@@ -1,0 +1,8 @@
+# build output and per-PC files - never committed
+*.exe
+*.pdb
+AdeeboMeter.settings
+AdeeboMeter.log
+AdeeboMeter-*.txt
+captures/
+history/

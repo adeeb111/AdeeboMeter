@@ -1,0 +1,41 @@
+# Builds AdeeboMeter.exe on a clean Windows machine with Microsoft's own .NET Framework compiler, straight from this
+# repository's source - so anyone can check the download matches the code. Tagging vX.Y.Z publishes a release.
+name: build
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with Windows' own csc.exe
+        shell: pwsh
+        run: |
+          $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & $csc /nologo /target:winexe /optimize+ /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll AdeeboMeter.cs
+          if ($LASTEXITCODE -ne 0) { throw "build failed" }
+          (Get-FileHash AdeeboMeter.exe -Algorithm SHA256).Hash | Out-File -Encoding ascii AdeeboMeter.exe.sha256
+          Get-Content AdeeboMeter.exe.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AdeeboMeter
+          path: |
+            AdeeboMeter.exe
+            AdeeboMeter.exe.sha256
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            AdeeboMeter.exe
+            AdeeboMeter.exe.sha256
+          body: |
+            **AdeeboMeter ${{ github.ref_name }}** — is it me or the network?
+            Download `AdeeboMeter.exe`, put it in any folder you like (for example `Documents\AdeeboMeter`) and run it. No installer, no admin rights.
+            Built on GitHub's Windows runner with Microsoft's .NET Framework compiler from this exact source. SHA256 is attached.
+            Windows SmartScreen may warn because the file isn't code-signed: choose *More info → Run anyway*, or build it yourself with `build.ps1`.
