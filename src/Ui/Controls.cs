@@ -117,7 +117,7 @@ namespace AdeeboMeter
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 1, Height - 1);
+            float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             Color fg;
             if (Kind == K.Primary)
@@ -164,7 +164,7 @@ namespace AdeeboMeter
             set
             {
                 bool had = label != ""; label = value ?? ""; float S = Draw.S; int lh = label != "" ? (int)(18 * S) : 0;
-                if (had != (label != "")) { Height = (int)(36 * S) + lh; Padding = new Padding((int)(12 * S), Math.Max(2, (int)((36 * S - Box.PreferredHeight) / 2) + 1) + lh, (int)(12 * S), 0); }
+                if (had != (label != "")) { Height = (int)(36 * S) + lh; Padding = new Padding((int)(12 * S), Math.Max(2, (int)((36 * S - Box.PreferredHeight) / 2) + 1) + lh, (int)(12 * S), (int)(3 * S)); }
                 Invalidate();
             }
         }
@@ -174,7 +174,7 @@ namespace AdeeboMeter
             DoubleBuffered = true; BackColor = Theme.Card;
             Size = new Size(width, (int)(36 * S)); Margin = new Padding(0, 0, (int)(10 * S), 0);
             Box.BorderStyle = BorderStyle.None; Box.Font = font;
-            Padding = new Padding((int)(12 * S), Math.Max(2, (int)((36 * S - Box.PreferredHeight) / 2) + 1), (int)(12 * S), 0);
+            Padding = new Padding((int)(12 * S), Math.Max(2, (int)((36 * S - Box.PreferredHeight) / 2) + 1), (int)(12 * S), (int)(3 * S));   // a bottom gap: the hint label must never paint over the border
             Box.Dock = DockStyle.Fill; Box.BackColor = Theme.Card; Box.ForeColor = Theme.Ink;
             Box.GotFocus += delegate { Invalidate(); }; Box.LostFocus += delegate { Invalidate(); };
             cueLbl = new Label { Text = cue, Dock = DockStyle.Fill, Font = font, ForeColor = Theme.Muted, BackColor = Theme.Card, AutoSize = false, AutoEllipsis = true, Cursor = Cursors.IBeam, UseMnemonic = false };   // one line, never half a second line
@@ -190,7 +190,7 @@ namespace AdeeboMeter
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(b, ClientRectangle);
             float lh = label != "" ? 18 * Draw.S : 0;
             if (lh > 0) using (var lb = new SolidBrush(Theme.Sub)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(label, Draw.fSmall, lb, new RectangleF(2, 0, Width - 4, lh), nf);
-            var r = new RectangleF(0.5f, 0.5f + lh, Width - 1, Height - 1 - lh);
+            var r = new RectangleF(0.5f, 0.5f + lh, Width - 2, Height - 2 - lh);
             Theme.Fill(g, r, 8 * Draw.S, Theme.Card);
             Theme.Stroke(g, r, 8 * Draw.S, Box.Focused ? Theme.Blue : Theme.Line, Box.Focused ? 2 : 1);
         }

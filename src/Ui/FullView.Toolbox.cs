@@ -34,7 +34,7 @@ namespace AdeeboMeter
                 T("gateway", "PATH", "Your gateway and failover", null, (a, r) => RoutingTools.Gateway(M)),
                 T("v6routers", "PATH", "IPv6 routers on this network", null, (a, r) => RoutingTools.Ipv6Routers()),
                 T("rlisten", "PATH", "Routing protocols on my segment", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r)),
-                T("discover", "PATH", "Who announces itself (mDNS, SSDP, LLMNR)", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r, true)),
+                T("discover", "PATH", "Who announces itself (mDNS, SSDP)", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r, true)),
                 T("ping6", "PATH", "IPv6 ping and trace", "Destination - e.g. www.google.com", (a, r) => SysTools.Ping6(a[0], r)),
                 T("overlap", "PATH", "Overlapping networks (home vs VPN)", null, (a, r) => PathTools.Overlap()),
                 T("ip46", "PATH", "IPv6 vs IPv4", "Site - e.g. www.google.com", (a, r) => PathTools.Ip46(Host(a[0]))),
@@ -288,7 +288,7 @@ namespace AdeeboMeter
             tbList.KeyPress += delegate(object s, KeyPressEventArgs e) { if (!char.IsControl(e.KeyChar)) { e.Handled = true; tbSearch.Box.Focus(); tbSearch.Box.Text += e.KeyChar; tbSearch.Box.SelectionStart = tbSearch.Box.TextLength; } };
             var left = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0) };
             var searchBar = new Panel { Dock = DockStyle.Top, Height = Sc(56), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(12), Sc(10), 0) };
-            tbSearch = new RoundBox(Sc(240), Draw.fInput, "Find a tool (mtu, dns, vpn...)") { Dock = DockStyle.Fill };
+            tbSearch = new RoundBox(Sc(240), Draw.fInput, "Find a tool (mtu, dns, wifi...)") { Dock = DockStyle.Top };   // its own height - stretched, its border ran under the list
             tbSearch.Box.TextChanged += delegate { tbFilter = tbSearch.Box.Text.Trim(); tbList.AutoScrollPosition = Point.Empty; tbList.Invalidate(); };
             tbSearch.Box.KeyDown += delegate(object s, KeyEventArgs e)
             {
@@ -522,7 +522,7 @@ namespace AdeeboMeter
                 if (tbRows == null && !tbBusy && mtuHops == null)
                 {
                     string d = Duration(tbSel, Inputs());
-                    if (d != "") { g.DrawString("Takes " + d + ".  Press F1 on anything for what it means.", Draw.fSmall, muted, new RectangleF(x, y, w, 20 * S)); y += 26 * S; }
+                    if (d != "") { string dl = "Takes " + d + ".  Press F1 on anything for what it means."; float dh = Draw.Measure(dl, Draw.fSmall, (int)w).Height; g.DrawString(dl, Draw.fSmall, muted, new RectangleF(x, y, w, dh + 4)); y += dh + 10 * S; }
                 }
                 if (tbSel == "owners" && !Online.On)
                 {
