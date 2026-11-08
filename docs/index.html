@@ -50,6 +50,9 @@ a{color:inherit}
 :root[data-theme="dark"] .theme .knob{transform:translateX(24px)}:root[data-theme="dark"] .theme .sun{display:none}:root[data-theme="dark"] .theme .moon{display:block}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme .knob{transform:translateX(24px)}:root:not([data-theme="light"]) .theme .sun{display:none}:root:not([data-theme="light"]) .theme .moon{display:block}}
 .theme:hover{opacity:.8}
+/* update banner (from "Check for updates" in the app) */
+.upd{max-width:560px;margin:0 auto 24px;padding:12px 18px;border-radius:14px;font-weight:600;font-size:15px}
+.upd.ok{background:var(--green-s);color:var(--green)}.upd.new{background:var(--blue-s);color:var(--blue)}
 /* hero */
 .lhero{text-align:center;padding:84px 0 40px}
 .lhero .logo{width:96px;height:96px;filter:drop-shadow(0 14px 28px rgba(31,111,235,.28))}
@@ -318,6 +321,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 
 <main>
 <section class="lhero"><div class="wrap">
+  <p id="update" class="upd" hidden></p>
   <svg class="logo" viewBox="0 0 64 64" role="img" aria-label="AdeeboMeter logo"><use href="#mark"/></svg>
   <h1>Is it me<br>or <span>the network?</span></h1>
   <p class="sub">AdeeboMeter answers in one glance. A quiet companion for Windows that watches your PC, your Wi-Fi, your provider and the internet — and tells you, in one sentence, what's wrong and what to do.</p>
@@ -332,7 +336,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="tb"><svg viewBox="0 0 64 64"><use href="#mark"/></svg>AdeeboMeter - is it me or the network?<span class="wc"><span>&#8212;</span><span>&#9633;</span><span>&#10005;</span></span></div>
       <div class="hd"><svg viewBox="0 0 64 64"><use href="#mark"/></svg><div class="nm"><b>AdeeboMeter</b><span>is it me or the network?</span></div><span class="ok">OK</span>
         <div class="say">Good evening, boss. All quiet. Nothing to fix &#8212; go get coffee.</div>
-        <div class="hb"><span class="tg"></span><span>About</span><span>Settings</span><span class="bk">Back to corner</span></div></div>
+        <div class="hb"><span class="tg"></span><span>Details</span><span>About</span><span>Settings</span><span class="bk">Back to corner</span></div></div>
       <div class="ps"><div class="t">IS IT ME OR THE NETWORK? &#183; CLICK A DOT FOR DETAILS</div>
         <div class="line">
           <div class="st"><i></i><b>PC</b><span>CPU 12% &#183; RAM 61%</span><small>OK &#183; 8 threads &#183; 16 GB</small></div>
@@ -343,7 +347,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
         </div></div>
       <div class="bd">
         <div class="lp">
-          <div class="tabs"><span class="on">Connections<em>28</em></span><span>Your Wi-Fi</span><span>What's running<em>121</em></span><span>Check a destination</span><span>Health check</span></div>
+          <div class="tabs"><span>Overview</span><span class="on">Monitor<em>28</em></span><span>Investigate</span><span>Network story</span><span>Time machine</span><span>Learn</span></div>
           <div class="chips"><span class="f">Filter by app, host, IP or port</span><span class="on">All</span><span>Teams</span><span>Edge</span><span>Outlook</span><span>OneDrive</span><span>Other</span></div>
           <table><tr><th>APP</th><th>PROTO</th><th>REMOTE</th><th>STATE</th><th>SEEN</th><th></th></tr><tr><td><span class="a" style="background:#5B5FC7">T</span>Teams<small>PID 8120</small></td><td>TCP</td><td><code>52.112.0.14</code><small style="margin-left:0"><code>52.112.0.14:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#0F6CBD">O</span>Outlook<small>PID 6604</small></td><td>TCP</td><td><code>52.96.88.130</code><small style="margin-left:0"><code>52.96.88.130:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#CF222E">E</span>Edge<small>PID 14532</small></td><td>TCP</td><td><code>13.107.42.14</code><small style="margin-left:0"><code>13.107.42.14:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#1F6FEB">O</span>OneDrive<small>PID 9048</small></td><td>TCP</td><td><code>20.190.151.6</code><small style="margin-left:0"><code>20.190.151.6:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#1DB954">S</span>Spotify<small>PID 11276</small></td><td>TCP</td><td><code>35.186.224.25</code><small style="margin-left:0"><code>35.186.224.25:4070</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#BF8700">C</span>Chrome<small>PID 7712</small></td><td>TCP</td><td><code>142.250.65.78</code><small style="margin-left:0"><code>142.250.65.78:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr></table>
         </div>
@@ -384,9 +388,9 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="tile"><div class="ic" style="background:var(--green-s);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.5L16 9.5"/></svg></div>
     <h3>One glance.</h3><p>Five dots from your PC to the internet. The first one that isn't green is where the trouble starts — and the fix is right there in plain English.</p></div>
   <div class="tile"><div class="ic" style="background:var(--blue-s);color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18V9M10 18V5M16 18v-7M22 18H2"/></svg></div>
-    <h3>The whole story.</h3><p>Your Wi-Fi channel and neighbours, your switch port, every program explained, the path your traffic takes — firewalls, NAT and all. One click away.</p></div>
+    <h3>The whole story.</h3><p>Pick the problem and it investigates for you. Follow any app from your PC to the server. Replay any minute of the last days. Every fact says where it came from.</p></div>
   <div class="tile"><div class="ic" style="background:var(--purple-s);color:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-    <h3>Yours alone.</h3><p>No account, no server, no admin rights. A penny of CPU in the background. One readable source file, built by the compiler already inside Windows.</p></div>
+    <h3>Yours alone.</h3><p>No account, no server, no admin rights. A penny of CPU in the background. Readable source, built by the compiler already inside Windows.</p></div>
 </div></section>
 
 <section id="theory">
@@ -451,12 +455,12 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card" style="padding:1.6em">
         <span class="tag t-g">Always on · penny-light</span>
         <h3 style="font-size:1.5em;margin:.5em 0">The corner widget</h3>
-        <ul class="clean"><li>Faded to 30%; brightens when you hover</li><li>Click-through — whatever is underneath keeps working</li><li>Folds into a tiny chip when a window covers the corner</li><li>CPU, memory, disk, network and a verdict in one sentence</li></ul>
+        <ul class="clean"><li>Faded to 30% (up to 100%), small or bigger; brightens when you hover</li><li>Click-through — whatever is underneath keeps working</li><li>Folds into a tiny chip when a window covers the corner</li><li>CPU, memory, disk, network and a verdict in one sentence</li></ul>
       </div>
       <div class="card b" style="padding:1.6em">
         <span class="tag t-b">On demand · tray icon or Ctrl+Alt+A</span>
         <h3 style="font-size:1.5em;margin:.5em 0">The engineer view</h3>
-        <ul class="clean"><li>Connections, Your Wi-Fi / cable, What's running</li><li>Check a destination, Health check, What changed, Live capture</li><li>Hover any <b>?</b> cursor for a plain-English explanation</li><li>Esc, minimise or X = back to the corner — memory given back</li></ul>
+        <ul class="clean"><li><b>Overview</b> · <b>Monitor</b> · <b>Investigate</b></li><li><b>Network story</b> · <b>Time machine</b> · <b>Learn</b></li><li>Hover any <b>?</b> cursor for a plain-English explanation</li><li>Esc, minimise or X = back to the corner — memory given back</li></ul>
       </div>
     </div>
   </div>
@@ -556,20 +560,52 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Engineer view · tour</div>
-  <h2>Everything you'd dig out of five tools.</h2>
+  <h2>Six places. Everything you'd dig out of five tools.</h2>
   <div class="body">
     <div class="grid g4">
-      <div class="card"><h3>Connections</h3><p>Every conversation, the app that owns it, its state. <b>Sniff</b> a row straight into Wireshark.</p></div>
-      <div class="card"><h3>Your Wi-Fi / cable</h3><p>Band, channel, width, dBm, roaming, neighbours, drop reasons — or your switch port and VLAN.</p></div>
-      <div class="card"><h3>What's running</h3><p>Every program explained in plain English, and whether it's safe to close.</p></div>
-      <div class="card"><h3>Check a destination</h3><p>DNS → route → ping → TCP → TLS → HTTP → MTU → trace, then the path story.</p></div>
-      <div class="card"><h3>Health check</h3><p>Uptime, pending reboot, disk, adapter errors, proxy, VPN, DNS, power — each with what to do.</p></div>
-      <div class="card"><h3>What changed</h3><p>The diary of the last 2 hours; optional 7-day history with the day at a glance.</p></div>
-      <div class="card"><h3>Live capture</h3><p>Protocols, top talkers, bytes per app, Teams call quality, rogue DHCP. Needs Wireshark.</p></div>
-      <div class="card b"><h3>Hover the ? cursor</h3><p>114 terms and 72 programs: what it is, how it works, why it matters, what to do.</p></div>
+      <div class="card b"><h3>Overview</h3><p>The verdict, router, internet, DNS and traffic right now, what needs attention, today.</p></div>
+      <div class="card"><h3>Monitor</h3><p>Connections (<b>Sniff</b> into Wireshark), your Wi-Fi or cable, what's running, live capture.</p></div>
+      <div class="card"><h3>Investigate</h3><p>Pick the problem; it runs the checks. Check a destination, health and tools.</p></div>
+      <div class="card"><h3>Network story</h3><p>Follow an app from your PC to the server, box by box, and time each step.</p></div>
+      <div class="card"><h3>Time machine</h3><p>Replay any minute, the week as a heatmap, data usage, calls, new devices.</p></div>
+      <div class="card"><h3>Learn</h3><p>43 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
+      <div class="card"><h3>Your Wi-Fi</h3><p>Health score that works with location off, an advisor, look-alike networks, a walk test.</p></div>
+      <div class="card g"><h3>Hover the ? cursor</h3><p>160 terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
     </div>
   </div>
   <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>09</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Investigate</div>
+  <h2>Start from the problem, not the protocol.</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:1.6em">
+      <div class="card b" style="padding:1.4em">
+        <h3 style="font-size:1.35em;margin:0 0 .5em">Four questions people actually ask</h3>
+        <ul class="clean"><li>The internet is slow</li><li>A website or app won't open</li><li>Calls freeze or sound robotic</li><li>I keep disconnecting</li></ul>
+        <p style="margin-top:.8em">Each runs the checks AdeeboMeter already has and answers in the same four parts: <b>Finding · What I observed · Not established · Next test</b>.</p>
+      </div>
+      <div class="card g" style="padding:1.4em">
+        <h3 style="font-size:1.35em;margin:0 0 .5em">Every fact says where it came from</h3>
+        <ul class="clean"><li><span class="tag t-g">measured</span> AdeeboMeter timed it itself</li><li><span class="tag t-b">Windows-reported</span> Windows said so</li><li><span class="tag">seen in packets</span> Wireshark decoded it</li><li><span class="tag">inferred</span> a conclusion from the others</li><li><span class="tag">unavailable</span> this PC doesn't let us see it</li></ul>
+        <p style="margin-top:.8em"><b>Details</b> (top right) adds raw values and the second each one was read.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>10</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Network story · Learn</div>
+  <h2>Follow one app from your PC to the server.</h2>
+  <div class="body">
+    <div class="card" style="padding:1.2em 1.4em;font-size:1.05em;text-align:center;letter-spacing:.01em"><b>Teams</b> → Windows <span style="color:var(--muted)">(socket)</span> → Wi-Fi → Router → Provider → Internet → <b>Microsoft</b></div>
+    <div class="grid g3" style="margin-top:1.2em">
+      <div class="card"><h3>Ready when you open it</h3><p>The busiest app is picked for you; nothing to type. Click a box for what happens there.</p></div>
+      <div class="card"><h3>Where the time goes</h3><p>Name · connect · lock · first byte, as one bar. Real packets with Wireshark.</p></div>
+      <div class="card"><h3>Learn in a glance</h3><p>Two lines, a picture, and one "if it goes wrong" line. People who want the textbook read it elsewhere.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>11</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Your Wi-Fi · your cable</div>
@@ -599,7 +635,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <p style="font-size:.8em;margin-top:.4em"><span class="tag t-b">your channel</span> <span class="tag t-a">overlaps yours</span> <span class="tag" style="background:#EEF1F5;color:#4A5568">others</span> — bar = strongest signal, number = access points</p>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>10</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>12</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">What's running</div>
@@ -619,7 +655,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       </div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>11</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>13</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Check a destination</div>
@@ -637,7 +673,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     </div>
     <p style="margin-top:1em;text-align:center">If a check fails, a <b>sign-in page check</b> catches hotel and airport portals. Pin up to 5 destinations and <b>Run all</b>.</p>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>12</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>14</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The path story</div>
@@ -661,10 +697,10 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>And more</h3><p>Load-balanced hops, where the delay jumps, silent routers (normal), the return path from reply TTLs.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>13</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>15</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
-  <div class="kicker">Live capture · What changed</div>
+  <div class="kicker">Live capture · Time machine</div>
   <h2>Deep when you ask. Silent when you don't.</h2>
   <div class="body">
     <div class="grid g2" style="gap:1.6em">
@@ -674,13 +710,13 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
         <ul class="clean"><li>What your traffic is made of; top conversations named from the traffic itself</li><li>Wireshark's expert warnings; bytes per app</li><li><b>Call quality:</b> RTP loss, jitter (RFC 3550), MOS score (ITU-T E-model) — audio stays encrypted</li><li><b>Rogue DHCP:</b> two servers answering on one network</li></ul>
       </div>
       <div class="card g" style="padding:1.4em">
-        <span class="tag t-g">History is off unless you turn it on</span>
-        <h3 style="font-size:1.35em;margin:.5em 0">What changed</h3>
-        <ul class="clean"><li>The last 2 hours: roams, drops, DNS changes, VPN flaps, verdict changes</li><li><b>7-day history:</b> one small file per day in your profile, deleted after 7 days</li><li>The day at a glance: verdict band, router delay and Wi-Fi signal</li><li>Chart drawn once as an image — scrolling costs nothing</li></ul>
+        <span class="tag t-g">History stays on this PC · 3 days by default (1–90)</span>
+        <h3 style="font-size:1.35em;margin:.5em 0">Time machine</h3>
+        <ul class="clean"><li><b>Replay:</b> drag to any minute — the dots, the numbers, what changed around then</li><li><b>The week:</b> 7 × 24 squares; click one to replay that hour</li><li>Data usage per network, "slower than usual", after-call summaries, new devices</li><li>One line a minute, older days compressed, oldest deleted every night</li></ul>
       </div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>14</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>16</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Privacy</div>
@@ -691,13 +727,14 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <tr><td>Router ping</td><td>every 2–10 s (Settings)</td><td>your own router</td></tr>
       <tr><td>Internet + DNS check</td><td>every 15–60 s, or off</td><td>1.1.1.1 / 8.8.8.8 and your DNS server</td></tr>
       <tr><td>Provider name</td><td>once per network</td><td>a 6-hop trace toward 1.1.1.1, one reverse-DNS lookup</td></tr>
-      <tr><td>Checks you start</td><td>when you press Check</td><td>where you asked, plus one DNS question to 1.1.1.1</td></tr>
+      <tr><td>Checks you start</td><td>when you press Check, Investigate or Time each step</td><td>where you asked, plus one DNS question to 1.1.1.1</td></tr>
+      <tr><td>DNS speed test · pinned watch</td><td>when you press it · opt-in, every 30 s</td><td>1.1.1.1, 8.8.8.8, 9.9.9.9 · the destination you pinned</td></tr>
       <tr><td>Sign-in page check</td><td>only if a check fails (can be off)</td><td>msftconnecttest.com — the page Windows itself uses</td></tr>
       <tr><td>Wi-Fi details · live capture</td><td>—</td><td>nothing leaves; Windows is asked locally</td></tr>
     </table>
-    <div class="card r" style="margin-top:1.2em;text-align:center"><b style="color:var(--red)">Never:</b> cloud · account · telemetry · updates · ads · crash reports · listening ports</div>
+    <div class="card r" style="margin-top:1.2em;text-align:center"><b style="color:var(--red)">Never:</b> cloud · account · telemetry · auto-updates · ads · crash reports sent · listening ports</div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>15</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>17</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Security</div>
@@ -712,7 +749,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card b"><h3>Static analysis: 0 findings</h3><p>Builds clean against Microsoft's .NET security and quality analyzers with every rule switched on.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>16</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>18</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Staying light</div>
@@ -730,7 +767,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Nothing leaks</h3><p>Windows, timers, bitmaps and helper tools released on close — and the self-test proves it.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>17</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>19</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Proof, not promises</div>
@@ -754,7 +791,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="mono" style="color:#3FB950;font-weight:700">ALL PASSED</div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>18</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>20</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Honest limits</div>
@@ -769,7 +806,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Inside a tunnel or your ISP</h3><p>Can only be inferred, never seen.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>19</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>21</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Get it</div>
@@ -786,7 +823,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Or don't install</h3><p><i>Just run it from here</i> keeps it portable. Not code-signed: SmartScreen says <i>More info → Run anyway</i>.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>20</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>22</span></div>
 </div></section></div>
 <div class="frame"><section class="slide end"><div class="in">
   <div class="kicker">AdeeboMeter</div>
@@ -938,6 +975,15 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
         document.querySelectorAll('a.dl').forEach(function (el) { el.href = a.browser_download_url; });
         var v = (rel.tag_name || '').replace(/^v/, '');
         if (v) document.querySelectorAll('.ver').forEach(function (el) { el.textContent = 'Version ' + v; });
+        // "Check for updates" from inside the app opens this page with ?v=<your version>
+        var mine = (new URLSearchParams(location.search)).get('v');
+        if (mine && v) {
+          var newer = v.split('.').map(Number).some(function (n, i, a) { var m = mine.split('.').map(Number); for (var j = 0; j < Math.max(a.length, m.length); j++) { var x = a[j] || 0, y = m[j] || 0; if (x !== y) return x > y; } return false; });
+          var b = document.getElementById('update');
+          b.textContent = newer ? 'AdeeboMeter ' + v + ' is out - you have ' + mine + '. Download it below and choose Update.' : 'You\u2019re up to date - ' + mine + ' is the latest version.';
+          b.className = 'upd ' + (newer ? 'new' : 'ok'); b.hidden = false;
+          if (location.hash === '#update') window.scrollTo(0, 0);
+        }
       }).catch(function () {});
   } catch (e) {}
 })();

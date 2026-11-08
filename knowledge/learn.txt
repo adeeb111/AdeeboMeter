@@ -1,0 +1,386 @@
+# Learn mode (short on purpose: two lines and a picture), the deep dives and the app stories. Format: see src/Knowledge/Knowledge.cs.
+# kind: protocol | windows | apps.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
+# try: what to do while it records. Keys after == are the names a topic answers to (lower case for Windows processes).
+
+
+== dns
+title: DNS - the internet's phone book
+kind: protocol
+tag: You type a name; DNS finds the number.
+line: Turns a name like github.com into the number computers use.
+breaks: Slow DNS makes every new site slow; broken DNS looks like 'no internet'.
+ladder: Your PC > DNS server: Where is github.com? | DNS server > Your PC: 140.82.112.3 (good for 60 s)
+live: port 53
+try: Open a website you haven't visited today.
+
+== dhcp
+title: DHCP - how your PC gets an address
+kind: protocol
+tag: Four messages, and you're on the network.
+line: Gives your PC an address, the router's address and DNS servers when you join a network.
+breaks: A 169.254.x.x address means DHCP failed - restart Wi-Fi or the router.
+ladder: Your PC > Everyone: DISCOVER - any DHCP server here? | Router > Your PC: OFFER - you can have 192.168.1.37 | Your PC > Router: REQUEST - I'll take .37 | Router > Your PC: ACK - it's yours for 24 hours
+live: port 67 or port 68
+try: Turn Wi-Fi off and on again.
+
+== arp
+title: ARP - finding the hardware next door
+kind: protocol
+tag: IP addresses for the journey, hardware addresses for the next step.
+line: Finds the hardware address of the router next to you, so packets can leave the room.
+breaks: If the router's hardware address suddenly changes, someone may be in the middle.
+ladder: Your PC > Everyone: Who has 192.168.1.1? | Router > Your PC: I do - 3c:84:6a:..
+live: arp
+try: Wait - it happens on its own every few minutes.
+
+== tcp
+title: TCP - the reliable conversation
+kind: protocol
+tag: Numbered, acknowledged, resent when lost.
+line: A reliable conversation: numbered pieces, every one confirmed, lost ones sent again.
+breaks: Lots of resends (retransmits) mean loss on the way - usually Wi-Fi.
+ladder: Your PC > Server: SYN - let's talk | Server > Your PC: SYN-ACK - sure | Your PC > Server: ACK - connected | Your PC > Server: data | Server > Your PC: ACK - got it
+live: tcp port 443
+try: Refresh a web page.
+
+== udp
+title: UDP - fast and fire-and-forget
+kind: protocol
+tag: No handshake, no resending - speed first.
+line: Fire and forget: no confirmations, no resends - fast, for calls, games and DNS.
+breaks: A lost UDP packet is just gone - in a call that's a glitch or robot voice.
+live: udp and not port 53
+try: Join a Teams call or play a video.
+ladder: Your PC > Server: packet 1 | Your PC > Server: packet 2 | Your PC > Server: packet 3 (no replies needed)
+
+== tls
+title: TLS - the padlock
+kind: protocol
+tag: Proves who the server is, then encrypts everything.
+line: The padlock: proves the server is real and encrypts everything after.
+breaks: A certificate error means the wrong server, a wrong clock, or something in the middle.
+ladder: Your PC > Server: ClientHello - I speak TLS 1.3 | Server > Your PC: ServerHello + certificate | Your PC > Server: Finished - keys agreed | Your PC > Server: encrypted request | Server > Your PC: encrypted answer
+live: tcp port 443
+try: Open a website.
+
+== quic
+title: QUIC and HTTP/3 - the modern web
+kind: protocol
+tag: TCP and TLS rebuilt on top of UDP.
+line: The modern web: connection and encryption in one quick handshake, over UDP 443.
+breaks: If UDP is blocked, browsers quietly fall back to TCP - slower, but it works.
+live: udp port 443
+try: Open YouTube or Google in Edge or Chrome.
+ladder: Your PC > Server: hello + keys (UDP 443) | Server > Your PC: hello + certificate | Your PC > Server: request, already encrypted
+
+== http
+title: HTTP - asking for a page
+kind: protocol
+tag: A request, a status, an answer.
+line: How apps ask for things: GET this page, POST this form - the server answers with a code.
+breaks: Codes: 200 fine, 401/403 not allowed, 404 not found, 5xx the server is broken.
+ladder: Your PC > Server: GET / | Server > Your PC: 200 OK + the page
+
+== icmp|ping|traceroute
+title: Ping and traceroute (ICMP)
+kind: protocol
+tag: Are you there? How far? Which way?
+line: The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.
+breaks: No ping reply doesn't always mean down - many servers ignore ping on purpose.
+ladder: Your PC > Router: echo request (TTL 1) | Router > Your PC: time exceeded - I'm hop 1 | Your PC > Server: echo request | Server > Your PC: echo reply - 22 ms
+live: icmp
+try: Run a check in Check a destination.
+
+== ipv6
+title: IPv6 and how your PC gets its addresses
+kind: protocol
+tag: Many addresses at once, and some of them change every day.
+line: The newer, much bigger address system; your PC usually has both IPv4 and IPv6.
+breaks: Broken IPv6 makes some sites slow to start while the PC falls back to IPv4.
+live: icmp6
+try: Wait - routers advertise every few minutes.
+ladder: Router > Everyone: here's the network prefix | Your PC > itself: makes its own address from it | Your PC > Server: talks over IPv6
+
+== nat
+title: NAT - many devices, one public address
+kind: protocol
+tag: Why your PC's address isn't the one the internet sees.
+line: Your router swaps your private address for its one public address on the way out.
+breaks: A 100.64.x.x hop means your provider adds a second NAT - some games and calls struggle.
+ladder: Your PC (192.168.1.37) > Router: to github.com | Router (public 24.x.x.x) > github.com: same request, new address | github.com > Router: reply | Router > Your PC: reply
+
+== mtu
+title: MTU - how big a packet can be
+kind: protocol
+tag: 1500 bytes, minus whatever tunnels add.
+line: The biggest packet that fits on a link - usually 1500 bytes, less on VPNs and PPPoE.
+breaks: Pages that half-load or hang on a VPN are often an MTU problem.
+ladder: Your PC > Router: 1500 bytes | Router > VPN tunnel: too big - needs 1400 | Your PC > Router: resends smaller
+
+== wifi
+title: Wi-Fi - how your laptop joins and stays connected
+kind: protocol
+tag: Scan, authenticate, associate, then share the air.
+line: Radio between your PC and the access point - band, channel and signal decide how good it is.
+breaks: Weak signal or a crowded channel: move closer, or use 5 GHz.
+ladder: Your PC > Access point: radio frame | Access point > Your PC: got it (ACK) | Access point > Router: on the cable
+
+== 802.1x|eap|radius
+title: 802.1X - company sign-in for Wi-Fi and network ports
+kind: protocol
+tag: The network checks who you are before letting you in.
+line: Work networks check who you are (certificate or password) before letting you on.
+breaks: Can't join the work Wi-Fi but others can: your certificate or account, not the radio.
+ladder: Your PC > Switch / AP: EAPOL start | Switch / AP > RADIUS server: here's who it claims to be | RADIUS server > Switch / AP: Access-Accept, VLAN 20 | Switch / AP > Your PC: you're in
+
+== dscp|qos
+title: QoS and DSCP - priority for calls
+kind: protocol
+tag: A label on each packet that says "me first".
+line: A priority label on packets - calls get 'express', downloads get normal.
+breaks: Most home routers and the internet ignore it; it helps mainly inside company networks.
+live: udp port 3478 or udp port 3479 or udp port 3480 or udp port 3481
+try: Join a Teams call.
+ladder: Teams > Your PC: mark audio EF (express) | Your PC > Router: EF packet | Router > Internet: label often removed here
+
+== bgp
+title: BGP - how networks agree on routes
+kind: protocol
+tag: The internet's map, drawn by agreements between providers.
+line: How the networks of the internet tell each other which addresses they can reach.
+breaks: When a provider announces something wrong, whole sites vanish for everyone at once.
+ladder: Your provider > Neighbour network: I can reach 24.x.x.x | Neighbour > Internet: via me | Internet > Your provider: traffic for you
+
+== boot-chain
+title: How Windows starts, from power to desktop
+kind: windows
+tag: Each one starts the next - and if certain ones die, Windows dies with them.
+line: Power on to desktop: firmware, Windows' loader, the kernel, then the core processes in order.
+breaks: If one of the core processes dies, Windows stops with a blue screen.
+ladder: Firmware > Boot manager: load Windows | Kernel > smss: start the session | smss > wininit: start services | smss > winlogon: show sign-in | winlogon > explorer: your desktop
+
+== svchost
+title: svchost.exe - one host, many services
+kind: windows
+tag: Why there are twenty of them, and what's inside each.
+line: A shared host: many small Windows services run inside each svchost.exe.
+breaks: When 'svchost' is busy, it's one service inside - Inside Windows shows which.
+ladder: services > svchost: host these services | svchost > Windows Update: run | svchost > DNS Client: run
+
+== lsass
+title: lsass.exe - the security guard
+kind: windows
+tag: Checks every password and keeps your sign-in tokens.
+line: The security guard: checks your password or PIN and keeps your sign-in tokens.
+breaks: Never end it - Windows restarts within a minute. High CPU at work is usually sign-in traffic.
+ladder: winlogon > lsass: check this PIN | lsass > winlogon: correct - here's your token | Outlook > lsass: sign me in to the company server
+
+== csrss
+title: csrss.exe - the session's core
+kind: windows
+tag: Old name, still essential.
+line: Draws console windows and helps start and shut down every program.
+breaks: Can't be ended; if it dies, Windows stops. Two copies is normal.
+ladder: smss > csrss: start for the session | Any program > csrss: I'm starting | csrss > Windows: noted
+
+== wininit
+title: wininit.exe - starts the background world
+kind: windows
+tag: Starts services and the security guard, then waits.
+line: Starts the system part of Windows: the service manager and the security guard.
+breaks: Can't be ended; if it dies, Windows stops.
+ladder: smss > wininit: start | wininit > services: start the service manager | wininit > lsass: start the security guard
+
+== winlogon
+title: winlogon.exe - your sign-in
+kind: windows
+tag: Sign-in screen, Ctrl+Alt+Del, lock and sign out.
+line: Handles signing in, locking (Win+L) and Ctrl+Alt+Del.
+breaks: If sign-in hangs, a startup program or a profile problem is usually behind it.
+ladder: You > winlogon: Ctrl+Alt+Del | winlogon > lsass: check PIN | winlogon > explorer: start your desktop
+
+== services
+title: services.exe - the Service Control Manager
+kind: windows
+tag: Starts, stops and watches every Windows service.
+line: The service manager: starts, stops and restarts every Windows service.
+breaks: A service that keeps restarting shows up here as repeated starts - check its name.
+ladder: wininit > services: start | services > svchost: run these services | services > Spooler: you crashed - restart
+
+== dwm
+title: dwm.exe - the desktop's painter
+kind: windows
+tag: Every window you see is drawn by it.
+line: Draws everything you see - windows, shadows, animations - with the graphics card.
+breaks: High GPU or memory here usually means many monitors or a graphics driver issue.
+ladder: Apps > dwm: here's my window | dwm > Graphics card: combine them | Graphics card > Screen: the frame
+
+== explorer
+title: explorer.exe - your desktop, taskbar and folders
+kind: windows
+tag: The shell: everything you click to start things.
+line: Your desktop, taskbar, Start menu and File Explorer - all one process.
+breaks: Taskbar frozen? Restart 'Windows Explorer' in Task Manager - nothing is lost.
+ladder: winlogon > explorer: start the desktop | explorer > Your apps: start them from Start | You > explorer: open a folder
+
+== runtimebroker
+title: RuntimeBroker.exe - the permission checker
+kind: windows
+tag: Asks Windows' permission on behalf of Store apps.
+line: Checks Store apps' permissions - camera, location, files.
+breaks: Many copies are normal; high CPU usually means one app asking over and over.
+ladder: Store app > RuntimeBroker: may I use the camera? | RuntimeBroker > Store app: yes - you allowed it
+
+== searchhost
+title: SearchHost.exe / SearchIndexer - Windows Search
+kind: windows
+tag: The search box, and the index behind it.
+line: The Start menu search box and its results.
+breaks: Slow search is usually the indexer catching up after many new files.
+ladder: You > SearchHost: type 'excel' | SearchHost > Index: anything matching? | SearchHost > You: Excel, 3 files
+
+== msmpeng
+title: MsMpEng.exe - Microsoft Defender
+kind: windows
+tag: Checks every file as it's opened.
+line: Microsoft Defender's scanner - checks files as they open and runs scans.
+breaks: Busy during big copies or builds; never stop it - it's your antivirus.
+ladder: Program > Windows: open this file | Windows > MsMpEng: scan it first | MsMpEng > Windows: clean - go ahead
+
+== msedgewebview2
+title: msedgewebview2.exe - Edge inside other apps
+kind: windows
+tag: Why Teams and new Outlook have so many Edge processes.
+line: A built-in Edge engine that apps like Teams, Outlook and widgets use to draw their screens.
+breaks: Many copies are normal - each belongs to an app; Inside Windows shows which.
+ladder: Teams > WebView2: draw the chat window | WebView2 > Teams service: load it (HTTPS) | WebView2 > Teams: drawn
+
+== memory compression
+title: Memory Compression
+kind: windows
+tag: Squeezes memory instead of writing it to disk.
+line: Windows squeezes memory it isn't using right now instead of writing it to disk.
+breaks: Large means memory is tight - close something heavy or add RAM.
+ladder: Windows > Memory compression: squeeze this idle app | App > Windows: I need it again | Windows > App: unsqueezed - instant
+
+== system
+title: System (the kernel)
+kind: windows
+tag: The engine room - drivers and the kernel itself.
+line: The Windows kernel and drivers - the part that talks to the hardware.
+breaks: High CPU here usually means a driver: Wi-Fi, storage or antivirus filter.
+ladder: Wi-Fi card > System: packet arrived | System > Program: here's your data | Program > System: send this
+
+== teams-call
+title: How a Teams call connects
+kind: apps
+tag: Sign in, signal, find a path, then audio and video over UDP.
+line: Teams signs in, rings the other side over HTTPS, then sends audio and video over UDP.
+breaks: Robot voice or freezing: UDP blocked, the VPN in the way, or weak Wi-Fi.
+ladder: Teams > Sign-in (WAM): token please | Sign-in (WAM) > Teams: token | Teams > Teams service: call Alex (HTTPS) | Teams service > Teams: Alex answered + relay addresses | Teams > Media relay: STUN - which path works? (UDP 3478) | Teams > Media relay: audio + video (SRTP over UDP)
+live: udp port 3478 or udp port 3479 or udp port 3480 or udp port 3481
+try: Join or start a Teams call.
+
+== outlook-flow
+title: How Outlook gets your mail
+kind: apps
+tag: Signs in once, keeps a copy on your PC, syncs in the background.
+line: Outlook keeps a copy of your mailbox on the PC and syncs it with Exchange Online over HTTPS.
+breaks: Slow Outlook is often the big local mailbox file or OneDrive using your upload.
+ladder: Outlook > Sign-in (WAM): token please | Sign-in (WAM) > Outlook: token | Outlook > Exchange Online: sync my mailbox (HTTPS) | Exchange Online > Outlook: new items | Exchange Online > Outlook: notification - new mail
+
+== onedrive
+title: OneDrive - files on demand
+kind: apps
+tag: Your files in the cloud, downloaded only when you open them.
+line: Keeps a folder on your PC in sync with the cloud, both ways, in the background.
+breaks: A big sync uses your upload - that's when calls get worse.
+ladder: OneDrive > Microsoft: anything new? | Microsoft > OneDrive: 2 files changed | OneDrive > Microsoft: uploading your photo
+
+== wam|sign-in broker
+title: Sign-in broker (WAM) - one sign-in for every Microsoft app
+kind: apps
+tag: Why Teams, Outlook and OneDrive never ask for your password separately.
+line: Windows' sign-in broker: Office and Teams ask it for tokens instead of asking you for passwords.
+breaks: Endless sign-in prompts: the token broker is stuck - sign out of Office and back in.
+ladder: Teams > WAM: token please | WAM > Microsoft sign-in: here's the account | Microsoft sign-in > WAM: token | WAM > Teams: token
+
+== osi|layers|tcp/ip
+title: The layers, in plain words
+kind: basics
+tag: A letter in envelopes inside envelopes - each layer adds one, the other side opens them in reverse.
+line: Each layer adds an envelope on the way out; the other side opens them in reverse.
+breaks: The layer that fails tells you who to blame: room, router, firewall, or the website.
+ladder: App > Windows: here's my message | Windows > Wi-Fi card: TCP + IP + Wi-Fi envelopes | Wi-Fi card > Router: radio waves | Router > Internet: new outer envelope, same inside | Server > App: opened in reverse, the reply comes back the same way
+live: tcp port 443
+try: Open any website.
+
+== open-website|web page|browser
+title: What happens when you open a website
+kind: basics
+tag: Six steps in about a fifth of a second.
+line: Find the address, open a connection, agree on encryption, ask for the page.
+breaks: Far-away sites feel slow because each step costs a round trip.
+ladder: Your PC > DNS: where is github.com? | DNS > Your PC: 140.82.112.3 | Your PC > Server: SYN | Server > Your PC: SYN-ACK | Your PC > Server: ACK + TLS hello | Server > Your PC: certificate + key | Your PC > Server: GET / | Server > Your PC: 200 OK + the page
+live: port 53 or tcp port 443 or udp port 443
+try: Open a website you haven't visited today.
+
+== apps-internet|sockets|how apps talk
+title: How apps actually use the internet
+kind: basics
+tag: Apps never touch the network - they ask Windows, through sockets.
+line: Apps never touch the network - they ask Windows for a connection (a socket).
+breaks: Every connection belongs to exactly one program - Connections shows which.
+ladder: App > Windows: open a socket to 52.112.0.5 port 443 | Windows > Server: SYN from port 51834 | Server > Windows: SYN-ACK | Windows > App: connected - send away | App > Windows: data | Windows > App: reply data
+live: tcp
+try: Open an app you haven't used today.
+
+== ports|port numbers
+title: Ports - which app gets the packet
+kind: basics
+tag: The IP address finds the building; the port finds the flat.
+line: The address finds the computer; the port finds the program on it.
+breaks: 'Door refused' means a firewall or a stopped service on that port.
+ladder: Your PC (port 51834) > Server (port 443): HTTPS please | Server (443) > Your PC (51834): here you go
+live: tcp port 443 or udp port 443
+try: Open a secure website.
+
+== speed-vs-delay|bandwidth|latency|jitter|loss
+title: Speed isn't one number
+kind: basics
+tag: Bandwidth, delay, jitter and loss - four different things that all feel like "slow".
+line: Bandwidth is how much; delay is how long; jitter is how uneven; loss is how much goes missing.
+breaks: Speed tests show bandwidth, but calls and browsing suffer from delay, jitter and loss.
+ladder: Your PC > Router: ping (3 ms) | Router > Internet: ping (+18 ms) | Internet > Your PC: reply after 21 ms, jitter 2 ms, 0% lost
+live: icmp
+try: Leave it running for a minute.
+
+== streaming-vs-calls|video|netflix|youtube
+title: Streaming vs calls - why one buffers and the other stutters
+kind: basics
+tag: Netflix can wait; a conversation can't.
+line: Video downloads ahead and buffers; calls play every packet the moment it arrives.
+breaks: YouTube fine but Teams breaking up is normal on a jittery network.
+ladder: Video server > Your PC: 10 s of video ahead (TCP) | Your PC > Teams relay: 20 ms of audio (UDP) | Teams relay > Your PC: 20 ms of their audio (UDP)
+live: udp
+try: Join a call or play a video.
+
+== background-chatter|idle traffic|why is my pc talking
+title: Why your PC talks when you're doing nothing
+kind: basics
+tag: Sync, updates, notifications and check-ins - all normal, all named.
+line: Sync, updates, notifications and clock checks keep your PC talking even when idle.
+breaks: A program from Downloads talking at 3 am is worth a look; Defender updating isn't.
+ladder: OneDrive > Microsoft: anything new? | Microsoft > OneDrive: 2 files changed | Teams > Teams service: still here (keep-alive) | Windows > time server: what time is it?
+live: udp port 123 or udp port 5353 or udp port 1900 or udp port 5355
+try: Leave the PC alone for a minute.
+
+== push|notifications|how teams knows
+title: How a message reaches you instantly
+kind: basics
+tag: Your app keeps one line open, so the server can call you back.
+line: Apps keep one connection open so the server can send you a message instantly.
+breaks: Late messages: that open line broke quietly after a network change.
+ladder: Teams > Teams service: open, and keep this line open | Teams service > Teams: (silence...) | Teams service > Teams: new message from Alex | Teams > Teams service: got it
+live: tcp port 443
+try: Ask someone to send you a chat message.

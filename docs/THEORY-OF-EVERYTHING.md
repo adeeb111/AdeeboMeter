@@ -25,7 +25,7 @@ Everything else in this document is detail behind those two.
 | **A penny app** | The background work is a few dozen tiny jobs a minute. Anything heavy (capture, traces, the process guide) runs only while you are looking at it, and stops by itself. |
 | **No cloud. No telemetry. Never listens.** | There is no server, no account, no update check. AdeeboMeter never opens a listening port — and checks that about itself every time it starts. Every packet it sends is listed in *About*, and each can be switched off. |
 | **No admin rights** | Everything comes from what Windows already shows a normal user. If Windows says no, that part simply doesn't show. |
-| **One readable file** | The whole app is one C# file (`AdeeboMeter.cs`) built by the compiler that already ships inside Windows. Nothing to install, nothing hidden. |
+| **Readable source** | Plain C# in `src/`, one file per part, built by the compiler that already ships inside Windows. Nothing to install, nothing hidden. |
 | **A companion, not a robot** | Every message has two versions: a friendly one ("Good morning boss, your PC looks cooked") and a plain one (*Serious* mode). The fix always comes right after the joke. |
 
 ---
@@ -48,10 +48,10 @@ Everything else in this document is detail behind those two.
             ┌────────────────────┼─────────────────────┐
             ▼                                          ▼
    Corner widget (AppCtx)                    Engineer view (FullView)
-   draws the Snap as an image,               pages: Connections, Your Wi-Fi,
-   faded, click-through                      What's running, Check a destination,
-                                             Health check, What changed,
-                                             Live capture, Settings, About
+   draws the Snap as an image,               six sections: Overview, Monitor,
+   faded, click-through                      Investigate, Network story,
+                                             Time machine, Learn
+                                             (+ Settings, About)
 ```
 
 The rule that keeps it light: **the Monitor is the only thing that always runs**. The widget just paints the latest snapshot. The engineer view adds its own work only while it's open.
@@ -108,7 +108,7 @@ Two background threads:
 **Sampler — every second**
 - Reads CPU (`GetSystemTimes`), memory (`GlobalMemoryStatusEx`), disk (performance counters), network bytes (adapter statistics), and TCP/IP health (retransmits, resets, failed connections, ICMP unreachable, UDP drops).
 - Every 10 seconds it **judges**: it looks at everything and writes the verdict (OK / Busy / Act) and one sentence.
-- If 7-day history is on, it writes one small line to today's history file.
+- Once a minute it writes one small line to today's history file (history is on by default, kept 3 days).
 
 **Probe — every 2 to 10 seconds** (the pace comes from Settings; the open view and Teams calls get the fast pace)
 - **Router ping** — is the local link healthy?
@@ -143,11 +143,13 @@ It walks the path from you outwards — *PC → Wi-Fi/LAN → ISP/VPN → DNS �
 ### 5.11 The engineer view (`FullView`)
 A full-screen window, built only when you open it and destroyed when you leave.
 
-- **Header:** the verdict, the day/night switch, *About*, *Settings*, *Back to corner*.
+- **Header:** the verdict, the day/night switch, *Details*, *About*, *Settings*, *Back to corner*.
+- **Six sections**, each with its pages underneath: **Overview** · **Monitor** (Connections, Your Wi-Fi / cable, What's running, Live capture) · **Investigate** (Investigate a problem, Check a destination, Health and tools) · **Network story** · **Time machine** (Replay, What changed) · **Learn** (Topics, Inside Windows). **Ctrl+K** jumps to anything.
+- **Details** shows raw values, sources and the exact time each was read, on every page that has them.
 - **The path strip:** five dots. **Click a dot** to jump to the page that explains it (PC → What's running, Wi-Fi/LAN → Your Wi-Fi, the rest → Check a destination).
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
-- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 114 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
-- **Small screens / high scaling:** tabs switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
+- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 160 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
+- **Small screens / high scaling:** page buttons switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
 - **Footer:** AdeeboMeter's own CPU and memory, against a 64 MB budget.
 
 ### 5.12 Connections (`ConnList`)
@@ -201,7 +203,31 @@ One click: uptime, pending reboot, disk space, adapter errors, Wi-Fi neighbourho
 
 ### 5.17 What changed (`Timeline`, `History`)
 - The diary of the last 2 hours: roams, drops, DNS changes, VPN flaps, app bursts, verdict changes.
-- **7-day history** (off unless you turn it on): one line every 10 s plus every event, one small file per day in your profile, deleted after 7 days. *What changed* then shows day buttons and **the day at a glance** — the verdict as a coloured band, router delay and Wi-Fi signal as lines. The chart is drawn once into an image, so scrolling costs nothing.
+- **History** (on by default, kept 3 days; 1–90 in Settings): one line a minute (worst level, averages and peaks) plus every event, one file per day in your profile; finished days are compressed (~15 KB a day) and the oldest are deleted every night. *What changed* shows day buttons and **the day at a glance** — the verdict as a coloured band, router delay and Wi-Fi signal as lines.
+- **The week:** 7 × 24 squares, each the worst moment of that hour; click one to replay that hour.
+- Also here: data usage per network (with an optional monthly cap), what's normal on this network, latency under load, after-call summaries, suggestions and new devices.
+
+### 5.17b Overview, Investigate and evidence (`Investigate`, `Evidence`)
+- **Overview** is the start page: the verdict, router / internet / DNS / traffic right now, what needs attention, today, and where everything lives.
+- **Investigate a problem** starts from what people say: *the internet is slow*, *a website or app won't open*, *calls freeze*, *I keep disconnecting*. Each chains checks AdeeboMeter already has and answers **Finding · What I observed · Not established · Next test**, with a button to the page that helps.
+- **Evidence labels** on every finding: *measured* (AdeeboMeter timed it), *Windows-reported*, *seen in packets*, *inferred* (a conclusion from the others) and *unavailable* (this PC doesn't let us see it).
+
+### 5.17c Network story (`FullView.Story`, `Routes`, `M365`, `Packets`)
+One picture, ready when you open it: the busiest app is picked (or type a site) and followed through seven boxes — App → Windows → Wi-Fi / Cable → Router → Provider → Internet → Server. Click a box for two lines and what's behind it: the routing table under *Router*, Teams & Office roles under *App*, packet sizes under *Wi-Fi*, the path under *Internet*, the certificate under *Server*, the PC's background chatter under *Windows*. *Time each step* runs the destination check and draws name · connect · lock · first byte as one bar; with Wireshark, the real handshake packets follow, each explainable layer by layer. Drawing the picture sends nothing.
+
+### 5.17d Time machine: Replay (`History`)
+Drag through any day of history: the five dots at that minute, the numbers against the day's middle value, and what changed 15 minutes either side; step a minute, ten, or to the next problem.
+
+### 5.17e Watching smarter (`Brain`, `Baseline`, `Alerts`, `Watch`, `Usage`, `Calls`, `Devices`, `WifiAdvisor`)
+- **Slower than usual**: learns what's normal for each network (told apart by the router's hardware address, so it works with location off).
+- **Alerts** only when there's something to do; quiet hours; silent while you present or play full screen.
+- **Watch and suggest**: first-time internet use, programs in Downloads / Temp or without a publisher, night-time connections, big unexpected uploads — with how to block it. It never blocks.
+- **Wi-Fi without location**: a health score from the router link, link speed, adapter errors and drops; an advisor (quieter channel, better band, sticky access point, Wi-Fi power saving); look-alike networks; the walk test.
+- **Meeting replay**: one sentence after each Teams call; numbers in memory only, nothing about the call is saved.
+- **HTTPS inspection**: says when a certificate was re-signed by a root that isn't on Microsoft's public list.
+
+### 5.17f Learn and the knowledge pack (`Knowledge`)
+The explanations (72 programs, 160 terms, 43 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
 
 ### 5.18 Live capture (`LiveCapture`)
 Only if Wireshark (tshark + Npcap) is installed, and **only while you press Start**. It stops by itself after 15 minutes (Settings), and when you leave the tab or close the view.
@@ -240,11 +266,14 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | Internet + DNS check | every 15–60 s or off | 1.1.1.1 / 8.8.8.8 and your DNS server |
 | Provider name | once per network (if the internet check is on) | a 6-hop trace toward 1.1.1.1, one reverse-DNS lookup |
 | Wi-Fi details | Settings | nothing leaves — Windows is asked locally |
-| Checks you start | when you press Check | where you asked, plus one DNS question to 1.1.1.1 |
+| Checks you start | when you press Check, Investigate or Time each step | where you asked, plus one DNS question to 1.1.1.1 |
+| DNS speed test | when you press it | about 40 questions to 1.1.1.1, 8.8.8.8, 9.9.9.9 and your DNS |
+| Pinned destination | opt-in, every 30 s | the destination you pinned |
+| Check for updates | when you click it in About | opens the website in your browser - the app itself never checks |
 | Sign-in page check | only if your check fails (can be off) | `msftconnecttest.com`, the page Windows itself uses |
 | Live capture | only while you press Start | nothing leaves — it listens to your own adapter |
 
-**Never:** cloud, account, telemetry, updates, ads, crash reports, listening ports.
+**Never:** cloud, account, telemetry, auto-updates, ads, crash reports sent, listening ports.
 
 ---
 
@@ -263,7 +292,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 
 - **Widget only:** about 0.5% of one CPU core (measured in a test VM including its own overhead), ~40 MB.
 - **Engineer view open:** about 2–3% of one core, back to zero the moment you leave.
-- **Memory stays flat:** fixed-size rings, capped lists (300 events, 3,000 conversations, 7 days of history), caches that clear themselves.
+- **Memory stays flat:** fixed-size rings, capped lists (300 events, 3,000 conversations), history that deletes its oldest day every night, caches that clear themselves.
 - **Nothing leaks:** windows, timers, bitmaps and helper processes are released on close — and the self-test proves it.
 
 ---
@@ -287,7 +316,9 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | `AdeeboMeter.log` | next to the exe | start/stop and errors, max 256 KB, no window titles or traffic |
 | `AdeeboMeter-selftest.txt` | next to the exe | only when you run `--selftest` |
 | `captures\` | `%LOCALAPPDATA%\AdeeboMeter` | live-capture ring and sniffs — deleted on exit |
-| `history\` | `%LOCALAPPDATA%\AdeeboMeter` | only if 7-day history is on — deleted after 7 days or with one click |
+| `history\` | `%LOCALAPPDATA%\AdeeboMeter` | one line a minute, kept 3 days by default (Settings 1–90), or cleared with one click |
+| `usage.txt`, `baselines.txt`, `seen-apps.txt`, `devices.txt` | `%LOCALAPPDATA%\AdeeboMeter` | daily data use, what's normal per network, programs and devices already seen |
+| `AdeeboMeter-crash.txt` | next to the exe | only after a crash; nothing is sent - *Report this* opens a pre-filled GitHub issue you can read first |
 
 ---
 
@@ -306,7 +337,7 @@ to exit and removes the folder — it only ever removes `%LOCALAPPDATA%\Programs
 
 **A release** follows one pattern every time:
 
-1. Change `Program.Version` in `AdeeboMeter.cs` (for example `1.1`) and add a `## 1.1 (date)` section to `CHANGELOG.md`.
+1. Change `Program.Version` in `src/Program.cs` (for example `1.1`) and add a `## 1.1 (date)` section to `CHANGELOG.md`.
 2. Push, then publish a GitHub release tagged `v1.1`.
 3. GitHub Actions runs `release.ps1` on a clean Windows machine and attaches `AdeeboMeter-<version>-win64.zip`
    (the exe, READ ME, the Theory of Everything PDF, SHA256SUMS), `AdeeboMeter.exe`, the source zip and `SHA256SUMS`;

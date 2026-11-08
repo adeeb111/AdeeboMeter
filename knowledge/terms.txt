@@ -1,0 +1,1599 @@
+== path.PC
+friendly: Your PC
+cat: term
+close: -1
+tag: Step one: is the problem on this laptop?
+what: Checks whether the laptop itself is the bottleneck - CPU, memory and threads.
+how: Reads Windows' own counters once a second. No network involved.
+why: If the PC is choking, every website feels slow - and that's not the network's fault.
+without: Red here means close something heavy. The other dots can be green and it still feels slow.
+
+== path.Wi-Fi|path.LAN
+friendly: Your local link
+cat: term
+close: -1
+tag: Step two: the hop from you to your router.
+what: Shows how well you reach your router (the gateway) - over Wi-Fi or a cable.
+how: Pings the gateway every few seconds and reads Wi-Fi signal, channel and speed from Windows.
+why: This is where most home and hotel problems live: weak signal, crowded channel, a busy router.
+without: Slow or lost gateway pings mean the trouble is in the room - move closer, plug in a cable, or restart the router.
+
+== path.ISP|path.VPN
+friendly: Your provider / VPN
+cat: term
+close: -1
+tag: Step three: from your router out to the world.
+what: Shows the jump from your router into your internet provider - or into the company VPN.
+how: Compares the time to the internet with the time to your gateway; the difference is what the provider (or VPN) adds.
+why: When this step is slow, rebooting your laptop won't help.
+without: A big jump past the router means the provider or the VPN gateway is slow - not you.
+
+== path.DNS
+friendly: DNS
+cat: term
+close: -1
+tag: The internet's phone book.
+what: Turns names like github.com into addresses computers can dial.
+how: Times a real lookup to the DNS server Windows is using, skipping the cache.
+why: If DNS is slow, every new website waits before it even starts loading.
+without: Slow or failing DNS feels like 'the internet is broken' even when the link is fine. On VPN, DNS goes through the tunnel.
+
+== path.Internet
+friendly: The internet
+cat: term
+close: -1
+tag: The last step: can you reach the outside world?
+what: Checks that a well-known public address answers.
+how: One small ping to a public DNS server (1.1.1.1 or 8.8.8.8) every 30 seconds - more often while this window is open.
+why: Tells 'my Wi-Fi is fine' apart from 'the internet is down'.
+without: No reply with a healthy gateway means the outage is past your router. Some networks block ping - then this stays grey.
+
+== TCP retransmits
+friendly: TCP retransmits
+cat: term
+close: -1
+tag: Packets that had to be sent twice.
+what: Counts TCP segments Windows had to send again because no acknowledgement came back.
+how: Read from Windows' TCP statistics every second - the same numbers 'netstat -s' shows.
+why: A few is normal. Lots means packets are being lost somewhere - weak Wi-Fi, a congested link, a bad cable.
+without: Steady retransmits make downloads crawl and calls stutter. Check the 'Why:' line - it says when they started.
+
+== TCP resets sent
+friendly: TCP resets sent
+cat: term
+close: -1
+tag: Connections slammed shut.
+what: Counts TCP resets (RST) - a hard 'go away' instead of a polite goodbye.
+how: Read from Windows' TCP statistics.
+why: Bursts happen when apps close or a firewall cuts sessions.
+without: A sudden flood means something is killing connections - a VPN reconnect, a firewall, or an app crashing.
+
+== Failed connection attempts
+friendly: Failed connection attempts
+cat: term
+close: -1
+tag: Knocks on doors that never opened.
+what: Counts connections that never got established.
+how: Read from Windows' TCP statistics, totalled over the last minute.
+why: Shows when apps are trying to reach things they can't.
+without: Many failures mean a blocked port, a dead server, a proxy problem or a VPN that dropped.
+
+== ICMP unreachable received
+friendly: ICMP unreachable
+cat: term
+close: -1
+tag: Routers saying 'can't get there from here'.
+what: Counts 'destination unreachable' messages routers and hosts send back.
+how: Read from Windows' ICMP statistics.
+why: Tells you a route or a port is closed somewhere along the way.
+without: A stream of these usually means a routing problem or a firewall rejecting traffic.
+
+== UDP datagrams dropped
+friendly: UDP datagrams dropped
+cat: term
+close: -1
+tag: UDP packets that arrived with nowhere to go.
+what: Counts UDP packets Windows had to throw away - no app listening, or a full buffer.
+how: Read from Windows' UDP statistics.
+why: UDP carries DNS, Teams media and VPN (DTLS) traffic.
+without: Lots of drops during a call can mean the PC is too busy to keep up.
+
+== CPU
+friendly: CPU
+cat: term
+close: -1
+tag: How hard the processor is working.
+what: Share of processor time in use across all cores.
+how: Read from Windows (GetSystemTimes) every second.
+why: When it's pegged, everything waits in line - typing, video, calls.
+without: Over 85% for long: look at 'Top by CPU' and close the hungriest app.
+
+== Memory
+friendly: Memory
+cat: term
+close: -1
+tag: Your desk space.
+what: How much of your RAM is in use. 'Committed' is everything apps have asked for, including what spilled to the page file.
+how: Read from Windows (GlobalMemoryStatusEx).
+why: When memory runs out, Windows shuffles to disk and everything slows to a crawl.
+without: Above 90%: close a big app - 'Top by memory' shows who.
+
+== Disk
+friendly: Disk
+cat: term
+close: -1
+tag: How busy the drive is.
+what: Share of time the disk is busy reading or writing.
+how: Windows' PhysicalDisk performance counters.
+why: A busy disk makes apps freeze for a moment when they open files.
+without: Pinned at 100% means updates, antivirus scans, OneDrive or Outlook syncs - usually it passes.
+
+== Download
+friendly: Download
+cat: term
+close: -1
+tag: How much is flowing in right now.
+what: Megabits per second arriving on your active network adapter.
+how: Windows' adapter byte counters, read every second.
+why: Tells you whether a slow site is slow - or your line is simply full.
+without: Near your line's limit: something is downloading (updates, OneDrive) and everything else waits.
+
+== Top by memory
+friendly: Top by memory
+cat: term
+close: -1
+tag: Who's using your desk space.
+what: The apps holding the most RAM, with all their processes added up.
+how: Process list read every 10 seconds (every 2 s with this window open).
+why: The quickest way to know what to close.
+without: Browsers and Teams add up fast - each tab or panel is its own process.
+
+== Top by CPU
+friendly: Top by CPU
+cat: term
+close: -1
+tag: Who's keeping the processor busy.
+what: The apps using the most processor time right now, all their processes added up.
+how: Process CPU time compared between two reads.
+why: Finds the culprit when the fan spins up.
+without: Antivirus and indexing spikes come and go; an app stuck high is the one to close.
+
+== step.DNS
+friendly: DNS lookup
+cat: term
+close: -1
+tag: Find the address.
+what: Asks your DNS server for the name's address (IPv4 and IPv6), skipping the cache.
+how: A real query through Windows' DNS client, timed.
+why: No address, no connection - everything else depends on this.
+without: 'No such name' = typo or an internal name that needs the VPN. 'Timed out' = DNS server trouble.
+
+== step.Route
+friendly: Route
+cat: term
+close: -1
+tag: Which door it leaves by.
+what: Shows which adapter Windows would use to reach that address - Wi-Fi, cable or VPN.
+how: Asks Windows' routing table by opening a UDP socket - nothing is sent.
+why: Catches 'it's going around the VPN' (or through it) surprises.
+without: 'No route' means Windows has no path at all - adapter down or VPN routes missing.
+
+== step.Ping
+friendly: Ping
+cat: term
+close: -1
+tag: Is anyone home?
+what: Four ICMP echo requests to the address.
+how: Measures the round trip and how many replies came back.
+why: A quick health check of the path.
+without: Many servers block ping on purpose - 'no reply' alone doesn't mean it's down.
+
+== step.TCP
+friendly: TCP connect
+cat: term
+close: -1
+tag: Knock on the door.
+what: Opens a TCP connection to the port.
+how: The three-way handshake: SYN, SYN-ACK, ACK - timed.
+why: If TCP connects, the network path and the firewall are fine.
+without: 'Refused' = server is there but nothing listens on that port. 'Timeout' = a firewall is silently dropping, or the server is down.
+
+== step.TLS
+friendly: TLS handshake
+cat: term
+close: -1
+tag: Agree on a secret and check ID.
+what: Sets up encryption and checks the server's certificate with Windows.
+how: TLS 1.2 or 1.3 only. Windows validates the certificate chain; if it isn't trusted, AdeeboMeter stops and sends nothing.
+why: This is where inspection proxies, expired certificates and MTU black holes show up.
+without: 'Untrusted' = certificate problem or a proxy in the middle. 'Stalls' = something drops the big certificate packets (often MTU).
+
+== step.HTTP
+friendly: HTTP
+cat: term
+close: -1
+tag: Does the website answer?
+what: Sends one HEAD request - like asking 'are you there?' without downloading the page.
+how: Reads only the status line (200 OK, 404, 503...) and the time to first byte.
+why: Separates 'the network is fine' from 'the site itself is broken'.
+without: 4xx = you're not allowed or the page is gone. 5xx = the server is broken - not you.
+
+== step.Path MTU
+friendly: Path MTU
+cat: term
+close: -1
+tag: The biggest packet that fits through the pipe.
+what: Finds the largest packet that reaches the server without being split.
+how: Sends pings with 'don't fragment' set and narrows the size down.
+why: Tunnels (VPN, LTE, Starlink) shrink the pipe. Big packets that don't fit vanish.
+without: Below 1500 is normal on VPN. Trouble starts when big packets disappear silently - pages hang half-loaded.
+
+== step.Path
+friendly: Path (traceroute)
+cat: term
+close: -1
+tag: Every router on the way.
+what: Lists the routers between you and the server, with time and loss at each.
+how: MTR-style: three rounds of probes with growing hop limits, all at once.
+why: Shows where along the way the delay or loss begins.
+without: Loss on a middle hop that doesn't continue to the end is just a router ignoring pings - only loss that carries on to the last hop matters.
+
+== card.SIGN-IN PAGE (CAPTIVE PORTAL)
+friendly: Sign-in page check
+cat: term
+close: -1
+tag: Hotel and airport Wi-Fi, caught red-handed.
+what: Asks the same tiny test page Windows uses to decide 'sign-in required'.
+how: One plain HTTP request to msftconnecttest.com; if anything other than Microsoft's answer comes back, a portal is in the way. The redirect is never followed.
+why: A sign-in page blocks everything until you accept it - and makes every other test look broken.
+without: 'Found' = open a browser and sign in, then check again.
+
+== card.WHO'S TALKING TO IT
+friendly: Who's talking to it
+cat: term
+close: -1
+tag: Apps on this PC connected to that destination.
+what: Lists the apps on your PC with open connections to that address right now.
+how: Read from Windows' connection table - no capture needed.
+why: Answers 'which app is it?' in one glance.
+without: Nobody = no app is connected to it at the moment.
+
+== state.ESTABLISHED
+friendly: ESTABLISHED
+cat: term
+close: -1
+tag: A live conversation.
+what: Both sides are connected and can send data.
+how: The TCP handshake finished.
+why: This is what working connections look like.
+without: Lots of them to one place is normal for browsers and Teams.
+
+== state.SYN_SENT
+friendly: SYN_SENT
+cat: term
+close: -1
+tag: Knocked - waiting for an answer.
+what: Your PC asked to connect and is waiting for the reply.
+how: The first packet of the TCP handshake went out; no SYN-ACK yet.
+why: A few for a split second is normal.
+without: Stuck for seconds = blocked by a firewall, a dead server, or a route that goes nowhere.
+
+== state.TIME_WAIT
+friendly: TIME_WAIT
+cat: term
+close: -1
+tag: Hung up - waiting a moment to be sure.
+what: The connection closed; Windows keeps the slot for a minute or two.
+how: So late packets from the old conversation can't confuse a new one. Windows shows these as owned by process 0.
+why: Normal after browsing.
+without: Thousands at once means an app is opening and closing connections very fast.
+
+== state.CLOSE_WAIT
+friendly: CLOSE_WAIT
+cat: term
+close: -1
+tag: The other side hung up; this app hasn't.
+what: The server closed the connection and the app on your PC hasn't closed its end yet.
+how: Waiting for the app to call close().
+why: Usually brief.
+without: Many piling up = an app isn't cleaning up after itself (a bug).
+
+== state.LISTEN|state.BOUND
+friendly: LISTEN / BOUND
+cat: term
+close: -1
+tag: Waiting for calls, or holding a number.
+what: LISTEN = an app waits for incoming connections. BOUND = a port reserved but not in use.
+how: Shown only when you turn on 'Bound / listening'.
+why: Tells you which apps accept connections into your PC.
+without: AdeeboMeter itself never listens - it checks that about itself every time it starts.
+
+== state.SYN_RCVD
+friendly: SYN_RCVD
+cat: term
+close: -1
+tag: Someone knocked on your door.
+what: Another machine asked to connect to an app on your PC, and your PC answered.
+how: The middle step of the TCP handshake, seen only on ports an app listens on.
+why: Rare on a laptop.
+without: Lots of them = something is trying to connect in (a scan, or a misconfigured app).
+
+== state.CLOSED|state.DELETE_TCB
+friendly: CLOSED
+cat: term
+close: -1
+tag: Finished - about to disappear.
+what: The connection is fully closed and Windows is tidying up.
+how: The last step after a goodbye or a reset; the row vanishes moments later.
+why: Normal and short-lived.
+without: Nothing to do.
+
+== state.FIN_WAIT1|state.FIN_WAIT2|state.LAST_ACK|state.CLOSING
+friendly: Closing states
+cat: term
+close: -1
+tag: Saying goodbye.
+what: The connection is in the middle of closing.
+how: TCP closes in a polite four-step goodbye; these are the steps.
+why: Normal and short-lived.
+without: Lots stuck here = a firewall dropping the goodbye packets.
+
+== live.PROTOCOL HIERARCHY
+friendly: Protocol hierarchy
+cat: term
+close: -1
+tag: What your traffic is made of.
+what: Breaks every packet down into its layers: Ethernet, IP, TCP/UDP, then TLS, DNS, QUIC and so on.
+how: tshark (Wireshark's engine) decodes each packet; AdeeboMeter counts them.
+why: Shows at a glance what's eating the line.
+without: Lots of QUIC/UDP = video or Teams; lots of TLS = normal web traffic.
+
+== live.EXPERT INFO
+friendly: Expert info
+cat: term
+close: -1
+tag: Wireshark's own warnings.
+what: The problems Wireshark spots in the traffic, grouped.
+how: tshark's expert analysis, counted per category.
+why: These point at real network trouble.
+without: Retransmissions and duplicate ACKs together = packet loss on the path.
+
+== live.TOP CONVERSATIONS
+friendly: Top conversations
+cat: term
+close: -1
+tag: Who you're talking to, and how much.
+what: The busiest flows right now, named from the TLS server name or the DNS answer in the traffic.
+how: Built from tshark's decode - names come from the packets themselves.
+why: Finds the bandwidth hog by name, not just by IP.
+without: A conversation with retransmissions is the one suffering.
+
+== TCP retransmissions
+friendly: TCP retransmissions
+cat: term
+close: -1
+tag: Packets sent again.
+what: Wireshark saw the same data sent twice.
+how: It spots repeated sequence numbers.
+why: Each one costs time.
+without: Many = loss on the path (Wi-Fi, congestion).
+
+== Duplicate ACKs
+friendly: Duplicate ACKs
+cat: term
+close: -1
+tag: 'I'm still missing a piece!'
+what: The receiver keeps acknowledging the same point because a packet went missing.
+how: Wireshark sees the same ACK number repeated.
+why: The early warning of loss.
+without: Three in a row trigger a fast retransmit.
+
+== Segments lost before capture
+friendly: Lost before capture
+cat: term
+close: -1
+tag: A gap in the stream.
+what: Data that never reached your PC (or the capture missed).
+how: Wireshark sees a jump in sequence numbers.
+why: Points at upstream loss.
+without: Many = the path is dropping packets.
+
+== Out of order
+friendly: Out of order
+cat: term
+close: -1
+tag: Packets arriving shuffled.
+what: Packets came in a different order than they were sent.
+how: Wireshark compares sequence numbers.
+why: Some is normal on busy paths.
+without: Lots can mean multiple paths or a struggling link.
+
+== Zero window
+friendly: Zero window
+cat: term
+close: -1
+tag: 'Stop - I'm full!'
+what: The receiver's buffer is full and it asked the sender to pause.
+how: TCP window size reached zero.
+why: Means the slow part is an app or PC, not the network.
+without: Seen from your side = your PC or app can't keep up.
+
+== Connection resets (RST)
+friendly: Connection resets
+cat: term
+close: -1
+tag: Hard hang-ups.
+what: Connections cut with a reset instead of a normal close.
+how: Wireshark counts TCP RST flags.
+why: Firewalls and crashing apps cause them.
+without: Floods of resets = something is actively killing sessions.
+
+== TLS alerts
+friendly: TLS alerts
+cat: term
+close: -1
+tag: The encryption layer complaining.
+what: TLS sent an alert - often a certificate or version problem.
+how: Decoded from the TLS records.
+why: Explains 'site can't be reached' errors.
+without: Look for an inspection proxy or an old server.
+
+== hc.Uptime
+friendly: Uptime
+cat: term
+close: -1
+tag: How long since the last restart.
+what: Time since Windows last started.
+how: Read from Windows.
+why: Many problems vanish after a restart - and 'Fast startup' means shutting down isn't a real restart.
+without: Over a week: restart before you blame the network.
+
+== hc.Pending reboot
+friendly: Pending reboot
+cat: term
+close: -1
+tag: Windows is waiting for you.
+what: Whether updates are waiting for a restart.
+how: Checks the registry flags Windows Update and installers set.
+why: Half-installed updates can break networking and VPN.
+without: Yes = restart when you can.
+
+== hc.Disk
+friendly: Disk space
+cat: term
+close: -1
+tag: Room left on the drive.
+what: Free space on each drive.
+how: Read from Windows.
+why: Windows, Outlook and updates need room to work.
+without: Under 10% things start failing; under 20% it's getting tight.
+
+== hc.Adapter errors
+friendly: Adapter errors
+cat: term
+close: -1
+tag: Damaged packets at the network card.
+what: Errors and discards counted by your network adapter.
+how: Read from Windows' adapter statistics.
+why: Points at cables, docks, drivers or radio trouble.
+without: Climbing errors on a cable = try another cable or dock port.
+
+== hc.Wi-Fi neighbourhood|hc.Wi-Fi
+friendly: Wi-Fi
+cat: term
+close: -1
+tag: Your radio and its neighbours.
+what: Signal, channel and how many other access points share your channel.
+how: Read from Windows (netsh) - no scanning by AdeeboMeter.
+why: Crowded channels and weak signal are the top cause of slow Wi-Fi.
+without: Signal under 50% or many neighbours on your channel: move closer, or use 5 GHz.
+
+== hc.Proxy
+friendly: Proxy
+cat: term
+close: -1
+tag: A middleman for your web traffic.
+what: Whether browsers send traffic through a proxy.
+how: Read from Windows' internet settings.
+why: Proxies can block, slow or inspect traffic.
+without: If a site works in AdeeboMeter's check but not in the browser, look here.
+
+== hc.VPN
+friendly: VPN
+cat: term
+close: -1
+tag: Your tunnel into the company.
+what: Whether a VPN is up, and its packet size (MTU).
+how: Read from the network adapters.
+why: Company sites need it; it also changes DNS and routes.
+without: Internal names failing = check the VPN first.
+
+== hc.DNS server
+friendly: DNS server
+cat: term
+close: -1
+tag: Who answers your name lookups.
+what: The DNS server Windows is using.
+how: Read from the active adapter.
+why: Wrong or slow DNS breaks everything at once.
+without: On VPN it should be the company's server.
+
+== hc.Memory
+friendly: Memory (committed)
+cat: term
+close: -1
+tag: Everything apps have asked for.
+what: Committed memory as a share of what Windows can give.
+how: Read from Windows.
+why: Past 90% Windows starts struggling.
+without: Close the top app shown.
+
+== hc.Power
+friendly: Power
+cat: term
+close: -1
+tag: Battery and power saving.
+what: Whether you're on battery or battery saver.
+how: Read from Windows.
+why: Battery saver throttles CPU and Wi-Fi.
+without: Plug in before a big call.
+
+== link.RADIO
+friendly: Your Wi-Fi radio
+cat: term
+close: -1
+tag: Everything Windows knows about your Wi-Fi link.
+what: The network, the access point, band, channel, speed and security of your Wi-Fi.
+how: Read from Windows (netsh wlan) only while this page is open. Nothing is sent anywhere.
+why: Most 'slow internet' at home or in a hotel is really a Wi-Fi problem - this card tells you which one.
+without: Weak signal, a crowded channel or 2.4 GHz are the usual suspects.
+
+== link.CABLE
+friendly: Your cable
+cat: term
+close: -1
+tag: The wired link.
+what: Your Ethernet adapter and the speed it agreed with the switch or dock.
+how: Read from the adapter itself.
+why: Cable is the steadiest link there is - if it's slow, the cable, port or dock is the suspect.
+without: Anything below 1 Gb/s on a modern network means a worn cable, an old port or a cheap dock.
+
+== link.Network (SSID)
+friendly: SSID
+cat: term
+close: -1
+tag: The network's name.
+what: The name of the Wi-Fi network you joined.
+how: Broadcast by the access point.
+why: Several access points can share one name - you hop between them as you move.
+without: Joined the guest network by mistake? It's often slower and filtered.
+
+== link.Access point (BSSID)
+friendly: BSSID
+cat: term
+close: -1
+tag: The exact access point you're talking to.
+what: The hardware address of the specific access point radio.
+how: Every access point radio has its own BSSID, even when they share the network name.
+why: When it changes, you roamed to another access point.
+without: Changing often while you sit still = two access points fighting over you.
+
+== link.Band
+friendly: Band
+cat: term
+close: -1
+tag: The radio 'lane' you're on.
+what: 2.4 GHz, 5 GHz or 6 GHz.
+how: 2.4 GHz reaches far but is slow and crowded; 5 GHz is faster; 6 GHz (Wi-Fi 6E / 7) is the fast, empty lane.
+why: The band decides your top speed and how much interference you get.
+without: Stuck on 2.4 GHz near the access point? Your network or laptop may be forcing it.
+
+== link.Channel
+friendly: Channel
+cat: term
+close: -1
+tag: Your slice of the band.
+what: The radio channel the access point uses.
+how: Everyone on the same channel takes turns to talk. On 2.4 GHz neighbouring channels overlap too - only 1, 6 and 11 are truly separate.
+why: A shared channel means shared air time - and slower Wi-Fi for everyone.
+without: Many neighbours on your channel: ask IT (or your router settings) for a quieter channel.
+
+== link.Standard
+friendly: Wi-Fi standard
+cat: term
+close: -1
+tag: How modern the radio is.
+what: The Wi-Fi generation in use: Wi-Fi 4 (n), 5 (ac), 6/6E (ax) or 7 (be).
+how: Both your laptop and the access point must support a generation to use it.
+why: Newer generations are faster and cope better with crowds.
+without: Wi-Fi 4 or older on a modern laptop = old access point.
+
+== link.Signal
+friendly: Signal
+cat: term
+close: -1
+tag: How loud the access point sounds.
+what: Signal strength as a percentage, and in dBm (closer to 0 is stronger: -50 great, -70 OK, -80 poor).
+how: Measured by your Wi-Fi card on every packet.
+why: Weak signal forces slower speeds and more retries.
+without: Below about 40%: move closer, or plug in.
+
+== link.Receive rate|link.Transmit rate
+friendly: Link rate
+cat: term
+close: -1
+tag: The speed the radio agreed on.
+what: How fast your laptop and the access point currently talk, each direction.
+how: Chosen many times a second based on signal and noise.
+why: Your real internet speed can't be faster than this.
+without: A rate that drops suddenly means signal or interference trouble.
+
+== link.Security
+friendly: Security
+cat: term
+close: -1
+tag: How your Wi-Fi is locked.
+what: The authentication (WPA2 / WPA3) and encryption (CCMP / GCMP) in use.
+how: Agreed when you connect.
+why: Open or WEP networks let others read your traffic.
+without: Open network? Treat it as public - use the VPN.
+
+== link.Sharing your channel
+friendly: Sharing your channel
+cat: term
+close: -1
+tag: Neighbours on your air.
+what: Other access points on the same (or overlapping) channel.
+how: Counted from Windows' own Wi-Fi scan list.
+why: Every one of them competes for the same air time.
+without: Three or more strong neighbours = noticeably slower Wi-Fi.
+
+== link.Air time used
+friendly: Air time used
+cat: term
+close: -1
+tag: How busy the channel is.
+what: The share of time the channel is busy, as reported by your access point (BSS load).
+how: Access points that support it announce this in their beacons; Windows passes it on.
+why: A busy channel means waiting to talk.
+without: Above ~60% the air is congested - everyone slows down.
+
+== link.Connection|link.Adapter
+friendly: Adapter
+cat: term
+close: -1
+tag: The hardware you're using.
+what: Your network adapter.
+how: Reported by Windows.
+why: Driver and hardware decide what speeds are possible.
+without: USB and dock adapters are a common weak spot.
+
+== link.Link speed
+friendly: Link speed
+cat: term
+close: -1
+tag: The speed your cable agreed on.
+what: The speed your adapter and the switch negotiated.
+how: Both ends test the cable and pick the fastest they can both do.
+why: This is the ceiling for everything you do on the wire.
+without: 100 Mb/s instead of 1 Gb/s = damaged cable, old port or dock.
+
+== link.IPv4 address
+friendly: IPv4 address
+cat: term
+close: -1
+tag: Your address on this network.
+what: The address your PC uses on this network, and its mask (how big the network is).
+how: Usually handed out by the router (DHCP).
+why: No address, no conversations.
+without: 169.254.x.x = nobody gave you an address - DHCP failed.
+
+== link.IPv6
+friendly: IPv6
+cat: term
+close: -1
+tag: The newer address system.
+what: Your public-style IPv6 address, if the network offers one.
+how: Assigned by the router or provider alongside IPv4.
+why: Many sites prefer IPv6 when it's there.
+without: A broken IPv6 path can make some sites slow to open while others are fine.
+
+== link.Gateway (router)
+friendly: Gateway
+cat: term
+close: -1
+tag: Your door to everything else.
+what: The router your PC sends all outside traffic to.
+how: Learned from DHCP or set by hand.
+why: If the gateway is slow or missing, nothing beyond it works.
+without: No gateway = you can talk to the local network only.
+
+== link.DNS servers
+friendly: DNS servers
+cat: term
+close: -1
+tag: Your phone book.
+what: The DNS servers this adapter uses to turn names into addresses.
+how: Learned from DHCP, the VPN, or set by hand.
+why: Slow or wrong DNS feels like 'the internet is down'.
+without: On VPN they should be the company's servers.
+
+== link.Address from
+friendly: DHCP
+cat: term
+close: -1
+tag: Who gave you your address.
+what: Whether the address came automatically (DHCP) - and from which server - or was typed in by hand.
+how: DHCP leases an address for a while and renews it quietly.
+why: Wrong DHCP server = wrong network settings.
+without: A DHCP server you don't recognise can be a rogue device.
+
+== link.Packet size (MTU)
+friendly: MTU
+cat: term
+close: -1
+tag: The biggest packet your adapter sends.
+what: The largest packet this adapter puts on the wire.
+how: 1500 bytes is standard for Ethernet and Wi-Fi.
+why: Paths that can't carry it split or drop big packets.
+without: Check a destination tells you the size the whole path can carry.
+
+== link.Hardware address (MAC)
+friendly: MAC address
+cat: term
+close: -1
+tag: Your adapter's serial number on the network.
+what: The hardware address of your adapter (Windows may randomise it per Wi-Fi network for privacy).
+how: Used on the local network only - it never leaves your router.
+why: Network admins use it to recognise devices.
+without: Changes per network if 'random hardware addresses' is on - that's a privacy feature.
+
+== link.Received|link.Sent
+friendly: Traffic
+cat: term
+close: -1
+tag: How much has moved.
+what: Bytes and packets through this adapter since it last started.
+how: Counted by the adapter.
+why: Context for the error counts below.
+without: -
+
+== link.Damaged packets (errors)
+friendly: Errors
+cat: term
+close: -1
+tag: Packets that arrived broken.
+what: Packets the adapter received or sent with errors.
+how: Checksums didn't match - the data was damaged on the way.
+why: Each one has to be sent again.
+without: Climbing on a cable = cable or port. On Wi-Fi = interference or driver.
+
+== link.Dropped packets (discards)
+friendly: Discards
+cat: term
+close: -1
+tag: Packets thrown away.
+what: Packets the adapter discarded, usually because buffers were full or the packet wasn't wanted.
+how: Counted by the adapter and driver.
+why: Some is normal.
+without: Fast-growing discards during slowness point at the adapter or driver.
+
+== link.LINK TO YOUR ROUTER
+friendly: Link to your router
+cat: term
+close: -1
+tag: How healthy the first hop is.
+what: Latency, jitter and loss to your router, from the pings AdeeboMeter already sends.
+how: Taken from the last 30 router pings - no extra traffic.
+why: The router is the first hop for everything; if this is bad, everything is bad.
+without: Loss or high jitter here means trouble in the room - Wi-Fi or cable.
+
+== link.Router answers in
+friendly: Router latency
+cat: term
+close: -1
+tag: How quickly the router replies.
+what: Best, typical and worst reply time from your router.
+how: From the router pings.
+why: Should be a few milliseconds on cable, under ~10 ms on good Wi-Fi.
+without: Tens of milliseconds = busy Wi-Fi or a busy router.
+
+== link.Jitter
+friendly: Jitter
+cat: term
+close: -1
+tag: How uneven the replies are.
+what: The average change in delay from one ping to the next.
+how: Computed from the router pings.
+why: Calls and games hate jitter more than slow but steady delay.
+without: Above ~20 ms, calls start to sound choppy.
+
+== link.Loss
+friendly: Loss
+cat: term
+close: -1
+tag: Pings that never came back.
+what: The share of router pings that got no reply.
+how: From the router pings.
+why: Any loss this close to you is a local problem.
+without: Even 2-3% loss makes calls and downloads suffer.
+
+== link.Based on
+friendly: Sample
+cat: term
+close: -1
+tag: How much data the numbers use.
+what: How many router pings these numbers are based on.
+how: The last 30 pings.
+why: More pings = more trustworthy numbers.
+without: Router ping is off in Settings? Then there's nothing to measure.
+
+== link.ADDRESSES
+friendly: Addresses
+cat: term
+close: -1
+tag: Who you are on the network.
+what: Your IP addresses, router, DNS servers and how you got them.
+how: Read from the adapter.
+why: Most 'can't connect' problems are an address problem.
+without: 169.254 or no gateway = start here.
+
+== link.TRAFFIC SINCE THE ADAPTER STARTED
+friendly: Traffic and errors
+cat: term
+close: -1
+tag: The adapter's own counters.
+what: What has moved through the adapter and how much of it was damaged or dropped.
+how: Read from the adapter statistics.
+why: Errors point at cables, docks, radios and drivers.
+without: Growing errors = hardware or interference.
+
+== link.CHANNEL MAP
+friendly: Channel map
+cat: term
+close: -1
+tag: Who else is on the air.
+what: Every channel in your band that has access points on it. Bar height = the strongest signal heard there; the number = how many access points.
+how: From Windows' own Wi-Fi scan list - AdeeboMeter doesn't scan by itself.
+why: Blue is you; amber channels overlap yours and steal your air time.
+without: A tall amber or crowded blue column = interference. A quieter channel exists if you see empty space.
+
+== link.NEIGHBOURS
+friendly: Strongest neighbours
+cat: term
+close: -1
+tag: The loudest access points around you.
+what: The access points your laptop hears best, with band, channel, generation and signal.
+how: From Windows' scan list.
+why: Amber ones share your air.
+without: Your own network's other access points appear here too - that's where you'd roam.
+
+== theme.toggle
+friendly: Day or night
+cat: term
+close: -1
+tag: Switch between the light and dark look.
+what: Flips AdeeboMeter between day (light) and night (dark).
+how: Click it, or Tab to it and press Space. Settings > Theme can also follow Windows automatically.
+why: Dark is easier on the eyes at night; light reads better in bright rooms.
+without: -
+
+== link.Channel width
+friendly: Channel width
+cat: term
+close: -1
+tag: How wide your lane is.
+what: How much radio spectrum your connection uses: 20, 40, 80 or 160 MHz.
+how: Read from the access point's own announcements (beacon information elements) through Windows' Wi-Fi API.
+why: Wider lanes carry more data - double the width, roughly double the top speed.
+without: 20 MHz on 5 GHz is slow; wide channels are also more likely to bump into neighbours.
+
+== link.Roaming help
+friendly: Roaming help
+cat: term
+close: -1
+tag: How smoothly you can move between access points.
+what: Whether the network supports 802.11k (shares a list of nearby access points), 802.11v (suggests a better one) and 802.11r (fast hand-over).
+how: Read from the access point's announcements.
+why: With these, walking from room to room barely blips a call.
+without: None advertised: your laptop decides alone and may cling to a weak access point ('sticky client').
+
+== link.Driver
+friendly: Network driver
+cat: term
+close: -1
+tag: The software that runs your network card.
+what: Driver version and date for this adapter.
+how: Read from the Windows registry - no admin needed.
+why: Old drivers are a top cause of random drops and slow Wi-Fi.
+without: Older than ~3 years: check the laptop maker's support page for an update.
+
+== link.DROPS
+friendly: Wi-Fi drops
+cat: term
+close: -1
+tag: Every disconnect in the last day, and why.
+what: Wi-Fi disconnects and failed connections from Windows' own WLAN log, with the reason Windows recorded.
+how: Read from the Microsoft-Windows-WLAN-AutoConfig event log - offline, no admin.
+why: Turns 'my Wi-Fi keeps dropping' into a reason you can act on.
+without: Many 'driver/AP disconnected' reasons = signal, driver or access-point trouble. 'Authentication' = password or certificate.
+
+== link.DHCP
+friendly: DHCP trouble
+cat: term
+close: -1
+tag: Problems getting an address.
+what: Warnings and errors from Windows' DHCP client in the last day.
+how: Read from the Microsoft-Windows-Dhcp-Client event log.
+why: No address renewal = no network, often in short bursts.
+without: Repeated failures point at the router's DHCP server or the Wi-Fi link to it.
+
+== link.LAN
+friendly: Devices on your network
+cat: term
+close: -1
+tag: Who your PC has met on the local network.
+what: Devices in Windows' ARP table on this network - your router, printers, other PCs - with names if your router knows them.
+how: Read from Windows' own table; names come from your router's DNS. Nothing is scanned.
+why: Helps you spot an unknown device, or check the router's address.
+without: A device you don't recognise on a home network is worth a look. Random addresses are normal for phones.
+
+== link.SWITCH
+friendly: Your switch port
+cat: term
+close: -1
+tag: Which switch, port and VLAN your cable lands on.
+what: The name, port, VLAN and model your switch announces with LLDP or CDP.
+how: Switches broadcast this every 30-60 seconds on the cable; AdeeboMeter listens with Wireshark's engine for up to 65 s. Nothing is sent.
+why: Tells IT exactly which port to look at - no more tracing cables.
+without: Nothing heard: LLDP/CDP is off on the switch, or a dock or Wi-Fi is in the way.
+
+== live.BY APP
+friendly: Bytes per app
+cat: term
+close: -1
+tag: Who used your bandwidth during the capture.
+what: Every conversation in the capture, added up by the app that owns it.
+how: Each packet's local port is matched to the app holding that port in Windows' connection table.
+why: Without admin rights this is the only way to see real per-app traffic.
+without: 'other / closed' = connections that ended before we could match them.
+
+== live.CALL QUALITY|live.MOS
+friendly: Call quality
+cat: term
+close: -1
+tag: How your calls really sound - measured, not guessed.
+what: Loss, jitter and an estimated MOS score (1-4.5) for each call media stream (Teams and other RTP calls).
+how: Sequence numbers show lost packets; timestamps vs. arrival show jitter (RFC 3550); the E-model (ITU-T G.107) turns them, plus your internet delay, into a MOS. Encrypted audio stays encrypted - only headers are read.
+why: MOS above 4 is great, 3.6-4 is fine, below 3.6 people start to notice.
+without: High loss = network trouble on the way; high jitter = a busy link or Wi-Fi. Fix the first red thing on the path.
+
+== live.DHCP
+friendly: Rogue DHCP
+cat: term
+close: -1
+tag: More than one address giver on your network.
+what: Two or more DHCP servers answered on this network during the capture.
+how: Seen in the DHCP packets in your own traffic.
+why: A second DHCP server can hand out wrong settings - by accident (a home router plugged in backwards) or on purpose.
+without: Tell IT, or check for a second router on your network.
+
+== hist.CHART
+friendly: The day at a glance
+cat: term
+close: -1
+tag: A whole day on one line.
+what: The verdict as a coloured band, your router's delay (blue) and Wi-Fi signal (green), and dots for warnings.
+how: From the optional 7-day history - one sample every 10 s.
+why: Lets you answer 'what was wrong at 2:15 yesterday?'
+without: Red stretches line up with the events listed below.
+
+== card.DNS SECOND OPINION
+friendly: DNS second opinion
+cat: term
+close: -1
+tag: Is your DNS telling the truth?
+what: Asks a public resolver (1.1.1.1) the same question and compares answers.
+how: One extra DNS query during a check you start.
+why: Catches DNS blockers, filters and tampering.
+without: Different addresses are usually just a nearby CDN server - if the TLS check passes, the answer is genuine.
+
+== card.PATH STORY
+friendly: The path story
+cat: term
+close: -1
+tag: Who carries your traffic, step by step.
+what: Your route grouped by who runs each stretch - your network, your provider, the carriers in between, the destination.
+how: Router names (reverse DNS) reveal their owner; where the owner changes, your traffic crossed between networks - a BGP peering or transit handoff. Only for checks you start.
+why: Tells you whose network the delay or the block is in - the first question any support desk asks.
+without: Unnamed routers just don't publish a name. 'Handoff' lines show where networks meet.
+
+== story.lan
+friendly: Your network
+cat: term
+close: -1
+tag: Your side of the fence.
+what: Routers with private addresses before the internet - your router, maybe your provider's modem.
+how: Private addresses (10.x, 172.16-31.x, 192.168.x) never travel on the internet; NAT swaps them for a public one.
+why: Two or more here = double NAT.
+without: Slow already here = Wi-Fi, cable or your own router.
+
+== story.cgnat
+friendly: Carrier-grade NAT
+cat: term
+close: -1
+tag: Your provider's shared address.
+what: Your provider puts many customers behind one public address (100.64.x.x addresses).
+how: Common with mobile, satellite and some fibre providers.
+why: Outgoing traffic works; incoming connections to you can't.
+without: Hosting a game or a server from home? This is why it doesn't work.
+
+== story.hidden
+friendly: Unnamed routers
+cat: term
+close: -1
+tag: Routers without a published name.
+what: Public routers that didn't publish a reverse-DNS name.
+how: Owners simply chose not to name them.
+why: We can't tell whose they are offline.
+without: Nothing to do - it's not a fault.
+
+== story.net
+friendly: A network on the way
+cat: term
+close: -1
+tag: One organisation's stretch of the route.
+what: Consecutive routers run by the same company, with how many hops and how much delay they add.
+how: Named from the routers' reverse-DNS names; the city is a guess from codes like 'tor' or 'yyz' in those names.
+why: Shows whose network adds the delay.
+without: A big delay inside one carrier is usually distance - or their congestion.
+
+== kind.net
+friendly: Network change
+cat: term
+close: -1
+tag: Adapters, addresses and gateways.
+what: Your network adapter, IP address or gateway changed.
+how: Windows tells AdeeboMeter the moment addresses change.
+why: Changes explain sudden drops.
+without: A change right before trouble is a strong clue.
+
+== kind.wifi
+friendly: Wi-Fi change
+cat: term
+close: -1
+tag: Roams, drops and signal swings.
+what: Wi-Fi connected, dropped, hopped to another access point, changed channel or lost speed.
+how: Read from Windows (netsh) every 30 seconds and on every network change.
+why: Roams and signal drops cause short freezes in calls.
+without: Several roams in a few minutes = you're between two access points.
+
+== kind.vpn
+friendly: VPN change
+cat: term
+close: -1
+tag: The tunnel came or went.
+what: The VPN connected or dropped.
+how: Watched through the network adapters.
+why: Everything internal depends on it.
+without: Drops = check the VPN client.
+
+== kind.dns
+friendly: DNS change
+cat: term
+close: -1
+tag: A different phone book.
+what: Your DNS server changed.
+how: Watched through the adapters.
+why: Usually happens with VPN or a new network.
+without: Unexpected changes can break internal names.
+
+== kind.inet
+friendly: Internet reachability
+cat: term
+close: -1
+tag: Out and back.
+what: The internet stopped or started answering.
+how: From the small reachability ping.
+why: Tells you when an outage began and ended.
+without: Down while the gateway is fine = provider problem.
+
+== kind.gw
+friendly: Gateway
+cat: term
+close: -1
+tag: Your router's response time.
+what: The router got much slower than usual, or stopped answering.
+how: From the gateway pings.
+why: The first sign of local trouble.
+without: Slow gateway = busy or weak Wi-Fi.
+
+== kind.app
+friendly: App behaviour
+cat: term
+close: -1
+tag: An app doing something unusual.
+what: An app opened a burst of connections, or got stuck connecting.
+how: From the connection table every 10 seconds.
+why: Finds the app behind a slowdown.
+without: Stuck connects = that app's server or port is blocked.
+
+== kind.call
+friendly: Teams call
+cat: term
+close: -1
+tag: A call started or ended.
+what: Teams opened or closed its call ports.
+how: Teams uses UDP ports 50000-50059 only during calls.
+why: AdeeboMeter watches more closely during calls.
+without: Problems during a call show up here with their time.
+
+== kind.verdict
+friendly: Verdict
+cat: term
+close: -1
+tag: AdeeboMeter's mood changed.
+what: The overall verdict went up or down a level.
+how: Judged every 10 seconds from everything above.
+why: A quick history of when things got worse.
+without: Look at what changed just before.
+
+== link.ADVISOR
+friendly: Wi-Fi advisor
+cat: term
+close: -1
+tag: What to change, if anything, to make your Wi-Fi better.
+what: Suggestions worked out from your Wi-Fi: a quieter channel for your router, a better band, an access point closer to you, Windows' Wi-Fi power saving.
+how: Compares the channels your neighbours use (signal-weighted), looks for your own network on 5 GHz, and reads Windows' power plan (read-only).
+why: Most slow Wi-Fi is fixed by one setting - the right channel or band - not a new router.
+without: When location is off for desktop apps, Windows hides the neighbour scan; the advisor then says so and only checks power saving.
+
+== link.HEALTH
+friendly: Wi-Fi health
+cat: term
+close: -1
+tag: A score from what Windows never hides - works even when IT turns location off.
+what: 0-100 from the link to your router (delay, jitter, loss), link speed, adapter errors, drops in the last day and, when visible, signal.
+how: Uses the pings AdeeboMeter already sends to your router plus Windows' adapter counters and drop log. No location needed.
+why: On work PCs Windows often hides the Wi-Fi name and signal; this still tells you whether your Wi-Fi is the problem.
+without: Under 55: expect stutters - move closer, switch band, or use a cable.
+
+== link.TWINS
+friendly: Look-alike networks
+cat: term
+close: -1
+tag: Same name as your network, different hardware maker.
+what: Another access point broadcasting your network's name whose hardware belongs to a different maker than yours.
+how: Compares the first half of the hardware addresses (the maker code) of every access point with your network's name. Randomised addresses are ignored.
+why: Mesh systems of one brand share a maker code. A different one can be a neighbour's router with the same name - or a fake access point ("evil twin") set up to capture sign-ins.
+without: Don't type passwords into sign-in pages on it; prefer your known access point or use the VPN.
+
+== link.WALK
+friendly: Walk test
+cat: term
+close: -1
+tag: Which rooms have good Wi-Fi and which don't.
+what: You walk from room to room and record each one: AdeeboMeter measures the link to your router there and ranks the rooms.
+how: 20 pings to your own router in 10 seconds per room, plus the link speed (and signal, when Windows shows it). Nothing leaves your network.
+why: Tells you where to put the router or a mesh point - with numbers, not guesses.
+without: A red room: move the router toward it, add a mesh point or extender between them, or use a cable there.
+
+== hist.WEEK
+friendly: When is my network bad?
+cat: term
+close: -1
+tag: Seven days, 24 hours - the worst moment in each hour, at a glance.
+what: Each square is one hour. Green: all good. Dark green: fine, but your router was slow to answer. Amber: busy or slow. Red: a real problem. Grey: the PC was off or history wasn't on.
+how: Built from the minute-by-minute history kept on this PC; drawn once into an image, so it costs nothing to look at. Click a square to replay that hour minute by minute.
+why: Patterns jump out: every evening 8-10 pm amber is your provider's busy hour; red every morning at 9 is something at work.
+without: Turn on history in Settings to fill it.
+
+== hist.USAGE
+friendly: Data usage and what's normal
+cat: term
+close: -1
+tag: How much you downloaded and uploaded, and what this network is normally like.
+what: Today and this month, per network, from Windows' own adapter counters - plus what's normal here (learned over the last day of use) and how much delay your own traffic adds at the router.
+how: Counted once a second, added up per minute, kept in a tiny file on this PC (usage.txt, 400 days). Never sent anywhere.
+why: Know before a hotspot or metered plan runs out; know when "slow" is really unusual for this network.
+without: Set a monthly cap in Settings to get a warning at 80%.
+
+== hist.CALLS
+friendly: After your calls
+cat: term
+close: -1
+tag: One sentence per call about the network - nothing recorded.
+what: When a Teams call ends, what (if anything) went wrong on the network: a drop, a roam, an upload competing, loss past your router.
+how: During the call AdeeboMeter keeps one row of numbers per second in memory (delay, loss, signal, link rate, traffic). After the call it writes one sentence and forgets the rows. No audio, video or packets - and nothing about the call is saved to disk.
+why: "The call was bad" finally gets a reason.
+without: Only Teams calls are detected (by its call ports).
+
+== hist.WATCH
+friendly: Worth a look
+cat: term
+close: -1
+tag: Programs doing something new - AdeeboMeter suggests, it never blocks.
+what: A program talking to the internet for the first time, from your Downloads or a temporary folder, without a publisher, at night - or a big upload you didn't start.
+how: From the connection table AdeeboMeter already reads. It remembers which programs it has seen (on this PC only) and spends the first 24 hours learning what's normal.
+why: New is not bad - updates and new apps do this. But unknown programs phoning home are exactly what you'd want to know about.
+without: To block one: Windows Security → Firewall (needs admin; ask IT on a work PC).
+
+== hist.DEVICES
+friendly: New devices on your network
+cat: term
+close: -1
+tag: Something new joined your Wi-Fi or network.
+what: A hardware address your PC has never seen on this network before.
+how: Compares Windows' ARP table (devices your PC has talked to) every 10 minutes with the ones it knew. Nothing is scanned.
+why: At home, an unknown device can mean someone knows your Wi-Fi password.
+without: Phones use random private addresses - a new one can just be a phone that rejoined.
+
+== dest.PINWATCH
+friendly: Watching a destination all day
+cat: term
+close: -1
+tag: One ping every 30 seconds to your first pinned destination.
+what: Delay over the last 24 hours to the server you care about (your VPN gateway, a work server); red ticks are pings that got no answer.
+how: One small ping every 30 seconds while AdeeboMeter runs. Off unless you switch it on in Settings; listed in About.
+why: Shows whether that one service drops out at certain times - evidence, not a feeling.
+without: Some servers never answer pings - then use Run all instead.
+
+== travel.LAYERS
+friendly: Your connection, layer by layer
+cat: term
+close: -1
+tag: The same connection, seen at each layer of the OSI / TCP-IP model.
+what: From the app you use (layer 7) down to the radio or cable (layer 1), then out across the internet - with the real values from this connection.
+how: From the check AdeeboMeter just ran, the routing table, the ARP table and the adapter - all readable without admin.
+why: When something breaks, the layer it breaks at tells you who can fix it: the app, the network, the Wi-Fi, or the provider.
+without: Press Follow the packet to fill it.
+
+== travel.L7
+friendly: Layer 7 - application
+cat: term
+close: -1
+tag: What the app is actually saying.
+what: HTTP for websites, and the protocols apps use on top of it.
+how: Your browser or app builds a request; everything below just carries it.
+why: A slow first byte here means the server is slow, not your network.
+without: -
+
+== travel.L6·5
+friendly: Layers 5-6 - encryption
+cat: term
+close: -1
+tag: TLS: who the server is, and nobody else reads it.
+what: TLS proves the server's identity with a certificate and encrypts everything.
+how: A handshake agrees on keys; from then on the data is unreadable on the way.
+why: If a company proxy inspects it, the certificate is signed by the company instead - shown here.
+without: Plain HTTP can be read and changed by anyone on the path.
+
+== travel.L4
+friendly: Layer 4 - transport
+cat: term
+close: -1
+tag: TCP or UDP, and the ports that say which app.
+what: TCP makes a reliable conversation (numbered, acknowledged, resent); UDP just sends.
+how: The handshake time here is one round trip to the server.
+why: A long handshake = a far server or a slow path.
+without: -
+
+== travel.L3
+friendly: Layer 3 - network
+cat: term
+close: -1
+tag: IP addresses end to end, and which route Windows picked.
+what: Your address, the server's, IPv4 or IPv6, and the route from your routing table that won.
+how: The most specific route wins (longest prefix), then the lowest metric.
+why: A wrong route - for example the VPN catching traffic it shouldn't - shows up here.
+without: -
+
+== travel.L2
+friendly: Layer 2 - data link
+cat: term
+close: -1
+tag: Hardware addresses - only one hop, to your router.
+what: Your adapter's hardware address and your router's, learned with ARP; the MTU of the link; the VLAN on cable.
+how: Each hop rewrites these; only IP addresses survive the whole journey.
+why: A changed router hardware address on the same network is a spoofing warning.
+without: -
+
+== travel.L1
+friendly: Layer 1 - physical
+cat: term
+close: -1
+tag: Radio or cable.
+what: Wi-Fi: network, channel and link rate. Cable: link speed.
+how: From Windows' adapter information.
+why: Most "slow internet" at home is really this layer - a weak or crowded radio.
+without: -
+
+== travel.L↗
+friendly: Out across the internet
+cat: term
+close: -1
+tag: NAT at your router, then network after network.
+what: Your router swaps your private address for its public one, then your provider and other networks hand the packet along.
+how: The path story from the trace shows who carries it and where networks hand over.
+why: Trouble after your router is your provider's or beyond - not something on your PC.
+without: -
+
+== travel.LADDER
+friendly: Where the time goes
+cat: term
+close: -1
+tag: DNS, TCP, TLS, then the server - each step timed.
+what: The handshakes as a ladder diagram, the way RFCs draw them, with the milliseconds each one took.
+how: Timed by the same check as Check a destination.
+why: Shows at a glance whether the wait is the name lookup, the distance, the encryption, or the server.
+without: -
+
+== travel.ANATOMY
+friendly: Packet anatomy
+cat: term
+close: -1
+tag: What's inside one full-size packet.
+what: The headers (Ethernet, IP, TCP, TLS) and how much room is left for your data - and what tunnels like VPNs take away.
+how: From your link's MTU and VPN state.
+why: Explains odd failures where small pages load but big downloads or VPN apps hang.
+without: -
+
+== travel.WINS
+friendly: Which route wins
+cat: term
+close: -1
+tag: The route Windows uses for an address - and the ones it didn't.
+what: Every route that matches the address, best first, and Windows' own pick.
+how: Longest prefix first, then lowest metric - the same rule routers use.
+why: Explains split tunnels and "why does this go through the VPN?".
+without: -
+
+== travel.ROUTES
+friendly: Routing table
+cat: term
+close: -1
+tag: Windows' map of where to send each packet.
+what: Every IPv4 route on this PC: the network it covers, where it goes (straight onto your network or via a router), the interface and its metric.
+how: Read from Windows' routing table - no admin needed.
+why: VPNs add routes here; a stray or missing route explains traffic going the wrong way.
+without: -
+
+== travel.ADDR
+friendly: How your PC got its addresses
+cat: term
+close: -1
+tag: DHCP lease, IPv6 addresses, DNS servers and suffix.
+what: Each address on your active adapter and where it came from: DHCP (with its lease), set by hand, built from your router's IPv6 advertisement, or temporary.
+how: From Windows' adapter information.
+why: A 169.254 address means DHCP failed; temporary IPv6 addresses are a privacy feature, not a problem.
+without: -
+
+== travel.FAMILIES
+friendly: The process families
+cat: term
+close: -1
+tag: Teams, Outlook, OneDrive and their helpers, grouped.
+what: How many processes each Microsoft 365 app runs right now, with its WebView2 helpers counted under it.
+how: From Windows' process list and who started whom.
+why: "Teams uses 2 GB" usually means Teams plus several WebView2 helpers.
+without: -
+
+== travel.ROLES
+friendly: What they're talking to
+cat: term
+close: -1
+tag: Each live connection labelled: sign-in, signalling, media, mail, files, updates, telemetry.
+what: Every connection of these apps, grouped by what it's for.
+how: From server names (Windows' DNS cache) and Microsoft's published Teams ranges, as of this AdeeboMeter version. Unknown Microsoft servers are labelled "role unknown".
+why: Shows what's normal - and what a firewall or VPN must let through.
+without: -
+
+== travel.FALLBACK
+friendly: Teams calls: UDP or TCP?
+cat: term
+close: -1
+tag: The usual hidden reason for bad calls on company networks.
+what: Whether a Teams call is using UDP (best) or had to fall back to TCP 443.
+how: A call with Teams' UDP media ports is UDP; media-relay connections on TCP 443 with call-like traffic and no UDP media means fallback.
+why: Over TCP, every lost packet is re-sent and delays everything behind it - audio stutters.
+without: Ask IT to allow UDP 3478-3481 to Microsoft's Teams ranges.
+
+== travel.CALLFLOW
+friendly: How a Teams call connects
+cat: term
+close: -1
+tag: Sign-in, signalling, path-finding, then media.
+what: The steps from pressing Call to hearing the other person.
+how: From the knowledge pack - see Learn → How a Teams call connects for the whole story.
+why: Each step can fail on its own: sign-in, HTTPS, or UDP.
+without: -
+
+== travel.OUTLOOK
+friendly: Why is Outlook slow?
+cat: term
+close: -1
+tag: The usual suspects, checked.
+what: Outlook's own CPU and memory, the size of the mailbox kept on this PC, its connection to Exchange, the internet, and OneDrive competing for upload.
+how: From the process list, the Outlook data folder (read-only), the connection table and the pings AdeeboMeter already sends.
+why: Most slowness is on the PC (a huge mailbox file, add-ins), not the network.
+without: -
+
+== travel.REAL
+friendly: The real packets
+cat: term
+close: -1
+tag: The actual handshake, as Wireshark saw it.
+what: Six seconds of your PC's traffic to one server, drawn as a ladder - SYN, SYN-ACK, ClientHello and so on, with timings.
+how: Wireshark's dumpcap records only that server's traffic while AdeeboMeter opens one connection (handshake only); tshark reads it back. The file is deleted when AdeeboMeter exits.
+why: See retransmissions, resets and TLS alerts that summaries hide.
+without: Needs Wireshark with Npcap.
+
+== travel.DECODE
+friendly: One packet, every layer
+cat: term
+close: -1
+tag: Wireshark's full decode, with what each layer means.
+what: Every layer of the packet you clicked - frame, Ethernet, IP, TCP or UDP, TLS - with its fields and a plain-English line about the layer.
+how: Wireshark's tshark decodes that one packet from the recording.
+why: Turns Wireshark from a tool you need training for into one that teaches you.
+without: -
+
+== travel.CHAT
+friendly: What your traffic is made of
+cat: term
+close: -1
+tag: The protocols your PC used in the last 10 seconds.
+what: Packets per protocol: TLS, QUIC, DNS, mDNS and so on.
+how: A 10-second recording of your PC's own traffic, read by Wireshark's tshark, then deleted.
+why: Shows modern vs old protocols and background chatter you never see.
+without: Needs Wireshark with Npcap.
+
+== travel.CHATNOTES
+friendly: What it means
+cat: term
+close: -1
+tag: IPv6, HTTP/3, local chatter and call priority, explained.
+what: Whether you use IPv6 and QUIC, which background protocols your PC speaks to the local network, and whether call packets carry a priority mark.
+how: From the same 10-second recording.
+why: LLMNR and NetBIOS are known attack targets on shared networks; unmarked call packets can suffer on busy office networks.
+without: -
+
+== kind.base
+friendly: Slower than usual
+cat: term
+close: -1
+tag: Compared with what's normal for this network.
+what: AdeeboMeter learns what's normal on each network and notes when it's clearly worse.
+how: A slow average of the last day of use per network, compared with the last 5 minutes.
+why: 40 ms at a café is fine; 40 ms at home, where it's normally 3, is not.
+without: -
+
+== kind.lan
+friendly: Your local network
+cat: term
+close: -1
+tag: Devices joining your network.
+what: A device your PC hadn't seen before on this network.
+how: From Windows' ARP table, every 10 minutes - nothing is scanned.
+why: An unknown device at home can mean someone has your Wi-Fi password.
+without: -
+
+== ev.measured
+friendly: Measured
+cat: term
+close: -1
+tag: AdeeboMeter timed this itself.
+what: A number AdeeboMeter produced with its own probe - a ping to your router, a DNS lookup, a TCP or TLS handshake it opened.
+how: Taken on this PC, at the time shown (turn on Details for the exact second).
+why: The strongest kind of evidence here: nobody else's word is involved.
+without: A single measurement is a moment, not a trend - the Time machine shows whether it was normal.
+
+== ev.Windows-reported
+friendly: Windows-reported
+cat: term
+close: -1
+tag: Windows said so.
+what: A value read from Windows itself - its counters, network tables, Wi-Fi API, event log or a built-in tool.
+how: Read without admin rights, through the same interfaces Task Manager and ipconfig use.
+why: Usually right, but it is Windows' view: a driver can report a link rate it isn't really getting.
+without: When Windows and a measurement disagree, trust the measurement.
+
+== ev.seen in packets
+friendly: Seen in packets
+cat: term
+close: -1
+tag: Wireshark decoded it from the real traffic.
+what: Something read out of actual packets on your network adapter - a handshake, a DSCP mark, a DHCP offer.
+how: Only when you start a capture (needs Wireshark and Npcap); nothing is kept unless you save it in Wireshark.
+why: The ground truth of what was on the wire.
+without: A capture only shows your own PC's traffic, and only while it runs.
+
+== ev.inferred
+friendly: Inferred
+cat: term
+close: -1
+tag: A conclusion, not a reading.
+what: AdeeboMeter put several facts together - for example "the delay starts beyond your router" from a fast router ping and a slow internet ping.
+how: Simple, explainable rules; the facts it used are listed with it.
+why: Most useful, and the one to question: check the facts under it.
+without: If an inference doesn't match what you see, the measured facts beneath it are what to trust.
+
+== ev.unavailable
+friendly: Unavailable
+cat: term
+close: -1
+tag: This PC doesn't let AdeeboMeter see it.
+what: A value AdeeboMeter couldn't read - hidden by Windows (Wi-Fi details without location permission), admin-only, or not measured yet.
+how: Said plainly instead of guessed.
+why: A missing fact is better than a made-up one.
+without: The Health and tools page has "What can AdeeboMeter see here?" - it lists what IT allows on this PC.
+
+== guide.slow
+friendly: The internet is slow
+cat: term
+close: -1
+tag: Finds where the delay starts.
+what: Walks outwards from your PC: processor, Wi-Fi, router, provider, DNS, and your own uploads.
+how: Uses the pings and counters AdeeboMeter already runs - nothing extra is sent.
+why: "Slow" has five different causes with five different fixes.
+without: It can't measure your provider's speed plan - AdeeboMeter never runs speed tests.
+
+== guide.site
+friendly: A website or app won't open
+cat: term
+close: -1
+tag: Finds the first step that fails.
+what: Name (DNS), route, door (TCP), lock (TLS) and answer (HTTP), in order - the first one that fails is the answer.
+how: Runs the same check as Check a destination on the name you type in the box (github.com if empty).
+why: "It won't load" can be a typo, a firewall, a certificate or the server itself.
+without: It only fetches the first page - not what happens after sign-in.
+
+== guide.calls
+friendly: Calls freeze or sound robotic
+cat: term
+close: -1
+tag: What calls care about.
+what: Jitter, lost packets, your upload, your router under load, Wi-Fi, VPN, and whether Teams fell back to TCP.
+how: Runs the pre-call check, plus what AdeeboMeter already measures; uses the last meeting replay if there is one.
+why: Calls hate uneven delay more than slow delay.
+without: It can only see your end - the other person's network is theirs.
+
+== guide.drops
+friendly: I keep disconnecting
+cat: term
+close: -1
+tag: What happened before each drop.
+what: Reads today's Wi-Fi drops, access-point hops, signal falls, VPN drops and Windows' own reason for the last drop.
+how: From the timeline and today's history file - nothing new is measured.
+why: Drops after a weak signal mean distance; drops with a good signal mean the adapter or the router.
+without: The router's own log lives on the router.
+
+== replay.SLIDER
+friendly: Replay slider
+cat: term
+close: -1
+tag: Drag to any minute of the day.
+what: Moves through the day's history one minute at a time - the dots, numbers and changes below follow.
+how: Reads that day's history file (one line a minute, kept on this PC for the days set in Settings).
+why: "It was bad at 10 this morning" becomes something you can look at.
+without: Click or drag the bar; the buttons step a minute, ten minutes, or to the next problem.
+
+== ov.TRAFFIC
+friendly: Your traffic
+cat: term
+close: -1
+tag: Download / upload right now, in megabits per second.
+what: What your PC is moving through the active adapter this second.
+how: Windows' own adapter byte counters, read once a second.
+why: A busy upload is the most common reason calls stutter at home.
+without: What's running shows which program; Live capture shows bytes per app.
+
+== ov.DETAILS
+friendly: Details
+cat: term
+close: -1
+tag: The engineer's switch.
+what: Shows raw values, sources and the exact time every finding was read - adapter, IP, gateway, MTU, worst-case delays.
+how: Same data, more of it on screen. Remembered between runs.
+why: Plain English for everyone; the raw numbers for whoever has to prove it.
+without: Off keeps pages calm; on is for troubleshooting.

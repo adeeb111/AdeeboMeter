@@ -1,0 +1,556 @@
+// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Drawing.Text;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using Microsoft.Win32;
+
+namespace AdeeboMeter
+{
+    // ================================================================== engineer view
+    // ================================================================== Deeper sources - all offline, all without admin
+    // Windows' own event log: why Wi-Fi dropped, why DHCP failed. Read only when asked (Wi-Fi tab, or right after a drop).
+    static class EvLog
+    {
+        [DllImport("wevtapi.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern IntPtr EvtQuery(IntPtr session, string path, string query, int flags);
+        [DllImport("wevtapi.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] static extern bool EvtNext(IntPtr results, int count, [Out] IntPtr[] events, int timeout, int flags, out int returned);
+        [DllImport("wevtapi.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] static extern bool EvtRender(IntPtr context, IntPtr fragment, int flags, int bufferSize, [Out] char[] buffer, out int used, out int props);
+        [DllImport("wevtapi.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern IntPtr EvtOpenPublisherMetadata(IntPtr session, string publisher, string logFile, int locale, int flags);
+        [DllImport("wevtapi.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] static extern bool EvtFormatMessage(IntPtr publisher, IntPtr evt, int messageId, int valueCount, IntPtr values, int flags, int bufferSize, [Out] char[] buffer, out int used);
+        [DllImport("wevtapi.dll")] [return: MarshalAs(UnmanagedType.Bool)] static extern bool EvtClose(IntPtr h);
+
+        public sealed class Ev { public DateTime T; public int Id, Level; public string Text = "", Xml = ""; }
+        static string Render(IntPtr e)
+        {
+            int used, props; var buf = new char[16384];
+            return EvtRender(IntPtr.Zero, e, 1 /*EvtRenderEventXml*/, buf.Length * 2, buf, out used, out props) ? new string(buf, 0, Math.Max(0, used / 2 - 1)) : "";
+        }
+        static string Format(IntPtr pub, IntPtr e)
+        {
+            if (pub == IntPtr.Zero) return "";
+            int used; var buf = new char[8192];
+            return EvtFormatMessage(pub, e, 0, 0, IntPtr.Zero, 1 /*EvtFormatMessageEvent*/, buf.Length, buf, out used) ? new string(buf, 0, Math.Max(0, used - 1)) : "";
+        }
+        // The event XML is read with plain patterns, not an XML parser (nothing to resolve, nothing to expand).
+        public static string Field(string xml, string name)
+        {
+            var m = Regex.Match(xml ?? "", "<Data Name=['\"]" + Regex.Escape(name) + "['\"]>([^<]*)</Data>");
+            return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
+        }
+        public static List<Ev> Recent(string log, string ids, double hours, int max, out string err)
+        {
+            var list = new List<Ev>(); err = "";
+            string q = "*[System[" + (ids != "" ? "(" + ids + ") and " : "") + "TimeCreated[timediff(@SystemTime) <= " + ((long)(hours * 3600000)).ToString(CultureInfo.InvariantCulture) + "]]]";
+            IntPtr res = IntPtr.Zero; var pubs = new Dictionary<string, IntPtr>();
+            try
+            {
+                res = EvtQuery(IntPtr.Zero, log, q, 1 /*channel path*/ | 0x200 /*newest first*/);
+                if (res == IntPtr.Zero) { int e = Marshal.GetLastWin32Error(); err = e == 5 ? "Windows doesn't let normal users read this log on this PC." : e == 15007 ? "This log doesn't exist on this PC." : "Couldn't read the log (" + e + ")."; return list; }
+                var evs = new IntPtr[1]; int got;
+                while (list.Count < max && EvtNext(res, 1, evs, 1000, 0, out got) && got == 1)
+                {
+                    try
+                    {
+                        string xml = Render(evs[0]);
+                        var ev = new Ev { Xml = xml };
+                        var idm = Regex.Match(xml, @"<EventID[^>]*>(\d+)</EventID>"); if (idm.Success) ev.Id = int.Parse(idm.Groups[1].Value, CultureInfo.InvariantCulture);
+                        var lvm = Regex.Match(xml, @"<Level>(\d+)</Level>"); if (lvm.Success) ev.Level = int.Parse(lvm.Groups[1].Value, CultureInfo.InvariantCulture);
+                        var tm = Regex.Match(xml, @"SystemTime=['""]([^'""]+)['""]"); DateTime t;
+                        if (tm.Success && DateTime.TryParse(tm.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out t)) ev.T = t.ToLocalTime();
+                        var pm = Regex.Match(xml, @"<Provider Name=['""]([^'""]+)['""]");
+                        if (pm.Success)
+                        {
+                            IntPtr ph; if (!pubs.TryGetValue(pm.Groups[1].Value, out ph)) { ph = EvtOpenPublisherMetadata(IntPtr.Zero, pm.Groups[1].Value, null, 0, 0); pubs[pm.Groups[1].Value] = ph; }
+                            ev.Text = Format(ph, evs[0]);
+                        }
+                        list.Add(ev);
+                    }
+                    finally { EvtClose(evs[0]); }
+                }
+            }
+            catch (Exception e) { err = Draw.Trunc(e.Message, 80); }
+            finally { if (res != IntPtr.Zero) EvtClose(res); foreach (var ph in pubs.Values) if (ph != IntPtr.Zero) EvtClose(ph); }
+            return list;
+        }
+        // "Reason: The network is disconnected by the user." -> the part after the label, first line only.
+        public static string ReasonOf(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            var m = Regex.Match(text, @"(?:Failure Reason|Reason)\s*:\s*(.+)", RegexOptions.IgnoreCase);
+            string r = m.Success ? m.Groups[1].Value : text.Split('\n')[0];
+            return Draw.Trunc(r.Trim().TrimEnd('.'), 110);
+        }
+        public static List<string[]> WifiDrops(double hours, out string err)
+        {
+            var rows = new List<string[]>();
+            foreach (var e in Recent("Microsoft-Windows-WLAN-AutoConfig/Operational", "EventID=8003 or EventID=8002", hours, 12, out err))
+            {
+                string why = Field(e.Xml, e.Id == 8002 ? "FailureReason" : "Reason"); if (why == "") why = ReasonOf(e.Text);
+                string ssid = Field(e.Xml, "SSID");
+                rows.Add(new[] { e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture), (e.Id == 8002 ? "Couldn't connect" : "Dropped") + (ssid != "" ? " from " + ssid : "") + ": " + Plain(Draw.Trunc(why.TrimEnd('.'), 110)), e.Id == 8002 ? "2" : "1" });
+            }
+            return rows;
+        }
+        public static List<string[]> DhcpProblems(double hours, out string err)
+        {
+            var rows = new List<string[]>();
+            foreach (var e in Recent("Microsoft-Windows-Dhcp-Client/Admin", "Level=2 or Level=3", hours, 8, out err))
+                rows.Add(new[] { e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture), Draw.Trunc((e.Text != "" ? e.Text : "DHCP event " + e.Id).Split('\n')[0].Trim(), 110), "1" });
+            return rows;
+        }
+        // Windows' wording is technical; add the plain meaning for the common ones.
+        public static string Plain(string reason)
+        {
+            string r = reason.ToLowerInvariant();
+            if (r.Contains("disconnected by the user")) return reason + " (you or an app chose to disconnect)";
+            if (r.Contains("driver disconnected") || r.Contains("deauth") || r.Contains("disassociat")) return reason + " (the access point or the driver dropped the link)";
+            if (r.Contains("roam")) return reason + " (moved to another access point)";
+            if (r.Contains("authentication") || r.Contains("security")) return reason + " (sign-in to the network failed - password or certificate)";
+            if (r.Contains("not found") || r.Contains("out of range") || r.Contains("no longer")) return reason + " (the network went out of range)";
+            return reason;
+        }
+    }
+
+    // Windows' Native Wifi API: what netsh doesn't show - channel width, roaming features, real dBm per access point.
+    static class WlanApi
+    {
+        [DllImport("wlanapi.dll")] static extern int WlanOpenHandle(int clientVersion, IntPtr reserved, out int negotiated, out IntPtr handle);
+        [DllImport("wlanapi.dll")] static extern int WlanCloseHandle(IntPtr handle, IntPtr reserved);
+        [DllImport("wlanapi.dll")] static extern int WlanEnumInterfaces(IntPtr handle, IntPtr reserved, out IntPtr list);
+        [DllImport("wlanapi.dll")] static extern int WlanGetNetworkBssList(IntPtr handle, ref Guid iface, IntPtr ssid, int bssType, [MarshalAs(UnmanagedType.Bool)] bool secOnly, IntPtr reserved, out IntPtr list);
+        [DllImport("wlanapi.dll")] static extern int WlanScan(IntPtr handle, ref Guid iface, IntPtr ssid, IntPtr ie, IntPtr reserved);
+        [DllImport("wlanapi.dll")] static extern void WlanFreeMemory(IntPtr p);
+
+        public sealed class Bss { public string Bssid = "", Ssid = ""; public int Rssi, FreqMHz, Channel, Width = 20; public bool K, V, R; public string Band = ""; }
+        static DateTime lastScan = DateTime.MinValue;
+
+        public static List<Bss> List(bool scan, out string err)
+        {
+            var res = new List<Bss>(); err = ""; IntPtr h = IntPtr.Zero, ifl = IntPtr.Zero;
+            try
+            {
+                int ver; if (WlanOpenHandle(2, IntPtr.Zero, out ver, out h) != 0) { err = "Wi-Fi service not available"; return res; }
+                if (WlanEnumInterfaces(h, IntPtr.Zero, out ifl) != 0) { err = "no Wi-Fi adapter"; return res; }
+                int n = Marshal.ReadInt32(ifl);
+                for (int i = 0; i < n; i++)
+                {
+                    IntPtr info = ifl + 8 + i * 532;   // WLAN_INTERFACE_INFO: GUID(16) + WCHAR[256] + state
+                    var gb = new byte[16]; Marshal.Copy(info, gb, 0, 16); var g = new Guid(gb);
+                    if (scan && (DateTime.UtcNow - lastScan).TotalSeconds > 60) { lastScan = DateTime.UtcNow; if (WlanScan(h, ref g, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero) != 0) Program.Log("Wi-Fi scan request refused"); }   // fresh results next time
+                    IntPtr bl; int rc = WlanGetNetworkBssList(h, ref g, IntPtr.Zero, 1 /*infrastructure*/, false, IntPtr.Zero, out bl);
+                    if (rc != 0) { err = rc == 5 ? "Windows needs location access for Wi-Fi details" : "Wi-Fi list unavailable (" + rc + ")"; continue; }
+                    try
+                    {
+                        int cnt = Marshal.ReadInt32(bl, 4);
+                        for (int j = 0; j < cnt && j < 400; j++) res.Add(ParseEntry(bl + 8 + j * 360));   // WLAN_BSS_ENTRY is 360 bytes
+                    }
+                    finally { WlanFreeMemory(bl); }
+                }
+            }
+            catch (Exception e) { err = Draw.Trunc(e.Message, 60); }
+            finally { if (ifl != IntPtr.Zero) WlanFreeMemory(ifl); if (h != IntPtr.Zero && WlanCloseHandle(h, IntPtr.Zero) != 0) Program.Log("Wi-Fi handle close failed"); }
+            return res;
+        }
+        static Bss ParseEntry(IntPtr e)
+        {
+            var b = new Bss();
+            int sl = Math.Min(32, Marshal.ReadInt32(e, 0)); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Encoding.UTF8.GetString(sb);
+            var mac = new byte[6]; Marshal.Copy(e + 40, mac, 0, 6); b.Bssid = string.Join(":", mac.Select(x => x.ToString("x2", CultureInfo.InvariantCulture)));
+            b.Rssi = Marshal.ReadInt32(e, 56);
+            b.FreqMHz = Marshal.ReadInt32(e, 92) / 1000;
+            int ieOff = Marshal.ReadInt32(e, 352), ieSize = Marshal.ReadInt32(e, 356);
+            byte[] ies = new byte[Math.Max(0, Math.Min(ieSize, 4096))];
+            if (ies.Length > 0) Marshal.Copy(e + ieOff, ies, 0, ies.Length);
+            FromFreq(b); ReadIes(ies, b);
+            return b;
+        }
+        public static void FromFreq(Bss b)
+        {
+            int f = b.FreqMHz;
+            if (f >= 2400 && f < 2500) { b.Band = "2.4 GHz"; b.Channel = f == 2484 ? 14 : (f - 2407) / 5; }
+            else if (f >= 5150 && f < 5925) { b.Band = "5 GHz"; b.Channel = (f - 5000) / 5; }
+            else if (f >= 5925 && f < 7125) { b.Band = "6 GHz"; b.Channel = (f - 5950) / 5; }
+        }
+        // Information elements: HT (61), VHT (192) and HE 6 GHz operation give the channel width;
+        // RM capabilities (70) = 802.11k, extended capability bit 19 = 802.11v BSS transition, mobility domain (54) = 802.11r.
+        public static void ReadIes(byte[] ies, Bss b)
+        {
+            for (int i = 0; i + 2 <= ies.Length; )
+            {
+                int id = ies[i], len = ies[i + 1], p = i + 2; if (p + len > ies.Length) break;
+                if (id == 61 && len >= 2 && (ies[p + 1] & 0x04) != 0) b.Width = Math.Max(b.Width, 40);
+                else if (id == 192 && len >= 3)
+                {
+                    int w = ies[p], c0 = ies[p + 1], c1 = ies[p + 2];
+                    if (w == 1) b.Width = Math.Max(b.Width, c1 != 0 && Math.Abs(c1 - c0) == 8 ? 160 : 80);
+                    else if (w == 2 || w == 3) b.Width = Math.Max(b.Width, 160);
+                }
+                else if (id == 255 && len >= 7 && ies[p] == 36)   // HE Operation
+                {
+                    int prm = ies[p + 1] | (ies[p + 2] << 8) | (ies[p + 3] << 16);
+                    int q = p + 1 + 3 + 1 + 2;                        // params, BSS colour, basic HE-MCS
+                    if ((prm & (1 << 14)) != 0) q += 3;               // VHT operation info present
+                    if ((prm & (1 << 15)) != 0) q += 1;               // co-hosted BSS
+                    if ((prm & (1 << 17)) != 0 && q + 2 <= p + len)   // 6 GHz operation info
+                    { int cw = ies[q + 1] & 0x03; b.Width = Math.Max(b.Width, cw == 0 ? 20 : cw == 1 ? 40 : cw == 2 ? 80 : 160); }
+                }
+                else if (id == 70) b.K = true;
+                else if (id == 54) b.R = true;
+                else if (id == 127 && len >= 3 && (ies[p + 2] & 0x08) != 0) b.V = true;
+                i = p + len;
+            }
+        }
+    }
+
+    // The ARP table: devices your PC has talked to on the local network (nothing is scanned).
+    static class Arp
+    {
+        [DllImport("iphlpapi.dll")] static extern int GetIpNetTable(IntPtr table, ref int size, bool order);
+        public sealed class Entry { public string Ip = "", Mac = ""; public int IfIndex; public bool Dynamic; }
+        public static List<Entry> Table()
+        {
+            var list = new List<Entry>(); int size = 0;
+            int rc0 = GetIpNetTable(IntPtr.Zero, ref size, true);
+            if (rc0 != 122 && rc0 != 0) return list;
+            if (size <= 0) return list;
+            size += 1024; IntPtr buf = Marshal.AllocHGlobal(size);
+            try
+            {
+                if (GetIpNetTable(buf, ref size, true) != 0) return list;
+                int n = Marshal.ReadInt32(buf);
+                for (int i = 0; i < n && i < 4000; i++)
+                {
+                    IntPtr r = buf + 4 + i * 24;   // MIB_IPNETROW: index, physLen, phys[8], addr, type
+                    int len = Math.Min(8, Marshal.ReadInt32(r, 4)); var mac = new byte[len]; Marshal.Copy(r + 8, mac, 0, len);
+                    var ip = new IPAddress((uint)Marshal.ReadInt32(r, 16)); int type = Marshal.ReadInt32(r, 20);
+                    if (len != 6 || mac.All(x => x == 0) || mac.All(x => x == 0xff) || (mac[0] & 1) != 0) continue;   // skip empty, broadcast, multicast
+                    list.Add(new Entry { Ip = ip.ToString(), Mac = string.Join(":", mac.Select(x => x.ToString("x2", CultureInfo.InvariantCulture))), IfIndex = Marshal.ReadInt32(r, 0), Dynamic = type == 3 });
+                }
+            }
+            finally { Marshal.FreeHGlobal(buf); }
+            return list;
+        }
+        // Phones and laptops often use a random ("locally administered") address per network for privacy.
+        public static bool Randomised(string mac) { if (mac.Length < 2) return false; int b = Convert.ToInt32(mac.Substring(0, 2), 16); return (b & 0x02) != 0; }
+        public static string MacOf(string ip) { var e = Table().FirstOrDefault(x => x.Ip == ip); return e != null ? e.Mac : ""; }
+    }
+
+    // Ask one specific DNS server (used only during a check you start, to spot filtered or tampered answers).
+    static class DnsAsk
+    {
+        public static List<string> Ask(string name, string server, int timeoutMs, out string err)
+        {
+            err = ""; IPAddress srv;
+            if (!IPAddress.TryParse(server, out srv) || srv.AddressFamily != AddressFamily.InterNetwork) { err = "bad server"; return new List<string>(); }
+            var t = Task.Factory.StartNew(() =>
+            {
+                var res = new List<string>(); IntPtr arr = Marshal.AllocHGlobal(8), recs = IntPtr.Zero;
+                try
+                {
+                    Marshal.WriteInt32(arr, 0, 1); Marshal.Copy(srv.GetAddressBytes(), 0, arr + 4, 4);   // IP4_ARRAY { count, address }
+                    int rc = Native.DnsQuery(name, 1, 0x8 | 0x100 /*bypass cache, wire only*/, arr, out recs, IntPtr.Zero);
+                    if (rc == 9003) { res.Add("NXDOMAIN"); return res; }
+                    if (rc != 0 || recs == IntPtr.Zero) { res.Add("ERR" + rc); return res; }
+                    int P = IntPtr.Size;
+                    for (IntPtr r = recs; r != IntPtr.Zero; r = Marshal.ReadIntPtr(r, 0))
+                        if ((Marshal.ReadInt16(r, 2 * P) & 0xFFFF) == 1) res.Add(new IPAddress((uint)Marshal.ReadInt32(r, 2 * P + 16)).ToString());
+                }
+                finally { if (recs != IntPtr.Zero) Native.DnsRecordListFree(recs, 1); Marshal.FreeHGlobal(arr); }
+                return res;
+            });
+            if (!t.Wait(timeoutMs)) { err = "no answer"; return new List<string>(); }
+            if (t.Result.Count == 1 && t.Result[0].StartsWith("ERR", StringComparison.Ordinal)) { err = "no answer"; return new List<string>(); }
+            return t.Result;
+        }
+    }
+
+    // Driver version and date for the network adapter, from the registry (readable without admin).
+    static class DriverInfo
+    {
+        public static string[] Of(string nicId)
+        {
+            try
+            {
+                using (var cls = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"))
+                {
+                    if (cls == null) return null;
+                    foreach (var sub in cls.GetSubKeyNames())
+                    {
+                        if (sub.Length != 4) continue;
+                        try
+                        {
+                            using (var k = cls.OpenSubKey(sub))
+                            {
+                                if (k == null || !string.Equals(k.GetValue("NetCfgInstanceId") as string, nicId, StringComparison.OrdinalIgnoreCase)) continue;
+                                return new[] { k.GetValue("DriverVersion") as string ?? "", k.GetValue("DriverDate") as string ?? "", k.GetValue("ProviderName") as string ?? "" };
+                            }
+                        }
+                        catch (System.Security.SecurityException) { }
+                    }
+                }
+            }
+            catch (Exception e) { Program.Log("driver: " + e.Message); }
+            return null;
+        }
+        static readonly string[] DateFormats = { "M-d-yyyy", "MM-dd-yyyy" };
+        public static double AgeYears(string date)
+        {
+            DateTime d; return DateTime.TryParseExact(date, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) ? (DateTime.Now - d).TotalDays / 365.25 : -1;
+        }
+    }
+
+    // ================================================================== Your connection: Wi-Fi radio, neighbours, cable, addressing
+    // Everything comes from Windows itself (netsh and the adapter statistics) - nothing is sent anywhere. Collected only while
+    // the "Your connection" page is open, every 10 s.
+    sealed class Ap { public string Ssid = "", Bssid = "", Band = "", Radio = ""; public int Signal = -1, Channel = -1, Util = -1, Stations = -1, Rssi, Width; }
+
+    sealed class LinkSnap
+    {
+        public bool Wifi, LocationBlocked; public string Verdict = "", Adapter = ""; public int Level;
+        public List<string[]> Radio = new List<string[]>(), Quality = new List<string[]>(), Address = new List<string[]>(), Traffic = new List<string[]>();
+        public List<Ap> Aps = new List<Ap>(); public int MyChannel = -1; public string MyBand = "", MyBssid = "";
+        public List<string[]> Drops = new List<string[]>(), Dhcp = new List<string[]>(), Lan = new List<string[]>(); public string DropsErr = "", DhcpErr = "";
+        public DateTime At = DateTime.Now;
+    }
+
+    static class LinkInfo
+    {
+        static string[] Row(params string[] v) { return v; }
+        static readonly Regex kv = new Regex(@"^\s*([^:]+?)\s*:\s*(.*?)\s*$");
+        public static Dictionary<string, string> Fields(string text)
+        {
+            var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in (text ?? "").Split('\n')) { var m = kv.Match(line); if (m.Success && !d.ContainsKey(m.Groups[1].Value)) d[m.Groups[1].Value] = m.Groups[2].Value; }
+            return d;
+        }
+        public static bool Blocked(string text) { return text != null && text.IndexOf("location", StringComparison.OrdinalIgnoreCase) >= 0 && text.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0; }
+        public static string BandOf(int ch, string band)
+        {
+            if (!string.IsNullOrEmpty(band)) return band;
+            if (ch >= 1 && ch <= 14) return "2.4 GHz"; if (ch >= 32 && ch <= 177) return "5 GHz"; return "";
+        }
+        public static string Gen(string radio)
+        {
+            radio = (radio ?? "").ToLowerInvariant();
+            if (radio.Contains("be")) return "Wi-Fi 7"; if (radio.Contains("ax")) return "Wi-Fi 6 / 6E"; if (radio.Contains("ac")) return "Wi-Fi 5";
+            if (radio.Contains("802.11n")) return "Wi-Fi 4"; if (radio != "") return "older Wi-Fi"; return "";
+        }
+        // netsh wlan show networks mode=bssid -> one Ap per BSSID
+        public static List<Ap> ParseNetworks(string text)
+        {
+            var list = new List<Ap>(); string ssid = ""; Ap cur = null;
+            foreach (var raw in (text ?? "").Split('\n'))
+            {
+                var m = kv.Match(raw); if (!m.Success) continue;
+                string k = m.Groups[1].Value, v = m.Groups[2].Value; int x;
+                if (Regex.IsMatch(k, @"^SSID \d+$")) { ssid = v; cur = null; }
+                else if (Regex.IsMatch(k, @"^BSSID \d+$")) { cur = new Ap { Ssid = ssid == "" ? "(hidden network)" : ssid, Bssid = v }; list.Add(cur); }
+                else if (cur == null) continue;
+                else if (k == "Signal" && int.TryParse(v.TrimEnd('%', ' '), NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Signal = x;
+                else if (k == "Channel" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Channel = x;
+                else if (k == "Band") cur.Band = v;
+                else if (k == "Radio type") cur.Radio = v;
+                else if (k == "Connected Stations" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Stations = x;
+                else if (k == "Channel Utilization") { var um = Regex.Match(v, @"\((\d+)\s*%\)"); if (um.Success) cur.Util = int.Parse(um.Groups[1].Value, CultureInfo.InvariantCulture); }
+                if (cur != null && cur.Band == "" && cur.Channel > 0) cur.Band = BandOf(cur.Channel, "");
+            }
+            if (list.Count > 300) list = list.OrderByDescending(a => a.Signal).Take(300).ToList();
+            return list;
+        }
+        public static bool Overlaps(int a, int b, string band)
+        {
+            if (a <= 0 || b <= 0) return false;
+            return band.StartsWith("2.4", StringComparison.Ordinal) ? Math.Abs(a - b) < 5 : a == b;
+        }
+        static string Rate(long bps) { return bps <= 0 ? "-" : bps >= 1000000000 ? (bps / 1e9).ToString("0.#", CultureInfo.CurrentCulture) + " Gb/s" : (bps / 1e6).ToString("0", CultureInfo.CurrentCulture) + " Mb/s"; }
+        static string Count(long v) { return v.ToString("N0", CultureInfo.CurrentCulture); }
+
+        static readonly Dictionary<string, string> lanNames = new Dictionary<string, string>(); static DateTime lanAt = DateTime.MinValue;
+        public static LinkSnap Collect(Monitor m)
+        {
+            var s = new LinkSnap(); NetworkInterface nic; string kind, gw;
+            lock (m.L) { nic = m.Primary; kind = m.AdapterKind; gw = m.Gateway; }
+            bool noGw = false;
+            if (nic == null)
+            {
+                try
+                {
+                    nic = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && n.NetworkInterfaceType != NetworkInterfaceType.Tunnel && !Monitor.IsVpn(n))
+                        .OrderByDescending(n => n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).FirstOrDefault();
+                    if (nic != null) { noGw = true; kind = nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ? "Wi-Fi" : "LAN"; }
+                }
+                catch { nic = null; }
+            }
+            if (nic == null) { s.Verdict = Voice.P("No network connection at all, boss. Plug in a cable or pick a Wi-Fi network.", "Not connected."); s.Level = 2; return s; }
+            s.Wifi = kind == "Wi-Fi"; s.Adapter = nic.Description;
+            int lv = 0; var notes = new List<string>();
+
+            // ---- radio (Wi-Fi) or cable
+            if (s.Wifi)
+            {
+                string iface = "", nets = "";
+                try { iface = Job.Run(Job.Netsh, "wlan show interfaces", 4000); } catch { }
+                try { nets = Job.Run(Job.Netsh, "wlan show networks mode=bssid", 6000); } catch { }
+                if (Blocked(iface) || Blocked(nets)) s.LocationBlocked = true;
+                var f = Fields(iface); string v; int ch = -1, sig = -1;
+                if (f.TryGetValue("Channel", out v)) int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch);
+                if (f.TryGetValue("Signal", out v)) int.TryParse(v.TrimEnd('%', ' '), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig);
+                string band = BandOf(ch, f.TryGetValue("Band", out v) ? v : ""), radio = f.TryGetValue("Radio type", out v) ? v : "";
+                string bssid = f.TryGetValue("AP BSSID", out v) ? v : f.TryGetValue("BSSID", out v) ? v : "";
+                s.MyChannel = ch; s.MyBand = band; s.MyBssid = bssid;
+                Func<string, string> F = k => { string x; return f.TryGetValue(k, out x) && x != "" ? x : "-"; };
+                string rssi = f.TryGetValue("Rssi", out v) ? v + " dBm" : sig >= 0 ? "about " + (sig / 2 - 100) + " dBm" : "-";
+                s.Radio.Add(new[] { "Network (SSID)", F("SSID") });
+                s.Radio.Add(new[] { "Access point (BSSID)", bssid == "" ? "-" : bssid });
+                s.Radio.Add(new[] { "Band", band == "" ? "-" : band, band.StartsWith("2.4", StringComparison.Ordinal) ? "1" : "0" });
+                s.Radio.Add(new[] { "Channel", ch > 0 ? ch.ToString(CultureInfo.CurrentCulture) : "-" });
+                s.Radio.Add(new[] { "Standard", radio == "" ? "-" : radio + (Gen(radio) != "" ? " (" + Gen(radio) + ")" : "") });
+                s.Radio.Add(new[] { "Signal", sig >= 0 ? sig + "%  ·  " + rssi : "-", sig < 0 ? "0" : sig < 40 ? "2" : sig < 60 ? "1" : "0" });
+                s.Radio.Add(new[] { "Receive rate", F("Receive rate (Mbps)") == "-" ? "-" : F("Receive rate (Mbps)") + " Mb/s" });
+                s.Radio.Add(new[] { "Transmit rate", F("Transmit rate (Mbps)") == "-" ? "-" : F("Transmit rate (Mbps)") + " Mb/s" });
+                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Authentication") == "Open" ? "2" : "0" });
+                if (sig >= 0 && sig < 40) { lv = 2; notes.Add(Voice.P("Your Wi-Fi signal is weak (" + sig + "%). Walls are winning - move closer to the access point or plug in a cable.", "Weak Wi-Fi signal (" + sig + "%).")); }
+                else if (sig >= 0 && sig < 60) { lv = Math.Max(lv, 1); notes.Add("Signal is so-so (" + sig + "%). Fine for browsing; calls may stutter."); }
+
+                s.Aps = ParseNetworks(nets);
+                if (ch > 0)
+                {
+                    var same = s.Aps.Where(a => !string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase) && a.Band == band && Overlaps(a.Channel, ch, band)).ToList();
+                    var mine = s.Aps.FirstOrDefault(a => string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
+                    int strong = same.Count(a => a.Signal >= 50);
+                    s.Radio.Add(new[] { "Sharing your channel", same.Count == 0 ? "nobody - clean air" : same.Count + " other access point" + (same.Count > 1 ? "s" : "") + (strong > 0 ? " (" + strong + " strong)" : ""), strong >= 3 ? "2" : same.Count >= 3 ? "1" : "0" });
+                    if (mine != null && mine.Util >= 0) s.Radio.Add(new[] { "Air time used", mine.Util + "% of the channel" + (mine.Stations >= 0 ? " · " + mine.Stations + " devices on this AP" : ""), mine.Util >= 70 ? "2" : mine.Util >= 45 ? "1" : "0" });
+                    if (strong >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your channel is a crowded room: " + same.Count + " neighbours share it. Everyone takes turns, so everyone is slower.", same.Count + " access points share your channel.")); }
+                    // Windows' Native Wifi API: channel width, roaming helpers, exact dBm
+                    string werr; var bss = WlanApi.List(true, out werr);
+                    foreach (var a in s.Aps) { var m2 = bss.FirstOrDefault(x => string.Equals(x.Bssid, a.Bssid, StringComparison.OrdinalIgnoreCase)); if (m2 != null) { a.Rssi = m2.Rssi; a.Width = m2.Width; } }
+                    var me = bss.FirstOrDefault(x => string.Equals(x.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
+                    if (me != null)
+                    {
+                        s.Radio.Insert(4, new[] { "Channel width", me.Width + " MHz" + (me.Width >= 80 ? " - a wide, fast lane" : me.Width == 40 ? "" : " - narrow, so slower but sturdier"), "0" });
+                        var help = new List<string>(); if (me.K) help.Add("11k"); if (me.V) help.Add("11v"); if (me.R) help.Add("11r fast roaming");
+                        s.Radio.Add(new[] { "Roaming help", help.Count == 0 ? "none advertised - roaming is up to your laptop alone" : string.Join(" · ", help), help.Count == 0 ? "1" : "0" });
+                        int idx = s.Radio.FindIndex(r => r[0] == "Signal");
+                        if (idx >= 0 && me.Rssi < 0) s.Radio[idx] = new[] { "Signal", sig + "%  ·  " + me.Rssi + " dBm", me.Rssi < -75 ? "2" : me.Rssi < -67 ? "1" : "0" };
+                    }
+                    if (band.StartsWith("2.4", StringComparison.Ordinal) && s.Aps.Any(a => a.Ssid == F("SSID") && !a.Band.StartsWith("2.4", StringComparison.Ordinal)))
+                        notes.Add(Voice.P("You're on 2.4 GHz, but your network also offers a faster band. Moving a bit closer usually lets Windows switch.", "Your network also has 5/6 GHz; 2.4 GHz is slower and more crowded."));
+                }
+            }
+            else
+            {
+                s.Radio.Add(Row("Connection", "Cable (Ethernet)"));
+                s.Radio.Add(new[] { "Adapter", nic.Description });
+                s.Radio.Add(new[] { "Link speed", Rate(nic.Speed), nic.Speed > 0 && nic.Speed < 1000000000 ? "1" : "0" });
+                if (nic.Speed > 0 && nic.Speed <= 100000000) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your cable only negotiated " + Rate(nic.Speed) + ". A worn cable, an old switch port or a dock is holding you back - gigabit is normal.", "Link negotiated at " + Rate(nic.Speed) + " (gigabit expected).")); }
+            }
+
+            // ---- addressing
+            try
+            {
+                var ip = nic.GetIPProperties();
+                var v4 = ip.UnicastAddresses.FirstOrDefault(a => a.Address.AddressFamily == AddressFamily.InterNetwork);
+                var v6 = ip.UnicastAddresses.Where(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal).Select(a => a.Address.ToString()).FirstOrDefault();
+                s.Address.Add(new[] { "IPv4 address", v4 == null ? "-" : v4.Address + (v4.IPv4Mask != null ? " / " + v4.IPv4Mask : "") });
+                s.Address.Add(new[] { "IPv6", v6 ?? "none (IPv4 only)" });
+                s.Address.Add(new[] { "Gateway (router)", gw == "" ? "-" : gw });
+                s.Address.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.Where(a => a.AddressFamily == AddressFamily.InterNetwork).Select(a => a.ToString()).Take(3)) });
+                var p4 = ip.GetIPv4Properties();
+                s.Address.Add(new[] { "Address from", p4 != null && p4.IsDhcpEnabled ? "DHCP" + (ip.DhcpServerAddresses.Count > 0 ? " (" + ip.DhcpServerAddresses[0] + ")" : "") : "set by hand (static)" });
+                s.Address.Add(new[] { "Packet size (MTU)", p4 != null ? p4.Mtu + " bytes" : "-" });
+                string mac = string.Join(":", nic.GetPhysicalAddress().GetAddressBytes().Select(b => b.ToString("X2", CultureInfo.InvariantCulture)));
+                s.Address.Add(new[] { "Hardware address (MAC)", mac == "" ? "-" : mac });
+                if (v4 != null && v4.Address.ToString().StartsWith("169.254.", StringComparison.Ordinal)) { lv = 2; notes.Insert(0, Voice.P("Windows gave itself a 169.254 address - nobody handed you a real one. The router's DHCP isn't answering.", "No DHCP address (169.254.x.x).")); }
+            }
+            catch (Exception e) { Program.Log("link addr: " + e.Message); }
+
+            // ---- traffic and errors
+            try
+            {
+                var st = nic.GetIPStatistics();
+                s.Traffic.Add(new[] { "Received", Draw.MemStr(st.BytesReceived) + " · " + Count(st.UnicastPacketsReceived) + " packets" });
+                s.Traffic.Add(new[] { "Sent", Draw.MemStr(st.BytesSent) + " · " + Count(st.UnicastPacketsSent) + " packets" });
+                long err = st.IncomingPacketsWithErrors + st.OutgoingPacketsWithErrors, disc = st.IncomingPacketsDiscarded + st.OutgoingPacketsDiscarded;
+                s.Traffic.Add(new[] { "Damaged packets (errors)", Count(err), err > 100 ? "1" : "0" });
+                s.Traffic.Add(new[] { "Dropped packets (discards)", Count(disc), disc > 1000 ? "1" : "0" });
+                if (err > 100) { lv = Math.Max(lv, 1); notes.Add(s.Wifi ? "The adapter has counted " + Count(err) + " damaged packets - radio interference or a driver issue." : "The adapter has counted " + Count(err) + " damaged packets - try another cable or dock port."); }
+            }
+            catch (Exception e) { Program.Log("link stats: " + e.Message); }
+
+            // ---- driver age
+            var drv = DriverInfo.Of(nic.Id);
+            if (drv != null && drv[0] != "")
+            {
+                double age = DriverInfo.AgeYears(drv[1]);
+                s.Radio.Add(new[] { "Driver", drv[0] + (drv[1] != "" ? " · " + drv[1] : "") + (age >= 0 ? " (" + (age < 1 ? "this year" : age.ToString("0", CultureInfo.CurrentCulture) + (age < 1.5 ? " year old" : " years old")) + ")" : ""), age >= 3 ? "1" : "0" });
+                if (age >= 3) notes.Add(Voice.P("Your " + (s.Wifi ? "Wi-Fi" : "network") + " driver is " + age.ToString("0", CultureInfo.CurrentCulture) + " years old. Old drivers are a top cause of random drops - worth an update from the laptop maker.", "Network driver is " + age.ToString("0", CultureInfo.CurrentCulture) + " years old."));
+            }
+            // ---- Windows' own diary: drops and DHCP trouble in the last 24 h
+            string de;
+            if (s.Wifi) { s.Drops = EvLog.WifiDrops(24, out de); s.DropsErr = de; }
+            s.Dhcp = EvLog.DhcpProblems(24, out de); s.DhcpErr = de;
+            int realDrops = s.Drops.Count(d => d[1].IndexOf("by the user", StringComparison.OrdinalIgnoreCase) < 0);
+            if (realDrops >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your Wi-Fi dropped " + realDrops + " times in the last day - the reasons are below.", realDrops + " Wi-Fi drops in 24 h.")); }
+            // ---- devices on your network (the ARP table - nothing is scanned), names from your router's DNS
+            try
+            {
+                int ifIndex = nic.GetIPProperties().GetIPv4Properties().Index;
+                var arp = Arp.Table().Where(e => e.IfIndex == ifIndex && e.Dynamic && DestCheck.Kind(e.Ip) != "public").Take(40).ToList();
+                var ptr = new Dictionary<string, string>();
+                if ((DateTime.UtcNow - lanAt).TotalMinutes < 5) lock (lanNames) foreach (var kv in lanNames) ptr[kv.Key] = kv.Value;
+                var tasks = arp.Where(e => !ptr.ContainsKey(e.Ip)).Select(e => Task.Factory.StartNew(() => { try { var h = Dns.GetHostEntry(IPAddress.Parse(e.Ip)).HostName; return Tuple.Create(e.Ip, h != e.Ip ? h : ""); } catch { return Tuple.Create(e.Ip, ""); } })).ToArray();
+                try { Task.WaitAll(tasks, 2500); } catch (AggregateException) { }
+                foreach (var t in tasks) if (t.Status == TaskStatus.RanToCompletion) ptr[t.Result.Item1] = t.Result.Item2;
+                lock (lanNames) { if ((DateTime.UtcNow - lanAt).TotalMinutes >= 5) { lanNames.Clear(); lanAt = DateTime.UtcNow; } foreach (var kv in ptr) lanNames[kv.Key] = kv.Value; }
+                foreach (var e in arp.OrderBy(e => e.Ip == gw ? 0 : 1).ThenBy(e => e.Ip.Split('.').Select(x => x.PadLeft(3, '0')).Aggregate((a, b) => a + b), StringComparer.Ordinal))
+                {
+                    string nm; ptr.TryGetValue(e.Ip, out nm);
+                    string what = e.Ip == gw ? "your router" : Arp.Randomised(e.Mac) ? "private (random) address - usually a phone or laptop" : "";
+                    s.Lan.Add(new[] { string.IsNullOrEmpty(nm) ? e.Ip : nm.Split('.')[0] + "  (" + e.Ip + ")", e.Mac, what });
+                }
+            }
+            catch (Exception ex) { Program.Log("lan: " + ex.Message); }
+
+            // ---- link quality to the router (from the gateway pings already running)
+            var pings = m.GwPing.Values(30);
+            var good = pings.Where(x => !double.IsNaN(x)).ToArray();
+            if (pings.Length > 0)
+            {
+                double loss = 100.0 * (pings.Length - good.Length) / pings.Length;
+                double jit = 0; for (int i = 1; i < good.Length; i++) jit += Math.Abs(good[i] - good[i - 1]); jit = good.Length > 1 ? jit / (good.Length - 1) : 0;
+                s.Quality.Add(new[] { "Router answers in", good.Length > 0 ? good.Min().ToString("0", CultureInfo.CurrentCulture) + " / " + good.Average().ToString("0", CultureInfo.CurrentCulture) + " / " + good.Max().ToString("0", CultureInfo.CurrentCulture) + " ms (best / typical / worst)" : "no answer", good.Length > 0 && good.Average() > 30 ? "1" : "0" });
+                s.Quality.Add(new[] { "Jitter", jit.ToString("0.0", CultureInfo.CurrentCulture) + " ms", jit > 20 ? "2" : jit > 8 ? "1" : "0" });
+                s.Quality.Add(new[] { "Loss", loss.ToString("0", CultureInfo.CurrentCulture) + "%", loss >= 5 ? "2" : loss > 0 ? "1" : "0" });
+                s.Quality.Add(new[] { "Based on", good.Length + " of the last " + pings.Length + " router pings" });
+                if (loss >= 5) { lv = 2; notes.Insert(0, Voice.P("Packets are getting lost between you and the router (" + loss.ToString("0", CultureInfo.CurrentCulture) + "%). The problem is in the room, not on the internet.", "Loss to the router: " + loss.ToString("0", CultureInfo.CurrentCulture) + "%.")); }
+                else if (jit > 20) { lv = Math.Max(lv, 1); notes.Add("Jitter to the router is high (" + jit.ToString("0", CultureInfo.CurrentCulture) + " ms) - calls will feel choppy."); }
+            }
+            else s.Quality.Add(Row("Router answers in", "router ping is off (Settings)"));
+
+            if (noGw) { lv = 2; notes.Insert(0, Voice.P("You're connected to the network, but there's no router (gateway) to reach anything beyond it. Usually DHCP failed, or the network is local-only.", "Connected, but no default gateway.")); }
+            s.Level = lv;
+            s.Verdict = notes.Count > 0 ? string.Join("\n", notes.Take(3)) : s.Wifi ? Voice.P("Your Wi-Fi is in great shape - strong signal, clean air, quick router.", "Wi-Fi link looks healthy.") : Voice.P("Cable, full speed, no errors. The steadiest link there is.", "Wired link looks healthy.");
+            if (s.LocationBlocked) { s.Level = Math.Max(s.Level, 1); s.Verdict = Voice.P("Windows is hiding the Wi-Fi details until you allow location for desktop apps (Settings > Privacy & security > Location > Let desktop apps access your location). Annoying, but that's how Windows 11 protects where you are.", "Wi-Fi details need location access: Settings > Privacy & security > Location > Let desktop apps access your location.") + (notes.Count > 0 ? "\n" + notes[0] : ""); }
+            return s;
+        }
+    }
+}

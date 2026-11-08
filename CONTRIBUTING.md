@@ -8,8 +8,8 @@ Thanks for wanting to make AdeeboMeter better.
 
 ## Changing the code
 
-Everything is one file, `AdeeboMeter.cs`, built by the C# compiler that ships with Windows — double-click
-`build_exe.cmd`. It builds, prints the SHA256 and runs the self-test (`AdeeboMeter.exe --selftest`).
+The source is in `src/` (one file per part) and the explanations in `knowledge/`, built by the C# compiler that ships
+with Windows — double-click `build_exe.cmd`. It builds, prints the SHA256 and runs the self-test (`AdeeboMeter.exe --selftest`).
 
 A change is welcome when it keeps the promises:
 

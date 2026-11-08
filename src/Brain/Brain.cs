@@ -1,0 +1,236 @@
+// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+
+namespace AdeeboMeter
+{
+    // ================================================================== the brain: what the Monitor's numbers mean over time
+    // Runs on the Monitor's own once-a-second thread and only does arithmetic on numbers already measured - no new packets,
+    // no new processes. Once a minute it writes the history line, adds up data usage, learns what's normal for this network
+    // and decides whether anything deserves an alert. Everything it keeps lives on this PC.
+    static class Brain
+    {
+        // ---------- the network we're on (told apart by the router's hardware address - works with location off)
+        public static volatile string NetKey = "", NetLabel = "";
+        static DateTime lastKey = DateTime.MinValue;
+        static void LearnNetwork(Monitor m)
+        {
+            if ((DateTime.UtcNow - lastKey).TotalSeconds < 60 && NetKey != "") return;
+            lastKey = DateTime.UtcNow;
+            string gw, ssid, kind; lock (m.L) { gw = m.Gateway; ssid = m.Ssid; kind = m.AdapterKind; }
+            if (gw == "") { NetKey = "offline"; NetLabel = "Offline"; return; }
+            string mac = ""; try { mac = Arp.MacOf(gw); } catch { }
+            NetKey = (mac != "" ? mac : gw).Replace(':', '-');
+            NetLabel = ssid != "" ? ssid : (kind == "Wi-Fi" ? "Wi-Fi" : kind) + " via " + gw;
+        }
+
+        // ---------- one-minute accumulation
+        static int minute = -1, n, worst; static double cpu, mem, down, up, gw, net, wifi, rx, gwMax, netMax, mbDown, mbUp; static int gwN, netN, wifiN, rxN, lossN, lossBad;
+        static double lastGw = double.NaN, lastNet = double.NaN;
+        public static void Second(Monitor m)
+        {
+            try
+            {
+                LearnNetwork(m);
+                var now = DateTime.Now; int mm = now.Hour * 60 + now.Minute;
+                if (minute >= 0 && mm != minute && n > 0) Flush(m, now.AddMinutes(-1));
+                if (mm != minute) { minute = mm; Reset(); }
+                n++;
+                var s = m.Latest; worst = Math.Max(worst, s.Level);
+                Add(ref cpu, m.Cpu.Last); Add(ref mem, m.Mem.Last);
+                double d = m.Down.Last, u = m.Up.Last;
+                if (!double.IsNaN(d)) { down += d; mbDown += d / 8; }
+                if (!double.IsNaN(u)) { up += u; mbUp += u / 8; }
+                double g = m.GwPing.Last, t = m.NetPing.Last;
+                if (!double.IsNaN(g) && g != lastGw) { gw += g; gwN++; gwMax = Math.Max(gwMax, g); Bloat.Sample(g, d, u); }
+                lastGw = g;
+                if (t != lastNet) { if (double.IsNaN(t)) lossBad++; else { net += t; netN++; netMax = Math.Max(netMax, t); } lossN++; }
+                lastNet = t;
+                int sig, rate; bool call; lock (m.L) { sig = m.WifiSignal; rate = m.RxRate; call = m.CallLikely; }
+                if (sig >= 0) { wifi += sig; wifiN++; }
+                if (rate > 0) { rx += rate; rxN++; }
+                Calls.Second(m, call, g, t, sig, rate, d, u);
+                Watch.Upload(m, u, call);
+                Pinned.Tick();
+            }
+            catch (Exception e) { Program.Log("brain: " + e.Message); }
+        }
+        static void Add(ref double acc, double v) { if (!double.IsNaN(v)) acc += v; }
+        static void Reset() { n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = 0; }
+        static void Flush(Monitor m, DateTime t)
+        {
+            double gwAvg = gwN > 0 ? gw / gwN : double.NaN, netAvg = netN > 0 ? net / netN : double.NaN, loss = lossN > 0 ? 100.0 * lossBad / lossN : double.NaN;
+            History.Minute(t, new[] { worst, cpu / n, mem / n, down / n, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, up / n, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey);
+            Usage.Add(NetKey, NetLabel, mbDown, mbUp);
+            Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
+            if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));
+        }
+    }
+
+    // ================================================================== small files in %LOCALAPPDATA%\AdeeboMeter (never leave the PC)
+    static class Store
+    {
+        public static string PathOf(string name) { return Path.Combine(Program.DataDir, name); }
+        public static List<string[]> Read(string name)
+        {
+            var r = new List<string[]>();
+            try { var f = PathOf(name); if (File.Exists(f)) foreach (var l in File.ReadLines(f).Take(20000)) { var p = l.Split('\t'); if (p.Length > 1) r.Add(p); } }
+            catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
+            return r;
+        }
+        public static void Write(string name, IEnumerable<string[]> rows)
+        {
+            try
+            {
+                string f = PathOf(name), tmp = f + ".tmp";
+                File.WriteAllLines(tmp, rows.Select(r => string.Join("\t", r.Select(x => (x ?? "").Replace('\t', ' ').Replace('\n', ' ')))));
+                if (File.Exists(f)) File.Replace(tmp, f, null); else File.Move(tmp, f);
+            }
+            catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
+        }
+        public static double D(string s) { double v; return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0; }
+        public static string S(double v) { return v.ToString("0.###", CultureInfo.InvariantCulture); }
+    }
+
+    // ================================================================== data usage per day and network (DU Meter's job), kept 400 days
+    static class Usage
+    {
+        sealed class Row { public string Day, Key, Label; public double Down, Up; }
+        static List<Row> rows; static readonly object k = new object(); static DateTime saved = DateTime.UtcNow; static bool capWarned;
+        static void Load() { if (rows == null) rows = Store.Read("usage.txt").Where(r => r.Length >= 5).Select(r => new Row { Day = r[0], Key = r[1], Label = r[2], Down = Store.D(r[3]), Up = Store.D(r[4]) }).ToList(); }
+        public static void Add(string key, string label, double mbDown, double mbUp)
+        {
+            lock (k)
+            {
+                Load(); string day = DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                var r = rows.FirstOrDefault(x => x.Day == day && x.Key == key);
+                if (r == null) { r = new Row { Day = day, Key = key, Label = label }; rows.Add(r); }
+                r.Down += mbDown; r.Up += mbUp; r.Label = label;
+                if ((DateTime.UtcNow - saved).TotalMinutes >= 5) Save();
+            }
+            if (Cfg.CapGB > 0)
+            {
+                double month = Month(null) / 1024;
+                if (month >= Cfg.CapGB * 0.8 && !capWarned) { capWarned = true; Alerts.Raise("cap", "You've used " + month.ToString("0.#", CultureInfo.CurrentCulture) + " GB of your " + Cfg.CapGB + " GB this month.", 24 * 60); }
+                if (month < Cfg.CapGB * 0.8) capWarned = false;
+            }
+        }
+        public static void Save()
+        {
+            lock (k)
+            {
+                if (rows == null) return; saved = DateTime.UtcNow;
+                string cut = DateTime.Today.AddDays(-400).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                rows.RemoveAll(x => string.CompareOrdinal(x.Day, cut) < 0);
+                Store.Write("usage.txt", rows.Select(x => new[] { x.Day, x.Key, x.Label, Store.S(x.Down), Store.S(x.Up) }).ToList());
+            }
+        }
+        // MB down + up; key null = every network
+        public static double Today(string key) { return Sum(key, DateTime.Today, DateTime.Today); }
+        public static double Month(string key) { var t = DateTime.Today; return Sum(key, new DateTime(t.Year, t.Month, 1), t); }
+        static double Sum(string key, DateTime from, DateTime to)
+        {
+            lock (k)
+            {
+                Load(); string a = from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), b = to.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                return rows.Where(x => (key == null || x.Key == key) && string.CompareOrdinal(x.Day, a) >= 0 && string.CompareOrdinal(x.Day, b) <= 0).Sum(x => x.Down + x.Up);
+            }
+        }
+        // per network this month: label, MB down, MB up
+        public static List<string[]> MonthByNetwork()
+        {
+            lock (k)
+            {
+                Load(); var t = DateTime.Today; string a = new DateTime(t.Year, t.Month, 1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                return rows.Where(x => string.CompareOrdinal(x.Day, a) >= 0).GroupBy(x => x.Key)
+                    .Select(g => new[] { g.Last().Label, Store.S(g.Sum(x => x.Down)), Store.S(g.Sum(x => x.Up)) })
+                    .OrderByDescending(x => Store.D(x[1]) + Store.D(x[2])).ToList();
+            }
+        }
+        public static string Mb(double mb) { return mb >= 1024 ? (mb / 1024).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }
+    }
+
+    // ================================================================== what's normal for each network ("slower than usual")
+    static class Baseline
+    {
+        sealed class B { public string Key, Label; public double Gw, Net, Loss; public int N; }
+        static List<B> list; static readonly object k = new object(); static DateTime saved = DateTime.UtcNow, warned = DateTime.MinValue;
+        static readonly List<double> recentGw = new List<double>(), recentNet = new List<double>();
+        static void Load() { if (list == null) list = Store.Read("baselines.txt").Where(r => r.Length >= 6).Select(r => new B { Key = r[0], Label = r[1], Gw = Store.D(r[2]), Net = Store.D(r[3]), Loss = Store.D(r[4]), N = (int)Store.D(r[5]) }).ToList(); }
+        public static void Minute(Monitor m, string key, string label, double gw, double net, double loss)
+        {
+            if (key == "" || key == "offline") return;
+            B b;
+            lock (k)
+            {
+                Load(); b = list.FirstOrDefault(x => x.Key == key);
+                if (b == null) { b = new B { Key = key, Label = label }; list.Add(b); }
+                b.Label = label;
+                // compare the last 5 minutes with what this network is normally like, before learning from them
+                Keep(recentGw, gw); Keep(recentNet, net);
+                if (b.N >= 120 && (DateTime.UtcNow - warned).TotalMinutes > 30)
+                {
+                    double g5 = Avg(recentGw), n5 = Avg(recentNet);
+                    if (!double.IsNaN(g5) && g5 > Math.Max(b.Gw * 2.5, b.Gw + 15))
+                    { warned = DateTime.UtcNow; m.Events.Add(1, "base", "Slower than usual for " + label + ": your router answers in " + g5.ToString("0", CultureInfo.CurrentCulture) + " ms (normally " + b.Gw.ToString("0", CultureInfo.CurrentCulture) + " ms)."); Alerts.Raise("base", "Slower than usual on " + label + " - the link to your router is " + (g5 / Math.Max(1, b.Gw)).ToString("0", CultureInfo.CurrentCulture) + "x slower than normal.", 60); }
+                    else if (!double.IsNaN(n5) && n5 > Math.Max(b.Net * 2.5, b.Net + 40))
+                    { warned = DateTime.UtcNow; m.Events.Add(1, "base", "Slower than usual for " + label + ": the internet answers in " + n5.ToString("0", CultureInfo.CurrentCulture) + " ms (normally " + b.Net.ToString("0", CultureInfo.CurrentCulture) + " ms)."); }
+                }
+                // learn: a slow average over roughly the last day of use
+                double a = 1.0 / Math.Min(b.N + 1, 1440);
+                if (!double.IsNaN(gw)) b.Gw = b.N == 0 ? gw : b.Gw + (gw - b.Gw) * a;
+                if (!double.IsNaN(net)) b.Net = b.N == 0 ? net : b.Net + (net - b.Net) * a;
+                if (!double.IsNaN(loss)) b.Loss = b.N == 0 ? loss : b.Loss + (loss - b.Loss) * a;
+                b.N++;
+                if ((DateTime.UtcNow - saved).TotalMinutes >= 10) { saved = DateTime.UtcNow; Store.Write("baselines.txt", list.Select(x => new[] { x.Key, x.Label, Store.S(x.Gw), Store.S(x.Net), Store.S(x.Loss), x.N.ToString(CultureInfo.InvariantCulture) }).ToList()); }
+            }
+        }
+        static void Keep(List<double> q, double v) { q.Add(v); while (q.Count > 5) q.RemoveAt(0); }
+        static double Avg(List<double> q) { var v = q.Where(x => !double.IsNaN(x)).ToList(); return v.Count >= 4 ? v.Average() : double.NaN; }
+        // "normally 4 ms to your router, 21 ms to the internet" for the current network, or "" while still learning
+        public static string Normal(string key)
+        {
+            lock (k)
+            {
+                Load(); var b = list.FirstOrDefault(x => x.Key == key);
+                if (b == null || b.N < 120) return b == null ? "" : "Still learning what's normal here (" + b.N + " of 120 minutes).";
+                return "Normally " + b.Gw.ToString("0", CultureInfo.CurrentCulture) + " ms to your router and " + b.Net.ToString("0", CultureInfo.CurrentCulture) + " ms to the internet on " + b.Label + ".";
+            }
+        }
+    }
+
+    // ================================================================== latency under load (bufferbloat), measured passively
+    static class Bloat
+    {
+        static readonly List<double> idle = new List<double>(), busy = new List<double>(); static readonly object k = new object();
+        public static void Sample(double gwMs, double downMbps, double upMbps)
+        {
+            bool loaded = (!double.IsNaN(upMbps) && upMbps > 2) || (!double.IsNaN(downMbps) && downMbps > 20);
+            bool quiet = (double.IsNaN(upMbps) || upMbps < 0.3) && (double.IsNaN(downMbps) || downMbps < 1);
+            lock (k)
+            {
+                if (loaded) { busy.Add(gwMs); if (busy.Count > 120) busy.RemoveAt(0); }
+                else if (quiet) { idle.Add(gwMs); if (idle.Count > 120) idle.RemoveAt(0); }
+            }
+        }
+        static double Median(IEnumerable<double> v) { var s = v.OrderBy(x => x).ToList(); return s.Count == 0 ? double.NaN : s[s.Count / 2]; }
+        // extra delay your own traffic adds at the router; NaN until there are enough busy and quiet samples
+        public static double Extra(out int busyN)
+        {
+            lock (k) { busyN = busy.Count; return busy.Count >= 8 && idle.Count >= 8 ? Median(busy) - Median(idle) : double.NaN; }
+        }
+        public static string Story()
+        {
+            int nb; double x = Extra(out nb);
+            if (double.IsNaN(x)) return "Not measured yet - it needs a few minutes of both busy and quiet traffic (" + nb + " busy samples so far).";
+            if (x < 20) return "Your router keeps up: your own downloads and uploads add only " + x.ToString("0", CultureInfo.CurrentCulture) + " ms. Calls won't stutter because of it.";
+            if (x < 80) return "Your own traffic adds " + x.ToString("0", CultureInfo.CurrentCulture) + " ms at the router - noticeable in games and calls during big uploads.";
+            return "Your router adds " + x.ToString("0", CultureInfo.CurrentCulture) + " ms when your PC is busy uploading or downloading - that's why calls stutter during OneDrive syncs or big downloads. A router with \"SQM\" / \"smart queue\" fixes this.";
+        }
+    }
+}

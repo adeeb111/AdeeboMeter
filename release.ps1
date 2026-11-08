@@ -6,16 +6,16 @@
 #   dist\SHA256SUMS                        fingerprints of the exe and both zips
 #   dist\RELEASE-NOTES-<version>.md        this version's CHANGELOG section
 #
-# The version comes from AdeeboMeter.cs (Program.Version) - change it there and add a CHANGELOG section, nothing else.
+# The version comes from src\Program.cs (Program.Version) - change it there and add a CHANGELOG section, nothing else.
 # The GitHub release is tagged v<version> (v1.0, v1.1 ...).
 param([switch]$NoBuild)
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $here
 
-$src = Get-Content -Raw "AdeeboMeter.cs"
+$src = Get-Content -Raw "src\Program.cs"
 $m = [regex]::Match($src, 'public const string Version = "([^"]+)"')
-if (-not $m.Success) { throw "Version not found in AdeeboMeter.cs" }
+if (-not $m.Success) { throw "Version not found in src\Program.cs" }
 $ver = $m.Groups[1].Value
 Write-Host "AdeeboMeter $ver"
 
@@ -27,7 +27,16 @@ $section = if ($j -gt 0) { $log.Substring($i, $j - $i) } else { $log.Substring($
 
 if (-not $NoBuild) {
     $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-    & $csc /nologo /target:winexe /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll AdeeboMeter.cs
+    # the knowledge (knowledge\*.txt) rides compressed inside the exe and is unpacked only when needed
+    New-Item -ItemType Directory -Force obj | Out-Null
+    $res = @()
+    foreach ($k in Get-ChildItem knowledge\*.txt) {
+        $b = [IO.File]::ReadAllBytes($k.FullName); $gz = "obj\$($k.BaseName).gz"
+        $o = [IO.File]::Create($gz); $z = New-Object IO.Compression.GZipStream($o, [IO.Compression.CompressionLevel]::Optimal)
+        $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
+        $res += "/resource:$gz,AdeeboMeter.knowledge.$($k.BaseName).gz"
+    }
+    & $csc /nologo /target:winexe /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /recurse:src\*.cs @res
     if ($LASTEXITCODE -ne 0) { throw "build failed" }
 }
 function Sha([string]$p) { (Get-FileHash $p -Algorithm SHA256).Hash.ToLowerInvariant() }

@@ -1,0 +1,720 @@
+== System
+friendly: Windows kernel
+cat: Windows core
+close: 2
+tag: The engine room. Everything else rides on it.
+what: Runs the heart of Windows: memory, disks, network and every driver work through here.
+how: It isn't an app at all - it's the kernel itself plus the drivers that talk straight to your hardware. Its CPU and memory are really your drivers' work.
+why: No kernel, no Windows. Every file you open and every packet you send passes through it.
+without: It can't be stopped - if it fails you get a blue screen. If it's busy, a driver is struggling (Wi-Fi, disk, or the antivirus checking files).
+
+== Idle|System Idle Process
+friendly: System Idle
+cat: Windows core
+close: 2
+tag: Not a program - it's how much of your CPU is free.
+what: Shows the CPU time nobody is using.
+how: When there's nothing to do, the processor runs this placeholder and naps to save power and heat.
+why: Pure bookkeeping, so the numbers add up to 100%.
+without: Nothing to remove. A big 'Idle' number is good news.
+
+== Registry
+friendly: Registry
+cat: Windows core
+close: 2
+tag: Windows' settings book, kept in memory.
+what: Holds the registry - the giant database of settings for Windows and every app.
+how: The kernel keeps the registry in this process's memory so lookups are instant, and saves it to files on disk.
+why: Every app setting, driver option and policy your IT team pushes lives there.
+without: Windows couldn't remember anything - it wouldn't even boot.
+
+== Memory Compression
+friendly: Memory Compression
+cat: Windows core
+close: 2
+tag: Zips your RAM so it lasts longer.
+what: Squeezes memory that apps aren't using right now, instead of writing it out to the disk.
+how: Pages that go quiet get compressed in RAM. When the app needs them back, they're unzipped in microseconds - far faster than reading the page file.
+why: It makes your memory feel bigger when Outlook, Teams and Edge all want room at once.
+without: Windows would hit the disk sooner and everything would feel slower. If it's large, your RAM is simply full - close an app or two.
+
+== Secure System
+friendly: Secure System
+cat: Security
+close: 2
+tag: A locked vault inside your PC.
+what: Runs Windows' virtualization-based security - a separate, protected world for secrets.
+how: The CPU's virtualization splits memory in two, so even malware with admin rights can't read what's inside the vault.
+why: It guards your sign-in secrets and keeps the kernel honest (Credential Guard, memory integrity).
+without: Stealing passwords would be much easier. On a work laptop IT turns this on deliberately.
+
+== LsaIso
+friendly: Credential Guard
+cat: Security
+close: 2
+tag: Your passwords' bodyguard.
+what: Keeps your sign-in secrets inside the Secure System vault.
+how: lsass asks it to do the secret work; the actual keys never leave the protected world.
+why: Even an attacker with admin rights can't copy your credentials out of memory.
+without: Credentials would sit in normal memory - the classic target for attackers.
+
+== smss
+friendly: Session Manager
+cat: Windows core
+close: 2
+tag: The first thing Windows starts - the stage manager.
+what: Builds each session when Windows boots or someone signs in.
+how: It starts csrss and wininit / winlogon for every session, sets up the page file, then mostly sleeps.
+why: Every session needs its stage built before the actors arrive.
+without: Windows would never finish starting.
+
+== csrss
+friendly: Client / Server Runtime
+cat: Windows core
+close: 2
+tag: Old but vital plumbing for windows and consoles.
+what: Handles parts of window management, console windows and shutdown - one copy per session.
+how: The kernel hands it the jobs that have to run outside the kernel but still be trusted.
+why: Apps couldn't open console windows and Windows couldn't shut down cleanly.
+without: Windows marks it critical - killing it blue-screens the PC.
+
+== wininit
+friendly: Windows Start-Up
+cat: Windows core
+close: 2
+tag: Starts the background world, once, at boot.
+what: Launches services, lsass and the rest of the system's background side.
+how: It runs once at boot, starts its children, then waits quietly in case one needs restarting.
+why: It's the parent of everything that runs in the background.
+without: Critical - stopping it crashes Windows.
+
+== winlogon
+friendly: Sign-in (Winlogon)
+cat: Windows core
+close: 2
+tag: The front door. Ctrl+Alt+Del lands here.
+what: Handles sign-in, locking, sign-out and the Ctrl+Alt+Del screen.
+how: It shows the lock screen, passes what you type to lsass to check, then starts your desktop.
+why: No front door means no way in - and no safe way to lock the PC when you walk away.
+without: You'd be signed out on the spot.
+
+== services
+friendly: Service Control Manager
+cat: Windows core
+close: 2
+tag: The conductor of every background service.
+what: Starts, stops and watches every Windows service - networking, updates, printing, VPN agents.
+how: At boot it reads the list of services, starts each one when it's needed, and restarts the ones that crash.
+why: Hundreds of background jobs need one boss to keep them in order.
+without: No network, no sound, no updates - Windows would grind to a halt.
+
+== lsass
+friendly: Local Security Authority
+cat: Security
+close: 2
+tag: The bouncer who checks every ID.
+what: Checks passwords, PINs and smart cards, and hands out the 'tickets' (Kerberos) your PC shows to company servers.
+how: When you sign in or open a file share, it proves who you are and holds your session's security tokens.
+why: Every 'are you allowed in?' question at work - Wi-Fi, VPN, file shares, Outlook - starts here.
+without: Windows restarts the whole PC within a minute. It's also attackers' favourite target, which is why it's so well guarded.
+
+== svchost
+friendly: Service Host
+cat: Windows core
+close: 1
+tag: An apartment building for Windows services.
+what: Each copy is home to one or more Windows services: DHCP (your IP address), DNS client (name lookups), Wi-Fi, Windows Update, time sync, Bluetooth and dozens more.
+how: Services are written as libraries, not programs, so they need a host to live in. With enough RAM, Windows gives most services their own copy so one crash can't take the others down.
+why: Your IP address, name lookups and Wi-Fi all live inside svchost.
+without: Kill the wrong copy and the network, the sound or the whole PC goes with it. Seeing 50-90 copies is completely normal.
+
+== dwm
+friendly: Desktop Window Manager
+cat: Windows core
+close: 2
+tag: The artist painting every pixel you see.
+what: Draws your whole screen - windows, shadows, transparency, animations.
+how: Each app paints into its own off-screen picture. dwm stacks them together on the graphics chip and sends the finished frame to the monitor.
+why: It's why windows don't smear when you drag them and the screen stays smooth.
+without: The screen flashes black and Windows restarts it. A busy dwm means lots of video, animation or extra monitors.
+
+== explorer
+friendly: Explorer (desktop and taskbar)
+cat: Windows core
+close: 1
+tag: Your desktop, taskbar and Start button live here.
+what: Runs the taskbar, the desktop icons, the system tray and every File Explorer window.
+how: One copy runs the 'shell' - the whole desktop experience. Folder windows may add more copies.
+why: It's your home screen.
+without: The taskbar and desktop vanish (your apps keep running). Task Manager > Run new task > explorer brings it back.
+
+== fontdrvhost
+friendly: Font Driver Host
+cat: Windows helpers
+close: 2
+tag: Draws the letters - inside a safe box.
+what: Turns font files into the letters you see.
+how: Fonts are processed in a locked-down process, so a booby-trapped font file can't attack the system.
+why: Every word on your screen goes through it.
+without: Text drawing breaks until Windows restarts it.
+
+== sihost
+friendly: Shell Infrastructure Host
+cat: Windows helpers
+close: 1
+tag: Backstage crew for notifications and the taskbar.
+what: Supports the newer parts of the desktop: notifications, the action centre, parts of Start and the taskbar.
+how: Starts when you sign in and serves those pieces whenever they're needed.
+why: Without it, notifications and parts of the taskbar stop working.
+without: Windows restarts it; the desktop may flicker.
+
+== taskhostw
+friendly: Task Host
+cat: Windows helpers
+close: 1
+tag: Runs Windows' little scheduled chores.
+what: Hosts tasks that run at sign-in, on a timer or after an event - syncing settings, cleaning up.
+how: Task Scheduler starts it with whatever chore is due, then it goes back to sleep.
+why: Lots of quiet housekeeping happens through it.
+without: Those chores just wait until next time.
+
+== ctfmon
+friendly: Text Input (CTF)
+cat: Windows helpers
+close: 1
+tag: Lets you type - in any language, on any keyboard.
+what: Handles keyboard layouts, the emoji panel, handwriting and the touch keyboard.
+how: It sits between your keyboard and your apps, translating input methods.
+why: Typing in the search box and some apps depends on it.
+without: Some text boxes stop accepting typing until it restarts.
+
+== RuntimeBroker
+friendly: Runtime Broker
+cat: Windows helpers
+close: 1
+tag: The permission desk for modern apps.
+what: Checks whether modern apps (Photos, Settings, widgets) may use your camera, microphone, location or files.
+how: One copy per app that needs it; it asks you once and remembers.
+why: It keeps those apps inside their sandbox.
+without: Those apps lose access to what they asked for; Windows restarts it.
+
+== SearchHost|SearchApp
+friendly: Windows Search box
+cat: Windows helpers
+close: 1
+tag: The search box on your taskbar.
+what: Shows the search panel and its results.
+how: It asks the search index (SearchIndexer) for matches and draws the results.
+why: That's how Start search finds apps, files and settings.
+without: Search does nothing until it restarts.
+
+== SearchIndexer|SearchProtocolHost|SearchFilterHost
+friendly: Search Indexer
+cat: Windows helpers
+close: 1
+tag: The librarian who reads everything so you can find it fast.
+what: Builds the index of your files, your Outlook mail and your settings.
+how: When you're not busy it reads new and changed files and notes what's inside. The helper copies open the files; the indexer keeps the catalogue.
+why: It makes search instant instead of crawling the whole disk.
+without: Search becomes slow or empty. It's busy for a while after a big Outlook sync - that's normal.
+
+== StartMenuExperienceHost
+friendly: Start menu
+cat: Windows helpers
+close: 1
+tag: The Start menu itself.
+what: Draws Start.
+how: It starts at sign-in and waits, so Start pops open instantly.
+why: It's how you launch apps.
+without: Start won't open until it restarts.
+
+== ShellExperienceHost
+friendly: Taskbar pop-ups
+cat: Windows helpers
+close: 1
+tag: The clock, calendar and network pop-ups.
+what: Draws the flyouts from the corner of the taskbar.
+how: A modern app that wakes up when you click those icons.
+why: That's where you pick Wi-Fi and check the date.
+without: Those pop-ups don't open until it restarts.
+
+== TextInputHost
+friendly: Emoji and clipboard panel
+cat: Windows helpers
+close: 1
+tag: The emoji panel, clipboard history and touch keyboard.
+what: Shows the emoji panel (Win + .), clipboard history (Win + V) and the touch keyboard.
+how: Wakes up when you ask for input help.
+why: Handy shortcuts for typing.
+without: Those panels don't appear.
+
+== conhost
+friendly: Console Host
+cat: Windows helpers
+close: 0
+tag: The window behind every black command box.
+what: Draws the window for cmd, PowerShell and command-line tools - including tshark and ping when AdeeboMeter runs them.
+how: One copy per command-line program; it handles the text and the keyboard, even when the window is hidden.
+why: Command-line tools need a window, even an invisible one.
+without: The tool attached to it closes with it.
+
+== dllhost
+friendly: COM Surrogate
+cat: Windows helpers
+close: 1
+tag: A disposable box for risky little jobs.
+what: Runs small pieces of code - like thumbnail makers - outside Explorer.
+how: If a thumbnail maker crashes on a weird file, only this box dies, not your Explorer.
+why: It keeps Explorer stable.
+without: Thumbnails or a feature stop briefly; it comes back when needed.
+
+== WmiPrvSE
+friendly: WMI Provider Host
+cat: Windows helpers
+close: 1
+tag: Answers 'tell me about this PC' questions.
+what: Answers questions that apps and IT tools ask about the PC - hardware, software, settings, battery.
+how: Management tools, antivirus and scripts query WMI; this process fetches the answers.
+why: It's how IT and many apps see what's on your laptop.
+without: Those tools get no answers until it restarts. Constant high CPU means some tool keeps asking questions.
+
+== spoolsv
+friendly: Print Spooler
+cat: Windows helpers
+close: 1
+tag: The print queue.
+what: Queues print jobs and talks to printer drivers.
+how: Apps hand it pages; it feeds them to the printer at the printer's pace.
+why: So you can keep working while a 40-page PDF prints.
+without: No printing - and on some PCs no 'Print to PDF'.
+
+== audiodg
+friendly: Windows Audio Engine
+cat: Windows helpers
+close: 1
+tag: Every sound you hear is mixed here.
+what: Mixes and processes audio - Teams calls, videos, notification dings.
+how: Sound effects and enhancements run in this isolated process so a bad audio driver can't take down Windows.
+why: Sound, plus headset effects and noise suppression.
+without: Sound stops for a moment, then comes back. High CPU here usually means a headset 'enhancement' driver.
+
+== LockApp
+friendly: Lock screen
+cat: Windows helpers
+close: 1
+tag: The picture and clock on your lock screen.
+what: Draws the lock screen.
+how: Starts when you lock the PC and idles otherwise.
+why: It's what people see when you step away.
+without: Windows restarts it next time you lock.
+
+== ApplicationFrameHost
+friendly: App Frame Host
+cat: Windows helpers
+close: 1
+tag: The window frame around modern apps.
+what: Draws the title bar and border for modern apps like Settings and Calculator.
+how: The app draws its content; this process draws the frame around it.
+why: Moving and resizing those apps.
+without: Those apps' windows close.
+
+== backgroundTaskHost
+friendly: Background Task Host
+cat: Windows helpers
+close: 1
+tag: Short errands for modern apps.
+what: Runs quick background jobs for modern apps - live tiles, notifications, syncing.
+how: Starts, does the job, and exits.
+why: Keeps those apps up to date without opening them.
+without: The errand waits until next time.
+
+== dasHost
+friendly: Device Association
+cat: Windows helpers
+close: 1
+tag: Pairs Bluetooth and network devices.
+what: Finds and pairs devices like Bluetooth headsets and network printers.
+how: Listens for devices the PC already knows and connects them.
+why: Your headset connecting by itself.
+without: Devices may not reconnect automatically.
+
+== WUDFHost
+friendly: User-Mode Driver Host
+cat: Windows helpers
+close: 2
+tag: Runs some drivers in a safe box.
+what: Runs drivers for things like fingerprint readers, sensors and some USB devices.
+how: These drivers run outside the kernel, so a crash takes down the device - not the PC.
+why: Windows Hello fingerprint and many gadgets depend on it.
+without: That device stops working until Windows restarts it.
+
+== TrustedInstaller|TiWorker
+friendly: Windows Modules Installer
+cat: Windows helpers
+close: 2
+tag: Installs Windows updates.
+what: Installs and removes Windows updates and features.
+how: It unpacks update packages and swaps system files safely - the only process allowed to change them.
+why: Security patches.
+without: Updates fail half-way. It's busy after Patch Tuesday - let it finish.
+
+== MoUsoCoreWorker|usoclient
+friendly: Update Orchestrator
+cat: Windows helpers
+close: 1
+tag: Decides when to check for updates.
+what: Checks for Windows updates and schedules installs and restarts.
+how: Wakes up on a schedule, asks Windows Update (or your company's update server), then hands work to the installer.
+why: Keeps the laptop patched.
+without: Updates are delayed until it runs again.
+
+== smartscreen
+friendly: SmartScreen
+cat: Security
+close: 1
+tag: Checks downloads before you run them.
+what: Warns about unknown or unsafe apps and files.
+how: When you launch something new it checks the file's reputation.
+why: It stops a lot of malware right at the door.
+without: No warnings on dodgy downloads.
+
+== MsMpEng
+friendly: Microsoft Defender Antivirus
+cat: Security
+close: 3
+tag: The guard who checks every file at the door.
+what: Scans files as they're opened, downloaded or written, and runs full scans when the PC is idle.
+how: A filter driver hands it each file before the app gets it; Defender checks it against signatures and behaviour rules.
+why: Your first line of defence against malware - and required by company policy.
+without: It can't be stopped (tamper protection). High CPU usually means a scan or a big file copy - it settles down.
+
+== MpDefenderCoreService
+friendly: Defender Core Service
+cat: Security
+close: 3
+tag: Defender's helper.
+what: Supports Defender's engine and keeps it updated.
+how: Runs alongside MsMpEng.
+why: Keeps protection current.
+without: Protected - managed by Windows and IT.
+
+== NisSrv
+friendly: Defender Network Inspection
+cat: Security
+close: 3
+tag: Watches traffic for known attacks.
+what: Inspects network traffic for known exploit patterns.
+how: Matches what flows in and out against attack signatures.
+why: Catches attacks that arrive over the network.
+without: Protected - managed by Windows and IT.
+
+== MsSense|SenseIR|SenseCncProxy|SenseNdr
+friendly: Defender for Endpoint
+cat: Company / IT tools
+close: 3
+tag: The company's security camera on your laptop.
+what: Records security events on this PC and reports them to your company's security team.
+how: It watches program starts, network connections and file changes, and raises alerts in Microsoft Defender for Endpoint.
+why: The security team can spot and stop an attack across every company PC.
+without: Protected and managed by IT - don't try to stop it.
+
+== SecurityHealthService|SecurityHealthSystray
+friendly: Windows Security
+cat: Security
+close: 3
+tag: The shield icon and the dashboard behind it.
+what: Shows your protection status.
+how: Collects status from Defender, the firewall and Windows Update.
+why: It tells you when something is off.
+without: The icon disappears; the protection itself keeps running.
+
+== SgrmBroker
+friendly: System Guard
+cat: Security
+close: 3
+tag: Checks that Windows started untampered.
+what: Measures that the system booted cleanly.
+how: Uses the CPU's security features to check the boot chain.
+why: Lets company systems trust that your laptop is clean.
+without: Protected.
+
+== CcmExec
+friendly: Configuration Manager (SCCM)
+cat: Company / IT tools
+close: 3
+tag: IT's remote hands.
+what: Installs software and patches your company pushes, and reports what's installed.
+how: It checks in with IT's servers on a schedule and runs the jobs it's given.
+why: That's how approved software and updates reach your laptop.
+without: Managed by IT - leave it running.
+
+== IntuneManagementExtension|AgentExecutor
+friendly: Intune Management
+cat: Company / IT tools
+close: 3
+tag: IT's remote hands, cloud edition.
+what: Applies company settings, scripts and apps from Microsoft Intune.
+how: Checks in with Intune, then installs or configures what IT assigned.
+why: It keeps the laptop compliant with company policy.
+without: Managed by IT - leave it running.
+
+== OfficeClickToRun
+friendly: Office Updater
+cat: Company / IT tools
+close: 1
+tag: Keeps Office installed and up to date.
+what: Installs and updates Word, Excel, Outlook and the rest.
+how: Downloads updates in the background and applies them when the apps are closed.
+why: Security fixes for Office.
+without: Office stops updating and some Office apps may not start.
+
+== vpnagent|csc_ui|vpnui|acwebhelper
+friendly: Cisco Secure Client (VPN)
+cat: Company / IT tools
+close: 3
+tag: Your tunnel into the company network.
+what: Builds and holds the VPN tunnel.
+how: It creates a virtual network adapter and encrypts traffic to the company's VPN gateway (TLS / DTLS). The window you click is only its face; the agent does the work.
+why: Internal sites, lab servers and internal names only work through it.
+without: The VPN drops and internal names stop resolving.
+
+== CSFalconService|CSFalconContainer
+friendly: CrowdStrike Falcon
+cat: Company / IT tools
+close: 3
+tag: A company security sensor.
+what: Watches the PC for attacks and reports to the security team.
+how: A kernel sensor records activity and sends detections to CrowdStrike's cloud.
+why: Protects the company's network from a compromised laptop.
+without: Protected and managed by IT.
+
+== ZSATunnel|ZSAService|ZSATray|ZSATrayManager
+friendly: Zscaler
+cat: Company / IT tools
+close: 3
+tag: The company's internet security gateway.
+what: Sends your web traffic through the company's cloud security service.
+how: A local tunnel forwards traffic to Zscaler, which applies company policy before it reaches the internet.
+why: The same protection on any network - home, hotel or office.
+without: Managed by IT. If websites fail but ping works, it's worth a look here.
+
+== msedgewebview2
+friendly: Edge WebView2
+cat: Your apps
+close: 1
+tag: A mini Edge inside other apps.
+what: Lets apps like the new Outlook, Teams and Widgets show web content.
+how: Each app gets its own small copies of the Edge engine.
+why: Much of modern Office is really web pages inside a window.
+without: The app that owns it shows blank panels or closes. Many copies is normal.
+
+== msedge
+friendly: Microsoft Edge
+cat: Your apps
+close: 0
+tag: Your browser. Every tab is its own process.
+what: The web browser.
+how: Edge splits tabs, extensions and graphics into separate processes, so one bad tab can't crash the rest. That's why you see so many copies.
+why: Browsing, SharePoint, web apps.
+without: Safe to close - you lose your tabs (Edge can restore them).
+
+== chrome
+friendly: Google Chrome
+cat: Your apps
+close: 0
+tag: A browser. Every tab is its own process.
+what: The web browser.
+how: Like Edge, Chrome runs each tab and extension in its own process for safety and stability.
+why: Browsing.
+without: Safe to close - you lose your tabs (Chrome can restore them).
+
+== firefox
+friendly: Firefox
+cat: Your apps
+close: 0
+tag: A browser.
+what: The web browser.
+how: Splits content into a handful of processes for safety.
+why: Browsing.
+without: Safe to close.
+
+== ms-teams|teams|msteams
+friendly: Microsoft Teams
+cat: Your apps
+close: 0
+tag: Chat, calls and meetings.
+what: Teams chat, calls and meetings.
+how: Built on web technology (WebView2). Calls send audio and video as UDP streams - ports 50000-50059 by default - straight to Microsoft's media relays.
+why: Calls and chat at work.
+without: Safe to close, but you'll miss calls. During a call Teams is the biggest user of your network and CPU.
+
+== outlook
+friendly: Outlook (classic)
+cat: Your apps
+close: 0
+tag: Mail and calendar.
+what: Email, calendar and contacts.
+how: Keeps a copy of your mailbox on disk (an OST file) and syncs it with the mail server.
+why: Mail.
+without: Safe to close - new mail waits on the server. Busy CPU and disk right after opening means it's syncing.
+
+== olk
+friendly: Outlook (new)
+cat: Your apps
+close: 0
+tag: Mail and calendar, web-based.
+what: Email, calendar and contacts.
+how: The new Outlook is the web version of Outlook inside a window (WebView2).
+why: Mail.
+without: Safe to close.
+
+== onedrive
+friendly: OneDrive
+cat: Your apps
+close: 0
+tag: Keeps your files in the cloud and in sync.
+what: Syncs your OneDrive and SharePoint files.
+how: It watches your folders, uploads changes, and downloads files only when you open them.
+why: Backup and sharing.
+without: Closing pauses syncing; your files stay safe and sync when it's back. Heavy upload means a big sync.
+
+== WINWORD
+friendly: Word
+cat: Your apps
+close: 0
+tag: Documents.
+what: Microsoft Word.
+how: A classic desktop app; files can live on your disk or in OneDrive.
+why: Writing.
+without: Safe to close - save first.
+
+== EXCEL
+friendly: Excel
+cat: Your apps
+close: 0
+tag: Spreadsheets.
+what: Microsoft Excel.
+how: A classic desktop app; big workbooks can use a lot of memory and CPU while recalculating.
+why: Numbers.
+without: Safe to close - save first.
+
+== POWERPNT
+friendly: PowerPoint
+cat: Your apps
+close: 0
+tag: Slides.
+what: Microsoft PowerPoint.
+how: A classic desktop app; video and images in decks use memory.
+why: Presentations.
+without: Safe to close - save first.
+
+== wireshark
+friendly: Wireshark
+cat: Your apps
+close: 0
+tag: The packet microscope.
+what: Shows captured packets.
+how: Reads capture files or live captures made by dumpcap.
+why: Seeing exactly what's on the wire.
+without: Safe to close.
+
+== dumpcap
+friendly: Wireshark capture engine
+cat: Your apps
+close: 0
+tag: The recorder behind Wireshark.
+what: Writes packets from the network card to a file.
+how: Npcap hands it a copy of every packet; it writes them to pcapng files. AdeeboMeter uses it for Sniff - only when you ask.
+why: Captures.
+without: Safe to close - the capture stops.
+
+== tshark
+friendly: tshark (Wireshark's brain)
+cat: Your apps
+close: 0
+tag: Wireshark without the window.
+what: Decodes packets into protocols.
+how: AdeeboMeter runs it only while Live capture is on, and stops it when you leave that tab.
+why: Live protocol breakdown.
+without: Safe to close - live capture stops.
+
+== putty
+friendly: PuTTY
+cat: Your apps
+close: 0
+tag: Your SSH and serial terminal.
+what: Connects to routers and servers.
+how: Opens SSH, Telnet or serial sessions in a window.
+why: Lab and router work.
+without: Safe to close - the session ends.
+
+== Code
+friendly: VS Code
+cat: Your apps
+close: 0
+tag: The code editor.
+what: Edits code and text.
+how: Built on web technology, so it runs several helper processes.
+why: Scripts and configs.
+without: Safe to close - save first.
+
+== cmd|powershell|pwsh|WindowsTerminal|OpenConsole
+friendly: Command shell
+cat: Your apps
+close: 0
+tag: Where you type commands.
+what: A command prompt or PowerShell window.
+how: Runs the commands you type; its window is drawn by conhost or Windows Terminal.
+why: Scripting and troubleshooting.
+without: Safe to close - anything running in it stops.
+
+== SystemSettings
+friendly: Settings
+cat: Your apps
+close: 0
+tag: The Settings app.
+what: Windows settings.
+how: A modern app.
+why: Changing settings.
+without: Safe to close.
+
+== Widgets|WidgetService
+friendly: Widgets
+cat: Your apps
+close: 0
+tag: News and weather on the taskbar.
+what: The Widgets board.
+how: A web-based panel that refreshes in the background.
+why: Glanceable news and weather.
+without: Safe to close; it comes back when you open Widgets.
+
+== PhoneExperienceHost
+friendly: Phone Link
+cat: Your apps
+close: 0
+tag: Your phone, on your PC.
+what: Links an Android phone or iPhone to the PC.
+how: Talks to your phone over Bluetooth and the network.
+why: Texts and calls on the PC.
+without: Safe to close.
+
+== msiexec
+friendly: Windows Installer
+cat: Windows helpers
+close: 1
+tag: Installs and repairs apps.
+what: Runs .msi installers.
+how: Starts when something is being installed, repaired or removed.
+why: Software installs.
+without: The install in progress fails.
+
+== AdeeboMeter
+friendly: AdeeboMeter
+cat: Your apps
+close: 0
+tag: That's me, boss.
+what: Watches your PC and network so you don't have to open Task Manager.
+how: Reads Windows' own counters once a second, never listens on the network, and only sends small probes when it checks your path.
+why: So you know whether it's you or the network.
+without: Safe to close - and when it's closed, nothing of it keeps running.
+
