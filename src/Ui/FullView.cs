@@ -790,7 +790,7 @@ namespace AdeeboMeter
             Guid gid; if (!Guid.TryParse((iface ?? "").Trim('{', '}'), out gid)) { sniffStatus = "No active adapter to capture on."; UpdateConnStatus(); return; }
             string safeApp = new string(c.Proc.Where(char.IsLetterOrDigit).Take(20).ToArray());
             string file = Program.SafeCapturePath("adebometer_" + safeApp + "_" + DateTime.Now.ToString("HHmmss", CultureInfo.CurrentCulture) + ".pcapng");
-            var psi = new ProcessStartInfo(dumpcap, "-i \"\\Device\\NPF_{" + gid.ToString().ToUpperInvariant() + "}\" -f \"" + filt + "\" -a duration:" + Cfg.SniffSec + " -w \"" + file + "\" -q");
+            var psi = new ProcessStartInfo(dumpcap, "-i \"\\Device\\NPF_{" + gid.ToString().ToUpperInvariant() + "}\" -f \"" + filt + "\" -a duration:" + Cfg.SniffSec + " -w \"" + file + "\" -q"); psi.WorkingDirectory = Path.GetDirectoryName(dumpcap);
             psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardError = true;
             try
             {
@@ -811,7 +811,7 @@ namespace AdeeboMeter
                             if (File.Exists(file) && new FileInfo(file).Length > 0)
                             {
                                 sniffStatus = Voice.P("Got it - opening in Wireshark. (Deleted when AdeeboMeter exits; Save As in Wireshark to keep it.)", "Saved; opening in Wireshark. Deleted on exit unless saved elsewhere.");
-                                try { if (File.Exists(wireshark)) { var ws = new ProcessStartInfo(wireshark, "\"" + file + "\""); ws.UseShellExecute = false; Process.Start(ws).Dispose(); } } catch (Exception ex) { sniffStatus = "Saved " + file + " (" + ex.Message + ")"; }
+                                try { if (File.Exists(wireshark)) { var ws = new ProcessStartInfo(wireshark, "\"" + file + "\""); ws.WorkingDirectory = Path.GetDirectoryName(wireshark); ws.UseShellExecute = false; Process.Start(ws).Dispose(); } } catch (Exception ex) { sniffStatus = "Saved " + file + " (" + ex.Message + ")"; }
                             }
                             else { string e2; lock (err) e2 = err.ToString().Trim(); sniffStatus = "Capture failed: " + Draw.Trunc(e2.Replace(Environment.NewLine, " "), 120); Program.Log("dumpcap: " + e2); }
                             UpdateConnStatus();

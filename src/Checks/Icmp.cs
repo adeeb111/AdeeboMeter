@@ -83,7 +83,7 @@ namespace AdeeboMeter
                 var o = new IpOpt { Ttl = (byte)Math.Max(1, Math.Min(255, ttl)) };
                 int size2 = 36 + data.Length + 8 + 64 + 256; buf = Marshal.AllocHGlobal(size2);
                 int n = Icmp6SendEcho2(h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, src, dst, data, (short)data.Length, ref o, buf, size2, timeoutMs);
-                if (n == 0) { int e = Marshal.GetLastWin32Error(); r.Status = e >= 11000 && e < 11100 ? e : TimedOut; if (r.Status != TtlExpired) return r; }
+                if (n == 0) { int e = Marshal.GetLastWin32Error(); r.Status = e >= 11000 && e < 11100 ? e : TimedOut; return r; }   // no reply in the buffer to read
                 var a = new byte[16]; Marshal.Copy(buf + 6, a, 0, 16); r.From = new IPAddress(a).ToString();
                 if (n != 0) r.Status = Marshal.ReadInt32(buf, 28); r.Rtt = (uint)Marshal.ReadInt32(buf, 32);
                 return r;

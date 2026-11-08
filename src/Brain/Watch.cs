@@ -188,34 +188,44 @@ namespace AdeeboMeter
         static Dictionary<string, HashSet<string>> known; static readonly object k = new object();
         public static readonly List<string[]> Joined = new List<string[]>();   // { when, network, ip, mac, note }
         public static DateTime QuietUntil = DateTime.MinValue;   // after a ping sweep: learn what it found, without "new device" alerts
+        static Dictionary<string, DateTime> netSince; static readonly Dictionary<string, DateTime> lastPop = new Dictionary<string, DateTime>();
+        // Every new device is listed (What changed). A pop-up only when you asked for it, on a home network AdeeboMeter
+        // has known for a day, for a device with a real (not private / random) hardware address, at most once an hour.
+        // Phones change their private address per network and over time, and office networks are full of other people's
+        // devices - announcing those would be noise.
         public static void Check(Monitor m)
         {
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
             List<Arp.Entry> table; try { table = Arp.Table(); } catch { return; }
-            string gw; lock (m.L) gw = m.Gateway;
+            string gw; bool vpn; lock (m.L) { gw = m.Gateway; vpn = m.VpnUp; }
+            bool company = vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+            var announce = new List<Arp.Entry>();
             lock (k)
             {
                 if (known == null) { known = new Dictionary<string, HashSet<string>>(); foreach (var r in Store.Read("devices.txt")) { HashSet<string> s; if (!known.TryGetValue(r[0], out s)) known[r[0]] = s = new HashSet<string>(); s.Add(r[1]); } }
+                if (netSince == null) { netSince = new Dictionary<string, DateTime>(); foreach (var r in Store.Read("device-nets.txt")) { DateTime t; if (r.Length > 1 && DateTime.TryParse(r[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out t)) netSince[r[0]] = t; } }
                 HashSet<string> set; bool first = !known.TryGetValue(key, out set); if (first) known[key] = set = new HashSet<string>();
-                if (DateTime.UtcNow < QuietUntil) first = true;   // learn silently
+                DateTime since; if (!netSince.TryGetValue(key, out since)) { since = DateTime.Now; netSince[key] = since; Store.Write("device-nets.txt", netSince.Select(kv => new[] { kv.Key, kv.Value.ToString("o", CultureInfo.InvariantCulture) }).ToList()); }
+                bool quiet = first || DateTime.UtcNow < QuietUntil || (DateTime.Now - since).TotalHours < 24;   // learning: the first day on a network, and after a ping sweep
                 bool changed = false;
                 foreach (var e in table.Where(x => x.Dynamic && x.Ip != gw))
                 {
-                    if (set.Add(e.Mac))
-                    {
-                        changed = true;
-                        if (!first)
-                        {
-                            string note = Arp.Randomised(e.Mac) ? "uses a private (random) hardware address - typical for phones and laptops" : "hardware address " + e.Mac;
-                            Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note });
-                            if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1);
-                            m.Events.Add(1, "lan", "New device on " + label + ": " + e.Ip + " (" + note + ")");
-                            Alerts.Raise("dev|" + e.Mac, "A new device joined " + label + ": " + e.Ip + ". If you don't recognise it, check your router's device list.", 24 * 60);
-                        }
-                    }
+                    if (!set.Add(e.Mac)) continue;
+                    changed = true;
+                    if (quiet) continue;
+                    bool rnd = Arp.Randomised(e.Mac);
+                    string note = rnd ? "uses a private (random) hardware address - phones and laptops change it, so it may not be new" : "hardware address " + e.Mac;
+                    Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note });
+                    if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1);
+                    m.Events.Add(3, "lan", "New on " + label + ": " + e.Ip + " (" + note + ")");
+                    if (!rnd) announce.Add(e);
                 }
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
+                DateTime last; lastPop.TryGetValue(key, out last);
+                if (announce.Count == 0 || Cfg.DevAlerts == 0 || company || set.Count > 30 || (DateTime.Now - last).TotalMinutes < 60) return;
+                lastPop[key] = DateTime.Now;
             }
+            Alerts.Raise("dev|" + key, (announce.Count == 1 ? "A new device joined " + label + ": " + announce[0].Ip : announce.Count + " new devices joined " + label + ": " + string.Join(", ", announce.Take(3).Select(e => e.Ip))) + ". If you don't recognise it, check your router's device list.", 60);
         }
     }
 

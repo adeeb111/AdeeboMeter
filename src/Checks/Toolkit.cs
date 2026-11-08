@@ -42,12 +42,12 @@ namespace AdeeboMeter
                     case "-u": case "--udp": case "udp": o.Udp = true; break;
                     case "-4": o.V4 = true; break; case "-6": o.V6 = true; break;
                     case "x4": o.Par = 4; break;
-                    case "-p": case "--port": if (int.TryParse(v, out n)) { o.Port = n; i++; } break;
+                    case "-p": case "--port": if (int.TryParse(v, out n) && n > 0 && n < 65536) { o.Port = n; i++; } break;
                     case "--parallel": if (int.TryParse(v, out n)) { o.Par = Math.Max(1, Math.Min(16, n)); i++; } break;
                     case "-t": case "--time": if (int.TryParse(v, out n)) { o.Secs = Math.Max(1, Math.Min(120, n)); i++; } break;
                     case "-o": case "--omit": if (int.TryParse(v, out n)) { o.Omit = Math.Max(0, Math.Min(10, n)); i++; } break;
                     case "-m": case "--set-mss": if (int.TryParse(v, out n)) { o.Mss = Math.Max(0, Math.Min(9000, n)); i++; } break;
-                    case "-b": case "--bitrate": case "--bandwidth": { long r = size(v); if (r > 0) { o.Rate = r; i++; } break; }
+                    case "-b": case "--bitrate": case "--bandwidth": { long r = size(v); if (r > 0) { o.Rate = Math.Min(r, 10000000000L); i++; } break; }   // at most 10 Gb/s - a typo can't flood the link
                     case "-l": case "--length": { long r = size(v); if (r > 0) { o.Len = Math.Min(r, 1 << 20); i++; } break; }
                     case "-w": case "--window": { long r = size(v); if (r > 0) { o.Window = Math.Min(r, 16 << 20); i++; } break; }
                     case "--tos": if (v.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? int.TryParse(v.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out n) : int.TryParse(v, out n)) { o.Tos = n & 255; i++; } break;
@@ -108,11 +108,18 @@ namespace AdeeboMeter
                         {
                             if (udp)
                             {
+                                if (run.Stop) break;
                                 var s = new Socket(addr.AddressFamily, SocketType.Dgram, ProtocolType.Udp); Tune(s, o); s.Connect(addr, port); s.ReceiveTimeout = 3000;
                                 s.Send(new byte[] { 0x39, 0x38, 0x37, 0x36 });   // UDP_CONNECT_MSG 0x36373839, sent in the server's (little-endian) byte order var rb = new byte[4]; try { s.Receive(rb); } catch (SocketException) { throw new InvalidOperationException("UDP to the server is blocked (no reply on UDP " + port + ")"); }
                                 streams.Add(s);
                             }
-                            else { var s = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp); Tune(s, o); s.Connect(addr, port); s.Send(cookie); streams.Add(s); }
+                            else
+                            {
+                                if (run.Stop) break;
+                                var s = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp); Tune(s, o);
+                                var ca = s.BeginConnect(addr, port, null, null); if (!ca.AsyncWaitHandle.WaitOne(5000)) { s.Close(); throw new TimeoutException("stream " + (streams.Count + 1) + " couldn't connect in 5 s"); }
+                                s.EndConnect(ca); s.Send(cookie); streams.Add(s);
+                            }
                         }
                     }
                     else if (st == 1) { }   // TEST_START
@@ -296,7 +303,7 @@ namespace AdeeboMeter
             {
                 using (var u = new UdpClient(server.AddressFamily))
                 {
-                    u.Client.ReceiveTimeout = 3000; u.Send(q.ToArray(), q.Count, new IPEndPoint(server, 53));
+                    u.Client.ReceiveTimeout = 3000; u.Connect(server, 53); u.Send(q.ToArray(), q.Count);   // connected: only the server we asked can answer
                     var from = new IPEndPoint(IPAddress.Any, 0); resp = u.Receive(ref from);
                     if (resp.Length < 12 || resp[0] != id[0] || resp[1] != id[1]) return null;
                 }
@@ -306,6 +313,7 @@ namespace AdeeboMeter
                         if (!tc.ConnectAsync(server, 53).Wait(3000)) return null; var s = tc.GetStream(); s.ReadTimeout = 3000;
                         var l = new[] { (byte)(q.Count >> 8), (byte)q.Count }; s.Write(l, 0, 2); s.Write(q.ToArray(), 0, q.Count);
                         var lb = ReadN(s, 2); resp = ReadN(s, lb[0] << 8 | lb[1]);
+                        if (resp == null || resp.Length < 12 || resp[0] != id[0] || resp[1] != id[1]) return null;
                     }
             }
             catch (SocketException) { return null; }
@@ -319,6 +327,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < (sec == 1 ? an : sec == 2 ? ns : ar); i++)
                     {
                         var r = new Rr { Section = sec, Name = Name(resp, ref p) }; int ty = resp[p] << 8 | resp[p + 1]; r.Ttl = resp[p + 4] << 24 | resp[p + 5] << 16 | resp[p + 6] << 8 | resp[p + 7]; int len = resp[p + 8] << 8 | resp[p + 9]; p += 10; int d = p;
+                        if (d + len > resp.Length) break;
                         r.Type = Types.FirstOrDefault(x => x.Value == ty).Key ?? (ty == 41 ? "OPT" : ty == 46 ? "RRSIG" : "type" + ty);
                         switch (ty)
                         {
@@ -391,7 +400,7 @@ namespace AdeeboMeter
                     {
                         if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
                         using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); errs = e; return e == SslPolicyErrors.None; }))
-                        { ssl.ReadTimeout = 5000; ssl.AuthenticateAsClient(host, null, proto.Item2, true); rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
+                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto.Item2, true)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
                 catch (Exception e) { rows.Add(R(3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }
@@ -497,7 +506,7 @@ namespace AdeeboMeter
             var mac = Enumerable.Range(0, 6).Select(i => Convert.ToByte(hex.Substring(i * 2, 2), 16)).ToArray();
             var pkt = new byte[102]; for (int i = 0; i < 6; i++) pkt[i] = 0xFF; for (int i = 1; i <= 16; i++) Array.Copy(mac, 0, pkt, i * 6, 6);
             using (var u = new UdpClient()) { u.EnableBroadcast = true; u.Send(pkt, pkt.Length, new IPEndPoint(IPAddress.Broadcast, 9)); u.Send(pkt, pkt.Length, new IPEndPoint(IPAddress.Broadcast, 7)); }
-            rows.Add(R(0, "Sent", "magic packet for " + string.Join(":", mac.Select(b => b.ToString("X2", CultureInfo.InvariantCulture))) + " to your network", "It only wakes PCs whose network card and BIOS allow Wake-on-LAN, on the same network (not over the internet or most VPNs).", "m"));
+            rows.Add(R(3, "Sent (no reply is possible)", "magic packet for " + string.Join(":", mac.Select(b => b.ToString("X2", CultureInfo.InvariantCulture))) + " to your network", "It only wakes PCs whose network card and BIOS allow Wake-on-LAN, on the same network (not over the internet or most VPNs).", "m"));
             return rows;
         }
 
@@ -558,7 +567,7 @@ namespace AdeeboMeter
             var firstPublic = hops.FirstOrDefault(h => h.Ip != "" && Watch.IsPublic(h.Ip)); IPAddress fp;
             if (firstPublic != null && IPAddress.TryParse(firstPublic.Ip, out fp) && !fp.Equals(a)) { rows.Add(R(3, "Record Route to your provider (" + fp + ")", "", "", "m")); rows.AddRange(PathTools.RecordRoute(fp)); }
             if (Online.On) { run.Status = "How the internet reaches you..."; rows.AddRange(Online.ReachMe()); }
-            else rows.Add(R(3, "How the internet reaches you", "turn on Online lookups (Settings > Privacy) to see the AS paths other networks use to reach you", "", "u"));
+            else rows.Add(R(3, "How the internet reaches you", "turn on Online lookups (Settings > Online lookups) to see the AS paths other networks use to reach you", "", "u"));
             string me = Online.On ? Online.MyIp() : "";
             rows.Add(R(3, "From the other side", "on a server you control:  mtr -rwc 20 " + (me != "" ? me : "<your public IP>") + "    or    tracepath " + (me != "" ? me : "<your public IP>"), "The only way to see every router on the way back is to trace from the far end toward you.", "i"));
             return rows;

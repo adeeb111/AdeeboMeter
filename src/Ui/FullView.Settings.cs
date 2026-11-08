@@ -103,7 +103,11 @@ namespace AdeeboMeter
                 y = SetRow(g, x, y, w, "Alerts", Cfg.Alerts ? "A Windows notification only when there's something to do (Wi-Fi keeps dropping, internet gone, slower than usual, a suspicious new program...). Silent while you present." : "Off: AdeeboMeter never pops up; everything still lands in What changed.",
                     SetOnOff, Cfg.Alerts ? 0 : 1, delegate(int i) { Cfg.Alerts = i == 0; Cfg.Save(); });
                 if (Cfg.Alerts)
+                {
                     y = SetRow(g, x, y, w, "Quiet hours", Cfg.Quiet ? "No alerts between 22:00 and 07:00." : "Alerts any time of day.", SetOnOff, Cfg.Quiet ? 0 : 1, delegate(int i) { Cfg.Quiet = i == 0; Cfg.Save(); });
+                    y = SetRow(g, x, y, w, "Tell me when a new device joins", Cfg.DevAlerts == 1 ? "Home networks only: a device with a real hardware address, after AdeeboMeter has known the network for a day, at most once an hour. Never on a company network or VPN, never for phones' private addresses." : "Off - new devices are still listed in What changed. (Phones change their private address, and office networks are full of other people's devices.)",
+                        DevAlertNames, Cfg.DevAlerts, delegate(int i) { Cfg.DevAlerts = i; Cfg.Save(); });
+                }
                 y = SetRow(g, x, y, w, "Watch and suggest", Cfg.Watch ? "Notices programs talking to the internet for the first time, from odd folders or at night, and big uploads - and suggests what to look at. It never blocks anything. (First 24 hours: learning what's normal.)" : "Off.",
                     SetOnOff, Cfg.Watch ? 0 : 1, delegate(int i) { Cfg.Watch = i == 0; Cfg.Save(); });
                 y = SetRow(g, x, y, w, "Monthly data cap", Cfg.CapGB > 0 ? "Warns at 80% of " + Cfg.CapGB + " GB (hotspots, metered plans). Counted on this PC from Windows' own counters." : "Off - usage is still counted in What changed.",
@@ -160,6 +164,7 @@ namespace AdeeboMeter
             var need = new Size(0, (int)(y + 20 * S)); if (settingsCanvas.AutoScrollMinSize != need) { settingsCanvas.AutoScrollMinSize = need; settingsCanvas.Invalidate(); }
         }
         static readonly string[] SetOnOff = { "On", "Off" };
+        static readonly string[] DevAlertNames = { "Off", "Home networks only" };
         static int JobsFor(string preset)
         {
             int gw = Cfg.GwSec, net = Cfg.NetSec, wifi = Cfg.WifiSec, apps = Cfg.AppsSec; bool call = Cfg.Call; string p = Cfg.Preset;

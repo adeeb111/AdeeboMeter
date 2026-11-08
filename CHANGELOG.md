@@ -2,6 +2,20 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
+## 1.1.1 (2026-11-08)
+
+A patch from the first day of use and two outside code reviews.
+
+- **New-device alerts are off by default.** Phones join Wi-Fi with a private, changing hardware address, and office networks are full of other people's devices - so every new device is still listed in What changed, but a pop-up only comes if you choose *Tell me when a new device joins → Home networks only* (Settings). Even then: never on a company network or VPN, never for private addresses, not in the first day on a network, at most one an hour.
+- **Copy as text** on every Toolbox result (including the MTU and MTR tables) - for a ticket or a chat. Built only when you press it; a RADIUS secret is never included.
+- **Neighbours (ARP table)** in the Toolbox: who this PC has talked to on its network, with makers, private addresses and virtual routers. Nothing is sent.
+- **Replies are only taken from the server you asked.** NTP, SNMP, RADIUS, TWAMP and DNS sockets are connected to that server; STUN checks the transaction ID and the server's address; NTP checks its answer echoes your question (and reports "kiss of death" and unsynchronised servers instead of an offset); TWAMP checks the reflector echoed your timestamp; SNMP checks it's a reply to this GET with no error.
+- **Harder parsing:** the SNMP reader checks every length before using it, handles long values (descriptions over 127 bytes) and nesting has a limit; the JSON reader refuses nesting deeper than 64 (a hostile iperf3 server could otherwise end the app); DNS checks the TCP answer and every record's length. The RADIUS reply check is tested against RFC 2865's own example.
+- **Nothing waits forever:** TLS handshakes give up after 8 s (HTTP timing, encrypted DNS, mail, TLS inspector); iperf3 streams connect within 5 s each and Stop is checked between them.
+- **Child programs never start in the folder AdeeboMeter runs from** (Downloads): netsh, tshark, dumpcap and the rest start in their own folder, so they can't pick up a planted DLL.
+- Smaller: iperf3 rate capped at 10 Gb/s and port checked; the syslog test strips line breaks; TWAMP no longer claims a synced clock, accepts 40-byte replies and says when loss can't be put on a direction; Wake-on-LAN no longer shows green for a packet it can't confirm; sustained ping starts with 50 pings (10 s); a destination typed elsewhere no longer replaces the gateway in sustained ping and SNMP; "Settings > Online lookups" named correctly; the build workflow treats the release tag as data.
+- File version in the exe has the four numbers Windows expects.
+
 ## 1.1 (2026-11-08)
 
 Troubleshoot anything from the PC - the path, the way back, the PC itself, and an engineer's toolbox.

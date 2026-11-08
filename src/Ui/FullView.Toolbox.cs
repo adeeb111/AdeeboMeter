@@ -59,6 +59,7 @@ namespace AdeeboMeter
                 T("syslog", "PROTOCOLS", "Syslog - send a test message", "Collector - host or host:port (UDP 514)|Text (optional)", (a, r) => Protocols.Syslog(a[0], a[1])),
                 T("radius", "PROTOCOLS", "RADIUS - is the server alive?", "Server - host or host:port (1812)|Shared secret", (a, r) => Protocols.Radius(a[0], a[1])),
                 T("tacacs", "PROTOCOLS", "TACACS+ - is the server there?", "Server - host or host:port (49)", (a, r) => Protocols.Tacacs(a[0])),
+                T("arp", "YOUR NETWORK", "Neighbours (ARP table)", null, (a, r) => RoutingTools.Neighbours(M)),
                 T("hairpin", "YOUR NETWORK", "Your own router (hairpin)", null, (a, r) => Protocols.Hairpin()),
                 T("sweep", "YOUR NETWORK", "Ping sweep", "|Type yes on company networks", (a, r) => Toolkit.Sweep(M, a[1], r)),
                 T("wol", "YOUR NETWORK", "Wake-on-LAN", "MAC - e.g. 3C:84:6A:12:34:56", (a, r) => Toolkit.Wake(a[0])),
@@ -94,16 +95,40 @@ namespace AdeeboMeter
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
             new[] { "SPEED & QUALITY", "iperf", "ping", "twamp", "cloud" },
             new[] { "NAMES & TIME", "dig", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
-            new[] { "NETWORK DEVICES", "snmp", "syslog", "hairpin", "sweep", "wol", "subnet" },
+            new[] { "NETWORK DEVICES", "arp", "snmp", "syslog", "hairpin", "sweep", "wol", "subnet" },
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events" },
             new[] { "THE PC", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
         // tools whose first box is "the thing you're looking at" - they share one target, so you type it once
-        static readonly HashSet<string> TargetTools = new HashSet<string> { "mtu", "mtr", "ret", "route", "ping6", "ip46", "owners", "port", "tcpping", "http", "httptime", "proxy", "ssh", "mail", "radius", "tacacs", "ping", "dig", "snmp" };
+        static readonly HashSet<string> TargetTools = new HashSet<string> { "mtu", "mtr", "ret", "route", "ping6", "ip46", "owners", "port", "tcpping", "http", "httptime", "proxy", "ssh", "mail", "radius", "tacacs", "dig" };   // not ping or SNMP: those start at your gateway
         string tbTarget = "", tbFilter = ""; readonly List<string> tbRecent = new List<string>(); readonly HashSet<string> tbOpen = new HashSet<string>();
         RoundBox tbSearch; bool tbCompare;
         sealed class PrevRun { public string Inputs; public DateTime At; public List<string[]> Rows; }
+        DateTime tbCopied;
+        // the result as plain text, for a ticket or a chat - built only when you press Copy; nothing is saved
+        string ResultText()
+        {
+            var sb = new System.Text.StringBuilder(); var t = Tools2().First(x => x.Id == tbSel);
+            sb.AppendLine("AdeeboMeter " + Program.Version + " · " + t.Title + " · " + tbAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
+            var a = Inputs(); for (int i = 0; i < t.Inputs.Length && i < 3; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + a[i]);
+            sb.AppendLine();
+            if (tbSel == "mtu" && mtuHops != null) foreach (var h in mtuHops) sb.AppendLine(("hop " + h.N).PadRight(8) + (h.Ip == "" ? "*" : h.Ip).PadRight(40) + (h.Mtu > 0 ? h.Mtu + "  " + h.MtuNote : h.MtuNote));
+            if (tbSel == "mtr" && mtrHops != null)
+            {
+                sb.AppendLine("hop     router                                   loss  sent  avg   best  worst  jitter");
+                foreach (var h in mtrHops) { double loss = h.Sent > 0 ? 100.0 * h.Lost / h.Sent : 0, avg = h.Sent - h.Lost > 0 ? h.Sum / (h.Sent - h.Lost) : double.NaN; sb.AppendLine(h.N.ToString(CultureInfo.InvariantCulture).PadRight(8) + (h.Ip == "" ? "*" : h.Ip).PadRight(40) + (loss.ToString("0", CultureInfo.InvariantCulture) + "%").PadLeft(5) + h.Sent.ToString(CultureInfo.InvariantCulture).PadLeft(6) + PathTools.F(avg).PadLeft(6) + PathTools.F(h.Best).PadLeft(6) + PathTools.F(h.Worst).PadLeft(7) + PathTools.F(h.Jit).PadLeft(8)); }
+                sb.AppendLine();
+            }
+            if (tbRows != null)
+                foreach (var o in tbRows)
+                {
+                    string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     ";
+                    sb.AppendLine(lv + o[1] + ": " + o[2]);
+                    if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + o[3]);
+                }
+            return sb.ToString();
+        }
         readonly Dictionary<string, PrevRun> tbPrev = new Dictionary<string, PrevRun>(), tbLast = new Dictionary<string, PrevRun>();   // the run before, per tool - this session only, never saved
-        static List<string[]> OnlineOff() { var r = new List<string[]>(); r.Add(Row5("3", "Online lookups", "off - this needs them (Settings > Privacy, or the link below)", "", "u")); return r; }
+        static List<string[]> OnlineOff() { var r = new List<string[]>(); r.Add(Row5("3", "Online lookups", "off - this needs them (Settings > Online lookups, or the link below)", "", "u")); return r; }
         static string[] Row5(params string[] a) { return a; }
         static List<string[]> Bad(string msg) { return new List<string[]> { new[] { "2", "Input", msg, "", "u" } }; }
         static string Host(string s) { s = (s ?? "").Trim(); Uri u; if (s.StartsWith("http", StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(s, UriKind.Absolute, out u)) return u.Host; int c = s.IndexOf('/'); return c > 0 ? s.Substring(0, c) : s; }
@@ -170,7 +195,7 @@ namespace AdeeboMeter
             if (tbTarget == "" && destBox.Box.Text.Trim() != "") tbTarget = destBox.Box.Text.Trim();
             tbOpen.Add(t.Group);
             if (t.Id == "iperf" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "--both -t 10";
-            if (t.Id == "ping" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw != "" ? gw : "1.1.1.1"; tbBoxes[1].Box.Text = "200"; tbBoxes[2].Box.Text = "200"; }
+            if (t.Id == "ping" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw != "" ? gw : "1.1.1.1"; tbBoxes[1].Box.Text = "50"; tbBoxes[2].Box.Text = "200"; }   // 10 seconds; type more for longer
             if (t.Id == "mtr" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "1";
             if (t.Id == "dig" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "A";
             if (t.Id == "tcpping" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "20";
@@ -300,6 +325,13 @@ namespace AdeeboMeter
                 g.DrawString(tbTitle.ToUpperInvariant() + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? "  ·  DONE " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture) : ""), Draw.fTiny, muted, x, y);
                 PrevRun prev = null; bool canCompare = !tbBusy && tbRows != null && tbPrev.TryGetValue(tbSel, out prev) && prev.Inputs == tbRowsKey && prev.Rows != tbRows;
                 if (!canCompare) prev = null;
+                if (!tbBusy && (tbRows != null || (tbSel == "mtu" && mtuHops != null) || (tbSel == "mtr" && mtrHops != null)))
+                {
+                    var cs = g.MeasureString("Copy as text", Draw.fSmall); float cxr = x + w - cs.Width - (prev != null ? g.MeasureString("Compare with the 00:00 run", Draw.fSmall).Width + 18 * S : 0);
+                    var cr = new RectangleF(cxr, y - 2 * S, cs.Width, cs.Height);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(tbCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", Draw.fSmall, lb, cr.X, cr.Y);
+                    Act(tbCanvas, cr, delegate { try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } tbCanvas.Invalidate(); });
+                }
                 if (prev != null)
                 {
                     string lk = tbCompare ? "Hide the " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + " run" : "Compare with the " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + " run"; var ls = g.MeasureString(lk, Draw.fSmall);
@@ -316,7 +348,7 @@ namespace AdeeboMeter
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(lk, Draw.fBodyB, lb, x, y);
                     Act(tbCanvas, new RectangleF(x, y, ls.Width, ls.Height), delegate { Online.Start(); tbCanvas.Invalidate(); header.Invalidate(); });
                     y += 30 * S;
-                    g.DrawString("Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Privacy has the timer.", Draw.fSmall, muted, new RectangleF(x, y, w, 34 * S)); y += 36 * S;
+                    g.DrawString("Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.", Draw.fSmall, muted, new RectangleF(x, y, w, 34 * S)); y += 36 * S;
                 }
                 if (tbSel == "mtu") y = PaintMtu(g, x, y, w);
                 if (tbSel == "mtr" && mtrHops != null) y = PaintMtr(g, x, y, w);

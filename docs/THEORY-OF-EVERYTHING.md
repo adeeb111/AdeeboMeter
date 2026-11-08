@@ -1,6 +1,6 @@
 # AdeeboMeter — The Theory of Everything
 
-*How every part of AdeeboMeter works, in plain words. Version 1.1.*
+*How every part of AdeeboMeter works, in plain words. Version 1.1.1.*
 
 ---
 
@@ -224,23 +224,24 @@ Drag through any day of history: the five dots at that minute, the numbers again
 - **Watch and suggest**: first-time internet use, programs in Downloads / Temp or without a publisher, night-time connections, big unexpected uploads — with how to block it. It never blocks.
 - **Wi-Fi without location**: a health score from the router link, link speed, adapter errors and drops; an advisor (quieter channel, better band, sticky access point, Wi-Fi power saving); look-alike networks; the walk test.
 - **Meeting replay**: one sentence after each Teams call; numbers in memory only, nothing about the call is saved.
-- **New devices** come from the ARP table (nothing is scanned); after a ping sweep, what it found is learned quietly instead of announced. The gateway's hardware address is checked every 30 s — a change is a router takeover, noted on the timeline. Frozen windows, slow leaks and disk delay are watched on a separate low-priority thread.
+- **New devices** come from the ARP table (nothing is scanned) and are listed in *What changed*. A pop-up is off by default; *Home networks only* announces a device with a real hardware address once AdeeboMeter has known the network for a day, at most once an hour — never on a company network or VPN, and never for phones' private addresses, which change. After a ping sweep, what it found is learned quietly. The gateway's hardware address is checked every 30 s — a change is a router takeover, noted on the timeline. Frozen windows, slow leaks and disk delay are watched on a separate low-priority thread.
 - **HTTPS inspection**: says when a certificate was re-signed by a root that isn't on Microsoft's public list.
 
 ### 5.17f Learn and the knowledge pack (`Knowledge`)
 The explanations (72 programs, 219 terms, 46 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
 
 ### 5.17g The Toolbox (`FullView.Toolbox`, `PathTools`, `WhyFails`, `Toolkit`, `Protocols`, `RoutingTools`, `SysTools`, `WinEvidence`, `PcHealth`)
-55 tools an engineer reaches for, each one a click and at most three boxes. **Nothing runs until you press Run, and Stop always works.**
+56 tools an engineer reaches for, each one a click and at most three boxes. **Nothing runs until you press Run, and Stop always works.**
 - **Finding a tool:** type in the search box (*mtu*, *dns*, *radius*, *slow* — it searches names and explanations; Enter opens the first), the five you used last are on top (this session only), and the groups fold away. They're grouped by the question you're asking:
   - **Path & routing:** MTU per hop (don't-fragment pings with rising TTL, a binary search per hop, *Next hop* searches only below the hop before; it names PPPoE, GRE, VPN and silent black holes), MTR (loss and delay per hop over minutes, with load sharing, reroutes, hidden tunnel hops and delay jumps flagged), the way back (reply-TTL per hop, Record Route, the command to run from the far end), which route Windows picks, your gateway (VRRP / HSRP / GLBP virtual address, takeovers on the timeline, a slow plug-in that points at spanning tree), IPv6 routers (rogue router advertisements), routing protocols on your segment (with Wireshark: OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP / HSRP, extra DHCP servers, spanning-tree changes, LLDP / CDP, DTP), IPv6 ping and trace, IPv6 vs IPv4, overlapping networks, who carries my traffic (online lookups).
   - **Is it reachable?** port test (refused vs. silently dropped), TCP ping, HTTP and TLS inspector, HTTP timing repeated (name · connect · lock · first byte · download), which proxy a URL uses, Teams UDP and NAT type, SSH banner, mail server (greeting, STARTTLS, certificate — never logs in), RADIUS Status-Server (the secret signs the request, is masked and never kept), TACACS+.
   - **Speed & quality:** an iperf3 client to your own server (iperf3's own options), sustained ping with a loss timeline, TWAMP-light to your own reflector (loss and jitter each way), nearest cloud.
   - **Names & time:** dig (any record, or the delegation from the root down), encrypted DNS (DoH / DoT), hosts file, DNS hijack and the VPN's name rules, NTP, clock check, where the PC gets its time.
-  - **Network devices:** SNMP v2c, a syslog test message, your own router (public address, CGNAT, hairpin), ping sweep (asks first on a company network), Wake-on-LAN, subnet calculator.
+  - **Network devices:** neighbours (the ARP table), SNMP v2c, a syslog test message, your own router (public address, CGNAT, hairpin), ping sweep (asks first on a company network), Wake-on-LAN, subnet calculator.
   - **Windows:** its own evidence (address conflicts, profile, adapter, DHCP), why 802.1X sign-in failed, domain controllers and their ports, Group Policy, certificates that expire soon, firewall rules for an app, what's listening, the event log explained, and the PC (memory pressure, disk, heat, drivers, frozen windows, slow leaks, crashes, background jobs, graphics card per app, what changed, battery, where the space went).
 - **One target:** a host typed into one tool is waiting in the next one that looks at a destination.
 - **Compare with the last run:** run a tool again with the same inputs and every row shows what it said before (memory only).
+- **Copy as text:** any result, ready for a ticket — made when you press it, never saved, never with a secret in it.
 - AdeeboMeter is always the client: it **never becomes a server** (iperf3 and TWAMP need yours), never logs in anywhere, and never sends a routing protocol packet.
 
 ### 5.17h Online lookups (`Online`) — opt-in, timed
@@ -263,7 +264,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 29 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 30 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations
@@ -306,6 +307,8 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **No risky parsing.** No binary serializers, no XML parser (event data is read with simple patterns), no secrets in the code, no home-made crypto.
 - **TLS done right.** Only TLS 1.2/1.3; Windows validates certificates; nothing is sent over an untrusted connection.
 - **DLLs only from System32** — for Windows calls, and for the whole process once it starts, so a DLL planted next to the exe (in Downloads) is never loaded.
+- **Only the server you asked can answer.** UDP tools connect their socket to the server (or check the transaction ID and sender), and every reply is parsed with its lengths checked first, nesting limited and handshakes on a deadline — a hostile device on the network can't make a tool lie, hang or crash the app.
+- **Child programs start in their own folder**, never in the one AdeeboMeter runs from.
 - **Secrets stay put.** The RADIUS secret box is masked; the secret signs one request and is never logged, saved or kept for *compare*.
 - **A provable build.** Releases are built by GitHub Actions from this source with every action pinned to an exact commit; each file carries SHA-256 and GitHub build provenance (`gh attestation verify <file> -R adeeb111/AdeeboMeter`). No updater exists, so there is no update channel to hijack.
 - **Static analysis:** the code builds clean against Microsoft's .NET security and quality analyzers with every rule switched on.

@@ -132,14 +132,25 @@ namespace AdeeboMeter
     // A small, strict JSON reader: objects, arrays, strings, numbers, true / false / null. Nothing is executed or resolved.
     static class Json
     {
-        public static object Parse(string s) { int i = 0; var v = Val(s, ref i); return v; }
+        // nesting deeper than 64 is refused: a hostile server can't run the stack out (that would end the whole app)
+        [ThreadStatic] static int depth;
+        public static object Parse(string s) { int i = 0; depth = 0; try { return Val(s, ref i); } catch (InvalidDataException) { return null; } }
         static void Ws(string s, ref int i) { while (i < s.Length && char.IsWhiteSpace(s[i])) i++; }
         static object Val(string s, ref int i)
         {
             Ws(s, ref i); if (i >= s.Length) return null;
             char c = s[i];
+            if (c == '{' || c == '[') { if (++depth > 64) throw new InvalidDataException("JSON nested too deep"); try { return Container(s, ref i, c); } finally { depth--; } }
+            return Scalar(s, ref i, c);
+        }
+        static object Container(string s, ref int i, char c)
+        {
             if (c == '{') { var d = new Dictionary<string, object>(); i++; Ws(s, ref i); if (i < s.Length && s[i] == '}') { i++; return d; } while (i < s.Length) { Ws(s, ref i); string key = Str(s, ref i); Ws(s, ref i); if (i < s.Length && s[i] == ':') i++; d[key] = Val(s, ref i); Ws(s, ref i); if (i < s.Length && s[i] == ',') { i++; continue; } if (i < s.Length && s[i] == '}') i++; break; } return d; }
             if (c == '[') { var l = new List<object>(); i++; Ws(s, ref i); if (i < s.Length && s[i] == ']') { i++; return l; } while (i < s.Length && l.Count < 100000) { l.Add(Val(s, ref i)); Ws(s, ref i); if (i < s.Length && s[i] == ',') { i++; continue; } if (i < s.Length && s[i] == ']') i++; break; } return l; }
+            return null;
+        }
+        static object Scalar(string s, ref int i, char c)
+        {
             if (c == '"') return Str(s, ref i);
             if (s.Length - i >= 4 && string.CompareOrdinal(s, i, "true", 0, 4) == 0) { i += 4; return true; }
             if (s.Length - i >= 5 && string.CompareOrdinal(s, i, "false", 0, 5) == 0) { i += 5; return false; }

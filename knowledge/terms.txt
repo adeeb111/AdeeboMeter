@@ -2187,3 +2187,13 @@ what: Listens (with Wireshark + Npcap) for OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BF
 how: Listens (with Wireshark + Npcap) for OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP, HSRP, IPv6 RAs, DHCP servers, spanning tree, LLDP / CDP, DTP. Nothing sent, nothing saved.
 why: Routing hellos on a user segment mean the router interface isn't passive - a security finding. Two DHCP servers or RA senders mean a rogue device.
 without: Needs Wireshark and Npcap, which usually need admin to install.
+
+== tb.arp
+friendly: Neighbours (ARP table)
+cat: term
+close: -1
+tag: Who this PC has talked to on its network.
+what: Lists the local devices Windows has a hardware address for - IP, hardware address, the maker or "private address", and virtual routers. Nothing is sent.
+how: Lists the local devices Windows has a hardware address for - IP, hardware address, the maker or "private address", and virtual routers. Nothing is sent.
+why: A quick look at who's on your segment, and whether the gateway is a VRRP / HSRP pair.
+without: Only devices your PC has exchanged packets with in the last few minutes; a ping sweep fills it in.

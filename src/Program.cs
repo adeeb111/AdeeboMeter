@@ -43,8 +43,8 @@ using Microsoft.Win32;
 [assembly: System.Reflection.AssemblyProduct("AdeeboMeter")]
 [assembly: System.Reflection.AssemblyDescription("Is it me or the network? An offline Windows network and PC companion.")]
 [assembly: System.Reflection.AssemblyCopyright("MIT License")]
-[assembly: System.Reflection.AssemblyVersion(AdeeboMeter.Program.Version + ".0.0")]
-[assembly: System.Reflection.AssemblyFileVersion(AdeeboMeter.Program.Version + ".0.0")]
+[assembly: System.Reflection.AssemblyVersion(AdeeboMeter.Program.FileVersion)]
+[assembly: System.Reflection.AssemblyFileVersion(AdeeboMeter.Program.FileVersion)]
 [assembly: System.Reflection.AssemblyInformationalVersion(AdeeboMeter.Program.Version)]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName = ".NET Framework 4.8")]   // web requests use Windows' TLS 1.2 / 1.3 defaults
 
@@ -54,7 +54,8 @@ namespace AdeeboMeter
     static class Program
     {
         public static string Dir;
-        public const string Version = "1.1";
+        public const string Version = "1.1.1";
+        public const string FileVersion = "1.1.1.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "is it me or the network?";
         public static int ForceTheme = -1;
@@ -172,6 +173,7 @@ namespace AdeeboMeter
         public static volatile bool IpNames = true, Portal = true, SeenTip, Details, BigWidget;   // BigWidget: the corner widget drawn 1.3x   // Details: the engineer toggle - raw values, sources and times on every finding
         // history on by default (kept HistoryDays, rolling), alerts with quiet hours, watch-and-suggest, data cap, pinned watch
         public static volatile bool History = true, Alerts = true, Quiet = true, Watch = true, PinWatch;
+        public static volatile int DevAlerts;   // new-device pop-ups: 0 off (default - they're still listed), 1 home networks only
         public static volatile int HistoryDays = 3, CapGB, OnlineMin = 30;   // OnlineMin: online lookups switch themselves off after this
         public static volatile int LiveMin = 15, SniffSec = 30;
         // widget
@@ -200,12 +202,12 @@ namespace AdeeboMeter
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + NetSec; yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
             yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + HistoryDays;
-            yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
+            yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "history2", "histdays", "alerts", "quiet", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "autostart", "widget", "serious", "theme" };
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)
         {
@@ -226,6 +228,7 @@ namespace AdeeboMeter
                 case "histdays": HistoryDays = Pick(v, 3, HistDayChoices); break;
                 case "alerts": Alerts = v != "0"; break;
                 case "quiet": Quiet = v != "0"; break;
+                case "devalerts": DevAlerts = v == "1" ? 1 : 0; break;
                 case "watch": Watch = v != "0"; break;
                 case "capgb": CapGB = Pick(v, 0, CapChoices); break;
                 case "onlinemin": OnlineMin = Pick(v, 30, OnlineChoices); break;
@@ -309,6 +312,7 @@ namespace AdeeboMeter
         {
             var psi = new ProcessStartInfo(exe, args);
             psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.CreateNoWindow = true;
+            psi.WorkingDirectory = Path.GetDirectoryName(exe);   // never the folder AdeeboMeter runs from (Downloads): a child could load a planted DLL from there
             if (Path.GetFileName(exe).Equals("tshark.exe", StringComparison.OrdinalIgnoreCase)) { psi.StandardOutputEncoding = System.Text.Encoding.UTF8; psi.StandardErrorEncoding = System.Text.Encoding.UTF8; }   // tshark writes UTF-8 (→, names); Windows' own tools write the console code page
             using (var p = Process.Start(psi))
             {

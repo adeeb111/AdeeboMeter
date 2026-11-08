@@ -34,6 +34,15 @@ namespace AdeeboMeter
         static IPAddress Addr(string host) { IPAddress a; if (IPAddress.TryParse(host, out a)) return a; try { return Dns.GetHostAddresses(host).OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).FirstOrDefault(); } catch { return null; } }
         static int Int(string s, int def, int lo, int hi) { int v; return int.TryParse((s ?? "").Trim(), out v) ? Math.Max(lo, Math.Min(hi, v)) : def; }
 
+        // A TLS handshake with a deadline: a server that accepts TCP and then stalls can't hold the tool forever.
+        // On timeout the socket is closed first, so the stuck handshake ends too.
+        public static void Tls(SslStream ssl, string host, IDisposable sock, int ms)
+        {
+            var t = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host));
+            bool done; try { done = t.Wait(ms); } catch (AggregateException e) { throw e.InnerException ?? e; }
+            if (!done) { try { sock.Dispose(); } catch { } try { t.Wait(1000); } catch { } throw new TimeoutException("the TLS handshake took more than " + ms / 1000 + " s"); }
+        }
+
         // ---------- TCP ping
         public static List<string[]> TcpPing(string target, string countIn, Toolkit.Run run)
         {
@@ -67,7 +76,7 @@ namespace AdeeboMeter
                     {
                         if (!tc.ConnectAsync(a, u.Port).Wait(5000)) throw new TimeoutException("connect timed out");
                         t[1] = sw.Elapsed.TotalMilliseconds; Stream st = tc.GetStream(); st.ReadTimeout = 8000;
-                        if (u.Scheme == "https") { var ssl = new SslStream(st, false); ssl.AuthenticateAsClient(u.Host); st = ssl; }
+                        if (u.Scheme == "https") { var ssl = new SslStream(st, false); Tls(ssl, u.Host, tc, 8000); st = ssl; }
                         t[2] = sw.Elapsed.TotalMilliseconds;
                         var req = Encoding.ASCII.GetBytes("GET " + u.PathAndQuery + " HTTP/1.1\r\nHost: " + u.Host + "\r\nUser-Agent: AdeeboMeter/" + Program.Version + "\r\nAccept: */*\r\nConnection: close\r\n\r\n");
                         st.Write(req, 0, req.Length);
@@ -114,7 +123,7 @@ namespace AdeeboMeter
                     if (!tc.ConnectAsync(a, 853).Wait(4000)) throw new TimeoutException("TCP 853 doesn't answer");
                     using (var ssl = new SslStream(tc.GetStream(), false))
                     {
-                        ssl.ReadTimeout = 4000; ssl.AuthenticateAsClient("cloudflare-dns.com");
+                        ssl.ReadTimeout = 4000; Tls(ssl, "cloudflare-dns.com", tc, 6000);
                         var q = new List<byte> { 0xAB, 0xCD, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 7 }; q.AddRange(Encoding.ASCII.GetBytes("example")); q.Add(3); q.AddRange(Encoding.ASCII.GetBytes("com")); q.AddRange(new byte[] { 0, 0, 1, 0, 1 });
                         var msg = new[] { (byte)(q.Count >> 8), (byte)q.Count }.Concat(q).ToArray(); ssl.Write(msg, 0, msg.Length);
                         var lb = new byte[2]; int got = ssl.Read(lb, 0, 2);
@@ -135,10 +144,15 @@ namespace AdeeboMeter
             {
                 using (var u = new UdpClient(a.AddressFamily))
                 {
-                    u.Client.ReceiveTimeout = 3000; var q = new byte[48]; q[0] = 0x23;   // LI 0, version 4, client
-                    var t1 = DateTime.UtcNow; WriteNtp(q, 40, t1); u.Send(q, 48, new IPEndPoint(a, p));
+                    u.Client.ReceiveTimeout = 3000; u.Connect(a, p);   // connected: replies from anyone else are dropped by Windows
+                    var q = new byte[48]; q[0] = 0x23;   // LI 0, version 4, client
+                    var t1 = DateTime.UtcNow; WriteNtp(q, 40, t1); u.Send(q, 48);
                     var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
                     if (r.Length < 48) throw new InvalidOperationException("short answer");
+                    bool same = true; for (int i = 0; i < 8; i++) if (r[24 + i] != q[40 + i]) same = false;
+                    if (!same || (r[0] & 7) != 4) throw new InvalidOperationException("the answer isn't a reply to this question");
+                    if (r[1] == 0) { rows.Add(R(2, h, "refused - 'kiss of death' (" + Encoding.ASCII.GetString(r, 12, 4).TrimEnd('\0') + ")", "The server tells you to stop asking - usually rate limiting. Try another server.", "m")); return rows; }
+                    if ((r[0] >> 6) == 3) { rows.Add(R(2, h, "answers, but says its own clock isn't synchronised (alarm)", "Don't trust this server's time.", "m")); return rows; }
                     int stratum = r[1]; var t2 = ReadNtp(r, 32); var t3 = ReadNtp(r, 40);
                     double offset = ((t2 - t1).TotalMilliseconds + (t3 - t4).TotalMilliseconds) / 2, delay = (t4 - t1).TotalMilliseconds - (t3 - t2).TotalMilliseconds;
                     string refid = stratum <= 1 ? Encoding.ASCII.GetString(r, 12, 4).TrimEnd('\0') : new IPAddress(new[] { r[12], r[13], r[14], r[15] }).ToString();
@@ -163,7 +177,7 @@ namespace AdeeboMeter
                 {
                     var sw = Stopwatch.StartNew(); if (!tc.ConnectAsync(h, p).Wait(6000)) throw new TimeoutException("no answer on port " + p);
                     Stream st = tc.GetStream(); st.ReadTimeout = 8000; X509Certificate2 cert = null;
-                    if (implicitTls) { var ssl = new SslStream(st, false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); ssl.AuthenticateAsClient(h); st = ssl; }
+                    if (implicitTls) { var ssl = new SslStream(st, false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); st = ssl; }
                     var rd = new StreamReader(st, Encoding.ASCII); var wr = new StreamWriter(st, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true };
                     string banner = rd.ReadLine() ?? "";
                     rows.Add(R(banner.StartsWith("220", StringComparison.Ordinal) || banner.StartsWith("* OK", StringComparison.Ordinal) || banner.StartsWith("+OK", StringComparison.Ordinal) ? 0 : 1, kind + " greeting (" + sw.ElapsedMilliseconds + " ms)", Draw.Trunc(banner, 140), "", "m"));
@@ -176,7 +190,7 @@ namespace AdeeboMeter
                         if (starttls && !implicitTls)
                         {
                             wr.WriteLine("STARTTLS"); string ok = rd.ReadLine() ?? "";
-                            if (ok.StartsWith("220", StringComparison.Ordinal)) { var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); ssl.AuthenticateAsClient(h); var w2 = new StreamWriter(ssl, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true }; w2.WriteLine("QUIT"); }
+                            if (ok.StartsWith("220", StringComparison.Ordinal)) { var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); var w2 = new StreamWriter(ssl, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true }; w2.WriteLine("QUIT"); }
                         }
                         else wr.WriteLine("QUIT");
                     }
@@ -222,8 +236,10 @@ namespace AdeeboMeter
             {
                 using (var u = new UdpClient(a.AddressFamily))
                 {
-                    u.Client.ReceiveTimeout = 3000; var sw = Stopwatch.StartNew(); u.Send(msg, msg.Length, new IPEndPoint(a, p));
+                    u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(msg, msg.Length);
                     var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
+                    string why = SnmpCheck(r, reqId[2], reqId[3]);
+                    if (why != "") { rows.Add(R(2, h, "answered, but " + why, "", "m")); return rows; }
                     var vals = new List<string>(); ParseVarbinds(r, vals);
                     rows.Add(R(0, h + " (" + sw.ElapsedMilliseconds + " ms)", "answered SNMP v2c", "The community string travels in clear text - SNMP v3 is the safe choice on shared networks.", "m"));
                     for (int i = 0; i < SysOids.Length && i < vals.Count; i++) rows.Add(R(3, SysOids[i][1], vals[i], "", "m"));
@@ -232,6 +248,21 @@ namespace AdeeboMeter
             catch (SocketException) { rows.Add(R(2, h + ":" + p, "no answer in 3 s", "Wrong community string, SNMP off, an access list that doesn't include your PC, or UDP 161 blocked - a device stays silent in all four cases.", "m")); }
             return rows;
         }
+        // A real answer to our GET: SEQUENCE { version 1, community, GetResponse { request-id, error-status 0, ... } }
+        static string SnmpCheck(byte[] r, byte id1, byte id2)
+        {
+            int t, hl, len, p = 0;
+            if (!TryTlv(r, 0, r.Length, out t, out hl, out len) || t != 0x30) return "not with an SNMP message";
+            p = hl; int end = hl + len;
+            if (!TryTlv(r, p, end, out t, out hl, out len) || t != 2 || len != 1 || r[p + hl] != 1) return "not with SNMP v2c";
+            p += hl + len; if (!TryTlv(r, p, end, out t, out hl, out len) || t != 4) return "not with an SNMP message";
+            p += hl + len; if (!TryTlv(r, p, end, out t, out hl, out len) || t != 0xA2) return "not with a reply to a GET (PDU " + t.ToString("X2", CultureInfo.InvariantCulture) + ")";
+            p += hl; int pend = p + len;
+            if (!TryTlv(r, p, pend, out t, out hl, out len) || t != 2 || len != 2 || r[p + hl] != id1 || r[p + hl + 1] != id2) return "to a different request";
+            p += hl + len; if (!TryTlv(r, p, pend, out t, out hl, out len) || t != 2) return "with a broken reply";
+            int err = len == 1 ? r[p + hl] : -1; if (err != 0) return "with SNMP error " + err + (err == 2 ? " (noSuchName)" : err == 5 ? " (genErr)" : "");
+            return "";
+        }
         static byte[] Tlv(byte tag, byte[] v) { var l = v.Length < 128 ? new[] { (byte)v.Length } : v.Length < 256 ? new byte[] { 0x81, (byte)v.Length } : new byte[] { 0x82, (byte)(v.Length >> 8), (byte)v.Length }; return new[] { tag }.Concat(l).Concat(v).ToArray(); }
         static byte[] Oid(string s)
         {
@@ -239,25 +270,49 @@ namespace AdeeboMeter
             for (int i = 2; i < p.Length; i++) { var st = new List<byte>(); long v = p[i]; st.Add((byte)(v & 0x7F)); v >>= 7; while (v > 0) { st.Add((byte)(0x80 | (v & 0x7F))); v >>= 7; } st.Reverse(); b.AddRange(st); }
             return Tlv(6, b.ToArray());
         }
-        static void ParseVarbinds(byte[] r, List<string> vals)
+        // Walks the BER tree of an SNMP reply and collects the value of every varbind (SEQUENCE { OID, value }).
+        // The reply comes from the network, so every length is checked before it is used: lengths are at most 3 bytes
+        // long, never negative, never past the end of the element that holds them, and the walk always moves forward.
+        public static void ParseVarbinds(byte[] r, List<string> vals)
         {
-            // walk the BER tree and collect the value of every varbind (SEQUENCE { OID, value })
+            int depth = 0;
             Action<int, int> walk = null;
             walk = (pos, end) =>
             {
-                while (pos < end)
+                if (++depth > 16) return;
+                while (pos < end && vals.Count < 64)
                 {
-                    byte tag = r[pos]; int len = r[pos + 1], hl = 2; if ((len & 0x80) != 0) { int nb = len & 0x7F; len = 0; for (int i = 0; i < nb; i++) len = len << 8 | r[pos + 2 + i]; hl = 2 + nb; }
-                    int v = pos + hl;
-                    if (tag == 0x30 && v < r.Length && r[v] == 6) { int ol = r[v + 1]; int vp = v + 2 + ol; byte vt = r[vp]; int vl = r[vp + 1]; vals.Add(Val(r, vt, vp + 2, vl)); }
-                    else if (tag == 0x30 || (tag >= 0xA0 && tag <= 0xA8)) walk(v, Math.Min(end, v + len));
-                    pos = v + len;
+                    int tag, hl, len; if (!TryTlv(r, pos, end, out tag, out hl, out len)) return;
+                    int v = pos + hl, vend = v + len;
+                    if (tag == 0x30 && len >= 2 && r[v] == 6)
+                    {
+                        int ot, ohl, ol; if (!TryTlv(r, v, vend, out ot, out ohl, out ol)) return;
+                        int vp = v + ohl + ol; int vt, vhl, vl;
+                        if (TryTlv(r, vp, vend, out vt, out vhl, out vl)) vals.Add(Val(r, (byte)vt, vp + vhl, vl));
+                    }
+                    else if (tag == 0x30 || (tag >= 0xA0 && tag <= 0xA8)) walk(v, vend);
+                    pos = vend;   // len >= 0, hl >= 2: always forward
                 }
+                depth--;
             };
-            try { walk(0, r.Length); } catch (IndexOutOfRangeException) { }
+            walk(0, r.Length);
+        }
+        static bool TryTlv(byte[] r, int pos, int end, out int tag, out int hl, out int len)
+        {
+            tag = 0; hl = 0; len = 0;
+            if (pos < 0 || pos + 2 > end || end > r.Length) return false;
+            tag = r[pos]; len = r[pos + 1]; hl = 2;
+            if ((len & 0x80) != 0)
+            {
+                int nb = len & 0x7F; if (nb == 0 || nb > 3 || pos + 2 + nb > end) return false;   // no indefinite or huge lengths
+                len = 0; for (int i = 0; i < nb; i++) len = len << 8 | r[pos + 2 + i]; hl = 2 + nb;
+            }
+            return len >= 0 && pos + hl + len <= end;
         }
         static string Val(byte[] r, byte t, int o, int l)
         {
+            if (o < 0 || l < 0 || o + l > r.Length) return "(malformed)";
+            if ((t == 0x43 || t == 2 || t == 0x41 || t == 0x42) && l > 8) return "(number too long)";
             if (t == 4) return Draw.Trunc(Regex.Replace(Encoding.UTF8.GetString(r, o, l), @"\s+", " "), 160);
             if (t == 0x43 || t == 2 || t == 0x41 || t == 0x42) { long v = 0; for (int i = 0; i < l; i++) v = v << 8 | r[o + i]; if (t == 0x43) { var ts = TimeSpan.FromMilliseconds(v * 10); return ts.Days + " days " + ts.Hours + " h " + ts.Minutes + " min"; } return v.ToString(CultureInfo.InvariantCulture); }
             if (t == 0x80 || t == 0x81) return "(not available on this device)";
@@ -269,7 +324,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 514, out h, out p)) { rows.Add(R(2, "Collector", "type the syslog server's address", "", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
-            string msg = "<14>1 " + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) + " " + Environment.MachineName + " AdeeboMeter - - - " + (string.IsNullOrWhiteSpace(text) ? "AdeeboMeter test message" : text.Trim());
+            string msg = "<14>1 " + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) + " " + Environment.MachineName + " AdeeboMeter - - - " + (string.IsNullOrWhiteSpace(text) ? "AdeeboMeter test message" : Regex.Replace(text.Trim(), @"[\r\n\t\x00-\x1f]", " ").Substring(0, Math.Min(400, text.Trim().Length)));
             using (var u = new UdpClient(a.AddressFamily)) { var b = Encoding.UTF8.GetBytes(msg); u.Send(b, b.Length, new IPEndPoint(a, p)); }
             rows.Add(R(0, "Sent to " + a + ":" + p + " (UDP)", msg, "Syslog over UDP never confirms - look for it on the collector (facility user, severity info).", "m"));
             return rows;
@@ -290,17 +345,28 @@ namespace AdeeboMeter
             {
                 using (var u = new UdpClient(a.AddressFamily))
                 {
-                    u.Client.ReceiveTimeout = 3000; var sw = Stopwatch.StartNew(); u.Send(pkt, pkt.Length, new IPEndPoint(a, p));
+                    u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(pkt, pkt.Length);
                     var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
-                    bool good = false;
-                    if (r.Length >= 20 && r[1] == pkt[1])
-                        using (var md5 = MD5.Create()) { var chk = new byte[r.Length + sec.Length]; Array.Copy(r, chk, r.Length); Array.Copy(auth, 0, chk, 4, 16); Array.Copy(sec, 0, chk, r.Length, sec.Length); var exp = md5.ComputeHash(chk); good = exp.SequenceEqual(r.Skip(4).Take(16)); }
+                    if (r.Length < 20) { rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
+                    bool good = ReplyOk(r, pkt[1], auth, sec); Array.Clear(sec, 0, sec.Length);
                     string code = r[0] == 2 ? "Access-Accept" : r[0] == 3 ? "Access-Reject" : r[0] == 5 ? "Accounting-Response" : "code " + r[0];
                     rows.Add(R(good ? 0 : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", code + (good ? " - the server is alive and the shared secret matches" : " - but the reply isn't signed with this secret"), good ? "" : "The shared secret differs between this PC's entry and the server.", "m"));
                 }
             }
             catch (SocketException) { rows.Add(R(2, h + ":" + p, "no answer in 3 s", "RADIUS servers stay silent for: a wrong shared secret, a client (NAS) entry that doesn't include this PC's address, Status-Server not enabled, or UDP " + p + " blocked. FreeRADIUS: status_server = yes and a client entry for this PC.", "m")); }
             return rows;
+        }
+
+        // Response Authenticator (RFC 2865 section 3): MD5(Code + Identifier + Length + Request Authenticator + Attributes + Secret),
+        // over the length the reply declares. Checked against the RFC's own example in the self-test.
+        [SuppressMessage("Security", "CA5351", Justification = "RADIUS (RFC 2865) defines MD5; nothing else interoperates")]
+        public static bool ReplyOk(byte[] r, byte id, byte[] reqAuth, byte[] secret)
+        {
+            if (r == null || r.Length < 20 || reqAuth == null || reqAuth.Length != 16 || secret == null) return false;
+            int rl = r[2] << 8 | r[3]; if (rl < 20 || rl > r.Length || r[1] != id) return false;
+            var chk = new byte[rl + secret.Length]; Array.Copy(r, chk, rl); Array.Copy(reqAuth, 0, chk, 4, 16); Array.Copy(secret, 0, chk, rl, secret.Length);
+            using (var md5 = MD5.Create()) { var exp = md5.ComputeHash(chk); for (int i = 0; i < 16; i++) if (exp[i] != r[4 + i]) return false; }
+            return true;
         }
 
         // ---------- TACACS+ reachability (TCP 49)
@@ -322,19 +388,21 @@ namespace AdeeboMeter
             var res = new List<double[]>();   // sseq, t1, t2, t3, t4, rseq (ms since 1900)
             using (var u = new UdpClient(a.AddressFamily))
             {
-                u.Client.ReceiveTimeout = 1000;
+                u.Client.ReceiveTimeout = 1000; u.Connect(a, p);
                 for (int i = 0; i < n && !run.Stop; i++)
                 {
                     var pkt = new byte[41]; pkt[0] = (byte)(i >> 24); pkt[1] = (byte)(i >> 16); pkt[2] = (byte)(i >> 8); pkt[3] = (byte)i;
-                    var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0x80; pkt[13] = 1;   // error estimate: synced, small
-                    u.Send(pkt, pkt.Length, new IPEndPoint(a, p)); var sw = Stopwatch.StartNew();
+                    var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate: S = 0 - this PC can't promise its clock is synced to UTC
+                    u.Send(pkt, pkt.Length); var sw = Stopwatch.StartNew();
                     try
                     {
                         while (sw.ElapsedMilliseconds < 1000)
                         {
                             var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
-                            if (r.Length < 41) continue;
+                            if (r.Length < 40) continue;
                             int sseq = r[24] << 24 | r[25] << 16 | r[26] << 8 | r[27]; if (sseq != i) continue;
+                            bool echoed = true; for (int k = 0; k < 8 && 28 + k < r.Length; k++) if (r[28 + k] != pkt[4 + k]) echoed = false;
+                            if (!echoed) continue;   // a late duplicate of an earlier packet
                             int rseq = r[0] << 24 | r[1] << 16 | r[2] << 8 | r[3];
                             var t3 = ReadNtp(r, 4); var t2 = ReadNtp(r, 16);
                             res.Add(new double[] { i, 0, (t2 - t1).TotalMilliseconds, (t4 - t3).TotalMilliseconds, ((t4 - t1) - (t3 - t2)).TotalMilliseconds, rseq });
@@ -353,7 +421,8 @@ namespace AdeeboMeter
             for (int i = 1; i < res.Count; i++) { int ds = (int)(res[i][0] - res[i - 1][0]), dr = (int)(res[i][5] - res[i - 1][5]); if (ds > 1) { int miss = ds - 1, reflected = Math.Max(0, dr - 1); lostBack += Math.Min(miss, reflected); lostOut += miss - Math.Min(miss, reflected); } }
             var rtt = res.Select(x => x[4]).OrderBy(x => x).ToList();
             Func<int, double> ipdv = k => { double s = 0; for (int i = 1; i < res.Count; i++) s += Math.Abs(res[i][k] - res[i - 1][k]); return res.Count > 1 ? s / (res.Count - 1) : 0; };
-            rows.Add(R(got < sent ? 1 : 0, "Reflected", got + " of " + sent + " · lost on the way out " + lostOut + " · on the way back " + lostBack, "The reflector numbers what it sends back, so AdeeboMeter can tell which direction lost each packet.", "m"));
+            int unknown = sent - got - lostOut - lostBack;
+            rows.Add(R(got < sent ? 1 : 0, "Reflected", got + " of " + sent + " · lost on the way out " + lostOut + " · on the way back " + lostBack + (unknown > 0 ? " · " + unknown + " before the first or after the last reply (direction unknown)" : ""), "The reflector numbers what it sends back, so AdeeboMeter can tell which direction lost each packet.", "m"));
             rows.Add(R(0, "Round trip (reflector time removed)", "min " + Ms(rtt[0]) + " · median " + Ms(rtt[rtt.Count / 2]) + " · max " + Ms(rtt.Last()), "", "m"));
             rows.Add(R(ipdv(2) > 10 || ipdv(3) > 10 ? 1 : 0, "Jitter each way", "out " + Ms(ipdv(2)) + " · back " + Ms(ipdv(3)), "Jitter per direction needs no synced clocks - the clock offset cancels out.", "m"));
             double fo = res.Select(x => x[2]).OrderBy(x => x).ElementAt(res.Count / 2), bo = res.Select(x => x[3]).OrderBy(x => x).ElementAt(res.Count / 2);
@@ -376,7 +445,7 @@ namespace AdeeboMeter
                 double rt = double.NaN; var r = Icmp.Echo(ma.Address, 32, 64, false, 1500, false); if (r.Status == Icmp.Ok) rt = r.Rtt;
                 rows.Add(R(3, "Ping your own public address", double.IsNaN(rt) ? "no answer (many routers ignore ping on their outside)" : Ms(rt) + " - answered by your router itself", "", "m"));
                 var probe = Encoding.ASCII.GetBytes("adeebometer-hairpin"); bool back = false;
-                try { a.Send(probe, probe.Length, mb); var from = new IPEndPoint(IPAddress.Any, 0); var got = b.Receive(ref from); back = got.Length == probe.Length; } catch (SocketException) { }
+                try { a.Send(probe, probe.Length, mb); var from = new IPEndPoint(IPAddress.Any, 0); var got = b.Receive(ref from); back = got.SequenceEqual(probe); } catch (SocketException) { }
                 rows.Add(R(back ? 0 : 1, "Hairpin (NAT loopback)", back ? "works - a packet sent to your own public address came back in" : "doesn't loop back", back ? "Devices at home can reach each other (a camera, a NAS, a game server) using the public address or a dynamic-DNS name." : "Using your public address or dynamic-DNS name from inside your home won't work - use the local address at home, or turn on 'NAT loopback' / 'NAT reflection' in the router.", "m"));
                 int inner = ((IPEndPoint)a.Client.LocalEndPoint).Port;
                 rows.Add(R(3, "Port kept?", inner + " inside → " + ma.Port + " outside" + (inner == ma.Port ? " (kept)" : " (changed by the router)"), "", "m"));
@@ -391,10 +460,13 @@ namespace AdeeboMeter
                 try
                 {
                     u.Send(req, req.Length, new IPEndPoint(relay, 3478)); var from = new IPEndPoint(IPAddress.Any, 0); var m = u.Receive(ref from);
-                    if (m.Length < 20 || m[1] != 1) continue;
+                    if (!from.Address.Equals(relay) || m.Length < 20 || m[0] != 1 || m[1] != 1) continue;   // a Binding Success from the server we asked
+                    bool mine = m[4] == 0x21 && m[5] == 0x12 && m[6] == 0xA4 && m[7] == 0x42; for (int k = 0; k < 12; k++) if (m[8 + k] != tid[k]) mine = false;
+                    if (!mine || 20 + (m[2] << 8 | m[3]) > m.Length) continue;
                     for (int p = 20; p + 4 <= m.Length;)
                     {
                         int type = m[p] << 8 | m[p + 1], len = m[p + 2] << 8 | m[p + 3], v = p + 4;
+                        if (v + len > m.Length) break;
                         if ((type == 0x20 || type == 1) && len >= 8 && m[v + 1] == 1) { int port = m[v + 2] << 8 | m[v + 3]; var ip = new[] { m[v + 4], m[v + 5], m[v + 6], m[v + 7] }; if (type == 0x20) { port ^= 0x2112; ip[0] ^= 0x21; ip[1] ^= 0x12; ip[2] ^= 0xA4; ip[3] ^= 0x42; } return new IPEndPoint(new IPAddress(ip), port); }
                         p = v + ((len + 3) & ~3);
                     }

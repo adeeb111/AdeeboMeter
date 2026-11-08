@@ -26,7 +26,7 @@ AdeeboMeter is a small Windows companion for people who live on the network. A f
 - **Overview** — the verdict, router / internet / DNS / traffic right now, what needs attention, and today.
 - **Monitor** — every connection and the app that owns it (*Sniff* a row into Wireshark); your Wi-Fi or cable (a health score that works even when IT turned location off, an advisor, look-alike networks, a walk test, your switch port and VLAN); every program explained; live capture.
 - **Investigate** — pick the problem (*slow*, *won't open*, *calls freeze*, *keeps disconnecting*, *works at home but not on VPN*, *my PC is slow*) and it runs the checks: **Finding · What I observed · Not established · Next test**. Plus Check a destination (DNS → route → TCP → TLS → HTTP → MTU → trace, and the path story) and a health check.
-- **Toolbox** — 55 tools, found by typing (*mtu*, *dns*, *radius*…): MTU per hop, MTR, the way back, which route, your gateway (VRRP / HSRP failover), routing protocols on your segment, IPv6; port test, TCP ping, HTTP timing, proxy, Teams UDP, SSH, mail, RADIUS, TACACS+; an iperf3 client, sustained ping, TWAMP-light; dig, encrypted DNS, NTP; SNMP, syslog, your own router (hairpin), ping sweep, Wake-on-LAN, subnet calculator; Windows' own evidence, 802.1X, domain controllers, Group Policy, expiring certificates, firewall rules, what's listening, the event log; and the PC — memory, disk, heat, frozen windows, leaks, crashes, battery, where the space went. Type a target once; run again and compare.
+- **Toolbox** — 56 tools, found by typing (*mtu*, *dns*, *radius*…), each result one click from your clipboard: MTU per hop, MTR, the way back, which route, your gateway (VRRP / HSRP failover), routing protocols on your segment, IPv6; port test, TCP ping, HTTP timing, proxy, Teams UDP, SSH, mail, RADIUS, TACACS+; an iperf3 client, sustained ping, TWAMP-light; dig, encrypted DNS, NTP; neighbours (ARP), SNMP, syslog, your own router (hairpin), ping sweep, Wake-on-LAN, subnet calculator; Windows' own evidence, 802.1X, domain controllers, Group Policy, expiring certificates, firewall rules, what's listening, the event log; and the PC — memory, disk, heat, frozen windows, leaks, crashes, battery, where the space went. Type a target once; run again and compare.
 - **Network story** — follow any app from your PC to the server, box by box, and see where the time goes.
 - **Time machine** — replay any minute of the last days (network and PC side by side), the week as a heatmap, data usage per network, after-call summaries, new devices on your network.
 - **Learn** — 46 topics, two lines and a picture each, from *the layers in plain words* to *svchost*; inside Windows (who started whom, what starts with Windows).
@@ -75,7 +75,7 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in; DLLs load only from System32.
 - TLS 1.2/1.3 only with Windows' certificate validation.
 - Builds clean against Microsoft's .NET security and quality analyzers with every rule on.
-- `AdeeboMeter.exe --selftest` runs 29 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
+- `AdeeboMeter.exe --selftest` runs 30 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
 
 ## Code signing policy
 

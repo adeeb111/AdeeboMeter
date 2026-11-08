@@ -93,7 +93,7 @@ namespace AdeeboMeter
                 // to start, and we quietly start again without them.
                 usingExtras = extrasOk != false;
                 if (usingExtras) { foreach (var f in extraFields) sb.Append(" -e ").Append(f); sb.Append(" --enable-heuristic rtp_udp"); }
-                var psi = new ProcessStartInfo(Tshark, sb.ToString()) { StandardOutputEncoding = System.Text.Encoding.UTF8, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+                var psi = new ProcessStartInfo(Tshark, sb.ToString()) { WorkingDirectory = WsDir, StandardOutputEncoding = System.Text.Encoding.UTF8, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
                 ts = Process.Start(psi); Job.Add(ts);
                 try { ts.PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
                 ts.ErrorDataReceived += delegate(object s, DataReceivedEventArgs e)
@@ -108,7 +108,7 @@ namespace AdeeboMeter
                 var t = new Thread(Reader) { IsBackground = true, Name = "tshark", Priority = ThreadPriority.BelowNormal }; t.Start();
                 // ring buffer for Sniff
                 try { Directory.CreateDirectory(RingDir); foreach (var f in Directory.GetFiles(RingDir)) try { File.Delete(f); } catch { } } catch { }
-                var rp = new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -b filesize:20000 -b files:5 -w \"" + Path.Combine(RingDir, "ring.pcapng") + "\"") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
+                var rp = new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -b filesize:20000 -b files:5 -w \"" + Path.Combine(RingDir, "ring.pcapng") + "\"") { WorkingDirectory = Path.GetDirectoryName(Dumpcap), UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
                 ring = Process.Start(rp); Job.Add(ring); ring.BeginErrorReadLine();
                 try { ring.PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
                 Program.Log("Live capture started");
@@ -351,7 +351,7 @@ namespace AdeeboMeter
             {
                 status(Voice.P("Digging through the last few minutes and listening 15 s more...", "Collecting history + 15 s..."));
                 var fwd = Path.Combine(dir, "z_after.pcapng");
-                var fp = Process.Start(new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -f \"" + filt + "\" -a duration:15 -w \"" + fwd + "\"") { UseShellExecute = false, CreateNoWindow = true }); Job.Add(fp);
+                var fp = Process.Start(new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -f \"" + filt + "\" -a duration:15 -w \"" + fwd + "\"") { WorkingDirectory = Path.GetDirectoryName(Dumpcap), UseShellExecute = false, CreateNoWindow = true }); Job.Add(fp);
                 int i = 0;
                 foreach (var rf in Directory.GetFiles(RingDir, "*.pcapng").OrderBy(x => File.GetLastWriteTimeUtc(x)))
                 {
@@ -366,7 +366,7 @@ namespace AdeeboMeter
                 if (parts.Count == 0) { status("Nothing captured for that flow."); return; }
                 Job.Run(Mergecap, "-w \"" + final + "\" " + string.Join(" ", parts.Select(x => "\"" + x + "\"")), 60000);
                 string ws = Path.Combine(WsDir, "Wireshark.exe");
-                if (File.Exists(final)) { if (File.Exists(ws)) { var psi = new ProcessStartInfo(ws, "\"" + final + "\"") { UseShellExecute = false }; Process.Start(psi).Dispose(); } status(Voice.P("Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits; Save As to keep it.)", "Saved with history; opening in Wireshark.")); }
+                if (File.Exists(final)) { if (File.Exists(ws)) { var psi = new ProcessStartInfo(ws, "\"" + final + "\"") { WorkingDirectory = Path.GetDirectoryName(ws), UseShellExecute = false }; Process.Start(psi).Dispose(); } status(Voice.P("Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits; Save As to keep it.)", "Saved with history; opening in Wireshark.")); }
                 else status("Merging failed.");
             }
             catch (Exception e) { status("Sniff failed: " + e.Message); Program.Log("sniff history: " + e); }

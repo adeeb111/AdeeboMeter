@@ -62,6 +62,24 @@ namespace AdeeboMeter
             return rows;
         }
 
+        // ---------- who this PC has talked to on the local network (the ARP table) - nothing is sent
+        public static List<string[]> Neighbours(Monitor m)
+        {
+            var rows = new List<string[]>(); string gw; lock (m.L) gw = m.Gateway;
+            List<Arp.Entry> t; try { t = Arp.Table(); } catch { t = new List<Arp.Entry>(); }
+            var names = new Dictionary<int, string>();
+            try { foreach (var n in NetworkInterface.GetAllNetworkInterfaces()) try { names[n.GetIPProperties().GetIPv4Properties().Index] = n.Name; } catch { } } catch { }
+            var list = t.OrderBy(e => e.IfIndex).ThenBy(e => { IPAddress a; return IPAddress.TryParse(e.Ip, out a) ? BitConverter.ToUInt32(a.GetAddressBytes().Reverse().ToArray(), 0) : 0; }).ToList();
+            rows.Add(R(3, "Neighbours", list.Count + " devices this PC has talked to recently", "Windows keeps each for a few minutes after the last packet. A ping sweep (Network devices) fills it with everyone who answers.", "w"));
+            foreach (var e in list.Take(200))
+            {
+                string g, v = Virtual(e.Mac, out g), name; names.TryGetValue(e.IfIndex, out name);
+                string what = e.Ip == gw ? "your gateway" + (v != "" ? " (" + v + " group " + g + ")" : "") : v != "" ? v + " virtual router" : Arp.Randomised(e.Mac) ? "private (random) address - a phone or laptop" : Toolkit.Vendor(e.Mac).Trim('(', ')');
+                rows.Add(R(e.Ip == gw ? 0 : 3, e.Ip, e.Mac + (what != "" ? "  ·  " + what : "") + (e.Dynamic ? "" : "  ·  static entry") + (name != null && names.Count > 1 ? "  ·  " + name : ""), "", "w"));
+            }
+            return rows;
+        }
+
         // ---------- IPv6 routers announcing themselves (router advertisements, read from Windows' own state)
         public static List<string[]> Ipv6Routers()
         {
