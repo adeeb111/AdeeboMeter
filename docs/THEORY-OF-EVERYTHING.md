@@ -1,6 +1,6 @@
 # AdeeboMeter — The Theory of Everything
 
-*How every part of AdeeboMeter works, in plain words. Version 0.6.3.*
+*How every part of AdeeboMeter works, in plain words. Version 1.0.*
 
 ---
 
@@ -220,7 +220,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 25 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 27 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations
@@ -291,21 +291,26 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 
 ---
 
-## 11. Build it yourself
+## 11. Build, install and release
 
-You need nothing but Windows (10 or 11, .NET Framework 4.8 is built in):
+You need nothing but Windows (10 or 11, .NET Framework 4.8 is built in). Double-click **`build_exe.cmd`**: it compiles
+`AdeeboMeter.exe` (with its icon), prints its SHA256 and runs the self-test.
 
-```powershell
-.\build.ps1
-```
+**The exe installs itself** (`Setup`, `SetupWindow`). A copy started for the first time from a folder where it has never
+run offers three choices: *Install*, *Just run it from here*, or — if a version is already installed — *Update* / *Open*.
+Install copies the exe to `%LOCALAPPDATA%\Programs\AdeeboMeter\<version>`, brings your settings along, adds a Start
+menu entry and an entry in Settings > Apps (per user, `HKCU`), asks a running copy to step aside (a named event; older
+versions are stopped), then removes older versions. No administrator rights, no shell. *Uninstall* (Settings > Apps or
+the tray menu) reverses every step; because a running exe can't delete its own folder, a copy in `%TEMP%` waits for it
+to exit and removes the folder — it only ever removes `%LOCALAPPDATA%\Programs\AdeeboMeter`.
 
-or by hand:
+**A release** follows one pattern every time:
 
-```powershell
-& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /optimize+ `
-  /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll AdeeboMeter.cs
-.\AdeeboMeter.exe --selftest
-```
+1. Change `Program.Version` in `AdeeboMeter.cs` (for example `1.1`) and add a `## 1.1 (date)` section to `CHANGELOG.md`.
+2. Push, then publish a GitHub release tagged `v1.1`.
+3. GitHub Actions runs `release.ps1` on a clean Windows machine and attaches `AdeeboMeter-<version>-win64.zip`
+   (the exe, READ ME, the Theory of Everything PDF, SHA256SUMS), `AdeeboMeter.exe`, the source zip and `SHA256SUMS`;
+   the release notes are the CHANGELOG section. The website's download button always points at the latest release.
 
 ---
 

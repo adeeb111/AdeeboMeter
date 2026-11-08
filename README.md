@@ -19,15 +19,21 @@ AdeeboMeter is a small Windows companion for people who live on the network. A f
 
 ## Get it
 
-**Download:** the latest `AdeeboMeter.exe` from [Releases](../../releases). Put it in any folder (for example `Documents\AdeeboMeter`) and run it. No installer, no admin rights. Windows 10 or 11.
+**[adeeb111.github.io/AdeeboMeter](https://adeeb111.github.io/AdeeboMeter/)** — download, and the Theory of Everything as slides.
 
-The exe is built by GitHub Actions on a clean Windows machine with Microsoft's own .NET Framework compiler from this exact source; its SHA256 is published next to it. It isn't code-signed, so SmartScreen may warn — choose *More info → Run anyway*, or build it yourself:
+1. Download `AdeeboMeter-<version>-win64.zip` from [Releases](../../releases) and open it.
+2. Double-click **AdeeboMeter.exe** and choose **Install**. (SmartScreen: *More info → Run anyway* — the exe isn't code-signed.)
+3. Look at the bottom-right corner of your screen.
 
-**Build it yourself** (nothing to install — the compiler ships inside Windows):
+It installs just for you — `%LOCALAPPDATA%\Programs\AdeeboMeter\<version>`, a Start menu entry and an entry in
+Settings > Apps — with no administrator rights. **Update**: run the new exe, choose *Update*; your settings come along.
+**Remove**: Settings > Apps, or the tray menu. Rather not install? Choose *Just run it from here*.
 
-```powershell
-.\build.ps1
-```
+Windows 10 or 11. The exe is built by GitHub Actions on a clean Windows machine with Microsoft's own .NET Framework
+compiler from this exact source; its SHA256 is published with each release.
+
+**Build it yourself** (nothing to install — the compiler ships inside Windows): double-click **`build_exe.cmd`**.
+Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Use it
 
@@ -45,7 +51,7 @@ The exe is built by GitHub Actions on a clean Windows machine with Microsoft's o
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in.
 - TLS 1.2/1.3 only with Windows' certificate validation.
 - Builds clean against Microsoft's .NET security and quality analyzers with every rule on.
-- `AdeeboMeter.exe --selftest` runs 25 checks, including "never listens", leak tests and parser tests.
+- `AdeeboMeter.exe --selftest` runs 27 checks, including "never listens", leak tests and parser tests.
 
 ## How it works
 

@@ -1,0 +1,26 @@
+AdeeboMeter __VERSION__  -  is it me or the network?
+No cloud. No telemetry. Never listens. Every packet it sends is listed in About - and you can switch each one off.
+
+Install (about ten seconds, no administrator rights)
+  Double-click AdeeboMeter.exe and choose Install.
+  Windows may say "Windows protected your PC" - the app isn't code-signed. Choose More info > Run anyway.
+  It installs just for you, adds itself to the Start menu and starts in the bottom-right corner of your screen.
+
+Use it
+  Click the tray icon or press Ctrl+Alt+A for the full story. Esc goes back to the corner.
+
+Update
+  Double-click the new AdeeboMeter.exe and choose Update. Your settings come along.
+
+Remove
+  Settings > Apps > AdeeboMeter > Uninstall, or right-click the tray icon > Uninstall AdeeboMeter.
+
+Rather not install?
+  Choose "Just run it from here" - it runs from this folder and keeps its settings next to it.
+
+How it works
+  AdeeboMeter - Theory of Everything.pdf, in this folder.
+  The source, the build and the website: https://github.com/adeeb111/AdeeboMeter
+
+SHA256SUMS holds the fingerprint of AdeeboMeter.exe - it matches the one published with the release.
+Created by Adeeb Khan.
