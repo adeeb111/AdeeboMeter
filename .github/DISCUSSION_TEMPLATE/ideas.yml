@@ -1,0 +1,12 @@
+title: "[Idea] "
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like AdeeboMeter to do, and why would it help you?
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: AdeeboMeter stays offline, light and admin-free - ideas that keep it that way can ship fastest.

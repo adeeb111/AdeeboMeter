@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: An idea or a question
+    url: https://github.com/adeeb111/AdeeboMeter/discussions
+    about: Ideas and questions live in Discussions - browse what others asked, vote, or start your own.
+  - name: Website and download
+    url: https://adeeb111.github.io/AdeeboMeter/
+    about: Download AdeeboMeter and read the Theory of Everything.

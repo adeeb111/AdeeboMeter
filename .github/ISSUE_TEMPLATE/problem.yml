@@ -1,0 +1,40 @@
+name: Something isn't working
+description: AdeeboMeter showed something wrong, crashed, or didn't do what you expected.
+title: "[Problem] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Please don't paste anything private (IP addresses, network names, company names) unless you're happy for it to be public.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      placeholder: "1. Open the engineer view\n2. Go to Your Wi-Fi\n3. ..."
+  - type: input
+    id: version
+    attributes:
+      label: AdeeboMeter version
+      description: Right-click the tray icon - the version is on the first line.
+      placeholder: "1.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 23H2
+  - type: textarea
+    id: selftest
+    attributes:
+      label: Self-test (optional, helps a lot)
+      description: Run `AdeeboMeter.exe --selftest` and paste AdeeboMeter-selftest.txt (it's next to the exe).
+      render: text
