@@ -54,6 +54,7 @@ $sums = "$exeSum  AdeeboMeter.exe`n$(Sha $win)  $(Split-Path -Leaf $win)`n$(Sha 
 Copy-Item (Join-Path $stage "AdeeboMeter.exe") $dist
 
 $body = ($section -split "`n", 2)[1].Trim()
+$body = $body -replace "\r?\n  +(?=\S)", " "      # CHANGELOG wraps bullets at 120 columns; GitHub would show each wrap as a line break
 $winName = Split-Path -Leaf $win; $srcName = Split-Path -Leaf $srcZip
 $winMB = "{0:N1} MB" -f ((Get-Item $win).Length / 1MB)
 $notes = @"

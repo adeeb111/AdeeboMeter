@@ -4,8 +4,7 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 ## 1.0 (2026-11-07)
 
-The first public version: a quiet Windows companion that tells you, in one glance, whether your PC, your Wi-Fi, your
-provider, DNS or the internet is the problem — and what to do about it.
+The first public version: a quiet Windows companion that tells you, in one glance, whether your PC, your Wi-Fi, your provider, DNS or the internet is the problem — and what to do about it.
 
 ### Highlights
 - **Corner widget** — faded, click-through, folds into a small chip when a window covers the corner. One sentence
