@@ -4,20 +4,48 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 ## 1.0 (2026-11-07)
 
-The first public version.
+The first public version: a quiet Windows companion that tells you, in one glance, whether your PC, your Wi-Fi, your
+provider, DNS or the internet is the problem — and what to do about it.
 
+### Highlights
+- **Corner widget** — faded, click-through, folds into a small chip when a window covers the corner. One sentence
+  verdict, five dots from your PC out to the internet.
+- **Engineer view** (tray icon or Ctrl+Alt+A) — Connections with *Sniff* into Wireshark, Your Wi-Fi / cable, What's
+  running, Check a destination, Health check, What changed, Live capture.
+- **Your Wi-Fi** — band, channel and width, signal in dBm, roaming support, neighbouring networks on your channel, why
+  Wi-Fi dropped. **Your cable** — speed, and the switch, port and VLAN you're plugged into (LLDP / CDP).
+- **Check a destination** — DNS, route, ping, TCP, TLS, HTTP, path MTU and a trace, then the path story: who carries
+  your traffic, NAT, tunnels, firewalls and load balancing.
+- **Live capture** (with Wireshark) — what your traffic is made of, bytes per app, Teams call quality, rogue DHCP.
+- **Plain English everywhere** — hover anything with a **?** cursor; 114 terms and 72 programs explained.
+- **Light by design** — Penny / Balanced / Engineer presets; about half a percent of one CPU core in the background.
+
+### New in 1.0
 - **One file installs itself**: double-click AdeeboMeter.exe and choose *Install*, *Update* or *Just run it from here*.
-  It installs just for you (`%LOCALAPPDATA%\Programs\AdeeboMeter\<version>`, no administrator rights), adds a Start
-  menu entry and an entry in Settings > Apps, and carries your settings and "Start with Windows" over.
-- **Remove** from Settings > Apps or the tray menu (*Uninstall AdeeboMeter...*): it stops, leaves Start and Settings >
-  Apps, and removes its folder, settings and history.
+  Per user (`%LOCALAPPDATA%\Programs\AdeeboMeter\<version>`), no administrator rights, a Start menu entry and an entry
+  in Settings > Apps; your settings and "Start with Windows" come along.
+- **Remove** from Settings > Apps or the tray menu (*Uninstall AdeeboMeter...*) — folder, settings and history.
 - **Updates** ask the running copy to step aside, then replace it; older versions are removed.
-- **Icon**: the exe, the Start menu and Settings > Apps show the AdeeboMeter logo.
-- **Website** with the Theory of Everything as slides to swipe through or download:
+- **Icon** on the exe, the Start menu and Settings > Apps.
+- **Website** with a download button, the Theory of Everything as slides, and a suggestion box:
   https://adeeb111.github.io/AdeeboMeter/
-- **Releases** are tagged `v<version>`; the zip carries the app, READ ME and the Theory of Everything PDF. Setup.cmd
-  and Uninstall.cmd are gone - the app does both.
-- **Self-test**: 27 checks (new: install paths, the settings line, the icon).
+
+### Privacy and security
+- No cloud, no account, no telemetry, no auto-update; never opens a listening port (checked at every start).
+- What it sends is listed in *About* with your current settings, and each item can be switched off.
+- No administrator rights, no shell; Windows tools by full System32 path; TLS 1.2 / 1.3 with Windows' certificate
+  checks; builds clean against Microsoft's .NET security and quality analyzers with every rule on.
+
+### Known limitations
+- Not code-signed yet: SmartScreen asks once (*More info > Run anyway*).
+- No AS numbers / BGP data (would need an internet service); traces use ICMP (TCP/UDP traces need admin).
+- Wi-Fi details on Windows 11 need *Location* allowed for desktop apps — AdeeboMeter says which switch to flip.
+- Live capture and *Find my switch port* need Wireshark (tshark + Npcap).
+
+### Under the hood
+- Releases are tagged `v<version>` and built by `release.ps1` on GitHub's Windows runner; Setup.cmd / Uninstall.cmd
+  are gone — the app does both.
+- Self-test: 27 checks (new: install paths, the settings line, the icon).
 
 ## beta-0.6.3 (2026-11-07)
 

@@ -54,16 +54,47 @@ $sums = "$exeSum  AdeeboMeter.exe`n$(Sha $win)  $(Split-Path -Leaf $win)`n$(Sha 
 Copy-Item (Join-Path $stage "AdeeboMeter.exe") $dist
 
 $body = ($section -split "`n", 2)[1].Trim()
+$winName = Split-Path -Leaf $win; $srcName = Split-Path -Leaf $srcZip
+$winMB = "{0:N1} MB" -f ((Get-Item $win).Length / 1MB)
 $notes = @"
-# AdeeboMeter $ver
+<p align="center"><img src="https://raw.githubusercontent.com/adeeb111/AdeeboMeter/main/docs/favicon.svg" width="72" alt=""></p>
+<h1 align="center">AdeeboMeter $ver</h1>
+<p align="center"><b>Is it me or the network?</b> One glance tells you.<br>No cloud. No telemetry. Never listens.</p>
+
+## Download
+
+| | File | For |
+|---|---|---|
+| ⭐ | **[$winName](https://github.com/adeeb111/AdeeboMeter/releases/download/v$ver/$winName)** ($winMB) | Everyone — the app, a READ ME and the Theory of Everything PDF |
+| | [AdeeboMeter.exe](https://github.com/adeeb111/AdeeboMeter/releases/download/v$ver/AdeeboMeter.exe) | The app alone |
+| | [$srcName](https://github.com/adeeb111/AdeeboMeter/releases/download/v$ver/$srcName) | Source code |
+
+**Install in ten seconds:** open the zip → double-click **AdeeboMeter.exe** → **Install**. It installs just for you — no administrator rights — and starts in the bottom-right corner of your screen.
+**Update:** run the new exe and choose **Update**; your settings come along. **Remove:** Settings › Apps › AdeeboMeter.
+
+> Windows may show *"Windows protected your PC"* because AdeeboMeter isn't code-signed yet. Choose **More info → Run anyway**.
+
+**Requirements:** Windows 10 or 11 (64-bit), .NET Framework 4.8 (built into Windows). Optional: Wireshark for live capture and *Find my switch port*.
 
 $body
 
-**Download** ``AdeeboMeter-$ver-win64.zip``, open it, double-click **AdeeboMeter.exe** and choose *Install* - no administrator rights. Website: https://adeeb111.github.io/AdeeboMeter/
-Assets: AdeeboMeter-$ver-win64.zip (the app and the Theory of Everything), AdeeboMeter.exe (the app alone), AdeeboMeter-$ver.zip (source), SHA256SUMS.
-Built on GitHub's Windows runner with Microsoft's .NET Framework compiler from this exact source. Not code-signed: SmartScreen may say *More info > Run anyway*.
+## Verify your download
 
-No cloud. No telemetry. Never listens. Created by Adeeb Khan.
+Built by GitHub Actions on a clean Windows machine with Microsoft's own .NET Framework compiler, from this exact source.
+
+| File | SHA256 |
+|---|---|
+| AdeeboMeter.exe | ``$exeSum`` |
+| $winName | ``$(Sha $win)`` |
+| $srcName | ``$(Sha $srcZip)`` |
+
+In PowerShell: ``Get-FileHash .\AdeeboMeter.exe`` — the hash must match.
+
+## Feedback
+
+[Report a problem](https://github.com/adeeb111/AdeeboMeter/issues/new/choose) · [Ideas & questions](https://github.com/adeeb111/AdeeboMeter/discussions) · [Website & suggestion box](https://adeeb111.github.io/AdeeboMeter/#feedback) · [Full changelog](https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md)
+
+<sub>Created by Adeeb Khan.</sub>
 "@
 [IO.File]::WriteAllText((Join-Path $dist "RELEASE-NOTES-$ver.md"), $notes)
 Remove-Item -Recurse -Force $stage

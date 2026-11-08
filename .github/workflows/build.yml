@@ -2,6 +2,7 @@
 # repository's source - so anyone can check the download matches the code.
 #   push to main        -> the packaged zips as a workflow artifact (Actions > the run > Artifacts)
 #   publish a release   -> the same files attached to that release (tag it v<version>, e.g. v1.0)
+#   run it by hand on main with a tag -> rebuilds that release's files from main and refreshes its notes
 name: build
 on:
   push:
@@ -9,6 +10,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Rebuild and refresh an existing release (e.g. v1.0) - leave empty for a plain build"
+        required: false
 permissions:
   contents: write
 jobs:
@@ -24,12 +29,12 @@ jobs:
           name: AdeeboMeter
           path: dist/*
       - name: Attach to the release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event.inputs.tag != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $tag = "${{ github.event.release.tag_name }}"
+          $tag = "${{ github.event.release.tag_name || github.event.inputs.tag }}"
           $ver = $tag.TrimStart("v")
           if (-not (Test-Path "dist/RELEASE-NOTES-$ver.md")) { throw "tag $tag does not match the version in AdeeboMeter.cs" }
           gh release upload $tag (Get-ChildItem dist -File | Where-Object Name -notlike "RELEASE-NOTES-*").FullName --clobber

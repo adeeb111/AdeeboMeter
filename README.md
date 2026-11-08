@@ -1,4 +1,17 @@
-# AdeeboMeter
+<p align="center"><img src="docs/favicon.svg" width="88" alt="AdeeboMeter"></p>
+<h1 align="center">AdeeboMeter</h1>
+
+<p align="center">
+<a href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/adeeb111/AdeeboMeter?label=download&color=1F6FEB"></a>
+<a href="https://github.com/adeeb111/AdeeboMeter/actions/workflows/build.yml"><img alt="Build" src="https://github.com/adeeb111/AdeeboMeter/actions/workflows/build.yml/badge.svg"></a>
+<img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
+<img alt="No admin" src="https://img.shields.io/badge/admin%20rights-none-2DA44E">
+<img alt="Offline" src="https://img.shields.io/badge/telemetry-none-2DA44E">
+</p>
+
+<p align="center"><b><a href="https://adeeb111.github.io/AdeeboMeter/">Website</a></b> · <a href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a> · <a href="https://adeeb111.github.io/AdeeboMeter/#theory">Theory of Everything</a> · <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Discussions</a></p>
+
+<p align="center"><img src="docs/img/screenshot.png" alt="AdeeboMeter: the engineer view and the corner widget on a Windows desktop" width="860"></p>
 
 **Is it me or the network?** One glance tells you.
 
@@ -56,6 +69,10 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 ## How it works
 
 Read **[The Theory of Everything](docs/THEORY-OF-EVERYTHING.md)** — every part of the code explained in plain words.
+
+## Feedback and help
+
+[Report a problem](https://github.com/adeeb111/AdeeboMeter/issues/new/choose) · [Ideas & questions](https://github.com/adeeb111/AdeeboMeter/discussions) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md)
 
 ---
 
