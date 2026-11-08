@@ -7,6 +7,7 @@
 <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
 <img alt="No admin" src="https://img.shields.io/badge/admin%20rights-none-2DA44E">
 <img alt="Offline" src="https://img.shields.io/badge/telemetry-none-2DA44E">
+<a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8250DF"></a>
 </p>
 
 <p align="center"><b><a href="https://adeeb111.github.io/AdeeboMeter/">Website</a></b> · <a href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a> · <a href="https://adeeb111.github.io/AdeeboMeter/#theory">Theory of Everything</a> · <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Discussions</a></p>
@@ -76,4 +77,4 @@ Read **[The Theory of Everything](docs/THEORY-OF-EVERYTHING.md)** — every part
 
 ---
 
-Created by Adeeb Khan.
+Created by Adeeb Khan · [MIT License](LICENSE) — free to use, change and share; keep the copyright notice.

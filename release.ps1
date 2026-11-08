@@ -39,6 +39,7 @@ New-Item -ItemType Directory -Force $stage | Out-Null
 Copy-Item AdeeboMeter.exe $stage
 $t = (Get-Content -Raw "assets\READ ME.txt").Replace("__VERSION__", $ver) -replace "`r?`n", "`r`n"
 [IO.File]::WriteAllText((Join-Path $stage "READ ME.txt"), $t, (New-Object Text.UTF8Encoding $false))
+Copy-Item "LICENSE" (Join-Path $stage "LICENSE.txt")
 Copy-Item "docs\AdeeboMeter-Theory-of-Everything.pdf" (Join-Path $stage "AdeeboMeter - Theory of Everything.pdf")
 $exeSum = Sha (Join-Path $stage "AdeeboMeter.exe")
 [IO.File]::WriteAllText((Join-Path $stage "SHA256SUMS"), "$exeSum  AdeeboMeter.exe`r`n")
@@ -95,7 +96,7 @@ In PowerShell: ``Get-FileHash .\AdeeboMeter.exe`` — the hash must match.
 
 [Report a problem](https://github.com/adeeb111/AdeeboMeter/issues/new/choose) · [Ideas & questions](https://github.com/adeeb111/AdeeboMeter/discussions) · [Website & suggestion box](https://adeeb111.github.io/AdeeboMeter/#feedback) · [Full changelog](https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md)
 
-<sub>Created by Adeeb Khan.</sub>
+<sub>Created by Adeeb Khan · MIT License.</sub>
 "@
 [IO.File]::WriteAllText((Join-Path $dist "RELEASE-NOTES-$ver.md"), $notes)
 Remove-Item -Recurse -Force $stage
