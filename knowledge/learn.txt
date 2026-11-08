@@ -384,3 +384,33 @@ breaks: Late messages: that open line broke quietly after a network change.
 ladder: Teams > Teams service: open, and keep this line open | Teams service > Teams: (silence...) | Teams service > Teams: new message from Alex | Teams > Teams service: got it
 live: tcp port 443
 try: Ask someone to send you a chat message.
+
+== mtu-path|mtu per hop|path mtu
+title: Path MTU - the biggest packet that fits
+kind: protocol
+tag: Every link has a size limit; the smallest one on the way wins.
+line: Ethernet carries 1500 bytes; PPPoE, VPNs and tunnels wrap packets and leave less room.
+breaks: Too-big packets are dropped - if no router says so, pages half-load and VPNs stall (a black hole).
+ladder: Your PC > Router: 1500 bytes, don't fragment | Router > Provider (PPPoE): 1500 | Provider > Your PC: too big - max 1492 | Your PC > Server: 1492 bytes
+live: icmp
+try: Open a website.
+
+== return-path|way back|asymmetric routing
+title: The way back
+kind: protocol
+tag: Your packets and the replies often take different roads.
+line: Each network sends traffic out by its own choice, so the reply route is decided by the far end.
+breaks: Loss or delay only on the way back looks like a problem 'out there' that no trace from your PC shows.
+ladder: Your PC > Rogers: request | Rogers > NTT: request | NTT > Server: request | Server > Cogent: reply | Cogent > Rogers: reply | Rogers > Your PC: reply
+live: icmp
+try: Run a trace.
+
+== memory-pressure|slow pc|page faults
+title: Why a PC feels slow
+kind: windows
+tag: It's rarely the processor - it's memory and the disk.
+line: When memory is full, Windows parks parts of programs on the disk and reads them back when needed - thousands of times slower.
+breaks: Many pages read back per second, or a disk taking more than 15 ms per request, makes everything stutter.
+ladder: App > Memory: I need my code | Memory > Disk: it was parked - read it back | Disk > Memory: here (12 ms later) | Memory > App: carry on
+live:
+try: Open a heavy app.

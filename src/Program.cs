@@ -39,6 +39,14 @@ using Microsoft.Win32;
 [assembly: SuppressMessage("Performance", "CA1846", Scope = "module", Justification = ".NET Framework has no AsSpan")]
 [assembly: SuppressMessage("Performance", "CA1865", Scope = "module", Justification = ".NET Framework has no string.StartsWith(char)")]
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+[assembly: System.Reflection.AssemblyTitle("AdeeboMeter")]
+[assembly: System.Reflection.AssemblyProduct("AdeeboMeter")]
+[assembly: System.Reflection.AssemblyDescription("Is it me or the network? An offline Windows network and PC companion.")]
+[assembly: System.Reflection.AssemblyCopyright("MIT License")]
+[assembly: System.Reflection.AssemblyVersion(AdeeboMeter.Program.Version + ".0.0")]
+[assembly: System.Reflection.AssemblyFileVersion(AdeeboMeter.Program.Version + ".0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion(AdeeboMeter.Program.Version)]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName = ".NET Framework 4.8")]   // web requests use Windows' TLS 1.2 / 1.3 defaults
 
 namespace AdeeboMeter
 {
@@ -46,7 +54,8 @@ namespace AdeeboMeter
     static class Program
     {
         public static string Dir;
-        public const string Version = "1.0";
+        public const string Version = "1.1";
+        public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "is it me or the network?";
         public static int ForceTheme = -1;
         public static string StartView, StartTip, StartDest;   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
@@ -55,6 +64,11 @@ namespace AdeeboMeter
         [STAThread]
         static int Main(string[] args)
         {
+            // DLL planting: a downloaded exe often runs from Downloads, where a file named like a Windows DLL could be
+            // waiting. From here on, Windows loads DLLs for this process only from System32 (the app's own folder is never searched).
+            // (skipped under Wine, whose system DLLs don't live in a real System32 - only the test lab runs there)
+            try { IsWine = Native.GetProcAddress(Native.GetModuleHandle("ntdll.dll"), "wine_get_version") != IntPtr.Zero; } catch { }
+            if (!IsWine) try { DllSafety = Native.SetDefaultDllDirectories(0x800 /*LOAD_LIBRARY_SEARCH_SYSTEM32*/) && Native.SetDllDirectory(""); } catch { DllSafety = false; }
             Dir = Path.GetDirectoryName(Application.ExecutablePath);
             try { Native.SetProcessDPIAware(); } catch { }
             Application.EnableVisualStyles();
@@ -66,6 +80,11 @@ namespace AdeeboMeter
             if (args.Any(a => string.Equals(a, "--light", StringComparison.OrdinalIgnoreCase))) ForceTheme = 0;
             if (args.Any(a => string.Equals(a, "--selftest", StringComparison.OrdinalIgnoreCase))) return SelfTest.Run();
             if (args.Any(a => string.Equals(a, "--perf", StringComparison.OrdinalIgnoreCase))) return SelfTest.Perf();
+            if (args.Any(a => string.Equals(a, "--deeptest", StringComparison.OrdinalIgnoreCase)))
+            {
+                int mi = Array.FindIndex(args, a => a == "--minutes"), min; if (mi < 0 || mi + 1 >= args.Length || !int.TryParse(args[mi + 1], out min)) min = 20;
+                return SelfTest.Deep(!args.Any(a => string.Equals(a, "--local", StringComparison.OrdinalIgnoreCase)), Math.Max(2, Math.Min(60, min)));
+            }
             int vi = Array.FindIndex(args, a => a == "--view"); if (vi >= 0 && vi + 1 < args.Length) StartView = args[vi + 1];
             int tpi = Array.FindIndex(args, a => a == "--tip"); if (tpi >= 0 && tpi + 1 < args.Length) StartTip = args[tpi + 1];
             int dsi = Array.FindIndex(args, a => a == "--dest"); if (dsi >= 0 && dsi + 1 < args.Length) StartDest = args[dsi + 1];
@@ -153,7 +172,7 @@ namespace AdeeboMeter
         public static volatile bool IpNames = true, Portal = true, SeenTip, Details, BigWidget;   // BigWidget: the corner widget drawn 1.3x   // Details: the engineer toggle - raw values, sources and times on every finding
         // history on by default (kept HistoryDays, rolling), alerts with quiet hours, watch-and-suggest, data cap, pinned watch
         public static volatile bool History = true, Alerts = true, Quiet = true, Watch = true, PinWatch;
-        public static volatile int HistoryDays = 3, CapGB;
+        public static volatile int HistoryDays = 3, CapGB, OnlineMin = 30;   // OnlineMin: online lookups switch themselves off after this
         public static volatile int LiveMin = 15, SniffSec = 30;
         // widget
         public static volatile int Fade = 77, DwellMs = 450;
@@ -181,12 +200,12 @@ namespace AdeeboMeter
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + NetSec; yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
             yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + HistoryDays;
-            yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "pinwatch=" + (PinWatch ? 1 : 0);
+            yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
-        public static readonly int[] HistDayChoices = { 1, 3, 7, 14, 30, 60, 90 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "history2", "histdays", "alerts", "quiet", "watch", "capgb", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "autostart", "widget", "serious", "theme" };
+        public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
+        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "history2", "histdays", "alerts", "quiet", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "autostart", "widget", "serious", "theme" };
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)
         {
@@ -209,6 +228,7 @@ namespace AdeeboMeter
                 case "quiet": Quiet = v != "0"; break;
                 case "watch": Watch = v != "0"; break;
                 case "capgb": CapGB = Pick(v, 0, CapChoices); break;
+                case "onlinemin": OnlineMin = Pick(v, 30, OnlineChoices); break;
                 case "pinwatch": PinWatch = v == "1"; break;
                 case "livemin": LiveMin = Pick(v, 15, 5, 15, 30); break;
                 case "sniffsec": SniffSec = Pick(v, 30, 30, 60); break;
@@ -282,12 +302,14 @@ namespace AdeeboMeter
 
         // Full path, so a netsh.exe planted somewhere on PATH can never be picked up instead.
         public static readonly string Netsh = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "netsh.exe");
+        public static string Sys(string exe) { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), exe); }
 
         // Runs a fixed program with fixed arguments (never through cmd or PowerShell) and returns its output.
         public static string Run(string exe, string args, int timeoutMs)
         {
             var psi = new ProcessStartInfo(exe, args);
             psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.CreateNoWindow = true;
+            if (Path.GetFileName(exe).Equals("tshark.exe", StringComparison.OrdinalIgnoreCase)) { psi.StandardOutputEncoding = System.Text.Encoding.UTF8; psi.StandardErrorEncoding = System.Text.Encoding.UTF8; }   // tshark writes UTF-8 (→, names); Windows' own tools write the console code page
             using (var p = Process.Start(psi))
             {
                 Add(p);

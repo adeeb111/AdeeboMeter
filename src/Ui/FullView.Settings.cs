@@ -28,10 +28,11 @@ namespace AdeeboMeter
 {
     sealed partial class FullView
     {
+        static string[] Row(params string[] a) { return a; }
         // ---------- Settings
         static readonly string[] SetS0 = { "balanced", "Balanced", "The default. Notices trouble within seconds and still costs next to nothing." };
         static readonly string[] SetS1 = { "engineer", "Engineer", "Watches everything closely - for when something is wrong and you want every clue." };
-        static readonly string[] SetS2 = { "2 s", "5 s", "10 s", "Off" };
+        static readonly string[] SetS2 = { "2 s", "5 s", "10 s", "Off" }, SetOnlineMin = { "5 min", "15 min", "30 min", "1 h", "2 h", "3 h" };
         static readonly int[] SetN3 = { 2, 5, 10, 0 };
         static readonly string[] SetS4 = { "15 s", "30 s", "60 s", "Off" };
         static readonly int[] SetN5 = { 15, 30, 60, 0 };
@@ -116,6 +117,10 @@ namespace AdeeboMeter
                     Act(settingsCanvas, clr, delegate { History.Clear(); histDay = null; histData = null; histDays = null; settingsCanvas.Invalidate(); });
                     y += 26 * S;
                 }
+                y = SetHead(g, "ONLINE LOOKUPS  ·  OFF UNLESS YOU SWITCH THEM ON", x, y, w);
+                y = SetRow(g, x, y, w, "BGP and who owns the network", Online.On ? "On for " + Math.Ceiling(Online.Left.TotalMinutes) + " more min: public IP addresses (never private ones or names you typed) go to RIPEstat and PeeringDB to name each network on the path, its route and RPKI." : "Off. When on, Toolbox can name every network on your path (AS numbers), where they hand over, the destination's route and RPKI, and how the internet reaches you.",
+                    SetOnOff, Online.On ? 0 : 1, delegate(int i) { if (i == 0) Online.Start(); else Online.Stop(); SyncOnlineChip(); Invalidate(true); });
+                y = SetRow(g, x, y, w, "Switch them off by themselves after", "So they're never left on by mistake.", SetOnlineMin, Array.IndexOf(Cfg.OnlineChoices, Cfg.OnlineMin), delegate(int i) { Cfg.OnlineMin = Cfg.OnlineChoices[i]; Cfg.Save(); if (Online.On) Online.Start(); });
                 y = SetHead(g, "IN THIS WINDOW  ·  ONLY WHILE IT'S OPEN", x, y, w);
                 y = SetRow(g, x, y, w, "Sign-in page check", Cfg.Portal ? "Only when a check you start fails: one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages." : "Off: a failed check won't look for a Wi-Fi sign-in page.",
                     SetOnOff, Cfg.Portal ? 0 : 1, delegate(int i) { Cfg.Portal = i == 0; Cfg.Save(); });
@@ -152,7 +157,7 @@ namespace AdeeboMeter
                     y += 30 * S;
                 }
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (settingsCanvas.AutoScrollMinSize != need) settingsCanvas.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 20 * S)); if (settingsCanvas.AutoScrollMinSize != need) { settingsCanvas.AutoScrollMinSize = need; settingsCanvas.Invalidate(); }
         }
         static readonly string[] SetOnOff = { "On", "Off" };
         static int JobsFor(string preset)
@@ -261,6 +266,8 @@ namespace AdeeboMeter
                     LeaveChecks,
                     LeaveTools,
                     new[] { "Pinned destination watch", Cfg.PinWatch && Cfg.Pins.Count > 0 ? "One ping to " + Cfg.Pins[0] + " every 30 s (you switched it on)." : "Off.", Cfg.PinWatch ? "1" : "-1" },
+                    new[] { "Online lookups (BGP)", Online.On ? "ON for " + Math.Ceiling(Online.Left.TotalMinutes) + " more min: public IP addresses of the path you look at go to stat.ripe.net and peeringdb.com (HTTPS)." : "Off (you switch them on; they switch themselves off after " + Cfg.OnlineMin + " min).", Online.On ? "1" : "-1" },
+                    Row("Toolbox", "Only when you press Run: MTU per hop and MTR (pings with a rising TTL), port and Teams UDP tests, dig and TLS checks, iperf3 to your own server, ping sweep of your own network, nearest-cloud timing, the clock check (one request to msftconnecttest.com).", "1"),
                     new[] { "Sign-in page check", Cfg.Portal ? "Only if a check you started fails: one request to the same test page Windows itself uses (msftconnecttest.com)." : "Off.", Cfg.Portal ? "1" : "-1" },
                     LeaveLive,
                     LeaveNever };
@@ -282,7 +289,7 @@ namespace AdeeboMeter
                 Act(aboutCanvas, upd, delegate { Crash.OpenUrl("https://adeeb111.github.io/AdeeboMeter/?v=" + Uri.EscapeDataString(Program.Version) + "#update"); });
                 y += 30 * S;
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (aboutCanvas.AutoScrollMinSize != need) aboutCanvas.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 20 * S)); if (aboutCanvas.AutoScrollMinSize != need) { aboutCanvas.AutoScrollMinSize = need; aboutCanvas.Invalidate(); }
         }
         static float Para(Graphics g, string t, float x, float y, float w, Brush b, Font f)
         {

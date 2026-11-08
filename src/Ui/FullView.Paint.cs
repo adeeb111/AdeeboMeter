@@ -125,7 +125,7 @@ namespace AdeeboMeter
             if (d == null && pr != null)
             {
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Voice.P("Click a row for the full story.", "Click a row for details."), Draw.fBody, mb, x, y);
-                var need0 = new Size(0, (int)(y + 40 * S)); if (destCanvas.AutoScrollMinSize != need0) destCanvas.AutoScrollMinSize = need0;
+                var need0 = new Size(0, (int)(y + 40 * S)); if (destCanvas.AutoScrollMinSize != need0) { destCanvas.AutoScrollMinSize = need0; destCanvas.Invalidate(); }
                 return;
             }
             bool done = d != null && d.Done;
@@ -159,31 +159,50 @@ namespace AdeeboMeter
             var cards = d != null ? d.CardsCopy() : new List<KeyValuePair<string, List<string[]>>>();
             if (cards.Count > 0)
             {
-                int per = Math.Max(1, (int)(w / (300 * S))); float cw = (w - (per - 1) * 12 * S) / per;
+                int per = Math.Max(1, (int)(w / (300 * S))); float cw = (w - (per - 1) * 12 * S) / per, inner = cw - 28 * S;
+                // each row: name and value on one line when they fit, otherwise the value gets its own (wrapping) line - nothing is cut
+                Func<string[], float> rowH = row =>
+                {
+                    string rn = row[0], rv = row.Length > 1 ? row[1] : "";
+                    float nw = g.MeasureString(rn, Draw.fBody).Width, vw = g.MeasureString(rv, Draw.fMonoS).Width;
+                    if (nw + vw + 12 * S <= inner) return 19 * S;
+                    return Draw.Measure(rn, Draw.fBody, (int)inner).Height + Draw.Measure(rv, Draw.fMonoS, (int)inner).Height + 6 * S;
+                };
                 for (int i = 0; i < cards.Count; i += per)
                 {
-                    float rowH = 0;
-                    for (int j = i; j < Math.Min(cards.Count, i + per); j++) rowH = Math.Max(rowH, 38 * S + cards[j].Value.Count * 19 * S);
+                    float rowsH = 0;
+                    for (int j = i; j < Math.Min(cards.Count, i + per); j++) rowsH = Math.Max(rowsH, 38 * S + cards[j].Value.Sum(rowH));
                     for (int j = i; j < Math.Min(cards.Count, i + per); j++)
                     {
-                        var cr = new RectangleF(x + (j - i) * (cw + 12 * S), y, cw, rowH);
+                        var cr = new RectangleF(x + (j - i) * (cw + 12 * S), y, cw, rowsH);
                         Theme.Stroke(g, cr, 10 * S, Theme.Track, 1);
-                        using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(cards[j].Key, Draw.fTiny, mb, cr.X + 14 * S, cr.Y + 12 * S);
+                        using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(cards[j].Key, Draw.fTiny, mb, new RectangleF(cr.X + 14 * S, cr.Y + 12 * S, inner, 16 * S));
                         Hint(destCanvas, new RectangleF(cr.X, cr.Y, cr.Width, 26 * S), CardKey(cards[j].Key));
                         float ry = cr.Y + 30 * S;
                         foreach (var row in cards[j].Value)
                         {
-                            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Draw.Trunc(row[0], 24), Draw.fBody, mb, cr.X + 14 * S, ry);
-                            string v = Draw.Trunc(row.Length > 1 ? row[1] : "", 34); var vs = g.MeasureString(v, Draw.fMonoS);
-                            using (var vb2 = new SolidBrush(row.Length > 2 ? Theme.LvText(int.Parse(row[2], CultureInfo.InvariantCulture)) : Theme.Ink)) g.DrawString(v, Draw.fMonoS, vb2, cr.Right - 14 * S - vs.Width, ry + 1 * S);
-                            ry += 19 * S;
+                            string v = row.Length > 1 ? row[1] : ""; float h = rowH(row);
+                            using (var mb = new SolidBrush(Theme.Muted)) using (var vb2 = new SolidBrush(row.Length > 2 ? Theme.LvText(int.Parse(row[2], CultureInfo.InvariantCulture)) : Theme.Ink))
+                            {
+                                if (h <= 19 * S + 0.5f)
+                                {
+                                    g.DrawString(row[0], Draw.fBody, mb, cr.X + 14 * S, ry);
+                                    var vs = g.MeasureString(v, Draw.fMonoS); g.DrawString(v, Draw.fMonoS, vb2, cr.Right - 14 * S - vs.Width, ry + 1 * S);
+                                }
+                                else
+                                {
+                                    float nh = Draw.Measure(row[0], Draw.fBody, (int)inner).Height;
+                                    g.DrawString(row[0], Draw.fBody, mb, new RectangleF(cr.X + 14 * S, ry, inner, nh + 2));
+                                    g.DrawString(v, Draw.fMonoS, vb2, new RectangleF(cr.X + 14 * S, ry + nh, inner, h - nh));
+                                }
+                            }
+                            ry += h;
                         }
                     }
-                    y += rowH + 12 * S;
+                    y += rowsH + 12 * S;
                 }
             }
-            var need = new Size(0, (int)(y + 20 * S));
-            if (destCanvas.AutoScrollMinSize != need) destCanvas.AutoScrollMinSize = need;
+            Need(destCanvas, y);
         }
 
         void PaintHealth(Graphics g)
@@ -195,7 +214,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (health == null && (toolRows != null || toolBusy)) { var need0 = new Size(0, (int)(y + 20 * S)); if (healthCanvas.AutoScrollMinSize != need0) healthCanvas.AutoScrollMinSize = need0; return; }
+                if (health == null && (toolRows != null || toolBusy)) { var need0 = new Size(0, (int)(y + 20 * S)); if (healthCanvas.AutoScrollMinSize != need0) { healthCanvas.AutoScrollMinSize = need0; healthCanvas.Invalidate(); } return; }
                 if (health == null)
                 {
                     g.DrawString(healthRunning ? Voice.P("Poking around...", "Running...") : Voice.P("Press the button and I'll give your PC a quick once-over.", "Press Run health check."), Draw.fBody, muted, x, y + 6 * S);
@@ -216,7 +235,7 @@ namespace AdeeboMeter
                     y += rh; g.DrawLine(line, x, y, x + w, y); y += 4 * S;
                 }
                 var need = new Size(0, (int)(y + 20 * S));
-                if (healthCanvas.AutoScrollMinSize != need) healthCanvas.AutoScrollMinSize = need;
+                if (healthCanvas.AutoScrollMinSize != need) { healthCanvas.AutoScrollMinSize = need; healthCanvas.Invalidate(); }
             }
         }
 
@@ -257,7 +276,7 @@ namespace AdeeboMeter
                 }
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (changesCanvas.AutoScrollMinSize != need) changesCanvas.AutoScrollMinSize = need;
+            if (changesCanvas.AutoScrollMinSize != need) { changesCanvas.AutoScrollMinSize = need; changesCanvas.Invalidate(); }
         }
 
         DateTime? histDay; History.Day histData; Bitmap histBmp; string histKey = ""; List<DateTime> histDays; DateTime histDaysAt = DateTime.MinValue;
@@ -438,7 +457,7 @@ namespace AdeeboMeter
                 y += c2.Height + 20 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (liveCanvas.AutoScrollMinSize != need) liveCanvas.AutoScrollMinSize = need;
+            if (liveCanvas.AutoScrollMinSize != need) { liveCanvas.AutoScrollMinSize = need; liveCanvas.Invalidate(); }
         }
     }
 }

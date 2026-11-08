@@ -33,7 +33,9 @@ namespace AdeeboMeter
             new Flow { Id = "slow", Title = "The internet is slow", Ask = "Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS." },
             new Flow { Id = "site", Title = "A website or app won't open", Ask = "Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails." },
             new Flow { Id = "calls", Title = "Calls freeze or sound robotic", Ask = "Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about." },
-            new Flow { Id = "drops", Title = "I keep disconnecting", Ask = "Reads today's drops, roams and changes and what the signal was doing just before." } };
+            new Flow { Id = "drops", Title = "I keep disconnecting", Ask = "Reads today's drops, roams and changes and what the signal was doing just before." },
+            new Flow { Id = "vpn", Title = "Works at home, not on VPN or at work", Ask = "Overlapping networks, proxy, the VPN's name rules, the MTU on the way, and the port itself." },
+            new Flow { Id = "pc", Title = "My PC is slow", Ask = "Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order." } };
 
         static string F(double v, string unit) { return double.IsNaN(v) ? "no answer" : v.ToString("0", CultureInfo.CurrentCulture) + unit; }
 
@@ -46,6 +48,8 @@ namespace AdeeboMeter
                 else if (id == "site") Site(m, r, changed);
                 else if (id == "calls") Calls(m, r, changed);
                 else if (id == "drops") Drops(m, r);
+                else if (id == "vpn") Vpn(m, r, changed);
+                else if (id == "pc") Pc(m, r, changed);
             }
             catch (Exception e) { Program.Log("investigate " + id + ": " + e); if (r.Finding == "") r.Conclude(3, "Couldn't finish: " + e.Message); }
             r.Status = ""; r.Done = true; changed();
@@ -111,9 +115,16 @@ namespace AdeeboMeter
                 if (lv == 2 && first < 0 && i != 2) first = i;   // ping is often blocked on purpose - not a failure by itself
             }
             if (d.Inspected != "") r.Obs("i", 1, "Certificate re-signed by", d.Inspected);
+            string hostOnly = d.Target != "" ? d.Target : input;
+            var pin = WhyFails.Hosts(hostOnly).FirstOrDefault(x => x[1] == "Pins your site"); if (pin != null) r.Obs("w", 2, "Hosts file", pin[2]);
+            var px = WhyFails.Proxy(hostOnly).FirstOrDefault(); if (px != null) r.Obs("w", 3, "Proxy", px[2]);
+            var clk = WhyFails.Clock().FirstOrDefault(); if (clk != null && clk[0] != "0") r.Obs(clk[4], int.Parse(clk[0], CultureInfo.InvariantCulture), "Your clock", clk[2]);
             string t = d.Target != "" ? d.Target : input;
+            if (pin != null && (first < 0 || first >= 3)) { r.Conclude(2, "Your hosts file pins " + hostOnly + " to a fixed address (" + pin[2] + ") - this PC ignores DNS for it. If that address is old, the site breaks only here."); r.Next.Add("Remove the line from the hosts file (needs admin, or ask IT)."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; first = 99; }
+            if (clk != null && clk[0] == "2" && first == 4) { r.Conclude(2, "The lock fails because your clock is wrong (" + clk[2] + ") - certificates look not-yet-valid or expired."); r.Next.Add("Settings > Time > Sync now."); first = 99; }
             switch (first)
             {
+                case 99: break;
                 case 0: r.Conclude(2, "The name " + t + " doesn't turn into an address - DNS fails. Check the spelling; if it's right, your DNS server or a company filter may be blocking it."); r.Next.Add("Run the DNS speed test to compare your DNS with public ones."); r.GoTab = "health"; r.GoLabel = "Open Health and tools"; break;
                 case 1: r.Conclude(2, "Windows has no route to " + t + " - often a VPN that's half connected, or no internet at all."); r.Next.Add("Open Network story > Routing table to see which route Windows picks."); r.GoTab = "travel"; r.GoLabel = "Open Network story"; break;
                 case 3: r.Conclude(2, "The address answers but the door is shut: the TCP connection to port " + (d.Port > 0 ? d.Port.ToString(CultureInfo.CurrentCulture) : "443") + " fails. A firewall (company or the site's) blocks it, or the service is down."); r.Next.Add("Try it from your phone on mobile data: if it works there, it's this network's firewall."); r.GoTab = "dest"; r.GoLabel = "See the full check"; break;
@@ -140,12 +151,16 @@ namespace AdeeboMeter
             if (vpn) r.Obs("w", 1, "VPN", "on - call media may go through the company first");
             string fb = ""; try { fb = M365.TcpFallback(m, M365.Connections(m)); } catch (Exception e) { Program.Log("fallback: " + e.Message); }
             if (fb != "") r.Obs("i", fb.Contains("over TCP 443") && !fb.Contains("no call") ? 2 : 0, "Teams media path", fb);
+            changed(); var stun = WhyFails.TeamsUdp(); bool udpOk = stun.Any(x => x[0] == "0" && x[1].StartsWith("UDP", StringComparison.Ordinal));
+            r.Obs("m", udpOk ? 0 : 2, "UDP 3478 to Teams' relays", udpOk ? "works" : "blocked - calls go over TCP 443");
+            var nat = stun.FirstOrDefault(x => x[1] == "NAT type"); if (nat != null) r.Obs("i", nat[0] == "0" ? 0 : 1, "NAT type", nat[2]);
             string last = ""; lock (global::AdeeboMeter.Calls.Summaries) if (global::AdeeboMeter.Calls.Summaries.Count > 0) last = global::AdeeboMeter.Calls.Summaries[0][1];
             if (last != "") r.Obs("i", 3, "Your last call", last);
 
             if (!double.IsNaN(loss) && loss > 2) { r.Conclude(2, "Packets are getting lost (" + loss.ToString("0.#", CultureInfo.CurrentCulture) + "%) - calls fill the gaps with robot sounds. " + (wifi ? "On Wi-Fi this is usually signal or interference." : "Restart the modem; if it stays, it's your provider.")); r.GoTab = wifi ? "link" : "dest"; r.GoLabel = wifi ? "Open Your Wi-Fi" : "Check a destination"; }
             else if (!double.IsNaN(bloat) && bloat > 80 && up > 2) { r.Conclude(2, "Your own upload fills the line while you talk - the router adds " + F(bloat, " ms") + ". Pause OneDrive / backups during calls."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
             else if (!double.IsNaN(jit) && jit > 30) { r.Conclude(1, "The delay jumps around (jitter " + F(jit, " ms") + ") - that's what makes voices freeze and catch up. " + (wifi ? "Wi-Fi is the usual cause; a cable fixes it." : "Usually congestion at your provider.")); r.GoTab = wifi ? "link" : "dest"; r.GoLabel = wifi ? "Open Your Wi-Fi" : "Check a destination"; }
+            else if (!udpOk) { r.Conclude(2, "UDP to Teams is blocked on this network - every call is squeezed into TCP 443, which stutters as soon as anything is lost or busy. Ask IT to allow UDP 3478-3481."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (fb.Contains("over TCP 443") && !fb.Contains("no call")) { r.Conclude(1, "Teams is carrying the call over TCP 443 because UDP is blocked - fine on a quiet line, stuttery under load. Ask IT to allow UDP 3478-3481."); r.GoTab = "travel"; r.GoLabel = "Open Network story"; }
             else { r.Conclude(0, "Your end looks fine for calls right now: low jitter, no loss" + (double.IsNaN(bloat) ? "." : ", and your router keeps up under load.") + " If calls still break up, it's likely the other person's connection."); r.GoTab = "live"; r.GoLabel = "Open Live capture"; }
             r.Next.Add("During the next call, start Live capture - it measures the real call stream (jitter, loss, MOS).");
@@ -188,6 +203,68 @@ namespace AdeeboMeter
             if (roams > 10) r.Next.Add("Many access-point hops: your laptop keeps switching between two routers / mesh points of similar strength.");
             r.NotEst.Add("The router's side of the story - its own log lives on the router.");
             if (wifi && sig < 0) r.NotEst.Add("Signal strength history - Windows hides it without location permission; drops and link rate still count.");
+        }
+
+        // ---------- works at home, not on VPN / at work
+        static void Vpn(Monitor m, GuideRun r, Action changed)
+        {
+            string target = (r.Input ?? "").Trim(); bool vpn; lock (m.L) vpn = m.VpnUp;
+            r.Obs("w", 3, "VPN", vpn ? "connected" : "not connected right now");
+            r.Status = "Looking for overlapping networks..."; changed();
+            var ov = PathTools.Overlap(); var bad = ov.FirstOrDefault(x => x[0] == "2" || x[0] == "1");
+            r.Obs("w", bad != null ? int.Parse(bad[0], CultureInfo.InvariantCulture) : 0, "Overlapping networks", bad != null ? bad[2] : "none");
+            var rules = WhyFails.DnsRules(); var hij = rules.First(); r.Obs(hij[4], int.Parse(hij[0], CultureInfo.InvariantCulture), "DNS for made-up names", hij[2]);
+            int nrpt = rules.Count(x => x[1] == "Name rule"); r.Obs("w", 3, "VPN name rules", nrpt > 0 ? nrpt + " rule(s) send company names to the VPN's DNS" : "none");
+            string verdict = ""; int lv = 0;
+            if (target != "")
+            {
+                var px = WhyFails.Proxy(target).FirstOrDefault(); if (px != null) r.Obs("w", 3, "Proxy for " + target, px[2]);
+                r.Status = "Testing " + target + "..."; changed();
+                string port = target.Contains(":") ? target : target + ":443"; var pt = WhyFails.Port(port).First();
+                r.Obs("m", int.Parse(pt[0], CultureInfo.InvariantCulture), "Door (TCP) to " + port, pt[2]);
+                var dst = Icmp.Resolve4(target);
+                if (dst != null)
+                {
+                    r.Status = "Checking the packet size on the way..."; changed();
+                    var hops = PathTools.Trace(dst, 20, () => false); var lastH = hops.LastOrDefault(h => h.Ip != "");
+                    if (lastH != null) { PathTools.MtuAt(dst, lastH, 1500); r.Obs("m", lastH.Mtu > 0 && lastH.Mtu < 1400 ? 1 : lastH.BlackHole ? 2 : 0, "Biggest packet that gets there", lastH.Mtu > 0 ? lastH.Mtu + " bytes - " + lastH.MtuNote : lastH.MtuNote); if (lastH.BlackHole) { verdict = "Big packets vanish on the way to " + target + " (an MTU black hole at " + lastH.Mtu + " bytes): small requests work, anything bigger hangs - pages half-load, file shares stall. The VPN or a firewall needs to lower the size (MSS clamping) - tell IT this number."; lv = 2; } }
+                    if (pt[0] == "2" && verdict == "") { verdict = "The door to " + port + " is silently dropped from this network - a firewall on the way (yours, the VPN's or theirs) blocks it. At home the path is different, so it works there."; lv = 2; }
+                }
+            }
+            if (verdict == "" && bad != null && bad[0] == "2") { verdict = bad[2] + " - addresses in that range can only be reached on one of them, so company servers there look 'down' from home. Change the home router's network (e.g. to 192.168.77.x)."; lv = 2; }
+            if (verdict == "" && hij[0] == "2" && nrpt == 0 && vpn) { verdict = "Your DNS answers names that don't exist and the VPN sets no name rules, so company names may land on the provider's page instead of the company server."; lv = 1; }
+            if (verdict == "") { verdict = target == "" ? "Nothing obvious on this PC. Type the server or site that fails in the box and run this again - it then tests the door, the proxy and the packet size to it." : "The path to " + target + " looks fine from here: the door opens and full packets get through. The difference is likely in the server's own rules (who it accepts) or your account."; lv = 0; }
+            r.Conclude(lv, verdict);
+            r.Next.Add("Toolbox > MTU per hop shows exactly where the size drops."); r.Next.Add("Toolbox > Which proxy does this URL use? for browser-only failures.");
+            r.NotEst.Add("The company firewall's rules - only IT can see those.");
+            r.NotEst.Add("What the VPN does inside its tunnel.");
+            r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox";
+        }
+
+        // ---------- my PC is slow
+        static void Pc(Monitor m, GuideRun r, Action changed)
+        {
+            r.Status = "Reading the PC's counters..."; changed();
+            foreach (var row in PcHealth.Pressure(m)) r.Obs(row[4], int.Parse(row[0], CultureInfo.InvariantCulture), row[1], row[2]);
+            double cpu = m.Cpu.Avg(10);
+            r.Obs("w", cpu > 90 ? 2 : cpu > 75 ? 1 : 0, "Processor busy", cpu.ToString("0", CultureInfo.CurrentCulture) + "%");
+            r.Status = "Checking background jobs..."; changed();
+            var bg = PcHealth.Background(); foreach (var row in bg.Where(x => x[0] != "0" || x[1] != "Background jobs").Take(4)) r.Obs(row[4], int.Parse(row[0], CultureInfo.InvariantCulture), row[1], row[2]);
+            var hung = m.Events.Recent(300).Where(e => e.Kind == "pc" && e.T > DateTime.Now.AddHours(-2)).ToList();
+            r.Obs("w", hung.Count > 0 ? 1 : 0, "Frozen windows (2 h)", hung.Count == 0 ? "none" : string.Join("; ", hung.Take(3).Select(e => e.Text)));
+            var obs = r.ObservedCopy(); Func<string, int> L = name => obs.Where(o => o[2].StartsWith(name, StringComparison.Ordinal)).Select(o => int.Parse(o[1], CultureInfo.InvariantCulture)).DefaultIfEmpty(0).Max();
+            if (L("Memory read back") == 2 || L("Committed memory") == 2) { r.Conclude(2, "Memory is full: Windows keeps reading programs back from the disk, which is what makes everything feel slow. Close the heaviest app (What's running, sorted by memory)."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
+            else if (L("Disk latency") == 2) { r.Conclude(2, "The disk is the bottleneck - each request takes far longer than normal. Toolbox > Disk shows who is using it and whether Windows sees the disk failing."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (cpu > 90) { r.Conclude(2, "The processor is maxed out (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%) - see which program in What's running."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
+            else if (L("Processor speed") >= 1) { r.Conclude(1, "The processor is being held back (heat, battery saver or the power plan) - it runs well below its speed."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (L("Driver interrupts") >= 1) { r.Conclude(1, "A driver keeps the processor busy with interrupts - the classic cause of stutter and crackling audio. Update Wi-Fi, audio and graphics drivers."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (bg.Any(x => x[0] == "1")) { r.Conclude(1, "A background job is busy right now (" + bg.First(x => x[0] == "1")[1] + ") - it finishes on its own."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (hung.Count > 0) { r.Conclude(1, "The PC itself is fine, but a program keeps freezing (" + hung[0].Text + ")."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else { r.Conclude(0, "Nothing on the PC is slow right now - processor, memory, disk and drivers are all fine. If one app is slow, it's that app (or the network: try The internet is slow)."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            r.Next.Add("Toolbox > Crashes and hangs, Slow leaks and What changed in 7 days - if it got slow recently, start there.");
+            r.Next.Add("Time machine > Replay now shows disk and memory for every minute: find when it was slow.");
+            r.NotEst.Add("Why Windows took long to start - that log is admin-only.");
+            r.NotEst.Add("Which files a program is writing - that needs a system trace (admin).");
         }
     }
 }

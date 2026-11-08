@@ -101,7 +101,7 @@ namespace AdeeboMeter
                     }
                 }
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (procList.AutoScrollMinSize != need) procList.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 20 * S)); if (procList.AutoScrollMinSize != need) { procList.AutoScrollMinSize = need; procList.Invalidate(); }
         }
         void PaintProcInfo(Graphics g)
         {
@@ -138,7 +138,7 @@ namespace AdeeboMeter
                 if (procFacts != null) rows.Add(new[] { "Where it lives", Explain.WhereText(procPathSel == "" ? "" : procFacts[3]) });
                 y = ExplainPaint.Section(g, "ON THIS PC", rows, x, y, w);
             }
-            var need = new Size(0, (int)(y + 30 * S)); if (procInfo.AutoScrollMinSize != need) procInfo.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 30 * S)); if (procInfo.AutoScrollMinSize != need) { procInfo.AutoScrollMinSize = need; procInfo.Invalidate(); }
         }
     }
 }

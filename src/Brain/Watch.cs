@@ -187,6 +187,7 @@ namespace AdeeboMeter
     {
         static Dictionary<string, HashSet<string>> known; static readonly object k = new object();
         public static readonly List<string[]> Joined = new List<string[]>();   // { when, network, ip, mac, note }
+        public static DateTime QuietUntil = DateTime.MinValue;   // after a ping sweep: learn what it found, without "new device" alerts
         public static void Check(Monitor m)
         {
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
@@ -196,6 +197,7 @@ namespace AdeeboMeter
             {
                 if (known == null) { known = new Dictionary<string, HashSet<string>>(); foreach (var r in Store.Read("devices.txt")) { HashSet<string> s; if (!known.TryGetValue(r[0], out s)) known[r[0]] = s = new HashSet<string>(); s.Add(r[1]); } }
                 HashSet<string> set; bool first = !known.TryGetValue(key, out set); if (first) known[key] = set = new HashSet<string>();
+                if (DateTime.UtcNow < QuietUntil) first = true;   // learn silently
                 bool changed = false;
                 foreach (var e in table.Where(x => x.Dynamic && x.Ip != gw))
                 {

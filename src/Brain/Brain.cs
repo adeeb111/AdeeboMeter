@@ -57,15 +57,33 @@ namespace AdeeboMeter
                 Calls.Second(m, call, g, t, sig, rate, d, u);
                 Watch.Upload(m, u, call);
                 Pinned.Tick();
+                // the PC itself, lightly: counters every 5 s, frozen windows every 10 s, disk users every minute, leaks every 5 min, free space every 6 h
+                tick++;
+                // (off the sampler thread: reading counters the first time can take seconds, and the corner widget must never wait)
+                int k = Cfg.Preset == "penny" ? 3 : 1;   // Penny watches the PC three times less often
+                if (tick % (5 * k) == 0) Bg(delegate { var pv = PcHealth.Sample(); double dm = pv["diskms"], pf = pv["faults"]; lock (pcLock) { if (!double.IsNaN(dm)) { diskMs += dm; diskN++; } if (!double.IsNaN(pf)) { faults += pf; faultN++; } } });
+                if (tick % (10 * k) == 0) Bg(delegate { PcHealth.HungTick(m); });
+                if (tick % (60 * k) == 30) Bg(PcHealth.IoTick);
+                if (tick % (30 * k) == 7) Bg(delegate { RoutingTools.GwTick(m); });
+                if (tick % (300 * k) == 150) Bg(PcHealth.LeakTick);
+                if (tick % 21600 == 20) Bg(PcHealth.SpaceTick);
             }
             catch (Exception e) { Program.Log("brain: " + e.Message); }
         }
         static void Add(ref double acc, double v) { if (!double.IsNaN(v)) acc += v; }
-        static void Reset() { n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = 0; }
+        static int tick; static double diskMs, faults; static int diskN, faultN; static readonly object pcLock = new object(); static int pcBusy;
+        // one PC job at a time, on a background thread, lowest priority; skipped if the previous one is still running
+        static void Bg(Action a)
+        {
+            if (System.Threading.Interlocked.CompareExchange(ref pcBusy, 1, 0) != 0) return;
+            var t = new System.Threading.Thread(() => { try { a(); } catch (Exception e) { Program.Log("pc job: " + e.Message); } finally { System.Threading.Interlocked.Exchange(ref pcBusy, 0); } }) { IsBackground = true, Priority = System.Threading.ThreadPriority.Lowest, Name = "AdeeboMeter PC" };
+            t.Start();
+        }
+        static void Reset() { diskMs = faults = 0; diskN = faultN = 0; n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = 0; }
         static void Flush(Monitor m, DateTime t)
         {
             double gwAvg = gwN > 0 ? gw / gwN : double.NaN, netAvg = netN > 0 ? net / netN : double.NaN, loss = lossN > 0 ? 100.0 * lossBad / lossN : double.NaN;
-            History.Minute(t, new[] { worst, cpu / n, mem / n, down / n, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, up / n, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey);
+            History.Minute(t, new[] { worst, cpu / n, mem / n, down / n, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, up / n, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
             if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));

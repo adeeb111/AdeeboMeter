@@ -115,6 +115,8 @@ namespace AdeeboMeter
         {
             var items = new List<KeyValuePair<string, Action>>();
             foreach (var kv in tabNames) { string t = kv.Key; items.Add(new KeyValuePair<string, Action>("Tab · " + kv.Value[0], delegate { tab = t; ShowTab(); })); }
+            foreach (var tl in Tools2()) { string id = tl.Id; items.Add(new KeyValuePair<string, Action>("Tool · " + tl.Title, delegate { tab = "toolbox"; ShowTab(); SelectTool(id); })); }
+            foreach (var f in Investigate.All) { string id = f.Id; items.Add(new KeyValuePair<string, Action>("Investigate · " + f.Title, delegate { GoGuide(id); })); }
             items.Add(new KeyValuePair<string, Action>("Settings", delegate { tab = "settings"; ShowTab(); }));
             items.Add(new KeyValuePair<string, Action>("About", delegate { tab = "about"; ShowTab(); }));
             foreach (var tl in new[] { new[] { "precall", "Pre-call check" }, new[] { "dns", "DNS speed test" }, new[] { "vpn", "VPN map" }, new[] { "see", "What can AdeeboMeter see here?" } }) { var t2 = tl; items.Add(new KeyValuePair<string, Action>("Tool · " + t2[1], delegate { tab = "health"; ShowTab(); RunTool(t2[0], t2[1]); })); }

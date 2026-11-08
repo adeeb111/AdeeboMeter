@@ -93,7 +93,7 @@ namespace AdeeboMeter
                 // to start, and we quietly start again without them.
                 usingExtras = extrasOk != false;
                 if (usingExtras) { foreach (var f in extraFields) sb.Append(" -e ").Append(f); sb.Append(" --enable-heuristic rtp_udp"); }
-                var psi = new ProcessStartInfo(Tshark, sb.ToString()) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+                var psi = new ProcessStartInfo(Tshark, sb.ToString()) { StandardOutputEncoding = System.Text.Encoding.UTF8, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
                 ts = Process.Start(psi); Job.Add(ts);
                 try { ts.PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
                 ts.ErrorDataReceived += delegate(object s, DataReceivedEventArgs e)

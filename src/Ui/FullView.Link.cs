@@ -96,7 +96,7 @@ namespace AdeeboMeter
                 var th = Draw.Measure(tip, Draw.fBody, (int)w).Height;
                 using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(tip, Draw.fBody, sb, new RectangleF(x, y, w, th + 4)); y += th + 20 * S;
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (linkCanvas.AutoScrollMinSize != need) linkCanvas.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 20 * S)); if (linkCanvas.AutoScrollMinSize != need) { linkCanvas.AutoScrollMinSize = need; linkCanvas.Invalidate(); }
         }
         float ListCard(Graphics g, string title, List<string[]> rows, string empty, string key, float x, float y, float w)
         {
@@ -200,18 +200,24 @@ namespace AdeeboMeter
             float ry = y + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                foreach (var a in top)
                 {
-                    bool me = string.Equals(a.Bssid, ls.MyBssid, StringComparison.OrdinalIgnoreCase);
-                    bool clash = !me && a.Band == band && LinkInfo.Overlaps(a.Channel, ls.MyChannel, band);
-                    using (var d = new SolidBrush(me ? Theme.Blue : clash ? Theme.Amber : Theme.Grey)) g.FillEllipse(d, x + 14 * S, ry + 6 * S, 8 * S, 8 * S);
-                    g.DrawString(a.Ssid + (me ? "  (you)" : ""), me ? Draw.fBodyB : Draw.fBody, ink, new RectangleF(x + 30 * S, ry, w * 0.30f, 20 * S), nowrap);
-                    g.DrawString(a.Band + " · ch " + a.Channel + (a.Radio != "" ? " · " + LinkInfo.Gen(a.Radio) : ""), Draw.fSmall, muted, new RectangleF(x + 30 * S + w * 0.31f, ry + 2 * S, w * 0.30f, 18 * S), nowrap);
-                    float bx = x + w * 0.66f, bw = w * 0.20f;
-                    Theme.Fill(g, new RectangleF(bx, ry + 7 * S, bw, 6 * S), 3 * S, Theme.Track);
-                    Theme.Fill(g, new RectangleF(bx, ry + 7 * S, bw * Math.Max(0, a.Signal) / 100f, 6 * S), 3 * S, me ? Theme.Blue : clash ? Theme.Amber : Theme.Rail);
-                    g.DrawString(a.Signal + "%" + (a.Rssi < 0 ? " · " + a.Rssi + " dBm" : "") + (a.Width > 20 ? " · " + a.Width + " MHz" : "") + (a.Util >= 0 ? " · air " + a.Util + "%" : ""), Draw.fSmall, muted, bx + bw + 10 * S, ry + 2 * S);
-                    ry += rh;
+                    Func<Ap, string> facts = a => a.Signal + "%" + (a.Rssi < 0 ? " · " + a.Rssi + " dBm" : "") + (a.Width > 20 ? " · " + a.Width + " MHz" : "") + (a.Util >= 0 ? " · air " + a.Util + "%" : "");
+                    float factW = top.Count == 0 ? 0 : top.Max(a => g.MeasureString(facts(a), Draw.fSmall).Width) + 6 * S;
+                    float nameW = Math.Min(w * 0.30f, Math.Max(120 * S, top.Count == 0 ? 0 : top.Max(a => g.MeasureString(a.Ssid + "  (you)", Draw.fBodyB).Width) + 10 * S));
+                    float bandW = Math.Min(w * 0.28f, top.Count == 0 ? 0 : top.Max(a => g.MeasureString(a.Band + " · ch " + a.Channel + (a.Radio != "" ? " · " + LinkInfo.Gen(a.Radio) : ""), Draw.fSmall).Width) + 16 * S);
+                    float left = x + 30 * S, bandX = left + nameW, bx = bandX + bandW, bw = Math.Max(40 * S, Math.Min(w * 0.22f, x + w - 14 * S - factW - 10 * S - bx));
+                    foreach (var a in top)
+                    {
+                        bool me = string.Equals(a.Bssid, ls.MyBssid, StringComparison.OrdinalIgnoreCase);
+                        bool clash = !me && a.Band == band && LinkInfo.Overlaps(a.Channel, ls.MyChannel, band);
+                        using (var d = new SolidBrush(me ? Theme.Blue : clash ? Theme.Amber : Theme.Grey)) g.FillEllipse(d, x + 14 * S, ry + 6 * S, 8 * S, 8 * S);
+                        g.DrawString(a.Ssid + (me ? "  (you)" : ""), me ? Draw.fBodyB : Draw.fBody, ink, new RectangleF(left, ry, nameW - 6 * S, 20 * S), nowrap);
+                        g.DrawString(a.Band + " · ch " + a.Channel + (a.Radio != "" ? " · " + LinkInfo.Gen(a.Radio) : ""), Draw.fSmall, muted, new RectangleF(bandX, ry + 2 * S, bandW - 6 * S, 18 * S), nowrap);
+                        Theme.Fill(g, new RectangleF(bx, ry + 7 * S, bw, 6 * S), 3 * S, Theme.Track);
+                        Theme.Fill(g, new RectangleF(bx, ry + 7 * S, bw * Math.Max(0, a.Signal) / 100f, 6 * S), 3 * S, me ? Theme.Blue : clash ? Theme.Amber : Theme.Rail);
+                        g.DrawString(facts(a), Draw.fSmall, muted, new RectangleF(bx + bw + 10 * S, ry + 2 * S, x + w - 14 * S - (bx + bw + 10 * S), 18 * S), nowrap);
+                        ry += rh;
+                    }
                 }
             return y + card2.Height + 16 * S;
         }

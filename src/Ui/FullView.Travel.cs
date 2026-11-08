@@ -65,7 +65,7 @@ namespace AdeeboMeter
             Begin(travelCanvas);
             float x = 14 * S, y = 8 * S, w = travelCanvas.ClientSize.Width - 28 * S;
             y = PaintStory(g, x, y, w);
-            var need = new Size(0, (int)(y + 30 * S)); if (travelCanvas.AutoScrollMinSize != need) travelCanvas.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 30 * S)); if (travelCanvas.AutoScrollMinSize != need) { travelCanvas.AutoScrollMinSize = need; travelCanvas.Invalidate(); }
         }
         static float Lead(Graphics g, string t, float x, float y, float w, bool muted)
         {

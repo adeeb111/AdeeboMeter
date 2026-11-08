@@ -1,0 +1,437 @@
+// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace AdeeboMeter
+{
+    // Investigate > Toolbox: every on-demand tool in one place - pick one on the left, fill in at most three boxes, Run.
+    // Results are rows with where each fact came from; some tools add a chart (iperf, sustained ping) or a live table
+    // (MTU per hop, MTR). Nothing runs until you press Run, and Stop always works.
+    sealed partial class FullView
+    {
+        sealed class Tool { public string Id, Group, Title; public string[] Inputs = Array.Empty<string>(); public Func<string[], Toolkit.Run, List<string[]>> Do; }
+        Panel toolboxPage; DB tbList, tbCanvas; FlowLayoutPanel tbBar; PillButton tbRun; readonly List<RoundBox> tbBoxes = new List<RoundBox>(); readonly RoundBox[] tbPool = new RoundBox[3];
+        string tbSel = "mtu", tbRowsKey = ""; List<string[]> tbRows; Toolkit.Run tbRun0; volatile bool tbBusy; string tbTitle = ""; DateTime tbAt;
+        List<PathTools.Hop> mtuHops; IPAddress mtuDst; volatile bool mtuBusy;
+
+        List<Tool> tools;
+        List<Tool> Tools2()
+        {
+            if (tools != null) return tools;
+            Func<string, string, string, string, Func<string[], Toolkit.Run, List<string[]>>, Tool> T = (id, g, t, ins, f) => new Tool { Id = id, Group = g, Title = t, Inputs = ins == null ? Array.Empty<string>() : ins.Split('|'), Do = f };   // inputs: "first|second|third"
+            tools = new List<Tool> {
+                T("mtu", "PATH", "MTU per hop", "Destination - e.g. github.com", null),
+                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-10)", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(10, min)); r.Status = "Tracing..."; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); PathTools.Mtr(dst, mtrHops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second..."; }); var res = new List<string[]> { new[] { "0", "Verdict", PathTools.MtrVerdict(mtrHops), "", "i" } }; res.AddRange(PathTools.Flags(mtrHops)); return res; }),
+                T("ret", "PATH", "The way back (return path)", "Destination", (a, r) => Toolkit.ReturnPath(a[0], r)),
+                T("owners", "PATH", "Who carries my traffic (BGP)", "Destination", (a, r) => { if (!Online.On) return OnlineOff(); var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); r.Status = "Tracing..."; var h = PathTools.Trace(dst, 30, () => r.Stop); r.Status = "Looking up each network..."; return Online.PathOwners(h, a[0]); }),
+                T("route", "PATH", "Which route does this take?", "Destination - e.g. 10.20.30.40 or a name", (a, r) => RoutingTools.RouteFor(Host(a[0]))),
+                T("gateway", "PATH", "Your gateway and failover", null, (a, r) => RoutingTools.Gateway(M)),
+                T("v6routers", "PATH", "IPv6 routers on this network", null, (a, r) => RoutingTools.Ipv6Routers()),
+                T("rlisten", "PATH", "Routing protocols on my segment", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r)),
+                T("ping6", "PATH", "IPv6 ping and trace", "Destination - e.g. www.google.com", (a, r) => SysTools.Ping6(a[0], r)),
+                T("overlap", "PATH", "Overlapping networks (home vs VPN)", null, (a, r) => PathTools.Overlap()),
+                T("ip46", "PATH", "IPv6 vs IPv4", "Site - e.g. www.google.com", (a, r) => PathTools.Ip46(Host(a[0]))),
+                T("proxy", "WHY DOES IT FAIL?", "Which proxy does this URL use?", "URL - e.g. https://outlook.office.com", (a, r) => WhyFails.Proxy(a[0])),
+                T("hosts", "WHY DOES IT FAIL?", "Hosts file", "Name to look for (optional)", (a, r) => WhyFails.Hosts(Host(a[0]))),
+                T("dnsrules", "WHY DOES IT FAIL?", "DNS hijack and VPN name rules", null, (a, r) => WhyFails.DnsRules()),
+                T("port", "WHY DOES IT FAIL?", "Port test", "host:port - e.g. smtp.office365.com:587", (a, r) => WhyFails.Port(a[0])),
+                T("teams", "WHY DOES IT FAIL?", "Teams UDP test (and NAT type)", null, (a, r) => WhyFails.TeamsUdp()),
+                T("clock", "WHY DOES IT FAIL?", "Clock check", null, (a, r) => WhyFails.Clock()),
+                T("iperf", "SPEED", "iperf3 to your server", "Your iperf3 server - e.g. 10.0.0.5|Options, like iperf3: -R -P 4 -t 10 -u -b 50M -l -w -S -O -M --both", (a, r) => Toolkit.Iperf(a[0], a[1], r)),
+                T("ping", "SPEED", "Sustained ping", "Target|How many (10-2000)|Every ms (20-5000)", (a, r) => Toolkit.Sustained(a[0], a[1], a[2], r)),
+                T("tcpping", "SPEED", "TCP ping", "host:port - e.g. github.com:443|How many (1-500)", (a, r) => Protocols.TcpPing(a[0], a[1], r)),
+                T("twamp", "SPEED", "TWAMP-light to a reflector", "Reflector - host or host:port (UDP 862)|Packets (10-2000)", (a, r) => Protocols.Twamp(a[0], a[1], r)),
+                T("cloud", "SPEED", "Nearest cloud", null, (a, r) => Toolkit.Nearest(r)),
+                T("dig", "DNS AND WEB", "dig - any DNS record", "Name - e.g. github.com|Type: A, AAAA, MX, TXT, NS, SRV, CAA or TRACE|Server (optional) - e.g. 1.1.1.1", (a, r) => Toolkit.Dig(a[0], a[1], a[2], M)),
+                T("http", "DNS AND WEB", "HTTP and TLS inspector", "URL - e.g. github.com", (a, r) => Toolkit.Http(a[0])),
+                T("httptime", "DNS AND WEB", "HTTP timing, repeated", "URL - e.g. outlook.office.com|How many (1-50)", (a, r) => Protocols.HttpTiming(a[0], a[1], r)),
+                T("doh", "DNS AND WEB", "Encrypted DNS (DoH / DoT)", null, (a, r) => Protocols.EncryptedDns()),
+                T("ntp", "PROTOCOLS", "NTP - ask a time server", "Server - e.g. time.windows.com or pool.ntp.org", (a, r) => Protocols.Ntp(a[0])),
+                T("mail", "PROTOCOLS", "Mail server (SMTP / IMAP / POP)", "host:port - 25 / 587 / 465 SMTP, 143 / 993 IMAP, 110 / 995 POP", (a, r) => Protocols.Mail(a[0])),
+                T("ssh", "PROTOCOLS", "SSH banner", "host or host:port", (a, r) => Protocols.Ssh(a[0])),
+                T("snmp", "PROTOCOLS", "SNMP v2c - ask a device", "Device address|Community (default public)", (a, r) => Protocols.Snmp(a[0], a[1])),
+                T("syslog", "PROTOCOLS", "Syslog - send a test message", "Collector - host or host:port (UDP 514)|Text (optional)", (a, r) => Protocols.Syslog(a[0], a[1])),
+                T("radius", "PROTOCOLS", "RADIUS - is the server alive?", "Server - host or host:port (1812)|Shared secret", (a, r) => Protocols.Radius(a[0], a[1])),
+                T("tacacs", "PROTOCOLS", "TACACS+ - is the server there?", "Server - host or host:port (49)", (a, r) => Protocols.Tacacs(a[0])),
+                T("hairpin", "YOUR NETWORK", "Your own router (hairpin)", null, (a, r) => Protocols.Hairpin()),
+                T("sweep", "YOUR NETWORK", "Ping sweep", "|Type yes on company networks", (a, r) => Toolkit.Sweep(M, a[1], r)),
+                T("wol", "YOUR NETWORK", "Wake-on-LAN", "MAC - e.g. 3C:84:6A:12:34:56", (a, r) => Toolkit.Wake(a[0])),
+                T("subnet", "YOUR NETWORK", "Subnet calculator", "e.g. 10.1.2.3/22 or 2001:db8::1/64|Is this IP inside? (optional)", (a, r) => Toolkit.Subnet(a[0], a[1])),
+                T("winev", "WINDOWS", "Windows' own evidence", null, (a, r) => WinEvidence.All(M)),
+                T("auth", "WINDOWS", "Why network sign-in failed (802.1X)", null, (a, r) => WinEvidence.Auth()),
+                T("dc", "WINDOWS", "Domain controllers", null, (a, r) => SysTools.DomainControllers(M)),
+                T("gpo", "WINDOWS", "Group Policy - what applied", null, (a, r) => SysTools.GroupPolicy()),
+                T("certs", "WINDOWS", "Certificates that expire soon", null, (a, r) => SysTools.Certs()),
+                T("fw", "WINDOWS", "Firewall rules for an app", "App - e.g. teams or chrome.exe", (a, r) => SysTools.Firewall(a[0])),
+                T("listen", "WINDOWS", "What's listening on this PC", null, (a, r) => SysTools.Listening(M)),
+                T("events", "WINDOWS", "Event log - errors in 24 h", "Filter (optional) - e.g. DNS, Tcpip or an event ID", (a, r) => SysTools.EventSearch(a[0])),
+                T("timesrc", "WINDOWS", "Where the PC gets its time", null, (a, r) => SysTools.TimeSource()),
+                T("pressure", "THE PC", "Memory, disk, heat, drivers", null, (a, r) => PcHealth.Pressure(M)),
+                T("disk", "THE PC", "Disk: who, health, space", null, (a, r) => PcHealth.Disk(M)),
+                T("space", "THE PC", "Where did my space go?", null, (a, r) => PcHealth.Space(s => r.Status = s)),
+                T("bg", "THE PC", "Background jobs right now", null, (a, r) => PcHealth.Background()),
+                T("crash", "THE PC", "Crashes and hangs (7 days)", null, (a, r) => PcHealth.Crashes()),
+                T("leaks", "THE PC", "Slow leaks", null, (a, r) => PcHealth.Leaks()),
+                T("gpu", "THE PC", "Graphics card per app", null, (a, r) => PcHealth.Gpu()),
+                T("changed", "THE PC", "What changed in 7 days", null, (a, r) => PcHealth.Changes()),
+                T("battery", "THE PC", "Battery health", null, (a, r) => PcHealth.Battery()) };
+            // grouped by the question you're asking, not by technology
+            var pos = new Dictionary<string, int>();
+            foreach (var grp in TbLayout) for (int i = 1; i < grp.Length; i++) pos[grp[i]] = pos.Count;
+            foreach (var t in tools) { var grp = TbLayout.FirstOrDefault(l => Array.IndexOf(l, t.Id, 1) > 0); if (grp != null) t.Group = grp[0]; }
+            tools = tools.OrderBy(t => { int p; return pos.TryGetValue(t.Id, out p) ? p : 999; }).ToList();
+            return tools;
+        }
+        List<PathTools.Hop> mtrHops;
+        static readonly string[][] TbLayout = {
+            new[] { "PATH & ROUTING", "mtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
+            new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
+            new[] { "SPEED & QUALITY", "iperf", "ping", "twamp", "cloud" },
+            new[] { "NAMES & TIME", "dig", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
+            new[] { "NETWORK DEVICES", "snmp", "syslog", "hairpin", "sweep", "wol", "subnet" },
+            new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events" },
+            new[] { "THE PC", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
+        // tools whose first box is "the thing you're looking at" - they share one target, so you type it once
+        static readonly HashSet<string> TargetTools = new HashSet<string> { "mtu", "mtr", "ret", "route", "ping6", "ip46", "owners", "port", "tcpping", "http", "httptime", "proxy", "ssh", "mail", "radius", "tacacs", "ping", "dig", "snmp" };
+        string tbTarget = "", tbFilter = ""; readonly List<string> tbRecent = new List<string>(); readonly HashSet<string> tbOpen = new HashSet<string>();
+        RoundBox tbSearch; bool tbCompare;
+        sealed class PrevRun { public string Inputs; public DateTime At; public List<string[]> Rows; }
+        readonly Dictionary<string, PrevRun> tbPrev = new Dictionary<string, PrevRun>(), tbLast = new Dictionary<string, PrevRun>();   // the run before, per tool - this session only, never saved
+        static List<string[]> OnlineOff() { var r = new List<string[]>(); r.Add(Row5("3", "Online lookups", "off - this needs them (Settings > Privacy, or the link below)", "", "u")); return r; }
+        static string[] Row5(params string[] a) { return a; }
+        static List<string[]> Bad(string msg) { return new List<string[]> { new[] { "2", "Input", msg, "", "u" } }; }
+        static string Host(string s) { s = (s ?? "").Trim(); Uri u; if (s.StartsWith("http", StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(s, UriKind.Absolute, out u)) return u.Host; int c = s.IndexOf('/'); return c > 0 ? s.Substring(0, c) : s; }
+
+        Panel BuildToolboxPage()
+        {
+            toolboxPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
+            return toolboxPage;
+        }
+        // built the first time it's shown, so opening the engineer view stays fast
+        void EnsureToolbox()
+        {
+            if (tbCanvas != null) return;
+            toolboxPage.SuspendLayout();
+            var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
+            split.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(290))); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            tbList = new DB { Name = "tbList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
+            tbList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbList(e.Graphics); }; Wire(tbList);
+            var left = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0) };
+            var searchBar = new Panel { Dock = DockStyle.Top, Height = Sc(56), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(12), Sc(10), 0) };
+            tbSearch = new RoundBox(Sc(240), Draw.fInput, "Find a tool (mtu, dns, vpn...)") { Dock = DockStyle.Fill };
+            tbSearch.Box.TextChanged += delegate { tbFilter = tbSearch.Box.Text.Trim(); tbList.AutoScrollPosition = Point.Empty; tbList.Invalidate(); };
+            tbSearch.Box.KeyDown += delegate(object s, KeyEventArgs e)
+            {
+                if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; var first = Matches().FirstOrDefault(); if (first != null) { SelectTool(first.Id); var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); } }
+                else if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; }
+            };
+            searchBar.Controls.Add(tbSearch); left.Controls.Add(tbList); left.Controls.Add(searchBar);
+            var right = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0) };
+            tbBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(60)), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(12), Sc(8), Sc(6)), WrapContents = true };
+            tbRun = new PillButton("Run", PillButton.K.Primary); tbRun.Click += delegate { if (tbBusy) { if (tbRun0 != null) tbRun0.Stop = true; } else StartTool(); };
+            for (int i = 0; i < tbPool.Length; i++)
+            {
+                var rb = new RoundBox(Sc(200), Draw.fInput, "") { Visible = false }; tbPool[i] = rb;
+                rb.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; if (!tbBusy) StartTool(); } };
+                tbBar.Controls.Add(rb);
+            }
+            tbBar.Controls.Add(tbRun);
+            tbCanvas = new DB { Name = "tbCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
+            tbCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTb(e.Graphics); }; Wire(tbCanvas);
+            right.Controls.Add(tbCanvas); right.Controls.Add(tbBar);
+            split.Controls.Add(left, 0, 0); split.Controls.Add(right, 1, 0);
+            toolboxPage.Controls.Add(split);
+            toolboxPage.ResumeLayout(true);
+            SelectTool(tbSel); ThemeScrollbars(toolboxPage);
+        }
+        void SelectTool(string id)
+        {
+            EnsureToolbox(); if (tbBusy) return;
+            var t = Tools2().FirstOrDefault(x => x.Id == id) ?? Tools2()[0]; tbSel = t.Id; tbRows = null; tbRun0 = null; tbTitle = t.Title; tbRowsKey = "";
+            PrevRun last; if (tbLast.TryGetValue(t.Id, out last)) { tbRows = last.Rows; tbAt = last.At; tbRowsKey = last.Inputs; }   // coming back shows the last result
+            // three input boxes made once and reused - switching tools creates no new windows
+            tbBar.SuspendLayout(); tbBoxes.Clear();
+            for (int i = 0; i < tbPool.Length; i++)
+            {
+                var rb = tbPool[i]; string inp = i < t.Inputs.Length ? t.Inputs[i] : "";
+                rb.Box.Text = "";
+                if (inp == "") { rb.Visible = false; if (i < t.Inputs.Length) tbBoxes.Add(null); continue; }
+                bool secret = inp.StartsWith("Shared secret", StringComparison.Ordinal);   // never shown, never saved, never logged
+                if (rb.Box.UseSystemPasswordChar != secret) rb.Box.UseSystemPasswordChar = secret;
+                rb.Cue = inp; rb.Width = Math.Min(Sc(380), Math.Max(Sc(200), TextRenderer.MeasureText(inp, Draw.fInput).Width + Sc(34)));   // wide enough to show the whole hint
+                rb.Visible = true; tbBoxes.Add(rb);
+            }
+            if (tbTarget == "" && destBox.Box.Text.Trim() != "") tbTarget = destBox.Box.Text.Trim();
+            tbOpen.Add(t.Group);
+            if (t.Id == "iperf" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "--both -t 10";
+            if (t.Id == "ping" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw != "" ? gw : "1.1.1.1"; tbBoxes[1].Box.Text = "200"; tbBoxes[2].Box.Text = "200"; }
+            if (t.Id == "mtr" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "1";
+            if (t.Id == "dig" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "A";
+            if (t.Id == "tcpping" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "20";
+            if (t.Id == "httptime" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "5";
+            if (t.Id == "twamp" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "100";
+            if (t.Id == "ntp" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "time.windows.com";
+            if ((t.Id == "snmp" || t.Id == "ssh" || t.Id == "syslog") && tbBoxes.Count > 0) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw; }
+            if (t.Id == "rlisten" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "60";
+            if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
+            tbRun.Text = "Run";
+            tbBar.ResumeLayout();
+            if (t.Id != "mtu") { mtuHops = null; }
+            tbList.Invalidate(); tbCanvas.Invalidate();
+        }
+        string[] Inputs() { var a = new string[3]; for (int i = 0; i < 3; i++) a[i] = i < tbBoxes.Count && tbBoxes[i] != null ? tbBoxes[i].Box.Text.Trim() : ""; return a; }
+
+        void StartTool()
+        {
+            var t = Tools2().First(x => x.Id == tbSel); var a = Inputs(); UiActivity.Doing = "starting tool " + t.Id;
+            tbRecent.Remove(t.Id); tbRecent.Insert(0, t.Id); if (tbRecent.Count > 5) tbRecent.RemoveAt(5);
+            if (TargetTools.Contains(t.Id) && a[0] != "") tbTarget = a[0];
+            if (t.Id == "mtu") { StartMtu(a[0]); return; }
+            string key = string.Join("|", t.Id == "radius" ? a.Take(1) : a);   // never keep the secret, even in memory
+            var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbBusy = true; tbRun.Text = "Stop"; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+            Task.Factory.StartNew(() =>
+            {
+                List<string[]> res;
+                try { res = t.Do(a, run); } catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
+                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res }; tbBusy = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = false; }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        // ---------- MTU per hop: trace, then measure hop by hop (Next hop / a row / all)
+        void StartMtu(string target)
+        {
+            if (mtuBusy) return; mtuBusy = true; tbBusy = true; tbRun.Text = "Stop"; tbRows = null; mtuHops = null; var run = new Toolkit.Run(); tbRun0 = run; run.Status = "Tracing to " + target + "..."; tbCanvas.Invalidate();
+            Task.Factory.StartNew(() =>
+            {
+                var dst = Icmp.Resolve4(target); List<PathTools.Hop> hops = null;
+                if (dst != null) hops = PathTools.Trace(dst, 30, () => run.Stop);
+                try { BeginInvoke((Action)delegate { mtuDst = dst; mtuHops = hops; mtuBusy = false; tbBusy = false; tbRun.Text = "Run"; if (dst == null) tbRows = Bad("couldn't find " + target + " (IPv4)"); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = false; }
+            }, TaskCreationOptions.LongRunning);
+        }
+        void MeasureHops(List<PathTools.Hop> which)
+        {
+            if (mtuBusy || mtuHops == null || mtuDst == null || which.Count == 0) return;
+            mtuBusy = true; var run = new Toolkit.Run(); tbRun0 = run; tbBusy = true; tbRun.Text = "Stop"; tbCanvas.Invalidate();
+            var hops = mtuHops; var dst = mtuDst;
+            Task.Factory.StartNew(() =>
+            {
+                foreach (var h in which)
+                {
+                    if (run.Stop) break;
+                    run.Status = "Measuring hop " + h.N + "...";
+                    int local; lock (M.L) local = M.PrimaryMtu; if (local < 576) local = 1500;
+                    int hi = hops.Where(x => x.N < h.N && x.Mtu > 0).Select(x => x.Mtu).DefaultIfEmpty(Math.Min(9216, local)).Min();   // starts at your adapter's own MTU (jumbo if set), then can only stay or shrink
+                    try { PathTools.MtuAt(dst, h, hi); } catch (Exception e) { Program.Log("mtu: " + e.Message); }
+                    try { BeginInvoke((Action)tbCanvas.Invalidate); } catch { }
+                }
+                try { BeginInvoke((Action)delegate { mtuBusy = false; tbBusy = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = false; }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        // ---------- painting
+        // search: every word must appear in the tool's name, its group or its explanation
+        List<Tool> Matches()
+        {
+            var words = tbFilter.ToLowerInvariant().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0) return Tools2();
+            return Tools2().Where(t =>
+            {
+                var e = Explain.Term("tb." + t.Id);
+                string hay = (t.Id + " " + t.Title + " " + t.Group + " " + (e != null ? e.Friendly + " " + e.Tag + " " + e.What + " " + e.Why : "")).ToLowerInvariant();
+                return words.All(w => hay.Contains(w));
+            }).ToList();
+        }
+        void PaintTbList(Graphics g)
+        {
+            g.TranslateTransform(tbList.AutoScrollPosition.X, tbList.AutoScrollPosition.Y); Begin(tbList);
+            float x = 14 * S, y = 4 * S, w = tbList.ClientSize.Width - 20 * S; bool searching = tbFilter != "";
+            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+            {
+                Action<Tool> item = t =>
+                {
+                    var rr = new RectangleF(0, y, tbList.ClientSize.Width, 28 * S);
+                    if (t.Id == tbSel) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, rr);
+                    g.DrawString(t.Title, Draw.fBody, ink, new RectangleF(x + 4 * S, y + 5 * S, w - 4 * S, 18 * S), nowrap);
+                    if (tbLast.ContainsKey(t.Id)) using (var db = new SolidBrush(Theme.Green)) g.FillEllipse(db, x - 6 * S, y + 12 * S, 5 * S, 5 * S);   // run this session
+                    string id = t.Id; Act(tbList, rr, delegate { SelectTool(id); }); Hint(tbList, rr, "tb." + id);
+                    y += 28 * S;
+                };
+                if (searching)
+                {
+                    var found = Matches();
+                    g.DrawString(found.Count == 0 ? "NOTHING MATCHES - TRY ANOTHER WORD" : found.Count + (found.Count == 1 ? " TOOL" : " TOOLS") + "  ·  ENTER OPENS THE FIRST", Draw.fTiny, muted, x, y + 4 * S); y += 24 * S;
+                    foreach (var t in found) item(t);
+                }
+                else
+                {
+                    if (tbRecent.Count > 0)
+                    {
+                        g.DrawString("RECENT", Draw.fTiny, muted, x, y + 4 * S); y += 22 * S;
+                        foreach (var id in tbRecent) { var t = Tools2().FirstOrDefault(z => z.Id == id); if (t != null) item(t); }
+                        y += 6 * S;
+                    }
+                    foreach (var grp in Tools2().GroupBy(t => t.Group))
+                    {
+                        bool open = tbOpen.Contains(grp.Key); var hr = new RectangleF(0, y, tbList.ClientSize.Width, 30 * S);
+                        float cx = x + 1 * S, cy = y + 15 * S;   // a drawn chevron - not every font has the arrow characters
+                        var tri = open ? new[] { new PointF(cx - 4 * S, cy - 2 * S), new PointF(cx + 4 * S, cy - 2 * S), new PointF(cx, cy + 3 * S) } : new[] { new PointF(cx - 2 * S, cy - 4 * S), new PointF(cx + 3 * S, cy), new PointF(cx - 2 * S, cy + 4 * S) };
+                        g.FillPolygon(open ? ink : muted, tri);
+                        g.DrawString(grp.Key + "   " + grp.Count(), Draw.fTiny, open ? ink : muted, x + 10 * S, y + 9 * S);
+                        string key = grp.Key; Act(tbList, hr, delegate { if (!tbOpen.Remove(key)) tbOpen.Add(key); tbList.Invalidate(); });
+                        y += 30 * S;
+                        if (open) { foreach (var t in grp) item(t); y += 4 * S; }
+                    }
+                }
+            }
+            Need(tbList, y + 10 * S);
+        }
+        void PaintTb(Graphics g)
+        {
+            g.TranslateTransform(tbCanvas.AutoScrollPosition.X, tbCanvas.AutoScrollPosition.Y); Begin(tbCanvas);
+            float x = 14 * S, y = 8 * S, w = tbCanvas.ClientSize.Width - 28 * S; var run = tbRun0;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
+            {
+                g.DrawString(tbTitle.ToUpperInvariant() + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? "  ·  DONE " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture) : ""), Draw.fTiny, muted, x, y);
+                PrevRun prev = null; bool canCompare = !tbBusy && tbRows != null && tbPrev.TryGetValue(tbSel, out prev) && prev.Inputs == tbRowsKey && prev.Rows != tbRows;
+                if (!canCompare) prev = null;
+                if (prev != null)
+                {
+                    string lk = tbCompare ? "Hide the " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + " run" : "Compare with the " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + " run"; var ls = g.MeasureString(lk, Draw.fSmall);
+                    var lr = new RectangleF(x + w - ls.Width, y - 2 * S, ls.Width, ls.Height);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(lk, Draw.fSmall, lb, lr.X, lr.Y);
+                    Act(tbCanvas, lr, delegate { tbCompare = !tbCompare; tbCanvas.Invalidate(); });
+                }
+                y += 22 * S;
+                var e = Explain.Term("tb." + tbSel);
+                if (tbRows == null && !tbBusy && mtuHops == null && e != null) { float h0 = Draw.Measure(e.Tag + " " + e.What, Draw.fBody, (int)w).Height; g.DrawString(e.Tag + " " + e.What, Draw.fBody, sub, new RectangleF(x, y, w, h0 + 4)); y += h0 + 12 * S; }
+                if (tbSel == "owners" && !Online.On)
+                {
+                    string lk = "Turn on online lookups for " + Cfg.OnlineMin + " min  >"; var ls = g.MeasureString(lk, Draw.fBodyB);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(lk, Draw.fBodyB, lb, x, y);
+                    Act(tbCanvas, new RectangleF(x, y, ls.Width, ls.Height), delegate { Online.Start(); tbCanvas.Invalidate(); header.Invalidate(); });
+                    y += 30 * S;
+                    g.DrawString("Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Privacy has the timer.", Draw.fSmall, muted, new RectangleF(x, y, w, 34 * S)); y += 36 * S;
+                }
+                if (tbSel == "mtu") y = PaintMtu(g, x, y, w);
+                if (tbSel == "mtr" && mtrHops != null) y = PaintMtr(g, x, y, w);
+                if (run != null) { var s = run.Copy(); if (s.Count > 1) y = PaintSeries(g, s, run.SeriesUnit, x, y, w); }
+                if (tbRows != null)
+                {
+                    float nameW = Math.Min(260 * S, w * 0.32f), pillW = Cfg.Details ? 170 * S : 120 * S;
+                    foreach (var o in tbRows)
+                    {
+                        int lv; int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
+                        string adv = o.Length > 3 ? o[3] : "", ev = o.Length > 4 ? o[4] : "";
+                        string was = "";
+                        if (tbCompare && prev != null) { var pr = prev.Rows.FirstOrDefault(z => z.Length > 2 && z[1] == o[1]); was = pr == null ? "new since " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) : pr[2] != o[2] ? "at " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + pr[2] : ""; }
+                        if (was != "") adv = was + (adv != "" ? "\n" + adv : "");
+                        float tw = w - nameW - pillW - 10 * S, vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(Math.Max(30 * S, vh + ah + 12 * S), Draw.Measure(o[1], Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
+                        if (lv == 4) using (var hb = new SolidBrush(Theme.BlueSoft)) g.FillRectangle(hb, x - 4 * S, y, w + 8 * S, rh);
+                        using (var b = new SolidBrush(Theme.Lv(lv == 4 ? 3 : lv))) g.FillEllipse(b, x, y + 9 * S, 10 * S, 10 * S);
+                        g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));
+                        using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(o[2], Draw.fBody, vb, new RectangleF(x + nameW, y + 5 * S, tw, vh + 4));
+                        if (adv != "") g.DrawString(adv, Draw.fSmall, sub, new RectangleF(x + nameW, y + 7 * S + vh, tw, ah));
+                        if (ev != "") { float px = x + w - pillW + 4 * S; Evidence.Pill(g, ev, px, y + 6 * S, tbAt); Hint(tbCanvas, new RectangleF(px, y, pillW, rh), Evidence.Key(ev)); }
+                        y += rh; g.DrawLine(line, x, y, x + w, y);
+                    }
+                }
+            }
+            Need(tbCanvas, y + 20 * S);
+        }
+        float PaintMtu(Graphics g, float x, float y, float w)
+        {
+            var hops = mtuHops;
+            if (hops == null) { if (!tbBusy) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop.", Draw.fBody, mb, new RectangleF(x, y, w, 40 * S)); return y + 40 * S; }
+            float cx = x;
+            foreach (var b in new[] { "Next hop  >", "Probe all", "Start again" })
+            {
+                var ts = g.MeasureString(b, Draw.fBodyB); var br = new RectangleF(cx, y, ts.Width + 26 * S, 32 * S); bool prim = b.StartsWith("Next", StringComparison.Ordinal);
+                Theme.Fill(g, br, 16 * S, prim ? Theme.Blue : Theme.Soft); using (var tb = new SolidBrush(prim ? Color.White : Theme.Ink)) g.DrawString(b, Draw.fBodyB, tb, cx + 13 * S, y + (32 * S - ts.Height) / 2);
+                string bb = b;
+                Act(tbCanvas, br, delegate
+                {
+                    if (bb.StartsWith("Next", StringComparison.Ordinal)) { var n = hops.FirstOrDefault(h => h.Mtu == -1 && h.MtuNote == "" && h.Ip != ""); if (n != null) MeasureHops(new List<PathTools.Hop> { n }); }
+                    else if (bb.StartsWith("Probe", StringComparison.Ordinal)) MeasureHops(hops.Where(h => h.Mtu == -1 && h.MtuNote == "" && h.Ip != "").ToList());
+                    else { foreach (var h in hops) { h.Mtu = -1; h.MtuNote = ""; h.Said = h.BlackHole = false; } tbCanvas.Invalidate(); }
+                });
+                cx += br.Width + 8 * S;
+            }
+            y += 46 * S;
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT", Draw.fTiny, muted, x, y);
+            y += 22 * S; int prev = 99999; float barX = x + w * 0.45f, barW = w * 0.25f;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
+                foreach (var h in hops)
+                {
+                    var rr = new RectangleF(x, y, w, 30 * S);
+                    g.DrawString(h.N.ToString(CultureInfo.CurrentCulture), Draw.fMono, sub, x, y + 6 * S);
+                    g.DrawString(h.Ip == "" ? "·  no answer" : h.Ip + (h.Reached ? "  (destination)" : ""), Draw.fBody, h.Ip == "" ? sub : ink, x + 40 * S, y + 6 * S);
+                    if (h.Mtu > 0)
+                    {
+                        bool drop = h.Mtu < prev; float bw = barW * Math.Min(1f, (h.Mtu - 500) / (h.Mtu > 1500 ? 8716f : 1000f));
+                        Theme.Fill(g, new RectangleF(barX, y + 9 * S, Math.Max(4, bw), 12 * S), 4 * S, drop ? Theme.Amber : Theme.Green);
+                        using (var vb = new SolidBrush(drop ? Theme.LvText(1) : Theme.Ink)) g.DrawString(h.Mtu + (drop ? "  ← drops here: " : "  ") + (drop || h.BlackHole ? h.MtuNote : ""), drop ? Draw.fBodyB : Draw.fBody, vb, new RectangleF(barX + barW + 10 * S, y + 6 * S, w - (barX - x) - barW - 10 * S, 20 * S));
+                        prev = Math.Min(prev, h.Mtu);
+                    }
+                    else if (h.MtuNote != "") g.DrawString(h.MtuNote, Draw.fBody, sub, barX, y + 6 * S);
+                    else if (h.Ip != "") { var hh = h; Act(tbCanvas, rr, delegate { MeasureHops(new List<PathTools.Hop> { hh }); }); g.DrawString("measure", Draw.fSmall, sub, barX, y + 8 * S); }
+                    y += 30 * S; g.DrawLine(line, x, y, x + w, y);
+                }
+            var measured = hops.Where(h => h.Mtu > 0).ToList();
+            if (measured.Count > 0)
+            {
+                var low = measured.OrderBy(h => h.Mtu).First();
+                string sum = low.Mtu >= 1500 ? (low.Mtu > 1500 ? "Jumbo packets (" + low.Mtu + ") get" : "Full-size packets (1500) get") + " as far as hop " + measured.Max(h => h.N) + " - no MTU problem so far." : "The path shrinks to " + low.Mtu + " at hop " + low.N + " - " + PathTools.Kind(low.Mtu) + "." + (low.BlackHole ? " That hop drops big packets silently: apps that send full-size packets hang (pages half-load, VPN stalls) until something lowers the size." : "");
+                y += 10 * S; float sh = Draw.Measure(sum, Draw.fBody, (int)(w - 28 * S)).Height; var sr = new RectangleF(x, y, w, sh + 20 * S);
+                Theme.Fill(g, sr, 10 * S, Theme.LvSoft(low.Mtu >= 1500 ? 0 : low.BlackHole ? 2 : 1)); using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(sum, Draw.fBody, ib, new RectangleF(x + 14 * S, y + 10 * S, w - 28 * S, sh + 4));
+                y += sr.Height + 10 * S;
+            }
+            return y + 6 * S;
+        }
+        float PaintMtr(Graphics g, float x, float y, float w)
+        {
+            var hops = mtrHops;
+            // fixed columns, numbers right-aligned under their headings
+            string[] head = { "LOSS", "SENT", "LAST", "AVG", "BEST", "WORST", "JITTER" };
+            float c0 = x + Math.Max(300 * S, w * 0.38f), cw = (x + w - c0) / head.Length;
+            using (var muted = new SolidBrush(Theme.Muted)) using (var right = new StringFormat { Alignment = StringAlignment.Far })
+            {
+                g.DrawString("HOP", Draw.fTiny, muted, x, y); g.DrawString("ROUTER", Draw.fTiny, muted, x + 40 * S, y);
+                for (int i = 0; i < head.Length; i++) g.DrawString(head[i] + (i >= 2 ? " ms" : ""), Draw.fTiny, muted, new RectangleF(c0 + i * cw, y, cw - 8 * S, 16 * S), right);
+                y += 22 * S;
+                using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
+                    foreach (var h in hops.ToList())
+                    {
+                        double loss = h.Sent > 0 ? 100.0 * h.Lost / h.Sent : 0; double avg = h.Sent - h.Lost > 0 ? h.Sum / (h.Sent - h.Lost) : double.NaN;
+                        g.DrawString(h.N.ToString(CultureInfo.CurrentCulture), Draw.fMono, sub, x, y + 5 * S);
+                        g.DrawString(h.Ip == "" ? "·  no answer" : h.Ip + (h.Owner != "" ? "  " + h.Owner : ""), Draw.fBody, h.Ip == "" ? sub : ink, new RectangleF(x + 40 * S, y + 5 * S, c0 - x - 44 * S, 20 * S));
+                        var cells = new[] { loss.ToString("0", CultureInfo.CurrentCulture) + "%", h.Sent.ToString(CultureInfo.CurrentCulture), PathTools.F(h.Last), PathTools.F(avg), PathTools.F(h.Best), PathTools.F(h.Worst), PathTools.F(h.Jit) };
+                        for (int i = 0; i < cells.Length; i++)
+                            using (var cb = new SolidBrush(i == 0 && loss >= 3 ? Theme.LvText(loss >= 10 ? 2 : 1) : i == 0 ? Theme.Ink : Theme.Sub))
+                                g.DrawString(cells[i], Draw.fMono, cb, new RectangleF(c0 + i * cw, y + 5 * S, cw - 8 * S, 20 * S), right);
+                        y += 26 * S; g.DrawLine(line, x, y, x + w, y);
+                    }
+            }
+            return y + 12 * S;
+        }
+        static float PaintSeries(Graphics g, List<double> s, string unit, float x, float y, float w)
+        {
+            float h = 120 * S; var r = new RectangleF(x, y, w, h); Theme.Stroke(g, r, 8 * S, Theme.Track, 1);
+            var ok = s.Where(v => !double.IsNaN(v)).ToList(); double max = ok.Count > 0 ? Math.Max(1, ok.Max()) * 1.1 : 1;
+            float bw = (w - 20 * S) / Math.Max(1, s.Count), bx = x + 10 * S, base0 = y + h - 10 * S, ph = h - 26 * S;
+            using (var bb = new SolidBrush(unit == "ms" ? Theme.Blue : Theme.Green)) using (var lost = new SolidBrush(Theme.Red))
+                for (int i = 0; i < s.Count; i++)
+                {
+                    if (double.IsNaN(s[i])) { g.FillRectangle(lost, bx + i * bw, y + 16 * S, Math.Max(1, bw - 1), ph); continue; }
+                    float bh = (float)(s[i] / max) * ph; g.FillRectangle(bb, bx + i * bw, base0 - bh, Math.Max(1, bw - (bw > 4 ? 1 : 0)), bh);
+                }
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("max " + max.ToString(max > 10 ? "0" : "0.#", CultureInfo.CurrentCulture) + " " + unit + (unit == "ms" ? "  ·  red = no answer" : "  ·  one bar per second"), Draw.fTiny, mb, x + 10 * S, y + 4 * S);
+            return y + h + 14 * S;
+        }
+    }
+}

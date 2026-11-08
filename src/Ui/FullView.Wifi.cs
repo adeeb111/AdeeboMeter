@@ -16,23 +16,30 @@ namespace AdeeboMeter
         WifiAdvisor.Extra linkExtra;
         // ---------- walk test: only runs while you record a spot (20 pings to your own router in 10 s)
         sealed class Spot { public string Room; public double Avg, Jitter, Loss; public long Speed; public int Signal; }
-        readonly List<Spot> spots = new List<Spot>(); FlowLayoutPanel walkBar; RoundBox walkRoom; PillButton walkRec; Label walkStatus; volatile bool walking;
+        readonly List<Spot> spots = new List<Spot>(); FlowLayoutPanel walkBar; RoundBox walkRoom; PillButton walkRec; Label walkStatus; volatile bool walking; string walkRename;   // set while a room is being renamed
 
         void BuildWalkBar()
         {
-            walkBar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false, Visible = false };
-            walkRoom = new RoundBox(Sc(220), Draw.fBody, "Room name - e.g. Kitchen");
+            walkBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(64)), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), Sc(8), Sc(6)), WrapContents = true, Visible = false };
+            walkRoom = new RoundBox(Sc(300), Draw.fBody, "Room name - e.g. Kitchen");
             walkRec = new PillButton("Record this spot (10 s)", PillButton.K.Primary); walkRec.Click += delegate { RecordSpot(); };
             walkRoom.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; RecordSpot(); } };
             var done = new PillButton("Finish walk test", PillButton.K.Chip) { Margin = new Padding(Sc(8), Sc(3), 0, 0) };
-            done.Click += delegate { walkBar.Visible = false; linkCanvas.Invalidate(); };
+            done.Click += delegate { EndRename(); walkBar.Visible = false; linkCanvas.Invalidate(); };
             walkStatus = new Label { AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0), Text = "Walk to a room, type its name, press Record. Nothing else runs meanwhile." };
             walkBar.Controls.Add(walkRoom); walkBar.Controls.Add(walkRec); walkBar.Controls.Add(done); walkBar.Controls.Add(walkStatus);
             linkPage.Controls.Add(walkBar);
         }
+        void EndRename() { walkRename = null; walkRec.Text = "Record this spot (10 s)"; }
         void RecordSpot()
         {
             if (walking) return;
+            if (walkRename != null)
+            {
+                string to = walkRoom.Box.Text.Trim(); var sp0 = spots.FirstOrDefault(z => z.Room == walkRename);
+                if (to != "" && sp0 != null) { spots.RemoveAll(z => z.Room == to && z != sp0); sp0.Room = to; walkStatus.Text = "Renamed " + walkRename + " to " + to + "."; }
+                EndRename(); walkRoom.Box.Text = ""; linkCanvas.Invalidate(); return;
+            }
             string room = walkRoom.Box.Text.Trim(); if (room == "") room = "Spot " + (spots.Count + 1);
             string gw; NetworkInterface nic; lock (M.L) { gw = M.Gateway; nic = M.Primary; }
             if (gw == "") { walkStatus.Text = "No router to measure - are you connected?"; return; }
@@ -99,15 +106,30 @@ namespace AdeeboMeter
             Act(linkCanvas, start, delegate { walkBar.Visible = true; walkRoom.Box.Focus(); linkCanvas.Invalidate(); });
             if (spots.Count > 0)
             {
-                float sy = y + 66 * S, bw = w * 0.38f;
-                foreach (var sp in spots.OrderByDescending(SpotScore))
+                float sy = y + 66 * S, nameW = 120 * S;
+                foreach (var sp in spots) nameW = Math.Max(nameW, g.MeasureString(sp.Room, Draw.fBodyB).Width + 16 * S);
+                nameW = Math.Min(nameW, w * 0.35f);
+                float actW = 150 * S, bx = x + 14 * S + nameW, bw = Math.Max(80 * S, (w - nameW - actW) * 0.40f);
+                using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+                using (var link = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue))
+                foreach (var sp in spots.OrderByDescending(SpotScore).ToList())
                 {
                     int sc = SpotScore(sp); int l = sc >= 80 ? 0 : sc >= 55 ? 1 : 2;
-                    using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(sp.Room, Draw.fBodyB, ink, x + 14 * S, sy + 4 * S);
-                    Theme.Fill(g, new RectangleF(x + 180 * S, sy + 6 * S, bw, 14 * S), 7 * S, Theme.Track);
-                    Theme.Fill(g, new RectangleF(x + 180 * S, sy + 6 * S, Math.Max(8 * S, bw * sc / 100f), 14 * S), 7 * S, Theme.Lv(l));
+                    using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(sp.Room, Draw.fBodyB, ink, new RectangleF(x + 14 * S, sy + 4 * S, nameW - 8 * S, 20 * S), nowrap);
+                    Hint(linkCanvas, new RectangleF(x + 14 * S, sy, nameW, 26 * S), "link.WALK");
+                    Theme.Fill(g, new RectangleF(bx, sy + 6 * S, bw, 14 * S), 7 * S, Theme.Track);
+                    Theme.Fill(g, new RectangleF(bx, sy + 6 * S, Math.Max(8 * S, bw * sc / 100f), 14 * S), 7 * S, Theme.Lv(l));
                     string facts = (double.IsNaN(sp.Avg) ? "no answer" : sp.Avg.ToString("0", CultureInfo.CurrentCulture) + " ms") + (double.IsNaN(sp.Jitter) ? "" : " · ±" + sp.Jitter.ToString("0", CultureInfo.CurrentCulture)) + " · loss " + sp.Loss.ToString("0", CultureInfo.CurrentCulture) + "%" + (sp.Speed > 0 ? " · " + (sp.Speed / 1e6).ToString("0", CultureInfo.CurrentCulture) + " Mb/s" : "") + (sp.Signal >= 0 ? " · " + sp.Signal + "%" : "");
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(facts, Draw.fSmall, mb, x + 190 * S + bw, sy + 5 * S);
+                    float fx = bx + bw + 10 * S;
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(facts, Draw.fSmall, mb, new RectangleF(fx, sy + 5 * S, x + w - actW - fx, 18 * S), nowrap);
+                    // rename / remove
+                    var spot = sp; float ax = x + w - actW + 10 * S;
+                    var rn = g.MeasureString("Rename", Draw.fSmall); var rr = new RectangleF(ax, sy + 4 * S, rn.Width, 20 * S);
+                    g.DrawString("Rename", Draw.fSmall, link, ax, sy + 5 * S);
+                    Act(linkCanvas, rr, delegate { walkRename = spot.Room; walkBar.Visible = true; walkRoom.Box.Text = spot.Room; walkRoom.Box.Focus(); walkRoom.Box.SelectAll(); walkRec.Text = "Save the new name"; walkStatus.Text = "Type the new name for " + spot.Room + ", then Save."; linkCanvas.Invalidate(); });
+                    var dr = new RectangleF(ax + rn.Width + 14 * S, sy + 4 * S, g.MeasureString("Remove", Draw.fSmall).Width, 20 * S);
+                    using (var red = new SolidBrush(Theme.LvText(2))) g.DrawString("Remove", Draw.fSmall, red, dr.X, sy + 5 * S);
+                    Act(linkCanvas, dr, delegate { spots.Remove(spot); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = "Removed " + spot.Room + "."; linkCanvas.Invalidate(); });
                     sy += 30 * S;
                 }
                 if (spots.Count >= 2)

@@ -120,7 +120,7 @@ namespace AdeeboMeter
                     string key = it[0]; Act(insideList, rr, delegate { SelectInside(key); });
                     y += rh; g.DrawLine(line, x, y, x + w, y);
                 }
-            var need = new Size(0, (int)(y + 20 * S)); if (insideList.AutoScrollMinSize != need) insideList.AutoScrollMinSize = need;
+            var need = new Size(0, (int)(y + 20 * S)); if (insideList.AutoScrollMinSize != need) { insideList.AutoScrollMinSize = need; insideList.Invalidate(); }
         }
         void SelectInside(string key)
         {
@@ -225,7 +225,9 @@ namespace AdeeboMeter
         }
         static float Lead2(Graphics g, string t, float x, float y, float w) { var h = Draw.Measure(t, Draw.fBody, (int)w).Height; using (var b = new SolidBrush(Theme.Sub)) g.DrawString(t, Draw.fBody, b, new RectangleF(x, y, w, h + 4)); return y + h + 12 * S; }
         static float Title2(Graphics g, string t, float x, float y, float w) { using (var b = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fTitle, b, new RectangleF(x, y, w, 30 * S)); return y + 36 * S; }
-        static void Need(ScrollableControl c, float y) { var need = new Size(0, (int)(y + 20 * S)); if (c.AutoScrollMinSize != need) c.AutoScrollMinSize = need; }
+        // when the content height changes, Windows may move the scroll position in the middle of a paint - the half that was
+        // already drawn is then at the old position (rows appear twice). Repaint the whole thing once more when that happens.
+        static void Need(ScrollableControl c, float y) { var need = new Size(0, (int)(y + 20 * S)); if (c.AutoScrollMinSize != need) { c.AutoScrollMinSize = need; c.Invalidate(); } }
 
         // a knowledge topic: what / how / why / look for, its ladder, and (protocols) the live button
         // the second line is skipped when it mostly repeats the first

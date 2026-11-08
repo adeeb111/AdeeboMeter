@@ -1,6 +1,6 @@
 # AdeeboMeter — The Theory of Everything
 
-*How every part of AdeeboMeter works, in plain words. Version 1.0.*
+*How every part of AdeeboMeter works, in plain words. Version 1.1.*
 
 ---
 
@@ -48,9 +48,9 @@ Everything else in this document is detail behind those two.
             ┌────────────────────┼─────────────────────┐
             ▼                                          ▼
    Corner widget (AppCtx)                    Engineer view (FullView)
-   draws the Snap as an image,               six sections: Overview, Monitor,
-   faded, click-through                      Investigate, Network story,
-                                             Time machine, Learn
+   draws the Snap as an image,               seven sections: Overview, Monitor,
+   faded, click-through                      Investigate, Toolbox, Network
+                                             story, Time machine, Learn
                                              (+ Settings, About)
 ```
 
@@ -144,11 +144,11 @@ It walks the path from you outwards — *PC → Wi-Fi/LAN → ISP/VPN → DNS �
 A full-screen window, built only when you open it and destroyed when you leave.
 
 - **Header:** the verdict, the day/night switch, *Details*, *About*, *Settings*, *Back to corner*.
-- **Six sections**, each with its pages underneath: **Overview** · **Monitor** (Connections, Your Wi-Fi / cable, What's running, Live capture) · **Investigate** (Investigate a problem, Check a destination, Health and tools) · **Network story** · **Time machine** (Replay, What changed) · **Learn** (Topics, Inside Windows). **Ctrl+K** jumps to anything.
+- **Seven sections**, each with its pages underneath: **Overview** · **Monitor** (Connections, Your Wi-Fi / cable, What's running, Live capture) · **Investigate** (Investigate a problem, Check a destination, Health) · **Toolbox** · **Network story** · **Time machine** (Replay, What changed) · **Learn** (Topics, Inside Windows). **Ctrl+K** jumps to anything.
 - **Details** shows raw values, sources and the exact time each was read, on every page that has them.
 - **The path strip:** five dots. **Click a dot** to jump to the page that explains it (PC → What's running, Wi-Fi/LAN → Your Wi-Fi, the rest → Check a destination).
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
-- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 160 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
+- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 219 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
 - **Small screens / high scaling:** page buttons switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
 - **Footer:** AdeeboMeter's own CPU and memory, against a 64 MB budget.
 
@@ -209,14 +209,14 @@ One click: uptime, pending reboot, disk space, adapter errors, Wi-Fi neighbourho
 
 ### 5.17b Overview, Investigate and evidence (`Investigate`, `Evidence`)
 - **Overview** is the start page: the verdict, router / internet / DNS / traffic right now, what needs attention, today, and where everything lives.
-- **Investigate a problem** starts from what people say: *the internet is slow*, *a website or app won't open*, *calls freeze*, *I keep disconnecting*. Each chains checks AdeeboMeter already has and answers **Finding · What I observed · Not established · Next test**, with a button to the page that helps.
+- **Investigate a problem** starts from what people say: *the internet is slow*, *a website or app won't open*, *calls freeze*, *I keep disconnecting*, *works at home but not on VPN / at work*, *my PC is slow*. Each chains checks AdeeboMeter already has and answers **Finding · What I observed · Not established · Next test**, with a button to the page that helps.
 - **Evidence labels** on every finding: *measured* (AdeeboMeter timed it), *Windows-reported*, *seen in packets*, *inferred* (a conclusion from the others) and *unavailable* (this PC doesn't let us see it).
 
 ### 5.17c Network story (`FullView.Story`, `Routes`, `M365`, `Packets`)
 One picture, ready when you open it: the busiest app is picked (or type a site) and followed through seven boxes — App → Windows → Wi-Fi / Cable → Router → Provider → Internet → Server. Click a box for two lines and what's behind it: the routing table under *Router*, Teams & Office roles under *App*, packet sizes under *Wi-Fi*, the path under *Internet*, the certificate under *Server*, the PC's background chatter under *Windows*. *Time each step* runs the destination check and draws name · connect · lock · first byte as one bar; with Wireshark, the real handshake packets follow, each explainable layer by layer. Drawing the picture sends nothing.
 
 ### 5.17d Time machine: Replay (`History`)
-Drag through any day of history: the five dots at that minute, the numbers against the day's middle value, and what changed 15 minutes either side; step a minute, ten, or to the next problem.
+Drag through any day of history: the five dots at that minute, the numbers against the day's middle value (the PC's disk delay and memory read back from disk too — "it was the disk, not the Wi-Fi"), and what changed 15 minutes either side; step a minute, ten, or to the next problem.
 
 ### 5.17e Watching smarter (`Brain`, `Baseline`, `Alerts`, `Watch`, `Usage`, `Calls`, `Devices`, `WifiAdvisor`)
 - **Slower than usual**: learns what's normal for each network (told apart by the router's hardware address, so it works with location off).
@@ -224,10 +224,27 @@ Drag through any day of history: the five dots at that minute, the numbers again
 - **Watch and suggest**: first-time internet use, programs in Downloads / Temp or without a publisher, night-time connections, big unexpected uploads — with how to block it. It never blocks.
 - **Wi-Fi without location**: a health score from the router link, link speed, adapter errors and drops; an advisor (quieter channel, better band, sticky access point, Wi-Fi power saving); look-alike networks; the walk test.
 - **Meeting replay**: one sentence after each Teams call; numbers in memory only, nothing about the call is saved.
+- **New devices** come from the ARP table (nothing is scanned); after a ping sweep, what it found is learned quietly instead of announced. The gateway's hardware address is checked every 30 s — a change is a router takeover, noted on the timeline. Frozen windows, slow leaks and disk delay are watched on a separate low-priority thread.
 - **HTTPS inspection**: says when a certificate was re-signed by a root that isn't on Microsoft's public list.
 
 ### 5.17f Learn and the knowledge pack (`Knowledge`)
-The explanations (72 programs, 160 terms, 43 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
+The explanations (72 programs, 219 terms, 46 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
+
+### 5.17g The Toolbox (`FullView.Toolbox`, `PathTools`, `WhyFails`, `Toolkit`, `Protocols`, `RoutingTools`, `SysTools`, `WinEvidence`, `PcHealth`)
+55 tools an engineer reaches for, each one a click and at most three boxes. **Nothing runs until you press Run, and Stop always works.**
+- **Finding a tool:** type in the search box (*mtu*, *dns*, *radius*, *slow* — it searches names and explanations; Enter opens the first), the five you used last are on top (this session only), and the groups fold away. They're grouped by the question you're asking:
+  - **Path & routing:** MTU per hop (don't-fragment pings with rising TTL, a binary search per hop, *Next hop* searches only below the hop before; it names PPPoE, GRE, VPN and silent black holes), MTR (loss and delay per hop over minutes, with load sharing, reroutes, hidden tunnel hops and delay jumps flagged), the way back (reply-TTL per hop, Record Route, the command to run from the far end), which route Windows picks, your gateway (VRRP / HSRP / GLBP virtual address, takeovers on the timeline, a slow plug-in that points at spanning tree), IPv6 routers (rogue router advertisements), routing protocols on your segment (with Wireshark: OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP / HSRP, extra DHCP servers, spanning-tree changes, LLDP / CDP, DTP), IPv6 ping and trace, IPv6 vs IPv4, overlapping networks, who carries my traffic (online lookups).
+  - **Is it reachable?** port test (refused vs. silently dropped), TCP ping, HTTP and TLS inspector, HTTP timing repeated (name · connect · lock · first byte · download), which proxy a URL uses, Teams UDP and NAT type, SSH banner, mail server (greeting, STARTTLS, certificate — never logs in), RADIUS Status-Server (the secret signs the request, is masked and never kept), TACACS+.
+  - **Speed & quality:** an iperf3 client to your own server (iperf3's own options), sustained ping with a loss timeline, TWAMP-light to your own reflector (loss and jitter each way), nearest cloud.
+  - **Names & time:** dig (any record, or the delegation from the root down), encrypted DNS (DoH / DoT), hosts file, DNS hijack and the VPN's name rules, NTP, clock check, where the PC gets its time.
+  - **Network devices:** SNMP v2c, a syslog test message, your own router (public address, CGNAT, hairpin), ping sweep (asks first on a company network), Wake-on-LAN, subnet calculator.
+  - **Windows:** its own evidence (address conflicts, profile, adapter, DHCP), why 802.1X sign-in failed, domain controllers and their ports, Group Policy, certificates that expire soon, firewall rules for an app, what's listening, the event log explained, and the PC (memory pressure, disk, heat, drivers, frozen windows, slow leaks, crashes, background jobs, graphics card per app, what changed, battery, where the space went).
+- **One target:** a host typed into one tool is waiting in the next one that looks at a destination.
+- **Compare with the last run:** run a tool again with the same inputs and every row shows what it said before (memory only).
+- AdeeboMeter is always the client: it **never becomes a server** (iperf3 and TWAMP need yours), never logs in anywhere, and never sends a routing protocol packet.
+
+### 5.17h Online lookups (`Online`) — opt-in, timed
+Off by default. Switched on in Settings (or from the tool that needs it) for 5 minutes to 3 hours, 30 by default; a header chip shows the time left and turns them off, and switching off clears what was looked up. They send **public IP addresses and prefixes only** — never private ones or names you typed — over HTTPS to RIPEstat and PeeringDB, and give: the network (AS) and owner of every hop, handovers and internet exchanges, the destination's prefix and RPKI, recent route changes, and how the internet reaches you.
 
 ### 5.18 Live capture (`LiveCapture`)
 Only if Wireshark (tshark + Npcap) is installed, and **only while you press Start**. It stops by itself after 15 minutes (Settings), and when you leave the tab or close the view.
@@ -246,7 +263,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 27 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 29 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations
@@ -255,6 +272,9 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - every label has an explanation
 - the parsers (Wi-Fi lists, Wi-Fi information elements, LLDP/CDP, event logs, RTP call quality, the path story) give the right answers on known samples
 - memory stays inside the 64 MB budget
+- DLLs load only from System32
+
+`AdeeboMeter.exe --deeptest` is the hardening run (`FullView.DeepTest`, writes `AdeeboMeter-deeptest.txt`, at low priority with a 20-minute cap; `--local` keeps it off the internet): every tool gets 15 hostile inputs in every box (empty, 5,000 characters, injection strings, impossible addresses, emoji, null characters) and must answer without throwing or hanging; the safe tools run for real; the tools that grew run 15 times in a row and must give memory and handles back; and the Toolbox is stressed — every tool opened twice without new window objects, search, folding, a 600-row result, every section three times. The tools that need your own gear are on a by-hand list.
 
 ---
 
@@ -272,6 +292,8 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | Check for updates | when you click it in About | opens the website in your browser - the app itself never checks |
 | Sign-in page check | only if your check fails (can be off) | `msftconnecttest.com`, the page Windows itself uses |
 | Live capture | only while you press Start | nothing leaves — it listens to your own adapter |
+| Toolbox | only when you press Run | the address you typed (or the one the tool names on screen: your gateway, Microsoft's Teams relay for STUN, time.windows.com, Cloudflare / Google for encrypted DNS, the root DNS servers for a trace) |
+| Online lookups | opt-in, 5 min–3 h, then off by themselves | public IP addresses only, to RIPEstat and PeeringDB (HTTPS) |
 
 **Never:** cloud, account, telemetry, auto-updates, ads, crash reports sent, listening ports.
 
@@ -283,7 +305,9 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **Paths are fenced.** Capture files can only be written inside AdeeboMeter's own folder.
 - **No risky parsing.** No binary serializers, no XML parser (event data is read with simple patterns), no secrets in the code, no home-made crypto.
 - **TLS done right.** Only TLS 1.2/1.3; Windows validates certificates; nothing is sent over an untrusted connection.
-- **DLLs only from System32.**
+- **DLLs only from System32** — for Windows calls, and for the whole process once it starts, so a DLL planted next to the exe (in Downloads) is never loaded.
+- **Secrets stay put.** The RADIUS secret box is masked; the secret signs one request and is never logged, saved or kept for *compare*.
+- **A provable build.** Releases are built by GitHub Actions from this source with every action pinned to an exact commit; each file carries SHA-256 and GitHub build provenance (`gh attestation verify <file> -R adeeb111/AdeeboMeter`). No updater exists, so there is no update channel to hijack.
 - **Static analysis:** the code builds clean against Microsoft's .NET security and quality analyzers with every rule switched on.
 
 ---
@@ -299,11 +323,13 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 
 ## 9. What Windows doesn't let us do (honest limits)
 
-- **AS numbers / BGP data** need an internet service or a database — left out on purpose. Router names give the "who carries my traffic" story instead.
+- **AS numbers / BGP data** need an internet service — only through the opt-in, timed online lookups. Without them, router names tell the "who carries my traffic" story.
+- **MPLS labels** from traceroute replies aren't handed to apps by Windows' ping API; hidden tunnel hops are inferred from reply TTLs instead.
+- **Routing protocols** are only visible from a PC if they leak onto your segment, and then only with packet capture.
 - **TCP/UDP traceroute** needs admin rights (raw sockets) — traces use ICMP.
 - **Per-connection RTT and retransmits** need admin to switch on — per-app traffic comes from live capture instead.
 - **The DNS cache is admin-only on some Windows builds** — then names come from live capture.
-- **Speed tests** would need a server or a listening port — not offered.
+- **Speed tests** to a public server aren't offered; the iperf3 client and TWAMP-light measure against a server or reflector you run — AdeeboMeter never listens.
 - **Inside a VPN tunnel or inside your ISP** can only be inferred, never seen.
 
 ---
@@ -314,10 +340,10 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 |---|---|---|
 | `AdeeboMeter.settings` | next to the exe | your choices |
 | `AdeeboMeter.log` | next to the exe | start/stop and errors, max 256 KB, no window titles or traffic |
-| `AdeeboMeter-selftest.txt` | next to the exe | only when you run `--selftest` |
+| `AdeeboMeter-selftest.txt`, `-deeptest.txt`, `-perf.txt` | next to the exe | only when you run `--selftest`, `--deeptest` or `--perf` |
 | `captures\` | `%LOCALAPPDATA%\AdeeboMeter` | live-capture ring and sniffs — deleted on exit |
 | `history\` | `%LOCALAPPDATA%\AdeeboMeter` | one line a minute, kept 3 days by default (Settings 1–90), or cleared with one click |
-| `usage.txt`, `baselines.txt`, `seen-apps.txt`, `devices.txt` | `%LOCALAPPDATA%\AdeeboMeter` | daily data use, what's normal per network, programs and devices already seen |
+| `usage.txt`, `baselines.txt`, `seen-apps.txt`, `devices.txt`, `space.txt` | `%LOCALAPPDATA%\AdeeboMeter` | daily data use, what's normal per network, programs and devices already seen, free disk space once a day |
 | `AdeeboMeter-crash.txt` | next to the exe | only after a crash; nothing is sent - *Report this* opens a pre-filled GitHub issue you can read first |
 
 ---

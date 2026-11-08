@@ -45,6 +45,8 @@ namespace AdeeboMeter
         public bool VpnUp; public string VpnName = ""; public int VpnMtu, PrimaryMtu;
         public bool HasWifi; public int WifiSignal = -1; public string Ssid = "", WifiChannel = "";
         public bool GwEverReplied, NetEverReplied, DnsFailedLast;
+        // cable plugged in -> first answer from the gateway: 30-50 s is classic spanning tree on a port without "edge / port fast"
+        readonly Dictionary<string, DateTime> ethUp = new Dictionary<string, DateTime>(); bool ethSeen; public string LinkWait = "";
         public string NetTarget = "1.1.1.1";
         public double DownBytesTotal;
         public List<AppStat> Apps = new List<AppStat>();
@@ -205,7 +207,16 @@ namespace AdeeboMeter
                         lastGw = t0;
                         string gw; lock (L) gw = Gateway;
                         double g = PingMs(gw);
-                        lock (L) { GwPing.Add(g); if (!double.IsNaN(g)) GwEverReplied = true; }
+                        lock (L)
+                        {
+                            GwPing.Add(g); if (!double.IsNaN(g)) GwEverReplied = true;
+                            DateTime up;
+                            if (!double.IsNaN(g) && Primary != null && ethUp.TryGetValue(Primary.Id, out up) && up != DateTime.MinValue)
+                            {
+                                ethUp[Primary.Id] = DateTime.MinValue; double secs = (DateTime.Now - up).TotalSeconds;
+                                if (secs >= 20) { LinkWait = DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture) + " - cable in, " + secs.ToString("0", CultureInfo.CurrentCulture) + " s until the network answered"; Events.Add(1, "lan", "Cable plugged in: " + secs.ToString("0", CultureInfo.CurrentCulture) + " s until the network answered (spanning tree without port fast?)"); }
+                            }
+                        }
                     }
                     if (netSec > 0 && (t0 - lastNet).TotalSeconds >= netSec - 0.2)
                     {
@@ -257,7 +268,15 @@ namespace AdeeboMeter
             try
             {
                 NetworkInterface best = null, vpn = null; string gw = "";
-                foreach (var n in NetworkInterface.GetAllNetworkInterfaces())
+                var all = NetworkInterface.GetAllNetworkInterfaces();
+                lock (L)
+                {
+                    foreach (var n in all.Where(x => x.NetworkInterfaceType == NetworkInterfaceType.Ethernet))
+                        if (n.OperationalStatus != OperationalStatus.Up) ethUp.Remove(n.Id);
+                        else if (!ethUp.ContainsKey(n.Id)) ethUp[n.Id] = ethSeen ? DateTime.Now : DateTime.MinValue;   // up when AdeeboMeter started = unknown
+                    ethSeen = true;
+                }
+                foreach (var n in all)
                 {
                     if (n.OperationalStatus != OperationalStatus.Up) continue;
                     if (n.NetworkInterfaceType == NetworkInterfaceType.Loopback || n.NetworkInterfaceType == NetworkInterfaceType.Tunnel) continue;

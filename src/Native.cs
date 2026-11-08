@@ -30,6 +30,10 @@ namespace AdeeboMeter
     static class Native
     {
         [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+        [DllImport("kernel32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetDefaultDllDirectories(uint flags);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr GetModuleHandle(string name);
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)] public static extern IntPtr GetProcAddress(IntPtr module, string name);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetDllDirectory(string path);
         [DllImport("kernel32.dll")] public static extern bool GetSystemTimes(out long idle, out long kernel, out long user);
         [DllImport("kernel32.dll")] public static extern ulong GetTickCount64();
         [DllImport("kernel32.dll")] public static extern IntPtr GetCurrentProcess();

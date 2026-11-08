@@ -18,7 +18,7 @@ namespace AdeeboMeter
         {
             guidePage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
-            guideBox = new RoundBox(Sc(320), Draw.fInput, "Site or app - e.g. outlook.office.com");
+            guideBox = new RoundBox(Sc(320), Draw.fInput, "Site, app or server - e.g. outlook.office.com");
             guideBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; StartGuide("site", false); } };
             bar.Controls.Add(guideBox);
             bar.Controls.Add(new Label { Text = Voice.P("Pick what's wrong - I'll run the checks and tell you what I saw, what I can't know, and what to try next.", "Choose the problem. AdeeboMeter runs the checks and reports findings, evidence, limits and next steps."), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0) });
@@ -64,7 +64,7 @@ namespace AdeeboMeter
                         g.DrawString(f.Ask, Draw.fBody, sub, new RectangleF(cr.X + 16 * S, cr.Y + 42 * S, cr.Width - 32 * S, cr.Height - 48 * S));
                         string id = f.Id; Act(guideCanvas, cr, delegate { StartGuide(id, false); }); Hint(guideCanvas, cr, "guide." + id);
                     }
-                    y += 2 * (chh + 14 * S) + 10 * S;
+                    y += ((Investigate.All.Length + 1) / 2) * (chh + 14 * S) + 10 * S;
                     g.DrawString(Voice.P("Every answer says where each fact came from - measured, Windows-reported, seen in packets or inferred - and what I couldn't establish.", "Each fact is labelled: measured, Windows-reported, seen in packets, inferred or unavailable."), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
                     y += 40 * S;
                 }
@@ -126,7 +126,7 @@ namespace AdeeboMeter
                 }
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (guideCanvas.AutoScrollMinSize != need) guideCanvas.AutoScrollMinSize = need;
+            if (guideCanvas.AutoScrollMinSize != need) { guideCanvas.AutoScrollMinSize = need; guideCanvas.Invalidate(); }
         }
     }
 }

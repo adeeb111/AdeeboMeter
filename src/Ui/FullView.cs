@@ -36,6 +36,7 @@ namespace AdeeboMeter
         readonly FlowLayoutPanel tabs, chips; readonly PillButton idle, checkBtn, healthBtn;
         readonly System.Windows.Forms.Timer timer;
         Snap snap; int lastVersion = -1;
+        System.Threading.Timer watchdog; DateTime lastPong = DateTime.UtcNow; volatile bool pinged, frozenLogged; string frozeDoing = "";
         Panel leftPane; string tab = "overview", lastPage = "overview", curSec;
         readonly FlowLayoutPanel subTabs; readonly Dictionary<string, List<Control>> subBtns = new Dictionary<string, List<Control>>(); readonly Dictionary<string, string> lastIn = new Dictionary<string, string>();
         readonly string dumpcap, wireshark; readonly bool npcap;
@@ -51,7 +52,7 @@ namespace AdeeboMeter
         List<AppStat> procs = new List<AppStat>(); string procSel; string[] procFacts; string procPathSel = ""; DateTime lastProcs = DateTime.MinValue;
         readonly Dictionary<string, string> procWhere = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); bool whereBusy;
         // Settings
-        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly PillButton settingsBtn, aboutBtn, backBtn, detailsBtn; readonly ThemeSwitch themeSw; Panel tipBar;
+        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly PillButton settingsBtn, aboutBtn, backBtn, detailsBtn, onlineChip; readonly ThemeSwitch themeSw; Panel tipBar;
         // Saved destinations
         readonly FlowLayoutPanel pinBar; readonly PillButton pinBtn; List<DestResult> pinResults; volatile bool pinRunning;
         // hover explanations + clickable painted areas, rebuilt on every paint
@@ -66,6 +67,14 @@ namespace AdeeboMeter
         public FullView(Icon icon, Monitor m)
         {
             M = m; snap = m.Latest; Knowledge.Hold = true;
+            // freeze watchdog: the window answers a ping every second; if it doesn't for 2 s, the log says what it was doing
+            watchdog = new System.Threading.Timer(delegate
+            {
+                if (!IsHandleCreated || IsDisposed) return;
+                var since = DateTime.UtcNow - lastPong;
+                if (since.TotalSeconds >= 2 && !frozenLogged) { frozenLogged = true; frozeDoing = UiActivity.Doing; Program.Log("window froze (" + since.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s so far) while " + frozeDoing); }
+                if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; }); } catch (InvalidOperationException) { pinged = false; } }
+            }, null, 1000, 1000);
             Text = "AdeeboMeter - " + Program.Tagline; Icon = icon; BackColor = Theme.Bg; Font = Draw.fBody;
             // Start at the size of the screen it opens on, so it fits even if maximizing is refused.
             var wa = Screen.FromPoint(Cursor.Position).WorkingArea;
@@ -86,15 +95,18 @@ namespace AdeeboMeter
             detailsBtn = new PillButton("Details", PillButton.K.Chip) { Selected = Cfg.Details };
             detailsBtn.Click += delegate { Cfg.Details = !Cfg.Details; detailsBtn.Selected = Cfg.Details; Cfg.Save(); Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
             detailsBtn.MouseEnter += delegate { SetTipKey("ov.DETAILS"); }; detailsBtn.MouseLeave += delegate { SetTipKey(null); };
+            onlineChip = new PillButton("Online lookups on", PillButton.K.Chip) { Visible = false };
+            onlineChip.Click += delegate { Online.Stop(); SyncOnlineChip(); };
+            onlineChip.MouseEnter += delegate { SetTipKey("ov.ONLINE"); }; onlineChip.MouseLeave += delegate { SetTipKey(null); };
             themeSw = new ThemeSwitch();
             themeSw.MouseEnter += delegate { SetTipKey("theme.toggle"); }; themeSw.MouseLeave += delegate { SetTipKey(null); };
-            header.Controls.Add(themeSw); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
+            header.Controls.Add(themeSw); header.Controls.Add(onlineChip); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
             EventHandler place = delegate
             {
                 int xr = header.Width - Sc(20);
-                foreach (var b in new Control[] { backBtn, settingsBtn, aboutBtn, detailsBtn, themeSw }) { xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
+                foreach (var b in new Control[] { backBtn, settingsBtn, aboutBtn, detailsBtn, onlineChip, themeSw }) { if (!b.Visible && b == onlineChip) continue; xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
             };
-            header.Resize += place; detailsBtn.Resize += place; settingsBtn.Resize += place; aboutBtn.Resize += place; backBtn.Resize += place;
+            header.Resize += place; detailsBtn.Resize += place; onlineChip.Resize += place; onlineChip.VisibleChanged += place; settingsBtn.Resize += place; aboutBtn.Resize += place; backBtn.Resize += place;
             pathPanel = new DB { Name = "pathPanel", Dock = DockStyle.Top, Height = Sc(128), BackColor = Theme.Card };
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
@@ -174,7 +186,7 @@ namespace AdeeboMeter
 
             // Destination page
             destPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
-            var destBar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
+            var destBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(64)), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), Sc(8), Sc(6)), WrapContents = true };   // the chips wrap onto a second line instead of running off the side
             destBox = new RoundBox(Sc(440), Draw.fInput, "host, IP or URL - e.g. github.com:443");
             destBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; StartDest(); } };
             checkBtn = new PillButton("Check", PillButton.K.Primary); checkBtn.Click += delegate { StartDest(); };
@@ -182,6 +194,12 @@ namespace AdeeboMeter
             pinBtn.Click += delegate { TogglePin(); };
             destBox.Box.TextChanged += delegate { SyncPinBtn(); };
             destBar.Controls.Add(destBox); destBar.Controls.Add(checkBtn); destBar.Controls.Add(pinBtn);
+            foreach (var t in new[] { "mtu|MTU per hop", "mtr|MTR", "ret|The way back", "owners|Who carries it" })
+            {
+                var p = t.Split('|'); var b = new PillButton(p[1], PillButton.K.Chip) { Tag = p[0], Margin = new Padding(Sc(8), Sc(3), 0, 0) };
+                b.Click += delegate(object s, EventArgs e) { string id = (string)((Control)s).Tag; tab = "toolbox"; ShowTab(); SelectTool(id); };
+                destBar.Controls.Add(b);
+            }
             pinBar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(42), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(4), 0, 0), WrapContents = false };
             destCanvas = new DB { Name = "destCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             destCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintDest(e.Graphics); };
@@ -256,7 +274,7 @@ namespace AdeeboMeter
             aboutCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintAbout(e.Graphics); }; Wire(aboutCanvas);
             aboutPage.Controls.Add(aboutCanvas);
 
-            left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
+            left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
             left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage());
             left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
@@ -284,17 +302,25 @@ namespace AdeeboMeter
                 if (weekBmp != null) { weekBmp.Dispose(); weekBmp = null; }
                 // WinForms makes a small copy of the window icon for each window; resetting the icon releases it now, not "someday".
                 try { ShowIcon = false; Icon = null; } catch { }
-                Knowledge.Hold = false; M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
+                Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
                 try { if (tip.IsHandleCreated) tip.Close(); } catch { } tip.Dispose(); live.Stop(); list.ReleaseAll(); procs = new List<AppStat>(); pinResults = null;
-                foreach (var l in subBtns.Values) foreach (var c in l) if (!c.IsDisposed) c.Dispose(); subBtns.Clear(); connSnap = new List<Conn>(); treeRows = null; treeBy = null; svcs = null; startups = null; realPkts = null; realDecode = null; chatPkts = null; learnPkts = null; m365Rows = null; routeTable = null; travelDest = null; guideRun = null; replayDay = null; if (replayBmp != null) { replayBmp.Dispose(); replayBmp = null; } };
+                foreach (var l in subBtns.Values) foreach (var c in l) if (!c.IsDisposed) c.Dispose(); subBtns.Clear(); connSnap = new List<Conn>(); treeRows = null; treeBy = null; svcs = null; startups = null; realPkts = null; realDecode = null; chatPkts = null; learnPkts = null; m365Rows = null; routeTable = null; travelDest = null; guideRun = null; replayDay = null; if (tbRun0 != null) tbRun0.Stop = true; mtuHops = null; mtrHops = null; tbRows = null; if (replayBmp != null) { replayBmp.Dispose(); replayBmp = null; } };
             Load += delegate { ApplyTheme(); };
         }
 
+        // the header chip that shows online lookups are on, with the minutes left; one click turns them off
+        void SyncOnlineChip()
+        {
+            bool on = Online.On; string t = on ? "Online · " + Math.Max(1, (int)Math.Ceiling(Online.Left.TotalMinutes)) + " min left" : "";
+            if (onlineChip.Visible != on) onlineChip.Visible = on;
+            if (on && onlineChip.Text != t) onlineChip.Text = t;
+        }
         static System.Collections.Generic.IEnumerable<Control> Descendants(Control r) { foreach (Control c in r.Controls) { yield return c; foreach (var d in Descendants(c)) yield return d; } }
         static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; }
 
         void ShowTab()
         {
+            UiActivity.Doing = "switching to " + tab;
             // one layout pass for the whole switch, not one per page shown or hidden
             if (leftPane != null) leftPane.SuspendLayout();
             try { ShowTab2(); } finally { if (leftPane != null) leftPane.ResumeLayout(true); }
@@ -306,7 +332,7 @@ namespace AdeeboMeter
             aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about";
             linkPage.Visible = tab == "link"; if (tab == "link") RefreshLink(true);
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
-            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay";
+            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox";
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about") lastPage = tab;
             string sec = SecOf(tab); if (sec != "") lastIn[sec] = tab;
@@ -325,6 +351,7 @@ namespace AdeeboMeter
             new[] { "overview", "Overview", "overview" },
             new[] { "monitor", "Monitor", "conn", "link", "procs", "live" },
             new[] { "investigate", "Investigate", "guide", "dest", "health" },
+            new[] { "toolbox", "Toolbox", "toolbox" },
             new[] { "story", "Network story", "travel" },
             new[] { "time", "Time machine", "replay", "changes" },
             new[] { "learn", "Learn", "learn", "windows" } };
@@ -332,7 +359,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
             { "overview", new[] { "Overview", "Overview" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
-            { "guide", new[] { "Investigate a problem", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health and tools", "Health" } },
+            { "guide", new[] { "Investigate a problem", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } } };
@@ -375,7 +402,7 @@ namespace AdeeboMeter
 
         void OnTimer()
         {
-            var tsw = Stopwatch.StartNew(); try { OnTimer2(); } finally { if (tsw.ElapsedMilliseconds > 60) Program.Log("slow tick: " + tab + " " + tsw.ElapsedMilliseconds + " ms"); }
+            UiActivity.Doing = "timer on " + tab; var tsw = Stopwatch.StartNew(); try { OnTimer2(); } finally { if (tsw.ElapsedMilliseconds > 60) Program.Log("slow tick: " + tab + " " + tsw.ElapsedMilliseconds + " ms"); }
         }
         void OnTimer2()
         {
@@ -383,6 +410,8 @@ namespace AdeeboMeter
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0) { SelfStats(); footer.Invalidate(); }
             if (destRunning || pinRunning) destCanvas.Invalidate();
+            if (tbBusy && tab == "toolbox" && tbCanvas != null) tbCanvas.Invalidate();
+            Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); }
             if (tab == "changes") changesSeen = DateTime.Now;
@@ -499,6 +528,7 @@ namespace AdeeboMeter
             else if (destIn != null && page == "dest") { destBox.Box.Text = destIn; StartDest(); }
             if (page == "guide" && destIn != null) StartGuide(destIn, false);
             if (page == "travel" && destIn != null) { travelBox.Box.Text = destIn; StorySite(); }
+            if (page == "toolbox" && destIn != null) { var parts = destIn.Split('|'); SelectTool(parts[0]); for (int i = 1; i < parts.Length && i - 1 < tbBoxes.Count; i++) if (tbBoxes[i - 1] != null) tbBoxes[i - 1].Box.Text = parts[i]; StartTool(); }
             if (page == "learn" && destIn != null) { learnSel = "topic:" + destIn; learnInfo.Invalidate(); learnList.Invalidate(); }
             if (page == "replay" && destIn != null) { double f; if (double.TryParse(destIn, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) ReplayAt(f); }
             if (page == "changes" && destIn == "today") { histDay = DateTime.Today; histData = History.Load(DateTime.Today); changesCanvas.Invalidate(); }
@@ -522,8 +552,8 @@ namespace AdeeboMeter
         public string Perf()
         {
             var sb = new StringBuilder(); var sw = new Stopwatch();
-            var pages = new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "travel", "replay", "changes", "learn", "windows", "settings", "about" };
-            var canvas = new Dictionary<string, Control> { { "overview", overviewCanvas }, { "conn", list }, { "link", linkCanvas }, { "procs", procList }, { "live", liveCanvas }, { "guide", guideCanvas }, { "dest", destCanvas }, { "health", healthCanvas },
+            var pages = new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about" };
+            var canvas = new Dictionary<string, Control> { { "overview", overviewCanvas }, { "conn", list }, { "link", linkCanvas }, { "procs", procList }, { "live", liveCanvas }, { "guide", guideCanvas }, { "dest", destCanvas }, { "health", healthCanvas }, { "toolbox", toolboxPage },
                 { "travel", travelCanvas }, { "replay", replayCanvas }, { "changes", changesCanvas }, { "learn", learnList }, { "windows", insideList }, { "settings", settingsCanvas }, { "about", aboutCanvas } };
             sb.AppendLine("window " + Width + "x" + Height);
             sb.AppendLine("page       first  again  (show+paint)  page-paint  scroll-step  tick   ms");
@@ -560,7 +590,7 @@ namespace AdeeboMeter
         public int TestWalk()
         {
             int n = 0;
-            foreach (var t in new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "travel", "replay", "changes", "learn", "windows", "settings", "about" }) { tab = t; ShowTab(); Refresh(); Application.DoEvents(); n++; }
+            foreach (var t in new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about" }) { tab = t; ShowTab(); Refresh(); Application.DoEvents(); n++; }
             List<AppStat> l; lock (M.L) l = M.Apps;
             if (l.Count > 0) { tab = "procs"; ShowTab(); SelectProc(l[0]); Thread.Sleep(50); Application.DoEvents(); procInfo.Refresh(); }
             SetTipKey("path.DNS"); ShowTip(); Application.DoEvents(); SetTipKey(null);
@@ -605,7 +635,7 @@ namespace AdeeboMeter
             {
                 if (e.Button != MouseButtons.Left) return;
                 List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) return;
-                for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); l[i].Value(); return; }
+                for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; l[i].Value(); return; }
             };
             c.MouseWheel += delegate { SetTipKey(null); };
         }

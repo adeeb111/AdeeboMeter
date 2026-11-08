@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // well-known names and ranges as of this version and says "role unknown" rather than guessing.
     static class M365
     {
-        public const string AsOf = "as of AdeeboMeter 1.0";
+        public const string AsOf = "as of AdeeboMeter 1.1";
         // Teams media relays (Transport Relays) - Microsoft's published, long-stable ranges
         static readonly string[] MediaRanges = { "52.112.0.0/14", "52.122.0.0/15", "52.120.0.0/14" };
         static readonly string[][] Hosts =

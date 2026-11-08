@@ -48,6 +48,28 @@ namespace AdeeboMeter
             File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-perf.txt"), sb.ToString());
             return 0;
         }
+        // --deeptest [--local] [--minutes N]: the hardening run (see FullView.DeepTest.cs) - written to AdeeboMeter-deeptest.txt
+        public static int Deep(bool net, int minutes)
+        {
+            try { Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }   // keeps the PC usable while it runs
+            var sb = new StringBuilder();
+            var M = new Monitor(); float sc; using (var g = Graphics.FromHwnd(IntPtr.Zero)) sc = g.DpiX / 96f; Draw.Init(sc);
+            M.RefreshInterfaces(); for (int i = 0; i < 3; i++) { M.Tick(); Thread.Sleep(300); }
+            sb.AppendLine("AdeeboMeter " + Program.Version + " deep test  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture) + "  " + Environment.OSVersion + "  " + Environment.ProcessorCount + " cores  scale " + (sc * 100).ToString("0", CultureInfo.InvariantCulture) + "%  cap " + minutes + " min" + (net ? "" : "  local only"));
+            string path = Path.Combine(Program.Dir, "AdeeboMeter-deeptest.txt");
+            try
+            {
+                using (var icon = Theme.MakeIcon(32))
+                {
+                    var fv = new FullView(icon, M); fv.Show(); Application.DoEvents();
+                    sb.Append(fv.DeepTest(net, minutes));
+                    fv.Close(); fv.Dispose();
+                }
+            }
+            catch (Exception e) { sb.AppendLine("CRASHED: " + e); }
+            File.WriteAllText(path, sb.ToString());
+            return sb.ToString().Contains("ALL PASSED") ? 0 : 1;
+        }
         public static int Run()
         {
             var sb = new StringBuilder(); int fails = 0;
@@ -89,6 +111,28 @@ namespace AdeeboMeter
                 string v1, v2; t.TryGetValue("140.82.112.4", out v1); t.TryGetValue("2606:2800:21f:cb07:6820:80da:af6b:8b2c", out v2);
                 if (v1 != "github.com" || v2 != "www.example.com" || t.Count != 2) throw new InvalidOperationException("ipconfig /displaydns parser wrong");
             });
+            T("toolbox: local tools and PC checks run", () =>
+            {
+                var sub = Toolkit.Subnet("10.1.2.3/22", "10.1.3.200");
+                if (!sub.Any(r => r[2].StartsWith("10.1.0.0/22", StringComparison.Ordinal)) || !sub.Any(r => r[2] == "yes")) throw new InvalidOperationException("subnet calculator wrong");
+                if (!Toolkit.Subnet("2001:db8::1/64", "").Any(r => r[2].StartsWith("2001:db8::/64", StringComparison.Ordinal))) throw new InvalidOperationException("IPv6 subnet wrong");
+                int n = PathTools.Overlap().Count + WhyFails.Hosts("").Count + WinEvidence.All(M).Count + PcHealth.Pressure(M).Count + PcHealth.Crashes().Count + PcHealth.Leaks().Count;
+                var msg = Toolkit.Query(System.Net.IPAddress.Loopback, "example.com", 1, true);   // nothing listens on 127.0.0.1:53 - must just say "no answer"
+                if (PathTools.BackHops(57) != 8 || PathTools.BackHops(120) != 9 || PathTools.Kind(1492).IndexOf("PPPoE", StringComparison.Ordinal) < 0) throw new InvalidOperationException("path helpers wrong");
+                var js = Json.Parse("{\"data\":{\"asns\":[812],\"prefix\":\"24.0.0.0/12\",\"holder\":\"ROGERS-COMMUNICATIONS - Rogers\"}}") as Dictionary<string, object>;
+                if (js == null || !((Dictionary<string, object>)js["data"]).ContainsKey("prefix")) throw new InvalidOperationException("json reader wrong");
+                string grp;
+                if (RoutingTools.Virtual("00-00-5e-00-01-0c", out grp) != "VRRP" || grp != "12" || RoutingTools.Virtual("00:00:0c:07:ac:01", out grp) != "HSRP" || RoutingTools.Virtual("3c:84:6a:12:34:56", out grp) != "") throw new InvalidOperationException("virtual router MAC reader wrong");
+                var hp = new List<PathTools.Hop> { new PathTools.Hop { N = 1, Ip = "10.0.0.1" }, new PathTools.Hop { N = 2, Ip = "10.0.1.1" } };
+                hp[1].Seen.Add("10.0.1.1"); hp[1].Seen.Add("10.0.1.2"); hp[1].Switches = 6;
+                if (!PathTools.Flags(hp).Any(r => r[1].Contains("load sharing"))) throw new InvalidOperationException("ECMP flag wrong");
+                n += RoutingTools.Ipv6Routers().Count + RoutingTools.RouteFor("127.0.0.1").Count;
+                n += SysTools.Listening(M).Count + SysTools.Certs().Count + SysTools.TimeSource().Count;
+                if (!Protocols.Syslog("127.0.0.1", "selftest").Any(r => r[1].StartsWith("Sent", StringComparison.Ordinal))) throw new InvalidOperationException("syslog sender wrong");
+                if (!Protocols.Snmp("127.0.0.1", "").Any(r => r[0] == "2")) throw new InvalidOperationException("SNMP should report no answer from 127.0.0.1");
+                sb.AppendLine("      " + n + " rows from overlap, hosts, Windows evidence, PC pressure, crashes, leaks" + (msg == null ? " · DNS client: no answer from 127.0.0.1 (correct)" : ""));
+            });
+            T("DLLs load only from System32", () => { if (!Program.DllSafety && !Program.IsWine) throw new InvalidOperationException("SetDefaultDllDirectories didn't take - DLL planting protection is off"); });
             T("never listens", () => { if (Tables.OwnListener()) throw new InvalidOperationException("AdeeboMeter owns a listening socket"); });
             T("destination input validation", () =>
             {
@@ -204,7 +248,7 @@ namespace AdeeboMeter
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
                     "travel.LADDER", "travel.ANATOMY", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "path.Internet", "path.LAN", "path.DNS" });
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten" }.Select(x => "tb." + x));
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));

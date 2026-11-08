@@ -58,6 +58,8 @@ namespace AdeeboMeter
     }
 
     // ================================================================== own controls (no stock Windows look - the topogram lesson)
+    // what the window was doing last - read by the freeze watchdog so "it hangs" comes with a cause in the log
+    static class UiActivity { public static volatile string Doing = ""; }
     sealed class DB : Panel
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
@@ -65,7 +67,7 @@ namespace AdeeboMeter
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
         protected override void OnPaint(PaintEventArgs e)
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
+            UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
             if (sw.ElapsedMilliseconds > 40)
             {
                 DateTime t; string n = Name ?? "";
@@ -147,16 +149,18 @@ namespace AdeeboMeter
     // A text box inside a rounded frame (the stock 3D border is gone).
     sealed class RoundBox : Panel
     {
-        public readonly TextBox Box = new TextBox();
+        public readonly TextBox Box = new TextBox(); readonly Label cueLbl;
+        public string Cue { get { return cueLbl.Text; } set { cueLbl.Text = value; } }
         public RoundBox(int width, Font font, string cue)
         {
             float S = Draw.S;
             DoubleBuffered = true; BackColor = Theme.Card;
             Size = new Size(width, (int)(36 * S)); Margin = new Padding(0, 0, (int)(10 * S), 0);
-            Padding = new Padding((int)(12 * S), (int)((36 * S - font.Height) / 2), (int)(12 * S), 0);
-            Box.BorderStyle = BorderStyle.None; Box.Font = font; Box.Dock = DockStyle.Fill; Box.BackColor = Theme.Card; Box.ForeColor = Theme.Ink;
+            Box.BorderStyle = BorderStyle.None; Box.Font = font;
+            Padding = new Padding((int)(12 * S), Math.Max(2, (int)((36 * S - Box.PreferredHeight) / 2) + 1), (int)(12 * S), 0);
+            Box.Dock = DockStyle.Fill; Box.BackColor = Theme.Card; Box.ForeColor = Theme.Ink;
             Box.GotFocus += delegate { Invalidate(); }; Box.LostFocus += delegate { Invalidate(); };
-            var cueLbl = new Label { Text = cue, Dock = DockStyle.Fill, Font = font, ForeColor = Theme.Muted, BackColor = Theme.Card, AutoSize = false, Cursor = Cursors.IBeam, UseMnemonic = false };
+            cueLbl = new Label { Text = cue, Dock = DockStyle.Fill, Font = font, ForeColor = Theme.Muted, BackColor = Theme.Card, AutoSize = false, AutoEllipsis = true, Cursor = Cursors.IBeam, UseMnemonic = false };   // one line, never half a second line
             cueLbl.Click += delegate { Box.Focus(); };
             Controls.Add(cueLbl); Controls.Add(Box); cueLbl.BringToFront();
             Action sync = delegate { cueLbl.Visible = !Box.Focused && Box.TextLength == 0; };

@@ -142,7 +142,7 @@ namespace AdeeboMeter
                 g.DrawString("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.", Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (overviewCanvas.AutoScrollMinSize != need) overviewCanvas.AutoScrollMinSize = need;
+            if (overviewCanvas.AutoScrollMinSize != need) { overviewCanvas.AutoScrollMinSize = need; overviewCanvas.Invalidate(); }
         }
     }
 }

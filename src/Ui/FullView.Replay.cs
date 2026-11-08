@@ -145,7 +145,8 @@ namespace AdeeboMeter
                 string netName = replayIdx < data.Net.Count ? data.Net[replayIdx] : "";
                 g.DrawString("AT " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " ON " + at.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant() + (netName != "" && Cfg.Details ? "  ·  ROUTER " + Draw.Trunc(netName, 24).ToUpperInvariant() : ""), Draw.fTiny, muted, x, y); y += 22 * S;
                 Func<double, string> ms = v => double.IsNaN(v) ? "no answer" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
-                int pcLv = (cpu > 90 || mem > 92) ? 2 : (cpu > 75 || mem > 85) ? 1 : double.IsNaN(cpu) ? 3 : 0;
+                double pd0 = replayIdx < data.Pc.Count ? data.Pc[replayIdx][0] : double.NaN, pf0 = replayIdx < data.Pc.Count ? data.Pc[replayIdx][1] : double.NaN;
+                int pcLv = (cpu > 90 || mem > 92 || pd0 > 50 || pf0 > 300) ? 2 : (cpu > 75 || mem > 85 || pd0 > 15 || pf0 > 60) ? 1 : double.IsNaN(cpu) ? 3 : 0;
                 int lanLv = double.IsNaN(gw) ? 2 : gw > 50 ? 2 : gw > 15 ? 1 : (wifi >= 0 && wifi < 35) ? 1 : 0;
                 int netLv = double.IsNaN(net) ? 2 : (net > 150 || loss > 5) ? 2 : (net > 80 || loss > 1) ? 1 : 0;
                 var snapAt = new Snap { Level = lvAll };
@@ -157,7 +158,7 @@ namespace AdeeboMeter
 
                 // in plain words
                 string plain = lvAll == 0 ? "Everything was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": router " + ms(gw) + ", internet " + ms(net) + "."
-                    : pcLv == 2 ? "Your PC was the busy one at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (CPU " + cpu.ToString("0", CultureInfo.CurrentCulture) + "%)."
+                    : pcLv == 2 ? "Your PC was the busy one at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + (pd0 > 50 ? "the disk took " + pd0.ToString("0", CultureInfo.CurrentCulture) + " ms per request" : pf0 > 300 ? "memory was full" : "CPU " + cpu.ToString("0", CultureInfo.CurrentCulture) + "%") + ") - it wasn't the network."
                     : lanLv >= 1 && lanLv >= netLv ? "The trouble at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " was close to you - the router took " + ms(gw) + (wifi >= 0 ? " with Wi-Fi at " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "") + "."
                     : netLv >= 1 ? "Your side was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (router " + ms(gw) + "); the internet was slow or dropping (" + ms(net) + (double.IsNaN(loss) ? "" : ", " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost") + ")."
                     : "Something needed attention at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " - see what changed around then below.";
@@ -175,6 +176,9 @@ namespace AdeeboMeter
                     new object[] { "Wi-Fi signal", wifi >= 0 ? wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "not on Wi-Fi / hidden", wifi >= 0 ? "w" : "u", replayMed[7], wifi, "%" },
                     new object[] { "Your traffic", (double.IsNaN(down) ? "?" : down.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s down · " + (double.IsNaN(up) ? "?" : up.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s up", "w", double.NaN, double.NaN, "" },
                     new object[] { "Processor / memory", (double.IsNaN(cpu) ? "?" : cpu.ToString("0", CultureInfo.CurrentCulture)) + "% / " + (double.IsNaN(mem) ? "?" : mem.ToString("0", CultureInfo.CurrentCulture)) + "%", "w", replayMed[2], cpu, "%" } };
+                double pdisk = replayIdx < data.Pc.Count ? data.Pc[replayIdx][0] : double.NaN, pfault = replayIdx < data.Pc.Count ? data.Pc[replayIdx][1] : double.NaN;
+                if (!double.IsNaN(pdisk)) rows.Add(new object[] { "Disk latency", pdisk.ToString("0.0", CultureInfo.CurrentCulture) + " ms per request" + (pdisk > 15 ? " - slow" : ""), "w", double.NaN, double.NaN, "" });
+                if (!double.IsNaN(pfault)) rows.Add(new object[] { "Memory read back from disk", pfault.ToString("0", CultureInfo.CurrentCulture) + " pages/s" + (pfault > 60 ? " - memory was full" : ""), "w", double.NaN, double.NaN, "" });
                 if (Cfg.Details) { rows.Add(new object[] { "Wi-Fi link rate", double.IsNaN(rx) ? "-" : rx.ToString("0", CultureInfo.CurrentCulture) + " Mb/s", "w", replayMed[12], rx, " Mb/s" }); rows.Add(new object[] { "Data that minute", (double.IsNaN(mbD) ? "?" : mbD.ToString("0.0", CultureInfo.CurrentCulture)) + " MB down · " + (double.IsNaN(mbU) ? "?" : mbU.ToString("0.0", CultureInfo.CurrentCulture)) + " MB up", "w", double.NaN, double.NaN, "" }); }
                 float nameW = Math.Min(230 * S, w * 0.3f), cmpW = Math.Min(220 * S, w * 0.28f);
                 foreach (var rr in rows)
@@ -213,7 +217,7 @@ namespace AdeeboMeter
                 y += 40 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (replayCanvas.AutoScrollMinSize != need) replayCanvas.AutoScrollMinSize = need;
+            if (replayCanvas.AutoScrollMinSize != need) { replayCanvas.AutoScrollMinSize = need; replayCanvas.Invalidate(); }
         }
     }
 }

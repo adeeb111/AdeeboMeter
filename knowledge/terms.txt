@@ -1597,3 +1597,593 @@ what: Shows raw values, sources and the exact time every finding was read - adap
 how: Same data, more of it on screen. Remembered between runs.
 why: Plain English for everyone; the raw numbers for whoever has to prove it.
 without: Off keeps pages calm; on is for troubleshooting.
+
+== tb.mtu
+friendly: MTU per hop
+cat: term
+close: -1
+tag: The biggest packet that reaches each hop.
+what: Traces the path, then sends Don't-Fragment pings with a rising TTL and finds the biggest size each hop still passes - about 8 small pings per hop, fewer after the first.
+how: Traces the path, then sends Don't-Fragment pings with a rising TTL and finds the biggest size each hop still passes - about 8 small pings per hop, fewer after the first.
+why: Where the size drops is where your packets get wrapped (PPPoE, a VPN, a tunnel) - and a silent drop (black hole) is why pages half-load or VPNs stall.
+without: IPv4 only. Routers that ignore pings can't be measured - shown as unavailable.
+
+== tb.mtr
+friendly: MTR
+cat: term
+close: -1
+tag: Loss and delay at every hop, over minutes.
+what: One probe per hop per second for as long as you choose, then reads it the way engineers do.
+how: One probe per hop per second for as long as you choose, then reads it the way engineers do.
+why: Loss at a middle hop that doesn't carry on to the end is just that router ignoring pings - only loss that continues is real.
+without: Run it while the problem is happening.
+
+== tb.ret
+friendly: The way back
+cat: term
+close: -1
+tag: As much of the return path as one PC can know.
+what: Reads the TTL every reply arrives with (how many routers it crossed on the way back), asks routers to write their addresses into the packet (Record Route), and - with online lookups on - shows how other networks reach you.
+how: Reads the TTL every reply arrives with (how many routers it crossed on the way back), asks routers to write their addresses into the packet (Record Route), and - with online lookups on - shows how other networks reach you.
+why: Slowness or loss is often only on the way back; a different number of hops back than out means a different road.
+without: The full return path can only be traced from the far end - the command for that is shown.
+
+== tb.owners
+friendly: Who carries my traffic
+cat: term
+close: -1
+tag: Every network on your path, by name.
+what: Traces the path, then asks RIPEstat which network (AS) owns each public hop, where they hand over (PeeringDB internet exchanges), the destination's route, its RPKI status and recent route changes.
+how: Traces the path, then asks RIPEstat which network (AS) owns each public hop, where they hand over (PeeringDB internet exchanges), the destination's route, its RPKI status and recent route changes.
+why: Tells you which company adds the delay - your provider, a carrier, or the destination.
+without: Needs online lookups (off by default, they switch themselves off). Only public addresses are sent.
+
+== tb.overlap
+friendly: Overlapping networks
+cat: term
+close: -1
+tag: Your home network and the VPN using the same addresses.
+what: Compares the address ranges of every active adapter and the VPN's routes.
+how: Compares the address ranges of every active adapter and the VPN's routes.
+why: The classic 'works in the office, not at home over VPN': a company server in the same range as your home network is unreachable.
+without: Nothing is sent.
+
+== tb.ip46
+friendly: IPv6 vs IPv4
+cat: term
+close: -1
+tag: Is IPv6 broken here?
+what: Opens one connection over each to the same site and compares.
+how: Opens one connection over each to the same site and compares.
+why: Broken IPv6 makes every site wait a moment before falling back to IPv4.
+without: One connection each.
+
+== tb.proxy
+friendly: Which proxy?
+cat: term
+close: -1
+tag: Direct, a proxy or a PAC script - for this exact URL.
+what: Asks Windows the same question your browser asks, and reads the WinHTTP setting background services use.
+how: Asks Windows the same question your browser asks, and reads the WinHTTP setting background services use.
+why: Sites that fail only on one PC or only in the browser are often a proxy rule.
+without: Local only.
+
+== tb.hosts
+friendly: Hosts file
+cat: term
+close: -1
+tag: Names pinned to a fixed address on this PC.
+what: Reads Windows' hosts file.
+how: Reads Windows' hosts file.
+why: An old line there breaks a site only on this PC.
+without: Read only.
+
+== tb.dnsrules
+friendly: DNS hijack and VPN name rules
+cat: term
+close: -1
+tag: Does your DNS tell the truth, and who answers company names?
+what: Looks up one made-up name, and reads the name rules (NRPT) your VPN or IT set.
+how: Looks up one made-up name, and reads the name rules (NRPT) your VPN or IT set.
+why: A provider that answers made-up names sends typos to its ad page; missing VPN rules send company names to the wrong DNS.
+without: One lookup.
+
+== tb.port
+friendly: Port test
+cat: term
+close: -1
+tag: Can I reach host:port?
+what: Opens one TCP connection with a 4-second limit.
+how: Opens one TCP connection with a 4-second limit.
+why: Refused = the server said no; no answer = a firewall silently dropped it.
+without: One connection.
+
+== tb.teams
+friendly: Teams UDP test
+cat: term
+close: -1
+tag: Can Teams calls use UDP here?
+what: Sends one STUN request to Microsoft's Teams relays on UDP 3478 and reads how your NAT maps it.
+how: Sends one STUN request to Microsoft's Teams relays on UDP 3478 and reads how your NAT maps it.
+why: Without UDP, calls are squeezed into TCP 443 and stutter; a symmetric NAT forces every call through a relay.
+without: A few small packets.
+
+== tb.clock
+friendly: Clock check
+cat: term
+close: -1
+tag: Is your clock right?
+what: Compares your clock with the time in one answer from msftconnecttest.com (the page Windows itself uses).
+how: Compares your clock with the time in one answer from msftconnecttest.com (the page Windows itself uses).
+why: More than about 5 minutes off breaks certificates and company sign-in.
+without: One request.
+
+== tb.iperf
+friendly: iperf3 client
+cat: term
+close: -1
+tag: Real throughput to your own server.
+what: Speaks the iperf3 protocol to an iperf3 server you run (iperf3 -s): TCP up, down or both, several streams, or UDP at a set rate with jitter and loss.
+how: Speaks the iperf3 protocol to an iperf3 server you run (iperf3 -s): TCP up, down or both, several streams, or UDP at a set rate with jitter and loss.
+why: The honest number for Wi-Fi, a VPN or a link - not a speed-test website's.
+without: Needs your own server; AdeeboMeter is only the client and never listens.
+
+== tb.ping
+friendly: Sustained ping
+cat: term
+close: -1
+tag: Ping, done properly.
+what: Hundreds of pings at the interval you choose, drawn as a timeline with losses in red, plus jitter and the longest gap.
+how: Hundreds of pings at the interval you choose, drawn as a timeline with losses in red, plus jitter and the longest gap.
+why: Bursts of loss point at Wi-Fi or a flapping link; steady loss at a busy line.
+without: Pick your router first, then the internet - the first one that misbehaves is where it starts.
+
+== tb.cloud
+friendly: Nearest cloud
+cat: term
+close: -1
+tag: How far Microsoft 365, Google and the big clouds are from you.
+what: Times a connection to each front door.
+how: Times a connection to each front door.
+why: Microsoft 365 far away means your traffic leaves through a VPN or proxy in another city.
+without: A few connections.
+
+== tb.dig
+friendly: dig
+cat: term
+close: -1
+tag: Any DNS record, from any server - or follow the delegation.
+what: Asks the DNS server directly (A, AAAA, MX, TXT, NS, CNAME, SOA, SRV, CAA, PTR). TRACE starts at a root server and follows each referral down to the domain's own server.
+how: Asks the DNS server directly (A, AAAA, MX, TXT, NS, CNAME, SOA, SRV, CAA, PTR). TRACE starts at a root server and follows each referral down to the domain's own server.
+why: Shows the TTL, who answered, and whether DNSSEC validated.
+without: Queries only when you press Run.
+
+== tb.http
+friendly: HTTP and TLS inspector
+cat: term
+close: -1
+tag: Redirects, headers and the certificate.
+what: Follows the redirect chain, lists the useful headers (HSTS, HTTP/3 offered, caches), tries TLS 1.3 and 1.2, and reads the certificate: names, expiry, issuer, inspected or not.
+how: Follows the redirect chain, lists the useful headers (HSTS, HTTP/3 offered, caches), tries TLS 1.3 and 1.2, and reads the certificate: names, expiry, issuer, inspected or not.
+why: The quick answer to 'why does the browser complain about this site'.
+without: A few requests to that site.
+
+== tb.sweep
+friendly: Ping sweep
+cat: term
+close: -1
+tag: Who answers on your network.
+what: Pings every address in your own subnet (up to 254), then names makers from the hardware address.
+how: Pings every address in your own subnet (up to 254), then names makers from the hardware address.
+why: Find the printer, the camera, or the device that shouldn't be there.
+without: On company networks it asks first - sweeping can trip security alarms.
+
+== tb.wol
+friendly: Wake-on-LAN
+cat: term
+close: -1
+tag: Wake a PC on your network.
+what: Sends one magic packet to the hardware address you type.
+how: Sends one magic packet to the hardware address you type.
+why: Handy for a home server or a desktop you left asleep.
+without: Same network only.
+
+== tb.subnet
+friendly: Subnet calculator
+cat: term
+close: -1
+tag: CIDR, masks and ranges - IPv4 and IPv6.
+what: Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Network, broadcast, usable range, wildcard mask, binary; IPv6 expanded and compressed; is this IP inside?
+without: Offline.
+
+== tb.winev
+friendly: Windows' own evidence
+cat: term
+close: -1
+tag: What Windows recorded about your network.
+what: Address conflicts, the network profile (Public / Private), firewall per profile, adapter power saving and speed, DHCP lease and trouble.
+how: Address conflicts, the network profile (Public / Private), firewall per profile, adapter power saving and speed, DHCP lease and trouble.
+why: Many 'mystery' drops are written down by Windows itself.
+without: Local, read only.
+
+== tb.auth
+friendly: Network sign-in (802.1X)
+cat: term
+close: -1
+tag: Why Wi-Fi or wired sign-in failed.
+what: Reads the WLAN and Wired AutoConfig logs from the last 7 days.
+how: Reads the WLAN and Wired AutoConfig logs from the last 7 days.
+why: Expired certificate, untrusted server, wrong credentials or a RADIUS server that didn't answer - each needs a different fix.
+without: Local, read only.
+
+== tb.pressure
+friendly: Memory, disk, heat, drivers
+cat: term
+close: -1
+tag: What actually makes a PC feel slow.
+what: Reads Windows' counters: memory read back from disk, committed memory, disk latency, processor speed vs rated, driver interrupt time.
+how: Reads Windows' counters: memory read back from disk, committed memory, disk latency, processor speed vs rated, driver interrupt time.
+why: 'Memory 70% used' says little; 400 pages a second read back from disk says the PC is struggling.
+without: Local.
+
+== tb.disk
+friendly: Disk
+cat: term
+close: -1
+tag: Who uses the disk, its health and its space.
+what: Latency now, the busiest programs over the last hour, the disk type and Windows' health verdict, free space and how it changed this week.
+how: Latency now, the busiest programs over the last hour, the disk type and Windows' health verdict, free space and how it changed this week.
+why: A slow or failing disk is the most misdiagnosed cause of a slow PC.
+without: Health needs Windows to allow it (some PCs keep it to admins).
+
+== tb.space
+friendly: Where did my space go?
+cat: term
+close: -1
+tag: The usual suspects, measured.
+what: Sizes Downloads, Temp, Teams and browser caches, OneDrive's local copies, Windows Update leftovers and the previous Windows, with a time limit.
+how: Sizes Downloads, Temp, Teams and browser caches, OneDrive's local copies, Windows Update leftovers and the previous Windows, with a time limit.
+why: Each comes with where to clean it safely.
+without: AdeeboMeter never deletes anything.
+
+== tb.bg
+friendly: Background jobs
+cat: term
+close: -1
+tag: What Windows is busy with right now.
+what: Defender scans, search indexing, Windows Update, OneDrive, Office updates - only the busy ones, with processor and disk use.
+how: Defender scans, search indexing, Windows Update, OneDrive, Office updates - only the busy ones, with processor and disk use.
+why: They finish on their own; knowing which one stops the guessing.
+without: Local.
+
+== tb.crash
+friendly: Crashes and hangs
+cat: term
+close: -1
+tag: Programs that crashed or froze this week.
+what: Reads the Application log: which program, how often, and the DLL it crashed in.
+how: Reads the Application log: which program, how often, and the DLL it crashed in.
+why: The same add-in or driver DLL every time is the likely culprit.
+without: Local, read only.
+
+== tb.leaks
+friendly: Slow leaks
+cat: term
+close: -1
+tag: Programs that keep growing.
+what: Every 5 minutes AdeeboMeter notes each program's memory and handles (in memory only) and compares.
+how: Every 5 minutes AdeeboMeter notes each program's memory and handles (in memory only) and compares.
+why: A program that grows and never gives back explains a PC that gets slower through the day.
+without: Needs about 15 minutes of watching.
+
+== tb.gpu
+friendly: Graphics card per app
+cat: term
+close: -1
+tag: Who uses the graphics card.
+what: Reads Windows' GPU engine counters for one second.
+how: Reads Windows' GPU engine counters for one second.
+why: Teams video and busy browser tabs are the usual ones.
+without: Local.
+
+== tb.changed
+friendly: What changed in 7 days
+cat: term
+close: -1
+tag: Programs, drivers and Windows updates installed recently.
+what: Reads the installed-programs list and Windows' own logs.
+how: Reads the installed-programs list and Windows' own logs.
+why: If it got slow on Tuesday, look at what was installed on Tuesday.
+without: Local, read only.
+
+== tb.battery
+friendly: Battery health
+cat: term
+close: -1
+tag: How worn the battery is.
+what: Windows' own battery report (powercfg), read and deleted.
+how: Windows' own battery report (powercfg), read and deleted.
+why: Below about 80% of the design capacity it lasts noticeably less.
+without: Local.
+
+== ov.ONLINE
+friendly: Online lookups
+cat: term
+close: -1
+tag: BGP and who owns the network - on for a while.
+what: While on, Toolbox can ask RIPEstat and PeeringDB about public IP addresses on your path.
+how: While on, Toolbox can ask RIPEstat and PeeringDB about public IP addresses on your path.
+why: Click to switch them off now. They switch themselves off anyway after the time set in Settings.
+without: Never sent: private addresses, names you typed, anything about this PC.
+
+== guide.vpn
+friendly: Works at home, not on VPN or at work
+cat: term
+close: -1
+tag: The usual suspects when a network changes.
+what: Overlapping address ranges, the proxy, the VPN's name rules, whether the door (TCP) opens, and the biggest packet that gets there.
+how: Overlapping address ranges, the proxy, the VPN's name rules, whether the door (TCP) opens, and the biggest packet that gets there.
+why: Type the server or site that fails in the box first.
+without: The company firewall's own rules stay invisible.
+
+== guide.pc
+friendly: My PC is slow
+cat: term
+close: -1
+tag: The PC side of 'is it me or the network?'.
+what: Processor, memory pressure, disk latency, heat and throttling, driver interrupts, background jobs and frozen windows - in that order.
+how: Processor, memory pressure, disk latency, heat and throttling, driver interrupts, background jobs and frozen windows - in that order.
+why: Ends with the first thing that's wrong, and where to look next.
+without: Local, nothing sent.
+
+== kind.pc
+friendly: The PC
+cat: term
+close: -1
+tag: Something on the PC itself.
+what: A program stopped responding, and for how long.
+how: A program stopped responding, and for how long.
+why: Frozen apps feel like a slow network but aren't.
+without: Recorded on the timeline.
+
+== tb.ping6
+friendly: IPv6 ping and trace
+cat: term
+close: -1
+tag: Does IPv6 work all the way?
+what: Pings and traces a destination over IPv6 only, using Windows' own IPv6 echo (no admin).
+how: Pings and traces a destination over IPv6 only, using Windows' own IPv6 echo (no admin).
+why: Broken IPv6 makes apps wait before falling back to IPv4; this shows where it breaks.
+without: Needs an IPv6 address on this PC - many networks give none.
+
+== tb.tcpping
+friendly: TCP ping
+cat: term
+close: -1
+tag: Ping that works where ping is blocked.
+what: Opens and closes a TCP connection to host:port once a second and times the handshake.
+how: Opens and closes a TCP connection to host:port once a second and times the handshake.
+why: Firewalls often drop ping (ICMP) but let TCP through - and TCP is what apps actually use.
+without: Each try is a full connect; keep the count small on servers you don't own.
+
+== tb.twamp
+friendly: TWAMP-light
+cat: term
+close: -1
+tag: Loss and jitter each way, to a reflector.
+what: Sends numbered, timestamped UDP packets to a TWAMP-light reflector (port 862 by default), which stamps and returns them.
+how: Sends numbered, timestamped UDP packets to a TWAMP-light reflector (port 862 by default), which stamps and returns them.
+why: Tells loss on the way out from loss on the way back, and jitter per direction - what ping can't.
+without: Needs a reflector you control (a router or a Linux box); one-way delay is exact only with synced clocks.
+
+== tb.httptime
+friendly: HTTP timing, repeated
+cat: term
+close: -1
+tag: Where a slow website spends its time.
+what: Fetches a URL several times and splits each into name lookup, connect, TLS, first byte and download - like curl -w.
+how: Fetches a URL several times and splits each into name lookup, connect, TLS, first byte and download - like curl -w.
+why: The spread of each step points at DNS, distance, the server or bandwidth.
+without: One page per request, nothing else loaded.
+
+== tb.doh
+friendly: Encrypted DNS
+cat: term
+close: -1
+tag: Do DoH and DoT get through?
+what: Asks Cloudflare and Google over DNS-over-HTTPS, and 1.1.1.1 over DNS-over-TLS (TCP 853), for example.com.
+how: Asks Cloudflare and Google over DNS-over-HTTPS, and 1.1.1.1 over DNS-over-TLS (TCP 853), for example.com.
+why: Browsers fall back silently when encrypted DNS is blocked; this shows what your network allows.
+without: Three small queries for example.com - no names of yours are sent.
+
+== tb.ntp
+friendly: NTP query
+cat: term
+close: -1
+tag: Ask a time server directly.
+what: Sends one SNTP v4 request and reads stratum, reference, round trip and how far your clock is off.
+how: Sends one SNTP v4 request and reads stratum, reference, round trip and how far your clock is off.
+why: Checks a company or public NTP server is reachable and sane, and how wrong this PC's clock is.
+without: UDP 123 is often allowed only to company time servers.
+
+== tb.mail
+friendly: Mail server check
+cat: term
+close: -1
+tag: Is the mail server talking, and securely?
+what: Reads the greeting and what the server offers (EHLO / CAPABILITY / CAPA), tries STARTTLS and reads the certificate. Never logs in.
+how: Reads the greeting and what the server offers (EHLO / CAPABILITY / CAPA), tries STARTTLS and reads the certificate. Never logs in.
+why: Tells blocked port, wrong port, missing STARTTLS or an expired certificate apart.
+without: Home providers usually block outgoing port 25.
+
+== tb.ssh
+friendly: SSH banner
+cat: term
+close: -1
+tag: Is SSH there, and which one?
+what: Connects and reads the version line the SSH server sends first. Never logs in.
+how: Connects and reads the version line the SSH server sends first. Never logs in.
+why: Shows the port is open and what software answers (OpenSSH, a router's SSH...).
+without: A banner only - no keys exchanged.
+
+== tb.snmp
+friendly: SNMP v2c get
+cat: term
+close: -1
+tag: Ask a device who it is.
+what: Sends one SNMP v2c GET for name, description, uptime, location and contact.
+how: Sends one SNMP v2c GET for name, description, uptime, location and contact.
+why: Confirms SNMP, the community and the access list all work from this PC.
+without: The community string travels in clear text - prefer SNMP v3 on shared networks.
+
+== tb.syslog
+friendly: Syslog test
+cat: term
+close: -1
+tag: Send one test message to a collector.
+what: Sends one RFC 5424 message over UDP 514 (or your port).
+how: Sends one RFC 5424 message over UDP 514 (or your port).
+why: Checks a firewall or collector filter - look for the message on the collector.
+without: UDP never confirms; the collector is the only proof.
+
+== tb.radius
+friendly: RADIUS Status-Server
+cat: term
+close: -1
+tag: Is the RADIUS server alive?
+what: Sends a Status-Server request (RFC 5997) signed with the shared secret and checks the signed reply.
+how: Sends a Status-Server request (RFC 5997) signed with the shared secret and checks the signed reply.
+why: Tells a dead server from a wrong secret or a missing client entry - without a user account.
+without: The server must allow Status-Server and list this PC as a client. The secret is never shown, saved or sent.
+
+== tb.tacacs
+friendly: TACACS+ reachability
+cat: term
+close: -1
+tag: Is the TACACS+ daemon there?
+what: Opens TCP 49 three times and times it.
+how: Opens TCP 49 three times and times it.
+why: Shows the daemon is listening and reachable through the firewalls.
+without: The key and client list can only be checked in the daemon's own log.
+
+== tb.hairpin
+friendly: Your own router (hairpin)
+cat: term
+close: -1
+tag: Can you reach home through your own public address?
+what: Learns your public address and port through STUN, then sends a packet to your own public address to see if the router loops it back.
+how: Learns your public address and port through STUN, then sends a packet to your own public address to see if the router loops it back.
+why: Explains why a camera, NAS or game server works from outside but not from home (or the reverse), and shows CGNAT.
+without: Two small STUN requests to Microsoft's Teams relay.
+
+== tb.dc
+friendly: Domain controllers
+cat: term
+close: -1
+tag: Can this PC find and reach its domain?
+what: Asks Windows (nltest) and DNS (_ldap._tcp.dc._msdcs) for domain controllers, then checks Kerberos, LDAP, SMB, RPC and the global catalog ports.
+how: Asks Windows (nltest) and DNS (_ldap._tcp.dc._msdcs) for domain controllers, then checks Kerberos, LDAP, SMB, RPC and the global catalog ports.
+why: Slow or failing sign-in and Group Policy usually come down to one of these.
+without: Only on domain-joined PCs; on VPN only once the VPN is up.
+
+== tb.gpo
+friendly: Group Policy
+cat: term
+close: -1
+tag: What Group Policy applied to you.
+what: Runs gpresult /r for your user: last applied, from which controller, applied and filtered-out policies, your groups.
+how: Runs gpresult /r for your user: last applied, from which controller, applied and filtered-out policies, your groups.
+why: Explains why a setting is forced, or why a policy didn't reach you.
+without: Read-only; the computer side needs admin.
+
+== tb.certs
+friendly: Expiring certificates
+cat: term
+close: -1
+tag: Certificates about to run out.
+what: Lists the personal certificates for you and for this PC, soonest expiry first.
+how: Lists the personal certificates for you and for this PC, soonest expiry first.
+why: Wi-Fi, VPN and sign-in by certificate stop working the day it expires.
+without: Read-only; nothing is exported.
+
+== tb.fw
+friendly: Firewall rules for an app
+cat: term
+close: -1
+tag: What Windows Firewall says about an app.
+what: Reads the firewall's rules and shows those that name the app: allow or block, in or out, ports and networks.
+how: Reads the firewall's rules and shows those that name the app: allow or block, in or out, ports and networks.
+why: A block rule wins - and 'public network' rules explain 'works at home, not at the café'.
+without: Read-only; company firewalls elsewhere aren't visible.
+
+== tb.listen
+friendly: What's listening
+cat: term
+close: -1
+tag: Which programs accept connections.
+what: Lists programs waiting for connections on this PC, split into open to the network and loopback only.
+how: Lists programs waiting for connections on this PC, split into open to the network and loopback only.
+why: Shows what other devices could reach, and finds port clashes.
+without: AdeeboMeter itself never listens.
+
+== tb.events
+friendly: Event log search
+cat: term
+close: -1
+tag: Errors and warnings in the last day.
+what: Reads System and Application errors and warnings for 24 hours, groups repeats and explains the common ones.
+how: Reads System and Application errors and warnings for 24 hours, groups repeats and explains the common ones.
+why: A disk reset, a crashed service or a DNS timeout at the same minute as the problem is the clue.
+without: Every PC logs some errors - look for ones that line up with the problem.
+
+== tb.timesrc
+friendly: Time source
+cat: term
+close: -1
+tag: Where this PC gets its time.
+what: Reads Windows Time's setting and current source (domain, NTP server or none).
+how: Reads Windows Time's setting and current source (domain, NTP server or none).
+why: A PC on its own clock drifts, and sign-in breaks past 5 minutes.
+without: Pair with the NTP tool to see how far off it is.
+
+== tb.route
+friendly: Which route does this take?
+cat: term
+close: -1
+tag: Which way Windows sends it.
+what: Asks Windows for the route it picks for a destination: the adapter, the next hop, the route that matched and its metric.
+how: Asks Windows for the route it picks for a destination: the adapter, the next hop, the route that matched and its metric.
+why: Answers 'does this go into the VPN or out the home internet?' - split tunnels and overlapping routes.
+without: IPv4 only for now.
+
+== tb.gateway
+friendly: Your gateway
+cat: term
+close: -1
+tag: Is your gateway one router or a redundant pair?
+what: Reads the gateway's MAC address: a VRRP, HSRP or GLBP virtual address means two or more routers share it. Watches it every 30 s and notes a takeover.
+how: Reads the gateway's MAC address: a VRRP, HSRP or GLBP virtual address means two or more routers share it. Watches it every 30 s and notes a takeover.
+why: A short outage with a MAC change at the same minute is a router failover, not your PC. Also shows slow plug-in (spanning tree).
+without: Some redundancy keeps the real MAC address; then it can't be seen.
+
+== tb.v6routers
+friendly: IPv6 routers on this network
+cat: term
+close: -1
+tag: Who announces IPv6 here?
+what: Lists the routers and prefixes Windows learned from router advertisements on each network.
+how: Lists the routers and prefixes Windows learned from router advertisements on each network.
+why: Two IPv6 routers on a home or office LAN is often a rogue device - traffic may go to it.
+without: Read from Windows' own state; nothing is sent.
+
+== tb.rlisten
+friendly: Routing protocols on my segment
+cat: term
+close: -1
+tag: What routers say on your network.
+what: Listens (with Wireshark + Npcap) for OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP, HSRP, IPv6 RAs, DHCP servers, spanning tree, LLDP / CDP, DTP. Nothing sent, nothing saved.
+how: Listens (with Wireshark + Npcap) for OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP, HSRP, IPv6 RAs, DHCP servers, spanning tree, LLDP / CDP, DTP. Nothing sent, nothing saved.
+why: Routing hellos on a user segment mean the router interface isn't passive - a security finding. Two DHCP servers or RA senders mean a rogue device.
+without: Needs Wireshark and Npcap, which usually need admin to install.

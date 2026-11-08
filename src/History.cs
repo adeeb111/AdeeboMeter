@@ -22,12 +22,12 @@ namespace AdeeboMeter
 
         // One minute. Columns: time, level, cpu, mem, down, gw, net, wifi, up, gwMax, netMax, loss %, link Mb/s, MB down, MB up, network
         public const int Cols = 15;   // numeric columns after the time (index 1..14 in Day.M rows; index 0 is seconds of day)
-        public static void Minute(DateTime t, double[] v, string net)
+        public static void Minute(DateTime t, double[] v, string net, double diskMs, double faults)
         {
             if (!Cfg.History) return;
             var sb = new StringBuilder(t.ToString("HH:mm:ss", CultureInfo.InvariantCulture));
             for (int i = 0; i < Cols - 1; i++) sb.Append(',').Append(i < v.Length ? N(v[i]) : "");
-            sb.Append(',').Append((net ?? "").Replace(',', ' '));
+            sb.Append(',').Append((net ?? "").Replace(',', ' ')).Append(',').Append(N(diskMs)).Append(',').Append(N(faults));   // the PC: disk ms per request, pages read back from disk per second
             Write(FileFor(t, "m"), sb.ToString());
         }
         public static void Event(int lv, string kind, string text)
@@ -104,7 +104,7 @@ namespace AdeeboMeter
         }
 
         // M rows: [0] seconds of day, then the 14 numeric columns (older 10-second files fill the first 7; the rest are NaN).
-        public sealed class Day { public List<double[]> M = new List<double[]>(); public List<string> Net = new List<string>(); public List<Timeline.Ev> E = new List<Timeline.Ev>(); }
+        public sealed class Day { public List<double[]> M = new List<double[]>(); public List<string> Net = new List<string>(); public List<double[]> Pc = new List<double[]>(); public List<Timeline.Ev> E = new List<Timeline.Ev>(); }
         public static Day Load(DateTime d)
         {
             var day = new Day();
@@ -116,7 +116,7 @@ namespace AdeeboMeter
                     var f = line.Split(','); TimeSpan t; if (f.Length < 8 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t)) continue;
                     var row = new double[Cols]; row[0] = t.TotalSeconds;
                     for (int i = 1; i < Cols; i++) row[i] = i < f.Length ? P(f[i]) : double.NaN;
-                    day.M.Add(row); day.Net.Add(f.Length > Cols ? f[Cols] : "");
+                    day.M.Add(row); day.Net.Add(f.Length > Cols ? f[Cols] : ""); day.Pc.Add(new[] { f.Length > Cols + 1 ? P(f[Cols + 1]) : double.NaN, f.Length > Cols + 2 ? P(f[Cols + 2]) : double.NaN });
                 }
                 foreach (var line in Lines(FileFor(d, "ev"), 2000))
                 {
