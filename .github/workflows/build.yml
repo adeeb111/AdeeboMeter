@@ -29,7 +29,7 @@ jobs:
       - name: Build and package (release.ps1)
         shell: pwsh
         run: ./release.ps1
-      - name: Build provenance (check with: gh attestation verify <file> -R adeeb111/AdeeboMeter)
+      - name: "Build provenance - check a file with: gh attestation verify <file> -R adeeb111/AdeeboMeter"
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8   # v4.2.2
         with:
           subject-path: dist/*
