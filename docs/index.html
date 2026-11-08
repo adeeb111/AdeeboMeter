@@ -406,7 +406,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <button class="arrow prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="stage" tabindex="0" aria-roledescription="carousel" aria-label="The Theory of Everything slides">
 <div class="frame"><section class="slide hero"><div class="in">
-  <div class="kicker">The Theory of Everything · version 1.0</div>
+  <div class="kicker">The Theory of Everything · version 1.1.2</div>
   <div class="body" style="flex-direction:row;align-items:center;gap:4em">
     <div style="flex:1">
       <h1>AdeeboMeter</h1>
@@ -583,7 +583,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card b" style="padding:1.4em">
         <h3 style="font-size:1.35em;margin:0 0 .5em">Six questions people actually ask</h3>
         <ul class="clean"><li>The internet is slow</li><li>A website or app won't open</li><li>Calls freeze or sound robotic</li><li>I keep disconnecting</li><li>It works at home, not on VPN or at work</li><li>My PC is slow</li></ul>
-        <p style="margin-top:.8em">Each runs the checks AdeeboMeter already has and answers in the same four parts: <b>Finding · What I observed · Not established · Next test</b>.</p>
+        <p style="margin-top:.8em">Each runs the checks AdeeboMeter already has and answers in the same four parts: <b>Finding · What I observed · Not established · Next test</b>. When the header turns amber or red, <b>Investigate ›</b> next to it opens the one that fits.</p>
       </div>
       <div class="card g" style="padding:1.4em">
         <h3 style="font-size:1.35em;margin:0 0 .5em">Every fact says where it came from</h3>
@@ -612,6 +612,21 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>10</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">SNMP</div>
+  <h2>Ask a switch or router - in plain words.</h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card b"><h3>Views that answer questions</h3><p>What is this device · interfaces with problems first · traffic per port · CPU and memory · LLDP neighbours · sensors.</p></div>
+      <div class="card"><h3>Walk anything</h3><p>Any OID or MIB name, up to 2,000 values, paced - rebuilt into tables joined by index, the useful columns first.</p></div>
+      <div class="card"><h3>Your own MIBs</h3><p>Drop a vendor's .mib files in a folder. A strict reader indexes names, tables and descriptions once; nothing in a MIB is ever run.</p></div>
+      <div class="card"><h3>Search, then walk</h3><p>Type <i>temperature</i>, <i>optic</i> or <i>fan</i> - matching objects with their description, one click walks that table.</p></div>
+      <div class="card"><h3>v2c and v3</h3><p>No auth, auth (MD5 / SHA-1 / SHA-256) and AES-128 privacy - keys checked against RFC 3414's own vectors. Masked, kept for the session only.</p></div>
+      <div class="card g"><h3>Read-only, always</h3><p>GET and GETBULK only. It never sets a value and never listens for traps.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>11</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Network story · Learn</div>
   <h2>Follow one app from your PC to the server.</h2>
   <div class="body">
@@ -622,7 +637,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Learn in a glance</h3><p>Two lines, a picture, and one "if it goes wrong" line. People who want the textbook read it elsewhere.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>11</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>12</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Your Wi-Fi · your cable</div>
@@ -652,7 +667,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <p style="font-size:.8em;margin-top:.4em"><span class="tag t-b">your channel</span> <span class="tag t-a">overlaps yours</span> <span class="tag" style="background:#EEF1F5;color:#4A5568">others</span> — bar = strongest signal, number = access points</p>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>12</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>13</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">What's running</div>
@@ -672,7 +687,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       </div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>13</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>14</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Check a destination</div>
@@ -690,7 +705,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     </div>
     <p style="margin-top:1em;text-align:center">If a check fails, a <b>sign-in page check</b> catches hotel and airport portals. Pin up to 5 destinations and <b>Run all</b>.</p>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>14</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>15</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The path story</div>
@@ -714,7 +729,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>And more</h3><p>Load-balanced hops, reroutes, where the delay jumps, hidden tunnel hops, the return path — and, with online lookups, the network that owns each hop.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>15</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>16</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Live capture · Time machine</div>
@@ -733,7 +748,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       </div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>16</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>17</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Privacy</div>
@@ -753,7 +768,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     </table>
     <div class="card r" style="margin-top:1.2em;text-align:center"><b style="color:var(--red)">Never:</b> cloud · account · telemetry · an updater · ads · crash reports sent · listening ports</div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>17</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>18</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Security</div>
@@ -764,11 +779,11 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Inputs validated</h3><p>Destinations checked strictly before anything runs. Capture paths fenced inside AdeeboMeter's own folder.</p></div>
       <div class="card"><h3>TLS done right</h3><p>Only TLS 1.2 / 1.3; Windows validates certificates; nothing is sent over an untrusted connection.</p></div>
       <div class="card"><h3>DLLs only from System32</h3><p>For the whole process — a DLL planted next to the exe in Downloads is never loaded.</p></div>
-      <div class="card"><h3>Nothing to hijack</h3><p>No updater, no binary serializers, no XML parser, no secrets in the code. A RADIUS secret is masked and never kept.</p></div>
-      <div class="card b"><h3>A provable build</h3><p>Built by GitHub from this source, actions pinned to exact commits; SHA-256 and build provenance on every file. 0 analyzer findings.</p></div>
+      <div class="card"><h3>Nothing to hijack</h3><p>No updater, no binary serializers, no XML parser, no secrets in the code. RADIUS secrets and SNMP communities / v3 passwords are masked and never kept.</p></div>
+      <div class="card b"><h3>A provable build</h3><p>Built by GitHub from this source, actions pinned to exact commits. The build can only read; a separate release step signs provenance. SHA-256 on every file, 0 analyzer findings.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>18</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>19</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Staying light</div>
@@ -786,7 +801,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Nothing leaks</h3><p>Windows, timers, bitmaps and helper tools released on close — and the self-test proves it.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>19</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>20</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Proof, not promises</div>
@@ -794,7 +809,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="body" style="flex-direction:row;gap:2em;align-items:center">
     <div style="flex:1">
       <p class="lead">30 checks on your own PC, written to <code>AdeeboMeter-selftest.txt</code>:</p>
-      <ul class="clean" style="margin-top:.8em"><li>Counters, socket tables and DNS reading work</li><li><b>Never listens</b></li><li>Bad destinations are rejected</li><li>The engineer view opens in under 1 second</li><li><b>No handle leaks</b> over 30 open/close cycles</li><li>Every label has an explanation</li><li>Parsers give the right answers on known samples: Wi-Fi, LLDP/CDP, event log, RTP, the path story</li><li>Memory stays inside the 64 MB budget</li><li><code>--deeptest</code>: hostile input into every tool, repeats to catch leaks, the UI under stress</li></ul>
+      <ul class="clean" style="margin-top:.8em"><li>Counters, socket tables and DNS reading work</li><li><b>Never listens</b></li><li>Bad destinations are rejected</li><li>The engineer view opens in under 1 second</li><li><b>No handle leaks</b> over 30 open/close cycles</li><li>Every label has an explanation</li><li>Parsers give the right answers on known samples: Wi-Fi, LLDP/CDP, event log, RTP, DNS records, SNMP and its v3 keys, MIB files</li><li>Memory stays inside the 64 MB budget</li><li><code>--deeptest</code>: hostile input into every tool, repeats to catch leaks, the UI under stress</li></ul>
     </div>
     <div class="hide-m" style="flex:.9;background:#151B26;border-radius:1em;padding:1.2em 1.4em;font-size:.82em;line-height:1.7;color:#C9D3E1" >
       <div class="mono" style="color:#8A96A8">AdeeboMeter 1.1.2 self-test</div>
@@ -810,22 +825,24 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="mono" style="color:#3FB950;font-weight:700">ALL PASSED</div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>20</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>21</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Honest limits</div>
   <h2>What Windows doesn't let us do without admin or the cloud.</h2>
   <div class="body">
-    <div class="grid g3">
+    <div class="grid g4">
       <div class="card"><h3>AS numbers / BGP data</h3><p>Need an internet service — only through the opt-in, timed online lookups. Otherwise router names tell the story.</p></div>
       <div class="card"><h3>TCP / UDP traceroute</h3><p>Needs raw sockets (admin) — traces use ICMP.</p></div>
       <div class="card"><h3>Per-connection RTT</h3><p>Needs admin to switch on — per-app traffic comes from live capture instead.</p></div>
       <div class="card"><h3>The DNS cache</h3><p>Admin-only on some Windows builds — then names come from live capture.</p></div>
-      <div class="card"><h3>Speed tests</h3><p>Only to a server you run (iperf3, TWAMP-light) — AdeeboMeter never listens.</p></div>
+      <div class="card"><h3>Speed tests</h3><p>Only to a server you run (iperf3, bufferbloat, TWAMP-light) — AdeeboMeter never listens.</p></div>
       <div class="card"><h3>Inside a tunnel or your ISP</h3><p>Can only be inferred, never seen.</p></div>
+      <div class="card"><h3>DSCP marking</h3><p>Windows usually clears a marking a program asks for unless a QoS policy allows it — only a capture proves it.</p></div>
+      <div class="card"><h3>Screens with different scaling</h3><p>Moving between a 100% and a 200% screen: Windows scales the window, slightly soft.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>21</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>22</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Get it</div>
@@ -842,7 +859,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Or don't install</h3><p><i>Just run it from here</i> keeps it portable. Not code-signed: SmartScreen says <i>More info → Run anyway</i>.</p></div>
     </div>
   </div>
-  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>22</span></div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>23</span></div>
 </div></section></div>
 <div class="frame"><section class="slide end"><div class="in">
   <div class="kicker">AdeeboMeter</div>
