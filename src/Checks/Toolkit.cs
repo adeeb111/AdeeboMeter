@@ -75,7 +75,7 @@ namespace AdeeboMeter
             {
                 run.Status = (rev ? "Download" : "Upload") + " test to " + host + "...";
                 try { rows.AddRange(IperfOne(host, o, rev, run)); }
-                catch (Exception e) { rows.Add(R(2, rev ? "Download" : "Upload", "failed: " + Draw.Trunc(e.Message, 90), "Is  iperf3 -s  running there, and is TCP " + o.Port + " allowed through its firewall?", "u")); }
+                catch (Exception e) { var ie = e is AggregateException && e.InnerException != null ? e.InnerException : e; rows.Add(R(2, rev ? "Download" : "Upload", "failed: " + Draw.Trunc(ie.Message.Replace("\r", " ").Replace("\n", " ").Trim(), 90), "Is  iperf3 -s  running there, and is TCP " + o.Port + " allowed through its firewall?", "u")); }
                 if (run.Stop) break;
             }
             return rows;
@@ -120,19 +120,28 @@ namespace AdeeboMeter
             double idle = med(pings(20, () => false));
             if (double.IsNaN(idle)) { rows.Add(R(2, "Idle", dst + " doesn't answer pings - pick another target", "", "m")); return rows; }
             rows.Add(R(0, "Idle", idle.ToString("0", CultureInfo.CurrentCulture) + " ms to " + dst, "", "m"));
-            double worst = 0;
+            double worst = 0; bool loaded = true;
             foreach (bool down in new[] { true, false })
             {
                 if (run.Stop) break;
                 run.Status = (down ? "Download" : "Upload") + " load + ping...";
-                bool done = false; List<double> during = null;
-                var pt = new Thread(() => { Thread.Sleep(1500); during = pings(400, () => done); }) { IsBackground = true, Name = "bloat ping" }; pt.Start();   // skip TCP's first second-and-a-half (slow start)
-                List<string[]> ip; try { ip = Iperf(server, (down ? "-R" : "") + " -t 10 -P 4", run); } finally { done = true; }
+                bool done = false; List<double> during = null; var load = new Run();   // its own Run: iperf3's Mb/s stay out of this chart in ms
+                var pt = new Thread(() => { Thread.Sleep(1500); during = pings(400, () => { if (run.Stop) load.Stop = true; return done; }); }) { IsBackground = true, Name = "bloat ping" }; pt.Start();   // skip TCP's first second-and-a-half (slow start)
+                List<string[]> ip; try { ip = Iperf(server, (down ? "-R" : "") + " -t 10 -P 4", load); } finally { done = true; }
                 pt.Join(3000);
-                var thr = ip.FirstOrDefault(x => x[1] == (down ? "Download" : "Upload"));
-                double ld = during != null ? med(during) : double.NaN, add = ld - idle; if (!double.IsNaN(add)) worst = Math.Max(worst, add);
-                rows.Add(R(double.IsNaN(add) ? 2 : add > 200 ? 2 : add > 60 ? 1 : 0, "During " + (down ? "download" : "upload"), (double.IsNaN(ld) ? "pings lost under load" : ld.ToString("0", CultureInfo.CurrentCulture) + " ms (+" + Math.Max(0, add).ToString("0", CultureInfo.CurrentCulture) + " ms)") + (thr != null ? " · " + thr[2] : " · " + (ip.Count > 0 ? Draw.Trunc(ip[ip.Count - 1][2], 60) : "no load")), "", "m"));
+                string want = down ? "Download" : "Upload";
+                var thr = ip.FirstOrDefault(x => x[0] == "0" && x[1].StartsWith(want, StringComparison.Ordinal) && x[2].Contains("Mb/s"));
+                if (thr == null)
+                {
+                    // no load, no verdict: pings on an idle line would grade it A for nothing
+                    var why = ip.FirstOrDefault(x => x[0] == "2"); loaded = false;
+                    rows.Add(R(2, "During " + want.ToLowerInvariant(), "no load - " + (why != null ? Draw.Trunc(why[2], 90) : run.Stop ? "stopped" : "iperf3 gave no result"), why != null ? why[3] : "", "m"));
+                    continue;
+                }
+                double ld = during != null ? med(during) : double.NaN, add = ld - idle; if (!double.IsNaN(add)) worst = Math.Max(worst, add); else worst = Math.Max(worst, 1000);
+                rows.Add(R(double.IsNaN(add) ? 2 : add > 200 ? 2 : add > 60 ? 1 : 0, "During " + want.ToLowerInvariant(), (double.IsNaN(ld) ? "pings lost under load" : ld.ToString("0", CultureInfo.CurrentCulture) + " ms (+" + Math.Max(0, add).ToString("0", CultureInfo.CurrentCulture) + " ms)") + " · " + thr[2], "", "m"));
             }
+            if (!loaded || run.Stop) { rows.Insert(0, R(1, "Bufferbloat grade", run.Stop ? "stopped - no grade" : "no grade - the line was never loaded in both directions", "The grade needs iperf3 to fill the line; see the row below for why it didn't.", "i")); return rows; }
             string grade = worst < 5 ? "A+" : worst < 30 ? "A" : worst < 60 ? "B" : worst < 200 ? "C" : worst < 400 ? "D" : "F";
             rows.Insert(0, R(worst >= 200 ? 2 : worst >= 60 ? 1 : 0, "Bufferbloat grade", grade + " · latency rises up to " + worst.ToString("0", CultureInfo.CurrentCulture) + " ms when the line is full",
                 worst >= 60 ? "Calls and games stutter while someone uploads or downloads. The fix is on the router: turn on SQM / Smart Queue / fq_codel / cake, set a little under your real speed." : "Busy line or not, calls stay smooth.", "i"));
@@ -253,7 +262,7 @@ namespace AdeeboMeter
                         double recvBytes = reverse ? mine : (sBytes > 0 ? sBytes : mine);
                         double mbps = recvBytes * 8 / 1e6 / secsDone;
                         string dir = reverse ? "Download (server → you)" : "Upload (you → server)";
-                        rows.Add(R(0, dir, mbps.ToString("0.0", CultureInfo.CurrentCulture) + " Mb/s" + (par > 1 ? " over " + par + " streams" : "") + (udp ? "" : " (TCP)"), Explain(mbps), "m"));
+                        rows.Add(R(0, dir, mbps.ToString("0.0", CultureInfo.CurrentCulture) + " Mb/s" + (par > 1 ? " over " + par + " streams" : "") + (udp ? "" : " (TCP)"), udp ? (mbps >= udpRate / 1e6 * 0.95 ? "The rate you asked for (-b) - raise it to find the limit; loss below shows when the line can't keep up." : "Less than the " + (udpRate / 1e6).ToString("0.#", CultureInfo.CurrentCulture) + " Mb/s asked for - this PC, the line or the server couldn't send that fast.") : Explain(mbps), "m"));
                         if (udp)
                         {
                             double lossPk = reverse ? lost : sErr, total = reverse ? pkts + lost : Math.Max(sPk, 1), jms = (reverse ? jit : sJit) * 1000;
@@ -636,7 +645,7 @@ namespace AdeeboMeter
             {
                 var c = el.Certificate; if (c == null || i > 6) break;
                 string key = c.PublicKey.Oid.FriendlyName ?? c.PublicKey.Oid.Value; int bits = 0;
-                try { if (c.PublicKey.Oid.Value == "1.2.840.113549.1.1.1") using (var rsa = c.GetRSAPublicKey()) bits = rsa.KeySize; else if (c.PublicKey.Oid.Value == "1.2.840.10045.2.1") bits = c.PublicKey.EncodedKeyValue.RawData.Length > 100 ? 384 : 256; } catch (CryptographicException) { }
+                try { if (c.PublicKey.Oid.Value == "1.2.840.113549.1.1.1") using (var rsa = c.GetRSAPublicKey()) bits = rsa.KeySize; else if (c.PublicKey.Oid.Value == "1.2.840.10045.2.1") { int kl = c.PublicKey.EncodedKeyValue.RawData.Length; bits = kl >= 133 ? 521 : kl >= 97 ? 384 : kl >= 65 ? 256 : 0; } } catch (CryptographicException) { }
                 string name = i == 0 ? "Chain: the site" : i == ch.ChainElements.Count - 1 ? "Chain: root" : "Chain: issuer " + i;
                 rows.Add(R(3, name, c.GetNameInfo(X509NameType.SimpleName, false) + " · " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " to " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture),
                     (key == "RSA" || key == "ECC" || key == "1.2.840.10045.2.1" ? (key == "1.2.840.10045.2.1" ? "ECC" : key) : key) + (bits > 0 ? " " + bits + "-bit" : "") + " key · signed with " + (c.SignatureAlgorithm.FriendlyName ?? c.SignatureAlgorithm.Value) + (el.ChainElementStatus.Length > 0 ? " · " + string.Join(", ", el.ChainElementStatus.Select(z => z.Status.ToString())) : ""), "m"));

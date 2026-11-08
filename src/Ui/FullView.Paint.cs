@@ -48,7 +48,7 @@ namespace AdeeboMeter
             {
                 float room = Math.Max(0, themeSw.Left - x - 16 * S), lw = 0; string link = "Investigate  ›";
                 if (snap.Level > 0 && snap.Flow != "") lw = g.MeasureString(link, Draw.fBodyB).Width + 14 * S;
-                float hw = Math.Min(g.MeasureString(head, Draw.fHead).Width, room - lw);
+                float hw = Math.Max(0, Math.Min(g.MeasureString(head, Draw.fHead).Width, room - lw));
                 g.DrawString(head, Draw.fHead, hb, new RectangleF(x, cy - 10 * S, Math.Max(0, hw), 22 * S), sf);
                 if (lw > 0)
                 {

@@ -143,7 +143,7 @@ namespace AdeeboMeter
                 SelectTool("sweep"); if (!tbSweepOk.Visible || tbSweepOk.Checked) throw new InvalidOperationException("the sweep tick isn't showing, or starts ticked");
                 tbSweepOk.Checked = true; SelectTool("subnet"); if (tbSweepOk.Visible) throw new InvalidOperationException("the sweep tick shows on another tool");
                 SelectTool("sweep"); if (tbSweepOk.Checked) throw new InvalidOperationException("the sweep tick stayed ticked");
-                if (IperfOpts(new[] { "s", "download", "15", "-P 4" }) != "-R -t 15 -P 4" || IperfOpts(new[] { "s", "both", "10", "" }) != "--both -t 10" || IperfOpts(new[] { "s", "upload", "999", "" }) != "-t 60") throw new InvalidOperationException("iperf's plain controls give the wrong options");
+                if (IperfOpts(new[] { "s", "download", "15", "-P 4" }) != "-R -t 15 -P 4" || IperfOpts(new[] { "s", "both", "10", "" }) != "--both -t 10" || IperfOpts(new[] { "s", "upload", "999", "" }) != "-t 60" || IperfOpts(new[] { "s", "both", "10", "-R -t 5" }) != "-R -t 5") throw new InvalidOperationException("iperf's plain controls give the wrong options");
                 tbFilter = "wifi"; if (Matches().Count == 0) throw new InvalidOperationException("searching wifi finds nothing"); tbFilter = "";
                 MoveTool(1); MoveTool(-1);
             }, Tools2().Count * 120);

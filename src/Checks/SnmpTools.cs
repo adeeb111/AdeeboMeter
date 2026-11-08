@@ -137,7 +137,9 @@ namespace AdeeboMeter
                 string ty = Snmp.Text(type[i], "", null); string kind = ty.EndsWith(".2", StringComparison.Ordinal) ? "Memory" : ty.EndsWith(".3", StringComparison.Ordinal) ? "Virtual memory" : ty.EndsWith(".4", StringComparison.Ordinal) ? "Disk" : ty.EndsWith(".9", StringComparison.Ordinal) ? "Flash" : "Storage";
                 double u = Snmp.Num(V(unit, i)), s = Snmp.Num(V(size, i)) * u, us = Snmp.Num(V(used, i)) * u;
                 if (s <= 0) continue; double pct = us * 100 / s;
-                rows.Add(R(pct > 90 ? 2 : pct > 75 ? 1 : 3, kind + " · " + S(descr, i, "", null), (us / 1048576).ToString("0", CultureInfo.CurrentCulture) + " of " + (s / 1048576).ToString("0", CultureInfo.CurrentCulture) + " MB used (" + pct.ToString("0", CultureInfo.CurrentCulture) + "%)", "", "m"));
+                // only real RAM, disks and flash get a colour: "other" entries (cached, shared, buffers) are full by design
+                int lvS = kind == "Memory" ? (pct > 97 ? 2 : pct > 90 ? 1 : 3) : kind == "Disk" || kind == "Flash" ? (pct > 95 ? 2 : pct > 85 ? 1 : 3) : 3;
+                rows.Add(R(lvS, kind + " · " + S(descr, i, "", null), (us / 1048576).ToString("0", CultureInfo.CurrentCulture) + " of " + (s / 1048576).ToString("0", CultureInfo.CurrentCulture) + " MB used (" + pct.ToString("0", CultureInfo.CurrentCulture) + "%)", "", "m"));
             }
             return rows;
         }

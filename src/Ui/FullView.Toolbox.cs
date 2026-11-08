@@ -213,9 +213,11 @@ namespace AdeeboMeter
         // the plain iperf3 controls become iperf3 options; anything typed under Advanced comes last
         static string IperfOpts(string[] a)
         {
-            string d = (a[1] ?? "").Trim().ToLowerInvariant(), o = d.StartsWith("down", StringComparison.Ordinal) || d == "-r" ? "-R" : d.StartsWith("up", StringComparison.Ordinal) || d == "" && a[3] != "" ? "" : "--both";
-            int sec; if (int.TryParse(a[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out sec)) o += " -t " + Math.Max(1, Math.Min(60, sec));
-            return (o + " " + a[3]).Trim();
+            string adv = " " + (a[3] ?? "").Trim() + " ";
+            bool advDir = adv.Contains(" -R ") || adv.Contains(" --reverse ") || adv.Contains(" --both "), advTime = adv.Contains(" -t ") || adv.Contains(" --time ");
+            string d = (a[1] ?? "").Trim().ToLowerInvariant(), o = advDir ? "" : d.StartsWith("down", StringComparison.Ordinal) || d == "-r" ? "-R" : d.StartsWith("up", StringComparison.Ordinal) || d == "" && adv.Trim() != "" ? "" : "--both";
+            int sec; if (!advTime && int.TryParse(a[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out sec)) o += " -t " + Math.Max(1, Math.Min(60, sec));
+            return (o + adv).Trim();
         }
         // how long a run takes, said before Run is pressed
         static string Duration(string id, string[] a)
