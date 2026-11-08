@@ -137,6 +137,8 @@ namespace AdeeboMeter
                 foreach (var bad in new[] { hex("3084fffffffa0201"), hex("30ff"), hex("30823000"), hex(string.Concat(Enumerable.Repeat("3082ffff", 200))), hex("3010300e060a2b06010201010100000400"), Array.Empty<byte>() })
                 { var v = new List<string>(); Protocols.ParseVarbinds(bad, v); }
                 var good = new List<string>(); Protocols.ParseVarbinds(hex("300f300d06082b06010201010500040161"), good);
+                var big = new List<string>(); Protocols.ParseVarbinds(hex("3016301406082b060102010103004308ffffffffffffffff"), big);
+                if (big.Count != 1 || big[0] != "(out of range)") throw new InvalidOperationException("SNMP TimeTicks too big isn't caught");
                 if (swSnmp.ElapsedMilliseconds > 500 || good.Count != 1 || good[0] != "a") throw new InvalidOperationException("SNMP reply parser wrong (" + good.Count + " values, " + swSnmp.ElapsedMilliseconds + " ms)");
                 n += RoutingTools.Neighbours(M).Count;
                 n += RoutingTools.Ipv6Routers().Count + RoutingTools.RouteFor("127.0.0.1").Count;

@@ -94,6 +94,12 @@ namespace AdeeboMeter
                 var cs = ctl.GetStream(); cs.Write(cookie, 0, Cookie);
                 var streams = new List<Socket>(); long[] bytes = new long[1]; long pkts = 0, lost = 0; double jit = 0; var sw = new Stopwatch(); var threads = new List<Thread>();
                 long udpSeqMax = 0, atOmit = 0; double lastTransit = double.NaN; var lockU = new object();
+                // Stop (or a test that runs far past its length) closes every socket - that breaks any read or write that is waiting
+                bool finished = false; var deadline = DateTime.UtcNow.AddSeconds(secs + 60);
+                var guard = new Thread(() => { while (!finished) { if (run.Stop || DateTime.UtcNow > deadline) { try { ctl.Close(); } catch { } lock (streams) foreach (var s in streams) try { s.Close(); } catch { } return; } Thread.Sleep(200); } }) { IsBackground = true, Name = "iperf guard" };
+                guard.Start();
+                try
+                {
                 for (; ; )
                 {
                     int st = cs.ReadByte(); if (st < 0) throw new InvalidOperationException("server closed the connection");
@@ -111,14 +117,14 @@ namespace AdeeboMeter
                                 if (run.Stop) break;
                                 var s = new Socket(addr.AddressFamily, SocketType.Dgram, ProtocolType.Udp); Tune(s, o); s.Connect(addr, port); s.ReceiveTimeout = 3000;
                                 s.Send(new byte[] { 0x39, 0x38, 0x37, 0x36 });   // UDP_CONNECT_MSG 0x36373839, sent in the server's (little-endian) byte order var rb = new byte[4]; try { s.Receive(rb); } catch (SocketException) { throw new InvalidOperationException("UDP to the server is blocked (no reply on UDP " + port + ")"); }
-                                streams.Add(s);
+                                lock (streams) streams.Add(s);
                             }
                             else
                             {
                                 if (run.Stop) break;
                                 var s = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp); Tune(s, o);
                                 var ca = s.BeginConnect(addr, port, null, null); if (!ca.AsyncWaitHandle.WaitOne(5000)) { s.Close(); throw new TimeoutException("stream " + (streams.Count + 1) + " couldn't connect in 5 s"); }
-                                s.EndConnect(ca); s.Send(cookie); streams.Add(s);
+                                s.EndConnect(ca); s.Send(cookie); lock (streams) streams.Add(s);
                             }
                         }
                     }
@@ -197,7 +203,9 @@ namespace AdeeboMeter
                     else if (st == 255 || st == 254) throw new InvalidOperationException(st == 255 ? "the server refused (busy with another test?)" : "server error");
                     else if (st == 11 || st == 15) throw new InvalidOperationException("server ended the test");
                 }
-                foreach (var s in streams) try { s.Close(); } catch { }
+                }
+                catch (Exception) { if (!run.Stop) throw; rows.Clear(); rows.Add(R(1, "Stopped", "the test was stopped - no result", "", "m")); }
+                finally { finished = true; lock (streams) foreach (var s in streams) try { s.Close(); } catch { } }
             }
             return rows;
         }

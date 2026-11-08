@@ -4,7 +4,7 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 ## 1.1.1 (2026-11-08)
 
-A patch from the first day of use and two outside code reviews.
+A patch from the first day of use and four outside code reviews.
 
 - **New-device alerts are off by default.** Phones join Wi-Fi with a private, changing hardware address, and office networks are full of other people's devices - so every new device is still listed in What changed, but a pop-up only comes if you choose *Tell me when a new device joins → Home networks only* (Settings). Even then: never on a company network or VPN, never for private addresses, not in the first day on a network, at most one an hour.
 - **Copy as text** on every Toolbox result (including the MTU and MTR tables) - for a ticket or a chat. Built only when you press it; a RADIUS secret is never included.
@@ -13,6 +13,8 @@ A patch from the first day of use and two outside code reviews.
 - **Harder parsing:** the SNMP reader checks every length before using it, handles long values (descriptions over 127 bytes) and nesting has a limit; the JSON reader refuses nesting deeper than 64 (a hostile iperf3 server could otherwise end the app); DNS checks the TCP answer and every record's length. The RADIUS reply check is tested against RFC 2865's own example.
 - **Nothing waits forever:** TLS handshakes give up after 8 s (HTTP timing, encrypted DNS, mail, TLS inspector); iperf3 streams connect within 5 s each and Stop is checked between them.
 - **Child programs never start in the folder AdeeboMeter runs from** (Downloads): netsh, tshark, dumpcap and the rest start in their own folder, so they can't pick up a planted DLL.
+- **iperf3 always cleans up:** Stop, or a test running a minute past its length, closes every socket at once (breaking any wait); sockets close even when a test fails; a stopped test says "stopped - no result" instead of a number.
+- **Clearer protocol verdicts:** RADIUS tells "secret matches and Status-Server answered properly" from "signed with this secret but not the answer Status-Server expects"; SNMP checks the reply's community and handles out-of-range values; NTP refuses timestamps that don't add up and calls the offset what it is - an estimate from one server.
 - Smaller: iperf3 rate capped at 10 Gb/s and port checked; the syslog test strips line breaks; TWAMP no longer claims a synced clock, accepts 40-byte replies and says when loss can't be put on a direction; Wake-on-LAN no longer shows green for a packet it can't confirm; sustained ping starts with 50 pings (10 s); a destination typed elsewhere no longer replaces the gateway in sustained ping and SNMP; "Settings > Online lookups" named correctly; the build workflow treats the release tag as data.
 - File version in the exe has the four numbers Windows expects.
 

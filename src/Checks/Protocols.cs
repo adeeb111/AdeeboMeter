@@ -156,8 +156,9 @@ namespace AdeeboMeter
                     int stratum = r[1]; var t2 = ReadNtp(r, 32); var t3 = ReadNtp(r, 40);
                     double offset = ((t2 - t1).TotalMilliseconds + (t3 - t4).TotalMilliseconds) / 2, delay = (t4 - t1).TotalMilliseconds - (t3 - t2).TotalMilliseconds;
                     string refid = stratum <= 1 ? Encoding.ASCII.GetString(r, 12, 4).TrimEnd('\0') : new IPAddress(new[] { r[12], r[13], r[14], r[15] }).ToString();
+                    if (delay < 0 || delay > 10000 || t3 < t2) { rows.Add(R(2, h, "answered with timestamps that don't add up (delay " + Ms(delay) + ")", "This server's time can't be used.", "m")); return rows; }
                     rows.Add(R(stratum == 0 || stratum > 15 ? 2 : 0, h, "answers · stratum " + stratum + (stratum == 1 ? " (has its own clock: " + refid + ")" : " (gets time from " + refid + ")") + " · round trip " + Ms(delay), stratum == 0 ? "Stratum 0 here means 'kiss of death' - the server refuses to serve you." : "", "m"));
-                    rows.Add(R(Math.Abs(offset) > 5000 ? 2 : Math.Abs(offset) > 500 ? 1 : 0, "Your clock vs this server", (offset >= 0 ? "behind by " : "ahead by ") + Ms(Math.Abs(offset)), Math.Abs(offset) > 500 ? "Settings > Time > Sync now. More than 5 minutes breaks sign-in and certificates." : "", "m"));
+                    rows.Add(R(Math.Abs(offset) > 5000 ? 2 : Math.Abs(offset) > 500 ? 1 : 0, "Your clock vs this server (an estimate from one server)", (offset >= 0 ? "behind by " : "ahead by ") + Ms(Math.Abs(offset)), Math.Abs(offset) > 500 ? "Settings > Time > Sync now. More than 5 minutes breaks sign-in and certificates." : "", "m"));
                 }
             }
             catch (Exception e) { rows.Add(R(2, h + ":" + p, "no answer (" + Draw.Trunc(e.Message, 50) + ")", "UDP 123 may be blocked on this network - company networks often allow only their own time servers.", "m")); }
@@ -238,7 +239,7 @@ namespace AdeeboMeter
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(msg, msg.Length);
                     var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
-                    string why = SnmpCheck(r, reqId[2], reqId[3]);
+                    string why = SnmpCheck(r, reqId[2], reqId[3], Encoding.ASCII.GetBytes(comm));
                     if (why != "") { rows.Add(R(2, h, "answered, but " + why, "", "m")); return rows; }
                     var vals = new List<string>(); ParseVarbinds(r, vals);
                     rows.Add(R(0, h + " (" + sw.ElapsedMilliseconds + " ms)", "answered SNMP v2c", "The community string travels in clear text - SNMP v3 is the safe choice on shared networks.", "m"));
@@ -249,13 +250,14 @@ namespace AdeeboMeter
             return rows;
         }
         // A real answer to our GET: SEQUENCE { version 1, community, GetResponse { request-id, error-status 0, ... } }
-        static string SnmpCheck(byte[] r, byte id1, byte id2)
+        static string SnmpCheck(byte[] r, byte id1, byte id2, byte[] community)
         {
             int t, hl, len, p = 0;
             if (!TryTlv(r, 0, r.Length, out t, out hl, out len) || t != 0x30) return "not with an SNMP message";
             p = hl; int end = hl + len;
             if (!TryTlv(r, p, end, out t, out hl, out len) || t != 2 || len != 1 || r[p + hl] != 1) return "not with SNMP v2c";
             p += hl + len; if (!TryTlv(r, p, end, out t, out hl, out len) || t != 4) return "not with an SNMP message";
+            if (community != null && (len != community.Length || !r.Skip(p + hl).Take(len).SequenceEqual(community))) return "with a different community";
             p += hl + len; if (!TryTlv(r, p, end, out t, out hl, out len) || t != 0xA2) return "not with a reply to a GET (PDU " + t.ToString("X2", CultureInfo.InvariantCulture) + ")";
             p += hl; int pend = p + len;
             if (!TryTlv(r, p, pend, out t, out hl, out len) || t != 2 || len != 2 || r[p + hl] != id1 || r[p + hl + 1] != id2) return "to a different request";
@@ -314,7 +316,7 @@ namespace AdeeboMeter
             if (o < 0 || l < 0 || o + l > r.Length) return "(malformed)";
             if ((t == 0x43 || t == 2 || t == 0x41 || t == 0x42) && l > 8) return "(number too long)";
             if (t == 4) return Draw.Trunc(Regex.Replace(Encoding.UTF8.GetString(r, o, l), @"\s+", " "), 160);
-            if (t == 0x43 || t == 2 || t == 0x41 || t == 0x42) { long v = 0; for (int i = 0; i < l; i++) v = v << 8 | r[o + i]; if (t == 0x43) { var ts = TimeSpan.FromMilliseconds(v * 10); return ts.Days + " days " + ts.Hours + " h " + ts.Minutes + " min"; } return v.ToString(CultureInfo.InvariantCulture); }
+            if (t == 0x43 || t == 2 || t == 0x41 || t == 0x42) { long v = 0; for (int i = 0; i < l; i++) v = v << 8 | r[o + i]; if (t == 0x43) { if (v < 0 || v > uint.MaxValue) return "(out of range)"; var ts = TimeSpan.FromMilliseconds(v * 10); return ts.Days + " days " + ts.Hours + " h " + ts.Minutes + " min"; } return v.ToString(CultureInfo.InvariantCulture); }
             if (t == 0x80 || t == 0x81) return "(not available on this device)";
             return "(type 0x" + t.ToString("X2", CultureInfo.InvariantCulture) + ")";
         }
@@ -350,7 +352,9 @@ namespace AdeeboMeter
                     if (r.Length < 20) { rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
                     bool good = ReplyOk(r, pkt[1], auth, sec); Array.Clear(sec, 0, sec.Length);
                     string code = r[0] == 2 ? "Access-Accept" : r[0] == 3 ? "Access-Reject" : r[0] == 5 ? "Accounting-Response" : "code " + r[0];
-                    rows.Add(R(good ? 0 : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", code + (good ? " - the server is alive and the shared secret matches" : " - but the reply isn't signed with this secret"), good ? "" : "The shared secret differs between this PC's entry and the server.", "m"));
+                    bool expected = r[0] == 2 || r[0] == 5;   // RFC 5997: Access-Accept on the authentication port, Accounting-Response on accounting
+                    rows.Add(R(good ? (expected ? 0 : 1) : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", code + (good ? (expected ? " - the server is alive and the shared secret matches" : " - signed with this secret (so it matches), but not the answer Status-Server expects") : " - but the reply isn't signed with this secret"),
+                        !good ? "The shared secret differs between this PC's entry and the server." : expected ? "" : "The server may handle Status-Server as a normal request - check that status_server is enabled (FreeRADIUS) and that this PC is a client.", "m"));
                 }
             }
             catch (SocketException) { rows.Add(R(2, h + ":" + p, "no answer in 3 s", "RADIUS servers stay silent for: a wrong shared secret, a client (NAS) entry that doesn't include this PC's address, Status-Server not enabled, or UDP " + p + " blocked. FreeRADIUS: status_server = yes and a client entry for this PC.", "m")); }
@@ -392,7 +396,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < n && !run.Stop; i++)
                 {
                     var pkt = new byte[41]; pkt[0] = (byte)(i >> 24); pkt[1] = (byte)(i >> 16); pkt[2] = (byte)(i >> 8); pkt[3] = (byte)i;
-                    var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate: S = 0 - this PC can't promise its clock is synced to UTC
+                    var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate (RFC 4656): S bit 0 = this PC can't promise its clock is synced to UTC; scale 0, multiplier 1 (a multiplier of 0 isn't allowed)
                     u.Send(pkt, pkt.Length); var sw = Stopwatch.StartNew();
                     try
                     {
