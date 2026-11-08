@@ -225,7 +225,7 @@ namespace AdeeboMeter
         public static string Fmt(double v, string f, string unit) { return double.IsNaN(v) ? "-" : v.ToString(f, CultureInfo.CurrentCulture) + unit; }
         public static string Trunc(string s, int n) { if (s == null) return ""; return s.Length <= n ? s : s.Substring(0, n - 1) + "…"; }
         public static string MemStr(long b) { return b >= 1073741824 ? (b / 1073741824.0).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : (b / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB"; }
-        public static string Word(int l) { return l == 2 ? Voice.P("Act", "Problem") : l == 1 ? "Busy" : "OK"; }
+        public static string Word(int l) { return l == 2 ? "Problem" : l == 1 ? "Busy" : "OK"; }
 
         public static Bitmap Chip(Snap s, double dwell)
         {

@@ -31,7 +31,7 @@ namespace AdeeboMeter
         // ---------- painting
         void PaintHeader(Graphics g, Rectangle r)
         {
-            float x = Sc(18), cy = r.Height / 2f;
+            float x = Sc(18), cy = r.Height / 2f; Begin(header);
             Theme.Logo(g, new RectangleF(x, cy - 15 * S, 30 * S, 30 * S), true); x += 40 * S;
             using (var b = new SolidBrush(Theme.Ink)) using (var mb = new SolidBrush(Theme.Muted))
             {
@@ -45,7 +45,19 @@ namespace AdeeboMeter
             string head = (snap.Level == 0 && !Voice.Serious ? Voice.Greet() + " " : "") + snap.Headline;
             using (var hb = new SolidBrush(snap.Level == 0 ? Theme.Ink : Theme.LvText(snap.Level)))
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                g.DrawString(head, Draw.fHead, hb, new RectangleF(x, cy - 10 * S, Math.Max(0, themeSw.Left - x - 16 * S), 22 * S), sf);
+            {
+                float room = Math.Max(0, themeSw.Left - x - 16 * S), lw = 0; string link = "Investigate  ›";
+                if (snap.Level > 0 && snap.Flow != "") lw = g.MeasureString(link, Draw.fBodyB).Width + 14 * S;
+                float hw = Math.Min(g.MeasureString(head, Draw.fHead).Width, room - lw);
+                g.DrawString(head, Draw.fHead, hb, new RectangleF(x, cy - 10 * S, Math.Max(0, hw), 22 * S), sf);
+                if (lw > 0)
+                {
+                    // a problem leads straight to the check that investigates it
+                    var lr = new RectangleF(x + hw + 14 * S, cy - 9 * S, lw - 14 * S, 22 * S); string fl = snap.Flow;
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(link, Draw.fBodyB, lb, lr.X, lr.Y);
+                    Act(header, lr, delegate { tab = "guide"; ShowTab(); StartGuide(fl, false); });
+                }
+            }
         }
 
         void PaintFooter(Graphics g, Rectangle r)

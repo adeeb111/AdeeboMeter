@@ -131,7 +131,7 @@ namespace AdeeboMeter
     {
         public string Hint = "";
         public List<Timeline.Ev> Recent = new List<Timeline.Ev>();
-        public int Level; public string Headline = "Waking up... give me ten seconds, boss.", Chip = "All quiet"; public int Countdown;
+        public int Level; public string Headline = "Waking up... give me ten seconds, boss.", Chip = "All quiet", Flow = ""; public int Countdown;
         public int[] Path = { 3, 3, 3, 3, 3 };
         public string[] PathLabel = { "PC", "LAN", "ISP", "DNS", "Internet" }, PathMain = new string[5], PathSub = new string[5];
         public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping, Jitter, LossPct, DnsMs;

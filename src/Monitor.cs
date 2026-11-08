@@ -77,6 +77,7 @@ namespace AdeeboMeter
         PerformanceCounter pcIdle, pcRead, pcWrite;
         volatile bool stop;
         readonly AutoResetEvent wake = new AutoResetEvent(false);
+        readonly ManualResetEvent stopping = new ManualResetEvent(false); Thread samplerT, probeT;
 
         public void Start()
         {
@@ -85,13 +86,15 @@ namespace AdeeboMeter
             availHandler = delegate(object o, NetworkAvailabilityEventArgs e) { Events.Add(e.IsAvailable ? 0 : 2, "net", e.IsAvailable ? "Network is back" : Voice.P("Every network connection just dropped.", "All network connections dropped.")); netChanged = true; wake.Set(); };
             try { NetworkChange.NetworkAddressChanged += addrHandler; NetworkChange.NetworkAvailabilityChanged += availHandler; } catch { }
             RefreshInterfaces();
-            var s = new Thread(SamplerLoop); s.IsBackground = true; s.Name = "sampler"; s.Priority = ThreadPriority.BelowNormal; s.Start();
-            var p = new Thread(ProbeLoop); p.IsBackground = true; p.Name = "probe"; p.Priority = ThreadPriority.BelowNormal; p.Start();
+            if (samplerT != null) return;   // started once
+            var s = new Thread(SamplerLoop); s.IsBackground = true; s.Name = "sampler"; s.Priority = ThreadPriority.BelowNormal; samplerT = s; s.Start();
+            var p = new Thread(ProbeLoop); p.IsBackground = true; p.Name = "probe"; p.Priority = ThreadPriority.BelowNormal; probeT = p; p.Start();
         }
         public void Stop()
         {
-            stop = true; wake.Set();
+            stop = true; wake.Set(); stopping.Set();
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
+            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(3000);   // both finish their tick and release their counters
         }
         void Once(string key, int seconds, int lv, string kind, string text)
         {
@@ -133,7 +136,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("sampler: " + e.Message); }
                 int wait = 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds;
-                if (wait > 0) Thread.Sleep(wait);
+                if (wait > 0) stopping.WaitOne(wait);   // Stop wakes it at once
             }
             foreach (var pc in new[] { pcIdle, pcRead, pcWrite }) if (pc != null) try { pc.Dispose(); } catch { }
         }
@@ -453,7 +456,7 @@ namespace AdeeboMeter
             {
                 if (state != pState && state.StartsWith("disconnected", StringComparison.Ordinal)) { Events.Add(2, "wifi", Voice.P("Wi-Fi dropped.", "Wi-Fi disconnected.")); ExplainWifiDrop(); }
                 else if (state != pState && pState.StartsWith("disconnected", StringComparison.Ordinal) && state == "connected") Events.Add(0, "wifi", "Wi-Fi reconnected");
-                if (bssid != "" && pBssid != "" && bssid != pBssid) { lastRoam = now; Events.Add(1, "wifi", Voice.P("Wi-Fi hopped to another access point", "Wi-Fi roamed to another access point") + " (ch " + ch + ", signal " + sig + "%)"); }
+                if (bssid != "" && pBssid != "" && bssid != pBssid) { lastRoam = now; Events.Add(1, "wifi", Voice.P("Wi-Fi hopped to another access point", "Wi-Fi roamed to another access point") + " (ch " + ch + ", signal " + sig + "%, from " + pBssid + " to " + bssid + ")"); }
                 else if (ch != "" && pCh != "" && ch != pCh) Events.Add(1, "wifi", "Wi-Fi channel changed " + pCh + " → " + ch);
                 if (rate > 0 && pRate >= 50 && rate < pRate * 0.5) Events.Add(1, "wifi", "Wi-Fi link rate dropped " + pRate + " → " + rate + " Mb/s");
                 if (sig >= 0 && pSig >= 0 && pSig - sig >= 25) { lastSigDrop = now; Events.Add(1, "wifi", "Wi-Fi signal fell to " + sig + "% (was " + pSig + "%)"); }
@@ -670,17 +673,18 @@ namespace AdeeboMeter
             string t1 = top.Count > 0 ? top[0].Name + " (" + Draw.MemStr(top[0].Mem) + ")" : "your apps", t2 = top.Count > 1 ? top[1].Name : "";
             string hogs = t1 + (t2 != "" ? " and " + t2 : "");
             string linkName = hasWifi ? "Wi-Fi" : "local network";
-            if (link == 2 && hasWifi && sig < 30) Set(2, Voice.P("Boss, your Wi-Fi is whispering (signal " + sig + "%). Not the PC's fault - move closer or plug in a cable.", "Wi-Fi signal is weak (" + sig + "%). Move closer to the access point or use a cable."));
-            else if (link == 2) Set(2, Voice.P("Found it: your " + linkName + " is dragging (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is innocent.", "The " + linkName + " is slow (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is not the cause."));
-            else if (pc == 2 && (mem > 90 || com > 92)) Set(2, Voice.P("Your PC is cooked, boss - memory is full. " + hogs + " are the hungry ones; close something.", "Memory is almost full. " + hogs + " use the most; close something."));
-            else if (pc == 2) Set(2, Voice.P("CPU is running a marathon (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "Something") + " is doing the running.", "CPU is pegged (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "An app") + " uses the most."));
+            if (link == 2 && hasWifi && sig < 30) Set(2, Voice.Red("Boss, your Wi-Fi is whispering (signal " + sig + "%). Not the PC's fault - move closer or plug in a cable.", "Wi-Fi signal is weak (" + sig + "%). Move closer to the access point or use a cable."));
+            else if (link == 2) Set(2, Voice.Red("Found it: your " + linkName + " is dragging (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is innocent.", "The " + linkName + " is slow (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is not the cause."));
+            else if (pc == 2 && (mem > 90 || com > 92)) Set(2, Voice.Red("Your PC is cooked, boss - memory is full. " + hogs + " are the hungry ones; close something.", "Memory is almost full. " + hogs + " use the most; close something."));
+            else if (pc == 2) Set(2, Voice.Red("CPU is running a marathon (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "Something") + " is doing the running.", "CPU is pegged (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "An app") + " uses the most."));
             else if (call && (jit > 30 || loss > 2)) Set(1, Voice.P("Call getting wobbly (jitter " + Draw.Fmt(jit, "0", " ms") + "). If faces freeze, turn video off - audio will survive.", "Call quality dropping (jitter " + Draw.Fmt(jit, "0", " ms") + "). Turn video off if it stutters."));
-            else if (isp == 2 || inet == 2) Set(2, Voice.P("Not you, not your PC - the internet past your router" + (vpn ? " / VPN" : "") + " is having a bad day.", "The internet past your router" + (vpn ? " / VPN" : "") + " is slow. Your PC and " + linkName + " are fine."));
-            else if (dn == 2) Set(2, dnsFail ? Voice.P("The internet's there but DNS lost the phone book - sites won't open by name.", "DNS lookups are failing; sites won't open by name.") : Voice.P("DNS is taking the scenic route (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms) - pages will be slow to start.", "DNS is slow (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms); pages will be slow to start."));
+            else if (isp == 2 || inet == 2) Set(2, Voice.Red("Not you, not your PC - the internet past your router" + (vpn ? " / VPN" : "") + " is having a bad day.", "The internet past your router" + (vpn ? " / VPN" : "") + " is slow. Your PC and " + linkName + " are fine."));
+            else if (dn == 2) Set(2, dnsFail ? Voice.Red("The internet's there but DNS lost the phone book - sites won't open by name.", "DNS lookups are failing; sites won't open by name.") : Voice.Red("DNS is taking the scenic route (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms) - pages will be slow to start.", "DNS is slow (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms); pages will be slow to start."));
             else if (call) Set(0, Voice.P("Call looks smooth. Go impress them.", "Call quality is good."));
             else if (pc == 1) Set(1, Voice.P("Busy, but holding. Maybe don't open another big app just yet.", "Busy but fine. Avoid opening big apps for now."));
             else if (link == 1 || isp == 1 || dn == 1 || inet == 1) Set(1, Voice.P("Network's a bit sleepy; your PC is fine.", "Network a bit slow; your PC is fine."));
             else Set(0, Voice.P("All quiet. Nothing to fix - go get coffee.", "All quiet."));
+            flow = level == 0 ? "" : call ? "calls" : pc >= 1 && link < 2 && isp < 2 && inet < 2 ? "pc" : dn == 2 ? "site" : link == 2 ? "drops" : "slow";   // the Investigate check that fits
 
             // gateway latency jumps (against its own calm baseline)
             if (!double.IsNaN(gw))
@@ -713,10 +717,11 @@ namespace AdeeboMeter
             hint = h;
         }
         void Set(int l, string h) { level = l; headline = h; }
+        string flow = "";
 
         Snap BuildSnap()
         {
-            var s = new Snap { Level = level, Headline = headline, Countdown = countdown, Path = path, Hint = hint, Recent = Events.Recent(3) };
+            var s = new Snap { Level = level, Headline = headline, Flow = flow, Countdown = countdown, Path = path, Hint = hint, Recent = Events.Recent(3) };
             s.Chip = level == 2 ? Voice.P("Needs you", "Problem") : level == 1 ? "Busy" : Voice.P("All quiet", "OK");
             s.Cpu = Cpu.Last; s.Mem = Mem.Last; s.Disk = Disk.Last; s.Down = Down.Last; s.Up = Up.Last;
             s.DownHist = Down.Values(60); s.UpHist = Up.Values(60);

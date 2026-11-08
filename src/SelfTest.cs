@@ -70,6 +70,20 @@ namespace AdeeboMeter
             File.WriteAllText(path, sb.ToString());
             return sb.ToString().Contains("ALL PASSED") ? 0 : 1;
         }
+        // --mibtest <walk.txt>: writes AdeeboMeter-mibtest.txt - the walk named and rebuilt through your MIB folder
+        public static int MibTest(string file)
+        {
+            var sb = new StringBuilder(); var sw = Stopwatch.StartNew();
+            try
+            {
+                var rows = SnmpTools.FromNetSnmp(file, s => { });
+                sb.AppendLine("AdeeboMeter " + Program.Version + " MIB test · " + MibIndex.FileCount() + " MIB files · " + sw.ElapsedMilliseconds + " ms");
+                foreach (var r in rows) sb.AppendLine(r[0] == "6" || r[0] == "7" || r[0] == "8" ? (r[0] == "7" ? "! " : "  ") + r[2] : r[1] + ": " + r[2]);
+            }
+            catch (Exception e) { sb.AppendLine("FAILED: " + e); }
+            File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString());
+            return 0;
+        }
         public static int Run()
         {
             var sb = new StringBuilder(); int fails = 0;
@@ -140,6 +154,34 @@ namespace AdeeboMeter
                 var big = new List<string>(); Protocols.ParseVarbinds(hex("3016301406082b060102010103004308ffffffffffffffff"), big);
                 if (big.Count != 1 || big[0] != "(out of range)") throw new InvalidOperationException("SNMP TimeTicks too big isn't caught");
                 if (swSnmp.ElapsedMilliseconds > 500 || good.Count != 1 || good[0] != "a") throw new InvalidOperationException("SNMP reply parser wrong (" + good.Count + " values, " + swSnmp.ElapsedMilliseconds + " ms)");
+                // dig: HTTPS (RFC 9460), DNSKEY key tag (RFC 4034 B, 2371 as dnspython computes it), DS, and the IPv6 reverse name
+                var dm = Toolkit.Parse(hex("052e81000001000300000000076578616d706c6503636f6d0000410001c00c004100010000012c002f000100000100060268330268320003000220fb00040004c00002010006001020010db8000000000000000000000001c00c003000010000012c00440101030d99db2cc14cabdc33d6d77da63a2f15f71112584f234e8d1dc428e39e8a4a97e1aa271a555dc90701e17e2a4c4b6f120b7c32d44f4ac02bd894cf2d4be7778a19c00c002b00010000012c002409430d021f987cc6583e92df0890718c42a0e86a0f2a6e6cde1e1c3f5c9f4a6b6b2e7f1a"), 1, "t");
+                if (dm.Rrs.Count != 3 || dm.Rrs[0].Data != "priority 1 . alpn=h3,h2 port=8443 ipv4hint=192.0.2.1 ipv6hint=2001:db8::1" || !dm.Rrs[1].Data.Contains("key tag 2371") || !dm.Rrs[1].Data.StartsWith("KSK", StringComparison.Ordinal) || !dm.Rrs[2].Data.StartsWith("key tag 2371 ECDSAP256SHA256 digest SHA-256 1F987C", StringComparison.Ordinal))
+                    throw new InvalidOperationException("dig HTTPS / DNSKEY / DS decoding wrong: " + string.Join(" | ", dm.Rrs.Select(x => x.Data)));
+                if (Toolkit.PtrName(System.Net.IPAddress.Parse("2001:db8::1")) != "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa") throw new InvalidOperationException("IPv6 reverse name wrong");
+                foreach (var cut in new[] { 20, 60, 90, 130 }) Toolkit.Parse(hex("052e81000001000300000000076578616d706c6503636f6d0000410001c00c004100010000012c002f000100000100060268330268320003000220fb00040004c00002010006001020010db8000000000000000000000001c00c003000010000012c00440101030d99db2cc14cabdc33d6d77da63a2f15f71112584f234e8d1dc428e39e8a4a97e1aa271a555dc90701e17e2a4c4b6f120b7c32d44f4ac02bd894cf2d4be7778a19").Take(cut).ToArray(), 1, "t");   // cut short: no crash
+                // SNMPv3 keys: RFC 3414 appendix A.3 (password "maplesyrup", engine 00..02)
+                var eid = hex("000000000000000000000002");
+                if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "md5")).Replace("-", "") != "526F5EED9FCCE26F8964C2930787D82B") throw new InvalidOperationException("SNMPv3 MD5 key localization wrong");
+                if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "sha")).Replace("-", "") != "6695FEBC9288E36282235FC7151F128497B38F3F") throw new InvalidOperationException("SNMPv3 SHA key localization wrong");
+                var plain = System.Text.Encoding.ASCII.GetBytes("a scoped PDU of 37 bytes, not a block"); var salt = hex("0102030405060708"); var aesKey = Snmp.Localize("maplesyrup", eid, "sha");
+                var enc = Snmp.Aes(aesKey, 3, 1234, salt, plain, true); if (enc.SequenceEqual(plain) || !Snmp.Aes(aesKey, 3, 1234, salt, enc, false).SequenceEqual(plain)) throw new InvalidOperationException("SNMPv3 AES round trip wrong");
+                if (Snmp.Cred.Parse("v3:admin").Version != 3 || Snmp.Cred.Parse("v3-sha256:u:a:p").AuthAlg != "sha256" || Snmp.Cred.Parse("v3:u:a:p").PrivPass != "p" || Snmp.Cred.Parse("public").Community != "public") throw new InvalidOperationException("SNMP credentials parsing wrong");
+                // MIB reader: a TC with enums, a table, its entry, two columns
+                var mib = "TEST-MIB DEFINITIONS ::= BEGIN\n MyState ::= TEXTUAL-CONVENTION STATUS current DESCRIPTION \"x\" SYNTAX INTEGER { up(1), down(2) }\n" +
+                    "test OBJECT IDENTIFIER ::= { enterprises 99999 }\n tTable OBJECT-TYPE SYNTAX SEQUENCE OF TEntry MAX-ACCESS not-accessible STATUS current DESCRIPTION \"the table\" ::= { test 1 }\n" +
+                    "tEntry OBJECT-TYPE SYNTAX TEntry MAX-ACCESS not-accessible STATUS current DESCRIPTION \"a row\" INDEX { tIdx } ::= { tTable 1 }\n" +
+                    "tName OBJECT-TYPE SYNTAX DisplayString MAX-ACCESS read-only STATUS current DESCRIPTION \"the name -- not a comment inside a string\" ::= { tEntry 2 }\n" +
+                    "tOperState OBJECT-TYPE SYNTAX MyState MAX-ACCESS read-only STATUS current DESCRIPTION \"state\" ::= { tEntry 3 } -- a comment\nEND";
+                var lines = MibIndex.BuildLines(new[] { mib });
+                var st = lines.FirstOrDefault(l => l.StartsWith("1.3.6.1.4.1.99999.1.1.3\ttOperState\t1.3.6.1.4.1.99999.1\t", StringComparison.Ordinal));
+                if (st == null || st.Split('\t')[3] != "1=up,2=down") throw new InvalidOperationException("MIB reader wrong: " + string.Join(" | ", lines));
+                // a walk rebuilt into a table, trouble first
+                var idx = MibIndex.BuiltinOnly(); Func<string, byte, byte[], Snmp.Vb> vb = (o, ty, raw) => new Snmp.Vb { Oid = o, Type = ty, Raw = raw };
+                var walk = new List<Snmp.Vb> { vb("1.3.6.1.2.1.2.2.1.2.1", 4, System.Text.Encoding.ASCII.GetBytes("eth0")), vb("1.3.6.1.2.1.2.2.1.2.2", 4, System.Text.Encoding.ASCII.GetBytes("eth1")),
+                    vb("1.3.6.1.2.1.2.2.1.7.1", 2, new byte[] { 1 }), vb("1.3.6.1.2.1.2.2.1.7.2", 2, new byte[] { 1 }), vb("1.3.6.1.2.1.2.2.1.8.1", 2, new byte[] { 1 }), vb("1.3.6.1.2.1.2.2.1.8.2", 2, new byte[] { 2 }) };
+                var tabs = Snmp.Tables(walk, idx, null);
+                if (tabs.Count != 1 || tabs[0].Name != "ifTable" || tabs[0].Rows.Count != 2 || tabs[0].Rows["2"]["ifOperStatus"] != "down" || !Snmp.Trouble(tabs[0], tabs[0].Rows["2"]) || Snmp.Trouble(tabs[0], tabs[0].Rows["1"])) throw new InvalidOperationException("SNMP table rebuild wrong");
                 n += RoutingTools.Neighbours(M).Count;
                 n += RoutingTools.Ipv6Routers().Count + RoutingTools.RouteFor("127.0.0.1").Count;
                 n += SysTools.Listening(M).Count + SysTools.Certs().Count + SysTools.TimeSource().Count;
@@ -264,7 +306,7 @@ namespace AdeeboMeter
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
                     "travel.LADDER", "travel.ANATOMY", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp" }.Select(x => "tb." + x));
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpwalk", "mibs", "dhcp", "roams", "bloat", "dscp", "discover" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));

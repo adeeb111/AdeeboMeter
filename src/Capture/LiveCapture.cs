@@ -75,7 +75,9 @@ namespace AdeeboMeter
         static readonly string[] fields = { "frame.len", "frame.protocols", "ip.src", "ip.dst", "ipv6.src", "ipv6.dst", "tcp.srcport", "tcp.dstport", "udp.srcport", "udp.dstport",
             "tls.handshake.extensions_server_name", "dns.qry.name", "dns.a", "dns.aaaa", "_ws.expert.message", "_ws.col.Protocol" };
 
-        public bool Start(string ifaceGuid)
+        readonly object life = new object(); Thread reader;   // Start and Stop never overlap (a restart can come from three places)
+        public bool Start(string ifaceGuid) { lock (life) return Start2(ifaceGuid); }
+        bool Start2(string ifaceGuid)
         {
             Stop();
             Guid g; if (!Guid.TryParse((ifaceGuid ?? "").Trim('{', '}'), out g)) { Error = "No active adapter to capture on."; return false; }
@@ -105,7 +107,7 @@ namespace AdeeboMeter
                     Error = Draw.Trunc(d.Trim(), 140);
                 };
                 ts.BeginErrorReadLine();
-                var t = new Thread(Reader) { IsBackground = true, Name = "tshark", Priority = ThreadPriority.BelowNormal }; t.Start();
+                var t = new Thread(Reader) { IsBackground = true, Name = "tshark", Priority = ThreadPriority.BelowNormal }; reader = t; t.Start();
                 // ring buffer for Sniff
                 try { Directory.CreateDirectory(RingDir); foreach (var f in Directory.GetFiles(RingDir)) try { File.Delete(f); } catch { } } catch { }
                 var rp = new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -b filesize:20000 -b files:5 -w \"" + Path.Combine(RingDir, "ring.pcapng") + "\"") { WorkingDirectory = Path.GetDirectoryName(Dumpcap), UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
@@ -117,11 +119,13 @@ namespace AdeeboMeter
             catch (Exception e) { Error = "Could not start tshark: " + e.Message; Stop(); return false; }
         }
 
-        public void Stop()
+        public void Stop() { lock (life) Stop2(); }
+        void Stop2()
         {
             bool was = running; running = false;
             foreach (var p in new[] { ts, ring })
                 if (p != null) { try { if (!p.HasExited) { p.Kill(); p.WaitForExit(2000); } } catch { } try { p.Dispose(); } catch { } }
+            var rd = reader; reader = null; if (rd != null && rd != Thread.CurrentThread) rd.Join(2000);   // tshark is gone, so its reader ends
             ts = null; ring = null;
             try { if (Directory.Exists(RingDir)) foreach (var f in Directory.GetFiles(RingDir)) try { File.Delete(f); } catch { } } catch { }
             lock (k) { convs.Clear(); names.Clear(); phs.Clear(); expert.Clear(); rtp.Clear(); dhcp.Clear(); }
@@ -366,7 +370,7 @@ namespace AdeeboMeter
                 if (parts.Count == 0) { status("Nothing captured for that flow."); return; }
                 Job.Run(Mergecap, "-w \"" + final + "\" " + string.Join(" ", parts.Select(x => "\"" + x + "\"")), 60000);
                 string ws = Path.Combine(WsDir, "Wireshark.exe");
-                if (File.Exists(final)) { if (File.Exists(ws)) { var psi = new ProcessStartInfo(ws, "\"" + final + "\"") { WorkingDirectory = Path.GetDirectoryName(ws), UseShellExecute = false }; Process.Start(psi).Dispose(); } status(Voice.P("Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits; Save As to keep it.)", "Saved with history; opening in Wireshark.")); }
+                if (File.Exists(final)) { Program.LastCapture = final; if (File.Exists(ws)) { var psi = new ProcessStartInfo(ws, "\"" + final + "\"") { WorkingDirectory = Path.GetDirectoryName(ws), UseShellExecute = false }; Process.Start(psi).Dispose(); } status(Voice.P("Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)", "Saved with history; opening in Wireshark.")); }
                 else status("Merging failed.");
             }
             catch (Exception e) { status("Sniff failed: " + e.Message); Program.Log("sniff history: " + e); }

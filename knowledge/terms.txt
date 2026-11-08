@@ -988,6 +988,16 @@ how: From the optional 7-day history - one sample every 10 s.
 why: Lets you answer 'what was wrong at 2:15 yesterday?'
 without: Red stretches line up with the events listed below.
 
+== card.IPV6
+friendly: IPv6 for this site
+cat: term
+close: -1
+tag: Does the same site work over IPv6?
+what: When the name has an IPv6 address too, three IPv6 pings and one connection to the same port - next to the IPv4 time.
+how: Only during a check you start; nothing is sent if the name has no IPv6 address.
+why: Browsers try IPv6 first. A site that hangs only sometimes is often one where IPv6 is broken and the browser falls back to IPv4 after a delay.
+without: 'No IPv6 route' is normal on many networks - browsers then use IPv4 straight away.
+
 == card.DNS SECOND OPINION
 friendly: DNS second opinion
 cat: term
@@ -1768,6 +1778,56 @@ how: Follows the redirect chain, lists the useful headers (HSTS, HTTP/3 offered,
 why: The quick answer to 'why does the browser complain about this site'.
 without: A few requests to that site.
 
+== tb.dhcp
+friendly: DHCP lease
+cat: term
+close: -1
+tag: Your address lease: when it renews and runs out.
+what: The lease Windows holds now - address, DHCP server, when it was obtained, renews (T1), rebinds (T2) and expires, and the router, DNS and domain it handed out - plus where each IPv6 address came from and how long it stays.
+how: Reads Windows' own record of the lease (no admin, nothing sent).
+why: Drops at the same time every few hours are often a lease that can't renew. A 169.254 address means no DHCP server answered at all.
+without: Static addresses have no lease - that's shown too.
+
+== tb.roams
+friendly: Wi-Fi roams and drops
+cat: term
+close: -1
+tag: Every access-point hop in the last 24 hours.
+what: The Wi-Fi events AdeeboMeter has seen today in order - roams (from which access point to which), drops, channel changes and signal falls - with back-and-forth roams within two minutes marked.
+how: From the events AdeeboMeter already recorded; nothing new is measured.
+why: A laptop that ping-pongs between two access points of equal strength stutters calls even with full bars.
+without: Roaming while you walk around is normal; roaming while sitting still is not.
+
+== tb.bloat
+friendly: Latency under load
+cat: term
+close: -1
+tag: Does your line stay quick when it's full?
+what: Pings while your own iperf3 server fills the line - first downloading, then uploading - and grades how much the delay grows (A+ to F, the scale speed-test sites use).
+how: About 30 seconds of real traffic to the iperf3 server you name, plus 4 pings a second to the ping target.
+why: Bufferbloat is why calls and games stutter when someone else uploads photos - the speed test looks fine but the delay balloons.
+without: The fix is on the router: Smart Queue / SQM / fq_codel / cake, set a little below the real speed.
+
+== tb.dscp
+friendly: DSCP-marked ping
+cat: term
+close: -1
+tag: Does a priority marking change anything?
+what: Pings the target with a DSCP marking (EF for voice, AF41 for video, CS6...) and unmarked in turn, and compares delay and loss.
+how: Alternating marked and unmarked pings, two a second.
+why: Checks whether the network polices or prioritises a class - for example voice traffic that gets dropped once it's marked.
+without: Windows usually clears a marking a program asks for unless a QoS policy allows it. Only a capture proves the ping left marked.
+
+== tb.discover
+friendly: Who announces itself
+cat: term
+close: -1
+tag: Devices and names announced on your network.
+what: Listens for mDNS (Bonjour), SSDP / UPnP, LLMNR and NetBIOS - which devices announce themselves and which names they ask for.
+how: Needs Wireshark + Npcap; listens only, sends nothing, saves nothing.
+why: Finds printers, TVs and smart devices - and the old LLMNR / NetBIOS lookups that let a device on the segment answer falsely and collect sign-in hashes.
+without: A silent result is normal on guest Wi-Fi, which blocks devices from seeing each other.
+
 == tb.sweep
 friendly: Ping sweep
 cat: term
@@ -2029,14 +2089,14 @@ why: Shows the port is open and what software answers (OpenSSH, a router's SSH..
 without: A banner only - no keys exchanged.
 
 == tb.snmp
-friendly: SNMP v2c get
+friendly: SNMP - what is this device?
 cat: term
 close: -1
 tag: Ask a device who it is.
-what: Sends one SNMP v2c GET for name, description, uptime, location and contact.
-how: Sends one SNMP v2c GET for name, description, uptime, location and contact.
-why: Confirms SNMP, the community and the access list all work from this PC.
-without: The community string travels in clear text - prefer SNMP v3 on shared networks.
+what: Reads its name, description, uptime, location, contact and product ID over SNMP v2c or v3 (no auth, auth, or auth + AES privacy).
+how: Reads its name, description, uptime, location, contact and product ID over SNMP v2c or v3 (no auth, auth, or auth + AES privacy).
+why: Confirms SNMP, the credentials and the access list all work from this PC.
+without: Read-only. v2c sends the community in clear text - prefer v3 with auth + privacy.
 
 == tb.syslog
 friendly: Syslog test
@@ -2197,3 +2257,73 @@ what: Lists the local devices Windows has a hardware address for - IP, hardware 
 how: Lists the local devices Windows has a hardware address for - IP, hardware address, the maker or "private address", and virtual routers. Nothing is sent.
 why: A quick look at who's on your segment, and whether the gateway is a VRRP / HSRP pair.
 without: Only devices your PC has exchanged packets with in the last few minutes; a ping sweep fills it in.
+
+== tb.snmpif
+friendly: SNMP - interfaces
+cat: term
+close: -1
+tag: Which ports are down, and which have errors.
+what: Reads the interfaces table (IF-MIB): name, admin and operational state, speed, errors and discards, description - problems first.
+how: Reads the interfaces table (IF-MIB): name, admin and operational state, speed, errors and discards, description - problems first.
+why: Admin up but down is a cable, optic or far-end problem; growing errors point at a bad cable, optic or duplex mismatch.
+without: Read-only. Errors count since the port started - run again and Compare.
+
+== tb.snmptraffic
+friendly: SNMP - traffic per port
+cat: term
+close: -1
+tag: How busy each port is right now.
+what: Reads the 64-bit traffic counters twice, 5 seconds apart, and shows the rate per port - busiest first, with the share of its speed.
+how: Reads the 64-bit traffic counters twice, 5 seconds apart, and shows the rate per port - busiest first, with the share of its speed.
+why: A port near 100% of its speed is the bottleneck.
+without: Read-only, two small walks.
+
+== tb.snmpcpu
+friendly: SNMP - CPU and memory
+cat: term
+close: -1
+tag: Is the device itself overloaded?
+what: Reads processor load and memory / storage use from the standard HOST-RESOURCES-MIB.
+how: Reads processor load and memory / storage use from the standard HOST-RESOURCES-MIB.
+why: A device at 100% CPU drops control traffic and answers slowly.
+without: Many network devices use their own MIB instead - search the MIB folder for cpu.
+
+== tb.snmplldp
+friendly: SNMP - neighbours (LLDP)
+cat: term
+close: -1
+tag: Who is plugged into which port.
+what: Reads the LLDP neighbour table: our port, the neighbour's name, its port and chassis.
+how: Reads the LLDP neighbour table: our port, the neighbour's name, its port and chassis.
+why: Confirms cabling without walking to the rack.
+without: LLDP must be on for those ports.
+
+== tb.snmpsens
+friendly: SNMP - sensors
+cat: term
+close: -1
+tag: Temperatures, optics, voltages, fans.
+what: Reads the standard sensor table (ENTITY-SENSOR-MIB) with names, scaled values and state - problems first.
+how: Reads the standard sensor table (ENTITY-SENSOR-MIB) with names, scaled values and state - problems first.
+why: A hot device or a weak optic (low dBm) explains errors and drops.
+without: Vendors often keep optics in their own MIB - search the MIB folder for optic.
+
+== tb.snmpwalk
+friendly: SNMP - walk any OID
+cat: term
+close: -1
+tag: Any table, rebuilt so you can read it.
+what: Walks an OID or a name from your MIBs (GETBULK, up to 2,000 values), names every column, decodes the values and joins columns into rows - admin-up-but-down rows first.
+how: Walks an OID or a name from your MIBs (GETBULK, up to 2,000 values), names every column, decodes the values and joins columns into rows - admin-up-but-down rows first.
+why: Turns hundreds of numbered lines into one readable table.
+without: Read-only; paced so the device isn't hammered.
+
+== tb.mibs
+friendly: MIB folder and search
+cat: term
+close: -1
+tag: Find the right object before you query.
+what: Lists your MIB folder and searches every object's name and description - click a result to walk it on the device.
+how: Lists your MIB folder and searches every object's name and description - click a result to walk it on the device.
+why: No more guessing OIDs: search 'temperature' or 'optic' and walk what it finds.
+without: Put the vendor's whole MIB set in the folder; it's read locally and never sent anywhere.

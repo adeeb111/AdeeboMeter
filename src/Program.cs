@@ -54,8 +54,8 @@ namespace AdeeboMeter
     static class Program
     {
         public static string Dir;
-        public const string Version = "1.1.1";
-        public const string FileVersion = "1.1.1.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
+        public const string Version = "1.1.2";
+        public const string FileVersion = "1.1.2.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "is it me or the network?";
         public static int ForceTheme = -1;
@@ -81,6 +81,8 @@ namespace AdeeboMeter
             if (args.Any(a => string.Equals(a, "--light", StringComparison.OrdinalIgnoreCase))) ForceTheme = 0;
             if (args.Any(a => string.Equals(a, "--selftest", StringComparison.OrdinalIgnoreCase))) return SelfTest.Run();
             if (args.Any(a => string.Equals(a, "--perf", StringComparison.OrdinalIgnoreCase))) return SelfTest.Perf();
+            int mt = Array.FindIndex(args, a => string.Equals(a, "--mibtest", StringComparison.OrdinalIgnoreCase));
+            if (mt >= 0 && mt + 1 < args.Length) return SelfTest.MibTest(args[mt + 1]);
             if (args.Any(a => string.Equals(a, "--deeptest", StringComparison.OrdinalIgnoreCase)))
             {
                 int mi = Array.FindIndex(args, a => a == "--minutes"), min; if (mi < 0 || mi + 1 >= args.Length || !int.TryParse(args[mi + 1], out min)) min = 20;
@@ -156,6 +158,7 @@ namespace AdeeboMeter
             if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("capture path outside the capture folder");
             return full;
         }
+        public static volatile string LastCapture = "";   // the newest capture this session - "Keep this capture" copies it out before exit deletes it
         public static void CleanCaptures()
         {
             try { foreach (var f in Directory.GetFiles(CaptureDir, "*.pcapng")) try { File.Delete(f); } catch { } } catch { }
@@ -330,6 +333,7 @@ namespace AdeeboMeter
     {
         public static volatile bool Serious;
         public static string P(string fun, string plain) { return Serious ? plain : fun; }
+        public static string Red(string fun, string plain) { return plain; }   // a real problem is never a joke - the plain words, whatever the voice
         public static string Greet()
         {
             int h = DateTime.Now.Hour;

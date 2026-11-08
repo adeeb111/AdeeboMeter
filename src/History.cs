@@ -42,7 +42,7 @@ namespace AdeeboMeter
                 try
                 {
                     Directory.CreateDirectory(Dir); File.AppendAllText(file, line + "\r\n");
-                    if ((DateTime.UtcNow - lastPrune).TotalHours > 6) { lastPrune = DateTime.UtcNow; Tidy(); }
+                    if ((DateTime.UtcNow - lastPrune).TotalHours > 6) { lastPrune = DateTime.UtcNow; System.Threading.ThreadPool.QueueUserWorkItem(delegate { Tidy(); }); }   // never on the 1-second sampler
                 }
                 catch (Exception e) { Program.Log("history: " + e.Message); }
             }

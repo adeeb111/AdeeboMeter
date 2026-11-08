@@ -22,7 +22,9 @@ namespace AdeeboMeter
         public static uint Addr(IPAddress a) { return BitConverter.ToUInt32(a.GetAddressBytes(), 0); }
 
         // size = payload bytes (IP packet = size + 28). rr = ask every router to write its address (9 slots).
-        public static Res Echo(IPAddress dest, int size, int ttl, bool df, int timeoutMs, bool rr)
+        public static Res Echo(IPAddress dest, int size, int ttl, bool df, int timeoutMs, bool rr) { return Echo(dest, size, ttl, df, timeoutMs, rr, 0); }
+        // tos = the whole TOS byte (DSCP << 2). Windows may clear it on the way out unless a QoS policy allows it - only a capture proves it left marked.
+        public static Res Echo(IPAddress dest, int size, int ttl, bool df, int timeoutMs, bool rr, byte tos)
         {
             var r = new Res();
             if (dest == null || dest.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) return r;
@@ -32,7 +34,7 @@ namespace AdeeboMeter
             {
                 var data = new byte[Math.Max(0, Math.Min(65000, size))];
                 for (int i = 0; i < data.Length; i++) data[i] = (byte)('a' + i % 23);
-                var o = new IpOpt { Ttl = (byte)Math.Max(1, Math.Min(255, ttl)), Flags = (byte)(df ? 2 : 0) };
+                var o = new IpOpt { Ttl = (byte)Math.Max(1, Math.Min(255, ttl)), Tos = tos, Flags = (byte)(df ? 2 : 0) };
                 if (rr)
                 {
                     var rrb = new byte[40]; rrb[0] = 7; rrb[1] = 39; rrb[2] = 4;   // Record Route: type, length, pointer, then 9 empty slots

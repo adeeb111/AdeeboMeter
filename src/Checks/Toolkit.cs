@@ -80,6 +80,64 @@ namespace AdeeboMeter
             }
             return rows;
         }
+        // ---------- DSCP ping: marked and unmarked pings in turn, so the difference is the marking and not the minute
+        static readonly Dictionary<string, int> Dscp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "EF", 46 }, { "AF41", 34 }, { "AF42", 36 }, { "AF31", 26 }, { "AF21", 18 }, { "AF11", 10 }, { "CS1", 8 }, { "CS2", 16 }, { "CS3", 24 }, { "CS4", 32 }, { "CS5", 40 }, { "CS6", 48 }, { "CS7", 56 }, { "BE", 0 } };
+        public static List<string[]> DscpPing(string target, string dscp, string count, Run run)
+        {
+            var rows = new List<string[]>(); var dst = Icmp.Resolve4(target); if (dst == null) { rows.Add(R(2, "Target", "couldn't find " + target + " (IPv4)", "", "u")); return rows; }
+            int d; string dn = (dscp ?? "").Trim(); if (!Dscp.TryGetValue(dn, out d) && !(int.TryParse(dn, out d) && d >= 0 && d <= 63)) { rows.Add(R(2, "DSCP", "use a name (EF, AF41, CS6...) or 0-63", "", "u")); return rows; }
+            int n; if (!int.TryParse(count, out n)) n = 20; n = Math.Max(2, Math.Min(200, n));
+            var mk = new List<double>(); var pl = new List<double>(); run.SeriesUnit = "ms";
+            for (int i = 0; i < n && !run.Stop; i++)
+            {
+                bool marked = i % 2 == 0; var sw = Stopwatch.StartNew();
+                var r = Icmp.Echo(dst, 64, 128, false, 1000, false, marked ? (byte)(d << 2) : (byte)0); double v = r.Status == Icmp.Ok ? Math.Max(r.Rtt, 0.5) : double.NaN;
+                (marked ? mk : pl).Add(v); if (marked) run.Add(v); run.Status = "Ping " + (i + 1) + " / " + n + (marked ? " (DSCP " + d + ")" : " (unmarked)");
+                int w = 500 - (int)sw.ElapsedMilliseconds; if (w > 0) Thread.Sleep(w);
+            }
+            Func<List<double>, string> sum = l => { var ok = l.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); return ok.Count == 0 ? "no replies" : "median " + ok[ok.Count / 2] + " ms · " + (l.Count - ok.Count) + " of " + l.Count + " lost"; };
+            string name = Dscp.FirstOrDefault(x => x.Value == d).Key;
+            rows.Add(R(mk.Count(double.IsNaN) > pl.Count(double.IsNaN) + 1 ? 1 : 0, "DSCP " + d + (name != null ? " (" + name + ")" : ""), sum(mk), "", "m"));
+            rows.Add(R(0, "Unmarked (0)", sum(pl), "", "m"));
+            rows.Add(R(3, "Was it really marked?", "only a capture can say", "Windows clears the marking a program asks for unless a QoS policy (Group Policy > Policy-based QoS) allows it. To check: Live capture with filter  icmp , look at the DSCP field of the request. Marked pings that are dropped while unmarked ones pass mean something on the way polices that class.", "i"));
+            return rows;
+        }
+
+        // ---------- latency under load (bufferbloat): ping while your own iperf3 server fills the line, one direction at a time
+        public static List<string[]> Loaded(string server, string target, Run run)
+        {
+            var rows = new List<string[]>(); if ((server ?? "").Trim() == "") { rows.Add(R(2, "Server", "type your iperf3 server", "It has to be on the far side of the link you want to test - for your internet line, a server out on the internet (iperf3 -s).", "u")); return rows; }
+            var dst = Icmp.Resolve4(string.IsNullOrWhiteSpace(target) ? "1.1.1.1" : target); if (dst == null) { rows.Add(R(2, "Ping target", "couldn't find " + target, "", "u")); return rows; }
+            run.SeriesUnit = "ms";
+            Func<int, Func<bool>, List<double>> pings = (max, stop) =>
+            {
+                var l = new List<double>();
+                for (int i = 0; i < max && !stop() && !run.Stop; i++) { var sw = Stopwatch.StartNew(); var r = Icmp.Echo(dst, 32, 128, false, 1000, false); double v = r.Status == Icmp.Ok ? Math.Max(r.Rtt, 0.5) : double.NaN; l.Add(v); run.Add(v); int w = 250 - (int)sw.ElapsedMilliseconds; if (w > 0) Thread.Sleep(w); }
+                return l;
+            };
+            Func<List<double>, double> med = l => { var v = l.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); return v.Count == 0 ? double.NaN : v[v.Count / 2]; };
+            run.Status = "Idle latency to " + dst + "...";
+            double idle = med(pings(20, () => false));
+            if (double.IsNaN(idle)) { rows.Add(R(2, "Idle", dst + " doesn't answer pings - pick another target", "", "m")); return rows; }
+            rows.Add(R(0, "Idle", idle.ToString("0", CultureInfo.CurrentCulture) + " ms to " + dst, "", "m"));
+            double worst = 0;
+            foreach (bool down in new[] { true, false })
+            {
+                if (run.Stop) break;
+                run.Status = (down ? "Download" : "Upload") + " load + ping...";
+                bool done = false; List<double> during = null;
+                var pt = new Thread(() => { Thread.Sleep(1500); during = pings(400, () => done); }) { IsBackground = true, Name = "bloat ping" }; pt.Start();   // skip TCP's first second-and-a-half (slow start)
+                List<string[]> ip; try { ip = Iperf(server, (down ? "-R" : "") + " -t 10 -P 4", run); } finally { done = true; }
+                pt.Join(3000);
+                var thr = ip.FirstOrDefault(x => x[1] == (down ? "Download" : "Upload"));
+                double ld = during != null ? med(during) : double.NaN, add = ld - idle; if (!double.IsNaN(add)) worst = Math.Max(worst, add);
+                rows.Add(R(double.IsNaN(add) ? 2 : add > 200 ? 2 : add > 60 ? 1 : 0, "During " + (down ? "download" : "upload"), (double.IsNaN(ld) ? "pings lost under load" : ld.ToString("0", CultureInfo.CurrentCulture) + " ms (+" + Math.Max(0, add).ToString("0", CultureInfo.CurrentCulture) + " ms)") + (thr != null ? " · " + thr[2] : " · " + (ip.Count > 0 ? Draw.Trunc(ip[ip.Count - 1][2], 60) : "no load")), "", "m"));
+            }
+            string grade = worst < 5 ? "A+" : worst < 30 ? "A" : worst < 60 ? "B" : worst < 200 ? "C" : worst < 400 ? "D" : "F";
+            rows.Insert(0, R(worst >= 200 ? 2 : worst >= 60 ? 1 : 0, "Bufferbloat grade", grade + " · latency rises up to " + worst.ToString("0", CultureInfo.CurrentCulture) + " ms when the line is full",
+                worst >= 60 ? "Calls and games stutter while someone uploads or downloads. The fix is on the router: turn on SQM / Smart Queue / fq_codel / cake, set a little under your real speed." : "Busy line or not, calls stay smooth.", "i"));
+            return rows;
+        }
         static List<string[]> IperfOne(string host, Opt o, bool reverse, Run run)
         {
             bool udp = o.Udp; int port = o.Port, par = o.Par, secs = o.Secs + o.Omit; long udpRate = o.Rate; int len = (int)(o.Len > 0 ? o.Len : udp ? 1400 : 131072);
@@ -93,7 +151,7 @@ namespace AdeeboMeter
                 if (!ctl.ConnectAsync(addr, port).Wait(5000)) throw new TimeoutException("no answer on TCP " + port);
                 var cs = ctl.GetStream(); cs.Write(cookie, 0, Cookie);
                 var streams = new List<Socket>(); long[] bytes = new long[1]; long pkts = 0, lost = 0; double jit = 0; var sw = new Stopwatch(); var threads = new List<Thread>();
-                long udpSeqMax = 0, atOmit = 0; double lastTransit = double.NaN; var lockU = new object();
+                long atOmit = 0, jitN = 0; double jitSum = 0; var lockU = new object();
                 // Stop (or a test that runs far past its length) closes every socket - that breaks any read or write that is waiting
                 bool finished = false; var deadline = DateTime.UtcNow.AddSeconds(secs + 60);
                 var guard = new Thread(() => { while (!finished) { if (run.Stop || DateTime.UtcNow > deadline) { try { ctl.Close(); } catch { } lock (streams) foreach (var s in streams) try { s.Close(); } catch { } return; } Thread.Sleep(200); } }) { IsBackground = true, Name = "iperf guard" };
@@ -116,7 +174,10 @@ namespace AdeeboMeter
                             {
                                 if (run.Stop) break;
                                 var s = new Socket(addr.AddressFamily, SocketType.Dgram, ProtocolType.Udp); Tune(s, o); s.Connect(addr, port); s.ReceiveTimeout = 3000;
-                                s.Send(new byte[] { 0x39, 0x38, 0x37, 0x36 });   // UDP_CONNECT_MSG 0x36373839, sent in the server's (little-endian) byte order var rb = new byte[4]; try { s.Receive(rb); } catch (SocketException) { throw new InvalidOperationException("UDP to the server is blocked (no reply on UDP " + port + ")"); }
+                                s.Send(new byte[] { 0x39, 0x38, 0x37, 0x36 });   // UDP_CONNECT_MSG 0x36373839, sent in the server's (little-endian) byte order
+                                var rb = new byte[4]; int rn; try { rn = s.Receive(rb); } catch (SocketException) { throw new InvalidOperationException("UDP to the server is blocked (no reply on UDP " + port + ")"); }
+                                bool okReply = rn == 4 && ((rb[0] == 0x36 && rb[1] == 0x37 && rb[2] == 0x38 && rb[3] == 0x39) || (rb[0] == 0xB1 && rb[1] == 0x68 && rb[2] == 0xDE && rb[3] == 0x3A));   // UDP_CONNECT_REPLY 0x39383736, or the legacy 987654321
+                                if (!okReply) throw new InvalidOperationException("the server answered the UDP setup with something unexpected");
                                 lock (streams) streams.Add(s);
                             }
                             else
@@ -138,6 +199,7 @@ namespace AdeeboMeter
                             var t = new Thread(() =>
                             {
                                 var buf = new byte[len]; long seq = 0; var pace = Stopwatch.StartNew(); double perStream = udpRate / 8.0 / streams.Count;
+                                long myMax = 0, myPk = 0, myLost = 0; double myJit = 0, myLast = double.NaN;   // each stream counts its own sequence numbers (iperf3 does too)
                                 try
                                 {
                                     s.ReceiveTimeout = 2000;
@@ -161,19 +223,20 @@ namespace AdeeboMeter
                                             {
                                                 uint sec = Ub(buf, 0), us = Ub(buf, 4); long sq = Ub(buf, 8);
                                                 double sent = sec + us / 1e6, arr = (DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds, transit = arr - sent;
-                                                lock (lockU) { pkts++; if (sq > udpSeqMax + 1) lost += sq - udpSeqMax - 1; if (sq > udpSeqMax) udpSeqMax = sq; if (!double.IsNaN(lastTransit)) jit += (Math.Abs(transit - lastTransit) - jit) / 16; lastTransit = transit; }
+                                                myPk++; if (sq > myMax + 1) myLost += sq - myMax - 1; if (sq > myMax) myMax = sq; if (!double.IsNaN(myLast)) myJit += (Math.Abs(transit - myLast) - myJit) / 16; myLast = transit;
                                             }
                                         }
                                     }
                                 }
                                 catch (SocketException) { }
                                 catch (ObjectDisposedException) { }
+                                if (myPk > 0) lock (lockU) { pkts += myPk; lost += myLost; jitSum += myJit; jitN++; jit = jitSum / jitN; }
                             }) { IsBackground = true };
                             threads.Add(t); t.Start();
                         }
                         long prev = 0;
                         for (int i = 0; i < secs && !run.Stop; i++) { Thread.Sleep(1000); long b = Interlocked.Read(ref bytes[0]); run.Add((b - prev) * 8 / 1e6); prev = b; if (i + 1 == o.Omit) atOmit = b; run.Status = (reverse ? "Download " : "Upload ") + (i + 1) + " / " + secs + " s"; }
-                        foreach (var t in threads) t.Join(3000);
+                        var joinBy = DateTime.UtcNow.AddSeconds(5); foreach (var t in threads) t.Join(Math.Max(0, (int)(joinBy - DateTime.UtcNow).TotalMilliseconds));   // one deadline for all streams
                         sw.Stop();
                         cs.WriteByte(4);   // TEST_END
                     }
@@ -253,22 +316,35 @@ namespace AdeeboMeter
         }
 
         // ================================================================== dig
-        static readonly Dictionary<string, int> Types = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "A", 1 }, { "NS", 2 }, { "CNAME", 5 }, { "SOA", 6 }, { "PTR", 12 }, { "MX", 15 }, { "TXT", 16 }, { "AAAA", 28 }, { "SRV", 33 }, { "CAA", 257 } };
+        static readonly Dictionary<string, int> Types = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "A", 1 }, { "NS", 2 }, { "CNAME", 5 }, { "SOA", 6 }, { "PTR", 12 }, { "MX", 15 }, { "TXT", 16 }, { "AAAA", 28 }, { "SRV", 33 }, { "CAA", 257 }, { "DS", 43 }, { "SSHFP", 44 }, { "DNSKEY", 48 }, { "TLSA", 52 }, { "SVCB", 64 }, { "HTTPS", 65 } };
         public sealed class Rr { public string Name = "", Type = "", Data = ""; public int Ttl; public int Section; }
         public sealed class Msg { public int Rcode; public bool Aa, Ad, Tc; public List<Rr> Rrs = new List<Rr>(); public string From = ""; public long Ms; }
         public static List<string[]> Dig(string name, string type, string server, Monitor m)
         {
             var rows = new List<string[]>(); name = (name ?? "").Trim().TrimEnd('.'); type = string.IsNullOrWhiteSpace(type) ? "A" : type.Trim().ToUpperInvariant();
             bool trace = type == "TRACE"; if (trace) type = "A";
-            int t; if (!Types.TryGetValue(type, out t)) { rows.Add(R(2, "Type", type + " isn't supported - use A, AAAA, MX, TXT, NS, CNAME, SOA, SRV, CAA, PTR or TRACE", "", "u")); return rows; }
+            int t; if (!Types.TryGetValue(type, out t)) { rows.Add(R(2, "Type", type + " isn't supported - use A, AAAA, MX, TXT, NS, CNAME, SOA, SRV, CAA, PTR, HTTPS, SVCB, DS, DNSKEY, TLSA, SSHFP or TRACE", "", "u")); return rows; }
             if (name == "" || name.Length > 253) { rows.Add(R(2, "Name", "type a name, e.g. github.com", "", "u")); return rows; }
-            IPAddress ipq; if (t == 12 && IPAddress.TryParse(name, out ipq) && ipq.AddressFamily == AddressFamily.InterNetwork) name = string.Join(".", ipq.GetAddressBytes().Reverse()) + ".in-addr.arpa";
+            IPAddress ipq; if (t == 12 && IPAddress.TryParse(name, out ipq)) name = PtrName(ipq);
             if (trace) return Trace(name, rows);
-            IPAddress srv; string dns; lock (m.L) dns = m.DnsServer;
-            if (!IPAddress.TryParse((server ?? "").Trim().TrimStart('@'), out srv) && !IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out srv)) { rows.Add(R(2, "Server", "no DNS server to ask - type one, e.g. 1.1.1.1", "", "u")); return rows; }
-            var msg = Query(srv, name, t, true);
-            if (msg == null) { rows.Add(R(2, "Answer", "no answer from " + srv + " in 3 s", "", "m")); return rows; }
-            rows.Add(R(msg.Rcode == 0 ? 0 : msg.Rcode == 3 ? 1 : 2, "Status", (msg.Rcode == 0 ? "NOERROR" : msg.Rcode == 3 ? "NXDOMAIN - the name doesn't exist" : msg.Rcode == 2 ? "SERVFAIL - the server couldn't get an answer" : "error " + msg.Rcode) + " from " + srv + " in " + msg.Ms + " ms" + (msg.Aa ? " · authoritative" : "") + (msg.Ad ? " · DNSSEC validated (AD)" : ""), msg.Rcode == 2 ? "Often a DNSSEC failure or the domain's own servers being down." : "", "m"));
+            IPAddress srv; string dns; lock (m.L) dns = m.DnsServer; Msg msg; object srvName;
+            string sv = (server ?? "").Trim().TrimStart('@');
+            if (sv.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                // over HTTPS (RFC 8484): the same question, POSTed to the DoH address you typed
+                Uri du; if (!Uri.TryCreate(sv, UriKind.Absolute, out du)) { rows.Add(R(2, "Server", "not a DoH address - e.g. https://cloudflare-dns.com/dns-query", "", "u")); return rows; }
+                if (du.AbsolutePath == "/") du = new Uri(du, "/dns-query");
+                string why; msg = QueryDoh(du, name, t, out why); srvName = du.Host + " (DoH)";
+                if (msg == null) { rows.Add(R(2, "Answer", "no DNS answer from " + du + " - " + why, "", "m")); return rows; }
+            }
+            else
+            {
+                if (!IPAddress.TryParse(sv, out srv) && !IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out srv)) { rows.Add(R(2, "Server", "no DNS server to ask - type one, e.g. 1.1.1.1, or a DoH address", "", "u")); return rows; }
+                msg = Query(srv, name, t, true); srvName = srv;
+                if (msg == null) { rows.Add(R(2, "Answer", "no answer from " + srv + " in 3 s", "", "m")); return rows; }
+            }
+            object srv2 = srvName;
+            rows.Add(R(msg.Rcode == 0 ? 0 : msg.Rcode == 3 ? 1 : 2, "Status", (msg.Rcode == 0 ? "NOERROR" : msg.Rcode == 3 ? "NXDOMAIN - the name doesn't exist" : msg.Rcode == 2 ? "SERVFAIL - the server couldn't get an answer" : "error " + msg.Rcode) + " from " + srv2 + " in " + msg.Ms + " ms" + (msg.Aa ? " · authoritative" : "") + (msg.Ad ? " · DNSSEC validated (AD)" : ""), msg.Rcode == 2 ? "Often a DNSSEC failure or the domain's own servers being down." : "", "m"));
             foreach (var r in msg.Rrs.Where(x => x.Section == 1)) rows.Add(R(3, r.Type + "  " + r.Name, r.Data + "   (TTL " + r.Ttl + " s)", "", "m"));
             if (!msg.Rrs.Any(x => x.Section == 1) && msg.Rcode == 0) rows.Add(R(1, "Answer", "no " + type + " records for this name", "", "m"));
             foreach (var r in msg.Rrs.Where(x => x.Section == 2).Take(4)) rows.Add(R(3, "authority  " + r.Type, r.Name + " → " + r.Data, "", "m"));
@@ -302,10 +378,7 @@ namespace AdeeboMeter
         public static Msg Query(IPAddress server, string name, int type, bool rd)
         {
             var id = new byte[2]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(id);
-            var q = new List<byte> { id[0], id[1], (byte)(rd ? 1 : 0), 0, 0, 1, 0, 0, 0, 0, 0, 1 };
-            foreach (var label in name.Split('.')) { var b = Encoding.ASCII.GetBytes(label); if (b.Length == 0 || b.Length > 63) return null; q.Add((byte)b.Length); q.AddRange(b); }
-            q.Add(0); q.Add((byte)(type >> 8)); q.Add((byte)type); q.Add(0); q.Add(1);
-            q.AddRange(new byte[] { 0, 0, 41, 0x10, 0, 0, 0, 0x80, 0, 0, 0 });   // EDNS0, 4096 bytes, DO bit
+            var qa = Question(name, type, rd, id); if (qa == null) return null; var q = new List<byte>(qa);
             var sw = Stopwatch.StartNew(); byte[] resp = null;
             try
             {
@@ -326,7 +399,72 @@ namespace AdeeboMeter
             }
             catch (SocketException) { return null; }
             catch (InvalidOperationException) { return null; }
-            var msg = new Msg { Ms = sw.ElapsedMilliseconds, From = server.ToString(), Aa = (resp[2] & 4) != 0, Tc = (resp[2] & 2) != 0, Ad = (resp[3] & 0x20) != 0, Rcode = resp[3] & 15 };
+            return Parse(resp, sw.ElapsedMilliseconds, server.ToString());
+        }
+        // ip -> the reverse name: 4.3.2.1.in-addr.arpa, or 32 nibbles .ip6.arpa
+        public static string PtrName(IPAddress ip)
+        {
+            var b = ip.GetAddressBytes();
+            if (ip.AddressFamily == AddressFamily.InterNetwork) return string.Join(".", b.Reverse()) + ".in-addr.arpa";
+            var sb = new StringBuilder(); for (int i = b.Length - 1; i >= 0; i--) sb.Append("0123456789abcdef"[b[i] & 15]).Append('.').Append("0123456789abcdef"[b[i] >> 4]).Append('.');
+            return sb + "ip6.arpa";
+        }
+        static byte[] Question(string name, int type, bool rd, byte[] id)
+        {
+            var q = new List<byte> { id[0], id[1], (byte)(rd ? 1 : 0), 0, 0, 1, 0, 0, 0, 0, 0, 1 };
+            foreach (var label in name.Split('.')) { var b = Encoding.ASCII.GetBytes(label); if (b.Length == 0 || b.Length > 63) return null; q.Add((byte)b.Length); q.AddRange(b); }
+            q.Add(0); q.Add((byte)(type >> 8)); q.Add((byte)type); q.Add(0); q.Add(1);
+            q.AddRange(new byte[] { 0, 0, 41, 0x10, 0, 0, 0, 0x80, 0, 0, 0 });   // EDNS0, 4096 bytes, DO bit
+            return q.ToArray();
+        }
+        // DNS over HTTPS: the wire question POSTed as application/dns-message; id 0 as RFC 8484 asks; answer capped at 64 KB
+        public static Msg QueryDoh(Uri url, string name, int type, out string why)
+        {
+            why = ""; var q = Question(name, type, true, new byte[2]); if (q == null) { why = "bad name"; return null; }
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                var req = (HttpWebRequest)WebRequest.Create(url); req.Method = "POST"; req.ContentType = "application/dns-message"; req.Accept = "application/dns-message";
+                req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.AllowAutoRedirect = false; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy(); req.ContentLength = q.Length;
+                using (var rs = req.GetRequestStream()) rs.Write(q, 0, q.Length);
+                using (var resp = (HttpWebResponse)req.GetResponse()) using (var st = resp.GetResponseStream())
+                {
+                    if (!(resp.ContentType ?? "").StartsWith("application/dns-message", StringComparison.OrdinalIgnoreCase)) { why = "the server answered " + (int)resp.StatusCode + " " + Draw.Trunc(resp.ContentType ?? "", 40) + ", not DNS"; return null; }
+                    var ms = new System.IO.MemoryStream(); var buf = new byte[4096]; int n;
+                    while ((n = st.Read(buf, 0, buf.Length)) > 0) { ms.Write(buf, 0, n); if (ms.Length > 65535) { why = "answer too big"; return null; } }
+                    var b = ms.ToArray(); if (b.Length < 12) { why = "short answer"; return null; }
+                    return Parse(b, sw.ElapsedMilliseconds, url.Host);
+                }
+            }
+            catch (WebException e) { why = Draw.Trunc(e.Message, 80); return null; }
+            catch (System.IO.IOException e) { why = Draw.Trunc(e.Message, 80); return null; }
+        }
+        static string Hex(byte[] b, int o, int n) { var sb = new StringBuilder(); for (int i = 0; i < n && o + i < b.Length; i++) sb.Append(b[o + i].ToString("X2", CultureInfo.InvariantCulture)); return sb.ToString(); }
+        static readonly Dictionary<int, string> DnsAlg = new Dictionary<int, string> { { 5, "RSASHA1" }, { 7, "RSASHA1-NSEC3" }, { 8, "RSASHA256" }, { 10, "RSASHA512" }, { 13, "ECDSAP256SHA256" }, { 14, "ECDSAP384SHA384" }, { 15, "ED25519" }, { 16, "ED448" } };
+        static string Alg(int a) { string n; return DnsAlg.TryGetValue(a, out n) ? n : "alg " + a; }
+        static readonly string[] SvcKeys = { "mandatory", "alpn", "no-default-alpn", "port", "ipv4hint", "ech", "ipv6hint" };
+        // HTTPS / SVCB (RFC 9460): priority, target, then the parameters a browser uses (alpn h3 = HTTP/3, ech = Encrypted Client Hello)
+        static string Svcb(byte[] b, int d, int len)
+        {
+            int x = d + 2, end = d + len; string tgt = Name(b, ref x); var sb = new StringBuilder();
+            int pri = b[d] << 8 | b[d + 1]; sb.Append(pri == 0 ? "alias of " : "priority " + pri + " ").Append(tgt == "" ? "." : tgt);
+            while (x + 4 <= end)
+            {
+                int k = b[x] << 8 | b[x + 1], l = b[x + 2] << 8 | b[x + 3]; x += 4; if (x + l > end) break;
+                string kn = k < SvcKeys.Length ? SvcKeys[k] : "key" + k, v;
+                if (k == 1) { var a = new List<string>(); int y = x; while (y < x + l) { int al = b[y++]; a.Add(Encoding.ASCII.GetString(b, y, Math.Min(al, x + l - y))); y += al; } v = string.Join(",", a); }
+                else if (k == 3 && l == 2) v = (b[x] << 8 | b[x + 1]).ToString(CultureInfo.InvariantCulture);
+                else if (k == 4) { var a = new List<string>(); for (int y = x; y + 4 <= x + l; y += 4) a.Add(new IPAddress(new[] { b[y], b[y + 1], b[y + 2], b[y + 3] }).ToString()); v = string.Join(",", a); }
+                else if (k == 6) { var a = new List<string>(); for (int y = x; y + 16 <= x + l; y += 16) { var z = new byte[16]; Array.Copy(b, y, z, 0, 16); a.Add(new IPAddress(z).ToString()); } v = string.Join(",", a); }
+                else if (k == 5) v = "(" + l + " bytes - Encrypted Client Hello is on)";
+                else v = l == 0 ? "" : Hex(b, x, Math.Min(l, 16)) + (l > 16 ? "..." : "");
+                sb.Append(' ').Append(kn).Append(v != "" ? "=" + v : ""); x += l;
+            }
+            return sb.ToString();
+        }
+        public static Msg Parse(byte[] resp, long ms, string from)
+        {
+            var msg = new Msg { Ms = ms, From = from, Aa = (resp[2] & 4) != 0, Tc = (resp[2] & 2) != 0, Ad = (resp[3] & 0x20) != 0, Rcode = resp[3] & 15 };
             int qd = resp[4] << 8 | resp[5], an = resp[6] << 8 | resp[7], ns = resp[8] << 8 | resp[9], ar = resp[10] << 8 | resp[11], p = 12;
             try
             {
@@ -347,6 +485,12 @@ namespace AdeeboMeter
                             case 6: { int x = d; string mn = Name(resp, ref x), rn = Name(resp, ref x); r.Data = mn + " " + rn + " serial " + ((uint)(resp[x] << 24 | resp[x + 1] << 16 | resp[x + 2] << 8 | resp[x + 3])); break; }
                             case 16: { var sb = new StringBuilder(); int x = d; while (x < d + len) { int l = resp[x++]; sb.Append('"').Append(Encoding.UTF8.GetString(resp, x, Math.Min(l, d + len - x))).Append("\" "); x += l; } r.Data = sb.ToString().Trim(); break; }
                             case 257: { int tl = resp[d + 1]; r.Data = (resp[d] != 0 ? "critical " : "") + Encoding.ASCII.GetString(resp, d + 2, tl) + " \"" + Encoding.ASCII.GetString(resp, d + 2 + tl, len - 2 - tl) + "\""; break; }
+                            case 43: r.Data = "key tag " + (resp[d] << 8 | resp[d + 1]) + " " + Alg(resp[d + 2]) + " digest " + (resp[d + 3] == 2 ? "SHA-256" : resp[d + 3] == 4 ? "SHA-384" : resp[d + 3] == 1 ? "SHA-1" : "type " + resp[d + 3]) + " " + Hex(resp, d + 4, Math.Min(len - 4, 32)); break;
+                            case 48: { int fl = resp[d] << 8 | resp[d + 1]; uint ac = 0; for (int i2 = 0; i2 < len; i2++) ac += (i2 & 1) != 0 ? resp[d + i2] : (uint)(resp[d + i2] << 8); ac += ac >> 16 & 0xFFFF;
+                                    r.Data = ((fl & 1) != 0 ? "KSK (signs the keys)" : "ZSK (signs the records)") + " · " + Alg(resp[d + 3]) + " · key tag " + (ac & 0xFFFF) + " · " + (len - 4) + "-byte key"; break; }   // key tag: RFC 4034 appendix B
+                            case 44: r.Data = (resp[d] == 1 ? "RSA" : resp[d] == 3 ? "ECDSA" : resp[d] == 4 ? "Ed25519" : "alg " + resp[d]) + " " + (resp[d + 1] == 2 ? "SHA-256" : resp[d + 1] == 1 ? "SHA-1" : "fp " + resp[d + 1]) + " " + Hex(resp, d + 2, len - 2); break;
+                            case 52: r.Data = "usage " + resp[d] + (resp[d] == 3 ? " (this exact cert)" : resp[d] == 2 ? " (this CA)" : "") + " · selector " + (resp[d + 1] == 1 ? "public key" : "full cert") + " · " + (resp[d + 2] == 1 ? "SHA-256" : resp[d + 2] == 2 ? "SHA-512" : "exact") + " " + Hex(resp, d + 3, Math.Min(len - 3, 32)); break;
+                            case 64: case 65: r.Data = Svcb(resp, d, len); break;
                             default: r.Data = len + " bytes"; break;
                         }
                         p = d + len; if (ty != 41) msg.Rrs.Add(r);
@@ -387,8 +531,12 @@ namespace AdeeboMeter
                         int code = (int)resp.StatusCode; string loc = resp.Headers["Location"] ?? "";
                         rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, (hop == 0 ? "" : "then ") + code + " " + resp.StatusDescription, u + " · " + sw.ElapsedMilliseconds + " ms" + (loc != "" ? " → " + loc : ""), "", "m"));
                         if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) { u = n; continue; } }
-                        foreach (var h in new[] { "Server", "Strict-Transport-Security", "Alt-Svc", "Content-Type", "Cache-Control", "Via", "X-Cache", "CF-Ray" })
-                            if (!string.IsNullOrEmpty(resp.Headers[h])) rows.Add(R(3, h, Draw.Trunc(resp.Headers[h], 120), h == "Alt-Svc" && resp.Headers[h].Contains("h3") ? "The site also offers HTTP/3 (QUIC over UDP 443) - browsers switch to it after the first visit." : h == "Strict-Transport-Security" ? "HSTS: browsers will only ever use HTTPS for this site." : "", "m"));
+                        foreach (var h in new[] { "Server", "Alt-Svc", "Content-Type", "Cache-Control", "Via", "X-Cache", "CF-Ray" })
+                            if (!string.IsNullOrEmpty(resp.Headers[h])) rows.Add(R(3, h, Draw.Trunc(resp.Headers[h], 120), h == "Alt-Svc" && resp.Headers[h].Contains("h3") ? "The site also offers HTTP/3 (QUIC over UDP 443) - browsers switch to it after the first visit." : "", "m"));
+                        rows.AddRange(SecurityHeaders(resp.Headers, u.Scheme == "https"));
+                        // every header, as the server sent it (cookies shortened - they're often long and never needed here)
+                        rows.Add(R(3, "All headers", resp.Headers.Count + " from the final answer", "", "m"));
+                        foreach (string k in resp.Headers.AllKeys.Take(80)) { string v = resp.Headers[k] ?? ""; if (k.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase)) v = "(" + v.Length + " characters)"; rows.Add(new[] { "6", "", (k + ": ").PadRight(28) + Draw.Trunc(v, 300), "", "" }); }
                         break;
                     }
                 }
@@ -397,9 +545,61 @@ namespace AdeeboMeter
             if (u.Scheme == "https") rows.AddRange(Tls(u.Host, u.Port));
             return rows;
         }
+        // the headers that make a site safer in a browser - present or missing, each in one plain line
+        static readonly string[][] SecHdr = {
+            new[] { "Strict-Transport-Security", "HSTS", "browsers only ever use HTTPS for this site - no downgrade to plain HTTP" },
+            new[] { "Content-Security-Policy", "CSP", "limits which scripts may run - the main defence against injected scripts" },
+            new[] { "X-Content-Type-Options", "nosniff", "the browser won't guess a file's type (stops some disguised scripts)" },
+            new[] { "X-Frame-Options", "framing", "other sites can't show this one inside a frame (clickjacking)" },
+            new[] { "Referrer-Policy", "referrer", "how much of the address is told to the next site you go to" },
+            new[] { "Permissions-Policy", "permissions", "which browser features (camera, location...) the page may ask for" } };
+        public static List<string[]> SecurityHeaders(WebHeaderCollection h, bool https)
+        {
+            var rows = new List<string[]>(); var missing = new List<string>();
+            foreach (var s in SecHdr)
+            {
+                string v = h[s[0]];
+                if (s[0] == "X-Frame-Options" && string.IsNullOrEmpty(v) && (h["Content-Security-Policy"] ?? "").Contains("frame-ancestors")) v = "via CSP frame-ancestors";
+                if (string.IsNullOrEmpty(v)) { if (https || s[1] != "HSTS") missing.Add(s[1]); continue; }
+                rows.Add(R(3, s[0], Draw.Trunc(v, 140), s[2] + ".", "m"));
+            }
+            if (missing.Count > 0) rows.Add(R(3, "Security headers missing", string.Join(", ", missing), "Not a fault in your network - these are the site's own choices. Pages for sign-in or payments usually send all of them.", "m"));
+            return rows;
+        }
+        // revocation is checked only when you press it: Windows then asks the certificate authority's OCSP / CRL servers
+        public static List<string[]> Revocation(string host, int port)
+        {
+            var rows = new List<string[]>(); X509Certificate2 cert = null;
+            try
+            {
+                using (var tc = new TcpClient())
+                {
+                    if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, "Revocation", "couldn't connect to " + host, "", "m")); return rows; }
+                    using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))
+                    { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException) { hd = cert != null; } if (!hd && cert == null) { rows.Add(R(2, "Revocation", "no TLS answer in 8 s", "", "m")); return rows; } }
+                }
+                if (cert == null) { rows.Add(R(2, "Revocation", "no certificate", "", "m")); return rows; }
+                using (cert) using (var chain = new X509Chain())
+                {
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Online; chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain; chain.ChainPolicy.UrlRetrievalTimeout = TimeSpan.FromSeconds(10);
+                    var sw = Stopwatch.StartNew(); chain.Build(cert);
+                    var bad = chain.ChainStatus.Where(x => x.Status != X509ChainStatusFlags.NoError).ToList();
+                    bool revoked = bad.Any(x => x.Status == X509ChainStatusFlags.Revoked), unknown = bad.Any(x => x.Status == X509ChainStatusFlags.RevocationStatusUnknown || x.Status == X509ChainStatusFlags.OfflineRevocation);
+                    rows.Add(R(revoked ? 2 : unknown ? 1 : 0, "Revocation (OCSP / CRL)", revoked ? "REVOKED - the authority has withdrawn this certificate" : unknown ? "couldn't be checked - the authority's server didn't answer" : "not revoked · checked in " + sw.ElapsedMilliseconds + " ms", revoked ? "Don't trust this site. Browsers block it." : unknown ? "A firewall or proxy often blocks the CA's OCSP / CRL servers. Browsers then usually carry on anyway." : "", "m"));
+                    foreach (var oid in new[] { "1.3.6.1.5.5.7.1.1", "2.5.29.31" })
+                    {
+                        var ext = cert.Extensions.Cast<X509Extension>().FirstOrDefault(x => x.Oid != null && x.Oid.Value == oid); if (ext == null) continue;
+                        var urls = System.Text.RegularExpressions.Regex.Matches(ext.Format(false), @"https?://[^\s,)]+").Cast<System.Text.RegularExpressions.Match>().Select(mm => mm.Value).Distinct().Take(3).ToList();
+                        if (urls.Count > 0) rows.Add(R(3, oid == "2.5.29.31" ? "CRL from" : "OCSP / issuer from", string.Join("  ", urls), "", "m"));
+                    }
+                }
+            }
+            catch (Exception e) { rows.Add(R(2, "Revocation", Draw.Trunc(e.Message, 100), "", "m")); }
+            return rows;
+        }
         static List<string[]> Tls(string host, int port)
         {
-            var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None;
+            var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None; List<string[]> chainRows = null;
             foreach (var proto in new[] { Tuple.Create("TLS 1.3", (SslProtocols)12288), Tuple.Create("TLS 1.2", SslProtocols.Tls12) })
             {
                 try
@@ -407,7 +607,7 @@ namespace AdeeboMeter
                     using (var tc = new TcpClient())
                     {
                         if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
-                        using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); errs = e; return e == SslPolicyErrors.None; }))
+                        using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); if (chainRows == null && ch != null) chainRows = Chain(ch); errs = e; return e == SslPolicyErrors.None; }))
                         { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto.Item2, true)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
@@ -422,7 +622,26 @@ namespace AdeeboMeter
                     if (san != null) rows.Add(R(3, "Names it covers", Draw.Trunc(san.Format(false).Replace("DNS Name=", ""), 200), "", "m"));
                     string ins = ""; try { ins = Inspection.InspectedBy(cert); } catch (Exception e) { Program.Log("inspect: " + e.Message); }
                     if (ins != "") rows.Add(R(1, "Inspected on the way", "re-signed by " + ins, "A company proxy (or something in the middle) decrypts and re-encrypts this connection.", "i"));
+                    if (cert.NotBefore > DateTime.Now) rows.Add(R(2, "Not valid yet", "valid from " + cert.NotBefore.ToString("d MMM yyyy HH:mm", CultureInfo.CurrentCulture), "Either the site's new certificate went live early, or this PC's clock is behind.", "m"));
+                    if (chainRows != null) rows.AddRange(chainRows);
+                    rows.Add(new[] { "3", "Revocation", "not checked - press to ask the authority (OCSP / CRL)", "This is the only part that contacts a server other than the site: the certificate authority's own.", "m", "revoke:" + host + ":" + port.ToString(CultureInfo.InvariantCulture) });
                 }
+            return rows;
+        }
+        // the whole chain, leaf to root: who, valid from-to, key and signature
+        static List<string[]> Chain(X509Chain ch)
+        {
+            var rows = new List<string[]>(); int i = 0;
+            foreach (var el in ch.ChainElements)
+            {
+                var c = el.Certificate; if (c == null || i > 6) break;
+                string key = c.PublicKey.Oid.FriendlyName ?? c.PublicKey.Oid.Value; int bits = 0;
+                try { if (c.PublicKey.Oid.Value == "1.2.840.113549.1.1.1") using (var rsa = c.GetRSAPublicKey()) bits = rsa.KeySize; else if (c.PublicKey.Oid.Value == "1.2.840.10045.2.1") bits = c.PublicKey.EncodedKeyValue.RawData.Length > 100 ? 384 : 256; } catch (CryptographicException) { }
+                string name = i == 0 ? "Chain: the site" : i == ch.ChainElements.Count - 1 ? "Chain: root" : "Chain: issuer " + i;
+                rows.Add(R(3, name, c.GetNameInfo(X509NameType.SimpleName, false) + " · " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " to " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture),
+                    (key == "RSA" || key == "ECC" || key == "1.2.840.10045.2.1" ? (key == "1.2.840.10045.2.1" ? "ECC" : key) : key) + (bits > 0 ? " " + bits + "-bit" : "") + " key · signed with " + (c.SignatureAlgorithm.FriendlyName ?? c.SignatureAlgorithm.Value) + (el.ChainElementStatus.Length > 0 ? " · " + string.Join(", ", el.ChainElementStatus.Select(z => z.Status.ToString())) : ""), "m"));
+                i++;
+            }
             return rows;
         }
 
@@ -453,7 +672,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); NetworkInterface nic; bool vpn; lock (m.L) { nic = m.Primary; vpn = m.VpnUp; }
             bool company = vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
             if (company && !string.Equals((confirm ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-            { rows.Add(R(1, "Company network?", "this PC is on a company domain or VPN", "Sweeping a company network can trip the security team's alarms. Type  yes  in the second box and press Run if you're sure (home networks are fine).", "i")); return rows; }
+            { rows.Add(R(1, "Company network?", "this PC is on a company domain or VPN", "Sweeping a company network can trip the security team's alarms. Tick \"This is my own network, or I'm allowed to scan it\" above and press Run if you're sure (home networks are fine).", "i")); return rows; }
             if (nic == null) { rows.Add(R(2, "Network", "no active adapter", "", "u")); return rows; }
             Devices.QuietUntil = DateTime.UtcNow.AddMinutes(10);   // the sweep fills the ARP table - those devices were already there, they didn't just join
             var u = nic.GetIPProperties().UnicastAddresses.FirstOrDefault(x => x.Address.AddressFamily == AddressFamily.InterNetwork && x.IPv4Mask != null);
@@ -479,7 +698,7 @@ namespace AdeeboMeter
                 }) { IsBackground = true, Name = "AdeeboMeter sweep" };
                 workers.Add(th); th.Start();
             }
-            foreach (var th in workers) th.Join(60000);
+            var allBy = DateTime.UtcNow.AddSeconds(90); foreach (var th in workers) th.Join(Math.Max(0, (int)(allBy - DateTime.UtcNow).TotalMilliseconds));   // one deadline for the whole sweep
             var arp = new Dictionary<string, string>(); try { foreach (var a in Arp.Table()) arp[a.Ip] = a.Mac; } catch (Exception e) { Program.Log("sweep arp: " + e.Message); }
             foreach (var x in up.OrderBy(x => BitConverter.ToUInt32(x.Item1.GetAddressBytes().Reverse().ToArray(), 0)))
             {

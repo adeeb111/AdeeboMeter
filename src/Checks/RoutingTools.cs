@@ -130,30 +130,35 @@ namespace AdeeboMeter
         // ---------- listen for routing / switching control traffic on this segment (needs Wireshark + Npcap, nothing sent, nothing saved)
         const string Filter = "ip proto 89 or ip proto 88 or ip proto 103 or ip proto 112 or ip proto 2 or udp port 520 or udp port 521 or udp port 1985 or udp port 3222 or udp port 646 or udp port 3784 or udp port 67 or (icmp6 and ip6[40] == 134) or ether proto 0x88cc or ether dst 01:00:0c:cc:cc:cc or ether dst 01:00:0c:cc:cc:cd or ether dst 01:80:c2:00:00:00 or ether dst 01:80:c2:00:00:14 or ether dst 01:80:c2:00:00:15 or ether dst 09:00:2b:00:00:05";
         static readonly string[] Fields = { "frame.protocols", "eth.src", "ip.src", "ipv6.src", "ospf.area_id", "vrrp.virt_rtr_id", "hsrp.group", "eigrp.as", "stp.root.hw", "stp.flags.tc", "dhcp.option.dhcp_server_id" };
-        public static List<string[]> Listen(Monitor m, string secsIn, Toolkit.Run run)
+        // the "who announces itself" preset: mDNS, SSDP / UPnP, LLMNR and NetBIOS - names and devices, not routing
+        const string DiscFilter = "udp port 5353 or udp port 1900 or udp port 5355 or udp port 137 or udp port 138";
+        static readonly string[] DiscFields = { "frame.protocols", "eth.src", "ip.src", "ipv6.src", "dns.qry.name", "nbns.name", "http.server" };
+        public static List<string[]> Listen(Monitor m, string secsIn, Toolkit.Run run) { return Listen(m, secsIn, run, false); }
+        public static List<string[]> Listen(Monitor m, string secsIn, Toolkit.Run run, bool discovery)
         {
             var rows = new List<string[]>(); string id; lock (m.L) id = m.IfaceId;
             if (!LiveCapture.Available) { rows.Add(R(3, "Needs packet capture", "Wireshark (tshark) and Npcap aren't installed on this PC", "Installing them usually needs admin - on a locked-down work PC this tool can't run. Everything else in Path & routing works without it.", "u")); return rows; }
             Guid g; if (!Guid.TryParse((id ?? "").Trim('{', '}'), out g)) { rows.Add(R(2, "Adapter", "no active wired or Wi-Fi adapter", "", "u")); return rows; }
             int secs; if (!int.TryParse((secsIn ?? "").Trim(), out secs)) secs = 60; secs = Math.Max(10, Math.Min(120, secs));
-            run.Status = "Listening for " + secs + " s (only routing and switch control traffic, nothing saved)...";
+            run.Status = "Listening for " + secs + " s (only " + (discovery ? "discovery and name" : "routing and switch control") + " traffic, nothing saved)...";
+            string filter = discovery ? DiscFilter : Filter; var fields = discovery ? DiscFields : Fields;
             string ifc = "\\Device\\NPF_{" + g.ToString().ToUpperInvariant() + "}";
-            Func<string[], string> go = f => { try { return Job.Run(LiveCapture.Tshark, "-i \"" + ifc + "\" -n -a duration:" + secs.ToString(CultureInfo.InvariantCulture) + " -f \"" + Filter + "\" -T fields -E separator=| " + string.Join(" ", f.Select(x => "-e " + x)), (secs + 15) * 1000) ?? ""; } catch (Exception e) { return "ERR " + e.Message; } };
-            string text = go(Fields);
-            if (text.Trim() == "" || text.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0) text = go(Fields.Take(4).ToArray());   // older Wireshark: fewer field names
+            Func<string[], string> go = f => { try { return Job.Run(LiveCapture.Tshark, "-i \"" + ifc + "\" -n -a duration:" + secs.ToString(CultureInfo.InvariantCulture) + " -f \"" + filter + "\" -T fields -E separator=| " + string.Join(" ", f.Select(x => "-e " + x)), (secs + 15) * 1000) ?? ""; } catch (Exception e) { return "ERR " + e.Message; } };
+            string text = go(fields);
+            if (text.Trim() == "" || text.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0) text = go(fields.Take(4).ToArray());   // older Wireshark: fewer field names
             if (text.StartsWith("ERR ", StringComparison.Ordinal)) { rows.Add(R(2, "Capture", Draw.Trunc(text.Substring(4), 90), "", "u")); return rows; }
             var seen = new Dictionary<string, List<string[]>>();
             foreach (var line in text.Split('\n'))
             {
                 var f = line.TrimEnd('\r').Split('|'); if (f.Length < 4 || f[0] == "") continue;
-                string k = Kind(f[0]); if (k == "") continue;
+                string k = discovery ? DiscKind(f[0]) : Kind(f[0]); if (k == "") continue;
                 List<string[]> l; if (!seen.TryGetValue(k, out l)) { l = new List<string[]>(); seen[k] = l; } if (l.Count < 200) l.Add(f);
             }
-            if (seen.Count == 0) rows.Add(R(0, "Heard nothing", "no routing protocol, redundancy or switch control traffic in " + secs + " s", "That's how a user segment should look: routers keep their protocols on their own links.", "m"));
+            if (seen.Count == 0) rows.Add(discovery ? R(0, "Heard nothing", "no mDNS, SSDP, LLMNR or NetBIOS in " + secs + " s", "A quiet, well-run network - or one that blocks multicast between devices (common on guest Wi-Fi).", "m") : R(0, "Heard nothing", "no routing protocol, redundancy or switch control traffic in " + secs + " s", "That's how a user segment should look: routers keep their protocols on their own links.", "m"));
             foreach (var kv in seen.OrderBy(x => Order(x.Key)))
             {
                 var from = kv.Value.Select(x => x[2] != "" ? x[2] : x[3] != "" ? x[3] : x[1]).Distinct().ToList();
-                string extra = Extra(kv.Key, kv.Value); int lv; string adv = Advice(kv.Key, from.Count, out lv);
+                string extra = discovery ? DiscExtra(kv.Value) : Extra(kv.Key, kv.Value); int lv; string adv = discovery ? DiscAdvice(kv.Key, out lv) : Advice(kv.Key, from.Count, out lv);
                 rows.Add(R(lv, kv.Key, kv.Value.Count + " packets from " + string.Join(", ", from.Take(4)) + (from.Count > 4 ? " +" + (from.Count - 4) : "") + extra, adv, "m"));
             }
             return rows;
@@ -167,6 +172,29 @@ namespace AdeeboMeter
             if (p.Contains(":igmp:")) return "IGMP"; if (p.Contains(":icmpv6:")) return "IPv6 router advertisement"; if (p.Contains(":dhcp:") || p.Contains(":bootp:")) return "DHCP";
             if (p.Contains(":lldp:")) return "LLDP"; if (p.Contains(":cdp:")) return "CDP"; if (p.Contains(":stp:")) return "Spanning tree"; if (p.Contains(":dtp:")) return "DTP"; if (p.Contains(":vtp:")) return "VTP";
             return "";
+        }
+        static string DiscKind(string protos)
+        {
+            var p = ":" + protos + ":";
+            if (p.Contains(":mdns:")) return "mDNS (Bonjour)"; if (p.Contains(":ssdp:")) return "SSDP / UPnP"; if (p.Contains(":llmnr:")) return "LLMNR"; if (p.Contains(":nbns:")) return "NetBIOS names"; if (p.Contains(":nbdgm:") || p.Contains(":browser:")) return "NetBIOS browser";
+            return "";
+        }
+        static string DiscExtra(List<string[]> l)
+        {
+            var names = l.SelectMany(x => x.Skip(4).Take(3)).SelectMany(x => x.Split(',')).Select(x => x.Trim()).Where(x => x != "").Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList();
+            return names.Count > 0 ? " · " + string.Join(", ", names) : "";
+        }
+        static string DiscAdvice(string k, out int lv)
+        {
+            lv = 3;
+            switch (k)
+            {
+                case "mDNS (Bonjour)": return "Printers, Chromecasts, Apple devices and smart-home gear announcing themselves and their services. Normal at home.";
+                case "SSDP / UPnP": return "Devices offering themselves to the network (TVs, routers, media servers). A router that answers UPnP may let devices open ports from inside.";
+                case "LLMNR": case "NetBIOS names": lv = 1; return "Old-style name lookups when DNS has no answer. Any device on the segment can answer them falsely and collect sign-in hashes - companies usually turn them off by Group Policy.";
+                case "NetBIOS browser": return "Old Windows network browsing - harmless but a sign of very old settings or devices.";
+                default: return "";
+            }
         }
         static int Order(string k) { var o = new[] { "OSPF", "EIGRP", "RIP", "RIPng", "IS-IS", "PIM", "LDP", "BFD", "DTP", "VTP", "VRRP", "HSRP", "GLBP", "IPv6 router advertisement", "DHCP", "Spanning tree", "LLDP", "CDP", "IGMP" }; int i = Array.IndexOf(o, k); return i < 0 ? 99 : i; }
         static string Extra(string k, List<string[]> l)

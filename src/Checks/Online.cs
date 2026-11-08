@@ -39,7 +39,9 @@ namespace AdeeboMeter
                 var req = (HttpWebRequest)WebRequest.Create(url); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
                 using (var resp = req.GetResponse()) using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
                 {
-                    var text = r.ReadToEnd(); if (text.Length > 4000000) return null;
+                    var sb = new StringBuilder(); var buf = new char[16384]; int n;   // read at most 4 MB, in small pieces - never the whole thing first
+                    while ((n = r.Read(buf, 0, buf.Length)) > 0) { sb.Append(buf, 0, n); if (sb.Length > 4000000) return null; }
+                    var text = sb.ToString();
                     var o = Json.Parse(text); lock (k) cache[url] = o; return o;
                 }
             }
@@ -62,13 +64,13 @@ namespace AdeeboMeter
         }
         public static string AsName(string asn)
         {
-            var o = Get("https://stat.ripe.net/data/as-overview/data.json?resource=AS" + asn.TrimStart('A', 'S', 'a', 's'));
+            var o = Get("https://stat.ripe.net/data/as-overview/data.json?resource=AS" + Uri.EscapeDataString(asn.TrimStart('A', 'S', 'a', 's')));
             string h = S(o, "data.holder"); int dash = h.IndexOf(" - ", StringComparison.Ordinal); return dash > 0 && dash < 30 ? h.Substring(0, dash) : Draw.Trunc(h, 40);
         }
         public static string Rpki(string asn, string prefix)
         {
             if (asn == "" || prefix == "") return "";
-            return S(Get("https://stat.ripe.net/data/rpki-validation/data.json?resource=AS" + asn + "&prefix=" + Uri.EscapeDataString(prefix)), "data.status");
+            return S(Get("https://stat.ripe.net/data/rpki-validation/data.json?resource=AS" + Uri.EscapeDataString(asn) + "&prefix=" + Uri.EscapeDataString(prefix)), "data.status");
         }
         public static int UpdatesLastHours(string prefix, int hours)
         {

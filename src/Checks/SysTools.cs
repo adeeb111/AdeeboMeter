@@ -31,6 +31,15 @@ namespace AdeeboMeter
             for (int i = 0; i < 10 && !run.Stop; i++) { var r = Icmp.Echo6(a, 32, 128, 2000); if (r.Status == Icmp.Ok) { ok++; run.Add(r.Rtt); } else run.Add(double.NaN); run.Status = "Ping " + (i + 1) + " / 10 to " + a; System.Threading.Thread.Sleep(300); }
             var s = run.Copy().Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList();
             rows.Add(R(ok == 10 ? 0 : ok > 0 ? 1 : 2, "Ping " + a, ok + " of 10 answered" + (s.Count > 0 ? " · min " + s[0] + " ms · median " + s[s.Count / 2] + " ms" : ""), "", "m"));
+            // IPv6 path MTU: routers never fragment IPv6 - they send "Packet Too Big" and Windows remembers the size per destination.
+            // Three full-size pings make any router on the way say so; then Windows' own destination cache tells the size it learned.
+            if (ok > 0 && !run.Stop)
+            {
+                run.Status = "IPv6 path MTU..."; int big = 0; for (int i = 0; i < 3; i++) if (Icmp.Echo6(a, 1452, 128, 2000).Status == Icmp.Ok) big++;
+                int pmtu = PathMtu6(a);
+                if (pmtu > 0) rows.Add(R(pmtu < 1280 ? 2 : pmtu < 1500 ? 1 : 0, "Path MTU (IPv6)", pmtu + " bytes" + (big == 0 ? " · full-size pings got no answer" : ""), pmtu < 1500 ? "Something on the way (a tunnel, PPPoE or a VPN) carries less than 1500 bytes. Fine as long as Packet Too Big messages get through - if they're blocked, big downloads stall." : "Full-size packets pass all the way.", "m"));
+                else rows.Add(R(big == 3 ? 0 : 1, "Path MTU (IPv6)", big == 3 ? "full-size (1500-byte) pings pass" : big + " of 3 full-size pings answered", big < 3 ? "Windows didn't record a smaller size. If small pings work and big ones don't, Packet Too Big messages are being dropped - a classic cause of stalled downloads over IPv6." : "", "m"));
+            }
             run.Status = "Tracing over IPv6...";
             int silent = 0;
             for (int ttl = 1; ttl <= 30 && !run.Stop && silent < 5; ttl++)
@@ -42,6 +51,68 @@ namespace AdeeboMeter
             }
             return rows;
         }
+        // the size Windows learned for this destination ("netsh interface ipv6 show destinationcache"): PMTU is the first number on its line
+        static int PathMtu6(IPAddress a)
+        {
+            string o = Run("netsh.exe", "interface ipv6 show destinationcache address=" + a, 5000), want = a.ToString();
+            foreach (var l in o.Split('\n'))
+            {
+                var f = l.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries); int v;
+                if (f.Length >= 2 && f.Skip(1).Any(x => string.Equals(x, want, StringComparison.OrdinalIgnoreCase)) && int.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out v) && v >= 576 && v <= 65535) return v;
+            }
+            return 0;
+        }
+        // ---------- DHCP: the lease Windows holds right now (registry, readable without admin) and the IPv6 address lifetimes
+        public static List<string[]> Dhcp(Monitor m)
+        {
+            var rows = new List<string[]>(); string id; lock (m.L) id = m.IfaceId;
+            NetworkInterface nic = null; try { nic = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(n => n.Id == id); } catch (NetworkInformationException) { }
+            if (nic == null) { rows.Add(R(2, "Adapter", "no active adapter", "", "w")); return rows; }
+            rows.Add(R(3, "Adapter", nic.Name + " · " + nic.Description, "", "w"));
+            bool dhcp4 = false; try { var p4 = nic.GetIPProperties().GetIPv4Properties(); dhcp4 = p4 != null && p4.IsDhcpEnabled; } catch (NetworkInformationException) { }
+            if (!dhcp4) rows.Add(R(3, "IPv4", "set by hand (static) - no DHCP lease", "", "w"));
+            else
+                try
+                {
+                    using (var k = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\" + id))
+                    {
+                        if (k == null) rows.Add(R(1, "IPv4 lease", "Windows has no lease details for this adapter", "", "w"));
+                        else
+                        {
+                            Func<string, string> str = n => { var v = k.GetValue(n); var a2 = v as string[]; return a2 != null ? string.Join(" ", a2) : (v ?? "").ToString().Trim(); };
+                            Func<string, DateTime> time = n => { var v = k.GetValue(n); long t; return v != null && long.TryParse(v.ToString(), out t) && t > 0 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(t).ToLocalTime() : DateTime.MinValue; };
+                            DateTime got = time("LeaseObtainedTime"), t1 = time("T1"), t2 = time("T2"), end = time("LeaseTerminatesTime"), now = DateTime.Now;
+                            string ip = str("DhcpIPAddress");
+                            rows.Add(R(ip == "" || ip.StartsWith("169.254", StringComparison.Ordinal) ? 2 : 0, "Address", ip == "" ? "none from DHCP" : ip + " / " + str("DhcpSubnetMask"), ip.StartsWith("169.254", StringComparison.Ordinal) ? "169.254 means no DHCP server answered - Windows made up an address. Nothing past this PC will work." : "", "w"));
+                            rows.Add(R(3, "DHCP server", str("DhcpServer"), "", "w"));
+                            if (got > DateTime.MinValue) rows.Add(R(3, "Obtained", got.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " (" + Ago(now - got) + " ago)", "", "w"));
+                            if (t1 > DateTime.MinValue) rows.Add(R(3, "Renews (T1)", t1.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (t1 > now ? " (in " + Ago(t1 - now) + ")" : " (due - renewing)"), "Halfway through the lease Windows asks the same server to extend it.", "w"));
+                            if (t2 > DateTime.MinValue) rows.Add(R(3, "Rebinds (T2)", t2.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture), "If renewing failed, Windows asks any DHCP server.", "w"));
+                            if (end > DateTime.MinValue) rows.Add(R(end < now ? 2 : (end - now).TotalMinutes < 10 ? 1 : 0, "Expires", end.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (end > now ? " (in " + Ago(end - now) + ")" : " (expired)"), got > DateTime.MinValue && (end - got).TotalMinutes < 60 ? "A short lease (under an hour) - common on guest Wi-Fi; renewals happen often." : "", "w"));
+                            string gw = str("DhcpDefaultGateway"), dns = str("DhcpNameServer"), dom = str("DhcpDomain");
+                            if (gw != "") rows.Add(R(3, "Router (option 3)", gw, "", "w"));
+                            if (dns != "") rows.Add(R(3, "DNS (option 6)", dns, "", "w"));
+                            if (dom != "") rows.Add(R(3, "Domain (option 15)", dom, "", "w"));
+                        }
+                    }
+                }
+                catch (System.Security.SecurityException) { rows.Add(R(1, "IPv4 lease", "Windows didn't let a normal user read it", "", "w")); }
+            // IPv6: where each address came from and how long it stays
+            try
+            {
+                foreach (var u in nic.GetIPProperties().UnicastAddresses.Where(x => x.Address.AddressFamily == AddressFamily.InterNetworkV6 && !x.Address.IsIPv6LinkLocal).Take(6))
+                {
+                    string from = u.PrefixOrigin == PrefixOrigin.Dhcp ? "DHCPv6" : u.PrefixOrigin == PrefixOrigin.RouterAdvertisement ? (u.SuffixOrigin == SuffixOrigin.Random ? "router advert (temporary, private)" : "router advert (SLAAC)") : u.PrefixOrigin == PrefixOrigin.Manual ? "set by hand" : u.PrefixOrigin.ToString();
+                    long valid = u.AddressValidLifetime, pref = u.AddressPreferredLifetime;
+                    rows.Add(R(3, "IPv6 " + from, u.Address + "  · valid " + Life(valid) + " · preferred " + Life(pref), "", "w"));
+                }
+            }
+            catch (NetworkInformationException) { }
+            catch (PlatformNotSupportedException) { }
+            return rows;
+        }
+        static string Life(long s) { return s <= 0 ? "0" : s >= uint.MaxValue ? "forever" : Ago(TimeSpan.FromSeconds(s)); }
+        static string Ago(TimeSpan t) { return t.TotalMinutes < 1 ? (int)t.TotalSeconds + " s" : t.TotalHours < 1 ? (int)t.TotalMinutes + " min" : t.TotalDays < 2 ? t.TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : t.TotalDays.ToString("0", CultureInfo.CurrentCulture) + " days"; }
         static bool HasV6() { try { return NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up).SelectMany(n => n.GetIPProperties().UnicastAddresses).Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !IPAddress.IsLoopback(u.Address) && !u.Address.ToString().StartsWith("fd", StringComparison.OrdinalIgnoreCase)); } catch { return false; } }
         static IPAddress Resolve6(string host)
         {

@@ -142,6 +142,7 @@ namespace AdeeboMeter
                     bool known = seen.ContainsKey(path);
                     if (!known)
                     {
+                        if (seen.Count > 2000) { foreach (var old in seen.OrderBy(x => x.Value).Take(200).Select(x => x.Key).ToList()) { seen.Remove(old); night.Remove(old); } }   // capped: the oldest go
                         seen[path] = DateTime.UtcNow; changed = true;
                         string[] facts = Explain.FileFacts(path); string where = Explain.Where(path);
                         bool odd = where == "downloads" || where == "temp" || path.IndexOf("\\Downloads\\", StringComparison.OrdinalIgnoreCase) >= 0 || path.IndexOf("\\Temp\\", StringComparison.OrdinalIgnoreCase) >= 0;

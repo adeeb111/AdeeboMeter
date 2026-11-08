@@ -1,6 +1,6 @@
 # AdeeboMeter — The Theory of Everything
 
-*How every part of AdeeboMeter works, in plain words. Version 1.1.1.*
+*How every part of AdeeboMeter works, in plain words. Version 1.1.2.*
 
 ---
 
@@ -148,7 +148,7 @@ A full-screen window, built only when you open it and destroyed when you leave.
 - **Details** shows raw values, sources and the exact time each was read, on every page that has them.
 - **The path strip:** five dots. **Click a dot** to jump to the page that explains it (PC → What's running, Wi-Fi/LAN → Your Wi-Fi, the rest → Check a destination).
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
-- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 219 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
+- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 233 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
 - **Small screens / high scaling:** page buttons switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
 - **Footer:** AdeeboMeter's own CPU and memory, against a 64 MB budget.
 
@@ -228,20 +228,21 @@ Drag through any day of history: the five dots at that minute, the numbers again
 - **HTTPS inspection**: says when a certificate was re-signed by a root that isn't on Microsoft's public list.
 
 ### 5.17f Learn and the knowledge pack (`Knowledge`)
-The explanations (72 programs, 219 terms, 46 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
+The explanations (72 programs, 233 terms, 46 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
 
 ### 5.17g The Toolbox (`FullView.Toolbox`, `PathTools`, `WhyFails`, `Toolkit`, `Protocols`, `RoutingTools`, `SysTools`, `WinEvidence`, `PcHealth`)
-56 tools an engineer reaches for, each one a click and at most three boxes. **Nothing runs until you press Run, and Stop always works.**
-- **Finding a tool:** type in the search box (*mtu*, *dns*, *radius*, *slow* — it searches names and explanations; Enter opens the first), the five you used last are on top (this session only), and the groups fold away. They're grouped by the question you're asking:
-  - **Path & routing:** MTU per hop (don't-fragment pings with rising TTL, a binary search per hop, *Next hop* searches only below the hop before; it names PPPoE, GRE, VPN and silent black holes), MTR (loss and delay per hop over minutes, with load sharing, reroutes, hidden tunnel hops and delay jumps flagged), the way back (reply-TTL per hop, Record Route, the command to run from the far end), which route Windows picks, your gateway (VRRP / HSRP / GLBP virtual address, takeovers on the timeline, a slow plug-in that points at spanning tree), IPv6 routers (rogue router advertisements), routing protocols on your segment (with Wireshark: OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP / HSRP, extra DHCP servers, spanning-tree changes, LLDP / CDP, DTP), IPv6 ping and trace, IPv6 vs IPv4, overlapping networks, who carries my traffic (online lookups).
-  - **Is it reachable?** port test (refused vs. silently dropped), TCP ping, HTTP and TLS inspector, HTTP timing repeated (name · connect · lock · first byte · download), which proxy a URL uses, Teams UDP and NAT type, SSH banner, mail server (greeting, STARTTLS, certificate — never logs in), RADIUS Status-Server (the secret signs the request, is masked and never kept), TACACS+.
-  - **Speed & quality:** an iperf3 client to your own server (iperf3's own options), sustained ping with a loss timeline, TWAMP-light to your own reflector (loss and jitter each way), nearest cloud.
-  - **Names & time:** dig (any record, or the delegation from the root down), encrypted DNS (DoH / DoT), hosts file, DNS hijack and the VPN's name rules, NTP, clock check, where the PC gets its time.
-  - **Network devices:** neighbours (the ARP table), SNMP v2c, a syslog test message, your own router (public address, CGNAT, hairpin), ping sweep (asks first on a company network), Wake-on-LAN, subnet calculator.
+68 tools an engineer reaches for, each one a click and at most four boxes, each with a label that stays while you type and the time it takes. **Nothing runs until you press Run, and Stop always works.**
+- **Finding a tool:** each tool shows its name and what it answers; type in the search box (*mtu*, *dns*, *radius*, *wifi*, *slow* — it searches names and explanations and knows everyday words; Enter opens the first), use the arrows, Enter and F1 (explains anything), the five you used last are on top (this session only), and the groups fold away. They're grouped by the question you're asking:
+  - **Path & routing:** MTU per hop (don't-fragment pings with rising TTL, a binary search per hop, *Next hop* searches only below the hop before; it names PPPoE, GRE, VPN and silent black holes), MTR (loss and delay per hop over minutes, with load sharing, reroutes, hidden tunnel hops and delay jumps flagged), the way back (reply-TTL per hop, Record Route, the command to run from the far end), which route Windows picks, your gateway (VRRP / HSRP / GLBP virtual address, takeovers on the timeline, a slow plug-in that points at spanning tree), IPv6 routers (rogue router advertisements), routing protocols on your segment (with Wireshark: OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP / HSRP, extra DHCP servers, spanning-tree changes, LLDP / CDP, DTP), who announces itself (mDNS, SSDP / UPnP, LLMNR, NetBIOS — and why LLMNR is a risk), IPv6 ping and trace with the path MTU Windows learned, IPv6 vs IPv4, overlapping networks, who carries my traffic (online lookups).
+  - **Is it reachable?** port test (refused vs. silently dropped), TCP ping, HTTP and TLS inspector (every header, security headers explained, the whole chain with keys and signatures, revocation only when you press it), HTTP timing repeated (name · connect · lock · first byte · download), which proxy a URL uses, Teams UDP and NAT type, SSH banner, mail server (greeting, STARTTLS, certificate — never logs in), RADIUS Status-Server (the secret signs the request, is masked and never kept), TACACS+.
+  - **Speed & quality:** an iperf3 client to your own server (direction and seconds in plain words, iperf3's own options under Advanced), latency under load (bufferbloat, graded A+ to F), sustained ping with a loss timeline, DSCP-marked ping (marked and unmarked in turn), TWAMP-light to your own reflector (loss and jitter each way), nearest cloud.
+  - **Names & time:** dig (any record including HTTPS / SVCB, DS, DNSKEY, TLSA and SSHFP, IPv6 reverse names, over DoH, or the delegation from the root down), encrypted DNS (DoH / DoT), hosts file, DNS hijack and the VPN's name rules, NTP, clock check, where the PC gets its time.
+  - **Network devices:** neighbours (the ARP table), the DHCP lease (T1, T2, expiry, options) and IPv6 lifetimes, Wi-Fi roams and drops in 24 hours, a syslog test message, your own router (public address, CGNAT, hairpin), ping sweep (a tick-box on a company network), Wake-on-LAN, subnet calculator.
   - **Windows:** its own evidence (address conflicts, profile, adapter, DHCP), why 802.1X sign-in failed, domain controllers and their ports, Group Policy, certificates that expire soon, firewall rules for an app, what's listening, the event log explained, and the PC (memory pressure, disk, heat, drivers, frozen windows, slow leaks, crashes, background jobs, graphics card per app, what changed, battery, where the space went).
 - **One target:** a host typed into one tool is waiting in the next one that looks at a destination.
 - **Compare with the last run:** run a tool again with the same inputs and every row shows what it said before (memory only).
-- **Copy as text:** any result, ready for a ticket — made when you press it, never saved, never with a secret in it.
+- **Copy as text / Save...:** any result, ready for a ticket — as text, or .csv for a spreadsheet (cells can't become formulas); made when you press it, saved only where you choose, never with a secret in it.
+  - **SNMP (read-only):** v2c and v3 (no auth, MD5 / SHA-1 / SHA-256, AES-128 privacy; keys localised as RFC 3414 says and checked against its test vectors). Views that answer questions — what is this device, interfaces with problems first, traffic per port, CPU and memory, LLDP neighbours, sensors — and a GETBULK walk of any OID or MIB name (2,000 values at most, paced), rebuilt into tables joined by index with the useful columns first. Your own MIB folder is read by a strict local parser (names, tables, enumerations, descriptions — nothing in a MIB is run) into a small index, rebuilt only when the folder changes; search it and walk a table in one click. Never SET, never traps, never listens.
 - AdeeboMeter is always the client: it **never becomes a server** (iperf3 and TWAMP need yours), never logs in anywhere, and never sends a routing protocol packet.
 
 ### 5.17h Online lookups (`Online`) — opt-in, timed
@@ -310,7 +311,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **Only the server you asked can answer.** UDP tools connect their socket to the server (or check the transaction ID and sender), and every reply is parsed with its lengths checked first, nesting limited and handshakes on a deadline — a hostile device on the network can't make a tool lie, hang or crash the app.
 - **Child programs start in their own folder**, never in the one AdeeboMeter runs from.
 - **Secrets stay put.** The RADIUS secret box is masked; the secret signs one request and is never logged, saved or kept for *compare*.
-- **A provable build.** Releases are built by GitHub Actions from this source with every action pinned to an exact commit; each file carries SHA-256 and GitHub build provenance (`gh attestation verify <file> -R adeeb111/AdeeboMeter`). No updater exists, so there is no update channel to hijack.
+- **A provable build.** Releases are built by GitHub Actions from this source with every action pinned to an exact commit; the build job can only read the repository, and a separate release job — which never runs the build script — is the only one that can sign provenance and attach files; each file carries SHA-256 and GitHub build provenance (`gh attestation verify <file> -R adeeb111/AdeeboMeter`). No updater exists, so there is no update channel to hijack.
 - **Static analysis:** the code builds clean against Microsoft's .NET security and quality analyzers with every rule switched on.
 
 ---
@@ -344,7 +345,8 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | `AdeeboMeter.settings` | next to the exe | your choices |
 | `AdeeboMeter.log` | next to the exe | start/stop and errors, max 256 KB, no window titles or traffic |
 | `AdeeboMeter-selftest.txt`, `-deeptest.txt`, `-perf.txt` | next to the exe | only when you run `--selftest`, `--deeptest` or `--perf` |
-| `captures\` | `%LOCALAPPDATA%\AdeeboMeter` | live-capture ring and sniffs — deleted on exit |
+| `captures\` | `%LOCALAPPDATA%\AdeeboMeter` | live-capture ring and sniffs — deleted on exit (*Keep this capture* copies the newest where you choose) |
+| `mibs\`, `mib-index.txt` | `%LOCALAPPDATA%\AdeeboMeter` | MIB files you put there yourself, and the small index of their names (rebuilt only when the folder changes) |
 | `history\` | `%LOCALAPPDATA%\AdeeboMeter` | one line a minute, kept 3 days by default (Settings 1–90), or cleared with one click |
 | `usage.txt`, `baselines.txt`, `seen-apps.txt`, `devices.txt`, `space.txt` | `%LOCALAPPDATA%\AdeeboMeter` | daily data use, what's normal per network, programs and devices already seen, free disk space once a day |
 | `AdeeboMeter-crash.txt` | next to the exe | only after a crash; nothing is sent - *Report this* opens a pre-filled GitHub issue you can read first |

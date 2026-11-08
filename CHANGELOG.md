@@ -2,6 +2,44 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
+## 1.1.2 (2026-11-08)
+
+SNMP that reads like a person wrote it, a friendlier Toolbox, more engineer's tools - and the loose ends from the 1.1 reviews.
+
+### SNMP - read-only, never changes a device, never listens
+- **Views that answer questions**: what is this device, interfaces (status, speed, errors, discards - problems first), traffic per port (two readings 5 s apart), CPU and memory, neighbours (LLDP), sensors (temperature, optics).
+- **Walk any OID or MIB name** (GETBULK, up to 2,000 values, paced, Stop): rows rebuilt into tables joined by index, the useful columns first, values decoded ("not changed since the device booted" instead of 0).
+- **Your own MIB folder**: drop a vendor's .mib files in the folder (*Open MIB folder*); a strict local reader indexes object names, tables, enumerations and descriptions once - nothing in a MIB is ever run. **Search your MIBs** for "temperature", "optic", "fan"... and one click walks just that table.
+- **SNMPv3** (user-based security): no auth, auth (MD5, SHA-1, SHA-256) and auth + AES-128 privacy - type `v3:user:authpass:privpass`. Keys are localised as RFC 3414 says, checked against its own test vectors. Credentials are masked, kept for this session only, never in Copy, Save or the compare key.
+
+### Toolbox - easier to use
+- **Two lines per tool**: the name and what it answers. Search understands everyday words (wifi, slow, lag, traceroute, nslookup, printer...).
+- **Keyboard**: arrows, Page Up / Down, Home / End and Enter in the tool list; typing jumps to search; **F1** explains whatever is under the mouse, or the tool you're in.
+- **Labels stay above the boxes** while you type, and every tool says how long it takes before you press Run.
+- **iperf3 in plain words**: direction (both, upload, download) and seconds, with iperf3's own options under Advanced.
+- **Ping sweep**: a tick-box ("this is my own network, or I'm allowed to scan it") instead of typing yes - never ticked by default, never remembered.
+- **Save...** next to Copy as text: .txt, or .csv for a spreadsheet (cells that start with = + - @ can't turn into formulas). Only where you choose, only when you press it.
+- **A red verdict is never a joke** - the plain words, whatever voice is set - and it links straight to the Investigate check that fits (*Investigate ›* in the header).
+
+### New and deeper tools
+- **Latency under load (bufferbloat)** with your own iperf3 server: idle delay, then delay while downloading and uploading, graded A+ to F.
+- **DSCP-marked ping**: marked and unmarked pings in turn, compared - and honest that only a capture proves the marking left the PC.
+- **Who announces itself**: mDNS, SSDP / UPnP, LLMNR and NetBIOS on your segment (Wireshark + Npcap; listens only).
+- **DHCP lease**: obtained, renews (T1), rebinds (T2), expires, server and options; where each IPv6 address came from and how long it stays.
+- **Wi-Fi roams and drops** (24 h): every hop between access points, back-and-forth roams marked. Roams now record which access point they moved from and to.
+- **dig**: HTTPS / SVCB (HTTP/3, Encrypted Client Hello), DS, DNSKEY (with key tag), TLSA, SSHFP, IPv6 reverse names - and queries over DoH when the server is an https:// address.
+- **HTTP and TLS inspector**: every header, security headers explained (and which are missing), the whole certificate chain with keys, signatures and validity dates, "not valid yet" - and a revocation check (OCSP / CRL) only when you press it.
+- **IPv6**: the path MTU Windows learned (Packet Too Big) in IPv6 ping and trace; *Check a destination* tries the same port over IPv6 next to IPv4.
+- **Keep this capture**: Sniff captures are still deleted on exit - one click copies the newest where you choose.
+
+### Reliability
+- Live capture starts and stops under one lock and its reader thread is joined; Monitor waits for its threads on stop; history tidying no longer holds the sampler.
+- Ping sweep has one deadline for the whole sweep (90 s); iperf3 keeps UDP loss and jitter per stream with -P and checks the UDP connect reply; online lookups read at most 16 KB and escape what they send; the list of seen devices is capped.
+- The build workflow is split: the build job can only read the repository; a separate release job, which never runs the build script, is the only one that can sign provenance and attach files.
+
+### Not in this version
+- Per-monitor DPI (moving the window between a 100% and a 200% screen) - it means re-laying-out every owner-drawn page live; too risky to rush. Windows scales the window instead, slightly soft.
+
 ## 1.1.1 (2026-11-08)
 
 A patch from the first day of use and four outside code reviews.

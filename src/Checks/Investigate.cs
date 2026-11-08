@@ -169,6 +169,32 @@ namespace AdeeboMeter
             r.NotEst.Add("The call stream itself - that needs Live capture during a call.");
         }
 
+        // ---------- Wi-Fi roams timeline (Toolbox): today's Wi-Fi events in order, with ping-pong between two access points called out
+        static readonly string[] RoamsHead = { "6", "", "time      event", "", "" };
+        public static List<string[]> Roams(Monitor m)
+        {
+            var rows = new List<string[]>();
+            var evs = new List<Timeline.Ev>(m.Events.Recent(300));
+            try { foreach (var e in History.Load(DateTime.Today).E) if (!evs.Any(x => Math.Abs((x.T - e.T).TotalSeconds) < 2 && x.Text == e.Text)) evs.Add(e); } catch (Exception e) { Program.Log("roams history: " + e.Message); }
+            var since = DateTime.Now.AddHours(-24); evs = evs.Where(e => e.Kind == "wifi" && e.T >= since).OrderBy(e => e.T).ToList();
+            var roams = evs.Where(e => e.Text.Contains("access point")).ToList();
+            bool onWifi; lock (m.L) onWifi = m.AdapterKind == "Wi-Fi";
+            if (evs.Count == 0) { rows.Add(new[] { "0", "Wi-Fi events", "none in the last 24 hours" + (onWifi ? "" : " - this PC isn't on Wi-Fi now"), "Roams, drops, channel changes and signal falls appear here as AdeeboMeter sees them.", "w" }); return rows; }
+            int pingPong = 0; for (int i = 1; i < roams.Count; i++) if ((roams[i].T - roams[i - 1].T).TotalMinutes < 2) pingPong++;
+            int drops = evs.Count(e => e.Lv == 2);
+            rows.Add(new[] { roams.Count > 10 || pingPong > 3 ? "1" : "0", "Last 24 hours", roams.Count + (roams.Count == 1 ? " roam" : " roams") + " · " + drops + (drops == 1 ? " drop" : " drops") + (pingPong > 0 ? " · " + pingPong + " back-and-forth within 2 min" : ""),
+                pingPong > 3 ? "Back-and-forth roams mean two access points look equally strong here. Moving the laptop, or asking IT to lower one AP's power or raise the roaming threshold, usually fixes it." : roams.Count > 10 ? "Many roams - normal while walking around an office, not while sitting still." : "", "w" });
+            rows.Add(RoamsHead.ToArray());
+            DateTime prev = DateTime.MinValue;
+            foreach (var e in evs.Skip(Math.Max(0, evs.Count - 120)))
+            {
+                bool pp = e.Text.Contains("access point") && prev != DateTime.MinValue && (e.T - prev).TotalMinutes < 2;
+                if (e.Text.Contains("access point")) prev = e.T;
+                rows.Add(new[] { e.Lv == 2 || pp ? "7" : "6", "", e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + "  " + e.Text + (pp ? "   <- back again within 2 min" : ""), "", "" });
+            }
+            return rows;
+        }
+
         // ---------- I keep disconnecting
         static void Drops(Monitor m, GuideRun r)
         {

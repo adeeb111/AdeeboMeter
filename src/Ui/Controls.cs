@@ -63,6 +63,11 @@ namespace AdeeboMeter
     sealed class DB : Panel
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
+        // KeyNav: the panel takes focus (click or Tab) and gets the arrow keys - for owner-drawn lists
+        bool keyNav;
+        public bool KeyNav { get { return keyNav; } set { keyNav = value; SetStyle(ControlStyles.Selectable, value); TabStop = value; } }
+        protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || base.IsInputKey(k); }
+        protected override void OnMouseDown(MouseEventArgs e) { if (keyNav && !Focused) Focus(); base.OnMouseDown(e); }
         // a paint slower than 40 ms is written to the log (at most once a minute per panel), so "it feels laggy" has numbers
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
         protected override void OnPaint(PaintEventArgs e)
@@ -151,6 +156,18 @@ namespace AdeeboMeter
     {
         public readonly TextBox Box = new TextBox(); readonly Label cueLbl;
         public string Cue { get { return cueLbl.Text; } set { cueLbl.Text = value; } }
+        // Label: a name drawn above the box that stays while you type (the cue inside disappears)
+        string label = "";
+        public string Label
+        {
+            get { return label; }
+            set
+            {
+                bool had = label != ""; label = value ?? ""; float S = Draw.S; int lh = label != "" ? (int)(18 * S) : 0;
+                if (had != (label != "")) { Height = (int)(36 * S) + lh; Padding = new Padding((int)(12 * S), Math.Max(2, (int)((36 * S - Box.PreferredHeight) / 2) + 1) + lh, (int)(12 * S), 0); }
+                Invalidate();
+            }
+        }
         public RoundBox(int width, Font font, string cue)
         {
             float S = Draw.S;
@@ -171,7 +188,9 @@ namespace AdeeboMeter
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(b, ClientRectangle);
-            var r = new RectangleF(0.5f, 0.5f, Width - 1, Height - 1);
+            float lh = label != "" ? 18 * Draw.S : 0;
+            if (lh > 0) using (var lb = new SolidBrush(Theme.Sub)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(label, Draw.fSmall, lb, new RectangleF(2, 0, Width - 4, lh), nf);
+            var r = new RectangleF(0.5f, 0.5f + lh, Width - 1, Height - 1 - lh);
             Theme.Fill(g, r, 8 * Draw.S, Theme.Card);
             Theme.Stroke(g, r, 8 * Draw.S, Box.Focused ? Theme.Blue : Theme.Line, Box.Focused ? 2 : 1);
         }

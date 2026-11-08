@@ -319,6 +319,30 @@ namespace AdeeboMeter
             try { stream.Dispose(); } catch { }
             try { sock.Close(); } catch { }
 
+            // 6b. IPv6: when the name also has an IPv6 address - does the same port work over IPv6, and is it slower?
+            var v6 = addrs.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetworkV6);
+            if (v6 != null && target.AddressFamily == AddressFamily.InterNetwork && DateTime.UtcNow < deadline)
+            {
+                int ok6 = 0; double sum6 = 0;
+                for (int i = 0; i < 3; i++) { var e6 = Icmp.Echo6(v6, 32, 128, 1500); if (e6.Status == Icmp.Ok) { ok6++; sum6 += e6.Rtt; } }
+                double t6 = double.NaN; string err6 = "";
+                try
+                {
+                    using (var s6 = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp))
+                    {
+                        var sw6 = Stopwatch.StartNew(); var ar6 = s6.BeginConnect(v6, port, null, null);
+                        if (ar6.AsyncWaitHandle.WaitOne(3000)) { s6.EndConnect(ar6); t6 = sw6.Elapsed.TotalMilliseconds; } else err6 = "timeout";
+                    }
+                }
+                catch (SocketException se6) { err6 = se6.SocketErrorCode == SocketError.NetworkUnreachable || se6.SocketErrorCode == SocketError.HostUnreachable ? "this network has no IPv6 route" : se6.SocketErrorCode.ToString(); }
+                catch (ObjectDisposedException) { err6 = "timeout"; }
+                bool v6ok = !double.IsNaN(t6), slower = v6ok && t6 > tcpMs * 1.5 + 20;
+                r.AddCard("IPV6", new List<string[]> {
+                    new[] { "Address", v6.ToString() },
+                    new[] { "Ping", ok6 > 0 ? (sum6 / ok6).ToString("0", CultureInfo.CurrentCulture) + " ms" : "no reply", ok6 > 0 ? "0" : "3" },
+                    new[] { "Port " + port, v6ok ? t6.ToString("0", CultureInfo.CurrentCulture) + " ms (IPv4 " + tcpMs.ToString("0", CultureInfo.CurrentCulture) + " ms)" : err6, v6ok ? (slower ? "1" : "0") : err6.StartsWith("this network", StringComparison.Ordinal) ? "3" : "1" } });
+            }
+
             // 7. Path MTU (IPv4, don't-fragment pings)
             int mtu = 0;
             if (target.AddressFamily == AddressFamily.InterNetwork && icmp && DateTime.UtcNow < deadline)

@@ -21,10 +21,11 @@ namespace AdeeboMeter
 
         static readonly string[] Hostile = { "", " ", "x;rm -rf /", "$(calc)", "&calc&", "'\"<>|%n%s", new string('a', 5000), "999.999.999.999", "::::::", "-1", "http://", "a\u0000b", "😀.example", "../../windows/win.ini", "127.0.0.1:99999" };
         // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (TESTPLAN-1.1.md)
-        static readonly HashSet<string> ByHand = new HashSet<string> { "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr" };
+        static readonly HashSet<string> ByHand = new HashSet<string> { "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover" };
 
         Probe RunOne(Tool t, string[] a, int limitMs)
         {
+            if (a.Length < 4) { var a4 = new string[4]; for (int i = 0; i < 4; i++) a4[i] = i < a.Length && a[i] != null ? a[i] : ""; a = a4; }   // the tools read up to four boxes
             var p = new Probe(); var run = new Toolkit.Run(); List<string[]> res = null; Exception err = null;
             var me = Process.GetCurrentProcess(); me.Refresh(); long m0 = me.PrivateMemorySize64; int h0 = me.HandleCount, g0 = Native.GetGuiResources(Native.GetCurrentProcess(), 0), t0 = me.Threads.Count;
             var sw = Stopwatch.StartNew();
@@ -68,7 +69,7 @@ namespace AdeeboMeter
                 for (int box = 0; box < t.Inputs.Length; box++)
                     foreach (var h in Hostile)
                     {
-                        var a = new string[3]; for (int i = 0; i < 3; i++) a[i] = i == box ? h : i == 0 ? "127.0.0.1" : "";   // other boxes: loopback, so nothing leaves the PC
+                        var a = new string[4]; for (int i = 0; i < 4; i++) a[i] = i == box ? h : i == 0 ? "127.0.0.1" : "";   // other boxes: loopback, so nothing leaves the PC
                         if (box == 0 && TargetTools.Contains(t.Id) && h.Length > 0 && h.Trim().Length == 0) continue;
                         var p = RunOne(t, a, 3000); total += p.Ms; tries++; mem += p.MemMb; hd += p.Handles; gd += p.Gdi;
                         if (p.Status != "OK" && p.Status != "SLOW (stopped at the limit)" && worst.Status == "OK") { worst = p; worst.Status += "  [box " + (box + 1) + " = " + Draw.Trunc(h.Replace("\u0000", "\\0"), 30) + "]"; }
@@ -130,7 +131,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < t.Inputs.Length; i++)
                     {
                         var b = tbBoxes[i]; if (t.Inputs[i] == "") { if (b != null) throw new InvalidOperationException(t.Id + ": a box where there should be none"); continue; }
-                        if (b == null || b.IsDisposed || b.Parent != tbBar || !b.Visible || b.Cue != t.Inputs[i]) throw new InvalidOperationException(t.Id + ": box " + (i + 1) + " isn't the one on screen");
+                        if (b == null || b.IsDisposed || b.Parent != tbBar || !b.Visible || (b.Tag as string) != t.Inputs[i] || b.Label == "") throw new InvalidOperationException(t.Id + ": box " + (i + 1) + " isn't the one on screen");
                     }
                     if (tbPool.Count(b => b.Visible) != tbBoxes.Count(b => b != null)) throw new InvalidOperationException(t.Id + ": a leftover box is still showing");
                 }
@@ -138,6 +139,13 @@ namespace AdeeboMeter
                 SelectTool("subnet"); tbBoxes[0].Box.Text = "10.9.8.7/24"; if (Inputs()[0] != "10.9.8.7/24") throw new InvalidOperationException("the tool doesn't read the box you typed in");
                 SelectTool("radius"); if (!tbBoxes[1].Box.UseSystemPasswordChar) throw new InvalidOperationException("the RADIUS secret isn't masked");
                 SelectTool("subnet"); if (tbBoxes[0].Box.UseSystemPasswordChar || tbBoxes[0].Box.Text != "") throw new InvalidOperationException("a box kept the secret's mask or old text");
+                // a company sweep needs the tick, which never carries over; iperf's plain controls become the right options
+                SelectTool("sweep"); if (!tbSweepOk.Visible || tbSweepOk.Checked) throw new InvalidOperationException("the sweep tick isn't showing, or starts ticked");
+                tbSweepOk.Checked = true; SelectTool("subnet"); if (tbSweepOk.Visible) throw new InvalidOperationException("the sweep tick shows on another tool");
+                SelectTool("sweep"); if (tbSweepOk.Checked) throw new InvalidOperationException("the sweep tick stayed ticked");
+                if (IperfOpts(new[] { "s", "download", "15", "-P 4" }) != "-R -t 15 -P 4" || IperfOpts(new[] { "s", "both", "10", "" }) != "--both -t 10" || IperfOpts(new[] { "s", "upload", "999", "" }) != "-t 60") throw new InvalidOperationException("iperf's plain controls give the wrong options");
+                tbFilter = "wifi"; if (Matches().Count == 0) throw new InvalidOperationException("searching wifi finds nothing"); tbFilter = "";
+                MoveTool(1); MoveTool(-1);
             }, Tools2().Count * 120);
             ui("open every tool again - GDI / USER objects must not grow", () =>
             {

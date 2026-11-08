@@ -85,7 +85,7 @@ namespace AdeeboMeter
             npcap = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Npcap", "wpcap.dll")) && File.Exists(dumpcap);
 
             header = new DB { Name = "header", Dock = DockStyle.Top, Height = Sc(60), BackColor = Theme.Card };
-            header.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintHeader(e.Graphics, header.ClientRectangle); };
+            header.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintHeader(e.Graphics, header.ClientRectangle); }; Wire(header);
             settingsBtn = new PillButton("Settings", PillButton.K.Chip);
             settingsBtn.Click += delegate { tab = tab == "settings" ? lastPage : "settings"; ShowTab(); };
             aboutBtn = new PillButton("About", PillButton.K.Chip);
@@ -180,7 +180,8 @@ namespace AdeeboMeter
             };
             list = new ConnList { Dock = DockStyle.Fill, CanSniff = npcap };
             list.SniffRequested += Sniff; list.Changed += UpdateConnStatus; list.HoverKey += SetTipKey;
-            connStatus = new Label { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall };
+            connStatus = new Label { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
+            connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
             connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips);
             StyleChips();
 
@@ -289,6 +290,15 @@ namespace AdeeboMeter
             {
                 if (e.KeyCode == Keys.Escape) Close();
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
+                else if (e.KeyCode == Keys.F1)
+                {
+                    // F1: the explanation for what's under the mouse, or for the tool you're in - no hovering needed
+                    e.Handled = true; string k = tipKey; bool kb = k == null;
+                    if (k == null && tab == "toolbox" && tbCanvas != null) k = "tb." + tbSel;
+                    var en = k != null ? TipEntry(k) : null; if (en == null) return;
+                    var at = kb && tbCanvas != null ? tbCanvas.PointToScreen(new Point(Sc(20), Sc(20))) : Cursor.Position;
+                    tipTimer.Stop(); tip.ShowAt(en, at, this);
+                }
             };
             Shown += delegate { timer.Start(); RefreshConns(true); };
             tipTimer.Tick += delegate { tipTimer.Stop(); ShowTip(); };
@@ -478,7 +488,20 @@ namespace AdeeboMeter
             if (sniffStatus != "") s += "    |    " + sniffStatus;
             else if (!npcap) s += Voice.P("    |    Sniff needs Wireshark + Npcap - not on this PC.", "    |    Sniff needs Wireshark and Npcap.");
             else s += "    |    Sniff: a row's Sniff button captures it for " + Cfg.SniffSec + " s and opens Wireshark";
-            connStatus.Text = s;
+            bool keep = Program.LastCapture != "" && File.Exists(Program.LastCapture);
+            if (keep) s += "    ·    Keep this capture (click)";
+            connStatus.Text = s; connStatus.Cursor = keep ? Cursors.Hand : Cursors.Default;
+        }
+        // copies the newest capture to where you choose - the original is still deleted when AdeeboMeter exits
+        void KeepCapture()
+        {
+            string f = Program.LastCapture; if (f == "" || !File.Exists(f)) return;
+            using (var d = new SaveFileDialog { Title = "Keep this capture", Filter = "Wireshark capture (*.pcapng)|*.pcapng", FileName = Path.GetFileName(f), InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), OverwritePrompt = true })
+            {
+                if (d.ShowDialog(this) != DialogResult.OK) return;
+                try { File.Copy(f, d.FileName, true); sniffStatus = "Kept: " + d.FileName; UpdateConnStatus(); }
+                catch (Exception e) { Program.Log("keep capture: " + e.Message); sniffStatus = "Couldn't keep it: " + e.Message; UpdateConnStatus(); }
+            }
         }
 
         void SelfStats()
@@ -810,7 +833,8 @@ namespace AdeeboMeter
                             sniffing = false;
                             if (File.Exists(file) && new FileInfo(file).Length > 0)
                             {
-                                sniffStatus = Voice.P("Got it - opening in Wireshark. (Deleted when AdeeboMeter exits; Save As in Wireshark to keep it.)", "Saved; opening in Wireshark. Deleted on exit unless saved elsewhere.");
+                                Program.LastCapture = file;
+                                sniffStatus = Voice.P("Got it - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)", "Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy.");
                                 try { if (File.Exists(wireshark)) { var ws = new ProcessStartInfo(wireshark, "\"" + file + "\""); ws.WorkingDirectory = Path.GetDirectoryName(wireshark); ws.UseShellExecute = false; Process.Start(ws).Dispose(); } } catch (Exception ex) { sniffStatus = "Saved " + file + " (" + ex.Message + ")"; }
                             }
                             else { string e2; lock (err) e2 = err.ToString().Trim(); sniffStatus = "Capture failed: " + Draw.Trunc(e2.Replace(Environment.NewLine, " "), 120); Program.Log("dumpcap: " + e2); }
