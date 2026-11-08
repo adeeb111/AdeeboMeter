@@ -35,9 +35,9 @@ namespace AdeeboMeter
             // Three full-size pings make any router on the way say so; then Windows' own destination cache tells the size it learned.
             if (ok > 0 && !run.Stop)
             {
-                run.Status = "IPv6 path MTU..."; int big = 0; for (int i = 0; i < 3; i++) if (Icmp.Echo6(a, 1452, 128, 2000).Status == Icmp.Ok) big++;
+                run.Status = "IPv6 path MTU..."; int big = 0, tooBig = 0; for (int i = 0; i < 3; i++) { var st = Icmp.Echo6(a, 1452, 128, 2000).Status; if (st == Icmp.Ok) big++; else if (st == Icmp.TooBig) tooBig++; }
                 int pmtu = PathMtu6(a);
-                if (pmtu > 0) rows.Add(R(pmtu < 1280 ? 2 : pmtu < 1500 ? 1 : 0, "Path MTU (IPv6)", pmtu + " bytes" + (big == 0 ? " · full-size pings got no answer" : ""), pmtu < 1500 ? "Something on the way (a tunnel, PPPoE or a VPN) carries less than 1500 bytes. Fine as long as Packet Too Big messages get through - if they're blocked, big downloads stall." : "Full-size packets pass all the way.", "m"));
+                if (pmtu > 0) rows.Add(R(pmtu < 1280 ? 2 : pmtu < 1500 ? 1 : 0, "Path MTU (IPv6)", pmtu + " bytes" + (tooBig > 0 ? " · a router answered Packet Too Big" : big == 0 ? " · full-size pings got no answer" : ""), pmtu < 1500 ? "Something on the way (a tunnel, PPPoE or a VPN) carries less than 1500 bytes. Fine as long as Packet Too Big messages get through - if they're blocked, big downloads stall." : "Full-size packets pass all the way.", "m"));
                 else rows.Add(R(big == 3 ? 0 : 1, "Path MTU (IPv6)", big == 3 ? "full-size (1500-byte) pings pass" : big + " of 3 full-size pings answered", big < 3 ? "Windows didn't record a smaller size. If small pings work and big ones don't, Packet Too Big messages are being dropped - a classic cause of stalled downloads over IPv6." : "", "m"));
             }
             run.Status = "Tracing over IPv6...";

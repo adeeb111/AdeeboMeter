@@ -81,12 +81,13 @@ namespace AdeeboMeter
 
         public void Start()
         {
+            if (samplerT != null) return;   // already running: never subscribe twice
+            stop = false; stopping.Reset();
             Events.Add(3, "app", "AdeeboMeter started");
             addrHandler = delegate { netChanged = true; wake.Set(); };
             availHandler = delegate(object o, NetworkAvailabilityEventArgs e) { Events.Add(e.IsAvailable ? 0 : 2, "net", e.IsAvailable ? "Network is back" : Voice.P("Every network connection just dropped.", "All network connections dropped.")); netChanged = true; wake.Set(); };
             try { NetworkChange.NetworkAddressChanged += addrHandler; NetworkChange.NetworkAvailabilityChanged += availHandler; } catch { }
             RefreshInterfaces();
-            if (samplerT != null) return;   // started once
             var s = new Thread(SamplerLoop); s.IsBackground = true; s.Name = "sampler"; s.Priority = ThreadPriority.BelowNormal; samplerT = s; s.Start();
             var p = new Thread(ProbeLoop); p.IsBackground = true; p.Name = "probe"; p.Priority = ThreadPriority.BelowNormal; probeT = p; p.Start();
         }
@@ -95,6 +96,7 @@ namespace AdeeboMeter
             stop = true; wake.Set(); stopping.Set();
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
             foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(3000);   // both finish their tick and release their counters
+            samplerT = null; probeT = null;   // so Start() can run again
         }
         void Once(string key, int seconds, int lv, string kind, string text)
         {
@@ -684,7 +686,9 @@ namespace AdeeboMeter
             else if (pc == 1) Set(1, Voice.P("Busy, but holding. Maybe don't open another big app just yet.", "Busy but fine. Avoid opening big apps for now."));
             else if (link == 1 || isp == 1 || dn == 1 || inet == 1) Set(1, Voice.P("Network's a bit sleepy; your PC is fine.", "Network a bit slow; your PC is fine."));
             else Set(0, Voice.P("All quiet. Nothing to fix - go get coffee.", "All quiet."));
-            flow = level == 0 ? "" : call ? "calls" : pc >= 1 && link < 2 && isp < 2 && inet < 2 ? "pc" : dn == 2 ? "site" : link == 2 ? "drops" : "slow";   // the Investigate check that fits
+            // the Investigate check that fits the headline's cause: a red PC first, then a lost or weak link (drops) vs a slow gateway (slow), then DNS, then a call in progress
+            bool linkDown = link == 2 && (double.IsNaN(gw) || hasWifi && sig < 30);
+            flow = level == 0 ? "" : pc == 2 ? "pc" : linkDown ? "drops" : link == 2 ? "slow" : dn == 2 ? "site" : call ? "calls" : pc >= 1 && isp < 2 && inet < 2 ? "pc" : "slow";
 
             // gateway latency jumps (against its own calm baseline)
             if (!double.IsNaN(gw))

@@ -150,8 +150,13 @@ namespace AdeeboMeter
                     {
                         try
                         {
-                            u.Send(req, req.Length, new IPEndPoint(r, 3478)); var from = new IPEndPoint(IPAddress.Any, 0); var resp = u.Receive(ref from);
-                            got = Mapped(resp, tid);
+                            // one socket for both relays (the NAT test needs the same local port), so every answer is checked: from that relay, port 3478, our transaction
+                            u.Send(req, req.Length, new IPEndPoint(r, 3478)); var until = DateTime.UtcNow.AddMilliseconds(1500);
+                            while (got == null && DateTime.UtcNow < until)
+                            {
+                                var from = new IPEndPoint(IPAddress.Any, 0); var resp = u.Receive(ref from);
+                                if (from.Address.Equals(r) && from.Port == 3478) got = Mapped(resp, tid);
+                            }
                         }
                         catch (SocketException) { }
                     }
@@ -168,7 +173,7 @@ namespace AdeeboMeter
         }
         static IPEndPoint Mapped(byte[] m, byte[] tid)
         {
-            if (m == null || m.Length < 20 || m[0] != 1 || m[1] != 1) return null;
+            if (m == null || m.Length < 20 || m[0] != 1 || m[1] != 1 || m[4] != 0x21 || m[5] != 0x12 || m[6] != 0xA4 || m[7] != 0x42) return null;   // binding success, with the magic cookie
             for (int i = 0; i < 12; i++) if (m[8 + i] != tid[i]) return null;
             for (int p = 20; p + 4 <= m.Length;)
             {

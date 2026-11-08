@@ -144,7 +144,11 @@ namespace AdeeboMeter
                 tbSweepOk.Checked = true; SelectTool("subnet"); if (tbSweepOk.Visible) throw new InvalidOperationException("the sweep tick shows on another tool");
                 SelectTool("sweep"); if (tbSweepOk.Checked) throw new InvalidOperationException("the sweep tick stayed ticked");
                 if (IperfOpts(new[] { "s", "download", "15", "-P 4" }) != "-R -t 15 -P 4" || IperfOpts(new[] { "s", "both", "10", "" }) != "--both -t 10" || IperfOpts(new[] { "s", "upload", "999", "" }) != "-t 60" || IperfOpts(new[] { "s", "both", "10", "-R -t 5" }) != "-R -t 5") throw new InvalidOperationException("iperf's plain controls give the wrong options");
-                tbFilter = "wifi"; if (Matches().Count == 0) throw new InvalidOperationException("searching wifi finds nothing"); tbFilter = "";
+                // search ranks: the everyday word's own tool comes first, so Enter opens the right one
+                foreach (var q in new[] { "wifi:roams", "nslookup:dig", "traceroute:mtr", "printers:sweep", "ospf:rlisten", "bufferbloat:bloat", "mtu:mtu" })
+                { var qa = q.Split(':'); tbFilter = qa[0]; var mm = Matches(); if (mm.Count == 0 || mm[0].Id != qa[1]) throw new InvalidOperationException("searching " + qa[0] + " opens " + (mm.Count > 0 ? mm[0].Id : "nothing") + ", not " + qa[1]); }
+                tbFilter = "";
+                if (IperfOpts(new[] { "s", "sideways", "10", "" }) != null) throw new InvalidOperationException("an unknown iperf direction is guessed instead of refused");
                 MoveTool(1); MoveTool(-1);
             }, Tools2().Count * 120);
             ui("open every tool again - GDI / USER objects must not grow", () =>

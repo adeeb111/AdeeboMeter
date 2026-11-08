@@ -333,7 +333,8 @@ namespace AdeeboMeter
     {
         public static volatile bool Serious;
         public static string P(string fun, string plain) { return Serious ? plain : fun; }
-        public static string Red(string fun, string plain) { return plain; }   // a real problem is never a joke - the plain words, whatever the voice
+        public static string Red(string fun, string plain) { return plain; }
+        public static string ByLevel(int level, string fun, string plain) { return level >= 2 ? plain : P(fun, plain); }   // a real problem is never a joke - the plain words, whatever the voice
         public static string Greet()
         {
             int h = DateTime.Now.Hour;

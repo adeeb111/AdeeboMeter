@@ -65,9 +65,10 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url.Trim();
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "URL", "not a web address", "", "u")); return rows; }
-            int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>();
+            int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5);
             for (int i = 0; i < n && !run.Stop; i++)
             {
+                if (DateTime.UtcNow > allBy) { rows.Add(R(1, "Stopped", "after 5 minutes - " + i + " of " + n + " requests done", "", "m")); break; }   // one deadline for the whole run
                 run.Status = "Request " + (i + 1) + " / " + n; var t = new double[5]; string status = "";
                 try
                 {
@@ -82,7 +83,7 @@ namespace AdeeboMeter
                         st.Write(req, 0, req.Length);
                         var buf = new byte[16384]; int r = st.Read(buf, 0, buf.Length); t[3] = sw.Elapsed.TotalMilliseconds;
                         status = r > 12 ? Encoding.ASCII.GetString(buf, 0, Math.Min(r, 40)).Split('\r')[0] : "";
-                        long total = r; while (r > 0 && total < 4 << 20) { r = st.Read(buf, 0, buf.Length); total += r; }
+                        long total = r; var dlBy = DateTime.UtcNow.AddSeconds(30); while (r > 0 && total < 4 << 20 && DateTime.UtcNow < dlBy && !run.Stop) { r = st.Read(buf, 0, buf.Length); total += r; }   // 4 MB or 30 s, whichever first
                         t[4] = sw.Elapsed.TotalMilliseconds; st.Dispose();
                     }
                     all.Add(t); run.Add(t[4]);
@@ -164,8 +165,8 @@ namespace AdeeboMeter
             catch (Exception e) { rows.Add(R(2, h + ":" + p, "no answer (" + Draw.Trunc(e.Message, 50) + ")", "UDP 123 may be blocked on this network - company networks often allow only their own time servers.", "m")); }
             return rows;
         }
-        static void WriteNtp(byte[] b, int o, DateTime t) { double s = (t - new DateTime(1900, 1, 1)).TotalSeconds; uint sec = (uint)s, frac = (uint)((s - sec) * 4294967296.0); b[o] = (byte)(sec >> 24); b[o + 1] = (byte)(sec >> 16); b[o + 2] = (byte)(sec >> 8); b[o + 3] = (byte)sec; b[o + 4] = (byte)(frac >> 24); b[o + 5] = (byte)(frac >> 16); b[o + 6] = (byte)(frac >> 8); b[o + 7] = (byte)frac; }
-        static DateTime ReadNtp(byte[] b, int o) { uint sec = (uint)(b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]); uint frac = (uint)(b[o + 4] << 24 | b[o + 5] << 16 | b[o + 6] << 8 | b[o + 7]); return new DateTime(1900, 1, 1).AddSeconds(sec + frac / 4294967296.0); }
+        static void WriteNtp(byte[] b, int o, DateTime t) { double s = (t - new DateTime(1900, 1, 1)).TotalSeconds; long whole = (long)Math.Floor(s); uint sec = (uint)(whole & 0xFFFFFFFFL), frac = (uint)((s - whole) * 4294967296.0); b[o] = (byte)(sec >> 24); b[o + 1] = (byte)(sec >> 16); b[o + 2] = (byte)(sec >> 8); b[o + 3] = (byte)sec; b[o + 4] = (byte)(frac >> 24); b[o + 5] = (byte)(frac >> 16); b[o + 6] = (byte)(frac >> 8); b[o + 7] = (byte)frac; }
+        static DateTime ReadNtp(byte[] b, int o) { uint sec = (uint)(b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]); uint frac = (uint)(b[o + 4] << 24 | b[o + 5] << 16 | b[o + 6] << 8 | b[o + 7]); return new DateTime(1900, 1, 1).AddSeconds((sec >= 0x80000000u ? sec : sec + 4294967296.0) + frac / 4294967296.0); }   // RFC 4330 3: top bit clear = era 1 (from Feb 2036)
 
         // ---------- mail: greeting, capabilities, STARTTLS / TLS certificate (no login)
         public static List<string[]> Mail(string target)
@@ -262,7 +263,7 @@ namespace AdeeboMeter
             p += hl; int pend = p + len;
             if (!TryTlv(r, p, pend, out t, out hl, out len) || t != 2 || len != 2 || r[p + hl] != id1 || r[p + hl + 1] != id2) return "to a different request";
             p += hl + len; if (!TryTlv(r, p, pend, out t, out hl, out len) || t != 2) return "with a broken reply";
-            int err = len == 1 ? r[p + hl] : -1; if (err != 0) return "with SNMP error " + err + (err == 2 ? " (noSuchName)" : err == 5 ? " (genErr)" : "");
+            int err = -1; if (len >= 1 && len <= 4) { err = 0; for (int i = 0; i < len; i++) err = err << 8 | r[p + hl + i]; } if (err != 0) return "with SNMP error " + err + (err == 2 ? " (noSuchName)" : err == 5 ? " (genErr)" : "");
             return "";
         }
         static byte[] Tlv(byte tag, byte[] v) { var l = v.Length < 128 ? new[] { (byte)v.Length } : v.Length < 256 ? new byte[] { 0x81, (byte)v.Length } : new byte[] { 0x82, (byte)(v.Length >> 8), (byte)v.Length }; return new[] { tag }.Concat(l).Concat(v).ToArray(); }
@@ -281,7 +282,9 @@ namespace AdeeboMeter
             Action<int, int> walk = null;
             walk = (pos, end) =>
             {
-                if (++depth > 16) return;
+                if (++depth > 16) { depth--; return; }
+                try
+                {
                 while (pos < end && vals.Count < 64)
                 {
                     int tag, hl, len; if (!TryTlv(r, pos, end, out tag, out hl, out len)) return;
@@ -295,7 +298,8 @@ namespace AdeeboMeter
                     else if (tag == 0x30 || (tag >= 0xA0 && tag <= 0xA8)) walk(v, vend);
                     pos = vend;   // len >= 0, hl >= 2: always forward
                 }
-                depth--;
+                }
+                finally { depth--; }   // every return path gives its level back
             };
             walk(0, r.Length);
         }
@@ -316,7 +320,7 @@ namespace AdeeboMeter
             if (o < 0 || l < 0 || o + l > r.Length) return "(malformed)";
             if ((t == 0x43 || t == 2 || t == 0x41 || t == 0x42) && l > 8) return "(number too long)";
             if (t == 4) return Draw.Trunc(Regex.Replace(Encoding.UTF8.GetString(r, o, l), @"\s+", " "), 160);
-            if (t == 0x43 || t == 2 || t == 0x41 || t == 0x42) { long v = 0; for (int i = 0; i < l; i++) v = v << 8 | r[o + i]; if (t == 0x43) { if (v < 0 || v > uint.MaxValue) return "(out of range)"; var ts = TimeSpan.FromMilliseconds(v * 10); return ts.Days + " days " + ts.Hours + " h " + ts.Minutes + " min"; } return v.ToString(CultureInfo.InvariantCulture); }
+            if (t == 0x43 || t == 2 || t == 0x41 || t == 0x42) { long v = t == 2 && l > 0 && (r[o] & 0x80) != 0 ? -1 : 0; for (int i = 0; i < l; i++) v = v << 8 | r[o + i]; /* INTEGER is signed: FF = -1 */ if (t == 0x43) { if (v < 0 || v > uint.MaxValue) return "(out of range)"; var ts = TimeSpan.FromMilliseconds(v * 10); return ts.Days + " days " + ts.Hours + " h " + ts.Minutes + " min"; } return v.ToString(CultureInfo.InvariantCulture); }
             if (t == 0x80 || t == 0x81) return "(not available on this device)";
             return "(type 0x" + t.ToString("X2", CultureInfo.InvariantCulture) + ")";
         }
@@ -369,7 +373,22 @@ namespace AdeeboMeter
             if (r == null || r.Length < 20 || reqAuth == null || reqAuth.Length != 16 || secret == null) return false;
             int rl = r[2] << 8 | r[3]; if (rl < 20 || rl > r.Length || r[1] != id) return false;
             var chk = new byte[rl + secret.Length]; Array.Copy(r, chk, rl); Array.Copy(reqAuth, 0, chk, 4, 16); Array.Copy(secret, 0, chk, rl, secret.Length);
-            using (var md5 = MD5.Create()) { var exp = md5.ComputeHash(chk); for (int i = 0; i < 16; i++) if (exp[i] != r[4 + i]) return false; }
+            try { using (var md5 = MD5.Create()) { var exp = md5.ComputeHash(chk); for (int i = 0; i < 16; i++) if (exp[i] != r[4 + i]) return false; } }
+            finally { Array.Clear(chk, 0, chk.Length); }
+            // a Message-Authenticator (attribute 80), when the reply carries one, must check out too (RFC 3579 3.2: HMAC-MD5 over the reply
+            // with the request authenticator in place and the attribute's own value zeroed)
+            for (int p = 20; p + 2 <= rl;)
+            {
+                int t = r[p], l = r[p + 1]; if (l < 2 || p + l > rl) return false;
+                if (t == 80)
+                {
+                    if (l != 18) return false;
+                    var copy = new byte[rl]; Array.Copy(r, copy, rl); Array.Copy(reqAuth, 0, copy, 4, 16); Array.Clear(copy, p + 2, 16);
+                    try { using (var h = new HMACMD5(secret)) { var mac = h.ComputeHash(copy); for (int i = 0; i < 16; i++) if (mac[i] != r[p + 2 + i]) return false; } }
+                    finally { Array.Clear(copy, 0, copy.Length); }
+                }
+                p += l;
+            }
             return true;
         }
 

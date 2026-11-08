@@ -53,7 +53,7 @@ namespace AdeeboMeter
                     case "--tos": if (v.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? int.TryParse(v.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out n) : int.TryParse(v, out n)) { o.Tos = n & 255; i++; } break;
                     default:
                         var m = System.Text.RegularExpressions.Regex.Match(a, @"^(\d+)m$");
-                        if (m.Success && o.Udp) o.Rate = long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) * 1000000; else o.Ignored.Add(t[i]);
+                        long mr; if (m.Success && o.Udp && long.TryParse(m.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out mr) && mr > 0 && mr <= 10000) o.Rate = mr * 1000000; else o.Ignored.Add(t[i]);   // same 10 Gb/s cap as -b
                         break;
                 }
             }
@@ -66,7 +66,7 @@ namespace AdeeboMeter
             var raw = (options ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries).ToList();
             var fixedOpts = string.Join(" ", raw.Select(x => x == "-P" ? "--parallel" : x == "-S" ? "--tos" : x == "-R" ? "--reverse" : x == "-O" ? "--omit" : x == "-M" ? "--set-mss" : x));
             var o = ParseOpts(fixedOpts);
-            int c = host.LastIndexOf(':'); if (c > 0 && host.IndexOf(':') == c) { int pp; if (int.TryParse(host.Substring(c + 1), out pp)) o.Port = pp; host = host.Substring(0, c); }
+            int c = host.LastIndexOf(':'); if (c > 0 && host.IndexOf(':') == c) { int pp; if (int.TryParse(host.Substring(c + 1), out pp) && pp > 0 && pp < 65536) o.Port = pp; else { rows.Add(R(2, "Server", "port must be 1-65535", "", "u")); return rows; } host = host.Substring(0, c); }
             if (host == "") { rows.Add(R(2, "Server", "type your iperf3 server, e.g. 10.0.0.5 or lab.example.com:5201", "On the other machine run:  iperf3 -s   (AdeeboMeter is only the client - it never listens)", "u")); return rows; }
             run.SeriesUnit = "Mb/s";
             rows.Add(R(3, "Settings", (o.Udp ? "UDP at " + (o.Rate / 1e6).ToString("0.#", CultureInfo.CurrentCulture) + " Mb/s" : "TCP") + " · " + o.Par + " stream" + (o.Par == 1 ? "" : "s") + " · " + o.Secs + " s" + (o.Omit > 0 ? " (+" + o.Omit + " s warm-up not counted)" : "") + (o.Len > 0 ? " · " + o.Len + "-byte writes" : "") + (o.Window > 0 ? " · window " + (o.Window / 1024) + " KB" : "") + (o.Mss > 0 ? " · MSS " + o.Mss : "") + (o.Tos > 0 ? " · TOS 0x" + o.Tos.ToString("X2", CultureInfo.InvariantCulture) : "") + " · port " + o.Port,
@@ -107,20 +107,24 @@ namespace AdeeboMeter
         public static List<string[]> Loaded(string server, string target, Run run)
         {
             var rows = new List<string[]>(); if ((server ?? "").Trim() == "") { rows.Add(R(2, "Server", "type your iperf3 server", "It has to be on the far side of the link you want to test - for your internet line, a server out on the internet (iperf3 -s).", "u")); return rows; }
-            var dst = Icmp.Resolve4(string.IsNullOrWhiteSpace(target) ? "1.1.1.1" : target); if (dst == null) { rows.Add(R(2, "Ping target", "couldn't find " + target, "", "u")); return rows; }
+            // ping target: the one you typed; otherwise the iperf3 server itself (its queue is the one being filled), or 1.1.1.1 if it doesn't answer pings
+            bool typed = !string.IsNullOrWhiteSpace(target);
+            string srvHost = server.Trim(); int sc = srvHost.LastIndexOf(':'); if (sc > 0 && srvHost.IndexOf(':') == sc) srvHost = srvHost.Substring(0, sc);
+            var dst = Icmp.Resolve4(typed ? target : srvHost); if (dst == null && typed) { rows.Add(R(2, "Ping target", "couldn't find " + target, "", "u")); return rows; }
             run.SeriesUnit = "ms";
             Func<int, Func<bool>, List<double>> pings = (max, stop) =>
             {
                 var l = new List<double>();
-                for (int i = 0; i < max && !stop() && !run.Stop; i++) { var sw = Stopwatch.StartNew(); var r = Icmp.Echo(dst, 32, 128, false, 1000, false); double v = r.Status == Icmp.Ok ? Math.Max(r.Rtt, 0.5) : double.NaN; l.Add(v); run.Add(v); int w = 250 - (int)sw.ElapsedMilliseconds; if (w > 0) Thread.Sleep(w); }
+                for (int i = 0; i < max && !stop() && !run.Stop; i++) { if (dst == null) break; var sw = Stopwatch.StartNew(); var r = Icmp.Echo(dst, 32, 128, false, 1000, false); double v = r.Status == Icmp.Ok ? Math.Max(r.Rtt, 0.5) : double.NaN; l.Add(v); run.Add(v); int w = 250 - (int)sw.ElapsedMilliseconds; if (w > 0) Thread.Sleep(w); }
                 return l;
             };
             Func<List<double>, double> med = l => { var v = l.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); return v.Count == 0 ? double.NaN : v[v.Count / 2]; };
             run.Status = "Idle latency to " + dst + "...";
             double idle = med(pings(20, () => false));
+            if (double.IsNaN(idle) && !typed) { dst = IPAddress.Parse("1.1.1.1"); run.Status = "The server doesn't answer pings - idle latency to 1.1.1.1..."; idle = med(pings(20, () => false)); }
             if (double.IsNaN(idle)) { rows.Add(R(2, "Idle", dst + " doesn't answer pings - pick another target", "", "m")); return rows; }
             rows.Add(R(0, "Idle", idle.ToString("0", CultureInfo.CurrentCulture) + " ms to " + dst, "", "m"));
-            double worst = 0; bool loaded = true;
+            double worst = 0; bool loaded = true, lost = false;
             foreach (bool down in new[] { true, false })
             {
                 if (run.Stop) break;
@@ -129,6 +133,7 @@ namespace AdeeboMeter
                 var pt = new Thread(() => { Thread.Sleep(1500); during = pings(400, () => { if (run.Stop) load.Stop = true; return done; }); }) { IsBackground = true, Name = "bloat ping" }; pt.Start();   // skip TCP's first second-and-a-half (slow start)
                 List<string[]> ip; try { ip = Iperf(server, (down ? "-R" : "") + " -t 10 -P 4", load); } finally { done = true; }
                 pt.Join(3000);
+                List<double> got; lock (pt) got = pt.IsAlive ? null : during;   // a ping thread that hasn't finished is never read while it writes
                 string want = down ? "Download" : "Upload";
                 var thr = ip.FirstOrDefault(x => x[0] == "0" && x[1].StartsWith(want, StringComparison.Ordinal) && x[2].Contains("Mb/s"));
                 if (thr == null)
@@ -138,13 +143,18 @@ namespace AdeeboMeter
                     rows.Add(R(2, "During " + want.ToLowerInvariant(), "no load - " + (why != null ? Draw.Trunc(why[2], 90) : run.Stop ? "stopped" : "iperf3 gave no result"), why != null ? why[3] : "", "m"));
                     continue;
                 }
-                double ld = during != null ? med(during) : double.NaN, add = ld - idle; if (!double.IsNaN(add)) worst = Math.Max(worst, add); else worst = Math.Max(worst, 1000);
-                rows.Add(R(double.IsNaN(add) ? 2 : add > 200 ? 2 : add > 60 ? 1 : 0, "During " + want.ToLowerInvariant(), (double.IsNaN(ld) ? "pings lost under load" : ld.ToString("0", CultureInfo.CurrentCulture) + " ms (+" + Math.Max(0, add).ToString("0", CultureInfo.CurrentCulture) + " ms)") + " · " + thr[2], "", "m"));
+                int sent = got != null ? got.Count : 0, okN = got != null ? got.Count(x => !double.IsNaN(x)) : 0;
+                double ld = okN >= Math.Max(5, sent / 2) ? med(got) : double.NaN, add = ld - idle;   // under half the pings back: no delay figure is trustworthy
+                if (!double.IsNaN(add)) worst = Math.Max(worst, add); else lost = true;
+                string lossTxt = sent > 0 ? " · " + (sent - okN) + " of " + sent + " pings lost" : "";
+                rows.Add(R(double.IsNaN(add) ? 2 : add > 200 ? 2 : add > 60 ? 1 : 0, "During " + want.ToLowerInvariant(), (double.IsNaN(ld) ? "too few pings came back to measure" : ld.ToString("0", CultureInfo.CurrentCulture) + " ms (+" + Math.Max(0, add).ToString("0", CultureInfo.CurrentCulture) + " ms)") + lossTxt + " · " + thr[2], "", "m"));
             }
             if (!loaded || run.Stop) { rows.Insert(0, R(1, "Bufferbloat grade", run.Stop ? "stopped - no grade" : "no grade - the line was never loaded in both directions", "The grade needs iperf3 to fill the line; see the row below for why it didn't.", "i")); return rows; }
+            if (lost) { rows.Insert(0, R(2, "Bufferbloat grade", "inconclusive - most pings were lost while the line was full, so no delay could be measured", "Losing every ping under load is worse than any grade: the router's queue drops or the line can't carry the load. Try a lower load (iperf3 -b) or SQM on the router.", "i")); return rows; }
             string grade = worst < 5 ? "A+" : worst < 30 ? "A" : worst < 60 ? "B" : worst < 200 ? "C" : worst < 400 ? "D" : "F";
             rows.Insert(0, R(worst >= 200 ? 2 : worst >= 60 ? 1 : 0, "Bufferbloat grade", grade + " · latency rises up to " + worst.ToString("0", CultureInfo.CurrentCulture) + " ms when the line is full",
-                worst >= 60 ? "Calls and games stutter while someone uploads or downloads. The fix is on the router: turn on SQM / Smart Queue / fq_codel / cake, set a little under your real speed." : "Busy line or not, calls stay smooth.", "i"));
+                (worst >= 60 ? "Calls and games stutter while someone uploads or downloads. The fix is on the router: turn on SQM / Smart Queue / fq_codel / cake, set a little under your real speed." : "Busy line or not, calls stay smooth.")
+                + " The grade assumes iperf3 filled the line: if the speeds below are well under what you pay for, the server or this PC was the limit and the line wasn't really full.", "i"));
             return rows;
         }
         static List<string[]> IperfOne(string host, Opt o, bool reverse, Run run)
@@ -252,6 +262,7 @@ namespace AdeeboMeter
                     else if (st == 13)   // EXCHANGE_RESULTS
                     {
                         var sb = new StringBuilder("{\"cpu_util_total\":0,\"cpu_util_user\":0,\"cpu_util_system\":0,\"sender_has_retransmits\":-1,\"streams\":[");
+                        // stream ids 1, 3, 4, 5...: the same numbering iperf3 itself uses (id 2 is skipped on purpose - it matches what the server expects)
                         for (int i = 0; i < streams.Count; i++) sb.Append(i > 0 ? "," : "").Append("{\"id\":" + (i == 0 ? 1 : i + 2) + ",\"bytes\":" + (Interlocked.Read(ref bytes[0]) / streams.Count) + ",\"retransmits\":-1,\"jitter\":" + (jit).ToString("0.######", CultureInfo.InvariantCulture) + ",\"errors\":" + lost + ",\"omitted_errors\":0,\"packets\":" + pkts + ",\"omitted_packets\":0,\"start_time\":0,\"end_time\":" + sw.Elapsed.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture) + "}");
                         sb.Append("]}"); SendJson(cs, sb.ToString());
                         var sj = Json.Parse(ReadJson(cs)) as Dictionary<string, object>;
@@ -484,6 +495,8 @@ namespace AdeeboMeter
                         var r = new Rr { Section = sec, Name = Name(resp, ref p) }; int ty = resp[p] << 8 | resp[p + 1]; r.Ttl = resp[p + 4] << 24 | resp[p + 5] << 16 | resp[p + 6] << 8 | resp[p + 7]; int len = resp[p + 8] << 8 | resp[p + 9]; p += 10; int d = p;
                         if (d + len > resp.Length) break;
                         r.Type = Types.FirstOrDefault(x => x.Value == ty).Key ?? (ty == 41 ? "OPT" : ty == 46 ? "RRSIG" : "type" + ty);
+                        int need = ty == 1 ? 4 : ty == 28 ? 16 : ty == 15 ? 3 : ty == 33 ? 7 : ty == 257 ? 2 : ty == 43 ? 5 : ty == 48 ? 5 : ty == 44 ? 3 : ty == 52 ? 4 : ty == 64 || ty == 65 ? 3 : 0;
+                        if (len < need) { r.Data = "(short record - " + len + " bytes)"; p = d + len; if (ty != 41) msg.Rrs.Add(r); continue; }   // one bad record never loses the rest
                         switch (ty)
                         {
                             case 1: r.Data = new IPAddress(new[] { resp[d], resp[d + 1], resp[d + 2], resp[d + 3] }).ToString(); break;
@@ -493,12 +506,12 @@ namespace AdeeboMeter
                             case 33: { int x = d + 6; r.Data = "priority " + (resp[d] << 8 | resp[d + 1]) + " weight " + (resp[d + 2] << 8 | resp[d + 3]) + " port " + (resp[d + 4] << 8 | resp[d + 5]) + " → " + Name(resp, ref x); break; }
                             case 6: { int x = d; string mn = Name(resp, ref x), rn = Name(resp, ref x); r.Data = mn + " " + rn + " serial " + ((uint)(resp[x] << 24 | resp[x + 1] << 16 | resp[x + 2] << 8 | resp[x + 3])); break; }
                             case 16: { var sb = new StringBuilder(); int x = d; while (x < d + len) { int l = resp[x++]; sb.Append('"').Append(Encoding.UTF8.GetString(resp, x, Math.Min(l, d + len - x))).Append("\" "); x += l; } r.Data = sb.ToString().Trim(); break; }
-                            case 257: { int tl = resp[d + 1]; r.Data = (resp[d] != 0 ? "critical " : "") + Encoding.ASCII.GetString(resp, d + 2, tl) + " \"" + Encoding.ASCII.GetString(resp, d + 2 + tl, len - 2 - tl) + "\""; break; }
-                            case 43: r.Data = "key tag " + (resp[d] << 8 | resp[d + 1]) + " " + Alg(resp[d + 2]) + " digest " + (resp[d + 3] == 2 ? "SHA-256" : resp[d + 3] == 4 ? "SHA-384" : resp[d + 3] == 1 ? "SHA-1" : "type " + resp[d + 3]) + " " + Hex(resp, d + 4, Math.Min(len - 4, 32)); break;
+                            case 257: { int tl = Math.Min(resp[d + 1], len - 2); r.Data = (resp[d] != 0 ? "critical " : "") + Encoding.ASCII.GetString(resp, d + 2, tl) + " \"" + Encoding.ASCII.GetString(resp, d + 2 + tl, len - 2 - tl) + "\""; break; }
+                            case 43: r.Data = "key tag " + (resp[d] << 8 | resp[d + 1]) + " " + Alg(resp[d + 2]) + " digest " + (resp[d + 3] == 2 ? "SHA-256" : resp[d + 3] == 4 ? "SHA-384" : resp[d + 3] == 1 ? "SHA-1" : "type " + resp[d + 3]) + " " + Hex(resp, d + 4, len - 4); break;
                             case 48: { int fl = resp[d] << 8 | resp[d + 1]; uint ac = 0; for (int i2 = 0; i2 < len; i2++) ac += (i2 & 1) != 0 ? resp[d + i2] : (uint)(resp[d + i2] << 8); ac += ac >> 16 & 0xFFFF;
                                     r.Data = ((fl & 1) != 0 ? "KSK (signs the keys)" : "ZSK (signs the records)") + " · " + Alg(resp[d + 3]) + " · key tag " + (ac & 0xFFFF) + " · " + (len - 4) + "-byte key"; break; }   // key tag: RFC 4034 appendix B
                             case 44: r.Data = (resp[d] == 1 ? "RSA" : resp[d] == 3 ? "ECDSA" : resp[d] == 4 ? "Ed25519" : "alg " + resp[d]) + " " + (resp[d + 1] == 2 ? "SHA-256" : resp[d + 1] == 1 ? "SHA-1" : "fp " + resp[d + 1]) + " " + Hex(resp, d + 2, len - 2); break;
-                            case 52: r.Data = "usage " + resp[d] + (resp[d] == 3 ? " (this exact cert)" : resp[d] == 2 ? " (this CA)" : "") + " · selector " + (resp[d + 1] == 1 ? "public key" : "full cert") + " · " + (resp[d + 2] == 1 ? "SHA-256" : resp[d + 2] == 2 ? "SHA-512" : "exact") + " " + Hex(resp, d + 3, Math.Min(len - 3, 32)); break;
+                            case 52: r.Data = "usage " + resp[d] + (resp[d] == 3 ? " (this exact cert)" : resp[d] == 2 ? " (this CA)" : "") + " · selector " + (resp[d + 1] == 1 ? "public key" : "full cert") + " · " + (resp[d + 2] == 1 ? "SHA-256" : resp[d + 2] == 2 ? "SHA-512" : "exact") + " " + Hex(resp, d + 3, len - 3); break;
                             case 64: case 65: r.Data = Svcb(resp, d, len); break;
                             default: r.Data = len + " bytes"; break;
                         }
@@ -544,7 +557,7 @@ namespace AdeeboMeter
                             if (!string.IsNullOrEmpty(resp.Headers[h])) rows.Add(R(3, h, Draw.Trunc(resp.Headers[h], 120), h == "Alt-Svc" && resp.Headers[h].Contains("h3") ? "The site also offers HTTP/3 (QUIC over UDP 443) - browsers switch to it after the first visit." : "", "m"));
                         rows.AddRange(SecurityHeaders(resp.Headers, u.Scheme == "https"));
                         // every header, as the server sent it (cookies shortened - they're often long and never needed here)
-                        rows.Add(R(3, "All headers", resp.Headers.Count + " from the final answer", "", "m"));
+                        rows.Add(R(3, "All headers", resp.Headers.Count + " from the final answer" + (resp.Headers.Count > 80 ? " (the first 80 shown)" : ""), "Cookie values are never shown or copied - they are often sign-in sessions; only their length is.", "m"));
                         foreach (string k in resp.Headers.AllKeys.Take(80)) { string v = resp.Headers[k] ?? ""; if (k.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase)) v = "(" + v.Length + " characters)"; rows.Add(new[] { "6", "", (k + ": ").PadRight(28) + Draw.Trunc(v, 300), "", "" }); }
                         break;
                     }
@@ -617,7 +630,7 @@ namespace AdeeboMeter
                     {
                         if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
                         using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); if (chainRows == null && ch != null) chainRows = Chain(ch); errs = e; return e == SslPolicyErrors.None; }))
-                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto.Item2, true)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
+                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
                 catch (Exception e) { rows.Add(R(3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }
@@ -643,7 +656,8 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); int i = 0;
             foreach (var el in ch.ChainElements)
             {
-                var c = el.Certificate; if (c == null || i > 6) break;
+                var c = el.Certificate; if (c == null) break;
+                if (i > 6) { rows.Add(R(3, "Chain", "+" + (ch.ChainElements.Count - i) + " more certificates not shown", "", "m")); break; }
                 string key = c.PublicKey.Oid.FriendlyName ?? c.PublicKey.Oid.Value; int bits = 0;
                 try { if (c.PublicKey.Oid.Value == "1.2.840.113549.1.1.1") using (var rsa = c.GetRSAPublicKey()) bits = rsa.KeySize; else if (c.PublicKey.Oid.Value == "1.2.840.10045.2.1") { int kl = c.PublicKey.EncodedKeyValue.RawData.Length; bits = kl >= 133 ? 521 : kl >= 97 ? 384 : kl >= 65 ? 256 : 0; } } catch (CryptographicException) { }
                 string name = i == 0 ? "Chain: the site" : i == ch.ChainElements.Count - 1 ? "Chain: root" : "Chain: issuer " + i;

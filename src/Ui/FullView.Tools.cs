@@ -11,17 +11,20 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         string toolTitle = "", toolStatus = "", toolWhich = ""; DateTime toolAt; List<string[]> toolRows; volatile bool toolBusy;
+        static string[] NoInputs() { return new[] { "", "", "", "" }; }
         void RunTool(string which, string title)
         {
             if (toolBusy) return;
             toolBusy = true; toolWhich = which; toolTitle = title; toolRows = null; toolStatus = "Starting..."; healthCanvas.Invalidate();
+            var tbTool = which.StartsWith("tb:", StringComparison.Ordinal) ? System.Linq.Enumerable.FirstOrDefault(Tools2(), z => z.Id == which.Substring(3)) : null;   // a Toolbox PC check, run here
             Action<string> progress = delegate(string s) { toolStatus = s; try { BeginInvoke((Action)healthCanvas.Invalidate); } catch { } };
             Task.Factory.StartNew(() =>
             {
                 List<string[]> res;
                 try
                 {
-                    res = which == "precall" ? Tools.PreCall(M, progress) : which == "dns" ? Tools.DnsBench(M, progress) : which == "vpn" ? Tools.VpnMap(M) : Tools.Visibility(M);
+                    if (tbTool != null) { var run = new Toolkit.Run(); var pr = new System.Threading.Timer(delegate { if (run.Status != "") progress(run.Status); }, null, 300, 500); try { res = tbTool.Do(NoInputs(), run); } finally { pr.Dispose(); } }
+                    else res = which == "precall" ? Tools.PreCall(M, progress) : which == "dns" ? Tools.DnsBench(M, progress) : which == "vpn" ? Tools.VpnMap(M) : Tools.Visibility(M);
                 }
                 catch (Exception e) { Program.Log("tool " + which + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 60), "" } }; }
                 try { BeginInvoke((Action)delegate { toolRows = res; toolAt = DateTime.Now; toolBusy = false; healthCanvas.Invalidate(); }); } catch { toolBusy = false; }

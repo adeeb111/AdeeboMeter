@@ -19,10 +19,16 @@ namespace AdeeboMeter
         static string[] Line(string text, bool trouble) { return new[] { trouble ? "7" : "6", "", text, "", "" }; }
         const string Hint = "Read-only: AdeeboMeter only reads (GET / GETBULK) - it never changes a device. v2c sends the community in clear text; v3 with auth + privacy doesn't.";
 
+        // set when a walk returned only part of a table - the Toolbox puts a "Partial" row on top (and so into Copy and Save)
+        [ThreadStatic] static string partial;
+        public static string TakePartial() { var p = partial; partial = null; return p; }
         static bool Target(string dev, out IPEndPoint ep, out string err)
         {
+            partial = null;
             ep = null; err = ""; string h = (dev ?? "").Trim(); int port = 161;
-            int c = h.LastIndexOf(':'); if (c > 0 && h.IndexOf(':') == c) { int p; if (int.TryParse(h.Substring(c + 1), out p) && p > 0 && p < 65536) port = p; h = h.Substring(0, c); }
+            int c = h.LastIndexOf(':'), rb = h.IndexOf("]:", StringComparison.Ordinal);
+            if (h.StartsWith("[", StringComparison.Ordinal) && rb > 0) { int p; if (!int.TryParse(h.Substring(rb + 2), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(1, rb - 1); }   // [2001:db8::1]:161
+            else if (c > 0 && h.IndexOf(':') == c) { int p; if (!int.TryParse(h.Substring(c + 1), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(0, c); }
             if (h == "") { err = "type the device's address"; return false; }
             IPAddress a; if (!IPAddress.TryParse(h.Trim('[', ']'), out a)) { try { a = Dns.GetHostAddresses(h).FirstOrDefault(); } catch { a = null; } }
             if (a == null) { err = "couldn't find " + h; return false; }
@@ -35,6 +41,7 @@ namespace AdeeboMeter
         static Dictionary<string, Snmp.Vb> Col(IPEndPoint ep, Snmp.Cred c, string oid, Toolkit.Run run, out string err)
         {
             var d = new Dictionary<string, Snmp.Vb>(); var vbs = Snmp.Walk(ep, c, oid, 2000, run, out err);
+            if (vbs != null && err != "" && partial == null) partial = err;   // some values, then it stopped: the view must say so
             if (vbs != null) foreach (var v in vbs) d[v.Oid.Substring(oid.Length + 1)] = v;
             return d;
         }
@@ -97,22 +104,29 @@ namespace AdeeboMeter
             IPEndPoint ep; string err; var c = Snmp.Cred.Parse(cred); var rows = new List<string[]>();
             if (!Target(dev, out ep, out err)) { rows.Add(R(2, "Device", err, "", "u")); return rows; }
             const string x = "1.3.6.1.2.1.31.1.1.1."; bool hc = true;
-            var in1 = Col(ep, c, x + "6", run, out err); var out1 = Col(ep, c, x + "10", run, out err);
-            if (in1.Count == 0) { hc = false; in1 = Col(ep, c, "1.3.6.1.2.1.2.2.1.10", run, out err); out1 = Col(ep, c, "1.3.6.1.2.1.2.2.1.16", run, out err); }
+            // each direction timed on its own (a monotonic clock, at the middle of its walk): on a big device the two walks are seconds apart
+            var clock = global::System.Diagnostics.Stopwatch.StartNew(); double tIn1, tOut1, tIn2, tOut2;
+            Func<string, double, Tuple<Dictionary<string, Snmp.Vb>, double>> walk = (o, dummy) => { double a0 = clock.Elapsed.TotalSeconds; var d = Col(ep, c, o, run, out err); return Tuple.Create(d, (a0 + clock.Elapsed.TotalSeconds) / 2); };
+            var w1 = walk(x + "6", 0); var w2 = walk(x + "10", 0);
+            if (w1.Item1.Count == 0) { hc = false; w1 = walk("1.3.6.1.2.1.2.2.1.10", 0); w2 = walk("1.3.6.1.2.1.2.2.1.16", 0); }
+            var in1 = w1.Item1; var out1 = w2.Item1; tIn1 = w1.Item2; tOut1 = w2.Item2;
             if (in1.Count == 0) return Fail(ep.ToString(), err == "" ? "no traffic counters (IF-MIB) on this device" : err, c);
-            var t0 = DateTime.UtcNow; for (int i = 0; i < 50 && !run.Stop; i++) { run.Status = "Measuring for 5 s..."; Thread.Sleep(100); }
-            var in2 = Col(ep, c, hc ? x + "6" : "1.3.6.1.2.1.2.2.1.10", run, out err); var out2 = Col(ep, c, hc ? x + "10" : "1.3.6.1.2.1.2.2.1.16", run, out err); double secs = (DateTime.UtcNow - t0).TotalSeconds;
+            for (int i = 0; i < 50 && !run.Stop; i++) { run.Status = "Measuring for 5 s..."; Thread.Sleep(100); }
+            var w3 = walk(hc ? x + "6" : "1.3.6.1.2.1.2.2.1.10", 0); var w4 = walk(hc ? x + "10" : "1.3.6.1.2.1.2.2.1.16", 0);
+            var in2 = w3.Item1; var out2 = w4.Item1; tIn2 = w3.Item2; tOut2 = w4.Item2; double secs = tIn2 - tIn1, secsOut = tOut2 - tOut1;
             var name = Col(ep, c, x + "1", run, out err); var hs = Col(ep, c, x + "15", run, out err);
-            Func<Dictionary<string, Snmp.Vb>, Dictionary<string, Snmp.Vb>, string, double> rate = (a, b, i) =>
+            // -1: no sample (unavailable), -2: the counter went backwards (reset / reboot) - never shown as 0
+            Func<Dictionary<string, Snmp.Vb>, Dictionary<string, Snmp.Vb>, string, double, double> rate = (a, b, i, dt) =>
             {
-                Snmp.Vb va = V(a, i), vb2 = V(b, i); if (va == null || vb2 == null) return -1; ulong p = Snmp.Num(va), q = Snmp.Num(vb2);
-                ulong d = q >= p ? q - p : hc ? 0 : (uint.MaxValue - p + q + 1); return d * 8.0 / secs;   // a 32-bit counter can wrap once
+                Snmp.Vb va = V(a, i), vb2 = V(b, i); if (va == null || vb2 == null || dt <= 0) return -1; ulong p = Snmp.Num(va), q = Snmp.Num(vb2);
+                if (q < p && hc) return -2;
+                ulong d = q >= p ? q - p : (uint.MaxValue - p + q + 1); return d * 8.0 / dt;   // a 32-bit counter can wrap once
             };
-            var list = in1.Keys.Select(i => new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : "if " + i, In = rate(in1, in2, i), Out = rate(out1, out2, i), Sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1e6 : 0 })
-                .Where(r => r.In >= 0).OrderByDescending(r => Math.Max(r.In, r.Out)).ToList();
-            Func<double, string> bps = v => v >= 1e9 ? (v / 1e9).ToString("0.00", CultureInfo.CurrentCulture) + " Gb/s" : v >= 1e6 ? (v / 1e6).ToString("0.0", CultureInfo.CurrentCulture) + " Mb/s" : (v / 1e3).ToString("0", CultureInfo.CurrentCulture) + " kb/s";
+            var list = in1.Keys.Select(i => new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : "if " + i, In = rate(in1, in2, i, secs), Out = rate(out1, out2, i, secsOut), Sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1e6 : 0 })
+                .Where(r => r.In != -1 || r.Out != -1).OrderByDescending(r => Math.Max(r.In, r.Out)).ToList();
+            Func<double, string> bps = v => v == -1 ? "n/a" : v == -2 ? "reset" : v >= 1e9 ? (v / 1e9).ToString("0.00", CultureInfo.CurrentCulture) + " Gb/s" : v >= 1e6 ? (v / 1e6).ToString("0.0", CultureInfo.CurrentCulture) + " Mb/s" : (v / 1e3).ToString("0", CultureInfo.CurrentCulture) + " kb/s";
             rows.Add(R(0, ep.ToString(), list.Count + " interfaces over " + secs.ToString("0.0", CultureInfo.CurrentCulture) + " s" + (hc ? "" : " (32-bit counters - fast links can wrap)"), "Busiest first. A port near 100% of its speed is the bottleneck.", "m"));
-            Table(rows, new[] { "Interface", "In", "Out", "Busiest %" }, list.Take(40).Select(r => new[] { r.Name, bps(r.In), bps(r.Out), r.Sp > 0 ? (Math.Max(r.In, r.Out) * 100 / r.Sp).ToString("0", CultureInfo.CurrentCulture) + "%" : "-" }).ToList(),
+            Table(rows, new[] { "Interface", "In", "Out", "Busiest %" }, list.Take(40).Select(r => new[] { r.Name, bps(r.In), bps(r.Out), r.Sp > 0 && Math.Max(r.In, r.Out) >= 0 ? (Math.Max(r.In, r.Out) * 100 / r.Sp).ToString("0", CultureInfo.CurrentCulture) + "%" : "-" }).ToList(),
                 list.Take(40).Select(r => r.Sp > 0 && Math.Max(r.In, r.Out) > r.Sp * 0.8).ToList());
             return rows;
         }
@@ -198,6 +212,7 @@ namespace AdeeboMeter
             var idx = MibIndex.For(b);
             var vbs = Snmp.Walk(ep, c, b, 2000, run, out err);
             if (vbs == null) return Fail(ep.ToString(), err, c);
+            if (err != "") partial = err;
             if (vbs.Count == 0) { rows.Add(R(1, ep.ToString(), "nothing under " + (idx.NameOfOid(b) ?? b), "The device doesn't offer this table, or the community / user can't see it (its SNMP view).", "m")); return rows; }
             Render(rows, vbs, idx, b, ep.Address.ToString());
             return rows;
@@ -242,9 +257,10 @@ namespace AdeeboMeter
                 ulong n; long sn;
                 switch (ty)
                 {
-                    case "INTEGER": vb.Type = 2; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"-?\d+"); sn = mm.Success ? long.Parse(mm.Value, CultureInfo.InvariantCulture) : 0; var b = new List<byte>(); do { b.Insert(0, (byte)sn); sn >>= 8; } while (sn != 0 && sn != -1); vb.Raw = b.ToArray(); } break;
+                    case "INTEGER": vb.Type = 2; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"-?\d+"); if (!mm.Success || !long.TryParse(mm.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out sn)) sn = 0;
+                        var b = new List<byte>(); do { b.Insert(0, (byte)sn); sn >>= 8; } while (!(sn == 0 && (b[0] & 0x80) == 0 || sn == -1 && (b[0] & 0x80) != 0)); vb.Raw = b.ToArray(); } break;   // 200 needs 00 C8 - one byte would read as -56
                     case "Gauge32": case "Counter32": case "Counter64": case "Unsigned32": vb.Type = (byte)(ty == "Counter64" ? 0x46 : ty == "Counter32" ? 0x41 : 0x42); ulong.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out n); vb.Raw = BitConverter.GetBytes(n).Reverse().ToArray(); break;
-                    case "Timeticks": vb.Type = 0x43; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"\((\d+)\)"); n = mm.Success ? ulong.Parse(mm.Groups[1].Value, CultureInfo.InvariantCulture) : 0; vb.Raw = BitConverter.GetBytes((uint)n).Reverse().ToArray(); } break;
+                    case "Timeticks": vb.Type = 0x43; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"\((\d+)\)"); if (!mm.Success || !ulong.TryParse(mm.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) n = 0; vb.Raw = BitConverter.GetBytes((uint)n).Reverse().ToArray(); } break;
                     case "IpAddress": { IPAddress a; vb.Type = 0x40; vb.Raw = IPAddress.TryParse(v, out a) ? a.GetAddressBytes() : new byte[4]; } break;
                     default: vb.Type = 4; vb.Raw = global::System.Text.Encoding.UTF8.GetBytes(v.Trim('"')); break;
                 }

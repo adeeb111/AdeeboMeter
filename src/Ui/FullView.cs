@@ -219,9 +219,18 @@ namespace AdeeboMeter
                 tb.Click += delegate(object s, EventArgs e) { RunTool((string)((Control)s).Tag, ((Control)s).Text); };
                 hb.Controls.Add(tb);
             }
+            // the PC checks (they used to sit in the Toolbox): one click each, the result shows here
+            var hb2 = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Card, Padding = new Padding(Sc(14), 0, Sc(8), Sc(8)), WrapContents = true };
+            hb2.Controls.Add(new Label { Text = "LOOK DEEPER", AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(0, Sc(10), Sc(6), 0) });
+            foreach (var t in new[] { new[] { "pressure", "Memory, disk, heat" }, new[] { "disk", "Disk" }, new[] { "space", "Where did my space go?" }, new[] { "bg", "Background jobs" }, new[] { "crash", "Crashes and hangs" }, new[] { "leaks", "Slow leaks" }, new[] { "gpu", "Graphics per app" }, new[] { "changed", "What changed (7 days)" }, new[] { "battery", "Battery" } })
+            {
+                var tb = new PillButton(t[1], PillButton.K.Chip) { Tag = "tb:" + t[0], Margin = new Padding(0, Sc(3), Sc(8), Sc(4)) };
+                tb.Click += delegate(object s, EventArgs e) { RunTool((string)((Control)s).Tag, ((Control)s).Text); };
+                hb2.Controls.Add(tb);
+            }
             healthCanvas = new DB { Name = "healthCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             healthCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintHealth(e.Graphics); }; Wire(healthCanvas);
-            healthPage.Controls.Add(healthCanvas); healthPage.Controls.Add(hb);
+            healthPage.Controls.Add(healthCanvas); healthPage.Controls.Add(hb2); healthPage.Controls.Add(hb);
 
             // Live capture page
             livePage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
@@ -288,12 +297,14 @@ namespace AdeeboMeter
             timer.Tick += delegate { OnTimer(); };
             KeyDown += delegate(object s, KeyEventArgs e)
             {
-                if (e.KeyCode == Keys.Escape) Close();
+                if (e.KeyCode == Keys.Escape) { if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return; Close(); }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
                 else if (e.KeyCode == Keys.F1)
                 {
                     // F1: the explanation for what's under the mouse, or for the tool you're in - no hovering needed
-                    e.Handled = true; string k = tipKey; bool kb = k == null;
+                    // keyboard in the Toolbox (list or a box has focus): the tool you're on; otherwise what's under the mouse
+                    bool inTb = tab == "toolbox" && tbCanvas != null && toolboxPage.ContainsFocus;
+                    e.Handled = true; string k = inTb ? "tb." + tbSel : tipKey; bool kb = inTb || k == null;
                     if (k == null && tab == "toolbox" && tbCanvas != null) k = "tb." + tbSel;
                     var en = k != null ? TipEntry(k) : null; if (en == null) return;
                     var at = kb && tbCanvas != null ? tbCanvas.PointToScreen(new Point(Sc(20), Sc(20))) : Cursor.Position;
@@ -536,7 +547,9 @@ namespace AdeeboMeter
         }
         public void Debug(string page, string tipK, string destIn)
         {
+            string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
             tab = page; ShowTab();
+            if (page == "toolbox" && sub != null) { EnsureToolbox(); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else OpenTool(sub); }
             if (destIn == "demo-story" && page == "dest")
             {
                 // screenshot aid: a typical home route, with made-up router names

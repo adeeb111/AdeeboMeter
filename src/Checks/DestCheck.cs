@@ -181,9 +181,9 @@ namespace AdeeboMeter
                     skipRest(1);
                     CompareDns(r, host, new List<string>());
                     bool filtered = r.Findings != null && r.Findings.Any(f => f[1] == "2");
-                    if (filtered) { Finish(r, 2, Voice.P("Your DNS says " + host + " doesn't exist - but a public resolver finds it. A DNS filter (AdGuard, a company filter or the VPN's DNS) is blocking this name.", "Blocked by your DNS: the name resolves on a public resolver.")); changed(); return; }
-                    Finish(r, 2, rc4 == 9003 ? Voice.P("Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?", "DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.")
-                                             : Voice.P("DNS didn't answer for " + host + ". The server (" + dnsSrv + ") is slow or unreachable.", "DNS lookup failed for " + host + " (server " + dnsSrv + ")."));
+                    if (filtered) { Finish(r, 2, Voice.Red("Your DNS says " + host + " doesn't exist - but a public resolver finds it. A DNS filter (AdGuard, a company filter or the VPN's DNS) is blocking this name.", "Blocked by your DNS: the name resolves on a public resolver.")); changed(); return; }
+                    Finish(r, 2, rc4 == 9003 ? Voice.Red("Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?", "DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.")
+                                             : Voice.Red("DNS didn't answer for " + host + ". The server (" + dnsSrv + ") is slow or unreachable.", "DNS lookup failed for " + host + " (server " + dnsSrv + ")."));
                     changed(); return;
                 }
                 step(0, ms > 300 ? 1 : 0, ms.ToString("0", CultureInfo.CurrentCulture) + " ms");
@@ -260,11 +260,11 @@ namespace AdeeboMeter
                 ssl.ReadTimeout = 6000; ssl.WriteTimeout = 6000;
                 var sw = Stopwatch.StartNew(); string sni = IPAddress.TryParse(host, out lit) ? target.ToString() : host;
                 var allowed = SslProtocols.Tls12 | (Tls13Client() ? (SslProtocols)12288 : 0);
-                var task = Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, allowed, true));
+                var task = Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, allowed, false));
                 bool done = false; string tErr = "";
                 try { done = task.Wait(8000); } catch (AggregateException ae) { Exception ie = ae; while (ie.InnerException != null) ie = ie.InnerException; tErr = ie.Message; done = true; }
                 tlsUntrusted = cert != null && errs != SslPolicyErrors.None;
-                if (!done) { tlsStalled = true; step(4, 2, "stalls"); try { ssl.Dispose(); } catch { } stream = Stream.Null; }
+                if (!done) { tlsStalled = true; step(4, 2, "stalls"); try { sock.Close(); } catch { } try { task.Wait(2000); } catch { } try { ssl.Dispose(); } catch { } stream = Stream.Null; }
                 else if (tlsUntrusted || tErr == "")
                 {
                     string proto = tlsUntrusted ? "-" : ProtoName(ssl.SslProtocol);
@@ -381,13 +381,13 @@ namespace AdeeboMeter
             else step(7, 3, "skipped");
 
             Who(r, m, addrs);
-            if (tlsStalled && mtu > 0 && mtu < 1500) Finish(r, 2, Voice.P("Classic MTU black hole: small packets walk through, big ones vanish. Path MTU is " + mtu + " - TLS stalls at the certificate.", "Path MTU is " + mtu + "; large packets are dropped, so TLS stalls. Check MSS clamping on the path."));
-            else if (tlsStalled) Finish(r, 2, Voice.P("TCP connects, then TLS just... stops. Something in the middle is holding the handshake - a proxy, a firewall, or an MTU problem.", "TLS handshake stalls after TCP connects (proxy, firewall or MTU)."));
-            else if (tlsUntrusted) Finish(r, 2, Voice.P("Gets to the door but the bouncer won't let you in: Windows doesn't trust the certificate (often an inspection proxy).", "TLS works but the certificate is not trusted by Windows (often an inspection proxy)."));
-            else if (tlsFailed && tlsLegacy) Finish(r, 2, Voice.P("TCP is fine, but the server won't do TLS 1.2 or newer - it's stuck in the past (TLS 1.0 / 1.1). That's on the server.", "TLS handshake failed: the server likely supports only TLS 1.0/1.1."));
-            else if (tlsFailed) Finish(r, 2, Voice.P("TCP is fine, TLS fails. The two sides can't agree on how to talk securely.", "TLS handshake failed."));
+            if (tlsStalled && mtu > 0 && mtu < 1500) Finish(r, 2, Voice.Red("Classic MTU black hole: small packets walk through, big ones vanish. Path MTU is " + mtu + " - TLS stalls at the certificate.", "Path MTU is " + mtu + "; large packets are dropped, so TLS stalls. Check MSS clamping on the path."));
+            else if (tlsStalled) Finish(r, 2, Voice.Red("TCP connects, then TLS just... stops. Something in the middle is holding the handshake - a proxy, a firewall, or an MTU problem.", "TLS handshake stalls after TCP connects (proxy, firewall or MTU)."));
+            else if (tlsUntrusted) Finish(r, 2, Voice.Red("Gets to the door but the bouncer won't let you in: Windows doesn't trust the certificate (often an inspection proxy).", "TLS works but the certificate is not trusted by Windows (often an inspection proxy)."));
+            else if (tlsFailed && tlsLegacy) Finish(r, 2, Voice.Red("TCP is fine, but the server won't do TLS 1.2 or newer - it's stuck in the past (TLS 1.0 / 1.1). That's on the server.", "TLS handshake failed: the server likely supports only TLS 1.0/1.1."));
+            else if (tlsFailed) Finish(r, 2, Voice.Red("TCP is fine, TLS fails. The two sides can't agree on how to talk securely.", "TLS handshake failed."));
             else if (status == 401 || status == 403 || status == 407) Finish(r, 1, Voice.P("The network's fine and the server answers - it just won't let you in (HTTP " + status + "). Sign in, VPN, or a proxy rule.", "Reachable, but access is refused (HTTP " + status + ")."));
-            else if (status >= 500) Finish(r, 2, Voice.P("The network's fine - the site itself is broken (HTTP " + status + "). Not you, boss.", "Network is fine; the server returns HTTP " + status + "."));
+            else if (status >= 500) Finish(r, 2, Voice.Red("The network's fine - the site itself is broken (HTTP " + status + "). Not you, boss.", "Network is fine; the server returns HTTP " + status + "."));
             else
             {
                 int worst = r.Lv.Max(x => x == 3 ? 0 : x);

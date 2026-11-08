@@ -25,15 +25,24 @@ namespace AdeeboMeter
             public int Version = 2; public string Community = "public", User = "", AuthPass = "", PrivPass = ""; public string AuthAlg = "sha";   // md5 | sha | sha256
             public bool Auth { get { return AuthPass != ""; } }
             public bool Priv { get { return PrivPass != ""; } }
+            public string Bad = "";   // set when the text can't be used as typed - the request is refused, nothing is sent
             // "public"  ·  "v3:user"  ·  "v3:user:authpass"  ·  "v3:user:authpass:privpass"  ·  "v3-md5:..." / "v3-sha256:..."
             public static Cred Parse(string s)
             {
                 var c = new Cred(); s = (s ?? "").Trim(); if (s == "") return c;
-                var m = Regex.Match(s, @"^v3(?:-(md5|sha|sha256))?:(.*)$", RegexOptions.IgnoreCase);
+                var m = Regex.Match(s, @"^v3(?:-([a-z0-9]+))?:(.*)$", RegexOptions.IgnoreCase);
                 if (!m.Success) { c.Community = s; return c; }
-                c.Version = 3; if (m.Groups[1].Success && m.Groups[1].Value != "") c.AuthAlg = m.Groups[1].Value.ToLowerInvariant();
+                c.Version = 3;
+                if (m.Groups[1].Success && m.Groups[1].Value != "")
+                {
+                    string alg = m.Groups[1].Value.ToLowerInvariant(); if (alg == "sha1") alg = "sha";
+                    if (alg != "md5" && alg != "sha" && alg != "sha256") { c.Bad = "unknown v3 algorithm '" + m.Groups[1].Value + "' - use v3-md5:, v3:, v3-sha1: or v3-sha256:"; return c; }
+                    c.AuthAlg = alg;
+                }
                 var p = m.Groups[2].Value.Split(new[] { ':' }, 3);
                 c.User = p[0]; if (p.Length > 1) c.AuthPass = p[1]; if (p.Length > 2) c.PrivPass = p[2];
+                if (c.User == "") c.Bad = "v3 needs a user name: v3:user[:authpass[:privpass]]";
+                else if (c.Priv && !c.Auth) c.Bad = "privacy needs an auth password too: v3:user:authpass:privpass";   // never quietly send it unprotected
                 return c;
             }
             public string Label() { return Version == 2 ? "v2c" : "v3 " + (Priv ? "auth + privacy (" + AuthAlg.ToUpperInvariant() + ", AES-128)" : Auth ? "auth (" + AuthAlg.ToUpperInvariant() + ")" : "no auth"); }
@@ -97,6 +106,7 @@ namespace AdeeboMeter
         public static List<Vb> Request(IPEndPoint ep, Cred c, byte pduType, int a, int b, IEnumerable<string> oids, out string error)
         {
             error = ""; int id = Interlocked.Increment(ref nextId) & 0x7FFFFFFF;
+            if (c.Bad != "") { error = c.Bad; return null; }
             byte[] pdu = Pdu(pduType, id, a, b, oids), reply;
             if (c.Version == 2)
             {
@@ -115,7 +125,7 @@ namespace AdeeboMeter
             reply = Exchange(ep, Message3(c, e, pdu, id), 3000);
             if (reply == null) { error = "no answer in 3 s"; return null; }
             var vbs = Parse3(reply, c, e, id, out error);
-            if (error.StartsWith("time window", StringComparison.Ordinal))   // the device restarted or our clock drifted: learn its time again, once
+            if (error.IndexOf("time window", StringComparison.Ordinal) >= 0)   // the device restarted or our clock drifted: learn its time again, once
             {
                 e = Discover(ep, out error); if (e == null) return null; lock (engines) engines[ek] = e;
                 reply = Exchange(ep, Message3(c, e, pdu, id), 3000); if (reply == null) { error = "no answer in 3 s"; return null; }
@@ -205,16 +215,17 @@ namespace AdeeboMeter
             return e;
         }
         // version 3, header, USM parameters (returned), and where the scoped PDU starts
-        static bool Head3(byte[] r, out int scopedPos, out byte[] usm, out int msgId)
+        static bool Head3(byte[] r, out int scopedPos, out byte[] usm, out int msgId) { int up; return Head3(r, out scopedPos, out usm, out msgId, out up); }
+        static bool Head3(byte[] r, out int scopedPos, out byte[] usm, out int msgId, out int usmPos)
         {
-            scopedPos = 0; usm = null; msgId = 0; int tag, hl, len;
+            scopedPos = 0; usm = null; msgId = 0; usmPos = 0; int tag, hl, len;
             if (!T(r, 0, r.Length, out tag, out hl, out len) || tag != 0x30) return false;
             int p = hl, end = hl + len;
             if (!T(r, p, end, out tag, out hl, out len) || tag != 2 || ReadInt(r, p + hl, len) != 3) return false;
             p += hl + len; if (!T(r, p, end, out tag, out hl, out len) || tag != 0x30) return false;
             int g = p + hl; int gt, ghl, gl; if (T(r, g, p + hl + len, out gt, out ghl, out gl) && gt == 2) msgId = (int)ReadInt(r, g + ghl, gl);
             p += hl + len; if (!T(r, p, end, out tag, out hl, out len) || tag != 4) return false;
-            usm = r.Skip(p + hl).Take(len).ToArray(); scopedPos = p + hl + len; return true;
+            usmPos = p + hl; usm = r.Skip(p + hl).Take(len).ToArray(); scopedPos = p + hl + len; return true;
         }
         static int AuthLen(Cred c) { return c.AuthAlg == "sha256" ? 24 : 12; }
         static byte[] Message3(Cred c, Engine e, byte[] pdu, int id)
@@ -237,30 +248,42 @@ namespace AdeeboMeter
         }
         static List<Vb> Parse3(byte[] r, Cred c, Engine e, int id, out string error)
         {
-            error = ""; int sp, mid; byte[] usm;
-            if (!Head3(r, out sp, out usm, out mid)) { error = "not an SNMPv3 reply"; return null; }
+            error = ""; int sp, mid, up; byte[] usm;
+            if (!Head3(r, out sp, out usm, out mid, out up)) { error = "not an SNMPv3 reply"; return null; }
+            if (mid != id) { error = "a reply to another request (message ID)"; return null; }
             int tag, hl, len, q;
-            // USM: engine id, boots, time, user, auth params, priv params
+            // USM: engine id, boots, time, user, auth params, priv params - each with where it sits in the message
             if (!T(usm, 0, usm.Length, out tag, out hl, out len)) { error = "a broken v3 reply"; return null; }
-            q = hl; var f = new List<byte[]>();
-            for (int i = 0; i < 6; i++) { if (!T(usm, q, usm.Length, out tag, out hl, out len)) { error = "a broken v3 reply"; return null; } f.Add(usm.Skip(q + hl).Take(len).ToArray()); q += hl + len; }
-            if (c.Auth && f[4].Length == AuthLen(c))
-            {
-                // check the device's MAC: the same message with the auth field zeroed
-                var copy = (byte[])r.Clone(); int at = IndexOf(copy, f[4]); if (at < 0) { error = "a broken v3 reply"; return null; }
-                for (int i = 0; i < f[4].Length; i++) copy[at + i] = 0;
-                var mac = Mac(c, Localize(c.AuthPass, e.Id, c.AuthAlg), copy);
-                for (int i = 0; i < f[4].Length; i++) if (mac[i] != f[4][i]) { error = "a reply that isn't signed with your auth password"; return null; }
-            }
+            q = hl; var f = new List<byte[]>(); var at = new int[6];
+            for (int i = 0; i < 6; i++) { if (!T(usm, q, usm.Length, out tag, out hl, out len) || tag != (i == 1 || i == 2 ? 2 : 4)) { error = "a broken v3 reply"; return null; } at[i] = up + q + hl; f.Add(usm.Skip(q + hl).Take(len).ToArray()); q += hl + len; }
             int p = sp;
             if (!T(r, p, r.Length, out tag, out hl, out len)) { error = "a broken v3 reply"; return null; }
+            bool isReport = tag == 0x30 && ReportAt(r, p);
+            if (!f[0].SequenceEqual(e.Id)) { error = "a reply from another SNMP engine than the one discovered"; return null; }
+            if (!isReport && Encoding.UTF8.GetString(f[3]) != c.User) { error = "a reply for another user"; return null; }
+            if (c.Auth)
+            {
+                // a signed request needs a signed answer: right length, MAC checked at its parsed place, inside the 150 s window
+                if (f[4].Length == 0 && isReport) { }   // unsigned reports (unknown user, wrong time...) are read below as errors, never as data
+                else if (f[4].Length != AuthLen(c)) { error = "a reply whose signature has the wrong length for " + c.AuthAlg.ToUpperInvariant() + " - check the algorithm"; return null; }
+                else
+                {
+                    var copy = (byte[])r.Clone(); for (int i = 0; i < f[4].Length; i++) copy[at[4] + i] = 0;
+                    var mac = Mac(c, Localize(c.AuthPass, e.Id, c.AuthAlg), copy);
+                    for (int i = 0; i < f[4].Length; i++) if (mac[i] != f[4][i]) { error = "a reply that isn't signed with your auth password"; return null; }
+                    long rb = ReadInt(f[1], 0, f[1].Length), rt = ReadInt(f[2], 0, f[2].Length), now = e.Time + (long)(DateTime.UtcNow - e.At).TotalSeconds;
+                    if (rb != e.Boots || Math.Abs(rt - now) > 150) { error = "time window: the reply's engine time is out of step"; return null; }
+                }
+            }
+            else if (!isReport && f[4].Length != 0) { error = "a signed reply to an unsigned request"; return null; }
             byte[] scoped; int sstart;
             if (tag == 4)   // encrypted
             {
                 if (!c.Priv) { error = "an encrypted reply, but no privacy password was given"; return null; }
                 var enc = r.Skip(p + hl).Take(len).ToArray();
                 long b = ReadInt(f[1], 0, f[1].Length), t = ReadInt(f[2], 0, f[2].Length);
-                scoped = Aes(Localize(c.PrivPass, e.Id, c.AuthAlg), (int)b, (int)t, f[5], enc, false); sstart = 0;
+                try { scoped = Aes(Localize(c.PrivPass, e.Id, c.AuthAlg), (int)b, (int)t, f[5], enc, false); } catch (CryptographicException) { error = "a reply that doesn't decrypt - check the privacy password"; return null; }
+                sstart = 0;
             }
             else { scoped = r; sstart = p; }
             if (!T(scoped, sstart, scoped.Length, out tag, out hl, out len) || tag != 0x30) { error = c.Priv ? "a reply that doesn't decrypt - check the privacy password" : "a broken v3 reply"; return null; }
@@ -270,10 +293,13 @@ namespace AdeeboMeter
             if (T(scoped, s, send, out tag, out hl, out len) && tag == 0xA8) { error = "the device reported: " + ReportName(scoped, s + hl, s + hl + len); return null; }
             return ReadPdu(scoped, s, send, id, out error);
         }
-        static int IndexOf(byte[] hay, byte[] needle)
+        // a plaintext scoped PDU whose PDU is a Report (0xA8)
+        static bool ReportAt(byte[] r, int p)
         {
-            for (int i = 0; i + needle.Length <= hay.Length; i++) { bool ok = true; for (int j = 0; j < needle.Length && ok; j++) ok = hay[i + j] == needle[j]; if (ok) return i; }
-            return -1;
+            int tag, hl, len; if (!T(r, p, r.Length, out tag, out hl, out len) || tag != 0x30) return false;
+            int s = p + hl, end = s + len;
+            for (int i = 0; i < 2; i++) { if (!T(r, s, end, out tag, out hl, out len)) return false; s += hl + len; }
+            return T(r, s, end, out tag, out hl, out len) && tag == 0xA8;
         }
 
         // RFC 3414 A.2: hash the password stretched to 1 MB, then localize it to the device's engine ID
@@ -314,9 +340,10 @@ namespace AdeeboMeter
         // GETBULK from base until the OIDs leave it, at most max rows; paced so a busy device isn't hammered
         public static List<Vb> Walk(IPEndPoint ep, Cred c, string baseOid, int max, Toolkit.Run run, out string error)
         {
-            error = ""; var all = new List<Vb>(); string cur = baseOid.Trim('.'), pre = cur + ".";
+            error = ""; var all = new List<Vb>(); string cur = baseOid.Trim('.'), pre = cur + "."; var deadline = DateTime.UtcNow.AddSeconds(120);
             while (all.Count < max && (run == null || !run.Stop))
             {
+                if (DateTime.UtcNow > deadline) { error = "stopped after 2 minutes - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }   // a slow device can't keep a walk going for an hour
                 var vbs = Request(ep, c, 0xA5, 0, 25, new[] { cur }, out error);
                 if (vbs == null) return all.Count > 0 ? all : null;
                 bool moved = false;
@@ -477,15 +504,19 @@ namespace AdeeboMeter
         {
             var s = (nameOrOid ?? "").Trim(); if (Snmp.ValidOid(s)) return s.Trim('.');
             foreach (var l in Builtin) { var p = l.Split('|'); if (string.Equals(p[1], s, StringComparison.OrdinalIgnoreCase)) return p[0]; }
-            if (File.Exists(IndexFile))
-                foreach (var l in File.ReadLines(IndexFile).Skip(1)) { var p = l.Split('\t'); if (p.Length > 1 && string.Equals(p[1], s, StringComparison.OrdinalIgnoreCase)) return p[0]; }
+            try
+            {
+                if (File.Exists(IndexFile))
+                    foreach (var l in File.ReadLines(IndexFile).Skip(1)) { var p = l.Split('\t'); if (p.Length > 1 && string.Equals(p[1], s, StringComparison.OrdinalIgnoreCase)) return p[0]; }
+            }
+            catch (IOException ex) { Program.Log("mib index: " + ex.Message); }   // being rebuilt right now - the built-in names still work
             return null;
         }
         static string FirstLine(string f) { using (var r = new StreamReader(f)) return r.ReadLine() ?? ""; }
         static IEnumerable<FileInfo> MibFiles()
         {
             if (!Directory.Exists(Folder)) return Array.Empty<FileInfo>();
-            return new DirectoryInfo(Folder).GetFiles().Where(f => f.Length > 0 && f.Length < 8000000 && (f.Extension == "" || ".mib .my .txt .smi .mib2".Split(' ').Contains(f.Extension.ToLowerInvariant()))).OrderBy(f => f.Name).Take(2000);
+            return new DirectoryInfo(Folder).GetFiles().Where(f => f.Length > 0 && f.Length < 8000000 && (f.Extension == "" || ".mib .my .txt .smi .mib2".Split(' ').Contains(f.Extension.ToLowerInvariant()))).OrderBy(f => f.Name).Take(2000).TakeWhileTotal(200000000);   // 2,000 files and 200 MB at most
         }
         static string Signature()
         {
@@ -604,14 +635,25 @@ namespace AdeeboMeter
             var res = new List<string[]>(); var w = (words ?? "").ToLowerInvariant().Split((char[])null, StringSplitOptions.RemoveEmptyEntries); if (w.Length == 0) return res;
             Func<string, string, string, string, bool> hit = (oid, name, desc, en) => { var hay = (name + " " + desc).ToLowerInvariant(); return w.All(x => hay.Contains(x)); };
             foreach (var l in Builtin) { var p = l.Split('|'); if (hit(p[0], p[1], "", "")) res.Add(new[] { p[1], p[0], "standard" }); }
-            if (File.Exists(IndexFile))
-                foreach (var l in File.ReadLines(IndexFile).Skip(1))
-                {
-                    var p = l.Split('\t'); if (p.Length < 5) continue;
-                    if (hit(p[0], p[1], p[4], p[3])) { res.Add(new[] { p[1], p[0], p[4] }); if (res.Count >= max) break; }
-                }
+            try
+            {
+                if (File.Exists(IndexFile))
+                    foreach (var l in File.ReadLines(IndexFile).Skip(1))
+                    {
+                        var p = l.Split('\t'); if (p.Length < 5) continue;
+                        if (hit(p[0], p[1], p[4], p[3])) { res.Add(new[] { p[1], p[0], p[4] }); if (res.Count >= max) break; }
+                    }
+            }
+            catch (IOException ex) { Program.Log("mib search: " + ex.Message); }
             // tables and columns first - that's what you walk
             return res.OrderBy(r => r[0].EndsWith("Table", StringComparison.Ordinal) ? 0 : r[0].EndsWith("Entry", StringComparison.Ordinal) ? 2 : 1).Take(max).ToList();
+        }
+    }
+    static class FileListExt
+    {
+        public static IEnumerable<FileInfo> TakeWhileTotal(this IEnumerable<FileInfo> files, long max)
+        {
+            long t = 0; foreach (var f in files) { t += f.Length; if (t > max) yield break; yield return f; }
         }
     }
 }

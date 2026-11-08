@@ -111,7 +111,7 @@ namespace AdeeboMeter
                 nameW = Math.Min(nameW, w * 0.35f);
                 float actW = 150 * S, bx = x + 14 * S + nameW, bw = Math.Max(80 * S, (w - nameW - actW) * 0.40f);
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                using (var link = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue))
+                using (var link = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 foreach (var sp in spots.OrderByDescending(SpotScore).ToList())
                 {
                     int sc = SpotScore(sp); int l = sc >= 80 ? 0 : sc >= 55 ? 1 : 2;

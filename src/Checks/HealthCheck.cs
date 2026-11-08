@@ -48,7 +48,7 @@ namespace AdeeboMeter
                 {
                     double free = d.AvailableFreeSpace * 100.0 / Math.Max(1, d.TotalSize);
                     add(free < 10 ? 2 : free < 20 ? 1 : 0, "Disk " + d.Name.TrimEnd('\\'), (d.AvailableFreeSpace / 1073741824.0).ToString("0", CultureInfo.CurrentCulture) + " GB free of " + (d.TotalSize / 1073741824.0).ToString("0", CultureInfo.CurrentCulture) + " GB",
-                        free < 10 ? Voice.P("Nearly full - Windows gets grumpy below 10%. Empty Downloads or old captures.", "Nearly full; free some space.")
+                        free < 10 ? Voice.Red("Nearly full - Windows gets grumpy below 10%. Empty Downloads or old captures.", "Nearly full; free some space.")
                         : free < 20 ? Voice.P("Getting tight (" + free.ToString("0", CultureInfo.CurrentCulture) + "% free). Worth a clean-up before it bites.", "Below 20% free; plan a clean-up.") : "Plenty of room.");
                 }
             }
@@ -86,7 +86,7 @@ namespace AdeeboMeter
             var top = m.TopApps(false, 2, true);
             double com = m.Commit.Avg(5);
             add(com > 90 ? 2 : com > 80 ? 1 : 0, "Memory", Draw.Fmt(com, "0", "% committed") + (top.Count > 0 ? " · " + top[0].Name + " " + Draw.MemStr(top[0].Mem) : ""),
-                com > 80 ? Voice.P((top.Count > 0 ? top[0].Name : "Something") + " is hoarding memory. Close what you forgot about.", "Memory is high; close unused apps.") : "Room to spare.");
+                com > 80 ? Voice.ByLevel(com > 90 ? 2 : 1, (top.Count > 0 ? top[0].Name : "Something") + " is hoarding memory. Close what you forgot about.", "Memory is high; close unused apps.") : "Room to spare.");
             Native.SYSTEM_POWER_STATUS ps;
             if (Native.GetSystemPowerStatus(out ps))
             {

@@ -2,6 +2,47 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
+## 1.1.3 (not released yet)
+
+A Toolbox you can find your way around, stricter SNMPv3, and the fixes from two outside reviews of 1.1.2.
+
+### Toolbox - redesigned
+- **Three sections** - Network · Devices · Windows - each opening on a home page with a card per group and your recent tools; every tool page has a way back.
+- **Quick buttons** on every Toolbox page: SNMP · Switch ports · MTR · Port test · dig · HTTP & TLS · iperf3 · Ping sweep.
+- **SNMP is one tool with view buttons** - Overview · Interfaces · Traffic · CPU & memory · Neighbours · Sensors · Walk · MIBs - and the device and credentials carry across them.
+- **The PC checks moved to Investigate › Health** ("Look deeper": memory, disk, space, background jobs, crashes, leaks, graphics, what changed, battery) and run there.
+- **Search ranks its results**: *wifi* opens Wi-Fi roams, *nslookup* opens dig, *traceroute* opens MTR, *printers* opens ping sweep; plurals and punctuation are understood; a result from another section says where it lives.
+- Esc in a filled search box clears it instead of closing the window; F1 explains the tool the keyboard is on; every tool says how long it takes (iperf3 counts both directions and -t / -O).
+- Copy and Save use the inputs the result was run with, not what's in the boxes now; CSV also guards cells that start with spaces before = + - @; an MTU result is saved with its real time.
+- Links (Copy, Save, Compare, Investigate ›) were nearly invisible in the dark theme since 1.0 - fixed. Input boxes and buttons are no longer clipped at 125%.
+
+### SNMP
+- **SNMPv3 replies are checked as RFC 3414 asks**: same message ID, same engine, same user, a signature of the right length checked at its parsed place, and inside the 150-second time window. A reply below the requested security is refused. A privacy password without an auth password is refused instead of being sent unprotected; `v3-sha1:` works, an unknown algorithm is an error. A device that rebooted is re-learned at once. SHA-256 key localisation has a test vector.
+- A walk that stops part-way shows **Partial result** at the top (and in Copy / Save); walks stop after 2 minutes.
+- Traffic times each direction on its own; a missing reading shows n/a and a counter that went backwards shows reset - never 0.
+- CPU / memory colours only RAM, disks and flash (cached and shared memory are full by design).
+- Bracketed IPv6 with a port (`[2001:db8::1]:161`); negative INTEGERs; values over 127 bytes; error codes in more than one byte; the MIB index has a size limit and can be read while it's rebuilt.
+
+### Honest results
+- Check a destination and the health check say red findings in plain words; the header's Investigate › link picks the right check when the PC is red, the gateway is slow or DNS fails during a call.
+- **Bufferbloat**: no grade without load in both directions, "inconclusive" when most pings are lost (never an invented number), ping loss per direction, pings the iperf3 server itself by default, and says the grade assumes the line was really full.
+- iperf3: UDP at the rate you asked for is no longer called slow; an unknown direction word is refused; Advanced -R / --both / -t win over the plain controls; host:port and the "50m" shorthand go through the same limits as the options.
+- Wi-Fi roams cover the real last 24 hours (yesterday included) and "back and forth" means back to the access point it just left.
+- New devices are listed in What changed even on a network's first day (only the pop-up waits); a sweep lists ten and counts the rest.
+
+### Network checks
+- **Revocation is checked only when you press it.** The HTTP inspector and Check a destination were asking the certificate authority on every run.
+- Teams UDP test accepts answers only from the relay it asked, with the STUN magic cookie; RADIUS checks a Message-Authenticator when the reply has one.
+- dig: a short or damaged record never loses the records after it; DS and TLSA digests are shown in full; the chain view says when it's cut.
+- NTP reads time correctly after February 2036.
+- HTTP timing stops after 5 minutes overall (30 s per download); a capture you stopped can't restart itself; the history merge after a sniff can't be left running; a stalled TLS check closes its connection before cleaning up.
+- Monitor can be stopped and started again.
+
+### Corrections to earlier notes
+- 1.1.2 "online lookups read at most 16 KB": they read in 16 KB pieces, up to 4 MB.
+- 1.1.2 "IPv6 path MTU in ping and trace": in IPv6 ping only. "DHCP options": router, DNS and domain.
+- 1.1.1 "TLS handshakes give up after 8 s": DoT gives up after 6 s.
+
 ## 1.1.2 (2026-11-08)
 
 SNMP that reads like a person wrote it, a friendlier Toolbox, more engineer's tools - and the loose ends from the 1.1 reviews.

@@ -54,7 +54,7 @@ namespace AdeeboMeter
                 {
                     // a problem leads straight to the check that investigates it
                     var lr = new RectangleF(x + hw + 14 * S, cy - 9 * S, lw - 14 * S, 22 * S); string fl = snap.Flow;
-                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(link, Draw.fBodyB, lb, lr.X, lr.Y);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(link, Draw.fBodyB, lb, lr.X, lr.Y);
                     Act(header, lr, delegate { tab = "guide"; ShowTab(); StartGuide(fl, false); });
                 }
             }

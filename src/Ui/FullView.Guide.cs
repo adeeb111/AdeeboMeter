@@ -71,7 +71,7 @@ namespace AdeeboMeter
                 else
                 {
                     string back = "<  All problems"; var bs = g.MeasureString(back, Draw.fBodyB);
-                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueSoft : Theme.Blue)) g.DrawString(back, Draw.fBodyB, lb, x, y);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(back, Draw.fBodyB, lb, x, y);
                     Act(guideCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { if (!guideBusy) { guideRun = null; guideCanvas.Invalidate(); } });
                     g.DrawString(r.Title.ToUpperInvariant() + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input.ToUpperInvariant() : "") + "  ·  " + (r.Done ? "DONE " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : "WORKING...")), Draw.fTiny, muted, x + bs.Width + 16 * S, y + 3 * S);
                     y += 32 * S;

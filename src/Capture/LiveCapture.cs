@@ -103,7 +103,7 @@ namespace AdeeboMeter
                     if (e.Data == null || e.Data.IndexOf("Capturing on", StringComparison.Ordinal) >= 0 || e.Data.Trim() == "") return;
                     string d = e.Data;
                     if (usingExtras && (d.IndexOf("valid", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("unrecognized", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("heuristic", StringComparison.OrdinalIgnoreCase) >= 0))
-                    { extrasOk = false; usingExtras = false; string gid = startGuid; Program.Log("tshark: extra fields not supported, restarting without them"); ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); Start(gid); }); return; }
+                    { extrasOk = false; usingExtras = false; string gid = startGuid; Program.Log("tshark: extra fields not supported, restarting without them"); Restart(gid); return; }
                     Error = Draw.Trunc(d.Trim(), 140);
                 };
                 ts.BeginErrorReadLine();
@@ -120,8 +120,11 @@ namespace AdeeboMeter
         }
 
         public void Stop() { lock (life) Stop2(); }
+        volatile int gen;   // bumped by every stop: a delayed self-restart from before it is dropped, so a capture you stopped stays stopped
+        void Restart(string guid) { int g = gen; ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); lock (life) { if (g == gen) Start2(guid); } }); }
         void Stop2()
         {
+            gen++;
             bool was = running; running = false;
             foreach (var p in new[] { ts, ring })
                 if (p != null) { try { if (!p.HasExited) { p.Kill(); p.WaitForExit(2000); } } catch { } try { p.Dispose(); } catch { } }
@@ -301,7 +304,7 @@ namespace AdeeboMeter
                 }
             }
             foreach (var c in v.Top) { string a = appByLocalPort != null ? appByLocalPort(c.LocalPort) : null; c.Proto = (a ?? "?") + " · " + (c.Proto != "" ? c.Proto : c.L4); }
-            try { if (ts != null && !ts.HasExited) { ts.Refresh(); v.TsharkMB = ts.PrivateMemorySize64 / 1048576; if (v.TsharkMB > 300) { Error = "tshark grew past 300 MB - restarted it."; string i = iface; ThreadPool.QueueUserWorkItem(delegate { Start(i.Substring(i.IndexOf('{'))); }); } } } catch { }
+            try { if (ts != null && !ts.HasExited) { ts.Refresh(); v.TsharkMB = ts.PrivateMemorySize64 / 1048576; if (v.TsharkMB > 300) { Error = "tshark grew past 300 MB - restarted it."; string i = iface; Restart(i.Substring(i.IndexOf('{'))); } } } catch { }
             v.State = running ? "capturing " + ((int)Elapsed.TotalMinutes) + ":" + Elapsed.Seconds.ToString("00", CultureInfo.CurrentCulture) + " of " + MaxMinutes + ":00" : "stopped";
             return v;
         }
@@ -365,7 +368,8 @@ namespace AdeeboMeter
                     try { File.Delete(copy); } catch { }
                     if (File.Exists(outp) && new FileInfo(outp).Length > 0) parts.Add(outp);
                 }
-                fp.WaitForExit(20000); if (File.Exists(fwd)) parts.Add(fwd);
+                if (!fp.WaitForExit(20000)) { try { fp.Kill(); fp.WaitForExit(2000); } catch { } }   // never left running
+                if (File.Exists(fwd)) parts.Add(fwd);
                 string final = Program.SafeCapturePath("adebometer_" + new string(c.Proc.Where(char.IsLetterOrDigit).Take(20).ToArray()) + "_" + DateTime.Now.ToString("HHmmss", CultureInfo.CurrentCulture) + ".pcapng");
                 if (parts.Count == 0) { status("Nothing captured for that flow."); return; }
                 Job.Run(Mergecap, "-w \"" + final + "\" " + string.Join(" ", parts.Select(x => "\"" + x + "\"")), 60000);

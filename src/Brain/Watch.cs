@@ -208,19 +208,23 @@ namespace AdeeboMeter
                 HashSet<string> set; bool first = !known.TryGetValue(key, out set); if (first) known[key] = set = new HashSet<string>();
                 DateTime since; if (!netSince.TryGetValue(key, out since)) { since = DateTime.Now; netSince[key] = since; Store.Write("device-nets.txt", netSince.Select(kv => new[] { kv.Key, kv.Value.ToString("o", CultureInfo.InvariantCulture) }).ToList()); }
                 bool quiet = first || DateTime.UtcNow < QuietUntil || (DateTime.Now - since).TotalHours < 24;   // learning: the first day on a network, and after a ping sweep
-                bool changed = false;
+                bool changed = false; int newHere = 0;
                 foreach (var e in table.Where(x => x.Dynamic && x.Ip != gw))
                 {
                     if (!set.Add(e.Mac)) continue;
                     changed = true;
-                    if (quiet) continue;
+                    if (first) continue;   // the first visit to a network is its baseline, not a list of "new" devices
+                    if (++newHere > 10) continue;   // after a sweep: ten listed, the rest counted below
+                    // always listed in What changed and on the timeline; the learning period only holds back the pop-up
                     bool rnd = Arp.Randomised(e.Mac);
                     string note = rnd ? "uses a private (random) hardware address - phones and laptops change it, so it may not be new" : "hardware address " + e.Mac;
+                    if (quiet) note += first ? " · first time on this network" : " · learning this network (no alert)";
                     Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note });
                     if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1);
                     m.Events.Add(3, "lan", "New on " + label + ": " + e.Ip + " (" + note + ")");
-                    if (!rnd) announce.Add(e);
+                    if (!rnd && !quiet) announce.Add(e);
                 }
+                if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
                 DateTime last; lastPop.TryGetValue(key, out last);
                 if (announce.Count == 0 || Cfg.DevAlerts == 0 || company || set.Count > 30 || (DateTime.Now - last).TotalMinutes < 60) return;

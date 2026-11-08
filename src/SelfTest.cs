@@ -80,7 +80,7 @@ namespace AdeeboMeter
                 sb.AppendLine("AdeeboMeter " + Program.Version + " MIB test · " + MibIndex.FileCount() + " MIB files · " + sw.ElapsedMilliseconds + " ms");
                 foreach (var r in rows) sb.AppendLine(r[0] == "6" || r[0] == "7" || r[0] == "8" ? (r[0] == "7" ? "! " : "  ") + r[2] : r[1] + ": " + r[2]);
             }
-            catch (Exception e) { sb.AppendLine("FAILED: " + e); }
+            catch (Exception e) { sb.AppendLine("FAILED: " + e); File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
             File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString());
             return 0;
         }
@@ -164,6 +164,14 @@ namespace AdeeboMeter
                 var eid = hex("000000000000000000000002");
                 if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "md5")).Replace("-", "") != "526F5EED9FCCE26F8964C2930787D82B") throw new InvalidOperationException("SNMPv3 MD5 key localization wrong");
                 if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "sha")).Replace("-", "") != "6695FEBC9288E36282235FC7151F128497B38F3F") throw new InvalidOperationException("SNMPv3 SHA key localization wrong");
+                // SHA-256 (RFC 7860): the same method; value computed independently (Python hashlib) for this password and engine
+                if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "sha256")).Replace("-", "") != "8982E0E549E866DB361A6B625D84CCCC11162D453EE8CE3A6445C2D6776F0F8B") throw new InvalidOperationException("SNMPv3 SHA-256 key localization wrong");
+                // credentials that can't be used as typed are refused, never sent weaker
+                if (Snmp.Cred.Parse("v3:u::p").Bad == "" || Snmp.Cred.Parse("v3-sha512:u:a").Bad == "" || Snmp.Cred.Parse("v3-sha1:u:a").AuthAlg != "sha" || Snmp.Cred.Parse("v3-sha1:u:a").Bad != "") throw new InvalidOperationException("SNMPv3 credential checks wrong");
+                // a value longer than 127 bytes (long-form length) - a long sysDescr
+                var longVb = new List<byte> { 0x30, 0x81, 0xD8, 0x30, 0x81, 0xD5, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00, 0x04, 0x81, 0xC8 }; longVb.AddRange(Enumerable.Repeat((byte)'a', 200));
+                var lv1 = new List<string>(); Protocols.ParseVarbinds(longVb.ToArray(), lv1);
+                if (lv1.Count != 1 || !lv1[0].StartsWith("aaaaaaaaaa", StringComparison.Ordinal) || lv1[0].Length < 150) throw new InvalidOperationException("SNMP long value (over 127 bytes) not read");
                 var plain = System.Text.Encoding.ASCII.GetBytes("a scoped PDU of 37 bytes, not a block"); var salt = hex("0102030405060708"); var aesKey = Snmp.Localize("maplesyrup", eid, "sha");
                 var enc = Snmp.Aes(aesKey, 3, 1234, salt, plain, true); if (enc.SequenceEqual(plain) || !Snmp.Aes(aesKey, 3, 1234, salt, enc, false).SequenceEqual(plain)) throw new InvalidOperationException("SNMPv3 AES round trip wrong");
                 if (Snmp.Cred.Parse("v3:admin").Version != 3 || Snmp.Cred.Parse("v3-sha256:u:a:p").AuthAlg != "sha256" || Snmp.Cred.Parse("v3:u:a:p").PrivPass != "p" || Snmp.Cred.Parse("public").Community != "public") throw new InvalidOperationException("SNMP credentials parsing wrong");
