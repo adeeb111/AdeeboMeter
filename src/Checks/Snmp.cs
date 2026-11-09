@@ -343,10 +343,12 @@ namespace AdeeboMeter
         // GETBULK from base until the OIDs leave it, at most max rows; paced so a busy device isn't hammered
         public static List<Vb> Walk(IPEndPoint ep, Cred c, string baseOid, int max, Toolkit.Run run, out string error)
         {
-            error = ""; var all = new List<Vb>(); string cur = baseOid.Trim('.'), pre = cur + "."; var deadline = DateTime.UtcNow.AddSeconds(120);
-            while (all.Count < max && (run == null || !run.Stop))
+            // one deadline per view (set on the run), so a view of ten walks can't take ten times two minutes
+            error = ""; var all = new List<Vb>(); string cur = baseOid.Trim('.'), pre = cur + "."; var deadline = run != null && run.Deadline != default(DateTime) ? run.Deadline : DateTime.UtcNow.AddSeconds(120);
+            while (all.Count < max)
             {
-                if (DateTime.UtcNow > deadline) { error = "stopped after 2 minutes - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }   // a slow device can't keep a walk going for an hour
+                if (run != null && run.Stop) { error = "stopped by you - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }
+                if (DateTime.UtcNow > deadline) { error = "stopped at the 2-minute limit for this view - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }   // a slow device can't keep a walk going for an hour
                 var vbs = Request(ep, c, 0xA5, 0, 25, new[] { cur }, out error);
                 if (vbs == null) return all.Count > 0 ? all : null;
                 bool moved = false;

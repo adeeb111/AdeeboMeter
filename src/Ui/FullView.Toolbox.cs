@@ -64,6 +64,13 @@ namespace AdeeboMeter
                 T("snmpcpu", "SNMP", "SNMP - CPU and memory", SnmpIn, (a, r) => SnmpTools.CpuMem(a[0], a[1], r)),
                 T("snmplldp", "SNMP", "SNMP - neighbours (LLDP)", SnmpIn, (a, r) => SnmpTools.Lldp(a[0], a[1], r)),
                 T("snmpsens", "SNMP", "SNMP - sensors (temperature, optics)", SnmpIn, (a, r) => SnmpTools.Sensors(a[0], a[1], r)),
+                T("snmpsnap", "SNMP", "SNMP - device snapshot (everything at once)", SnmpIn, (a, r) => SnmpTools.Snapshot(a[0], a[1], r)),
+                T("snmpmac", "SNMP", "SNMP - find a MAC on a switch", SnmpIn + "|MAC or IP to find - empty lists the whole table", (a, r) => SnmpTools.FindMac(a[0], a[1], a[2], r)),
+                T("snmpvlan", "SNMP", "SNMP - VLANs and their ports", SnmpIn, (a, r) => SnmpTools.Vlans(a[0], a[1], r)),
+                T("snmppoe", "SNMP", "SNMP - PoE power per port", SnmpIn, (a, r) => SnmpTools.Poe(a[0], a[1], r)),
+                T("snmplag", "SNMP", "SNMP - link aggregation (LACP)", SnmpIn, (a, r) => SnmpTools.Lag(a[0], a[1], r)),
+                T("snmpprn", "SNMP", "SNMP - printer status and toner", SnmpIn, (a, r) => SnmpTools.Printer(a[0], a[1], r)),
+                T("snmpups", "SNMP", "SNMP - UPS battery and runtime", SnmpIn, (a, r) => SnmpTools.Ups(a[0], a[1], r)),
                 T("snmpwalk", "SNMP", "SNMP - walk any OID or name", SnmpIn + "|OID or MIB name - e.g. ifTable", (a, r) => SnmpTools.Walk(a[0], a[1], a[2], r)),
                 T("mibs", "SNMP", "MIB folder and search", "Search your MIBs - e.g. temperature, optic, fan", (a, r) => SnmpTools.Search(a[0], r)),
                 T("syslog", "PROTOCOLS", "Syslog - send a test message", "Collector - host or host:port (UDP 514)|Text (optional)", (a, r) => Protocols.Syslog(a[0], a[1])),
@@ -108,7 +115,7 @@ namespace AdeeboMeter
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
             new[] { "SPEED & QUALITY", "iperf", "bloat", "ping", "dscp", "twamp", "cloud" },
             new[] { "NAMES & TIME", "dig", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
-            new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpwalk", "mibs" },
+            new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
             new[] { "ON YOUR NETWORK", "arp", "discover", "dhcp", "roams", "sweep", "hairpin", "syslog", "wol", "subnet" },
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events" },
             new[] { "THE PC", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
@@ -117,7 +124,7 @@ namespace AdeeboMeter
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, and what else is on your network." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
-        static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
+        static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
         static readonly string[][] QuickTools = { new[] { "snmp", "SNMP" }, new[] { "snmpif", "Switch ports" }, new[] { "mtr", "MTR" }, new[] { "port", "Port test" }, new[] { "dig", "dig" }, new[] { "http", "HTTP & TLS" }, new[] { "iperf", "iperf3" }, new[] { "sweep", "Ping sweep" } };
         static bool SnmpView(string id) { return IsSnmp(id) || id == "mibs"; }
         string tbSection = "net"; bool tbHome = true; PillButton[] tbChips;
@@ -276,6 +283,7 @@ namespace AdeeboMeter
                 case "dscp": if (!int.TryParse(a[2], out n)) n = 20; return RunSecs(Math.Max(1, Math.Min(200, n)) / 2 + 1);
                 case "snmptraffic": return "about 10 seconds (two readings 5 seconds apart)";
                 case "snmpwalk": return "a second to a minute - stops at 2,000 values";
+                case "snmpsnap": return "up to 3 minutes on a big switch";
                 case "cloud": case "owners": case "ret": return "about 20-40 seconds";
                 case "ping6": return "about 10-30 seconds";
                 case "space": return "up to a minute on a big disk";
@@ -291,10 +299,10 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string> Synonyms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "bloat iperf ping mtr cloud" }, { "speed", "iperf bloat cloud" },
-            { "bandwidth", "iperf bloat" }, { "throughput", "iperf" }, { "lag", "ping bloat mtr" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
+            { "bandwidth", "iperf bloat" }, { "throughput", "iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts" },
             { "cert", "http certs" }, { "certificate", "http certs" }, { "ssl", "http certs" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
-            { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
+            { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep snmpprn arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
             { "ip", "subnet arp dhcp" }, { "lease", "dhcp" }, { "vpn", "overlap route proxy dnsrules" }, { "email", "mail" }, { "smtp", "mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover" }, { "bonjour", "discover" }, { "upnp", "discover" }, { "llmnr", "discover" },
@@ -438,7 +446,7 @@ namespace AdeeboMeter
             {
                 List<string[]> res;
                 try { res = t.Do(a, run); } catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
-                if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
+                if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
                 try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; tbBusy = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }

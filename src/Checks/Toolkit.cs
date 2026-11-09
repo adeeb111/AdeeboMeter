@@ -21,7 +21,7 @@ namespace AdeeboMeter
     static class Toolkit
     {
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
-        public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } }
+        public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public DateTime Deadline; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } }
 
         // ================================================================== iperf3 client
         const int Cookie = 37;

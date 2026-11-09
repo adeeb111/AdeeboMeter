@@ -2308,6 +2308,76 @@ how: Reads the standard sensor table (ENTITY-SENSOR-MIB) with names, scaled valu
 why: A hot device or a weak optic (low dBm) explains errors and drops.
 without: Vendors often keep optics in their own MIB - search the MIB folder for optic.
 
+== tb.snmpsnap
+friendly: SNMP - device snapshot
+cat: term
+close: -1
+tag: Overview, ports, CPU, sensors, neighbours at once.
+what: Runs the overview, interfaces, CPU and memory, sensors and LLDP views one after another, with one time limit, into one result you can copy or save.
+how: Read-only GET / GETBULK, the same as each view on its own; stops at 3 minutes.
+why: One record of a device's state before and after a change, or to attach to a ticket.
+without: Run the views one by one.
+
+== tb.snmpmac
+friendly: SNMP - find a MAC
+cat: term
+close: -1
+tag: Which switch port a device is on.
+what: Looks up a MAC (or an IP, through the device's ARP table) in the switch's forwarding table (BRIDGE-MIB / Q-BRIDGE-MIB) and names the port. Empty lists the whole table, busiest ports first.
+how: Read-only walks of the forwarding table and the bridge-port to interface map.
+why: Finding where a device is plugged in without tracing cables. A port with many MACs is an uplink - follow it to the next switch.
+without: Some switches only show the table per VLAN (community@vlan).
+
+== tb.snmpvlan
+friendly: SNMP - VLANs
+cat: term
+close: -1
+tag: VLANs, tagged and untagged ports.
+what: Reads the VLAN table (Q-BRIDGE-MIB): each VLAN's name, its untagged and tagged ports, and each port's native VLAN (PVID). Older Cisco switches are read from their VTP table.
+how: Read-only walks; port lists are decoded from the switch's bitmaps.
+why: A device in the wrong VLAN gets the wrong addresses or none - this shows which VLAN each port really carries.
+without: Vendors without Q-BRIDGE-MIB keep VLANs in their own MIB - search the MIB folder for vlan.
+
+== tb.snmppoe
+friendly: SNMP - PoE
+cat: term
+close: -1
+tag: Power budget and port faults.
+what: Reads POWER-ETHERNET-MIB: the switch's power budget and use, and each port's state (off, searching, powering, fault) and class - faults first.
+how: Read-only walks.
+why: A phone or access point that won't start is often a PoE fault or an exhausted power budget.
+without: Not a PoE switch, or the vendor's own MIB - search for poe.
+
+== tb.snmplag
+friendly: SNMP - link aggregation
+cat: term
+close: -1
+tag: Is every LAG member in its bundle?
+what: Reads the LACP table (IEEE8023-LAG-MIB): each member's bundle, whether it's in sync, collecting and distributing, and its partner - a member cabled to a different switch stands out. Without LACP it reads the interface stack.
+how: Read-only walks.
+why: A member that dropped out halves the bandwidth silently; a mis-cabled one can loop or black-hole traffic.
+without: Without the LACP table only up / down of members is known.
+
+== tb.snmpprn
+friendly: SNMP - printer
+cat: term
+close: -1
+tag: Printer state, errors, toner.
+what: Reads the Printer MIB: idle / printing, error flags (jam, door open, no paper, toner), supply levels, what the panel says, page count and alerts.
+how: Read-only; most printers answer the community public.
+why: Tells you why a printer isn't printing without walking to it.
+without: Turn SNMP on in the printer's web page.
+
+== tb.snmpups
+friendly: SNMP - UPS
+cat: term
+close: -1
+tag: Mains or battery, minutes left.
+what: Reads UPS-MIB (or APC's own MIB): whether it's on mains or battery, battery state and charge, minutes of runtime left, load and alarms.
+how: Read-only GETs.
+why: Know before an outage whether the UPS will actually carry the network gear.
+without: Turn SNMP on in the UPS's network card.
+
 == tb.snmpwalk
 friendly: SNMP - walk any OID
 cat: term

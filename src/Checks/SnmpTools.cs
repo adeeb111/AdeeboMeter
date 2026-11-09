@@ -12,7 +12,7 @@ namespace AdeeboMeter
     // The SNMP views: questions an engineer asks, answered from read-only GET / GETBULK, problems first.
     // Rows with level "6" are a monospaced table line, "7" the same line marked as trouble.
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1861", Justification = "table headers and OID lists, built once per run")]
-    static class SnmpTools
+    static partial class SnmpTools
     {
         static Snmp.Vb V(Dictionary<string, Snmp.Vb> d, string i) { Snmp.Vb v; return d.TryGetValue(i, out v) ? v : null; }
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
@@ -22,9 +22,13 @@ namespace AdeeboMeter
         // set when a walk returned only part of a table - the Toolbox puts a "Partial" row on top (and so into Copy and Save)
         [ThreadStatic] static string partial;
         public static string TakePartial() { var p = partial; partial = null; return p; }
+        // columns a view asked for and didn't get - said once at the end, and shown as n/a in the table, never as 0
+        [ThreadStatic] static List<string> missing;
+        [ThreadStatic] static bool keep;   // inside a snapshot: one partial note and one deadline for all of it
         static bool Target(string dev, out IPEndPoint ep, out string err)
         {
-            partial = null;
+            if (!keep) { partial = null; missing = new List<string>(); }
+            if (missing == null) missing = new List<string>();
             ep = null; err = ""; string h = (dev ?? "").Trim(); int port = 161;
             int c = h.LastIndexOf(':'), rb = h.IndexOf("]:", StringComparison.Ordinal);
             if (h.StartsWith("[", StringComparison.Ordinal) && rb > 0) { int p; if (!int.TryParse(h.Substring(rb + 2), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(1, rb - 1); }   // [2001:db8::1]:161
@@ -38,13 +42,25 @@ namespace AdeeboMeter
         {
             return new List<string[]> { R(2, what, err, err.StartsWith("no answer", StringComparison.Ordinal) ? (c.Version == 2 ? "Wrong community, SNMP off, an access list that doesn't include this PC, or UDP 161 blocked - a device stays silent in all four cases." : (c.Priv ? "With v3 privacy, a wrong privacy password looks exactly like this - the device can't decrypt the request and stays silent. Otherwise: " : "") + "SNMP v3 not enabled for this PC, an access list, or UDP 161 blocked.") : "", "m") };
         }
-        static Dictionary<string, Snmp.Vb> Col(IPEndPoint ep, Snmp.Cred c, string oid, Toolkit.Run run, out string err)
+        static Dictionary<string, Snmp.Vb> Col(IPEndPoint ep, Snmp.Cred c, string oid, Toolkit.Run run, out string err) { return Col(ep, c, oid, run, out err, null); }
+        static Dictionary<string, Snmp.Vb> Col(IPEndPoint ep, Snmp.Cred c, string oid, Toolkit.Run run, out string err, string label)
         {
+            if (run != null && run.Deadline == default(DateTime)) run.Deadline = DateTime.UtcNow.AddSeconds(120);
             var d = new Dictionary<string, Snmp.Vb>(); var vbs = Snmp.Walk(ep, c, oid, 2000, run, out err);
-            if (vbs != null && err != "" && partial == null) partial = err;   // some values, then it stopped: the view must say so
+            if (err != "" && partial == null && (vbs != null || err.StartsWith("stopped", StringComparison.Ordinal))) partial = err;   // some values, then it stopped: the view must say so
+            if (label != null && (vbs == null || vbs.Count == 0) && missing != null) missing.Add(label + (err == "" || err.StartsWith("SNMP error", StringComparison.Ordinal) ? " (not offered)" : " (" + err + ")"));
             if (vbs != null) foreach (var v in vbs) d[v.Oid.Substring(oid.Length + 1)] = v;
             return d;
         }
+        static void Missing(List<string[]> rows)
+        {
+            if (missing == null || missing.Count == 0) return;
+            rows.Add(R(3, "Not read", string.Join(" · ", missing.Distinct()), "Shown as n/a below - never as 0. \"Not offered\" means the device doesn't have it or this community / user can't see it.", "m")); missing.Clear();
+        }
+        static long L(Dictionary<string, Snmp.Vb> d, string i) { var v = V(d, i); return v == null || v.End ? -1 : (long)Math.Min(Snmp.Num(v), long.MaxValue); }
+        static string Nc(long n) { return n < 0 ? "n/a" : n.ToString(CultureInfo.InvariantCulture); }
+        // a counter between two runs: never a guess - n/a when either side is missing, reset when it went back or the device restarted
+        public static string Delta(long was, long now, bool reset) { if (was < 0 || now < 0) return "n/a"; if (reset || now < was) return "reset"; return now == was ? "0" : "+" + (now - was).ToString(CultureInfo.InvariantCulture); }
         static string S(Dictionary<string, Snmp.Vb> col, string i, string name, MibIndex.Entry e) { Snmp.Vb v; return col.TryGetValue(i, out v) ? Snmp.Text(v, name, e) : ""; }
         static int IdxCmp(string a, string b) { var x = a.Split('.'); var y = b.Split('.'); for (int i = 0; i < Math.Min(x.Length, y.Length); i++) { long p, q; if (!long.TryParse(x[i], out p)) p = 0; if (!long.TryParse(y[i], out q)) q = 0; if (p != q) return p.CompareTo(q); } return x.Length.CompareTo(y.Length); }
 
@@ -71,31 +87,64 @@ namespace AdeeboMeter
             return rows;
         }
 
-        // ---------- Interfaces: status, speed, errors and discards, problems first
+        // ---------- Interfaces: status, speed, errors and discards, problems first; and what changed since the last run
+        sealed class IfSnap { public DateTime At; public ulong Up; public Dictionary<string, long[]> P = new Dictionary<string, long[]>(); public Dictionary<string, string> Oper = new Dictionary<string, string>(), Disc = new Dictionary<string, string>(), Name = new Dictionary<string, string>(); }
+        static readonly Dictionary<string, IfSnap> ifSnaps = new Dictionary<string, IfSnap>();   // this session only, in memory - never written anywhere
+        static readonly object snapLock = new object();
         public static List<string[]> Interfaces(string dev, string cred, Toolkit.Run run)
         {
             IPEndPoint ep; string err; var c = Snmp.Cred.Parse(cred); var rows = new List<string[]>();
             if (!Target(dev, out ep, out err)) { rows.Add(R(2, "Device", err, "", "u")); return rows; }
             const string t = "1.3.6.1.2.1.2.2.1.", x = "1.3.6.1.2.1.31.1.1.1.";
+            string ue; var upv = Snmp.Request(ep, c, 0xA0, 0, 0, new[] { "1.3.6.1.2.1.1.3.0" }, out ue); ulong upt = upv != null && upv.Count == 1 && !upv[0].End ? Snmp.Num(upv[0]) : 0;
             var descr = Col(ep, c, t + "2", run, out err); if (descr.Count == 0) return Fail(ep.ToString(), err == "" ? "no interfaces table (IF-MIB) on this device" : err, c);
             var name = Col(ep, c, x + "1", run, out err); var alias = Col(ep, c, x + "18", run, out err); var hs = Col(ep, c, x + "15", run, out err); var spd = Col(ep, c, t + "5", run, out err);
-            var adm = Col(ep, c, t + "7", run, out err); var op = Col(ep, c, t + "8", run, out err);
-            var ie = Col(ep, c, t + "14", run, out err); var oe = Col(ep, c, t + "20", run, out err); var idc = Col(ep, c, t + "13", run, out err); var odc = Col(ep, c, t + "19", run, out err);
+            var adm = Col(ep, c, t + "7", run, out err, "admin status"); var op = Col(ep, c, t + "8", run, out err, "oper status");
+            var ie = Col(ep, c, t + "14", run, out err, "in errors"); var oe = Col(ep, c, t + "20", run, out err, "out errors"); var idc = Col(ep, c, t + "13", run, out err, "in discards"); var odc = Col(ep, c, t + "19", run, out err, "out discards");
+            var crc = Col(ep, c, "1.3.6.1.2.1.10.7.2.1.3", run, out err, "CRC errors (EtherLike-MIB)"); var disc = Col(ep, c, x + "19", run, out err);
             var ud = MibIndex.BuiltinOnly(); MibIndex.Entry upd; ud.Column(t + "8.1", out upd, out err);
             var list = descr.Keys.Select(i =>
             {
-                string a = S(adm, i, "", upd), o = S(op, i, "", upd); ulong sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1000000UL : Snmp.Num(V(spd, i));
-                ulong e1 = Snmp.Num(V(ie, i)), e2 = Snmp.Num(V(oe, i)), d1 = Snmp.Num(V(idc, i)), d2 = Snmp.Num(V(odc, i));
-                bool down = a == "up" && o != "up";
-                return new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : S(descr, i, "", null), a, o, sp, e1, e2, d1, d2, Alias = S(alias, i, "", null), down, errs = e1 + e2 > 0 };
+                string a = V(adm, i) != null ? S(adm, i, "", upd) : "n/a", o = V(op, i) != null ? S(op, i, "", upd) : "n/a"; ulong sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1000000UL : Snmp.Num(V(spd, i));
+                long e1 = L(ie, i), e2 = L(oe, i), d1 = L(idc, i), d2 = L(odc, i), cr = L(crc, i);
+                bool down = a == "up" && o != "up" && o != "n/a";
+                return new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : S(descr, i, "", null), a, o, sp, e1, e2, d1, d2, cr, Alias = S(alias, i, "", null), down, errs = Math.Max(e1, 0) + Math.Max(e2, 0) + Math.Max(cr, 0) > 0 };
             }).OrderBy(r => r.down ? 0 : r.errs ? 1 : 2).ThenBy(r => r.i, Comparer<string>.Create(IdxCmp)).ToList();
             int nDown = list.Count(r => r.down), nErr = list.Count(r => r.errs);
-            rows.Add(R(nDown > 0 ? 1 : nErr > 0 ? 1 : 0, ep.ToString(), list.Count + " interfaces · " + list.Count(r => r.o == "up") + " up · " + nDown + " admin up but down · " + nErr + " with errors", "Errors and discards are counted since the device or interface started - run it again in a few minutes and Compare to see if they're still growing. " + Hint, "m"));
+            rows.Add(R(nDown > 0 ? 1 : nErr > 0 ? 1 : 0, ep.ToString(), list.Count + " interfaces · " + list.Count(r => r.o == "up") + " up · " + nDown + " admin up but down · " + nErr + " with errors", "Errors and discards are counted since the device or interface started - run it again in a few minutes to see which are still growing. " + Hint, "m"));
+            // what changed since the last run on this device, port by port (by ifIndex - a renamed port is still the same port)
+            var now = new IfSnap { At = DateTime.Now, Up = upt };
+            foreach (var r in list) { now.P[r.i] = new[] { r.e1, r.e2, r.cr, r.d1, r.d2 }; now.Oper[r.i] = r.o; now.Name[r.i] = r.Name; var dv = V(disc, r.i); if (dv != null) now.Disc[r.i] = Snmp.Text(dv, "", null); }
+            IfSnap old; string key = ep.ToString();
+            lock (snapLock) { ifSnaps.TryGetValue(key, out old); if (old == null && ifSnaps.Count >= 20) ifSnaps.Clear(); ifSnaps[key] = now; }
+            if (old != null) Changes(rows, old, now);
+            Missing(rows);
             Func<ulong, string> sps = v => v == 0 ? "-" : v >= 1000000000UL ? (v / 1000000000UL) + "G" : (v / 1000000UL) + "M";
-            Table(rows, new[] { "Interface", "Admin", "Oper", "Speed", "In err", "Out err", "In disc", "Out disc", "Description" },
-                list.Take(400).Select(r => new[] { r.Name, r.a, r.o, sps(r.sp), r.e1.ToString(CultureInfo.InvariantCulture), r.e2.ToString(CultureInfo.InvariantCulture), r.d1.ToString(CultureInfo.InvariantCulture), r.d2.ToString(CultureInfo.InvariantCulture), r.Alias }).ToList(),
+            Table(rows, new[] { "Interface", "Admin", "Oper", "Speed", "In err", "Out err", "CRC", "In disc", "Out disc", "Description" },
+                list.Take(400).Select(r => new[] { r.Name, r.a, r.o, sps(r.sp), Nc(r.e1), Nc(r.e2), Nc(r.cr), Nc(r.d1), Nc(r.d2), r.Alias }).ToList(),
                 list.Take(400).Select(r => r.down || r.errs).ToList());
             return rows;
+        }
+        static void Changes(List<string[]> rows, IfSnap old, IfSnap now)
+        {
+            bool reboot = now.Up > 0 && old.Up > 0 && now.Up < old.Up;
+            double mins = (now.At - old.At).TotalMinutes; string when = old.At.ToString("HH:mm", CultureInfo.CurrentCulture), span = mins < 1 ? (int)(mins * 60) + " s" : mins.ToString("0", CultureInfo.CurrentCulture) + " min";
+            var cells = new List<string[]>(); var bad = new List<bool>(); int grew = 0;
+            foreach (var i in now.P.Keys.OrderBy(k => k, Comparer<string>.Create(IdxCmp)))
+            {
+                long[] o; if (!old.P.TryGetValue(i, out o)) { cells.Add(new[] { now.Name[i], "new port", "", "", "", "", "" }); bad.Add(false); continue; }
+                string d0, d1; bool reset = reboot || old.Disc.TryGetValue(i, out d0) && now.Disc.TryGetValue(i, out d1) && d0 != d1;
+                var n = now.P[i]; var ds = Enumerable.Range(0, 5).Select(k => Delta(o[k], n[k], reset)).ToArray();
+                string ow; old.Oper.TryGetValue(i, out ow); string st = ow != null && ow != now.Oper[i] ? ow + " -> " + now.Oper[i] : now.Oper[i];
+                bool up = ds.Any(z => z.StartsWith("+", StringComparison.Ordinal)), moved = st.Contains("->") || up || ds.Contains("reset");
+                if (!moved) continue;
+                if (up) grew++;
+                cells.Add(new[] { now.Name[i], st, ds[0], ds[1], ds[2], ds[3], ds[4] }); bad.Add(up || st.EndsWith("-> down", StringComparison.Ordinal));
+            }
+            foreach (var i in old.P.Keys.Where(k => !now.P.ContainsKey(k))) { string nm; old.Name.TryGetValue(i, out nm); cells.Add(new[] { nm ?? "if " + i, "gone", "", "", "", "", "" }); bad.Add(true); }
+            if (cells.Count == 0) { rows.Add(R(0, "Since " + when + " (" + span + ")", "no error or discard counter grew and no port changed state", "Compared port by port (ifIndex) with your last run on this device.", "m")); return; }
+            rows.Add(R(4, "Since " + when + " (" + span + ")", cells.Count + " ports changed" + (grew > 0 ? " · " + grew + " with growing errors or discards" : "") + (reboot ? " · the device restarted in between" : ""), "Compared port by port (ifIndex) with your last run on this device. \"reset\" means the counter went back - the device or port restarted - so no difference can be worked out.", "m"));
+            Table(rows, new[] { "Interface", "Oper", "In err", "Out err", "CRC", "In disc", "Out disc" }, cells.Take(400).ToList(), bad.Take(400).ToList());
         }
 
         // ---------- Traffic: the 64-bit counters twice, 5 seconds apart -> rate per port, busiest first
@@ -150,7 +199,9 @@ namespace AdeeboMeter
             {
                 string ty = Snmp.Text(type[i], "", null); string kind = ty.EndsWith(".2", StringComparison.Ordinal) ? "Memory" : ty.EndsWith(".3", StringComparison.Ordinal) ? "Virtual memory" : ty.EndsWith(".4", StringComparison.Ordinal) ? "Disk" : ty.EndsWith(".9", StringComparison.Ordinal) ? "Flash" : "Storage";
                 double u = Snmp.Num(V(unit, i)), s = Snmp.Num(V(size, i)) * u, us = Snmp.Num(V(used, i)) * u;
-                if (s <= 0) continue; double pct = us * 100 / s;
+                if (s <= 0) continue;
+                if (V(used, i) == null) { rows.Add(R(3, kind + " · " + S(descr, i, "", null), (s / 1048576).ToString("0", CultureInfo.CurrentCulture) + " MB · used n/a (not read)", "", "m")); continue; }
+                double pct = us * 100 / s;
                 // only real RAM, disks and flash get a colour: "other" entries (cached, shared, buffers) are full by design
                 int lvS = kind == "Memory" ? (pct > 97 ? 2 : pct > 90 ? 1 : 3) : kind == "Disk" || kind == "Flash" ? (pct > 95 ? 2 : pct > 85 ? 1 : 3) : 3;
                 rows.Add(R(lvS, kind + " · " + S(descr, i, "", null), (us / 1048576).ToString("0", CultureInfo.CurrentCulture) + " of " + (s / 1048576).ToString("0", CultureInfo.CurrentCulture) + " MB used (" + pct.ToString("0", CultureInfo.CurrentCulture) + "%)", "", "m"));
@@ -184,19 +235,20 @@ namespace AdeeboMeter
             const string s = "1.3.6.1.2.1.99.1.1.1.";
             var val = Col(ep, c, s + "4", run, out err);
             if (val.Count == 0) { if (err != "" && !err.StartsWith("SNMP error", StringComparison.Ordinal)) return Fail(ep.ToString(), err, c); rows.Add(R(3, ep.ToString(), "this device doesn't offer the standard sensor table (ENTITY-SENSOR-MIB)", "Search the MIB folder for temperature or optic to find the vendor's own table.", "m")); return rows; }
-            var type = Col(ep, c, s + "1", run, out err); var scale = Col(ep, c, s + "2", run, out err); var prec = Col(ep, c, s + "3", run, out err); var stat = Col(ep, c, s + "5", run, out err);
+            var type = Col(ep, c, s + "1", run, out err, "sensor type"); var scale = Col(ep, c, s + "2", run, out err, "scale"); var prec = Col(ep, c, s + "3", run, out err, "precision"); var stat = Col(ep, c, s + "5", run, out err, "sensor state");
             var name = Col(ep, c, "1.3.6.1.2.1.47.1.1.1.1.7", run, out err); var descr = Col(ep, c, "1.3.6.1.2.1.47.1.1.1.1.2", run, out err);
             var list = val.Keys.Select(i =>
             {
-                long ty = (V(type, i) != null ? (long)Snmp.Num(V(type, i)) : 2), sc = (V(scale, i) != null ? (long)Snmp.Num(V(scale, i)) : 9), pr = (V(prec, i) != null ? (long)Snmp.Num(V(prec, i)) : 0), stt = (V(stat, i) != null ? (long)Snmp.Num(V(stat, i)) : 1);
+                long ty = (V(type, i) != null ? (long)Snmp.Num(V(type, i)) : 2), sc = (V(scale, i) != null ? (long)Snmp.Num(V(scale, i)) : 9), pr = (V(prec, i) != null ? (long)Snmp.Num(V(prec, i)) : 0), stt = (V(stat, i) != null ? (long)Snmp.Num(V(stat, i)) : -1);
                 long raw = 0; var rv = val[i].Raw; if (rv.Length > 0 && rv.Length <= 8) { raw = (rv[0] & 0x80) != 0 ? -1 : 0; foreach (var b in rv) raw = raw << 8 | b; }
                 double v = raw * Math.Pow(10, (sc - 9) * 3) / Math.Pow(10, pr);
                 string nm = S(name, i, "", null); if (nm == "") nm = S(descr, i, "", null); if (nm == "") nm = "sensor " + i;
                 string unit = ty >= 0 && ty < SensorType.Length ? SensorType[ty] : "";
-                bool bad = stt != 1 || (ty == 8 && v > 75);
-                return new { nm, Text = v.ToString(Math.Abs(v) < 10 ? "0.00" : "0.0", CultureInfo.CurrentCulture) + " " + unit, State = stt == 1 ? "ok" : stt == 2 ? "unavailable" : stt == 3 ? "non-operational" : "?", bad, ty };
+                bool bad = (stt != 1 && stt != -1) || (ty == 8 && v > 75);
+                return new { nm, Text = v.ToString(Math.Abs(v) < 10 ? "0.00" : "0.0", CultureInfo.CurrentCulture) + " " + unit, State = stt == 1 ? "ok" : stt == 2 ? "unavailable" : stt == 3 ? "non-operational" : stt == -1 ? "n/a" : "?", bad, ty };
             }).OrderBy(r => r.bad ? 0 : 1).ThenBy(r => r.ty).ThenBy(r => r.nm).ToList();
             rows.Add(R(list.Any(r => r.bad) ? 1 : 0, ep.ToString(), list.Count + " sensors", "Temperatures over 75 °C and sensors that aren't 'ok' come first. Optical power is in dBm.", "m"));
+            Missing(rows);
             Table(rows, new[] { "Sensor", "Value", "State" }, list.Take(300).Select(r => new[] { r.nm, r.Text, r.State }).ToList(), list.Take(300).Select(r => r.bad).ToList());
             return rows;
         }
