@@ -2428,7 +2428,7 @@ how: Windows' DHCP client API; your address and lease are not touched.
 why: Phones and APs that fetch config by TFTP, wrong DNS or NTP from DHCP, or a WPAD proxy you didn't expect.
 without: DHCP lease and IPv6 lifetimes shows your current lease without asking the server.
 
-== tb.snmptrap
+== tb.trap
 friendly: SNMP test trap
 cat: term
 close: -1
