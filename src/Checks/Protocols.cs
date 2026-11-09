@@ -326,13 +326,23 @@ namespace AdeeboMeter
         }
 
         // ---------- syslog: one test message
-        public static List<string[]> Syslog(string target, string text)
+        static readonly string[] Facilities = { "kern", "user", "mail", "daemon", "auth", "syslog", "lpr", "news", "uucp", "cron", "authpriv", "ftp", "ntp", "audit", "alert", "clock", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7" };
+        static readonly string[] Severities = { "emerg", "alert", "crit", "err", "warning", "notice", "info", "debug" };
+        public static List<string[]> Syslog(string target, string text) { return Syslog(target, text, ""); }
+        public static List<string[]> Syslog(string target, string text, string level)
         {
+            int fac = 1, sev = 6; string lv = (level ?? "").Trim().ToLowerInvariant();
+            if (lv != "")
+            {
+                var pp = lv.Split('.'); int f = Array.IndexOf(Facilities, pp[0]), sv = pp.Length > 1 ? Array.IndexOf(Severities, pp[1] == "warn" ? "warning" : pp[1] == "error" ? "err" : pp[1]) : 6;
+                if (pp.Length > 2 || f < 0 || sv < 0) return new List<string[]> { R(2, "Level", "facility.severity - e.g. local7.warning, user.info, auth.err", "Facilities: " + string.Join(" ", Facilities) + ". Severities: " + string.Join(" ", Severities) + ".", "u") };
+                fac = f; sev = sv;
+            }
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 514, out h, out p)) { rows.Add(R(2, "Collector", "type the syslog server's address", "", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
-            string msg = "<14>1 " + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) + " " + Environment.MachineName + " AdeeboMeter - - - " + (string.IsNullOrWhiteSpace(text) ? "AdeeboMeter test message" : Regex.Replace(text.Trim(), @"[\r\n\t\x00-\x1f]", " ").Substring(0, Math.Min(400, text.Trim().Length)));
+            string msg = "<" + (fac * 8 + sev).ToString(CultureInfo.InvariantCulture) + ">1 " + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) + " " + Environment.MachineName + " AdeeboMeter - - - " + (string.IsNullOrWhiteSpace(text) ? "AdeeboMeter test message" : Regex.Replace(text.Trim(), @"[\r\n\t\x00-\x1f]", " ").Substring(0, Math.Min(400, text.Trim().Length)));
             using (var u = new UdpClient(a.AddressFamily)) { var b = Encoding.UTF8.GetBytes(msg); u.Send(b, b.Length, new IPEndPoint(a, p)); }
-            rows.Add(R(0, "Sent to " + a + ":" + p + " (UDP)", msg, "Syslog over UDP never confirms - look for it on the collector (facility user, severity info).", "m"));
+            rows.Add(R(0, "Sent to " + a + ":" + p + " (UDP)", msg, "Syslog over UDP never confirms - look for it on the collector (facility " + Facilities[fac] + ", severity " + Severities[sev] + ").", "m"));
             return rows;
         }
 

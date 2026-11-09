@@ -78,6 +78,10 @@ namespace AdeeboMeter
         [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
         [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int v, int size);
 
+        [DllImport("iphlpapi.dll")] public static extern uint SendARP(int dest, int src, byte[] mac, ref int len);
+        [StructLayout(LayoutKind.Sequential)] public struct DhcpParamsArray { public uint N; public IntPtr P; }
+        [DllImport("dhcpcsvc.dll")] public static extern uint DhcpCApiInitialize(out uint version);
+        [DllImport("dhcpcsvc.dll", CharSet = CharSet.Unicode)] public static extern uint DhcpRequestParams(uint flags, IntPtr reserved, string adapter, IntPtr classId, DhcpParamsArray send, DhcpParamsArray recv, IntPtr buffer, ref int size, string requestId);
         [DllImport("iphlpapi.dll")] public static extern uint GetExtendedTcpTable(IntPtr t, ref int len, bool sort, int af, int cls, uint res);
         [DllImport("iphlpapi.dll")] public static extern uint GetExtendedUdpTable(IntPtr t, ref int len, bool sort, int af, int cls, uint res);
 

@@ -529,7 +529,7 @@ namespace AdeeboMeter
             catch (ArgumentException) { }
             return msg;
         }
-        static string Name(byte[] b, ref int p)
+        internal static string Name(byte[] b, ref int p)
         {
             var parts = new List<string>(); int jumps = 0, pos = p; bool jumped = false;
             while (pos < b.Length && jumps < 20)
@@ -759,14 +759,18 @@ namespace AdeeboMeter
         }
 
         // ================================================================== Wake-on-LAN
-        public static List<string[]> Wake(string macIn)
+        public static List<string[]> Wake(string macIn) { return Wake(macIn, ""); }
+        public static List<string[]> Wake(string macIn, string secureOn)
         {
             var rows = new List<string[]>(); string hex = new string((macIn ?? "").Where(Uri.IsHexDigit).ToArray());
             if (hex.Length != 12) { rows.Add(R(2, "Hardware address", "type the PC's MAC, e.g. 3C:84:6A:12:34:56", "Your Wi-Fi > devices on your network lists the ones your PC has seen.", "u")); return rows; }
             var mac = Enumerable.Range(0, 6).Select(i => Convert.ToByte(hex.Substring(i * 2, 2), 16)).ToArray();
-            var pkt = new byte[102]; for (int i = 0; i < 6; i++) pkt[i] = 0xFF; for (int i = 1; i <= 16; i++) Array.Copy(mac, 0, pkt, i * 6, 6);
+            string pw = new string((secureOn ?? "").Where(Uri.IsHexDigit).ToArray());
+            if ((secureOn ?? "").Trim() != "" && pw.Length != 12) { rows.Add(R(2, "SecureOn password", "6 bytes written like a MAC, e.g. 01:23:45:67:89:AB", "Set in the PC's BIOS or network card; most PCs don't use one - leave it empty.", "u")); return rows; }
+            var pkt = new byte[pw.Length == 12 ? 108 : 102]; for (int i = 0; i < 6; i++) pkt[i] = 0xFF; for (int i = 1; i <= 16; i++) Array.Copy(mac, 0, pkt, i * 6, 6);
+            if (pw.Length == 12) for (int i = 0; i < 6; i++) pkt[102 + i] = Convert.ToByte(pw.Substring(i * 2, 2), 16);
             using (var u = new UdpClient()) { u.EnableBroadcast = true; u.Send(pkt, pkt.Length, new IPEndPoint(IPAddress.Broadcast, 9)); u.Send(pkt, pkt.Length, new IPEndPoint(IPAddress.Broadcast, 7)); }
-            rows.Add(R(3, "Sent (no reply is possible)", "magic packet for " + string.Join(":", mac.Select(b => b.ToString("X2", CultureInfo.InvariantCulture))) + " to your network", "It only wakes PCs whose network card and BIOS allow Wake-on-LAN, on the same network (not over the internet or most VPNs).", "m"));
+            rows.Add(R(3, "Sent (no reply is possible)", "magic packet for " + string.Join(":", mac.Select(b => b.ToString("X2", CultureInfo.InvariantCulture))) + " to your network" + (pw.Length == 12 ? " (with SecureOn password)" : ""), "It only wakes PCs whose network card and BIOS allow Wake-on-LAN, on the same network (not over the internet or most VPNs).", "m"));
             return rows;
         }
 

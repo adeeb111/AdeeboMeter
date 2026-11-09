@@ -2378,6 +2378,196 @@ how: Read-only GETs.
 why: Know before an outage whether the UPS will actually carry the network gear.
 without: Turn SNMP on in the UPS's network card.
 
+== tb.icmpb
+friendly: ICMP builder
+cat: term
+close: -1
+tag: Ping with your own size, DF, TTL and gap.
+what: Sends ping (ICMP echo) to one target with the size, don't-fragment flag, TTL, count and gap you choose - IPv4 or IPv6 - and reports answers, loss, packet-too-big and which router answered when the TTL ran out.
+how: Windows' own ping API; no admin. At most 10 a second and 1,000 in all.
+why: Prove an MTU problem (size + df), find the hop where a TTL runs out, or check a firewall rule for ICMP.
+without: Sustained ping for long runs, MTU per hop for the whole path.
+
+== tb.udpsend
+friendly: UDP sender
+cat: term
+close: -1
+tag: Your own UDP payload to host:port.
+what: Sends a text or hex payload to one UDP port up to 1,000 times (10 a second at most) and shows any answer, or that the port is closed.
+how: An ordinary UDP socket.
+why: Test a firewall rule, a SIP / syslog / custom service, or that a port-forward reaches the box.
+without: UDP has no handshake - silence can't tell delivered-and-ignored from dropped.
+
+== tb.tcpsend
+friendly: TCP sender
+cat: term
+close: -1
+tag: Connect, send, see the reply.
+what: Connects to host:port, sends what you typed (text with \r\n, or hex) and shows up to 4 KB of the reply.
+how: An ordinary TCP connection, closed after 3 seconds.
+why: Talk to a service by hand - an HTTP line, a banner, a custom protocol - like telnet or netcat.
+without: Port test only checks it opens.
+
+== tb.arpwho
+friendly: ARP who-has
+cat: term
+close: -1
+tag: Who has this IP on my LAN?
+what: Asks Windows to send one ARP request for an address on your own subnet and shows the MAC that answered and how fast.
+how: Windows' SendARP - no admin.
+why: Find a device's MAC, or spot two devices claiming the same IP.
+without: Only works on your own subnet.
+
+== tb.dhcpopt
+friendly: DHCP options
+cat: term
+close: -1
+tag: What the DHCP server hands out.
+what: Asks your DHCP server (a DHCP information request, through Windows) for its options: router, DNS, domain, NTP, TFTP / boot file, classless routes, WPAD and vendor options.
+how: Windows' DHCP client API; your address and lease are not touched.
+why: Phones and APs that fetch config by TFTP, wrong DNS or NTP from DHCP, or a WPAD proxy you didn't expect.
+without: DHCP lease and IPv6 lifetimes shows your current lease without asking the server.
+
+== tb.snmptrap
+friendly: SNMP test trap
+cat: term
+close: -1
+tag: Does my trap receiver see this?
+what: Sends one SNMPv2c notification (Net-SNMP's heartbeat test OID) with a text saying it's a test, to your trap receiver.
+how: One UDP packet to port 162; AdeeboMeter never receives traps or changes a device.
+why: Prove the path, firewall and community to your NMS before trusting it to alert you.
+without: Look on the receiver - traps are never confirmed.
+
+== tb.netflow
+friendly: NetFlow test record
+cat: term
+close: -1
+tag: Does my collector decode flows?
+what: Sends one NetFlow v5 packet with one flow from this PC to a documentation address (192.0.2.10), so you can find it on the collector.
+how: One UDP packet to port 2055.
+why: Check the collector's port, firewall and parsing before pointing routers at it.
+without: Look on the collector - flows are never confirmed.
+
+== tb.httpreq
+friendly: HTTP request builder
+cat: term
+close: -1
+tag: Any method, headers and body.
+what: Sends one HTTP request with the method, headers and body you choose and shows the status, time, every response header and the start of the body. Redirects are shown, not followed.
+how: Through your proxy settings, like a browser; 15 s limit, 64 KB read.
+why: Test an API, a health check, a POST to a webhook, or what a server says to OPTIONS - without curl or Postman.
+without: HTTP and TLS inspector for certificates and TLS.
+
+== tb.stun
+friendly: STUN
+cat: term
+close: -1
+tag: My public address and port.
+what: Sends a STUN binding request to the server you name and shows the address and port the internet sees, and whether your NAT kept the port.
+how: One UDP request, RFC 5389.
+why: Calls and VoIP depend on how NAT maps ports; this shows it directly.
+without: The Teams UDP test checks NAT behaviour against Microsoft.
+
+== tb.nbname
+friendly: Name of a device
+cat: term
+close: -1
+tag: What is 192.168.1.23 called?
+what: Asks that one device for its name over NetBIOS (with its workgroup and MAC), LLMNR and mDNS (Bonjour), and your DNS server for a PTR name.
+how: A few small UDP questions to that one IP.
+why: Put a name to an address from the ARP table, a log or a firewall.
+without: Devices that block these stay nameless - try SNMP or their web page.
+
+== tb.finddev
+friendly: Find devices
+cat: term
+close: -1
+tag: Ask the network who's there.
+what: Asks once over mDNS, SSDP (UPnP) and WS-Discovery, and lists every device that answers in 3 seconds with what it says it is.
+how: Three multicast questions; answers come back to the same sockets. Nothing keeps listening.
+why: Find printers, TVs, NAS boxes, cameras and routers fast - with names, not just addresses.
+without: Announcements listens quietly instead; Ping sweep finds devices that answer none of these.
+
+== tb.remote
+friendly: SSH, SCP and remote commands
+cat: term
+close: -1
+tag: Copy-ready ssh, scp and sftp.
+what: Fills in the commands for Windows' own OpenSSH (ssh, scp, sftp, ssh-keyscan, ssh-keygen), curl and PowerShell with your host, user and port. Click one to copy it; click the top line to open PowerShell.
+how: Nothing runs from AdeeboMeter and no password is typed or kept here.
+why: Remote access without installing PuTTY or WinSCP, and without remembering the options.
+without: Settings › Optional features › OpenSSH Client if it isn't installed.
+
+== tb.certfile
+friendly: Inspect a certificate
+cat: term
+close: -1
+tag: What's in this .cer / .pem?
+what: Reads a certificate file (or pasted PEM, or a whole chain) and shows subject, issuer, dates, SAN names, key, signature, fingerprints and chain order.
+how: On this PC only; revocation isn't checked (that needs the internet).
+why: Check a certificate before you install it or send it on.
+without: certutil -dump does the same in text.
+
+== tb.pfx
+friendly: Check a PFX / P12
+cat: term
+close: -1
+tag: Is the key in there?
+what: Opens a PFX with its password and shows each certificate, whether the private key is there and usable, and whether the chain is complete.
+how: In memory only (an ephemeral key set); the key is never exported, shown or saved, and the password isn't kept.
+why: Most certificate installs that fail are a PFX without its key or without its intermediates.
+without: certutil -dump on the PFX, with the password.
+
+== tb.csr
+friendly: Decode a CSR
+cat: term
+close: -1
+tag: What does this request ask for?
+what: Reads a certificate signing request and shows the subject, the SAN names, the key type and size and the signature algorithm.
+how: On this PC only.
+why: Catch a missing SAN name or a weak key before the CA issues the wrong certificate.
+without: certutil -dump on the .csr.
+
+== tb.certconv
+friendly: Convert a certificate
+cat: term
+close: -1
+tag: PEM to DER and back.
+what: Writes the certificate in the other form (PEM text or DER binary) as a new file next to the original - never over it.
+how: Certificates only; a file holding a private key is refused.
+why: Network gear, Linux and Windows each want a different form of the same certificate.
+without: certutil -encode / -decode.
+
+== tb.hashf
+friendly: Hash a file
+cat: term
+close: -1
+tag: Is my download intact?
+what: Works out SHA-256, SHA-1 and MD5 of a file at once and compares them with the hash you paste from the download page.
+how: Reads the file locally; nothing is sent.
+why: A damaged or swapped download - firmware especially - fails the comparison.
+without: certutil -hashfile file SHA256.
+
+== tb.b64
+friendly: Decode Base64 or a JWT
+cat: term
+close: -1
+tag: What does this token say?
+what: Decodes Base64 (or Base64url) to text or bytes with a hint about what they are, or a JWT's header and claims with its issue and expiry times.
+how: On this PC only. A JWT's signature is not checked.
+why: Read a token's claims or expiry, or an encoded blob from a log or config.
+without: A token is a password while it's valid - don't paste live ones into websites.
+
+== tb.certcmds
+friendly: Certificate commands
+cat: term
+close: -1
+tag: certutil, PowerShell, openssl - filled in.
+what: Lists the everyday certificate commands with your file filled in - dump, verify, convert, hash, the certificate stores - and openssl's when it's installed. Click to copy.
+how: Nothing runs from here; exporting private keys is left out on purpose.
+why: The commands you'd otherwise search for each time.
+without: Certificates that expire soon lists your own store's.
+
 == tb.snmpwalk
 friendly: SNMP - walk any OID
 cat: term
