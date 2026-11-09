@@ -119,7 +119,7 @@ namespace AdeeboMeter
                             var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                             Theme.Fill(g, br, 17 * S, Theme.Blue);
                             using (var wb = new SolidBrush(Color.White)) g.DrawString(r.GoLabel + "  >", Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
-                            string go = r.GoTab; Act(guideCanvas, br, delegate { tab = go; ShowTab(); });
+                            string go = r.GoTab; Act(guideCanvas, br, delegate { if (go.StartsWith("guide:", StringComparison.Ordinal)) StartGuide(go.Substring(6), false); else { tab = go; ShowTab(); } });
                             y += 50 * S;
                         }
                     }

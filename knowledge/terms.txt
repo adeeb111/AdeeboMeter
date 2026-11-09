@@ -1538,6 +1538,126 @@ how: Said plainly instead of guessed.
 why: A missing fact is better than a made-up one.
 without: The Health and tools page has "What can AdeeboMeter see here?" - it lists what IT allows on this PC.
 
+== guide.whats
+friendly: What's wrong?
+cat: term
+close: -1
+tag: When you can't name the problem.
+what: Walks out from your PC layer by layer - this PC, the link, your router, the internet, names (DNS), the way in (sign-in pages, proxies) - and stops at the first broken one, with what happened around then.
+how: Uses what AdeeboMeter already measures; re-tests only what's stale: a few pings, a TCP connection when ping is blocked, one DNS question and Windows' own connectivity test.
+why: Most problems are one broken layer; finding which one tells you who can fix it.
+without: It checks right now - for problems that come and go, leave AdeeboMeter running and look at Time machine.
+
+== tb.manyports
+friendly: Many ports for one service
+cat: term
+close: -1
+tag: Is every port the service needs open?
+what: Tests the ports a service needs (web, mail, Active Directory, SQL, RDP, SSH, VoIP, printing, SMB, VPN, DNS) or up to 20 you list, on one host: open, refused or no answer.
+how: One TCP connection per port, closed at once; never more than 20 - not a port scanner.
+why: Sign-in, mail or printing often fails on one missing port, not all of them.
+without: Port test for a single port.
+
+== tb.allips
+friendly: Every IP behind a name
+cat: term
+close: -1
+tag: Does every server behind the name answer?
+what: Resolves a name to all its addresses and tries the port on each one.
+how: A TCP connection to each address (16 at most).
+why: "Works on retry" is often one dead server among several - this finds it.
+without: Check a destination tests only the first address.
+
+== tb.rdpcheck
+friendly: Remote Desktop reachable?
+cat: term
+close: -1
+tag: Will Remote Desktop connect?
+what: Opens the RDP port and does Remote Desktop's own opening negotiation to see that it really answers and whether it requires sign-in first (NLA).
+how: No sign-in and no password - the negotiation stops before that.
+why: Tells "port blocked" from "Remote Desktop off" from "works".
+without: Port test only shows the port.
+
+== tb.ldapcheck
+friendly: Active Directory / LDAP reachable?
+cat: term
+close: -1
+tag: Can I reach the domain controller?
+what: Reads the directory's root (rootDSE) anonymously, as every client does first: domain, server name, functional level and its clock - then checks LDAPS, the global catalog and Kerberos ports.
+how: Anonymous read, no password; plain BER over TCP 389.
+why: Sign-in and Group Policy need the DC and a clock within 5 minutes of it.
+without: Domain controllers lists the DCs Windows found.
+
+== tb.dnscmp
+friendly: DNS answer compare
+cat: term
+close: -1
+tag: Does my DNS say the same as another?
+what: Asks your DNS server and one you name (an IP or a DoH address) for the same name and compares the addresses.
+how: Two DNS questions each.
+why: A site that fails only here may get a different, wrong answer from this network's DNS.
+without: dig asks one server at a time.
+
+== tb.beforeafter
+friendly: Before / after snapshot
+cat: term
+close: -1
+tag: What changed when I switched?
+what: Takes a snapshot of adapter, addresses, gateway, DNS, VPN, proxy, MTU and response times; run it again after one change (VPN on, dock, Wi-Fi to cable) and it lists exactly what changed.
+how: Read from Windows and what AdeeboMeter already measures; kept in memory until AdeeboMeter closes.
+why: "It breaks when I connect the VPN" - this shows what the VPN actually changed.
+without: Compare a result with its last run in any tool.
+
+== tb.twopc
+friendly: Compare two saved results
+cat: term
+close: -1
+tag: Why does it work on the other PC?
+what: Reads two results saved from AdeeboMeter (one from each PC) and lists the lines that differ.
+how: Reads the two .txt files locally.
+why: The difference between a working and a broken PC is usually one line - a DNS answer, a route, a proxy.
+without: Save the same tool's result on both PCs first.
+
+== tb.mysites
+friendly: My sites
+cat: term
+close: -1
+tag: Are my sites fine right now?
+what: Walks each site you pinned in Check a destination: name, HTTPS port and how long its certificate has left.
+how: One DNS question, one TCP connection and one TLS handshake per site.
+why: Your own short watchlist, checked in seconds.
+without: Pin sites in Investigate › Check a destination.
+
+== tb.shares
+friendly: Shared folders (SMB)
+cat: term
+close: -1
+tag: What does this PC or NAS share?
+what: Lists the shared folders and printers on a PC or NAS, as Windows would show them to your account.
+how: Windows' own share listing (NetShareEnum) with your credentials; nothing is opened or read.
+why: Find the right share name, or see whether access is denied for your account.
+without: Many ports with "smb" shows whether port 445 answers.
+
+== tb.svcfail
+friendly: Services that failed to start
+cat: term
+close: -1
+tag: Which Windows services keep failing?
+what: Reads 7 days of the System log for services that failed to start, timed out or stopped unexpectedly, grouped by service.
+how: Windows' own event log, read as you.
+why: A VPN, antivirus or network service that fails at start-up explains a lot of "sometimes" problems.
+without: Event log - errors in 24 h shows everything else.
+
+== tb.tidy
+friendly: Quick tidy
+cat: term
+close: -1
+tag: Where's the clutter - you decide.
+what: Finds old temp files, the Recycle Bin, low disk space, startup programs, frozen or memory-hungry apps and recent installs, and opens the right Windows screen for each.
+how: Reads only; deletes, ends and changes nothing. No registry cleaning, memory boosting or cache wiping - they don't help.
+why: Most "PC cleanup" is a few Windows screens you can use yourself.
+without: Storage settings › Storage Sense does the temp files automatically.
+
 == guide.slow
 friendly: The internet is slow
 cat: term

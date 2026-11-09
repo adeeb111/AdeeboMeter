@@ -86,6 +86,17 @@ namespace AdeeboMeter
                 T("nbname", "YOUR NETWORK", "Name of a device (NetBIOS, LLMNR, mDNS)", "IP - e.g. 192.168.1.23", (a, r) => Reach.NameOf(a[0])),
                 T("finddev", "YOUR NETWORK", "Find devices (mDNS, SSDP, WS-Discovery)", null, (a, r) => Reach.Find(M, a[3], r)),
                 T("remote", "REMOTE", "SSH, SCP and remote commands", "Host - e.g. 10.0.0.1|User (optional)|Port (optional, 22)", (a, r) => Reach.Remote(a[0], a[1], a[2])),
+                T("manyports", "WEB", "Many ports for one service", "Host - e.g. dc01 or mail.example.com|Service - web, mail, ad, sql, rdp, ssh, voip, print, smb, vpn, dns - or ports 80,443", (a, r) => MoreTools.ManyPorts(a[0], a[1], r)),
+                T("allips", "WEB", "Every IP behind a name", "name:port - e.g. outlook.office.com:443", (a, r) => MoreTools.AllIps(a[0], r)),
+                T("rdpcheck", "WEB", "Remote Desktop reachable?", "PC - host or host:port (3389)", (a, r) => MoreTools.Rdp(a[0])),
+                T("ldapcheck", "WEB", "Active Directory / LDAP reachable?", "Domain controller or domain (empty = your domain)", (a, r) => MoreTools.Ldap(a[0])),
+                T("dnscmp", "WEB", "DNS answer compare", "Name - e.g. outlook.office.com|Other DNS - e.g. 1.1.1.1 or a DoH address (default 1.1.1.1)", (a, r) => MoreTools.DnsCompare(M, a[0], a[1])),
+                T("beforeafter", "WEB", "Before / after snapshot", "Name this moment - e.g. VPN off", (a, r) => MoreTools.Snapshot(M, a[0])),
+                T("twopc", "WEB", "Compare two saved results (two PCs)", "First saved result (.txt)|Second saved result (.txt)", (a, r) => MoreTools.TwoPc(a[0], a[1])),
+                T("mysites", "WEB", "My sites", null, (a, r) => MoreTools.MySites(r)),
+                T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
+                T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
+                T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
                 T("pfx", "CERTS", "Check a PFX / P12", "File path|Password - used once, never kept", (a, r) => CertTools.Pfx(a[0], a[1])),
                 T("csr", "CERTS", "Decode a CSR", "File path, or paste the PEM text", (a, r) => CertTools.Csr(a[0])),
@@ -131,20 +142,21 @@ namespace AdeeboMeter
         // three sections, each grouped by the question you're asking, not by technology
         static readonly string[][] TbLayout = {
             new[] { "PATH & ROUTING", "mtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
-            new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
+            new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
             new[] { "SPEED & QUALITY", "ping", "twamp", "cloud" },
-            new[] { "NAMES & TIME", "dig", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
+            new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
+            new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
-            new[] { "ON YOUR NETWORK", "arp", "finddev", "nbname", "discover", "dhcp", "roams", "sweep", "hairpin", "subnet" },
+            new[] { "ON YOUR NETWORK", "arp", "finddev", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin", "subnet" },
             new[] { "REMOTE ACCESS", "remote" },
             new[] { "BUILD A PACKET", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "wol" },
             new[] { "TEST A COLLECTOR", "syslog", "trap", "netflow" },
             new[] { "LOAD & QUEUES", "iperf", "bloat", "dscp" },
-            new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events" },
+            new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
             new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
-            new[] { "THE PC", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
+            new[] { "THE PC", "tidy", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
-            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" },
+            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" },
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
@@ -200,6 +212,7 @@ namespace AdeeboMeter
                     try { BeginInvoke((Action)delegate { tbBusy = false; tbRun.Text = "Run"; if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = false; }
                 }, TaskCreationOptions.LongRunning);
             }
+            else if (act.StartsWith("fix:", StringComparison.Ordinal)) SecFix(act.Substring(4));
             else if (act.StartsWith("copy:", StringComparison.Ordinal)) { try { Clipboard.SetText(act.Substring(5)); tbCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } tbCanvas.Invalidate(); }
             else if (act == "ps:")
             {
@@ -339,14 +352,14 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string> Synonyms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "bloat iperf ping mtr cloud" }, { "speed", "iperf bloat cloud" },
-            { "bandwidth", "iperf bloat" }, { "throughput", "iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
+            { "bandwidth", "iperf bloat" }, { "throughput", "iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts" },
             { "cert", "http certs certfile" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "http certs" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
             { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep snmpprn arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
             { "ip", "subnet arp dhcp" }, { "lease", "dhcp" }, { "vpn", "overlap route proxy dnsrules" }, { "email", "mail" }, { "smtp", "mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover finddev" }, { "bonjour", "discover finddev" }, { "upnp", "discover finddev" }, { "llmnr", "discover nbname" },
-            { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "discover", "finddev" }, { "ssdp", "finddev" }, { "wsd", "finddev" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" },
+            { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "discover", "finddev" }, { "ssdp", "finddev" }, { "wsd", "finddev" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" },
         };
         Panel BuildToolboxPage()
         {

@@ -26,10 +26,11 @@ namespace AdeeboMeter
         public void Conclude(int lv, string finding) { Lv = lv; Finding = finding; }
     }
 
-    static class Investigate
+    static partial class Investigate
     {
         public sealed class Flow { public string Id, Title, Ask; }
         public static readonly Flow[] All = {
+            new Flow { Id = "whats", Title = "What's wrong? (I can't name it)", Ask = "Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken." },
             new Flow { Id = "slow", Title = "The internet is slow", Ask = "Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS." },
             new Flow { Id = "site", Title = "A website or app won't open", Ask = "Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails." },
             new Flow { Id = "calls", Title = "Calls freeze or sound robotic", Ask = "Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about." },
@@ -44,7 +45,8 @@ namespace AdeeboMeter
             r.Id = id; var flow = All.FirstOrDefault(f => f.Id == id); r.Title = flow != null ? flow.Title : id;
             try
             {
-                if (id == "slow") Slow(m, r);
+                if (id == "whats") Whats(m, r, changed);
+                else if (id == "slow") Slow(m, r);
                 else if (id == "site") Site(m, r, changed);
                 else if (id == "calls") Calls(m, r, changed);
                 else if (id == "drops") Drops(m, r);

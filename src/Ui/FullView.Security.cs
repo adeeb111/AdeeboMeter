@@ -57,13 +57,14 @@ namespace AdeeboMeter
             }, TaskCreationOptions.LongRunning);
         }
         static int SecLevel(List<string[]> r) { var l = r.Select(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList(); return l.Contains(2) ? 2 : l.Contains(1) ? 1 : l.Contains(0) ? 0 : 3; }
-        static readonly HashSet<string> SecTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UserAccountControlSettings.exe", "SystemPropertiesRemote.exe", "optionalfeatures.exe", "ncpa.cpl", "certmgr.msc", "taskschd.msc", "netplwiz.exe" };
+        static readonly HashSet<string> SecTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UserAccountControlSettings.exe", "SystemPropertiesRemote.exe", "optionalfeatures.exe", "ncpa.cpl", "certmgr.msc", "taskschd.msc", "netplwiz.exe", "taskmgr.exe" };
         static void SecFix(string f)
         {
             try
             {
                 if (f.StartsWith("ms-settings:", StringComparison.Ordinal) || f.StartsWith("windowsdefender:", StringComparison.Ordinal)) { using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(f) { UseShellExecute = true })) { } }
                 else if (f.StartsWith("url:http://", StringComparison.Ordinal) || f.StartsWith("url:https://", StringComparison.Ordinal)) { Uri u; if (Uri.TryCreate(f.Substring(4), UriKind.Absolute, out u)) using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(u.AbsoluteUri) { UseShellExecute = true })) { } }
+                else if (f == "shell:RecycleBinFolder") { using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), f) { UseShellExecute = false })) { } }
                 else if (SecTools.Contains(f)) { using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, f)) { UseShellExecute = true })) { } }
             }
             catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is InvalidOperationException || e is System.IO.FileNotFoundException)) throw; Program.Log("security fix " + f + ": " + e.Message); }

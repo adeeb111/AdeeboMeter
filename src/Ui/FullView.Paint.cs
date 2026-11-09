@@ -152,6 +152,15 @@ namespace AdeeboMeter
             Theme.Fill(g, vb, 10 * S, bg);
             using (var b = new SolidBrush(fg)) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 20 * S;
+            if (done)
+            {
+                // Copy as text and Save: only when you press them, only where you choose
+                string ct = destCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", st = "Save...";
+                var cs = g.MeasureString(ct, Draw.fSmall); var ss = g.MeasureString(st, Draw.fSmall); var cr = new RectangleF(x + w - 16 * S - cs.Width, vb.Y + 8 * S, cs.Width, cs.Height); var sr = new RectangleF(cr.X - 14 * S - ss.Width, cr.Y, ss.Width, ss.Height);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { g.DrawString(ct, Draw.fSmall, lb, cr.X, cr.Y); g.DrawString(st, Draw.fSmall, lb, sr.X, sr.Y); }
+                var dd = d; Act(destCanvas, cr, delegate { try { Clipboard.SetText(dd.Text()); destCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } destCanvas.Invalidate(); });
+                Act(destCanvas, sr, delegate { SaveText("AdeeboMeter-check-" + Draw.Trunc(dd.Target, 40).Replace(':', '-'), dd.Text()); });
+            }
             int n = DestResult.Steps.Length; float slot = w / n, dot = 18 * S;
             using (var line = new Pen(Theme.Rail, 2 * S)) for (int i = 0; i < n - 1; i++) g.DrawLine(line, x + slot * i + slot / 2 + dot / 2 + 2 * S, y + dot / 2, x + slot * (i + 1) + slot / 2 - dot / 2 - 2 * S, y + dot / 2);
             using (var center = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })

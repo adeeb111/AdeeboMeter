@@ -565,6 +565,7 @@ namespace AdeeboMeter
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);
+            if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
             if (page == "toolbox" && sub != null) { EnsureToolbox(); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else OpenTool(sub); }
             if (destIn == "demo-story" && page == "dest")
             {
