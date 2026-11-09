@@ -31,6 +31,7 @@ namespace AdeeboMeter
     {
         readonly double[] a; int n, head; readonly object k = new object();
         public Ring(int size) { a = new double[size]; }
+        public void Clear() { lock (k) { n = 0; head = 0; } }
         public void Add(double v) { lock (k) { a[head] = v; head = (head + 1) % a.Length; if (n < a.Length) n++; } }
         double At(int back) { return a[((head - 1 - back) % a.Length + a.Length) % a.Length]; }
         public double Last { get { lock (k) return n == 0 ? double.NaN : At(0); } }

@@ -127,7 +127,8 @@ namespace AdeeboMeter
             Func<List<double>, double> med = l => { var v = l.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); return v.Count == 0 ? double.NaN : v[v.Count / 2]; };
             run.Status = "Idle latency to " + dst + "...";
             double idle = med(pings(20, () => false));
-            if (double.IsNaN(idle) && !typed) { dst = IPAddress.Parse("1.1.1.1"); run.Status = "The server doesn't answer pings - idle latency to 1.1.1.1..."; idle = med(pings(20, () => false)); }
+            // the server doesn't answer pings: pinging somewhere else could measure a different path (lab server, split-tunnel VPN) - say so instead
+            if (double.IsNaN(idle) && !typed) { rows.Add(R(1, "Bufferbloat grade", "inconclusive - " + srvHost + " doesn't answer pings", "Type a ping target that sits beyond the same link (for your internet line: e.g. 1.1.1.1) and run it again.", "i")); return rows; }
             if (double.IsNaN(idle)) { rows.Add(R(2, "Idle", dst + " doesn't answer pings - pick another target", "", "m")); return rows; }
             rows.Add(R(0, "Idle", idle.ToString("0", CultureInfo.CurrentCulture) + " ms to " + dst, "", "m"));
             double worst = 0; bool loaded = true, lost = false;

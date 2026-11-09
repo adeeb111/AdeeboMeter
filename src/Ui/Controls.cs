@@ -36,6 +36,7 @@ namespace AdeeboMeter
         }
         protected override bool ShowWithoutActivation { get { return true; } }
         public Rectangle Placed { get; private set; }
+        DateTime failLogged;
         public void Present(Bitmap bmp, byte alpha, int x, int y)
         {
             IntPtr screen = Native.GetDC(IntPtr.Zero), mem = Native.CreateCompatibleDC(screen), hb = IntPtr.Zero, old = IntPtr.Zero;
@@ -44,8 +45,16 @@ namespace AdeeboMeter
                 hb = bmp.GetHbitmap(Color.FromArgb(0)); old = Native.SelectObject(mem, hb);
                 var size = new Native.SIZE(bmp.Width, bmp.Height); var src = new Native.POINT(0, 0); var dst = new Native.POINT(x, y);
                 var bf = new Native.BLENDFUNCTION { BlendOp = 0, BlendFlags = 0, SourceConstantAlpha = alpha, AlphaFormat = 1 };
-                Native.UpdateLayeredWindow(Handle, screen, ref dst, ref size, mem, ref src, 0, ref bf, 2);
+                if (!Native.UpdateLayeredWindow(Handle, screen, ref dst, ref size, mem, ref src, 0, ref bf, 2))
+                {
+                    // after sleep or a screen change the call can fail; say so (once a minute) and let the next tick try again
+                    if ((DateTime.UtcNow - failLogged).TotalSeconds > 60) { failLogged = DateTime.UtcNow; Program.Log("widget draw failed: error " + System.Runtime.InteropServices.Marshal.GetLastWin32Error()); }
+                    Placed = Rectangle.Empty; return;
+                }
                 Placed = new Rectangle(x, y, bmp.Width, bmp.Height);
+                // Windows can drop a small always-on-top window out of the top layer (sleep, unlock, monitors reconnecting) -
+                // then a maximised window hides it. Claim the top again, without taking focus.
+                if (alpha > 0) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040);
             }
             finally
             {

@@ -228,7 +228,7 @@ namespace AdeeboMeter
                         lastNet = t0;
                         string tgt; lock (L) tgt = NetTarget;
                         double n = PingMs(tgt);
-                        lock (L) { NetPing.Add(n); if (!double.IsNaN(n)) NetEverReplied = true; if (NetEverReplied) Loss.Add(double.IsNaN(n) ? 1 : 0); }
+                        lock (L) { NetPing.Add(n); netAt = DateTime.UtcNow; if (!double.IsNaN(n)) NetEverReplied = true; if (NetEverReplied) Loss.Add(double.IsNaN(n) ? 1 : 0); }
                         if (NetEverReplied)
                         {
                             if (double.IsNaN(n)) { if (++netDown == 3) { netDownSince = DateTime.Now; Events.Add(2, "inet", Voice.P("The internet went quiet - no replies from " + tgt + ".", "Internet unreachable (no reply from " + tgt + ").")); } }
@@ -237,7 +237,9 @@ namespace AdeeboMeter
                         if (!NetEverReplied && double.IsNaN(n) && ++netFails >= 2) { netFails = 0; ti = (ti + 1) % targets.Length; lock (L) NetTarget = targets[ti]; }
                         ProbeDns();
                     }
-                    if (netChanged) { netChanged = false; lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
+                    // internet check turned off: forget what it measured, so old pings and loss are never judged as now
+                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; netDown = 0; }
+                    if (netChanged) { netChanged = false; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; netDown = 0; } /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= 10) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }
                     if (wifiSec > 0 && (t0 - lastWifi).TotalSeconds >= wifiSec - 0.2) { lastWifi = t0; ProbeWifi(); }
                     if (appsSec > 0 && (t0 - lastConnT).TotalSeconds >= appsSec - 0.2) ProbeConns();
@@ -668,6 +670,9 @@ namespace AdeeboMeter
             else if (!double.IsNaN(net)) isp = net > 150 ? 2 : net > 60 ? 1 : 0;
             int dn = dnsFail ? 2 : double.IsNaN(dns) ? 3 : dns > 300 ? 2 : dns > 100 ? 1 : 0;
             int inet = !netEver ? 3 : loss >= 20 ? 2 : loss >= 10 ? 1 : 0;
+            // not checked (Settings › Internet check off) or nothing measured lately: grey, never a verdict
+            bool netStale; lock (L) netStale = Cfg.NetSec == 0 || (DateTime.UtcNow - netAt).TotalSeconds > 3 * Math.Max(Cfg.NetSec, 15) + 10;
+            if (netStale) { isp = 3; inet = 3; }
             if (link == 2) { isp = 3; dn = 3; inet = 3; }
             path = new[] { pc, link, isp, dn, inet };
 
@@ -721,7 +726,7 @@ namespace AdeeboMeter
             hint = h;
         }
         void Set(int l, string h) { level = l; headline = h; }
-        string flow = "";
+        string flow = ""; DateTime netAt;
 
         Snap BuildSnap()
         {

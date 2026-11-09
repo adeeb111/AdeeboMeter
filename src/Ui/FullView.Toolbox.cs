@@ -505,6 +505,29 @@ namespace AdeeboMeter
             }
             return scored.OrderByDescending(x => x.Value).Select(x => x.Key).ToList();
         }
+        static readonly char[] TitleSplit = { ' ', '-', '(', ')', ',', '/' };
+        string DidYouMean(string q)
+        {
+            q = (q ?? "").Trim().ToLowerInvariant(); if (q.Length < 3 || q.Contains(" ")) return null;
+            var words = new List<string>(Synonyms.Keys);
+            foreach (var t in Tools2()) { words.Add(t.Id); words.AddRange(t.Title.ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
+            string best = null; int bd = q.Length <= 4 ? 1 : 2;
+            foreach (var w in words.Distinct()) { int d = Edit(q, w.ToLowerInvariant(), bd); if (d <= bd && (best == null || d < bd)) { best = w.ToLowerInvariant(); bd = d; } }
+            return best;
+        }
+        // edit distance, giving up past "max"
+        static int Edit(string a, string b, int max)
+        {
+            if (Math.Abs(a.Length - b.Length) > max) return max + 1;
+            var prev = new int[b.Length + 1]; var cur = new int[b.Length + 1]; for (int j = 0; j <= b.Length; j++) prev[j] = j;
+            for (int i = 1; i <= a.Length; i++)
+            {
+                cur[0] = i; int rowMin = i;
+                for (int j = 1; j <= b.Length; j++) { cur[j] = Math.Min(Math.Min(prev[j] + 1, cur[j - 1] + 1), prev[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1)); rowMin = Math.Min(rowMin, cur[j]); }
+                if (rowMin > max) return max + 1; var t = prev; prev = cur; cur = t;
+            }
+            return prev[b.Length];
+        }
         static readonly char[] SearchTrim = { '.', ',', ';', ':', '!', '?', '"', '\'', '(', ')' };
         void MoveTool(int by)
         {
@@ -546,6 +569,12 @@ namespace AdeeboMeter
                 {
                     var found = Matches();
                     g.DrawString(found.Count == 0 ? "NOTHING MATCHES - TRY ANOTHER WORD" : found.Count + (found.Count == 1 ? " TOOL" : " TOOLS") + "  ·  ENTER OPENS THE FIRST", Draw.fTiny, muted, x, y + 4 * S); y += 24 * S;
+                    if (found.Count == 0)
+                    {
+                        // did you mean: the closest tool name or everyday word, one or two letters off
+                        string dym = DidYouMean(tbFilter);
+                        if (dym != null) using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { string tx = "Did you mean  " + dym + " ?"; var ts = g.MeasureString(tx, Draw.fBody); g.DrawString(tx, Draw.fBody, lb, x, y); string q = dym; Act(tbList, new RectangleF(x, y, ts.Width, ts.Height), delegate { tbSearch.Box.Text = q; tbSearch.Box.SelectionStart = q.Length; }); y += 26 * S; }
+                    }
                     foreach (var t in found) item(t);
                 }
                 else

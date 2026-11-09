@@ -72,6 +72,19 @@ namespace AdeeboMeter
             miWidget = new ToolStripMenuItem("Hide widget (keep tray icon)"); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
             miBig = new ToolStripMenuItem("Bigger widget"); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
             miSerious = new ToolStripMenuItem("Serious mode (no jokes)"); miSerious.Click += delegate { Voice.Serious = !Voice.Serious; SaveSettings(); drawnKey = ""; };
+            var miScreen = new ToolStripMenuItem("Widget on screen");
+            miScreen.DropDownOpening += delegate
+            {
+                miScreen.DropDownItems.Clear(); int n = 0;
+                foreach (var sc2 in Screen.AllScreens)
+                {
+                    n++; string dn = sc2.DeviceName;
+                    var it = new ToolStripMenuItem((sc2.Primary ? "Main screen" : "Screen " + n) + "  (" + sc2.Bounds.Width + " x " + sc2.Bounds.Height + ")") { Checked = WidgetScreen().DeviceName == dn };
+                    it.Click += delegate { Cfg.WidgetScreen = Screen.AllScreens.Any(z => z.DeviceName == dn && z.Primary) ? "" : dn; SaveSettings(); drawnKey = ""; lastCover = DateTime.MinValue; };
+                    miScreen.DropDownItems.Add(it);
+                }
+            };
+            miScreen.DropDownItems.Add("...");
             var miTheme = new ToolStripMenuItem("Theme");
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
             miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
@@ -82,7 +95,7 @@ namespace AdeeboMeter
             var miExit = new ToolStripMenuItem("Exit AdeeboMeter"); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
             menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(miFull); menu.Items.Add(miSettings); menu.Items.Add(miWidget); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
+            menu.Items.Add(miFull); menu.Items.Add(miSettings); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
             menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = autoStart; miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
 
@@ -127,6 +140,8 @@ namespace AdeeboMeter
             };
             SystemEvents.UserPreferenceChanged += prefHandler;
             ui.Interval = 50; ui.Tick += delegate { OnUi(); }; ui.Start();
+            // after sleep, unlock or a screen change: draw again from scratch (place, layer and size can all have changed)
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged += OnPower; Microsoft.Win32.SystemEvents.SessionSwitch += OnSession;
 
             // Second launch -> open the engineer view here. The ack is sent from the UI thread, so a hung UI is detected as hung.
             try
@@ -247,8 +262,13 @@ namespace AdeeboMeter
             else OpenFull();
         }
 
+        DateTime lastTop;
+        void OnScreens(object s, EventArgs e) { drawnKey = ""; lastCover = DateTime.MinValue; }
+        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { drawnKey = ""; lastCover = DateTime.MinValue; } }
+        void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e) { if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) { drawnKey = ""; lastCover = DateTime.MinValue; } }
         void Quit()
         {
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go
             if (quitting) return;
             quitting = true; ui.Stop(); M.Stop(); Usage.Save();
             try { SystemEvents.UserPreferenceChanged -= prefHandler; } catch { }
@@ -261,9 +281,11 @@ namespace AdeeboMeter
         }
 
         // ---------- 50 ms: hover, dwell, cover check - and draw only when something changed
+        // the chosen screen's work area - the main screen when none is chosen or it was unplugged
+        static Screen WidgetScreen() { var w = Cfg.WidgetScreen; return w == "" ? Screen.PrimaryScreen : Screen.AllScreens.FirstOrDefault(x => x.DeviceName == w) ?? Screen.PrimaryScreen; }
         static Rectangle Zone()
         {
-            var wa = Screen.PrimaryScreen.WorkingArea; int m = (int)(10 * Draw.S);
+            var wa = WidgetScreen().WorkingArea; int m = (int)(10 * Draw.S);
             int w = (int)(264 * Draw.S), h = (int)(300 * Draw.S);
             return new Rectangle(wa.Right - m - w, wa.Bottom - m - h, w, h);
         }
@@ -273,7 +295,9 @@ namespace AdeeboMeter
             try
             {
                 uiTick++;
-                bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized;
+                // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
+                bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
+                if ((DateTime.UtcNow - lastTop).TotalSeconds > 30) { lastTop = DateTime.UtcNow; drawnKey = ""; }   // every 30 s: draw again, which also claims the top layer back
                 if (!widgetOn || viewUp) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 500; return; }
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
@@ -318,7 +342,7 @@ namespace AdeeboMeter
 
         void Render(Snap s, bool compact)
         {
-            var wa = Screen.PrimaryScreen.WorkingArea; int m = (int)(10 * Draw.S);
+            var wa = WidgetScreen().WorkingArea; int m = (int)(10 * Draw.S);
             using (var bmp = compact ? Draw.Chip(s, dwell) : Draw.Card(s, hits))
             {
                 if (compact) hits.Clear();

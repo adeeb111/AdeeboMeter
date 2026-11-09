@@ -309,6 +309,14 @@ namespace AdeeboMeter
                 double cap = 1; foreach (var v in s.DownHist) if (!double.IsNaN(v) && v > cap) cap = v; foreach (var v in s.UpHist) if (!double.IsNaN(v) && v > cap) cap = v;
                 Theme.Spark(g, s.DownHist, gr, Theme.Blue, cap * 1.15, true);
                 Theme.Spark(g, s.UpHist, gr, Theme.Orange, cap * 1.15, false);
+                // data used today, in the graph's top corners (no extra height); this month against a cap at the bottom right
+                var du = Usage.TodayDU();
+                using (var tb = new SolidBrush(Theme.Muted))
+                {
+                    g.DrawString("today ↓ " + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
+                    string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
+                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1024).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
+                }
             }
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
             return bmp;

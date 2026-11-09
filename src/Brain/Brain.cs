@@ -148,6 +148,18 @@ namespace AdeeboMeter
                 Store.Write("usage.txt", rows.Select(x => new[] { x.Day, x.Key, x.Label, Store.S(x.Down), Store.S(x.Up) }).ToList());
             }
         }
+        // today's MB down and up, every network - for the widget; worked out at most every 5 s
+        static double[] todayDU = { 0, 0 }; static DateTime todayAt;
+        public static double[] TodayDU()
+        {
+            lock (k)
+            {
+                if ((DateTime.UtcNow - todayAt).TotalSeconds < 5) return todayDU;
+                Load(); string day = DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); double d = 0, u = 0;
+                foreach (var x in rows) if (x.Day == day) { d += x.Down; u += x.Up; }
+                todayDU = new[] { d, u }; todayAt = DateTime.UtcNow; return todayDU;
+            }
+        }
         // MB down + up; key null = every network
         public static double Today(string key) { return Sum(key, DateTime.Today, DateTime.Today); }
         public static double Month(string key) { var t = DateTime.Today; return Sum(key, new DateTime(t.Year, t.Month, 1), t); }
