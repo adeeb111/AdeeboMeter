@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AdeeboMeter — free offline network troubleshooter for Windows (no admin)</title>
-<meta name="description" content="AdeeboMeter is a free, offline Windows 10/11 network monitor and troubleshooter that needs no admin rights. One glance tells you if the problem is your PC, Wi-Fi, router, ISP, DNS or the internet — plus 68 engineer tools: MTR, MTU, ping, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3 with your own MIBs.">
+<title>AdeeboMeter — free Windows network troubleshooter (no admin, no cloud)</title>
+<meta name="description" content="Free Windows 10/11 network troubleshooter. No admin rights, no cloud, no telemetry. One glance tells you if it's your PC, Wi-Fi, ISP, DNS or the internet.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://adeeb111.github.io/AdeeboMeter/">
 <meta name="author" content="Adeeb Khan">
@@ -13,12 +13,12 @@
 <meta property="og:site_name" content="AdeeboMeter">
 <meta property="og:url" content="https://adeeb111.github.io/AdeeboMeter/">
 <meta property="og:title" content="AdeeboMeter — Is it me or the network?">
-<meta property="og:description" content="Free, offline network troubleshooter for Windows. One glance tells you whether your PC, Wi-Fi, ISP, DNS or the internet is the problem. No cloud, no telemetry, no admin rights.">
+<meta property="og:description" content="Free network troubleshooter for Windows, local-first. One glance tells you whether your PC, Wi-Fi, ISP, DNS or the internet is the problem. No cloud, no telemetry, no admin rights.">
 <meta property="og:image" content="https://adeeb111.github.io/AdeeboMeter/img/screenshot.png">
 <meta property="og:image:alt" content="AdeeboMeter on a Windows desktop">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, offline network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 68 engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3).","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.3","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeeb111.github.io/AdeeboMeter/","screenshot":"https://adeeb111.github.io/AdeeboMeter/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter"}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 68 engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3).","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.3","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeeb111.github.io/AdeeboMeter/","screenshot":"https://adeeb111.github.io/AdeeboMeter/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter"}
 </script>
 <style>
 /* This page loads nothing from anywhere else: no fonts, no trackers, no analytics. Like the app. */
@@ -68,6 +68,7 @@ a{color:inherit}
 /* hero */
 .lhero{text-align:center;padding:84px 0 40px}
 .lhero .logo{width:96px;height:96px;filter:drop-shadow(0 14px 28px rgba(31,111,235,.28))}
+.lhero .kind{margin:22px 0 0;font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--sub,#5B6575)}
 .lhero h1{font-size:clamp(42px,7.4vw,88px);line-height:1.02;letter-spacing:-.035em;font-weight:700;margin:28px 0 18px}
 .lhero h1 span{background:linear-gradient(90deg,#2DA44E,#1F6FEB 45%,#8250DF);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lhero .sub{font-size:clamp(18px,2.1vw,23px);line-height:1.45;color:var(--sub);max-width:720px;margin:0 auto}
@@ -221,7 +222,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   aspect-ratio:16/9;container-type:inline-size;overflow:hidden}
 .slide .in{position:absolute;inset:0;padding:4.2cqw 5cqw 3.6cqw;font-size:1.32cqw;display:flex;flex-direction:column}
 .slide .kicker{font-size:.82em;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
-.slide h1{font-size:4.2em;line-height:1.02;letter-spacing:-.025em;font-weight:700}
+.slide h1,.slide .h1{font-size:4.2em;line-height:1.02;letter-spacing:-.025em;font-weight:700}
 .slide h2{font-size:2.45em;line-height:1.1;letter-spacing:-.02em;font-weight:700;margin:.25em 0 .2em}
 .slide h3{font-size:1.12em;font-weight:700;margin-bottom:.3em}
 .slide p,.slide li{line-height:1.45;color:var(--sub)}
@@ -284,7 +285,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   .deckbox{padding:0 16px}
   .slide{aspect-ratio:auto}
   .slide .in{position:relative;inset:auto;padding:22px 18px 46px;font-size:14px}
-  .slide h1{font-size:2.5em}.slide h2{font-size:1.65em}
+  .slide h1,.slide .h1{font-size:2.5em}.slide h2{font-size:1.65em}
   .slide .g2,.slide .g3,.slide .g4,.slide .g5{grid-template-columns:1fr}
   .slide .foot{left:18px;right:18px;bottom:14px}
   .slide .path{flex-wrap:wrap;gap:12px}.slide .path::before{display:none}.slide .stop{width:30%}
@@ -335,8 +336,9 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 <section class="lhero"><div class="wrap">
   <p id="update" class="upd" hidden></p>
   <svg class="logo" viewBox="0 0 64 64" role="img" aria-label="AdeeboMeter logo"><use href="#mark"/></svg>
+  <p class="kind">AdeeboMeter · free Windows network troubleshooting tool</p>
   <h1>Is it me<br>or <span>the network?</span></h1>
-  <p class="sub">AdeeboMeter answers in one glance. A free, offline network troubleshooter for Windows that watches your PC, your Wi-Fi, your provider and the internet — and tells you, in one sentence, what's wrong and what to do.</p>
+  <p class="sub">AdeeboMeter answers in one glance. A local-first network troubleshooter for Windows — no cloud account, no admin rights — that watches your PC, your Wi-Fi, your provider and the internet — and tells you, in one sentence, what's wrong and what to do.</p>
   <div class="cta">
     <a class="btn primary dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
     <a class="btn ghost" href="#theory">See how it works ›</a>
@@ -421,7 +423,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="kicker">The Theory of Everything · version 1.1.3</div>
   <div class="body" style="flex-direction:row;align-items:center;gap:4em">
     <div style="flex:1">
-      <h1>AdeeboMeter</h1>
+      <h2 class="h1">AdeeboMeter</h2>
       <p class="quote" style="margin:.6em 0 .5em;color:var(--blue)">Is it me or the network?</p>
       <p class="lead">A small, quiet Windows companion. One glance tells you whether your PC, your Wi-Fi, your provider, DNS or the internet is the problem — and what to do about it.</p>
       <p style="margin-top:1.4em;font-weight:600;color:var(--ink)">No cloud. No telemetry. Never listens.<br><span style="font-weight:400;color:var(--sub)">Every packet it sends is listed — and you can switch each one off.</span></p>
@@ -876,7 +878,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 <div class="frame"><section class="slide end"><div class="in">
   <div class="kicker">AdeeboMeter</div>
   <div class="body">
-    <h1 style="color:#fff">Is it me or the network?</h1>
+    <h2 class="h1" style="color:#fff">Is it me or the network?</h2>
     <p class="lead" style="margin-top:.8em;font-size:1.5em">Now you know — in one glance.</p>
     <p style="margin-top:2em;font-size:1.15em">No cloud. No telemetry. Never listens.<br>Every packet it sends is listed — and you can switch each one off.</p>
     <p style="margin-top:2em" class="mono">adeeb111.github.io/AdeeboMeter</p>
