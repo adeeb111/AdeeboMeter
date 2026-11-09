@@ -95,7 +95,7 @@ namespace AdeeboMeter
         {
             stop = true; wake.Set(); stopping.Set();
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
-            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(3000);   // both finish their tick and release their counters
+            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(1500);   // both finish their tick (the stop event wakes them; quitting never waits long) and release their counters
             samplerT = null; probeT = null;   // so Start() can run again
         }
         void Once(string key, int seconds, int lv, string kind, string text)

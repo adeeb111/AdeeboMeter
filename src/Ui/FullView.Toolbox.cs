@@ -34,7 +34,7 @@ namespace AdeeboMeter
                 T("gateway", "PATH", "Your gateway and failover", null, (a, r) => RoutingTools.Gateway(M)),
                 T("v6routers", "PATH", "IPv6 routers on this network", null, (a, r) => RoutingTools.Ipv6Routers()),
                 T("rlisten", "PATH", "Routing protocols on my segment", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r)),
-                T("discover", "PATH", "Announcements (mDNS, SSDP, LLMNR)", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r, true)),
+                T("discover", "PATH", "Announcements (mDNS, SSDP, LLMNR, NetBIOS)", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r, true)),
                 T("ping6", "PATH", "IPv6 ping and trace", "Destination - e.g. www.google.com", (a, r) => SysTools.Ping6(a[0], r)),
                 T("overlap", "PATH", "Overlapping networks (home vs VPN)", null, (a, r) => PathTools.Overlap()),
                 T("ip46", "PATH", "IPv6 vs IPv4", "Site - e.g. www.google.com", (a, r) => PathTools.Ip46(Host(a[0]))),
@@ -132,7 +132,7 @@ namespace AdeeboMeter
         }
         void ShowSection(string s)
         {
-            if (tbBusy) return;
+            if (tbBusy) { if (tbRun0 != null) tbRun0.Status = "still running - press Stop first to change section"; tbCanvas.Invalidate(); return; }   // say why the click did nothing
             tbSection = s; tbHome = true; tbBar.Visible = false; foreach (var c in tbChips) c.Selected = (string)c.Tag == s;
             foreach (var t in Tools2().Where(x => SectionOf(x) == s)) tbOpen.Add(t.Group);   // short lists: every group starts open
             tbList.AutoScrollPosition = Point.Empty; tbCanvas.AutoScrollPosition = Point.Empty; tbList.Invalidate(); tbCanvas.Invalidate();

@@ -29,7 +29,13 @@ namespace AdeeboMeter
         public sealed class Opt { public bool Udp, Reverse, Both, V6, V4; public int Par = 1, Secs = 10, Omit, Mss, Tos, Port = 5201; public long Rate = 50000000, Len, Window; public List<string> Ignored = new List<string>(); }
         public static Opt ParseOpts(string text)
         {
-            var o = new Opt(); var t = (text ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries).ToList();
+            // attached forms iperf3 also accepts: -t20, --time=20, -O3, --omit=3, -P4, -b50M ... become "-t 20" and so on
+            text = System.Text.RegularExpressions.Regex.Replace(" " + (text ?? "") + " ", @"(?<=\s)(--[a-z-]+)=(\S+)(?=\s)", "$1 $2");
+            // capitals first: the switch below lower-cases, and -P (streams) is not -p (port)
+            foreach (var cap in new[] { new[] { "P", "--parallel" }, new[] { "O", "--omit" }, new[] { "S", "--tos" }, new[] { "M", "--set-mss" } })
+                text = System.Text.RegularExpressions.Regex.Replace(text, @"(?<=\s)-" + cap[0] + @"(\S+)(?=\s)", cap[1] + " $1");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"(?<=\s)-([tblwp])(\S+)(?=\s)", "-$1 $2");
+            var o = new Opt(); var t = text.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).ToList();
             Func<string, long> size = v => { v = v.Trim().ToUpperInvariant(); long mul = v.EndsWith("G", StringComparison.Ordinal) ? 1000000000 : v.EndsWith("M", StringComparison.Ordinal) ? 1000000 : v.EndsWith("K", StringComparison.Ordinal) ? 1000 : 1; double d; return double.TryParse(v.TrimEnd('G', 'M', 'K'), NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? (long)(d * mul) : -1; };
             for (int i = 0; i < t.Count; i++)
             {

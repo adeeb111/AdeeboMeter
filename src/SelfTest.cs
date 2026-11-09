@@ -166,6 +166,9 @@ namespace AdeeboMeter
                 if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "sha")).Replace("-", "") != "6695FEBC9288E36282235FC7151F128497B38F3F") throw new InvalidOperationException("SNMPv3 SHA key localization wrong");
                 // SHA-256 (RFC 7860): the same method; value computed independently (Python hashlib) for this password and engine
                 if (BitConverter.ToString(Snmp.Localize("maplesyrup", eid, "sha256")).Replace("-", "") != "8982E0E549E866DB361A6B625D84CCCC11162D453EE8CE3A6445C2D6776F0F8B") throw new InvalidOperationException("SNMPv3 SHA-256 key localization wrong");
+                // iperf3 options typed the attached way are read the same as the spaced way
+                var po1 = Toolkit.ParseOpts("-t20 -P4 -O3 -b50M -u"); var po2 = Toolkit.ParseOpts("--time=15 --omit=2 -p 5202");
+                if (po1.Secs != 20 || po1.Par != 4 || po1.Omit != 3 || po1.Rate != 50000000 || po1.Port != 5201 || po2.Secs != 15 || po2.Omit != 2 || po2.Port != 5202) throw new InvalidOperationException("iperf3 attached options misread");
                 // credentials that can't be used as typed are refused, never sent weaker
                 if (Snmp.Cred.Parse("v3:u::p").Bad == "" || Snmp.Cred.Parse("v3-sha512:u:a").Bad == "" || Snmp.Cred.Parse("v3-sha1:u:a").AuthAlg != "sha" || Snmp.Cred.Parse("v3-sha1:u:a").Bad != "") throw new InvalidOperationException("SNMPv3 credential checks wrong");
                 // a value longer than 127 bytes (long-form length) - a long sysDescr
