@@ -2,7 +2,7 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
-## 1.1.3 (not released yet)
+## 1.1.3 (2026-11-08)
 
 A Toolbox you can find your way around, stricter SNMPv3, and the fixes from two outside reviews of 1.1.2.
 
