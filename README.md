@@ -10,6 +10,8 @@
 <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8250DF"></a>
 </p>
 
+<p align="center"><b>Free, offline network troubleshooter and monitor for Windows 10 and 11 — no admin rights, no cloud.</b><br>Is it your PC, your Wi-Fi, your router, your ISP, DNS or the internet? One glance tells you.</p>
+
 <p align="center"><b><a href="https://adeeb111.github.io/AdeeboMeter/">Website</a></b> · <a href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a> · <a href="https://adeeb111.github.io/AdeeboMeter/#theory">Theory of Everything</a> · <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Discussions</a></p>
 
 <p align="center"><img src="docs/img/screenshot.png" alt="AdeeboMeter: the engineer view and the corner widget on a Windows desktop" width="860"></p>
