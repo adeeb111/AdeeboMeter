@@ -268,7 +268,7 @@ namespace AdeeboMeter
                     {
                         // from the options that will really run: both directions are two tests, each its seconds plus any -O
                         var o = IperfOpts(a); if (o == null) return "- first type both, upload or download as the direction";
-                        var po = Toolkit.ParseOpts(o.Replace("-R", "--reverse").Replace("-O", "--omit"));
+                        var po = Toolkit.ParseOpts(o);   // the same reading the run uses - attached -O3 / -t20 included
                         return "about " + RunSecs((po.Both ? 2 : 1) * (po.Secs + po.Omit) + 2);
                     }
                 case "sweep": return "about 20 seconds, never more than 90";
