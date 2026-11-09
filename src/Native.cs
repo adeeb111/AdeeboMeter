@@ -78,6 +78,14 @@ namespace AdeeboMeter
         [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
         [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int v, int size);
 
+        [DllImport("advapi32.dll", SetLastError = true)] static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+        [DllImport("advapi32.dll", SetLastError = true)] static extern bool GetTokenInformation(IntPtr token, int cls, out int info, int len, out int ret);
+        // 1 default (standard user, or UAC off), 2 full (elevated), 3 limited (an admin running without elevation); 0 unknown
+        public static int ElevationType()
+        {
+            IntPtr t; if (!OpenProcessToken(GetCurrentProcess(), 8, out t)) return 0;
+            try { int v, r; return GetTokenInformation(t, 18, out v, 4, out r) ? v : 0; } finally { CloseHandle(t); }
+        }
         [DllImport("iphlpapi.dll")] public static extern uint SendARP(int dest, int src, byte[] mac, ref int len);
         [StructLayout(LayoutKind.Sequential)] public struct DhcpParamsArray { public uint N; public IntPtr P; }
         [DllImport("dhcpcsvc.dll")] public static extern uint DhcpCApiInitialize(out uint version);

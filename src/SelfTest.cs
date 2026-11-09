@@ -326,6 +326,17 @@ namespace AdeeboMeter
                 if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
+            T("Security: 42 checks, end-of-support dates and site names read right", () =>
+            {
+                var bad = new List<string>();
+                if (Security.All.Count != 42 || Security.All.Select(c => c.Id).Distinct().Count() != 42) bad.Add("count " + Security.All.Count);
+                var d = new DateTime(2026, 11, 9);
+                if (Security.VersionVerdict("19045", "Professional", "22H2", d)[0][0] != "2") bad.Add("win10 should be ended");
+                if (Security.VersionVerdict("22631", "Enterprise", "23H2", d)[0][0] != "1") bad.Add("23H2 enterprise ends tomorrow");
+                if (Security.VersionVerdict("26100", "Professional", "24H2", d)[0][0] != "2" || Security.VersionVerdict("26100", "Enterprise", "24H2", d)[0][0] != "0") bad.Add("24H2");
+                if (Security.HostOf("https://Example.com/path") != "example.com" || Security.HostOf("a;b") != null || Security.HostOf("10.0.0.1") != null) bad.Add("site names");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
+            });
             T("plain-English guide covers every label", () =>
             {
                 var keys = new List<string> { "path.PC", "path.Wi-Fi", "path.LAN", "path.ISP", "path.VPN", "path.DNS", "path.Internet", "CPU", "Memory", "Disk", "Download", "Top by memory", "Top by CPU",
