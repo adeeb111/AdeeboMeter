@@ -34,7 +34,7 @@ namespace AdeeboMeter
                 T("gateway", "PATH", "Your gateway and failover", null, (a, r) => RoutingTools.Gateway(M)),
                 T("v6routers", "PATH", "IPv6 routers on this network", null, (a, r) => RoutingTools.Ipv6Routers()),
                 T("rlisten", "PATH", "Routing protocols on my segment", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r)),
-                T("discover", "PATH", "Who announces itself (mDNS, SSDP)", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r, true)),
+                T("discover", "PATH", "Announcements (mDNS, SSDP, LLMNR)", "Seconds (10-120)", (a, r) => RoutingTools.Listen(M, a[0], r, true)),
                 T("ping6", "PATH", "IPv6 ping and trace", "Destination - e.g. www.google.com", (a, r) => SysTools.Ping6(a[0], r)),
                 T("overlap", "PATH", "Overlapping networks (home vs VPN)", null, (a, r) => PathTools.Overlap()),
                 T("ip46", "PATH", "IPv6 vs IPv4", "Site - e.g. www.google.com", (a, r) => PathTools.Ip46(Host(a[0]))),
@@ -241,7 +241,8 @@ namespace AdeeboMeter
         static string IperfOpts(string[] a)
         {
             string adv = " " + (a[3] ?? "").Trim() + " ", al = adv.ToLowerInvariant();
-            bool advDir = al.Contains(" -r ") || al.Contains(" --reverse ") || al.Contains(" --both "), advTime = al.Contains(" -t ") || al.Contains(" --time ");
+            // -t20, -t 20 and --time=20 all count (iperf3 accepts each)
+            bool advDir = System.Text.RegularExpressions.Regex.IsMatch(al, @"\s(-r|--reverse|--both)(\s|$)"), advTime = System.Text.RegularExpressions.Regex.IsMatch(al, @"\s(-t|--time)(\s|=|\d)");
             string d = (a[1] ?? "").Trim().ToLowerInvariant(), o;
             if (advDir) o = "";
             else if (d.StartsWith("down", StringComparison.Ordinal) || d == "-r") o = "-R";
@@ -266,7 +267,7 @@ namespace AdeeboMeter
                 case "iperf":
                     {
                         // from the options that will really run: both directions are two tests, each its seconds plus any -O
-                        var o = IperfOpts(a); if (o == null) return "";
+                        var o = IperfOpts(a); if (o == null) return "- first type both, upload or download as the direction";
                         var po = Toolkit.ParseOpts(o.Replace("-R", "--reverse").Replace("-O", "--omit"));
                         return "about " + RunSecs((po.Both ? 2 : 1) * (po.Secs + po.Omit) + 2);
                     }
@@ -603,7 +604,7 @@ namespace AdeeboMeter
                     }
                     int n = snmp ? SnmpTabs.Length : grp.Count(); string more = (snmp ? "All " + n + " views" : "All " + n + " tools") + "  ›";
                     var ms = g.MeasureString(more, Draw.fSmall); g.DrawString(more, Draw.fSmall, lb, cx + 14 * S, iy + 4 * S);
-                    string first = grp.First().Id, gk = grp.Key; Act(tbCanvas, new RectangleF(cx + 14 * S, iy + 4 * S, ms.Width, ms.Height), delegate { tbOpen.Add(gk); SelectTool(first); });
+                    string first = grp.First().Id, gk = grp.Key; Act(tbCanvas, new RectangleF(cx + 14 * S, iy + 4 * S, ms.Width, ms.Height), delegate { tbOpen.Add(gk); tbList.Refresh(); float gy; if (tbRowY.TryGetValue(first, out gy)) tbList.AutoScrollPosition = new Point(0, Math.Max(0, (int)gy - Sc(40))); tbList.Focus(); tbList.Invalidate(); });   // opens the group in the list
                     rowH = Math.Max(rowH, ch);
                     if (++col == cols) { col = 0; rowY += rowH + gap; rowH = 0; }
                 }

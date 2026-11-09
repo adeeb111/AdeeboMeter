@@ -133,9 +133,9 @@ namespace AdeeboMeter
                 var pt = new Thread(() => { Thread.Sleep(1500); during = pings(400, () => { if (run.Stop) load.Stop = true; return done; }); }) { IsBackground = true, Name = "bloat ping" }; pt.Start();   // skip TCP's first second-and-a-half (slow start)
                 List<string[]> ip; try { ip = Iperf(server, (down ? "-R" : "") + " -t 10 -P 4", load); } finally { done = true; }
                 pt.Join(3000);
-                List<double> got; lock (pt) got = pt.IsAlive ? null : during;   // a ping thread that hasn't finished is never read while it writes
+                List<double> got = pt.IsAlive ? null : during;   // a ping thread that hasn't finished is never read while it writes
                 string want = down ? "Download" : "Upload";
-                var thr = ip.FirstOrDefault(x => x[0] == "0" && x[1].StartsWith(want, StringComparison.Ordinal) && x[2].Contains("Mb/s"));
+                var thr = ip.FirstOrDefault(x => x[0] == "0" && x[1].StartsWith(want, StringComparison.Ordinal) && x[2].Contains("Mb/s"));   // IsAlive below is what keeps the list safe
                 if (thr == null)
                 {
                     // no load, no verdict: pings on an idle line would grade it A for nothing
@@ -504,7 +504,7 @@ namespace AdeeboMeter
                             case 2: case 5: case 12: { int x = d; r.Data = Name(resp, ref x); break; }
                             case 15: { int x = d + 2; r.Data = (resp[d] << 8 | resp[d + 1]) + " " + Name(resp, ref x); break; }
                             case 33: { int x = d + 6; r.Data = "priority " + (resp[d] << 8 | resp[d + 1]) + " weight " + (resp[d + 2] << 8 | resp[d + 3]) + " port " + (resp[d + 4] << 8 | resp[d + 5]) + " → " + Name(resp, ref x); break; }
-                            case 6: { int x = d; string mn = Name(resp, ref x), rn = Name(resp, ref x); r.Data = mn + " " + rn + " serial " + ((uint)(resp[x] << 24 | resp[x + 1] << 16 | resp[x + 2] << 8 | resp[x + 3])); break; }
+                            case 6: { int x = d; string mn = Name(resp, ref x), rn = Name(resp, ref x); r.Data = mn + " " + rn + (x + 4 <= d + len ? " serial " + ((uint)(resp[x] << 24 | resp[x + 1] << 16 | resp[x + 2] << 8 | resp[x + 3])) : " (short record)"); break; }
                             case 16: { var sb = new StringBuilder(); int x = d; while (x < d + len) { int l = resp[x++]; sb.Append('"').Append(Encoding.UTF8.GetString(resp, x, Math.Min(l, d + len - x))).Append("\" "); x += l; } r.Data = sb.ToString().Trim(); break; }
                             case 257: { int tl = Math.Min(resp[d + 1], len - 2); r.Data = (resp[d] != 0 ? "critical " : "") + Encoding.ASCII.GetString(resp, d + 2, tl) + " \"" + Encoding.ASCII.GetString(resp, d + 2 + tl, len - 2 - tl) + "\""; break; }
                             case 43: r.Data = "key tag " + (resp[d] << 8 | resp[d + 1]) + " " + Alg(resp[d + 2]) + " digest " + (resp[d + 3] == 2 ? "SHA-256" : resp[d + 3] == 4 ? "SHA-384" : resp[d + 3] == 1 ? "SHA-1" : "type " + resp[d + 3]) + " " + Hex(resp, d + 4, len - 4); break;
@@ -529,7 +529,8 @@ namespace AdeeboMeter
             {
                 int l = b[pos];
                 if (l == 0) { pos++; break; }
-                if ((l & 0xC0) == 0xC0) { if (!jumped) p = pos + 2; pos = (l & 0x3F) << 8 | b[pos + 1]; jumped = true; jumps++; continue; }
+                if ((l & 0xC0) == 0xC0) { if (pos + 1 >= b.Length) { pos = b.Length; break; } if (!jumped) p = pos + 2; pos = (l & 0x3F) << 8 | b[pos + 1]; jumped = true; jumps++; continue; }
+                if (pos + 1 + l > b.Length) { parts.Add("(cut)"); pos = b.Length; break; }   // a name cut short ends the name, never the whole answer
                 parts.Add(Encoding.ASCII.GetString(b, pos + 1, l)); pos += l + 1;
             }
             if (!jumped) p = pos;
@@ -607,6 +608,8 @@ namespace AdeeboMeter
                     var sw = Stopwatch.StartNew(); chain.Build(cert);
                     var bad = chain.ChainStatus.Where(x => x.Status != X509ChainStatusFlags.NoError).ToList();
                     bool revoked = bad.Any(x => x.Status == X509ChainStatusFlags.Revoked), unknown = bad.Any(x => x.Status == X509ChainStatusFlags.RevocationStatusUnknown || x.Status == X509ChainStatusFlags.OfflineRevocation);
+                    var other = bad.Where(x => x.Status != X509ChainStatusFlags.Revoked && x.Status != X509ChainStatusFlags.RevocationStatusUnknown && x.Status != X509ChainStatusFlags.OfflineRevocation).Select(x => x.Status.ToString()).Distinct().ToList();
+                    if (other.Count > 0) rows.Add(R(1, "Chain problem", string.Join(", ", other), "The certificate chain fails for another reason, so revocation alone doesn't make it trustworthy.", "m"));
                     rows.Add(R(revoked ? 2 : unknown ? 1 : 0, "Revocation (OCSP / CRL)", revoked ? "REVOKED - the authority has withdrawn this certificate" : unknown ? "couldn't be checked - the authority's server didn't answer" : "not revoked · checked in " + sw.ElapsedMilliseconds + " ms", revoked ? "Don't trust this site. Browsers block it." : unknown ? "A firewall or proxy often blocks the CA's OCSP / CRL servers. Browsers then usually carry on anyway." : "", "m"));
                     foreach (var oid in new[] { "1.3.6.1.5.5.7.1.1", "2.5.29.31" })
                     {

@@ -218,7 +218,7 @@ namespace AdeeboMeter
                     // always listed in What changed and on the timeline; the learning period only holds back the pop-up
                     bool rnd = Arp.Randomised(e.Mac);
                     string note = rnd ? "uses a private (random) hardware address - phones and laptops change it, so it may not be new" : "hardware address " + e.Mac;
-                    if (quiet) note += first ? " · first time on this network" : " · learning this network (no alert)";
+                    if (quiet) note += " · learning this network (no alert)";
                     Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note });
                     if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1);
                     m.Events.Add(3, "lan", "New on " + label + ": " + e.Ip + " (" + note + ")");

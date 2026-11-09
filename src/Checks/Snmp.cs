@@ -26,6 +26,7 @@ namespace AdeeboMeter
             public bool Auth { get { return AuthPass != ""; } }
             public bool Priv { get { return PrivPass != ""; } }
             public string Bad = "";   // set when the text can't be used as typed - the request is refused, nothing is sent
+            // a ':' can't be part of the user or auth password (it separates them); the privacy password may contain one
             // "public"  ·  "v3:user"  ·  "v3:user:authpass"  ·  "v3:user:authpass:privpass"  ·  "v3-md5:..." / "v3-sha256:..."
             public static Cred Parse(string s)
             {
@@ -203,8 +204,9 @@ namespace AdeeboMeter
             var msg = Tlv(0x30, Cat(Int(3), Tlv(0x30, Cat(Int(id), Int(65507), Str(new byte[] { 4 }), Int(3))), Str(usm), scoped));
             var r = Exchange(ep, msg, 3000);
             if (r == null) { error = "no answer to SNMPv3 discovery in 3 s"; return null; }
-            int tag, hl, len, p; byte[] usmB; int dummy;
-            if (!Head3(r, out p, out usmB, out dummy)) { error = "not an SNMPv3 reply"; return null; }
+            int tag, hl, len, p; byte[] usmB; int rid;
+            if (!Head3(r, out p, out usmB, out rid)) { error = "not an SNMPv3 reply"; return null; }
+            if (rid != id || !ReportAt(r, p)) { error = "an SNMPv3 discovery reply that doesn't answer our request"; return null; }   // only our own Report teaches us the engine
             var e = new Engine { At = DateTime.UtcNow };
             int q = 0; if (!T(usmB, 0, usmB.Length, out tag, out hl, out len) || tag != 0x30) { error = "a broken v3 reply"; return null; }
             q = hl; if (!T(usmB, q, usmB.Length, out tag, out hl, out len) || tag != 4) { error = "a broken v3 reply"; return null; }
@@ -277,6 +279,7 @@ namespace AdeeboMeter
             }
             else if (!isReport && f[4].Length != 0) { error = "a signed reply to an unsigned request"; return null; }
             byte[] scoped; int sstart;
+            if (c.Priv && tag != 4 && !isReport) { error = "an unencrypted reply to an encrypted request - refused"; return null; }   // privacy can't be dropped by the device
             if (tag == 4)   // encrypted
             {
                 if (!c.Priv) { error = "an encrypted reply, but no privacy password was given"; return null; }

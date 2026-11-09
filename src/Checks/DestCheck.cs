@@ -127,7 +127,7 @@ namespace AdeeboMeter
                 PortalAsked,
                 new[] { "Result", kind == 0 ? "none - internet is open" : kind == 1 ? "found" + (where != "" ? ": " + where : "") : "can't tell - " + (why != "" ? why : "odd answer"), kind == 1 ? "2" : "0" } });
             if (kind == 1)
-                r.Verdict = Voice.P("Found the real culprit: a Wi-Fi sign-in page is holding everything hostage" + (where != "" ? " (" + where + ")" : "") + ". Open a browser, sign in or accept the terms, then check again.",
+                r.Verdict = Voice.Red("Found the real culprit: a Wi-Fi sign-in page is holding everything hostage" + (where != "" ? " (" + where + ")" : "") + ". Open a browser, sign in or accept the terms, then check again.",
                                     "Captive portal detected" + (where != "" ? " (" + where + ")" : "") + ". Sign in through a browser, then retry.");
             if (kind == 1) r.Level = 2;
             r.Note = null;
@@ -239,8 +239,8 @@ namespace AdeeboMeter
                     r.Note = null;
                 }
                 Finish(r, 2, tcpErr == "refused"
-                    ? Voice.P("The server is there but slammed the door on port " + port + " (connection refused). Wrong port, or the service isn't running.", "Connection refused on port " + port + ". Wrong port or service not running.")
-                    : Voice.P("Address found, but nobody answers on port " + port + ". A firewall is quietly eating the packets, or the service is down.", "No answer on port " + port + " (timeout). Likely a firewall or the service is down."));
+                    ? Voice.Red("The server is there but slammed the door on port " + port + " (connection refused). Wrong port, or the service isn't running.", "Connection refused on port " + port + ". Wrong port or service not running.")
+                    : Voice.Red("Address found, but nobody answers on port " + port + ". A firewall is quietly eating the packets, or the service is down.", "No answer on port " + port + " (timeout). Likely a firewall or the service is down."));
                 Who(r, m, addrs); changed(); return;
             }
             step(3, tcpMs > 300 ? 1 : 0, tcpMs.ToString("0", CultureInfo.CurrentCulture) + " ms");

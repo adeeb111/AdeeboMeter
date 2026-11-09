@@ -12,12 +12,12 @@ A Toolbox you can find your way around, stricter SNMPv3, and the fixes from two 
 - **SNMP is one tool with view buttons** - Overview · Interfaces · Traffic · CPU & memory · Neighbours · Sensors · Walk · MIBs - and the device and credentials carry across them.
 - **The PC checks moved to Investigate › Health** ("Look deeper": memory, disk, space, background jobs, crashes, leaks, graphics, what changed, battery) and run there.
 - **Search ranks its results**: *wifi* opens Wi-Fi roams, *nslookup* opens dig, *traceroute* opens MTR, *printers* opens ping sweep; plurals and punctuation are understood; a result from another section says where it lives.
-- Esc in a filled search box clears it instead of closing the window; F1 explains the tool the keyboard is on; every tool says how long it takes (iperf3 counts both directions and -t / -O).
+- Keyboard: Esc clears an active search instead of closing the window; F1 explains the tool the keyboard is on; Ctrl+C copies the result; Ctrl+PageDown / PageUp step through the SNMP views; "All N tools ›" opens the group in the list; every tool says how long it takes (iperf3 counts both directions and -t / -O).
 - Copy and Save use the inputs the result was run with, not what's in the boxes now; CSV also guards cells that start with spaces before = + - @; an MTU result is saved with its real time.
 - Links (Copy, Save, Compare, Investigate ›) were nearly invisible in the dark theme since 1.0 - fixed. Input boxes and buttons are no longer clipped at 125%.
 
 ### SNMP
-- **SNMPv3 replies are checked as RFC 3414 asks**: same message ID, same engine, same user, a signature of the right length checked at its parsed place, and inside the 150-second time window. A reply below the requested security is refused. A privacy password without an auth password is refused instead of being sent unprotected; `v3-sha1:` works, an unknown algorithm is an error. A device that rebooted is re-learned at once. SHA-256 key localisation has a test vector.
+- **SNMPv3 replies are checked as RFC 3414 asks**: same message ID, same engine, same user, a signature of the right length checked at its parsed place, and inside the 150-second time window. A reply below the requested security is refused - unsigned, or unencrypted when you asked for privacy. Discovery only accepts the device's Report to our own request. A `:` can't be part of the user name or auth password (it separates them). A privacy password without an auth password is refused instead of being sent unprotected; `v3-sha1:` works, an unknown algorithm is an error. A device that rebooted is re-learned at once. SHA-256 key localisation has a test vector.
 - A walk that stops part-way shows **Partial result** at the top (and in Copy / Save); walks stop after 2 minutes.
 - Traffic times each direction on its own; a missing reading shows n/a and a counter that went backwards shows reset - never 0.
 - CPU / memory colours only RAM, disks and flash (cached and shared memory are full by design).
@@ -26,14 +26,15 @@ A Toolbox you can find your way around, stricter SNMPv3, and the fixes from two 
 ### Honest results
 - Check a destination and the health check say red findings in plain words; the header's Investigate › link picks the right check when the PC is red, the gateway is slow or DNS fails during a call.
 - **Bufferbloat**: no grade without load in both directions, "inconclusive" when most pings are lost (never an invented number), ping loss per direction, pings the iperf3 server itself by default, and says the grade assumes the line was really full.
-- iperf3: UDP at the rate you asked for is no longer called slow; an unknown direction word is refused; Advanced -R / --both / -t win over the plain controls; host:port and the "50m" shorthand go through the same limits as the options.
+- iperf3: UDP at the rate you asked for is no longer called slow; an unknown direction word is refused; Advanced -R / --both / -t (also as -t20 or --time=20) win over the plain controls; host:port and the "50m" shorthand go through the same limits as the options.
 - Wi-Fi roams cover the real last 24 hours (yesterday included) and "back and forth" means back to the access point it just left.
-- New devices are listed in What changed even on a network's first day (only the pop-up waits); a sweep lists ten and counts the rest.
+- New devices are listed in What changed during a network's first day too (only the pop-up waits); the very first visit to a network is its baseline and lists nothing; a sweep lists ten and counts the rest.
 
 ### Network checks
 - **Revocation is checked only when you press it.** The HTTP inspector and Check a destination were asking the certificate authority on every run.
 - Teams UDP test accepts answers only from the relay it asked, with the STUN magic cookie; RADIUS checks a Message-Authenticator when the reply has one.
-- dig: a short or damaged record never loses the records after it; DS and TLSA digests are shown in full; the chain view says when it's cut.
+- dig: a short or damaged record (names and SOA included) never loses the records after it; DS and TLSA digests are shown in full.
+- HTTP / TLS: the chain view says when it's cut; the revocation check reports any other chain problem instead of a clean "not revoked".
 - NTP reads time correctly after February 2036.
 - HTTP timing stops after 5 minutes overall (30 s per download); a capture you stopped can't restart itself; the history merge after a sniff can't be left running; a stalled TLS check closes its connection before cleaning up.
 - Monitor can be stopped and started again.

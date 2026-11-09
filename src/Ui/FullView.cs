@@ -297,7 +297,21 @@ namespace AdeeboMeter
             timer.Tick += delegate { OnTimer(); };
             KeyDown += delegate(object s, KeyEventArgs e)
             {
-                if (e.KeyCode == Keys.Escape) { if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return; Close(); }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
+                if (e.KeyCode == Keys.Escape)
+                {
+                    if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return;   // its own handler clears it
+                    if (tab == "toolbox" && tbSearch != null && tbSearch.Box.Text != "" && toolboxPage.ContainsFocus) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; return; }   // a filter is on: Esc clears it first
+                    Close();
+                }
+                else if (tab == "toolbox" && tbCanvas != null && e.Control && (e.KeyCode == Keys.PageDown || e.KeyCode == Keys.PageUp) && SnmpView(tbSel))
+                {
+                    // Ctrl+PageDown / PageUp: the next / previous SNMP view, from the keyboard
+                    e.Handled = true; int k = Array.FindIndex(SnmpTabs, z => z[0] == tbSel); k = (k + (e.KeyCode == Keys.PageDown ? 1 : SnmpTabs.Length - 1)) % SnmpTabs.Length; SelectTool(SnmpTabs[k][0]);
+                }
+                else if (tab == "toolbox" && tbCanvas != null && e.Control && e.KeyCode == Keys.C && !(ActiveControl is TextBoxBase) && !tbSearch.Box.Focused && !tbBoxes.Any(b => b != null && b.Box.Focused) && tbRows != null && !tbBusy)
+                {
+                    e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { Program.Log("copy: " + ce.Message); }   // Ctrl+C copies the result, like the link
+                }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
                 else if (e.KeyCode == Keys.F1)
                 {

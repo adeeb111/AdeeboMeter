@@ -620,7 +620,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Walk anything</h3><p>Any OID or MIB name, up to 2,000 values, paced - rebuilt into tables joined by index, the useful columns first.</p></div>
       <div class="card"><h3>Your own MIBs</h3><p>Drop a vendor's .mib files in a folder. A strict reader indexes names, tables and descriptions once; nothing in a MIB is ever run.</p></div>
       <div class="card"><h3>Search, then walk</h3><p>Type <i>temperature</i>, <i>optic</i> or <i>fan</i> - matching objects with their description, one click walks that table.</p></div>
-      <div class="card"><h3>v2c and v3</h3><p>No auth, auth (MD5 / SHA-1 / SHA-256) and AES-128 privacy - keys checked against RFC 3414's own vectors. Masked, kept for the session only.</p></div>
+      <div class="card"><h3>v2c and v3</h3><p>No auth, auth (MD5 / SHA-1 / SHA-256) and AES-128 privacy - MD5 and SHA-1 keys checked against RFC 3414's own test vectors, SHA-256 against an independent computation. Masked, kept for the session only.</p></div>
       <div class="card g"><h3>Read-only, always</h3><p>GET and GETBULK only. It never sets a value and never listens for traps.</p></div>
     </div>
   </div>
@@ -869,7 +869,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <p style="margin-top:2em;font-size:1.15em">No cloud. No telemetry. Never listens.<br>Every packet it sends is listed — and you can switch each one off.</p>
     <p style="margin-top:2em" class="mono">adeeb111.github.io/AdeeboMeter</p>
   </div>
-  <div class="foot" style="color:#BFD4FF"><span>Created by <b style="color:#fff">Adeeb Khan</b></span><span>23</span></div>
+  <div class="foot" style="color:#BFD4FF"><span>Created by <b style="color:#fff">Adeeb Khan</b></span><span>24</span></div>
 </div></section></div>
     </div>
     <button class="arrow next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
