@@ -80,7 +80,7 @@ namespace AdeeboMeter
                 sb.AppendLine("AdeeboMeter " + Program.Version + " MIB test · " + MibIndex.FileCount() + " MIB files · " + sw.ElapsedMilliseconds + " ms");
                 foreach (var r in rows) sb.AppendLine(r[0] == "6" || r[0] == "7" || r[0] == "8" ? (r[0] == "7" ? "! " : "  ") + r[2] : r[1] + ": " + r[2]);
             }
-            catch (Exception e) { sb.AppendLine("FAILED: " + e); File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
+            catch (Exception e) { sb.AppendLine(Directory.Exists(file) ? "FAILED: --mibtest takes one saved Net-SNMP walk file (snmpwalk output), not a folder - your MIB files go in the MIB folder" : "FAILED: " + e); File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
             File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString());
             return 0;
         }

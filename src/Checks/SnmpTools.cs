@@ -307,6 +307,11 @@ namespace AdeeboMeter
                 if (!Snmp.ValidOid(o)) continue; if (first == null) first = o;
                 var vb = new Snmp.Vb { Oid = o };
                 ulong n; long sn;
+                // a number that doesn't read as a number stays its own text - never shown as a real 0
+                bool num = ty == "INTEGER" ? global::System.Text.RegularExpressions.Regex.IsMatch(v, @"-?\d+") && long.TryParse(global::System.Text.RegularExpressions.Regex.Match(v, @"-?\d+").Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out sn)
+                    : ty == "Timeticks" ? global::System.Text.RegularExpressions.Regex.IsMatch(v, @"\((\d+)\)")
+                    : ty == "Gauge32" || ty == "Counter32" || ty == "Counter64" || ty == "Unsigned32" ? ulong.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out n) : true;
+                if (!num) ty = "(invalid " + ty + ")";
                 switch (ty)
                 {
                     case "INTEGER": vb.Type = 2; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"-?\d+"); if (!mm.Success || !long.TryParse(mm.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out sn)) sn = 0;
