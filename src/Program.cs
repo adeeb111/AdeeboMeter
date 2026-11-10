@@ -170,7 +170,7 @@ namespace AdeeboMeter
     static class Cfg
     {
         // background work while only the widget runs
-        public static volatile int GwSec = 5, NetSec = 30, WifiSec = 30, AppsSec = 10;
+        public static volatile int GwSec = 5, NetSec = 30, WifiSec = 30, AppsSec = 10;   /* NetSec 30 on a fresh install is deliberate (Adeeb, 2026-11-09): the Internet dot pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
         public static volatile bool Call = true;
         // engineer view (only while it's open)
         public static volatile string WidgetScreen = "";   // the screen the widget sits on ("" = the main screen); falls back to the main one if it's gone
