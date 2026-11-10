@@ -539,7 +539,7 @@ namespace AdeeboMeter
             var lc = new LiveCapture(); var sb = new StringBuilder(); var sw = Stopwatch.StartNew(); int n = 0;
             foreach (var line in File.ReadLines(file)) { lc.FeedForTest(line); n++; }
             var v = lc.Snapshot(null);
-            sb.AppendLine(n + " lines parsed in " + sw.ElapsedMilliseconds + " ms");
+            sb.AppendLine(n + " lines parsed in " + sw.ElapsedMilliseconds + " ms · " + lc.Dropped + " malformed lines dropped (not counted)");
             foreach (var r in v.Phs) sb.AppendLine(new string(' ', int.Parse(r[0], CultureInfo.InvariantCulture) * 2) + r[1] + "  " + r[2] + "  " + r[3]);
             sb.AppendLine("-- top conversations");
             foreach (var c in v.Top) sb.AppendLine(c.Host + "  " + c.Proto + "  " + c.Remote + ":" + c.RemotePort + "  bytes=" + c.Bytes + " retx=" + c.Retx);

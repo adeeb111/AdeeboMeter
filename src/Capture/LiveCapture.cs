@@ -34,6 +34,8 @@ namespace AdeeboMeter
     {
         static readonly char[] Comma = { ',' };
         static readonly string[] TestLocal = { "10.0.0.82", "172.17.0.2", "192.0.2.2" };
+        long bad;   // malformed lines dropped
+        public long Dropped { get { lock (k) return bad; } }
         static int Num(string f) { int v; return int.TryParse(First(f), NumberStyles.Integer, CultureInfo.InvariantCulture, out v) ? v : 0; }
         public sealed class Conv { public string Key, Local = "", Remote = "", Proto = "", Host = "", L4 = ""; public int LocalPort, RemotePort; public long Bytes, Pkts, Prev; public int Retx; public DateTime Last; public double Rate; }
         public sealed class View
@@ -166,6 +168,9 @@ namespace AdeeboMeter
             int sp = 0, dp = 0; string l4 = "";
             if (f[6] != "") { sp = Num(f[6]); dp = Num(f[7]); l4 = "TCP"; }
             else if (f[8] != "") { sp = Num(f[8]); dp = Num(f[9]); l4 = "UDP"; }
+            // a line that can't be a real frame is dropped, never counted: frame size, addresses and ports must make sense
+            IPAddress ia;
+            if (len < 0 || len > 262144 || (src != "" && !IPAddress.TryParse(src, out ia)) || (dst != "" && !IPAddress.TryParse(dst, out ia)) || sp < 0 || sp > 65535 || dp < 0 || dp > 65535) { lock (k) bad++; return; }
             lock (k)
             {
                 pkts++; bytes += len;

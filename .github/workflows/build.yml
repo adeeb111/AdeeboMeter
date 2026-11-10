@@ -31,6 +31,12 @@ jobs:
       - name: Build and package (release.ps1)
         shell: pwsh
         run: ./release.ps1
+      - name: Self-test - nothing is uploaded or released if it fails
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--selftest' -Wait -PassThru
+          if (Test-Path AdeeboMeter-selftest.txt) { Get-Content AdeeboMeter-selftest.txt }
+          if ($p.ExitCode -ne 0) { throw "self-test failed (exit $($p.ExitCode))" }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
         with:
           name: AdeeboMeter

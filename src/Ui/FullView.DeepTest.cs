@@ -53,7 +53,8 @@ namespace AdeeboMeter
         public string DeepTest(bool net, int capMinutes)
         {
             var sb = new StringBuilder(); var all = Stopwatch.StartNew(); int fails = 0;
-            Func<bool> late = () => all.Elapsed.TotalMinutes > capMinutes;
+            bool skipped = false;
+            Func<bool> late = () => { if (all.Elapsed.TotalMinutes > capMinutes) skipped = true; return skipped; };
             Action<string> head = s => { sb.AppendLine(); sb.AppendLine("== " + s + "   (" + (int)all.Elapsed.TotalSeconds + " s)"); };
             Action<string, Probe> rec = (w, p) => { if (p.Status != "OK") fails++; sb.AppendLine(Line(w, p)); };
             var me = Process.GetCurrentProcess(); me.Refresh(); long mStart = me.PrivateMemorySize64; int hStart = me.HandleCount, gStart = Native.GetGuiResources(Native.GetCurrentProcess(), 0), tStart = me.Threads.Count;
@@ -101,7 +102,7 @@ namespace AdeeboMeter
             // the tools that grew most in a single run are repeated too: growth once is a cache, growth every time is a leak
             foreach (var id in net ? new[] { "listen", "certs", "gateway", "v6routers", "overlap", "pressure", "route", "http", "doh", "events", "fw", "gpo", "clock", "ip46", "disk", "bg" } : new[] { "listen", "certs", "gateway", "v6routers", "overlap", "pressure", "route", "events", "fw", "gpo", "disk", "bg" })
             {
-                if (late()) break;
+                if (late()) { sb.AppendLine("      (time cap reached - rest skipped)"); break; }
                 var t = Tools2().FirstOrDefault(x => x.Id == id); if (t == null) continue;
                 var a = id == "route" ? new[] { "8.8.8.8", "", "" } : id == "http" ? new[] { "github.com", "", "" } : id == "ip46" ? new[] { "www.google.com", "", "" } : id == "fw" ? new[] { "teams", "", "" } : new[] { "", "", "" };
                 RunOne(t, a, 20000); GC.Collect(); GC.WaitForPendingFinalizers(); me.Refresh(); long m0 = me.PrivateMemorySize64; int h0 = me.HandleCount, g0 = Native.GetGuiResources(Native.GetCurrentProcess(), 0), th0 = me.Threads.Count;
@@ -180,7 +181,10 @@ namespace AdeeboMeter
             head("Summary");
             sb.AppendLine("since start: memory " + ((me.PrivateMemorySize64 - mStart) / 1048576.0).ToString("+0.0;-0.0", CultureInfo.InvariantCulture) + " MB · handles " + (me.HandleCount - hStart).ToString("+0;-0", CultureInfo.InvariantCulture) + " · GDI " + (Native.GetGuiResources(Native.GetCurrentProcess(), 0) - gStart).ToString("+0;-0", CultureInfo.InvariantCulture) + " · threads " + (me.Threads.Count - tStart).ToString("+0;-0", CultureInfo.InvariantCulture) + " · now " + (me.PrivateMemorySize64 / 1048576) + " MB");
             sb.AppendLine("checked by hand (needs your gear or acts on the network): " + string.Join(", ", ByHand.OrderBy(x => x)));
-            sb.AppendLine(fails == 0 ? "ALL PASSED in " + (int)all.Elapsed.TotalSeconds + " s" : fails + " FAILED - in " + (int)all.Elapsed.TotalSeconds + " s");
+            // a run cut short by the time cap is never a pass - it says what it didn't get to
+            sb.AppendLine(fails > 0 ? fails + " FAILED - in " + (int)all.Elapsed.TotalSeconds + " s" + (skipped ? " (and the time cap skipped the rest)" : "")
+                : skipped ? "INCOMPLETE - the " + capMinutes + "-minute cap was reached and later checks were skipped (see \"rest skipped\" above). Not a pass: run again with --minutes " + Math.Min(60, capMinutes * 2) + "."
+                : "ALL PASSED in " + (int)all.Elapsed.TotalSeconds + " s");
             return sb.ToString();
         }
     }
