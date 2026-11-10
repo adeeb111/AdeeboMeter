@@ -111,4 +111,8 @@ Read **[The Theory of Everything](docs/THEORY-OF-EVERYTHING.md)** — every part
 
 ---
 
+## Donate
+
+AdeeboMeter is free. If it saved you time, you can **[donate](https://paypal.me/adeeb1111)** to cover the cost to keep this app free and running: [$5](https://paypal.me/adeeb1111/5CAD) · [$10](https://paypal.me/adeeb1111/10CAD) · [$20](https://paypal.me/adeeb1111/20CAD) · [$50](https://paypal.me/adeeb1111/50CAD) · [other amount](https://paypal.me/adeeb1111) (PayPal, Canadian dollars).
+
 Created by Adeeb Khan · [MIT License](LICENSE) — free to use, change and share; keep the copyright notice.
