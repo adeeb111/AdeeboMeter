@@ -310,7 +310,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string f = (file ?? "").Trim().Trim('"');
             if (f == "") f = "C:\\certs\\server.cer";
-            else if (f.IndexOfAny(Unsafe) >= 0 || f.IndexOfAny(Path.GetInvalidPathChars()) >= 0) { rows.Add(R(2, "File", "that path has characters that aren't safe in a command", "", "u")); return rows; }
+            else if (f.Length > 240 || f.IndexOfAny(Unsafe) >= 0 || f.IndexOfAny(Path.GetInvalidPathChars()) >= 0) { rows.Add(R(2, "File", f.Length > 240 ? "that path is too long" : "that path has characters that aren't safe in a command", "", "u")); return rows; }
             string q = "\"" + f + "\"", stem = Path.Combine(Path.GetDirectoryName(f) ?? "", Path.GetFileNameWithoutExtension(f)), os = FindOpenssl();
             rows.Add(new[] { "0", "How to use", "click a command to copy it, then paste it into PowerShell", "Commands are filled in with your file. Nothing runs from here. Exporting a private key is left out on purpose - do that only on the server that owns it. Click this line to open PowerShell.", "w", "ps:" });
             rows.Add(R(4, "Look at a certificate", "", "", "m"));
