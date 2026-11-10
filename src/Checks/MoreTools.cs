@@ -154,9 +154,9 @@ namespace AdeeboMeter
                 catch (AggregateException e) { var se = e.InnerException as SocketException; if (se != null && se.SocketErrorCode == SocketError.ConnectionRefused) { ms = sw.ElapsedMilliseconds; return "refused"; } return "failed"; }
             }
         }
-        public static List<string[]> ManyPorts(string host, string what, Toolkit.Run run)
+        public static List<string[]> ManyPorts(Monitor m, string host, string what, string ok, Toolkit.Run run)
         {
-            var rows = new List<string[]>(); string h = (host ?? "").Trim();
+            var rows = new List<string[]>(); if (!Lab.Allowed(m, ok, rows)) return rows; string h = (host ?? "").Trim();
             if (h == "" || h.Length > 253 || !Regex.IsMatch(h, @"^[\w.:%-]+$")) { rows.Add(R(2, "Host", "type a host or IP", "", "u")); return rows; }
             string w = (what ?? "").Trim(); if (w == "") w = "web"; int[] ports;
             if (!Presets.TryGetValue(w, out ports))
@@ -190,7 +190,8 @@ namespace AdeeboMeter
                 if (run.Stop) break; run.Status = a + "..."; double ms; string st = Knock(a, port, out ms); if (st == "open") ok++;
                 res.Add(R(st == "open" ? 0 : 2, a.ToString(), st + (double.IsNaN(ms) ? "" : " · " + ms.ToString("0", CultureInfo.CurrentCulture) + " ms"), "", "m"));
             }
-            rows.Add(R(ok == res.Count ? 0 : ok == 0 ? 2 : 1, h + ":" + port, all.Length + " addresses · " + ok + " of " + res.Count + " answer", ok > 0 && ok < res.Count ? "Some addresses fail: apps that pick one at random fail now and then - the classic \"works on retry\". Tell the service's owner which ones." : all.Length > 16 ? "Only the first 16 tested." : "", "m"));
+            if (run.Stop) rows.Add(R(1, "Stopped", "stopped by you after " + res.Count + " addresses", "", "m"));
+            rows.Add(R(res.Count == 0 ? 3 : ok == res.Count ? 0 : ok == 0 ? 2 : 1, h + ":" + port, all.Length + " addresses · " + ok + " of " + res.Count + " answer", ok > 0 && ok < res.Count ? "Some addresses fail: apps that pick one at random fail now and then - the classic \"works on retry\". Tell the service's owner which ones." : all.Length > 16 ? "Only the first 16 tested." : "", "m"));
             rows.AddRange(res); return rows;
         }
 
@@ -206,15 +207,16 @@ namespace AdeeboMeter
                 double ms; string st = Knock(a[0], 443, out ms);
                 if (st != "open") { rows.Add(R(2, h, "HTTPS port " + st, "", "m")); continue; }
                 X509Days(h, out ms);
-                int days = (int)ms;
-                rows.Add(R(days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a[0] + (days >= 0 ? " · certificate " + days + " days left" : ""), "", "m"));
+                int days = double.IsNaN(ms) ? -1 : (int)ms;
+                bool expired = !double.IsNaN(ms) && ms < 0;
+                rows.Add(R(expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a[0] + (expired ? " · certificate EXPIRED " + (-days) + " days ago" : !double.IsNaN(ms) ? " · certificate " + days + " days left" : " · certificate not read"), expired ? "Visitors get a security warning - renew it." : "", "m"));
             }
             return rows;
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5359", Justification = "reads the certificate's dates only - nothing is sent")]
         static void X509Days(string h, out double days)
         {
-            days = -1; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
+            days = double.NaN; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
             try
             {
                 using (var c = new TcpClient()) { if (!c.ConnectAsync(h, 443).Wait(4000)) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)).Wait(6000); }

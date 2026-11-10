@@ -89,7 +89,7 @@ namespace AdeeboMeter
                 var sh = Draw.Measure(sub, Draw.fSmall, (int)w).Height; g.DrawString(sub, Draw.fSmall, muted, new RectangleF(x, y, w, sh + 4)); y += sh + 12 * S;
                 if (res.Count > 0)
                 {
-                    float bx = x; string[] lab = { "good", "worth a look", "risky", "can't tell" };
+                    float bx = x; string[] lab = { "good", "worth a look", "risky", "info / can't tell" };
                     foreach (int lv in new[] { 2, 1, 0, 3 })
                     {
                         string t = n[lv] + " " + lab[lv]; var ts = g.MeasureString(t, Draw.fBodyB); var pr = new RectangleF(bx, y, ts.Width + 30 * S, 32 * S);

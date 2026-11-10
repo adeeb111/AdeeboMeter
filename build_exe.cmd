@@ -26,7 +26,13 @@ if /i "%~1"=="notest" goto done
 echo.
 echo Running the self-test (a few seconds; small windows may flash) ...
 start "" /wait AdeeboMeter.exe --selftest
+set "RC=!errorlevel!"
 findstr /b /c:"FAIL" /c:"ALL PASSED" /c:"FAILED" AdeeboMeter-selftest.txt
+if not "!RC!"=="0" (
+    echo Self-test FAILED - exit code !RC!. Don't release this build.
+    pause
+    exit /b !RC!
+)
 :done
 echo.
 echo Done. Double-click AdeeboMeter.exe - it offers to install itself, or runs from here.

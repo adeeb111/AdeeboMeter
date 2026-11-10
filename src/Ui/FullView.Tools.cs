@@ -40,6 +40,7 @@ namespace AdeeboMeter
         }
         void SaveText(string name, string text)
         {
+            foreach (var ch in System.IO.Path.GetInvalidFileNameChars()) name = name.Replace(ch, '-');
             using (var d = new SaveFileDialog { Title = "Save the result", Filter = "Text (*.txt)|*.txt", FileName = name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".txt" })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;

@@ -191,7 +191,7 @@ namespace AdeeboMeter
             IPEndPoint ep; string err; var c = Snmp.Cred.Parse(cred); var rows = new List<string[]>();
             if (!Target(dev, out ep, out err)) { rows.Add(R(2, "Device", err, "", "u")); return rows; }
             const string a = "1.2.840.10006.300.43.1.2.1.1.";
-            var att = Col(ep, c, a + "12", run, out err);
+            var att = Col(ep, c, a + "13", run, out err);   /* dot3adAggPortAttachedAggID */
             if (att.Count == 0)
             {
                 if (err != "" && !err.StartsWith("SNMP error", StringComparison.Ordinal)) return Fail(ep.ToString(), err, c);
@@ -205,7 +205,7 @@ namespace AdeeboMeter
                 Table(rows, new[] { "LAG", "Member", "Member link" }, mem.Take(500).Select(z => new[] { ifn0(z.Lag), ifn0(z.If), z.Known ? (z.Up ? "up" : "down") : "n/a" }).ToList(), mem.Take(500).Select(z => z.Known && !z.Up).ToList());
                 return rows;
             }
-            var sel = Col(ep, c, a + "11", run, out err); var act = Col(ep, c, a + "21", run, out err, "member state"); var psys = Col(ep, c, a + "8", run, out err, "partner"); var ifn = IfNames(ep, c, run);
+            var sel = Col(ep, c, a + "12", run, out err); var act = Col(ep, c, a + "21", run, out err, "member state"); var psys = Col(ep, c, a + "9", run, out err, "partner");   /* SelectedAggID, ActorOperState, PartnerOperSystemID */ var ifn = IfNames(ep, c, run);
             var list = att.Keys.Select(i =>
             {
                 long at = L(att, i), se = L(sel, i); var s = V(act, i); string ps = V(psys, i) != null ? Snmp.Text(V(psys, i), "", null) : "n/a";

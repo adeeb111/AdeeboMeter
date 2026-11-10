@@ -206,7 +206,7 @@ namespace AdeeboMeter
                 {
                     bool fast = ViewOpen || CallLikely;
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
-                    int gwSec = ViewOpen ? 2 : Cfg.GwSec, netSec = fast ? 2 : Cfg.NetSec, wifiSec = ViewOpen ? 10 : Cfg.WifiSec, appsSec = ViewOpen ? 2 : Cfg.AppsSec, procSec = ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
+                    int gwSec = ViewOpen ? 2 : Cfg.GwSec, netSec = Cfg.NetSec == 0 ? 0 : fast ? 2 : Cfg.NetSec,   /* the internet check off means off, view open or not */ wifiSec = ViewOpen ? 10 : Cfg.WifiSec, appsSec = ViewOpen ? 2 : Cfg.AppsSec, procSec = ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
                     if (gwSec > 0 && (t0 - lastGw).TotalSeconds >= gwSec - 0.2)
                     {
                         lastGw = t0;

@@ -46,6 +46,7 @@ namespace AdeeboMeter
                 }
                 catch (ArgumentException) { skipped.Add(n); }
             }
+            if ((body ?? "").Length > 65536) { rows.Add(R(2, "Body", "64 KB at most", "", "u")); return rows; }
             var data = Encoding.UTF8.GetBytes(body ?? "");
             var sw = Stopwatch.StartNew(); HttpWebResponse r = null;
             try
@@ -65,7 +66,7 @@ namespace AdeeboMeter
                 int code = (int)r.StatusCode;
                 rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, m + " " + Draw.Trunc(uri.ToString(), 80), I(code) + " " + r.StatusDescription + " · " + sw.ElapsedMilliseconds + " ms · " + I(buf.Length) + (buf.Length >= 65536 ? "+" : "") + " bytes",
                     (code >= 300 && code < 400 ? "A redirect - shown, not followed. " : "") + (skipped.Count > 0 ? "Not sent (Windows sets these itself, or not a valid header): " + string.Join(", ", skipped) + ". " : "") + "Sent through your proxy settings, like a browser.", "m"));
-                foreach (string k in r.Headers.AllKeys.Take(40)) rows.Add(R(3, k, Draw.Trunc(r.Headers[k], 300), "", "m"));
+                foreach (string k in r.Headers.AllKeys.Take(80)) rows.Add(R(3, k, Draw.Trunc(r.Headers[k], 300), "", "m"));
                 var bytes = buf.ToArray(); if (bytes.Length == 0) return rows;
                 bool text = bytes.Take(2000).All(x => x == 9 || x == 10 || x == 13 || x >= 32);
                 rows.Add(R(4, "Body", text ? Draw.Trunc(Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 3000)), 3000) : string.Join(" ", bytes.Take(96).Select(x => x.ToString("x2", CultureInfo.InvariantCulture))) + " …", "", "m"));
@@ -187,11 +188,11 @@ namespace AdeeboMeter
             var socks = new List<Tuple<UdpClient, string>>();
             try
             {
-                var md = new UdpClient(AddressFamily.InterNetwork); var q = DnsQ("_services._dns-sd._udp.local", 12, 0); md.Send(q, q.Length, new IPEndPoint(IPAddress.Parse("224.0.0.251"), 5353)); socks.Add(Tuple.Create(md, "mdns"));
-                var ss = new UdpClient(AddressFamily.InterNetwork); var s1 = Encoding.ASCII.GetBytes("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: ssdp:all\r\n\r\n"); ss.Send(s1, s1.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900)); socks.Add(Tuple.Create(ss, "ssdp"));
-                var ws = new UdpClient(AddressFamily.InterNetwork);
+                var md = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(md, "mdns")); var q = DnsQ("_services._dns-sd._udp.local", 12, 0); md.Send(q, q.Length, new IPEndPoint(IPAddress.Parse("224.0.0.251"), 5353));
+                var ss = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(ss, "ssdp")); var s1 = Encoding.ASCII.GetBytes("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: ssdp:all\r\n\r\n"); ss.Send(s1, s1.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900));
+                var ws = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(ws, "wsd"));   /* owned before any send can throw */
                 var probe = Encoding.UTF8.GetBytes("<?xml version=\"1.0\" encoding=\"utf-8\"?><soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:wsa=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" xmlns:wsd=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\"><soap:Header><wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To><wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action><wsa:MessageID>urn:uuid:" + Guid.NewGuid() + "</wsa:MessageID></soap:Header><soap:Body><wsd:Probe/></soap:Body></soap:Envelope>");
-                ws.Send(probe, probe.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 3702)); socks.Add(Tuple.Create(ws, "wsd"));
+                ws.Send(probe, probe.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 3702));
                 var until = DateTime.UtcNow.AddSeconds(3);
                 while (DateTime.UtcNow < until && !run.Stop)
                 {

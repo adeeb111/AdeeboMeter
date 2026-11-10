@@ -87,8 +87,10 @@ namespace AdeeboMeter
                 int pol = RegInt(LM, pb + p[0], "EnableFirewall", -1), own = RegInt(LM, b + p[0], "EnableFirewall", -1);
                 if ((pol >= 0 ? pol : own) == 0) off.Add(p[1]);
             }
+            int known = 0; foreach (var p2 in new[] { "DomainProfile", "StandardProfile", "PublicProfile" }) if (RegInt(LM, pb + p2, "EnableFirewall", -1) >= 0 || RegInt(LM, b + p2, "EnableFirewall", -1) >= 0) known++;
+            if (known == 0) return One(3, "Firewall", "Windows didn't say (the firewall settings couldn't be read here)", "Windows Security › Firewall & network protection shows it.", "windowsdefender://network");
             var third = Wmi(@"root\SecurityCenter2", "SELECT displayName, productState FROM FirewallProduct");
-            string other = third != null && third.Count > 0 ? string.Join(", ", third.Select(x => x["displayName"])) : "";
+            string other = third != null ? string.Join(", ", third.Where(x => ((Convert.ToInt64(x["productState"] ?? 0, CultureInfo.InvariantCulture) >> 12) & 0xF) == 1).Select(x => x["displayName"])) : "";   /* registered AND on */
             if (off.Count == 0) return One(0, "Firewall", "Windows Firewall on for every network type", "", "windowsdefender://network");
             return One(other != "" ? 3 : off.Contains("public") ? 2 : 1, "Firewall", "Windows Firewall OFF for " + string.Join(", ", off) + " networks" + (other != "" ? " · " + other + " is on instead" : ""), other != "" ? "Another firewall is in charge - fine if it's on." : "Turn it back on in Windows Security › Firewall & network protection.", "windowsdefender://network");
         }
@@ -150,7 +152,7 @@ namespace AdeeboMeter
             if (row == null)
             {
                 int b; if (!int.TryParse(build, out b)) b = 0;
-                if (b > 26200) return One(0, "Windows version", "build " + build + " - newer than this release knows", "", "ms-settings:windowsupdate");
+                if (b > 26200) return One(3, "Windows version", "build " + build + " - newer than this release knows", "Its support dates aren't built in yet - Windows Update › Windows release information shows them.", "ms-settings:windowsupdate");
                 return One(b > 0 && b < 19045 ? 2 : 3, "Windows version", (b > 0 ? "build " + build : "unknown build") + (dv != "" ? " (" + dv + ")" : ""), b > 0 && b < 19045 ? "No longer gets security fixes - update to a supported version." : "", "ms-settings:windowsupdate");
             }
             var end = DateTime.Parse(ent ? row[3] : row[2], CultureInfo.InvariantCulture); int left = (int)(end - today).TotalDays;
@@ -203,7 +205,7 @@ namespace AdeeboMeter
             if (open.Count == 0) return One(0, "Open to the network", "nothing beyond Windows' own file sharing and services", "", null);
             var named = open.Select(p => { string n; return Servers.TryGetValue(p, out n) ? p + " (" + n + ")" : I(p); }).ToList();
             bool server = open.Any(p => Servers.ContainsKey(p));
-            return One(server ? 1 : 3, "Open to the network", string.Join(", ", named.Take(20)) + (open.Count > 20 ? " …" : ""), (server ? "A server runs on this PC and listens on every network. " : "") + "The firewall may still block it from outside - Toolbox › What's listening shows which program each one is.", "windowsdefender://network");
+            return One(server ? 1 : 3, "Open to the network (TCP)", string.Join(", ", named.Take(20)) + (open.Count > 20 ? " …" : ""), (server ? "A server runs on this PC and listens on every network. " : "") + "The firewall may still block it from outside - Toolbox › What's listening shows which program each one is.", "windowsdefender://network");
         }
         static readonly string[] Interceptors = { "fiddler", "charles", "mitmproxy", "burp", "portswigger", "zscaler", "netskope", "fortinet", "fortigate", "palo alto", "blue coat", "bluecoat", "sophos", "kaspersky", "avast", "avg ", "eset", "bitdefender", "cisco umbrella", "forcepoint", "websense", "superfish" };
         static List<string[]> Roots(Monitor m, List<string> s)
@@ -240,7 +242,9 @@ namespace AdeeboMeter
         static List<string[]> Proxy(Monitor m, List<string> s)
         {
             const string p = @"Software\Microsoft\Windows\CurrentVersion\Internet Settings";
-            int en = RegInt(CU, p, "ProxyEnable", 0); string srv = Convert.ToString(Reg(CU, p, "ProxyServer"), CultureInfo.InvariantCulture) ?? "", pac = Convert.ToString(Reg(CU, p, "AutoConfigURL"), CultureInfo.InvariantCulture) ?? "";
+            bool machine = RegInt(LM, @"SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings", "ProxySettingsPerUser", 1) == 0;   /* one proxy for the whole machine */
+            var hv = machine ? LM : CU; string pp = machine ? @"SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings" : p;
+            int en = RegInt(hv, pp, "ProxyEnable", 0); string srv = Convert.ToString(Reg(hv, pp, "ProxyServer"), CultureInfo.InvariantCulture) ?? "", pac = Convert.ToString(Reg(hv, pp, "AutoConfigURL"), CultureInfo.InvariantCulture) ?? "";
             bool policy = Reg(LM, @"SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings", "ProxySettingsPerUser") != null || Reg(CU, @"Software\Policies\Microsoft\Internet Explorer\Control Panel", "Proxy") != null;
             if (en == 0 && pac == "") return One(0, "Proxy", "none - straight to the internet", "", "ms-settings:network-proxy");
             string what = (en != 0 ? "proxy " + srv : "") + (pac != "" ? (en != 0 ? " · " : "") + "script " + pac : "");
@@ -263,7 +267,7 @@ namespace AdeeboMeter
                 if (string.Equals(Path.GetFileName(exe), "AdeeboMeter.exe", StringComparison.OrdinalIgnoreCase)) continue;   /* this app: unsigned, and you chose to start it */
                 try { using (X509Certificate.CreateFromSignedFile(exe)) { } } catch (System.Security.Cryptography.CryptographicException) { unsigned.Add(it.Item1 + " (" + Path.GetFileName(exe) + ")"); }
             }
-            return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", items.Count + " start automatically" + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · all signed"), unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
+            return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", items.Count + " start automatically" + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · all .exe programs signed"), unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
         }
         static List<string[]> Tasks(Monitor m, List<string> s)
         {
@@ -282,7 +286,8 @@ namespace AdeeboMeter
         {
             int ppl = RegInt(LM, @"SYSTEM\CurrentControlSet\Control\Lsa", "RunAsPPL", 0);
             var dg = Wmi(@"root\Microsoft\Windows\DeviceGuard", "SELECT SecurityServicesRunning FROM Win32_DeviceGuard");
-            var run = dg != null && dg.Count > 0 && dg[0]["SecurityServicesRunning"] is int[] ? (int[])dg[0]["SecurityServicesRunning"] : dg != null && dg.Count > 0 && dg[0]["SecurityServicesRunning"] is uint[] ? ((uint[])dg[0]["SecurityServicesRunning"]).Select(x => (int)x).ToArray() : Array.Empty<int>();
+            var arr = dg != null && dg.Count > 0 ? dg[0]["SecurityServicesRunning"] as Array : null;   /* WMI gives uint32[]; read any number type */
+            var run = arr == null ? Array.Empty<int>() : arr.Cast<object>().Select(x => Convert.ToInt32(x, CultureInfo.InvariantCulture)).ToArray();
             bool cg = run.Contains(1);
             return One(ppl >= 1 || cg ? 0 : 1, "Sign-in secrets protection", (ppl >= 1 ? "LSA protection on" : "LSA protection off") + " · " + (cg ? "Credential Guard on" : "Credential Guard off"), ppl >= 1 || cg ? "" : "These stop password-stealing tools from reading sign-in secrets from memory. Windows Security › Device security › Core isolation (LSA protection).", "windowsdefender://devicesecurity");
         }
@@ -301,7 +306,7 @@ namespace AdeeboMeter
         {
             int dis = RegInt(CU, @"Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers", "DisableAutoplay", 0), nd = RegInt(LM, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoDriveTypeAutoRun", 0x91);
             bool off = dis == 1 || (nd & 0x04) != 0 && (nd & 0x10) != 0 && nd == 0xFF;
-            return One(off ? 0 : 3, "AutoPlay", off ? "off" : "on - Windows offers what to do when a USB drive goes in", off ? "" : "Windows no longer runs programs from USB drives by itself; AutoPlay only asks. Turning it off removes the temptation.", "ms-settings:autoplay");
+            return One(0, "AutoPlay", off ? "off" : "on - Windows offers what to do when a USB drive goes in", off ? "" : "Windows no longer runs programs from USB drives by itself; AutoPlay only asks. Turning it off removes the temptation.", "ms-settings:autoplay");
         }
         static List<string[]> AdminDaily(Monitor m, List<string> s)
         {
@@ -335,7 +340,7 @@ namespace AdeeboMeter
         {
             string p = Convert.ToString(Reg(LM, @"SOFTWARE\Policies\Microsoft\Windows\PowerShell", "ExecutionPolicy") ?? Reg(CU, @"Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell", "ExecutionPolicy") ?? Reg(LM, @"SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell", "ExecutionPolicy"), CultureInfo.InvariantCulture) ?? "Restricted (Windows' default)";
             bool loose = p.Equals("Unrestricted", StringComparison.OrdinalIgnoreCase) || p.Equals("Bypass", StringComparison.OrdinalIgnoreCase);
-            return One(loose ? 1 : 3, "PowerShell script policy", p, loose ? "Any script runs without a warning. RemoteSigned is the common middle ground. (This policy is a seat belt, not a security wall.)" : "", null);
+            return One(loose ? 1 : 0, "PowerShell script policy", p, loose ? "Any script runs without a warning. RemoteSigned is the common middle ground. (This policy is a seat belt, not a security wall.)" : "", null);
         }
 
         // ================================================================== YOUR NETWORK
@@ -460,8 +465,8 @@ namespace AdeeboMeter
         static List<string[]> NewDevices(Monitor m, List<string> s)
         {
             List<string[]> j; lock (Devices.Joined) j = Devices.Joined.ToList();
-            var week = j.Where(r => { DateTime t; return r.Length > 3 && DateTime.TryParse(r[0], CultureInfo.InvariantCulture, DateTimeStyles.None, out t) && t > DateTime.Now.AddDays(-7); }).ToList();
-            return One(week.Count == 0 ? 0 : 3, "New devices this week", week.Count == 0 ? "none seen join this session" : week.Count + " joined: " + string.Join(", ", week.Take(6).Select(r => r[2])), week.Count == 0 ? "AdeeboMeter notices devices only while it runs." : "Recognise them? Time machine › What changed lists each with its time; Name of a device asks one what it's called.", null);
+            var week = j.Where(r => r.Length > 3).ToList();   /* the list holds this session's joins (stored as "ddd HH:mm") */
+            return One(week.Count == 0 ? 0 : 3, "New devices", week.Count == 0 ? "none joined while AdeeboMeter was running this session" : week.Count + " joined this session: " + string.Join(", ", week.Take(6).Select(r => r[2])), week.Count == 0 ? "AdeeboMeter notices devices only while it runs." : "Recognise them? Time machine › What changed lists each with its time; Name of a device asks one what it's called.", null);
         }
 
         // ================================================================== YOUR SITES
@@ -544,10 +549,12 @@ namespace AdeeboMeter
             return PerSite(sites, "Mail protection", h =>
             {
                 string d = h.StartsWith("www.", StringComparison.Ordinal) ? h.Substring(4) : h;
-                Func<string, List<string>> txt = n => { var r = Toolkit.Query(srv, n, 16, true); return r == null ? new List<string>() : r.Rrs.Where(x => x.Section == 1 && x.Type == "TXT").Select(x => x.Data).ToList(); };
+                bool noAnswer = false;
+                Func<string, List<string>> txt = n => { var r = Toolkit.Query(srv, n, 16, true); if (r == null) { noAnswer = true; return new List<string>(); } return r.Rrs.Where(x => x.Section == 1 && x.Type == "TXT").Select(x => x.Data).ToList(); };
                 var spf = txt(d).FirstOrDefault(x => x.Contains("v=spf1")); var dm = txt("_dmarc." + d).FirstOrDefault(x => x.Contains("v=DMARC1"));
                 string pol = dm != null ? Regex.Match(dm, @"p=(\w+)").Groups[1].Value : "";
                 string dk = Selectors.FirstOrDefault(sel => txt(sel + "._domainkey." + d).Any(x => x.Contains("p=")));
+                if (noAnswer) return R(3, "Mail protection · " + d, "couldn't check - your DNS server didn't answer every question", "", null);
                 var miss = new List<string>(); if (spf == null) miss.Add("SPF"); if (dm == null) miss.Add("DMARC");
                 string val = (spf != null ? "SPF " + (spf.Contains("-all") ? "strict (-all)" : spf.Contains("~all") ? "soft (~all)" : "set") : "no SPF") + " · " + (dm != null ? "DMARC p=" + pol : "no DMARC") + " · " + (dk != null ? "DKIM found (" + dk + ")" : "DKIM not found under common selectors");
                 int lv = miss.Count > 0 ? (miss.Count == 2 ? 2 : 1) : pol == "none" ? 1 : 0;
@@ -566,7 +573,7 @@ namespace AdeeboMeter
             C("lock", "pc", "Screen lock", ScreenLock), C("openwifi", "pc", "Saved open Wi-Fi networks", OpenWifi), C("pspolicy", "pc", "PowerShell script policy", PsPolicy),
             C("wifisec", "net", "This Wi-Fi's security", WifiSec), C("dnshijack", "net", "DNS honesty", DnsHijack), C("tlsint", "net", "Encrypted traffic inspected?", TlsIntercept), C("arp", "net", "ARP spoofing signs", ArpSpoof),
             C("dhcp2", "net", "A second DHCP server", SecondDhcp), C("upnp", "net", "Router UPnP", Upnp), C("routeradmin", "net", "Router admin page over http", RouterAdmin), C("routerold", "net", "Router old services", RouterOld),
-            C("v6pub", "net", "Public IPv6 address", PublicV6), C("dnsleak", "net", "DNS leak on VPN", DnsLeak), C("newdev", "net", "New devices this week", NewDevices),
+            C("v6pub", "net", "Public IPv6 address", PublicV6), C("dnsleak", "net", "DNS leak on VPN", DnsLeak), C("newdev", "net", "New devices", NewDevices),
             C("certexp", "sites", "Certificate expiring", CertExpiry), C("oldtls", "sites", "Old TLS still accepted", OldTls), C("headers", "sites", "Security headers", Headers), C("mailsec", "sites", "SPF, DKIM and DMARC", Mail)
         };
         static Check C(string id, string g, string t, Func<Monitor, List<string>, List<string[]>> f) { return new Check { Id = id, Group = g, Title = t, Run = f }; }

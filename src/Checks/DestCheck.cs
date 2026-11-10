@@ -40,7 +40,7 @@ namespace AdeeboMeter
         // Copy as text / Save: the verdict, each step and every card's rows
         public string Text()
         {
-            var sb = new System.Text.StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · Check a destination · " + Target + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture));
+            var sb = new System.Text.StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · Check a destination · " + Target + " · " + At.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture));
             sb.AppendLine("Result: " + Verdict); sb.AppendLine();
             for (int i = 0; i < Steps.Length; i++) if (Lv[i] >= 0) sb.AppendLine(Steps[i] + ": " + (Val[i] ?? ""));
             var f = Findings; if (f != null) { sb.AppendLine(); foreach (var r in f) if (r.Length > 2) sb.AppendLine(r[1] + ": " + r[2]); }

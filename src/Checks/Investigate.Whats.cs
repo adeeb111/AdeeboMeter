@@ -109,18 +109,27 @@ namespace AdeeboMeter
             }
             // 6. the way in: Windows' own connectivity test (a sign-in page answers it with something else)
             step("Checking for a sign-in page...");
-            string portal = "";
+            string portal = "", portalErr = "";
             try
             {
                 var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.AllowAutoRedirect = false;
                 using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var body = rd.ReadToEnd(); if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
             }
-            catch (WebException e) { var resp = e.Response as HttpWebResponse; portal = resp != null ? ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 ? "redirected to " + Draw.Trunc(resp.Headers["Location"] ?? "", 60) : "error " + (int)resp.StatusCode) : e.Status == WebExceptionStatus.Timeout ? "no answer (a proxy may be required)" : ""; if (resp != null) resp.Dispose(); }
-            r.Obs("m", portal != "" ? 1 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
+            catch (WebException e) { var resp = e.Response as HttpWebResponse; portal = resp != null ? ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 ? "redirected to " + Draw.Trunc(resp.Headers["Location"] ?? "", 60) : "error " + (int)resp.StatusCode) : e.Status == WebExceptionStatus.Timeout ? "no answer (a proxy may be required)" : ""; if (resp == null && e.Status != WebExceptionStatus.Timeout) portalErr = e.Status.ToString(); if (resp != null) resp.Dispose(); }
+            r.Obs("m", portal != "" ? 1 : portalErr != "" ? 3 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : portalErr != "" ? "Windows' connectivity test couldn't run (" + portalErr + ") - web traffic may need a proxy here" : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
+            if (portalErr != "") r.NotEst.Add("Whether a sign-in page or proxy stands in the way - the web test couldn't connect (" + portalErr + ").");
             if (portal != "")
             {
                 r.Conclude(1, "Everything up to the internet works, but web traffic is intercepted (" + portal + ") - a hotel / airport sign-in page, or a proxy that needs you to sign in.");
                 r.Next.Add("Open any http:// site in the browser to get the sign-in page."); r.GoTab = "guide:vpn"; r.GoLabel = "Run Works at home, not at work"; around(); return;
+            }
+            // nothing broken - but something slow or weak is still worth saying, never "all clear"
+            var weak = r.ObservedCopy().Where(o => o[1] == "1" && o[2].Length > 2 && char.IsDigit(o[2][0])).ToList();
+            if (weak.Count > 0)
+            {
+                var w = weak[0]; r.Conclude(1, "Nothing is broken, but " + w[2].Substring(3).ToLowerInvariant() + " is weak: " + w[3] + ". That's where to look if things feel slow or unreliable.");
+                r.Next.Add("Run The internet is slow - it digs into exactly this."); r.GoTab = "guide:slow"; r.GoLabel = "Run The internet is slow";
+                r.NotEst.Add("Problems that come and go - this is a check of right now."); around(); return;
             }
             // all fine: say what was checked, hand to the guided checks for a named symptom
             r.Conclude(0, "Nothing is wrong right now - your PC, the " + (wifi ? "Wi-Fi" : "link") + ", your router, the internet, names and the way in all work. If something still fails, it's one site or app, or it comes and goes.");

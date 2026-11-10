@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -73,7 +74,7 @@ namespace AdeeboMeter
                 T("snmpups", "SNMP", "SNMP - UPS battery and runtime", SnmpIn, (a, r) => SnmpTools.Ups(a[0], a[1], r)),
                 T("snmpwalk", "SNMP", "SNMP - walk any OID or name", SnmpIn + "|OID or MIB name - e.g. ifTable", (a, r) => SnmpTools.Walk(a[0], a[1], a[2], r)),
                 T("mibs", "SNMP", "MIB folder and search", "Search your MIBs - e.g. temperature, optic, fan", (a, r) => SnmpTools.Search(a[0], r)),
-                T("syslog", "PROTOCOLS", "Syslog - send a test message", "Collector - host or host:port (UDP 514)|Text (optional)|Level (optional) - e.g. local7.warning", (a, r) => Protocols.Syslog(a[0], a[1], a[2])),
+                T("syslog", "PROTOCOLS", "Syslog - send a test message", "Collector - host or host:port (UDP 514)|Text (optional)|Level (optional) - e.g. local7.warning", (a, r) => { var gate = new List<string[]>(); return Lab.Allowed(M, a[3], gate) ? Protocols.Syslog(a[0], a[1], a[2]) : gate; }),
                 T("icmpb", "LAB", "ICMP builder (size, DF, TTL)", "Target - IPv4 or IPv6|How many (1-1000)|Options - e.g. size 1472 df ttl 5 every 200", (a, r) => Lab.Icmp(M, a[0], a[1], a[2], a[3], r)),
                 T("udpsend", "LAB", "UDP sender", "host:port - e.g. 10.0.0.5:5060|Payload - text, or hex:0a0b0c|How many (1-1000)", (a, r) => Lab.Udp(M, a[0], a[1], a[2], a[3], r)),
                 T("tcpsend", "LAB", "TCP sender (send, see the reply)", "host:port - e.g. 10.0.0.5:8080|Payload - text with \\r\\n, or hex:0a0b0c", (a, r) => Lab.Tcp(M, a[0], a[1], a[3], r)),
@@ -86,7 +87,7 @@ namespace AdeeboMeter
                 T("nbname", "YOUR NETWORK", "Name of a device (NetBIOS, LLMNR, mDNS)", "IP - e.g. 192.168.1.23", (a, r) => Reach.NameOf(a[0])),
                 T("finddev", "YOUR NETWORK", "Find devices (mDNS, SSDP, WS-Discovery)", null, (a, r) => Reach.Find(M, a[3], r)),
                 T("remote", "REMOTE", "SSH, SCP and remote commands", "Host - e.g. 10.0.0.1|User (optional)|Port (optional, 22)", (a, r) => Reach.Remote(a[0], a[1], a[2])),
-                T("manyports", "WEB", "Many ports for one service", "Host - e.g. dc01 or mail.example.com|Service - web, mail, ad, sql, rdp, ssh, voip, print, smb, vpn, dns - or ports 80,443", (a, r) => MoreTools.ManyPorts(a[0], a[1], r)),
+                T("manyports", "WEB", "Many ports for one service", "Host - e.g. dc01 or mail.example.com|Service - web, mail, ad, sql, rdp, ssh, voip, print, smb, vpn, dns - or ports 80,443", (a, r) => MoreTools.ManyPorts(M, a[0], a[1], a[3], r)),
                 T("allips", "WEB", "Every IP behind a name", "name:port - e.g. outlook.office.com:443", (a, r) => MoreTools.AllIps(a[0], r)),
                 T("rdpcheck", "WEB", "Remote Desktop reachable?", "PC - host or host:port (3389)", (a, r) => MoreTools.Rdp(a[0])),
                 T("ldapcheck", "WEB", "Active Directory / LDAP reachable?", "Domain controller or domain (empty = your domain)", (a, r) => MoreTools.Ldap(a[0])),
@@ -162,7 +163,11 @@ namespace AdeeboMeter
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
         static readonly string[][] QuickTools = { new[] { "snmp", "SNMP" }, new[] { "snmpif", "Switch ports" }, new[] { "mtr", "MTR" }, new[] { "port", "Port test" }, new[] { "dig", "dig" }, new[] { "http", "HTTP & TLS" }, new[] { "iperf", "iperf3" }, new[] { "sweep", "Ping sweep" } };
-        static readonly HashSet<string> LabGate = new HashSet<string> { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "finddev" };   // need the tick on a company network
+        static readonly HashSet<string> LabGate = new HashSet<string> { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "finddev", "manyports", "syslog" };   // need the tick on a company network
+        // Traffic Lab tools that don't send packets they build (or that came with their own rules before the Lab) - the self-test fails if a new Lab tool is in neither list
+        public static readonly HashSet<string> LabExempt = new HashSet<string> { "wol", "iperf", "bloat", "dscp" };
+        public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))); }
+        static bool SecretInput(string label) { return label.StartsWith("Shared secret", StringComparison.Ordinal) || label.StartsWith("Community", StringComparison.Ordinal) || label.StartsWith("Password", StringComparison.Ordinal); }
         static bool SnmpView(string id) { return IsSnmp(id) || id == "mibs"; }
         string tbSection = "net"; bool tbHome = true; PillButton[] tbChips;
         static string SectionOf(Tool t) { string s; return GroupSection.TryGetValue(t.Group, out s) ? s : "net"; }
@@ -335,6 +340,12 @@ namespace AdeeboMeter
                 case "snmpwalk": return "a second to a minute - stops at 2,000 values";
                 case "snmpsnap": return "up to 3 minutes on a big switch";
                 case "finddev": return "about 3 seconds";
+                case "mysites": return "a few seconds per pinned site";
+                case "tidy": return "up to a minute with a big temp folder";
+                case "manyports": return "up to 2 seconds per port";
+                case "allips": return "up to 2 seconds per address";
+                case "rdpcheck": case "ldapcheck": case "nbname": return "a few seconds";
+                case "svcfail": return "a few seconds";
                 case "icmpb": { if (!int.TryParse(a[1], out n)) n = 10; n = Math.Max(1, Math.Min(1000, n)); var mg = System.Text.RegularExpressions.Regex.Match(a[2] ?? "", @"(?:every|gap)\s*=?\s*(\d{1,5})"); int gp = mg.Success ? Math.Max(100, int.Parse(mg.Groups[1].Value, CultureInfo.InvariantCulture)) : 1000; return RunSecs(n * gp / 1000 + 1); }
                 case "udpsend": if (!int.TryParse(a[2], out n)) n = 1; return RunSecs(Math.Max(1, Math.Min(1000, n)) / 10 + 1);
                 case "cloud": case "owners": case "ret": return "about 20-40 seconds";
@@ -353,13 +364,13 @@ namespace AdeeboMeter
         {
             { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "bloat iperf ping mtr cloud" }, { "speed", "iperf bloat cloud" },
             { "bandwidth", "iperf bloat" }, { "throughput", "iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
-            { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts" },
+            { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
             { "cert", "http certs certfile" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "http certs" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
             { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep snmpprn arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
-            { "ip", "subnet arp dhcp" }, { "lease", "dhcp" }, { "vpn", "overlap route proxy dnsrules" }, { "email", "mail" }, { "smtp", "mail" }, { "outlook", "mail http proxy" },
+            { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "overlap route proxy dnsrules" }, { "email", "mail" }, { "smtp", "mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover finddev" }, { "bonjour", "discover finddev" }, { "upnp", "discover finddev" }, { "llmnr", "discover nbname" },
-            { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "discover", "finddev" }, { "ssdp", "finddev" }, { "wsd", "finddev" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" },
+            { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "discover", "finddev" }, { "ssdp", "finddev" }, { "wsd", "finddev" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" }, { "arp", "arpwho" },
         };
         Panel BuildToolboxPage()
         {
@@ -449,7 +460,7 @@ namespace AdeeboMeter
                 var rb = tbPool[i]; string inp = i < t.Inputs.Length ? t.Inputs[i] : "";
                 rb.Box.Text = "";
                 if (inp == "") { rb.Visible = false; if (i < t.Inputs.Length) tbBoxes.Add(null); continue; }
-                bool secret = inp.StartsWith("Shared secret", StringComparison.Ordinal) || inp.StartsWith("Community", StringComparison.Ordinal);   // never shown, never saved, never logged
+                bool secret = SecretInput(inp);   // never shown, never saved, never logged
                 if (rb.Box.UseSystemPasswordChar != secret) rb.Box.UseSystemPasswordChar = secret;
                 // the name stays above the box while you type; the example stays inside until you do
                 int dash = inp.IndexOf(" - ", StringComparison.Ordinal); string lab = dash > 0 ? inp.Substring(0, dash) : inp, cue = dash > 0 ? inp.Substring(dash + 3) : "";
@@ -493,8 +504,12 @@ namespace AdeeboMeter
             if (IsSnmp(t.Id)) { snmpDev = a[0]; snmpCred = a[1]; }
             if (t.Id == "sweep" || LabGate.Contains(t.Id)) a[3] = tbSweepOk.Checked ? "yes" : "";
             if ((t.Id == "iperf" || t.Id == "bloat") && a[0] != "") tbIperfSrv = a[0];
-            string key = string.Join("|", t.Id == "radius" || t.Id == "pfx" ? a.Take(1) : t.Id == "wol" ? a.Take(1) : IsSnmp(t.Id) ? new[] { a[0], a[2] } : a);   // never keep a secret in the compare key
-            var shown = (string[])a.Clone(); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbBusy = true; tbRun.Text = "Stop"; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+            // what's kept after the run (Copy, Save, Compare, coming back to the tool) never holds a secret: secret boxes are blanked,
+            // HTTP sign-in headers hidden and a request body left out
+            var shown = (string[])a.Clone();
+            for (int i = 0; i < t.Inputs.Length && i < shown.Length; i++) if (SecretInput(t.Inputs[i])) shown[i] = "";
+            if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
+            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbBusy = true; tbRun.Text = "Stop"; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {
                 List<string[]> res;
@@ -562,7 +577,7 @@ namespace AdeeboMeter
                     if (best == 0) { ok = false; break; }
                     total += best;
                 }
-                if (ok) scored.Add(new KeyValuePair<Tool, int>(t, total * 1000 - k));   // ties keep the list's order
+                if (ok) scored.Add(new KeyValuePair<Tool, int>(t, total * 1000 - k));   // ties keep the list's order: reordering Tools2 / TbLayout changes which tool a search opens first (the deep test pins a few)
             }
             return scored.OrderByDescending(x => x.Value).Select(x => x.Key).ToList();
         }

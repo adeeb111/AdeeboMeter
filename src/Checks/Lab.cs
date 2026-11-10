@@ -25,7 +25,12 @@ namespace AdeeboMeter
         static string I(long n) { return n.ToString(CultureInfo.InvariantCulture); }
 
         // on a company domain or VPN a deliberate tick is needed first, as for the ping sweep
-        public static bool Company(Monitor m) { bool vpn; lock (m.L) vpn = m.VpnUp; return vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase); }
+        public static bool Company(Monitor m)
+        {
+            bool vpn; lock (m.L) vpn = m.VpnUp; string machineDomain = "";
+            try { machineDomain = IPGlobalProperties.GetIPGlobalProperties().DomainName ?? ""; } catch (NetworkInformationException) { }
+            return vpn || machineDomain != "" || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);   /* the PC's domain too - a local account on a company PC counts */
+        }
         public static bool Allowed(Monitor m, string ok, List<string[]> rows)
         {
             if (string.Equals((ok ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase) || !Company(m)) return true;

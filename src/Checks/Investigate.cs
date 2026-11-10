@@ -30,7 +30,7 @@ namespace AdeeboMeter
     {
         public sealed class Flow { public string Id, Title, Ask; }
         public static readonly Flow[] All = {
-            new Flow { Id = "whats", Title = "What's wrong? (I can't name it)", Ask = "Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken." },
+            new Flow { Id = "whats", Title = "What's wrong? (I can't name it)", Ask = "Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken. Only what's stale is re-tested: a few pings (1.1.1.1 if needed), one DNS question and Windows' own connectivity test page - only when you press it." },
             new Flow { Id = "slow", Title = "The internet is slow", Ask = "Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS." },
             new Flow { Id = "site", Title = "A website or app won't open", Ask = "Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails." },
             new Flow { Id = "calls", Title = "Calls freeze or sound robotic", Ask = "Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about." },

@@ -702,8 +702,8 @@ namespace AdeeboMeter
         // ================================================================== ping sweep (your own subnet, up to 254 addresses)
         public static List<string[]> Sweep(Monitor m, string confirm, Run run)
         {
-            var rows = new List<string[]>(); NetworkInterface nic; bool vpn; lock (m.L) { nic = m.Primary; vpn = m.VpnUp; }
-            bool company = vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+            var rows = new List<string[]>(); NetworkInterface nic; lock (m.L) nic = m.Primary;
+            bool company = Lab.Company(m);
             if (company && !string.Equals((confirm ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
             { rows.Add(R(1, "Company network?", "this PC is on a company domain or VPN", "Sweeping a company network can trip the security team's alarms. Tick \"This is my own network, or I'm allowed to scan it\" above and press Run if you're sure (home networks are fine).", "i")); return rows; }
             if (nic == null) { rows.Add(R(2, "Network", "no active adapter", "", "u")); return rows; }
