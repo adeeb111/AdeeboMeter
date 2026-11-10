@@ -2,6 +2,43 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
+## 1.1.4 (2026-11-09)
+
+A Security tab, a Traffic Lab, "What's wrong?", 35 new tools (103 in all, plus 42 security checks), honest SNMP, and the fixes from four outside reviews.
+
+### New: Security tab
+- **One "Security checkup" button** - a scorecard (risky · worth a look · good · info / can't tell), problems first; click any check to run it again; Copy as text.
+- **42 defensive checks, no admin**: this PC (antivirus, firewall per network type, BitLocker, Secure Boot, UAC, Windows Update and pending restart, Windows version still supported, SMBv1, SMB signing, Remote Desktop and NLA, Remote Assistance, LLMNR / NetBIOS / mDNS, WPAD, ports open to the network, root certificates added for you, hosts file, proxy, unsigned startup programs, scheduled tasks in writable folders, LSA protection / Credential Guard, memory integrity, SmartScreen, AutoPlay, everyday admin account, screen lock, saved open Wi-Fi, PowerShell policy); your network (Wi-Fi security, DNS honesty, TLS interception, ARP spoofing signs, a second DHCP server, UPnP, router admin over http, router Telnet / FTP / TR-069, public IPv6, DNS leak on VPN, new devices); your sites (certificate expiry, old TLS, security headers, SPF / DKIM / DMARC).
+- Reads settings only; never tries a password, never scans beyond your own router, changes nothing. Every fix opens the Windows screen (or your router's page) where you act. The two checks that ask the internet (DNS vs an encrypted resolver, TLS interception) run only with online lookups on.
+
+### New: What's wrong?
+- First card in Investigate: this PC -> the link -> your router -> the internet -> names -> the way in, stopping at the first broken layer. Reuses what's measured; re-tests only what's stale (TCP when ping is blocked). Weak-but-working layers are named, never "all clear"; events around then are labelled as not causes; hands over to the matching guided check.
+
+### New: Traffic Lab (fourth Toolbox section)
+- ICMP builder (size, don't-fragment, TTL, gap; IPv4 / IPv6), UDP and TCP senders (text or hex), ARP who-has, DHCP options from the server, SNMP test trap (send only), NetFlow v5 test record, Wake-on-LAN with SecureOn, syslog with facility.severity; iperf3, bufferbloat and DSCP ping moved here.
+- One target; at most 10 packets a second and 1,000 in all; on a company domain or VPN nothing is sent without the "allowed to send test traffic" tick; Stop works; each send is logged.
+
+### New tools elsewhere
+- Network: HTTP request builder, STUN, many ports for one service, every IP behind a name, Remote Desktop reachable?, Active Directory / LDAP reachable?, DNS answer compare, before / after snapshot, compare two saved results, My sites.
+- Devices: name of a device (NetBIOS / LLMNR / mDNS / PTR), find devices (mDNS / SSDP / WS-Discovery), shared folders (SMB), remote access commands (ssh / scp / sftp / keys, filled in; click to copy).
+- SNMP: Snapshot, Find a MAC, VLANs, PoE, LAG (LACP), Printer, UPS.
+- Windows: Certificates & files - inspect a certificate, check a PFX (key never exported), decode a CSR, convert PEM / DER, hash a file and compare, decode Base64 / JWT, certificate commands; services that failed to start.
+- Investigate › Health: **Quick tidy** - temp files, Recycle Bin, disk space, startup, frozen or memory-hungry apps, recent installs; each opens the Windows screen, nothing is deleted or changed.
+
+### SNMP - honest numbers
+- A column the device didn't give shows n/a and a "Not read" line - never 0. One 2-minute limit per view; Stop says "Stopped - partial result".
+- Interfaces: CRC column, and "Since HH:mm" lists what changed per port (by ifIndex) - counter deltas, resets, up / down - kept in memory only.
+- A saved walk's unreadable number shows as its own text.
+
+### Widget and the Internet dot
+- The widget claims "always on top" again after sleep, unlock or a display change, and every 30 s; tray › Widget on screen; today's down / up in the graph corners, the month against your cap.
+- With the internet check off, ISP and Internet are grey (never red) and nothing is pinged - also with the main view open.
+
+### Fixes and safety
+- Secrets are never kept after a run: password / secret / community boxes are blanked in Copy, Save and Compare and masked on screen; HTTP sign-in headers are hidden and a request body isn't kept.
+- Live capture drops impossible lines instead of counting them. Check a destination and Health results have Copy as text and Save. Search: "Did you mean ...?". Bufferbloat says inconclusive when the iperf3 server ignores ping.
+- Release gate: the deep test says INCOMPLETE (not ALL PASSED) when its time cap skips checks; GitHub's build runs the self-test before uploading anything; build_exe.cmd returns the self-test's result.
+
 ## 1.1.3 (2026-11-08)
 
 A Toolbox you can find your way around, stricter SNMPv3, and the fixes from two outside reviews of 1.1.2.

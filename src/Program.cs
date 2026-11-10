@@ -54,8 +54,8 @@ namespace AdeeboMeter
     static class Program
     {
         public static string Dir;
-        public const string Version = "1.1.3";
-        public const string FileVersion = "1.1.3.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
+        public const string Version = "1.1.4";
+        public const string FileVersion = "1.1.4.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "is it me or the network?";
         public static int ForceTheme = -1;

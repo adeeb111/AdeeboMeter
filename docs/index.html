@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="AdeeboMeter on a Windows desktop">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 68 engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3).","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.3","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeeb111.github.io/AdeeboMeter/","screenshot":"https://adeeb111.github.io/AdeeboMeter/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter"}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 103 engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3) and a 42-check security checkup.","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.3","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeeb111.github.io/AdeeboMeter/","screenshot":"https://adeeb111.github.io/AdeeboMeter/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter"}
 </script>
 <style>
 /* This page loads nothing from anywhere else: no fonts, no trackers, no analytics. Like the app. */
@@ -402,7 +402,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="tile"><div class="ic" style="background:var(--green-s);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.5L16 9.5"/></svg></div>
     <h3>One glance.</h3><p>Five dots from your PC to the internet. The first one that isn't green is where the trouble starts — and the fix is right there in plain English.</p></div>
   <div class="tile"><div class="ic" style="background:var(--blue-s);color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18V9M10 18V5M16 18v-7M22 18H2"/></svg></div>
-    <h3>The whole story.</h3><p>Pick the problem and it investigates for you. 68 engineer's tools, found by typing. Follow any app from your PC to the server. Replay any minute of the last days. Every fact says where it came from.</p></div>
+    <h3>The whole story.</h3><p>Pick the problem and it investigates for you. 103 engineer's tools, found by typing. Follow any app from your PC to the server. Replay any minute of the last days. Every fact says where it came from.</p></div>
   <div class="tile"><div class="ic" style="background:var(--purple-s);color:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
     <h3>Yours alone.</h3><p>No account, no server, no admin rights. A penny of CPU in the background. Readable source, built by the compiler already inside Windows.</p></div>
 </div></section>
@@ -574,17 +574,18 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Engineer view · tour</div>
-  <h2>Seven places. Everything you'd dig out of a dozen tools.</h2>
+  <h2>Eight places. Everything you'd dig out of a dozen tools.</h2>
   <div class="body">
     <div class="grid g4">
       <div class="card b"><h3>Overview</h3><p>The verdict, router, internet, DNS and traffic right now, what needs attention, today.</p></div>
       <div class="card"><h3>Monitor</h3><p>Connections (<b>Sniff</b> into Wireshark), your Wi-Fi or cable, what's running, live capture.</p></div>
-      <div class="card"><h3>Investigate</h3><p>Pick the problem; it runs the checks. Check a destination, health check.</p></div>
+      <div class="card"><h3>Investigate</h3><p>What's wrong? finds the broken layer; or pick the problem. Check a destination, health check.</p></div>
+      <div class="card r"><h3>Security</h3><p>One checkup: 42 defensive checks of this PC, your network and your sites. Reads only; you fix.</p></div>
       <div class="card"><h3>Network story</h3><p>Follow an app from your PC to the server, box by box, and time each step.</p></div>
       <div class="card"><h3>Time machine</h3><p>Replay any minute, the week as a heatmap, data usage, calls, new devices.</p></div>
       <div class="card"><h3>Learn</h3><p>46 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
-      <div class="card b"><h3>Toolbox</h3><p>68 tools in three sections — Network, Devices, Windows — with quick buttons. Type to find one.</p></div>
-      <div class="card g"><h3>Hover the ? cursor</h3><p>233 terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
+      <div class="card b"><h3>Toolbox</h3><p>103 tools in four sections — Network, Devices, Traffic Lab, Windows — with quick buttons. Type to find one.</p></div>
+      <div class="card g" style="display:none"><h3>Hover the ? cursor</h3><p>233 terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
     </div>
   </div>
   <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>08</span></div>
@@ -610,7 +611,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Toolbox</div>
-  <h2>68 tools. Type what you need.</h2>
+  <h2>103 tools. Type what you need.</h2>
   <div class="body">
     <div class="grid g4">
       <div class="card b"><h3>Path &amp; routing</h3><p>MTU per hop, MTR, the way back, which route, your gateway (VRRP / HSRP), routing protocols on your segment, IPv6.</p></div>
