@@ -6,7 +6,7 @@
 name: build
 on:
   push:
-    branches: [main]
+    branches: [main, store]   # store: the Microsoft Store package before its release
   release:
     types: [published]
   workflow_dispatch:
