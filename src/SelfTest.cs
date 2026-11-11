@@ -45,7 +45,7 @@ namespace AdeeboMeter
                 sb.Append(fv.Perf());
                 fv.Close(); fv.Dispose();
             }
-            File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-perf.txt"), sb.ToString());
+            File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-perf.txt"), sb.ToString());
             return 0;
         }
         // --deeptest [--local] [--minutes N]: the hardening run (see FullView.DeepTest.cs) - written to AdeeboMeter-deeptest.txt
@@ -56,7 +56,7 @@ namespace AdeeboMeter
             var M = new Monitor(); float sc; using (var g = Graphics.FromHwnd(IntPtr.Zero)) sc = g.DpiX / 96f; Draw.Init(sc);
             M.RefreshInterfaces(); for (int i = 0; i < 3; i++) { M.Tick(); Thread.Sleep(300); }
             sb.AppendLine("AdeeboMeter " + Program.Version + " deep test  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture) + "  " + Environment.OSVersion + "  " + Environment.ProcessorCount + " cores  scale " + (sc * 100).ToString("0", CultureInfo.InvariantCulture) + "%  cap " + minutes + " min" + (net ? "" : "  local only"));
-            string path = Path.Combine(Program.Dir, "AdeeboMeter-deeptest.txt");
+            string path = Path.Combine(Program.WriteDir, "AdeeboMeter-deeptest.txt");
             try
             {
                 using (var icon = Theme.MakeIcon(32))
@@ -80,8 +80,8 @@ namespace AdeeboMeter
                 sb.AppendLine("AdeeboMeter " + Program.Version + " MIB test · " + MibIndex.FileCount() + " MIB files · " + sw.ElapsedMilliseconds + " ms");
                 foreach (var r in rows) sb.AppendLine(r[0] == "6" || r[0] == "7" || r[0] == "8" ? (r[0] == "7" ? "! " : "  ") + r[2] : r[1] + ": " + r[2]);
             }
-            catch (Exception e) { sb.AppendLine(Directory.Exists(file) ? "FAILED: --mibtest takes one saved Net-SNMP walk file (snmpwalk output), not a folder - your MIB files go in the MIB folder" : "FAILED: " + e); File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
-            File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-mibtest.txt"), sb.ToString());
+            catch (Exception e) { sb.AppendLine(Directory.Exists(file) ? "FAILED: --mibtest takes one saved Net-SNMP walk file (snmpwalk output), not a folder - your MIB files go in the MIB folder" : "FAILED: " + e); File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
+            File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-mibtest.txt"), sb.ToString());
             return 0;
         }
         public static int Run()
@@ -250,9 +250,9 @@ namespace AdeeboMeter
                     foreach (var dark in new[] { false, true })
                     {
                         Theme.Apply(dark); string tag = dark ? "dark" : "light";
-                        using (var b = Draw.Chip(snap, 0.6)) b.Save(Path.Combine(Program.Dir, "sample_chip_" + tag + ".png"));
-                        using (var b = Draw.Card(snap, new Dictionary<string, RectangleF>())) b.Save(Path.Combine(Program.Dir, "sample_card_" + tag + ".png"));
-                        using (var b = Draw.DetailCard(det)) b.Save(Path.Combine(Program.Dir, "sample_detail_" + tag + ".png"));
+                        using (var b = Draw.Chip(snap, 0.6)) b.Save(Path.Combine(Program.WriteDir, "sample_chip_" + tag + ".png"));
+                        using (var b = Draw.Card(snap, new Dictionary<string, RectangleF>())) b.Save(Path.Combine(Program.WriteDir, "sample_card_" + tag + ".png"));
+                        using (var b = Draw.DetailCard(det)) b.Save(Path.Combine(Program.WriteDir, "sample_detail_" + tag + ".png"));
                     }
                     Theme.Apply(false);
                 });
@@ -509,7 +509,7 @@ namespace AdeeboMeter
                 using (var p = Process.GetCurrentProcess()) sb.AppendLine("      handles=" + p.HandleCount);
             });
             sb.AppendLine(fails == 0 ? "ALL PASSED" : fails + " FAILED");
-            try { File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-selftest.txt"), sb.ToString()); } catch { }
+            try { File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-selftest.txt"), sb.ToString()); } catch { }
             M.Stop();
             return fails;
         }
@@ -529,7 +529,7 @@ namespace AdeeboMeter
             for (int i = 0; i < 8; i++) sb.AppendLine("  " + DestResult.Steps[i].PadRight(9) + " lv=" + r.Lv[i] + "  " + r.Val[i]);
             foreach (var c in r.CardsCopy()) { sb.AppendLine("  [" + c.Key + "]"); foreach (var row in c.Value) sb.AppendLine("     " + row[0] + ": " + (row.Length > 1 ? row[1] : "")); }
             AppendStory(sb, r);
-            File.AppendAllText(Path.Combine(Program.Dir, "AdeeboMeter-check.txt"), sb.ToString() + "\n");
+            File.AppendAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-check.txt"), sb.ToString() + "\n");
             return 0;
         }
 
@@ -545,7 +545,7 @@ namespace AdeeboMeter
             foreach (var c in v.Top) sb.AppendLine(c.Host + "  " + c.Proto + "  " + c.Remote + ":" + c.RemotePort + "  bytes=" + c.Bytes + " retx=" + c.Retx);
             sb.AppendLine("-- expert");
             foreach (var e in v.Expert) sb.AppendLine(e[1] + " = " + e[2]);
-            File.WriteAllText(Path.Combine(Program.Dir, "AdeeboMeter-parsetest.txt"), sb.ToString());
+            File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-parsetest.txt"), sb.ToString());
             return 0;
         }
     }

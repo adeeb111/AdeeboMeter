@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdeeboMeter Privacy Policy</title>
+<meta name="description" content="AdeeboMeter collects nothing. No account, no telemetry, no server. What it keeps on your PC and every packet it sends.">
+<link rel="canonical" href="https://adeeb111.github.io/AdeeboMeter/privacy.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue)}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<p><a href="./">← AdeeboMeter</a></p>
+<h1>Privacy Policy</h1>
+<p class="date">AdeeboMeter for Windows · last updated 11 November 2026</p>
+
+<div class="short"><p><b>In short:</b> AdeeboMeter collects nothing about you. There is no account, no telemetry, no analytics and no server. Everything it learns stays on your PC, and it never accepts a connection from anywhere.</p></div>
+
+<h2>What AdeeboMeter collects</h2>
+<p>Nothing. The app has no server to send data to, and the developer receives no information about you, your PC, your network or how you use the app.</p>
+
+<h2>What stays on your PC</h2>
+<ul>
+  <li><b>Settings</b> (<code>AdeeboMeter.settings</code>) and a small <b>log</b> for troubleshooting the app itself.</li>
+  <li><b>History</b> of your network's speed and health for the last days, so you can replay a minute that went wrong. It's kept in your AppData folder and old days are removed automatically.</li>
+  <li><b>Captures</b> and <b>saved results</b>, but only the ones you choose to make or save.</li>
+</ul>
+<p>Passwords and secrets you type into a tool (for example an SNMP community, a RADIUS secret or a certificate password) are used for that one action and are never saved, logged or copied.</p>
+<p>Uninstalling AdeeboMeter removes it. Your own saved files stay where you put them.</p>
+
+<h2>What it sends, and when</h2>
+<ul>
+  <li><b>The internet check:</b> a small ping to <code>1.1.1.1</code> and <code>8.8.8.8</code> about every 30 seconds, to show whether the internet answers. It carries no information about you. Set the internet check to Off in Settings and it stops completely.</li>
+  <li><b>Tools you start:</b> when you run a test (for example a ping, a DNS lookup or a website check), it contacts only the target you typed or picked, and only when you start it.</li>
+  <li><b>Online lookups:</b> checks that ask a third party (for example a DNS-over-HTTPS server) run only if you turn on online lookups in Settings.</li>
+  <li><b>Crash reports:</b> if the app crashes, the next start offers to open a GitHub issue page in your browser with the details filled in. Nothing is sent unless you choose to submit it, and you can read and edit it first.</li>
+</ul>
+<p>AdeeboMeter never listens: it opens no ports and runs no server, and only receives replies to requests it made.</p>
+
+<h2>Microsoft Store</h2>
+<p>If you installed AdeeboMeter from the Microsoft Store, Microsoft handles the download, updates and any purchase data under <a href="https://privacy.microsoft.com/privacystatement">Microsoft's privacy statement</a>. The developer only sees the anonymous totals Microsoft provides to every publisher, such as the number of installs.</p>
+
+<h2>Children</h2>
+<p>AdeeboMeter doesn't collect personal information from anyone, including children.</p>
+
+<h2>Changes and contact</h2>
+<p>If this policy changes, the new version will be posted on this page with a new date. The source code is public on <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>, so anyone can check what the app does. For questions, open an issue at <a href="https://github.com/adeeb111/AdeeboMeter/issues">github.com/adeeb111/AdeeboMeter/issues</a>.</p>
+
+<footer>AdeeboMeter by Adeeb Khan · MIT License</footer>
+</main>
+</body>
+</html>

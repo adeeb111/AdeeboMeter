@@ -51,7 +51,7 @@ namespace AdeeboMeter
         // Offer to install only on a first start of a copy that isn't installed and was never used from where it is.
         public static bool ShouldOffer()
         {
-            if (RunningInstalled) return false;
+            if (Program.Packaged || RunningInstalled) return false;
             return !File.Exists(Path.Combine(Program.Dir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "Ade" + "boMeter.settings"));
         }
 

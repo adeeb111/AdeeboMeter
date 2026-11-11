@@ -7,3 +7,5 @@ AdeeboMeter-*.txt
 captures/
 history/
 obj/
+store/out/
+store/obj/

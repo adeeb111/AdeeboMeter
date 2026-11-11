@@ -54,6 +54,15 @@ namespace AdeeboMeter
     static class Program
     {
         public static string Dir;
+        // Installed from the Microsoft Store (an MSIX package): its own folder is read-only and Windows / the Store install,
+        // update, start and remove it - so settings and reports go to AppData and the self-install / Run key are left alone.
+        public static bool Packaged;
+        public static string WriteDir { get { return Packaged ? DataDir : Dir; } }
+        static bool DetectPackaged()
+        {
+            try { int n = 0; return Native.GetCurrentPackageFullName(ref n, null) == 122; }   /* 122 = buffer too small: there IS a package; 15700 = none */
+            catch (EntryPointNotFoundException) { return false; }
+        }
         public const string Version = "1.1.4";
         public const string FileVersion = "1.1.4.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
@@ -70,7 +79,7 @@ namespace AdeeboMeter
             // (skipped under Wine, whose system DLLs don't live in a real System32 - only the test lab runs there)
             try { IsWine = Native.GetProcAddress(Native.GetModuleHandle("ntdll.dll"), "wine_get_version") != IntPtr.Zero; } catch { }
             if (!IsWine) try { DllSafety = Native.SetDefaultDllDirectories(0x800 /*LOAD_LIBRARY_SEARCH_SYSTEM32*/) && Native.SetDllDirectory(""); } catch { DllSafety = false; }
-            Dir = Path.GetDirectoryName(Application.ExecutablePath);
+            Dir = Path.GetDirectoryName(Application.ExecutablePath); Packaged = DetectPackaged();
             try { Native.SetProcessDPIAware(); } catch { }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -100,7 +109,7 @@ namespace AdeeboMeter
 
             // A downloaded copy offers to install itself; --uninstall comes from Settings > Apps or the tray menu.
             bool uninstall = args.Any(a => string.Equals(a, "--uninstall", StringComparison.OrdinalIgnoreCase));
-            if (uninstall || ((args.Length == 0 || args.Any(a => a == "--offer")) && Setup.ShouldOffer()) || args.Any(a => a == "--offer"))
+            if (!Packaged && (uninstall || ((args.Length == 0 || args.Any(a => a == "--offer")) && Setup.ShouldOffer()) || args.Any(a => a == "--offer")))
             {
                 bool here;
                 using (var w = new SetupWindow(uninstall)) { Application.Run(w); here = w.RunHere; }
@@ -132,7 +141,7 @@ namespace AdeeboMeter
             {
                 lock (logLock)
                 {
-                    string p = Path.Combine(Dir, "AdeeboMeter.log");
+                    string p = Path.Combine(WriteDir, "AdeeboMeter.log");
                     if (File.Exists(p) && new FileInfo(p).Length > 256 * 1024) File.Delete(p);
                     File.AppendAllText(p, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture) + "  " + m + Environment.NewLine);
                 }

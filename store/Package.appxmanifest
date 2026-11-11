@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AdeeboMeter for the Microsoft Store. store\pack.ps1 fills in __VERSION__ and builds the .msix; Microsoft signs it after review.
+     The identity values come from Partner Center (Product management > Product identity) and must not change. -->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap desktop rescap">
+  <Identity Name="AdeebKhan.AdeeboMeter" Publisher="CN=0FFED5C5-A469-4C68-9855-2168DBCE607F" Version="__VERSION__" ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>AdeeboMeter</DisplayName>
+    <PublisherDisplayName>Adeeb Khan</PublisherDisplayName>
+    <Logo>images\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Applications>
+    <Application Id="AdeeboMeter" Executable="AdeeboMeter.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="AdeeboMeter" Description="Is it me or the network? A small widget and toolbox that tells you - offline, no admin, never listens."
+                          BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- "Start with Windows": on by default like the downloaded exe; the user switches it in Settings > Apps > Startup -->
+        <desktop:Extension Category="windows.startupTask" Executable="AdeeboMeter.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="AdeeboMeter" Enabled="true" DisplayName="AdeeboMeter" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <!-- a classic desktop app (it reads Windows settings and sends the network tests you start); no other capability is asked for -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
