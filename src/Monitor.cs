@@ -750,7 +750,7 @@ namespace AdeeboMeter
                 gw = GwPing.Last; net = NetPing.Last; dns = Dns.Last; loss = NetEverReplied ? Loss.Avg(10) * 100 : double.NaN; jit = NetPing.Jitter(10);
                 s.Call = CallLikely; readMB = DiskReadMBs; writeMB = DiskWriteMBs; downTot = DownBytesTotal;
             }
-            s.Ping = net; s.Jitter = jit; s.LossPct = loss; s.DnsMs = dns;
+            s.Ping = net; s.Jitter = jit; s.LossPct = loss; s.DnsMs = dns; s.GwMs = gw; s.NetHist = NetPing.Values(60);
             s.PathLabel = new[] { "PC", hasWifi ? "Wi-Fi" : "LAN", vpn ? "VPN" : "ISP", "DNS", "Internet" };
             string[] word = { "OK", "Slow", "Problem here", "Unknown" };
             s.PathMain = new[]

@@ -107,6 +107,14 @@ namespace AdeeboMeter
             int pi = Array.FindIndex(args, a => string.Equals(a, "--parse-test", StringComparison.OrdinalIgnoreCase));
             if (pi >= 0 && pi + 1 < args.Length) return SelfTest.ParseTest(args[pi + 1]);
             int rf = Array.FindIndex(args, a => a == "--remove-folder"); if (rf >= 0 && rf + 1 < args.Length) return Setup.RemoveFolder(args[rf + 1]);
+            // test lab: draw the corner widget's card in a given style to a PNG (no window) - --render-card calls out.png
+            int rc = Array.FindIndex(args, a => a == "--render-card");
+            if (rc >= 0 && rc + 2 < args.Length && args[rc + 2].EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                Cfg.WidgetStyle = args[rc + 1]; Cfg.Mode = "pro"; Draw.Init(1f); var mon = new Monitor(); mon.RefreshInterfaces(); mon.Start(); Thread.Sleep(8000);
+                var snap = mon.Latest ?? new Snap(); using (var bmp = Draw.Card(snap, new Dictionary<string, System.Drawing.RectangleF>())) bmp.Save(args[rc + 2], System.Drawing.Imaging.ImageFormat.Png);
+                mon.Stop(); return 0;
+            }
             int wi = Array.FindIndex(args, a => a == "--write-icon"); if (wi >= 0 && wi + 1 < args.Length) { File.WriteAllBytes(args[wi + 1], Theme.IcoBytes()); return 0; }
 
             // A downloaded copy offers to install itself; --uninstall comes from Settings > Apps or the tray menu.
@@ -272,7 +280,7 @@ namespace AdeeboMeter
                 case "gwidget": GameWidget = v != "0"; break;
                 case "speedsrv": SpeedServer = System.Text.RegularExpressions.Regex.IsMatch(v ?? "", "^[a-z0-9-]{1,40}$") ? v : "auto"; break;
                 case "mode": Mode = v == "simple" || v == "pro" ? v : ""; break;
-                case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" ? v : "auto"; break;
+                case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" || v == "calls" || v == "engineer" ? v : "auto"; break;
                 case "livemin": LiveMin = Pick(v, 15, 5, 15, 30); break;
                 case "sniffsec": SniffSec = Pick(v, 30, 30, 60); break;
                 case "fade": Fade = Pick(v, 77, 51, 77, 128, 191, 255); break;

@@ -1918,6 +1918,16 @@ how: From the events AdeeboMeter already recorded; nothing new is measured.
 why: A laptop that ping-pongs between two access points of equal strength stutters calls even with full bars.
 without: Roaming while you walk around is normal; roaming while sitting still is not.
 
+== tb.gamecompare
+friendly: Side by side
+cat: term
+close: -1
+tag: Is the cable really better? Is my PC the problem?
+what: Measures a game's servers 30 times each and saves the run under a name you choose - Wi-Fi, Cable, Laptop. Switch the connection (or run it on another PC) and run again: every saved run shows side by side, with which one is steadier, loses fewer packets and is quicker.
+how: One probe a second to each of the game's servers (up to 8), the same way the Gamer Zone measures them. Up to 4 runs per game are kept on this PC. To compare two PCs, copy the run on one and paste it into the name box on the other - it's one line of numbers, nothing else.
+why: "Use a cable" is the first advice every gamer gets. This shows whether it actually helps on your setup - and whether one PC (drivers, background apps) is the problem rather than the line.
+without: Run ping -n 30 to the same server on each connection and compare by hand.
+
 == tb.vpn
 friendly: VPN and company proxy
 cat: term

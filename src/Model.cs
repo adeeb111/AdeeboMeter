@@ -136,7 +136,8 @@ namespace AdeeboMeter
         public int[] Path = { 3, 3, 3, 3, 3 };
         public string[] PathLabel = { "PC", "LAN", "ISP", "DNS", "Internet" }, PathMain = new string[5], PathSub = new string[5];
         public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping, Jitter, LossPct, DnsMs;
-        public double[] DownHist = Array.Empty<double>(), UpHist = Array.Empty<double>();
+        public double[] DownHist = Array.Empty<double>(), UpHist = Array.Empty<double>(), NetHist = Array.Empty<double>();   // NetHist: the internet check, last 60
+        public double GwMs = double.NaN;
         public bool Call;
         public string MemText = "", DiskText = "";
         public Dictionary<string, Detail> Details = new Dictionary<string, Detail>();

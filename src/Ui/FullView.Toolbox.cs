@@ -100,6 +100,7 @@ namespace AdeeboMeter
                 T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
                 T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
                 T("speedtest", "SPEED", "Speed test", "Server - empty = your usual, auto, a city (vultr toronto), a file URL - or list / check", (a, r) => SpeedTest.Run(a[0], r)),
+                T("gamecompare", "SPEED", "Side by side: Wi-Fi vs cable, or two PCs (a game)", "Game - e.g. valorant (empty = the one you play)|Name this run (Wi-Fi, Cable, Laptop) - or paste a run copied on another PC|Type clear to delete this game's saved runs", (a, r) => GameCompare.Run(M, a[0], a[1], a[2], r)),
                 T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes|Include my public IP? type yes (it asks Cloudflare once) - no by default", (a, r) => IspReport.Run(M, a[0], a[1], a[2], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
@@ -148,7 +149,7 @@ namespace AdeeboMeter
         static readonly string[][] TbLayout = {
             new[] { "PATH & ROUTING", "mtu", "udpmtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "vpn", "teams", "ssh", "mail", "radius", "tacacs" },
-            new[] { "SPEED & QUALITY", "speedtest", "ping", "twamp", "cloud", "ispreport" },
+            new[] { "SPEED & QUALITY", "speedtest", "ping", "twamp", "cloud", "ispreport", "gamecompare" },
             new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
             new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
@@ -339,6 +340,7 @@ namespace AdeeboMeter
                     }
                 case "sweep": return "about 20 seconds, never more than 90";
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
+                case "gamecompare": return "about " + GameCompare.Samples + " seconds - one probe a second to each of the game's servers (up to 8)";
                 case "vpn": return "a few seconds - 7 pings to the VPN's own DNS server";
                 case "udpmtu": return "about 10-20 seconds · about 12 sizes, two small tries each, to the one target";
                 case "speedtest": return a.Length > 0 && (a[0].Trim() == "list") ? "instant - nothing is sent" : a.Length > 0 && a[0].Trim() == "check" ? "about a minute - 1 KB from each server" : "about 20 seconds · up to " + SpeedTest.MaxDownMB + " MB down and " + SpeedTest.MaxUpMB + " MB up - nothing runs until you press Run";

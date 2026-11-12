@@ -250,11 +250,14 @@ namespace AdeeboMeter
             return bmp;
         }
 
-        // which layout the widget card uses: Auto follows what you're doing (Gamer while a game you added is open)
-        public static string Layout()
+        // which layout the widget card uses: Auto follows what you're doing - Gamer while a game you added is open, Calls during
+        // a call - and is Everyday the rest of the time. Engineer is chosen by hand (Pro mode).
+        public static string Layout(bool call)
         {
             string st = Cfg.WidgetStyle; var gp = GamePing.Me.Playing;
             if (st == "gamer" || (st == "auto" && gp != null && Cfg.GameWidget)) return GamerTarget() != null ? "gamer" : "everyday";
+            if (st == "calls" || (st == "auto" && call)) return "calls";
+            if (st == "engineer") return Cfg.Simple ? "everyday" : "engineer";
             return "everyday";
         }
         // the game and server the gamer layout shows: the one being played, else the first game you added; its best region
@@ -313,9 +316,75 @@ namespace AdeeboMeter
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
             return bmp;
         }
+        // Calls: what a call cares about - steadiness (jitter), loss and the delay; the VPN as its own line when one is up
+        public static Bitmap CallsCard(Snap s, Dictionary<string, RectangleF> hits)
+        {
+            double jit = s.Jitter, loss = s.LossPct, ping = s.Ping;
+            int lv = double.IsNaN(ping) ? 3 : (jit > 30 || loss > 3 || ping > 250) ? 2 : (jit > 15 || loss > 1 || ping > 150) ? 1 : 0;
+            string grade = lv == 0 ? "CLEAR" : lv == 1 ? "SOME BREAKUP" : lv == 2 ? "CHOPPY" : "WAITING";
+            string head = s.Call ? (lv == 0 ? "Your call should sound clear." : lv == 1 ? "Your call may break up now and then." : lv == 2 ? "Your call will sound choppy." : "Measuring your call...") : "No call right now - this is how one would sound.";
+            string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? "through the VPN · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
+            return MetricCard(s, hits, "CALL", head, lv, double.IsNaN(jit) ? "-" : Math.Round(jit).ToString(CultureInfo.InvariantCulture), "ms jitter", grade,
+                s.NetHist, new[] { "delay " + Fmt(ping, "0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↑" + Fmt(s.Up, "0.0", " Mb/s"), vpnLine });
+        }
+        // Engineer: the raw numbers - router and internet delay, DNS, TCP retransmits / resets, throughput
+        public static Bitmap EngineerCard(Snap s, Dictionary<string, RectangleF> hits)
+        {
+            string h1 = s.Health != null && s.Health.Count > 0 ? s.Health[0][0] + " " + s.Health[0][1] : "", h2 = s.Health != null && s.Health.Count > 1 ? s.Health[1][0] + " " + s.Health[1][1] : "";
+            double gw = s.GwMs;
+            return MetricCard(s, hits, "ENG", s.Headline, s.Level, Fmt(s.Ping, "0", ""), "ms internet", s.Level == 0 ? "OK" : s.Level == 1 ? "SLOW" : s.Level == 2 ? "PROBLEM" : "WAITING",
+                s.NetHist, new[] { "router " + Fmt(gw, "0", " ms") + "   DNS " + Fmt(s.DnsMs, "0", " ms") + "   jitter " + Fmt(s.Jitter, "0.0", " ms") + "   loss " + Fmt(s.LossPct, "0.#", "%"), (h1 + (h2 != "" ? "   " + h2 : "")).Trim(), "↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s") + "   CPU " + Fmt(s.Cpu, "0", "%") + "   RAM " + Fmt(s.Mem, "0", "%") });
+        }
+        // the shared shape: tag, headline, one big number with its level colour and a grade pill, a 60-sample sparkline,
+        // a few small rows, then the five-dot path strip
+        static Bitmap MetricCard(Snap s, Dictionary<string, RectangleF> hits, string tagText, string head, int lv, string big, string unit, string grade, double[] series, string[] rows)
+        {
+            hits.Clear();
+            var lines = rows.Where(r => !string.IsNullOrEmpty(r)).ToArray();
+            Color gc = lv == 0 ? Theme.Green : lv == 1 ? Theme.Amber : lv == 2 ? Theme.Red : Theme.Grey;
+            int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
+            float headH = Measure(head, fHead, (int)inner).Height;
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 30 * S + pad);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
+            {
+                var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
+                Theme.Fill(g, cr, 12 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 12 * S, lv == 1 || lv == 2 ? gc : Theme.Line, lv == 1 || lv == 2 ? 1.5f : 1f);
+                float y = pad;
+                Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
+                g.DrawString("AdeeboMeter", fName, ink, pad + 24 * S, y + 1 * S);
+                float nw = Measure("AdeeboMeter", fName, 0).Width;
+                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tagText, fTiny, 0).Width + 10 * S, 15 * S);
+                Theme.Fill(g, tag, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
+                y += 24 * S;
+                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
+                hits["main"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 80 * S);
+                using (var bf = new Font(fHead.FontFamily, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel)) using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
+                {
+                    g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
+                    g.DrawString(unit, fBody, muted, pad + bw - 2 * S, y + 16 * S);
+                }
+                float pw = Measure(grade, fTiny, 0).Width + 12 * S; var gp = new RectangleF(W - pad - pw, y + 12 * S, pw, 17 * S);
+                Theme.Fill(g, gp, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                y += 46 * S;
+                var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 5 * S, Theme.Soft);
+                var v = series ?? Array.Empty<double>(); double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;
+                Theme.Spark(g, v, sr, gc, cap * 1.15, false);
+                y += 30 * S;
+                foreach (var l in lines) { using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(l, fSmall, muted, new RectangleF(pad, y, inner, 18 * S), sf); y += 18 * S; }
+                y += 4 * S;
+                hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 20 * S);
+                PathStrip(g, s, new RectangleF(pad, y, inner, 12 * S), false);
+            }
+            if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
+            return bmp;
+        }
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
-            if (Layout() == "gamer") return GamerCard(s, hits);
+            string lay = Layout(s.Call);
+            if (lay == "gamer") return GamerCard(s, hits);
+            if (lay == "calls") return CallsCard(s, hits);
+            if (lay == "engineer") return EngineerCard(s, hits);
             hits.Clear();
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(s.Headline, fHead, (int)inner).Height;

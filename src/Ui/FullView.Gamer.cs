@@ -200,6 +200,8 @@ namespace AdeeboMeter
                 }
                 btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
                 var rg = ss != null ? games.FirstOrDefault(z => z.Id == ss.GameId) : target;
+                btn("Lag graph for streaming", false, delegate { StreamOverlay.Toggle(M); });
+                btn("Wi-Fi vs cable...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null && tbBoxes.Count > 0) tbBoxes[0].Box.Text = rg.Id; });
                 btn("Report for my ISP...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); if (rg != null && tbBoxes.Count > 1) { tbBoxes[0].Box.Text = rg.Id; tbBoxes[1].Box.Text = "2"; } });
                 y += 44 * S;
                 if (ss == null) return y + 6 * S;
