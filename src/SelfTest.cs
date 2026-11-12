@@ -409,7 +409,132 @@ namespace AdeeboMeter
                 if (IspReport.StartOfLoss(clean) != -1) throw new InvalidOperationException("a router ignoring probes was blamed");
                 var bad = new List<PathTools.Hop> { H(1, 0, "192.168.1.1"), H(2, 0, "203.0.113.1"), H(3, 8, "203.0.113.9"), H(4, 7, "198.51.100.7") };
                 if (IspReport.StartOfLoss(bad) != 2) throw new InvalidOperationException("loss start " + IspReport.StartOfLoss(bad));
+                // seen on a real line: the router rate-limits (67%), then silent hops and a game server that never answers ping
+                var silent = new List<PathTools.Hop> { H(1, 67, "10.0.0.1"), H(2, 24, "174.116.88.1"), H(3, 0, "69.63.250.1"), H(4, 0, "209.148.235.1"), H(5, 0, "104.160.128.1"), H(6, 100, ""), H(7, 100, "") };
+                if (IspReport.StartOfLoss(silent) != -1) throw new InvalidOperationException("silent hops were blamed: hop " + IspReport.StartOfLoss(silent));
+                if (!PathTools.MtrVerdict(silent).Contains("doesn't answer pings")) throw new InvalidOperationException("silent destination not said: " + PathTools.MtrVerdict(silent));
+                var lastOnly = new List<PathTools.Hop> { H(1, 0, "10.0.0.1"), H(2, 0, "203.0.113.1"), H(3, 30, "203.0.113.9"), H(4, 100, "") };
+                if (IspReport.StartOfLoss(lastOnly) != -1) throw new InvalidOperationException("a lone lossy hop before silence was blamed");
+                var reached = new List<PathTools.Hop> { H(1, 0, "10.0.0.1"), H(2, 0, "203.0.113.1"), H(3, 12, "198.51.100.7") }; reached[2].Reached = true;
+                if (IspReport.StartOfLoss(reached) != 2) throw new InvalidOperationException("loss at the destination itself not found");
                 if (!IspReport.Private(IPAddress.Parse("100.64.3.1")) || !IspReport.Private(IPAddress.Parse("fd00::1")) || IspReport.Private(IPAddress.Parse("8.8.8.8"))) throw new InvalidOperationException("private address check");
+            });
+            T("code keys: Windows' fast PBKDF2 gives the same bytes as the managed one", () =>
+            {
+                var pw = Encoding.UTF8.GetBytes("ABCD2345EFGH6789JKMN"); var salt = new byte[16]; for (int i = 0; i < 16; i++) salt[i] = (byte)(i * 7);
+                var nat = new byte[64]; var man = FileCrypt.ManagedPbkdf2(pw, salt, 1000, 64);
+                if (!FileCrypt.NativePbkdf2(pw, salt, 1000, nat)) { if (Environment.OSVersion.Platform == PlatformID.Win32NT && !Program.IsWine) throw new InvalidOperationException("bcrypt PBKDF2 not available on Windows"); return; }
+                if (!nat.SequenceEqual(man)) throw new InvalidOperationException("native and managed PBKDF2 differ");
+            });
+            T("untrusted files: damaged captures, .adeebo, .adeebokey and file names never crash", () =>
+            {
+                var rnd = new Random(1234); int cases = 0;
+                Action<byte[]> replay = bytes =>
+                {
+                    try
+                    {
+                        var pk = Pcap.Parse(bytes); cases++;
+                        Replay.DhcpRows(pk, new List<string[]>()); Replay.RaRows(pk, new List<string[]>()); Replay.EapRows(pk, new List<string[]>()); Replay.IcmpRowsFromPackets(pk, new List<string[]>());
+                    }
+                    catch (Exception e)
+                    { if (!(e is IndexOutOfRangeException || e is ArgumentException || e is OverflowException || e is NullReferenceException)) throw; var st = (e.StackTrace ?? "").Split('\n'); throw new InvalidOperationException(e.GetType().Name + " at " + string.Join(" < ", st.Take(3).Select(l => l.Trim()))); }
+                };
+                foreach (var smp in Replay.Samples.Where(x => x[2] != "cert"))
+                {
+                    var good = Replay.Build(smp[0]);
+                    for (int n = 0; n < 150; n++)
+                    {
+                        var b = (byte[])good.Clone(); int flips = 1 + rnd.Next(8);
+                        for (int f = 0; f < flips; f++) b[rnd.Next(b.Length)] = (byte)rnd.Next(256);
+                        if (rnd.Next(4) == 0) Array.Resize(ref b, rnd.Next(b.Length));
+                        replay(b);
+                    }
+                }
+                // a pcapng block that claims to be ~2 GB, and random bytes behind each magic number
+                var ng = new byte[64]; BitConverter.GetBytes(0x0A0D0D0Au).CopyTo(ng, 0); BitConverter.GetBytes(28u).CopyTo(ng, 4); BitConverter.GetBytes(0x1A2B3C4Du).CopyTo(ng, 8); BitConverter.GetBytes(28u).CopyTo(ng, 24);
+                BitConverter.GetBytes(6u).CopyTo(ng, 28); BitConverter.GetBytes(0x7FFFFFFCu).CopyTo(ng, 32); replay(ng);
+                foreach (var magic in new[] { 0xa1b2c3d4u, 0xd4c3b2a1u, 0x0A0D0D0Au })
+                    for (int n = 0; n < 200; n++) { var b = new byte[24 + rnd.Next(400)]; rnd.NextBytes(b); BitConverter.GetBytes(magic).CopyTo(b, 0); replay(b); }
+                // a tampered .adeebo: only "can't open this" (CryptographicException), never a crash or a half-opened file
+                byte[] enc; using (var o = new MemoryStream()) { FileCrypt.EncryptCode(new MemoryStream(Encoding.UTF8.GetBytes("hello")), "a.txt", o, "ABCD2345EFGH6789JKMN2345", 100000); enc = o.ToArray(); }
+                for (int n = 0; n < 24; n++)
+                {
+                    var b = (byte[])enc.Clone(); int at = rnd.Next(b.Length); if (at >= 8 && at < 12) at = 12; b[at] ^= (byte)(1 + rnd.Next(255));
+                    if (n % 6 == 5) Array.Resize(ref b, rnd.Next(b.Length));
+                    try { using (var o = new MemoryStream()) FileCrypt.DecryptCode(new MemoryStream(b), o, "ABCD2345EFGH6789JKMN2345"); throw new InvalidOperationException("a changed file opened (byte " + at + ")"); }
+                    catch (System.Security.Cryptography.CryptographicException) { }
+                }
+                var big = (byte[])enc.Clone(); big[8] = 0x7F; try { FileCrypt.DecryptCode(new MemoryStream(big), new MemoryStream(), "x"); throw new InvalidOperationException("huge iteration count accepted"); } catch (System.Security.Cryptography.CryptographicException) { }
+                // mangled public key text
+                string nm; foreach (var t in new[] { "", "ADEEBOMETER PUBLIC KEY v1", "ADEEBOMETER PUBLIC KEY v1\nkey: ###", "ADEEBOMETER PUBLIC KEY v1\nkey: QUJD", "ADEEBOMETER PUBLIC KEY v1\nname: x\nkey: " + new string('A', 5000) }) if (EcKeys.ReadPublic(t, out nm) != null) throw new InvalidOperationException("bad key text accepted");
+                // a file name chosen by whoever encrypted the file stays a plain name in the chosen folder
+                string dir = Path.GetTempPath().TrimEnd('\\');
+                foreach (var bad in new[] { "..\\..\\Windows\\evil.exe", "C:\\Windows\\x.dll", "a|b<c>.txt", "CON", "nul.txt", "", "...", new string('x', 500) + ".txt", "/etc/passwd" })
+                {
+                    string p = FileCrypt.FreeName(dir, bad);
+                    if (!string.Equals(Path.GetDirectoryName(p).TrimEnd('\\'), dir, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("escaped the folder: " + bad + " -> " + p);
+                    string f = Path.GetFileName(p), stem = f.Split('.')[0]; if (f.Length > 140 || string.Equals(stem, "CON", StringComparison.OrdinalIgnoreCase) || string.Equals(stem, "NUL", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("bad name: " + bad + " -> " + f);
+                }
+                sb.AppendLine("      " + cases + " damaged or random captures read without a crash");
+            });
+            T("no company reference anywhere in the product", () =>
+            {
+                var exe = System.IO.File.ReadAllBytes(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string word = ((char)('m' + 1)).ToString(CultureInfo.InvariantCulture) + "ok" + "ia";   // built at run time so this test doesn't find itself
+                foreach (var enc in new Encoding[] { Encoding.ASCII, Encoding.Unicode })
+                {
+                    var hay = enc.GetString(exe).ToLowerInvariant();
+                    if (hay.Contains(word)) throw new InvalidOperationException("found in the exe (" + enc.WebName + ")");
+                }
+                foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("found in " + pack);
+            });
+            T("About links: only AdeeboMeter's pages and its PayPal donation link open", () =>
+            {
+                foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);
+                foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
+            });
+            T("Adeebo Points: +1 / +2 once, replay +2 once, survives a restart, off keeps the total", () =>
+            {
+                var bad = new List<string>();
+                if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
+                string f = Path.Combine(Path.GetTempPath(), "am-points-" + Guid.NewGuid().ToString("N") + ".txt");
+                try
+                {
+                    var p = new Points(f); var t0 = new DateTime(2026, 11, 12, 10, 0, 0, DateTimeKind.Utc);
+                    if (p.Total != 0) bad.Add("fresh total " + p.Total);
+                    if (p.Award("ping", false, true, t0) != 0) bad.Add("earned without opening the Example");
+                    if (p.Award("ping", true, false, t0) != 0) bad.Add("earned with earning off");
+                    if (p.Award("ping", true, true, t0) != 1) bad.Add("first run not +1");
+                    if (p.Award("ping", true, true, t0.AddMinutes(1)) != 0 || p.Award("ping", true, true, t0.AddHours(3)) != 0) bad.Add("regular example earned twice");
+                    if (p.Award("ispreport", true, true, t0) != 2) bad.Add("a longer test (ISP report) first not +2");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(5)) != 0) bad.Add("replay bonus inside 10 minutes");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(11)) != 2) bad.Add("replay bonus not +2");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(40)) != 0) bad.Add("replay bonus twice");
+                    if (p.Award("udpsend", true, true, t0) != 0) bad.Add("a Traffic Lab sender earned");
+                    if (p.Total != 5) bad.Add("total " + p.Total + " (want 5)");
+                    var again = new Points(f); if (again.Total != 5 || again.Done != 2) bad.Add("after restart " + again.Total + "/" + again.Done);
+                    if (again.Award("ispreport", true, true, t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
+                    if (again.Award("dig", true, false, t0) != 0 || again.Total != 5) bad.Add("earning off changed the total");
+                    if (again.Award("learn.dhcp", true, true, t0) != 1 || again.Award("page.replay", true, true, t0) != 1 || again.Award("learn.dhcp", true, true, t0.AddHours(1)) != 0) bad.Add("Learn / page points");
+                    if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
+                    int left; if (Points.Rank(14) != "Beginner" || Points.Rank(15) != "Learner" || Points.Rank(49) != "Learner" || Points.Rank(50) != "Troubleshooter" || Points.Rank(100) != "Expert" || Points.Next(32, out left) != "Troubleshooter" || left != 18) bad.Add("ranks");
+                    var ex = Examples.Rows(Examples.Get("ping"), true);
+                    if (Points.Completed(ex, false)) bad.Add("an example counted as a run");
+                    if (Points.Completed(new List<string[]> { new[] { "0", "Replies", "50 of 50", "", "m" } }, true)) bad.Add("a stopped run counted");
+                    if (Points.Completed(new List<string[]> { new[] { "2", "Target", "type a host", "", "" } }, false)) bad.Add("an input prompt counted");
+                    if (!Points.Completed(new List<string[]> { new[] { "2", "Closed", "port 25 blocked", "", "m" } }, false)) bad.Add("a real (bad) result didn't count");
+                }
+                finally { try { File.Delete(f); } catch (IOException) { } }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
+            T("examples: every tool has one, it fits its boxes, it's marked and never copied", () =>
+            {
+                using (var icon = Theme.MakeIcon(16))
+                {
+                    var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
+                    try { string bad = fv.ExampleCheck(); if (bad != "") throw new InvalidOperationException(bad); }
+                    finally { fv.Close(); fv.Dispose(); }
+                }
             });
             T("wave 4: UDP MTU packets, neighbour filter, speed grade, mode setting", () =>
             {

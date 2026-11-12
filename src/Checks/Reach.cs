@@ -240,8 +240,8 @@ namespace AdeeboMeter
                 }
             }
             rows.Add(R(found.Count > 0 ? 0 : 1, "Found", I(found.Count) + " devices · " + I(answered) + " answered in 4 s, " + I(found.Count - answered) + " from the neighbour table", "Asked once each over mDNS (Apple, Chromecast, printers, TVs), SSDP (UPnP routers, media) and WS-Discovery (Windows, printers, scanners); devices that stayed quiet but talked to this PC recently come from Windows' neighbour table. Ping sweep finds the rest.", "m"));
-            if (answered == 0) rows.Add(R(1, "No device answered", "If you know there are devices here: Windows may treat this network as Public, which blocks the replies - set it to Private (Settings › Network & internet › your network). A guest network or 'client isolation' on the router also hides devices from each other.", "", "w"));
-            foreach (var kv in found.OrderBy(k => Order(k.Key))) rows.Add(R(3, kv.Key, string.Join(" · ", kv.Value), "", "m"));
+            if (answered == 0) rows.Add(R(1, "No device answered", "Phones and laptops often stay quiet. If you know a printer, TV or speaker is here: a guest network or 'client isolation' on the router hides devices from each other, and a 'Block' answer to an old Windows Firewall question about AdeeboMeter stops the replies (Windows Security › Firewall › Allow an app).", "", "w"));
+            foreach (var kv in found.OrderBy(k => Order(k.Key))) rows.Add(R(3, kv.Key, string.Join(" · ", kv.Value), "", kv.Value.Any(v => v.StartsWith("seen recently", StringComparison.Ordinal)) ? "w" : "m"));   // neighbour-table entries are what Windows reports, not an answer
             return rows;
         }
         static long Order(string ip) { IPAddress a; return IPAddress.TryParse(ip, out a) && a.AddressFamily == AddressFamily.InterNetwork ? (long)(uint)IPAddress.NetworkToHostOrder(BitConverter.ToInt32(a.GetAddressBytes(), 0)) : long.MaxValue; }

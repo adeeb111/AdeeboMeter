@@ -2023,8 +2023,8 @@ friendly: Recipients
 cat: term
 close: -1
 tag: Other people's public keys.
-what: The public certificates of people you encrypt files for. Add one from the .cer they send you and give it a name; you'll pick them by that name in Encrypt a file.
-how: Saved as .cer files in AdeeboMeter's data folder - public information only. Check the fingerprint with them by phone once.
+what: The public keys of people you encrypt files for. Add one from the .cer (standard) or .adeebokey (EC P-384, AdeeboMeter only) they send you and give it a name; you'll pick them by that name in Encrypt a file.
+how: Saved as .cer or .adeebokey files in AdeeboMeter's data folder - public information only. Check the fingerprint with them by phone once.
 why: Encrypting for someone's own key means no code to pass around - only they can open it.
 without: certmgr.msc › Other People.
 

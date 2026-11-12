@@ -78,8 +78,10 @@ namespace AdeeboMeter
                 var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 10 * S;
                 if (gamerNote != "") { var nh = Draw.Measure(gamerNote, Draw.fSmall, (int)w).Height; g.DrawString(gamerNote, Draw.fSmall, blue, new RectangleF(x, y, w, nh + 4)); y += nh + 10 * S; }
 
+                // no game yet: what watching one looks like - made-up, under a banner
+                if (mon.Count == 0 && pg == null) y = PaintExample(g, gamerCanvas, "page.gamer", x, y, w);
                 // this match: Start / Stop / Mark lag, then the summary
-                if (mon.Count > 0) y = PaintSession(g, games, x, y, w);
+                if (mon.Count > 0) { y = PaintSession(g, games, x, y, w); PageUsed("gamer"); }
 
                 // tiles: monitored first, then installed, then the rest; GTA VI-style "soon" last
                 var order = games.OrderBy(z => mon.Contains(z.Id) ? 0 : inst.Contains(z.Id) ? 1 : z.Soon ? 3 : 2).ToList();

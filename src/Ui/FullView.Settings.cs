@@ -101,6 +101,7 @@ namespace AdeeboMeter
             add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. More languages come as their translations are finished." : "Français - aperçu : les écrans principaux sont traduits, le reste reste en anglais pour l'instant. Redémarrez AdeeboMeter pour tout changer.", AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français langue english");
             add("General", "Theme", TagPc, () => "Follow Windows switches light and dark with your Windows setting.", SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : th == 0 ? 1 : 2; }, i => Cfg.SetTheme(i == 0 ? -1 : i == 1 ? 0 : 1), null, "dark light colour color");
             add("General", "Voice", TagPc, () => Voice.Serious ? "Plain, serious wording." : "The companion - a joke first, then the fix.", SetS19, () => Voice.Serious ? 1 : 0, i => { Voice.Serious = i == 1; Cfg.Save(); Invalidate(true); }, null, "jokes wording tone");
+            add("General", "Adeebo Points", TagPc, () => Cfg.Points ? "On: the Adeebo button in the header - your rank, how to earn, and every feature in one place. " + Points.Rank(Points.Me.Total) + " · " + Points.Me.Total + " so far, kept on this PC only." : "Off: the button is hidden and nothing is earned" + (Points.Me.Total > 0 ? " - your " + Points.Me.Total + " points are kept." : "."), SetOnOff, () => Cfg.Points ? 0 : 1, i => { Cfg.Points = i == 0; Cfg.Save(); SyncPointsBtn(); if (!Cfg.Points && tab == "points") { tab = "settings"; ShowTab(); } Invalidate(true); }, null, "points adeebo rank reward learn examples dashboard every feature");
             add("General", "Start with Windows", TagPc, () => Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.", SetS10, () => Cfg.GetAutoStart() ? 0 : 1, i => Cfg.SetAutoStart(i == 0), null, "startup boot login autostart");
             // Widget
             add("Widget", "Corner widget size", TagPc, () => Cfg.BigWidget ? "A little bigger (1.3x) - easier to read at a glance." : "Small - out of the way.", SetSize, () => Cfg.BigWidget ? 1 : 0, i => { Cfg.BigWidget = i == 1; Cfg.Save(); Invalidate(true); }, null, "big small scale");
@@ -325,6 +326,17 @@ namespace AdeeboMeter
             new[] { "Learn (Ctrl+K)", "Press Ctrl+K anywhere to jump to a tab, a program, a term or a protocol. Learn mode explains each protocol with its ladder diagram and, with Wireshark, shows it live on your PC for ten seconds." },
             new[] { "Live capture", "Wireshark's engine (tshark), only if you have Wireshark installed and only while you press Start. It shows what your traffic is made of, who you talk to by name, and Wireshark's own warnings. It stops by itself." }
         };
+        static readonly string[][] AboutLinks =
+        {
+            new[] { "Ask a question or share an idea", "GitHub Discussions - other users and Adeeb answer there", "https://github.com/adeeb111/AdeeboMeter/discussions" },
+            new[] { "Report a bug", "GitHub Issues - say what you did and what you expected; Copy as text from the tool helps", "https://github.com/adeeb111/AdeeboMeter/issues/new/choose" },
+            new[] { "Source code and releases", "everything AdeeboMeter does can be read there", "https://github.com/adeeb111/AdeeboMeter" },
+        };
+        static readonly string[][] Donate =
+        {
+            new[] { "$5", "https://paypal.me/adeeb1111/5CAD" }, new[] { "$10", "https://paypal.me/adeeb1111/10CAD" }, new[] { "$20", "https://paypal.me/adeeb1111/20CAD" },
+            new[] { "$50", "https://paypal.me/adeeb1111/50CAD" }, new[] { "Other amount", "https://paypal.me/adeeb1111" },
+        };
         void PaintAbout(Graphics g)
         {
             g.TranslateTransform(aboutCanvas.AutoScrollPosition.X, aboutCanvas.AutoScrollPosition.Y);
@@ -378,6 +390,33 @@ namespace AdeeboMeter
                 y = AboutHead(g, "6", "Built to be trusted", x, y, w);
                 y = Rows(g, AboutTrust, x, y, w);
 
+                // community and support: links that open in the browser - AdeeboMeter itself sends nothing
+                y += 6 * S;
+                y = AboutHead(g, "7", "Community and support", x, y, w);
+                g.DrawString(L.T("AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing."), Draw.fBody, sub, new RectangleF(x, y, w, 24 * S)); y += 32 * S;
+                foreach (var lk in AboutLinks)
+                {
+                    string url = lk[2]; var ls = g.MeasureString(L.T(lk[0]) + "  >", Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width, ls.Height);
+                    g.DrawString(L.T(lk[0]) + "  >", Draw.fBodyB, blue, lr.X, lr.Y);
+                    g.DrawString(L.T(lk[1]), Draw.fSmall, muted, new RectangleF(x + Math.Max(ls.Width + 12 * S, 300 * S), y + 2 * S, w - 300 * S, 20 * S));
+                    Act(aboutCanvas, lr, delegate { Crash.OpenUrl(url); });
+                    y += 30 * S;
+                }
+                y += 6 * S;
+                g.DrawString(L.T("Donate"), Draw.fBodyB, ink, x, y); y += 26 * S;
+                g.DrawString(L.T("Free for everyone. If it saved you time, a donation helps cover code signing and the Microsoft Store, and keeps AdeeboMeter free."), Draw.fBody, sub, new RectangleF(x, y, w, 44 * S)); y += Draw.Measure(L.T("Free for everyone. If it saved you time, a donation helps cover code signing and the Microsoft Store, and keeps AdeeboMeter free."), Draw.fBody, (int)w).Height + 10 * S;
+                float dx = x;
+                foreach (var d in Donate)
+                {
+                    string label = L.T(d[0]), url = d[1]; var ds = g.MeasureString(label, Draw.fBodyB); var dr = new RectangleF(dx, y, ds.Width + 30 * S, 34 * S);
+                    Theme.Fill(g, dr, 17 * S, Theme.BlueSoft); Theme.Stroke(g, dr, 17 * S, Theme.Blue, 1);
+                    g.DrawString(label, Draw.fBodyB, blue, dr.X + 15 * S, dr.Y + (dr.Height - ds.Height) / 2);
+                    Act(aboutCanvas, dr, delegate { Crash.OpenUrl(url); });
+                    dx += dr.Width + 10 * S; if (dx > x + w - 120 * S) { dx = x; y += 44 * S; }
+                }
+                y += 44 * S;
+                g.DrawString(L.T("PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter."), Draw.fSmall, muted, x, y); y += 30 * S;
+
                 y += 10 * S;
                 using (var line = new Pen(Theme.Line)) g.DrawLine(line, x, y, x + w, y); y += 14 * S;
                 g.DrawString("AdeeboMeter " + Program.Version + "  ·  made by Adeeb Khan  ·  " + Program.Tagline, Draw.fSmall, muted, x, y); y += 26 * S;
@@ -385,11 +424,6 @@ namespace AdeeboMeter
                 g.DrawString(L.T("Check for updates  >"), Draw.fBodyB, blue, upd.X, upd.Y);
                 g.DrawString(L.T("opens the website in your browser - AdeeboMeter itself never checks"), Draw.fSmall, muted, x + g.MeasureString("Check for updates  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
                 Act(aboutCanvas, upd, delegate { Crash.OpenUrl("https://adeeb111.github.io/AdeeboMeter/?v=" + Uri.EscapeDataString(Program.Version) + "#update"); });
-                y += 30 * S;
-                var don = new RectangleF(x, y, 420 * S, 22 * S);
-                g.DrawString(L.T("Support AdeeboMeter  >"), Draw.fBodyB, blue, don.X, don.Y);
-                g.DrawString(L.T("free for everyone - a donation helps cover signing and the Store"), Draw.fSmall, muted, x + g.MeasureString("Support AdeeboMeter  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
-                Act(aboutCanvas, don, delegate { Crash.OpenUrl("https://adeeb111.github.io/AdeeboMeter/#donate"); });
                 y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S)); if (aboutCanvas.AutoScrollMinSize != need) { aboutCanvas.AutoScrollMinSize = need; aboutCanvas.Invalidate(); }

@@ -28,7 +28,7 @@ namespace AdeeboMeter
                     else res = which == "precall" ? Tools.PreCall(M, progress) : which == "dns" ? Tools.DnsBench(M, progress) : which == "vpn" ? Tools.VpnMap(M) : Tools.Visibility(M);
                 }
                 catch (Exception e) { Program.Log("tool " + which + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 60), "" } }; }
-                try { BeginInvoke((Action)delegate { toolRows = res; toolAt = DateTime.Now; toolBusy = false; healthCanvas.Invalidate(); }); } catch { toolBusy = false; }
+                try { BeginInvoke((Action)delegate { toolRows = res; toolAt = DateTime.Now; toolBusy = false; if (tbTool != null) EarnPts(tbTool.Id, true, Points.Completed(res, false)); healthCanvas.Invalidate(); }); } catch { toolBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
         DateTime toolCopied, destCopied;

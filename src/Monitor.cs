@@ -400,11 +400,16 @@ namespace AdeeboMeter
                     else if (k == "State") state = v.ToLowerInvariant();
                     else if (k.StartsWith("Receive rate", StringComparison.Ordinal)) { double r; if (double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r)) rate = (int)r; }
                 }
+                // netsh that timed out or answered nothing (a busy PC) is not "Wi-Fi gone": keep the last reading, and only
+                // give up after three empty answers in a row - otherwise the dot flips to LAN and a false disconnect is logged
+                if (state == "" && sig < 0 && ssid == "") { if (++wifiEmpty < 3) return; lock (L) { HasWifi = false; WifiSignal = -1; } return; }
+                wifiEmpty = 0;
                 lock (L) { HasWifi = sig >= 0; WifiSignal = sig; Ssid = ssid; WifiChannel = ch; Bssid = bssid; WifiState = state; RxRate = rate; }
                 WifiEvents(state, bssid, ch, sig, rate);
             }
-            catch { lock (L) HasWifi = false; }
+            catch { if (++wifiEmpty >= 3) lock (L) HasWifi = false; }
         }
+        int wifiEmpty;
 
         // ARP spoofing alarm: the router's hardware address should not change while you stay on the same network.
         string gwMacKey = "", gwMac = "";

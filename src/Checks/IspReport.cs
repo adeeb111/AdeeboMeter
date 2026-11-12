@@ -54,10 +54,10 @@ namespace AdeeboMeter
             }
             else if (q != "")
             {
-                if (!Games.ValidHost(q)) { rows.Add(R(2, "Target", "type a game you added, a host name or an IP", "", "u")); return rows; }
+                if (!Games.ValidHost(q)) { rows.Add(R(2, "Target", "type a game you added, a host name or an IP", "", "")); return rows; }
                 routes.Add(new Route { Label = q, Host = q }); routes.Add(new Route { Label = "Reference (1.1.1.1)", Host = "1.1.1.1" });
             }
-            else { rows.Add(R(2, "Target", "add a game in the Gamer Zone, or type a host name or IP", "", "u")); return rows; }
+            else { rows.Add(R(2, "Target", "add a game in the Gamer Zone, or type a host name or IP", "", "")); return rows; }
             foreach (var r in routes)
             {
                 try { IPAddress ip; r.Ip = IPAddress.TryParse(r.Host, out ip) ? ip : Dns.GetHostAddresses(r.Host).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); }
@@ -85,23 +85,24 @@ namespace AdeeboMeter
             int firstIsp = main.Hops.FindIndex(h => { IPAddress a; return IPAddress.TryParse(h.Ip, out a) && !Private(a); });
             string verdict = PathTools.MtrVerdict(main.Hops);
             int start = StartOfLoss(main.Hops);
-            var router = main.Hops.FirstOrDefault(); var end = main.Hops.LastOrDefault(h => h.Sent > 0);
+            var router = main.Hops.FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var end = main.Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
+            bool silentEnd = !main.Hops.Any(h => h.Reached && h.Sent > 0 && h.Lost < h.Sent);
             bool wifi; string ssid, dns; lock (m.L) { wifi = m.AdapterKind.IndexOf("Wi", StringComparison.OrdinalIgnoreCase) >= 0; ssid = m.Ssid; dns = m.DnsServer; }
 
             // finding in one line
             string finding;
             if (start >= 0 && firstIsp >= 0 && start >= firstIsp) finding = "Loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + "), inside or past the provider's network, and carries through to the destination. The home network was clean.";
             else if (start >= 0) finding = "Loss starts at hop " + main.Hops[start].N + " - before the provider (" + (wifi ? "Wi-Fi or the router" : "the home network") + "). Fix the home side first.";
-            else if (end != null && Loss(end) >= 1) finding = "Only the destination drops some probes - it rate-limits pings; the path itself is clean.";
-            else finding = "No real loss on the path during the " + min + "-minute run. If it's an evening problem, run it again in the evening - the 7-day pattern below shows when.";
+            else if (end != null && Loss(end) >= 1 && !silentEnd) finding = "Only the destination drops some probes - it rate-limits pings; the path itself is clean.";
+            else finding = (silentEnd && end != null ? "The destination doesn't answer pings, so this is judged up to the last router that does (hop " + end.N + "). " : "") + "No real loss on the path during the " + min + "-minute run. If it's an evening problem, run it again in the evening - the 7-day pattern below shows when.";
             rows.Add(R(start >= 0 ? 2 : 0, "Finding", finding, verdict, "m"));
 
             // each part of the path
             rows.Add(R(-1, "EACH PART OF THE PATH", main.Label + " · " + main.Hops.Sum(h => h.Sent) + " probes", "", "m"));
-            if (router != null) rows.Add(R(Lv(Loss(router)), "Home router (hop 1)", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), "", "m"));
-            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Lv(Loss(h)), "Provider, first hop (" + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
+            if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), "", "m"));
+            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), "Provider, first hop (" + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
             if (start >= 0) { var h = main.Hops[start]; rows.Add(R(2, "Where loss starts (hop " + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
-            if (end != null) rows.Add(R(Lv(Loss(end)), "Destination (hop " + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
+            if (end != null) rows.Add(R(Lv(Loss(end)), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
 
             // hop by hop
             // who owns each public hop: only with online lookups switched on (public addresses go to RIPEstat) - otherwise said
@@ -194,17 +195,11 @@ namespace AdeeboMeter
             if (csv != null) rows.Add(new[] { "3", "Raw data", Path.GetFileName(csv) + " - every hop of every route, for a network engineer", "", "m", "show:" + csv });
             return rows;
         }
+        // loss at a hop that doesn't carry on is that router ignoring probes: amber at most, never red
+        static int Shown(double loss, bool real) { int l = Lv(loss); return real || l < 2 ? l : 1; }
         static int Lv(double loss) { return double.IsNaN(loss) ? 3 : loss >= 3 ? 2 : loss >= 1 ? 1 : 0; }
         // the first hop whose loss carries on to the end (the same rule as MtrVerdict)
-        public static int StartOfLoss(List<PathTools.Hop> hops)
-        {
-            for (int i = 0; i < hops.Count; i++)
-            {
-                var h = hops[i]; if (h.Sent == 0) continue; double l = 100.0 * h.Lost / h.Sent;
-                if (l >= 3 && hops.Skip(i).Where(x => x.Sent > 0).All(x => 100.0 * x.Lost / x.Sent >= l * 0.6)) return i;
-            }
-            return -1;
-        }
+        public static int StartOfLoss(List<PathTools.Hop> hops) { return PathTools.LossStart(hops); }
         // where the route leaves the provider: the last hop whose name shares the first public hop's domain (rDNS), else "-"
         static string HandOff(List<PathTools.Hop> hops, Func<string, string> nm)
         {

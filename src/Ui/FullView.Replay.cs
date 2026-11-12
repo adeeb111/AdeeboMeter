@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // compares with the rest of that day. Reads the history files only; nothing is measured for it.
     sealed partial class FullView
     {
-        Panel replayPage; DB replayCanvas; DateTime? replayDay; History.Day replayData; int replayIdx = -1; Bitmap replayBmp; string replayKey = "";
+        Panel replayPage; DB replayCanvas; DateTime? replayDay; History.Day replayData; bool replayExample; int replayIdx = -1; Bitmap replayBmp; string replayKey = "";
         RectangleF replayTrack; bool replayDrag, replayLoading; double pendingAt = -1; double[] replayMed = new double[History.Cols];
 
         Panel BuildReplayPage()
@@ -47,7 +47,7 @@ namespace AdeeboMeter
                 {
                     History.Day d = null; var med = new double[History.Cols];
                     try { d = History.Load(day); for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c); } catch (Exception e) { Program.Log("replay: " + e.Message); }
-                    try { BeginInvoke((Action)delegate { replayLoading = false; if (replayDay != day || d == null) { if (replayDay != day) ReplayOpen(); return; } replayData = d; replayMed = med; replayIdx = d.M.Count - 1; if (pendingAt >= 0) { double f = pendingAt; pendingAt = -1; ReplayAt(f); } replayCanvas.Invalidate(); }); } catch { replayLoading = false; }
+                    try { BeginInvoke((Action)delegate { replayLoading = false; if (replayDay != day || d == null) { if (replayDay != day) ReplayOpen(); return; } replayData = d; replayExample = false; replayMed = med; replayIdx = d.M.Count - 1; if (pendingAt >= 0) { double f = pendingAt; pendingAt = -1; ReplayAt(f); } replayCanvas.Invalidate(); }); } catch { replayLoading = false; }
                 });
             }
             replayCanvas.Invalidate();
@@ -88,19 +88,39 @@ namespace AdeeboMeter
                     var ts = g.MeasureString(t, Draw.fBody); var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S); bool on = replayDay == dd;
                     Theme.Fill(g, cr, 14 * S, on ? Theme.Blue : Theme.Soft);
                     using (var tb = new SolidBrush(on ? Color.White : Theme.Ink)) g.DrawString(t, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
-                    Act(replayCanvas, cr, delegate { replayDay = dd; replayData = null; ReplayOpen(); });
+                    Act(replayCanvas, cr, delegate { replayDay = dd; replayData = null; replayExample = false; ReplayOpen(); });
                     cx += cr.Width + 8 * S;
                 }
                 y += 42 * S;
                 var data = replayData;
+                if (replayExample && data != null)
+                {
+                    // the made-up day: a banner above it, and the way back
+                    y = PaintExampleBanner(g, x, y, w, null) - 4 * S;
+                    string hk = L.T("Hide the example"); var hs = g.MeasureString(hk, Draw.fSmall);
+                    using (var hb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(hk, Draw.fSmall, hb, x + w - hs.Width, y - 34 * S);
+                    Act(replayCanvas, new RectangleF(x + w - hs.Width, y - 34 * S, hs.Width, hs.Height), delegate { replayExample = false; replayData = null; replayKey = ""; ReplayOpen(); replayCanvas.Invalidate(); });
+                }
                 if (data == null || data.M.Count == 0)
                 {
                     string t = replayLoading || (data == null && Cfg.History) ? "Reading that day..." : Cfg.History ? Voice.P("Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.", "No history for this day yet (one line is written per minute).") : Voice.P("History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.", "History is off. Enable it in Settings to replay past minutes.");
                     g.DrawString(t, Draw.fBody, muted, new RectangleF(x, y, w, 60 * S));
+                    if (!replayLoading && !(data == null && Cfg.History))
+                    {
+                        // nothing yet: show what a day looks like - made-up, under a banner
+                        string ek = L.T("See an example day") + "  ›"; var es = g.MeasureString(ek, Draw.fBodyB); float ey = y + 50 * S;
+                        using (var eb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(ek, Draw.fBodyB, eb, x, ey);
+                        Act(replayCanvas, new RectangleF(x, ey, es.Width, es.Height), delegate
+                        {
+                            var d = ExampleDay.Make(); var med = new double[History.Cols]; for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c);
+                            replayData = d; replayMed = med; replayIdx = 19 * 60 + 5; replayExample = true; replayKey = ""; replayCanvas.Invalidate();
+                        });
+                    }
                     replayTrack = RectangleF.Empty;
                     var n0 = new Size(0, (int)(y + 80 * S)); if (replayCanvas.AutoScrollMinSize != n0) replayCanvas.AutoScrollMinSize = n0;
                     return;
                 }
+                if (!replayExample) PageUsed("replay");
                 if (replayIdx < 0 || replayIdx >= data.M.Count) replayIdx = data.M.Count - 1;
                 var row = data.M[replayIdx]; double sec = row[0];
                 var at = replayDay.Value.Date.AddSeconds(sec);

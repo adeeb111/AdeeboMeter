@@ -113,7 +113,7 @@ namespace AdeeboMeter
                 rows.Add(R(-1, NameOf(c).ToUpperInvariant(), (p == "server" ? "server certificate" : p == "client" ? "client certificate (mTLS)" : "for files encrypted to you") + " · RSA " + c.PublicKey.Key.KeySize + " · " + (c.Subject == c.Issuer ? "self-signed" : "from " + c.GetNameInfo(X509NameType.SimpleName, true)) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 30 ? " (soon)" : ""), "", "w"));
                 rows.Add(new[] { "3", "Copy public key", "a .cer someone needs to encrypt a file for you - copied, and saved in AdeeboMeter's certs folder", "", "w", "key:pub:" + c.Thumbprint });
                 rows.Add(new[] { "3", "Back up private key", "a password-protected .pfx for a new PC, with a strong recovery passphrase shown once", "", "w", "key:backup:" + c.Thumbprint });
-                rows.Add(new[] { "3", "Delete", "remove it from Windows - you'll be asked to type its name", "", "w", "key:del:" + c.Thumbprint });
+                rows.Add(new[] { "3", "Delete", "remove it from Windows - asks first", "", "w", "key:del:" + c.Thumbprint });
                 c.Dispose();
             }
             return rows;
@@ -122,8 +122,8 @@ namespace AdeeboMeter
         public static List<string[]> NewKey(string name, string purpose, string type)
         {
             var rows = new List<string[]>(); string n = Safe(name, 60);
-            if (n == "") { rows.Add(R(2, "Name", "give the key a name - e.g. Adeeb work", "", "u")); return rows; }
-            if (Find(n) != null || EcKeys.Find(n) != null) { rows.Add(R(2, "Name", "you already have a key called " + n, "", "u")); return rows; }
+            if (n == "") { rows.Add(R(2, "Name", "give the key a name - e.g. Adeeb work", "", "")); return rows; }
+            if (Find(n) != null || EcKeys.Find(n) != null) { rows.Add(R(2, "Name", "you already have a key called " + n, "", "")); return rows; }
             string p = (purpose ?? "").Trim().ToLowerInvariant(), ty = (type ?? "").Trim().ToLowerInvariant().Replace("-", "").Replace(" ", "");
             bool files = !p.StartsWith("serv", StringComparison.Ordinal) && !p.StartsWith("cli", StringComparison.Ordinal) && p != "mtls";
             if (files && (ty == "p384" || ty == "ec" || ty == "ecp384" || ty == "strongest"))
@@ -141,8 +141,8 @@ namespace AdeeboMeter
         public static List<string[]> Csr(string keyName, string names, string subject)
         {
             var rows = new List<string[]>(); var sans = Sans(names); string kn = Safe(keyName, 60);
-            if (kn == "") { rows.Add(R(2, "Key", "type a key name - an existing one from My keys, or a new name to make one", "", "u")); return rows; }
-            if (sans.Count == 0) { rows.Add(R(2, "Names", "type the DNS names and IP addresses the certificate is for - e.g. vpn.example.com, 10.0.0.5", "", "u")); return rows; }
+            if (kn == "") { rows.Add(R(2, "Key", "type a key name - an existing one from My keys, or a new name to make one", "", "")); return rows; }
+            if (sans.Count == 0) { rows.Add(R(2, "Names", "type the DNS names and IP addresses the certificate is for - e.g. vpn.example.com, 10.0.0.5", "", "")); return rows; }
             string cn = string.IsNullOrWhiteSpace(subject) ? sans[0] : subject.Trim();
             var key = Find(kn); bool made = false;
             try
@@ -172,10 +172,10 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string p = (preset ?? "").Trim().ToLowerInvariant().Replace(" ", "");
             var pr = Presets.FirstOrDefault(x => x[0] == p || string.Equals(x[1].Replace(" ", ""), p, StringComparison.OrdinalIgnoreCase) || (p.StartsWith("local", StringComparison.Ordinal) && x[0] == "https") || (p.StartsWith("client", StringComparison.Ordinal) && x[0] == "mtls"));
-            if (pr == null) { rows.Add(R(2, "Preset", "type Local HTTPS, Lab server or mTLS client", "", "u")); return rows; }
+            if (pr == null) { rows.Add(R(2, "Preset", "type Local HTTPS, Lab server or mTLS client", "", "")); return rows; }
             var sans = Sans(names);
             if (pr[0] == "https") { foreach (var x in new[] { "localhost", "127.0.0.1" }) if (!sans.Contains(x)) sans.Add(x); }
-            if (sans.Count == 0) { rows.Add(R(2, "Names", pr[0] == "mtls" ? "type a name for this client - e.g. lab-client-01" : "type the names it's for - e.g. lab01.lab, 10.0.0.5", "", "u")); return rows; }
+            if (sans.Count == 0) { rows.Add(R(2, "Names", pr[0] == "mtls" ? "type a name for this client - e.g. lab-client-01" : "type the names it's for - e.g. lab01.lab, 10.0.0.5", "", "")); return rows; }
             string name = pr[1] + " - " + sans[0]; if (Find(name) != null) name += " " + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture);
             try
             {
@@ -184,7 +184,7 @@ namespace AdeeboMeter
                     string file = Path.Combine(OutDir, Safe(sans[0], 40).Replace('*', '_') + "-" + pr[0] + ".cer"); File.WriteAllText(file, Pem("CERTIFICATE", c.RawData), new UTF8Encoding(false));
                     rows.Add(R(0, "Made", name + " · valid " + pr[2] + " days · names: " + string.Join(", ", sans), "The certificate and its key are in My keys (kept by Windows).", "w"));
                     rows.Add(new[] { "3", "Certificate for the lab", Path.GetFileName(file) + " - the public part, to copy to the server or client", "", "m", "show:" + file });
-                    rows.Add(R(1, "Trust", "not trusted anywhere yet - you decide", "Browsers and clients will warn until you add this certificate to their trusted list. AdeeboMeter never adds anything to Windows' trusted roots - do it only on lab machines, by double-clicking the .cer.", "u"));
+                    rows.Add(R(1, "Trust", "not trusted anywhere yet - you decide", "Browsers and clients will warn until you add this certificate to their trusted list. AdeeboMeter never adds anything to Windows' trusted roots - do it only on lab machines, by double-clicking the .cer.", ""));
                 }
             }
             catch (CryptographicException e) { rows.Add(R(2, "Self-signed", e.Message, "", "w")); }
@@ -202,7 +202,7 @@ namespace AdeeboMeter
         public static List<string[]> Match(string certIn, string install)
         {
             var rows = new List<string[]>(); X509Certificate2 cert;
-            try { cert = Load(certIn); } catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - a .cer, .crt or .pem file, or paste the PEM text", "", "u")); return rows; }
+            try { cert = Load(certIn); } catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - a .cer, .crt or .pem file, or paste the PEM text", "", "")); return rows; }
             using (cert)
             {
                 rows.Add(R(3, "Certificate", cert.GetNameInfo(X509NameType.SimpleName, false) + " · from " + cert.GetNameInfo(X509NameType.SimpleName, true) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m"));
@@ -219,7 +219,7 @@ namespace AdeeboMeter
                     }
                     catch (CryptographicException e) { rows.Add(R(2, "Put together", e.Message, "", "m")); }
                 }
-                else rows.Add(R(3, "Next", "type yes in the second box and run again to put them together in My keys", "", "u"));
+                else rows.Add(R(3, "Next", "type yes in the second box and run again to put them together in My keys", "", ""));
                 foreach (var k in mine) k.Dispose();
             }
             return rows;
@@ -228,8 +228,8 @@ namespace AdeeboMeter
         public static List<string[]> Live(string certIn, string server)
         {
             var rows = new List<string[]>(); X509Certificate2 want;
-            try { want = Load(certIn); } catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - a .cer, .crt or .pem file, or paste the PEM text", "", "u")); return rows; }
-            string h; int port; if (!Lab.Split((server ?? "").Trim(), 443, out h, out port) || !Games.ValidHost(h)) { want.Dispose(); rows.Add(R(2, "Server", "type the server - e.g. vpn.example.com or 10.0.0.5:8443", "", "u")); return rows; }
+            try { want = Load(certIn); } catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - a .cer, .crt or .pem file, or paste the PEM text", "", "")); return rows; }
+            string h; int port; if (!Lab.Split((server ?? "").Trim(), 443, out h, out port) || !Games.ValidHost(h)) { want.Dispose(); rows.Add(R(2, "Server", "type the server - e.g. vpn.example.com or 10.0.0.5:8443", "", "")); return rows; }
             var sent = new List<X509Certificate2>(); SslPolicyErrors errs = SslPolicyErrors.None;
             try
             {
@@ -259,29 +259,29 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string n = Safe(name, 40);
             if (!string.IsNullOrWhiteSpace(certIn))
             {
-                if (n == "") { rows.Add(R(2, "Name", "type the person's name - you'll pick them by it when you encrypt", "", "u")); return rows; }
+                if (n == "") { rows.Add(R(2, "Name", "type the person's name - you'll pick them by it when you encrypt", "", "")); return rows; }
                 string ci = certIn.Trim().Trim('"'); string txt = File.Exists(ci) ? File.ReadAllText(ci) : ci; string kn;
                 var ecPub = EcKeys.ReadPublic(txt, out kn);
                 if (ecPub != null)
                 {
                     File.WriteAllText(Path.Combine(RecipDir, n + ".adeebokey"), txt.Trim() + "\r\n", new UTF8Encoding(false));
-                    rows.Add(R(0, "Saved", n + " · EC P-384 (.adeebo files)", "Check the fingerprint with them by phone once: " + EcKeys.Fingerprint(ecPub), "u"));
+                    rows.Add(R(0, "Saved", n + " · EC P-384 (.adeebo files)", "Check the fingerprint with them by phone once: " + EcKeys.Fingerprint(ecPub), ""));
                 }
                 else try
                 {
                     using (var c = Load(certIn))
                     {
-                        if (!(c.PublicKey.Key is RSA)) { rows.Add(R(2, "Certificate", "it needs an RSA key (this one isn't)", "", "u")); return rows; }
+                        if (!(c.PublicKey.Key is RSA)) { rows.Add(R(2, "Certificate", "it needs an RSA key (this one isn't)", "", "")); return rows; }
                         File.WriteAllText(Path.Combine(RecipDir, n + ".cer"), Pem("CERTIFICATE", c.RawData), new UTF8Encoding(false));
-                        rows.Add(R(0, "Saved", n + " · " + c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "Check the fingerprint with them by phone once: SHA-256 " + BitConverter.ToString(Sha(c.RawData)).Replace("-", ":").Substring(0, 23) + "...", "u"));
+                        rows.Add(R(0, "Saved", n + " · " + c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "Check the fingerprint with them by phone once: SHA-256 " + BitConverter.ToString(Sha(c.RawData)).Replace("-", ":").Substring(0, 23) + "...", ""));
                     }
                 }
-                catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - the .cer they sent you, or paste its text", "", "u")); return rows; }
+                catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - the .cer they sent you, or paste its text", "", "")); return rows; }
             }
             var files = Directory.GetFiles(RecipDir, "*.cer").Concat(Directory.GetFiles(RecipDir, "*.adeebokey")).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
-            rows.Add(R(-1, "SAVED RECIPIENTS", files.Count == 0 ? "none yet" : files.Count.ToString(CultureInfo.InvariantCulture), "", "u"));
-            foreach (var f in files.Where(x => x.EndsWith(".adeebokey", StringComparison.OrdinalIgnoreCase))) { string nm; var pb = EcKeys.ReadPublic(File.ReadAllText(f), out nm); if (pb != null) rows.Add(R(3, Path.GetFileNameWithoutExtension(f), "EC P-384 · .adeebo files · fingerprint " + EcKeys.Fingerprint(pb), "", "u")); }
-            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "u")); } catch (CryptographicException) { } }
+            rows.Add(R(-1, "SAVED RECIPIENTS", files.Count == 0 ? "none yet" : files.Count.ToString(CultureInfo.InvariantCulture), "", ""));
+            foreach (var f in files.Where(x => x.EndsWith(".adeebokey", StringComparison.OrdinalIgnoreCase))) { string nm; var pb = EcKeys.ReadPublic(File.ReadAllText(f), out nm); if (pb != null) rows.Add(R(3, Path.GetFileNameWithoutExtension(f), "EC P-384 · .adeebo files · fingerprint " + EcKeys.Fingerprint(pb), "", "")); }
+            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "")); } catch (CryptographicException) { } }
             return rows;
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5350", Justification = "SHA-256 fingerprint for display")]
@@ -320,7 +320,7 @@ namespace AdeeboMeter
                 Program.Log("key backup written (" + Path.GetFileName(file) + ")");
                 rows.Add(new[] { "0", "Backup", Path.GetFileName(file) + " - copy it somewhere safe (a USB stick, your own cloud)", "", "w", "show:" + file });
                 rows.Add(new[] { "1", "Recovery passphrase", pass, "Save it in your password manager now - AdeeboMeter doesn't keep it. Without it the backup can't be opened, by anyone.", "k", "copy:" + pass });
-                rows.Add(R(3, "On a new PC", "double-click the .pfx (or Toolbox › Check a PFX), type the passphrase - then it's in My keys there too", "", "u"));
+                rows.Add(R(3, "On a new PC", "double-click the .pfx (or Toolbox › Check a PFX), type the passphrase - then it's in My keys there too", "", ""));
             }
             return rows;
         }

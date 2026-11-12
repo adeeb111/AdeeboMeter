@@ -69,12 +69,12 @@ namespace AdeeboMeter
             {
                 uint type = U32(b, p, le);
                 if (type == 0x0A0D0D0A) { if (p + 12 > b.Length) break; le = U32(b, p + 8, true) == 0x1A2B3C4D; links.Clear(); }
-                int blen = (int)U32(b, p + 4, le); if (blen < 12 || blen % 4 != 0 || p + blen > b.Length) break;
+                int blen = (int)U32(b, p + 4, le); if (blen < 12 || blen % 4 != 0 || (long)p + blen > b.Length) break;   // 64-bit sums: a crafted length near 2 GB must not wrap around
                 if (type == 1 && blen >= 20) links.Add(U16(b, p + 8, le));
                 else if (type == 6 && blen >= 32)
                 {
                     int ifc = (int)U32(b, p + 8, le); long ts = ((long)U32(b, p + 12, le) << 32) | U32(b, p + 16, le); int cap = (int)U32(b, p + 20, le);
-                    if (cap >= 0 && 28 + cap <= blen && ifc < links.Count)
+                    if (cap >= 0 && 28L + cap <= blen && ifc >= 0 && ifc < links.Count)
                     {
                         double t = ts / 1e6; if (t0 < 0) t0 = t;   // the default (and by far the most common) resolution: microseconds
                         var k = Decode(b, p + 28, cap, links[ifc]); if (k != null) { k.T = t - t0; list.Add(k); }

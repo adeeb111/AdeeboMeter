@@ -409,6 +409,41 @@ namespace AdeeboMeter
     }
 
     // Day / night switch in the header: a sun and a moon on a little track. Click flips it; Settings keeps "Follow Windows".
+    // A labelled on/off slider ("Details  ( o)"): click, Space or Enter flips it; the knob slides in a few frames.
+    sealed class SlideSwitch : Control
+    {
+        bool on; float knob; readonly System.Windows.Forms.Timer anim = new System.Windows.Forms.Timer { Interval = 15 };
+        public bool On { get { return on; } set { if (on != value) { on = value; anim.Start(); Invalidate(); } } }
+        public SlideSwitch(string label, bool start)
+        {
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
+            Text = label; on = start; knob = start ? 1 : 0; Cursor = Cursors.Hand; TabStop = true; AccessibleName = label; AccessibleRole = AccessibleRole.CheckButton;
+            anim.Tick += delegate { float to = on ? 1 : 0; knob += (to - knob) * 0.45f; if (Math.Abs(to - knob) < 0.02f) { knob = to; anim.Stop(); } Invalidate(); };
+            FitSize();
+        }
+        void FitSize() { float S = Draw.S; Size = new Size((int)(TextRenderer.MeasureText(L.T(Text), Draw.fBody).Width + 52 * S), (int)(32 * S)); }
+        protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); FitSize(); }
+        protected override void OnClick(EventArgs e) { On = !On; base.OnClick(e); }
+        protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) OnClick(e); base.OnKeyDown(e); }
+        protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+        protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+        protected override void Dispose(bool disposing) { if (disposing) anim.Dispose(); base.Dispose(disposing); }
+        protected override void OnPaint(PaintEventArgs pe)
+        {
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; float S = Draw.S;
+            using (var bg = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(bg, ClientRectangle);
+            string t = L.T(Text); var ts = g.MeasureString(t, Draw.fBody);
+            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fBody, ink, 0, (Height - ts.Height) / 2);
+            var tr = new RectangleF(Width - 40 * S, (Height - 20 * S) / 2, 38 * S, 20 * S);
+            Color off = Theme.Dark ? Theme.C("#3A4456") : Theme.C("#C9D1DC");
+            Color fill = Color.FromArgb((int)(off.R + (Theme.Blue.R - off.R) * knob), (int)(off.G + (Theme.Blue.G - off.G) * knob), (int)(off.B + (Theme.Blue.B - off.B) * knob));
+            Theme.Fill(g, tr, tr.Height / 2, fill);
+            if (Focused) Theme.Stroke(g, tr, tr.Height / 2, Theme.Blue, 2);
+            float k = tr.Height - 6 * S, kx = tr.X + 3 * S + (tr.Width - k - 6 * S) * knob;
+            using (var kb = new SolidBrush(Color.White)) g.FillEllipse(kb, kx, tr.Y + 3 * S, k, k);
+        }
+    }
+
     sealed class ThemeSwitch : Control
     {
         public ThemeSwitch()

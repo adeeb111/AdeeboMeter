@@ -100,7 +100,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string w = (what ?? "").Trim();
             if (w.Equals("list", StringComparison.OrdinalIgnoreCase) || w.Equals("check", StringComparison.OrdinalIgnoreCase)) return Servers(w.Equals("check", StringComparison.OrdinalIgnoreCase), run);
             var srv = Pick(w == "" ? Cfg.SpeedServer : w);
-            if (srv == null) { rows.Add(R(2, "Server", "no server matches \"" + w + "\"", "Type auto, a city or provider (e.g. vultr toronto), a file URL - or list to see them all.", "u")); return rows; }
+            if (srv == null) { rows.Add(R(2, "Server", "no server matches \"" + w + "\"", "Type auto, a city or provider (e.g. vultr toronto), a file URL - or list to see them all.", "")); return rows; }
             var res = Measure(run, srv);
             if (res.Error != "") { rows.Add(R(2, "Speed test", res.Error, "Nothing else was sent. Try another server - type list to see them, check to see which answer from here. A company network may block it.", "m")); return rows; }
             rows.Add(R(3, "Server", res.Server + (res.Where != "" ? " · " + res.Where : ""), "", "m"));
@@ -117,7 +117,7 @@ namespace AdeeboMeter
         static List<string[]> Servers(bool check, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var l = All();
-            rows.Add(R(3, "How to choose", "type auto, an id or words (e.g. vultr toronto), or a file URL", "Your own servers: add lines to " + FilePath + "  as  server|id|provider|city|download URL|upload URL (optional)", "u"));
+            rows.Add(R(3, "How to choose", "type auto, an id or words (e.g. vultr toronto), or a file URL", "Your own servers: add lines to " + FilePath + "  as  server|id|provider|city|download URL|upload URL (optional)", ""));
             foreach (var g in l.GroupBy(s => s.Provider))
             {
                 rows.Add(R(-1, g.Key.ToUpperInvariant(), g.First().Up != "" ? "download and upload" : "download only", "", "m"));

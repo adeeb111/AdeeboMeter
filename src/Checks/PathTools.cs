@@ -93,17 +93,31 @@ namespace AdeeboMeter
             }
         }
         // loss at a middle hop only counts if the hops after it lose too
-        public static string MtrVerdict(List<Hop> hops)
+        // a hop that never answered (no reply in the whole run) is a router that ignores probes, not loss - it can't start
+        // or carry loss. Loss is real only from the first answering hop whose loss every later answering hop keeps (and there
+        // must be a later answering hop, or it is the destination itself).
+        static bool Answers(Hop h) { return h.Sent > 0 && h.Lost < h.Sent; }
+        static double LossOf(Hop h) { return 100.0 * h.Lost / h.Sent; }
+        public static int LossStart(List<Hop> hops)
         {
-            var last = hops.LastOrDefault(h => h.Sent > 0); if (last == null) return "";
-            double endLoss = last.Sent > 0 ? 100.0 * last.Lost / last.Sent : 0;
             for (int i = 0; i < hops.Count; i++)
             {
-                var h = hops[i]; if (h.Sent == 0) continue; double l = 100.0 * h.Lost / h.Sent;
-                bool carries = hops.Skip(i).Where(x => x.Sent > 0).All(x => 100.0 * x.Lost / x.Sent >= l * 0.6);
-                if (l >= 3 && carries) return "Real loss starts at hop " + h.N + " (" + (h.Ip == "" ? "?" : h.Ip) + ") and carries on to the end - " + l.ToString("0", CultureInfo.CurrentCulture) + "% lost from there.";
+                var h = hops[i]; if (!Answers(h)) continue; double l = LossOf(h); if (l < 3) continue;
+                var later = hops.Skip(i + 1).Where(Answers).ToList();
+                if (later.Count == 0 && !h.Reached) continue;
+                if (later.All(x => LossOf(x) >= l * 0.6)) return i;
             }
-            if (endLoss < 1) return "No real loss: any loss at a middle hop doesn't carry on - that router just ignores some pings (normal).";
+            return -1;
+        }
+        public static string MtrVerdict(List<Hop> hops)
+        {
+            var last = hops.LastOrDefault(Answers); if (last == null) return "No hop answered - probes are blocked on the way out (a firewall or VPN).";
+            bool silentEnd = !hops.Any(h => h.Reached && Answers(h));
+            string tail = silentEnd ? " The destination doesn't answer pings at all, so this is judged by the last router that does (hop " + last.N + ")." : "";
+            int i = LossStart(hops);
+            if (i >= 0) { var h = hops[i]; return "Real loss starts at hop " + h.N + " (" + h.Ip + ") and carries on to the end - " + LossOf(h).ToString("0", CultureInfo.CurrentCulture) + "% lost from there." + tail; }
+            double endLoss = LossOf(last);
+            if (endLoss < 1 || silentEnd) return "No real loss: any loss at a middle hop doesn't carry on - that router just ignores some pings (normal)." + tail;
             return "Loss at the destination only (" + endLoss.ToString("0", CultureInfo.CurrentCulture) + "%) - the server itself drops or rate-limits pings.";
         }
 

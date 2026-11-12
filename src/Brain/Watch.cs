@@ -276,9 +276,16 @@ namespace AdeeboMeter
             string body = "**What were you doing when it crashed?**\n\n\n**Crash note** (no user names or folders):\n```\n" + (text.Length > 3500 ? text.Substring(0, 3500) : text) + "\n```";
             return "https://github.com/adeeb111/AdeeboMeter/issues/new?labels=bug&title=" + Uri.EscapeDataString("Crash in " + Program.Version) + "&body=" + Uri.EscapeDataString(body);
         }
+        // only AdeeboMeter's own pages (GitHub, the website) and Adeeb's PayPal donation link ever open
+        public static bool Allowed(string url)
+        {
+            url = url ?? "";
+            return url.StartsWith("https://github.com/adeeb111/AdeeboMeter", StringComparison.Ordinal) || url.StartsWith("https://adeeb111.github.io/AdeeboMeter", StringComparison.Ordinal)
+                || url == "https://paypal.me/adeeb1111" || url.StartsWith("https://paypal.me/adeeb1111/", StringComparison.Ordinal);
+        }
         public static void OpenUrl(string url)
         {
-            if (!url.StartsWith("https://github.com/adeeb111/AdeeboMeter", StringComparison.Ordinal) && !url.StartsWith("https://adeeb111.github.io/AdeeboMeter", StringComparison.Ordinal)) return;   // only our own pages
+            if (!Allowed(url)) return;   // only our own pages
             try { using (Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })) { } } catch (Exception e) { Program.Log("open: " + e.Message); }
         }
     }

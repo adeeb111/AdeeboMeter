@@ -1,0 +1,701 @@
+# AdeeboMeter examples - what each tool's result looks like, before you run it.
+# Made-up data, shown with an EXAMPLE banner; never saved, copied or compared. Nothing is sent to show one.
+# Format:  == toolid  /  in: box 1|box 2  /  lv|name|value|advice|evidence   (lv: -1 heading, 0 ok, 1 note, 2 problem, 3 info)
+# Addresses are documentation ones only: 192.0.2.x, 198.51.100.x, 203.0.113.x, 2001:db8::, example.com / example.net.
+
+# ---------------------------------------------------------------- path and routing
+== mtu
+in: example.com
+0|Biggest packet all the way|1500 bytes - full size, nothing on the way shrinks it||m
+3|Hop 1 · 192.168.1.1|1500|your router|m
+3|Hop 4 · 198.51.100.17|1500|provider core|m
+3|Hop 9 · example.com (203.0.113.10)|1500|the destination|m
+
+== udpmtu
+in: example.com|443
+0|Biggest UDP packet through|about 1452 bytes (UDP payload 1424)|Full size for a tunnel-free line - nothing on the way shrinks UDP.|m
+3|How|QUIC version check to 203.0.113.10:443 · don't-fragment · 7 packets|Accurate to about 8 bytes.|m
+
+== mtr
+in: example.com|1
+0|Finding|No real loss: any loss at a middle hop doesn't carry on - that router just ignores some pings (normal).||m
+3|Hop 1 · 192.168.1.1|avg 2 ms · worst 9 ms · loss 0%||m
+1|Hop 3 · 198.51.100.1|avg 11 ms · worst 40 ms · loss 12%|doesn't carry on - not real|m
+3|Hop 7 · example.com (203.0.113.10)|avg 18 ms · worst 31 ms · loss 0%||m
+
+== ret
+in: example.com
+3|Out (this PC to the site)|9 hops · leaves your provider at 198.51.100.9||m
+3|Back (the site to this PC)|11 hops · seen through a public looking glass||i
+1|Different ways|the reply takes another provider back - normal on the internet, but a slow return path won't show in a normal trace||i
+
+== owners
+in: example.com
+3|Hop 2 · 198.51.100.1|AS64500 Example Cable (your provider)||m
+3|Hop 5 · 198.51.100.77|AS64501 Example Transit||m
+3|Hop 8 · 203.0.113.10|AS64502 Example Hosting (the site)||m
+3|Who to call|a problem from hop 5 on is between your provider and Example Transit - your provider is still the one to ask||i
+
+== route
+in: 10.20.30.40
+0|Goes out|Wi-Fi · next hop 192.168.1.1 · metric 35||w
+3|Why this way|default route (0.0.0.0/0) - no more specific route for 10.20.30.40||w
+3|If a VPN is on|a 10.0.0.0/8 route from the VPN would win (longer match)||i
+
+== rlisten
+in: 60
+0|Heard in 60 s|2 protocols on this cable or Wi-Fi||p
+3|OSPF hello|from 192.168.1.1 · area 0 · every 10 s|A router is offering OSPF to anything on this segment - usually only routers should be here.|p
+3|VRRP|virtual 192.168.1.254 · master 192.168.1.2 · priority 120||p
+
+== discover
+in: 60
+0|Heard in 60 s|4 devices announced themselves||p
+3|192.168.1.20|mDNS · Living-room TV · _googlecast||p
+3|192.168.1.31|SSDP · Example router · InternetGatewayDevice||p
+3|192.168.1.40|NetBIOS · NAS01 · workgroup HOME||p
+
+== ping6
+in: example.com
+0|IPv6 reply|2001:db8::10 · 19 ms · 0% loss||m
+3|Path|8 hops over IPv6||m
+
+== ip46
+in: example.com
+0|IPv4|203.0.113.10 · connects in 21 ms||m
+0|IPv6|2001:db8::10 · connects in 19 ms||m
+3|Which one apps use|IPv6 first (Windows prefers it when both work)||w
+
+== proxy
+in: https://outlook.office.com
+0|This URL goes|DIRECT - no proxy||w
+3|Windows proxy setting|automatic (PAC file at http://wpad.example.net/wpad.dat)||w
+3|Why|the PAC file sends *.office.com directly, everything else through proxy.example.net:8080||w
+
+== hosts
+in: example.com
+0|Hosts file|3 entries · nothing for example.com||w
+3|127.0.0.1|localhost||w
+3|192.168.1.40|nas01||w
+
+== port
+in: smtp.example.com:587
+0|Open|203.0.113.25:587 answered in 24 ms||m
+3|What answered|220 smtp.example.com ESMTP ready||m
+
+== hairpin
+2|Your own address from inside|203.0.113.50:443 doesn't answer from this network|The router doesn't loop traffic back (no NAT hairpin / loopback). From outside it may work - inside, use the local name or 192.168.1.40.|m
+3|Same service locally|192.168.1.40:443 answers in 2 ms||m
+
+== gateway
+0|Your gateway|192.168.1.1 · answers in 2 ms · Example router||m
+3|Backup way out|none - one router, one line||w
+3|IPv6 gateway|fe80::1 on Wi-Fi||w
+
+== v6routers
+0|IPv6 routers seen|1 · fe80::1 (your router)||w
+3|Prefix|2001:db8:1200:5a00::/64 · from the router's announcement||w
+
+== overlap
+1|Overlap|your home network 10.0.0.0/24 is inside the VPN's 10.0.0.0/8|While the VPN is on, company addresses 10.0.0.x go to your home network instead. Ask IT for a narrower route, or change the home network to e.g. 192.168.50.0/24.|w
+3|Home network|10.0.0.0/24 on Wi-Fi||w
+3|VPN routes|10.0.0.0/8, 172.16.0.0/12||w
+
+== vpn
+1|VPN|Example Secure Client · full tunnel - everything goes through the company||w
+3|Inside the tunnel|31 ms to the VPN's DNS 10.8.0.53 (17 ms without the VPN)||m
+3|Company proxy|proxy.example.net:8080 for web traffic||w
+3|What it means|the VPN adds 14 ms - fine for calls and browsing; a game would rather run with the VPN off||i
+
+== dnsrules
+0|DNS hijack|none - answers for a made-up name come back empty, as they should||m
+3|VPN name rules|*.corp.example.net goes to 10.8.0.53 (Name Resolution Policy)||w
+
+# ---------------------------------------------------------------- speed and load
+== speedtest
+in: auto
+0|Download|312 Mb/s||m
+0|Upload|41.5 Mb/s||m
+0|Ping|11 ms idle · 19 ms while downloading (when busy A)||m
+3|Server|Cloudflare · data centre YYZ (Toronto)||m
+
+== iperf
+in: 192.0.2.5|both|10
+0|Download|941 Mb/s · 0 retransmits||m
+0|Upload|936 Mb/s · 12 retransmits||m
+3|Server|192.0.2.5:5201 · 10 s each way||m
+
+== bloat
+in: 192.0.2.5|
+2|Grade|C - delay grows from 12 ms to 180 ms when the line is full|Calls and games stutter while someone uploads. Turn on SQM / Smart Queue on the router (set to about 90% of your speed).|m
+3|Idle|12 ms||m
+3|Download busy|38 ms||m
+3|Upload busy|180 ms||m
+
+== ping
+in: 192.168.1.1|50|200
+0|Replies|50 of 50 · 0% loss||m
+0|Time|avg 2.4 ms · best 1.1 · worst 9.8 · jitter 1.3||m
+
+== dscp
+in: 192.168.1.1|EF|20
+0|Marked EF (46)|20 of 20 replies · avg 2.2 ms||m
+3|Unmarked|20 of 20 replies · avg 2.3 ms||m
+3|What it means|no difference - the path doesn't treat EF better or worse (common at home)||i
+
+== tcpping
+in: example.com:443|20
+0|Connected|20 of 20 · avg 18 ms · worst 25 ms||m
+
+== twamp
+in: 192.0.2.7|100
+0|Round trip|avg 4.1 ms · jitter 0.3 ms · loss 0%||m
+3|One way (estimate)|out 2.0 ms · back 2.1 ms||i
+
+== teams
+0|UDP to Teams media|3478-3481 answered · 23 ms||m
+3|NAT type|port-restricted cone - calls connect directly||m
+
+== cloud
+0|Nearest|Example Cloud ca-central · 9 ms||m
+3|Next|Example Cloud us-east · 24 ms||m
+3|Far|Example Cloud eu-west · 92 ms||m
+
+== gamecompare
+in: valorant|Wi-Fi
+3|Valorant - side by side|2 runs||m
+3|Cable (21:40)|NA Central: 38 ms · 95% 41 · jitter 1 · loss 0%||m
+1|Wi-Fi (21:52)|NA Central: 44 ms · 95% 71 · jitter 9 · loss 0.4%||m
+1|Verdict|the cable is steadier: 30 ms better on the worst 5%, and no loss||i
+
+== ispreport
+in: example.com|1|
+0|Finding|No real loss on the path during the 1-minute run. If it's an evening problem, run it again in the evening - the 7-day pattern below shows when.||m
+3|Home router (hop 1)|2 ms avg · worst 6 ms · jitter 0.8 ms · loss 0%||m
+3|Provider, first hop (2)|9 ms avg · worst 22 ms · loss 0% · cpe-198-51-100-1.example.net||m
+3|Destination (hop 8)|18 ms avg · worst 30 ms · jitter 1.9 ms · loss 0%||m
+3|Saved|isp-report.html - open it, print to PDF, attach it to the support chat||m
+
+# ---------------------------------------------------------------- names, web and time
+== dig
+in: example.com|A|
+0|A|203.0.113.10 · TTL 3600||m
+3|Asked|1.1.1.1 · 14 ms · signed (DNSSEC) ✓||m
+
+== doh
+0|Encrypted DNS|Windows uses DNS over HTTPS to 1.1.1.1||w
+3|Browser|Edge: secure DNS on, with your current provider||w
+
+== dnscmp
+in: example.com|1.1.1.1
+0|Same answer|203.0.113.10 from both||m
+3|Your DNS (192.168.1.1)|203.0.113.10 · 3 ms||m
+3|1.1.1.1|203.0.113.10 · 12 ms||m
+
+== http
+in: example.com|
+0|HTTPS|200 OK · TLS 1.3 · HTTP/2 · 142 ms||m
+0|Certificate|example.com · valid until 14 Mar 2027 · issued by Example CA R3||m
+3|Server|nginx||m
+
+== httptime
+in: example.com|5
+0|Total|avg 140 ms · worst 210 ms||m
+3|DNS|4 ms||m
+3|Connect|19 ms||m
+3|TLS|38 ms||m
+3|First byte|79 ms||m
+
+== httpreq
+in: https://example.com/api/health|GET|
+0|200 OK|52 bytes · 88 ms||m
+3|Content-Type|application/json||m
+3|Body|{"status":"ok","version":"2.4.1"}||m
+
+== ntp
+in: time.windows.com
+0|Time server|answered in 21 ms · stratum 2||m
+0|Your clock|0.04 s fast - fine||m
+
+== clock
+0|Clock|0.1 s off - fine||m
+3|Time zone|Eastern (UTC-05:00) · daylight saving off||w
+
+== timesrc
+0|Time comes from|time.windows.com (NTP) · last sync 2 h ago||w
+
+== mysites
+0|example.com|up · 120 ms||m
+2|intranet.example.net|doesn't answer from here|Only reachable on the company network or VPN.|m
+
+== allips
+in: example.com:443
+0|Addresses|3 · all answer on 443||m
+3|203.0.113.10|19 ms||m
+3|203.0.113.11|21 ms||m
+3|2001:db8::10|18 ms||m
+
+== manyports
+in: mail.example.com|mail
+0|Mail ports|4 of 6 open||m
+0|587 submission|open · 22 ms||m
+0|993 IMAPS|open · 21 ms||m
+2|25 SMTP|blocked|Most home providers block port 25 out - use 587.|m
+
+# ---------------------------------------------------------------- protocols and remote
+== mail
+in: mail.example.com:587
+0|SMTP 587|220 mail.example.com ESMTP · 31 ms||m
+0|STARTTLS|offered · TLS 1.3 · certificate mail.example.com valid until 2 Feb 2027||m
+3|Login methods|AUTH LOGIN PLAIN XOAUTH2||m
+
+== smtppath
+in: example.com
+0|MX|mail.example.com (priority 10)||m
+0|Connects|203.0.113.25:25 · 220 banner in 40 ms||m
+0|STARTTLS|offered · TLS 1.2||m
+3|How far it got|all the way to the hello - the server would take a message||i
+
+== ssh
+in: 192.0.2.10
+0|SSH|SSH-2.0-OpenSSH_9.6 · 12 ms||m
+3|Host key|ED25519 SHA256:Wm4kq...7Ts||m
+
+== remote
+in: 192.0.2.10|admin|22
+3|Connect|ssh admin@192.0.2.10||i
+3|Copy a file there|scp .\report.txt admin@192.0.2.10:/tmp/||i
+3|Run one command|ssh admin@192.0.2.10 "uptime"||i
+
+== rdpcheck
+in: pc01.example.net
+0|Remote Desktop|3389 open · 15 ms · asks for network sign-in (NLA)||m
+
+== ldapcheck
+in: example.net
+0|Domain controllers|dc01.example.net, dc02.example.net||m
+0|LDAP 389 / LDAPS 636|both answer · 6 ms||m
+3|Kerberos 88|answers||m
+
+== dc
+0|Your domain|EXAMPLE (example.net)||w
+0|Signed in through|dc01.example.net · 10.1.0.5 · site Ottawa||w
+
+== gpo
+0|Policies applied|7 · last at 08:12 today||w
+3|Computer|Default Domain Policy · Example Wi-Fi · Example Firewall||w
+3|User|Example Drive Maps · Example Edge Settings||w
+
+== shares
+in: nas01
+0|Shared folders|3||m
+3|\\nas01\photos|disk||m
+3|\\nas01\backup|disk||m
+3|\\nas01\print$|printer drivers||m
+
+== stun
+in: stun.example.com:3478
+0|Your public address|203.0.113.50:51234||m
+3|NAT|one public address, ports kept per destination (cone NAT) - calls connect directly||m
+
+== nbname
+in: 192.168.1.40
+0|Name|NAS01 (NetBIOS) · nas01.local (mDNS)||m
+3|Workgroup|HOME||m
+
+== arpwho
+in: 192.168.1.40
+0|Answered|192.168.1.40 is at 00:11:32:ab:cd:ef · 1 ms||m
+3|Maker|Example Storage Inc.||i
+
+== wol
+in: 3C:84:6A:12:34:56|
+0|Sent|magic packet to 3C:84:6A:12:34:56 on Wi-Fi (broadcast 192.168.1.255:9)||m
+3|Next|the PC wakes in 10-30 s if Wake-on-LAN is on in its BIOS and network card||i
+
+== subnet
+in: 10.1.2.3/22|10.1.5.9
+0|Network|10.1.0.0/22 · mask 255.255.252.0||m
+3|Usable|10.1.0.1 - 10.1.3.254 (1,022 hosts)||m
+3|Broadcast|10.1.3.255||m
+2|10.1.5.9|outside this network||m
+
+# ---------------------------------------------------------------- traffic lab
+== icmpb
+in: 192.0.2.10|5|size 1472 df
+0|Replies|5 of 5 · 1500-byte packets go through without splitting||m
+3|Time|avg 3 ms||m
+
+== udpsend
+in: 192.0.2.10:5060|OPTIONS sip:test@192.0.2.10 SIP/2.0|1
+0|Sent|1 packet · 39 bytes||m
+0|Reply|SIP/2.0 200 OK · 14 ms||m
+
+== tcpsend
+in: 192.0.2.10:8080|GET / HTTP/1.0\r\n\r\n
+0|Connected|192.0.2.10:8080 · 3 ms||m
+0|Reply|HTTP/1.0 200 OK (412 bytes)||m
+
+== syslog
+in: 192.0.2.20|AdeeboMeter test|local7.warning
+0|Sent|1 message to 192.0.2.20:514 (UDP) · local7.warning||m
+3|Check|look for "AdeeboMeter test" on the collector - UDP has no reply||i
+
+== trap
+in: 192.0.2.20|public
+0|Sent|SNMPv2c test trap to 192.0.2.20:162||m
+3|Check|it should appear on the receiver within a second||i
+
+== netflow
+in: 192.0.2.20
+0|Sent|1 NetFlow v9 test record to 192.0.2.20:2055||m
+
+# ---------------------------------------------------------------- devices (SNMP and your network)
+== snmp
+in: 192.168.1.2|public
+0|Device|Example Switch 24P · up 41 days||m
+3|Name / place|core-sw1 · server room||m
+3|Contact|it@example.net||m
+
+== snmpif
+in: 192.168.1.2|public
+0|Ports up|18 of 26||m
+2|Port 7|1 Gb/s · 1,204 CRC errors in 10 min|A bad cable or dirty optic - swap the patch lead first.|m
+3|Port 24|10 Gb/s uplink · clean||m
+
+== snmptraffic
+in: 192.168.1.2|public
+3|Port 24 (uplink)|in 412 Mb/s · out 96 Mb/s||m
+3|Port 3|in 18 Mb/s · out 140 Mb/s||m
+
+== snmpcpu
+in: 192.168.1.2|public
+0|CPU|12%||m
+0|Memory|41% of 512 MB||m
+
+== snmplldp
+in: 192.168.1.2|public
+3|Port 24|router1 · Gi0/1 · 192.168.1.1||m
+3|Port 9|ap-lobby · eth0||m
+
+== snmpsens
+in: 192.168.1.2|public
+0|Temperature|44 °C||m
+0|Optic port 25|RX -5.1 dBm · TX -2.3 dBm||m
+
+== snmpsnap
+in: 192.168.1.2|public
+0|Device|Example Switch 24P · up 41 days · CPU 12% · 44 °C||m
+1|Ports|18 up · 1 with errors (port 7)||m
+3|Neighbours|router1 (port 24), ap-lobby (port 9)||m
+
+== snmpmac
+in: 192.168.1.2|public|00:11:32:ab:cd:ef
+0|Found|00:11:32:ab:cd:ef on port 12 · VLAN 10||m
+
+== snmpvlan
+in: 192.168.1.2|public
+3|VLAN 10 (staff)|ports 1-16, 24 (tagged)||m
+3|VLAN 20 (guest)|ports 17-20, 24 (tagged)||m
+
+== snmppoe
+in: 192.168.1.2|public
+0|PoE budget|46 W used of 195 W||m
+3|Port 9|ap-lobby · 12.4 W||m
+3|Port 11|phone · 4.1 W||m
+
+== snmplag
+in: 192.168.1.2|public
+0|LAG 1|ports 23 + 24 · both active (LACP)||m
+
+== snmpprn
+in: 192.168.1.30|public
+0|Printer|Example LaserJet · ready||m
+1|Toner|black 12%|Order a cartridge.|m
+
+== snmpups
+in: 192.168.1.5|public
+0|UPS|on mains · battery 100%||m
+0|Runtime|38 min at the current load (21%)||m
+
+== snmpwalk
+in: 192.168.1.2|public|ifTable
+3|ifDescr.1|Port 1||m
+3|ifOperStatus.1|up (1)||m
+3|ifSpeed.1|1000000000||m
+
+== mibs
+in: temperature
+3|Found|3 objects in 2 MIB files||w
+3|entPhySensorValue|ENTITY-SENSOR-MIB · 1.3.6.1.2.1.99.1.1.1.4||w
+3|ciscoEnvMonTemperatureStatusValue|CISCO-ENVMON-MIB · 1.3.6.1.4.1.9.9.13.1.3.1.3||w
+
+== finddev
+0|Found|5 devices · 3 answered in 4 s, 2 from the neighbour table||m
+3|192.168.1.20|mDNS googlecast · Living-room TV||m
+3|192.168.1.30|WS-Discovery printer · Example LaserJet||m
+3|192.168.1.31|SSDP · Example router · InternetGatewayDevice||m
+3|192.168.1.40|seen recently · nas01 · Example Storage||w
+
+== sweep
+0|Answered|4 of 254||m
+3|192.168.1.1|00:11:22:33:44:55 · 2 ms||m
+3|192.168.1.20|random address - a phone or laptop hiding its identity · 40 ms||m
+3|192.168.1.40|00:11:32:ab:cd:ef · 1 ms||m
+
+== arp
+3|192.168.1.1|00:11:22:33:44:55 · your router||w
+3|192.168.1.40|00:11:32:ab:cd:ef · Example Storage||w
+
+# ---------------------------------------------------------------- engineer: joining, 802.1X, replays
+== join
+2|Verdict|Stops at the network sign-in (802.1X): the server refused this PC's certificate.|Next: open 802.1X failure decoder for the full timeline.|i
+0|1. Link|Wi-Fi connected · Example-Corp||w
+2|2. Network sign-in (802.1X)|failed at 09:14 · reason 0x50005 (certificate not trusted)||w
+3|3. Address (DHCP)|not reached||w
+3|4. Router|not reached||w
+
+== dot1x
+2|Category|Certificate - the server doesn't trust the PC's certificate (or the PC the server's)||i
+3|09:14:02|association to Example-Corp (AP 00:11:22:aa:bb:cc)||w
+3|09:14:02|EAP identity host/LAPTOP01.example.net||w
+3|09:14:03|PEAP / EAP-TLS started||w
+2|09:14:03|failed · 0x50005 - the server's certificate isn't trusted by this PC||w
+3|Next|inspect the certificate involved||
+
+== auth
+2|Last network sign-in|failed today 09:14 on Example-Corp|The server's certificate isn't trusted by this PC - IT needs to push the Example Root CA.|w
+
+== dhcpreplay
+in: C:\captures\dhcp.pcapng
+3|Read|4 packets||p
+0|Lease|Discover → Offer → Request → ACK in 18 ms · 192.168.1.20 from 192.168.1.1||p
+3|Offer|router 192.168.1.1 · DNS 192.168.1.1 · lease 24 h||p
+
+== rareplay
+in: C:\captures\ra.pcapng
+3|Read|3 router announcements||p
+0|fe80::1|prefix 2001:db8:1200:5a00::/64 · lifetime 1800 s · same router Windows uses||p
+2|fe80::bad|announces itself as a router too - a second (possibly rogue) router|Windows may send IPv6 traffic to it. Find the device with this address and turn off its router announcements.|p
+
+== eapreplay
+in: C:\captures\eap.pcapng
+3|Read|9 packets||p
+3|EAP|identity → PEAP → TLS hello · server certificate sent||p
+2|Result|EAP-Failure after the TLS handshake|The server refused - usually a certificate one side doesn't trust.|p
+
+== icmpexplain
+in: 3/4
+2|ICMP 3/4|Fragmentation needed - the packet is too big for the next link and has don't-fragment set. The router says how big it may be; if this message is blocked, big transfers hang (an MTU black hole).||
+
+== samplelab
+in: dhcp-no-ack
+3|Sample|An offer, then Request after Request - the ACK never comes|Made by AdeeboMeter - addresses are documentation examples, not real devices.|
+3|Read|5 packets||p
+1|No ACK for 02:00:5e:10:00:01|offered, but never confirmed|The Request didn't reach the server, or its answer didn't come back - a relay that forwards one way only, or a firewall.|p
+
+== certcmp
+in: example.com|VPN off
+3|Run|VPN off · example.com||m
+0|Chain|example.com → Example CA R3 → Example Root X1 · 3 certificates||m
+3|Compared with "VPN on"|different: with the VPN on, the site was signed by Example Corp Inspection CA (the company looks inside HTTPS)||i
+
+== radiuslab
+in: labtest@192.0.2.30||
+0|Access-Accept|in 14 ms · from 192.0.2.30:1812||m
+3|Sent from|192.168.1.20 (the RADIUS server must list this address as a client)||m
+3|Attributes back|Session-Timeout 3600 · Class staff||m
+
+== radius
+in: 192.0.2.30|
+0|RADIUS|192.0.2.30:1812 answered (Access-Reject for a test name - it's alive)||m
+
+== tacacs
+in: 192.0.2.31
+0|TACACS+|192.0.2.31:49 accepts connections · 8 ms||m
+
+== dhcpopt
+0|DHCP server|192.168.1.1||w
+3|Options|router 192.168.1.1 · DNS 192.168.1.1 · domain home · lease 24 h||w
+
+== dhcp
+0|IPv4 lease|192.168.1.20 · renews in 11 h||w
+3|IPv6|2001:db8:1200:5a00::20 · valid 1 day, preferred 4 h||w
+
+== roams
+0|Wi-Fi in 24 h|2 roams · 0 drops||w
+3|08:31|moved to AP 00:11:22:aa:bb:cd (signal 41% → 78%)||w
+3|12:02|moved to AP 00:11:22:aa:bb:cc (signal 38% → 85%)||w
+
+== winev
+3|Network|2 adapter resets in 24 h (Wi-Fi)||w
+3|DNS client|14 timeouts to 192.168.1.1 between 19:02 and 19:05||w
+
+# ---------------------------------------------------------------- Windows: certificates, files, firewall, events
+== certs
+1|Expire soon|1 certificate within 30 days||w
+1|LAPTOP01.example.net|machine certificate · expires in 12 days|Renews by itself on the company network - connect once before then.|w
+
+== certfile
+in: C:\certs\server.crt
+0|Certificate|vpn.example.com · valid until 9 Jun 2027||m
+3|Names|vpn.example.com, 203.0.113.40||m
+3|Issued by|Example CA R3 · RSA 2048 · SHA-256||m
+
+== pfx
+in: C:\certs\vpn.pfx|
+0|PFX|opened · 1 certificate with its private key||m
+3|Certificate|vpn.example.com · valid until 9 Jun 2027||m
+3|Chain inside|Example CA R3 (intermediate) included||m
+
+== csr
+in: C:\certs\vpn.csr
+0|CSR|CN=vpn.example.com · RSA 3072 · signature checks out||m
+3|Names asked for|vpn.example.com, 203.0.113.40||m
+
+== certconv
+in: C:\certs\server.crt
+0|Converted|server.der - the same certificate in binary (DER) form, next to the original||m
+
+== hashf
+in: C:\Downloads\tool.zip|
+0|SHA-256|3f2a9c...e71b||m
+3|SHA-1 / MD5|9b1c...4d2e / 77a0...c19f||m
+
+== b64
+in: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.c2ln
+3|JWT header|{"alg":"HS256"}||m
+3|JWT body|{"sub":"test"}||m
+1|Signature|not checked - it needs the key||i
+
+== certcmds
+in: C:\certs\server.crt
+3|Show it|certutil -dump "C:\certs\server.crt"||i
+3|With OpenSSL|openssl x509 -in "C:\certs\server.crt" -noout -text||i
+
+== fw
+in: teams
+0|Teams|allowed in: 2 rules (UDP and TCP, private and domain networks)||w
+3|Blocked|none||w
+
+== events
+in: DNS
+1|Errors in 24 h|14 from DNS Client Events||w
+3|1014 × 14|name resolution for example.net timed out (19:02-19:05)||w
+
+== listen
+3|0.0.0.0:445|System - file sharing||w
+3|127.0.0.1:5939|Example Remote Support||w
+3|0.0.0.0:3389|Remote Desktop||w
+
+== svcfail
+1|Failed to start (7 days)|1 service||w
+1|Example Updater|failed 3 times - last Tuesday 08:02 · error 1053 (didn't answer in time)||w
+
+# ---------------------------------------------------------------- keys and encryption
+== keys
+3|ADEEB WORK|for files encrypted to you · RSA 3072 · self-signed · expires 11 Nov 2029||w
+3|Copy public key|a .cer someone needs to encrypt a file for you||w
+3|Back up private key|a password-protected .pfx for a new PC, with a strong recovery passphrase shown once||w
+
+== newkey
+in: Adeeb work|files|standard
+0|Made|Adeeb work · RSA 3072 · kept by Windows for your account|Next: Copy public key (in My keys) and send it to anyone who'll encrypt files for you.|w
+
+== csrmake
+in: vpn-2027|vpn.example.com, 203.0.113.40|
+0|CSR|vpn-2027.csr · CN=vpn.example.com · RSA 3072||w
+3|Next|send the .csr to your CA; when the certificate comes back, use Check certificate and key to put them together||i
+
+== selfsigned
+in: Local HTTPS|lab01.lab, 192.0.2.50
+0|Made|lab01.lab · valid 2 years · in My keys||w
+1|Trust|not trusted anywhere yet - you decide|Browsers and clients will warn until you add this certificate to their trusted list.|i
+
+== certmatch
+in: C:\certs\vpn.crt|
+0|Match|the certificate belongs to your key "vpn-2027"||m
+3|Next|type yes in the second box and run again to put them together in My keys||
+
+== certlive
+in: C:\certs\vpn.crt|vpn.example.com
+2|Different|the server still shows the old certificate (expires 2 Dec 2026)|The new one isn't deployed yet, or the service wasn't restarted.|m
+3|File|vpn.example.com · expires 9 Jun 2027||m
+
+== recipients
+in: |Munif
+0|SAVED RECIPIENTS|2||
+3|Munif|EC P-384 · .adeebo files · fingerprint A9CC2-7CEAE-51019-B324B-96284-6E774||
+3|Lab team|lab-team · expires 3 Mar 2028||
+
+== encrypt
+in: C:\Docs\design.pdf|code|
+0|Encrypted|design.pdf.adeebo - next to the original, which isn't changed||m
+1|The code|7K2M-XXXX-XXXX-XXXX-XXXX-XXXX|Give it another way than the file - read it out on the phone, or send it by text. (In a real run this is a fresh random code.)|
+3|To open it|the other person opens the .adeebo file in AdeeboMeter (Open an encrypted file) and types the code||
+
+== decrypt
+in: C:\Docs\design.pdf.adeebo|
+0|Opened|design (2).pdf - the file checked out (not changed since it was encrypted)||m
+
+# ---------------------------------------------------------------- compare
+== beforeafter
+in: VPN off
+3|Saved "VPN off"|internet 17 ms · DNS 4 ms · gateway 2 ms · public IP hidden||m
+3|Compared with "VPN on"|internet 31 ms (+14) · DNS 22 ms (+18) · a new route to 10.0.0.0/8||i
+
+== twopc
+in: C:\Results\laptop.txt|C:\Results\desktop.txt
+3|Same|gateway, DNS server, MTU 1500||i
+1|Different|laptop: Wi-Fi 44% signal, 38 ms · desktop: cable, 12 ms||i
+
+# ---------------------------------------------------------------- the PC (Investigate › Health)
+== tidy
+3|Temp files|3.1 GB in your Temp folder - Settings › System › Storage › Temporary files||w
+3|Downloads|8.4 GB, oldest from 2023||w
+
+== pressure
+0|Memory|9.2 of 16 GB used||m
+0|Disk|C: 61% full · healthy||w
+0|Heat|CPU 58 °C||w
+
+== disk
+0|C: health|healthy · 1 TB SSD · 2% worn||w
+3|Busiest now|Example Backup · 40 MB/s||m
+
+== space
+3|C:|612 GB used of 1 TB||w
+3|Users\you\Videos|184 GB||w
+3|Windows update leftovers|9 GB - Settings › System › Storage › Clean up||w
+
+== bg
+3|Example Backup|uploading · 12% CPU · 4 MB/s||m
+3|Windows Update|downloading · 1% CPU||m
+
+== crash
+1|Crashes (7 days)|Example Browser stopped 2 times (Tuesday, Thursday)||w
+3|Hangs|none||w
+
+== leaks
+1|Growing|Example Chat: 410 MB → 1.6 GB over 9 hours without restarting|Restart it once a day until an update fixes it.|m
+
+== gpu
+3|Example Game|62% GPU · 3.1 GB video memory||m
+3|Edge|4% GPU||m
+
+== changed
+3|Installed|Example VPN 5.2 (Monday)||w
+3|Updated|Wi-Fi driver 23.40 (Wednesday)||w
+3|Windows Update|KB0000000 (Thursday)||w
+
+== battery
+0|Battery health|86% of its design capacity (48 of 56 Wh)||w
+3|Charge cycles|212||w
+
+# ---------------------------------------------------------------- pages that are still empty
+== page.gamer
+-1|VALORANT · WATCHED IN THE BACKGROUND|every 30 s · NA Central and US East||
+0|NA Central|38 ms now · 95% of the time under 41 ms · loss 0%||m
+1|US East|61 ms · 23 ms further away - pick NA Central in the game||m
+2|Tonight 21:14|a lag spike to 180 ms for 9 s - past your router, your home network was fine|Marked as lag. Report for my ISP collects the proof.|m
+3|This week|best 18:00-20:00 · worst 21:00-22:00 (the evening rush)||i

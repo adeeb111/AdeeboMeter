@@ -12,12 +12,12 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         Panel overviewPage; DB overviewCanvas; string ovKey = "";
-        Toolkit.Run speedRun = new Toolkit.Run(); string speedErr = "";
+        Toolkit.Run speedRun = new Toolkit.Run(); string speedErr = "", speedNote = "";
         // the speed test runs only when this button is pressed - one at a time, on its own thread
         void StartSpeed()
         {
             if (SpeedTest.Busy) return;
-            speedRun = new Toolkit.Run { Status = "Starting..." }; speedErr = ""; var run = speedRun;
+            speedRun = new Toolkit.Run { Status = "Starting..." }; speedErr = ""; speedNote = ""; var run = speedRun;
             var srv = SpeedTest.Pick(Cfg.SpeedServer) ?? SpeedTest.Pick("auto");
             new System.Threading.Thread(() => { var res = SpeedTest.Measure(run, srv); speedErr = res.Error; run.Status = ""; }) { IsBackground = true, Name = "speed test" }.Start();
             overviewCanvas.Invalidate();
@@ -30,7 +30,7 @@ namespace AdeeboMeter
             Action<ToolStripItemCollection, SpeedTest.Server, string> item = (into, sv, text) =>
             {
                 var it = new ToolStripMenuItem(text) { Checked = Cfg.SpeedServer == sv.Id || (sv.Id == "cloudflare" && Cfg.SpeedServer == "auto") };
-                string id = sv.Id; it.Click += delegate { Cfg.SpeedServer = id == "cloudflare" ? "auto" : id; Cfg.Save(); speedErr = ""; overviewCanvas.Invalidate(); };
+                string id = sv.Id; it.Click += delegate { Cfg.SpeedServer = id == "cloudflare" ? "auto" : id; Cfg.Save(); speedErr = ""; speedNote = ""; overviewCanvas.Invalidate(); };
                 into.Add(it);
             };
             var l = SpeedTest.All();
@@ -51,7 +51,7 @@ namespace AdeeboMeter
         }
         void FindClosestSpeed()
         {
-            if (SpeedTest.Busy || speedFinding) return; speedFinding = true; speedErr = ""; overviewCanvas.Invalidate();
+            if (SpeedTest.Busy || speedFinding) return; speedFinding = true; speedErr = ""; speedNote = ""; overviewCanvas.Invalidate();
             new System.Threading.Thread(() =>
             {
                 string best = null; double bestMs = double.MaxValue;
@@ -70,7 +70,7 @@ namespace AdeeboMeter
                     BeginInvoke((Action)delegate
                     {
                         speedFinding = false;
-                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); } else speedErr = "no server answered - is the internet down?";
+                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); var bs = SpeedTest.Pick(best); speedNote = L.T("Closest:") + " " + (best == "cloudflare" ? "Cloudflare" : bs != null ? bs.Label : best) + " (" + Math.Round(bestMs).ToString(CultureInfo.CurrentCulture) + " ms) - " + L.T("picked. Press Test my speed."); } else speedErr = "no server answered - is the internet down?";
                         overviewCanvas.Invalidate();
                     });
                 }
@@ -246,7 +246,7 @@ namespace AdeeboMeter
                     Theme.Stroke(g, cr, 16 * S, Theme.Track, 1); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(ct, Draw.fBody, tb, cr.X + 12 * S, cr.Y + (32 * S - csz.Height) / 2);
                     Act(overviewCanvas, cr, delegate { if (!SpeedTest.Busy) SpeedMenu(new Point((int)cr.X, (int)(cr.Bottom + overviewCanvas.AutoScrollPosition.Y))); });
                     sb2 = new RectangleF(sb2.X, sb2.Y, cr.Right - sb2.X, sb2.Height);
-                    string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : last != null ? last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (last.Where != "" && last.Where.StartsWith("data centre", StringComparison.Ordinal) ? last.Where.Substring(12) + " · " : "") + SpeedTest.Mbps(last.Down) + " down" + (last.NoUpload ? "" : " / " + SpeedTest.Mbps(last.Up) + " up") + " Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
+                    string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : speedNote != "" ? speedNote : last != null ? last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (last.Where != "" && last.Where.StartsWith("data centre", StringComparison.Ordinal) ? last.Where.Substring(12) + " · " : "") + SpeedTest.Mbps(last.Down) + " down" + (last.NoUpload ? "" : " / " + SpeedTest.Mbps(last.Up) + " up") + " Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
                         : "About 20 seconds, up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. Never runs by itself.";
                     using (var stb = new SolidBrush(speedErr != "" && !busy ? Theme.LvText(1) : Theme.Sub)) g.DrawString(st, Draw.fBody, stb, new RectangleF(sb2.Right + 12 * S, sb2.Y + 6 * S, w - sb2.Width - 12 * S, 24 * S));
                     y += 44 * S;

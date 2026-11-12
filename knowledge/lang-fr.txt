@@ -270,3 +270,56 @@ BACKGROUND · INTERNET	ARRIÈRE-PLAN · INTERNET
 ONLINE LOOKUP	RECHERCHE EN LIGNE
 ONLY WHILE THIS WINDOW IS OPEN	SEULEMENT QUAND CETTE FENÊTRE EST OUVERTE
 Keys and encryption	Clés et chiffrement
+Closest:	Le plus proche :
+picked. Press Test my speed.	choisi. Appuyez sur Tester ma vitesse.
+Delete this key from Windows?	Supprimer cette clé de Windows ?
+Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone.	Les fichiers chiffrés pour elle ne pourront plus être ouverts, sauf si vous avez une sauvegarde. C'est irréversible.
+Example	Exemple
+EXAMPLE	EXEMPLE
+Made-up data - not your PC or network. Nothing was sent.	Données inventées - pas votre PC ni votre réseau. Rien n'a été envoyé.
+Click here to fill the boxes with these inputs, then press Run to try it for real.	Cliquez ici pour remplir les cases avec ces valeurs, puis Lancer pour l'essayer pour de vrai.
+Press Run to see your own.	Appuyez sur Lancer pour voir le vôtre.
+See an example	Voir un exemple
+Hide the example	Masquer l'exemple
+See an example day	Voir une journée d'exemple
++1 Adeebo Point	+1 point Adeebo
++2 replay bonus	+2 bonus de relance
+Adeebo Point	point Adeebo
+Adeebo Points	points Adeebo
+examples done	exemples faits
+of	sur
+Beginner	Débutant
+Learner	Apprenti
+Troubleshooter	Dépanneur
+Expert	Expert
+Earn Adeebo Points	Gagner des points Adeebo
+Replay bonus · +2	Bonus de relance · +2
+Already earned.	Déjà gagné.
+Run it for real: +1 Adeebo Point.	Lancez-le pour de vrai : +1 point Adeebo.
+Doesn't earn Adeebo Points - it sends test traffic.	Ne rapporte pas de points Adeebo - il envoie du trafic de test.
+Replay bonus · +2 - run it again at least 10 minutes after your first run.	Bonus de relance · +2 - relancez-le au moins 10 minutes après la première fois.
+HOW TO EARN	COMMENT GAGNER
+Open a tool's Example, then run it for real	Ouvrez l'exemple d'un outil, puis lancez-le pour de vrai
++1, or +2 for the longer tests	+1, ou +2 pour les tests longs
+Run a tool marked replay again, 10 minutes or more later	Relancez un outil marqué relance, 10 minutes ou plus après
++2, once	+2, une fois
+Read a Learn topic to the end	Lisez un sujet d'Apprendre jusqu'au bout
+Use a page for the first time	Utilisez une page pour la première fois
+Kept on this PC only. Every feature is below - Go takes you straight there.	Gardé sur ce PC uniquement. Toutes les fonctions sont ci-dessous - Aller vous y emmène.
+Go	Aller
+no points	pas de points
+read	lus
+done	faits
+to	avant
+Pages	Pages
+Nothing matches - try another word.	Aucun résultat - essayez un autre mot.
+Top rank - every feature you tried taught you something.	Rang maximal - chaque fonction essayée vous a appris quelque chose.
+Earning is off (Settings › Adeebo Points) - your points are kept.	Les gains sont coupés (Paramètres › Points Adeebo) - vos points sont gardés.
+Community and support	Communauté et soutien
+AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing.	AdeeboMeter est gratuit et open source. Ces liens s'ouvrent dans votre navigateur - AdeeboMeter n'envoie rien.
+Ask a question or share an idea	Poser une question ou proposer une idée
+Report a bug	Signaler un bug
+Source code and releases	Code source et versions
+Donate	Faire un don
+Other amount	Autre montant
+PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal, en dollars canadiens. AdeeboMeter n'envoie rien sur vous.

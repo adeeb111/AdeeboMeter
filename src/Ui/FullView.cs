@@ -52,7 +52,7 @@ namespace AdeeboMeter
         List<AppStat> procs = new List<AppStat>(); string procSel; string[] procFacts; string procPathSel = ""; DateTime lastProcs = DateTime.MinValue;
         readonly Dictionary<string, string> procWhere = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); bool whereBusy;
         // Settings
-        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly PillButton settingsBtn, aboutBtn, backBtn, detailsBtn, onlineChip; readonly ThemeSwitch themeSw; Panel tipBar;
+        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly SlideSwitch detailsBtn; readonly PillButton settingsBtn, aboutBtn, backBtn, onlineChip; readonly ThemeSwitch themeSw; Panel tipBar;
         // Saved destinations
         readonly FlowLayoutPanel pinBar; readonly PillButton pinBtn; List<DestResult> pinResults; volatile bool pinRunning;
         // hover explanations + clickable painted areas, rebuilt on every paint
@@ -90,23 +90,25 @@ namespace AdeeboMeter
             settingsBtn.Click += delegate { tab = tab == "settings" ? lastPage : "settings"; ShowTab(); };
             aboutBtn = new PillButton("About", PillButton.K.Chip);
             aboutBtn.Click += delegate { tab = tab == "about" ? lastPage : "about"; ShowTab(); };
+            pointsBtn = new PillButton("Adeebo", PillButton.K.Chip) { Visible = Cfg.Points };
+            pointsBtn.Click += delegate { tab = tab == "points" ? lastPage : "points"; ShowTab(); };
             backBtn = new PillButton("Back to corner", PillButton.K.Primary);
             backBtn.Click += delegate { Close(); };
-            detailsBtn = new PillButton("Details", PillButton.K.Chip) { Selected = Cfg.Details };
-            detailsBtn.Click += delegate { Cfg.Details = !Cfg.Details; detailsBtn.Selected = Cfg.Details; Cfg.Save(); Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
+            detailsBtn = new SlideSwitch("Details", Cfg.Details);   // a sliding on/off switch: the engineer view
+            detailsBtn.Click += delegate { Cfg.Details = detailsBtn.On; Cfg.Save(); Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
             detailsBtn.MouseEnter += delegate { SetTipKey("ov.DETAILS"); }; detailsBtn.MouseLeave += delegate { SetTipKey(null); };
             onlineChip = new PillButton("Online lookups on", PillButton.K.Chip) { Visible = false };
             onlineChip.Click += delegate { Online.Stop(); SyncOnlineChip(); };
             onlineChip.MouseEnter += delegate { SetTipKey("ov.ONLINE"); }; onlineChip.MouseLeave += delegate { SetTipKey(null); };
             themeSw = new ThemeSwitch();
             themeSw.MouseEnter += delegate { SetTipKey("theme.toggle"); }; themeSw.MouseLeave += delegate { SetTipKey(null); };
-            header.Controls.Add(themeSw); header.Controls.Add(onlineChip); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
+            header.Controls.Add(themeSw); header.Controls.Add(onlineChip); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(pointsBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
             EventHandler place = delegate
             {
                 int xr = header.Width - Sc(20);
-                foreach (var b in new Control[] { backBtn, settingsBtn, aboutBtn, detailsBtn, onlineChip, themeSw }) { if (!b.Visible && b == onlineChip) continue; xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
+                foreach (var b in new Control[] { backBtn, settingsBtn, pointsBtn, aboutBtn, detailsBtn, onlineChip, themeSw }) { if (!b.Visible && (b == onlineChip || b == pointsBtn)) continue; xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
             };
-            header.Resize += place; detailsBtn.Resize += place; onlineChip.Resize += place; onlineChip.VisibleChanged += place; settingsBtn.Resize += place; aboutBtn.Resize += place; backBtn.Resize += place;
+            header.Resize += place; detailsBtn.Resize += place; onlineChip.Resize += place; onlineChip.VisibleChanged += place; settingsBtn.Resize += place; aboutBtn.Resize += place; pointsBtn.Resize += place; pointsBtn.VisibleChanged += place; backBtn.Resize += place;
             pathPanel = new DB { Name = "pathPanel", Dock = DockStyle.Top, Height = Sc(128), BackColor = Theme.Card };
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
@@ -293,7 +295,7 @@ namespace AdeeboMeter
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
             left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage());
-            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
+            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
             body.Controls.Add(left, 0, 0); body.Controls.Add(side, 1, 0);
@@ -315,7 +317,7 @@ namespace AdeeboMeter
                     // Ctrl+PageDown / PageUp: the next / previous SNMP view, from the keyboard
                     e.Handled = true; int k = Array.FindIndex(SnmpTabs, z => z[0] == tbSel); k = (k + (e.KeyCode == Keys.PageDown ? 1 : SnmpTabs.Length - 1)) % SnmpTabs.Length; SelectTool(SnmpTabs[k][0]);
                 }
-                else if (tab == "toolbox" && tbCanvas != null && e.Control && e.KeyCode == Keys.C && !(ActiveControl is TextBoxBase) && !tbSearch.Box.Focused && !tbBoxes.Any(b => b != null && b.Box.Focused) && tbRows != null && !tbBusy)
+                else if (tab == "toolbox" && tbCanvas != null && e.Control && e.KeyCode == Keys.C && !(ActiveControl is TextBoxBase) && !tbSearch.Box.Focused && !tbBoxes.Any(b => b != null && b.Box.Focused) && tbRows != null && !Examples.IsExample(tbRows) && !tbBusy)
                 {
                     e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { Program.Log("copy: " + ce.Message); }   // Ctrl+C copies the result, like the link
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
@@ -380,12 +382,13 @@ namespace AdeeboMeter
         {
             connPage.Visible = tab == "conn"; destPage.Visible = tab == "dest"; healthPage.Visible = tab == "health"; livePage.Visible = tab == "live"; changesPage.Visible = tab == "changes";
             procPage.Visible = tab == "procs"; settingsPage.Visible = tab == "settings"; settingsBtn.Selected = tab == "settings"; M.ProcsTab = tab == "procs";
-            aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about";
+            aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about"; pointsPage.Visible = tab == "points"; if (tab == "points") pointsCanvas.Invalidate();
             linkPage.Visible = tab == "link"; if (tab == "link") RefreshLink(true);
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
             overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer";
             if (tab == "replay") ReplayOpen();
-            if (tab != "settings" && tab != "about") lastPage = tab;
+            if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
+            SyncPointsBtn(); PageUsed(tab);
             string sec = SecOf(tab); if (sec != "") lastIn[sec] = tab;
             if (sec != curSec) { curSec = sec; BuildSubTabs(sec); }
             if (tab == "windows" && treeRows == null) LoadInside();
@@ -468,18 +471,21 @@ namespace AdeeboMeter
             foreach (Control c in chips.Controls) { var b = c as PillButton; if (b != null && b != idle) b.Selected = (string)b.Tag == list.Filter; }
         }
 
+        string headKey = "";
         void OnTimer()
         {
             UiActivity.Doing = "timer on " + tab; var tsw = Stopwatch.StartNew(); try { OnTimer2(); } finally { if (tsw.ElapsedMilliseconds > 60) Program.Log("slow tick: " + tab + " " + tsw.ElapsedMilliseconds + " ms"); }
         }
         void OnTimer2()
         {
-            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; header.Invalidate(); pathPanel.Invalidate(); side.Invalidate(); if (tab == "changes") changesCanvas.Invalidate(); if (tab == "overview") OverviewTick(); }
+            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour; if (hk != headKey) { headKey = hk; header.Invalidate(); } pathPanel.Invalidate(); side.Invalidate(); if (tab == "changes") changesCanvas.Invalidate(); if (tab == "overview") OverviewTick(); }
+            if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
+            if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0) { SelfStats(); footer.Invalidate(); }
             if (destRunning || pinRunning) destCanvas.Invalidate();
             if (tbBusy && tab == "toolbox" && tbCanvas != null) tbCanvas.Invalidate();
-            if (tab == "gamer" && footTick % 2 == 0) gamerCanvas.Invalidate();
+            if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) gamerCanvas.Invalidate();   // nothing moves until a game is watched
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); }
@@ -639,7 +645,7 @@ namespace AdeeboMeter
         public string Perf()
         {
             var sb = new StringBuilder(); var sw = new Stopwatch();
-            var pages = new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about" };
+            var pages = new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about", "points" };
             var canvas = new Dictionary<string, Control> { { "overview", overviewCanvas }, { "conn", list }, { "link", linkCanvas }, { "procs", procList }, { "live", liveCanvas }, { "guide", guideCanvas }, { "dest", destCanvas }, { "health", healthCanvas }, { "toolbox", toolboxPage },
                 { "travel", travelCanvas }, { "replay", replayCanvas }, { "changes", changesCanvas }, { "learn", learnList }, { "windows", insideList }, { "settings", settingsCanvas }, { "gamer", gamerCanvas }, { "about", aboutCanvas } };
             sb.AppendLine("window " + Width + "x" + Height);
@@ -677,7 +683,7 @@ namespace AdeeboMeter
         public int TestWalk()
         {
             int n = 0;
-            foreach (var t in new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about" }) { tab = t; ShowTab(); Refresh(); Application.DoEvents(); n++; }
+            foreach (var t in new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about", "points" }) { tab = t; ShowTab(); Refresh(); Application.DoEvents(); n++; }
             List<AppStat> l; lock (M.L) l = M.Apps;
             if (l.Count > 0) { tab = "procs"; ShowTab(); SelectProc(l[0]); Thread.Sleep(50); Application.DoEvents(); procInfo.Refresh(); }
             SetTipKey("path.DNS"); ShowTip(); Application.DoEvents(); SetTipKey(null);

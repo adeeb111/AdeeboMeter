@@ -82,7 +82,8 @@ namespace AdeeboMeter
         {
             name = ""; if (text == null || !text.StartsWith("ADEEBOMETER PUBLIC KEY v1", StringComparison.Ordinal)) return null;
             string b64 = ""; foreach (var line in text.Split('\n')) { var l = line.Trim(); if (l.StartsWith("key: ", StringComparison.Ordinal)) b64 = l.Substring(5).Trim(); else if (l.StartsWith("name: ", StringComparison.Ordinal)) name = l.Substring(6).Trim(); }
-            try { var blob = Convert.FromBase64String(b64); using (var k = CngKey.Import(blob, CngKeyBlobFormat.EccPublicBlob)) return k.Algorithm == CngAlgorithm.ECDiffieHellmanP384 ? blob : null; }
+            try { var blob = Convert.FromBase64String(b64); if (blob.Length != 104) return null;   /* ECK3 header (8) + X and Y (48 each): anything else isn't a P-384 public key */
+                using (var k = CngKey.Import(blob, CngKeyBlobFormat.EccPublicBlob)) return k.Algorithm == CngAlgorithm.ECDiffieHellmanP384 ? blob : null; }
             catch (Exception e) { if (!(e is FormatException || e is CryptographicException)) throw; return null; }
         }
         static byte[] Pad(byte[] secret)

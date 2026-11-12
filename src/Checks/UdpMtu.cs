@@ -24,11 +24,11 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h = (target ?? "").Trim(); int p;
             if (!int.TryParse((port ?? "").Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out p)) p = 443;
-            if (p != 443 && p != 53) { rows.Add(R(2, "Port", "443 (a QUIC server - most big websites) or 53 (a DNS server)", "", "u")); return rows; }
+            if (p != 443 && p != 53) { rows.Add(R(2, "Port", "443 (a QUIC server - most big websites) or 53 (a DNS server)", "", "")); return rows; }
             if (h == "") h = p == 53 ? "1.1.1.1" : "cloudflare.com";
-            if (!Games.ValidHost(h)) { rows.Add(R(2, "Target", "a host name or an IP", "", "u")); return rows; }
+            if (!Games.ValidHost(h)) { rows.Add(R(2, "Target", "a host name or an IP", "", "")); return rows; }
             var a = Lab.Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; }
-            if (a.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "Target", "IPv4 only for now - type an IPv4 address", "", "u")); return rows; }
+            if (a.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "Target", "IPv4 only for now - type an IPv4 address", "", "")); return rows; }
             Program.Log("udp mtu to " + a + ":" + p);
             int hdr = 28;   // IPv4 20 + UDP 8
             int lo = 0, hi = 1500 - hdr, tries = 0; bool local = false;

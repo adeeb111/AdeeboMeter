@@ -20,10 +20,10 @@ namespace AdeeboMeter
         static List<Pcap.Pkt> Load(string path, List<string[]> rows)
         {
             string p = (path ?? "").Trim().Trim('"');
-            if (p == "") { rows.Add(R(2, "Capture file", "type or paste the path of a .pcap or .pcapng file - or try the Sample lab", "", "u")); return null; }
+            if (p == "") { rows.Add(R(2, "Capture file", "type or paste the path of a .pcap or .pcapng file - or try the Sample lab", "", "")); return null; }
             string err; var l = Pcap.Read(p, out err);
-            if (err != "") { rows.Add(R(2, "Capture file", err, "", "u")); return null; }
-            rows.Add(R(3, "Read", l.Count.ToString("N0", CultureInfo.CurrentCulture) + " packets from " + Path.GetFileName(p), "Read on this PC with AdeeboMeter's own reader - the file isn't changed or sent anywhere.", "m"));
+            if (err != "") { rows.Add(R(2, "Capture file", err, "", "")); return null; }
+            rows.Add(R(3, "Read", l.Count.ToString("N0", CultureInfo.CurrentCulture) + " packets from " + Path.GetFileName(p), "Read on this PC with AdeeboMeter's own reader - the file isn't changed or sent anywhere.", "p"));
             return l;
         }
 
@@ -71,34 +71,34 @@ namespace AdeeboMeter
         public static List<string[]> DhcpRows(List<Pcap.Pkt> pkts, List<string[]> rows)
         {
             var msgs = pkts.Where(k => k.Proto == 17 && (k.SrcPort == 67 || k.SrcPort == 68) && (k.DstPort == 67 || k.DstPort == 68)).Select(k => ParseDhcp(k.Payload, k.T)).Where(d => d != null).ToList();
-            if (msgs.Count == 0) { rows.Add(R(1, "DHCP", "no DHCP in this capture", "Capture while the PC connects: Wireshark filter  udp port 67 or udp port 68 , then unplug / plug the cable or reconnect the Wi-Fi.", "m")); return rows; }
+            if (msgs.Count == 0) { rows.Add(R(1, "DHCP", "no DHCP in this capture", "Capture while the PC connects: Wireshark filter  udp port 67 or udp port 68 , then unplug / plug the cable or reconnect the Wi-Fi.", "p")); return rows; }
             var findings = new List<string[]>();
             foreach (var g in msgs.GroupBy(d => d.Client))
             {
-                rows.Add(R(-1, "CLIENT " + g.Key + (g.Any(d => d.Host != "") ? " · " + g.First(d => d.Host != "").Host : ""), "", "", "m"));
+                rows.Add(R(-1, "CLIENT " + g.Key + (g.Any(d => d.Host != "") ? " · " + g.First(d => d.Host != "").Host : ""), "", "", "p"));
                 foreach (var d in g.OrderBy(d => d.T).Take(60))
                 {
                     string what = DhcpNames[d.Type] + (d.Type == 2 || d.Type == 5 ? " " + d.Your + " from " + (d.Server != "" ? d.Server : "?") : d.Type == 3 && d.Requested != "" ? " for " + d.Requested + (d.Server != "" ? " (accepting " + d.Server + "'s offer)" : "") : d.Type == 6 ? " from " + d.Server : "");
-                    rows.Add(R(d.Type == 6 || d.Type == 4 ? 2 : 3, T(d.T), what, (d.Type == 2 || d.Type == 5 ? Opts(d) : "") + (d.Relay != "" ? (d.Type == 2 || d.Type == 5 ? " · " : "") + "relayed by " + d.Relay : ""), "m"));
+                    rows.Add(R(d.Type == 6 || d.Type == 4 ? 2 : 3, T(d.T), what, (d.Type == 2 || d.Type == 5 ? Opts(d) : "") + (d.Relay != "" ? (d.Type == 2 || d.Type == 5 ? " · " : "") + "relayed by " + d.Relay : ""), "p"));
                 }
                 // what went wrong (or right)
                 var offers = g.Where(d => d.Type == 2).ToList(); var servers = offers.Select(d => d.Server).Where(s => s != "").Distinct().ToList();
-                if (servers.Count > 1) findings.Add(R(2, "Two DHCP servers answered " + g.Key, string.Join(" and ", servers) + " both offered addresses", "One of them shouldn't be there: a second router, a hotspot or a VM host handing out addresses (a rogue DHCP server). The client takes whichever answers first - which is why it works sometimes and not others. DHCP snooping on the switch stops it.", "m"));
-                if (g.Any(d => d.Type == 1) && offers.Count == 0) findings.Add(R(2, "No offer for " + g.Key, g.Count(d => d.Type == 1) + " Discover(s), no answer", "No DHCP server heard it: the VLAN has no DHCP server, the relay (ip helper-address) is missing or wrong, the server's pool is full, or 802.1X hasn't let the port through yet.", "m"));
-                if (g.Any(d => d.Type == 6)) findings.Add(R(2, "Refused (NAK) " + g.Key, "the server said no to " + (g.LastOrDefault(d => d.Type == 3 && d.Requested != "") != null ? g.Last(d => d.Type == 3 && d.Requested != "").Requested : "the address asked for"), "Usually the PC asked for its old address on a different network (after moving, or a VLAN change) - it starts over with Discover, which is normal. Repeated NAKs mean two servers disagree about the same network.", "m"));
-                if (offers.Count > 0 && !g.Any(d => d.Type == 5) && !g.Any(d => d.Type == 6)) findings.Add(R(1, "No ACK for " + g.Key, "offered, but never confirmed", "The Request didn't reach the server, or its answer didn't come back - a relay that forwards one way only, or a firewall.", "m"));
+                if (servers.Count > 1) findings.Add(R(2, "Two DHCP servers answered " + g.Key, string.Join(" and ", servers) + " both offered addresses", "One of them shouldn't be there: a second router, a hotspot or a VM host handing out addresses (a rogue DHCP server). The client takes whichever answers first - which is why it works sometimes and not others. DHCP snooping on the switch stops it.", "p"));
+                if (g.Any(d => d.Type == 1) && offers.Count == 0) findings.Add(R(2, "No offer for " + g.Key, g.Count(d => d.Type == 1) + " Discover(s), no answer", "No DHCP server heard it: the VLAN has no DHCP server, the relay (ip helper-address) is missing or wrong, the server's pool is full, or 802.1X hasn't let the port through yet.", "p"));
+                if (g.Any(d => d.Type == 6)) findings.Add(R(2, "Refused (NAK) " + g.Key, "the server said no to " + (g.LastOrDefault(d => d.Type == 3 && d.Requested != "") != null ? g.Last(d => d.Type == 3 && d.Requested != "").Requested : "the address asked for"), "Usually the PC asked for its old address on a different network (after moving, or a VLAN change) - it starts over with Discover, which is normal. Repeated NAKs mean two servers disagree about the same network.", "p"));
+                if (offers.Count > 0 && !g.Any(d => d.Type == 5) && !g.Any(d => d.Type == 6)) findings.Add(R(1, "No ACK for " + g.Key, "offered, but never confirmed", "The Request didn't reach the server, or its answer didn't come back - a relay that forwards one way only, or a firewall.", "p"));
                 var acks = g.Where(d => d.Type == 5).ToList();
                 if (acks.Count >= 2)
                 {
                     var a = acks[acks.Count - 2]; var b = acks[acks.Count - 1];
                     var changed = a.Opts.Keys.Union(b.Opts.Keys).Where(k => k != 51 && k != 58 && k != 59 && (!a.Opts.ContainsKey(k) || !b.Opts.ContainsKey(k) || a.Opts[k] != b.Opts[k])).ToList();
                     if (a.Your != b.Your) changed.Insert(0, -1);
-                    if (changed.Count > 0) findings.Add(R(1, "What changed between leases", string.Join(" · ", changed.Select(k => k == -1 ? "address " + a.Your + " > " + b.Your : OptName[k] + " " + Opt(a, k) + " > " + Opt(b, k))), "Compare a good and a bad lease: a different router or DNS server is the usual reason one works and the other doesn't.", "m"));
+                    if (changed.Count > 0) findings.Add(R(1, "What changed between leases", string.Join(" · ", changed.Select(k => k == -1 ? "address " + a.Your + " > " + b.Your : OptName[k] + " " + Opt(a, k) + " > " + Opt(b, k))), "Compare a good and a bad lease: a different router or DNS server is the usual reason one works and the other doesn't.", "p"));
                 }
-                if (g.Any(d => d.Opt82)) findings.Add(R(3, "Option 82", "the relay added its own information (which switch port the client is on)", "Normal on enterprise networks - the server can use it to pick the pool.", "m"));
-                if (acks.Count > 0 && servers.Count <= 1 && !g.Any(d => d.Type == 6)) { var last = acks.Last(); findings.Add(R(0, "Lease for " + g.Key, last.Your + " from " + last.Server + " in " + T(last.T - g.Min(d => d.T)), "", "m")); }
+                if (g.Any(d => d.Opt82)) findings.Add(R(3, "Option 82", "the relay added its own information (which switch port the client is on)", "Normal on enterprise networks - the server can use it to pick the pool.", "p"));
+                if (acks.Count > 0 && servers.Count <= 1 && !g.Any(d => d.Type == 6)) { var last = acks.Last(); findings.Add(R(0, "Lease for " + g.Key, last.Your + " from " + last.Server + " in " + T(last.T - g.Min(d => d.T)), "", "p")); }
             }
-            rows.Insert(1, R(-1, "WHAT IT SHOWS", "", "", "m"));
+            rows.Insert(1, R(-1, "WHAT IT SHOWS", "", "", "p"));
             rows.InsertRange(2, findings);
             return rows;
         }
@@ -108,13 +108,13 @@ namespace AdeeboMeter
         public static List<string[]> RaRows(List<Pcap.Pkt> pkts, List<string[]> rows)
         {
             var ras = pkts.Where(k => k.V6 && k.Proto == 58 && k.Payload.Length >= 16 && k.Payload[0] == 134).ToList();
-            if (ras.Count == 0) { rows.Add(R(1, "Router Advertisements", "none in this capture", "Capture for a minute with filter  icmpv6.type == 134  (routers send one every few minutes, or when a PC asks with type 133).", "m")); return rows; }
+            if (ras.Count == 0) { rows.Add(R(1, "Router Advertisements", "none in this capture", "Capture for a minute with filter  icmpv6.type == 134  (routers send one every few minutes, or when a PC asks with type 133).", "p")); return rows; }
             var routers = ras.GroupBy(k => k.Src.ToString()).ToList();
             var winGw = new List<string>();
             try { foreach (var n in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()) if (n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up) foreach (var gw in n.GetIPProperties().GatewayAddresses) if (gw.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) winGw.Add(gw.Address.ToString().Split('%')[0]); }
             catch (System.Net.NetworkInformation.NetworkInformationException) { }
-            rows.Add(R(-1, "WHAT IT SHOWS", "", "", "m"));
-            if (routers.Count > 1) rows.Add(R(2, "More than one router", routers.Count + " routers announce themselves: " + string.Join(", ", routers.Select(r => r.Key)), "If you have one router, the others are rogue - a phone hotspot, a VM host or a misconfigured device; PCs may send IPv6 traffic to it. RA Guard on the switch stops them.", "m"));
+            rows.Add(R(-1, "WHAT IT SHOWS", "", "", "p"));
+            if (routers.Count > 1) rows.Add(R(2, "More than one router", routers.Count + " routers announce themselves: " + string.Join(", ", routers.Select(r => r.Key)), "If you have one router, the others are rogue - a phone hotspot, a VM host or a misconfigured device; PCs may send IPv6 traffic to it. RA Guard on the switch stops them.", "p"));
             foreach (var r in routers)
             {
                 var k = r.Last(); var p = k.Payload; int life = p[6] << 8 | p[7]; bool mFlag = (p[5] & 0x80) != 0, oFlag = (p[5] & 0x40) != 0;
@@ -129,7 +129,7 @@ namespace AdeeboMeter
                 }
                 bool used = winGw.Contains(r.Key, StringComparer.OrdinalIgnoreCase);
                 rows.Add(R(life == 0 ? 1 : 3, "Router " + r.Key + (used ? " · this PC uses it now" : ""), r.Count() + " RA(s) · default router for " + (life == 0 ? "0 s - it says it is NOT a default router" : life + " s") + (prefixes.Count > 0 ? " · prefix " + string.Join(", ", prefixes) : " · no prefix"),
-                    (mFlag ? "M flag: get addresses from DHCPv6. " : "") + (oFlag ? "O flag: other settings from DHCPv6. " : "") + (mtu != "" ? "MTU " + mtu + ". " : "") + (dns != "" ? "DNS " + dns + "." : "") + (life == 0 ? " A lifetime of 0 removes this router as the way out - fine for a second router, a problem if it's the only one." : ""), "m"));
+                    (mFlag ? "M flag: get addresses from DHCPv6. " : "") + (oFlag ? "O flag: other settings from DHCPv6. " : "") + (mtu != "" ? "MTU " + mtu + ". " : "") + (dns != "" ? "DNS " + dns + "." : "") + (life == 0 ? " A lifetime of 0 removes this router as the way out - fine for a second router, a problem if it's the only one." : ""), "p"));
             }
             if (winGw.Count > 0) rows.Add(R(3, "This PC's IPv6 routers now", string.Join(", ", winGw.Distinct()), routers.Any(r => winGw.Contains(r.Key, StringComparer.OrdinalIgnoreCase)) ? "Marked above where they match the capture." : "None of the routers in the capture - the capture is from another network or another time.", "w"));
             return rows;
@@ -161,18 +161,18 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string s = (input ?? "").Trim(); bool v6 = s.StartsWith("v6", StringComparison.OrdinalIgnoreCase); if (v6) s = s.Substring(2).Trim();
             var m = System.Text.RegularExpressions.Regex.Match(s, @"^(\d{1,3})\s*[/ ]\s*(\d{1,3})$");
-            if (m.Success) { int ty = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), co = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); rows.Add(R(3, (v6 ? "ICMPv6 " : "ICMP ") + ty + "/" + co, Explain(v6, ty, co), "", "u")); return rows; }
+            if (m.Success) { int ty = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), co = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); rows.Add(R(3, (v6 ? "ICMPv6 " : "ICMP ") + ty + "/" + co, Explain(v6, ty, co), "", "")); return rows; }
             var l = Load(input, rows); if (l == null) return rows;
             var errs = l.Where(k => (k.Proto == 1 && k.Payload.Length >= 8 && (k.Payload[0] == 3 || k.Payload[0] == 5 || k.Payload[0] == 11 || k.Payload[0] == 12)) || (k.Proto == 58 && k.Payload.Length >= 8 && k.Payload[0] >= 1 && k.Payload[0] <= 4)).ToList();
-            if (errs.Count == 0) { rows.Add(R(0, "ICMP errors", "none in this capture", "", "m")); return rows; }
-            rows.Add(R(-1, "WHAT IT SHOWS", errs.Count + " error messages", "", "m"));
+            if (errs.Count == 0) { rows.Add(R(0, "ICMP errors", "none in this capture", "", "p")); return rows; }
+            rows.Add(R(-1, "WHAT IT SHOWS", errs.Count + " error messages", "", "p"));
             foreach (var g in errs.GroupBy(k => (k.V6 ? "v6 " : "") + k.Payload[0] + "/" + k.Payload[1] + " from " + k.Src).OrderByDescending(g => g.Count()).Take(30))
             {
                 var k = g.First(); int ty = k.Payload[0], co = k.Payload[1];
                 string inner = Inner(k), extra = "";
                 if (!k.V6 && ty == 3 && co == 4) extra = " · MTU " + (k.Payload[6] << 8 | k.Payload[7]);
                 if (k.V6 && ty == 2) extra = " · MTU " + ((uint)(k.Payload[4] << 24 | k.Payload[5] << 16 | k.Payload[6] << 8 | k.Payload[7]));
-                rows.Add(R(ty == 11 || (k.V6 && ty == 3) ? 3 : 1, (k.V6 ? "ICMPv6 " : "ICMP ") + ty + "/" + co + " from " + k.Src + " × " + g.Count(), Explain(k.V6, ty, co) + extra, inner != "" ? "About: " + inner : "", "m"));
+                rows.Add(R(ty == 11 || (k.V6 && ty == 3) ? 3 : 1, (k.V6 ? "ICMPv6 " : "ICMP ") + ty + "/" + co + " from " + k.Src + " × " + g.Count(), Explain(k.V6, ty, co) + extra, inner != "" ? "About: " + inner : "", "p"));
             }
             return rows;
         }
@@ -201,12 +201,12 @@ namespace AdeeboMeter
 
         // ---------- 802.1X from a capture: EAPOL Start, EAP Request / Response, the method, Success or Failure
         static readonly Dictionary<int, string> EapTypes = new Dictionary<int, string> { { 1, "Identity" }, { 3, "NAK (wants another method)" }, { 4, "MD5" }, { 13, "EAP-TLS" }, { 21, "EAP-TTLS" }, { 25, "PEAP" }, { 26, "MS-CHAPv2" }, { 43, "EAP-FAST" } };
-        static readonly string[] NextCert = { "3", "Next", "inspect the certificate involved", "", "u", "tool:certfile" };
+        static readonly string[] NextCert = { "3", "Next", "inspect the certificate involved", "", "", "tool:certfile" };
         public static List<string[]> EapReplay(string path) { var rows = new List<string[]>(); var l = Load(path, rows); return l == null ? rows : EapRows(l, rows); }
         public static List<string[]> EapRows(List<Pcap.Pkt> pkts, List<string[]> rows)
         {
             var e = pkts.Where(k => k.Proto == Pcap.Eapol && k.Payload.Length >= 4).ToList();
-            if (e.Count == 0) { rows.Add(R(1, "802.1X", "no EAPOL frames in this capture", "Capture on the PC's cable port while it connects (Wireshark filter  eapol ). Wi-Fi 802.1X happens inside the radio - capture it on the access point or controller.", "m")); return rows; }
+            if (e.Count == 0) { rows.Add(R(1, "802.1X", "no EAPOL frames in this capture", "Capture on the PC's cable port while it connects (Wireshark filter  eapol ). Wi-Fi 802.1X happens inside the radio - capture it on the access point or controller.", "p")); return rows; }
             var steps = new List<string[]>(); string method = "", identity = ""; bool success = false, failure = false, nak = false, pcAnswered = false; int idReq = 0;
             foreach (var k in e.Take(200))
             {
@@ -225,7 +225,7 @@ namespace AdeeboMeter
                     if (code == 2 && et == 1 && identity != "") what += " (" + identity + ")";
                 }
                 else what = "EAPOL type " + type;
-                steps.Add(R(what == "FAILURE" ? 2 : what == "SUCCESS" ? 0 : 3, T(k.T), what, "", "m"));
+                steps.Add(R(what == "FAILURE" ? 2 : what == "SUCCESS" ? 0 : 3, T(k.T), what, "", "p"));
             }
             string verdict; int lv;
             if (success) { verdict = "The sign-in worked" + (method != "" ? " (" + method + ")" : "") + ". If there's still no network, the next step is DHCP."; lv = 0; }
@@ -234,9 +234,9 @@ namespace AdeeboMeter
             else if (failure) { verdict = "The server refused the sign-in (EAP-Failure)" + (identity != "" ? " for " + identity : "") + " - the server's log says which rule."; lv = 2; }
             else if (idReq > 0 && !pcAnswered) { verdict = "The switch asked " + idReq + " time(s) who's there and the PC never answered - 802.1X isn't turned on for this adapter (Wired AutoConfig service), or the port expects it and the PC doesn't do it."; lv = 2; }
             else { verdict = "The exchange stops without Success or Failure - the server (RADIUS) may not be answering the switch."; lv = 1; }
-            rows.Add(R(-1, "WHAT IT SHOWS", "", "", "m")); rows.Add(R(lv, "Verdict", verdict, "", "i"));
+            rows.Add(R(-1, "WHAT IT SHOWS", "", "", "p")); rows.Add(R(lv, "Verdict", verdict, "", "i"));
             if (lv == 2 && (method == "EAP-TLS" || method == "PEAP")) rows.Add(NextCert);
-            rows.Add(R(-1, "TIMELINE", e.Count + " frames", "", "m")); rows.AddRange(steps);
+            rows.Add(R(-1, "TIMELINE", e.Count + " frames", "", "p")); rows.AddRange(steps);
             return rows;
         }
 
@@ -258,27 +258,27 @@ namespace AdeeboMeter
             var s = Samples.FirstOrDefault(x => x[0] == w);
             if (s == null)
             {
-                rows.Add(R(3, "Samples", "type a name to open it here and save it for Wireshark", "", "u"));
-                foreach (var x in Samples) rows.Add(new[] { "3", x[0], x[1], "", "u", "copy:" + x[0] });
+                rows.Add(R(3, "Samples", "click one (or type its name) to open it here and save it for Wireshark", "", ""));
+                foreach (var x in Samples) rows.Add(new[] { "3", x[0], x[1], "", "", "tool:samplelab|" + x[0] });
                 return rows;
             }
             bool pem = s[2] == "cert"; var bytes = pem ? Encoding.ASCII.GetBytes(ExpiredChainPem) : Build(s[0]); string dir = Path.Combine(Program.DataDir, "samples"), file = Path.Combine(dir, s[0] + (pem ? ".pem" : ".pcap"));
             try { Directory.CreateDirectory(dir); File.WriteAllBytes(file, bytes); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; file = null; }
-            rows.Add(R(3, "Sample", s[1], "Made by AdeeboMeter - addresses are documentation examples, not real devices.", "u"));
-            if (file != null) rows.Add(new[] { "3", "Saved", Path.GetFileName(file) + (pem ? " - open it with Inspect a certificate file, or double-click it in Windows" : " - open it in Wireshark to see the same packets"), "", "m", "show:" + file });
+            rows.Add(R(3, "Sample", s[1], "Made by AdeeboMeter - addresses are documentation examples, not real devices.", ""));
+            if (file != null) rows.Add(new[] { "3", "Saved", Path.GetFileName(file) + (pem ? " - open it with Inspect a certificate file, or double-click it in Windows" : " - open it in Wireshark to see the same packets"), "", "", "show:" + file });
             if (pem)
             {
                 var cr = CertTools.Inspect(ExpiredChainPem); rows.AddRange(cr);
                 rows.Add(R(0, "What to learn", "the site's own certificate is fine, but the intermediate between it and the root expired - browsers and Windows reject the whole chain. The server needs the renewed intermediate installed next to its certificate.", "", "i"));
                 return rows;
             }
-            var pk = Pcap.Parse(bytes); rows.Add(R(3, "Read", pk.Count + " packets", "", "m"));
+            var pk = Pcap.Parse(bytes); rows.Add(R(3, "Read", pk.Count + " packets", "", "p"));
             return s[2] == "dhcp" ? DhcpRows(pk, rows) : s[2] == "ra" ? RaRows(pk, rows) : s[2] == "eap" ? EapRows(pk, rows) : IcmpRowsFromPackets(pk, rows);
         }
-        static List<string[]> IcmpRowsFromPackets(List<Pcap.Pkt> pk, List<string[]> rows)
+        internal static List<string[]> IcmpRowsFromPackets(List<Pcap.Pkt> pk, List<string[]> rows)
         {
-            foreach (var k in pk.Where(k => k.Proto == 1 || k.Proto == 58))
-                rows.Add(R(1, (k.V6 ? "ICMPv6 " : "ICMP ") + k.Payload[0] + "/" + k.Payload[1] + " from " + k.Src, Explain(k.V6, k.Payload[0], k.Payload[1]) + (!k.V6 && k.Payload[0] == 3 && k.Payload[1] == 4 ? " · MTU " + (k.Payload[6] << 8 | k.Payload[7]) : ""), Inner(k) != "" ? "About: " + Inner(k) : "", "m"));
+            foreach (var k in pk.Where(k => (k.Proto == 1 || k.Proto == 58) && k.Payload != null && k.Payload.Length >= 8))   // type, code, checksum and the 4-byte field (MTU) - a shorter one is cut off
+                rows.Add(R(1, (k.V6 ? "ICMPv6 " : "ICMP ") + k.Payload[0] + "/" + k.Payload[1] + " from " + k.Src, Explain(k.V6, k.Payload[0], k.Payload[1]) + (!k.V6 && k.Payload[0] == 3 && k.Payload[1] == 4 ? " · MTU " + (k.Payload[6] << 8 | k.Payload[7]) : ""), Inner(k) != "" ? "About: " + Inner(k) : "", "p"));
             return rows;
         }
         // DHCP message builder for the samples

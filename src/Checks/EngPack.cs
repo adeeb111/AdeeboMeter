@@ -40,7 +40,7 @@ namespace AdeeboMeter
         public static List<string[]> CertCompare(string target, string name)
         {
             var rows = new List<string[]>(); string t = (target ?? "").Trim(); if (t.StartsWith("http", StringComparison.OrdinalIgnoreCase)) { Uri u; if (Uri.TryCreate(t, UriKind.Absolute, out u)) t = u.Host + (u.IsDefaultPort ? "" : ":" + u.Port); }
-            string h; int port; if (!Lab.Split(t, 443, out h, out port) || !Games.ValidHost(h)) { rows.Add(R(2, "Site", "type a site - e.g. outlook.office.com or https://intranet.example.com", "", "u")); return rows; }
+            string h; int port; if (!Lab.Split(t, 443, out h, out port) || !Games.ValidHost(h)) { rows.Add(R(2, "Site", "type a site - e.g. outlook.office.com or https://intranet.example.com", "", "")); return rows; }
             var snap = new CertSnap { Host = h + (port != 443 ? ":" + port : ""), Name = string.IsNullOrWhiteSpace(name) ? "run " + DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture) : Clean(name, 40), T = DateTime.Now };
             SslPolicyErrors errs = SslPolicyErrors.None;
             try
@@ -68,7 +68,7 @@ namespace AdeeboMeter
             try { File.WriteAllLines(CertFile, all.Select(CertLine)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             rows.Add(R(errs == SslPolicyErrors.None ? 0 : 2, snap.Name, snap.Trust, "", "m"));
             for (int i = 0; i < snap.Chain.Count; i++) rows.Add(R(3, i == 0 ? "Site certificate" : i == snap.Chain.Count - 1 ? "Root" : "Intermediate", snap.Chain[i][0] + " · from " + snap.Chain[i][1] + " · expires " + snap.Chain[i][3], "SHA-256 " + snap.Chain[i][2] + (i == 0 && snap.Chain[i].Length > 4 && snap.Chain[i][4] != "" ? " · names: " + snap.Chain[i][4] : ""), "m"));
-            if (prev == null) { rows.Add(R(3, "Next", "now change one thing - VPN on / off, another network, the proxy - and run again with another name", "", "u")); return rows; }
+            if (prev == null) { rows.Add(R(3, "Next", "now change one thing - VPN on / off, another network, the proxy - and run again with another name", "", "")); return rows; }
             rows.Add(R(-1, "COMPARED WITH \"" + prev.Name.ToUpperInvariant() + "\" (" + prev.T.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + ")", "", "", "m"));
             rows.Add(CertVerdict(prev, snap));
             string sa = prev.Chain[0].Length > 4 ? prev.Chain[0][4] : "", sb = snap.Chain[0].Length > 4 ? snap.Chain[0][4] : "";
@@ -137,7 +137,7 @@ namespace AdeeboMeter
             if (e.Id == 8003) return "disconnected";
             return "started";
         }
-        static string[] Next(string text, string act) { return new[] { "3", "Next", text, "", "u", act }; }
+        static string[] Next(string text, string act) { return new[] { "3", "Next", text, "", "", act }; }
         static string Category(string t)
         {
             t = (t ?? "").ToLowerInvariant();
@@ -253,15 +253,15 @@ namespace AdeeboMeter
             }
             return rows;
         }
-        static string Vendor(byte[] v) { uint id = (uint)(v[0] << 24 | v[1] << 16 | v[2] << 8 | v[3]); return id == 9 ? " (Cisco)" : id == 311 ? " (Microsoft)" : id == 14179 ? " (Cisco Airespace)" : id == 25506 ? " (HPE / H3C)" : id == 14823 ? " (Aruba)" : id == 2636 ? " (Juniper)" : id == 6527 ? " (Nokia SR OS)" : id == 637 ? " (Nokia)" : ""; }
+        static string Vendor(byte[] v) { uint id = (uint)(v[0] << 24 | v[1] << 16 | v[2] << 8 | v[3]); return id == 9 ? " (Cisco)" : id == 311 ? " (Microsoft)" : id == 14179 ? " (Cisco Airespace)" : id == 25506 ? " (HPE / H3C)" : id == 14823 ? " (Aruba)" : id == 2636 ? " (Juniper)" : ""; }
         [SuppressMessage("Security", "CA5351", Justification = "RADIUS Message-Authenticator (RFC 3579) is HMAC-MD5")]
         public static List<string[]> RadiusLab(string who, string secret, string password, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string w = (who ?? "").Trim(); int at = w.LastIndexOf('@');
-            if (at <= 0 || at == w.Length - 1) { rows.Add(R(2, "Account and server", "type testuser@server - e.g. labtest@10.0.0.5 or labtest@radius.lab:1812", "Use a TEST account made for this, never your own sign-in.", "u")); return rows; }
+            if (at <= 0 || at == w.Length - 1) { rows.Add(R(2, "Account and server", "type testuser@server - e.g. labtest@10.0.0.5 or labtest@radius.lab:1812", "Use a TEST account made for this, never your own sign-in.", "")); return rows; }
             string user = Clean(w.Substring(0, at), 64); string h; int port;
-            if (!Lab.Split(w.Substring(at + 1), 1812, out h, out port) || !Games.ValidHost(h)) { rows.Add(R(2, "Server", "type the RADIUS server's address after the @", "", "u")); return rows; }
-            if (string.IsNullOrEmpty(secret) || string.IsNullOrEmpty(password)) { rows.Add(R(2, "Secret and password", "type the shared secret and the test account's password", "Both are used for this one request and wiped - never shown, saved, logged or copied.", "u")); return rows; }
+            if (!Lab.Split(w.Substring(at + 1), 1812, out h, out port) || !Games.ValidHost(h)) { rows.Add(R(2, "Server", "type the RADIUS server's address after the @", "", "")); return rows; }
+            if (string.IsNullOrEmpty(secret) || string.IsNullOrEmpty(password)) { rows.Add(R(2, "Secret and password", "type the shared secret and the test account's password", "Both are used for this one request and wiped - never shown, saved, logged or copied.", "")); return rows; }
             var a = Lab.Addr(h); if (a == null) { rows.Add(R(2, "Server", "couldn't find " + h, "", "m")); return rows; }
             var sec = Encoding.UTF8.GetBytes(secret); var pw = Encoding.UTF8.GetBytes(password); var auth = new byte[16]; byte id;
             using (var g = RandomNumberGenerator.Create()) { g.GetBytes(auth); var idb = new byte[1]; g.GetBytes(idb); id = idb[0]; }
@@ -335,7 +335,7 @@ namespace AdeeboMeter
         public static List<string[]> SmtpPath(Monitor m, string domain, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string d = (domain ?? "").Trim().TrimEnd('.'); int at = d.LastIndexOf('@'); if (at >= 0) d = d.Substring(at + 1);
-            if (!Games.ValidHost(d) || d.IndexOf('.') < 0) { rows.Add(R(2, "Domain", "type a mail domain - e.g. example.com (or an address: someone@example.com)", "", "u")); return rows; }
+            if (!Games.ValidHost(d) || d.IndexOf('.') < 0) { rows.Add(R(2, "Domain", "type a mail domain - e.g. example.com (or an address: someone@example.com)", "", "")); return rows; }
             string ds; lock (m.L) ds = m.DnsServer; IPAddress dns; if (!IPAddress.TryParse((ds ?? "").Split(',')[0].Trim(), out dns)) dns = null;
             if (dns == null) { rows.Add(R(2, "DNS", "this PC has no DNS server to ask", "", "w")); return rows; }
             run.Status = "Asking for " + d + "'s mail servers (MX)...";
