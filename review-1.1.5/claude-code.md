@@ -1720,3 +1720,126 @@ Confidence: suspected (read it)
 - Crypto: more than 20 recipients, malformed keys-ec.txt lines, key-backup names with CR/LF or '|'.
 - Speed test: GradeOf with no loaded samples, a 302 server, Stop during upload.
 - pcapng with if_tsresol other than 6.
+
+## Added after cross-checking a second review
+
+These came from another reviewer's pass on the same commit. I re-read each one in the dev-1.1.5 code before adding it. Items already covered above aren't repeated.
+
+### 229. TWAMP-light, MTU over UDP and the Engineer pack send traffic without the Lab gate
+Severity: security  
+Where: src\Ui\FullView.Toolbox.cs line 194 (LabGate has only the 10 Lab ids); src\Checks\Protocols.cs line 418 (Twamp: up to 2,000 packets); src\Checks\UdpMtu.cs; src\Checks\EngPack.cs (radiuslab, smtppath, certcmp)  
+How to reproduce: on a company domain or VPN, without the "allowed to send test traffic" tick, run TWAMP-light with count 2000, MTU over UDP, or the RADIUS lab against any address.  
+What happens / what should happen: they send with no tick, no Lab.Log line, and TWAMP is capped at 2,000 (twice the Lab's 1,000). The self-test's LabToolsMissingGate only looks at tools in "lab" sections, so it can't catch them. Add twamp and udpmtu to LabGate and clamp to 1,000; gate the Engineer senders, or exempt them on purpose and say so in a comment.  
+Confidence: suspected (read it: grep finds no gate call in the three files)  
+
+### 230. "Pick from running programs" in the game editor is always empty
+Severity: wrong result  
+Where: src\Ui\GameEditor.cs lines 131-133  
+How to reproduce: Gamer Zone > Edit games > pick from running programs, with a game running.  
+What happens / what should happen: the Where disposes each Process (`using (p)`), and then the Select reads ProcessName from the disposed object. That throws InvalidOperationException, the catch turns it into "", and the list always says "(no programs with a window)". Read MainWindowHandle and ProcessName in one step before disposing, as src\Gamer\Gamer.cs line 228 already does.  
+Confidence: suspected (read it; .NET Framework's Process.Close clears the process id, so ProcessName throws afterwards)  
+
+### 231. History, game history and outages ignore portable mode
+Severity: wrong result  
+Where: src\History.cs line 17 (Dir is always %LOCALAPPDATA%\AdeeboMeter\history); used by src\Gamer\Gamer.cs lines 500-525 and the outage log  
+How to reproduce: run a portable copy (AdeeboMeter.portable beside the exe) next to an installed one.  
+What happens / what should happen: the portable copy reads and writes the installed copy's history, and uninstalling the installed copy deletes it. That breaks the brief's "all data goes to data\ beside it". Base History.Dir on Program.DataDir.  
+Confidence: suspected (read it)  
+
+### 232. The TCP:443 fallback for the internet check never comes back after one ICMP reply
+Severity: wrong result  
+Where: src\Monitor.cs lines 234-235 (NetIcmpEver)  
+How to reproduce: start on a network where ping to 1.1.1.1 works; then ICMP gets blocked (firewall change, captive VPN policy) while TCP:443 still works.  
+What happens / what should happen: NetIcmpEver stays true until a network change or restart, so the fallback is never tried again, and the widget reports "The internet went quiet" while the web works. Re-arm the fallback after N ICMP misses in a row.  
+Confidence: suspected (read it)  
+
+### 233. CI never builds dev-1.1.5
+Severity: wrong result  
+Where: .github\workflows\build.yml line 9 (`branches: [main, store]`)  
+How to reproduce: push to dev-1.1.5.  
+What happens / what should happen: no build or self-test runs, so none of the 25 commits has a Windows self-test result. Add dev-* or run it on pull requests.  
+Confidence: confirmed (read the workflow; branch list checked)  
+
+### 234. "printer" + Enter in Toolbox search opens Ping sweep
+Severity: wrong result  
+Where: src\Ui\FullView.Toolbox.cs line 501 (`"printer", "sweep snmpprn arp discover"`); src\Ui\FullView.DeepTest.cs line 149 asserts "printers:sweep"  
+How to reproduce: Toolbox search, type `printer`, press Enter.  
+What happens / what should happen: the first match is Ping sweep, which needs the "my own network" tick, instead of SNMP Printer. Put snmpprn first and update the DeepTest expectation.  
+Confidence: suspected (read it)  
+
+### 235. No Windows notification for outages
+Severity: wrong result  
+Where: src\Brain\Outages.cs; src\AppCtx.cs lines 111-123 (the balloon code exists)  
+How to reproduce: unplug the router for 2 minutes with the engineer view closed.  
+What happens / what should happen: the outage is logged but no notification appears, although PLAN-1.1.5 section 6 promises one.  
+Confidence: suspected (read it: nothing calls the balloon for outages)  
+
+### 236. The Theory of Everything says public speed tests aren't offered
+Severity: cosmetic  
+Where: docs\THEORY-OF-EVERYTHING.md line 352  
+How to reproduce: read it next to Toolbox > Speed test (Cloudflare, Vultr, OVHcloud).  
+What happens / what should happen: no docs file changed on dev-1.1.5, so this sentence is now false. Update it with the 1.1.5 docs.  
+Confidence: confirmed (read both)  
+
+### 237. The French help sentence says the main screens are translated
+Severity: cosmetic  
+Where: src\Ui\FullView.Settings.cs line 101; src\Ui\FullView.cs lines 145 and 404-412 (section tabs are literals, not L.T)  
+How to reproduce: Settings > General > Language > Français.  
+What happens / what should happen: section tabs, header chips, Learn and Guide titles and all 129 tool titles stay English (see also the translation finding above). Say "preview: some screens", or translate the tabs.  
+Confidence: suspected (read it)  
+
+### 238. "Same certificate" names the issuer instead of the subject
+Severity: cosmetic  
+Where: src\Checks\EngPack.cs line 82  
+How to reproduce: certificate compare, run twice against the same site.  
+What happens / what should happen: the verdict shows the issuer's name where the certificate's own name belongs.  
+Confidence: suspected (read it)  
+
+### 239. DSCP compare: `100` can't be typed, and the headline ignores loss in the unmarked bucket
+Severity: wrong result  
+Where: src\Checks\Lab.cs line 128  
+How to reproduce: Traffic Lab > DSCP ping compare with `100`; or a path that drops unmarked packets.  
+What happens / what should happen: the regex never matches 100, so the value is dropped silently, and the headline compares delay only.  
+Confidence: suspected (read it)  
+
+### 240. Game-ping TCP fallback leaks wait handles
+Severity: slow  
+Where: src\Gamer\Gamer.cs lines 478-490 (TcpMs)  
+How to reproduce: Gamer Zone on a network that blocks ICMP; leave it running.  
+What happens / what should happen: on a timeout, EndConnect is never called and the AsyncWaitHandle is never disposed, so up to 10 handles a second wait for the finalizer. Monitor uses the same TcpMs for its fallback.  
+Confidence: suspected (read it)  
+
+### 241. 802.1X replay judges only the first 200 frames
+Severity: wrong result  
+Where: src\Checks\Replay.cs line 211  
+How to reproduce: a capture whose EAP failure comes after frame 200, such as a long capture with other traffic first.  
+What happens / what should happen: the verdict misses it. Scan all EAPOL frames, or say "first 200 only".  
+Confidence: suspected (read it)  
+
+### 242. Tools run from Health earn points without opening the Example
+Severity: wrong result  
+Where: src\Ui\FullView.Tools.cs line 31 (no exOpened check, unlike the Toolbox)  
+How to reproduce: run disk / crashes / battery from Investigate > Health.  
+What happens / what should happen: points are awarded on a path the Toolbox would not award on.  
+Confidence: suspected (read it)  
+Rule: 10  
+
+### 243. Leftovers still open from earlier reviews
+Severity: cosmetic  
+Where: src\Ui\FullView.Toolbox.cs line 662 (Cookie redaction keeps the values after the first `;`); line 500 ("cert"/"ssl" open the HTTP inspector first); no spf/dkim/dmarc search words; Security tab has Copy but no Save  
+How to reproduce: HTTP builder with `Cookie: a=1; b=secret`, then Copy; search `ssl`; search `dmarc`.  
+What happens / what should happen: b=secret is copied (rule 4 when it's a session cookie); the wrong tool opens first; nothing is found.  
+Confidence: suspected (read it)  
+Rule: 4  
+
+### 244. PLAN-1.1.5.md and the privacy page are out of step
+Severity: cosmetic  
+Where: PLAN-1.1.5.md (header says "not built"; section 4 says privacy page updated); docs\privacy.html  
+How to reproduce: read them.  
+What happens / what should happen: privacy.html has no game list, ISP report, encryption keys or recipients, Points or outage log (see also the privacy findings above).  
+Confidence: confirmed (read both)  
+
+### Where the second review is wrong
+- **"The downloaded exe defaults autostart off (Program.cs:224)."** That line is only a placeholder delegate. The real default is `autoStart = true` (src\AppCtx.cs line 40), and the first run writes the Run key (finding #46). The Store manifest's comment "on by default like the downloaded exe" is accurate.
+- **"Policy is switch-off only and enforced at every choke point."** It isn't. An exe-folder policy file overrides %ProgramData% (#13, confirmed by running it), `mode = pro` locks Pro on (#14), and the speed test's `check` path (src\Checks\SpeedTest.cs line 101, then Servers) never reads Policy.NoSpeed. Only Measure checks it, at line 153 (#15).
+- **"Portable and Store paths don't mix."** This contradicts the second review's own History finding (#231) and #46/#47 here (Run key and lock shared).
