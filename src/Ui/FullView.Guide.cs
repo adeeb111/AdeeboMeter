@@ -31,6 +31,7 @@ namespace AdeeboMeter
         // test = run right here on this thread (self-test; only the flows that send nothing new)
         void StartGuide(string id, bool test)
         {
+            guideNote = "";
             if (guideBusy) return;
             var r = new GuideRun { Input = guideBox.Box.Text };
             guideRun = r; guideCanvas.AutoScrollPosition = Point.Empty;
@@ -43,6 +44,18 @@ namespace AdeeboMeter
             }, TaskCreationOptions.LongRunning);
         }
 
+        DateTime guideCopied; string guideNote = "";
+        // what someone helping you needs: the problem, what was found, what was seen, what to try - internal addresses removed on copy
+        static string GuideText(GuideRun r)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("AdeeboMeter - " + r.Title + (r.Input != "" ? " (" + r.Input + ")" : "") + " - " + r.Started.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture));
+            sb.AppendLine("Finding: " + r.Finding);
+            foreach (var o in r.ObservedCopy()) sb.AppendLine("  " + o[2] + ": " + o[3] + " [" + o[0] + "]");
+            foreach (var n in r.Next) sb.AppendLine("Try: " + n);
+            foreach (var n in r.NotEst) sb.AppendLine("Not established: " + n);
+            return sb.ToString();
+        }
         void PaintGuide(Graphics g)
         {
             g.TranslateTransform(guideCanvas.AutoScrollPosition.X, guideCanvas.AutoScrollPosition.Y);
@@ -53,6 +66,7 @@ namespace AdeeboMeter
             {
                 if (r == null)
                 {
+                    if (guideNote != "") { using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString(guideNote, Draw.fBodyB, gb, x, y); y += 30 * S; }
                     g.DrawString("WHAT'S WRONG?", Draw.fTiny, muted, x, y); y += 24 * S;
                     float cw = (w - 14 * S) / 2, chh = 104 * S;
                     for (int i = 0; i < Investigate.All.Length; i++)
@@ -113,7 +127,7 @@ namespace AdeeboMeter
                             return y + 10 * S;
                         };
                         y = list("NOT ESTABLISHED", r.NotEst);
-                        y = list("NEXT TEST", r.Next);
+                        y = list("WHAT TO TRY NEXT", r.Next);
                         if (r.GoTab != "")
                         {
                             var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
@@ -122,6 +136,19 @@ namespace AdeeboMeter
                             string go = r.GoTab; Act(guideCanvas, br, delegate { if (go.StartsWith("guide:", StringComparison.Ordinal)) StartGuide(go.Substring(6), false); else { tab = go; ShowTab(); } });
                             y += 50 * S;
                         }
+                        // for everyone: did it help, try again, or hand it to someone who can help
+                        float lx = x; var r2 = r;
+                        using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                            foreach (var a in new[] { "It's fixed", "Still broken - check again", (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : "Copy for someone who can help" })
+                            {
+                                var asz = g.MeasureString(a, Draw.fBodyB); var ar = new RectangleF(lx, y, asz.Width, asz.Height);
+                                g.DrawString(a, Draw.fBodyB, lb, lx, y);
+                                if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = "Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."; guideRun = null; guideCanvas.Invalidate(); });
+                                else if (a.StartsWith("Still", StringComparison.Ordinal)) Act(guideCanvas, ar, delegate { if (!guideBusy) StartGuide(r2.Id, false); });
+                                else Act(guideCanvas, ar, delegate { try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(GameSession.Redact(GuideText(r2), ssid)); guideCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } guideCanvas.Invalidate(); });
+                                lx += asz.Width + 26 * S;
+                            }
+                        y += 34 * S;
                     }
                 }
             }

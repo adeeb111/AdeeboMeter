@@ -387,6 +387,19 @@ namespace AdeeboMeter
                 if (ip != "155.133.248.34") throw new InvalidOperationException(ip ?? "null");
                 if (MatchFinder.Busiest("10.0.0.2\t10.0.0.1\n") != null) throw new InvalidOperationException("private counted");
             });
+            T("Fix a problem understands everyday words", () =>
+            {
+                var bad = new List<string>();
+                Func<string, string> go = t => { var r = FullView.FixMatch(t); return r == null ? null : r[1]; };
+                if (go("youtube keeps stopping and loading") != "guide:slow") bad.Add("youtube");
+                if (go("my laptop is hot and slow") != "guide:pc") bad.Add("hot laptop");
+                if (go("zoom calls freeze") != "guide:calls") bad.Add("zoom");
+                if (go("wifi keeps disconnecting") != "guide:drops") bad.Add("disconnect");
+                if (go("valorant lag") != "gamer") bad.Add("valorant");
+                if (go("disk is full") != "tool:tidy") bad.Add("disk full");
+                if (go("purple elephants") != null) bad.Add("nonsense matched");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));

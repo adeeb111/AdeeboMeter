@@ -40,10 +40,67 @@ namespace AdeeboMeter
             new[] { "guide:calls", "My calls keep freezing" },
             new[] { "guide:slow", "The internet is slow" },
             new[] { "tool:tidy", "I'm running out of storage" } };
+        // the symptoms people notice: { where it goes, what they see, a few words more }
+        static readonly string[][] Symptoms = {
+            new[] { "guide:whats", "I have no internet", "nothing opens - works even when you can't google it" },
+            new[] { "guide:slow", "My internet is slow", "pages take ages, videos buffer" },
+            new[] { "guide:whats", "Wi-Fi says \"No internet\"", "connected, but nothing works" },
+            new[] { "guide:drops", "Internet stops and starts", "works, then doesn't, then works" },
+            new[] { "guide:slow", "Videos keep buffering", "YouTube, Netflix stop and spin" },
+            new[] { "link", "Can't find my Wi-Fi", "the network isn't in the list" },
+            new[] { "guide:calls", "Calls are choppy", "Teams, Zoom, WhatsApp cut out" },
+            new[] { "guide:pc", "Computer feels slow", "everything takes a long time" },
+            new[] { "guide:pc", "An app freezes", "it stops responding" },
+            new[] { "guide:pc", "Fan is loud or it's hot", "something is working hard" },
+            new[] { "changes", "It was fine yesterday", "what changed since then?" },
+            new[] { "guide:site", "Only one website is broken", "everything else works" } };
+        // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
+        static readonly string[][] FixWords = {
+            new[] { "buffer|youtube|netflix|stream|video|twitch|disney|prime", "guide:slow", "videos keep buffering", "your speed, your Wi-Fi and whether something else is using the internet" },
+            new[] { "lag|ping|game|gaming|fortnite|valorant|steam|xbox|playstation", "gamer", "your game is lagging", "the game's servers, your Wi-Fi and your provider - in the Gamer Zone" },
+            new[] { "call|zoom|teams|meet|whatsapp|skype|robot|choppy|voice|echo", "guide:calls", "calls are choppy", "jitter, loss, your upload and the VPN" },
+            new[] { "disconnect|drop|drops|dropping|keeps going|cuts out|on and off|stops and starts|unstable", "guide:drops", "the connection keeps dropping", "today's drops, roams and what the signal was doing" },
+            new[] { "no internet|offline|nothing works|nothing opens|not connected|can't connect|cannot connect", "guide:whats", "there's no internet", "every layer, from this PC to the internet" },
+            new[] { "website|site|page|link|url|app won|won't open|wont open|can't open|cant open|error", "guide:site", "a website or app won't open", "the name, the route, the door, the lock and the answer" },
+            new[] { "vpn|work|office|company", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
+            new[] { "slow pc|computer slow|laptop slow|freeze|freezes|frozen|hang|hot|fan|noisy|crash|not responding", "guide:pc", "the computer itself is slow", "processor, memory, disk, heat and frozen apps" },
+            new[] { "storage|disk full|space|full|gigabytes", "tool:tidy", "you're running out of storage", "temp files, the Recycle Bin and what takes the space" },
+            new[] { "slow|slowly|loading|takes ages|speed", "guide:slow", "the internet is slow", "where the delay starts: your PC, Wi-Fi, router, provider or DNS" },
+            new[] { "yesterday|suddenly|since|changed|update", "changes", "something changed", "what changed on this PC and network since then" } };
+        RoundBox fixBox; string fixHint = "", fixGo;
+        void EnsureFixBox()
+        {
+            if (fixBox != null) return;
+            fixBox = new RoundBox(Sc(400), Draw.fInput, "Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot");
+            fixBox.Box.AccessibleName = "Describe the problem"; fixBox.Box.MaxLength = 200;
+            fixBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; FixFind(); } };
+            overviewCanvas.Controls.Add(fixBox);
+        }
+        // the first rule whose word appears wins (most specific rules first); nothing found -> suggest checking everything
+        internal static string[] FixMatch(string text)
+        {
+            string t = " " + (text ?? "").ToLowerInvariant().Replace("’", "'") + " ";
+            foreach (var r in FixWords)
+                foreach (var wd in r[0].Split('|'))
+                    if (t.Contains(wd.Contains(" ") ? wd : " " + wd) || (wd.Length >= 6 && t.Contains(wd))) return r;
+            return null;
+        }
+        void FixFind()
+        {
+            string q = fixBox == null ? "" : fixBox.Box.Text.Trim();
+            if (q.Length == 0) { fixHint = "Type what you notice, or press Check everything for me."; fixGo = null; }
+            else
+            {
+                var r = FixMatch(q);
+                if (r == null) { fixHint = "I didn't recognise that - press here and I'll check everything, layer by layer."; fixGo = "guide:whats"; }
+                else { fixHint = "Sounds like " + r[2] + ". I'll check " + r[3] + ".   Start  >"; fixGo = r[1]; }
+            }
+            overviewCanvas.Invalidate();
+        }
         void FixGo(string go)
         {
             if (go.StartsWith("guide:", StringComparison.Ordinal)) GoGuide(go.Substring(6));
-            else if (go == "gamer") { tab = "gamer"; ShowTab(); }
+            else if (go == "gamer" || go == "link" || go == "changes") { tab = go; ShowTab(); }
             else if (go.StartsWith("tool:", StringComparison.Ordinal)) { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(go.Substring(5)); }
         }
 
@@ -98,33 +155,68 @@ namespace AdeeboMeter
                 }
                 y += 10 * S;
 
-                // Fix a problem: the things people recognise, each opening the right guided check
+                // Fix a problem. First "Not sure what's wrong?" - big, in everyday words: one button that checks everything, a box to
+                // describe it in your own words, and the symptoms people actually notice. Then the named problems, smaller.
                 {
+                    float cx0 = x + 20 * S, cw = w - 40 * S, cy = y + 20 * S;
                     var card = new RectangleF(x, y, w, 0);
-                    float cy = y + 16 * S, cw = w - 32 * S, cx0 = x + 16 * S;
-                    var probs = FixProblems; int fcols = Math.Max(1, Math.Min(4, (int)(cw / (220 * S)))); int frows = (probs.Length + fcols - 1) / fcols;
-                    float bh = 40 * S, bw = (cw - (fcols - 1) * 10 * S) / fcols;
-                    card.Height = 16 * S + 28 * S + 26 * S + frows * (bh + 10 * S) + 34 * S;
-                    Theme.Fill(g, card, 12 * S, Theme.Soft); Theme.Stroke(g, card, 12 * S, Theme.Line, 1);
-                    g.DrawString("Fix a problem", Draw.fTitle, ink, cx0, cy); cy += 28 * S;
-                    g.DrawString("Pick what's happening. AdeeboMeter shows what it finds and what to check next.", Draw.fBody, muted, cx0, cy); cy += 26 * S;
-                    using (var nowrapF = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter, LineAlignment = StringAlignment.Center })
-                        for (int i = 0; i < probs.Length; i++)
-                        {
-                            var br = new RectangleF(cx0 + (i % fcols) * (bw + 10 * S), cy + (i / fcols) * (bh + 10 * S), bw, bh);
-                            bool first = i == 0;
-                            Theme.Fill(g, br, 10 * S, first ? Theme.Blue : Theme.Card); if (!first) Theme.Stroke(g, br, 10 * S, Theme.Track, 1);
-                            using (var tb = new SolidBrush(first ? Color.White : Theme.Ink)) g.DrawString(probs[i][1], first ? Draw.fBodyB : Draw.fBody, tb, new RectangleF(br.X + 14 * S, br.Y, br.Width - 20 * S, br.Height), nowrapF);
-                            string go = probs[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
-                            if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, br, "guide." + go.Substring(6));
-                        }
-                    cy += frows * (bh + 10 * S) + 4 * S;
+                    int sc = Math.Max(1, Math.Min(3, (int)(cw / (240 * S)))); int sr = (Symptoms.Length + sc - 1) / sc; float sbh = 58 * S, sbw = (cw - (sc - 1) * 10 * S) / sc;
+                    card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
+                    Theme.Fill(g, card, 14 * S, Theme.Soft); Theme.Stroke(g, card, 14 * S, Theme.Line, 1);
+                    // the big button, right
+                    string big = "Check everything for me"; var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
+                    Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
+                    Act(overviewCanvas, bbr, delegate { GoGuide("whats"); });
+                    float tw0 = bbr.X - cx0 - 16 * S;
+                    g.DrawString("Not sure what's wrong?", Draw.fTitle, ink, new RectangleF(cx0, cy, tw0, 30 * S));
+                    g.DrawString("That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.", Draw.fBody, muted, new RectangleF(cx0, cy + 32 * S, tw0, 40 * S));
+                    cy += 62 * S;
+                    // the describe-it box is a real text box, kept in place under the heading
+                    EnsureFixBox();
+                    var want = new Point((int)cx0, (int)(cy + overviewCanvas.AutoScrollPosition.Y)); int wantW = (int)(cw - 120 * S);
+                    if (fixBox.Location != want) fixBox.Location = want; if (fixBox.Width != wantW) fixBox.Width = wantW;
+                    var fb = new RectangleF(cx0 + wantW + 10 * S, cy, 110 * S, 40 * S);
+                    Theme.Fill(g, fb, 10 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString("Find it", Draw.fBodyB, tb, fb, c);
+                    Act(overviewCanvas, fb, delegate { FixFind(); });
+                    cy += 56 * S;
+                    if (fixHint != "")
+                    {
+                        var hr = new RectangleF(cx0, cy - 6 * S, cw, 34 * S); Theme.Fill(g, hr, 8 * S, Theme.BlueSoft);
+                        using (var tb = new SolidBrush(Theme.Ink)) using (var nf = new StringFormat { LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(fixHint, Draw.fBody, tb, new RectangleF(hr.X + 12 * S, hr.Y, hr.Width - 24 * S, hr.Height), nf);
+                        if (fixGo != null) { string go = fixGo; Act(overviewCanvas, hr, delegate { FixGo(go); }); }
+                        cy += 40 * S;
+                    }
+                    g.DrawString("OR TAP WHAT YOU SEE", Draw.fTiny, muted, cx0, cy); cy += 22 * S;
+                    for (int i = 0; i < Symptoms.Length; i++)
+                    {
+                        var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
+                        Theme.Fill(g, br, 10 * S, Theme.Card); Theme.Stroke(g, br, 10 * S, Theme.Track, 1);
+                        g.DrawString(Symptoms[i][1], Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
+                        g.DrawString(Symptoms[i][2], Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, 18 * S));
+                        string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
+                    }
+                    y = card.Bottom + 14 * S;
+
+                    // I know what it is
+                    g.DrawString("I KNOW WHAT IT IS", Draw.fTiny, muted, x, y); y += 22 * S;
+                    float kx = x; var probs = FixProblems;
+                    for (int i = 1; i < probs.Length; i++)
+                    {
+                        var ks = g.MeasureString(probs[i][1], Draw.fBody); var kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S);
+                        if (kr.Right > x + w && kx > x) { kx = x; y += 42 * S; kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S); }
+                        Theme.Stroke(g, kr, 17 * S, Theme.Track, 1); g.DrawString(probs[i][1], Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
+                        string go = probs[i][0]; Act(overviewCanvas, kr, delegate { FixGo(go); });
+                        if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, kr, "guide." + go.Substring(6));
+                        kx += kr.Width + 8 * S;
+                    }
                     using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                     {
-                        var all = new RectangleF(cx0, cy, 200 * S, 22 * S); g.DrawString("See all problems  >", Draw.fBodyB, bl, all.X, all.Y);
-                        Act(overviewCanvas, all, delegate { GoGuide(null); });
+                        string all = "See all problems  >"; var asz = g.MeasureString(all, Draw.fBodyB);
+                        if (kx + asz.Width > x + w) { kx = x; y += 42 * S; }
+                        var ar = new RectangleF(kx + 6 * S, y + (34 * S - asz.Height) / 2, asz.Width, asz.Height); g.DrawString(all, Draw.fBodyB, bl, ar.X, ar.Y);
+                        Act(overviewCanvas, ar, delegate { GoGuide(null); });
                     }
-                    y = card.Bottom + 16 * S;
+                    y += 52 * S;
                 }
 
                 // needs attention
