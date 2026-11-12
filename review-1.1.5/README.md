@@ -23,3 +23,8 @@ Independent review. Findings only; nothing in the product was changed.
 - Version still says 1.1.4 (`src/Program.cs:66`): `--report` writes `"app": "AdeeboMeter 1.1.4"`, and tagging v1.1.5 fails the release workflow's version check.
 - Rule 8: Nokia reference, "On SR OS: ..." (`src/Checks/Protocols.cs:418`).
 - `--report` can say "names ... all work" while `measured_ms.dns` is null (the monitor's 30 s DNS probe may not run inside a 15 s report).
+
+## Round 2 (a0fbd56)
+
+**Start here: `round-2/claude-code.md`**. It covers the fix status of all 244 round-1 findings, 131 findings (plus #81, withdrawn), the cost table, the top 15, and where Muse is wrong.
+Section files: `round-2/R2-fixcheck.md`, `R2-calc-labs.md`, `R2-hof-points-update.md`, `R2-core-tools.md`, `R2-perf.md`. Muse's round-2 reports: `round-2/muse.md`, `round-2/muse-200-bugs.md`; the check of Muse's Mediums goes in `round-2/muse-200-check.md`.
