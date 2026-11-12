@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AdeeboMeter
@@ -82,7 +83,7 @@ namespace AdeeboMeter
         void OverviewTick()
         {
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
-            string k = s.Headline + "|" + s.Level + "|" + Outages.Last(M, 1).Count + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != ovKey) { ovKey = k; overviewCanvas.Invalidate(); }
         }
 
@@ -176,6 +177,17 @@ namespace AdeeboMeter
             else if (go.StartsWith("tool:", StringComparison.Ordinal)) { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(go.Substring(5)); }
         }
 
+        // the weather sentence reads the outage log (files, when History is on): never on the paint, never more than twice a minute
+        string weather = ""; DateTime weatherAt = DateTime.MinValue; volatile bool weatherBusy;
+        string WeatherLine()
+        {
+            if (!weatherBusy && (DateTime.UtcNow - weatherAt).TotalSeconds > 30)
+            {
+                weatherBusy = true; weatherAt = DateTime.UtcNow;
+                Task.Factory.StartNew(() => { string w = ""; try { w = Picks.Weather(M); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("weather: " + e.Message); } try { BeginInvoke((Action)delegate { weatherBusy = false; if (w != weather) { weather = w; overviewCanvas.Invalidate(); } }); } catch (InvalidOperationException) { weatherBusy = false; } });
+            }
+            return weather;
+        }
         void PaintOverview(Graphics g)
         {
             g.TranslateTransform(overviewCanvas.AutoScrollPosition.X, overviewCanvas.AutoScrollPosition.Y);
@@ -186,7 +198,7 @@ namespace AdeeboMeter
             {
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
-                string wx = ""; try { wx = Picks.Weather(M); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("weather: " + e.Message); }   // the internet weather, one sentence
+                string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
                 float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)(w - 40 * S)).Height + 4 * S : 0;
                 var vr = new RectangleF(x, y, w, hh + 30 * S + wh);
                 Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));

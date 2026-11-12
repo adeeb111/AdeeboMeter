@@ -12,18 +12,19 @@ namespace AdeeboMeter
     static class Outages
     {
         public sealed class O { public DateTime From, To; public bool Ongoing, EndUnseen; public TimeSpan Len { get { var d = To - From; return d < TimeSpan.Zero ? TimeSpan.Zero : d; } } /* local times: a DST fall-back mid-outage must not give a negative length */ }
-        static List<O> cache; static DateTime cacheAt; static int cacheDays;
+        // one cache per length: the Overview asks for today, the outage list for 7 days - a single slot made them reload each other every tick
+        static readonly Dictionary<int, KeyValuePair<DateTime, List<O>>> cache = new Dictionary<int, KeyValuePair<DateTime, List<O>>>();
         static readonly object k = new object();
         public static List<O> Last(Monitor m, int days)
         {
             lock (k)
             {
-                if (cache != null && cacheDays == days && (DateTime.UtcNow - cacheAt).TotalSeconds < 60) return cache;
+                KeyValuePair<DateTime, List<O>> c; if (cache.TryGetValue(days, out c) && (DateTime.UtcNow - c.Key).TotalSeconds < 60) return c.Value;
                 var evs = new List<Timeline.Ev>();
                 if (Cfg.History) foreach (var d in History.Days().Where(d => d >= DateTime.Today.AddDays(-(days - 1)))) evs.AddRange(History.EventsOf(d));
                 if (m != null) foreach (var e in m.Events.Recent(300)) if (!evs.Any(x => x.T == e.T && x.Text == e.Text)) evs.Add(e);
-                cache = Pair(evs.Where(e => e.Kind == "inet").OrderBy(e => e.T).ToList(), DateTime.Now, m != null && m.NetQuiet); cacheAt = DateTime.UtcNow; cacheDays = days;
-                return cache;
+                var res = Pair(evs.Where(e => e.Kind == "inet").OrderBy(e => e.T).ToList(), DateTime.Now, m != null && m.NetQuiet); cache[days] = new KeyValuePair<DateTime, List<O>>(DateTime.UtcNow, res);
+                return res;
             }
         }
         // went quiet (level 2) ... back (level 0) -> one outage; a quiet with no "back" yet is ongoing

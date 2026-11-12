@@ -247,6 +247,8 @@ namespace AdeeboMeter
             var now = DateTime.UtcNow; double dt = Math.Min(0.2, (now - jTick).TotalSeconds); jTick = now;
             var recs = jSess.Snapshot(); double end = recs.Count > 0 ? recs[recs.Count - 1].T : 0;
             jPlay += dt / jSlow;
+            // long silences (an idle connection) are skipped, not watched in slow motion: jump to just before the next packet
+            if (!recs.Any(r => r.T <= jPlay && jPlay - r.T <= JTrip())) { var nx = recs.FirstOrDefault(r => r.T > jPlay); if (nx != null && nx.T - jPlay > JTrip()) jPlay = nx.T - JTrip() * 0.1; }
             if (jPlay > end + JTrip()) { jPlay = end; jPlaying = false; JTimer(false); travelCanvas.Invalidate(); return; }
             if (jLane.Width > 0) { var r = jLane; r.Offset(travelCanvas.AutoScrollPosition.X, travelCanvas.AutoScrollPosition.Y); travelCanvas.Invalidate(Rectangle.Ceiling(r)); }
         }
