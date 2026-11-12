@@ -25,7 +25,7 @@
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png" />
       </uap:VisualElements>
       <Extensions>
-        <!-- "Start with Windows": on by default like the downloaded exe; the user switches it in Settings > Apps > Startup -->
+        <!-- "Start with Windows": on by default like the installed exe (a portable copy never starts by itself); the user switches it in Settings > Apps > Startup -->
         <desktop:Extension Category="windows.startupTask" Executable="AdeeboMeter.exe" EntryPoint="Windows.FullTrustApplication">
           <desktop:StartupTask TaskId="AdeeboMeter" Enabled="true" DisplayName="AdeeboMeter" />
         </desktop:Extension>

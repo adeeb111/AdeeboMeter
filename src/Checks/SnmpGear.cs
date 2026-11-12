@@ -12,7 +12,7 @@ namespace AdeeboMeter
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1861", Justification = "table headers and OID lists, built once per run")]
     static partial class SnmpTools
     {
-        static long Sn(Snmp.Vb v) { if (v == null || v.Raw.Length == 0 || v.Raw.Length > 8) return -2; long n = v.Type == 2 && (v.Raw[0] & 0x80) != 0 ? -1 : 0; foreach (var b in v.Raw) n = n << 8 | b; return n; }
+        static long Sn(Snmp.Vb v) { if (v == null || !Snmp.HasNum(v)) return -2; long n = v.Type == 2 && (v.Raw[0] & 0x80) != 0 ? -1 : 0; foreach (var b in v.Raw) n = n << 8 | b; return n; }
         static string I(long n) { return n.ToString(CultureInfo.InvariantCulture); }
 
         // ---------- Snapshot: overview, interfaces, CPU and memory, sensors, neighbours - one run, one deadline, one Copy / Save
@@ -85,7 +85,7 @@ namespace AdeeboMeter
                 rows.Add(R(3, ep.ToString(), "no MAC table offered (BRIDGE-MIB)", "Some switches show it per VLAN only: try the community as community@10 for VLAN 10. Routers and firewalls usually have none.", "m")); return rows;
             }
             var pn = BridgeNames(ep, c, run);
-            var all = fdb.Select(kv => { var p = kv.Key.Split('.'); return new { Mac = MacOf(p, qb ? 1 : 0), Vlan = qb && p.Length > 0 ? p[0] : "", Port = I((long)Snmp.Num(kv.Value)) }; }).Where(e => e.Mac != null).ToList();
+            var all = fdb.Select(kv => { var p = kv.Key.Split('.'); return new { Mac = MacOf(p, qb ? 1 : 0), Vlan = qb && p.Length > 0 ? p[0] : "", Port = Snmp.HasNum(kv.Value) ? I((long)Snmp.Num(kv.Value)) : "" }; }).Where(e => e.Mac != null && e.Port != "").ToList();
             var perPort = all.GroupBy(e => e.Port).ToDictionary(g => g.Key, g => g.Count());
             Func<string, string> portName = p => p == "0" ? "the switch itself" : pn(p);
             if (mac != null)
@@ -279,7 +279,7 @@ namespace AdeeboMeter
 
         // ---------- UPS (UPS-MIB, and APC's own when that isn't offered): on mains or battery, charge, minutes left, load
         static Snmp.Vb G(List<Snmp.Vb> v, int i) { return v != null && i < v.Count && !v[i].End ? v[i] : null; }
-        static long Gl(List<Snmp.Vb> v, int i) { var x = G(v, i); return x == null || x.Type == 4 ? -1 : (long)Snmp.Num(x); }
+        static long Gl(List<Snmp.Vb> v, int i) { var x = G(v, i); return x == null || !Snmp.HasNum(x) ? -1 : Snmp.Signed(x); }   // NULL / missing / odd: n/a, never 0
         public static List<string[]> Ups(string dev, string cred, Toolkit.Run run)
         {
             IPEndPoint ep; string err; var c = Snmp.Cred.Parse(cred); var rows = new List<string[]>();

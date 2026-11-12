@@ -76,13 +76,20 @@ namespace AdeeboMeter
             run.Status = "Looking up router names...";
             var names = new Dictionary<string, string>();
             var look = routes.SelectMany(r => r.Hops).Where(h => h.Ip != "").Select(h => h.Ip).Distinct().Take(60)
-                .Select(ip => System.Threading.Tasks.Task.Factory.StartNew(() => { try { var h = Dns.GetHostEntry(IPAddress.Parse(ip)).HostName; return Tuple.Create(ip, h); } catch (SocketException) { return Tuple.Create(ip, ip); } catch (ArgumentException) { return Tuple.Create(ip, ip); } })).ToArray();
+                .Select(ip => System.Threading.Tasks.Task.Factory.StartNew(() => { try { var h = Native.PtrName(ip); return Tuple.Create(ip, h != "" ? h : ip); } catch (SocketException) { return Tuple.Create(ip, ip); } catch (ArgumentException) { return Tuple.Create(ip, ip); } })).ToArray();
             System.Threading.Tasks.Task.WaitAll(look, 5000);
             foreach (var t in look) if (t.Status == System.Threading.Tasks.TaskStatus.RanToCompletion) names[t.Result.Item1] = t.Result.Item2;
-            Func<string, string> nm = ip => { string n; return ip == "" ? "(no answer)" : names.TryGetValue(ip, out n) && n != ip ? n : ip; };
+            // a private hop's own name (Johns-MacBook.lan) stays out of a report you send: just its address, which is redacted
+            Func<string, string> nm = ip => { string n; IPAddress pa; return ip == "" ? "(no answer)" : IPAddress.TryParse(ip, out pa) && Private(pa) ? ip : names.TryGetValue(ip, out n) && n != ip ? n : ip; };
 
             var main = routes[0];
-            int firstIsp = main.Hops.FindIndex(h => { IPAddress a; return IPAddress.TryParse(h.Ip, out a) && !Private(a); });
+            // where the provider starts: the first hop after your router. Providers often number their first hops from 10.x or
+            // CGNAT 100.64.x space, so "private" alone isn't "home" - only the router itself and 192.168.x hops behind it are
+            // (a provider's modem in front of your own router, double NAT)
+            string gwIp; lock (m.L) gwIp = m.Gateway;
+            int gwIdx = main.Hops.FindIndex(h => h.Ip != "" && h.Ip == gwIp);
+            int firstIsp = gwIdx < 0 ? main.Hops.FindIndex(h => { IPAddress a; return IPAddress.TryParse(h.Ip, out a) && !Private(a); })   // router not seen on the path (a VPN): the first public hop
+                : main.Hops.FindIndex(gwIdx + 1, h => { IPAddress a; if (!IPAddress.TryParse(h.Ip, out a)) return false; var b = a.GetAddressBytes(); return !(b.Length == 4 && b[0] == 192 && b[1] == 168) && !IPAddress.IsLoopback(a); });
             string verdict = PathTools.MtrVerdict(main.Hops);
             int start = StartOfLoss(main.Hops);
             var router = main.Hops.FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var end = main.Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
@@ -285,13 +292,15 @@ namespace AdeeboMeter
                 sb.Append("<h1>Connection quality report</h1><div class=\"m\">Measured from the customer's PC with AdeeboMeter (free, open source) on " + Esc(DateTime.Now.ToString("ddd d MMM yyyy HH:mm", CultureInfo.CurrentCulture)) + ". Pings and TCP connects from this PC - not the game's own data.</div><table>");
                 foreach (var r in rows)
                 {
-                    if (r[0] == "-1") { sb.Append("</table><h2>" + Esc(r[1]) + "</h2>" + (r[2] != "" && r[2] != "click to copy" ? "<div class=\"m\">" + Esc(r[2]) + "</div>" : "") + "<table>"); continue; }
+                    // redacted as text first, then made HTML (a Wi-Fi name "AT&T" is found before it becomes AT&amp;T, and a name like "td" can't break the tags)
+                    Func<string, string> X = z => Esc(GameSession.Redact(z ?? "", ssid));
+                    if (r[0] == "-1") { sb.Append("</table><h2>" + X(r[1]) + "</h2>" + (r[2] != "" && r[2] != "click to copy" ? "<div class=\"m\">" + X(r[2]) + "</div>" : "") + "<table>"); continue; }
                     if (r.Length > 5 && r[5].StartsWith("show:", StringComparison.Ordinal)) continue;
-                    if (r[1] == "Message") { sb.Append("</table><div class=\"box\">" + Esc(r[2]) + "</div><table>"); continue; }
-                    sb.Append("<tr><td class=\"n\">" + Esc(r[1]) + "</td><td class=\"l" + Esc(r[0]) + "\">" + Esc(r[2]) + (r[3] != "" ? "<div class=\"m\">" + Esc(r[3]) + "</div>" : "") + "</td></tr>");
+                    if (r[1] == "Message") { sb.Append("</table><div class=\"box\">" + X(r[2]) + "</div><table>"); continue; }
+                    sb.Append("<tr><td class=\"n\">" + X(r[1]) + "</td><td class=\"l" + Esc(r[0]) + "\">" + X(r[2]) + (r[3] != "" ? "<div class=\"m\">" + X(r[3]) + "</div>" : "") + "</td></tr>");
                 }
                 sb.Append("</table></body></html>");
-                File.WriteAllText(file, GameSession.Redact(sb.ToString(), ssid), new UTF8Encoding(false));
+                File.WriteAllText(file, sb.ToString(), new UTF8Encoding(false));
                 return file;
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("isp report: " + e.Message); return null; }

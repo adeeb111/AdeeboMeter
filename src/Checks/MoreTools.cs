@@ -161,7 +161,11 @@ namespace AdeeboMeter
             string w = (what ?? "").Trim(); if (w == "") w = "web"; int[] ports;
             if (!Presets.TryGetValue(w, out ports))
             {
-                var nums = Regex.Matches(w, @"\d{1,5}").Cast<Match>().Select(x => int.Parse(x.Value, CultureInfo.InvariantCulture)).Where(p => p >= 1 && p <= 65535).Distinct().ToArray();
+                // whole numbers only: "100000" is a mistake, not port 10000
+                var all = Regex.Matches(w, @"\d+").Cast<Match>().Select(x => x.Value).ToList();
+                var badNum = all.FirstOrDefault(x => x.Length > 5 || int.Parse(x, CultureInfo.InvariantCulture) < 1 || int.Parse(x, CultureInfo.InvariantCulture) > 65535);
+                if (badNum != null) { rows.Add(R(2, "Ports", badNum + " isn't a port (1-65535)", "", "u")); return rows; }
+                var nums = all.Select(x => int.Parse(x, CultureInfo.InvariantCulture)).Distinct().ToArray();
                 if (nums.Length == 0) { rows.Add(R(2, "Ports", "a service (" + string.Join(", ", Presets.Keys) + ") or up to 20 ports, e.g. 80,443,8443", "", "u")); return rows; }
                 if (nums.Length > 20) { rows.Add(R(2, "Ports", "20 ports at most - this isn't a port scanner", "", "u")); return rows; }
                 ports = nums;
@@ -203,7 +207,8 @@ namespace AdeeboMeter
             foreach (var h in hosts)
             {
                 if (run.Stop) break; run.Status = h + "...";
-                IPAddress[] a; try { a = Dns.GetHostAddresses(h); } catch (SocketException) { rows.Add(R(2, h, "name doesn't resolve", "", "m")); continue; }
+                IPAddress[] a; try { a = Dns.GetHostAddresses(h); } catch (SocketException) { rows.Add(R(2, h, "name doesn't resolve", "", "m")); continue; } catch (ArgumentException) { rows.Add(R(2, h, "not a name", "", "m")); continue; }
+                if (a.Length == 0) { rows.Add(R(2, h, "the name has no addresses", "", "m")); continue; }
                 double ms; string st = Knock(a[0], 443, out ms);
                 if (st != "open") { rows.Add(R(2, h, "HTTPS port " + st, "", "m")); continue; }
                 X509Days(h, out ms);
@@ -219,7 +224,7 @@ namespace AdeeboMeter
             days = double.NaN; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
             try
             {
-                using (var c = new TcpClient()) { if (!c.ConnectAsync(h, 443).Wait(4000)) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)).Wait(6000); }
+                using (var c = Toolkit.Tcp()) { if (!c.ConnectAsync(h, 443).Wait(4000)) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)).Wait(6000); }
             }
             catch (AggregateException) { } catch (SocketException) { } catch (IOException) { }
             if (got != null) using (got) days = Math.Floor((got.NotAfter - DateTime.Now).TotalDays);
@@ -260,7 +265,13 @@ namespace AdeeboMeter
             {
                 var sw = Stopwatch.StartNew();
                 try { if (!c.ConnectAsync(a, port).Wait(3000)) { rows.Add(R(2, a + ":" + port, "no answer in 3 s", "A firewall drops it, or the PC is off / asleep.", "m")); return rows; } }
-                catch (AggregateException) { rows.Add(R(2, a + ":" + port, "refused - the PC is there, Remote Desktop isn't on (or another port)", "", "m")); return rows; }
+                catch (AggregateException ae)
+                {
+                    var se = ae.InnerException as SocketException;
+                    if (se != null && se.SocketErrorCode == SocketError.ConnectionRefused) rows.Add(R(2, a + ":" + port, "refused - the PC is there, Remote Desktop isn't on (or another port)", "", "m"));
+                    else rows.Add(R(2, a + ":" + port, "couldn't connect: " + Draw.Trunc(ae.InnerException != null ? ae.InnerException.Message : ae.Message, 80), "No route to it from here (another network, a VPN that's off), or a firewall rejects it.", "m"));
+                    return rows;
+                }
                 rows.Add(R(0, a + ":" + port, "the port is open (" + sw.ElapsedMilliseconds + " ms)", "", "m"));
                 // X.224 connection request with an RDP negotiation request: TLS + CredSSP (NLA) offered
                 var req = new byte[] { 3, 0, 0, 19, 14, 0xE0, 0, 0, 0, 0, 0, 1, 0, 8, 0, 3, 0, 0, 0 };
@@ -289,6 +300,23 @@ namespace AdeeboMeter
             var attrs = Tlv(0x30, RootAttrs.SelectMany(Os).ToArray());
             var search = Tlv(0x63, Cat(Os(""), Tlv(0x0A, new byte[] { 0 }), Tlv(0x0A, new byte[] { 0 }), Tlv(2, new byte[] { 0 }), Tlv(2, new byte[] { 5 }), Tlv(1, new byte[] { 0 }), Tlv(0x87, Encoding.ASCII.GetBytes("objectClass")), attrs));
             return Tlv(0x30, Cat(Tlv(2, new byte[] { 1 }), search));
+        }
+        // a whole SearchResultDone (op 0x65) has arrived - walking the messages, not looking for a 0x65 byte (that's an "e")
+        static bool LdapDone(byte[] b, int n)
+        {
+            int pos = 0;
+            while (pos + 2 <= n)
+            {
+                if (b[pos] != 0x30) return false;
+                int lenAt = pos + 1, len = b[lenAt], hdr = 2;
+                if ((len & 0x80) != 0) { int k = len & 0x7f; if (k < 1 || k > 3 || lenAt + k >= n) return false; len = 0; for (int i = 1; i <= k; i++) len = len << 8 | b[lenAt + i]; hdr = 2 + k; }
+                if (pos + hdr + len > n) return false;
+                int id = pos + hdr; if (id + 2 > n || b[id] != 0x02) return false;
+                int op = id + 2 + b[id + 1]; if (op >= n) return false;
+                if (b[op] == 0x65) return true;
+                pos += hdr + len;
+            }
+            return false;
         }
         public static Dictionary<string, string> ParseRootDse(byte[] b, int n)
         {
@@ -322,15 +350,15 @@ namespace AdeeboMeter
                 try { if (!c.ConnectAsync(a, port).Wait(3000)) { rows.Add(R(2, a + ":" + port, "no answer in 3 s", "", "m")); return rows; } }
                 catch (AggregateException) { rows.Add(R(2, a + ":" + port, "refused - not an LDAP server", "", "m")); return rows; }
                 var s = c.GetStream(); s.ReadTimeout = 4000; var req = RootDseRequest(); var b = new byte[16384]; int n = 0;
-                try { s.Write(req, 0, req.Length); var until = DateTime.UtcNow.AddSeconds(4); while (n < b.Length && DateTime.UtcNow < until) { int k = s.Read(b, n, b.Length - n); if (k <= 0) break; n += k; if (n > 10 && Array.IndexOf(b, (byte)0x65, 0, n) > 0) break; } } catch (IOException) { }
+                try { s.Write(req, 0, req.Length); var until = DateTime.UtcNow.AddSeconds(4); while (n < b.Length && DateTime.UtcNow < until) { int k = s.Read(b, n, b.Length - n); if (k <= 0) break; n += k; if (LdapDone(b, n)) break; } } catch (IOException) { }
                 var d = ParseRootDse(b, n);
                 if (d.Count == 0) { rows.Add(R(1, a + ":" + port, n > 0 ? "answered, but not with a directory root" : "connected, no LDAP answer", "", "m")); return rows; }
                 rows.Add(R(0, a + ":" + port + " (" + sw.ElapsedMilliseconds + " ms)", "LDAP answers", "Read anonymously, as every client does first - no password is sent.", "m"));
-                string[] fl = { "2000", "2003 interim", "2003", "2008", "2008 R2", "2012", "2012 R2", "2016", "2025" };
+                string[] fl = { "2000", "2003 interim", "2003", "2008", "2008 R2", "2012", "2012 R2", "2016", "", "", "2025" };   // 7 covers 2016-2022; 10 is 2025
                 foreach (var kv in d)
                 {
                     string v = kv.Value; int f;
-                    if (kv.Key == "domainFunctionality" && int.TryParse(v, out f) && f >= 0 && f < fl.Length) v = "Windows Server " + fl[f] + " level";
+                    if (kv.Key == "domainFunctionality" && int.TryParse(v, out f) && f >= 0 && f < fl.Length && fl[f] != "") v = "Windows Server " + fl[f] + " level";
                     if (kv.Key == "currentTime") { DateTime t; if (DateTime.TryParseExact(v.Replace(".0Z", "Z"), "yyyyMMddHHmmssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out t)) { double skew = (DateTime.UtcNow - t).TotalSeconds; rows.Add(R(Math.Abs(skew) > 300 ? 2 : Math.Abs(skew) > 60 ? 1 : 0, "Clock difference", skew.ToString("0", CultureInfo.CurrentCulture) + " s", Math.Abs(skew) > 300 ? "Over 5 minutes breaks Kerberos sign-in." : "", "m")); continue; } }
                     rows.Add(R(3, kv.Key, Draw.Trunc(v, 200), "", "m"));
                 }

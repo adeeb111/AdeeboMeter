@@ -73,10 +73,15 @@ namespace AdeeboMeter
                     add(3, "Wi-Fi neighbourhood", "not available", "Windows only shares the Wi-Fi scan with apps that have location permission. Skipped.");
                 else
                 {
-                    int same = Math.Max(0, Regex.Matches(outp, @"^\s*Channel\s*:\s*(\d+)", RegexOptions.Multiline).Cast<Match>().Count(x => x.Groups[1].Value == ch) - 1);
+                    // channels from Windows' own Wi-Fi API (any language); the English netsh labels only as a fallback
+                    string werr; var bss = WlanApi.List(false, out werr); int chN; int.TryParse(ch, NumberStyles.Integer, CultureInfo.InvariantCulture, out chN);
+                    var chans = bss.Count > 0 ? bss.Select(b => b.Channel).ToList() : Regex.Matches(outp, @"^\s*Channel\s*:\s*(\d+)", RegexOptions.Multiline).Cast<Match>().Select(x => int.Parse(x.Groups[1].Value, CultureInfo.InvariantCulture)).ToList();
+                    if (chans.Count == 0 || chN <= 0) { add(3, "Wi-Fi", "signal " + (sig >= 0 ? sig + "%" : "?") + " · channel neighbours couldn't be read", ""); goto doneWifi; }
+                    int same = Math.Max(0, chans.Count(x => x == chN) - 1);
                     int lv = (sig >= 0 && sig < 40) || same >= 5 ? 1 : 0;
                     add(lv, "Wi-Fi", "signal " + (sig >= 0 ? sig + "%" : "?") + " · ch " + ch + " · " + same + " other AP" + (same == 1 ? "" : "s") + " on it",
                         lv == 1 ? Voice.P("Crowded or weak. Move closer, or switch band (5 GHz near the router, 2.4 GHz far away).", "Crowded or weak channel; move closer or change band.") : Voice.P("Your channel is calm.", "Channel is clear."));
+                    doneWifi:;
                 }
             }
             string proxy = DestCheck.ProxyInfo();

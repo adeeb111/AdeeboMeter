@@ -36,6 +36,8 @@ namespace AdeeboMeter
                 if (b.Length >= 24 && (U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d || U32(b, 0, false) == 0xa1b2c3d4 || U32(b, 0, false) == 0xa1b23c4d)) Classic(b, list);
                 else if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A) Ng(b, list);
                 else error = "not a pcap or pcapng file";
+                // nothing came out: say so when it's because of the link type (a Wi-Fi monitor-mode capture), not "no DHCP here"
+                if (error == "" && list.Count == 0) { int lt = FirstLink(b); if (lt >= 0 && !Links.Contains(lt)) error = "this capture's link type (" + lt + (lt == 105 || lt == 127 ? ", Wi-Fi monitor mode" : "") + ") isn't supported - capture on the Ethernet or Wi-Fi adapter normally (not in monitor mode)"; }
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is NotSupportedException || e is ArgumentException)) throw; error = e.Message; }
             return list;
@@ -47,6 +49,14 @@ namespace AdeeboMeter
             else if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A) Ng(b, list);
             return list;
         }
+        // only what a replay reads is kept (DHCP, DHCPv6, ICMP, ICMPv6, 802.1X): a 60 MB capture of mostly web traffic stays
+        // small in memory - every other frame is skipped as soon as it's decoded
+        static bool Wanted(Pkt k)
+        {
+            if (k == null) return false;
+            if (k.Proto == Eapol || k.Proto == 1 || k.Proto == 58) return true;
+            return k.Proto == 17 && (k.SrcPort == 67 || k.SrcPort == 68 || k.DstPort == 67 || k.DstPort == 68 || k.SrcPort == 546 || k.SrcPort == 547 || k.DstPort == 546 || k.DstPort == 547);
+        }
         static uint U32(byte[] b, int o, bool le) { return le ? (uint)(b[o] | b[o + 1] << 8 | b[o + 2] << 16 | b[o + 3] << 24) : (uint)(b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]); }
         static int U16(byte[] b, int o, bool le) { return le ? b[o] | b[o + 1] << 8 : b[o] << 8 | b[o + 1]; }
         static void Classic(byte[] b, List<Pkt> list)
@@ -55,37 +65,61 @@ namespace AdeeboMeter
             int link = (int)(U32(b, 20, le) & 0xFFFF); int p = 24; double t0 = -1;
             while (p + 16 <= b.Length && list.Count < MaxPackets)
             {
-                double t = U32(b, p, le) + U32(b, p + 4, le) / (ns ? 1e9 : 1e6); int len = (int)Math.Min(U32(b, p + 8, le), 262144u);
-                p += 16; if (len < 0 || p + len > b.Length) break;
+                double t = U32(b, p, le) + U32(b, p + 4, le) / (ns ? 1e9 : 1e6); long incl = U32(b, p + 8, le);
+                p += 16; if (p + incl > b.Length) break;   // the record's real length moves us on; only the decode is capped
                 if (t0 < 0) t0 = t;
-                var k = Decode(b, p, len, link); if (k != null) { k.T = t - t0; list.Add(k); }
-                p += len;
+                var k = Decode(b, p, (int)Math.Min(incl, 262144L), link); if (Wanted(k)) { k.T = t - t0; list.Add(k); }
+                p += (int)incl;
             }
         }
         static void Ng(byte[] b, List<Pkt> list)
         {
-            int p = 0; bool le = true; var links = new List<int>(); double t0 = -1;
+            int p = 0; bool le = true; var links = new List<int>(); var perSec = new List<double>(); double t0 = -1;
             while (p + 12 <= b.Length && list.Count < MaxPackets)
             {
                 uint type = U32(b, p, le);
-                if (type == 0x0A0D0D0A) { if (p + 12 > b.Length) break; le = U32(b, p + 8, true) == 0x1A2B3C4D; links.Clear(); }
+                if (type == 0x0A0D0D0A) { if (p + 12 > b.Length) break; le = U32(b, p + 8, true) == 0x1A2B3C4D; links.Clear(); perSec.Clear(); }
                 int blen = (int)U32(b, p + 4, le); if (blen < 12 || blen % 4 != 0 || (long)p + blen > b.Length) break;   // 64-bit sums: a crafted length near 2 GB must not wrap around
-                if (type == 1 && blen >= 20) links.Add(U16(b, p + 8, le));
+                if (type == 1 && blen >= 20)
+                {
+                    // the interface's time unit (option 9, if_tsresol): microseconds unless it says otherwise - Linux dumpcap
+                    // often writes nanoseconds
+                    links.Add(U16(b, p + 8, le)); double ps = 1e6;
+                    for (int o = p + 16; o + 4 <= p + blen - 4;)
+                    {
+                        int code = U16(b, o, le), olen = U16(b, o + 2, le); if (code == 0 || o + 4 + olen > p + blen - 4) break;
+                        if (code == 9 && olen >= 1) { int v = b[o + 4]; double r = (v & 0x80) == 0 ? Math.Pow(10, v & 0x7f) : Math.Pow(2, v & 0x7f); if (r >= 1 && r <= 1e15) ps = r; }
+                        o += 4 + ((olen + 3) & ~3);
+                    }
+                    perSec.Add(ps);
+                }
                 else if (type == 6 && blen >= 32)
                 {
                     int ifc = (int)U32(b, p + 8, le); long ts = ((long)U32(b, p + 12, le) << 32) | U32(b, p + 16, le); int cap = (int)U32(b, p + 20, le);
                     if (cap >= 0 && 28L + cap <= blen && ifc >= 0 && ifc < links.Count)
                     {
-                        double t = ts / 1e6; if (t0 < 0) t0 = t;   // the default (and by far the most common) resolution: microseconds
-                        var k = Decode(b, p + 28, cap, links[ifc]); if (k != null) { k.T = t - t0; list.Add(k); }
+                        double t = ts / perSec[ifc]; if (t0 < 0) t0 = t;
+                        var k = Decode(b, p + 28, cap, links[ifc]); if (Wanted(k)) { k.T = t - t0; list.Add(k); }
                     }
                 }
                 else if (type == 3 && blen >= 16 && links.Count > 0)
                 {
-                    int cap = Math.Min(blen - 16, (int)U32(b, p + 8, le)); if (cap > 0) { var k = Decode(b, p + 12, cap, links[0]); if (k != null) { k.T = list.Count > 0 ? list[list.Count - 1].T : 0; list.Add(k); } }
+                    int cap = Math.Min(blen - 16, (int)U32(b, p + 8, le)); if (cap > 0) { var k = Decode(b, p + 12, cap, links[0]); if (Wanted(k)) { k.T = list.Count > 0 ? list[list.Count - 1].T : 0; list.Add(k); } }
                 }
                 p += blen;
             }
+        }
+        static readonly HashSet<int> Links = new HashSet<int> { 1, 101, 12, 14, 113, 276 };
+        static int FirstLink(byte[] b)
+        {
+            if (b.Length >= 24 && (U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d)) return (int)(U32(b, 20, true) & 0xFFFF);
+            if (b.Length >= 24 && (U32(b, 0, false) == 0xa1b2c3d4 || U32(b, 0, false) == 0xa1b23c4d)) return (int)(U32(b, 20, false) & 0xFFFF);
+            if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A)
+            {
+                bool le = U32(b, 8, true) == 0x1A2B3C4D; int p = 0;
+                while (p + 12 <= b.Length) { uint t = U32(b, p, le); int bl = (int)U32(b, p + 4, le); if (bl < 12 || (long)p + bl > b.Length) break; if (t == 1 && bl >= 20) return U16(b, p + 8, le); p += bl; }
+            }
+            return -1;
         }
         // link layer -> IP
         static Pkt Decode(byte[] b, int o, int len, int link)

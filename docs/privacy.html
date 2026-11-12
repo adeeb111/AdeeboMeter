@@ -15,7 +15,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
 main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
-a{color:var(--blue)}
+a{color:var(--blue);overflow-wrap:anywhere}
 h1{font-size:32px;line-height:1.2;margin:0 0 6px}
 h2{font-size:20px;margin:36px 0 8px}
 .date{color:var(--sub);margin:0 0 24px}
@@ -26,12 +26,13 @@ li{margin:6px 0}
 code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
 footer{margin-top:48px;color:var(--sub);font-size:14px}
 </style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 </head>
 <body>
 <main>
 <p><a href="./">← AdeeboMeter</a></p>
 <h1>Privacy Policy</h1>
-<p class="date">AdeeboMeter for Windows · last updated 11 November 2026</p>
+<p class="date">AdeeboMeter for Windows · last updated 12 November 2026</p>
 
 <div class="short"><p><b>In short:</b> AdeeboMeter collects nothing about you. There is no account, no telemetry, no analytics and no server. Everything it learns stays on your PC, and it never accepts a connection from anywhere.</p></div>
 
@@ -45,19 +46,36 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Captures</b> and <b>saved results</b>, but only the ones you choose to make or save.</li>
 </ul>
 <p>Passwords and secrets you type into a tool (for example an SNMP community, a RADIUS secret or a certificate password) are used for that one action and are never saved, logged or copied.</p>
-<p>Uninstalling AdeeboMeter removes it. Your own saved files stay where you put them.</p>
+<p>Live captures are deleted when a capture stops, at the next start and when you sign out of Windows.</p>
+<p>Uninstalling AdeeboMeter removes it, except your encryption key list and key backups (so files sent to you still open after a reinstall; delete <code>%LOCALAPPDATA%\AdeeboMeter</code> and <code>Documents\AdeeboMeter</code> to remove them too). Your own saved files stay where you put them.</p>
 
 <h2>What it sends, and when</h2>
+<p>None of this carries information about you. Each item is listed live in the app under About › "What leaves your PC", and each background item can be switched off in Settings.</p>
+<p><b>In the background (while the app runs):</b></p>
 <ul>
-  <li><b>The internet check:</b> a small ping to <code>1.1.1.1</code> and <code>8.8.8.8</code> about every 30 seconds, to show whether the internet answers. It carries no information about you. Set the internet check to Off in Settings and it stops completely.</li>
-  <li><b>Tools you start:</b> when you run a test (for example a ping, a DNS lookup or a website check), it contacts only the target you typed or picked, and only when you start it.</li>
-  <li><b>Online lookups:</b> checks that ask a third party (for example a DNS-over-HTTPS server) run only if you turn on online lookups in Settings.</li>
+  <li><b>Router ping:</b> a tiny ping to your own router every few seconds. It stays on your local network.</li>
+  <li><b>Internet and DNS check:</b> one ping to <code>1.1.1.1</code> (or <code>8.8.8.8</code>) and one name lookup about every 30 seconds. On networks that block ping, a timed connection to port 443 of the same address instead, closed at once. Set it to Off and nothing goes to the internet in the background.</li>
+  <li><b>Provider name:</b> once per network, a short trace (6 hops) toward <code>1.1.1.1</code> and a reverse name lookup, to name your provider.</li>
+  <li><b>Sign-in page check:</b> only when a check fails, one request to the test page Windows itself uses (<code>msftconnecttest.com</code>).</li>
+  <li><b>Pinned destination watch:</b> one ping every 30 seconds to a destination you pinned, only if you switch it on.</li>
+  <li><b>Gamer Zone:</b> nothing until you click a game. Then pings (or timed connections) to that game's regions; the Valve server list from <code>api.steampowered.com</code> only when you add a Valve game or press Refresh.</li>
+</ul>
+<p><b>Only when you start them:</b></p>
+<ul>
+  <li><b>Tools:</b> a test contacts only the target you typed or picked (or the one it names on screen, such as <code>msftconnecttest.com</code> for the clock check).</li>
+  <li><b>Speed test:</b> about 8 seconds of download and upload to the server you picked (Cloudflare's nearest <code>speed.cloudflare.com</code> by default, or a Vultr or OVHcloud test file in a city), with a cap in MB.</li>
+  <li><b>Report for my ISP:</b> pings and traces to the destinations you choose; your public IP (one request to <code>www.cloudflare.com/cdn-cgi/trace</code>) only if you type yes.</li>
+  <li><b>Online lookups</b> (off by default, and they switch themselves off after the time you choose): public IP addresses of a path go to RIPEstat (<code>stat.ripe.net</code>) and PeeringDB over HTTPS; the Security checkup then also asks Cloudflare's encrypted DNS (<code>cloudflare-dns.com</code>) one question and opens one TLS handshake with <code>www.microsoft.com</code>. The Encrypted DNS (DoH / DoT) tool asks the server you choose when you run it.</li>
+  <li><b>Links you click</b> (GitHub, Donate) open in your browser; the app itself sends nothing.</li>
   <li><b>Crash reports:</b> if the app crashes, the next start offers to open a GitHub issue page in your browser with the details filled in. Nothing is sent unless you choose to submit it, and you can read and edit it first.</li>
 </ul>
 <p>AdeeboMeter never listens: it opens no ports and runs no server, and only receives replies to requests it made.</p>
 
 <h2>Microsoft Store</h2>
-<p>If you installed AdeeboMeter from the Microsoft Store, Microsoft handles the download, updates and any purchase data under <a href="https://privacy.microsoft.com/privacystatement">Microsoft's privacy statement</a>. The developer only sees the anonymous totals Microsoft provides to every publisher, such as the number of installs.</p>
+<p>If AdeeboMeter is offered in the Microsoft Store and you installed AdeeboMeter from the Microsoft Store, Microsoft handles the download, updates and any purchase data under <a href="https://privacy.microsoft.com/privacystatement">Microsoft's privacy statement</a>. The developer only sees the anonymous totals Microsoft provides to every publisher, such as the number of installs.</p>
+
+<h2>This website</h2>
+<p>The page loads nothing from other sites, with one exception: it asks GitHub's API (<code>api.github.com</code>) for the latest version number, so GitHub sees your IP address the way any website you visit does.</p>
 
 <h2>Children</h2>
 <p>AdeeboMeter doesn't collect personal information from anyone, including children.</p>

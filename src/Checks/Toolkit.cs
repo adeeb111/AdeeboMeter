@@ -20,6 +20,14 @@ namespace AdeeboMeter
     // nearest cloud, ping sweep, Wake-on-LAN, subnet calculator. All on press, all outbound, nothing listens.
     static class Toolkit
     {
+        // A TCP client that can reach IPv6-only hosts too (dual mode: IPv4 still works through mapped addresses).
+        // Where the PC has no IPv6 at all, a plain IPv4 one.
+        public static TcpClient Tcp()
+        {
+            try { var c = new TcpClient(AddressFamily.InterNetworkV6); c.Client.DualMode = true; return c; }
+            catch (SocketException) { return new TcpClient(); }
+            catch (NotSupportedException) { return new TcpClient(); }
+        }
         // What people paste: "https://example.com/path", "example.com:8443", "[2001:db8::1]:22", a bare name or IP.
         // HostOnly gives just the host; Target gives host:port (the URL's own port, or its scheme's: https 443, http 80).
         public static string HostOnly(string input)
@@ -376,7 +384,7 @@ namespace AdeeboMeter
             if (name == "" || name.Length > 253) { rows.Add(R(2, "Name", "type a name, e.g. github.com", "", "u")); return rows; }
             IPAddress ipq; if (t == 12 && IPAddress.TryParse(name, out ipq)) name = PtrName(ipq);
             if (trace) return Trace(name, rows);
-            IPAddress srv; string dns; lock (m.L) dns = m.DnsServer; Msg msg; object srvName;
+            IPAddress srv = null; string dns; lock (m.L) dns = m.DnsServer; Msg msg; object srvName;
             string sv = (server ?? "").Trim().TrimStart('@');
             if (sv.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
@@ -388,7 +396,16 @@ namespace AdeeboMeter
             }
             else
             {
-                if (!IPAddress.TryParse(sv, out srv) && !IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out srv)) { rows.Add(R(2, "Server", "no DNS server to ask - type one, e.g. 1.1.1.1, or a DoH address", "", "u")); return rows; }
+                // the server you typed is the server asked - never a quiet fall back to this PC's DNS
+                string svh = sv; int c53 = sv.LastIndexOf(':'); if (sv.StartsWith("[", StringComparison.Ordinal) && sv.Contains("]")) svh = sv.Substring(1, sv.IndexOf(']') - 1); else if (c53 > 0 && sv.IndexOf(':') == c53 && sv.Substring(c53 + 1) == "53") svh = sv.Substring(0, c53);
+                if (sv != "" && !IPAddress.TryParse(svh, out srv))
+                {
+                    IPAddress[] byName = null; try { byName = Dns.GetHostAddresses(svh); } catch (SocketException) { } catch (ArgumentException) { }
+                    srv = byName == null ? null : byName.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? byName.FirstOrDefault();
+                    if (srv == null) { rows.Add(R(2, "Server", "\"" + sv + "\" isn't an address, and the name doesn't resolve - type an IP (1.1.1.1) or a DoH address (https://...)", "", "u")); return rows; }
+                    rows.Add(R(3, "Server", svh + " is " + srv + " (looked up with this PC's DNS)", "", "m"));
+                }
+                else if (sv == "" && !IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out srv)) { rows.Add(R(2, "Server", "no DNS server to ask - type one, e.g. 1.1.1.1, or a DoH address", "", "u")); return rows; }
                 msg = Query(srv, name, t, true); srvName = srv;
                 if (msg == null) { rows.Add(R(2, "Answer", "no answer from " + srv + " in 3 s", "", "m")); return rows; }
             }
@@ -448,6 +465,8 @@ namespace AdeeboMeter
             }
             catch (SocketException) { return null; }
             catch (InvalidOperationException) { return null; }
+            catch (System.IO.IOException) { return null; }   // the TCP retry cut off
+            catch (AggregateException) { return null; }   // the TCP retry refused
             return Parse(resp, sw.ElapsedMilliseconds, server.ToString());
         }
         // ip -> the reverse name: 4.3.2.1.in-addr.arpa, or 32 nibbles .ip6.arpa
@@ -461,6 +480,7 @@ namespace AdeeboMeter
         static byte[] Question(string name, int type, bool rd, byte[] id)
         {
             var q = new List<byte> { id[0], id[1], (byte)(rd ? 1 : 0), 0, 0, 1, 0, 0, 0, 0, 0, 1 };
+            if (name.Any(ch => ch > 127)) try { name = new IdnMapping().GetAscii(name); } catch (ArgumentException) { return null; }   // bücher.de -> xn--bcher-kva.de, never "b?cher"
             foreach (var label in name.Split('.')) { var b = Encoding.ASCII.GetBytes(label); if (b.Length == 0 || b.Length > 63) return null; q.Add((byte)b.Length); q.AddRange(b); }
             q.Add(0); q.Add((byte)(type >> 8)); q.Add((byte)type); q.Add(0); q.Add(1);
             q.AddRange(new byte[] { 0, 0, 41, 0x10, 0, 0, 0, 0x80, 0, 0, 0 });   // EDNS0, 4096 bytes, DO bit
@@ -572,7 +592,7 @@ namespace AdeeboMeter
         // server of a pool by its IP, or a site before its DNS is switched over
         public static List<string[]> Http(string url, string sni)
         {
-            var rows = new List<string[]>(); url = (url ?? "").Trim(); sni = (sni ?? "").Trim(); if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url;
+            var rows = new List<string[]>(); url = (url ?? "").Trim(); sni = (sni ?? "").Trim(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url;
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u) || (u.Scheme != "https" && u.Scheme != "http")) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
             if (sni != "" && Uri.CheckHostName(sni) != UriHostNameType.Dns) { rows.Add(R(2, "Name to ask for", "a host name - e.g. www.example.com", "", "u")); return rows; }
             if (sni != "") rows.Add(R(3, "Asking for", sni + " at " + u.Host, "The connection goes to " + u.Host + "; the name sent (TLS SNI and the Host header) is " + sni + ".", "u"));
@@ -634,7 +654,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); X509Certificate2 cert = null;
             try
             {
-                using (var tc = new TcpClient())
+                using (var tc = Toolkit.Tcp())
                 {
                     if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, "Revocation", "couldn't connect to " + host, "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))
@@ -663,12 +683,15 @@ namespace AdeeboMeter
         }
         static List<string[]> Tls(string host, int port, string sni)
         {
+            host = (host ?? "").Trim('[', ']'); sni = (sni ?? "").Trim('[', ']');
             var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None; List<string[]> chainRows = null;
             foreach (var proto in new[] { Tuple.Create("TLS 1.3", (SslProtocols)12288), Tuple.Create("TLS 1.2", SslProtocols.Tls12) })
             {
+                // Windows 10 can't speak TLS 1.3 as a client: that's this PC, not the site
+                if (proto.Item1 == "TLS 1.3" && !DestCheck.Tls13Client()) { rows.Add(R(3, "TLS 1.3", "this PC can't test it (Windows 10 has no TLS 1.3 client) - not a verdict on the site", "", "m")); continue; }
                 try
                 {
-                    using (var tc = new TcpClient())
+                    using (var tc = Toolkit.Tcp())
                     {
                         if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
                         using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); if (chainRows == null && ch != null) chainRows = Chain(ch); errs = e; return e == SslPolicyErrors.None; }))
@@ -811,10 +834,19 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string s = (input ?? "").Trim(); int prefix = -1; string ipPart = s;
             int slash = s.IndexOf('/'); var sp = s.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-            if (slash > 0) { ipPart = s.Substring(0, slash); if (!int.TryParse(s.Substring(slash + 1), out prefix)) prefix = -2; }
-            else if (sp.Length == 2) { ipPart = sp[0]; IPAddress mk; if (IPAddress.TryParse(sp[1], out mk)) prefix = MaskBits(mk.GetAddressBytes()); }
-            IPAddress ip; if (!IPAddress.TryParse(ipPart, out ip)) { rows.Add(R(2, "Input", "type e.g. 10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64", "", "u")); return rows; }
-            int bits = ip.AddressFamily == AddressFamily.InterNetwork ? 32 : 128; if (prefix < 0) prefix = bits; if (prefix > bits) { rows.Add(R(2, "Prefix", "/" + prefix + " is too long", "", "u")); return rows; }
+            // a prefix or mask that's there but wrong is an error - only "no prefix at all" means one host
+            string bad = null;
+            if (slash > 0) { ipPart = s.Substring(0, slash); if (!int.TryParse(s.Substring(slash + 1), NumberStyles.None, CultureInfo.InvariantCulture, out prefix)) bad = "\"/" + s.Substring(slash + 1) + "\" isn't a prefix length"; }
+            else if (sp.Length == 2)
+            {
+                ipPart = sp[0]; IPAddress mk;
+                if (!IPAddress.TryParse(sp[1], out mk)) bad = "\"" + sp[1] + "\" isn't a mask";
+                else { prefix = MaskBits(mk.GetAddressBytes()); var mb = mk.GetAddressBytes(); var want = new byte[mb.Length]; for (int i = 0; i < Math.Max(0, prefix); i++) want[i / 8] |= (byte)(0x80 >> (i % 8)); if (prefix < 0 || !mb.SequenceEqual(want)) bad = sp[1] + " isn't a contiguous mask"; }
+            }
+            else if (sp.Length > 2) bad = "too many parts - one address and a prefix or mask";
+            IPAddress ip; if (bad != null || !IPAddress.TryParse(ipPart, out ip) || (ip.AddressFamily == AddressFamily.InterNetwork && ipPart.Count(ch => ch == '.') != 3)) { rows.Add(R(2, "Input", (bad != null ? bad + " - " : "") + "type e.g. 10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64", "", "u")); return rows; }
+            int bits = ip.AddressFamily == AddressFamily.InterNetwork ? 32 : 128; if (prefix < 0) prefix = bits;
+            if (sp.Length == 2 && slash < 0 && IPAddress.Parse(sp[1]).AddressFamily != ip.AddressFamily) { rows.Add(R(2, "Mask", "an IPv" + (bits == 32 ? "6" : "4") + " mask on an IPv" + (bits == 32 ? "4" : "6") + " address", "", "u")); return rows; } if (prefix > bits) { rows.Add(R(2, "Prefix", "/" + prefix + " is too long", "", "u")); return rows; }
             var b = ip.GetAddressBytes(); var mask = new byte[b.Length]; for (int i = 0; i < prefix; i++) mask[i / 8] |= (byte)(0x80 >> (i % 8));
             var net = b.Select((x, i) => (byte)(x & mask[i])).ToArray(); var bc = b.Select((x, i) => (byte)(x | ~mask[i])).ToArray();
             long count = bits == 32 ? 1L << (32 - prefix) : 0;

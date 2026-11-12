@@ -23,7 +23,7 @@ namespace AdeeboMeter
             if (p == "") { rows.Add(R(2, "Capture file", "type or paste the path of a .pcap or .pcapng file - or try the Sample lab", "", "")); return null; }
             string err; var l = Pcap.Read(p, out err);
             if (err != "") { rows.Add(R(2, "Capture file", err, "", "")); return null; }
-            rows.Add(R(3, "Read", l.Count.ToString("N0", CultureInfo.CurrentCulture) + " packets from " + Path.GetFileName(p), "Read on this PC with AdeeboMeter's own reader - the file isn't changed or sent anywhere.", "p"));
+            rows.Add(R(3, "Read", l.Count.ToString("N0", CultureInfo.CurrentCulture) + " DHCP, ICMP and 802.1X packets from " + Path.GetFileName(p), "Read on this PC with AdeeboMeter's own reader - the file isn't changed or sent anywhere.", "p"));
             return l;
         }
 
@@ -182,7 +182,7 @@ namespace AdeeboMeter
             var p = k.Payload; int o = 8;
             try
             {
-                if (!k.V6 && p.Length >= o + 20 && (p[o] >> 4) == 4)
+                if (!k.V6 && p.Length >= o + 20 && (p[o] >> 4) == 4 && (p[o] & 15) >= 5)   // a real IPv4 header is at least 20 bytes (IHL 5)
                 {
                     int ihl = (p[o] & 15) * 4, proto = p[o + 9]; var dst = new IPAddress(new[] { p[o + 16], p[o + 17], p[o + 18], p[o + 19] });
                     string port = (proto == 6 || proto == 17) && p.Length >= o + ihl + 4 ? ":" + (p[o + ihl + 2] << 8 | p[o + ihl + 3]) : "";

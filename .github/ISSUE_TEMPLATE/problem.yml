@@ -24,7 +24,7 @@ body:
     attributes:
       label: AdeeboMeter version
       description: Right-click the tray icon - the version is on the first line.
-      placeholder: "1.0"
+      placeholder: "1.1.5"
     validations:
       required: true
   - type: input

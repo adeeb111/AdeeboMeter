@@ -28,7 +28,7 @@ namespace AdeeboMeter
                     else res = which == "precall" ? Tools.PreCall(M, progress) : which == "dns" ? Tools.DnsBench(M, progress) : which == "vpn" ? Tools.VpnMap(M) : Tools.Visibility(M);
                 }
                 catch (Exception e) { Program.Log("tool " + which + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 60), "" } }; }
-                try { BeginInvoke((Action)delegate { toolRows = res; toolAt = DateTime.Now; toolBusy = false; if (tbTool != null) EarnPts(tbTool.Id, true, Points.Completed(res, false)); healthCanvas.Invalidate(); }); } catch { toolBusy = false; }
+                try { BeginInvoke((Action)delegate { toolRows = res; toolAt = DateTime.Now; toolBusy = false; if (tbTool != null) EarnPts(tbTool.Id, exOpened.Contains(tbTool.Id), Points.Completed(res, false)); /* the same rule as the Toolbox: its Example first */ healthCanvas.Invalidate(); }); } catch { toolBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
         DateTime toolCopied, destCopied;
@@ -38,13 +38,19 @@ namespace AdeeboMeter
             var rows = toolRows; if (rows != null) foreach (var r in rows) if (r.Length > 2) sb.AppendLine(r[1] + ": " + r[2] + (r.Length > 3 && r[3] != "" ? "  - " + r[3] : ""));
             return sb.ToString();
         }
+        // a copy or save that didn't happen is said, not just logged (Remote Desktop or another app can hold the clipboard)
+        void CopyFailed(Exception e)
+        {
+            Program.Log("copy: " + e.Message);
+            if (!IsDisposed) MessageBox.Show(this, L.T("Couldn't copy - another app (often Remote Desktop) is holding the clipboard. Try again in a moment."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
         void SaveText(string name, string text)
         {
             foreach (var ch in System.IO.Path.GetInvalidFileNameChars()) name = name.Replace(ch, '-');
             using (var d = new SaveFileDialog { Title = "Save the result", Filter = "Text (*.txt)|*.txt", FileName = name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".txt" })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
-                try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); }
+                try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); MessageBox.Show(this, L.T("Couldn't save it:") + " " + e.Message, "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
             }
         }
         float PaintToolResult(Graphics g, float x, float y, float w)
@@ -57,7 +63,7 @@ namespace AdeeboMeter
                 string ct = toolCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", st = "Save..."; var cs = g.MeasureString(ct, Draw.fSmall); var ss = g.MeasureString(st, Draw.fSmall);
                 var cr = new RectangleF(x + w - cs.Width, y - 26 * S, cs.Width, cs.Height); var sr = new RectangleF(cr.X - 14 * S - ss.Width, cr.Y, ss.Width, ss.Height);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { g.DrawString(ct, Draw.fSmall, lb, cr.X, cr.Y); g.DrawString(st, Draw.fSmall, lb, sr.X, sr.Y); }
-                Act(healthCanvas, cr, delegate { try { Clipboard.SetText(ToolText()); toolCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } healthCanvas.Invalidate(); });
+                Act(healthCanvas, cr, delegate { try { Clipboard.SetText(ToolText()); toolCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } healthCanvas.Invalidate(); });
                 Act(healthCanvas, sr, delegate { SaveText("AdeeboMeter-" + toolWhich.Replace("tb:", "").Replace(':', '-'), ToolText()); });
             }
             float nameW = 250 * S;
@@ -68,7 +74,7 @@ namespace AdeeboMeter
                     string adv = row.Length > 3 ? row[3] : "";
                     float dh = Draw.Measure(row[2], Draw.fBodyB, (int)(w - nameW - 30 * S)).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fBody, (int)(w - nameW - 30 * S)).Height;
                     float rh = Math.Max(36 * S, dh + ah + 16 * S);
-                    using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, x, y + 10 * S, 11 * S, 11 * S);
+                    Draw.LvDot(g, lv, x, y + 10 * S, 11 * S, 11 * S);
                     g.DrawString(row[1], Draw.fBodyB, ink, new RectangleF(x + 22 * S, y + 6 * S, nameW - 26 * S, rh));
                     { string ev = Evidence.For(toolWhich, row); float nh = Draw.Measure(row[1], Draw.fBodyB, (int)(nameW - 26 * S)).Height, ew = Evidence.Pill(g, ev, x + 22 * S, y + 8 * S + nh, toolAt); Hint(healthCanvas, new RectangleF(x + 22 * S, y + 6 * S + nh, ew, 20 * S), Evidence.Key(ev)); rh = Math.Max(rh, nh + 34 * S); }
                     using (var vb = new SolidBrush(lv == 3 ? Theme.Ink : Theme.LvText(lv))) g.DrawString(row[2], Draw.fBodyB, vb, new RectangleF(x + nameW, y + 6 * S, w - nameW, dh + 4));

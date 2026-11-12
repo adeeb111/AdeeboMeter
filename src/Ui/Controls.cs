@@ -35,7 +35,10 @@ namespace AdeeboMeter
             get { var cp = base.CreateParams; cp.ExStyle |= 0x80000 | 0x20 | 0x80 | 0x08000000 | 0x8; return cp; }
         }
         protected override bool ShowWithoutActivation { get { return true; } }
+        // never in a screen share or recording: the hover card lists your apps by name (Windows 10 2004+; older ignore it)
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); try { if (!Native.SetWindowDisplayAffinity(Handle, 0x11 /*WDA_EXCLUDEFROMCAPTURE*/)) Program.Log("widget: capture exclusion not available"); } catch (EntryPointNotFoundException) { } }
         public Rectangle Placed { get; private set; }
+        public static volatile bool HoldTop;   // the tray menu is open: don't climb over it
         DateTime failLogged;
         public void Present(Bitmap bmp, byte alpha, int x, int y)
         {
@@ -54,7 +57,7 @@ namespace AdeeboMeter
                 Placed = new Rectangle(x, y, bmp.Width, bmp.Height);
                 // Windows can drop a small always-on-top window out of the top layer (sleep, unlock, monitors reconnecting) -
                 // then a maximised window hides it. Claim the top again, without taking focus.
-                if (alpha > 0) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040);
+                if (alpha > 0 && !HoldTop) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040);
             }
             finally
             {
@@ -77,11 +80,26 @@ namespace AdeeboMeter
         public bool KeyNav { get { return keyNav; } set { keyNav = value; SetStyle(ControlStyles.Selectable, value); TabStop = value; } }
         protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || base.IsInputKey(k); }
         protected override void OnMouseDown(MouseEventArgs e) { if (keyNav && !Focused) Focus(); base.OnMouseDown(e); }
+        // Painted buttons and links reached from the keyboard: Tab / Shift+Tab step through them (then on to the next control),
+        // Enter or Space presses the marked one. FullView supplies the steps; the mark is drawn after the page paints.
+        Func<bool, bool> tabStep; public Action Press; public Func<RectangleF> Mark;
+        public Func<bool, bool> TabStep { get { return tabStep; } set { tabStep = value; if (value != null && !keyNav) { SetStyle(ControlStyles.Selectable, true); TabStop = true; } } }
+        protected override bool ProcessDialogKey(Keys k)
+        {
+            var c = k & Keys.KeyCode; var mods = k & Keys.Modifiers;
+            if (Focused && tabStep != null && c == Keys.Tab && (mods & (Keys.Control | Keys.Alt)) == 0 && tabStep((mods & Keys.Shift) == 0)) return true;
+            if (Focused && Press != null && (c == Keys.Enter || c == Keys.Space) && mods == 0) { Press(); return true; }
+            return base.ProcessDialogKey(k);
+        }
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+        public void Announce(string name) { AccessibleName = name; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); AccessibilityNotifyClients(AccessibleEvents.Focus, -1); }
         // a paint slower than 40 ms is written to the log (at most once a minute per panel), so "it feels laggy" has numbers
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
         protected override void OnPaint(PaintEventArgs e)
         {
             UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
+            if (Focused && ShowFocusCues && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(Rectangle.Round(r), 2, 2)); } }
             if (sw.ElapsedMilliseconds > 40)
             {
                 DateTime t; string n = Name ?? "";
@@ -95,7 +113,7 @@ namespace AdeeboMeter
     {
         public enum K { Primary, Chip, Tab }
         public readonly K Kind; bool sel, hot, down;
-        public bool Selected { get { return sel; } set { if (sel != value) { sel = value; Invalidate(); } } }
+        public bool Selected { get { return sel; } set { if (sel != value) { sel = value; AccessibleDescription = value ? "selected" : null; AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); Invalidate(); } } }
         string badge = ""; int badgeLv = -1;
         // A small count or flag at the end of a tab ("16", "3 new", "REC"). lv: -1 neutral, 0-2 green/amber/red, 4 blue.
         public void SetBadge(string b, int lv) { b = b ?? ""; if (b == badge && lv == badgeLv) return; badge = b; badgeLv = lv; Fit(); Invalidate(); }
@@ -119,11 +137,14 @@ namespace AdeeboMeter
         protected override void OnMouseDown(MouseEventArgs e) { down = true; Focus(); Invalidate(); base.OnMouseDown(e); }
         protected override void OnMouseUp(MouseEventArgs e) { down = false; Invalidate(); base.OnMouseUp(e); }
         protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
-        protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+        protected override void OnLostFocus(EventArgs e) { held = false; Invalidate(); base.OnLostFocus(e); }
         protected override void OnEnabledChanged(EventArgs e) { Invalidate(); base.OnEnabledChanged(e); }
         protected override bool IsInputKey(Keys k) { return k == Keys.Enter || k == Keys.Space || base.IsInputKey(k); }
-        protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = true; OnClick(EventArgs.Empty); } base.OnKeyDown(e); }
-        protected override void OnTextChanged(EventArgs e) { Fit(); Invalidate(); base.OnTextChanged(e); }
+        // a held key repeats KeyDown: press once per press, not once per repeat (a held Enter mustn't start and stop a capture 30 times)
+        bool held;
+        protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = true; if (!held) { held = true; OnClick(EventArgs.Empty); } } base.OnKeyDown(e); }
+        protected override void OnKeyUp(KeyEventArgs e) { held = false; base.OnKeyUp(e); }
+        protected override void OnTextChanged(EventArgs e) { Fit(); Invalidate(); AccessibleName = Text; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); base.OnTextChanged(e); }   // "Start live capture" -> "Stop" is announced
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -165,7 +186,8 @@ namespace AdeeboMeter
     sealed class RoundBox : Panel
     {
         public readonly TextBox Box = new TextBox(); readonly Label cueLbl;
-        public string Cue { get { return cueLbl.Text; } set { cueLbl.Text = value; } }
+        public string Cue { get { return cueLbl.Text; } set { cueLbl.Text = value; if (string.IsNullOrEmpty(Box.AccessibleName) || Box.AccessibleName == lastCueName) { Box.AccessibleName = value; lastCueName = value; } } }   // a screen reader says the hint, not just "edit"
+        string lastCueName;
         // Label: a name drawn above the box that stays while you type (the cue inside disappears)
         string label = "";
         public string Label
@@ -387,10 +409,35 @@ namespace AdeeboMeter
             if (OnSniffButton(e.X) && CanSniff && view[i].C.State != "BOUND" && SniffRequested != null) SniffRequested(view[i].C);
         }
         protected override void OnMouseDoubleClick(MouseEventArgs e) { int i = RowAt(e.Y); if (i >= 0 && CanSniff && view[i].C.State != "BOUND" && SniffRequested != null) SniffRequested(view[i].C); }
+        // the keyboard: Up / Down / Page / Home / End move the selection (and scroll to it), Enter sniffs that flow
+        protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; return c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter || base.IsInputKey(k); }
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e); if (view.Count == 0) return;
+            int cur = view.FindIndex(r => r.C.Key == selKey), page = Math.Max(1, (Height - HeadH) / RowH - 1), n = cur;
+            switch (e.KeyCode)
+            {
+                case Keys.Up: n = cur < 0 ? 0 : cur - 1; break;
+                case Keys.Down: n = cur + 1; break;
+                case Keys.PageUp: n = cur - page; break;
+                case Keys.PageDown: n = cur + page; break;
+                case Keys.Home: n = 0; break;
+                case Keys.End: n = view.Count - 1; break;
+                case Keys.Enter: if (cur >= 0 && CanSniff && view[cur].C.State != "BOUND" && SniffRequested != null) SniffRequested(view[cur].C); e.Handled = true; return;
+                default: return;
+            }
+            n = Math.Max(0, Math.Min(view.Count - 1, n)); selKey = view[n].C.Key; e.Handled = true;
+            int top = n * RowH, max = Math.Max(0, sb.Maximum - sb.LargeChange + 1);
+            if (top < sb.Value) sb.Value = Math.Min(max, top); else if (top + RowH > sb.Value + Height - HeadH) sb.Value = Math.Max(0, Math.Min(max, top + RowH - (Height - HeadH)));
+            AccessibilityNotifyClients(AccessibleEvents.Selection, n);
+            Invalidate();
+        }
+        int wheelRest;
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             int max = Math.Max(0, sb.Maximum - sb.LargeChange + 1);
-            sb.Value = Math.Max(0, Math.Min(max, sb.Value - e.Delta / 120 * RowH * 3)); Invalidate();
+            wheelRest += e.Delta * RowH * 3; int px = wheelRest / 120; wheelRest -= px * 120;   /* touchpads send small steps: keep the remainder */
+            sb.Value = Math.Max(0, Math.Min(max, sb.Value - px)); Invalidate();
         }
         protected override void OnResize(EventArgs e) { base.OnResize(e); if (IsHandleCreated) Rebuild(); }
     }
@@ -402,7 +449,8 @@ namespace AdeeboMeter
         public HotKey(Action onPress)
         {
             press = onPress; CreateHandle(new CreateParams());
-            Ok = Native.RegisterHotKey(Handle, 1, 0x0001 /*ALT*/ | 0x0002 /*CTRL*/ | 0x4000 /*NOREPEAT*/, (uint)Keys.A);
+            // not on a keyboard where AltGr+A types a letter: the hotkey would eat that letter in every app
+            Ok = !Native.AltGrTypes(Keys.A) && Native.RegisterHotKey(Handle, 1, 0x0001 /*ALT*/ | 0x0002 /*CTRL*/ | 0x4000 /*NOREPEAT*/, (uint)Keys.A);
         }
         protected override void WndProc(ref Message m) { if (m.Msg == 0x0312) { try { press(); } catch { } } base.WndProc(ref m); }
         public void Dispose() { if (Handle != IntPtr.Zero) { Native.UnregisterHotKey(Handle, 1); DestroyHandle(); } }
@@ -412,8 +460,9 @@ namespace AdeeboMeter
     // A labelled on/off slider ("Details  ( o)"): click, Space or Enter flips it; the knob slides in a few frames.
     sealed class SlideSwitch : Control
     {
+        protected override AccessibleObject CreateAccessibilityInstance() { return new SwitchAccess(this, () => on); }
         bool on; float knob; readonly System.Windows.Forms.Timer anim = new System.Windows.Forms.Timer { Interval = 15 };
-        public bool On { get { return on; } set { if (on != value) { on = value; anim.Start(); Invalidate(); } } }
+        public bool On { get { return on; } set { if (on != value) { on = value; anim.Start(); Invalidate(); AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); } } }
         public SlideSwitch(string label, bool start)
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
@@ -424,9 +473,11 @@ namespace AdeeboMeter
         void FitSize() { float S = Draw.S; Size = new Size((int)(TextRenderer.MeasureText(L.T(Text), Draw.fBody).Width + 52 * S), (int)(32 * S)); }
         protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); FitSize(); }
         protected override void OnClick(EventArgs e) { On = !On; base.OnClick(e); }
-        protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) OnClick(e); base.OnKeyDown(e); }
+        bool held;
+        protected override void OnKeyDown(KeyEventArgs e) { if ((e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) && !held) { held = true; OnClick(e); } base.OnKeyDown(e); }
+        protected override void OnKeyUp(KeyEventArgs e) { held = false; base.OnKeyUp(e); }
         protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
-        protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+        protected override void OnLostFocus(EventArgs e) { held = false; Invalidate(); base.OnLostFocus(e); }
         protected override void Dispose(bool disposing) { if (disposing) anim.Dispose(); base.Dispose(disposing); }
         protected override void OnPaint(PaintEventArgs pe)
         {
@@ -438,30 +489,42 @@ namespace AdeeboMeter
             Color off = Theme.Dark ? Theme.C("#3A4456") : Theme.C("#C9D1DC");
             Color fill = Color.FromArgb((int)(off.R + (Theme.Blue.R - off.R) * knob), (int)(off.G + (Theme.Blue.G - off.G) * knob), (int)(off.B + (Theme.Blue.B - off.B) * knob));
             Theme.Fill(g, tr, tr.Height / 2, fill);
-            if (Focused) Theme.Stroke(g, tr, tr.Height / 2, Theme.Blue, 2);
+            if (Focused && ShowFocusCues) Theme.Stroke(g, tr, tr.Height / 2, Theme.Blue, 2);
             float k = tr.Height - 6 * S, kx = tr.X + 3 * S + (tr.Width - k - 6 * S) * knob;
             using (var kb = new SolidBrush(Color.White)) g.FillEllipse(kb, kx, tr.Y + 3 * S, k, k);
         }
     }
 
+    // an on/off switch as a screen reader should hear it: a check button that says whether it's checked
+    sealed class SwitchAccess : Control.ControlAccessibleObject
+    {
+        readonly Func<bool> on;
+        public SwitchAccess(Control c, Func<bool> on) : base(c) { this.on = on; }
+        public override AccessibleRole Role { get { return AccessibleRole.CheckButton; } }
+        public override AccessibleStates State { get { var st = base.State | AccessibleStates.Focusable; if (on()) st |= AccessibleStates.Checked; return st; } }
+        public override string DefaultAction { get { return on() ? "Switch off" : "Switch on"; } }
+    }
     sealed class ThemeSwitch : Control
     {
+        protected override AccessibleObject CreateAccessibilityInstance() { return new SwitchAccess(this, () => Theme.Dark); }
         public ThemeSwitch()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
-            Size = new Size((int)(64 * Draw.S), (int)(32 * Draw.S)); Cursor = Cursors.Hand; TabStop = true; AccessibleName = "Day or night theme";
+            Size = new Size((int)(64 * Draw.S), (int)(32 * Draw.S)); Cursor = Cursors.Hand; TabStop = true; AccessibleName = "Night theme";
         }
         protected override void OnClick(EventArgs e) { base.OnClick(e); Cfg.SetTheme(Theme.Dark ? 0 : 1); }
-        protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) OnClick(e); base.OnKeyDown(e); }
+        bool held;
+        protected override void OnKeyDown(KeyEventArgs e) { if ((e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) && !held) { held = true; OnClick(e); } base.OnKeyDown(e); }
+        protected override void OnKeyUp(KeyEventArgs e) { held = false; base.OnKeyUp(e); }
         protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
-        protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+        protected override void OnLostFocus(EventArgs e) { held = false; Invalidate(); base.OnLostFocus(e); }
         protected override void OnPaint(PaintEventArgs pe)
         {
             var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; float S = Draw.S;
             using (var bg = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(bg, ClientRectangle);
             var tr = new RectangleF(1, 2 * S, Width - 2, Height - 4 * S);
             Theme.Fill(g, tr, tr.Height / 2, Theme.Dark ? Theme.C("#2B3445") : Theme.C("#E8EEF7"));
-            Theme.Stroke(g, tr, tr.Height / 2, Focused ? Theme.Blue : Theme.Line, Focused ? 2 : 1);
+            bool ring = Focused && ShowFocusCues; Theme.Stroke(g, tr, tr.Height / 2, ring ? Theme.Blue : Theme.Line, ring ? 2 : 1);
             float k = tr.Height - 6 * S, kx = Theme.Dark ? tr.Right - k - 3 * S : tr.X + 3 * S, ky = tr.Y + 3 * S;
             using (var kb = new SolidBrush(Theme.Dark ? Theme.C("#0F1622") : Color.White)) g.FillEllipse(kb, kx, ky, k, k);
             float cx = kx + k / 2, cy = ky + k / 2;
@@ -508,6 +571,7 @@ namespace AdeeboMeter
             int x = at.X + (int)(18 * S), y = at.Y + (int)(22 * S);
             if (x + w > wa.Right) x = Math.Max(wa.Left, at.X - w - (int)(12 * S));
             if (y + h > wa.Bottom) y = Math.Max(wa.Top, at.Y - h - (int)(12 * S));
+            h = Math.Min(h, wa.Height); if (y + h > wa.Bottom) y = wa.Bottom - h;   // a tip taller than the room left: as much as fits, never off the screen
             BackColor = Theme.Card;
             Bounds = new Rectangle(x, y, w, h);
             if (!Visible) { Owner = owner; Show(); }

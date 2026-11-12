@@ -120,7 +120,7 @@ namespace AdeeboMeter
             List<Routes.R> table; try { table = Routes.Read(); } catch { table = new List<Routes.R>(); }
             var match = table.Where(r => (be & r.Mask) == r.Dest).OrderByDescending(r => r.Prefix).ThenBy(r => r.Metric).ToList();
             var chosen = match.FirstOrDefault();
-            rows.Add(R(0, dst.ToString(), rc == 0 ? "leaves through " + (ifName != "" ? ifName : "interface " + best.IfIndex) + (vpn ? " (the VPN)" : "") + (best.NextHop != 0 && new IPAddress(best.NextHop).ToString() != dst.ToString() ? " via " + new IPAddress(best.NextHop) : " (directly on that network)") : "Windows has no route to it", vpn ? "This traffic goes into the VPN tunnel." : match.Any(r => r.Vpn) ? "" : "", "m"));
+            rows.Add(R(rc == 0 ? 0 : 2, dst.ToString(), rc == 0 ? "leaves through " + (ifName != "" ? ifName : "interface " + best.IfIndex) + (vpn ? " (the VPN)" : "") + (best.NextHop != 0 && new IPAddress(best.NextHop).ToString() != dst.ToString() ? " via " + new IPAddress(best.NextHop) : " (directly on that network)") : "Windows has no route to it", vpn ? "This traffic goes into the VPN tunnel." : match.Any(r => r.Vpn) ? "" : "", "m"));
             if (chosen != null) rows.Add(R(3, "Because of", Routes.Ip(chosen.Dest) + "/" + chosen.Prefix + " · metric " + chosen.Metric + (chosen.Vpn ? " · VPN" : ""), "The most specific route wins; among equals, the lowest metric.", "m"));
             foreach (var r in match.Skip(1).Take(4)) rows.Add(R(3, "Also matches", Routes.Ip(r.Dest) + "/" + r.Prefix + " · metric " + r.Metric + " · " + (r.Iface != "" ? r.Iface : "if " + r.IfIndex) + (r.Vpn ? " (VPN)" : ""), "", "m"));
             if (chosen != null && chosen.Prefix == 0 && table.Count(r => r.Prefix == 0) > 1) rows.Add(R(3, "Split tunnel?", "two default routes - the lower metric one wins (" + string.Join(", ", table.Where(r => r.Prefix == 0).OrderBy(r => r.Metric).Select(r => (r.Iface != "" ? r.Iface : "if " + r.IfIndex) + " " + r.Metric).Take(3)) + ")", "", "m"));
@@ -158,7 +158,9 @@ namespace AdeeboMeter
             foreach (var kv in seen.OrderBy(x => Order(x.Key)))
             {
                 var from = kv.Value.Select(x => x[2] != "" ? x[2] : x[3] != "" ? x[3] : x[1]).Distinct().ToList();
-                string extra = discovery ? DiscExtra(kv.Value) : Extra(kv.Key, kv.Value); int lv; string adv = discovery ? DiscAdvice(kv.Key, out lv) : Advice(kv.Key, from.Count, out lv);
+                // DHCP: clients renewing send from their own address too - only distinct server ids (OFFER / ACK) are servers
+                int sources = kv.Key == "DHCP" ? kv.Value.Where(x => x.Length > 10 && x[10].Trim() != "").Select(x => x[10].Trim()).Distinct().Count() : from.Count;
+                string extra = discovery ? DiscExtra(kv.Value) : Extra(kv.Key, kv.Value); int lv; string adv = discovery ? DiscAdvice(kv.Key, out lv) : Advice(kv.Key, sources, out lv);
                 rows.Add(R(lv, kv.Key, kv.Value.Count + " packets from " + string.Join(", ", from.Take(4)) + (from.Count > 4 ? " +" + (from.Count - 4) : "") + extra, adv, "m"));
             }
             return rows;

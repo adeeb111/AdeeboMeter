@@ -15,7 +15,7 @@ namespace AdeeboMeter
         float PaintInsights(Graphics g, float x, float y, float w)
         {
             // ---- the week at a glance (from history; rebuilt at most every 10 minutes, drawn once into an image)
-            if (Cfg.History && !weekBusy && (weekLv == null || (DateTime.UtcNow - weekAt).TotalMinutes > 10))
+            if (Cfg.History && !weekBusy && ((weekLv == null && (DateTime.UtcNow - weekAt).TotalMinutes > 1) || (DateTime.UtcNow - weekAt).TotalMinutes > 10))   // a failed read waits a minute, never a read per paint
             {
                 weekBusy = true;
                 Task.Factory.StartNew(() => { double[,] gw = null; int[,] lv = null; try { lv = History.Week(out gw); } catch (Exception e) { Program.Log("week: " + e.Message); } try { BeginInvoke((Action)delegate { weekLv = lv; weekGw = gw; weekAt = DateTime.UtcNow; weekBusy = false; weekKey = ""; changesCanvas.Invalidate(); }); } catch { weekBusy = false; } });

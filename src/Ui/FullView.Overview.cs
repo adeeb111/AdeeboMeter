@@ -46,7 +46,7 @@ namespace AdeeboMeter
             }
             menu.Items.Add(new ToolStripSeparator());
             var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("speedtest"); if (tbBoxes.Count > 0) tbBoxes[0].Box.Text = "list"; }; menu.Items.Add(more);
-            menu.Closed += delegate { BeginInvoke((Action)menu.Dispose); };
+            menu.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)menu.Dispose); else menu.Dispose(); } catch (InvalidOperationException) { menu.Dispose(); } };
             menu.Show(overviewCanvas, at);
         }
         void FindClosestSpeed()
@@ -121,18 +121,20 @@ namespace AdeeboMeter
             new[] { "changes", "It was fine yesterday", "what changed since then?" },
             new[] { "guide:site", "Only one website is broken", "everything else works" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
+        // Whole words only ("work" never matches "working"); a word of 6+ letters also matches what starts with it
+        // ("disconnect" -> "disconnecting"). Most specific rules first, the catch-all "nothing works" after the topics.
         static readonly string[][] FixWords = {
-            new[] { "vpn|globalprotect|anyconnect|zscaler|netskope|forticlient|tunnel|work laptop", "tool:vpn", "the VPN may be the slow part", "how much of the delay is the VPN tunnel, and whether everything goes through it" },
-            new[] { "buffer|youtube|netflix|stream|video|twitch|disney|prime", "guide:slow", "videos keep buffering", "your speed, your Wi-Fi and whether something else is using the internet" },
-            new[] { "lag|ping|game|gaming|fortnite|valorant|steam|xbox|playstation", "gamer", "your game is lagging", "the game's servers, your Wi-Fi and your provider - in the Gamer Zone" },
-            new[] { "call|zoom|teams|meet|whatsapp|skype|robot|choppy|voice|echo", "guide:calls", "calls are choppy", "jitter, loss, your upload and the VPN" },
+            new[] { "vpn slow|slow vpn|vpn is slow|vpn lag|vpn lags|tunnel", "tool:vpn", "the VPN may be the slow part", "how much of the delay is the VPN tunnel, and whether everything goes through it" },
+            new[] { "vpn|globalprotect|anyconnect|zscaler|netskope|forticlient|work laptop|office network|company network|at work|at the office", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
+            new[] { "buffer|buffering|youtube|netflix|stream|streaming|video|twitch|disney|prime", "guide:slow", "videos keep buffering", "your speed, your Wi-Fi and whether something else is using the internet" },
+            new[] { "lag|lagging|laggy|game|games|gaming|fortnite|valorant|steam|xbox|playstation", "gamer", "your game is lagging", "the game's servers, your Wi-Fi and your provider - in the Gamer Zone" },
+            new[] { "call|calls|zoom|teams|meet|whatsapp|skype|robot|robotic|choppy|voice|echo", "guide:calls", "calls are choppy", "jitter, loss, your upload and the VPN" },
             new[] { "disconnect|drop|drops|dropping|keeps going|cuts out|on and off|stops and starts|unstable", "guide:drops", "the connection keeps dropping", "today's drops, roams and what the signal was doing" },
-            new[] { "no internet|offline|nothing works|nothing opens|not connected|can't connect|cannot connect", "guide:whats", "there's no internet", "every layer, from this PC to the internet" },
-            new[] { "website|site|page|link|url|app won|won't open|wont open|can't open|cant open|error", "guide:site", "a website or app won't open", "the name, the route, the door, the lock and the answer" },
-            new[] { "vpn|work|office|company", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
-            new[] { "slow pc|computer slow|laptop slow|freeze|freezes|frozen|hang|hot|fan|noisy|crash|not responding", "guide:pc", "the computer itself is slow", "processor, memory, disk, heat and frozen apps" },
+            new[] { "slow pc|computer slow|laptop slow|pc is slow|computer is slow|laptop is slow|freeze|freezes|frozen|hang|hangs|hot|fan|noisy|crash|crashes|not responding", "guide:pc", "the computer itself is slow", "processor, memory, disk, heat and frozen apps" },
             new[] { "storage|disk full|space|full|gigabytes", "tool:tidy", "you're running out of storage", "temp files, the Recycle Bin and what takes the space" },
-            new[] { "slow|slowly|loading|takes ages|speed", "guide:slow", "the internet is slow", "where the delay starts: your PC, Wi-Fi, router, provider or DNS" },
+            new[] { "website|websites|site|sites|page|pages|link|url|won't open|wont open|can't open|cant open|error", "guide:site", "a website or app won't open", "the name, the route, the door, the lock and the answer" },
+            new[] { "no internet|offline|nothing works|nothing opens|nothing loads|not connected|can't connect|cannot connect|won't connect|doesn't work|does not work|not working|isn't working|stopped working|hotspot|printer", "guide:whats", "there's no internet", "every layer, from this PC to the internet" },
+            new[] { "slow|slowly|loading|takes ages|speed|high ping|ping is high|latency", "guide:slow", "the internet is slow", "where the delay starts: your PC, Wi-Fi, router, provider or DNS" },
             new[] { "yesterday|suddenly|since|changed|update", "changes", "something changed", "what changed on this PC and network since then" } };
         RoundBox fixBox; string fixHint = "", fixGo;
         void EnsureFixBox()
@@ -146,10 +148,13 @@ namespace AdeeboMeter
         // the first rule whose word appears wins (most specific rules first); nothing found -> suggest checking everything
         internal static string[] FixMatch(string text)
         {
-            string t = " " + (text ?? "").ToLowerInvariant().Replace("’", "'") + " ";
+            // words separated by single spaces, punctuation gone (the apostrophe stays: "won't")
+            var sb = new System.Text.StringBuilder(" ");
+            foreach (char c in (text ?? "").ToLowerInvariant().Replace("\u2019", "'")) sb.Append(char.IsLetterOrDigit(c) || c == '\'' ? c : ' ');
+            string t = System.Text.RegularExpressions.Regex.Replace(sb.Append(' ').ToString(), " {2,}", " ");
             foreach (var r in FixWords)
                 foreach (var wd in r[0].Split('|'))
-                    if (t.Contains(wd.Contains(" ") ? wd : " " + wd) || (wd.Length >= 6 && t.Contains(wd))) return r;
+                    if (t.Contains(" " + wd + " ") || (wd.Length >= 6 && t.Contains(" " + wd))) return r;
             return null;
         }
         void FixFind()
@@ -223,7 +228,7 @@ namespace AdeeboMeter
                     var t = tiles[i]; var tr = new RectangleF(x + (i % cols) * (tw + 12 * S), y + (i / cols) * (th + 12 * S), tw, th);
                     Theme.Stroke(g, tr, 12 * S, Theme.Track, 1);
                     int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
-                    using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
+                    Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
                     g.DrawString(t[0].ToUpperInvariant(), Draw.fTiny, muted, tr.X + 30 * S, tr.Y + 14 * S);
                     using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t[1], Draw.fName, vb, tr.X + 14 * S, tr.Y + 34 * S);
                     Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
@@ -333,7 +338,7 @@ namespace AdeeboMeter
                     foreach (var e in att)
                     {
                         g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
-                        using (var b = new SolidBrush(Theme.Lv(e.Lv))) g.FillEllipse(b, x + 52 * S, y + 7 * S, 10 * S, 10 * S);
+                        Draw.LvDot(g, e.Lv, x + 52 * S, y + 7 * S, 10 * S, 10 * S);
                         g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S, 20 * S), nowrap);
                         var er = new RectangleF(x, y, w, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
                         y += 26 * S; g.DrawLine(line, x, y, x + w, y);
@@ -369,7 +374,7 @@ namespace AdeeboMeter
                 g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (overviewCanvas.AutoScrollMinSize != need) { overviewCanvas.AutoScrollMinSize = need; overviewCanvas.Invalidate(); }
+            SetNeed(overviewCanvas, need);
         }
     }
 }

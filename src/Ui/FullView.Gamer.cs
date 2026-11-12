@@ -93,7 +93,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, r, 10 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 10 * S, on ? Theme.Blue : here ? Theme.Blue : Theme.Line, on ? 2 : 1);
                     var ic = new RectangleF(r.X + 10 * S, r.Y + 14 * S, 30 * S, 30 * S);
                     using (var ib = new SolidBrush(gm.Soon ? Theme.Grey : Hex(gm.Color))) g.FillRectangle(ib, ic);
-                    using (var wb = new SolidBrush(Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(gm.Name.Substring(0, 1), Draw.fBodyB, wb, ic, c);
+                    using (var wb = new SolidBrush(Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
                     using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
                     string state;
                     if (gm.Soon) state = "Coming when it launches on PC";
@@ -137,7 +137,7 @@ namespace AdeeboMeter
                 string foot = "How it measures: a ping, or a timed TCP connection when a server ignores ping - never game traffic. \"Estimate\" rows measure the cloud region the game runs in; Valve rows are Valve's own servers. At most 8 servers, 10 probes a second.";
                 var fh = Draw.Measure(foot, Draw.fSmall, (int)w).Height; g.DrawString(foot, Draw.fSmall, muted, new RectangleF(x, y, w, fh + 4)); y += fh + 16 * S;
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (gamerCanvas.AutoScrollMinSize != need) { gamerCanvas.AutoScrollMinSize = need; gamerCanvas.Invalidate(); }
+            var need = new Size(0, (int)(y + 20 * S)); SetNeed(gamerCanvas, need);
         }
 
         DateTime gzCopied; volatile bool findBusy;
@@ -238,7 +238,7 @@ namespace AdeeboMeter
                 g.DrawString((DateTime.Now - gzCopied).TotalSeconds < 3 ? "Copied - internal addresses removed" : "Copy match report (internal addresses removed)", Draw.fBodyB, blue, cp.X, cp.Y);
                 var ss2 = ss; Act(gamerCanvas, cp, delegate
                 {
-                    try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(ss2.Report(sp, ssid)); gzCopied = DateTime.Now; } catch (Exception e) { Program.Log("copy: " + e.Message); }
+                    try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(ss2.Report(sp, ssid)); gzCopied = DateTime.Now; } catch (Exception e) { CopyFailed(e); }
                     gamerCanvas.Invalidate();
                 });
                 y += 34 * S;

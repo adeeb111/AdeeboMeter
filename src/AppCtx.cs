@@ -40,7 +40,7 @@ namespace AdeeboMeter
         bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
-        string hoverKey = ""; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
+        string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
         ToolStripMenuItem miWidget, miAuto, miSerious, miBig;
         readonly string settingsPath;
         EventWaitHandle openEvt, ackEvt, quitEvt;
@@ -64,6 +64,7 @@ namespace AdeeboMeter
             Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
             Theme.Apply(Program.WantDark());
             Program.CleanCaptures();
+            Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
             M.Start(); GamePing.Me.Start(M);   /* the Gamer Zone sends nothing until a game is clicked */
 
             var menu = new ContextMenuStrip();
@@ -96,6 +97,7 @@ namespace AdeeboMeter
             menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miFull); menu.Items.Add(miSettings); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
+            menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
             menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
 
@@ -275,15 +277,19 @@ namespace AdeeboMeter
         void OnScreens(object s, EventArgs e) { drawnKey = ""; lastCover = DateTime.MinValue; }
         void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; } }
         void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e) { if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) { drawnKey = ""; lastCover = DateTime.MinValue; } }
+        // logoff or shutdown: no live capture left on disk (a Quit may never come)
+        void OnSessionEnding(object s, Microsoft.Win32.SessionEndingEventArgs e) { try { if (full != null && !full.IsDisposed) full.StopCaptures(); } catch (Exception ex) { Program.Log("session end: " + ex.Message); } Program.CleanCaptures(); }
         void Quit()
         {
+            Microsoft.Win32.SystemEvents.SessionEnding -= OnSessionEnding;
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go
             if (quitting) return;
             quitting = true; ui.Stop(); GamePing.Me.Stop(); M.Stop(); Usage.Save();
             try { SystemEvents.UserPreferenceChanged -= prefHandler; } catch { }
             if (hotkey != null) hotkey.Dispose();
             tray.Visible = false; tray.Dispose();
-            if (full != null && !full.IsDisposed) { full.Close(); full.Dispose(); }
+            // a dialog open over the view (Save, Export, Ctrl+K) goes first, so nothing runs on a disposed view when it returns
+            if (full != null && !full.IsDisposed) { foreach (var f in Application.OpenForms.Cast<Form>().Where(f => f != full && f.Modal).ToList()) try { f.Close(); } catch (InvalidOperationException) { } full.Close(); full.Dispose(); }
             widget.Dispose(); detailWin.Dispose();
             Program.CleanCaptures();
             ExitThread();
@@ -291,12 +297,17 @@ namespace AdeeboMeter
 
         // ---------- 50 ms: hover, dwell, cover check - and draw only when something changed
         // the chosen screen's work area - the main screen when none is chosen or it was unplugged
-        static Screen WidgetScreen() { var w = Cfg.WidgetScreen; return w == "" ? Screen.PrimaryScreen : Screen.AllScreens.FirstOrDefault(x => x.DeviceName == w) ?? Screen.PrimaryScreen; }
-        static Rectangle Zone()
+        // null when Windows has no screen at all right now (a disconnected Remote Desktop session, every display off)
+        static Screen WidgetScreen() { var w = Cfg.WidgetScreen; var all = Screen.AllScreens; return (w == "" ? null : all.FirstOrDefault(x => x.DeviceName == w)) ?? Screen.PrimaryScreen ?? all.FirstOrDefault(); }
+        // where the card is: what's actually on screen (a bigger widget, a taller card), else the corner it opens into
+        Rectangle Zone()
         {
-            var wa = WidgetScreen().WorkingArea; int m = (int)(10 * Draw.S);
-            int w = (int)(264 * Draw.S), h = (int)(300 * Draw.S);
-            return new Rectangle(wa.Right - m - w, wa.Bottom - m - h, w, h);
+            var scr = WidgetScreen(); if (scr == null) return Rectangle.Empty;
+            var wa = scr.WorkingArea; int m = (int)(10 * Draw.S);
+            int w = (int)((Cfg.BigWidget ? 343 : 264) * Draw.S), h = (int)(300 * Draw.S);
+            var z = new Rectangle(wa.Right - m - w, wa.Bottom - m - h, w, h);
+            var p = widget != null ? widget.Placed : Rectangle.Empty;
+            return p.Width > 1 && p.Height > 1 ? Rectangle.Union(z, p) : z;
         }
 
         void OnUi()
@@ -304,10 +315,12 @@ namespace AdeeboMeter
             try
             {
                 uiTick++;
+                if (WidgetScreen() == null) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
                 bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
                 if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; drawnKey = ""; }   // every 30 s: draw again, which also claims the top layer back
-                if (!widgetOn || viewUp) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 500; return; }
+                if ((uiTick & 7) == 0) presenting = Native.Presenting();   // checked twice a second at most
+                if (!widgetOn || viewUp || presenting) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 500; return; }
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : 250;
@@ -360,10 +373,11 @@ namespace AdeeboMeter
             lastChip = s.Chip; lastLevel = s.Level;
             Detail d;
             if (!compact && hovered && hoverKey != "" && s.Details.TryGetValue(hoverKey, out d))
-                using (var db = Draw.DetailCard(d)) detailWin.Present(db, 255, widget.Placed.X - db.Width - (int)(8 * Draw.S), wa.Bottom - m - db.Height);
+                using (var db = Draw.DetailCard(d)) detailWin.Present(db, 255, Math.Max(wa.Left, widget.Placed.X - db.Width - (int)(8 * Draw.S)), Math.Max(wa.Top, wa.Bottom - m - db.Height));   /* on this screen, never above its top */
             else if (detailWin.Placed.Width > 1) detailWin.Vanish();
             string tip = "AdeeboMeter - " + s.Chip.ToLowerInvariant();
-            if (tray.Text != tip) tray.Text = tip.Length > 63 ? tip.Substring(0, 63) : tip;
+            if (tip.Length > 63) tip = tip.Substring(0, 63);   // Windows keeps 63 characters: compare what it holds, or it is rewritten every second
+            if (tray.Text != tip) tray.Text = tip;
         }
 
         // Any normal window over the widget's corner? (Desktop icons are ignored by design.)
@@ -408,7 +422,8 @@ namespace AdeeboMeter
                     using (var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\" + pfn + @"\AdeeboMeter"))
                     {
                         object v = k == null ? null : k.GetValue("State");
-                        return v is int && ((int)v == 2 || (int)v == 4);   /* 2 enabled, 4 enabled by policy; 0 / 1 / 3 off */
+                        if (!(v is int)) return true;   /* never touched yet: the manifest's own default, on */
+                        return (int)v == 2 || (int)v == 4;   /* 2 enabled, 4 enabled by policy; 0 / 1 / 3 off */
                     }
                 }
                 catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is System.IO.IOException || e is EntryPointNotFoundException)) throw; return false; }

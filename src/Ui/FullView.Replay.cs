@@ -46,7 +46,7 @@ namespace AdeeboMeter
                 System.Threading.Tasks.Task.Factory.StartNew(() =>
                 {
                     History.Day d = null; var med = new double[History.Cols];
-                    try { d = History.Load(day); for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c); } catch (Exception e) { Program.Log("replay: " + e.Message); }
+                    try { d = History.Load(day); for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c); } catch (Exception e) { Program.Log("replay: " + e.Message); d = new History.Day(); }   /* a day that can't be read shows as empty - never "Reading that day..." forever */
                     try { BeginInvoke((Action)delegate { replayLoading = false; if (replayDay != day || d == null) { if (replayDay != day) ReplayOpen(); return; } replayData = d; replayExample = false; replayMed = med; replayIdx = d.M.Count - 1; if (pendingAt >= 0) { double f = pendingAt; pendingAt = -1; ReplayAt(f); } replayCanvas.Invalidate(); }); } catch { replayLoading = false; }
                 });
             }
@@ -112,7 +112,7 @@ namespace AdeeboMeter
                         using (var eb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(ek, Draw.fBodyB, eb, x, ey);
                         Act(replayCanvas, new RectangleF(x, ey, es.Width, es.Height), delegate
                         {
-                            var d = ExampleDay.Make(); var med = new double[History.Cols]; for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c);
+                            var d = ExampleDay.Make(replayDay ?? DateTime.Today); var med = new double[History.Cols]; for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c);
                             replayData = d; replayMed = med; replayIdx = 19 * 60 + 5; replayExample = true; replayKey = ""; replayCanvas.Invalidate();
                         });
                     }
@@ -226,7 +226,7 @@ namespace AdeeboMeter
                     foreach (var e in near)
                     {
                         g.DrawString(e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
-                        using (var b = new SolidBrush(Theme.Lv(e.Lv))) g.FillEllipse(b, x + 76 * S, y + 7 * S, 10 * S, 10 * S);
+                        Draw.LvDot(g, e.Lv, x + 76 * S, y + 7 * S, 10 * S, 10 * S);
                         g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 96 * S, y + 2 * S, w - 96 * S, 20 * S), nowrap);
                         Hint(replayCanvas, new RectangleF(x + 76 * S, y, w - 76 * S, 26 * S), "kind." + e.Kind);
                         var te = e.T; Act(replayCanvas, new RectangleF(x, y, 70 * S, 26 * S), delegate { ReplayAt(te.TimeOfDay.TotalSeconds / 86400.0); });
@@ -237,7 +237,7 @@ namespace AdeeboMeter
                 y += 40 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (replayCanvas.AutoScrollMinSize != need) { replayCanvas.AutoScrollMinSize = need; replayCanvas.Invalidate(); }
+            SetNeed(replayCanvas, need);
         }
     }
 }

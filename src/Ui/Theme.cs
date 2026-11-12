@@ -65,7 +65,16 @@ namespace AdeeboMeter
                 lvSoft[0] = C("#12301C"); lvSoft[1] = C("#3A2F0B"); lvSoft[2] = C("#3A1A1D");
             }
             lvText[3] = Muted; lvSoft[3] = Line2;
+            // Windows High Contrast: the user's own colours for text, background and lines (levels keep their hue, text the
+            // system's) - so nothing becomes unreadable on a black-on-yellow or white-on-black theme
+            if (SystemInformation.HighContrast)
+            {
+                Ink = Sub = SystemColors.WindowText; Muted = SystemColors.GrayText; Card = Soft = RowHot = SystemColors.Window; Bg = SystemColors.Control;
+                Line = Line2 = Rail = Track = SystemColors.WindowFrame; RowSel = SystemColors.Highlight; BlueDark = SystemColors.HotTrack;
+                for (int i = 0; i < 4; i++) { lvText[i] = SystemColors.WindowText; lvSoft[i] = SystemColors.Window; }
+            }
         }
+        public static bool HighContrast { get { return SystemInformation.HighContrast; } }
         public static Color Lv(int l) { return l == 2 ? Red : l == 1 ? Amber : l == 0 ? Green : Grey; }
         public static Color LvText(int l) { return lvText[l < 0 || l > 3 ? 3 : l]; }
         public static Color LvSoft(int l) { return lvSoft[l < 0 || l > 3 ? 3 : l]; }
@@ -164,6 +173,18 @@ namespace AdeeboMeter
     // All fonts made once; nothing is created per paint (a lesson from topogram).
     static class Draw
     {
+        // a status dot that doesn't rely on colour alone: a problem carries a bar across it, a "worth a look" a short upright
+        // stroke - red / amber / green still tell apart for colour-blind eyes and in high contrast
+        public static void LvDot(Graphics g, int lv, float x, float y, float w, float h)
+        {
+            using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, x, y, w, h);
+            if (w < 8 * S || (lv != 1 && lv != 2)) return;
+            using (var p = new Pen(Theme.HighContrast ? SystemColors.Window : Color.White, Math.Max(1.5f, w / 6)))
+            {
+                float cx = x + w / 2, cy = y + h / 2;
+                if (lv == 2) g.DrawLine(p, x + w * 0.25f, cy, x + w * 0.75f, cy); else g.DrawLine(p, cx, y + h * 0.25f, cx, y + h * 0.62f);
+            }
+        }
         public static float S = 1;
         public static Font fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput;
         static readonly Bitmap measureBmp = new Bitmap(1, 1);
@@ -189,6 +210,9 @@ namespace AdeeboMeter
             // Windows 11 type (Segoe UI Variable, Cascadia Mono) when it's there; Windows 10 falls back to Segoe UI / Consolas.
             string text = Fam("Segoe UI Variable Text", "Segoe UI"), disp = Fam("Segoe UI Variable Display", "Segoe UI"), semi = Fam("Segoe UI Semibold", "Segoe UI"), mono = Fam("Cascadia Mono", "Consolas");
             FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;
+            // GDI+ can't pick a variable font's real bold - it smears the regular one. Bold text uses Segoe UI's true bold.
+            if (disp.IndexOf("Variable", StringComparison.Ordinal) >= 0) disp = "Segoe UI";
+            string tb = text.IndexOf("Variable", StringComparison.Ordinal) >= 0 ? "Segoe UI" : text;
             fName = new Font(disp, 12.5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fHead = new Font(semi, 13.5f * S, semiStyle, GraphicsUnit.Pixel);
             fBody = new Font(text, 12.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
@@ -196,8 +220,8 @@ namespace AdeeboMeter
             fSmall = new Font(text, 11 * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = new Font(text, 9.5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fPill = new Font(text, 10 * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            fTiny = new Font(tb, 9.5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            fPill = new Font(tb, 10 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fBig = new Font(disp, 20 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fTitle = new Font(disp, 16 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fHero = new Font(disp, 30 * S, FontStyle.Bold, GraphicsUnit.Pixel);
@@ -209,7 +233,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>();
         public static SizeF Measure(string t, Font f, int width)
         {
-            t = t ?? ""; string key = f.GetHashCode().ToString(CultureInfo.InvariantCulture) + "|" + width.ToString(CultureInfo.InvariantCulture) + "|" + t;
+            t = t ?? ""; string key = f.Name + "|" + f.Size.ToString("R", CultureInfo.InvariantCulture) + "|" + (int)f.Style + "|" + width.ToString(CultureInfo.InvariantCulture) + "|" + t;   // the font's own name, size and style (its hash ignores the family)
             lock (measureBmp)
             {
                 SizeF sz; if (measured.TryGetValue(key, out sz)) return sz;
@@ -223,7 +247,12 @@ namespace AdeeboMeter
         static Graphics PrepW(Bitmap b) { var g = Prep(b); g.ScaleTransform(WidgetK, WidgetK); return g; }
         static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; g.Clear(Color.Transparent); return g; }
         public static string Fmt(double v, string f, string unit) { return double.IsNaN(v) ? "-" : v.ToString(f, CultureInfo.CurrentCulture) + unit; }
-        public static string Trunc(string s, int n) { if (s == null) return ""; return s.Length <= n ? s : s.Substring(0, n - 1) + "…"; }
+        public static string Trunc(string s, int n)
+        {
+            if (s == null) return ""; if (s.Length <= n) return s;
+            int cut = Math.Max(0, n - 1); if (cut > 0 && char.IsHighSurrogate(s[cut - 1])) cut--;   // never half an emoji
+            return s.Substring(0, cut) + "…";
+        }
         public static string MemStr(long b) { return b >= 1073741824 ? (b / 1073741824.0).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : (b / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB"; }
         public static string Word(int l) { return l == 2 ? "Problem" : l == 1 ? "Busy" : "OK"; }
 
@@ -271,7 +300,8 @@ namespace AdeeboMeter
         public static Bitmap GamerCard(Snap s, Dictionary<string, RectangleF> hits)
         {
             hits.Clear();
-            var t = GamerTarget(); var st = GamePing.Me.Stat(t.Item1.Id, t.Item2); var v = st.Recent(60);
+            var t = GamerTarget(); if (t == null) return Draw.Card(s, hits);   // the game ended between choosing this card and drawing it
+            var st = GamePing.Me.Stat(t.Item1.Id, t.Item2); var v = st.Recent(60);
             double now = v.Length > 0 ? v[v.Length - 1] : double.NaN, avg = GameStat.Avg(v), jit = GameStat.Jitter(v), loss = GameStat.Loss(v);
             string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
             Color gc = grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey;
@@ -288,7 +318,7 @@ namespace AdeeboMeter
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
-                float nw = Measure("AdeeboMeter", fName, 0).Width;
+                float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure("GAME", fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(L.T("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
@@ -353,7 +383,7 @@ namespace AdeeboMeter
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
-                float nw = Measure("AdeeboMeter", fName, 0).Width;
+                float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tagText, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
@@ -402,7 +432,7 @@ namespace AdeeboMeter
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
-                float nw = Measure("AdeeboMeter", fName, 0).Width;
+                float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
                 Theme.Pill(g, Word(s.Level), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Level, S);
                 string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0);
                 g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S);
@@ -478,7 +508,7 @@ namespace AdeeboMeter
             {
                 float cx = r.X + slot * i + slot / 2; int lv = s.Path[i];
                 using (var halo = new SolidBrush(Color.FromArgb(lv == 2 ? 70 : 38, Theme.Lv(lv)))) g.FillEllipse(halo, cx - dot / 2 - 5 * S, r.Y - 5 * S, dot + 10 * S, dot + 10 * S);
-                using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, cx - dot / 2, r.Y, dot, dot);
+                Draw.LvDot(g, lv, cx - dot / 2, r.Y, dot, dot);
                 if (big) using (var hi = new SolidBrush(Color.FromArgb(90, Color.White))) g.FillEllipse(hi, cx - dot / 4, r.Y + dot / 5, dot / 2, dot / 3);
                 string lab = s.PathLabel[i] ?? ""; var ls = Measure(lab, lf, 0);
                 using (var b = new SolidBrush(lv == 2 ? Theme.LvText(2) : Theme.Ink)) g.DrawString(lab, lf, b, cx - ls.Width / 2, r.Y + dot + 3 * S);

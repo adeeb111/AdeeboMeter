@@ -20,7 +20,10 @@ namespace AdeeboMeter
     //   live_capture   = off        Live capture and Find my match server (Wireshark's tshark)
     //   gamer_zone     = off        game pings in the background (the tab says it's off)
     //   history_days   = 3          keep at most this many days of history (1-30)
-    //   mode           = simple     always Simple mode (pro is also accepted - it doesn't add anything)
+    //   mode           = simple     always Simple mode
+    //
+    // Both files are read and combined - the strictest wins - so an empty file next to the exe can't cancel IT's file in
+    // %ProgramData%. The policy only changes what runs; the user's own saved settings are kept and come back if it goes.
     static class Policy
     {
         public static bool NoInternetCheck, NoOnline, NoSpeed, NoLab, NoCapture, NoGamer;
@@ -38,7 +41,7 @@ namespace AdeeboMeter
                     if (string.IsNullOrEmpty(dir)) continue;
                     string f = Path.Combine(dir, "AdeeboMeter.policy"); if (!System.IO.File.Exists(f)) continue;
                     var info = new FileInfo(f); if (info.Length > 16384) { Program.Log("policy: " + f + " is too big - ignored"); continue; }
-                    Parse(System.IO.File.ReadAllLines(f)); File = f; Program.Log("policy: " + f); return;
+                    Parse(System.IO.File.ReadAllLines(f)); File = File == "" ? f : File + "; " + f; Program.Log("policy: " + f);
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException)) throw; Program.Log("policy: " + e.Message); }
             }
@@ -60,18 +63,28 @@ namespace AdeeboMeter
                     case "live_capture": NoCapture |= off; break;
                     case "gamer_zone": NoGamer |= off; break;
                     case "history_days": int d; if (int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out d) && d >= 1 && d <= 30) MaxHistoryDays = MaxHistoryDays == 0 ? d : Math.Min(MaxHistoryDays, d); break;
-                    case "mode": if (v == "simple" || v == "pro") Mode = v; break;
+                    case "mode": if (v == "simple") Mode = v; break;   // only ever narrows: "pro" isn't a policy
                 }
             }
         }
         // after the user's settings are read: the policy wins
+        // The user's own values that the policy is covering, so saving settings writes theirs back, not the policy's.
+        static readonly Dictionary<string, string> mine = new Dictionary<string, string>();
         public static void Apply()
         {
-            if (NoInternetCheck) Cfg.NetSec = 0;
-            if (MaxHistoryDays > 0 && Cfg.HistoryDays > MaxHistoryDays) Cfg.HistoryDays = MaxHistoryDays;
-            if (Mode != "") Cfg.Mode = Mode;
-            if (NoGamer) Cfg.GameIds = "";
+            lock (mine)
+            {
+                if (NoInternetCheck && Cfg.NetSec != 0) { mine["net"] = Cfg.NetSec.ToString(CultureInfo.InvariantCulture); Cfg.NetSec = 0; }
+                if (MaxHistoryDays > 0 && Cfg.HistoryDays > MaxHistoryDays) { mine["histdays"] = Cfg.HistoryDays.ToString(CultureInfo.InvariantCulture); Cfg.HistoryDays = MaxHistoryDays; }
+                if (Mode != "" && Cfg.Mode != Mode) { mine["mode"] = Cfg.Mode; Cfg.Mode = Mode; }
+                if (NoGamer && Cfg.GameIds != "") { mine["gmon"] = Cfg.GameIds; Cfg.GameIds = ""; }
+            }
         }
-        public static void Reset() { NoInternetCheck = NoOnline = NoSpeed = NoLab = NoCapture = NoGamer = false; MaxHistoryDays = 0; Mode = ""; File = ""; }
+        // what to save for a key: the user's own value while the policy covers it
+        public static string Keep(string key, string current)
+        {
+            lock (mine) { string v; return mine.TryGetValue(key, out v) ? v : current; }
+        }
+        public static void Reset() { NoInternetCheck = NoOnline = NoSpeed = NoLab = NoCapture = NoGamer = false; MaxHistoryDays = 0; Mode = ""; File = ""; lock (mine) mine.Clear(); }
     }
 }

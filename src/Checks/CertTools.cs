@@ -85,7 +85,8 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string label; var data = Input(input, rows, out label); if (data == null) return rows;
             if (Encoding.ASCII.GetString(data).Contains("PRIVATE KEY")) rows.Add(R(1, "Private key inside", "this file also holds a private key", "Keep it safe - anyone with it can pretend to be this server. AdeeboMeter doesn't read or show the key.", "m"));
             var certs = new List<X509Certificate2>();
-            foreach (var b in Blocks(data, "CERTIFICATE").Take(10)) try { certs.Add(new X509Certificate2(b)); } catch (CryptographicException) { }
+            // only plain certificates: a PFX handed in here would otherwise have its private key imported into the user's key store
+            foreach (var b in Blocks(data, "CERTIFICATE").Take(10)) try { if (X509Certificate2.GetCertContentType(b) == X509ContentType.Cert) certs.Add(new X509Certificate2(b)); } catch (CryptographicException) { }
             if (certs.Count == 0)
             {
                 string t = Encoding.ASCII.GetString(data);
@@ -125,10 +126,15 @@ namespace AdeeboMeter
                     }
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "File", Draw.Trunc(e.Message, 90), "", "u")); return rows; }
-                string a = Hex(s256.Hash), b = Hex(s1.Hash), c = Hex(m5.Hash), want = new string((expected ?? "").Where(Uri.IsHexDigit).ToArray()).ToUpperInvariant();
+                string a = Hex(s256.Hash), b = Hex(s1.Hash), c = Hex(m5.Hash);
+                // the hash out of whatever was pasted ("SHA256: e3b0...", certutil's "SHA256 hash of f.txt:" line, spaced pairs):
+                // runs of hex 32-128 long; certutil's spaced pairs are joined first. Never the letters of the words around it.
+                string pasted = (expected ?? "").Trim(); var joined = Regex.Replace(pasted, @"(?<=\b[0-9a-fA-F]{2}) (?=[0-9a-fA-F]{2}\b)", "");
+                var tokens = Regex.Matches(joined, @"\b[0-9a-fA-F]{32,128}\b").Cast<Match>().Select(x => x.Value.ToUpperInvariant()).ToList();
+                string want = pasted == "" ? "" : tokens.Count > 0 ? tokens[0] : "?";
                 if (want != "")
                 {
-                    string which = want == a ? "SHA-256" : want == b ? "SHA-1" : want == c ? "MD5" : null;
+                    string which = tokens.Contains(a) ? "SHA-256" : tokens.Contains(b) ? "SHA-1" : tokens.Contains(c) ? "MD5" : null;
                     rows.Add(which != null ? R(0, "Matches", which + " is the same as the one you pasted", which == "SHA-256" ? "The file is exactly what was published." : which + " is old; a match is still good evidence the download isn't damaged, but SHA-256 is the one to trust.", "m")
                         : R(2, "DOESN'T MATCH", "none of the three is the hash you pasted", "The file is damaged or not the one published - download it again from the official page. Check you copied the whole hash.", "m"));
                 }
@@ -280,8 +286,9 @@ namespace AdeeboMeter
                     rows.Add(R(3, "Claims", Draw.Trunc(bs, 2000), "", "m"));
                     foreach (var k in new[] { "iat", "nbf", "exp" })
                     {
-                        var m = Regex.Match(bs, "\"" + k + "\"\\s*:\\s*(\\d{9,11})"); if (!m.Success) continue;
-                        var t = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).ToLocalTime();
+                        var m = Regex.Match(bs, "\"" + k + "\"\\s*:\\s*(\\d{9,13})(?!\\d)"); if (!m.Success) continue;
+                        long n = long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); if (m.Groups[1].Value.Length >= 12) n /= 1000;   // some issuers write milliseconds
+                        var t = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(n).ToLocalTime();
                         bool exp = k == "exp" && t < DateTime.Now; rows.Add(R(exp ? 1 : 3, k == "iat" ? "Issued" : k == "nbf" ? "Not before" : "Expires", t.ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture) + (exp ? " · EXPIRED" : ""), "", "m"));
                     }
                     return rows;
@@ -299,6 +306,14 @@ namespace AdeeboMeter
         static string[] Cmd(string name, string cmd, string why) { return new[] { "3", name, cmd, why, "", "copy:" + cmd }; }
         static readonly string[] OpensslSpots = { @"C:\Program Files\Git\usr\bin\openssl.exe", @"C:\Program Files\OpenSSL-Win64\bin\openssl.exe" };
         static readonly char[] Unsafe = { '"', '\'', '`', '$', ';', '&', '|', '<', '>', '\r', '\n' };
+        // what PowerShell also reads as quotes (curly and low-9 quotes), control characters, and \\server paths (certutil
+        // -urlfetch on a share would hand your Windows sign-in to that server)
+        public static bool PsSafe(string f)
+        {
+            if (string.IsNullOrEmpty(f) || f.StartsWith("\\\\", StringComparison.Ordinal) || f.StartsWith("//", StringComparison.Ordinal)) return false;
+            foreach (char ch in f) if (char.IsControl(ch) || (ch >= '\u2018' && ch <= '\u201F') || ch == '\u2032' || ch == '\u2033' || ch == '\uFF02' || ch == '\uFF07') return false;
+            return true;
+        }
         public static string FindOpenssl()
         {
             foreach (var d in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
@@ -310,16 +325,18 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string f = (file ?? "").Trim().Trim('"');
             if (f == "") f = "C:\\certs\\server.cer";
-            else if (f.Length > 240 || f.IndexOfAny(Unsafe) >= 0 || f.IndexOfAny(Path.GetInvalidPathChars()) >= 0) { rows.Add(R(2, "File", f.Length > 240 ? "that path is too long" : "that path has characters that aren't safe in a command", "", "u")); return rows; }
-            string q = "\"" + f + "\"", stem = Path.Combine(Path.GetDirectoryName(f) ?? "", Path.GetFileNameWithoutExtension(f)), os = FindOpenssl();
+            else if (f.Length > 240 || f.IndexOfAny(Unsafe) >= 0 || f.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !PsSafe(f)) { rows.Add(R(2, "File", f.Length > 240 ? "that path is too long" : "that path has characters that aren't safe in a command", "", "u")); return rows; }
+            // single-quoted for PowerShell: inside '...' nothing runs - only a quote could end it, and every quote-like character is refused above
+            string stem = Path.Combine(Path.GetDirectoryName(f) ?? "", Path.GetFileNameWithoutExtension(f)), os = FindOpenssl();
+            Func<string, string> sq = x => "'" + x.Replace("'", "''") + "'"; string q = sq(f);
             rows.Add(new[] { "0", "How to use", "click a command to copy it, then paste it into PowerShell", "Commands are filled in with your file. Nothing runs from here. Exporting a private key is left out on purpose - do that only on the server that owns it. Click this line to open PowerShell.", "w", "ps:" });
             rows.Add(R(4, "Look at a certificate", "", "", "m"));
             rows.Add(Cmd("Everything in it", "certutil -dump " + q, "Subject, issuer, dates, names, key, extensions."));
             rows.Add(Cmd("Check the chain and revocation", "certutil -verify -urlfetch " + q, "Builds the chain and asks the CA's revocation lists (needs the internet)."));
             rows.Add(Cmd("Fingerprint", "(Get-PfxCertificate " + q + ").Thumbprint", "The SHA-1 thumbprint Windows shows."));
             rows.Add(R(4, "Convert", "", "", "m"));
-            rows.Add(Cmd("DER -> PEM (text)", "certutil -encode " + q + " \"" + stem + ".pem\"", "Base64 text form, for Linux, network gear and web servers."));
-            rows.Add(Cmd("PEM -> DER (binary)", "certutil -decode " + q + " \"" + stem + ".der\"", "Binary form - what Windows calls .cer (DER encoded)."));
+            rows.Add(Cmd("DER -> PEM (text)", "certutil -encode " + q + " " + sq(stem + ".pem"), "Base64 text form, for Linux, network gear and web servers."));
+            rows.Add(Cmd("PEM -> DER (binary)", "certutil -decode " + q + " " + sq(stem + ".der"), "Binary form - what Windows calls .cer (DER encoded)."));
             rows.Add(R(4, "Files and hashes", "", "", "m"));
             rows.Add(Cmd("SHA-256 of a file", "certutil -hashfile " + q + " SHA256", "Compare with the hash on the download page."));
             rows.Add(Cmd("Same in PowerShell", "Get-FileHash " + q + " -Algorithm SHA256", ""));
@@ -329,13 +346,13 @@ namespace AdeeboMeter
             rows.Add(Cmd("Open the manager", "certmgr.msc", "Your own certificates; the machine store (certlm.msc) needs admin."));
             if (os != null)
             {
-                string o = "& \"" + os + "\"";
+                string o = "& " + sq(os);
                 rows.Add(R(4, "openssl (found on this PC)", os, "", "m"));
                 rows.Add(Cmd("Read a certificate", o + " x509 -in " + q + " -noout -text", ""));
                 rows.Add(Cmd("Read a CSR", o + " req -in " + q + " -noout -text -verify", "Also checks the CSR's signature."));
                 rows.Add(Cmd("What's in a PFX", o + " pkcs12 -in " + q + " -info -nokeys", "-nokeys: the certificates only, never the key."));
                 rows.Add(Cmd("A live server's chain", o + " s_client -connect example.com:443 -servername example.com -showcerts", "Type the server's name in both places."));
-                rows.Add(Cmd("New key and CSR", o + " req -new -newkey rsa:2048 -nodes -keyout \"" + stem + ".key\" -out \"" + stem + ".csr\"", "The .key file is your private key - keep it on the server that will use it."));
+                rows.Add(Cmd("New key and CSR", o + " req -new -newkey rsa:2048 -nodes -keyout " + sq(stem + ".key") + " -out " + sq(stem + ".csr"), "The .key file is your private key - keep it on the server that will use it."));
             }
             else rows.Add(R(3, "openssl", "not found on this PC", "Not needed - certutil and PowerShell above cover the everyday jobs. Git for Windows includes openssl if you have it installed elsewhere.", "m"));
             return rows;

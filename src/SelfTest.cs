@@ -380,6 +380,10 @@ namespace AdeeboMeter
             {
                 string r = GameSession.Redact("router 192.168.0.1 and 10.1.2.3, 172.20.0.9, mac aa:bb:cc:dd:ee:ff on HomeNet-5G; server 155.133.248.34", "HomeNet-5G");
                 if (r.Contains("192.168") || r.Contains("10.1.2.3") || r.Contains("172.20") || r.Contains("aa:bb") || r.Contains("HomeNet") || !r.Contains("155.133.248.34")) throw new InvalidOperationException(r);
+                // short and HTML-like Wi-Fi names, zones and MAC-built IPv6
+                if (GameSession.Redact("<td class=\"n\">12 ms</td>", "td") != "<td class=\"n\">12 ms</td>" || GameSession.Redact("ping 12 ms", "ms") != "ping 12 ms") throw new InvalidOperationException("a short Wi-Fi name ate the text");
+                if (GameSession.Redact("On Wi-Fi \"AT&T WiFi\"", "AT&T WiFi").Contains("AT&T")) throw new InvalidOperationException("AT&T not redacted");
+                string z = GameSession.Redact("gw fe80::1%12 and 2001:db8::211:22ff:fe33:4455 via 100.64.1.2", "x"); if (z.Contains("%12") || z.Contains("ff:fe33") || z.Contains("100.64")) throw new InvalidOperationException(z);
                 var ss = new GameSession { GameId = "t", GameName = "T", Server = "NA East", Start = DateTime.Now.AddMinutes(-1) };
                 ss.Add(new GameSession.Sec { T = DateTime.Now, Game = 30, Router = 2, Net = 15, Signal = 80, Down = 1, Up = 0.2, Cpu = 10 });
                 ss.Mark(); string rep = ss.Report(new List<Spike>(), "");
@@ -390,6 +394,7 @@ namespace AdeeboMeter
                 string ip = MatchFinder.Busiest("192.168.0.10\t155.133.248.34\n155.133.248.34\t192.168.0.10\n192.168.0.10\t8.8.8.8\n192.168.0.10\t239.255.255.250\n");
                 if (ip != "155.133.248.34") throw new InvalidOperationException(ip ?? "null");
                 if (MatchFinder.Busiest("10.0.0.2\t10.0.0.1\n") != null) throw new InvalidOperationException("private counted");
+                if (MatchFinder.Busiest("203.0.113.50\t198.51.100.20\n198.51.100.20\t203.0.113.50\n203.0.113.50\t8.8.8.8\n", new HashSet<string> { "203.0.113.50" }) != "198.51.100.20") throw new InvalidOperationException("the PC's own public address won");
             });
             T("Fix a problem understands everyday words", () =>
             {
@@ -402,6 +407,12 @@ namespace AdeeboMeter
                 if (go("valorant lag") != "gamer") bad.Add("valorant");
                 if (go("disk is full") != "tool:tidy") bad.Add("disk full");
                 if (go("purple elephants") != null) bad.Add("nonsense matched");
+                if (go("my internet doesn't work") != "guide:whats") bad.Add("internet doesn't work -> " + go("my internet doesn't work"));
+                if (go("printer not working") != "guide:whats") bad.Add("printer");
+                if (go("Wi-Fi works but nothing loads") != "guide:whats") bad.Add("nothing loads");
+                if (go("my VPN won't connect") != "guide:vpn") bad.Add("vpn won't connect");
+                if (go("ping is high") != "guide:slow") bad.Add("ping is high");
+                if (go("disk is full") != "tool:tidy") bad.Add("disk is full");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
             T("ISP report finds where loss starts and ignores loss that doesn't carry on", () =>
@@ -420,7 +431,27 @@ namespace AdeeboMeter
                 var reached = new List<PathTools.Hop> { H(1, 0, "10.0.0.1"), H(2, 0, "203.0.113.1"), H(3, 12, "198.51.100.7") }; reached[2].Reached = true;
                 if (IspReport.StartOfLoss(reached) != -1) throw new InvalidOperationException("loss only at the destination was called real loss");
                 if (!PathTools.MtrVerdict(reached).StartsWith("Loss at the destination only", StringComparison.Ordinal)) throw new InvalidOperationException("destination-only loss verdict: " + PathTools.MtrVerdict(reached));
+                // everything past hop 2 went dark for the whole run (those hops had answered the trace): an outage, not quiet routers
+                var dark = new List<PathTools.Hop> { H(1, 0, "192.168.1.1"), H(2, 0, "203.0.113.1"), H(3, 100, "203.0.113.9"), H(4, 100, "198.51.100.7") }; dark[3].Reached = true;
+                if (IspReport.StartOfLoss(dark) != 2) throw new InvalidOperationException("an outage past hop 2 wasn't seen: " + PathTools.MtrVerdict(dark));
                 if (!IspReport.Private(IPAddress.Parse("100.64.3.1")) || !IspReport.Private(IPAddress.Parse("fd00::1")) || IspReport.Private(IPAddress.Parse("8.8.8.8"))) throw new InvalidOperationException("private address check");
+            });
+            T("SMTP path: steps come from the rows - a bad certificate is never 'checked', a banner can't fake a step", () =>
+            {
+                Func<string, string, string[]> Rw = (lv, n) => new[] { lv, n, "x", "", "m" };
+                string ok = EngPack.HowFar(new List<string[]> { Rw("0", "SMTP greeting (40 ms)"), Rw("3", "Offers"), Rw("0", "STARTTLS"), Rw("0", "Certificate") });
+                if (!ok.EndsWith("certificate checked", StringComparison.Ordinal)) throw new InvalidOperationException("good path: " + ok);
+                string bad = EngPack.HowFar(new List<string[]> { Rw("0", "SMTP greeting (40 ms)"), Rw("3", "Offers"), Rw("0", "STARTTLS"), Rw("2", "mx.example.com:25") });
+                if (!bad.EndsWith("certificate FAILED", StringComparison.Ordinal)) throw new InvalidOperationException("invalid certificate: " + bad);
+                string none = EngPack.HowFar(new List<string[]> { Rw("2", "mx.example.com:25") });
+                if (!none.EndsWith("connection FAILED", StringComparison.Ordinal)) throw new InvalidOperationException("no connection: " + none);
+                var snap = EngPack.ParseCert("snap|intranet.example.com:8443|run|202611121000|ok|CN=a~CN=b~ab~20270101");
+                if (snap == null || snap.Host != "intranet.example.com:8443") throw new InvalidOperationException("a non-443 snapshot didn't load back");
+            });
+            T("Microsoft 365 roles: only Microsoft's own names get them", () =>
+            {
+                if (M365.Role("login.microsoftonline.com", "", 443) != "Sign-in" || M365.Role("eu.trouter.teams.microsoft.com", "", 443) == "") throw new InvalidOperationException("a real name lost its role");
+                foreach (var h in new[] { "msauth.evil.example", "notskype.com.attacker.net", "myoffice.com.example.net" }) if (M365.Role(h, "", 443) != "") throw new InvalidOperationException(h + " got a Microsoft role");
             });
             T("code keys: Windows' fast PBKDF2 gives the same bytes as the managed one", () =>
             {
@@ -535,25 +566,28 @@ namespace AdeeboMeter
             {
                 var bad = new List<string>();
                 if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
+                foreach (var id in FullView.LabGateIds) if (Points.Value(id) != 0) bad.Add(id + " earns behind the 'my own network' tick");
+                foreach (var id in new[] { "speedtest", "iperf", "bloat" }) if (Points.Replay.Contains(id)) bad.Add(id + " has a replay bonus (moves a lot of data)");
                 string f = Path.Combine(Path.GetTempPath(), "am-points-" + Guid.NewGuid().ToString("N") + ".txt");
                 try
                 {
                     var p = new Points(f); var t0 = new DateTime(2026, 11, 12, 10, 0, 0, DateTimeKind.Utc);
                     if (p.Total != 0) bad.Add("fresh total " + p.Total);
-                    if (p.Award("ping", false, true, t0) != 0) bad.Add("earned without opening the Example");
-                    if (p.Award("ping", true, false, t0) != 0) bad.Add("earned with earning off");
-                    if (p.Award("ping", true, true, t0) != 1) bad.Add("first run not +1");
-                    if (p.Award("ping", true, true, t0.AddMinutes(1)) != 0 || p.Award("ping", true, true, t0.AddHours(3)) != 0) bad.Add("regular example earned twice");
-                    if (p.Award("ispreport", true, true, t0) != 2) bad.Add("a longer test (ISP report) first not +2");
-                    if (p.Award("ispreport", true, true, t0.AddMinutes(5)) != 0) bad.Add("replay bonus inside 10 minutes");
-                    if (p.Award("ispreport", true, true, t0.AddMinutes(11)) != 2) bad.Add("replay bonus not +2");
-                    if (p.Award("ispreport", true, true, t0.AddMinutes(40)) != 0) bad.Add("replay bonus twice");
-                    if (p.Award("udpsend", true, true, t0) != 0) bad.Add("a Traffic Lab sender earned");
-                    if (p.Total != 5) bad.Add("total " + p.Total + " (want 5)");
-                    var again = new Points(f); if (again.Total != 5 || again.Done != 2) bad.Add("after restart " + again.Total + "/" + again.Done);
-                    if (again.Award("ispreport", true, true, t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
-                    if (again.Award("dig", true, false, t0) != 0 || again.Total != 5) bad.Add("earning off changed the total");
-                    if (again.Award("learn.dhcp", true, true, t0) != 1 || again.Award("page.replay", true, true, t0) != 1 || again.Award("learn.dhcp", true, true, t0.AddHours(1)) != 0) bad.Add("Learn / page points");
+                    if (p.Award("ping", false, true, t0, t0) != 0) bad.Add("earned without opening the Example");
+                    if (p.Award("ping", true, false, t0, t0) != 0) bad.Add("earned with earning off");
+                    if (p.Award("ping", true, true, t0, t0) != 1) bad.Add("first run not +1");
+                    if (p.Award("ping", true, true, t0.AddMinutes(1), t0.AddMinutes(1)) != 0 || p.Award("ping", true, true, t0.AddHours(3), t0.AddHours(3)) != 0) bad.Add("regular example earned twice");
+                    if (p.Award("ispreport", true, true, t0, t0) != 2) bad.Add("a longer test (ISP report) first not +2");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(5), t0.AddMinutes(5)) != 0) bad.Add("replay bonus inside 10 minutes");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != 2) bad.Add("replay bonus not +2");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(40), t0.AddMinutes(40)) != 0) bad.Add("replay bonus twice");
+                    if (p.Award("udpsend", true, true, t0, t0) != 0) bad.Add("a Traffic Lab sender earned");
+                    if (p.Award("mtr", true, true, t0, t0) != 2 || p.Award("mtr", true, true, t0.AddMinutes(11), t0.AddMinutes(1)) != 0) bad.Add("moving the Windows clock paid the replay bonus");
+                    if (p.Total != 7) bad.Add("total " + p.Total + " (want 7)");
+                    var again = new Points(f); if (again.Total != 7 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
+                    if (again.Award("ispreport", true, true, t0.AddDays(1), t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1), t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
+                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 7) bad.Add("earning off changed the total");
+                    if (again.Award("learn.dhcp", true, true, t0, t0) != 1 || again.Award("page.replay", true, true, t0, t0) != 1 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
                     if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
                     int left; if (Points.Rank(14) != "Beginner" || Points.Rank(15) != "Learner" || Points.Rank(49) != "Learner" || Points.Rank(50) != "Troubleshooter" || Points.Rank(100) != "Expert" || Points.Next(32, out left) != "Troubleshooter" || left != 18) bad.Add("ranks");
                     var ex = Examples.Rows(Examples.Get("ping"), true);
@@ -599,6 +633,13 @@ namespace AdeeboMeter
                     Policy.Reset(); Policy.Parse(new[] { "# test", "internet_check = off", "speed_test=on", "history_days = 2 # two", "mode = simple", "traffic_lab = maybe", "history_days = 40" });
                     if (!Policy.NoInternetCheck || Policy.NoSpeed || Policy.MaxHistoryDays != 2 || Policy.Mode != "simple" || Policy.NoLab) throw new InvalidOperationException("policy parse");
                     var rows = new List<string[]>(); Policy.NoLab = true; if (Lab.Allowed(null, "yes", rows) || rows.Count != 1) throw new InvalidOperationException("lab not blocked");
+                    // two files (next to the exe and in ProgramData): combined, the strictest wins; "pro" is never a policy
+                    Policy.Reset(); Policy.Parse(new[] { "history_days = 5", "mode = pro" }); Policy.Parse(new[] { "speed_test = off", "history_days = 3" });
+                    if (!Policy.NoSpeed || Policy.MaxHistoryDays != 3 || Policy.Mode != "") throw new InvalidOperationException("two policy files");
+                    var sp = SpeedTest.Run("check", new Toolkit.Run()); if (sp.Count != 1 || sp[0][2].IndexOf("IT team", StringComparison.Ordinal) < 0) throw new InvalidOperationException("speed check ran under the policy");
+                    // the user's own value comes back when the policy goes
+                    int keepNet = Cfg.NetSec; Cfg.NetSec = 60; Policy.Reset(); Policy.NoInternetCheck = true; Policy.Apply();
+                    bool kept = Cfg.Lines().Any(l => l == "net=60") && Cfg.NetSec == 0; Cfg.NetSec = keepNet; if (!kept) throw new InvalidOperationException("the policy overwrote the saved setting");
                 }
                 finally { Policy.Reset(); }
                 var r = new GuideRun(); r.Obs("m", 1, "Router \"ping\"", "12 ms\n"); r.Conclude(1, "Wi-Fi is weak");

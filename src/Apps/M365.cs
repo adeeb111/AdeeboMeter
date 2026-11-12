@@ -26,10 +26,18 @@ namespace AdeeboMeter
             new[] { "events.data.microsoft.com", "Telemetry" }, new[] { "aria.microsoft.com", "Telemetry" }, new[] { "vortex", "Telemetry" }, new[] { "self.events", "Telemetry" },
             new[] { "graph.microsoft.com", "Microsoft Graph (your data)" }, new[] { "config.teams", "Settings" }, new[] { "config.office", "Settings" },
         };
+        static readonly string[] MsDomains = { "microsoft.com", "microsoftonline.com", "msauth.net", "msftauth.net", "live.com", "live.net", "office.com", "office.net", "office365.com", "skype.com", "sharepoint.com", "cloud.microsoft", "windows.net", "azureedge.net", "msedge.net", "trafficmanager.net", "msidentity.com", "teams.microsoft" };
         public static string Role(string host, string ip, int port)
         {
             host = (host ?? "").ToLowerInvariant();
-            foreach (var h in Hosts) if (host.Contains(h[0])) return h[1];
+            // a name ending in one of these domains (on a label boundary) - "msauth.evil.example" or "notskype.com.attacker.net" is nobody's
+            // Microsoft. Pieces like "trouter" or "aadcdn." count only inside a Microsoft-owned domain.
+            bool ms = MsDomains.Any(d => host == d || host.EndsWith("." + d, StringComparison.Ordinal));
+            foreach (var h in Hosts)
+            {
+                bool domain = h[0].IndexOf('.') > 0 && !h[0].EndsWith(".", StringComparison.Ordinal) && h[0] != "self.events" && !h[0].StartsWith("config.", StringComparison.Ordinal);
+                if (domain ? host == h[0] || host.EndsWith("." + h[0], StringComparison.Ordinal) : ms && host.Contains(h[0])) return h[1];
+            }
             IPAddress a;
             if (IPAddress.TryParse(ip ?? "", out a) && MediaRanges.Any(r => InRange(a, r))) return port == 443 ? "Teams media relay (over TCP 443)" : "Teams media relay";
             if (host.EndsWith(".microsoft.com", StringComparison.Ordinal) || host.EndsWith(".office.com", StringComparison.Ordinal) || host.EndsWith(".msedge.net", StringComparison.Ordinal) || host.EndsWith(".azureedge.net", StringComparison.Ordinal)) return "Microsoft, role unknown";

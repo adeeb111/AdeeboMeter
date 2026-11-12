@@ -21,6 +21,12 @@ namespace AdeeboMeter
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern bool Process32FirstW(IntPtr snap, ref PROCESSENTRY32 e);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern bool Process32NextW(IntPtr snap, ref PROCESSENTRY32 e);
 
+        [DllImport("kernel32.dll")] static extern bool GetProcessTimes(IntPtr h, out long created, out long exited, out long kernel, out long user);
+        static long Started(int pid)
+        {
+            if (pid <= 4) return 0; IntPtr h = Native.OpenProcess(0x1000 /*query limited*/, false, pid); if (h == IntPtr.Zero) return 0;
+            try { long c, e, k, u; return GetProcessTimes(h, out c, out e, out k, out u) ? c : 0; } finally { Native.CloseHandle(h); }
+        }
         // every process with its parent; roots are processes whose parent is gone (Windows reuses ids, so a parent must also be older)
         public static List<P> Snapshot(out Dictionary<int, P> byPid)
         {
@@ -35,12 +41,26 @@ namespace AdeeboMeter
                     while (Process32NextW(h, ref e) && all.Count < 5000);
             }
             finally { Native.CloseHandle(h); }
+            // Windows reuses process ids: a "parent" that started after its child is a newcomer with the old parent's id
+            var born = new Dictionary<int, long>();
+            foreach (var p in all) { long t = Started(p.Pid); if (t > 0) born[p.Pid] = t; }
             var roots = new List<P>();
             foreach (var p in all)
             {
-                P par;
-                if (p.Pid != p.Parent && p.Pid != 0 && byPid.TryGetValue(p.Parent, out par)) par.Kids.Add(p);
+                P par; long tp, tc;
+                bool older = !born.TryGetValue(p.Parent, out tp) || !born.TryGetValue(p.Pid, out tc) || tp <= tc;
+                if (p.Pid != p.Parent && p.Pid != 0 && older && byPid.TryGetValue(p.Parent, out par)) par.Kids.Add(p);
                 else { p.Orphan = p.Pid > 4; roots.Add(p); }
+            }
+            // anything still not reachable from a root sits in a loop of reused ids: break it there, never lose a process
+            var seen = new HashSet<P>(); var stack = new Stack<P>(roots);
+            while (stack.Count > 0) { var x = stack.Pop(); if (!seen.Add(x)) continue; foreach (var k in x.Kids) stack.Push(k); }
+            foreach (var p in all.Where(z => !seen.Contains(z)).ToList())
+            {
+                if (seen.Contains(p)) continue;
+                P par; if (byPid.TryGetValue(p.Parent, out par)) par.Kids.Remove(p);
+                p.Orphan = true; roots.Add(p);
+                stack.Push(p); while (stack.Count > 0) { var x = stack.Pop(); if (!seen.Add(x)) continue; foreach (var k in x.Kids) stack.Push(k); }
             }
             return roots;
         }
@@ -143,7 +163,7 @@ namespace AdeeboMeter
                 try
                 {
                     using (var k = root.OpenSubKey(path))
-                        if (k != null) foreach (var n in k.GetValueNames()) { string cmd = Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture); r.Add(new Item { Name = n, Command = cmd, Where = label, Exe = ExeOf(cmd) }); }
+                        if (k != null) foreach (var n in k.GetValueNames()) { string cmd; try { cmd = Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture); } catch (Exception ve) { if (!(ve is System.Security.SecurityException || ve is IOException || ve is UnauthorizedAccessException)) throw; cmd = "(couldn't read)"; } r.Add(new Item { Name = n, Command = cmd, Where = label, Exe = ExeOf(cmd) }); }
                 }
                 catch { }
             };
@@ -171,7 +191,9 @@ namespace AdeeboMeter
         {
             if (string.IsNullOrEmpty(cmd)) return "";
             cmd = cmd.Trim(); string exe = cmd.StartsWith("\"", StringComparison.Ordinal) ? cmd.Substring(1, Math.Max(0, cmd.IndexOf('"', 1) - 1)) : cmd.Split(' ')[0];
-            return Path.GetFileName(exe);
+            // a stray quote or tab in a Run value must not hide it (and every entry after it): take the last part by hand
+            exe = exe.Trim('"', ' ', '\t'); int cut = Math.Max(exe.LastIndexOf('\\'), exe.LastIndexOf('/'));
+            return cut >= 0 ? exe.Substring(cut + 1) : exe;
         }
         // exe name (lower case) → where it's started from, for "why did it start?"
         public static Dictionary<string, string> ByExe()

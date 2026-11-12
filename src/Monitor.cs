@@ -62,6 +62,7 @@ namespace AdeeboMeter
         // change tracking for the timeline (probe / sampler threads only)
         string pAdapter, pGw, pDns, pIp, pState, pBssid = "", pCh = ""; bool pVpn; int pRate = -1, pSig = -1;
         DateTime lastRoam = DateTime.MinValue, lastSigDrop = DateTime.MinValue, netDownSince, lastConnT = Clock.Mono;
+        public bool NetQuiet { get { return netDown >= 3; } }
         int netDown, prevLevel = -1; bool gwFlag, prevCall; double gwBase = double.NaN; string hint = "";
         HashSet<string> prevKeys; readonly Dictionary<string, DateTime> synFirst = new Dictionary<string, DateTime>();
         readonly Dictionary<string, DateTime> suppress = new Dictionary<string, DateTime>();
@@ -77,7 +78,7 @@ namespace AdeeboMeter
         long pIdle, pKern, pUser; bool cpuInit;
         long pRx = -1, pTx = -1; DateTime pNetT;
         long pRetx = -1, pRst, pFail, pUnr, pUdp;
-        PerformanceCounter pcIdle, pcRead, pcWrite;
+        volatile PerformanceCounter pcIdle, pcRead, pcWrite;
         volatile bool stop;
         readonly AutoResetEvent wake = new AutoResetEvent(false);
         readonly ManualResetEvent stopping = new ManualResetEvent(false); Thread samplerT, probeT;
@@ -117,14 +118,20 @@ namespace AdeeboMeter
         // ---------- sampler: every second
         void SamplerLoop()
         {
-            try
+            // the disk counters can take seconds to open (a damaged counter registry): opened beside the sampler, which runs
+            // from the first second and shows the disk once they're ready
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
-                pcIdle = new PerformanceCounter("PhysicalDisk", "% Idle Time", "_Total");
-                pcRead = new PerformanceCounter("PhysicalDisk", "Disk Read Bytes/sec", "_Total");
-                pcWrite = new PerformanceCounter("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
-                pcIdle.NextValue(); pcRead.NextValue(); pcWrite.NextValue();
-            }
-            catch (Exception e) { pcIdle = null; Program.Log("Disk counters unavailable: " + e.Message); }
+                try
+                {
+                    var r = new PerformanceCounter("PhysicalDisk", "Disk Read Bytes/sec", "_Total");
+                    var w = new PerformanceCounter("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
+                    var i = new PerformanceCounter("PhysicalDisk", "% Idle Time", "_Total");
+                    i.NextValue(); r.NextValue(); w.NextValue();
+                    pcRead = r; pcWrite = w; pcIdle = i;   // pcIdle last: the sampler starts using them when it is set
+                }
+                catch (Exception e) { pcIdle = null; Program.Log("Disk counters unavailable: " + e.Message); }
+            });
             while (!stop)
             {
                 var t0 = Clock.Mono;
@@ -243,7 +250,9 @@ namespace AdeeboMeter
                         string gwNow; lock (L) gwNow = Gateway; if (gwNow != "" || VpnUp) ProbeDns();   // no way out: a DNS failure would only be noise
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
+                    if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(0, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
                     if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
+                    if (netChanged && netDown >= 3) Events.Add(0, "inet", "Network changed while the internet was quiet (down since " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + ") - checking afresh");
                     if (netChanged) { netChanged = false; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; GwPing.Clear(); GwEverReplied = false; } gwMacKey = ""; gwMac = "";   /* a new network: its router is judged on its own, never on the last network's */ /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= 10) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }
                     if (wifiSec > 0 && (t0 - lastWifi).TotalSeconds >= wifiSec - 0.2) { lastWifi = t0; ProbeWifi(); }
@@ -266,11 +275,12 @@ namespace AdeeboMeter
             catch { return double.NaN; }
         }
 
-        static readonly string[] vpnWords = { "vpn", "anyconnect", "globalprotect", "pangp", "juniper", "pulse", "fortinet", "forti", "wireguard", "tap-windows", "zscaler", "openvpn", "netskope", "f5 ", "ivanti", "checkpoint", "check point" };
+        static readonly string[] vpnWords = { "vpn", "anyconnect", "globalprotect", "pangp", "juniper", "pulse", "fortinet", "forti", "wireguard", "tap-windows", "zscaler", "openvpn", "netskope", "f5 ", "ivanti", "checkpoint", "check point", "tailscale", "wintun", "cloudflare", "nordlynx", "zerotier", "mullvad", "protonvpn", "expressvpn", "surfshark", "sonicwall", "barracuda" };
         public static bool IsVpn(NetworkInterface n)
         {
-            if (n.NetworkInterfaceType == NetworkInterfaceType.Ppp) return true;
             string d = (n.Description + " " + n.Name).ToLowerInvariant();
+            // dial-up style links: VPNs (PPTP, L2TP, SSTP, IKEv2) - but a PPPoE broadband link is the internet itself, not a VPN
+            if (n.NetworkInterfaceType == NetworkInterfaceType.Ppp) return d.IndexOf("pppoe", StringComparison.Ordinal) < 0 && d.IndexOf("broadband", StringComparison.Ordinal) < 0;
             foreach (var w in vpnWords) if (d.Contains(w)) return true;
             return false;
         }
@@ -409,7 +419,7 @@ namespace AdeeboMeter
                 string k = m.Groups[1].Value.Trim(), kl = k.ToLowerInvariant(), v = m.Groups[2].Value;
                 var pct = Regex.Match(v, @"^(\d{1,3})\s*%$");
                 if (pct.Success && sig < 0) { int x; if (int.TryParse(pct.Groups[1].Value, out x) && x <= 100) sig = x; }
-                else if (k == "SSID") ssid = v;
+                else if (k == "SSID") ssid = Program.Plain(v);
                 else if (k == "BSSID" || k == "AP BSSID") bssid = v;
                 else if (ChanKeys.Contains(kl)) ch = v;
                 else if (StateKeys.Contains(kl)) state = NormState(v);
@@ -459,7 +469,7 @@ namespace AdeeboMeter
                     var first = hops.Select(h => h.Item1).FirstOrDefault(ip => ip != null && DestCheck.Kind(ip) == "public");
                     if (first != null)
                     {
-                        string name = ""; var t = Task.Factory.StartNew(() => { try { return System.Net.Dns.GetHostEntry(IPAddress.Parse(first)).HostName; } catch { return ""; } });
+                        string name = ""; var t = Task.Factory.StartNew(() => { try { return Native.PtrName(first); } catch { return ""; } });
                         if (t.Wait(3000)) name = t.Result;
                         string owner = name != first ? DestCheck.OwnerOf(name) : null;
                         if (owner != null && owner != "cloudflare.com" && owner != "Cloudflare") { Isp = owner; Program.Log("provider: " + owner); }

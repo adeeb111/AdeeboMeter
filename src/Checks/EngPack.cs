@@ -31,7 +31,9 @@ namespace AdeeboMeter
         public static string CertLine(CertSnap s) { return "snap|" + s.Host + "|" + Clean(s.Name, 40) + "|" + s.T.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture) + "|" + Clean(s.Trust, 80) + "|" + string.Join(";", s.Chain.Select(c => string.Join("~", c.Select(x => Clean(x, 120))))); }
         public static CertSnap ParseCert(string l)
         {
-            var p = (l ?? "").Split('|'); if (p.Length != 6 || p[0] != "snap" || !Games.ValidHost(p[1])) return null;
+            var p = (l ?? "").Split('|'); if (p.Length != 6 || p[0] != "snap") return null;
+            // host, or host:port for a site on another port - checked apart
+            string hh; int pp; if (!Lab.Split(p[1], 443, out hh, out pp) || !Games.ValidHost(hh)) return null;
             DateTime t; if (!DateTime.TryParseExact(p[3], "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) return null;
             var s = new CertSnap { Host = p[1], Name = p[2], T = t, Trust = p[4] };
             foreach (var c in p[5].Split(';').Take(8)) { var f = c.Split('~'); if (f.Length == 4) s.Chain.Add(new[] { f[0], f[1], f[2], f[3], "" }); else if (f.Length == 5) s.Chain.Add(f); }
@@ -39,13 +41,13 @@ namespace AdeeboMeter
         }
         public static List<string[]> CertCompare(string target, string name)
         {
-            var rows = new List<string[]>(); string t = (target ?? "").Trim(); if (t.StartsWith("http", StringComparison.OrdinalIgnoreCase)) { Uri u; if (Uri.TryCreate(t, UriKind.Absolute, out u)) t = u.Host + (u.IsDefaultPort ? "" : ":" + u.Port); }
+            var rows = new List<string[]>(); string t = (target ?? "").Trim(); if (t.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || t.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) { Uri u; if (Uri.TryCreate(t, UriKind.Absolute, out u)) t = u.Host + (u.IsDefaultPort ? "" : ":" + u.Port); }
             string h; int port; if (!Lab.Split(t, 443, out h, out port) || !Games.ValidHost(h)) { rows.Add(R(2, "Site", "type a site - e.g. outlook.office.com or https://intranet.example.com", "", "")); return rows; }
             var snap = new CertSnap { Host = h + (port != 443 ? ":" + port : ""), Name = string.IsNullOrWhiteSpace(name) ? "run " + DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture) : Clean(name, 40), T = DateTime.Now };
             SslPolicyErrors errs = SslPolicyErrors.None;
             try
             {
-                using (var tc = new TcpClient())
+                using (var tc = Toolkit.Tcp())
                 {
                     if (!tc.ConnectAsync(h, port).Wait(6000)) { rows.Add(R(2, snap.Host, "couldn't connect in 6 s", "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) =>
@@ -263,6 +265,7 @@ namespace AdeeboMeter
             if (!Lab.Split(w.Substring(at + 1), 1812, out h, out port) || !Games.ValidHost(h)) { rows.Add(R(2, "Server", "type the RADIUS server's address after the @", "", "")); return rows; }
             if (string.IsNullOrEmpty(secret) || string.IsNullOrEmpty(password)) { rows.Add(R(2, "Secret and password", "type the shared secret and the test account's password", "Both are used for this one request and wiped - never shown, saved, logged or copied.", "")); return rows; }
             var a = Lab.Addr(h); if (a == null) { rows.Add(R(2, "Server", "couldn't find " + h, "", "m")); return rows; }
+            if (Encoding.UTF8.GetByteCount(password) > 128) { rows.Add(R(2, "Password", "longer than 128 bytes - RADIUS can't carry it (RFC 2865)", "Use a shorter test password.", "")); return rows; }
             var sec = Encoding.UTF8.GetBytes(secret); var pw = Encoding.UTF8.GetBytes(password); var auth = new byte[16]; byte id;
             using (var g = RandomNumberGenerator.Create()) { g.GetBytes(auth); var idb = new byte[1]; g.GetBytes(idb); id = idb[0]; }
             byte[] reply = null; long ms = -1; string error = "", srcIp = "";
@@ -285,7 +288,7 @@ namespace AdeeboMeter
                 }
             }
             catch (SocketException e) { error = e.SocketErrorCode == SocketError.TimedOut ? "no answer in 4 s" : e.SocketErrorCode == SocketError.ConnectionReset ? "refused - nothing listens on UDP " + port : e.Message; }
-            bool signed = reply != null && Protocols.ReplyOk(reply, id, auth, sec);
+            bool hasMa = false, signed = reply != null && Protocols.ReplyOk(reply, id, auth, sec, out hasMa);
             Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length);
             string code; var attrRows = new List<string[]>();
             if (srcIp != "") rows.Add(R(3, "Sent from", srcIp + " (the address Windows picked for this route)", "The server must list this address as a client (NAS) with this shared secret - on a VPN or a PC with two networks it may not be the one you expect.", "w"));
@@ -297,6 +300,7 @@ namespace AdeeboMeter
                 rows.Add(R(!signed ? 2 : reply[0] == 2 ? 0 : 1, code + " in " + ms + " ms", !signed ? "but the reply isn't signed with this shared secret - the secret on the server differs" : reply[0] == 2 ? "the server accepted the test account" : reply[0] == 3 ? "the server refused the test account" : reply[0] == 11 ? "the server wants a second step (EAP or a one-time code) - PAP alone can't finish it" : "",
                     reply[0] == 3 ? "Wrong password, a locked or disabled account, or a policy that doesn't match (this NAS, the time, the group). The server's own log says which rule refused it." : "", "m"));
                 if (signed) { attrRows = DecodeAttrs(reply); rows.AddRange(attrRows); }
+                if (signed && !hasMa) rows.Add(R(1, "Message-Authenticator", "the reply doesn't carry one", "Its signature is only the older Response Authenticator - not hardened against BlastRADIUS (CVE-2024-3596). Turn on require_message_authenticator on the server, or update it.", "m"));
             }
             // before / after: this run is kept (without any secret) to compare with the next one
             string line = "aaa|" + h + ":" + port + "|" + DateTime.Now.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture) + "|" + code + "|" + ms + "|" + string.Join(";", attrRows.Select(r => Clean(r[1], 40) + "=" + Clean(r[2], 60)));
@@ -306,7 +310,7 @@ namespace AdeeboMeter
             foreach (var prev in new[] { prevSame, prevOther }.Where(x => x != null))
             {
                 var p = prev.Split('|'); if (p.Length < 6) continue;
-                rows.Add(R(-1, (prev == prevSame ? "BEFORE / AFTER · " : "THE OTHER SERVER · ") + p[1], "earlier run " + DateTime.ParseExact(p[2], "yyyyMMddHHmm", CultureInfo.InvariantCulture).ToString("d MMM HH:mm", CultureInfo.CurrentCulture), "", "m"));
+                rows.Add(R(-1, (prev == prevSame ? "BEFORE / AFTER · " : "THE OTHER SERVER · ") + p[1], "earlier run " + When(p[2]), "", "m"));
                 rows.Add(R(p[3] == code ? 0 : 1, "Answer", p[3] + " (" + p[4] + " ms)  >  " + code + " (" + ms + " ms)", p[3] != code ? "The answer changed - a policy, the account or the server changed in between." : "", "m"));
                 var before = p[5] == "" ? Array.Empty<string>() : p[5].Split(';'); var after = attrRows.Select(r => Clean(r[1], 40) + "=" + Clean(r[2], 60)).ToArray();
                 var gone = before.Except(after).ToList(); var added = after.Except(before).ToList();
@@ -318,17 +322,25 @@ namespace AdeeboMeter
             return rows;
         }
 
+        // a saved run's time, or "an earlier run" when the saved line is damaged
+        static string When(string stamp) { DateTime t; return DateTime.TryParseExact(stamp ?? "", "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t) ? t.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) : "(time not readable)"; }
         // MX found > connected > greeting > EHLO > STARTTLS > certificate - from the rows the mail check produced
         public static string HowFar(List<string[]> r)
         {
-            Func<string, bool> any = w => r.Any(x => (x[1] + " " + x[2]).IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0);
+            // read from what the mail check actually recorded (row names and levels), never from words in a server's banner
+            Func<string, string[]> row = name => r.FirstOrDefault(x => x[1].IndexOf(name, StringComparison.Ordinal) >= 0);
+            var fail = r.FirstOrDefault(x => x[0] == "2" && x[1].IndexOf(':') > 0 && x[1].IndexOf(' ') < 0);   // "host:port" - the step that threw
             var steps = new List<string> { "MX found" };
-            if (any("couldn't") || any("no answer") || any("refused")) return string.Join(" > ", steps) + " > connection FAILED";
-            steps.Add("connected");
-            if (any("220") || any("greeting") || any("banner")) steps.Add("greeting");
-            if (any("STARTTLS") || any("offers") || any("EHLO")) steps.Add("EHLO");
-            if (any("STARTTLS") && !any("not offered")) steps.Add("STARTTLS");
-            if (any("certificate")) steps.Add("certificate checked");
+            var greet = row("greeting");
+            if (greet == null) return string.Join(" > ", steps) + " > connection FAILED";
+            steps.Add("connected"); steps.Add("greeting");
+            if (row("Offers") != null) steps.Add("EHLO");
+            var tls = r.FirstOrDefault(x => x[1] == "STARTTLS");
+            if (fail != null && (tls == null || tls[0] != "0")) return string.Join(" > ", steps) + " > stopped (" + Draw.Trunc(fail[2], 50) + ")";
+            if (tls != null && tls[0] == "0") steps.Add("STARTTLS"); else if (tls != null) return string.Join(" > ", steps) + " > no STARTTLS";
+            var cert = r.FirstOrDefault(x => x[1] == "Certificate");
+            if (cert != null && cert[0] == "0" && fail == null) steps.Add("certificate checked");
+            else if (fail != null || (cert != null && cert[0] == "2")) return string.Join(" > ", steps) + " > certificate FAILED";
             return string.Join(" > ", steps);
         }
         // ---------- 5. SMTP delivery path: MX > connect > EHLO > STARTTLS + certificate > QUIT (never MAIL FROM)
@@ -348,10 +360,10 @@ namespace AdeeboMeter
                 if (run.Stop) break;
                 string host = x[1].TrimEnd('.'); run.Status = "Talking to " + host + " on port 25 (stops before sending anything)...";
                 rows.Add(R(-1, host.ToUpperInvariant() + " · PORT 25", "", "", "m"));
-                var r = Protocols.Mail(host + ":25");
+                var r = Protocols.Mail(host + ":25", run);
                 string got = HowFar(r);
                 r.Insert(0, R(got.EndsWith("certificate checked", StringComparison.Ordinal) ? 0 : 1, "Got as far as", got, "", "m"));
-                if (r.Count > 0 && r[0][2].IndexOf("couldn't", StringComparison.OrdinalIgnoreCase) >= 0) r.Add(R(1, "Port 25 from here", "most home providers block outgoing port 25", "Normal on home lines - only mail servers talk on 25. Run this from a server, or test your own mail with port 587 in the Mail server tool.", "m"));
+                if (got.EndsWith("connection FAILED", StringComparison.Ordinal)) r.Add(R(1, "Port 25 from here", "most home providers block outgoing port 25", "Normal on home lines - only mail servers talk on 25. Run this from a server, or test your own mail with port 587 in the Mail server tool.", "m"));
                 rows.AddRange(r);
             }
             return rows;

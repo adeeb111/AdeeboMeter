@@ -18,10 +18,10 @@
 <meta property="og:image:alt" content="AdeeboMeter on a Windows desktop">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 100+ engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3, a Traffic Lab) and a 42-check security checkup.","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.3","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeeb111.github.io/AdeeboMeter/","screenshot":"https://adeeb111.github.io/AdeeboMeter/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter"}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 100+ engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3, a Traffic Lab) and a 42-check security checkup.","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.5","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeeb111.github.io/AdeeboMeter/","screenshot":"https://adeeb111.github.io/AdeeboMeter/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter"}
 </script>
 <style>
-/* This page loads nothing from anywhere else: no fonts, no trackers, no analytics. Like the app. */
+/* No fonts, trackers or analytics from anywhere else. One exception: the newest version number is asked from api.github.com (see privacy.html). */
 :root{
   --blue:#1F6FEB; --blue-d:#1A5FCC; --blue-s:#E8F0FE; --green:#2DA44E; --green-s:#E6F4EA; --amber:#BF8700; --amber-s:#FFF4D6;
   --red:#CF222E; --red-s:#FDE7E9; --purple:#8250DF; --purple-s:#F1EAFE;
@@ -30,12 +30,12 @@
 }
 
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --blue:#4C8DF6; --blue-d:#6AA1FA; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --amber:#D29922; --amber-s:#2E2410;
+  --blue:#2F6FDB; --blue-d:#3B7BE6; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --amber:#D29922; --amber-s:#2E2410;
   --red:#F85149; --red-s:#341819; --purple:#A371F7; --purple-s:#241B3A;
   --ink:#E6EDF3; --sub:#B4BFCB; --muted:#8B97A5; --line:#26303B; --card:#121820; --page:#0A0E13; --soft:#171E27;
   --nav:rgba(10,14,19,.78); --glass:rgba(23,30,39,.92); --wall1:#13213A; --wall2:#11261B; --wall3:#0E141C; --wall4:#0B1016; --tbar:rgba(20,26,34,.78);}}
 :root[data-theme="dark"]{
-  --blue:#4C8DF6; --blue-d:#6AA1FA; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --amber:#D29922; --amber-s:#2E2410;
+  --blue:#2F6FDB; --blue-d:#3B7BE6; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --amber:#D29922; --amber-s:#2E2410;
   --red:#F85149; --red-s:#341819; --purple:#A371F7; --purple-s:#241B3A;
   --ink:#E6EDF3; --sub:#B4BFCB; --muted:#8B97A5; --line:#26303B; --card:#121820; --page:#0A0E13; --soft:#171E27;
   --nav:rgba(10,14,19,.78); --glass:rgba(23,30,39,.92); --wall1:#13213A; --wall2:#11261B; --wall3:#0E141C; --wall4:#0B1016; --tbar:rgba(20,26,34,.78);}
@@ -55,6 +55,14 @@ a{color:inherit}
 .pill{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff!important;text-decoration:none;font-weight:600;border-radius:99px;padding:7px 16px;font-size:14px}
 .pill:hover{background:var(--blue-d)}
 .links a.donate-top{color:#D1245B;font-weight:600;white-space:nowrap}
+:root[data-theme="dark"] .links a.donate-top{color:#F06292}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .links a.donate-top{color:#F06292}}
+footer a{text-decoration:underline}
+.stage:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+@media (max-width:400px){.brand{font-size:15px;gap:6px}.brand svg{width:22px;height:22px}.pill{padding:6px 10px;font-size:13px}.links{gap:6px}.links a.donate-top{margin-left:0}.theme{transform:scale(.85);margin:0 -4px}.top .wrap{padding-left:12px;padding-right:12px}}
+p a,li a{overflow-wrap:anywhere}
+.brand,.pill{white-space:nowrap}
+@media (max-width:400px){.seg{display:flex;flex-wrap:wrap;max-width:100%}.seg button{padding:8px 10px;font-size:14px}}
 .donate{padding:8px 0 36px}.donate-box{max-width:620px;margin:0 auto;text-align:center;border:1px solid var(--line);border-radius:16px;padding:18px 20px}
 .donate-box p{margin:0 0 12px;font-size:15px}.donate-box small{display:block;margin-top:10px;color:var(--muted);font-size:12.5px}
 .amts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.amts a{display:inline-block;min-width:56px;padding:6px 14px;border:1px solid var(--line);border-radius:99px;text-decoration:none;color:inherit;font-weight:600;font-size:14px;transition:border-color .2s ease,background .2s ease}
@@ -185,6 +193,7 @@ a{color:inherit}
 .stage{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:22px;outline:none}
 .stage::-webkit-scrollbar{display:none}
 .frame{flex:0 0 100%;scroll-snap-align:center;display:flex;justify-content:center;align-items:flex-start;padding:2px}
+.stage{align-items:flex-start;transition:height .25s ease}
 .frame .slide{width:100%}
 .arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--glass);box-shadow:0 6px 18px rgba(27,35,48,.12);cursor:pointer;display:grid;place-items:center;z-index:3;color:var(--ink)}
 .arrow:hover{background:var(--card)}.arrow:disabled{opacity:.3;cursor:default}
@@ -360,7 +369,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <a class="btn primary dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
     <a class="btn ghost" href="#theory">See how it works ›</a>
   </div>
-  <p class="meta"><span class="ver">Version 1.1.3</span> · Windows 10 &amp; 11 · free · no administrator rights</p>
+  <p class="meta"><span class="ver">Version 1.1.5</span> · Windows 10 &amp; 11 · free · no administrator rights</p>
 
   <div class="scene" role="img" aria-label="AdeeboMeter on a Windows desktop: the engineer view open, the widget in the corner folding into a small chip">
     <div class="ev" aria-hidden="true">
@@ -448,7 +457,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <button class="arrow prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="stage" tabindex="0" aria-roledescription="carousel" aria-label="The Theory of Everything slides">
 <div class="frame"><section class="slide hero"><div class="in">
-  <div class="kicker">The Theory of Everything · version 1.1.3</div>
+  <div class="kicker">The Theory of Everything · version 1.1.5</div>
   <div class="body" style="flex-direction:row;align-items:center;gap:4em">
     <div style="flex:1">
       <h2 class="h1">AdeeboMeter</h2>
@@ -516,7 +525,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card g"><div class="ic" style="background:var(--green)">¢</div><h3>A penny app</h3><p>A few dozen tiny jobs a minute. Anything heavy runs only while you look at it, and stops by itself.</p></div>
       <div class="card b"><div class="ic" style="background:var(--blue)">◎</div><h3>Never listens</h3><p>No server, account or update check. It checks at every start that it opens no listening port.</p></div>
       <div class="card a"><div class="ic" style="background:var(--amber)">✓</div><h3>No admin rights</h3><p>Only what Windows shows a normal user. If Windows says no, that part simply doesn't show.</p></div>
-      <div class="card p"><div class="ic" style="background:var(--purple)">{}</div><h3>One readable file</h3><p>One C# file, built by the compiler already inside Windows. Nothing to install, nothing hidden.</p></div>
+      <div class="card p"><div class="ic" style="background:var(--purple)">{}</div><h3>Readable source</h3><p>Plain C#, built by the compiler already inside Windows. Nothing to install, nothing hidden.</p></div>
       <div class="card"><div class="ic" style="background:var(--ink)">☺</div><h3>A companion</h3><p>Every message has a friendly and a plain version. The fix always comes right after the joke.</p></div>
     </div>
   </div>
@@ -612,7 +621,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card"><h3>Network story</h3><p>Follow an app from your PC to the server, box by box, and time each step.</p></div>
       <div class="card"><h3>Time machine</h3><p>Replay any minute, the week as a heatmap, data usage, calls, new devices.</p></div>
       <div class="card"><h3>Learn</h3><p>46 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
-      <div class="card b"><h3>Toolbox</h3><p>100+ tools in four sections — Network, Devices, Traffic Lab, Windows — with quick buttons. Type to find one.</p></div>
+      <div class="card b"><h3>Toolbox</h3><p>100+ tools in five sections — Network, Devices, Traffic Lab, Engineer, Windows — by question or as one list, each with an Example to look at first. Type to find one.</p></div>
       <div class="card g" style="display:none"><h3>Hover the ? cursor</h3><p>233 terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
     </div>
   </div>
@@ -866,11 +875,11 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <h2><code style="font-size:.8em">AdeeboMeter.exe --selftest</code></h2>
   <div class="body" style="flex-direction:row;gap:2em;align-items:center">
     <div style="flex:1">
-      <p class="lead">30 checks on your own PC, written to <code>AdeeboMeter-selftest.txt</code>:</p>
+      <p class="lead">61 checks on your own PC, written to <code>AdeeboMeter-selftest.txt</code>:</p>
       <ul class="clean" style="margin-top:.8em"><li>Counters, socket tables and DNS reading work</li><li><b>Never listens</b></li><li>Bad destinations are rejected</li><li>The engineer view opens in under 1 second</li><li><b>No handle leaks</b> over 30 open/close cycles</li><li>Every label has an explanation</li><li>Parsers give the right answers on known samples: Wi-Fi, LLDP/CDP, event log, RTP, DNS records, SNMP and its v3 keys, MIB files</li><li>Memory stays inside the 64 MB budget</li><li><code>--deeptest</code>: hostile input into every tool, repeats to catch leaks, the UI under stress</li></ul>
     </div>
     <div class="hide-m" style="flex:.9;background:#151B26;border-radius:1em;padding:1.2em 1.4em;font-size:.82em;line-height:1.7;color:#C9D3E1" >
-      <div class="mono" style="color:#8A96A8">AdeeboMeter 1.1.3 self-test</div>
+      <div class="mono" style="color:#8A96A8">AdeeboMeter 1.1.5 self-test</div>
       <div class="mono"><span style="color:#3FB950">PASS</span>  never listens</div>
       <div class="mono"><span style="color:#3FB950">PASS</span>  socket tables</div>
       <div class="mono"><span style="color:#3FB950">PASS</span>  destination validation</div>
@@ -932,7 +941,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     </div>
     <button class="arrow next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
     <div class="deckbar">
-      <span class="counter">1 / 24</span>
+      <span class="counter">1 / 26</span>
       <div class="progress"><i></i></div>
       <button class="iconbtn full"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Full screen</button>
     </div>
@@ -1000,7 +1009,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="cta">
     <a class="btn primary dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
   </div>
-  <p class="meta"><span class="ver">Version 1.0</span> · <a href="https://github.com/adeeb111/AdeeboMeter/releases">all releases</a></p>
+  <p class="meta"><span class="ver">Version 1.1.5</span> · <a href="https://github.com/adeeb111/AdeeboMeter/releases">all releases</a></p>
 </div></section>
 
 <section class="donate" id="donate"><div class="wrap">
@@ -1020,7 +1029,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 
 <footer><div class="wrap">
   <span>Created by Adeeb Khan · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/LICENSE">MIT License</a></span>
-  <span><a href="#donate">Donate</a> · <a href="https://github.com/adeeb111/AdeeboMeter">Source</a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md">What's new</a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/docs/THEORY-OF-EVERYTHING.md">Theory of Everything (text)</a></span>
+  <span><a href="#donate">Donate</a> · <a href="privacy.html">Privacy</a> · <a href="https://github.com/adeeb111/AdeeboMeter">Source</a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md">What's new</a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/docs/THEORY-OF-EVERYTHING.md">Theory of Everything (text)</a></span>
 </div></footer>
 
 <script>
@@ -1031,13 +1040,17 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   var counter = document.querySelector('.counter'), bar = document.querySelector('.progress i');
   function cur() { return Math.round(stage.scrollLeft / Math.max(1, stage.clientWidth)); }
   function go(i) { i = Math.max(0, Math.min(n - 1, i)); stage.scrollTo({ left: i * stage.clientWidth, behavior: 'smooth' }); }
-  function upd() { var i = cur(); counter.textContent = (i + 1) + ' / ' + n; bar.style.width = ((i + 1) / n * 100) + '%'; prev.disabled = i === 0; next.disabled = i === n - 1; }
+  // phones: the stage is as tall as the slide on screen, not the tallest one
+  function fit() { if (innerWidth > 860 || document.fullscreenElement) { stage.style.height = ''; return; } var f = stage.children[cur()]; if (f) stage.style.height = (f.scrollHeight + 4) + 'px'; }
+  // slide footers numbered from the real order
+  document.querySelectorAll('.stage .frame').forEach(function (f, k) { var ft = f.querySelector('.foot span:last-child'); if (ft && /^\d+$/.test(ft.textContent.trim())) ft.textContent = (k + 1 < 10 ? '0' : '') + (k + 1); });
+  function upd() { fit(); var i = cur(); counter.textContent = (i + 1) + ' / ' + n; bar.style.width = ((i + 1) / n * 100) + '%'; prev.disabled = i === 0; next.disabled = i === n - 1; }
   prev.addEventListener('click', function () { go(cur() - 1); });
   next.addEventListener('click', function () { go(cur() + 1); });
   var t; stage.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(upd, 60); }, { passive: true });
   document.addEventListener('keydown', function (e) {
-    var r = stage.getBoundingClientRect(), inView = r.top < innerHeight * 0.6 && r.bottom > innerHeight * 0.4;
-    if (!inView && !document.fullscreenElement) return;
+    // only when the deck has focus (or is full screen): PageUp / PageDown and the arrows keep scrolling the page otherwise
+    if (!document.fullscreenElement && !stage.contains(document.activeElement)) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') { go(cur() + 1); e.preventDefault(); }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') { go(cur() - 1); e.preventDefault(); }
   });
@@ -1049,10 +1062,14 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   addEventListener('resize', function () { var i = cur(); stage.scrollLeft = i * stage.clientWidth; });
   upd();
 
+  (function () { var d = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.querySelector('.theme').setAttribute('aria-pressed', d === 'dark' ? 'true' : 'false'); })();
+  // the trailer doesn't play by itself for people who asked for less motion or less data
+  var tr = document.querySelector('video[autoplay]');
+  if (tr && (matchMedia('(prefers-reduced-motion: reduce)').matches || (navigator.connection && navigator.connection.saveData))) { tr.removeAttribute('autoplay'); tr.pause(); tr.preload = 'none'; }
   // day / night: follows Windows / the phone until you choose; your choice is remembered in this browser only
   document.querySelector('.theme').addEventListener('click', function () {
     var r = document.documentElement, cur = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    var nx = cur === 'dark' ? 'light' : 'dark'; r.setAttribute('data-theme', nx);
+    var nx = cur === 'dark' ? 'light' : 'dark'; r.setAttribute('data-theme', nx); this.setAttribute('aria-pressed', nx === 'dark' ? 'true' : 'false');
     try { localStorage.setItem('am-theme', nx); } catch (e) {}
   });
 
@@ -1073,13 +1090,14 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   function ready() { send.disabled = !(title.value.trim() && body.value.trim()); }
   title.addEventListener('input', ready); body.addEventListener('input', ready);
   send.addEventListener('click', function () {
-    var t = title.value.trim(), b = body.value.trim(), u;
+    var t = title.value.trim().slice(0, 200), b = body.value.trim().slice(0, 2500), u;   // a link GitHub will open
     if (kind === 'problem') {
       b = '### What happened\n' + b + '\n\n### Windows / AdeeboMeter version\n' + (env.value.trim() || '(not given)') + '\n\n_Sent from the suggestion box on the website._';
-      u = REPO + '/issues/new?labels=bug&title=' + encodeURIComponent(t) + '&body=' + encodeURIComponent(b);
+      u = REPO + '/issues/new?title=' + encodeURIComponent(t) + '&body=' + encodeURIComponent(b);
     } else {
       b += '\n\n_Sent from the suggestion box on the website._';
-      u = REPO + '/discussions/new?category=' + (kind === 'idea' ? 'ideas' : 'q-a') + '&title=' + encodeURIComponent(t) + '&body=' + encodeURIComponent(b);
+      // the Ideas form fills its own field (idea); Q&A takes the body
+      u = REPO + '/discussions/new?category=' + (kind === 'idea' ? 'ideas' : 'q-a') + '&title=' + encodeURIComponent(t) + (kind === 'idea' ? '&idea=' : '&body=') + encodeURIComponent(b);
     }
     window.open(u, '_blank', 'noopener');
   });
@@ -1089,7 +1107,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     fetch('https://api.github.com/repos/adeeb111/AdeeboMeter/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (rel) {
-        if (!rel || !rel.assets) return;
+        if (!rel || !rel.assets) { cantCheck(); return; }
         var a = rel.assets.filter(function (x) { return /-win64\.zip$/.test(x.name); })[0];
         if (!a) return;
         document.querySelectorAll('a.dl').forEach(function (el) { el.href = a.browser_download_url; });
@@ -1097,15 +1115,24 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
         if (v) document.querySelectorAll('.ver').forEach(function (el) { el.textContent = 'Version ' + v; });
         // "Check for updates" from inside the app opens this page with ?v=<your version>
         var mine = (new URLSearchParams(location.search)).get('v');
+        if (mine && !/^\d{1,3}(\.\d{1,4}){1,3}$/.test(mine)) mine = null;   // only a version number is ever shown back
         if (mine && v) {
           var newer = v.split('.').map(Number).some(function (n, i, a) { var m = mine.split('.').map(Number); for (var j = 0; j < Math.max(a.length, m.length); j++) { var x = a[j] || 0, y = m[j] || 0; if (x !== y) return x > y; } return false; });
           var b = document.getElementById('update');
-          b.textContent = newer ? 'AdeeboMeter ' + v + ' is out - you have ' + mine + '. Download it below and choose Update.' : 'You\u2019re up to date - ' + mine + ' is the latest version.';
+          var ahead = mine.split('.').map(Number).some(function (x, i, m) { var a = v.split('.').map(Number); for (var j = 0; j < Math.max(a.length, m.length); j++) { var p = m[j] || 0, q = a[j] || 0; if (p !== q) return p > q; } return false; });
+          b.textContent = newer ? 'AdeeboMeter ' + v + ' is out - you have ' + mine + '. Download it below and choose Update.' : ahead ? 'You\u2019re ahead - ' + mine + ' is newer than the latest release (' + v + ').' : 'You\u2019re up to date - ' + mine + ' is the latest version.';
           b.className = 'upd ' + (newer ? 'new' : 'ok'); b.hidden = false;
           if (location.hash === '#update') window.scrollTo(0, 0);
         }
-      }).catch(function () {});
-  } catch (e) {}
+      }).catch(function () { cantCheck(); });
+  } catch (e) { cantCheck(); }
+  // GitHub didn't answer (rate limit, blocker, company proxy): an app user who pressed Check for updates still gets an answer
+  function cantCheck() {
+    var mine = (new URLSearchParams(location.search)).get('v'); if (!mine || !/^\d{1,3}(\.\d{1,4}){1,3}$/.test(mine)) return;
+    var b = document.getElementById('update'); if (!b || !b.hidden) return;
+    b.innerHTML = 'Couldn\u2019t check for a newer version right now - see <a href="https://github.com/adeeb111/AdeeboMeter/releases">GitHub Releases</a> (you have ' + mine + ').';
+    b.className = 'upd ok'; b.hidden = false;
+  }
 })();
 </script>
 </body>

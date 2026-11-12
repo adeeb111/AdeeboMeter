@@ -107,7 +107,7 @@ namespace AdeeboMeter
                         {
                             int lv; int.TryParse(o[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
                             float vh = Draw.Measure(o[3], Draw.fBody, (int)(w - nameW - pillW - 30 * S)).Height, rh = Math.Max(30 * S, vh + 12 * S);
-                            using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, x, y + 9 * S, 10 * S, 10 * S);
+                            Draw.LvDot(g, lv, x, y + 9 * S, 10 * S, 10 * S);
                             g.DrawString(o[2], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));
                             using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Sub)) g.DrawString(o[3], Draw.fBody, vb, new RectangleF(x + nameW, y + 5 * S, w - nameW - pillW - 10 * S, vh + 4));
                             DateTime at; DateTime? atN = DateTime.TryParse(o[4], CultureInfo.CurrentCulture, DateTimeStyles.None, out at) ? at : (DateTime?)null;
@@ -145,7 +145,7 @@ namespace AdeeboMeter
                                 g.DrawString(a, Draw.fBodyB, lb, lx, y);
                                 if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = "Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."; guideRun = null; guideCanvas.Invalidate(); });
                                 else if (a.StartsWith("Still", StringComparison.Ordinal)) Act(guideCanvas, ar, delegate { if (!guideBusy) StartGuide(r2.Id, false); });
-                                else Act(guideCanvas, ar, delegate { try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(GameSession.Redact(GuideText(r2), ssid)); guideCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } guideCanvas.Invalidate(); });
+                                else Act(guideCanvas, ar, delegate { try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(GameSession.Redact(GuideText(r2), ssid)); guideCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } guideCanvas.Invalidate(); });
                                 lx += asz.Width + 26 * S;
                             }
                         y += 34 * S;
@@ -153,7 +153,7 @@ namespace AdeeboMeter
                 }
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (guideCanvas.AutoScrollMinSize != need) { guideCanvas.AutoScrollMinSize = need; guideCanvas.Invalidate(); }
+            SetNeed(guideCanvas, need);
         }
     }
 }

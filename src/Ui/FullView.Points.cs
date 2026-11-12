@@ -60,7 +60,7 @@ namespace AdeeboMeter
                 l.Add(new PtItem
                 {
                     Key = id, Title = t.Title, Tag = term != null ? term.Tag : "", Group = sec == "health" ? "The PC" : SectionName(sec), Replay = Points.Replay.Contains(id), Value = Points.Value(id),
-                    Go = delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(id); if (sec != "health") ShowExample(); }
+                    Go = delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); SelectTool(id); ShowExample(); }   // THE PC tools too: their Example first, never a whole-disk scan straight away
                 });
             }
             foreach (var t in Knowledge.Learn())
@@ -76,7 +76,7 @@ namespace AdeeboMeter
             string q = pointsSearch == null ? "" : pointsSearch.Box.Text.Trim();
             if (q == "") return PtAll();
             var words = q.Split(Space, StringSplitOptions.RemoveEmptyEntries);
-            return PtAll().Where(i => words.All(wd => (i.Title + " " + i.Tag + " " + i.Group + " " + i.Key).IndexOf(wd, StringComparison.OrdinalIgnoreCase) >= 0));
+            return PtAll().Where(i => words.All(wd => (i.Title + " " + L.T(i.Title) + " " + i.Tag + " " + i.Group + " " + L.T(i.Group) + " " + i.Key).IndexOf(wd, StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
         // award once, flash it on the header button; returns the line to show ("+1 Adeebo Point", "+2 replay bonus" or "")
@@ -96,10 +96,22 @@ namespace AdeeboMeter
             if (pointsBtn == null) return;
             bool show = Cfg.Points; if (pointsBtn.Visible != show) pointsBtn.Visible = show;
             string t = DateTime.Now < pointsFlashUntil ? pointsFlash : "Adeebo · " + Points.Me.Total.ToString(CultureInfo.CurrentCulture);
-            if (pointsBtn.Text != t) pointsBtn.Text = t;
+            if (pointsBtn.Text != L.T(t)) pointsBtn.Text = t;
             pointsBtn.Selected = tab == "points";
         }
-        // a page's first real use (Gamer Zone: a game added; Time machine: a real day on screen)
+        // "first use" means doing something there - a click or a key on the page - not just opening the tab
+        readonly HashSet<string> useWatched = new HashSet<string>();
+        void WatchUse(string tabId)
+        {
+            if (tabId == "gamer" || tabId == "replay" || useWatched.Contains(tabId) || !PtPages.Any(p => p[1] == tabId)) return;
+            var pages = new Dictionary<string, Control> { { "guide", guidePage }, { "dest", destPage }, { "health", healthPage }, { "conn", connPage }, { "link", linkPage }, { "procs", procPage }, { "security", securityPage }, { "travel", travelPage }, { "changes", changesPage }, { "windows", insidePage } };
+            Control page; if (!pages.TryGetValue(tabId, out page) || page == null) return;
+            useWatched.Add(tabId); string id = tabId;
+            Action<Control> hook = null;
+            hook = c => { c.MouseDown += delegate { PageUsed(id); }; c.KeyDown += delegate { PageUsed(id); }; foreach (Control k in c.Controls) hook(k); };
+            hook(page);
+        }
+        // a page's first real use (Gamer Zone: a game added; Time machine: a real day on screen; the others: a click or a key there)
         void PageUsed(string tabId)
         {
             if (!Cfg.Points) return;

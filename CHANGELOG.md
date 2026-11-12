@@ -2,6 +2,42 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
+## 1.1.5 (unreleased)
+
+A Gamer Zone, a Report for my ISP, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 129 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
+
+### New: Gamer Zone
+- Finds installed games by reading Steam, Epic and Riot's own lists (nothing sent). One click on a game is the consent to ping its regions; until then nothing goes to a game company.
+- Per server: ping now / average / worst / p95, jitter, loss, spikes, grade; the best region over 7 days; each spike blamed on your Wi-Fi, your provider or the game's side; Mark lag; a match summary and a redacted report.
+- Edit games and servers; Find my match server (with Wireshark); side by side Wi-Fi vs cable; a streamer lag graph (window or overlay.png for OBS); Gamer, Calls and Engineer widget layouts.
+
+### New: Report for my ISP
+- The path in layers (router, provider's first hop, provider, destination), hop by hop with owners, loss that carries on (a router that ignores pings is never blamed), 7-day hour pattern, two routes, speed and bufferbloat grade, "already ruled out", a message ready to paste. Saved as HTML with private addresses, MACs and the Wi-Fi name redacted; your public IP only if you type yes.
+
+### New: keys and encryption
+- My keys in Windows' own store, CSR, self-signed certificates, certificate and key match, file vs live server, recipients.
+- Encrypt a file: share with a code (.adeebo: PBKDF2-SHA256 600,000, AES-256, HMAC-SHA256 checked first), for P-384 recipients (.adeebo, AdeeboMeter only; streams up to 4 GB) or standard RSA (.p7m, up to 50 MB). Codes and passphrases are shown once and never copied into results, saved or put in clipboard history. Key backups go to Documents\AdeeboMeter.
+
+### New: network engineer pack (Engineer section)
+- Why didn't this PC join the network?, 802.1X failure decoder, RADIUS client lab (says when a server isn't hardened against BlastRADIUS) with TACACS+, DHCP / IPv6 RA / 802.1X replays and an ICMP error translator on AdeeboMeter's own pcap / pcapng reader, certificate chain compare, SMTP delivery path, sample captures.
+
+### New elsewhere
+- Speed test on click (Cloudflare nearest, Vultr and OVHcloud cities, or your own file URL); MTU over UDP; SNI in HTTP & TLS; DSCP compare; app connections; VPN and company proxy awareness (the tunnel as its own layer); outage log with a notification when the internet comes back.
+- Fix a problem on the home screen: check everything, or describe it in your own words. Simple / Pro mode.
+- Toolbox by question (9 cards, the PC's own checks included) or the classic list; Examples on every tool and empty page: made-up results under an EXAMPLE banner, "Fill the boxes" with documentation addresses only - never saved, copied, compared or counted.
+- Adeebo Points: a dashboard of every tool, Learn topic and page; +1 / +2 once each, a +2 replay bonus once; Traffic Lab senders and scanners never earn.
+- French (preview, Settings › General › Language), Microsoft Store package, Windows on ARM (AnyCPU, native on ARM64), portable mode (AdeeboMeter.portable), `--report out.json` (exit 0-3 verdict, 4 = the report couldn't be made), AdeeboMeter.policy for IT teams (switch-off only; both files combined, the strictest wins, never overwrites your own settings).
+- About: Community and support links and Donate.
+
+### Fixes and safety (from the 1.1.5 reviews)
+- Verdicts: loss counts only when it carries on to later hops - and an outage past a hop is real loss; a provider's first hop numbered from 10.x or 100.64.x is the provider's; amber observations never end in "nothing is wrong"; a quiet router isn't blamed when the internet works; a sign-in page is found before blaming anyone; speed grade "A+" never on unmeasured or timed-out pings; IPv4/IPv6 every combination; 802.1X success events aren't failures; BitLocker suspended is amber.
+- Any language: Wi-Fi signal, channel, saved networks and WinHTTP proxy are read language-neutrally; "Your Wi-Fi is in great shape" never on no data.
+- Files from others: decryption reads each byte once (what's decrypted is what was checked), half-written files are hidden temp files until complete, Stop works, decrypted names can't spoof extensions or use device names, programs are flagged; key backups, recipient files and SNMP answers are validated; pcapng time units, 64-bit lengths and unsupported link types handled.
+- Privacy: live-capture leftovers are deleted at start and at logoff; redaction works on text before HTML and never eats words; reverse lookups ask PTR only; the widget hides during presentations and full-screen apps and is excluded from screen capture; files planted next to an exe in Downloads are ignored; speedservers.txt can't aim at this PC, the router or a LAN address.
+- Safety: the policy covers the speed-test server check; the Traffic Lab guard knows Entra / Intune devices and says when it can't tell; Esc clears a box instead of closing the view; a held Enter presses once; Ctrl+Alt+A is skipped on keyboards where AltGr+A types a letter; "Delete all saved history" asks first; Import checks the file first.
+- Weight: no busy loops when a loader fails, the lag-graph PNG is written only when it changes, pcap replays keep only the frames they read, GPU and disk tools have timeouts, painted pages don't flicker at the scrollbar edge.
+- Accessibility: Tab and Enter reach the painted buttons and links; switches report on/off; status dots carry a shape as well as a colour; High Contrast colours are honoured; tabs and button bars wrap instead of cutting off.
+
 ## 1.1.4 (2026-11-09)
 
 A Security tab, a Traffic Lab, "What's wrong?", 35 new tools (103 in all, plus 42 security checks), honest SNMP, and the fixes from four outside reviews.

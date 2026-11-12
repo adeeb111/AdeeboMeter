@@ -99,11 +99,27 @@ namespace AdeeboMeter
             string problem; var servers = Read(out problem);
             string nm = name.Box.Text.Trim();
             if (problem == null && nm == "") problem = "Give the game a name.";
-            var exes = exe.Box.Text.Split(';', ',').Select(z => Path.GetFileNameWithoutExtension(z.Trim())).Where(z => z.Length > 0 && z.IndexOfAny(Path.GetInvalidFileNameChars()) < 0).Take(4).ToArray();
+            var exes = exe.Box.Text.Split(';', ',').Select(ExeName).Where(z => z.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(4).ToArray();
             if (problem != null) { err.Text = problem; return; }
-            if (isNew) { string id = new string(nm.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray()); if (id.Length == 0) id = "game"; if (id.Length > 30) id = id.Substring(0, 30); g.Id = "my-" + id; g.Custom = true; }
+            if (isNew)
+            {
+                if (Games.All.Any(x => string.Equals(x.Name, nm, StringComparison.OrdinalIgnoreCase))) { err.Text = "You already have a game called " + nm + " - pick another name, or edit that one."; return; }
+                string id = new string(nm.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray()); if (id.Length == 0) id = "game"; if (id.Length > 30) id = id.Substring(0, 30);
+                // two names that reduce to the same id ("CS 2" and "CS-2") get their own: my-cs2, my-cs2-2 ... never one replacing the other
+                string baseId = "my-" + id, tryId = baseId; for (int n = 2; Games.All.Any(x => x.Id == tryId); n++) tryId = baseId + "-" + n;
+                g.Id = tryId; g.Custom = true;
+            }
             g.Name = nm; g.Exes = exes; g.Servers = servers;
             Games.SaveGame(g); Saved = true; Close();
+        }
+        // what's typed or pasted as the program: "C:\Games\VALORANT.exe" (quotes and all) -> VALORANT; nothing that can throw
+        static string ExeName(string z)
+        {
+            z = (z ?? "").Trim().Trim('"', '\'', ' ');
+            int cut = Math.Max(z.LastIndexOf('\\'), z.LastIndexOf('/')); if (cut >= 0) z = z.Substring(cut + 1);
+            var bad = Path.GetInvalidFileNameChars(); z = new string(z.Where(c => !bad.Contains(c)).ToArray()).Trim();
+            if (z.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) z = z.Substring(0, z.Length - 4);
+            return z.Length > 60 ? z.Substring(0, 60) : z;
         }
         // one probe per line, off the window's thread; results shown beside each line
         void TestAll()
@@ -128,14 +144,15 @@ namespace AdeeboMeter
             var menu = new ContextMenuStrip();
             try
             {
-                var names = Process.GetProcesses().Where(p => { try { using (p) return p.MainWindowHandle != IntPtr.Zero; } catch (InvalidOperationException) { return false; } })
-                    .Select(p => { try { return p.ProcessName; } catch (InvalidOperationException) { return ""; } }).Where(z => z != "" && !string.Equals(z, "AdeeboMeter", StringComparison.OrdinalIgnoreCase))
+                // read the name while the process object is still open, then dispose it (one step - reading after Dispose throws)
+                var names = Process.GetProcesses().Select(p => { try { using (p) return p.MainWindowHandle != IntPtr.Zero ? p.ProcessName : ""; } catch (InvalidOperationException) { return ""; } catch (System.ComponentModel.Win32Exception) { return ""; } })
+                    .Where(z => z != "" && !string.Equals(z, "AdeeboMeter", StringComparison.OrdinalIgnoreCase))
                     .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(z => z, StringComparer.OrdinalIgnoreCase).Take(40).ToList();
                 foreach (var n in names) { string pn = n; menu.Items.Add(pn, null, delegate { exe.Box.Text = pn; }); }
                 if (names.Count == 0) menu.Items.Add("(no programs with a window)").Enabled = false;
             }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; }
-            menu.Closed += delegate { BeginInvoke((Action)delegate { menu.Dispose(); }); };
+            menu.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)delegate { menu.Dispose(); }); else menu.Dispose(); } catch (InvalidOperationException) { menu.Dispose(); } };
             menu.Show(at, new Point(0, at.Height));
         }
         // the same line format as games.txt, for this one game - a list a friend can import

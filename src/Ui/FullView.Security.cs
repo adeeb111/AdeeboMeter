@@ -84,7 +84,7 @@ namespace AdeeboMeter
                 if (res.Count > 0 && !secBusy)
                 {
                     string ct = secCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text"; var cs = g.MeasureString(ct, Draw.fSmall); var cr = new RectangleF(x + w - cs.Width, y - 26 * S, cs.Width, cs.Height);
-                    g.DrawString(ct, Draw.fSmall, link, cr.X, cr.Y); Act(secCanvas, cr, delegate { try { Clipboard.SetText(SecurityText()); secCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } secCanvas.Invalidate(); });
+                    g.DrawString(ct, Draw.fSmall, link, cr.X, cr.Y); Act(secCanvas, cr, delegate { try { Clipboard.SetText(SecurityText()); secCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } secCanvas.Invalidate(); });
                 }
                 var sh = Draw.Measure(sub, Draw.fSmall, (int)w).Height; g.DrawString(sub, Draw.fSmall, muted, new RectangleF(x, y, w, sh + 4)); y += sh + 12 * S;
                 if (res.Count > 0)
@@ -93,7 +93,7 @@ namespace AdeeboMeter
                     foreach (int lv in new[] { 2, 1, 0, 3 })
                     {
                         string t = n[lv] + " " + lab[lv]; var ts = g.MeasureString(t, Draw.fBodyB); var pr = new RectangleF(bx, y, ts.Width + 30 * S, 32 * S);
-                        Theme.Fill(g, pr, 16 * S, Theme.LvSoft(lv)); using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, bx + 10 * S, y + 11 * S, 10 * S, 10 * S);
+                        Theme.Fill(g, pr, 16 * S, Theme.LvSoft(lv)); Draw.LvDot(g, lv, bx + 10 * S, y + 11 * S, 10 * S, 10 * S);
                         using (var tb = new SolidBrush(Theme.LvText(lv))) g.DrawString(t, Draw.fBodyB, tb, bx + 24 * S, y + (32 * S - ts.Height) / 2);
                         bx += pr.Width + 8 * S;
                     }

@@ -118,7 +118,7 @@ namespace AdeeboMeter
         {
             var h = (host ?? "").Trim().Trim('[', ']'); IPAddress a;
             if (IPAddress.TryParse(h, out a)) return a.AddressFamily == AddressFamily.InterNetworkV6 ? a : null;
-            if (h.StartsWith("http", StringComparison.OrdinalIgnoreCase)) { Uri u; if (Uri.TryCreate(h, UriKind.Absolute, out u)) h = u.Host; }
+            if (h.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || h.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) { Uri u; if (Uri.TryCreate(h, UriKind.Absolute, out u)) h = u.Host; }
             try { return Dns.GetHostAddresses(h).FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6); } catch { return null; }
         }
 
@@ -160,6 +160,35 @@ namespace AdeeboMeter
         public static List<string[]> GroupPolicy()
         {
             var rows = new List<string[]>();
+            // the XML report first - its element names are the same in every language (the /r text isn't). Read as plain
+            // text with simple patterns: no XML parser, no DTDs, nothing fetched.
+            string xf = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "adeebometer-gp-" + Guid.NewGuid().ToString("N") + ".xml");
+            try
+            {
+                Run("gpresult.exe", "/scope user /x \"" + xf + "\" /f", 30000);
+                if (System.IO.File.Exists(xf) && new System.IO.FileInfo(xf).Length < 20000000)
+                {
+                    string x = System.IO.File.ReadAllText(xf);   // gpresult writes UTF-16 with a byte-order mark
+                    var um = Regex.Match(x, @"<UserResults>([\s\S]*?)</UserResults>");
+                    if (um.Success)
+                    {
+                        string u = um.Groups[1].Value;
+                        Func<string, string, string> val = (blk, n) => { var mm = Regex.Match(blk, "<" + n + @"(?:\s[^>]*)?>([^<]*)</" + n + ">"); return mm.Success ? System.Net.WebUtility.HtmlDecode(mm.Groups[1].Value).Trim() : ""; };
+                        var rt = Regex.Match(x, @"<ReadTime>([^<]+)</ReadTime>"); DateTime t;
+                        if (rt.Success && DateTime.TryParse(rt.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out t)) rows.Add(R(3, "Last read", t.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), "", "w"));
+                        var gpos = Regex.Matches(u, @"<GPO>([\s\S]*?)</GPO>").Cast<Match>().Select(mm => mm.Groups[1].Value).ToList();
+                        var applied = gpos.Where(g => val(g, "FilterAllowed") == "true" && val(g, "AccessDenied") != "true" && val(g, "Enabled") != "false").Select(g => val(g, "Name")).Where(n => n != "").Distinct().ToList();
+                        var filtered = gpos.Where(g => val(g, "FilterAllowed") == "false" || val(g, "AccessDenied") == "true").Select(g => val(g, "Name")).Where(n => n != "").Distinct().ToList();
+                        if (applied.Count > 0) rows.Add(R(3, "Applied", string.Join(" · ", applied.Take(30)), "", "w"));
+                        if (filtered.Count > 0) rows.Add(R(3, "Filtered out", string.Join(" · ", filtered.Take(30)), "", "w"));
+                        var grp = Regex.Matches(u, @"<SecurityGroup>([\s\S]*?)</SecurityGroup>").Cast<Match>().Select(mm => val(mm.Groups[1].Value, "Name")).Where(n => n != "").ToList();
+                        if (grp.Count > 0) rows.Add(R(3, "Your security groups", grp.Count + ": " + Draw.Trunc(string.Join(", ", grp), 300), "", "w"));
+                        if (rows.Count > 0) return rows;
+                    }
+                }
+            }
+            catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("gpresult xml: " + e.Message); }
+            finally { try { if (System.IO.File.Exists(xf)) System.IO.File.Delete(xf); } catch (System.IO.IOException) { } }
             var o = Run("gpresult.exe", "/r /scope user", 30000);
             if (o.Trim() == "") { rows.Add(R(3, "Group Policy", "gpresult gave no answer (not on a domain, or it timed out)", "", "w")); return rows; }
             var last = Regex.Match(o, @"Last time Group Policy was applied:\s*(.+)"); var from = Regex.Match(o, @"Group Policy was applied from:\s*(.+)");
@@ -237,9 +266,11 @@ namespace AdeeboMeter
         public static List<string[]> Listening(Monitor m)
         {
             var rows = new List<string[]>(); List<Conn> all; try { all = m.Connections(true); } catch { all = new List<Conn>(); }
-            var tcp = all.Where(c => c.Proto == "TCP" && c.State == "LISTEN").ToList(); var udp = all.Where(c => c.Proto == "UDP").ToList();
-            var exposed = tcp.Where(c => !c.Local.StartsWith("127.", StringComparison.Ordinal)).OrderBy(c => c.LocalPort).ToList();
-            var local = tcp.Where(c => c.Local.StartsWith("127.", StringComparison.Ordinal)).ToList();
+            // IPv4 and IPv6 listeners alike (a service bound only to [::] is open too); loopback = 127.x or [::1]
+            var tcp = all.Where(c => (c.Proto == "TCP" || c.Proto == "TCP6") && c.State == "LISTEN").ToList(); var udp = all.Where(c => c.Proto == "UDP" || c.Proto == "UDP6").ToList();
+            Func<Conn, bool> loop = c => c.Local.StartsWith("127.", StringComparison.Ordinal) || c.Local.StartsWith("[::1]", StringComparison.Ordinal);
+            var exposed = tcp.Where(c => !loop(c)).OrderBy(c => c.LocalPort).ToList();
+            var local = tcp.Where(loop).ToList();
             rows.Add(R(3, "Listening", exposed.Count + " TCP ports open to the network · " + local.Count + " only to this PC · " + udp.Count + " UDP", "Ports open to the network can be reached by other devices if the firewall lets them. AdeeboMeter itself never listens.", "w"));
             foreach (var g in exposed.GroupBy(c => c.Proc).OrderBy(g => g.Min(c => c.LocalPort)).Take(25))
             {
@@ -295,6 +326,9 @@ namespace AdeeboMeter
             try { using (var k = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\W32Time\Parameters")) if (k != null) { type = (k.GetValue("Type") ?? "").ToString(); server = (k.GetValue("NtpServer") ?? "").ToString(); } } catch { }
             string how = type == "NT5DS" ? "from the domain (a domain controller)" : type == "NTP" ? "from an internet / company NTP server" : type == "NoSync" ? "not syncing at all" : type == "AllSync" ? "from the domain or NTP, whichever works" : type;
             rows.Add(R(type == "NoSync" ? 2 : 0, "How", how == "" ? "unknown" : how, "", "w"));
+            // "The following error occurred: The service has not been started. (0x80070426)" is an error, not a source
+            bool w32err = src.IndexOf("0x8007", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (w32err) { rows.Add(R(2, "Current source", Draw.Trunc(src.Replace("\r", " ").Replace("\n", " "), 140), src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) >= 0 ? "The Windows Time service isn't running, so the clock isn't being synced. It starts on its own on most PCs; on others it's started by the domain." : "", "w")); src = ""; }
             if (src != "") rows.Add(R(src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("Free-running", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 0, "Current source", src, src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 ? "It runs on its own clock - no server has set it recently. Settings > Time > Sync now." : src.IndexOf("access is denied", StringComparison.OrdinalIgnoreCase) >= 0 ? "" : "", "w"));
             if (server != "") rows.Add(R(3, "Configured server", server.Replace(",0x9", "").Replace(",0x1", "").Replace(",0x8", ""), "", "w"));
             rows.Add(R(3, "Check it", "Use the NTP tool on the same server to see how far off this PC is.", "", "i"));

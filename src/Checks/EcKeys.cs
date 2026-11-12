@@ -23,7 +23,9 @@ namespace AdeeboMeter
     //    changed file is refused before anything is decrypted.
     static class EcKeys
     {
-        public sealed class Key { public string Name = "", KeyName = "", Pub = ""; public DateTime Made; public string Id { get { return Fingerprint(Convert.FromBase64String(Pub)).Substring(0, 9); } } }
+        public sealed class Key { public string Name = "", KeyName = "", Pub = ""; public DateTime Made;
+            // the private key is in this PC's key store (a portable copy carries the list, not the keys made on another PC)
+            public bool Here { get { try { return CngKey.Exists(KeyName); } catch (CryptographicException) { return false; } catch (PlatformNotSupportedException) { return false; } } } public string Id { get { return Fingerprint(Convert.FromBase64String(Pub)).Substring(0, 9); } } }
         static string IndexFile { get { return Path.Combine(Program.DataDir, "keys-ec.txt"); } }
         static readonly byte[] Magic2 = { (byte)'A', (byte)'D', (byte)'E', (byte)'E', (byte)'B', (byte)'O', 1, 2 }, Magic3 = { (byte)'A', (byte)'D', (byte)'E', (byte)'E', (byte)'B', (byte)'O', 1, 3 };
         static readonly byte[] Label = Encoding.ASCII.GetBytes("AdeeboMeter ECDH P-384 file key v1");
@@ -41,13 +43,23 @@ namespace AdeeboMeter
                     foreach (var line in File.ReadAllLines(IndexFile).Take(100))
                     {
                         var p = line.Split('|'); DateTime t; if (p.Length != 5 || p[0] != "ec" || !DateTime.TryParseExact(p[4], "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) continue;
+                        // a damaged line is skipped: the public key must be a whole P-384 key (104 bytes of valid base64)
+                        byte[] pub; try { pub = Convert.FromBase64String(p[3]); } catch (FormatException) { continue; }
+                        if (pub.Length != 104 || p[1].Trim() == "" || p[2].Trim() == "") continue;
                         l.Add(new Key { Name = p[1], KeyName = p[2], Pub = p[3], Made = t });
                     }
             }
             catch (IOException) { }
             return l;
         }
-        static void Save(List<Key> l) { File.WriteAllLines(IndexFile, l.Select(k => "ec|" + k.Name + "|" + k.KeyName + "|" + k.Pub + "|" + k.Made.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture))); }
+        // a name can come from a key backup someone else made: never a | or a line break in the index
+        public static string SafeName(string n) { return new string((n ?? "").Where(c => c != '|' && !char.IsControl(c)).ToArray()).Trim(); }
+        static void Save(List<Key> l)
+        {
+            string tmp = IndexFile + ".tmp";   // written whole, then swapped in: a crash mid-write can't leave half a file
+            File.WriteAllLines(tmp, l.Select(k => "ec|" + SafeName(k.Name) + "|" + SafeName(k.KeyName) + "|" + k.Pub + "|" + k.Made.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)));
+            Program.ReplaceFile(tmp, IndexFile);
+        }
         public static Key Find(string q) { return All().FirstOrDefault(k => string.Equals(k.Name, q, StringComparison.OrdinalIgnoreCase) || string.Equals(k.KeyName, q, StringComparison.OrdinalIgnoreCase)); }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5350", Justification = "SHA-256 fingerprint")]
         public static string Fingerprint(byte[] pub)
@@ -64,7 +76,8 @@ namespace AdeeboMeter
             if (importPrivate != null) p.Parameters.Add(new CngProperty(CngKeyBlobFormat.EccPrivateBlob.Format, importPrivate, CngPropertyOptions.None));
             using (var k = CngKey.Create(CngAlgorithm.ECDiffieHellmanP384, kn, p))
             {
-                var key = new Key { Name = name, KeyName = kn, Pub = Convert.ToBase64String(k.Export(CngKeyBlobFormat.EccPublicBlob)), Made = DateTime.Now };
+                string nm = SafeName(name); if (nm.Length > 60) nm = nm.Substring(0, 60); if (nm == "") nm = "restored key";
+                var key = new Key { Name = nm, KeyName = kn, Pub = Convert.ToBase64String(k.Export(CngKeyBlobFormat.EccPublicBlob)), Made = DateTime.Now };
                 var l = All(); l.Add(key); Save(l); return key;
             }
         }
@@ -100,6 +113,9 @@ namespace AdeeboMeter
         // ---------- encrypt for P-384 recipients; decrypt with whichever of My keys it was made for
         public static void Encrypt(Stream input, string name, Stream output, IList<byte[]> recipients)
         {
+            // the same key twice is one recipient; the header holds 1-20 (what Decrypt accepts)
+            recipients = recipients.GroupBy(Convert.ToBase64String).Select(gr => gr.First()).ToList();
+            if (recipients.Count < 1 || recipients.Count > 20) throw new CryptographicException("1 to 20 recipients per file - this has " + recipients.Count);
             var fileKey = new byte[64]; var iv = new byte[16]; using (var g = RandomNumberGenerator.Create()) { g.GetBytes(fileKey); g.GetBytes(iv); }
             try
             {
@@ -130,7 +146,10 @@ namespace AdeeboMeter
             byte[] fileKey = null;
             for (int i = 0; i < count; i++)
             {
-                var id = take(8); var lb = take(2); var ephPub = take(lb[0] << 8 | lb[1]); var wrapped = take(64);
+                var id = take(8); var lb = take(2); int el = lb[0] << 8 | lb[1]; if (el != 104) throw new CryptographicException("damaged header");
+                var ephPub = take(el); var wrapped = take(64);
+                // a one-time key must be a P-384 ECDH public key ("ECK3", 48-byte X and Y) - anything else is a damaged or crafted file
+                if (ephPub[0] != 0x45 || ephPub[1] != 0x43 || ephPub[2] != 0x4B || ephPub[3] != 0x33 || ephPub[4] != 48 || ephPub[5] != 0 || ephPub[6] != 0 || ephPub[7] != 0) throw new CryptographicException("damaged header");
                 if (fileKey != null) continue;
                 var k = mine.FirstOrDefault(m => KeyId(Convert.FromBase64String(m.Pub)).SequenceEqual(id)); if (k == null || !CngKey.Exists(k.KeyName)) continue;
                 using (var ck = CngKey.Open(k.KeyName)) using (var dh = new ECDiffieHellmanCng(ck))
@@ -166,8 +185,11 @@ namespace AdeeboMeter
                 FileCrypt.DecryptCode(input, o, passphrase, Magic3); var body = o.ToArray();
                 try
                 {
-                    int bar = Array.IndexOf(body, (byte)'|'); int nlen = int.Parse(Encoding.ASCII.GetString(body, 0, bar), CultureInfo.InvariantCulture);
-                    string name = Encoding.UTF8.GetString(body, bar + 1, nlen); var priv = body.Skip(bar + 1 + nlen + 1).ToArray();
+                    // the body is untrusted until it parses: "<name length>|<name>|<private key>", nothing else
+                    int bar = Array.IndexOf(body, (byte)'|'), nlen;
+                    if (bar <= 0 || bar > 4 || !int.TryParse(Encoding.ASCII.GetString(body, 0, bar), NumberStyles.None, CultureInfo.InvariantCulture, out nlen) || nlen < 0 || nlen > 240 || bar + 1 + nlen + 1 > body.Length || body[bar + 1 + nlen] != (byte)'|')
+                        throw new CryptographicException("this key backup is damaged");
+                    string name = SafeName(Encoding.UTF8.GetString(body, bar + 1, nlen)); var priv = body.Skip(bar + 1 + nlen + 1).ToArray();
                     var existing = All().FirstOrDefault(x => x.Name == name); if (existing != null) name += " (restored)";
                     try { return Create(name, priv); } finally { Array.Clear(priv, 0, priv.Length); }
                 }

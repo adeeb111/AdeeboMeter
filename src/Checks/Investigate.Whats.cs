@@ -46,6 +46,9 @@ namespace AdeeboMeter
         static void Whats(Monitor m, GuideRun r, Action changed)
         {
             var s = m.Latest; double cpu = m.Cpu.Avg(10), mem = s.Mem, gw = m.GwPing.Avg(6), net = m.NetPing.Avg(6), loss = s.LossPct;
+            // an average hides a link that is down right now: if the newest ping failed, test again instead of trusting older ones
+            if (double.IsNaN(m.GwPing.Last)) gw = double.NaN;
+            if (double.IsNaN(m.NetPing.Last)) net = double.NaN;
             bool wifi, vpn; int sig; string adapter, gws, dnsSrv, target; NetworkInterface nic;
             lock (m.L) { wifi = m.AdapterKind == "Wi-Fi"; sig = m.WifiSignal; adapter = m.Adapter; gws = m.Gateway; dnsSrv = m.DnsServer; vpn = m.VpnUp; target = m.NetTarget; nic = m.Primary; }
             string normal = Baseline.Normal(Brain.NetKey);
@@ -84,15 +87,15 @@ namespace AdeeboMeter
             if (double.IsNaN(gw) && g != null) foreach (var p in new[] { 53, 80, 443 }) { gwTcp = TcpReach(g, p, 800); if (!double.IsNaN(gwTcp)) break; }
             if (g == null) r.Obs("w", vpn ? 3 : 2, "3. Your router", vpn ? "no local router (the VPN carries everything)" : "no default gateway - Windows has no way out");
             bool gwSilent = g != null && double.IsNaN(gw) && double.IsNaN(gwTcp);   // judged after the internet test: many routers just ignore ping and TCP
-            if (g != null) r.Obs("m", gwSilent ? 1 : gw > 60 ? 1 : 0, "3. Your router (" + g + ")", !double.IsNaN(gw) ? F(gw, " ms") : !double.IsNaN(gwTcp) ? "doesn't answer ping, but answers on TCP in " + F(gwTcp, " ms") + " - it's there" : "no answer to ping or TCP");
+            if (g != null) r.Obs("m", gwSilent ? 1 : gw > 15 ? 1 : 0, "3. Your router (" + g + ")", !double.IsNaN(gw) ? F(gw, " ms") : !double.IsNaN(gwTcp) ? "doesn't answer ping, but answers on TCP in " + F(gwTcp, " ms") + " - it's there" : "no answer to ping or TCP");
             if (g == null && !vpn) { r.Conclude(2, "Windows has no default gateway on " + (string.IsNullOrEmpty(adapter) ? "this connection" : adapter) + " - it doesn't know where to send anything that isn't local. Usually DHCP didn't finish."); r.Next.Add("Disconnect and reconnect; if it stays, DHCP lease and IPv6 lifetimes shows what the network gave you."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; around(); return; }
             // 4. the internet (ping, or TCP 443 when ping is blocked)
             step("Testing the internet...");
             IPAddress t1; if (!IPAddress.TryParse((target ?? "").Trim(), out t1)) t1 = IPAddress.Parse("1.1.1.1");
-            bool retested = false; if (double.IsNaN(net)) { net = PingNow(t1, 3); retested = true; }
+            if (double.IsNaN(net)) net = PingNow(t1, 3);
             double netTcp = double.NaN; if (double.IsNaN(net)) { netTcp = TcpReach(t1, 443, 2000); if (double.IsNaN(netTcp)) netTcp = TcpReach(IPAddress.Parse("8.8.8.8"), 443, 2000); }
-            r.Obs("m", double.IsNaN(net) && double.IsNaN(netTcp) ? 2 : net > 200 || (!double.IsNaN(loss) && loss > 5) ? 1 : 0, "4. The internet",
-                !double.IsNaN(net) ? F(net, " ms") + (!double.IsNaN(loss) && !retested ? " · " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost" : "") + (Cfg.NetSec == 0 ? " (your internet check is off - tested once now)" : "") : !double.IsNaN(netTcp) ? "ping is blocked here, but a TCP connection works (" + F(netTcp, " ms") + ")" : "no answer to ping or TCP 443");
+            r.Obs("m", double.IsNaN(net) && double.IsNaN(netTcp) ? 2 : net > 150 || (!double.IsNaN(loss) && loss > 1) ? 1 : 0, "4. The internet",   // the same lines as The internet is slow: over 150 ms, or more than 1% lost (calls stutter from 2%)
+                !double.IsNaN(net) ? F(net, " ms") + (!double.IsNaN(loss) ? " · " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost" : "") + (Cfg.NetSec == 0 ? " (your internet check is off - tested once now)" : "") : !double.IsNaN(netTcp) ? "ping is blocked here, but a TCP connection works (" + F(netTcp, " ms") + ")" : "no answer to ping or TCP 443");
             if (normal != "") r.Obs("i", 3, "Normal for this network", normal);
             if (double.IsNaN(net) && double.IsNaN(netTcp))
             {
@@ -121,14 +124,24 @@ namespace AdeeboMeter
             }
             // 5. names
             step("Asking your DNS server...");
-            IPAddress ds; double dnsNow = double.NaN; string dnsErr = "";
-            if (IPAddress.TryParse((dnsSrv ?? "").Split(',')[0].Trim(), out ds))
+            // every server Windows has (a dead primary with a working secondary is fine), then Windows' own resolver as the
+            // last word - with DNS over HTTPS or a VPN's DNS rules, plain UDP 53 to the server can fail while apps resolve fine
+            IPAddress ds = null; double dnsNow = double.NaN; string dnsErr = ""; bool viaWindows = false;
+            foreach (var one in (dnsSrv ?? "").Split(',').Select(z => z.Trim()).Where(z => z != "").Take(3))
             {
-                var sw = System.Diagnostics.Stopwatch.StartNew(); var q = Toolkit.Query(ds, "www.microsoft.com", 1, true);
-                if (q != null && q.Rcode == 0 && q.Rrs.Any(x => x.Section == 1)) dnsNow = sw.ElapsedMilliseconds; else dnsErr = q == null ? "no answer from " + ds : "answered with an error";
+                IPAddress cand; if (!IPAddress.TryParse(one, out cand)) continue;
+                var sw = System.Diagnostics.Stopwatch.StartNew(); var q = Toolkit.Query(cand, "www.microsoft.com", 1, true);
+                if (q != null && q.Rcode == 0 && q.Rrs.Any(x => x.Section == 1)) { dnsNow = sw.ElapsedMilliseconds; ds = cand; break; }
+                dnsErr = q == null ? "no answer from " + cand : cand + " answered with an error";
             }
-            else dnsErr = "no DNS server set";
-            r.Obs("m", double.IsNaN(dnsNow) ? 2 : dnsNow > 500 ? 1 : 0, "5. Names (DNS)", !double.IsNaN(dnsNow) ? F(dnsNow, " ms") + " from " + ds : dnsErr);
+            if (dnsErr == "" && ds == null) dnsErr = "no DNS server set";
+            if (double.IsNaN(dnsNow))
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                try { var t = System.Threading.Tasks.Task.Factory.StartNew(() => Dns.GetHostAddresses("www.microsoft.com")); if (t.Wait(4000) && t.Result.Length > 0) { dnsNow = sw.ElapsedMilliseconds; viaWindows = true; } }
+                catch (AggregateException) { }
+            }
+            r.Obs("m", double.IsNaN(dnsNow) ? 2 : dnsNow > 500 ? 1 : 0, "5. Names (DNS)", !double.IsNaN(dnsNow) ? F(dnsNow, " ms") + (viaWindows ? " through Windows (encrypted DNS or the VPN's rules - " + dnsErr + ")" : " from " + ds) : dnsErr);
             if (double.IsNaN(dnsNow))
             {
                 r.Conclude(2, "The internet answers, but names don't turn into addresses (" + dnsErr + ") - so every site and app fails, even though the connection is fine.");

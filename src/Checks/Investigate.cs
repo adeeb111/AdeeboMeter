@@ -91,9 +91,15 @@ namespace AdeeboMeter
             else if (!double.IsNaN(bloat) && bloat > 80 && up > 2) { r.Conclude(1, "Your own uploads are filling the line - the router adds " + F(bloat, " ms") + " while your PC sends. Pause OneDrive or the big upload and it clears."); r.Next.Add("Check what's uploading in What's running (bytes per app in Live capture)."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
             else if (double.IsNaN(net) || net > 150 || (!double.IsNaN(loss) && loss > 3)) { r.Conclude(2, "Your PC and router are fine (" + F(gw, " ms") + "); the delay starts beyond the router - your provider or the internet."); r.Next.Add("Run Check a destination on the site that's slow to see which hop adds the time."); r.Next.Add("If it lasts, restart the modem; then call your provider with the times shown here."); r.GoTab = "dest"; r.GoLabel = "Check a destination"; }
             else if (!double.IsNaN(dns) && dns > 300) { r.Conclude(1, "Pages start slowly because name lookups take " + F(dns, " ms") + ". Once a page starts, the network itself is fine."); r.Next.Add("Run the DNS speed test (Health and tools) to see if another DNS server answers faster."); r.GoTab = "health"; r.GoLabel = "Open Health and tools"; }
+            else if (r.ObservedCopy().Any(o => o[1] == "1"))
+            {
+                var amber = r.ObservedCopy().Where(o => o[1] == "1").Select(o => o[2] + " " + o[3]).Take(3).ToList();
+                r.Conclude(1, "Nothing is badly slow, but not everything is clean: " + string.Join("; ", amber) + ". That's enough to notice on calls or games; on browsing it usually isn't.");
+                r.Next.Add("Run it again when it feels slow - if the same thing is worse then, that's the cause.");
+            }
             else { r.Conclude(0, "Nothing on the path is slow right now: router " + F(gw, " ms") + ", internet " + F(net, " ms") + ". If one site or app feels slow, it's most likely that service, not your network."); r.Next.Add("Run A website or app won't open with that site's name - it times each step."); r.GoTab = "dest"; r.GoLabel = "Check a destination"; }
 
-            r.NotEst.Add("Your provider's speed plan - AdeeboMeter doesn't run speed tests (they'd send hundreds of MB).");
+            r.NotEst.Add("Your provider's speed plan - this check sends almost nothing; the Speed test in the Toolbox measures it when you ask.");
             r.NotEst.Add("What the slow site's own servers are doing.");
             if (wifi && sig < 0) r.NotEst.Add("Wi-Fi signal and channel crowding - Windows hides them without location permission.");
             if (double.IsNaN(bloat)) r.NotEst.Add("Latency under load - not enough busy and quiet minutes yet.");

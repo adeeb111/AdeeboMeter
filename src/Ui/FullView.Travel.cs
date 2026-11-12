@@ -48,14 +48,17 @@ namespace AdeeboMeter
                 try { BeginInvoke((Action)delegate { travelBusy = false; travelStatus = ""; travelCanvas.Invalidate(); }); } catch { travelBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
-        void LoadRoutes() { Task.Factory.StartNew(() => { var t = Routes.Read(); try { BeginInvoke((Action)delegate { routeTable = t; travelCanvas.Invalidate(); }); } catch { } }); }
+        // one read at a time, and a failed one waits a minute - a paint never starts another and another
+        bool routesLoading, appsLoading; DateTime appsFailedAt = DateTime.MinValue;
+        void LoadRoutes() { if (routesLoading) return; routesLoading = true; Task.Factory.StartNew(() => { List<Routes.R> t; try { t = Routes.Read(); } catch (Exception e) { Program.Log("routes: " + e.Message); t = new List<Routes.R>(); } try { BeginInvoke((Action)delegate { routeTable = t; routesLoading = false; travelCanvas.Invalidate(); }); } catch { routesLoading = false; } }); }
         void LoadApps()
         {
+            if (appsLoading || (DateTime.UtcNow - appsFailedAt).TotalSeconds < 60) return; appsLoading = true;
             Task.Factory.StartNew(() =>
             {
                 List<M365.Row> rows = null; Dictionary<int, string> fam = null; string fb = ""; List<string[]> ol = null;
                 try { fam = M365.FamilyByPid(); rows = M365.Connections(M); fb = M365.TcpFallback(M, rows); ol = M365.OutlookSlow(M, rows); } catch (Exception e) { Program.Log("m365: " + e.Message); }
-                try { BeginInvoke((Action)delegate { m365Rows = rows; m365Fam = fam; m365Fallback = fb; outlookRows = ol; travelCanvas.Invalidate(); }); } catch { }
+                try { BeginInvoke((Action)delegate { appsLoading = false; if (rows == null) appsFailedAt = DateTime.UtcNow; m365Rows = rows; m365Fam = fam; m365Fallback = fb; outlookRows = ol; travelCanvas.Invalidate(); }); } catch { appsLoading = false; }
             });
         }
 
@@ -65,7 +68,7 @@ namespace AdeeboMeter
             Begin(travelCanvas);
             float x = 14 * S, y = 8 * S, w = travelCanvas.ClientSize.Width - 28 * S;
             y = PaintStory(g, x, y, w);
-            var need = new Size(0, (int)(y + 30 * S)); if (travelCanvas.AutoScrollMinSize != need) { travelCanvas.AutoScrollMinSize = need; travelCanvas.Invalidate(); }
+            var need = new Size(0, (int)(y + 30 * S)); SetNeed(travelCanvas, need);
         }
         static float Lead(Graphics g, string t, float x, float y, float w, bool muted)
         {
@@ -183,7 +186,7 @@ namespace AdeeboMeter
         // ---------- Teams and Office, end to end
         float PaintApps(Graphics g, float x, float y, float w)
         {
-            if (m365Rows == null) { LoadApps(); return Lead(g, "Looking at Teams and Office...", x, y + 4 * S, w, true); }
+            if (m365Rows == null) { LoadApps(); return Lead(g, (DateTime.UtcNow - appsFailedAt).TotalSeconds < 60 ? "Couldn't read the running apps just now (Windows' process list didn't answer) - trying again in a minute." : "Looking at Teams and Office...", x, y + 4 * S, w, true); }
             y = Lead(g, "Which program does what, and what each one sends where - live from this PC. Roles come from server names and Microsoft's published Teams ranges (" + M365.AsOf + "); anything else from Microsoft shows as \"role unknown\" rather than a guess.", x, y + 4 * S, w, false);
             var famCount = m365Fam == null ? new List<string[]>() : m365Fam.Values.GroupBy(v => v).Select(gr => new[] { gr.Key, gr.Count() + (gr.Count() == 1 ? " process" : " processes"), "3" }).ToList();
             if (famCount.Count == 0) famCount.Add(NoFamilies);

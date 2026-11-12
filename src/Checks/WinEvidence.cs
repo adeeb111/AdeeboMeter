@@ -86,12 +86,12 @@ namespace AdeeboMeter
         }
         static RegistryKey SafeOpen(RegistryKey k, string s) { try { return k.OpenSubKey(s); } catch { return null; } }
 
-        // ---------- why network sign-in (802.1X / Wi-Fi) failed
+        // ---------- why network sign-in (802.1X / Wi-Fi) failed - failure events only (12012 and 15501 are the successes)
         public static List<string[]> Auth()
         {
             var rows = new List<string[]>(); string e1, e2;
-            var wl = EvLog.Recent("Microsoft-Windows-WLAN-AutoConfig/Operational", "EventID=8002 or EventID=12013 or EventID=12012 or EventID=11006", 24 * 7, 8, out e1);
-            var wd = EvLog.Recent("Microsoft-Windows-Wired-AutoConfig/Operational", "EventID=15501 or EventID=15502 or EventID=15514", 24 * 7, 8, out e2);
+            var wl = EvLog.Recent("Microsoft-Windows-WLAN-AutoConfig/Operational", "EventID=8002 or EventID=12013 or EventID=11006", 24 * 7, 8, out e1);
+            var wd = EvLog.Recent("Microsoft-Windows-Wired-AutoConfig/Operational", "EventID=15502 or EventID=15514", 24 * 7, 8, out e2);
             foreach (var e in wl.Concat(wd).OrderByDescending(x => x.T).Take(10))
             {
                 string reason = Reason(e.Text);

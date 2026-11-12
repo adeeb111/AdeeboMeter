@@ -104,7 +104,7 @@ namespace AdeeboMeter
                     string id = Clean(f[1], 40).ToLowerInvariant(); if (id.Length == 0 || !id.All(c => char.IsLetterOrDigit(c) || c == '-')) continue;
                     var g = all.FirstOrDefault(x => x.Id == id);
                     if (g == null) { g = new Game { Id = id, Custom = true }; all.Add(g); }
-                    string nm = Clean(f[2], 40); if (nm.Length > 0) g.Name = nm;
+                    string nm = Clean(f[2], 40); if (nm.Length > 0) g.Name = nm; else if (string.IsNullOrEmpty(g.Name)) g.Name = id;   // a nameless custom game is shown by its id, never null
                     var ex = f[3].Split(';').Select(x => Clean(x, 60)).Where(x => x.Length > 0 && x.IndexOfAny(Path.GetInvalidFileNameChars()) < 0).Take(4).ToArray();
                     if (ex.Length > 0 || g.Custom) g.Exes = ex;
                 }
@@ -606,12 +606,21 @@ namespace AdeeboMeter
             return Redact(sb.ToString(), ssid);
         }
         static string Fx(double v) { return double.IsNaN(v) ? "-" : v.ToString(v < 10 ? "0.0" : "0", CultureInfo.InvariantCulture); }
-        static readonly Regex PrivIp = new Regex(@"\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|f[cd][0-9a-f]{2}:[0-9a-f:]+|fe80:[0-9a-f:]+)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        // home and provider-inside addresses (CGNAT 100.64/10 too), link-local with its zone (fe80::1%12), and IPv6 addresses
+        // built from the network card's MAC (EUI-64: ff:fe in the middle) - none of them belong in a report you send
+        static readonly Regex PrivIp = new Regex(@"\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}|f[cd][0-9a-f]{2}:[0-9a-f:]+|fe80:[0-9a-f:]+(%\w+)?|[0-9a-f:]*:[0-9a-f]{1,2}ff:fe[0-9a-f]{2}:[0-9a-f]{1,4})\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         static readonly Regex Mac = new Regex(@"\b([0-9a-f]{2}[:-]){5}[0-9a-f]{2}\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         public static string Redact(string text, string ssid)
         {
             string t = PrivIp.Replace(text, "[internal address]"); t = Mac.Replace(t, "[hardware address]");
-            if (!string.IsNullOrEmpty(ssid) && ssid.Length >= 2) t = Regex.Replace(t, Regex.Escape(ssid), "[Wi-Fi name]", RegexOptions.IgnoreCase);
+            // the Wi-Fi name as a whole word only ("td" or "ms" must not eat table cells or every "12 ms"); a very short name
+            // only where it's quoted or follows "Wi-Fi"
+            if (!string.IsNullOrEmpty(ssid) && ssid.Length >= 2)
+            {
+                string e = Regex.Escape(ssid);
+                t = ssid.Length >= 4 ? Regex.Replace(t, @"(?<![\w-])" + e + @"(?![\w-])", "[Wi-Fi name]", RegexOptions.IgnoreCase)
+                    : Regex.Replace(t, "(\"" + e + "\"|(?<=Wi-Fi )" + e + @"(?![\w-]))", "[Wi-Fi name]", RegexOptions.IgnoreCase);
+            }
             return t;
         }
     }
@@ -653,7 +662,17 @@ namespace AdeeboMeter
             return ip == null ? "No game packets in 8 seconds - are you in a match (not the menu)?" : null;
         }
         // the public address that appears most often (either direction); private, multicast and broadcast addresses don't count
-        public static string Busiest(string tsharkFields)
+        public static string Busiest(string tsharkFields) { return Busiest(tsharkFields, MyAddresses()); }
+        // this PC's own addresses: with a public IPv4 on the PC (bridge-mode modem, a university network) it would be in
+        // every packet and "win"
+        static HashSet<string> MyAddresses()
+        {
+            var me = new HashSet<string>();
+            try { foreach (var n in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()) foreach (var u in n.GetIPProperties().UnicastAddresses) me.Add(u.Address.ToString()); }
+            catch (System.Net.NetworkInformation.NetworkInformationException) { }
+            return me;
+        }
+        public static string Busiest(string tsharkFields, HashSet<string> mine)
         {
             var count = new Dictionary<string, int>();
             foreach (var line in (tsharkFields ?? "").Split('\n'))
@@ -662,7 +681,7 @@ namespace AdeeboMeter
                     IPAddress a; if (!IPAddress.TryParse(f.Trim(), out a) || a.AddressFamily != AddressFamily.InterNetwork) continue;
                     var b = a.GetAddressBytes();
                     bool priv = b[0] == 10 || b[0] == 127 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168) || (b[0] == 169 && b[1] == 254) || b[0] >= 224 || (b[0] == 100 && b[1] >= 64 && b[1] <= 127);
-                    if (priv) continue;
+                    if (priv || (mine != null && mine.Contains(a.ToString()))) continue;
                     int c; count.TryGetValue(a.ToString(), out c); count[a.ToString()] = c + 1;
                 }
             return count.Count == 0 ? null : count.OrderByDescending(kv => kv.Value).First().Key;

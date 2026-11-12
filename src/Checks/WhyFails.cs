@@ -11,6 +11,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
+using System.Runtime.InteropServices;
 
 namespace AdeeboMeter
 {
@@ -18,13 +19,16 @@ namespace AdeeboMeter
     // Rows: { level, name, value, advice, evidence }.
     static class WhyFails
     {
+        [StructLayout(LayoutKind.Sequential)] struct WinHttpProxyInfo { public uint AccessType; public IntPtr Proxy, Bypass; }
+        [DllImport("winhttp.dll", SetLastError = true)] static extern bool WinHttpGetDefaultProxyConfiguration(ref WinHttpProxyInfo info);
+        [DllImport("kernel32.dll")] static extern IntPtr GlobalFree(IntPtr h);
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
 
         // ---------- which proxy a URL uses
         public static List<string[]> Proxy(string url)
         {
             var rows = new List<string[]>();
-            if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url;
+            if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url;
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
             try
             {
@@ -51,10 +55,17 @@ namespace AdeeboMeter
                 }
             }
             catch (Exception e) { Program.Log("proxy reg: " + e.Message); }
-            string wh = Job.Run(Job.Netsh, "winhttp show proxy", 5000);
-            bool whDirect = wh.IndexOf("Direct access", StringComparison.OrdinalIgnoreCase) >= 0;
-            var m = Regex.Match(wh, @"Proxy Server\(s\)\s*:\s*(\S+)");
-            rows.Add(R(3, "Windows services (WinHTTP)", whDirect ? "direct" : m.Success ? m.Groups[1].Value : "unknown", "Windows Update, Teams sign-in and other background services use this one - it can differ from the browser's.", "w"));
+            // WinHTTP's own setting from the API (netsh's words are translated on non-English Windows)
+            string whText = "unknown";
+            try
+            {
+                var pi = new WinHttpProxyInfo();
+                if (WinHttpGetDefaultProxyConfiguration(ref pi))
+                    try { whText = pi.AccessType == 3 && pi.Proxy != IntPtr.Zero ? Marshal.PtrToStringUni(pi.Proxy) : "direct"; }
+                    finally { if (pi.Proxy != IntPtr.Zero && GlobalFree(pi.Proxy) != IntPtr.Zero) Program.Log("winhttp free"); if (pi.Bypass != IntPtr.Zero && GlobalFree(pi.Bypass) != IntPtr.Zero) Program.Log("winhttp free"); }
+            }
+            catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; }
+            rows.Add(R(3, "Windows services (WinHTTP)", whText, "Windows Update, Teams sign-in and other background services use this one - it can differ from the browser's.", "w"));
             return rows;
         }
 
@@ -137,11 +148,11 @@ namespace AdeeboMeter
             try { relays = Dns.GetHostAddresses("worldaz.relay.teams.microsoft.com").Where(x => x.AddressFamily == AddressFamily.InterNetwork).Take(2).ToList().ToArray(); }
             catch (Exception e) { rows.Add(R(2, "Teams relay", "couldn't find it: " + e.Message, "", "m")); return rows; }
             if (relays.Length == 0) { rows.Add(R(2, "Teams relay", "no IPv4 address", "", "m")); return rows; }
-            var maps = new List<IPEndPoint>();
+            var maps = new List<IPEndPoint>(); var mapFrom = new List<IPAddress>();
             using (var u = new UdpClient(0, AddressFamily.InterNetwork))
             {
                 u.Client.ReceiveTimeout = 1500;
-                foreach (var r in relays.Concat(relays.Length == 1 ? relays : Array.Empty<IPAddress>()))
+                foreach (var r in relays.Distinct().Take(2))
                 {
                     var tid = new byte[12]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(tid);
                     var req = new byte[20]; req[1] = 1; req[4] = 0x21; req[5] = 0x12; req[6] = 0xA4; req[7] = 0x42; Array.Copy(tid, 0, req, 8, 12);
@@ -161,9 +172,10 @@ namespace AdeeboMeter
                         catch (SocketException) { }
                     }
                     rows.Add(R(got != null ? 0 : 2, "UDP 3478 to " + r, got != null ? "works - answer in " + sw.ElapsedMilliseconds + " ms; you're seen as " + got : "no answer", got != null ? "" : "UDP to Teams' relays is blocked here - calls will fall back to TCP 443 and stutter more. Ask IT to allow UDP 3478-3481 to Microsoft's Teams ranges.", "m"));
-                    if (got != null) maps.Add(got);
+                    if (got != null && !mapFrom.Contains(r)) { maps.Add(got); mapFrom.Add(r); }   // the NAT test needs two different servers
                 }
             }
+            if (maps.Count < 2 && relays.Length == 1) rows.Add(R(3, "NAT type", "not tested - only one relay answered DNS, and the test needs two different servers", "", "m"));
             if (maps.Count >= 2)
             {
                 bool same = maps[0].Port == maps[1].Port && maps[0].Address.Equals(maps[1].Address);

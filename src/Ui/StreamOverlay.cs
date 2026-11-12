@@ -19,7 +19,7 @@ namespace AdeeboMeter
     {
         static StreamOverlay open;
         readonly Monitor M; readonly Timer tick = new Timer { Interval = 1000 };
-        bool green, png; Point down;
+        bool green, png; Point down; byte[] lastPng;
         static int Sc(float v) { return (int)(v * Draw.S); }
         public static string PngPath { get { return Path.Combine(Program.DataDir, "overlay.png"); } }
 
@@ -105,7 +105,11 @@ namespace AdeeboMeter
                 using (var bmp = new Bitmap(ClientSize.Width, ClientSize.Height, PixelFormat.Format32bppArgb))
                 {
                     using (var g = Graphics.FromImage(bmp)) Paint1(g, ClientSize);
-                    string tmp = PngPath + ".tmp"; bmp.Save(tmp, ImageFormat.Png);
+                    // only when the picture changed: an idle graph doesn't rewrite the file 86,400 times a day
+                    byte[] png; using (var ms = new MemoryStream()) { bmp.Save(ms, ImageFormat.Png); png = ms.ToArray(); }
+                    if (lastPng != null && png.Length == lastPng.Length && png.SequenceEqual(lastPng) && File.Exists(PngPath)) return;
+                    lastPng = png;
+                    string tmp = PngPath + ".tmp"; File.WriteAllBytes(tmp, png);
                     Program.ReplaceFile(tmp, PngPath);
                 }
             }

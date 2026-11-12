@@ -70,10 +70,10 @@ namespace AdeeboMeter
             // freeze watchdog: the window answers a ping every second; if it doesn't for 2 s, the log says what it was doing
             watchdog = new System.Threading.Timer(delegate
             {
-                if (!IsHandleCreated || IsDisposed) return;
+                if (!IsHandleCreated || IsDisposed || Disposing) return;
                 var since = DateTime.UtcNow - lastPong;
                 if (since.TotalSeconds >= 2 && !frozenLogged) { frozenLogged = true; frozeDoing = UiActivity.Doing; Program.Log("window froze (" + since.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s so far) while " + frozeDoing); }
-                if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; }); } catch (InvalidOperationException) { pinged = false; } }
+                if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; }); } catch (Exception) { pinged = false; } }   /* the window may be closing: an exception here would end the whole process (a timer thread) */
             }, null, 1000, 1000);
             Text = "AdeeboMeter - " + Program.Tagline; Icon = icon; BackColor = Theme.Bg; Font = Draw.fBody;
             // Start at the size of the screen it opens on, so it fits even if maximizing is refused.
@@ -300,6 +300,10 @@ namespace AdeeboMeter
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
             body.Controls.Add(left, 0, 0); body.Controls.Add(side, 1, 0);
             Controls.Add(body); Controls.Add(footer); Controls.Add(new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Theme.Line, Tag = "line" }); Controls.Add(pathPanel); Controls.Add(header);
+            // docking adds the fill first, which would make Tab visit the page before its tabs: put reading order back
+            header.TabIndex = 0; pathPanel.TabIndex = 1; body.TabIndex = 2; footer.TabIndex = 3; left.TabIndex = 0; side.TabIndex = 1;
+            int ti = 0; foreach (var c in left.Controls.Cast<Control>().Where(c => c.Dock == DockStyle.Top).OrderBy(c => c.Top)) c.TabIndex = ti++;
+            foreach (var c in left.Controls.Cast<Control>().Where(c => c.Dock != DockStyle.Top)) c.TabIndex = 100 + ti++;
             ShowTab();
 
             timer = new System.Windows.Forms.Timer { Interval = 500 };
@@ -310,6 +314,10 @@ namespace AdeeboMeter
                 {
                     if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return;   // its own handler clears it
                     if (tab == "toolbox" && tbSearch != null && tbSearch.Box.Text != "" && toolboxPage.ContainsFocus) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; return; }   // a filter is on: Esc clears it first
+                    // typing in any box: Esc clears that box (and stays) - it never throws away a running check or a result
+                    var tb = ActiveTextBox(); if (tb != null && tb.Text != "" && !tb.ReadOnly) { e.SuppressKeyPress = true; tb.Text = ""; return; }
+                    // a tool still running: a stray Esc doesn't throw it away (the window's X still closes)
+                    if (tbBusy || sniffing) { e.SuppressKeyPress = true; return; }
                     Close();
                 }
                 else if (tab == "toolbox" && tbCanvas != null && e.Control && (e.KeyCode == Keys.PageDown || e.KeyCode == Keys.PageUp) && SnmpView(tbSel))
@@ -319,7 +327,7 @@ namespace AdeeboMeter
                 }
                 else if (tab == "toolbox" && tbCanvas != null && e.Control && e.KeyCode == Keys.C && !(ActiveControl is TextBoxBase) && !tbSearch.Box.Focused && !tbBoxes.Any(b => b != null && b.Box.Focused) && tbRows != null && !Examples.IsExample(tbRows) && !tbBusy)
                 {
-                    e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { Program.Log("copy: " + ce.Message); }   // Ctrl+C copies the result, like the link
+                    e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { CopyFailed(ce); }   // Ctrl+C copies the result, like the link
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
                 else if (e.KeyCode == Keys.F1)
@@ -356,7 +364,7 @@ namespace AdeeboMeter
                 // WinForms makes a small copy of the window icon for each window; resetting the icon releases it now, not "someday".
                 try { ShowIcon = false; Icon = null; } catch { }
                 Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
-                try { if (tip.IsHandleCreated) tip.Close(); } catch { } tip.Dispose(); live.Stop(); list.ReleaseAll(); procs = new List<AppStat>(); pinResults = null;
+                try { if (tip.IsHandleCreated) tip.Close(); } catch { } tip.Dispose(); live.Dispose(); list.ReleaseAll(); procs = new List<AppStat>(); pinResults = null;
                 foreach (var l in subBtns.Values) foreach (var c in l) if (!c.IsDisposed) c.Dispose(); subBtns.Clear(); connSnap = new List<Conn>(); treeRows = null; treeBy = null; svcs = null; startups = null; realPkts = null; realDecode = null; chatPkts = null; learnPkts = null; m365Rows = null; routeTable = null; travelDest = null; guideRun = null; replayDay = null; if (tbRun0 != null) tbRun0.Stop = true; mtuHops = null; mtrHops = null; tbRows = null; if (replayBmp != null) { replayBmp.Dispose(); replayBmp = null; } };
             Load += delegate { ApplyTheme(); };
         }
@@ -376,7 +384,29 @@ namespace AdeeboMeter
             UiActivity.Doing = "switching to " + tab;
             // one layout pass for the whole switch, not one per page shown or hidden
             if (leftPane != null) leftPane.SuspendLayout();
-            try { ShowTab2(); } finally { if (leftPane != null) leftPane.ResumeLayout(true); }
+            try { ShowTab2(); FitBars(this); } finally { if (leftPane != null) leftPane.ResumeLayout(true); }
+        }
+        // Button bars and tab rows wrap onto a second line when they don't fit (a small screen, 175% scaling, French) instead
+        // of cutting the last tabs off; each one grows to what it needs and never below its designed height.
+        readonly HashSet<FlowLayoutPanel> fitted = new HashSet<FlowLayoutPanel>();
+        void FitBars(Control root)
+        {
+            foreach (Control c in root.Controls)
+            {
+                var f = c as FlowLayoutPanel;
+                if (f != null && f.Dock == DockStyle.Top && !f.WrapContents && fitted.Add(f))
+                {
+                    int minH = f.Height; var bar = f; bar.WrapContents = true;
+                    bar.Layout += delegate
+                    {
+                        if (bar.Width <= 0) return;
+                        int h = Math.Max(minH, bar.GetPreferredSize(new Size(bar.Width, 0)).Height);
+                        if (Math.Abs(bar.Height - h) > 1) bar.Height = h;
+                    };
+                    bar.PerformLayout();
+                }
+                if (c.HasChildren && !(c is DB)) FitBars(c);
+            }
         }
         void ShowTab2()
         {
@@ -388,7 +418,7 @@ namespace AdeeboMeter
             overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer";
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
-            SyncPointsBtn(); PageUsed(tab);
+            SyncPointsBtn(); WatchUse(tab);
             string sec = SecOf(tab); if (sec != "") lastIn[sec] = tab;
             if (sec != curSec) { curSec = sec; BuildSubTabs(sec); }
             if (tab == "windows" && treeRows == null) LoadInside();
@@ -498,7 +528,7 @@ namespace AdeeboMeter
                 liveView = live.Snapshot(delegate(int port) { string a; return map.TryGetValue(port, out a) ? a : null; }, oneWay);
                 liveCanvas.Invalidate();
             }
-            else if (!live.Running && liveBtn.Text != "Start live capture") { liveBtn.Text = "Start live capture"; liveCanvas.Invalidate(); }
+            else if (!live.Running && liveBtn.Text != L.T("Start live capture")) { liveBtn.Text = "Start live capture"; liveCanvas.Invalidate(); }
         }
 
         void ToggleLive()
@@ -693,6 +723,13 @@ namespace AdeeboMeter
             return n;
         }
 
+        public void StopCaptures() { live.Stop(); }
+        TextBox ActiveTextBox()
+        {
+            Control c = ActiveControl; var cc = c as ContainerControl;
+            while (cc != null && cc.ActiveControl != null) { c = cc.ActiveControl; cc = c as ContainerControl; }
+            return c as TextBox;
+        }
         // ---------- hover explanations and clickable painted areas
         void Begin(Control c)
         {
@@ -712,8 +749,36 @@ namespace AdeeboMeter
             List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) acts[c] = l = new List<KeyValuePair<RectangleF, Action>>();
             l.Add(new KeyValuePair<RectangleF, Action>(r, a));
         }
+        // keyboard: the painted actions of a page in reading order; Tab walks them, Enter presses
+        readonly Dictionary<Control, int> actFocus = new Dictionary<Control, int>();
+        List<KeyValuePair<RectangleF, Action>> ActsInOrder(Control c)
+        {
+            List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) return new List<KeyValuePair<RectangleF, Action>>();
+            return l.Where(kv => kv.Key.Width > 0 && kv.Key.Height > 0).OrderBy(kv => (int)(kv.Key.Top / (8 * S))).ThenBy(kv => kv.Key.Left).ToList();
+        }
+        void WireKeys(DB db)
+        {
+            if (db.KeyNav) return;   // lists with their own arrow keys
+            Func<RectangleF> mark = () => { int i; var l = ActsInOrder(db); return actFocus.TryGetValue(db, out i) && i >= 0 && i < l.Count ? l[i].Key : RectangleF.Empty; };
+            db.Mark = mark;
+            db.LostFocus += delegate { actFocus.Remove(db); };   // a mark only after Tab is pressed - never on a click or at start
+            db.TabStep = forward =>
+            {
+                var l = ActsInOrder(db); int i; if (!actFocus.TryGetValue(db, out i)) i = -1;
+                i += forward ? 1 : -1; if (l.Count == 0 || i < 0 || i >= l.Count) { actFocus.Remove(db); db.Invalidate(); return false; }
+                actFocus[db] = i; var r = l[i].Key;
+                if (db.AutoScroll && (r.Top < 0 || r.Bottom > db.ClientSize.Height)) { var sp = db.AutoScrollPosition; db.AutoScrollPosition = new Point(-sp.X, Math.Max(0, (int)(-sp.Y + r.Top - db.ClientSize.Height / 3))); }
+                // what a screen reader says: the explanation under that spot, if there is one
+                List<KeyValuePair<RectangleF, string>> h; string say = "";
+                if (hints.TryGetValue(db, out h)) { var c0 = new PointF(r.X + r.Width / 2, r.Y + r.Height / 2); var hit = h.LastOrDefault(kv => kv.Key.Contains(c0)); if (hit.Value != null) { var e = TipEntry(hit.Value); if (e != null) say = e.Friendly ?? ""; } }
+                db.Announce(say != "" ? say : "item " + (i + 1) + " of " + l.Count);
+                db.Invalidate(); return true;
+            };
+            db.Press = () => { var r = mark(); if (r.Width <= 0) return; var l = ActsInOrder(db); int i; if (actFocus.TryGetValue(db, out i) && i < l.Count) { UiActivity.Doing = "key on " + db.Name + " (" + tab + ")"; l[i].Value(); } };
+        }
         void Wire(Control c)
         {
+            var dbc = c as DB; if (dbc != null) WireKeys(dbc);
             c.MouseMove += delegate(object s, MouseEventArgs e)
             {
                 List<KeyValuePair<RectangleF, Action>> l; bool click = acts.TryGetValue(c, out l) && l.Any(kv => kv.Key.Contains(e.Location));
@@ -864,9 +929,11 @@ namespace AdeeboMeter
         void Sniff(Conn c)
         {
             if (!npcap || sniffing || c == null) return;
+            if (live.Running && !live.RingActive && live.RingError != "") { sniffStatus = "The rewind buffer stopped (" + live.RingError + ") - capturing from now instead."; UpdateConnStatus(); }
             if (live.RingActive && !string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0)
             {
                 IPAddress ip; if (!IPAddress.TryParse(c.RemoteIp, out ip)) return;
+                ip = new IPAddress(ip.GetAddressBytes());   // fe80::1%12 -> fe80::1: capture filters have no zone
                 string l4 = c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? "udp" : "tcp";
                 string bpf = "host " + ip + " and port " + c.RemotePort + " and port " + c.LocalPort;
                 string df = (ip.AddressFamily == AddressFamily.InterNetworkV6 ? "ipv6.addr==" : "ip.addr==") + ip + " && " + l4 + ".port==" + c.RemotePort + " && " + l4 + ".port==" + c.LocalPort;
@@ -877,18 +944,18 @@ namespace AdeeboMeter
             }
             string filt; IPAddress rip;
             if (!string.IsNullOrEmpty(c.RemoteIp) && IPAddress.TryParse(c.RemoteIp, out rip) && c.RemotePort > 0)
-                filt = "host " + rip + " and port " + c.RemotePort + " and port " + c.LocalPort;
+                filt = "host " + new IPAddress(rip.GetAddressBytes()) + " and port " + c.RemotePort + " and port " + c.LocalPort;
             else filt = (c.Proto == "UDP" ? "udp" : "tcp") + " port " + c.LocalPort;
             string iface; lock (M.L) iface = M.IfaceId;
             Guid gid; if (!Guid.TryParse((iface ?? "").Trim('{', '}'), out gid)) { sniffStatus = "No active adapter to capture on."; UpdateConnStatus(); return; }
             string safeApp = new string(c.Proc.Where(char.IsLetterOrDigit).Take(20).ToArray());
-            string file = Program.SafeCapturePath("adebometer_" + safeApp + "_" + DateTime.Now.ToString("HHmmss", CultureInfo.CurrentCulture) + ".pcapng");
-            var psi = new ProcessStartInfo(dumpcap, "-i \"\\Device\\NPF_{" + gid.ToString().ToUpperInvariant() + "}\" -f \"" + filt + "\" -a duration:" + Cfg.SniffSec + " -w \"" + file + "\" -q"); psi.WorkingDirectory = Path.GetDirectoryName(dumpcap);
+            string file = Program.SafeCapturePath("adebometer_" + safeApp + "_" + DateTime.Now.ToString("HHmmss", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N").Substring(0, 4) + ".pcapng");
+            var psi = new ProcessStartInfo(dumpcap, "-i \"\\Device\\NPF_{" + gid.ToString().ToUpperInvariant() + "}\" -p -f \"" + filt + "\" -a duration:" + Cfg.SniffSec + " -a filesize:200000 -w \"" + file + "\" -q");   /* 200 MB at most: a big download can't fill the disk */ psi.WorkingDirectory = Path.GetDirectoryName(dumpcap);
             psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardError = true;
             try
             {
                 var p = Process.Start(psi); Job.Add(p);
-                sniffing = true; sniffStatus = Voice.P("Listening in for 30 s on ", "Capturing 30 s: ") + filt;
+                sniffing = true; sniffStatus = Voice.P("Listening in for " + Cfg.SniffSec + " s on ", "Capturing " + Cfg.SniffSec + " s: ") + filt;
                 UpdateConnStatus();
                 var err = new StringBuilder();
                 p.ErrorDataReceived += delegate(object s, DataReceivedEventArgs e) { if (e.Data != null) lock (err) err.AppendLine(e.Data); };

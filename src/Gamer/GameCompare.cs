@@ -66,7 +66,7 @@ namespace AdeeboMeter
             {
                 if (!Games.Monitored().Contains(game.Id)) { rows.Add(R(2, game.Name, "click it in the Gamer Zone first - that's your OK to contact its servers", "", "u")); return rows; }
                 if (nm == "") nm = m.AdapterKind == "Wi-Fi" ? "Wi-Fi" : "Cable";
-                var servers = game.Servers.Take(8).ToList(); var s = new Saved { Game = game.Id, Name = Clean(nm), T = DateTime.Now };
+                var servers = game.Servers.GroupBy(z => z.Name).Select(gr => gr.First()).Take(8).ToList(); /* two servers with the same (cut) name: measured once, never a crash */ var s = new Saved { Game = game.Id, Name = Clean(nm), T = DateTime.Now };
                 var samples = servers.ToDictionary(z => z.Name, z => new List<double>());
                 for (int i = 0; i < Samples && !run.Stop; i++)
                 {

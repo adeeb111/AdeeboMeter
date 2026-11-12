@@ -1,6 +1,6 @@
 # AdeeboMeter 1.1.5 - plan
 
-Status: designed with Adeeb on 11 Nov 2026, not built. Mockups: the "AdeeboMeter Gamer Zone" design canvas (6 artboards).
+Status (12 Nov 2026): built on branch dev-1.1.5 and reviewed (three outside reviews, findings fixed); not released - Adeeb releases it. Designed 11 Nov 2026. Mockups: the "AdeeboMeter Gamer Zone" design canvas (6 artboards).
 One release, everything together (Adeeb's rule). Nothing is built, tested, committed or published until he says go.
 
 ## Rules every item keeps

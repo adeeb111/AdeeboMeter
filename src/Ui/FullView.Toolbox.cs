@@ -59,7 +59,7 @@ namespace AdeeboMeter
                 T("httptime", "DNS AND WEB", "HTTP timing, repeated", "URL - e.g. outlook.office.com|How many (1-50)", (a, r) => Protocols.HttpTiming(a[0], a[1], r)),
                 T("doh", "DNS AND WEB", "Encrypted DNS (DoH / DoT)", null, (a, r) => Protocols.EncryptedDns()),
                 T("ntp", "PROTOCOLS", "NTP - ask a time server", "Server - e.g. time.windows.com or pool.ntp.org", (a, r) => Protocols.Ntp(a[0])),
-                T("mail", "PROTOCOLS", "Mail server (SMTP / IMAP / POP)", "host:port - 25 / 587 / 465 SMTP, 143 / 993 IMAP, 110 / 995 POP", (a, r) => Protocols.Mail(a[0])),
+                T("mail", "PROTOCOLS", "Mail server (SMTP / IMAP / POP)", "host:port - 25 / 587 / 465 SMTP, 143 / 993 IMAP, 110 / 995 POP", (a, r) => Protocols.Mail(a[0], r)),
                 T("ssh", "PROTOCOLS", "SSH banner", "host or host:port", (a, r) => Protocols.Ssh(a[0])),
                 T("snmp", "SNMP", "SNMP - what is this device?", SnmpIn, (a, r) => SnmpTools.System(a[0], a[1])),
                 T("snmpif", "SNMP", "SNMP - interfaces (status, errors)", SnmpIn, (a, r) => SnmpTools.Interfaces(a[0], a[1], r)),
@@ -84,7 +84,7 @@ namespace AdeeboMeter
                 T("dhcpopt", "LAB", "DHCP options from the server", null, (a, r) => Lab.DhcpOptions(M, a[3])),
                 T("trap", "LAB", "SNMP test trap (send only)", "Trap receiver - host or host:port (UDP 162)|Community (default public)", (a, r) => Lab.Trap(M, a[0], a[1], a[3])),
                 T("netflow", "LAB", "NetFlow test record", "Collector - host or host:port (UDP 2055)", (a, r) => Lab.Flow(M, a[0], a[3])),
-                T("httpreq", "WEB", "HTTP request builder", "URL - e.g. https://example.com/api/health|Method - GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS|Headers (optional) - Name: value; Name: value|Body (optional)", (a, r) => Reach.Http(a[0], a[1], a[2], a[3])),
+                T("httpreq", "WEB", "HTTP request builder", "URL - e.g. https://example.com/api/health|Method - GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS|Headers (optional) - Name: value; Name: value|Body (optional)", (a, r) => Reach.Http(a[0], a[1], a[2], a[3], r)),
                 T("stun", "WEB", "STUN - my public address and port", "STUN server - e.g. stun.example.com:3478", (a, r) => Reach.Stun(a[0])),
                 T("nbname", "YOUR NETWORK", "Name of a device (NetBIOS, LLMNR, mDNS)", "IP - e.g. 192.168.1.23", (a, r) => Reach.NameOf(a[0])),
                 T("finddev", "YOUR NETWORK", "Find devices (mDNS, SSDP, WS-Discovery)", null, (a, r) => Reach.Find(M, a[3], r)),
@@ -192,10 +192,11 @@ namespace AdeeboMeter
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
         static readonly string[][] QuickTools = { new[] { "snmp", "SNMP" }, new[] { "snmpif", "Switch ports" }, new[] { "mtr", "MTR" }, new[] { "port", "Port test" }, new[] { "dig", "dig" }, new[] { "http", "HTTP & TLS" }, new[] { "iperf", "iperf3" }, new[] { "sweep", "Ping sweep" } };
         static readonly HashSet<string> LabGate = new HashSet<string> { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "finddev", "manyports", "syslog" };   // need the tick on a company network
+        internal static IEnumerable<string> LabGateIds { get { return LabGate; } }
         // Traffic Lab tools that don't send packets they build (or that came with their own rules before the Lab) - the self-test fails if a new Lab tool is in neither list
         public static readonly HashSet<string> LabExempt = new HashSet<string> { "wol", "iperf", "bloat", "dscp" };
         public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))); }
-        static bool SecretInput(string label) { return label.StartsWith("Shared secret", StringComparison.Ordinal) || label.StartsWith("Community", StringComparison.Ordinal) || label.StartsWith("Password", StringComparison.Ordinal); }
+        static bool SecretInput(string label) { return label.StartsWith("Shared secret", StringComparison.Ordinal) || label.StartsWith("Community", StringComparison.Ordinal) || label.StartsWith("Password", StringComparison.Ordinal) || label.StartsWith("Code", StringComparison.Ordinal); }
         static bool SnmpView(string id) { return IsSnmp(id) || id == "mibs"; }
         string tbSection = "net"; bool tbHome = true; PillButton[] tbChips;
         static string SectionOf(Tool t) { string s; return GroupSection.TryGetValue(t.Group, out s) ? s : "net"; }
@@ -204,8 +205,7 @@ namespace AdeeboMeter
         void OpenTool(string id)
         {
             var t = Tools2().FirstOrDefault(z => z.Id == id); if (t == null) return;
-            if (SectionOf(t) == "health") { tab = "health"; ShowTab(); RunTool("tb:" + id, t.Title); return; }
-            SelectTool(id);
+            SelectTool(id);   // every tool opens first and runs when you press Run (a PC check too - never a whole-disk scan from a click)
         }
         void ShowSection(string s)
         {
@@ -257,9 +257,10 @@ namespace AdeeboMeter
         {
             var k = EcKeys.All().FirstOrDefault(x => x.KeyName == keyName); if (k == null) return null;
             var rows = new List<string[]>();
+            if (what != "pub" && !k.Here) { rows.Add(new[] { "2", k.Name, "its private key isn't on this PC - back it up or delete it on the PC that made it", "", "w" }); return rows; }
             if (what == "pub")
             {
-                string txt = EcKeys.PublicFile(k), file = System.IO.Path.Combine(CertKeys.OutDir, new string(k.Name.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '-').ToArray()).Trim('-') + "-public.adeebokey"); System.IO.File.WriteAllText(file, txt);
+                string txt = EcKeys.PublicFile(k), file = FileCrypt.FreeName(CertKeys.OutDir, new string(k.Name.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '-').ToArray()).Trim('-') + "-public.adeebokey"); System.IO.File.WriteAllText(file, txt);
                 rows.Add(new[] { "0", "Public key of " + k.Name, System.IO.Path.GetFileName(file) + " - send this file; it's safe to share", "Fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)) + " - read it out to them once so they know it's yours.", "w", "show:" + file });
                 rows.Add(new[] { "3", "Copy as text", "the same, to paste into an email or chat", "", "w", "copy:" + txt });
             }
@@ -339,7 +340,7 @@ namespace AdeeboMeter
                 }, TaskCreationOptions.LongRunning);
             }
             else if (act.StartsWith("fix:", StringComparison.Ordinal)) SecFix(act.Substring(4));
-            else if (act.StartsWith("copy:", StringComparison.Ordinal)) { try { Clipboard.SetText(act.Substring(5)); tbCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } tbCanvas.Invalidate(); }
+            else if (act.StartsWith("copy:", StringComparison.Ordinal)) { try { Program.CopySecret(act.Substring(5)); tbCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } tbCanvas.Invalidate(); }
             else if (act == "ps:")
             {
                 // an empty PowerShell window - you paste the command; nothing is typed or run for you
@@ -727,7 +728,8 @@ namespace AdeeboMeter
             for (int k = 0; k < all.Count; k++)
             {
                 var t = all[k]; var e = Explain.Term("tb." + t.Id);
-                string title = (t.Id + " " + t.Title).ToLowerInvariant(), text = ((e != null ? e.Friendly + " " + e.Tag + " " + e.What + " " + e.Why : "") + " " + t.Group).ToLowerInvariant();
+                // the words you see: in French too ("pare-feu", "vitesse"), the English kept so either finds it
+                string tr = L.T(t.Title); string title = (t.Id + " " + t.Title + (tr != t.Title ? " " + tr : "")).ToLowerInvariant(), text = ((e != null ? e.Friendly + " " + e.Tag + " " + e.What + " " + e.Why + " " + L.T(e.Friendly ?? "") : "") + " " + t.Group).ToLowerInvariant();
                 int total = 0; bool ok = true;
                 foreach (var w0 in words)
                 {
@@ -751,7 +753,7 @@ namespace AdeeboMeter
         {
             q = (q ?? "").Trim().ToLowerInvariant(); if (q.Length < 3 || q.Contains(" ")) return null;
             var words = new List<string>(Synonyms.Keys);
-            foreach (var t in Tools2()) { words.Add(t.Id); words.AddRange(t.Title.ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
+            foreach (var t in Tools2()) { words.Add(t.Id); words.AddRange((t.Title + " " + L.T(t.Title)).ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
             string best = null; int bd = q.Length <= 4 ? 1 : 2;
             foreach (var w in words.Distinct()) { int d = Edit(q, w.ToLowerInvariant(), bd); if (d <= bd && (best == null || d < bd)) { best = w.ToLowerInvariant(); bd = d; } }
             return best;
@@ -814,7 +816,7 @@ namespace AdeeboMeter
                     {
                         // did you mean: the closest tool name or everyday word, one or two letters off
                         string dym = DidYouMean(tbFilter);
-                        if (dym != null) using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { string tx = "Did you mean  " + dym + " ?"; var ts = g.MeasureString(tx, Draw.fBody); g.DrawString(tx, Draw.fBody, lb, x, y); string q = dym; Act(tbList, new RectangleF(x, y, ts.Width, ts.Height), delegate { tbSearch.Box.Text = q; tbSearch.Box.SelectionStart = q.Length; }); y += 26 * S; }
+                        if (dym != null) using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { string tx = L.T("Did you mean") + "  " + dym + " ?"; var ts = g.MeasureString(tx, Draw.fBody); g.DrawString(tx, Draw.fBody, lb, x, y); string q = dym; Act(tbList, new RectangleF(x, y, ts.Width, ts.Height), delegate { tbSearch.Box.Text = q; tbSearch.Box.SelectionStart = q.Length; }); y += 26 * S; }
                     }
                     foreach (var t in found) item(t);
                 }
@@ -936,7 +938,7 @@ namespace AdeeboMeter
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sv, Draw.fSmall, lb, sr.X, sr.Y);
                     Act(tbCanvas, sr, SaveResult);
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(tbCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", Draw.fSmall, lb, cr.X, cr.Y);
-                    Act(tbCanvas, cr, delegate { try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } tbCanvas.Invalidate(); });
+                    Act(tbCanvas, cr, delegate { try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } tbCanvas.Invalidate(); });
                 }
                 if (prev != null)
                 {
@@ -986,7 +988,7 @@ namespace AdeeboMeter
                         if (was != "") adv = was + (adv != "" ? "\n" + adv : "");
                         float tw = w - nameW - pillW - 10 * S, vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(Math.Max(30 * S, vh + ah + 12 * S), Draw.Measure(o[1], Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
                         if (lv == 4) using (var hb = new SolidBrush(Theme.BlueSoft)) g.FillRectangle(hb, x - 4 * S, y, w + 8 * S, rh);
-                        using (var b = new SolidBrush(Theme.Lv(lv == 4 ? 3 : lv))) g.FillEllipse(b, x, y + 9 * S, 10 * S, 10 * S);
+                        Draw.LvDot(g, lv == 4 ? 3 : lv, x, y + 9 * S, 10 * S, 10 * S);
                         g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));
                         using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(o[2], Draw.fBody, vb, new RectangleF(x + nameW, y + 5 * S, tw, vh + 4));
                         if (adv != "") g.DrawString(adv, Draw.fSmall, sub, new RectangleF(x + nameW, y + 7 * S + vh, tw, ah));

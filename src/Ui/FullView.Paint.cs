@@ -84,7 +84,7 @@ namespace AdeeboMeter
                 var c1 = new RectangleF(x, y, w - 1, h1); Theme.Fill(g, c1, 12 * S, Theme.Card); Theme.Stroke(g, c1, 12 * S, Theme.Line, 1);
                 float yy = y + 14 * S, xx = x + 14 * S, ww = w - 28 * S;
                 g.DrawString(L.T("TCP / IP HEALTH"), Draw.fTiny, muted, xx, yy);
-                var ns = g.MeasureString("Windows counters · no admin", Draw.fSmall); g.DrawString(L.T("Windows counters · no admin"), Draw.fSmall, muted, xx + ww - ns.Width, yy - 2 * S);
+                var ns = g.MeasureString(L.T("Windows counters · no admin"), Draw.fSmall); g.DrawString(L.T("Windows counters · no admin"), Draw.fSmall, muted, xx + ww - ns.Width, yy - 2 * S);
                 yy += 22 * S;
                 for (int i = 0; i < snap.Health.Count && i < snap.HealthHist.Count; i++)
                 {
@@ -137,7 +137,7 @@ namespace AdeeboMeter
             if (d == null && pr != null)
             {
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Voice.P("Click a row for the full story.", "Click a row for details."), Draw.fBody, mb, x, y);
-                var need0 = new Size(0, (int)(y + 40 * S)); if (destCanvas.AutoScrollMinSize != need0) { destCanvas.AutoScrollMinSize = need0; destCanvas.Invalidate(); }
+                var need0 = new Size(0, (int)(y + 40 * S)); SetNeed(destCanvas, need0);
                 return;
             }
             bool done = d != null && d.Done;
@@ -158,7 +158,7 @@ namespace AdeeboMeter
                 string ct = destCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", st = "Save...";
                 var cs = g.MeasureString(ct, Draw.fSmall); var ss = g.MeasureString(st, Draw.fSmall); var cr = new RectangleF(x + w - 16 * S - cs.Width, vb.Y + 8 * S, cs.Width, cs.Height); var sr = new RectangleF(cr.X - 14 * S - ss.Width, cr.Y, ss.Width, ss.Height);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { g.DrawString(ct, Draw.fSmall, lb, cr.X, cr.Y); g.DrawString(st, Draw.fSmall, lb, sr.X, sr.Y); }
-                var dd = d; Act(destCanvas, cr, delegate { try { Clipboard.SetText(dd.Text()); destCopied = DateTime.Now; } catch (Exception ce) { Program.Log("copy: " + ce.Message); } destCanvas.Invalidate(); });
+                var dd = d; Act(destCanvas, cr, delegate { try { Clipboard.SetText(dd.Text()); destCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } destCanvas.Invalidate(); });
                 Act(destCanvas, sr, delegate { SaveText("AdeeboMeter-check-" + Draw.Trunc(dd.Target, 40).Replace(':', '-'), dd.Text()); });
             }
             int n = DestResult.Steps.Length; float slot = w / n, dot = 18 * S;
@@ -235,7 +235,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (health == null && (toolRows != null || toolBusy)) { var need0 = new Size(0, (int)(y + 20 * S)); if (healthCanvas.AutoScrollMinSize != need0) { healthCanvas.AutoScrollMinSize = need0; healthCanvas.Invalidate(); } return; }
+                if (health == null && (toolRows != null || toolBusy)) { var need0 = new Size(0, (int)(y + 20 * S)); SetNeed(healthCanvas, need0); return; }
                 if (health == null)
                 {
                     g.DrawString(healthRunning ? Voice.P("Poking around...", "Running...") : Voice.P("Press the button and I'll give your PC a quick once-over.", "Press Run health check."), Draw.fBody, muted, x, y + 6 * S);
@@ -247,7 +247,7 @@ namespace AdeeboMeter
                     int lv = int.Parse(row[0], CultureInfo.InvariantCulture);
                     float ah = Draw.Measure(row[3], Draw.fBody, (int)(w - nameW - 30 * S)).Height;
                     float rh = Math.Max(46 * S, ah + 18 * S);
-                    using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, x, y + 12 * S, 13 * S, 13 * S);
+                    Draw.LvDot(g, lv, x, y + 12 * S, 13 * S, 13 * S);
                     g.DrawString(row[1], Draw.fBodyB, ink, x + 26 * S, y + 6 * S);
                     { string ev = Evidence.For("health", row); float ex = x + 26 * S + g.MeasureString(row[1], Draw.fBodyB).Width + 6 * S, ew = Evidence.Pill(g, ev, ex, y + 8 * S, healthAt); Hint(healthCanvas, new RectangleF(ex, y + 4 * S, ew, 20 * S), Evidence.Key(ev)); }
                     Hint(healthCanvas, new RectangleF(x, y, nameW, rh), "hc." + (row[1].StartsWith("Disk", StringComparison.Ordinal) ? "Disk" : row[1]));
@@ -256,7 +256,7 @@ namespace AdeeboMeter
                     y += rh; g.DrawLine(line, x, y, x + w, y); y += 4 * S;
                 }
                 var need = new Size(0, (int)(y + 20 * S));
-                if (healthCanvas.AutoScrollMinSize != need) { healthCanvas.AutoScrollMinSize = need; healthCanvas.Invalidate(); }
+                SetNeed(healthCanvas, need);
             }
         }
 
@@ -288,7 +288,7 @@ namespace AdeeboMeter
             var evs = histDay == null ? M.Events.Recent(300) : (histData != null ? histData.E : new List<Timeline.Ev>());
             if (histDay != null && histData != null)
             {
-                float ch = 196 * S; string key = histDay.Value.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "|" + (int)w + "|" + Theme.Dark;
+                float ch = 196 * S; string key = histDay.Value.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "|" + (int)w + "|" + Theme.Dark + "|" + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(histData) + "|" + histData.M.Count;   // a reload of the same day (Today again) is new data
                 if (histBmp == null || histKey != key)
                 {
                     if (histBmp != null) histBmp.Dispose();
@@ -307,7 +307,7 @@ namespace AdeeboMeter
                 foreach (var e in evs)
                 {
                     g.DrawString(e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
-                    using (var b = new SolidBrush(Theme.Lv(e.Lv))) g.FillEllipse(b, x + 76 * S, y + 7 * S, 10 * S, 10 * S);
+                    Draw.LvDot(g, e.Lv, x + 76 * S, y + 7 * S, 10 * S, 10 * S);
                     using (var tb = new SolidBrush(e.Lv == 2 ? Theme.LvText(2) : Theme.Ink)) g.DrawString(e.Text, e.Lv == 2 ? Draw.fBodyB : Draw.fBody, tb, new RectangleF(x + 96 * S, y + 2 * S, w - 200 * S, 20 * S), nowrap);
                     var ks = g.MeasureString(e.Kind, Draw.fSmall); g.DrawString(e.Kind, Draw.fSmall, muted, x + w - ks.Width, y + 4 * S);
                     Hint(changesCanvas, new RectangleF(x + 76 * S, y, w - 76 * S, 26 * S), "kind." + e.Kind);
@@ -315,7 +315,7 @@ namespace AdeeboMeter
                 }
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (changesCanvas.AutoScrollMinSize != need) { changesCanvas.AutoScrollMinSize = need; changesCanvas.Invalidate(); }
+            SetNeed(changesCanvas, need);
         }
 
         DateTime? histDay; History.Day histData; Bitmap histBmp; string histKey = ""; List<DateTime> histDays; DateTime histDaysAt = DateTime.MinValue;
@@ -388,7 +388,7 @@ namespace AdeeboMeter
             };
             lineOf(7, 100, Theme.Green); lineOf(5, gmax, Theme.Blue);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(gmax.ToString("0", CultureInfo.CurrentCulture) + " ms", Draw.fSmall, mb, x + 6 * S, top - 2 * S);
-            foreach (var e in d.E.Where(e => e.Lv >= 1)) using (var b = new SolidBrush(Theme.Lv(e.Lv))) g.FillEllipse(b, X(e.T.TimeOfDay.TotalSeconds) - 3 * S, top - 4 * S, 6 * S, 6 * S);
+            foreach (var e in d.E.Where(e => e.Lv >= 1)) Draw.LvDot(g, e.Lv, X(e.T.TimeOfDay.TotalSeconds) - 3 * S, top - 4 * S, 6 * S, 6 * S);
             return y + card.Height + 14 * S;
         }
 
@@ -438,7 +438,7 @@ namespace AdeeboMeter
                 yy = c3.Y + 30 * S;
                 foreach (var e in v.Expert)
                 {
-                    using (var b = new SolidBrush(Theme.Lv(int.Parse(e[0], CultureInfo.InvariantCulture)))) g.FillEllipse(b, c3.X + 14 * S, yy + 4 * S, 9 * S, 9 * S);
+                    Draw.LvDot(g, int.Parse(e[0], CultureInfo.InvariantCulture), c3.X + 14 * S, yy + 4 * S, 9 * S, 9 * S);
                     g.DrawString(e[1], Draw.fBody, ink, c3.X + 30 * S, yy); Hint(liveCanvas, new RectangleF(c3.X, yy, c3.Width, 20 * S), e[1]);
                     var ns = g.MeasureString(e[2], Draw.fMono); g.DrawString(e[2], Draw.fMono, ink, c3.Right - 14 * S - ns.Width, yy);
                     yy += 20 * S;
@@ -469,7 +469,7 @@ namespace AdeeboMeter
                 foreach (var cl in v.Calls)
                 {
                     int lv = int.Parse(cl[6], CultureInfo.InvariantCulture);
-                    using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, c5.X + 14 * S, yy + 4 * S, 9 * S, 9 * S);
+                    Draw.LvDot(g, lv, c5.X + 14 * S, yy + 4 * S, 9 * S, 9 * S);
                     g.DrawString(cl[1] + " " + cl[0], Draw.fBody, ink, new RectangleF(c5.X + 30 * S, yy, colW * 0.42f, 18 * S), nowrap);
                     string t = "loss " + cl[3] + " · jitter " + cl[4] + " · MOS " + cl[5]; var ts3 = g.MeasureString(t, Draw.fMonoS);
                     using (var tb = new SolidBrush(Theme.LvText(lv))) g.DrawString(t, Draw.fMonoS, tb, c5.Right - 14 * S - ts3.Width, yy + 1 * S);
@@ -496,7 +496,7 @@ namespace AdeeboMeter
                 y += c2.Height + 20 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
-            if (liveCanvas.AutoScrollMinSize != need) { liveCanvas.AutoScrollMinSize = need; liveCanvas.Invalidate(); }
+            SetNeed(liveCanvas, need);
         }
     }
 }

@@ -74,11 +74,34 @@ namespace AdeeboMeter
         // so settings are kept and the install offer doesn't come back at every start
         static string writeDir; static int dirWritable = -1;
         static bool DirWritable { get { if (dirWritable < 0) dirWritable = CanWrite(Dir) ? 1 : 0; return dirWritable == 1; } }
-        public static string WriteDir { get { if (writeDir == null) writeDir = Packaged || !DirWritable ? LocalDir : Dir; return writeDir; } }
+        public static string WriteDir { get { if (writeDir == null) writeDir = Packaged || !DirWritable || InDownloads ? LocalDir : Dir; return writeDir; } }
+        // An exe still sitting in Downloads: anything else in that folder may have come from any website, so files beside it
+        // (a portable marker, a settings file with game "consent") aren't trusted - settings go to AppData instead.
+        static int inDownloads = -1;
+        public static bool InDownloads
+        {
+            get
+            {
+                if (inDownloads >= 0) return inDownloads == 1;
+                inDownloads = 0;
+                try
+                {
+                    if (string.IsNullOrEmpty(Dir)) return false;
+                    var dl = new List<string> { Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads") };
+                    using (var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"))
+                    { var v = k == null ? null : k.GetValue("{374DE290-123F-4565-9164-39C4925E467B}") as string; if (!string.IsNullOrEmpty(v)) dl.Add(Environment.ExpandEnvironmentVariables(v)); }
+                    string here = Path.GetFullPath(Dir).TrimEnd('\\', '/');
+                    if (dl.Any(d => string.Equals(Path.GetFullPath(d).TrimEnd('\\', '/'), here, StringComparison.OrdinalIgnoreCase))) inDownloads = 1;
+                }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException || e is ArgumentException || e is NotSupportedException)) throw; }
+                return inDownloads == 1;
+            }
+        }
         static string LocalDir { get { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); try { Directory.CreateDirectory(d); } catch (IOException) { } catch (UnauthorizedAccessException) { } return d; } }
         public static bool CanWrite(string dir)
         {
             if (string.IsNullOrEmpty(dir)) return false;
+            if (dir.Length > 200) return false;   // a deep folder: the settings, log and their .tmp files would pass Windows' 260-character limit
             try { string f = Path.Combine(dir, ".adeebometer-write-test-" + Guid.NewGuid().ToString("N")); File.WriteAllText(f, ""); File.Delete(f); return true; }
             catch (Exception e) { if (e is IOException || e is UnauthorizedAccessException || e is NotSupportedException || e is System.Security.SecurityException) return false; throw; }
         }
@@ -193,6 +216,23 @@ namespace AdeeboMeter
             catch (PlatformNotSupportedException) { File.Delete(dst); File.Move(tmp, dst); }
         }
         static string lastLogMsg = ""; static DateTime lastLogAt = DateTime.MinValue; static int lastLogRepeats;
+        // Text that came from outside (a Wi-Fi name, a program's description): without invisible format characters - a
+        // right-to-left override or zero-width joiner can make one name look like another, or move "(you)" to the wrong row
+        public static string Plain(string t)
+        {
+            if (string.IsNullOrEmpty(t)) return t ?? "";
+            bool any = false; foreach (char c in t) if (char.GetUnicodeCategory(c) == UnicodeCategory.Format || (char.IsControl(c) && c != '\t')) { any = true; break; }
+            return any ? new string(t.Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.Format && !char.IsControl(c)).ToArray()) : t;
+        }
+        // Copy a secret (a generated code): kept out of Win+V history and Cloud Clipboard, and out of clipboard monitors
+        public static void CopySecret(string text)
+        {
+            var d = new System.Windows.Forms.DataObject(); d.SetData(System.Windows.Forms.DataFormats.UnicodeText, text);
+            d.SetData("ExcludeClipboardContentFromMonitorProcessing", new MemoryStream(new byte[] { 1, 0, 0, 0 }));
+            d.SetData("CanIncludeInClipboardHistory", new MemoryStream(new byte[4]));
+            d.SetData("CanUploadToCloudClipboard", new MemoryStream(new byte[4]));
+            System.Windows.Forms.Clipboard.SetDataObject(d, false);
+        }
         public static void Log(string m)
         {
             try
@@ -212,7 +252,7 @@ namespace AdeeboMeter
         }
 
         static int portable = -1;
-        public static bool Portable { get { if (portable < 0) { try { portable = !string.IsNullOrEmpty(Dir) && File.Exists(Path.Combine(Dir, "AdeeboMeter.portable")) ? 1 : 0; } catch (IOException) { portable = 0; } } return portable == 1; } }
+        public static bool Portable { get { if (portable < 0) { try { portable = !string.IsNullOrEmpty(Dir) && !InDownloads && File.Exists(Path.Combine(Dir, "AdeeboMeter.portable")) ? 1 : 0; } catch (IOException) { portable = 0; } } return portable == 1; } }
         public static string DataDir
         {
             get
@@ -234,9 +274,16 @@ namespace AdeeboMeter
             return full;
         }
         public static volatile string LastCapture = "";   // the newest capture this session - "Keep this capture" copies it out before exit deletes it
+        // every capture left from before - the ring, sniff folders, journeys - even after a crash, a kill, a power cut or a
+        // logoff (full-payload traffic must not sit on disk). Runs at start and when Windows is ending the session.
         public static void CleanCaptures()
         {
-            try { foreach (var f in Directory.GetFiles(CaptureDir, "*.pcapng")) try { File.Delete(f); } catch { } } catch { }
+            try
+            {
+                foreach (var f in Directory.GetFiles(CaptureDir, "*.pcap*", SearchOption.AllDirectories)) try { File.Delete(f); } catch { }
+                foreach (var d in Directory.GetDirectories(CaptureDir)) try { if (!Directory.EnumerateFileSystemEntries(d, "*", SearchOption.AllDirectories).Any(x => File.Exists(x))) Directory.Delete(d, true); } catch { }
+            }
+            catch { }
         }
     }
 
@@ -283,20 +330,28 @@ namespace AdeeboMeter
             else { Preset = "balanced"; GwSec = 5; NetSec = 30; WifiSec = 30; AppsSec = 10; Call = true; }
         }
         // background checks per minute, on top of the once-a-second counter read the widget always does
-        public static int JobsPerMinute()
+        public static int JobsPerMinute() { return JobsPerMinute(GwSec, NetSec, WifiSec, AppsSec); }
+        static int JobsPerMinute(int gw, int net, int wifi, int apps)
         {
             Func<int, double> per = delegate(int sec) { return sec > 0 ? 60.0 / sec : 0; };
-            return (int)Math.Round(6 /*adapters*/ + per(GwSec) + 2 * per(NetSec) + per(WifiSec) + 2 * per(AppsSec));
+            return (int)Math.Round(6 /*adapters*/ + per(gw) + 2 * per(net) + per(wifi) + 2 * per(apps));
+        }
+        // what a preset would cost, worked out without touching the live settings the monitor reads
+        public static int JobsForPreset(string p)
+        {
+            if (p == "penny") return JobsPerMinute(10, 60, 120, 30);
+            if (p == "engineer") return JobsPerMinute(2, 15, 10, 5);
+            return JobsPerMinute(5, 30, 30, 10);
         }
         public static IEnumerable<string> Lines()
         {
             yield return "preset=" + Preset;
-            yield return "gw=" + GwSec; yield return "net=" + NetSec; yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + HistoryDays;
+            yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
+            yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
-            yield return "gmon=" + GameIds; yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
-            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Mode; yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
+            yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
+            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
@@ -356,8 +411,12 @@ namespace AdeeboMeter
     static class Single
     {
         public const string OpenName = "Local\\AdeeboMeter.open", AckName = "Local\\AdeeboMeter.ack", QuitName = "Local\\AdeeboMeter.quit";
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int pid);
         public static bool AskRunningToOpen()
         {
+            // we were just started by the user, so we may bring a window forward - pass that right on to the running copy,
+            // or its window opens behind everything and only the taskbar flashes
+            try { AllowSetForegroundWindow(-1 /*ASFW_ANY*/); } catch (EntryPointNotFoundException) { }
             for (int i = 0; i < 3; i++)
             {
                 try
@@ -447,6 +506,8 @@ namespace AdeeboMeter
             psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.CreateNoWindow = true;
             psi.WorkingDirectory = Path.GetDirectoryName(exe);   // never the folder AdeeboMeter runs from (Downloads): a child could load a planted DLL from there
             if (Path.GetFileName(exe).Equals("tshark.exe", StringComparison.OrdinalIgnoreCase)) { psi.StandardOutputEncoding = System.Text.Encoding.UTF8; psi.StandardErrorEncoding = System.Text.Encoding.UTF8; }   // tshark writes UTF-8 (→, names); Windows' own tools write the console code page
+            else if (Path.GetFileName(exe).Equals("netsh.exe", StringComparison.OrdinalIgnoreCase))
+                try { psi.StandardOutputEncoding = System.Text.Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage); } catch (ArgumentException) { } catch (NotSupportedException) { }   // netsh: the OEM page (a Wi-Fi name with é), not ANSI
             using (var p = Process.Start(psi))
             {
                 Add(p);

@@ -12,6 +12,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         readonly HashSet<string> exOpen = new HashSet<string>();
+        static readonly string[] NetBoxWords = { "host", "server", "site", "address", "target", "domain", "device", "url", "ip", "router", "destination" };
 
         // self-test: every tool has an example that fits its boxes, shows under the banner and can't be copied or saved
         internal string ExampleCheck()
@@ -22,6 +23,16 @@ namespace AdeeboMeter
                 var ex = Examples.Get(t.Id); if (ex == null) { bad.Add(t.Id + ": no example"); continue; }
                 if (ex.Rows.Count == 0) bad.Add(t.Id + ": no rows");
                 if (ex.In.Length > t.Inputs.Length) bad.Add(t.Id + ": " + ex.In.Length + " inputs for " + t.Inputs.Length + " boxes");
+                // "Fill the boxes" must never aim a real run at a real device or company: documentation addresses and example.* only
+                for (int vi = 0; vi < ex.In.Length; vi++)
+                {
+                    string v = ex.In[vi], lab = vi < t.Inputs.Length ? (t.Inputs[vi] ?? "").ToLowerInvariant() : "";
+                    if (!NetBoxWords.Any(lab.Contains)) continue;   // a box that takes a place on the network
+                    System.Net.IPAddress ip; string h = v.Split('/')[0];
+                    if (t.Id != "subnet" && System.Net.IPAddress.TryParse(h, out ip) && h.Contains(".") && !(h.StartsWith("192.0.2.", StringComparison.Ordinal) || h.StartsWith("198.51.100.", StringComparison.Ordinal) || h.StartsWith("203.0.113.", StringComparison.Ordinal))) bad.Add(t.Id + ": fills in " + v);
+                    string host = v.IndexOf("://", StringComparison.Ordinal) > 0 ? new Uri(v).Host : v;
+                    if (t.Id != "b64" && !host.Contains("\\") && !host.Contains(" ") && System.Text.RegularExpressions.Regex.IsMatch(host, @"^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$", System.Text.RegularExpressions.RegexOptions.IgnoreCase) && !System.Text.RegularExpressions.Regex.IsMatch(host, @"(^|\.)example\.(com|net|org)$|\.(pcapng|pcap|crt|cer|pfx|csr|zip|pdf|adeebo|txt)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) bad.Add(t.Id + ": fills in " + v);
+                }
                 foreach (var r in ex.Rows) { int lv; if (!int.TryParse(r[0], out lv) || lv < -1 || lv > 3) bad.Add(t.Id + ": level " + r[0]); if (r[4] != "" && Evidence.Label(r[4]) == "") bad.Add(t.Id + ": evidence " + r[4]); }
             }
             foreach (var id in new[] { "page.gamer" }) if (Examples.Get(id) == null) bad.Add(id + ": missing");
@@ -71,7 +82,8 @@ namespace AdeeboMeter
         static readonly double[] PcRow = { 0.4, 2.0 };   // disk ms per request, pages read back per second - quiet
         // A made-up day for Time machine: quiet all day, an evening slowdown 19:00-19:25 with some loss, one Wi-Fi dip.
         // Columns follow History: time, level, cpu, mem, down, gw, net, wifi, up, gwMax, netMax, loss %, link Mb/s, MB down, MB up.
-        public static History.Day Make()
+        public static History.Day Make() { return Make(DateTime.Today); }
+        public static History.Day Make(DateTime forDay)   // its events carry the day being looked at, not always today
         {
             var d = new History.Day(); var rnd = new Random(7);
             for (int m = 0; m < 24 * 60; m++)
@@ -84,7 +96,7 @@ namespace AdeeboMeter
                 d.M.Add(new[] { m * 60.0, lv, day ? 8 + rnd.Next(20) : 3, 52 + rnd.Next(8), down, gw, net, wifi, up, gw * 2.5, net * 1.8, loss, 866, down * 7.5, up * 7.5 });
                 d.Net.Add("Wi-Fi Example-Home"); d.Pc.Add(PcRow);
             }
-            Func<int, int, DateTime> at = (h, mi) => DateTime.Today.AddHours(h).AddMinutes(mi);
+            Func<int, int, DateTime> at = (h, mi) => forDay.Date.AddHours(h).AddMinutes(mi);
             d.E.Add(new Timeline.Ev { T = at(14, 10), Lv = 1, Kind = "wifi", Text = "Wi-Fi signal fell to 28% (it came back at 14:14)" });
             d.E.Add(new Timeline.Ev { T = at(19, 0), Lv = 2, Kind = "net", Text = "Internet slow: 70-130 ms and 2-6% loss past your router - your home network was fine" });
             d.E.Add(new Timeline.Ev { T = at(19, 25), Lv = 0, Kind = "net", Text = "Internet back to normal (16 ms)" });

@@ -109,11 +109,17 @@ namespace AdeeboMeter
                     var near = aps.Where(a => a.Ssid == ssid && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase) && a.Signal >= sig + 25).OrderByDescending(a => a.Signal).FirstOrDefault();
                     if (near != null) x.Advice.Add(new[] { "1", "Your PC clings to a far access point (" + sig + "%) while another one of \"" + ssid + "\" is at " + near.Signal + "% nearby. Turning Wi-Fi off and on makes it pick the closer one; in the adapter's Advanced settings, a higher \"Roaming aggressiveness\" makes it switch by itself." });
                 }
-                // look-alike networks: same name, different maker and not a randomised address - an "evil twin" sign (or a neighbour's same-named router)
+                // look-alike networks: same name, different maker and not a randomised address - an "evil twin" sign (or a neighbour's
+                // same-named router). Not when your own access point uses a randomised (locally administered) address, not when both
+                // makers are known and the same, and not on a big managed network (3+ of your maker's APs: batches differ there)
                 string myOui = Oui(s.MyBssid);
-                if (myOui != "" && ssid != "-")
+                int mine = aps.Count(a => a.Ssid == ssid && Oui(a.Bssid) == myOui);
+                if (myOui != "" && ssid != "-" && !Arp.Randomised(s.MyBssid) && mine < 3)
                     foreach (var a in aps.Where(a => a.Ssid == ssid && Oui(a.Bssid) != "" && Oui(a.Bssid) != myOui && !Arp.Randomised(a.Bssid)))
-                        x.Twins.Add(new[] { a.Ssid, a.Bssid, "Same name as your network, but a different maker's hardware (" + a.Signal + "%). Mesh systems from one brand share a maker code; a stranger's router with the same name - or a fake access point - doesn't. Don't sign in to anything on it." });
+                    {
+                        string v1 = Toolkit.Vendor(s.MyBssid), v2 = Toolkit.Vendor(a.Bssid); if (v1 != "" && v1 == v2) continue;
+                        x.Twins.Add(new[] { a.Ssid, a.Bssid, "Same name as your network, but different hardware (" + a.Signal + "%" + (v2 != "" ? ", " + v2.Trim('(', ')') : "") + "). Usually another access point bought separately or a neighbour's router with the same name - but it could be a fake one. If it shows a sign-in page you didn't expect, don't sign in." });
+                    }
             }
             if (x.Advice.Count == 0) x.Advice.Add(new[] { "0", Voice.P("Nothing to tweak - your Wi-Fi is set up well.", "No changes suggested.") });
             return x;

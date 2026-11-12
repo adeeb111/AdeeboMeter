@@ -67,10 +67,11 @@ namespace AdeeboMeter
             }
             else
             {
-                var m6 = Regex.Match(s, @"^\[([0-9A-Fa-f:.]+)\](?::(\d{1,5}))?$");
+                var m6 = Regex.Match(s, @"^\[([0-9A-Fa-f:.]+(?:%\w+)?)\](?::(\d{1,5}))?$");   // [fe80::1%12]:8443 keeps its zone and its port
                 IPAddress ip;
                 if (m6.Success) { host = m6.Groups[1].Value; if (m6.Groups[2].Success) port = int.Parse(m6.Groups[2].Value, CultureInfo.InvariantCulture); }
-                else if (IPAddress.TryParse(s, out ip) && s.Count(c => c == ':') != 1) host = s;
+                // a bare IPv4 must be written out in full: 1.2.3, 0x7f.1 or 4294967295 aren't what anyone means
+                else if (IPAddress.TryParse(s, out ip) && s.Count(c => c == ':') != 1 && (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || Regex.IsMatch(s, @"^\d{1,3}(\.\d{1,3}){3}$"))) host = s;
                 else
                 {
                     int colon = s.LastIndexOf(':');
@@ -474,7 +475,7 @@ namespace AdeeboMeter
         {
             var tasks = ips.Distinct().Select(ip => Task.Factory.StartNew(() =>
             {
-                try { var h = Dns.GetHostEntry(IPAddress.Parse(ip)).HostName; return Tuple.Create(ip, h != ip ? h : null); }
+                try { var h = Native.PtrName(ip); return Tuple.Create(ip, h != "" ? h : null); }
                 catch { return Tuple.Create(ip, (string)null); }
             })).ToArray();
             try { Task.WaitAll(tasks, 3000); } catch (AggregateException) { }
@@ -591,7 +592,7 @@ namespace AdeeboMeter
         }
 
         // Windows' TLS 1.3 client arrived with Windows 11 / Server 2022 (build 20348+); older builds get TLS 1.2 only.
-        static bool Tls13Client()
+        internal static bool Tls13Client()
         {
             try
             {

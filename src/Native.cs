@@ -91,21 +91,65 @@ namespace AdeeboMeter
         [DllImport("iphlpapi.dll")] public static extern uint SendARP(int dest, int src, byte[] mac, ref int len);
         [StructLayout(LayoutKind.Sequential)] public struct DhcpParamsArray { public uint N; public IntPtr P; }
         [DllImport("dhcpcsvc.dll")] public static extern uint DhcpCApiInitialize(out uint version);
+        [DllImport("dhcpcsvc.dll")] public static extern void DhcpCApiCleanup();
         [DllImport("dhcpcsvc.dll", CharSet = CharSet.Unicode)] public static extern uint DhcpRequestParams(uint flags, IntPtr reserved, string adapter, IntPtr classId, DhcpParamsArray send, DhcpParamsArray recv, IntPtr buffer, ref int size, string requestId);
         [DllImport("iphlpapi.dll")] public static extern uint GetExtendedTcpTable(IntPtr t, ref int len, bool sort, int af, int cls, uint res);
         [DllImport("iphlpapi.dll")] public static extern uint GetExtendedUdpTable(IntPtr t, ref int len, bool sort, int af, int cls, uint res);
 
         [DllImport("dnsapi.dll", EntryPoint = "DnsQuery_W", CharSet = CharSet.Unicode)] public static extern int DnsQuery(string name, short type, int options, IntPtr extra, out IntPtr results, IntPtr reserved);
         [DllImport("dnsapi.dll")] public static extern void DnsRecordListFree(IntPtr list, int freeType);
+        // The DNS name of an address: one PTR question and nothing else (Dns.GetHostEntry also looks the answer up again, a
+        // second query About doesn't list). "" when there's no name. Blocks for at most what the resolver allows.
+        public static string PtrName(string ip)
+        {
+            System.Net.IPAddress a; if (!System.Net.IPAddress.TryParse(ip ?? "", out a)) return "";
+            var b = a.GetAddressBytes(); string q;
+            if (b.Length == 4) q = b[3] + "." + b[2] + "." + b[1] + "." + b[0] + ".in-addr.arpa";
+            else { var sb = new System.Text.StringBuilder(); for (int i = 15; i >= 0; i--) sb.Append((b[i] & 0xf).ToString("x", System.Globalization.CultureInfo.InvariantCulture)).Append('.').Append((b[i] >> 4).ToString("x", System.Globalization.CultureInfo.InvariantCulture)).Append('.'); q = sb + "ip6.arpa"; }
+            IntPtr res;
+            if (DnsQuery(q, 12, 0, IntPtr.Zero, out res, IntPtr.Zero) != 0 || res == IntPtr.Zero) return "";
+            try
+            {
+                int P = IntPtr.Size, typeOff = 2 * P, dataOff = 2 * P + 16;
+                for (IntPtr r = res; r != IntPtr.Zero; r = Marshal.ReadIntPtr(r, 0))
+                    if ((Marshal.ReadInt16(r, typeOff) & 0xFFFF) == 12) { var n = Marshal.PtrToStringUni(Marshal.ReadIntPtr(r, dataOff)); return (n ?? "").TrimEnd('.'); }
+                return "";
+            }
+            finally { DnsRecordListFree(res, 1); }
+        }
         [DllImport("dnsapi.dll")] public static extern bool DnsGetCacheDataTable(out IntPtr table);
         [DllImport("dnsapi.dll")] public static extern void DnsFree(IntPtr p, int freeType);
 
         [DllImport("user32.dll")] public static extern int GetGuiResources(IntPtr proc, int flags);
         [DllImport("user32.dll")] public static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
         [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr h, int id);
+        [DllImport("user32.dll")] static extern int GetKeyboardLayoutList(int n, [Out] IntPtr[] list);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int ToUnicodeEx(uint vk, uint scan, byte[] state, [Out] char[] buf, int cch, uint flags, IntPtr hkl);
+        // Does any installed keyboard layout type a character with AltGr (= Ctrl+Alt) + this key? Then a Ctrl+Alt hotkey on it
+        // would swallow a letter (Polish "ą", for one) system-wide.
+        public static bool AltGrTypes(Keys key)
+        {
+            try
+            {
+                int n = GetKeyboardLayoutList(0, null); if (n <= 0 || n > 64) return false;
+                var list = new IntPtr[n]; n = GetKeyboardLayoutList(n, list);
+                var st = new byte[256]; st[0x11] = st[0x12] = st[0xA2] = st[0xA5] = 0x80;
+                for (int i = 0; i < n; i++)
+                {
+                    var buf = new char[8];
+                    int r = ToUnicodeEx((uint)key, 0, st, buf, buf.Length, 4 /*don't change the keyboard state*/, list[i]);
+                    if (r != 0) return true;   // a character, or a dead key that starts one
+                }
+            }
+            catch (EntryPointNotFoundException) { }
+            return false;
+        }
         [DllImport("dwmapi.dll")] public static extern int DwmSetWindowAttribute(IntPtr h, int attr, ref int v, int size);
         [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)] public static extern int SetWindowTheme(IntPtr h, string app, string idList);
         [DllImport("kernel32.dll", SetLastError = true)] public static extern IntPtr OpenProcess(int access, bool inherit, int pid);
+        [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetWindowDisplayAffinity(IntPtr h, uint affinity);
+        // a presentation, a full-screen game or video: the corner widget steps aside (states 2 busy, 3 D3D full screen, 4 presenting)
+        public static bool Presenting() { try { int s; return SHQueryUserNotificationState(out s) == 0 && (s == 2 || s == 3 || s == 4); } catch (EntryPointNotFoundException) { return false; } }
         [DllImport("shell32.dll")] public static extern int SHQueryUserNotificationState(out int state);   // 5 = OK to notify; else presenting / full screen / quiet
         // Windows says it's fine to pop a notification now (not presenting, not full screen, not in Focus quiet time)
         public static bool CanNotify() { try { int s; return SHQueryUserNotificationState(out s) != 0 || s == 5; } catch { return true; } }

@@ -57,11 +57,15 @@ namespace AdeeboMeter
             return true;
         }
         // the big public roots every Windows ships with - never call these "inspection" even if the public list is empty
-        static readonly string[] Public = { "DigiCert", "ISRG", "GlobalSign", "Sectigo", "USERTrust", "Baltimore", "Microsoft", "Amazon", "GTS Root", "Google Trust", "Entrust", "GoDaddy", "Starfield", "Certum", "IdenTrust", "QuoVadis", "SSL.com", "Comodo", "AAA Certificate", "Go Daddy", "Verisign", "VeriSign", "Thawte", "Buypass", "Actalis", "HARICA", "SwissSign", "T-TeleSec", "D-TRUST" };
+        static readonly string[] Public = { "DigiCert", "ISRG", "GlobalSign", "Sectigo", "USERTrust", "Baltimore", "Microsoft", "Amazon", "GTS Root", "Google Trust", "Entrust", "GoDaddy", "Starfield", "Certum", "IdenTrust", "QuoVadis", "SSL.com", "Comodo", "AAA Certificate", "Go Daddy", "Verisign", "VeriSign", "Thawte", "Buypass", "Actalis", "HARICA", "SwissSign", "T-TeleSec", "D-TRUST", "Internet Security Research Group", "Google Trust Services", "Unizeto", "Asseco", "T-Systems", "Hellenic Academic", "SSL Corporation", "Starfield Technologies" };
         static bool IsWellKnown(X509Certificate2 root)
         {
-            string n = root.GetNameInfo(X509NameType.SimpleName, false) ?? "";
-            return Public.Any(p => n.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0);
+            // the organisation (O=) must be the CA itself, not just a name that borrows it ("CN=DigiCert Proxy CA, O=Acme"),
+            // and the root signs itself
+            if (root.Subject != root.Issuer) return false;
+            var om = System.Text.RegularExpressions.Regex.Match(root.Subject, @"(?:^|,\s*)O=(""[^""]*""|[^,]*)");
+            string org = om.Success ? om.Groups[1].Value.Trim('"', ' ') : root.GetNameInfo(X509NameType.SimpleName, false) ?? "";
+            return Public.Any(p => org.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }

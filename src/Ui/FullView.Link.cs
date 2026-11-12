@@ -96,7 +96,7 @@ namespace AdeeboMeter
                 var th = Draw.Measure(tip, Draw.fBody, (int)w).Height;
                 using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(tip, Draw.fBody, sb, new RectangleF(x, y, w, th + 4)); y += th + 20 * S;
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (linkCanvas.AutoScrollMinSize != need) { linkCanvas.AutoScrollMinSize = need; linkCanvas.Invalidate(); }
+            var need = new Size(0, (int)(y + 20 * S)); SetNeed(linkCanvas, need);
         }
         float ListCard(Graphics g, string title, List<string[]> rows, string empty, string key, float x, float y, float w)
         {

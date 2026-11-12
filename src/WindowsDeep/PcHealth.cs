@@ -54,7 +54,9 @@ namespace AdeeboMeter
             rows.Add(double.IsNaN(perf) ? R(3, "Processor speed", "not available", "", "u") : R(perf < 60 ? 1 : 0, "Processor speed", perf.ToString("0", CultureInfo.CurrentCulture) + "% of its rated speed", perf < 60 ? "It's being held back - heat, battery saver or the power plan. Plug in, check vents, Settings > Power > Best performance." : "", "w"));
             if (!double.IsNaN(intr) && !double.IsNaN(dpc)) rows.Add(R(intr + dpc > 15 ? 2 : intr + dpc > 6 ? 1 : 0, "Driver interrupts", (intr + dpc).ToString("0.0", CultureInfo.CurrentCulture) + "% of the processor", intr + dpc > 6 ? "A driver is keeping the processor busy - the usual cause of crackling audio and stuttering mice. Update Wi-Fi, audio and graphics drivers." : "", "w"));
             var ps = System.Windows.Forms.SystemInformation.PowerStatus;
-            rows.Add(R(3, "Power", ps.PowerLineStatus == System.Windows.Forms.PowerLineStatus.Online ? "plugged in" : "on battery " + (ps.BatteryLifePercent * 100).ToString("0", CultureInfo.CurrentCulture) + "%", "", "w"));
+            // a desktop or VM says "unknown" (255): no battery talk then
+            bool noBat = (ps.BatteryChargeStatus & (System.Windows.Forms.BatteryChargeStatus.NoSystemBattery | System.Windows.Forms.BatteryChargeStatus.Unknown)) != 0 || ps.BatteryLifePercent > 1f;
+            rows.Add(R(3, "Power", ps.PowerLineStatus == System.Windows.Forms.PowerLineStatus.Online || (noBat && ps.PowerLineStatus != System.Windows.Forms.PowerLineStatus.Offline) ? "plugged in" : noBat ? "on battery" : "on battery " + (ps.BatteryLifePercent * 100).ToString("0", CultureInfo.CurrentCulture) + "%", "", "w"));
             return rows;
         }
 
@@ -64,18 +66,21 @@ namespace AdeeboMeter
             var rows = new List<string[]>();
             try
             {
-                var cat = new PerformanceCounterCategory("GPU Engine"); var inst = cat.GetInstanceNames().Where(n => n.Contains("engtype_3D") || n.Contains("engtype_VideoDecode") || n.Contains("engtype_VideoEncode")).Take(400).ToList();
-                var cs = new List<PerformanceCounter>();
-                try
-                {
-                    foreach (var i in inst) try { var c = new PerformanceCounter("GPU Engine", "Utilization Percentage", i, true); c.NextValue(); cs.Add(c); } catch { }
-                    Thread.Sleep(1000);
-                    var by = new Dictionary<int, double>();
-                    foreach (var c in cs) { var mm = Regex.Match(c.InstanceName, @"pid_(\d+)_"); int pid; if (!mm.Success || !int.TryParse(mm.Groups[1].Value, out pid)) continue; double x; try { x = c.NextValue(); } catch { continue; } double o; by.TryGetValue(pid, out o); by[pid] = o + x; }
-                    foreach (var kv in by.Where(x => x.Value >= 0.5).OrderByDescending(x => x.Value).Take(8))
-                    { string name = "pid " + kv.Key; try { using (var p = Process.GetProcessById(kv.Key)) name = p.ProcessName; } catch { } rows.Add(R(kv.Value > 60 ? 1 : 0, name, kv.Value.ToString("0", CultureInfo.CurrentCulture) + "% of the graphics card", "", "w")); }
-                }
-                finally { foreach (var c in cs) c.Dispose(); }
+                // the whole category in one read, twice a second apart - not hundreds of separate counters
+                var cat = new PerformanceCounterCategory("GPU Engine");
+                Func<string, bool> wanted = n => n.Contains("engtype_3D") || n.Contains("engtype_VideoDecode") || n.Contains("engtype_VideoEncode");
+                var d1 = cat.ReadCategory()["Utilization Percentage"]; Thread.Sleep(1000); var d2 = cat.ReadCategory()["Utilization Percentage"];
+                var by = new Dictionary<int, double>();
+                if (d1 != null && d2 != null)
+                    foreach (InstanceData i2 in d2.Values)
+                    {
+                        if (!wanted(i2.InstanceName) || !d1.Contains(i2.InstanceName)) continue;
+                        var mm = Regex.Match(i2.InstanceName, @"pid_(\d+)_"); int pid; if (!mm.Success || !int.TryParse(mm.Groups[1].Value, out pid)) continue;
+                        double x; try { x = CounterSample.Calculate(d1[i2.InstanceName].Sample, i2.Sample); } catch (InvalidOperationException) { continue; }
+                        double o; by.TryGetValue(pid, out o); by[pid] = o + x;
+                    }
+                foreach (var kv in by.Where(x => x.Value >= 0.5).OrderByDescending(x => x.Value).Take(8))
+                { string name = "pid " + kv.Key; try { using (var p = Process.GetProcessById(kv.Key)) name = p.ProcessName; } catch { } rows.Add(R(kv.Value > 60 ? 1 : 0, name, kv.Value.ToString("0", CultureInfo.CurrentCulture) + "% of the graphics card", "", "w")); }
                 if (rows.Count == 0) rows.Add(R(0, "Graphics card", "nothing is using it noticeably right now", "", "w"));
             }
             catch (Exception e) { rows.Add(R(3, "Graphics card", "Windows didn't give GPU counters here (" + Draw.Trunc(e.Message, 50) + ")", "", "u")); }
@@ -217,7 +222,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>();
             if (System.Windows.Forms.SystemInformation.PowerStatus.BatteryChargeStatus == System.Windows.Forms.BatteryChargeStatus.NoSystemBattery) { rows.Add(R(3, "Battery", "this PC has no battery", "", "w")); return rows; }
-            string f = Path.Combine(Path.GetTempPath(), "adeebometer-battery.xml");
+            string f = Path.Combine(Path.GetTempPath(), "adeebometer-battery-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".xml");   // its own name: two runs at once don't delete each other's
             try
             {
                 Job.Run(Job.Sys("powercfg.exe"), "/batteryreport /xml /output \"" + f + "\"", 20000);
@@ -266,7 +271,7 @@ namespace AdeeboMeter
             try
             {
                 var scope = new System.Management.ManagementScope(@"\\.\root\Microsoft\Windows\Storage");
-                using (var s = new System.Management.ManagementObjectSearcher(scope, new System.Management.ObjectQuery("SELECT FriendlyName, MediaType, HealthStatus, Size FROM MSFT_PhysicalDisk")))
+                using (var s = new System.Management.ManagementObjectSearcher(scope, new System.Management.ObjectQuery("SELECT FriendlyName, MediaType, HealthStatus, Size FROM MSFT_PhysicalDisk"), new System.Management.EnumerationOptions { Timeout = TimeSpan.FromSeconds(10), ReturnImmediately = true, Rewindable = false }))   // a sleeping USB disk or a broken WMI can't hang it forever
                     foreach (System.Management.ManagementObject d in s.Get())
                         using (d)
                         {

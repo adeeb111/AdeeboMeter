@@ -62,7 +62,7 @@ namespace AdeeboMeter
                     sv = Svc.List(); st = Startup.List(); sbe = Startup.ByExe();
                 }
                 catch (Exception e) { Program.Log("inside: " + e.Message); }
-                try { BeginInvoke((Action)delegate { insideBusy = false; treeRows = rows; treeBy = by; svcs = sv; startups = st; startupByExe = sbe; insideList.Invalidate(); insideInfo.Invalidate(); }); } catch { insideBusy = false; }
+                try { BeginInvoke((Action)delegate { insideBusy = false; exePathCache.Clear(); treeRows = rows; treeBy = by; svcs = sv; startups = st; startupByExe = sbe; insideList.Invalidate(); insideInfo.Invalidate(); }); } catch { insideBusy = false; }
             });
         }
 
@@ -120,7 +120,7 @@ namespace AdeeboMeter
                     string key = it[0]; Act(insideList, rr, delegate { SelectInside(key); });
                     y += rh; g.DrawLine(line, x, y, x + w, y);
                 }
-            var need = new Size(0, (int)(y + 20 * S)); if (insideList.AutoScrollMinSize != need) { insideList.AutoScrollMinSize = need; insideList.Invalidate(); }
+            var need = new Size(0, (int)(y + 20 * S)); SetNeed(insideList, need);
         }
         void SelectInside(string key)
         {
@@ -200,7 +200,8 @@ namespace AdeeboMeter
                 var chain = new List<string>(); var cur = p; int guard = 0;
                 while (cur != null && guard++ < 12) { chain.Insert(0, cur.Name); ProcTree.P up; cur = treeBy.TryGetValue(cur.Parent, out up) && up.Pid != cur.Pid ? up : null; }
                 var rows = new List<string[]> { new[] { "Family line", string.Join("  →  ", chain), "3" }, new[] { "Why it started", ProcTree.WhyStarted(p, treeBy, startupByExe), "3" } };
-                string path = Native.ExePath(p.Pid); rows.Add(new[] { "Runs from", path != "" ? path : "hidden - Windows keeps system processes to itself for normal users", "3" });
+                string path; if (!exePathCache.TryGetValue(p.Pid, out path)) { path = Native.ExePath(p.Pid); if (exePathCache.Count > 500) exePathCache.Clear(); exePathCache[p.Pid] = path; }   // once per process, not per repaint
+                rows.Add(new[] { "Runs from", path != "" ? path : "hidden - Windows keeps system processes to itself for normal users", "3" });
                 if (p.Kids.Count > 0) rows.Add(new[] { "It started", string.Join(", ", p.Kids.Select(k => k.Name).Distinct().Take(8)) + (p.Kids.Count > 8 ? " ..." : ""), "3" });
                 var hosted = svcs == null ? new List<Svc.S>() : svcs.Where(s => s.Pid == p.Pid).ToList();
                 if (hosted.Count > 0) rows.Add(new[] { "Services inside", hosted.Count + " - " + string.Join(", ", hosted.Select(s => s.Name).Take(12)), "3" });
@@ -227,7 +228,16 @@ namespace AdeeboMeter
         static float Title2(Graphics g, string t, float x, float y, float w) { using (var b = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fTitle, b, new RectangleF(x, y, w, 30 * S)); return y + 36 * S; }
         // when the content height changes, Windows may move the scroll position in the middle of a paint - the half that was
         // already drawn is then at the old position (rows appear twice). Repaint the whole thing once more when that happens.
-        static void Need(ScrollableControl c, float y) { var need = new Size(0, (int)(y + 20 * S)); if (c.AutoScrollMinSize != need) { c.AutoScrollMinSize = need; c.Invalidate(); } }
+        // the page's height for scrolling, with a margin: once the scrollbar is there it stays while the page is nearly as tall
+        // as the window - otherwise it appears, the text narrows and wraps, it isn't needed, it goes... on every paint
+        readonly Dictionary<int, string> exePathCache = new Dictionary<int, string>();
+        static void SetNeed(ScrollableControl c, Size need)
+        {
+            if (c.VerticalScroll.Visible && need.Height <= c.ClientSize.Height && need.Height > c.ClientSize.Height - (int)(48 * S)) need = new Size(need.Width, c.ClientSize.Height + 1);
+            if (c.AutoScrollMinSize == need) return;
+            c.AutoScrollMinSize = need; c.Invalidate();
+        }
+        static void Need(ScrollableControl c, float y) { var need = new Size(0, (int)(y + 20 * S)); SetNeed(c, need); }
 
         // a knowledge topic: what / how / why / look for, its ladder, and (protocols) the live button
         // the second line is skipped when it mostly repeats the first

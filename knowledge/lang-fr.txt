@@ -233,7 +233,6 @@ works, then doesn't, then works	ça marche, puis non, puis oui
 Check everything for me	Tout vérifier pour moi
 Test my speed	Tester ma vitesse
 Stop	Arrêter
-Simple	Simple
 Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.	Dites-moi juste ce qui cloche. Les points, Qu'est-ce qui cloche ?, un test de vitesse, l'historique et la Zone joueur.
 All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.	Tous les outils d'ingénieur en plus : Surveiller, Sécurité, Boîte à outils, L'histoire du réseau et Apprendre.
 Network	Réseau
@@ -323,3 +322,158 @@ Source code and releases	Code source et versions
 Donate	Faire un don
 Other amount	Autre montant
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal, en dollars canadiens. AdeeboMeter n'envoie rien sur vous.
+Delete all saved history?	Supprimer tout l'historique enregistré ?
+days of history are deleted for good - this can't be undone.	jours d'historique sont supprimés définitivement - impossible d'annuler.
+ tool matches	 outil correspond
+ tools match	 outils correspondent
+All	Tout
+All tools	Tous les outils
+Ask the question - the right tool comes up. Type in the box above, or pick a question.	Posez la question - le bon outil apparaît. Tapez dans la case ci-dessus, ou choisissez une question.
+Did you mean	Vouliez-vous dire
+Enter opens the first	Entrée ouvre le premier
+Free for everyone. If it saved you time, a donation helps cover code signing and the Microsoft Store, and keeps AdeeboMeter free.	Gratuit pour tous. S'il vous a fait gagner du temps, un don aide à payer la signature du code et le Microsoft Store, et garde AdeeboMeter gratuit.
+Nothing matches - try another word	Aucun résultat - essayez un autre mot
+Ports, traffic, CPU, neighbours, sensors, any OID.	Ports, trafic, processeur, voisins, capteurs, n'importe quel OID.
+QUICK	RAPIDE
+SNMP - ask a switch or router	SNMP - interroger un commutateur ou un routeur
+Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan.	Du trafic de test que vous construisez - vers une seule cible, petit et plafonné (10 paquets par seconde, 1 000 au plus), jamais une inondation ni un balayage.
+tools	outils
+Couldn't copy - another app (often Remote Desktop) is holding the clipboard. Try again in a moment.	Copie impossible - une autre application (souvent le Bureau à distance) tient le presse-papiers. Réessayez dans un instant.
+Couldn't save it:	Enregistrement impossible :
+MTU per hop	MTU par saut
+MTU over UDP (QUIC / DNS)	MTU en UDP (QUIC / DNS)
+MTR - loss per hop over time	MTR - pertes par saut dans le temps
+The way back (return path)	Le chemin du retour
+Who carries my traffic (BGP)	Qui transporte mon trafic (BGP)
+Which route does this take?	Quelle route est prise?
+Your gateway and failover	Votre passerelle et sa relève
+IPv6 routers on this network	Routeurs IPv6 sur ce réseau
+Routing protocols on my segment	Protocoles de routage sur mon segment
+Announcements (mDNS, SSDP, LLMNR, NetBIOS)	Annonces (mDNS, SSDP, LLMNR, NetBIOS)
+IPv6 ping and trace	Ping et traceroute IPv6
+Overlapping networks (home vs VPN)	Réseaux qui se chevauchent (maison ou VPN)
+IPv6 vs IPv4	IPv6 contre IPv4
+iperf3 to your server	iperf3 vers votre serveur
+Latency under load (bufferbloat)	Latence sous charge (bufferbloat)
+Sustained ping	Ping prolongé
+DSCP-marked ping	Ping marqué DSCP
+TCP ping	Ping TCP
+TWAMP-light to a reflector	TWAMP-light vers un réflecteur
+Nearest cloud	Nuage le plus proche
+dig - any DNS record	dig - n'importe quel enregistrement DNS
+HTTP and TLS inspector	Inspecteur HTTP et TLS
+HTTP timing, repeated	Temps HTTP, répétés
+Encrypted DNS (DoH / DoT)	DNS chiffré (DoH / DoT)
+NTP - ask a time server	NTP - interroger un serveur de temps
+Mail server (SMTP / IMAP / POP)	Serveur de courriel (SMTP / IMAP / POP)
+SSH banner	Bannière SSH
+SNMP - what is this device?	SNMP - quel est cet appareil?
+SNMP - interfaces (status, errors)	SNMP - interfaces (état, erreurs)
+SNMP - traffic per port	SNMP - trafic par port
+SNMP - CPU and memory	SNMP - processeur et mémoire
+SNMP - neighbours (LLDP)	SNMP - voisins (LLDP)
+SNMP - sensors (temperature, optics)	SNMP - capteurs (température, optiques)
+SNMP - device snapshot (everything at once)	SNMP - instantané de l'appareil (tout d'un coup)
+SNMP - find a MAC on a switch	SNMP - trouver une adresse MAC sur un commutateur
+SNMP - VLANs and their ports	SNMP - VLAN et leurs ports
+SNMP - PoE power per port	SNMP - puissance PoE par port
+SNMP - link aggregation (LACP)	SNMP - agrégation de liens (LACP)
+SNMP - printer status and toner	SNMP - état et encre de l'imprimante
+SNMP - UPS battery and runtime	SNMP - batterie et autonomie de l'onduleur
+SNMP - walk any OID or name	SNMP - parcourir n'importe quel OID ou nom
+MIB folder and search	Dossier MIB et recherche
+Syslog - send a test message	Syslog - envoyer un message de test
+ICMP builder (size, DF, TTL)	Constructeur ICMP (taille, DF, TTL)
+UDP sender	Émetteur UDP
+TCP sender (send, see the reply)	Émetteur TCP (envoyer, voir la réponse)
+ARP who-has	ARP who-has
+DHCP options from the server	Options DHCP du serveur
+SNMP test trap (send only)	Trap SNMP de test (envoi seulement)
+NetFlow test record	Enregistrement NetFlow de test
+HTTP request builder	Constructeur de requêtes HTTP
+STUN - my public address and port	STUN - mon adresse et mon port publics
+Name of a device (NetBIOS, LLMNR, mDNS)	Nom d'un appareil (NetBIOS, LLMNR, mDNS)
+Find devices (mDNS, SSDP, WS-Discovery)	Trouver des appareils (mDNS, SSDP, WS-Discovery)
+SSH, SCP and remote commands	SSH, SCP et commandes à distance
+Many ports for one service	Plusieurs ports pour un service
+Every IP behind a name	Toutes les IP derrière un nom
+Remote Desktop reachable?	Bureau à distance joignable?
+Active Directory / LDAP reachable?	Active Directory / LDAP joignable?
+DNS answer compare	Comparer des réponses DNS
+Before / after snapshot	Instantané avant / après
+Compare two saved results (two PCs)	Comparer deux résultats enregistrés (deux PC)
+My sites	Mes sites
+Shared folders on a PC or NAS (SMB)	Dossiers partagés d'un PC ou d'un NAS (SMB)
+Services that failed to start (7 days)	Services qui n'ont pas démarré (7 jours)
+Speed test	Test de vitesse
+Side by side: Wi-Fi vs cable (a game)	Côte à côte : Wi-Fi ou câble (un jeu)
+Why didn't this PC join the network?	Pourquoi ce PC n'a-t-il pas rejoint le réseau?
+802.1X failure decoder (timeline)	Décodeur d'échecs 802.1X (chronologie)
+DHCP lease replay (from a capture)	Rejouer un bail DHCP (d'une capture)
+IPv6 RA replay (from a capture)	Rejouer des RA IPv6 (d'une capture)
+802.1X replay (from a capture)	Rejouer 802.1X (d'une capture)
+ICMP error translator	Traducteur d'erreurs ICMP
+Certificate chain compare	Comparer des chaînes de certificats
+RADIUS client lab (test account)	Labo client RADIUS (compte de test)
+SMTP delivery path (MX, STARTTLS)	Chemin de livraison SMTP (MX, STARTTLS)
+Sample captures - good and broken	Captures d'exemple - bonnes et brisées
+Report for my ISP	Rapport pour mon fournisseur
+Quick tidy (you do it, I show where)	Ménage rapide (vous le faites, je montre où)
+My keys	Mes clés
+New key	Nouvelle clé
+Generate a CSR	Générer un CSR
+Create a self-signed certificate	Créer un certificat auto-signé
+Check certificate and key	Vérifier certificat et clé
+Compare file vs live server	Comparer le fichier et le serveur en ligne
+Recipients (their public keys)	Destinataires (leurs clés publiques)
+Encrypt a file	Chiffrer un fichier
+Open an encrypted file	Ouvrir un fichier chiffré
+Inspect a certificate file	Examiner un fichier de certificat
+Check a PFX / P12	Vérifier un PFX / P12
+Decode a CSR	Décoder un CSR
+Convert a certificate (PEM / DER)	Convertir un certificat (PEM / DER)
+Hash a file and compare	Calculer l'empreinte d'un fichier et comparer
+Decode Base64 or a JWT	Décoder du Base64 ou un JWT
+Certificate commands (certutil, openssl)	Commandes de certificats (certutil, openssl)
+RADIUS - is the server alive?	RADIUS - le serveur répond-il?
+TACACS+ - is the server there?	TACACS+ - le serveur est-il là?
+Neighbours (ARP table)	Voisins (table ARP)
+Your own router (hairpin)	Votre propre routeur (hairpin)
+Ping sweep	Balayage ping
+Wi-Fi roams and drops (24 h)	Changements et coupures Wi-Fi (24 h)
+DHCP lease and IPv6 lifetimes	Bail DHCP et durées de vie IPv6
+Wake-on-LAN	Wake-on-LAN
+Subnet calculator	Calculatrice de sous-réseaux
+Windows' own evidence	Les preuves de Windows
+Why network sign-in failed (802.1X)	Pourquoi la connexion réseau a échoué (802.1X)
+Domain controllers	Contrôleurs de domaine
+Group Policy - what applied	Stratégie de groupe - ce qui s'applique
+Certificates that expire soon	Certificats qui expirent bientôt
+Firewall rules for an app	Règles du pare-feu pour une application
+What's listening on this PC	Ce qui écoute sur ce PC
+Event log - errors in 24 h	Journal d'événements - erreurs en 24 h
+Where the PC gets its time	D'où le PC tient son heure
+Memory, disk, heat, drivers	Mémoire, disque, chaleur, pilotes
+Disk: who, health, space	Disque : qui, santé, espace
+Where did my space go?	Où est passé mon espace?
+Background jobs right now	Tâches de fond en ce moment
+Crashes and hangs (7 days)	Plantages et blocages (7 jours)
+Slow leaks	Fuites lentes
+Graphics card per app	Carte graphique par application
+What changed in 7 days	Ce qui a changé en 7 jours
+Battery health	Santé de la batterie
+Can I reach it?	Est-ce que je peux le joindre?
+Why is it slow?	Pourquoi c'est lent?
+Where does it break?	Où ça casse?
+What's on my network?	Qu'y a-t-il sur mon réseau?
+Why can't it join?	Pourquoi ça ne se connecte pas?
+Windows and certificates	Windows et certificats
+Build test traffic	Construire du trafic de test
+Is it this PC?	Est-ce ce PC?
+VPN and company proxy - is it the slow part?	VPN et proxy d'entreprise - est-ce la partie lente?
+Which proxy does this URL use?	Quel proxy cette adresse utilise-t-elle?
+Hosts file	Fichier hosts
+DNS hijack and VPN name rules	Détournement DNS et règles de noms du VPN
+Port test	Test de port
+Teams UDP test (and NAT type)	Test UDP Teams (et type de NAT)
+Clock check	Vérification de l'horloge

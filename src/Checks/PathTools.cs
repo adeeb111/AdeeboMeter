@@ -45,8 +45,11 @@ namespace AdeeboMeter
         {
             Func<int, int> probe = ip =>
             {
-                for (int t = 0; t < 2; t++)
+                // routers rate-limit their error replies (often 1 a second): silence only counts after a pause and one more try,
+                // or rate limiting reads as an "MTU black hole"
+                for (int t = 0; t < 3; t++)
                 {
+                    if (t == 2) Thread.Sleep(1100);
                     var r = Icmp.Echo(dst, ip - 28, h.N, true, 1500, false);
                     if (r.Status == Icmp.TtlExpired || r.Status == Icmp.Ok) return 1;
                     if (r.Status == Icmp.TooBig) { h.Said = true; return 0; }
@@ -96,7 +99,9 @@ namespace AdeeboMeter
         // a hop that never answered (no reply in the whole run) is a router that ignores probes, not loss - it can't start
         // or carry loss. Loss is real only from the first answering hop whose loss every later answering hop keeps (and there
         // must be a later answering hop that keeps it).
-        static bool Answers(Hop h) { return h.Sent > 0 && h.Lost < h.Sent; }
+        // A hop that answered the trace and then lost everything during the run did answer once: 100% from there on is an
+        // outage, not a quiet router (that's what lets "everything past hop 2 went dark" count as loss).
+        static bool Answers(Hop h) { return h.Sent > 0 && (h.Lost < h.Sent || h.Ip != ""); }
         static double LossOf(Hop h) { return 100.0 * h.Lost / h.Sent; }
         public static int LossStart(List<Hop> hops)
         {
@@ -183,6 +188,7 @@ namespace AdeeboMeter
             for (int i = 0; i < nets.Count; i++) for (int j = i + 1; j < nets.Count; j++)
                 {
                     uint m = Math.Min(nets[i].Item3, nets[j].Item3);   // the wider mask
+                    if (nets[i].Item1 == nets[j].Item1) continue;   // two addresses on one adapter aren't an overlap
                     if ((nets[i].Item2 & m) == (nets[j].Item2 & m))
                     { found = true; rows.Insert(0, new[] { "2", "Overlap", nets[i].Item1 + " and " + nets[j].Item1 + " use the same addresses (" + Routes.Ip(nets[i].Item2) + ")", "Anything in that range can only be reached on one of them - usually the company servers on the VPN become unreachable from home. The fix is on the home router (change its network, e.g. to 192.168.77.x).", "i" }); }
                 }
@@ -190,7 +196,8 @@ namespace AdeeboMeter
             {
                 var routes = Routes.Read(); var lan = nets.Where(n => !n.Item4).ToList();
                 foreach (var r in routes.Where(r => r.Vpn && r.Prefix > 0 && r.Prefix < 32))
-                    foreach (var l in lan) { uint m = Math.Min(r.Mask, l.Item3); if ((r.Dest & m) == (l.Item2 & m)) { found = true; rows.Insert(0, new[] { "1", "VPN route over your LAN", "the VPN claims " + Routes.Ip(r.Dest) + "/" + r.Prefix + ", which covers your home network " + Routes.Ip(l.Item2), "Printers and other home devices may become unreachable while the VPN is up.", "i" }); } }
+                    // only a VPN route at least as specific as the LAN's own wins over it (0/1 + 128/1 of a full tunnel doesn't)
+                    foreach (var l in lan) { uint m = Math.Min(r.Mask, l.Item3); if (r.Mask >= l.Item3 && (r.Dest & m) == (l.Item2 & m)) { found = true; rows.Insert(0, new[] { "1", "VPN route over your LAN", "the VPN claims " + Routes.Ip(r.Dest) + "/" + r.Prefix + ", which covers your home network " + Routes.Ip(l.Item2), "Printers and other home devices may become unreachable while the VPN is up.", "i" }); } }
             }
             catch (Exception e) { Program.Log("overlap routes: " + e.Message); }
             if (!found) rows.Insert(0, Row("0", "Overlap", "none - your networks and the VPN don't share addresses", "", "i"));
@@ -208,10 +215,16 @@ namespace AdeeboMeter
             double t4 = v4 == null ? double.NaN : Connect(v4, 443, 3000), t6 = v6 == null ? double.NaN : Connect(v6, 443, 3000);
             rows.Add(new[] { v4 == null ? "3" : double.IsNaN(t4) ? "2" : "0", "IPv4", v4 == null ? "the site has no IPv4 address" : double.IsNaN(t4) ? "couldn't connect to " + v4 : F(t4) + " ms to " + v4, "", "m" });
             rows.Add(new[] { v6 == null ? "3" : double.IsNaN(t6) ? "2" : "0", "IPv6", v6 == null ? "the site has no IPv6 address (or your PC has no IPv6 DNS answer)" : double.IsNaN(t6) ? "couldn't connect to " + v6 : F(t6) + " ms to " + v6, "", "m" });
-            string verdict = v6 != null && double.IsNaN(t6) && !double.IsNaN(t4) ? "IPv6 is broken here: the PC tries it first and waits before falling back to IPv4 - sites feel slow to start. Fix: the router's IPv6 settings, or ask your provider."
-                : !double.IsNaN(t6) && !double.IsNaN(t4) ? (t6 > t4 + 30 ? "Both work, but IPv6 is slower by " + F(t6 - t4) + " ms - its route takes a detour." : "Both work about equally well.")
-                : v6 == null ? "Only IPv4 here - nothing to compare." : "Neither connected.";
-            rows.Add(new[] { verdict.StartsWith("IPv6 is broken", StringComparison.Ordinal) ? "2" : "0", "Verdict", verdict, "", "i" });
+            // every combination: has v4 / v6, and whether each connected
+            bool ok4 = !double.IsNaN(t4), ok6 = !double.IsNaN(t6); string verdict; int vl;
+            if (ok4 && ok6) { verdict = t6 > t4 + 30 ? "Both work, but IPv6 is slower by " + F(t6 - t4) + " ms - its route takes a detour." : "Both work about equally well."; vl = t6 > t4 + 30 ? 1 : 0; }
+            else if (ok4 && v6 != null) { verdict = "IPv6 is broken here: the PC tries it first and waits before falling back to IPv4 - sites feel slow to start. Fix: the router's IPv6 settings, or ask your provider."; vl = 2; }
+            else if (ok4) { verdict = "Only IPv4 here - nothing to compare."; vl = 0; }
+            else if (ok6 && v4 != null) { verdict = "IPv4 is broken here, IPv6 works - anything without IPv6 fails. Check the router, or ask your provider."; vl = 2; }
+            else if (ok6) { verdict = "The site is IPv6-only, and IPv6 works here."; vl = 0; }
+            else if (v4 == null && v6 == null) { verdict = "The name has no addresses."; vl = 2; }
+            else { verdict = "Neither connected - the site, the port (443) or the way out is down."; vl = 2; }
+            rows.Add(new[] { vl.ToString(CultureInfo.InvariantCulture), "Verdict", verdict, "", "i" });
             return rows;
         }
         public static double Connect(IPAddress a, int port, int timeout)

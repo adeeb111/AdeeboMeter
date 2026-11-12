@@ -27,8 +27,8 @@ namespace AdeeboMeter
         static bool Split(string target, int defPort, out string host, out int port)
         {
             host = (target ?? "").Trim(); port = defPort;
-            if (host.StartsWith("[", StringComparison.Ordinal)) { int e = host.IndexOf(']'); if (e > 0) { int p; if (host.Length > e + 2 && int.TryParse(host.Substring(e + 2), out p)) port = p; host = host.Substring(1, e - 1); } }
-            else { int c = host.LastIndexOf(':'); if (c > 0 && host.IndexOf(':') == c) { int p; if (int.TryParse(host.Substring(c + 1), out p)) port = p; host = host.Substring(0, c); } }
+            if (host.StartsWith("[", StringComparison.Ordinal)) { int e = host.IndexOf(']'); if (e > 0) { int p; if (host.Length > e + 2) { if (!int.TryParse(host.Substring(e + 2), NumberStyles.None, CultureInfo.InvariantCulture, out p)) return false; port = p; } host = host.Substring(1, e - 1); } }
+            else { int c = host.LastIndexOf(':'); if (c > 0 && host.IndexOf(':') == c) { int p; if (!int.TryParse(host.Substring(c + 1), NumberStyles.None, CultureInfo.InvariantCulture, out p)) return false; port = p; host = host.Substring(0, c); } }   // "host:abc" is a mistake, not the default port
             return host != "" && port > 0 && port < 65536;
         }
         static IPAddress Addr(string host) { IPAddress a; if (IPAddress.TryParse(host, out a)) return a; try { return Dns.GetHostAddresses(host).OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).FirstOrDefault(); } catch { return null; } }
@@ -63,7 +63,7 @@ namespace AdeeboMeter
         // ---------- HTTP timing, repeated (like curl -w)
         public static List<string[]> HttpTiming(string url, string countIn, Toolkit.Run run)
         {
-            var rows = new List<string[]>(); if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url.Trim();
+            var rows = new List<string[]>(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url.Trim();
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "URL", "not a web address", "", "u")); return rows; }
             int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5);
             for (int i = 0; i < n && !run.Stop; i++)
@@ -119,7 +119,7 @@ namespace AdeeboMeter
             var a = IPAddress.Parse("1.1.1.1"); var s2 = Stopwatch.StartNew();
             try
             {
-                using (var tc = new TcpClient())
+                using (var tc = Toolkit.Tcp())
                 {
                     if (!tc.ConnectAsync(a, 853).Wait(4000)) throw new TimeoutException("TCP 853 doesn't answer");
                     using (var ssl = new SslStream(tc.GetStream(), false))
@@ -169,39 +169,59 @@ namespace AdeeboMeter
         static DateTime ReadNtp(byte[] b, int o) { uint sec = (uint)(b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]); uint frac = (uint)(b[o + 4] << 24 | b[o + 5] << 16 | b[o + 6] << 8 | b[o + 7]); return new DateTime(1900, 1, 1).AddSeconds((sec >= 0x80000000u ? sec : sec + 4294967296.0) + frac / 4294967296.0); }   // RFC 4330 3: top bit clear = era 1 (from Feb 2036)
 
         // ---------- mail: greeting, capabilities, STARTTLS / TLS certificate (no login)
-        public static List<string[]> Mail(string target)
+        // A mail server's lines, read with limits: 1 KB a line at most, one deadline for the whole check, and Stop honoured -
+        // a server that never ends a line, sends endless "250-" lines or drips a byte at a time can't eat memory or hang the tool
+        sealed class Lines
+        {
+            public Stream S; readonly DateTime until; readonly Toolkit.Run run; readonly byte[] one = new byte[1];
+            public Lines(Stream s, int seconds, Toolkit.Run r) { S = s; until = DateTime.UtcNow.AddSeconds(seconds); run = r; }
+            public string Next()
+            {
+                var sb = new StringBuilder();
+                while (true)
+                {
+                    if (DateTime.UtcNow > until) throw new TimeoutException("the server took too long (20 s for the whole check)");
+                    if (run != null && run.Stop) throw new OperationCanceledException("stopped");
+                    int n = S.Read(one, 0, 1); if (n <= 0) return sb.Length > 0 ? sb.ToString() : null;
+                    char c = (char)one[0]; if (c == '\n') return sb.ToString().TrimEnd('\r');
+                    if (sb.Length < 1024) sb.Append(c);   // a longer line is cut, never kept growing
+                }
+            }
+        }
+        public static List<string[]> Mail(string target) { return Mail(target, null); }
+        public static List<string[]> Mail(string target, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 587, out h, out p)) { rows.Add(R(2, "Server", "type host or host:port, e.g. smtp.office365.com:587", "", "u")); return rows; }
             bool implicitTls = p == 465 || p == 993 || p == 995; string kind = p == 143 || p == 993 ? "IMAP" : p == 110 || p == 995 ? "POP" : "SMTP";
             try
             {
-                using (var tc = new TcpClient())
+                using (var tc = Toolkit.Tcp())
                 {
                     var sw = Stopwatch.StartNew(); if (!tc.ConnectAsync(h, p).Wait(6000)) throw new TimeoutException("no answer on port " + p);
                     Stream st = tc.GetStream(); st.ReadTimeout = 8000; X509Certificate2 cert = null;
                     if (implicitTls) { var ssl = new SslStream(st, false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); st = ssl; }
-                    var rd = new StreamReader(st, Encoding.ASCII); var wr = new StreamWriter(st, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true };
-                    string banner = rd.ReadLine() ?? "";
+                    var rd = new Lines(st, 20, run); var wr = new StreamWriter(st, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true };
+                    string banner = rd.Next() ?? "";
                     rows.Add(R(banner.StartsWith("220", StringComparison.Ordinal) || banner.StartsWith("* OK", StringComparison.Ordinal) || banner.StartsWith("+OK", StringComparison.Ordinal) ? 0 : 1, kind + " greeting (" + sw.ElapsedMilliseconds + " ms)", Draw.Trunc(banner, 140), "", "m"));
                     if (kind == "SMTP")
                     {
-                        wr.WriteLine("EHLO adeebometer.local"); var caps = new List<string>(); string l; while ((l = rd.ReadLine()) != null) { caps.Add(l.Length > 4 ? l.Substring(4) : l); if (l.Length < 4 || l[3] != '-') break; }
+                        wr.WriteLine("EHLO adeebometer.local"); var caps = new List<string>(); string l; while ((l = rd.Next()) != null && caps.Count < 50) { caps.Add(l.Length > 4 ? l.Substring(4) : l); if (l.Length < 4 || l[3] != '-') break; }
                         rows.Add(R(3, "Offers", string.Join(" · ", caps.Skip(1).Take(12)), "", "m"));
                         bool starttls = caps.Any(c => c.StartsWith("STARTTLS", StringComparison.OrdinalIgnoreCase));
                         if (!implicitTls) rows.Add(R(starttls ? 0 : 1, "STARTTLS", starttls ? "offered" : "not offered - mail to this server would travel unencrypted", "", "m"));
                         if (starttls && !implicitTls)
                         {
-                            wr.WriteLine("STARTTLS"); string ok = rd.ReadLine() ?? "";
+                            wr.WriteLine("STARTTLS"); string ok = rd.Next() ?? "";
                             if (ok.StartsWith("220", StringComparison.Ordinal)) { var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); var w2 = new StreamWriter(ssl, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true }; w2.WriteLine("QUIT"); }
                         }
                         else wr.WriteLine("QUIT");
                     }
-                    else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = rd.ReadLine() ?? ""; rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
-                    else { wr.WriteLine("CAPA"); var caps = new List<string>(); string l; while ((l = rd.ReadLine()) != null && l != "." && caps.Count < 20) caps.Add(l); rows.Add(R(3, "Offers", string.Join(" · ", caps.Skip(1)), "", "m")); wr.WriteLine("QUIT"); }
+                    else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = rd.Next() ?? ""; rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
+                    else { wr.WriteLine("CAPA"); var caps = new List<string>(); string l; while ((l = rd.Next()) != null && l != "." && caps.Count < 20) caps.Add(l); rows.Add(R(3, "Offers", string.Join(" · ", caps.Skip(1)), "", "m")); wr.WriteLine("QUIT"); }
                     if (cert != null) using (cert) { double days = (cert.NotAfter - DateTime.Now).TotalDays; rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cert.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m")); }
                 }
             }
-            catch (Exception e) { rows.Add(R(2, h + ":" + p, Draw.Trunc(e.Message, 100), p == 25 ? "Home providers usually block outgoing port 25 - use 587." : "", "m")); }
+            catch (Exception e) { if (e is AggregateException && e.InnerException != null) e = e.InnerException; rows.Add(R(2, h + ":" + p, Draw.Trunc(e.Message, 100), p == 25 ? "Home providers usually block outgoing port 25 - use 587." : "", "m")); }
             return rows;
         }
 
@@ -211,7 +231,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 22, out h, out p)) { rows.Add(R(2, "Server", "type host or host:port", "", "u")); return rows; }
             try
             {
-                using (var tc = new TcpClient())
+                using (var tc = Toolkit.Tcp())
                 {
                     var sw = Stopwatch.StartNew(); if (!tc.ConnectAsync(h, p).Wait(5000)) throw new TimeoutException("no answer on port " + p);
                     var st = tc.GetStream(); st.ReadTimeout = 5000; var buf = new byte[256]; int n = st.Read(buf, 0, buf.Length);
@@ -365,7 +385,8 @@ namespace AdeeboMeter
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(pkt, pkt.Length);
                     var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
                     if (r.Length < 20) { rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
-                    bool good = ReplyOk(r, pkt[1], auth, sec); Array.Clear(sec, 0, sec.Length);
+                    bool ma, good = ReplyOk(r, pkt[1], auth, sec, out ma); Array.Clear(sec, 0, sec.Length);
+                    if (good && !ma) rows.Add(R(1, "Message-Authenticator", "the reply doesn't carry one", "Not hardened against BlastRADIUS (CVE-2024-3596): turn on require_message_authenticator / limit_proxy_state on the server, or update it.", "m"));
                     string code = r[0] == 2 ? "Access-Accept" : r[0] == 3 ? "Access-Reject" : r[0] == 5 ? "Accounting-Response" : "code " + r[0];
                     bool expected = r[0] == 2 || r[0] == 5;   // RFC 5997: Access-Accept on the authentication port, Accounting-Response on accounting
                     rows.Add(R(good ? (expected ? 0 : 1) : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", code + (good ? (expected ? " - the server is alive and the shared secret matches" : " - signed with this secret (so it matches), but not the answer Status-Server expects") : " - but the reply isn't signed with this secret"),
@@ -379,8 +400,12 @@ namespace AdeeboMeter
         // Response Authenticator (RFC 2865 section 3): MD5(Code + Identifier + Length + Request Authenticator + Attributes + Secret),
         // over the length the reply declares. Checked against the RFC's own example in the self-test.
         [SuppressMessage("Security", "CA5351", Justification = "RADIUS (RFC 2865) defines MD5; nothing else interoperates")]
-        public static bool ReplyOk(byte[] r, byte id, byte[] reqAuth, byte[] secret)
+        public static bool ReplyOk(byte[] r, byte id, byte[] reqAuth, byte[] secret) { bool ma; return ReplyOk(r, id, reqAuth, secret, out ma); }
+        [SuppressMessage("Security", "CA5351", Justification = "RADIUS (RFC 2865 / 3579) defines MD5 and HMAC-MD5; nothing else interoperates")]
+        // hasMa: the reply carried a Message-Authenticator that checked out (we always send one; BlastRADIUS hardening wants it back)
+        public static bool ReplyOk(byte[] r, byte id, byte[] reqAuth, byte[] secret, out bool hasMa)
         {
+            hasMa = false;
             if (r == null || r.Length < 20 || reqAuth == null || reqAuth.Length != 16 || secret == null) return false;
             int rl = r[2] << 8 | r[3]; if (rl < 20 || rl > r.Length || r[1] != id) return false;
             var chk = new byte[rl + secret.Length]; Array.Copy(r, chk, rl); Array.Copy(reqAuth, 0, chk, 4, 16); Array.Copy(secret, 0, chk, rl, secret.Length);
@@ -397,6 +422,7 @@ namespace AdeeboMeter
                     var copy = new byte[rl]; Array.Copy(r, copy, rl); Array.Copy(reqAuth, 0, copy, 4, 16); Array.Clear(copy, p + 2, 16);
                     try { using (var h = new HMACMD5(secret)) { var mac = h.ComputeHash(copy); for (int i = 0; i < 16; i++) if (mac[i] != r[p + 2 + i]) return false; } }
                     finally { Array.Clear(copy, 0, copy.Length); }
+                    hasMa = true;
                 }
                 p += l;
             }

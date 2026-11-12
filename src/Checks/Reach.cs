@@ -21,7 +21,8 @@ namespace AdeeboMeter
         // ---------- HTTP request builder: method, headers and body you choose; redirects shown, not followed
         static readonly char[] BadHdr = { '\r', '\n', '\0' };
         static readonly string[] Methods = { "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" };
-        public static List<string[]> Http(string url, string method, string headers, string body)
+        public static List<string[]> Http(string url, string method, string headers, string body) { return Http(url, method, headers, body, null); }
+        public static List<string[]> Http(string url, string method, string headers, string body, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string u = (url ?? "").Trim(); if (u != "" && !u.Contains("://")) u = "https://" + u;
             Uri uri; if (!Uri.TryCreate(u, UriKind.Absolute, out uri) || (uri.Scheme != "http" && uri.Scheme != "https") || u.Length > 2000) { rows.Add(R(2, "URL", "type a web address - e.g. https://example.com/api/health", "", "u")); return rows; }
@@ -31,7 +32,15 @@ namespace AdeeboMeter
             try { q = (HttpWebRequest)WebRequest.Create(uri); } catch (NotSupportedException) { rows.Add(R(2, "URL", "not a web address", "", "u")); return rows; }
             q.Method = m; q.AllowAutoRedirect = false; q.Timeout = 15000; q.ReadWriteTimeout = 15000; q.UserAgent = "AdeeboMeter/" + Program.Version;
             var skipped = new List<string>();
-            foreach (var part in (headers ?? "").Split(';'))
+            // headers are separated by ";" - but a value may hold one too (Content-Type: application/json; charset=utf-8): a
+            // piece without its own "Name:" belongs to the header before it
+            var parts = new List<string>();
+            foreach (var piece in (headers ?? "").Split(';'))
+            {
+                int pc = piece.IndexOf(':'), pe = piece.IndexOf('=');
+                if (parts.Count > 0 && (pc <= 0 || (pe >= 0 && pe < pc))) parts[parts.Count - 1] += ";" + piece; else parts.Add(piece);
+            }
+            foreach (var part in parts)
             {
                 int c = part.IndexOf(':'); if (c <= 0) continue; string n = part.Substring(0, c).Trim(), v = part.Substring(c + 1).Trim();
                 if (!Regex.IsMatch(n, @"^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,64}$") || v.IndexOfAny(BadHdr) >= 0) { skipped.Add(n); continue; }
@@ -48,6 +57,7 @@ namespace AdeeboMeter
             }
             if ((body ?? "").Length > 65536) { rows.Add(R(2, "Body", "64 KB at most", "", "u")); return rows; }
             var data = Encoding.UTF8.GetBytes(body ?? "");
+            if (data.Length > 0 && (m == "GET" || m == "HEAD")) rows.Add(R(1, "Body", "not sent - a " + m + " request has no body (use POST or PUT)", "", "u"));
             var sw = Stopwatch.StartNew(); HttpWebResponse r = null;
             try
             {
@@ -62,7 +72,10 @@ namespace AdeeboMeter
             catch (System.IO.IOException e) { rows.Add(R(2, uri.Host, Draw.Trunc(e.Message, 100), "", "m")); return rows; }
             using (r)
             {
-                var buf = new MemoryStream(); try { using (var s = r.GetResponseStream()) { var b = new byte[8192]; int k; while (buf.Length < 65536 && (k = s.Read(b, 0, b.Length)) > 0) buf.Write(b, 0, k); } } catch (IOException) { } catch (WebException) { }
+                // the body: 64 KB at most, 20 s at most in all (a server dripping a byte at a time can't keep the Toolbox busy), Stop ends it
+                var buf = new MemoryStream(); bool cut = false; var dl = Stopwatch.StartNew();
+                try { using (var s = r.GetResponseStream()) { var b = new byte[8192]; int k; while (buf.Length < 65536 && (k = s.Read(b, 0, b.Length)) > 0) { buf.Write(b, 0, k); if (dl.ElapsedMilliseconds > 20000 || (run != null && run.Stop)) { cut = true; break; } } } } catch (IOException) { } catch (WebException) { }
+                if (cut) rows.Add(R(1, "Body", "stopped reading after " + I((int)buf.Length) + " bytes - the server was sending very slowly (or you pressed Stop)", "", "m"));
                 int code = (int)r.StatusCode;
                 rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, m + " " + Draw.Trunc(uri.ToString(), 80), I(code) + " " + r.StatusDescription + " · " + sw.ElapsedMilliseconds + " ms · " + I(buf.Length) + (buf.Length >= 65536 ? "+" : "") + " bytes",
                     (code >= 300 && code < 400 ? "A redirect - shown, not followed. " : "") + (skipped.Count > 0 ? "Not sent (Windows sets these itself, or not a valid header): " + string.Join(", ", skipped) + ". " : "") + "Sent through your proxy settings, like a browser.", "m"));
@@ -122,6 +135,7 @@ namespace AdeeboMeter
         static byte[] DnsQ(string name, int type, ushort id)
         {
             var b = new List<byte> { (byte)(id >> 8), (byte)id, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
+            if (name.Any(ch => ch > 127)) try { name = new System.Globalization.IdnMapping().GetAscii(name.TrimEnd('.')); } catch (ArgumentException) { }
             foreach (var l in name.Split('.')) { b.Add((byte)l.Length); b.AddRange(Encoding.ASCII.GetBytes(l)); }
             b.AddRange(new byte[] { 0, 0, (byte)type, 0, 1 }); return b.ToArray();
         }
@@ -173,7 +187,7 @@ namespace AdeeboMeter
             if (ln != null) { any = true; rows.Add(R(0, "LLMNR name", ln, "Windows answers this on home and work networks unless LLMNR is turned off by policy.", "m")); }
             var md = Ask(a, 5353, DnsQ(rev, 12, 0), 1000); string mn = md != null ? FirstPtr(md) : null;
             if (mn != null) { any = true; rows.Add(R(0, "mDNS (Bonjour) name", mn, "Apple devices, printers, smart TVs and Linux usually answer this.", "m")); }
-            try { var e = Dns.GetHostEntry(a); if (e.HostName != a.ToString()) { any = true; rows.Add(R(3, "DNS name (PTR)", e.HostName, "From your DNS server, which may know it from DHCP.", "m")); } } catch (SocketException) { } catch (ArgumentException) { }
+            try { var hn = Native.PtrName(a.ToString()); if (hn != "") { any = true; rows.Add(R(3, "DNS name (PTR)", hn, "From your DNS server, which may know it from DHCP.", "m")); } } catch (SocketException) { } catch (ArgumentException) { }
             if (!any) rows.Add(R(1, a.ToString(), "no name from NetBIOS, LLMNR, mDNS or DNS", "It may block these on its firewall, be off, or not have a name. SNMP or its web page may tell you more.", "m"));
             return rows;
         }
@@ -231,7 +245,7 @@ namespace AdeeboMeter
             if (arp.Count > 0)
             {
                 run.Status = "Adding devices from the neighbour table...";
-                var look = arp.Select(e => System.Threading.Tasks.Task.Factory.StartNew(() => { try { var h = Dns.GetHostEntry(IPAddress.Parse(e.Ip)).HostName; return h != e.Ip ? h : ""; } catch (SocketException) { return ""; } catch (ArgumentException) { return ""; } })).ToArray();
+                var look = arp.Select(e => System.Threading.Tasks.Task.Factory.StartNew(() => { try { return Native.PtrName(e.Ip); } catch (SocketException) { return ""; } catch (ArgumentException) { return ""; } })).ToArray();
                 System.Threading.Tasks.Task.WaitAll(look, 4000);
                 for (int i = 0; i < arp.Count; i++)
                 {

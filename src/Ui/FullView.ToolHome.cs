@@ -22,7 +22,8 @@ namespace AdeeboMeter
             new[] { "join", "Why can't it join?", "WHY CAN'T IT JOIN?|REPLAY A CAPTURE|TRUST & MAIL", "join|radiuslab|dhcpreplay" },
             new[] { "keys", "Keys and encryption", "KEYS & ENCRYPTION", "encrypt|decrypt|keys" },
             new[] { "win", "Windows and certificates", "WINDOWS|CERTIFICATES & FILES", "winev|certs|fw" },
-            new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" } };
+            new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
+            new[] { "pc", "Is it this PC?", "THE PC", "pressure|space|crash" } };   // the PC's own checks: on no other card
         string tbQ = "";   // the question page open ("" = all questions)
         DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
         static bool ByQuestion { get { return Cfg.TbView != "list"; } }

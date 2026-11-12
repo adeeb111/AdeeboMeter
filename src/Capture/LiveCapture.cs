@@ -30,7 +30,7 @@ namespace AdeeboMeter
     // Runs only on the Live capture tab, stops when you press Stop, leave the tab, close the view or after 15 minutes.
     // tshark decodes (-n: no name lookups, -p: only this PC's own traffic, -M: session reset to keep memory flat);
     // dumpcap keeps a small ring buffer (5 x 20 MB) so Sniff can include what happened before you clicked.
-    sealed class LiveCapture
+    sealed class LiveCapture : IDisposable
     {
         static readonly char[] Comma = { ',' };
         static readonly string[] TestLocal = { "10.0.0.82", "172.17.0.2", "192.0.2.2" };
@@ -88,7 +88,7 @@ namespace AdeeboMeter
             lock (k) { phs.Clear(); convs.Clear(); expert.Clear(); rtp.Clear(); dhcp.Clear(); pkts = bytes = prevPkts = 0; }
             local = new HashSet<string>();
             try { foreach (var n in NetworkInterface.GetAllNetworkInterfaces()) foreach (var ua in n.GetIPProperties().UnicastAddresses) local.Add(ua.Address.ToString().Split('%')[0]); } catch { }
-            Error = ""; started = DateTime.UtcNow; running = true;
+            Error = ""; RingError = ""; started = DateTime.UtcNow; running = true;
             try
             {
                 var sb = new StringBuilder("-i \"" + iface + "\" -p -n -l -M 100000 -T fields -E separator=/t -E occurrence=a -E aggregator=, -E quote=n");
@@ -104,7 +104,9 @@ namespace AdeeboMeter
                 {
                     if (e.Data == null || e.Data.IndexOf("Capturing on", StringComparison.Ordinal) >= 0 || e.Data.Trim() == "") return;
                     string d = e.Data;
-                    if (usingExtras && (d.IndexOf("valid", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("unrecognized", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("heuristic", StringComparison.OrdinalIgnoreCase) >= 0))
+                    // only tshark's own "unknown field / heuristic" complaints - an "Invalid argument" or "not a valid interface" must not
+                    // switch call quality and DHCP detection off for the session
+                    if (usingExtras && (d.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("isn't a valid field", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("are not valid", StringComparison.OrdinalIgnoreCase) >= 0 || (d.IndexOf("heuristic", StringComparison.OrdinalIgnoreCase) >= 0 && d.IndexOf("not", StringComparison.OrdinalIgnoreCase) >= 0) || d.IndexOf("unrecognized option", StringComparison.OrdinalIgnoreCase) >= 0))
                     { extrasOk = false; usingExtras = false; string gid = startGuid; Program.Log("tshark: extra fields not supported, restarting without them"); Restart(gid); return; }
                     Error = Draw.Trunc(d.Trim(), 140);
                 };
@@ -113,7 +115,14 @@ namespace AdeeboMeter
                 // ring buffer for Sniff
                 try { Directory.CreateDirectory(RingDir); foreach (var f in Directory.GetFiles(RingDir)) try { File.Delete(f); } catch { } } catch { }
                 var rp = new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -b filesize:20000 -b files:5 -w \"" + Path.Combine(RingDir, "ring.pcapng") + "\"") { WorkingDirectory = Path.GetDirectoryName(Dumpcap), UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
-                ring = Process.Start(rp); Job.Add(ring); ring.BeginErrorReadLine();
+                ring = Process.Start(rp); Job.Add(ring);
+                ring.ErrorDataReceived += delegate(object s2, DataReceivedEventArgs e2)
+                {
+                    string d2 = e2.Data ?? ""; if (d2.Trim() == "" || d2.IndexOf("Capturing on", StringComparison.Ordinal) >= 0 || d2.IndexOf("File:", StringComparison.Ordinal) >= 0) return;
+                    if (d2.IndexOf("rror", StringComparison.Ordinal) >= 0 || d2.IndexOf("space", StringComparison.OrdinalIgnoreCase) >= 0) { RingError = Draw.Trunc(d2.Trim(), 140); Program.Log("dumpcap ring: " + d2); }
+                };
+                ring.BeginErrorReadLine();
+                if (limit != null) limit.Dispose(); limit = new System.Threading.Timer(delegate { try { CheckLimit(); } catch (Exception ex) { Program.Log("capture limit: " + ex.Message); } }, null, 30000, 30000);
                 try { ring.PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
                 Program.Log("Live capture started");
                 return true;
@@ -121,15 +130,22 @@ namespace AdeeboMeter
             catch (Exception e) { Error = "Could not start tshark: " + e.Message; Stop(); return false; }
         }
 
+        public volatile string RingError = "";   // the Sniff ring buffer's own trouble (disk full, adapter gone) - Sniff says it instead of switching path quietly
         public void Stop() { lock (life) Stop2(); }
+        public void Dispose() { Stop(); }
         volatile int gen;   // bumped by every stop: a delayed self-restart from before it is dropped, so a capture you stopped stays stopped
         void Restart(string guid) { int g = gen; ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); lock (life) { if (g == gen) Start2(guid); } }); }
         void Stop2()
         {
             gen++;
             bool was = running; running = false;
+            if (limit != null) { limit.Dispose(); limit = null; }
+            // tshark runs its own dumpcap: stop that child too, or it keeps the adapter until its next write fails
+            var kids = new List<int>();
+            if (ts != null) try { int tid = ts.Id; Dictionary<int, ProcTree.P> by; ProcTree.Snapshot(out by); kids.AddRange(by.Values.Where(x => x.Parent == tid && string.Equals(x.Name, "dumpcap.exe", StringComparison.OrdinalIgnoreCase)).Select(x => x.Pid)); } catch (InvalidOperationException) { }
             foreach (var p in new[] { ts, ring })
                 if (p != null) { try { if (!p.HasExited) { p.Kill(); p.WaitForExit(2000); } } catch { } try { p.Dispose(); } catch { } }
+            foreach (int k2 in kids) try { using (var kp = Process.GetProcessById(k2)) if (string.Equals(kp.ProcessName, "dumpcap", StringComparison.OrdinalIgnoreCase) && !kp.HasExited) { kp.Kill(); kp.WaitForExit(1000); } } catch (ArgumentException) { } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
             var rd = reader; reader = null; if (rd != null && rd != Thread.CurrentThread) rd.Join(2000);   // tshark is gone, so its reader ends
             ts = null; ring = null;
             try { if (Directory.Exists(RingDir)) foreach (var f in Directory.GetFiles(RingDir)) try { File.Delete(f); } catch { } } catch { }
@@ -151,6 +167,15 @@ namespace AdeeboMeter
             }
             catch { }
             if (!running) ThreadPool.QueueUserWorkItem(delegate { Stop(); });
+            // tshark ended on its own (sleep, an adapter reset, Wi-Fi gone) while we still think we're capturing: say so and stop,
+            // never "capturing 47:12" with nothing coming in. (A restart without the extra fields swaps ts first - not this.)
+            else if (p == ts) { Error = "Capture stopped by itself - the adapter went away or the PC slept. Press Start again."; ThreadPool.QueueUserWorkItem(delegate { Stop(); }); }
+        }
+        // the time limit holds even when no packets arrive (the reader only wakes up on a line)
+        System.Threading.Timer limit;
+        void CheckLimit()
+        {
+            if (running && (DateTime.UtcNow - started).TotalMinutes > MaxMinutes) { Error = "Stopped after " + MaxMinutes + " minutes so it doesn't nibble your CPU forever. Press Start for more."; Stop(); }
         }
 
         public void FeedForTest(string line) { if (local.Count == 0) local = new HashSet<string>(TestLocal); Parse(line); }
@@ -357,13 +382,15 @@ namespace AdeeboMeter
         // Sniff with history: the ring buffer filtered to one flow, plus 15 s more, merged and opened in Wireshark.
         public void SniffWithHistory(Conn c, string filt, string dfilt, Action<string> status)
         {
-            string dir = Program.SafeCapturePath("sniff_" + DateTime.Now.ToString("HHmmss", CultureInfo.CurrentCulture)); Directory.CreateDirectory(dir);
+            // the time plus a few random letters: two sniffs in one second each get their own folder
+            string dir = Program.SafeCapturePath("sniff_" + DateTime.Now.ToString("HHmmss", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N").Substring(0, 6));
             var parts = new List<string>();
             try
             {
+                Directory.CreateDirectory(dir);
                 status(Voice.P("Digging through the last few minutes and listening 15 s more...", "Collecting history + 15 s..."));
                 var fwd = Path.Combine(dir, "z_after.pcapng");
-                var fp = Process.Start(new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -f \"" + filt + "\" -a duration:15 -w \"" + fwd + "\"") { WorkingDirectory = Path.GetDirectoryName(Dumpcap), UseShellExecute = false, CreateNoWindow = true }); Job.Add(fp);
+                var fp = Process.Start(new ProcessStartInfo(Dumpcap, "-i \"" + iface + "\" -p -q -f \"" + filt + "\" -a duration:15 -a filesize:200000 -w \"" + fwd + "\"") { WorkingDirectory = Path.GetDirectoryName(Dumpcap), UseShellExecute = false, CreateNoWindow = true }); Job.Add(fp);
                 int i = 0;
                 foreach (var rf in Directory.GetFiles(RingDir, "*.pcapng").OrderBy(x => File.GetLastWriteTimeUtc(x)))
                 {

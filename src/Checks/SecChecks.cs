@@ -107,8 +107,10 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (!(e is System.Runtime.InteropServices.COMException || e is System.Reflection.TargetInvocationException || e is ArgumentException || e is NullReferenceException || e is FormatException || e is InvalidCastException || e is MissingMethodException || e is NotImplementedException)) throw; }
             string drive = Path.GetPathRoot(Environment.SystemDirectory).TrimEnd('\\');
-            if (v == 1 || v == 3 || v == 5) return One(0, "Drive encryption", "BitLocker on for " + drive + (v == 3 ? " (encrypting now)" : ""), "", null);
-            if (v == 2 || v == 4 || v == 6) return One(1, "Drive encryption", "BitLocker OFF for " + drive, "A lost or stolen laptop gives away everything on it. Home editions may have Device encryption instead (Settings › Privacy & security).", "ms-settings:deviceencryption");
+            // System.Volume.BitLockerProtection: 1 on, 2 off, 3 encrypting, 4 decrypting, 5 suspended, 6 on (locked), 8 waiting for activation
+            if (v == 1 || v == 3 || v == 6) return One(0, "Drive encryption", "BitLocker on for " + drive + (v == 3 ? " (encrypting now)" : ""), "", null);
+            if (v == 5 || v == 8) return One(1, "Drive encryption", "BitLocker " + (v == 5 ? "SUSPENDED" : "waiting for activation") + " for " + drive, "The drive is encrypted but the key isn't protected right now - anyone with the laptop can read it. Resume protection in Control Panel › BitLocker.", "ms-settings:deviceencryption");
+            if (v == 2 || v == 4) return One(1, "Drive encryption", "BitLocker OFF for " + drive, "A lost or stolen laptop gives away everything on it. Home editions may have Device encryption instead (Settings › Privacy & security).", "ms-settings:deviceencryption");
             return One(3, "Drive encryption", "Windows doesn't say for " + drive, "Settings › Privacy & security › Device encryption, or BitLocker in Control Panel.", "ms-settings:deviceencryption");
         }
         static List<string[]> SecureBoot(Monitor m, List<string> s)
@@ -128,7 +130,7 @@ namespace AdeeboMeter
         {
             var hf = Wmi(@"root\cimv2", "SELECT InstalledOn FROM Win32_QuickFixEngineering");
             DateTime last = DateTime.MinValue;
-            if (hf != null) foreach (var h in hf) { DateTime d; var t = Convert.ToString(h["InstalledOn"], CultureInfo.InvariantCulture); if (DateTime.TryParse(t, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) || DateTime.TryParse(t, CultureInfo.CurrentCulture, DateTimeStyles.None, out d)) if (d > last && d <= DateTime.Now.AddDays(1)) last = d; }
+            if (hf != null) foreach (var h in hf) { DateTime d; var t = Convert.ToString(h["InstalledOn"], CultureInfo.InvariantCulture); if (DateTime.TryParse(t, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) || DateTime.TryParse(t, CultureInfo.CurrentCulture, DateTimeStyles.None, out d))   /* WMI writes M/d/yyyy whatever the PC's language (Get-HotFix's known trap) - so invariant first */ if (d > last && d <= DateTime.Now.AddDays(1)) last = d; }
             bool pending = KeyExists(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired") || KeyExists(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending");
             int days = last == DateTime.MinValue ? -1 : (int)(DateTime.Now - last).TotalDays;
             int lv = days < 0 ? 3 : days > 60 ? 2 : days > 35 ? 1 : 0; if (pending && lv == 0) lv = 1;
@@ -210,16 +212,22 @@ namespace AdeeboMeter
         static readonly string[] Interceptors = { "fiddler", "charles", "mitmproxy", "burp", "portswigger", "zscaler", "netskope", "fortinet", "fortigate", "palo alto", "blue coat", "bluecoat", "sophos", "kaspersky", "avast", "avg ", "eset", "bitdefender", "cisco umbrella", "forcepoint", "websense", "superfish" };
         static List<string[]> Roots(Monitor m, List<string> s)
         {
-            var mine = new List<X509Certificate2>(); var lm = new HashSet<string>();
+            var mine = new List<X509Certificate2>(); var lm = new HashSet<string>(); var lmHits = new List<string>();
             try
             {
-                using (var st = new X509Store(StoreName.Root, StoreLocation.LocalMachine)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) { lm.Add(c.Thumbprint); c.Dispose(); } }
+                using (var st = new X509Store(StoreName.Root, StoreLocation.LocalMachine)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) { lm.Add(c.Thumbprint); if (Interceptors.Any(n => c.Subject.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0)) lmHits.Add(c.GetNameInfo(X509NameType.SimpleName, false)); c.Dispose(); } }
                 using (var st = new X509Store(StoreName.Root, StoreLocation.CurrentUser)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) mine.Add(c); }
             }
             catch (System.Security.Cryptography.CryptographicException) { return One(3, "Trusted root certificates", "couldn't read the stores", "", "certmgr.msc"); }
             var extra = mine.Where(c => !lm.Contains(c.Thumbprint)).ToList();
             var hits = extra.Where(c => Interceptors.Any(n => c.Subject.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
-            var res = extra.Count == 0 ? One(0, "Trusted root certificates", "only the ones Windows and your company put there", "", "certmgr.msc")
+            // a traffic-reading root in the machine store is there for every user (an antivirus, a company proxy, or something worse)
+            if (extra.Count == 0 && lmHits.Count > 0)
+            {
+                foreach (var c in mine) c.Dispose();
+                return One(Lab.Company(m) ? 3 : 1, "Trusted root certificates", "for everyone on this PC: " + string.Join("; ", lmHits.Distinct().Take(5)), "It belongs to a tool that can read your encrypted web traffic (an antivirus web shield, a company proxy or a debugging tool). Expected if your company or your antivirus put it there; otherwise remove it in certlm.msc.", "certlm.msc");
+            }
+            var res = extra.Count == 0 ? One(0, "Trusted root certificates", "no extra roots, and none from tools that read encrypted traffic", "", "certmgr.msc")
                 : One(hits.Count > 0 ? 1 : 3, "Trusted root certificates", extra.Count + " added just for you: " + string.Join("; ", extra.Take(5).Select(c => c.GetNameInfo(X509NameType.SimpleName, false))), hits.Count > 0 ? "One belongs to a tool that reads your encrypted web traffic (a debugging proxy or an antivirus's web shield). Fine if you installed it on purpose; otherwise remove it in certmgr." : "Added roots let whoever owns them make certificates your PC trusts. Remove any you don't recognise.", "certmgr.msc");
             foreach (var c in mine) c.Dispose();
             return res;
@@ -325,15 +333,11 @@ namespace AdeeboMeter
         }
         static List<string[]> OpenWifi(Monitor m, List<string> s)
         {
-            var o = Run("netsh.exe", "wlan show profiles", 10000);
-            if (o == null || !o.Contains(":")) return One(3, "Saved Wi-Fi networks", "no Wi-Fi here, or Windows didn't list them", "", "ms-settings:network-wifisettings");
-            var names = Regex.Matches(o, @"(?m)^\s+[^:\r\n]*Profile\s*:\s*(.+?)\s*$").Cast<Match>().Select(x => x.Groups[1].Value).Where(x => x.Length > 0 && x.Length < 64 && !x.Contains("\"")).Take(40).ToList();
-            var open = new List<string>();
-            foreach (var n in names)
-            {
-                var p = Run("netsh.exe", "wlan show profile name=\"" + n + "\"", 5000); if (p == null) continue;
-                if (Regex.IsMatch(p, @"Authentication\s*:\s*Open", RegexOptions.IgnoreCase) && Regex.IsMatch(p, @"Connection mode\s*:\s*Connect automatically", RegexOptions.IgnoreCase)) open.Add(n);
-            }
+            // Windows' own profile store (XML, the same in every language) - netsh's labels are translated
+            var prof = WlanApi.Profiles();
+            if (prof == null) return One(3, "Saved Wi-Fi networks", "no Wi-Fi here, or Windows didn't list them", "", "ms-settings:network-wifisettings");
+            var names = prof.Select(p => p.Item1).ToList();
+            var open = prof.Where(p => p.Item2 && p.Item3).Select(p => p.Item1).ToList();
             return One(open.Count == 0 ? 0 : 1, "Saved Wi-Fi networks", names.Count + " saved" + (open.Count > 0 ? " · " + open.Count + " OPEN and join by themselves: " + string.Join(", ", open.Take(5)) : " · none open and auto-joining"), open.Count > 0 ? "Anyone can set up a hotspot with the same name and your PC will join it. Untick \"Connect automatically\" or forget them." : "", "ms-settings:network-wifisettings");
         }
         static List<string[]> PsPolicy(Monitor m, List<string> s)

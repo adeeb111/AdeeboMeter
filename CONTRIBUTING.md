@@ -17,7 +17,7 @@ A change is welcome when it keeps the promises:
 2. **No administrator rights** — if Windows says no, that part simply doesn't show.
 3. **Penny-light** — heavy work only while the user is looking, and it stops by itself.
 4. **Safe** — no shell; Windows tools by full System32 path; inputs validated; TLS 1.2+ with Windows' certificate checks.
-5. **One readable file, C# 5** — it must build with Windows' own `csc.exe` (.NET Framework 4.x).
+5. **Readable source, plain C# 5** — it must build with Windows' own `csc.exe` (.NET Framework 4.x).
 6. **Plain English** — every new label gets an explanation for the **?** hover card.
 
 Add a line to `CHANGELOG.md` under the next version, and keep the self-test passing.

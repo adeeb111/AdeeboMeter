@@ -80,7 +80,7 @@ namespace AdeeboMeter
             {
                 var br = new RectangleF(x + i * (bw + 14 * S), y, bw, bh); bool on = storyBox == i; int lv = int.Parse(box[i][2], CultureInfo.InvariantCulture);
                 Theme.Fill(g, br, 12 * S, on ? Theme.BlueSoft : Theme.Soft); if (on) Theme.Stroke(g, br, 12 * S, Theme.Blue, 2);
-                using (var b = new SolidBrush(Theme.Lv(lv))) g.FillEllipse(b, br.X + 10 * S, br.Y + 12 * S, 9 * S, 9 * S);
+                Draw.LvDot(g, lv, br.X + 10 * S, br.Y + 12 * S, 9 * S, 9 * S);
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString((i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]).ToUpperInvariant(), Draw.fTiny, mb, br.X + 24 * S, br.Y + 9 * S);
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 {

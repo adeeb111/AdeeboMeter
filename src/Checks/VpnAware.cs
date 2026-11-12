@@ -49,6 +49,14 @@ namespace AdeeboMeter
                 i.AdapterUp = true; i.Adapter = n.Description;
                 var ip = n.GetIPProperties();
                 i.FullTunnel = ip.GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork && !g.Address.Equals(IPAddress.Any));
+                // WireGuard and OpenVPN full tunnels often have no adapter gateway: a default route (0/0, or 0/1 + 128/1) through it says it
+                if (!i.FullTunnel)
+                    try
+                    {
+                        var v4 = ip.GetIPv4Properties(); int idx = v4 != null ? v4.Index : -1;
+                        if (idx >= 0) i.FullTunnel = Routes.Read().Any(r => r.IfIndex == idx && (r.Prefix == 0 || (r.Prefix == 1 && (r.Dest == 0 || r.Dest == 0x80000000u))));
+                    }
+                    catch (NetworkInformationException) { }
                 i.FarSide = ip.DnsAddresses.FirstOrDefault(d => d.AddressFamily == AddressFamily.InterNetwork) ?? ip.GatewayAddresses.Select(g => g.Address).FirstOrDefault(g => g.AddressFamily == AddressFamily.InterNetwork && !g.Equals(IPAddress.Any));
                 break;
             }

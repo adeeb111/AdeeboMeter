@@ -24,7 +24,17 @@ namespace AdeeboMeter
     {
         public const string Prefix = "AdeeboMeter: ";
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
-        public static string OutDir { get { var d = Path.Combine(Program.DataDir, "certs"); Directory.CreateDirectory(d); return d; } }
+        // Key backups, CSRs and public keys you hand to others: Documents\AdeeboMeter, where you can find them, Explorer's "Show"
+        // can see them (a Store copy's AppData is virtualised) and no uninstall removes them. A portable copy keeps its own.
+        public static string OutDir
+        {
+            get
+            {
+                string d = Program.Portable ? Path.Combine(Program.DataDir, "certs") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter");
+                if (string.IsNullOrEmpty(Path.GetDirectoryName(d)) || d.StartsWith("AdeeboMeter", StringComparison.Ordinal)) d = Path.Combine(Program.DataDir, "certs");   // no Documents folder (a locked-down profile)
+                Directory.CreateDirectory(d); return d;
+            }
+        }
         static string RecipDir { get { var d = Path.Combine(Program.DataDir, "recipients"); Directory.CreateDirectory(d); return d; } }
         static string Safe(string s, int max) { s = new string((s ?? "").Where(c => char.IsLetterOrDigit(c) || c == ' ' || c == '-' || c == '_' || c == '.' || c == '@').ToArray()).Trim(); return s.Length > max ? s.Substring(0, max) : s; }
         static string Pem(string label, byte[] der) { var b = Convert.ToBase64String(der); var sb = new StringBuilder("-----BEGIN " + label + "-----\r\n"); for (int i = 0; i < b.Length; i += 64) sb.Append(b.Substring(i, Math.Min(64, b.Length - i))).Append("\r\n"); return sb.Append("-----END " + label + "-----\r\n").ToString(); }
@@ -101,6 +111,13 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); var l = Mine(); var ec = EcKeys.All();
             foreach (var k in ec)
             {
+                if (!k.Here)
+                {
+                    // listed (a portable copy's list travels) but its private key lives on the PC that made it - nothing to do here
+                    rows.Add(R(-1, k.Name.ToUpperInvariant(), "made on another PC - its private key is there, not on this one · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "", "w"));
+                    rows.Add(new[] { "3", "Copy public key", "a .adeebokey file to send", "", "w", "key:pub:ec:" + k.KeyName });
+                    continue;
+                }
                 rows.Add(R(-1, k.Name.ToUpperInvariant(), "for files encrypted to you · EC P-384 (strongest, opens .adeebo files - AdeeboMeter only) · made " + k.Made.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "", "w"));
                 rows.Add(new[] { "3", "Copy public key", "a .adeebokey file to send - only AdeeboMeter uses it", "", "w", "key:pub:ec:" + k.KeyName });
                 rows.Add(new[] { "3", "Back up private key", "an encrypted .adeebo backup, with a strong recovery passphrase shown once", "", "w", "key:backup:ec:" + k.KeyName });
@@ -233,7 +250,7 @@ namespace AdeeboMeter
             var sent = new List<X509Certificate2>(); SslPolicyErrors errs = SslPolicyErrors.None;
             try
             {
-                using (var tc = new TcpClient())
+                using (var tc = Toolkit.Tcp())
                 {
                     if (!tc.ConnectAsync(h, port).Wait(6000)) { rows.Add(R(2, h + ":" + port, "couldn't connect in 6 s", "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) => { errs = e; if (ch != null) foreach (var el in ch.ChainElements) sent.Add(new X509Certificate2(el.Certificate)); else if (c != null) sent.Add(new X509Certificate2(c)); return e == SslPolicyErrors.None; }))
@@ -260,11 +277,16 @@ namespace AdeeboMeter
             if (!string.IsNullOrWhiteSpace(certIn))
             {
                 if (n == "") { rows.Add(R(2, "Name", "type the person's name - you'll pick them by it when you encrypt", "", "")); return rows; }
+                if (n.Equals("code", StringComparison.OrdinalIgnoreCase)) { rows.Add(R(2, "Name", "\"code\" means \"share with a code\" when you encrypt - give them another name", "", "")); return rows; }
                 string ci = certIn.Trim().Trim('"'); string txt = File.Exists(ci) ? File.ReadAllText(ci) : ci; string kn;
                 var ecPub = EcKeys.ReadPublic(txt, out kn);
+                // a key changing under the same name is how someone else's key slips in: never silently
+                string ecFile = Path.Combine(RecipDir, n + ".adeebokey"), cerFile = Path.Combine(RecipDir, n + ".cer");
                 if (ecPub != null)
                 {
-                    File.WriteAllText(Path.Combine(RecipDir, n + ".adeebokey"), txt.Trim() + "\r\n", new UTF8Encoding(false));
+                    if (File.Exists(ecFile)) { string on; var old = EcKeys.ReadPublic(File.ReadAllText(ecFile), out on); if (old != null && !old.SequenceEqual(ecPub)) rows.Add(R(1, "Key changed", n + " had a different P-384 key (" + EcKeys.Fingerprint(old) + ") - it's replaced", "Only keep this if they told you they made a new key.", "")); }
+                    if (File.Exists(cerFile)) rows.Add(R(1, "Two keys", n + " also has a standard (RSA) key - files for " + n + " now use the P-384 one", "", ""));
+                    File.WriteAllText(ecFile, txt.Trim() + "\r\n", new UTF8Encoding(false));
                     rows.Add(R(0, "Saved", n + " · EC P-384 (.adeebo files)", "Check the fingerprint with them by phone once: " + EcKeys.Fingerprint(ecPub), ""));
                 }
                 else try
@@ -272,7 +294,9 @@ namespace AdeeboMeter
                     using (var c = Load(certIn))
                     {
                         if (!(c.PublicKey.Key is RSA)) { rows.Add(R(2, "Certificate", "it needs an RSA key (this one isn't)", "", "")); return rows; }
-                        File.WriteAllText(Path.Combine(RecipDir, n + ".cer"), Pem("CERTIFICATE", c.RawData), new UTF8Encoding(false));
+                        if (File.Exists(cerFile)) try { using (var oc = Load(cerFile)) if (oc.Thumbprint != c.Thumbprint) rows.Add(R(1, "Key changed", n + " had a different certificate (" + oc.GetNameInfo(X509NameType.SimpleName, false) + ") - it's replaced", "Only keep this if they told you they have a new one.", "")); } catch (CryptographicException) { }
+                        if (File.Exists(ecFile)) rows.Add(R(1, "Two keys", n + " also has a P-384 key - files for " + n + " keep using that one (delete " + n + ".adeebokey to use this certificate)", "", ""));
+                        File.WriteAllText(cerFile, Pem("CERTIFICATE", c.RawData), new UTF8Encoding(false));
                         rows.Add(R(0, "Saved", n + " · " + c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "Check the fingerprint with them by phone once: SHA-256 " + BitConverter.ToString(Sha(c.RawData)).Replace("-", ":").Substring(0, 23) + "...", ""));
                     }
                 }
@@ -320,7 +344,7 @@ namespace AdeeboMeter
                 Program.Log("key backup written (" + Path.GetFileName(file) + ")");
                 rows.Add(new[] { "0", "Backup", Path.GetFileName(file) + " - copy it somewhere safe (a USB stick, your own cloud)", "", "w", "show:" + file });
                 rows.Add(new[] { "1", "Recovery passphrase", pass, "Save it in your password manager now - AdeeboMeter doesn't keep it. Without it the backup can't be opened, by anyone.", "k", "copy:" + pass });
-                rows.Add(R(3, "On a new PC", "double-click the .pfx (or Toolbox › Check a PFX), type the passphrase - then it's in My keys there too", "", ""));
+                rows.Add(R(3, "On a new PC", "double-click the .pfx: Current User · type the passphrase exactly as shown (with the dashes, in capitals) · tick \"Mark this key as exportable\" if you'll ever back it up again · let Windows pick the store", "Then it's in My keys there too. (Check a PFX in the Toolbox only reads a file - it doesn't import it.)", ""));
             }
             return rows;
         }

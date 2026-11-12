@@ -30,7 +30,10 @@ namespace AdeeboMeter
             // "public"  ·  "v3:user"  ·  "v3:user:authpass"  ·  "v3:user:authpass:privpass"  ·  "v3-md5:..." / "v3-sha256:..."
             public static Cred Parse(string s)
             {
-                var c = new Cred(); s = (s ?? "").Trim(); if (s == "") return c;
+                // spaces around it are a paste slip and go; "community:" in front keeps a community exactly as typed (spaces,
+                // or one that starts with v3:)
+                var c = new Cred(); string raw = s ?? ""; s = raw.Trim(); if (s == "") return c;
+                if (s.StartsWith("community:", StringComparison.OrdinalIgnoreCase)) { c.Community = raw.Substring(raw.IndexOf(':') + 1); return c; }
                 var m = Regex.Match(s, @"^v3(?:-([a-z0-9]+))?:(.*)$", RegexOptions.IgnoreCase);
                 if (!m.Success) { c.Community = s; return c; }
                 c.Version = 3;
@@ -94,12 +97,22 @@ namespace AdeeboMeter
         }
 
         // one request / reply over a connected socket; null = no answer
-        static byte[] Exchange(IPEndPoint ep, byte[] msg, int timeoutMs)
+        static byte[] Exchange(IPEndPoint ep, byte[] msg, int timeoutMs) { bool refused; return Exchange(ep, msg, timeoutMs, null, out refused); }
+        // accept: is this datagram the answer to our request? Anything else (a stray or forged packet) is skipped, not taken
+        // as the answer. refused: the device said nothing listens on that port (ICMP port unreachable).
+        static byte[] Exchange(IPEndPoint ep, byte[] msg, int timeoutMs, Func<byte[], bool> accept, out bool refused)
         {
+            refused = false;
             using (var u = new UdpClient(ep.AddressFamily))
             {
-                u.Client.ReceiveTimeout = timeoutMs; u.Connect(ep); u.Send(msg, msg.Length);
-                try { var from = new IPEndPoint(IPAddress.Any, 0); return u.Receive(ref from); } catch (SocketException) { return null; }
+                u.Connect(ep); u.Send(msg, msg.Length); var until = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+                while (true)
+                {
+                    int left = (int)(until - DateTime.UtcNow).TotalMilliseconds; if (left <= 0) return null;
+                    u.Client.ReceiveTimeout = left;
+                    try { var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); if (accept == null || accept(r)) return r; }
+                    catch (SocketException se) { if (se.SocketErrorCode == SocketError.ConnectionReset) refused = true; return null; }
+                }
             }
         }
 
@@ -111,9 +124,9 @@ namespace AdeeboMeter
             byte[] pdu = Pdu(pduType, id, a, b, oids), reply;
             if (c.Version == 2)
             {
-                var msg = Tlv(0x30, Cat(Int(1), Str(Encoding.ASCII.GetBytes(c.Community)), pdu));
-                reply = Exchange(ep, msg, 3000);
-                if (reply == null) { error = "no answer in 3 s"; return null; }
+                var msg = Tlv(0x30, Cat(Int(1), Str(Encoding.UTF8.GetBytes(c.Community)), pdu)); bool refused;
+                reply = Exchange(ep, msg, 3000, r => { string pe; Parse2(r, id, c.Community, out pe); return pe != "a reply to a different request"; }, out refused);
+                if (reply == null) { error = refused ? "nothing listens on UDP " + ep.Port + " there (port unreachable) - SNMP is off on that device" : "no answer in 3 s"; return null; }
                 return Parse2(reply, id, c.Community, out error);
             }
             Engine e; string ek = ep.ToString();
@@ -155,6 +168,7 @@ namespace AdeeboMeter
             p += hl; int pend = p + len;
             if (!T(r, p, pend, out tag, out hl, out len) || tag != 2 || ReadInt(r, p + hl, len) != id) { error = "a reply to a different request"; return null; }
             p += hl + len; if (!T(r, p, pend, out tag, out hl, out len) || tag != 2) { error = "a broken reply"; return null; }
+            if (len < 1) { error = "a broken reply (no error status)"; return null; }
             long err = ReadInt(r, p + hl, len);
             if (err != 0) { error = "SNMP error " + err + " (" + (err == 2 ? "no such name" : err == 5 ? "general error" : err == 6 ? "no access" : err == 16 ? "authorization error" : "see RFC 3416") + ")"; return null; }
             p += hl + len; if (!T(r, p, pend, out tag, out hl, out len)) { error = "a broken reply"; return null; }
@@ -348,7 +362,7 @@ namespace AdeeboMeter
             while (all.Count < max)
             {
                 if (run != null && run.Stop) { error = "stopped by you - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }
-                if (DateTime.UtcNow > deadline) { error = "stopped at the 2-minute limit for this view - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }   // a slow device can't keep a walk going for an hour
+                if (DateTime.UtcNow > deadline) { error = "stopped at this view's time limit - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }   // a slow device can't keep a walk going for an hour
                 var vbs = Request(ep, c, 0xA5, 0, 25, new[] { cur }, out error);
                 if (vbs == null) return all.Count > 0 ? all : null;
                 bool moved = false;
@@ -356,6 +370,9 @@ namespace AdeeboMeter
                 {
                     if (v.End || !v.Oid.StartsWith(pre, StringComparison.Ordinal)) { return all; }
                     if (string.CompareOrdinal(v.Oid, cur) == 0) continue;
+                    // every answer must come after the last one (compared number by number): an agent that loops or goes
+                    // backwards would repeat data forever and look like a clean finish
+                    if (OidCompare(v.Oid, cur) <= 0) { error = "the device's answers stopped moving forward (OID not increasing at " + v.Oid + ") - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }
                     all.Add(v); cur = v.Oid; moved = true; if (all.Count >= max) break;
                 }
                 if (!moved) break;
@@ -365,17 +382,28 @@ namespace AdeeboMeter
             return all;
         }
 
+        public static int OidCompare(string a, string b)
+        {
+            var x = a.Trim('.').Split('.'); var y = b.Trim('.').Split('.');
+            for (int i = 0; i < x.Length && i < y.Length; i++)
+            {
+                long p, q; long.TryParse(x[i], NumberStyles.None, CultureInfo.InvariantCulture, out p); long.TryParse(y[i], NumberStyles.None, CultureInfo.InvariantCulture, out q);
+                if (p != q) return p < q ? -1 : 1;
+            }
+            return x.Length.CompareTo(y.Length);
+        }
+
         // ================================================================== reading values
         public static string Text(Vb v, string name, MibIndex.Entry col)
         {
             var r = v.Raw;
             switch (v.Type)
             {
-                case 2: { long n = ReadInt(r, 0, r.Length); string en; if (col != null && col.Enums != null && col.Enums.TryGetValue(n, out en)) return en; return n.ToString(CultureInfo.InvariantCulture); }
-                case 0x41: case 0x42: case 0x46: { if (r.Length > 9) return "(too long)"; ulong n = 0; foreach (var b in r) n = n << 8 | b; return n.ToString(CultureInfo.InvariantCulture); }
+                case 2: { if (!HasNum(v)) return r.Length == 0 ? "n/a" : "(too long)"; long n = ReadInt(r, 0, r.Length); string en; if (col != null && col.Enums != null && col.Enums.TryGetValue(n, out en)) return en; return n.ToString(CultureInfo.InvariantCulture); }
+                case 0x41: case 0x42: case 0x46: { if (!HasNum(v)) return r.Length == 0 ? "n/a" : "(too long)"; ulong n = 0; foreach (var b in r) n = n << 8 | b; return n.ToString(CultureInfo.InvariantCulture); }
                 case 0x43:
                     {
-                        if (r.Length > 5) return "(too long)"; ulong n = 0; foreach (var b in r) n = n << 8 | b;
+                        if (!HasNum(v)) return r.Length == 0 ? "n/a" : "(too long)"; ulong n = 0; foreach (var b in r) n = n << 8 | b;
                         if (n == 0 && name != null && name.IndexOf("Last", StringComparison.OrdinalIgnoreCase) >= 0) return "not since boot";
                         var ts = TimeSpan.FromMilliseconds(n * 10.0); return (ts.Days > 0 ? ts.Days + " d " : "") + ts.Hours + " h " + ts.Minutes.ToString("00", CultureInfo.InvariantCulture) + " min";
                     }
@@ -392,6 +420,16 @@ namespace AdeeboMeter
                 default: return "(type 0x" + v.Type.ToString("X2", CultureInfo.InvariantCulture) + ")";
             }
         }
+        // a real number came back: a numeric type of a size its type allows (not NULL, "no such object", empty or too long)
+        public static bool HasNum(Vb v)
+        {
+            if (v == null || v.Raw == null || v.Raw.Length == 0) return false;
+            int n = v.Raw.Length, max = v.Type == 2 ? 8 : v.Type == 0x46 ? 9 : v.Type == 0x41 || v.Type == 0x42 || v.Type == 0x43 ? 5 : 0;
+            if (max == 0 || n > max) return false;
+            return n < max || v.Type == 2 || v.Raw[0] == 0;   // the one extra byte of an unsigned type is only ever a leading zero
+        }
+        // INTEGER is signed (a sensor precision of -2 is -2, not 254)
+        public static long Signed(Vb v) { if (!HasNum(v)) return 0; long n = v.Type == 2 && (v.Raw[0] & 0x80) != 0 ? -1 : 0; foreach (var b in v.Raw) n = n << 8 | b; return n; }
         public static ulong Num(Vb v) { if (v == null || v.Raw.Length == 0 || v.Raw.Length > 9) return 0; ulong n = 0; foreach (var b in v.Raw) n = n << 8 | b; return n; }
 
         // ================================================================== a table from a walk: rows by index, columns by name

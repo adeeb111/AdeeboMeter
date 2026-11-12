@@ -131,7 +131,7 @@ namespace AdeeboMeter
                     }
                 }
             }
-            var need = new Size(0, (int)(y + 20 * S)); if (procList.AutoScrollMinSize != need) { procList.AutoScrollMinSize = need; procList.Invalidate(); }
+            var need = new Size(0, (int)(y + 20 * S)); SetNeed(procList, need);
         }
         void PaintProcInfo(Graphics g)
         {
@@ -170,7 +170,7 @@ namespace AdeeboMeter
                 y += 6 * S;
                 y = ExplainPaint.Section(g, "ITS CONNECTIONS RIGHT NOW", ConnRows(procConns), x, y, w);
             }
-            var need = new Size(0, (int)(y + 30 * S)); if (procInfo.AutoScrollMinSize != need) { procInfo.AutoScrollMinSize = need; procInfo.Invalidate(); }
+            var need = new Size(0, (int)(y + 30 * S)); SetNeed(procInfo, need);
         }
     }
 }

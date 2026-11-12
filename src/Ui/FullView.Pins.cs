@@ -96,7 +96,7 @@ namespace AdeeboMeter
                     var row = new RectangleF(x + 1, yy, w - 2, rh);
                     if (r == dest) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, row);
                     bool done = r.Done;
-                    if (done) using (var b = new SolidBrush(Theme.Lv(r.Level))) g.FillEllipse(b, x + 14 * S, yy + rh / 2 - 6 * S, 12 * S, 12 * S);
+                    if (done) Draw.LvDot(g, r.Level, x + 14 * S, yy + rh / 2 - 6 * S, 12 * S, 12 * S);
                     else using (var p = new Pen(Theme.Blue, 2 * S)) g.DrawEllipse(p, x + 14 * S, yy + rh / 2 - 6 * S, 12 * S, 12 * S);
                     g.DrawString(r.Input, Draw.fBodyB, ink, new RectangleF(x + 36 * S, yy + 11 * S, 220 * S, 20 * S), nowrap);
                     float dx = x + 266 * S;

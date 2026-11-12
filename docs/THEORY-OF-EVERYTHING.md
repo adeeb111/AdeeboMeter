@@ -1,6 +1,6 @@
 # AdeeboMeter — The Theory of Everything
 
-*How every part of AdeeboMeter works, in plain words. Version 1.1.3.*
+*How every part of AdeeboMeter works, in plain words. Version 1.1.5.*
 
 ---
 
@@ -223,7 +223,7 @@ Drag through any day of history: the five dots at that minute, the numbers again
 - **Slower than usual**: learns what's normal for each network (told apart by the router's hardware address, so it works with location off).
 - **Alerts** only when there's something to do; quiet hours; silent while you present or play full screen.
 - **Watch and suggest**: first-time internet use, programs in Downloads / Temp or without a publisher, night-time connections, big unexpected uploads — with how to block it. It never blocks.
-- **Wi-Fi without location**: a health score from the router link, link speed, adapter errors and drops; an advisor (quieter channel, better band, sticky access point, Wi-Fi power saving); look-alike networks; the walk test.
+- **Wi-Fi without location**: a health score from the router link, link speed, adapter errors and drops; Wi-Fi power-saving advice; the walk test. The channel and band advisor, the sticky access point and look-alike networks need the Wi-Fi scan, which Windows only gives with location on.
 - **Meeting replay**: one sentence after each Teams call; numbers in memory only, nothing about the call is saved.
 - **New devices** come from the ARP table (nothing is scanned) and are listed in *What changed*. A pop-up is off by default; *Home networks only* announces a device with a real hardware address once AdeeboMeter has known the network for a day, at most once an hour — never on a company network or VPN, and never for phones' private addresses, which change. After a ping sweep, what it found is learned quietly. The gateway's hardware address is checked every 30 s — a change is a router takeover, noted on the timeline. Frozen windows, slow leaks and disk delay are watched on a separate low-priority thread.
 - **HTTPS inspection**: says when a certificate was re-signed by a root that isn't on Microsoft's public list.
@@ -232,7 +232,7 @@ Drag through any day of history: the five dots at that minute, the numbers again
 The explanations (72 programs, 233 terms, 46 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
 
 ### 5.17g The Toolbox (`FullView.Toolbox`, `PathTools`, `WhyFails`, `Toolkit`, `Protocols`, `RoutingTools`, `SysTools`, `WinEvidence`, `PcHealth`)
-100+ tools (103) an engineer reaches for, each one a click and at most four boxes, each with a label that stays while you type and the time it takes. **Nothing runs until you press Run, and Stop always works.**
+129 tools an engineer reaches for, in five sections (Network · Devices · Traffic Lab · Engineer · Windows), by question or as one list, each with a made-up Example to look at first, each one a click and at most four boxes, each with a label that stays while you type and the time it takes. **Nothing runs until you press Run, and Stop always works.**
 - **Finding a tool:** four sections — **Network**, **Devices**, **Traffic Lab** and **Windows** — each opening on a home page with a card per group and the tools you used last (this session only). **Quick buttons** on every Toolbox page go straight to SNMP, switch ports, MTR, port test, dig, HTTP & TLS, iperf3 and ping sweep. One search covers every section and ranks its results (*wifi* opens Wi-Fi roams, *nslookup* opens dig, *traceroute* opens MTR); the arrows, Enter, F1 (explains anything), Ctrl+C (copy the result) and Esc work from the keyboard. **SNMP is one tool with view buttons** (Overview · Interfaces · Traffic · CPU & memory · Neighbours · Sensors · Walk · MIBs, Ctrl+PageDown steps through them), and the device you typed carries across. The PC checks (memory, disk, crashes, leaks, battery…) moved to **Investigate › Health**, under *Look deeper*. They're grouped by the question you're asking:
   - **Path & routing:** MTU per hop (don't-fragment pings with rising TTL, a binary search per hop, *Next hop* searches only below the hop before; it names PPPoE, GRE, VPN and silent black holes), MTR (loss and delay per hop over minutes, with load sharing, reroutes, hidden tunnel hops and delay jumps flagged), the way back (reply-TTL per hop, Record Route, the command to run from the far end), which route Windows picks, your gateway (VRRP / HSRP / GLBP virtual address, takeovers on the timeline, a slow plug-in that points at spanning tree), IPv6 routers (rogue router advertisements), routing protocols on your segment (with Wireshark: OSPF, EIGRP, RIP, IS-IS, PIM, LDP, BFD, VRRP / HSRP, extra DHCP servers, spanning-tree changes, LLDP / CDP, DTP), who announces itself (mDNS, SSDP / UPnP, LLMNR, NetBIOS — and why LLMNR is a risk), IPv6 ping and trace with the path MTU Windows learned, IPv6 vs IPv4, overlapping networks, who carries my traffic (online lookups).
   - **Is it reachable?** port test (refused vs. silently dropped), TCP ping, HTTP and TLS inspector (every header, security headers explained, the whole chain with keys and signatures, revocation only when you press it), HTTP timing repeated (name · connect · lock · first byte · download), which proxy a URL uses, Teams UDP and NAT type, SSH banner, mail server (greeting, STARTTLS, certificate — never logs in), RADIUS Status-Server (the secret signs the request, is masked and never kept), TACACS+.
@@ -278,11 +278,11 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 30 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 61 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations
-- the engineer view opens in under 1 second
+- the engineer view opens in under 2 seconds
 - **no handle leaks over 30 open/close cycles** — and, if one appears, it re-runs page by page to name the culprit
 - every label has an explanation
 - the parsers (Wi-Fi lists, Wi-Fi information elements, LLDP/CDP, event logs, RTP call quality, the path story) give the right answers on known samples
@@ -349,7 +349,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **TCP/UDP traceroute** needs admin rights (raw sockets) — traces use ICMP.
 - **Per-connection RTT and retransmits** need admin to switch on — per-app traffic comes from live capture instead.
 - **The DNS cache is admin-only on some Windows builds** — then names come from live capture.
-- **Speed tests** to a public server aren't offered; the iperf3 client and TWAMP-light measure against a server or reflector you run — AdeeboMeter never listens.
+- **Speed tests** run only when you press them (Cloudflare's nearest, a Vultr or OVHcloud city, or your own file; capped in MB); iperf3 and TWAMP-light measure against a server or reflector you run — AdeeboMeter never listens.
 - **Inside a VPN tunnel or inside your ISP** can only be inferred, never seen.
 
 ---
@@ -361,7 +361,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | `AdeeboMeter.settings` | next to the exe | your choices |
 | `AdeeboMeter.log` | next to the exe | start/stop and errors, max 256 KB, no window titles or traffic |
 | `AdeeboMeter-selftest.txt`, `-deeptest.txt`, `-perf.txt` | next to the exe | only when you run `--selftest`, `--deeptest` or `--perf` |
-| `captures\` | `%LOCALAPPDATA%\AdeeboMeter` | live-capture ring and sniffs — deleted on exit (*Keep this capture* copies the newest where you choose) |
+| `captures\` | `%LOCALAPPDATA%\AdeeboMeter` | live-capture ring and sniffs — deleted when capture stops, at the next start and at logoff (*Keep this capture* copies the newest where you choose) |
 | `mibs\`, `mib-index.txt` | `%LOCALAPPDATA%\AdeeboMeter` | MIB files you put there yourself, and the small index of their names (rebuilt only when the folder changes) |
 | `history\` | `%LOCALAPPDATA%\AdeeboMeter` | one line a minute, kept 3 days by default (Settings 1–90), or cleared with one click |
 | `usage.txt`, `baselines.txt`, `seen-apps.txt`, `devices.txt`, `space.txt` | `%LOCALAPPDATA%\AdeeboMeter` | daily data use, what's normal per network, programs and devices already seen, free disk space once a day |

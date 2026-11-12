@@ -133,6 +133,8 @@ namespace AdeeboMeter
             foreach (var i in now.P.Keys.OrderBy(k => k, Comparer<string>.Create(IdxCmp)))
             {
                 long[] o; if (!old.P.TryGetValue(i, out o)) { cells.Add(new[] { now.Name[i], "new port", "", "", "", "", "" }); bad.Add(false); continue; }
+                // a different port behind the same number (a chassis that renumbered after a reboot): no deltas across it
+                string n0; if (old.Name.TryGetValue(i, out n0) && n0 != now.Name[i]) { cells.Add(new[] { now.Name[i], "was " + n0 + " - renumbered", "", "", "", "", "" }); bad.Add(true); continue; }
                 string d0, d1; bool reset = reboot || old.Disc.TryGetValue(i, out d0) && now.Disc.TryGetValue(i, out d1) && d0 != d1;
                 var n = now.P[i]; var ds = Enumerable.Range(0, 5).Select(k => Delta(o[k], n[k], reset)).ToArray();
                 string ow; old.Oper.TryGetValue(i, out ow); string st = ow != null && ow != now.Oper[i] ? ow + " -> " + now.Oper[i] : now.Oper[i];
@@ -169,7 +171,13 @@ namespace AdeeboMeter
             {
                 Snmp.Vb va = V(a, i), vb2 = V(b, i); if (va == null || vb2 == null || dt <= 0) return -1; ulong p = Snmp.Num(va), q = Snmp.Num(vb2);
                 if (q < p && hc) return -2;
-                ulong d = q >= p ? q - p : (uint.MaxValue - p + q + 1); return d * 8.0 / dt;   // a 32-bit counter can wrap once
+                if (!hc && (p > uint.MaxValue || q > uint.MaxValue)) return -2;   // not a 32-bit counter after all
+                if (q >= p) return (q - p) * 8.0 / dt;
+                // a 32-bit counter can wrap once - but only when the rate that implies fits the port; otherwise the device
+                // rebooted or the counter was reset, and a phantom 400 Mb/s would be blamed
+                double wrapped = (uint.MaxValue - p + q + 1) * 8.0 / dt;
+                var sv = V(hs, i); double port = sv != null ? Snmp.Num(sv) * 1e6 : 0;
+                return port > 0 && wrapped <= port * 1.05 ? wrapped : -2;
             };
             var list = in1.Keys.Select(i => new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : "if " + i, In = rate(in1, in2, i, secs), Out = rate(out1, out2, i, secsOut), Sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1e6 : 0 })
                 .Where(r => r.In != -1 || r.Out != -1).OrderByDescending(r => Math.Max(r.In, r.Out)).ToList();
@@ -201,6 +209,13 @@ namespace AdeeboMeter
                 double u = Snmp.Num(V(unit, i)), s = Snmp.Num(V(size, i)) * u, us = Snmp.Num(V(used, i)) * u;
                 if (s <= 0) continue;
                 if (V(used, i) == null) { rows.Add(R(3, kind + " · " + S(descr, i, "", null), (s / 1048576).ToString("0", CultureInfo.CurrentCulture) + " MB · used n/a (not read)", "", "m")); continue; }
+                // Net-SNMP on Linux counts buffers and cache as "used" physical memory: take them off (they're freed on demand)
+                if (kind == "Memory")
+                {
+                    double back = 0;
+                    foreach (var j in type.Keys) { string d = S(descr, j, "", null); if (d == "Memory buffers" || d == "Cached memory") back += Snmp.Num(V(used, j)) * Snmp.Num(V(unit, j)); }
+                    if (back > 0 && back < us) us -= back;
+                }
                 double pct = us * 100 / s;
                 // only real RAM, disks and flash get a colour: "other" entries (cached, shared, buffers) are full by design
                 int lvS = kind == "Memory" ? (pct > 97 ? 2 : pct > 90 ? 1 : 3) : kind == "Disk" || kind == "Flash" ? (pct > 95 ? 2 : pct > 85 ? 1 : 3) : 3;
@@ -239,7 +254,7 @@ namespace AdeeboMeter
             var name = Col(ep, c, "1.3.6.1.2.1.47.1.1.1.1.7", run, out err); var descr = Col(ep, c, "1.3.6.1.2.1.47.1.1.1.1.2", run, out err);
             var list = val.Keys.Select(i =>
             {
-                long ty = (V(type, i) != null ? (long)Snmp.Num(V(type, i)) : 2), sc = (V(scale, i) != null ? (long)Snmp.Num(V(scale, i)) : 9), pr = (V(prec, i) != null ? (long)Snmp.Num(V(prec, i)) : 0), stt = (V(stat, i) != null ? (long)Snmp.Num(V(stat, i)) : -1);
+                long ty = (V(type, i) != null ? (long)Snmp.Num(V(type, i)) : 2), sc = (V(scale, i) != null ? (long)Snmp.Num(V(scale, i)) : 9), pr = (V(prec, i) != null ? Snmp.Signed(V(prec, i)) : 0), stt = (V(stat, i) != null ? (long)Snmp.Num(V(stat, i)) : -1);
                 long raw = 0; var rv = val[i].Raw; if (rv.Length > 0 && rv.Length <= 8) { raw = (rv[0] & 0x80) != 0 ? -1 : 0; foreach (var b in rv) raw = raw << 8 | b; }
                 double v = raw * Math.Pow(10, (sc - 9) * 3) / Math.Pow(10, pr);
                 string nm = S(name, i, "", null); if (nm == "") nm = S(descr, i, "", null); if (nm == "") nm = "sensor " + i;

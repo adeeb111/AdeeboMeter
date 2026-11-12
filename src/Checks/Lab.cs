@@ -29,12 +29,29 @@ namespace AdeeboMeter
         {
             bool vpn; lock (m.L) vpn = m.VpnUp; string machineDomain = "";
             try { machineDomain = IPGlobalProperties.GetIPGlobalProperties().DomainName ?? ""; } catch (NetworkInformationException) { }
-            return vpn || machineDomain != "" || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);   /* the PC's domain too - a local account on a company PC counts */
+            return vpn || machineDomain != "" || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase) || CloudManaged();   /* the PC's domain too - a local account on a company PC counts */
+        }
+        // joined to Entra ID (Azure AD) or enrolled in Intune / another MDM: a company PC even with a local account and no VPN
+        static int cloudManaged = -1;
+        static bool CloudManaged()
+        {
+            if (cloudManaged >= 0) return cloudManaged == 1;
+            bool yes = false;
+            try
+            {
+                using (var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo")) if (k != null && k.SubKeyCount > 0) yes = true;
+                if (!yes) using (var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Enrollments"))
+                    if (k != null) foreach (var n in k.GetSubKeyNames()) using (var e = k.OpenSubKey(n)) if (e != null && !string.IsNullOrEmpty(e.GetValue("UPN") as string)) { yes = true; break; }
+            }
+            catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is System.IO.IOException)) throw; }
+            cloudManaged = yes ? 1 : 0; return yes;
         }
         public static bool Allowed(Monitor m, string ok, List<string[]> rows)
         {
             if (Policy.NoLab) { rows.Add(R(2, "Traffic Lab", "turned off by your IT team (AdeeboMeter.policy)", "", "u")); return false; }
-            if (string.Equals((ok ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase) || !Company(m)) return true;
+            if (string.Equals((ok ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase)) return true;
+            // not a company network as far as this PC can tell - a guess, so say it was one
+            if (!Company(m)) { rows.Add(R(3, "Your network", "doesn't look like a company network (no domain, VPN or device management found)", "If it is one, stop here and ask before sending test traffic.", "u")); return true; }
             rows.Add(R(1, "Company network?", "this PC is on a company domain or VPN", "Test traffic on a company network can trip the security team's alarms. Tick \"This is my own network, or I'm allowed to send test traffic to it\" and run again.", "u"));
             return false;
         }
@@ -268,12 +285,14 @@ namespace AdeeboMeter
             var v4 = nic.GetIPProperties().GetIPv4Properties();
             if (v4 == null || !v4.IsDhcpEnabled) { rows.Add(R(3, nic.Name, "uses a fixed address - no DHCP server to ask", "", "m")); return rows; }
             Log("dhcp inform on " + nic.Name);
-            const int sz = 32; IntPtr arr = Marshal.AllocHGlobal(sz * DhcpWant.Length), buf = IntPtr.Zero;
+            // DHCPAPI_PARAMS: 32 bytes on 64-bit, 20 on 32-bit Windows (the Data pointer and padding differ); zeroed first
+            int sz = IntPtr.Size == 8 ? 32 : 20; IntPtr arr = Marshal.AllocHGlobal(sz * DhcpWant.Length), buf = IntPtr.Zero; bool inited = false;
+            for (int z = 0; z < sz * DhcpWant.Length; z++) Marshal.WriteByte(arr, z, 0);
             try
             {
                 for (int i = 0; i < DhcpWant.Length; i++) { var b = arr + i * sz; Marshal.WriteInt32(b, 0); Marshal.WriteInt32(b, 4, DhcpWant[i]); Marshal.WriteInt32(b, 8, 0); Marshal.WriteIntPtr(b, IntPtr.Size == 8 ? 16 : 12, IntPtr.Zero); Marshal.WriteInt32(b, IntPtr.Size == 8 ? 24 : 16, 0); }
                 uint ver; uint res;
-                try { if (Native.DhcpCApiInitialize(out ver) != 0) { rows.Add(R(2, "DHCP", "Windows' DHCP client interface didn't start", "", "m")); return rows; } } catch (EntryPointNotFoundException) { rows.Add(R(2, "DHCP", "Windows' DHCP client interface isn't available here", "", "m")); return rows; } catch (DllNotFoundException) { rows.Add(R(2, "DHCP", "Windows' DHCP client interface isn't available here", "", "m")); return rows; }
+                try { if (Native.DhcpCApiInitialize(out ver) == 0) inited = true; else { rows.Add(R(2, "DHCP", "Windows' DHCP client interface didn't start", "", "m")); return rows; } } catch (EntryPointNotFoundException) { rows.Add(R(2, "DHCP", "Windows' DHCP client interface isn't available here", "", "m")); return rows; } catch (DllNotFoundException) { rows.Add(R(2, "DHCP", "Windows' DHCP client interface isn't available here", "", "m")); return rows; }
                 int size = 4096; buf = Marshal.AllocHGlobal(size);
                 var send = new Native.DhcpParamsArray { N = 0, P = IntPtr.Zero }; var recv = new Native.DhcpParamsArray { N = (uint)DhcpWant.Length, P = arr };
                 var sw = Stopwatch.StartNew();
@@ -289,7 +308,7 @@ namespace AdeeboMeter
                     rows.Add(R(3, DhcpName[DhcpWant[i]] + " (" + DhcpWant[i] + ")", Draw.Trunc(DhcpText(DhcpWant[i], d), 300), "", "m"));
                 }
             }
-            finally { Marshal.FreeHGlobal(arr); if (buf != IntPtr.Zero) Marshal.FreeHGlobal(buf); }
+            finally { Marshal.FreeHGlobal(arr); if (buf != IntPtr.Zero) Marshal.FreeHGlobal(buf); if (inited) try { Native.DhcpCApiCleanup(); } catch (EntryPointNotFoundException) { } }
             return rows;
         }
 

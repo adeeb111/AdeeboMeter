@@ -6,11 +6,11 @@
 <a href="https://github.com/adeeb111/AdeeboMeter/actions/workflows/build.yml"><img alt="Build" src="https://github.com/adeeb111/AdeeboMeter/actions/workflows/build.yml/badge.svg"></a>
 <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
 <img alt="No admin" src="https://img.shields.io/badge/admin%20rights-none-2DA44E">
-<img alt="Offline" src="https://img.shields.io/badge/telemetry-none-2DA44E">
+<img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-2DA44E">
 <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8250DF"></a>
 </p>
 
-<p align="center"><b>Free, offline network troubleshooter and monitor for Windows 10 and 11 — no admin rights, no cloud.</b><br>Is it your PC, your Wi-Fi, your router, your ISP, DNS or the internet? One glance tells you.</p>
+<p align="center"><b>Free, local-first network troubleshooter and monitor for Windows 10 and 11 — no admin rights, no cloud.</b><br>Is it your PC, your Wi-Fi, your router, your ISP, DNS or the internet? One glance tells you.</p>
 
 <p align="center"><b><a href="https://adeeb111.github.io/AdeeboMeter/">Website</a></b> · <a href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a> · <a href="https://adeeb111.github.io/AdeeboMeter/#theory">Theory of Everything</a> · <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Discussions</a></p>
 
@@ -26,10 +26,10 @@ AdeeboMeter is a small Windows companion for people who live on the network. A f
 
 - **Corner widget** — faded (30 % by default, up to 100 %), small or a little bigger, never takes clicks, folds away behind your windows. A verdict in one sentence and five dots from your PC to the internet.
 - **Overview** — the verdict, router / internet / DNS / traffic right now, what needs attention, and today.
-- **Monitor** — every connection and the app that owns it (*Sniff* a row into Wireshark); your Wi-Fi or cable (a health score that works even when IT turned location off, an advisor, look-alike networks, a walk test, your switch port and VLAN); every program explained; live capture.
+- **Monitor** — every connection and the app that owns it (*Sniff* a row into Wireshark); your Wi-Fi or cable (a health score and walk test that work even when IT turned location off; the advisor, channels and look-alike networks need Windows' location permission; your switch port and VLAN); every program explained; live capture.
 - **Investigate** — **What's wrong?** when you can't name it: layer by layer from your PC to the internet, stopping at the first broken one. Or pick the problem (*slow*, *won't open*, *calls freeze*, *keeps disconnecting*, *works at home but not on VPN*, *my PC is slow*) and it runs the checks: **Finding · What I observed · Not established · Next test**. Plus Check a destination (DNS → route → TCP → TLS → HTTP → MTU → trace, and the path story) and a health check.
 - **Security** — one checkup, 42 defensive checks of this PC, your network and your sites (firewall, BitLocker, updates, SMBv1, RDP, open ports, added root certificates, ARP spoofing signs, rogue DHCP, router UPnP, certificate expiry, SPF / DMARC…). Reads only; each fix opens the Windows screen where you change it.
-- **Toolbox** — 100+ tools (103) in four sections (Network · Devices · Traffic Lab · Windows) with quick buttons on every page, found by typing (*mtu*, *dns*, *wifi*, *slow*…) or with the keyboard (F1 explains anything), each result one click from your clipboard or saved as .txt / .csv: MTU per hop, MTR, the way back, which route, your gateway (VRRP / HSRP failover), routing protocols on your segment, IPv6; port test, TCP ping, HTTP timing, proxy, Teams UDP, SSH, mail, RADIUS, TACACS+; an iperf3 client, latency under load (bufferbloat), sustained ping, DSCP-marked ping, TWAMP-light; dig (HTTPS / SVCB, DNSSEC, TLSA, over DoH), encrypted DNS, NTP; neighbours (ARP), DHCP lease, Wi-Fi roams, who announces itself (mDNS / SSDP / LLMNR), syslog, your own router (hairpin), ping sweep, Wake-on-LAN, subnet calculator; Windows' own evidence, 802.1X, domain controllers, Group Policy, expiring certificates, firewall rules, what's listening, the event log; and the PC — memory, disk, heat, frozen windows, leaks, crashes, battery, where the space went. Type a target once; run again and compare.
+- **Toolbox** — 129 tools in five sections (Network · Devices · Traffic Lab · Engineer · Windows), by question or as one list, each with a made-up Example to see before you run it, with quick buttons on every page, found by typing (*mtu*, *dns*, *wifi*, *slow*…) or with the keyboard (F1 explains anything), each result one click from your clipboard or saved as .txt / .csv: MTU per hop, MTR, the way back, which route, your gateway (VRRP / HSRP failover), routing protocols on your segment, IPv6; port test, TCP ping, HTTP timing, proxy, Teams UDP, SSH, mail, RADIUS, TACACS+; an iperf3 client, latency under load (bufferbloat), sustained ping, DSCP-marked ping, TWAMP-light; dig (HTTPS / SVCB, DNSSEC, TLSA, over DoH), encrypted DNS, NTP; neighbours (ARP), DHCP lease, Wi-Fi roams, who announces itself (mDNS / SSDP / LLMNR), syslog, your own router (hairpin), ping sweep, Wake-on-LAN, subnet calculator; Windows' own evidence, 802.1X, domain controllers, Group Policy, expiring certificates, firewall rules, what's listening, the event log; and the PC — memory, disk, heat, frozen windows, leaks, crashes, battery, where the space went. Type a target once; run again and compare.
 - **Network story** — follow any app from your PC to the server, box by box, and see where the time goes.
 - **Time machine** — replay any minute of the last days (network and PC side by side), the week as a heatmap, data usage per network, after-call summaries, new devices on your network.
 - **Traffic Lab** — test traffic you build yourself: ICMP (size, DF, TTL), UDP and TCP payloads, ARP who-has, DHCP options, a test trap, a NetFlow record, Wake-on-LAN, iperf3 — one target, capped at 10 packets a second.
@@ -63,7 +63,8 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 | To… | Do this |
 |---|---|
 | Open the engineer view | Click the tray icon, or press **Ctrl+Alt+A** |
-| Go back to the corner | **Esc**, minimise, the X, or *Back to corner* |
+| Go back to the corner | **Esc** (in a box, Esc clears it first; while a tool runs it waits), minimise, the X, or *Back to corner* |
+| Use it from the keyboard | **Tab** walks the buttons and links on a page, **Enter** presses; Connections: arrows and Enter (Sniff) |
 | Quit completely | Right-click the tray icon → **Exit** (nothing keeps running) |
 | Day / night | The sun/moon switch in the header |
 | Raw values and sources | **Details** in the header |
@@ -75,12 +76,12 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 
 - Never listens on a port (it checks itself at every start), no cloud, no account, no telemetry, no updater.
 - Tests and tools run only when you press them, and contact only what you typed or what they name on screen.
-- **Online lookups** (BGP and network owners) are off by default; switched on, they run for 5 minutes to 3 hours, then turn themselves off. They send public IP addresses only, to RIPEstat and PeeringDB.
-- History, data usage and what's normal stay on your PC and delete themselves (3 days by default).
+- **Online lookups** (BGP and network owners) are off by default; switched on, they run for 5 minutes to 3 hours, then turn themselves off. They send public IP addresses to RIPEstat and PeeringDB; with them on, the Security checkup also asks Cloudflare's encrypted DNS about www.microsoft.com and opens one TLS handshake with it.
+- History, data usage and what's normal stay on your PC and delete themselves (3 days by default). Live captures are deleted when you stop, at the next start and at logoff.
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in; DLLs load only from System32.
 - TLS 1.2/1.3 only with Windows' certificate validation.
 - Builds clean against Microsoft's .NET security and quality analyzers with every rule on.
-- `AdeeboMeter.exe --selftest` runs 30 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
+- `AdeeboMeter.exe --selftest` runs 61 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
 
 ## Code signing policy
 
@@ -98,8 +99,9 @@ AdeeboMeter will not transfer any information to other networked systems unless 
 
 - It never listens for connections, has no telemetry, no account and no updater.
 - Checks and tools you start contact only the address you typed, or the one the tool names on screen. *About* lists live every packet your current settings send, and each can be switched off.
-- *Online lookups* are off by default. Switched on, they send public IP addresses only (never your private addresses or the names you typed) to [RIPEstat](https://www.ripe.net/about-us/legal/ripe-ncc-privacy-statement/) and [PeeringDB](https://www.peeringdb.com/aup) over HTTPS, and turn themselves off after the time you choose.
-- Everything AdeeboMeter remembers stays on your PC; removing the app (Settings > Apps) removes it.
+- *Online lookups* are off by default. Switched on, they send public IP addresses (never your private addresses) to [RIPEstat](https://www.ripe.net/about-us/legal/ripe-ncc-privacy-statement/) and [PeeringDB](https://www.peeringdb.com/aup) over HTTPS - and let the Security checkup ask Cloudflare's encrypted DNS one question and Microsoft for one TLS handshake - and turn themselves off after the time you choose.
+- The speed test, the Gamer Zone and the Report for my ISP contact servers only when you start them (a game only after you click it); *About* names each one.
+- Everything AdeeboMeter remembers stays on your PC; removing the app (Settings > Apps) removes it - except your encryption key list and key backups (Documents\AdeeboMeter), so files sent to you still open after a reinstall.
 
 ## How it works
 

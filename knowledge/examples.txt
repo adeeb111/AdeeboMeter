@@ -2,6 +2,8 @@
 # Made-up data, shown with an EXAMPLE banner; never saved, copied or compared. Nothing is sent to show one.
 # Format:  == toolid  /  in: box 1|box 2  /  lv|name|value|advice|evidence   (lv: -1 heading, 0 ok, 1 note, 2 problem, 3 info)
 # Addresses are documentation ones only: 192.0.2.x, 198.51.100.x, 203.0.113.x, 2001:db8::, example.com / example.net.
+# "Fill the boxes" inputs follow the same rule; a tool whose point is a real public server (speed test, NTP, DNS compare,
+# game compare) has no "in:" line - you type the target yourself.
 
 # ---------------------------------------------------------------- path and routing
 == mtu
@@ -37,7 +39,7 @@ in: example.com
 3|Who to call|a problem from hop 5 on is between your provider and Example Transit - your provider is still the one to ask||i
 
 == route
-in: 10.20.30.40
+in: 198.51.100.40
 0|Goes out|Wi-Fi · next hop 192.168.1.1 · metric 35||w
 3|Why this way|default route (0.0.0.0/0) - no more specific route for 10.20.30.40||w
 3|If a VPN is on|a 10.0.0.0/8 route from the VPN would win (longer match)||i
@@ -67,7 +69,7 @@ in: example.com
 3|Which one apps use|IPv6 first (Windows prefers it when both work)||w
 
 == proxy
-in: https://outlook.office.com
+in: https://www.example.com
 0|This URL goes|DIRECT - no proxy||w
 3|Windows proxy setting|automatic (PAC file at http://wpad.example.net/wpad.dat)||w
 3|Why|the PAC file sends *.office.com directly, everything else through proxy.example.net:8080||w
@@ -113,7 +115,6 @@ in: smtp.example.com:587
 
 # ---------------------------------------------------------------- speed and load
 == speedtest
-in: auto
 0|Download|312 Mb/s||m
 0|Upload|41.5 Mb/s||m
 0|Ping|11 ms idle · 19 ms while downloading (when busy A)||m
@@ -133,12 +134,12 @@ in: 192.0.2.5|
 3|Upload busy|180 ms||m
 
 == ping
-in: 192.168.1.1|50|200
+in: 192.0.2.1|50|200
 0|Replies|50 of 50 · 0% loss||m
 0|Time|avg 2.4 ms · best 1.1 · worst 9.8 · jitter 1.3||m
 
 == dscp
-in: 192.168.1.1|EF|20
+in: 192.0.2.1|EF|20
 0|Marked EF (46)|20 of 20 replies · avg 2.2 ms||m
 3|Unmarked|20 of 20 replies · avg 2.3 ms||m
 3|What it means|no difference - the path doesn't treat EF better or worse (common at home)||i
@@ -162,7 +163,6 @@ in: 192.0.2.7|100
 3|Far|Example Cloud eu-west · 92 ms||m
 
 == gamecompare
-in: valorant|Wi-Fi
 3|Valorant - side by side|2 runs||m
 3|Cable (21:40)|NA Central: 38 ms · 95% 41 · jitter 1 · loss 0%||m
 1|Wi-Fi (21:52)|NA Central: 44 ms · 95% 71 · jitter 9 · loss 0.4%||m
@@ -187,7 +187,6 @@ in: example.com|A|
 3|Browser|Edge: secure DNS on, with your current provider||w
 
 == dnscmp
-in: example.com|1.1.1.1
 0|Same answer|203.0.113.10 from both||m
 3|Your DNS (192.168.1.1)|203.0.113.10 · 3 ms||m
 3|1.1.1.1|203.0.113.10 · 12 ms||m
@@ -213,7 +212,6 @@ in: https://example.com/api/health|GET|
 3|Body|{"status":"ok","version":"2.4.1"}||m
 
 == ntp
-in: time.windows.com
 0|Time server|answered in 21 ms · stratum 2||m
 0|Your clock|0.04 s fast - fine||m
 
@@ -287,7 +285,7 @@ in: example.net
 3|User|Example Drive Maps · Example Edge Settings||w
 
 == shares
-in: nas01
+in: 192.0.2.40
 0|Shared folders|3||m
 3|\\nas01\photos|disk||m
 3|\\nas01\backup|disk||m
@@ -299,17 +297,17 @@ in: stun.example.com:3478
 3|NAT|one public address, ports kept per destination (cone NAT) - calls connect directly||m
 
 == nbname
-in: 192.168.1.40
+in: 192.0.2.40
 0|Name|NAS01 (NetBIOS) · nas01.local (mDNS)||m
 3|Workgroup|HOME||m
 
 == arpwho
-in: 192.168.1.40
+in: 192.0.2.40
 0|Answered|192.168.1.40 is at 00:11:32:ab:cd:ef · 1 ms||m
 3|Maker|Example Storage Inc.||i
 
 == wol
-in: 3C:84:6A:12:34:56|
+in: 02:00:5E:12:34:56|
 0|Sent|magic packet to 3C:84:6A:12:34:56 on Wi-Fi (broadcast 192.168.1.255:9)||m
 3|Next|the PC wakes in 10-30 s if Wake-on-LAN is on in its BIOS and network card||i
 
@@ -352,74 +350,74 @@ in: 192.0.2.20
 
 # ---------------------------------------------------------------- devices (SNMP and your network)
 == snmp
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|Device|Example Switch 24P · up 41 days||m
 3|Name / place|core-sw1 · server room||m
 3|Contact|it@example.net||m
 
 == snmpif
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|Ports up|18 of 26||m
 2|Port 7|1 Gb/s · 1,204 CRC errors in 10 min|A bad cable or dirty optic - swap the patch lead first.|m
 3|Port 24|10 Gb/s uplink · clean||m
 
 == snmptraffic
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 3|Port 24 (uplink)|in 412 Mb/s · out 96 Mb/s||m
 3|Port 3|in 18 Mb/s · out 140 Mb/s||m
 
 == snmpcpu
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|CPU|12%||m
 0|Memory|41% of 512 MB||m
 
 == snmplldp
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 3|Port 24|router1 · Gi0/1 · 192.168.1.1||m
 3|Port 9|ap-lobby · eth0||m
 
 == snmpsens
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|Temperature|44 °C||m
 0|Optic port 25|RX -5.1 dBm · TX -2.3 dBm||m
 
 == snmpsnap
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|Device|Example Switch 24P · up 41 days · CPU 12% · 44 °C||m
 1|Ports|18 up · 1 with errors (port 7)||m
 3|Neighbours|router1 (port 24), ap-lobby (port 9)||m
 
 == snmpmac
-in: 192.168.1.2|public|00:11:32:ab:cd:ef
+in: 192.0.2.2|public|00:11:32:ab:cd:ef
 0|Found|00:11:32:ab:cd:ef on port 12 · VLAN 10||m
 
 == snmpvlan
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 3|VLAN 10 (staff)|ports 1-16, 24 (tagged)||m
 3|VLAN 20 (guest)|ports 17-20, 24 (tagged)||m
 
 == snmppoe
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|PoE budget|46 W used of 195 W||m
 3|Port 9|ap-lobby · 12.4 W||m
 3|Port 11|phone · 4.1 W||m
 
 == snmplag
-in: 192.168.1.2|public
+in: 192.0.2.2|public
 0|LAG 1|ports 23 + 24 · both active (LACP)||m
 
 == snmpprn
-in: 192.168.1.30|public
+in: 192.0.2.30|public
 0|Printer|Example LaserJet · ready||m
 1|Toner|black 12%|Order a cartridge.|m
 
 == snmpups
-in: 192.168.1.5|public
+in: 192.0.2.5|public
 0|UPS|on mains · battery 100%||m
 0|Runtime|38 min at the current load (21%)||m
 
 == snmpwalk
-in: 192.168.1.2|public|ifTable
+in: 192.0.2.2|public|ifTable
 3|ifDescr.1|Port 1||m
 3|ifOperStatus.1|up (1)||m
 3|ifSpeed.1|1000000000||m
@@ -636,7 +634,7 @@ in: C:\Docs\design.pdf|code|
 
 == decrypt
 in: C:\Docs\design.pdf.adeebo|
-0|Opened|design (2).pdf - the file checked out (not changed since it was encrypted)||m
+0|Opened|design (2).pdf - not changed or damaged since it was encrypted||m
 
 # ---------------------------------------------------------------- compare
 == beforeafter

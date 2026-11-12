@@ -62,7 +62,7 @@ namespace AdeeboMeter
             {
                 string[] f; if (fileInfo.TryGetValue(path, out f)) return f;
                 string d = "", c = "", p = "";
-                try { var v = FileVersionInfo.GetVersionInfo(path); d = (v.FileDescription ?? "").Trim(); c = (v.CompanyName ?? "").Trim(); p = (v.ProductName ?? "").Trim(); } catch { }
+                try { var v = FileVersionInfo.GetVersionInfo(path); d = Program.Plain(v.FileDescription).Trim(); c = Program.Plain(v.CompanyName).Trim(); p = Program.Plain(v.ProductName).Trim(); } catch { }
                 f = new[] { d, c, p, Where(path) };
                 if (fileInfo.Count > 400) fileInfo.Clear();
                 fileInfo[path] = f; return f;
@@ -112,7 +112,7 @@ namespace AdeeboMeter
             if (!string.IsNullOrEmpty(e.How)) rows.Add(new[] { "HOW IT WORKS", e.How });
             if (!string.IsNullOrEmpty(e.Why)) rows.Add(new[] { proc ? "WHY YOU NEED IT" : "WHY IT MATTERS", e.Why });
             if (!string.IsNullOrEmpty(e.Without)) rows.Add(new[] { proc ? (e.Close >= 0 ? "IF IT WEREN'T THERE" : "WHAT TO DO") : "WHEN IT LOOKS BAD", e.Without });
-            if (e.Close >= 0) rows.Add(new[] { "CAN I CLOSE IT?", Explain.CloseText[e.Close], e.Close == 0 ? "0" : e.Close == 2 ? "2" : "1" });
+            if (e.Close >= 0 && e.Close < Explain.CloseText.Length) rows.Add(new[] { "CAN I CLOSE IT?", Explain.CloseText[e.Close], e.Close == 0 ? "0" : e.Close == 2 ? "2" : "1" });
             foreach (var r in rows)
             {
                 using (var mb = new SolidBrush(Theme.Muted)) if (g != null) g.DrawString(r[0], Draw.fTiny, mb, x, y);

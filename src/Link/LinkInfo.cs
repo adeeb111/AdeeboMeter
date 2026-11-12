@@ -140,6 +140,46 @@ namespace AdeeboMeter
         [DllImport("wlanapi.dll")] static extern int WlanScan(IntPtr handle, ref Guid iface, IntPtr ssid, IntPtr ie, IntPtr reserved);
         [DllImport("wlanapi.dll")] static extern void WlanFreeMemory(IntPtr p);
 
+        [DllImport("wlanapi.dll")] static extern int WlanGetProfileList(IntPtr handle, ref Guid iface, IntPtr reserved, out IntPtr list);
+        [DllImport("wlanapi.dll", CharSet = CharSet.Unicode)] static extern int WlanGetProfile(IntPtr handle, ref Guid iface, string name, IntPtr reserved, out IntPtr xml, ref int flags, out int access);
+
+        // Saved Wi-Fi profiles as Windows stores them (XML, the same words in every language): name, open (no security),
+        // joins by itself. null when the Wi-Fi service isn't there. Passwords are never asked for (no plaintext flag).
+        public static List<Tuple<string, bool, bool>> Profiles()
+        {
+            IntPtr h = IntPtr.Zero, ifl = IntPtr.Zero; var res = new List<Tuple<string, bool, bool>>(); var seen = new HashSet<string>();
+            try
+            {
+                int ver; if (WlanOpenHandle(2, IntPtr.Zero, out ver, out h) != 0) return null;
+                if (WlanEnumInterfaces(h, IntPtr.Zero, out ifl) != 0) return null;
+                int n = Marshal.ReadInt32(ifl);
+                for (int i = 0; i < n && i < 8; i++)
+                {
+                    var gb = new byte[16]; Marshal.Copy(ifl + 8 + i * 532, gb, 0, 16); var g = new Guid(gb);
+                    IntPtr pl; if (WlanGetProfileList(h, ref g, IntPtr.Zero, out pl) != 0) continue;
+                    try
+                    {
+                        int cnt = Marshal.ReadInt32(pl);
+                        for (int j = 0; j < cnt && j < 100; j++)
+                        {
+                            string name = Marshal.PtrToStringUni(pl + 8 + j * 516);   // WLAN_PROFILE_INFO: WCHAR[256] + flags
+                            if (string.IsNullOrEmpty(name) || !seen.Add(name)) continue;
+                            IntPtr x; int flags = 0, acc;
+                            if (WlanGetProfile(h, ref g, name, IntPtr.Zero, out x, ref flags, out acc) != 0) continue;
+                            string xml; try { xml = Marshal.PtrToStringUni(x) ?? ""; } finally { WlanFreeMemory(x); }
+                            bool open = Regex.IsMatch(xml, @"<authentication>\s*open\s*</authentication>", RegexOptions.IgnoreCase) && Regex.IsMatch(xml, @"<encryption>\s*none\s*</encryption>", RegexOptions.IgnoreCase);
+                            bool auto = Regex.IsMatch(xml, @"<connectionMode>\s*auto\s*</connectionMode>", RegexOptions.IgnoreCase);
+                            res.Add(Tuple.Create(Program.Plain(name), open, auto));
+                        }
+                    }
+                    finally { WlanFreeMemory(pl); }
+                }
+            }
+            catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; return null; }
+            finally { if (ifl != IntPtr.Zero) WlanFreeMemory(ifl); if (h != IntPtr.Zero && WlanCloseHandle(h, IntPtr.Zero) != 0) Program.Log("Wi-Fi handle close failed"); }
+            return res;
+        }
+
         public sealed class Bss { public string Bssid = "", Ssid = ""; public int Rssi, FreqMHz, Channel, Width = 20; public bool K, V, R; public string Band = ""; }
         static DateTime lastScan = DateTime.MinValue;
 
@@ -173,7 +213,7 @@ namespace AdeeboMeter
         static Bss ParseEntry(IntPtr e)
         {
             var b = new Bss();
-            int sl = Math.Min(32, Marshal.ReadInt32(e, 0)); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Encoding.UTF8.GetString(sb);
+            int sl = Math.Min(32, Marshal.ReadInt32(e, 0)); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Program.Plain(Encoding.UTF8.GetString(sb));
             var mac = new byte[6]; Marshal.Copy(e + 40, mac, 0, 6); b.Bssid = string.Join(":", mac.Select(x => x.ToString("x2", CultureInfo.InvariantCulture)));
             b.Rssi = Marshal.ReadInt32(e, 56);
             b.FreqMHz = Marshal.ReadInt32(e, 92) / 1000;
@@ -188,7 +228,7 @@ namespace AdeeboMeter
             int f = b.FreqMHz;
             if (f >= 2400 && f < 2500) { b.Band = "2.4 GHz"; b.Channel = f == 2484 ? 14 : (f - 2407) / 5; }
             else if (f >= 5150 && f < 5925) { b.Band = "5 GHz"; b.Channel = (f - 5000) / 5; }
-            else if (f >= 5925 && f < 7125) { b.Band = "6 GHz"; b.Channel = (f - 5950) / 5; }
+            else if (f >= 5925 && f < 7125) { b.Band = "6 GHz"; b.Channel = f == 5935 ? 2 : Math.Max(1, (f - 5950) / 5); }   // 5935 MHz is 6 GHz channel 2 (the one below the regular grid)
         }
         // Information elements: HT (61), VHT (192) and HE 6 GHz operation give the channel width;
         // RM capabilities (70) = 802.11k, extended capability bit 19 = 802.11v BSS transition, mobility domain (54) = 802.11r.
@@ -250,7 +290,7 @@ namespace AdeeboMeter
             return list;
         }
         // Phones and laptops often use a random ("locally administered") address per network for privacy.
-        public static bool Randomised(string mac) { if (mac.Length < 2) return false; int b = Convert.ToInt32(mac.Substring(0, 2), 16); return (b & 0x02) != 0; }
+        public static bool Randomised(string mac) { int b; if (mac == null || mac.Length < 2 || !int.TryParse(mac.Substring(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out b)) return false; return (b & 0x02) != 0; }
         public static string MacOf(string ip) { var e = Table().FirstOrDefault(x => x.Ip == ip); return e != null ? e.Mac : ""; }
     }
 
@@ -342,6 +382,15 @@ namespace AdeeboMeter
             foreach (var line in (text ?? "").Split('\n')) { var m = kv.Match(line); if (m.Success && !d.ContainsKey(m.Groups[1].Value)) d[m.Groups[1].Value] = m.Groups[2].Value; }
             return d;
         }
+        // netsh lists each Wi-Fi adapter as its own block (blank line between): keep the one that's connected - the one with
+        // a signal %, or whose state reads connected in any language
+        static string ActiveBlock(string text)
+        {
+            var blocks = Regex.Split(text ?? "", @"\r?\n\s*\r?\n").Where(b => b.IndexOf(':') >= 0).ToList();
+            if (blocks.Count <= 1) return text ?? "";
+            var best = blocks.FirstOrDefault(b => Regex.IsMatch(b, @":\s*\d{1,3}\s*%", RegexOptions.Multiline)) ?? blocks.FirstOrDefault(b => b.Split('\n').Any(l => { int c = l.IndexOf(':'); return c > 0 && Monitor.NormState(l.Substring(c + 1)) == "connected"; }));
+            return best ?? text;
+        }
         public static bool Blocked(string text) { return text != null && text.IndexOf("location", StringComparison.OrdinalIgnoreCase) >= 0 && text.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0; }
         public static string BandOf(int ch, string band)
         {
@@ -362,15 +411,15 @@ namespace AdeeboMeter
             {
                 var m = kv.Match(raw); if (!m.Success) continue;
                 string k = m.Groups[1].Value, v = m.Groups[2].Value; int x;
-                if (Regex.IsMatch(k, @"^SSID \d+$")) { ssid = v; cur = null; }
+                if (Regex.IsMatch(k, @"^SSID \d+$")) { ssid = Program.Plain(v); cur = null; }
                 else if (Regex.IsMatch(k, @"^BSSID \d+$")) { cur = new Ap { Ssid = ssid == "" ? "(hidden network)" : ssid, Bssid = v }; list.Add(cur); }
                 else if (cur == null) continue;
-                else if (k == "Signal" && int.TryParse(v.TrimEnd('%', ' '), NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Signal = x;
+                else if (k == "Signal" && int.TryParse(v.TrimEnd('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Signal = x;
                 else if (k == "Channel" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Channel = x;
                 else if (k == "Band") cur.Band = v;
                 else if (k == "Radio type") cur.Radio = v;
                 else if (k == "Connected Stations" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Stations = x;
-                else if (k == "Channel Utilization") { var um = Regex.Match(v, @"\((\d+)\s*%\)"); if (um.Success) cur.Util = int.Parse(um.Groups[1].Value, CultureInfo.InvariantCulture); }
+                else if (k == "Channel Utilization") { var um = Regex.Match(v, @"\((\d+)\s*%\)"); int u; if (um.Success && int.TryParse(um.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out u)) cur.Util = Math.Min(100, u); }
                 if (cur != null && cur.Band == "" && cur.Channel > 0) cur.Band = BandOf(cur.Channel, "");
             }
             if (list.Count > 300) list = list.OrderByDescending(a => a.Signal).Take(300).ToList();
@@ -402,7 +451,7 @@ namespace AdeeboMeter
             }
             if (nic == null) { s.Verdict = Voice.P("No network connection at all, boss. Plug in a cable or pick a Wi-Fi network.", "Not connected."); s.Level = 2; return s; }
             s.Wifi = kind == "Wi-Fi"; s.Adapter = nic.Description;
-            int lv = 0; var notes = new List<string>();
+            int lv = 0; var notes = new List<string>(); bool unknownAir = false;
 
             // ---- radio (Wi-Fi) or cable
             if (s.Wifi)
@@ -411,11 +460,20 @@ namespace AdeeboMeter
                 try { iface = Job.Run(Job.Netsh, "wlan show interfaces", 4000); } catch { }
                 try { nets = Job.Run(Job.Netsh, "wlan show networks mode=bssid", 6000); } catch { }
                 if (Blocked(iface) || Blocked(nets)) s.LocationBlocked = true;
+                iface = ActiveBlock(iface);   // two Wi-Fi adapters: the connected one's lines only, never a mix of both
                 var f = Fields(iface); string v; int ch = -1, sig = -1;
                 if (f.TryGetValue("Channel", out v)) int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch);
-                if (f.TryGetValue("Signal", out v)) int.TryParse(v.TrimEnd('%', ' '), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig);
-                string band = BandOf(ch, f.TryGetValue("Band", out v) ? v : ""), radio = f.TryGetValue("Radio type", out v) ? v : "";
-                string bssid = f.TryGetValue("AP BSSID", out v) ? v : f.TryGetValue("BSSID", out v) ? v : "";
+                if (f.TryGetValue("Signal", out v)) int.TryParse(v.TrimEnd('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig);
+                // Windows in another language: the same reading the corner widget uses (it finds the % and the channel by shape)
+                int psig, prate; string pssid, pch, pbssid, pstate; Monitor.ParseWifi(iface, out psig, out pssid, out pch, out pbssid, out pstate, out prate);
+                if (sig < 0) sig = psig; if (ch < 0) int.TryParse(pch, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch); if (ch == 0) ch = -1;
+                // the band from Windows' Wi-Fi API when it knows this access point (6 GHz channel 5 isn't 2.4 GHz channel 5)
+                string apiBand = "";
+                string myB = f.TryGetValue("AP BSSID", out v) ? v : f.TryGetValue("BSSID", out v) ? v : pbssid;
+                if (!f.ContainsKey("Band") && myB != "") { string werr; var me = WlanApi.List(false, out werr).FirstOrDefault(b => string.Equals(b.Bssid, myB.Replace('-', ':'), StringComparison.OrdinalIgnoreCase)); if (me != null) { apiBand = me.Band; if (ch < 0) ch = me.Channel; } }
+                string band = BandOf(ch, f.TryGetValue("Band", out v) ? v : apiBand), radio = f.TryGetValue("Radio type", out v) ? v : "";
+                string bssid = f.TryGetValue("AP BSSID", out v) ? v : f.TryGetValue("BSSID", out v) ? v : pbssid;
+                if (s.Wifi && sig < 0 && ch < 0) unknownAir = true;
                 s.MyChannel = ch; s.MyBand = band; s.MyBssid = bssid;
                 Func<string, string> F = k => { string x; return f.TryGetValue(k, out x) && x != "" ? x : "-"; };
                 string rssi = f.TryGetValue("Rssi", out v) ? v + " dBm" : sig >= 0 ? "about " + (sig / 2 - 100) + " dBm" : "-";
@@ -517,7 +575,7 @@ namespace AdeeboMeter
                 var arp = Arp.Table().Where(e => e.IfIndex == ifIndex && e.Dynamic && DestCheck.Kind(e.Ip) != "public").Take(40).ToList();
                 var ptr = new Dictionary<string, string>();
                 if ((DateTime.UtcNow - lanAt).TotalMinutes < 5) lock (lanNames) foreach (var kv in lanNames) ptr[kv.Key] = kv.Value;
-                var tasks = arp.Where(e => !ptr.ContainsKey(e.Ip)).Select(e => Task.Factory.StartNew(() => { try { var h = Dns.GetHostEntry(IPAddress.Parse(e.Ip)).HostName; return Tuple.Create(e.Ip, h != e.Ip ? h : ""); } catch { return Tuple.Create(e.Ip, ""); } })).ToArray();
+                var tasks = arp.Where(e => !ptr.ContainsKey(e.Ip)).Select(e => Task.Factory.StartNew(() => { try { return Tuple.Create(e.Ip, Native.PtrName(e.Ip)); } catch { return Tuple.Create(e.Ip, ""); } })).ToArray();
                 try { Task.WaitAll(tasks, 2500); } catch (AggregateException) { }
                 foreach (var t in tasks) if (t.Status == TaskStatus.RanToCompletion) ptr[t.Result.Item1] = t.Result.Item2;
                 lock (lanNames) { if ((DateTime.UtcNow - lanAt).TotalMinutes >= 5) { lanNames.Clear(); lanAt = DateTime.UtcNow; } foreach (var kv in ptr) lanNames[kv.Key] = kv.Value; }
@@ -548,7 +606,7 @@ namespace AdeeboMeter
 
             if (noGw) { lv = 2; notes.Insert(0, Voice.P("You're connected to the network, but there's no router (gateway) to reach anything beyond it. Usually DHCP failed, or the network is local-only.", "Connected, but no default gateway.")); }
             s.Level = lv;
-            s.Verdict = notes.Count > 0 ? string.Join("\n", notes.Take(3)) : s.Wifi ? Voice.P("Your Wi-Fi is in great shape - strong signal, clean air, quick router.", "Wi-Fi link looks healthy.") : Voice.P("Cable, full speed, no errors. The steadiest link there is.", "Wired link looks healthy.");
+            s.Verdict = notes.Count > 0 ? string.Join("\n", notes.Take(3)) : unknownAir ? "Windows didn't say the signal or channel, so the air can't be judged - only the router's answers above are measured." : s.Wifi ? Voice.P("Your Wi-Fi is in great shape - strong signal, clean air, quick router.", "Wi-Fi link looks healthy.") : Voice.P("Cable, full speed, no errors. The steadiest link there is.", "Wired link looks healthy.");
             if (s.LocationBlocked) { s.Level = Math.Max(s.Level, 1); s.Verdict = Voice.P("Windows is hiding the Wi-Fi details until you allow location for desktop apps (Settings > Privacy & security > Location > Let desktop apps access your location). Annoying, but that's how Windows 11 protects where you are.", "Wi-Fi details need location access: Settings > Privacy & security > Location > Let desktop apps access your location.") + (notes.Count > 0 ? "\n" + notes[0] : ""); }
             return s;
         }

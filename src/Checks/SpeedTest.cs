@@ -56,7 +56,8 @@ namespace AdeeboMeter
                         var p = line.Split('|'); if (p.Length < 5 || p[0] != "server") continue;
                         var s = new Server { Id = Clean(p[1], 40).ToLowerInvariant(), Provider = Clean(p[2], 40), Where = Clean(p[3], 40), Down = p[4].Trim(), Up = p.Length > 5 ? p[5].Trim() : "" };
                         if (s.Id == "" || !SafeUrl(s.Down) || (s.Up != "" && !SafeUrl(s.Up))) continue;
-                        l.RemoveAll(x => x.Id == s.Id); l.Add(s);
+                        if (l.Any(x => x.Id == s.Id)) continue;   // a file adds servers; it can't replace a built-in one (or change what "auto" means)
+                        l.Add(s);
                     }
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("speed servers: " + e.Message); }
@@ -70,6 +71,11 @@ namespace AdeeboMeter
             Uri u; if (!Uri.TryCreate((url ?? "").Trim(), UriKind.Absolute, out u)) return false;
             if (u.Scheme != "https" && u.Scheme != "http") return false;
             if (u.UserInfo != "" || !Games.ValidHost(u.Host) || url.Length > 400) return false;
+            // never this PC, the router, the LAN or a cloud metadata address: a name with a dot, or a public address
+            // (Uri has already turned 0x7f000001 / 2130706433 / 0177.0.0.1 into 127.0.0.1)
+            string h = u.DnsSafeHost; IPAddress ip;
+            if (IPAddress.TryParse(h, out ip)) return Watch.IsPublic(ip.ToString());
+            if (h.IndexOf('.') < 0 || h.EndsWith(".local", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".lan", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".home", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".internal", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase)) return false;
             return true;
         }
         // what the user picked (Settings / the home page chip / the Toolbox box): an id, words matching one ("vultr toronto"),
@@ -80,7 +86,7 @@ namespace AdeeboMeter
             string w = (what ?? "").Trim(); var l = All();
             if (w == "" || w.Equals("auto", StringComparison.OrdinalIgnoreCase)) return l[0];
             var byId = l.FirstOrDefault(s => s.Id.Equals(w, StringComparison.OrdinalIgnoreCase)); if (byId != null) return byId;
-            if (w.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return SafeUrl(w) ? new Server { Id = "url", Provider = "Your file", Where = new Uri(w).Host, Down = w } : null;
+            if (w.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || w.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return SafeUrl(w) ? new Server { Id = "url", Provider = "Your file", Where = new Uri(w).Host, Down = w } : null;
             var words = w.Split(WordSep, StringSplitOptions.RemoveEmptyEntries);
             return l.FirstOrDefault(s => words.All(x => (s.Label + " " + s.Id).IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0));
         }
@@ -98,6 +104,7 @@ namespace AdeeboMeter
         public static List<string[]> Run(string what, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string w = (what ?? "").Trim();
+            if (Policy.NoSpeed) { rows.Add(R(1, "Speed test", "turned off by your IT team (AdeeboMeter.policy)", "Nothing was sent.", "")); return rows; }
             if (w.Equals("list", StringComparison.OrdinalIgnoreCase) || w.Equals("check", StringComparison.OrdinalIgnoreCase)) return Servers(w.Equals("check", StringComparison.OrdinalIgnoreCase), run);
             var srv = Pick(w == "" ? Cfg.SpeedServer : w);
             if (srv == null) { rows.Add(R(2, "Server", "no server matches \"" + w + "\"", "Type auto, a city or provider (e.g. vultr toronto), a file URL - or list to see them all.", "")); return rows; }
@@ -105,7 +112,7 @@ namespace AdeeboMeter
             if (res.Error != "") { rows.Add(R(2, "Speed test", res.Error, "Nothing else was sent. Try another server - type list to see them, check to see which answer from here. A company network may block it.", "m")); return rows; }
             rows.Add(R(3, "Server", res.Server + (res.Where != "" ? " · " + res.Where : ""), "", "m"));
             rows.Add(R(0, "Download", Mbps(res.Down) + " Mbps", "", "m"));
-            rows.Add(R(res.NoUpload ? 3 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : Mbps(res.Up) + " Mbps", "", "m"));
+            rows.Add(R(res.NoUpload ? 3 : double.IsNaN(res.Up) ? 1 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : (double.IsNaN(res.Up) ? "didn't take the upload (" + (srv.Up.Length > 0 ? new Uri(srv.Up).Host : "") + ")" : Mbps(res.Up) + " Mbps"), "", "m"));
             rows.Add(R(3, "Ping when idle", double.IsNaN(res.Idle) ? "-" : Math.Round(res.Idle) + " ms", "", "m"));
             rows.Add(R(3, "Ping while downloading", double.IsNaN(res.LoadDown) ? "-" : Math.Round(res.LoadDown) + " ms", "", "m"));
             if (!res.NoUpload) rows.Add(R(3, "Ping while uploading", double.IsNaN(res.LoadUp) ? "-" : Math.Round(res.LoadUp) + " ms", "", "m"));
@@ -136,7 +143,12 @@ namespace AdeeboMeter
             try
             {
                 var req = Req(url); req.AddRange(0, 1023);
-                using (var resp = (HttpWebResponse)req.GetResponse()) using (var s = resp.GetResponseStream()) { var b = new byte[1024]; return s.Read(b, 0, b.Length) > 0; }
+                using (var resp = (HttpWebResponse)req.GetResponse()) using (var s = resp.GetResponseStream())
+                {
+                    // a redirect or an empty answer isn't a test file
+                    if (resp.StatusCode != HttpStatusCode.OK && resp.StatusCode != HttpStatusCode.PartialContent) return false;
+                    var b = new byte[1024]; return s.Read(b, 0, b.Length) > 0;
+                }
             }
             catch (WebException) { return false; } catch (IOException) { return false; }
         }
@@ -175,11 +187,12 @@ namespace AdeeboMeter
                     if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
                     var pu = new List<double>(); string c2 = "";
                     res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
+                    if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved"; return res; }
                 }
                 else res.NoUpload = true;
                 res.MB = (down + up) / 1e6;
                 if (double.IsNaN(res.Down)) { res.Error = srv.Label + " didn't send its test file (" + srv.Host + ")"; return res; }
-                res.Grade = GradeOf(res.Idle, Math.Max(double.IsNaN(res.LoadDown) ? 0 : res.LoadDown, double.IsNaN(res.LoadUp) ? 0 : res.LoadUp));
+                res.Grade = GradeOf(res.Idle, double.IsNaN(res.LoadDown) ? res.LoadUp : double.IsNaN(res.LoadUp) ? res.LoadDown : Math.Max(res.LoadDown, res.LoadUp));   // nothing measured: no grade
                 Last = res;
                 History.Event(0, "speed", "Speed test to " + srv.Label + ": " + Mbps(res.Down) + " down" + (res.NoUpload ? "" : " / " + Mbps(res.Up) + " up") + " Mbps · ping " + (double.IsNaN(res.Idle) ? "-" : Math.Round(res.Idle).ToString(CultureInfo.InvariantCulture)) + " ms" + (res.Grade != "" ? " · under load " + res.Grade : ""));
                 Program.Log("speed test " + srv.Id + " " + Mbps(res.Down) + "/" + Mbps(res.Up) + " Mbps, " + Math.Round(res.MB) + " MB");
@@ -213,6 +226,8 @@ namespace AdeeboMeter
             long bytes = 0, counted = 0; var sw = System.Diagnostics.Stopwatch.StartNew(); long cap = (download ? MaxDownMB : MaxUpMB) * 1000000L;
             Func<bool> done = () => sw.Elapsed.TotalSeconds >= Seconds || Interlocked.Read(ref bytes) >= cap || (run != null && run.Stop);
             int streams = download ? 4 : 3; var th = new List<Thread>(); int fails = 0; string seenColo = "";
+            // .NET allows 2 connections per server by default - the other streams would just queue
+            try { var sp = ServicePointManager.FindServicePoint(new Uri(url)); if (sp.ConnectionLimit < streams + 1) sp.ConnectionLimit = streams + 1; } catch (UriFormatException) { }
             for (int i = 0; i < streams; i++)
             {
                 var t = new Thread(() =>
@@ -227,24 +242,30 @@ namespace AdeeboMeter
                             {
                                 req.Method = "POST"; req.ContentType = "application/octet-stream"; req.ContentLength = payload.Length; req.AllowWriteStreamBuffering = false;
                                 using (var o = req.GetRequestStream()) for (int off = 0; off < payload.Length && !done(); off += buf.Length) { int n = Math.Min(buf.Length, payload.Length - off); o.Write(payload, off, n); Interlocked.Add(ref bytes, n); if (sw.Elapsed.TotalSeconds >= 1) Interlocked.Add(ref counted, n); }
-                                using (req.GetResponse()) { }
+                                using (var r2 = (HttpWebResponse)req.GetResponse()) if ((int)r2.StatusCode >= 300) throw new WebException("answered " + (int)r2.StatusCode);
                             }
                             else using (var resp = (HttpWebResponse)req.GetResponse()) using (var s = resp.GetResponseStream())
                             {
+                                if (resp.StatusCode != HttpStatusCode.OK && resp.StatusCode != HttpStatusCode.PartialContent) throw new WebException("answered " + (int)resp.StatusCode + ", not the test file");   // a redirect's few hundred bytes are not a speed
                                 string ray = resp.Headers["CF-Ray"] ?? ""; int dash = ray.LastIndexOf('-'); if (dash > 0 && ray.Length - dash == 4) seenColo = ray.Substring(dash + 1).ToUpperInvariant();
                                 int n; while (!done() && (n = s.Read(buf, 0, buf.Length)) > 0) { Interlocked.Add(ref bytes, n); if (sw.Elapsed.TotalSeconds >= 1) Interlocked.Add(ref counted, n); }
                             }
                         }
-                        catch (WebException) { if (Interlocked.Increment(ref fails) > 6) return; Thread.Sleep(200); }
-                        catch (IOException) { if (Interlocked.Increment(ref fails) > 6) return; Thread.Sleep(200); }
+                        catch (Exception e)   // a background thread: nothing may escape it (a bad URL, a protocol error...)
+                        {
+                            if (e is OutOfMemoryException || e is ThreadAbortException) throw;
+                            if (Interlocked.Increment(ref fails) > 6) return; Thread.Sleep(200);
+                        }
                     }
                 }) { IsBackground = true };
                 th.Add(t); t.Start();
             }
-            while (!done()) { double v = One(ip); if (!double.IsNaN(v) && sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(v); Thread.Sleep(250); }
-            foreach (var t in th) t.Join(3000);
-            double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1); total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
+            // a ping lost under load counts as the full second it waited - a queue so bad that nothing comes back is the worst
+            // case, not a missing one (the grade is blank anyway when the server never answered pings at idle)
+            while (!done()) { double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v); Thread.Sleep(250); }
+            double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1);   // the measured window ends here, not after waiting for the threads
             long c = Interlocked.Read(ref counted);
+            foreach (var t in th) t.Join(3000); total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
             return c <= 0 ? double.NaN : c * 8 / 1e6 / secs;
         }
     }

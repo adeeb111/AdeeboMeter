@@ -32,6 +32,7 @@ namespace AdeeboMeter
     // like any app), your settings carried over. No administrator rights, no shell, no extra files.
     static class Setup
     {
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)] static extern bool DeleteFileW(string path);
         public static string Base { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "AdeeboMeter"); } }
         public const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\AdeeboMeter";
         const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -139,7 +140,13 @@ namespace AdeeboMeter
 
             step("Copying AdeeboMeter...", 0.3f);
             string self = Application.ExecutablePath;
-            if (!string.Equals(Path.GetFullPath(self), Path.GetFullPath(exe), StringComparison.OrdinalIgnoreCase)) File.Copy(self, exe, true);
+            if (!string.Equals(Path.GetFullPath(self), Path.GetFullPath(exe), StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(self, exe, true);
+                // the installed copy is the one you chose to keep: it doesn't need the downloaded copy's "from the internet" mark
+                // (Mark-of-the-Web) - that would warn again at every start from the new place
+                if (!DeleteFileW(exe + ":Zone.Identifier")) Program.Log("install: no download mark to clear");
+            }
 
             step("Bringing your settings along...", 0.5f);
             string settings = Path.Combine(dst, "AdeeboMeter.settings");
@@ -201,8 +208,21 @@ namespace AdeeboMeter
             catch { }
             try { if (File.Exists(Shortcut)) File.Delete(Shortcut); } catch { }
             try { Registry.CurrentUser.DeleteSubKeyTree(UninstallKey); } catch { }
-            step("Removing your history and captures...", 0.75f);
-            try { string data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); if (Directory.Exists(data)) Directory.Delete(data, true); } catch { }
+            step("Removing your history and captures (your encryption keys stay)...", 0.75f);
+            // Everything goes except what opens files sent to you: the P-384 key list, saved recipients and key backups. The keys
+            // themselves live in Windows' key store, which an uninstall doesn't touch - deleting the list would leave every
+            // .adeebo addressed to you unopenable after a reinstall. They're small; delete the folder by hand to wipe them.
+            try
+            {
+                string data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
+                if (Directory.Exists(data))
+                {
+                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs" };
+                    foreach (var f in Directory.GetFiles(data)) if (!keep.Contains(Path.GetFileName(f))) try { File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                    foreach (var d in Directory.GetDirectories(data)) if (!keep.Contains(Path.GetFileName(d))) try { Directory.Delete(d, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                }
+            }
+            catch { }
             // The running exe can't delete its own folder: a copy in %TEMP% waits for us to exit, then removes it.
             if (RunningInstalled || Directory.Exists(Base))
             {
