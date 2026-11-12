@@ -1958,6 +1958,16 @@ how: Reads a .pcap / .pcapng with AdeeboMeter's own reader - no Wireshark needed
 why: Most "connected, no internet" cases at the edge are DHCP: no server on the VLAN, a missing relay, a full pool or a rogue router handing out wrong addresses.
 without: Wireshark with the filter dhcp, reading each packet's options by hand.
 
+== tb.eapreplay
+friendly: 802.1X replay
+cat: term
+close: -1
+tag: What happened in the network sign-in, frame by frame?
+what: Reads a capture file and rebuilds the 802.1X exchange - EAPOL-Start, the switch asking who's there, the identity, the method (PEAP, EAP-TLS, TTLS) and the server's Success or Failure - then says where and why it stopped: no answer from the PC, a method the two sides don't share, a certificate problem or a refusal.
+how: Reads a .pcap / .pcapng with AdeeboMeter's own reader; nothing is sent. Capture on the PC's cable port with the filter eapol while it connects. Wi-Fi 802.1X happens inside the radio - capture it on the access point.
+why: The Windows log says that sign-in failed; the frames show at which step - the quickest way to tell a PC problem from a switch or RADIUS problem.
+without: Wireshark with the filter eapol, reading each EAP code and type.
+
 == tb.rareplay
 friendly: IPv6 Router Advertisement replay
 cat: term

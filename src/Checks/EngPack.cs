@@ -34,7 +34,7 @@ namespace AdeeboMeter
             var p = (l ?? "").Split('|'); if (p.Length != 6 || p[0] != "snap" || !Games.ValidHost(p[1])) return null;
             DateTime t; if (!DateTime.TryParseExact(p[3], "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) return null;
             var s = new CertSnap { Host = p[1], Name = p[2], T = t, Trust = p[4] };
-            foreach (var c in p[5].Split(';').Take(8)) { var f = c.Split('~'); if (f.Length == 4) s.Chain.Add(f); }
+            foreach (var c in p[5].Split(';').Take(8)) { var f = c.Split('~'); if (f.Length == 4) s.Chain.Add(new[] { f[0], f[1], f[2], f[3], "" }); else if (f.Length == 5) s.Chain.Add(f); }
             return s.Chain.Count == 0 ? null : s;
         }
         public static List<string[]> CertCompare(string target, string name)
@@ -51,8 +51,8 @@ namespace AdeeboMeter
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) =>
                     {
                         errs = e;
-                        if (ch != null) foreach (var el in ch.ChainElements) { var x = el.Certificate; snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) }); }
-                        if (snap.Chain.Count == 0 && c != null) { var x = new X509Certificate2(c); snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) }); }
+                        if (ch != null) foreach (var el in ch.ChainElements) { var x = el.Certificate; snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), snap.Chain.Count == 0 ? Sans(x) : "" }); }
+                        if (snap.Chain.Count == 0 && c != null) { var x = new X509Certificate2(c); snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Sans(x) }); }
                         return e == SslPolicyErrors.None;   // an untrusted certificate is still recorded above - then the handshake stops
                     }))
                     {
@@ -67,10 +67,13 @@ namespace AdeeboMeter
             all.Add(snap); all = all.Skip(Math.Max(0, all.Count - 40)).ToList();
             try { File.WriteAllLines(CertFile, all.Select(CertLine)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             rows.Add(R(errs == SslPolicyErrors.None ? 0 : 2, snap.Name, snap.Trust, "", "m"));
-            for (int i = 0; i < snap.Chain.Count; i++) rows.Add(R(3, i == 0 ? "Site certificate" : i == snap.Chain.Count - 1 ? "Root" : "Intermediate", snap.Chain[i][0] + " · from " + snap.Chain[i][1] + " · expires " + snap.Chain[i][3], "SHA-256 " + snap.Chain[i][2], "m"));
+            for (int i = 0; i < snap.Chain.Count; i++) rows.Add(R(3, i == 0 ? "Site certificate" : i == snap.Chain.Count - 1 ? "Root" : "Intermediate", snap.Chain[i][0] + " · from " + snap.Chain[i][1] + " · expires " + snap.Chain[i][3], "SHA-256 " + snap.Chain[i][2] + (i == 0 && snap.Chain[i].Length > 4 && snap.Chain[i][4] != "" ? " · names: " + snap.Chain[i][4] : ""), "m"));
             if (prev == null) { rows.Add(R(3, "Next", "now change one thing - VPN on / off, another network, the proxy - and run again with another name", "", "u")); return rows; }
             rows.Add(R(-1, "COMPARED WITH \"" + prev.Name.ToUpperInvariant() + "\" (" + prev.T.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + ")", "", "", "m"));
             rows.Add(CertVerdict(prev, snap));
+            string sa = prev.Chain[0].Length > 4 ? prev.Chain[0][4] : "", sb = snap.Chain[0].Length > 4 ? snap.Chain[0][4] : "";
+            if (sa != "" && sb != "" && sa != sb) rows.Add(R(1, "Names it covers differ", "\"" + prev.Name + "\": " + sa + "  vs  \"" + snap.Name + "\": " + sb, "A certificate made for other names on one path - a different server (DNS points elsewhere there) or a proxy's own certificate.", "i"));
+            if (prev.Chain.Count != snap.Chain.Count) rows.Add(R(1, "Chain length differs", prev.Chain.Count + " certificates vs " + snap.Chain.Count, "One path adds (or leaves out) an intermediate - a missing intermediate breaks some clients but not browsers that fetch it themselves.", "i"));
             return rows;
         }
         public static string[] CertVerdict(CertSnap a, CertSnap b)
@@ -84,6 +87,13 @@ namespace AdeeboMeter
                     "Something on one path re-signs the site: a company proxy doing TLS inspection (normal if IT said so), antivirus web scanning, or - on a network you don't control - an interception. " + (aUntrusted || bUntrusted ? "One of them isn't trusted by Windows - don't sign in on that path." : "Both are trusted by Windows, so the re-signing one has its root installed on this PC (usually by IT)."), "i");
             }
             return R(1, "Same issuer, different certificate", "the site uses more than one certificate (load balancers or a renewal in between)", "Usually harmless - big sites rotate certificates. It matters only if one of them is expired or not trusted.", "i");
+        }
+        static string Sans(X509Certificate2 x)
+        {
+            var san = x.Extensions.Cast<X509Extension>().FirstOrDefault(e => e.Oid != null && e.Oid.Value == "2.5.29.17");
+            if (san == null) return "";
+            var names = Regex.Matches(san.Format(false), @"(?:DNS Name|DNS|IP Address)[=:]\s*([^,\r\n]+)").Cast<Match>().Select(m => m.Groups[1].Value.Trim()).OrderBy(n => n, StringComparer.Ordinal).Take(12);
+            return Clean(string.Join(",", names), 200);
         }
         [SuppressMessage("Security", "CA5350", Justification = "SHA-256 fingerprint for display")]
         static byte[] Sha256(byte[] d) { using (var s = SHA256.Create()) return s.ComputeHash(d); }
@@ -112,6 +122,11 @@ namespace AdeeboMeter
                 : lk == "succeeded" ? "The last 802.1X sign-in worked. If there's still no network, the next step is DHCP - run \"Why didn't this PC join the network?\"."
                 : "The last event was the start of a sign-in with no result after it - the sign-in server (RADIUS) may not be answering the switch / access point.";
             rows.Insert(0, R(lk == "failed" ? 2 : lk == "succeeded" ? 0 : 1, "Where it stopped", verdict, "", "w"));
+            string cat = lk == "succeeded" ? "dhcp" : Category(last.Item2.Text);
+            rows.Insert(1, R(3, "Points to", cat == "profile" ? "profile selection - the PC picked the wrong (or no) network profile" : cat == "cert" ? "certificate validation" : cat == "reject" ? "the sign-in server refusing (policy, account or password)" : cat == "timeout" ? "the sign-in server not answering" : cat == "dhcp" ? "after sign-in: getting an address (DHCP)" : "not clear from the event text", "", "i"));
+            if (cat == "cert") rows.Insert(2, Next("check the certificate: inspect the file, or compare what the server sends", "tool:certfile"));
+            else if (cat == "dhcp") rows.Insert(2, Next("walk the rest of the way in: Why didn't this PC join the network?", "tool:join"));
+            else if (cat == "reject" || cat == "timeout") rows.Insert(2, Next("test the RADIUS server directly with a test account", "tool:radiuslab"));
             return rows;
         }
         static string Kind(EvLog.Ev e)
@@ -121,6 +136,16 @@ namespace AdeeboMeter
             if (e.Id == 8001 || e.Id == 12012 || e.Id == 15501 || t.Contains("succeeded") || t.Contains("successfully")) return "succeeded";
             if (e.Id == 8003) return "disconnected";
             return "started";
+        }
+        static string[] Next(string text, string act) { return new[] { "3", "Next", text, "", "u", act }; }
+        static string Category(string t)
+        {
+            t = (t ?? "").ToLowerInvariant();
+            if (t.Contains("profile")) return "profile";
+            if (t.Contains("certificate") || t.Contains("trust") || t.Contains("0x80092013") || t.Contains("0x800b0109")) return "cert";
+            if (t.Contains("timeout") || t.Contains("timed out") || t.Contains("no response") || t.Contains("did not respond")) return "timeout";
+            if (t.Contains("reject") || t.Contains("denied") || t.Contains("credential") || t.Contains("password")) return "reject";
+            return "";
         }
         static string Reason(string t) { var m = Regex.Match(t ?? "", @"(Failure Reason|Reason Code|Reason|Error)\s*:\s*([^\r\n]+)", RegexOptions.IgnoreCase); return m.Success ? m.Groups[2].Value.Trim() : ""; }
         static string Hint(string t)
@@ -240,7 +265,7 @@ namespace AdeeboMeter
             var a = Lab.Addr(h); if (a == null) { rows.Add(R(2, "Server", "couldn't find " + h, "", "m")); return rows; }
             var sec = Encoding.UTF8.GetBytes(secret); var pw = Encoding.UTF8.GetBytes(password); var auth = new byte[16]; byte id;
             using (var g = RandomNumberGenerator.Create()) { g.GetBytes(auth); var idb = new byte[1]; g.GetBytes(idb); id = idb[0]; }
-            byte[] reply = null; long ms = -1; string error = "";
+            byte[] reply = null; long ms = -1; string error = "", srcIp = "";
             try
             {
                 var attrs = new List<byte>();
@@ -254,7 +279,8 @@ namespace AdeeboMeter
                 Program.Log("radius lab: Access-Request to " + a + ":" + port);
                 using (var u = new UdpClient(a.AddressFamily))
                 {
-                    u.Client.ReceiveTimeout = 4000; u.Connect(a, port); var sw = System.Diagnostics.Stopwatch.StartNew(); u.Send(pkt, pkt.Length); Array.Clear(pkt, 0, pkt.Length);
+                    u.Client.ReceiveTimeout = 4000; u.Connect(a, port); var lep = u.Client.LocalEndPoint as IPEndPoint; if (lep != null) srcIp = lep.Address.ToString();
+                    var sw = System.Diagnostics.Stopwatch.StartNew(); u.Send(pkt, pkt.Length); Array.Clear(pkt, 0, pkt.Length);
                     var from = new IPEndPoint(IPAddress.Any, 0); reply = u.Receive(ref from); ms = sw.ElapsedMilliseconds;
                 }
             }
@@ -262,6 +288,7 @@ namespace AdeeboMeter
             bool signed = reply != null && Protocols.ReplyOk(reply, id, auth, sec);
             Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length);
             string code; var attrRows = new List<string[]>();
+            if (srcIp != "") rows.Add(R(3, "Sent from", srcIp + " (the address Windows picked for this route)", "The server must list this address as a client (NAS) with this shared secret - on a VPN or a PC with two networks it may not be the one you expect.", "w"));
             if (reply == null) { code = "Timeout"; rows.Add(R(2, h + ":" + port, error, "Silence usually means: this PC isn't a client (NAS) on the server, the shared secret is wrong (many servers drop those silently), or UDP " + port + " is blocked on the way.", "m")); }
             else if (reply.Length < 20) { code = "Junk"; rows.Add(R(2, h + ":" + port, "answered " + reply.Length + " bytes - not RADIUS", "", "m")); }
             else
@@ -291,6 +318,19 @@ namespace AdeeboMeter
             return rows;
         }
 
+        // MX found > connected > greeting > EHLO > STARTTLS > certificate - from the rows the mail check produced
+        public static string HowFar(List<string[]> r)
+        {
+            Func<string, bool> any = w => r.Any(x => (x[1] + " " + x[2]).IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0);
+            var steps = new List<string> { "MX found" };
+            if (any("couldn't") || any("no answer") || any("refused")) return string.Join(" > ", steps) + " > connection FAILED";
+            steps.Add("connected");
+            if (any("220") || any("greeting") || any("banner")) steps.Add("greeting");
+            if (any("STARTTLS") || any("offers") || any("EHLO")) steps.Add("EHLO");
+            if (any("STARTTLS") && !any("not offered")) steps.Add("STARTTLS");
+            if (any("certificate")) steps.Add("certificate checked");
+            return string.Join(" > ", steps);
+        }
         // ---------- 5. SMTP delivery path: MX > connect > EHLO > STARTTLS + certificate > QUIT (never MAIL FROM)
         public static List<string[]> SmtpPath(Monitor m, string domain, Toolkit.Run run)
         {
@@ -309,6 +349,8 @@ namespace AdeeboMeter
                 string host = x[1].TrimEnd('.'); run.Status = "Talking to " + host + " on port 25 (stops before sending anything)...";
                 rows.Add(R(-1, host.ToUpperInvariant() + " · PORT 25", "", "", "m"));
                 var r = Protocols.Mail(host + ":25");
+                string got = HowFar(r);
+                r.Insert(0, R(got.EndsWith("certificate checked", StringComparison.Ordinal) ? 0 : 1, "Got as far as", got, "", "m"));
                 if (r.Count > 0 && r[0][2].IndexOf("couldn't", StringComparison.OrdinalIgnoreCase) >= 0) r.Add(R(1, "Port 25 from here", "most home providers block outgoing port 25", "Normal on home lines - only mail servers talk on 25. Run this from a server, or test your own mail with port 587 in the Mail server tool.", "m"));
                 rows.AddRange(r);
             }

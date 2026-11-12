@@ -21,6 +21,7 @@ namespace AdeeboMeter
             public byte[] Payload = Array.Empty<byte>();   // UDP payload, or the ICMP / ICMPv6 message (type, code, checksum, rest)
             public bool V6;
         }
+        public const int Eapol = -2;   // Proto for 802.1X frames (no IP header; Payload = the EAPOL header and body)
         public const long MaxBytes = 64L * 1024 * 1024; public const int MaxPackets = 200000;
 
         public static List<Pkt> Read(string path, out string error)
@@ -101,6 +102,7 @@ namespace AdeeboMeter
             else if (link == 113) { if (len < 16) return null; et = b[o + 14] << 8 | b[o + 15]; ip = o + 16; }
             else if (link == 276) { if (len < 20) return null; et = b[o] << 8 | b[o + 1]; ip = o + 20; }
             else return null;
+            if (et == 0x888e) return new Pkt { SrcMac = mac, Proto = Eapol, Payload = Sub(b, ip, end - ip) };   // 802.1X (EAP over LAN)
             Pkt k = et == 0x0800 ? V4(b, ip, end) : et == 0x86dd ? V6(b, ip, end) : null;
             if (k != null) k.SrcMac = mac;
             return k;

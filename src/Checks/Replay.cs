@@ -110,6 +110,9 @@ namespace AdeeboMeter
             var ras = pkts.Where(k => k.V6 && k.Proto == 58 && k.Payload.Length >= 16 && k.Payload[0] == 134).ToList();
             if (ras.Count == 0) { rows.Add(R(1, "Router Advertisements", "none in this capture", "Capture for a minute with filter  icmpv6.type == 134  (routers send one every few minutes, or when a PC asks with type 133).", "m")); return rows; }
             var routers = ras.GroupBy(k => k.Src.ToString()).ToList();
+            var winGw = new List<string>();
+            try { foreach (var n in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()) if (n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up) foreach (var gw in n.GetIPProperties().GatewayAddresses) if (gw.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) winGw.Add(gw.Address.ToString().Split('%')[0]); }
+            catch (System.Net.NetworkInformation.NetworkInformationException) { }
             rows.Add(R(-1, "WHAT IT SHOWS", "", "", "m"));
             if (routers.Count > 1) rows.Add(R(2, "More than one router", routers.Count + " routers announce themselves: " + string.Join(", ", routers.Select(r => r.Key)), "If you have one router, the others are rogue - a phone hotspot, a VM host or a misconfigured device; PCs may send IPv6 traffic to it. RA Guard on the switch stops them.", "m"));
             foreach (var r in routers)
@@ -124,9 +127,11 @@ namespace AdeeboMeter
                     else if (type == 25 && len >= 24) dns = string.Join(", ", Enumerable.Range(0, (len - 8) / 16).Select(i => { var a = new byte[16]; Array.Copy(p, o + 8 + i * 16, a, 0, 16); return new IPAddress(a).ToString(); }));
                     o += len;
                 }
-                rows.Add(R(life == 0 ? 1 : 3, "Router " + r.Key, r.Count() + " RA(s) · default router for " + (life == 0 ? "0 s - it says it is NOT a default router" : life + " s") + (prefixes.Count > 0 ? " · prefix " + string.Join(", ", prefixes) : " · no prefix"),
+                bool used = winGw.Contains(r.Key, StringComparer.OrdinalIgnoreCase);
+                rows.Add(R(life == 0 ? 1 : 3, "Router " + r.Key + (used ? " · this PC uses it now" : ""), r.Count() + " RA(s) · default router for " + (life == 0 ? "0 s - it says it is NOT a default router" : life + " s") + (prefixes.Count > 0 ? " · prefix " + string.Join(", ", prefixes) : " · no prefix"),
                     (mFlag ? "M flag: get addresses from DHCPv6. " : "") + (oFlag ? "O flag: other settings from DHCPv6. " : "") + (mtu != "" ? "MTU " + mtu + ". " : "") + (dns != "" ? "DNS " + dns + "." : "") + (life == 0 ? " A lifetime of 0 removes this router as the way out - fine for a second router, a problem if it's the only one." : ""), "m"));
             }
+            if (winGw.Count > 0) rows.Add(R(3, "This PC's IPv6 routers now", string.Join(", ", winGw.Distinct()), routers.Any(r => winGw.Contains(r.Key, StringComparer.OrdinalIgnoreCase)) ? "Marked above where they match the capture." : "None of the routers in the capture - the capture is from another network or another time.", "w"));
             return rows;
         }
 
@@ -194,12 +199,57 @@ namespace AdeeboMeter
             return "";
         }
 
+        // ---------- 802.1X from a capture: EAPOL Start, EAP Request / Response, the method, Success or Failure
+        static readonly Dictionary<int, string> EapTypes = new Dictionary<int, string> { { 1, "Identity" }, { 3, "NAK (wants another method)" }, { 4, "MD5" }, { 13, "EAP-TLS" }, { 21, "EAP-TTLS" }, { 25, "PEAP" }, { 26, "MS-CHAPv2" }, { 43, "EAP-FAST" } };
+        static readonly string[] NextCert = { "3", "Next", "inspect the certificate involved", "", "u", "tool:certfile" };
+        public static List<string[]> EapReplay(string path) { var rows = new List<string[]>(); var l = Load(path, rows); return l == null ? rows : EapRows(l, rows); }
+        public static List<string[]> EapRows(List<Pcap.Pkt> pkts, List<string[]> rows)
+        {
+            var e = pkts.Where(k => k.Proto == Pcap.Eapol && k.Payload.Length >= 4).ToList();
+            if (e.Count == 0) { rows.Add(R(1, "802.1X", "no EAPOL frames in this capture", "Capture on the PC's cable port while it connects (Wireshark filter  eapol ). Wi-Fi 802.1X happens inside the radio - capture it on the access point or controller.", "m")); return rows; }
+            var steps = new List<string[]>(); string method = "", identity = ""; bool success = false, failure = false, nak = false, pcAnswered = false; int idReq = 0;
+            foreach (var k in e.Take(200))
+            {
+                var p = k.Payload; int type = p[1]; string what;
+                if (type == 1) what = "EAPOL-Start - the PC asks to sign in";
+                else if (type == 2) what = "EAPOL-Logoff";
+                else if (type == 3) what = "EAPOL-Key (Wi-Fi keys after a successful sign-in)";
+                else if (type == 0 && p.Length >= 8)
+                {
+                    int code = p[4], et = p.Length >= 9 ? p[8] : 0; string tn; if (!EapTypes.TryGetValue(et, out tn)) tn = "type " + et;
+                    if (code == 1) { what = "Request · " + tn; if (et == 1) idReq++; else if (et != 3) method = tn; }
+                    else if (code == 2) { what = "Response · " + tn; pcAnswered = true; if (et == 1 && p.Length > 9) identity = Clean(Encoding.UTF8.GetString(p, 9, Math.Min(p.Length - 9, 64))); if (et == 3) nak = true; }
+                    else if (code == 3) { what = "SUCCESS"; success = true; }
+                    else if (code == 4) { what = "FAILURE"; failure = true; }
+                    else what = "EAP code " + code;
+                    if (code == 2 && et == 1 && identity != "") what += " (" + identity + ")";
+                }
+                else what = "EAPOL type " + type;
+                steps.Add(R(what == "FAILURE" ? 2 : what == "SUCCESS" ? 0 : 3, T(k.T), what, "", "m"));
+            }
+            string verdict; int lv;
+            if (success) { verdict = "The sign-in worked" + (method != "" ? " (" + method + ")" : "") + ". If there's still no network, the next step is DHCP."; lv = 0; }
+            else if (failure && nak) { verdict = "The PC and the server couldn't agree on a sign-in method - the server offered " + (method != "" ? method : "one method") + " and the PC asked for another. Match the PC's network profile to the server's policy."; lv = 2; }
+            else if (failure && (method == "EAP-TLS" || method == "PEAP" || method == "EAP-TTLS")) { verdict = "The server refused after starting " + method + " - usually a certificate the other side doesn't trust (the PC's, or the server's), or the account / policy for " + (identity != "" ? identity : "this identity") + "."; lv = 2; }
+            else if (failure) { verdict = "The server refused the sign-in (EAP-Failure)" + (identity != "" ? " for " + identity : "") + " - the server's log says which rule."; lv = 2; }
+            else if (idReq > 0 && !pcAnswered) { verdict = "The switch asked " + idReq + " time(s) who's there and the PC never answered - 802.1X isn't turned on for this adapter (Wired AutoConfig service), or the port expects it and the PC doesn't do it."; lv = 2; }
+            else { verdict = "The exchange stops without Success or Failure - the server (RADIUS) may not be answering the switch."; lv = 1; }
+            rows.Add(R(-1, "WHAT IT SHOWS", "", "", "m")); rows.Add(R(lv, "Verdict", verdict, "", "i"));
+            if (lv == 2 && (method == "EAP-TLS" || method == "PEAP")) rows.Add(NextCert);
+            rows.Add(R(-1, "TIMELINE", e.Count + " frames", "", "m")); rows.AddRange(steps);
+            return rows;
+        }
+
         // ---------- the sample lab: small captures written by AdeeboMeter, good and broken
         public static readonly string[][] Samples = {
             new[] { "dhcp-good", "A normal lease: Discover, Offer, Request, ACK", "dhcp" },
             new[] { "dhcp-two-servers", "Two DHCP servers answer (one is rogue)", "dhcp" },
             new[] { "dhcp-no-answer", "Discover after Discover - nobody answers", "dhcp" },
             new[] { "dhcp-nak", "The server refuses the old address (NAK), then a fresh lease", "dhcp" },
+            new[] { "dhcp-no-ack", "An offer, then Request after Request - the ACK never comes", "dhcp" },
+            new[] { "eap-failure", "802.1X: identity, PEAP starts, then the server says FAILURE", "eap" },
+            new[] { "eap-good", "802.1X: the same exchange ending in SUCCESS", "eap" },
+            new[] { "cert-expired-intermediate", "A certificate chain whose intermediate expired", "cert" },
             new[] { "ra-rogue", "Two IPv6 routers, one of them a stranger", "ra" },
             new[] { "icmp-errors", "Fragmentation needed, port unreachable, TTL exceeded", "icmp" } };
         public static List<string[]> Lab(string which)
@@ -212,12 +262,18 @@ namespace AdeeboMeter
                 foreach (var x in Samples) rows.Add(new[] { "3", x[0], x[1], "", "u", "copy:" + x[0] });
                 return rows;
             }
-            var bytes = Build(s[0]); string dir = Path.Combine(Program.DataDir, "samples"), file = Path.Combine(dir, s[0] + ".pcap");
+            bool pem = s[2] == "cert"; var bytes = pem ? Encoding.ASCII.GetBytes(ExpiredChainPem) : Build(s[0]); string dir = Path.Combine(Program.DataDir, "samples"), file = Path.Combine(dir, s[0] + (pem ? ".pem" : ".pcap"));
             try { Directory.CreateDirectory(dir); File.WriteAllBytes(file, bytes); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; file = null; }
             rows.Add(R(3, "Sample", s[1], "Made by AdeeboMeter - addresses are documentation examples, not real devices.", "u"));
-            if (file != null) rows.Add(new[] { "3", "Saved", Path.GetFileName(file) + " - open it in Wireshark to see the same packets", "", "m", "show:" + file });
+            if (file != null) rows.Add(new[] { "3", "Saved", Path.GetFileName(file) + (pem ? " - open it with Inspect a certificate file, or double-click it in Windows" : " - open it in Wireshark to see the same packets"), "", "m", "show:" + file });
+            if (pem)
+            {
+                var cr = CertTools.Inspect(ExpiredChainPem); rows.AddRange(cr);
+                rows.Add(R(0, "What to learn", "the site's own certificate is fine, but the intermediate between it and the root expired - browsers and Windows reject the whole chain. The server needs the renewed intermediate installed next to its certificate.", "", "i"));
+                return rows;
+            }
             var pk = Pcap.Parse(bytes); rows.Add(R(3, "Read", pk.Count + " packets", "", "m"));
-            return s[2] == "dhcp" ? DhcpRows(pk, rows) : s[2] == "ra" ? RaRows(pk, rows) : IcmpRowsFromPackets(pk, rows);
+            return s[2] == "dhcp" ? DhcpRows(pk, rows) : s[2] == "ra" ? RaRows(pk, rows) : s[2] == "eap" ? EapRows(pk, rows) : IcmpRowsFromPackets(pk, rows);
         }
         static List<string[]> IcmpRowsFromPackets(List<Pcap.Pkt> pk, List<string[]> rows)
         {
@@ -259,6 +315,17 @@ namespace AdeeboMeter
                 case "dhcp-nak":
                     w.Add(0, cli(3, "10.20.30.40", "", false)); w.Add(0.003, srvMsg(6, "0.0.0.0", "192.0.2.1", rt));
                     w.Add(0.5, cli(1, "", "", false)); w.Add(0.004, srvMsg(2, "192.0.2.51", "192.0.2.1", rt)); w.Add(0.002, cli(3, "192.0.2.51", "192.0.2.1", false)); w.Add(0.003, srvMsg(5, "192.0.2.51", "192.0.2.1", rt)); break;
+                case "dhcp-no-ack":
+                    w.Add(0, cli(1, "", "", false)); w.Add(0.004, srvMsg(2, "192.0.2.52", "192.0.2.1", rt));
+                    w.Add(0.002, cli(3, "192.0.2.52", "192.0.2.1", false)); w.Add(4, cli(3, "192.0.2.52", "192.0.2.1", false)); w.Add(8, cli(3, "192.0.2.52", "192.0.2.1", false)); break;
+                case "eap-failure": case "eap-good":
+                    string sw = "02:00:5e:40:00:01"; Func<int, int, int, byte[], byte[]> eap = (code, id, typ, data) => { var body = new List<byte> { (byte)code, (byte)id, 0, 0 }; if (typ > 0) body.Add((byte)typ); body.AddRange(data); body[2] = (byte)(body.Count >> 8); body[3] = (byte)body.Count; var f = new List<byte> { 2, 0, (byte)(body.Count >> 8), (byte)body.Count }; f.AddRange(body); return f.ToArray(); };
+                    w.Add(0, Pcap.Eth("01:80:c2:00:00:03", pc, 0x888e, new byte[] { 2, 1, 0, 0 }));
+                    w.Add(0.01, Pcap.Eth(pc, sw, 0x888e, eap(1, 1, 1, Array.Empty<byte>())));
+                    w.Add(0.02, Pcap.Eth("01:80:c2:00:00:03", pc, 0x888e, eap(2, 1, 1, Encoding.ASCII.GetBytes("host/LAPTOP-ADEEB.corp.example.com"))));
+                    w.Add(0.05, Pcap.Eth(pc, sw, 0x888e, eap(1, 2, 25, new byte[] { 0x21 })));
+                    w.Add(0.02, Pcap.Eth("01:80:c2:00:00:03", pc, 0x888e, eap(2, 2, 25, new byte[] { 0x01, 0x16, 0x03, 0x01 })));
+                    w.Add(0.2, Pcap.Eth(pc, sw, 0x888e, name == "eap-good" ? eap(3, 3, 0, Array.Empty<byte>()) : eap(4, 3, 0, Array.Empty<byte>()))); break;
                 case "ra-rogue":
                     w.Add(0, Pcap.Eth("33:33:00:00:00:01", rt, 0x86dd, Pcap.Ip6Icmp("fe80::1", "ff02::1", 255, 134, 0, Ra(1800, false, "2001:db8:1::", "2001:db8:1::53"))));
                     w.Add(3, Pcap.Eth("33:33:00:00:00:01", rogue, 0x86dd, Pcap.Ip6Icmp("fe80::bad:1", "ff02::1", 255, 134, 0, Ra(9000, false, "fd00:bad::", ""))));
@@ -273,6 +340,65 @@ namespace AdeeboMeter
             }
             return w.Bytes();
         }
+        // a sample chain made for the lab (documentation names, throwaway keys): the intermediate expired on 20 Oct 2026
+        const string ExpiredChainPem = @"-----BEGIN CERTIFICATE-----
+MIIDWTCCAkGgAwIBAgIUQc5MXDqpGIQTqLTuFLWj6hJN5HEwDQYJKoZIhvcNAQEL
+BQAwQjEhMB8GA1UEAwwYRXhhbXBsZSBMYWIgSXNzdWluZyBDQSAxMR0wGwYDVQQK
+DBRFeGFtcGxlIExhYiAoc2FtcGxlKTAeFw0yNjA0MTUwMDAwMDBaFw0yNzA0MTUw
+MDAwMDBaMD4xHTAbBgNVBAMMFGludHJhbmV0LmV4YW1wbGUuY29tMR0wGwYDVQQK
+DBRFeGFtcGxlIExhYiAoc2FtcGxlKTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+AQoCggEBAL/escBRtISSAZIddKCynRUjsk+MXg0TvV0OX3wQTHq3S/9TLWa238fN
+YtHinLV6FT3bKpYdCPuR4rzvrI3PwWHTJp1TT4uXiVAcZOkztSX9YchGu9TV/3ug
+Emyd8qxavGjbJuiodzooirFFzsc1NNqelBVZvtefOFFUr071HA+kJfbVEEfHA+uD
+Azna9Ul2ZEegmxlOXiNobbI6TZ34AmYBPtcLVRAZTyuqL8JJ6Dfoc/Zbym8Sqagt
+0dBq5ocEUwGehLkN/NGohAcRfd5GRJ/HUGYf3dQetcvc7FnYNP72ycKGAH5nyr8g
+bmdq8saY12fKofd69RXhEOCZKGgSY68CAwEAAaNLMEkwDAYDVR0TAQH/BAIwADA5
+BgNVHREEMjAwghRpbnRyYW5ldC5leGFtcGxlLmNvbYIYd3d3LmludHJhbmV0LmV4
+YW1wbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQAtPlk45wiiy5l7baJQn3Mm7gaE
+WH2CHMSjJ+Z/rk9TF4f1FjFrnbHZI39aPe2Dr9V/COmiG8bWlz0afMYMewV17jUe
+B2ALXuxOChqj1uADQuZsfyPAhSUaGyVWtAH00MYSRwQXPlNL6jYF1cSnFe9xX+Ew
+kNNM8wsYaTF4QjSxOIRkjL2nXTIFB10dqXVpRcDD41IwIZoNsdGrDgma+OqR6qxQ
+OgieMYJuVd9IdR7ClakHLeF+iVypdvFjJU7sr0LHy5ZmPBeowyZwnYvc6/Yy5nKk
+j06Elw+HKtPxpEyPhubjsl4ckc4n0v2hZE5Gzqr2oXi8vSWsJ5c77NX4mvdH
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDIDCCAgigAwIBAgIUT0IJqKdiRqkY0bvWd/NsAmMamA0wDQYJKoZIhvcNAQEL
+BQAwPTEcMBoGA1UEAwwTRXhhbXBsZSBMYWIgUm9vdCBDQTEdMBsGA1UECgwURXhh
+bXBsZSBMYWIgKHNhbXBsZSkwHhcNMjMxMDI4MDAwMDAwWhcNMjYxMDIwMDAwMDAw
+WjBCMSEwHwYDVQQDDBhFeGFtcGxlIExhYiBJc3N1aW5nIENBIDExHTAbBgNVBAoM
+FEV4YW1wbGUgTGFiIChzYW1wbGUpMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEAxa4zY+UUxFsjoar0itAjJFhzlngul43MFiVqgxcUTVNIyWGo3q2QKsEF
+bS/8rMWAd5cw0webABpPwtirHgjoDPcIZrdqRTDCcsy7OG1xrwliQa8kaE8hfkEj
+x6pNBo+dqIks2DaqBggOYKq5YZ3h9wYy1Qf9+kbTPJV1RssLf5mLz63C8+e9z0l5
+mga8y0kvTpicCQhZaqaX/cgBES44KHOmFPUHvZK1VJjF8aS5Hw37PIC2iTYRnhK1
+XMZQbmV/Y2JHCIVP6/Yfx9boxGrOMl2bMVPfijH6jjQmaK3wKBdKvMsl0ILsulGk
+g/iU0ex52ZEnYLsgFQo2YKHXgwf0OQIDAQABoxMwETAPBgNVHRMBAf8EBTADAQH/
+MA0GCSqGSIb3DQEBCwUAA4IBAQB9Lg8bMo0+GBUq9BNgw7Ns3vtlChLKRI+JlDsW
+NVClUPo36+ljRsBJBNqKWK9zR+b7dyP14TzRhx9dipRbFqHquUmig9/g8UxGl9/X
+wLnOriTadqnWeBXT/0r5apOOpS3CpsgPXJsz8zJBb2uhENYiKtBzN0YVWjYTzQEV
+q72ziLPklVBVk+nuaOhfkN3ME0fYa6BoEK5kJqQ1pQzH5gCDPXPani0rfRTayBzC
+9PraJWBr6bDsVtlhvUFHUYiP4NpfV90r2jMNZ3kPH2xx1VB/Evt+M5iDGFVmth3n
+qsP7Tk1YTRAIbYpK//LtsV2Hoo1sEc94FmOm+ND+AvSKHOfS
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDGzCCAgOgAwIBAgIUGPK0dmbEchld327EIdc7svlmISgwDQYJKoZIhvcNAQEL
+BQAwPTEcMBoGA1UEAwwTRXhhbXBsZSBMYWIgUm9vdCBDQTEdMBsGA1UECgwURXhh
+bXBsZSBMYWIgKHNhbXBsZSkwHhcNMTYxMTAzMDAwMDAwWhcNMzYxMDI5MDAwMDAw
+WjA9MRwwGgYDVQQDDBNFeGFtcGxlIExhYiBSb290IENBMR0wGwYDVQQKDBRFeGFt
+cGxlIExhYiAoc2FtcGxlKTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+AMUs92ctYb0Hr7eiWIwWqsypXgG8aUarZ7gSgAflPN+cCdn7ty9r0BKbvXLrjP3r
+RdBpMXRkj0ljlx4W0AypUWx+n1PU515KMtSAVgfaH5BuwFtWWUZIpq7J9RA4AMHU
+xcJbrUUxFMmrjrhFuwEZiYF7UDux7wrmuowguCywF+rK4WpmtauJVoFqyEzh9LVM
+YboIyzFtO/TpnXUbHOpMkPqmG5seQttY+yAHEMFKPNOmR+l87o67guELCJ78XUr6
+PXnEO16A9g01VrK2YL7bCjgbIeex7vya2FKJRJKgDnMf3Fg4vip3fY6XAh6WmxQd
++qsRn0JDX68Q1V22ATDSJT0CAwEAAaMTMBEwDwYDVR0TAQH/BAUwAwEB/zANBgkq
+hkiG9w0BAQsFAAOCAQEAA6RhU962EvEcPkbnpanUaNGgSQkniI/5hSufryRcHo1v
+hhAUAaGYTfzaenpU7qDYoW6wVPdk4XQSNQeq9XYMGQlJDhY1B4NCtrLxSdwjB72H
+6MiHA4szXOrOhhHIiDsn/KPyek1hBFPNGHl/6UwGqObEJRrmUC4EBgd9fcO5zz04
+F2JUa0JMTPXLCsSBmUUvDUJcmHaUxQr4Hfnr6zvjaO8lYRKkiwBdsrvJP0yDWrRA
+13W05BEUtGkvR+hqng/7PHTY9nNHqAulhP5kS/ZuO4+mI0WdbeXJCqbxdoIRqrJi
+WytUJCCDxHBiC6CJr9lSWDAIWiSrfVd8nWB3HM1L5A==
+-----END CERTIFICATE-----";
         static byte[] Ra(int life, bool m, string prefix, string dns)
         {
             var r = new List<byte> { 64, (byte)(m ? 0x80 : 0), (byte)(life >> 8), (byte)life, 0, 0, 0, 0, 0, 0, 0, 0 };

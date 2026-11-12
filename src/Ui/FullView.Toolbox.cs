@@ -105,6 +105,7 @@ namespace AdeeboMeter
                 T("dot1x", "ENG", "802.1X failure decoder (timeline)", null, (a, r) => EngPack.Dot1x()),
                 T("dhcpreplay", "ENG", "DHCP lease replay (from a capture)", "Capture file - path of a .pcap or .pcapng", (a, r) => Replay.DhcpReplay(a[0])),
                 T("rareplay", "ENG", "IPv6 RA replay (from a capture)", "Capture file - path of a .pcap or .pcapng", (a, r) => Replay.RaReplay(a[0])),
+                T("eapreplay", "ENG", "802.1X replay (from a capture)", "Capture file - path of a .pcap or .pcapng", (a, r) => Replay.EapReplay(a[0])),
                 T("icmpexplain", "ENG", "ICMP error translator", "Capture file, or a type/code - e.g. 3/4, or v6 2/0", (a, r) => Replay.IcmpExplain(a[0])),
                 T("certcmp", "ENG", "Certificate chain compare", "Site - e.g. outlook.office.com|Name this run - e.g. VPN off", (a, r) => EngPack.CertCompare(a[0], a[1])),
                 T("radiuslab", "ENG", "RADIUS client lab (test account)", "Test account and server - e.g. labtest@10.0.0.5 or labtest@radius.lab:1812|Shared secret|Password - the test account's (never your own)", (a, r) => EngPack.RadiusLab(a[0], a[1], a[2], r)),
@@ -161,7 +162,7 @@ namespace AdeeboMeter
             new[] { "SPEED & QUALITY", "speedtest", "ping", "twamp", "cloud", "ispreport", "gamecompare" },
             new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
             new[] { "WHY CAN'T IT JOIN?", "join", "dot1x", "radiuslab" },
-            new[] { "REPLAY A CAPTURE", "dhcpreplay", "rareplay", "icmpexplain", "samplelab" },
+            new[] { "REPLAY A CAPTURE", "dhcpreplay", "eapreplay", "rareplay", "icmpexplain", "samplelab" },
             new[] { "TRUST & MAIL", "certcmp", "smtppath" },
             new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
@@ -214,9 +215,16 @@ namespace AdeeboMeter
         static bool IsSnmp(string id) { return id.StartsWith("snmp", StringComparison.Ordinal); }
         DateTime tbCopied;
         // a clickable result row: walk this object, or open the MIB folder
+        static readonly char[] PipeSep = { '|' };
         void RowAction(string act)
         {
             if (tbBusy) return;
+            if (act.StartsWith("tool:", StringComparison.Ordinal))
+            {
+                var p = act.Substring(5).Split(PipeSep, 2); OpenTool(p[0]);
+                if (p.Length > 1 && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = p[1];
+                return;
+            }
             if (act.StartsWith("walk:", StringComparison.Ordinal))
             {
                 SelectTool("snmpwalk"); if (tbBoxes.Count > 2) tbBoxes[2].Box.Text = act.Substring(5);
@@ -352,7 +360,7 @@ namespace AdeeboMeter
                     }
                 case "sweep": return "about 20 seconds, never more than 90";
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
-                case "join": case "dot1x": case "icmpexplain": case "samplelab": case "dhcpreplay": case "rareplay": return "a few seconds - nothing is sent";
+                case "join": case "dot1x": case "icmpexplain": case "samplelab": case "dhcpreplay": case "rareplay": case "eapreplay": return "a few seconds - nothing is sent";
                 case "certcmp": return "a few seconds - one TLS handshake to the site";
                 case "radiuslab": return "up to 4 seconds - one Access-Request, then one TACACS+ connection test";
                 case "smtppath": return "up to half a minute - one DNS question, then a short SMTP conversation with the top 2 mail servers (stops before sending)";
