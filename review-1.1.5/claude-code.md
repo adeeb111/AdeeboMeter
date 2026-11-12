@@ -1842,4 +1842,4 @@ Confidence: confirmed (read both)
 ### Where the second review is wrong
 - **"The downloaded exe defaults autostart off (Program.cs:224)."** That line is only a placeholder delegate. The real default is `autoStart = true` (src\AppCtx.cs line 40), and the first run writes the Run key (finding #46). The Store manifest's comment "on by default like the downloaded exe" is accurate.
 - **"Policy is switch-off only and enforced at every choke point."** It isn't. An exe-folder policy file overrides %ProgramData% (#13, confirmed by running it), `mode = pro` locks Pro on (#14), and the speed test's `check` path (src\Checks\SpeedTest.cs line 101, then Servers) never reads Policy.NoSpeed. Only Measure checks it, at line 153 (#15).
-- **"Portable and Store paths don't mix."** This contradicts the second review's own History finding (#231) and #46/#47 here (Run key and lock shared).
+- **"Portable and Store paths don't mix."** This contradicts the second review's own History finding (#231) and #46 and #107 here (shared Run key; P-384 key index travels without the keys).
