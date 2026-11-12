@@ -36,16 +36,15 @@ namespace AdeeboMeter
             foreach (var d in probs.Take(10)) { var p = DevInfo.Problem(d.Problem); rows.Add(R(2, Draw.Trunc(d.Name, 50), p[0] + " (Windows code " + d.Problem + ")", p[1], "w")); bad++; if (next == "") next = p[1]; }
             // 2. what came and went recently: a device that keeps dropping points at the cable, the port or power
             var recent = mine.Where(d => d.Removed != DateTime.MinValue && (DateTime.Now - d.Removed).TotalHours < 24).OrderByDescending(d => d.Removed).ToList();
-            var drops = Drops(mine.Select(d => d.Id).ToList(), out err);
+            // Windows keeps the last arrival and removal per device; a removal followed by an arrival seconds later, while
+            // you didn't touch it, is a drop (cable, port or power) - only the last one is known, never a count
             foreach (var d in recent.Take(8))
             {
-                int n; drops.TryGetValue(d.Id, out n);
-                bool back = d.Present && d.Arrived > d.Removed;
-                int lv = n >= 3 ? 2 : back && (d.Arrived - d.Removed).TotalSeconds < 30 ? 1 : 3; if (lv == 2) bad++; else if (lv == 1) warn++;
-                rows.Add(R(lv, Draw.Trunc(d.Name, 50), (back ? "dropped at " + DevInfo.When(d.Removed) + ", back at " + DevInfo.When(d.Arrived) : "unplugged or lost at " + DevInfo.When(d.Removed) + (d.Present ? "" : " - not back since")) + (n > 0 ? " · " + n + " disconnects in 24 h" : ""), n >= 3 ? "Dropping again and again: a loose or long cable, a worn port, or not enough power (a hub without its own power supply, or a front-panel port). Try a port on the back of the PC, straight in." : "", "w"));
-                if (lv == 2 && next == "") next = "Try another port (a back port, not a hub) and another cable.";
+                bool back = d.Present && d.Arrived > d.Removed, quick = back && (d.Arrived - d.Removed).TotalSeconds < 30;
+                int lv = quick ? 1 : 3; if (lv == 1) warn++;
+                rows.Add(R(lv, Draw.Trunc(d.Name, 50), back ? (quick ? "dropped at " + DevInfo.When(d.Removed) + " and came back seconds later" : "unplugged at " + DevInfo.When(d.Removed) + ", back at " + DevInfo.When(d.Arrived)) : "unplugged or lost at " + DevInfo.When(d.Removed) + (d.Present ? "" : " - not back since"), quick ? "If you didn't unplug it then, it dropped out by itself: a loose or long cable, a worn port, or not enough power (a hub without its own power supply, or a front-panel port). Try a port on the back of the PC, straight in." : "", "w"));
+                if (quick && next == "") next = "Try another port (a back port, not a hub) and another cable.";
             }
-            if (err != "" && recent.Count > 0) rows.Add(R(3, "Disconnect count", "Windows doesn't let normal users read its device log here, so drops are counted from the last time only", "", "w"));
             // 3. power: selective suspend, battery saver
             string ss = SelectiveSuspend();
             if (ss == "on") { rows.Add(R(1, "USB power saving", "on - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings › USB selective suspend › Disabled (you change it; AdeeboMeter doesn't).", "w")); warn++; if (next == "") next = "Turn off USB selective suspend and see if it stops."; }
@@ -68,15 +67,6 @@ namespace AdeeboMeter
                 "Read from Windows' Plug and Play list - nothing is changed. AdeeboMeter can't test the device's own hardware.", "w"));
             if (bad == 0 && warn == 0 && present.Count > 0) foreach (var d in present.Take(12)) rows.Add(R(0, Draw.Trunc(d.Name, 50), "working" + (d.DriverVer != "" ? " · driver " + d.DriverVer : "") + " · plugged in since " + DevInfo.When(d.Arrived), "", "w"));
             return rows;
-        }
-        // disconnects in the last 24 h, from Windows' device log (readable without admin on most PCs)
-        static Dictionary<string, int> Drops(List<string> ids, out string err)
-        {
-            var d = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            var evs = EvLog.Recent("Microsoft-Windows-Kernel-PnP/Configuration", "EventID=420 or EventID=400", 24, 600, out err);
-            foreach (var e in evs.Where(x => x.Id == 420 || x.Text.IndexOf("removed", StringComparison.OrdinalIgnoreCase) >= 0))
-            { string id = EvLog.Field(e.Xml, "DeviceInstanceId"); if (id == "") continue; var match = ids.FirstOrDefault(x => string.Equals(x, id, StringComparison.OrdinalIgnoreCase)); if (match != null) { int n; d.TryGetValue(match, out n); d[match] = n + 1; } }
-            return d;
         }
         // powercfg's own answer for the current plan: USB settings › USB selective suspend (on battery and plugged in)
         static string SelectiveSuspend()
@@ -114,13 +104,15 @@ namespace AdeeboMeter
             // the four legs: which one is bad
             Func<double, string> ms = v => double.IsNaN(v) ? "-" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             Func<double, string> pc = v => double.IsNaN(v) ? "-" : v.ToString("0.#", CultureInfo.CurrentCulture) + "%";
-            int lvHome = double.IsNaN(gA) ? 2 : gA > 20 || gJ > 10 || gL > 1 ? (gA > 50 || gJ > 30 || gL > 5 ? 2 : 1) : 0;
+            // loss by count, not percent: one lost probe in 30 is 3% but means nothing; two is worth a look, three or more is real
+            int gLost = gw.Count(double.IsNaN), nLost = Math.Max(0, net.Count(double.IsNaN) - gLost), sLost = srv.Count(double.IsNaN);
+            int lvHome = double.IsNaN(gA) ? 2 : (gA > 50 || gJ > 30 || gLost >= 3) ? 2 : (gA > 20 || gJ > 10 || gLost == 2) ? 1 : 0;
             double ispA = double.IsNaN(nA) || double.IsNaN(gA) ? double.NaN : Math.Max(0, nA - gA);
-            int lvIsp = double.IsNaN(nA) ? 2 : (ispA > 60 || nJ - gJ > 20 || nL - gL > 2) ? 2 : (ispA > 30 || nJ - gJ > 10 || nL - gL > 1) ? 1 : 0;
-            int lvSrv = srv.Length == 0 || double.IsNaN(sA) ? 3 : (sA > 120 || sL > 3 || sJ > 25) ? 2 : (sA > 70 || sL > 1 || sJ > 12) ? 1 : 0;
-            rows.Add(R(lvHome, kind == "Wi-Fi" ? "This PC → router (Wi-Fi)" : "This PC → router (cable)", ms(gA) + " · jitter " + ms(gJ) + " · lost " + pc(gL) + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : ""), "Should be under 5 ms on a cable and under 10 ms on good Wi-Fi.", "i"));
-            rows.Add(R(lvIsp, "Router → your provider → internet", "+" + ms(ispA) + " · jitter " + ms(nJ) + " · lost " + pc(nL), "The part your provider is responsible for.", "i"));
-            rows.Add(R(lvSrv, "→ the game's server" + (srvName != "" ? " (" + srvName + ")" : ""), srv.Length == 0 ? "not measured yet - add the game in the Gamer Zone and start it" : ms(sA) + " · jitter " + ms(sJ) + " · lost " + pc(sL), "Distance to the server sets the floor; the Gamer Zone compares regions.", "i"));
+            int lvIsp = double.IsNaN(nA) ? 2 : (ispA > 60 || nJ - gJ > 20 || nLost >= 3) ? 2 : (ispA > 30 || nJ - gJ > 10 || nLost == 2) ? 1 : 0;
+            int lvSrv = srv.Length == 0 || double.IsNaN(sA) ? 3 : (sA > 120 || sJ > 25 || (sL > 3 && sLost >= 3)) ? 2 : (sA > 70 || sJ > 12 || (sL > 1 && sLost >= 2)) ? 1 : 0;
+            rows.Add(R(lvHome, kind == "Wi-Fi" ? "This PC → router (Wi-Fi)" : "This PC → router (cable)", ms(gA) + " · jitter " + ms(gJ) + " · lost " + gLost + " of " + gw.Length + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : ""), "Should be under 5 ms on a cable and under 10 ms on good Wi-Fi.", "i"));
+            rows.Add(R(lvIsp, "Router → your provider → internet", "+" + ms(ispA) + " · jitter " + ms(nJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
+            rows.Add(R(lvSrv, "→ the game's server" + (srvName != "" ? " (" + srvName + ")" : ""), srv.Length == 0 ? "not measured yet - add the game in the Gamer Zone and start it" : ms(sA) + " · jitter " + ms(sJ) + " · lost " + sLost + " of " + srv.Length, "Distance to the server sets the floor; the Gamer Zone compares regions.", "i"));
             // what else is going on
             double up = m.Up.Avg(10), down = m.Down.Avg(10), cpu = m.Cpu.Avg(10), mem = m.Mem.Avg(10);
             int lvLoad = !double.IsNaN(up) && up > 5 ? 1 : 0;

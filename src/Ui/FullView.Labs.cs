@@ -38,13 +38,13 @@ namespace AdeeboMeter
         readonly Dictionary<int, string> tcpEvents = new Dictionary<int, string>();
         List<string[]> labDns; bool labBusy; string labCg = ""; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = "";
 
-        void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); if (learnInfo != null) learnInfo.Invalidate(); }
+        void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); else if (learnInfo != null && learnPage.Visible) learnInfo.Invalidate(); }   // full screen: only that window repaints
 
         float PaintLabList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
         {
             var list = Labs.Where(l => hit(l[1]) || hit(l[2]) || hit("lab")).ToList(); if (list.Count == 0) return y;
             g.DrawString(L.T("LABS - PLAY WITH IT"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
-            foreach (var l in list) y = LearnRow(g, "lab:" + l[0], l[1], l[2], x, y, w, ink, muted, nowrap);
+            foreach (var l in list) y = LearnRow(g, "lab:" + l[0], L.T(l[1]), L.T(l[2]), x, y, w, ink, muted, nowrap);
             return y + 8 * S;
         }
 
@@ -107,7 +107,7 @@ namespace AdeeboMeter
             db.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); e.Graphics.TranslateTransform(db.AutoScrollPosition.X, db.AutoScrollPosition.Y); Begin(db); float yy = PaintLab(db, e.Graphics, id, 28 * S, 20 * S, db.ClientSize.Width - 56 * S); Need(db, yy + 20 * S); };
             Wire(db); f.Controls.Add(db); labHost = db; labWin = f;
             f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape) f.Close(); };
-            f.FormClosed += delegate { labHost = null; labWin = null; f.Dispose(); };
+            f.FormClosed += delegate { labHost = null; labWin = null; f.Dispose(); if (learnInfo != null) learnInfo.Invalidate(); };
             f.Show(this);
         }
         void LabPlay(bool on)
@@ -149,7 +149,7 @@ namespace AdeeboMeter
             cx += Stepper(h, g, "tcp.buf", "Router buffer", new double[] { 0.1, 0.25, 0.5, 1, 2, 4, 8 }, 1, v => v.ToString("0.##", CultureInfo.CurrentCulture) + "× BDP", cx, y);
             cx += Stepper(h, g, "tcp.loss", "Random loss", new double[] { 0, 0.001, 0.01, 0.1, 0.5, 1, 2 }, 0, v => v.ToString("0.###", CultureInfo.CurrentCulture) + "%", cx, y);
             cx += Stepper(h, g, "tcp.rounds", "Length", new double[] { 60, 120, 240, 480 }, 240, v => N0(v) + " RTTs", cx, y);
-            y += 58 * S;
+            y += 74 * S;   /* room for the axis label under the steppers */
             string algo = LS("tcp.algo", "cubic"); int rounds = (int)LV("tcp.rounds", 240);
             Func<string, List<LabSim.Step>> run = a => { var p = new LabSim.TcpIn { Algo = a, Mbps = LV("tcp.mbps", 100), RttMs = LV("tcp.rtt", 40), BufferBdp = LV("tcp.buf", 1), LossPct = LV("tcp.loss", 0), Rounds = rounds }; foreach (var kv in tcpEvents) p.Events[kv.Key] = kv.Value; return LabSim.Tcp(p); };
             var main = run(algo == "reno" ? "reno" : "cubic"); var other = algo == "both" ? run("reno") : null;
@@ -425,7 +425,7 @@ namespace AdeeboMeter
             IPAddress ip; if (!IPAddress.TryParse(target, out ip)) return y;
             List<Routes.R> matched; var best = Routes.Best(routeTable, ip, out matched);
             y = Lead2(g, "Every route that covers " + target + " is a candidate; the most specific one (the longest prefix) wins, and only a tie goes to the lowest metric. A VPN takes over by adding routes more specific than yours - or two /1 routes that beat your /0 default.", x, y, w);
-            var rows = routeTable.OrderByDescending(r => r.Prefix).ThenBy(r => r.Metric).Take(40).Select(r => { bool m = matched != null && matched.Contains(r), win = best == r; return new[] { Routes.Ip(r.Dest) + "/" + r.Prefix, (win ? "WINS  " : m ? "covers it  " : "") + "via " + (r.OnLink ? "on-link" : r.Gateway) + " · " + r.Iface + " · metric " + r.Metric + (r.Vpn ? " · VPN" : ""), win ? "0" : m ? "1" : "3" }; }).ToList();
+            var rows = routeTable.OrderBy(r => best == r ? 0 : matched != null && matched.Contains(r) ? 1 : 2).ThenByDescending(r => r.Prefix).ThenBy(r => r.Metric).Take(40).Select(r => { bool m = matched != null && matched.Contains(r), win = best == r; return new[] { Routes.Ip(r.Dest) + "/" + r.Prefix, (win ? "WINS  " : m ? "covers it  " : "") + "via " + (r.OnLink ? "on-link" : r.Gateway) + " · " + r.Iface + " · metric " + r.Metric + (r.Vpn ? " · VPN" : ""), win ? "0" : m ? "1" : "3" }; }).ToList();
             return InfoCardOn(h, g, "YOUR ROUTE TABLE  ·  " + (best != null ? target + " LEAVES VIA " + (best.OnLink ? "THE LOCAL LINK" : best.Gateway) : "NO ROUTE FOR " + target), rows, null, x, y, w);
         }
 

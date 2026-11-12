@@ -388,8 +388,8 @@ in:
 
 == usb
 in: headset
-2|Verdict|Found the likely reason - Try another port (a back port, not a hub) and another cable.||w
-2|USB Headset|dropped at today 14:02, back at today 14:02 · 6 disconnects in 24 h|Dropping again and again: a loose or long cable, a worn port, or not enough power (a hub without its own power supply, or a front-panel port). Try a port on the back of the PC, straight in.|w
+1|Verdict|Nothing broken, but try another port (a back port, not a hub) and another cable.||w
+1|USB Headset|dropped at today 14:02 and came back seconds later|If you didn't unplug it then, it dropped out by itself: a loose or long cable, a worn port, or not enough power (a hub without its own power supply, or a front-panel port). Try a port on the back of the PC, straight in.|w
 1|USB power saving|on - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)||w
 
 == lag

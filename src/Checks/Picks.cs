@@ -201,8 +201,10 @@ namespace AdeeboMeter
                 var cached = new List<double>(); var fresh = new List<double>(); int fail = 0;
                 for (int round = 0; round < 3; round++) foreach (var n in names)
                     {
-                        if (run.Stop) break; var q = Toolkit.Query(s.Item2, n, 1, true); if (q == null) fail++; else (round == 0 ? fresh : cached).Add(q.Ms);
+                        if (run.Stop || (fail >= 3 && cached.Count + fresh.Count == 0)) break;   // blocked here: three silences and it's out of the race, not another minute of waiting
+                        var q = Toolkit.Query(s.Item2, n, 1, true); if (q == null) fail++; else (round == 0 ? fresh : cached).Add(q.Ms);
                     }
+                if (cached.Count + fresh.Count == 0) { res.Add(Tuple.Create(s.Item1, double.NaN, double.NaN, fail)); continue; }
                 // a name nobody asked before: how fast it goes out and finds the answer itself
                 for (int i = 0; i < 3 && !run.Stop; i++) { var q = Toolkit.Query(s.Item2, "r" + Guid.NewGuid().ToString("N").Substring(0, 10) + ".example.com", 1, true); if (q == null) fail++; else fresh.Add(q.Ms); }
                 res.Add(Tuple.Create(s.Item1, cached.Count > 0 ? Journey.Median(cached) : double.NaN, fresh.Count > 0 ? Journey.Median(fresh) : double.NaN, fail));
@@ -290,8 +292,8 @@ namespace AdeeboMeter
                 rows.Add(R(3, cls[1].ToUpperInvariant(), "", "", "w"));
                 foreach (var d in l)
                 {
-                    double years = d.DriverDate == DateTime.MinValue ? 0 : (DateTime.Now - d.DriverDate).TotalDays / 365.25; bool old = cls[0] == "Net" && years >= 3 && d.Provider.IndexOf("Microsoft", StringComparison.OrdinalIgnoreCase) < 0;
-                    rows.Add(R(old ? 1 : 3, Draw.Trunc(d.Name, 50), d.DriverVer + (d.DriverDate != DateTime.MinValue ? " · " + d.DriverDate.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " (" + DevInfo.Age(d.DriverDate) + ")" : "") + (d.Provider != "" ? " · " + d.Provider : ""), old ? "An old network driver is a common cause of drops and slow Wi-Fi - the maker's site (or the PC maker's support page) usually has a newer one." : "", "w"));
+                    double years = d.DriverDate == DateTime.MinValue || DevInfo.Inbox(d.DriverDate) ? 0 : (DateTime.Now - d.DriverDate).TotalDays / 365.25; bool old = cls[0] == "Net" && years >= 3 && d.Provider.IndexOf("Microsoft", StringComparison.OrdinalIgnoreCase) < 0;
+                    rows.Add(R(old ? 1 : 3, Draw.Trunc(d.Name, 50), d.DriverVer + (DevInfo.Inbox(d.DriverDate) ? " · Windows' own driver (updated with Windows)" : d.DriverDate != DateTime.MinValue ? " · " + d.DriverDate.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " (" + DevInfo.Age(d.DriverDate) + ")" : "") + (d.Provider != "" ? " · " + d.Provider : ""), old ? "An old network driver is a common cause of drops and slow Wi-Fi - the maker's site (or the PC maker's support page) usually has a newer one." : "", "w"));
                 }
             }
             // USB history: every USB device Windows has seen, by when it last came or went

@@ -2373,8 +2373,8 @@ friendly: Why isn't my USB device working?
 cat: term
 close: -1
 tag: Not detected, not working or keeps disconnecting - why.
-what: Windows' problem code for the device in plain words, when it last dropped and how often, USB power saving and battery saver, and for a USB network adapter or phone tethering whether the link is really up. Ends with a verdict and one thing to try.
-how: Read from Windows' Plug and Play list and its device log - no admin, nothing changed.
+what: Windows' problem code for the device in plain words, when it last dropped out and came back, USB power saving and battery saver, and for a USB network adapter or phone tethering whether the link is really up. Ends with a verdict and one thing to try.
+how: Read from Windows' Plug and Play list - no admin, nothing changed.
 why: Most USB trouble is the cable, the port, power or the driver - this says which.
 without: AdeeboMeter can't test the device's own hardware.
 

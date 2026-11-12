@@ -651,6 +651,12 @@ namespace AdeeboMeter
                 if (k2 != "realtime" || r2.Count(r => r.GapBefore > 0 && !r.Out) != 3 || !ex2.Any(n => n.Title.StartsWith("Delayed and bunched", StringComparison.Ordinal)) || !ex2.Any(n => n.Title == "Your PC sent on time") || ex2.Last().Text.IndexOf("UDP carries no sequence", StringComparison.Ordinal) < 0)
                     throw new InvalidOperationException("journey explain (UDP) wrong: " + k2 + " stalls=" + r2.Count(r => r.GapBefore > 0) + " / " + string.Join(" | ", ex2.Select(n => n.Lv + " " + n.Title)));
                 if (Journey.Explain(f, recs.Take(2).ToList(), kind, false)[0].Title != "Too little to go on") throw new InvalidOperationException("journey: two packets should be too little");
+                // an idle connection's keepalives (1 byte at one before the next) and their ACKs are not loss (found on a real PC)
+                var w3 = new Pcap.Writer(); w3.Add(0, Pcap.Eth(m2, m1, 0x0800, Pcap.Ip4(me, srv, 6, 64, Pcap.Tcp(50123, 443, 1000, 5000, 0x18, 500, new byte[100]))));
+                w3.Add(0.05, Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(srv, me, 6, 52, Pcap.Tcp(443, 50123, 5000, 1100, 0x10, 500, Array.Empty<byte>()))));
+                for (int i = 0; i < 4; i++) { w3.Add(5, Pcap.Eth(m2, m1, 0x0800, Pcap.Ip4(me, srv, 6, 64, Pcap.Tcp(50123, 443, 1099, 5000, 0x10, 500, new byte[1])))); w3.Add(0.05, Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(srv, me, 6, 52, Pcap.Tcp(443, 50123, 5000, 1100, 0x10, 500, Array.Empty<byte>())))); }
+                var r3 = Journey.Records(Pcap.Parse(w3.Bytes(), k => Journey.Belongs(k, f)), f, 0); var p3 = Pcap.Parse(w3.Bytes(), k => Journey.Belongs(k, f)); r3 = Journey.Records(p3, f, p3[0].Abs);
+                if (r3.Count(z => z.Keepalive) != 4 || r3.Any(z => z.Resend || z.DupAck) || Journey.Explain(f, r3, "web", false).Any(n => n.Title.StartsWith("Packets were lost", StringComparison.Ordinal))) throw new InvalidOperationException("keepalives read as loss: " + r3.Count(z => z.Keepalive) + " keepalives, " + r3.Count(z => z.Resend) + " resends, " + r3.Count(z => z.DupAck) + " dup ACKs");
             });
             T("1.1.5 picks: when, Wi-Fi security and channels, devices, questions", () =>
             {

@@ -50,7 +50,7 @@ namespace AdeeboMeter
         }
         // one read at a time, and a failed one waits a minute - a paint never starts another and another
         bool routesLoading, appsLoading; DateTime appsFailedAt = DateTime.MinValue;
-        void LoadRoutes() { if (routesLoading) return; routesLoading = true; Task.Factory.StartNew(() => { List<Routes.R> t; try { t = Routes.Read(); } catch (Exception e) { Program.Log("routes: " + e.Message); t = new List<Routes.R>(); } try { BeginInvoke((Action)delegate { routeTable = t; routesLoading = false; travelCanvas.Invalidate(); }); } catch { routesLoading = false; } }); }
+        void LoadRoutes() { if (routesLoading) return; routesLoading = true; Task.Factory.StartNew(() => { List<Routes.R> t; try { t = Routes.Read(); } catch (Exception e) { Program.Log("routes: " + e.Message); t = new List<Routes.R>(); } try { BeginInvoke((Action)delegate { routeTable = t; routesLoading = false; travelCanvas.Invalidate(); LabRefresh(); }); } catch { routesLoading = false; } }); }
         void LoadApps()
         {
             if (appsLoading || (DateTime.UtcNow - appsFailedAt).TotalSeconds < 60) return; appsLoading = true;

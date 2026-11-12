@@ -477,3 +477,120 @@ DNS hijack and VPN name rules	Détournement DNS et règles de noms du VPN
 Port test	Test de port
 Teams UDP test (and NAT type)	Test UDP Teams (et type de NAT)
 Clock check	Vérification de l'horloge
+LABS - PLAY WITH IT	LABOS - ESSAYEZ VOUS-MÊME
+link full (bandwidth × round trip)	lien plein (débit × aller-retour)
+packets	paquets
+buffer full - packets dropped	tampon plein - paquets perdus
+window (packets)	fenêtre (paquets)
+round trips	allers-retours
+loss	perte
+the queue in your router	la file d'attente de votre routeur
+of waiting	d'attente
+buffer edge - later than this is too late to play	bord du tampon - plus tard, c'est trop tard pour jouer
+how late each packet arrives	retard de chaque paquet
+Pick an answer.	Choisissez une réponse.
+right this session	bonnes réponses cette session
+Algorithm	Algorithme
+A click on the graph adds	Un clic sur le graphique ajoute
+Link	Lien
+Round trip	Aller-retour
+Router buffer	Tampon du routeur
+Random loss	Perte aléatoire
+Length	Durée
+Loss	Perte
+Your upload	Votre envoi
+A backup sends	Une sauvegarde envoie
+Router buffer holds	Le tampon du routeur contient
+Queue	File d'attente
+Network jitter	Gigue du réseau
+Jitter buffer	Tampon de gigue
+Network delay	Délai du réseau
+A far-away old device	Un vieil appareil éloigné
+Devices near the router	Appareils près du routeur
+Busy neighbours on your channel	Voisins actifs sur votre canal
+Router	Routeur
+Name	Nom
+Packet you send	Paquet envoyé
+On the way	En chemin
+Don't Fragment	Ne pas fragmenter
+The tunnel's router	Le routeur du tunnel
+Where to	Destination
+Ping	Ping
+Server tick rate	Fréquence du serveur
+Interpolation	Interpolation
+Frame rate	Images par seconde
+Screen	Écran
+Upload	Envoi
+Big packets already queued	Gros paquets déjà en file
+CUBIC (Windows' default)	CUBIC (par défaut dans Windows)
+Both	Les deux
+soft loss (3 dup ACKs)	perte légère (3 ACK en double)
+hard loss (timeout)	perte grave (délai expiré)
+first come, first served	premier arrivé, premier servi
+smart queue (fq_codel / SQM)	file intelligente (fq_codel / SQM)
+equal turns	tours égaux
+airtime fairness	équité du temps d'antenne
+nothing	rien
+on (TCP, most traffic)	activé (TCP, la plupart du trafic)
+off	désactivé
+says "too big"	dit « trop gros »
+is blocked from saying it	ne peut pas le dire (bloqué)
+First come, first served (most home routers)	Premier arrivé, premier servi (la plupart des routeurs à domicile)
+Fair queuing (each flow takes turns)	File équitable (chaque flux à son tour)
+Priority for marked calls (EF)	Priorité aux appels marqués (EF)
+Clear my losses	Effacer mes pertes
+Test my line under load  ›	Tester ma ligne sous charge  ›
+Find the real MTU of my path  ›	Trouver le vrai MTU de mon chemin  ›
+Next question  ›	Question suivante  ›
+Click a stop to see what happens to the labels there. Sizes are the usual ones; Packet stack in the Toolbox works out any mix.	Cliquez sur une étape pour voir ce qui arrive aux étiquettes. Les tailles sont les valeurs habituelles; Pile de paquets dans la Boîte à outils calcule n'importe quel mélange.
+Measure again	Mesurer de nouveau
+Block width = packet size · amber = sent again · red = an error from the network · a red mark = a stall	Largeur du bloc = taille du paquet · ambre = renvoyé · rouge = erreur du réseau · marque rouge = arrêt
+stall	arrêt
+live	en direct
+real speed	vitesse réelle
+x slower	x plus lent
+Explain this capture	Expliquer cette capture
+See how TCP's window grew - in the TCP lab  ›	Voir comment la fenêtre TCP a grandi - dans le labo TCP  ›
+Copied - internal addresses removed	Copié - adresses internes retirées
+Copy the explanation	Copier l'explication
+Quick · 100 packets	Rapide · 100 paquets
+Normal · 1,000 or 30 s	Normal · 1 000 ou 30 s
+Packet stack and MTU	Pile de paquets et MTU
+VLSM planner	Planificateur VLSM
+Bandwidth and transfer time	Débit et temps de transfert
+Decimal, hex and binary	Décimal, hexadécimal et binaire
+What changed when it broke?	Qu'est-ce qui a changé quand ça a planté?
+Is this Wi-Fi OK to use? (hotel, cafe)	Ce Wi-Fi est-il sûr? (hôtel, café)
+DNS race - which server is fastest here	Course DNS - quel serveur est le plus rapide ici
+Devices on this network (kept over time)	Appareils de ce réseau (gardés dans le temps)
+Drivers, device problems and USB history	Pilotes, problèmes d'appareils et historique USB
+Why isn't my USB device working?	Pourquoi mon appareil USB ne fonctionne-t-il pas?
+Why is my game lagging?	Pourquoi mon jeu lague-t-il?
+Work it out	Calculer
+TCP congestion control	Contrôle de congestion TCP
+Watch the window grow, back off and recover - Reno and CUBIC.	La fenêtre grandit, recule et se rétablit - Reno et CUBIC.
+Loss → the most TCP can do	Perte → le maximum de TCP
+Why 1% loss caps a download, whatever your plan.	Pourquoi 1 % de perte plafonne un téléchargement, quel que soit votre forfait.
+Bufferbloat	Bufferbloat (file engorgée)
+A full queue: the download is fine, the ping isn't.	Une file pleine : le téléchargement va bien, le ping non.
+A call's jitter buffer	Le tampon de gigue d'un appel
+Too small cuts the sound, too big adds delay.	Trop petit coupe le son, trop grand ajoute du délai.
+Wi-Fi airtime	Temps d'antenne Wi-Fi
+Why one slow device slows everyone.	Pourquoi un appareil lent ralentit tout le monde.
+How a name gets found	Comment un nom est trouvé
+Root, .com, the site's own server - and the cache.	La racine, .com, le serveur du site - et le cache.
+NAT, and why inbound fails	Le NAT, et pourquoi l'entrant échoue
+Your private address, the router's public one, CGNAT.	Votre adresse privée, celle publique du routeur, le CGNAT.
+MTU and black holes	MTU et trous noirs
+When big packets vanish and small ones work.	Quand les gros paquets disparaissent et les petits passent.
+Which route wins	Quelle route gagne
+Longest prefix first - on your own route table.	Le préfixe le plus long d'abord - sur votre propre table de routage.
+The game latency budget	Le budget de latence d'un jeu
+Why a 30 ms ping can feel like 80.	Pourquoi un ping de 30 ms peut sembler 80.
+QoS queues	Files QoS
+Why a marked call packet jumps the line - or doesn't.	Pourquoi un paquet d'appel marqué passe devant - ou non.
+Subnetting practice	Exercices de sous-réseaux
+Network, broadcast, hosts - check yourself.	Réseau, diffusion, hôtes - vérifiez-vous.
+Full screen	Plein écran
+Play	Lire
+Show all	Tout afficher

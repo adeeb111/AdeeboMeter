@@ -73,7 +73,7 @@ namespace AdeeboMeter
             g.TranslateTransform(learnInfo.AutoScrollPosition.X, learnInfo.AutoScrollPosition.Y);
             Begin(learnInfo);
             float x = 20 * S, y = 14 * S, w = learnInfo.ClientSize.Width - 40 * S;
-            if (learnSel == "") { y = Title2(g, "Learn", x, y, w); y = Lead2(g, "Two lines and a picture each. New to networking? Start with The layers, in plain words.", x, y, w); Need(learnInfo, y); return; }
+            if (learnSel == "") { y = Title2(g, "Learn", x, y, w); y = Lead2(g, "Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words.", x, y, w); Need(learnInfo, y); return; }
             if (learnSel.StartsWith("lab:", StringComparison.Ordinal)) { y = PaintLab(learnInfo, g, learnSel.Substring(4), x, y, w); Need(learnInfo, y + 20 * S); return; }
                         if (learnSel.StartsWith("term:", StringComparison.Ordinal))
             {

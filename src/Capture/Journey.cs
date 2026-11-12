@@ -21,7 +21,7 @@ namespace AdeeboMeter
         {
             public double T; public bool Out; public int Len, IpLen, Proto, Flags, Win, PayLen, Ttl, Dscp; public uint Seq, Ack;
             public int IcmpType = -1, IcmpCode = -1, IcmpMtu; public bool FromRouter;
-            public bool Resend, DupAck, Before;   // Before: from the rewind buffer, before you clicked
+            public bool Resend, DupAck, Before, Keepalive;   // Before: from the rewind buffer, before you clicked
             public double GapBefore;              // a stall right before this packet (seconds), 0 if none
             public string Say = "";
         }
@@ -101,15 +101,21 @@ namespace AdeeboMeter
             foreach (var d in dirs) { ackRun[d] = 0; }
             foreach (var r in list.Where(x => x.Proto == 6))
             {
+                uint hi0; bool have = seen.TryGetValue(r.Out, out hi0);
+                // a keepalive: 0 or 1 byte at one before the next byte (RFC 9293) - "still here", not a lost packet
+                if (r.PayLen <= 1 && have && r.Seq == hi0 - 1 && (r.Flags & 0x07) == 0) { r.Keepalive = true; continue; }
                 if (r.PayLen > 0)
                 {
-                    uint end = r.Seq + (uint)r.PayLen, hi;
-                    if (seen.TryGetValue(r.Out, out hi) && (int)(end - hi) <= 0) r.Resend = true;
+                    uint end = r.Seq + (uint)r.PayLen;
+                    if (have && (int)(end - hi0) <= 0) r.Resend = true;
                     else seen[r.Out] = end;
                 }
+                else if ((r.Flags & 0x02) != 0) seen[r.Out] = r.Seq + 1;   // SYN takes one sequence number
                 if (r.PayLen == 0 && (r.Flags & 0x10) != 0 && (r.Flags & 0x07) == 0)
                 {
-                    uint la; if (lastAck.TryGetValue(r.Out, out la) && la == r.Ack) { ackRun[r.Out]++; if (ackRun[r.Out] >= 2) r.DupAck = true; } else ackRun[r.Out] = 0;
+                    // a duplicate ACK only means something while the other side has data out that isn't acknowledged yet
+                    uint hiO; bool waiting = seen.TryGetValue(!r.Out, out hiO) && (int)(hiO - r.Ack) > 0;
+                    uint la; if (waiting && lastAck.TryGetValue(r.Out, out la) && la == r.Ack) { ackRun[r.Out]++; if (ackRun[r.Out] >= 2) r.DupAck = true; } else ackRun[r.Out] = 0;
                     lastAck[r.Out] = r.Ack;
                 }
                 else if (r.PayLen > 0) ackRun[r.Out] = 0;
@@ -166,6 +172,7 @@ namespace AdeeboMeter
                     else if ((fl & 0x02) != 0) r.Say = who + " says yes, let's talk (SYN-ACK)";
                     else if ((fl & 0x04) != 0) r.Say = who + " hangs up abruptly (RST)";
                     else if ((fl & 0x01) != 0) r.Say = who + " says goodbye (FIN)";
+                    else if (r.Keepalive) r.Say = who + " checks the line is still there (keepalive)";
                     else if (r.Resend) r.Say = who + " sends " + Bytes(r.PayLen) + " AGAIN - the first copy got lost or late (resend)";
                     else if (r.DupAck) r.Say = who + " asks again for the same data - something went missing (duplicate ACK)";
                     else if (r.PayLen > 0) r.Say = who + " sends " + Bytes(r.PayLen) + (kind == "web" && r.Out ? " (request or upload)" : "");
@@ -200,7 +207,7 @@ namespace AdeeboMeter
             }
             return "ICMP type " + r.IcmpType + " code " + r.IcmpCode;
         }
-        static string Bytes(int n) { return n.ToString("N0", CultureInfo.CurrentCulture) + " bytes"; }
+        static string Bytes(int n) { return n.ToString("N0", CultureInfo.CurrentCulture) + (n == 1 ? " byte" : " bytes"); }
         public static string Ms(double s) { return (s * 1000).ToString(s < 0.01 ? "0.0" : "0", CultureInfo.CurrentCulture) + " ms"; }
         static string At(double t) { return t.ToString("0.0", CultureInfo.CurrentCulture) + " s"; }
 
@@ -291,7 +298,7 @@ namespace AdeeboMeter
             double rtt = syn != null && synack != null ? synack.T - syn.T : double.NaN;
             if (!double.IsNaN(rtt)) n.Add(N(rtt > 0.15 ? 1 : 3, "Round trip to the server", Ms(rtt) + " (from the connection handshake)" + (rtt > 0.15 ? " - far away or a slow path; every request waits at least this long." : "."), synack.T));
             int resIn = inb.Count(x => x.Resend), resOut = outb.Count(x => x.Resend), dupIn = inb.Count(x => x.DupAck), dupOut = outb.Count(x => x.DupAck);
-            int dataIn = inb.Count(x => x.PayLen > 0), dataOut = outb.Count(x => x.PayLen > 0);
+            int dataIn = inb.Count(x => x.PayLen > 0 && !x.Keepalive), dataOut = outb.Count(x => x.PayLen > 0 && !x.Keepalive);
             if (resIn + resOut > 0)
             {
                 double pctIn = dataIn > 0 ? 100.0 * resIn / dataIn : 0, pctOut = dataOut > 0 ? 100.0 * resOut / dataOut : 0; double pc = Math.Max(pctIn, pctOut);
@@ -423,7 +430,7 @@ namespace AdeeboMeter
                 try
                 {
                     if (F.Remote == "" || !Directory.Exists(LiveCapture.RingDir)) return got;
-                    var newest = Directory.GetFiles(LiveCapture.RingDir, "*.pcapng").OrderByDescending(x => System.IO.File.GetLastWriteTimeUtc(x)).Take(2).ToList();
+                    var newest = Directory.GetFiles(LiveCapture.RingDir, "*.pcapng").OrderByDescending(x => System.IO.File.GetLastWriteTimeUtc(x)).Take(1).ToList();   // the newest file only: one 20 MB read, then let go
                     foreach (var rf in newest)
                     {
                         byte[] b; using (var fs = new FileStream(rf, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) { if (fs.Length > 32L * 1024 * 1024) continue; b = new byte[fs.Length]; int g = 0, n; while (g < b.Length && (n = fs.Read(b, g, b.Length - g)) > 0) g += n; }

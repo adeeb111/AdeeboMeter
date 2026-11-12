@@ -4,7 +4,24 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 ## 1.1.5 (unreleased)
 
-A Gamer Zone, a Report for my ISP, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 129 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
+A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 140 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
+
+### New: packet journey (Network story)
+- Any conversation - a Journey button on every Connections row (UDP game sockets included) and in the Gamer Zone. Shows the label stack at each stop (PC, router, provider, internet, server) and where the time goes: Wi-Fi or cable, provider, distance and queues, from ten pings when you press Measure.
+- Capture this conversation (Wireshark with Npcap): one conversation plus ICMP about it, filtered in the capture driver, headers only (128 bytes per packet), stops by itself - Quick 100 packets, Normal 1,000 or 30 s. Uses the rewind buffer for the seconds before you clicked when it's running.
+- The packets play along the path, sized by bytes; resends amber, network errors red, stalls marked; a plain-words line per packet; a timeline to jump around.
+- Explain this capture: fixed rules, no AI, nothing sent. Decides the kind (call or game, download, web, DNS, VPN, a device at home) and reports stalls and bursts, resends, refused deliveries, packets too big, route changes, this PC sending late, a slow server - each with the moment it's about - and a "can't tell from here" line. UDP loss is never claimed without proof.
+
+### New: Labs (Learn)
+- TCP congestion control: Reno and CUBIC side by side, link, round trip, router buffer and random loss; click the graph for a soft (3 duplicate ACKs) or hard (timeout) loss; phases shaded; your own captured download drawn next to the simulation (estimated).
+- Loss and the most TCP can do, bufferbloat, a call's jitter buffer, Wi-Fi airtime, how a name gets found, NAT and CGNAT, MTU black holes, which route wins, the game latency budget, QoS queues, subnetting practice. Each opens full screen; local arithmetic except "Do it for real" (DNS) and "Check for CGNAT" (one short trace), on press.
+
+### New: questions and picks
+- Why isn't my USB device working? (Windows' problem code in plain words, recent drops, USB power saving, USB network adapters) and Why is my game lagging? (this PC → router → provider → server, uploads, a busy PC) - a verdict, the evidence and one next step. Read-only.
+- What changed when it broke? (a timeline around an outage, with the first suspect), Is this Wi-Fi OK to use? (lock, sign-in page, DNS honesty, Public profile, other guests, HTTPS inspection), DNS race, devices on this network kept over time with your labels, drivers, device problems and USB history.
+- Work it out: subnet calculator with gateway checks (outside the subnet, network or broadcast address, /31, /32, a mask that disagrees; empty = this PC), packet stack and MTU, VLSM planner, bandwidth and transfer time, decimal / hex / binary.
+- Wi-Fi: the least crowded channel, and networks that share a name but not their security; security shown per access point. MTR runs up to 60 minutes with a graph and a CSV recording. The internet weather in one sentence on the Overview.
+- Sniff and every short capture now honour the policy's capture switch.
 
 ### New: Gamer Zone
 - Finds installed games by reading Steam, Epic and Riot's own lists (nothing sent). One click on a game is the consent to ping its regions; until then nothing goes to a game company.
