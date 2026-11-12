@@ -114,14 +114,14 @@ namespace AdeeboMeter
                 T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes|Include my public IP? type yes (it asks Cloudflare once) - no by default", (a, r) => IspReport.Run(M, a[0], a[1], a[2], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("keys", "KEYS", "My keys", null, (a, r) => CertKeys.MyKeys()),
-                T("newkey", "KEYS", "New key", "Name - e.g. Adeeb work|Purpose - files (default), server or client", (a, r) => CertKeys.NewKey(a[0], a[1])),
+                T("newkey", "KEYS", "New key", "Name - e.g. Adeeb work|Purpose - files (default), server or client|Type for files - standard (RSA, .p7m, opens anywhere) or P-384 (strongest, .adeebo, AdeeboMeter only)", (a, r) => CertKeys.NewKey(a[0], a[1], a[2])),
                 T("csrmake", "KEYS", "Generate a CSR", "Key - one of My keys, or a new name to make one|Names - DNS names and IPs, e.g. vpn.example.com, 10.0.0.5|Subject (optional) - e.g. CN=vpn.example.com, O=Example", (a, r) => CertKeys.Csr(a[0], a[1], a[2])),
                 T("selfsigned", "KEYS", "Create a self-signed certificate", "Preset - Local HTTPS, Lab server or mTLS client|Names - e.g. lab01.lab, 10.0.0.5", (a, r) => CertKeys.SelfSigned(a[0], a[1])),
                 T("certmatch", "KEYS", "Check certificate and key", "Certificate - the file your CA sent back, or paste it|Put them together? type yes", (a, r) => CertKeys.Match(a[0], a[1])),
                 T("certlive", "KEYS", "Compare file vs live server", "Certificate - the file you meant to deploy|Server - e.g. vpn.example.com or 10.0.0.5:8443", (a, r) => CertKeys.Live(a[0], a[1])),
-                T("recipients", "KEYS", "Recipients (their public keys)", "Certificate (optional) - their .cer, to add them|Name - e.g. Munif", (a, r) => CertKeys.Recipients(a[0], a[1])),
+                T("recipients", "KEYS", "Recipients (their public keys)", "Their key (optional) - the .cer or .adeebokey they sent, to add them|Name - e.g. Munif", (a, r) => CertKeys.Recipients(a[0], a[1])),
                 T("encrypt", "KEYS", "Encrypt a file", "File - path of the file|For - code (share with a code) or recipient names, e.g. Munif, Lab team|Also for me? - yes (default) or no", (a, r) => FileCrypt.Encrypt(a[0], a[1], a[2], r)),
-                T("decrypt", "KEYS", "Open an encrypted file", "File - a .adeebo or .p7m|Code - only for .adeebo files", (a, r) => FileCrypt.Decrypt(a[0], a[1], r)),
+                T("decrypt", "KEYS", "Open an encrypted file", "File - a .adeebo or .p7m|Code - for files shared with a code, or a key backup's passphrase", (a, r) => FileCrypt.Decrypt(a[0], a[1], r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
                 T("pfx", "CERTS", "Check a PFX / P12", "File path|Password - used once, never kept", (a, r) => CertTools.Pfx(a[0], a[1])),
                 T("csr", "CERTS", "Decode a CSR", "File path, or paste the PEM text", (a, r) => CertTools.Csr(a[0])),
@@ -226,6 +226,31 @@ namespace AdeeboMeter
         DateTime tbCopied;
         // a clickable result row: walk this object, or open the MIB folder
         static readonly char[] PipeSep = { '|' };
+        // the P-384 keys' actions: public key file, encrypted backup with a recovery passphrase, delete (asks first)
+        List<string[]> EcAction(string what, string keyName)
+        {
+            var k = EcKeys.All().FirstOrDefault(x => x.KeyName == keyName); if (k == null) return null;
+            var rows = new List<string[]>();
+            if (what == "pub")
+            {
+                string txt = EcKeys.PublicFile(k), file = System.IO.Path.Combine(CertKeys.OutDir, new string(k.Name.Where(char.IsLetterOrDigit).ToArray()) + ".adeebokey"); System.IO.File.WriteAllText(file, txt);
+                rows.Add(new[] { "0", "Public key of " + k.Name, System.IO.Path.GetFileName(file) + " - send this file; it's safe to share", "Fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)) + " - read it out to them once so they know it's yours.", "w", "show:" + file });
+                rows.Add(new[] { "3", "Copy as text", "the same, to paste into an email or chat", "", "w", "copy:" + txt });
+            }
+            else if (what == "backup")
+            {
+                string pass = FileCrypt.NewCode(), file = FileCrypt.FreeName(CertKeys.OutDir, new string(k.Name.Where(char.IsLetterOrDigit).ToArray()) + "-key-backup.adeebo");
+                System.IO.File.WriteAllBytes(file, EcKeys.BackupBytes(k, pass)); Program.Log("P-384 key backup written");
+                rows.Add(new[] { "0", "Backup", System.IO.Path.GetFileName(file) + " - copy it somewhere safe", "", "w", "show:" + file });
+                rows.Add(new[] { "1", "Recovery passphrase", pass, "Save it in your password manager now - AdeeboMeter doesn't keep it. Restore on a new PC with Open an encrypted file.", "k", "copy:" + pass });
+            }
+            else if (what == "del")
+            {
+                if (MessageBox.Show(this, L.T("Delete this key from Windows?") + "\n\n" + k.Name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return null;
+                rows.Add(new[] { EcKeys.Delete(k) ? "0" : "2", "Deleted", k.Name, "", "w" }); rows.AddRange(CertKeys.MyKeys());
+            }
+            return rows;
+        }
         // a code or passphrase made for you: shown on screen once - never in Copy, Save, or the result kept for this session
         static bool IsSecretRow(string[] r) { return r.Length > 4 && r[4] == "k"; }
         void RowAction(string act)
@@ -233,7 +258,8 @@ namespace AdeeboMeter
             if (tbBusy) return;
             if (act.StartsWith("key:", StringComparison.Ordinal))
             {
-                var p = act.Split(':'); if (p.Length != 3) return; string thumb = p[2];
+                var p = act.Split(':'); if (p.Length == 4 && p[2] == "ec") { tbRows = EcAction(p[1], p[3]); if (tbRows != null) { tbAt = DateTime.Now; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate(); } return; }
+                if (p.Length != 3) return; string thumb = p[2];
                 List<string[]> res;
                 if (p[1] == "pub") res = CertKeys.PublicKey(thumb);
                 else if (p[1] == "backup") res = CertKeys.Backup(thumb);

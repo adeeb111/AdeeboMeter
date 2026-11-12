@@ -1973,7 +1973,7 @@ friendly: New key
 cat: term
 close: -1
 tag: Make a key of your own.
-what: Makes an RSA 3072 key and keeps it in Windows for your account: for files encrypted to you (default), a server, or an mTLS client.
+what: Makes a key and keeps it in Windows for your account: for files encrypted to you (default), a server, or an mTLS client. For files you choose the type: standard (RSA 3072 - .p7m files that open in other tools too) or P-384 (elliptic curve, the strongest - .adeebo files only AdeeboMeter opens; its public key travels as a .adeebokey file).
 how: Offline. The key never leaves the PC unless you back it up.
 why: Others can only encrypt files for you once you have a key and send them its public part.
 without: certreq or openssl genpkey.
@@ -2033,7 +2033,7 @@ friendly: Encrypt a file
 cat: term
 close: -1
 tag: Send a file only the right person can open.
-what: Two ways. Share with a code: makes a .adeebo file and a random 24-character code - send the file, give the code another way (by phone). For a recipient: a standard .p7m (CMS / S/MIME, AES-256) for their public key, which they open with the key they already hold - optionally also for you.
+what: Two ways. Share with a code: makes a .adeebo file and a random 24-character code - send the file, give the code another way (by phone). For a recipient: their key decides the format - a standard RSA key gives a .p7m (CMS / S/MIME, AES-256) that also opens in OpenSSL or Outlook-compatible tools; an EC P-384 key (the strongest choice) gives a .adeebo that only AdeeboMeter opens. Optionally also for you.
 how: Offline. .adeebo: PBKDF2-SHA256 (600,000 rounds), AES-256 and an HMAC-SHA256 check, so a changed file is refused. The code is shown once and never saved. The original file isn't changed.
 why: Email isn't private. A file encrypted this way stays private wherever it travels.
 without: 7-Zip with AES-256, or openssl cms -encrypt.

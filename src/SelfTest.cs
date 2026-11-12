@@ -512,6 +512,23 @@ namespace AdeeboMeter
                 var cut = enc.Take(enc.Length - 40).ToArray(); if (!refused(cut, code)) throw new InvalidOperationException("cut file accepted");
                 string dir = Path.GetTempPath(); var fn = FileCrypt.FreeName(dir, "..\\..\\evil.exe"); if (Path.GetDirectoryName(fn) != dir.TrimEnd('\\') || !fn.EndsWith("evil.exe", StringComparison.Ordinal)) throw new InvalidOperationException("name escapes the folder: " + fn);
             });
+            T(".adeebo for P-384 recipients: round trip, wrong key refused, key backup restores", () =>
+            {
+                if (!EcKeys.Available) return;   // Windows' key storage (CNG) - not in the Linux test lab; runs on a real PC
+                EcKeys.Key a = null, b = null, rest = null;
+                try
+                {
+                    a = EcKeys.Create("selftest-a " + Guid.NewGuid().ToString("N").Substring(0, 6), null); b = EcKeys.Create("selftest-b " + Guid.NewGuid().ToString("N").Substring(0, 6), null);
+                    var data = Enumerable.Range(0, 50000).Select(i => (byte)(i * 13)).ToArray(); byte[] enc;
+                    using (var o = new MemoryStream()) { EcKeys.Encrypt(new MemoryStream(data), "plan.docx", o, new[] { Convert.FromBase64String(a.Pub) }); enc = o.ToArray(); }
+                    using (var o = new MemoryStream()) { string used; string nm = EcKeys.Decrypt(new MemoryStream(enc), o, out used); if (nm != "plan.docx" || !o.ToArray().SequenceEqual(data) || used != a.Name) throw new InvalidOperationException("EC round trip"); }
+                    var bad = (byte[])enc.Clone(); bad[bad.Length - 40] ^= 1; bool refused = false; try { string u; EcKeys.Decrypt(new MemoryStream(bad), new MemoryStream(), out u); } catch (System.Security.Cryptography.CryptographicException) { refused = true; } if (!refused) throw new InvalidOperationException("changed EC file accepted");
+                    string code = FileCrypt.NewCode(); var backup = EcKeys.BackupBytes(a, code); EcKeys.Delete(a);
+                    rest = EcKeys.Restore(new MemoryStream(backup), code);
+                    using (var o = new MemoryStream()) { string used; EcKeys.Decrypt(new MemoryStream(enc), o, out used); if (!o.ToArray().SequenceEqual(data)) throw new InvalidOperationException("restored key can't open the file"); }
+                }
+                finally { foreach (var k in new[] { a, b, rest }) if (k != null) EcKeys.Delete(k); }
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));

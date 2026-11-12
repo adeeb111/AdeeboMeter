@@ -46,31 +46,34 @@ namespace AdeeboMeter
         // what people type: any case, with or without dashes and spaces
         public static string Clean(string code) { return new string((code ?? "").ToUpperInvariant().Where(c => !char.IsWhiteSpace(c) && c != '-').ToArray()); }
 
-        public static void EncryptCode(Stream input, string name, Stream output, string code, int iterations)
+        public static void EncryptCode(Stream input, string name, Stream output, string code, int iterations) { EncryptCode(input, name, output, code, iterations, Magic); }
+        public static void EncryptCode(Stream input, string name, Stream output, string code, int iterations, byte[] magic)
         {
             var salt = new byte[16]; var iv = new byte[16]; using (var g = RandomNumberGenerator.Create()) { g.GetBytes(salt); g.GetBytes(iv); }
             byte[] ek, mk; Keys(code, salt, iterations, out ek, out mk);
-            try
-            {
-                using (var hmac = new HMACSHA256(mk))
-                {
-                    var head = new List<byte>(Magic); head.AddRange(BitConverter.GetBytes(iterations).Reverse()); head.AddRange(salt); head.AddRange(iv);
-                    var h = head.ToArray(); output.Write(h, 0, h.Length); hmac.TransformBlock(h, 0, h.Length, null, 0);
-                    using (var aes = Aes.Create())
-                    {
-                        aes.KeySize = 256; aes.Mode = CipherMode.CBC; aes.Padding = PaddingMode.PKCS7; aes.Key = ek; aes.IV = iv;
-                        var macTee = new MacStream(output, hmac);
-                        using (var cs = new CryptoStream(macTee, aes.CreateEncryptor(), CryptoStreamMode.Write))
-                        {
-                            var nb = Encoding.UTF8.GetBytes(name ?? ""); if (nb.Length > 255) nb = nb.Take(255).ToArray();
-                            cs.WriteByte((byte)(nb.Length >> 8)); cs.WriteByte((byte)nb.Length); cs.Write(nb, 0, nb.Length);
-                            input.CopyTo(cs, 81920); cs.FlushFinalBlock();
-                        }
-                    }
-                    hmac.TransformFinalBlock(Array.Empty<byte>(), 0, 0); output.Write(hmac.Hash, 0, MacLen);
-                }
-            }
+            var head = new List<byte>(magic); head.AddRange(BitConverter.GetBytes(iterations).Reverse()); head.AddRange(salt); head.AddRange(iv);
+            try { Seal(input, name, output, head.ToArray(), ek, mk, iv); }
             finally { Array.Clear(ek, 0, ek.Length); Array.Clear(mk, 0, mk.Length); }
+        }
+        // header as given, then AES-256-CBC( name length | name | file ), then HMAC-SHA256 over header + ciphertext
+        public static void Seal(Stream input, string name, Stream output, byte[] header, byte[] ek, byte[] mk, byte[] iv)
+        {
+            using (var hmac = new HMACSHA256(mk))
+            {
+                output.Write(header, 0, header.Length); hmac.TransformBlock(header, 0, header.Length, null, 0);
+                using (var aes = Aes.Create())
+                {
+                    aes.KeySize = 256; aes.Mode = CipherMode.CBC; aes.Padding = PaddingMode.PKCS7; aes.Key = ek; aes.IV = iv;
+                    var macTee = new MacStream(output, hmac);
+                    using (var cs = new CryptoStream(macTee, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        var nb = Encoding.UTF8.GetBytes(name ?? ""); if (nb.Length > 255) nb = nb.Take(255).ToArray();
+                        cs.WriteByte((byte)(nb.Length >> 8)); cs.WriteByte((byte)nb.Length); cs.Write(nb, 0, nb.Length);
+                        input.CopyTo(cs, 81920); cs.FlushFinalBlock();
+                    }
+                }
+                hmac.TransformFinalBlock(Array.Empty<byte>(), 0, 0); output.Write(hmac.Hash, 0, MacLen);
+            }
         }
         // writes ciphertext through to the file and into the HMAC; never closes the file underneath
         sealed class MacStream : Stream
@@ -85,43 +88,45 @@ namespace AdeeboMeter
             public override long Seek(long off, SeekOrigin so) { throw new NotSupportedException(); }
             public override void SetLength(long v) { throw new NotSupportedException(); }
         }
-        // returns the original name; throws CryptographicException("wrong code or changed file") when the check fails
-        public static string DecryptCode(Stream input, Stream output, string code)
+        public static string DecryptCode(Stream input, Stream output, string code) { return DecryptCode(input, output, code, Magic); }
+        // returns the original name; throws CryptographicException when the code is wrong or the file was changed
+        public static string DecryptCode(Stream input, Stream output, string code, byte[] magic)
         {
-            long len = input.Length; if (len < HeaderLen + 16 + MacLen) throw new CryptographicException("not an AdeeboMeter encrypted file");
+            if (input.Length < HeaderLen + 16 + MacLen) throw new CryptographicException("not an AdeeboMeter encrypted file");
             var head = new byte[HeaderLen]; ReadAll(input, head);
-            for (int i = 0; i < Magic.Length; i++) if (head[i] != Magic[i]) throw new CryptographicException(i < 6 ? "not an AdeeboMeter encrypted file" : "made by a newer AdeeboMeter - update to open it");
+            for (int i = 0; i < magic.Length; i++) if (head[i] != magic[i]) throw new CryptographicException(i < 6 ? "not an AdeeboMeter encrypted file" : i == 7 ? "not this kind of .adeebo file" : "made by a newer AdeeboMeter - update to open it");
             int iter = head[8] << 24 | head[9] << 16 | head[10] << 8 | head[11]; if (iter < 100000 || iter > 10000000) throw new CryptographicException("damaged header");
             var salt = head.Skip(12).Take(16).ToArray(); var iv = head.Skip(28).Take(16).ToArray();
             byte[] ek, mk; Keys(code, salt, iter, out ek, out mk);
-            try
+            try { return Open(input, output, head, ek, mk, iv); }
+            finally { Array.Clear(ek, 0, ek.Length); Array.Clear(mk, 0, mk.Length); }
+        }
+        // the stream sits just after the header: 1. check the HMAC over header + ciphertext, 2. only then decrypt
+        public static string Open(Stream input, Stream output, byte[] head, byte[] ek, byte[] mk, byte[] iv)
+        {
+            long ctStart = input.Position, ctLen = input.Length - ctStart - MacLen; if (ctLen < 16) throw new CryptographicException("file is cut short");
+            var buf = new byte[81920];
+            using (var hmac = new HMACSHA256(mk))
             {
-                // 1. check: the HMAC over header + ciphertext, before decrypting anything
-                long ctLen = len - HeaderLen - MacLen; var buf = new byte[81920];
-                using (var hmac = new HMACSHA256(mk))
+                hmac.TransformBlock(head, 0, head.Length, null, 0); long left = ctLen;
+                while (left > 0) { int n = input.Read(buf, 0, (int)Math.Min(buf.Length, left)); if (n <= 0) throw new CryptographicException("file is cut short"); hmac.TransformBlock(buf, 0, n, null, 0); left -= n; }
+                hmac.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+                var tag = new byte[MacLen]; ReadAll(input, tag);
+                int diff = 0; for (int i = 0; i < MacLen; i++) diff |= tag[i] ^ hmac.Hash[i];   // constant time
+                if (diff != 0) throw new CryptographicException("wrong code or key, or the file was changed or damaged");
+            }
+            input.Position = ctStart;
+            using (var aes = Aes.Create())
+            {
+                aes.KeySize = 256; aes.Mode = CipherMode.CBC; aes.Padding = PaddingMode.PKCS7; aes.Key = ek; aes.IV = iv;
+                using (var lim = new LimitStream(input, ctLen)) using (var cs = new CryptoStream(lim, aes.CreateDecryptor(), CryptoStreamMode.Read))
                 {
-                    hmac.TransformBlock(head, 0, head.Length, null, 0); long left = ctLen;
-                    while (left > 0) { int n = input.Read(buf, 0, (int)Math.Min(buf.Length, left)); if (n <= 0) throw new CryptographicException("file is cut short"); hmac.TransformBlock(buf, 0, n, null, 0); left -= n; }
-                    hmac.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-                    var tag = new byte[MacLen]; ReadAll(input, tag);
-                    int diff = 0; for (int i = 0; i < MacLen; i++) diff |= tag[i] ^ hmac.Hash[i];   // constant time
-                    if (diff != 0) throw new CryptographicException("wrong code, or the file was changed or damaged");
-                }
-                // 2. decrypt
-                input.Position = HeaderLen;
-                using (var aes = Aes.Create())
-                {
-                    aes.KeySize = 256; aes.Mode = CipherMode.CBC; aes.Padding = PaddingMode.PKCS7; aes.Key = ek; aes.IV = iv;
-                    using (var lim = new LimitStream(input, ctLen)) using (var cs = new CryptoStream(lim, aes.CreateDecryptor(), CryptoStreamMode.Read))
-                    {
-                        int hi = cs.ReadByte(), lo = cs.ReadByte(); if (hi < 0 || lo < 0) throw new CryptographicException("damaged");
-                        var nb = new byte[hi << 8 | lo]; ReadAll(cs, nb);
-                        cs.CopyTo(output, 81920);
-                        return Encoding.UTF8.GetString(nb);
-                    }
+                    int hi = cs.ReadByte(), lo = cs.ReadByte(); if (hi < 0 || lo < 0) throw new CryptographicException("damaged");
+                    var nb = new byte[hi << 8 | lo]; ReadAll(cs, nb);
+                    cs.CopyTo(output, 81920);
+                    return Encoding.UTF8.GetString(nb);
                 }
             }
-            finally { Array.Clear(ek, 0, ek.Length); Array.Clear(mk, 0, mk.Length); }
         }
         sealed class LimitStream : Stream
         {
@@ -171,7 +176,22 @@ namespace AdeeboMeter
                 rows.Add(R(3, "To open it", "the other person opens the .adeebo file in AdeeboMeter (Toolbox › Open an encrypted file) and types the code", "AdeeboMeter is free - it's the only app that opens .adeebo files.", "u"));
                 return rows;
             }
-            // for recipients (their public certificates), standard CMS
+            // for recipients: their key type decides - EC P-384 keys get a .adeebo (AdeeboMeter only), RSA certificates a standard .p7m
+            var names0 = t.Split(',').Select(x => x.Trim()).Where(x => x != "").ToList();
+            var ecs = names0.Select(CertKeys.EcRecipient).ToList();
+            if (ecs.Any(x => x != null))
+            {
+                if (ecs.Any(x => x == null)) { rows.Add(R(2, "Recipients", "mix of key types: " + string.Join(", ", names0.Where((x, i) => ecs[i] == null)) + " have standard (RSA) keys, the others P-384", "Encrypt twice - once for each kind - or ask them for the same kind of key.", "u")); return rows; }
+                var list = ecs.ToList(); var who = names0.ToList();
+                if (!string.Equals((alsoMe ?? "").Trim(), "no", StringComparison.OrdinalIgnoreCase)) { var me = EcKeys.All().FirstOrDefault(); if (me != null) { list.Add(Convert.FromBase64String(me.Pub)); who.Add("you (" + me.Name + ")"); } }
+                string outEc = FreeName(fi.DirectoryName, fi.Name + ".adeebo");
+                try { run.Status = "Encrypting for " + string.Join(", ", who) + " (EC P-384)..."; using (var i = File.OpenRead(file)) using (var o = new FileStream(outEc, FileMode.CreateNew, FileAccess.Write)) EcKeys.Encrypt(i, fi.Name, o, list); }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; try { File.Delete(outEc); } catch (IOException) { } rows.Add(R(2, "Encrypt", e.Message, "", "u")); return rows; }
+                Program.Log("encrypted a file for " + list.Count + " P-384 recipient(s)");
+                rows.Add(new[] { "0", "Encrypted", Path.GetFileName(outEc) + " for " + string.Join(", ", who) + " · EC P-384", "", "m", "show:" + outEc });
+                rows.Add(R(3, "To open it", "they open it in AdeeboMeter (Open an encrypted file) - their key is found by itself, no code needed", "Only AdeeboMeter opens these: the strongest choice, unique to the app.", "u"));
+                return rows;
+            }
             if (fi.Length > MaxCms) { rows.Add(R(2, "File", "for a recipient, files up to 200 MB - use Share with a code for bigger ones", "", "u")); return rows; }
             var certs = new List<X509Certificate2>(); var names = new List<string>();
             foreach (var nm in t.Split(',').Select(x => x.Trim()).Where(x => x != ""))
@@ -203,7 +223,21 @@ namespace AdeeboMeter
             var fi = new FileInfo(file); string tmp = Path.Combine(fi.DirectoryName, "." + Guid.NewGuid().ToString("N") + ".opening");
             try
             {
-                if (file.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase))
+                var h8 = new byte[8]; using (var f8 = File.OpenRead(file)) f8.Read(h8, 0, 8);
+                if (EcKeys.IsMode2(h8))
+                {
+                    run.Status = "Looking for your P-384 key and checking the file..."; string name, used;
+                    using (var i = File.OpenRead(file)) using (var o = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write)) name = EcKeys.Decrypt(i, o, out used);
+                    string dest = FreeName(fi.DirectoryName, name); File.Move(tmp, dest);
+                    rows.Add(new[] { "0", "Opened", Path.GetFileName(dest) + " - with your key " + used + "; the file checked out", "", "m", "show:" + dest });
+                }
+                else if (EcKeys.IsBackup(h8))
+                {
+                    if (Clean(code).Length == 0) { rows.Add(R(2, "Recovery passphrase", "this is a key backup - type its recovery passphrase in the Code box", "", "u")); return rows; }
+                    run.Status = "Restoring the key..."; EcKeys.Key k; using (var i = File.OpenRead(file)) k = EcKeys.Restore(i, code);
+                    rows.Add(R(0, "Key restored", k.Name + " is back in My keys (EC P-384, kept by Windows) · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "", "w"));
+                }
+                else if (file.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase))
                 {
                     if (Clean(code).Length == 0) { rows.Add(R(2, "Code", "type the code you were given", "", "u")); return rows; }
                     run.Status = "Checking the file, then opening it..."; string name;

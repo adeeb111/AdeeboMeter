@@ -98,8 +98,15 @@ namespace AdeeboMeter
         // ---------- the tools
         public static List<string[]> MyKeys()
         {
-            var rows = new List<string[]>(); var l = Mine();
-            if (l.Count == 0) rows.Add(R(3, "My keys", "none yet - make one with New key", "Kept by Windows for your account (Current User › Personal). AdeeboMeter never keeps a private key itself.", "w"));
+            var rows = new List<string[]>(); var l = Mine(); var ec = EcKeys.All();
+            foreach (var k in ec)
+            {
+                rows.Add(R(-1, k.Name.ToUpperInvariant(), "for files encrypted to you · EC P-384 (strongest, opens .adeebo files - AdeeboMeter only) · made " + k.Made.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "", "w"));
+                rows.Add(new[] { "3", "Copy public key", "a .adeebokey file to send - only AdeeboMeter uses it", "", "w", "key:pub:ec:" + k.KeyName });
+                rows.Add(new[] { "3", "Back up private key", "an encrypted .adeebo backup, with a strong recovery passphrase shown once", "", "w", "key:backup:ec:" + k.KeyName });
+                rows.Add(new[] { "3", "Delete", "remove it from Windows - asks first", "", "w", "key:del:ec:" + k.KeyName });
+            }
+            if (l.Count == 0 && ec.Count == 0) rows.Add(R(3, "My keys", "none yet - make one with New key", "Kept by Windows for your account (Current User › Personal). AdeeboMeter never keeps a private key itself.", "w"));
             foreach (var c in l)
             {
                 string p = Purpose(c); double days = (c.NotAfter - DateTime.Now).TotalDays;
@@ -112,12 +119,20 @@ namespace AdeeboMeter
             return rows;
         }
         // purpose: encrypt (files to you) | server | client
-        public static List<string[]> NewKey(string name, string purpose)
+        public static List<string[]> NewKey(string name, string purpose, string type)
         {
             var rows = new List<string[]>(); string n = Safe(name, 60);
             if (n == "") { rows.Add(R(2, "Name", "give the key a name - e.g. Adeeb work", "", "u")); return rows; }
-            if (Find(n) != null) { rows.Add(R(2, "Name", "you already have a key called " + n, "", "u")); return rows; }
-            string p = (purpose ?? "").Trim().ToLowerInvariant(); string preset = p.StartsWith("serv", StringComparison.Ordinal) ? "lab" : p.StartsWith("cli", StringComparison.Ordinal) || p == "mtls" ? "mtls" : "encrypt";
+            if (Find(n) != null || EcKeys.Find(n) != null) { rows.Add(R(2, "Name", "you already have a key called " + n, "", "u")); return rows; }
+            string p = (purpose ?? "").Trim().ToLowerInvariant(), ty = (type ?? "").Trim().ToLowerInvariant().Replace("-", "").Replace(" ", "");
+            bool files = !p.StartsWith("serv", StringComparison.Ordinal) && !p.StartsWith("cli", StringComparison.Ordinal) && p != "mtls";
+            if (files && (ty == "p384" || ty == "ec" || ty == "ecp384" || ty == "strongest"))
+            {
+                if (!EcKeys.Available) { rows.Add(R(2, "EC P-384", "this Windows can't make P-384 keys here", "", "w")); return rows; }
+                try { var k = EcKeys.Create(n, null); rows.Add(R(0, "Made", n + " · EC P-384 · kept by Windows for your account · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "Files encrypted to this key are .adeebo files - only AdeeboMeter opens them. Next: Copy public key (in My keys) and send the .adeebokey file.", "w")); }
+                catch (CryptographicException e) { rows.Add(R(2, "New key", e.Message, "", "w")); }
+                return rows;
+            } string preset = p.StartsWith("serv", StringComparison.Ordinal) ? "lab" : p.StartsWith("cli", StringComparison.Ordinal) || p == "mtls" ? "mtls" : "encrypt";
             try { using (var c = Create(n, preset, null, 3 * 365)) rows.Add(R(0, "Made", n + " · RSA 3072 · kept by Windows for your account", "Next: Copy public key (in My keys) and send it to anyone who'll encrypt files for you.", "w")); }
             catch (CryptographicException e) { rows.Add(R(2, "New key", e.Message, "", "w")); }
             return rows;
@@ -245,7 +260,14 @@ namespace AdeeboMeter
             if (!string.IsNullOrWhiteSpace(certIn))
             {
                 if (n == "") { rows.Add(R(2, "Name", "type the person's name - you'll pick them by it when you encrypt", "", "u")); return rows; }
-                try
+                string ci = certIn.Trim().Trim('"'); string txt = File.Exists(ci) ? File.ReadAllText(ci) : ci; string kn;
+                var ecPub = EcKeys.ReadPublic(txt, out kn);
+                if (ecPub != null)
+                {
+                    File.WriteAllText(Path.Combine(RecipDir, n + ".adeebokey"), txt.Trim() + "\r\n", new UTF8Encoding(false));
+                    rows.Add(R(0, "Saved", n + " · EC P-384 (.adeebo files)", "Check the fingerprint with them by phone once: " + EcKeys.Fingerprint(ecPub), "u"));
+                }
+                else try
                 {
                     using (var c = Load(certIn))
                     {
@@ -256,13 +278,19 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - the .cer they sent you, or paste its text", "", "u")); return rows; }
             }
-            var files = Directory.GetFiles(RecipDir, "*.cer").OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
+            var files = Directory.GetFiles(RecipDir, "*.cer").Concat(Directory.GetFiles(RecipDir, "*.adeebokey")).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
             rows.Add(R(-1, "SAVED RECIPIENTS", files.Count == 0 ? "none yet" : files.Count.ToString(CultureInfo.InvariantCulture), "", "u"));
-            foreach (var f in files) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "u")); } catch (CryptographicException) { } }
+            foreach (var f in files.Where(x => x.EndsWith(".adeebokey", StringComparison.OrdinalIgnoreCase))) { string nm; var pb = EcKeys.ReadPublic(File.ReadAllText(f), out nm); if (pb != null) rows.Add(R(3, Path.GetFileNameWithoutExtension(f), "EC P-384 · .adeebo files · fingerprint " + EcKeys.Fingerprint(pb), "", "u")); }
+            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "u")); } catch (CryptographicException) { } }
             return rows;
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5350", Justification = "SHA-256 fingerprint for display")]
         static byte[] Sha(byte[] d) { using (var s = SHA256.Create()) return s.ComputeHash(d); }
+        public static byte[] EcRecipient(string name)
+        {
+            string f = Path.Combine(RecipDir, Safe(name, 40) + ".adeebokey"); if (!File.Exists(f)) return null; string nm;
+            return EcKeys.ReadPublic(File.ReadAllText(f), out nm);
+        }
         public static X509Certificate2 Recipient(string name)
         {
             string f = Path.Combine(RecipDir, Safe(name, 40) + ".cer"); if (!File.Exists(f)) return null;
