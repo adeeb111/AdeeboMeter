@@ -62,7 +62,7 @@ namespace AdeeboMeter
             var t = Knowledge.Learn();
             switch (card)
             {
-                case "labs": { var ls = Labs.Where(l => l[0] != "quiz").ToList(); all = ls.Count; return ls.Count(l => Points.Me.Has("lab." + l[0])); }
+                case "labs": all = Labs.Length; return Labs.Count(l => l[0] == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + l[0]));   // the same tick as the Labs page
                 case "games": { var k = LearnGames.Keys().ToList(); all = k.Count; return k.Count(Points.Me.Has); }
                 case "check": { var c = t.Where(x => x["check"] != "").ToList(); all = c.Count; return c.Count(x => Points.Me.Has("check." + x.Id)); }
                 case "paths": all = Paths.Length; return Paths.Count(p => Points.Me.Has("path." + p.Id));
@@ -102,7 +102,7 @@ namespace AdeeboMeter
             var l = new List<string[]>();
             switch (card)
             {
-                case "labs": foreach (var lab in Labs) l.Add(new[] { "lab:" + lab[0], lab[1], lab[2], Points.Me.Has("lab." + lab[0]) || (lab[0] == "quiz" && Points.Me.Has("quiz.5")) ? "1" : "" }); break;
+                case "labs": foreach (var lab in Labs) l.Add(new[] { "lab:" + lab[0], lab[1], lab[2], Points.Me.Has("lab." + lab[0]) || (lab[0] == "quiz" && Points.Me.Has("quiz.10")) ? "1" : "" }); break;
                 case "games": foreach (var gm in LearnGames.All) { string pre = GamePrefix(gm[0]); l.Add(new[] { "game:" + gm[0], gm[1], gm[2] + " · " + gm[3], LearnGames.Keys().Where(k => k.StartsWith(pre, StringComparison.Ordinal)).All(Points.Me.Has) ? "1" : "" }); } break;
                 case "check": foreach (var t in Knowledge.Learn().Where(t => t["check"] != "")) l.Add(new[] { "topic:" + t.Id, t["title"], CheckParts(t["check"])[0], Points.Me.Has("check." + t.Id) ? "1" : "" }); break;
                 default: foreach (var t in Knowledge.Learn().Where(t => t["kind"] == card)) l.Add(new[] { "topic:" + t.Id, t["title"], t["tag"], Points.Me.Has("learn." + t.Id) ? "1" : "" }); break;

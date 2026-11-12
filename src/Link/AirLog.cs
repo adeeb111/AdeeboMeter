@@ -20,7 +20,7 @@ namespace AdeeboMeter
 
         public static void Record(Monitor m)
         {
-            if (!Cfg.History) { Clear(); return; }   // History off: nothing is kept - an old log goes within the hour (and at start-up)
+            if (!Cfg.History) { Clear(); return; }   // History off: nothing is kept - an old log goes within the hour (the next hourly tick)
             var hour = DateTime.Now.Date.AddHours(DateTime.Now.Hour); if (hour == lastHour) return;
             bool wifi; string myB, mySsid; lock (m.L) { wifi = m.HasWifi && m.AdapterKind == "Wi-Fi"; myB = (m.Bssid ?? "").Replace('-', ':'); mySsid = m.Ssid ?? ""; }
             if (!wifi) return;
@@ -114,6 +114,12 @@ namespace AdeeboMeter
             }
             // the quietest channel all week, among the usual ones for the band - judged at your own width
             int[] cand = w.MyBand.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : w.MyBand.StartsWith("5", StringComparison.Ordinal) ? (w.MyWidth >= 80 ? new[] { 36, 52, 100, 116, 149 } : w.MyWidth >= 40 ? new[] { 36, 44, 52, 60, 100, 108, 149, 157 } : new[] { 36, 40, 44, 48, 149, 153, 157, 161 }) : Array.Empty<int>();
+            // 5 GHz: 149+ and the radar (DFS) channels only when they're already in use around here - proof they're allowed (as Least crowded does)
+            if (w.MyBand.StartsWith("5", StringComparison.Ordinal))
+            {
+                var seen = new HashSet<int>(w.Nets.Select(n => n.Channel)); seen.Add(w.MyChannel);
+                cand = cand.Where(c => c <= 48 || (c >= 149 ? seen.Any(z => z >= 149) : seen.Any(z => z >= 52 && z <= 144))).ToArray();
+            }
             if (cand.Length > 0) w.Quiet = cand.OrderBy(c => w.Nets.Where(n => !n.Mine && !n.Same && Overlap(n.Channel, n.Width, c, w.MyWidth, w.MyBand)).Sum(n => Math.Pow(Pct((int)n.Rssi) / 100, 2))).ThenBy(c => c == w.MyChannel ? 0 : 1).First();
             int won = w.Winner.Count(kv => kv.Value == "you"), days = w.Winner.Count;
             var sharingNow = w.Nets.Where(n => !n.Mine && !n.Same && Overlap(n.Channel, n.Width, w.MyChannel, w.MyWidth, w.MyBand)).ToList(); int sharing = sharingNow.Count;

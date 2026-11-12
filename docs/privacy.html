@@ -59,7 +59,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <p><b>In the background (while the app runs):</b></p>
 <ul>
   <li><b>Router ping:</b> a tiny ping to your own router every few seconds. It stays on your local network.</li>
-  <li><b>Internet and DNS check:</b> one ping to <code>1.1.1.1</code> (or <code>8.8.8.8</code>) and one name lookup about every 30 seconds. On networks that block ping, a timed connection to port 443 of the same address instead, closed at once. Set it to Off and nothing goes to the internet in the background.</li>
+  <li><b>Internet and DNS check:</b> one ping to <code>1.1.1.1</code> (or <code>8.8.8.8</code>) every 15 seconds on Balanced (every 5 minutes on Penny), and one name lookup at most once a minute. On networks that block ping, a timed connection to port 443 of the same address instead, closed at once. Set it to Off and nothing goes to the internet in the background.</li>
   <li><b>Provider name:</b> once per network, a short trace (6 hops) toward <code>1.1.1.1</code> and a reverse name lookup, to name your provider.</li>
   <li><b>Sign-in page check:</b> only when a check fails, one request to the test page Windows itself uses (<code>msftconnecttest.com</code>).</li>
   <li><b>Pinned destination watch:</b> one ping every 30 seconds to a destination you pinned, only if you switch it on.</li>
@@ -70,7 +70,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Tools:</b> a test contacts only the target you typed or picked (or the one it names on screen, such as <code>msftconnecttest.com</code> for the clock check).</li>
   <li><b>Speed test:</b> about 8 seconds of download and upload to the server you picked (Cloudflare's nearest <code>speed.cloudflare.com</code> by default, or a Vultr or OVHcloud test file in a city), with a cap in MB.</li>
   <li><b>Report for my ISP:</b> pings and traces to the destinations you choose; your public IP (one request to <code>www.cloudflare.com/cdn-cgi/trace</code>) only if you type yes.</li>
-  <li><b>Online lookups</b> (off by default, and they switch themselves off after the time you choose): public IP addresses of a path go to RIPEstat (<code>stat.ripe.net</code>) and PeeringDB over HTTPS; the Security checkup then also asks Cloudflare's encrypted DNS (<code>cloudflare-dns.com</code>) one question and opens one TLS handshake with <code>www.microsoft.com</code>. The Encrypted DNS (DoH / DoT) tool asks the server you choose when you run it.</li>
+  <li><b>Online lookups</b> (off by default, and they switch themselves off after the time you choose): public IP addresses of a path go to RIPEstat (<code>stat.ripe.net</code>) and PeeringDB over HTTPS; the Security checkup then also asks Cloudflare's encrypted DNS (<code>cloudflare-dns.com</code>) one question and opens one TLS handshake with <code>www.microsoft.com</code>. The VPN leak test (Toolbox, when you press it) asks Cloudflare's STUN server (<code>stun.cloudflare.com</code>, UDP 3478) which address it sees, once through the normal route and once through your Wi-Fi or cable directly. The Encrypted DNS (DoH / DoT) tool asks the server you choose when you run it.</li>
   <li><b>Links you click</b> (GitHub, Donate) open in your browser; the app itself sends nothing.</li>
   <li><b>Crash reports:</b> if the app crashes, the next start offers to open a GitHub issue page in your browser with the details filled in. Nothing is sent unless you choose to submit it, and you can read and edit it first.</li>
 </ul>

@@ -194,24 +194,11 @@ namespace AdeeboMeter
 
         // (Find devices - asking the network over mDNS / SSDP / WS-Discovery - was removed in 1.1.5: it had to keep a socket
         // open for the answers, and AdeeboMeter never listens. Devices on this network and Announcements cover it passively.)
-        static long Order(string ip) { IPAddress a; return IPAddress.TryParse(ip, out a) && a.AddressFamily == AddressFamily.InterNetwork ? (long)(uint)IPAddress.NetworkToHostOrder(BitConverter.ToInt32(a.GetAddressBytes(), 0)) : long.MaxValue; }
         // same /24 as this PC (the common home and office size); used only to keep the neighbour table to this network
         public static bool SameNet(string ip, string mine)
         {
             IPAddress a, b; if (!IPAddress.TryParse(ip ?? "", out a) || !IPAddress.TryParse(mine ?? "", out b) || a.AddressFamily != AddressFamily.InterNetwork || b.AddressFamily != AddressFamily.InterNetwork) return false;
             var x = a.GetAddressBytes(); var y = b.GetAddressBytes(); return x[0] == y[0] && x[1] == y[1] && x[2] == y[2] && x[3] != 255 && !a.Equals(b);
-        }
-        static List<string> Ptrs(byte[] r)
-        {
-            var l = new List<string>();
-            try
-            {
-                int qd = r[4] << 8 | r[5], n = (r[6] << 8 | r[7]) + (r[8] << 8 | r[9]) + (r[10] << 8 | r[11]), p = 12;
-                for (int i = 0; i < qd; i++) { Toolkit.Name(r, ref p); p += 4; }
-                for (int i = 0; i < n && p + 10 <= r.Length && l.Count < 12; i++) { Toolkit.Name(r, ref p); int ty = r[p] << 8 | r[p + 1], len = r[p + 8] << 8 | r[p + 9]; p += 10; if (ty == 12) { int q = p; l.Add(Toolkit.Name(r, ref q)); } p += len; }
-            }
-            catch (IndexOutOfRangeException) { }
-            return l;
         }
 
         // ---------- Remote access: the commands for Windows' own OpenSSH, curl and PowerShell, filled in - click one to copy it

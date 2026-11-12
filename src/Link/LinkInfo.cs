@@ -426,7 +426,7 @@ namespace AdeeboMeter
         {
             var blocks = Regex.Split(text ?? "", @"\r?\n\s*\r?\n").Where(b => b.IndexOf(':') >= 0).ToList();
             if (blocks.Count <= 1) return text ?? "";
-            var best = blocks.FirstOrDefault(b => Regex.IsMatch(b, @":\s*\d{1,3}\s*%", RegexOptions.Multiline)) ?? blocks.FirstOrDefault(b => b.Split('\n').Any(l => { int c = l.IndexOf(':'); return c > 0 && Monitor.NormState(l.Substring(c + 1)) == "connected"; }));
+            var best = blocks.FirstOrDefault(b => Regex.IsMatch(b, @":\s*(\d{1,3}\s*%|%\s*\d{1,3})", RegexOptions.Multiline)) ?? blocks.FirstOrDefault(b => b.Split('\n').Any(l => { int c = l.IndexOf(':'); return c > 0 && Monitor.NormState(l.Substring(c + 1)) == "connected"; }));
             return best ?? text;
         }
         public static bool Blocked(string text) { return text != null && text.IndexOf("location", StringComparison.OrdinalIgnoreCase) >= 0 && text.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0; }

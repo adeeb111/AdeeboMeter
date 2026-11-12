@@ -65,7 +65,7 @@ namespace AdeeboMeter
             for (int i = 0; i < words.Length; i++)
             {
                 string w = words[i]; if (w == "over" || w == "on" || w == "in") continue;
-                var m = Regex.Match(w, @"^x(\d)$"); if (m.Success && list.Count > 0) { int n = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); for (int k = 1; k < n && k < 8; k++) list.Add(list[list.Count - 1]); continue; }
+                var m = Regex.Match(w, @"^x([0-9])$"); if (m.Success && list.Count > 0) { int n = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); for (int k = 1; k < n && k < 8; k++) list.Add(list[list.Count - 1]); continue; }
                 string key; if (Alias.TryGetValue(w, out key)) w = key;
                 var l = Known.FirstOrDefault(x => x.Key == w);
                 if (l == null) { error = w; return list; }
@@ -147,7 +147,7 @@ namespace AdeeboMeter
         // never octal as IPAddress.Parse reads it; "0x0A..." is refused)
         static IPAddress V4(string t)
         {
-            var m = Regex.Match((t ?? "").Trim(), @"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$"); if (!m.Success) return null;
+            var m = Regex.Match((t ?? "").Trim(), @"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"); if (!m.Success) return null;
             var b = new byte[4]; for (int i = 0; i < 4; i++) { int v = int.Parse(m.Groups[i + 1].Value, CultureInfo.InvariantCulture); if (v > 255) return null; b[i] = (byte)v; }
             return new IPAddress(b);
         }

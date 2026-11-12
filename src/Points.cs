@@ -86,7 +86,7 @@ namespace AdeeboMeter
         // Only items AdeeboMeter can really award count (a line typed into points.txt for something that doesn't exist
         // counts 0), the replay bonus only for the replay tools, and never more than everything there is to earn.
         public int Total { get { lock (k) return Math.Min(Max, map.Where(kv => Known(kv.Key)).Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) && Replay.Contains(kv.Key) ? ReplayPts : 0))); } }
-        public const int Max = 600;   // a little above everything there is (about 585): a file saying more was edited by hand
+        public const int Max = 800;   // a little above everything there is (about 750 - the self-test fails if it grows past this): a file saying more was edited by hand
         static readonly Dictionary<string, bool> known = new Dictionary<string, bool>(StringComparer.Ordinal);
         public static bool Known(string id)
         {
@@ -106,8 +106,8 @@ namespace AdeeboMeter
         // a real run of a tool finished with results. opened = its Example was opened first. Returns the points awarded (0 when nothing new).
         public int Award(string id, bool opened, bool earning, DateTime nowUtc) { return Award(id, opened, earning, nowUtc, Clock.Mono, BootMs()); }
         // mono: the steady clock (the self-test passes its own)
-        public int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono) { return Award(id, opened, earning, nowUtc, mono, mono.Ticks / 10000); }   // the self-test's own clocks
-        int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono, long boot)
+        public int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono) { return Award(id, opened, earning, nowUtc, mono, (mono.Ticks / 10000) & 0xFFFFFFFFL); }   // the self-test's own clocks
+        internal int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono, long boot)
         {
             if (!earning || string.IsNullOrEmpty(id) || NoEarn.Contains(id)) return 0;
             lock (k)
@@ -127,14 +127,27 @@ namespace AdeeboMeter
                 DateTime fm; if (firstMono.TryGetValue(id, out fm) && mono - fm < ReplayGap) return 0;
                 // after a restart: the same Windows session (ms since boot still counting up from the first award) must also
                 // have run 10 minutes - moving the clock forward and restarting doesn't help
-                long bt = boot; if (e.Tick > 0 && bt >= e.Tick && bt - e.Tick < (long)ReplayGap.TotalMilliseconds) return 0;
+                // The value carries Windows' boot number in its high half (0 = unknown): a different boot is a real restart of the PC,
+                // never a reason to wait - only the same boot is held to the 10 minutes of uptime (round-3 #10)
+                long bootNow = boot >> 32, bootThen = e.Tick >> 32, bt = boot & 0xFFFFFFFFL, et = e.Tick & 0xFFFFFFFFL;
+                bool sameBoot = bootNow == 0 || bootThen == 0 || bootNow == bootThen;
+                if (sameBoot && et > 0 && bt >= et && bt - et < (long)ReplayGap.TotalMilliseconds) return 0;
                 if (!Replay.Contains(id) || e.Again != default(DateTime) || nowUtc - e.First < ReplayGap) return 0;
                 e.Again = nowUtc;
                 if (!TrySave()) { e.Again = default(DateTime); return 0; }
                 return ReplayPts;
             }
         }
-        static long BootMs() { return (long)(uint)Environment.TickCount; }
+        static long BootMs() { return BootId() << 32 | (long)(uint)Environment.TickCount; }
+        // Windows counts its boots (the prefetcher's BootId); 0 when it can't be read
+        static long bootId = -1;
+        static long BootId()
+        {
+            if (bootId >= 0) return bootId; bootId = 0;
+            try { using (var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters")) { var v = k == null ? null : k.GetValue("BootId"); if (v is int) bootId = (uint)(int)v; } }
+            catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is System.IO.IOException)) throw; }
+            return bootId;
+        }
         bool TrySave()
         {
             try { Save(); return true; }

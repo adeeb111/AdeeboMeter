@@ -18,6 +18,14 @@ namespace AdeeboMeter
     // About 8 s each way, with pings to that server while the line is full. Capped: 400 MB down, 100 MB up.
     static class SpeedTest
     {
+        // a public address that is really out there: not private, and not the documentation or benchmarking ranges either
+        static bool Reachable(IPAddress ip)
+        {
+            if (!Watch.IsPublic(ip.ToString())) return false;
+            if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4(); var b = ip.GetAddressBytes();
+            if (b.Length == 4) return !((b[0] == 192 && b[1] == 0 && b[2] == 2) || (b[0] == 198 && b[1] == 51 && b[2] == 100) || (b[0] == 203 && b[1] == 0 && b[2] == 113) || (b[0] == 198 && (b[1] == 18 || b[1] == 19)));
+            return !(b[0] == 0x20 && b[1] == 0x01 && b[2] == 0x0d && b[3] == 0xb8);   // 2001:db8::/32
+        }
         public const int MaxDownMB = 400, MaxUpMB = 100, Seconds = 8;
         public sealed class Server
         {
@@ -74,7 +82,7 @@ namespace AdeeboMeter
             // never this PC, the router, the LAN or a cloud metadata address: a name with a dot, or a public address
             // (Uri has already turned 0x7f000001 / 2130706433 / 0177.0.0.1 into 127.0.0.1)
             string h = u.DnsSafeHost; IPAddress ip;
-            if (IPAddress.TryParse(h, out ip)) return Watch.IsPublic(ip.ToString());
+            if (IPAddress.TryParse(h, out ip)) return Reachable(ip);
             if (h.IndexOf('.') < 0 || h.EndsWith(".local", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".lan", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".home", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".internal", StringComparison.OrdinalIgnoreCase) || h.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase)) return false;
             return true;
         }
@@ -172,7 +180,7 @@ namespace AdeeboMeter
                 catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; }
                 if (ip == null) { res.Error = "couldn't find " + srv.Host + " - the server's name doesn't resolve, or DNS / the internet is down"; return res; }
                 // a server from speedservers.txt whose name points into this PC or the LAN (127.0.0.1.nip.io, localtest.me): never
-                if (!Watch.IsPublic(ip.ToString())) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }
+                if (!Reachable(ip)) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }
                 if (run != null) run.Status = "Ping to " + srv.Label + "...";
                 res.Idle = Ping(ip, 10, () => run != null && run.Stop);
                 // some providers' test-file servers have no HTTPS: then the file comes over plain HTTP (it's only test data, and

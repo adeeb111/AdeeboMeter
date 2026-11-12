@@ -52,9 +52,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/hall-of-fame.json
           git commit -m "Hall of Fame: a new Adeebo Award"
+          # the claim code this run added - after any retry, success means it is really in the pushed file
+          CODE=$(python3 -c "import json; print(json.load(open('docs/hall-of-fame.json'))['entries'][-1]['code'])")
           # someone else's card (or Adeeb) may have pushed meanwhile: take theirs and put ours on top, a few times
           for i in 1 2 3 4 5; do
-            if git push; then exit 0; fi
+            if git push; then
+              if grep -q "\"$CODE\"" docs/hall-of-fame.json; then exit 0; fi
+              echo "Pushed, but the entry isn't in the file (the issue changed meanwhile)"; exit 1
+            fi
             sleep $((i * 3))
             git pull --rebase origin main || { git rebase --abort; git reset --hard origin/main; python3 .github/scripts/hof_verify.py > /dev/null || true; git add docs/hall-of-fame.json; git commit -m "Hall of Fame: a new Adeebo Award" || true; }
           done

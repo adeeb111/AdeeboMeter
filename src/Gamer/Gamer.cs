@@ -342,8 +342,8 @@ namespace AdeeboMeter
         }
         public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
         Thread th; volatile bool stop; Monitor mon;
-        public const int MaxPerSecond = 10;
-        public static int MaxServers { get { return Cfg.Preset == "gamer" ? 16 : 8; } }   // the Gamer preset watches twice as many
+        public static int MaxPerSecond { get { return MaxServers + 2; } }   // every playing server each second, plus room for the background ones
+        public static int MaxServers { get { return Cfg.GameBgServers >= 5 ? 16 : 8; } }   // set by the Gamer preset (5 regions watched) - tweaking another row keeps it   // the Gamer preset watches twice as many
 
         public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
         public void Stop() { stop = true; var t = th; th = null; if (t != null) t.Join(3000); }
@@ -378,7 +378,7 @@ namespace AdeeboMeter
                     foreach (var s in g.Servers.Take(12)) if (!r.Any(x => x.Item1 == g.Id && x.Item2.Name == s.Name)) r.Add(Tuple.Create(g.Id, s, SurveySec));
             return r;
         }
-        public static int SurveySec { get { return Cfg.Preset == "penny" ? 1800 : 300; } }   // Penny surveys each region every 30 min
+        public static int SurveySec { get { return Cfg.GameBgSec >= 60 ? 1800 : 300; } }   // Penny (game ping every 60 s) surveys every 30 min   // Penny surveys each region every 30 min
         // the best region: lowest 7-day average with little loss, from history; before there's history, the lowest recent average
         public GameServer Best(Game g)
         {
@@ -630,7 +630,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < h.Count; i++)
                     {
                         IPAddress ip; v[i] = double.NaN; if (!IPAddress.TryParse(h[i].Split('|')[1], out ip)) continue;
-                        try { var r = p.Send(ip, 800); if (r.Status == System.Net.NetworkInformation.IPStatus.Success) v[i] = r.RoundtripTime; } catch (System.Net.NetworkInformation.PingException) { }
+                        try { var r = p.Send(ip, 800); if (r.Status == System.Net.NetworkInformation.IPStatus.Success) v[i] = r.RoundtripTime; } catch (Exception e) { if (!(e is System.Net.NetworkInformation.PingException || e is InvalidOperationException || e is SocketException)) throw; }
                     }
                 lock (k) { hopMs.Add(v); if (hopMs.Count > 4 * 720) hopMs.RemoveAt(0); }
             }
@@ -642,14 +642,20 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (hopMs.Count < 6 || hops.Count == 0) return "";
-                var last = hopMs[hopMs.Count - 1]; int n = Math.Min(hops.Count, last.Length);
+                int n = Math.Min(hops.Count, hopMs[hopMs.Count - 1].Length), cnt = hopMs.Count;
+                // each hop's own usual time (the median before the last two samples)
+                var med = new double[n];
+                for (int i = 0; i < n; i++) { int idx = i; var u = hopMs.Take(cnt - 2).Select(x => idx < x.Length ? x[idx] : double.NaN).Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); med[i] = u.Count >= 3 ? u[u.Count / 2] : double.NaN; }
+                Func<int, int, bool> up = (sample, i) => { var v = hopMs[sample]; return i < v.Length && !double.IsNaN(v[i]) && !double.IsNaN(med[i]) && v[i] > med[i] * 2 && v[i] > med[i] + 25; };
+                Func<int, int, bool> stays = (sample, i) => { var v = hopMs[sample]; return i < v.Length && !double.IsNaN(v[i]) && !double.IsNaN(med[i]) && v[i] > med[i] + 15; };
                 for (int i = 0; i < n; i++)
                 {
-                    int idx = i; var usual = hopMs.Take(hopMs.Count - 1).Select(x => idx < x.Length ? x[idx] : double.NaN).Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList();
-                    if (usual.Count < 4 || double.IsNaN(last[i])) continue;
-                    double med = usual[usual.Count / 2];
-                    if (last[i] > med * 2 && last[i] > med + 25 && Enumerable.Range(i, n - i).All(j => double.IsNaN(last[j]) || last[j] > med + 15))
-                        return "hop " + hops[i].Split('|')[0] + " (" + hops[i].Split('|')[1] + "): " + Math.Round(med) + " -> " + Math.Round(last[i]) + " ms";
+                    // up in the last two samples, and every later hop that answered is up against its own usual too
+                    if (!up(cnt - 1, i) || !up(cnt - 2, i)) continue;
+                    bool later = true; int answered = 0;
+                    for (int j = i + 1; j < n && later; j++) { var v = hopMs[cnt - 1]; if (j >= v.Length || double.IsNaN(v[j])) continue; answered++; later = stays(cnt - 1, j); }
+                    if (!later || (answered == 0 && i < n - 1)) continue;
+                    return "hop " + hops[i].Split('|')[0] + " (" + hops[i].Split('|')[1] + "): " + Math.Round(med[i]) + " -> " + Math.Round(hopMs[cnt - 1][i]) + " ms";
                 }
                 return "";
             }

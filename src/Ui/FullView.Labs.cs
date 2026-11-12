@@ -283,7 +283,7 @@ namespace AdeeboMeter
                 new[] { "Now: " + last.Phase, last.Phase == "slow start" ? "The window doubles every round trip until it hits the threshold or a loss. Fast, but it overshoots." : last.Phase == "fast recovery" ? "Three duplicate ACKs said one packet went missing. The window is cut (Reno halves it, CUBIC keeps 70%) and the missing packet is resent - no restart." : (algo == "reno" ? "Reno adds one packet per round trip - the straight slope of the sawtooth." : "CUBIC grows by time since the last loss: fast far from the old maximum, slow and careful near it, then probes past it."), "3" } };
             if (tcpEvents.ContainsValue("hard")) rows.Add(new[] { "A timeout", "No ACKs at all, so TCP waits out its retransmission timer (at least 300 ms on Windows, often 1 s) - drawn here as the very next round trip - then the window goes back to 1 and slow start begins again. Much more costly than a soft loss.", "1" });
             if (main.Take(shown).Any(s2 => s2.Cwnd >= 100000)) rows.Add(new[] { "Window capped", "The window stops at 100,000 packets here - in real life the receiver's window (how much it can buffer) sets this ceiling.", "3" });
-            if (LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)) < 2) rows.Add(new[] { "A tiny pipe", "This link holds less than 2 packets per round trip - TCP's window can't go below 2, so the extra waits in the queue.", "3" });
+            if (LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)) < 2) rows.Add(new[] { "A tiny pipe", "This link holds less than 2 packets per round trip - in this simulation the window never goes below 2 (real TCP can drop to 1), so the extra waits in the queue.", "3" });
             if (real != null && real.Count > 1) rows.Add(new[] { "Your real download", "Estimated from the packet journey's last capture: data sent but not yet acknowledged, per round trip (" + N0(LabSim.LastRealRttMs) + " ms). Seen from one end, so it's a close guess, not the sender's own number.", "3" });
             return InfoCardOn(h, g, "WHAT IT SHOWS", rows, null, x, y, w);
         }
@@ -350,7 +350,7 @@ namespace AdeeboMeter
             var arr = LabSim.Arrivals(jit, 2000, 11); var o = LabSim.Jitter(arr, bas, buf, loss);
             // histogram of how late packets arrive, with the buffer's edge
             var plot = new RectangleF(x, y, w, 150 * S); int bins = 40; double maxD = Math.Max(buf * 1.4, jit * 5); var cnt = new int[bins];
-            foreach (var d in arr) cnt[Math.Min(bins - 1, (int)(d / maxD * bins))]++; int cm = Math.Max(1, cnt.Max());
+            foreach (var d in arr) cnt[Math.Min(bins - 1, (int)(Math.Max(0, d) / maxD * bins))]++; /* early packets count as on time in the picture */ int cm = Math.Max(1, cnt.Max());
             for (int i = 0; i < bins; i++) { float bh = plot.Height * cnt[i] / cm; bool late = (i + 0.5) / bins * maxD > buf; using (var b = new SolidBrush(late ? Theme.Red : Theme.Blue)) g.FillRectangle(b, plot.X + i * plot.Width / bins, plot.Bottom - bh, plot.Width / bins - 2, bh); }
             float bxl = plot.X + (float)(buf / maxD) * plot.Width; using (var p = new Pen(Theme.Ink, 2 * S) { DashStyle = DashStyle.Dash }) g.DrawLine(p, bxl, plot.Y - 6 * S, bxl, plot.Bottom);
             using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("buffer edge - later than this is too late to play"), Draw.fTiny, mb, Math.Min(bxl + 6 * S, plot.Right - 260 * S), plot.Y - 4 * S); g.DrawString(L.T("how late each packet arrives"), Draw.fTiny, mb, plot.X, plot.Bottom + 4 * S); }

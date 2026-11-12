@@ -138,7 +138,7 @@ namespace AdeeboMeter
             {
                 var f = new Font("Segoe UI", z, FontStyle.Bold, GraphicsUnit.Pixel);
                 if (g.MeasureString(s, f).Width <= maxW) return f;
-                if (z <= 40) { while (s.Length > 1 && g.MeasureString(s + "…", f).Width > maxW) s = s.Substring(0, s.Length - 1); s = s.TrimEnd() + "…"; return f; }
+                if (z <= 18) return f;   // the whole name, always - smaller rather than cut: the claim is typed from the picture (32 characters fit at 18 px)
                 f.Dispose();
             }
         }

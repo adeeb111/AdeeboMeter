@@ -208,7 +208,7 @@ namespace AdeeboMeter
             catch { }
             if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
             // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") and the game settings are kept.
-            if (Cfg.Preset != "custom") { int gb = Cfg.GameBgSec, gs = Cfg.GameBgServers; Cfg.ApplyPreset(Cfg.Preset); Cfg.GameBgSec = gb; Cfg.GameBgServers = gs; }
+            if (Cfg.PresetSaved && Cfg.Preset != "custom") Cfg.ApplyPreset(Cfg.Preset);   // the Gamer Zone rows switch to "custom" when changed, so a named preset means all its timings
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
             if (first) { ApplyAutoStart(); SaveSettings(); }

@@ -9,7 +9,8 @@ namespace AdeeboMeter
     // Is HTTPS being opened and inspected on the way? Public websites' certificates chain up to a root from Microsoft's
     // public list (the "Third-Party Root Certification Authorities" store). A company proxy or a man-in-the-middle re-signs
     // traffic with its own root, which someone added to this PC's trusted roots by hand or by policy - and which is NOT on
-    // Microsoft's public list. Read-only: nothing is changed or sent.
+    // Microsoft's public list. A root found only in the machine or user Root store is then matched by thumbprint against
+    // Mozilla's list plus Windows' own Microsoft roots - never by name. Read-only: nothing is changed or sent.
     static class Inspection
     {
         // "" = not inspected (or can't tell); otherwise the name of the root that signed it
@@ -90,7 +91,12 @@ namespace AdeeboMeter
             "F373B387065A28848AF2F34ACE192BDDC78E9CAC F42786EB6EB86D88316702FBBA66A45300AA7AA6 F517A24F9A48C6C9F8A200269FDC0F482CAB3089 F6108407D6F8BB67980CC2E244C2EBAE1CEF63BE " +
             "F69CDBB0FCF60213B65232A6A3913F1670DAC3E1 F6B11C1A8338E97BDBB3A8C83324E02D9C7F2666 F700342594886831E434873F70FE86B3869FF06E F9E16DDC0189CFD58245633EC5377DC2EB936F2B " +
             "FB97967CEF8D986306C03BB611F8E01397A298D3"
-            ).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+            + " " + WindowsOwn).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+        // roots Windows ships in its own Root store that Mozilla's list doesn't carry - Microsoft's own, used by Windows Update and
+        // other Microsoft services: Root Authority, Root Certificate Authority (2001), 2010, 2011, and the ECC Product Root 2018
+        const string WindowsOwn = "A43489159A520F0D93D032CCAF37E7FE20A8B419 CDD4EEAE6000AC7F40C3802C171E30148030C072 3B1EFD3A66EA28B16697394703A72CA340A05BD5 8F43288AD272F3103B6FB1428485EA3014C0BCFE 06F1AA330B927B753A40E68CDF22E34BCBEF3352";
+        internal static int PublicCount { get { return Public.Count; } }
+        internal static bool PublicThumb(string t) { return Public.Contains(t ?? ""); }
         internal static bool IsWellKnown(X509Certificate2 root) { return root.Subject == root.Issuer && Public.Contains(root.Thumbprint ?? ""); }
     }
 }

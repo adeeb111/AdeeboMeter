@@ -34,7 +34,7 @@ AdeeboMeter is a small Windows companion for people who live on the network. A f
 - **Time machine** — replay any minute of the last days (network and PC side by side), the week as a heatmap, data usage per network, after-call summaries, new devices on your network.
 - **Traffic Lab** — test traffic you build yourself: ICMP (size, DF, TTL), UDP and TCP payloads, ARP who-has, DHCP options, a test trap, a NetFlow record, Wake-on-LAN, iperf3 — one target, capped at 10 packets a second.
 - **SNMP, read-only** — v2c and v3 (auth and AES privacy): a one-click snapshot, interfaces with problems first and what changed since your last run, find a MAC, VLANs, PoE, LAG, printers and UPSes, traffic per port, CPU and memory, LLDP neighbours, sensors, and a walk of any OID rebuilt into named tables. Drop your vendor's MIBs in a folder; search them for *temperature* or *optic* and walk that table in one click. It never sets anything and never listens for traps.
-- **Learn** — 12 Labs to play with (TCP congestion control with Reno and CUBIC, bufferbloat, a call's jitter buffer, Wi-Fi airtime, NAT and CGNAT, MTU black holes, the game latency budget, subnetting practice and more), and 46 topics, two lines and a picture each, from *the layers in plain words* to *svchost*; inside Windows (who started whom, what starts with Windows).
+- **Learn** — 12 Labs to play with (TCP congestion control with Reno and CUBIC, bufferbloat, a call's jitter buffer, Wi-Fi airtime, NAT and CGNAT, MTU black holes, the game latency budget, subnetting practice and more), and 59 topics, two lines and a picture each, from *the layers in plain words* to *svchost*; inside Windows (who started whom, what starts with Windows).
 - **Every fact says where it came from** — measured, Windows-reported, seen in packets, inferred or unavailable. **Details** adds the raw values.
 - Hover anything with a **?** cursor for an explanation; **Ctrl+K** jumps to anything.
 
@@ -81,7 +81,7 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in; DLLs load only from System32.
 - TLS 1.2/1.3 only with Windows' certificate validation.
 - Builds clean against Microsoft's .NET security and quality analyzers with every rule on.
-- `AdeeboMeter.exe --selftest` runs 63 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
+- `AdeeboMeter.exe --selftest` runs 71 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
 
 ## Code signing policy
 

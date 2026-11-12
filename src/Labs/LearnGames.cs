@@ -32,7 +32,7 @@ namespace AdeeboMeter
         // ================================================================== escape room
         public sealed class Fault { public string Id, Name, Fix, Hint1, Hint2; public string[] WrongFixes; }
         public static readonly Fault[] Faults = {
-            new Fault { Id = "dns", Name = "The DNS server is down", Fix = "Use another DNS server (the router's, or 1.1.1.1) - or restart the router", Hint1 = "Addresses work. Names don't.", Hint2 = "Compare ping 1.1.1.1 with ping example.com, then ask nslookup.", WrongFixes = new[] { "Lower the MTU", "Remove a line from the hosts file", "Move closer to the Wi-Fi" } },
+            new Fault { Id = "dns", Name = "The DNS server is down", Fix = "Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here", Hint1 = "Addresses work. Names don't.", Hint2 = "Compare ping 1.1.1.1 with ping example.com, then ask nslookup.", WrongFixes = new[] { "Lower the MTU", "Remove a line from the hosts file", "Move closer to the Wi-Fi" } },
             new Fault { Id = "hosts", Name = "A hosts-file line sends one site to the wrong place", Fix = "Remove the line from the hosts file (Notepad as administrator)", Hint1 = "nslookup asks the DNS server. ping uses Windows' own list first.", Hint2 = "Open the hosts file.", WrongFixes = new[] { "Change the DNS server", "Turn off the proxy", "Renew the DHCP lease" } },
             new Fault { Id = "mtu", Name = "An MTU black hole: big packets vanish", Fix = "Lower the MTU (e.g. 1400) or ask the provider - small packets pass, big ones are dropped silently", Hint1 = "Small things work. Big things hang.", Hint2 = "Try the don't-fragment ping at full size.", WrongFixes = new[] { "Change the DNS server", "Turn off the proxy", "Restart the PC" } },
             new Fault { Id = "rogue", Name = "A rogue DHCP server handed out the addresses", Fix = "Find and unplug the device at that address - a second router or a misconfigured box giving out leases", Hint1 = "Who gave you your router and DNS addresses?", Hint2 = "Look at ipconfig's DHCP server, then arp -a.", WrongFixes = new[] { "Change the Wi-Fi channel", "Lower the MTU", "Remove a line from the hosts file" } },
@@ -265,7 +265,7 @@ namespace AdeeboMeter
             }
         }
         // the quick-fire rule: 8 of 10 within 60 s
-        public static bool Won(Quick q) { return q.Right >= 8 && q.At >= q.Q.Count; }
+        public static bool Won(Quick q) { return q.Right >= 8; }   // eight right within the minute wins - all ten don't have to be answered
         public static int SecondsLeft(Quick q) { return Math.Max(0, 60 - (int)(DateTime.UtcNow - q.Start).TotalSeconds); }
     }
 }

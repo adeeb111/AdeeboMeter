@@ -14,7 +14,7 @@ namespace AdeeboMeter
         List<string[]> QrRows()
         {
             string t = OverTime.Summary(M, 400);
-            while (Encoding.UTF8.GetByteCount(t) > Qr.MaxBytes - 1) t = t.Substring(0, t.Length - 1);
+            while (Encoding.UTF8.GetByteCount(t) > Qr.MaxBytes - 1) t = t.Substring(0, t.Length - (t.Length > 1 && char.IsLowSurrogate(t[t.Length - 1]) ? 2 : 1));   // whole characters only
             var rows = new List<string[]>
             {
                 new[] { "0", "QR code", "ready - click to show it, then point your phone's camera at it", "The code holds only this text: no link, no address, nothing to download.", "i", "qr:" + t },

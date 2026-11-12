@@ -41,8 +41,10 @@ namespace AdeeboMeter
                     if (string.IsNullOrEmpty(dir)) continue;
                     string f = Path.Combine(dir, "AdeeboMeter.policy"); if (!System.IO.File.Exists(f)) continue;
                     // a big file (a long comment header) is read up to 2,000 lines - never ignored whole: IT would think things are off
-                    var info = new FileInfo(f); if (info.Length > 16384) Program.Log("policy: " + f + " is " + info.Length + " bytes - reading its first 2,000 lines");
-                    Parse(System.IO.File.ReadLines(f).Take(2000).ToList()); File = File == "" ? f : File + "; " + f; Program.Log("policy: " + f);
+                    // ... and at most the first 64 KB: a line count alone doesn't stop one 300 MB line filling memory
+                    var info = new FileInfo(f); if (info.Length > 16384) Program.Log("policy: " + f + " is " + info.Length + " bytes - reading its first 64 KB, up to 2,000 lines");
+                    string head; using (var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) using (var sr = new StreamReader(fs)) { var buf = new char[65536]; int n = sr.ReadBlock(buf, 0, buf.Length); head = new string(buf, 0, n); }
+                    Parse(head.Split('\n').Take(2000).Select(l => l.TrimEnd('\r')).ToList()); File = File == "" ? f : File + "; " + f; Program.Log("policy: " + f);
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException)) throw; Program.Log("policy: " + e.Message); }
             }

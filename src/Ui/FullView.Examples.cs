@@ -45,6 +45,7 @@ namespace AdeeboMeter
             var items = PtAll(); int nTools = Tools2().Count, nLearn = Knowledge.Learn().Count;
             int want = nTools + nLearn * 2 /* read + its check question */ + PtPages.Length + (Labs.Length - 1) + 2 /* subnetting streaks */ + 1 /* journey */ + Paths.Length + LearnGames.Keys().Count() /* games */;
             if (items.Count != want) bad.Add("dashboard has " + items.Count + " rows, want " + want);
+            int earnable = items.Sum(i => i.Value) + Points.Replay.Count * Points.ReplayPts; if (earnable > Points.Max) bad.Add("everything earnable is " + earnable + " points - above Points.Max (" + Points.Max + "): raise it, and hof_verify.py with it");
             if (items.Select(i => i.Key).Distinct().Count() != items.Count) bad.Add("dashboard keys repeat");
             tab = "points"; ShowTab(); if (!pointsPage.Visible) bad.Add("dashboard didn't open");
             var mtr = items.First(i => i.Key == "mtr"); mtr.Go(); if (tab != "toolbox" || tbSel != "mtr" || !Examples.IsExample(tbRows)) bad.Add("Go on MTR didn't open its Example");

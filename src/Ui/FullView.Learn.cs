@@ -54,7 +54,7 @@ namespace AdeeboMeter
                 {
                     if (learnFilter != "all" && learnFilter != "topics") break;
                     var list = topics.Where(t => t["kind"] == grp[0] && (hit(t["title"]) || hit(t["tag"]) || t.Keys.Any(hit))).ToList(); if (list.Count == 0) continue;
-                    g.DrawString(grp[1], Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
+                    g.DrawString(L.T(grp[1]), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
                     foreach (var t in list) { y = LearnRow(g, "topic:" + t.Id, t["title"], t["tag"], x, y, w, ink, muted, nowrap); }
                     y += 8 * S;
                 }
@@ -140,7 +140,7 @@ namespace AdeeboMeter
                 bool isRight = o == right, isPick = o == picked, done = picked != null;
                 Theme.Fill(g, r, 10 * S, done && isRight ? Theme.LvSoft(0) : isPick ? Theme.LvSoft(2) : Theme.Card); if (done && isRight) Theme.Stroke(g, r, 10 * S, Theme.Green, 2);
                 using (var tb = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord }) g.DrawString(L.T(o), Draw.fBody, tb, new RectangleF(r.X + 12 * S, r.Y, r.Width - 20 * S, r.Height), c);
-                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) EarnPts("check." + id, true, true); else if (Cfg.Points) Points.Me.MarkTried("check." + id); learnInfo.Invalidate(); });
+                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) EarnPts("check." + id, true, true); else Points.Me.MarkTried("check." + id);   /* remembered even with Points off: a revealed answer can never pay later */ learnInfo.Invalidate(); });
             }
             if (picked != null)
             {

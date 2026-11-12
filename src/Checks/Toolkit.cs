@@ -624,7 +624,7 @@ namespace AdeeboMeter
         // server of a pool by its IP, or a site before its DNS is switched over
         public static List<string[]> Http(string url, string sni)
         {
-            var rows = new List<string[]>(); url = (url ?? "").Trim(); sni = (sni ?? "").Trim(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url;
+            var rows = new List<string[]>(); url = OneSlash(url ?? ""); sni = (sni ?? "").Trim(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url;
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u) || (u.Scheme != "https" && u.Scheme != "http")) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
             if (sni != "" && Uri.CheckHostName(sni) != UriHostNameType.Dns) { rows.Add(R(2, "Name to ask for", "a host name - e.g. www.example.com", "", "u")); return rows; }
             if (sni != "") rows.Add(R(3, "Asking for", sni + " at " + u.Host, "The connection goes to " + u.Host + "; the name sent (TLS SNI and the Host header) is " + sni + ".", "u"));

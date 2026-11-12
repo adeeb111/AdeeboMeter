@@ -42,7 +42,7 @@ namespace AdeeboMeter
         float PaintPingMap(Graphics g, Game gm, float x, float y, float w)
         {
             if (gm == null || gm.Servers.Count == 0) return y;
-            y = SetHead(g, "PING MAP · " + gm.Name.ToUpperInvariant(), x, y, w);
+            y = SetHead(g, L.T("PING MAP") + " · " + gm.Name.ToUpperInvariant(), x, y, w);
             float mw = Math.Min(w, 760 * S), mh = mw / 2.2f; var map = new RectangleF(x, y, mw, mh);
             Theme.Fill(g, map, 12 * S, Theme.Soft);
             Func<float, float, PointF> P = (lon, lat) => new PointF(map.X + (lon + 180) / 360f * map.Width, map.Y + (78 - lat) / 140f * map.Height);   // 78N to 62S
@@ -53,7 +53,7 @@ namespace AdeeboMeter
             var gp = GamePing.Me; var best = gp.Best(gm); int off = 0; var missing = new List<string>();
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
-                foreach (var s in gm.Servers.Take(GamePing.MaxServers))
+                foreach (var s in gm.Servers)
                 {
                     float[] ll = null; foreach (var kv in Places) if ((s.Where ?? "").IndexOf(kv.Key, StringComparison.OrdinalIgnoreCase) >= 0 || (s.Name ?? "").IndexOf(kv.Key, StringComparison.OrdinalIgnoreCase) >= 0) { ll = kv.Value; break; }
                     if (ll == null) { missing.Add(s.Name); continue; }
@@ -66,13 +66,13 @@ namespace AdeeboMeter
                         else g.FillEllipse(b, pt.X - r, pt.Y - r, 2 * r, 2 * r);
                     }
                     string lab = (s.Name ?? "") + " " + (double.IsNaN(a) ? "-" : Math.Round(a).ToString(CultureInfo.CurrentCulture) + " ms");
-                    var ls = g.MeasureString(lab, Draw.fTiny); float lx = Math.Min(map.Right - ls.Width - 4 * S, Math.Max(map.X + 4 * S, pt.X - ls.Width / 2)), ly = pt.Y + r + 2 * S + (off++ % 2) * 0;
+                    var ls = g.MeasureString(lab, Draw.fTiny); float lx = Math.Min(map.Right - ls.Width - 4 * S, Math.Max(map.X + 4 * S, pt.X - ls.Width / 2)), ly = pt.Y + r + 2 * S + (off++ % 2) * 12 * S;
                     if (ly + ls.Height > map.Bottom) ly = pt.Y - r - ls.Height - 2 * S;
                     g.DrawString(lab, Draw.fTiny, best == s ? ink : muted, lx, ly);
                     Hint(gamerCanvas, new RectangleF(pt.X - r, pt.Y - r, 2 * r, 2 * r), "gz.map");
                 }
                 y += mh + 8 * S;
-                string legend = L.T("green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server") + (missing.Count > 0 ? "  ·  " + L.T("not on the map") + ": " + string.Join(", ", missing.Take(4)) : "");
+                string legend = L.T("green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server") + (missing.Count > 0 ? "  ·  " + L.T("not on the map") + ": " + string.Join(", ", missing.Take(4)) + (missing.Count > 4 ? " " + L.T("and") + " " + (missing.Count - 4) + " " + L.T("more") : "") : "");
                 var lh = Draw.Measure(legend, Draw.fSmall, (int)w).Height; g.DrawString(legend, Draw.fSmall, muted, new RectangleF(x, y, w, lh + 4)); y += lh + 16 * S;
             }
             return y;

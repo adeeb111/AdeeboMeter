@@ -48,7 +48,7 @@ namespace AdeeboMeter
             public List<string[]> Calls = new List<string[]>();   // direction + far end, kind, packets, loss, jitter, MOS, level
             public List<string> DhcpServers = new List<string>(); public bool Extras;
         }
-        sealed class Rtp { public string Dir = "", Remote = ""; public long Count, BaseExt = -1, MaxExt, Cycles, LastSeq = -1; public double FirstT, FirstTs, PrevT, PrevTs, Rate, Jitter; }
+        sealed class Rtp { public string Dir = "", Remote = ""; public long Count, BaseExt = -1, MaxExt, Cycles, LastSeq = -1, PrevExpected; /* PrevExpected: packets expected in earlier numbering runs (a sender restart) */ public double FirstT, FirstTs, PrevT, PrevTs, Rate, Jitter; }
         readonly Dictionary<string, Rtp> rtp = new Dictionary<string, Rtp>(); readonly HashSet<string> dhcp = new HashSet<string>();
         static bool? extrasOk; bool usingExtras; string startGuid = "";
         static readonly string[] extraFields = { "frame.time_relative", "rtp.ssrc", "rtp.seq", "rtp.timestamp", "dhcp.option.dhcp_server_id" };
@@ -137,7 +137,7 @@ namespace AdeeboMeter
         void Restart(string guid) { int g = gen; ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); lock (life) { if (g == gen) Start2(guid); restarting = false; } }); }
         void Stop2()
         {
-            gen++;
+            gen++; restarting = false;   // a Stop inside the restart window must not leave the flag up for good
             bool was = running; running = false;
             if (limit != null) { limit.Dispose(); limit = null; }
             // tshark runs its own dumpcap: stop that child too, or it keeps the adapter until its next write fails
@@ -262,8 +262,10 @@ namespace AdeeboMeter
             if (r.LastSeq >= 0 && seq < r.LastSeq && r.LastSeq - seq > 30000)
             {
                 if (r.LastSeq > 60000 && seq < 5536) r.Cycles++;
-                else { r.BaseExt = r.Cycles * 65536 + seq - (r.Count > 0 ? r.Count : 0); r.MaxExt = -1; }
+                else { if (r.BaseExt >= 0) r.PrevExpected += r.MaxExt - r.BaseExt + 1; r.BaseExt = -1; r.MaxExt = -1; }   /* a new numbering run: keep what the old one expected, start counting again */
             }
+            // a sender restarting higher up (random start number) - a jump forward of 30,000+ in one step - is a new run too, not lost packets
+            else if (r.LastSeq >= 0 && seq > r.LastSeq && seq - r.LastSeq > 30000) { if (r.BaseExt >= 0) r.PrevExpected += r.MaxExt - r.BaseExt + 1; r.BaseExt = -1; r.MaxExt = -1; }
             long ext = r.Cycles * 65536 + seq;
             if (r.BaseExt < 0) r.BaseExt = ext;
             if (ext > r.MaxExt) r.MaxExt = ext;
@@ -327,7 +329,7 @@ namespace AdeeboMeter
                 }
                 foreach (var r in rtp.Values.Where(x => x.Count >= 100).OrderByDescending(x => x.Count).Take(6))
                 {
-                    long expected = r.MaxExt - r.BaseExt + 1; double loss = expected > 0 ? Math.Max(0, (expected - r.Count) * 100.0 / expected) : 0;
+                    long expected = r.PrevExpected + r.MaxExt - r.BaseExt + 1; double loss = expected > 0 ? Math.Max(0, (expected - r.Count) * 100.0 / expected) : 0;
                     double jit = r.Jitter * 1000, mos = Mos(oneWayMs, jit, loss);
                     int lv = mos >= 4.0 ? 0 : mos >= 3.6 ? 1 : 2;
                     v.Calls.Add(new[] { (r.Dir == "in" ? "from " : "to ") + r.Remote, r.Rate >= 90000 ? "video" : r.Rate > 0 ? "audio" : "media", r.Count.ToString("N0", CultureInfo.CurrentCulture),

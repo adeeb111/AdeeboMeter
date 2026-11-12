@@ -68,11 +68,11 @@ namespace AdeeboMeter
             }
             else
             {
-                var m6 = Regex.Match(s, @"^\[([0-9A-Fa-f:.]+(?:%\w+)?)\](?::(\d{1,5}))?$");   // [fe80::1%12]:8443 keeps its zone and its port
+                var m6 = Regex.Match(s, @"^\[([0-9A-Fa-f:.]+(?:%\w+)?)\](?::([0-9]{1,5}))?$");   // [fe80::1%12]:8443 keeps its zone and its port
                 IPAddress ip;
                 if (m6.Success) { host = m6.Groups[1].Value; if (m6.Groups[2].Success) port = int.Parse(m6.Groups[2].Value, CultureInfo.InvariantCulture); }
                 // a bare IPv4 must be written out in full: 1.2.3, 0x7f.1 or 4294967295 aren't what anyone means
-                else if (IPAddress.TryParse(s, out ip) && s.Count(c => c == ':') != 1 && (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || Regex.IsMatch(s, @"^\d{1,3}(\.\d{1,3}){3}$"))) host = s;
+                else if (IPAddress.TryParse(s, out ip) && s.Count(c => c == ':') != 1 && (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || Regex.IsMatch(s, @"^[0-9]{1,3}(\.[0-9]{1,3}){3}$"))) host = s;
                 else
                 {
                     int colon = s.LastIndexOf(':');
@@ -86,8 +86,8 @@ namespace AdeeboMeter
             if (port < 1 || port > 65535) { err = "Ports go from 1 to 65535."; return false; }
             // all-number names ("1.2.3", "4294967295", "01.02.03.04", "0x7f.1") are read by Windows as a different IP than they
             // look like - so they're not accepted as names: type the address in full
-            if (!Regex.IsMatch(host, @"^\d{1,3}(\.\d{1,3}){3}$") && Regex.IsMatch(host, @"^(0x[0-9a-fA-F]+|\d+)(\.(0x[0-9a-fA-F]+|\d+))*$")) { err = "Write an IP address out in full (four numbers, e.g. 10.0.0.1) - " + host + " would be read as a different address."; return false; }
-            if (Regex.IsMatch(host, @"^\d{1,3}(\.\d{1,3}){3}$") && host.Split('.').Any(o => o.Length > 1 && o[0] == '0')) { err = "Write the address without leading zeros (" + string.Join(".", host.Split('.').Select(o => int.Parse(o, CultureInfo.InvariantCulture))) + ") - Windows would read 0-prefixed numbers as octal."; return false; }
+            if (!Regex.IsMatch(host, @"^[0-9]{1,3}(\.[0-9]{1,3}){3}$") && Regex.IsMatch(host, @"^(0x[0-9a-fA-F]+|[0-9]+)(\.(0x[0-9a-fA-F]+|[0-9]+))*$")) { err = "Write an IP address out in full (four numbers, e.g. 10.0.0.1) - " + host + " would be read as a different address."; return false; }
+            if (Regex.IsMatch(host, @"^[0-9]{1,3}(\.[0-9]{1,3}){3}$") && host.Split('.').Any(o => o.Length > 1 && o[0] == '0')) { err = "Write the address without leading zeros (" + string.Join(".", host.Split('.').Select(o => int.Parse(o, CultureInfo.InvariantCulture))) + ") - Windows would read 0-prefixed numbers as octal."; return false; }
             if (!IPAddress.TryParse(host, out tmp) && !hostRx.IsMatch(host)) { err = Voice.P("That doesn't look like a host, an IP or a URL, boss.", "That is not a valid host, IP or URL."); return false; }
             return true;
         }
@@ -156,7 +156,7 @@ namespace AdeeboMeter
             if (string.IsNullOrEmpty(resp)) return 2;
             var head = resp.Split(HeadEnd, 2, StringSplitOptions.None);
             var lines = head[0].Split('\n');
-            var m = Regex.Match(lines[0].Trim(), @"^HTTP/\d(?:\.\d)?\s+(\d{3})");
+            var m = Regex.Match(lines[0].Trim(), @"^HTTP/[0-9](?:\.[0-9])?\s+([0-9]{3})");
             if (!m.Success) return 2;
             int status = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
             string body = head.Length > 1 ? head[1].Trim() : "";
@@ -320,7 +320,7 @@ namespace AdeeboMeter
                     var sw = Stopwatch.StartNew(); stream.ReadTimeout = 6000; stream.Write(req, 0, req.Length);
                     var buf = new byte[256]; int n = stream.Read(buf, 0, buf.Length); double ttfb = sw.Elapsed.TotalMilliseconds; r.TtfbMs = ttfb;
                     var line = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\n')[0].Trim();
-                    var mm = Regex.Match(line, @"^HTTP/\d(\.\d)?\s+(\d{3})");
+                    var mm = Regex.Match(line, @"^HTTP/[0-9](\.[0-9])?\s+([0-9]{3})");
                     if (mm.Success)
                     {
                         status = int.Parse(mm.Groups[2].Value, CultureInfo.InvariantCulture);
@@ -462,7 +462,7 @@ namespace AdeeboMeter
             var labels = ptr.ToLowerInvariant().Split(LabelSplit);
             foreach (var l in labels.Take(Math.Max(0, labels.Length - 2)))   // skip the domain itself
             {
-                string t = Regex.Replace(l, @"\d+$", "");
+                string t = Regex.Replace(l, @"[0-9]+$", "");
                 foreach (var c in Cities) if (t == c[0]) return c[1];
             }
             return null;
@@ -510,7 +510,9 @@ namespace AdeeboMeter
                 if (oerr != "") { r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Your DNS server (" + own + ")", "didn't answer when asked directly (" + oerr + ")", "1") }); return; }
                 var dIps = direct.Where(x => x != "NXDOMAIN").ToList(); bool dNx = direct.Count == 1 && direct[0] == "NXDOMAIN";
                 bool agree = mine.Intersect(dIps).Any() || (mine.Count == 0 && dIps.Count == 0);
-                r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Your DNS server (" + own + "), asked directly", dNx ? "no such name" : string.Join(", ", dIps.Take(3))), Row("Verdict", agree ? "same answer as this PC got" : "this PC got a different answer than its DNS server gives now - the hosts file, a stale cache or a VPN name rule", agree ? "0" : "1"), Row("Public resolver", "not asked - online lookups are turned off by your IT team (AdeeboMeter.policy)") });
+                // rotating answers (CDNs, round-robin) are normal; only a blocking or private answer the server doesn't give is a flag
+                IPAddress mp; bool odd = !agree && mine.Count > 0 && mine.All(ip => ip == "0.0.0.0" || ip.StartsWith("127.", StringComparison.Ordinal) || (IPAddress.TryParse(ip, out mp) && IspReport.Private(mp))) && dIps.Count > 0 && !dIps.All(ip => { IPAddress dp; return IPAddress.TryParse(ip, out dp) && IspReport.Private(dp); });
+                r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Your DNS server (" + own + "), asked directly", dNx ? "no such name" : string.Join(", ", dIps.Take(3))), Row("Verdict", agree ? "same answer as this PC got" : odd ? "this PC got a blocking or private answer its DNS server doesn't give - the hosts file, a stale cache or a VPN name rule" : "different answer (usually a nearby CDN server or round-robin - normal)", agree ? "0" : odd ? "1" : "3"), Row("Public resolver", "not asked - online lookups are turned off by your IT team (AdeeboMeter.policy)") });
                 return;
             }
             string err; var pub = DnsAsk.Ask(host, "1.1.1.1", 2500, out err);

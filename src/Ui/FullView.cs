@@ -515,7 +515,7 @@ namespace AdeeboMeter
                 // the path strip and the side panel repaint only when what they print changed
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }
-                string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(h => h.Length > 0 ? h.Length + ":" + h[0].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h[h.Length - 1].ToString("0.#", CultureInfo.InvariantCulture) : "")) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
+                string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(h => h.Length > 0 ? h.Length + ":" + h[0].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h[h.Length - 1].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h.Where(z => !double.IsNaN(z)).DefaultIfEmpty(0).Max().ToString("0.#", CultureInfo.InvariantCulture) + ":" + h.Where(z => !double.IsNaN(z)).DefaultIfEmpty(0).Min().ToString("0.#", CultureInfo.InvariantCulture) : "")) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
                 if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") changesCanvas.Invalidate(); if (tab == "overview") OverviewTick(); }
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
@@ -573,7 +573,7 @@ namespace AdeeboMeter
         {
             if (refreshing || IsDisposed) return;
             refreshing = true; lastConns = DateTime.UtcNow;
-            bool names = force || ((tab == "conn" || tab == "travel" || tab == "procs") && (DateTime.UtcNow - lastNames).TotalSeconds > 15);   // names only where they are shown
+            bool names = force || (DateTime.UtcNow - lastNames).TotalSeconds > (tab == "conn" || tab == "travel" || tab == "procs" ? 15 : 60);   // every 15 s where names are shown, every minute for the rest (Calls, Connections() users)
             if (names) lastNames = DateTime.UtcNow;
             Task.Factory.StartNew(() =>
             {

@@ -58,9 +58,10 @@ namespace AdeeboMeter
                 {
                     if (run.Stop) break; run.Status = "Timing hop " + h.N + " of " + hops.Count + "...";
                     var v = new List<double>(); IPAddress hip; if (!IPAddress.TryParse(h.Ip, out hip)) continue;
-                    for (int i = 0; i < 5; i++) { try { var r = p.Send(hip, 1000); v.Add(r.Status == IPStatus.Success ? r.RoundtripTime : double.NaN); } catch (PingException) { v.Add(double.NaN); } Thread.Sleep(120); }
+                    for (int i = 0; i < 5 && !run.Stop; i++) { try { var r = p.Send(hip, 1000); v.Add(r.Status == IPStatus.Success ? r.RoundtripTime : double.NaN); } catch (PingException) { v.Add(double.NaN); } Thread.Sleep(120); }
                     stats.Add(Tuple.Create(h, GameStat.Avg(v.ToArray()), GameStat.Loss(v.ToArray())));
                 }
+            if (run.Stop) { rows.Add(R(1, "Stopped", "stopped by you - the path is only partly measured, so there's no verdict", "", "m")); return rows; }
             int firstPublic = stats.FindIndex(s => { IPAddress a; return IPAddress.TryParse(s.Item1.Ip, out a) && !IspReport.Private(a); });
             int ispEnd = firstPublic < 0 ? stats.Count - 1 : Math.Min(stats.Count - 1, firstPublic + 1);   // your provider: up to the hop after its first public router
             double endAvg = stats.Count > 0 ? stats[stats.Count - 1].Item2 : double.NaN;
@@ -68,21 +69,21 @@ namespace AdeeboMeter
             for (int i = 1; i < stats.Count; i++)
             {
                 double prev = stats.Take(i).Select(s => s.Item2).Where(x => !double.IsNaN(x)).DefaultIfEmpty(double.NaN).Max(), cur = stats[i].Item2;
-                bool carries = stats.Skip(i).Where(s => !double.IsNaN(s.Item2)).All(s => s.Item2 >= cur - 10);
+                var later = stats.Skip(i + 1).Where(s => !double.IsNaN(s.Item2)).ToList(); bool carries = (later.Count > 0 || stats[i].Item1.Reached) && later.All(s => s.Item2 >= cur - 10);   // "carries on" needs an answer after it
                 bool lossCarries = stats[i].Item3 >= 20 && stats.Skip(i).All(s => s.Item3 >= 20);
                 if ((!double.IsNaN(prev) && !double.IsNaN(cur) && cur > prev + 30 && carries) || lossCarries) { jump = i; break; }
             }
             rows.Add(R(-1, "THE WAY TO " + srv.Name.ToUpperInvariant() + (srv.Kind == "estimate" ? " (A REGION ESTIMATE)" : ""), stats.Count + " hops", "", "m"));
             for (int i = 0; i < stats.Count; i++)
             {
-                var s = stats[i]; string who = i == 0 ? "your router" : i <= ispEnd ? "your provider" : i == stats.Count - 1 && s.Item1.Reached ? "the server" : "the internet (transit)";
+                var s = stats[i]; string who = s.Item1.N == 1 ? "your router" : i <= ispEnd ? "your provider" : i == stats.Count - 1 && s.Item1.Reached ? "the server" : "the internet (transit)";
                 rows.Add(R(i == jump ? 2 : 3, "Hop " + s.Item1.N + " · " + s.Item1.Ip, Ms(s.Item2) + " · loss " + Pc(s.Item3), who + (i == jump ? " - the delay starts here and carries on" : ""), "m"));
             }
             string verdict, why; int lv;
             if (home > spikes.Count / 2 && home > 0) { lv = 2; verdict = "No - the trouble is at home"; why = "Most spikes started on your own Wi-Fi or network. A GPN starts after your router, so it can't fix this. A cable, a better Wi-Fi spot or stopping a download will."; }
             else if (jump < 0) { lv = 0; verdict = "No - your path is clean"; why = "No hop adds delay or loss that carries on to the server. A GPN can't beat the speed of light; " + Ms(endAvg) + " is about what the distance costs."; }
             else if (jump <= ispEnd) { lv = 1; verdict = "Probably not - it's inside your provider"; why = "The delay starts at hop " + stats[jump].Item1.N + ", still your provider's network. A GPN still rides those first hops; call your provider (Report for my ISP builds the evidence)."; }
-            else if (jump == stats.Count - 1) { lv = 1; verdict = "No - it's the game's own server"; why = "The delay only appears at the last hop: the server or its network is busy. A GPN arrives at the same server."; }
+            else if (jump == stats.Count - 1 && stats[jump].Item1.Reached) { lv = 1; verdict = "No - it's the game's own server"; why = "The delay only appears at the last hop: the server or its network is busy. A GPN arrives at the same server."; }
             else { lv = 0; verdict = "Maybe - this is what a GPN is for"; why = "The delay starts at hop " + stats[jump].Item1.N + " (" + stats[jump].Item1.Ip + "), between your provider and the game. A GPN takes another road around it. Try one on a free trial and compare with AdeeboMeter running."; }
             rows.Insert(0, R(lv, "Would a GPN help?", verdict, why, "i"));
             if (srv.Kind == "estimate") rows.Add(R(3, "Note", "this traced the cloud region " + g.Name + " runs in, not your match server", "Find my match server (Gamer Zone, needs Wireshark) gives the real one.", "i"));
@@ -100,7 +101,7 @@ namespace AdeeboMeter
             double gw = m.GwPing.Avg(10), net = m.NetPing.Avg(10);
             bool gwSlow = !double.IsNaN(gw) && gw > 15; if (gwSlow) warn++;
             rows.Add(R(gwSlow ? 1 : 0, "Router right now", Ms(gw), gwSlow ? "Slow for a home network - something on it is busy, or the Wi-Fi is." : "", "m"));
-            rows.Add(R(3, "Internet right now", Ms(net), "", "m"));
+            rows.Add(R(double.IsNaN(net) ? 1 : net > 80 ? 1 : 3, "Internet right now", Ms(net), double.IsNaN(net) ? "Not measured yet (or no answer) - give it a minute." : net > 80 ? "Slow right now - expect lag." : "", "m"));
             bool busyNet = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5; if (busyNet) warn++;
             rows.Add(R(busyNet ? 1 : 0, "This PC's traffic", Pc0(s.Down) + " down · " + Pc0(s.Up) + " up (Mbps)", busyNet ? "Something is downloading or uploading - an upload hurts game ping most." : "Quiet.", "w"));
             run.Status = "Looking for updaters and sync apps...";
@@ -127,7 +128,8 @@ namespace AdeeboMeter
             if (!Cfg.History) { rows.Add(R(1, "History", "off", "Turn on History in Settings - the Gamer Zone then keeps a line a minute for each server.", "u")); return rows; }
             var all = new List<GameHistory.Row>(); for (int i = 0; i < Cfg.GameDays; i++) all.AddRange(GameHistory.Read(DateTime.Today.AddDays(-i), g.Id));
             if (all.Count < 60) { rows.Add(R(1, "Not enough yet", all.Count + " minutes recorded for " + g.Name, "Leave the Gamer Zone watching it for a few days (background game ping in Settings).", "u")); return rows; }
-            var server = all.GroupBy(x => x.Server).OrderBy(x => GameStat.Avg(x.Select(y => y.Avg).ToArray())).First();
+            var server = all.GroupBy(x => x.Server).Where(x => !double.IsNaN(GameStat.Avg(x.Select(y => y.Avg).ToArray()))).OrderBy(x => GameStat.Avg(x.Select(y => y.Avg).ToArray())).FirstOrDefault();
+            if (server == null) { rows.Add(R(1, "No answers", "none of " + g.Name + "'s servers answered in the recorded days", "", "m")); return rows; }
             var slots = server.GroupBy(x => new { D = (int)x.T.DayOfWeek, H = x.T.Hour }).Where(x => x.Count() >= 5)
                 .Select(x => new { x.Key.D, x.Key.H, Avg = GameStat.Avg(x.Select(y => y.Avg).ToArray()), P95 = GameStat.Avg(x.Select(y => y.P95).ToArray()), Loss = GameStat.Avg(x.Select(y => y.Loss).ToArray()) })
                 .Select(x => new { x.D, x.H, x.Avg, x.Loss, Score = x.P95 + 20 * (double.IsNaN(x.Loss) ? 0 : x.Loss) }).Where(x => !double.IsNaN(x.Score)).ToList();
@@ -161,12 +163,29 @@ namespace AdeeboMeter
             return rows;
         }
 
+        // the console is on one of this PC's networks: same prefix as any local IPv4 address (a /16 or /23 home network too)
+        static bool OnMyNet(IPAddress ip)
+        {
+            try
+            {
+                var b = ip.GetAddressBytes();
+                foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up))
+                    foreach (var u in n.GetIPProperties().UnicastAddresses.Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork))
+                    {
+                        int len = u.PrefixLength; if (len <= 0 || len > 32) len = 24; var a = u.Address.GetAddressBytes(); bool same = true;
+                        for (int i = 0; i < 4 && same; i++) { int bits = Math.Max(0, Math.Min(8, len - i * 8)); int mask = bits == 0 ? 0 : (0xFF << (8 - bits)) & 0xFF; same = (a[i] & mask) == (b[i] & mask); }
+                        if (same && !u.Address.Equals(ip)) return true;
+                    }
+            }
+            catch (Exception e) { if (!(e is NetworkInformationException || e is NotImplementedException || e is PlatformNotSupportedException)) throw; return true; }
+            return false;
+        }
         // ---------- console mode: a PlayStation / Xbox / Switch on your network. The PC can't see the console's own game traffic,
         // so it times the console's link (from here), your router, the internet and the game's region - and says which leg is off.
         public static List<string[]> ConsoleCheck(Monitor m, string ipText, string which, string secsText, Toolkit.Run run)
         {
             var rows = new List<string[]>(); IPAddress ip; string mine; lock (m.L) mine = m.LocalIp;
-            if (!IPAddress.TryParse((ipText ?? "").Trim(), out ip) || ip.AddressFamily != AddressFamily.InterNetwork || !IspReport.Private(ip) || (mine != "" && !Reach.SameNet(ip.ToString(), mine)))
+            if (!IPAddress.TryParse((ipText ?? "").Trim(), out ip) || ip.AddressFamily != AddressFamily.InterNetwork || !IspReport.Private(ip) || (mine != "" && !OnMyNet(ip)))
             { rows.Add(R(2, "Console", "type the console's address on your network - e.g. 192.168.1.40", "PlayStation: Settings > Network > Connection status. Xbox: Settings > General > Network settings > Advanced. Switch: System Settings > Internet.", "u")); return rows; }
             int secs; if (!int.TryParse((secsText ?? "").Trim(), out secs)) secs = 30; secs = Math.Max(10, Math.Min(120, secs));
             string err; var g = Pick(which, out err); var srv = g != null ? Best(g) : null; var sip = srv != null ? Resolve(srv) : null;
@@ -192,6 +211,7 @@ namespace AdeeboMeter
             if (srv != null) rows.Add(R(3, g.Name + " · " + srv.Name, Ms(sa), srv.Kind == "estimate" ? "The cloud region the game runs in, timed from this PC." : "", "m"));
             string v; int lv;
             if (double.IsNaN(cAvg)) { lv = 1; v = "the console didn't answer - can't time its link"; }
+            else if (conBad && double.IsNaN(ga)) { lv = 1; v = "the console's link is slow, but your router hasn't been timed yet - can't tell the two apart (try again in a minute)"; }
             else if (conBad && !double.IsNaN(ga) && ga < 10) { lv = 2; v = "the console's own link: the router answers this PC quickly, the console doesn't - move it closer, use 5 GHz, or a cable"; }
             else if (!double.IsNaN(ga) && ga > 20) { lv = 1; v = "your home network is slow for everyone right now - something is downloading, or the router is busy"; }
             else if (!double.IsNaN(na) && na > 80) { lv = 1; v = "your internet connection is slow right now - a provider problem if it lasts"; }

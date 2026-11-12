@@ -22,7 +22,7 @@ namespace AdeeboMeter
 
         void GameTick(bool on)
         {
-            if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); return; } learnInfo.Invalidate(); }; }
+            if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
         static string Clock2(int secs) { return (secs / 60).ToString(CultureInfo.InvariantCulture) + ":" + (secs % 60).ToString("00", CultureInfo.InvariantCulture); }
@@ -214,7 +214,7 @@ namespace AdeeboMeter
             if (quick == null)
             {
                 GameTick(false);
-                y = Lead2(g, L.T("Ten questions, sixty seconds. Eight right wins."), x, y, w);
+                y = Lead2(g, L.T("Ten questions, sixty seconds. Eight right within the minute wins."), x, y, w);
                 Button(learnInfo, g, "Start", true, delegate { quick = LearnGames.NewQuick(id, GameRnd.Next()); quickMsg = ""; quickEarn = null; learnInfo.Invalidate(); }, x, y);
                 return y + 46 * S;
             }
@@ -232,7 +232,7 @@ namespace AdeeboMeter
             }
             else
             {
-                bool won = quick.Right >= 8; if (quickEarn == null) quickEarn = won ? EarnPts("game.quick." + id, true, true) : ""; string earned = quickEarn;
+                bool won = LearnGames.Won(quick); if (quickEarn == null) quickEarn = won ? EarnPts("game.quick." + id, true, true) : ""; string earned = quickEarn;
                 y = Say(g, won ? L.T("You won") + " - " + quick.Right + " / 10. " + earned : quick.Right + " / 10" + (left == 0 && quick.At < quick.Q.Count ? " - " + L.T("out of time") : "") + ". " + L.T("Eight wins - try again."), won ? 0 : 2, x, y, w);
                 Button(learnInfo, g, "Play again", true, delegate { quick = LearnGames.NewQuick(id, GameRnd.Next()); quickMsg = ""; quickEarn = null; learnInfo.Invalidate(); }, x, y); y += 46 * S;
             }

@@ -86,14 +86,14 @@ namespace AdeeboMeter
         public sealed class JitterOut { public double LatePct, MouthToEarMs, Mos; }
         public static List<double> Arrivals(double jitterMs, int n, int seed)
         {
-            // how much later than usual each packet arrives: a normal spread around the usual time (early ones count as on
+            // how much later than usual each packet arrives: a normal spread around the usual time (early ones wait in the buffer
             // time), scaled so the RFC 3550 jitter - the mean difference between neighbouring packets - is about jitterMs.
             // That's why a buffer of about twice the jitter is the usual advice.
-            var rnd = new Random(seed); var l = new List<double>(); double sigma = jitterMs / 1.128;
+            var rnd = new Random(seed); var l = new List<double>(); double sigma = jitterMs / 1.128;   /* not clamped: an early packet just waits in the buffer - and the RFC 3550 jitter of this spread is exactly jitterMs */
             for (int i = 0; i < n; i++)
             {
                 double u1 = 1.0 - rnd.NextDouble(), u2 = rnd.NextDouble(), z = Math.Sqrt(-2 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2);
-                l.Add(Math.Max(0, sigma * z));
+                l.Add(sigma * z);   // negative = early (it waits in the buffer); positive = late
             }
             return l;
         }

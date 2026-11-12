@@ -16,7 +16,7 @@ import base64, datetime, hashlib, hmac, json, os, re, sys, unicodedata
 
 JSON = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "hall-of-fame.json")
 AWARD_AT = 500
-MAX_POINTS = 600   # AdeeboMeter never counts more (Points.Max): everything there is to earn is about 585
+MAX_POINTS = 800   # AdeeboMeter never counts more (Points.Max): everything there is to earn is about 750
 
 
 def clean_name(n):

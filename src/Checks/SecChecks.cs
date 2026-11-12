@@ -263,7 +263,7 @@ namespace AdeeboMeter
         {
             var items = new List<Tuple<string, string>>();
             // the 64-bit Run keys, and LM's 32-bit one (WOW6432Node) where 32-bit programs register themselves
-            foreach (var hv in new[] { Tuple.Create(CU, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry32) })
+            foreach (var hv in new[] { Tuple.Create(CU, RegistryView.Registry64), Tuple.Create(CU, RegistryView.Registry32), Tuple.Create(LM, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry32) })
                 try { using (var b = RegistryKey.OpenBaseKey(hv.Item1, hv.Item2)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) foreach (var n in k.GetValueNames()) items.Add(Tuple.Create(n, Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture) ?? "")); }
                 catch (System.Security.SecurityException) { }
             foreach (var d in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })
@@ -411,6 +411,7 @@ namespace AdeeboMeter
             var lease = nic.GetIPProperties().DhcpServerAddresses.Select(x => x.ToString()).ToList();
             if (lease.Count == 0) return One(3, "DHCP server", "this adapter has a fixed address", "", null);
             // the same guard as the Toolbox: on a company network nothing is sent without the deliberate tick there
+            if (Policy.NoLab) return One(3, "DHCP server", "your lease is from " + string.Join(", ", lease) + " · a second question is turned off by your IT team (AdeeboMeter.policy)", "", null);
             if (Lab.Company(m)) return One(3, "DHCP server", "your lease is from " + string.Join(", ", lease) + " · a second question was skipped on this company network", "Toolbox › DHCP options asks it, with the \"my own network\" tick.", null);
             var opts = Lab.DhcpOptions(m, "yes"); var id = opts.FirstOrDefault(r => r[1].StartsWith("DHCP server", StringComparison.Ordinal));
             if (id == null) return One(3, "DHCP server", "your lease is from " + string.Join(", ", lease) + " · the server didn't answer a second question", "", null);
@@ -562,8 +563,8 @@ namespace AdeeboMeter
                 string d = h.StartsWith("www.", StringComparison.Ordinal) ? h.Substring(4) : h;
                 bool noAnswer = false;
                 Func<string, List<string>> txt = n => { var r = Toolkit.Query(srv, n, 16, true); if (r == null) { noAnswer = true; return new List<string>(); } return r.Rrs.Where(x => x.Section == 1 && x.Type == "TXT").Select(x => x.Data).ToList(); };
-                var spf = txt(d).FirstOrDefault(x => x.Contains("v=spf1")); var dm = txt("_dmarc." + d).FirstOrDefault(x => x.Contains("v=DMARC1"));
-                string pol = dm != null ? Regex.Match(dm, @"(?:^|;)\s*p\s*=\s*(\w+)").Groups[1].Value : "";   // p=, never the sp= / np= in front of it
+                var spf = txt(d).FirstOrDefault(x => x.IndexOf("v=spf1", StringComparison.OrdinalIgnoreCase) >= 0); var dm = txt("_dmarc." + d).FirstOrDefault(x => x.IndexOf("v=DMARC1", StringComparison.OrdinalIgnoreCase) >= 0);
+                string pol = dm != null ? Regex.Match(dm, @"(?:^|;)\s*p\s*=\s*(\w+)", RegexOptions.IgnoreCase).Groups[1].Value.ToLowerInvariant() : "";   // p=, never the sp= / np= in front of it
                 string dk = Selectors.FirstOrDefault(sel => txt(sel + "._domainkey." + d).Any(x => x.Contains("p=")));
                 if (noAnswer) return R(3, "Mail protection · " + d, "couldn't check - your DNS server didn't answer every question", "", null);
                 var miss = new List<string>(); if (spf == null) miss.Add("SPF"); if (dm == null) miss.Add("DMARC");

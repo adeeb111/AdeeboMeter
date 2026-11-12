@@ -165,7 +165,7 @@ namespace AdeeboMeter
                                 if (gm.Servers.Count > 12) gm.Servers.RemoveAt(gm.Servers.Count - 1);
                                 Games.SaveGame(gm); Games.Reload();
                             }
-                            gamerNote = "Busiest connection: " + ip + " - most likely the match server (in a peer-to-peer game it can be another player). Added as \"My match\" and watched from now on.";
+                            gamerNote = "Busiest connection: " + ip + " - most likely the match server (in a peer-to-peer game it can be another player). " + (have == null ? "Added as \"My match\" and watched from now on." : "It's already in the list (" + have.Name + ").");
                         }
                         else gamerNote = err ?? "Couldn't tell which server the match uses.";
                         gamerCanvas.Invalidate();

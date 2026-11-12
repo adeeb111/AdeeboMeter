@@ -619,6 +619,17 @@ namespace AdeeboMeter
                     var again = new Points(f); if (again.Total != 13 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
                     if (again.Award("mtr", true, true, t0.AddMinutes(12), t0.AddMinutes(2)) != 0) bad.Add("a restart plus a clock moved forward paid the replay bonus");
                     if (again.Award("mtr", true, true, t0.AddMinutes(13), t0.AddMinutes(13)) != 3) bad.Add("the replay bonus after a real 10 minutes (across a restart)");
+                    // round-3 #10: the uptime rule holds only within one Windows boot - a reboot the next day pays at 5 min of uptime
+                    {
+                        string fb = f + ".boot"; try { File.Delete(fb); } catch (IOException) { }
+                        try
+                        {
+                            var pb = new Points(fb); pb.Award("gamecompare", true, true, t0, t0, 5L << 32 | 120000);
+                            if (pb.Award("gamecompare", true, true, t0.AddMinutes(12), t0.AddMinutes(12), 5L << 32 | 300000) != 0) bad.Add("same boot, 3 min of uptime later: paid");
+                            if (pb.Award("gamecompare", true, true, t0.AddDays(1), t0.AddDays(1), 6L << 32 | 300000) != 3) bad.Add("a new boot the next day: the replay bonus was refused");
+                        }
+                        finally { try { File.Delete(fb); } catch (IOException) { } }
+                    }
                     if (again.Award("ispreport", true, true, t0.AddDays(1), t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1), t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
                     if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 16) bad.Add("earning off changed the total");
                     if (again.Award("learn.dhcp", true, true, t0, t0) != 2 || again.Award("page.replay", true, true, t0, t0) != 2 || again.Award("check.dhcp", true, true, t0, t0) != 2 || again.Award("lab.tcp", true, true, t0, t0) != 4 || again.Award("quiz.5", true, true, t0, t0) != 3 || again.Award("quiz.10", true, true, t0, t0) != 5 || again.Award("journey.explain", true, true, t0, t0) != 3 || again.Award("path.gamer", true, true, t0, t0) != 10 || again.Award("lab.tcp", true, true, t0.AddHours(2), t0.AddHours(2)) != 0 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
@@ -711,6 +722,12 @@ namespace AdeeboMeter
                 var t0 = new DateTime(2026, 11, 12, 18, 0, 0);
                 var evs = new List<Timeline.Ev> { new Timeline.Ev { T = t0, Lv = 2, Kind = "inet", Text = "quiet" }, new Timeline.Ev { T = t0.AddMinutes(9), Lv = 1, Kind = "inet", Text = "network changed" } };
                 var op = Outages.Pair(evs, t0.AddHours(1), false); if (op.Count != 1 || !op[0].EndUnseen) bad.Add("a network change closed an outage with a made-up end");
+                // round-3 #7: digits from other scripts never reach int.Parse - they're refused, not a crash
+                try { Calc.Vlsm("\u0661\u0660.0.0.0/24", "10"); Calc.Number("\u0661.2.3.4"); string h0; int p0; bool t0x; string e0; DestCheck.Parse("01.1.1.\u0661", out h0, out p0, out t0x, out e0); }
+                catch (FormatException) { bad.Add("Arabic-Indic digits threw"); }
+                // --report: a step that couldn't run turns "ok" into "couldn't tell"; an informational row doesn't
+                var gr = new GuideRun { Lv = 0 }; gr.Obs("m", 3, "Around then", "On LAN"); if (Report.Verdict(gr) != 0) bad.Add("--report: an info row downgraded a healthy run");
+                gr.Obs("u", 3, "6. The way in", "Windows' connectivity test couldn't run (NameResolutionFailure)"); if (Report.Verdict(gr) != 3) bad.Add("--report said ok with a step that couldn't run");
                 string f = Path.Combine(Path.GetTempPath(), "am-replace-" + Guid.NewGuid().ToString("N"));
                 try
                 {
@@ -851,7 +868,7 @@ namespace AdeeboMeter
                 p.Events[30] = "hard"; var hard = LabSim.Tcp(p); if (hard[31].Cwnd != 1) throw new InvalidOperationException("a timeout should drop the window to 1");
                 double mm = LabSim.MathisMbps(40, 1); if (mm < 3 || mm > 4) throw new InvalidOperationException("Mathis limit wrong: " + mm);
                 var b1 = LabSim.Bloat(20, 20, 500, 20, false); var b2 = LabSim.Bloat(20, 20, 500, 20, true); if (b1.PingMs < 400 || b2.PingMs > 30 || LabSim.Bloat(20, 5, 500, 20, false).PingMs > 25) throw new InvalidOperationException("bufferbloat model wrong");
-                var a30 = LabSim.Arrivals(30, 2000, 11); if (LabSim.Jitter(a30, 60, 60, 0).Mos < 3.9) throw new InvalidOperationException("a 2x-jitter buffer should give a usable call: " + LabSim.Jitter(a30, 60, 60, 0).Mos);
+                var a30 = LabSim.Arrivals(30, 2000, 11); double rj = Enumerable.Range(1, a30.Count - 1).Average(i => Math.Abs(a30[i] - a30[i - 1])); if (rj < 26 || rj > 34) throw new InvalidOperationException("the jitter lab's 30 ms is really " + rj.ToString("0.#", CultureInfo.InvariantCulture) + " ms"); if (LabSim.Jitter(a30, 60, 60, 0).Mos < 3.9) throw new InvalidOperationException("a 2x-jitter buffer should give a usable call: " + LabSim.Jitter(a30, 60, 60, 0).Mos);
                 var arr = LabSim.Arrivals(20, 2000, 11); var j1 = LabSim.Jitter(arr, 60, 20, 0); var j2 = LabSim.Jitter(arr, 60, 120, 0); if (j1.LatePct <= j2.LatePct || j1.MouthToEarMs >= j2.MouthToEarMs) throw new InvalidOperationException("jitter buffer trade-off wrong");
                 var devs = new List<LabSim.AirDev> { new LabSim.AirDev { RateMbps = 600 }, new LabSim.AirDev { RateMbps = 6 } }; LabSim.Airtime(devs, false, 0); if (devs[1].ShareAir < 0.9) throw new InvalidOperationException("the slow device should hold most of the air");
                 LabSim.Airtime(devs, true, 0); if (Math.Abs(devs[0].ShareAir - 0.5) > 0.01) throw new InvalidOperationException("airtime fairness should split evenly");
@@ -941,6 +958,8 @@ namespace AdeeboMeter
                 // a self-signed root "CN=Proxy, O=DigiCert Inc" (made with openssl for this test): borrowing a CA's name isn't enough
                 using (var fake = new System.Security.Cryptography.X509Certificates.X509Certificate2(Convert.FromBase64String("MIIBojCCAUmgAwIBAgIUczkokrF21nSiSTwdKqzk9oKitU0wCgYIKoZIzj0EAwIwJzEOMAwGA1UEAwwFUHJveHkxFTATBgNVBAoMDERpZ2lDZXJ0IEluYzAeFw0yNjExMTIyMTQ1NTRaFw0zNjExMDkyMTQ1NTRaMCcxDjAMBgNVBAMMBVByb3h5MRUwEwYDVQQKDAxEaWdpQ2VydCBJbmMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS0PWTXiCZJEplkuK/1l8pPwCcUfegjodLEqbwMXqU45y1eEHBYpxlaMmVogPCqQ2uch+vXNyhAE/8I54TZng2Eo1MwUTAdBgNVHQ4EFgQU75K4CLLqAdvJaWr/2H0n2hQsNP8wHwYDVR0jBBgwFoAU75K4CLLqAdvJaWr/2H0n2hQsNP8wDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgNHADBEAiBKWHWXXk1gS7o7L8vPIVTdzmIMje5LTTd6tzF36cnkjgIgC/IyYOEIICxPoxmxAdzCX3gwBwLTXGp4tvYMUJGSNeE=")))
                     if (Inspection.IsWellKnown(fake)) throw new InvalidOperationException("a root that borrows a CA's name counted as public");
+                // and real ones do: ISRG Root X1 (Mozilla's list), Microsoft Root Certificate Authority 2011 (Windows' own); the list is whole
+                if (!Inspection.PublicThumb("CABD2A79A1076A31F21D253635CB039D4329A5E8") || !Inspection.PublicThumb("8F43288AD272F3103B6FB1428485EA3014C0BCFE") || Inspection.PublicCount < 120) throw new InvalidOperationException("public root list: " + Inspection.PublicCount);
                 byte[] pw = Encoding.UTF8.GetBytes("test-password-123"), sec = Encoding.UTF8.GetBytes("s3cret"), ra = Enumerable.Range(1, 16).Select(i => (byte)i).ToArray();
                 var c = EngPack.HidePassword(pw, sec, ra); if (c.Length != 32) throw new InvalidOperationException("length " + c.Length);
                 {
@@ -1059,8 +1078,8 @@ namespace AdeeboMeter
             T("settings round trip + presets", () =>
             {
                 Cfg.ApplyPreset("penny"); int penny = Cfg.JobsPerMinute(); Cfg.ApplyPreset("engineer"); int eng = Cfg.JobsPerMinute(); Cfg.ApplyPreset("balanced"); int bal = Cfg.JobsPerMinute();
-                Cfg.ApplyPreset("gamer"); int gmr = Cfg.JobsPerMinute(); bool gOk = Cfg.GameBgSec == 10 && Cfg.GameBgServers == 5 && GamePing.MaxServers == 16; Cfg.ApplyPreset("penny"); bool pOk = Cfg.GameBgSec == 60 && GamePing.MaxServers == 8 && GamePing.SurveySec == 1800; Cfg.ApplyPreset("balanced");
-                if (!(penny * 3 < bal && bal == eng && gmr == eng) || !gOk || !pOk) throw new InvalidOperationException("presets wrong: " + penny + "/" + bal + "/" + eng + "/" + gmr + " game " + gOk + "/" + pOk);
+                Cfg.ApplyPreset("gamer"); int gmr = Cfg.JobsPerMinute(); bool gOk = Cfg.GameBgSec == 10 && Cfg.GameBgServers == 5 && GamePing.MaxServers == 16 && GamePing.MaxPerSecond >= GamePing.MaxServers; Cfg.ApplyPreset("penny"); bool pOk = Cfg.GameBgSec == 60 && GamePing.MaxServers == 8 && GamePing.SurveySec == 1800; Cfg.ApplyPreset("balanced");
+                if (!(penny * 3 < bal && bal == eng && gmr == eng) || !(Cfg.GameJobsForPreset("gamer") > Cfg.GameJobsForPreset("engineer") && Cfg.GameJobsForPreset("penny") < Cfg.GameJobsForPreset("balanced")) || !gOk || !pOk) throw new InvalidOperationException("presets wrong: " + penny + "/" + bal + "/" + eng + "/" + gmr + " game " + gOk + "/" + pOk);
                 Cfg.Read("preset", "gamer"); if (Cfg.Preset != "gamer") throw new InvalidOperationException("gamer preset not read"); Cfg.Read("preset", "x"); if (Cfg.Preset != "balanced") throw new InvalidOperationException("odd preset kept");
                 Cfg.Read("gw", "30"); Cfg.Read("net", "300"); if (Cfg.GwSec != 30 || Cfg.NetSec != 300) throw new InvalidOperationException("30 s / 5 min not accepted"); Cfg.ApplyPreset("balanced");
                 Cfg.Pins.Clear(); Cfg.Read("pin", "github.com"); Cfg.Read("pin", "rm -rf /"); Cfg.Read("pin", "https://jira.example.com/x?a=b"); Cfg.Read("gw", "999"); Cfg.Read("fade", "128");

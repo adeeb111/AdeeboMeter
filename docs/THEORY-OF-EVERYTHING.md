@@ -148,7 +148,7 @@ A full-screen window, built only when you open it and destroyed when you leave.
 - **Details** shows raw values, sources and the exact time each was read, on every page that has them.
 - **The path strip:** five dots. **Click a dot** to jump to the page that explains it (PC → What's running, Wi-Fi/LAN → Your Wi-Fi, the rest → Check a destination).
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
-- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 233 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
+- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 332 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
 - **Small screens / high scaling:** page buttons switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
 - **Footer:** AdeeboMeter's own CPU and memory, against a 64 MB budget.
 
@@ -229,7 +229,7 @@ Drag through any day of history: the five dots at that minute, the numbers again
 - **HTTPS inspection**: says when a certificate was re-signed by a root that isn't on Microsoft's public list.
 
 ### 5.17f Learn and the knowledge pack (`Knowledge`)
-The explanations (72 programs, 233 terms, 46 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
+The explanations (72 programs, 332 terms, 59 topics) are plain text in `knowledge/`, packed **gzip-compressed inside the exe** and unpacked only while the engineer view needs them. Every Learn topic is two lines, a picture (a step-by-step ladder) and one "if it goes wrong" line — from *the layers, in plain words* to *svchost*. **Inside Windows** shows who started whom, the boot chain, inside each svchost, and what starts with Windows.
 
 ### 5.17g The Toolbox (`FullView.Toolbox`, `PathTools`, `WhyFails`, `Toolkit`, `Protocols`, `RoutingTools`, `SysTools`, `WinEvidence`, `PcHealth`)
 158 tools an engineer reaches for, in five sections (Network · Devices · Traffic Lab · Engineer · Windows), by question or as one list, each with a made-up Example to look at first, each one a click and at most four boxes, each with a label that stays while you type and the time it takes. **Nothing runs until you press Run, and Stop always works.**
@@ -242,7 +242,7 @@ The explanations (72 programs, 233 terms, 46 topics) are plain text in `knowledg
   - **Windows:** its own evidence (address conflicts, profile, adapter, DHCP), why 802.1X sign-in failed, domain controllers and their ports, Group Policy, certificates that expire soon, firewall rules for an app, what's listening, the event log explained, and the PC (memory pressure, disk, heat, drivers, frozen windows, slow leaks, crashes, background jobs, graphics card per app, what changed, battery, where the space went).
   - **Compare & watch:** before / after snapshot (what changed when you switched VPN, dock or Wi-Fi), compare two saved results (two PCs), My sites (your pinned sites: name, port, certificate days), DNS answer compare. Also under Is it reachable?: HTTP request builder (method, headers, body; redirects shown, not followed), STUN (your public address and whether NAT kept the port), many ports for one service, every IP behind a name, Remote Desktop reachable? (the RDP negotiation, no sign-in), Active Directory / LDAP reachable? (the rootDSE, read anonymously, with the clock difference).
   - **Traffic Lab:** test traffic you build yourself — ICMP builder (size, don't-fragment, TTL, gap; IPv4 and IPv6), UDP and TCP senders (text or hex), ARP who-has, DHCP options from the server (an information request through Windows - your lease isn't touched), SNMP test trap (send only), NetFlow v5 test record, Wake-on-LAN with SecureOn, syslog with facility.severity, iperf3, bufferbloat and DSCP ping. One target, at most 10 packets a second and 1,000 in all; on a company domain or VPN nothing is sent without a deliberate tick; Stop works; every send is logged.
-  - **Devices:** name of a device (NetBIOS, LLMNR, mDNS, PTR), find devices (one mDNS, SSDP and WS-Discovery question each, answers for 3 seconds), shared folders on a PC or NAS (as your account sees them), and a remote access page: Windows' own ssh / scp / sftp / ssh-keyscan / ssh-keygen, curl and Test-NetConnection, filled in with your host, user and port — click to copy, nothing runs from AdeeboMeter, no password is typed here.
+  - **Devices:** name of a device (NetBIOS, LLMNR, mDNS, PTR), shared folders on a PC or NAS (as your account sees them), and a remote access page: Windows' own ssh / scp / sftp / ssh-keyscan / ssh-keygen, curl and Test-NetConnection, filled in with your host, user and port — click to copy, nothing runs from AdeeboMeter, no password is typed here.
   - **Certificates & files:** inspect a certificate or chain, check a PFX (in memory only; the key is never exported, the password not kept), decode a CSR, convert PEM ⇄ DER (a new file next to it; files with a private key are refused), hash a file and compare with the published hash, decode Base64 or a JWT, and a certutil / PowerShell / openssl commands page. Plus services that failed to start (7 days of the System log).
   - **Quick tidy** (in Health): old temp files, the Recycle Bin, disk space, startup programs, frozen or memory-hungry apps, recent installs — each with a button that opens the Windows screen. It deletes, ends and changes nothing.
 - **One target:** a host typed into one tool is waiting in the next one that looks at a destination.
@@ -278,7 +278,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 61 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 71 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations

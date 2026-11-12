@@ -87,12 +87,13 @@ namespace AdeeboMeter
                 try
                 {
                     if (string.IsNullOrEmpty(Dir)) return false;
-                    // Downloads (and anything unzipped inside it) and the Desktop: places where files arrive from anywhere
+                    // the Downloads folder and the Desktop themselves: where loose files arrive from anywhere. A folder unzipped inside them
+                    // holds only what came in that zip - its AdeeboMeter.portable marker is honoured (round-3 #5)
                     var dl = new List<string> { Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) };
                     using (var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"))
                     { var v = k == null ? null : k.GetValue("{374DE290-123F-4565-9164-39C4925E467B}") as string; if (!string.IsNullOrEmpty(v)) dl.Add(Environment.ExpandEnvironmentVariables(v)); }
                     string here = Path.GetFullPath(Dir).TrimEnd('\\', '/');
-                    if (dl.Where(d => !string.IsNullOrEmpty(d)).Select(d => Path.GetFullPath(d).TrimEnd('\\', '/')).Any(d => string.Equals(d, here, StringComparison.OrdinalIgnoreCase) || here.StartsWith(d + "\\", StringComparison.OrdinalIgnoreCase))) inDownloads = 1;
+                    if (dl.Where(d => !string.IsNullOrEmpty(d)).Select(d => Path.GetFullPath(d).TrimEnd('\\', '/')).Any(d => string.Equals(d, here, StringComparison.OrdinalIgnoreCase))) inDownloads = 1;
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException || e is ArgumentException || e is NotSupportedException)) throw; }
                 return inDownloads == 1;
@@ -345,6 +346,10 @@ namespace AdeeboMeter
             return (int)Math.Round(per(ifs) /*adapters*/ + per(gw) + per(net) + (net > 0 ? per(Math.Max(net, 60)) : 0) /*DNS: at most once a minute*/ + per(wifi) + 2 * per(apps));
         }
         // what a preset would cost, worked out without touching the live settings the monitor reads
+        // game pings in the background, per minute, once a game is watched (more while one is played) - shown next to the checks
+        public static int GameJobsPerMinute() { return Games.Monitored().Count == 0 || GameBgSec <= 0 ? 0 : GameBgServers * 60 / GameBgSec; }
+        public static int GameJobsForPreset(string p) { return p == "penny" ? 3 * 60 / 60 : p == "gamer" ? 5 * 60 / 10 : 3 * 60 / 30; }
+        public static bool PresetSaved;   // the settings file named a preset (an old file without one keeps its own intervals)
         public static int JobsForPreset(string p)
         {
             if (p == "penny") return JobsPerMinute(30, 300, 120, 30, 60);
@@ -369,7 +374,7 @@ namespace AdeeboMeter
         {
             switch (k)
             {
-                case "preset": Preset = v == "penny" || v == "engineer" || v == "gamer" || v == "custom" ? v : "balanced"; break;
+                case "preset": PresetSaved = true; Preset = v == "penny" || v == "engineer" || v == "gamer" || v == "custom" ? v : "balanced"; break;
                 case "gw": GwSec = Pick(v, 2, 2, 5, 10, 30, 0); break;
                 case "net": NetSec = Pick(v, 15, 15, 30, 60, 300, 0); break;
                 case "wifi": WifiSec = Pick(v, 10, 10, 30, 120, 0); break;

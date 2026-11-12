@@ -39,7 +39,7 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Why didn't this PC join the network?, 802.1X failure decoder, RADIUS client lab (says when a server isn't hardened against BlastRADIUS) with TACACS+, DHCP / IPv6 RA / 802.1X replays and an ICMP error translator on AdeeboMeter's own pcap / pcapng reader, certificate chain compare, SMTP delivery path, sample captures.
 
 ### New: Learn, redesigned - and Games
-- Learn by goal (cards for Start here, packets, Windows, apps, Labs, Games, Check yourself and Learning paths, each with your progress) or All (the list beside the reading pane, with Topics / Labs / Games / Terms chips) - switched like the Toolbox.
+- Learn by goal (cards for Start here, packets, inside the internet, inside the mobile network, Windows, apps, Labs, Games, Check yourself and Learning paths, each with your progress) or All (the list beside the reading pane, with Topics / Labs / Games / Terms chips) - switched like the Toolbox.
 - Two new Learn sections, each with how it works, a ladder and a check question: inside the internet (BGP, OSPF and IS-IS, MPLS, L3VPN, multicast for IPTV, how Netflix, HBO and YouTube stream, live football delay) and inside the mobile network (towers, the 4G core, the 5G core, attach and registration, APN/DNN and sessions, NSA vs SA).
 - Games, all on a made-up network - nothing real is sent or changed: a network escape room (10 faults, a simulated console, 10 minutes, hints cost time), catch the thief (5 cases), packet detective (10 puzzles) and two quick-fire rounds (ports, address kinds). First solve of each earns Adeebo Points.
 
@@ -55,6 +55,7 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Adeebo Points: a dashboard of every tool, Learn topic and page; +1 / +2 once each, a +2 replay bonus once; Traffic Lab senders and scanners never earn.
 - French (preview, Settings › General › Language), Microsoft Store package, Windows on ARM (AnyCPU, native on ARM64), portable mode (AdeeboMeter.portable), `--report out.json` (exit 0-3 verdict, 4 = the report couldn't be made), AdeeboMeter.policy for IT teams (switch-off only; both files combined, the strictest wins, never overwrites your own settings).
 - About: Community and support links and Donate.
+- Adeebo Points and the Hall of Fame: only things that exist count (a hand-edited points.txt adds nothing), the replay bonus only for tools that have one, a wrong first answer to a check question never pays later, the total is capped at 800 (everything earnable is about 750); 500 points makes the Adeebo Award card with a claim code the Hall of Fame checks.
 - Presets, reworked: Penny is much lighter (router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching; about 8 checks a minute); Balanced, the default, takes Engineer's timings (router every 2 s, internet every 15 s); new Gamer preset: the same, plus up to 16 game servers and the best regions every 10 s. The uncached DNS lookup runs at most once a minute.
 - Removed: Find devices (mDNS / SSDP / WS-Discovery). It asked the whole network to answer; known devices still come from the ARP table and the Ping sweep.
 - DNS second opinion (Check a destination): when the IT policy turns online lookups off, it asks your PC's own DNS server directly instead of 1.1.1.1 / 8.8.8.8.

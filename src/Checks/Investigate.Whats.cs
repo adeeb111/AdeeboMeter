@@ -155,7 +155,7 @@ namespace AdeeboMeter
             step("Checking for a sign-in page...");
             string portal, portalErr; PortalTest(out portal, out portalErr);
             if (portalErr == "off") { r.NotEst.Add("Whether a sign-in page stands in the way - the sign-in page check is off in Settings."); portalErr = ""; }
-            else r.Obs("m", portal != "" ? 1 : portalErr != "" ? 3 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : portalErr != "" ? "Windows' connectivity test couldn't run (" + portalErr + ") - web traffic may need a proxy here" : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
+            else r.Obs(portal == "" && portalErr != "" ? "u" : "m", portal != "" ? 1 : portalErr != "" ? 3 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : portalErr != "" ? "Windows' connectivity test couldn't run (" + portalErr + ") - web traffic may need a proxy here" : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
             if (portalErr != "") r.NotEst.Add("Whether a sign-in page or proxy stands in the way - the web test couldn't connect (" + portalErr + ").");
             if (portal != "")
             {

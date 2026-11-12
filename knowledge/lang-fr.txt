@@ -722,7 +722,7 @@ Not them - the thief was	Pas lui - le voleur était
 ONE OF THESE PACKETS IS WRONG - CLICK IT	UN DE CES PAQUETS EST FAUX - CLIQUEZ DESSUS
 Spotted.	Trouvé.
 Not that one - the green one is wrong.	Pas celui-là - c'est le vert qui est faux.
-Ten questions, sixty seconds. Eight right wins.	Dix questions, soixante secondes. Huit bonnes réponses pour gagner.
+Ten questions, sixty seconds. Eight right within the minute wins.	Dix questions, soixante secondes. Huit bonnes réponses pour gagner.
 Start	Commencer
 Play again	Rejouer
 right	justes
@@ -771,3 +771,15 @@ BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football r
 Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA.	Antennes, cœurs 4G et 5G (MME, AMF, SMF, UPF), rattachement, sessions, NSA ou SA.
 INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING	DANS INTERNET - OPÉRATEURS, TV ET STREAMING
 INSIDE THE MOBILE NETWORK - 4G AND 5G	DANS LE RÉSEAU MOBILE - 4G ET 5G
+Penny	Penny
+PING MAP	CARTE DES PINGS
+and	et
+more	de plus
+game	jeu
+Right now: about	En ce moment : environ
+checks a minute in the background	vérifications par minute en arrière-plan
+your own mix	vos réglages
+plus about	plus environ
+game pings a minute for the games you watch (one a second per server while you play)	pings de jeu par minute pour vos jeux suivis (un par seconde et par serveur pendant que vous jouez)
+on top of the widget's once-a-second read of Windows' own counters.	en plus de la lecture des compteurs de Windows par le widget, une fois par seconde.
+The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	Le widget reste toujours léger. Le travail de fond (capture en direct, liste complète des connexions, chemins) ne tourne que fenêtre ouverte. Ces réglages décident de la surveillance en arrière-plan - vérifications par minute, plus les pings de jeu dès que vous suivez un jeu.

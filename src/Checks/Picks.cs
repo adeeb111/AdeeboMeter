@@ -266,7 +266,7 @@ namespace AdeeboMeter
                 }
                 var here = new HashSet<string>(now.Where(e => e.Dynamic).Select(e => e.Mac));
                 var mine = inv.Where(x => x.Net == net).OrderByDescending(x => here.Contains(x.Mac)).ThenByDescending(x => x.Last).ToList();
-                rows.Insert(0, R(3, Brain.NetLabel, mine.Count + " devices seen here · " + mine.Count(x => here.Contains(x.Mac)) + " here now", "From the ARP table AdeeboMeter reads every ten minutes - devices that talked to this PC or the router recently. Find devices or a Ping sweep fills it in.", "i"));
+                rows.Insert(0, R(3, Brain.NetLabel, mine.Count + " devices seen here · " + mine.Count(x => here.Contains(x.Mac)) + " here now", "From the ARP table AdeeboMeter reads every ten minutes - devices that talked to this PC or the router recently. A Ping sweep fills it in.", "i"));
                 foreach (var d in mine.Take(200))
                 {
                     string maker = Toolkit.Vendor(d.Mac); bool now2 = here.Contains(d.Mac);

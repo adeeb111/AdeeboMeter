@@ -29,11 +29,7 @@ namespace AdeeboMeter
                 m.RefreshInterfaces(); m.Start();
                 Thread.Sleep(Math.Max(5, Math.Min(120, seconds)) * 1000);
                 var r = new GuideRun(); Investigate.Run("whats", m, r, delegate { });
-                int lv = r.Lv < 0 ? 3 : Math.Min(3, r.Lv);
-                // "fine" isn't fine when a step couldn't run: say so instead of passing a half-checked PC
-                // only a step that couldn't run ("u" evidence) - not an informational row like "Around then: On LAN" or "normal for
-                // this network", which every healthy run has
-                if (lv == 0 && r.ObservedCopy().Any(o => o.Length > 1 && o[0] == "u" && o[1] == "3")) lv = 3;
+                int lv = Verdict(r);
                 string json = Json(m, r, lv);
                 try { File.WriteAllText(file, json, new UTF8Encoding(false)); }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is NotSupportedException || e is System.Security.SecurityException)) throw; Program.Log("--report: can't write " + file + ": " + e.Message); return 4; }
@@ -78,6 +74,14 @@ namespace AdeeboMeter
             double v; return mm.Success && double.TryParse(mm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN;
         }
         static string N(double v) { return double.IsNaN(v) || double.IsInfinity(v) ? "null" : Math.Round(v, 1).ToString(CultureInfo.InvariantCulture); }
+        // "fine" isn't fine when a step couldn't run: say so instead of passing a half-checked PC. Only a step that couldn't run
+        // ("u" evidence - What's wrong marks them so) - not an informational row like "Around then: On LAN", which every healthy run has
+        public static int Verdict(GuideRun r)
+        {
+            int lv = r.Lv < 0 ? 3 : Math.Min(3, r.Lv);
+            if (lv == 0 && r.ObservedCopy().Any(o => o.Length > 1 && o[0] == "u" && o[1] == "3")) lv = 3;
+            return lv;
+        }
         public static string Json(Monitor m, GuideRun r, int lv)
         {
             string kind, adapter, gw, dns, vpnName, ssid; bool vpn, viaTcp; int sig;

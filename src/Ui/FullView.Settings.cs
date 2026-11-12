@@ -117,9 +117,9 @@ namespace AdeeboMeter
             add("Background checks", "Teams call detection", TagPc, () => Cfg.Call ? "Notices when a Teams call starts and watches the network more closely during it." : "Off: calls get no extra attention.", SetS10, () => Cfg.Call ? 0 : 1, i => { Cfg.Call = i == 0; Custom(); }, null, "teams call meeting");
             add("Background checks", "Watch my first pinned destination all day", TagNet, () => Cfg.Pins.Count == 0 ? "Pin a destination on Check a destination first." : Cfg.PinWatch ? "One ping to " + Cfg.Pins[0] + " every 30 s, graphed on Check a destination." : "Off - pinned destinations are only checked when you press Run all.", SetOnOff, () => Cfg.PinWatch ? 0 : 1, i => { Cfg.PinWatch = i == 0 && Cfg.Pins.Count > 0; Cfg.Save(); }, null, "pin ping destination");
             // Gamer Zone
-            add("Gamer Zone", "Game ping in the background", TagGame, () => Games.Monitored().Count == 0 ? "Nothing is sent to game servers until you click a game in the Gamer Zone." : Cfg.GameBgSec == 0 ? "Off: game servers are only checked while a game is open." : "Checks your games' best regions " + Every(Cfg.GameBgSec) + " while AdeeboMeter runs, so the 7-day verdict covers every hour - not only when you play.", GzBg, () => Array.IndexOf(GzBgN, Cfg.GameBgSec), i => { Cfg.GameBgSec = GzBgN[i]; Cfg.Save(); }, null, "game ping gamer background");
-            add("Gamer Zone", "Servers watched in the background", TagGame, () => "Each added game's best region, up to this many. Never more than 10 probes a second in total.", GzSrv, () => Array.IndexOf(GzSrvN, Cfg.GameBgServers), i => { Cfg.GameBgServers = GzSrvN[i]; Cfg.Save(); }, () => Cfg.GameBgSec > 0, "game servers gamer");
-            add("Gamer Zone", "Every second while a game is open", TagGame, () => Cfg.GameFast ? "All of that game's servers (up to 8), once a second - for spikes and the match report." : "Off: the game's servers stay at the background pace.", SetOnOff, () => Cfg.GameFast ? 0 : 1, i => { Cfg.GameFast = i == 0; Cfg.Save(); }, null, "game fast ping gamer");
+            add("Gamer Zone", "Game ping in the background", TagGame, () => Games.Monitored().Count == 0 ? "Nothing is sent to game servers until you click a game in the Gamer Zone." : Cfg.GameBgSec == 0 ? "Off: game servers are only checked while a game is open." : "Checks your games' best regions " + Every(Cfg.GameBgSec) + " while AdeeboMeter runs, so the 7-day verdict covers every hour - not only when you play.", GzBg, () => Array.IndexOf(GzBgN, Cfg.GameBgSec), i => { Cfg.GameBgSec = GzBgN[i]; Custom(); }, null, "game ping gamer background");
+            add("Gamer Zone", "Servers watched in the background", TagGame, () => "Each added game's best region, up to this many. 5 also lets a game you play be watched on up to 16 servers (otherwise 8).", GzSrv, () => Array.IndexOf(GzSrvN, Cfg.GameBgServers), i => { Cfg.GameBgServers = GzSrvN[i]; Custom(); }, () => Cfg.GameBgSec > 0, "game servers gamer");
+            add("Gamer Zone", "Every second while a game is open", TagGame, () => Cfg.GameFast ? "All of that game's servers (up to " + GamePing.MaxServers + "), once a second - for spikes and the match report." : "Off: the game's servers stay at the background pace.", SetOnOff, () => Cfg.GameFast ? 0 : 1, i => { Cfg.GameFast = i == 0; Cfg.Save(); }, null, "game fast ping gamer");
             add("Gamer Zone", "Start when a game opens", TagPc, () => Cfg.GameAuto ? "Notices when a game you added starts (by its program name) and switches to watching it closely." : "Off: games are only watched at the background pace.", SetOnOff, () => Cfg.GameAuto ? 0 : 1, i => { Cfg.GameAuto = i == 0; Cfg.Save(); }, null, "game auto start detect gamer");
             add("Gamer Zone", "Keep game history for", TagPc, () => "One line a minute per server, on this PC only, with the rest of the history" + (Cfg.History ? "." : " - history is off in History & data, so nothing is kept."), GzDays, () => Array.IndexOf(GzDaysN, Cfg.GameDays), i => { Cfg.GameDays = GzDaysN[i]; Cfg.Save(); }, null, "game history days gamer");
             // Alerts
@@ -209,7 +209,7 @@ namespace AdeeboMeter
                     g.DrawString(L.T(setSec), Draw.fTitle, ink, x, y); y += 34 * S;
                     if (setSec == "Background checks")
                     {
-                        string lead = "The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background.";
+                        string lead = L.T("The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.");
                         var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 14 * S;
                         string[][] presets = { new[] { "penny", "Penny", "The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching." }, SetS0, SetS1, SetSG };
                         int cols = w > 760 * S ? 4 : 2; float pw = (w - (cols - 1) * 12 * S) / cols, ph = 96 * S;
@@ -218,13 +218,13 @@ namespace AdeeboMeter
                             var r = new RectangleF(x + (i % cols) * (pw + 12 * S), y + (i / cols) * (ph + 12 * S), pw, ph); bool on = Cfg.Preset == presets[i][0];
                             Theme.Fill(g, r, 12 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 12 * S, on ? Theme.Blue : Theme.Line, on ? 2 : 1);
                             using (var tb = new SolidBrush(on ? Theme.BlueDark : Theme.Ink)) g.DrawString(L.T(presets[i][1]), Draw.fHead, tb, r.X + 14 * S, r.Y + 12 * S);
-                            string cost = "~" + JobsFor(presets[i][0]) + " checks a minute";
+                            string cost = "~" + JobsFor(presets[i][0]) + " + " + Cfg.GameJobsForPreset(presets[i][0]) + " " + L.T("game");
                             var cs = g.MeasureString(cost, Draw.fSmall); g.DrawString(cost, Draw.fSmall, muted, r.Right - 14 * S - cs.Width, r.Y + 15 * S);
                             g.DrawString(L.T(presets[i][2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 40 * S, r.Width - 28 * S, ph - 46 * S));
                             string key = presets[i][0]; Act(settingsCanvas, r, delegate { Cfg.ApplyPreset(key); Policy.Apply(); Cfg.Save(); M.Nudge(); settingsCanvas.Invalidate(); });
                         }
                         y += ((presets.Length + cols - 1) / cols) * (ph + 12 * S) - 2 * S;
-                        string cnt = "Right now: about " + Cfg.JobsPerMinute() + " checks a minute in the background" + (Cfg.Preset == "custom" ? " (your own mix)" : "") + ", on top of the widget's once-a-second read of Windows' own counters.";
+                        int gj = Cfg.GameJobsPerMinute(); string cnt = L.T("Right now: about") + " " + Cfg.JobsPerMinute() + " " + L.T("checks a minute in the background") + (Cfg.Preset == "custom" ? " (" + L.T("your own mix") + ")" : "") + (gj > 0 ? ", " + L.T("plus about") + " " + gj + " " + L.T("game pings a minute for the games you watch (one a second per server while you play)") : "") + ", " + L.T("on top of the widget's once-a-second read of Windows' own counters.");
                         var ch = Draw.Measure(cnt, Draw.fSmall, (int)w).Height; g.DrawString(cnt, Draw.fSmall, muted, new RectangleF(x, y, w, ch + 4)); y += ch + 18 * S;
                     }
                     foreach (var it in items.Where(i2 => i2.Sec == setSec))
@@ -316,7 +316,7 @@ namespace AdeeboMeter
                     new[] { "One readable file", "The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows." },
                     new[] { "No admin rights", "Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show." },
                     new[] { "Secure by default", "Checks use TLS 1.2 or newer with Windows' own certificate validation - it never skips a certificate check. Inputs are validated; no shell is ever used." },
-                    new[] { "Light as a feather", "A few dozen small checks a minute in the background. The heavy tools only run while this window is open, and always stop by themselves." },
+                    new[] { "Light as a feather", "Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves." },
                     new[] { "Leaves no trace", "Settings and a small log live next to the exe. Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it." } };
         static readonly string[][] AboutTabs =
         {
@@ -373,7 +373,7 @@ namespace AdeeboMeter
                 Func<int, string> every = sec => sec <= 0 ? "Off" : sec >= 60 ? "every " + sec / 60 + " min" : "every " + sec + " s";
                 var leaves = new List<string[]> {
                     new[] { "Router ping", Cfg.GwSec > 0 ? "A tiny ping to your own router, " + every(Cfg.GwSec) + ". Stays on your local network." : "Off.", Cfg.GwSec > 0 ? "0" : "-1" },
-                    new[] { "Internet and DNS check", Cfg.NetSec > 0 ? "One ping to 1.1.1.1 (or 8.8.8.8) and one name lookup, " + every(Cfg.NetSec) + ". On networks that block ping: a timed connection to port 443 of the same address instead, closed at once." : "Off - nothing goes to the internet in the background.", Cfg.NetSec > 0 ? "1" : "-1" },
+                    new[] { "Internet and DNS check", Cfg.NetSec > 0 ? "One ping to 1.1.1.1 (or 8.8.8.8) " + every(Cfg.NetSec) + ", and one name lookup at most once a minute (every 15 s with this window open). On networks that block ping: a timed connection to port 443 of the same address instead, closed at once." : "Off - nothing goes to the internet in the background.", Cfg.NetSec > 0 ? "1" : "-1" },
                     new[] { "Provider name", Cfg.NetSec > 0 ? "Once per network: a short trace (6 hops) toward 1.1.1.1 and one name lookup, to put your provider's name on the ISP dot." : "Off (follows the internet check).", Cfg.NetSec > 0 ? "1" : "-1" },
                     new[] { "Wi-Fi watch", Cfg.WifiSec > 0 ? "Asks Windows about your Wi-Fi, " + every(Cfg.WifiSec) + ". Nothing is sent anywhere." : "Off.", "-1" },
                     LeaveChecks,

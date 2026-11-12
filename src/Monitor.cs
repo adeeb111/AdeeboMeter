@@ -258,7 +258,7 @@ namespace AdeeboMeter
                     if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(1, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
                     if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
                     if (netChanged && netDown >= 3) Events.Add(1, "inet", "Network changed while the internet was quiet (down since " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + ") - checking afresh");
-                    if (netChanged) { netChanged = false; lastIf = DateTime.MinValue; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; GwPing.Clear(); GwEverReplied = false; } gwMacKey = ""; gwMac = "";   /* a new network: its router is judged on its own, never on the last network's */ /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
+                    if (netChanged) { netChanged = false; lastIf = DateTime.MinValue; icmpMiss = 0; lock (L) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; GwPing.Clear(); GwEverReplied = false; } gwMacKey = ""; gwMac = "";   /* a new network: its router is judged on its own, never on the last network's */ /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= IfEvery) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }
                     if (wifiSec > 0 && (t0 - lastWifi).TotalSeconds >= wifiSec - 0.2) { lastWifi = t0; ProbeWifi(); }
                     if (appsSec > 0 && (t0 - lastConnT).TotalSeconds >= appsSec - 0.2) ProbeConns();
@@ -266,7 +266,7 @@ namespace AdeeboMeter
                     if (Cfg.Call || ViewOpen) ProbeCall(); else lock (L) CallLikely = false;
                 }
                 catch (Exception e) { Program.Log("probe: " + e.Message); }
-                // Sleep until the next job is due (2 s with the view open; up to 10 s in Penny mode).
+                // Sleep until the next job is due (2 s with the view open or a call; 1 s just after waking; up to 30 s on Penny).
                 int pace = Waking(Clock.Mono) ? 1 : ViewOpen || CallLikely ? 2 : new[] { Cfg.GwSec, Cfg.NetSec, Cfg.WifiSec, Cfg.AppsSec, IfEvery }.Where(v => v > 0).Min();
                 int wait = Math.Max(Waking(Clock.Mono) ? 1 : 2, pace) * 1000 - (int)(Clock.Mono - t0).TotalMilliseconds;
                 if (wait > 0) wake.WaitOne(wait);
@@ -427,7 +427,7 @@ namespace AdeeboMeter
             v = (v ?? "").Trim().ToLowerInvariant();
             foreach (var d in new[] { "disconn", "getrennt", "déconnect", "deconnect", "desconect", "disconness", "niet verbonden", "rozłącz" }) if (v.Contains(d)) return "disconnected";
             foreach (var d in new[] { "切断", "отключ", "bağlantı kesildi", "已断开" }) if (v.Contains(d)) return "disconnected";
-            foreach (var c in new[] { "connected", "verbunden", "connecté", "connecte", "conectado", "connesso", "verbonden", "połączon", "接続", "подключ", "bağlandı", "已连接" }) if (v.Contains(c)) return "connected";
+            foreach (var c in new[] { "connected", "verbunden", "connecté", "connecte", "conectado", "connesso", "verbonden", "połączon", "接続", "подключ", "bağlandı", "bağlı", "已连接" }) if (v.Contains(c)) return "connected";
             return v;
         }
         public static void ParseWifi(string outp, out int sig, out string ssid, out string ch, out string bssid, out string state, out int rate)
@@ -484,7 +484,7 @@ namespace AdeeboMeter
             if ((dnsOk && !double.IsNaN(wakeGw)) || timeout)
             {
                 var c = CultureInfo.InvariantCulture; double dn = dnsOk ? (t0 - wakeAt).TotalSeconds : double.NaN;
-                if (!double.IsNaN(wakeGw)) Events.Add(wakeGw > 30 ? 1 : 3, "wake", "Back online after waking: router " + wakeGw.ToString("0.#", c) + " s" + (double.IsNaN(dn) ? "" : " · DNS " + dn.ToString("0.#", c) + " s"));
+                if (!double.IsNaN(wakeGw)) Events.Add(wakeGw > 30 || double.IsNaN(dn) ? 1 : 3, "wake", "Back online after waking: router " + wakeGw.ToString("0.#", c) + " s" + (double.IsNaN(dn) ? " · DNS didn't answer within 2 minutes" : " · DNS " + dn.ToString("0.#", c) + " s"));
                 else Events.Add(1, "wake", "Woke up, but the router didn't answer within 2 minutes");
                 wakeAt = DateTime.MinValue;
             }
