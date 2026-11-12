@@ -112,7 +112,7 @@ namespace AdeeboMeter
         }
         void LabPlay(bool on)
         {
-            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized) || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 120)) { labShown = -1; labTimer.Enabled = false; } LabRefresh(); }; }
+            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized) || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; } LabRefresh(); }; }
             labShown = on ? 0 : -1; labTimer.Enabled = on; LabRefresh();
         }
 
@@ -148,9 +148,9 @@ namespace AdeeboMeter
             cx += Stepper(h, g, "tcp.rtt", "Round trip", new double[] { 5, 10, 20, 40, 80, 150, 300 }, 40, v => N0(v) + " ms", cx, y);
             cx += Stepper(h, g, "tcp.buf", "Router buffer", new double[] { 0.1, 0.25, 0.5, 1, 2, 4, 8 }, 1, v => v.ToString("0.##", CultureInfo.CurrentCulture) + "× BDP", cx, y);
             cx += Stepper(h, g, "tcp.loss", "Random loss", new double[] { 0, 0.001, 0.01, 0.1, 0.5, 1, 2 }, 0, v => v.ToString("0.###", CultureInfo.CurrentCulture) + "%", cx, y);
-            cx += Stepper(h, g, "tcp.rounds", "Length", new double[] { 60, 120, 240, 480 }, 120, v => N0(v) + " RTTs", cx, y);
+            cx += Stepper(h, g, "tcp.rounds", "Length", new double[] { 60, 120, 240, 480 }, 240, v => N0(v) + " RTTs", cx, y);
             y += 58 * S;
-            string algo = LS("tcp.algo", "cubic"); int rounds = (int)LV("tcp.rounds", 120);
+            string algo = LS("tcp.algo", "cubic"); int rounds = (int)LV("tcp.rounds", 240);
             Func<string, List<LabSim.Step>> run = a => { var p = new LabSim.TcpIn { Algo = a, Mbps = LV("tcp.mbps", 100), RttMs = LV("tcp.rtt", 40), BufferBdp = LV("tcp.buf", 1), LossPct = LV("tcp.loss", 0), Rounds = rounds }; foreach (var kv in tcpEvents) p.Events[kv.Key] = kv.Value; return LabSim.Tcp(p); };
             var main = run(algo == "reno" ? "reno" : "cubic"); var other = algo == "both" ? run("reno") : null;
             double bdp = LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)), cap = bdp * (1 + LV("tcp.buf", 1));
