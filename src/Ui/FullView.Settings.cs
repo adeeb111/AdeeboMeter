@@ -85,6 +85,8 @@ namespace AdeeboMeter
             add("General", "Start with Windows", TagPc, () => Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.", SetS10, () => Cfg.GetAutoStart() ? 0 : 1, i => Cfg.SetAutoStart(i == 0), null, "startup boot login autostart");
             // Widget
             add("Widget", "Corner widget size", TagPc, () => Cfg.BigWidget ? "A little bigger (1.3x) - easier to read at a glance." : "Small - out of the way.", SetSize, () => Cfg.BigWidget ? 1 : 0, i => { Cfg.BigWidget = i == 1; Cfg.Save(); Invalidate(true); }, null, "big small scale");
+            add("Widget", "Widget style", TagPc, () => Cfg.WidgetStyle == "gamer" ? "Always the gamer card: your game's ping, jitter, loss and grade." : Cfg.WidgetStyle == "everyday" ? "Always the everyday card: the verdict, the five dots, CPU, memory and speed." : "Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the everyday card the rest of the time.", WStyle, () => Cfg.WidgetStyle == "everyday" ? 1 : Cfg.WidgetStyle == "gamer" ? 2 : 0, i => { Cfg.WidgetStyle = i == 1 ? "everyday" : i == 2 ? "gamer" : "auto"; Cfg.Save(); }, null, "layout gamer game everyday card");
+            add("Widget", "Show game ping on the widget", TagPc, () => Cfg.GameWidget ? "While a game you added is open, the widget shows its ping, grade and who caused a spike." : "Off: the widget stays the everyday card while you play.", SetOnOff, () => Cfg.GameWidget ? 0 : 1, i => { Cfg.GameWidget = i == 0; Cfg.Save(); }, () => Cfg.WidgetStyle == "auto", "game gamer widget ping");
             add("Widget", "How visible", TagPc, () => "How strongly the corner widget shows when you're not hovering it.", SetS14, () => Array.IndexOf(SetN15, Cfg.Fade), i => { Cfg.Fade = SetN15[i]; Cfg.Save(); }, null, "fade opacity transparent");
             add("Widget", "Hover wait on the folded chip", TagPc, () => "How long to rest the mouse on the folded chip before the card opens.", SetS16, () => Array.IndexOf(SetN17, Cfg.DwellMs), i => { Cfg.DwellMs = SetN17[i]; Cfg.Save(); }, null, "chip delay mouse");
             // Background checks
@@ -219,6 +221,7 @@ namespace AdeeboMeter
             var need = new Size(0, (int)(Math.Max(y, my) + 20 * S)); if (settingsCanvas.AutoScrollMinSize != need) { settingsCanvas.AutoScrollMinSize = need; settingsCanvas.Invalidate(); }
         }
         static readonly string[] SetOnOff = { "On", "Off" };
+        static readonly string[] WStyle = { "Auto", "Everyday", "Gamer" };
         static readonly string[] GzBg = { "10 s", "30 s", "60 s", "Off" }, GzSrv = { "1", "3", "5" }, GzDays = { "7 days", "14 days", "30 days" };
         static readonly int[] GzBgN = { 10, 30, 60, 0 }, GzSrvN = { 1, 3, 5 }, GzDaysN = { 7, 14, 30 };
         static readonly string[] DevAlertNames = { "Off", "Home networks only" };

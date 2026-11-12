@@ -372,6 +372,15 @@ namespace AdeeboMeter
                 if (Math.Abs(GameStat.Jitter(new[] { 10.0, 14, 10, double.NaN, 12 }) - (4 + 4 + 2) / 3.0) > 0.01 || GameStat.Loss(new[] { 1.0, double.NaN, 2, double.NaN }) != 50) bad.Add("jitter/loss");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
+            T("match report removes internal addresses, hardware addresses and the Wi-Fi name", () =>
+            {
+                string r = GameSession.Redact("router 192.168.0.1 and 10.1.2.3, 172.20.0.9, mac aa:bb:cc:dd:ee:ff on HomeNet-5G; server 155.133.248.34", "HomeNet-5G");
+                if (r.Contains("192.168") || r.Contains("10.1.2.3") || r.Contains("172.20") || r.Contains("aa:bb") || r.Contains("HomeNet") || !r.Contains("155.133.248.34")) throw new InvalidOperationException(r);
+                var ss = new GameSession { GameId = "t", GameName = "T", Server = "NA East", Start = DateTime.Now.AddMinutes(-1) };
+                ss.Add(new GameSession.Sec { T = DateTime.Now, Game = 30, Router = 2, Net = 15, Signal = 80, Down = 1, Up = 0.2, Cpu = 10 });
+                ss.Mark(); string rep = ss.Report(new List<Spike>(), "");
+                if (!rep.Contains("NA East") || !rep.Contains("Marked as laggy")) throw new InvalidOperationException("report");
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));

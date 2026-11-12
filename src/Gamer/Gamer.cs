@@ -320,6 +320,14 @@ namespace AdeeboMeter
         readonly object k = new object();
         public volatile string Playing;            // id of the monitored game running now (null = none)
         public DateTime PlayingSince;
+        public volatile GameSession Session, LastSession;   // the open session (or null) and the one before
+        public void StartSession(Game g, bool manual)
+        {
+            var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; }
+            var b = Best(g) ?? (g.Servers.Count > 0 ? g.Servers[0] : null);
+            Session = new GameSession { GameId = g.Id, GameName = g.Name, Server = b != null ? b.Name : "-", Start = DateTime.Now, Manual = manual };
+        }
+        public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
         Thread th; volatile bool stop; Monitor mon;
         public const int MaxServers = 8, MaxPerSecond = 10;
 
@@ -387,7 +395,13 @@ namespace AdeeboMeter
                     {
                         lastRun = DateTime.UtcNow;
                         var g = GameFinder.Running(games, mon2); string id = g == null ? null : g.Id;
-                        if (id != Playing) { Playing = id; PlayingSince = DateTime.Now; }
+                        if (id != Playing)
+                        {
+                            Playing = id; PlayingSince = DateTime.Now;
+                            var cur = Session;
+                            if (g != null && Cfg.GameAuto && (cur == null || !cur.Manual)) StartSession(g, false);
+                            else if (g == null && cur != null && !cur.Manual) EndSession();
+                        }
                     }
                     var plan = Plan(games, mon2, Cfg.GameAuto ? Playing : null);
                     var now = DateTime.UtcNow; var go = new List<Tuple<string, GameServer, int>>();
@@ -398,10 +412,21 @@ namespace AdeeboMeter
                         if (go.Count >= MaxPerSecond) break;
                     }
                     if (go.Count > 0) Task.WaitAll(go.Select(p => Task.Factory.StartNew(() => ProbeOne(p.Item1, p.Item2))).ToArray(), 2500);
+                    Evidence(games);
                     if ((DateTime.Now - lastMinute).TotalSeconds >= 60) { lastMinute = DateTime.Now; GameHistory.Minute(this, plan); }
                 }
                 catch (Exception e) { Program.Log("gameping: " + e.Message); }
             }
+        }
+        // one evidence row a second for the open session
+        void Evidence(List<Game> games)
+        {
+            var ss = Session; if (ss == null || !ss.Open || mon == null) return;
+            var g = games.FirstOrDefault(z => z.Id == ss.GameId); var srv = g == null ? null : g.Servers.FirstOrDefault(z => z.Name == ss.Server);
+            double gm = double.NaN;
+            if (srv != null) { var st = Stat(g.Id, srv); if ((DateTime.Now - st.LastAt).TotalSeconds < 3) { var v = st.Recent(1); if (v.Length > 0) gm = v[0]; } }
+            var snap = mon.Latest;
+            ss.Add(new GameSession.Sec { T = DateTime.Now, Game = gm, Router = mon.GwPing.Last, Net = mon.NetPing.Last, Signal = mon.WifiSignal, Down = snap.Down, Up = snap.Up, Cpu = snap.Cpu });
         }
         void ProbeOne(string game, GameServer s)
         {
@@ -538,6 +563,56 @@ namespace AdeeboMeter
                 }
                 weekCache[game] = w; return w;
             }
+        }
+    }
+}
+
+namespace AdeeboMeter
+{
+    // ================================================================== a gaming session: the evidence a player needs afterwards
+    // Starts by itself when a game you added opens (or with Start session), ends when it closes. One row a second: the game's
+    // ping, your router, the internet check, Wi-Fi signal, traffic and CPU - in memory only, kept until the next session starts.
+    sealed class GameSession
+    {
+        public sealed class Sec { public DateTime T; public double Game, Router, Net, Down, Up, Cpu; public int Signal; }
+        public string GameId, GameName, Server; public DateTime Start, End = DateTime.MaxValue; public bool Manual;
+        public readonly List<Sec> Rows = new List<Sec>(); public readonly List<DateTime> Marks = new List<DateTime>();
+        public bool Open { get { return End == DateTime.MaxValue; } }
+        readonly object k = new object();
+        public void Add(Sec s) { lock (k) { Rows.Add(s); if (Rows.Count > 4 * 3600) Rows.RemoveAt(0); } }
+        public List<Sec> Around(DateTime t, int secs) { lock (k) return Rows.Where(r => Math.Abs((r.T - t).TotalSeconds) <= secs).ToList(); }
+        public List<Sec> All() { lock (k) return Rows.ToList(); }
+        public void Mark() { lock (k) if (Marks.Count < 50) Marks.Add(DateTime.Now); }
+
+        // the short report a player pastes into a chat or a ticket; internal addresses, hardware addresses and the Wi-Fi name removed
+        public string Report(List<Spike> spikes, string ssid)
+        {
+            var rows = All(); var c = CultureInfo.CurrentCulture; var sb = new StringBuilder();
+            var gv = rows.Select(r => r.Game).ToArray();
+            DateTime end = Open ? DateTime.Now : End;
+            sb.AppendLine("AdeeboMeter match report - " + GameName + " (" + Server + ")");
+            sb.AppendLine(Start.ToString("ddd d MMM yyyy HH:mm", c) + " - " + end.ToString("HH:mm", c) + "  (" + Math.Round((end - Start).TotalMinutes) + " min, " + rows.Count + " samples, one a second)");
+            sb.AppendLine("Game ping: avg " + Fx(GameStat.Avg(gv)) + " ms, 95% " + Fx(GameStat.Pct(gv, 0.95)) + " ms, jitter " + Fx(GameStat.Jitter(gv)) + " ms, loss " + Fx(GameStat.Loss(gv)) + "%");
+            sb.AppendLine("Router: avg " + Fx(GameStat.Avg(rows.Select(r => r.Router).ToArray())) + " ms · Internet check: avg " + Fx(GameStat.Avg(rows.Select(r => r.Net).ToArray())) + " ms");
+            var mine = spikes.Where(z => z.Game == GameId && z.T >= Start && z.T <= end).ToList();
+            sb.AppendLine("Spikes: " + mine.Count + (mine.Count > 0 ? " - " + string.Join(", ", mine.GroupBy(z => z.Blame).Select(gr => gr.Count() + " " + gr.Key)) : ""));
+            foreach (var z in mine.OrderByDescending(z => z.Ms).Take(5))
+            {
+                var at = Around(z.T, 0).FirstOrDefault();
+                sb.AppendLine("  " + z.T.ToString("HH:mm:ss", c) + "  " + Fx(z.Normal) + " -> " + Fx(z.Ms) + " ms  · " + z.Blame + (at != null ? "  (router " + Fx(at.Router) + " ms, Wi-Fi " + (at.Signal >= 0 ? at.Signal + "%" : "-") + ", traffic down " + Fx(at.Down) + " / up " + Fx(at.Up) + " Mb/s, CPU " + Fx(at.Cpu) + "%)" : ""));
+            }
+            foreach (var m in Marks) sb.AppendLine("  Marked as laggy by the player at " + m.ToString("HH:mm:ss", c));
+            sb.AppendLine("Measured with AdeeboMeter (pings / TCP connects to the region - not the game's own in-game ping).");
+            return Redact(sb.ToString(), ssid);
+        }
+        static string Fx(double v) { return double.IsNaN(v) ? "-" : v.ToString(v < 10 ? "0.0" : "0", CultureInfo.InvariantCulture); }
+        static readonly Regex PrivIp = new Regex(@"\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|f[cd][0-9a-f]{2}:[0-9a-f:]+|fe80:[0-9a-f:]+)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        static readonly Regex Mac = new Regex(@"\b([0-9a-f]{2}[:-]){5}[0-9a-f]{2}\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        public static string Redact(string text, string ssid)
+        {
+            string t = PrivIp.Replace(text, "[internal address]"); t = Mac.Replace(t, "[hardware address]");
+            if (!string.IsNullOrEmpty(ssid) && ssid.Length >= 2) t = Regex.Replace(t, Regex.Escape(ssid), "[Wi-Fi name]", RegexOptions.IgnoreCase);
+            return t;
         }
     }
 }

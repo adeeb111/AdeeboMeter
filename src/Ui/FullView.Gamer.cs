@@ -77,6 +77,9 @@ namespace AdeeboMeter
                 var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 10 * S;
                 if (gamerNote != "") { var nh = Draw.Measure(gamerNote, Draw.fSmall, (int)w).Height; g.DrawString(gamerNote, Draw.fSmall, blue, new RectangleF(x, y, w, nh + 4)); y += nh + 10 * S; }
 
+                // this match: Start / Stop / Mark lag, then the summary
+                if (mon.Count > 0) y = PaintSession(g, games, x, y, w);
+
                 // tiles: monitored first, then installed, then the rest; GTA VI-style "soon" last
                 var order = games.OrderBy(z => mon.Contains(z.Id) ? 0 : inst.Contains(z.Id) ? 1 : z.Soon ? 3 : 2).ToList();
                 int cols = Math.Max(2, Math.Min(6, (int)(w / (190 * S)))); float tw = (w - (cols - 1) * 10 * S) / cols, th = 64 * S;
@@ -134,6 +137,70 @@ namespace AdeeboMeter
             var need = new Size(0, (int)(y + 20 * S)); if (gamerCanvas.AutoScrollMinSize != need) { gamerCanvas.AutoScrollMinSize = need; gamerCanvas.Invalidate(); }
         }
 
+        DateTime gzCopied;
+        float PaintSession(Graphics g, List<Game> games, float x, float y, float w)
+        {
+            var gp = GamePing.Me; var ss = gp.Session ?? gp.LastSession; bool open = gp.Session != null && gp.Session.Open;
+            var mon = Games.Monitored();
+            var target = games.FirstOrDefault(z => z.Id == gp.Playing) ?? games.FirstOrDefault(z => mon.Contains(z.Id) && z.Servers.Count > 0);
+            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
+            using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+            {
+                float bx = x;
+                Func<string, bool, Action, float> btn = (t, primary, a) =>
+                {
+                    var sz = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
+                    Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Theme.Stroke(g, r, 17 * S, Theme.Line, 1);
+                    using (var tb = new SolidBrush(primary ? Color.White : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
+                    Act(gamerCanvas, r, a); bx += r.Width + 10 * S; return r.Width;
+                };
+                if (open)
+                {
+                    btn("Mark lag", true, delegate { gp.Session.Mark(); gamerNote = "Marked - the 30 seconds around it are in the match summary."; gamerCanvas.Invalidate(); });
+                    btn("Stop session", false, delegate { gp.EndSession(); gamerCanvas.Invalidate(); });
+                }
+                else if (target != null) btn("Start session · " + target.Name, true, delegate { gp.StartSession(target, true); gamerNote = "Session started - press Mark lag whenever it feels wrong."; gamerCanvas.Invalidate(); });
+                btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
+                y += 44 * S;
+                if (ss == null) return y + 6 * S;
+
+                var rows = ss.All(); var gv = rows.Select(r => r.Game).ToArray();
+                DateTime end = ss.Open ? DateTime.Now : ss.End;
+                List<Spike> sp; lock (gp.Spikes) sp = gp.Spikes.Where(z => z.Game == ss.GameId && z.T >= ss.Start && z.T <= end).ToList();
+                y = SetHead(g, (open ? "THIS MATCH · " : "LAST MATCH · ") + ss.GameName.ToUpperInvariant() + " · " + ss.Server.ToUpperInvariant() + " · " + ss.Start.ToString("HH:mm", CultureInfo.CurrentCulture) + " - " + (open ? "NOW" : end.ToString("HH:mm", CultureInfo.CurrentCulture)), x, y, w);
+                string line = rows.Count == 0 ? "Collecting - one row a second while the session is open." :
+                    Math.Round((end - ss.Start).TotalMinutes) + " min · avg " + Ms(GameStat.Avg(gv)) + " ms · 95% " + Ms(GameStat.Pct(gv, 0.95)) + " ms · jitter " + Ms(GameStat.Jitter(gv)) + " ms · loss " + (double.IsNaN(GameStat.Loss(gv)) ? "-" : GameStat.Loss(gv).ToString("0.#", CultureInfo.InvariantCulture) + "%") + " · " + sp.Count + (sp.Count == 1 ? " spike" : " spikes") + (sp.Count > 0 ? " (" + string.Join(", ", sp.GroupBy(z => z.Blame).Select(gr => gr.Count() + " " + gr.Key)) + ")" : "");
+                var lh = Draw.Measure(line, Draw.fBody, (int)w).Height; g.DrawString(line, Draw.fBody, ink, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S;
+                // the worst moments and the player's marks, each with the 30 seconds around it
+                var moments = sp.OrderByDescending(z => z.Ms).Take(3).Select(z => Tuple.Create(z.T, "Spike " + Ms(z.Normal) + " -> " + Ms(z.Ms) + " ms · " + z.Blame)).ToList();
+                moments.AddRange(ss.Marks.Select(m => Tuple.Create(m, "You marked lag here")));
+                foreach (var m in moments.OrderBy(z => z.Item1).Take(8))
+                {
+                    var ar = ss.Around(m.Item1, 15);
+                    g.DrawString(m.Item1.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + "  " + m.Item2, Draw.fBodyB, ink, x, y); y += 22 * S;
+                    float sw = Math.Min(260 * S, (w - 30 * S) / 4);
+                    string[] names = { "game ms", "router ms", "Wi-Fi %", "traffic Mb/s" };
+                    for (int i = 0; i < 4; i++)
+                    {
+                        var sr = new RectangleF(x + i * (sw + 10 * S), y, sw, 30 * S); Theme.Fill(g, sr, 5 * S, Theme.Soft);
+                        double[] series = i == 0 ? ar.Select(r => r.Game).ToArray() : i == 1 ? ar.Select(r => r.Router).ToArray() : i == 2 ? ar.Select(r => r.Signal < 0 ? double.NaN : (double)r.Signal).ToArray() : ar.Select(r => (double.IsNaN(r.Down) ? 0 : r.Down) + (double.IsNaN(r.Up) ? 0 : r.Up)).ToArray();
+                        double cap = 1; foreach (var v in series) if (!double.IsNaN(v) && v > cap) cap = v;
+                        Theme.Spark(g, series, sr, i == 0 ? Theme.Blue : i == 1 ? Theme.Amber : i == 2 ? Theme.Green : Theme.Orange, cap * 1.15, false);
+                        using (var lb = new SolidBrush(Theme.Muted)) g.DrawString(names[i], Draw.fTiny, lb, sr.X + 4 * S, sr.Y + 2 * S);
+                    }
+                    y += 38 * S;
+                }
+                var cp = new RectangleF(x, y, 360 * S, 22 * S);
+                g.DrawString((DateTime.Now - gzCopied).TotalSeconds < 3 ? "Copied - internal addresses removed" : "Copy match report (internal addresses removed)", Draw.fBodyB, blue, cp.X, cp.Y);
+                var ss2 = ss; Act(gamerCanvas, cp, delegate
+                {
+                    try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(ss2.Report(sp, ssid)); gzCopied = DateTime.Now; } catch (Exception e) { Program.Log("copy: " + e.Message); }
+                    gamerCanvas.Invalidate();
+                });
+                y += 34 * S;
+            }
+            return y;
+        }
         float PaintGameCard(Graphics g, Game gm, bool playing, float x, float y, float w)
         {
             var week = GameHistory.Week(gm.Id); var best = GamePing.Me.Best(gm);
