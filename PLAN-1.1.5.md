@@ -127,4 +127,9 @@ One widget engine (sleep / unlock / multi-monitor / fade / chip fixes shared), s
 3. Report for my ISP (general + gamer): path layers, hops, heatmap, two routes, modem page, PDF / text / CSV.
 4. Simple / Pro mode · speed test on click · Find devices fix · leftover gaps · Toolbox cold-open speed.
 5. VPN awareness · --report JSON · admin preset · ARM64 · streamer graph · side-by-side compare.
-6. Languages: string table, then French.
+6. Network engineer pack (moved in from PLAN-1.2.md, 11 Nov - "everything in one release"): Certificate Chain Compare,
+   DHCP Lease Replay, 802.1X Failure Decoder, "Why didn't this PC join the network?", RADIUS Client Lab, AAA before/after,
+   IPv6 RA replay, ICMP error translator, SMTP path check, sample-capture lab.
+7. Languages: string table, then French.
+8. Full suite: analyzer build, self-test, 25-min deep test, Windows build on Adeeb's PC, LIVE-TESTS; then hand-off for a
+   Claude Code / Codex bug review; fixes; then release when Adeeb says.
