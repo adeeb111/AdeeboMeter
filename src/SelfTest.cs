@@ -344,6 +344,34 @@ namespace AdeeboMeter
                 var pkt = new List<byte> { 0x30, 0, 0x04, (byte)t.Length }; pkt.AddRange(t); pkt.AddRange(new byte[] { 0x31, (byte)(v.Length + 2), 0x04, (byte)v.Length }); pkt.AddRange(v);
                 var d = MoreTools.ParseRootDse(pkt.ToArray(), pkt.Count); string h; if (!d.TryGetValue("dnsHostName", out h) || h != "dc01.corp.test") throw new InvalidOperationException("parse: " + h);
             });
+            T("outage log pairs 'went quiet' with 'back' and keeps an open one", () =>
+            {
+                var t0 = new DateTime(2026, 11, 11, 18, 0, 0); Func<int, int, Timeline.Ev> E = (min, lv) => new Timeline.Ev { T = t0.AddMinutes(min), Lv = lv, Kind = "inet", Text = "x" };
+                var o = Outages.Pair(new List<Timeline.Ev> { E(0, 2), E(5, 0), E(7, 0), E(20, 2), E(21, 2) }, t0.AddMinutes(30));
+                if (o.Count != 2 || !o[0].Ongoing || o[0].From != t0.AddMinutes(20) || o[1].Len.TotalMinutes != 5) throw new InvalidOperationException(o.Count + " outages");
+            });
+            T("every setting sits in a known section, and search finds words, not word parts", () =>
+            {
+                var bad = new List<string>();
+                if (!FullView.SettingsSelfCheck(bad)) throw new InvalidOperationException(string.Join(", ", bad));
+            });
+            T("Gamer Zone: Valve list, host check, caps, blame and grades", () =>
+            {
+                var bad = new List<string>();
+                string json = "{\"revision\":1,\"pops\":{\"ams\":{\"desc\":\"Amsterdam (Netherlands)\",\"geo\":[4.9,52.4],\"relays\":[{\"ipv4\":\"155.133.248.34\",\"port_range\":[27015,27060]}]},"
+                    + "\"iad\":{\"geo\":[-77.4,38.9],\"desc\":\"Sterling (Washington DC)\",\"relays\":[{\"ipv4\":\"162.254.192.71\"}]},\"bad\":{\"desc\":\"x\",\"relays\":[{\"ipv4\":\"999.1.1.1\"}]}}}";
+                var v = Valve.Parse(json);
+                if (v.Count != 2 || v[0].Name != "AMS" || v[0].Where != "Amsterdam" || v[1].Host != "162.254.192.71" || v[1].Port != -1) bad.Add("valve parse " + v.Count);
+                if (!Games.ValidHost("dynamodb.us-east-1.amazonaws.com") || !Games.ValidHost("203.0.113.20") || Games.ValidHost("riot server 3") || Games.ValidHost("a|b") || Games.ValidHost("x;calc") || Games.ValidHost("")) bad.Add("host check");
+                var many = new Game { Id = "t", Name = "T" }; for (int i = 0; i < 20; i++) many.Servers.Add(new GameServer { Name = "S" + i, Host = "10.0.0." + (i + 1), Port = -1 });
+                var gs = new List<Game> { many }; var plan = GamePing.Me.Plan(gs, new HashSet<string> { "t" }, "t");
+                if (plan.Count(z => z.Item3 < GamePing.SurveySec) > GamePing.MaxServers) bad.Add("more than 8 servers: " + plan.Count);
+                if (GamePing.Me.Plan(gs, new HashSet<string>(), null).Count != 0) bad.Add("probes a game nobody clicked");
+                if (!GamePing.Blame(90, 30, 45, 4).StartsWith("your Wi-Fi", StringComparison.Ordinal) || GamePing.Blame(4, 150, 80, 4) != "your provider" || !GamePing.Blame(4, 20, 80, 4).StartsWith("past your provider", StringComparison.Ordinal)) bad.Add("blame");
+                if (GameStat.Grade(34, 2, 0) != "Competitive" || GameStat.Grade(80, 9, 1) != "Casual" || GameStat.Grade(140, 3, 0) != "Laggy" || GameStat.Grade(double.NaN, 0, 100) != "No reply") bad.Add("grade");
+                if (Math.Abs(GameStat.Jitter(new[] { 10.0, 14, 10, double.NaN, 12 }) - (4 + 4 + 2) / 3.0) > 0.01 || GameStat.Loss(new[] { 1.0, double.NaN, 2, double.NaN }) != 50) bad.Add("jitter/loss");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));

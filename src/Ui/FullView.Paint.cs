@@ -260,6 +260,23 @@ namespace AdeeboMeter
             }
         }
 
+        // the outage log: every time the internet went quiet in the last 7 days (from history + the last 2 hours)
+        float PaintOutages(Graphics g, float x, float y, float w)
+        {
+            var list = Outages.Last(M, 7);
+            using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
+            {
+                g.DrawString("INTERNET OUTAGES · LAST 7 DAYS" + (Cfg.History ? "" : " · HISTORY IS OFF, SO ONLY THE LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 20 * S;
+                if (list.Count == 0) { g.DrawString(Cfg.NetSec == 0 ? "The internet check is off in Settings, so outages can't be noticed." : "None - the internet answered every time AdeeboMeter checked.", Draw.fBody, muted, x, y); y += 26 * S; }
+                foreach (var o in list.Take(8))
+                {
+                    using (var b = new SolidBrush(o.Ongoing ? Theme.Red : Theme.Amber)) g.FillEllipse(b, x + 2 * S, y + 6 * S, 9 * S, 9 * S);
+                    g.DrawString(Outages.Text(o), Draw.fBody, ink, x + 20 * S, y); y += 24 * S;
+                }
+                if (list.Count > 8) { g.DrawString("and " + (list.Count - 8) + " more", Draw.fSmall, muted, x + 20 * S, y); y += 22 * S; }
+            }
+            return y + 12 * S;
+        }
         void PaintChanges(Graphics g)
         {
             g.TranslateTransform(changesCanvas.AutoScrollPosition.X, changesCanvas.AutoScrollPosition.Y);
@@ -267,6 +284,7 @@ namespace AdeeboMeter
             Begin(changesCanvas);
             y = PaintDayPicker(g, x, y, w);
             if (histDay == null) y = PaintInsights(g, x, y, w);
+            if (histDay == null) y = PaintOutages(g, x, y, w);
             var evs = histDay == null ? M.Events.Recent(300) : (histData != null ? histData.E : new List<Timeline.Ev>());
             if (histDay != null && histData != null)
             {

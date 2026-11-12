@@ -277,6 +277,12 @@ namespace AdeeboMeter
             settingsCanvas = new DB { Name = "settingsCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             settingsCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSettings(e.Graphics); }; Wire(settingsCanvas);
             settingsPage.Controls.Add(settingsCanvas);
+            // search across every setting (Settings > the box at the top)
+            var setTop = new Panel { Dock = DockStyle.Top, Height = Sc(56), BackColor = Theme.Card, Padding = new Padding(Sc(252), Sc(12), Sc(24), Sc(8)) };
+            settingsSearch = new RoundBox(Sc(420), Draw.fBody, "Search settings - e.g. ping, history, widget") { Dock = DockStyle.Left };
+            settingsSearch.Box.AccessibleName = "Search settings";
+            settingsSearch.Box.TextChanged += delegate { settingsCanvas.AutoScrollPosition = Point.Empty; settingsCanvas.Invalidate(); };
+            setTop.Controls.Add(settingsSearch); settingsPage.Controls.Add(setTop);
 
             // About page
             aboutPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
@@ -285,7 +291,7 @@ namespace AdeeboMeter
             aboutPage.Controls.Add(aboutCanvas);
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
-            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage());
+            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage());
             left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
@@ -367,7 +373,7 @@ namespace AdeeboMeter
             aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about";
             linkPage.Visible = tab == "link"; if (tab == "link") RefreshLink(true);
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
-            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security";
+            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer";
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about") lastPage = tab;
             string sec = SecOf(tab); if (sec != "") lastIn[sec] = tab;
@@ -388,6 +394,7 @@ namespace AdeeboMeter
             new[] { "investigate", "Investigate", "guide", "dest", "health" },
             new[] { "security", "Security", "security" },
             new[] { "toolbox", "Toolbox", "toolbox" },
+            new[] { "gamer", "Gamer Zone", "gamer" },
             new[] { "story", "Network story", "travel" },
             new[] { "time", "Time machine", "replay", "changes" },
             new[] { "learn", "Learn", "learn", "windows" } };
@@ -395,7 +402,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
             { "overview", new[] { "Overview", "Overview" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
-            { "guide", new[] { "Investigate a problem", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "security", new[] { "Security", "Security" } },
+            { "guide", new[] { "Investigate a problem", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } } };
@@ -447,6 +454,7 @@ namespace AdeeboMeter
             if (++footTick % 2 == 0) { SelfStats(); footer.Invalidate(); }
             if (destRunning || pinRunning) destCanvas.Invalidate();
             if (tbBusy && tab == "toolbox" && tbCanvas != null) tbCanvas.Invalidate();
+            if (tab == "gamer" && footTick % 2 == 0) gamerCanvas.Invalidate();
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); }
@@ -565,6 +573,7 @@ namespace AdeeboMeter
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);
+            if (page == "settings" && sub != null) { if (sub.StartsWith("q=", StringComparison.Ordinal)) settingsSearch.Box.Text = sub.Substring(2); else { var hit = SetSections.FirstOrDefault(z => z.StartsWith(sub, StringComparison.OrdinalIgnoreCase)); if (hit != null) setSec = hit; } settingsCanvas.Invalidate(); }
             if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
             if (page == "toolbox" && sub != null) { EnsureToolbox(); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else OpenTool(sub); }
             if (destIn == "demo-story" && page == "dest")
@@ -607,7 +616,7 @@ namespace AdeeboMeter
             var sb = new StringBuilder(); var sw = new Stopwatch();
             var pages = new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about" };
             var canvas = new Dictionary<string, Control> { { "overview", overviewCanvas }, { "conn", list }, { "link", linkCanvas }, { "procs", procList }, { "live", liveCanvas }, { "guide", guideCanvas }, { "dest", destCanvas }, { "health", healthCanvas }, { "toolbox", toolboxPage },
-                { "travel", travelCanvas }, { "replay", replayCanvas }, { "changes", changesCanvas }, { "learn", learnList }, { "windows", insideList }, { "settings", settingsCanvas }, { "about", aboutCanvas } };
+                { "travel", travelCanvas }, { "replay", replayCanvas }, { "changes", changesCanvas }, { "learn", learnList }, { "windows", insideList }, { "settings", settingsCanvas }, { "gamer", gamerCanvas }, { "about", aboutCanvas } };
             sb.AppendLine("window " + Width + "x" + Height);
             sb.AppendLine("page       first  again  (show+paint)  page-paint  scroll-step  tick   ms");
             var first = new Dictionary<string, long>();

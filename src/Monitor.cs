@@ -232,7 +232,7 @@ namespace AdeeboMeter
                         if (NetEverReplied)
                         {
                             if (double.IsNaN(n)) { if (++netDown == 3) { netDownSince = DateTime.Now; Events.Add(2, "inet", Voice.P("The internet went quiet - no replies from " + tgt + ".", "Internet unreachable (no reply from " + tgt + ").")); } }
-                            else { if (netDown >= 3) Events.Add(0, "inet", "Internet back after " + Timeline.Ago(netDownSince)); netDown = 0; }
+                            else { if (netDown >= 3) Events.Add(0, "inet", "Internet back after " + Timeline.Ago(netDownSince) + " (down " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + " - " + DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture) + ")"); netDown = 0; }
                         }
                         if (!NetEverReplied && double.IsNaN(n) && ++netFails >= 2) { netFails = 0; ti = (ti + 1) % targets.Length; lock (L) NetTarget = targets[ti]; }
                         ProbeDns();

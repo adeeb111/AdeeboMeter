@@ -105,6 +105,21 @@ namespace AdeeboMeter
 
         // M rows: [0] seconds of day, then the 14 numeric columns (older 10-second files fill the first 7; the rest are NaN).
         public sealed class Day { public List<double[]> M = new List<double[]>(); public List<string> Net = new List<string>(); public List<double[]> Pc = new List<double[]>(); public List<Timeline.Ev> E = new List<Timeline.Ev>(); }
+        // just the events of a day (cheap: no measurement rows) - the outage log reads these
+        public static List<Timeline.Ev> EventsOf(DateTime d)
+        {
+            var l = new List<Timeline.Ev>();
+            try
+            {
+                foreach (var line in Lines(FileFor(d, "ev"), 2000))
+                {
+                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
+                    l.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
+                }
+            }
+            catch (Exception e) { Program.Log("history events: " + e.Message); }
+            return l;
+        }
         public static Day Load(DateTime d)
         {
             var day = new Day();

@@ -64,7 +64,7 @@ namespace AdeeboMeter
             Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
             Theme.Apply(Program.WantDark());
             Program.CleanCaptures();
-            M.Start();
+            M.Start(); GamePing.Me.Start(M);   /* the Gamer Zone sends nothing until a game is clicked */
 
             var menu = new ContextMenuStrip();
             var miFull = new ToolStripMenuItem("Open engineer view"); miFull.Font = new Font(miFull.Font, FontStyle.Bold); miFull.Click += delegate { OpenFull(); };
@@ -271,7 +271,7 @@ namespace AdeeboMeter
         {
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go
             if (quitting) return;
-            quitting = true; ui.Stop(); M.Stop(); Usage.Save();
+            quitting = true; ui.Stop(); GamePing.Me.Stop(); M.Stop(); Usage.Save();
             try { SystemEvents.UserPreferenceChanged -= prefHandler; } catch { }
             if (hotkey != null) hotkey.Dispose();
             tray.Visible = false; tray.Dispose();

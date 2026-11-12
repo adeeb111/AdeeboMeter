@@ -191,6 +191,11 @@ namespace AdeeboMeter
         public static volatile int LiveMin = 15, SniffSec = 30;
         // widget
         public static volatile int Fade = 77, DwellMs = 450;
+        // Gamer Zone: GameIds = games the user clicked (consent to contact their servers); background ping every GameBgSec
+        // to up to GameBgServers servers; every second while a game is open (GameFast); history kept GameDays
+        public static string GameIds = "";
+        public static volatile int GameBgSec = 30, GameBgServers = 3, GameDays = 14;
+        public static volatile bool GameFast = true, GameAuto = true, GameWidget = true;
         public static string Preset = "balanced";
         public static readonly List<string> Pins = new List<string>();   // saved destinations, max 5, UI thread only
         public static Action Save = delegate { };
@@ -217,11 +222,13 @@ namespace AdeeboMeter
             yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + HistoryDays;
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
+            yield return "gmon=" + GameIds; yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
+            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "autostart", "widget", "serious", "theme" };
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)
         {
@@ -248,6 +255,13 @@ namespace AdeeboMeter
                 case "capgb": CapGB = Pick(v, 0, CapChoices); break;
                 case "onlinemin": OnlineMin = Pick(v, 30, OnlineChoices); break;
                 case "pinwatch": PinWatch = v == "1"; break;
+                case "gmon": GameIds = string.Join(",", v.Split(',').Select(x => x.Trim().ToLowerInvariant()).Where(x => x.Length > 0 && x.Length <= 40 && x.All(ch => char.IsLetterOrDigit(ch) || ch == '-')).Distinct().Take(20)); break;
+                case "gbg": GameBgSec = Pick(v, 30, 10, 30, 60, 0); break;
+                case "gsrv": GameBgServers = Pick(v, 3, 1, 3, 5); break;
+                case "gdays": GameDays = Pick(v, 14, 7, 14, 30); break;
+                case "gfast": GameFast = v != "0"; break;
+                case "gauto": GameAuto = v != "0"; break;
+                case "gwidget": GameWidget = v != "0"; break;
                 case "livemin": LiveMin = Pick(v, 15, 5, 15, 30); break;
                 case "sniffsec": SniffSec = Pick(v, 30, 30, 60); break;
                 case "fade": Fade = Pick(v, 77, 51, 77, 128, 191, 255); break;

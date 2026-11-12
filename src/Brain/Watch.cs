@@ -37,6 +37,7 @@ namespace AdeeboMeter
             }
             else if (e.Kind == "net" && e.Lv == 2 && e.Text.IndexOf("hardware address", StringComparison.OrdinalIgnoreCase) >= 0) Raise("arp", "Your router's hardware address changed on the same network - possible spoofing. Use the VPN until you know why.", 60);
             else if (e.Kind == "inet" && e.Lv == 2) Raise("inet", "The internet went quiet. Your router still answers - it's your provider or the line, not your PC.", 20);
+            else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1);
         }
     }
 
