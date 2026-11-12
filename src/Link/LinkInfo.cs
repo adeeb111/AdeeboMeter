@@ -242,7 +242,7 @@ namespace AdeeboMeter
         // counted on every channel it overlaps
         public static int[] LeastCrowded(List<Ap> aps, string band, int mine, string myBssid)
         {
-            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48, 149, 153, 157, 161 } : new int[0];
+            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48, 149, 153, 157, 161 } : Array.Empty<int>();
             if (cand.Length == 0) return null;
             Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, c, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
             int best = cand.OrderBy(c => load(c)).ThenBy(c => c == mine ? 0 : 1).First();

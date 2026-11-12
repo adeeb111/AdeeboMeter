@@ -2308,6 +2308,86 @@ how: Pure arithmetic, nothing sent.
 why: Shows the same value every way a network engineer meets it.
 without: Offline.
 
+== tb.timeline
+friendly: What changed when it broke?
+cat: term
+close: -1
+tag: Everything that changed around the moment it broke.
+what: Network events AdeeboMeter noted, sleep and wake, Windows updates, new drivers and installed programs - in order, with the closest change before the break named as the first suspect.
+how: From AdeeboMeter's own timeline (History keeps it past two hours) and Windows' System log; nothing is sent.
+why: If something changed just before, undo that first; if nothing changed on this PC, the cause is outside it.
+without: History in Settings keeps events for days; without it only the last two hours are known.
+
+== tb.hotel
+friendly: Is this Wi-Fi OK to use?
+cat: term
+close: -1
+tag: Hotel, cafe or airport Wi-Fi: safe enough, or use a VPN?
+what: Checks the Wi-Fi lock (open, WEP, WPA2, WPA3), a sign-in page in the way, DNS that answers for names that don't exist, whether Windows treats it as Public, how many other guests reach you, and whether someone opens your HTTPS.
+how: Two requests go out when you press Run: Windows' own internet test and one HTTPS connection to microsoft.com. Everything else is read from this PC.
+why: A clear yes or no before you sign in to anything.
+without: Wi-Fi details need location access for desktop apps.
+
+== tb.dnsrace
+friendly: DNS race
+cat: term
+close: -1
+tag: Which DNS server answers fastest from here.
+what: Asks your DNS, your router and a few public ones the same names - known ones (cached) and made-up ones (it has to go and find out) - and compares the typical times.
+how: About 30 small questions per server, only when you press Run.
+why: Slow DNS makes every new site wait. Speed isn't everything: a company PC must keep its own DNS.
+without: -
+
+== tb.inventory
+friendly: Devices on this network
+cat: term
+close: -1
+tag: Every device seen here, kept over time - with your own labels.
+what: From the ARP table AdeeboMeter already reads every ten minutes: address, hardware address, maker, first and last seen. Give one a name with  aa:bb:cc:dd:ee:ff = Living room TV.
+how: Nothing is scanned for it; Find devices or a Ping sweep fills it in faster. Kept on this PC only.
+why: Know what's yours, and notice what isn't.
+without: -
+
+== tb.drivers
+friendly: Drivers, device problems and USB history
+cat: term
+close: -1
+tag: Devices with a problem, old network drivers, and every USB device seen.
+what: Each device's Windows problem code in plain words with the one thing to try, network / Bluetooth / USB drivers with their date, and USB devices by when they last came and went.
+how: Read from Windows' Plug and Play list - no admin, nothing changed.
+why: Old network drivers cause drops; a USB device with a problem code says why it won't work.
+without: -
+
+== ov.WEATHER
+friendly: The internet weather
+cat: term
+close: -1
+tag: Calm, choppy or stormy - in one sentence.
+what: How fast the internet answers right now, how much that wobbles, and the drops today.
+how: From the internet check AdeeboMeter already runs and the outage log.
+why: A quick read before a call or a match.
+without: -
+
+== tb.usb
+friendly: Why isn't my USB device working?
+cat: term
+close: -1
+tag: Not detected, not working or keeps disconnecting - why.
+what: Windows' problem code for the device in plain words, when it last dropped and how often, USB power saving and battery saver, and for a USB network adapter or phone tethering whether the link is really up. Ends with a verdict and one thing to try.
+how: Read from Windows' Plug and Play list and its device log - no admin, nothing changed.
+why: Most USB trouble is the cable, the port, power or the driver - this says which.
+without: AdeeboMeter can't test the device's own hardware.
+
+== tb.lag
+friendly: Why is my game lagging?
+cat: term
+close: -1
+tag: Lag, stutter, rubber banding, high ping - where it starts.
+what: Splits the path into this PC to the router, the router to your provider, and on to the game's server, from the pings AdeeboMeter already sends, and checks what else is happening: an upload, a busy PC, recent spikes. Ends with which part is at fault and what to do.
+how: No new traffic: it reads the pings already running (the Gamer Zone's for the game server).
+why: Wi-Fi, provider, server or the PC itself - each has a different fix.
+without: It can't read the game's in-game ping or frame rate.
+
 == tb.winev
 friendly: Windows' own evidence
 cat: term

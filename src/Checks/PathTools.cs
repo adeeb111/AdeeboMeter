@@ -16,7 +16,7 @@ namespace AdeeboMeter
     static class PathTools
     {
         static string[] Row(params string[] a) { return a; }
-        public sealed class Hop { public int N; public string Ip = ""; public long Rtt = -1; public int ReplyTtl = -1, Mtu = -1; public string MtuNote = "", Owner = ""; public bool Reached, BlackHole, Said; public int Sent, Lost, Switches; public string Cur = ""; public DateTime SwitchedAt; public readonly List<string> Seen = new List<string>(); public double Sum, Best = double.NaN, Worst = double.NaN, Last = double.NaN, Jit; }
+        public sealed class Hop { public int N; public string Ip = ""; public long Rtt = -1; public int ReplyTtl = -1, Mtu = -1; public string MtuNote = "", Owner = ""; public bool Reached, BlackHole, Said; public int Sent, Lost, Switches; public string Cur = ""; public DateTime SwitchedAt; public readonly List<string> Seen = new List<string>(); public double Sum, Best = double.NaN, Worst = double.NaN, Last = double.NaN, Jit; public readonly List<double> Hist = new List<double>(); }   // Hist: one value a round (NaN = lost), for the graph and the recording
         public static string F(double v) { return double.IsNaN(v) || v < 0 ? "-" : v.ToString("0", CultureInfo.CurrentCulture); }
 
         // ---------- trace (ICMP, 2 tries per hop)
@@ -88,12 +88,29 @@ namespace AdeeboMeter
                         else if (r.From != h.Cur) { h.Switches++; h.Cur = r.From; h.SwitchedAt = DateTime.Now; if (!h.Seen.Contains(r.From) && h.Seen.Count < 8) h.Seen.Add(r.From); }
                         double v = r.Rtt; if (!double.IsNaN(h.Last)) h.Jit += (Math.Abs(v - h.Last) - h.Jit) / 16; h.Last = v; h.Sum += v;
                         h.Best = double.IsNaN(h.Best) ? v : Math.Min(h.Best, v); h.Worst = double.IsNaN(h.Worst) ? v : Math.Max(h.Worst, v);
+                        lock (h.Hist) if (h.Hist.Count < 3600) h.Hist.Add(v);
                     }
-                    else h.Lost++;
+                    else { h.Lost++; lock (h.Hist) if (h.Hist.Count < 3600) h.Hist.Add(double.NaN); }
                 }
                 tick();
                 int wait = 1000 - (int)round.ElapsedMilliseconds; if (wait > 0) Thread.Sleep(wait);
             }
+        }
+        // the recording: one row per round, one column per hop - opens in Excel; kept in AdeeboMeter's own folder
+        public static string SaveCsv(List<Hop> hops, string target, DateTime start)
+        {
+            try
+            {
+                string dir = System.IO.Path.Combine(Program.WriteDir, "mtr"); System.IO.Directory.CreateDirectory(dir);
+                string safe = new string((target ?? "").Where(c => char.IsLetterOrDigit(c) || c == '.' || c == '-').Take(40).ToArray());
+                string f = System.IO.Path.Combine(dir, "mtr-" + safe + "-" + start.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".csv");
+                var sb = new System.Text.StringBuilder(); var list = hops.ToList();
+                sb.AppendLine("second," + string.Join(",", list.Select(h => "hop " + h.N + " " + (h.Ip == "" ? "*" : h.Ip))));
+                int rounds = list.Count == 0 ? 0 : list.Max(h => { lock (h.Hist) return h.Hist.Count; });
+                for (int i = 0; i < rounds; i++) sb.AppendLine(i.ToString(CultureInfo.InvariantCulture) + "," + string.Join(",", list.Select(h => { lock (h.Hist) return i < h.Hist.Count ? (double.IsNaN(h.Hist[i]) ? "lost" : h.Hist[i].ToString("0", CultureInfo.InvariantCulture)) : ""; })));
+                System.IO.File.WriteAllText(f, sb.ToString()); return f;
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("mtr csv: " + e.Message); return null; }
         }
         // loss at a middle hop only counts if the hops after it lose too
         // a hop that never answered (no reply in the whole run) is a router that ignores probes, not loss - it can't start

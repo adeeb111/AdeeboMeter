@@ -130,7 +130,7 @@ namespace AdeeboMeter
         // ---------- what kind of conversation this is: decides which rules apply
         public static string Kind(Flow f, List<Rec> r)
         {
-            int rp = f.RemotePort; IPAddress ip; IPAddress.TryParse(f.Remote, out ip);
+            int rp = f.RemotePort; IPAddress ip; if (!IPAddress.TryParse(f.Remote, out ip)) ip = null;
             if (rp == 53 || rp == 853 || rp == 5353) return "dns";
             if (rp == 51820 || rp == 500 || rp == 4500 || rp == 1194 || rp == 1701 || (rp == 443 && f.App.IndexOf("vpn", StringComparison.OrdinalIgnoreCase) >= 0)) return "vpn";
             if (ip != null && !Watch.IsPublic(f.Remote)) return "local";
@@ -157,7 +157,7 @@ namespace AdeeboMeter
             bool syn = false;
             foreach (var r in list)
             {
-                string who = r.Out ? "You" : "Server";
+                string who = r.Out ? "This PC" : "Server";
                 if (r.IcmpType >= 0) { r.Say = (r.FromRouter ? "A router on the way: " : "Server: ") + IcmpWords(r); continue; }
                 if (r.Proto == 6)
                 {
@@ -235,7 +235,7 @@ namespace AdeeboMeter
             var worst = findings.OrderByDescending(n => n.Lv == 2 ? 3 : n.Lv == 1 ? 2 : n.Lv == 0 ? 0 : 1).FirstOrDefault();
             string summary = data.Count + " packets over " + At(dur) + " · " + inb.Count + " in, " + outb.Count + " out · " + KindName(kind);
             if (worst == null || (worst.Lv != 1 && worst.Lv != 2)) notes.Add(N(0, "Looks healthy", summary + ". Nothing in these packets points at a problem.", double.NaN));
-            else notes.Add(N(worst.Lv, worst.Title, summary + ".", worst.At));
+            else notes.Add(N(worst.Lv, "In short: " + worst.Title.Substring(0, 1).ToLowerInvariant() + worst.Title.Substring(1), summary + ". The details are below.", worst.At));
             notes.AddRange(findings.OrderByDescending(n => n.Lv == 2 ? 3 : n.Lv == 1 ? 2 : n.Lv == 0 ? 1 : 0).ThenBy(n => double.IsNaN(n.At) ? 1e9 : n.At));
             notes.Add(N(3, "Can't tell from here", CantTell(kind, f.Udp)));
             return notes;
@@ -350,6 +350,19 @@ namespace AdeeboMeter
             n.Add(N(m > 0.2 ? 1 : 0, "How fast the device answers", Ms(m) + " typical, " + Ms(mx) + " at worst" + (m > 0.2 ? " - slow for a device on your own network; the device itself is busy or asleep (printers and NAS drives wake up slowly)" : " - the local network is fine") + ".", double.NaN));
         }
 
+        // ---------- a made-up game conversation (screenshots and the example): steady 8 ms updates, three stalls with bursts
+        public static List<Rec> Sample()
+        {
+            var l = new List<Rec>(); double tin = 0.004;
+            for (int i = 0; i < 300; i++) l.Add(new Rec { T = i * 0.008, Out = true, IpLen = 118, PayLen = 90, Proto = 17, Ttl = 64 });
+            for (int i = 0; i < 300; i++)
+            {
+                if (i == 100 || i == 180 || i == 250) { tin += 0.120; for (int k = 0; k < 5; k++) { l.Add(new Rec { T = tin, IpLen = 318, PayLen = 290, Proto = 17, Ttl = 52 }); tin += 0.0005; } }
+                l.Add(new Rec { T = tin, IpLen = i % 20 == 0 ? 1200 : 318, PayLen = 290, Proto = 17, Ttl = 52 }); tin += 0.008;
+            }
+            l = l.OrderBy(r => r.T).ToList(); Mark(l); return l;
+        }
+
         // ---------- the capture itself
         public sealed class Session
         {
@@ -357,6 +370,7 @@ namespace AdeeboMeter
             public double T0 = double.NaN; public List<Rec> Recs = new List<Rec>(); public int Before;
             readonly object k = new object(); Process p; volatile bool stop;
             public HashSet<string> Mine = new HashSet<string>();   // this PC's own addresses
+            public Session(Flow f, List<Rec> made) : this(f, false) { Recs = made; Done = true; }   // a finished one, for the example
             public Session(Flow f, bool quick) { F = f; Cap = quick ? QuickCap : NormalCap; Secs = quick ? QuickSecs : NormalSecs; }
             public List<Rec> Snapshot() { lock (k) return Recs.ToList(); }
             public void Stop() { stop = true; }
@@ -365,6 +379,7 @@ namespace AdeeboMeter
             {
                 try
                 {
+                    if (Policy.NoCapture) { Error = "Capturing packets is turned off by your IT team (AdeeboMeter.policy)."; return; }
                     string bpf = Bpf(F); if (bpf == null) { Error = "No address to follow."; return; }
                     var before = Rewind(); T0 = before.Count > 0 ? before[0].Abs : double.NaN;
                     File = Program.SafeCapturePath("journey_" + DateTime.Now.ToString("HHmmss", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N").Substring(0, 4) + ".pcapng");

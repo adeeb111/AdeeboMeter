@@ -346,6 +346,61 @@ in: 0xC8
 0|Binary|11001000||i
 3|As an IPv4 address|0.0.0.200||i
 
+== timeline
+in: 18:40
+3|The break|18:40||i
+1|First suspect|Driver installed: Intel(R) Wi-Fi 6 AX201 160MHz - 26 min before it broke||i
+3|18:14|Driver installed: Intel(R) Wi-Fi 6 AX201 160MHz||w
+3|18:39|Wi-Fi roamed to another access point||i
+2|18:40|The internet went quiet||i
+0|18:47|The internet is back||i
+
+== hotel
+0|Verdict|Usable - mind the notes below||i
+0|Wi-Fi lock|WPA2 - a password protects the air||i
+0|Sign-in page|none in the way - you're through to the internet||i
+0|DNS|honest - a name that doesn't exist gets "no such name"||i
+0|Windows treats it as|a Public network - this PC stays hidden from other guests||i
+1|Other devices seen|14 other devices on this network have talked to this PC - guests aren't kept apart here||i
+1|VPN|off - turn it on before you sign in to anything||i
+
+== dnsrace
+in: 
+0|Winner|Yours (192.0.2.1) - 4 ms for a name it knows, 38 ms for a new one||m
+3|Yours (192.0.2.1)|4 ms known · 38 ms new||m
+3|Cloudflare (1.1.1.1)|11 ms known · 24 ms new||m
+3|Google (8.8.8.8)|13 ms known · 41 ms new||m
+
+== inventory
+in: 
+3|Home|9 devices seen here · 6 here now||i
+0|Your router|192.0.2.1  ·  02:00:5e:10:00:01  ·  here now  ·  first seen 2 Nov 2026 09:12||i
+0|Living room TV|192.0.2.23  ·  02:00:5e:10:00:17  ·  here now  ·  first seen 2 Nov 2026 09:12||i
+3|Example Storage Inc.|192.0.2.40  ·  02:00:5e:10:00:28  ·  last seen yesterday 22:10  ·  first seen 4 Nov 2026 18:30||i
+
+== drivers
+2|Devices with a problem|1 - listed first below||w
+2|USB Receiver|Windows stopped it because it reported problems (code 43)|The classic USB failure: try another port and cable (a hub without power often causes it); then update the driver.|w
+3|NETWORK ADAPTERS|||w
+1|Example Wi-Fi 6 adapter|21.40.5.1 · 3 Mar 2021 (5.7 years old) · Example Corp||w
+3|USB HISTORY|the devices Windows has seen, most recent first||w
+3|USB Receiver|plugged in · arrived today 09:14 · removed today 09:13||w
+
+== usb
+in: headset
+2|Verdict|Found the likely reason - Try another port (a back port, not a hub) and another cable.||w
+2|USB Headset|dropped at today 14:02, back at today 14:02 · 6 disconnects in 24 h|Dropping again and again: a loose or long cable, a worn port, or not enough power (a hub without its own power supply, or a front-panel port). Try a port on the back of the PC, straight in.|w
+1|USB power saving|on - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)||w
+
+== lag
+in: valorant
+1|Verdict|Your Wi-Fi (weak signal) - the lag starts before the router||i
+3|Game|Valorant (running now) · server NA East||i
+2|This PC → router (Wi-Fi)|38 ms · jitter 21 ms · lost 2% · signal 41%||i
+0|Router → your provider → internet|+9 ms · jitter 22 ms · lost 2%||i
+0|→ the game's server (NA East)|41 ms · jitter 23 ms · lost 2%||i
+3|Honest limits|AdeeboMeter measures the network with its own probes; it can't read the game's in-game ping or frame rate.||i
+
 # ---------------------------------------------------------------- traffic lab
 == icmpb
 in: 192.0.2.10|5|size 1472 df

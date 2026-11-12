@@ -650,7 +650,15 @@ namespace AdeeboMeter
             }
             else if (destIn != null && page == "dest") { destBox.Box.Text = destIn; StartDest(); }
             if (page == "guide" && destIn != null) StartGuide(destIn, false);
-            if (page == "travel" && destIn != null) { travelBox.Box.Text = destIn; StorySite(); }
+            if (page == "travel" && destIn == "demo-journey")
+            {
+                // screenshot aid: a made-up game conversation on the packet journey, explained
+                storyApp = "VALORANT-Win64-Shipping"; storyIp = "203.0.113.40"; storyPort = 7086; storyTarget = "203.0.113.40:7086";
+                jFlow = new Journey.Flow { Remote = storyIp, RemotePort = 7086, LocalPort = 61000, Udp = true, App = storyApp };
+                jSess = new Journey.Session(jFlow, Journey.Sample()); jKind = "realtime"; jPlay = 1.62; jPing = new[] { 31.0, 33, 30, 41, 32, 30, 55, 31, 30, 34 };
+                jNotes = Journey.Explain(jFlow, jSess.Snapshot(), jKind, true); jScrollTo = true; travelCanvas.Invalidate();
+            }
+            else if (page == "travel" && destIn != null) { travelBox.Box.Text = destIn; StorySite(); }
             if (page == "toolbox" && destIn != null) { var parts = destIn.Split('|'); SelectTool(parts[0]); for (int i = 1; i < parts.Length && i - 1 < tbBoxes.Count; i++) if (tbBoxes[i - 1] != null) tbBoxes[i - 1].Box.Text = parts[i]; StartTool(); }
             if (page == "learn" && destIn != null) { learnSel = "topic:" + destIn; learnInfo.Invalidate(); learnList.Invalidate(); }
             if (page == "replay" && destIn != null) { double f; if (double.TryParse(destIn, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) ReplayAt(f); }
@@ -929,6 +937,7 @@ namespace AdeeboMeter
         void Sniff(Conn c)
         {
             if (!npcap || sniffing || c == null) return;
+            if (Policy.NoCapture) { sniffStatus = "Capturing packets is turned off by your IT team (AdeeboMeter.policy)."; UpdateConnStatus(); return; }
             if (live.Running && !live.RingActive && live.RingError != "") { sniffStatus = "The rewind buffer stopped (" + live.RingError + ") - capturing from now instead."; UpdateConnStatus(); }
             if (live.RingActive && !string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0)
             {

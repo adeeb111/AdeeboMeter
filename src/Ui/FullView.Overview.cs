@@ -82,7 +82,7 @@ namespace AdeeboMeter
         void OverviewTick()
         {
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
-            string k = s.Headline + "|" + s.Level + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            string k = s.Headline + "|" + s.Level + "|" + Outages.Last(M, 1).Count + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != ovKey) { ovKey = k; overviewCanvas.Invalidate(); }
         }
 
@@ -186,9 +186,12 @@ namespace AdeeboMeter
             {
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
-                var vr = new RectangleF(x, y, w, hh + 30 * S);
+                string wx = ""; try { wx = Picks.Weather(M); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("weather: " + e.Message); }   // the internet weather, one sentence
+                float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)(w - 40 * S)).Height + 4 * S : 0;
+                var vr = new RectangleF(x, y, w, hh + 30 * S + wh);
                 Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));
                 using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
+                if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh)); Hint(overviewCanvas, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh), "ov.WEATHER"); }
                 y += vr.Height + 18 * S;
 
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)

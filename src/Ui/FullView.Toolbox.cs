@@ -29,7 +29,7 @@ namespace AdeeboMeter
             tools = new List<Tool> {
                 T("mtu", "PATH", "MTU per hop", "Destination - e.g. github.com", null),
                 T("udpmtu", "PATH", "MTU over UDP (QUIC / DNS)", "Target - a website (port 443) or a DNS server (port 53)|Port - 443 or 53", (a, r) => UdpMtu.Run(a[0], a[1], r)),
-                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-10)", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(10, min)); r.Status = "Tracing..."; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); PathTools.Mtr(dst, mtrHops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second..."; }); var res = new List<string[]> { new[] { "0", "Verdict", PathTools.MtrVerdict(mtrHops), "", "i" } }; res.AddRange(PathTools.Flags(mtrHops)); return res; }),
+                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-60) - longer runs are a recording: a graph and a file you can keep", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(60, min)); r.Status = "Tracing..."; var start = DateTime.Now; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); r.SeriesUnit = "ms"; var hops = mtrHops; PathTools.Mtr(dst, hops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second... (the graph is the far end)"; var last = hops.LastOrDefault(h => h.Ip != ""); if (last != null) lock (last.Hist) r.Add(last.Hist.Count > 0 ? last.Hist[last.Hist.Count - 1] : double.NaN); }); var res = new List<string[]> { new[] { "0", "Verdict", PathTools.MtrVerdict(hops), "", "i" } }; res.AddRange(PathTools.Flags(hops)); string csv = PathTools.SaveCsv(hops, a[0], start); if (csv != null) res.Add(new[] { "3", "Recording", System.IO.Path.GetFileName(csv) + " - every hop, every second (opens in Excel)", "Kept in AdeeboMeter's folder; nothing is sent.", "m", "show:" + csv }); return res; }),
                 T("ret", "PATH", "The way back (return path)", "Destination", (a, r) => Toolkit.ReturnPath(a[0], r)),
                 T("owners", "PATH", "Who carries my traffic (BGP)", "Destination", (a, r) => { if (!Online.On) return OnlineOff(); var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); r.Status = "Tracing..."; var h = PathTools.Trace(dst, 30, () => r.Stop); r.Status = "Looking up each network..."; return Online.PathOwners(h, a[0]); }),
                 T("route", "PATH", "Which route does this take?", "Destination - e.g. 10.20.30.40 or a name", (a, r) => RoutingTools.RouteFor(Host(a[0]))),
@@ -142,6 +142,13 @@ namespace AdeeboMeter
                 T("vlsm", "CALC", "VLSM planner", "Block - e.g. 10.0.0.0/22|Hosts each subnet needs - e.g. 200, 60, 12, 2", (a, r) => Calc.Vlsm(a[0], a[1])),
                 T("bandwidth", "CALC", "Bandwidth and transfer time", "Size - e.g. 4.7 GB (optional)|Speed - e.g. 100 Mbps or 12 MB/s|Time - e.g. 10 min (optional) - any two give the third", (a, r) => Calc.Bandwidth(a[0], a[1], a[2])),
                 T("binhex", "CALC", "Decimal, hex and binary", "Number - 200, 0xC8, 0b11001000, an IPv4 address or a MAC", (a, r) => Calc.Number(a[0])),
+                T("timeline", "WATCH", "What changed when it broke?", "When it broke - e.g. 18:40 or yesterday 18:40 (empty = the last outage)", (a, r) => Picks.Timeline(M, a[0])),
+                T("hotel", "YOUR NETWORK", "Is this Wi-Fi OK to use? (hotel, cafe)", null, (a, r) => Picks.Hotel(M, r)),
+                T("dnsrace", "NAMES", "DNS race - which server is fastest here", "Extra servers to race (optional) - e.g. 208.67.222.222", (a, r) => Picks.DnsRace(M, a[0], r)),
+                T("inventory", "YOUR NETWORK", "Devices on this network (kept over time)", "Label one (optional) - e.g. aa:bb:cc:dd:ee:ff = Living room TV", (a, r) => Picks.Inventory(M, a[0])),
+                T("drivers", "THE PC", "Drivers, device problems and USB history", null, (a, r) => Picks.Drivers()),
+                T("usb", "THE PC", "Why isn't my USB device working?", "Which device (optional) - part of its name, e.g. headset, mouse, disk", (a, r) => Guided.Usb(a[0])),
+                T("lag", "SPEED", "Why is my game lagging?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => Guided.Lag(M, a[0])),
                 T("winev", "WINDOWS", "Windows' own evidence", null, (a, r) => WinEvidence.All(M)),
                 T("auth", "WINDOWS", "Why network sign-in failed (802.1X)", null, (a, r) => WinEvidence.Auth()),
                 T("dc", "WINDOWS", "Domain controllers", null, (a, r) => SysTools.DomainControllers(M)),
@@ -172,14 +179,14 @@ namespace AdeeboMeter
         static readonly string[][] TbLayout = {
             new[] { "PATH & ROUTING", "mtu", "udpmtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "vpn", "teams", "ssh", "mail", "radius", "tacacs" },
-            new[] { "SPEED & QUALITY", "speedtest", "ping", "twamp", "cloud", "ispreport", "gamecompare" },
-            new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
+            new[] { "SPEED & QUALITY", "lag", "speedtest", "ping", "twamp", "cloud", "ispreport", "gamecompare" },
+            new[] { "COMPARE & WATCH", "timeline", "beforeafter", "twopc", "mysites" },
             new[] { "WHY CAN'T IT JOIN?", "join", "dot1x", "radiuslab" },
             new[] { "REPLAY A CAPTURE", "dhcpreplay", "eapreplay", "rareplay", "icmpexplain", "samplelab" },
             new[] { "TRUST & MAIL", "certcmp", "smtppath" },
-            new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
+            new[] { "NAMES & TIME", "dig", "dnsrace", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
-            new[] { "ON YOUR NETWORK", "arp", "finddev", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin" },
+            new[] { "ON YOUR NETWORK", "hotel", "inventory", "arp", "finddev", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin" },
             new[] { "CALCULATORS", "subnet", "vlsm", "stack", "bandwidth", "binhex" },
             new[] { "REMOTE ACCESS", "remote" },
             new[] { "BUILD A PACKET", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "wol" },
@@ -188,7 +195,7 @@ namespace AdeeboMeter
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
             new[] { "KEYS & ENCRYPTION", "encrypt", "decrypt", "keys", "newkey", "recipients", "csrmake", "selfsigned", "certmatch", "certlive" },
             new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
-            new[] { "THE PC", "tidy", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
+            new[] { "THE PC", "usb", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "CALCULATORS", "net" },
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health

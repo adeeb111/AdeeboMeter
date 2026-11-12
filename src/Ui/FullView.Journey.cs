@@ -171,8 +171,8 @@ namespace AdeeboMeter
         float PaintJCapture(Graphics g, float x, float y, float w, Journey.Flow f)
         {
             y = Head(g, "THE REAL PACKETS", x, y, w, "travel.JREAL");
-            if (!LiveCapture.Available) return Lead(g, "Recording the real packets needs Wireshark (with Npcap). The stack and the timing above work without it.", x, y, w, true);
-            bool rec = jSess != null && !jSess.Done;
+            bool rec = jSess != null && !jSess.Done, can = LiveCapture.Available && !Policy.NoCapture;
+            if (!can && (jSess == null || jSess.Snapshot().Count == 0)) return Lead(g, Policy.NoCapture ? "Capturing packets is turned off by your IT team (AdeeboMeter.policy). The stack and the timing above still work." : "Recording the real packets needs Wireshark (with Npcap). The stack and the timing above work without it.", x, y, w, true);
             // controls: mode, capture / stop
             float cx = x;
             foreach (var m in new[] { new[] { "q", "Quick · 100 packets" }, new[] { "n", "Normal · 1,000 or 30 s" } })
@@ -185,8 +185,8 @@ namespace AdeeboMeter
             }
             string lab = rec ? "Stop" : jSess != null ? "Capture again" : "Capture this conversation";
             var ls = g.MeasureString(L.T(lab), Draw.fBodyB); var lr = new RectangleF(cx + 10 * S, y, ls.Width + 28 * S, 34 * S);
-            Theme.Fill(g, lr, 17 * S, rec ? Theme.Red : Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(L.T(lab), Draw.fBodyB, wb, lr.X + 14 * S, y + (34 * S - ls.Height) / 2);
-            Act(travelCanvas, lr, delegate { if (jSess != null && !jSess.Done) jSess.Stop(); else JCapture(); });
+            Theme.Fill(g, lr, 17 * S, !can ? Theme.Soft : rec ? Theme.Red : Theme.Blue); using (var wb = new SolidBrush(can ? Color.White : Theme.Muted)) g.DrawString(L.T(lab), Draw.fBodyB, wb, lr.X + 14 * S, y + (34 * S - ls.Height) / 2);
+            if (can) Act(travelCanvas, lr, delegate { if (jSess != null && !jSess.Done) jSess.Stop(); else JCapture(); });
             y += 44 * S;
             var recs = jSess != null ? jSess.Snapshot() : new List<Journey.Rec>();
             if (jSess == null) return Lead(g, "Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first.", x, y, w, true);
@@ -323,7 +323,7 @@ namespace AdeeboMeter
                 {
                     int lv = r.IcmpType >= 0 || r.GapBefore > 0 ? 2 : r.Resend || r.DupAck ? 1 : 3;
                     g.DrawString(r.T.ToString("0.000", CultureInfo.InvariantCulture), Draw.fMonoS, muted, x, y + 2 * S);
-                    using (var arrow = new SolidBrush(r.Out ? Theme.Blue : Theme.Green)) g.DrawString(r.Out ? "→" : "←", Draw.fBodyB, arrow, x + 64 * S, y);
+                    using (var ap = new Pen(r.Out ? Theme.Blue : Theme.Green, 2 * S)) { ap.CustomEndCap = new AdjustableArrowCap(3, 4); float ay = y + 10 * S; if (r.Out) g.DrawLine(ap, x + 62 * S, ay, x + 78 * S, ay); else g.DrawLine(ap, x + 78 * S, ay, x + 62 * S, ay); }   // drawn, not a font glyph
                     using (var tb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(r.Say, Draw.fBody, tb, new RectangleF(x + 86 * S, y, w - 86 * S, 20 * S), nowrap);
                     y += 21 * S;
                 }

@@ -32,6 +32,7 @@ namespace AdeeboMeter
         {
             err = ""; file = ""; var list = new List<Pkt>();
             if (!LiveCapture.Available) { err = "Needs Wireshark (with Npcap) - not found on this PC."; return list; }
+            if (Policy.NoCapture) { err = "Capturing packets is turned off by your IT team (AdeeboMeter.policy)."; return list; }
             string ifc = Iface(m); if (ifc == "") { err = "No active network adapter."; return list; }
             if (filter != "" && !SafeFilter(filter)) { err = "Bad filter."; return list; }
             file = Program.SafeCapturePath("journey-" + DateTime.Now.ToString("HHmmss", CultureInfo.InvariantCulture) + ".pcapng");

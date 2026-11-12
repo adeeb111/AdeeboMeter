@@ -213,6 +213,7 @@ namespace AdeeboMeter
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
             List<Arp.Entry> table; try { table = Arp.Table(); } catch { return; }
             string gw; bool vpn; lock (m.L) { gw = m.Gateway; vpn = m.VpnUp; }
+            try { Picks.SeeDevices(key, table, gw); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory: " + e.Message); }
             bool company = vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
             var announce = new List<Arp.Entry>();
             lock (k)

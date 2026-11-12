@@ -16,14 +16,14 @@ namespace AdeeboMeter
         // id, question, the groups (from TbLayout) it covers, its three featured tools
         static readonly string[][] Questions = {
             new[] { "reach", "Can I reach it?", "IS IT REACHABLE?|NAMES & TIME", "port|http|allips" },
-            new[] { "slow", "Why is it slow?", "SPEED & QUALITY|COMPARE & WATCH", "speedtest|ping|ispreport" },
+            new[] { "slow", "Why is it slow?", "SPEED & QUALITY|COMPARE & WATCH", "lag|speedtest|timeline" },
             new[] { "path", "Where does it break?", "PATH & ROUTING", "mtr|mtu|route" },
             new[] { "lan", "What's on my network?", "SWITCHES & ROUTERS (SNMP)|ON YOUR NETWORK|REMOTE ACCESS", "finddev|snmp|arp" },
             new[] { "join", "Why can't it join?", "WHY CAN'T IT JOIN?|REPLAY A CAPTURE|TRUST & MAIL", "join|radiuslab|dhcpreplay" },
             new[] { "keys", "Keys and encryption", "KEYS & ENCRYPTION", "encrypt|decrypt|keys" },
             new[] { "win", "Windows and certificates", "WINDOWS|CERTIFICATES & FILES", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
-            new[] { "pc", "Is it this PC?", "THE PC", "pressure|space|crash" },   // the PC's own checks: on no other card
+            new[] { "pc", "Is it this PC?", "THE PC", "usb|pressure|drivers" },   // the PC's own checks: on no other card
             new[] { "calc", "Work it out", "CALCULATORS", "subnet|stack|bandwidth" } };   // pure arithmetic, nothing sent
         string tbQ = "";   // the question page open ("" = all questions)
         DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
