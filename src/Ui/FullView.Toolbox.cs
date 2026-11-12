@@ -199,7 +199,7 @@ namespace AdeeboMeter
         void ShowSection(string s)
         {
             if (tbBusy) { if (tbRun0 != null) tbRun0.Status = "still running - press Stop first to change section"; tbCanvas.Invalidate(); return; }   // say why the click did nothing
-            tbSection = s; tbHome = true; tbBar.Visible = false; foreach (var c in tbChips) c.Selected = (string)c.Tag == s;
+            tbSection = s; tbHome = true; tbBar.Visible = false; if (tbHead != null) tbHead.Visible = false; foreach (var c in tbChips) c.Selected = (string)c.Tag == s;
             foreach (var t in Tools2().Where(x => SectionOf(x) == s)) tbOpen.Add(t.Group);   // short lists: every group starts open
             tbList.AutoScrollPosition = Point.Empty; tbCanvas.AutoScrollPosition = Point.Empty; tbList.Invalidate(); tbCanvas.Invalidate();
         }
@@ -412,7 +412,7 @@ namespace AdeeboMeter
         void EnsureToolbox2()
         {
             toolboxPage.SuspendLayout();
-            var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
+            var split = tbSplit = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
             split.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(290))); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             tbList = new DB { Name = "tbList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             tbList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbList(e.Graphics); }; Wire(tbList);
@@ -430,27 +430,35 @@ namespace AdeeboMeter
                 else if (e.KeyCode == Keys.Enter) { e.Handled = true; e.SuppressKeyPress = true; var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); else if (!tbBusy) StartTool(); }
             };
             tbList.KeyPress += delegate(object s, KeyPressEventArgs e) { if (!char.IsControl(e.KeyChar)) { e.Handled = true; tbSearch.Box.Focus(); tbSearch.Box.Text += e.KeyChar; tbSearch.Box.SelectionStart = tbSearch.Box.TextLength; } };
-            var left = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0) };
+            var left = tbLeft = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0) };
             // top bar: Network · Devices · This PC, and one search across all of them
             var topBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(10), Sc(10), Sc(6)), WrapContents = true };
             tbChips = Sections.Select(sec => { var c = new PillButton(sec[1], PillButton.K.Chip) { Tag = sec[0], Margin = new Padding(0, Sc(3), Sc(8), 0) }; string id = sec[0]; c.Click += delegate { tbSearch.Box.Text = ""; ShowSection(id); }; return c; }).ToArray();
-            foreach (var c in tbChips) topBar.Controls.Add(c);
+            foreach (var c in tbChips) { topBar.Controls.Add(c); tbClassic.Add(c); }
             tbSearch = new RoundBox(Sc(320), Draw.fInput, "Find any tool (mtu, dns, wifi, slow...)") { Margin = new Padding(Sc(16), 0, 0, 0) };
-            tbSearch.Box.TextChanged += delegate { tbFilter = tbSearch.Box.Text.Trim(); tbList.AutoScrollPosition = Point.Empty; tbList.Invalidate(); };
+            tbSearch.Box.TextChanged += delegate
+            {
+                tbFilter = tbSearch.Box.Text.Trim(); tbList.AutoScrollPosition = Point.Empty; tbList.Invalidate();
+                if (ByQuestion && !tbBusy) { if (tbFilter != "") { tbHome = true; tbBar.Visible = false; } tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate(); }   // by question, results show in the page itself
+            };
             tbSearch.Box.KeyDown += delegate(object s, KeyEventArgs e)
             {
                 if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; var first = Matches().FirstOrDefault(); if (first != null) { OpenTool(first.Id); if (tab != "toolbox") return; var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); } }
                 else if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; }
                 else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; tbList.Focus(); MoveTool(tbVisible.IndexOf(tbSel) < 0 ? 0 : 1); }
             };
-            topBar.Controls.Add(tbSearch); topBar.SetFlowBreak(tbSearch, true);
+            topBar.Controls.Add(tbSearch);
+            // by question, or the classic all-at-once list - remembered
+            tbViewQ = new PillButton("By question", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewQ.Click += delegate { SetTbView("q"); };
+            tbViewL = new PillButton("All tools (list)", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), 0, 0) }; tbViewL.Click += delegate { SetTbView("list"); };
+            topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewL); topBar.SetFlowBreak(tbViewL, true);
             // one click to the tools people reach for most - from any section
-            topBar.Controls.Add(new Label { Text = "QUICK", AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) });
+            var quick = new Label { Text = L.T("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
             foreach (var q in QuickTools)
             {
                 var qb = new PillButton(q[1], PillButton.K.Chip) { Tag = q[0], Margin = new Padding(0, Sc(6), Sc(8), 0) };
                 qb.Click += delegate(object s2, EventArgs e2) { tbSearch.Box.Text = ""; OpenTool((string)((Control)s2).Tag); };
-                topBar.Controls.Add(qb);
+                topBar.Controls.Add(qb); tbClassic.Add(qb);
             }
             left.Controls.Add(tbList);
             var right = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0) };
@@ -470,18 +478,22 @@ namespace AdeeboMeter
             tbBar.Controls.Add(tbRun);
             tbCanvas = new DB { Name = "tbCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             tbCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTb(e.Graphics); }; Wire(tbCanvas);
-            right.Controls.Add(tbCanvas); right.Controls.Add(tbBar);
+            tbHead = new DB { Name = "tbHead", Dock = DockStyle.Top, Height = Sc(100), BackColor = Theme.Card, Visible = false };
+            tbHead.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbHead(e.Graphics); }; Wire(tbHead);
+            right.Controls.Add(tbCanvas); right.Controls.Add(tbBar); right.Controls.Add(tbHead);
             split.Controls.Add(left, 0, 0); split.Controls.Add(right, 1, 0);
             toolboxPage.Controls.Add(split); toolboxPage.Controls.Add(topBar);
             toolboxPage.ResumeLayout(true);
             SelectTool(tbSel); ShowSection("net"); ThemeScrollbars(toolboxPage);
+            toolboxPage.Resize += delegate { if (ByQuestion && tbSearch != null) { int want = Math.Max(Sc(420), toolboxPage.Width - Sc(420)); if (Math.Abs(tbSearch.Width - want) > 4) tbSearch.Width = want; } };
+            ApplyTbView(); if (ByQuestion) ShowQuestions("");
         }
         void SelectTool(string id)
         {
             EnsureToolbox(); if (tbBusy) return;
             if (SnmpView(tbSel) && SnmpView(id) && tbBoxes.Count > 1 && IsSnmp(tbSel)) { snmpDev = tbBoxes[0].Box.Text.Trim(); snmpCred = tbBoxes[1].Box.Text.Trim(); }   // switching SNMP tabs keeps the device you typed
             var t = Tools2().FirstOrDefault(x => x.Id == id) ?? Tools2()[0];
-            tbHome = false; tbBar.Visible = true; if (tbSection != SectionOf(t) && SectionOf(t) != "health") { tbSection = SectionOf(t); foreach (var c in tbChips) c.Selected = (string)c.Tag == tbSection; foreach (var o in Tools2().Where(z => SectionOf(z) == tbSection)) tbOpen.Add(o.Group); } tbSel = t.Id; tbRows = null; tbRun0 = null; tbTitle = t.Title; tbRowsKey = "";
+            tbHome = false; tbBar.Visible = true; if (tbHead != null) { tbHead.Visible = ByQuestion; tbHead.Invalidate(); } if (tbSection != SectionOf(t) && SectionOf(t) != "health") { tbSection = SectionOf(t); foreach (var c in tbChips) c.Selected = (string)c.Tag == tbSection; foreach (var o in Tools2().Where(z => SectionOf(z) == tbSection)) tbOpen.Add(o.Group); } tbSel = t.Id; tbRows = null; tbRun0 = null; tbTitle = t.Title; tbRowsKey = "";
             tbShown = null; PrevRun last; if (tbLast.TryGetValue(t.Id, out last)) { tbRows = last.Rows; tbAt = last.At; tbRowsKey = last.Inputs; tbShown = last.Shown; }   // coming back shows the last result
             // three input boxes made once and reused - switching tools creates no new windows
             tbBar.SuspendLayout(); tbBoxes.Clear();
@@ -750,17 +762,21 @@ namespace AdeeboMeter
         {
             g.TranslateTransform(tbCanvas.AutoScrollPosition.X, tbCanvas.AutoScrollPosition.Y); Begin(tbCanvas);
             float x = 14 * S, y = 8 * S, w = tbCanvas.ClientSize.Width - 28 * S; var run = tbRun0;
-            if (tbHome) { PaintHome(g, x, y, w); return; }
+            if (tbHome) { if (ByQuestion) PaintQuestions(g, x + 6 * S, y, w - 12 * S); else PaintHome(g, x, y, w); return; }
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {
                 // where you are: back to the section's home, and the group
                 var cur = Tools2().First(z => z.Id == tbSel);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 {
-                    string back = "‹  " + SectionName(tbSection); var bs = g.MeasureString(back, Draw.fSmall);
-                    g.DrawString(back, Draw.fSmall, lb, x, y); Act(tbCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { ShowSection(tbSection); });
-                    g.DrawString("·  " + cur.Group, Draw.fTiny, muted, x + bs.Width + 6 * S, y + 2 * S);
-                    y += 26 * S;
+                    if (ByQuestion) { }   // by question: the way back and the tool's name are in the header above the boxes (tbHead)
+                    else
+                    {
+                        string back = "‹  " + SectionName(tbSection); var bs = g.MeasureString(back, Draw.fSmall);
+                        g.DrawString(back, Draw.fSmall, lb, x, y); Act(tbCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { ShowSection(tbSection); });
+                        g.DrawString("·  " + cur.Group, Draw.fTiny, muted, x + bs.Width + 6 * S, y + 2 * S);
+                        y += 26 * S;
+                    }
                     if (SnmpView(tbSel))
                     {
                         // SNMP: one device, many questions - the views as tabs
