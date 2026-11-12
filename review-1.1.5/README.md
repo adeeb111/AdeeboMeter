@@ -13,7 +13,7 @@ Independent review. Findings only; nothing in the product was changed.
 | Which 1.1.4 findings are still on dev-1.1.5 | dev-1.1.5 | done: 167 of 169 still present, 2 partly fixed, 0 fixed | 10-carryover.md |
 | Crypto, keys, policy, report, portable, Store | dev-1.1.5 | running | — |
 | Engineer pack, pcap, replays, speed test, ISP report, Gamer | dev-1.1.5 | running | — |
-| New UI: Examples, Points, Toolbox home, French | dev-1.1.5 | running | — |
+| New UI: Examples, Points, Toolbox home, French | dev-1.1.5 | done: 12 confirmed, 6 suspected | 09-ui-115.md |
 
 The final `claude-code.md` (the brief's format, numbered, dev-1.1.5 line numbers) comes when the dev-1.1.5 parts finish.
 
