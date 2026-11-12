@@ -118,14 +118,23 @@ namespace AdeeboMeter
         // must be a later answering hop that keeps it).
         // A hop that answered the trace and then lost everything during the run did answer once: 100% from there on is an
         // outage, not a quiet router (that's what lets "everything past hop 2 went dark" count as loss).
-        static bool Answers(Hop h) { return h.Sent > 0 && (h.Lost < h.Sent || h.Ip != ""); }
+        // ...but only when it isn't alone: one quiet router at the end that answered the trace and then ignored every ping
+        // is just a quiet router. It's an outage when the destination itself goes dark, or two or more traced hops do.
+        static bool Answers(Hop h) { return h.Sent > 0 && h.Lost < h.Sent; }
+        static bool Answers(List<Hop> hops, int i)
+        {
+            var h = hops[i]; if (h.Sent <= 0) return false; if (h.Lost < h.Sent) return true; if (h.Ip == "") return false;
+            if (h.Reached) return true;
+            int dark = hops.Count(x => x.Sent > 0 && x.Ip != "" && x.Lost >= x.Sent);
+            return dark >= 2;
+        }
         static double LossOf(Hop h) { return 100.0 * h.Lost / h.Sent; }
         public static int LossStart(List<Hop> hops)
         {
             for (int i = 0; i < hops.Count; i++)
             {
-                var h = hops[i]; if (!Answers(h)) continue; double l = LossOf(h); if (l < 3) continue;
-                var later = hops.Skip(i + 1).Where(Answers).ToList();
+                var h = hops[i]; if (!Answers(hops, i)) continue; double l = LossOf(h); if (l < 3) continue;
+                var later = Enumerable.Range(i + 1, Math.Max(0, hops.Count - i - 1)).Where(j => Answers(hops, j)).Select(j => hops[j]).ToList();
                 if (later.Count == 0) continue;   // loss only at the last hop that answers (the destination too) is that box rate-limiting pings - it has to carry on to count
                 if (later.All(x => LossOf(x) >= l * 0.6)) return i;
             }

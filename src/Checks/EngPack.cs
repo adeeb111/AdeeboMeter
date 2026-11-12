@@ -47,9 +47,9 @@ namespace AdeeboMeter
             SslPolicyErrors errs = SslPolicyErrors.None;
             try
             {
-                using (var tc = Toolkit.Tcp())
+                using (var tc = Toolkit.Open(h, port, 6000))
                 {
-                    if (!tc.ConnectAsync(h, port).Wait(6000)) { rows.Add(R(2, snap.Host, "couldn't connect in 6 s", "", "m")); return rows; }
+                    if (tc == null) { rows.Add(R(2, snap.Host, "couldn't connect in 6 s", "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) =>
                     {
                         errs = e;

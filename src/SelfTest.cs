@@ -454,6 +454,10 @@ namespace AdeeboMeter
                 // everything past hop 2 went dark for the whole run (those hops had answered the trace): an outage, not quiet routers
                 var dark = new List<PathTools.Hop> { H(1, 0, "192.168.1.1"), H(2, 0, "203.0.113.1"), H(3, 100, "203.0.113.9"), H(4, 100, "198.51.100.7") }; dark[3].Reached = true;
                 if (IspReport.StartOfLoss(dark) != 2) throw new InvalidOperationException("an outage past hop 2 wasn't seen: " + PathTools.MtrVerdict(dark));
+                // round-2 review: ONE quiet router at the end (answered the trace, then ignored every ping) doesn't make an earlier
+                // hop's rate-limiting "real loss", and the verdict is judged by a hop that answered pings
+                var quietTail = new List<PathTools.Hop> { H(1, 0, "192.168.1.1"), H(2, 5, "203.0.113.1"), H(3, 100, "203.0.113.5") };
+                if (IspReport.StartOfLoss(quietTail) != -1 || PathTools.MtrVerdict(quietTail).Contains("hop 3")) throw new InvalidOperationException("a quiet tail hop made loss real: " + PathTools.MtrVerdict(quietTail));
                 if (!IspReport.Private(IPAddress.Parse("100.64.3.1")) || !IspReport.Private(IPAddress.Parse("fd00::1")) || IspReport.Private(IPAddress.Parse("8.8.8.8"))) throw new InvalidOperationException("private address check");
             });
             T("SMTP path: steps come from the rows - a bad certificate is never 'checked', a banner can't fake a step", () =>
@@ -686,6 +690,24 @@ namespace AdeeboMeter
                 if (UpdateBreak.Compare(new UpdateBreak.Change { T = dD.AddDays(-2).AddHours(9), What = "two before" }, stepAtD).Strong) bad.Add("blamed an install two days before it got worse");
                 if (!UpdateBreak.Compare(new UpdateBreak.Change { T = dD.AddDays(-1).AddHours(9), What = "the day before" }, stepAtD).Strong) bad.Add("missed the install the day before it got worse");
                 if (!UpdateBreak.Defender("Security Intelligence Update for Microsoft Defender Antivirus - KB2267602 (Version 1.421.1)") || UpdateBreak.Defender("2026-11 Cumulative Update (KB5046617)")) bad.Add("Defender definitions not set apart");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
+            T("round-2 core fixes: mapped addresses, outage ends, ReplaceFile, --report verdict", () =>
+            {
+                var bad = new List<string>();
+                if (Lab.NotOne(IPAddress.Parse("::ffff:255.255.255.255")) == "" || Lab.NotOne(IPAddress.Parse("::ffff:224.0.0.251")) == "") bad.Add("IPv4-mapped broadcast/multicast passed as one device");
+                if (Watch.IsPublic("::ffff:192.168.1.1") || Watch.IsPublic("::ffff:127.0.0.1") || !Watch.IsPublic("::ffff:8.8.8.8")) bad.Add("IPv4-mapped private address counted as public");
+                if (SpeedTest.SafeUrl("http://[::ffff:127.0.0.1]/x") || SpeedTest.SafeUrl("http://[::ffff:192.168.1.1]/cgi-bin/x")) bad.Add("speed server URL into this PC / the LAN");
+                var t0 = new DateTime(2026, 11, 12, 18, 0, 0);
+                var evs = new List<Timeline.Ev> { new Timeline.Ev { T = t0, Lv = 2, Kind = "inet", Text = "quiet" }, new Timeline.Ev { T = t0.AddMinutes(9), Lv = 1, Kind = "inet", Text = "network changed" } };
+                var op = Outages.Pair(evs, t0.AddHours(1), false); if (op.Count != 1 || !op[0].EndUnseen) bad.Add("a network change closed an outage with a made-up end");
+                string f = Path.Combine(Path.GetTempPath(), "am-replace-" + Guid.NewGuid().ToString("N"));
+                try
+                {
+                    File.WriteAllText(f, "old"); File.WriteAllText(f + ".tmp", "new"); Program.ReplaceFile(f + ".tmp", f);
+                    if (File.ReadAllText(f) != "new" || File.Exists(f + ".tmp") || File.Exists(f + ".bak")) bad.Add("ReplaceFile");
+                }
+                finally { foreach (var x in new[] { f, f + ".tmp", f + ".bak" }) try { File.Delete(x); } catch (IOException) { } }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("Neighbour wars: winner per day, who moved onto your channel, the quietest channel", () =>

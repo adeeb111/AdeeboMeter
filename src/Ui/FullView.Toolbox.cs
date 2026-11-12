@@ -52,7 +52,7 @@ namespace AdeeboMeter
                 T("ping", "SPEED", "Sustained ping", "Target|How many (10-2000)|Every ms (20-5000)", (a, r) => Toolkit.Sustained(a[0], a[1], a[2], r)),
                 T("dscp", "SPEED", "DSCP-marked ping", "Target|DSCP - EF, AF41, CS6 or 0-63|How many (2-200)", (a, r) => Toolkit.DscpPing(a[0], a[1], a[2], r)),
                 T("tcpping", "SPEED", "TCP ping", "host:port - e.g. github.com:443|How many (1-500)", (a, r) => Protocols.TcpPing(a[0], a[1], r)),
-                T("twamp", "SPEED", "TWAMP-light to a reflector", "Reflector - host or host:port (UDP 862)|Packets (10-2000)", (a, r) => Protocols.Twamp(a[0], a[1], r)),
+                T("twamp", "SPEED", "TWAMP-light to a reflector", "Reflector - host or host:port (UDP 862)|Packets (10-1000)", (a, r) => Protocols.Twamp(a[0], a[1], r)),
                 T("cloud", "SPEED", "Nearest cloud", null, (a, r) => Toolkit.Nearest(r)),
                 T("dig", "DNS AND WEB", "dig - any DNS record", "Name - e.g. github.com or an IP|Type - A, AAAA, MX, TXT, NS, SRV, CAA, PTR, HTTPS, DS, DNSKEY, TLSA, SSHFP or TRACE|Server (optional) - 1.1.1.1 or https://cloudflare-dns.com/dns-query", (a, r) => Toolkit.Dig(a[0], a[1], a[2], M)),
                 T("http", "DNS AND WEB", "HTTP and TLS inspector", "URL - e.g. github.com or https://203.0.113.5|Name to ask for (optional, SNI) - e.g. www.example.com", (a, r) => Toolkit.Http(a[0], a[1])),
@@ -205,10 +205,15 @@ namespace AdeeboMeter
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
         static readonly string[][] QuickTools = { new[] { "snmp", "SNMP" }, new[] { "snmpif", "Switch ports" }, new[] { "mtr", "MTR" }, new[] { "port", "Port test" }, new[] { "dig", "dig" }, new[] { "http", "HTTP & TLS" }, new[] { "iperf", "iperf3" }, new[] { "sweep", "Ping sweep" } };
         static readonly HashSet<string> LabGate = new HashSet<string> { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "finddev", "manyports", "syslog" };   // need the tick on a company network
-        internal static IEnumerable<string> LabGateIds { get { return LabGate; } }
+        // tools outside the Traffic Lab that still send traffic of their own making (to a reflector, a RADIUS server, many DNS
+        // servers, mail servers, oversized UDP): the same tick on a company network, the same "never for points"
+        static readonly HashSet<string> SenderGate = new HashSet<string> { "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
+        internal static IEnumerable<string> LabGateIds { get { return LabGate.Concat(SenderGate); } }
+        // every tool that sends traffic it builds, wherever it sits - the self-test checks each one is behind the tick
+        public static readonly string[] Senders = { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "finddev", "manyports", "syslog", "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
         // Traffic Lab tools that don't send packets they build (or that came with their own rules before the Lab) - the self-test fails if a new Lab tool is in neither list
         public static readonly HashSet<string> LabExempt = new HashSet<string> { "wol", "iperf", "bloat", "dscp" };
-        public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))); }
+        public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Concat(SenderGate).Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))).Concat(Senders.Where(id => !LabGate.Contains(id) && !SenderGate.Contains(id))); }
         static bool SecretInput(string label) { return label.StartsWith("Shared secret", StringComparison.Ordinal) || label.StartsWith("Community", StringComparison.Ordinal) || label.StartsWith("Password", StringComparison.Ordinal) || label.StartsWith("Code", StringComparison.Ordinal); }
         static bool SnmpView(string id) { return IsSnmp(id) || id == "mibs"; }
         string tbSection = "net"; bool tbHome = true; PillButton[] tbChips;
@@ -640,7 +645,7 @@ namespace AdeeboMeter
             if (tbTarget == "" && destBox.Box.Text.Trim() != "") tbTarget = destBox.Box.Text.Trim();
             tbOpen.Add(t.Group);
             if (t.Id == "iperf" && tbBoxes.Count > 2) { tbBoxes[1].Box.Text = "both"; tbBoxes[2].Box.Text = "10"; }
-            tbSweepOk.Visible = t.Id == "sweep" || LabGate.Contains(t.Id); tbSweepOk.Checked = false; tbSweepOk.Text = t.Id == "sweep" ? "This is my own network, or I'm allowed to scan it" : "This is my own network, or I'm allowed to send test traffic to it";
+            tbSweepOk.Visible = t.Id == "sweep" || LabGate.Contains(t.Id) || SenderGate.Contains(t.Id); tbSweepOk.Checked = false; tbSweepOk.Text = t.Id == "sweep" ? "This is my own network, or I'm allowed to scan it" : "This is my own network, or I'm allowed to send test traffic to it";
             if (t.Id == "ping" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw != "" ? gw : "1.1.1.1"; tbBoxes[1].Box.Text = "50"; tbBoxes[2].Box.Text = "200"; }   // 10 seconds; type more for longer
             if (t.Id == "mtr" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "1";
             if (t.Id == "dig" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "A";
@@ -672,7 +677,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < a.Length && i < t.Inputs.Length; i++)
                 {
                     string v = a[i] ?? ""; Uri u;
-                    if (SecretInput(t.Inputs[i]) || PayloadBox(t.Id, i) || v.IndexOf("://", StringComparison.Ordinal) <= 0 || v.Contains(" ") || !Uri.TryCreate(v, UriKind.Absolute, out u)) continue;
+                    if (SecretInput(t.Inputs[i]) || PayloadBox(t.Id, i) || t.Inputs[i].IndexOf("DoH", StringComparison.Ordinal) >= 0 || t.Inputs[i].IndexOf("https://", StringComparison.Ordinal) >= 0 /* a DoH server box: the URL IS the server - never turn it into a plain DNS query */ || v.IndexOf("://", StringComparison.Ordinal) <= 0 || v.Contains(" ") || !Uri.TryCreate(v, UriKind.Absolute, out u)) continue;
                     string fixedV = Toolkit.UrlToTarget(v, t.Inputs[i].IndexOf(":port", StringComparison.OrdinalIgnoreCase) >= 0);
                     if (fixedV != v) { a[i] = fixedV; if (i < tbBoxes.Count && tbBoxes[i] != null) tbBoxes[i].Box.Text = fixedV; }
                 }
@@ -681,6 +686,7 @@ namespace AdeeboMeter
             if (t.Id == "mtu") { StartMtu(a[0]); return; }
             if (IsSnmp(t.Id)) { snmpDev = a[0]; snmpCred = a[1]; }
             if (t.Id == "sweep" || LabGate.Contains(t.Id)) a[3] = tbSweepOk.Checked ? "yes" : "";
+            string senderOk = SenderGate.Contains(t.Id) ? (tbSweepOk.Checked ? "yes" : "") : null;
             if ((t.Id == "iperf" || t.Id == "bloat") && a[0] != "") tbIperfSrv = a[0];
             // what's kept after the run (Copy, Save, Compare, coming back to the tool) never holds a secret: secret boxes are blanked,
             // HTTP sign-in headers hidden and a request body left out
@@ -691,7 +697,12 @@ namespace AdeeboMeter
             Task.Factory.StartNew(() =>
             {
                 List<string[]> res;
-                try { res = t.Do(a, run); } catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
+                try
+                {
+                    if (senderOk != null) { var gate = new List<string[]>(); res = Lab.Allowed(M, senderOk, gate) ? gate.Concat(t.Do(a, run) ?? new List<string[]>()).ToList() : gate; }
+                    else res = t.Do(a, run);
+                }
+                catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
                 try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = false; }
             }, TaskCreationOptions.LongRunning);

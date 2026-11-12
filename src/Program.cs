@@ -138,7 +138,7 @@ namespace AdeeboMeter
             if (args.Any(a => string.Equals(a, "--selftest", StringComparison.OrdinalIgnoreCase))) return SelfTest.Run();
             if (args.Any(a => string.Equals(a, "--perf", StringComparison.OrdinalIgnoreCase))) return SelfTest.Perf();
             int ri = Array.FindIndex(args, a => string.Equals(a, "--report", StringComparison.OrdinalIgnoreCase));
-            if (ri >= 0) { if (ri + 1 >= args.Length) return 3; int si = Array.FindIndex(args, a => string.Equals(a, "--seconds", StringComparison.OrdinalIgnoreCase)), sec; if (si < 0 || si + 1 >= args.Length || !int.TryParse(args[si + 1], out sec)) sec = 15; return Report.Run(args[ri + 1], sec); }
+            if (ri >= 0) { if (ri + 1 >= args.Length) return 4;   /* no file name: the report couldn't be made */ int si = Array.FindIndex(args, a => string.Equals(a, "--seconds", StringComparison.OrdinalIgnoreCase)), sec; if (si < 0 || si + 1 >= args.Length || !int.TryParse(args[si + 1], out sec)) sec = 15; return Report.Run(args[ri + 1], sec); }
             int mt = Array.FindIndex(args, a => string.Equals(a, "--mibtest", StringComparison.OrdinalIgnoreCase));
             if (mt >= 0 && mt + 1 < args.Length) return SelfTest.MibTest(args[mt + 1]);
             if (args.Any(a => string.Equals(a, "--deeptest", StringComparison.OrdinalIgnoreCase)))
@@ -206,14 +206,19 @@ namespace AdeeboMeter
         static readonly object logLock = new object();
         // The log: one line per message (newlines from network text flattened), invariant dates, the same message at most
         // once a minute (a stuck error can't write 20 lines a second), and at 256 KB it rolls to .log.1 instead of losing everything
-        // tmp -> dst in one step where the drive allows it; on shares and USB sticks where File.Replace isn't supported,
-        // delete and move instead (a moment without the file beats never saving)
+        // tmp -> dst in one step where the drive allows it; on shares and USB sticks where File.Replace isn't supported, the
+        // old file is moved aside first and put back if the new one can't take its place - the old file is never deleted
+        // before the new one is in (a scanner holding it open used to lose points.txt or the key list)
         public static void ReplaceFile(string tmp, string dst)
         {
             if (!File.Exists(dst)) { File.Move(tmp, dst); return; }
-            try { File.Replace(tmp, dst, null); }
-            catch (IOException) { File.Delete(dst); File.Move(tmp, dst); }
-            catch (PlatformNotSupportedException) { File.Delete(dst); File.Move(tmp, dst); }
+            try { File.Replace(tmp, dst, null); return; }
+            catch (IOException) { } catch (PlatformNotSupportedException) { }
+            string bak = dst + ".bak"; if (File.Exists(bak)) File.Delete(bak);
+            File.Move(dst, bak);   // if this fails, nothing moved: the old file stays and the error goes up
+            try { File.Move(tmp, dst); }
+            catch (Exception) { try { if (!File.Exists(dst)) File.Move(bak, dst); } catch (IOException) { } catch (UnauthorizedAccessException) { } throw; }
+            try { File.Delete(bak); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
         static string lastLogMsg = ""; static DateTime lastLogAt = DateTime.MinValue; static int lastLogRepeats;
         // Text that came from outside (a Wi-Fi name, a program's description): without invisible format characters - a

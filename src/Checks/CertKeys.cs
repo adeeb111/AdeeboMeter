@@ -250,9 +250,9 @@ namespace AdeeboMeter
             var sent = new List<X509Certificate2>(); SslPolicyErrors errs = SslPolicyErrors.None;
             try
             {
-                using (var tc = Toolkit.Tcp())
+                using (var tc = Toolkit.Open(h, port, 6000))
                 {
-                    if (!tc.ConnectAsync(h, port).Wait(6000)) { rows.Add(R(2, h + ":" + port, "couldn't connect in 6 s", "", "m")); return rows; }
+                    if (tc == null) { rows.Add(R(2, h + ":" + port, "couldn't connect in 6 s", "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) => { errs = e; if (ch != null) foreach (var el in ch.ChainElements) sent.Add(new X509Certificate2(el.Certificate)); else if (c != null) sent.Add(new X509Certificate2(c)); return e == SslPolicyErrors.None; }))
                     { var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); hs.Wait(8000); }
                 }

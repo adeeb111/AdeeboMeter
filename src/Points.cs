@@ -21,7 +21,7 @@ namespace AdeeboMeter
         public static readonly HashSet<string> Replay = new HashSet<string>(StringComparer.Ordinal) { "ispreport", "gamecompare", "beforeafter", "certcmp", "mtr" };
         // the Traffic Lab senders and the scanners behind the "my own network" tick never earn - nobody should send test
         // traffic, or tick "I'm allowed" on a company network, just for points (the self-test checks every gated tool is here)
-        public static readonly HashSet<string> NoEarn = new HashSet<string>(StringComparer.Ordinal) { "udpsend", "tcpsend", "trap", "netflow", "syslog", "icmpb", "arpwho", "dhcpopt", "manyports", "finddev", "sweep" };
+        public static readonly HashSet<string> NoEarn = new HashSet<string>(StringComparer.Ordinal) { "udpsend", "tcpsend", "trap", "netflow", "syslog", "icmpb", "arpwho", "dhcpopt", "manyports", "finddev", "sweep", "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
         // longer tests are worth +2 the first time; everything else +1 (a Learn topic read to the end, a page's first use: +1)
         public static readonly HashSet<string> Big = new HashSet<string>(StringComparer.Ordinal) { "mtr", "ispreport", "speedtest", "iperf", "bloat", "gamecompare", "mtu" };
         public static readonly TimeSpan ReplayGap = TimeSpan.FromMinutes(10);

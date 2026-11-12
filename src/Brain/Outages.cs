@@ -40,6 +40,8 @@ namespace AdeeboMeter
                 if (e.Lv == 2 && open != null && (e.T - lastQuiet).TotalMinutes > 10) { open.To = lastQuiet; open.EndUnseen = true; r.Add(open); open = null; }
                 if (e.Lv == 2) { lastQuiet = e.T; if (open == null) open = new O { From = e.T }; }
                 else if (e.Lv == 0 && open != null) { open.To = e.T; r.Add(open); open = null; }
+                // "network changed" / "check switched off" (level 1): the outage's end wasn't seen - never a made-up end time
+                else if (e.Lv == 1 && open != null) { open.To = lastQuiet; open.EndUnseen = true; r.Add(open); open = null; }
             }
             if (open != null) { if (quietNow) { open.To = now; open.Ongoing = true; } else { open.To = lastQuiet; open.EndUnseen = true; } r.Add(open); }
             r.Reverse();

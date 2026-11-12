@@ -31,7 +31,9 @@ namespace AdeeboMeter
                 var r = new GuideRun(); Investigate.Run("whats", m, r, delegate { });
                 int lv = r.Lv < 0 ? 3 : Math.Min(3, r.Lv);
                 // "fine" isn't fine when a step couldn't run: say so instead of passing a half-checked PC
-                if (lv == 0 && r.ObservedCopy().Any(o => o.Length > 1 && o[1] == "3")) lv = 3;
+                // only a step that couldn't run ("u" evidence) - not an informational row like "Around then: On LAN" or "normal for
+                // this network", which every healthy run has
+                if (lv == 0 && r.ObservedCopy().Any(o => o.Length > 1 && o[0] == "u" && o[1] == "3")) lv = 3;
                 string json = Json(m, r, lv);
                 try { File.WriteAllText(file, json, new UTF8Encoding(false)); }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is NotSupportedException || e is System.Security.SecurityException)) throw; Program.Log("--report: can't write " + file + ": " + e.Message); return 4; }

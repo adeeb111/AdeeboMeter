@@ -67,6 +67,7 @@ namespace AdeeboMeter
         // one device: not a broadcast (255.255.255.255 or this network's), not multicast, not "any" (0.0.0.0 / ::)
         public static string NotOne(IPAddress a)
         {
+            if (a.AddressFamily == AddressFamily.InterNetworkV6 && a.IsIPv4MappedToIPv6) a = a.MapToIPv4();   // ::ffff:255.255.255.255 is a broadcast too
             if (a.Equals(IPAddress.Any) || a.Equals(IPAddress.IPv6Any) || a.Equals(IPAddress.None)) return a + " isn't one device - it means 'any' or 'everyone'";
             if (a.AddressFamily == AddressFamily.InterNetworkV6) return a.IsIPv6Multicast ? a + " is a multicast group - many devices at once" : "";
             var b = a.GetAddressBytes(); if (b[0] >= 224 && b[0] <= 239) return a + " is a multicast group - many devices at once";

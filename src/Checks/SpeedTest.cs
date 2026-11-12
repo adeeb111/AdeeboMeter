@@ -171,6 +171,8 @@ namespace AdeeboMeter
                 try { ip = Dns.GetHostAddresses(srv.Host).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); }
                 catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; }
                 if (ip == null) { res.Error = "couldn't find " + srv.Host + " - the server's name doesn't resolve, or DNS / the internet is down"; return res; }
+                // a server from speedservers.txt whose name points into this PC or the LAN (127.0.0.1.nip.io, localtest.me): never
+                if (!Watch.IsPublic(ip.ToString())) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }
                 if (run != null) run.Status = "Ping to " + srv.Label + "...";
                 res.Idle = Ping(ip, 10, () => run != null && run.Stop);
                 // some providers' test-file servers have no HTTPS: then the file comes over plain HTTP (it's only test data, and

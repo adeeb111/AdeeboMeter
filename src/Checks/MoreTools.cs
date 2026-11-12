@@ -224,7 +224,7 @@ namespace AdeeboMeter
             days = double.NaN; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
             try
             {
-                using (var c = Toolkit.Tcp()) { if (!c.ConnectAsync(h, 443).Wait(4000)) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)).Wait(6000); }
+                using (var c = Toolkit.Open(h, 443, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)).Wait(6000); }
             }
             catch (AggregateException) { } catch (SocketException) { } catch (IOException) { }
             if (got != null) using (got) days = Math.Floor((got.NotAfter - DateTime.Now).TotalDays);

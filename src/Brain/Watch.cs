@@ -190,7 +190,8 @@ namespace AdeeboMeter
         public static bool IsPublic(string ip)
         {
             IPAddress a; if (string.IsNullOrEmpty(ip) || !IPAddress.TryParse(ip, out a)) return false;
-            if (IPAddress.IsLoopback(a)) return false;
+            if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 && a.IsIPv4MappedToIPv6) a = a.MapToIPv4();   // ::ffff:192.168.1.1 is 192.168.1.1
+            if (IPAddress.IsLoopback(a) || a.Equals(IPAddress.IPv6Any) || a.Equals(IPAddress.IPv6None)) return false;
             var b = a.GetAddressBytes();
             if (b.Length == 4) return !(b[0] == 10 || (b[0] == 172 && b[1] >= 16 && b[1] < 32) || (b[0] == 192 && b[1] == 168) || (b[0] == 169 && b[1] == 254) || (b[0] == 100 && b[1] >= 64 && b[1] < 128) || b[0] >= 224 || b[0] == 0);
             return !(a.IsIPv6LinkLocal || a.IsIPv6SiteLocal || a.IsIPv6Multicast || (b[0] & 0xfe) == 0xfc);

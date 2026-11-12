@@ -251,9 +251,9 @@ namespace AdeeboMeter
                         string gwNow; lock (L) gwNow = Gateway; if (gwNow != "" || VpnUp) ProbeDns();   // no way out: a DNS failure would only be noise
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
-                    if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(0, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
+                    if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(1, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
                     if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
-                    if (netChanged && netDown >= 3) Events.Add(0, "inet", "Network changed while the internet was quiet (down since " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + ") - checking afresh");
+                    if (netChanged && netDown >= 3) Events.Add(1, "inet", "Network changed while the internet was quiet (down since " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + ") - checking afresh");
                     if (netChanged) { netChanged = false; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; GwPing.Clear(); GwEverReplied = false; } gwMacKey = ""; gwMac = "";   /* a new network: its router is judged on its own, never on the last network's */ /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= 10) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }
                     if (wifiSec > 0 && (t0 - lastWifi).TotalSeconds >= wifiSec - 0.2) { lastWifi = t0; ProbeWifi(); }

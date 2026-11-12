@@ -88,7 +88,7 @@ namespace AdeeboMeter
                     { "http", new[] { "github.com", "", "" } }, { "httptime", new[] { "www.microsoft.com", "3", "" } }, { "proxy", new[] { "https://outlook.office.com", "", "" } }, { "ip46", new[] { "www.google.com", "", "" } },
                     { "ret", new[] { "github.com", "", "" } }, { "ping6", new[] { "www.google.com", "", "" } }, { "ntp", new[] { "time.windows.com", "", "" } } }) inputs[kv.Key] = kv.Value;
             var netNoInput = new HashSet<string> { "dnsrules", "teams", "clock", "cloud", "doh", "hairpin" };
-            foreach (var t in Tools2().Where(x => x.Do != null && !ByHand.Contains(x.Id) && !LabGate.Contains(x.Id)))   /* senders: hostile input only (to loopback), never a real run */
+            foreach (var t in Tools2().Where(x => x.Do != null && !ByHand.Contains(x.Id) && !LabGate.Contains(x.Id) && !SenderGate.Contains(x.Id)))   /* senders: hostile input only (to loopback), never a real run */
             {
                 if (late()) { sb.AppendLine("      (time cap reached - rest skipped)"); break; }
                 string[] a;

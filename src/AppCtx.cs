@@ -278,9 +278,31 @@ namespace AdeeboMeter
         void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; } }
         void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e) { if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) { drawnKey = ""; lastCover = DateTime.MinValue; } }
         // logoff or shutdown: no live capture left on disk (a Quit may never come)
-        void OnSessionEnding(object s, Microsoft.Win32.SessionEndingEventArgs e) { try { if (full != null && !full.IsDisposed) full.StopCaptures(); } catch (Exception ex) { Program.Log("session end: " + ex.Message); } Program.CleanCaptures(); }
+        // SystemEvents raise this on their own thread: the view (its timers, its captures) is only touched on the UI thread -
+        // synchronously, so it's done before Windows logs off
+        void OnSessionEnding(object s, Microsoft.Win32.SessionEndingEventArgs e)
+        {
+            Action stop = delegate { try { if (full != null && !full.IsDisposed) full.StopCaptures(); } catch (Exception ex) { Program.Log("session end: " + ex.Message); } };
+            try { if (marshal.InvokeRequired) marshal.Invoke(stop); else stop(); } catch (InvalidOperationException ex) { Program.Log("session end: " + ex.Message); }
+            Program.CleanCaptures();
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsWindowEnabled(IntPtr h);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr GetLastActivePopup(IntPtr h);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, int msg, IntPtr w, IntPtr l);
+        System.Windows.Forms.Timer quitWait; int quitTries;
         void Quit()
         {
+            // a dialog is open over the view (Ctrl+K, Save, Export - a form or a Windows file dialog): close it and come back once
+            // it has returned, so nothing runs on a disposed view after ShowDialog
+            if (!quitting && full != null && !full.IsDisposed && full.IsHandleCreated && !IsWindowEnabled(full.Handle) && quitTries < 30)
+            {
+                quitTries++;
+                foreach (var f in Application.OpenForms.Cast<Form>().Where(f => f != full && f.Modal).ToList()) try { f.Close(); } catch (InvalidOperationException) { }
+                var pop = GetLastActivePopup(full.Handle); if (pop != IntPtr.Zero && pop != full.Handle) PostMessage(pop, 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero);
+                if (quitWait == null) { quitWait = new System.Windows.Forms.Timer { Interval = 100 }; quitWait.Tick += delegate { quitWait.Stop(); Quit(); }; }
+                quitWait.Start(); return;
+            }
+            if (quitWait != null) { quitWait.Stop(); quitWait.Dispose(); quitWait = null; }
             Microsoft.Win32.SystemEvents.SessionEnding -= OnSessionEnding;
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go
             if (quitting) return;

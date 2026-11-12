@@ -119,9 +119,9 @@ namespace AdeeboMeter
             var a = IPAddress.Parse("1.1.1.1"); var s2 = Stopwatch.StartNew();
             try
             {
-                using (var tc = Toolkit.Tcp())
+                using (var tc = Toolkit.Open(a, 853, 4000))
                 {
-                    if (!tc.ConnectAsync(a, 853).Wait(4000)) throw new TimeoutException("TCP 853 doesn't answer");
+                    if (tc == null) throw new TimeoutException("TCP 853 doesn't answer");
                     using (var ssl = new SslStream(tc.GetStream(), false))
                     {
                         ssl.ReadTimeout = 4000; Tls(ssl, "cloudflare-dns.com", tc, 6000);
@@ -195,9 +195,10 @@ namespace AdeeboMeter
             bool implicitTls = p == 465 || p == 993 || p == 995; string kind = p == 143 || p == 993 ? "IMAP" : p == 110 || p == 995 ? "POP" : "SMTP";
             try
             {
-                using (var tc = Toolkit.Tcp())
+                var sw = Stopwatch.StartNew();   // from before the connect, as it always was
+                using (var tc = Toolkit.Open(h, p, 6000))
                 {
-                    var sw = Stopwatch.StartNew(); if (!tc.ConnectAsync(h, p).Wait(6000)) throw new TimeoutException("no answer on port " + p);
+                    if (tc == null) throw new TimeoutException("no answer on port " + p);
                     Stream st = tc.GetStream(); st.ReadTimeout = 8000; X509Certificate2 cert = null;
                     if (implicitTls) { var ssl = new SslStream(st, false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); st = ssl; }
                     var rd = new Lines(st, 20, run); var wr = new StreamWriter(st, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true };
@@ -231,9 +232,10 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 22, out h, out p)) { rows.Add(R(2, "Server", "type host or host:port", "", "u")); return rows; }
             try
             {
-                using (var tc = Toolkit.Tcp())
+                var sw = Stopwatch.StartNew();   // from before the connect, as it always was
+                using (var tc = Toolkit.Open(h, p, 5000))
                 {
-                    var sw = Stopwatch.StartNew(); if (!tc.ConnectAsync(h, p).Wait(5000)) throw new TimeoutException("no answer on port " + p);
+                    if (tc == null) throw new TimeoutException("no answer on port " + p);
                     var st = tc.GetStream(); st.ReadTimeout = 5000; var buf = new byte[256]; int n = st.Read(buf, 0, buf.Length);
                     string b = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\r', '\n')[0];
                     rows.Add(R(b.StartsWith("SSH-", StringComparison.Ordinal) ? 0 : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", b.StartsWith("SSH-", StringComparison.Ordinal) ? b : "connected, but it isn't SSH: " + Draw.Trunc(b, 80), b.StartsWith("SSH-1", StringComparison.Ordinal) ? "SSH version 1 is broken and should be off." : "", "m"));
@@ -444,7 +446,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 862, out h, out p)) { rows.Add(R(2, "Reflector", "type the reflector's address (port 862, or host:port)", "Most carrier routers can run a TWAMP-light reflector; on Linux, any TWAMP-light reflector works.", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
-            int n = Int(countIn, 100, 10, 2000); run.SeriesUnit = "ms";
+            int n = Int(countIn, 100, 10, 1000);   // the Traffic Lab's cap: 1,000 packets at most run.SeriesUnit = "ms";
             var res = new List<double[]>();   // sseq, t1, t2, t3, t4, rseq (ms since 1900)
             using (var u = new UdpClient(a.AddressFamily))
             {

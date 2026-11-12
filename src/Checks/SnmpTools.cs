@@ -166,6 +166,8 @@ namespace AdeeboMeter
             var w3 = walk(hc ? x + "6" : "1.3.6.1.2.1.2.2.1.10", 0); var w4 = walk(hc ? x + "10" : "1.3.6.1.2.1.2.2.1.16", 0);
             var in2 = w3.Item1; var out2 = w4.Item1; tIn2 = w3.Item2; tOut2 = w4.Item2; double secs = tIn2 - tIn1, secsOut = tOut2 - tOut1;
             var name = Col(ep, c, x + "1", run, out err); var hs = Col(ep, c, x + "15", run, out err);
+            // no ifXTable (that's exactly when the counters are 32-bit): the port speed comes from ifSpeed (bits/s) instead
+            var ls = hc ? new Dictionary<string, Snmp.Vb>() : Col(ep, c, "1.3.6.1.2.1.2.2.1.5", run, out err);
             // -1: no sample (unavailable), -2: the counter went backwards (reset / reboot) - never shown as 0
             Func<Dictionary<string, Snmp.Vb>, Dictionary<string, Snmp.Vb>, string, double, double> rate = (a, b, i, dt) =>
             {
@@ -177,7 +179,9 @@ namespace AdeeboMeter
                 // rebooted or the counter was reset, and a phantom 400 Mb/s would be blamed
                 double wrapped = (uint.MaxValue - p + q + 1) * 8.0 / dt;
                 var sv = V(hs, i); double port = sv != null ? Snmp.Num(sv) * 1e6 : 0;
-                return port > 0 && wrapped <= port * 1.05 ? wrapped : -2;
+                if (port <= 0) { var lv = V(ls, i); if (lv != null) port = Snmp.Num(lv); }
+                if (port <= 0) return wrapped <= 10e9 ? wrapped : -2;   // speed unknown: one wrap at a believable rate
+                return wrapped <= port * 1.05 ? wrapped : -2;
             };
             var list = in1.Keys.Select(i => new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : "if " + i, In = rate(in1, in2, i, secs), Out = rate(out1, out2, i, secsOut), Sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1e6 : 0 })
                 .Where(r => r.In != -1 || r.Out != -1).OrderByDescending(r => Math.Max(r.In, r.Out)).ToList();

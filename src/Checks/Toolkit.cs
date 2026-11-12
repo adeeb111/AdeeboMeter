@@ -28,6 +28,35 @@ namespace AdeeboMeter
             catch (SocketException) { return new TcpClient(); }
             catch (NotSupportedException) { return new TcpClient(); }
         }
+        // Connected to host:port, or null. Every address the name has, IPv6 and IPv4 taken in turn, each with its share of the
+        // time - so a PC with a global IPv6 address but no working IPv6 path still gets through over IPv4 (dual-mode "IPv6 first,
+        // wait it out" failed there where 1.1.4's IPv4-only client worked).
+        public static TcpClient Open(string host, int port, int ms)
+        {
+            IPAddress ip; if (IPAddress.TryParse((host ?? "").Trim('[', ']'), out ip)) return Open(new[] { ip }, port, ms);
+            IPAddress[] all;
+            try { var t = Dns.GetHostAddressesAsync(host); if (!t.Wait(Math.Min(ms, 5000))) return null; all = t.Result; }
+            catch (AggregateException) { return null; } catch (SocketException) { return null; } catch (ArgumentException) { return null; }
+            return Open(all, port, ms);
+        }
+        public static TcpClient Open(IPAddress ip, int port, int ms) { return Open(new[] { ip }, port, ms); }
+        static TcpClient Open(IPAddress[] all, int port, int ms)
+        {
+            var v6 = all.Where(a => a.AddressFamily == AddressFamily.InterNetworkV6).ToList(); var v4 = all.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToList();
+            var order = new List<IPAddress>(); for (int i = 0; i < Math.Max(v6.Count, v4.Count); i++) { if (i < v6.Count) order.Add(v6[i]); if (i < v4.Count) order.Add(v4[i]); }
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < order.Count && i < 6; i++)
+            {
+                int left = ms - (int)sw.ElapsedMilliseconds; if (left <= 200) break;
+                int each = i < order.Count - 1 ? Math.Min(left, Math.Max(1500, left / 2)) : left;
+                TcpClient c;
+                try { c = new TcpClient(order[i].AddressFamily); } catch (SocketException) { continue; } catch (NotSupportedException) { continue; }
+                try { var t = c.ConnectAsync(order[i], port); if (t.Wait(each) && c.Connected) return c; }
+                catch (AggregateException) { } catch (SocketException) { } catch (ObjectDisposedException) { }
+                c.Close();
+            }
+            return null;
+        }
         // What people paste: "https://example.com/path", "example.com:8443", "[2001:db8::1]:22", a bare name or IP.
         // HostOnly gives just the host; Target gives host:port (the URL's own port, or its scheme's: https 443, http 80).
         public static string HostOnly(string input)
@@ -654,9 +683,9 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); X509Certificate2 cert = null;
             try
             {
-                using (var tc = Toolkit.Tcp())
+                using (var tc = Toolkit.Open(host, port, 5000))
                 {
-                    if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, "Revocation", "couldn't connect to " + host, "", "m")); return rows; }
+                    if (tc == null) { rows.Add(R(2, "Revocation", "couldn't connect to " + host, "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))
                     { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException) { hd = cert != null; } if (!hd && cert == null) { rows.Add(R(2, "Revocation", "no TLS answer in 8 s", "", "m")); return rows; } }
                 }
@@ -691,9 +720,9 @@ namespace AdeeboMeter
                 if (proto.Item1 == "TLS 1.3" && !DestCheck.Tls13Client()) { rows.Add(R(3, "TLS 1.3", "this PC can't test it (Windows 10 has no TLS 1.3 client) - not a verdict on the site", "", "m")); continue; }
                 try
                 {
-                    using (var tc = Toolkit.Tcp())
+                    using (var tc = Toolkit.Open(host, port, 5000))
                     {
-                        if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
+                        if (tc == null) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
                         using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); if (chainRows == null && ch != null) chainRows = Chain(ch); errs = e; return e == SslPolicyErrors.None; }))
                         { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
