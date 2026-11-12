@@ -1958,6 +1958,96 @@ how: Reads a .pcap / .pcapng with AdeeboMeter's own reader - no Wireshark needed
 why: Most "connected, no internet" cases at the edge are DHCP: no server on the VLAN, a missing relay, a full pool or a rogue router handing out wrong addresses.
 without: Wireshark with the filter dhcp, reading each packet's options by hand.
 
+== tb.keys
+friendly: My keys
+cat: term
+close: -1
+tag: Your keys, kept by Windows.
+what: The keys and certificates AdeeboMeter made or put together for you, each with what it's for and when it expires - and, for each one, Copy public key, Back up private key and Delete.
+how: They live in Windows' own certificate store for your account (Current User › Personal) - no admin needed. Windows protects the private keys; AdeeboMeter never writes one to a file of its own, except a password-protected backup when you ask.
+why: A key you can find, back up and share safely is the start of encrypting files, mTLS clients and lab servers.
+without: certmgr.msc and certutil.
+
+== tb.newkey
+friendly: New key
+cat: term
+close: -1
+tag: Make a key of your own.
+what: Makes an RSA 3072 key and keeps it in Windows for your account: for files encrypted to you (default), a server, or an mTLS client.
+how: Offline. The key never leaves the PC unless you back it up.
+why: Others can only encrypt files for you once you have a key and send them its public part.
+without: certreq or openssl genpkey.
+
+== tb.csrmake
+friendly: Generate a CSR
+cat: term
+close: -1
+tag: Ask your CA for a certificate.
+what: Makes a certificate signing request for one of My keys (or a new key made now) with the DNS names and IP addresses you list as Subject Alternative Names, and saves the .csr to send to your CA.
+how: Offline. The private key stays in Windows. When the certificate comes back, Check certificate and key puts the two together.
+why: Every CA starts from a CSR - and a wrong or missing name in it is the most common reason a new certificate doesn't work.
+without: certreq -new with an .inf file, or openssl req.
+
+== tb.selfsigned
+friendly: Create a self-signed certificate
+cat: term
+close: -1
+tag: A certificate for the lab, in one step.
+what: Presets: Local HTTPS (localhost and the names you give, 397 days), Lab server (2 years) and mTLS client. The key goes into My keys; the public certificate is saved to copy to the server or client.
+how: Offline. Nothing is ever added to Windows' trusted roots - you decide where to trust it.
+why: Lab servers, test portals and mTLS tests need a certificate today, not after a CA ticket.
+without: New-SelfSignedCertificate in PowerShell, or openssl req -x509.
+
+== tb.certmatch
+friendly: Check certificate and key
+cat: term
+close: -1
+tag: Does this certificate belong to my key?
+what: Reads the certificate your CA sent back and finds which of My keys it belongs to - or says none does. Type yes to put them together in My keys, ready to back up as a .pfx.
+how: Offline: compares the public key inside the certificate with each of your keys.
+why: "The certificate doesn't match the private key" stops many server installs; this tells you before you get there.
+without: certutil -repairstore, or comparing openssl modulus hashes.
+
+== tb.certlive
+friendly: Compare file vs live server
+cat: term
+close: -1
+tag: Is the server really using the new certificate?
+what: Connects once to the server and compares what it presents with the certificate you meant to deploy, then lists the intermediates it sends and whether Windows trusts the chain.
+how: One TLS handshake to the server you type - nothing else.
+why: After a certificate renewal the old one often stays loaded, or an intermediate is missing - users find out when it expires.
+without: openssl s_client -showcerts and comparing fingerprints.
+
+== tb.recipients
+friendly: Recipients
+cat: term
+close: -1
+tag: Other people's public keys.
+what: The public certificates of people you encrypt files for. Add one from the .cer they send you and give it a name; you'll pick them by that name in Encrypt a file.
+how: Saved as .cer files in AdeeboMeter's data folder - public information only. Check the fingerprint with them by phone once.
+why: Encrypting for someone's own key means no code to pass around - only they can open it.
+without: certmgr.msc › Other People.
+
+== tb.encrypt
+friendly: Encrypt a file
+cat: term
+close: -1
+tag: Send a file only the right person can open.
+what: Two ways. Share with a code: makes a .adeebo file and a random 24-character code - send the file, give the code another way (by phone). For a recipient: a standard .p7m (CMS / S/MIME, AES-256) for their public key, which they open with the key they already hold - optionally also for you.
+how: Offline. .adeebo: PBKDF2-SHA256 (600,000 rounds), AES-256 and an HMAC-SHA256 check, so a changed file is refused. The code is shown once and never saved. The original file isn't changed.
+why: Email isn't private. A file encrypted this way stays private wherever it travels.
+without: 7-Zip with AES-256, or openssl cms -encrypt.
+
+== tb.decrypt
+friendly: Open an encrypted file
+cat: term
+close: -1
+tag: Open a .adeebo or .p7m.
+what: Opens a .adeebo file with its code, or a .p7m made for one of your keys - Windows finds the right key. The opened file is saved next to the encrypted one.
+how: Offline. A .adeebo file is checked before anything is decrypted: a wrong code or a changed file is refused, never half-opened.
+why: The other half of Encrypt a file.
+without: openssl cms -decrypt for .p7m files.
+
 == tb.eapreplay
 friendly: 802.1X replay
 cat: term

@@ -113,6 +113,15 @@ namespace AdeeboMeter
                 T("samplelab", "ENG", "Sample captures - good and broken", "Which sample - empty for the list", (a, r) => Replay.Lab(a[0])),
                 T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes|Include my public IP? type yes (it asks Cloudflare once) - no by default", (a, r) => IspReport.Run(M, a[0], a[1], a[2], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
+                T("keys", "KEYS", "My keys", null, (a, r) => CertKeys.MyKeys()),
+                T("newkey", "KEYS", "New key", "Name - e.g. Adeeb work|Purpose - files (default), server or client", (a, r) => CertKeys.NewKey(a[0], a[1])),
+                T("csrmake", "KEYS", "Generate a CSR", "Key - one of My keys, or a new name to make one|Names - DNS names and IPs, e.g. vpn.example.com, 10.0.0.5|Subject (optional) - e.g. CN=vpn.example.com, O=Example", (a, r) => CertKeys.Csr(a[0], a[1], a[2])),
+                T("selfsigned", "KEYS", "Create a self-signed certificate", "Preset - Local HTTPS, Lab server or mTLS client|Names - e.g. lab01.lab, 10.0.0.5", (a, r) => CertKeys.SelfSigned(a[0], a[1])),
+                T("certmatch", "KEYS", "Check certificate and key", "Certificate - the file your CA sent back, or paste it|Put them together? type yes", (a, r) => CertKeys.Match(a[0], a[1])),
+                T("certlive", "KEYS", "Compare file vs live server", "Certificate - the file you meant to deploy|Server - e.g. vpn.example.com or 10.0.0.5:8443", (a, r) => CertKeys.Live(a[0], a[1])),
+                T("recipients", "KEYS", "Recipients (their public keys)", "Certificate (optional) - their .cer, to add them|Name - e.g. Munif", (a, r) => CertKeys.Recipients(a[0], a[1])),
+                T("encrypt", "KEYS", "Encrypt a file", "File - path of the file|For - code (share with a code) or recipient names, e.g. Munif, Lab team|Also for me? - yes (default) or no", (a, r) => FileCrypt.Encrypt(a[0], a[1], a[2], r)),
+                T("decrypt", "KEYS", "Open an encrypted file", "File - a .adeebo or .p7m|Code - only for .adeebo files", (a, r) => FileCrypt.Decrypt(a[0], a[1], r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
                 T("pfx", "CERTS", "Check a PFX / P12", "File path|Password - used once, never kept", (a, r) => CertTools.Pfx(a[0], a[1])),
                 T("csr", "CERTS", "Decode a CSR", "File path, or paste the PEM text", (a, r) => CertTools.Csr(a[0])),
@@ -172,11 +181,12 @@ namespace AdeeboMeter
             new[] { "TEST A COLLECTOR", "syslog", "trap", "netflow" },
             new[] { "LOAD & QUEUES", "iperf", "bloat", "dscp" },
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
+            new[] { "KEYS & ENCRYPTION", "encrypt", "decrypt", "keys", "newkey", "recipients", "csrmake", "selfsigned", "certmatch", "certlive" },
             new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
             new[] { "THE PC", "tidy", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" },
-            { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
+            { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
@@ -216,9 +226,28 @@ namespace AdeeboMeter
         DateTime tbCopied;
         // a clickable result row: walk this object, or open the MIB folder
         static readonly char[] PipeSep = { '|' };
+        // a code or passphrase made for you: shown on screen once - never in Copy, Save, or the result kept for this session
+        static bool IsSecretRow(string[] r) { return r.Length > 4 && r[4] == "k"; }
         void RowAction(string act)
         {
             if (tbBusy) return;
+            if (act.StartsWith("key:", StringComparison.Ordinal))
+            {
+                var p = act.Split(':'); if (p.Length != 3) return; string thumb = p[2];
+                List<string[]> res;
+                if (p[1] == "pub") res = CertKeys.PublicKey(thumb);
+                else if (p[1] == "backup") res = CertKeys.Backup(thumb);
+                else if (p[1] == "del")
+                {
+                    var name = CertKeys.Mine().Where(c => c.Thumbprint == thumb).Select(CertKeys.NameOf).FirstOrDefault(); if (name == null) return;
+                    if (MessageBox.Show(this, L.T("Delete this key from Windows?") + "\n\n" + name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                    res = new List<string[]> { new[] { CertKeys.Delete(thumb) ? "0" : "2", "Deleted", name, "", "w" } };
+                    res.AddRange(CertKeys.MyKeys());
+                }
+                else return;
+                tbRows = res; tbAt = DateTime.Now; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+                return;
+            }
             if (act.StartsWith("tool:", StringComparison.Ordinal))
             {
                 var p = act.Substring(5).Split(PipeSep, 2); OpenTool(p[0]);
@@ -286,7 +315,7 @@ namespace AdeeboMeter
         {
             Func<string, string> q = v => { v = v ?? ""; var lead = v.TrimStart(' ', '\t', '\r', '\n'); if (lead.Length > 0 && "=+-@".IndexOf(lead[0]) >= 0 || v.Length > 0 && v[0] == '\t') v = "'" + v; return "\"" + v.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ") + "\""; };   // a leading = + - @ can't become a formula
             var sb = new System.Text.StringBuilder(); sb.AppendLine("Level,Item,Value,Notes");
-            foreach (var o in tbRows)
+            foreach (var o in tbRows.Where(x => !IsSecretRow(x)))
             {
                 int lv; int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
                 string word = lv == 2 || lv == 7 ? "problem" : lv == 1 ? "warning" : lv == 0 ? "ok" : "info";
@@ -299,7 +328,7 @@ namespace AdeeboMeter
         {
             var sb = new System.Text.StringBuilder(); var t = Tools2().First(x => x.Id == tbSel);
             sb.AppendLine("AdeeboMeter " + Program.Version + " · " + t.Title + " · " + tbAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + a[i]);
+            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + a[i]);
             sb.AppendLine();
             if (tbSel == "mtu" && mtuHops != null) foreach (var h in mtuHops) sb.AppendLine(("hop " + h.N).PadRight(8) + (h.Ip == "" ? "*" : h.Ip).PadRight(40) + (h.Mtu > 0 ? h.Mtu + "  " + h.MtuNote : h.MtuNote));
             if (tbSel == "mtr" && mtrHops != null)
@@ -309,7 +338,7 @@ namespace AdeeboMeter
                 sb.AppendLine();
             }
             if (tbRows != null)
-                foreach (var o in tbRows)
+                foreach (var o in tbRows.Where(x => !IsSecretRow(x)))
                 {
                     if (o[0] == "6" || o[0] == "7" || o[0] == "8") { sb.AppendLine((o[0] == "7" ? "! " : "  ") + o[2]); continue; }   // table lines, as they are
                     string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     ";
@@ -364,6 +393,9 @@ namespace AdeeboMeter
                 case "certcmp": return "a few seconds - one TLS handshake to the site";
                 case "radiuslab": return "up to 4 seconds - one Access-Request, then one TACACS+ connection test";
                 case "smtppath": return "up to half a minute - one DNS question, then a short SMTP conversation with the top 2 mail servers (stops before sending)";
+                case "keys": case "newkey": case "recipients": case "certmatch": case "csrmake": case "selfsigned": return "a few seconds - nothing is sent";
+                case "encrypt": case "decrypt": return "a second or two to make the key from the code, then about as long as copying the file - nothing is sent";
+                case "certlive": return "a few seconds - one TLS handshake to the server";
                 case "gamecompare": return "about " + GameCompare.Samples + " seconds - one probe a second to each of the game's servers (up to 8)";
                 case "vpn": return "a few seconds - 7 pings to the VPN's own DNS server";
                 case "udpmtu": return "about 10-20 seconds · about 12 sizes, two small tries each, to the one target";
@@ -401,7 +433,7 @@ namespace AdeeboMeter
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
             { "cert", "http certs certfile" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "http certs" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
             { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep snmpprn arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
-            { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "join", "join dot1x dhcpreplay" }, { "rogue", "dhcpreplay rareplay" }, { "radius", "radius radiuslab tacacs" }, { "pcap", "dhcpreplay rareplay icmpexplain samplelab" }, { "capture", "dhcpreplay rareplay icmpexplain samplelab" }, { "mx", "smtppath dig" }, { "inspection", "certcmp" }, { "email", "mail" }, { "smtp", "smtppath mail" }, { "outlook", "mail http proxy" },
+            { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "encrypt", "encrypt decrypt recipients" }, { "decrypt", "decrypt encrypt" }, { "adeebo", "decrypt encrypt" }, { "p7m", "decrypt encrypt" }, { "key", "keys newkey csrmake certmatch" }, { "keys", "keys newkey" }, { "self-signed", "selfsigned" }, { "selfsigned", "selfsigned" }, { "backup", "keys" }, { "join", "join dot1x dhcpreplay" }, { "rogue", "dhcpreplay rareplay" }, { "radius", "radius radiuslab tacacs" }, { "pcap", "dhcpreplay rareplay icmpexplain samplelab" }, { "capture", "dhcpreplay rareplay icmpexplain samplelab" }, { "mx", "smtppath dig" }, { "inspection", "certcmp" }, { "email", "mail" }, { "smtp", "smtppath mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover finddev" }, { "bonjour", "discover finddev" }, { "upnp", "discover finddev" }, { "llmnr", "discover nbname" },
             { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "discover", "finddev" }, { "ssdp", "finddev" }, { "wsd", "finddev" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" }, { "arp", "arpwho" },
@@ -565,7 +597,7 @@ namespace AdeeboMeter
                 List<string[]> res;
                 try { res = t.Do(a, run); } catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
-                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; tbBusy = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = false; }
+                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
 
