@@ -336,7 +336,7 @@ namespace AdeeboMeter
             {
                 var ls = g.MeasureString(L.T("Explain this capture"), Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                 Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(L.T("Explain this capture"), Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
-                Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; jNotes = Journey.Explain(jSess.F, jSess.Snapshot(), jKind, k == "Wi-Fi"); travelCanvas.Invalidate(); });
+                Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); travelCanvas.Invalidate(); });
                 y += 42 * S;
                 return Lead(g, "Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.", x, y, w, true);
             }
@@ -355,6 +355,13 @@ namespace AdeeboMeter
                 }
                 y += card.Height + 8 * S;
             }
+            if (!jSess.F.Udp && (jKind == "bulk" || jKind == "web"))
+            {
+                var tr = new RectangleF(x, y, 360 * S, 22 * S);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("See how TCP's window grew - in the TCP lab  ›"), Draw.fBodyB, lb, x, y);
+                Act(travelCanvas, tr, delegate { tab = "learn"; ShowTab(); learnSel = "lab:tcp"; learnList.Invalidate(); learnInfo.Invalidate(); });
+                y += 30 * S;
+            }
             string cp = (DateTime.Now - jCopied).TotalSeconds < 3 ? L.T("Copied - internal addresses removed") : L.T("Copy the explanation");
             var cr = new RectangleF(x, y, g.MeasureString(cp, Draw.fBodyB).Width + 4, 22 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(cp, Draw.fBodyB, lb, x, y);
@@ -370,6 +377,14 @@ namespace AdeeboMeter
                 travelCanvas.Invalidate();
             });
             return y + 32 * S;
+        }
+            // a captured TCP conversation: its window, estimated per round trip, goes to the TCP lab next to the simulation
+        static void JKeepCwnd(List<Journey.Rec> rs)
+        {
+            var syn = rs.FirstOrDefault(r => r.Out && r.Proto == 6 && (r.Flags & 0x12) == 0x02); var sa = rs.FirstOrDefault(r => !r.Out && r.Proto == 6 && (r.Flags & 0x12) == 0x12);
+            if (syn == null || sa == null || sa.T <= syn.T) return;
+            var c = LabSim.CwndFromCapture(rs, sa.T - syn.T); if (c.Count < 3) return;
+            LabSim.LastRealCwnd = c; LabSim.LastRealRttMs = (sa.T - syn.T) * 1000;
         }
     }
 }

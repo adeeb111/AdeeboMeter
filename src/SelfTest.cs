@@ -667,6 +667,27 @@ namespace AdeeboMeter
                 if (Picks.Drivers().Count == 0 || Picks.Timeline(M, "12:00").Count == 0 || Picks.Inventory(M, "not a label").Count == 0) throw new InvalidOperationException("a pick returned nothing");
                 Picks.Weather(M);
             });
+            T("labs: TCP Reno and CUBIC, loss limit, bufferbloat, jitter buffer, airtime, quiz", () =>
+            {
+                var p = new LabSim.TcpIn { Algo = "reno", Mbps = 100, RttMs = 40, BufferBdp = 1, Rounds = 200 };
+                var reno = LabSim.Tcp(p); double bdp = LabSim.Bdp(100, 40);
+                var first = reno.FirstOrDefault(z => z.Loss != ""); if (first == null) throw new InvalidOperationException("Reno never filled the buffer");
+                var nxt = reno[first.Round + 1]; if (Math.Abs(nxt.Cwnd - first.Cwnd / 2) > 1 || nxt.Phase != "fast recovery") throw new InvalidOperationException("Reno didn't halve on loss: " + first.Cwnd + " -> " + nxt.Cwnd + " " + nxt.Phase);
+                if (reno[first.Round + 3].Cwnd - reno[first.Round + 2].Cwnd != 1) throw new InvalidOperationException("Reno doesn't add one packet per round trip");
+                if (reno.Take(4).Any(z => z.Phase != "slow start") || reno[1].Cwnd != 20) throw new InvalidOperationException("slow start doesn't double");
+                p.Algo = "cubic"; var cub = LabSim.Tcp(p); var cf = cub.First(z => z.Loss != ""); if (Math.Abs(cub[cf.Round + 1].Cwnd - cf.Cwnd * 0.7) > 1) throw new InvalidOperationException("CUBIC didn't keep 70%");
+                if (LabSim.Throughput(cub) < LabSim.Throughput(reno) - 0.02) throw new InvalidOperationException("CUBIC should keep the link at least as busy as Reno here");
+                p.Events[30] = "hard"; var hard = LabSim.Tcp(p); if (hard[31].Cwnd != 1) throw new InvalidOperationException("a timeout should drop the window to 1");
+                double mm = LabSim.MathisMbps(40, 1); if (mm < 3 || mm > 4) throw new InvalidOperationException("Mathis limit wrong: " + mm);
+                var b1 = LabSim.Bloat(20, 20, 500, 20, false); var b2 = LabSim.Bloat(20, 20, 500, 20, true); if (b1.PingMs < 400 || b2.PingMs > 30 || LabSim.Bloat(20, 5, 500, 20, false).PingMs > 25) throw new InvalidOperationException("bufferbloat model wrong");
+                var arr = LabSim.Arrivals(20, 2000, 11); var j1 = LabSim.Jitter(arr, 60, 20, 0); var j2 = LabSim.Jitter(arr, 60, 120, 0); if (j1.LatePct <= j2.LatePct || j1.MouthToEarMs >= j2.MouthToEarMs) throw new InvalidOperationException("jitter buffer trade-off wrong");
+                var devs = new List<LabSim.AirDev> { new LabSim.AirDev { RateMbps = 600 }, new LabSim.AirDev { RateMbps = 6 } }; LabSim.Airtime(devs, false, 0); if (devs[1].ShareAir < 0.9) throw new InvalidOperationException("the slow device should hold most of the air");
+                LabSim.Airtime(devs, true, 0); if (Math.Abs(devs[0].ShareAir - 0.5) > 0.01) throw new InvalidOperationException("airtime fairness should split evenly");
+                if (LabSim.VoiceWaitMs("priority", 10, 50) >= LabSim.VoiceWaitMs("fifo", 10, 50)) throw new InvalidOperationException("priority queue should be faster");
+                for (int sd = 0; sd < 200; sd++) { var q = LabSim.Subnet(sd); if (q.Options.Length != 4 || q.Options.Count(o => o == q.Answer) != 1 || q.Options.Distinct().Count() != 4) throw new InvalidOperationException("quiz " + sd + ": " + q.Question + " " + string.Join(",", q.Options)); }
+                var qn = LabSim.Subnet(3); if (qn.Question.IndexOf("network address", StringComparison.Ordinal) >= 0) { var part = qn.Question.Split(' ').First(z => z.Contains("/")).TrimEnd('?'); var sub = Toolkit.Subnet(part, ""); if (!sub.Any(r => r[2].StartsWith(qn.Answer + "/", StringComparison.Ordinal))) throw new InvalidOperationException("quiz answer disagrees with the calculator"); }
+                var wnd = LabSim.CwndFromCapture(Journey.Sample(), 0.05); if (wnd == null) throw new InvalidOperationException("cwnd estimate failed");
+            });
             T("examples: every tool has one, it fits its boxes, it's marked and never copied", () =>
             {
                 using (var icon = Theme.MakeIcon(16))

@@ -660,7 +660,7 @@ namespace AdeeboMeter
             }
             else if (page == "travel" && destIn != null) { travelBox.Box.Text = destIn; StorySite(); }
             if (page == "toolbox" && destIn != null) { var parts = destIn.Split('|'); SelectTool(parts[0]); for (int i = 1; i < parts.Length && i - 1 < tbBoxes.Count; i++) if (tbBoxes[i - 1] != null) tbBoxes[i - 1].Box.Text = parts[i]; StartTool(); }
-            if (page == "learn" && destIn != null) { learnSel = "topic:" + destIn; learnInfo.Invalidate(); learnList.Invalidate(); }
+            if (page == "learn" && destIn != null) { learnSel = destIn.StartsWith("lab:", StringComparison.Ordinal) ? destIn : "topic:" + destIn; learnInfo.Invalidate(); learnList.Invalidate(); }
             if (page == "replay" && destIn != null) { double f; if (double.TryParse(destIn, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) ReplayAt(f); }
             if (page == "changes" && destIn == "today") { histDay = DateTime.Today; histData = History.Load(DateTime.Today); changesCanvas.Invalidate(); }
             if (page == "procs")

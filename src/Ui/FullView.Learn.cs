@@ -44,6 +44,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
+                y = PaintLabList(g, x, y, w, ink, muted, nowrap, hit);
                 foreach (var grp in LearnGroups)
                 {
                     var list = topics.Where(t => t["kind"] == grp[0] && (hit(t["title"]) || hit(t["tag"]) || t.Keys.Any(hit))).ToList(); if (list.Count == 0) continue;
@@ -73,7 +74,8 @@ namespace AdeeboMeter
             Begin(learnInfo);
             float x = 20 * S, y = 14 * S, w = learnInfo.ClientSize.Width - 40 * S;
             if (learnSel == "") { y = Title2(g, "Learn", x, y, w); y = Lead2(g, "Two lines and a picture each. New to networking? Start with The layers, in plain words.", x, y, w); Need(learnInfo, y); return; }
-            if (learnSel.StartsWith("term:", StringComparison.Ordinal))
+            if (learnSel.StartsWith("lab:", StringComparison.Ordinal)) { y = PaintLab(learnInfo, g, learnSel.Substring(4), x, y, w); Need(learnInfo, y + 20 * S); return; }
+                        if (learnSel.StartsWith("term:", StringComparison.Ordinal))
             {
                 var e = Explain.AllTerms.FirstOrDefault(t => t.Friendly == learnSel.Substring(5));
                 if (e != null) { y = Title2(g, e.Friendly, x, y, w); y = ExplainPaint.Paint(g, e, x, y, w, false); }
