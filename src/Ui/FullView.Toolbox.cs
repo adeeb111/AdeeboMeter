@@ -97,6 +97,7 @@ namespace AdeeboMeter
                 T("mysites", "WEB", "My sites", null, (a, r) => MoreTools.MySites(r)),
                 T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
                 T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
+                T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes", (a, r) => IspReport.Run(M, a[0], a[1], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
                 T("pfx", "CERTS", "Check a PFX / P12", "File path|Password - used once, never kept", (a, r) => CertTools.Pfx(a[0], a[1])),
@@ -144,7 +145,7 @@ namespace AdeeboMeter
         static readonly string[][] TbLayout = {
             new[] { "PATH & ROUTING", "mtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
-            new[] { "SPEED & QUALITY", "ping", "twamp", "cloud" },
+            new[] { "SPEED & QUALITY", "ping", "twamp", "cloud", "ispreport" },
             new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
             new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
@@ -335,6 +336,7 @@ namespace AdeeboMeter
                     }
                 case "sweep": return "about 20 seconds, never more than 90";
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
+                case "ispreport": return (int.TryParse(a.Length > 1 ? a[1].Trim() : "", out m) && (m == 1 || m == 5) ? m : 2) + " min of measuring, plus about 30 seconds to trace and name the routers";
                 case "dscp": if (!int.TryParse(a[2], out n)) n = 20; return RunSecs(Math.Max(1, Math.Min(200, n)) / 2 + 1);
                 case "snmptraffic": return "about 10 seconds (two readings 5 seconds apart)";
                 case "snmpwalk": return "a second to a minute - stops at 2,000 values";
