@@ -12,6 +12,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace AdeeboMeter
@@ -61,7 +62,7 @@ namespace AdeeboMeter
         // HostOnly gives just the host; Target gives host:port (the URL's own port, or its scheme's: https 443, http 80).
         public static string HostOnly(string input)
         {
-            string s = (input ?? "").Trim(); IPAddress ip;
+            string s = OneSlash(input); IPAddress ip;
             if (s.IndexOf("://", StringComparison.Ordinal) > 0) { Uri u; return Uri.TryCreate(s, UriKind.Absolute, out u) && u.Host != "" ? u.Host.Trim('[', ']') : s; }
             int slash = s.IndexOf('/'); if (slash > 0) s = s.Substring(0, slash);
             if (IPAddress.TryParse(s.Trim('[', ']'), out ip)) return s.Trim('[', ']');            // an IPv6 address keeps its colons
@@ -69,9 +70,11 @@ namespace AdeeboMeter
             int c = s.LastIndexOf(':'); if (c > 0 && s.IndexOf(':') == c) s = s.Substring(0, c);   // name:port
             return s;
         }
+        // "https:/example.com" (one slash, a common slip) is the URL that was meant - never the host "https"
+        static string OneSlash(string input) { return Regex.Replace((input ?? "").Trim(), @"^(https?|ftp|wss?):/(?!/)", "$1://", RegexOptions.IgnoreCase); }
         public static string UrlToTarget(string input, bool withPort)
         {
-            string s = (input ?? "").Trim(); if (s.IndexOf("://", StringComparison.Ordinal) <= 0) return s;
+            string s = OneSlash(input); if (s.IndexOf("://", StringComparison.Ordinal) <= 0) return s;
             Uri u; if (!Uri.TryCreate(s, UriKind.Absolute, out u) || u.Host == "") return s;
             string h = u.Host.Trim('[', ']'); if (h.Contains(":")) h = "[" + h + "]";
             return withPort && u.Port > 0 ? h + ":" + u.Port.ToString(CultureInfo.InvariantCulture) : h;
@@ -85,7 +88,7 @@ namespace AdeeboMeter
         public sealed class Opt { public bool Udp, Reverse, Both, V6, V4; public int Par = 1, Secs = 10, Omit, Mss, Tos, Port = 5201; public long Rate = 50000000, Len, Window; public List<string> Ignored = new List<string>(); }
         // bytes per write: -l as given (1 MB at most), else 1400 for UDP / 128 KB for TCP; a UDP packet carries a 12-byte
         // time + sequence header, so it is never smaller than 16 (iperf3 itself refuses less)
-        public static int BlockLen(Opt o) { int len = (int)(o.Len > 0 ? o.Len : o.Udp ? 1400 : 131072); return o.Udp && len < 16 ? 16 : Math.Max(1, len); }
+        public static int BlockLen(Opt o) { int len = (int)(o.Len > 0 ? o.Len : o.Udp ? 1400 : 131072); if (o.Udp && len > 65507) len = 65507; /* the most one UDP datagram can carry: -l 1M would fail every send and report 0 Mb/s as fine */ return o.Udp && len < 16 ? 16 : Math.Max(1, len); }
         public static Opt ParseOpts(string text)
         {
             // attached forms iperf3 also accepts: -t20, --time=20, -O3, --omit=3, -P4, -b50M ... become "-t 20" and so on

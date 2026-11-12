@@ -411,7 +411,7 @@ namespace AdeeboMeter
         }
         // netsh lists each Wi-Fi adapter as its own block (blank line between): keep the one that's connected - the one with
         // a signal %, or whose state reads connected in any language
-        static string ActiveBlock(string text)
+        internal static string ActiveBlock(string text)
         {
             var blocks = Regex.Split(text ?? "", @"\r?\n\s*\r?\n").Where(b => b.IndexOf(':') >= 0).ToList();
             if (blocks.Count <= 1) return text ?? "";

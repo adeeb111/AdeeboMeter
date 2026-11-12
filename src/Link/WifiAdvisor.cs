@@ -41,7 +41,7 @@ namespace AdeeboMeter
             long speed = 0; long errs = 0;
             try { if (nic != null) { speed = nic.Speed; var st = nic.GetIPStatistics(); errs = st.IncomingPacketsWithErrors + st.IncomingPacketsDiscarded + st.OutgoingPacketsWithErrors; } } catch { }
             double errPerMin = double.NaN;
-            if (lastErr >= 0 && (DateTime.UtcNow - lastErrAt).TotalSeconds > 5) errPerMin = (errs - lastErr) / (DateTime.UtcNow - lastErrAt).TotalMinutes;
+            if (lastErr >= 0 && (DateTime.UtcNow - lastErrAt).TotalSeconds > 5) errPerMin = errs < lastErr ? double.NaN /* the adapter was reset: its counters started again */ : (errs - lastErr) / (DateTime.UtcNow - lastErrAt).TotalMinutes;
             if (lastErr < 0 || (DateTime.UtcNow - lastErrAt).TotalSeconds > 5) { lastErr = errs; lastErrAt = DateTime.UtcNow; }
             int score = 100;
             if (!double.IsNaN(avg)) { if (avg > 50) score -= 40; else if (avg > 20) score -= 20; }

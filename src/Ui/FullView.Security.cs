@@ -57,7 +57,7 @@ namespace AdeeboMeter
             }, TaskCreationOptions.LongRunning);
         }
         static int SecLevel(List<string[]> r) { var l = r.Select(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList(); return l.Contains(2) ? 2 : l.Contains(1) ? 1 : l.Contains(0) ? 0 : 3; }
-        static readonly HashSet<string> SecTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UserAccountControlSettings.exe", "SystemPropertiesRemote.exe", "optionalfeatures.exe", "ncpa.cpl", "certmgr.msc", "taskschd.msc", "netplwiz.exe", "taskmgr.exe" };
+        static readonly HashSet<string> SecTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UserAccountControlSettings.exe", "SystemPropertiesRemote.exe", "optionalfeatures.exe", "ncpa.cpl", "certmgr.msc", "certlm.msc", "taskschd.msc", "netplwiz.exe", "taskmgr.exe" };
         static void SecFix(string f)
         {
             try

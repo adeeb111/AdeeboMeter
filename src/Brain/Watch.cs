@@ -152,12 +152,12 @@ namespace AdeeboMeter
                     var c0 = g.First();
                     // versioned folders (Teams, Discord, updaters: "app-1.0.9", "MSTeams_24123.1.2_x64") are the same app after an update
                     string key = Unversioned(path); DateTime was; if (key != path && seen.TryGetValue(path, out was) && !seen.ContainsKey(key)) seen[key] = was;
-                    bool known = seen.ContainsKey(key) || seen.ContainsKey(path); path = key;
+                    bool known = seen.ContainsKey(key) || seen.ContainsKey(path); string realPath = path; path = key;   // facts come from the real file: the key has a * in it
                     if (!known)
                     {
                         if (seen.Count > 2000) { foreach (var old in seen.OrderBy(x => x.Value).Take(200).Select(x => x.Key).ToList()) { seen.Remove(old); night.Remove(old); } }   // capped: the oldest go
                         seen[path] = DateTime.UtcNow; changed = true;
-                        string[] facts = Explain.FileFacts(path); string where = Explain.Where(path);
+                        string[] facts = Explain.FileFacts(realPath); string where = Explain.Where(realPath);
                         bool odd = where == "downloads" || where == "temp" || path.IndexOf("\\Downloads\\", StringComparison.OrdinalIgnoreCase) >= 0 || path.IndexOf("\\Temp\\", StringComparison.OrdinalIgnoreCase) >= 0;
                         bool noPublisher = facts.Length > 1 && string.IsNullOrEmpty(facts[1]);
                         // temp-folder updaters are normal while it's still learning this PC: amber then, red afterwards
@@ -242,7 +242,7 @@ namespace AdeeboMeter
                 if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
                 DateTime last; lastPop.TryGetValue(key, out last);
-                if (announce.Count == 0 || Cfg.DevAlerts == 0 || company || set.Count > 30 || (DateTime.Now - last).TotalMinutes < 60) return;
+                if (announce.Count == 0 || Cfg.DevAlerts == 0 || company || set.Count(x => !Arp.Randomised(x)) > 30 ||   /* a big network (many fixed addresses): phones' rotating private ones don't count towards it */ (DateTime.Now - last).TotalMinutes < 60) return;
                 lastPop[key] = DateTime.Now;
             }
             Alerts.Raise("dev|" + key, (announce.Count == 1 ? "A new device joined " + label + ": " + announce[0].Ip : announce.Count + " new devices joined " + label + ": " + string.Join(", ", announce.Take(3).Select(e => e.Ip))) + ". If you don't recognise it, check your router's device list.", 60);

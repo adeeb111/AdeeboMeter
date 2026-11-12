@@ -413,12 +413,23 @@ namespace AdeeboMeter
                 case 0x80: return "(no such object)"; case 0x81: return "(no such instance)"; case 0x82: return "(end)";
                 case 4:
                     {
-                        if (r.Length == 6 && (r.Any(b => b < 32 || b > 126))) return string.Join(":", r.Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
-                        if (r.All(b => b == 9 || b == 10 || b == 13 || (b >= 32 && b < 127) || b >= 0xC2)) return Regex.Replace(Encoding.UTF8.GetString(r), @"\s+", " ").Trim();
+                        // text: printable ASCII, or valid UTF-8 ("café", "Büro") - checked strictly, so a 6-byte name with an accent
+                        // isn't taken for a MAC address and a MAC isn't taken for text
+                        string txt = Utf8Text(r);
+                        if (r.Length == 6 && txt == null) return string.Join(":", r.Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
+                        if (txt != null) return Regex.Replace(txt, @"\s+", " ").Trim();
                         return "0x" + string.Concat(r.Take(32).Select(b => b.ToString("x2", CultureInfo.InvariantCulture))) + (r.Length > 32 ? "…" : "");
                     }
                 default: return "(type 0x" + v.Type.ToString("X2", CultureInfo.InvariantCulture) + ")";
             }
+        }
+        static readonly UTF8Encoding StrictUtf8 = new UTF8Encoding(false, true);
+        static string Utf8Text(byte[] r)
+        {
+            if (r.Length == 0) return "";
+            if (r.Any(b => b < 32 && b != 9 && b != 10 && b != 13 || b == 127)) return null;
+            if (r.All(b => b < 128)) return Encoding.ASCII.GetString(r);
+            try { var t = StrictUtf8.GetString(r); return t.Any(ch => char.IsControl(ch) && ch != '\t' && ch != '\n' && ch != '\r') ? null : t; } catch (DecoderFallbackException) { return null; } catch (ArgumentException) { return null; }
         }
         // a real number came back: a numeric type of a size its type allows (not NULL, "no such object", empty or too long)
         public static bool HasNum(Vb v)

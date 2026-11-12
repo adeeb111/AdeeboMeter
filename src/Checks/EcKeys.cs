@@ -53,7 +53,7 @@ namespace AdeeboMeter
             return l;
         }
         // a name can come from a key backup someone else made: never a | or a line break in the index
-        public static string SafeName(string n) { return new string((n ?? "").Where(c => c != '|' && !char.IsControl(c)).ToArray()).Trim(); }
+        public static string SafeName(string n) { return Program.Plain(new string((n ?? "").Where(c => c != '|' && !char.IsControl(c)).ToArray())).Trim(); }   // Plain: no right-to-left override or other format characters
         static void Save(List<Key> l)
         {
             string tmp = IndexFile + ".tmp";   // written whole, then swapped in: a crash mid-write can't leave half a file

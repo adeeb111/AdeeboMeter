@@ -109,7 +109,7 @@ namespace AdeeboMeter
             var srv = Pick(w == "" ? Cfg.SpeedServer : w);
             if (srv == null) { rows.Add(R(2, "Server", "no server matches \"" + w + "\"", "Type auto, a city or provider (e.g. vultr toronto), a file URL - or list to see them all.", "")); return rows; }
             var res = Measure(run, srv);
-            if (res.Error != "") { rows.Add(R(2, "Speed test", res.Error, "Nothing else was sent. Try another server - type list to see them, check to see which answer from here. A company network may block it.", "m")); return rows; }
+            if (res.Error != "") { rows.Add(R(2, "Speed test", res.Error, (res.Error.StartsWith("stopped during the upload", StringComparison.Ordinal) ? "" : "Nothing else was sent. ") + "Try another server - type list to see them, check to see which answer from here. A company network may block it.", "m")); return rows; }
             rows.Add(R(3, "Server", res.Server + (res.Where != "" ? " · " + res.Where : ""), "", "m"));
             rows.Add(R(0, "Download", Mbps(res.Down) + " Mbps", "", "m"));
             rows.Add(R(res.NoUpload ? 3 : double.IsNaN(res.Up) ? 1 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : (double.IsNaN(res.Up) ? "didn't take the upload (" + (srv.Up.Length > 0 ? new Uri(srv.Up).Host : "") + ")" : Mbps(res.Up) + " Mbps"), "", "m"));
@@ -189,7 +189,7 @@ namespace AdeeboMeter
                     if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
                     var pu = new List<double>(); string c2 = "";
                     res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
-                    if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved"; return res; }
+                    if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved (about " + Math.Round(up / 1e6).ToString(CultureInfo.CurrentCulture) + " MB had been sent)"; return res; }
                 }
                 else res.NoUpload = true;
                 res.MB = (down + up) / 1e6;

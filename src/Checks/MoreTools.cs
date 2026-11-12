@@ -202,7 +202,7 @@ namespace AdeeboMeter
         // ================================================================== My sites: the pinned sites, each walked once
         public static List<string[]> MySites(Toolkit.Run run)
         {
-            var rows = new List<string[]>(); var hosts = Cfg.Pins.Select(Security.HostOf).Where(x => x != null).Distinct().Take(15).ToList();
+            var rows = new List<string[]>(); var hosts = Cfg.Pins.ToArray() /* a copy: the list is the UI thread's, this runs on a worker */.Select(Security.HostOf).Where(x => x != null).Distinct().Take(15).ToList();
             if (hosts.Count == 0) { rows.Add(R(3, "My sites", "no sites yet", "Pin the sites and services you care about in Investigate › Check a destination - they appear here, and the Security checkup checks their certificates.", "u")); return rows; }
             foreach (var h in hosts)
             {

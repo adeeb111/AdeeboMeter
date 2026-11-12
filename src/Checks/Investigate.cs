@@ -273,6 +273,8 @@ namespace AdeeboMeter
                 }
             }
             if (verdict == "" && bad != null && bad[0] == "2") { verdict = bad[2] + " - addresses in that range can only be reached on one of them, so company servers there look 'down' from home. Change the home router's network (e.g. to 192.168.77.x)."; lv = 2; }
+            // a level-1 overlap (the VPN's routes cover the home network) is on screen too - never "looks fine" next to it
+            if (verdict == "" && bad != null && bad[0] == "1") { verdict = bad[2] + " - while the VPN is up, devices on your home network in that range (printers, a NAS) may not be reachable, and company servers there may not be either."; lv = 1; }
             if (verdict == "" && hij[0] == "2" && nrpt == 0 && vpn) { verdict = "Your DNS answers names that don't exist and the VPN sets no name rules, so company names may land on the provider's page instead of the company server."; lv = 1; }
             if (verdict == "") { verdict = target == "" ? "Nothing obvious on this PC. Type the server or site that fails in the box and run this again - it then tests the door, the proxy and the packet size to it." : "The path to " + target + " looks fine from here: the door opens and full packets get through. The difference is likely in the server's own rules (who it accepts) or your account."; lv = 0; }
             r.Conclude(lv, verdict);

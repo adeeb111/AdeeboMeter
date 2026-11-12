@@ -40,8 +40,9 @@ namespace AdeeboMeter
                 {
                     if (string.IsNullOrEmpty(dir)) continue;
                     string f = Path.Combine(dir, "AdeeboMeter.policy"); if (!System.IO.File.Exists(f)) continue;
-                    var info = new FileInfo(f); if (info.Length > 16384) { Program.Log("policy: " + f + " is too big - ignored"); continue; }
-                    Parse(System.IO.File.ReadAllLines(f)); File = File == "" ? f : File + "; " + f; Program.Log("policy: " + f);
+                    // a big file (a long comment header) is read up to 2,000 lines - never ignored whole: IT would think things are off
+                    var info = new FileInfo(f); if (info.Length > 16384) Program.Log("policy: " + f + " is " + info.Length + " bytes - reading its first 2,000 lines");
+                    Parse(System.IO.File.ReadLines(f).Take(2000).ToList()); File = File == "" ? f : File + "; " + f; Program.Log("policy: " + f);
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException)) throw; Program.Log("policy: " + e.Message); }
             }

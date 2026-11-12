@@ -43,8 +43,9 @@ namespace AdeeboMeter
             var sb = new System.Text.StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · Check a destination · " + Target + " · " + At.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture));
             sb.AppendLine("Result: " + Verdict); sb.AppendLine();
             for (int i = 0; i < Steps.Length; i++) if (Lv[i] >= 0) sb.AppendLine(Steps[i] + ": " + (Val[i] ?? ""));
-            var f = Findings; if (f != null) { sb.AppendLine(); foreach (var r in f) if (r.Length > 2) sb.AppendLine(r[1] + ": " + r[2]); }
-            foreach (var c in CardsCopy()) { sb.AppendLine(); sb.AppendLine(c.Key); foreach (var r in c.Value) if (r.Length > 1) sb.AppendLine("  " + string.Join(": ", r.Skip(r.Length > 2 ? 1 : 0).Take(2))); }
+            // findings are [text, level]; card rows are [name, value, level] - the text and the name/value, never the level number
+            var f = Findings; if (f != null) { sb.AppendLine(); foreach (var r in f) if (r.Length > 0 && r[0] != "") sb.AppendLine("- " + r[0]); }
+            foreach (var c in CardsCopy()) { sb.AppendLine(); sb.AppendLine(c.Key); foreach (var r in c.Value) if (r.Length > 1) sb.AppendLine("  " + r[0] + ": " + r[1]); }
             return sb.ToString();
         }
     }

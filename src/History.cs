@@ -59,6 +59,7 @@ namespace AdeeboMeter
                     if (!Directory.Exists(Dir)) return;
                     var cut = DateTime.Today.AddDays(-(Math.Max(1, Cfg.HistoryDays) - 1));
                     foreach (var f in Directory.GetFiles(Dir))
+                    try
                     {
                         string n = Path.GetFileName(f); DateTime d;
                         if (n.Length < 10 || !DateTime.TryParseExact(n.Substring(0, 10), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d)) continue;
@@ -77,6 +78,8 @@ namespace AdeeboMeter
                             File.Delete(f);
                         }
                     }
+                    // one damaged day never stops the others: it's left as it is (its temp file removed), the rest go on
+                    catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("history tidy " + Path.GetFileName(f) + ": " + e.Message); try { File.Delete(f + ".gz.tmp"); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
                 }
                 catch (Exception e) { Program.Log("history tidy: " + e.Message); }
             }

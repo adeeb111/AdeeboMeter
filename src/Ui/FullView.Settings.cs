@@ -313,11 +313,11 @@ namespace AdeeboMeter
                     new[] { "Learn anything", "When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears." },
                     new[] { "Tune it", "Settings decides how much AdeeboMeter watches in the background - from Penny to Engineer." } };
         static readonly string[][] AboutTrust = {
-                    new[] { "One readable file", "The whole app is a single source file you can read before you run it, built with the compiler that already ships inside Windows." },
+                    new[] { "One readable file", "The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows." },
                     new[] { "No admin rights", "Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show." },
                     new[] { "Secure by default", "Checks use TLS 1.2 or newer with Windows' own certificate validation - it never skips a certificate check. Inputs are validated; no shell is ever used." },
                     new[] { "Light as a feather", "A few dozen small checks a minute in the background. The heavy tools only run while this window is open, and always stop by themselves." },
-                    new[] { "Leaves no trace", "Settings and a small log live next to the exe. Captures are deleted on exit. Window titles and traffic content are never logged. The 7-day history is off unless you switch it on - and one click deletes it." } };
+                    new[] { "Leaves no trace", "Settings and a small log live next to the exe. Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it." } };
         static readonly string[][] AboutTabs =
         {
             new[] { "Connections", "Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark." },

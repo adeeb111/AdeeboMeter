@@ -335,7 +335,8 @@ namespace AdeeboMeter
                 {
                     case "INTEGER": vb.Type = 2; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"-?\d+"); if (!mm.Success || !long.TryParse(mm.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out sn)) sn = 0;
                         var b = new List<byte>(); do { b.Insert(0, (byte)sn); sn >>= 8; } while (!(sn == 0 && (b[0] & 0x80) == 0 || sn == -1 && (b[0] & 0x80) != 0)); vb.Raw = b.ToArray(); } break;   // 200 needs 00 C8 - one byte would read as -56
-                    case "Gauge32": case "Counter32": case "Counter64": case "Unsigned32": vb.Type = (byte)(ty == "Counter64" ? 0x46 : ty == "Counter32" ? 0x41 : 0x42); ulong.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out n); vb.Raw = BitConverter.GetBytes(n).Reverse().ToArray(); break;
+                    case "Gauge32": case "Counter32": case "Counter64": case "Unsigned32": vb.Type = (byte)(ty == "Counter64" ? 0x46 : ty == "Counter32" ? 0x41 : 0x42); ulong.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out n);
+                        { var nb = new List<byte>(); do { nb.Insert(0, (byte)n); n >>= 8; } while (n != 0); if ((nb[0] & 0x80) != 0) nb.Insert(0, 0); vb.Raw = nb.ToArray(); } break;   // as on the wire: the fewest bytes (a Counter32 is at most 5)
                     case "Timeticks": vb.Type = 0x43; { var mm = global::System.Text.RegularExpressions.Regex.Match(v, @"\((\d+)\)"); if (!mm.Success || !ulong.TryParse(mm.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) n = 0; vb.Raw = BitConverter.GetBytes((uint)n).Reverse().ToArray(); } break;
                     case "IpAddress": { IPAddress a; vb.Type = 0x40; vb.Raw = IPAddress.TryParse(v, out a) ? a.GetAddressBytes() : new byte[4]; } break;
                     default: vb.Type = 4; vb.Raw = global::System.Text.Encoding.UTF8.GetBytes(v.Trim('"')); break;

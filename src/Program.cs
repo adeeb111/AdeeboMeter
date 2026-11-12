@@ -459,7 +459,7 @@ namespace AdeeboMeter
             foreach (var p in Process.GetProcesses())
             {
                 bool ours = false;
-                try { ours = p.Id != me.Id && p.SessionId == me.SessionId && p.ProcessName.StartsWith("AdeeboMeter", StringComparison.OrdinalIgnoreCase); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
+                try { ours = p.Id != me.Id && p.SessionId == me.SessionId && p.ProcessName.StartsWith("AdeeboMeter", StringComparison.OrdinalIgnoreCase) && !p.ProcessName.EndsWith("-remove", StringComparison.OrdinalIgnoreCase); }   /* never the uninstall helper */ catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
                 if (ours) r.Add(p); else p.Dispose();
             }
             return r;

@@ -403,12 +403,13 @@ namespace AdeeboMeter
         // Wi-Fi from netsh, read in any Windows language: whether it IS Wi-Fi comes from the adapter, not from the text;
         // the signal is the one "NN%" value; SSID / BSSID are never translated; channel and state know the common translations.
         // A location-blocked netsh (Windows 11) keeps Wi-Fi as Wi-Fi with the signal unknown - never "LAN", never "weak".
-        static readonly string[] ChanKeys = { "channel", "kanal", "canal", "canale", "kanaal" }, StateKeys = { "state", "status", "état", "etat", "estado", "stato", "zustand", "staat", "stan" };
+        static readonly string[] ChanKeys = { "channel", "kanal", "canal", "canale", "kanaal", "kanał", "チャネル", "канал", "信道" }, StateKeys = { "state", "status", "état", "etat", "estado", "stato", "zustand", "staat", "stan", "状態", "состояние", "durum", "状态" };
         public static string NormState(string v)
         {
             v = (v ?? "").Trim().ToLowerInvariant();
             foreach (var d in new[] { "disconn", "getrennt", "déconnect", "deconnect", "desconect", "disconness", "niet verbonden", "rozłącz" }) if (v.Contains(d)) return "disconnected";
-            foreach (var c in new[] { "connected", "verbunden", "connecté", "connecte", "conectado", "connesso", "verbonden", "połączon" }) if (v.Contains(c)) return "connected";
+            foreach (var d in new[] { "切断", "отключ", "bağlantı kesildi", "已断开" }) if (v.Contains(d)) return "disconnected";
+            foreach (var c in new[] { "connected", "verbunden", "connecté", "connecte", "conectado", "connesso", "verbonden", "połączon", "接続", "подключ", "bağlandı", "已连接" }) if (v.Contains(c)) return "connected";
             return v;
         }
         public static void ParseWifi(string outp, out int sig, out string ssid, out string ch, out string bssid, out string state, out int rate)
@@ -418,10 +419,10 @@ namespace AdeeboMeter
             {
                 var m = Regex.Match(line, @"^\s*([^:]+?)\s*:\s*(.+?)\s*$"); if (!m.Success) continue;
                 string k = m.Groups[1].Value.Trim(), kl = k.ToLowerInvariant(), v = m.Groups[2].Value;
-                var pct = Regex.Match(v, @"^(\d{1,3})\s*%$");
-                if (pct.Success && sig < 0) { int x; if (int.TryParse(pct.Groups[1].Value, out x) && x <= 100) sig = x; }
+                var pct = Regex.Match(v, @"^(?:(\d{1,3})\s*%|%\s*(\d{1,3}))$");   // "74%", or Turkish "%74"
+                if (pct.Success && sig < 0) { int x; if (int.TryParse(pct.Groups[1].Success ? pct.Groups[1].Value : pct.Groups[2].Value, out x) && x <= 100) sig = x; }
                 else if (k == "SSID") ssid = Program.Plain(v);
-                else if (k == "BSSID" || k == "AP BSSID") bssid = v;
+                else if ((k == "BSSID" || k == "AP BSSID" || k.IndexOf("BSSID", StringComparison.OrdinalIgnoreCase) >= 0) && Regex.IsMatch(v, "^[0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}$")) bssid = v;   // "BSSID du point d'accès" too
                 else if (ChanKeys.Contains(kl)) ch = v;
                 else if (StateKeys.Contains(kl)) state = NormState(v);
                 else if (kl.StartsWith("receive rate", StringComparison.Ordinal)) { double r; if (double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r)) rate = (int)r; }
@@ -438,7 +439,7 @@ namespace AdeeboMeter
                 string outp = Job.Run(Job.Netsh, "wlan show interfaces", 3000);
                 if (LinkInfo.Blocked(outp)) { WifiBlocked = true; wifiEmpty = 0; lock (L) { HasWifi = true; WifiSignal = -1; } return; }
                 WifiBlocked = false;
-                int sig, rate; string ssid, ch, bssid, state; ParseWifi(outp, out sig, out ssid, out ch, out bssid, out state, out rate);
+                int sig, rate; string ssid, ch, bssid, state; outp = LinkInfo.ActiveBlock(outp); ParseWifi(outp, out sig, out ssid, out ch, out bssid, out state, out rate);
                 // netsh that timed out or answered nothing (a busy PC) is not "Wi-Fi gone": keep the last reading for up to three
                 // empty answers (the adapter itself going away is seen at once - it stops being the Wi-Fi adapter above)
                 if (state == "" && sig < 0 && ssid == "") { if (++wifiEmpty < 3) return; lock (L) { HasWifi = true; WifiSignal = -1; } return; }

@@ -483,9 +483,12 @@ namespace AdeeboMeter
                 try
                 {
                     var ar = sock.BeginConnect(ip, port, null, null);
-                    if (!ar.AsyncWaitHandle.WaitOne(timeoutMs)) return double.NaN;
-                    sock.EndConnect(ar);
-                    return sw.Elapsed.TotalMilliseconds;
+                    using (var wh = ar.AsyncWaitHandle)   // its handle closed every time - hours of TCP probes left one per probe to the finalizer
+                    {
+                        if (!wh.WaitOne(timeoutMs)) return double.NaN;
+                        sock.EndConnect(ar);
+                        return sw.Elapsed.TotalMilliseconds;
+                    }
                 }
                 catch (SocketException) { return double.NaN; }
                 catch (ObjectDisposedException) { return double.NaN; }

@@ -262,8 +262,9 @@ namespace AdeeboMeter
         static List<string[]> Startup(Monitor m, List<string> s)
         {
             var items = new List<Tuple<string, string>>();
-            foreach (var h in new[] { CU, LM })
-                try { using (var b = RegistryKey.OpenBaseKey(h, RegistryView.Registry64)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) foreach (var n in k.GetValueNames()) items.Add(Tuple.Create(n, Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture) ?? "")); }
+            // the 64-bit Run keys, and LM's 32-bit one (WOW6432Node) where 32-bit programs register themselves
+            foreach (var hv in new[] { Tuple.Create(CU, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry32) })
+                try { using (var b = RegistryKey.OpenBaseKey(hv.Item1, hv.Item2)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) foreach (var n in k.GetValueNames()) items.Add(Tuple.Create(n, Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture) ?? "")); }
                 catch (System.Security.SecurityException) { }
             foreach (var d in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })
                 try { if (Directory.Exists(d)) foreach (var f in Directory.GetFiles(d).Where(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase))) items.Add(Tuple.Create(Path.GetFileName(f), f)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
@@ -527,6 +528,7 @@ namespace AdeeboMeter
             {
                 string e1, e2; var a = SiteCert(h, SslProtocols.Tls, out e1); var b = a == null ? SiteCert(h, (SslProtocols)768, out e2) : null;
                 bool old = a != null || b != null; if (a != null) a.Dispose(); if (b != null) b.Dispose();
+                if (!old) { string e3; var c12 = SiteCert(h, SslProtocols.Tls12, out e3); if (c12 == null) return R(3, "Old TLS · " + h, "couldn't check - the site didn't answer over TLS at all (" + Draw.Trunc(e3, 50) + ")", "", null); c12.Dispose(); }   // unreachable isn't "refused"
                 return R(old ? 1 : 0, "Old TLS · " + h, old ? "TLS " + (a != null ? "1.0" : "1.1") + " still accepted" : "TLS 1.0 / 1.1 refused (or turned off on this PC)", old ? "Browsers dropped TLS 1.0 and 1.1 in 2020; servers should too." : "", null);
             });
         }
@@ -561,12 +563,14 @@ namespace AdeeboMeter
                 bool noAnswer = false;
                 Func<string, List<string>> txt = n => { var r = Toolkit.Query(srv, n, 16, true); if (r == null) { noAnswer = true; return new List<string>(); } return r.Rrs.Where(x => x.Section == 1 && x.Type == "TXT").Select(x => x.Data).ToList(); };
                 var spf = txt(d).FirstOrDefault(x => x.Contains("v=spf1")); var dm = txt("_dmarc." + d).FirstOrDefault(x => x.Contains("v=DMARC1"));
-                string pol = dm != null ? Regex.Match(dm, @"p=(\w+)").Groups[1].Value : "";
+                string pol = dm != null ? Regex.Match(dm, @"(?:^|;)\s*p\s*=\s*(\w+)").Groups[1].Value : "";   // p=, never the sp= / np= in front of it
                 string dk = Selectors.FirstOrDefault(sel => txt(sel + "._domainkey." + d).Any(x => x.Contains("p=")));
                 if (noAnswer) return R(3, "Mail protection · " + d, "couldn't check - your DNS server didn't answer every question", "", null);
                 var miss = new List<string>(); if (spf == null) miss.Add("SPF"); if (dm == null) miss.Add("DMARC");
                 string val = (spf != null ? "SPF " + (spf.Contains("-all") ? "strict (-all)" : spf.Contains("~all") ? "soft (~all)" : "set") : "no SPF") + " · " + (dm != null ? "DMARC p=" + pol : "no DMARC") + " · " + (dk != null ? "DKIM found (" + dk + ")" : "DKIM not found under common selectors");
-                int lv = miss.Count > 0 ? (miss.Count == 2 ? 2 : 1) : pol == "none" ? 1 : 0;
+                bool plusAll = spf != null && Regex.IsMatch(spf, @"(^|\s)\+all\b");   // "+all": anyone on the internet may send as this domain
+                if (plusAll) val = val.Replace("SPF set", "SPF +all (lets anyone send)");
+                int lv = miss.Count > 0 ? (miss.Count == 2 ? 2 : 1) : pol == "none" || plusAll ? 1 : 0;
                 return R(lv, "Mail protection · " + d, val, lv == 0 ? "" : "Without SPF and DMARC (p=quarantine or reject) anyone can send email that looks like it's from " + d + ". Your mail provider's admin page has the records to add.", null);
             });
         }

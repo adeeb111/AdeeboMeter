@@ -516,11 +516,11 @@ namespace AdeeboMeter
         // everyday words -> the tools they mean, best first (ids, not more words - so "wifi" finds the Wi-Fi tool, not every page that says "speed")
         static readonly Dictionary<string, string> Synonyms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "bloat iperf ping mtr cloud" }, { "speed", "iperf bloat cloud" },
-            { "bandwidth", "iperf bloat" }, { "throughput", "iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
+            { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "speedtest lag bloat ping mtr" }, { "speed", "speedtest iperf bloat cloud" },
+            { "bandwidth", "iperf bloat" }, { "throughput", "speedtest iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
-            { "cert", "http certs certfile" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "http certs" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
-            { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep snmpprn arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
+            { "cert", "certs certfile http" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "certs http" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
+            { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "snmpprn discover arp sweep" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
             { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "encrypt", "encrypt decrypt recipients" }, { "decrypt", "decrypt encrypt" }, { "adeebo", "decrypt encrypt" }, { "p7m", "decrypt encrypt" }, { "key", "keys newkey csrmake certmatch" }, { "keys", "keys newkey" }, { "self-signed", "selfsigned" }, { "selfsigned", "selfsigned" }, { "backup", "keys" }, { "join", "join dot1x dhcpreplay" }, { "rogue", "dhcpreplay rareplay" }, { "radius", "radius radiuslab tacacs" }, { "pcap", "dhcpreplay rareplay icmpexplain samplelab" }, { "capture", "dhcpreplay rareplay icmpexplain samplelab" }, { "mx", "smtppath dig" }, { "inspection", "certcmp" }, { "email", "mail" }, { "smtp", "smtppath mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover finddev" }, { "bonjour", "discover finddev" }, { "upnp", "discover finddev" }, { "llmnr", "discover nbname" },
@@ -692,7 +692,7 @@ namespace AdeeboMeter
             // HTTP sign-in headers hidden and a request body left out
             var shown = (string[])a.Clone();
             for (int i = 0; i < t.Inputs.Length && i < shown.Length; i++) if (SecretInput(t.Inputs[i])) shown[i] = "";
-            if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
+            if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
             string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = true; tbRun.Text = "Stop"; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {
@@ -1053,7 +1053,7 @@ namespace AdeeboMeter
                     g.DrawString(h.Ip == "" ? "·  no answer" : h.Ip + (h.Reached ? "  (destination)" : ""), Draw.fBody, h.Ip == "" ? sub : ink, x + 40 * S, y + 6 * S);
                     if (h.Mtu > 0)
                     {
-                        bool drop = h.Mtu < prev; float bw = barW * Math.Min(1f, (h.Mtu - 500) / (h.Mtu > 1500 ? 8716f : 1000f));
+                        bool drop = prev < 99999 && h.Mtu < prev;   /* the first measured hop has nothing before it to drop from */ float bw = barW * Math.Min(1f, (h.Mtu - 500) / (h.Mtu > 1500 ? 8716f : 1000f));
                         Theme.Fill(g, new RectangleF(barX, y + 9 * S, Math.Max(4, bw), 12 * S), 4 * S, drop ? Theme.Amber : Theme.Green);
                         using (var vb = new SolidBrush(drop ? Theme.LvText(1) : Theme.Ink)) g.DrawString(h.Mtu + (drop ? "  ← drops here: " : "  ") + (drop || h.BlackHole ? h.MtuNote : ""), drop ? Draw.fBodyB : Draw.fBody, vb, new RectangleF(barX + barW + 10 * S, y + 6 * S, w - (barX - x) - barW - 10 * S, 20 * S));
                         prev = Math.Min(prev, h.Mtu);

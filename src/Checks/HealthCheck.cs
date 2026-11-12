@@ -96,7 +96,7 @@ namespace AdeeboMeter
             if (Native.GetSystemPowerStatus(out ps))
             {
                 bool batt = ps.ACLineStatus == 0, saver = ps.SystemStatusFlag == 1;
-                add(saver ? 1 : 0, "Power", (batt ? "on battery " + ps.BatteryLifePercent + "%" : "plugged in") + (saver ? " · battery saver ON" : ""),
+                add(saver ? 1 : 0, "Power", (batt ? "on battery" + (ps.BatteryLifePercent <= 100 ? " " + ps.BatteryLifePercent + "%" : "") : "plugged in")   /* 255 = Windows doesn't know */ + (saver ? " · battery saver ON" : ""),
                     saver ? Voice.P("Battery saver is slowing things down on purpose. Plug in if it feels sluggish.", "Battery saver is on and throttles performance.") : "Not throttled.");
             }
             return rows;

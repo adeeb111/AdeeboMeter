@@ -386,7 +386,7 @@ namespace AdeeboMeter
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(pkt, pkt.Length);
                     var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
-                    if (r.Length < 20) { rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
+                    if (r.Length < 20) { Array.Clear(sec, 0, sec.Length); rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
                     bool ma, good = ReplyOk(r, pkt[1], auth, sec, out ma); Array.Clear(sec, 0, sec.Length);
                     if (good && !ma) rows.Add(R(1, "Message-Authenticator", "the reply doesn't carry one", "Not hardened against BlastRADIUS (CVE-2024-3596): turn on require_message_authenticator / limit_proxy_state on the server, or update it.", "m"));
                     string code = r[0] == 2 ? "Access-Accept" : r[0] == 3 ? "Access-Reject" : r[0] == 5 ? "Accounting-Response" : "code " + r[0];
@@ -395,7 +395,7 @@ namespace AdeeboMeter
                         !good ? "The shared secret differs between this PC's entry and the server." : expected ? "" : "The server may handle Status-Server as a normal request - check that status_server is enabled (FreeRADIUS) and that this PC is a client.", "m"));
                 }
             }
-            catch (SocketException) { rows.Add(R(2, h + ":" + p, "no answer in 3 s", "RADIUS servers stay silent for: a wrong shared secret, a client (NAS) entry that doesn't include this PC's address, Status-Server not enabled, or UDP " + p + " blocked. FreeRADIUS: status_server = yes and a client entry for this PC.", "m")); }
+            catch (SocketException) { Array.Clear(sec, 0, sec.Length); rows.Add(R(2, h + ":" + p, "no answer in 3 s", "RADIUS servers stay silent for: a wrong shared secret, a client (NAS) entry that doesn't include this PC's address, Status-Server not enabled, or UDP " + p + " blocked. FreeRADIUS: status_server = yes and a client entry for this PC.", "m")); }
             return rows;
         }
 
@@ -446,8 +446,8 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 862, out h, out p)) { rows.Add(R(2, "Reflector", "type the reflector's address (port 862, or host:port)", "Most carrier routers can run a TWAMP-light reflector; on Linux, any TWAMP-light reflector works.", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
-            int n = Int(countIn, 100, 10, 1000);   // the Traffic Lab's cap: 1,000 packets at most run.SeriesUnit = "ms";
-            var res = new List<double[]>();   // sseq, t1, t2, t3, t4, rseq (ms since 1900)
+            int n = Int(countIn, 100, 10, 1000); /* the Traffic Lab's cap: 1,000 packets at most */ run.SeriesUnit = "ms";
+            var res = new List<double[]>(); int sentN = 0;   // sseq, t1, t2, t3, t4, rseq (ms since 1900); sentN: really sent (Stop ends early)
             using (var u = new UdpClient(a.AddressFamily))
             {
                 u.Client.ReceiveTimeout = 1000; u.Connect(a, p);
@@ -455,7 +455,7 @@ namespace AdeeboMeter
                 {
                     var pkt = new byte[41]; pkt[0] = (byte)(i >> 24); pkt[1] = (byte)(i >> 16); pkt[2] = (byte)(i >> 8); pkt[3] = (byte)i;
                     var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate (RFC 4656): S bit 0 = this PC can't promise its clock is synced to UTC; scale 0, multiplier 1 (a multiplier of 0 isn't allowed)
-                    u.Send(pkt, pkt.Length); var sw = Stopwatch.StartNew();
+                    u.Send(pkt, pkt.Length); sentN++; var sw = Stopwatch.StartNew();
                     try
                     {
                         while (sw.ElapsedMilliseconds < 1000)
@@ -479,7 +479,7 @@ namespace AdeeboMeter
             }
             if (res.Count == 0) { rows.Add(R(2, a + ":" + p, "no reflected packets", "Is a TWAMP-light reflector running there on UDP " + p + ", and does its prefix list include this PC's address?", "m")); return rows; }
             // loss per direction: the reflector numbers what it reflected, so a gap there means lost on the way out
-            int sent = n, got = res.Count, lostOut = 0, lostBack = 0;
+            int sent = sentN, got = res.Count, lostOut = 0, lostBack = 0;
             for (int i = 1; i < res.Count; i++) { int ds = (int)(res[i][0] - res[i - 1][0]), dr = (int)(res[i][5] - res[i - 1][5]); if (ds > 1) { int miss = ds - 1, reflected = Math.Max(0, dr - 1); lostBack += Math.Min(miss, reflected); lostOut += miss - Math.Min(miss, reflected); } }
             var rtt = res.Select(x => x[4]).OrderBy(x => x).ToList();
             Func<int, double> ipdv = k => { double s = 0; for (int i = 1; i < res.Count; i++) s += Math.Abs(res[i][k] - res[i - 1][k]); return res.Count > 1 ? s / (res.Count - 1) : 0; };

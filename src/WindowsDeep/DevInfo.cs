@@ -105,6 +105,6 @@ namespace AdeeboMeter
         public static string When(DateTime t) { if (t == DateTime.MinValue) return "-"; var c = CultureInfo.CurrentCulture; return t.Date == DateTime.Today ? "today " + t.ToString("HH:mm", c) : t.Date == DateTime.Today.AddDays(-1) ? "yesterday " + t.ToString("HH:mm", c) : t.ToString("d MMM yyyy HH:mm", c); }
         // Windows' own in-box drivers all carry the same made-up date (21 June 2006) - it says nothing about age
         public static bool Inbox(DateTime t) { return t.Year == 2006 && t.Month == 6 && (t.Day == 20 || t.Day == 21); }
-        public static string Age(DateTime t) { if (t == DateTime.MinValue) return ""; double y = (DateTime.Now - t).TotalDays / 365.25; return y >= 1 ? y.ToString("0.#", CultureInfo.CurrentCulture) + " years old" : ((int)(DateTime.Now - t).TotalDays) + " days old"; }
+        public static string Age(DateTime t) { if (t == DateTime.MinValue) return ""; if (t > DateTime.Now) return "dated in the future"; double y = (DateTime.Now - t).TotalDays / 365.25; return y >= 1 ? y.ToString("0.#", CultureInfo.CurrentCulture) + " years old" : ((int)(DateTime.Now - t).TotalDays) + " days old"; }
     }
 }

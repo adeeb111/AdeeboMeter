@@ -81,7 +81,7 @@ namespace AdeeboMeter
         public static string[] CertVerdict(CertSnap a, CertSnap b)
         {
             if (a.Chain.Count == 0 || b.Chain.Count == 0) return R(3, "Compared", "-", "", "i");
-            if (a.Chain[0][2] == b.Chain[0][2]) return R(0, "Same certificate", "both runs got exactly the same site certificate (" + a.Chain[0][1] + ")", "Nothing in the middle changes this site's encryption on either path.", "i");
+            if (a.Chain[0][2] == b.Chain[0][2]) return R(0, "Same certificate", "both runs got exactly the same site certificate (" + a.Chain[0][0] + ")", "Nothing in the middle changes this site's encryption on either path.", "i");
             if (a.Chain[0][1] != b.Chain[0][1])
             {
                 bool bUntrusted = !b.Trust.StartsWith("trusted", StringComparison.Ordinal), aUntrusted = !a.Trust.StartsWith("trusted", StringComparison.Ordinal);

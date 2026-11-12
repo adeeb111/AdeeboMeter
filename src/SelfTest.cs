@@ -710,6 +710,19 @@ namespace AdeeboMeter
                 finally { foreach (var x in new[] { f, f + ".tmp", f + ".bak" }) try { File.Delete(x); } catch (IOException) { } }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("round-2 batch: SNMP text, Wi-Fi parsing, mail records, URL slips, iperf block size", () =>
+            {
+                var bad = new List<string>();
+                Func<byte[], string> txt = b => Snmp.Text(new Snmp.Vb { Type = 4, Raw = b }, "sysName", null);
+                if (txt(Encoding.UTF8.GetBytes("café")) != "café" || txt(Encoding.UTF8.GetBytes("Bürox")) != "Bürox") bad.Add("SNMP UTF-8 text: " + txt(Encoding.UTF8.GetBytes("café")) + " / " + txt(Encoding.UTF8.GetBytes("Bürox")));
+                if (txt(new byte[] { 0x00, 0x11, 0x22, 0xaa, 0xbb, 0xcc }) != "00:11:22:aa:bb:cc") bad.Add("SNMP MAC");
+                int sig, rate; string ssid, ch, bssid, state;
+                Monitor.ParseWifi("    Sinyal                 : %74\n    SSID                   : Ev\n", out sig, out ssid, out ch, out bssid, out state, out rate); if (sig != 74) bad.Add("Turkish signal " + sig);
+                Monitor.ParseWifi("    BSSID du point d'accès : 02:11:22:33:44:55\n    Signal : 80 %\n", out sig, out ssid, out ch, out bssid, out state, out rate); if (bssid != "02:11:22:33:44:55") bad.Add("French BSSID label");
+                if (Toolkit.HostOnly("https:/example.com/x") != "example.com" || Toolkit.UrlToTarget("https:/example.com", false) != "example.com") bad.Add("one-slash URL: " + Toolkit.HostOnly("https:/example.com/x"));
+                if (Toolkit.BlockLen(Toolkit.ParseOpts("-u -l 1M")) > 65507) bad.Add("iperf3 UDP block over 65,507");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("Neighbour wars: winner per day, who moved onto your channel, the quietest channel", () =>
             {
                 var bad = new List<string>(); var rows = new List<AirLog.Row>(); var d0 = DateTime.Today.AddDays(-2);

@@ -105,7 +105,7 @@ namespace AdeeboMeter
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
             if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));
             if (t.Minute == 5) Task.Factory.StartNew(() => { try { AirLog.Record(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("air: " + e.Message); } });   // neighbour wars: once an hour
-            if (t.Minute == 20) UpdateBreak.Background();   // what Windows Update changed: once an hour, in the background
+            if (t.Minute == 20 && Cfg.History && (Cfg.Preset != "penny" || t.Hour == 12)) UpdateBreak.Background();   // what Windows Update changed: once an hour, in the background
         }
     }
 
@@ -207,7 +207,7 @@ namespace AdeeboMeter
     // ================================================================== what's normal for each network ("slower than usual")
     static class Baseline
     {
-        sealed class B { public string Key, Label; public double Gw, Net, Loss; public int N; }
+        sealed class B { public string Key, Label; public double Gw = double.NaN, Net = double.NaN, Loss = double.NaN; public int N; }   // NaN: never measured here (a router that never answers stays "unknown", never "0 ms")
         static List<B> list; static readonly object k = new object(); static DateTime saved = DateTime.UtcNow, warned = DateTime.MinValue;
         static readonly List<double> recentGw = new List<double>(), recentNet = new List<double>(); static string recentKey = "";
         static void Load() { if (list == null) list = Store.Read("baselines.txt").Where(r => r.Length >= 6).Select(r => new B { Key = r[0], Label = r[1], Gw = Store.D(r[2]), Net = Store.D(r[3]), Loss = Store.D(r[4]), N = (int)Store.D(r[5]) }).ToList(); }
@@ -227,17 +227,17 @@ namespace AdeeboMeter
                 if (b.N >= 120 && recentGw.Count >= 4 && (DateTime.UtcNow - warned).TotalMinutes > 30)
                 {
                     double g5 = Avg(recentGw), n5 = Avg(recentNet);
-                    if (!double.IsNaN(g5) && g5 > Math.Max(b.Gw * 2.5, b.Gw + 15))
+                    if (!double.IsNaN(g5) && !double.IsNaN(b.Gw) && g5 > Math.Max(b.Gw * 2.5, b.Gw + 15))
                     { warned = DateTime.UtcNow; m.Events.Add(1, "base", "Slower than usual for " + label + ": your router answers in " + g5.ToString("0", CultureInfo.CurrentCulture) + " ms (normally " + b.Gw.ToString("0", CultureInfo.CurrentCulture) + " ms)."); Alerts.Raise("base", "Slower than usual on " + label + " - the link to your router is " + (g5 / Math.Max(1, b.Gw)).ToString("0", CultureInfo.CurrentCulture) + "x slower than normal.", 60); }
-                    else if (!double.IsNaN(n5) && n5 > Math.Max(b.Net * 2.5, b.Net + 40))
+                    else if (!double.IsNaN(n5) && !double.IsNaN(b.Net) && n5 > Math.Max(b.Net * 2.5, b.Net + 40))
                     { warned = DateTime.UtcNow; m.Events.Add(1, "base", "Slower than usual for " + label + ": the internet answers in " + n5.ToString("0", CultureInfo.CurrentCulture) + " ms (normally " + b.Net.ToString("0", CultureInfo.CurrentCulture) + " ms)."); }
                 }
                 // learn: a slow average over roughly the last day of use
                 double a = 1.0 / Math.Min(b.N + 1, 1440);
-                if (!double.IsNaN(gw)) b.Gw = b.N == 0 ? gw : b.Gw + (gw - b.Gw) * a;
-                if (!double.IsNaN(net)) b.Net = b.N == 0 ? net : b.Net + (net - b.Net) * a;
-                if (!double.IsNaN(loss)) b.Loss = b.N == 0 ? loss : b.Loss + (loss - b.Loss) * a;
-                b.N++;
+                if (!double.IsNaN(gw)) b.Gw = double.IsNaN(b.Gw) ? gw : b.Gw + (gw - b.Gw) * a;
+                if (!double.IsNaN(net)) b.Net = double.IsNaN(b.Net) ? net : b.Net + (net - b.Net) * a;
+                if (!double.IsNaN(loss)) b.Loss = double.IsNaN(b.Loss) ? loss : b.Loss + (loss - b.Loss) * a;
+                if (!double.IsNaN(gw) || !double.IsNaN(net)) b.N++;   // only minutes that measured something teach "normal"
                 if ((DateTime.UtcNow - saved).TotalMinutes >= 10) { saved = DateTime.UtcNow; Store.Write("baselines.txt", list.Select(x => new[] { x.Key, x.Label, Store.S(x.Gw), Store.S(x.Net), Store.S(x.Loss), x.N.ToString(CultureInfo.InvariantCulture) }).ToList()); }
             }
         }
@@ -250,7 +250,8 @@ namespace AdeeboMeter
             {
                 Load(); var b = list.FirstOrDefault(x => x.Key == key);
                 if (b == null || b.N < 120) return b == null ? "" : "Still learning what's normal here (" + b.N + " of 120 minutes).";
-                return "Normally " + b.Gw.ToString("0", CultureInfo.CurrentCulture) + " ms to your router and " + b.Net.ToString("0", CultureInfo.CurrentCulture) + " ms to the internet on " + b.Label + ".";
+                if (double.IsNaN(b.Gw) && double.IsNaN(b.Net)) return "";
+                return "Normally " + (double.IsNaN(b.Gw) ? "" : b.Gw.ToString("0", CultureInfo.CurrentCulture) + " ms to your router" + (double.IsNaN(b.Net) ? "" : " and ")) + (double.IsNaN(b.Net) ? "" : b.Net.ToString("0", CultureInfo.CurrentCulture) + " ms to the internet") + " on " + b.Label + ".";
             }
         }
     }

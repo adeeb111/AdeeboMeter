@@ -247,20 +247,20 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); X509Certificate2 want;
             try { want = Load(certIn); } catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - a .cer, .crt or .pem file, or paste the PEM text", "", "")); return rows; }
             string h; int port; if (!Lab.Split((server ?? "").Trim(), 443, out h, out port) || !Games.ValidHost(h)) { want.Dispose(); rows.Add(R(2, "Server", "type the server - e.g. vpn.example.com or 10.0.0.5:8443", "", "")); return rows; }
-            var sent = new List<X509Certificate2>(); SslPolicyErrors errs = SslPolicyErrors.None;
+            var sent = new List<X509Certificate2>(); SslPolicyErrors errs = SslPolicyErrors.None; string hsErr = "";
             try
             {
                 using (var tc = Toolkit.Open(h, port, 6000))
                 {
                     if (tc == null) { rows.Add(R(2, h + ":" + port, "couldn't connect in 6 s", "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) => { errs = e; if (ch != null) foreach (var el in ch.ChainElements) sent.Add(new X509Certificate2(el.Certificate)); else if (c != null) sent.Add(new X509Certificate2(c)); return e == SslPolicyErrors.None; }))
-                    { var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); hs.Wait(8000); }
+                    { var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); if (!hs.Wait(8000)) hsErr = "the TLS handshake didn't finish in 8 s"; }
                 }
             }
-            catch (Exception e) { if (!(e is SocketException || e is IOException || e is AggregateException || e is System.Security.Authentication.AuthenticationException)) throw; }
+            catch (Exception e) { if (!(e is SocketException || e is IOException || e is AggregateException || e is System.Security.Authentication.AuthenticationException)) throw; var ie = e is AggregateException && e.InnerException != null ? e.InnerException : e; hsErr = "the TLS handshake failed: " + Draw.Trunc(ie.Message, 90); }
             using (want)
             {
-                if (sent.Count == 0) { rows.Add(R(2, h + ":" + port, "no certificate came back - not a TLS port?", "", "m")); return rows; }
+                if (sent.Count == 0) { rows.Add(R(2, h + ":" + port, hsErr != "" ? hsErr : "no certificate came back - not a TLS port?", "", "m")); return rows; }
                 bool same = sent[0].Thumbprint == want.Thumbprint;
                 rows.Add(R(same ? 0 : 2, "The server presents", same ? "exactly this certificate" : "a DIFFERENT certificate: " + sent[0].GetNameInfo(X509NameType.SimpleName, false) + " · from " + sent[0].GetNameInfo(X509NameType.SimpleName, true) + " · expires " + sent[0].NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture),
                     same ? "" : SameKey(sent[0], want) ? "Same key, different certificate - an older or newer copy is still loaded (restart the service, or check which certificate the binding uses)." : "Not even the same key - the new certificate isn't bound to this port yet, or another server answers on this name.", "m"));
@@ -305,7 +305,7 @@ namespace AdeeboMeter
             var files = Directory.GetFiles(RecipDir, "*.cer").Concat(Directory.GetFiles(RecipDir, "*.adeebokey")).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
             rows.Add(R(-1, "SAVED RECIPIENTS", files.Count == 0 ? "none yet" : files.Count.ToString(CultureInfo.InvariantCulture), "", ""));
             foreach (var f in files.Where(x => x.EndsWith(".adeebokey", StringComparison.OrdinalIgnoreCase))) { string nm; var pb = EcKeys.ReadPublic(File.ReadAllText(f), out nm); if (pb != null) rows.Add(R(3, Path.GetFileNameWithoutExtension(f), "EC P-384 · .adeebo files · fingerprint " + EcKeys.Fingerprint(pb), "", "")); }
-            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "")); } catch (CryptographicException) { } }
+            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "")); } catch (CryptographicException) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a certificate this PC can read - skipped", "", "")); } catch (FormatException) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a certificate this PC can read - skipped", "", "")); } catch (IOException) { } }
             return rows;
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5350", Justification = "SHA-256 fingerprint for display")]
@@ -355,7 +355,19 @@ namespace AdeeboMeter
                 st.Open(OpenFlags.ReadWrite);
                 var c = st.Certificates.Cast<X509Certificate2>().FirstOrDefault(x => x.Thumbprint == thumb && (x.FriendlyName ?? "").StartsWith(Prefix, StringComparison.Ordinal));   // only AdeeboMeter's own keys
                 if (c == null) return false;
-                st.Remove(c); Program.Log("key deleted: " + NameOf(c)); return true;
+                st.Remove(c);
+                // the certificate is gone from the store - the private key it pointed to goes too, never left behind orphaned
+                try
+                {
+                    if (c.HasPrivateKey)
+                    {
+                        var k = c.GetRSAPrivateKey();
+                        var cng = k as RSACng; if (cng != null) cng.Key.Delete();
+                        var csp = k as RSACryptoServiceProvider; if (csp != null) { csp.PersistKeyInCsp = false; csp.Clear(); }
+                    }
+                }
+                catch (CryptographicException e) { Program.Log("key delete (private key): " + e.Message); }
+                Program.Log("key deleted: " + NameOf(c)); return true;
             }
         }
     }

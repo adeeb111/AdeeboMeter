@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -143,9 +144,23 @@ namespace AdeeboMeter
             run.Status = "Listening for " + secs + " s (only " + (discovery ? "discovery and name" : "routing and switch control") + " traffic, nothing saved)...";
             string filter = discovery ? DiscFilter : Filter; var fields = discovery ? DiscFields : Fields;
             string ifc = "\\Device\\NPF_{" + g.ToString().ToUpperInvariant() + "}";
-            Func<string[], string> go = f => { try { return Job.Run(LiveCapture.Tshark, "-i \"" + ifc + "\" -n -a duration:" + secs.ToString(CultureInfo.InvariantCulture) + " -f \"" + filter + "\" -T fields -E separator=| " + string.Join(" ", f.Select(x => "-e " + x)), (secs + 15) * 1000) ?? ""; } catch (Exception e) { return "ERR " + e.Message; } };
+            // in pieces of up to 15 s, so Stop is honoured within one piece (tshark itself can't be told to stop early)
+            Func<string[], int, string> go1 = (f, n) => { try { return Job.Run(LiveCapture.Tshark, "-i \"" + ifc + "\" -n -a duration:" + n.ToString(CultureInfo.InvariantCulture) + " -f \"" + filter + "\" -T fields -E separator=| " + string.Join(" ", f.Select(x => "-e " + x)), (n + 15) * 1000) ?? ""; } catch (Exception e) { return "ERR " + e.Message; } };
+            Func<string[], string> go = f =>
+            {
+                var sb = new StringBuilder(); int left = secs;
+                while (left > 0 && !run.Stop)
+                {
+                    int n = Math.Min(15, left); string part = go1(f, n); left -= n;
+                    if (part.StartsWith("ERR ", StringComparison.Ordinal) || part.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0) return sb.Length == 0 ? part : sb.ToString();
+                    sb.Append(part); if (!part.EndsWith("\n", StringComparison.Ordinal) && part != "") sb.Append('\n');
+                    run.Status = "Listening... " + (secs - left) + " of " + secs + " s";
+                }
+                return sb.ToString();
+            };
             string text = go(fields);
-            if (text.Trim() == "" || text.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0) text = go(fields.Take(4).ToArray());   // older Wireshark: fewer field names
+            // older Wireshark refuses some field names: only then once more with fewer (a quiet network is not a reason to listen twice)
+            if (text.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0) text = go(fields.Take(4).ToArray());
             if (text.StartsWith("ERR ", StringComparison.Ordinal)) { rows.Add(R(2, "Capture", Draw.Trunc(text.Substring(4), 90), "", "u")); return rows; }
             var seen = new Dictionary<string, List<string[]>>();
             foreach (var line in text.Split('\n'))

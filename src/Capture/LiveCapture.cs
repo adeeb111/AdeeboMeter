@@ -257,11 +257,19 @@ namespace AdeeboMeter
             if (!double.TryParse(tRel, NumberStyles.Float, CultureInfo.InvariantCulture, out t) || !long.TryParse(seqS, NumberStyles.Integer, CultureInfo.InvariantCulture, out seq) || !long.TryParse(tsS, NumberStyles.Integer, CultureInfo.InvariantCulture, out ts)) return;
             string key = dir + "|" + ssrc; Rtp r;
             if (!rtp.TryGetValue(key, out r)) { if (rtp.Count >= 60) return; r = new Rtp { Dir = dir, Remote = remote, FirstT = t, FirstTs = ts }; rtp[key] = r; }
-            if (r.LastSeq >= 0 && seq < r.LastSeq && r.LastSeq - seq > 30000) r.Cycles++;
+            // a real wrap: the old number was near the top (65535) and the new one near the bottom. Anything else that goes
+            // backwards a long way is the sender starting its numbering again - not 65,536 lost packets
+            if (r.LastSeq >= 0 && seq < r.LastSeq && r.LastSeq - seq > 30000)
+            {
+                if (r.LastSeq > 60000 && seq < 5536) r.Cycles++;
+                else { r.BaseExt = r.Cycles * 65536 + seq - (r.Count > 0 ? r.Count : 0); r.MaxExt = -1; }
+            }
             long ext = r.Cycles * 65536 + seq;
             if (r.BaseExt < 0) r.BaseExt = ext;
             if (ext > r.MaxExt) r.MaxExt = ext;
-            if (r.Count == 60 && t > r.FirstT + 0.5)
+            // the clock rate, from at least half a second of timestamps (a 30 fps video sends 60 packets well inside that,
+            // so it waits for the time, not for the 60th packet)
+            if (r.Rate == 0 && r.Count >= 60 && t > r.FirstT + 0.5)
             {
                 double est = (ts - r.FirstTs) / (t - r.FirstT); double best = 0, bd = double.MaxValue;
                 foreach (var c in Clocks) { double dd = Math.Abs(c - est); if (dd < bd) { bd = dd; best = c; } }

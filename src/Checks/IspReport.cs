@@ -248,8 +248,11 @@ namespace AdeeboMeter
                 var snr = Nums(body, @"(?i)SNR[^0-9-]{0,80}?(-?\d{1,2}(?:\.\d)?)\s*dB"); var pwr = Nums(body, @"(?i)Power(?: Level)?[^0-9-]{0,80}?(-?\d{1,2}(?:\.\d)?)\s*dBmV");
                 var unc = Nums(body, @"(?i)Uncorrect\w*[^0-9]{0,80}?(\d{1,12})");
                 if (snr.Count == 0 && pwr.Count == 0) continue;
-                bool okSnr = snr.Count == 0 || snr.Min() >= 33, okPwr = pwr.Count == 0 || (pwr.Min() >= -7 && pwr.Max() <= 7);
-                r.Add(R(okSnr && okPwr ? 0 : 1, "Cable modem (192.168.100.1)", "SNR " + (snr.Count > 0 ? snr.Min().ToString("0.#", CultureInfo.InvariantCulture) + " dB (lowest)" : "-") + " · power " + (pwr.Count > 0 ? pwr.Min().ToString("0.#", CultureInfo.InvariantCulture) + " to " + pwr.Max().ToString("0.#", CultureInfo.InvariantCulture) + " dBmV" : "-") + " · uncorrectable " + (unc.Count > 0 ? unc.Sum().ToString("0", CultureInfo.InvariantCulture) : "-"), okSnr && okPwr ? "The line's signal is in the normal range." : "Signal levels are outside the usual range - worth telling the provider (they can see the same numbers).", "m"));
+                // the page lists both directions: downstream power sits around 0 (-7 to +7 dBmV is normal), upstream (what the modem
+                // transmits) around +35 to +51 - judged apart. Uncorrectable errors are real data loss: thousands of them is a line problem.
+                var down = pwr.Where(v => v < 20).ToList(); var upP = pwr.Where(v => v >= 20).ToList(); pwr = down.Count > 0 ? down : pwr;
+                bool okSnr = snr.Count == 0 || snr.Min() >= 33, okPwr = (down.Count == 0 || (down.Min() >= -7 && down.Max() <= 7)) && (upP.Count == 0 || upP.Max() <= 51), okUnc = unc.Count == 0 || unc.Sum() < 10000;
+                r.Add(R(okSnr && okPwr && okUnc ? 0 : 1, "Cable modem (192.168.100.1)", "SNR " + (snr.Count > 0 ? snr.Min().ToString("0.#", CultureInfo.InvariantCulture) + " dB (lowest)" : "-") + " · power " + (pwr.Count > 0 ? pwr.Min().ToString("0.#", CultureInfo.InvariantCulture) + " to " + pwr.Max().ToString("0.#", CultureInfo.InvariantCulture) + " dBmV" : "-") + " · uncorrectable " + (unc.Count > 0 ? unc.Sum().ToString("0", CultureInfo.InvariantCulture) : "-"), okSnr && okPwr ? "The line's signal is in the normal range." : "Signal levels are outside the usual range - worth telling the provider (they can see the same numbers).", "m"));
                 return r;
             }
             r.Add(R(3, "Cable modem", "not readable - fibre / DSL, a locked modem, or no modem page at 192.168.100.1", "", "m"));
