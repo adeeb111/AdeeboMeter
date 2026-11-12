@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Hall of Fame check for AdeeboMeter award cards.
+
+Reads one entry (from a GitHub issue made with the "Hall of Fame" form, or from the inputs of a manual run for an
+entry that came by email), computes the claim code with the secret key - exactly as AdeeboMeter's src/HallOfFame.cs
+does - and only on a match adds the entry to docs/hall-of-fame.json.
+
+Never trusts the text it reads: the issue body arrives in an environment variable (never pasted into a shell line),
+names are cleaned to the same safe characters the app allows, the picture link must be a GitHub attachment, and the
+page shows every field as text (never as HTML).
+
+Exit codes: 0 added (or already there), 2 the code doesn't match, 3 something is missing or wrong in the entry.
+Writes a short result to $GITHUB_OUTPUT (result=..., message=...) for the workflow to comment on the issue.
+"""
+import base64, datetime, hashlib, hmac, json, os, re, sys, unicodedata
+
+JSON = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "hall-of-fame.json")
+AWARD_AT = 500
+
+
+def clean_name(n):
+    # the same rule as HallOfFame.CleanName: letters/digits (any language), . - _ ' ; single spaces; at most 32
+    out, sp = [], False
+    for c in (n or "").strip():
+        if c.isspace():
+            if not sp and out:
+                out.append(" ")
+            sp = True
+            continue
+        cat = unicodedata.category(c)
+        if cat[0] == "L" or cat == "Nd" or c in ".-_'":   # like .NET char.IsLetterOrDigit
+            out.append(c)
+            sp = False
+    s = "".join(out).strip()
+    return s[:32].strip() if len(s) > 32 else s
+
+
+def code(key, name, total, date):
+    mac = hmac.new(key.encode("utf-8"), ("v1|%s|%d|%s" % (clean_name(name), total, date)).encode("utf-8"), hashlib.sha256).digest()
+    b = base64.b32encode(mac).decode("ascii")[:16]
+    return "ADB-%s-%s-%s-%s" % (b[0:4], b[4:8], b[8:12], b[12:16])
+
+
+def field(body, label):
+    # an issue form body: "### Label\n\nvalue\n\n### Next"
+    m = re.search(r"^###\s+" + re.escape(label) + r"\s*\n+(.*?)(?=\n###\s|\Z)", body or "", re.S | re.M)
+    v = (m.group(1).strip() if m else "")
+    return "" if v == "_No response_" else v
+
+
+def out(result, message):
+    p = os.environ.get("GITHUB_OUTPUT")
+    if p:
+        with open(p, "a", encoding="utf-8") as f:
+            f.write("result=%s\n" % result)
+            f.write("message<<EOM\n%s\nEOM\n" % message)
+    print(result + ": " + message)
+
+
+def main():
+    key = os.environ.get("HOF_KEY", "")
+    if not key:
+        out("error", "The Hall of Fame key isn't set up yet (repository secret HOF_KEY).")
+        return 3
+    body = os.environ.get("ISSUE_BODY", "")
+    if body:
+        name, total, date, claim, pic = field(body, "Name on the card"), field(body, "Points on the card"), field(body, "Date on the card"), field(body, "Claim code"), field(body, "Your card")
+        via, ref = "form", os.environ.get("ISSUE_URL", "")
+    else:
+        name, total, date, claim, pic = (os.environ.get(k, "") for k in ("IN_NAME", "IN_POINTS", "IN_DATE", "IN_CODE", "IN_PICTURE"))
+        via, ref = "email", ""
+    name = clean_name(name)
+    claim = re.sub(r"\s+", "", claim or "").upper()
+    if not name or not re.fullmatch(r"\d{3,5}", (total or "").strip()) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", (date or "").strip()):
+        out("missing", "The name, points and date have to be exactly as they are on the card (points like 512, date like 2026-11-12).")
+        return 3
+    total, date = int(total.strip()), date.strip()
+    try:
+        d = datetime.date.fromisoformat(date)
+    except ValueError:
+        out("missing", "The date on the card isn't a real date.")
+        return 3
+    if total < AWARD_AT or d < datetime.date(2026, 11, 1) or d > datetime.date.today() + datetime.timedelta(days=1):
+        out("mismatch", "That card isn't an Adeebo Award card (500 points or more, made with AdeeboMeter 1.1.5 or later).")
+        return 2
+    if not hmac.compare_digest(code(key, name, total, date), claim):
+        out("mismatch", "The claim code doesn't match the name, points and date. Type them exactly as they are on the card - or make the card again in AdeeboMeter.")
+        return 2
+    # the picture: only a GitHub attachment link (the form's upload), never any other site
+    m = re.search(r"https://github\.com/user-attachments/assets/[0-9a-fA-F-]{36}", pic or "")
+    picture = m.group(0) if m else ""
+    with open(JSON, encoding="utf-8") as f:
+        data = json.load(f)
+    entries = data.setdefault("entries", [])
+    if any(e.get("code") == claim for e in entries):
+        out("already", "%s is already in the Hall of Fame." % name)
+        return 0
+    entries.append({"name": name, "points": total, "date": date, "code": claim, "picture": picture, "via": via, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
+    entries.sort(key=lambda e: (e["date"], e["name"].lower()))
+    with open(JSON, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    out("added", "Welcome to the Hall of Fame, %s! You'll be on the page in a minute or two: https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html" % name)
+    return 0
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 5 and sys.argv[1] == "--code":   # for testing: hof_verify.py --code NAME POINTS DATE (key from HOF_KEY)
+        print(code(os.environ.get("HOF_KEY", ""), sys.argv[2], int(sys.argv[3]), sys.argv[4]))
+        sys.exit(0)
+    sys.exit(main())

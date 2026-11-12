@@ -626,6 +626,23 @@ namespace AdeeboMeter
                 if (Points.Value("lab.tcp") != 4 || Points.Value("check.dns") != 2 || Points.Value("path.home") != 10 || Points.Value("udpsend") != 0) bad.Add("values");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)));
             });
+            T("Adeebo Award card: claim code matches the Hall of Fame check, names cleaned, picture drawn", () =>
+            {
+                var bad = new List<string>();
+                // the same vectors as .github/scripts/hof_verify.py --code (HOF_KEY=test-key-1)
+                if (HallOfFame.Code("test-key-1", "Ada  Lovelace", 512, "2026-11-12") != "ADB-I5IU-AQRM-QTIL-TP2C") bad.Add("code 1 " + HallOfFame.Code("test-key-1", "Ada  Lovelace", 512, "2026-11-12"));
+                if (HallOfFame.Code("test-key-1", "\u00C1d\u00E1m O'Neil-\u00E9", 500, "2026-12-01") != "ADB-WOQK-DNUY-56M2-5DB4") bad.Add("code 2 (accents)");
+                if (HallOfFame.Code("", "Ada", 512, "2026-11-12") != "") bad.Add("a code without a key");
+                if (HallOfFame.Code("test-key-1", "Ada", 513, "2026-11-12") == HallOfFame.Code("test-key-1", "Ada", 512, "2026-11-12")) bad.Add("points not in the code");
+                if (HallOfFame.CleanName("  <script>alert(1)</script>  Bob ") != "scriptalert1script Bob") bad.Add("clean: " + HallOfFame.CleanName("  <script>alert(1)</script>  Bob "));
+                if (HallOfFame.CleanName(new string('a', 50)).Length != 32) bad.Add("name length");
+                if (HallOfFame.Unmask(new byte[] { (byte)('k' ^ 41), (byte)('y' ^ 114) }) != "ky") bad.Add("unmask");
+                var st = new HallOfFame.Stats { Tools = 120, ToolsAll = 131, Topics = 46, TopicsAll = 46, Checks = 44, Labs = 11, LabsAll = 11, Paths = new[] { "Home user", "Gamer" } };
+                using (var b = HallOfFame.Card("Ada Lovelace", 512, "2026-11-12", "ADB-I5IU-AQRM-QTIL-TP2C", st)) if (b.Width != 1200 || b.Height != 675) bad.Add("card size");
+                using (var b = HallOfFame.Card("", 500, "2026-11-12", "", null)) if (b.Width != 1200) bad.Add("unofficial card");
+                if (!Crash.Allowed(HallOfFame.Form) || !Crash.Allowed(HallOfFame.Page)) bad.Add("Hall of Fame links not allowed to open");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("What did Windows Update break: before/after per install, KB names", () =>
             {
                 var bad = new List<string>();

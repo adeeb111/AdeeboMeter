@@ -32,6 +32,10 @@ jobs:
           ref: ${{ github.event.release.tag_name || github.event.inputs.tag || github.ref }}
       - name: Build and package (release.ps1)
         shell: pwsh
+        # the one secret the build sees: the Hall of Fame key, so official award cards carry a claim code (see src/HallOfFame.cs).
+        # It goes into one generated file (obj/HofKey.cs) that release.ps1 deletes after compiling; every other byte is this source.
+        env:
+          HOF_KEY: ${{ secrets.HOF_KEY }}
         run: ./release.ps1
       - name: Self-test - nothing is uploaded or released if it fails
         shell: pwsh

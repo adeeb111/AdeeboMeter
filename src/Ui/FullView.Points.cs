@@ -84,6 +84,62 @@ namespace AdeeboMeter
             return ptItems = l;
         }
 
+        // ---------- the Adeebo Award card (500 points): a picture you send yourself - AdeeboMeter sends nothing
+        string awardFile = "", awardCode = "", awardName = ""; DateTime awardCopied;
+        void MakeAwardCard()
+        {
+            int total = Points.Me.Total; if (total < Points.AwardAt) return;
+            string name = AskName(awardName); if (name == null) return; name = HallOfFame.CleanName(name);
+            string date = HallOfFame.Date(DateTime.Now), code = HallOfFame.Code(HallOfFame.Key, name, total, date);
+            var all = PtAll(); var toolIds = new HashSet<string>(Tools2().Select(t => t.Id));
+            var st = new HallOfFame.Stats
+            {
+                ToolsAll = toolIds.Count(id => Points.Value(id) > 0), Tools = toolIds.Count(id => Points.Value(id) > 0 && Points.Me.Has(id)),
+                TopicsAll = Knowledge.Learn().Count, Topics = Knowledge.Learn().Count(t => Points.Me.Has("learn." + t.Id)), Checks = Knowledge.Learn().Count(t => Points.Me.Has("check." + t.Id)),
+                LabsAll = Labs.Length - 1, Labs = Labs.Count(l => Points.Me.Has("lab." + l[0])), Paths = Paths.Where(p => Points.Me.Has("path." + p.Id)).Select(p => p.Title).ToArray()
+            };
+            using (var d = new SaveFileDialog { Title = L.T("Save your Adeebo Award card"), Filter = "PNG picture (*.png)|*.png", FileName = "Adeebo-Award-" + (name == "" ? "card" : name.Replace(' ', '-')) + ".png", InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), OverwritePrompt = true, AddExtension = true })
+            {
+                if (d.ShowDialog(this) != DialogResult.OK) return;
+                try { using (var bmp = HallOfFame.Card(name, total, date, code, st)) bmp.Save(d.FileName, System.Drawing.Imaging.ImageFormat.Png); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("award card: " + e.Message); pointsFlash = L.T("Couldn't save the card") + " - " + e.Message; pointsFlashUntil = DateTime.Now.AddSeconds(8); SyncPointsBtn(); return; }
+                awardFile = d.FileName; awardCode = code; awardName = name;
+                try { Clipboard.SetText(HallOfFame.Text(name, total, date, code)); awardCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); }
+                Program.Log("award card saved (" + (code != "" ? "official" : "unofficial build") + ")");
+            }
+            pointsCanvas.Invalidate();
+        }
+        // what to do with the card now
+        float PaintAwardSent(Graphics g, float x, float y, float w, Brush ink, Brush sub, Brush blue)
+        {
+            var box = new RectangleF(x, y, w, 128 * S); Theme.Fill(g, box, 14 * S, Theme.Soft);
+            g.DrawString(L.T("Your card is saved") + " - " + System.IO.Path.GetFileName(awardFile) + (awardCode != "" ? "  ·  " + awardCode : ""), Draw.fBodyB, ink, x + 18 * S, y + 14 * S);
+            g.DrawString(awardCode != "" ? L.T("Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically - or email it (the address is on the Hall of Fame page). Its text is copied, ready to paste.") : L.T("This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can."), Draw.fSmall, sub, new RectangleF(x + 18 * S, y + 40 * S, w - 36 * S, 40 * S));
+            float bx = x + 18 * S;
+            foreach (var b in new[] { new[] { "Send it with the GitHub form ›", HallOfFame.Form }, new[] { "The Hall of Fame page ›", HallOfFame.Page }, new[] { "Show the picture", "" } })
+            {
+                if (awardCode == "" && b[1] == HallOfFame.Form) continue;
+                var sz = g.MeasureString(L.T(b[0]), Draw.fBodyB); var r = new RectangleF(bx, y + 86 * S, sz.Width + 4 * S, 26 * S);
+                g.DrawString(L.T(b[0]), Draw.fBodyB, blue, bx, y + 88 * S); string url = b[1];
+                Act(pointsCanvas, r, delegate { if (url != "") Crash.OpenUrl(url); else try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + awardFile + "\""); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("award card: " + e.Message); } });
+                bx += sz.Width + 28 * S;
+            }
+            return box.Bottom + 18 * S;
+        }
+        // a small box for the name on the card
+        string AskName(string start)
+        {
+            using (var f = new Form { Text = L.T("Your Adeebo Award card"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(170)), BackColor = Theme.Card, ForeColor = Theme.Ink, ShowInTaskbar = false })
+            {
+                var lb = new Label { Text = L.T("Your name as it should appear in the Hall of Fame. Letters, numbers, spaces and . - _ ' - up to 32."), Font = Draw.fBody, Location = new Point(Sc(18), Sc(14)), Size = new Size(Sc(424), Sc(44)) };
+                var tb = new TextBox { Text = start ?? "", Font = Draw.fInput, Location = new Point(Sc(18), Sc(64)), Width = Sc(424), MaxLength = 40 };
+                var ok = new Button { Text = L.T("Make the card"), DialogResult = DialogResult.OK, Location = new Point(Sc(250), Sc(118)), Size = new Size(Sc(110), Sc(32)) };
+                var no = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(368), Sc(118)), Size = new Size(Sc(74), Sc(32)) };
+                f.Controls.AddRange(new Control[] { lb, tb, ok, no }); f.AcceptButton = ok; f.CancelButton = no;
+                return f.ShowDialog(this) == DialogResult.OK ? tb.Text : null;
+            }
+        }
+
         // ---------- learning paths: a short list in a sensible order; finishing one is +10, once
         sealed class PathDef { public string Id, Title, Tag; public string[] Keys; }
         static readonly PathDef[] Paths =
@@ -192,6 +248,13 @@ namespace AdeeboMeter
                     var card = new RectangleF(x, y, w, 96 * S); Theme.Fill(g, card, 14 * S, award ? Theme.LvSoft(1) : Theme.BlueSoft);
                     if (award) Theme.Stroke(g, card, 14 * S, Theme.Amber, 2);
                     g.DrawString(award ? "★  " + L.T("You got the Adeebo Award") + "  ·  " + total + " " + L.T("Adeebo Points") : L.T(rank) + "  ·  " + total + " " + L.T(total == 1 ? "Adeebo Point" : "Adeebo Points"), Draw.fTitle, ink, x + 18 * S, y + 14 * S);
+                    if (award)
+                    {
+                        // the award card: make it, then send it to the Hall of Fame
+                        string mk = L.T(awardFile == "" ? "Make my award card" : "Make it again"); var ms = g.MeasureString(mk, Draw.fBodyB); var mr = new RectangleF(card.Right - ms.Width - 46 * S, y + 16 * S, ms.Width + 28 * S, 34 * S);
+                        Theme.Fill(g, mr, 17 * S, Theme.Amber); using (var wb = new SolidBrush(Color.White)) g.DrawString(mk, Draw.fBodyB, wb, mr.X + 14 * S, mr.Y + (34 * S - ms.Height) / 2);
+                        Act(pointsCanvas, mr, delegate { MakeAwardCard(); });
+                    }
                     if (!Cfg.Points) g.DrawString(L.T("Earning is off (Settings › Adeebo Points) - your points are kept."), Draw.fSmall, sub, x + 18 * S, y + 46 * S);
                     else
                     {
@@ -201,6 +264,7 @@ namespace AdeeboMeter
                         g.DrawString(next == "" ? L.T("Nearly everything AdeeboMeter can teach, tried and understood. Well done.") : left + " " + L.T("to") + " " + L.T(next), Draw.fSmall, sub, bar.Right + 12 * S, y + 50 * S);
                     }
                     y += card.Height + 18 * S;
+                    if (award && awardFile != "") y = PaintAwardSent(g, x, y, w, ink, sub, blue);
                     // how to earn
                     g.DrawString(L.T("HOW TO EARN"), Draw.fTiny, muted, x, y); y += 20 * S;
                     foreach (var h in new[] { new[] { "Open a tool's Example, then run it for real", "+2, or +4 for the longer tests" }, new[] { "Run a tool marked replay again, 10 minutes or more later", "+3, once" }, new[] { "Read a Learn topic to the end", "+2" }, new[] { "Answer its Check yourself question right first time", "+2" }, new[] { "Meet a lab's challenge", "+4" }, new[] { "Subnetting practice: 5 in a row, then 10 in a row", "+3, then +5" }, new[] { "Explain a packet journey of your own", "+3" }, new[] { "Use a page for the first time", "+2" }, new[] { "Finish a learning path", "+10" }, new[] { "Reach " + Points.AwardAt, "the Adeebo Award" } })

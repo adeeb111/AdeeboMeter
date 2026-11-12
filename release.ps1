@@ -36,8 +36,18 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.knowledge.$($k.BaseName).gz"
     }
-    & $csc /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /r:System.Security.dll /recurse:src\*.cs @res
-    if ($LASTEXITCODE -ne 0) { throw "build failed" }
+    # the Hall of Fame key (the Adeebo Award's claim code): from the HOF_KEY secret on GitHub's build, or secrets\hof.key
+    # on Adeeb's PC - never in the source. One generated file, removed again right after the build.
+    $hk = $env:HOF_KEY; if (-not $hk -and (Test-Path secrets\hof.key)) { $hk = (Get-Content -Raw secrets\hof.key).Trim() }
+    $extra = @()
+    if ($hk) {
+        $kb = [Text.Encoding]::UTF8.GetBytes($hk); $m = for ($i = 0; $i -lt $kb.Length; $i++) { $kb[$i] -bxor (($i * 73 + 41) -band 255) }
+        "namespace AdeeboMeter { static partial class HallOfFame { static partial void BuildKey(ref string key) { key = Unmask(new byte[] { $($m -join ',') }); } } }" | Set-Content -Encoding ASCII obj\HofKey.cs
+        $extra += "obj\HofKey.cs"
+    } else { Write-Host "No Hall of Fame key: award cards from this build say 'unofficial build'" }
+    & $csc /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /r:System.Security.dll /recurse:src\*.cs @extra @res
+    $rc = $LASTEXITCODE; if (Test-Path obj\HofKey.cs) { Remove-Item obj\HofKey.cs }
+    if ($rc -ne 0) { throw "build failed" }
 }
 function Sha([string]$p) { (Get-FileHash $p -Algorithm SHA256).Hash.ToLowerInvariant() }
 

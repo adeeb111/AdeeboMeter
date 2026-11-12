@@ -1,0 +1,70 @@
+# The Hall of Fame: checks an Adeebo Award card's claim code and, on a match, adds it to docs/hall-of-fame.json
+# (the website shows that file). Two ways in:
+#   - the "Join the Hall of Fame" issue form: runs by itself, comments the result, closes the issue
+#   - a card that came by email: Actions > hall-of-fame > Run workflow, and type what's on the card
+# The key is the HOF_KEY repository secret - the same one the official build puts in AdeeboMeter.
+# Nothing from the issue is ever pasted into a shell line: it reaches the script as environment variables.
+name: hall-of-fame
+on:
+  issues:
+    types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      name:     { description: "Name on the card", required: true }
+      points:   { description: "Points on the card", required: true }
+      date:     { description: "Date on the card (2026-11-12)", required: true }
+      code:     { description: "Claim code (ADB-XXXX-XXXX-XXXX-XXXX)", required: true }
+      picture:  { description: "Picture link (optional; only a github.com/user-attachments link is kept)", required: false }
+permissions:
+  contents: read
+concurrency:
+  group: hall-of-fame   # one entry at a time, so two cards never race on the same file
+  cancel-in-progress: false
+jobs:
+  check:
+    if: github.event_name == 'workflow_dispatch' || (github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'hall-of-fame'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to add the entry
+      issues: write     # to comment and close
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+        with:
+          ref: main
+      - name: Check the claim code
+        id: v
+        continue-on-error: true
+        env:
+          HOF_KEY: ${{ secrets.HOF_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          IN_NAME: ${{ github.event.inputs.name }}
+          IN_POINTS: ${{ github.event.inputs.points }}
+          IN_DATE: ${{ github.event.inputs.date }}
+          IN_CODE: ${{ github.event.inputs.code }}
+          IN_PICTURE: ${{ github.event.inputs.picture }}
+        run: python3 .github/scripts/hof_verify.py
+      - name: Add it to the page
+        if: steps.v.outputs.result == 'added'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/hall-of-fame.json
+          git commit -m "Hall of Fame: a new Adeebo Award"
+          git push
+      - name: Answer on the issue
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          NUM: ${{ github.event.issue.number }}
+          RESULT: ${{ steps.v.outputs.result }}
+          MESSAGE: ${{ steps.v.outputs.message }}
+        run: |
+          if [ "$RESULT" = "added" ] || [ "$RESULT" = "already" ]; then
+            gh issue comment "$NUM" --body "$MESSAGE"
+            gh issue close "$NUM" --reason completed
+          else
+            gh issue comment "$NUM" --body "$MESSAGE (Edit the issue to fix it - the check runs again by itself.)"
+            gh issue edit "$NUM" --add-label "not verified"
+          fi

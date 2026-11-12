@@ -9,3 +9,6 @@ history/
 obj/
 store/out/
 store/obj/
+
+# the Hall of Fame key - never committed (official builds get it from the HOF_KEY secret)
+secrets/

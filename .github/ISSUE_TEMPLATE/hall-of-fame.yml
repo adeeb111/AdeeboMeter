@@ -1,0 +1,44 @@
+name: Join the Hall of Fame
+description: You reached 500 Adeebo Points and made your Adeebo Award card - send it here and you're added automatically.
+title: "[Hall of Fame] "
+labels: [hall-of-fame]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Congratulations on the **Adeebo Award**! 🏆
+        Copy the four things below **exactly as they are on your card** (AdeeboMeter copied them for you when you saved it - just paste). A check runs straight away: if the claim code matches, you're on the [Hall of Fame page](https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html) within a couple of minutes and this issue closes itself.
+        Your name, points, date and picture become public. Nothing else is asked or kept.
+  - type: input
+    id: name
+    attributes:
+      label: Name on the card
+      placeholder: Ada Lovelace
+    validations:
+      required: true
+  - type: input
+    id: points
+    attributes:
+      label: Points on the card
+      placeholder: "512"
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Date on the card
+      placeholder: "2026-11-12"
+    validations:
+      required: true
+  - type: input
+    id: code
+    attributes:
+      label: Claim code
+      placeholder: ADB-XXXX-XXXX-XXXX-XXXX
+    validations:
+      required: true
+  - type: textarea
+    id: picture
+    attributes:
+      label: Your card
+      description: Drag your card picture (the PNG AdeeboMeter saved) into this box. Optional, but it goes on the page next to your name.
