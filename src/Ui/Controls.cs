@@ -239,7 +239,7 @@ namespace AdeeboMeter
         int hover = -1; string selKey;
         public string Filter = "All", Query = ""; public bool ShowIdle;
         public bool CanSniff;
-        public event Action<Conn> SniffRequested;
+        public event Action<Conn> SniffRequested, JourneyRequested;
         public event Action Changed;
         public event Action<string> HoverKey;   // "proc:<app>" or "state.<STATE>" under the mouse, null when none
         string lastKey;
@@ -321,9 +321,9 @@ namespace AdeeboMeter
         }
         int[] Cols(int w)
         {
-            // badge, app, proto, remote, state, seen, sniff
-            int fixedW = (int)((34 + 62 + 116 + 64 + 70 + 6 * 8) * S), flex = Math.Max((int)(240 * S), w - fixedW - sb.Width - (int)(28 * S));
-            return new[] { (int)(34 * S), (int)(flex * 0.3), (int)(62 * S), (int)(flex * 0.7), (int)(116 * S), (int)(64 * S), (int)(70 * S) };
+            // badge, app, proto, remote, state, seen, journey + sniff
+            int fixedW = (int)((34 + 62 + 116 + 64 + 140 + 6 * 8) * S), flex = Math.Max((int)(240 * S), w - fixedW - sb.Width - (int)(28 * S));
+            return new[] { (int)(34 * S), (int)(flex * 0.3), (int)(62 * S), (int)(flex * 0.7), (int)(116 * S), (int)(64 * S), (int)(140 * S) };
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -370,6 +370,10 @@ namespace AdeeboMeter
                     g.DrawString(Age(r, now), Draw.fMonoS, sub, x, cy - 7 * S);
                     x += cols[5] + 8 * S;
                     bool can = CanSniff && c.State != "BOUND";
+                    bool jn = Journeyable(c); var jr = new RectangleF(x, cy - 13 * S, 66 * S, 26 * S);
+                    Theme.Fill(g, jr, 6 * S, jn ? Theme.Soft : Theme.Line2); Theme.Stroke(g, jr, 6 * S, jn ? Theme.Blue : Theme.Line2, 1);
+                    using (var b = new SolidBrush(jn ? (Theme.Dark ? Theme.BlueDark : Theme.Blue) : Theme.Muted)) g.DrawString(L.T("Journey"), Draw.fSmall, b, jr, center);
+                    x += 72 * S;
                     var br = new RectangleF(x, cy - 13 * S, 58 * S, 26 * S);
                     Theme.Fill(g, br, 6 * S, can ? Theme.Blue : Theme.Line2);
                     using (var b = new SolidBrush(can ? Color.White : Theme.Muted)) g.DrawString(L.T("Sniff"), Draw.fSmall, b, br, center);
@@ -393,12 +397,16 @@ namespace AdeeboMeter
             return r.Initial ? s + "+" : s;
         }
         int RowAt(int y) { if (y < HeadH) return -1; int i = (y - HeadH + sb.Value) / RowH; return i >= 0 && i < view.Count ? i : -1; }
-        bool OnSniffButton(int x) { var cols = Cols(Width); float sx = 14 * S; for (int i = 0; i < 6; i++) sx += cols[i] + 8 * S; return x >= sx && x <= sx + 58 * S; }
+        bool OnSniffButton(int x) { var cols = Cols(Width); float sx = 14 * S; for (int i = 0; i < 6; i++) sx += cols[i] + 8 * S; sx += 72 * S; return x >= sx && x <= sx + 58 * S; }
+        bool OnJourneyButton(int x) { var cols = Cols(Width); float sx = 14 * S; for (int i = 0; i < 6; i++) sx += cols[i] + 8 * S; return x >= sx && x <= sx + 66 * S; }
+        // the packet journey needs a conversation: a remote address and port
+        // (a UDP socket has no fixed far end: the journey finds it from the packets)
+        static bool Journeyable(Conn c) { return c.State != "LISTEN" && ((!string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0) || (c.Proto.StartsWith("UDP", StringComparison.Ordinal) && c.LocalPort > 0)); }
         protected override void OnMouseMove(MouseEventArgs e)
         {
             int h = RowAt(e.Y); if (h != hover) { hover = h; Invalidate(); }
             string k = KeyAt(e.Location);
-            Cursor = h >= 0 && OnSniffButton(e.X) ? Cursors.Hand : k != null ? Cursors.Help : Cursors.Default;
+            Cursor = h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : k != null ? Cursors.Help : Cursors.Default;
             if (k != lastKey) { lastKey = k; if (HoverKey != null) HoverKey(k); }
         }
         protected override void OnMouseLeave(EventArgs e) { if (hover != -1) { hover = -1; Invalidate(); } lastKey = null; if (HoverKey != null) HoverKey(null); }
@@ -407,6 +415,7 @@ namespace AdeeboMeter
             Focus(); int i = RowAt(e.Y); if (i < 0) return;
             selKey = view[i].C.Key; Invalidate();
             if (OnSniffButton(e.X) && CanSniff && view[i].C.State != "BOUND" && SniffRequested != null) SniffRequested(view[i].C);
+            else if (OnJourneyButton(e.X) && Journeyable(view[i].C) && JourneyRequested != null) JourneyRequested(view[i].C);
         }
         protected override void OnMouseDoubleClick(MouseEventArgs e) { int i = RowAt(e.Y); if (i >= 0 && CanSniff && view[i].C.State != "BOUND" && SniffRequested != null) SniffRequested(view[i].C); }
         // the keyboard: Up / Down / Page / Home / End move the selection (and scroll to it), Enter sniffs that flow

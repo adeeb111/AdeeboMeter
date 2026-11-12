@@ -830,9 +830,20 @@ namespace AdeeboMeter
         }
 
         // ================================================================== subnet calculator
-        public static List<string[]> Subnet(string input, string inside)
+        public static List<string[]> Subnet(string input, string inside) { return Subnet(input, inside, "", null); }
+        public static List<string[]> Subnet(string input, string inside, string gateway, Monitor m)
         {
-            var rows = new List<string[]>(); string s = (input ?? "").Trim(); int prefix = -1; string ipPart = s;
+            var rows = new List<string[]>(); string s = (input ?? "").Trim(); int prefix = -1;
+            if (s == "" && m != null)
+            {   // empty = this PC's own address, mask and gateway - read from the adapter, nothing sent
+                NetworkInterface nic; string gwNow; lock (m.L) { nic = m.Primary; gwNow = m.Gateway; }
+                UnicastIPAddressInformation u = null; try { if (nic != null) u = nic.GetIPProperties().UnicastAddresses.FirstOrDefault(x => x.Address.AddressFamily == AddressFamily.InterNetwork && x.IPv4Mask != null); } catch (NetworkInformationException) { }
+                if (u == null) { rows.Add(R(2, "This PC", "no IPv4 address on the active adapter - type one, e.g. 10.1.2.3/22", "", "u")); return rows; }
+                s = u.Address + "/" + MaskBits(u.IPv4Mask.GetAddressBytes());
+                if (string.IsNullOrWhiteSpace(gateway) && gwNow != "") gateway = gwNow;
+                rows.Add(R(3, "This PC", s + (gwNow != "" ? "  ·  gateway " + gwNow : "  ·  no gateway"), "Read from the active adapter.", "i"));
+            }
+            string ipPart = s;
             int slash = s.IndexOf('/'); var sp = s.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             // a prefix or mask that's there but wrong is an error - only "no prefix at all" means one host
             string bad = null;
@@ -866,6 +877,54 @@ namespace AdeeboMeter
             }
             IPAddress q; if (!string.IsNullOrWhiteSpace(inside) && IPAddress.TryParse(inside.Trim(), out q) && q.AddressFamily == ip.AddressFamily)
             { var qb = q.GetAddressBytes(); bool inNet = qb.Select((x, i) => (byte)(x & mask[i])).SequenceEqual(net); rows.Add(R(inNet ? 0 : 1, q + " inside?", inNet ? "yes" : "no", "", "i")); }
+            var gwRows = GatewayRows(ip, prefix, net, bc, gateway);
+            int at = rows.FindIndex(r => r[1] == "Network") + 1; rows.InsertRange(at, gwRows);
+            return rows;
+        }
+        // the gateway against the host's subnet: the checks that decide whether anything leaves it
+        static List<string[]> GatewayRows(IPAddress ip, int prefix, byte[] net, byte[] bc, string gateway)
+        {
+            var rows = new List<string[]>(); string g = (gateway ?? "").Trim(); bool v4 = ip.AddressFamily == AddressFamily.InterNetwork; int bits = v4 ? 32 : 128;
+            var hb = ip.GetAddressBytes(); var mask = new byte[hb.Length]; for (int i = 0; i < prefix; i++) mask[i / 8] |= (byte)(0x80 >> (i % 8));
+            if (g == "")
+            {
+                if (v4 && prefix <= 30) { var f = (byte[])net.Clone(); f[3]++; var l = (byte[])bc.Clone(); l[3]--; rows.Add(R(3, "Gateway", "none given - the usual choice is " + new IPAddress(f) + " (first) or " + new IPAddress(l) + " (last)", "", "i")); }
+                return rows;
+            }
+            int gp = -1; string gPart = g; var gs = g.Split((char[])null, StringSplitOptions.RemoveEmptyEntries); int gsl = g.IndexOf('/');
+            if (gsl > 0) { gPart = g.Substring(0, gsl); if (!int.TryParse(g.Substring(gsl + 1), NumberStyles.None, CultureInfo.InvariantCulture, out gp)) gp = -2; }
+            else if (gs.Length == 2) { gPart = gs[0]; IPAddress gm; if (IPAddress.TryParse(gs[1], out gm) && gm.AddressFamily == ip.AddressFamily) { gp = MaskBits(gm.GetAddressBytes()); var mb = gm.GetAddressBytes(); var want = new byte[mb.Length]; for (int i = 0; i < gp; i++) want[i / 8] |= (byte)(0x80 >> (i % 8)); if (!mb.SequenceEqual(want)) gp = -2; } else gp = -2; }
+            IPAddress gw; int zone = gPart.IndexOf('%'); if (zone > 0) gPart = gPart.Substring(0, zone);
+            if (!IPAddress.TryParse(gPart, out gw) || (gw.AddressFamily == AddressFamily.InterNetwork && gPart.Count(ch => ch == '.') != 3) || gp == -2 || gp > bits)
+            { rows.Add(R(2, "Gateway", "\"" + g + "\" isn't an address (with an optional /prefix or mask)", "", "u")); return rows; }
+            if (gw.AddressFamily != ip.AddressFamily) { rows.Add(R(2, "Gateway", "an IPv" + (v4 ? "6" : "4") + " gateway for an IPv" + (v4 ? "4" : "6") + " address - each family needs its own", "", "u")); return rows; }
+            var gb = gw.GetAddressBytes(); bool inNet = gb.Select((x, i) => (byte)(x & mask[i])).SequenceEqual(net);
+            if (gw.Equals(ip)) { rows.Add(R(2, "Gateway", "Will not work: the gateway is this host's own address - it would send to itself. Use the router's address.", "", "i")); return rows; }
+            if (!v4)
+            {
+                if (gw.IsIPv6LinkLocal) rows.Add(R(0, "Gateway", gw + " - link-local, the normal IPv6 way (learned from router adverts, always on-link)", "", "i"));
+                else if (!inNet) rows.Add(R(1, "Gateway", gw + " is outside " + new IPAddress(net) + "/" + prefix + " - it only works if a route says it's on-link; routers usually give a link-local (fe80::) gateway", "", "i"));
+                else rows.Add(R(0, "Gateway", gw + " is inside the prefix", "", "i"));
+                return rows;
+            }
+            string netTxt = new IPAddress(net) + "/" + prefix;
+            if (prefix == 32) { rows.Add(R(1, "Gateway", "a /32 has no neighbours: " + gw + " is reachable only with an on-link route (Windows adds one for a /32 point-to-point link; most hosts don't)", "", "i")); return rows; }
+            if (!inNet)
+            {
+                int common = 0; for (int i = 0; i < 32; i++) { int bt = 0x80 >> (i % 8); if ((hb[i / 8] & bt) != (gb[i / 8] & bt)) break; common++; }
+                string fix;
+                if (gp >= 0 && gp < prefix) { var gm2 = new byte[4]; for (int i = 0; i < gp; i++) gm2[i / 8] |= (byte)(0x80 >> (i % 8)); var gnet = gb.Select((x, i) => (byte)(x & gm2[i])).ToArray(); bool holds = hb.Select((x, i) => (byte)(x & gm2[i])).SequenceEqual(gnet); fix = holds ? "Use /" + gp + " (" + new IPAddress(gm2) + ") - the gateway's network " + new IPAddress(gnet) + "/" + gp + " holds " + ip + " too." : "The gateway's own network " + new IPAddress(gnet) + "/" + gp + " doesn't hold " + ip + " either - one of the two addresses is wrong."; }
+                else { var cm = new byte[4]; for (int i = 0; i < common; i++) cm[i / 8] |= (byte)(0x80 >> (i % 8)); fix = common >= 1 ? "The smallest subnet holding both is /" + common + " (" + new IPAddress(cm) + ") - if that's the real network, use that mask; otherwise the gateway address is wrong." : "No sensible subnet holds both - the gateway address is wrong."; }
+                rows.Add(R(2, "Gateway", "Will not work: " + gw + " is outside " + netTxt + ". The host won't ARP for it, so nothing leaves this subnet - no ping beyond it, no internet. " + fix, "", "i"));
+                return rows;
+            }
+            if (prefix <= 30 && gb.SequenceEqual(net)) { rows.Add(R(2, "Gateway", "Will not work: " + gw + " is the network address of " + netTxt + ", not a host", "", "i")); return rows; }
+            if (prefix <= 30 && gb.SequenceEqual(bc)) { rows.Add(R(2, "Gateway", "Will not work: " + gw + " is the broadcast address of " + netTxt + ", not a host", "", "i")); return rows; }
+            if (gp >= 0 && gp != prefix) { rows.Add(R(1, "Gateway", gw + " is inside, but its mask is /" + gp + " and the host's is /" + prefix + " - the two disagree about who is on-link, so some traffic works one way only (one side ARPs, the other routes). Use the same mask on both.", "", "i")); return rows; }
+            if (prefix == 31) { rows.Add(R(0, "Gateway", gw + " - the other end of the /31 point-to-point link", "", "i")); return rows; }
+            var first = (byte[])net.Clone(); first[3]++; var last = (byte[])bc.Clone(); last[3]--;
+            if (gb.SequenceEqual(first) || gb.SequenceEqual(last)) rows.Add(R(0, "Gateway", gw + " is inside " + netTxt + " (the " + (gb.SequenceEqual(first) ? "first" : "last") + " usable address - the usual choice)", "", "i"));
+            else rows.Add(R(0, "Gateway", gw + " is inside " + netTxt + " - fine; not the first or last usable address, which is the usual choice", "", "i"));
             return rows;
         }
         static int MaskBits(byte[] m) { int n = 0; foreach (var x in m) for (int i = 7; i >= 0; i--) if ((x >> i & 1) == 1) n++; else return n; return n; }

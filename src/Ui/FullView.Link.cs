@@ -191,6 +191,21 @@ namespace AdeeboMeter
                 for (int i = 0; i < 3; i++)
                 { Theme.Fill(g, new RectangleF(lx, ly + 3 * S, 10 * S, 10 * S), 3 * S, colors[i]); g.DrawString(Legend[i], Draw.fSmall, muted, lx + 16 * S, ly); lx += g.MeasureString(Legend[i], Draw.fSmall).Width + 34 * S; }
             y += card.Height + 16 * S;
+            // which channel is least crowded, and networks that share a name but not their security
+            var tips = new List<string[]>();
+            var lc = WlanApi.LeastCrowded(ls.Aps, band, ls.MyChannel, ls.MyBssid);
+            if (lc != null)
+            {
+                if (lc[0] == ls.MyChannel || lc[2] - lc[1] < 15) tips.Add(new[] { "Least crowded", "You're already on the quietest channel there is (" + ls.MyChannel + ") - changing won't help.", "0" });
+                else tips.Add(new[] { "Least crowded", "Channel " + lc[0] + " is the quietest in " + band + " (crowding " + lc[1] + " vs " + lc[2] + " on yours). If this is your own router, set it to " + lc[0] + " in its Wi-Fi settings - or leave it on Auto and restart it so it picks again.", "1" });
+            }
+            foreach (var grp in ls.Aps.Where(a => a.Sec != "" && a.Ssid != "" && a.Ssid != "(hidden network)").GroupBy(a => a.Ssid))
+            {
+                var secs = grp.Select(a => a.Sec).Distinct().ToList();
+                if (secs.Count > 1 && secs.Any(WlanApi.Weak) && secs.Any(z => !WlanApi.Weak(z)))
+                    tips.Add(new[] { "Same name, different lock", "\"" + grp.Key + "\" is on the air both as " + string.Join(" and as ", secs) + ". The " + secs.First(WlanApi.Weak) + " one could be a fake copy - join the protected one, and don't sign in on a page you didn't expect.", "2" });
+            }
+            if (tips.Count > 0) y = TextCard(g, "WHAT TO DO ABOUT IT", tips, "link.CHANNEL MAP", x, y, w);
 
             var top = ls.Aps.OrderByDescending(a => a.Signal).Take(12).ToList();
             float rh = 24 * S; var card2 = new RectangleF(x, y, w, 40 * S + top.Count * rh);
@@ -201,7 +216,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 {
-                    Func<Ap, string> facts = a => a.Signal + "%" + (a.Rssi < 0 ? " · " + a.Rssi + " dBm" : "") + (a.Width > 20 ? " · " + a.Width + " MHz" : "") + (a.Util >= 0 ? " · air " + a.Util + "%" : "");
+                    Func<Ap, string> facts = a => a.Signal + "%" + (a.Rssi < 0 ? " · " + a.Rssi + " dBm" : "") + (a.Width > 20 ? " · " + a.Width + " MHz" : "") + (a.Util >= 0 ? " · air " + a.Util + "%" : "") + (a.Sec != "" ? " · " + a.Sec : "");
                     float factW = top.Count == 0 ? 0 : top.Max(a => g.MeasureString(facts(a), Draw.fSmall).Width) + 6 * S;
                     float nameW = Math.Min(w * 0.30f, Math.Max(120 * S, top.Count == 0 ? 0 : top.Max(a => g.MeasureString(a.Ssid + "  (you)", Draw.fBodyB).Width) + 10 * S));
                     float bandW = Math.Min(w * 0.28f, top.Count == 0 ? 0 : top.Max(a => g.MeasureString(a.Band + " · ch " + a.Channel + (a.Radio != "" ? " · " + LinkInfo.Gen(a.Radio) : ""), Draw.fSmall).Width) + 16 * S);

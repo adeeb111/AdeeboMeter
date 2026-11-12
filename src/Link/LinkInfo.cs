@@ -180,7 +180,7 @@ namespace AdeeboMeter
             return res;
         }
 
-        public sealed class Bss { public string Bssid = "", Ssid = ""; public int Rssi, FreqMHz, Channel, Width = 20; public bool K, V, R; public string Band = ""; }
+        public sealed class Bss { public string Bssid = "", Ssid = "", Sec = ""; public int Rssi, FreqMHz, Channel, Width = 20; public bool K, V, R; public string Band = ""; }
         static DateTime lastScan = DateTime.MinValue;
 
         public static List<Bss> List(bool scan, out string err)
@@ -221,7 +221,32 @@ namespace AdeeboMeter
             byte[] ies = new byte[Math.Max(0, Math.Min(ieSize, 4096))];
             if (ies.Length > 0) Marshal.Copy(e + ieOff, ies, 0, ies.Length);
             FromFreq(b); ReadIes(ies, b);
+            if (b.Sec == "") b.Sec = (Marshal.ReadInt16(e, 88) & 0x0010) != 0 ? "WEP" : "Open";   // no RSN / WPA element: the privacy bit says WEP or nothing
             return b;
+        }
+        // RSN element: version (2), group cipher (4), pairwise count + suites, AKM count + suites - the AKM says how you sign in
+        static string Rsn(byte[] ies, int p, int len)
+        {
+            int end = p + len, q = p + 2 + 4; if (q + 2 > end) return "WPA2";
+            int pc = ies[q] | ies[q + 1] << 8; q += 2 + 4 * pc; if (q + 2 > end) return "WPA2";
+            int ac = ies[q] | ies[q + 1] << 8; q += 2; bool sae = false, psk = false, ent = false, owe = false, ent3 = false;
+            for (int i = 0; i < ac && q + 4 <= end; i++, q += 4)
+            {
+                if (ies[q] != 0x00 || ies[q + 1] != 0x0F || ies[q + 2] != 0xAC) continue; int t = ies[q + 3];
+                if (t == 8 || t == 9 || t == 24 || t == 25) sae = true; else if (t == 2 || t == 4 || t == 6) psk = true; else if (t == 12 || t == 13) ent3 = true; else if (t == 1 || t == 3 || t == 5 || t == 11) ent = true; else if (t == 18) owe = true;
+            }
+            if (ent3) return "WPA3-Enterprise"; if (ent) return "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return "WPA2";
+        }
+        public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)"; }
+        // the least crowded channel in a band: each neighbour weighs by its signal (squared - a strong one hurts far more),
+        // counted on every channel it overlaps
+        public static int[] LeastCrowded(List<Ap> aps, string band, int mine, string myBssid)
+        {
+            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48, 149, 153, 157, 161 } : new int[0];
+            if (cand.Length == 0) return null;
+            Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, c, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
+            int best = cand.OrderBy(c => load(c)).ThenBy(c => c == mine ? 0 : 1).First();
+            return new[] { best, (int)Math.Round(load(best) * 100), (int)Math.Round(load(mine) * 100) };
         }
         public static void FromFreq(Bss b)
         {
@@ -253,6 +278,8 @@ namespace AdeeboMeter
                     if ((prm & (1 << 17)) != 0 && q + 2 <= p + len)   // 6 GHz operation info
                     { int cw = ies[q + 1] & 0x03; b.Width = Math.Max(b.Width, cw == 0 ? 20 : cw == 1 ? 40 : cw == 2 ? 80 : 160); }
                 }
+                else if (id == 48 && len >= 8) b.Sec = Rsn(ies, p, len);
+                else if (id == 221 && len >= 4 && ies[p] == 0x00 && ies[p + 1] == 0x50 && ies[p + 2] == 0xF2 && ies[p + 3] == 1 && b.Sec == "") b.Sec = "WPA (old)";
                 else if (id == 70) b.K = true;
                 else if (id == 54) b.R = true;
                 else if (id == 127 && len >= 3 && (ies[p + 2] & 0x08) != 0) b.V = true;
@@ -361,7 +388,7 @@ namespace AdeeboMeter
     // ================================================================== Your connection: Wi-Fi radio, neighbours, cable, addressing
     // Everything comes from Windows itself (netsh and the adapter statistics) - nothing is sent anywhere. Collected only while
     // the "Your connection" page is open, every 10 s.
-    sealed class Ap { public string Ssid = "", Bssid = "", Band = "", Radio = ""; public int Signal = -1, Channel = -1, Util = -1, Stations = -1, Rssi, Width; }
+    sealed class Ap { public string Ssid = "", Bssid = "", Band = "", Radio = "", Sec = ""; public int Signal = -1, Channel = -1, Util = -1, Stations = -1, Rssi, Width; }
 
     sealed class LinkSnap
     {
@@ -500,7 +527,7 @@ namespace AdeeboMeter
                     if (strong >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your channel is a crowded room: " + same.Count + " neighbours share it. Everyone takes turns, so everyone is slower.", same.Count + " access points share your channel.")); }
                     // Windows' Native Wifi API: channel width, roaming helpers, exact dBm
                     string werr; var bss = WlanApi.List(true, out werr);
-                    foreach (var a in s.Aps) { var m2 = bss.FirstOrDefault(x => string.Equals(x.Bssid, a.Bssid, StringComparison.OrdinalIgnoreCase)); if (m2 != null) { a.Rssi = m2.Rssi; a.Width = m2.Width; } }
+                    foreach (var a in s.Aps) { var m2 = bss.FirstOrDefault(x => string.Equals(x.Bssid, a.Bssid, StringComparison.OrdinalIgnoreCase)); if (m2 != null) { a.Rssi = m2.Rssi; a.Width = m2.Width; a.Sec = m2.Sec; } }
                     var me = bss.FirstOrDefault(x => string.Equals(x.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
                     if (me != null)
                     {

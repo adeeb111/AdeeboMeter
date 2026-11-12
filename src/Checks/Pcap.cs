@@ -20,6 +20,8 @@ namespace AdeeboMeter
             public IPAddress Src, Dst; public int Proto = -1, SrcPort, DstPort, Ttl;
             public byte[] Payload = Array.Empty<byte>();   // UDP payload, or the ICMP / ICMPv6 message (type, code, checksum, rest)
             public bool V6;
+            // for the packet journey: absolute time (s since 1970), size on the wire, IP length, DSCP and the TCP header
+            public double Abs; public int Len, IpLen, Dscp = -1, Flags, Win, PayLen; public uint Seq, Ack;
         }
         public const int Eapol = -2;   // Proto for 802.1X frames (no IP header; Payload = the EAPOL header and body)
         public const long MaxBytes = 64L * 1024 * 1024; public const int MaxPackets = 200000;
@@ -33,8 +35,8 @@ namespace AdeeboMeter
                 if (!fi.Exists) { error = "file not found"; return list; }
                 if (fi.Length > MaxBytes) { error = "bigger than 64 MB - filter it first in Wireshark (File › Export Specified Packets)"; return list; }
                 var b = File.ReadAllBytes(path);
-                if (b.Length >= 24 && (U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d || U32(b, 0, false) == 0xa1b2c3d4 || U32(b, 0, false) == 0xa1b23c4d)) Classic(b, list);
-                else if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A) Ng(b, list);
+                if (b.Length >= 24 && (U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d || U32(b, 0, false) == 0xa1b2c3d4 || U32(b, 0, false) == 0xa1b23c4d)) Classic(b, list, Wanted);
+                else if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A) Ng(b, list, Wanted);
                 else error = "not a pcap or pcapng file";
                 // nothing came out: say so when it's because of the link type (a Wi-Fi monitor-mode capture), not "no DHCP here"
                 if (error == "" && list.Count == 0) { int lt = FirstLink(b); if (lt >= 0 && !Links.Contains(lt)) error = "this capture's link type (" + lt + (lt == 105 || lt == 127 ? ", Wi-Fi monitor mode" : "") + ") isn't supported - capture on the Ethernet or Wi-Fi adapter normally (not in monitor mode)"; }
@@ -42,11 +44,14 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is NotSupportedException || e is ArgumentException)) throw; error = e.Message; }
             return list;
         }
-        public static List<Pkt> Parse(byte[] b)
+        public static List<Pkt> Parse(byte[] b) { return Parse(b, Wanted); }
+        // keep decides which packets stay (the journey keeps one conversation); a file still being written ends mid-record -
+        // the reader stops at the last whole one
+        public static List<Pkt> Parse(byte[] b, Func<Pkt, bool> keep)
         {
             var list = new List<Pkt>();
-            if (b.Length >= 24 && (U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, false) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d || U32(b, 0, false) == 0xa1b23c4d)) Classic(b, list);
-            else if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A) Ng(b, list);
+            if (b.Length >= 24 && (U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, false) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d || U32(b, 0, false) == 0xa1b23c4d)) Classic(b, list, keep);
+            else if (b.Length >= 28 && U32(b, 0, true) == 0x0A0D0D0A) Ng(b, list, keep);
             return list;
         }
         // only what a replay reads is kept (DHCP, DHCPv6, ICMP, ICMPv6, 802.1X): a 60 MB capture of mostly web traffic stays
@@ -59,20 +64,20 @@ namespace AdeeboMeter
         }
         static uint U32(byte[] b, int o, bool le) { return le ? (uint)(b[o] | b[o + 1] << 8 | b[o + 2] << 16 | b[o + 3] << 24) : (uint)(b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]); }
         static int U16(byte[] b, int o, bool le) { return le ? b[o] | b[o + 1] << 8 : b[o] << 8 | b[o + 1]; }
-        static void Classic(byte[] b, List<Pkt> list)
+        static void Classic(byte[] b, List<Pkt> list, Func<Pkt, bool> keep)
         {
             bool le = U32(b, 0, true) == 0xa1b2c3d4 || U32(b, 0, true) == 0xa1b23c4d; bool ns = U32(b, 0, le) == 0xa1b23c4d;
             int link = (int)(U32(b, 20, le) & 0xFFFF); int p = 24; double t0 = -1;
             while (p + 16 <= b.Length && list.Count < MaxPackets)
             {
-                double t = U32(b, p, le) + U32(b, p + 4, le) / (ns ? 1e9 : 1e6); long incl = U32(b, p + 8, le);
+                double t = U32(b, p, le) + U32(b, p + 4, le) / (ns ? 1e9 : 1e6); long incl = U32(b, p + 8, le); int orig = (int)Math.Min(int.MaxValue, U32(b, p + 12, le));
                 p += 16; if (p + incl > b.Length) break;   // the record's real length moves us on; only the decode is capped
                 if (t0 < 0) t0 = t;
-                var k = Decode(b, p, (int)Math.Min(incl, 262144L), link); if (Wanted(k)) { k.T = t - t0; list.Add(k); }
+                var k = Decode(b, p, (int)Math.Min(incl, 262144L), link); if (k != null) { k.Abs = t; k.Len = orig; } if (keep(k)) { k.T = t - t0; list.Add(k); }
                 p += (int)incl;
             }
         }
-        static void Ng(byte[] b, List<Pkt> list)
+        static void Ng(byte[] b, List<Pkt> list, Func<Pkt, bool> keep)
         {
             int p = 0; bool le = true; var links = new List<int>(); var perSec = new List<double>(); double t0 = -1;
             while (p + 12 <= b.Length && list.Count < MaxPackets)
@@ -95,16 +100,16 @@ namespace AdeeboMeter
                 }
                 else if (type == 6 && blen >= 32)
                 {
-                    int ifc = (int)U32(b, p + 8, le); long ts = ((long)U32(b, p + 12, le) << 32) | U32(b, p + 16, le); int cap = (int)U32(b, p + 20, le);
+                    int ifc = (int)U32(b, p + 8, le); long ts = ((long)U32(b, p + 12, le) << 32) | U32(b, p + 16, le); int cap = (int)U32(b, p + 20, le), orig = (int)Math.Min(int.MaxValue, U32(b, p + 24, le));
                     if (cap >= 0 && 28L + cap <= blen && ifc >= 0 && ifc < links.Count)
                     {
                         double t = ts / perSec[ifc]; if (t0 < 0) t0 = t;
-                        var k = Decode(b, p + 28, cap, links[ifc]); if (Wanted(k)) { k.T = t - t0; list.Add(k); }
+                        var k = Decode(b, p + 28, cap, links[ifc]); if (k != null) { k.Abs = t; k.Len = orig; } if (keep(k)) { k.T = t - t0; list.Add(k); }
                     }
                 }
                 else if (type == 3 && blen >= 16 && links.Count > 0)
                 {
-                    int cap = Math.Min(blen - 16, (int)U32(b, p + 8, le)); if (cap > 0) { var k = Decode(b, p + 12, cap, links[0]); if (Wanted(k)) { k.T = list.Count > 0 ? list[list.Count - 1].T : 0; list.Add(k); } }
+                    int cap = Math.Min(blen - 16, (int)U32(b, p + 8, le)); if (cap > 0) { var k = Decode(b, p + 12, cap, links[0]); if (k != null) k.Len = (int)Math.Min(int.MaxValue, U32(b, p + 8, le)); if (keep(k)) { k.T = list.Count > 0 ? list[list.Count - 1].T : 0; list.Add(k); } }
                 }
                 p += blen;
             }
@@ -146,28 +151,35 @@ namespace AdeeboMeter
             if (o + 20 > end || (b[o] >> 4) != 4) return null;
             int ihl = (b[o] & 15) * 4, tot = b[o + 2] << 8 | b[o + 3]; if (ihl < 20 || o + ihl > end) return null;
             int stop = Math.Min(end, o + Math.Max(tot, ihl));
-            var k = new Pkt { Proto = b[o + 9], Ttl = b[o + 8], Src = new IPAddress(Sub(b, o + 12, 4)), Dst = new IPAddress(Sub(b, o + 16, 4)) };
+            var k = new Pkt { Proto = b[o + 9], Ttl = b[o + 8], Src = new IPAddress(Sub(b, o + 12, 4)), Dst = new IPAddress(Sub(b, o + 16, 4)), IpLen = tot, Dscp = b[o + 1] >> 2 };
             if (((b[o + 6] & 0x1F) << 8 | b[o + 7]) != 0) return k;   // a later fragment: no transport header in it
-            L4(k, b, o + ihl, stop); return k;
+            L4(k, b, o + ihl, stop, o); return k;
         }
         static Pkt V6(byte[] b, int o, int end)
         {
             if (o + 40 > end || (b[o] >> 4) != 6) return null;
             int stop = Math.Min(end, o + 40 + (b[o + 4] << 8 | b[o + 5])); int nh = b[o + 6], p = o + 40;
-            var k = new Pkt { V6 = true, Ttl = b[o + 7], Src = new IPAddress(Sub(b, o + 8, 16)), Dst = new IPAddress(Sub(b, o + 24, 16)) };
+            var k = new Pkt { V6 = true, Ttl = b[o + 7], Src = new IPAddress(Sub(b, o + 8, 16)), Dst = new IPAddress(Sub(b, o + 24, 16)), IpLen = 40 + (b[o + 4] << 8 | b[o + 5]), Dscp = ((b[o] & 15) << 4 | b[o + 1] >> 4) >> 2 };
             for (int guard = 0; guard < 8 && (nh == 0 || nh == 43 || nh == 60 || nh == 44); guard++)
             {
                 if (p + 8 > stop) return k;
                 int n2 = b[p]; int l = nh == 44 ? 8 : (b[p + 1] + 1) * 8; if (nh == 44 && ((b[p + 2] << 8 | b[p + 3]) & 0xFFF8) != 0) { k.Proto = 44; return k; }
                 nh = n2; p += l;
             }
-            k.Proto = nh; L4(k, b, p, stop); return k;
+            k.Proto = nh; L4(k, b, p, stop, o); return k;
         }
-        static void L4(Pkt k, byte[] b, int o, int stop)
+        static void L4(Pkt k, byte[] b, int o, int stop, int ipStart)
         {
             if (o > stop) return;
-            if (k.Proto == 17 && o + 8 <= stop) { k.SrcPort = b[o] << 8 | b[o + 1]; k.DstPort = b[o + 2] << 8 | b[o + 3]; k.Payload = Sub(b, o + 8, stop - o - 8); }
-            else if (k.Proto == 6 && o + 20 <= stop) { k.SrcPort = b[o] << 8 | b[o + 1]; k.DstPort = b[o + 2] << 8 | b[o + 3]; }
+            if (k.Proto == 17 && o + 8 <= stop) { k.SrcPort = b[o] << 8 | b[o + 1]; k.DstPort = b[o + 2] << 8 | b[o + 3]; k.Payload = Sub(b, o + 8, stop - o - 8); k.PayLen = Math.Max(0, (b[o + 4] << 8 | b[o + 5]) - 8); }
+            else if (k.Proto == 6 && o + 20 <= stop)
+            {
+                k.SrcPort = b[o] << 8 | b[o + 1]; k.DstPort = b[o + 2] << 8 | b[o + 3];
+                k.Seq = (uint)(b[o + 4] << 24 | b[o + 5] << 16 | b[o + 6] << 8 | b[o + 7]); k.Ack = (uint)(b[o + 8] << 24 | b[o + 9] << 16 | b[o + 10] << 8 | b[o + 11]);
+                int off = (b[o + 12] >> 4) * 4; k.Flags = b[o + 13]; k.Win = b[o + 14] << 8 | b[o + 15];
+                // payload size from the IP length, not from what was captured: the journey records headers only
+                k.PayLen = Math.Max(0, k.IpLen - (o - ipStart) - off);
+            }
             else if ((k.Proto == 1 || k.Proto == 58) && o + 4 <= stop) k.Payload = Sub(b, o, stop - o);
         }
         static byte[] Sub(byte[] b, int o, int n) { n = Math.Max(0, Math.Min(n, b.Length - o)); var r = new byte[n]; Array.Copy(b, o, r, 0, n); return r; }
@@ -197,6 +209,7 @@ namespace AdeeboMeter
             var c = Sum(h); h[10] = (byte)(c >> 8); h[11] = (byte)c; return h.Concat(body).ToArray();
         }
         public static byte[] Udp(int sp, int dp, byte[] body) { int l = 8 + body.Length; return new[] { (byte)(sp >> 8), (byte)sp, (byte)(dp >> 8), (byte)dp, (byte)(l >> 8), (byte)l, (byte)0, (byte)0 }.Concat(body).ToArray(); }
+        public static byte[] Tcp(int sp, int dp, uint seq, uint ack, int flags, int win, byte[] body) { var h = new byte[20]; h[0] = (byte)(sp >> 8); h[1] = (byte)sp; h[2] = (byte)(dp >> 8); h[3] = (byte)dp; h[4] = (byte)(seq >> 24); h[5] = (byte)(seq >> 16); h[6] = (byte)(seq >> 8); h[7] = (byte)seq; h[8] = (byte)(ack >> 24); h[9] = (byte)(ack >> 16); h[10] = (byte)(ack >> 8); h[11] = (byte)ack; h[12] = 0x50; h[13] = (byte)flags; h[14] = (byte)(win >> 8); h[15] = (byte)win; return h.Concat(body).ToArray(); }
         public static byte[] Icmp4(int type, int code, byte[] rest) { var m = new byte[] { (byte)type, (byte)code, 0, 0 }.Concat(rest).ToArray(); var c = Sum(m); m[2] = (byte)(c >> 8); m[3] = (byte)c; return m; }
         public static byte[] Ip6Icmp(string src, string dst, int hop, int type, int code, byte[] rest)
         {

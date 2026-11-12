@@ -134,6 +134,18 @@ namespace AdeeboMeter
                 var sub = Toolkit.Subnet("10.1.2.3/22", "10.1.3.200");
                 if (!sub.Any(r => r[2].StartsWith("10.1.0.0/22", StringComparison.Ordinal)) || !sub.Any(r => r[2] == "yes")) throw new InvalidOperationException("subnet calculator wrong");
                 if (!Toolkit.Subnet("2001:db8::1/64", "").Any(r => r[2].StartsWith("2001:db8::/64", StringComparison.Ordinal))) throw new InvalidOperationException("IPv6 subnet wrong");
+                Func<List<string[]>, string, string> val = (rs, name) => { var rr = rs.FirstOrDefault(r => r[1] == name); return rr == null ? "" : rr[2]; };
+                var stk = Calc.Stack("tcp ipv4 wireguard pppoe ethernet", "", "1400"); string mss = val(stk, "Biggest segment (MSS)"), inner = val(stk, "Set the inner MTU to");
+                if (!mss.Replace(",", "").Replace(".", "").Replace("\u00a0", "").Replace(" ", "").StartsWith("1392", StringComparison.Ordinal) || !inner.Replace(",", "").Replace(".", "").Replace("\u00a0", "").Replace(" ", "").StartsWith("1432", StringComparison.Ordinal)) throw new InvalidOperationException("packet stack wrong: " + mss + " / " + inner);
+                if (Calc.Stack("tcp banana", "", "")[0][0] != "2" || Calc.Stack("udp ipv4 ethernet", "", "3000").All(r => !r[2].Contains("fragments"))) throw new InvalidOperationException("packet stack input checks wrong");
+                var vl = Calc.Vlsm("10.0.0.0/22", "200, 60, 12, 2"); if (!val(vl, "Subnet 2 (60 hosts)").StartsWith("10.0.1.0/26", StringComparison.Ordinal) || !val(vl, "Subnet 4 (2 hosts)").StartsWith("10.0.1.80/30", StringComparison.Ordinal) || !Calc.Vlsm("10.0.0.0/24", "200, 100").Any(r => r[0] == "2")) throw new InvalidOperationException("VLSM wrong");
+                var bw = Calc.Bandwidth("4.7 GB", "100 Mbps", ""); if (!val(bw, "Time").Contains("min")) throw new InvalidOperationException("bandwidth wrong: " + val(bw, "Time"));
+                var nb = Calc.Number("0xC8"); if (val(nb, "Decimal") != "200" || val(nb, "Binary") != "11001000" || val(Calc.Number("255.255.252.0"), "As a mask").StartsWith("/22", StringComparison.Ordinal) == false || val(Calc.Number("00:11:22:aa:bb:cc"), "As a MAC") != "00:11:22:aa:bb:cc") throw new InvalidOperationException("number converter wrong");
+                Func<string, string, string> gwv = (a, g) => { var gr = Toolkit.Subnet(a, "", g, null).FirstOrDefault(r => r[1] == "Gateway"); return gr == null ? "none" : gr[0] + ":" + gr[2]; };
+                string g1 = gwv("10.20.3.7/31", "10.20.0.1/21"), g2 = gwv("10.1.2.3/24", "10.1.2.0"), g3 = gwv("10.1.2.3/24", "10.1.2.255"), g4 = gwv("10.1.2.3/24", "10.1.2.3"), g5 = gwv("10.1.2.3/24", "10.1.2.1/23"), g6 = gwv("10.1.2.3/24", "10.1.2.1"), g7 = gwv("10.1.2.6/31", "10.1.2.7"), g8 = gwv("2001:db8::5/64", "fe80::1"), g9 = gwv("10.1.2.3/24", "10.1.2.77"), g10 = gwv("10.1.2.3/24", ""), g11 = gwv("10.1.2.3/24", "10.1.9.1");
+                if (!g1.StartsWith("2:Will not work", StringComparison.Ordinal) || !g1.Contains("Use /21") || !g2.StartsWith("2:", StringComparison.Ordinal) || !g2.Contains("network address") || !g3.Contains("broadcast") || !g4.Contains("own address")
+                    || !g5.StartsWith("1:", StringComparison.Ordinal) || !g6.StartsWith("0:", StringComparison.Ordinal) || !g6.Contains("first") || !g7.StartsWith("0:", StringComparison.Ordinal) || !g8.StartsWith("0:", StringComparison.Ordinal) || !g9.Contains("not the first") || !g10.Contains("10.1.2.1 (first)") || !g11.Contains("/20"))
+                    throw new InvalidOperationException("subnet gateway checks wrong: " + string.Join(" | ", g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11));
                 int n = PathTools.Overlap().Count + WhyFails.Hosts("").Count + WinEvidence.All(M).Count + PcHealth.Pressure(M).Count + PcHealth.Crashes().Count + PcHealth.Leaks().Count;
                 var msg = Toolkit.Query(System.Net.IPAddress.Loopback, "example.com", 1, true);   // nothing listens on 127.0.0.1:53 - must just say "no answer"
                 if (PathTools.BackHops(57) != 8 || PathTools.BackHops(120) != 9 || PathTools.Kind(1492).IndexOf("PPPoE", StringComparison.Ordinal) < 0) throw new InvalidOperationException("path helpers wrong");
@@ -599,6 +611,47 @@ namespace AdeeboMeter
                 finally { try { File.Delete(f); } catch (IOException) { } }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("packet journey: filter, records, translation and Explain rules", () =>
+            {
+                const string me = "192.0.2.10", srv = "203.0.113.40", rtr = "198.51.100.1", m1 = "02:00:00:00:00:01", m2 = "02:00:00:00:00:02";
+                var f = new Journey.Flow { Remote = srv, RemotePort = 443, LocalPort = 50123, Udp = false };
+                if (Journey.Bpf(f) != "(host 203.0.113.40 and port 443 and port 50123) or (icmp and host 203.0.113.40)") throw new InvalidOperationException("journey filter: " + Journey.Bpf(f));
+                // TCP: handshake 30 ms, data, one resend, a router's "too big"
+                var w = new Pcap.Writer(); var body = new byte[1200];
+                w.Add(0, Pcap.Eth(m2, m1, 0x0800, Pcap.Ip4(me, srv, 6, 64, Pcap.Tcp(50123, 443, 1000, 0, 0x02, 64240, new byte[0]))));
+                w.Add(0.030, Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(srv, me, 6, 52, Pcap.Tcp(443, 50123, 5000, 1001, 0x12, 65535, new byte[0]))));
+                w.Add(0.001, Pcap.Eth(m2, m1, 0x0800, Pcap.Ip4(me, srv, 6, 64, Pcap.Tcp(50123, 443, 1001, 5001, 0x10, 64240, new byte[0]))));
+                w.Add(0.001, Pcap.Eth(m2, m1, 0x0800, Pcap.Ip4(me, srv, 6, 64, Pcap.Tcp(50123, 443, 1001, 5001, 0x18, 64240, new byte[300]))));
+                for (int i = 0; i < 20; i++) w.Add(0.002, Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(srv, me, 6, 52, Pcap.Tcp(443, 50123, (uint)(5001 + i * 1200), 1301, 0x10, 65535, body))));
+                w.Add(0.2, Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(srv, me, 6, 52, Pcap.Tcp(443, 50123, 5001 + 5 * 1200, 1301, 0x10, 65535, body))));   // sent again
+                var quote = Pcap.Ip4(me, srv, 6, 64, Pcap.Tcp(50123, 443, 1301, 0, 0x10, 1, new byte[0]));
+                w.Add(0.01, Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(rtr, me, 1, 250, Pcap.Icmp4(3, 4, new byte[] { 0, 0, 0x05, 0x78 }.Concat(quote).ToArray()))));
+                var pk = Pcap.Parse(w.Bytes(), k => Journey.Belongs(k, f)); if (pk.Count != 26) throw new InvalidOperationException("journey kept " + pk.Count + " of 26 packets");
+                var recs = Journey.Records(pk, f, pk[0].Abs); string kind = Journey.Kind(f, recs); Journey.Translate(recs, kind);
+                if (kind != "web" || recs.Count(r => r.Resend) != 1 || recs[0].Say.IndexOf("asks to connect", StringComparison.Ordinal) < 0 || !recs.Any(r => r.Say.IndexOf("AGAIN", StringComparison.Ordinal) >= 0) || recs.Last().IcmpMtu != 1400) throw new InvalidOperationException("journey records wrong: " + kind + " / " + string.Join(" | ", recs.Take(3).Select(r => r.Say)));
+                var ex = Journey.Explain(f, recs, kind, false);
+                if (ex[0].Lv != 2 || !ex.Any(n => n.Title.StartsWith("Packets were lost", StringComparison.Ordinal)) || !ex.Any(n => n.Title.StartsWith("A packet was too large", StringComparison.Ordinal)) || ex.Last().Title != "Can't tell from here" || !ex.Any(n => n.Text.IndexOf("30 ms", StringComparison.Ordinal) >= 0))
+                    throw new InvalidOperationException("journey explain (TCP) wrong: " + string.Join(" | ", ex.Select(n => n.Lv + " " + n.Title)));
+                // UDP game: steady 8 ms both ways, three 120 ms stalls each followed by a burst; the far end found from the packets
+                var g = new Journey.Flow { Remote = "", LocalPort = 61000, Udp = true }; var w2 = new Pcap.Writer(); var upd = new byte[90];
+                var ev = new List<KeyValuePair<double, bool>>();   // time, outgoing
+                for (int i = 0; i < 300; i++) ev.Add(new KeyValuePair<double, bool>(i * 0.008, true));
+                double tin = 0.004;
+                for (int i = 0; i < 300; i++)
+                {
+                    if (i == 100 || i == 180 || i == 250) { tin += 0.120; for (int k = 0; k < 5; k++) { ev.Add(new KeyValuePair<double, bool>(tin, false)); tin += 0.0005; } }
+                    ev.Add(new KeyValuePair<double, bool>(tin, false)); tin += 0.008;
+                }
+                double prev = 0;
+                foreach (var e in ev.OrderBy(z => z.Key)) { w2.Add(e.Key - prev, e.Value ? Pcap.Eth(m2, m1, 0x0800, Pcap.Ip4(me, srv, 17, 64, Pcap.Udp(61000, 7086, upd))) : Pcap.Eth(m1, m2, 0x0800, Pcap.Ip4(srv, me, 17, 52, Pcap.Udp(7086, 61000, upd)))); prev = e.Key; }
+                if (Journey.Bpf(g) != "(udp port 61000) or icmp or icmp6") throw new InvalidOperationException("journey UDP filter: " + Journey.Bpf(g));
+                var pk2 = Pcap.Parse(w2.Bytes(), k => Journey.Belongs(k, g)); Journey.FindRemote(g, pk2, new HashSet<string> { me });
+                if (g.Remote != srv || g.RemotePort != 7086) throw new InvalidOperationException("journey didn't find the far end: " + g.Remote + ":" + g.RemotePort);
+                var r2 = Journey.Records(pk2.Where(k => Journey.Belongs(k, g)).ToList(), g, pk2[0].Abs); string k2 = Journey.Kind(g, r2); var ex2 = Journey.Explain(g, r2, k2, true);
+                if (k2 != "realtime" || r2.Count(r => r.GapBefore > 0 && !r.Out) != 3 || !ex2.Any(n => n.Title.StartsWith("Delayed and bunched", StringComparison.Ordinal)) || !ex2.Any(n => n.Title == "Your PC sent on time") || ex2.Last().Text.IndexOf("UDP carries no sequence", StringComparison.Ordinal) < 0)
+                    throw new InvalidOperationException("journey explain (UDP) wrong: " + k2 + " stalls=" + r2.Count(r => r.GapBefore > 0) + " / " + string.Join(" | ", ex2.Select(n => n.Lv + " " + n.Title)));
+                if (Journey.Explain(f, recs.Take(2).ToList(), kind, false)[0].Title != "Too little to go on") throw new InvalidOperationException("journey: two packets should be too little");
+            });
             T("examples: every tool has one, it fits its boxes, it's marked and never copied", () =>
             {
                 using (var icon = Theme.MakeIcon(16))
@@ -750,9 +803,9 @@ namespace AdeeboMeter
                     "link.Dropped packets (discards)", "link.Router answers in", "link.Jitter", "link.Loss", "link.Based on",
                     "theme.toggle", "link.Channel width", "link.Roaming help", "link.Driver", "link.DROPS", "link.DHCP", "link.LAN", "link.SWITCH", "live.BY APP", "live.CALL QUALITY", "live.MOS", "live.DHCP", "hist.CHART", "card.DNS SECOND OPINION",
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
-                    "travel.LADDER", "travel.ANATOMY", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
+                    "travel.LADDER", "travel.ANATOMY", "travel.JOURNEY", "travel.JTIME", "travel.JREAL", "travel.JSAY", "travel.JEXPLAIN", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "certcmp", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "stack", "vlsm", "bandwidth", "binhex", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "certcmp", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));

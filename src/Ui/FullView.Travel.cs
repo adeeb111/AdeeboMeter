@@ -30,7 +30,7 @@ namespace AdeeboMeter
             travelGo = new PillButton("Follow", PillButton.K.Primary); travelGo.Click += delegate { StorySite(); };
             bar.Controls.Add(travelBox); bar.Controls.Add(travelGo);
             travelCanvas = new DB { Name = "travelCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
-            travelCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTravel(e.Graphics); }; Wire(travelCanvas);
+            travelCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); if (JLaneOnly(e)) return; PaintTravel(e.Graphics); }; Wire(travelCanvas);
             travelPage.Controls.Add(travelCanvas); travelPage.Controls.Add(bar);   // the five mode buttons are gone - the boxes lead to each part
             return travelPage;
         }
@@ -68,6 +68,7 @@ namespace AdeeboMeter
             Begin(travelCanvas);
             float x = 14 * S, y = 8 * S, w = travelCanvas.ClientSize.Width - 28 * S;
             y = PaintStory(g, x, y, w);
+            if (storyTarget != "" || jFlow != null) y = PaintJourney(g, x, y, w);
             var need = new Size(0, (int)(y + 30 * S)); SetNeed(travelCanvas, need);
         }
         static float Lead(Graphics g, string t, float x, float y, float w, bool muted)

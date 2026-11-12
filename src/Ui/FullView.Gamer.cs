@@ -199,6 +199,7 @@ namespace AdeeboMeter
                 {
                     var pg = games.FirstOrDefault(z => z.Id == gp.Playing);
                     if (pg != null) btn(findBusy ? "Finding your match server..." : "Find my match server", false, delegate { FindMatch(pg); });
+                    if (pg != null) btn("See the packet journey", false, delegate { GameJourney(pg); });
                 }
                 btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
                 var rg = ss != null ? games.FirstOrDefault(z => z.Id == ss.GameId) : target;
@@ -314,6 +315,15 @@ namespace AdeeboMeter
                 if (!string.IsNullOrEmpty(gm.Note)) g.DrawString(gm.Note, Draw.fSmall, muted, new RectangleF(cx, cy + 8 * S, cw, 18 * S), nowrap);
             }
             return top + h + 14 * S;
+        }
+        // the game's own conversation (its busiest UDP socket, or its TCP one) on the packet journey
+        void GameJourney(Game pg)
+        {
+            List<Conn> all; try { all = M.Connections(true); } catch (Exception e) { Program.Log("game journey: " + e.Message); gamerNote = "Couldn't read the connection table."; gamerCanvas.Invalidate(); return; }
+            Func<Conn, bool> mine = c => pg.Exes.Any(x => string.Equals((c.Proc ?? "").Replace(".exe", ""), x, StringComparison.OrdinalIgnoreCase));
+            var c1 = all.Where(mine).OrderBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(c => c.LocalPort).FirstOrDefault();
+            if (c1 == null) { gamerNote = pg.Name + " has no network conversation open right now - join a match first."; gamerCanvas.Invalidate(); return; }
+            OpenJourney(c1);
         }
     }
 }

@@ -1338,6 +1338,56 @@ how: Timed by the same check as Check a destination.
 why: Shows at a glance whether the wait is the name lookup, the distance, the encryption, or the server.
 without: -
 
+== travel.JOURNEY
+friendly: Packet journey
+cat: term
+close: -1
+tag: One conversation, layer by layer and packet by packet.
+what: The label stack at each stop, where the time goes, and the conversation's real packets played along the path - with a plain-words translation and an explanation you can ask for.
+how: Stack and timing from your adapter and ten pings; the real packets from a short capture of this one conversation (Wireshark with Npcap), headers only.
+why: Shows what latency and jitter really are, and whether a problem is the network, this PC or the server.
+without: The stack and timing work without Wireshark.
+
+== travel.JTIME
+friendly: Where the time goes
+cat: term
+close: -1
+tag: Latency split into Wi-Fi, provider, distance and queues.
+what: Ten pings to the server, set against the router and internet pings AdeeboMeter already makes. Distance is the fastest reply; queues are how much slower the average is; jitter is how much it wobbles.
+how: One small ping a second, ten times, only when you press Measure.
+why: Distance can't be fixed; queues can - they're usually Wi-Fi or a busy upload at home.
+without: Some servers ignore pings - then the captured packets show the rhythm instead.
+
+== travel.JREAL
+friendly: The real packets
+cat: term
+close: -1
+tag: This conversation's packets, played along the path.
+what: A short capture of only this conversation - the filter runs in the capture driver, so nothing else reaches AdeeboMeter - headers only, stopping by itself. Each packet travels the path as a block as wide as its size; resends are amber, network errors red, stalls marked.
+how: Wireshark's dumpcap with a filter for this conversation plus ICMP about it; AdeeboMeter's own reader; Quick = 100 packets, Normal = 1,000 or 30 s.
+why: See drops, resends and stalls happen instead of guessing.
+without: Needs Wireshark with Npcap.
+
+== travel.JSAY
+friendly: In plain words
+cat: term
+close: -1
+tag: Each packet translated.
+what: One line per packet: who sent it and what it means - asks to connect, sends data again, says its buffer is full, a router says the packet is too big.
+how: From the packet headers, by fixed rules.
+why: Reading a capture without knowing the protocols.
+without: -
+
+== travel.JEXPLAIN
+friendly: Explain this capture
+cat: term
+close: -1
+tag: What these packets show - and what they can't.
+what: Decides what kind of conversation it is (call or game, download, web, DNS, VPN, a device at home) and applies that kind's rules: stalls and bursts, resends, refused deliveries, packets too big, a route change, this PC sending late, a slow server.
+how: Fixed rules on the packets already recorded - no AI, nothing sent, the same answer every time.
+why: Each finding points at the moment it's about; the last line says what a capture from this PC can't tell.
+without: -
+
 == travel.ANATOMY
 friendly: Packet anatomy
 cat: term
@@ -2215,7 +2265,47 @@ close: -1
 tag: CIDR, masks and ranges - IPv4 and IPv6.
 what: Pure arithmetic, nothing sent.
 how: Pure arithmetic, nothing sent.
-why: Network, broadcast, usable range, wildcard mask, binary; IPv6 expanded and compressed; is this IP inside?
+why: Network, broadcast, usable range, wildcard mask, binary; IPv6 expanded and compressed; is this IP inside? Checks a gateway too - outside the subnet, the network or broadcast address, a mask that disagrees - and says what to use instead. Leave the address empty to check this PC's own.
+without: Offline.
+
+== tb.stack
+friendly: Packet stack and MTU
+cat: term
+close: -1
+tag: What fits in one packet - through VPNs, PPPoE, VLANs and labels.
+what: Adds up the headers of each layer you list, top to bottom, against the link MTU. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Gives the biggest TCP segment (MSS), the MTU to set inside a tunnel, the size on the wire, how much of the line carries data, and whether a given size splits.
+without: Offline.
+
+== tb.vlsm
+friendly: VLSM planner
+cat: term
+close: -1
+tag: Split one block into subnets of the sizes you need.
+what: Biggest first, each on its own boundary, with gateway and broadcast. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Shows each subnet's range, gateway, broadcast and spare room, and what's left of the block.
+without: Offline.
+
+== tb.bandwidth
+friendly: Bandwidth and transfer time
+cat: term
+close: -1
+tag: How long a download takes, what speed you need, bits vs bytes.
+what: Any two of size, speed and time give the third. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Also converts the speed (Mbps, MB/s, per hour) and shows how many full-size packets a second it means.
+without: Offline.
+
+== tb.binhex
+friendly: Decimal, hex and binary
+cat: term
+close: -1
+tag: One number in decimal, hex, binary - and as an address, mask, MAC or DSCP.
+what: Reads 200, 0xC8, 0b11001000, C8h, an IPv4 address or a MAC. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Shows the same value every way a network engineer meets it.
 without: Offline.
 
 == tb.winev

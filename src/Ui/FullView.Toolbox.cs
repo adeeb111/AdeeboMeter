@@ -137,7 +137,11 @@ namespace AdeeboMeter
                 T("roams", "YOUR NETWORK", "Wi-Fi roams and drops (24 h)", null, (a, r) => Investigate.Roams(M)),
                 T("dhcp", "YOUR NETWORK", "DHCP lease and IPv6 lifetimes", null, (a, r) => SysTools.Dhcp(M)),
                 T("wol", "YOUR NETWORK", "Wake-on-LAN", "MAC - e.g. 3C:84:6A:12:34:56|Password (optional) - SecureOn, 6 bytes like a MAC", (a, r) => Toolkit.Wake(a[0], a[1])),
-                T("subnet", "YOUR NETWORK", "Subnet calculator", "e.g. 10.1.2.3/22 or 2001:db8::1/64|Is this IP inside? (optional)", (a, r) => Toolkit.Subnet(a[0], a[1])),
+                T("subnet", "YOUR NETWORK", "Subnet calculator", "Address - e.g. 10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64 (empty = this PC's)|Gateway (optional) - may carry its own mask, e.g. 10.1.0.1/22|Is this IP inside? (optional)", (a, r) => Toolkit.Subnet(a[0], a[2], a[1], M)),
+                T("stack", "CALC", "Packet stack and MTU", "Layers, top to bottom - e.g. tcp ipv4 wireguard pppoe ethernet, or a preset: web, game, call, dsl, vpn, office vpn|Link MTU - empty = 1500|Data size in bytes (optional) - does it fit in one packet?", (a, r) => Calc.Stack(a[0], a[1], a[2])),
+                T("vlsm", "CALC", "VLSM planner", "Block - e.g. 10.0.0.0/22|Hosts each subnet needs - e.g. 200, 60, 12, 2", (a, r) => Calc.Vlsm(a[0], a[1])),
+                T("bandwidth", "CALC", "Bandwidth and transfer time", "Size - e.g. 4.7 GB (optional)|Speed - e.g. 100 Mbps or 12 MB/s|Time - e.g. 10 min (optional) - any two give the third", (a, r) => Calc.Bandwidth(a[0], a[1], a[2])),
+                T("binhex", "CALC", "Decimal, hex and binary", "Number - 200, 0xC8, 0b11001000, an IPv4 address or a MAC", (a, r) => Calc.Number(a[0])),
                 T("winev", "WINDOWS", "Windows' own evidence", null, (a, r) => WinEvidence.All(M)),
                 T("auth", "WINDOWS", "Why network sign-in failed (802.1X)", null, (a, r) => WinEvidence.Auth()),
                 T("dc", "WINDOWS", "Domain controllers", null, (a, r) => SysTools.DomainControllers(M)),
@@ -175,7 +179,8 @@ namespace AdeeboMeter
             new[] { "TRUST & MAIL", "certcmp", "smtppath" },
             new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
-            new[] { "ON YOUR NETWORK", "arp", "finddev", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin", "subnet" },
+            new[] { "ON YOUR NETWORK", "arp", "finddev", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin" },
+            new[] { "CALCULATORS", "subnet", "vlsm", "stack", "bandwidth", "binhex" },
             new[] { "REMOTE ACCESS", "remote" },
             new[] { "BUILD A PACKET", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "wol" },
             new[] { "TEST A COLLECTOR", "syslog", "trap", "netflow" },
@@ -185,7 +190,7 @@ namespace AdeeboMeter
             new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
             new[] { "THE PC", "tidy", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
-            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" },
+            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "CALCULATORS", "net" },
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions

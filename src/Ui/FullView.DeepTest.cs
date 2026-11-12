@@ -81,7 +81,7 @@ namespace AdeeboMeter
             // 2. the safe tools for real
             head("2. Real run" + (net ? " (local + light network)" : " (local only)"));
             var inputs = new Dictionary<string, string[]> {
-                { "fw", new[] { "teams", "", "" } }, { "events", new[] { "", "", "" } }, { "subnet", new[] { "10.1.2.3/22", "10.1.3.9", "" } }, { "route", new[] { "8.8.8.8", "", "" } }, { "hosts", new[] { "", "", "" } } };
+                { "fw", new[] { "teams", "", "" } }, { "events", new[] { "", "", "" } }, { "subnet", new[] { "10.1.2.3/22", "10.1.0.1", "10.1.3.9" } }, { "route", new[] { "8.8.8.8", "", "" } }, { "hosts", new[] { "", "", "" } } };
             if (net)
                 foreach (var kv in new Dictionary<string, string[]> {
                     { "port", new[] { gw + ":80", "", "" } }, { "tcpping", new[] { gw + ":80", "5", "" } }, { "ping", new[] { gw, "20", "200" } }, { "dig", new[] { "github.com", "A", "" } },

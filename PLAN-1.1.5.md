@@ -133,3 +133,112 @@ One widget engine (sleep / unlock / multi-monitor / fade / chip fixes shared), s
 7. Languages: string table, then French.
 8. Full suite: analyzer build, self-test, 25-min deep test, Windows build on Adeeb's PC, LIVE-TESTS; then hand-off for a
    Claude Code / Codex bug review; fixes; then release when Adeeb says.
+
+## 10. Added 12 Nov (Adeeb: "your picks, the later plan and the parts from topogram") - DESIGN, not built
+Rules unchanged: no admin, never listens, nothing sent unless the user presses it (drawing sends nothing), no company names.
+A. Packet journey (the Network story, extended - "protocol playground" everywhere)
+   - Open it from: Network story (any app / site), Gamer Zone server row ("See the journey"), Toolbox results (MTR, ping,
+     speed), ISP report hops, Learn.
+   - The path is real: boxes from the trace / MTR already measured (or one short trace when you press Measure).
+   - At every box the packet's label stack is drawn: data > UDP/TCP (+TLS/QUIC) > IP > (VPN outer IP + ESP/WireGuard) >
+     Wi-Fi 802.11 + CCMP or Ethernet; the router rewrites addresses (NAT); PPPoE +8 when the line uses it; provider
+     labels (MPLS) shown as "inferred, can't be seen from a PC". Bytes per layer and what's left of the MTU.
+   - Time per segment split into what causes it: distance (fibre ~5 us/km), size on the link (serialisation), queues
+     (bufferbloat - idle vs loaded ping when measured), Wi-Fi airtime and retries, processing. Jitter = how much the queue
+     part moves. Every number tagged measured / Windows-reported / estimated.
+   - Controls: Play / step, packet size 64-1500 (fragmentation vs MTU), protocol (game UDP, web TCP+TLS, DNS, ping),
+     what-if: add a VPN, PPPoE, cable instead of Wi-Fi. "Why is my jitter 14 ms?" in plain words.
+   - Call-flow cards with the same engine: DHCP, DNS, TCP handshake, TLS 1.3, QUIC, 802.1X/EAP, ARP - each linked to
+     the Traffic Lab tool that builds that packet.
+B. Picks for 1.1.5: what-changed-when-it-broke timeline · hotel / cafe check · Wi-Fi channel map + least crowded +
+   same name different security · DNS race · saved device inventory · driver audit + USB history · MTR record + graph ·
+   internet weather sentence.
+C. From topogram (generic only): encapsulation stack calculator (engine of A), decimal / hex / binary / bandwidth
+   converter, VLSM planner on the subnet calculator, protocol call-flow cards (A).
+   - Subnet calculator gateway options (Adeeb, 12 Nov, screenshot of topogram's calculator): a third box "Gateway
+     (optional)" - may carry its own mask (10.20.0.1/21). Today's "Is this IP inside?" box stays. Checks, in order:
+       red   gateway outside the host's subnet -> "Will not work: the host won't ARP for it, nothing leaves the subnet"
+             + the smallest prefix that holds both, and whether the gateway's own network already holds the host;
+       red   gateway = the network address, the broadcast address, or the host itself;
+       red   /31: the gateway must be the other address of the pair; /32: says it needs an on-link route;
+       amber gateway's mask differs from the host's (one side ARPs, the other routes - works one way only);
+       info  gateway isn't the first or last usable address (fine, just not the usual choice);
+       blank: suggests the usual choices (first / last usable).
+     IPv6: a link-local gateway (fe80::) is normal (learned from router adverts); a global gateway outside the prefix
+     -> amber. Buttons: "Use this PC's" fills IP, mask and gateway from the active adapter (local read, nothing sent);
+     Mask drop-down (/0 - /32 with dotted masks) beside the box; Copy result. Self-test cases for each row above.
+D. Later (1.1.6+): topology map, Wi-Fi heatmap, paste output -> verdict, crash-dump reader (picked
+   file), privacy checkup, full-PC HTML report, ISP report card + CCTS complaint letter, winget list (read-only),
+   LAN test by SMB copy (with an "I'm allowed" tick), camera-like device check.
+   - With a capture (12 Nov, Adeeb): the journey also reads real packets - the live rewind buffer (last minutes, already
+     kept when Npcap is there), a Sniff, or a .pcap/.pcapng the user opens. Read on this PC only, never uploaded; our own
+     reader for IP/UDP/TCP headers (filtered to the one flow), tshark when Wireshark is installed for TLS/QUIC/DNS detail.
+     Adds: real sizes and stack (VLAN, DSCP, PPPoE, fragments), TCP handshake / data-to-ACK RTT, retransmits, DNS and TLS
+     times, the game's own UDP packet rate and inter-arrival jitter, ICMP errors. Time-matched to the history on the same
+     clock (router ping, Wi-Fi signal, roams, events, Mark lag) -> "the jitter spike at 21:04:12 is your Wi-Fi".
+     Honest limits: one point of view (the PC); no per-hop timing of real traffic; game UDP loss only hinted by gaps;
+     the Wi-Fi air layer isn't in a normal capture; a file from another PC has another clock (shift it, or no matching).
+   - Entry for real packets is a Sniff button on the journey itself (Adeeb, 12 Nov): "Capture this conversation" -
+     takes the last minutes from the rewind buffer if it holds this flow, otherwise sniffs just this flow for 15-60 s
+     (you pick; Stop works), then redraws the journey with real packets. No Npcap: the button says so and offers
+     "Open a capture file" instead.
+   - Live translation (Adeeb, 12 Nov): while capturing, a running list in plain words beside the journey - one line
+     per meaningful step ("your PC asked where riotgames.com is", "the answer: 3 addresses, 18 ms", "hello / hello back /
+     ok - connected in 24 ms", "encrypted game data, 128 packets a second, 90-140 bytes"); busy streams are grouped
+     per second, never one line per packet. Click a line -> the packet's stack and raw fields (Details). Encrypted
+     content is described, never decoded. Through the language table (French too). Needs Npcap; nothing saved.
+   - The diagram itself plays the real packets (Adeeb, 12 Nov): each captured packet travels the path as a block sized by
+     its bytes and coloured by kind (DNS, handshake, data, ACK, game); a lost one fades out with "?" (a PC can't see where;
+     the segment is named only when the time match points to it, e.g. Wi-Fi), its resend follows marked "sent again";
+     gaps show as empty road; fragments split into pieces at the MTU. Slow motion (real time is too fast to see: 38 ms),
+     pause, step, scrub back through the capture; busy streams sampled (about 20 blocks a second drawn).
+   - Weight (Adeeb, 12 Nov: "100 packets then stop"): capture filtered to the one flow (dumpcap, BPF), our own reader for
+     headers only (no payload kept); tshark only for DNS/TLS detail and only if installed. Stops by itself at a packet cap
+     or a time cap, whichever first: Quick = 100 packets, Normal = 1,000 packets / 30 s (default). Animation draws at most
+     ~20 blocks/s at 30 fps, only while the journey is on screen; paused when hidden. Target: under 5% of one core while
+     capturing, nothing after it stops - measured in the deep test before release.
+   - Any connection, not just games (Adeeb, 12 Nov: "forget gamer, helpful everywhere"): the journey opens on any row
+     of the connection list - browser, Teams / Zoom call, VPN, OneDrive upload, printer, DNS lookup. Game wording lives
+     only in the real-time rules.
+   - Filter: Sniff's own BPF (host + both ports, applied in the Npcap driver - nothing else reaches us) widened by
+     "or (icmp and host X)" so "too big" / "unreachable" replies about this flow are kept. Rewind buffer supplies the
+     seconds before the click, matched by time.
+   - Honesty for UDP: no headers say a UDP packet was lost; we show gaps / late / bursts and claim loss only where the
+     protocol carries sequence numbers (RTP, QUIC acks not readable - so not there either) or TCP shows resends.
+   - "Explain this capture" button (moved here from D): our own fixed rules, no AI, nothing leaves the PC, runs only
+     when pressed on packets already in memory (well under 1 s). Step 1 decides the kind from port, protocol, rhythm and
+     sizes: real-time (call, game, stream) · download / upload (TCP bulk) · web page (TLS / QUIC) · DNS · VPN / tunnel
+     · local device (printer, NAS, SMB) · unknown (shared rules only, says so). Step 2 applies shared rules (ICMP errors,
+     TTL / route change, this PC sending late, Wi-Fi scan gaps) + that kind's rules:
+       real-time: gaps, jitter, bunching after stalls, RTP loss / MOS when present
+       download: resends, dup ACKs, window size / far-end window cap, slow start, throughput over time
+       web: TCP / TLS handshake time, time to first byte, QUIC vs TCP
+       DNS: time to answer, retries, which server answered
+       VPN: inner packet size vs MTU, keepalives, tunnel resets
+       local device: ARP, how long the device takes to reply
+     Output: a one-line verdict, the evidence (every claim links to the packet time in the journey), and a "can't tell
+     from here" line - encrypted contents are never guessed. Simple / Expert wording. Copy uses the ISP report redaction.
+E. Two plain-language questions (Adeeb, 12 Nov) - guided checks that end in a verdict, each its own card on the
+   Toolbox question page and searchable ("usb", "lag", "laggy", "stutter", "rubber band"):
+   1. "Why isn't my USB device working?" (on "Is it this PC?") - read-only, no admin:
+      - the device's Windows problem code in plain words (CfgMgr32: e.g. 10 can't start, 28 no driver, 43 Windows
+        stopped it / bad descriptor, 45 not plugged in now) and its driver name / version / date (shares the driver audit
+        from B);
+      - when it last connected and dropped (Kernel-PnP / USB history from B) - "dropped 6 times in the last hour" points
+        at cable, port or power;
+      - power: USB selective suspend on, hub power budget exceeded, laptop on battery saver;
+      - network USB devices get the network checks too (USB Wi-Fi / Ethernet adapter, phone tethering: link up?, IP?,
+        driver resets).
+      - Verdict + one next step (try another port / cable, update or roll back driver - opening Device Manager, never
+        changing anything ourselves). Honest: we can't test the device's own hardware. Read-only APIs to be confirmed
+        on a real PC without admin before building.
+   2. "Why is my game lagging?" (on "Why is it slow?") - joins pieces we have:
+      - is a game open (Gamer Zone list), which server / region it talks to;
+      - quick split: this PC -> router -> ISP -> game server (ping + loss + jitter per leg) => which leg is at fault;
+      - at the same time: Wi-Fi signal / band / roaming, the busiest process uploading or downloading, PC pressure
+        (CPU, memory, disk);
+      - offers "Capture this conversation" on the game's flow, then Explain (D/A above).
+      - Honest labels: we can't read the game's in-game ping or frame rate. If every network leg is clean while it
+        still lags, the verdict says so: "network looks fine - likely the PC or the game itself (frame rate)".
+   - Pattern for later questions of the same kind ("Why does my call break up?", "Why won't my printer print?"):
+     guided checks -> verdict -> evidence -> one next step. Same rules engine as Explain.

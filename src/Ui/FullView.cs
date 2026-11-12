@@ -182,7 +182,7 @@ namespace AdeeboMeter
                 if (search.Width != wanted) search.Width = wanted;
             };
             list = new ConnList { Dock = DockStyle.Fill, CanSniff = npcap };
-            list.SniffRequested += Sniff; list.Changed += UpdateConnStatus; list.HoverKey += SetTipKey;
+            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += SetTipKey;
             connStatus = new Label { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
             connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
             connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips);
@@ -723,7 +723,7 @@ namespace AdeeboMeter
             return n;
         }
 
-        public void StopCaptures() { live.Stop(); }
+        public void StopCaptures() { live.Stop(); if (jSess != null) jSess.Stop(); if (jTimer != null) jTimer.Enabled = false; }
         TextBox ActiveTextBox()
         {
             Control c = ActiveControl; var cc = c as ContainerControl;
