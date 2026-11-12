@@ -20,10 +20,13 @@ namespace AdeeboMeter
             learnPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
             learnSearch = new RoundBox(Sc(300), Draw.fBody, "Search: DNS, TCP, svchost, jitter...");
-            learnSearch.Box.TextChanged += delegate { learnList.AutoScrollPosition = Point.Empty; learnList.Invalidate(); };
+            learnSearch.Box.TextChanged += delegate { if (learnSearch.Box.Text.Trim() != "" && Cfg.LearnView != "all") SetLearnView("all"); learnList.AutoScrollPosition = Point.Empty; learnList.Invalidate(); };   // searching shows everything
+            AddLearnViewButtons(bar);
             bar.Controls.Add(learnSearch);
-            bar.Controls.Add(new Label { Text = "Tip: press Ctrl+K anywhere to jump straight to a tab, a program, a term or a protocol.", AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(4), Sc(10), 0, 0) });
-            var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
+            learnTip = new Label { Text = "Tip: press Ctrl+K anywhere to jump straight to a tab, a program, a term or a protocol.", AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(4), Sc(10), 0, 0) };
+            bar.Controls.Add(learnTip);
+            AddLearnChips(bar);
+            var split = learnSplit = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
             split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34)); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 66));
             learnList = new DB { Name = "learnList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             learnList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintLearnList(e.Graphics); }; Wire(learnList);
@@ -31,6 +34,7 @@ namespace AdeeboMeter
             learnInfo.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintLearnInfo(e.Graphics); }; Wire(learnInfo);
             split.Controls.Add(learnList, 0, 0); split.Controls.Add(learnInfo, 1, 0);
             learnPage.Controls.Add(split); learnPage.Controls.Add(bar);
+            SyncLearnView();
             return learnPage;
         }
         static readonly string[][] LearnGroups = { new[] { "basics", "START HERE - HOW APPS USE THE INTERNET" }, new[] { "protocol", "PROTOCOLS - HOW YOUR PACKETS TALK" }, new[] { "windows", "WINDOWS - WHAT'S INSIDE" }, new[] { "apps", "TEAMS AND OFFICE" } };
@@ -44,17 +48,19 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                y = PaintLabList(g, x, y, w, ink, muted, nowrap, hit);
+                if (learnFilter == "all" || learnFilter == "labs") y = PaintLabList(g, x, y, w, ink, muted, nowrap, hit);
+                if (learnFilter == "all" || learnFilter == "games") y = PaintGameList(g, x, y, w, ink, muted, nowrap, hit);
                 foreach (var grp in LearnGroups)
                 {
+                    if (learnFilter != "all" && learnFilter != "topics") break;
                     var list = topics.Where(t => t["kind"] == grp[0] && (hit(t["title"]) || hit(t["tag"]) || t.Keys.Any(hit))).ToList(); if (list.Count == 0) continue;
                     g.DrawString(grp[1], Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
                     foreach (var t in list) { y = LearnRow(g, "topic:" + t.Id, t["title"], t["tag"], x, y, w, ink, muted, nowrap); }
                     y += 8 * S;
                 }
-                if (q != "")
+                if (q != "" || learnFilter == "terms")
                 {
-                    var terms = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).Take(30).ToList();
+                    var terms = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).Take(learnFilter == "terms" ? 400 : 30).ToList();
                     if (terms.Count > 0) { g.DrawString(L.T("TERMS USED IN ADEEBOMETER"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
                 }
             }
@@ -73,6 +79,14 @@ namespace AdeeboMeter
             g.TranslateTransform(learnInfo.AutoScrollPosition.X, learnInfo.AutoScrollPosition.Y);
             Begin(learnInfo);
             float x = 20 * S, y = 14 * S, w = learnInfo.ClientSize.Width - 40 * S;
+            if (Cfg.LearnView != "all")
+            {
+                // By goal: the cards (or a card's page) when nothing is open; a way back above anything that is
+                if (learnSel == "") { y = PaintLearnHome(g, x, y, w); Need(learnInfo, y); return; }
+                var card = LearnCards.FirstOrDefault(c => c[0] == learnGroup);
+                y = BackLink(g, "‹ " + (card != null ? L.T(card[1]) : L.T("All of Learn")), x, y, delegate { learnSel = ""; });
+            }
+            if (learnSel.StartsWith("game:", StringComparison.Ordinal)) { y = PaintGame(g, learnSel.Substring(5), x, y, w); Need(learnInfo, y + 20 * S); return; }
             if (learnSel == "") { y = Title2(g, "Learn", x, y, w); y = Lead2(g, "Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words.", x, y, w); Need(learnInfo, y); return; }
             if (learnSel.StartsWith("lab:", StringComparison.Ordinal)) { y = PaintLab(learnInfo, g, learnSel.Substring(4), x, y, w); Need(learnInfo, y + 20 * S); return; }
                         if (learnSel.StartsWith("term:", StringComparison.Ordinal))

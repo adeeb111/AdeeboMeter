@@ -36,6 +36,7 @@ namespace AdeeboMeter
             id = id ?? ""; if (NoEarn.Contains(id)) return 0;
             if (id.StartsWith("path.", StringComparison.Ordinal)) return 10;
             if (id.StartsWith("lab.", StringComparison.Ordinal)) return 4;
+            if (id.StartsWith("game.", StringComparison.Ordinal)) return LearnGames.Pts(id);   // Learn › Games: first solve of each scenario
             if (id == "quiz.5" || id == "journey.explain") return 3;
             if (id == "quiz.10") return 5;
             return Big.Contains(id) ? 4 : 2;

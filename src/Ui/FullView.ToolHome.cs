@@ -24,7 +24,9 @@ namespace AdeeboMeter
             new[] { "win", "Windows and certificates", "WINDOWS|CERTIFICATES & FILES", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
             new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },   // the PC's own checks: on no other card
-            new[] { "calc", "Work it out", "CALCULATORS", "subnet|stack|bandwidth" } };   // pure arithmetic, nothing sent
+            new[] { "calc", "Work it out", "CALCULATORS", "subnet|stack|bandwidth" },   // pure arithmetic, nothing sent
+            new[] { "game", "Is it my game?", "GAMING", "prematch|gpn|tonight" },
+            new[] { "time", "How has my network been?", "OVER TIME|SHARE A DIAGNOSIS|PRIVACY & IPV6", "month|rushhour|vpnleak" } };
         string tbQ = "";   // the question page open ("" = all questions)
         DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
         static bool ByQuestion { get { return Cfg.TbView != "list"; } }

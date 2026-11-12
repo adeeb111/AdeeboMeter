@@ -43,7 +43,7 @@ namespace AdeeboMeter
             if (tbRows != null) bad.Add("filling the boxes left the example showing");
             // the points dashboard: every tool, Learn topic and page is there, and Go lands on it
             var items = PtAll(); int nTools = Tools2().Count, nLearn = Knowledge.Learn().Count;
-            int want = nTools + nLearn * 2 /* read + its check question */ + PtPages.Length + (Labs.Length - 1) + 2 /* subnetting streaks */ + 1 /* journey */ + Paths.Length;
+            int want = nTools + nLearn * 2 /* read + its check question */ + PtPages.Length + (Labs.Length - 1) + 2 /* subnetting streaks */ + 1 /* journey */ + Paths.Length + LearnGames.Keys().Count() /* games */;
             if (items.Count != want) bad.Add("dashboard has " + items.Count + " rows, want " + want);
             if (items.Select(i => i.Key).Distinct().Count() != items.Count) bad.Add("dashboard keys repeat");
             tab = "points"; ShowTab(); if (!pointsPage.Visible) bad.Add("dashboard didn't open");

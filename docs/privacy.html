@@ -45,6 +45,9 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>History</b> of your network's speed and health for the last days, so you can replay a minute that went wrong. It's kept in your AppData folder and old days are removed automatically.</li>
   <li><b>Neighbour wars</b> (only while History is on): once an hour, the Wi-Fi networks Windows already lists - their names, addresses (BSSIDs), channels and signal - kept 7 days in <code>air.txt</code>. Turning History off deletes it within the hour. These are names and addresses that every Wi-Fi network broadcasts to anyone nearby; nothing about the devices on them is seen.</li>
   <li><b>Adeebo Points</b> (<code>points.txt</code>): which features you've tried and when. Nothing else.</li>
+  <li><b>Network settings snapshot</b> (<code>netsnap.txt</code>, only when you press Save): your adapters' addresses, routers and DNS servers, the proxy, and a fingerprint of the hosts file - to show what changed later.</li>
+  <li><b>Reviews</b> (the <code>reports</code> folder): the six-month review you save - and, when History is kept for 6 months, the one AdeeboMeter writes before the oldest days roll off. Names, the Wi-Fi name and addresses are left out. They stay until you delete them.</li>
+  <li><b>Wake-ups</b> (in History): how many seconds after waking the router and DNS answered.</li>
   <li><b>Captures</b> and <b>saved results</b>, but only the ones you choose to make or save.</li>
 </ul>
 <p>Passwords and secrets you type into a tool (for example an SNMP community, a RADIUS secret or a certificate password) are used for that one action and are never saved, logged or copied.</p>

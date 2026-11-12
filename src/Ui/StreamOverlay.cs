@@ -47,7 +47,8 @@ namespace AdeeboMeter
             tick.Tick += delegate
             {
                 // repaint (and encode the PNG) only when what it shows changed
-                string t; double[] v; Series(out t, out v); string key = t + "|" + green + "|" + string.Join(",", v.Select(x => double.IsNaN(x) ? "x" : Math.Round(x).ToString(CultureInfo.InvariantCulture)));
+                string t; double[] v; Series(out t, out v); var rv = M.GwPing.Values(60);
+                string key = t + "|" + green + "|" + Spikes() + "|" + string.Join(",", v.Concat(rv).Select(x => double.IsNaN(x) ? "x" : Math.Round(x).ToString(CultureInfo.InvariantCulture)));
                 if (key == lastKey) return; lastKey = key; Invalidate(); if (png) WritePng();
             };
             tick.Start();
@@ -65,6 +66,8 @@ namespace AdeeboMeter
             }
             title = "Internet ping"; v = M.NetPing.Values(60);
         }
+        // spikes in the open game session - so viewers see whether it was "his Wi-Fi" or not
+        static int Spikes() { var gp = GamePing.Me; var ss = gp.Session; if (ss == null || !ss.Open) return -1; lock (gp.Spikes) return gp.Spikes.Count(z => z.Game == ss.GameId && z.T >= ss.Start); }
         protected override void OnPaint(PaintEventArgs e) { Paint1(e.Graphics, ClientSize); }
         void Paint1(Graphics g, Size sz)
         {
@@ -82,7 +85,7 @@ namespace AdeeboMeter
                 g.DrawString(title, f1, w, box.X + 10, box.Y + 6);
                 string big = double.IsNaN(now) ? "no reply" : Math.Round(now).ToString(CultureInfo.InvariantCulture) + " ms";
                 g.DrawString(big, f2, cb, box.X + 8, box.Y + 22);
-                string sub = (ok.Length > 1 ? "jitter " + Math.Round(GameStat.Jitter(v)).ToString(CultureInfo.InvariantCulture) + " ms" : "") + (double.IsNaN(loss) ? "" : " · loss " + Math.Round(loss).ToString(CultureInfo.InvariantCulture) + "%");
+                int sp = Spikes(); string sub = (sp >= 0 ? sp + " spikes · " : "") + (ok.Length > 1 ? "jitter " + Math.Round(GameStat.Jitter(v)).ToString(CultureInfo.InvariantCulture) + " ms" : "") + (double.IsNaN(loss) ? "" : " · loss " + Math.Round(loss).ToString(CultureInfo.InvariantCulture) + "%");
                 g.DrawString(sub.Trim(' ', '·'), f1, w, box.X + 10, box.Bottom - 22);
             }
             // the graph: last 60 s, red marks where a reply was missing
@@ -91,6 +94,15 @@ namespace AdeeboMeter
             {
                 double max = Math.Max(60, ok.Length > 0 ? ok.Max() * 1.15 : 60);
                 float dx = gr.Width / 59f;
+                // your router on the same scale, thin and grey: flat while the game line jumps = not your home network
+                var rv = M.GwPing.Values(60);
+                if (rv.Length > 1)
+                    using (var rp = new Pen(Color.FromArgb(150, 200, 210, 220), 1.2f) { DashStyle = DashStyle.Dash })
+                    {
+                        PointF? lr = null; int roff = 60 - rv.Length;
+                        for (int i = 0; i < rv.Length; i++) { if (double.IsNaN(rv[i])) { lr = null; continue; } var pt = new PointF(gr.X + (roff + i) * dx, gr.Bottom - (float)(Math.Min(rv[i], max) / max) * gr.Height); if (lr != null) g.DrawLine(rp, lr.Value, pt); lr = pt; }
+                    }
+                using (var lf = new SolidBrush(Color.FromArgb(170, 200, 210, 220))) g.DrawString("- - router", f1, lf, gr.Right - 64, gr.Y - 12);
                 using (var pen = new Pen(Color.FromArgb(120, 170, 255), 2f)) using (var red = new SolidBrush(Color.FromArgb(240, 80, 80)))
                 {
                     PointF? last = null; int off = 60 - v.Length;

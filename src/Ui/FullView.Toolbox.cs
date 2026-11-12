@@ -149,6 +149,24 @@ namespace AdeeboMeter
                 T("usb", "THE PC", "Why isn't my USB device working?", "Which device (optional) - part of its name, e.g. headset, mouse, disk", (a, r) => Guided.Usb(a[0])),
                 T("lag", "SPEED", "Why is my game lagging?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => Guided.Lag(M, a[0])),
                 T("winupdate", "THE PC", "What did Windows Update break?", null, (a, r) => UpdateBreak.Run()),
+                T("gpn", "GAMING", "Would a GPN (ping booster) help me?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => GamerTools.Gpn(M, a[0], r)),
+                T("prematch", "GAMING", "Ready to play? (pre-match checklist)", null, (a, r) => GamerTools.PreMatch(M, r)),
+                T("besttime", "GAMING", "Best time to play", "Game (optional) - e.g. fortnite (empty = the one you play)", (a, r) => GamerTools.BestTime(a[0])),
+                T("tonight", "GAMING", "Which game plays best right now?", null, (a, r) => GamerTools.Tonight()),
+                T("console", "GAMING", "Console mode (PlayStation, Xbox, Switch)", "Console address - e.g. 192.168.1.40|Game (optional) - e.g. fortnite|Seconds (10-120)", (a, r) => GamerTools.ConsoleCheck(M, a[0], a[1], a[2], r)),
+                T("month", "OVER TIME", "Your month on the network", "Month (optional) - e.g. october, 2026-10 or this (empty = last month)", (a, r) => OverTime.Month(M, a[0], r)),
+                T("sixmonths", "OVER TIME", "Six months on your network (to share)", null, (a, r) => OverTime.SixMonths(M, r)),
+                T("rushhour", "OVER TIME", "Wi-Fi rush hour", null, (a, r) => OverTime.RushHour(r)),
+                T("wakeup", "OVER TIME", "How fast is it online after waking?", null, (a, r) => OverTime.WakeUp(M)),
+                T("capfc", "OVER TIME", "Data cap forecast", null, (a, r) => OverTime.CapForecast()),
+                T("dltime", "OVER TIME", "How long will this download take?", "Size - e.g. 50 GB or 800 MB", (a, r) => OverTime.DownloadTime(a[0], r)),
+                T("netsnap", "OVER TIME", "Network settings snapshot - what changed?", "Action (optional) - type save for a new snapshot; empty compares with the saved one", (a, r) => OverTime.Snapshot(a[0])),
+                T("ipv6score", "PRIVACY & IPV6", "IPv6 readiness score", null, (a, r) => OverTime.Ipv6Score(M, r)),
+                T("vpnleak", "PRIVACY & IPV6", "VPN leak test (IPv4, IPv6, DNS)", null, (a, r) => OverTime.VpnLeak(M, r)),
+                T("qr", "SHARE A DIAGNOSIS", "QR code to read it on your phone", null, (a, r) => QrRows()),
+                T("friend", "SHARE A DIAGNOSIS", "Help-a-friend bundle (encrypted file)", null, (a, r) => OverTime.FriendBundle(M, r)),
+                T("bluetooth", "THE PC", "My Bluetooth devices", null, (a, r) => OverTime.Bluetooth()),
+                T("dupip", "ON YOUR NETWORK", "Is another device using my address?", null, (a, r) => OverTime.DuplicateIp(M)),
                 T("winev", "WINDOWS", "Windows' own evidence", null, (a, r) => WinEvidence.All(M)),
                 T("auth", "WINDOWS", "Why network sign-in failed (802.1X)", null, (a, r) => WinEvidence.Auth()),
                 T("dc", "WINDOWS", "Domain controllers", null, (a, r) => SysTools.DomainControllers(M)),
@@ -181,12 +199,16 @@ namespace AdeeboMeter
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "vpn", "teams", "ssh", "mail", "radius", "tacacs" },
             new[] { "SPEED & QUALITY", "lag", "speedtest", "ping", "twamp", "cloud", "ispreport", "gamecompare" },
             new[] { "COMPARE & WATCH", "timeline", "beforeafter", "twopc", "mysites" },
+            new[] { "GAMING", "prematch", "gpn", "tonight", "besttime", "console" },
+            new[] { "OVER TIME", "month", "sixmonths", "rushhour", "wakeup", "capfc", "dltime", "netsnap" },
+            new[] { "PRIVACY & IPV6", "vpnleak", "ipv6score" },
+            new[] { "SHARE A DIAGNOSIS", "qr", "friend" },
             new[] { "WHY CAN'T IT JOIN?", "join", "dot1x", "radiuslab" },
             new[] { "REPLAY A CAPTURE", "dhcpreplay", "eapreplay", "rareplay", "icmpexplain", "samplelab" },
             new[] { "TRUST & MAIL", "certcmp", "smtppath" },
             new[] { "NAMES & TIME", "dig", "dnsrace", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
-            new[] { "ON YOUR NETWORK", "hotel", "inventory", "arp", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin" },
+            new[] { "ON YOUR NETWORK", "hotel", "inventory", "dupip", "arp", "nbname", "shares", "discover", "dhcp", "roams", "sweep", "hairpin" },
             new[] { "CALCULATORS", "subnet", "vlsm", "stack", "bandwidth", "binhex" },
             new[] { "REMOTE ACCESS", "remote" },
             new[] { "BUILD A PACKET", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "wol" },
@@ -195,9 +217,9 @@ namespace AdeeboMeter
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
             new[] { "KEYS & ENCRYPTION", "encrypt", "decrypt", "keys", "newkey", "recipients", "csrmake", "selfsigned", "certmatch", "certlive" },
             new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
-            new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
+            new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
-            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "CALCULATORS", "net" },
+            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "CALCULATORS", "net" },
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
@@ -333,6 +355,7 @@ namespace AdeeboMeter
                 return;
             }
             if (act.StartsWith("exfill:", StringComparison.Ordinal)) { FillExample(act.Substring(7)); return; }
+            if (act.StartsWith("qr:", StringComparison.Ordinal)) { ShowQr(act.Substring(3)); return; }
             if (act.StartsWith("tool:", StringComparison.Ordinal))
             {
                 var p = act.Substring(5).Split(PipeSep, 2); OpenTool(p[0]);
@@ -514,15 +537,19 @@ namespace AdeeboMeter
         // everyday words -> the tools they mean, best first (ids, not more words - so "wifi" finds the Wi-Fi tool, not every page that says "speed")
         static readonly Dictionary<string, string> Synonyms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            { "gpn", "gpn" }, { "exitlag", "gpn" }, { "booster", "gpn prematch" }, { "console", "console" }, { "playstation", "console" }, { "ps5", "console" }, { "xbox", "console" },
+            { "month", "month sixmonths" }, { "review", "sixmonths month" }, { "monthly", "month" }, { "rush", "rushhour" }, { "sleep", "wakeup" }, { "lid", "wakeup" }, { "cap", "capfc" }, { "forecast", "capfc" },
+            { "download", "dltime speedtest" }, { "ipv6", "ipv6score ping6 v6routers ip46" }, { "leak", "vpnleak" }, { "qr", "qr" }, { "phone", "qr" }, { "friend", "friend" },
+            { "bluetooth", "bluetooth" }, { "headset", "bluetooth usb" }, { "conflict", "dupip" }, { "duplicate", "dupip" },
             { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "speedtest lag bloat ping mtr" }, { "speed", "speedtest iperf bloat cloud" },
-            { "bandwidth", "iperf bloat" }, { "throughput", "speedtest iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
+            { "bandwidth", "iperf bloat" }, { "throughput", "speedtest iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "netsnap snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
             { "cert", "certs certfile http" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "certs http" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
             { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "snmpprn discover arp sweep" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
             { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "encrypt", "encrypt decrypt recipients" }, { "decrypt", "decrypt encrypt" }, { "adeebo", "decrypt encrypt" }, { "p7m", "decrypt encrypt" }, { "key", "keys newkey csrmake certmatch" }, { "keys", "keys newkey" }, { "self-signed", "selfsigned" }, { "selfsigned", "selfsigned" }, { "backup", "keys" }, { "join", "join dot1x dhcpreplay" }, { "rogue", "dhcpreplay rareplay" }, { "radius", "radius radiuslab tacacs" }, { "pcap", "dhcpreplay rareplay icmpexplain samplelab" }, { "capture", "dhcpreplay rareplay icmpexplain samplelab" }, { "mx", "smtppath dig" }, { "inspection", "certcmp" }, { "email", "mail" }, { "smtp", "smtppath mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover" }, { "bonjour", "discover" }, { "upnp", "discover" }, { "llmnr", "discover nbname" },
-            { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "ssdp", "discover" }, { "wsd", "discover" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" }, { "arp", "arpwho" },
+            { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "ssdp", "discover" }, { "wsd", "discover" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol wakeup" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares friend qr" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" }, { "arp", "arpwho" },
         };
         Panel BuildToolboxPage()
         {

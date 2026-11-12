@@ -52,6 +52,8 @@ namespace AdeeboMeter
         // Rolling delete by the day in the file name, then compress every finished day.
         public static void Tidy()
         {
+            // keeping 180 days: before the oldest days go, the six-month review is written once (Toolbox > Six months on your network)
+            if (Cfg.HistoryDays >= 180) OverTime.BeforeRollOff();
             lock (k)
             {
                 try

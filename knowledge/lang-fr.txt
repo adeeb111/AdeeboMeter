@@ -671,3 +671,96 @@ Journey	Trajet
 What did Windows Update break?	Qu'est-ce que Windows Update a cassé ?
 Every check close, plus up to 16 game servers and your best regions every 10 s.	Chaque contrôle de près, plus jusqu'à 16 serveurs de jeu et vos meilleures régions toutes les 10 s.
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	La touche la plus légère. Routeur toutes les 30 s, internet toutes les 5 min, Wi-Fi toutes les 2 min, pas de suivi des appels.
+By goal	Par objectif
+Everything	Tout
+Games	Jeux
+Terms	Termes
+Start here	Commencez ici
+How your packets talk	Comment vos paquets se parlent
+Teams and office apps	Teams et les applis de bureau
+All of Learn	Tout Apprendre
+finished	terminés
+solved	résolus
+How apps use the internet - in plain words.	Comment les applis utilisent internet - en mots simples.
+DNS, DHCP, TCP, TLS, Wi-Fi... two lines and a picture each.	DNS, DHCP, TCP, TLS, Wi-Fi... deux lignes et une image chacun.
+What all those processes and services are for.	À quoi servent tous ces processus et services.
+What a call or a sync really does on the network.	Ce qu'un appel ou une synchro fait vraiment sur le réseau.
+Play with how networks behave, with your own numbers.	Jouez avec le comportement des réseaux, avec vos propres chiffres.
+An escape room, catch the thief, packet detective, quick-fire rounds.	Un escape game, attrapez le voleur, détective de paquets, manches éclair.
+One question per topic - right first time earns.	Une question par sujet - juste du premier coup, ça rapporte.
+Home, gamer, engineer: a route through the lot.	Maison, joueur, ingénieur : un chemin à travers tout.
+Pick a goal. New to networking? Start here. Want to play? Games and Labs. Search above shows everything at once.	Choisissez un objectif. Débutant ? Commencez ici. Envie de jouer ? Jeux et Labos. La recherche en haut montre tout.
+Network escape room	Escape game réseau
+Catch the thief	Attrapez le voleur
+Packet detective	Détective de paquets
+Port quick-fire	Ports en éclair
+Address quick-fire	Adresses en éclair
+Something is broken. Ten minutes, a console, and your wits.	Quelque chose est cassé. Dix minutes, une console et votre tête.
+Someone is on your network who shouldn't be. Read the evidence, point at them.	Quelqu'un est sur votre réseau sans y être invité. Lisez les indices, désignez-le.
+One packet in the conversation is wrong. Spot it.	Un paquet de la conversation est faux. Trouvez-le.
+Ten questions, sixty seconds: which port does it use?	Dix questions, soixante secondes : quel port utilise-t-il ?
+Private, public, loopback, CGNAT? Ten addresses, sixty seconds.	Privée, publique, boucle locale, CGNAT ? Dix adresses, soixante secondes.
+everything here is made up - nothing real is sent or changed	tout est inventé ici - rien de réel n'est envoyé ni modifié
+left	restant
+hints used	indices utilisés
+Done	Terminé
+Hint (-1 min)	Indice (-1 min)
+Another hint (-1 min)	Un autre indice (-1 min)
+No more hints	Plus d'indices
+New scenario	Nouveau scénario
+WHAT'S BROKEN?	QU'EST-CE QUI EST CASSÉ ?
+THE FIX?	LA SOLUTION ?
+Next room	Salle suivante
+Next case	Affaire suivante
+Next puzzle	Énigme suivante
+Another clue	Un autre indice
+CLUES	INDICES
+THE ROUTER'S LOG	LE JOURNAL DU ROUTEUR
+DEVICES ON THE NETWORK  ·  CLICK ONE TO ACCUSE IT	APPAREILS SUR LE RÉSEAU  ·  CLIQUEZ POUR ACCUSER
+Caught!	Pris !
+Not them - the thief was	Pas lui - le voleur était
+ONE OF THESE PACKETS IS WRONG - CLICK IT	UN DE CES PAQUETS EST FAUX - CLIQUEZ DESSUS
+Spotted.	Trouvé.
+Not that one - the green one is wrong.	Pas celui-là - c'est le vert qui est faux.
+Ten questions, sixty seconds. Eight right wins.	Dix questions, soixante secondes. Huit bonnes réponses pour gagner.
+Start	Commencer
+Play again	Rejouer
+right	justes
+Right	Juste
+No	Non
+You won	Gagné
+out of time	temps écoulé
+Eight wins - try again.	Il en faut huit - réessayez.
+Time's up. It was	Temps écoulé. C'était
+Fix	Solution
+You escaped in	Vous êtes sorti en
+Right. Now - how do you fix it?	Juste. Maintenant, comment on répare ?
+Not that - it costs a minute. Look again.	Pas ça - ça coûte une minute. Cherchez encore.
+That wouldn't fix it - another minute gone.	Ça ne réparerait pas - encore une minute de perdue.
+The fix	La solution
+GAMES - PLAY TO LEARN	JEUX - APPRENDRE EN JOUANT
+Is it my game?	Est-ce mon jeu ?
+How has my network been?	Comment allait mon réseau ?
+Would a GPN (ping booster) help me?	Un GPN (réducteur de ping) m'aiderait-il ?
+Ready to play? (pre-match checklist)	Prêt à jouer ? (vérifications avant le match)
+Best time to play	Meilleur moment pour jouer
+Which game plays best right now?	Quel jeu tourne le mieux maintenant ?
+Console mode (PlayStation, Xbox, Switch)	Mode console (PlayStation, Xbox, Switch)
+Your month on the network	Votre mois sur le réseau
+Six months on your network (to share)	Six mois sur votre réseau (à partager)
+Wi-Fi rush hour	L'heure de pointe du Wi-Fi
+How fast is it online after waking?	En combien de temps est-on en ligne au réveil ?
+Data cap forecast	Prévision du forfait de données
+How long will this download take?	Combien de temps prendra ce téléchargement ?
+Network settings snapshot - what changed?	Instantané des réglages réseau - qu'est-ce qui a changé ?
+IPv6 readiness score	Score de préparation IPv6
+VPN leak test (IPv4, IPv6, DNS)	Test de fuite VPN (IPv4, IPv6, DNS)
+QR code to read it on your phone	Code QR à lire sur votre téléphone
+Help-a-friend bundle (encrypted file)	Colis pour aider un ami (fichier chiffré)
+My Bluetooth devices	Mes appareils Bluetooth
+Is another device using my address?	Un autre appareil utilise-t-il mon adresse ?
+Scan with your phone	Scannez avec votre téléphone
+Your phone's camera reads it - nothing is sent.	L'appareil photo de votre téléphone le lit - rien n'est envoyé.
+not on the map	pas sur la carte
+green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server	vert sous 50 ms · orange sous 100 · rouge au-dessus · gris : pas encore de ping · anneau = une région estimée (la région cloud du jeu), point = un vrai serveur
+6 months	6 mois

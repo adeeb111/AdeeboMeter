@@ -119,6 +119,8 @@ namespace AdeeboMeter
                 // one card per monitored game, the one being played first
                 foreach (var gm in games.Where(z => mon.Contains(z.Id)).OrderBy(z => z.Id == playing ? 0 : 1))
                     y = PaintGameCard(g, gm, gm.Id == playing, x, y, w);
+                // the ping map: the game being played, else the first watched one
+                y = PaintPingMap(g, games.Where(z => mon.Contains(z.Id) && !z.Soon).OrderBy(z => z.Id == playing ? 0 : 1).FirstOrDefault(), x, y, w);
 
                 // spikes and who caused them
                 List<Spike> sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Take(8).ToList();

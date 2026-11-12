@@ -310,7 +310,7 @@ namespace AdeeboMeter
             return "Laggy";
         }
     }
-    sealed class Spike { public DateTime T; public string Game, Server, Blame; public double Ms, Normal; }
+    sealed class Spike { public DateTime T; public string Game, Server, Blame, Busy = "", Hop = ""; public double Ms, Normal; }   // Busy: what this PC was doing; Hop: where the path jumped (match path recording)
 
     sealed class GamePing
     {
@@ -325,7 +325,20 @@ namespace AdeeboMeter
         {
             var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; }
             var b = Best(g) ?? (g.Servers.Count > 0 ? g.Servers[0] : null);
-            Session = new GameSession { GameId = g.Id, GameName = g.Name, Server = b != null ? b.Name : "-", Start = DateTime.Now, Manual = manual };
+            var ns = new GameSession { GameId = g.Id, GameName = g.Name, Server = b != null ? b.Name : "-", Start = DateTime.Now, Manual = manual };
+            Session = ns;
+            // match path recording: the routers on the way, found once (a short trace), then timed every 5 s while the session is open
+            if (b != null && Cfg.GameFast) System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    IPAddress ip; if (!IPAddress.TryParse(b.Host, out ip)) ip = Dns.GetHostAddresses(b.Host).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+                    if (ip == null) return;
+                    var hops = PathTools.Trace(ip, 16, () => !ns.Open || stop).Where(h => h.Ip != "").Take(12).Select(h => h.N + "|" + h.Ip).ToList();
+                    ns.SetHops(hops);
+                }
+                catch (Exception e) { if (!(e is SocketException || e is ArgumentException || e is PingException || e is InvalidOperationException)) throw; }
+            });
         }
         public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
         Thread th; volatile bool stop; Monitor mon;
@@ -383,7 +396,7 @@ namespace AdeeboMeter
 
         void Loop()
         {
-            var due = new Dictionary<string, DateTime>(); bool idle = false; DateTime lastRun = DateTime.MinValue, lastMinute = Clock.Mono;   // intervals on the clock that never jumps
+            var due = new Dictionary<string, DateTime>(); bool idle = false; DateTime lastHops = DateTime.MinValue, lastRun = DateTime.MinValue, lastMinute = Clock.Mono;   // intervals on the clock that never jumps
             while (!stop)
             {
                 try
@@ -415,6 +428,7 @@ namespace AdeeboMeter
                     }
                     if (go.Count > 0) Task.WaitAll(go.Select(p => Task.Factory.StartNew(() => ProbeOne(p.Item1, p.Item2))).ToArray(), 2500);
                     Evidence(games);
+                    var ses = Session; if (ses != null && ses.Open && ses.HopCount > 0 && (Clock.Mono - lastHops).TotalSeconds >= 5) { lastHops = Clock.Mono; System.Threading.Tasks.Task.Factory.StartNew(() => ses.TimeHops()); }
                     if ((Clock.Mono - lastMinute).TotalSeconds >= 60) { lastMinute = Clock.Mono; GameHistory.Minute(this, plan); }
                 }
                 catch (Exception e) { Program.Log("gameping: " + e.Message); }
@@ -442,7 +456,20 @@ namespace AdeeboMeter
                 double gw = mon != null ? mon.GwPing.Last : double.NaN, net = mon != null ? mon.NetPing.Last : double.NaN;
                 int sig = mon != null ? mon.WifiSignal : -1;
                 string blame = Blame(gw, net, sig, mon != null ? mon.GwPing.Avg(20) : double.NaN);
-                lock (Spikes) { Spikes.Insert(0, new Spike { T = DateTime.Now, Game = game, Server = s.Name, Ms = v, Normal = med, Blame = blame }); if (Spikes.Count > 50) Spikes.RemoveAt(Spikes.Count - 1); }
+                string busy = "", hop = "";
+                if (mon != null)
+                {
+                    var sn = mon.Latest; busy = "this PC: " + (double.IsNaN(sn.Down) ? "-" : sn.Down.ToString("0.#", CultureInfo.InvariantCulture)) + " Mbps down, " + (double.IsNaN(sn.Up) ? "-" : sn.Up.ToString("0.#", CultureInfo.InvariantCulture)) + " up";
+                    try
+                    {
+                        var g0 = Games.All.FirstOrDefault(z => z.Id == game); var exes = g0 != null ? g0.Exes : Array.Empty<string>();
+                        var top = mon.Connections(false).Where(c => !string.IsNullOrEmpty(c.Proc) && !exes.Any(x => c.Proc.StartsWith(x, StringComparison.OrdinalIgnoreCase))).GroupBy(c => c.Proc).OrderByDescending(gr => gr.Count()).Take(3).Select(gr => gr.Key + " (" + gr.Count() + ")").ToList();
+                        if (top.Count > 0) busy += " · busiest apps by connections: " + string.Join(", ", top);
+                    }
+                    catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; }
+                }
+                var ses = Session; if (ses != null && ses.Open && ses.GameId == game) hop = ses.HopJump();
+                lock (Spikes) { Spikes.Insert(0, new Spike { T = DateTime.Now, Game = game, Server = s.Name, Ms = v, Normal = med, Blame = blame, Busy = busy, Hop = hop }); if (Spikes.Count > 50) Spikes.RemoveAt(Spikes.Count - 1); }
             }
         }
         public static string Blame(double gwNow, double netNow, int sig, double gwUsual)
@@ -588,6 +615,45 @@ namespace AdeeboMeter
         public List<Sec> Around(DateTime t, int secs) { lock (k) return Rows.Where(r => Math.Abs((r.T - t).TotalSeconds) <= secs).ToList(); }
         public List<Sec> All() { lock (k) return Rows.ToList(); }
         public void Mark() { lock (k) if (Marks.Count < 50) Marks.Add(DateTime.Now); }
+        // match path recording: each router on the way, timed every 5 s (one ping each) while the match runs
+        List<string> hops = new List<string>(); readonly List<double[]> hopMs = new List<double[]>();
+        public int HopCount { get { lock (k) return hops.Count; } }
+        public void SetHops(List<string> h) { lock (k) hops = h; }
+        volatile bool timing;
+        public void TimeHops()
+        {
+            if (timing) return; timing = true;
+            try
+            {
+                List<string> h; lock (k) h = hops.ToList(); var v = new double[h.Count];
+                using (var p = new System.Net.NetworkInformation.Ping())
+                    for (int i = 0; i < h.Count; i++)
+                    {
+                        IPAddress ip; v[i] = double.NaN; if (!IPAddress.TryParse(h[i].Split('|')[1], out ip)) continue;
+                        try { var r = p.Send(ip, 800); if (r.Status == System.Net.NetworkInformation.IPStatus.Success) v[i] = r.RoundtripTime; } catch (System.Net.NetworkInformation.PingException) { }
+                    }
+                lock (k) { hopMs.Add(v); if (hopMs.Count > 4 * 720) hopMs.RemoveAt(0); }
+            }
+            finally { timing = false; }
+        }
+        // the first hop whose latest time is well above its own usual and stays up to the end: where the spike starts
+        public string HopJump()
+        {
+            lock (k)
+            {
+                if (hopMs.Count < 6 || hops.Count == 0) return "";
+                var last = hopMs[hopMs.Count - 1]; int n = Math.Min(hops.Count, last.Length);
+                for (int i = 0; i < n; i++)
+                {
+                    int idx = i; var usual = hopMs.Take(hopMs.Count - 1).Select(x => idx < x.Length ? x[idx] : double.NaN).Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList();
+                    if (usual.Count < 4 || double.IsNaN(last[i])) continue;
+                    double med = usual[usual.Count / 2];
+                    if (last[i] > med * 2 && last[i] > med + 25 && Enumerable.Range(i, n - i).All(j => double.IsNaN(last[j]) || last[j] > med + 15))
+                        return "hop " + hops[i].Split('|')[0] + " (" + hops[i].Split('|')[1] + "): " + Math.Round(med) + " -> " + Math.Round(last[i]) + " ms";
+                }
+                return "";
+            }
+        }
 
         // the short report a player pastes into a chat or a ticket; internal addresses, hardware addresses and the Wi-Fi name removed
         public string Report(List<Spike> spikes, string ssid)
@@ -605,6 +671,8 @@ namespace AdeeboMeter
             {
                 var at = Around(z.T, 0).FirstOrDefault();
                 sb.AppendLine("  " + z.T.ToString("HH:mm:ss", c) + "  " + Fx(z.Normal) + " -> " + Fx(z.Ms) + " ms  · " + z.Blame + (at != null ? "  (router " + Fx(at.Router) + " ms, Wi-Fi " + (at.Signal >= 0 ? at.Signal + "%" : "-") + ", traffic down " + Fx(at.Down) + " / up " + Fx(at.Up) + " Mb/s, CPU " + Fx(at.Cpu) + "%)" : ""));
+                if (z.Hop != "") sb.AppendLine("      the path jumped at " + z.Hop);
+                if (z.Busy != "") sb.AppendLine("      " + z.Busy + " (connections, not bytes per app)");
             }
             foreach (var m in Marks) sb.AppendLine("  Marked as laggy by the player at " + m.ToString("HH:mm:ss", c));
             sb.AppendLine("Measured with AdeeboMeter (pings / TCP connects to the region - not the game's own in-game ping).");

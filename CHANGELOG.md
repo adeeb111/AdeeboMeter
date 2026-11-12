@@ -4,7 +4,7 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 ## 1.1.5 (unreleased)
 
-A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 140 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
+A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
 ### New: packet journey (Network story)
 - Any conversation - a Journey button on every Connections row (UDP game sockets included) and in the Gamer Zone. Shows the label stack at each stop (PC, router, provider, internet, server) and where the time goes: Wi-Fi or cable, provider, distance and queues, from ten pings when you press Measure.
@@ -37,6 +37,15 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 
 ### New: network engineer pack (Engineer section)
 - Why didn't this PC join the network?, 802.1X failure decoder, RADIUS client lab (says when a server isn't hardened against BlastRADIUS) with TACACS+, DHCP / IPv6 RA / 802.1X replays and an ICMP error translator on AdeeboMeter's own pcap / pcapng reader, certificate chain compare, SMTP delivery path, sample captures.
+
+### New: Learn, redesigned - and Games
+- Learn by goal (cards for Start here, packets, Windows, apps, Labs, Games, Check yourself and Learning paths, each with your progress) or All (the list beside the reading pane, with Topics / Labs / Games / Terms chips) - switched like the Toolbox.
+- Games, all on a made-up network - nothing real is sent or changed: a network escape room (10 faults, a simulated console, 10 minutes, hints cost time), catch the thief (5 cases), packet detective (10 puzzles) and two quick-fire rounds (ports, address kinds). First solve of each earns Adeebo Points.
+
+### New: gaming, your network over time, sharing
+- Gaming: would a GPN help me (traces the way and names the hop), ready to play (pre-match checklist - suggests, never closes anything), best time to play, which game plays best right now, console mode. Gamer Zone: a ping map of every server, match path recording (each router on the way timed every 5 s during a session, so a spike names the hop) and what this PC was doing at each spike. The lag overlay draws your router on the same graph and counts the session's spikes.
+- Over time (from History): your month on the network, six months on your network (a review saved to share - written by itself before six months of history roll off), Wi-Fi rush hour, how fast it's online after waking, data cap forecast, how long a download will take at your real speeds, and a network settings snapshot with what changed. History can now be kept for 6 months.
+- Privacy and IPv6: VPN leak test (IPv4, IPv6, DNS; with Online lookups on) and an IPv6 readiness score. Sharing: a QR code of the diagnosis (made offline) and a help-a-friend bundle (an encrypted .adeebo). Also: your own paired Bluetooth devices, and IP address conflicts from Windows' log.
 
 ### New elsewhere
 - Speed test on click (Cloudflare nearest, Vultr and OVHcloud cities, or your own file URL); MTU over UDP; SNI in HTTP & TLS; DSCP compare; app connections; VPN and company proxy awareness (the tunnel as its own layer); outage log with a notification when the internet comes back.

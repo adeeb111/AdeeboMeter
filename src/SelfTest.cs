@@ -1040,6 +1040,22 @@ namespace AdeeboMeter
                 if (DestCheck.ClassifyPortal("garbage", out w) != 2 || DestCheck.ClassifyPortal(null, out w) != 2) throw new InvalidOperationException("junk not 'can't tell'");
                 if (DestCheck.ClassifyPortal("HTTP/1.1 302 Found\r\nLocation: javascript:alert(1)\r\n\r\n", out w) != 1 || w != "") throw new InvalidOperationException("odd Location shown: " + w);
             });
+            T("Learn games, the QR code and the over-time tools", () =>
+            {
+                foreach (var f in LearnGames.Faults)
+                {
+                    var room = LearnGames.NewRoom(7, f.Id); if (room.F.Id != f.Id || !room.FaultChoices.Contains(f.Name) || !room.FixChoices.Contains(f.Fix) || room.FixChoices.Distinct().Count() != 4) throw new InvalidOperationException("room " + f.Id);
+                    foreach (var c in LearnGames.Commands) if (LearnGames.Run(room, c[0]) == "") throw new InvalidOperationException("room " + f.Id + " says nothing to " + c[0]);
+                }
+                foreach (var id in LearnGames.ThiefCases) { var c = LearnGames.NewCase(3, id); if (c.Id != id || c.Devices.Count(d => d.Thief) != 1 || c.Clues.Length < 3) throw new InvalidOperationException("thief case " + id); }
+                foreach (var d in LearnGames.Detective) { int w = int.Parse(d[2], CultureInfo.InvariantCulture); if (w < 0 || w >= d[1].Split('~').Length || d[1].Split('~').Any(x => x.Split('|').Length != 3)) throw new InvalidOperationException("detective " + d[0]); }
+                foreach (var k in new[] { "ports", "addr" }) { var q = LearnGames.NewQuick(k, 5); if (q.Q.Count != 10 || q.Q.Any(z => z.Length != 6 || !z.Skip(2).Contains(z[1]) || z.Skip(2).Distinct().Count() != 4)) throw new InvalidOperationException("quick-fire " + k); }
+                var rnd = new Random(1); for (int i = 0; i < 200; i++) { string a, cls; LearnGames.Addr(rnd, out a, out cls); IPAddress ip; if (!IPAddress.TryParse(a, out ip)) throw new InvalidOperationException("address " + a); if (cls.StartsWith("private", StringComparison.Ordinal) != (IspReport.Private(ip) && !a.StartsWith("100.", StringComparison.Ordinal) && !a.StartsWith("169.254.", StringComparison.Ordinal) && !a.StartsWith("127.", StringComparison.Ordinal))) throw new InvalidOperationException("address kind " + a + " " + cls); }
+                if (LearnGames.Keys().Any(k => !FullView.PtKeyKnown(k) || Points.Value(k) < 3)) throw new InvalidOperationException("game points not known");
+                if (Qr.Encode("hi").GetLength(0) != 21 || Qr.Encode(new string('A', 250)).GetLength(0) != 57 || Qr.Encode(new string('z', 300)) != null) throw new InvalidOperationException("QR sizes");
+                var snap = OverTime.ReadSettings(); if (!snap.Keys.Any(k => k.StartsWith("adapter ", StringComparison.Ordinal) || k == "proxy")) throw new InvalidOperationException("settings snapshot read nothing");
+                sb.AppendLine("      " + LearnGames.Keys().Count() + " game scenarios, " + snap.Count + " network settings read");
+            });
             T("settings round trip + presets", () =>
             {
                 Cfg.ApplyPreset("penny"); int penny = Cfg.JobsPerMinute(); Cfg.ApplyPreset("engineer"); int eng = Cfg.JobsPerMinute(); Cfg.ApplyPreset("balanced"); int bal = Cfg.JobsPerMinute();

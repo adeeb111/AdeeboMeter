@@ -217,12 +217,12 @@ namespace AdeeboMeter
                 {
                     bool fast = ViewOpen || CallLikely;
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
-                    int gwSec = Cfg.GwSec == 0 ? 0 : ViewOpen ? 2 : Cfg.GwSec,   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
+                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? 2 : Cfg.GwSec,   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? 1 : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
                     if (gwSec > 0 && (t0 - lastGw).TotalSeconds >= gwSec - 0.2)
                     {
                         lastGw = t0;
                         string gw; lock (L) gw = Gateway;
-                        double g = PingMs(gw);
+                        double g = PingMs(gw); WakeStep(t0, !double.IsNaN(g), false);
                         lock (L)
                         {
                             GwPing.Add(g); GwAt = Clock.Mono; if (!double.IsNaN(g)) GwEverReplied = true; GwAnswering = !double.IsNaN(g);
@@ -252,7 +252,7 @@ namespace AdeeboMeter
                         if (!NetEverReplied && double.IsNaN(n) && ++netFails >= 2) { netFails = 0; ti = (ti + 1) % targets.Length; lock (L) NetTarget = targets[ti]; }
                         string gwNow; lock (L) gwNow = Gateway != "" ? Gateway : Gateway6;
                         // the DNS lookup skips the cache, so it reaches the DNS server: at most once a minute, every 15 s with the view open
-                        if ((gwNow != "" || VpnUp) && (t0 - lastDns).TotalSeconds >= (ViewOpen ? 15 : 60) - 0.2) { lastDns = t0; ProbeDns(); }   // no way out: a DNS failure would only be noise
+                        if ((gwNow != "" || VpnUp) && ((t0 - lastDns).TotalSeconds >= (ViewOpen ? 15 : 60) - 0.2 || (Waking(t0) && !double.IsNaN(wakeGw)))) { lastDns = t0; ProbeDns(); bool dok; lock (L) dok = !DnsFailedLast; WakeStep(t0, false, dok); }   // no way out: a DNS failure would only be noise
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
                     if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(1, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
@@ -267,8 +267,8 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("probe: " + e.Message); }
                 // Sleep until the next job is due (2 s with the view open; up to 10 s in Penny mode).
-                int pace = ViewOpen || CallLikely ? 2 : new[] { Cfg.GwSec, Cfg.NetSec, Cfg.WifiSec, Cfg.AppsSec, IfEvery }.Where(v => v > 0).Min();
-                int wait = Math.Max(2, pace) * 1000 - (int)(Clock.Mono - t0).TotalMilliseconds;
+                int pace = Waking(Clock.Mono) ? 1 : ViewOpen || CallLikely ? 2 : new[] { Cfg.GwSec, Cfg.NetSec, Cfg.WifiSec, Cfg.AppsSec, IfEvery }.Where(v => v > 0).Min();
+                int wait = Math.Max(Waking(Clock.Mono) ? 1 : 2, pace) * 1000 - (int)(Clock.Mono - t0).TotalMilliseconds;
                 if (wait > 0) wake.WaitOne(wait);
             }
         }
@@ -472,7 +472,23 @@ namespace AdeeboMeter
         // ARP spoofing alarm: the router's hardware address should not change while you stay on the same network.
         string gwMacKey = "", gwMac = ""; readonly Dictionary<string, DateTime> gwMacSeen = new Dictionary<string, DateTime>();
         // after sleep the PC may wake on another network with the same router address: start fresh, as on a network change
-        public void Resumed() { netChanged = true; wake.Set(); }
+        public void Resumed() { netChanged = true; wakeAt = Clock.Mono; wakeGw = double.NaN; wake.Set(); }
+        // the wake-up report: seconds from waking until the router, then DNS, answered - logged once per wake as a "wake" event
+        DateTime wakeAt = DateTime.MinValue; double wakeGw = double.NaN;
+        bool Waking(DateTime t0) { return wakeAt != DateTime.MinValue && (t0 - wakeAt).TotalSeconds < 120; }
+        void WakeStep(DateTime t0, bool gwOk, bool dnsOk)
+        {
+            if (wakeAt == DateTime.MinValue) return;
+            if (gwOk && double.IsNaN(wakeGw)) wakeGw = (t0 - wakeAt).TotalSeconds;
+            bool timeout = (t0 - wakeAt).TotalSeconds >= 120;
+            if ((dnsOk && !double.IsNaN(wakeGw)) || timeout)
+            {
+                var c = CultureInfo.InvariantCulture; double dn = dnsOk ? (t0 - wakeAt).TotalSeconds : double.NaN;
+                if (!double.IsNaN(wakeGw)) Events.Add(wakeGw > 30 ? 1 : 3, "wake", "Back online after waking: router " + wakeGw.ToString("0.#", c) + " s" + (double.IsNaN(dn) ? "" : " · DNS " + dn.ToString("0.#", c) + " s"));
+                else Events.Add(1, "wake", "Woke up, but the router didn't answer within 2 minutes");
+                wakeAt = DateTime.MinValue;
+            }
+        }
         // Your provider's name: the first public router after your own is theirs, and its reverse-DNS name usually says so
         // (what "nslookup <hop>" would show). Learned once per network: a 6-hop trace toward 1.1.1.1 and one name lookup.
         public volatile string Isp = ""; string ispKey = ""; volatile bool ispBusy;

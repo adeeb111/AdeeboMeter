@@ -79,6 +79,15 @@ namespace AdeeboMeter
                 l.Add(new PtItem { Key = "lab." + id, Title = lab[1], Tag = goal ?? "", Group = "Challenges", Value = Points.Value("lab." + id), Go = go });
             }
             l.Add(new PtItem { Key = "journey.explain", Title = "Explain a packet journey", Tag = "capture one of your own connections and press Explain", Group = "Challenges", Value = Points.Value("journey.explain"), Go = delegate { tab = "travel"; ShowTab(); } });
+            // Learn › Games: each scenario, case, puzzle and quick-fire round once
+            foreach (var key in LearnGames.Keys())
+            {
+                string k2 = key, gid = key.StartsWith("game.quick.", StringComparison.Ordinal) ? key.Substring(11) : key.Split('.')[1];
+                var gd = LearnGames.All.FirstOrDefault(z => z[0] == gid); string sub = key.Substring(key.LastIndexOf('.') + 1);
+                var f = LearnGames.Faults.FirstOrDefault(z => "game.room." + z.Id == key);
+                string title = gd == null ? key : gid == "room" && f != null ? gd[1] + ": " + f.Name : gid == "detective" ? gd[1] + " #" + sub : gid == "thief" ? gd[1] + ": " + sub : gd[1];
+                l.Add(new PtItem { Key = k2, Title = title, Tag = gd != null ? gd[2] : "", Group = "Games", Value = Points.Value(k2), Go = delegate { tab = "learn"; ShowTab(); learnSel = "game:" + gid; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); } });
+            }
             foreach (var pg in PtPages) { string tb = pg[1]; l.Add(new PtItem { Key = pg[0], Title = pg[2], Tag = pg[3], Group = "Pages", Value = Points.Value(pg[0]), Go = delegate { tab = tb; ShowTab(); } }); }
             foreach (var pa in Paths) { var p2 = pa; l.Add(new PtItem { Key = "path." + pa.Id, Title = pa.Title, Tag = pa.Tag, Group = "Learning paths", Value = Points.Value("path." + pa.Id), Go = delegate { tab = "points"; ShowTab(); pointsSearch.Box.Text = ""; pointsCanvas.AutoScrollPosition = Point.Empty; pointsCanvas.Invalidate(); } }); }
             return ptItems = l;
@@ -156,6 +165,7 @@ namespace AdeeboMeter
             if (k.StartsWith("check.", StringComparison.Ordinal)) { var t = Knowledge.Topic(k.Substring(6)); return t != null && t["check"] != ""; }
             if (k.StartsWith("lab.", StringComparison.Ordinal)) return LabGoals.ContainsKey(k.Substring(4)) && k != "lab.quiz";
             if (k.StartsWith("page.", StringComparison.Ordinal)) return PtPages.Any(p => p[0] == k);
+            if (k.StartsWith("game.", StringComparison.Ordinal)) return LearnGames.Known(k);
             if (k == "quiz.5" || k == "quiz.10" || k == "journey.explain") return true;
             if (k.StartsWith("path.", StringComparison.Ordinal)) return Paths.Any(p => "path." + p.Id == k);
             return Explain.Term("tb." + k) != null && Points.Value(k) > 0;

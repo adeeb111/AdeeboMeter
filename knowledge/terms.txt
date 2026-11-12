@@ -3127,3 +3127,193 @@ what: Lists your MIB folder and searches every object's name and description - c
 how: Lists your MIB folder and searches every object's name and description - click a result to walk it on the device.
 why: No more guessing OIDs: search 'temperature' or 'optic' and walk what it finds.
 without: Put the vendor's whole MIB set in the folder; it's read locally and never sent anywhere.
+
+== tb.gpn
+friendly: Would a GPN (ping booster) help me?
+cat: term
+close: -1
+tag: Paid ping reducers re-route your game traffic - would it help you?
+what: Reads where this run's spikes started (home, provider, past it), traces the way to the game's best region and times each router five times. Says plainly whether a GPN could help - and names the hop where the delay starts.
+how: About 100 pings to the routers on the way, once, when you press Run.
+why: A GPN can't fix Wi-Fi, a busy PC or the game's own server. Many people pay for one that can't help.
+without: It can't see the game's own server unless Find my match server found it.
+
+== tb.prematch
+friendly: Ready to play? (pre-match checklist)
+cat: term
+close: -1
+tag: What could spoil the match right now?
+what: Wi-Fi or cable and the signal, your router and internet right now, this PC's own traffic, updaters and sync apps that are running, CPU and memory hogs, and the best server for your game.
+how: Reads what AdeeboMeter already measures and the list of running programs. Nothing is closed for you.
+why: One look before you queue beats finding out mid-match.
+without: Suggestions only: it never closes a program.
+
+== tb.besttime
+friendly: Best time to play
+cat: term
+close: -1
+tag: Which hours your game's server plays best - and worst.
+what: Your game's best server, from the Gamer Zone's history, by weekday and hour: the three best and three worst hours, and whether evenings are worse.
+how: Gamer Zone history only (kept on this PC). Nothing is sent.
+why: Peak hours on your provider's network are real; now you know yours.
+without: Needs History on and a few days of background game ping.
+
+== tb.tonight
+friendly: Which game plays best right now?
+cat: term
+close: -1
+tag: Every game you watch, ranked by its best server right now.
+what: The last minute of pings to each watched game's best region, ranked by ping, loss and jitter.
+how: Pings the Gamer Zone already sends. Nothing new.
+why: Pick the smoothest one tonight.
+without: For most games these are the cloud regions they run in, not your match server.
+
+== tb.console
+friendly: Console mode (PlayStation, Xbox, Switch)
+cat: term
+close: -1
+tag: Lag on a console: is it the console's link, home, or the internet?
+what: Pings the console from this PC once a second, and reads your router, the internet check and the game's region at the same time - then says which leg is off.
+how: One small ping a second to the console, for the seconds you choose. The game region is timed every 5 s.
+why: Console players have no tools for this.
+without: The PC can't see the console's own game traffic, so the game leg is timed from this PC.
+
+== tb.month
+friendly: Your month on the network
+cat: term
+close: -1
+tag: A month in one page: smooth minutes, outages, delay, data.
+what: How smooth the month was, outages and their minutes, the usual delay, data used, the best and worst day, rush hour, the laggiest game - and a comparison with the month before.
+how: From History (one line a minute, on this PC). Nothing is sent.
+why: Know whether things are getting better or worse - with numbers.
+without: Needs History on.
+
+== tb.sixmonths
+friendly: Six months on your network (to share)
+cat: term
+close: -1
+tag: Half a year in one review - and a file to keep or send.
+what: The same numbers as the monthly review over six months, then month by month. Saves an HTML page you can open, print or send (names and addresses left out). Kept for 180 days, History writes this review by itself before the oldest days roll off.
+how: From History on this PC. The review file stays in AdeeboMeter's reports folder until you delete it.
+why: Evidence over months for your provider, landlord or IT - or just to know.
+without: Needs History on; set Keep history for 6 months to get a full review.
+
+== tb.rushhour
+friendly: Wi-Fi rush hour
+cat: term
+close: -1
+tag: Your network's slowest hour on each day of the week.
+what: Router delay by weekday and hour over the last four weeks, from History: the slowest hour of each day, and which ones are twice the usual.
+how: From History on this PC. Nothing new is measured.
+why: Schedule big downloads and updates outside rush hour.
+without: Needs History on and a few days of data.
+
+== tb.wakeup
+friendly: How fast is it online after waking?
+cat: term
+close: -1
+tag: Seconds from opening the lid to working internet.
+what: Each time the PC wakes from sleep, AdeeboMeter times how long until the router answers and then DNS. Shows the average, the slowest and day by day.
+how: Right after waking it pings the router every second until it answers - then back to normal.
+why: A slow wake is usually Wi-Fi power saving or a slow DHCP renew - both fixable.
+without: Times are kept a month with History on.
+
+== tb.capfc
+friendly: Data cap forecast
+cat: term
+close: -1
+tag: At this pace, when do you hit your cap?
+what: This month's data so far and the pace per day; with a cap set in Settings, the date you'd reach it and how much a day keeps you under.
+how: Windows' own byte counters, on this PC.
+why: No surprise bill at the end of the month.
+without: Counts this PC only - not the rest of the household.
+
+== tb.dltime
+friendly: How long will this download take?
+cat: term
+close: -1
+tag: At your real speed - not the advertised one.
+what: Uses the speed tests you ran (median, and evenings) and the fastest minutes History saw, by hour, to say how long a download of that size takes - and when it'd be fastest.
+how: From History and your speed tests. Nothing is sent.
+why: A 50 GB update at 2 am vs 9 pm can be hours apart.
+without: Minute averages are what your downloads got, not a test - real capacity can be higher.
+
+== tb.netsnap
+friendly: Network settings snapshot - what changed?
+cat: term
+close: -1
+tag: Save your DNS, proxy, hosts and adapter settings - compare later.
+what: Saves each adapter's address, router and DNS servers, DHCP, the proxy and proxy script, and a fingerprint of the hosts file. Later it lists exactly what changed - and how to put each back.
+how: Reads Windows' own settings. The snapshot is a small text file in AdeeboMeter's folder.
+why: A VPN, an installer or adware can change your DNS or proxy silently. Now you see it.
+without: Putting settings back needs admin, so it tells you how instead of doing it.
+
+== tb.ipv6score
+friendly: IPv6 readiness score
+cat: term
+close: -1
+tag: Is IPv6 ready here: ready, half-ready, or off?
+what: Five checks: a public IPv6 address, privacy addresses, an IPv6 router, DNS answers with IPv6, and a ping to Cloudflare's IPv6 DNS. One score and the line to fix first.
+how: One DNS question to your own DNS server and one IPv6 ping (skipped when the internet check is off by policy).
+why: IPv6 can mean a shorter path and no shared provider NAT for games and calls.
+without: Some providers simply don't offer IPv6 yet - that isn't a fault.
+
+== tb.vpnleak
+friendly: VPN leak test (IPv4, IPv6, DNS)
+cat: term
+close: -1
+tag: With the VPN on, does anything leave outside the tunnel?
+what: Asks a STUN server which address it sees through the normal route and through your Wi-Fi or cable directly, checks whether IPv6 bypasses the VPN, and whether the VPN sets its own DNS server.
+how: A few STUN requests to stun.cloudflare.com - only with Online lookups on.
+why: A VPN that leaks IPv6 or DNS gives your real address and the sites you visit away.
+without: Needs the VPN connected and Online lookups on.
+
+== tb.qr
+friendly: QR code to read it on your phone
+cat: term
+close: -1
+tag: The diagnosis as a QR code your phone's camera reads.
+what: Turns AdeeboMeter's current verdict - the headline, why, and each part of the path - into a QR code on screen. Names and addresses are left out.
+how: Made on this PC; the picture holds only the text. Nothing is sent or linked.
+why: Read the diagnosis on your phone while you walk to the router.
+without: Holds a short summary (about 270 characters).
+
+== tb.friend
+friendly: Help-a-friend bundle (encrypted file)
+cat: term
+close: -1
+tag: Send someone your diagnosis - encrypted, no account, no cloud.
+what: Writes the diagnosis and where to look into one .adeebo file encrypted with a new code. Send the file; say the code another way. They open it with Toolbox > Decrypt.
+how: AES-256 with a code made on this PC. The plain text copy is deleted.
+why: Help family or a colleague without screenshots or a remote-control app.
+without: They need AdeeboMeter to open it.
+
+== tb.bluetooth
+friendly: My Bluetooth devices
+cat: term
+close: -1
+tag: Your paired Bluetooth devices and the radio's health.
+what: The Bluetooth radio and its state, and every device paired with this PC: available, not around, or with a problem.
+how: Asks Windows' device list. Other people's devices nearby are never listed or recorded.
+why: Headset won't connect? See whether Windows even has it.
+without: Battery levels aren't shown - Windows doesn't share them with desktop apps reliably.
+
+== tb.dupip
+friendly: Is another device using my address?
+cat: term
+close: -1
+tag: IP address conflicts, from Windows' own log.
+what: Reads Windows' address-conflict events (Tcpip 4199) for 30 days: when, and the other device's hardware address and maker.
+how: The System event log. Nothing is sent - Windows itself detects conflicts.
+why: Random drops that come and go are a classic duplicate-address symptom.
+without: Needs a conflict to have happened while this PC was on.
+
+== gz.map
+friendly: Ping map
+cat: term
+close: -1
+tag: Every server of the game, coloured by your ping.
+what: Green under 50 ms, amber under 100, red above. A ring is a region estimate - the cloud region the game runs in; a dot is a real server.
+how: The Gamer Zone's own pings - nothing new is sent.
+why: See at a glance which region is closest for you.
+without: Places are approximate - it's a picture, not a map to navigate by.

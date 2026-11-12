@@ -779,3 +779,126 @@ in: C:\Results\laptop.txt|C:\Results\desktop.txt
 1|US East|61 ms · 23 ms further away - pick NA Central in the game||m
 2|Tonight 21:14|a lag spike to 180 ms for 9 s - past your router, your home network was fine|Marked as lag. Report for my ISP collects the proof.|m
 3|This week|best 18:00-20:00 · worst 21:00-22:00 (the evening rush)||i
+
+# ---------------------------------------------------------------- 1.1.5: gaming, over time, privacy, sharing
+== gpn
+0|Would a GPN help?|Maybe - this is what a GPN is for|The delay starts at hop 6 (198.51.100.40), between your provider and the game. A GPN takes another road around it.|i
+3|Spikes this run|7 · 0 at home · 1 at your provider · 6 past it|From the Gamer Zone's own pings.|m
+-1|THE WAY TO EUROPE (A REGION ESTIMATE)|9 hops||m
+3|Hop 1 · 192.168.1.1|2 ms · loss 0%|your router|m
+3|Hop 3 · 198.51.100.1|9 ms · loss 0%|your provider|m
+2|Hop 6 · 198.51.100.40|71 ms · loss 0%|the internet (transit) - the delay starts here and carries on|m
+3|Hop 9 · 203.0.113.10|74 ms · loss 0%|the server|m
+
+== prematch
+1|Ready to play?|2 things could spoil the match|AdeeboMeter only suggests - it never closes a program for you.|i
+1|Connection|Wi-Fi · signal 48%|Weak. A cable is the single best fix for lag.|w
+0|Router right now|3 ms||m
+1|Background|OneDrive is running (it syncs in the background)|Pause it before you play.|w
+3|Best server now|Valorant · NA Central · 31 ms||m
+
+== besttime
+3|Server|NA Central · 34 ms on average|Valorant's best server over 14 days.|m
+-1|BEST HOURS|||m
+0|Tuesday 10:00|29 ms||m
+0|Sunday 08:00|30 ms||m
+-1|WORST HOURS|||m
+1|Friday 21:00|58 ms · loss 1.2%||m
+1|Evenings|worse than the rest of the day|Peak time on your provider's network.|i
+
+== tonight
+0|★ Rocket League|NA East · 22 ms · jitter 2 ms|Smoothest right now.|m
+3|2. Fortnite|NA Central · 35 ms · jitter 4 ms||m
+3|3. Apex Legends|NA West · 68 ms · jitter 9 ms||m
+
+== console
+in: 192.0.2.40|fortnite|30
+2|Console verdict|the console's own link: the router answers this PC quickly, the console doesn't - move it closer, use 5 GHz, or a cable||i
+-1|THE FOUR LEGS|30 seconds||m
+1|PC → console|38 ms · jitter 21 ms · loss 7%|Your home network to the console - includes the console's Wi-Fi.|m
+3|PC → router|3 ms (192.0.2.1)||m
+3|Internet|14 ms||m
+
+== month
+in: october
+-1|OCTOBER 2026 ON YOUR NETWORK|||m
+1|Smooth|98.7% of the minutes measured (612 hours over 31 days)||m
+1|Outages|3 · 41 minutes without internet||m
+3|Usual delay|router 3 ms · internet 15 ms · loss 0.2%||m
+3|Data|182 GB down · 21 GB up||w
+0|Best day|Tuesday 7 October||m
+1|Worst day|Saturday 18 October|Open it in the Time machine to see what happened.|m
+3|Rush hour|Fridays 21:00-22:00 · router 19 ms||m
+0|Compared with September|smoother - 1.3% rough minutes (was 2.1%), 41 outage minutes (was 95)||m
+
+== sixmonths
+-1|SIX MONTHS ON YOUR NETWORK|12 May 2026 - 12 Nov 2026||m
+1|Smooth|98.9% of the minutes measured (3,120 hours over 184 days)||m
+1|Outages|11 · 230 minutes without internet||m
+-1|MONTH BY MONTH|||m
+0|June|99.4% smooth · 1 outages · router 3 ms · 160 GB down||m
+1|September|97.2% smooth · 4 outages · router 6 ms · 201 GB down||m
+0|Saved to share|Six-months-2026-05-to-2026-11.html - open it in your browser||m
+
+== rushhour
+3|Usual|router 4 ms||m
+-1|THE SLOWEST HOUR OF EACH DAY|router delay, last 4 weeks||m
+3|Monday|20:00-21:00 · 6 ms||m
+1|Friday|21:00-22:00 · 14 ms · 6 rough minutes|Twice the usual - your network's rush hour.|m
+
+== wakeup
+1|Back online after waking|23 s on average · slowest 41 s · 18 wake-ups|Slow wake-ups are usually the Wi-Fi adapter's power saving.|m
+3|DNS answered|25 s after waking, on average||m
+-1|BY DAY|||m
+1|Mon 10 Nov|3 wake-ups · 31 s on average · slowest 41 s||m
+
+== capfc
+3|This month so far|212 GB in 12 days · 17.7 GB a day||w
+1|At this pace|you reach 400 GB on the 23rd - 7 days early|To stay under: 9.9 GB a day from now.|i
+
+== dltime
+in: 50 GB
+0|At your measured speed|1 h 32 min at 310 Mbps|The middle of 4 speed tests you ran in the last 30 days.|m
+3|In the evening|2 h 40 min at 180 Mbps||m
+3|Fastest hour seen|03:00 - your downloads reached 410 Mbps then: 1 h 9 min||m
+
+== netsnap
+1|Since the snapshot (2026-11-02 18:20)|2 settings changed|Type save to make this the new snapshot.|w
+1|adapter Wi-Fi · DNS servers|192.168.1.1  →  198.51.100.53|To put it back: Settings > Network > the adapter > DNS server assignment.|w
+1|proxy|off  →  127.0.0.1:8899|An unexpected proxy is a classic adware trick.|w
+
+== ipv6score
+1|IPv6 readiness|Half-ready · 3 of 5|Something is missing - the red line below is the one to fix first.|m
+0|A public IPv6 address|1 - e.g. 2001:db8:4a1f:…||w
+0|An IPv6 router|yes - Windows has an IPv6 default route||w
+1|DNS gives IPv6 answers|no - names come back IPv4-only||m
+2|Reaches the IPv6 internet|no answer||m
+
+== vpnleak
+2|VPN leaks|1 found|Details below - the first red line matters most.|m
+3|VPN|Example VPN Adapter||w
+3|The internet sees you as|203.0.113.77|Through the normal route - this should be the VPN's exit.|m
+0|IPv4|goes through the tunnel||m
+2|IPv6 outside the tunnel|IPv6 traffic leaves directly as 2001:db8::1f|Your VPN carries only IPv4.|m
+0|DNS|the VPN sets its own DNS server (192.0.2.53)||w
+
+== qr
+0|QR code|ready - click to show it, then point your phone's camera at it|The code holds only this text.|i
+3|What it says|AdeeboMeter · Problem: Wi-Fi signal is weak · Why: 31% · PC OK · LAN Problem · ISP OK|Names, Wi-Fi name and addresses are left out.|i
+
+== friend
+0|Encrypted|AdeeboMeter-diagnosis-20261112-1730.txt.adeebo - next to the original||m
+1|The code|7KQF-2MZD-9TXR-WC4H|Tell it by phone - never in the same message as the file.|m
+3|For your friend|send the .adeebo file; tell them the code another way|Nothing goes through any server.|i
+
+== bluetooth
+0|Radio|Intel(R) Wireless Bluetooth(R)||w
+-1|PAIRED WITH THIS PC|3 devices||w
+0|WH-1000XM5|available||w
+3|Pixel 8|paired, not around right now||w
+2|MX Keys|stopped (code 43)|Windows stopped it after it reported a problem.|w
+
+== dupip
+1|Address conflicts|2 in 30 days - the last Thu 6 Nov 19:40|Another device used the same address. Usually a device with a fixed address inside the router's DHCP range.|w
+3|6 Nov 19:40|the other device: 00-00-5E-00-53-12||w
+3|Your address now|192.0.2.37||w
