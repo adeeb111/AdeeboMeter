@@ -27,6 +27,7 @@ namespace AdeeboMeter
         void ClickGame(Game g)
         {
             if (g.Soon) return;
+            if (Policy.NoGamer) { gamerNote = "Game pings are turned off by your IT team (AdeeboMeter.policy)."; gamerCanvas.Invalidate(); return; }
             var mon = Games.Monitored();
             if (!mon.Contains(g.Id))
             {

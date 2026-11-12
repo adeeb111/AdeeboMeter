@@ -331,7 +331,7 @@ namespace AdeeboMeter
         Thread th; volatile bool stop; Monitor mon;
         public const int MaxServers = 8, MaxPerSecond = 10;
 
-        public void Start(Monitor m) { if (th != null) return; mon = m; stop = false; th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
+        public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
         public void Stop() { stop = true; var t = th; th = null; if (t != null) t.Join(3000); }
         public GameStat Stat(string game, GameServer s)
         {
@@ -638,6 +638,7 @@ namespace AdeeboMeter
         public static string Find(Game g, string ifaceGuid, out string ip)
         {
             ip = null; Guid gid;
+            if (Policy.NoCapture) return "Capturing packets is turned off by your IT team (AdeeboMeter.policy).";
             if (!LiveCapture.Available) return "Needs Wireshark (with Npcap) installed - it's what lets AdeeboMeter see the game's packets.";
             if (!Guid.TryParse((ifaceGuid ?? "").Trim('{', '}'), out gid)) return "No active network adapter.";
             var ports = GamePorts(g);

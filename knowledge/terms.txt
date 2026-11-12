@@ -1918,6 +1918,16 @@ how: From the events AdeeboMeter already recorded; nothing new is measured.
 why: A laptop that ping-pongs between two access points of equal strength stutters calls even with full bars.
 without: Roaming while you walk around is normal; roaming while sitting still is not.
 
+== tb.vpn
+friendly: VPN and company proxy
+cat: term
+close: -1
+tag: Is the VPN the slow part?
+what: Recognises the common VPN and zero-trust clients (GlobalProtect, Cisco Secure Client, Zscaler, Netskope, FortiClient, Ivanti, Check Point, Cloudflare WARP, Tailscale, WireGuard, OpenVPN, NordVPN, Proton and more), says whether everything goes through the tunnel or only company traffic, shows any proxy or PAC script - and times the tunnel as its own layer: router, the VPN's far side, then the whole trip.
+how: Reads the running program names, the network adapters and Windows' proxy settings - nothing is changed. The only packets are 7 pings (or timed connections to port 53) to the VPN's own DNS server.
+why: "The internet is slow" on a work laptop is very often the VPN: a full tunnel sends every site to the company first. Knowing the tunnel's own share tells you whether to pick a nearer gateway, ask IT about split tunnelling, or look elsewhere.
+without: Compare tracert with the VPN on and off, and read the VPN client's own statistics page.
+
 == tb.udpmtu
 friendly: MTU over UDP
 cat: term

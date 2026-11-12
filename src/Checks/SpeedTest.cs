@@ -150,6 +150,7 @@ namespace AdeeboMeter
         public static Result Measure(Toolkit.Run run, Server srv)
         {
             var res = new Result { T = DateTime.Now, Server = srv.Label };
+            if (Policy.NoSpeed) { res.Error = "turned off by your IT team (AdeeboMeter.policy)"; return res; }
             if (Busy) { res.Error = "a speed test is already running"; return res; }
             Busy = true;
             try

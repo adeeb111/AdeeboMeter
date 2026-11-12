@@ -40,6 +40,7 @@ namespace AdeeboMeter
                 T("ping6", "PATH", "IPv6 ping and trace", "Destination - e.g. www.google.com", (a, r) => SysTools.Ping6(a[0], r)),
                 T("overlap", "PATH", "Overlapping networks (home vs VPN)", null, (a, r) => PathTools.Overlap()),
                 T("ip46", "PATH", "IPv6 vs IPv4", "Site - e.g. www.google.com", (a, r) => PathTools.Ip46(Host(a[0]))),
+                T("vpn", "WHY DOES IT FAIL?", "VPN and company proxy - is it the slow part?", null, (a, r) => VpnAware.Run(M, r)),
                 T("proxy", "WHY DOES IT FAIL?", "Which proxy does this URL use?", "URL - e.g. https://outlook.office.com", (a, r) => WhyFails.Proxy(a[0])),
                 T("hosts", "WHY DOES IT FAIL?", "Hosts file", "Name to look for (optional)", (a, r) => WhyFails.Hosts(Host(a[0]))),
                 T("dnsrules", "WHY DOES IT FAIL?", "DNS hijack and VPN name rules", null, (a, r) => WhyFails.DnsRules()),
@@ -146,7 +147,7 @@ namespace AdeeboMeter
         // three sections, each grouped by the question you're asking, not by technology
         static readonly string[][] TbLayout = {
             new[] { "PATH & ROUTING", "mtu", "udpmtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
-            new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
+            new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "vpn", "teams", "ssh", "mail", "radius", "tacacs" },
             new[] { "SPEED & QUALITY", "speedtest", "ping", "twamp", "cloud", "ispreport" },
             new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
             new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
@@ -338,6 +339,7 @@ namespace AdeeboMeter
                     }
                 case "sweep": return "about 20 seconds, never more than 90";
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
+                case "vpn": return "a few seconds - 7 pings to the VPN's own DNS server";
                 case "udpmtu": return "about 10-20 seconds · about 12 sizes, two small tries each, to the one target";
                 case "speedtest": return a.Length > 0 && (a[0].Trim() == "list") ? "instant - nothing is sent" : a.Length > 0 && a[0].Trim() == "check" ? "about a minute - 1 KB from each server" : "about 20 seconds · up to " + SpeedTest.MaxDownMB + " MB down and " + SpeedTest.MaxUpMB + " MB up - nothing runs until you press Run";
                 case "ispreport": return (int.TryParse(a.Length > 1 ? a[1].Trim() : "", out m) && (m == 1 || m == 5) ? m : 2) + " min of measuring, plus about 30 seconds to trace and name the routers";
@@ -373,7 +375,7 @@ namespace AdeeboMeter
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
             { "cert", "http certs certfile" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "http certs" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
             { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "sweep snmpprn arp discover" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
-            { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "overlap route proxy dnsrules" }, { "email", "mail" }, { "smtp", "mail" }, { "outlook", "mail http proxy" },
+            { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "email", "mail" }, { "smtp", "mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover finddev" }, { "bonjour", "discover finddev" }, { "upnp", "discover finddev" }, { "llmnr", "discover nbname" },
             { "qos", "dscp" }, { "dscp", "dscp" }, { "bufferbloat", "bloat" }, { "storage", "space disk" }, { "crash", "crash" }, { "freeze", "crash bg" }, { "login", "auth radius tacacs" }, { "8021x", "auth" }, { "802.1x", "auth" }, { "packet", "icmpb udpsend tcpsend" }, { "craft", "icmpb udpsend tcpsend" }, { "udp", "udpsend" }, { "tcp", "tcpsend" }, { "icmp", "icmpb" }, { "df", "icmpb mtu" }, { "ttl", "icmpb" }, { "trap", "trap" }, { "netflow", "netflow" }, { "flow", "netflow" }, { "ipfix", "netflow" }, { "dhcp", "dhcpopt" }, { "option", "dhcpopt" }, { "stun", "stun" }, { "nat", "stun teams" }, { "public", "stun" }, { "curl", "httpreq remote" }, { "api", "httpreq" }, { "rest", "httpreq" }, { "post", "httpreq" }, { "netbios", "nbname" }, { "hostname", "nbname" }, { "name", "nbname" }, { "discover", "finddev" }, { "ssdp", "finddev" }, { "wsd", "finddev" }, { "ssh", "remote" }, { "scp", "remote" }, { "sftp", "remote" }, { "putty", "remote" }, { "telnet", "remote" }, { "pfx", "pfx" }, { "p12", "pfx" }, { "csr", "csr" }, { "pem", "certfile certconv" }, { "der", "certconv certfile" }, { "hash", "hashf" }, { "sha256", "hashf" }, { "checksum", "hashf" }, { "md5", "hashf" }, { "jwt", "b64" }, { "base64", "b64" }, { "token", "b64" }, { "openssl", "certcmds" }, { "certutil", "certcmds" }, { "syslog", "syslog" }, { "wake", "wol" }, { "iperf", "iperf" }, { "rdp", "rdpcheck remote" }, { "ldap", "ldapcheck" }, { "ad", "ldapcheck dc manyports" }, { "kerberos", "ldapcheck" }, { "smb", "shares manyports" }, { "share", "shares" }, { "nas", "shares" }, { "service", "svcfail" }, { "services", "svcfail" }, { "clean", "tidy" }, { "cleanup", "tidy" }, { "temp", "tidy" }, { "junk", "tidy" }, { "recycle", "tidy" }, { "ports", "manyports" }, { "compare", "beforeafter twopc dnscmp" }, { "before", "beforeafter" }, { "after", "beforeafter" }, { "sites", "mysites" }, { "watchlist", "mysites" }, { "arp", "arpwho" },

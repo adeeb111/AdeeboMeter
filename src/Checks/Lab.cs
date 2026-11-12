@@ -33,6 +33,7 @@ namespace AdeeboMeter
         }
         public static bool Allowed(Monitor m, string ok, List<string[]> rows)
         {
+            if (Policy.NoLab) { rows.Add(R(2, "Traffic Lab", "turned off by your IT team (AdeeboMeter.policy)", "", "u")); return false; }
             if (string.Equals((ok ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase) || !Company(m)) return true;
             rows.Add(R(1, "Company network?", "this PC is on a company domain or VPN", "Test traffic on a company network can trip the security team's alarms. Tick \"This is my own network, or I'm allowed to send test traffic to it\" and run again.", "u"));
             return false;

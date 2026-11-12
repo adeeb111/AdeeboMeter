@@ -33,6 +33,19 @@ namespace AdeeboMeter
         static readonly string[] SetS0 = { "balanced", "Balanced", "The default. Notices trouble within seconds and still costs next to nothing." };
         static readonly string[] SetS1 = { "engineer", "Engineer", "Watches everything closely - for when something is wrong and you want every clue." };
         static readonly string[] SetMode = { "Simple", "Pro" };
+        static bool PolicyLocks(string label)
+        {
+            switch (label)
+            {
+                case "Mode": return Policy.Mode != "";
+                case "Internet and DNS check": return Policy.NoInternetCheck;
+                case "Keep history for": return Policy.MaxHistoryDays > 0;
+                case "BGP and who owns the network": case "Switch them off by themselves after": return Policy.NoOnline;
+                case "Game ping in the background": case "Servers watched in the background": case "Every second while a game is open": case "Start when a game opens": return Policy.NoGamer;
+                case "Live capture stops after": return Policy.NoCapture;
+                default: return false;
+            }
+        }
         static readonly string[] SetS2 = { "2 s", "5 s", "10 s", "Off" }, SetOnlineMin = { "5 min", "15 min", "30 min", "1 h", "2 h", "3 h" };
         static readonly int[] SetN3 = { 2, 5, 10, 0 };
         static readonly string[] SetS4 = { "15 s", "30 s", "60 s", "Off" };
@@ -79,7 +92,10 @@ namespace AdeeboMeter
         {
             var L = new List<SetItem>();
             Action<string, string, string, Func<string>, string[], Func<int>, Action<int>, Func<bool>, string> add = (sec, label, tag, help, opts, cur, set, show, keys) =>
+            {
+                if (PolicyLocks(label)) { help = () => Policy.Locked; set = delegate { }; }   // shown, but the IT team's choice stands
                 L.Add(new SetItem { Sec = sec, Label = label, Tag = tag, Help = help, Opts = opts, Cur = cur, Set = set, Show = show, Keys = keys ?? "" });
+            };
             // General
             add("General", "Mode", TagPc, () => Cfg.Simple ? "Simple: the dots, What's wrong?, speed, history and the Gamer Zone." : "Pro: every tab - Monitor, Security, Toolbox, Network story and Learn too.", SetMode, () => Cfg.Simple ? 0 : 1, i => SetModeTo(i == 0 ? "simple" : "pro"), null, "simple pro engineer advanced beginner tabs");
             add("General", "Theme", TagPc, () => "Follow Windows switches light and dark with your Windows setting.", SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : th == 0 ? 1 : 2; }, i => Cfg.SetTheme(i == 0 ? -1 : i == 1 ? 0 : 1), null, "dark light colour color");
@@ -203,7 +219,7 @@ namespace AdeeboMeter
                             string cost = "~" + JobsFor(presets[i][0]) + " checks a minute";
                             var cs = g.MeasureString(cost, Draw.fSmall); g.DrawString(cost, Draw.fSmall, muted, r.Right - 14 * S - cs.Width, r.Y + 15 * S);
                             g.DrawString(presets[i][2], Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 40 * S, r.Width - 28 * S, ph - 46 * S));
-                            string key = presets[i][0]; Act(settingsCanvas, r, delegate { Cfg.ApplyPreset(key); Cfg.Save(); M.Nudge(); settingsCanvas.Invalidate(); });
+                            string key = presets[i][0]; Act(settingsCanvas, r, delegate { Cfg.ApplyPreset(key); Policy.Apply(); Cfg.Save(); M.Nudge(); settingsCanvas.Invalidate(); });
                         }
                         y += ph + 10 * S;
                         string cnt = "Right now: about " + Cfg.JobsPerMinute() + " checks a minute in the background" + (Cfg.Preset == "custom" ? " (your own mix)" : "") + ", on top of the widget's once-a-second read of Windows' own counters.";

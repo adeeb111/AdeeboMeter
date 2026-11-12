@@ -19,7 +19,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, object> cache = new Dictionary<string, object>();
         public static bool On { get { return DateTime.UtcNow < until; } }
         public static TimeSpan Left { get { var l = until - DateTime.UtcNow; return l < TimeSpan.Zero ? TimeSpan.Zero : l; } }
-        public static void Start() { until = DateTime.UtcNow.AddMinutes(Math.Max(5, Math.Min(180, Cfg.OnlineMin))); Program.Log("online lookups on for " + Cfg.OnlineMin + " min"); }
+        public static void Start() { if (Policy.NoOnline) { Program.Log("online lookups: off by policy"); return; } until = DateTime.UtcNow.AddMinutes(Math.Max(5, Math.Min(180, Cfg.OnlineMin))); Program.Log("online lookups on for " + Cfg.OnlineMin + " min"); }
         public static void Stop() { until = DateTime.MinValue; lock (k) cache.Clear(); Program.Log("online lookups off"); }
         public static void Tick() { if (until != DateTime.MinValue && !On) Stop(); }
 

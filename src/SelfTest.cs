@@ -421,6 +421,26 @@ namespace AdeeboMeter
                 if (SpeedTest.GradeOf(10, 12) != "A+" || SpeedTest.GradeOf(10, 90) != "C" || SpeedTest.GradeOf(double.NaN, 5) != "") throw new InvalidOperationException("speed grade");
                 string old = Cfg.Mode; try { Cfg.Read("mode", "pro"); if (Cfg.Simple) throw new InvalidOperationException("pro"); Cfg.Read("mode", "nonsense"); if (Cfg.Mode != "" || !Cfg.Simple) throw new InvalidOperationException("bad mode kept"); } finally { Cfg.Mode = old; }
             });
+            T("VPN layer verdict", () =>
+            {
+                if (!VpnAware.Verdict(3, 90, 120, true).StartsWith("Your VPN is the slow part", StringComparison.Ordinal)) throw new InvalidOperationException("slow tunnel not blamed");
+                if (!VpnAware.Verdict(3, 12, 140, true).StartsWith("The tunnel itself is quick", StringComparison.Ordinal)) throw new InvalidOperationException("quick tunnel blamed");
+                if (VpnAware.Verdict(3, double.NaN, 40, false) != "") throw new InvalidOperationException("no answer, no verdict");
+            });
+            T("admin policy only switches things off; report JSON is valid", () =>
+            {
+                try
+                {
+                    Policy.Reset(); Policy.Parse(new[] { "# test", "internet_check = off", "speed_test=on", "history_days = 2 # two", "mode = simple", "traffic_lab = maybe", "history_days = 40" });
+                    if (!Policy.NoInternetCheck || Policy.NoSpeed || Policy.MaxHistoryDays != 2 || Policy.Mode != "simple" || Policy.NoLab) throw new InvalidOperationException("policy parse");
+                    var rows = new List<string[]>(); Policy.NoLab = true; if (Lab.Allowed(null, "yes", rows) || rows.Count != 1) throw new InvalidOperationException("lab not blocked");
+                }
+                finally { Policy.Reset(); }
+                var r = new GuideRun(); r.Obs("m", 1, "Router \"ping\"", "12 ms\n"); r.Conclude(1, "Wi-Fi is weak");
+                string j = Report.Json(new Monitor(), r, 1);
+                var o = Json.Parse(j) as Dictionary<string, object>;
+                if (o == null || Convert.ToString(o["verdict"], CultureInfo.InvariantCulture) != "warning" || !(o["observed"] is List<object>)) throw new InvalidOperationException("report JSON: " + j);
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));
@@ -440,7 +460,7 @@ namespace AdeeboMeter
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
                     "travel.LADDER", "travel.ANATOMY", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));

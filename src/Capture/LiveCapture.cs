@@ -78,7 +78,7 @@ namespace AdeeboMeter
             "tls.handshake.extensions_server_name", "dns.qry.name", "dns.a", "dns.aaaa", "_ws.expert.message", "_ws.col.Protocol" };
 
         readonly object life = new object(); Thread reader;   // Start and Stop never overlap (a restart can come from three places)
-        public bool Start(string ifaceGuid) { lock (life) return Start2(ifaceGuid); }
+        public bool Start(string ifaceGuid) { if (Policy.NoCapture) { Program.Log("live capture: off by policy"); return false; } lock (life) return Start2(ifaceGuid); }
         bool Start2(string ifaceGuid)
         {
             Stop();

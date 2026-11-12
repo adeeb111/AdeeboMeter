@@ -122,6 +122,7 @@ namespace AdeeboMeter
             new[] { "guide:site", "Only one website is broken", "everything else works" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
         static readonly string[][] FixWords = {
+            new[] { "vpn|globalprotect|anyconnect|zscaler|netskope|forticlient|tunnel|work laptop", "tool:vpn", "the VPN may be the slow part", "how much of the delay is the VPN tunnel, and whether everything goes through it" },
             new[] { "buffer|youtube|netflix|stream|video|twitch|disney|prime", "guide:slow", "videos keep buffering", "your speed, your Wi-Fi and whether something else is using the internet" },
             new[] { "lag|ping|game|gaming|fortnite|valorant|steam|xbox|playstation", "gamer", "your game is lagging", "the game's servers, your Wi-Fi and your provider - in the Gamer Zone" },
             new[] { "call|zoom|teams|meet|whatsapp|skype|robot|choppy|voice|echo", "guide:calls", "calls are choppy", "jitter, loss, your upload and the VPN" },

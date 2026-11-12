@@ -203,6 +203,7 @@ namespace AdeeboMeter
             }
             catch { }
             if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
+            Policy.Load(); Policy.Apply();   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
             if (first) { ApplyAutoStart(); SaveSettings(); }
         }
         void SaveSettings()
