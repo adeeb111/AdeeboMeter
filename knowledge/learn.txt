@@ -7,6 +7,7 @@
 title: DNS - the internet's phone book
 kind: protocol
 tag: You type a name; DNS finds the number.
+check: What does DNS do when you type a site's name? | Finds the IP address for that name | Encrypts the page | Picks the fastest Wi-Fi channel | Gives your PC its own address
 line: Turns a name like github.com into the number computers use.
 breaks: Slow DNS makes every new site slow; broken DNS looks like 'no internet'.
 ladder: Your PC > DNS server: Where is github.com? | DNS server > Your PC: 140.82.112.3 (good for 60 s)
@@ -17,6 +18,7 @@ try: Open a website you haven't visited today.
 title: DHCP - how your PC gets an address
 kind: protocol
 tag: Four messages, and you're on the network.
+check: What does DHCP give your PC when it joins a network? | An IP address, the router and DNS servers | A Wi-Fi password | A faster internet plan | The website's certificate
 line: Gives your PC an address, the router's address and DNS servers when you join a network.
 breaks: A 169.254.x.x address means DHCP failed - restart Wi-Fi or the router.
 ladder: Your PC > Everyone: DISCOVER - any DHCP server here? | Router > Your PC: OFFER - you can have 192.168.1.37 | Your PC > Router: REQUEST - I'll take .37 | Router > Your PC: ACK - it's yours for 24 hours
@@ -27,6 +29,7 @@ try: Turn Wi-Fi off and on again.
 title: ARP - finding the hardware next door
 kind: protocol
 tag: IP addresses for the journey, hardware addresses for the next step.
+check: What does ARP find out? | The hardware (MAC) address of a device on your own network | The country a server is in | The best route across the internet | Which app owns a port
 line: Finds the hardware address of the router next to you, so packets can leave the room.
 breaks: If the router's hardware address suddenly changes, someone may be in the middle.
 ladder: Your PC > Everyone: Who has 192.168.1.1? | Router > Your PC: I do - 3c:84:6a:..
@@ -37,6 +40,7 @@ try: Wait - it happens on its own every few minutes.
 title: TCP - the reliable conversation
 kind: protocol
 tag: Numbered, acknowledged, resent when lost.
+check: What does TCP do when a packet goes missing? | Sends it again, so nothing arrives missing | Skips it to stay fast | Closes the connection | Asks DNS again
 line: A reliable conversation: numbered pieces, every one confirmed, lost ones sent again.
 breaks: Lots of resends (retransmits) mean loss on the way - usually Wi-Fi.
 ladder: Your PC > Server: SYN - let's talk | Server > Your PC: SYN-ACK - sure | Your PC > Server: ACK - connected | Your PC > Server: data | Server > Your PC: ACK - got it
@@ -47,6 +51,7 @@ try: Refresh a web page.
 title: UDP - fast and fire-and-forget
 kind: protocol
 tag: No handshake, no resending - speed first.
+check: Why do games and calls usually use UDP? | Late data is useless, so speed beats resending | UDP is encrypted and TCP isn't | UDP packets can't be lost | Routers block TCP
 line: Fire and forget: no confirmations, no resends - fast, for calls, games and DNS.
 breaks: A lost UDP packet is just gone - in a call that's a glitch or robot voice.
 live: udp and not port 53
@@ -57,6 +62,7 @@ ladder: Your PC > Server: packet 1 | Your PC > Server: packet 2 | Your PC > Serv
 title: TLS - the padlock
 kind: protocol
 tag: Proves who the server is, then encrypts everything.
+check: What does the padlock (TLS) prove before encrypting? | That the server really is who it says it is | That your Wi-Fi is fast | That the site has no ads | That your PC has no viruses
 line: The padlock: proves the server is real and encrypts everything after.
 breaks: A certificate error means the wrong server, a wrong clock, or something in the middle.
 ladder: Your PC > Server: ClientHello - I speak TLS 1.3 | Server > Your PC: ServerHello + certificate | Your PC > Server: Finished - keys agreed | Your PC > Server: encrypted request | Server > Your PC: encrypted answer
@@ -67,6 +73,7 @@ try: Open a website.
 title: QUIC and HTTP/3 - the modern web
 kind: protocol
 tag: TCP and TLS rebuilt on top of UDP.
+check: What is QUIC built on? | UDP, with TCP-like reliability and TLS built in | A new kind of cable | DNS | ARP
 line: The modern web: connection and encryption in one quick handshake, over UDP 443.
 breaks: If UDP is blocked, browsers quietly fall back to TCP - slower, but it works.
 live: udp port 443
@@ -77,6 +84,7 @@ ladder: Your PC > Server: hello + keys (UDP 443) | Server > Your PC: hello + cer
 title: HTTP - asking for a page
 kind: protocol
 tag: A request, a status, an answer.
+check: What does a 404 answer from a web server mean? | The page you asked for isn't there | The server is overloaded | Your password is wrong | The connection is encrypted
 line: How apps ask for things: GET this page, POST this form - the server answers with a code.
 breaks: Codes: 200 fine, 401/403 not allowed, 404 not found, 5xx the server is broken.
 ladder: Your PC > Server: GET / | Server > Your PC: 200 OK + the page
@@ -85,6 +93,7 @@ ladder: Your PC > Server: GET / | Server > Your PC: 200 OK + the page
 title: Ping and traceroute (ICMP)
 kind: protocol
 tag: Are you there? How far? Which way?
+check: What does traceroute show? | Each router your packets pass on the way | The speed of your Wi-Fi | Which apps use the internet | The website's certificate
 line: The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.
 breaks: No ping reply doesn't always mean down - many servers ignore ping on purpose.
 ladder: Your PC > Router: echo request (TTL 1) | Router > Your PC: time exceeded - I'm hop 1 | Your PC > Server: echo request | Server > Your PC: echo reply - 22 ms
@@ -95,6 +104,7 @@ try: Run a check in Check a destination.
 title: IPv6 and how your PC gets its addresses
 kind: protocol
 tag: Many addresses at once, and some of them change every day.
+check: Why can a PC have several IPv6 addresses at once? | Some are temporary (privacy) addresses that change over time | IPv6 is broken | Each app gets its own | One per Wi-Fi channel
 line: The newer, much bigger address system; your PC usually has both IPv4 and IPv6.
 breaks: Broken IPv6 makes some sites slow to start while the PC falls back to IPv4.
 live: icmp6
@@ -105,6 +115,7 @@ ladder: Router > Everyone: here's the network prefix | Your PC > itself: makes i
 title: NAT - many devices, one public address
 kind: protocol
 tag: Why your PC's address isn't the one the internet sees.
+check: Why does a website see a different address than your PC's own? | Your router swaps your private address for its public one (NAT) | DNS changes it | Your PC lies about it | TLS hides it
 line: Your router swaps your private address for its one public address on the way out.
 breaks: A 100.64.x.x hop means your provider adds a second NAT - some games and calls struggle.
 ladder: Your PC (192.168.1.37) > Router: to github.com | Router (public 24.x.x.x) > github.com: same request, new address | github.com > Router: reply | Router > Your PC: reply
@@ -113,6 +124,7 @@ ladder: Your PC (192.168.1.37) > Router: to github.com | Router (public 24.x.x.x
 title: MTU - how big a packet can be
 kind: protocol
 tag: 1500 bytes, minus whatever tunnels add.
+check: What usually makes the usable MTU smaller than 1500 bytes? | A tunnel such as a VPN or PPPoE adding its own headers | A slow Wi-Fi signal | Too many browser tabs | A weak password
 line: The biggest packet that fits on a link - usually 1500 bytes, less on VPNs and PPPoE.
 breaks: Pages that half-load or hang on a VPN are often an MTU problem.
 ladder: Your PC > Router: 1500 bytes | Router > VPN tunnel: too big - needs 1400 | Your PC > Router: resends smaller
@@ -121,6 +133,7 @@ ladder: Your PC > Router: 1500 bytes | Router > VPN tunnel: too big - needs 1400
 title: Wi-Fi - how your laptop joins and stays connected
 kind: protocol
 tag: Scan, authenticate, associate, then share the air.
+check: What does a Wi-Fi device do before it can send data? | Scans, authenticates and associates with an access point | Asks DNS for permission | Opens a TCP connection to the router | Runs a speed test
 line: Radio between your PC and the access point - band, channel and signal decide how good it is.
 breaks: Weak signal or a crowded channel: move closer, or use 5 GHz.
 ladder: Your PC > Access point: radio frame | Access point > Your PC: got it (ACK) | Access point > Router: on the cable
@@ -129,6 +142,7 @@ ladder: Your PC > Access point: radio frame | Access point > Your PC: got it (AC
 title: 802.1X - company sign-in for Wi-Fi and network ports
 kind: protocol
 tag: The network checks who you are before letting you in.
+check: What does 802.1X check before letting a device onto the network? | Who the user or device is, through a server such as RADIUS | The device's speed | Its DNS cache | Its screen size
 line: Work networks check who you are (certificate or password) before letting you on.
 breaks: Can't join the work Wi-Fi but others can: your certificate or account, not the radio.
 ladder: Your PC > Switch / AP: EAPOL start | Switch / AP > RADIUS server: here's who it claims to be | RADIUS server > Switch / AP: Access-Accept, VLAN 20 | Switch / AP > Your PC: you're in
@@ -137,6 +151,7 @@ ladder: Your PC > Switch / AP: EAPOL start | Switch / AP > RADIUS server: here's
 title: QoS and DSCP - priority for calls
 kind: protocol
 tag: A label on each packet that says "me first".
+check: What is a DSCP mark? | A label on a packet asking routers to treat it with priority | A Wi-Fi password | A type of cable | An encryption key
 line: A priority label on packets - calls get 'express', downloads get normal.
 breaks: Most home routers and the internet ignore it; it helps mainly inside company networks.
 live: udp port 3478 or udp port 3479 or udp port 3480 or udp port 3481
@@ -147,6 +162,7 @@ ladder: Teams > Your PC: mark audio EF (express) | Your PC > Router: EF packet |
 title: BGP - how networks agree on routes
 kind: protocol
 tag: The internet's map, drawn by agreements between providers.
+check: What does BGP do? | Lets networks (providers) tell each other which addresses they can reach | Gives your PC an address | Encrypts web pages | Finds hardware addresses
 line: How the networks of the internet tell each other which addresses they can reach.
 breaks: When a provider announces something wrong, whole sites vanish for everyone at once.
 ladder: Your provider > Neighbour network: I can reach 24.x.x.x | Neighbour > Internet: via me | Internet > Your provider: traffic for you
@@ -155,6 +171,7 @@ ladder: Your provider > Neighbour network: I can reach 24.x.x.x | Neighbour > In
 title: How Windows starts, from power to desktop
 kind: windows
 tag: Each one starts the next - and if certain ones die, Windows dies with them.
+check: Why does Windows stop if certain core processes die? | Each one starts the next, and Windows can't run without them | They hold your files | They are viruses | They run the internet
 line: Power on to desktop: firmware, Windows' loader, the kernel, then the core processes in order.
 breaks: If one of the core processes dies, Windows stops with a blue screen.
 ladder: Firmware > Boot manager: load Windows | Kernel > smss: start the session | smss > wininit: start services | smss > winlogon: show sign-in | winlogon > explorer: your desktop
@@ -163,6 +180,7 @@ ladder: Firmware > Boot manager: load Windows | Kernel > smss: start the session
 title: svchost.exe - one host, many services
 kind: windows
 tag: Why there are twenty of them, and what's inside each.
+check: Why are there many svchost.exe processes? | Each hosts one or more Windows services | They are copies of a virus | One per browser tab | One per user
 line: A shared host: many small Windows services run inside each svchost.exe.
 breaks: When 'svchost' is busy, it's one service inside - Inside Windows shows which.
 ladder: services > svchost: host these services | svchost > Windows Update: run | svchost > DNS Client: run
@@ -171,6 +189,7 @@ ladder: services > svchost: host these services | svchost > Windows Update: run 
 title: lsass.exe - the security guard
 kind: windows
 tag: Checks every password and keeps your sign-in tokens.
+check: What does lsass.exe do? | Checks sign-ins and keeps your sign-in tokens | Draws windows | Plays sound | Indexes files for search
 line: The security guard: checks your password or PIN and keeps your sign-in tokens.
 breaks: Never end it - Windows restarts within a minute. High CPU at work is usually sign-in traffic.
 ladder: winlogon > lsass: check this PIN | lsass > winlogon: correct - here's your token | Outlook > lsass: sign me in to the company server
@@ -179,6 +198,7 @@ ladder: winlogon > lsass: check this PIN | lsass > winlogon: correct - here's yo
 title: csrss.exe - the session's core
 kind: windows
 tag: Old name, still essential.
+check: What happens if csrss.exe stops? | Windows stops - it's essential to the session | Only the sound stops | Nothing, it's optional | The taskbar restarts
 line: Draws console windows and helps start and shut down every program.
 breaks: Can't be ended; if it dies, Windows stops. Two copies is normal.
 ladder: smss > csrss: start for the session | Any program > csrss: I'm starting | csrss > Windows: noted
@@ -187,6 +207,7 @@ ladder: smss > csrss: start for the session | Any program > csrss: I'm starting 
 title: wininit.exe - starts the background world
 kind: windows
 tag: Starts services and the security guard, then waits.
+check: What does wininit.exe start? | The Service Control Manager and the security guard (lsass) | Your browser | Microsoft Teams | The printer
 line: Starts the system part of Windows: the service manager and the security guard.
 breaks: Can't be ended; if it dies, Windows stops.
 ladder: smss > wininit: start | wininit > services: start the service manager | wininit > lsass: start the security guard
@@ -195,6 +216,7 @@ ladder: smss > wininit: start | wininit > services: start the service manager | 
 title: winlogon.exe - your sign-in
 kind: windows
 tag: Sign-in screen, Ctrl+Alt+Del, lock and sign out.
+check: What is winlogon.exe responsible for? | Sign-in, Ctrl+Alt+Del, lock and sign-out | Drawing the desktop | Downloading updates | Your Wi-Fi
 line: Handles signing in, locking (Win+L) and Ctrl+Alt+Del.
 breaks: If sign-in hangs, a startup program or a profile problem is usually behind it.
 ladder: You > winlogon: Ctrl+Alt+Del | winlogon > lsass: check PIN | winlogon > explorer: start your desktop
@@ -203,6 +225,7 @@ ladder: You > winlogon: Ctrl+Alt+Del | winlogon > lsass: check PIN | winlogon > 
 title: services.exe - the Service Control Manager
 kind: windows
 tag: Starts, stops and watches every Windows service.
+check: What does services.exe manage? | Starting, stopping and watching Windows services | Your passwords | The internet connection speed | The screen brightness
 line: The service manager: starts, stops and restarts every Windows service.
 breaks: A service that keeps restarting shows up here as repeated starts - check its name.
 ladder: wininit > services: start | services > svchost: run these services | services > Spooler: you crashed - restart
@@ -211,6 +234,7 @@ ladder: wininit > services: start | services > svchost: run these services | ser
 title: dwm.exe - the desktop's painter
 kind: windows
 tag: Every window you see is drawn by it.
+check: What does dwm.exe do? | Draws (composes) every window you see | Checks passwords | Downloads updates | Runs scheduled tasks
 line: Draws everything you see - windows, shadows, animations - with the graphics card.
 breaks: High GPU or memory here usually means many monitors or a graphics driver issue.
 ladder: Apps > dwm: here's my window | dwm > Graphics card: combine them | Graphics card > Screen: the frame
@@ -219,6 +243,7 @@ ladder: Apps > dwm: here's my window | dwm > Graphics card: combine them | Graph
 title: explorer.exe - your desktop, taskbar and folders
 kind: windows
 tag: The shell: everything you click to start things.
+check: What is explorer.exe? | The shell: desktop, taskbar, Start and folders | Internet Explorer | A virus scanner | The Wi-Fi driver
 line: Your desktop, taskbar, Start menu and File Explorer - all one process.
 breaks: Taskbar frozen? Restart 'Windows Explorer' in Task Manager - nothing is lost.
 ladder: winlogon > explorer: start the desktop | explorer > Your apps: start them from Start | You > explorer: open a folder
@@ -227,6 +252,7 @@ ladder: winlogon > explorer: start the desktop | explorer > Your apps: start the
 title: RuntimeBroker.exe - the permission checker
 kind: windows
 tag: Asks Windows' permission on behalf of Store apps.
+check: What does RuntimeBroker.exe check? | Whether Store apps have permission for things like the camera or location | Your internet speed | Your files for viruses | Your sign-in password
 line: Checks Store apps' permissions - camera, location, files.
 breaks: Many copies are normal; high CPU usually means one app asking over and over.
 ladder: Store app > RuntimeBroker: may I use the camera? | RuntimeBroker > Store app: yes - you allowed it
@@ -235,6 +261,7 @@ ladder: Store app > RuntimeBroker: may I use the camera? | RuntimeBroker > Store
 title: SearchHost.exe / SearchIndexer - Windows Search
 kind: windows
 tag: The search box, and the index behind it.
+check: What does the Windows Search indexer build? | An index of your files so search answers instantly | A list of websites | A backup of your PC | A map of your network
 line: The Start menu search box and its results.
 breaks: Slow search is usually the indexer catching up after many new files.
 ladder: You > SearchHost: type 'excel' | SearchHost > Index: anything matching? | SearchHost > You: Excel, 3 files
@@ -243,6 +270,7 @@ ladder: You > SearchHost: type 'excel' | SearchHost > Index: anything matching? 
 title: MsMpEng.exe - Microsoft Defender
 kind: windows
 tag: Checks every file as it's opened.
+check: What does MsMpEng.exe (Defender) do as files are opened? | Checks them for malware | Compresses them | Uploads them to OneDrive | Translates them
 line: Microsoft Defender's scanner - checks files as they open and runs scans.
 breaks: Busy during big copies or builds; never stop it - it's your antivirus.
 ladder: Program > Windows: open this file | Windows > MsMpEng: scan it first | MsMpEng > Windows: clean - go ahead
@@ -251,6 +279,7 @@ ladder: Program > Windows: open this file | Windows > MsMpEng: scan it first | M
 title: msedgewebview2.exe - Edge inside other apps
 kind: windows
 tag: Why Teams and new Outlook have so many Edge processes.
+check: Why do Teams and new Outlook run msedgewebview2.exe? | They show their screens using Edge's engine inside the app | They are hiding a browser | They mine cryptocurrency | They update Windows
 line: A built-in Edge engine that apps like Teams, Outlook and widgets use to draw their screens.
 breaks: Many copies are normal - each belongs to an app; Inside Windows shows which.
 ladder: Teams > WebView2: draw the chat window | WebView2 > Teams service: load it (HTTPS) | WebView2 > Teams: drawn
@@ -259,6 +288,7 @@ ladder: Teams > WebView2: draw the chat window | WebView2 > Teams service: load 
 title: Memory Compression
 kind: windows
 tag: Squeezes memory instead of writing it to disk.
+check: What does Memory Compression do? | Squeezes memory instead of writing it to the disk | Deletes old files | Makes downloads smaller | Speeds up Wi-Fi
 line: Windows squeezes memory it isn't using right now instead of writing it to disk.
 breaks: Large means memory is tight - close something heavy or add RAM.
 ladder: Windows > Memory compression: squeeze this idle app | App > Windows: I need it again | Windows > App: unsqueezed - instant
@@ -267,6 +297,7 @@ ladder: Windows > Memory compression: squeeze this idle app | App > Windows: I n
 title: System (the kernel)
 kind: windows
 tag: The engine room - drivers and the kernel itself.
+check: What runs inside the System process? | The Windows kernel and drivers | Your browser | Microsoft Office | Games
 line: The Windows kernel and drivers - the part that talks to the hardware.
 breaks: High CPU here usually means a driver: Wi-Fi, storage or antivirus filter.
 ladder: Wi-Fi card > System: packet arrived | System > Program: here's your data | Program > System: send this
@@ -275,6 +306,7 @@ ladder: Wi-Fi card > System: packet arrived | System > Program: here's your data
 title: How a Teams call connects
 kind: apps
 tag: Sign in, signal, find a path, then audio and video over UDP.
+check: How does a Teams call prefer to carry audio and video? | UDP, falling back to TCP if UDP is blocked | Email | Only TCP port 25 | DNS
 line: Teams signs in, rings the other side over HTTPS, then sends audio and video over UDP.
 breaks: Robot voice or freezing: UDP blocked, the VPN in the way, or weak Wi-Fi.
 ladder: Teams > Sign-in (WAM): token please | Sign-in (WAM) > Teams: token | Teams > Teams service: call Alex (HTTPS) | Teams service > Teams: Alex answered + relay addresses | Teams > Media relay: STUN - which path works? (UDP 3478) | Teams > Media relay: audio + video (SRTP over UDP)
@@ -285,6 +317,7 @@ try: Join or start a Teams call.
 title: How Outlook gets your mail
 kind: apps
 tag: Signs in once, keeps a copy on your PC, syncs in the background.
+check: Why can Outlook show your mail while offline? | It keeps a copy on your PC and syncs in the background | It guesses the mail | The mail is stored in DNS | It can't
 line: Outlook keeps a copy of your mailbox on the PC and syncs it with Exchange Online over HTTPS.
 breaks: Slow Outlook is often the big local mailbox file or OneDrive using your upload.
 ladder: Outlook > Sign-in (WAM): token please | Sign-in (WAM) > Outlook: token | Outlook > Exchange Online: sync my mailbox (HTTPS) | Exchange Online > Outlook: new items | Exchange Online > Outlook: notification - new mail
@@ -293,6 +326,7 @@ ladder: Outlook > Sign-in (WAM): token please | Sign-in (WAM) > Outlook: token |
 title: OneDrive - files on demand
 kind: apps
 tag: Your files in the cloud, downloaded only when you open them.
+check: What does 'files on demand' mean in OneDrive? | Files are listed but only downloaded when you open them | Files are deleted when not used | Files are emailed to you | Files are printed
 line: Keeps a folder on your PC in sync with the cloud, both ways, in the background.
 breaks: A big sync uses your upload - that's when calls get worse.
 ladder: OneDrive > Microsoft: anything new? | Microsoft > OneDrive: 2 files changed | OneDrive > Microsoft: uploading your photo
@@ -301,6 +335,7 @@ ladder: OneDrive > Microsoft: anything new? | Microsoft > OneDrive: 2 files chan
 title: Sign-in broker (WAM) - one sign-in for every Microsoft app
 kind: apps
 tag: Why Teams, Outlook and OneDrive never ask for your password separately.
+check: Why don't Teams, Outlook and OneDrive each ask for your password? | They share one sign-in through Windows' sign-in broker | They don't need one | They store it in plain text | They use DNS to sign in
 line: Windows' sign-in broker: Office and Teams ask it for tokens instead of asking you for passwords.
 breaks: Endless sign-in prompts: the token broker is stuck - sign out of Office and back in.
 ladder: Teams > WAM: token please | WAM > Microsoft sign-in: here's the account | Microsoft sign-in > WAM: token | WAM > Teams: token
@@ -309,6 +344,7 @@ ladder: Teams > WAM: token please | WAM > Microsoft sign-in: here's the account 
 title: The layers, in plain words
 kind: basics
 tag: A letter in envelopes inside envelopes - each layer adds one, the other side opens them in reverse.
+check: In the 'envelopes' picture of the layers, what does the receiving side do? | Opens the envelopes in reverse order | Adds more envelopes | Throws away the outer one only | Nothing
 line: Each layer adds an envelope on the way out; the other side opens them in reverse.
 breaks: The layer that fails tells you who to blame: room, router, firewall, or the website.
 ladder: App > Windows: here's my message | Windows > Wi-Fi card: TCP + IP + Wi-Fi envelopes | Wi-Fi card > Router: radio waves | Router > Internet: new outer envelope, same inside | Server > App: opened in reverse, the reply comes back the same way
@@ -319,6 +355,7 @@ try: Open any website.
 title: What happens when you open a website
 kind: basics
 tag: Six steps in about a fifth of a second.
+check: What happens first when you open a website? | The name is looked up in DNS | The page is downloaded | The padlock is checked | The cookies are sent
 line: Find the address, open a connection, agree on encryption, ask for the page.
 breaks: Far-away sites feel slow because each step costs a round trip.
 ladder: Your PC > DNS: where is github.com? | DNS > Your PC: 140.82.112.3 | Your PC > Server: SYN | Server > Your PC: SYN-ACK | Your PC > Server: ACK + TLS hello | Server > Your PC: certificate + key | Your PC > Server: GET / | Server > Your PC: 200 OK + the page
@@ -329,6 +366,7 @@ try: Open a website you haven't visited today.
 title: How apps actually use the internet
 kind: basics
 tag: Apps never touch the network - they ask Windows, through sockets.
+check: How does an app send data on the network? | It asks Windows through a socket - it never touches the network itself | It talks to the network card directly | It sends email | It uses Bluetooth
 line: Apps never touch the network - they ask Windows for a connection (a socket).
 breaks: Every connection belongs to exactly one program - Connections shows which.
 ladder: App > Windows: open a socket to 52.112.0.5 port 443 | Windows > Server: SYN from port 51834 | Server > Windows: SYN-ACK | Windows > App: connected - send away | App > Windows: data | Windows > App: reply data
@@ -339,6 +377,7 @@ try: Open an app you haven't used today.
 title: Ports - which app gets the packet
 kind: basics
 tag: The IP address finds the building; the port finds the flat.
+check: If the IP address finds the building, what does the port find? | The flat - which app gets the packet | The street | The country | The postman
 line: The address finds the computer; the port finds the program on it.
 breaks: 'Door refused' means a firewall or a stopped service on that port.
 ladder: Your PC (port 51834) > Server (port 443): HTTPS please | Server (443) > Your PC (51834): here you go
@@ -349,6 +388,7 @@ try: Open a secure website.
 title: Speed isn't one number
 kind: basics
 tag: Bandwidth, delay, jitter and loss - four different things that all feel like "slow".
+check: Which can feel 'slow' even on a fast plan? | High delay, jitter or loss | A big hard disk | A bright screen | A long password
 line: Bandwidth is how much; delay is how long; jitter is how uneven; loss is how much goes missing.
 breaks: Speed tests show bandwidth, but calls and browsing suffer from delay, jitter and loss.
 ladder: Your PC > Router: ping (3 ms) | Router > Internet: ping (+18 ms) | Internet > Your PC: reply after 21 ms, jitter 2 ms, 0% lost
@@ -359,6 +399,7 @@ try: Leave it running for a minute.
 title: Streaming vs calls - why one buffers and the other stutters
 kind: basics
 tag: Netflix can wait; a conversation can't.
+check: Why does Netflix buffer instead of stuttering like a call? | It can download ahead and wait; a conversation can't | It uses better cables | It doesn't use the internet | Calls use no buffer at all
 line: Video downloads ahead and buffers; calls play every packet the moment it arrives.
 breaks: YouTube fine but Teams breaking up is normal on a jittery network.
 ladder: Video server > Your PC: 10 s of video ahead (TCP) | Your PC > Teams relay: 20 ms of audio (UDP) | Teams relay > Your PC: 20 ms of their audio (UDP)
@@ -369,6 +410,7 @@ try: Join a call or play a video.
 title: Why your PC talks when you're doing nothing
 kind: basics
 tag: Sync, updates, notifications and check-ins - all normal, all named.
+check: Why does your PC send traffic when you're doing nothing? | Sync, updates, notifications and check-ins run in the background | It's always a virus | The screen saver uses internet | It never does
 line: Sync, updates, notifications and clock checks keep your PC talking even when idle.
 breaks: A program from Downloads talking at 3 am is worth a look; Defender updating isn't.
 ladder: OneDrive > Microsoft: anything new? | Microsoft > OneDrive: 2 files changed | Teams > Teams service: still here (keep-alive) | Windows > time server: what time is it?
@@ -379,6 +421,7 @@ try: Leave the PC alone for a minute.
 title: How a message reaches you instantly
 kind: basics
 tag: Your app keeps one line open, so the server can call you back.
+check: How does a chat app get a message to you instantly? | It keeps one connection open so the server can send to you | It checks email every minute | It uses SMS | It polls DNS
 line: Apps keep one connection open so the server can send you a message instantly.
 breaks: Late messages: that open line broke quietly after a network change.
 ladder: Teams > Teams service: open, and keep this line open | Teams service > Teams: (silence...) | Teams service > Teams: new message from Alex | Teams > Teams service: got it
@@ -389,6 +432,7 @@ try: Ask someone to send you a chat message.
 title: Path MTU - the biggest packet that fits
 kind: protocol
 tag: Every link has a size limit; the smallest one on the way wins.
+check: Which link decides the biggest packet that fits a whole path? | The smallest MTU anywhere on the way | The first link | The fastest link | The last link
 line: Ethernet carries 1500 bytes; PPPoE, VPNs and tunnels wrap packets and leave less room.
 breaks: Too-big packets are dropped - if no router says so, pages half-load and VPNs stall (a black hole).
 ladder: Your PC > Router: 1500 bytes, don't fragment | Router > Provider (PPPoE): 1500 | Provider > Your PC: too big - max 1492 | Your PC > Server: 1492 bytes
@@ -399,6 +443,7 @@ try: Open a website.
 title: The way back
 kind: protocol
 tag: Your packets and the replies often take different roads.
+check: Do replies always come back the same way your packets went? | No - the way back is often a different road | Yes, always | Only on Wi-Fi | Only for DNS
 line: Each network sends traffic out by its own choice, so the reply route is decided by the far end.
 breaks: Loss or delay only on the way back looks like a problem 'out there' that no trace from your PC shows.
 ladder: Your PC > Rogers: request | Rogers > NTT: request | NTT > Server: request | Server > Cogent: reply | Cogent > Rogers: reply | Rogers > Your PC: reply
@@ -409,6 +454,7 @@ try: Run a trace.
 title: Why a PC feels slow
 kind: windows
 tag: It's rarely the processor - it's memory and the disk.
+check: What usually makes a PC feel slow? | Running out of memory, so it waits on the disk | A slow processor clock | A small screen | Too many desktop icons
 line: When memory is full, Windows parks parts of programs on the disk and reads them back when needed - thousands of times slower.
 breaks: Many pages read back per second, or a disk taking more than 15 ms per request, makes everything stutter.
 ladder: App > Memory: I need my code | Memory > Disk: it was parked - read it back | Disk > Memory: here (12 ms later) | Memory > App: carry on

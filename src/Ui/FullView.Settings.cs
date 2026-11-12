@@ -237,7 +237,7 @@ namespace AdeeboMeter
                         {
                             int nd = History.Days().Count;
                             if (MessageBox.Show(this, L.T("Delete all saved history?") + "\n\n" + nd + " " + L.T("days of history are deleted for good - this can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
-                            History.Clear(); histDay = null; histData = null; histDays = null; histStatAt = DateTime.MinValue; settingsCanvas.Invalidate();
+                            History.Clear(); AirLog.Clear(); histDay = null; histData = null; histDays = null; histStatAt = DateTime.MinValue; settingsCanvas.Invalidate();
                         });
                         y += 30 * S;
                     }

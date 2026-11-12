@@ -43,12 +43,15 @@ namespace AdeeboMeter
             if (tbRows != null) bad.Add("filling the boxes left the example showing");
             // the points dashboard: every tool, Learn topic and page is there, and Go lands on it
             var items = PtAll(); int nTools = Tools2().Count, nLearn = Knowledge.Learn().Count;
-            if (items.Count != nTools + nLearn + PtPages.Length) bad.Add("dashboard has " + items.Count + " rows, want " + (nTools + nLearn + PtPages.Length));
+            int want = nTools + nLearn * 2 /* read + its check question */ + PtPages.Length + (Labs.Length - 1) + 2 /* subnetting streaks */ + 1 /* journey */ + Paths.Length;
+            if (items.Count != want) bad.Add("dashboard has " + items.Count + " rows, want " + want);
             if (items.Select(i => i.Key).Distinct().Count() != items.Count) bad.Add("dashboard keys repeat");
             tab = "points"; ShowTab(); if (!pointsPage.Visible) bad.Add("dashboard didn't open");
             var mtr = items.First(i => i.Key == "mtr"); mtr.Go(); if (tab != "toolbox" || tbSel != "mtr" || !Examples.IsExample(tbRows)) bad.Add("Go on MTR didn't open its Example");
             var lt = items.First(i => i.Group == "Learn"); lt.Go(); if (tab != "learn" || learnSel != "topic:" + lt.Key.Substring(6)) bad.Add("Go on a Learn topic");
             items.First(i => i.Key == "page.replay").Go(); if (tab != "replay") bad.Add("Go on Time machine");
+            items.First(i => i.Key == "lab.mtu").Go(); if (tab != "learn" || learnSel != "lab:mtu") bad.Add("Go on a lab challenge");
+            items.First(i => i.Key == "check.dns").Go(); if (tab != "learn" || learnSel != "topic:dns") bad.Add("Go on a check question");
             pointsSearch.Box.Text = "mtr"; if (!PtFiltered().Any(i => i.Key == "mtr")) bad.Add("search for mtr"); pointsSearch.Box.Text = "";
             var day = ExampleDay.Make(); if (day.M.Count != 1440 || day.M.Any(r => r.Length != History.Cols) || day.E.Count == 0) bad.Add("example day is malformed");
             return string.Join("; ", bad.Take(8));

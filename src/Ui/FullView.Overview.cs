@@ -345,6 +345,14 @@ namespace AdeeboMeter
                     y += 52 * S;
                 }
 
+                // a Windows update that lines up with a lasting slowdown (only when strong and still there)
+                string ub = UpdateBreak.Strong;
+                if (ub != "")
+                {
+                    var ur = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, ur, 10 * S, Theme.LvSoft(1));
+                    using (var tb = new SolidBrush(Theme.LvText(1))) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(ub + "  ›", Draw.fBodyB, tb, new RectangleF(x + 14 * S, y + 8 * S, w - 28 * S, 20 * S), nw);
+                    Act(overviewCanvas, ur, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("winupdate"); }); y += 44 * S;
+                }
                 // needs attention
                 var att = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).Take(4).ToList();
                 g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;

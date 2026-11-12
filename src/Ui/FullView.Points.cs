@@ -66,11 +66,50 @@ namespace AdeeboMeter
             foreach (var t in Knowledge.Learn())
             {
                 string id = t.Id;
-                l.Add(new PtItem { Key = "learn." + id, Title = t["title"], Tag = t["tag"], Group = "Learn", Value = 1, Go = delegate { tab = "learn"; ShowTab(); learnSel = "topic:" + id; learnPkts = null; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); } });
+                Action go = delegate { tab = "learn"; ShowTab(); learnSel = "topic:" + id; learnPkts = null; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); };
+                l.Add(new PtItem { Key = "learn." + id, Title = t["title"], Tag = t["tag"], Group = "Learn", Value = Points.Value("learn." + id), Go = go });
+                if (t["check"] != "") l.Add(new PtItem { Key = "check." + id, Title = t["title"], Tag = CheckParts(t["check"])[0], Group = "Check yourself", Value = Points.Value("check." + id), Go = go });
             }
-            foreach (var pg in PtPages) { string tb = pg[1]; l.Add(new PtItem { Key = pg[0], Title = pg[2], Tag = pg[3], Group = "Pages", Value = 1, Go = delegate { tab = tb; ShowTab(); } }); }
+            // lab challenges, subnetting streaks, the packet journey
+            foreach (var lab in Labs)
+            {
+                string id = lab[0]; Action go = delegate { tab = "learn"; ShowTab(); learnSel = "lab:" + id; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); };
+                if (id == "quiz") { l.Add(new PtItem { Key = "quiz.5", Title = "Subnetting: 5 in a row", Tag = "network, broadcast, hosts - without a slip", Group = "Challenges", Value = Points.Value("quiz.5"), Go = go }); l.Add(new PtItem { Key = "quiz.10", Title = "Subnetting: 10 in a row", Tag = "the same, twice as long", Group = "Challenges", Value = Points.Value("quiz.10"), Go = go }); continue; }
+                string goal; LabGoals.TryGetValue(id, out goal);
+                l.Add(new PtItem { Key = "lab." + id, Title = lab[1], Tag = goal ?? "", Group = "Challenges", Value = Points.Value("lab." + id), Go = go });
+            }
+            l.Add(new PtItem { Key = "journey.explain", Title = "Explain a packet journey", Tag = "capture one of your own connections and press Explain", Group = "Challenges", Value = Points.Value("journey.explain"), Go = delegate { tab = "travel"; ShowTab(); } });
+            foreach (var pg in PtPages) { string tb = pg[1]; l.Add(new PtItem { Key = pg[0], Title = pg[2], Tag = pg[3], Group = "Pages", Value = Points.Value(pg[0]), Go = delegate { tab = tb; ShowTab(); } }); }
+            foreach (var pa in Paths) { var p2 = pa; l.Add(new PtItem { Key = "path." + pa.Id, Title = pa.Title, Tag = pa.Tag, Group = "Learning paths", Value = Points.Value("path." + pa.Id), Go = delegate { tab = "points"; ShowTab(); pointsSearch.Box.Text = ""; pointsCanvas.AutoScrollPosition = Point.Empty; pointsCanvas.Invalidate(); } }); }
             return ptItems = l;
         }
+
+        // ---------- learning paths: a short list in a sensible order; finishing one is +10, once
+        sealed class PathDef { public string Id, Title, Tag; public string[] Keys; }
+        static readonly PathDef[] Paths =
+        {
+            new PathDef { Id = "home", Title = "Home user", Tag = "why the internet feels slow, and what to do about it", Keys = new[] { "learn.osi", "learn.open-website", "learn.dns", "learn.dhcp", "learn.wifi", "learn.speed-vs-delay", "learn.background-chatter", "page.guide", "speedtest", "hotel", "usb", "winupdate", "lab.airtime" } },
+            new PathDef { Id = "gamer", Title = "Gamer", Tag = "ping, jitter and lag - where every millisecond goes", Keys = new[] { "learn.udp", "learn.speed-vs-delay", "learn.streaming-vs-calls", "page.gamer", "ping", "lag", "bloat", "gamecompare", "lab.bloat", "lab.jitter", "lab.game" } },
+            new PathDef { Id = "engineer", Title = "Network engineer", Tag = "TCP, MTU, routing and subnets - from the packets up", Keys = new[] { "learn.tcp", "learn.mtu", "learn.nat", "learn.ipv6", "learn.bgp", "mtr", "mtu", "subnet", "vlsm", "lab.tcp", "lab.mtu", "lab.route", "quiz.10", "journey.explain" } },
+        };
+        public static IEnumerable<string> PathKeys { get { return Paths.SelectMany(p => p.Keys); } }   // the self-test checks every one exists
+        // is this a points key something on the Points page can earn? (the self-test runs every path step through it)
+        public static bool PtKeyKnown(string k)
+        {
+            if (k.StartsWith("learn.", StringComparison.Ordinal)) return Knowledge.Topic(k.Substring(6)) != null;
+            if (k.StartsWith("check.", StringComparison.Ordinal)) { var t = Knowledge.Topic(k.Substring(6)); return t != null && t["check"] != ""; }
+            if (k.StartsWith("lab.", StringComparison.Ordinal)) return LabGoals.ContainsKey(k.Substring(4)) && k != "lab.quiz";
+            if (k.StartsWith("page.", StringComparison.Ordinal)) return PtPages.Any(p => p[0] == k);
+            if (k == "quiz.5" || k == "quiz.10" || k == "journey.explain") return true;
+            return Explain.Term("tb." + k) != null && Points.Value(k) > 0;
+        }
+        void CheckPaths()
+        {
+            if (!Cfg.Points) return;
+            foreach (var p in Paths) if (!Points.Me.Has("path." + p.Id) && p.Keys.All(Points.Me.Has)) EarnPts("path." + p.Id, true, true);
+        }
+        // "question | right answer | wrong | wrong | wrong"
+        static string[] CheckParts(string s) { return (s ?? "").Split('|').Select(x => x.Trim()).ToArray(); }
         IEnumerable<PtItem> PtFiltered()
         {
             string q = pointsSearch == null ? "" : pointsSearch.Box.Text.Trim();
@@ -79,15 +118,18 @@ namespace AdeeboMeter
             return PtAll().Where(i => words.All(wd => (i.Title + " " + L.T(i.Title) + " " + i.Tag + " " + i.Group + " " + L.T(i.Group) + " " + i.Key).IndexOf(wd, StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
-        // award once, flash it on the header button; returns the line to show ("+1 Adeebo Point", "+2 replay bonus" or "")
+        // award once, flash it on the header button; returns the line to show ("+2 Adeebo Points", "+3 replay bonus" or "")
         string EarnPts(string id, bool opened, bool completed)
         {
             if (!Cfg.Points || !completed) return "";
-            bool had = Points.Me.Has(id); int n = Points.Me.Award(id, opened, true, DateTime.UtcNow);
+            bool had = Points.Me.Has(id); int before = Points.Me.Total, n = Points.Me.Award(id, opened, true, DateTime.UtcNow);
             if (n <= 0) return "";
             Program.Log("adeebo points: " + id + " +" + n + " (total " + Points.Me.Total + ")");
-            string line = had ? L.T("+2 replay bonus") : n == 1 ? L.T("+1 Adeebo Point") : "+" + n + " " + L.T("Adeebo Points");
-            pointsFlash = line; pointsFlashUntil = DateTime.Now.AddSeconds(5); SyncPointsBtn();
+            string line = had ? "+" + n + " " + L.T("replay bonus") : id.StartsWith("path.", StringComparison.Ordinal) ? "+" + n + " " + L.T("path finished") : "+" + n + " " + L.T("Adeebo Points");
+            pointsFlash = line; pointsFlashUntil = DateTime.Now.AddSeconds(5);
+            if (before < Points.AwardAt && Points.Me.Total >= Points.AwardAt) { pointsFlash = L.T("You got the Adeebo Award!"); pointsFlashUntil = DateTime.Now.AddSeconds(12); Program.Log("adeebo points: the Adeebo Award"); }
+            SyncPointsBtn();
+            if (!id.StartsWith("path.", StringComparison.Ordinal)) CheckPaths();
             if (pointsCanvas != null && tab == "points") pointsCanvas.Invalidate();
             return line;
         }
@@ -134,6 +176,7 @@ namespace AdeeboMeter
         void PaintPoints(Graphics g)
         {
             g.TranslateTransform(pointsCanvas.AutoScrollPosition.X, pointsCanvas.AutoScrollPosition.Y); Begin(pointsCanvas);
+            CheckPaths();   // a path finished before 1.1.5 (or in another window) is paid the first time this page is drawn
             float x = 24 * S, y = 8 * S, w = pointsCanvas.ClientSize.Width - 48 * S;
             float top = -pointsCanvas.AutoScrollPosition.Y, bottom = top + pointsCanvas.ClientSize.Height;
             int total = Points.Me.Total, left; string rank = Points.Rank(total), next = Points.Next(total, out left);
@@ -145,24 +188,45 @@ namespace AdeeboMeter
                 if (!searching)
                 {
                     // the rank card
-                    var card = new RectangleF(x, y, w, 96 * S); Theme.Fill(g, card, 14 * S, Theme.BlueSoft);
-                    g.DrawString(L.T(rank) + "  ·  " + total + " " + L.T(total == 1 ? "Adeebo Point" : "Adeebo Points"), Draw.fTitle, ink, x + 18 * S, y + 14 * S);
+                    bool award = total >= Points.AwardAt;
+                    var card = new RectangleF(x, y, w, 96 * S); Theme.Fill(g, card, 14 * S, award ? Theme.LvSoft(1) : Theme.BlueSoft);
+                    if (award) Theme.Stroke(g, card, 14 * S, Theme.Amber, 2);
+                    g.DrawString(award ? "★  " + L.T("You got the Adeebo Award") + "  ·  " + total + " " + L.T("Adeebo Points") : L.T(rank) + "  ·  " + total + " " + L.T(total == 1 ? "Adeebo Point" : "Adeebo Points"), Draw.fTitle, ink, x + 18 * S, y + 14 * S);
                     if (!Cfg.Points) g.DrawString(L.T("Earning is off (Settings › Adeebo Points) - your points are kept."), Draw.fSmall, sub, x + 18 * S, y + 46 * S);
                     else
                     {
                         float bw = Math.Min(360 * S, w - 36 * S), frac = next == "" ? 1f : 1f - (float)left / Math.Max(1, left + total - RankFloor(total));
                         var bar = new RectangleF(x + 18 * S, y + 54 * S, bw, 10 * S); Theme.Fill(g, bar, 5 * S, Theme.Track);
                         if (frac > 0) Theme.Fill(g, new RectangleF(bar.X, bar.Y, Math.Max(10 * S, bw * Math.Min(1f, frac)), bar.Height), 5 * S, Theme.Blue);
-                        g.DrawString(next == "" ? L.T("Top rank - every feature you tried taught you something.") : left + " " + L.T("to") + " " + L.T(next), Draw.fSmall, sub, bar.Right + 12 * S, y + 50 * S);
+                        g.DrawString(next == "" ? L.T("Nearly everything AdeeboMeter can teach, tried and understood. Well done.") : left + " " + L.T("to") + " " + L.T(next), Draw.fSmall, sub, bar.Right + 12 * S, y + 50 * S);
                     }
                     y += card.Height + 18 * S;
                     // how to earn
                     g.DrawString(L.T("HOW TO EARN"), Draw.fTiny, muted, x, y); y += 20 * S;
-                    foreach (var h in new[] { new[] { "Open a tool's Example, then run it for real", "+1, or +2 for the longer tests" }, new[] { "Run a tool marked replay again, 10 minutes or more later", "+2, once" }, new[] { "Read a Learn topic to the end", "+1" }, new[] { "Use a page for the first time", "+1" } })
+                    foreach (var h in new[] { new[] { "Open a tool's Example, then run it for real", "+2, or +4 for the longer tests" }, new[] { "Run a tool marked replay again, 10 minutes or more later", "+3, once" }, new[] { "Read a Learn topic to the end", "+2" }, new[] { "Answer its Check yourself question right first time", "+2" }, new[] { "Meet a lab's challenge", "+4" }, new[] { "Subnetting practice: 5 in a row, then 10 in a row", "+3, then +5" }, new[] { "Explain a packet journey of your own", "+3" }, new[] { "Use a page for the first time", "+2" }, new[] { "Finish a learning path", "+10" }, new[] { "Reach " + Points.AwardAt, "the Adeebo Award" } })
                     {
                         g.DrawString(L.T(h[0]), Draw.fBody, ink, x, y); g.DrawString(L.T(h[1]), Draw.fBodyB, green, x + Math.Min(420 * S, w * 0.6f), y); y += 24 * S;
                     }
                     g.DrawString(L.T("Kept on this PC only. Every feature is below - Go takes you straight there."), Draw.fSmall, muted, x, y + 4 * S); y += 34 * S;
+                    // learning paths: progress for each
+                    g.DrawString(L.T("LEARNING PATHS"), Draw.fTiny, muted, x, y); y += 22 * S;
+                    var byKey = PtAll().GroupBy(i => i.Key).ToDictionary(gr => gr.Key, gr => gr.First());
+                    float pw = Math.Max(220 * S, (w - 28 * S) / 3);
+                    for (int i = 0; i < Paths.Length; i++)
+                    {
+                        var pa = Paths[i]; int got = pa.Keys.Count(Points.Me.Has); bool fin = Points.Me.Has("path." + pa.Id) || got == pa.Keys.Length;
+                        float px = w >= 700 * S ? x + i * (pw + 14 * S) : x, py = w >= 700 * S ? y : y + i * 96 * S; var pc = new RectangleF(px, py, w >= 700 * S ? pw : w, 84 * S);
+                        Theme.Fill(g, pc, 12 * S, fin ? Theme.LvSoft(0) : Theme.Soft);
+                        g.DrawString((fin ? "✓ " : "") + L.T(pa.Title), Draw.fBodyB, ink, pc.X + 14 * S, pc.Y + 10 * S);
+                        g.DrawString(L.T(pa.Tag), Draw.fSmall, sub, new RectangleF(pc.X + 14 * S, pc.Y + 32 * S, pc.Width - 28 * S, 20 * S), nowrap);
+                        var pb = new RectangleF(pc.X + 14 * S, pc.Y + 60 * S, pc.Width - 100 * S, 8 * S); Theme.Fill(g, pb, 4 * S, Theme.Track);
+                        if (got > 0) Theme.Fill(g, new RectangleF(pb.X, pb.Y, Math.Max(8 * S, pb.Width * got / pa.Keys.Length), pb.Height), 4 * S, fin ? Theme.Green : Theme.Blue);
+                        g.DrawString(got + " / " + pa.Keys.Length + (fin ? "" : "  · +10"), Draw.fTiny, fin ? green : muted, pb.Right + 10 * S, pb.Y - 4 * S);
+                        // Go: the first step not done yet
+                        var nextKey = pa.Keys.FirstOrDefault(k2 => !Points.Me.Has(k2)); PtItem nx;
+                        if (nextKey != null && byKey.TryGetValue(nextKey, out nx)) { var go = nx.Go; Act(pointsCanvas, pc, delegate { go(); }); }
+                    }
+                    y += (w >= 700 * S ? 84 * S : Paths.Length * 96 * S) + 22 * S;
                 }
                 // every feature, grouped
                 var items = PtFiltered().ToList(); float rh = 30 * S, tagX = x + Math.Min(300 * S, w * 0.34f), ptsX = x + w - 150 * S;
@@ -182,7 +246,7 @@ namespace AdeeboMeter
                             using (var dot = new SolidBrush(has ? Theme.Green : Theme.Line)) g.FillEllipse(dot, x, y + 10 * S, 10 * S, 10 * S);
                             g.DrawString(it.Title, Draw.fBodyB, ink, new RectangleF(x + 18 * S, y + 5 * S, tagX - x - 26 * S, 22 * S), nowrap);
                             g.DrawString(it.Tag, Draw.fSmall, sub, new RectangleF(tagX, y + 7 * S, ptsX - tagX - 10 * S, 22 * S), nowrap);
-                            string pts = it.Value == 0 ? L.T("no points") : (has ? "✓ " : "") + "+" + it.Value + (it.Replay ? (rep ? "  ·  replay ✓" : "  ·  replay +2") : "");
+                            string pts = it.Value == 0 ? L.T("no points") : (has ? "✓ " : "") + "+" + it.Value + (it.Replay ? (rep ? "  ·  replay ✓" : "  ·  replay +" + Points.ReplayPts) : "");
                             g.DrawString(pts, Draw.fSmall, it.Value == 0 ? muted : has ? green : ink, ptsX, y + 7 * S);
                             g.DrawString(L.T("Go") + " ›", Draw.fBodyB, blue, x + w - 34 * S, y + 5 * S);
                             var go = it.Go; Act(pointsCanvas, rr, delegate { go(); });
@@ -195,6 +259,6 @@ namespace AdeeboMeter
             }
             Need(pointsCanvas, y);
         }
-        static int RankFloor(int total) { int f = 0; foreach (var t in new[] { 0, 15, 50, 100 }) if (total >= t) f = t; return f; }
+        static int RankFloor(int total) { int f = 0; foreach (var t in Points.Floors) if (total >= t) f = t; return f; }
     }
 }

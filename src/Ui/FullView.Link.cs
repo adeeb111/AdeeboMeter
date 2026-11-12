@@ -88,6 +88,7 @@ namespace AdeeboMeter
             y = ListCard(g, "ADDRESS (DHCP) TROUBLE IN THE LAST 24 HOURS", ls.Dhcp, ls.DhcpErr != "" ? ls.DhcpErr : "None - your address renewed without a hitch.", "link.DHCP", x, y, w);
             y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), "None in Windows' table yet.", "link.LAN", x, y, w);
             if (ls.Wifi && ls.MyChannel > 0 && ls.Aps.Count > 0) y = PaintChannelMap(g, ls, x, y, w);
+            if (ls.Wifi) y = PaintWars(g, x, y, w);
             else if (ls.Wifi && ls.Aps.Count == 0 && !ls.LocationBlocked)
                 using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so."), Draw.fBody, mb, x, y); y += 30 * S; }
             if (!ls.Wifi)
@@ -235,6 +236,56 @@ namespace AdeeboMeter
                     }
                 }
             return y + card2.Height + 16 * S;
+        }
+            // ---------- neighbour wars: 7 days of who is on your air (read in the background, at most every 10 minutes)
+        AirLog.Wars wars; DateTime warsAt = DateTime.MinValue; volatile bool warsBusy;
+        float PaintWars(Graphics g, float x, float y, float w)
+        {
+            if (!warsBusy && (DateTime.UtcNow - warsAt).TotalMinutes > 10)
+            {
+                warsBusy = true; warsAt = DateTime.UtcNow;
+                Task.Factory.StartNew(() => { AirLog.Wars r = null; try { r = AirLog.Analyse(AirLog.Load()); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wars: " + e.Message); } try { BeginInvoke((Action)delegate { warsBusy = false; wars = r; linkCanvas.Invalidate(); }); } catch (InvalidOperationException) { warsBusy = false; } });
+            }
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
+            Hint(linkCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "link.WARS"); y += 22 * S;
+            var wr = wars;
+            if (!Cfg.History) return Lead(g, "Turn on History in Settings and AdeeboMeter writes down who is on your air once an hour (the list Windows already has - no extra scanning), kept 7 days on this PC.", x, y, w, true);
+            if (wr == null || wr.Nets.Count == 0 || wr.MyChannel <= 0) return Lead(g, "Nothing recorded yet - the first reading comes within the hour (Windows' location permission for desktop apps is needed to see neighbours).", x, y, w, true);
+            var days = wr.DaysSeen.Skip(Math.Max(0, wr.DaysSeen.Count - 7)).ToList();
+            float nameW = Math.Min(240 * S, w * 0.3f), infoW = Math.Min(230 * S, w * 0.28f), dayW = Math.Max(30 * S, (w - nameW - infoW) / Math.Max(1, days.Count));
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var amb = new SolidBrush(Theme.LvText(1))) using (var c = new StringFormat { Alignment = StringAlignment.Center })
+            using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+            {
+                for (int i = 0; i < days.Count; i++) g.DrawString(days[i].ToString("ddd", CultureInfo.CurrentCulture), Draw.fTiny, muted, new RectangleF(x + nameW + infoW + i * dayW, y, dayW, 16 * S), c);
+                y += 20 * S; int rank = 0;
+                foreach (var n in wr.Nets.Take(10))
+                {
+                    rank++; bool share = !n.Mine && n.Channel == wr.MyChannel;
+                    using (var nb = new SolidBrush(n.Mine ? Theme.Blue : share ? Theme.LvText(1) : Theme.Ink)) g.DrawString(rank + "  " + n.Name + (n.Mine ? "  (you)" : ""), n.Mine ? Draw.fBodyB : Draw.fBody, nb, new RectangleF(x, y, nameW - 6 * S, 20 * S), nowrap);
+                    g.DrawString(n.Rssi.ToString("0", CultureInfo.CurrentCulture) + " dBm · ch " + n.Channel + (n.Width > 20 ? " · " + n.Width + " MHz" : "") + (n.Moved != "" ? " · moved " + n.Moved : ""), Draw.fSmall, share ? amb : sub, new RectangleF(x + nameW, y + 2 * S, infoW - 6 * S, 18 * S), nowrap);
+                    for (int i = 0; i < days.Count; i++)
+                    {
+                        string win; bool won = wr.Winner.TryGetValue(days[i], out win) && (n.Mine ? win == "you" : win == n.Name);
+                        int ch; bool here = n.ChByDay.TryGetValue(days[i], out ch); bool onMine = here && (ch == wr.MyChannel || LinkInfo.Overlaps(ch, wr.MyChannel, wr.MyBand));
+                        var cr = new RectangleF(x + nameW + infoW + i * dayW + dayW / 2 - 7 * S, y + 3 * S, 14 * S, 14 * S);
+                        if (won) using (var wb = new SolidBrush(n.Mine ? Theme.Green : Theme.Amber)) g.FillEllipse(wb, cr);
+                        else if (onMine) using (var p = new Pen(n.Mine ? Theme.Green : Theme.Amber, 1.5f * S)) g.DrawEllipse(p, cr);
+                        else if (here) using (var db = new SolidBrush(Theme.Track)) g.FillEllipse(db, cr.X + 4 * S, cr.Y + 4 * S, 6 * S, 6 * S);
+                    }
+                    y += 24 * S;
+                }
+                // your channel's crowding, day by day
+                g.DrawString(L.T("Crowding on your channel"), Draw.fSmall, muted, x, y + 4 * S);
+                double cm = Math.Max(10, wr.Crowding.Count > 0 ? wr.Crowding.Values.Max() : 10);
+                for (int i = 0; i < days.Count; i++)
+                {
+                    double v; wr.Crowding.TryGetValue(days[i], out v); float bh = (float)(v / cm) * 22 * S;
+                    Theme.Fill(g, new RectangleF(x + nameW + infoW + i * dayW + dayW / 2 - 8 * S, y + 26 * S - bh, 16 * S, Math.Max(2, bh)), 3 * S, v > cm * 0.6 ? Theme.Amber : Theme.Rail);
+                }
+                y += 34 * S;
+                g.DrawString(L.T("filled = strongest on your channel that day · ring = on your channel · dot = heard here"), Draw.fTiny, muted, x, y); y += 18 * S;
+            }
+            return Lead(g, wr.Verdict, x, y + 4 * S, w, false);
         }
     }
 }

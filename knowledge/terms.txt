@@ -2388,6 +2388,26 @@ how: No new traffic: it reads the pings already running (the Gamer Zone's for th
 why: Wi-Fi, provider, server or the PC itself - each has a different fix.
 without: It can't read the game's in-game ping or frame rate.
 
+== tb.winupdate
+friendly: What did Windows Update break?
+cat: term
+close: -1
+tag: Did an update or a new driver make the connection worse?
+what: Every update and driver installed in the last 14 days, each with your ping and outages for the three days before and the three days after it, from AdeeboMeter's History. Names the one where things got worse - and whether it's still like that.
+how: Windows' own install log and AdeeboMeter's History; nothing is sent. Needs History on for the comparison.
+why: A lasting slowdown that starts the day after an update is worth undoing to test. It says "started after", never "caused by" - a provider can have a bad week too.
+without: Without History it lists what was installed, and can't compare.
+
+== link.WARS
+friendly: Neighbour wars
+cat: term
+close: -1
+tag: Seven days of who is on your Wi-Fi channel.
+what: Once an hour the Wi-Fi list Windows already has is written down - each network's channel, width and signal - and kept 7 days. Shows who was strongest on your channel each day, who moved onto it, and the quietest channel all week.
+how: No extra scanning; on this PC only, and only while History is on. Deleting History deletes it too.
+why: Makes the channel advice obvious: you see the neighbour arrive, and the empty channel waiting.
+without: Needs Windows' location permission for desktop apps to see neighbours.
+
 == tb.winev
 friendly: Windows' own evidence
 cat: term

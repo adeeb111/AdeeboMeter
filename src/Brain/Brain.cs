@@ -104,6 +104,8 @@ namespace AdeeboMeter
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
             if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));
+            if (t.Minute == 5) Task.Factory.StartNew(() => { try { AirLog.Record(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("air: " + e.Message); } });   // neighbour wars: once an hour
+            if (t.Minute == 20) UpdateBreak.Background();   // what Windows Update changed: once an hour, in the background
         }
     }
 

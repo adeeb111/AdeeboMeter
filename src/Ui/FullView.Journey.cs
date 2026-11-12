@@ -338,7 +338,7 @@ namespace AdeeboMeter
             {
                 var ls = g.MeasureString(L.T("Explain this capture"), Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                 Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(L.T("Explain this capture"), Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
-                Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); travelCanvas.Invalidate(); });
+                Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); if (rs.Count > 0) EarnPts("journey.explain", true, true); /* Adeebo Points: the first capture explained */ travelCanvas.Invalidate(); });
                 y += 42 * S;
                 return Lead(g, "Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.", x, y, w, true);
             }

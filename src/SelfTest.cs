@@ -574,7 +574,7 @@ namespace AdeeboMeter
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);
                 foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "", "https://github.com/adeeb111/AdeeboMeterEvil", "https://github.com/adeeb111/AdeeboMeter@evil.example", "https://x@github.com/adeeb111/AdeeboMeter", "https://adeeb111.github.io/AdeeboMeterX/" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
             });
-            T("Adeebo Points: +1 / +2 once, replay +2 once, survives a restart, off keeps the total", () =>
+            T("Adeebo Points: +2 / +4 once, replay +3 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
             {
                 var bad = new List<string>();
                 if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
@@ -587,21 +587,24 @@ namespace AdeeboMeter
                     if (p.Total != 0) bad.Add("fresh total " + p.Total);
                     if (p.Award("ping", false, true, t0, t0) != 0) bad.Add("earned without opening the Example");
                     if (p.Award("ping", true, false, t0, t0) != 0) bad.Add("earned with earning off");
-                    if (p.Award("ping", true, true, t0, t0) != 1) bad.Add("first run not +1");
+                    if (p.Award("ping", true, true, t0, t0) != 2) bad.Add("first run not +2");
                     if (p.Award("ping", true, true, t0.AddMinutes(1), t0.AddMinutes(1)) != 0 || p.Award("ping", true, true, t0.AddHours(3), t0.AddHours(3)) != 0) bad.Add("regular example earned twice");
-                    if (p.Award("ispreport", true, true, t0, t0) != 2) bad.Add("a longer test (ISP report) first not +2");
+                    if (p.Award("ispreport", true, true, t0, t0) != 4) bad.Add("a longer test (ISP report) first not +4");
                     if (p.Award("ispreport", true, true, t0.AddMinutes(5), t0.AddMinutes(5)) != 0) bad.Add("replay bonus inside 10 minutes");
-                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != 2) bad.Add("replay bonus not +2");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != 3) bad.Add("replay bonus not +3");
                     if (p.Award("ispreport", true, true, t0.AddMinutes(40), t0.AddMinutes(40)) != 0) bad.Add("replay bonus twice");
                     if (p.Award("udpsend", true, true, t0, t0) != 0) bad.Add("a Traffic Lab sender earned");
-                    if (p.Award("mtr", true, true, t0, t0) != 2 || p.Award("mtr", true, true, t0.AddMinutes(11), t0.AddMinutes(1)) != 0) bad.Add("moving the Windows clock paid the replay bonus");
-                    if (p.Total != 7) bad.Add("total " + p.Total + " (want 7)");
-                    var again = new Points(f); if (again.Total != 7 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
+                    if (p.Award("mtr", true, true, t0, t0) != 4 || p.Award("mtr", true, true, t0.AddMinutes(11), t0.AddMinutes(1)) != 0) bad.Add("moving the Windows clock paid the replay bonus");
+                    if (p.Total != 13) bad.Add("total " + p.Total + " (want 13)");
+                    var again = new Points(f); if (again.Total != 13 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
                     if (again.Award("ispreport", true, true, t0.AddDays(1), t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1), t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
-                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 7) bad.Add("earning off changed the total");
-                    if (again.Award("learn.dhcp", true, true, t0, t0) != 1 || again.Award("page.replay", true, true, t0, t0) != 1 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
+                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 13) bad.Add("earning off changed the total");
+                    if (again.Award("learn.dhcp", true, true, t0, t0) != 2 || again.Award("page.replay", true, true, t0, t0) != 2 || again.Award("check.dhcp", true, true, t0, t0) != 2 || again.Award("lab.tcp", true, true, t0, t0) != 4 || again.Award("quiz.5", true, true, t0, t0) != 3 || again.Award("quiz.10", true, true, t0, t0) != 5 || again.Award("journey.explain", true, true, t0, t0) != 3 || again.Award("path.gamer", true, true, t0, t0) != 10 || again.Award("lab.tcp", true, true, t0.AddHours(2), t0.AddHours(2)) != 0 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
                     if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
-                    int left; if (Points.Rank(14) != "Beginner" || Points.Rank(15) != "Learner" || Points.Rank(49) != "Learner" || Points.Rank(50) != "Troubleshooter" || Points.Rank(100) != "Expert" || Points.Next(32, out left) != "Troubleshooter" || left != 18) bad.Add("ranks");
+                    int left; if (Points.Rank(29) != "Beginner" || Points.Rank(30) != "Learner" || Points.Rank(99) != "Learner" || Points.Rank(100) != "Troubleshooter" || Points.Rank(200) != "Expert" || Points.Rank(300) != "Network detective" || Points.Rank(499) != "Packet whisperer" || Points.Rank(Points.AwardAt) != "Adeebo Award" || Points.Next(32, out left) != "Troubleshooter" || left != 68 || Points.Next(600, out left) != "") bad.Add("ranks");
+                    // a points file from 1.1.4 (+1 per tool, +2 replay) counts at today's values
+                    string old = f + ".old"; File.WriteAllLines(old, new[] { "ping|" + t0.Ticks + "|-|1", "mtr|" + t0.Ticks + "|" + t0.AddMinutes(20).Ticks + "|2", "learn.dns|" + t0.Ticks + "|-|1" });
+                    try { var po = new Points(old); if (po.Total != 2 + 4 + 3 + 2) bad.Add("1.1.4 file total " + po.Total); } finally { try { File.Delete(old); } catch (IOException) { } }
                     var ex = Examples.Rows(Examples.Get("ping"), true);
                     if (Points.Completed(ex, false)) bad.Add("an example counted as a run");
                     if (Points.Completed(new List<string[]> { new[] { "0", "Replies", "50 of 50", "", "m" } }, true)) bad.Add("a stopped run counted");
@@ -609,6 +612,59 @@ namespace AdeeboMeter
                     if (!Points.Completed(new List<string[]> { new[] { "2", "Closed", "port 25 blocked", "", "m" } }, false)) bad.Add("a real (bad) result didn't count");
                 }
                 finally { try { File.Delete(f); } catch (IOException) { } }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
+            T("Adeebo Points 1.1.5: a check question per Learn topic, a challenge per lab, learning paths that exist", () =>
+            {
+                var bad = new List<string>();
+                foreach (var t in Knowledge.Learn())
+                {
+                    var p = t["check"].Split('|').Select(x => x.Trim()).ToArray();
+                    if (p.Length != 5 || p.Any(x => x == "") || p.Skip(1).Distinct().Count() != 4) bad.Add(t.Id + ": check question needs a question, the answer and 3 wrong ones");
+                }
+                foreach (var k in FullView.PathKeys) if (!FullView.PtKeyKnown(k)) bad.Add("path step " + k + " doesn't exist");
+                if (Points.Value("lab.tcp") != 4 || Points.Value("check.dns") != 2 || Points.Value("path.home") != 10 || Points.Value("udpsend") != 0) bad.Add("values");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)));
+            });
+            T("What did Windows Update break: before/after per install, KB names", () =>
+            {
+                var bad = new List<string>();
+                if (UpdateBreak.Short("2026-11 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5046617)") != "KB5046617 (Cumulative Update)") bad.Add("KB name: " + UpdateBreak.Short("2026-11 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5046617)"));
+                if (UpdateBreak.Short("Security Intelligence Update for Microsoft Defender Antivirus - KB2267602 (Version 1.421.1)") != "KB2267602 (Defender definitions)") bad.Add("Defender name");
+                var day0 = DateTime.Today.AddDays(-6); var c = new UpdateBreak.Change { T = day0.AddHours(3), What = "KB5046617", Kind = "update" };
+                // worse from the day after, and still worse today
+                Func<DateTime, UpdateBreak.DayStat> worse = d => new UpdateBreak.DayStat { D = d, Ping = d > day0 ? 62 : 21, Drops = d > day0 ? 3 : 0, Minutes = 1440 };
+                var f = UpdateBreak.Compare(c, worse); if (!f.Strong || !f.Stayed || f.Lv != 2) bad.Add("clear change: " + f.Text);
+                // the same before and after
+                Func<DateTime, UpdateBreak.DayStat> same = d => new UpdateBreak.DayStat { D = d, Ping = 21 + (d.Day % 3), Drops = 0, Minutes = 1440 };
+                f = UpdateBreak.Compare(c, same); if (f.Lv != 0 || f.Strong) bad.Add("no change: " + f.Text);
+                // a one-day blip that has gone again
+                Func<DateTime, UpdateBreak.DayStat> blip = d => new UpdateBreak.DayStat { D = d, Ping = d == day0.AddDays(1) || d == day0.AddDays(2) ? 70 : 21, Drops = 0, Minutes = 1440 };
+                f = UpdateBreak.Compare(c, blip); if (f.Stayed) bad.Add("a blip that settled said 'still like that'");
+                // no History before it
+                Func<DateTime, UpdateBreak.DayStat> none = d => new UpdateBreak.DayStat { D = d, Ping = d > day0 ? 30 : double.NaN };
+                f = UpdateBreak.Compare(c, none); if (f.Lv != 3 || f.Strong) bad.Add("no History judged anyway");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
+            T("Neighbour wars: winner per day, who moved onto your channel, the quietest channel", () =>
+            {
+                var bad = new List<string>(); var rows = new List<AirLog.Row>(); var d0 = DateTime.Today.AddDays(-2);
+                for (int day = 0; day < 3; day++) for (int h = 0; h < 4; h++)
+                {
+                    var t = d0.AddDays(day).AddHours(9 + h);
+                    rows.Add(new AirLog.Row { T = t, Bssid = "02:00:00:00:00:01", Ssid = "Home", Band = "2.4 GHz", Channel = 6, Width = 20, Rssi = -50, Sec = "WPA2", Mine = true });
+                    rows.Add(new AirLog.Row { T = t, Bssid = "02:00:00:00:00:02", Ssid = "Neighbour", Band = "2.4 GHz", Channel = day == 0 ? 1 : 6, Width = 20, Rssi = -45, Sec = "WPA2" });
+                    rows.Add(new AirLog.Row { T = t, Bssid = "02:00:00:00:00:03", Ssid = "Far", Band = "2.4 GHz", Channel = 11, Width = 20, Rssi = -80, Sec = "WPA3" });
+                }
+                var w = AirLog.Analyse(rows);
+                if (w.MyChannel != 6 || w.DaysSeen.Count != 3) bad.Add("my channel " + w.MyChannel + " days " + w.DaysSeen.Count);
+                string win0, win2; w.Winner.TryGetValue(d0, out win0); w.Winner.TryGetValue(d0.AddDays(2), out win2);
+                if (win0 != "you" || win2 != "Neighbour") bad.Add("winners " + win0 + " / " + win2);
+                var nb = w.Nets.FirstOrDefault(n => n.Name == "Neighbour"); if (nb == null || nb.Moved == "") bad.Add("the move onto channel 6 not seen");
+                if (w.Nets.Any(n => n.Name == "Far" && n.Moved != "")) bad.Add("Far moved?");
+                if (w.Quiet != 1) bad.Add("quietest " + w.Quiet);
+                if (w.Verdict.IndexOf("Neighbour moved onto it", StringComparison.Ordinal) < 0 || w.Verdict.IndexOf("1 of 3", StringComparison.Ordinal) < 0) bad.Add("verdict: " + w.Verdict);
+                if (AirLog.Analyse(new List<AirLog.Row>()).Nets.Count != 0) bad.Add("empty log");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("packet journey: filter, records, translation and Explain rules", () =>
@@ -847,7 +903,7 @@ namespace AdeeboMeter
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
                     "travel.LADDER", "travel.ANATOMY", "travel.JOURNEY", "travel.JTIME", "travel.JREAL", "travel.JSAY", "travel.JEXPLAIN", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "ov.WEATHER", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "stack", "vlsm", "bandwidth", "binhex", "timeline", "hotel", "dnsrace", "inventory", "drivers", "usb", "lag", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "certcmp", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "ov.WEATHER", "link.WARS", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "stack", "vlsm", "bandwidth", "binhex", "timeline", "hotel", "dnsrace", "inventory", "drivers", "usb", "lag", "winupdate", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "certcmp", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));

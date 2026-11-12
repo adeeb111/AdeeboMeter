@@ -84,7 +84,9 @@ namespace AdeeboMeter
             {
                 for (int d = 0; d < 7; d++)
                 {
-                    g.DrawString(DateTime.Today.AddDays(d - 6).ToString("ddd d", CultureInfo.CurrentCulture), Draw.fSmall, mb, 0, d * rh + 3 * S);
+                    var dd = DateTime.Today.AddDays(d - 6);
+                    g.DrawString(dd.ToString("ddd d", CultureInfo.CurrentCulture), Draw.fSmall, mb, 0, d * rh + 3 * S);
+                    if (UpdateBreak.ChangeDays.Contains(dd)) using (var ub = new SolidBrush(Theme.Blue)) g.FillEllipse(ub, lw - 12 * S, d * rh + 7 * S, 7 * S, 7 * S);   // something was installed that day
                     for (int h = 0; h < 24; h++)
                     {
                         int l = weekLv[d, h];

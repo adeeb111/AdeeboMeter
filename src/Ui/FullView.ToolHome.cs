@@ -23,7 +23,7 @@ namespace AdeeboMeter
             new[] { "keys", "Keys and encryption", "KEYS & ENCRYPTION", "encrypt|decrypt|keys" },
             new[] { "win", "Windows and certificates", "WINDOWS|CERTIFICATES & FILES", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
-            new[] { "pc", "Is it this PC?", "THE PC", "usb|pressure|drivers" },   // the PC's own checks: on no other card
+            new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },   // the PC's own checks: on no other card
             new[] { "calc", "Work it out", "CALCULATORS", "subnet|stack|bandwidth" } };   // pure arithmetic, nothing sent
         string tbQ = "";   // the question page open ("" = all questions)
         DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;

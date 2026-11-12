@@ -149,6 +149,7 @@ namespace AdeeboMeter
                 T("drivers", "THE PC", "Drivers, device problems and USB history", null, (a, r) => Picks.Drivers()),
                 T("usb", "THE PC", "Why isn't my USB device working?", "Which device (optional) - part of its name, e.g. headset, mouse, disk", (a, r) => Guided.Usb(a[0])),
                 T("lag", "SPEED", "Why is my game lagging?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => Guided.Lag(M, a[0])),
+                T("winupdate", "THE PC", "What did Windows Update break?", null, (a, r) => UpdateBreak.Run()),
                 T("winev", "WINDOWS", "Windows' own evidence", null, (a, r) => WinEvidence.All(M)),
                 T("auth", "WINDOWS", "Why network sign-in failed (802.1X)", null, (a, r) => WinEvidence.Auth()),
                 T("dc", "WINDOWS", "Domain controllers", null, (a, r) => SysTools.DomainControllers(M)),
@@ -195,7 +196,7 @@ namespace AdeeboMeter
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
             new[] { "KEYS & ENCRYPTION", "encrypt", "decrypt", "keys", "newkey", "recipients", "csrmake", "selfsigned", "certmatch", "certlive" },
             new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
-            new[] { "THE PC", "usb", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
+            new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "CALCULATORS", "net" },
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
@@ -251,7 +252,7 @@ namespace AdeeboMeter
             tbRows = Examples.Rows(ex, tbBoxes.Any(b => b != null)); tbAward = "";
             if (Cfg.Points && tbRows.Count > 0)
             {
-                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) ? L.T("Replay bonus · +2 - run it again at least 10 minutes after your first run.") : L.T("Already earned.")) : L.T("Run it for real: +1 Adeebo Point.") + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +2") : "");
+                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) ? L.T("Replay bonus · +3 - run it again at least 10 minutes after your first run.") : L.T("Already earned.")) : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Adeebo Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +3") : "");
                 tbRows[0][3] = (tbRows[0][3] + "  " + note).Trim();
             } tbRowsKey = "example"; tbAt = DateTime.Now; tbRun0 = null; tbShown = null; tbCompare = false;
             tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();

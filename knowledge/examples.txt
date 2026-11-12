@@ -401,6 +401,12 @@ in: valorant
 0|→ the game's server (NA East)|41 ms · jitter 23 ms · lost 2%||i
 3|Honest limits|AdeeboMeter measures the network with its own probes; it can't read the game's in-game ping or frame rate.||i
 
+== winupdate
+2|Verdict|Things got worse starting the day after KB5046617 (Cumulative Update) (Tue 4 Nov): things got clearly worse starting the day after - ping 18 ms → 41 ms · drops a day 0 → 2.7 - and it's still like that|It started then - that's not proof it's the cause (your provider can have a bad week too). To test it: Settings › Windows Update › Update history › Uninstall updates. If it gets better, that was it.|w
+0|Fri 7 Nov · update|Defender definitions - no change after it - ping 40 ms → 41 ms · drops a day 2.7 → 2.3||w
+2|Tue 4 Nov · update|KB5046617 (Cumulative Update) - things got clearly worse starting the day after - ping 18 ms → 41 ms · drops a day 0 → 2.7 - and it's still like that||w
+0|Sat 1 Nov · driver|driver: Example Wi-Fi 6 adapter - no change after it - ping 18 ms → 18 ms · drops a day 0 → 0||w
+
 # ---------------------------------------------------------------- traffic lab
 == icmpb
 in: 192.0.2.10|5|size 1472 df

@@ -594,3 +594,58 @@ Network, broadcast, hosts - check yourself.	Réseau, diffusion, hôtes - vérifi
 Full screen	Plein écran
 Play	Lire
 Show all	Tout afficher
+Run it for real:	Lancez-le pour de vrai :
+Replay bonus · +3	Bonus de relance · +3
+Replay bonus · +3 - run it again at least 10 minutes after your first run.	Bonus de relance · +3 - relancez-le au moins 10 minutes après la première fois.
+replay bonus	bonus de relance
+path finished	parcours terminé
+You got the Adeebo Award!	Vous avez gagné le Prix Adeebo !
+You got the Adeebo Award	Vous avez gagné le Prix Adeebo
+Adeebo Award	Prix Adeebo
+Network detective	Détective réseau
+Packet whisperer	Murmureur de paquets
+Nearly everything AdeeboMeter can teach, tried and understood. Well done.	Presque tout ce qu'AdeeboMeter peut enseigner, essayé et compris. Bravo.
++2, or +4 for the longer tests	+2, ou +4 pour les tests longs
++3, once	+3, une fois
++2	+2
+Answer its Check yourself question right first time	Répondez juste du premier coup à sa question Vérifiez-vous
+Meet a lab's challenge	Relevez le défi d'un labo
+Subnetting practice: 5 in a row, then 10 in a row	Entraînement aux sous-réseaux : 5 d'affilée, puis 10 d'affilée
++3, then +5	+3, puis +5
+Explain a packet journey of your own	Expliquez un de vos propres trajets de paquets
+Finish a learning path	Terminez un parcours
++10	+10
+the Adeebo Award	le Prix Adeebo
+LEARNING PATHS	PARCOURS
+Learning paths	Parcours
+Home user	Utilisateur à la maison
+Network engineer	Ingénieur réseau
+why the internet feels slow, and what to do about it	pourquoi Internet semble lent, et quoi faire
+ping, jitter and lag - where every millisecond goes	ping, gigue et lag - où part chaque milliseconde
+TCP, MTU, routing and subnets - from the packets up	TCP, MTU, routage et sous-réseaux - à partir des paquets
+Check yourself	Vérifiez-vous
+CHECK YOURSELF	VÉRIFIEZ-VOUS
+Challenges	Défis
+CHALLENGE	DÉFI
+in a row	d'affilée
+Right.	Juste.
+Not quite - the answer is	Pas tout à fait - la réponse est
+(you can try again next time AdeeboMeter starts)	(vous pourrez réessayer au prochain démarrage d'AdeeboMeter)
+Subnetting: 5 in a row	Sous-réseaux : 5 d'affilée
+Subnetting: 10 in a row	Sous-réseaux : 10 d'affilée
+network, broadcast, hosts - without a slip	réseau, diffusion, hôtes - sans faute
+the same, twice as long	pareil, deux fois plus long
+Explain a packet journey	Expliquer un trajet de paquets
+capture one of your own connections and press Explain	capturez une de vos connexions et appuyez sur Expliquer
+Cause a timeout (set clicks to hard loss, then click the graph) and watch slow start begin again.	Provoquez une expiration (clics en perte dure, puis cliquez sur le graphique) et regardez le démarrage lent recommencer.
+Set the round trip to 150 ms or more, then find the loss that still lets one download reach 25 Mbps.	Mettez l'aller-retour à 150 ms ou plus, puis trouvez la perte qui laisse encore un téléchargement atteindre 25 Mbit/s.
+Keep the backup sending at 100% or more and get the ping under 40 ms.	Gardez la sauvegarde à 100 % ou plus et faites passer le ping sous 40 ms.
+With 30 ms of jitter or more, reach a call score of 4.0 with the smallest buffer that does it.	Avec 30 ms de gigue ou plus, atteignez une note d'appel de 4,0 avec le plus petit tampon qui y arrive.
+Keep a far-away old device on and rescue the near laptops: switch the router to airtime fairness and see how much faster they get.	Gardez un vieil appareil éloigné allumé et sauvez les portables proches : passez le routeur en équité du temps d'antenne et voyez combien ils accélèrent.
+Trace a name for real and see every server that answered.	Tracez un nom pour de vrai et voyez chaque serveur qui a répondu.
+Find out whether your provider puts you behind a second NAT (CGNAT).	Découvrez si votre fournisseur vous met derrière un second NAT (CGNAT).
+Make a black hole, then fix it without turning the tunnel off.	Créez un trou noir, puis réparez-le sans couper le tunnel.
+Look up three different destinations in your own route table.	Cherchez trois destinations différentes dans votre propre table de routage.
+Keep the ping at 30 ms or more and get the whole budget under 60 ms.	Gardez le ping à 30 ms ou plus et faites passer le budget total sous 60 ms.
+Find an upload where even first come, first served keeps the call's wait under 10 ms.	Trouvez un débit montant où même premier arrivé, premier servi garde l'attente de l'appel sous 10 ms.
+Get 5 right in a row, then 10 in a row.	5 justes d'affilée, puis 10 d'affilée.

@@ -84,6 +84,7 @@ namespace AdeeboMeter
             var topic = Knowledge.Topic(learnSel.Substring(6));
             y = PaintTopic(g, learnInfo, topic, x, y, w);
             if (topic != null) LearnRead(y);   // Adeebo Points: the topic's text read to the end
+            if (topic != null && topic["check"] != "") y = PaintCheck(g, topic, x, y + 8 * S, w);
             if (topic != null && topic["live"] != "")
             {
                 y += 6 * S;
@@ -102,6 +103,39 @@ namespace AdeeboMeter
             }
             Need(learnInfo, y);
         }
+        // ---------- Check yourself: one question per topic. Right first time -> +2, once; a wrong pick shows the answer
+        // (and can be tried again the next time AdeeboMeter starts).
+        readonly Dictionary<string, string> checkPick = new Dictionary<string, string>();
+        float PaintCheck(Graphics g, Knowledge.Rec t, float x, float y, float w)
+        {
+            var p = CheckParts(t["check"]); if (p.Length < 3) return y;
+            string id = t.Id, q = p[0], right = p[1], picked; checkPick.TryGetValue(id, out picked);
+            // the same order every time, not always the right one first
+            var opts = p.Skip(1).Where(o => o != "").OrderBy(o => Hash(id + o)).ToList();
+            bool earned = Points.Me.Has("check." + id);
+            float qh = Draw.Measure(L.T(q), Draw.fBodyB, (int)(w - 32 * S)).Height, ow = (w - 46 * S) / 2, oh = 40 * S;
+            var card = new RectangleF(x, y, w, 44 * S + qh + (float)Math.Ceiling(opts.Count / 2.0) * (oh + 10 * S) + (picked != null ? 34 * S : 0));
+            Theme.Fill(g, card, 12 * S, Theme.Soft);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("CHECK YOURSELF") + (Cfg.Points ? "  ·  " + (earned ? "✓ " : "") + "+" + Points.Value("check." + id) : ""), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(L.T(q), Draw.fBodyB, ib, new RectangleF(x + 16 * S, y + 32 * S, w - 32 * S, qh + 4));
+            float oy = y + 40 * S + qh;
+            for (int i = 0; i < opts.Count; i++)
+            {
+                string o = opts[i]; var r = new RectangleF(x + 16 * S + (i % 2) * (ow + 14 * S), oy + (i / 2) * (oh + 10 * S), ow, oh);
+                bool isRight = o == right, isPick = o == picked, done = picked != null;
+                Theme.Fill(g, r, 10 * S, done && isRight ? Theme.LvSoft(0) : isPick ? Theme.LvSoft(2) : Theme.Card); if (done && isRight) Theme.Stroke(g, r, 10 * S, Theme.Green, 2);
+                using (var tb = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord }) g.DrawString(L.T(o), Draw.fBody, tb, new RectangleF(r.X + 12 * S, r.Y, r.Width - 20 * S, r.Height), c);
+                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) EarnPts("check." + id, true, true); learnInfo.Invalidate(); });
+            }
+            if (picked != null)
+            {
+                string msg = picked == right ? L.T("Right.") : L.T("Not quite - the answer is") + ": " + L.T(right) + (Cfg.Points && !earned ? " " + L.T("(you can try again next time AdeeboMeter starts)") : "");
+                using (var b = new SolidBrush(picked == right ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(msg, Draw.fSmall, b, new RectangleF(x + 16 * S, card.Bottom - 30 * S, w - 32 * S, 24 * S));
+            }
+            return card.Bottom + 14 * S;
+        }
+        static int Hash(string s) { unchecked { int h = 17; foreach (char c in s ?? "") h = h * 31 + c; return h; } }
+
         void LearnLive(Knowledge.Rec t)
         {
             learnBusy = true; learnPkts = null; learnErr = ""; learnInfo.Invalidate();

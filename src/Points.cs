@@ -8,9 +8,10 @@ using System.Linq;
 namespace AdeeboMeter
 {
     // ================================================================== Adeebo Points
-    // A small reward for learning the tools: open a tool's Example, then run it for real and get a result -> +1, once.
-    // Eight tools where a second look teaches something carry a replay bonus: the first real run again, at least
-    // 10 minutes later -> +2, once. Everything after that, a stopped run or a run that only asked for input -> 0.
+    // A small reward for learning: open a tool's Example, then run it for real and get a result -> +2 (+4 the longer
+    // tests), once. Learn topics, their check questions, lab challenges, subnetting streaks, the packet journey and the
+    // learning paths earn too (see Value). 500 is the Adeebo Award. Tools where a second look teaches something carry a
+    // replay bonus: the first real run again, at least 10 minutes later -> +3, once. Everything after that, a stopped run or a run that only asked for input -> 0.
     // Off until you turn it on (Settings); off pauses earning and keeps the total. Local only: one line per tool in
     // points.txt in AdeeboMeter's data folder ("id|first award time|replay award time"), written once per award - so
     // reopening the app, pressing Run twice or replaying again can never add more.
@@ -24,8 +25,21 @@ namespace AdeeboMeter
         // longer tests are worth +2 the first time; everything else +1 (a Learn topic read to the end, a page's first use: +1)
         public static readonly HashSet<string> Big = new HashSet<string>(StringComparer.Ordinal) { "mtr", "ispreport", "speedtest", "iperf", "bloat", "gamecompare", "mtu" };
         public static readonly TimeSpan ReplayGap = TimeSpan.FromMinutes(10);
-        static readonly string[][] Ranks = { new[] { "0", "Beginner" }, new[] { "15", "Learner" }, new[] { "50", "Troubleshooter" }, new[] { "100", "Expert" } };
-        public static int Value(string id) { return NoEarn.Contains(id ?? "") ? 0 : Big.Contains(id ?? "") ? 2 : 1; }
+        // 1.1.5: every item is worth more, and there is more to earn (about 580 in all), so 500 means you've done nearly everything
+        public const int AwardAt = 500, ReplayPts = 3;
+        static readonly string[][] Ranks = { new[] { "0", "Beginner" }, new[] { "30", "Learner" }, new[] { "100", "Troubleshooter" }, new[] { "200", "Expert" }, new[] { "300", "Network detective" }, new[] { "400", "Packet whisperer" }, new[] { "500", "Adeebo Award" } };
+        public static int[] Floors { get { return Ranks.Select(r => int.Parse(r[0], CultureInfo.InvariantCulture)).ToArray(); } }
+        // a tool +2 (the longer tests +4), a Learn topic read +2, its check question +2, a page's first use +2, a lab challenge +4,
+        // subnetting 5 in a row +3 and 10 in a row +5, the first packet journey explained +3, a learning path finished +10
+        public static int Value(string id)
+        {
+            id = id ?? ""; if (NoEarn.Contains(id)) return 0;
+            if (id.StartsWith("path.", StringComparison.Ordinal)) return 10;
+            if (id.StartsWith("lab.", StringComparison.Ordinal)) return 4;
+            if (id == "quiz.5" || id == "journey.explain") return 3;
+            if (id == "quiz.10") return 5;
+            return Big.Contains(id) ? 4 : 2;
+        }
         public static string Next(int total, out int left) { foreach (var x in Ranks) { int at = int.Parse(x[0], CultureInfo.InvariantCulture); if (total < at) { left = at - total; return x[1]; } } left = 0; return ""; }
 
         sealed class Entry { public DateTime First, Again; public int Pts = 1; }
@@ -50,7 +64,7 @@ namespace AdeeboMeter
                     // a damaged line (a bit flip, ticks out of range) is skipped - it never takes the whole file down with it
                     if (long.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out a) && a > 0 && a <= DateTime.MaxValue.Ticks) e.First = new DateTime(a, DateTimeKind.Utc); else continue;
                     if (p.Length > 2 && long.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out b) && b > 0 && b <= DateTime.MaxValue.Ticks) e.Again = new DateTime(b, DateTimeKind.Utc);
-                    int pts; if (p.Length > 3 && int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out pts) && pts >= 0 && pts <= 2) e.Pts = pts;
+                    int pts; if (p.Length > 3 && int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out pts) && pts >= 0 && pts <= 10) e.Pts = pts;
                     map[p[0].Trim()] = e;
                 }
             }
@@ -66,13 +80,14 @@ namespace AdeeboMeter
             Program.ReplaceFile(tmp, file);   // never a half-written file
         }
 
-        public int Total { get { lock (k) return map.Values.Sum(e => e.Pts + (e.Again != default(DateTime) ? 2 : 0)); } }
+        // counted by today's values, so points earned before 1.1.5 move up with everyone else's
+        public int Total { get { lock (k) return map.Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) ? ReplayPts : 0)); } }
         public int Done { get { lock (k) return map.Count; } }
         public bool Has(string id) { lock (k) return map.ContainsKey(id); }
         public bool Replayed(string id) { lock (k) { Entry e; return map.TryGetValue(id, out e) && e.Again != default(DateTime); } }
         public static string Rank(int total) { string r = Ranks[0][1]; foreach (var x in Ranks) if (total >= int.Parse(x[0], CultureInfo.InvariantCulture)) r = x[1]; return r; }
 
-        // a real run of a tool finished with results. opened = its Example was opened first. Returns the points awarded (0, 1 or 2).
+        // a real run of a tool finished with results. opened = its Example was opened first. Returns the points awarded (0 when nothing new).
         public int Award(string id, bool opened, bool earning, DateTime nowUtc) { return Award(id, opened, earning, nowUtc, Clock.Mono); }
         // mono: the steady clock (the self-test passes its own)
         public int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono)
@@ -96,7 +111,7 @@ namespace AdeeboMeter
                 if (!Replay.Contains(id) || e.Again != default(DateTime) || nowUtc - e.First < ReplayGap) return 0;
                 e.Again = nowUtc;
                 if (!TrySave()) { e.Again = default(DateTime); return 0; }
-                return 2;
+                return ReplayPts;
             }
         }
         bool TrySave()

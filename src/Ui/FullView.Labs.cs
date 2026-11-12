@@ -36,7 +36,7 @@ namespace AdeeboMeter
         string LS(string k, string d) { string v; return labS.TryGetValue(k, out v) ? v : d; }
         Control labHost; Form labWin; System.Windows.Forms.Timer labTimer; int labShown = -1;   // TCP: rounds drawn so far while playing (-1 = all)
         readonly Dictionary<int, string> tcpEvents = new Dictionary<int, string>();
-        List<string[]> labDns; bool labBusy; string labCg = ""; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = "";
+        List<string[]> labDns; bool labBusy; string labCg = ""; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = ""; int quizStreak;
 
         void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); else if (learnInfo != null && learnPage.Visible) learnInfo.Invalidate(); }   // full screen: only that window repaints
 
@@ -116,7 +116,8 @@ namespace AdeeboMeter
             labShown = on ? 0 : -1; labTimer.Enabled = on; LabRefresh();
         }
 
-        float PaintLab(Control h, Graphics g, string id, float x, float y, float w)
+        float PaintLab(Control h, Graphics g, string id, float x, float y, float w) { return LabChallenge(h, g, id, x, PaintLabBody(h, g, id, x, y, w) + 10 * S, w); }
+        float PaintLabBody(Control h, Graphics g, string id, float x, float y, float w)
         {
             y = LabHead(h, g, id, x, y, w);
             switch (id)
@@ -135,6 +136,74 @@ namespace AdeeboMeter
                 case "quiz": return LabQuiz(h, g, x, y, w);
             }
             return y;
+        }
+
+        // ================================================================== Adeebo Points: one challenge per lab (+2, once)
+        // Each lab asks for one thing worth discovering. Met = the lab's own settings show it; checked as the lab is drawn.
+        static readonly Dictionary<string, string> LabGoals = new Dictionary<string, string>
+        {
+            { "tcp", "Cause a timeout (set clicks to hard loss, then click the graph) and watch slow start begin again." },
+            { "mathis", "Set the round trip to 150 ms or more, then find the loss that still lets one download reach 25 Mbps." },
+            { "bloat", "Keep the backup sending at 100% or more and get the ping under 40 ms." },
+            { "jitter", "With 30 ms of jitter or more, reach a call score of 4.0 with the smallest buffer that does it." },
+            { "airtime", "Keep a far-away old device on and rescue the near laptops: switch the router to airtime fairness and see how much faster they get." },
+            { "dns", "Trace a name for real and see every server that answered." },
+            { "nat", "Find out whether your provider puts you behind a second NAT (CGNAT)." },
+            { "mtu", "Make a black hole, then fix it without turning the tunnel off." },
+            { "route", "Look up three different destinations in your own route table." },
+            { "game", "Keep the ping at 30 ms or more and get the whole budget under 60 ms." },
+            { "qos", "Find an upload where even first come, first served keeps the call's wait under 10 ms." },
+            { "quiz", "Get 5 right in a row, then 10 in a row." },
+        };
+        bool mtuHole; readonly HashSet<string> routeSeen = new HashSet<string>();
+        bool LabGoalMet(string id)
+        {
+            switch (id)
+            {
+                case "tcp": return tcpEvents.ContainsValue("hard");
+                case "mathis": return LV("m.rtt", 40) >= 150 && LabSim.MathisMbps(LV("m.rtt", 40), LV("m.loss", 1)) >= 25;
+                case "bloat": { double link = LV("b.link", 20); return LV("b.load", 100) >= 100 && LabSim.Bloat(link, link * LV("b.load", 100) / 100, LV("b.buf", 500), 20, LS("b.smart", "fifo") == "smart").PingMs < 40; }
+                case "jitter":
+                    {
+                        double jit = LV("j.jit", 20), buf = LV("j.buf", 60); if (jit < 30) return false; var arr = LabSim.Arrivals(jit, 2000, 11);
+                        Func<double, double> mos = b => LabSim.Jitter(arr, LV("j.base", 60), b, LV("j.loss", 0)).Mos;
+                        var smaller = new double[] { 10, 20, 40, 60, 80, 120, 200 }.Where(b => b < buf);
+                        return mos(buf) >= 4.0 && smaller.All(b => mos(b) < 4.0);
+                    }
+                case "airtime": return LV("a.slow", 1) >= 1 && LS("a.fair", "turns") == "fair";
+                case "dns": return labDns != null && labDns.Any(r => r.Length > 0 && r[0] != "2");
+                case "nat": return labCg != "";
+                case "mtu":
+                    {
+                        string way = LS("u.way", "wg"); int narrow = 1500 - (way == "pppoe" ? 8 : way == "wg" ? 60 : way == "ipsec" ? 66 : 0); bool fits = LV("u.size", 1500) <= narrow;
+                        if (!fits && LS("u.df", "on") == "on" && LS("u.icmp", "says") == "silent") { mtuHole = true; return false; }
+                        return mtuHole && way != "none" && (fits || LS("u.icmp", "says") == "says");
+                    }
+                case "route": routeSeen.Add(LS("r.dst", "8.8.8.8")); return routeTable != null && routeSeen.Count >= 3;
+                case "game": return LV("g.ping", 30) >= 30 && LabSim.GameBudget(LV("g.ping", 30), (int)LV("g.tick", 64), LV("g.interp", 2), (int)LV("g.fps", 144), LV("g.disp", 8)).Sum() < 60;
+                case "qos": return LabSim.VoiceWaitMs("fifo", LV("q.link", 10), (int)LV("q.burst", 50)) < 10;
+            }
+            return false;
+        }
+        float LabChallenge(Control h, Graphics g, string id, float x, float y, float w)
+        {
+            string goal; if (!LabGoals.TryGetValue(id, out goal)) return y;
+            bool met = id != "quiz" && LabGoalMet(id);
+            if (met && Cfg.Points) EarnPts("lab." + id, true, true);
+            bool done = id == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + id) || met;
+            string head = (done ? "✓ " : "") + L.T("CHALLENGE") + (Cfg.Points ? "  ·  " + (id == "quiz" ? "+" + Points.Value("quiz.5") + " / +" + Points.Value("quiz.10") : "+" + Points.Value("lab." + id)) : "");
+            float th = Draw.Measure(L.T(goal), Draw.fBody, (int)(w - 32 * S)).Height;
+            var card = new RectangleF(x, y, w, th + 44 * S); Theme.Fill(g, card, 12 * S, done ? Theme.LvSoft(0) : Theme.BlueSoft);
+            using (var hb = new SolidBrush(done ? Theme.LvText(0) : Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(head, Draw.fTiny, hb, x + 16 * S, y + 10 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(L.T(goal), Draw.fBody, ib, new RectangleF(x + 16 * S, y + 28 * S, w - 32 * S, th + 4));
+            if (id == "quiz" && quizStreak > 0) using (var mb = new SolidBrush(Theme.Muted)) { string st = quizStreak + " " + L.T("in a row"); var sz = g.MeasureString(st, Draw.fTiny); g.DrawString(st, Draw.fTiny, mb, x + w - sz.Width - 16 * S, y + 10 * S); }
+            return card.Bottom + 12 * S;
+        }
+        void QuizStreakPts()
+        {
+            if (!Cfg.Points) return;
+            if (quizStreak >= 5) EarnPts("quiz.5", true, true);
+            if (quizStreak >= 10) EarnPts("quiz.10", true, true);
         }
 
         // ================================================================== TCP congestion control
@@ -487,7 +556,7 @@ namespace AdeeboMeter
                 bool picked = quizPick == o, right = o == q.Answer, done = quizPick != "";
                 Theme.Fill(g, r, 10 * S, done && right ? Theme.LvSoft(0) : picked ? Theme.LvSoft(2) : Theme.Soft); if (done && right) Theme.Stroke(g, r, 10 * S, Theme.Green, 2);
                 using (var tb = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(o, Draw.fBodyB, tb, r, c);
-                if (!done) Act(h, r, delegate { quizPick = o; quizAll++; if (o == q.Answer) quizRight++; LabRefresh(); });
+                if (!done) Act(h, r, delegate { quizPick = o; quizAll++; if (o == q.Answer) { quizRight++; quizStreak++; QuizStreakPts(); } else quizStreak = 0; LabRefresh(); });
             }
             y += 112 * S;
             if (quizPick != "") { y = Lead2(g, quizPick == q.Answer ? "Right." : "Not quite - it's " + q.Answer + ". The Subnet calculator in the Toolbox shows every step.", x, y, w); Button(h, g, "Next question  ›", true, delegate { quizSeed++; quizPick = ""; LabRefresh(); }, x, y); y += 44 * S; }
