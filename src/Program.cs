@@ -159,11 +159,15 @@ namespace AdeeboMeter
             catch { }
         }
 
+        static int portable = -1;
+        public static bool Portable { get { if (portable < 0) { try { portable = !string.IsNullOrEmpty(Dir) && File.Exists(Path.Combine(Dir, "AdeeboMeter.portable")) ? 1 : 0; } catch (IOException) { portable = 0; } } return portable == 1; } }
         public static string DataDir
         {
             get
             {
-                string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
+                // portable / test copy: an empty file named AdeeboMeter.portable next to the exe keeps all data in a "data"
+                // folder beside it - a second copy (a USB stick, a test build) never mixes with the installed one's history
+                string d = Portable ? Path.Combine(Dir ?? "", "data") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
                 try { Directory.CreateDirectory(d); } catch { }
                 return d;
             }
