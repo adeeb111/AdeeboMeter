@@ -252,15 +252,18 @@ namespace AdeeboMeter
             {
                 var px = WhyFails.Proxy(target).FirstOrDefault(); if (px != null) r.Obs("w", 3, "Proxy for " + target, px[2]);
                 r.Status = "Testing " + target + "..."; changed();
-                string port = target.Contains(":") ? target : target + ":443"; var pt = WhyFails.Port(port).First();
+                // "https://intranet.example.com/x", "host:8443" or a bare name: the port test gets host:port, the rest the host
+                string tgt = Toolkit.UrlToTarget(target, true), host = Toolkit.HostOnly(target);
+                string port = tgt.Contains(":") && !tgt.EndsWith("]", StringComparison.Ordinal) ? tgt : tgt + ":443"; var pt = WhyFails.Port(port).First();
                 r.Obs("m", int.Parse(pt[0], CultureInfo.InvariantCulture), "Door (TCP) to " + port, pt[2]);
-                var dst = Icmp.Resolve4(target);
+                // the door's verdict stands on its own - it must not depend on the packet-size step below finding the address
+                if (pt[0] == "2") { verdict = pt[1] == "Name" || pt[1] == "Input" ? "Couldn't test " + target + ": " + pt[2] + "." : "The door to " + port + " doesn't open from this network (" + pt[2] + ") - a firewall on the way (yours, the VPN's or theirs) blocks it, or the server is down. At home the path is different, so it may work there."; lv = 2; }
+                var dst = Icmp.Resolve4(host);
                 if (dst != null)
                 {
                     r.Status = "Checking the packet size on the way..."; changed();
                     var hops = PathTools.Trace(dst, 20, () => false); var lastH = hops.LastOrDefault(h => h.Ip != "");
                     if (lastH != null) { PathTools.MtuAt(dst, lastH, 1500); r.Obs("m", lastH.Mtu > 0 && lastH.Mtu < 1400 ? 1 : lastH.BlackHole ? 2 : 0, "Biggest packet that gets there", lastH.Mtu > 0 ? lastH.Mtu + " bytes - " + lastH.MtuNote : lastH.MtuNote); if (lastH.BlackHole) { verdict = "Big packets vanish on the way to " + target + " (an MTU black hole at " + lastH.Mtu + " bytes): small requests work, anything bigger hangs - pages half-load, file shares stall. The VPN or a firewall needs to lower the size (MSS clamping) - tell IT this number."; lv = 2; } }
-                    if (pt[0] == "2" && verdict == "") { verdict = "The door to " + port + " is silently dropped from this network - a firewall on the way (yours, the VPN's or theirs) blocks it. At home the path is different, so it works there."; lv = 2; }
                 }
             }
             if (verdict == "" && bad != null && bad[0] == "2") { verdict = bad[2] + " - addresses in that range can only be reached on one of them, so company servers there look 'down' from home. Change the home router's network (e.g. to 192.168.77.x)."; lv = 2; }

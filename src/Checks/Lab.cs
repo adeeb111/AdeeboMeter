@@ -47,6 +47,27 @@ namespace AdeeboMeter
             else if (c > 0 && host.IndexOf(':') == c) { if (!int.TryParse(host.Substring(c + 1), out port)) return false; host = host.Substring(0, c); }
             return host != "" && host.Length <= 253 && port >= 1 && port <= 65535 && Regex.IsMatch(host, @"^[\w.:%-]+$");
         }
+        // one device: not a broadcast (255.255.255.255 or this network's), not multicast, not "any" (0.0.0.0 / ::)
+        public static string NotOne(IPAddress a)
+        {
+            if (a.Equals(IPAddress.Any) || a.Equals(IPAddress.IPv6Any) || a.Equals(IPAddress.None)) return a + " isn't one device - it means 'any' or 'everyone'";
+            if (a.AddressFamily == AddressFamily.InterNetworkV6) return a.IsIPv6Multicast ? a + " is a multicast group - many devices at once" : "";
+            var b = a.GetAddressBytes(); if (b[0] >= 224 && b[0] <= 239) return a + " is a multicast group - many devices at once";
+            if (b[0] == 255 || b[0] == 0) return a + " isn't one device";
+            try
+            {
+                foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+                    foreach (var ua in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ua.Address.AddressFamily != AddressFamily.InterNetwork || ua.IPv4Mask == null) continue;
+                        var ip = ua.Address.GetAddressBytes(); var mk = ua.IPv4Mask.GetAddressBytes(); bool bc = true;
+                        for (int i = 0; i < 4; i++) if ((byte)(ip[i] | ~mk[i]) != b[i]) { bc = false; break; }
+                        if (bc && !mk.All(x => x == 255)) return a + " is the broadcast address of your network - every device on it";
+                    }
+            }
+            catch (System.Net.NetworkInformation.NetworkInformationException) { }
+            return "";
+        }
         public static IPAddress Addr(string h)
         {
             IPAddress a; if (IPAddress.TryParse(h, out a)) return a;
@@ -79,7 +100,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h = (target ?? "").Trim(); if (h == "" || !Regex.IsMatch(h, @"^[\w.:%-]+$") || h.Length > 253) { rows.Add(R(2, "Target", "type an address or name", "", "u")); return rows; }
-            var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; }
+            var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             int n = Count(count, 10), size = 32, ttl = 128, gap = 1000, dscp = -1; bool df = false, cmp = false; string o = (opts ?? "").ToLowerInvariant(), bad = "";
             foreach (Match mm in Regex.Matches(o, @"(size|ttl|every|gap)\s*=?\s*(\d+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}\d{0,2}|\d{1,2})\b|\b(compare)\b"))
             {
@@ -150,7 +171,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h; int port; if (!Split(target, 0, out h, out port) || port == 0) { rows.Add(R(2, "Target", "type host:port - e.g. 10.0.0.5:5060", "", "u")); return rows; }
-            var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; }
+            var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             var data = Payload(payload); if (data == null) { rows.Add(R(2, "Payload", "hex: needs pairs of 0-9 a-f", "e.g. hex:0a0b0c or plain text", "u")); return rows; }
             int n = Count(count, 1); Log("udp " + n + " x " + data.Length + " B to " + a + ":" + port);
             var answers = new List<string>(); int sent = 0, refused = 0;
@@ -167,6 +188,8 @@ namespace AdeeboMeter
                         try { var ep = new IPEndPoint(IPAddress.Any, 0); var b = u.Receive(ref ep); if (answers.Count < 20) answers.Add(I(b.Length) + " B: " + Show(b, 200)); }
                         catch (SocketException e) { if (e.SocketErrorCode == SocketError.ConnectionReset) { refused++; break; } }
                     }
+                    // the gap always holds: a "port unreachable" reply ends the listening early, never the wait (10 a second at most)
+                    var left = until - DateTime.UtcNow; if (left > TimeSpan.Zero && !run.Stop) Thread.Sleep(left);
                 }
             }
             rows.Add(R(answers.Count > 0 ? 0 : refused > 0 ? 1 : 3, "Sent to " + a + ":" + port + " (UDP)", I(sent) + " × " + I(data.Length) + " bytes · " + (answers.Count > 0 ? I(answers.Count) + " answers" : refused > 0 ? "port closed (the host said so)" : "no answer"),
@@ -180,7 +203,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h; int port; if (!Split(target, 0, out h, out port) || port == 0) { rows.Add(R(2, "Target", "type host:port - e.g. 10.0.0.5:8080", "", "u")); return rows; }
-            var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; }
+            var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             var data = Payload(payload); if (data == null) { rows.Add(R(2, "Payload", "hex: needs pairs of 0-9 a-f", "", "u")); return rows; }
             Log("tcp " + data.Length + " B to " + a + ":" + port);
             using (var c = new TcpClient(a.AddressFamily))
@@ -286,7 +309,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h; int port; if (!Split(target, 162, out h, out port)) { rows.Add(R(2, "Receiver", "type the trap receiver - host or host:port (UDP 162)", "", "u")); return rows; }
-            var a = Addr(h); if (a == null) { rows.Add(R(2, "Receiver", "couldn't find " + h, "", "m")); return rows; }
+            var a = Addr(h); if (a == null) { rows.Add(R(2, "Receiver", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Receiver", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             string cm = (community ?? "").Trim(); if (cm == "") cm = "public";
             string text = "AdeeboMeter test trap from " + Environment.MachineName + " at " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
             var pkt = TrapPacket(cm, (uint)(Environment.TickCount & 0x7FFFFFFF) / 10, new Random().Next(1, int.MaxValue), text);
@@ -311,7 +334,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h; int port; if (!Split(target, 2055, out h, out port)) { rows.Add(R(2, "Collector", "type the collector - host or host:port (UDP 2055)", "", "u")); return rows; }
-            var a = Addr(h); if (a == null || a.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "Collector", a == null ? "couldn't find " + h : "NetFlow v5 needs an IPv4 collector", "", "m")); return rows; }
+            var a = Addr(h); if (a == null || a.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "Collector", a == null ? "couldn't find " + h : "NetFlow v5 needs an IPv4 collector", "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Collector", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             IPAddress me; using (var s = new UdpClient(AddressFamily.InterNetwork)) { s.Connect(a, port); me = ((IPEndPoint)s.Client.LocalEndPoint).Address; }
             var dst = IPAddress.Parse("192.0.2.10");
             var pkt = FlowPacket(me, dst, (uint)(Environment.TickCount & 0x7FFFFFFF), 1);

@@ -20,6 +20,25 @@ namespace AdeeboMeter
     // nearest cloud, ping sweep, Wake-on-LAN, subnet calculator. All on press, all outbound, nothing listens.
     static class Toolkit
     {
+        // What people paste: "https://example.com/path", "example.com:8443", "[2001:db8::1]:22", a bare name or IP.
+        // HostOnly gives just the host; Target gives host:port (the URL's own port, or its scheme's: https 443, http 80).
+        public static string HostOnly(string input)
+        {
+            string s = (input ?? "").Trim(); IPAddress ip;
+            if (s.IndexOf("://", StringComparison.Ordinal) > 0) { Uri u; return Uri.TryCreate(s, UriKind.Absolute, out u) && u.Host != "" ? u.Host.Trim('[', ']') : s; }
+            int slash = s.IndexOf('/'); if (slash > 0) s = s.Substring(0, slash);
+            if (IPAddress.TryParse(s.Trim('[', ']'), out ip)) return s.Trim('[', ']');            // an IPv6 address keeps its colons
+            if (s.StartsWith("[", StringComparison.Ordinal)) { int e = s.IndexOf(']'); if (e > 1) return s.Substring(1, e - 1); }
+            int c = s.LastIndexOf(':'); if (c > 0 && s.IndexOf(':') == c) s = s.Substring(0, c);   // name:port
+            return s;
+        }
+        public static string UrlToTarget(string input, bool withPort)
+        {
+            string s = (input ?? "").Trim(); if (s.IndexOf("://", StringComparison.Ordinal) <= 0) return s;
+            Uri u; if (!Uri.TryCreate(s, UriKind.Absolute, out u) || u.Host == "") return s;
+            string h = u.Host.Trim('[', ']'); if (h.Contains(":")) h = "[" + h + "]";
+            return withPort && u.Port > 0 ? h + ":" + u.Port.ToString(CultureInfo.InvariantCulture) : h;
+        }
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
         public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public DateTime Deadline; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } }
 
@@ -27,6 +46,9 @@ namespace AdeeboMeter
         const int Cookie = 37;
         // iperf3 options, the same spelling as iperf3 itself: -R -P n -t n -u -b 50M -l 1400 -w 256K -S 0xB8 -O 2 -M 1400 -p 5201 -4 -6, plus --both
         public sealed class Opt { public bool Udp, Reverse, Both, V6, V4; public int Par = 1, Secs = 10, Omit, Mss, Tos, Port = 5201; public long Rate = 50000000, Len, Window; public List<string> Ignored = new List<string>(); }
+        // bytes per write: -l as given (1 MB at most), else 1400 for UDP / 128 KB for TCP; a UDP packet carries a 12-byte
+        // time + sequence header, so it is never smaller than 16 (iperf3 itself refuses less)
+        public static int BlockLen(Opt o) { int len = (int)(o.Len > 0 ? o.Len : o.Udp ? 1400 : 131072); return o.Udp && len < 16 ? 16 : Math.Max(1, len); }
         public static Opt ParseOpts(string text)
         {
             // attached forms iperf3 also accepts: -t20, --time=20, -O3, --omit=3, -P4, -b50M ... become "-t 20" and so on
@@ -166,7 +188,7 @@ namespace AdeeboMeter
         }
         static List<string[]> IperfOne(string host, Opt o, bool reverse, Run run)
         {
-            bool udp = o.Udp; int port = o.Port, par = o.Par, secs = o.Secs + o.Omit; long udpRate = o.Rate; int len = (int)(o.Len > 0 ? o.Len : udp ? 1400 : 131072);
+            bool udp = o.Udp; int port = o.Port, par = o.Par, secs = o.Secs + o.Omit; long udpRate = o.Rate; int len = BlockLen(o);
             var rows = new List<string[]>();
             var addr = Dns.GetHostAddresses(host).First(a => o.V6 ? a.AddressFamily == AddressFamily.InterNetworkV6 : o.V4 ? a.AddressFamily == AddressFamily.InterNetwork : a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6);
             var rnd = new byte[36]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(rnd);

@@ -21,6 +21,19 @@ namespace AdeeboMeter
             return t.Count == 0 ? double.NaN : t.Average();
         }
         // TCP reachability: an answer of any kind (accepted or refused) proves the host is there - for when ping is blocked
+        // Windows' own connectivity test page: a sign-in page or proxy answers it with something else.
+        // portal = what came back instead ("" when the page is right); err = why it couldn't run ("" when it ran)
+        static void PortalTest(out string portal, out string portalErr)
+        {
+            portal = ""; portalErr = "";
+            if (!Cfg.Portal) { portalErr = "off"; return; }   // Settings › Sign-in page check is off: nothing is sent
+            try
+            {
+                var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.AllowAutoRedirect = false;
+                using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var body = rd.ReadToEnd(); if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
+            }
+            catch (WebException e) { var resp = e.Response as HttpWebResponse; portal = resp != null ? ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 ? "redirected to " + Draw.Trunc(resp.Headers["Location"] ?? "", 60) : "error " + (int)resp.StatusCode) : e.Status == WebExceptionStatus.Timeout ? "no answer (a proxy may be required)" : ""; if (resp == null && e.Status != WebExceptionStatus.Timeout) portalErr = e.Status.ToString(); if (resp != null) resp.Dispose(); }
+        }
         public static double TcpReach(IPAddress a, int port, int ms)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -70,14 +83,9 @@ namespace AdeeboMeter
             double gwTcp = double.NaN;
             if (double.IsNaN(gw) && g != null) foreach (var p in new[] { 53, 80, 443 }) { gwTcp = TcpReach(g, p, 800); if (!double.IsNaN(gwTcp)) break; }
             if (g == null) r.Obs("w", vpn ? 3 : 2, "3. Your router", vpn ? "no local router (the VPN carries everything)" : "no default gateway - Windows has no way out");
-            else r.Obs("m", double.IsNaN(gw) && double.IsNaN(gwTcp) ? 2 : gw > 60 ? 1 : 0, "3. Your router (" + g + ")", !double.IsNaN(gw) ? F(gw, " ms") : !double.IsNaN(gwTcp) ? "doesn't answer ping, but answers on TCP in " + F(gwTcp, " ms") + " - it's there" : "no answer to ping or TCP");
+            bool gwSilent = g != null && double.IsNaN(gw) && double.IsNaN(gwTcp);   // judged after the internet test: many routers just ignore ping and TCP
+            if (g != null) r.Obs("m", gwSilent ? 1 : gw > 60 ? 1 : 0, "3. Your router (" + g + ")", !double.IsNaN(gw) ? F(gw, " ms") : !double.IsNaN(gwTcp) ? "doesn't answer ping, but answers on TCP in " + F(gwTcp, " ms") + " - it's there" : "no answer to ping or TCP");
             if (g == null && !vpn) { r.Conclude(2, "Windows has no default gateway on " + (string.IsNullOrEmpty(adapter) ? "this connection" : adapter) + " - it doesn't know where to send anything that isn't local. Usually DHCP didn't finish."); r.Next.Add("Disconnect and reconnect; if it stays, DHCP lease and IPv6 lifetimes shows what the network gave you."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; around(); return; }
-            if (g != null && double.IsNaN(gw) && double.IsNaN(gwTcp))
-            {
-                r.Conclude(2, "Your router (" + g + ") doesn't answer at all - the problem is right next to you: the " + (wifi ? "Wi-Fi link" : "cable") + " or the router itself.");
-                r.Next.Add(wifi ? "Move closer, or turn Wi-Fi off and on." : "Check the cable and the router's lights."); r.Next.Add("Restart the router if nothing else on this network works either.");
-                r.GoTab = "guide:drops"; r.GoLabel = "Run I keep disconnecting"; around(); return;
-            }
             // 4. the internet (ping, or TCP 443 when ping is blocked)
             step("Testing the internet...");
             IPAddress t1; if (!IPAddress.TryParse((target ?? "").Trim(), out t1)) t1 = IPAddress.Parse("1.1.1.1");
@@ -86,6 +94,25 @@ namespace AdeeboMeter
             r.Obs("m", double.IsNaN(net) && double.IsNaN(netTcp) ? 2 : net > 200 || (!double.IsNaN(loss) && loss > 5) ? 1 : 0, "4. The internet",
                 !double.IsNaN(net) ? F(net, " ms") + (!double.IsNaN(loss) && !retested ? " · " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost" : "") + (Cfg.NetSec == 0 ? " (your internet check is off - tested once now)" : "") : !double.IsNaN(netTcp) ? "ping is blocked here, but a TCP connection works (" + F(netTcp, " ms") + ")" : "no answer to ping or TCP 443");
             if (normal != "") r.Obs("i", 3, "Normal for this network", normal);
+            if (double.IsNaN(net) && double.IsNaN(netTcp))
+            {
+                // before blaming the router or the provider: a hotel / airport sign-in page blocks everything until you sign in
+                step("Checking for a sign-in page..."); string sp, spErr; PortalTest(out sp, out spErr);
+                if (sp != "" && sp != "no answer (a proxy may be required)")
+                {
+                    r.Obs("m", 1, "The way in", "Windows' connectivity test got " + sp);
+                    r.Conclude(1, "Your router works, but the internet is blocked until you sign in (" + sp + ") - a hotel / airport / guest network sign-in page.");
+                    r.Next.Add("Open any http:// site in the browser to get the sign-in page."); r.GoTab = "guide:vpn"; r.GoLabel = "Run Works at home, not at work"; around(); return;
+                }
+            }
+            if (gwSilent && double.IsNaN(net) && double.IsNaN(netTcp))
+            {
+                // the router said nothing AND nothing beyond it answers: now it's fair to point at the link or the router
+                r.Conclude(2, "Your router (" + g + ") doesn't answer at all, and nothing beyond it does either - the problem is right next to you: the " + (wifi ? "Wi-Fi link" : "cable") + " or the router itself.");
+                r.Next.Add(wifi ? "Move closer, or turn Wi-Fi off and on." : "Check the cable and the router's lights."); r.Next.Add("Restart the router if nothing else on this network works either.");
+                r.GoTab = "guide:drops"; r.GoLabel = "Run I keep disconnecting"; around(); return;
+            }
+            if (gwSilent) r.Obs("i", 3, "Your router is quiet", "it ignores ping and TCP from this PC, but traffic passes through it - that's a setting on the router, not a fault");
             if (double.IsNaN(net) && double.IsNaN(netTcp))
             {
                 r.Conclude(2, "Your router answers, but nothing beyond it does - the break is between your router and the internet: your provider, the modem, or " + (vpn ? "the VPN." : "a company firewall."));
@@ -109,14 +136,9 @@ namespace AdeeboMeter
             }
             // 6. the way in: Windows' own connectivity test (a sign-in page answers it with something else)
             step("Checking for a sign-in page...");
-            string portal = "", portalErr = "";
-            try
-            {
-                var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.AllowAutoRedirect = false;
-                using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var body = rd.ReadToEnd(); if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
-            }
-            catch (WebException e) { var resp = e.Response as HttpWebResponse; portal = resp != null ? ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 ? "redirected to " + Draw.Trunc(resp.Headers["Location"] ?? "", 60) : "error " + (int)resp.StatusCode) : e.Status == WebExceptionStatus.Timeout ? "no answer (a proxy may be required)" : ""; if (resp == null && e.Status != WebExceptionStatus.Timeout) portalErr = e.Status.ToString(); if (resp != null) resp.Dispose(); }
-            r.Obs("m", portal != "" ? 1 : portalErr != "" ? 3 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : portalErr != "" ? "Windows' connectivity test couldn't run (" + portalErr + ") - web traffic may need a proxy here" : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
+            string portal, portalErr; PortalTest(out portal, out portalErr);
+            if (portalErr == "off") { r.NotEst.Add("Whether a sign-in page stands in the way - the sign-in page check is off in Settings."); portalErr = ""; }
+            else r.Obs("m", portal != "" ? 1 : portalErr != "" ? 3 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : portalErr != "" ? "Windows' connectivity test couldn't run (" + portalErr + ") - web traffic may need a proxy here" : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
             if (portalErr != "") r.NotEst.Add("Whether a sign-in page or proxy stands in the way - the web test couldn't connect (" + portalErr + ").");
             if (portal != "")
             {

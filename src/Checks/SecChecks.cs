@@ -405,6 +405,8 @@ namespace AdeeboMeter
             NetworkInterface nic; lock (m.L) nic = m.Primary; if (nic == null) return One(3, "DHCP server", "no active adapter", "", null);
             var lease = nic.GetIPProperties().DhcpServerAddresses.Select(x => x.ToString()).ToList();
             if (lease.Count == 0) return One(3, "DHCP server", "this adapter has a fixed address", "", null);
+            // the same guard as the Toolbox: on a company network nothing is sent without the deliberate tick there
+            if (Lab.Company(m)) return One(3, "DHCP server", "your lease is from " + string.Join(", ", lease) + " · a second question was skipped on this company network", "Toolbox › DHCP options asks it, with the \"my own network\" tick.", null);
             var opts = Lab.DhcpOptions(m, "yes"); var id = opts.FirstOrDefault(r => r[1].StartsWith("DHCP server", StringComparison.Ordinal));
             if (id == null) return One(3, "DHCP server", "your lease is from " + string.Join(", ", lease) + " · the server didn't answer a second question", "", null);
             bool same = lease.Contains(id[2].Trim());
@@ -413,6 +415,7 @@ namespace AdeeboMeter
         static List<string[]> Upnp(Monitor m, List<string> s)
         {
             var gw = Gateway(m); if (gw == null || gw.AddressFamily != AddressFamily.InterNetwork) return One(3, "Router UPnP", "no router to ask", "", null);
+            if (Lab.Company(m)) return One(3, "Router UPnP", "skipped on this company network - its router isn't yours to probe", "", null);
             bool on = false;
             try
             {
@@ -429,6 +432,7 @@ namespace AdeeboMeter
         static List<string[]> RouterAdmin(Monitor m, List<string> s)
         {
             var gw = Gateway(m); if (gw == null) return One(3, "Router admin page", "no router", "", null);
+            if (Lab.Company(m)) return One(3, "Router admin page", "skipped on this company network - its router isn't yours to probe", "", null);
             bool h80 = TcpOpen(gw, 80, 800), h443 = TcpOpen(gw, 443, 800);
             if (!h80 && !h443) return One(0, "Router admin page", "not on the usual web ports (or not reachable from here)", "", null);
             bool redirect = false;
@@ -440,6 +444,7 @@ namespace AdeeboMeter
         static List<string[]> RouterOld(Monitor m, List<string> s)
         {
             var gw = Gateway(m); if (gw == null) return One(3, "Router old services", "no router", "", null);
+            if (Lab.Company(m)) return One(3, "Router old services", "skipped on this company network - its router isn't yours to probe", "", null);
             var open = OldPorts.Where(p => TcpOpen(gw, p[0], 700)).ToList();
             var bad = open.Where(p => p[1] < 3).ToList();
             string names = string.Join(", ", open.Select(p => p[0] == 21 ? "FTP (21)" : p[0] == 23 ? "Telnet (23)" : p[0] == 7547 ? "TR-069 (7547)" : p[0] == 8080 ? "web (8080)" : "SSH (22)"));

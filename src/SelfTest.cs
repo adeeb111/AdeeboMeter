@@ -488,6 +488,19 @@ namespace AdeeboMeter
                 }
                 foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("found in " + pack);
             });
+            T("review fixes: URLs as targets, one device only for Traffic Lab, iperf3 UDP block size", () =>
+            {
+                var bad = new List<string>();
+                foreach (var c in new[] { new[] { "https://example.com/x?y", "example.com" }, new[] { "example.com:8443", "example.com" }, new[] { "http://192.0.2.5:8080/", "192.0.2.5" }, new[] { "[2001:db8::1]:22", "2001:db8::1" }, new[] { "2001:db8::1", "2001:db8::1" }, new[] { "10.0.0.1", "10.0.0.1" }, new[] { "example.com/path", "example.com" } })
+                    if (Toolkit.HostOnly(c[0]) != c[1]) bad.Add("HostOnly(" + c[0] + ") = " + Toolkit.HostOnly(c[0]));
+                if (Toolkit.UrlToTarget("https://example.com/x", true) != "example.com:443" || Toolkit.UrlToTarget("http://example.com", true) != "example.com:80" || Toolkit.UrlToTarget("https://example.com:8443", false) != "example.com") bad.Add("UrlToTarget");
+                var r4 = Icmp.Resolve4("https://127.0.0.1/status"); if (r4 == null || r4.ToString() != "127.0.0.1") bad.Add("Resolve4 of a URL gave " + r4);
+                foreach (var no in new[] { "255.255.255.255", "224.0.0.1", "239.255.255.250", "0.0.0.0", "ff02::1", "::" }) if (Lab.NotOne(IPAddress.Parse(no)) == "") bad.Add("Traffic Lab would send to " + no);
+                if (Lab.NotOne(IPAddress.Parse("192.0.2.10")) != "") bad.Add("one device refused");
+                var o = Toolkit.ParseOpts("-u -l 4"); if (Toolkit.BlockLen(o) < 16) bad.Add("UDP block " + Toolkit.BlockLen(o));
+                if (Toolkit.BlockLen(Toolkit.ParseOpts("-l 4")) != 4 || Toolkit.BlockLen(Toolkit.ParseOpts("-u")) != 1400) bad.Add("block sizes");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("About links: only AdeeboMeter's pages and its PayPal donation link open", () =>
             {
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);

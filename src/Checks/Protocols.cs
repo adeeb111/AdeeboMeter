@@ -340,6 +340,7 @@ namespace AdeeboMeter
             }
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 514, out h, out p)) { rows.Add(R(2, "Collector", "type the syslog server's address", "", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
+            string notOne = Lab.NotOne(a); if (notOne != "") { rows.Add(R(2, "Collector", notOne, "A test message goes to one collector only - never to a whole network.", "")); return rows; }
             string msg = "<" + (fac * 8 + sev).ToString(CultureInfo.InvariantCulture) + ">1 " + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) + " " + Environment.MachineName + " AdeeboMeter - - - " + (string.IsNullOrWhiteSpace(text) ? "AdeeboMeter test message" : Regex.Replace(text.Trim(), @"[\r\n\t\x00-\x1f]", " ").Substring(0, Math.Min(400, text.Trim().Length)));
             using (var u = new UdpClient(a.AddressFamily)) { var b = Encoding.UTF8.GetBytes(msg); u.Send(b, b.Length, new IPEndPoint(a, p)); }
             rows.Add(R(0, "Sent to " + a + ":" + p + " (UDP)", msg, "Syslog over UDP never confirms - look for it on the collector (facility " + Facilities[fac] + ", severity " + Severities[sev] + ").", "m"));

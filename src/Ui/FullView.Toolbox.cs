@@ -226,6 +226,9 @@ namespace AdeeboMeter
         DateTime tbCopied;
         // a clickable result row: walk this object, or open the MIB folder
         static readonly char[] PipeSep = { '|' };
+        // tools whose boxes take a URL, a file path or free text as it is
+        static readonly HashSet<string> UrlTools = new HashSet<string> { "http", "httptime", "httpreq", "proxy", "speedtest", "b64", "certfile", "csr", "pfx", "certconv", "certcmds", "hashf", "twopc", "encrypt", "decrypt", "recipients", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "samplelab", "events", "fw", "hosts", "mibs", "certmatch", "certlive" };
+        static bool PayloadBox(string id, int i) { return (id == "udpsend" || id == "tcpsend" || id == "syslog") && i >= 1; }
         PillButton tbEx; string tbAward = ""; readonly HashSet<string> exOpened = new HashSet<string>();
         // a finished real run: Adeebo Points once (only after the Example was opened; replay bonus once, 10+ minutes later)
         void Earn(string id, bool completed) { tbAward = EarnPts(id, exOpened.Contains(id), completed); }
@@ -649,6 +652,16 @@ namespace AdeeboMeter
         void StartTool()
         {
             var t = Tools2().First(x => x.Id == tbSel); var a = Inputs(); UiActivity.Doing = "starting tool " + t.Id;
+            // a pasted URL where a host is wanted: "https://example.com/x" -> example.com (or example.com:443 when the box asks for host:port);
+            // shown back in the box so you see what was used
+            if (!UrlTools.Contains(t.Id))
+                for (int i = 0; i < a.Length && i < t.Inputs.Length; i++)
+                {
+                    string v = a[i] ?? ""; Uri u;
+                    if (SecretInput(t.Inputs[i]) || PayloadBox(t.Id, i) || v.IndexOf("://", StringComparison.Ordinal) <= 0 || v.Contains(" ") || !Uri.TryCreate(v, UriKind.Absolute, out u)) continue;
+                    string fixedV = Toolkit.UrlToTarget(v, t.Inputs[i].IndexOf(":port", StringComparison.OrdinalIgnoreCase) >= 0);
+                    if (fixedV != v) { a[i] = fixedV; if (i < tbBoxes.Count && tbBoxes[i] != null) tbBoxes[i].Box.Text = fixedV; }
+                }
             tbRecent.Remove(t.Id); tbRecent.Insert(0, t.Id); if (tbRecent.Count > 5) tbRecent.RemoveAt(5);
             if (TargetTools.Contains(t.Id) && a[0] != "") tbTarget = a[0];
             if (t.Id == "mtu") { StartMtu(a[0]); return; }

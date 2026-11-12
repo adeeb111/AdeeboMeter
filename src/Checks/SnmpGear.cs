@@ -91,6 +91,18 @@ namespace AdeeboMeter
             if (mac != null)
             {
                 var hits = all.Where(e => e.Mac == mac).ToList();
+                if (hits.Count == 0)
+                {
+                    // the walk reads at most 2,000 entries: ask for this one MAC directly (BRIDGE-MIB dot1dTpFdbPort.<mac>), which has no cap
+                    string get; var one = Snmp.Request(ep, c, 0xA0, 0, 0, new[] { "1.3.6.1.2.1.17.4.3.1.2." + string.Join(".", mac.Split(':').Select(h => Convert.ToInt32(h, 16).ToString(CultureInfo.InvariantCulture))) }, out get);
+                    if (one != null && one.Count == 1 && !one[0].End && one[0].Raw.Length > 0) hits.Add(new { Mac = mac, Vlan = "", Port = I((long)Snmp.Num(one[0])) });
+                }
+                if (hits.Count == 0 && fdb.Count >= 2000)
+                {
+                    // not found, but the table was cut: never say "not here" about rows that weren't read
+                    rows.Add(R(1, mac, "not in the first " + I(fdb.Count) + " MAC entries read - this switch has more, so it may still be here", "Ask per VLAN to read a smaller table: on many switches the community community@10 shows VLAN 10 only. Or ask the core switch for the device's IP.", "m"));
+                    return rows;
+                }
                 if (hits.Count == 0) { rows.Add(R(1, mac, "not in this switch's MAC table (" + all.Count + " entries)", "Switches forget a MAC after about 5 minutes of silence - ping the device, then run this again. Or it's behind another switch.", "m")); return rows; }
                 foreach (var h in hits)
                 {
@@ -99,7 +111,7 @@ namespace AdeeboMeter
                 }
                 return rows;
             }
-            rows.Add(R(0, ep.ToString(), all.Count + " MACs on " + perPort.Count + " ports", "Ports with many MACs are uplinks to other switches or access points. Type a MAC or IP to find one device.", "m"));
+            rows.Add(R(0, ep.ToString(), (fdb.Count >= 2000 ? "the first " : "") + all.Count + " MACs on " + perPort.Count + " ports" + (fdb.Count >= 2000 ? " - the table has more (reading stops at 2,000)" : ""), "Ports with many MACs are uplinks to other switches or access points. Type a MAC or IP to find one device.", "m"));
             Table(rows, new[] { "Port", "MACs", "VLANs", "One of them" }, all.GroupBy(e => e.Port).OrderByDescending(g => g.Count()).Take(300).Select(g => new[] { portName(g.Key), I(g.Count()), string.Join(",", g.Select(e => e.Vlan).Where(v => v != "").Distinct().Take(6)), g.First().Mac }).ToList(), all.GroupBy(e => e.Port).Take(300).Select(g => false).ToList());
             Table(rows, new[] { "MAC", "VLAN", "Port" }, all.Take(1000).Select(e => new[] { e.Mac, e.Vlan, portName(e.Port) }).ToList(), all.Take(1000).Select(e => false).ToList());
             return rows;

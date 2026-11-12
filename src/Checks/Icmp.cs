@@ -96,9 +96,7 @@ namespace AdeeboMeter
 
         public static IPAddress Resolve4(string host)
         {
-            IPAddress a; string h = (host ?? "").Trim();
-            int c = h.LastIndexOf(':'); if (c > 0 && h.IndexOf(':') == c) h = h.Substring(0, c);
-            if (h.StartsWith("http", StringComparison.OrdinalIgnoreCase)) { Uri u; if (Uri.TryCreate(h, UriKind.Absolute, out u)) h = u.Host; }
+            IPAddress a; string h = Toolkit.HostOnly(host);   // a URL first, then name:port - "https://x" must not become "https"
             if (IPAddress.TryParse(h, out a)) return a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? a : null;
             string hh; int p; bool t; string e; if (!DestCheck.Parse(h, out hh, out p, out t, out e)) return null;
             try { return Dns.GetHostAddresses(hh).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); } catch { return null; }
