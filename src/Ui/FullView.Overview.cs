@@ -30,6 +30,22 @@ namespace AdeeboMeter
         }
 
         void GoGuide(string id) { tab = "guide"; ShowTab(); if (id != null) StartGuide(id, false); }
+        // Fix a problem (home screen): { where it goes, what the button says }. "I can't name it" stays first - it's the catch-all.
+        static readonly string[][] FixProblems = {
+            new[] { "guide:whats", "Not sure what's wrong" },
+            new[] { "guide:pc", "My PC is slow" },
+            new[] { "guide:drops", "My Wi-Fi keeps dropping" },
+            new[] { "guide:site", "A website or app won't open" },
+            new[] { "gamer", "My game is lagging" },
+            new[] { "guide:calls", "My calls keep freezing" },
+            new[] { "guide:slow", "The internet is slow" },
+            new[] { "tool:tidy", "I'm running out of storage" } };
+        void FixGo(string go)
+        {
+            if (go.StartsWith("guide:", StringComparison.Ordinal)) GoGuide(go.Substring(6));
+            else if (go == "gamer") { tab = "gamer"; ShowTab(); }
+            else if (go.StartsWith("tool:", StringComparison.Ordinal)) { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(go.Substring(5)); }
+        }
 
         void PaintOverview(Graphics g)
         {
@@ -82,21 +98,34 @@ namespace AdeeboMeter
                 }
                 y += 10 * S;
 
-                // investigate
-                g.DrawString("SOMETHING WRONG?", Draw.fTiny, muted, x, y); y += 24 * S;
-                float cx = x;
-                string lead = "Investigate a problem  >"; var ls = g.MeasureString(lead, Draw.fBodyB); var lr = new RectangleF(cx, y, ls.Width + 28 * S, 34 * S);
-                Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(lead, Draw.fBodyB, wb, cx + 14 * S, y + (34 * S - ls.Height) / 2);
-                Act(overviewCanvas, lr, delegate { GoGuide(null); }); cx += lr.Width + 10 * S;
-                foreach (var f in Investigate.All)
+                // Fix a problem: the things people recognise, each opening the right guided check
                 {
-                    var fs = g.MeasureString(f.Title, Draw.fBody); var fr = new RectangleF(cx, y + 2 * S, fs.Width + 22 * S, 30 * S);
-                    if (fr.Right > x + w) break;
-                    Theme.Stroke(g, fr, 15 * S, Theme.Track, 1); g.DrawString(f.Title, Draw.fBody, ink, cx + 11 * S, y + 2 * S + (30 * S - fs.Height) / 2);
-                    string id = f.Id; Act(overviewCanvas, fr, delegate { GoGuide(id); }); Hint(overviewCanvas, fr, "guide." + id);
-                    cx += fr.Width + 8 * S;
+                    var card = new RectangleF(x, y, w, 0);
+                    float cy = y + 16 * S, cw = w - 32 * S, cx0 = x + 16 * S;
+                    var probs = FixProblems; int fcols = Math.Max(1, Math.Min(4, (int)(cw / (220 * S)))); int frows = (probs.Length + fcols - 1) / fcols;
+                    float bh = 40 * S, bw = (cw - (fcols - 1) * 10 * S) / fcols;
+                    card.Height = 16 * S + 28 * S + 26 * S + frows * (bh + 10 * S) + 34 * S;
+                    Theme.Fill(g, card, 12 * S, Theme.Soft); Theme.Stroke(g, card, 12 * S, Theme.Line, 1);
+                    g.DrawString("Fix a problem", Draw.fTitle, ink, cx0, cy); cy += 28 * S;
+                    g.DrawString("Pick what's happening. AdeeboMeter shows what it finds and what to check next.", Draw.fBody, muted, cx0, cy); cy += 26 * S;
+                    using (var nowrapF = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter, LineAlignment = StringAlignment.Center })
+                        for (int i = 0; i < probs.Length; i++)
+                        {
+                            var br = new RectangleF(cx0 + (i % fcols) * (bw + 10 * S), cy + (i / fcols) * (bh + 10 * S), bw, bh);
+                            bool first = i == 0;
+                            Theme.Fill(g, br, 10 * S, first ? Theme.Blue : Theme.Card); if (!first) Theme.Stroke(g, br, 10 * S, Theme.Track, 1);
+                            using (var tb = new SolidBrush(first ? Color.White : Theme.Ink)) g.DrawString(probs[i][1], first ? Draw.fBodyB : Draw.fBody, tb, new RectangleF(br.X + 14 * S, br.Y, br.Width - 20 * S, br.Height), nowrapF);
+                            string go = probs[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
+                            if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, br, "guide." + go.Substring(6));
+                        }
+                    cy += frows * (bh + 10 * S) + 4 * S;
+                    using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                    {
+                        var all = new RectangleF(cx0, cy, 200 * S, 22 * S); g.DrawString("See all problems  >", Draw.fBodyB, bl, all.X, all.Y);
+                        Act(overviewCanvas, all, delegate { GoGuide(null); });
+                    }
+                    y = card.Bottom + 16 * S;
                 }
-                y += 50 * S;
 
                 // needs attention
                 var att = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).Take(4).ToList();

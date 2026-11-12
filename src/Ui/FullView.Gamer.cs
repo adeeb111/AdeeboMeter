@@ -46,6 +46,15 @@ namespace AdeeboMeter
                 try { BeginInvoke((Action)delegate { valveBusy = false; gamerNote = r; gamerCanvas.Invalidate(); }); } catch (InvalidOperationException) { valveBusy = false; }
             });
         }
+        void EditGame(Game gm, bool asNew)
+        {
+            using (var d = new GameEditor(gm, asNew))
+            {
+                d.ShowDialog(this);
+                if (d.Saved) { Games.Reload(); if (asNew && !string.IsNullOrEmpty(gm.Id)) Games.SetMonitored(gm.Id, true); gamerNote = asNew ? "Added " + gm.Name + " - monitoring it now." : "Saved " + gm.Name + "'s servers."; }
+            }
+            gamerCanvas.Invalidate();
+        }
         static Color Hex(string h) { try { return Theme.C(h); } catch (Exception e) { if (!(e is ArgumentException || e is FormatException)) throw; return Theme.Grey; } }
         static string Ms(double v) { return double.IsNaN(v) ? "-" : v < 10 ? v.ToString("0.0", CultureInfo.InvariantCulture) : Math.Round(v).ToString(CultureInfo.InvariantCulture); }
         static Color GradeColor(string grade) { return grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey; }
@@ -92,7 +101,14 @@ namespace AdeeboMeter
                     using (var sb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Muted)) g.DrawString(state, Draw.fSmall, sb, new RectangleF(r.X + 48 * S, r.Y + 34 * S, r.Width - 56 * S, 18 * S), nowrap);
                     var gm2 = gm; if (!gm.Soon) Act(gamerCanvas, r, delegate { ClickGame(gm2); });
                 }
-                y += ((order.Count + cols - 1) / cols) * (th + 10 * S) + 14 * S;
+                {
+                    int i = order.Count; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
+                    Theme.Stroke(g, r, 10 * S, Theme.Line, 1);
+                    g.DrawString("+ Add your own game", Draw.fBodyB, blue, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 20 * S, 20 * S), nowrap);
+                    g.DrawString("any game, any server IP", Draw.fSmall, muted, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 20 * S, 18 * S), nowrap);
+                    Act(gamerCanvas, r, delegate { EditGame(new Game { Name = "", Custom = true }, true); });
+                }
+                y += ((order.Count + 1 + cols - 1) / cols) * (th + 10 * S) + 14 * S;
 
                 // one card per monitored game, the one being played first
                 foreach (var gm in games.Where(z => mon.Contains(z.Id)).OrderBy(z => z.Id == playing ? 0 : 1))
@@ -144,6 +160,9 @@ namespace AdeeboMeter
                 var stop = new RectangleF(x + w - pad - 120 * S, cy, 120 * S, 22 * S);
                 g.DrawString("Stop monitoring", Draw.fSmall, blue, stop, right);
                 var gm2 = gm; Act(gamerCanvas, stop, delegate { Games.SetMonitored(gm2.Id, false); gamerNote = "Stopped monitoring " + gm2.Name + ". Nothing more is sent to its servers."; gamerCanvas.Invalidate(); });
+                var ed = new RectangleF(stop.X - (gm.Valve ? 260 : 110) * S, cy, 100 * S, 22 * S);
+                g.DrawString("Edit servers", Draw.fSmall, blue, ed, right);
+                Act(gamerCanvas, ed, delegate { EditGame(gm2, false); });
                 if (gm.Valve)
                 {
                     var rf = new RectangleF(stop.X - 150 * S, cy, 140 * S, 22 * S);
@@ -152,7 +171,7 @@ namespace AdeeboMeter
                 }
                 cy += 28 * S;
                 g.DrawString(bt, Draw.fSmall, sub, new RectangleF(cx, cy, cw, 18 * S), nowrap); cy += 22 * S;
-                if (rows.Count == 0) { g.DrawString(gm.Valve ? "No Valve servers yet - press Refresh Valve list (one request to Valve)." : "No servers - add your server's address (Edit is coming in this release).", Draw.fBody, muted, cx, cy); }
+                if (rows.Count == 0) { g.DrawString(gm.Valve ? "No Valve servers yet - press Refresh Valve list (one request to Valve)." : "No servers yet - press Edit servers and add your server's address.", Draw.fBody, muted, cx, cy); }
                 float c1 = cx + 230 * S, c2 = c1 + 90 * S, c3 = c2 + 80 * S, c4 = c3 + 70 * S, c5 = c4 + 110 * S;
                 foreach (var s in rows)
                 {
