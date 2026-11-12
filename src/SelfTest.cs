@@ -381,6 +381,12 @@ namespace AdeeboMeter
                 ss.Mark(); string rep = ss.Report(new List<Spike>(), "");
                 if (!rep.Contains("NA East") || !rep.Contains("Marked as laggy")) throw new InvalidOperationException("report");
             });
+            T("Find my match server picks the busiest public address", () =>
+            {
+                string ip = MatchFinder.Busiest("192.168.0.10\t155.133.248.34\n155.133.248.34\t192.168.0.10\n192.168.0.10\t8.8.8.8\n192.168.0.10\t239.255.255.250\n");
+                if (ip != "155.133.248.34") throw new InvalidOperationException(ip ?? "null");
+                if (MatchFinder.Busiest("10.0.0.2\t10.0.0.1\n") != null) throw new InvalidOperationException("private counted");
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));

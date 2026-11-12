@@ -616,3 +616,55 @@ namespace AdeeboMeter
         }
     }
 }
+
+namespace AdeeboMeter
+{
+    // ================================================================== Find my match server
+    // While the game is running: its UDP ports come from Windows' own table (no admin), then tshark listens for 8 seconds to just
+    // those ports and counts packets per remote address. The busiest public address is the match server. Needs Wireshark + Npcap.
+    static class MatchFinder
+    {
+        public static List<int> GamePorts(Game g)
+        {
+            var pids = new HashSet<int>();
+            try
+            {
+                foreach (var exe in g.Exes)
+                    foreach (var p in Process.GetProcessesByName(exe)) using (p) pids.Add(p.Id);
+            }
+            catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; }
+            return Tables.Udp().Where(kv => pids.Contains(kv.Value) && kv.Key > 0).Select(kv => kv.Key).Distinct().Take(20).ToList();
+        }
+        public static string Find(Game g, string ifaceGuid, out string ip)
+        {
+            ip = null; Guid gid;
+            if (!LiveCapture.Available) return "Needs Wireshark (with Npcap) installed - it's what lets AdeeboMeter see the game's packets.";
+            if (!Guid.TryParse((ifaceGuid ?? "").Trim('{', '}'), out gid)) return "No active network adapter.";
+            var ports = GamePorts(g);
+            if (ports.Count == 0) return g.Name + " isn't running, or hasn't opened its game connection yet - start a match first.";
+            string ifc = "\\Device\\NPF_{" + gid.ToString().ToUpperInvariant() + "}";
+            string filter = "udp and (" + string.Join(" or ", ports.Select(p => "port " + p.ToString(CultureInfo.InvariantCulture))) + ")";
+            string args = "-i \"" + ifc + "\" -n -a duration:8 -c 4000 -f \"" + filter + "\" -T fields -e ip.src -e ip.dst";
+            string text;
+            try { text = Job.Run(LiveCapture.Tshark, args, 20000) ?? ""; }
+            catch (Exception e) { return "Capture failed: " + Draw.Trunc(e.Message, 80); }
+            ip = Busiest(text);
+            return ip == null ? "No game packets in 8 seconds - are you in a match (not the menu)?" : null;
+        }
+        // the public address that appears most often (either direction); private, multicast and broadcast addresses don't count
+        public static string Busiest(string tsharkFields)
+        {
+            var count = new Dictionary<string, int>();
+            foreach (var line in (tsharkFields ?? "").Split('\n'))
+                foreach (var f in line.Trim().Split('\t'))
+                {
+                    IPAddress a; if (!IPAddress.TryParse(f.Trim(), out a) || a.AddressFamily != AddressFamily.InterNetwork) continue;
+                    var b = a.GetAddressBytes();
+                    bool priv = b[0] == 10 || b[0] == 127 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168) || (b[0] == 169 && b[1] == 254) || b[0] >= 224 || (b[0] == 100 && b[1] >= 64 && b[1] <= 127);
+                    if (priv) continue;
+                    int c; count.TryGetValue(a.ToString(), out c); count[a.ToString()] = c + 1;
+                }
+            return count.Count == 0 ? null : count.OrderByDescending(kv => kv.Value).First().Key;
+        }
+    }
+}

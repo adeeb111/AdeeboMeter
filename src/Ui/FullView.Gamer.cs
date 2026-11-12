@@ -137,7 +137,39 @@ namespace AdeeboMeter
             var need = new Size(0, (int)(y + 20 * S)); if (gamerCanvas.AutoScrollMinSize != need) { gamerCanvas.AutoScrollMinSize = need; gamerCanvas.Invalidate(); }
         }
 
-        DateTime gzCopied;
+        DateTime gzCopied; volatile bool findBusy;
+        void FindMatch(Game gm)
+        {
+            if (findBusy) return; findBusy = true; gamerNote = "Listening to " + gm.Name + "'s own ports for 8 seconds...";
+            string iface; lock (M.L) iface = M.IfaceId;
+            Task.Factory.StartNew(() =>
+            {
+                string ip; string err = MatchFinder.Find(gm, iface, out ip);
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        findBusy = false;
+                        if (ip != null && Games.ValidHost(ip))
+                        {
+                            var have = gm.Servers.FirstOrDefault(z => z.Host == ip);
+                            if (have == null)
+                            {
+                                gm.Servers.RemoveAll(z => z.Name == "My match");
+                                gm.Servers.Insert(0, new GameServer { Name = "My match", Where = "found " + DateTime.Now.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), Host = ip, Port = -1, Kind = "exact" });
+                                if (gm.Servers.Count > 12) gm.Servers.RemoveAt(gm.Servers.Count - 1);
+                                Games.SaveGame(gm); Games.Reload();
+                            }
+                            gamerNote = "Your match server is " + ip + " - added as \"My match\" (exact) and watched from now on.";
+                        }
+                        else gamerNote = err ?? "Couldn't tell which server the match uses.";
+                        gamerCanvas.Invalidate();
+                    });
+                }
+                catch (InvalidOperationException) { findBusy = false; }
+            });
+            gamerCanvas.Invalidate();
+        }
         float PaintSession(Graphics g, List<Game> games, float x, float y, float w)
         {
             var gp = GamePing.Me; var ss = gp.Session ?? gp.LastSession; bool open = gp.Session != null && gp.Session.Open;
@@ -160,6 +192,11 @@ namespace AdeeboMeter
                     btn("Stop session", false, delegate { gp.EndSession(); gamerCanvas.Invalidate(); });
                 }
                 else if (target != null) btn("Start session · " + target.Name, true, delegate { gp.StartSession(target, true); gamerNote = "Session started - press Mark lag whenever it feels wrong."; gamerCanvas.Invalidate(); });
+                if (gp.Playing != null)
+                {
+                    var pg = games.FirstOrDefault(z => z.Id == gp.Playing);
+                    if (pg != null) btn(findBusy ? "Finding your match server..." : "Find my match server", false, delegate { FindMatch(pg); });
+                }
                 btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
                 y += 44 * S;
                 if (ss == null) return y + 6 * S;
