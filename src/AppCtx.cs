@@ -202,6 +202,7 @@ namespace AdeeboMeter
                     }
             }
             catch { }
+            if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
             if (first) { ApplyAutoStart(); SaveSettings(); }
         }
         void SaveSettings()

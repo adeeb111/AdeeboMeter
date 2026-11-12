@@ -87,7 +87,7 @@ namespace AdeeboMeter
             return rows;
         }
         // ---------- DSCP ping: marked and unmarked pings in turn, so the difference is the marking and not the minute
-        static readonly Dictionary<string, int> Dscp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "EF", 46 }, { "AF41", 34 }, { "AF42", 36 }, { "AF31", 26 }, { "AF21", 18 }, { "AF11", 10 }, { "CS1", 8 }, { "CS2", 16 }, { "CS3", 24 }, { "CS4", 32 }, { "CS5", 40 }, { "CS6", 48 }, { "CS7", 56 }, { "BE", 0 } };
+        public static readonly Dictionary<string, int> Dscp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "EF", 46 }, { "AF41", 34 }, { "AF42", 36 }, { "AF31", 26 }, { "AF21", 18 }, { "AF11", 10 }, { "CS1", 8 }, { "CS2", 16 }, { "CS3", 24 }, { "CS4", 32 }, { "CS5", 40 }, { "CS6", 48 }, { "CS7", 56 }, { "BE", 0 } };
         public static List<string[]> DscpPing(string target, string dscp, string count, Run run)
         {
             var rows = new List<string[]>(); var dst = Icmp.Resolve4(target); if (dst == null) { rows.Add(R(2, "Target", "couldn't find " + target + " (IPv4)", "", "u")); return rows; }
@@ -545,15 +545,25 @@ namespace AdeeboMeter
         }
 
         // ================================================================== HTTP / TLS inspector
-        public static List<string[]> Http(string url)
+        public static List<string[]> Http(string url) { return Http(url, ""); }
+        // sni: the name to ask the server for (TLS SNI and the Host header) when it differs from the address - e.g. testing one
+        // server of a pool by its IP, or a site before its DNS is switched over
+        public static List<string[]> Http(string url, string sni)
         {
-            var rows = new List<string[]>(); if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url.Trim();
+            var rows = new List<string[]>(); url = (url ?? "").Trim(); sni = (sni ?? "").Trim(); if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url;
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u) || (u.Scheme != "https" && u.Scheme != "http")) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
+            if (sni != "" && Uri.CheckHostName(sni) != UriHostNameType.Dns) { rows.Add(R(2, "Name to ask for", "a host name - e.g. www.example.com", "", "u")); return rows; }
+            if (sni != "") rows.Add(R(3, "Asking for", sni + " at " + u.Host, "The connection goes to " + u.Host + "; the name sent (TLS SNI and the Host header) is " + sni + ".", "u"));
+            string first = u.Host;
             for (int hop = 0; hop < 8; hop++)
             {
                 try
                 {
                     var req = (HttpWebRequest)WebRequest.Create(u); req.AllowAutoRedirect = false; req.Method = "GET"; req.Timeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                    if (sni != "" && u.Host == first) req.Host = sni + (u.IsDefaultPort ? "" : ":" + u.Port.ToString(CultureInfo.InvariantCulture));
+                    // asking by address for another name: the certificate is for the name, so only that mismatch is let through (the
+                    // chain must still be trusted) - the TLS rows below check the certificate against the name you gave
+                    if (sni != "" && u.Host == first) req.ServerCertificateValidationCallback = (o, c, ch, e) => (e & ~SslPolicyErrors.RemoteCertificateNameMismatch) == SslPolicyErrors.None;
                     var sw = Stopwatch.StartNew(); HttpWebResponse resp;
                     try { resp = (HttpWebResponse)req.GetResponse(); } catch (WebException we) { resp = we.Response as HttpWebResponse; if (resp == null) throw; }
                     using (resp)
@@ -572,7 +582,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { rows.Add(R(2, "Request", Draw.Trunc(e.Message, 100), "", "m")); break; }
             }
-            if (u.Scheme == "https") rows.AddRange(Tls(u.Host, u.Port));
+            if (u.Scheme == "https") rows.AddRange(Tls(u.Host, u.Port, u.Host == first && sni != "" ? sni : u.Host));
             return rows;
         }
         // the headers that make a site safer in a browser - present or missing, each in one plain line
@@ -629,7 +639,7 @@ namespace AdeeboMeter
             catch (Exception e) { rows.Add(R(2, "Revocation", Draw.Trunc(e.Message, 100), "", "m")); }
             return rows;
         }
-        static List<string[]> Tls(string host, int port)
+        static List<string[]> Tls(string host, int port, string sni)
         {
             var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None; List<string[]> chainRows = null;
             foreach (var proto in new[] { Tuple.Create("TLS 1.3", (SslProtocols)12288), Tuple.Create("TLS 1.2", SslProtocols.Tls12) })
@@ -640,7 +650,7 @@ namespace AdeeboMeter
                     {
                         if (!tc.ConnectAsync(host, port).Wait(5000)) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
                         using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); if (chainRows == null && ch != null) chainRows = Chain(ch); errs = e; return e == SslPolicyErrors.None; }))
-                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
+                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
                 catch (Exception e) { rows.Add(R(3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }

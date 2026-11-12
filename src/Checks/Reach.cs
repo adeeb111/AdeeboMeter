@@ -186,14 +186,28 @@ namespace AdeeboMeter
             var found = new Dictionary<string, SortedSet<string>>();
             Action<IPAddress, string> add = (ip, what) => { if (string.IsNullOrWhiteSpace(what)) return; string k = ip.ToString(); SortedSet<string> s; if (!found.TryGetValue(k, out s)) found[k] = s = new SortedSet<string>(); if (s.Count < 12) s.Add(Draw.Trunc(what.Trim(), 120)); };
             var socks = new List<Tuple<UdpClient, string>>();
+            // the asks go out of the adapter you're actually on (not a VPN or virtual adapter) and the answers come back to us
+            // directly (mDNS "unicast reply" bit; SSDP and WS-Discovery always reply to the sender) - Windows Firewall lets those
+            // replies in for a few seconds, where replies sent to the multicast group would be dropped
+            string lip; lock (m.L) lip = m.LocalIp; IPAddress local; if (!IPAddress.TryParse(lip ?? "", out local)) local = IPAddress.Any;
+            Func<string, UdpClient> sock = kind =>
+            {
+                var u = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(u, kind));   /* owned before anything can throw */
+                u.Client.Bind(new IPEndPoint(local, 0));
+                if (!local.Equals(IPAddress.Any)) u.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastInterface, local.GetAddressBytes());
+                u.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 1);   // stays on your own network
+                return u;
+            };
             try
             {
-                var md = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(md, "mdns")); var q = DnsQ("_services._dns-sd._udp.local", 12, 0); md.Send(q, q.Length, new IPEndPoint(IPAddress.Parse("224.0.0.251"), 5353));
-                var ss = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(ss, "ssdp")); var s1 = Encoding.ASCII.GetBytes("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: ssdp:all\r\n\r\n"); ss.Send(s1, s1.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900));
-                var ws = new UdpClient(AddressFamily.InterNetwork); socks.Add(Tuple.Create(ws, "wsd"));   /* owned before any send can throw */
+                var md = sock("mdns");
+                foreach (var name in new[] { "_services._dns-sd._udp.local", "_googlecast._tcp.local", "_airplay._tcp.local", "_ipp._tcp.local", "_spotify-connect._tcp.local" })
+                { var q = DnsQ(name, 12, 0); q[q.Length - 2] |= 0x80; md.Send(q, q.Length, new IPEndPoint(IPAddress.Parse("224.0.0.251"), 5353)); }
+                var ss = sock("ssdp"); var s1 = Encoding.ASCII.GetBytes("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: ssdp:all\r\n\r\n"); ss.Send(s1, s1.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900));
+                var ws = sock("wsd");
                 var probe = Encoding.UTF8.GetBytes("<?xml version=\"1.0\" encoding=\"utf-8\"?><soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:wsa=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" xmlns:wsd=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\"><soap:Header><wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To><wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action><wsa:MessageID>urn:uuid:" + Guid.NewGuid() + "</wsa:MessageID></soap:Header><soap:Body><wsd:Probe/></soap:Body></soap:Envelope>");
                 ws.Send(probe, probe.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 3702));
-                var until = DateTime.UtcNow.AddSeconds(3);
+                var until = DateTime.UtcNow.AddSeconds(4);
                 while (DateTime.UtcNow < until && !run.Stop)
                 {
                     bool got = false;
@@ -210,9 +224,32 @@ namespace AdeeboMeter
             }
             catch (SocketException e) { rows.Add(R(2, "Send", Draw.Trunc(e.Message, 100), "", "m")); return rows; }
             finally { foreach (var s in socks) s.Item1.Close(); }
-            rows.Add(R(found.Count > 0 ? 0 : 1, "Answered", I(found.Count) + " devices in 3 s", "Asked once each over mDNS (Apple, printers, TVs), SSDP (UPnP routers, media) and WS-Discovery (Windows, printers, scanners). Devices that don't speak any of them stay silent - Ping sweep finds those.", "m"));
-            foreach (var kv in found.OrderBy(k => k.Key.Length).ThenBy(k => k.Key, StringComparer.Ordinal)) rows.Add(R(3, kv.Key, string.Join(" · ", kv.Value), "", "m"));
+            int answered = found.Count;
+            // devices that stayed silent but talked to this PC recently are in Windows' neighbour (ARP) table - add them with
+            // their maker (from the hardware address) and the name your router's DNS knows them by
+            var arp = Arp.Table().Where(e => e.Dynamic && !found.ContainsKey(e.Ip) && SameNet(e.Ip, lip)).Take(64).ToList();
+            if (arp.Count > 0)
+            {
+                run.Status = "Adding devices from the neighbour table...";
+                var look = arp.Select(e => System.Threading.Tasks.Task.Factory.StartNew(() => { try { var h = Dns.GetHostEntry(IPAddress.Parse(e.Ip)).HostName; return h != e.Ip ? h : ""; } catch (SocketException) { return ""; } catch (ArgumentException) { return ""; } })).ToArray();
+                System.Threading.Tasks.Task.WaitAll(look, 4000);
+                for (int i = 0; i < arp.Count; i++)
+                {
+                    string nm = look[i].Status == System.Threading.Tasks.TaskStatus.RanToCompletion ? look[i].Result : "";
+                    add(IPAddress.Parse(arp[i].Ip), "seen recently" + (nm != "" ? " · " + nm : "") + " " + Toolkit.Vendor(arp[i].Mac));
+                }
+            }
+            rows.Add(R(found.Count > 0 ? 0 : 1, "Found", I(found.Count) + " devices · " + I(answered) + " answered in 4 s, " + I(found.Count - answered) + " from the neighbour table", "Asked once each over mDNS (Apple, Chromecast, printers, TVs), SSDP (UPnP routers, media) and WS-Discovery (Windows, printers, scanners); devices that stayed quiet but talked to this PC recently come from Windows' neighbour table. Ping sweep finds the rest.", "m"));
+            if (answered == 0) rows.Add(R(1, "No device answered", "If you know there are devices here: Windows may treat this network as Public, which blocks the replies - set it to Private (Settings › Network & internet › your network). A guest network or 'client isolation' on the router also hides devices from each other.", "", "w"));
+            foreach (var kv in found.OrderBy(k => Order(k.Key))) rows.Add(R(3, kv.Key, string.Join(" · ", kv.Value), "", "m"));
             return rows;
+        }
+        static long Order(string ip) { IPAddress a; return IPAddress.TryParse(ip, out a) && a.AddressFamily == AddressFamily.InterNetwork ? (long)(uint)IPAddress.NetworkToHostOrder(BitConverter.ToInt32(a.GetAddressBytes(), 0)) : long.MaxValue; }
+        // same /24 as this PC (the common home and office size); used only to keep the neighbour table to this network
+        public static bool SameNet(string ip, string mine)
+        {
+            IPAddress a, b; if (!IPAddress.TryParse(ip ?? "", out a) || !IPAddress.TryParse(mine ?? "", out b) || a.AddressFamily != AddressFamily.InterNetwork || b.AddressFamily != AddressFamily.InterNetwork) return false;
+            var x = a.GetAddressBytes(); var y = b.GetAddressBytes(); return x[0] == y[0] && x[1] == y[1] && x[2] == y[2] && x[3] != 255 && !a.Equals(b);
         }
         static List<string> Ptrs(byte[] r)
         {

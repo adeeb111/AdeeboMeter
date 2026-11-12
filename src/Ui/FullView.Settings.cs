@@ -32,6 +32,7 @@ namespace AdeeboMeter
         // ---------- Settings
         static readonly string[] SetS0 = { "balanced", "Balanced", "The default. Notices trouble within seconds and still costs next to nothing." };
         static readonly string[] SetS1 = { "engineer", "Engineer", "Watches everything closely - for when something is wrong and you want every clue." };
+        static readonly string[] SetMode = { "Simple", "Pro" };
         static readonly string[] SetS2 = { "2 s", "5 s", "10 s", "Off" }, SetOnlineMin = { "5 min", "15 min", "30 min", "1 h", "2 h", "3 h" };
         static readonly int[] SetN3 = { 2, 5, 10, 0 };
         static readonly string[] SetS4 = { "15 s", "30 s", "60 s", "Off" };
@@ -80,6 +81,7 @@ namespace AdeeboMeter
             Action<string, string, string, Func<string>, string[], Func<int>, Action<int>, Func<bool>, string> add = (sec, label, tag, help, opts, cur, set, show, keys) =>
                 L.Add(new SetItem { Sec = sec, Label = label, Tag = tag, Help = help, Opts = opts, Cur = cur, Set = set, Show = show, Keys = keys ?? "" });
             // General
+            add("General", "Mode", TagPc, () => Cfg.Simple ? "Simple: the dots, What's wrong?, speed, history and the Gamer Zone." : "Pro: every tab - Monitor, Security, Toolbox, Network story and Learn too.", SetMode, () => Cfg.Simple ? 0 : 1, i => SetModeTo(i == 0 ? "simple" : "pro"), null, "simple pro engineer advanced beginner tabs");
             add("General", "Theme", TagPc, () => "Follow Windows switches light and dark with your Windows setting.", SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : th == 0 ? 1 : 2; }, i => Cfg.SetTheme(i == 0 ? -1 : i == 1 ? 0 : 1), null, "dark light colour color");
             add("General", "Voice", TagPc, () => Voice.Serious ? "Plain, serious wording." : "The companion - a joke first, then the fix.", SetS19, () => Voice.Serious ? 1 : 0, i => { Voice.Serious = i == 1; Cfg.Save(); Invalidate(true); }, null, "jokes wording tone");
             add("General", "Start with Windows", TagPc, () => Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.", SetS10, () => Cfg.GetAutoStart() ? 0 : 1, i => Cfg.SetAutoStart(i == 0), null, "startup boot login autostart");
@@ -337,13 +339,14 @@ namespace AdeeboMeter
                 Func<int, string> every = sec => sec <= 0 ? "Off" : sec >= 60 ? "every " + sec / 60 + " min" : "every " + sec + " s";
                 var leaves = new List<string[]> {
                     new[] { "Router ping", Cfg.GwSec > 0 ? "A tiny ping to your own router, " + every(Cfg.GwSec) + ". Stays on your local network." : "Off.", Cfg.GwSec > 0 ? "0" : "-1" },
-                    new[] { "Internet and DNS check", Cfg.NetSec > 0 ? "One ping to 1.1.1.1 (or 8.8.8.8) and one name lookup, " + every(Cfg.NetSec) + "." : "Off - nothing goes to the internet in the background.", Cfg.NetSec > 0 ? "1" : "-1" },
+                    new[] { "Internet and DNS check", Cfg.NetSec > 0 ? "One ping to 1.1.1.1 (or 8.8.8.8) and one name lookup, " + every(Cfg.NetSec) + ". On networks that block ping: a timed connection to port 443 of the same address instead, closed at once." : "Off - nothing goes to the internet in the background.", Cfg.NetSec > 0 ? "1" : "-1" },
                     new[] { "Provider name", Cfg.NetSec > 0 ? "Once per network: a short trace (6 hops) toward 1.1.1.1 and one name lookup, to put your provider's name on the ISP dot." : "Off (follows the internet check).", Cfg.NetSec > 0 ? "1" : "-1" },
                     new[] { "Wi-Fi watch", Cfg.WifiSec > 0 ? "Asks Windows about your Wi-Fi, " + every(Cfg.WifiSec) + ". Nothing is sent anywhere." : "Off.", "-1" },
                     LeaveChecks,
                     LeaveTools,
                     new[] { "Pinned destination watch", Cfg.PinWatch && Cfg.Pins.Count > 0 ? "One ping to " + Cfg.Pins[0] + " every 30 s (you switched it on)." : "Off.", Cfg.PinWatch ? "1" : "-1" },
                     new[] { "Gamer Zone", Games.Monitored().Count == 0 ? "Nothing - until you click a game in the Gamer Zone." : "A ping (or a timed TCP connection) to the regions of the games you added: the best ones " + every(Cfg.GameBgSec) + ", the others every 5 min, every second while a game is open. Valve's server list is fetched only when you add a Valve game or press Refresh.", Games.Monitored().Count == 0 ? "-1" : "1" },
+                    new[] { "Speed test", "Only when you press Test my speed (or Run in the Toolbox): about 8 s of download from and 8 s of upload to speed.cloudflare.com, with pings to it - up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. Never by itself.", "1" },
                     new[] { "Online lookups (BGP)", Online.On ? "ON for " + Math.Ceiling(Online.Left.TotalMinutes) + " more min: public IP addresses of the path you look at go to stat.ripe.net and peeringdb.com (HTTPS)." : "Off (you switch them on; they switch themselves off after " + Cfg.OnlineMin + " min).", Online.On ? "1" : "-1" },
                     Row("Toolbox", "Only when you press Run: MTU per hop and MTR (pings with a rising TTL), port and Teams UDP tests, dig and TLS checks, iperf3 to your own server, ping sweep of your own network, nearest-cloud timing, the clock check (one request to msftconnecttest.com).", "1"),
                     new[] { "Sign-in page check", Cfg.Portal ? "Only if a check you started fails: one request to the same test page Windows itself uses (msftconnecttest.com)." : "Off.", Cfg.Portal ? "1" : "-1" },

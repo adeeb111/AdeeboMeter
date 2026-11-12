@@ -35,6 +35,7 @@ namespace AdeeboMeter
             List<AppStat> l; lock (M.L) l = M.Apps;
             procs = l ?? new List<AppStat>();
             procList.Invalidate(); procInfo.Invalidate();
+            if (procSel != null) LoadProcConns(procSel);
             // where unknown programs live (once per name, off the UI thread)
             var todo = procs.Where(a => Explain.Find(a.Name) == null && Explain.Find(Monitor.RawOf(a.Name)) == null && !procWhere.ContainsKey(a.Name)).Select(a => new KeyValuePair<string, int>(a.Name, a.Pid)).ToList();
             if (todo.Count == 0 || whereBusy) return;
@@ -53,9 +54,38 @@ namespace AdeeboMeter
             string w; procWhere.TryGetValue(a.Name, out w);
             return w == "windows" ? Explain.Help : w == "programfiles" || w == "user" ? Explain.App : Explain.Other;
         }
+        // the selected program's connections right now (TCP to where, ports it listens on, UDP ports) - off the UI thread
+        List<Conn> procConns; volatile bool procConnBusy;
+        void LoadProcConns(string name)
+        {
+            if (procConnBusy) return; procConnBusy = true;
+            Task.Factory.StartNew(() =>
+            {
+                List<Conn> l = null; try { l = M.Connections(true).Where(c => c.Proc == name).ToList(); } catch (Exception e) { Program.Log("app connections: " + e.Message); }
+                try { BeginInvoke((Action)delegate { procConnBusy = false; if (procSel == name) { procConns = l; procInfo.Invalidate(); } }); } catch (InvalidOperationException) { procConnBusy = false; }
+            });
+        }
+        static readonly string[] ConnReading = { "Connections", "reading..." }, ConnNone = { "Connections", "none right now - it isn't using the network" }, ConnMore = { "", "... and more - Monitor › Connections shows them all" };
+        static List<string[]> ConnRows(List<Conn> l)
+        {
+            var rows = new List<string[]>();
+            if (l == null) { rows.Add(ConnReading); return rows; }
+            var tcp = l.Where(c => c.Proto != "UDP" && c.State != "LISTEN").ToList(); var lis = l.Where(c => c.State == "LISTEN").ToList(); var udp = l.Where(c => c.Proto == "UDP").ToList();
+            if (l.Count == 0) { rows.Add(ConnNone); return rows; }
+            foreach (var g in tcp.GroupBy(c => (c.Host != "" ? c.Host : c.RemoteIp) + ":" + c.RemotePort.ToString(CultureInfo.InvariantCulture)).OrderByDescending(g => g.Count()).Take(20))
+                rows.Add(new[] { "TCP to", g.Key + (g.Count() > 1 ? "  × " + g.Count() : "") + "  ·  " + string.Join(", ", g.Select(c => c.State).Distinct()) });
+            if (tcp.Count > 0 && tcp.GroupBy(c => c.RemoteIp + ":" + c.RemotePort).Count() > 20) rows.Add(ConnMore);
+            foreach (var c in lis.OrderBy(c => c.LocalPort).Take(10))
+            {
+                bool all = c.Local.StartsWith("0.0.0.0", StringComparison.Ordinal) || c.Local.StartsWith("[::]", StringComparison.Ordinal);
+                rows.Add(new[] { "Listens on", "TCP port " + c.LocalPort.ToString(CultureInfo.InvariantCulture) + (all ? " - open to other devices (if Windows Firewall lets them in)" : c.Local.StartsWith("127.", StringComparison.Ordinal) || c.Local.StartsWith("[::1]", StringComparison.Ordinal) ? " - this PC only" : " - on " + c.Local) });
+            }
+            if (udp.Count > 0) rows.Add(new[] { "UDP ports", string.Join(", ", udp.Select(c => c.LocalPort).Distinct().OrderBy(p => p).Take(16).Select(p => p.ToString(CultureInfo.InvariantCulture))) + (udp.Count > 16 ? " ..." : "") + "  ·  calls, games, DNS and discovery use UDP" });
+            return rows;
+        }
         void SelectProc(AppStat a)
         {
-            procSel = a.Name; procFacts = null; procPathSel = ""; procInfo.AutoScrollPosition = Point.Empty; procList.Invalidate(); procInfo.Invalidate();
+            procSel = a.Name; procFacts = null; procPathSel = ""; procConns = null; LoadProcConns(a.Name); procInfo.AutoScrollPosition = Point.Empty; procList.Invalidate(); procInfo.Invalidate();
             string name = a.Name; int pid = a.Pid;
             Task.Factory.StartNew(() =>
             {
@@ -137,6 +167,8 @@ namespace AdeeboMeter
                 if (procFacts != null && procFacts[1] != "") rows.Add(new[] { "Publisher", procFacts[1] });
                 if (procFacts != null) rows.Add(new[] { "Where it lives", Explain.WhereText(procPathSel == "" ? "" : procFacts[3]) });
                 y = ExplainPaint.Section(g, "ON THIS PC", rows, x, y, w);
+                y += 6 * S;
+                y = ExplainPaint.Section(g, "ITS CONNECTIONS RIGHT NOW", ConnRows(procConns), x, y, w);
             }
             var need = new Size(0, (int)(y + 30 * S)); if (procInfo.AutoScrollMinSize != need) { procInfo.AutoScrollMinSize = need; procInfo.Invalidate(); }
         }

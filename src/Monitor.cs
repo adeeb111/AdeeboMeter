@@ -45,6 +45,9 @@ namespace AdeeboMeter
         public bool VpnUp; public string VpnName = ""; public int VpnMtu, PrimaryMtu;
         public bool HasWifi; public int WifiSignal = -1; public string Ssid = "", WifiChannel = "";
         public bool GwEverReplied, NetEverReplied, DnsFailedLast;
+        // networks that block ping (many company and hotel networks): the internet check falls back to timing a TCP connection
+        // to port 443 of the same address - opened and closed at once, nothing is sent over it
+        public bool NetIcmpEver, NetViaTcp;
         // cable plugged in -> first answer from the gateway: 30-50 s is classic spanning tree on a port without "edge / port fast"
         readonly Dictionary<string, DateTime> ethUp = new Dictionary<string, DateTime>(); bool ethSeen; public string LinkWait = "";
         public string NetTarget = "1.1.1.1";
@@ -228,6 +231,8 @@ namespace AdeeboMeter
                         lastNet = t0;
                         string tgt; lock (L) tgt = NetTarget;
                         double n = PingMs(tgt);
+                        if (!double.IsNaN(n)) { lock (L) { NetIcmpEver = true; NetViaTcp = false; } }
+                        else if (!NetIcmpEver) { IPAddress tip; if (IPAddress.TryParse(tgt, out tip)) { n = GamePing.TcpMs(tip, 443, 1500); if (!double.IsNaN(n)) lock (L) NetViaTcp = true; } }
                         lock (L) { NetPing.Add(n); netAt = DateTime.UtcNow; if (!double.IsNaN(n)) NetEverReplied = true; if (NetEverReplied) Loss.Add(double.IsNaN(n) ? 1 : 0); }
                         if (NetEverReplied)
                         {
@@ -238,8 +243,8 @@ namespace AdeeboMeter
                         ProbeDns();
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
-                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; netDown = 0; }
-                    if (netChanged) { netChanged = false; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; netDown = 0; } /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
+                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
+                    if (netChanged) { netChanged = false; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; } /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= 10) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }
                     if (wifiSec > 0 && (t0 - lastWifi).TotalSeconds >= wifiSec - 0.2) { lastWifi = t0; ProbeWifi(); }
                     if (appsSec > 0 && (t0 - lastConnT).TotalSeconds >= appsSec - 0.2) ProbeConns();
@@ -736,12 +741,12 @@ namespace AdeeboMeter
             s.DownHist = Down.Values(60); s.UpHist = Up.Values(60);
             s.MemText = UsedGB.ToString("0.0", CultureInfo.CurrentCulture) + " / " + TotalGB.ToString("0", CultureInfo.CurrentCulture) + " GB";
             s.DiskText = Draw.Fmt(s.Disk, "0", "% active");
-            string gwS, adapter, speed, dnsSrv, vpnName, ssid, ch, target, cfree; bool hasWifi, vpn, netEver; int sig, vmtu, pmtu;
+            string gwS, adapter, speed, dnsSrv, vpnName, ssid, ch, target, cfree; bool hasWifi, vpn, netEver, viaTcp; int sig, vmtu, pmtu;
             double gw, net, dns, loss, jit, readMB, writeMB, downTot;
             lock (L)
             {
                 gwS = Gateway; adapter = Adapter; speed = LinkSpeed; dnsSrv = DnsServer; vpnName = VpnName; ssid = Ssid; ch = WifiChannel; target = NetTarget; cfree = CFree;
-                hasWifi = HasWifi; vpn = VpnUp; netEver = NetEverReplied; sig = WifiSignal; vmtu = VpnMtu; pmtu = PrimaryMtu;
+                hasWifi = HasWifi; vpn = VpnUp; netEver = NetEverReplied; sig = WifiSignal; vmtu = VpnMtu; pmtu = PrimaryMtu; viaTcp = NetViaTcp;
                 gw = GwPing.Last; net = NetPing.Last; dns = Dns.Last; loss = NetEverReplied ? Loss.Avg(10) * 100 : double.NaN; jit = NetPing.Jitter(10);
                 s.Call = CallLikely; readMB = DiskReadMBs; writeMB = DiskWriteMBs; downTot = DownBytesTotal;
             }
@@ -754,7 +759,7 @@ namespace AdeeboMeter
                 (hasWifi ? "signal " + sig + "% · " : "") + "gw " + Draw.Fmt(gw, "0", " ms"),
                 !double.IsNaN(net) && !double.IsNaN(gw) ? "+" + Math.Max(0, net - gw).ToString("0", CultureInfo.CurrentCulture) + " ms past router" : (vpn ? "tunnel up" : "-"),
                 Draw.Fmt(dns, "0", " ms"),
-                netEver ? Draw.Fmt(net, "0", " ms") + " · loss " + Draw.Fmt(loss, "0", "%") : "no ICMP reply yet"
+                netEver ? Draw.Fmt(net, "0", " ms") + (viaTcp ? " (TCP)" : "") + " · loss " + Draw.Fmt(loss, "0", "%") : "no reply yet"
             };
             s.PathSub = new[]
             {

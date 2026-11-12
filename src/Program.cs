@@ -196,7 +196,11 @@ namespace AdeeboMeter
         public static string GameIds = "";
         public static volatile int GameBgSec = 30, GameBgServers = 3, GameDays = 14;
         public static volatile bool GameFast = true, GameAuto = true, GameWidget = true;
-        public static volatile string WidgetStyle = "auto";   // auto (follows what you are doing) / everyday / gamer
+        public static volatile string WidgetStyle = "auto";
+        // Simple (the dots, What's wrong?, speed, history, Gamer Zone) or Pro (every tab). "" = not chosen yet (a new install:
+        // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
+        public static volatile string Mode = "";
+        public static bool Simple { get { return Mode != "pro"; } }   // auto (follows what you are doing) / everyday / gamer
         public static string Preset = "balanced";
         public static readonly List<string> Pins = new List<string>();   // saved destinations, max 5, UI thread only
         public static Action Save = delegate { };
@@ -224,12 +228,12 @@ namespace AdeeboMeter
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + GameIds; yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
-            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle;
+            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Mode;
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "autostart", "widget", "serious", "theme" };
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)
         {
@@ -263,6 +267,7 @@ namespace AdeeboMeter
                 case "gfast": GameFast = v != "0"; break;
                 case "gauto": GameAuto = v != "0"; break;
                 case "gwidget": GameWidget = v != "0"; break;
+                case "mode": Mode = v == "simple" || v == "pro" ? v : ""; break;
                 case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" ? v : "auto"; break;
                 case "livemin": LiveMin = Pick(v, 15, 5, 15, 30); break;
                 case "sniffsec": SniffSec = Pick(v, 30, 30, 60); break;

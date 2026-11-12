@@ -79,39 +79,64 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h = (target ?? "").Trim(); if (h == "" || !Regex.IsMatch(h, @"^[\w.:%-]+$") || h.Length > 253) { rows.Add(R(2, "Target", "type an address or name", "", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; }
-            int n = Count(count, 10), size = 32, ttl = 128, gap = 1000; bool df = false; string o = (opts ?? "").ToLowerInvariant(), bad = "";
-            foreach (Match mm in Regex.Matches(o, @"(size|ttl|every|gap)\s*=?\s*(\d+)|\b(df)\b"))
+            int n = Count(count, 10), size = 32, ttl = 128, gap = 1000, dscp = -1; bool df = false, cmp = false; string o = (opts ?? "").ToLowerInvariant(), bad = "";
+            foreach (Match mm in Regex.Matches(o, @"(size|ttl|every|gap)\s*=?\s*(\d+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}\d{0,2}|\d{1,2})\b|\b(compare)\b"))
             {
                 if (mm.Groups[3].Success) { df = true; continue; }
+                if (mm.Groups[5].Success) { cmp = true; continue; }
+                if (mm.Groups[4].Success) { int d; string dn = mm.Groups[4].Value.ToUpperInvariant(); if (Toolkit.Dscp.TryGetValue(dn, out d) || (int.TryParse(dn, out d) && d >= 0 && d <= 63)) dscp = d; else bad = "DSCP is a name (EF, AF41, CS6...) or 0-63"; continue; }
                 int v = int.Parse(mm.Groups[2].Value.Length > 6 ? "999999" : mm.Groups[2].Value, CultureInfo.InvariantCulture);
                 switch (mm.Groups[1].Value) { case "size": size = v; break; case "ttl": ttl = v; break; default: gap = v; break; }
             }
             if (size > 65500) bad = "size is at most 65,500 bytes"; if (ttl < 1 || ttl > 255) bad = "TTL is 1-255";
-            if (bad != "") { rows.Add(R(2, "Options", bad, "e.g. size 1472 df ttl 5 every 200", "u")); return rows; }
+            if (cmp && dscp < 0) bad = "compare needs a marking - e.g. dscp ef compare";
+            if (dscp >= 0 && a.AddressFamily != AddressFamily.InterNetwork) bad = "DSCP marking works with IPv4 targets here";
+            if (bad != "") { rows.Add(R(2, "Options", bad, "e.g. size 1472 df ttl 5 every 200 dscp ef compare", "u")); return rows; }
             gap = Math.Max(MinGapMs, Math.Min(10000, gap));
-            Log("icmp " + n + " x " + size + " B to " + a + (df ? " df" : "") + " ttl " + ttl);
+            Log("icmp " + n + " x " + size + " B to " + a + (df ? " df" : "") + " ttl " + ttl + (dscp >= 0 ? " dscp " + dscp + (cmp ? " compare" : "") : ""));
             var buf = new byte[size]; for (int i = 0; i < size; i++) buf[i] = (byte)('a' + i % 23);
-            var times = new List<long>(); var froms = new Dictionary<string, int>(); int sent = 0, lost = 0, frag = 0;
+            // two buckets: [0] as asked (marked when dscp is set), [1] unmarked - only used with compare, every other packet
+            var times = new[] { new List<long>(), new List<long>() }; var sentB = new int[2]; var lostB = new int[2];
+            var froms = new Dictionary<string, int>(); int sent = 0, frag = 0;
             using (var p = new Ping())
                 for (int i = 0; i < n && !run.Stop; i++)
                 {
-                    var sw = Stopwatch.StartNew(); sent++;
+                    var sw = Stopwatch.StartNew(); sent++; int b = cmp && i % 2 == 1 ? 1 : 0; sentB[b]++;
                     try
                     {
-                        var r = p.Send(a, 2000, buf, new PingOptions(ttl, df));
-                        if (r.Status == IPStatus.Success) times.Add(r.RoundtripTime);
-                        else if (r.Status == IPStatus.PacketTooBig) frag++;
-                        else if (r.Status == IPStatus.TtlExpired || r.Status == IPStatus.TimeExceeded) { string k = r.Address + " (TTL ran out there)"; int c; froms.TryGetValue(k, out c); froms[k] = c + 1; }
-                        else lost++;
+                        IPStatus st; long rtt; string from;
+                        if (dscp >= 0)
+                        {
+                            var r = AdeeboMeter.Icmp.Echo(a, size, ttl, df, 2000, false, b == 0 ? (byte)(dscp << 2) : (byte)0);
+                            st = r.Status == AdeeboMeter.Icmp.Ok ? IPStatus.Success : r.Status == AdeeboMeter.Icmp.TooBig ? IPStatus.PacketTooBig : r.Status == AdeeboMeter.Icmp.TtlExpired ? IPStatus.TtlExpired : IPStatus.TimedOut; rtt = Math.Max(0, r.Rtt); from = r.From;
+                        }
+                        else { var r = p.Send(a, 2000, buf, new PingOptions(ttl, df)); st = r.Status; rtt = r.RoundtripTime; from = r.Address != null ? r.Address.ToString() : ""; }
+                        if (st == IPStatus.Success) times[b].Add(rtt);
+                        else if (st == IPStatus.PacketTooBig) frag++;
+                        else if (st == IPStatus.TtlExpired || st == IPStatus.TimeExceeded) { string k = from + " (TTL ran out there)"; int c; froms.TryGetValue(k, out c); froms[k] = c + 1; }
+                        else lostB[b]++;
                     }
-                    catch (PingException) { lost++; }
-                    catch (InvalidOperationException) { lost++; }
-                    run.Status = "Sent " + sent + " of " + n + "..."; run.Add(times.Count > 0 ? times.Last() : 0);
+                    catch (PingException) { lostB[b]++; }
+                    catch (InvalidOperationException) { lostB[b]++; }
+                    run.Status = "Sent " + sent + " of " + n + (cmp ? (b == 0 ? " (marked)" : " (unmarked)") : "") + "..."; run.Add(times[b].Count > 0 ? times[b].Last() : 0);
                     int wait = gap - (int)sw.ElapsedMilliseconds; while (wait > 0 && !run.Stop && i < n - 1) { Thread.Sleep(Math.Min(wait, 100)); wait -= 100; }
                 }
-            int got = times.Count;
-            rows.Add(R(got == 0 && froms.Count == 0 ? 2 : lost > 0 ? 1 : 0, a + (a.ToString() != h ? " (" + h + ")" : ""), I(sent) + " sent · " + I(got) + " answered" + (got > 0 ? " · " + times.Min() + " / " + (long)times.Average() + " / " + times.Max() + " ms (min / avg / max)" : ""),
-                I(size) + "-byte payload" + (df ? ", don't fragment" : "") + ", TTL " + ttl + ", every " + gap + " ms. " + Caps, "m"));
+            Func<int, string> line = k => I(sentB[k]) + " sent · " + I(times[k].Count) + " answered" + (times[k].Count > 0 ? " · " + times[k].Min() + " / " + (long)times[k].Average() + " / " + times[k].Max() + " ms (min / avg / max)" : "");
+            int got = times[0].Count + times[1].Count, lost = lostB[0] + lostB[1];
+            string mark = dscp >= 0 ? "DSCP " + dscp + (Toolkit.Dscp.Any(x => x.Value == dscp) ? " (" + Toolkit.Dscp.First(x => x.Value == dscp).Key + ")" : "") : "";
+            rows.Add(R(got == 0 && froms.Count == 0 ? 2 : lostB[0] > 0 ? 1 : 0, a + (a.ToString() != h ? " (" + h + ")" : "") + (cmp ? " · " + mark : ""), line(0),
+                I(size) + "-byte payload" + (df ? ", don't fragment" : "") + ", TTL " + ttl + (mark != "" ? ", " + mark : "") + ", every " + gap + " ms. " + Caps, "m"));
+            if (cmp)
+            {
+                rows.Add(R(lostB[1] > 0 ? 1 : 0, "Same, unmarked", line(1), "Every other packet left without a marking - the same size, TTL and timing.", "m"));
+                double a0 = times[0].Count > 0 ? times[0].Average() : double.NaN, a1 = times[1].Count > 0 ? times[1].Average() : double.NaN;
+                double l0 = sentB[0] > 0 ? 100.0 * lostB[0] / sentB[0] : 0, l1 = sentB[1] > 0 ? 100.0 * lostB[1] / sentB[1] : 0;
+                string verdict = l0 > l1 + 10 ? "Marked packets are dropped more - something on the way polices or drops that class." :
+                                 l1 > l0 + 10 ? "Unmarked packets are dropped more - the marked class is protected (it gets priority)." :
+                                 !double.IsNaN(a0) && !double.IsNaN(a1) && a0 + 5 < a1 ? "Marked packets come back faster - the marking is honoured somewhere on the way." :
+                                 "No difference - the marking is ignored, cleared on the way, or the path isn't busy enough to show it.";
+                rows.Add(R(3, "Compared", verdict, "Windows clears the marking a program asks for unless a QoS policy allows it - Live capture with filter icmp shows whether it left marked.", "i"));
+            }
             if (frag > 0) rows.Add(R(1, "Too big", I(frag) + " replies said the packet needs fragmenting", "With don't-fragment set, a link on the way has a smaller MTU than " + I(size + (a.AddressFamily == AddressFamily.InterNetwork ? 28 : 48)) + " bytes.", "m"));
             foreach (var kv in froms) rows.Add(R(3, "Answered by", kv.Key + " × " + kv.Value, "With a small TTL this shows the router at that hop - a manual traceroute.", "m"));
             if (lost > 0) rows.Add(R(1, "No answer", I(lost) + " of " + I(sent), "Loss, or the target or a firewall on the way drops ping.", "m"));

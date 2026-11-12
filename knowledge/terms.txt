@@ -1918,6 +1918,26 @@ how: From the events AdeeboMeter already recorded; nothing new is measured.
 why: A laptop that ping-pongs between two access points of equal strength stutters calls even with full bars.
 without: Roaming while you walk around is normal; roaming while sitting still is not.
 
+== tb.udpmtu
+friendly: MTU over UDP
+cat: term
+close: -1
+tag: The biggest UDP packet that gets through - even where ping is blocked
+what: Finds the largest UDP packet that reaches a QUIC web server (port 443) or a DNS server (port 53) and gets an answer, with don't-fragment set. Useful on VPNs and company networks that drop ping, and for the UDP traffic itself: HTTP/3, calls, games.
+how: Port 443: a QUIC packet with an unused version number - QUIC servers answer it with the versions they speak, and no connection is made. Port 53: a DNS question for the root, padded to the size being tried. About 12 sizes, two tries each, to the one target you typed.
+why: When UDP packets above a size vanish (a VPN or tunnel that doesn't fit them), HTTP/3 sites stall and VPNs misbehave while ping-based MTU checks look fine - or can't run at all because ping is blocked.
+without: Wireshark and a QUIC client that lets you set the packet size, or ping with -f -l if ping is allowed.
+
+== tb.speedtest
+friendly: Speed test
+cat: term
+close: -1
+tag: How fast is my internet right now?
+what: Downloads from and uploads to Cloudflare's speed-test server for about 8 seconds each, and pings while the line is full - so you see the speed and whether calls and games would stutter while someone downloads.
+how: Only when you press Run - never in the background. Talks to speed.cloudflare.com (the server their own speed page uses); nothing about you is sent. Capped at 400 MB down and 100 MB up. The result is kept in the day's history.
+why: "Is it my internet?" usually starts here. The ping while the line is busy matters as much as the speed: a fast line that queues badly still makes calls choppy.
+without: Open a speed-test website in your browser.
+
 == tb.ispreport
 friendly: Report for my ISP
 cat: term

@@ -28,6 +28,7 @@ namespace AdeeboMeter
             Func<string, string, string, string, Func<string[], Toolkit.Run, List<string[]>>, Tool> T = (id, g, t, ins, f) => new Tool { Id = id, Group = g, Title = t, Inputs = ins == null ? Array.Empty<string>() : ins.Split('|'), Do = f };   // inputs: "first|second|third"
             tools = new List<Tool> {
                 T("mtu", "PATH", "MTU per hop", "Destination - e.g. github.com", null),
+                T("udpmtu", "PATH", "MTU over UDP (QUIC / DNS)", "Target - a website (port 443) or a DNS server (port 53)|Port - 443 or 53", (a, r) => UdpMtu.Run(a[0], a[1], r)),
                 T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-10)", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(10, min)); r.Status = "Tracing..."; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); PathTools.Mtr(dst, mtrHops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second..."; }); var res = new List<string[]> { new[] { "0", "Verdict", PathTools.MtrVerdict(mtrHops), "", "i" } }; res.AddRange(PathTools.Flags(mtrHops)); return res; }),
                 T("ret", "PATH", "The way back (return path)", "Destination", (a, r) => Toolkit.ReturnPath(a[0], r)),
                 T("owners", "PATH", "Who carries my traffic (BGP)", "Destination", (a, r) => { if (!Online.On) return OnlineOff(); var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); r.Status = "Tracing..."; var h = PathTools.Trace(dst, 30, () => r.Stop); r.Status = "Looking up each network..."; return Online.PathOwners(h, a[0]); }),
@@ -53,7 +54,7 @@ namespace AdeeboMeter
                 T("twamp", "SPEED", "TWAMP-light to a reflector", "Reflector - host or host:port (UDP 862)|Packets (10-2000)", (a, r) => Protocols.Twamp(a[0], a[1], r)),
                 T("cloud", "SPEED", "Nearest cloud", null, (a, r) => Toolkit.Nearest(r)),
                 T("dig", "DNS AND WEB", "dig - any DNS record", "Name - e.g. github.com or an IP|Type - A, AAAA, MX, TXT, NS, SRV, CAA, PTR, HTTPS, DS, DNSKEY, TLSA, SSHFP or TRACE|Server (optional) - 1.1.1.1 or https://cloudflare-dns.com/dns-query", (a, r) => Toolkit.Dig(a[0], a[1], a[2], M)),
-                T("http", "DNS AND WEB", "HTTP and TLS inspector", "URL - e.g. github.com", (a, r) => Toolkit.Http(a[0])),
+                T("http", "DNS AND WEB", "HTTP and TLS inspector", "URL - e.g. github.com or https://203.0.113.5|Name to ask for (optional, SNI) - e.g. www.example.com", (a, r) => Toolkit.Http(a[0], a[1])),
                 T("httptime", "DNS AND WEB", "HTTP timing, repeated", "URL - e.g. outlook.office.com|How many (1-50)", (a, r) => Protocols.HttpTiming(a[0], a[1], r)),
                 T("doh", "DNS AND WEB", "Encrypted DNS (DoH / DoT)", null, (a, r) => Protocols.EncryptedDns()),
                 T("ntp", "PROTOCOLS", "NTP - ask a time server", "Server - e.g. time.windows.com or pool.ntp.org", (a, r) => Protocols.Ntp(a[0])),
@@ -75,7 +76,7 @@ namespace AdeeboMeter
                 T("snmpwalk", "SNMP", "SNMP - walk any OID or name", SnmpIn + "|OID or MIB name - e.g. ifTable", (a, r) => SnmpTools.Walk(a[0], a[1], a[2], r)),
                 T("mibs", "SNMP", "MIB folder and search", "Search your MIBs - e.g. temperature, optic, fan", (a, r) => SnmpTools.Search(a[0], r)),
                 T("syslog", "PROTOCOLS", "Syslog - send a test message", "Collector - host or host:port (UDP 514)|Text (optional)|Level (optional) - e.g. local7.warning", (a, r) => { var gate = new List<string[]>(); return Lab.Allowed(M, a[3], gate) ? Protocols.Syslog(a[0], a[1], a[2]) : gate; }),
-                T("icmpb", "LAB", "ICMP builder (size, DF, TTL)", "Target - IPv4 or IPv6|How many (1-1000)|Options - e.g. size 1472 df ttl 5 every 200", (a, r) => Lab.Icmp(M, a[0], a[1], a[2], a[3], r)),
+                T("icmpb", "LAB", "ICMP builder (size, DF, TTL)", "Target - IPv4 or IPv6|How many (1-1000)|Options - e.g. size 1472 df ttl 5 every 200 dscp ef compare", (a, r) => Lab.Icmp(M, a[0], a[1], a[2], a[3], r)),
                 T("udpsend", "LAB", "UDP sender", "host:port - e.g. 10.0.0.5:5060|Payload - text, or hex:0a0b0c|How many (1-1000)", (a, r) => Lab.Udp(M, a[0], a[1], a[2], a[3], r)),
                 T("tcpsend", "LAB", "TCP sender (send, see the reply)", "host:port - e.g. 10.0.0.5:8080|Payload - text with \\r\\n, or hex:0a0b0c", (a, r) => Lab.Tcp(M, a[0], a[1], a[3], r)),
                 T("arpwho", "LAB", "ARP who-has", "IP on your network - e.g. 192.168.1.23", (a, r) => Lab.Arp(M, a[0], a[3])),
@@ -97,6 +98,7 @@ namespace AdeeboMeter
                 T("mysites", "WEB", "My sites", null, (a, r) => MoreTools.MySites(r)),
                 T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
                 T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
+                T("speedtest", "SPEED", "Speed test (Cloudflare)", null, (a, r) => SpeedTest.Run(r)),
                 T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes", (a, r) => IspReport.Run(M, a[0], a[1], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
@@ -143,9 +145,9 @@ namespace AdeeboMeter
         List<PathTools.Hop> mtrHops;
         // three sections, each grouped by the question you're asking, not by technology
         static readonly string[][] TbLayout = {
-            new[] { "PATH & ROUTING", "mtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
+            new[] { "PATH & ROUTING", "mtu", "udpmtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "teams", "ssh", "mail", "radius", "tacacs" },
-            new[] { "SPEED & QUALITY", "ping", "twamp", "cloud", "ispreport" },
+            new[] { "SPEED & QUALITY", "speedtest", "ping", "twamp", "cloud", "ispreport" },
             new[] { "COMPARE & WATCH", "beforeafter", "twopc", "mysites" },
             new[] { "NAMES & TIME", "dig", "dnscmp", "doh", "hosts", "dnsrules", "ntp", "clock", "timesrc" },
             new[] { "SWITCHES & ROUTERS (SNMP)", "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs" },
@@ -336,6 +338,8 @@ namespace AdeeboMeter
                     }
                 case "sweep": return "about 20 seconds, never more than 90";
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
+                case "udpmtu": return "about 10-20 seconds · about 12 sizes, two small tries each, to the one target";
+                case "speedtest": return "about 20 seconds · up to " + SpeedTest.MaxDownMB + " MB down and " + SpeedTest.MaxUpMB + " MB up with " + SpeedTest.Host + " - nothing runs until you press Run";
                 case "ispreport": return (int.TryParse(a.Length > 1 ? a[1].Trim() : "", out m) && (m == 1 || m == 5) ? m : 2) + " min of measuring, plus about 30 seconds to trace and name the routers";
                 case "dscp": if (!int.TryParse(a[2], out n)) n = 20; return RunSecs(Math.Max(1, Math.Min(200, n)) / 2 + 1);
                 case "snmptraffic": return "about 10 seconds (two readings 5 seconds apart)";
@@ -383,6 +387,10 @@ namespace AdeeboMeter
         void EnsureToolbox()
         {
             if (tbCanvas != null) return;
+            var osw = System.Diagnostics.Stopwatch.StartNew(); try { EnsureToolbox2(); } finally { Program.Log("toolbox opened in " + osw.ElapsedMilliseconds + " ms"); }
+        }
+        void EnsureToolbox2()
+        {
             toolboxPage.SuspendLayout();
             var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
             split.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(290))); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));

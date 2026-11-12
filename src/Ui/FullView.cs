@@ -148,6 +148,7 @@ namespace AdeeboMeter
             var tabLine = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Theme.Track, Tag = "line" };
             // Small screens / high scaling: switch to short tab names instead of letting tabs fall off the edge.
             subTabs.Resize += delegate { FitTabs(); };
+            ApplyMode();
 
             // Connections page
             connPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card };
@@ -331,7 +332,16 @@ namespace AdeeboMeter
                     tipTimer.Stop(); tip.ShowAt(en, at, this);
                 }
             };
-            Shown += delegate { timer.Start(); RefreshConns(true); };
+            Shown += delegate
+            {
+                timer.Start(); RefreshConns(true);
+                // warm the Toolbox while you look at the home page: its explanations are parsed off the UI thread, and the
+                // page itself is built a moment later when the app is idle - so the first click on Toolbox is instant
+                Task.Factory.StartNew(() => { try { Knowledge.Guide("terms"); } catch (Exception e) { Program.Log("warm: " + e.Message); } });
+                var warm = new System.Windows.Forms.Timer { Interval = 2500 };
+                warm.Tick += delegate { warm.Stop(); warm.Dispose(); if (!IsDisposed && tab != "toolbox") EnsureToolbox(); };
+                warm.Start();
+            };
             tipTimer.Tick += delegate { tipTimer.Stop(); ShowTip(); };
             // Minimising means "get out of my way": same as Esc / Back to corner - the view closes, frees its memory, the widget keeps watching.
             Resize += delegate { if (WindowState == FormWindowState.Minimized && Visible) BeginInvoke((Action)Close); };
@@ -398,6 +408,21 @@ namespace AdeeboMeter
             new[] { "story", "Network story", "travel" },
             new[] { "time", "Time machine", "replay", "changes" },
             new[] { "learn", "Learn", "learn", "windows" } };
+        // Simple mode shows only these sections; pages of the others still open when something links to them (a Fix a problem
+        // answer that needs a Toolbox tool, say) - only their tab is hidden
+        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "overview", "investigate", "gamer", "time" };
+        void ApplyMode()
+        {
+            if (tabs == null) return;
+            tabs.SuspendLayout();
+            foreach (Control c in tabs.Controls) c.Visible = !Cfg.Simple || SimpleSecs.Contains((string)c.Tag);
+            tabs.ResumeLayout(true);
+        }
+        void SetModeTo(string m)
+        {
+            Cfg.Mode = m; Cfg.Save(); ApplyMode();
+            if (overviewCanvas != null) overviewCanvas.Invalidate();
+        }
         static string SecOf(string page) { foreach (var sc in Secs) for (int i = 2; i < sc.Length; i++) if (sc[i] == page) return sc[0]; return ""; }
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
             { "overview", new[] { "Overview", "Overview" } },

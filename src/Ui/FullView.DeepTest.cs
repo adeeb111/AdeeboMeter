@@ -21,7 +21,7 @@ namespace AdeeboMeter
 
         static readonly string[] Hostile = { "", " ", "x;rm -rf /", "$(calc)", "&calc&", "'\"<>|%n%s", new string('a', 5000), "999.999.999.999", "::::::", "-1", "http://", "a\u0000b", "😀.example", "../../windows/win.ini", "127.0.0.1:99999" };
         // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (TESTPLAN-1.1.md)
-        static readonly HashSet<string> ByHand = new HashSet<string> { "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport" };
+        static readonly HashSet<string> ByHand = new HashSet<string> { "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu" };
 
         Probe RunOne(Tool t, string[] a, int limitMs)
         {

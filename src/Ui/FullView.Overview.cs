@@ -12,11 +12,20 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         Panel overviewPage; DB overviewCanvas; string ovKey = "";
+        Toolkit.Run speedRun = new Toolkit.Run(); string speedErr = "";
+        // the speed test runs only when this button is pressed - one at a time, on its own thread
+        void StartSpeed()
+        {
+            if (SpeedTest.Busy) return;
+            speedRun = new Toolkit.Run { Status = "Starting..." }; speedErr = ""; var run = speedRun;
+            new System.Threading.Thread(() => { var res = SpeedTest.Measure(run); speedErr = res.Error; run.Status = ""; }) { IsBackground = true, Name = "speed test" }.Start();
+            overviewCanvas.Invalidate();
+        }
         // repaint only when something on the page would look different (not every second)
         void OverviewTick()
         {
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
-            string k = s.Headline + "|" + s.Level + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details;
+            string k = s.Headline + "|" + s.Level + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != ovKey) { ovKey = k; overviewCanvas.Invalidate(); }
         }
 
@@ -119,6 +128,26 @@ namespace AdeeboMeter
                 using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
                 y += vr.Height + 18 * S;
 
+                // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
+                if (Cfg.Mode == "")
+                {
+                    g.DrawString("HOW WOULD YOU LIKE ADEEBOMETER?", Draw.fTiny, muted, x, y); y += 22 * S;
+                    var opts = new[] {
+                        new[] { "simple", "Simple", "Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone." },
+                        new[] { "pro", "Pro", "All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn." } };
+                    float ow = (w - 12 * S) / 2, oh = 84 * S;
+                    for (int i = 0; i < 2; i++)
+                    {
+                        var orr = new RectangleF(x + i * (ow + 12 * S), y, ow, oh);
+                        Theme.Fill(g, orr, 12 * S, i == 0 ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, orr, 12 * S, i == 0 ? Theme.Blue : Theme.Line, i == 0 ? 2 : 1);
+                        g.DrawString(opts[i][1], Draw.fHead, ink, orr.X + 18 * S, orr.Y + 12 * S);
+                        g.DrawString(opts[i][2], Draw.fBody, muted, new RectangleF(orr.X + 18 * S, orr.Y + 40 * S, orr.Width - 36 * S, 40 * S));
+                        string m = opts[i][0]; Act(overviewCanvas, orr, delegate { SetModeTo(m); });
+                    }
+                    y += oh + 8 * S;
+                    g.DrawString("You can switch any time in Settings › General.", Draw.fSmall, muted, x, y); y += 30 * S;
+                }
+
                 // the four numbers
                 g.DrawString("RIGHT NOW", Draw.fTiny, muted, x, y); y += 22 * S;
                 double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), down = M.Down.Last, up = M.Up.Last, dns = M.Dns.Avg(6);
@@ -145,6 +174,18 @@ namespace AdeeboMeter
                 y += ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 8 * S;
                 string netLine = (kind == "Wi-Fi" ? "On Wi-Fi" + (ssid != "" ? " \"" + ssid + "\"" : " (name hidden - location is off)") + (sig >= 0 ? " · signal " + sig + "%" : "") : "On " + kind) + (speed != "" ? " · link " + speed : "") + (vpn ? " · VPN on" : "");
                 g.DrawString(netLine, Draw.fBody, sub, x, y); y += 24 * S;
+                // speed: only when you press the button (it talks to Cloudflare's speed server; the line says so)
+                {
+                    var last = SpeedTest.Last; bool busy = SpeedTest.Busy;
+                    string bt = busy ? "Stop" : "Test my speed"; var bsz2 = g.MeasureString(bt, Draw.fBodyB); var sb2 = new RectangleF(x, y + 2 * S, bsz2.Width + 28 * S, 32 * S);
+                    Theme.Fill(g, sb2, 16 * S, busy ? Theme.Soft : Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(bt, Draw.fBodyB, tb, sb2.X + 14 * S, sb2.Y + (32 * S - bsz2.Height) / 2);
+                    Act(overviewCanvas, sb2, delegate { if (SpeedTest.Busy) speedRun.Stop = true; else StartSpeed(); });
+                    Hint(overviewCanvas, sb2, "tb.speedtest");
+                    string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : last != null ? "Last test " + last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + SpeedTest.Mbps(last.Down) + " down / " + SpeedTest.Mbps(last.Up) + " up Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
+                        : "About 20 seconds with Cloudflare's speed server (up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB). Never runs by itself.";
+                    using (var stb = new SolidBrush(speedErr != "" && !busy ? Theme.LvText(1) : Theme.Sub)) g.DrawString(st, Draw.fBody, stb, new RectangleF(sb2.Right + 12 * S, sb2.Y + 6 * S, w - sb2.Width - 12 * S, 24 * S));
+                    y += 44 * S;
+                }
                 string normal = Baseline.Normal(Brain.NetKey);
                 if (normal != "") { g.DrawString(normal, Draw.fSmall, muted, new RectangleF(x, y, w, 36 * S)); y += Draw.Measure(normal, Draw.fSmall, (int)w).Height + 8 * S; }
                 if (Cfg.Details)
