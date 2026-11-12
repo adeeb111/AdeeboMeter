@@ -6,7 +6,7 @@
 name: build
 on:
   push:
-    branches: [main]
+    branches: [main, store]   # store: the Microsoft Store package before its release
   release:
     types: [published]
   workflow_dispatch:
@@ -41,6 +41,18 @@ jobs:
         with:
           name: AdeeboMeter
           path: dist/*
+      # The Microsoft Store package (unsigned - Microsoft signs it after review). Never attached to the GitHub release;
+      # download it from the run's Artifacts and upload it in Partner Center. A packaging problem doesn't hold up the release.
+      - name: Store package (store/pack.ps1)
+        id: store
+        continue-on-error: true
+        shell: pwsh
+        run: ./store/pack.ps1 -Exe ./AdeeboMeter.exe
+      - if: steps.store.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        with:
+          name: AdeeboMeter-store
+          path: store/out/*.msix
   release:
     needs: build
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')

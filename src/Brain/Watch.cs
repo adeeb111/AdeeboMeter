@@ -254,7 +254,7 @@ namespace AdeeboMeter
     // ================================================================== a crash leaves a note; the next start offers to report it
     static class Crash
     {
-        public static string FilePath { get { return Path.Combine(Program.Dir, "AdeeboMeter-crash.txt"); } }
+        public static string FilePath { get { return Path.Combine(Program.WriteDir, "AdeeboMeter-crash.txt"); } }
         public static void Write(object ex)
         {
             try { File.WriteAllText(FilePath, "AdeeboMeter " + Program.Version + " crashed " + DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "\r\nWindows " + Environment.OSVersion.Version + ", CLR " + Environment.Version + "\r\n\r\n" + Clean(Convert.ToString(ex, CultureInfo.InvariantCulture))); }

@@ -56,12 +56,12 @@ namespace AdeeboMeter
             Draw.Init(sc);
             appIcon = Theme.MakeIcon(32);
             marshal.CreateControl(); var h = marshal.Handle;
-            settingsPath = Path.Combine(Program.Dir, "AdeeboMeter.settings");
-            try { string old = Path.Combine(Program.Dir, OldName + ".settings"); if (!File.Exists(settingsPath) && File.Exists(old)) File.Copy(old, settingsPath); } catch (Exception e) { Program.Log("settings migrate: " + e.Message); }
+            settingsPath = Path.Combine(Program.WriteDir, "AdeeboMeter.settings");
+            try { string old = Path.Combine(Program.WriteDir, OldName + ".settings"); if (!File.Exists(settingsPath) && File.Exists(old)) File.Copy(old, settingsPath); } catch (Exception e) { Program.Log("settings migrate: " + e.Message); }
             Cfg.ApplyPreset("balanced");
             LoadSettings(); ApplyAutoStart();
             Cfg.Save = SaveSettings; Cfg.SetTheme = SetTheme; Cfg.GetTheme = () => Program.ForceTheme;
-            Cfg.SetAutoStart = delegate(bool on) { autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => autoStart;
+            Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
             Theme.Apply(Program.WantDark());
             Program.CleanCaptures();
             M.Start();
@@ -89,14 +89,14 @@ namespace AdeeboMeter
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
             miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
             miTheme.DropDownItems.Add(miThemeAuto); miTheme.DropDownItems.Add(miThemeLight); miTheme.DropDownItems.Add(miThemeDark);
-            miAuto = new ToolStripMenuItem("Start with Windows"); miAuto.Click += delegate { autoStart = !autoStart; ApplyAutoStart(); SaveSettings(); };
+            miAuto = new ToolStripMenuItem("Start with Windows"); miAuto.Click += delegate { Cfg.SetAutoStart(!Cfg.GetAutoStart()); };
             var miRemove = new ToolStripMenuItem("Uninstall AdeeboMeter...");
             miRemove.Click += delegate { try { using (Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--uninstall") { UseShellExecute = false })) { } } catch (Exception e) { Program.Log("uninstall: " + e.Message); } };
             var miExit = new ToolStripMenuItem("Exit AdeeboMeter"); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
             menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miFull); menu.Items.Add(miSettings); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
-            menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = autoStart; miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
+            menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
 
             tray.Icon = Theme.MakeIcon(Math.Max(16, (int)(16 * sc)));
@@ -217,6 +217,7 @@ namespace AdeeboMeter
         const string OldName = "Ade" + "boMeter";
         void ApplyAutoStart()
         {
+            if (Program.Packaged) return;   // a Store copy starts through its package's startup entry (StoreStartup), never the Run key
             try
             {
                 using (var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
@@ -379,6 +380,36 @@ namespace AdeeboMeter
                 found = true; return false;
             }, IntPtr.Zero);
             return found;
+        }
+    }
+
+    // The Store copy's "Start with Windows": its package declares a startup entry (Package.appxmanifest, TaskId AdeeboMeter).
+    // Windows keeps the on / off switch; we only read it (HKCU, read-only) and hand the user to Settings > Apps > Startup.
+    static class StoreStartup
+    {
+        public static bool On
+        {
+            get
+            {
+                try
+                {
+                    int n = 0;
+                    if (Native.GetCurrentPackageFamilyName(ref n, null) != 122 || n <= 0 || n > 300) return false;
+                    var buf = new char[n]; if (Native.GetCurrentPackageFamilyName(ref n, buf) != 0) return false;
+                    string pfn = new string(buf, 0, Math.Max(0, n - 1));   /* n counts the closing NUL */
+                    using (var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\" + pfn + @"\AdeeboMeter"))
+                    {
+                        object v = k == null ? null : k.GetValue("State");
+                        return v is int && ((int)v == 2 || (int)v == 4);   /* 2 enabled, 4 enabled by policy; 0 / 1 / 3 off */
+                    }
+                }
+                catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is System.IO.IOException || e is EntryPointNotFoundException)) throw; return false; }
+            }
+        }
+        public static void Open()
+        {
+            try { using (Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true })) { } }
+            catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is InvalidOperationException)) throw; Program.Log("startup apps: " + e.Message); }
         }
     }
 }

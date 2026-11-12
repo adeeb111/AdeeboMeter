@@ -149,10 +149,10 @@ namespace AdeeboMeter
                     SetS19, Voice.Serious ? 1 : 0, delegate(int i) { Voice.Serious = i == 1; Cfg.Save(); Invalidate(true); });
                 y = SetRow(g, x, y, w, "Corner widget size", Cfg.BigWidget ? "A little bigger (1.3x) - easier to read at a glance." : "Small - out of the way.",
                     SetSize, Cfg.BigWidget ? 1 : 0, delegate(int i) { Cfg.BigWidget = i == 1; Cfg.Save(); Invalidate(true); });
-                y = SetRow(g, x, y, w, "Start with Windows", "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.",
+                y = SetRow(g, x, y, w, "Start with Windows", Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.",
                     SetS10, Cfg.GetAutoStart() ? 0 : 1, delegate(int i) { Cfg.SetAutoStart(i == 0); });
                 y += 10 * S;
-                g.DrawString("Settings are saved next to AdeeboMeter.exe (AdeeboMeter.settings). Nothing leaves this PC.", Draw.fSmall, muted, x, y); y += 24 * S;
+                g.DrawString(Program.Packaged ? "Settings are saved in your AppData folder (AdeeboMeter.settings). Nothing leaves this PC." : "Settings are saved next to AdeeboMeter.exe (AdeeboMeter.settings). Nothing leaves this PC.", Draw.fSmall, muted, x, y); y += 24 * S;
                 using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 {
                     var ex = new RectangleF(x, y, 150 * S, 22 * S); g.DrawString("Export settings...", Draw.fBodyB, blue, ex.X, ex.Y); Act(settingsCanvas, ex, ExportSettings);
@@ -369,7 +369,7 @@ namespace AdeeboMeter
             using (var d = new SaveFileDialog { FileName = "AdeeboMeter.settings", Filter = "AdeeboMeter settings|*.settings", OverwritePrompt = true })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
-                try { Cfg.Save(); File.Copy(Path.Combine(Program.Dir, "AdeeboMeter.settings"), d.FileName, true); settingsNote = "Saved to " + Path.GetFileName(d.FileName) + "."; }
+                try { Cfg.Save(); File.Copy(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"), d.FileName, true); settingsNote = "Saved to " + Path.GetFileName(d.FileName) + "."; }
                 catch (Exception e) { settingsNote = "Couldn't save: " + e.Message; }
             }
             settingsCanvas.Invalidate();

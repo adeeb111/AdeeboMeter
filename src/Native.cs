@@ -36,6 +36,8 @@ namespace AdeeboMeter
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetDllDirectory(string path);
         [DllImport("kernel32.dll")] public static extern bool GetSystemTimes(out long idle, out long kernel, out long user);
         [DllImport("kernel32.dll")] public static extern ulong GetTickCount64();
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetCurrentPackageFullName(ref int length, char[] name);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetCurrentPackageFamilyName(ref int length, char[] name);
         [DllImport("kernel32.dll")] public static extern IntPtr GetCurrentProcess();
         [DllImport("kernel32.dll")] public static extern bool SetProcessWorkingSetSize(IntPtr p, IntPtr min, IntPtr max);
 
