@@ -1,5 +1,6 @@
-# Builds the Microsoft Store package from an AdeeboMeter.exe that release.ps1 already built and the self-test passed:
-#   store\out\AdeeboMeter-<version>.msix   upload this in Partner Center (Microsoft signs it after review)
+# Builds the Microsoft Store packages from an AdeeboMeter.exe that release.ps1 already built and the self-test passed:
+#   store\out\AdeeboMeter-<version>.msixbundle   upload this in Partner Center (Microsoft signs it after review)
+# One AnyCPU exe, packaged twice - x64 and arm64 - and bundled, so Windows on ARM PCs get a native (not emulated) install.
 # Needs the Windows SDK's makeappx / makepri (GitHub's windows-latest machines have them). Usage: store\pack.ps1 [path\to\AdeeboMeter.exe]
 param([string]$Exe = "AdeeboMeter.exe")
 $ErrorActionPreference = "Stop"
@@ -18,23 +19,27 @@ $tool = Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction SilentlyC
 if (-not $tool) { throw "makeappx.exe not found - install the Windows SDK" }
 $bin = Split-Path $tool.FullName
 
-$stage = Join-Path $root "store\obj\pkg"; $out = Join-Path $root "store\out"
-foreach ($d in $stage, $out) { if (Test-Path $d) { Remove-Item -Recurse -Force $d }; New-Item -ItemType Directory -Force $d | Out-Null }
-Copy-Item $Exe (Join-Path $stage "AdeeboMeter.exe")
-Copy-Item "store\images" (Join-Path $stage "images") -Recurse
-Copy-Item "LICENSE" (Join-Path $stage "LICENSE.txt")
-$man = (Get-Content -Raw "store\Package.appxmanifest").Replace("__VERSION__", $ver)
-[IO.File]::WriteAllText((Join-Path $stage "AppxManifest.xml"), $man, (New-Object Text.UTF8Encoding $false))
-
-# resources.pri lets Windows pick the right icon size (taskbar, Start, Settings)
-$cfg = Join-Path $root "store\obj\priconfig.xml"
-& "$bin\makepri.exe" createconfig /cf $cfg /dq en-US /pv 10.0.0 /o | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "makepri createconfig failed" }
-& "$bin\makepri.exe" new /pr $stage /cf $cfg /mn (Join-Path $stage "AppxManifest.xml") /of (Join-Path $stage "resources.pri") /o
-if ($LASTEXITCODE -ne 0) { throw "makepri new failed" }
-
-$msix = Join-Path $out "AdeeboMeter-$ver.msix"
-& "$bin\makeappx.exe" pack /d $stage /p $msix /o
-if ($LASTEXITCODE -ne 0) { throw "makeappx pack failed" }
+$out = Join-Path $root "store\out"; $parts = Join-Path $root "store\obj\parts"
+foreach ($d in $out, $parts) { if (Test-Path $d) { Remove-Item -Recurse -Force $d }; New-Item -ItemType Directory -Force $d | Out-Null }
+foreach ($arch in "x64", "arm64") {
+  $stage = Join-Path $root "store\obj\pkg-$arch"
+  if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }; New-Item -ItemType Directory -Force $stage | Out-Null
+  Copy-Item $Exe (Join-Path $stage "AdeeboMeter.exe")
+  Copy-Item "store\images" (Join-Path $stage "images") -Recurse
+  Copy-Item "LICENSE" (Join-Path $stage "LICENSE.txt")
+  $man = (Get-Content -Raw "store\Package.appxmanifest").Replace("__VERSION__", $ver).Replace("__ARCH__", $arch)
+  [IO.File]::WriteAllText((Join-Path $stage "AppxManifest.xml"), $man, (New-Object Text.UTF8Encoding $false))
+  # resources.pri lets Windows pick the right icon size (taskbar, Start, Settings)
+  $cfg = Join-Path $root "store\obj\priconfig-$arch.xml"
+  & "$bin\makepri.exe" createconfig /cf $cfg /dq en-US /pv 10.0.0 /o | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "makepri createconfig failed" }
+  & "$bin\makepri.exe" new /pr $stage /cf $cfg /mn (Join-Path $stage "AppxManifest.xml") /of (Join-Path $stage "resources.pri") /o
+  if ($LASTEXITCODE -ne 0) { throw "makepri new failed" }
+  & "$bin\makeappx.exe" pack /d $stage /p (Join-Path $parts "AdeeboMeter-$ver-$arch.msix") /o
+  if ($LASTEXITCODE -ne 0) { throw "makeappx pack ($arch) failed" }
+}
+$bundle = Join-Path $out "AdeeboMeter-$ver.msixbundle"
+& "$bin\makeappx.exe" bundle /d $parts /p $bundle /bv $ver /o
+if ($LASTEXITCODE -ne 0) { throw "makeappx bundle failed" }
 Remove-Item -Recurse -Force (Join-Path $root "store\obj")
-Get-Item $msix | Format-Table Name, Length -AutoSize
+Get-Item $bundle | Format-Table Name, Length -AutoSize

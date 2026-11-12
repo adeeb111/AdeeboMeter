@@ -36,7 +36,7 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.knowledge.$($k.BaseName).gz"
     }
-    & $csc /nologo /target:winexe /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /recurse:src\*.cs @res
+    & $csc /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /recurse:src\*.cs @res
     if ($LASTEXITCODE -ne 0) { throw "build failed" }
 }
 function Sha([string]$p) { (Get-FileHash $p -Algorithm SHA256).Hash.ToLowerInvariant() }

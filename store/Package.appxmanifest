@@ -6,7 +6,7 @@
          xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap desktop rescap">
-  <Identity Name="AdeebKhan.AdeeboMeter" Publisher="CN=0FFED5C5-A469-4C68-9855-2168DBCE607F" Version="__VERSION__" ProcessorArchitecture="x64" />
+  <Identity Name="AdeebKhan.AdeeboMeter" Publisher="CN=0FFED5C5-A469-4C68-9855-2168DBCE607F" Version="__VERSION__" ProcessorArchitecture="__ARCH__" />
   <Properties>
     <DisplayName>AdeeboMeter</DisplayName>
     <PublisherDisplayName>Adeeb Khan</PublisherDisplayName>
