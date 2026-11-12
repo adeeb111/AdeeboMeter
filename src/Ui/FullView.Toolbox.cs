@@ -98,7 +98,7 @@ namespace AdeeboMeter
                 T("mysites", "WEB", "My sites", null, (a, r) => MoreTools.MySites(r)),
                 T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
                 T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
-                T("speedtest", "SPEED", "Speed test (Cloudflare)", null, (a, r) => SpeedTest.Run(r)),
+                T("speedtest", "SPEED", "Speed test", "Server - empty = your usual, auto, a city (vultr toronto), a file URL - or list / check", (a, r) => SpeedTest.Run(a[0], r)),
                 T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes", (a, r) => IspReport.Run(M, a[0], a[1], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
@@ -339,7 +339,7 @@ namespace AdeeboMeter
                 case "sweep": return "about 20 seconds, never more than 90";
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
                 case "udpmtu": return "about 10-20 seconds · about 12 sizes, two small tries each, to the one target";
-                case "speedtest": return "about 20 seconds · up to " + SpeedTest.MaxDownMB + " MB down and " + SpeedTest.MaxUpMB + " MB up with " + SpeedTest.Host + " - nothing runs until you press Run";
+                case "speedtest": return a.Length > 0 && (a[0].Trim() == "list") ? "instant - nothing is sent" : a.Length > 0 && a[0].Trim() == "check" ? "about a minute - 1 KB from each server" : "about 20 seconds · up to " + SpeedTest.MaxDownMB + " MB down and " + SpeedTest.MaxUpMB + " MB up - nothing runs until you press Run";
                 case "ispreport": return (int.TryParse(a.Length > 1 ? a[1].Trim() : "", out m) && (m == 1 || m == 5) ? m : 2) + " min of measuring, plus about 30 seconds to trace and name the routers";
                 case "dscp": if (!int.TryParse(a[2], out n)) n = 20; return RunSecs(Math.Max(1, Math.Min(200, n)) / 2 + 1);
                 case "snmptraffic": return "about 10 seconds (two readings 5 seconds apart)";

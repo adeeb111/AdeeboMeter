@@ -18,14 +18,71 @@ namespace AdeeboMeter
         {
             if (SpeedTest.Busy) return;
             speedRun = new Toolkit.Run { Status = "Starting..." }; speedErr = ""; var run = speedRun;
-            new System.Threading.Thread(() => { var res = SpeedTest.Measure(run); speedErr = res.Error; run.Status = ""; }) { IsBackground = true, Name = "speed test" }.Start();
+            var srv = SpeedTest.Pick(Cfg.SpeedServer) ?? SpeedTest.Pick("auto");
+            new System.Threading.Thread(() => { var res = SpeedTest.Measure(run, srv); speedErr = res.Error; run.Status = ""; }) { IsBackground = true, Name = "speed test" }.Start();
             overviewCanvas.Invalidate();
         }
+        // the server menu: Auto (Cloudflare picks its nearest data centre), every city by provider, and "find the closest"
+        // (one ping - or a timed connection - to each server, on this click only)
+        void SpeedMenu(Point at)
+        {
+            var menu = new ContextMenuStrip { ShowImageMargin = false, Font = Draw.fBody };
+            Action<ToolStripItemCollection, SpeedTest.Server, string> item = (into, sv, text) =>
+            {
+                var it = new ToolStripMenuItem(text) { Checked = Cfg.SpeedServer == sv.Id || (sv.Id == "cloudflare" && Cfg.SpeedServer == "auto") };
+                string id = sv.Id; it.Click += delegate { Cfg.SpeedServer = id == "cloudflare" ? "auto" : id; Cfg.Save(); speedErr = ""; overviewCanvas.Invalidate(); };
+                into.Add(it);
+            };
+            var l = SpeedTest.All();
+            item(menu.Items, l[0], "Auto - Cloudflare, its nearest data centre (download and upload)");
+            var find = new ToolStripMenuItem("Find the closest server for me"); find.Click += delegate { FindClosestSpeed(); }; menu.Items.Add(find);
+            menu.Items.Add(new ToolStripSeparator());
+            foreach (var g in l.Skip(1).GroupBy(z => z.Provider))
+            {
+                var sub = new ToolStripMenuItem(g.Key + (g.First().Up == "" ? "  (download only)" : ""));
+                ((ToolStripDropDownMenu)sub.DropDown).ShowImageMargin = false;
+                foreach (var sv in g) item(sub.DropDownItems, sv, sv.Where);
+                menu.Items.Add(sub);
+            }
+            menu.Items.Add(new ToolStripSeparator());
+            var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("speedtest"); if (tbBoxes.Count > 0) tbBoxes[0].Box.Text = "list"; }; menu.Items.Add(more);
+            menu.Closed += delegate { BeginInvoke((Action)menu.Dispose); };
+            menu.Show(overviewCanvas, at);
+        }
+        void FindClosestSpeed()
+        {
+            if (SpeedTest.Busy || speedFinding) return; speedFinding = true; speedErr = ""; overviewCanvas.Invalidate();
+            new System.Threading.Thread(() =>
+            {
+                string best = null; double bestMs = double.MaxValue;
+                foreach (var sv in SpeedTest.All())
+                {
+                    try
+                    {
+                        var ip = System.Net.Dns.GetHostAddresses(sv.Host).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); if (ip == null) continue;
+                        var r = Icmp.Echo(ip, 32, 64, false, 800, false); double ms = r.Status == Icmp.Ok && r.Rtt >= 0 ? r.Rtt : GamePing.TcpMs(ip, 443, 800);
+                        if (!double.IsNaN(ms) && ms < bestMs) { bestMs = ms; best = sv.Id; }
+                    }
+                    catch (System.Net.Sockets.SocketException) { } catch (ArgumentException) { }
+                }
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        speedFinding = false;
+                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); } else speedErr = "no server answered - is the internet down?";
+                        overviewCanvas.Invalidate();
+                    });
+                }
+                catch (InvalidOperationException) { }
+            }) { IsBackground = true, Name = "closest speed server" }.Start();
+        }
+        volatile bool speedFinding;
         // repaint only when something on the page would look different (not every second)
         void OverviewTick()
         {
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
-            string k = s.Headline + "|" + s.Level + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            string k = s.Headline + "|" + s.Level + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != ovKey) { ovKey = k; overviewCanvas.Invalidate(); }
         }
 
@@ -181,8 +238,15 @@ namespace AdeeboMeter
                     Theme.Fill(g, sb2, 16 * S, busy ? Theme.Soft : Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(bt, Draw.fBodyB, tb, sb2.X + 14 * S, sb2.Y + (32 * S - bsz2.Height) / 2);
                     Act(overviewCanvas, sb2, delegate { if (SpeedTest.Busy) speedRun.Stop = true; else StartSpeed(); });
                     Hint(overviewCanvas, sb2, "tb.speedtest");
-                    string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : last != null ? "Last test " + last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + SpeedTest.Mbps(last.Down) + " down / " + SpeedTest.Mbps(last.Up) + " up Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
-                        : "About 20 seconds with Cloudflare's speed server (up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB). Never runs by itself.";
+                    // which server - shown, and a click to change it
+                    var cur = SpeedTest.Pick(Cfg.SpeedServer) ?? SpeedTest.Pick("auto");
+                    string ct = speedFinding ? "Finding the closest..." : "Server: " + (cur.Id == "cloudflare" ? "Cloudflare, nearest" : cur.Label) + "  ·  change"; var csz = g.MeasureString(ct, Draw.fBody);
+                    var cr = new RectangleF(sb2.Right + 8 * S, sb2.Y, csz.Width + 24 * S, 32 * S);
+                    Theme.Stroke(g, cr, 16 * S, Theme.Track, 1); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(ct, Draw.fBody, tb, cr.X + 12 * S, cr.Y + (32 * S - csz.Height) / 2);
+                    Act(overviewCanvas, cr, delegate { if (!SpeedTest.Busy) SpeedMenu(new Point((int)cr.X, (int)(cr.Bottom + overviewCanvas.AutoScrollPosition.Y))); });
+                    sb2 = new RectangleF(sb2.X, sb2.Y, cr.Right - sb2.X, sb2.Height);
+                    string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : last != null ? last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (last.Where != "" && last.Where.StartsWith("data centre", StringComparison.Ordinal) ? last.Where.Substring(12) + " · " : "") + SpeedTest.Mbps(last.Down) + " down" + (last.NoUpload ? "" : " / " + SpeedTest.Mbps(last.Up) + " up") + " Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
+                        : "About 20 seconds, up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. Never runs by itself.";
                     using (var stb = new SolidBrush(speedErr != "" && !busy ? Theme.LvText(1) : Theme.Sub)) g.DrawString(st, Draw.fBody, stb, new RectangleF(sb2.Right + 12 * S, sb2.Y + 6 * S, w - sb2.Width - 12 * S, 24 * S));
                     y += 44 * S;
                 }

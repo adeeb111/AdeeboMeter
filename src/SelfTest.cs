@@ -415,6 +415,9 @@ namespace AdeeboMeter
                 var q = UdpMtu.Quic(1172); if (q.Length != 1172 || (q[0] & 0xC0) != 0xC0 || q[5] != 8) throw new InvalidOperationException("QUIC probe");
                 if (!UdpMtu.IsVn(new byte[] { 0x80, 0, 0, 0, 0, 8, 1, 2 }) || UdpMtu.IsVn(q)) throw new InvalidOperationException("version negotiation check");
                 if (!Reach.SameNet("192.168.1.20", "192.168.1.5") || Reach.SameNet("192.168.1.255", "192.168.1.5") || Reach.SameNet("192.168.2.20", "192.168.1.5") || Reach.SameNet("192.168.1.5", "192.168.1.5")) throw new InvalidOperationException("same network");
+                if (SpeedTest.Pick("auto").Id != "cloudflare" || SpeedTest.Pick("vultr toronto").Id != "vultr-tor-ca" || SpeedTest.Pick("linode-toronto1") == null || SpeedTest.Pick("hetzner ash").Id != "hetzner-ash" || SpeedTest.Pick("nowhere at all") != null) throw new InvalidOperationException("speed server pick");
+                if (!SpeedTest.SafeUrl("https://example.com/100MB.bin") || SpeedTest.SafeUrl("https://user:pw@example.com/x") || SpeedTest.SafeUrl("file:///c:/x") || SpeedTest.SafeUrl("ftp://example.com/x")) throw new InvalidOperationException("speed URL check");
+                if (SpeedTest.All().Select(z => z.Id).Distinct().Count() != SpeedTest.All().Count || SpeedTest.All().Any(z => !SpeedTest.SafeUrl(z.Down))) throw new InvalidOperationException("speed list");
                 if (SpeedTest.GradeOf(10, 12) != "A+" || SpeedTest.GradeOf(10, 90) != "C" || SpeedTest.GradeOf(double.NaN, 5) != "") throw new InvalidOperationException("speed grade");
                 string old = Cfg.Mode; try { Cfg.Read("mode", "pro"); if (Cfg.Simple) throw new InvalidOperationException("pro"); Cfg.Read("mode", "nonsense"); if (Cfg.Mode != "" || !Cfg.Simple) throw new InvalidOperationException("bad mode kept"); } finally { Cfg.Mode = old; }
             });
