@@ -11,7 +11,7 @@ Independent review. Findings only; nothing in the product was changed.
 | UI | main (1.1.4) | done | sections-1.1.4/05-ui.md |
 | Capture, Wi-Fi, Windows deep, native | main (1.1.4) | done | sections-1.1.4/06-capture-link-deep.md |
 | Which 1.1.4 findings are still on dev-1.1.5 | dev-1.1.5 | done: 167 of 169 still present, 2 partly fixed, 0 fixed | 10-carryover.md |
-| Crypto, keys, policy, report, portable, Store | dev-1.1.5 | running | — |
+| Crypto, keys, policy, report, portable, Store | dev-1.1.5 | done: 2 High, 7 Medium, rest Low | 07-crypto-policy-store.md |
 | Engineer pack, pcap, replays, speed test, ISP report, Gamer | dev-1.1.5 | running | — |
 | New UI: Examples, Points, Toolbox home, French | dev-1.1.5 | done: 12 confirmed, 6 suspected | 09-ui-115.md |
 
