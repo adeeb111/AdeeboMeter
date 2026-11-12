@@ -1,4 +1,4 @@
-# AdeeboMeter review: status
+# AdeeboMeter 1.1.5 review
 
 Independent review. Findings only; nothing in the product was changed.
 
@@ -15,7 +15,7 @@ Independent review. Findings only; nothing in the product was changed.
 | Engineer pack, pcap, replays, speed test, ISP report, Gamer | dev-1.1.5 | done: 14 confirmed, 11 suspected | 08-engpack-gamer.md |
 | New UI: Examples, Points, Toolbox home, French | dev-1.1.5 | done: 12 confirmed, 6 suspected | 09-ui-115.md |
 
-The final `claude-code.md` (the brief's format, numbered, dev-1.1.5 line numbers) comes when the dev-1.1.5 parts finish.
+**Start here: `claude-code.md`**. It has all 228 findings in the brief's format, with dev-1.1.5 line numbers, rule breaks and the top 15 to fix. The other files are the detailed section reports it was built from.
 
 ## Found so far directly on the 1.1.5 test build (ran it under mono)
 - Version still says 1.1.4 (`src/Program.cs:66`): `--report` writes `"app": "AdeeboMeter 1.1.4"`, and tagging v1.1.5 fails the release workflow's version check.
