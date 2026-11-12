@@ -2344,7 +2344,7 @@ cat: term
 close: -1
 tag: Every device seen here, kept over time - with your own labels.
 what: From the ARP table AdeeboMeter already reads every ten minutes: address, hardware address, maker, first and last seen. Give one a name with  aa:bb:cc:dd:ee:ff = Living room TV.
-how: Nothing is scanned for it; Find devices or a Ping sweep fills it in faster. Kept on this PC only.
+how: Nothing is scanned for it; a Ping sweep fills it in faster. Kept on this PC only.
 why: Know what's yours, and notice what isn't.
 without: -
 
@@ -3027,16 +3027,6 @@ what: Asks that one device for its name over NetBIOS (with its workgroup and MAC
 how: A few small UDP questions to that one IP.
 why: Put a name to an address from the ARP table, a log or a firewall.
 without: Devices that block these stay nameless - try SNMP or their web page.
-
-== tb.finddev
-friendly: Find devices
-cat: term
-close: -1
-tag: Ask the network who's there.
-what: Asks once over mDNS, SSDP (UPnP) and WS-Discovery, and lists every device that answers in 3 seconds with what it says it is.
-how: Three multicast questions; answers come back to the same sockets. Nothing keeps listening.
-why: Find printers, TVs, NAS boxes, cameras and routers fast - with names, not just addresses.
-without: Announcements listens quietly instead; Ping sweep finds devices that answer none of these.
 
 == tb.remote
 friendly: SSH, SCP and remote commands

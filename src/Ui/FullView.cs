@@ -240,7 +240,10 @@ namespace AdeeboMeter
             var lb = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
             liveBtn = new PillButton("Start live capture", PillButton.K.Primary); liveBtn.Click += delegate { ToggleLive(); };
             lb.Controls.Add(liveBtn);
-            lb.Controls.Add(new Label { Text = LiveCapture.Available ? "Wireshark's tshark decodes your PC's own traffic. Off until you press Start; stops when you leave this tab, close the view, or after " + Cfg.LiveMin + " min (Settings)." : "Needs Wireshark (tshark) and Npcap - not found on this PC.", AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0) });
+            Func<string> liveText = () => LiveCapture.Available ? "Wireshark's tshark decodes your PC's own traffic. Off until you press Start; stops when you leave this tab, close the view, or after " + Cfg.LiveMin + " min (Settings)." : "Needs Wireshark (tshark) and Npcap - not found on this PC.";
+            var liveLbl = new Label { Text = liveText(), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0) };
+            liveLbl.VisibleChanged += delegate { if (liveLbl.Visible) liveLbl.Text = liveText(); };   // the minutes follow Settings
+            lb.Controls.Add(liveLbl);
             liveBtn.Enabled = LiveCapture.Available;
             liveCanvas = new DB { Name = "liveCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             liveCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintLive(e.Graphics); }; Wire(liveCanvas);
@@ -501,18 +504,23 @@ namespace AdeeboMeter
             foreach (Control c in chips.Controls) { var b = c as PillButton; if (b != null && b != idle) b.Selected = (string)b.Tag == list.Filter; }
         }
 
-        string headKey = "";
+        string headKey = "", pathKey = "", sideKey = "", footKey = "";
         void OnTimer()
         {
             UiActivity.Doing = "timer on " + tab; var tsw = Stopwatch.StartNew(); try { OnTimer2(); } finally { if (tsw.ElapsedMilliseconds > 60) Program.Log("slow tick: " + tab + " " + tsw.ElapsedMilliseconds + " ms"); }
         }
         void OnTimer2()
         {
-            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour; if (hk != headKey) { headKey = hk; header.Invalidate(); } pathPanel.Invalidate(); side.Invalidate(); if (tab == "changes") changesCanvas.Invalidate(); if (tab == "overview") OverviewTick(); }
+            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour; if (hk != headKey) { headKey = hk; header.Invalidate(); }
+                // the path strip and the side panel repaint only when what they print changed
+                string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
+                if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }
+                string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(h => h.Length > 0 ? h.Length + ":" + h[0].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h[h.Length - 1].ToString("0.#", CultureInfo.InvariantCulture) : "")) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
+                if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") changesCanvas.Invalidate(); if (tab == "overview") OverviewTick(); }
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
-            if (++footTick % 2 == 0) { SelfStats(); footer.Invalidate(); }
+            if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0.0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 20) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if (destRunning || pinRunning) destCanvas.Invalidate();
             if (tbBusy && tab == "toolbox" && tbCanvas != null) tbCanvas.Invalidate();
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) gamerCanvas.Invalidate();   // nothing moves until a game is watched
@@ -565,7 +573,7 @@ namespace AdeeboMeter
         {
             if (refreshing || IsDisposed) return;
             refreshing = true; lastConns = DateTime.UtcNow;
-            bool names = force || (DateTime.UtcNow - lastNames).TotalSeconds > 15;
+            bool names = force || ((tab == "conn" || tab == "travel" || tab == "procs") && (DateTime.UtcNow - lastNames).TotalSeconds > 15);   // names only where they are shown
             if (names) lastNames = DateTime.UtcNow;
             Task.Factory.StartNew(() =>
             {
@@ -801,7 +809,7 @@ namespace AdeeboMeter
             {
                 if (e.Button != MouseButtons.Left) return;
                 List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) return;
-                for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; l[i].Value(); return; }
+                for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; string usedTab = tab; l[i].Value(); PageUsed(usedTab); return; }   /* Adeebo Points: a page counts as used when something on it was really clicked */
             };
             c.MouseWheel += delegate { SetTipKey(null); };
         }

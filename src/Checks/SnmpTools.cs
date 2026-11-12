@@ -128,6 +128,8 @@ namespace AdeeboMeter
         static void Changes(List<string[]> rows, IfSnap old, IfSnap now)
         {
             bool reboot = now.Up > 0 && old.Up > 0 && now.Up < old.Up;
+            // uptime unknown: counters going backwards on any port mean the device restarted - then no port's delta is trusted
+            if (!reboot && (now.Up == 0 || old.Up == 0)) reboot = now.P.Any(kv => { long[] o; return old.P.TryGetValue(kv.Key, out o) && Enumerable.Range(0, Math.Min(o.Length, kv.Value.Length)).Any(k => o[k] >= 0 && kv.Value[k] >= 0 && kv.Value[k] < o[k]); });
             double mins = (now.At - old.At).TotalMinutes; string when = old.At.ToString("HH:mm", CultureInfo.CurrentCulture), span = mins < 1 ? (int)(mins * 60) + " s" : mins.ToString("0", CultureInfo.CurrentCulture) + " min";
             var cells = new List<string[]>(); var bad = new List<bool>(); int grew = 0;
             foreach (var i in now.P.Keys.OrderBy(k => k, Comparer<string>.Create(IdxCmp)))

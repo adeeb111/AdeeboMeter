@@ -2,13 +2,13 @@
 # repository's source. One generated file is added: the Hall of Fame key (obj/HofKey.cs, from the HOF_KEY secret), so a rebuild
 # from the source alone differs from the release in those bytes; the build provenance (gh attestation verify) still proves
 # which workflow run and commit made each file.
-#   push to main        -> the packaged zips as a workflow artifact (Actions > the run > Artifacts)
+#   push to main or dev-* -> the packaged zips as a workflow artifact (Actions > the run > Artifacts)
 #   publish a release   -> the same files attached to that release (tag it v<version>, e.g. v1.0)
 #   run it by hand on main with a tag -> rebuilds that release's files from main and refreshes its notes
 name: build
 on:
   push:
-    branches: [main, store]   # store: the Microsoft Store package before its release
+    branches: [main, store, "dev-*"]   # store: the Microsoft Store package before its release; dev-*: the version being worked on
   release:
     types: [published]
   workflow_dispatch:

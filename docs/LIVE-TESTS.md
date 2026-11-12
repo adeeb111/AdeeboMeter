@@ -33,7 +33,7 @@ The self-test and the deep test (`--selftest`, `--deeptest`) cover parsing, host
 - [ ] Printer: toner and an open door / jam; UPS: on mains, then unplugged -> "ON BATTERY" and minutes left.
 
 ## Devices and certificates
-- [ ] Find devices lists the printer, TV / NAS and router on a home network; Name of a device names a Windows PC and a phone.
+- [ ] Name of a device names a Windows PC and a phone.
 - [ ] Shared folders on a NAS match File Explorer.
 - [ ] Remote access: a copied ssh line works in PowerShell; the top line opens PowerShell.
 - [ ] Check a PFX exported by Windows (AES) and one from OpenSSL with `-legacy`: both open, key "present and usable".

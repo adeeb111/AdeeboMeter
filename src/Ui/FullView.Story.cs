@@ -87,7 +87,7 @@ namespace AdeeboMeter
                     using (var ib = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(box[i][0], Draw.fBodyB, ib, new RectangleF(br.X + 10 * S, br.Y + 32 * S, bw - 16 * S, 20 * S), nowrap);
                     using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(box[i][1], Draw.fSmall, sb, new RectangleF(br.X + 10 * S, br.Y + 54 * S, bw - 16 * S, 18 * S), nowrap);
                 }
-                if (i < 6) using (var ap = new Pen(Theme.Rail, 2 * S)) { ap.CustomEndCap = new System.Drawing.Drawing2D.AdjustableArrowCap(3, 4); g.DrawLine(ap, br.Right + 2 * S, br.Y + bh / 2, br.Right + 12 * S, br.Y + bh / 2); }
+                if (i < 6) using (var ap = new Pen(Theme.Rail, 2 * S)) { ap.CustomEndCap = Cap34; g.DrawLine(ap, br.Right + 2 * S, br.Y + bh / 2, br.Right + 12 * S, br.Y + bh / 2); }
                 int ii = i; Act(travelCanvas, br, delegate { storyBox = storyBox == ii ? -1 : ii; if (ii == 3 && routeTable == null) LoadRoutes(); if (ii == 0 && m365Rows == null) LoadApps(); travelCanvas.Invalidate(); });
             }
             y += bh + 8 * S;

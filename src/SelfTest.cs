@@ -389,7 +389,7 @@ namespace AdeeboMeter
                 if (!Games.ValidHost("dynamodb.us-east-1.amazonaws.com") || !Games.ValidHost("203.0.113.20") || Games.ValidHost("riot server 3") || Games.ValidHost("a|b") || Games.ValidHost("x;calc") || Games.ValidHost("")) bad.Add("host check");
                 var many = new Game { Id = "t", Name = "T" }; for (int i = 0; i < 20; i++) many.Servers.Add(new GameServer { Name = "S" + i, Host = "10.0.0." + (i + 1), Port = -1 });
                 var gs = new List<Game> { many }; var plan = GamePing.Me.Plan(gs, new HashSet<string> { "t" }, "t");
-                if (plan.Count(z => z.Item3 < GamePing.SurveySec) > GamePing.MaxServers) bad.Add("more than 8 servers: " + plan.Count);
+                if (plan.Count(z => z.Item3 < GamePing.SurveySec) > GamePing.MaxServers) bad.Add("more than " + GamePing.MaxServers + " servers: " + plan.Count);
                 if (GamePing.Me.Plan(gs, new HashSet<string>(), null).Count != 0) bad.Add("probes a game nobody clicked");
                 if (!GamePing.Blame(90, 30, 45, 4).StartsWith("your Wi-Fi", StringComparison.Ordinal) || GamePing.Blame(4, 150, 80, 4) != "your provider" || !GamePing.Blame(4, 20, 80, 4).StartsWith("past your provider", StringComparison.Ordinal)) bad.Add("blame");
                 if (GameStat.Grade(34, 2, 0) != "Competitive" || GameStat.Grade(80, 9, 1) != "Casual" || GameStat.Grade(140, 3, 0) != "Laggy" || GameStat.Grade(double.NaN, 0, 100) != "No reply") bad.Add("grade");
@@ -403,6 +403,8 @@ namespace AdeeboMeter
                 // short and HTML-like Wi-Fi names, zones and MAC-built IPv6
                 if (GameSession.Redact("<td class=\"n\">12 ms</td>", "td") != "<td class=\"n\">12 ms</td>" || GameSession.Redact("ping 12 ms", "ms") != "ping 12 ms") throw new InvalidOperationException("a short Wi-Fi name ate the text");
                 if (GameSession.Redact("On Wi-Fi \"AT&T WiFi\"", "AT&T WiFi").Contains("AT&T")) throw new InvalidOperationException("AT&T not redacted");
+                if (GameSession.Redact("Wi-Fi: Bob", "Bob").Contains("Bob") || GameSession.Redact("On ATT (channel 6)", "ATT").Contains("ATT")) throw new InvalidOperationException("a short Wi-Fi name stayed readable");
+                if (GameSession.Redact("Your router (192.0.2.1) answered", "Router").IndexOf("router", StringComparison.OrdinalIgnoreCase) < 0) throw new InvalidOperationException("a Wi-Fi name that's a common word erased that word");
                 string z = GameSession.Redact("gw fe80::1%12 and 2001:db8::211:22ff:fe33:4455 via 100.64.1.2", "x"); if (z.Contains("%12") || z.Contains("ff:fe33") || z.Contains("100.64")) throw new InvalidOperationException(z);
                 var ss = new GameSession { GameId = "t", GameName = "T", Server = "NA East", Start = DateTime.Now.AddMinutes(-1) };
                 ss.Add(new GameSession.Sec { T = DateTime.Now, Game = 30, Router = 2, Net = 15, Signal = 80, Down = 1, Up = 0.2, Cpu = 10 });
@@ -427,6 +429,12 @@ namespace AdeeboMeter
                 if (go("valorant lag") != "gamer") bad.Add("valorant");
                 if (go("disk is full") != "tool:tidy") bad.Add("disk full");
                 if (go("purple elephants") != null) bad.Add("nonsense matched");
+                // round-2: what's wrong beats where ("at work"); games beat streaming; mail is a site that won't open
+                if (go("my work laptop is slow") != "guide:pc") bad.Add("work laptop slow -> " + go("my work laptop is slow"));
+                if (go("the network at work is slow") != "guide:slow") bad.Add("network at work slow -> " + go("the network at work is slow"));
+                if (go("streaming works but games lag") != "gamer") bad.Add("games lag");
+                if (go("I can't get to work email") != "guide:site") bad.Add("work email -> " + go("I can't get to work email"));
+                if (go("globalprotect won't connect") != "guide:vpn") bad.Add("vpn product");
                 if (go("my internet doesn't work") != "guide:whats") bad.Add("internet doesn't work -> " + go("my internet doesn't work"));
                 if (go("printer not working") != "guide:whats") bad.Add("printer");
                 if (go("Wi-Fi works but nothing loads") != "guide:whats") bad.Add("nothing loads");
@@ -609,8 +617,10 @@ namespace AdeeboMeter
                     if (p.Award("mtr", true, true, t0, t0) != 4 || p.Award("mtr", true, true, t0.AddMinutes(11), t0.AddMinutes(1)) != 0) bad.Add("moving the Windows clock paid the replay bonus");
                     if (p.Total != 13) bad.Add("total " + p.Total + " (want 13)");
                     var again = new Points(f); if (again.Total != 13 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
+                    if (again.Award("mtr", true, true, t0.AddMinutes(12), t0.AddMinutes(2)) != 0) bad.Add("a restart plus a clock moved forward paid the replay bonus");
+                    if (again.Award("mtr", true, true, t0.AddMinutes(13), t0.AddMinutes(13)) != 3) bad.Add("the replay bonus after a real 10 minutes (across a restart)");
                     if (again.Award("ispreport", true, true, t0.AddDays(1), t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1), t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
-                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 13) bad.Add("earning off changed the total");
+                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 16) bad.Add("earning off changed the total");
                     if (again.Award("learn.dhcp", true, true, t0, t0) != 2 || again.Award("page.replay", true, true, t0, t0) != 2 || again.Award("check.dhcp", true, true, t0, t0) != 2 || again.Award("lab.tcp", true, true, t0, t0) != 4 || again.Award("quiz.5", true, true, t0, t0) != 3 || again.Award("quiz.10", true, true, t0, t0) != 5 || again.Award("journey.explain", true, true, t0, t0) != 3 || again.Award("path.gamer", true, true, t0, t0) != 10 || again.Award("lab.tcp", true, true, t0.AddHours(2), t0.AddHours(2)) != 0 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
                     if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
                     // round-2 review: lines typed into points.txt for things that don't exist count nothing; a replay mark on a
@@ -815,6 +825,9 @@ namespace AdeeboMeter
                 if (rsn(8, 0) != "WPA3" || rsn(2, 0) != "WPA2" || rsn(2, 8) != "WPA2/WPA3" || rsn(1, 0) != "WPA2-Enterprise" || !WlanApi.Weak("Open") || WlanApi.Weak("WPA2")) throw new InvalidOperationException("Wi-Fi security reading wrong: " + rsn(8, 0) + " " + rsn(2, 0));
                 var aps = new List<Ap> { new Ap { Ssid = "a", Bssid = "1", Band = "2.4 GHz", Channel = 6, Signal = 90 }, new Ap { Ssid = "b", Bssid = "2", Band = "2.4 GHz", Channel = 6, Signal = 80 }, new Ap { Ssid = "c", Bssid = "3", Band = "2.4 GHz", Channel = 1, Signal = 70 }, new Ap { Ssid = "me", Bssid = "9", Band = "2.4 GHz", Channel = 6, Signal = 99 } };
                 var lc = WlanApi.LeastCrowded(aps, "2.4 GHz", 6, "9"); if (lc == null || lc[0] != 11 || lc[2] <= lc[1]) throw new InvalidOperationException("least crowded channel wrong: " + (lc == null ? "null" : string.Join(",", lc)));
+                // an EU building: 36-48 busy, the router on 100 - never "set it to 149" when nothing around uses the upper block
+                var eu = new[] { 36, 40, 44, 48, 36, 44 }.Select((c, i) => new Ap { Ssid = "n" + i, Bssid = "n" + i, Band = "5 GHz", Channel = c, Signal = 70 }).ToList(); eu.Add(new Ap { Ssid = "me", Bssid = "9", Band = "5 GHz", Channel = 100, Signal = 99 });
+                var lc5 = WlanApi.LeastCrowded(eu, "5 GHz", 100, "9"); if (lc5 == null || lc5[0] >= 149 || lc5[0] < 52) throw new InvalidOperationException("5 GHz pick wrong for Europe: " + (lc5 == null ? "null" : string.Join(",", lc5)));
                 if (DevInfo.Problem(43)[0].IndexOf("stopped", StringComparison.Ordinal) < 0 || DevInfo.Problem(28)[1] == "" || DevInfo.Problem(999)[0].IndexOf("999", StringComparison.Ordinal) < 0) throw new InvalidOperationException("problem codes wrong");
                 // the guided checks and the PC lists never throw, whatever Windows (or Wine) gives them
                 var lag = Guided.Lag(M, ""); if (lag.Count < 4 || lag[0][1] != "Verdict" || lag.Last()[1] != "Honest limits") throw new InvalidOperationException("game lag check wrong");
@@ -925,6 +938,9 @@ namespace AdeeboMeter
             });
             T("engineer pack: RADIUS password hiding, certificate verdicts", () =>
             {
+                // a self-signed root "CN=Proxy, O=DigiCert Inc" (made with openssl for this test): borrowing a CA's name isn't enough
+                using (var fake = new System.Security.Cryptography.X509Certificates.X509Certificate2(Convert.FromBase64String("MIIBojCCAUmgAwIBAgIUczkokrF21nSiSTwdKqzk9oKitU0wCgYIKoZIzj0EAwIwJzEOMAwGA1UEAwwFUHJveHkxFTATBgNVBAoMDERpZ2lDZXJ0IEluYzAeFw0yNjExMTIyMTQ1NTRaFw0zNjExMDkyMTQ1NTRaMCcxDjAMBgNVBAMMBVByb3h5MRUwEwYDVQQKDAxEaWdpQ2VydCBJbmMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS0PWTXiCZJEplkuK/1l8pPwCcUfegjodLEqbwMXqU45y1eEHBYpxlaMmVogPCqQ2uch+vXNyhAE/8I54TZng2Eo1MwUTAdBgNVHQ4EFgQU75K4CLLqAdvJaWr/2H0n2hQsNP8wHwYDVR0jBBgwFoAU75K4CLLqAdvJaWr/2H0n2hQsNP8wDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgNHADBEAiBKWHWXXk1gS7o7L8vPIVTdzmIMje5LTTd6tzF36cnkjgIgC/IyYOEIICxPoxmxAdzCX3gwBwLTXGp4tvYMUJGSNeE=")))
+                    if (Inspection.IsWellKnown(fake)) throw new InvalidOperationException("a root that borrows a CA's name counted as public");
                 byte[] pw = Encoding.UTF8.GetBytes("test-password-123"), sec = Encoding.UTF8.GetBytes("s3cret"), ra = Enumerable.Range(1, 16).Select(i => (byte)i).ToArray();
                 var c = EngPack.HidePassword(pw, sec, ra); if (c.Length != 32) throw new InvalidOperationException("length " + c.Length);
                 {
@@ -1000,7 +1016,7 @@ namespace AdeeboMeter
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
                     "travel.LADDER", "travel.ANATOMY", "travel.JOURNEY", "travel.JTIME", "travel.JREAL", "travel.JSAY", "travel.JEXPLAIN", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "ov.WEATHER", "link.WARS", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "stack", "vlsm", "bandwidth", "binhex", "timeline", "hotel", "dnsrace", "inventory", "drivers", "usb", "lag", "winupdate", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "certcmp", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "ov.WEATHER", "link.WARS", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "stack", "vlsm", "bandwidth", "binhex", "timeline", "hotel", "dnsrace", "inventory", "drivers", "usb", "lag", "winupdate", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "certcmp", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));
@@ -1027,14 +1043,17 @@ namespace AdeeboMeter
             T("settings round trip + presets", () =>
             {
                 Cfg.ApplyPreset("penny"); int penny = Cfg.JobsPerMinute(); Cfg.ApplyPreset("engineer"); int eng = Cfg.JobsPerMinute(); Cfg.ApplyPreset("balanced"); int bal = Cfg.JobsPerMinute();
-                if (!(penny < bal && bal < eng)) throw new InvalidOperationException("presets not ordered: " + penny + "/" + bal + "/" + eng);
+                Cfg.ApplyPreset("gamer"); int gmr = Cfg.JobsPerMinute(); bool gOk = Cfg.GameBgSec == 10 && Cfg.GameBgServers == 5 && GamePing.MaxServers == 16; Cfg.ApplyPreset("penny"); bool pOk = Cfg.GameBgSec == 60 && GamePing.MaxServers == 8 && GamePing.SurveySec == 1800; Cfg.ApplyPreset("balanced");
+                if (!(penny * 3 < bal && bal == eng && gmr == eng) || !gOk || !pOk) throw new InvalidOperationException("presets wrong: " + penny + "/" + bal + "/" + eng + "/" + gmr + " game " + gOk + "/" + pOk);
+                Cfg.Read("preset", "gamer"); if (Cfg.Preset != "gamer") throw new InvalidOperationException("gamer preset not read"); Cfg.Read("preset", "x"); if (Cfg.Preset != "balanced") throw new InvalidOperationException("odd preset kept");
+                Cfg.Read("gw", "30"); Cfg.Read("net", "300"); if (Cfg.GwSec != 30 || Cfg.NetSec != 300) throw new InvalidOperationException("30 s / 5 min not accepted"); Cfg.ApplyPreset("balanced");
                 Cfg.Pins.Clear(); Cfg.Read("pin", "github.com"); Cfg.Read("pin", "rm -rf /"); Cfg.Read("pin", "https://jira.example.com/x?a=b"); Cfg.Read("gw", "999"); Cfg.Read("fade", "128");
-                if (Cfg.Pins.Count != 2 || Cfg.GwSec != 5 || Cfg.Fade != 128) throw new InvalidOperationException("settings read wrong: pins=" + Cfg.Pins.Count + " gw=" + Cfg.GwSec + " fade=" + Cfg.Fade);
+                if (Cfg.Pins.Count != 2 || Cfg.GwSec != 2 || Cfg.Fade != 128) throw new InvalidOperationException("settings read wrong: pins=" + Cfg.Pins.Count + " gw=" + Cfg.GwSec + " fade=" + Cfg.Fade);
                 var lines = Cfg.Lines().ToList(); Cfg.Pins.Clear(); Cfg.Fade = 77;
                 foreach (var l in lines) { int eq = l.IndexOf('='); Cfg.Read(l.Substring(0, eq), l.Substring(eq + 1)); }
                 if (Cfg.Pins.Count != 2 || Cfg.Fade != 128) throw new InvalidOperationException("round trip lost data");
                 Cfg.Pins.Clear(); Cfg.Fade = 77;
-                sb.AppendLine("      jobs a minute: penny " + penny + ", balanced " + bal + ", engineer " + eng);
+                sb.AppendLine("      jobs a minute: penny " + penny + ", balanced " + bal + ", engineer " + eng + ", gamer " + gmr);
             });
             T("Wi-Fi neighbours and path story parsers", () =>
             {

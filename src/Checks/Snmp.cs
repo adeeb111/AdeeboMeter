@@ -25,6 +25,15 @@ namespace AdeeboMeter
             public int Version = 2; public string Community = "public", User = "", AuthPass = "", PrivPass = ""; public string AuthAlg = "sha";   // md5 | sha | sha256
             public bool Auth { get { return AuthPass != ""; } }
             public bool Priv { get { return PrivPass != ""; } }
+            // the localized keys, kept on this object only - it already holds the passwords and lives for one walk, so nothing is kept longer.
+            // RFC 3414's 1 MB stretch then runs once per device, not once per message.
+            byte[] kEid, kAuth, kPriv;
+            internal byte[] Key(bool priv, byte[] eid)
+            {
+                if (kEid == null || !kEid.SequenceEqual(eid)) { kEid = (byte[])eid.Clone(); kAuth = null; kPriv = null; }
+                if (priv) { if (kPriv == null) kPriv = Localize(PrivPass, eid, AuthAlg); return kPriv; }
+                if (kAuth == null) kAuth = Localize(AuthPass, eid, AuthAlg); return kAuth;
+            }
             public string Bad = "";   // set when the text can't be used as typed - the request is refused, nothing is sent
             // a ':' can't be part of the user or auth password (it separates them); the privacy password may contain one
             // "public"  ·  "v3:user"  ·  "v3:user:authpass"  ·  "v3:user:authpass:privpass"  ·  "v3-md5:..." / "v3-sha256:..."
@@ -252,14 +261,14 @@ namespace AdeeboMeter
             byte[] privParams = Array.Empty<byte>(), body = scoped;
             if (c.Auth && c.Priv)
             {
-                var key = Localize(c.PrivPass, e.Id, c.AuthAlg); privParams = new byte[8]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(privParams);
+                var key = c.Key(true, e.Id); privParams = new byte[8]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(privParams);
                 body = Str(Aes(key, e.Boots, time, privParams, scoped, true));
             }
             byte[] authParams = new byte[c.Auth ? AuthLen(c) : 0];
             Func<byte[]> build = () => Tlv(0x30, Cat(Int(3), Tlv(0x30, Cat(Int(id), Int(65507), Str(new[] { flags }), Int(3))),
                 Str(Tlv(0x30, Cat(Str(e.Id), Int(e.Boots), Int(time), Str(Encoding.UTF8.GetBytes(c.User)), Str(authParams), Str(privParams)))), body));
             var msg = build();
-            if (c.Auth) { var mac = Mac(c, Localize(c.AuthPass, e.Id, c.AuthAlg), msg); Array.Copy(mac, authParams, authParams.Length); msg = build(); }
+            if (c.Auth) { var mac = Mac(c, c.Key(false, e.Id), msg); Array.Copy(mac, authParams, authParams.Length); msg = build(); }
             return msg;
         }
         static List<Vb> Parse3(byte[] r, Cred c, Engine e, int id, out string error)
@@ -285,7 +294,7 @@ namespace AdeeboMeter
                 else
                 {
                     var copy = (byte[])r.Clone(); for (int i = 0; i < f[4].Length; i++) copy[at[4] + i] = 0;
-                    var mac = Mac(c, Localize(c.AuthPass, e.Id, c.AuthAlg), copy);
+                    var mac = Mac(c, c.Key(false, e.Id), copy);
                     for (int i = 0; i < f[4].Length; i++) if (mac[i] != f[4][i]) { error = "a reply that isn't signed with your auth password"; return null; }
                     long rb = ReadInt(f[1], 0, f[1].Length), rt = ReadInt(f[2], 0, f[2].Length), now = e.Time + (long)(DateTime.UtcNow - e.At).TotalSeconds;
                     if (rb != e.Boots || Math.Abs(rt - now) > 150) { error = "time window: the reply's engine time is out of step"; return null; }
@@ -299,7 +308,7 @@ namespace AdeeboMeter
                 if (!c.Priv) { error = "an encrypted reply, but no privacy password was given"; return null; }
                 var enc = r.Skip(p + hl).Take(len).ToArray();
                 long b = ReadInt(f[1], 0, f[1].Length), t = ReadInt(f[2], 0, f[2].Length);
-                try { scoped = Aes(Localize(c.PrivPass, e.Id, c.AuthAlg), (int)b, (int)t, f[5], enc, false); } catch (CryptographicException) { error = "a reply that doesn't decrypt - check the privacy password"; return null; }
+                try { scoped = Aes(c.Key(true, e.Id), (int)b, (int)t, f[5], enc, false); } catch (CryptographicException) { error = "a reply that doesn't decrypt - check the privacy password"; return null; }
                 sstart = 0;
             }
             else { scoped = r; sstart = p; }

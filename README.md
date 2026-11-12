@@ -69,7 +69,7 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 | Day / night | The sun/moon switch in the header |
 | Raw values and sources | **Details** in the header |
 | Jump to anything | **Ctrl+K** |
-| Tune how much it watches | **Settings** → Penny / Balanced / Engineer |
+| Tune how much it watches | **Settings** → Penny / Balanced / Engineer / Gamer |
 | Bigger corner widget | Tray menu → **Bigger widget** |
 
 ## Privacy and security

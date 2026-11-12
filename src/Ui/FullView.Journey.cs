@@ -37,7 +37,7 @@ namespace AdeeboMeter
             ShowPage("travel"); jScrollTo = true; travelCanvas.Invalidate();
         }
         bool jScrollTo;
-        void JReset() { jSess = null; jNotes = null; jKind = ""; jPlay = 0; jPlaying = false; jPing = null; JTimer(false); }
+        void JReset() { if (jSess != null && !jSess.Done) jSess.Stop(); /* a new story never orphans a running capture */ jSess = null; jNotes = null; jKind = ""; jPlay = 0; jPlaying = false; jPing = null; JTimer(false); }
 
         // the conversation the story is showing becomes the journey's, unless one was picked from Connections
         Journey.Flow JFlowFromStory()
@@ -250,8 +250,11 @@ namespace AdeeboMeter
             // long silences (an idle connection) are skipped, not watched in slow motion: jump to just before the next packet
             if (!recs.Any(r => r.T <= jPlay && jPlay - r.T <= JTrip())) { var nx = recs.FirstOrDefault(r => r.T > jPlay); if (nx != null && nx.T - jPlay > JTrip()) jPlay = nx.T - JTrip() * 0.1; }
             if (jPlay > end + JTrip()) { jPlay = end; jPlaying = false; JTimer(false); travelCanvas.Invalidate(); return; }
-            if (jLane.Width > 0) { var r = jLane; r.Offset(travelCanvas.AutoScrollPosition.X, travelCanvas.AutoScrollPosition.Y); travelCanvas.Invalidate(Rectangle.Ceiling(r)); }
+            // the lane every frame; the whole page (the timeline's play head, "In plain words") four times a second
+            if ((now - jFullAt).TotalMilliseconds >= 250) { jFullAt = now; travelCanvas.Invalidate(); }
+            else if (jLane.Width > 0) { var r = jLane; r.Offset(travelCanvas.AutoScrollPosition.X, travelCanvas.AutoScrollPosition.Y); travelCanvas.Invalidate(Rectangle.Ceiling(r)); }
         }
+        DateTime jFullAt;
         // capture-seconds one trip along the path takes on screen (real speed: a short streak - a real trip is too quick to see)
         double JTrip() { return jSlow == 1 ? 0.25 : JTravel / jSlow; }
         // the play head moved: repaint only the strip, not the whole page
@@ -325,7 +328,7 @@ namespace AdeeboMeter
                 {
                     int lv = r.IcmpType >= 0 || r.GapBefore > 0 ? 2 : r.Resend || r.DupAck ? 1 : 3;
                     g.DrawString(r.T.ToString("0.000", CultureInfo.InvariantCulture), Draw.fMonoS, muted, x, y + 2 * S);
-                    using (var ap = new Pen(r.Out ? Theme.Blue : Theme.Green, 2 * S)) { ap.CustomEndCap = new AdjustableArrowCap(3, 4); float ay = y + 10 * S; if (r.Out) g.DrawLine(ap, x + 62 * S, ay, x + 78 * S, ay); else g.DrawLine(ap, x + 78 * S, ay, x + 62 * S, ay); }   // drawn, not a font glyph
+                    using (var ap = new Pen(r.Out ? Theme.Blue : Theme.Green, 2 * S)) { ap.CustomEndCap = Cap34; float ay = y + 10 * S; if (r.Out) g.DrawLine(ap, x + 62 * S, ay, x + 78 * S, ay); else g.DrawLine(ap, x + 78 * S, ay, x + 62 * S, ay); }   // drawn, not a font glyph
                     using (var tb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(r.Say, Draw.fBody, tb, new RectangleF(x + 86 * S, y, w - 86 * S, 20 * S), nowrap);
                     y += 21 * S;
                 }

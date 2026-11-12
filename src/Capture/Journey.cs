@@ -331,7 +331,9 @@ namespace AdeeboMeter
                 if (!double.IsNaN(rtt) && rtt > 0 && maxWin > 0 && maxWin < 65535)
                 {
                     double cap = maxWin * 8 / rtt / 1e6;   // without window scaling we can't see the real window; only flag the obvious
-                    if (mbps > cap * 0.7) n.Add(N(1, "Capped by the receive window", "The receiver offers about " + Bytes(maxWin) + " at a time over a " + Ms(rtt) + " round trip - that alone limits it to about " + cap.ToString("0.#", CultureInfo.CurrentCulture) + " Mbps whatever your plan is.", double.NaN));
+                    // faster than the raw window allows = the window is scaled (the SYN's scale option isn't read here), so the raw
+                    // number says nothing: only a speed sitting right at that cap points at the window
+                    if (mbps > cap * 0.7 && mbps <= cap * 1.1) n.Add(N(1, "Capped by the receive window", "The receiver offers about " + Bytes(maxWin) + " at a time over a " + Ms(rtt) + " round trip - that alone limits it to about " + cap.ToString("0.#", CultureInfo.CurrentCulture) + " Mbps whatever your plan is.", double.NaN));
                 }
             }
         }

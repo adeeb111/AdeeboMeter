@@ -240,9 +240,20 @@ namespace AdeeboMeter
         public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)"; }
         // the least crowded channel in a band: each neighbour weighs by its signal (squared - a strong one hurts far more),
         // counted on every channel it overlaps
+        static readonly int[] Upper5 = { 149, 153, 157, 161 }, Dfs5 = { 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144 };
         public static int[] LeastCrowded(List<Ap> aps, string band, int mine, string myBssid)
         {
-            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48, 149, 153, 157, 161 } : Array.Empty<int>();
+            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48 } : Array.Empty<int>();
+            // 5 GHz: 36-48 work everywhere. The upper block (149-161, not allowed in much of Europe and Japan) and the radar (DFS) channels
+            // 52-144 are offered only when your router or the networks around already use them - proof that they are allowed here
+            if (cand.Length == 4)
+            {
+                var seen = new HashSet<int>(aps.Where(a => a.Band == band && a.Channel > 0).Select(a => a.Channel)); seen.Add(mine);
+                var extra = new List<int>();
+                if (seen.Any(c => c >= 149)) extra.AddRange(Upper5);
+                if (seen.Any(c => c >= 52 && c <= 144)) extra.AddRange(Dfs5.Where(c => seen.Contains(c) || seen.Any(z => Math.Abs(z - c) <= 12)));
+                cand = cand.Concat(extra).Distinct().ToArray();
+            }
             if (cand.Length == 0) return null;
             Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, c, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
             int best = cand.OrderBy(c => load(c)).ThenBy(c => c == mine ? 0 : 1).First();

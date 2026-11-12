@@ -30,8 +30,9 @@ namespace AdeeboMeter
     {
         static string[] Row(params string[] a) { return a; }
         // ---------- Settings
-        static readonly string[] SetS0 = { "balanced", "Balanced", "The default. Notices trouble within seconds and still costs next to nothing." };
-        static readonly string[] SetS1 = { "engineer", "Engineer", "Watches everything closely - for when something is wrong and you want every clue." };
+        static readonly string[] SetS0 = { "balanced", "Balanced", "The default. Router every 2 s, internet every 15 s - notices trouble within seconds." };
+        static readonly string[] SetS1 = { "engineer", "Engineer", "Every check close, for when something is wrong and you want every clue." };
+        static readonly string[] SetSG = { "gamer", "Gamer", "Every check close, plus up to 16 game servers and your best regions every 10 s." };
         static readonly string[] SetMode = { "Simple", "Pro" };
         static bool PolicyLocks(string label)
         {
@@ -39,17 +40,16 @@ namespace AdeeboMeter
             {
                 case "Mode": return Policy.Mode != "";
                 case "Internet and DNS check": return Policy.NoInternetCheck;
-                case "Keep history for": return Policy.MaxHistoryDays > 0;
-                case "BGP and who owns the network": case "Switch them off by themselves after": return Policy.NoOnline;
+                                case "BGP and who owns the network": case "Switch them off by themselves after": return Policy.NoOnline;
                 case "Game ping in the background": case "Servers watched in the background": case "Every second while a game is open": case "Start when a game opens": return Policy.NoGamer;
                 case "Live capture stops after": return Policy.NoCapture;
                 default: return false;
             }
         }
-        static readonly string[] SetS2 = { "2 s", "5 s", "10 s", "Off" }, SetOnlineMin = { "5 min", "15 min", "30 min", "1 h", "2 h", "3 h" };
-        static readonly int[] SetN3 = { 2, 5, 10, 0 };
-        static readonly string[] SetS4 = { "15 s", "30 s", "60 s", "Off" };
-        static readonly int[] SetN5 = { 15, 30, 60, 0 };
+        static readonly string[] SetS2 = { "2 s", "5 s", "10 s", "30 s", "Off" }, SetOnlineMin = { "5 min", "15 min", "30 min", "1 h", "2 h", "3 h" };
+        static readonly int[] SetN3 = { 2, 5, 10, 30, 0 };
+        static readonly string[] SetS4 = { "15 s", "30 s", "60 s", "5 min", "Off" };
+        static readonly int[] SetN5 = { 15, 30, 60, 300, 0 };
         static readonly string[] SetS6 = { "10 s", "30 s", "2 min", "Off" };
         static readonly int[] SetN7 = { 10, 30, 120, 0 };
         static readonly string[] SetS8 = { "5 s", "10 s", "30 s", "Off" };
@@ -111,7 +111,7 @@ namespace AdeeboMeter
             add("Widget", "Hover wait on the folded chip", TagPc, () => "How long to rest the mouse on the folded chip before the card opens.", SetS16, () => Array.IndexOf(SetN17, Cfg.DwellMs), i => { Cfg.DwellMs = SetN17[i]; Cfg.Save(); }, null, "chip delay mouse");
             // Background checks
             add("Background checks", "Router ping", TagLan, () => Cfg.GwSec == 0 ? "Off: the LAN / Wi-Fi dot goes grey and slow-router alerts stop." : "Pings your router " + Every(Cfg.GwSec) + " - tells Wi-Fi trouble apart from internet trouble.", SetS2, () => Array.IndexOf(SetN3, Cfg.GwSec), i => { Cfg.GwSec = SetN3[i]; Custom(); }, null, "ping gateway lan wifi");
-            add("Background checks", "Internet and DNS check", TagNet, () => Cfg.NetSec == 0 ? "Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey." : "One tiny ping to a public server and one name lookup " + Every(Cfg.NetSec) + ".", SetS4, () => Array.IndexOf(SetN5, Cfg.NetSec), i => { Cfg.NetSec = SetN5[i]; Custom(); }, null, "ping internet dns 1.1.1.1 8.8.8.8");
+            add("Background checks", "Internet and DNS check", TagNet, () => Cfg.NetSec == 0 ? "Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey." : "One tiny ping to a public server " + Every(Cfg.NetSec) + ", and one name lookup at most once a minute.", SetS4, () => Array.IndexOf(SetN5, Cfg.NetSec), i => { Cfg.NetSec = SetN5[i]; Custom(); }, null, "ping internet dns 1.1.1.1 8.8.8.8");
             add("Background checks", "Wi-Fi watch", TagPc, () => Cfg.WifiSec == 0 ? "Off: no roam, signal or channel alerts." : "Asks Windows for signal, channel and access point " + Every(Cfg.WifiSec) + ". The priciest job here - it starts a small Windows tool (netsh) each time.", SetS6, () => Array.IndexOf(SetN7, Cfg.WifiSec), i => { Cfg.WifiSec = SetN7[i]; Custom(); }, null, "wifi signal roam");
             add("Background checks", "App and connection watch", TagPc, () => Cfg.AppsSec == 0 ? "Off: the verdict can't name the app to close, and connection bursts go unnoticed." : "Reads the process list and connection table " + Every(Cfg.AppsSec) + " - powers 'top apps', connection bursts and stuck-connection alerts.", SetS8, () => Array.IndexOf(SetN9, Cfg.AppsSec), i => { Cfg.AppsSec = SetN9[i]; Custom(); }, null, "apps processes connections");
             add("Background checks", "Teams call detection", TagPc, () => Cfg.Call ? "Notices when a Teams call starts and watches the network more closely during it." : "Off: calls get no extra attention.", SetS10, () => Cfg.Call ? 0 : 1, i => { Cfg.Call = i == 0; Custom(); }, null, "teams call meeting");
@@ -130,7 +130,7 @@ namespace AdeeboMeter
             add("Alerts", "Monthly data cap", TagPc, () => Cfg.CapGB > 0 ? "Warns at 80% of " + Cfg.CapGB + " GB (hotspots, metered plans). Counted on this PC from Windows' own counters." : "Off - usage is still counted in What changed.", CapNames, () => Array.IndexOf(Cfg.CapChoices, Cfg.CapGB), i => { Cfg.CapGB = Cfg.CapChoices[i]; Cfg.Save(); }, null, "data usage limit gb metered");
             // History & data
             add("History & data", "History", TagPc, () => Cfg.History ? "One small line a minute plus every change, on this PC only (" + Usage.Mb(HistBytesCached() / 1048576.0) + " now; about 15 KB a day once compressed). Powers past days, the week heatmap and 'slower than usual', and Neighbour wars (the Wi-Fi networks Windows lists, once an hour, 7 days)." : "Off: nothing is written to disk (the Neighbour wars log is deleted too) - What changed only remembers the last 2 hours, in memory.", SetOnOff, () => Cfg.History ? 0 : 1, i => { Cfg.History = i == 0; Cfg.Save(); }, null, "time machine record disk");
-            add("History & data", "Keep history for", TagPc, () => "Every night anything older goes (rolling). 90 days is still only about 1.5 MB.", HistDayNames, () => Array.IndexOf(Cfg.HistDayChoices, Cfg.HistoryDays), i => { Cfg.HistoryDays = Cfg.HistDayChoices[i]; Cfg.Save(); History.Tidy(); }, () => Cfg.History, "days retention");
+            add("History & data", "Keep history for", TagPc, () => "Every night anything older goes (rolling). 90 days is still only about 1.5 MB." + (Policy.MaxHistoryDays > 0 ? " Your IT team keeps it to " + Policy.MaxHistoryDays + " days at most." : ""), HistDayNames, () => Array.FindLastIndex(Cfg.HistDayChoices, d => d <= Cfg.HistoryDays), i => { int d = Cfg.HistDayChoices[i]; Cfg.HistoryDays = Policy.MaxHistoryDays > 0 ? Math.Min(d, Policy.MaxHistoryDays) : d; Cfg.Save(); History.Tidy(); }, () => Cfg.History, "days retention");
             // Privacy & online lookups
             add("Privacy & online lookups", "BGP and who owns the network", TagOnline, () => Online.On ? "On for " + Math.Ceiling(Online.Left.TotalMinutes) + " more min: public IP addresses (never private ones or names you typed) go to RIPEstat and PeeringDB to name each network on the path, its route and RPKI." : "Off. When on, Toolbox can name every network on your path (AS numbers), where they hand over, the destination's route and RPKI, and how the internet reaches you.", SetOnOff, () => Online.On ? 0 : 1, i => { if (i == 0) Online.Start(); else Online.Stop(); SyncOnlineChip(); Invalidate(true); }, null, "online bgp asn ripe peeringdb");
             add("Privacy & online lookups", "Switch them off by themselves after", TagOnline, () => "So they're never left on by mistake.", SetOnlineMin, () => Array.IndexOf(Cfg.OnlineChoices, Cfg.OnlineMin), i => { Cfg.OnlineMin = Cfg.OnlineChoices[i]; Cfg.Save(); if (Online.On) Online.Start(); }, null, "timer online");
@@ -211,19 +211,19 @@ namespace AdeeboMeter
                     {
                         string lead = "The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background.";
                         var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 14 * S;
-                        string[][] presets = { new[] { "penny", "Penny", "The lightest touch. Checks less often, Wi-Fi watch every 2 min, no call watching." }, SetS0, SetS1 };
-                        float pw = (w - 24 * S) / 3, ph = 96 * S;
-                        for (int i = 0; i < 3; i++)
+                        string[][] presets = { new[] { "penny", "Penny", "The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching." }, SetS0, SetS1, SetSG };
+                        int cols = w > 760 * S ? 4 : 2; float pw = (w - (cols - 1) * 12 * S) / cols, ph = 96 * S;
+                        for (int i = 0; i < presets.Length; i++)
                         {
-                            var r = new RectangleF(x + i * (pw + 12 * S), y, pw, ph); bool on = Cfg.Preset == presets[i][0];
+                            var r = new RectangleF(x + (i % cols) * (pw + 12 * S), y + (i / cols) * (ph + 12 * S), pw, ph); bool on = Cfg.Preset == presets[i][0];
                             Theme.Fill(g, r, 12 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 12 * S, on ? Theme.Blue : Theme.Line, on ? 2 : 1);
-                            using (var tb = new SolidBrush(on ? Theme.BlueDark : Theme.Ink)) g.DrawString(presets[i][1], Draw.fHead, tb, r.X + 14 * S, r.Y + 12 * S);
+                            using (var tb = new SolidBrush(on ? Theme.BlueDark : Theme.Ink)) g.DrawString(L.T(presets[i][1]), Draw.fHead, tb, r.X + 14 * S, r.Y + 12 * S);
                             string cost = "~" + JobsFor(presets[i][0]) + " checks a minute";
                             var cs = g.MeasureString(cost, Draw.fSmall); g.DrawString(cost, Draw.fSmall, muted, r.Right - 14 * S - cs.Width, r.Y + 15 * S);
-                            g.DrawString(presets[i][2], Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 40 * S, r.Width - 28 * S, ph - 46 * S));
+                            g.DrawString(L.T(presets[i][2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 40 * S, r.Width - 28 * S, ph - 46 * S));
                             string key = presets[i][0]; Act(settingsCanvas, r, delegate { Cfg.ApplyPreset(key); Policy.Apply(); Cfg.Save(); M.Nudge(); settingsCanvas.Invalidate(); });
                         }
-                        y += ph + 10 * S;
+                        y += ((presets.Length + cols - 1) / cols) * (ph + 12 * S) - 2 * S;
                         string cnt = "Right now: about " + Cfg.JobsPerMinute() + " checks a minute in the background" + (Cfg.Preset == "custom" ? " (your own mix)" : "") + ", on top of the widget's once-a-second read of Windows' own counters.";
                         var ch = Draw.Measure(cnt, Draw.fSmall, (int)w).Height; g.DrawString(cnt, Draw.fSmall, muted, new RectangleF(x, y, w, ch + 4)); y += ch + 18 * S;
                     }
@@ -303,7 +303,7 @@ namespace AdeeboMeter
 
         // ---------- About: the whole story, told simply
         static readonly string[] LeaveIsp = { "Report for my ISP", "Only when you run it: an MTR to the destinations you chose for the minutes you chose; your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes.", "1" };
-        static readonly string[] LeaveChecks = { "Checks you start", "Check a destination sends only what you ask for, to where you ask, when you press Check.", "1" };
+        static readonly string[] LeaveChecks = { "Checks you start", "Check a destination sends only what you ask for, to where you ask, when you press Check - plus one DNS question for the same name to 1.1.1.1 (8.8.8.8 if that fails), the second opinion that spots a filter. An IT policy with online_lookups = off stops it.", "1" };
         static readonly string[] LeaveLive = { "Live capture", "Listens to your own adapter only while you press Start. Nothing is sent; captures are deleted when AdeeboMeter exits.", "-1" };
         static readonly string[] LeaveNever = { "Never", "No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.", "0" };
         static readonly string[][] AboutNav = {

@@ -67,6 +67,8 @@ namespace AdeeboMeter
         public static bool ShouldOffer()
         {
             if (Program.Packaged || RunningInstalled) return false;
+            // a settings file beside an exe in Downloads isn't trusted (it may have come with the download): only the real one counts
+            if (Program.InDownloads) return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"));
             return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "Ade" + "boMeter.settings"));
         }
 

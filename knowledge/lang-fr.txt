@@ -184,7 +184,7 @@ Tell me when a new device joins	Me prévenir quand un appareil arrive
 Test these now	Tester maintenant
 Test under load...	Tester sous charge...
 That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.	Pas de souci. Dites-moi ce que vous remarquez, ou touchez le plus proche. Tout fonctionne hors ligne - même quand vous ne pouvez pas chercher sur Google.
-The default. Notices trouble within seconds and still costs next to nothing.	Par défaut. Repère un problème en quelques secondes et ne coûte presque rien.
+The default. Router every 2 s, internet every 15 s - notices trouble within seconds.	Par défaut. Routeur toutes les 2 s, internet toutes les 15 s - repère un problème en quelques secondes.
 The internet is slow	Internet est lent
 Theme	Thème
 Time machine	Retour arrière
@@ -200,7 +200,7 @@ WHAT'S WRONG?	QU'EST-CE QUI CLOCHE ?
 WHERE EVERYTHING LIVES	OÙ SE TROUVE CHAQUE CHOSE
 Watch and suggest	Surveiller et suggérer
 Watch my first pinned destination all day	Surveiller ma première destination épinglée toute la journée
-Watches everything closely - for when something is wrong and you want every clue.	Surveille tout de près - quand quelque chose cloche et que vous voulez chaque indice.
+Every check close, for when something is wrong and you want every clue.	Chaque contrôle de près, quand quelque chose cloche et que vous voulez chaque indice.
 What changed	Ce qui a changé
 What's running	Ce qui tourne
 Wi-Fi	Wi-Fi
@@ -393,7 +393,6 @@ NetFlow test record	Enregistrement NetFlow de test
 HTTP request builder	Constructeur de requêtes HTTP
 STUN - my public address and port	STUN - mon adresse et mon port publics
 Name of a device (NetBIOS, LLMNR, mDNS)	Nom d'un appareil (NetBIOS, LLMNR, mDNS)
-Find devices (mDNS, SSDP, WS-Discovery)	Trouver des appareils (mDNS, SSDP, WS-Discovery)
 SSH, SCP and remote commands	SSH, SCP et commandes à distance
 Many ports for one service	Plusieurs ports pour un service
 Every IP behind a name	Toutes les IP derrière un nom
@@ -670,3 +669,5 @@ Crowding on your channel	Encombrement de votre canal
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	plein = le plus fort sur votre canal ce jour-là · anneau = sur votre canal · point = entendu ici
 Journey	Trajet
 What did Windows Update break?	Qu'est-ce que Windows Update a cassé ?
+Every check close, plus up to 16 game servers and your best regions every 10 s.	Chaque contrôle de près, plus jusqu'à 16 serveurs de jeu et vos meilleures régions toutes les 10 s.
+The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	La touche la plus légère. Routeur toutes les 30 s, internet toutes les 5 min, Wi-Fi toutes les 2 min, pas de suivi des appels.

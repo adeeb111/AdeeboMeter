@@ -34,7 +34,7 @@ namespace AdeeboMeter
                 st.Phase = recovering ? "fast recovery" : cwnd < ss ? "slow start" : "congestion avoidance";
                 // what goes wrong this round: your click, the buffer overflowing, or a random loss
                 string loss; p.Events.TryGetValue(r, out loss); loss = loss ?? "";
-                if (loss == "" && cwnd > cap) loss = "soft";
+                if (loss == "" && cwnd > Math.Max(cap, 2)) loss = "soft";   // the window never goes below 2: a link whose BDP is under 2 packets just queues them
                 if (loss == "" && p.LossPct > 0 && rnd.NextDouble() < 1 - Math.Pow(1 - p.LossPct / 100, Math.Min(cwnd, 5000))) loss = "soft";
                 st.Loss = loss; res.Add(st);
                 recovering = false;

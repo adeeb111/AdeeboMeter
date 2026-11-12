@@ -329,7 +329,8 @@ namespace AdeeboMeter
         }
         public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
         Thread th; volatile bool stop; Monitor mon;
-        public const int MaxServers = 8, MaxPerSecond = 10;
+        public const int MaxPerSecond = 10;
+        public static int MaxServers { get { return Cfg.Preset == "gamer" ? 16 : 8; } }   // the Gamer preset watches twice as many
 
         public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
         public void Stop() { stop = true; var t = th; th = null; if (t != null) t.Join(3000); }
@@ -358,13 +359,13 @@ namespace AdeeboMeter
                     r.Add(Tuple.Create(g.Id, Best(g) ?? g.Servers[0], Cfg.GameBgSec));
                 }
             r = r.Take(MaxServers).ToList();
-            // a slow survey of every other region (once every 5 minutes each) so "best region" compares like with like
+            // a slow survey of every other region (once every 5 minutes each, 30 on Penny) so "best region" compares like with like
             if (Cfg.GameBgSec > 0)
                 foreach (var g in games.Where(g => monitored.Contains(g.Id) && !g.Soon))
                     foreach (var s in g.Servers.Take(12)) if (!r.Any(x => x.Item1 == g.Id && x.Item2.Name == s.Name)) r.Add(Tuple.Create(g.Id, s, SurveySec));
             return r;
         }
-        public const int SurveySec = 300;
+        public static int SurveySec { get { return Cfg.Preset == "penny" ? 1800 : 300; } }   // Penny surveys each region every 30 min
         // the best region: lowest 7-day average with little loss, from history; before there's history, the lowest recent average
         public GameServer Best(Game g)
         {
@@ -382,14 +383,15 @@ namespace AdeeboMeter
 
         void Loop()
         {
-            var due = new Dictionary<string, DateTime>(); DateTime lastRun = DateTime.MinValue, lastMinute = Clock.Mono;   // intervals on the clock that never jumps
+            var due = new Dictionary<string, DateTime>(); bool idle = false; DateTime lastRun = DateTime.MinValue, lastMinute = Clock.Mono;   // intervals on the clock that never jumps
             while (!stop)
             {
                 try
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(idle ? 5000 : 1000);
                     var mon2 = Games.Monitored();
-                    if (mon2.Count == 0) { Playing = null; continue; }   // nothing clicked yet: nothing is sent
+                    idle = mon2.Count == 0;
+                    if (idle) { Playing = null; continue; }   // nothing clicked yet: nothing is sent, and the loop wakes only every 5 s
                     var games = Games.All;
                     if ((Clock.Mono - lastRun).TotalSeconds >= 5)
                     {
@@ -616,13 +618,15 @@ namespace AdeeboMeter
         public static string Redact(string text, string ssid)
         {
             string t = PrivIp.Replace(text, "[internal address]"); t = Mac.Replace(t, "[hardware address]");
-            // the Wi-Fi name as a whole word only ("td" or "ms" must not eat table cells or every "12 ms"); a very short name
-            // only where it's quoted or follows "Wi-Fi"
-            if (!string.IsNullOrEmpty(ssid) && ssid.Length >= 2)
+            // the Wi-Fi name where the report shows it (quoted, after "Wi-Fi", "SSID", "network", or "On <name> (channel")
+            // - any length, so "ATT" or "Bob" is hidden too. Everywhere else only when the name can't be an ordinary word:
+            // a name like "Router", "Home" or "loss" must not erase those words all over the report (that would give it away).
+            if (!string.IsNullOrEmpty(ssid) && ssid.Trim() != "")
             {
                 string e = Regex.Escape(ssid);
-                t = ssid.Length >= 4 ? Regex.Replace(t, @"(?<![\w-])" + e + @"(?![\w-])", "[Wi-Fi name]", RegexOptions.IgnoreCase)
-                    : Regex.Replace(t, "(\"" + e + "\"|(?<=Wi-Fi )" + e + @"(?![\w-]))", "[Wi-Fi name]", RegexOptions.IgnoreCase);
+                t = Regex.Replace(t, "\"" + e + "\"|(?<=\\b(?:Wi-Fi|WiFi|SSID|network|Network)[:]? )" + e + "(?![\\w-])|(?<=\\bOn )" + e + "(?= \\()", "[Wi-Fi name]");
+                bool plainWord = Regex.IsMatch(ssid, "^[A-Za-z]+$");
+                if (!plainWord && ssid.Length >= 3) t = Regex.Replace(t, @"(?<![\w-])" + e + @"(?![\w-])", "[Wi-Fi name]");
             }
             return t;
         }

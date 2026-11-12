@@ -63,7 +63,7 @@ namespace AdeeboMeter
             Cfg.Save = SaveSettings; Cfg.SetTheme = SetTheme; Cfg.GetTheme = () => Program.ForceTheme;
             Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
             Theme.Apply(Program.WantDark());
-            Program.CleanCaptures();
+            Program.CleanCaptures(); FileCrypt.SweepParts();
             Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
             M.Start(); GamePing.Me.Start(M);   /* the Gamer Zone sends nothing until a game is clicked */
 
@@ -160,7 +160,7 @@ namespace AdeeboMeter
                     {
                         try
                         {
-                            int w = WaitHandle.WaitAny(both, 1000);
+                            int w = WaitHandle.WaitAny(both, 30000);   // woken by either event; the timeout only re-checks quitting (a background thread ends with the app anyway)
                             if (quitting) break;
                             if (w == 0) marshal.BeginInvoke((Action)delegate { ackEvt.Set(); OpenFull(); });
                             else if (w == 1) { Program.Log("asked to quit (update or removal)"); marshal.BeginInvoke((Action)Quit); }
@@ -207,6 +207,8 @@ namespace AdeeboMeter
             }
             catch { }
             if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
+            // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") and the game settings are kept.
+            if (Cfg.Preset != "custom") { int gb = Cfg.GameBgSec, gs = Cfg.GameBgServers; Cfg.ApplyPreset(Cfg.Preset); Cfg.GameBgSec = gb; Cfg.GameBgServers = gs; }
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
             if (first) { ApplyAutoStart(); SaveSettings(); }
@@ -273,10 +275,14 @@ namespace AdeeboMeter
             else OpenFull();
         }
 
-        DateTime lastTop;
+        DateTime lastTop, lastCard; string lastHead = ""; volatile bool locked;   // locked: the lock screen is up
         void OnScreens(object s, EventArgs e) { drawnKey = ""; lastCover = DateTime.MinValue; }
         void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; } }
-        void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e) { if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) { drawnKey = ""; lastCover = DateTime.MinValue; } }
+        void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e)
+        {
+            if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionLock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleDisconnect) locked = true;   // the lock screen: the widget rests
+            if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) locked = false;
+            if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) { drawnKey = ""; lastCover = DateTime.MinValue; } }
         // logoff or shutdown: no live capture left on disk (a Quit may never come)
         // SystemEvents raise this on their own thread: the view (its timers, its captures) is only touched on the UI thread -
         // synchronously, so it's done before Windows logs off
@@ -340,12 +346,12 @@ namespace AdeeboMeter
                 if (WidgetScreen() == null) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
                 bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
-                if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; drawnKey = ""; }   // every 30 s: draw again, which also claims the top layer back
+                if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; widget.ClaimTop(); }   // every 30 s: claim the top layer back - no redraw
                 if ((uiTick & 7) == 0) presenting = Native.Presenting();   // checked twice a second at most
-                if (!widgetOn || viewUp || presenting) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 500; return; }
+                if (!widgetOn || viewUp || presenting || locked) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
-                int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : 250;
+                int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
                 if (ui.Interval != want) ui.Interval = want;
                 if ((Clock.Mono - lastCover).TotalMilliseconds >= 400)
                 {
@@ -375,10 +381,12 @@ namespace AdeeboMeter
                 Snap s = M.Latest; bool compact = !hovered && (covered || (s.Level == 0 && !s.Call));
                 string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget;
                 bool fresh = M.Version != drawnVersion;
-                // The folded chip redraws only when its words or colour change; the open card once a second.
-                if (state != drawnKey || (fresh && (!compact || s.Chip != lastChip || s.Level != lastLevel)))
+                // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
+                // and unhovered only when its level or headline changes (or every 10 s for the numbers)
+                bool cardDue = !compact && (hovered || s.Level != lastLevel || s.Headline != lastHead || (Clock.Mono - lastCard).TotalSeconds >= 10);
+                if (state != drawnKey || (fresh && (cardDue || (compact && (s.Chip != lastChip || s.Level != lastLevel)))))
                 {
-                    Render(s, compact); drawnKey = state; drawnVersion = M.Version;
+                    Draw.CardHovered = hovered; Render(s, compact); drawnKey = state; drawnVersion = M.Version; if (!compact) { lastCard = Clock.Mono; lastHead = s.Headline; }
                 }
             }
             catch (Exception e) { Program.Log("ui: " + e.Message); }

@@ -49,6 +49,10 @@ namespace AdeeboMeter
             // an average hides a link that is down right now: if the newest ping failed, test again instead of trusting older ones
             if (double.IsNaN(m.GwPing.Last)) gw = double.NaN;
             if (double.IsNaN(m.NetPing.Last)) net = double.NaN;
+            // samples from before a sleep (or a slow check pace) aren't "now": anything older than 20 s is measured again
+            DateTime gAt, nAt; lock (m.L) { gAt = m.GwAt; nAt = m.NetAt; }
+            if ((Clock.Mono - gAt).TotalSeconds > 20) gw = double.NaN;
+            if ((Clock.Mono - nAt).TotalSeconds > 20) net = double.NaN;
             bool wifi, vpn; int sig; string adapter, gws, dnsSrv, target; NetworkInterface nic;
             lock (m.L) { wifi = m.AdapterKind == "Wi-Fi"; sig = m.WifiSignal; adapter = m.Adapter; gws = m.Gateway; dnsSrv = m.DnsServer; vpn = m.VpnUp; target = m.NetTarget; nic = m.Primary; }
             string normal = Baseline.Normal(Brain.NetKey);

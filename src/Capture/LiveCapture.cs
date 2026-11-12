@@ -107,7 +107,7 @@ namespace AdeeboMeter
                     // only tshark's own "unknown field / heuristic" complaints - an "Invalid argument" or "not a valid interface" must not
                     // switch call quality and DHCP detection off for the session
                     if (usingExtras && (d.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("isn't a valid field", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("are not valid", StringComparison.OrdinalIgnoreCase) >= 0 || (d.IndexOf("heuristic", StringComparison.OrdinalIgnoreCase) >= 0 && d.IndexOf("not", StringComparison.OrdinalIgnoreCase) >= 0) || d.IndexOf("unrecognized option", StringComparison.OrdinalIgnoreCase) >= 0))
-                    { extrasOk = false; usingExtras = false; string gid = startGuid; Program.Log("tshark: extra fields not supported, restarting without them"); Restart(gid); return; }
+                    { extrasOk = false; usingExtras = false; restarting = true; string gid = startGuid; Program.Log("tshark: extra fields not supported, restarting without them"); Restart(gid); return; }
                     Error = Draw.Trunc(d.Trim(), 140);
                 };
                 ts.BeginErrorReadLine();
@@ -134,7 +134,7 @@ namespace AdeeboMeter
         public void Stop() { lock (life) Stop2(); }
         public void Dispose() { Stop(); }
         volatile int gen;   // bumped by every stop: a delayed self-restart from before it is dropped, so a capture you stopped stays stopped
-        void Restart(string guid) { int g = gen; ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); lock (life) { if (g == gen) Start2(guid); } }); }
+        void Restart(string guid) { int g = gen; ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); lock (life) { if (g == gen) Start2(guid); restarting = false; } }); }
         void Stop2()
         {
             gen++;
@@ -169,10 +169,10 @@ namespace AdeeboMeter
             if (!running) ThreadPool.QueueUserWorkItem(delegate { Stop(); });
             // tshark ended on its own (sleep, an adapter reset, Wi-Fi gone) while we still think we're capturing: say so and stop,
             // never "capturing 47:12" with nothing coming in. (A restart without the extra fields swaps ts first - not this.)
-            else if (p == ts) { Error = "Capture stopped by itself - the adapter went away or the PC slept. Press Start again."; ThreadPool.QueueUserWorkItem(delegate { Stop(); }); }
+            else if (p == ts && !restarting) { Error = "Capture stopped by itself - the adapter went away or the PC slept. Press Start again."; ThreadPool.QueueUserWorkItem(delegate { Stop(); }); }
         }
         // the time limit holds even when no packets arrive (the reader only wakes up on a line)
-        System.Threading.Timer limit;
+        System.Threading.Timer limit; volatile bool restarting;   // set while the extra-fields restart swaps tshark: its old reader's EOF isn't "the adapter went away"
         void CheckLimit()
         {
             if (running && (DateTime.UtcNow - started).TotalMinutes > MaxMinutes) { Error = "Stopped after " + MaxMinutes + " minutes so it doesn't nibble your CPU forever. Press Start for more."; Stop(); }

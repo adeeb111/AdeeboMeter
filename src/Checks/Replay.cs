@@ -208,7 +208,7 @@ namespace AdeeboMeter
             var e = pkts.Where(k => k.Proto == Pcap.Eapol && k.Payload.Length >= 4).ToList();
             if (e.Count == 0) { rows.Add(R(1, "802.1X", "no EAPOL frames in this capture", "Capture on the PC's cable port while it connects (Wireshark filter  eapol ). Wi-Fi 802.1X happens inside the radio - capture it on the access point or controller.", "p")); return rows; }
             var steps = new List<string[]>(); string method = "", identity = ""; bool success = false, failure = false, nak = false, pcAnswered = false; int idReq = 0;
-            foreach (var k in e.Take(200))
+            foreach (var k in e)
             {
                 var p = k.Payload; int type = p[1]; string what;
                 if (type == 1) what = "EAPOL-Start - the PC asks to sign in";
@@ -225,7 +225,7 @@ namespace AdeeboMeter
                     if (code == 2 && et == 1 && identity != "") what += " (" + identity + ")";
                 }
                 else what = "EAPOL type " + type;
-                steps.Add(R(what == "FAILURE" ? 2 : what == "SUCCESS" ? 0 : 3, T(k.T), what, "", "p"));
+                if (steps.Count < 200 || what == "FAILURE" || what == "SUCCESS") steps.Add(R(what == "FAILURE" ? 2 : what == "SUCCESS" ? 0 : 3, T(k.T), what, "", "p")); /* judge every frame, list the first 200 plus the outcomes */
             }
             string verdict; int lv;
             if (success) { verdict = "The sign-in worked" + (method != "" ? " (" + method + ")" : "") + ". If there's still no network, the next step is DHCP."; lv = 0; }

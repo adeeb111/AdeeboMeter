@@ -66,6 +66,8 @@ namespace AdeeboMeter
                 Native.DeleteDC(mem);
             }
         }
+        // claim the top layer back without drawing again (Windows can drop a small top-most window after sleep or unlock)
+        public void ClaimTop() { if (Placed.Width > 1 && !HoldTop) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040); }
         public void Vanish() { using (var b = new Bitmap(1, 1, PixelFormat.Format32bppArgb)) Present(b, 0, -10, -10); Placed = Rectangle.Empty; }
     }
 

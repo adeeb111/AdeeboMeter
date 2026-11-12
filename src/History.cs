@@ -10,11 +10,11 @@ using System.Text;
 namespace AdeeboMeter
 {
     // History (on by default, Settings: 1-90 days, rolling): one line a minute (worst level, averages and peaks) plus every
-    // event, one file per day in %LOCALAPPDATA%\AdeeboMeter\history. Today stays plain text; older days are compressed
+    // event, one file per day in the data folder's history (%LOCALAPPDATA%\AdeeboMeter\history when installed). Today stays plain text; older days are compressed
     // (.csv.gz, ~15 KB a day) and only opened when you look at them. Every night anything older than your setting goes.
     static class History
     {
-        public static string Dir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter", "history"); } }
+        public static string Dir { get { return Path.Combine(Program.DataDir, "history"); } }   // a portable copy keeps its own (data\history beside it); installed: %LOCALAPPDATA%\AdeeboMeter\history
         static readonly object k = new object(); static DateTime lastPrune = DateTime.MinValue; static readonly char[] CommaSep = { ',' };
         static string Name(DateTime d) { return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); }
         static string FileFor(DateTime d, string kind) { return Path.Combine(Dir, Name(d) + (kind == "ev" ? "-events" : "") + ".csv"); }

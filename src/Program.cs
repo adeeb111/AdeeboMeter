@@ -9,7 +9,7 @@
 // Check a destination - runs only when you press it; when a check you started fails, Windows' own test page
 // (msftconnecttest.com) is asked once (Settings can turn that off).
 // Settings and the log live next to the exe (a Store or portable copy: in its data folder); history, usage, baselines, known
-// devices and seen apps live in %LOCALAPPDATA%\AdeeboMeter (History settings delete them); captures are deleted on exit.
+// devices and seen apps live in %LOCALAPPDATA%\AdeeboMeter (a portable copy: its data folder; History settings delete them); captures are deleted on exit.
 
 using System;
 using System.Collections.Generic;
@@ -87,11 +87,12 @@ namespace AdeeboMeter
                 try
                 {
                     if (string.IsNullOrEmpty(Dir)) return false;
-                    var dl = new List<string> { Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads") };
+                    // Downloads (and anything unzipped inside it) and the Desktop: places where files arrive from anywhere
+                    var dl = new List<string> { Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) };
                     using (var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"))
                     { var v = k == null ? null : k.GetValue("{374DE290-123F-4565-9164-39C4925E467B}") as string; if (!string.IsNullOrEmpty(v)) dl.Add(Environment.ExpandEnvironmentVariables(v)); }
                     string here = Path.GetFullPath(Dir).TrimEnd('\\', '/');
-                    if (dl.Any(d => string.Equals(Path.GetFullPath(d).TrimEnd('\\', '/'), here, StringComparison.OrdinalIgnoreCase))) inDownloads = 1;
+                    if (dl.Where(d => !string.IsNullOrEmpty(d)).Select(d => Path.GetFullPath(d).TrimEnd('\\', '/')).Any(d => string.Equals(d, here, StringComparison.OrdinalIgnoreCase) || here.StartsWith(d + "\\", StringComparison.OrdinalIgnoreCase))) inDownloads = 1;
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException || e is ArgumentException || e is NotSupportedException)) throw; }
                 return inDownloads == 1;
@@ -297,7 +298,7 @@ namespace AdeeboMeter
     static class Cfg
     {
         // background work while only the widget runs
-        public static volatile int GwSec = 5, NetSec = 30, WifiSec = 30, AppsSec = 10;   /* NetSec 30 on a fresh install is deliberate (Adeeb, 2026-11-09): the Internet dot pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
+        public static volatile int GwSec = 2, NetSec = 15, WifiSec = 10, AppsSec = 5;   /* Balanced (Adeeb, 2026-11-12: Balanced takes the old Engineer timings, Penny is the light plan). The internet check is on from a fresh install (Adeeb, 2026-11-09): it pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
         public static volatile bool Call = true;
         // engineer view (only while it's open)
         public static volatile string WidgetScreen = "";   // the screen the widget sits on ("" = the main screen); falls back to the main one if it's gone
@@ -330,23 +331,24 @@ namespace AdeeboMeter
         public static void ApplyPreset(string p)
         {
             Preset = p;
-            if (p == "penny") { GwSec = 10; NetSec = 60; WifiSec = 120; AppsSec = 30; Call = false; }
-            else if (p == "engineer") { GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; }
-            else { Preset = "balanced"; GwSec = 5; NetSec = 30; WifiSec = 30; AppsSec = 10; Call = true; }
+            // Penny: the lightest touch. Balanced (the default) and Engineer: every check close. Gamer: the same, plus more game servers, more often.
+            if (p == "penny") { GwSec = 30; NetSec = 300; WifiSec = 120; AppsSec = 30; Call = false; GameBgSec = 60; GameBgServers = 3; }
+            else if (p == "engineer") { GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 30; GameBgServers = 3; }
+            else if (p == "gamer") { GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 10; GameBgServers = 5; }
+            else { Preset = "balanced"; GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 30; GameBgServers = 3; }
         }
         // background checks per minute, on top of the once-a-second counter read the widget always does
-        public static int JobsPerMinute() { return JobsPerMinute(GwSec, NetSec, WifiSec, AppsSec); }
-        static int JobsPerMinute(int gw, int net, int wifi, int apps)
+        public static int JobsPerMinute() { return JobsPerMinute(GwSec, NetSec, WifiSec, AppsSec, Preset == "penny" ? 60 : 10); }
+        static int JobsPerMinute(int gw, int net, int wifi, int apps, int ifs)
         {
             Func<int, double> per = delegate(int sec) { return sec > 0 ? 60.0 / sec : 0; };
-            return (int)Math.Round(6 /*adapters*/ + per(gw) + 2 * per(net) + per(wifi) + 2 * per(apps));
+            return (int)Math.Round(per(ifs) /*adapters*/ + per(gw) + per(net) + (net > 0 ? per(Math.Max(net, 60)) : 0) /*DNS: at most once a minute*/ + per(wifi) + 2 * per(apps));
         }
         // what a preset would cost, worked out without touching the live settings the monitor reads
         public static int JobsForPreset(string p)
         {
-            if (p == "penny") return JobsPerMinute(10, 60, 120, 30);
-            if (p == "engineer") return JobsPerMinute(2, 15, 10, 5);
-            return JobsPerMinute(5, 30, 30, 10);
+            if (p == "penny") return JobsPerMinute(30, 300, 120, 30, 60);
+            return JobsPerMinute(2, 15, 10, 5, 10);
         }
         public static IEnumerable<string> Lines()
         {
@@ -367,11 +369,11 @@ namespace AdeeboMeter
         {
             switch (k)
             {
-                case "preset": Preset = v == "penny" || v == "engineer" || v == "custom" ? v : "balanced"; break;
-                case "gw": GwSec = Pick(v, 5, 2, 5, 10, 0); break;
-                case "net": NetSec = Pick(v, 30, 15, 30, 60, 0); break;
-                case "wifi": WifiSec = Pick(v, 30, 10, 30, 120, 0); break;
-                case "apps": AppsSec = Pick(v, 10, 5, 10, 30, 0); break;
+                case "preset": Preset = v == "penny" || v == "engineer" || v == "gamer" || v == "custom" ? v : "balanced"; break;
+                case "gw": GwSec = Pick(v, 2, 2, 5, 10, 30, 0); break;
+                case "net": NetSec = Pick(v, 15, 15, 30, 60, 300, 0); break;
+                case "wifi": WifiSec = Pick(v, 10, 10, 30, 120, 0); break;
+                case "apps": AppsSec = Pick(v, 5, 5, 10, 30, 0); break;
                 case "call": Call = v == "1"; break;
                 case "ipnames": IpNames = v == "1"; break;
                 case "details": Details = v == "1"; break;

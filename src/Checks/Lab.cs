@@ -120,7 +120,7 @@ namespace AdeeboMeter
             string h = (target ?? "").Trim(); if (h == "" || !Regex.IsMatch(h, @"^[\w.:%-]+$") || h.Length > 253) { rows.Add(R(2, "Target", "type an address or name", "", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             int n = Count(count, 10), size = 32, ttl = 128, gap = 1000, dscp = -1; bool df = false, cmp = false; string o = (opts ?? "").ToLowerInvariant(), bad = "";
-            foreach (Match mm in Regex.Matches(o, @"(size|ttl|every|gap)\s*=?\s*(\d+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}\d{0,2}|\d{1,2})\b|\b(compare)\b"))
+            foreach (Match mm in Regex.Matches(o, @"(size|ttl|every|gap)\s*=?\s*(\d+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}\d{0,2}|\d{1,4})\b|\b(compare)\b"))
             {
                 if (mm.Groups[3].Success) { df = true; continue; }
                 if (mm.Groups[5].Success) { cmp = true; continue; }
@@ -164,7 +164,7 @@ namespace AdeeboMeter
             Func<int, string> line = k => I(sentB[k]) + " sent · " + I(times[k].Count) + " answered" + (times[k].Count > 0 ? " · " + times[k].Min() + " / " + (long)times[k].Average() + " / " + times[k].Max() + " ms (min / avg / max)" : "");
             int got = times[0].Count + times[1].Count, lost = lostB[0] + lostB[1];
             string mark = dscp >= 0 ? "DSCP " + dscp + (Toolkit.Dscp.Any(x => x.Value == dscp) ? " (" + Toolkit.Dscp.First(x => x.Value == dscp).Key + ")" : "") : "";
-            rows.Add(R(got == 0 && froms.Count == 0 ? 2 : lostB[0] > 0 ? 1 : 0, a + (a.ToString() != h ? " (" + h + ")" : "") + (cmp ? " · " + mark : ""), line(0),
+            rows.Add(R(got == 0 && froms.Count == 0 ? 2 : lost > 0 ? 1 : 0, a + (a.ToString() != h ? " (" + h + ")" : "") + (cmp ? " · " + mark : ""), line(0),
                 I(size) + "-byte payload" + (df ? ", don't fragment" : "") + ", TTL " + ttl + (mark != "" ? ", " + mark : "") + ", every " + gap + " ms. " + Caps, "m"));
             if (cmp)
             {

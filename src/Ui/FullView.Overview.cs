@@ -123,19 +123,21 @@ namespace AdeeboMeter
             new[] { "guide:site", "Only one website is broken", "everything else works" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
         // Whole words only ("work" never matches "working"); a word of 6+ letters also matches what starts with it
-        // ("disconnect" -> "disconnecting"). Most specific rules first, the catch-all "nothing works" after the topics.
+        // ("disconnect" -> "disconnecting"). What's wrong (a symptom) beats where it happens ("at work", "work laptop"): the
+        // symptom rules come first, the place rule (VPN / work) and the catch-all "nothing works" after them.
         static readonly string[][] FixWords = {
             new[] { "vpn slow|slow vpn|vpn is slow|vpn lag|vpn lags|tunnel", "tool:vpn", "the VPN may be the slow part", "how much of the delay is the VPN tunnel, and whether everything goes through it" },
-            new[] { "vpn|globalprotect|anyconnect|zscaler|netskope|forticlient|work laptop|office network|company network|at work|at the office", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
-            new[] { "buffer|buffering|youtube|netflix|stream|streaming|video|twitch|disney|prime", "guide:slow", "videos keep buffering", "your speed, your Wi-Fi and whether something else is using the internet" },
+            new[] { "vpn|globalprotect|anyconnect|zscaler|netskope|forticlient", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
             new[] { "lag|lagging|laggy|game|games|gaming|fortnite|valorant|steam|xbox|playstation", "gamer", "your game is lagging", "the game's servers, your Wi-Fi and your provider - in the Gamer Zone" },
+            new[] { "buffer|buffering|youtube|netflix|stream|streaming|video|twitch|disney|prime", "guide:slow", "videos keep buffering", "your speed, your Wi-Fi and whether something else is using the internet" },
             new[] { "call|calls|zoom|teams|meet|whatsapp|skype|robot|robotic|choppy|voice|echo", "guide:calls", "calls are choppy", "jitter, loss, your upload and the VPN" },
             new[] { "disconnect|drop|drops|dropping|keeps going|cuts out|on and off|stops and starts|unstable", "guide:drops", "the connection keeps dropping", "today's drops, roams and what the signal was doing" },
             new[] { "slow pc|computer slow|laptop slow|pc is slow|computer is slow|laptop is slow|freeze|freezes|frozen|hang|hangs|hot|fan|noisy|crash|crashes|not responding", "guide:pc", "the computer itself is slow", "processor, memory, disk, heat and frozen apps" },
             new[] { "storage|disk full|space|full|gigabytes", "tool:tidy", "you're running out of storage", "temp files, the Recycle Bin and what takes the space" },
-            new[] { "website|websites|site|sites|page|pages|link|url|won't open|wont open|can't open|cant open|error", "guide:site", "a website or app won't open", "the name, the route, the door, the lock and the answer" },
-            new[] { "no internet|offline|nothing works|nothing opens|nothing loads|not connected|can't connect|cannot connect|won't connect|doesn't work|does not work|not working|isn't working|stopped working|hotspot|printer", "guide:whats", "there's no internet", "every layer, from this PC to the internet" },
+            new[] { "website|websites|site|sites|page|pages|link|url|won't open|wont open|can't open|cant open|can't get to|cant get to|email|outlook|mail|error", "guide:site", "a website or app won't open", "the name, the route, the door, the lock and the answer" },
             new[] { "slow|slowly|loading|takes ages|speed|high ping|ping is high|latency", "guide:slow", "the internet is slow", "where the delay starts: your PC, Wi-Fi, router, provider or DNS" },
+            new[] { "work laptop|office network|company network|at work|at the office", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
+            new[] { "no internet|offline|nothing works|nothing opens|nothing loads|not connected|can't connect|cannot connect|won't connect|doesn't work|does not work|not working|isn't working|stopped working|hotspot|printer", "guide:whats", "there's no internet", "every layer, from this PC to the internet" },
             new[] { "yesterday|suddenly|since|changed|update", "changes", "something changed", "what changed on this PC and network since then" } };
         RoundBox fixBox; string fixHint = "", fixGo;
         void EnsureFixBox()

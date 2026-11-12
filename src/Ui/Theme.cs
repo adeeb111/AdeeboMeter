@@ -409,6 +409,7 @@ namespace AdeeboMeter
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
             return bmp;
         }
+        public static volatile bool CardHovered = true;   // set by the widget before it draws the card
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
             string lay = Layout(s.Call);
@@ -434,8 +435,7 @@ namespace AdeeboMeter
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
                 Theme.Pill(g, Word(s.Level), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Level, S);
-                string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0);
-                g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S);
+                if (CardHovered) { string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0); g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S); }   // the countdown only while you look: unhovered, the card isn't redrawn each second
                 y += 24 * S;
                 using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2));
                 y += headH;

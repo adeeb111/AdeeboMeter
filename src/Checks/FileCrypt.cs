@@ -25,7 +25,7 @@ namespace AdeeboMeter
     {
         static readonly byte[] Magic = { (byte)'A', (byte)'D', (byte)'E', (byte)'E', (byte)'B', (byte)'O', 1, 1 };
         public const int Iterations = 600000, HeaderLen = 8 + 4 + 16 + 16, MacLen = 32;
-        public const long MaxBytes = 4L * 1024 * 1024 * 1024, MaxCms = 50L * 1024 * 1024, MaxCmsOpen = 200L * 1024 * 1024;   // a standard .p7m is built in memory (several copies): made up to 50 MB; one someone sends is opened up to 200 MB; .adeebo streams up to 4 GB
+        public const long MaxBytes = 4L * 1024 * 1024 * 1024, MaxCms = 50L * 1024 * 1024, MaxCmsOpen = 100L * 1024 * 1024;   // a standard .p7m is built in memory (several copies): made up to 50 MB; one someone sends is opened up to 100 MB; .adeebo streams up to 4 GB
         const string Alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";   // no 0/O, 1/I/L - easy to read out on the phone
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
 
@@ -177,12 +177,41 @@ namespace AdeeboMeter
         static FileStream Temp(string dir, out string tmp)
         {
             tmp = Path.Combine(dir, "." + Guid.NewGuid().ToString("N") + ".part");
+            Track(tmp, true);   // written down first: if AdeeboMeter is killed mid-way, the next start removes it
             var f = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write);
             try { File.SetAttributes(tmp, FileAttributes.Hidden | FileAttributes.NotContentIndexed); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             return f;
         }
-        static void Drop(string tmp) { try { if (tmp != null && File.Exists(tmp)) { File.SetAttributes(tmp, FileAttributes.Normal); File.Delete(tmp); } } catch (IOException) { } catch (UnauthorizedAccessException) { } }
-        static void Keep(string tmp, string dest) { File.SetAttributes(tmp, FileAttributes.Normal); File.Move(tmp, dest); }
+        static void Drop(string tmp) { try { if (tmp != null && File.Exists(tmp)) { File.SetAttributes(tmp, FileAttributes.Normal); File.Delete(tmp); } if (tmp != null && !File.Exists(tmp)) Track(tmp, false); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        static void Keep(string tmp, string dest) { File.SetAttributes(tmp, FileAttributes.Normal); File.Move(tmp, dest); Track(tmp, false); }
+        // the list of temp files in progress (data folder, parts.txt): a crash, a kill or a logoff can't leave hidden
+        // half-decrypted plaintext behind for good - SweepParts at the next start deletes what's still listed
+        static readonly object pk = new object();
+        static string PartsFile { get { return Path.Combine(Program.DataDir, "parts.txt"); } }
+        static void Track(string tmp, bool add)
+        {
+            lock (pk)
+                try
+                {
+                    var l = File.Exists(PartsFile) ? File.ReadAllLines(PartsFile).Where(x => x != "" && x != tmp).Take(200).ToList() : new List<string>();
+                    if (add) l.Add(tmp);
+                    if (l.Count == 0) { if (File.Exists(PartsFile)) File.Delete(PartsFile); } else File.WriteAllLines(PartsFile, l);
+                }
+                catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        public static void SweepParts()
+        {
+            lock (pk)
+                try
+                {
+                    if (!File.Exists(PartsFile)) return;
+                    foreach (var p in File.ReadAllLines(PartsFile).Take(200))
+                        if (Path.GetFileName(p).StartsWith(".", StringComparison.Ordinal) && p.EndsWith(".part", StringComparison.OrdinalIgnoreCase) && File.Exists(p))   // only our own hidden .<guid>.part files
+                            try { File.SetAttributes(p, FileAttributes.Normal); File.Delete(p); Program.Log("removed a leftover decrypt temp file: " + p); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                    File.Delete(PartsFile);
+                }
+                catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
         static readonly HashSet<string> RunsWhenOpened = new HashSet<string> { ".exe", ".scr", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".jse", ".wsf", ".msi", ".lnk", ".hta", ".cpl", ".dll", ".reg", ".pif", ".url" };
         static bool Risky(string name) { return RunsWhenOpened.Contains(Path.GetExtension(name ?? "").ToLowerInvariant()); }
 
@@ -294,6 +323,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string file = FileArg(fileIn);
             if (file == "" || !File.Exists(file)) { rows.Add(R(2, "File", file == "" ? "type or paste the path of the .adeebo or .p7m file" : "not found: " + file, "", "")); return rows; }
             var fi = new FileInfo(file); string tmp = null; int kind = 0;   // 1 code, 2 P-384 recipients, 3 key backup, 0 anything else (a .p7m)
+            if (fi.Length > MaxBytes + 1024 * 1024) { rows.Add(R(2, "File", "bigger than any file AdeeboMeter makes (4 GB) - not opened", "", "")); return rows; }
             try
             {
                 var h8 = new byte[8]; using (var f8 = File.OpenRead(file)) f8.Read(h8, 0, 8);
@@ -325,7 +355,7 @@ namespace AdeeboMeter
                 else if (h8.Take(6).SequenceEqual(Magic.Take(6))) { rows.Add(R(2, "Open", "an AdeeboMeter file of a kind this version doesn't know - made by a newer AdeeboMeter?", "Update AdeeboMeter and open it again.", "")); return rows; }
                 else
                 {
-                    if (fi.Length > MaxCmsOpen) { rows.Add(R(2, "File", "bigger than 200 MB - too big to open as a .p7m here", "", "")); return rows; }
+                    if (fi.Length > MaxCmsOpen) { rows.Add(R(2, "File", "bigger than 100 MB - too big to open as a .p7m here (it is decoded in memory)", "", "")); return rows; }
                     run.Status = "Looking for your key and opening it...";
                     var env = new EnvelopedCms(); env.Decode(File.ReadAllBytes(file)); env.Decrypt();   // Windows finds the matching private key in your store
                     string name = fi.Name.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase) ? fi.Name.Substring(0, fi.Name.Length - 4) : fi.Name + ".opened";

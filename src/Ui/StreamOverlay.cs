@@ -19,7 +19,8 @@ namespace AdeeboMeter
     {
         static StreamOverlay open;
         readonly Monitor M; readonly Timer tick = new Timer { Interval = 1000 };
-        bool green, png; Point down; byte[] lastPng;
+        bool green, png; Point down; byte[] lastPng; string lastKey = "";
+        readonly Font f1 = new Font("Segoe UI", 9f), f2 = new Font("Segoe UI Semibold", 20f);   // made once, not on every paint
         static int Sc(float v) { return (int)(v * Draw.S); }
         public static string PngPath { get { return Path.Combine(Program.DataDir, "overlay.png"); } }
 
@@ -38,14 +39,19 @@ namespace AdeeboMeter
             MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) Location = new Point(Location.X + e.X - down.X, Location.Y + e.Y - down.Y); };
             var menu = new ContextMenuStrip { ShowImageMargin = false };
             var g = new ToolStripMenuItem("Green background (for OBS Chroma Key)") { CheckOnClick = true }; g.CheckedChanged += delegate { green = g.Checked; Invalidate(); };
-            var p = new ToolStripMenuItem("Write a PNG for OBS (overlay.png)") { CheckOnClick = true }; p.CheckedChanged += delegate { png = p.Checked; if (png) Program.Log("lag graph png: " + PngPath); };
+            var p = new ToolStripMenuItem("Write a PNG for OBS (overlay.png)") { CheckOnClick = true }; p.CheckedChanged += delegate { png = p.Checked; lastKey = ""; if (png) Program.Log("lag graph png: " + PngPath); };
             var f = new ToolStripMenuItem("Show the PNG in its folder"); f.Click += delegate { if (File.Exists(PngPath)) try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + PngPath + "\""); } catch (System.ComponentModel.Win32Exception) { } };
             var c = new ToolStripMenuItem("Close"); c.Click += delegate { Close(); };
             menu.Items.AddRange(new ToolStripItem[] { g, p, f, new ToolStripSeparator(), c });
             ContextMenuStrip = menu;
-            tick.Tick += delegate { Invalidate(); if (png) WritePng(); };
+            tick.Tick += delegate
+            {
+                // repaint (and encode the PNG) only when what it shows changed
+                string t; double[] v; Series(out t, out v); string key = t + "|" + green + "|" + string.Join(",", v.Select(x => double.IsNaN(x) ? "x" : Math.Round(x).ToString(CultureInfo.InvariantCulture)));
+                if (key == lastKey) return; lastKey = key; Invalidate(); if (png) WritePng();
+            };
             tick.Start();
-            FormClosed += delegate { tick.Stop(); tick.Dispose(); menu.Dispose(); if (open == this) open = null; };
+            FormClosed += delegate { tick.Stop(); tick.Dispose(); menu.Dispose(); f1.Dispose(); f2.Dispose(); if (open == this) open = null; };
         }
         // what to show: the game you're playing (its best server), else the internet check
         void Series(out string title, out double[] v)
@@ -71,7 +77,7 @@ namespace AdeeboMeter
             var ok = v.Where(x => !double.IsNaN(x)).ToArray();
             double loss = v.Length == 0 ? double.NaN : 100.0 * v.Count(double.IsNaN) / v.Length;
             Color c = double.IsNaN(now) ? Color.FromArgb(240, 80, 80) : now > 100 ? Color.FromArgb(240, 80, 80) : now > 60 ? Color.FromArgb(240, 180, 60) : Color.FromArgb(80, 210, 120);
-            using (var f1 = new Font("Segoe UI", 9f)) using (var f2 = new Font("Segoe UI Semibold", 20f)) using (var w = new SolidBrush(Color.FromArgb(200, 210, 220))) using (var cb = new SolidBrush(c))
+            using (var w = new SolidBrush(Color.FromArgb(200, 210, 220))) using (var cb = new SolidBrush(c))
             {
                 g.DrawString(title, f1, w, box.X + 10, box.Y + 6);
                 string big = double.IsNaN(now) ? "no reply" : Math.Round(now).ToString(CultureInfo.InvariantCulture) + " ms";

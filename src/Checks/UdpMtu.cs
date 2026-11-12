@@ -77,20 +77,23 @@ namespace AdeeboMeter
             return rows;
         }
 
+        // one Random for every packet: two made in the same millisecond on .NET Framework share a seed (and their "random" ids)
+        static readonly Random Rnd = new Random();
         // QUIC long header with a reserved (never used) version - servers must reply with Version Negotiation
         public static byte[] Quic(int size)
         {
-            var b = new byte[Math.Max(size, 30)]; var rnd = new Random();
+            var b = new byte[Math.Max(size, 30)]; var rnd = Rnd; lock (rnd) {
             b[0] = (byte)(0xC0 | rnd.Next(16)); b[1] = 0x1a; b[2] = 0x2a; b[3] = 0x3a; b[4] = 0x4a;   // version 0x?a?a?a?a is reserved for this
             b[5] = 8; for (int i = 0; i < 8; i++) b[6 + i] = (byte)rnd.Next(256);    // destination connection id
             b[14] = 8; for (int i = 0; i < 8; i++) b[15 + i] = (byte)rnd.Next(256);  // source connection id; the rest is zero padding
+            }
             return b;
         }
         public static bool IsVn(byte[] r) { return r != null && r.Length >= 7 && (r[0] & 0x80) != 0 && r[1] == 0 && r[2] == 0 && r[3] == 0 && r[4] == 0; }
         // DNS: "." NS with an EDNS OPT record carrying a padding option that makes the datagram exactly size bytes
         public static byte[] DnsPad(int size)
         {
-            var id = (ushort)new Random().Next(65536);
+            int id0; lock (Rnd) id0 = Rnd.Next(65536); var id = (ushort)id0;
             var head = new List<byte> { (byte)(id >> 8), (byte)id, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 1 };   // RD, 1 question, 1 additional; "." NS IN
             var opt = new List<byte> { 0, 0, 41, 0x10, 0x00, 0, 0, 0, 0 };   // root, OPT, UDP size 4096, no flags
             int pad = Math.Max(0, size - head.Count - opt.Count - 2 - 4);

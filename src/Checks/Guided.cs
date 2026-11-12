@@ -105,7 +105,10 @@ namespace AdeeboMeter
             Func<double, string> ms = v => double.IsNaN(v) ? "-" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             Func<double, string> pc = v => double.IsNaN(v) ? "-" : v.ToString("0.#", CultureInfo.CurrentCulture) + "%";
             // loss by count, not percent: one lost probe in 30 is 3% but means nothing; two is worth a look, three or more is real
-            int gLost = gw.Count(double.IsNaN), nLost = Math.Max(0, net.Count(double.IsNaN) - gLost), sLost = srv.Count(double.IsNaN);
+            int gLost = gw.Count(double.IsNaN), sLost = srv.Count(double.IsNaN);
+            // the two checks run at different paces, so take away only the share the home loss rate explains - never the raw count,
+            // which could wipe out real ISP loss that happens alongside a Wi-Fi blip
+            int nLost = Math.Max(0, net.Count(double.IsNaN) - (gw.Length > 0 ? (int)Math.Floor((double)gLost / gw.Length * net.Length) : 0));
             // no router data (the router check is off, or the router doesn't answer pings - many don't) is "can't tell",
             // never "your home network": if the internet answers, the leg before the router can't be what's broken
             bool gwEver; lock (m.L) gwEver = m.GwEverReplied;

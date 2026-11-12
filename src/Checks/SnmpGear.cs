@@ -74,6 +74,7 @@ namespace AdeeboMeter
                 // an IP: the device's own ARP table turns it into a MAC (a router or layer-3 switch has one)
                 var arp = Col(ep, c, "1.3.6.1.2.1.4.22.1.2", run, out err);
                 foreach (var kv in arp) if (kv.Key.EndsWith("." + ip, StringComparison.Ordinal) && kv.Value.Raw.Length == 6) { mac = string.Join(":", kv.Value.Raw.Select(x => x.ToString("x2", CultureInfo.InvariantCulture))); break; }
+                if (mac == null && arp.Count >= 1990) { rows.Add(R(1, ip.ToString(), "not in the first " + arp.Count + " entries of this device's ARP table - the table is longer than AdeeboMeter reads, so it may be further down", "Type the MAC instead, or ask a smaller router / the switch for that VLAN.", "m")); return rows; }
                 if (mac == null) { rows.Add(R(1, ip.ToString(), "this device doesn't have it in its ARP table", "A plain switch has no ARP table - ask the router or core switch for the IP, or type the MAC. A device that hasn't talked for a few minutes also drops out.", "m")); return rows; }
                 rows.Add(R(3, ip.ToString(), "is " + mac + " (from the device's ARP table)", "", "m"));
             }

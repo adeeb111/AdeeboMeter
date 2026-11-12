@@ -207,7 +207,8 @@ namespace AdeeboMeter
             Control page; if (!pages.TryGetValue(tabId, out page) || page == null) return;
             useWatched.Add(tabId); string id = tabId;
             Action<Control> hook = null;
-            hook = c => { c.MouseDown += delegate { PageUsed(id); }; c.KeyDown += delegate { PageUsed(id); }; foreach (Control k in c.Controls) hook(k); };
+            // a real action only: a button, a switch, Enter in a box (clicks on painted actions count in Wire) - never a click on empty space
+            hook = c => { if (c is ButtonBase || c is PillButton) c.Click += delegate { PageUsed(id); }; var tb = c as TextBox; if (tb != null) tb.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) PageUsed(id); }; foreach (Control k in c.Controls) hook(k); };
             hook(page);
         }
         // a page's first real use (Gamer Zone: a game added; Time machine: a real day on screen; the others: a click or a key there)

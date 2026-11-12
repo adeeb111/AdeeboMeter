@@ -134,7 +134,7 @@ namespace AdeeboMeter
                     else add(1, "Sign-in page", "something answered in the internet's place - a sign-in page or a filter", "");
                 }
             }
-            catch (WebException e) { var hr = e.Response as HttpWebResponse; if (hr != null && (int)hr.StatusCode >= 300 && (int)hr.StatusCode < 400) add(1, "Sign-in page", "the network sends you to a sign-in page first - open a browser and accept it", ""); else add(1, "Sign-in page", "couldn't reach the internet's test address (" + Draw.Trunc(e.Message, 60) + ")", ""); }
+            catch (WebException e) { var hr = e.Response as HttpWebResponse; int code = hr != null ? (int)hr.StatusCode : 0; using (e.Response) { } if (code >= 300 && code < 400) add(1, "Sign-in page", "the network sends you to a sign-in page first - open a browser and accept it", ""); else add(1, "Sign-in page", "couldn't reach the internet's test address (" + Draw.Trunc(e.Message, 60) + ")", ""); }
             // 3. DNS that lies: a name that can't exist must not get an answer
             run.Status = "Checking DNS honesty...";
             IPAddress dsrv; if (IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out dsrv))
@@ -161,7 +161,7 @@ namespace AdeeboMeter
                             try { ssl.AuthenticateAsClient("www.microsoft.com"); } catch (System.Security.Authentication.AuthenticationException) { }
                 if (seen == null) add(3, "HTTPS", "couldn't check - no answer from microsoft.com", "");
                 else if (errs != System.Net.Security.SslPolicyErrors.None) add(2, "HTTPS", "the certificate this network shows for microsoft.com isn't trusted - something on the way is pretending to be the site", "Don't sign in to anything here; use your phone's hotspot.");
-                else { string by = Inspection.InspectedBy(new System.Security.Cryptography.X509Certificates.X509Certificate2(seen)); if (by != "") add(2, "HTTPS", "someone on this network opens your HTTPS (certificate from " + Draw.Trunc(by, 40) + ")", "Fine on your company's network; on a hotel or cafe network, stop and use your phone instead."); else add(0, "HTTPS", "not opened on the way - certificates come straight from the sites", ""); }
+                else { string by; using (var sc = new System.Security.Cryptography.X509Certificates.X509Certificate2(seen)) by = Inspection.InspectedBy(sc); if (by != "") add(2, "HTTPS", "someone on this network opens your HTTPS (certificate from " + Draw.Trunc(by, 40) + ")", "Fine on your company's network; on a hotel or cafe network, stop and use your phone instead."); else add(0, "HTTPS", "not opened on the way - certificates come straight from the sites", ""); }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; add(3, "HTTPS", "couldn't check (" + Draw.Trunc(e.GetBaseException().Message, 60) + ")", ""); }
             if (vpn) add(0, "VPN", "on - everything above matters much less: your traffic is wrapped until it reaches the VPN", "");

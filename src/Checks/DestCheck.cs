@@ -84,6 +84,10 @@ namespace AdeeboMeter
             }
             IPAddress tmp;
             if (port < 1 || port > 65535) { err = "Ports go from 1 to 65535."; return false; }
+            // all-number names ("1.2.3", "4294967295", "01.02.03.04", "0x7f.1") are read by Windows as a different IP than they
+            // look like - so they're not accepted as names: type the address in full
+            if (!Regex.IsMatch(host, @"^\d{1,3}(\.\d{1,3}){3}$") && Regex.IsMatch(host, @"^(0x[0-9a-fA-F]+|\d+)(\.(0x[0-9a-fA-F]+|\d+))*$")) { err = "Write an IP address out in full (four numbers, e.g. 10.0.0.1) - " + host + " would be read as a different address."; return false; }
+            if (Regex.IsMatch(host, @"^\d{1,3}(\.\d{1,3}){3}$") && host.Split('.').Any(o => o.Length > 1 && o[0] == '0')) { err = "Write the address without leading zeros (" + string.Join(".", host.Split('.').Select(o => int.Parse(o, CultureInfo.InvariantCulture))) + ") - Windows would read 0-prefixed numbers as octal."; return false; }
             if (!IPAddress.TryParse(host, out tmp) && !hostRx.IsMatch(host)) { err = Voice.P("That doesn't look like a host, an IP or a URL, boss.", "That is not a valid host, IP or URL."); return false; }
             return true;
         }
@@ -191,7 +195,7 @@ namespace AdeeboMeter
                     step(0, 2, rc4 == 9003 ? "no such name" : rc4 == 1460 ? "timed out" : "failed (" + rc4 + ")");
                     r.AddCard("DNS", new List<string[]> { new[] { "Server", (dnsSrv != "" ? dnsSrv : "system default") + (vpn ? " (VPN)" : "") }, new[] { "Answer", rc4 == 9003 ? "NXDOMAIN - no such name" : "error " + rc4, "2" } });
                     skipRest(1);
-                    CompareDns(r, host, new List<string>());
+                    CompareDns(r, host, new List<string>(), m);
                     bool filtered = r.Findings != null && r.Findings.Any(f => f[1] == "2");
                     if (filtered) { Finish(r, 2, Voice.Red("Your DNS says " + host + " doesn't exist - but a public resolver finds it. A DNS filter (AdGuard, a company filter or the VPN's DNS) is blocking this name.", "Blocked by your DNS: the name resolves on a public resolver.")); changed(); return; }
                     Finish(r, 2, rc4 == 9003 ? Voice.Red("Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?", "DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.")
@@ -204,7 +208,7 @@ namespace AdeeboMeter
                 r.AddCard("DNS", dc);
             }
             var target = addrs.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? addrs[0];
-            if (!IPAddress.TryParse(host, out lit)) CompareDns(r, host, addrs.Where(a => a.AddressFamily == AddressFamily.InterNetwork).Select(a => a.ToString()).ToList());
+            if (!IPAddress.TryParse(host, out lit)) CompareDns(r, host, addrs.Where(a => a.AddressFamily == AddressFamily.InterNetwork).Select(a => a.ToString()).ToList(), m);
 
             // 2. Route: which adapter the OS would use (a UDP "connect" sends nothing)
             string via = "?"; bool viaVpn = false; string localIp = "";
@@ -492,8 +496,23 @@ namespace AdeeboMeter
         static string[] Row(params string[] v) { return v; }
         // Ask a public resolver the same question. Different answers are usually a CDN picking a nearby server;
         // "blocked" answers (0.0.0.0, 127.x, NXDOMAIN while the public resolver finds it) mean a filter is in the way.
-        static void CompareDns(DestResult r, string host, List<string> mine)
+        // It sends the name you typed to a public resolver - so an IT policy that turns online lookups off turns this off too,
+        // and the card says where the name went.
+        static void CompareDns(DestResult r, string host, List<string> mine, Monitor m)
         {
+            // IT turned online lookups off: the name stays inside - the second opinion is your own DNS server, asked directly
+            // (past Windows' cache and the hosts file): it still shows a stale cache, a hosts-file entry or a VPN name rule
+            if (Policy.NoOnline)
+            {
+                string own; lock (m.L) own = m.DnsServer; IPAddress oa;
+                if (!IPAddress.TryParse(own ?? "", out oa)) { r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Your DNS server", "not known - and online lookups are turned off by your IT team, so no public resolver is asked") }); return; }
+                string oerr; var direct = DnsAsk.Ask(host, own, 2500, out oerr);
+                if (oerr != "") { r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Your DNS server (" + own + ")", "didn't answer when asked directly (" + oerr + ")", "1") }); return; }
+                var dIps = direct.Where(x => x != "NXDOMAIN").ToList(); bool dNx = direct.Count == 1 && direct[0] == "NXDOMAIN";
+                bool agree = mine.Intersect(dIps).Any() || (mine.Count == 0 && dIps.Count == 0);
+                r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Your DNS server (" + own + "), asked directly", dNx ? "no such name" : string.Join(", ", dIps.Take(3))), Row("Verdict", agree ? "same answer as this PC got" : "this PC got a different answer than its DNS server gives now - the hosts file, a stale cache or a VPN name rule", agree ? "0" : "1"), Row("Public resolver", "not asked - online lookups are turned off by your IT team (AdeeboMeter.policy)") });
+                return;
+            }
             string err; var pub = DnsAsk.Ask(host, "1.1.1.1", 2500, out err);
             if (err != "") pub = DnsAsk.Ask(host, "8.8.8.8", 2500, out err);
             if (err != "") { r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Public resolver", "couldn't ask (" + err + ") - the network may only allow its own DNS") }); return; }

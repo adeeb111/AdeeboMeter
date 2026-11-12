@@ -92,9 +92,10 @@ namespace AdeeboMeter
                 }
                 else if (band.StartsWith("5", StringComparison.Ordinal))
                 {
-                    int[] chans = { 36, 40, 44, 48, 149, 153, 157, 161, 165 };
+                    // the same candidates as Least crowded channel: 36-48 everywhere, upper and radar channels only when they're in use around here
+                    var lc = WlanApi.LeastCrowded(aps, band, my, s.MyBssid);
                     Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel == c && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase)).Sum(a => Math.Max(5, a.Signal));
-                    var best = chans.OrderBy(load).First();
+                    var best = lc != null ? lc[0] : 36;
                     if (best != my && load(my) > 60 && load(best) < load(my) * 0.4) x.Advice.Add(new[] { "1", "Neighbours crowd 5 GHz channel " + my + ". Channel " + best + " is " + (load(best) == 0 ? "empty" : "much quieter") + " here - set it in your router." });
                 }
                 // the same network on a better band

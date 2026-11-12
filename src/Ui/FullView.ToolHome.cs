@@ -18,7 +18,7 @@ namespace AdeeboMeter
             new[] { "reach", "Can I reach it?", "IS IT REACHABLE?|NAMES & TIME", "port|http|allips" },
             new[] { "slow", "Why is it slow?", "SPEED & QUALITY|COMPARE & WATCH", "lag|speedtest|timeline" },
             new[] { "path", "Where does it break?", "PATH & ROUTING", "mtr|mtu|route" },
-            new[] { "lan", "What's on my network?", "SWITCHES & ROUTERS (SNMP)|ON YOUR NETWORK|REMOTE ACCESS", "finddev|snmp|arp" },
+            new[] { "lan", "What's on my network?", "SWITCHES & ROUTERS (SNMP)|ON YOUR NETWORK|REMOTE ACCESS", "inventory|snmp|arp" },
             new[] { "join", "Why can't it join?", "WHY CAN'T IT JOIN?|REPLAY A CAPTURE|TRUST & MAIL", "join|radiuslab|dhcpreplay" },
             new[] { "keys", "Keys and encryption", "KEYS & ENCRYPTION", "encrypt|decrypt|keys" },
             new[] { "win", "Windows and certificates", "WINDOWS|CERTIFICATES & FILES", "winev|certs|fw" },

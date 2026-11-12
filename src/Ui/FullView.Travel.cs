@@ -15,6 +15,8 @@ namespace AdeeboMeter
     // "How it travels": your own connection, one OSI / TCP-IP layer at a time. Everything runs only when you press a button.
     sealed partial class FullView
     {
+        // arrow heads made once: a Pen copies the cap it is given, so one each is enough (was one per arrow per paint)
+        static readonly AdjustableArrowCap Cap45 = new AdjustableArrowCap(4, 5), Cap34 = new AdjustableArrowCap(3, 4);
         Panel travelPage; DB travelCanvas; RoundBox travelBox; PillButton travelGo;
         string travelStatus = ""; volatile bool travelBusy;
         DestResult travelDest; List<Routes.R> routeTable; List<M365.Row> m365Rows; Dictionary<int, string> m365Fam; string m365Fallback = ""; List<string[]> outlookRows;
@@ -122,7 +124,7 @@ namespace AdeeboMeter
             {
                 int a = int.Parse(st[0], CultureInfo.InvariantCulture), b = int.Parse(st[1], CultureInfo.InvariantCulture);
                 float x1 = x + a * colW + colW / 2, x2 = x + b * colW + colW / 2;
-                using (var p = new Pen(a < b ? Theme.Blue : Theme.Green, 2 * S)) { p.CustomEndCap = new AdjustableArrowCap(4, 5); g.DrawLine(p, x1, sy, x2 + (a < b ? -4 * S : 4 * S), sy); }
+                using (var p = new Pen(a < b ? Theme.Blue : Theme.Green, 2 * S)) { p.CustomEndCap = Cap45; g.DrawLine(p, x1, sy, x2 + (a < b ? -4 * S : 4 * S), sy); }
                 using (var sub = new SolidBrush(Theme.Sub)) using (var c = new StringFormat { Alignment = StringAlignment.Center })
                     g.DrawString(st[2], Draw.fSmall, sub, new RectangleF(Math.Min(x1, x2), sy - 17 * S, Math.Abs(x2 - x1), 16 * S), c);
                 if (st[3] != "") using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(st[3], Draw.fMonoS, mb, Math.Max(x1, x2) + 8 * S, sy - 8 * S);
@@ -246,7 +248,7 @@ namespace AdeeboMeter
                     bool outb = myIps.Contains(p.Src); float yy = y + 13 * S;
                     var rowR = new RectangleF(x, y, w, 26 * S);
                     if (p.No == realSel) Theme.Fill(g, rowR, 6 * S, Theme.RowSel);
-                    using (var pen = new Pen(outb ? Theme.Blue : Theme.Green, 2 * S)) { pen.CustomEndCap = new AdjustableArrowCap(4, 5); if (outb) g.DrawLine(pen, colA, yy, colB - 4 * S, yy); else g.DrawLine(pen, colB, yy, colA + 4 * S, yy); }
+                    using (var pen = new Pen(outb ? Theme.Blue : Theme.Green, 2 * S)) { pen.CustomEndCap = Cap45; if (outb) g.DrawLine(pen, colA, yy, colB - 4 * S, yy); else g.DrawLine(pen, colB, yy, colA + 4 * S, yy); }
                     g.DrawString(p.T.ToString("0.000", CultureInfo.InvariantCulture), Draw.fMonoS, muted, x, y + 5 * S);
                     using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     using (var sub = new SolidBrush(Theme.Sub)) g.DrawString(p.Proto + "  " + p.Info, Draw.fSmall, sub, new RectangleF(colA + 10 * S, y - 1 * S, colB - colA - 20 * S, 16 * S), nowrap);

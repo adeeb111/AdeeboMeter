@@ -21,7 +21,7 @@ namespace AdeeboMeter
         public static readonly HashSet<string> Replay = new HashSet<string>(StringComparer.Ordinal) { "ispreport", "gamecompare", "beforeafter", "certcmp", "mtr" };
         // the Traffic Lab senders and the scanners behind the "my own network" tick never earn - nobody should send test
         // traffic, or tick "I'm allowed" on a company network, just for points (the self-test checks every gated tool is here)
-        public static readonly HashSet<string> NoEarn = new HashSet<string>(StringComparer.Ordinal) { "udpsend", "tcpsend", "trap", "netflow", "syslog", "icmpb", "arpwho", "dhcpopt", "manyports", "finddev", "sweep", "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
+        public static readonly HashSet<string> NoEarn = new HashSet<string>(StringComparer.Ordinal) { "udpsend", "tcpsend", "trap", "netflow", "syslog", "icmpb", "arpwho", "dhcpopt", "manyports", "sweep", "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
         // longer tests are worth +2 the first time; everything else +1 (a Learn topic read to the end, a page's first use: +1)
         public static readonly HashSet<string> Big = new HashSet<string>(StringComparer.Ordinal) { "mtr", "ispreport", "speedtest", "iperf", "bloat", "gamecompare", "mtu" };
         public static readonly TimeSpan ReplayGap = TimeSpan.FromMinutes(10);
@@ -42,7 +42,7 @@ namespace AdeeboMeter
         }
         public static string Next(int total, out int left) { foreach (var x in Ranks) { int at = int.Parse(x[0], CultureInfo.InvariantCulture); if (total < at) { left = at - total; return x[1]; } } left = 0; return ""; }
 
-        sealed class Entry { public DateTime First, Again; public int Pts = 1; }
+        sealed class Entry { public DateTime First, Again; public int Pts = 1; public long Tick; }   // Tick: ms since Windows started, at the first award (the replay wait survives a restart)
         readonly Dictionary<string, DateTime> firstMono = new Dictionary<string, DateTime>(StringComparer.Ordinal);
         readonly string file; readonly Dictionary<string, Entry> map = new Dictionary<string, Entry>(StringComparer.Ordinal); readonly object k = new object();
 
@@ -65,6 +65,7 @@ namespace AdeeboMeter
                     if (long.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out a) && a > 0 && a <= DateTime.MaxValue.Ticks) e.First = new DateTime(a, DateTimeKind.Utc); else continue;
                     if (p.Length > 2 && long.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out b) && b > 0 && b <= DateTime.MaxValue.Ticks) e.Again = new DateTime(b, DateTimeKind.Utc);
                     int pts; if (p.Length > 3 && int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out pts) && pts >= 0 && pts <= 10) e.Pts = pts;
+                    long tk; if (p.Length > 4 && long.TryParse(p[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out tk) && tk > 0) e.Tick = tk;
                     map[p[0].Trim()] = e;
                 }
             }
@@ -74,7 +75,7 @@ namespace AdeeboMeter
         void Save()
         {
             if (loadFailed) { Load(); if (loadFailed) return; }   // read what's saved first (merged with today's award), or wait for next time
-            var lines = map.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => kv.Key + "|" + kv.Value.First.Ticks.ToString(CultureInfo.InvariantCulture) + "|" + (kv.Value.Again == default(DateTime) ? "-" : kv.Value.Again.Ticks.ToString(CultureInfo.InvariantCulture)) + "|" + kv.Value.Pts.ToString(CultureInfo.InvariantCulture));
+            var lines = map.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => kv.Key + "|" + kv.Value.First.Ticks.ToString(CultureInfo.InvariantCulture) + "|" + (kv.Value.Again == default(DateTime) ? "-" : kv.Value.Again.Ticks.ToString(CultureInfo.InvariantCulture)) + "|" + kv.Value.Pts.ToString(CultureInfo.InvariantCulture) + "|" + kv.Value.Tick.ToString(CultureInfo.InvariantCulture));
             string tmp = file + ".tmp";
             File.WriteAllLines(tmp, lines);
             Program.ReplaceFile(tmp, file);   // never a half-written file
@@ -102,9 +103,10 @@ namespace AdeeboMeter
         public static string Rank(int total) { string r = Ranks[0][1]; foreach (var x in Ranks) if (total >= int.Parse(x[0], CultureInfo.InvariantCulture)) r = x[1]; return r; }
 
         // a real run of a tool finished with results. opened = its Example was opened first. Returns the points awarded (0 when nothing new).
-        public int Award(string id, bool opened, bool earning, DateTime nowUtc) { return Award(id, opened, earning, nowUtc, Clock.Mono); }
+        public int Award(string id, bool opened, bool earning, DateTime nowUtc) { return Award(id, opened, earning, nowUtc, Clock.Mono, BootMs()); }
         // mono: the steady clock (the self-test passes its own)
-        public int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono)
+        public int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono) { return Award(id, opened, earning, nowUtc, mono, mono.Ticks / 10000); }   // the self-test's own clocks
+        int Award(string id, bool opened, bool earning, DateTime nowUtc, DateTime mono, long boot)
         {
             if (!earning || string.IsNullOrEmpty(id) || NoEarn.Contains(id)) return 0;
             lock (k)
@@ -113,7 +115,7 @@ namespace AdeeboMeter
                 if (!map.TryGetValue(id, out e))
                 {
                     if (!opened) return 0;
-                    int v = Value(id); map[id] = new Entry { First = nowUtc, Pts = v };
+                    int v = Value(id); map[id] = new Entry { First = nowUtc, Pts = v, Tick = boot };
                     if (!TrySave()) { map.Remove(id); return 0; }
                     firstMono[id] = mono;
                     return v;
@@ -122,12 +124,16 @@ namespace AdeeboMeter
                 if (e.First > nowUtc.AddMinutes(1)) { e.First = nowUtc; TrySave(); firstMono[id] = mono; return 0; }
                 // first run in this session: the 10 minutes are counted on the steady clock too (moving the Windows clock doesn't help)
                 DateTime fm; if (firstMono.TryGetValue(id, out fm) && mono - fm < ReplayGap) return 0;
+                // after a restart: the same Windows session (ms since boot still counting up from the first award) must also
+                // have run 10 minutes - moving the clock forward and restarting doesn't help
+                long bt = boot; if (e.Tick > 0 && bt >= e.Tick && bt - e.Tick < (long)ReplayGap.TotalMilliseconds) return 0;
                 if (!Replay.Contains(id) || e.Again != default(DateTime) || nowUtc - e.First < ReplayGap) return 0;
                 e.Again = nowUtc;
                 if (!TrySave()) { e.Again = default(DateTime); return 0; }
                 return ReplayPts;
             }
         }
+        static long BootMs() { return (long)(uint)Environment.TickCount; }
         bool TrySave()
         {
             try { Save(); return true; }
