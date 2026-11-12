@@ -1928,6 +1928,96 @@ how: One probe a second to each of the game's servers (up to 8), the same way th
 why: "Use a cable" is the first advice every gamer gets. This shows whether it actually helps on your setup - and whether one PC (drivers, background apps) is the problem rather than the line.
 without: Run ping -n 30 to the same server on each connection and compare by hand.
 
+== tb.join
+friendly: Why didn't this PC join the network?
+cat: term
+close: -1
+tag: Where does joining stop?
+what: Walks the steps a PC takes to get online - link, network sign-in (802.1X), an address from DHCP, the router, names (DNS), the internet - and says where the evidence ends.
+how: Reads the adapter, Windows' own sign-in log and what AdeeboMeter already measured. Nothing is sent.
+why: "No network" has six possible places to break. The first broken step is the one to fix - the later ones can't work until it does.
+without: Check each with ipconfig /all, the event viewer, ping and nslookup.
+
+== tb.dot1x
+friendly: 802.1X failure decoder
+cat: term
+close: -1
+tag: Why did the network sign-in fail?
+what: Puts Windows' own 802.1X events - Wi-Fi and cable, the last 2 days - on one timeline: started, succeeded, failed, with the reason in plain words, and says where it stopped.
+how: Reads the WLAN-AutoConfig and Wired-AutoConfig logs, which Windows lets you read without admin rights (a company PC may restrict them - then it says so). Nothing is sent.
+why: Company networks sign the PC (or you) in before letting any traffic through. When that fails, the PC looks connected but gets nothing - the reason is in these logs, worded for engineers.
+without: Event Viewer > Applications and Services Logs > Microsoft > Windows > Wired-AutoConfig / WLAN-AutoConfig.
+
+== tb.dhcpreplay
+friendly: DHCP lease replay
+cat: term
+close: -1
+tag: What happened when the PC asked for an address?
+what: Reads a capture file and rebuilds each DHCP conversation - Discover, Offer, Request, ACK - with who answered, the options given, the relay and option 82. Finds two DHCP servers answering (a rogue one), no answer at all, refusals (NAK) and what changed between a good and a bad lease.
+how: Reads a .pcap / .pcapng with AdeeboMeter's own reader - no Wireshark needed, nothing is sent. Capture with filter udp port 67 or udp port 68 while the PC connects.
+why: Most "connected, no internet" cases at the edge are DHCP: no server on the VLAN, a missing relay, a full pool or a rogue router handing out wrong addresses.
+without: Wireshark with the filter dhcp, reading each packet's options by hand.
+
+== tb.rareplay
+friendly: IPv6 Router Advertisement replay
+cat: term
+close: -1
+tag: Which routers announce IPv6 here?
+what: Reads a capture file and lists every IPv6 router announcing itself: its prefixes, lifetimes, flags (DHCPv6 or not), MTU and DNS - and flags a second, unexpected router.
+how: Reads a .pcap / .pcapng with AdeeboMeter's own reader; nothing is sent. Capture for a minute with filter icmpv6.type == 134.
+why: A rogue Router Advertisement (a hotspot, a VM host) can quietly send a network's IPv6 traffic the wrong way - sites half-work, or not at all.
+without: Wireshark with the filter icmpv6.type == 134.
+
+== tb.icmpexplain
+friendly: ICMP error translator
+cat: term
+close: -1
+tag: What is this ICMP error telling me?
+what: Turns ICMP and ICMPv6 error messages into plain words - unreachable, fragmentation needed (with the MTU), TTL exceeded, administratively prohibited - and shows which packet caused each one. Give it a capture file, or just a type/code like 3/4.
+how: Reads the capture with AdeeboMeter's own reader; nothing is sent.
+why: Routers explain what went wrong in ICMP - but in numbers. Reading them tells you whether it's a missing route, a firewall, an MTU problem or a closed port.
+without: Look up the type and code in the RFCs.
+
+== tb.certcmp
+friendly: Certificate chain compare
+cat: term
+close: -1
+tag: Does someone re-sign this site on one path?
+what: Connects to the same site from two places - VPN on and off, office and home, through the proxy and direct - and compares the certificate chains: fingerprints, issuers and whether Windows trusts them.
+how: One TLS handshake per run, nothing else sent. Each run is kept on this PC (fingerprints and names only) so the next run compares with it.
+why: A different issuer on one path means something re-signs the encryption: a company proxy doing inspection (expected if IT says so), antivirus, or an interception on a network you don't control.
+without: openssl s_client -showcerts on each path, then compare fingerprints.
+
+== tb.radiuslab
+friendly: RADIUS client lab
+cat: term
+close: -1
+tag: Does the RADIUS server accept this test account - and what does it send back?
+what: Sends one Access-Request (PAP) with a TEST account to a RADIUS server you manage and decodes the answer: Accept, Reject, Challenge or silence, and the attributes returned - VLAN, Session-Timeout, Filter-Id, vendor attributes. Each run is compared with the previous one (before / after a change) and with the last run to another server. Also checks TACACS+ on the same server.
+how: The shared secret and password are used for this one request and wiped - never shown, saved, logged or copied. The request carries a Message-Authenticator. This PC must be a client (NAS) on the server.
+why: After a policy change, the question is always "what does the server answer now?". This answers it in seconds - from your PC, with the attributes the switch would get.
+without: radtest / NTRadPing, then reading the server's log.
+
+== tb.smtppath
+friendly: SMTP delivery path
+cat: term
+close: -1
+tag: Can mail reach this domain, and is it encrypted?
+what: Finds a domain's mail servers (MX), then talks to the top two on port 25: greeting, EHLO, STARTTLS and its certificate - and stops before sending anything.
+how: One DNS question, then a short SMTP conversation that ends with QUIT before MAIL FROM - no message is ever sent. Home providers usually block port 25; then it says so.
+why: When mail bounces or arrives unencrypted, the path - MX, the server's answer, STARTTLS - is where to look first.
+without: nslookup -type=mx, then telnet / openssl s_client -starttls smtp.
+
+== tb.samplelab
+friendly: Sample captures
+cat: term
+close: -1
+tag: Learn what good and broken look like.
+what: Small example captures made by AdeeboMeter: a normal DHCP lease, two DHCP servers, nobody answering, a refused lease, a rogue IPv6 router and common ICMP errors. Each opens here with the replay that explains it, and is saved so you can open the same packets in Wireshark.
+how: Written on this PC with documentation addresses (192.0.2.x, 2001:db8::) - nothing is captured or sent.
+why: Seeing the broken pattern once makes it easy to spot in a real capture.
+without: Wireshark's sample captures wiki.
+
 == tb.vpn
 friendly: VPN and company proxy
 cat: term
@@ -1962,7 +2052,7 @@ without: Open a speed-test website in your browser.
 friendly: Report for my ISP
 cat: term
 close: -1
-tag: The evidence a provider's support desk asks for, ready to send
+tag: The evidence a provider's support desk asks for, ready to send.
 what: Traces the path to your game's server (or any host), measures every hop at once for 1, 2 or 5 minutes, and compares a second route at the same moment. Adds the hour-of-day loss pattern from the last 7 days, your line details and cable modem levels if the modem shows them, the worst spikes and outages, and a message to paste into the support chat.
 how: One small ping a second to each hop, from this PC only. Router names come from your DNS server. The cable modem page (192.168.100.1) is read once without logging in. The report is saved as a web page in AdeeboMeter's own folder - open it and Print > Save as PDF to attach it. Internal addresses, hardware addresses and your Wi-Fi name are taken out. A raw CSV of every hop is saved next to it. Who owns each network is added only when you have online lookups switched on; your public address only when you type yes (one request to Cloudflare's trace page). Today's speed test, if you ran one, adds speed and the bufferbloat grade.
 why: "It lags in the evenings" gets a script read back to you. "Loss starts at hop 6, inside your network, every evening from 19:00, on this route but not that one" gets passed to the network team - who can fix it or move your traffic.

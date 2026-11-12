@@ -32,6 +32,8 @@ namespace AdeeboMeter
     [SuppressMessage("Performance", "CA1861", Justification = "one-shot self-test data")]
     static class SelfTest
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351", Justification = "checks RADIUS (RFC 2865) password hiding, which is defined with MD5")]
+        static byte[] Md5(byte[] d) { using (var h = System.Security.Cryptography.MD5.Create()) return h.ComputeHash(d); }
         // --perf: how long each page takes to switch to, to paint, and what the 2-a-second timer costs - written to AdeeboMeter-perf.txt
         public static int Perf()
         {
@@ -449,6 +451,36 @@ namespace AdeeboMeter
                 if (GameCompare.ParseLine("run|../x|a|202611112100|s=1/2/3/4") != null || GameCompare.ParseLine("hello") != null) throw new InvalidOperationException("junk accepted");
                 string v = GameCompare.Verdict(a, b); if (!v.Contains("Cable loses fewer") || !v.Contains("Cable is steadier")) throw new InvalidOperationException(v);
             });
+            T("engineer pack: capture replays find the classic failures", () =>
+            {
+                Func<string, List<string[]>> lab = n => Replay.Lab(n);
+                Func<List<string[]>, string, bool> has = (rows, w) => rows.Any(r => (r[1] + " " + r[2] + " " + r[3]).IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0);
+                var good = lab("dhcp-good"); if (!has(good, "192.0.2.50 from 192.0.2.1") || has(good, "Two DHCP servers")) throw new InvalidOperationException("good lease");
+                if (!has(lab("dhcp-two-servers"), "Two DHCP servers answered")) throw new InvalidOperationException("rogue DHCP not found");
+                if (!has(lab("dhcp-no-answer"), "No offer")) throw new InvalidOperationException("no-answer not found");
+                if (!has(lab("dhcp-nak"), "Refused (NAK)")) throw new InvalidOperationException("NAK not found");
+                var ra = lab("ra-rogue"); if (!has(ra, "More than one router") || !has(ra, "2001:db8:1::/64")) throw new InvalidOperationException("rogue RA");
+                var ic = lab("icmp-errors"); if (!has(ic, "MTU 1400") || !has(ic, "Port unreachable") || !has(ic, "TCP to 198.51.100.10:443")) throw new InvalidOperationException("ICMP: " + string.Join(" / ", ic.Select(r => r[2])));
+                if (!Replay.Explain(true, 2, 0).StartsWith("Packet too big", StringComparison.Ordinal)) throw new InvalidOperationException("ICMPv6 2/0");
+                if (Pcap.Parse(new byte[] { 1, 2, 3 }).Count != 0) throw new InvalidOperationException("junk read as packets");
+                // the same lease saved by Wireshark (tshark -F pcapng): AdeeboMeter's reader must handle pcapng blocks too
+                byte[] ng; using (var z = new System.IO.Compression.GZipStream(new MemoryStream(Convert.FromBase64String("H4sIAPkx9WoC/+Pi5eXKYGBg8LXRlmIE0v+hgIXBkSEkOCOxKFtBIzyzKLUYxNRUMNEz0jNS0HDPLFEog7ALEpOzE9NTUxQSiyGyuoZ6hkmlmTkpxpoMEAAyH2S2CJT+/x/CZgNiH0aImkhnIM/DTUUHyAdhiCuYGOIEGBg5GFwZGOVAqhwEKy8wQF3J4MLgzMgFNJGRjSFK/MA9BiwAop9h2IDkpuBkU0ZGHh4fx4AQ/wBdRxdXV6f/oDAEhWUMUlguCHdTsQHybZDDUgEalnqQsNy+7wADEyM4LJ0ZXBilgOGFFpZAeaPhHZZMZiygQGBkAYUCM5jNBiaNWRgYAxv+x0DDNgIpbAvi3VQsgHwLbOlUC5pOj6CkU7GRmE6ZIWFrBCKN0NJsBJY0q5E9mmaJCVdWItIsAG9BjrvYBQAA")), System.IO.Compression.CompressionMode.Decompress)) using (var o2 = new MemoryStream()) { z.CopyTo(o2); ng = o2.ToArray(); }
+                var ngp = Pcap.Parse(ng); if (ngp.Count != 4 || !has(Replay.DhcpRows(ngp, new List<string[]>()), "192.0.2.50 from 192.0.2.1")) throw new InvalidOperationException("pcapng: " + ngp.Count + " packets");
+            });
+            T("engineer pack: RADIUS password hiding, certificate verdicts", () =>
+            {
+                byte[] pw = Encoding.UTF8.GetBytes("test-password-123"), sec = Encoding.UTF8.GetBytes("s3cret"), ra = Enumerable.Range(1, 16).Select(i => (byte)i).ToArray();
+                var c = EngPack.HidePassword(pw, sec, ra); if (c.Length != 32) throw new InvalidOperationException("length " + c.Length);
+                {
+                    var b1 = Md5(sec.Concat(ra).ToArray()); var b2 = Md5(sec.Concat(c.Take(16)).ToArray());
+                    var back = c.Select((x, i) => (byte)(x ^ (i < 16 ? b1[i] : b2[i - 16]))).ToArray();
+                    if (Encoding.UTF8.GetString(back).TrimEnd('\0') != "test-password-123") throw new InvalidOperationException("RFC 2865 hiding doesn't round-trip");
+                }
+                var a = new EngPack.CertSnap { Name = "VPN off", Trust = "trusted by Windows" }; a.Chain.Add(new[] { "site", "DigiCert", "AA", "2027-01-01" });
+                var b = new EngPack.CertSnap { Name = "VPN on", Trust = "trusted by Windows" }; b.Chain.Add(new[] { "site", "Zscaler Intermediate", "BB", "2027-01-01" });
+                if (EngPack.CertVerdict(a, b)[1] != "Different issuer" || EngPack.CertVerdict(a, a)[1] != "Same certificate") throw new InvalidOperationException("cert verdict");
+                if (EngPack.ParseCert(EngPack.CertLine(new EngPack.CertSnap { Host = "x.example.com", Name = "n", T = DateTime.Now, Trust = "t", Chain = a.Chain })) == null) throw new InvalidOperationException("cert line");
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));
@@ -468,7 +500,7 @@ namespace AdeeboMeter
                     "link.ADVISOR", "link.HEALTH", "link.TWINS", "link.WALK", "hist.WEEK", "hist.USAGE", "hist.CALLS", "hist.WATCH", "hist.DEVICES", "dest.PINWATCH", "travel.LAYERS", "travel.L7", "travel.L6·5", "travel.L4", "travel.L3", "travel.L2", "travel.L1", "travel.L↗",
                     "travel.LADDER", "travel.ANATOMY", "travel.WINS", "travel.ROUTES", "travel.ADDR", "travel.FAMILIES", "travel.ROLES", "travel.FALLBACK", "travel.CALLFLOW", "travel.OUTLOOK", "travel.REAL", "travel.DECODE", "travel.CHAT", "travel.CHATNOTES", "kind.base", "kind.lan" };
                 keys.AddRange(DestResult.Steps.Select(x => "step." + x));
-                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
+                keys.AddRange(new[] { "m", "w", "p", "i", "u" }.Select(Evidence.Key)); keys.AddRange(Investigate.All.Select(f => "guide." + f.Id)); keys.AddRange(new[] { "replay.SLIDER", "ov.TRAFFIC", "ov.DETAILS", "ov.ONLINE", "kind.pc", "path.Internet", "path.LAN", "path.DNS" }); keys.AddRange(new[] { "mtu", "mtr", "ret", "owners", "overlap", "ip46", "proxy", "hosts", "dnsrules", "port", "teams", "clock", "iperf", "ping", "cloud", "dig", "http", "sweep", "wol", "subnet", "winev", "auth", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "ping6", "tcpping", "twamp", "httptime", "doh", "ntp", "mail", "ssh", "snmp", "syslog", "radius", "tacacs", "hairpin", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "route", "gateway", "v6routers", "rlisten", "arp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "httpreq", "stun", "nbname", "finddev", "remote", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds", "manyports", "allips", "rdpcheck", "ldapcheck", "dnscmp", "beforeafter", "twopc", "mysites", "shares", "svcfail", "tidy", "dhcp", "roams", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "join", "dot1x", "dhcpreplay", "rareplay", "icmpexplain", "certcmp", "radiuslab", "smtppath", "samplelab" }.Select(x => "tb." + x)); keys.Add("card.IPV6");
                 keys.AddRange(new[] { "Uptime", "Pending reboot", "Disk", "Adapter errors", "Wi-Fi neighbourhood", "Wi-Fi", "Proxy", "VPN", "DNS server", "Memory", "Power" }.Select(x => "hc." + x));
                 keys.AddRange(new[] { "net", "wifi", "vpn", "dns", "inet", "gw", "app", "call", "verdict" }.Select(x => "kind." + x));
                 keys.AddRange(new[] { "ESTABLISHED", "SYN_SENT", "SYN_RCVD", "TIME_WAIT", "CLOSE_WAIT", "LISTEN", "BOUND", "FIN_WAIT1", "FIN_WAIT2", "LAST_ACK", "CLOSING", "CLOSED", "DELETE_TCB" }.Select(x => "state." + x));
