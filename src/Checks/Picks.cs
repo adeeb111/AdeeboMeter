@@ -57,10 +57,11 @@ namespace AdeeboMeter
             at = DateTime.MinValue; string s = w.Trim().ToLowerInvariant(); DateTime day = DateTime.Today;
             if (s.StartsWith("yesterday", StringComparison.Ordinal)) { day = day.AddDays(-1); s = s.Substring(9).Trim(); }
             else if (s.StartsWith("today", StringComparison.Ordinal)) s = s.Substring(5).Trim();
-            var m = Regex.Match(s, @"^(\d{1,2})[:h.](\d{2})$"); TimeSpan ts;
-            if (m.Success) { int h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), mi = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); if (h > 23 || mi > 59) return false; at = day.AddHours(h).AddMinutes(mi); if (at > DateTime.Now.AddMinutes(5) && day == DateTime.Today) at = at.AddDays(-1); return true; }
+            var m = Regex.Match(s, @"^(\d{1,2})(?:[:h.](\d{2}))?$"); TimeSpan ts;   // "18:40", "18h40", or a bare hour "9"
+            if (m.Success) { int h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), mi = m.Groups[2].Success ? int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture) : 0; if (h > 23 || mi > 59) return false; at = day.AddHours(h).AddMinutes(mi); if (at > DateTime.Now.AddMinutes(5) && day == DateTime.Today) at = at.AddDays(-1); return true; }
             DateTime full; if (DateTime.TryParse(w, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out full) || DateTime.TryParse(w, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out full)) { at = full; return at <= DateTime.Now.AddMinutes(5); }
-            if (TimeSpan.TryParse(s, CultureInfo.InvariantCulture, out ts)) { at = day + ts; return true; }
+            // a time of day only ("18:40:30") - never "9" read as nine days, and never in the future
+            if (TimeSpan.TryParse(s, CultureInfo.InvariantCulture, out ts) && ts.Days == 0 && ts >= TimeSpan.Zero) { at = day + ts; if (at > DateTime.Now.AddMinutes(5) && day == DateTime.Today) at = at.AddDays(-1); return at <= DateTime.Now.AddMinutes(5); }
             return false;
         }
         static List<Change> Gather(Monitor m, DateTime from, DateTime to)

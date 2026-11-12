@@ -140,6 +140,14 @@ namespace AdeeboMeter
                 if (Calc.Stack("tcp banana", "", "")[0][0] != "2" || Calc.Stack("udp ipv4 ethernet", "", "3000").All(r => !r[2].Contains("fragments"))) throw new InvalidOperationException("packet stack input checks wrong");
                 var vl = Calc.Vlsm("10.0.0.0/22", "200, 60, 12, 2"); if (!val(vl, "Subnet 2 (60 hosts)").StartsWith("10.0.1.0/26", StringComparison.Ordinal) || !val(vl, "Subnet 4 (2 hosts)").StartsWith("10.0.1.80/30", StringComparison.Ordinal) || !Calc.Vlsm("10.0.0.0/24", "200, 100").Any(r => r[0] == "2")) throw new InvalidOperationException("VLSM wrong");
                 var bw = Calc.Bandwidth("4.7 GB", "100 Mbps", ""); if (!val(bw, "Time").Contains("min")) throw new InvalidOperationException("bandwidth wrong: " + val(bw, "Time"));
+                // round-2 review: a subnet that doesn't fit leaves the room for smaller ones; 1 host is a /30; leading zeros are decimal
+                var v2 = Calc.Vlsm("10.0.1.0/24", "500, 100"); if (!val(v2, "Subnet 1 (500 hosts)").Contains("doesn't fit") || !val(v2, "Subnet 2 (100 hosts)").StartsWith("10.0.1.0/25", StringComparison.Ordinal)) throw new InvalidOperationException("VLSM after a subnet that doesn't fit: " + val(v2, "Subnet 2 (100 hosts)"));
+                if (!val(Calc.Vlsm("10.0.0.0/24", "1, 1"), "Subnet 2 (1 hosts)").StartsWith("10.0.0.4/30", StringComparison.Ordinal)) throw new InvalidOperationException("VLSM 1 host should be a /30");
+                if (!val(Calc.Vlsm("010.0.0.0/8", "100"), "Block").StartsWith("10.0.0.0/8", StringComparison.Ordinal) || Calc.Vlsm("0x0A.0.0.0/8", "100")[0][0] != "2" || val(Calc.Number("010.1.1.1"), "Decimal") != "167837953") throw new InvalidOperationException("leading zeros read as octal");
+                if (!val(Calc.Bandwidth("1,500 MB", "100 Mbps", ""), "Time").StartsWith("2 min", StringComparison.Ordinal) || !val(Calc.Bandwidth("4,7 GB", "100 Mbps", ""), "Time").Contains("min") || Calc.Bandwidth("4.7 GB", "0", "")[0][0] != "2") throw new InvalidOperationException("bandwidth thousands / zero: " + val(Calc.Bandwidth("1,500 MB", "100 Mbps", ""), "Time"));
+                if (val(Calc.Number("100000000"), "Decimal") != "100000000" || val(Calc.Number("101b"), "Decimal") != "5") throw new InvalidOperationException("number converter read decimal as binary");
+                if (!val(Calc.Stack("web", "", ""), "Biggest segment (MSS)").Replace(",", "").Replace(".", "").Replace("\u00a0", "").Replace(" ", "").StartsWith("1460", StringComparison.Ordinal)) throw new InvalidOperationException("TLS taken off the MSS: " + val(Calc.Stack("web", "", ""), "Biggest segment (MSS)"));
+                if (!Calc.Stack("udp ipv4 ethernet", "", "2952").Any(r => r[2].Contains("into 2 fragments"))) throw new InvalidOperationException("UDP fragment count");
                 var nb = Calc.Number("0xC8"); if (val(nb, "Decimal") != "200" || val(nb, "Binary") != "11001000" || val(Calc.Number("255.255.252.0"), "As a mask").StartsWith("/22", StringComparison.Ordinal) == false || val(Calc.Number("00:11:22:aa:bb:cc"), "As a MAC") != "00:11:22:aa:bb:cc") throw new InvalidOperationException("number converter wrong");
                 Func<string, string, string> gwv = (a, g) => { var gr = Toolkit.Subnet(a, "", g, null).FirstOrDefault(r => r[1] == "Gateway"); return gr == null ? "none" : gr[0] + ":" + gr[2]; };
                 string g1 = gwv("10.20.3.7/31", "10.20.0.1/21"), g2 = gwv("10.1.2.3/24", "10.1.2.0"), g3 = gwv("10.1.2.3/24", "10.1.2.255"), g4 = gwv("10.1.2.3/24", "10.1.2.3"), g5 = gwv("10.1.2.3/24", "10.1.2.1/23"), g6 = gwv("10.1.2.3/24", "10.1.2.1"), g7 = gwv("10.1.2.6/31", "10.1.2.7"), g8 = gwv("2001:db8::5/64", "fe80::1"), g9 = gwv("10.1.2.3/24", "10.1.2.77"), g10 = gwv("10.1.2.3/24", ""), g11 = gwv("10.1.2.3/24", "10.1.9.1");
@@ -601,6 +609,12 @@ namespace AdeeboMeter
                     if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 13) bad.Add("earning off changed the total");
                     if (again.Award("learn.dhcp", true, true, t0, t0) != 2 || again.Award("page.replay", true, true, t0, t0) != 2 || again.Award("check.dhcp", true, true, t0, t0) != 2 || again.Award("lab.tcp", true, true, t0, t0) != 4 || again.Award("quiz.5", true, true, t0, t0) != 3 || again.Award("quiz.10", true, true, t0, t0) != 5 || again.Award("journey.explain", true, true, t0, t0) != 3 || again.Award("path.gamer", true, true, t0, t0) != 10 || again.Award("lab.tcp", true, true, t0.AddHours(2), t0.AddHours(2)) != 0 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
                     if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
+                    // round-2 review: lines typed into points.txt for things that don't exist count nothing; a replay mark on a
+                    // tool without replay counts nothing; the total never passes the maximum; a wrong first answer never pays
+                    string farm = f + ".farm"; var fl = new List<string>(); for (int i = 0; i < 250; i++) fl.Add("zz" + i + "|" + t0.Ticks); for (int i = 0; i < 50; i++) fl.Add("path.fake" + i + "|" + t0.Ticks); fl.Add("ping|" + t0.Ticks + "|" + t0.AddMinutes(30).Ticks + "|2");
+                    File.WriteAllLines(farm, fl);
+                    try { var pf = new Points(farm); if (pf.Total != 2) bad.Add("farmed points.txt counted " + pf.Total + " (want 2)"); pf.MarkTried("check.dns"); var pf2 = new Points(farm); if (!pf2.Tried("check.dns") || pf2.Total != 2) bad.Add("tried marker"); }
+                    finally { try { File.Delete(farm); } catch (IOException) { } }
                     int left; if (Points.Rank(29) != "Beginner" || Points.Rank(30) != "Learner" || Points.Rank(99) != "Learner" || Points.Rank(100) != "Troubleshooter" || Points.Rank(200) != "Expert" || Points.Rank(300) != "Network detective" || Points.Rank(499) != "Packet whisperer" || Points.Rank(Points.AwardAt) != "Adeebo Award" || Points.Next(32, out left) != "Troubleshooter" || left != 68 || Points.Next(600, out left) != "") bad.Add("ranks");
                     // a points file from 1.1.4 (+1 per tool, +2 replay) counts at today's values
                     string old = f + ".old"; File.WriteAllLines(old, new[] { "ping|" + t0.Ticks + "|-|1", "mtr|" + t0.Ticks + "|" + t0.AddMinutes(20).Ticks + "|2", "learn.dns|" + t0.Ticks + "|-|1" });
@@ -633,6 +647,9 @@ namespace AdeeboMeter
                 if (HallOfFame.Code("test-key-1", "Ada  Lovelace", 512, "2026-11-12") != "ADB-I5IU-AQRM-QTIL-TP2C") bad.Add("code 1 " + HallOfFame.Code("test-key-1", "Ada  Lovelace", 512, "2026-11-12"));
                 if (HallOfFame.Code("test-key-1", "\u00C1d\u00E1m O'Neil-\u00E9", 500, "2026-12-01") != "ADB-WOQK-DNUY-56M2-5DB4") bad.Add("code 2 (accents)");
                 if (HallOfFame.Code("", "Ada", 512, "2026-11-12") != "") bad.Add("a code without a key");
+                // names outside the Basic Multilingual Plane, Indic vowel signs and decomposed accents: the same code as Python's check
+                if (HallOfFame.Code("test-key-1", "\U00020BB7\u7530 \u0926\u0947\u0935\u0928\u093E\u0917\u0930\u0940", 512, "2026-11-10") != "ADB-MDL2-JV5N-5LJA-LJPT") bad.Add("astral / Devanagari name code");
+                if (HallOfFame.Code("test-key-1", "Jose\u0301", 512, "2026-11-10") != "ADB-3YBG-N6OJ-JA72-XFEL") bad.Add("decomposed accent code");
                 if (HallOfFame.Code("test-key-1", "Ada", 513, "2026-11-12") == HallOfFame.Code("test-key-1", "Ada", 512, "2026-11-12")) bad.Add("points not in the code");
                 if (HallOfFame.CleanName("  <script>alert(1)</script>  Bob ") != "scriptalert1script Bob") bad.Add("clean: " + HallOfFame.CleanName("  <script>alert(1)</script>  Bob "));
                 if (HallOfFame.CleanName(new string('a', 50)).Length != 32) bad.Add("name length");
@@ -661,6 +678,14 @@ namespace AdeeboMeter
                 // no History before it
                 Func<DateTime, UpdateBreak.DayStat> none = d => new UpdateBreak.DayStat { D = d, Ping = d > day0 ? 30 : double.NaN };
                 f = UpdateBreak.Compare(c, none); if (f.Lv != 3 || f.Strong) bad.Add("no History judged anyway");
+                // round-2 review: it got worse on day D. An install the day AFTER (or two days before) must not be blamed;
+                // the one the day before is
+                var dD = DateTime.Today.AddDays(-5);
+                Func<DateTime, UpdateBreak.DayStat> stepAtD = d => new UpdateBreak.DayStat { D = d, Ping = d >= dD ? 60 : 20, Drops = 0, Minutes = 1440 };
+                if (UpdateBreak.Compare(new UpdateBreak.Change { T = dD.AddDays(1).AddHours(9), What = "after" }, stepAtD).Strong) bad.Add("blamed an install made after it got worse");
+                if (UpdateBreak.Compare(new UpdateBreak.Change { T = dD.AddDays(-2).AddHours(9), What = "two before" }, stepAtD).Strong) bad.Add("blamed an install two days before it got worse");
+                if (!UpdateBreak.Compare(new UpdateBreak.Change { T = dD.AddDays(-1).AddHours(9), What = "the day before" }, stepAtD).Strong) bad.Add("missed the install the day before it got worse");
+                if (!UpdateBreak.Defender("Security Intelligence Update for Microsoft Defender Antivirus - KB2267602 (Version 1.421.1)") || UpdateBreak.Defender("2026-11 Cumulative Update (KB5046617)")) bad.Add("Defender definitions not set apart");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("Neighbour wars: winner per day, who moved onto your channel, the quietest channel", () =>
@@ -682,6 +707,22 @@ namespace AdeeboMeter
                 if (w.Quiet != 1) bad.Add("quietest " + w.Quiet);
                 if (w.Verdict.IndexOf("Neighbour moved onto it", StringComparison.Ordinal) < 0 || w.Verdict.IndexOf("1 of 3", StringComparison.Ordinal) < 0) bad.Add("verdict: " + w.Verdict);
                 if (AirLog.Analyse(new List<AirLog.Row>()).Nets.Count != 0) bad.Add("empty log");
+                // round-2 review: 80 MHz blocks overlap on 5 GHz; the verdict uses the channel you're on NOW; another access
+                // point with your name (mesh) is never a neighbour
+                if (!AirLog.Overlap(44, 80, 36, 80, "5 GHz") || AirLog.Overlap(44, 80, 52, 80, "5 GHz") || !AirLog.Overlap(40, 20, 36, 40, "5 GHz") || AirLog.Overlap(40, 20, 44, 40, "5 GHz") || !AirLog.Overlap(149, 80, 161, 20, "5 GHz")) bad.Add("5 GHz width overlap");
+                var r5 = new List<AirLog.Row>();
+                for (int day = 0; day < 3; day++) for (int h = 0; h < 3; h++)
+                {
+                    var t = d0.AddDays(day).AddHours(9 + h);
+                    r5.Add(new AirLog.Row { T = t, Bssid = "02:00:00:00:01:01", Ssid = "Home", Band = "5 GHz", Channel = day < 2 ? 149 : 44, Width = 80, Rssi = -60, Sec = "WPA2", Mine = true });
+                    r5.Add(new AirLog.Row { T = t, Bssid = "02:00:00:00:01:02", Ssid = "Home", Band = "5 GHz", Channel = 100, Width = 80, Rssi = -40, Sec = "WPA2", Same = true });
+                    r5.Add(new AirLog.Row { T = t, Bssid = "02:00:00:00:01:03", Ssid = "Next door", Band = "5 GHz", Channel = 36, Width = 80, Rssi = -45, Sec = "WPA2" });
+                }
+                var w5 = AirLog.Analyse(r5);
+                if (w5.MyChannel != 44 || !w5.MovedLately) bad.Add("5 GHz: my channel now " + w5.MyChannel);
+                if (w5.Verdict.IndexOf("nobody else overlaps", StringComparison.Ordinal) >= 0 || w5.Verdict.IndexOf("1 neighbour now overlaps", StringComparison.Ordinal) < 0) bad.Add("80 MHz neighbour missed: " + w5.Verdict);
+                string wd0; w5.Winner.TryGetValue(d0, out wd0); if (wd0 != "you") bad.Add("day 1 (on 149, alone) winner " + wd0);
+                if (w5.Quiet == 36 || w5.Quiet == 40 || w5.Quiet == 44 || w5.Quiet == 48) bad.Add("quietest channel inside the busy 80 MHz block: " + w5.Quiet);
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("packet journey: filter, records, translation and Explain rules", () =>
@@ -733,7 +774,7 @@ namespace AdeeboMeter
             });
             T("1.1.5 picks: when, Wi-Fi security and channels, devices, questions", () =>
             {
-                DateTime at; if (!Picks.ParseWhen("yesterday 18:40", out at) || at != DateTime.Today.AddDays(-1).AddHours(18).AddMinutes(40) || Picks.ParseWhen("25:99", out at) || !Picks.ParseWhen("7:05", out at)) throw new InvalidOperationException("when parser wrong");
+                DateTime at; if (!Picks.ParseWhen("yesterday 18:40", out at) || at != DateTime.Today.AddDays(-1).AddHours(18).AddMinutes(40) || Picks.ParseWhen("25:99", out at) || !Picks.ParseWhen("7:05", out at) || (Picks.ParseWhen("9", out at) && at > DateTime.Now.AddMinutes(5)) || Picks.ParseWhen("99", out at)) throw new InvalidOperationException("when parser wrong");
                 // RSN: version, group CCMP, 1 pairwise CCMP, 1 AKM SAE -> WPA3; AKM PSK -> WPA2; both -> transition mode
                 Func<byte, byte, string> rsn = (a1, a2) => { var b = new WlanApi.Bss(); var ie = new List<byte> { 48, 0, 1, 0, 0, 0x0F, 0xAC, 4, 1, 0, 0, 0x0F, 0xAC, 4 }; var ak = new List<byte> { a2 == 0 ? (byte)1 : (byte)2, 0, 0, 0x0F, 0xAC, a1 }; if (a2 != 0) ak.AddRange(new byte[] { 0, 0x0F, 0xAC, a2 }); ie.AddRange(ak); ie[1] = (byte)(ie.Count - 2); WlanApi.ReadIes(ie.ToArray(), b); return b.Sec; };
                 if (rsn(8, 0) != "WPA3" || rsn(2, 0) != "WPA2" || rsn(2, 8) != "WPA2/WPA3" || rsn(1, 0) != "WPA2-Enterprise" || !WlanApi.Weak("Open") || WlanApi.Weak("WPA2")) throw new InvalidOperationException("Wi-Fi security reading wrong: " + rsn(8, 0) + " " + rsn(2, 0));
@@ -742,6 +783,9 @@ namespace AdeeboMeter
                 if (DevInfo.Problem(43)[0].IndexOf("stopped", StringComparison.Ordinal) < 0 || DevInfo.Problem(28)[1] == "" || DevInfo.Problem(999)[0].IndexOf("999", StringComparison.Ordinal) < 0) throw new InvalidOperationException("problem codes wrong");
                 // the guided checks and the PC lists never throw, whatever Windows (or Wine) gives them
                 var lag = Guided.Lag(M, ""); if (lag.Count < 4 || lag[0][1] != "Verdict" || lag.Last()[1] != "Honest limits") throw new InvalidOperationException("game lag check wrong");
+                // a router that never answers ping (or the router check off) is "can't tell", never "your home network"
+                var mq = new Monitor(); lock (mq.L) { for (int i = 0; i < 30; i++) mq.NetPing.Add(20); }
+                var lq = Guided.Lag(mq, ""); if (lq[0][2].IndexOf("home network", StringComparison.OrdinalIgnoreCase) >= 0 || lq[0][2].IndexOf("Wi-Fi", StringComparison.Ordinal) >= 0) throw new InvalidOperationException("lag blamed the home network with no router data: " + lq[0][2]);
                 var usb = Guided.Usb(""); if (usb.Count == 0) throw new InvalidOperationException("USB check returned nothing");
                 if (Picks.Drivers().Count == 0 || Picks.Timeline(M, "12:00").Count == 0 || Picks.Inventory(M, "not a label").Count == 0) throw new InvalidOperationException("a pick returned nothing");
                 Picks.Weather(M);
@@ -759,6 +803,7 @@ namespace AdeeboMeter
                 p.Events[30] = "hard"; var hard = LabSim.Tcp(p); if (hard[31].Cwnd != 1) throw new InvalidOperationException("a timeout should drop the window to 1");
                 double mm = LabSim.MathisMbps(40, 1); if (mm < 3 || mm > 4) throw new InvalidOperationException("Mathis limit wrong: " + mm);
                 var b1 = LabSim.Bloat(20, 20, 500, 20, false); var b2 = LabSim.Bloat(20, 20, 500, 20, true); if (b1.PingMs < 400 || b2.PingMs > 30 || LabSim.Bloat(20, 5, 500, 20, false).PingMs > 25) throw new InvalidOperationException("bufferbloat model wrong");
+                var a30 = LabSim.Arrivals(30, 2000, 11); if (LabSim.Jitter(a30, 60, 60, 0).Mos < 3.9) throw new InvalidOperationException("a 2x-jitter buffer should give a usable call: " + LabSim.Jitter(a30, 60, 60, 0).Mos);
                 var arr = LabSim.Arrivals(20, 2000, 11); var j1 = LabSim.Jitter(arr, 60, 20, 0); var j2 = LabSim.Jitter(arr, 60, 120, 0); if (j1.LatePct <= j2.LatePct || j1.MouthToEarMs >= j2.MouthToEarMs) throw new InvalidOperationException("jitter buffer trade-off wrong");
                 var devs = new List<LabSim.AirDev> { new LabSim.AirDev { RateMbps = 600 }, new LabSim.AirDev { RateMbps = 6 } }; LabSim.Airtime(devs, false, 0); if (devs[1].ShareAir < 0.9) throw new InvalidOperationException("the slow device should hold most of the air");
                 LabSim.Airtime(devs, true, 0); if (Math.Abs(devs[0].ShareAir - 0.5) > 0.01) throw new InvalidOperationException("airtime fairness should split evenly");

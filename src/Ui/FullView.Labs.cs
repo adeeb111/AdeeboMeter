@@ -36,9 +36,9 @@ namespace AdeeboMeter
         string LS(string k, string d) { string v; return labS.TryGetValue(k, out v) ? v : d; }
         Control labHost; Form labWin; System.Windows.Forms.Timer labTimer; int labShown = -1;   // TCP: rounds drawn so far while playing (-1 = all)
         readonly Dictionary<int, string> tcpEvents = new Dictionary<int, string>();
-        List<string[]> labDns; bool labBusy; string labCg = ""; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = ""; int quizStreak;
+        List<string[]> labDns; bool labBusy; string labCg = ""; bool labCgOk; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = ""; int quizStreak;
 
-        void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); else if (learnInfo != null && learnPage.Visible) learnInfo.Invalidate(); }   // full screen: only that window repaints
+        void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); if (learnInfo != null && learnPage.Visible && learnSel.StartsWith("lab:", StringComparison.Ordinal)) learnInfo.Invalidate(); }   // both: a change can come from either window
 
         float PaintLabList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
         {
@@ -112,7 +112,7 @@ namespace AdeeboMeter
         }
         void LabPlay(bool on)
         {
-            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized) || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; } LabRefresh(); }; }
+            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized && learnSel == "lab:tcp") || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; labShown = -1; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; } LabRefresh(); }; }
             labShown = on ? 0 : -1; labTimer.Enabled = on; LabRefresh();
         }
 
@@ -172,7 +172,7 @@ namespace AdeeboMeter
                     }
                 case "airtime": return LV("a.slow", 1) >= 1 && LS("a.fair", "turns") == "fair";
                 case "dns": return labDns != null && labDns.Any(r => r.Length > 0 && r[0] != "2");
-                case "nat": return labCg != "";
+                case "nat": return labCgOk;
                 case "mtu":
                     {
                         string way = LS("u.way", "wg"); int narrow = 1500 - (way == "pppoe" ? 8 : way == "wg" ? 60 : way == "ipsec" ? 66 : 0); bool fits = LV("u.size", 1500) <= narrow;
@@ -187,6 +187,8 @@ namespace AdeeboMeter
         }
         float LabChallenge(Control h, Graphics g, string id, float x, float y, float w)
         {
+            // every lab is a model driven by the numbers you pick - say so, so nobody reads it as their own line
+            if (id != "quiz" && id != "route") using (var mb = new SolidBrush(Theme.Muted)) { string sim = L.T("A simulation with the numbers you pick - not a measurement of your line (only rows that say \"your\" are)."); g.DrawString(sim, Draw.fSmall, mb, new RectangleF(x, y, w, 40 * S)); y += Draw.Measure(sim, Draw.fSmall, (int)w).Height + 8 * S; }
             string goal; if (!LabGoals.TryGetValue(id, out goal)) return y;
             bool met = id != "quiz" && LabGoalMet(id);
             if (met && Cfg.Points) EarnPts("lab." + id, true, true);
@@ -287,7 +289,8 @@ namespace AdeeboMeter
         // ================================================================== loss -> the most TCP can do
         float LabMathis(Control h, Graphics g, float x, float y, float w)
         {
-            double myRtt = M.NetPing.Avg(30), myLoss = 100 * M.Loss.Avg(20);
+            double myRtt = M.NetPing.Avg(30); long lossN, lossK; lock (M.L) { lossN = M.NetTries; lossK = M.NetLostN; } double myLoss = lossN > 0 ? 100.0 * lossK / lossN : double.NaN;
+            bool lossEnough = lossN >= 100 && lossK >= 3;   // 20 probes are 5% steps; a few lost pings are often just a router saying no to ping
             float cx = x;
             cx += Stepper(h, g, "m.rtt", "Round trip", new double[] { 5, 10, 20, 40, 80, 150, 300 }, 40, v => N0(v) + " ms", cx, y);
             cx += Stepper(h, g, "m.loss", "Loss", new double[] { 0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 5 }, 1, v => v.ToString("0.###", CultureInfo.CurrentCulture) + "%", cx, y);
@@ -304,7 +307,7 @@ namespace AdeeboMeter
             using (var b = new SolidBrush(Theme.Red)) g.FillEllipse(b, X(loss) - 5 * S, Y(mb) - 5 * S, 10 * S, 10 * S);
             using (var mbr = new SolidBrush(Theme.Muted)) { foreach (var l in new[] { 0.001, 0.01, 0.1, 1, 10 }) g.DrawString(l.ToString("0.###", CultureInfo.CurrentCulture) + "%", Draw.fTiny, mbr, X(l) - 10 * S, plot.Bottom + 4 * S); g.DrawString(N0(top) + " Mbps", Draw.fTiny, mbr, x, plot.Y); g.DrawString(L.T("loss"), Draw.fTiny, mbr, plot.Right - 40 * S, plot.Bottom + 18 * S); }
             y = plot.Bottom + 40 * S;
-            if (!double.IsNaN(myRtt)) y = InfoCardOn(h, g, "YOUR LINE RIGHT NOW", new List<string[]> { new[] { "Round trip / loss", myRtt.ToString("0", CultureInfo.CurrentCulture) + " ms · " + (double.IsNaN(myLoss) ? "-" : myLoss.ToString("0.#", CultureInfo.CurrentCulture) + "%") + " (to the internet check)", "3" }, new[] { "Most one download can do", double.IsNaN(myLoss) || myLoss <= 0 ? "no loss seen, so no limit from loss" : N0(LabSim.MathisMbps(myRtt, myLoss)) + " Mbps - quote this in the ISP report if it's below your plan", double.IsNaN(myLoss) || myLoss <= 0 ? "0" : "1" } }, null, x, y, w);
+            if (!double.IsNaN(myRtt)) y = InfoCardOn(h, g, "YOUR LINE RIGHT NOW", new List<string[]> { new[] { "Round trip / loss", myRtt.ToString("0", CultureInfo.CurrentCulture) + " ms · " + (double.IsNaN(myLoss) ? "-" : myLoss.ToString("0.#", CultureInfo.CurrentCulture) + "%") + " (to the internet check)", "3" }, new[] { "Most one download can do", double.IsNaN(myLoss) || myLoss <= 0 ? "no loss seen, so no limit from loss" : !lossEnough ? "not enough to tell - " + lossK + " lost of " + lossN + " pings; lost pings are often a router ignoring ping, not lost data" : "about " + N0(LabSim.MathisMbps(myRtt, myLoss)) + " Mbps - a rough Reno-style bound from ping loss (Windows uses CUBIC, which does better, and ping loss isn't always data loss)", double.IsNaN(myLoss) || myLoss <= 0 || !lossEnough ? "3" : "1" } }, null, x, y, w);
             return y;
         }
 
@@ -428,20 +431,21 @@ namespace AdeeboMeter
             if (conns.Count > 0) y = InfoCardOn(h, g, "YOUR CONVERSATIONS THE ROUTER IS REMEMBERING RIGHT NOW (A FEW)", conns.Select(c => new[] { (c.Proc ?? "") + " :" + c.LocalPort, "→ " + (c.Host != "" ? c.Host : c.RemoteIp) + ":" + c.RemotePort, "3" }).ToList(), null, x, y, w);
             Button(h, g, labBusy ? "Tracing..." : "Check for CGNAT or double NAT (one short trace)  ›", true, labBusy ? (Action)null : delegate
             {
-                labBusy = true; labCg = ""; LabRefresh();
+                labBusy = true; labCg = ""; labCgOk = false; LabRefresh();
                 Task.Factory.StartNew(() =>
                 {
-                    string res;
+                    string res; bool ok = false;
                     try
                     {
-                        var hops = PathTools.Trace(IPAddress.Parse("1.1.1.1"), 5, () => false).Where(z => z.Ip != "").ToList();
+                        var all = PathTools.Trace(IPAddress.Parse("1.1.1.1"), 5, () => false).ToList();   // hop positions kept: a silent router is still hop 1
+                        var hops = all.Where(z => z.Ip != "").ToList(); ok = hops.Count > 0;
                         Func<string, bool> cg = ip => { IPAddress a; if (!IPAddress.TryParse(ip, out a)) return false; var b = a.GetAddressBytes(); return b.Length == 4 && b[0] == 100 && b[1] >= 64 && b[1] < 128; };
                         Func<string, bool> priv = ip => !Watch.IsPublic(ip) && !cg(ip);
-                        var after = hops.Skip(1).Take(3).ToList();
-                        res = after.Any(z => cg(z.Ip)) ? "CGNAT: a hop right after your router uses 100.64-100.127 - your provider shares one public address between customers. Port forwarding can't work; ask them for a public IP (often free or a few dollars)." : after.Take(1).Any(z => priv(z.Ip)) ? "Double NAT: the hop after your router is another private address (" + after[0].Ip + ") - a modem-router in front of your own router. Put the modem in bridge mode, or forward ports on both." : hops.Count == 0 ? "No hop answered - couldn't tell." : "Neither: your router's next hop is your provider's public network - port forwarding on your router is all you'd need.";
+                        var after = all.Skip(1).Take(3).Where(z => z.Ip != "").ToList();
+                        res = after.Any(z => cg(z.Ip)) ? "CGNAT: a hop right after your router uses 100.64-100.127 - your provider shares one public address between customers. Port forwarding can't work; ask them for a public IP (often free or a few dollars)." : after.Take(1).Any(z => priv(z.Ip)) ? "Possibly double NAT: the hop after your router has a private address (" + after[0].Ip + "). That's often a modem-router in front of your own router (then bridge mode, or forwarding on both, fixes port forwarding) - but some providers number their own first router privately too. If your router's settings page shows a private WAN address, it's double NAT." : hops.Count == 0 ? "No hop answered - couldn't tell." : "Neither: your router's next hop is your provider's public network - port forwarding on your router is all you'd need.";
                     }
                     catch (Exception e) { if (e is OutOfMemoryException) throw; res = "Couldn't trace: " + e.Message; }
-                    try { BeginInvoke((Action)delegate { labBusy = false; labCg = res; LabRefresh(); }); } catch (InvalidOperationException) { labBusy = false; }
+                    try { BeginInvoke((Action)delegate { labBusy = false; labCg = res; labCgOk = ok; LabRefresh(); }); } catch (InvalidOperationException) { labBusy = false; }
                 });
             }, x, y);
             y += 44 * S;
@@ -541,7 +545,7 @@ namespace AdeeboMeter
                 y += 30 * S;
             }
             y += 6 * S;
-            return Lead2(g, "How long one voice packet waits behind " + burst + " full-size packets on a " + N0(link) + " Mbps upload. Teams and Zoom mark their audio as EF (DSCP 46) - but a mark only helps where a router honours it: company networks often do, most home routers and the internet ignore it. At home, a smart queue (see Bufferbloat) gets most of the benefit without any marks.", x, y, w);
+            return Lead2(g, "How long one voice packet waits behind " + burst + " full-size packets on a " + N0(link) + " Mbps upload. Teams marks its audio EF (DSCP 46) when an admin turns QoS on, and Zoom marks its own way - but a mark only helps where a router honours it: company networks often do, most home routers and the internet ignore it. At home, a smart queue (see Bufferbloat) gets most of the benefit without any marks.", x, y, w);
         }
 
         // ================================================================== subnetting practice

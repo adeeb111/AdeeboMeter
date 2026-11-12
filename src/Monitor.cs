@@ -34,6 +34,7 @@ namespace AdeeboMeter
         public Ring Cpu = new Ring(120), Mem = new Ring(120), Commit = new Ring(120), Disk = new Ring(120);
         public Ring Down = new Ring(120), Up = new Ring(120);
         public Ring GwPing = new Ring(30), NetPing = new Ring(30), Loss = new Ring(20), Dns = new Ring(12);
+        public long NetTries, NetLostN;   // internet probes and lost ones since the network last changed (the Loss lab needs more than 20)
         public Ring Retx = new Ring(120), Rst = new Ring(120), Fail = new Ring(120), Unreach = new Ring(120), UdpDrop = new Ring(120);
 
         public int Cores = Environment.ProcessorCount;
@@ -240,7 +241,7 @@ namespace AdeeboMeter
                         double n = PingMs(tgt);
                         if (!double.IsNaN(n)) { lock (L) { NetIcmpEver = true; NetViaTcp = false; } }
                         else if (!NetIcmpEver) { IPAddress tip; if (IPAddress.TryParse(tgt, out tip)) { n = GamePing.TcpMs(tip, 443, 1500); if (!double.IsNaN(n)) lock (L) NetViaTcp = true; } }
-                        lock (L) { NetPing.Add(n); netAt = Clock.Mono; if (!double.IsNaN(n)) NetEverReplied = true; if (NetEverReplied) Loss.Add(double.IsNaN(n) ? 1 : 0); }
+                        lock (L) { NetPing.Add(n); netAt = Clock.Mono; if (!double.IsNaN(n)) NetEverReplied = true; if (NetEverReplied) { Loss.Add(double.IsNaN(n) ? 1 : 0); NetTries++; if (double.IsNaN(n)) NetLostN++; } }
                         if (NetEverReplied)
                         {
                             if (double.IsNaN(n)) { if (++netDown == 3) { netDownSince = DateTime.Now; Events.Add(2, "inet", Voice.P("The internet went quiet - no replies from " + tgt + ".", "Internet unreachable (no reply from " + tgt + ").")); } }
@@ -251,7 +252,7 @@ namespace AdeeboMeter
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
                     if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(0, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
-                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
+                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
                     if (netChanged && netDown >= 3) Events.Add(0, "inet", "Network changed while the internet was quiet (down since " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + ") - checking afresh");
                     if (netChanged) { netChanged = false; lock (L) { NetPing.Clear(); Loss.Clear(); NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; GwPing.Clear(); GwEverReplied = false; } gwMacKey = ""; gwMac = "";   /* a new network: its router is judged on its own, never on the last network's */ /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= 10) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }

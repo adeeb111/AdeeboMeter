@@ -157,6 +157,7 @@ namespace AdeeboMeter
             if (k.StartsWith("lab.", StringComparison.Ordinal)) return LabGoals.ContainsKey(k.Substring(4)) && k != "lab.quiz";
             if (k.StartsWith("page.", StringComparison.Ordinal)) return PtPages.Any(p => p[0] == k);
             if (k == "quiz.5" || k == "quiz.10" || k == "journey.explain") return true;
+            if (k.StartsWith("path.", StringComparison.Ordinal)) return Paths.Any(p => "path." + p.Id == k);
             return Explain.Term("tb." + k) != null && Points.Value(k) > 0;
         }
         void CheckPaths()

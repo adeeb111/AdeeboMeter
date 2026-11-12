@@ -16,23 +16,36 @@ import base64, datetime, hashlib, hmac, json, os, re, sys, unicodedata
 
 JSON = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "hall-of-fame.json")
 AWARD_AT = 500
+MAX_POINTS = 600   # AdeeboMeter never counts more (Points.Max): everything there is to earn is about 585
 
 
 def clean_name(n):
-    # the same rule as HallOfFame.CleanName: letters/digits (any language), . - _ ' ; single spaces; at most 32
+    # the same rule as HallOfFame.CleanName: NFC; letters and their marks (L*, Mn, Mc, any plane), decimal digits,
+    # . - _ ' ; single spaces; at most 32 characters (code points)
     out, sp = [], False
-    for c in (n or "").strip():
+    for c in unicodedata.normalize("NFC", (n or "").strip()):
         if c.isspace():
             if not sp and out:
                 out.append(" ")
             sp = True
             continue
         cat = unicodedata.category(c)
-        if cat[0] == "L" or cat == "Nd" or c in ".-_'":   # like .NET char.IsLetterOrDigit
+        if cat[0] == "L" or cat in ("Mn", "Mc", "Nd") or c in ".-_'":
             out.append(c)
             sp = False
-    s = "".join(out).strip()
-    return s[:32].strip() if len(s) > 32 else s
+    while out and out[-1] == " ":
+        out.pop()
+    if len(out) > 32:
+        out = out[:32]
+        while out and out[-1] == " ":
+            out.pop()
+    return "".join(out)
+
+
+def same_person(a, b):
+    # one entry per name: case, accents' forms and look-alike widths don't make a new person
+    f = lambda x: unicodedata.normalize("NFKC", x).casefold().replace(" ", "")
+    return f(a) == f(b)
 
 
 def code(key, name, total, date):
@@ -71,7 +84,7 @@ def main():
         via, ref = "email", ""
     name = clean_name(name)
     claim = re.sub(r"\s+", "", claim or "").upper()
-    if not name or not re.fullmatch(r"\d{3,5}", (total or "").strip()) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", (date or "").strip()):
+    if not name or not re.fullmatch(r"[1-9]\d{0,5}", (total or "").strip()) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", (date or "").strip()):
         out("missing", "The name, points and date have to be exactly as they are on the card (points like 512, date like 2026-11-12).")
         return 3
     total, date = int(total.strip()), date.strip()
@@ -80,8 +93,8 @@ def main():
     except ValueError:
         out("missing", "The date on the card isn't a real date.")
         return 3
-    if total < AWARD_AT or d < datetime.date(2026, 11, 1) or d > datetime.date.today() + datetime.timedelta(days=1):
-        out("mismatch", "That card isn't an Adeebo Award card (500 points or more, made with AdeeboMeter 1.1.5 or later).")
+    if total < AWARD_AT or total > MAX_POINTS or d < datetime.date(2026, 11, 1) or d > datetime.date.today() + datetime.timedelta(days=1):
+        out("mismatch", "That card isn't an Adeebo Award card (500 to %d points, made with AdeeboMeter 1.1.5 or later)." % MAX_POINTS)
         return 2
     if not hmac.compare_digest(code(key, name, total, date), claim):
         out("mismatch", "The claim code doesn't match the name, points and date. Type them exactly as they are on the card - or make the card again in AdeeboMeter.")
@@ -95,7 +108,13 @@ def main():
     if any(e.get("code") == claim for e in entries):
         out("already", "%s is already in the Hall of Fame." % name)
         return 0
-    entries.append({"name": name, "points": total, "date": date, "code": claim, "picture": picture, "via": via, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
+    if any(same_person(e.get("name", ""), name) for e in entries):
+        out("already", "There's already a %s in the Hall of Fame. If that isn't you, put something extra in your name on the card (an initial or your city) and send the new card." % name)
+        return 0
+    author = os.environ.get("ISSUE_AUTHOR", "")
+    if not re.fullmatch(r"[A-Za-z0-9-]{1,39}", author or ""):
+        author = ""
+    entries.append({"name": name, "points": total, "date": date, "code": claim, "picture": picture, "via": via, "by": author, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
     entries.sort(key=lambda e: (e["date"], e["name"].lower()))
     with open(JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)

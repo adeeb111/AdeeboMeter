@@ -630,7 +630,7 @@ CHALLENGE	DÉFI
 in a row	d'affilée
 Right.	Juste.
 Not quite - the answer is	Pas tout à fait - la réponse est
-(you can try again next time AdeeboMeter starts)	(vous pourrez réessayer au prochain démarrage d'AdeeboMeter)
+You answered this one before - the answer is	Vous avez déjà répondu à celle-ci - la réponse est
 Subnetting: 5 in a row	Sous-réseaux : 5 d'affilée
 Subnetting: 10 in a row	Sous-réseaux : 10 d'affilée
 network, broadcast, hosts - without a slip	réseau, diffusion, hôtes - sans faute
@@ -649,3 +649,24 @@ Look up three different destinations in your own route table.	Cherchez trois des
 Keep the ping at 30 ms or more and get the whole budget under 60 ms.	Gardez le ping à 30 ms ou plus et faites passer le budget total sous 60 ms.
 Find an upload where even first come, first served keeps the call's wait under 10 ms.	Trouvez un débit montant où même premier arrivé, premier servi garde l'attente de l'appel sous 10 ms.
 Get 5 right in a row, then 10 in a row.	5 justes d'affilée, puis 10 d'affilée.
+A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	Une simulation avec les valeurs que vous choisissez - pas une mesure de votre ligne (seules les lignes qui disent « votre » le sont).
+Save your Adeebo Award card	Enregistrer votre carte Prix Adeebo
+Couldn't save the card	Impossible d'enregistrer la carte
+Your card is saved	Votre carte est enregistrée
+Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically - or email it (the address is on the Hall of Fame page). Its text is copied, ready to paste.	Envoyez-la au Temple de la renommée : le formulaire GitHub vérifie le code et vous ajoute automatiquement - ou envoyez-la par e-mail (l'adresse est sur la page du Temple de la renommée). Son texte est copié, prêt à coller.
+This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can.	Cette copie d'AdeeboMeter a été compilée depuis le code source : la carte n'a pas de code et ne peut pas entrer au Temple de la renommée. Le téléchargement du site, oui.
+Your Adeebo Award card	Votre carte Prix Adeebo
+Your name as it should appear in the Hall of Fame. Letters, numbers, spaces and . - _ ' - up to 32.	Votre nom tel qu'il doit apparaître au Temple de la renommée. Lettres, chiffres, espaces et . - _ ' - 32 au plus.
+Make the card	Créer la carte
+Make my award card	Créer ma carte de prix
+Make it again	La recréer
+Send it with the GitHub form ›	L'envoyer avec le formulaire GitHub ›
+The Hall of Fame page ›	La page du Temple de la renommée ›
+Show the picture	Montrer l'image
+NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR	GUERRE DES VOISINS  ·  7 JOURS SUR VOS ONDES
+you	vous
+moved	déplacé
+Crowding on your channel	Encombrement de votre canal
+filled = strongest on your channel that day · ring = on your channel · dot = heard here	plein = le plus fort sur votre canal ce jour-là · anneau = sur votre canal · point = entendu ici
+Journey	Trajet
+What did Windows Update break?	Qu'est-ce que Windows Update a cassé ?

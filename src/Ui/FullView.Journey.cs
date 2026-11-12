@@ -384,8 +384,9 @@ namespace AdeeboMeter
         static void JKeepCwnd(List<Journey.Rec> rs)
         {
             var syn = rs.FirstOrDefault(r => r.Out && r.Proto == 6 && (r.Flags & 0x12) == 0x02); var sa = rs.FirstOrDefault(r => !r.Out && r.Proto == 6 && (r.Flags & 0x12) == 0x12);
+            LabSim.LastRealCwnd = null;   // a capture without a handshake never leaves the previous capture's line on the graph
             if (syn == null || sa == null || sa.T <= syn.T) return;
-            var c = LabSim.CwndFromCapture(rs, sa.T - syn.T); if (c.Count < 3) return;
+            var c = LabSim.CwndFromCapture(rs.Where(r => r.LPort == syn.LPort).ToList(), sa.T - syn.T); if (c.Count < 3) return;
             LabSim.LastRealCwnd = c; LabSim.LastRealRttMs = (sa.T - syn.T) * 1000;
         }
     }

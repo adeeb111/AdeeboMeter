@@ -111,7 +111,7 @@ footer a{color:inherit}
 
 <section id="how"><div class="wrap">
   <h2>How Adeebo Points work</h2>
-  <p class="sub">Adeebo Points are a small reward for learning AdeeboMeter and how networks work. They're <b>off until you turn them on</b> (Settings › Adeebo Points). Every item pays <b>once</b>. Points are kept <b>on your PC only</b> - nothing is sent anywhere, there are no streaks and no reminders. Press the <b>Adeebo</b> button at the top of AdeeboMeter to see your rank, your progress on each path, and every feature with a <b>Go</b> that takes you straight there.</p>
+  <p class="sub">Adeebo Points are a small reward for learning AdeeboMeter and how networks work. They're on from the start; you can switch them off in Settings › Adeebo Points (your total is kept). Every item pays <b>once</b>. Points are kept <b>on your PC only</b> - nothing is sent anywhere, there are no streaks and no reminders. Press the <b>Adeebo</b> button at the top of AdeeboMeter to see your rank, your progress on each path, and every feature with a <b>Go</b> that takes you straight there.</p>
 
   <h3>What earns points</h3>
   <table>
@@ -175,7 +175,7 @@ footer a{color:inherit}
   <h3>Learn, then check yourself</h3>
   <div class="cards3">
     <div class="box"><h3>Learn a topic</h3><p class="sub" style="margin:0">Open <b>Learn</b> and pick a topic. Each one is two lines and a picture. Scroll to the end and stay at least 15 seconds: +2. Many topics also have <b>See it live on my PC</b>, which records 10 seconds of that protocol on your own PC (needs Wireshark).</p></div>
-    <div class="box"><h3>Check yourself</h3><p class="sub" style="margin:0">Every topic ends with one question and four answers. Right the first time: +2. Wrong: the right answer is shown, and you can try again the next time AdeeboMeter starts. That way guessing all four doesn't pay.</p></div>
+    <div class="box"><h3>Check yourself</h3><p class="sub" style="margin:0">Every topic ends with one question and four answers. Right the first time: +2. Wrong: the right answer is shown, and that question pays nothing - not now, and not after a restart. That way guessing doesn't pay.</p></div>
     <div class="box"><h3>Check your progress</h3><p class="sub" style="margin:0">The <b>Adeebo</b> button at the top shows your total, your rank, how far you are from the next one, each learning path's progress, and every feature with ✓ when it's done. Search it (“mtr”, “dns”, “wifi”) and press <b>Go</b>.</p></div>
   </div>
 </div></section>
@@ -195,8 +195,8 @@ footer a{color:inherit}
   </ol>
 
   <h3>How a card is checked</h3>
-  <div class="note">Each card has a <b>claim code</b> like <code>ADB-7K3F-Q9XM-2PLD-…</code>. AdeeboMeter makes it from your name, your points and the date, using a secret key that only the official download contains. The Hall of Fame computes the same code with the same key. Only a match is shown. A card edited in a picture editor, or someone else's card with a new name, doesn't match. AdeeboMeter built from the source code has no key, so its cards say “unofficial build”.
-  <br><br><b>To be honest about it:</b> AdeeboMeter is offline and open source, and your points are a file on your PC. A determined person could still fake a card. The code stops the easy fakes, and any entry can be taken down. It's a celebration, not a certificate.</div>
+  <div class="note">Each card has a <b>claim code</b> like <code>ADB-7K3F-Q9XM-2PLD-…</code>. AdeeboMeter makes it from your name, your points and the date, using a key that only the official download contains. The Hall of Fame computes the same code. A card edited in a picture editor, or someone else's card with a new name, doesn't match. AdeeboMeter built from the source code has no key, so its cards say “unofficial build”.
+  <br><br><b>What the code proves, honestly:</b> that the card came out of AdeeboMeter unchanged - not that every point was earned. AdeeboMeter is offline and open source and your points live on your PC, so a determined person could still cheat. AdeeboMeter only counts items that really exist (never more than everything there is to earn), the check turns away impossible totals and second entries for the same name, and any entry can be taken down. It's a celebration, not a certificate.</div>
 
   <h3>Questions</h3>
   <details><summary>Does AdeeboMeter send my points anywhere?</summary><p>No. AdeeboMeter never sends anything about your points. It only saves a picture, and you decide whether to share it.</p></details>

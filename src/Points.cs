@@ -81,8 +81,22 @@ namespace AdeeboMeter
         }
 
         // counted by today's values, so points earned before 1.1.5 move up with everyone else's
-        public int Total { get { lock (k) return map.Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) ? ReplayPts : 0)); } }
-        public int Done { get { lock (k) return map.Count; } }
+        // Only items AdeeboMeter can really award count (a line typed into points.txt for something that doesn't exist
+        // counts 0), the replay bonus only for the replay tools, and never more than everything there is to earn.
+        public int Total { get { lock (k) return Math.Min(Max, map.Where(kv => Known(kv.Key)).Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) && Replay.Contains(kv.Key) ? ReplayPts : 0))); } }
+        public const int Max = 600;   // a little above everything there is (about 585): a file saying more was edited by hand
+        static readonly Dictionary<string, bool> known = new Dictionary<string, bool>(StringComparer.Ordinal);
+        public static bool Known(string id)
+        {
+            lock (known) { bool v; if (known.TryGetValue(id, out v)) return v; v = FullView.PtKeyKnown(id); if (known.Count < 5000) known[id] = v; return v; }
+        }
+        // a question answered wrong the first time: kept (0 points) so a restart can't pay for it
+        public bool Tried(string id) { lock (k) return map.ContainsKey("tried." + id); }
+        public void MarkTried(string id)
+        {
+            lock (k) { if (map.ContainsKey("tried." + id) || map.ContainsKey(id)) return; map["tried." + id] = new Entry { First = DateTime.UtcNow, Pts = 0 }; if (!TrySave()) map.Remove("tried." + id); }
+        }
+        public int Done { get { lock (k) return map.Keys.Count(Known); } }
         public bool Has(string id) { lock (k) return map.ContainsKey(id); }
         public bool Replayed(string id) { lock (k) { Entry e; return map.TryGetValue(id, out e) && e.Again != default(DateTime); } }
         public static string Rank(int total) { string r = Ranks[0][1]; foreach (var x in Ranks) if (total >= int.Parse(x[0], CultureInfo.InvariantCulture)) r = x[1]; return r; }

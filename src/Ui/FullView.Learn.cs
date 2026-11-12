@@ -103,8 +103,8 @@ namespace AdeeboMeter
             }
             Need(learnInfo, y);
         }
-        // ---------- Check yourself: one question per topic. Right first time -> +2, once; a wrong pick shows the answer
-        // (and can be tried again the next time AdeeboMeter starts).
+        // ---------- Check yourself: one question per topic. Right the first time -> +2, once. A wrong first pick shows
+        // the answer and is remembered (points.txt, "tried.check.<id>", 0 points), so a restart can't pay for it.
         readonly Dictionary<string, string> checkPick = new Dictionary<string, string>();
         float PaintCheck(Graphics g, Knowledge.Rec t, float x, float y, float w)
         {
@@ -112,7 +112,8 @@ namespace AdeeboMeter
             string id = t.Id, q = p[0], right = p[1], picked; checkPick.TryGetValue(id, out picked);
             // the same order every time, not always the right one first
             var opts = p.Skip(1).Where(o => o != "").OrderBy(o => Hash(id + o)).ToList();
-            bool earned = Points.Me.Has("check." + id);
+            bool earned = Points.Me.Has("check." + id), tried = !earned && Points.Me.Tried("check." + id);
+            if (picked == null && tried) picked = "\u0001";   // answered wrong before: show the answer, no buttons
             float qh = Draw.Measure(L.T(q), Draw.fBodyB, (int)(w - 32 * S)).Height, ow = (w - 46 * S) / 2, oh = 40 * S;
             var card = new RectangleF(x, y, w, 44 * S + qh + (float)Math.Ceiling(opts.Count / 2.0) * (oh + 10 * S) + (picked != null ? 34 * S : 0));
             Theme.Fill(g, card, 12 * S, Theme.Soft);
@@ -125,11 +126,11 @@ namespace AdeeboMeter
                 bool isRight = o == right, isPick = o == picked, done = picked != null;
                 Theme.Fill(g, r, 10 * S, done && isRight ? Theme.LvSoft(0) : isPick ? Theme.LvSoft(2) : Theme.Card); if (done && isRight) Theme.Stroke(g, r, 10 * S, Theme.Green, 2);
                 using (var tb = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord }) g.DrawString(L.T(o), Draw.fBody, tb, new RectangleF(r.X + 12 * S, r.Y, r.Width - 20 * S, r.Height), c);
-                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) EarnPts("check." + id, true, true); learnInfo.Invalidate(); });
+                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) EarnPts("check." + id, true, true); else if (Cfg.Points) Points.Me.MarkTried("check." + id); learnInfo.Invalidate(); });
             }
             if (picked != null)
             {
-                string msg = picked == right ? L.T("Right.") : L.T("Not quite - the answer is") + ": " + L.T(right) + (Cfg.Points && !earned ? " " + L.T("(you can try again next time AdeeboMeter starts)") : "");
+                string msg = picked == right ? L.T("Right.") : picked == "\u0001" ? L.T("You answered this one before - the answer is") + ": " + L.T(right) : L.T("Not quite - the answer is") + ": " + L.T(right);
                 using (var b = new SolidBrush(picked == right ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(msg, Draw.fSmall, b, new RectangleF(x + 16 * S, card.Bottom - 30 * S, w - 32 * S, 24 * S));
             }
             return card.Bottom + 14 * S;

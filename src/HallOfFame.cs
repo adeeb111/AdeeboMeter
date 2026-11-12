@@ -1,5 +1,6 @@
 // AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
@@ -33,16 +34,25 @@ namespace AdeeboMeter
         // the generated file holds the key masked, so it isn't a readable string in the exe (a speed bump, not a lock)
         internal static string Unmask(byte[] b) { var o = new byte[b.Length]; for (int i = 0; i < b.Length; i++) o[i] = (byte)(b[i] ^ ((i * 73 + 41) & 0xFF)); return Encoding.UTF8.GetString(o); }
 
-        // a name fit for a public page: letters (any language), digits, space and . - _ ' ; single spaces; at most 32
+        // a name fit for a public page: letters and their accents/vowel signs (any script, also outside the BMP), digits,
+        // space and . - _ ' ; NFC first, single spaces, at most 32 characters. hof_verify.py's clean_name is the same rule.
         public static string CleanName(string n)
         {
-            var sb = new StringBuilder(); bool sp = false;
-            foreach (char c in (n ?? "").Trim())
+            string src; try { src = (n ?? "").Trim().Normalize(NormalizationForm.FormC); } catch (ArgumentException) { src = (n ?? "").Trim(); }
+            var parts = new List<string>(); bool sp = false;
+            for (int i = 0; i < src.Length; i++)
             {
-                if (char.IsWhiteSpace(c)) { if (!sp && sb.Length > 0) sb.Append(' '); sp = true; continue; }
-                if (char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '\'') { sb.Append(c); sp = false; }
+                bool pair = char.IsSurrogatePair(src, i); string cp = pair ? src.Substring(i, 2) : src.Substring(i, 1);
+                if (pair) i++;
+                if (cp.Length == 1 && char.IsWhiteSpace(cp[0])) { if (!sp && parts.Count > 0) parts.Add(" "); sp = true; continue; }
+                var cat = CharUnicodeInfo.GetUnicodeCategory(cp, 0);
+                bool ok = cat == UnicodeCategory.UppercaseLetter || cat == UnicodeCategory.LowercaseLetter || cat == UnicodeCategory.TitlecaseLetter || cat == UnicodeCategory.ModifierLetter || cat == UnicodeCategory.OtherLetter
+                       || cat == UnicodeCategory.NonSpacingMark || cat == UnicodeCategory.SpacingCombiningMark || cat == UnicodeCategory.DecimalDigitNumber || cp == "." || cp == "-" || cp == "_" || cp == "'";
+                if (ok) { parts.Add(cp); sp = false; }
             }
-            var s = sb.ToString().Trim(); return s.Length > 32 ? s.Substring(0, 32).Trim() : s;
+            while (parts.Count > 0 && parts[parts.Count - 1] == " ") parts.RemoveAt(parts.Count - 1);
+            if (parts.Count > 32) { parts = parts.Take(32).ToList(); while (parts.Count > 0 && parts[parts.Count - 1] == " ") parts.RemoveAt(parts.Count - 1); }
+            return string.Concat(parts);
         }
         public static string Date(DateTime d) { return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); }
         // ADB-XXXX-XXXX-XXXX-XXXX: the first 80 bits of the HMAC in base32 (no 0/1/8/9 mix-ups: the RFC 4648 alphabet)
@@ -84,7 +94,7 @@ namespace AdeeboMeter
                 using (var f1 = new Font("Segoe UI", 20f, FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("AdeeboMeter", f1, white, 128, 64);
                 using (var fk = new Font("Segoe UI", 22f, FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("ADEEBO AWARD", fk, gold, 60, 150);
                 string nm = CleanName(name); if (nm == "") nm = "A network detective";
-                using (var fn = Fit(g, nm, 900, 76)) g.DrawString(nm, fn, white, 54, 182);
+                using (var fn = Fit(g, ref nm, 880, 76)) g.DrawString(nm, fn, white, 54, 182);
                 using (var fp = new Font("Segoe UI", 30f, FontStyle.Regular, GraphicsUnit.Pixel)) g.DrawString(total.ToString(CultureInfo.InvariantCulture) + " Adeebo Points  ·  " + date, fp, soft, 60, 290);
                 // what it took
                 float y = 370;
@@ -122,9 +132,15 @@ namespace AdeeboMeter
             }
             return bmp;
         }
-        static Font Fit(Graphics g, string s, float maxW, float size)
+        static Font Fit(Graphics g, ref string s, float maxW, float size)
         {
-            for (float z = size; ; z -= 4) { var f = new Font("Segoe UI", z, FontStyle.Bold, GraphicsUnit.Pixel); if (z <= 36 || g.MeasureString(s, f).Width <= maxW) return f; f.Dispose(); }
+            for (float z = size; ; z -= 4)
+            {
+                var f = new Font("Segoe UI", z, FontStyle.Bold, GraphicsUnit.Pixel);
+                if (g.MeasureString(s, f).Width <= maxW) return f;
+                if (z <= 40) { while (s.Length > 1 && g.MeasureString(s + "…", f).Width > maxW) s = s.Substring(0, s.Length - 1); s = s.TrimEnd() + "…"; return f; }
+                f.Dispose();
+            }
         }
         static void Star(Graphics g, float cx, float cy, float r, Color c)
         {

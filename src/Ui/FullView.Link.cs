@@ -260,13 +260,13 @@ namespace AdeeboMeter
                 y += 20 * S; int rank = 0;
                 foreach (var n in wr.Nets.Take(10))
                 {
-                    rank++; bool share = !n.Mine && n.Channel == wr.MyChannel;
-                    using (var nb = new SolidBrush(n.Mine ? Theme.Blue : share ? Theme.LvText(1) : Theme.Ink)) g.DrawString(rank + "  " + n.Name + (n.Mine ? "  (you)" : ""), n.Mine ? Draw.fBodyB : Draw.fBody, nb, new RectangleF(x, y, nameW - 6 * S, 20 * S), nowrap);
-                    g.DrawString(n.Rssi.ToString("0", CultureInfo.CurrentCulture) + " dBm · ch " + n.Channel + (n.Width > 20 ? " · " + n.Width + " MHz" : "") + (n.Moved != "" ? " · moved " + n.Moved : ""), Draw.fSmall, share ? amb : sub, new RectangleF(x + nameW, y + 2 * S, infoW - 6 * S, 18 * S), nowrap);
+                    rank++; bool share = !n.Mine && !n.Same && AirLog.Overlap(n.Channel, n.Width, wr.MyChannel, wr.MyWidth, wr.MyBand);
+                    using (var nb = new SolidBrush(n.Mine ? Theme.Blue : share ? Theme.LvText(1) : Theme.Ink)) g.DrawString(rank + "  " + n.Name + (n.Mine ? "  (" + L.T("you") + ")" : ""), n.Mine ? Draw.fBodyB : Draw.fBody, nb, new RectangleF(x, y, nameW - 6 * S, 20 * S), nowrap);
+                    g.DrawString(n.Rssi.ToString("0", CultureInfo.CurrentCulture) + " dBm · ch " + n.Channel + (n.Width > 20 ? " · " + n.Width + " MHz" : "") + (n.Moved != "" ? " · " + L.T("moved") + " " + n.Moved : ""), Draw.fSmall, share ? amb : sub, new RectangleF(x + nameW, y + 2 * S, infoW - 6 * S, 18 * S), nowrap);
                     for (int i = 0; i < days.Count; i++)
                     {
                         string win; bool won = wr.Winner.TryGetValue(days[i], out win) && (n.Mine ? win == "you" : win == n.Name);
-                        int ch; bool here = n.ChByDay.TryGetValue(days[i], out ch); bool onMine = here && (ch == wr.MyChannel || LinkInfo.Overlaps(ch, wr.MyChannel, wr.MyBand));
+                        int ch, myCh; bool here = n.ChByDay.TryGetValue(days[i], out ch); bool onMine = here && wr.MyChByDay.TryGetValue(days[i], out myCh) && (n.Mine || AirLog.Overlap(ch, n.WidthByDay[days[i]], myCh, wr.MyWidth, wr.MyBand));
                         var cr = new RectangleF(x + nameW + infoW + i * dayW + dayW / 2 - 7 * S, y + 3 * S, 14 * S, 14 * S);
                         if (won) using (var wb = new SolidBrush(n.Mine ? Theme.Green : Theme.Amber)) g.FillEllipse(wb, cr);
                         else if (onMine) using (var p = new Pen(n.Mine ? Theme.Green : Theme.Amber, 1.5f * S)) g.DrawEllipse(p, cr);

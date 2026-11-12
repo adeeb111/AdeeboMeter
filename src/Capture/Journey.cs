@@ -20,7 +20,7 @@ namespace AdeeboMeter
         public sealed class Rec
         {
             public double T; public bool Out; public int Len, IpLen, Proto, Flags, Win, PayLen, Ttl, Dscp; public uint Seq, Ack;
-            public int IcmpType = -1, IcmpCode = -1, IcmpMtu; public bool FromRouter;
+            public int IcmpType = -1, IcmpCode = -1, IcmpMtu; public bool FromRouter; public int LPort;   // this PC's port: tells one connection from another
             public bool Resend, DupAck, Before, Keepalive;   // Before: from the rewind buffer, before you clicked
             public double GapBefore;              // a stall right before this packet (seconds), 0 if none
             public string Say = "";
@@ -84,6 +84,7 @@ namespace AdeeboMeter
             {
                 string s = Plain(k.Src);
                 var r = new Rec { T = k.Abs - t0, Out = s != f.Remote, Len = k.Len, IpLen = k.IpLen, Proto = k.Proto, Flags = k.Flags, Win = k.Win, PayLen = k.PayLen, Ttl = k.Ttl, Dscp = k.Dscp, Seq = k.Seq, Ack = k.Ack };
+                r.LPort = r.Out ? k.SrcPort : k.DstPort;
                 if ((k.Proto == 1 || k.Proto == 58) && k.Payload.Length >= 4)
                 {
                     r.IcmpType = k.Payload[0]; r.IcmpCode = k.Payload[1]; r.FromRouter = s != f.Remote; r.Out = false;

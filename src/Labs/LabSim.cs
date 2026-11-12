@@ -86,9 +86,15 @@ namespace AdeeboMeter
         public sealed class JitterOut { public double LatePct, MouthToEarMs, Mos; }
         public static List<double> Arrivals(double jitterMs, int n, int seed)
         {
-            // network delay on top of the fastest packet: mostly small, sometimes a long tail - the shape real jitter has
-            var rnd = new Random(seed); var l = new List<double>();
-            for (int i = 0; i < n; i++) { double u = rnd.NextDouble(); l.Add(-Math.Log(1 - u * 0.999) * jitterMs); }
+            // how much later than usual each packet arrives: a normal spread around the usual time (early ones count as on
+            // time), scaled so the RFC 3550 jitter - the mean difference between neighbouring packets - is about jitterMs.
+            // That's why a buffer of about twice the jitter is the usual advice.
+            var rnd = new Random(seed); var l = new List<double>(); double sigma = jitterMs / 1.128;
+            for (int i = 0; i < n; i++)
+            {
+                double u1 = 1.0 - rnd.NextDouble(), u2 = rnd.NextDouble(), z = Math.Sqrt(-2 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2);
+                l.Add(Math.Max(0, sigma * z));
+            }
             return l;
         }
         public static JitterOut Jitter(List<double> extraDelays, double baseMs, double bufferMs, double lossPct)
@@ -96,7 +102,8 @@ namespace AdeeboMeter
             var o = new JitterOut(); if (extraDelays.Count == 0) return o;
             o.LatePct = 100.0 * extraDelays.Count(d => d > bufferMs) / extraDelays.Count;
             o.MouthToEarMs = baseMs + bufferMs + 20;   // + 20 ms for the codec on both ends
-            o.Mos = LiveCapture.Mos(baseMs + bufferMs, 0, lossPct + o.LatePct);
+            // a late packet is a gap the codec papers over (packet loss concealment): it hurts about half as much as a lost one
+            o.Mos = LiveCapture.Mos(baseMs + bufferMs, 0, lossPct + o.LatePct * 0.5);
             return o;
         }
 
@@ -150,6 +157,11 @@ namespace AdeeboMeter
         public static List<double> CwndFromCapture(List<Journey.Rec> recs, double rttS)
         {
             var res = new List<double>(); if (recs == null || recs.Count == 0 || rttS <= 0) return res;
+            // one connection only: a capture can hold several (a browser opens parallel ones) - sequence numbers from two
+            // connections can't be mixed, so take the busiest
+            var tcpRecs = recs.Where(x => x.Proto == 6).ToList(); if (tcpRecs.Count == 0) return res;
+            int port = tcpRecs.GroupBy(x => x.LPort).OrderByDescending(gr => gr.Sum(x => (long)x.PayLen)).First().Key;
+            recs = tcpRecs.Where(x => x.LPort == port).ToList();
             long inB = recs.Where(r => !r.Out).Sum(r => (long)r.PayLen), outB = recs.Where(r => r.Out).Sum(r => (long)r.PayLen); bool down = inB >= outB;
             uint hiSeq = 0, hiAck = 0; bool seqSet = false, ackSet = false; double t0 = recs[0].T, binEnd = t0 + rttS, best = 0;
             foreach (var r in recs.Where(x => x.Proto == 6))

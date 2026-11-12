@@ -106,12 +106,19 @@ namespace AdeeboMeter
             Func<double, string> pc = v => double.IsNaN(v) ? "-" : v.ToString("0.#", CultureInfo.CurrentCulture) + "%";
             // loss by count, not percent: one lost probe in 30 is 3% but means nothing; two is worth a look, three or more is real
             int gLost = gw.Count(double.IsNaN), nLost = Math.Max(0, net.Count(double.IsNaN) - gLost), sLost = srv.Count(double.IsNaN);
-            int lvHome = double.IsNaN(gA) ? 2 : (gA > 50 || gJ > 30 || gLost >= 3) ? 2 : (gA > 20 || gJ > 10 || gLost == 2) ? 1 : 0;
-            double ispA = double.IsNaN(nA) || double.IsNaN(gA) ? double.NaN : Math.Max(0, nA - gA);
-            int lvIsp = double.IsNaN(nA) ? 2 : (ispA > 60 || nJ - gJ > 20 || nLost >= 3) ? 2 : (ispA > 30 || nJ - gJ > 10 || nLost == 2) ? 1 : 0;
+            // no router data (the router check is off, or the router doesn't answer pings - many don't) is "can't tell",
+            // never "your home network": if the internet answers, the leg before the router can't be what's broken
+            bool gwEver; lock (m.L) gwEver = m.GwEverReplied;
+            bool gwUnknown = gw.Length == 0 || (double.IsNaN(gA) && (!gwEver || !double.IsNaN(nA)));
+            if (gwUnknown) { gLost = 0; nLost = net.Count(double.IsNaN); }
+            int lvHome = gwUnknown ? 3 : double.IsNaN(gA) ? 2 : (gA > 50 || gJ > 30 || gLost >= 3) ? 2 : (gA > 20 || gJ > 10 || gLost == 2) ? 1 : 0;
+            double ispA = double.IsNaN(nA) ? double.NaN : gwUnknown || double.IsNaN(gA) ? nA : Math.Max(0, nA - gA);
+            double ispJ = gwUnknown || double.IsNaN(gJ) ? nJ : nJ - gJ;
+            // no internet probes at all (the internet check is off by policy) is "can't tell" too
+            int lvIsp = net.Length == 0 ? 3 : double.IsNaN(nA) ? 2 : (ispA > (gwUnknown ? 80 : 60) || ispJ > 20 || nLost >= 3) ? 2 : (ispA > (gwUnknown ? 45 : 30) || ispJ > 10 || nLost == 2) ? 1 : 0;
             int lvSrv = srv.Length == 0 || double.IsNaN(sA) ? 3 : (sA > 120 || sJ > 25 || (sL > 3 && sLost >= 3)) ? 2 : (sA > 70 || sJ > 12 || (sL > 1 && sLost >= 2)) ? 1 : 0;
-            rows.Add(R(lvHome, kind == "Wi-Fi" ? "This PC → router (Wi-Fi)" : "This PC → router (cable)", ms(gA) + " · jitter " + ms(gJ) + " · lost " + gLost + " of " + gw.Length + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : ""), "Should be under 5 ms on a cable and under 10 ms on good Wi-Fi.", "i"));
-            rows.Add(R(lvIsp, "Router → your provider → internet", "+" + ms(ispA) + " · jitter " + ms(nJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
+            rows.Add(R(lvHome, kind == "Wi-Fi" ? "This PC → router (Wi-Fi)" : "This PC → router (cable)", gwUnknown ? (gw.Length == 0 ? "not measured - the router check is off in Settings" : "your router doesn't answer pings, so this leg can't be measured on its own") + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : "") : ms(gA) + " · jitter " + ms(gJ) + " · lost " + gLost + " of " + gw.Length + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : ""), "Should be under 5 ms on a cable and under 10 ms on good Wi-Fi.", "i"));
+            rows.Add(R(lvIsp, gwUnknown ? "This PC → your provider → internet" : "Router → your provider → internet", net.Length == 0 ? "not measured - the internet check is off" : (gwUnknown ? "" : "+") + ms(ispA) + " · jitter " + ms(nJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
             rows.Add(R(lvSrv, "→ the game's server" + (srvName != "" ? " (" + srvName + ")" : ""), srv.Length == 0 ? "not measured yet - add the game in the Gamer Zone and start it" : ms(sA) + " · jitter " + ms(sJ) + " · lost " + sLost + " of " + srv.Length, "Distance to the server sets the floor; the Gamer Zone compares regions.", "i"));
             // what else is going on
             double up = m.Up.Avg(10), down = m.Down.Avg(10), cpu = m.Cpu.Avg(10), mem = m.Mem.Avg(10);
