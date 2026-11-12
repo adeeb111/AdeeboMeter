@@ -30,16 +30,15 @@ namespace AdeeboMeter
         public static volatile bool Busy;
 
         // ---------- the list. Cloudflare first (it picks its nearest data centre itself), then cities, nearest-to-Canada first
-        // within each provider. Each file is a public test file the provider publishes for exactly this. Checked: see PLAN.
+        // within each provider. Each file is a public test file the provider publishes for exactly this. Every one answered from
+        // a home line in Ottawa on 11 Nov 2026; Linode's and Hetzner's test servers didn't (no answer / connection closed) - left out.
         static readonly string[][] Vultr = { new[] { "tor-ca", "Toronto" }, new[] { "nj-us", "New Jersey" }, new[] { "il-us", "Chicago" }, new[] { "ga-us", "Atlanta" }, new[] { "tx-us", "Dallas" }, new[] { "fl-us", "Miami" }, new[] { "wa-us", "Seattle" }, new[] { "sjo-ca-us", "Silicon Valley" }, new[] { "lax-ca-us", "Los Angeles" }, new[] { "lon-gb", "London" }, new[] { "par-fr", "Paris" }, new[] { "ams-nl", "Amsterdam" }, new[] { "fra-de", "Frankfurt" }, new[] { "sgp", "Singapore" }, new[] { "hnd-jp", "Tokyo" }, new[] { "sel-kor", "Seoul" }, new[] { "syd-au", "Sydney" } };
-        static readonly string[][] Linode = { new[] { "toronto1", "Toronto" }, new[] { "newark", "Newark" }, new[] { "atlanta", "Atlanta" }, new[] { "dallas", "Dallas" }, new[] { "fremont", "Fremont" }, new[] { "london", "London" }, new[] { "frankfurt", "Frankfurt" }, new[] { "mumbai1", "Mumbai" }, new[] { "singapore", "Singapore" }, new[] { "tokyo2", "Tokyo" }, new[] { "syd1", "Sydney" } };
-        static readonly string[][] Hetzner = { new[] { "ash", "Ashburn (Virginia)" }, new[] { "hil", "Hillsboro (Oregon)" }, new[] { "nbg1", "Nuremberg" }, new[] { "fsn1", "Falkenstein" }, new[] { "hel1", "Helsinki" }, new[] { "sin", "Singapore" } };
         public static List<Server> BuiltIn()
         {
             var l = new List<Server> { new Server { Id = "cloudflare", Provider = "Cloudflare", Where = "nearest", Down = "https://speed.cloudflare.com/__down?bytes=25000000", Up = "https://speed.cloudflare.com/__up" } };
             l.AddRange(Vultr.Select(v => new Server { Id = "vultr-" + v[0], Provider = "Vultr", Where = v[1], Down = "https://" + v[0] + "-ping.vultr.com/vultr.com.100MB.bin" }));
-            l.AddRange(Linode.Select(v => new Server { Id = "linode-" + v[0], Provider = "Linode (Akamai)", Where = v[1], Down = "https://speedtest." + v[0] + ".linode.com/100MB-" + v[0] + ".bin" }));
-            l.AddRange(Hetzner.Select(v => new Server { Id = "hetzner-" + v[0], Provider = "Hetzner", Where = v[1], Down = "https://" + v[0] + "-speed.hetzner.com/100MB.bin" }));
+            l.Add(new Server { Id = "ovh-ca", Provider = "OVHcloud", Where = "Beauharnois (Montreal)", Down = "https://proof.ovh.ca/files/100Mb.dat" });
+            l.Add(new Server { Id = "ovh-fr", Provider = "OVHcloud", Where = "Roubaix (France)", Down = "https://proof.ovh.net/files/100Mb.dat" });
             return l;
         }
         public static string FilePath { get { return Path.Combine(Program.DataDir, "speedservers.txt"); } }

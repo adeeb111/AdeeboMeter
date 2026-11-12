@@ -1933,7 +1933,7 @@ friendly: Speed test
 cat: term
 close: -1
 tag: How fast is my internet right now - to the city I choose?
-what: Downloads (and, where the server allows, uploads) for about 8 seconds each and pings that server while the line is full - so you see the speed and whether calls and games would stutter while someone downloads. Pick the server: Auto (Cloudflare's nearest data centre, download and upload), or a city from Vultr, Linode or Hetzner's public test files (download only), or your own file URL. "Find the closest server" pings each one once and picks the quickest.
+what: Downloads (and, where the server allows, uploads) for about 8 seconds each and pings that server while the line is full - so you see the speed and whether calls and games would stutter while someone downloads. Pick the server: Auto (Cloudflare's nearest data centre, download and upload), or a city from Vultr's or OVHcloud's public test files (download only), or your own file URL. "Find the closest server" pings each one once and picks the quickest.
 how: Only when you press it - never in the background. Nothing about you is sent; the server only sees an ordinary download. Capped at 400 MB down and 100 MB up. A few providers' test files have no HTTPS - then the test data comes over plain HTTP and the result says so. Your own servers go in speedservers.txt in AdeeboMeter's data folder: server|id|provider|city|download URL|upload URL. In the Toolbox, type list to see every server or check to see which answer from here.
 why: "Is it my internet?" usually starts here. Testing to a city also answers "is it slow everywhere, or only to Europe?" - and the ping while the line is busy matters as much as the speed.
 without: Open a speed-test website in your browser.
