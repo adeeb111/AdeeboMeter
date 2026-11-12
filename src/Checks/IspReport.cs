@@ -34,7 +34,9 @@ namespace AdeeboMeter
         sealed class Route { public string Label, Host; public IPAddress Ip; public List<PathTools.Hop> Hops = new List<PathTools.Hop>(); }
 
         // input: a game you added ("valorant"), a host name or an IP; minutes: 1, 2 or 5
-        public static List<string[]> Run(Monitor m, string what, string minutes, Toolkit.Run run)
+        public static List<string[]> Run(Monitor m, string what, string minutes, Toolkit.Run run) { return Run(m, what, minutes, "", run); }
+        // withIp: "yes" adds your public address (one HTTPS request to Cloudflare's trace page) - off unless you type yes
+        public static List<string[]> Run(Monitor m, string what, string minutes, string withIp, Toolkit.Run run)
         {
             var rows = new List<string[]>();
             string q = (what ?? "").Trim(); int min; if (!int.TryParse((minutes ?? "").Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out min) || (min != 1 && min != 2 && min != 5)) min = 2;
@@ -102,11 +104,18 @@ namespace AdeeboMeter
             if (end != null) rows.Add(R(Lv(Loss(end)), "Destination (hop " + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
 
             // hop by hop
-            rows.Add(R(-1, "HOP BY HOP", "loss at one hop that doesn't continue to the next ones is that router ignoring probes - not a problem", "", "m"));
+            // who owns each public hop: only with online lookups switched on (public addresses go to RIPEstat) - otherwise said
+            var owners = new Dictionary<string, string>();
+            if (Online.On)
+            {
+                run.Status = "Looking up who owns each network (online lookups are on)...";
+                foreach (var ip in main.Hops.Select(h => h.Ip).Where(Online.Shareable).Distinct().Take(30)) { var o = Online.Owner(ip); if (o.Asn != "") owners[ip] = "AS" + o.Asn + (o.Name != "" ? " " + o.Name : ""); }
+            }
+            rows.Add(R(-1, "HOP BY HOP", "loss at one hop that doesn't continue to the next ones is that router ignoring probes - not a problem" + (Online.On ? "" : " · turn on online lookups (Settings) to name who owns each network"), "", "m"));
             foreach (var h in main.Hops)
             {
-                double l = Loss(h); bool real = start >= 0 && h.N >= main.Hops[start].N;
-                rows.Add(R(h.Ip == "" ? 3 : real ? 2 : l >= 3 ? 1 : 0, "Hop " + h.N, nm(h.Ip) + (h.Ip != "" && nm(h.Ip) != h.Ip ? " (" + h.Ip + ")" : "") + " · avg " + F(Avg(h), " ms") + " · worst " + F(h.Worst, " ms") + " · loss " + F(l, "%"), l >= 3 && !real ? "doesn't carry on - not real" : "", "m"));
+                double l = Loss(h); bool real = start >= 0 && h.N >= main.Hops[start].N; string own; owners.TryGetValue(h.Ip, out own);
+                rows.Add(R(h.Ip == "" ? 3 : real ? 2 : l >= 3 ? 1 : 0, "Hop " + h.N, nm(h.Ip) + (h.Ip != "" && nm(h.Ip) != h.Ip ? " (" + h.Ip + ")" : "") + (own != null ? " · " + own : "") + " · avg " + F(Avg(h), " ms") + " · worst " + F(h.Worst, " ms") + " · loss " + F(l, "%"), l >= 3 && !real ? "doesn't carry on - not real" : "", "m"));
             }
 
             // the same moment over two routes
@@ -141,6 +150,17 @@ namespace AdeeboMeter
             rows.Add(R(-1, "THE LINE", "", "", "m"));
             rows.Add(R(wifi ? 1 : 0, "Connection", wifi ? "Wi-Fi - a provider will ask you to test on a cable first" : "Ethernet (cable)", "", "w"));
             rows.Add(R(3, "DNS", string.IsNullOrEmpty(dns) ? "-" : dns, "", "w"));
+            int pmtu; lock (m.L) pmtu = m.PrimaryMtu;
+            bool v6 = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().Any(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && n.GetIPProperties().UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !Private(u.Address)));
+            rows.Add(R(3, "Addresses", "IPv4" + (v6 ? " and IPv6 (a public IPv6 address)" : " only - no public IPv6") + (pmtu > 0 ? " · adapter MTU " + pmtu : ""), "", "w"));
+            var spd = SpeedTest.Last;
+            if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms") + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
+            else rows.Add(R(3, "Speed and queueing", "not measured today - press Test my speed on the home page, then make the report again", "", "u"));
+            if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
+            {
+                run.Status = "Asking Cloudflare for your public address (you said yes)...";
+                string pub = PublicIp(); rows.Add(R(3, "Your public address", pub != "" ? pub : "couldn't get it", "Your provider can find your line by it. Leave it out if you'll post the report publicly.", "m"));
+            }
             run.Status = "Reading the cable modem (if it shows its levels)...";
             foreach (var l in Modem()) rows.Add(l);
 
@@ -151,12 +171,27 @@ namespace AdeeboMeter
             foreach (var o in Outages.Last(m, 7).Take(5)) rows.Add(R(2, "Internet outage", Outages.Text(o), "", "h"));
             if (sp.Count == 0) rows.Add(R(3, "Spikes", "none recorded yet", "", "m"));
 
+            // what's already ruled out - the first things a support desk asks you to check
+            var ruled = new List<string>();
+            var hop1 = main.Hops.FirstOrDefault();
+            if (hop1 != null && hop1.Sent > 0 && Loss(hop1) < 1 && Avg(hop1) < 10) ruled.Add("the home network - the router answered every probe, in " + F(Avg(hop1), " ms"));
+            int sig; lock (m.L) sig = m.WifiSignal;
+            if (wifi && sig >= 60) ruled.Add("Wi-Fi signal (" + sig + "%)"); else if (!wifi) ruled.Add("Wi-Fi - measured on a cable");
+            double dnsMs = m.Dns.Avg(10); if (!double.IsNaN(dnsMs) && dnsMs < 100) ruled.Add("DNS - names look up in " + Math.Round(dnsMs) + " ms");
+            var snap = m.Latest; if (snap != null && !double.IsNaN(snap.Cpu) && snap.Cpu < 70) ruled.Add("this PC - CPU " + Math.Round(snap.Cpu) + "%");
+            if (spd != null && (DateTime.Now - spd.T).TotalHours < 24 && spd.Grade.StartsWith("A", StringComparison.Ordinal)) ruled.Add("the router's queue - grade " + spd.Grade + " under load");
+            rows.Add(R(-1, "ALREADY RULED OUT", "", "", "m"));
+            if (ruled.Count == 0) rows.Add(R(3, "Nothing yet", "fix what the report found on the home side first, then run it again", "", "m"));
+            foreach (var r in ruled) rows.Add(R(0, "Checked", r, "", "m"));
+
             // the message to paste, and the report file
             string msg = Message(finding, routes, main, start, firstIsp, wifi, nm, heat);
             rows.Add(R(-1, "MESSAGE FOR YOUR PROVIDER'S SUPPORT CHAT", "click to copy", "", "i"));
             rows.Add(new[] { "3", "Message", msg, "", "i", "copy:" + msg });
             string file = Save(rows, ssid);
             if (file != null) rows.Add(new[] { "0", "Report saved", Path.GetFileName(file) + " - open it in your browser and Print > Save as PDF to attach it", "", "m", "show:" + file });
+            string csv = SaveCsv(routes, file);
+            if (csv != null) rows.Add(new[] { "3", "Raw data", Path.GetFileName(csv) + " - every hop of every route, for a network engineer", "", "m", "show:" + csv });
             return rows;
         }
         static int Lv(double loss) { return double.IsNaN(loss) ? 3 : loss >= 3 ? 2 : loss >= 1 ? 1 : 0; }
@@ -265,6 +300,39 @@ namespace AdeeboMeter
                 return file;
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("isp report: " + e.Message); return null; }
+        }
+        // every hop of every route, comma-separated (opens in Excel); private addresses are kept out like in the report
+        static string SaveCsv(List<Route> routes, string html)
+        {
+            if (html == null) return null;
+            try
+            {
+                var sb = new StringBuilder("route,hop,address,sent,lost,loss_pct,avg_ms,best_ms,worst_ms,jitter_ms\r\n");
+                foreach (var r in routes)
+                    foreach (var h in r.Hops)
+                    {
+                        IPAddress a; string ip = IPAddress.TryParse(h.Ip, out a) && Private(a) ? "(private)" : h.Ip;
+                        sb.Append(string.Join(",", new[] { "\"" + r.Label.Replace("\"", "'") + "\"", h.N.ToString(CultureInfo.InvariantCulture), ip, h.Sent.ToString(CultureInfo.InvariantCulture), h.Lost.ToString(CultureInfo.InvariantCulture), Num(Loss(h)), Num(Avg(h)), Num(h.Best), Num(h.Worst), Num(h.Jit) })).Append("\r\n");
+                    }
+                string file = Path.ChangeExtension(html, ".csv"); File.WriteAllText(file, sb.ToString(), new UTF8Encoding(false)); return file;
+            }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("isp csv: " + e.Message); return null; }
+        }
+        static string Num(double v) { return double.IsNaN(v) ? "" : v.ToString("0.#", CultureInfo.InvariantCulture); }
+        // your public address, from Cloudflare's plain-text trace page - only when you asked for it
+        static string PublicIp()
+        {
+            try
+            {
+                var req = (HttpWebRequest)WebRequest.Create("https://www.cloudflare.com/cdn-cgi/trace"); req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                using (var resp = req.GetResponse()) using (var rd = new StreamReader(resp.GetResponseStream()))
+                {
+                    var buf = new char[4096]; int n = rd.Read(buf, 0, buf.Length);
+                    var mm = Regex.Match(new string(buf, 0, n), @"(?m)^ip=([0-9a-fA-F:.]{2,45})\s*$"); IPAddress a;
+                    return mm.Success && IPAddress.TryParse(mm.Groups[1].Value, out a) ? a.ToString() : "";
+                }
+            }
+            catch (Exception e) { if (!(e is WebException || e is IOException)) throw; return ""; }
         }
         static string Esc(string s) { return System.Net.WebUtility.HtmlEncode(s ?? ""); }
     }

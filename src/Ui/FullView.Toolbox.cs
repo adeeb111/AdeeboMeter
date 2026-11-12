@@ -99,7 +99,7 @@ namespace AdeeboMeter
                 T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
                 T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
                 T("speedtest", "SPEED", "Speed test", "Server - empty = your usual, auto, a city (vultr toronto), a file URL - or list / check", (a, r) => SpeedTest.Run(a[0], r)),
-                T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes", (a, r) => IspReport.Run(M, a[0], a[1], r)),
+                T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes|Include my public IP? type yes (it asks Cloudflare once) - no by default", (a, r) => IspReport.Run(M, a[0], a[1], a[2], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
                 T("pfx", "CERTS", "Check a PFX / P12", "File path|Password - used once, never kept", (a, r) => CertTools.Pfx(a[0], a[1])),
