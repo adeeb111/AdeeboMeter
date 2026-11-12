@@ -37,7 +37,7 @@ namespace AdeeboMeter
             SyncLearnView();
             return learnPage;
         }
-        static readonly string[][] LearnGroups = { new[] { "basics", "START HERE - HOW APPS USE THE INTERNET" }, new[] { "protocol", "PROTOCOLS - HOW YOUR PACKETS TALK" }, new[] { "windows", "WINDOWS - WHAT'S INSIDE" }, new[] { "apps", "TEAMS AND OFFICE" } };
+        static readonly string[][] LearnGroups = { new[] { "basics", "START HERE - HOW APPS USE THE INTERNET" }, new[] { "protocol", "PROTOCOLS - HOW YOUR PACKETS TALK" }, new[] { "provider", "INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING" }, new[] { "mobile", "INSIDE THE MOBILE NETWORK - 4G AND 5G" }, new[] { "windows", "WINDOWS - WHAT'S INSIDE" }, new[] { "apps", "TEAMS AND OFFICE" } };
         void PaintLearnList(Graphics g)
         {
             g.TranslateTransform(learnList.AutoScrollPosition.X, learnList.AutoScrollPosition.Y);

@@ -40,6 +40,7 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 
 ### New: Learn, redesigned - and Games
 - Learn by goal (cards for Start here, packets, Windows, apps, Labs, Games, Check yourself and Learning paths, each with your progress) or All (the list beside the reading pane, with Topics / Labs / Games / Terms chips) - switched like the Toolbox.
+- Two new Learn sections, each with how it works, a ladder and a check question: inside the internet (BGP, OSPF and IS-IS, MPLS, L3VPN, multicast for IPTV, how Netflix, HBO and YouTube stream, live football delay) and inside the mobile network (towers, the 4G core, the 5G core, attach and registration, APN/DNN and sessions, NSA vs SA).
 - Games, all on a made-up network - nothing real is sent or changed: a network escape room (10 faults, a simulated console, 10 minutes, hints cost time), catch the thief (5 cases), packet detective (10 puzzles) and two quick-fire rounds (ports, address kinds). First solve of each earns Adeebo Points.
 
 ### New: gaming, your network over time, sharing

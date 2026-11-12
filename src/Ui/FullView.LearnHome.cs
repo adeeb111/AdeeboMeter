@@ -17,6 +17,8 @@ namespace AdeeboMeter
         static readonly string[][] LearnCards = {
             new[] { "basics", "Start here", "How apps use the internet - in plain words." },
             new[] { "protocol", "How your packets talk", "DNS, DHCP, TCP, TLS, Wi-Fi... two lines and a picture each." },
+            new[] { "provider", "Inside the internet", "BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football reach you." },
+            new[] { "mobile", "Inside the mobile network", "Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA." },
             new[] { "windows", "Inside Windows", "What all those processes and services are for." },
             new[] { "apps", "Teams and office apps", "What a call or a sync really does on the network." },
             new[] { "labs", "Labs", "Play with how networks behave, with your own numbers." },

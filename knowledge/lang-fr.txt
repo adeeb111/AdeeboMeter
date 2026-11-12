@@ -764,3 +764,10 @@ Your phone's camera reads it - nothing is sent.	L'appareil photo de votre télé
 not on the map	pas sur la carte
 green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server	vert sous 50 ms · orange sous 100 · rouge au-dessus · gris : pas encore de ping · anneau = une région estimée (la région cloud du jeu), point = un vrai serveur
 6 months	6 mois
+Inside the internet	Dans internet
+Inside the mobile network	Dans le réseau mobile
+HOW IT WORKS	COMMENT ÇA MARCHE
+BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football reach you.	BGP, OSPF et IS-IS, MPLS, L3VPN, la TV en multicast, comment Netflix et le foot en direct vous arrivent.
+Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA.	Antennes, cœurs 4G et 5G (MME, AMF, SMF, UPF), rattachement, sessions, NSA ou SA.
+INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING	DANS INTERNET - OPÉRATEURS, TV ET STREAMING
+INSIDE THE MOBILE NETWORK - 4G AND 5G	DANS LE RÉSEAU MOBILE - 4G ET 5G

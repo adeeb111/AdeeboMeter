@@ -158,15 +158,6 @@ live: udp port 3478 or udp port 3479 or udp port 3480 or udp port 3481
 try: Join a Teams call.
 ladder: Teams > Your PC: mark audio EF (express) | Your PC > Router: EF packet | Router > Internet: label often removed here
 
-== bgp
-title: BGP - how networks agree on routes
-kind: protocol
-tag: The internet's map, drawn by agreements between providers.
-check: What does BGP do? | Lets networks (providers) tell each other which addresses they can reach | Gives your PC an address | Encrypts web pages | Finds hardware addresses
-line: How the networks of the internet tell each other which addresses they can reach.
-breaks: When a provider announces something wrong, whole sites vanish for everyone at once.
-ladder: Your provider > Neighbour network: I can reach 24.x.x.x | Neighbour > Internet: via me | Internet > Your provider: traffic for you
-
 == boot-chain
 title: How Windows starts, from power to desktop
 kind: windows
@@ -460,3 +451,145 @@ breaks: Many pages read back per second, or a disk taking more than 15 ms per re
 ladder: App > Memory: I need my code | Memory > Disk: it was parked - read it back | Disk > Memory: here (12 ms later) | Memory > App: carry on
 live:
 try: Open a heavy app.
+
+# ---------------------------------------------------------------- inside a provider's network (kind: provider)
+== bgp
+title: BGP - how the internet's networks agree on the way
+kind: provider
+tag: Thousands of networks, each telling its neighbours what it can reach.
+check: What does BGP decide? | Which network-to-network path traffic takes across the internet | Which Wi-Fi channel your router uses | Which IP address your PC gets | How fast a single cable runs
+line: The internet is about 75,000 networks (autonomous systems, each with an AS number). BGP is how they tell each other "I can reach these addresses, through me".
+more: Each provider runs BGP on its border routers. A route carries the path of AS numbers it went through; routers prefer the shortest AS path unless a business rule says otherwise (a cheaper neighbour, a paying customer first). Inside a provider, the same routes are spread with internal BGP (iBGP, often via route reflectors). Peering at an internet exchange (IXP) is two networks connecting directly for free; transit is paying a bigger network to reach everyone else. That's why one site is fast and another, just as close, is slow: the way there is a business decision. AdeeboMeter's "Who carries my traffic (BGP)" shows the networks your packets cross.
+breaks: A wrong announcement (a "route leak" or hijack) can send traffic the wrong way for the whole internet in minutes. A slow site that's slow for everyone on your provider is often a peering choice, not your line.
+ladder: Your provider > Transit network: UPDATE - 198.51.100.0/24 is reachable through AS64500 | Transit network > The world: UPDATE - 198.51.100.0/24 via AS64510 AS64500 | Content network > Transit network: traffic for 198.51.100.7 | Transit network > Your provider: forwarded, following the path it learned
+
+== igp
+title: OSPF and IS-IS - the map inside one network
+kind: provider
+tag: Every router knows the whole map of its own network, and the shortest way across it.
+check: What do OSPF and IS-IS build inside a provider's network? | A map of every router and link, to work out the shortest paths | The list of websites customers visit | Wi-Fi passwords | The public routes of other networks
+line: Inside one provider, routers run a link-state protocol - OSPF or IS-IS - so each one holds the same map of all routers and links, with a cost on each link.
+more: Every router floods small notices about its own links (OSPF's LSAs, IS-IS's LSPs). Each then runs Dijkstra's shortest-path algorithm on the full map. When a fibre is cut, the routers at each end flood the change and every router recomputes - in well-tuned networks, well under a second, and fast-reroute backups are often ready before that. BGP decides which exit to use; OSPF or IS-IS find the way to that exit. Big providers often prefer IS-IS: it runs directly on the link layer, not over IP, and copes well with very large single areas. OSPF splits big networks into areas around a backbone area 0.
+breaks: Two routers that disagree on timers, area or MTU never become neighbours, and part of the map goes missing. A flapping link makes every router recompute again and again - the network "churns".
+ladder: Router A > Router B: Hello - I'm A, area 0 | Router B > Router A: Hello - I see you | Router A > Router B: here is my whole link database | Router B > Everyone: my link to C just went down (new LSA) | Every router > Itself: run shortest path again, update the routes
+
+== mpls
+title: MPLS - labels for fast lanes through the core
+kind: provider
+tag: A short label on the front of each packet decides where it goes next.
+check: What does an MPLS router look at to forward a packet? | A short label added in front of the packet | The website's name | The Wi-Fi signal | The packet's payload
+line: At the edge of a provider's network the packet gets a label; core routers just swap labels along a pre-built path (an LSP) without reading the IP address underneath.
+more: Labels are handed out by LDP or, more and more, carried in the IGP itself (segment routing). A packet can carry a stack: an outer label for the path across the core and an inner label that says which customer or service it belongs to. That inner label is what makes VPNs, Ethernet services and traffic engineering possible on one shared network. The last-but-one router usually pops the outer label (penultimate hop popping) so the exit router only sees the service label. Traceroute through MPLS often shows hops with labels (ICMP extensions) - or hides them entirely when the provider tunnels them.
+breaks: Labels add 4 bytes each; if the core's MTU wasn't raised to carry them, big packets get dropped - an MTU black hole inside the provider.
+ladder: Customer router > Provider edge PE1: IP packet to 10.2.0.9 | PE1 > Core P1: label 300 (path) + label 17 (customer VPN) + packet | P1 > P2: label 410 + 17 + packet (swapped) | P2 > PE2: label 17 + packet (outer label popped) | PE2 > Customer site B: IP packet to 10.2.0.9
+
+== l3vpn
+title: L3VPN (VRF, VPRN) - a private network inside the provider
+kind: provider
+tag: Many companies on one provider network, each in its own walled routing table.
+check: Two companies both use 10.0.0.0/8 over the same provider. What keeps them apart? | Each has its own routing table (a VRF) and its own VPN label | They take turns | The provider changes their addresses | Wi-Fi encryption
+line: An enterprise connects its offices through the provider. The provider edge keeps a separate routing table per customer (a VRF - some vendors call the service a VPRN), so overlapping private addresses never mix.
+more: Customer routes are learned at each site (static, OSPF or BGP), then carried between provider edges by MP-BGP as VPN-IPv4 routes: the customer's prefix plus a route distinguisher to keep it unique, plus route targets that say which VRFs import it - that's how a hub-and-spoke or a shared-services VPN is built. In the core the traffic rides MPLS (or segment routing / SRv6) with an inner VPN label. Internet access for the same company is often just another VRF. EVPN is the same idea for Ethernet (layer 2) services and data-centre fabrics.
+breaks: A route-target typo means a branch silently can't see head office. Overlapping addresses are fine inside separate VRFs and break the moment two are joined.
+ladder: Branch router > PE-Branch: OSPF - I have 10.20.0.0/16 | PE-Branch > Route reflector: MP-BGP - RD 64500:7 10.20.0.0/16, label 22, target "Acme" | Route reflector > PE-Head office: the same route | PE-Head office > Head-office router: 10.20.0.0/16 is reachable through me | Head office > Branch: traffic, carried with VPN label 22
+
+== multicast
+title: Multicast - one TV stream for thousands of homes
+kind: provider
+tag: Sent once, copied only where someone is watching.
+check: Why does IPTV use multicast? | The stream is sent once and copied only where viewers are | It encrypts the channel | It makes the picture sharper | It avoids needing a router
+line: A live channel is one multicast group address. Your set-top box joins the group; routers copy the stream only onto links where somebody is watching.
+more: The box sends an IGMP "join" (MLD on IPv6) when you change channel; the access switch or router notes it (IGMP snooping keeps it off ports that didn't ask). Routers build a distribution tree toward the source with PIM - usually source-specific (PIM-SSM: "this channel from that server"). One 8 Mbps channel watched by 50,000 homes costs the core 8 Mbps, not 400 Gbps. Channel change speed depends on how fast the join reaches a router that already has the stream - providers add fast-channel-change servers that blast a short unicast burst while the multicast joins. Ordinary internet streaming (Netflix, YouTube) can't use multicast - every viewer pulls their own copy.
+breaks: IGMP snooping off on a home switch floods the TV stream to every port - Wi-Fi collapses. A join that never reaches the tree gives a black screen while the internet works fine.
+ladder: Set-top box > Home router: IGMP join 239.1.1.5 (channel 5) | Home router > Provider router: join 239.1.1.5 | Provider router > Toward the TV head-end: PIM join (S,G) | TV head-end > Many routers: one stream, copied at each branch | Provider router > Set-top box: channel 5, 8 Mbps
+
+== cdn
+title: Netflix, HBO and YouTube - how streaming really reaches you
+kind: provider
+tag: The film comes from a box inside your provider, a few chunks at a time.
+check: Where does a Netflix film usually come from? | A cache server inside or next to your provider's network | Netflix's head office | Your neighbour's PC | A satellite every time
+line: Big streamers put cache servers (a CDN - Netflix's is Open Connect) inside providers' networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.
+more: The video is cut into 2-10 second segments, each encoded at several qualities (a "ladder" from 240p to 4K). The player (DASH or HLS) keeps a buffer of upcoming segments; if downloads slow, it picks a lower rung - that's why quality drops before the video stops. Buffering only happens when the buffer runs dry. Popular titles are pre-loaded onto the caches overnight; a DNS answer or a steering service sends you to the nearest healthy cache. HBO, Disney+ and YouTube work the same way with their own or rented CDNs. 4K needs about 15-25 Mbps steady - the average speed matters less than the dips.
+breaks: A busy evening Wi-Fi or a provider link to the CDN that's full shows up as quality drops first, buffering second. A VPN can send you to a far-away cache - slower and lower quality.
+ladder: Your TV > Streaming service: play this film (sign-in, licence) | Streaming service > Your TV: use the cache cache-12 near you, here's the segment list | Your TV > Cache in your provider: segment 1, 1080p | Cache > Your TV: 4 s of video | Your TV > Cache: segment 2, 4K (the buffer is healthy - go up a rung)
+
+== livesport
+title: Live football online - why your neighbour cheers first
+kind: provider
+tag: Live streams are chunked, cached and buffered - 20 to 60 seconds behind the pitch.
+check: Why is a live football stream often 30 seconds behind TV? | It is cut into chunks, encoded, sent through a CDN and buffered by the player | The camera is slow | Your Wi-Fi is weak | The referee adds a delay
+line: A live match goes camera → encoder → packager (chunks) → CDN → your player's buffer. Each step adds seconds; classic HLS sits 20-45 s behind broadcast.
+more: Low-latency HLS and DASH cut chunks into small parts and push them as soon as they exist, getting to 3-8 seconds - but with a smaller buffer, a Wi-Fi hiccup stalls the picture sooner. A big match is the hardest day for a CDN: millions ask for the same seconds at the same moment, so providers pre-position capacity and some use multicast-assisted delivery inside their own network. Satellite and IPTV multicast are usually closer to live than online apps. Picture stutter on a big match night is often the shared links, not your line.
+breaks: Shrinking the buffer for lower delay makes stalls more likely. A goal alert on your phone beats the stream because notifications don't wait in a video buffer.
+ladder: Stadium cameras > Encoder: live picture | Encoder > Packager: video in 2 s chunks | Packager > CDN: chunk 4512 | Your app > CDN: newest chunk, please | CDN > Your app: chunk 4512 - it plays about 30 s after the kick
+
+# ---------------------------------------------------------------- inside the mobile network (kind: mobile)
+== mobile
+title: The mobile network in plain words
+kind: mobile
+tag: Your phone, the radio towers, and a core network that decides who you are and where your data goes.
+check: What are the three big parts of a mobile network? | The phone, the radio access network (towers), and the core network | Wi-Fi, Bluetooth and cable | The SIM, the screen and the battery | DNS, DHCP and NAT
+line: The phone (UE) talks by radio to a base station (eNodeB in 4G, gNodeB in 5G). The base stations connect over fibre to the core, which checks your SIM, gives you an IP address and sends your data to the internet.
+more: The radio access network (RAN) handles the air: scheduling who transmits when, handovers between cells, signal quality. The core does everything else: authentication (from the SIM's secret key), mobility (which tower you're under), sessions (your IP address and the path for your data), policy and charging. Control (signalling) and user data travel separately: signalling to the core's control functions, your packets through user-plane gateways. "Registered but no data" is a classic case where the control side worked and the data session didn't. A cellular router or a phone hotspot looks like any other router to your PC - AdeeboMeter sees the link to it, DNS and reachability, not the radio or the core.
+breaks: Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Weak signal with steady bars is often a busy cell - many users sharing it.
+ladder: Phone > Tower: radio connection | Tower > Core (control): who is this, may they connect? | Core > Phone: welcome, here is your IP address | Phone > Tower > Core (user plane): your data | Core > Internet: your data, from the phone's address
+
+== ran
+title: eNodeB and gNodeB - the towers
+kind: mobile
+tag: The base station: radio on one side, fibre to the core on the other.
+check: What is a gNodeB? | The 5G base station (the "tower" equipment) | A type of SIM card | The 5G core's database | A Wi-Fi router
+line: eNodeB is the 4G base station, gNodeB the 5G one. They schedule the radio, measure your signal, hand you to a better cell, and connect to the core over S1 (4G) or N2 and N3 (5G).
+more: Each cell broadcasts its identity; the phone measures signal strength (RSRP) and quality (RSRQ, SINR) and reports them, and the base station decides handovers - directly over the X2/Xn link to the neighbour cell when it can. A 5G gNodeB is often split: a radio unit on the mast, distributed and central units further back (CU/DU split, O-RAN). Early 5G is "non-standalone" (NSA): 5G radio added to a 4G eNodeB, still on the 4G core. "Standalone" (SA) uses the 5G core. RedCap is a lighter 5G for sensors and routers that don't need full speed.
+breaks: Good RSRP but poor SINR means interference or a busy cell, not distance. Constant handovers at a cell edge show up as short stalls and jitter.
+ladder: Phone > gNodeB: random access - I'd like to talk | gNodeB > Phone: radio resources granted | Phone > gNodeB: measurement report - neighbour cell is stronger | gNodeB > Neighbour gNodeB: handover request (Xn) | Neighbour > Phone: you're mine now
+
+== epc
+title: The 4G core: MME, SGW, PGW, HSS
+kind: mobile
+tag: The MME signals; the gateways carry your data.
+check: In a 4G core, which part handles signalling and mobility (not your data)? | The MME | The PGW | The eNodeB | The DNS server
+line: The MME authenticates you and tracks which area you're in. The SGW carries your data from the tower; the PGW gives you an IP address and connects to the internet (the APN). The HSS holds subscriber data.
+more: Signalling goes eNodeB → MME (S1-MME, protocol S1AP with NAS inside). Data goes in GTP-U tunnels: eNodeB → SGW (S1-U) → PGW (S5/S8) → internet (SGi). Each tunnel has an ID (TEID), so a capture on S1-U shows your packets wrapped in GTP. The MME asks the HSS for your keys and profile (S6a, Diameter); the PCRF sets policy and the bearers' QoS. When you roam, the PGW can be your home network's - your traffic goes home first, which is why roaming can be slow.
+breaks: An MME problem means phones can't attach at all. A PGW or APN problem means attached but no data - the bars look fine.
+ladder: eNodeB > MME: initial UE message (attach request) | MME > HSS: authentication info for this IMSI | MME > SGW: create session | SGW > PGW: create session (APN internet) | PGW > MME: IP 100.70.3.9 allocated
+
+== 5gc
+title: The 5G core: AMF, SMF, UPF and friends
+kind: mobile
+tag: Separate small functions that call each other over HTTP APIs.
+check: In the 5G core, which function carries your actual data packets? | The UPF | The AMF | The AUSF | The NRF
+line: The AMF handles registration and mobility; the SMF sets up your data session; the UPF carries your packets; AUSF and UDM check who you are; the NRF is the directory where functions find each other.
+more: The 5G core is "service-based": functions expose HTTP/2 APIs on a shared bus (N11 between AMF and SMF, N12 to the AUSF, N8 and N10 to the UDM). The gNodeB talks to the AMF over N2 (NGAP, with NAS inside) and sends data to the UPF over N3 (GTP-U); the UPF reaches the internet or a company network over N6. The SMF programs the UPF over N4 (PFCP). Because functions are software, they run in clouds with several copies; when one fails, another takes over - and a test of that failover asks one question: how long until data works again? The PCF sets policy; network slices let one core run separate virtual networks with different rules.
+breaks: AMF trouble: phones can't register. SMF or UPF trouble: registered, no data. A failover that keeps registration but drops sessions looks exactly like "full bars, no internet" until the phone re-establishes its session.
+ladder: gNodeB > AMF: registration request (N2) | AMF > AUSF: authenticate this subscriber (N12) | AMF > SMF: create a PDU session (N11) | SMF > UPF: set up the forwarding rules (N4) | UPF > Internet: your packets (N6)
+
+== attach
+title: How a phone joins: LTE attach and 5G registration
+kind: mobile
+tag: Who are you, prove it, here's your address.
+check: In 5G, after registration is accepted, what still has to happen before data flows? | A PDU session must be set up | The SIM must be removed | Wi-Fi must be turned on | The phone must restart
+line: Joining has two halves: registration (who you are, proven with the SIM's key) and a data session (an IP address and a path). In 4G the default bearer comes with the attach; in 5G the PDU session is a separate step.
+more: In 4G: attach request → authentication (the network sends a challenge only your SIM can answer) → security mode → the MME asks the gateways for a session → attach accept with your IP → the default bearer is up. In 5G SA: registration request → authentication → security mode → registration accept; then the phone asks for a PDU session for a DNN (5G's name for the APN) → the SMF picks a UPF and an address → PDU session accept. Each step can be rejected with a cause code (for example "DNN not supported", "insufficient resources"). A modem log that ends after "PDU Session Establishment Request" with no accept or reject is a strong clue the problem is the session side, not the radio.
+breaks: "Registered" on the router's screen only means the first half worked. Look for the session accept and an IP address before blaming anything else.
+ladder: Phone > AMF: Registration Request | AMF > Phone: Authentication Request (challenge) | Phone > AMF: Authentication Response | AMF > Phone: Registration Accept | Phone > SMF: PDU Session Establishment Request (DNN internet) | SMF > Phone: PDU Session Establishment Accept - IP 100.70.3.9
+
+== bearer
+title: APN, DNN, bearers and PDU sessions
+kind: mobile
+tag: The name of the network you ask for, and the pipe you get.
+check: What is an APN (4G) or DNN (5G)? | The name of the data network a device asks to connect to | The phone's serial number | The tower's name | A Wi-Fi password
+line: The APN (4G) or DNN (5G) names the network you want: "internet", a company's private network, IMS for voice calls. The bearer (4G) or PDU session (5G) is the resulting pipe, with its own IP address and QoS.
+more: One device can hold several at once: internet data, IMS for VoLTE calls (with a guaranteed-bit-rate bearer for the voice itself), a private APN for a company's routers. Each gets its own address and can go to a different gateway. QoS is set per flow: a QCI (4G) or 5QI (5G) number says the priority, delay budget and loss target - voice gets a better one than web browsing. A private APN with the wrong name or no subscription in the core is a classic "registered, no data" cause: the core rejects the session with a cause code that's only visible in the modem's log.
+breaks: Typo in the APN on a router: registered, no data. The wrong IP type (IPv4 vs IPv6 vs both) can also be refused.
+ladder: Router > Core: connect me to APN "acme.corp" | Core > Subscriber database: is this SIM allowed on acme.corp? | Subscriber database > Core: yes, fixed IP 10.40.0.17 | Core > Router: session up, IP 10.40.0.17, QoS 9 | Router > Company network: data through the private APN
+
+== nsa
+title: 5G NSA vs SA, and why your router says 5G but behaves like 4G
+kind: mobile
+tag: Non-standalone borrows the 4G core; standalone is 5G all the way.
+check: In 5G non-standalone (NSA), which core is used? | The 4G core (EPC) | The 5G core | No core at all | The Wi-Fi router
+line: NSA adds 5G radio to a 4G anchor cell: the phone signals over 4G and gets extra speed on 5G, but the core is still the 4G one. SA uses a 5G core and 5G for everything.
+more: NSA (option 3x) gave early 5G its speed without a new core. Features that need the 5G core - network slicing, the lower-latency user plane, RedCap devices, the newer session handling - only come with SA. On NSA, losing the 4G anchor drops the 5G leg too, so a "5G" icon can flicker while data stalls. Routers usually show which one they're on (EN-DC means NSA). Latency on NSA is close to good 4G; on SA with a nearby UPF it can be lower.
+breaks: A device that only supports SA in a place that only has NSA (or the reverse) falls back to 4G - working, slower.
+ladder: Phone > 4G anchor cell: attach (as in 4G) | 4G anchor > 5G cell: add a 5G leg for this phone (EN-DC) | 5G cell > Phone: extra capacity | Phone > 4G core: all signalling stays here | 4G core > Internet: your data

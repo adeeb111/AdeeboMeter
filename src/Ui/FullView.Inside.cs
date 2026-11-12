@@ -256,6 +256,11 @@ namespace AdeeboMeter
             // two lines and a picture - people who want the textbook will read it elsewhere
             if (t["line"] != "" && !SaysSame(t["tag"], t["line"])) y = Lead2(g, t["line"], x, y, w);
             if (t["ladder"] != "") { y += 6 * S; y = DrawKnowledgeLadder(g, host, t["ladder"], x, y, w); }
+            if (t["more"] != "")   // the deeper topics (provider networks, the mobile core): how it works, a paragraph
+            {
+                y += 8 * S; using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("HOW IT WORKS"), Draw.fTiny, mb, x, y); y += 20 * S;
+                y = Lead2(g, t["more"], x, y, w);
+            }
             if (t["breaks"] != "")
             {
                 y += 8 * S; string bt = "If it goes wrong:  " + t["breaks"]; float bh = Draw.Measure(bt, Draw.fBody, (int)(w - 28 * S)).Height;
