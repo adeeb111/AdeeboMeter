@@ -104,17 +104,18 @@ namespace AdeeboMeter
     // A small "what changed" log: only changes are recorded, kept for 2 hours (max 300 lines), in memory only.
     sealed class Timeline
     {
-        public sealed class Ev { public DateTime T; public int Lv; public string Kind, Text; }
+        public sealed class Ev { public DateTime T; public int Lv; public string Kind, Text; public DateTime Mono; }   // T for showing the time; Mono for "how long ago"
         readonly List<Ev> list = new List<Ev>(); readonly object k = new object();
         public void Add(int lv, string kind, string text)
         {
             lock (k)
             {
-                var now = DateTime.Now;
-                if (list.Count > 0 && list[list.Count - 1].Text == text && (now - list[list.Count - 1].T).TotalSeconds < 120) return;
-                list.Add(new Ev { T = now, Lv = lv, Kind = kind, Text = text });
+                var now = DateTime.Now; var mono = Clock.Mono;
+                // same text within 2 minutes: once - timed on the clock that never jumps (a DST or clock change must not hide events for an hour)
+                if (list.Count > 0 && list[list.Count - 1].Text == text && (mono - list[list.Count - 1].Mono).TotalSeconds < 120) return;
+                list.Add(new Ev { T = now, Lv = lv, Kind = kind, Text = text, Mono = mono });
                 History.Event(lv, kind, text);
-                var cut = now.AddHours(-2); list.RemoveAll(e => e.T < cut);
+                var cut = mono.AddHours(-2); list.RemoveAll(e => e.Mono < cut);
                 if (list.Count > 300) list.RemoveRange(0, list.Count - 300);
             }
             var ev = new Ev { T = DateTime.Now, Lv = lv, Kind = kind, Text = text };
@@ -123,7 +124,7 @@ namespace AdeeboMeter
         public List<Ev> Recent(int n) { lock (k) { var r = list.Skip(Math.Max(0, list.Count - n)).ToList(); r.Reverse(); return r; } }
         public static string Ago(DateTime t)
         {
-            var d = DateTime.Now - t;
+            var d = DateTime.Now - t; if (d < TimeSpan.Zero) d = TimeSpan.Zero;   // a clock or DST change never shows "-59 min"
             return d.TotalSeconds < 60 ? ((int)d.TotalSeconds) + " s" : d.TotalMinutes < 60 ? ((int)d.TotalMinutes) + " min" : ((int)d.TotalHours) + " h " + d.Minutes + " min";
         }
     }

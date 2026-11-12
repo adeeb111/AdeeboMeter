@@ -1,11 +1,15 @@
 // AdeeboMeter - a small, quiet Windows companion for "is it me or the network?". Created by Adeeb Khan.
 // .NET Framework 4.x, C# 5: builds with the csc.exe that ships with Windows (build_exe.cmd), no admin.
-// No cloud. No telemetry. Never listens. Every packet it sends is listed in About - and you can switch each one off.
-// (It never listens on any port, never updates itself, never downloads anything.)
-// The only packets it sends (Balanced, the default - Settings changes the pace): a ping to your gateway every 5 s, a ping to 1.1.1.1
-// and one DNS lookup every 30 s (every 2 s only while the engineer view is open or a Teams call is running), and whatever you ask
-// Check a destination to test - plus, only when such a check fails, Windows' own captive-portal probe (msftconnecttest.com).
-// Everything it keeps (settings, log) lives next to the exe; captures go to %LOCALAPPDATA%\AdeeboMeter and are deleted on exit.
+// No cloud. No telemetry. Never listens. Every packet it sends is listed in About ("What leaves your PC") - and you can switch
+// each background one off. (It never listens on any port, never updates itself, never downloads anything.)
+// In the background (Balanced, the default - Settings changes the pace): a ping to your gateway every 5 s; a ping to 1.1.1.1 and
+// one DNS lookup every 30 s (TCP 443 to it instead when ping never answers); once per network a 6-hop trace toward 1.1.1.1 with
+// reverse-DNS names (to name your provider); and, only if you turn them on, one ping to your first pinned destination every 30 s
+// and your added games' servers. Everything else - every Toolbox tool, the speed test, the ISP report, the Steam server list,
+// Check a destination - runs only when you press it; when a check you started fails, Windows' own test page
+// (msftconnecttest.com) is asked once (Settings can turn that off).
+// Settings and the log live next to the exe (a Store or portable copy: in its data folder); history, usage, baselines, known
+// devices and seen apps live in %LOCALAPPDATA%\AdeeboMeter (History settings delete them); captures are deleted on exit.
 
 using System;
 using System.Collections.Generic;
@@ -50,6 +54,14 @@ using Microsoft.Win32;
 
 namespace AdeeboMeter
 {
+    // A clock for intervals that never jumps: setting the PC's clock back (dual boot, NTP after sleep, by hand) must not
+    // freeze the probes or the sampler. Use it for "how long since" and "when is the next run" - never as a time of day.
+    static class Clock
+    {
+        static readonly System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        static readonly DateTime start = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public static DateTime Mono { get { return start + sw.Elapsed; } }
+    }
     // ================================================================== entry
     static class Program
     {
@@ -57,7 +69,19 @@ namespace AdeeboMeter
         // Installed from the Microsoft Store (an MSIX package): its own folder is read-only and Windows / the Store install,
         // update, start and remove it - so settings and reports go to AppData and the self-install / Run key are left alone.
         public static bool Packaged;
-        public static string WriteDir { get { return Packaged ? DataDir : Dir; } }
+        // where settings and the log go: next to the exe when that folder can be written; a Store copy, or an exe in a
+        // read-only place (Program Files, a network share, a locked-down PC), uses %LOCALAPPDATA%\AdeeboMeter instead -
+        // so settings are kept and the install offer doesn't come back at every start
+        static string writeDir; static int dirWritable = -1;
+        static bool DirWritable { get { if (dirWritable < 0) dirWritable = CanWrite(Dir) ? 1 : 0; return dirWritable == 1; } }
+        public static string WriteDir { get { if (writeDir == null) writeDir = Packaged || !DirWritable ? LocalDir : Dir; return writeDir; } }
+        static string LocalDir { get { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); try { Directory.CreateDirectory(d); } catch (IOException) { } catch (UnauthorizedAccessException) { } return d; } }
+        public static bool CanWrite(string dir)
+        {
+            if (string.IsNullOrEmpty(dir)) return false;
+            try { string f = Path.Combine(dir, ".adeebometer-write-test-" + Guid.NewGuid().ToString("N")); File.WriteAllText(f, ""); File.Delete(f); return true; }
+            catch (Exception e) { if (e is IOException || e is UnauthorizedAccessException || e is NotSupportedException || e is System.Security.SecurityException) return false; throw; }
+        }
         static bool DetectPackaged()
         {
             try { int n = 0; return Native.GetCurrentPackageFullName(ref n, null) == 122; }   /* 122 = buffer too small: there IS a package; 15700 = none */
@@ -91,35 +115,37 @@ namespace AdeeboMeter
             if (args.Any(a => string.Equals(a, "--selftest", StringComparison.OrdinalIgnoreCase))) return SelfTest.Run();
             if (args.Any(a => string.Equals(a, "--perf", StringComparison.OrdinalIgnoreCase))) return SelfTest.Perf();
             int ri = Array.FindIndex(args, a => string.Equals(a, "--report", StringComparison.OrdinalIgnoreCase));
-            if (ri >= 0) { if (ri + 1 >= args.Length) return 3; int si = Array.FindIndex(args, a => a == "--seconds"), sec; if (si < 0 || si + 1 >= args.Length || !int.TryParse(args[si + 1], out sec)) sec = 15; return Report.Run(args[ri + 1], sec); }
+            if (ri >= 0) { if (ri + 1 >= args.Length) return 3; int si = Array.FindIndex(args, a => string.Equals(a, "--seconds", StringComparison.OrdinalIgnoreCase)), sec; if (si < 0 || si + 1 >= args.Length || !int.TryParse(args[si + 1], out sec)) sec = 15; return Report.Run(args[ri + 1], sec); }
             int mt = Array.FindIndex(args, a => string.Equals(a, "--mibtest", StringComparison.OrdinalIgnoreCase));
             if (mt >= 0 && mt + 1 < args.Length) return SelfTest.MibTest(args[mt + 1]);
             if (args.Any(a => string.Equals(a, "--deeptest", StringComparison.OrdinalIgnoreCase)))
             {
-                int mi = Array.FindIndex(args, a => a == "--minutes"), min; if (mi < 0 || mi + 1 >= args.Length || !int.TryParse(args[mi + 1], out min)) min = 20;
+                int mi = Array.FindIndex(args, a => string.Equals(a, "--minutes", StringComparison.OrdinalIgnoreCase)), min; if (mi < 0 || mi + 1 >= args.Length || !int.TryParse(args[mi + 1], out min)) min = 20;
                 return SelfTest.Deep(!args.Any(a => string.Equals(a, "--local", StringComparison.OrdinalIgnoreCase)), Math.Max(2, Math.Min(60, min)));
             }
-            int vi = Array.FindIndex(args, a => a == "--view"); if (vi >= 0 && vi + 1 < args.Length) StartView = args[vi + 1];
-            int tpi = Array.FindIndex(args, a => a == "--tip"); if (tpi >= 0 && tpi + 1 < args.Length) StartTip = args[tpi + 1];
-            int dsi = Array.FindIndex(args, a => a == "--dest"); if (dsi >= 0 && dsi + 1 < args.Length) StartDest = args[dsi + 1];
+            int vi = Array.FindIndex(args, a => string.Equals(a, "--view", StringComparison.OrdinalIgnoreCase)); if (vi >= 0 && vi + 1 < args.Length) StartView = args[vi + 1];
+            int tpi = Array.FindIndex(args, a => string.Equals(a, "--tip", StringComparison.OrdinalIgnoreCase)); if (tpi >= 0 && tpi + 1 < args.Length) StartTip = args[tpi + 1];
+            int dsi = Array.FindIndex(args, a => string.Equals(a, "--dest", StringComparison.OrdinalIgnoreCase)); if (dsi >= 0 && dsi + 1 < args.Length) StartDest = args[dsi + 1];
             int ci = Array.FindIndex(args, a => string.Equals(a, "--check", StringComparison.OrdinalIgnoreCase));
             if (ci >= 0 && ci + 1 < args.Length) return SelfTest.CheckOnce(args[ci + 1]);
             int pi = Array.FindIndex(args, a => string.Equals(a, "--parse-test", StringComparison.OrdinalIgnoreCase));
             if (pi >= 0 && pi + 1 < args.Length) return SelfTest.ParseTest(args[pi + 1]);
-            int rf = Array.FindIndex(args, a => a == "--remove-folder"); if (rf >= 0 && rf + 1 < args.Length) return Setup.RemoveFolder(args[rf + 1]);
+            int rf = Array.FindIndex(args, a => string.Equals(a, "--remove-folder", StringComparison.OrdinalIgnoreCase)); if (rf >= 0 && rf + 1 < args.Length) return Setup.RemoveFolder(args[rf + 1]);
+            // the uninstaller's helper can't delete itself: any later start tidies it away
+            try { string helper = Path.Combine(Path.GetTempPath(), "AdeeboMeter-remove.exe"); if (File.Exists(helper)) File.Delete(helper); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             // test lab: draw the corner widget's card in a given style to a PNG (no window) - --render-card calls out.png
-            int rc = Array.FindIndex(args, a => a == "--render-card");
+            int rc = Array.FindIndex(args, a => string.Equals(a, "--render-card", StringComparison.OrdinalIgnoreCase));
             if (rc >= 0 && rc + 2 < args.Length && args[rc + 2].EndsWith(".png", StringComparison.OrdinalIgnoreCase))
             {
                 Cfg.WidgetStyle = args[rc + 1]; Cfg.Mode = "pro"; Draw.Init(1f); var mon = new Monitor(); mon.RefreshInterfaces(); mon.Start(); Thread.Sleep(8000);
                 var snap = mon.Latest ?? new Snap(); using (var bmp = Draw.Card(snap, new Dictionary<string, System.Drawing.RectangleF>())) bmp.Save(args[rc + 2], System.Drawing.Imaging.ImageFormat.Png);
                 mon.Stop(); return 0;
             }
-            int wi = Array.FindIndex(args, a => a == "--write-icon"); if (wi >= 0 && wi + 1 < args.Length) { File.WriteAllBytes(args[wi + 1], Theme.IcoBytes()); return 0; }
+            int wi = Array.FindIndex(args, a => string.Equals(a, "--write-icon", StringComparison.OrdinalIgnoreCase)); if (wi >= 0 && wi + 1 < args.Length) { try { File.WriteAllBytes(args[wi + 1], Theme.IcoBytes()); return 0; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException)) throw; Console.Error.WriteLine("--write-icon: " + e.Message); return 2; } }
 
             // A downloaded copy offers to install itself; --uninstall comes from Settings > Apps or the tray menu.
             bool uninstall = args.Any(a => string.Equals(a, "--uninstall", StringComparison.OrdinalIgnoreCase));
-            if (!Packaged && (uninstall || ((args.Length == 0 || args.Any(a => a == "--offer")) && Setup.ShouldOffer()) || args.Any(a => a == "--offer")))
+            if (!Packaged && (uninstall || ((args.Length == 0 || args.Any(a => string.Equals(a, "--offer", StringComparison.OrdinalIgnoreCase))) && Setup.ShouldOffer()) || args.Any(a => string.Equals(a, "--offer", StringComparison.OrdinalIgnoreCase))))
             {
                 bool here;
                 using (var w = new SetupWindow(uninstall)) { Application.Run(w); here = w.RunHere; }
@@ -128,6 +154,16 @@ namespace AdeeboMeter
 
             bool created;
             var mtx = new Mutex(true, "Local\\AdeeboMeter.single", out created);
+            if (!created)
+            {
+                // an OLDER copy is running and this one is newer (a fresh download, maybe renamed "AdeeboMeter (1).exe"):
+                // ask it to step aside and take over, instead of opening the old one and leaving you thinking you updated
+                if (Single.RunningIsOlder())
+                {
+                    try { using (var q = EventWaitHandle.OpenExisting(Single.QuitName)) q.Set(); } catch (WaitHandleCannotBeOpenedException) { } catch (UnauthorizedAccessException) { }
+                    try { if (mtx.WaitOne(6000)) created = true; } catch (AbandonedMutexException) { created = true; }
+                }
+            }
             if (!created)
             {
                 if (Single.AskRunningToOpen()) return 0;
@@ -145,15 +181,31 @@ namespace AdeeboMeter
         }
 
         static readonly object logLock = new object();
+        // The log: one line per message (newlines from network text flattened), invariant dates, the same message at most
+        // once a minute (a stuck error can't write 20 lines a second), and at 256 KB it rolls to .log.1 instead of losing everything
+        // tmp -> dst in one step where the drive allows it; on shares and USB sticks where File.Replace isn't supported,
+        // delete and move instead (a moment without the file beats never saving)
+        public static void ReplaceFile(string tmp, string dst)
+        {
+            if (!File.Exists(dst)) { File.Move(tmp, dst); return; }
+            try { File.Replace(tmp, dst, null); }
+            catch (IOException) { File.Delete(dst); File.Move(tmp, dst); }
+            catch (PlatformNotSupportedException) { File.Delete(dst); File.Move(tmp, dst); }
+        }
+        static string lastLogMsg = ""; static DateTime lastLogAt = DateTime.MinValue; static int lastLogRepeats;
         public static void Log(string m)
         {
             try
             {
+                m = (m ?? "").Replace("\r", " ").Replace("\n", " ");
                 lock (logLock)
                 {
+                    if (m == lastLogMsg && (Clock.Mono - lastLogAt).TotalSeconds < 60) { lastLogRepeats++; return; }
+                    string extra = lastLogRepeats > 0 ? " (the line before repeated " + lastLogRepeats + " more times)" : "";
+                    lastLogMsg = m; lastLogAt = Clock.Mono; lastLogRepeats = 0;
                     string p = Path.Combine(WriteDir, "AdeeboMeter.log");
-                    if (File.Exists(p) && new FileInfo(p).Length > 256 * 1024) File.Delete(p);
-                    File.AppendAllText(p, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture) + "  " + m + Environment.NewLine);
+                    if (File.Exists(p) && new FileInfo(p).Length > 256 * 1024) { string old = p + ".1"; if (File.Exists(old)) File.Delete(old); File.Move(p, old); }
+                    File.AppendAllText(p, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + "  " + m + extra + Environment.NewLine);
                 }
             }
             catch { }
@@ -167,7 +219,7 @@ namespace AdeeboMeter
             {
                 // portable / test copy: an empty file named AdeeboMeter.portable next to the exe keeps all data in a "data"
                 // folder beside it - a second copy (a USB stick, a test build) never mixes with the installed one's history
-                string d = Portable ? Path.Combine(Dir ?? "", "data") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
+                string d = Portable && DirWritable ? Path.Combine(Dir ?? "", "data") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");   // a portable copy on read-only media falls back too
                 try { Directory.CreateDirectory(d); } catch { }
                 return d;
             }
@@ -322,12 +374,37 @@ namespace AdeeboMeter
             }
             return false;
         }
+        // is a running copy older than this one? (its exe's file version, read from disk - nothing is asked of it)
+        public static bool RunningIsOlder()
+        {
+            Version mine; if (!Version.TryParse(Program.FileVersion, out mine)) return false;
+            foreach (var p in Others())
+                using (p)
+                    try
+                    {
+                        Version v; var fv = FileVersionInfo.GetVersionInfo(p.MainModule.FileName).FileVersion;
+                        if (Version.TryParse(fv, out v) && v < mine && !p.ProcessName.EndsWith("-remove", StringComparison.OrdinalIgnoreCase)) return true;
+                    }
+                    catch (System.ComponentModel.Win32Exception) { } catch (InvalidOperationException) { } catch (ArgumentException) { }
+            return false;
+        }
+        // other AdeeboMeter copies in THIS Windows session - renamed ones too ("AdeeboMeter (1).exe"); never another user's
+        public static List<Process> Others()
+        {
+            var me = Process.GetCurrentProcess(); var r = new List<Process>();
+            foreach (var p in Process.GetProcesses())
+            {
+                bool ours = false;
+                try { ours = p.Id != me.Id && p.SessionId == me.SessionId && p.ProcessName.StartsWith("AdeeboMeter", StringComparison.OrdinalIgnoreCase); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
+                if (ours) r.Add(p); else p.Dispose();
+            }
+            return r;
+        }
         public static void KillOthers()
         {
-            int me = Process.GetCurrentProcess().Id;
-            foreach (var p in Process.GetProcessesByName("AdeeboMeter"))
+            foreach (var p in Others())
             {
-                try { if (p.Id != me) { p.Kill(); p.WaitForExit(3000); } } catch { } finally { p.Dispose(); }
+                try { p.Kill(); p.WaitForExit(3000); } catch { } finally { p.Dispose(); }
             }
         }
     }

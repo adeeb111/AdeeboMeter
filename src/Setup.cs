@@ -47,12 +47,26 @@ namespace AdeeboMeter
             catch { return false; }
         }
         public static bool RunningInstalled { get { return Under(Program.Dir, Base); } }
+        // the installed copy's "Start with Windows" choice (its settings file), on when unknown
+        public static bool InstalledAutoStart(string exe)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(exe)) return true;
+                string f = Path.Combine(Path.GetDirectoryName(exe), "AdeeboMeter.settings"); if (!File.Exists(f)) return true;
+                foreach (var l in File.ReadAllLines(f)) if (l.StartsWith("autostart=", StringComparison.Ordinal)) return l.Trim() != "autostart=0";
+            }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
+            return true;
+        }
+        // a Run value that starts some AdeeboMeter*.exe (installed, downloaded or renamed)
+        public static bool OurRunValue(string v) { try { string f = Path.GetFileName((v ?? "").Trim().Trim('"')); return f.StartsWith("AdeeboMeter", StringComparison.OrdinalIgnoreCase) && f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase); } catch (ArgumentException) { return false; } }
 
         // Offer to install only on a first start of a copy that isn't installed and was never used from where it is.
         public static bool ShouldOffer()
         {
             if (Program.Packaged || RunningInstalled) return false;
-            return !File.Exists(Path.Combine(Program.Dir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "Ade" + "boMeter.settings"));
+            return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "Ade" + "boMeter.settings"));
         }
 
         // The installed copy: its version and exe (from Settings > Apps entry, else the newest folder under Base).
@@ -87,12 +101,11 @@ namespace AdeeboMeter
         public static void StopOthers()
         {
             try { using (var q = EventWaitHandle.OpenExisting(Single.QuitName)) q.Set(); } catch { }
-            int me = Process.GetCurrentProcess().Id;
             var until = DateTime.UtcNow.AddSeconds(4);
             while (DateTime.UtcNow < until)
             {
-                var ps = Process.GetProcessesByName("AdeeboMeter"); bool any = false;
-                foreach (var p in ps) { if (p.Id != me) any = true; p.Dispose(); }
+                var ps = Single.Others(); bool any = ps.Count > 0;
+                foreach (var p in ps) p.Dispose();
                 if (!any) return;
                 Thread.Sleep(200);
             }
@@ -183,7 +196,7 @@ namespace AdeeboMeter
             try
             {
                 using (var k = Registry.CurrentUser.OpenSubKey(RunKey, true))
-                    if (k != null) { var v = k.GetValue("AdeeboMeter") as string; if (v != null && Under(v.Trim('"'), Base)) k.DeleteValue("AdeeboMeter"); }
+                    if (k != null) { var v = k.GetValue("AdeeboMeter") as string; if (v != null && OurRunValue(v)) k.DeleteValue("AdeeboMeter"); }   // removed means it never starts again, wherever the copy was
             }
             catch { }
             try { if (File.Exists(Shortcut)) File.Delete(Shortcut); } catch { }
@@ -246,6 +259,7 @@ namespace AdeeboMeter
             fBtn = new Font(semi, 14 * S, semiStyle, GraphicsUnit.Pixel);
             fSmall = new Font(text, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             Setup.Installed(out instVer, out instExe);
+            autoStart = Setup.InstalledAutoStart(instExe);   // an update keeps your choice; a first install starts on
             st = remove ? St.AskRemove : St.Offer;
             Text = remove ? "Remove AdeeboMeter" : "AdeeboMeter";
             FormBorderStyle = FormBorderStyle.None; StartPosition = FormStartPosition.CenterScreen;
@@ -256,6 +270,8 @@ namespace AdeeboMeter
             Cursor = Cursors.Default;
         }
         protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ClassStyle |= 0x20000; /* drop shadow */ return cp; } }
+        // Alt+F4 or the taskbar's Close while it copies or removes: wait - a half install (or half removal) is worse than a second's wait
+        protected override void OnFormClosing(FormClosingEventArgs e) { if (st == St.Working && e.CloseReason == CloseReason.UserClosing) e.Cancel = true; base.OnFormClosing(e); }
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
@@ -277,7 +293,9 @@ namespace AdeeboMeter
             base.OnKeyDown(e);
         }
 
-        bool Upgrade { get { return instVer != null && instVer != Program.Version; } }
+        bool Upgrade { get { return instVer != null && instVer != Program.Version && !Newer; } }
+        // the installed copy is newer than this one (an old download double-clicked): never "update" backwards
+        bool Newer { get { Version a, b; return instVer != null && Version.TryParse(instVer, out a) && Version.TryParse(Program.Version, out b) && a > b; } }
         bool Same { get { return instVer != null && instVer == Program.Version; } }
 
         void Btn(Graphics g, string key, RectangleF r, string label, Color bg, Color fg, bool filled)
@@ -338,10 +356,10 @@ namespace AdeeboMeter
                 Theme.Fill(g, sw, 12 * S, autoStart ? Theme.Green : Theme.Rail);
                 using (var kb = new SolidBrush(Color.White)) g.FillEllipse(kb, autoStart ? sw.Right - 21 * S : sw.X + 3 * S, sw.Y + 3 * S, 18 * S, 18 * S);
                 y += 52 * S;
-                string main = Same ? "Open AdeeboMeter" : Upgrade ? "Update to " + Program.Version : "Install";
+                string main = Same ? "Open AdeeboMeter" : Newer ? "Open AdeeboMeter " + instVer : Upgrade ? "Update to " + Program.Version : "Install";
                 Btn(g, "main", new RectangleF(bx, y, W - 2 * bx, 46 * S), main, Theme.Blue, Color.White, true); y += 54 * S;
                 Btn(g, "here", new RectangleF(bx, y, W - 2 * bx, 32 * S), Same ? "Reinstall" : "Just run it from here", Theme.Card, Theme.Muted, false);
-                string foot = Upgrade ? "You have " + instVer + ". Your settings come along." : "Remove it anytime from Settings > Apps.";
+                string foot = Newer ? "You already have a newer version (" + instVer + ") - this download is older." : Upgrade ? "You have " + instVer + ". Your settings come along." : "Remove it anytime from Settings > Apps.";
                 Center(g, foot, fSmall, Theme.Muted, H - 34 * S, W);
             }
             else if (st == St.Working)
@@ -410,12 +428,14 @@ namespace AdeeboMeter
             if (key == "here" && st == St.Offer)
             {
                 if (Same) { Run(false); return; }
+                // the Start with Windows switch counts here too: written next to this copy before it starts
+                try { Setup.SetLine(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"), "autostart", autoStart ? "1" : "0"); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("run here: " + e.Message); }
                 startHere = true; Close(); return;
             }
             if (key != "main") return;
             if (st == St.Offer)
             {
-                if (Same) { StartExe(instExe); Close(); return; }
+                if (Same || Newer) { StartExe(instExe); Close(); return; }
                 Run(false);
             }
             else if (st == St.AskRemove) Run(true);

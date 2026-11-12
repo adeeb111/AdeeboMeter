@@ -56,7 +56,7 @@ namespace AdeeboMeter
             var lines = map.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => kv.Key + "|" + kv.Value.First.Ticks.ToString(CultureInfo.InvariantCulture) + "|" + (kv.Value.Again == default(DateTime) ? "-" : kv.Value.Again.Ticks.ToString(CultureInfo.InvariantCulture)) + "|" + kv.Value.Pts.ToString(CultureInfo.InvariantCulture));
             string tmp = file + ".tmp";
             File.WriteAllLines(tmp, lines);
-            if (File.Exists(file)) File.Replace(tmp, file, null); else File.Move(tmp, file);   // never a half-written file
+            Program.ReplaceFile(tmp, file);   // never a half-written file
         }
 
         public int Total { get { lock (k) return map.Values.Sum(e => e.Pts + (e.Again != default(DateTime) ? 2 : 0)); } }

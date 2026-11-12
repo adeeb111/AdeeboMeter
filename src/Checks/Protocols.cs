@@ -416,7 +416,7 @@ namespace AdeeboMeter
         // ---------- TWAMP-light sender (RFC 5357, unauthenticated) to a reflector you choose
         public static List<string[]> Twamp(string target, string countIn, Toolkit.Run run)
         {
-            var rows = new List<string[]>(); string h; int p; if (!Split(target, 862, out h, out p)) { rows.Add(R(2, "Reflector", "type the reflector's address (port 862, or host:port)", "On SR OS: a TWAMP-light reflector on the router; on Linux: any TWAMP-light reflector.", "u")); return rows; }
+            var rows = new List<string[]>(); string h; int p; if (!Split(target, 862, out h, out p)) { rows.Add(R(2, "Reflector", "type the reflector's address (port 862, or host:port)", "Most carrier routers can run a TWAMP-light reflector; on Linux, any TWAMP-light reflector works.", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
             int n = Int(countIn, 100, 10, 2000); run.SeriesUnit = "ms";
             var res = new List<double[]>();   // sseq, t1, t2, t3, t4, rseq (ms since 1900)

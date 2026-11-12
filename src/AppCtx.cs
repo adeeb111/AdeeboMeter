@@ -37,7 +37,7 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = true; volatile bool quitting; string balloonUrl;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
@@ -135,6 +135,8 @@ namespace AdeeboMeter
             // Light / dark follows Windows and switches live
             prefHandler = delegate
             {
+                // Windows may raise this on its own thread: the theme switch always happens on the UI thread
+                if (marshal.InvokeRequired) { try { marshal.BeginInvoke((Action)delegate { bool d2 = Program.WantDark(); if (d2 != Theme.Dark) { Theme.Apply(d2); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); } }); } catch (InvalidOperationException) { } return; }
                 bool d = Program.WantDark();
                 if (d != Theme.Dark) { Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); }
             };
@@ -213,7 +215,7 @@ namespace AdeeboMeter
             {
                 string tmp = settingsPath + ".tmp";
                 File.WriteAllLines(tmp, new[] { "autostart=" + (autoStart ? 1 : 0), "widget=" + (widgetOn ? 1 : 0), "serious=" + (Voice.Serious ? 1 : 0), "theme=" + (Program.ForceTheme == 1 ? "dark" : Program.ForceTheme == 0 ? "light" : "auto") }.Concat(Cfg.Lines()));
-                if (File.Exists(settingsPath)) File.Replace(tmp, settingsPath, null); else File.Move(tmp, settingsPath);
+                Program.ReplaceFile(tmp, settingsPath);
             }
             catch (Exception e) { Program.Log("settings: " + e.Message); }
         }
@@ -227,8 +229,11 @@ namespace AdeeboMeter
                 {
                     if (k == null) return;
                     if (k.GetValue(OldName) != null) k.DeleteValue(OldName);   // the app used to be called AdeboMeter - don't start the old copy
-                    if (autoStart) k.SetValue("AdeeboMeter", "\"" + Application.ExecutablePath + "\"");
-                    else if (k.GetValue("AdeeboMeter") != null) k.DeleteValue("AdeeboMeter");
+                    // a copy only ever changes its own entry: a downloaded copy never takes over (or removes) the installed copy's
+                    var cur = k.GetValue("AdeeboMeter") as string; string me = "\"" + Application.ExecutablePath + "\"";
+                    bool installedOwns = cur != null && !Setup.RunningInstalled && Setup.Under(cur.Trim().Trim('"'), Setup.Base) && File.Exists(cur.Trim().Trim('"'));
+                    if (autoStart) { if (installedOwns) Program.Log("autostart: the installed copy already starts with Windows - left as it is"); else if (cur != me) k.SetValue("AdeeboMeter", me); }
+                    else if (cur != null && string.Equals(cur.Trim().Trim('"'), Application.ExecutablePath, StringComparison.OrdinalIgnoreCase)) k.DeleteValue("AdeeboMeter");
                 }
             }
             catch (Exception e) { Program.Log("autostart: " + e.Message); }
@@ -268,7 +273,7 @@ namespace AdeeboMeter
 
         DateTime lastTop;
         void OnScreens(object s, EventArgs e) { drawnKey = ""; lastCover = DateTime.MinValue; }
-        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { drawnKey = ""; lastCover = DateTime.MinValue; } }
+        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; } }
         void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e) { if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleConnect || e.Reason == Microsoft.Win32.SessionSwitchReason.RemoteConnect) { drawnKey = ""; lastCover = DateTime.MinValue; } }
         void Quit()
         {
@@ -301,15 +306,15 @@ namespace AdeeboMeter
                 uiTick++;
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
                 bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
-                if ((DateTime.UtcNow - lastTop).TotalSeconds > 30) { lastTop = DateTime.UtcNow; drawnKey = ""; }   // every 30 s: draw again, which also claims the top layer back
+                if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; drawnKey = ""; }   // every 30 s: draw again, which also claims the top layer back
                 if (!widgetOn || viewUp) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 500; return; }
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : 250;
                 if (ui.Interval != want) ui.Interval = want;
-                if ((DateTime.UtcNow - lastCover).TotalMilliseconds >= 400)
+                if ((Clock.Mono - lastCover).TotalMilliseconds >= 400)
                 {
-                    lastCover = DateTime.UtcNow;
+                    lastCover = Clock.Mono;
                     bool c = WindowOver(Zone());
                     if (c != covered) { covered = c; revealed = false; dwellStart = DateTime.MinValue; drawnKey = ""; }
                 }

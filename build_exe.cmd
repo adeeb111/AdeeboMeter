@@ -18,7 +18,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem knowledge\
 set "RES="
 for %%F in (knowledge\*.txt) do set "RES=!RES! /resource:obj\%%~nF.gz,AdeeboMeter.knowledge.%%~nF.gz"
 "%CSC%" /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /r:System.Security.dll /recurse:src\*.cs !RES! || goto fail
-rem fingerprint: compare it with SHA256SUMS published with the release
+rem fingerprint of YOUR build (the compiler stamps a fresh id into every build, so it differs from the releases).
+rem To check a downloaded release instead: gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter
 certutil -hashfile AdeeboMeter.exe SHA256 | findstr /v ":" > AdeeboMeter.exe.sha256
 echo Built AdeeboMeter.exe   SHA256
 type AdeeboMeter.exe.sha256

@@ -17,15 +17,17 @@ namespace AdeeboMeter
     {
         // ---------- the network we're on (told apart by the router's hardware address - works with location off)
         public static volatile string NetKey = "", NetLabel = "";
-        static DateTime lastKey = DateTime.MinValue;
+        static DateTime lastKey = DateTime.MinValue; static readonly Dictionary<string, string> gwMacs = new Dictionary<string, string>();
         static void LearnNetwork(Monitor m)
         {
-            if ((DateTime.UtcNow - lastKey).TotalSeconds < 60 && NetKey != "") return;
-            lastKey = DateTime.UtcNow;
+            if ((Clock.Mono - lastKey).TotalSeconds < 60 && NetKey != "") return;
+            lastKey = Clock.Mono;
             string gw, ssid, kind; lock (m.L) { gw = m.Gateway; ssid = m.Ssid; kind = m.AdapterKind; }
             if (gw == "") { NetKey = "offline"; NetLabel = "Offline"; return; }
             string mac = ""; try { mac = Arp.MacOf(gw); } catch { }
-            NetKey = (mac != "" ? mac : gw).Replace(':', '-');
+            // one missed ARP read must not split a network into two rows: remember the router's MAC per gateway address
+            if (mac != "") gwMacs[gw] = mac; else gwMacs.TryGetValue(gw, out mac);
+            NetKey = (!string.IsNullOrEmpty(mac) ? mac : gw).Replace(':', '-');
             NetLabel = ssid != "" ? ssid : (kind == "Wi-Fi" ? "Wi-Fi" : kind) + " via " + gw;
         }
 
@@ -73,11 +75,26 @@ namespace AdeeboMeter
         static void Add(ref double acc, double v) { if (!double.IsNaN(v)) acc += v; }
         static int tick; static double diskMs, faults; static int diskN, faultN; static readonly object pcLock = new object(); static int pcBusy;
         // one PC job at a time, on a background thread, lowest priority; skipped if the previous one is still running
+        // one long-lived, lowest-priority worker for the PC jobs (not a new thread every 5 s); a job that comes while the last
+        // one still runs is skipped
+        static System.Threading.Thread bgThread; static readonly System.Threading.AutoResetEvent bgGo = new System.Threading.AutoResetEvent(false); static volatile Action bgJob;
         static void Bg(Action a)
         {
             if (System.Threading.Interlocked.CompareExchange(ref pcBusy, 1, 0) != 0) return;
-            var t = new System.Threading.Thread(() => { try { a(); } catch (Exception e) { Program.Log("pc job: " + e.Message); } finally { System.Threading.Interlocked.Exchange(ref pcBusy, 0); } }) { IsBackground = true, Priority = System.Threading.ThreadPriority.Lowest, Name = "AdeeboMeter PC" };
-            t.Start();
+            bgJob = a;
+            if (bgThread == null)
+            {
+                bgThread = new System.Threading.Thread(() =>
+                {
+                    while (true)
+                    {
+                        bgGo.WaitOne(); var job = bgJob; bgJob = null;
+                        try { if (job != null) job(); } catch (Exception e) { Program.Log("pc job: " + e.Message); } finally { System.Threading.Interlocked.Exchange(ref pcBusy, 0); }
+                    }
+                }) { IsBackground = true, Priority = System.Threading.ThreadPriority.Lowest, Name = "pc jobs" };
+                bgThread.Start();
+            }
+            bgGo.Set();
         }
         static void Reset() { diskMs = faults = 0; diskN = faultN = 0; n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = 0; }
         static void Flush(Monitor m, DateTime t)
@@ -97,7 +114,7 @@ namespace AdeeboMeter
         public static List<string[]> Read(string name)
         {
             var r = new List<string[]>();
-            try { var f = PathOf(name); if (File.Exists(f)) foreach (var l in File.ReadLines(f).Take(20000)) { var p = l.Split('\t'); if (p.Length > 1) r.Add(p); } }
+            try { var f = PathOf(name); if (File.Exists(f)) { var q = new Queue<string>(); foreach (var l in File.ReadLines(f)) { q.Enqueue(l); if (q.Count > 20000) q.Dequeue(); } foreach (var l in q) { var p = l.Split('\t'); if (p.Length > 1) r.Add(p); } } /* the NEWEST 20,000 rows: the file grows oldest-first */ }
             catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
             return r;
         }
@@ -107,7 +124,7 @@ namespace AdeeboMeter
             {
                 string f = PathOf(name), tmp = f + ".tmp";
                 File.WriteAllLines(tmp, rows.Select(r => string.Join("\t", r.Select(x => (x ?? "").Replace('\t', ' ').Replace('\n', ' ')))));
-                if (File.Exists(f)) File.Replace(tmp, f, null); else File.Move(tmp, f);
+                Program.ReplaceFile(tmp, f);
             }
             catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
         }
@@ -190,7 +207,7 @@ namespace AdeeboMeter
     {
         sealed class B { public string Key, Label; public double Gw, Net, Loss; public int N; }
         static List<B> list; static readonly object k = new object(); static DateTime saved = DateTime.UtcNow, warned = DateTime.MinValue;
-        static readonly List<double> recentGw = new List<double>(), recentNet = new List<double>();
+        static readonly List<double> recentGw = new List<double>(), recentNet = new List<double>(); static string recentKey = "";
         static void Load() { if (list == null) list = Store.Read("baselines.txt").Where(r => r.Length >= 6).Select(r => new B { Key = r[0], Label = r[1], Gw = Store.D(r[2]), Net = Store.D(r[3]), Loss = Store.D(r[4]), N = (int)Store.D(r[5]) }).ToList(); }
         public static void Minute(Monitor m, string key, string label, double gw, double net, double loss)
         {
@@ -201,9 +218,11 @@ namespace AdeeboMeter
                 Load(); b = list.FirstOrDefault(x => x.Key == key);
                 if (b == null) { b = new B { Key = key, Label = label }; list.Add(b); }
                 b.Label = label;
-                // compare the last 5 minutes with what this network is normally like, before learning from them
+                // compare the last 5 minutes with what this network is normally like, before learning from them - minutes of
+                // this network only: right after switching, the last network's minutes would make the new one look "slower"
+                if (key != recentKey) { recentKey = key; recentGw.Clear(); recentNet.Clear(); }
                 Keep(recentGw, gw); Keep(recentNet, net);
-                if (b.N >= 120 && (DateTime.UtcNow - warned).TotalMinutes > 30)
+                if (b.N >= 120 && recentGw.Count >= 4 && (DateTime.UtcNow - warned).TotalMinutes > 30)
                 {
                     double g5 = Avg(recentGw), n5 = Avg(recentNet);
                     if (!double.IsNaN(g5) && g5 > Math.Max(b.Gw * 2.5, b.Gw + 15))

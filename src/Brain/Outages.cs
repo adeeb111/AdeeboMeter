@@ -11,7 +11,7 @@ namespace AdeeboMeter
     // hours in memory. Nothing new is recorded for it.
     static class Outages
     {
-        public sealed class O { public DateTime From, To; public bool Ongoing; public TimeSpan Len { get { return To - From; } } }
+        public sealed class O { public DateTime From, To; public bool Ongoing; public TimeSpan Len { get { var d = To - From; return d < TimeSpan.Zero ? TimeSpan.Zero : d; } } /* local times: a DST fall-back mid-outage must not give a negative length */ }
         static List<O> cache; static DateTime cacheAt;
         static readonly object k = new object();
         public static List<O> Last(Monitor m, int days)

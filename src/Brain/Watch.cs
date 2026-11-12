@@ -36,7 +36,7 @@ namespace AdeeboMeter
                 lock (drops) { drops.Add(e.T); drops.RemoveAll(t => (e.T - t).TotalMinutes > 10); if (drops.Count >= 3) Raise("drops", "Wi-Fi dropped " + drops.Count + " times in 10 minutes. Move closer to the router, or switch to 5 GHz if it's offered.", 30); }
             }
             else if (e.Kind == "net" && e.Lv == 2 && e.Text.IndexOf("hardware address", StringComparison.OrdinalIgnoreCase) >= 0) Raise("arp", "Your router's hardware address changed on the same network - possible spoofing. Use the VPN until you know why.", 60);
-            else if (e.Kind == "inet" && e.Lv == 2) Raise("inet", "The internet went quiet. Your router still answers - it's your provider or the line, not your PC.", 20);
+            else if (e.Kind == "inet" && e.Lv == 2) Raise("inet", Monitor.GwAnswering ? "The internet went quiet. Your router still answers - it's your provider or the line, not your PC." : "The internet went quiet, and your router isn't answering either - check the Wi-Fi or cable first, then the router.", 20);
             else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1);
         }
     }
@@ -82,8 +82,11 @@ namespace AdeeboMeter
             else if (lossPct > 2) { lv = 1; s = "Your " + mins + "-minute call lost " + lossPct.ToString("0.#", CultureInfo.CurrentCulture) + "% of internet checks - the trouble was past your router (provider or VPN)."; }
             else if (worst != null && worst.Gw > 100) { lv = 1; s = "The link to your router spiked to " + worst.Gw.ToString("0", CultureInfo.CurrentCulture) + " ms at " + worst.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + " - Wi-Fi trouble around then."; }
             else s = "Your " + mins + "-minute call at " + when + " had a clean network the whole way.";
-            Summaries.Insert(0, new[] { DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture), s, lv.ToString(CultureInfo.InvariantCulture) });
-            if (Summaries.Count > 10) Summaries.RemoveAt(Summaries.Count - 1);
+            lock (Summaries)   // readers lock the list itself (History page, Investigate) - so must the writer
+            {
+                Summaries.Insert(0, new[] { DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture), s, lv.ToString(CultureInfo.InvariantCulture) });
+                if (Summaries.Count > 10) Summaries.RemoveAt(Summaries.Count - 1);
+            }
             if (lv > 0) Alerts.Raise("call", "After your call: " + s, 5);
         }
         public static bool InCall { get { lock (k) return inCall; } }
@@ -129,6 +132,13 @@ namespace AdeeboMeter
             return "To block it: Windows Security → Firewall & network protection → Allow an app through firewall → untick it, or add an outbound rule for " + System.IO.Path.GetFileName(path) + " (needs admin - on a work PC, ask IT). AdeeboMeter only suggests; it never blocks anything.";
         }
 
+        static readonly System.Text.RegularExpressions.Regex VerSeg = new System.Text.RegularExpressions.Regex(@"\d+(\.\d+){1,3}", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // a path with its version numbers taken out of the FOLDER names (the file name stays): one key per app across updates
+        public static string Unversioned(string path)
+        {
+            string dir = System.IO.Path.GetDirectoryName(path) ?? "", file = System.IO.Path.GetFileName(path);
+            return System.IO.Path.Combine(VerSeg.Replace(dir, "*"), file);
+        }
         // From the Monitor's connection read (every few seconds): which programs talk to the internet, and is that new?
         public static void Conns(Monitor m, List<Conn> list)
         {
@@ -140,7 +150,9 @@ namespace AdeeboMeter
                 {
                     string path = Native.ExePath(g.Key); if (path == "") continue;
                     var c0 = g.First();
-                    bool known = seen.ContainsKey(path);
+                    // versioned folders (Teams, Discord, updaters: "app-1.0.9", "MSTeams_24123.1.2_x64") are the same app after an update
+                    string key = Unversioned(path); DateTime was; if (key != path && seen.TryGetValue(path, out was) && !seen.ContainsKey(key)) seen[key] = was;
+                    bool known = seen.ContainsKey(key) || seen.ContainsKey(path); path = key;
                     if (!known)
                     {
                         if (seen.Count > 2000) { foreach (var old in seen.OrderBy(x => x.Value).Take(200).Select(x => x.Key).ToList()) { seen.Remove(old); night.Remove(old); } }   // capped: the oldest go
@@ -148,7 +160,8 @@ namespace AdeeboMeter
                         string[] facts = Explain.FileFacts(path); string where = Explain.Where(path);
                         bool odd = where == "downloads" || where == "temp" || path.IndexOf("\\Downloads\\", StringComparison.OrdinalIgnoreCase) >= 0 || path.IndexOf("\\Temp\\", StringComparison.OrdinalIgnoreCase) >= 0;
                         bool noPublisher = facts.Length > 1 && string.IsNullOrEmpty(facts[1]);
-                        if (odd) Add(2, c0.Proc, path, "connects to the internet from " + (path.IndexOf("Downloads", StringComparison.OrdinalIgnoreCase) >= 0 ? "your Downloads folder" : "a temporary folder") + " - programs normally live in Program Files.", HowToBlock(path));
+                        // temp-folder updaters are normal while it's still learning this PC: amber then, red afterwards
+                        if (odd) Add(Learning ? 1 : 2, c0.Proc, path, "connects to the internet from " + (path.IndexOf("Downloads", StringComparison.OrdinalIgnoreCase) >= 0 ? "your Downloads folder" : "a temporary folder") + " - programs normally live in Program Files.", HowToBlock(path));
                         else if (!Learning) Add(noPublisher ? 2 : 1, c0.Proc, path, "connected to the internet for the first time" + (noPublisher ? ", and its file names no publisher" : "") + " (" + Draw.Trunc(c0.Host != "" ? c0.Host : c0.RemoteIp, 40) + ").", noPublisher ? HowToBlock(path) : "If you just installed or updated it, that's expected. If not, look it up before trusting it. " + HowToBlock(path));
                     }
                     if (atNight && !night.Contains(path))
@@ -220,8 +233,7 @@ namespace AdeeboMeter
                     bool rnd = Arp.Randomised(e.Mac);
                     string note = rnd ? "uses a private (random) hardware address - phones and laptops change it, so it may not be new" : "hardware address " + e.Mac;
                     if (quiet) note += " · learning this network (no alert)";
-                    Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note });
-                    if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1);
+                    lock (Joined) { Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note }); if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1); }
                     m.Events.Add(3, "lan", "New on " + label + ": " + e.Ip + " (" + note + ")");
                     if (!rnd && !quiet) announce.Add(e);
                 }
@@ -242,10 +254,10 @@ namespace AdeeboMeter
         public static volatile string Host = ""; static DateTime last = DateTime.MinValue; static volatile bool busy;
         public static void Tick()
         {
-            if (!Cfg.PinWatch || Cfg.Pins.Count == 0) { Host = ""; return; }
-            if ((DateTime.UtcNow - last).TotalSeconds < 30 || busy) return;
-            last = DateTime.UtcNow; busy = true;
-            string pin = Cfg.Pins[0]; string h; int port; bool tls; string err;
+            string pin; try { pin = Cfg.Pins.FirstOrDefault(); } catch (InvalidOperationException) { return; } catch (ArgumentOutOfRangeException) { return; }   // the list belongs to the UI thread: read once, never Count then [0]
+            if (!Cfg.PinWatch || pin == null) { Host = ""; return; }
+            if ((Clock.Mono - last).TotalSeconds < 30 || busy) return;
+            last = Clock.Mono; busy = true; string h; int port; bool tls; string err;
             if (!DestCheck.Parse(pin, out h, out port, out tls, out err)) { busy = false; return; }
             if (h != Host) { Host = h; }
             Task.Factory.StartNew(() => { try { Ms.Add(Monitor.PingMs(h)); } finally { busy = false; } });
@@ -273,15 +285,28 @@ namespace AdeeboMeter
         // GitHub's "new issue" page with the crash filled in. Opens in your browser; nothing is sent until you press Submit there.
         public static string IssueUrl(string text)
         {
-            string body = "**What were you doing when it crashed?**\n\n\n**Crash note** (no user names or folders):\n```\n" + (text.Length > 3500 ? text.Substring(0, 3500) : text) + "\n```";
-            return "https://github.com/adeeb111/AdeeboMeter/issues/new?labels=bug&title=" + Uri.EscapeDataString("Crash in " + Program.Version) + "&body=" + Uri.EscapeDataString(body);
+            // the whole address stays under ~7,000 characters (GitHub refuses much longer ones): shorten the note until it fits
+            string note = text ?? ""; string url;
+            do
+            {
+                string body = "**What were you doing when it crashed?**\n\n\n**Crash note** (no user names or folders):\n```\n" + note + "\n```";
+                url = "https://github.com/adeeb111/AdeeboMeter/issues/new?labels=bug&title=" + Uri.EscapeDataString("Crash in " + Program.Version) + "&body=" + Uri.EscapeDataString(body);
+                note = note.Length > 200 ? note.Substring(0, note.Length * 3 / 4) : "";
+            } while (url.Length > 7000 && note != "");
+            return url;
         }
         // only AdeeboMeter's own pages (GitHub, the website) and Adeeb's PayPal donation link ever open
+        static readonly char[] Slash = { '/' };
         public static bool Allowed(string url)
         {
-            url = url ?? "";
-            return url.StartsWith("https://github.com/adeeb111/AdeeboMeter", StringComparison.Ordinal) || url.StartsWith("https://adeeb111.github.io/AdeeboMeter", StringComparison.Ordinal)
-                || url == "https://paypal.me/adeeb1111" || url.StartsWith("https://paypal.me/adeeb1111/", StringComparison.Ordinal);
+            // parsed, then host and path compared exactly - "AdeeboMeterEvil" or "AdeeboMeter@evil" never pass a prefix test
+            Uri u; if (!Uri.TryCreate(url ?? "", UriKind.Absolute, out u) || u.Scheme != Uri.UriSchemeHttps || u.UserInfo != "" || !u.IsDefaultPort) return false;
+            var seg = u.AbsolutePath.Split(Slash, StringSplitOptions.RemoveEmptyEntries);
+            string host = u.Host.ToLowerInvariant();
+            if (host == "github.com") return seg.Length >= 2 && seg[0] == "adeeb111" && string.Equals(seg[1], "AdeeboMeter", StringComparison.OrdinalIgnoreCase);
+            if (host == "adeeb111.github.io") return seg.Length >= 1 && seg[0] == "AdeeboMeter";
+            if (host == "paypal.me") return seg.Length >= 1 && seg[0] == "adeeb1111" && seg.Length <= 2;
+            return false;
         }
         public static void OpenUrl(string url)
         {

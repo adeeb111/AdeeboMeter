@@ -21,6 +21,7 @@ namespace AdeeboMeter
         static string N(double v) { return double.IsNaN(v) ? "" : v.ToString("0.#", CultureInfo.InvariantCulture); }
 
         // One minute. Columns: time, level, cpu, mem, down, gw, net, wifi, up, gwMax, netMax, loss %, link Mb/s, MB down, MB up, network
+        static readonly TimeSpan OneDay = TimeSpan.FromDays(1);   // a time of day outside 0-24 h is a damaged line: skipped, never a crash
         public const int Cols = 15;   // numeric columns after the time (index 1..14 in Day.M rows; index 0 is seconds of day)
         public static void Minute(DateTime t, double[] v, string net, double diskMs, double faults)
         {
@@ -64,9 +65,15 @@ namespace AdeeboMeter
                         if (d < cut) { File.Delete(f); continue; }
                         if (d < DateTime.Today && n.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                         {
-                            using (var src = File.OpenRead(f))
-                            using (var dst = File.Create(f + ".gz"))
-                            using (var z = new GZipStream(dst, CompressionLevel.Optimal)) src.CopyTo(z);
+                            // a day already compressed can still get a late .csv (clock or time-zone change): add to it, never replace it
+                            string gz = f + ".gz", tmp = gz + ".tmp";
+                            using (var dst = File.Create(tmp))
+                            using (var z = new GZipStream(dst, CompressionLevel.Optimal))
+                            {
+                                if (File.Exists(gz)) using (var old = File.OpenRead(gz)) using (var oz = new GZipStream(old, CompressionMode.Decompress)) oz.CopyTo(z);
+                                using (var src = File.OpenRead(f)) src.CopyTo(z);
+                            }
+                            Program.ReplaceFile(tmp, gz);
                             File.Delete(f);
                         }
                     }
@@ -90,17 +97,15 @@ namespace AdeeboMeter
             return r.OrderByDescending(d => d).ToList();
         }
 
-        static IEnumerable<string> Lines(string file, int max)
+        // the compressed part of a day first, then any plain lines written after it - both, never one hiding the other
+        static List<string> Lines(string file, int max)
         {
-            if (File.Exists(file)) return File.ReadLines(file).Take(max);
+            var list = new List<string>();
             if (File.Exists(file + ".gz"))
-            {
-                var list = new List<string>();
                 using (var s = File.OpenRead(file + ".gz")) using (var z = new GZipStream(s, CompressionMode.Decompress)) using (var r = new StreamReader(z))
                 { string l; while ((l = r.ReadLine()) != null && list.Count < max) list.Add(l); }
-                return list;
-            }
-            return Enumerable.Empty<string>();
+            if (File.Exists(file)) list.AddRange(File.ReadLines(file).Take(Math.Max(0, max - list.Count)));
+            return list;
         }
 
         // M rows: [0] seconds of day, then the 14 numeric columns (older 10-second files fill the first 7; the rest are NaN).
@@ -113,7 +118,7 @@ namespace AdeeboMeter
             {
                 foreach (var line in Lines(FileFor(d, "ev"), 2000))
                 {
-                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
+                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
                     l.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
                 }
             }
@@ -128,14 +133,14 @@ namespace AdeeboMeter
             {
                 foreach (var line in Lines(FileFor(d, "m"), 10000))
                 {
-                    var f = line.Split(','); TimeSpan t; if (f.Length < 8 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t)) continue;
+                    var f = line.Split(','); TimeSpan t; if (f.Length < 8 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay) continue;
                     var row = new double[Cols]; row[0] = t.TotalSeconds;
                     for (int i = 1; i < Cols; i++) row[i] = i < f.Length ? P(f[i]) : double.NaN;
                     day.M.Add(row); day.Net.Add(f.Length > Cols ? f[Cols] : ""); day.Pc.Add(new[] { f.Length > Cols + 1 ? P(f[Cols + 1]) : double.NaN, f.Length > Cols + 2 ? P(f[Cols + 2]) : double.NaN });
                 }
                 foreach (var line in Lines(FileFor(d, "ev"), 2000))
                 {
-                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
+                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
                     day.E.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
                 }
             }

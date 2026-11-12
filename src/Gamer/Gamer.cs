@@ -128,7 +128,7 @@ namespace AdeeboMeter
                     keep.Add("game|" + g.Id + "|" + Clean(g.Name, 40) + "|" + string.Join(";", g.Exes.Select(x => Clean(x, 60))));
                     foreach (var s in g.Servers.Take(12)) keep.Add("server|" + g.Id + "|" + Clean(s.Name, 30) + "|" + Clean(s.Where, 40) + "|" + Clean(s.Host, 253) + "|" + s.Port.ToString(CultureInfo.InvariantCulture) + "|" + s.Kind);
                     string tmp = FilePath + ".tmp"; File.WriteAllLines(tmp, keep);
-                    if (File.Exists(FilePath)) File.Replace(tmp, FilePath, null); else File.Move(tmp, FilePath);
+                    Program.ReplaceFile(tmp, FilePath);
                 }
                 catch (Exception e) { Program.Log("games save: " + e.Message); }
                 all = null;
@@ -382,7 +382,7 @@ namespace AdeeboMeter
 
         void Loop()
         {
-            var due = new Dictionary<string, DateTime>(); DateTime lastRun = DateTime.MinValue, lastMinute = DateTime.Now;
+            var due = new Dictionary<string, DateTime>(); DateTime lastRun = DateTime.MinValue, lastMinute = Clock.Mono;   // intervals on the clock that never jumps
             while (!stop)
             {
                 try
@@ -391,9 +391,9 @@ namespace AdeeboMeter
                     var mon2 = Games.Monitored();
                     if (mon2.Count == 0) { Playing = null; continue; }   // nothing clicked yet: nothing is sent
                     var games = Games.All;
-                    if ((DateTime.UtcNow - lastRun).TotalSeconds >= 5)
+                    if ((Clock.Mono - lastRun).TotalSeconds >= 5)
                     {
-                        lastRun = DateTime.UtcNow;
+                        lastRun = Clock.Mono;
                         var g = GameFinder.Running(games, mon2); string id = g == null ? null : g.Id;
                         if (id != Playing)
                         {
@@ -404,7 +404,7 @@ namespace AdeeboMeter
                         }
                     }
                     var plan = Plan(games, mon2, Cfg.GameAuto ? Playing : null);
-                    var now = DateTime.UtcNow; var go = new List<Tuple<string, GameServer, int>>();
+                    var now = Clock.Mono; var go = new List<Tuple<string, GameServer, int>>();
                     foreach (var p in plan)
                     {
                         string key = p.Item1 + "|" + p.Item2.Name; DateTime d;
@@ -413,7 +413,7 @@ namespace AdeeboMeter
                     }
                     if (go.Count > 0) Task.WaitAll(go.Select(p => Task.Factory.StartNew(() => ProbeOne(p.Item1, p.Item2))).ToArray(), 2500);
                     Evidence(games);
-                    if ((DateTime.Now - lastMinute).TotalSeconds >= 60) { lastMinute = DateTime.Now; GameHistory.Minute(this, plan); }
+                    if ((Clock.Mono - lastMinute).TotalSeconds >= 60) { lastMinute = Clock.Mono; GameHistory.Minute(this, plan); }
                 }
                 catch (Exception e) { Program.Log("gameping: " + e.Message); }
             }

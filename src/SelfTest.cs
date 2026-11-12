@@ -89,6 +89,8 @@ namespace AdeeboMeter
         public static int Run()
         {
             var sb = new StringBuilder(); int fails = 0;
+            // the checks simulate Wi-Fi drops, VPNs and roams: none of it may land in your real history, or raise a pop-up
+            Cfg.History = false; Cfg.Alerts = false; Cfg.Portal = false;   // and no sign-in-page request: the self-test stays off the internet
             Action<string, Action> T = delegate(string name, Action a)
             {
                 var sw = Stopwatch.StartNew();
@@ -416,7 +418,8 @@ namespace AdeeboMeter
                 var lastOnly = new List<PathTools.Hop> { H(1, 0, "10.0.0.1"), H(2, 0, "203.0.113.1"), H(3, 30, "203.0.113.9"), H(4, 100, "") };
                 if (IspReport.StartOfLoss(lastOnly) != -1) throw new InvalidOperationException("a lone lossy hop before silence was blamed");
                 var reached = new List<PathTools.Hop> { H(1, 0, "10.0.0.1"), H(2, 0, "203.0.113.1"), H(3, 12, "198.51.100.7") }; reached[2].Reached = true;
-                if (IspReport.StartOfLoss(reached) != 2) throw new InvalidOperationException("loss at the destination itself not found");
+                if (IspReport.StartOfLoss(reached) != -1) throw new InvalidOperationException("loss only at the destination was called real loss");
+                if (!PathTools.MtrVerdict(reached).StartsWith("Loss at the destination only", StringComparison.Ordinal)) throw new InvalidOperationException("destination-only loss verdict: " + PathTools.MtrVerdict(reached));
                 if (!IspReport.Private(IPAddress.Parse("100.64.3.1")) || !IspReport.Private(IPAddress.Parse("fd00::1")) || IspReport.Private(IPAddress.Parse("8.8.8.8"))) throw new InvalidOperationException("private address check");
             });
             T("code keys: Windows' fast PBKDF2 gives the same bytes as the managed one", () =>
@@ -487,6 +490,13 @@ namespace AdeeboMeter
                     if (hay.Contains(word)) throw new InvalidOperationException("found in the exe (" + enc.WebName + ")");
                 }
                 foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("found in " + pack);
+                // its products too (the operating system and router families), built at run time for the same reason
+                Func<string, string, string> j = (x, y) => x + y;   // joined at run time - "a" + "b" would be folded into one literal
+                foreach (var w in new[] { j("S", "R OS"), j("S", "R-OS"), j("Ti", "MOS"), j("Alca", "tel") })
+                {
+                    foreach (var enc in new Encoding[] { Encoding.ASCII, Encoding.Unicode }) if (enc.GetString(exe).IndexOf(w, StringComparison.Ordinal) >= 0) throw new InvalidOperationException("product name in the exe: " + w);
+                    foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(w, StringComparison.Ordinal) >= 0) throw new InvalidOperationException("product name in " + pack + ": " + w);
+                }
             });
             T("review fixes: URLs as targets, one device only for Traffic Lab, iperf3 UDP block size", () =>
             {
@@ -501,10 +511,25 @@ namespace AdeeboMeter
                 if (Toolkit.BlockLen(Toolkit.ParseOpts("-l 4")) != 4 || Toolkit.BlockLen(Toolkit.ParseOpts("-u")) != 1400) bad.Add("block sizes");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("core review fixes: Wi-Fi in any language, one key per app across updates, no negative ages", () =>
+            {
+                var bad = new List<string>(); int sig, rate; string ssid, ch, bssid, st;
+                Monitor.ParseWifi("    State                  : connected\r\n    SSID                   : Home\r\n    BSSID                  : aa:bb:cc:00:00:01\r\n    Channel                : 36\r\n    Receive rate (Mbps)    : 866.7\r\n    Signal                 : 81%\r\n", out sig, out ssid, out ch, out bssid, out st, out rate);
+                if (sig != 81 || ssid != "Home" || ch != "36" || st != "connected" || rate != 866) bad.Add("English: " + sig + "/" + ssid + "/" + ch + "/" + st + "/" + rate);
+                Monitor.ParseWifi("    Status                 : Verbunden\r\n    SSID                   : Zuhause\r\n    Kanal                  : 6\r\n    Signal                 : 64 %\r\n", out sig, out ssid, out ch, out bssid, out st, out rate);
+                if (sig != 64 || ssid != "Zuhause" || ch != "6" || st != "connected") bad.Add("German: " + sig + "/" + ssid + "/" + ch + "/" + st);
+                Monitor.ParseWifi("    Estado                 : desconectado\r\n    Señal                  : 0%\r\n", out sig, out ssid, out ch, out bssid, out st, out rate);
+                if (st != "disconnected") bad.Add("Spanish state: " + st);
+                if (!LinkInfo.Blocked("Network shell commands need location permission to access WLAN information.")) bad.Add("location block not seen");
+                if (Watch.Unversioned(@"C:\Users\a\AppData\Local\Discord\app-1.0.9013\Discord.exe") != Watch.Unversioned(@"C:\Users\a\AppData\Local\Discord\app-1.0.9014\Discord.exe")) bad.Add("versioned folders");
+                if (Timeline.Ago(DateTime.Now.AddMinutes(30)) != "0 s") bad.Add("negative age: " + Timeline.Ago(DateTime.Now.AddMinutes(30)));
+                if (!Program.CanWrite(Path.GetTempPath())) bad.Add("temp not writable?");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("About links: only AdeeboMeter's pages and its PayPal donation link open", () =>
             {
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);
-                foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
+                foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "", "https://github.com/adeeb111/AdeeboMeterEvil", "https://github.com/adeeb111/AdeeboMeter@evil.example", "https://x@github.com/adeeb111/AdeeboMeter", "https://adeeb111.github.io/AdeeboMeterX/" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
             });
             T("Adeebo Points: +1 / +2 once, replay +2 once, survives a restart, off keeps the total", () =>
             {

@@ -106,7 +106,7 @@ namespace AdeeboMeter
                 {
                     using (var g = Graphics.FromImage(bmp)) Paint1(g, ClientSize);
                     string tmp = PngPath + ".tmp"; bmp.Save(tmp, ImageFormat.Png);
-                    if (File.Exists(PngPath)) File.Replace(tmp, PngPath, null); else File.Move(tmp, PngPath);
+                    Program.ReplaceFile(tmp, PngPath);
                 }
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is System.Runtime.InteropServices.ExternalException)) throw; }

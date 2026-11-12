@@ -95,7 +95,7 @@ namespace AdeeboMeter
         // loss at a middle hop only counts if the hops after it lose too
         // a hop that never answered (no reply in the whole run) is a router that ignores probes, not loss - it can't start
         // or carry loss. Loss is real only from the first answering hop whose loss every later answering hop keeps (and there
-        // must be a later answering hop, or it is the destination itself).
+        // must be a later answering hop that keeps it).
         static bool Answers(Hop h) { return h.Sent > 0 && h.Lost < h.Sent; }
         static double LossOf(Hop h) { return 100.0 * h.Lost / h.Sent; }
         public static int LossStart(List<Hop> hops)
@@ -104,7 +104,7 @@ namespace AdeeboMeter
             {
                 var h = hops[i]; if (!Answers(h)) continue; double l = LossOf(h); if (l < 3) continue;
                 var later = hops.Skip(i + 1).Where(Answers).ToList();
-                if (later.Count == 0 && !h.Reached) continue;
+                if (later.Count == 0) continue;   // loss only at the last hop that answers (the destination too) is that box rate-limiting pings - it has to carry on to count
                 if (later.All(x => LossOf(x) >= l * 0.6)) return i;
             }
             return -1;

@@ -65,14 +65,16 @@ namespace AdeeboMeter
             y = InfoCard(g, "DATA USAGE AND WHAT'S NORMAL  ·  COUNTED ON THIS PC, NEVER SENT", rows, "hist.USAGE", x, y, w);
 
             // ---- after your calls (memory only)
-            if (Calls.Summaries.Count > 0)
-                y = InfoCard(g, "AFTER YOUR CALLS  ·  NUMBERS ONLY, KEPT IN MEMORY UNTIL YOU QUIT - NOTHING IS RECORDED", Calls.Summaries.Select(c => new[] { c[0], c[1], c[2] }).ToList(), "hist.CALLS", x, y, w);
+            List<string[]> calls; lock (Calls.Summaries) calls = Calls.Summaries.ToList();   // a copy: a call can end while this paints
+            if (calls.Count > 0)
+                y = InfoCard(g, "AFTER YOUR CALLS  ·  NUMBERS ONLY, KEPT IN MEMORY UNTIL YOU QUIT - NOTHING IS RECORDED", calls.Select(c => new[] { c[0], c[1], c[2] }).ToList(), "hist.CALLS", x, y, w);
             // ---- watch and suggest
             List<Watch.Sug> sugs; lock (Watch.List) sugs = Watch.List.Take(8).ToList();
             if (sugs.Count > 0)
                 y = InfoCard(g, "WORTH A LOOK  ·  AdeeboMeter ONLY SUGGESTS - IT NEVER BLOCKS ANYTHING", sugs.Select(s => new[] { s.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + "  " + Draw.Trunc(s.App, 18), s.Why + "  " + s.How, s.Lv.ToString(CultureInfo.InvariantCulture) }).ToList(), "hist.WATCH", x, y, w);
-            if (Devices.Joined.Count > 0)
-                y = InfoCard(g, "NEW DEVICES ON YOUR NETWORK", Devices.Joined.Take(6).Select(d => new[] { d[0], d[2] + " on " + d[1] + " - " + d[4], "1" }).ToList(), "hist.DEVICES", x, y, w);
+            List<string[]> joined; lock (Devices.Joined) joined = Devices.Joined.ToList();
+            if (joined.Count > 0)
+                y = InfoCard(g, "NEW DEVICES ON YOUR NETWORK", joined.Take(6).Select(d => new[] { d[0], d[2] + " on " + d[1] + " - " + d[4], "1" }).ToList(), "hist.DEVICES", x, y, w);
             return y + 6 * S;
         }
         void DrawWeek(Graphics g, float w)
