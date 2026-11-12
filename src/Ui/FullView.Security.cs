@@ -79,7 +79,7 @@ namespace AdeeboMeter
             {
                 // the scorecard
                 int[] n = new int[4]; foreach (var r in res.Values) n[SecLevel(r)]++;
-                g.DrawString("Security checkup", Draw.fTitle, ink, x, y); y += 30 * S;
+                g.DrawString(L.T("Security checkup"), Draw.fTitle, ink, x, y); y += 30 * S;
                 string sub = secBusy ? "Checking: " + secNow + "...  (" + res.Count + " of " + Security.All.Count + ")" : res.Count == 0 ? Security.All.Count + " checks of this PC, your network and your sites. Reads settings only - it never tries a password, never attacks anything and never scans beyond your own router. Each fix opens the Windows screen where you change it yourself." : "Checked at " + secAt.ToString("HH:mm", CultureInfo.CurrentCulture) + " · click a check to run it again";
                 if (res.Count > 0 && !secBusy)
                 {

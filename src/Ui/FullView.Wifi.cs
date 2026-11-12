@@ -83,7 +83,7 @@ namespace AdeeboMeter
             var hcard = new RectangleF(x, y, w, 70 * S + ex.Health.Count * 22 * S);
             Theme.Stroke(g, hcard, 10 * S, Theme.Track, 1);
             int lv = ex.Score >= 80 ? 0 : ex.Score >= 55 ? 1 : 2;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.HEALTH");
             using (var b = new SolidBrush(Theme.LvText(lv))) { g.DrawString(ex.Score + " / 100", Draw.fBig, b, x + 14 * S, y + 30 * S); g.DrawString(ex.ScoreText, Draw.fBodyB, b, x + 120 * S, y + 36 * S); }
             float ry = y + 66 * S, lw = Math.Min(260 * S, w * 0.45f);
@@ -99,7 +99,7 @@ namespace AdeeboMeter
             // walk test
             var wr = new RectangleF(x, y, w, (spots.Count == 0 ? 74 : 92 + spots.Count * 30) * S);
             Theme.Stroke(g, wr, 10 * S, Theme.Track, 1);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.WALK");
             var start = new RectangleF(x + 14 * S, y + 36 * S, 260 * S, 22 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(walkBar.Visible ? "Walk test is on - use the bar at the top" : spots.Count == 0 ? "Start walk test →" : "Add more rooms →", Draw.fBodyB, lb, start.X, start.Y);
@@ -125,10 +125,10 @@ namespace AdeeboMeter
                     // rename / remove
                     var spot = sp; float ax = x + w - actW + 10 * S;
                     var rn = g.MeasureString("Rename", Draw.fSmall); var rr = new RectangleF(ax, sy + 4 * S, rn.Width, 20 * S);
-                    g.DrawString("Rename", Draw.fSmall, link, ax, sy + 5 * S);
+                    g.DrawString(L.T("Rename"), Draw.fSmall, link, ax, sy + 5 * S);
                     Act(linkCanvas, rr, delegate { walkRename = spot.Room; walkBar.Visible = true; walkRoom.Box.Text = spot.Room; walkRoom.Box.Focus(); walkRoom.Box.SelectAll(); walkRec.Text = "Save the new name"; walkStatus.Text = "Type the new name for " + spot.Room + ", then Save."; linkCanvas.Invalidate(); });
                     var dr = new RectangleF(ax + rn.Width + 14 * S, sy + 4 * S, g.MeasureString("Remove", Draw.fSmall).Width, 20 * S);
-                    using (var red = new SolidBrush(Theme.LvText(2))) g.DrawString("Remove", Draw.fSmall, red, dr.X, sy + 5 * S);
+                    using (var red = new SolidBrush(Theme.LvText(2))) g.DrawString(L.T("Remove"), Draw.fSmall, red, dr.X, sy + 5 * S);
                     Act(linkCanvas, dr, delegate { spots.Remove(spot); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = "Removed " + spot.Room + "."; linkCanvas.Invalidate(); });
                     sy += 30 * S;
                 }

@@ -481,6 +481,21 @@ namespace AdeeboMeter
                 if (EngPack.CertVerdict(a, b)[1] != "Different issuer" || EngPack.CertVerdict(a, a)[1] != "Same certificate") throw new InvalidOperationException("cert verdict");
                 if (EngPack.ParseCert(EngPack.CertLine(new EngPack.CertSnap { Host = "x.example.com", Name = "n", T = DateTime.Now, Trust = "t", Chain = a.Chain })) == null) throw new InvalidOperationException("cert line");
             });
+            T("languages: French table is well-formed and English stays the fallback", () =>
+            {
+                var fr = L.Parse(Knowledge.RawText("lang-fr"));
+                if (fr.Count < 250) throw new InvalidOperationException("French table has only " + fr.Count + " lines");
+                foreach (var kv in fr)
+                {
+                    if (kv.Value.Trim().Length == 0) throw new InvalidOperationException("empty translation: " + kv.Key);
+                    // numbers and placeholders must survive translation (a "20 pings" that becomes "pings" is a wrong translation)
+                    var nums = System.Text.RegularExpressions.Regex.Matches(kv.Key, @"\d+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value);
+                    foreach (var n in nums) if (kv.Value.IndexOf(n, StringComparison.Ordinal) < 0) throw new InvalidOperationException("number " + n + " lost in: " + kv.Value);
+                }
+                string old = L.Code;
+                try { L.Use("fr"); if (L.T("Settings") != "Paramètres" || L.T("not in the table at all") != "not in the table at all") throw new InvalidOperationException("lookup"); L.Use("xx"); if (L.Code != "en" || L.T("Settings") != "Settings") throw new InvalidOperationException("unknown language must fall back to English"); }
+                finally { L.Use(old); }
+            });
             T("every Traffic Lab sender needs the company-network tick", () =>
             {
                 var miss = FullView.LabToolsMissingGate().ToList(); if (miss.Count > 0) throw new InvalidOperationException("not gated: " + string.Join(", ", miss));

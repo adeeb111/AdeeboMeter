@@ -712,7 +712,7 @@ namespace AdeeboMeter
                 var recent = tbRecent.Select(id => Tools2().FirstOrDefault(z => z.Id == id)).Where(t => t != null).ToList();
                 if (recent.Count > 0)
                 {
-                    g.DrawString("RECENT", Draw.fTiny, muted, x, y + 3 * S); float rx = x + g.MeasureString("RECENT", Draw.fTiny).Width + 12 * S;
+                    g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y + 3 * S); float rx = x + g.MeasureString("RECENT", Draw.fTiny).Width + 12 * S;
                     foreach (var t in recent)
                     {
                         var ts = g.MeasureString(t.Title, Draw.fSmall); if (rx + ts.Width > x + w) break;
@@ -811,7 +811,7 @@ namespace AdeeboMeter
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(lk, Draw.fBodyB, lb, x, y);
                     Act(tbCanvas, new RectangleF(x, y, ls.Width, ls.Height), delegate { Online.Start(); tbCanvas.Invalidate(); header.Invalidate(); });
                     y += 30 * S;
-                    g.DrawString("Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.", Draw.fSmall, muted, new RectangleF(x, y, w, 34 * S)); y += 36 * S;
+                    g.DrawString(L.T("Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer."), Draw.fSmall, muted, new RectangleF(x, y, w, 34 * S)); y += 36 * S;
                 }
                 if (tbSel == "mtu") y = PaintMtu(g, x, y, w);
                 if (tbSel == "mtr" && mtrHops != null) y = PaintMtr(g, x, y, w);
@@ -853,7 +853,7 @@ namespace AdeeboMeter
         float PaintMtu(Graphics g, float x, float y, float w)
         {
             var hops = mtuHops;
-            if (hops == null) { if (!tbBusy) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop.", Draw.fBody, mb, new RectangleF(x, y, w, 40 * S)); return y + 40 * S; }
+            if (hops == null) { if (!tbBusy) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop."), Draw.fBody, mb, new RectangleF(x, y, w, 40 * S)); return y + 40 * S; }
             float cx = x;
             foreach (var b in new[] { "Next hop  >", "Probe all", "Start again" })
             {
@@ -869,7 +869,7 @@ namespace AdeeboMeter
                 cx += br.Width + 8 * S;
             }
             y += 46 * S;
-            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT", Draw.fTiny, muted, x, y);
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(L.T("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT"), Draw.fTiny, muted, x, y);
             y += 22 * S; int prev = 99999; float barX = x + w * 0.45f, barW = w * 0.25f;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
                 foreach (var h in hops)
@@ -885,7 +885,7 @@ namespace AdeeboMeter
                         prev = Math.Min(prev, h.Mtu);
                     }
                     else if (h.MtuNote != "") g.DrawString(h.MtuNote, Draw.fBody, sub, barX, y + 6 * S);
-                    else if (h.Ip != "") { var hh = h; Act(tbCanvas, rr, delegate { MeasureHops(new List<PathTools.Hop> { hh }); }); g.DrawString("measure", Draw.fSmall, sub, barX, y + 8 * S); }
+                    else if (h.Ip != "") { var hh = h; Act(tbCanvas, rr, delegate { MeasureHops(new List<PathTools.Hop> { hh }); }); g.DrawString(L.T("measure"), Draw.fSmall, sub, barX, y + 8 * S); }
                     y += 30 * S; g.DrawLine(line, x, y, x + w, y);
                 }
             var measured = hops.Where(h => h.Mtu > 0).ToList();
@@ -907,7 +907,7 @@ namespace AdeeboMeter
             float c0 = x + Math.Max(300 * S, w * 0.38f), cw = (x + w - c0) / head.Length;
             using (var muted = new SolidBrush(Theme.Muted)) using (var right = new StringFormat { Alignment = StringAlignment.Far })
             {
-                g.DrawString("HOP", Draw.fTiny, muted, x, y); g.DrawString("ROUTER", Draw.fTiny, muted, x + 40 * S, y);
+                g.DrawString(L.T("HOP"), Draw.fTiny, muted, x, y); g.DrawString(L.T("ROUTER"), Draw.fTiny, muted, x + 40 * S, y);
                 for (int i = 0; i < head.Length; i++) g.DrawString(head[i] + (i >= 2 ? " ms" : ""), Draw.fTiny, muted, new RectangleF(c0 + i * cw, y, cw - 8 * S, 16 * S), right);
                 y += 22 * S;
                 using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))

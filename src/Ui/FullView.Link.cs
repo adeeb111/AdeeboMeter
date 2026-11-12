@@ -89,7 +89,7 @@ namespace AdeeboMeter
             y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), "None in Windows' table yet.", "link.LAN", x, y, w);
             if (ls.Wifi && ls.MyChannel > 0 && ls.Aps.Count > 0) y = PaintChannelMap(g, ls, x, y, w);
             else if (ls.Wifi && ls.Aps.Count == 0 && !ls.LocationBlocked)
-                using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString("Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so.", Draw.fBody, mb, x, y); y += 30 * S; }
+                using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so."), Draw.fBody, mb, x, y); y += 30 * S; }
             if (!ls.Wifi)
             {
                 string tip = Voice.P("Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.", "Wired links have no radio interference; look further along the path if problems persist.");
@@ -124,7 +124,7 @@ namespace AdeeboMeter
         {
             var card = new RectangleF(x, y, w, switchInfo != null ? 150 * S : 86 * S);
             Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.SWITCH");
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
             bool can = LiveCapture.Available && !switchBusy;
@@ -195,7 +195,7 @@ namespace AdeeboMeter
             var top = ls.Aps.OrderByDescending(a => a.Signal).Take(12).ToList();
             float rh = 24 * S; var card2 = new RectangleF(x, y, w, 40 * S + top.Count * rh);
             Theme.Stroke(g, card2, 10 * S, Theme.Track, 1);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("STRONGEST NEIGHBOURS", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("STRONGEST NEIGHBOURS"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.NEIGHBOURS");
             float ry = y + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))

@@ -21,7 +21,7 @@ namespace AdeeboMeter
                 Task.Factory.StartNew(() => { double[,] gw = null; int[,] lv = null; try { lv = History.Week(out gw); } catch (Exception e) { Program.Log("week: " + e.Message); } try { BeginInvoke((Action)delegate { weekLv = lv; weekGw = gw; weekAt = DateTime.UtcNow; weekBusy = false; weekKey = ""; changesCanvas.Invalidate(); }); } catch { weekBusy = false; } });
             }
             float hh = 7 * 22 * S + 52 * S;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR", Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR"), Draw.fTiny, mb, x, y);
             Hint(changesCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "hist.WEEK");
             y += 20 * S;
             if (weekLv != null)

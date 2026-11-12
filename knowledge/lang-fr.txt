@@ -1,0 +1,271 @@
+# AdeeboMeter - French (Canada). English text, a TAB, the French. Missing lines stay in English.
++ Add server	+ Ajouter un serveur
++ Add your own game	+ Ajouter votre jeu
+1 day	1 jour
+10 GB	10 Go
+100 GB	100 Go
+14 days	14 jours
+25 GB	25 Go
+250 GB	250 Go
+3 days	3 jours
+30 days	30 jours
+50 GB	50 Go
+500 GB	500 Go
+60 days	60 jours
+7 days	7 jours
+90 days	90 jours
+A website or app won't open	Un site ou une appli ne s'ouvre pas
+About	À propos
+AdeeboMeter itself	AdeeboMeter lui-même
+Alerts	Alertes
+An app freezes	Une appli se fige
+App and connection watch	Surveillance des applis et connexions
+Auto	Auto
+BGP and who owns the network	BGP et propriétaire du réseau
+BYTES PER APP (SINCE START)	OCTETS PAR APPLI (DEPUIS LE DÉMARRAGE)
+Back to corner	Retour au coin
+Background checks	Vérifications en arrière-plan
+Balanced	Équilibré
+Bigger	Plus grand
+Bound / listening	Lié / à l'écoute
+CALL QUALITY (TEAMS AND OTHER CALLS)	QUALITÉ D'APPEL (TEAMS ET AUTRES)
+Calls	Appels
+Calls are choppy	Les appels coupent
+Can't find my Wi-Fi	Je ne trouve pas mon Wi-Fi
+Cancel	Annuler
+Capture & advanced	Capture et avancé
+Change any of these in Settings  >	Tout cela se change dans les Paramètres  >
+Changes	Changements
+Check	Vérifier
+Check a destination	Vérifier une destination
+Check for updates  >	Vérifier les mises à jour  >
+Checks you start	Vérifications que vous lancez
+Companion	Compagnon
+Computer feels slow	L'ordinateur est lent
+Connections	Connexions
+Corner widget size	Taille du widget
+Dark	Sombre
+Delete all saved history now	Effacer tout l'historique maintenant
+Details	Détails
+EXPERT INFO (WIRESHARK)	INFOS EXPERT (WIRESHARK)
+Edit servers	Modifier les serveurs
+Engineer	Ingénieur
+Every second while a game is open	Chaque seconde pendant une partie
+Everyday	Quotidien
+Export settings...	Exporter les paramètres...
+Export...	Exporter...
+FINDING	CONSTAT
+FOLLOW	SUIVRE
+Fan is loud or it's hot	Le ventilateur souffle ou ça chauffe
+Find it	Trouver
+Finish walk test	Terminer le test de pièces
+Follow	Suivre
+Follow Windows	Comme Windows
+Follow Windows switches light and dark with your Windows setting.	Comme Windows : clair ou sombre selon le réglage de Windows.
+GAME	JEU
+Game ping in the background	Ping des jeux en arrière-plan
+Gamer	Joueur
+Gamer Zone	Zone joueur
+General	Général
+Got it	Compris
+HOW LONG EACH STEP TAKES	DURÉE DE CHAQUE ÉTAPE
+HOW WOULD YOU LIKE ADEEBOMETER?	COMMENT VOULEZ-VOUS ADEEBOMETER ?
+Health	Santé
+History	Historique
+History & data	Historique et données
+Home networks only	Réseaux domestiques seulement
+Hover wait on the folded chip	Délai de survol sur la pastille
+How long a row's Sniff button captures before opening Wireshark.	Durée de capture du bouton Sniff avant d'ouvrir Wireshark.
+How long to rest the mouse on the folded chip before the card opens.	Temps de survol de la pastille avant que la carte s'ouvre.
+How strongly the corner widget shows when you're not hovering it.	Visibilité du widget quand la souris n'est pas dessus.
+How visible	Visibilité
+I KNOW WHAT IT IS	JE SAIS CE QUE C'EST
+I have no internet	Je n'ai pas Internet
+I'm running out of storage	Je manque d'espace disque
+IS IT ME OR THE NETWORK?	EST-CE MOI OU LE RÉSEAU ?
+IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS	EST-CE MOI OU LE RÉSEAU ?   ·   CLIQUEZ UN POINT POUR LES DÉTAILS
+Import settings...	Importer des paramètres...
+Import...	Importer...
+Inside Windows	Dans Windows
+Internet and DNS check	Vérification Internet et DNS
+Internet stops and starts	Internet coupe et revient
+Investigate	Enquêter
+Investigate a problem	Enquêter sur un problème
+Is it me or the network? One glance tells you.	Est-ce moi ou le réseau ? Un coup d'œil suffit.
+It was fine yesterday	Ça marchait hier
+Keep game history for	Garder l'historique des jeux
+Keep history for	Garder l'historique
+Lag graph for streaming	Graphique de lag pour le stream
+Language	Langue
+Learn	Apprendre
+Light	Clair
+Live	Direct
+Live capture	Capture en direct
+Live capture stops after	La capture s'arrête après
+Looking inside Windows...	Je regarde dans Windows...
+MEETING MODE · TEAMS CALL	MODE RÉUNION · APPEL TEAMS
+Mark lag	Marquer le lag
+Measure again  ↻	Mesurer à nouveau  ↻
+Mode	Mode
+Monitor	Surveiller
+Monthly data cap	Limite de données mensuelle
+My PC is slow	Mon PC est lent
+My Wi-Fi keeps dropping	Mon Wi-Fi décroche sans arrêt
+My calls keep freezing	Mes appels se figent
+My game is lagging	Mon jeu lag
+My internet is slow	Mon Internet est lent
+NEEDS ATTENTION  ·  LAST 2 HOURS	À SURVEILLER  ·  2 DERNIÈRES HEURES
+Names for IP addresses	Noms des adresses IP
+Network story	Récit réseau
+Never	Jamais
+Not sure what's wrong	Je ne sais pas ce qui cloche
+Not sure what's wrong?	Vous ne savez pas ce qui cloche ?
+OR TAP WHAT YOU SEE	OU TOUCHEZ CE QUE VOUS VOYEZ
+Off	Désactivé
+On	Activé
+Online lookups on	Recherches en ligne activées
+Only one website is broken	Un seul site ne marche pas
+Open ›	Ouvrir ›
+Overview	Aperçu
+PROTOCOL HIERARCHY (BY PACKETS)	HIÉRARCHIE DES PROTOCOLES (PAR PAQUETS)
+Pick from running programs...	Choisir parmi les programmes ouverts...
+Pin	Épingler
+Privacy & online lookups	Confidentialité et recherches en ligne
+Pro	Pro
+Problem	Problème
+Quiet hours	Heures calmes
+RECENT	RÉCENT
+RIGHT NOW	EN CE MOMENT
+ROUTER	ROUTEUR
+Record this spot (10 s)	Enregistrer cet endroit (10 s)
+Refresh  ↻	Actualiser  ↻
+Remove	Retirer
+Rename	Renommer
+Replay	Revoir
+Report for my ISP...	Rapport pour mon fournisseur...
+Reset to defaults	Valeurs par défaut
+Router ping	Ping du routeur
+Run	Lancer
+Run health check	Lancer le bilan de santé
+Run security checkup	Lancer l'examen de sécurité
+Running	En cours
+STRONGEST NEIGHBOURS	VOISINS LES PLUS FORTS
+Save	Enregistrer
+Security	Sécurité
+Security checkup	Examen de sécurité
+Serious	Sérieux
+Servers watched in the background	Serveurs surveillés en arrière-plan
+Settings	Paramètres
+Show game ping on the widget	Afficher le ping du jeu sur le widget
+Sign-in page check	Vérification de page de connexion
+Simple	Simple
+Small	Petit
+Sniff	Sniff
+Sniff records for	Sniff enregistre pendant
+So they're never left on by mistake.	Pour ne jamais les oublier activées.
+Start live capture	Démarrer la capture
+Start session · 	Démarrer une session · 
+Start when a game opens	Démarrer quand un jeu s'ouvre
+Start with Windows	Démarrer avec Windows
+Stop monitoring	Arrêter la surveillance
+Stop session	Arrêter la session
+Story	Histoire
+Support AdeeboMeter  >	Soutenir AdeeboMeter  >
+Switch them off by themselves after	Les désactiver d'eux-mêmes après
+TCP / IP HEALTH	SANTÉ TCP / IP
+TERMS USED IN ADEEBOMETER	TERMES UTILISÉS DANS ADEEBOMETER
+THIS PC	CE PC
+TODAY	AUJOURD'HUI
+TOP BY CPU	TOP PROCESSEUR
+TOP BY MEMORY	TOP MÉMOIRE
+Teams call detection	Détection des appels Teams
+Teams, Zoom, WhatsApp cut out	Teams, Zoom, WhatsApp coupent
+Tell me when a new device joins	Me prévenir quand un appareil arrive
+Test these now	Tester maintenant
+Test under load...	Tester sous charge...
+That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.	Pas de souci. Dites-moi ce que vous remarquez, ou touchez le plus proche. Tout fonctionne hors ligne - même quand vous ne pouvez pas chercher sur Google.
+The default. Notices trouble within seconds and still costs next to nothing.	Par défaut. Repère un problème en quelques secondes et ne coûte presque rien.
+The internet is slow	Internet est lent
+Theme	Thème
+Time machine	Retour arrière
+Toolbox	Boîte à outils
+Tools you press	Outils que vous lancez
+Topics	Sujets
+Videos keep buffering	Les vidéos chargent sans arrêt
+Voice	Ton
+WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T	TEST DE PIÈCES  ·  LESQUELLES SONT BONNES, LESQUELLES NON
+WHAT CHANGED 15 MINUTES EITHER SIDE	CE QUI A CHANGÉ 15 MINUTES AVANT ET APRÈS
+WHAT I OBSERVED	CE QUE J'AI OBSERVÉ
+WHAT'S WRONG?	QU'EST-CE QUI CLOCHE ?
+WHERE EVERYTHING LIVES	OÙ SE TROUVE CHAQUE CHOSE
+Watch and suggest	Surveiller et suggérer
+Watch my first pinned destination all day	Surveiller ma première destination épinglée toute la journée
+Watches everything closely - for when something is wrong and you want every clue.	Surveille tout de près - quand quelque chose cloche et que vous voulez chaque indice.
+What changed	Ce qui a changé
+What's running	Ce qui tourne
+Wi-Fi	Wi-Fi
+Wi-Fi says "No internet"	Le Wi-Fi dit « Pas d'Internet »
+Wi-Fi vs cable...	Wi-Fi ou câble...
+Wi-Fi watch	Surveillance du Wi-Fi
+Widget	Widget
+Widget style	Style du widget
+Windows	Windows
+Windows counters · no admin	Compteurs Windows · sans admin
+You can switch any time in Settings › General.	Vous pouvez changer à tout moment dans Paramètres › Général.
+YouTube, Netflix stop and spin	YouTube, Netflix s'arrêtent et tournent
+Your PC	Votre PC
+Your Wi-Fi	Votre Wi-Fi
+any game, any server IP	n'importe quel jeu, n'importe quel serveur
+connected, but nothing works	connecté, mais rien ne marche
+everything else works	tout le reste fonctionne
+everything takes a long time	tout prend du temps
+free for everyone - a donation helps cover signing and the Store	gratuit pour tous - un don aide à payer la signature et le Store
+it stops responding	elle ne répond plus
+measure	mesurer
+nothing opens - works even when you can't google it	rien ne s'ouvre - fonctionne même sans Google
+opens the website in your browser - AdeeboMeter itself never checks	ouvre le site dans votre navigateur - AdeeboMeter ne vérifie jamais lui-même
+pages take ages, videos buffer	les pages traînent, les vidéos chargent
+something is working hard	quelque chose travaille fort
+the network isn't in the list	le réseau n'est pas dans la liste
+tshark is the heaviest thing AdeeboMeter can run, so it always stops by itself.	tshark est ce qu'AdeeboMeter peut lancer de plus lourd, alors il s'arrête toujours tout seul.
+what changed since then?	qu'est-ce qui a changé depuis ?
+works, then doesn't, then works	ça marche, puis non, puis oui
+Check everything for me	Tout vérifier pour moi
+Test my speed	Tester ma vitesse
+Stop	Arrêter
+Simple	Simple
+Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.	Dites-moi juste ce qui cloche. Les points, Qu'est-ce qui cloche ?, un test de vitesse, l'historique et la Zone joueur.
+All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.	Tous les outils d'ingénieur en plus : Surveiller, Sécurité, Boîte à outils, L'histoire du réseau et Apprendre.
+Network	Réseau
+Devices	Appareils
+Traffic Lab	Labo de trafic
+Find any tool (mtu, dns, wifi, slow...)	Trouver un outil (mtu, dns, wifi, lent...)
+Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot	Décrivez-le - ex. YouTube s'arrête, les appels figent, le portable chauffe
+Check a destination sends only what you ask for, to where you ask, when you press Check.	Vérifier une destination n'envoie que ce que vous demandez, là où vous le demandez, quand vous appuyez sur Vérifier.
+Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.	Ctrl+K mène à tout.   Détails (en haut à droite) montre les valeurs brutes, les sources et les heures.
+DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC.	Le DNS n'est pas gardé dans l'historique (le point gris). Chaque nombre est la moyenne d'une minute d'AdeeboMeter, tirée du fichier du jour sur ce PC.
+Each added game's best region, up to this many. Never more than 10 probes a second in total.	La meilleure région de chaque jeu ajouté, jusqu'à ce nombre. Jamais plus de 10 sondes par seconde au total.
+Every night anything older goes (rolling). 90 days is still only about 1.5 MB.	Chaque nuit, ce qui est plus vieux disparaît (en continu). 90 jours, c'est à peine 1,5 Mo.
+HOP	SAUT
+HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	SAUT   ROUTEUR                                    PLUS GROS PAQUET QUI PASSE  ·  CLIQUEZ UN SAUT POUR LE MESURER
+Needs a newer Wireshark (3.0 or later).	Il faut un Wireshark plus récent (3.0 ou plus).
+No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	Pas de nuage, pas de compte, pas de télémétrie, pas de mises à jour, pas de pubs, pas de rapports de plantage. Il n'écoute jamais sur un port - et le vérifie lui-même à chaque démarrage.
+Nothing is talking to the internet right now - type a site above.	Rien ne parle à Internet en ce moment - tapez un site ci-dessus.
+Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.	Vérification avant appel : 20 pings au routeur et 20 à 1.1.1.1. Test de vitesse DNS : environ 40 recherches de noms vers votre DNS, 1.1.1.1, 8.8.8.8 et 9.9.9.9. Test de pièces : 20 pings au routeur par pièce. Seulement quand vous les lancez.
+Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent.	Fait la même vérification que Vérifier une destination : nom, connexion, cadenas, premier octet et le chemin. Rien d'autre n'est envoyé.
+Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	N'envoie que des adresses IP publiques à RIPEstat et PeeringDB, puis se désactive tout seul. La minuterie est dans Paramètres > Recherches en ligne.
+THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	CETTE MINUTE  ·  COMPARÉE À LA VALEUR MÉDIANE DU JOUR
+THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	LA JOURNÉE EN UN COUP D'ŒIL  ·  BANDE = VERDICT, BLEU = DÉLAI DU ROUTEUR (MS), VERT = SIGNAL WI-FI (%)
+TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC	PRINCIPALES CONVERSATIONS · NOMMÉES SELON LE NOM DE SERVEUR TLS / DNS DU TRAFIC
+Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop.	Tapez une destination et appuyez sur Lancer : AdeeboMeter trace le chemin, puis vous mesurez saut par saut.
+WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR	QUAND MON RÉSEAU VA-T-IL MAL ?  ·  7 DERNIERS JOURS × 24 HEURES  ·  PIRE MOMENT DE CHAQUE HEURE
+WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)	SANTÉ DU WI-FI  ·  À PARTIR DE CE QUE WINDOWS NE CACHE JAMAIS (MARCHE SANS LA LOCALISATION)
+Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so.	Windows n'a listé aucun réseau voisin cette fois - il refait son balayage environ chaque minute.
+YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY	VOTRE PORT DE COMMUTATEUR  ·  LLDP / CDP, ÉCOUTÉS PASSIVEMENT
+Search settings - e.g. ping, history, widget	Chercher un paramètre - ex. ping, historique, widget
+ON THIS PC	SUR CE PC
+BACKGROUND · GAME SERVERS	ARRIÈRE-PLAN · SERVEURS DE JEU
+BACKGROUND · YOUR NETWORK	ARRIÈRE-PLAN · VOTRE RÉSEAU
+BACKGROUND · INTERNET	ARRIÈRE-PLAN · INTERNET
+ONLINE LOOKUP	RECHERCHE EN LIGNE
+ONLY WHILE THIS WINDOW IS OPEN	SEULEMENT QUAND CETTE FENÊTRE EST OUVERTE

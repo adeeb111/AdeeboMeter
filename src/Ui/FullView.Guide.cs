@@ -67,7 +67,7 @@ namespace AdeeboMeter
                 if (r == null)
                 {
                     if (guideNote != "") { using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString(guideNote, Draw.fBodyB, gb, x, y); y += 30 * S; }
-                    g.DrawString("WHAT'S WRONG?", Draw.fTiny, muted, x, y); y += 24 * S;
+                    g.DrawString(L.T("WHAT'S WRONG?"), Draw.fTiny, muted, x, y); y += 24 * S;
                     float cw = (w - 14 * S) / 2, chh = 104 * S;
                     for (int i = 0; i < Investigate.All.Length; i++)
                     {
@@ -94,14 +94,14 @@ namespace AdeeboMeter
                     float fh = Draw.Measure(fin, Draw.fName, (int)(w - 40 * S)).Height;
                     var frc = new RectangleF(x, y, w, fh + 44 * S);
                     Theme.Fill(g, frc, 12 * S, Theme.LvSoft(r.Done ? r.Lv : 3));
-                    using (var tb = new SolidBrush(Theme.Muted)) g.DrawString("FINDING", Draw.fTiny, tb, x + 18 * S, y + 10 * S);
+                    using (var tb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("FINDING"), Draw.fTiny, tb, x + 18 * S, y + 10 * S);
                     using (var fb = new SolidBrush(r.Done ? (r.Lv == 0 ? Theme.Ink : Theme.LvText(r.Lv)) : Theme.Muted)) g.DrawString(fin, Draw.fName, fb, new RectangleF(x + 18 * S, y + 28 * S, w - 36 * S, fh + 6));
                     y += frc.Height + 18 * S;
                     // observed
                     var obs = r.ObservedCopy();
                     if (obs.Count > 0)
                     {
-                        g.DrawString("WHAT I OBSERVED", Draw.fTiny, muted, x, y); y += 22 * S;
+                        g.DrawString(L.T("WHAT I OBSERVED"), Draw.fTiny, muted, x, y); y += 22 * S;
                         float nameW = Math.Min(280 * S, w * 0.34f), pillW = Cfg.Details ? 170 * S : 120 * S;
                         foreach (var o in obs)
                         {
@@ -123,7 +123,7 @@ namespace AdeeboMeter
                         {
                             if (items.Count == 0) return y;
                             g.DrawString(head, Draw.fTiny, muted, x, y); y += 22 * S;
-                            foreach (var it in items) { float ih = Draw.Measure(it, Draw.fBody, (int)(w - 24 * S)).Height; g.DrawString("-", Draw.fBody, sub, x + 2 * S, y); g.DrawString(it, Draw.fBody, sub, new RectangleF(x + 18 * S, y, w - 24 * S, ih + 4)); y += ih + 8 * S; }
+                            foreach (var it in items) { float ih = Draw.Measure(it, Draw.fBody, (int)(w - 24 * S)).Height; g.DrawString(L.T("-"), Draw.fBody, sub, x + 2 * S, y); g.DrawString(it, Draw.fBody, sub, new RectangleF(x + 18 * S, y, w - 24 * S, ih + 4)); y += ih + 8 * S; }
                             return y + 10 * S;
                         };
                         y = list("NOT ESTABLISHED", r.NotEst);

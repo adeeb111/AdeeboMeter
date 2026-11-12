@@ -198,7 +198,7 @@ namespace AdeeboMeter
             var o = Knowledge.Topic("outlook-flow");
             if (o != null && o["ladder"] != "") { y = Head(g, "HOW OUTLOOK GETS YOUR MAIL", x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
             var refresh = new RectangleF(x, y, 120 * S, 22 * S);
-            using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString("Refresh  ↻", Draw.fBodyB, lb, refresh.X, refresh.Y);
+            using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Refresh  ↻"), Draw.fBodyB, lb, refresh.X, refresh.Y);
             Act(travelCanvas, refresh, delegate { m365Rows = null; travelCanvas.Invalidate(); });
             return y + 30 * S;
         }
@@ -234,7 +234,7 @@ namespace AdeeboMeter
             float colA = x + 90 * S, colB = x + w - 90 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
-                g.DrawString("Your PC", Draw.fBodyB, ink, colA - 30 * S, y); g.DrawString(realHost, Draw.fBodyB, ink, colB - 60 * S, y); y += 24 * S;
+                g.DrawString(L.T("Your PC"), Draw.fBodyB, ink, colA - 30 * S, y); g.DrawString(realHost, Draw.fBodyB, ink, colB - 60 * S, y); y += 24 * S;
                 float top = y;
                 using (var lp = new Pen(Theme.Line, 2 * S)) { g.DrawLine(lp, colA, top, colA, top + shown.Count * 26 * S); g.DrawLine(lp, colB, top, colB, top + shown.Count * 26 * S); }
                 foreach (var p in shown)

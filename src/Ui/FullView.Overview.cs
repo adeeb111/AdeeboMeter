@@ -189,7 +189,7 @@ namespace AdeeboMeter
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
                 if (Cfg.Mode == "")
                 {
-                    g.DrawString("HOW WOULD YOU LIKE ADEEBOMETER?", Draw.fTiny, muted, x, y); y += 22 * S;
+                    g.DrawString(L.T("HOW WOULD YOU LIKE ADEEBOMETER?"), Draw.fTiny, muted, x, y); y += 22 * S;
                     var opts = new[] {
                         new[] { "simple", "Simple", "Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone." },
                         new[] { "pro", "Pro", "All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn." } };
@@ -198,16 +198,16 @@ namespace AdeeboMeter
                     {
                         var orr = new RectangleF(x + i * (ow + 12 * S), y, ow, oh);
                         Theme.Fill(g, orr, 12 * S, i == 0 ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, orr, 12 * S, i == 0 ? Theme.Blue : Theme.Line, i == 0 ? 2 : 1);
-                        g.DrawString(opts[i][1], Draw.fHead, ink, orr.X + 18 * S, orr.Y + 12 * S);
-                        g.DrawString(opts[i][2], Draw.fBody, muted, new RectangleF(orr.X + 18 * S, orr.Y + 40 * S, orr.Width - 36 * S, 40 * S));
+                        g.DrawString(L.T(opts[i][1]), Draw.fHead, ink, orr.X + 18 * S, orr.Y + 12 * S);
+                        g.DrawString(L.T(opts[i][2]), Draw.fBody, muted, new RectangleF(orr.X + 18 * S, orr.Y + 40 * S, orr.Width - 36 * S, 40 * S));
                         string m = opts[i][0]; Act(overviewCanvas, orr, delegate { SetModeTo(m); });
                     }
                     y += oh + 8 * S;
-                    g.DrawString("You can switch any time in Settings › General.", Draw.fSmall, muted, x, y); y += 30 * S;
+                    g.DrawString(L.T("You can switch any time in Settings › General."), Draw.fSmall, muted, x, y); y += 30 * S;
                 }
 
                 // the four numbers
-                g.DrawString("RIGHT NOW", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(L.T("RIGHT NOW"), Draw.fTiny, muted, x, y); y += 22 * S;
                 double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), down = M.Down.Last, up = M.Up.Last, dns = M.Dns.Avg(6);
                 string kind, ssid, adapter, ip, gate, dnsSrv, speed, vpnName; bool vpn; int sig, mtu;
                 lock (M.L) { kind = M.AdapterKind; ssid = M.Ssid; adapter = M.Adapter; ip = M.LocalIp; gate = M.Gateway; dnsSrv = M.DnsServer; speed = M.LinkSpeed; vpn = M.VpnUp; vpnName = M.VpnName; sig = M.WifiSignal; mtu = M.PrimaryMtu; }
@@ -235,7 +235,7 @@ namespace AdeeboMeter
                 // speed: only when you press the button (it talks to Cloudflare's speed server; the line says so)
                 {
                     var last = SpeedTest.Last; bool busy = SpeedTest.Busy;
-                    string bt = busy ? "Stop" : "Test my speed"; var bsz2 = g.MeasureString(bt, Draw.fBodyB); var sb2 = new RectangleF(x, y + 2 * S, bsz2.Width + 28 * S, 32 * S);
+                    string bt = L.T(busy ? "Stop" : "Test my speed"); var bsz2 = g.MeasureString(bt, Draw.fBodyB); var sb2 = new RectangleF(x, y + 2 * S, bsz2.Width + 28 * S, 32 * S);
                     Theme.Fill(g, sb2, 16 * S, busy ? Theme.Soft : Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(bt, Draw.fBodyB, tb, sb2.X + 14 * S, sb2.Y + (32 * S - bsz2.Height) / 2);
                     Act(overviewCanvas, sb2, delegate { if (SpeedTest.Busy) speedRun.Stop = true; else StartSpeed(); });
                     Hint(overviewCanvas, sb2, "tb.speedtest");
@@ -270,19 +270,19 @@ namespace AdeeboMeter
                     card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
                     Theme.Fill(g, card, 14 * S, Theme.Soft); Theme.Stroke(g, card, 14 * S, Theme.Line, 1);
                     // the big button, right
-                    string big = "Check everything for me"; var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
+                    string big = L.T("Check everything for me"); var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
                     Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
                     Act(overviewCanvas, bbr, delegate { GoGuide("whats"); });
                     float tw0 = bbr.X - cx0 - 16 * S;
-                    g.DrawString("Not sure what's wrong?", Draw.fTitle, ink, new RectangleF(cx0, cy, tw0, 30 * S));
-                    g.DrawString("That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.", Draw.fBody, muted, new RectangleF(cx0, cy + 32 * S, tw0, 40 * S));
+                    g.DrawString(L.T("Not sure what's wrong?"), Draw.fTitle, ink, new RectangleF(cx0, cy, tw0, 30 * S));
+                    g.DrawString(L.T("That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it."), Draw.fBody, muted, new RectangleF(cx0, cy + 32 * S, tw0, 40 * S));
                     cy += 62 * S;
                     // the describe-it box is a real text box, kept in place under the heading
                     EnsureFixBox();
                     var want = new Point((int)cx0, (int)(cy + overviewCanvas.AutoScrollPosition.Y)); int wantW = (int)(cw - 120 * S);
                     if (fixBox.Location != want) fixBox.Location = want; if (fixBox.Width != wantW) fixBox.Width = wantW;
                     var fb = new RectangleF(cx0 + wantW + 10 * S, cy, 110 * S, 40 * S);
-                    Theme.Fill(g, fb, 10 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString("Find it", Draw.fBodyB, tb, fb, c);
+                    Theme.Fill(g, fb, 10 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T("Find it"), Draw.fBodyB, tb, fb, c);
                     Act(overviewCanvas, fb, delegate { FixFind(); });
                     cy += 56 * S;
                     if (fixHint != "")
@@ -292,25 +292,25 @@ namespace AdeeboMeter
                         if (fixGo != null) { string go = fixGo; Act(overviewCanvas, hr, delegate { FixGo(go); }); }
                         cy += 40 * S;
                     }
-                    g.DrawString("OR TAP WHAT YOU SEE", Draw.fTiny, muted, cx0, cy); cy += 22 * S;
+                    g.DrawString(L.T("OR TAP WHAT YOU SEE"), Draw.fTiny, muted, cx0, cy); cy += 22 * S;
                     for (int i = 0; i < Symptoms.Length; i++)
                     {
                         var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
                         Theme.Fill(g, br, 10 * S, Theme.Card); Theme.Stroke(g, br, 10 * S, Theme.Track, 1);
-                        g.DrawString(Symptoms[i][1], Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
-                        g.DrawString(Symptoms[i][2], Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, 18 * S));
+                        g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
+                        g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, 18 * S));
                         string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
                     }
                     y = card.Bottom + 14 * S;
 
                     // I know what it is
-                    g.DrawString("I KNOW WHAT IT IS", Draw.fTiny, muted, x, y); y += 22 * S;
+                    g.DrawString(L.T("I KNOW WHAT IT IS"), Draw.fTiny, muted, x, y); y += 22 * S;
                     float kx = x; var probs = FixProblems;
                     for (int i = 1; i < probs.Length; i++)
                     {
-                        var ks = g.MeasureString(probs[i][1], Draw.fBody); var kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S);
+                        var ks = g.MeasureString(L.T(probs[i][1]), Draw.fBody); var kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S);
                         if (kr.Right > x + w && kx > x) { kx = x; y += 42 * S; kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S); }
-                        Theme.Stroke(g, kr, 17 * S, Theme.Track, 1); g.DrawString(probs[i][1], Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
+                        Theme.Stroke(g, kr, 17 * S, Theme.Track, 1); g.DrawString(L.T(probs[i][1]), Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
                         string go = probs[i][0]; Act(overviewCanvas, kr, delegate { FixGo(go); });
                         if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, kr, "guide." + go.Substring(6));
                         kx += kr.Width + 8 * S;
@@ -327,7 +327,7 @@ namespace AdeeboMeter
 
                 // needs attention
                 var att = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).Take(4).ToList();
-                g.DrawString("NEEDS ATTENTION  ·  LAST 2 HOURS", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (att.Count == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in att)
@@ -343,13 +343,13 @@ namespace AdeeboMeter
                 // today
                 string today = "Used today on this network: " + Usage.Mb(Usage.Today(Brain.NetKey));
                 string lastCall = ""; lock (Calls.Summaries) if (Calls.Summaries.Count > 0) lastCall = "Last call (" + Calls.Summaries[0][0] + "): " + Calls.Summaries[0][1];
-                g.DrawString("TODAY", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(L.T("TODAY"), Draw.fTiny, muted, x, y); y += 22 * S;
                 g.DrawString(today, Draw.fBody, sub, x, y); y += 24 * S;
                 if (lastCall != "") { float lh = Draw.Measure(lastCall, Draw.fBody, (int)w).Height; g.DrawString(lastCall, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S; }
                 y += 14 * S;
 
                 // where things live
-                g.DrawString("WHERE EVERYTHING LIVES", Draw.fTiny, muted, x, y); y += 24 * S;
+                g.DrawString(L.T("WHERE EVERYTHING LIVES"), Draw.fTiny, muted, x, y); y += 24 * S;
                 var map = new[] {
                     new[] { "monitor", "Monitor", "Connections, your Wi-Fi or cable, what's running, live capture." },
                     new[] { "investigate", "Investigate", "Guided problems, check a destination, health and tools." },
@@ -366,7 +366,7 @@ namespace AdeeboMeter
                     string id = m[0]; Act(overviewCanvas, mr, delegate { string pg; tab = lastIn.TryGetValue(id, out pg) ? pg : Secs.First(z => z[0] == id)[2]; ShowTab(); });
                 }
                 y += ((map.Length + mc - 1) / mc) * (mh + 10 * S) + 10 * S;
-                g.DrawString("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.", Draw.fSmall, muted, x, y); y += 30 * S;
+                g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
             if (overviewCanvas.AutoScrollMinSize != need) { overviewCanvas.AutoScrollMinSize = need; overviewCanvas.Invalidate(); }

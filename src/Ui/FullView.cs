@@ -111,7 +111,7 @@ namespace AdeeboMeter
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
                 Prep(e.Graphics);
-                using (var mb = new SolidBrush(Theme.Muted)) e.Graphics.DrawString("IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS", Draw.fTiny, mb, Sc(20), Sc(12));
+                using (var mb = new SolidBrush(Theme.Muted)) e.Graphics.DrawString(L.T("IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS"), Draw.fTiny, mb, Sc(20), Sc(12));
                 if (!string.IsNullOrEmpty(snap.Hint))
                     using (var hintBrush = new SolidBrush(Theme.LvText(1))) using (var sf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                         e.Graphics.DrawString("Why: " + snap.Hint, Draw.fBodyB, hintBrush, new RectangleF(Sc(220), Sc(9), pathPanel.Width - Sc(240), Sc(20)), sf);

@@ -103,7 +103,7 @@ namespace AdeeboMeter
             g.TranslateTransform(insideList.AutoScrollPosition.X, insideList.AutoScrollPosition.Y);
             Begin(insideList);
             float x = 14 * S, y = 8 * S, w = insideList.ClientSize.Width - 22 * S;
-            if (treeRows == null) { if (!insideBusy) LoadInside(); using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("Looking inside Windows...", Draw.fBody, mb, x, y); return; }
+            if (treeRows == null) { if (!insideBusy) LoadInside(); using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Looking inside Windows..."), Draw.fBody, mb, x, y); return; }
             var items = InsideItems(); float rh = 40 * S;
             int first = (int)Math.Max(0, (-insideList.AutoScrollPosition.Y - y) / rh), last = first + (int)(insideList.ClientSize.Height / rh) + 2;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
@@ -212,7 +212,7 @@ namespace AdeeboMeter
                 else if (now != null) y = Lead2(g, "It has exited.", x, y, w);
                 else y = Lead2(g, "Measuring for one second...", x, y, w);
                 var again = new RectangleF(x, y - 4 * S, 140 * S, 20 * S);
-                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString("Measure again  ↻", Draw.fBodyB, lb, again.X, again.Y);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Measure again  ↻"), Draw.fBodyB, lb, again.X, again.Y);
                 Act(insideInfo, again, MeasureNow); y += 26 * S;
                 if (hosted.Count > 0)
                     y = InfoCardOn(insideInfo, g, "THE SERVICES LIVING IN THIS " + exe.ToUpperInvariant(), hosted.Select(s => new[] { s.Name, (Svc.What(s.Name) != "" ? Svc.What(s.Name) : s.Display), "3" }).ToList(), null, x, y, w);

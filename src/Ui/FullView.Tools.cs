@@ -77,7 +77,7 @@ namespace AdeeboMeter
                     {
                         // a hand-off: opens the Windows screen where you act; AdeeboMeter changes nothing
                         var ls = g.MeasureString("Open ›", Draw.fSmall); var lr = new RectangleF(x + w - ls.Width, y + 8 * S, ls.Width, ls.Height); string f = row[5].Substring(4);
-                        using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString("Open ›", Draw.fSmall, lb, lr.X, lr.Y); Act(healthCanvas, lr, delegate { SecFix(f); });
+                        using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Open ›"), Draw.fSmall, lb, lr.X, lr.Y); Act(healthCanvas, lr, delegate { SecFix(f); });
                     }
                     y += rh; g.DrawLine(line, x, y, x + w, y); y += 4 * S;
                 }

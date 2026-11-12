@@ -108,8 +108,8 @@ namespace AdeeboMeter
                 {
                     int i = order.Count; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
                     Theme.Stroke(g, r, 10 * S, Theme.Line, 1);
-                    g.DrawString("+ Add your own game", Draw.fBodyB, blue, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 20 * S, 20 * S), nowrap);
-                    g.DrawString("any game, any server IP", Draw.fSmall, muted, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 20 * S, 18 * S), nowrap);
+                    g.DrawString(L.T("+ Add your own game"), Draw.fBodyB, blue, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 20 * S, 20 * S), nowrap);
+                    g.DrawString(L.T("any game, any server IP"), Draw.fSmall, muted, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 20 * S, 18 * S), nowrap);
                     Act(gamerCanvas, r, delegate { EditGame(new Game { Name = "", Custom = true }, true); });
                 }
                 y += ((order.Count + 1 + cols - 1) / cols) * (th + 10 * S) + 14 * S;
@@ -181,7 +181,7 @@ namespace AdeeboMeter
             {
                 float bx = x;
                 Func<string, bool, Action, float> btn = (t, primary, a) =>
-                {
+                { t = L.T(t);
                     var sz = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
                     Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Theme.Stroke(g, r, 17 * S, Theme.Line, 1);
                     using (var tb = new SolidBrush(primary ? Color.White : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
@@ -267,10 +267,10 @@ namespace AdeeboMeter
                                : "Best right now: " + best.Name + " - the week's verdict needs a few days of history";
                 }
                 var stop = new RectangleF(x + w - pad - 120 * S, cy, 120 * S, 22 * S);
-                g.DrawString("Stop monitoring", Draw.fSmall, blue, stop, right);
+                g.DrawString(L.T("Stop monitoring"), Draw.fSmall, blue, stop, right);
                 var gm2 = gm; Act(gamerCanvas, stop, delegate { Games.SetMonitored(gm2.Id, false); gamerNote = "Stopped monitoring " + gm2.Name + ". Nothing more is sent to its servers."; gamerCanvas.Invalidate(); });
                 var ed = new RectangleF(stop.X - (gm.Valve ? 260 : 110) * S, cy, 100 * S, 22 * S);
-                g.DrawString("Edit servers", Draw.fSmall, blue, ed, right);
+                g.DrawString(L.T("Edit servers"), Draw.fSmall, blue, ed, right);
                 Act(gamerCanvas, ed, delegate { EditGame(gm2, false); });
                 if (gm.Valve)
                 {

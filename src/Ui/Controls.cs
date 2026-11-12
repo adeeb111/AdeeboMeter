@@ -101,17 +101,18 @@ namespace AdeeboMeter
         public void SetBadge(string b, int lv) { b = b ?? ""; if (b == badge && lv == badgeLv) return; badge = b; badgeLv = lv; Fit(); Invalidate(); }
         int BadgeW { get { return badge == "" ? 0 : TextRenderer.MeasureText(badge, Draw.fTiny).Width + (int)(16 * Draw.S); } }
         void Fit() { var sz = TextRenderer.MeasureText(Text, Font, Size.Empty, TextFormatFlags.NoPrefix); Width = sz.Width + (int)((Kind == K.Chip ? 22 : 30) * Draw.S) + BadgeW; }
+        public override string Text { get { return base.Text; } set { base.Text = L.T(value); } }   // every caption goes through the language table
         public PillButton(string text, K kind)
         {
             Kind = kind; Text = text;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.StandardClick, true);
             Font = kind == K.Tab ? Draw.fBodyB : kind == K.Primary ? Draw.fBodyB : Draw.fBody;
             Cursor = Cursors.Hand; TabStop = true; BackColor = Theme.Card;
-            var sz = TextRenderer.MeasureText(text, Font);
+            var sz = TextRenderer.MeasureText(Text, Font);   // the translated caption, not the English
             float S = Draw.S;
             Size = new Size(sz.Width + (int)((kind == K.Chip ? 22 : 30) * S), (int)((kind == K.Tab ? 42 : kind == K.Primary ? 36 : 30) * S));
             Margin = new Padding(0, 0, (int)((kind == K.Tab ? 2 : 6) * S), 0);
-            AccessibleRole = AccessibleRole.PushButton; AccessibleName = text;
+            AccessibleRole = AccessibleRole.PushButton; AccessibleName = Text;
         }
         protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { hot = false; down = false; Invalidate(); base.OnMouseLeave(e); }
@@ -179,6 +180,7 @@ namespace AdeeboMeter
         }
         public RoundBox(int width, Font font, string cue)
         {
+            cue = L.T(cue);
             float S = Draw.S;
             DoubleBuffered = true; BackColor = Theme.Card;
             Size = new Size(width, (int)(36 * S)); Margin = new Padding(0, 0, (int)(10 * S), 0);
@@ -348,7 +350,7 @@ namespace AdeeboMeter
                     bool can = CanSniff && c.State != "BOUND";
                     var br = new RectangleF(x, cy - 13 * S, 58 * S, 26 * S);
                     Theme.Fill(g, br, 6 * S, can ? Theme.Blue : Theme.Line2);
-                    using (var b = new SolidBrush(can ? Color.White : Theme.Muted)) g.DrawString("Sniff", Draw.fSmall, b, br, center);
+                    using (var b = new SolidBrush(can ? Color.White : Theme.Muted)) g.DrawString(L.T("Sniff"), Draw.fSmall, b, br, center);
                 }
                 g.ResetClip();
                 if (view.Count == 0) g.DrawString(Voice.P("Nothing matches. Either the filter's too picky or it's really quiet out there.", "No connections match."), Draw.fBody, muted, x0, HeadH + 14 * S);

@@ -98,6 +98,7 @@ namespace AdeeboMeter
             };
             // General
             add("General", "Mode", TagPc, () => Cfg.Simple ? "Simple: the dots, What's wrong?, speed, history and the Gamer Zone." : "Pro: every tab - Monitor, Security, Toolbox, Network story and Learn too.", SetMode, () => Cfg.Simple ? 0 : 1, i => SetModeTo(i == 0 ? "simple" : "pro"), null, "simple pro engineer advanced beginner tabs");
+            add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. More languages come as their translations are finished." : "Français - aperçu : les écrans principaux sont traduits, le reste reste en anglais pour l'instant. Redémarrez AdeeboMeter pour tout changer.", AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français langue english");
             add("General", "Theme", TagPc, () => "Follow Windows switches light and dark with your Windows setting.", SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : th == 0 ? 1 : 2; }, i => Cfg.SetTheme(i == 0 ? -1 : i == 1 ? 0 : 1), null, "dark light colour color");
             add("General", "Voice", TagPc, () => Voice.Serious ? "Plain, serious wording." : "The companion - a joke first, then the fix.", SetS19, () => Voice.Serious ? 1 : 0, i => { Voice.Serious = i == 1; Cfg.Save(); Invalidate(true); }, null, "jokes wording tone");
             add("General", "Start with Windows", TagPc, () => Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.", SetS10, () => Cfg.GetAutoStart() ? 0 : 1, i => Cfg.SetAutoStart(i == 0), null, "startup boot login autostart");
@@ -175,15 +176,15 @@ namespace AdeeboMeter
                     var r = new RectangleF(mx, my, mw, 36 * S); bool on = q.Length == 0 && sec == setSec;
                     if (on) Theme.Fill(g, r, 8 * S, Theme.BlueSoft);
                     int n = q.Length > 0 ? hits.Count(h => h.Sec == sec) : 0;
-                    using (var tb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Sub)) g.DrawString(sec, on ? Draw.fBodyB : Draw.fBody, tb, new RectangleF(r.X + 12 * S, r.Y, r.Width - 44 * S, r.Height), nowrap);
+                    using (var tb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Sub)) g.DrawString(L.T(sec), on ? Draw.fBodyB : Draw.fBody, tb, new RectangleF(r.X + 12 * S, r.Y, r.Width - 44 * S, r.Height), nowrap);
                     if (n > 0) g.DrawString(n.ToString(CultureInfo.InvariantCulture), Draw.fSmall, muted, new RectangleF(r.Right - 28 * S, r.Y, 24 * S, r.Height), nowrap);
                     string s2 = sec; Act(settingsCanvas, r, delegate { setSec = s2; if (settingsSearch != null) settingsSearch.Box.Text = ""; settingsCanvas.AutoScrollPosition = Point.Empty; settingsCanvas.Invalidate(); });
                     my += 40 * S;
                 }
                 my += 14 * S;
                 using (var line = new Pen(Theme.Line)) g.DrawLine(line, mx, my, mx + mw, my); my += 12 * S;
-                var ex = new RectangleF(mx + 12 * S, my, mw - 12 * S, 24 * S); g.DrawString("Export settings...", Draw.fBodyB, blue, ex.X, ex.Y); Act(settingsCanvas, ex, ExportSettings); my += 30 * S;
-                var im = new RectangleF(mx + 12 * S, my, mw - 12 * S, 24 * S); g.DrawString("Import settings...", Draw.fBodyB, blue, im.X, im.Y); Act(settingsCanvas, im, ImportSettings); my += 30 * S;
+                var ex = new RectangleF(mx + 12 * S, my, mw - 12 * S, 24 * S); g.DrawString(L.T("Export settings..."), Draw.fBodyB, blue, ex.X, ex.Y); Act(settingsCanvas, ex, ExportSettings); my += 30 * S;
+                var im = new RectangleF(mx + 12 * S, my, mw - 12 * S, 24 * S); g.DrawString(L.T("Import settings..."), Draw.fBodyB, blue, im.X, im.Y); Act(settingsCanvas, im, ImportSettings); my += 30 * S;
                 if (settingsNote != "") { var nh0 = Draw.Measure(settingsNote, Draw.fSmall, (int)(mw - 12 * S)).Height; g.DrawString(settingsNote, Draw.fSmall, muted, new RectangleF(mx + 12 * S, my, mw - 12 * S, nh0 + 4)); my += nh0 + 8 * S; }
                 string where = Program.Packaged ? "Saved in your AppData folder. Nothing leaves this PC." : "Saved next to AdeeboMeter.exe. Nothing leaves this PC.";
                 var wh = Draw.Measure(where, Draw.fSmall, (int)(mw - 12 * S)).Height; g.DrawString(where, Draw.fSmall, muted, new RectangleF(mx + 12 * S, my, mw - 12 * S, wh + 4)); my += wh + 8 * S;
@@ -199,12 +200,12 @@ namespace AdeeboMeter
                     foreach (var it in hits)
                     {
                         if (it.Sec != last) { y = SetHead(g, it.Sec.ToUpperInvariant(), x, y, w); last = it.Sec; }
-                        y = SetRow(g, x, y, w, it.Label, it.Help(), it.Opts, it.Cur(), it.Set, it.Tag);
+                        y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     }
                 }
                 else
                 {
-                    g.DrawString(setSec, Draw.fTitle, ink, x, y); y += 34 * S;
+                    g.DrawString(L.T(setSec), Draw.fTitle, ink, x, y); y += 34 * S;
                     if (setSec == "Background checks")
                     {
                         string lead = "The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background.";
@@ -226,11 +227,11 @@ namespace AdeeboMeter
                         var ch = Draw.Measure(cnt, Draw.fSmall, (int)w).Height; g.DrawString(cnt, Draw.fSmall, muted, new RectangleF(x, y, w, ch + 4)); y += ch + 18 * S;
                     }
                     foreach (var it in items.Where(i2 => i2.Sec == setSec))
-                        y = SetRow(g, x, y, w, it.Label, it.Help(), it.Opts, it.Cur(), it.Set, it.Tag);
+                        y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     if (setSec == "History & data" && History.Days().Count > 0)
                     {
                         var clr = new RectangleF(x, y, 240 * S, 22 * S);
-                        using (var cb = new SolidBrush(Theme.LvText(2))) g.DrawString("Delete all saved history now", Draw.fBodyB, cb, clr.X, clr.Y);
+                        using (var cb = new SolidBrush(Theme.LvText(2))) g.DrawString(L.T("Delete all saved history now"), Draw.fBodyB, cb, clr.X, clr.Y);
                         Act(settingsCanvas, clr, delegate { History.Clear(); histDay = null; histData = null; histDays = null; settingsCanvas.Invalidate(); });
                         y += 30 * S;
                     }
@@ -269,13 +270,13 @@ namespace AdeeboMeter
                 g.DrawString(label, Draw.fBodyB, ink, x, y);
                 if (!string.IsNullOrEmpty(tag))
                 {
-                    float lw = g.MeasureString(label, Draw.fBodyB).Width, tgw = g.MeasureString(tag, Draw.fTiny).Width + 12 * S;
+                    float lw = g.MeasureString(label, Draw.fBodyB).Width, tgw = g.MeasureString(L.T(tag), Draw.fTiny).Width + 12 * S;
                     if (lw + tgw + 16 * S < tw)
                     {
                         Color tc = tag == TagNet || tag == TagGame ? Theme.Amber : tag == TagLan ? Theme.Blue : tag == TagOnline ? Theme.Orange : tag == TagWin ? Theme.Grey : Theme.Green;
                         var tr = new RectangleF(x + lw + 10 * S, y + 2 * S, tgw, 17 * S);
                         Theme.Fill(g, tr, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 36, tc));
-                        using (var tbr = new SolidBrush(Theme.Dark ? Theme.Ink : tc)) using (var csf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(tag, Draw.fTiny, tbr, tr, csf);
+                        using (var tbr = new SolidBrush(Theme.Dark ? Theme.Ink : tc)) using (var csf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T(tag), Draw.fTiny, tbr, tr, csf);
                     }
                 }
                 g.DrawString(help, Draw.fSmall, muted, new RectangleF(x, y + 20 * S, tw, hh + 4));
@@ -333,8 +334,8 @@ namespace AdeeboMeter
             using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
             {
                 Theme.Logo(g, new RectangleF(x, y, 56 * S, 56 * S), true);
-                g.DrawString("AdeeboMeter", Draw.fHero, ink, x + 70 * S, y - 2 * S);
-                g.DrawString("Is it me or the network? One glance tells you.", Draw.fHead, blue, x + 72 * S, y + 38 * S);
+                g.DrawString(L.T("AdeeboMeter"), Draw.fHero, ink, x + 70 * S, y - 2 * S);
+                g.DrawString(L.T("Is it me or the network? One glance tells you."), Draw.fHead, blue, x + 72 * S, y + 38 * S);
                 y += 84 * S;
                 y = Para(g, "When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.", x, y, w, sub, Draw.fBody);
                 y = Para(g, "No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.", x, y, w, ink, Draw.fBodyB);
@@ -370,7 +371,7 @@ namespace AdeeboMeter
                     LeaveNever };
                 y = Rows(g, leaves, x, y, w);
                 var setLink = new RectangleF(x, y, 260 * S, 22 * S);
-                g.DrawString("Change any of these in Settings  >", Draw.fBodyB, blue, setLink.X, setLink.Y);
+                g.DrawString(L.T("Change any of these in Settings  >"), Draw.fBodyB, blue, setLink.X, setLink.Y);
                 Act(aboutCanvas, setLink, delegate { tab = "settings"; ShowTab(); });
                 y += 34 * S;
 
@@ -381,13 +382,13 @@ namespace AdeeboMeter
                 using (var line = new Pen(Theme.Line)) g.DrawLine(line, x, y, x + w, y); y += 14 * S;
                 g.DrawString("AdeeboMeter " + Program.Version + "  ·  made by Adeeb Khan  ·  " + Program.Tagline, Draw.fSmall, muted, x, y); y += 26 * S;
                 var upd = new RectangleF(x, y, 420 * S, 22 * S);
-                g.DrawString("Check for updates  >", Draw.fBodyB, blue, upd.X, upd.Y);
-                g.DrawString("opens the website in your browser - AdeeboMeter itself never checks", Draw.fSmall, muted, x + g.MeasureString("Check for updates  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
+                g.DrawString(L.T("Check for updates  >"), Draw.fBodyB, blue, upd.X, upd.Y);
+                g.DrawString(L.T("opens the website in your browser - AdeeboMeter itself never checks"), Draw.fSmall, muted, x + g.MeasureString("Check for updates  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
                 Act(aboutCanvas, upd, delegate { Crash.OpenUrl("https://adeeb111.github.io/AdeeboMeter/?v=" + Uri.EscapeDataString(Program.Version) + "#update"); });
                 y += 30 * S;
                 var don = new RectangleF(x, y, 420 * S, 22 * S);
-                g.DrawString("Support AdeeboMeter  >", Draw.fBodyB, blue, don.X, don.Y);
-                g.DrawString("free for everyone - a donation helps cover signing and the Store", Draw.fSmall, muted, x + g.MeasureString("Support AdeeboMeter  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
+                g.DrawString(L.T("Support AdeeboMeter  >"), Draw.fBodyB, blue, don.X, don.Y);
+                g.DrawString(L.T("free for everyone - a donation helps cover signing and the Store"), Draw.fSmall, muted, x + g.MeasureString("Support AdeeboMeter  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
                 Act(aboutCanvas, don, delegate { Crash.OpenUrl("https://adeeb111.github.io/AdeeboMeter/#donate"); });
                 y += 30 * S;
             }

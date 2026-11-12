@@ -287,10 +287,10 @@ namespace AdeeboMeter
                 Theme.Fill(g, cr, 12 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 12 * S, last != null ? Theme.Amber : Theme.Line, last != null ? 1.5f : 1f);
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
-                g.DrawString("AdeeboMeter", fName, ink, pad + 24 * S, y + 1 * S);
+                g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure("AdeeboMeter", fName, 0).Width;
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure("GAME", fTiny, 0).Width + 10 * S, 15 * S);
-                Theme.Fill(g, tag, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString("GAME", fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
+                Theme.Fill(g, tag, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(L.T("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
                 hits["game"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 80 * S);
@@ -298,7 +298,7 @@ namespace AdeeboMeter
                 using (var bf = new Font(fHead.FontFamily, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel)) using (var bb = new SolidBrush(gc))
                 {
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
-                    g.DrawString("ms", fBody, muted, pad + bw - 2 * S, y + 16 * S);
+                    g.DrawString(L.T("ms"), fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
                 var gp = new RectangleF(W - pad - Measure(grade.ToUpperInvariant(), fTiny, 0).Width - 12 * S, y + 12 * S, Measure(grade.ToUpperInvariant(), fTiny, 0).Width + 12 * S, 17 * S);
                 Theme.Fill(g, gp, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade.ToUpperInvariant(), fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
@@ -352,7 +352,7 @@ namespace AdeeboMeter
                 Theme.Fill(g, cr, 12 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 12 * S, lv == 1 || lv == 2 ? gc : Theme.Line, lv == 1 || lv == 2 ? 1.5f : 1f);
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
-                g.DrawString("AdeeboMeter", fName, ink, pad + 24 * S, y + 1 * S);
+                g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure("AdeeboMeter", fName, 0).Width;
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tagText, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
@@ -401,7 +401,7 @@ namespace AdeeboMeter
                 Theme.Stroke(g, cr, 12 * S, s.Level == 2 ? Theme.Red : Theme.Line, s.Level == 2 ? 1.5f : 1f);
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
-                g.DrawString("AdeeboMeter", fName, ink, pad + 24 * S, y + 1 * S);
+                g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure("AdeeboMeter", fName, 0).Width;
                 Theme.Pill(g, Word(s.Level), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Level, S);
                 string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0);
@@ -412,7 +412,7 @@ namespace AdeeboMeter
                 if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString("Why: " + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
                 y += 10 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 52 * S);
-                g.DrawString("IS IT ME OR THE NETWORK?", fTiny, muted, pad, y);
+                g.DrawString(L.T("IS IT ME OR THE NETWORK?"), fTiny, muted, pad, y);
                 y += 15 * S;
                 PathStrip(g, s, new RectangleF(pad, y, inner, 32 * S), false);
                 y += 37 * S;
@@ -423,7 +423,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, r, 7 * S, bad ? Theme.LvSoft(1) : Theme.BlueSoft);
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
-                        g.DrawString("MEETING MODE · TEAMS CALL", fTiny, b, r.X + 8 * S, r.Y + 4 * S);
+                        g.DrawString(L.T("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
                         g.DrawString("up " + Fmt(s.Up, "0.0", " Mb/s") + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;

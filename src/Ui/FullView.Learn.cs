@@ -54,7 +54,7 @@ namespace AdeeboMeter
                 if (q != "")
                 {
                     var terms = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).Take(30).ToList();
-                    if (terms.Count > 0) { g.DrawString("TERMS USED IN ADEEBOMETER", Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
+                    if (terms.Count > 0) { g.DrawString(L.T("TERMS USED IN ADEEBOMETER"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
                 }
             }
             Need(learnList, y);
