@@ -249,7 +249,8 @@ namespace AdeeboMeter
             err = ""; p = (p ?? "").Trim().Trim('"');
             try
             {
-                if (p == "" || !Path.IsPathRooted(p) || p.StartsWith(@"\\", StringComparison.Ordinal)) { err = p.StartsWith(@"\\", StringComparison.Ordinal) ? "local paths only - copy the file from the share to this PC first" : "type the full path of a saved .txt result"; return null; }
+                bool unc = Regex.IsMatch(p, @"^\\\\[^\\?.][^\\]*\\[^\\]+\\.");   // \\server\share\file.txt - a share is fine; \\?\ and \\.\ device paths are not
+                if (p == "" || !Path.IsPathRooted(p) || (p.StartsWith(@"\\", StringComparison.Ordinal) && !unc)) { err = @"type the full path of a saved .txt result (C:\... or \\server\share\...)"; return null; }
                 var fi = new FileInfo(p); if (!fi.Exists) { err = "not found"; return null; } if (fi.Length > 4 << 20) { err = "bigger than 4 MB - not a saved result"; return null; }
                 return File.ReadAllLines(fi.FullName);
             }

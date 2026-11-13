@@ -328,7 +328,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **Child programs start in their own folder**, never in the one AdeeboMeter runs from.
 - **Secrets stay put.** The RADIUS secret box is masked; the secret signs one request and is never logged, saved or kept for *compare*.
 - **A provable build.** Releases are built by GitHub Actions from this source with every action pinned to an exact commit; the build job can only read the repository, and a separate release job — which never runs the build script — is the only one that can sign provenance and attach files; each file carries SHA-256 and GitHub build provenance (`gh attestation verify <file> -R adeeb111/AdeeboMeter`). No updater exists, so there is no update channel to hijack.
-- **Static analysis:** the code builds clean against Microsoft's .NET security and quality analyzers with every rule switched on.
+- **Static analysis:** the code builds clean against Microsoft's .NET security and quality analyzers with every rule switched on (`tools/analyze.sh` runs them; any finding fails it).
 
 ---
 

@@ -319,13 +319,16 @@ namespace AdeeboMeter
             }
             return top + h + 14 * S;
         }
-        // the game's own conversation on the packet journey: its newest UDP socket (the highest local port - the table has no
-        // traffic counts to rank by), else a TCP one to the internet
+        // the game's own conversation on the packet journey: its busiest UDP socket when Live capture is counting bytes,
+        // otherwise its newest (the highest local port - the connection table has no traffic counts); else a TCP one
         void GameJourney(Game pg)
         {
             List<Conn> all; try { all = M.Connections(true); } catch (Exception e) { Program.Log("game journey: " + e.Message); gamerNote = "Couldn't read the connection table."; gamerCanvas.Invalidate(); return; }
             Func<Conn, bool> mine = c => pg.Exes.Any(x => string.Equals((c.Proc ?? "").Replace(".exe", ""), x, StringComparison.OrdinalIgnoreCase));
-            var c1 = all.Where(mine).OrderBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(c => c.LocalPort).FirstOrDefault();
+            var busy = new Dictionary<int, long>(); var lv = live.Running ? liveView : null;
+            if (lv != null) foreach (var cv in lv.Top) if (cv.LocalPort > 0) { long b; busy.TryGetValue(cv.LocalPort, out b); busy[cv.LocalPort] = b + cv.Bytes; }
+            Func<Conn, long> bytes = c => { long b; return busy.TryGetValue(c.LocalPort, out b) ? b : 0; };
+            var c1 = all.Where(mine).OrderBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(bytes).ThenByDescending(c => c.LocalPort).FirstOrDefault();
             if (c1 == null) { gamerNote = pg.Name + " has no network conversation open right now - join a match first."; gamerCanvas.Invalidate(); return; }
             OpenJourney(c1);
         }

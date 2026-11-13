@@ -31,6 +31,34 @@ namespace AdeeboMeter
             }
             catch { return ""; }
         }
+        // Windows' own list of every root Microsoft trusts (the Certificate Trust List it downloads with its updates) is kept in
+        // the registry, signed by Microsoft: a public root newer than this version's snapshot is found there. Read once.
+        static byte[] ctl; static readonly object ctlLock = new object();
+        static bool InWindowsList(X509Certificate2 root)
+        {
+            byte[] tp; try { tp = root.GetCertHash(); } catch (System.Security.Cryptography.CryptographicException) { return false; }
+            lock (ctlLock)
+            {
+                if (ctl == null)
+                {
+                    ctl = Array.Empty<byte>();
+                    try
+                    {
+                        using (var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\SystemCertificates\AuthRoot\AutoUpdate"))
+                        { var b = k != null ? k.GetValue("EncodedCtl") as byte[] : null; if (b != null && b.Length < 8 * 1024 * 1024) ctl = b; }
+                    }
+                    catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is System.IO.IOException)) throw; }
+                }
+                if (tp.Length != 20 || ctl.Length < 22) return false;
+                for (int i = 0; i + 22 <= ctl.Length; i++)   // each entry: OCTET STRING (04 14) and the 20-byte SHA-1 thumbprint
+                {
+                    if (ctl[i] != 0x04 || ctl[i + 1] != 0x14 || ctl[i + 2] != tp[0]) continue;
+                    int j = 1; while (j < 20 && ctl[i + 2 + j] == tp[j]) j++;
+                    if (j == 20) return true;
+                }
+                return false;
+            }
+        }
         static bool OnPublicList(X509Certificate2 root)
         {
             foreach (var loc in new[] { StoreLocation.LocalMachine, StoreLocation.CurrentUser })
@@ -52,7 +80,7 @@ namespace AdeeboMeter
                     {
                         st.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
                         var mine = st.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => c.Thumbprint == root.Thumbprint);
-                        if (mine != null) return IsWellKnown(root);
+                        if (mine != null) return IsWellKnown(root) || InWindowsList(root);
                     }
                 }
                 catch { }

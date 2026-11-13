@@ -34,6 +34,7 @@ namespace AdeeboMeter
             new[] { "page.replay", "replay", "Time machine", "replay any minute of a day you recorded" },
             new[] { "page.changes", "changes", "What changed", "new apps, networks and settings" },
             new[] { "page.windows", "windows", "Windows inside", "what Windows runs, explained" },
+            new[] { "page.live", "live", "Live capture", "who's talking on your network, packet by packet" },
         };
 
         Panel BuildPointsPage()
@@ -213,7 +214,7 @@ namespace AdeeboMeter
         void WatchUse(string tabId)
         {
             if (tabId == "gamer" || tabId == "replay" || useWatched.Contains(tabId) || !PtPages.Any(p => p[1] == tabId)) return;
-            var pages = new Dictionary<string, Control> { { "guide", guidePage }, { "dest", destPage }, { "health", healthPage }, { "conn", connPage }, { "link", linkPage }, { "procs", procPage }, { "security", securityPage }, { "travel", travelPage }, { "changes", changesPage }, { "windows", insidePage } };
+            var pages = new Dictionary<string, Control> { { "guide", guidePage }, { "dest", destPage }, { "live", livePage }, { "health", healthPage }, { "conn", connPage }, { "link", linkPage }, { "procs", procPage }, { "security", securityPage }, { "travel", travelPage }, { "changes", changesPage }, { "windows", insidePage } };
             Control page; if (!pages.TryGetValue(tabId, out page) || page == null) return;
             useWatched.Add(tabId); string id = tabId;
             Action<Control> hook = null;

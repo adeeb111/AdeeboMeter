@@ -81,7 +81,7 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 - History, data usage and what's normal stay on your PC and delete themselves (3 days by default). Live captures are deleted when you stop, at the next start and at logoff.
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in; DLLs load only from System32.
 - TLS with Windows' own certificate validation (Windows picks the version - 1.2 or 1.3 on a current Windows).
-- Builds clean against Microsoft's .NET security and quality analyzers with every rule on.
+- Builds clean against Microsoft's .NET security and quality analyzers with every rule on - run `tools/analyze.sh` to check it yourself.
 - `AdeeboMeter.exe --selftest` runs 71 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
 
 ## Code signing policy

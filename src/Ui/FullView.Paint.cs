@@ -471,7 +471,7 @@ namespace AdeeboMeter
                     int lv = int.Parse(cl[6], CultureInfo.InvariantCulture);
                     Draw.LvDot(g, lv, c5.X + 14 * S, yy + 4 * S, 9 * S, 9 * S);
                     g.DrawString(cl[1] + " " + cl[0], Draw.fBody, ink, new RectangleF(c5.X + 30 * S, yy, colW * 0.42f, 18 * S), nowrap);
-                    string t = "loss " + cl[3] + " · jitter " + cl[4] + " · MOS " + cl[5]; var ts3 = g.MeasureString(t, Draw.fMonoS);
+                    string t = lv == 3 ? cl[2] + " packets - too short to judge" : "loss " + cl[3] + " · jitter " + cl[4] + " · MOS " + cl[5]; var ts3 = g.MeasureString(t, Draw.fMonoS);
                     using (var tb = new SolidBrush(Theme.LvText(lv))) g.DrawString(t, Draw.fMonoS, tb, c5.Right - 14 * S - ts3.Width, yy + 1 * S);
                     Hint(liveCanvas, new RectangleF(c5.X, yy, c5.Width, 20 * S), "live.MOS");
                     yy += 20 * S;

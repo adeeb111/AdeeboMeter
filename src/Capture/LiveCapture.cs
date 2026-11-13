@@ -337,6 +337,9 @@ namespace AdeeboMeter
                     v.Calls.Add(new[] { (r.Dir == "in" ? "from " : "to ") + r.Remote, r.Rate >= 90000 ? "video" : r.Rate > 0 ? "audio" : "media", r.Count.ToString("N0", CultureInfo.CurrentCulture),
                         loss.ToString("0.0", CultureInfo.CurrentCulture) + "%", r.Rate > 0 ? jit.ToString("0.0", CultureInfo.CurrentCulture) + " ms" : "-", mos.ToString("0.0", CultureInfo.CurrentCulture), lv.ToString(CultureInfo.InvariantCulture) });
                 }
+                // a short stream (a test call of a few seconds): listed, but not judged - too few packets for loss and jitter to mean anything
+                foreach (var r in rtp.Values.Where(x => x.Count >= 25 && x.Count < 100).OrderByDescending(x => x.Count).Take(Math.Max(0, 6 - v.Calls.Count)))
+                    v.Calls.Add(new[] { (r.Dir == "in" ? "from " : "to ") + r.Remote, "short call", r.Count.ToString("N0", CultureInfo.CurrentCulture), "-", "-", "-", "3" });
                 v.DhcpServers = dhcp.ToList(); v.Extras = usingExtras;
                 foreach (var cat in new[] { "TCP retransmissions", "Duplicate ACKs", "Segments lost before capture", "Out of order", "Zero window", "Connection resets (RST)", "TLS alerts" })
                 {
