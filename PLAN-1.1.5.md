@@ -242,3 +242,257 @@ E. Two plain-language questions (Adeeb, 12 Nov) - guided checks that end in a ve
         still lags, the verdict says so: "network looks fine - likely the PC or the game itself (frame rate)".
    - Pattern for later questions of the same kind ("Why does my call break up?", "Why won't my printer print?"):
      guided checks -> verdict -> evidence -> one next step. Same rules engine as Explain.
+
+## 11. UI refresh: life, colour, a living companion (designed 13 Nov) - DESIGN, not built
+Adeeb: "looks dull", "no one reads when there is too much writing", "compare topogram - the UI is way off".
+Goal: every page reads in a glance - colour and an icon per section, short labels, pictures instead of paragraphs, a buddy
+that reacts. Nothing an engineer needs is lost: the Details switch brings every number back.
+
+### 11.1 Two layouts, one set of pages (Settings + a header icon, instant, no restart)
+```
+Classic (default)                         Sidebar (topogram style)
+┌ logo · buddy line · mood · Details ┐   ┌──────┬ buddy line · mood · Details ┐
+│ coloured top tabs with icons       │   │ navy │                              │
+│ page ......................... ▐▌ │   │ nav  │ page                         │
+│               slim health strip ▐▌ │   │ ──── │                              │
+└────────────────────────────────────┘   │meter │                              │
+                                          └──────┴──────────────────────────────┘
+```
+- Only the frame differs (navigation + where the health box sits). Pages, cards, tool pages, colours and lines are shared -
+  a fix is made once.
+- The grey right panel (TCP/IP health, This PC, Top apps) becomes a slim icon strip (Classic) or the sidebar meter
+  (Sidebar); it expands on click. Pages get about 25% more width.
+
+### 11.2 The topogram recipe (read from topogram v2.3 paint.py / topogram_app.py)
+| Take | How |
+|---|---|
+| Inter font (Regular / SemiBold / Bold) | embedded in the exe, subset to Latin + French (~300 KB), PrivateFontCollection; OFL notice in About |
+| Grey anti-aliased text | TextRenderingHint.AntiAlias everywhere (today ClearTypeGridFit - thin, "old school") |
+| One palette | navy #0b1b3a, aqua #3de0c2, page #f5f7fb, card #fff, line #e3e8f0, ink #0b1b3a + light tints; dark theme mapped too |
+| Cards | 16 px corners, soft 4-layer shadow instead of a border, optional 5 px colour stripe |
+| Buttons / chips / switch | all drawn (no mixed WinForms buttons): 10 px corners, weight 600, 38 px; switch 38x22 |
+| Sidebar | navy, 44 px rows, selected = white 10% wash + 3 px aqua bar, hover 5% wash, counts as chips, meter at the bottom |
+| Scrolling | 60 px a notch, touchpad-aware; long pages drawn only around what is on screen |
+| 2x drawing then shrink | NOT for whole pages (redrawn every second: a 20 MB scratch picture, breaks the 64 MB budget). Only icons, buddy, logo. |
+
+### 11.3 Colour + icon per section (same everywhere: tab, card stripe, tool page header, back button)
+Investigate purple · Security pink · Toolbox amber · Gamer red · Network story blue · Time machine teal · Learn violet ·
+Monitor green. Toolbox questions each get their own hue (reach teal, slow amber, break red, network blue, join purple,
+keys pink, padlock green, Windows grey, test traffic coral). Colour is never the only signal (icon + text always; high contrast keeps working).
+
+### 11.4 Header + Details switch
+- Details OFF: buddy line + 3 plain chips (PC · Wi-Fi · Internet). Wi-Fi "signal -1%" becomes "hidden by Windows".
+- Details ON: the full 5-dot path (PC · Wi-Fi · ISP · DNS · Internet) with every number, and pages show their full rows.
+- Header also gets the Mood button (11.7) and Adeebo points.
+
+### 11.5 Pages
+| Page | Today | Becomes |
+|---|---|---|
+| Toolbox | 9 grey cards, tool + description | colour + icon per question, tool names only (description on hover), "+5" / ✓ points, "Right now" card when something happened, rotating search examples |
+| Investigate | 6 cards of 4-line paragraphs | 6 icon tiles, one line each |
+| Security checkup | long grey list "not checked yet" | grid of status tiles green / amber / red |
+| Check a destination | empty box + paragraph | recent + pinned sites as chips, 8 step icons that light up as they pass |
+| Gamer Zone | letter tiles, text table | tiles in the game's colour, ping bar per region |
+| Monitor > Your cable | one red box | cable / Wi-Fi picture + buddy line |
+| Time machine | chart good, small text | keep the chart, bigger status dots with icons |
+| Learn | paragraph cards, "0 / 8 done" | icon cards with progress rings |
+| Points | text list | badge wall (earned in colour, locked grey) |
+| Settings | dense pill rows | picture per section; Mood + Persona + Layout get their own section |
+| About | wall of text | one picture + one line per step |
+| Overview | (screenshot came out black under Wine - check on a real PC) | buddy + today in 3 cards |
+
+### 11.6 One tool page for all ~160 tools
+```
+← big back button (to its question, in its colour)
+▌icon  Tool name · 3-word hint                         +5 points
+(buddy) one line - changes with mood and result
+inputs: chips / switches / sliders / drop zones   ->  big coloured GO
+── after the run ──
+2-3 big numbers · "what this means" icons · next-step buttons
+▸ Details (the full rows) · ▸ How it works (the old paragraph)
+```
+Automatic swaps: path box -> drop zone + Browse · yes/no box -> switch · "a or b" text -> big choice buttons ·
+host box -> box + recent hosts as chips · minutes box -> slider with quick picks · paragraph -> 3-step picture (top 20 tools
+first, the rest a short line until they get one).
+
+### 11.7 Mood + persona (replaces the hidden Voice setting)
+- Mood (how it feels): Chill (default) · Roast · Hype · Support · Bossy · Emo (light, "relatable", never dark) · Plain.
+- Persona (who talks): Gamer · Bestie · Pirate · Noir detective · Nature documentary · Shakespeare · Dark Ages
+  (Monty Python silly) · Industrial · Revolution · Mission control · Poetic · Scientist · Coder · Network engineer · Plain.
+- Changes: buddy face + colour, header sentence, tool verdict lines, empty / idle text. Never: numbers, labels, settings,
+  error details, Details rows.
+- Each persona = one text file of ~40 lines (header, top tool verdicts, idle, empty) x good / bad / idle; anything missing
+  falls back to the mood's line. Mood picks which feeling. Total ~560 lines; all 14 packs in this release (Adeeb).
+- Reports and "Copy for my ISP" always Plain. French: Plain + Chill now; other French lines fall back to Chill.
+- Lines are written first and approved by Adeeb before they go in (humour lands or it's cringe).
+
+### 11.7a Lines file, variety, how to address you, tone (13 Nov, Adeeb)
+One file holds every line: knowledge\lines.txt (embedded like the other knowledge files, gzip). The code never holds a
+sentence for the buddy or a summary - it asks for a key. Adding a persona or fixing a line never touches code.
+```
+# key            | mood/persona      | line ({addr} = how you like to be called, {v} = the measured value)
+wifi.drops       | plain             | Wi-Fi disconnected {v} times today.
+wifi.drops       | epic-fantasy      | {Addr}, your Wi-Fi is slower than a raven with a bad wing.
+wifi.drops       | epic-fantasy      | The signal fell {v} times. The night is dark and full of dropouts.
+wifi.drops       | bro               | Bro. Your Wi-Fi bailed {v} times. Not cool, bro.
+sum.tool.mtr     | -                 | Loss and delay at every hop, over minutes.
+sum.page.gamer   | -                 | Your games, your ping, and who to blame.
+```
+- sum.* keys = the one or two line summary of every page, section and tool (plain, mood-free; ~200 lines). They replace
+  the paragraphs; the old paragraph moves under "How it works".
+- Variety: 4-5 lines for the moments seen often (header states, busy, idle, empty, freeze guard, top tool verdicts),
+  2 for the rest. Picked at random, never the same line twice in a row.
+- Pace-aware: clicking or switching tabs fast picks from a "speedrunner" set ("Easy, speedrunner - I'm still on the last
+  one"); long idle picks from an "idle" set. Never more than one buddy line per 10 s unless something changed.
+- How should I address you (Settings, default Neutral; never guessed): Neutral (boss / friend) · Sir / My Lord / bro ·
+  Ma'am / My Lady / sis · Just my name (typed, kept only in settings). Personas use it through {addr}.
+- New personas: Epic fantasy (houses, dragons, ravens, "My Lady") · Space saga (rebels, the dark side, hyperspace) ·
+  Bro code. Named generically on screen - "Game of Thrones" and "Star Wars" are trademarks, and their famous lines are
+  theirs; we write our own lines in that style (no character names, no quoted catchphrases).
+- Size: ~17 personas x (12 frequent x 5 + 28 x 2) ~= 1,900 lines + ~200 summaries. Written and approved in rounds.
+Tone rules (every line is checked against these)
+- A companion, never above the user: we tease the network, the Wi-Fi, the PC - never the person. Roast mode roasts
+  the gear, not you.
+- Never cringe: no forced slang, no "hello fellow kids", no emoji in lines, max 16 words (Adeeb, 13 Nov), one joke per line.
+- The fact always survives: every line still says where the problem is (PC / Wi-Fi / router / provider / server).
+- Never dark: no death, self-harm, violence or real wars; Emo stays "relatable". No mocking any group of people.
+- Reports, "Copy for my ISP" and anything copied out are always Plain.
+
+### 11.7c Companion customization (13 Nov, from Adeeb's companion plan; adapted to AdeeboMeter)
+Words only; data never changes. Findings' numbers, outputs, exports and anything copied always use Plain.
+Settings > Companion (Basic on top, the rest under "More")
+- Basic: Mood (Chill default, Roast, Hype, Support, Bossy, Emo, Plain) · Persona (none by default; the 11.7 list + Gen-Z)
+  · Address me as: Neutral (boss, default) / Sir / Ma'am / my name - chosen, never guessed.
+- More: how chatty (quiet / normal / chatty) · where lines show (header, verdicts, busy/waiting, greetings - each on/off)
+  · buddy face: drawn faces or an emoji set the user picks, plus colour · mix personas (up to 3, rotated) · pin a favourite line / mute a line (never again)
+  · live preview of a sample line. Rule: every option must visibly change the preview, or it doesn't ship.
+- Header: a "Fun lines" toggle always visible - one click to Plain everywhere (next to the Mood button).
+Line files (replaces "one lines.txt" in 11.7a)
+- One file per persona: `key | mood | line`; placeholders {addr} {v} {router} {port} {app} {site}.
+- Several lines per key + mood: random, never the same twice in a row. Missing: persona's other mood -> Plain. Never blank.
+- Built-in files embedded in the exe (single-file app), read-only. Custom / imported files in
+  %LOCALAPPDATA%\AdeeboMeter\lines\ (no admin, the Store build already uses this folder); they survive updates.
+Custom, import, export
+- Write your own lines in any language or style on top of the built-ins; import a file; export your set to share.
+- Import check says what's wrong AND offers the fix; tick the lines, one click fixes them: too long -> shortened version
+  offered; unknown placeholder -> nearest valid one; missing mood -> chill; wrong separator -> fixed. Refused lines are
+  listed, never silent.
+- Limits: runs off the UI thread, 2 s time limit, at most 1 MB and 600 lines a file, 200 characters a line, 20 custom files.
+  Over a limit: refused with the reason, the app carries on. A broken file never stops the app; built-in lines take over.
+- Imported text is untrusted: shown as text only, never run; control characters and right-to-left override marks
+  removed; only the known placeholders are filled. No points for importing.
+Automatic lines test (self-test; replaces reviewing every line - Adeeb: "I won't review every line, keep the surprise")
+- Every built-in line: at most 16 words, no emoji, valid placeholders only, every key has a Plain line, no word from a
+  banned list (dark topics, slurs, trademarked character / house / place / order / weapon names, famous catchphrases).
+- Adeeb reviews a handful of samples per persona, not every line.
+Buddy emoji (13 Nov, Adeeb: "people change emojis; we switch them occasionally as our trick")
+- The buddy can wear an emoji face set instead of the drawn face; picked in Settings > Companion.
+- GDI+ draws emoji in black and white, so the sets ship as small pictures: an open emoji set under CC-BY 4.0 (Twemoji),
+  about 40 faces, ~60 KB, credited in About. No emoji inside the text lines (they'd show as outlines).
+- Our trick: now and then (seasons, the install's birthday, a rare day) the buddy wears a surprise emoji for a day,
+  then goes back to the user's pick. Happens in every mode, Plain too (Adeeb: "that's the surprise") - it's only the face,
+  never the words, and never in anything copied, saved or exported. Never permanent.
+- Batch 1 lines (Plain, Epic fantasy, Bro code, Network engineer) approved 13 Nov. Batches 2-5 are NOT shown to Adeeb
+  ("keep it as a surprise for me"): they go in after passing the automatic lines test and a second read against the
+  tone rules by a separate reviewer (a fresh agent), so they don't grade themselves.
+AdeeboMeter differences from Topogram's version of this plan
+- AdeeboMeter gives advice by design (Investigate says what to try). Persona lines may restate the measured finding and
+  WHERE it is (PC / Wi-Fi / router / provider); the advice itself comes from the engine's Plain rows, never invented by
+  a persona.
+- Default persona: none (Chill buddy) for a Gen-Z audience; Topogram defaults to Network engineer for senior engineers.
+- Emo mood kept (light, "relatable"); Gen-Z persona added alongside Bestie / Bro code.
+
+### 11.7d Additions after Grok's review (13 Nov, Adeeb agreed)
+- Persona picker: "Surprise me" is the default and first choice - one persona picked at random a day (not every
+  line, so it doesn't feel chaotic), then the rest: 6-8 featured, the others under "More personas". Plain and the
+  faith options are never in Surprise me. Address (Neutral / Sir / Ma'am / name) only fills {addr}; it never decides
+  which personas you get.
+- Length per place, not per persona: header line = one line at laptop width (~70 characters); tool verdicts up to
+  2 lines; busy / empty lines one line. The lines test measures each line in the font, per place.
+- Plain persona names on screen (Dark Ages, Revolution, Mission control, Noir) - no "Ye Olde".
+- One-time "Try the new Sidebar layout?" card after updating to 1.1.5; closed = never shown again.
+- Face rule: the buddy is smaller and softer than the verdict; the path dots are the only red / amber / green on the
+  page; the face shows mood by expression, never by health colour.
+- Health tint: the page background shifts to a calm soft tint when green and flat grey when red - one repaint when the
+  state changes, no particles, nothing moving.
+- Hour mark: at the top of each hour the face does one ~1 s reaction (blink or smile); at 22:00 and 23:00 a sleepy face
+  for a second. Full window only - the corner widget stays still. Skipped during a call, a game or a running tool.
+- "What the buddy noticed" strip on Overview: only after several days of history, only patterns seen 3+ times, only
+  what was measured ("quieter since Tuesday", never "since you moved the router").
+- Shareable cards (award, roast, ISP letter, recap) hide network name, IPs, provider and place by default; an explicit
+  switch includes them.
+- Milestone hats: earned from real milestones (30 days of history, first clean security checkup, first ISP letter...),
+  on top of the points hats; never taken away.
+- "Just the facts" one-click in Companion: Plain, Details on, buddy face only.
+- How chatty: Face only / Quiet / Normal / Chatty.
+Faith quotes (opt-in only)
+- Settings > Companion > "Words of comfort": Off (default) / Islam / Christianity / Hinduism / Buddhism (+ Sikhism and
+  Judaism offered too, so no major faith is left out). Chosen by the user, never guessed, never in Surprise me.
+- Quotes stay words shared across that faith's traditions (e.g. "Verily, with hardship comes ease" - Quran 94:5-6), each
+  with its reference, never edited, never mixed with a joke, never in Roast, never next to a problem verdict. They show
+  only in calm moments: greeting, idle, a long wait.
+- Translations from public-domain editions only (e.g. Bible: King James; Gita: Edwin Arnold 1885; Dhammapada:
+  Max Muller 1881; Quran: Pickthall 1930) - checked before shipping.
+- ~20-30 quotes per faith, reviewed by the separate reviewer for accuracy of wording and reference.
+
+### 11.7b Come back for the right reasons (13 Nov, Adeeb agreed)
+Goal: people come back because they want to, never because they feel they have to. The personality makes the useful
+moment memorable; it never replaces it.
+Build
+- The buddy remembers (local only, from data already kept): "Your Wi-Fi was steadier this week than last" ·
+  "Third Monday in a row the internet dipped at 9 pm - that's your provider's busy hour." Only true, measured patterns.
+- Small surprises: seasonal hats (built), rare lines that show about once a month, easter eggs, a different greeting on
+  the install's birthday. Rare lines live in lines.txt with a rarity mark.
+- Visible progress: points, badges, the hat collection, the buddy levelling up with points (new face details / hats).
+  Progress is never taken away.
+- Worth sharing: award card, roast, letter to your ISP, weekly recap card (opt-in, made on request, saved as a picture).
+- Being right when it matters: when something breaks, one line that says "you or your provider" first, jokes second.
+Never build
+- Streaks that can be lost or "you broke your streak" messages.
+- Notifications, pop-ups or reminders asking people to open the app; it never wakes on its own (existing rule).
+- Fake urgency or fear ("Your network might be at risk! Check now") - alerts only for measured problems.
+- A needy buddy: no "I missed you", no sadness or guilt about the user being away, no begging to stay.
+- Anything that hides data, settings or the Quiet buddy / Plain switch behind points.
+Check: every new line and feature in 11.x is read against this list before it goes in.
+
+### 11.8 Also
+- Fresh-install default: Classic layout, Chill mood, no persona (plain buddy).
+- One-file download: CI also uploads AdeeboMeter.exe unzipped (upload-artifact v7, archive: false) - edited, not pushed.
+- Penny rules stand: no idle animation; a ~150 ms hover fade only while the mouse moves; memory stays under 64 MB.
+
+### 11.8a Never slow, never silent (Adeeb: "it shouldn't hang like topogram - always show something")
+Speed rules
+- Repaint only what changed (as today: path strip, side panel, footer and the open page compare their printed text first).
+- Each page's background (cards, shadows, stripes, icons) is drawn once into a cached picture; live numbers are painted
+  on top. Redrawn only on resize, theme, layout or language change. First open of a page ~50-100 ms, then instant.
+- Hover repaints the card under the mouse only, never the page. The ~150 ms fade runs only while the mouse moves.
+- The meter shows rounded numbers, so it repaints only when a shown number changes. Buddy / persona lines are picked when
+  the state changes, not every tick.
+Never look hung
+- Rule: the window thread only draws and answers clicks. Every read, parse, network call, file open, encrypt, history load
+  or capture runs on a worker - audit all of them (pcap replay up to 64 MB, encrypt/decrypt, certificate files, settings
+  import, Gamer week report, history days, Time machine day load).
+- Anything taking over 300 ms shows a busy line in the current mood ("Crunching the numbers, boss..." · Roast: "Hold on,
+  your PC is thinking. Slowly." · Plain: "Working... 3 s") with a moving dot and a Stop button. Clicks keep working;
+  starting the same thing twice is refused politely instead of queued.
+- Freeze guard: the existing watchdog (it only logs today) gets a tiny "Still with you - catching up (3 s)..." card on its
+  OWN thread, so it shows even if the window thread is stuck; it vanishes when the window answers. The log names what
+  it was doing (UiActivity), so a freeze on a tester's PC can be traced.
+- Files people pick (captures, certificates, encrypted files) keep their size caps and are read on a worker with progress.
+Tests that fail the build
+- Self-test: draws every page in both layouts and themes; any page over 30 ms fails.
+- Self-test: the window thread answers within 100 ms while each heavy tool starts (proves the work left the UI thread).
+- Deep test: 60 s on the busiest page - own CPU over 1% average, or memory over 64 MB, fails.
+- The "slow tick" (over 60 ms) and "window froze" logs stay, so a slow PC shows us which page and how long.
+
+### 11.9 Build order (after Adeeb approves this section and the line packs)
+1. Drawing kit: Inter, text hint, palette, card / button / chip / switch / tile / big back button, scrolling.
+2. Frame: Classic + Sidebar, slim health strip, header with Details behaviour + Mood button.
+3. Shared tool page + input swaps; Toolbox page.
+4. The other pages (11.5).
+5. Mood + persona engine, 14 packs, Settings section.
+6. Analyzer + self-test + deep test; screenshots of every page in both layouts and themes for Adeeb; real-PC check.
+
+### 11.10 Open questions
+- Default layout: Classic chosen (least surprise after 1.1.4) - Adeeb can flip it.
+- Persona names on screen: keep "Dark Ages" / "Revolution" or give them fun titles ("Ye Olde", "Viva la Router")?

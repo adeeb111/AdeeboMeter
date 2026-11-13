@@ -2,7 +2,7 @@
 # repository's source. One generated file is added: the Hall of Fame key (obj/HofKey.cs, from the HOF_KEY secret), so a rebuild
 # from the source alone differs from the release in those bytes; the build provenance (gh attestation verify) still proves
 # which workflow run and commit made each file.
-#   push to main or dev-* -> the packaged zips as a workflow artifact (Actions > the run > Artifacts)
+#   push to main or dev-* -> AdeeboMeter.exe on its own (one click, one file) plus the packaged zips, as workflow artifacts
 #   publish a release   -> the same files attached to that release (tag it v<version>, e.g. v1.0)
 #   run it by hand on main with a tag -> rebuilds that release's files from main and refreshes its notes
 name: build
@@ -50,6 +50,12 @@ jobs:
         with:
           name: AdeeboMeter
           path: dist/*
+      # The same AdeeboMeter.exe on its own, not zipped: the one-click, one-file download for testers (Actions > the run >
+      # Artifacts > AdeeboMeter.exe). archive: false needs upload-artifact v7 and exactly one file; the file name is the artifact's name.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2
+        with:
+          path: dist/AdeeboMeter.exe
+          archive: false
       # The Microsoft Store package (unsigned - Microsoft signs it after review). Never attached to the GitHub release;
       # download it from the run's Artifacts and upload it in Partner Center. A packaging problem doesn't hold up the release.
       - name: Store package (store/pack.ps1)
