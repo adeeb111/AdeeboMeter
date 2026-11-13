@@ -87,7 +87,9 @@ namespace AdeeboMeter
                 r.LPort = r.Out ? k.SrcPort : k.DstPort;
                 if ((k.Proto == 1 || k.Proto == 58) && k.Payload.Length >= 4)
                 {
-                    r.IcmpType = k.Payload[0]; r.IcmpCode = k.Payload[1]; r.FromRouter = s != f.Remote; r.Out = false;
+                    r.IcmpType = k.Payload[0]; r.IcmpCode = k.Payload[1];
+                    if (Plain(k.Dst) == f.Remote) { r.Out = true; r.FromRouter = false; }   // this PC's own ping, or its "port unreachable" back to the server
+                    else { r.FromRouter = s != f.Remote; r.Out = false; }
                     if (k.Proto == 1 && r.IcmpType == 3 && r.IcmpCode == 4 && k.Payload.Length >= 8) r.IcmpMtu = k.Payload[6] << 8 | k.Payload[7];
                     if (k.Proto == 58 && r.IcmpType == 2 && k.Payload.Length >= 8) r.IcmpMtu = (int)Math.Min(65535u, (uint)(k.Payload[4] << 24 | k.Payload[5] << 16 | k.Payload[6] << 8 | k.Payload[7]));
                 }
@@ -347,8 +349,8 @@ namespace AdeeboMeter
         }
         static void Vpn(List<Note> n, List<Rec> data)
         {
-            int big = data.Count(x => x.Out && x.IpLen >= 1400), maxLen = data.Count > 0 ? data.Max(x => x.IpLen) : 0;
-            if (big > 0) n.Add(N(1, "Tunnel packets near full size", big + " packets were " + maxLen + " bytes on the outside. With the tunnel's own headers that's close to a 1,500-byte link's limit - if some sites hang half-loaded, lower the VPN adapter's MTU (Packet stack in the Toolbox works out the number).", data.First(x => x.Out && x.IpLen >= 1400).T));
+            int big = data.Count(x => x.Out && x.IpLen >= 1400), maxLen = big > 0 ? data.Where(x => x.Out).Max(x => x.IpLen) : 0;   /* the biggest of the same outbound packets it counts */
+            if (big > 0) n.Add(N(1, "Tunnel packets near full size", big + " packets were up to " + maxLen + " bytes on the outside. With the tunnel's own headers that's close to a 1,500-byte link's limit - if some sites hang half-loaded, lower the VPN adapter's MTU (Packet stack in the Toolbox works out the number).", data.First(x => x.Out && x.IpLen >= 1400).T));
             var outb = data.Where(x => x.Out).ToList(); var gaps = new List<double>(); for (int i = 1; i < outb.Count; i++) gaps.Add(outb[i].T - outb[i - 1].T);
             if (outb.Count >= 3 && outb.All(x => x.IpLen < 200)) n.Add(N(3, "Only keepalives", "Just small packets - the tunnel is up but idle (keepalives every " + Ms(Median(gaps)) + ").", double.NaN));
         }

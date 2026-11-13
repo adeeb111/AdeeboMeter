@@ -84,6 +84,7 @@ namespace AdeeboMeter
             }
             IPAddress tmp;
             if (port < 1 || port > 65535) { err = "Ports go from 1 to 65535."; return false; }
+            if (host.Length > 1 && host.EndsWith(".", StringComparison.Ordinal) && !host.EndsWith("..", StringComparison.Ordinal)) host = host.Substring(0, host.Length - 1);   // "example.com." is a full name too
             // all-number names ("1.2.3", "4294967295", "01.02.03.04", "0x7f.1") are read by Windows as a different IP than they
             // look like - so they're not accepted as names: type the address in full
             if (!Regex.IsMatch(host, @"^[0-9]{1,3}(\.[0-9]{1,3}){3}$") && Regex.IsMatch(host, @"^(0x[0-9a-fA-F]+|[0-9]+)(\.(0x[0-9a-fA-F]+|[0-9]+))*$")) { err = "Write an IP address out in full (four numbers, e.g. 10.0.0.1) - " + host + " would be read as a different address."; return false; }
@@ -218,8 +219,8 @@ namespace AdeeboMeter
                 {
                     u.Connect(target, port); localIp = ((IPEndPoint)u.LocalEndPoint).Address.ToString();
                     foreach (var n in NetworkInterface.GetAllNetworkInterfaces())
-                        foreach (var ua in n.GetIPProperties().UnicastAddresses)
-                            if (ua.Address.ToString() == localIp) { via = n.Name; viaVpn = Monitor.IsVpn(n); }
+                        try { foreach (var ua in n.GetIPProperties().UnicastAddresses) if (ua.Address.ToString() == localIp) { via = n.Name; viaVpn = Monitor.IsVpn(n); } }
+                        catch (NetworkInformationException) { }   // one adapter that can't be read never undoes a route that worked
                 }
                 step(1, 0, viaVpn ? "VPN" : Draw.Trunc(via, 14));
             }
@@ -284,7 +285,7 @@ namespace AdeeboMeter
                 else if (tlsUntrusted || tErr == "")
                 {
                     string proto = tlsUntrusted ? "-" : ProtoName(ssl.SslProtocol);
-                    int days = cert != null ? (int)(cert.NotAfter - DateTime.Now).TotalDays : 0;
+                    int days = cert != null ? (int)Math.Floor((cert.NotAfter - DateTime.Now).TotalDays) : 0;   // expired an hour ago is -1, not 0
                     r.TlsMs = sw.Elapsed.TotalMilliseconds; r.TlsProto = proto; r.TlsIssuer = cert != null ? cert.GetNameInfo(X509NameType.SimpleName, true) : "";
                     if (cert != null && !tlsUntrusted) r.Inspected = Inspection.InspectedBy(cert);
                     step(4, tlsUntrusted ? 2 : days < 14 ? 1 : 0, tlsUntrusted ? "untrusted" : proto + " · " + sw.Elapsed.TotalMilliseconds.ToString("0", CultureInfo.CurrentCulture) + " ms");
@@ -316,7 +317,7 @@ namespace AdeeboMeter
             {
                 try
                 {
-                    var req = Encoding.ASCII.GetBytes("HEAD / HTTP/1.1\r\nHost: " + host + "\r\nUser-Agent: AdeeboMeter\r\nConnection: close\r\n\r\n");
+                    var req = Encoding.ASCII.GetBytes("HEAD / HTTP/1.1\r\nHost: " + (host.Contains(":") ? "[" + host + "]" : host) + "\r\nUser-Agent: AdeeboMeter\r\nConnection: close\r\n\r\n");
                     var sw = Stopwatch.StartNew(); stream.ReadTimeout = 6000; stream.Write(req, 0, req.Length);
                     var buf = new byte[256]; int n = stream.Read(buf, 0, buf.Length); double ttfb = sw.Elapsed.TotalMilliseconds; r.TtfbMs = ttfb;
                     var line = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\n')[0].Trim();
@@ -366,13 +367,13 @@ namespace AdeeboMeter
                 if (DfPing(target, 1472)) mtu = 1500;
                 else
                 {
-                    int lo = 1172, hi = 1471; if (!DfPing(target, lo)) lo = 548;
-                    for (int i = 0; i < 9 && lo < hi; i++) { int mid = (lo + hi + 1) / 2; if (DfPing(target, mid)) lo = mid; else hi = mid - 1; }
-                    mtu = lo + 28;
+                    int lo = 1172, hi = 1471; if (!DfPing(target, lo)) { lo = 548; if (!DfPing(target, lo)) lo = -1; }
+                    if (lo > 0) { for (int i = 0; i < 9 && lo < hi; i++) { int mid = (lo + hi + 1) / 2; if (DfPing(target, mid)) lo = mid; else hi = mid - 1; } mtu = lo + 28; }
+                    else mtu = -1;   // no don't-fragment ping passed at any size: unknown, not 576
                 }
                 int lmtu; lock (m.L) lmtu = viaVpn && m.VpnMtu > 0 ? m.VpnMtu : m.PrimaryMtu;
-                step(6, mtu < 1500 && tlsStalled ? 2 : mtu < 1500 ? 1 : 0, mtu.ToString(CultureInfo.CurrentCulture));
-                r.AddCard("PATH MTU", new List<string[]> { new[] { "Largest that passes", mtu + " bytes", mtu < 1500 ? "1" : "0" }, new[] { "Your adapter sends", lmtu > 0 ? lmtu + " bytes" : "?" }, MtuMethod });
+                step(6, mtu < 0 ? 3 : mtu < 1500 && tlsStalled ? 2 : mtu < 1500 ? 1 : 0, mtu < 0 ? "unknown - no don't-fragment ping got an answer (blocked on the way)" : mtu.ToString(CultureInfo.CurrentCulture));
+                r.AddCard("PATH MTU", new List<string[]> { new[] { "Largest that passes", mtu < 0 ? "unknown (don't-fragment pings blocked)" : mtu + " bytes", mtu < 0 ? "3" : mtu < 1500 ? "1" : "0" }, new[] { "Your adapter sends", lmtu > 0 ? lmtu + " bytes" : "?" }, MtuMethod });
             }
             else step(6, 3, icmp ? "IPv6" : "ICMP blocked");
 
@@ -522,8 +523,9 @@ namespace AdeeboMeter
             bool blocked = mine.Count > 0 && mine.All(ip => ip == "0.0.0.0" || ip.StartsWith("127.", StringComparison.Ordinal)) && pubIps.Count > 0;
             bool missing = mine.Count == 0 && pubIps.Count > 0;
             bool same = mine.Intersect(pubIps).Any();
-            string verdict = blocked || missing ? "your DNS blocks this name" : pubNx ? "public DNS doesn't know it (internal name?)" : same ? "same answer - nothing fishy" : "different answer (usually a nearby CDN server)";
-            r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Public resolver (1.1.1.1)", pubNx ? "no such name" : string.Join(", ", pubIps.Take(3))), Row("Verdict", verdict, blocked || missing ? "2" : same || pubNx ? "0" : "1") });
+            bool v6only = mine.Count == 0 && pubIps.Count == 0 && !pubNx;   // only IPv6 addresses (AAAA): this second opinion compares IPv4 answers
+            string verdict = v6only ? "no IPv4 address on either side - an IPv6-only name, nothing to compare" : blocked || missing ? "your DNS blocks this name" : pubNx ? "public DNS doesn't know it (internal name?)" : same ? "same answer - nothing fishy" : "different answer (usually a nearby CDN server)";
+            r.AddCard("DNS SECOND OPINION", new List<string[]> { Row("Public resolver (1.1.1.1)", pubNx ? "no such name" : string.Join(", ", pubIps.Take(3))), Row("Verdict", verdict, v6only ? "3" : blocked || missing ? "2" : same || pubNx ? "0" : "1") });
             var f = r.Findings ?? new List<string[]>();
             if (blocked || missing) f.Add(Row("Your DNS answered " + (missing ? "'no such name'" : string.Join(", ", mine.Take(2))) + ", but a public resolver finds " + string.Join(", ", pubIps.Take(2)) + ". Something is filtering names - a DNS blocker (like AdGuard), a corporate filter, or the VPN's DNS.", "2"));
             else if (!same && !pubNx && mine.Count > 0) f.Add(Row("Your DNS and a public resolver gave different addresses. That's normal for big sites (each DNS gets a nearby server). If the TLS check below passes, the answer is genuine - certificates can't be faked that easily.", "-1"));
@@ -568,7 +570,7 @@ namespace AdeeboMeter
                 }
                 curCount++; curEnd = h.Item2; string cty = CityOf(name); if (curCity == null) curCity = cty; else if (cty != null) curCityEnd = cty;
                 if (prevMs > 0 && h.Item2 - prevMs > bigJump) { bigJump = h.Item2 - prevMs; bigFrom = (i) + ""; bigTo = (i + 1) + ""; }
-                prevMs = Math.Max(prevMs, h.Item2);
+                prevMs = h.Item2;   // the previous hop, not the slowest so far: each jump is measured where it happens
             }
             flush();
             if (last < 0) seg.Add(Row("Destination", "didn't answer the trace", "dest", ""));
@@ -593,7 +595,8 @@ namespace AdeeboMeter
             // firewalls
             if (tcpErr == "refused" && !double.IsNaN(pingAvg) && tcpFailMs > 0 && tcpFailMs < pingAvg * 0.5)
                 find.Add(new[] { "The 'no' came back in " + ms(tcpFailMs) + ", but the server is " + ms(pingAvg) + " away. Something closer than the server rejected port " + port + " - most likely a firewall or proxy on the way.", "2" });
-            else if (tcpErr == "refused") find.Add(new[] { "The server itself answered 'nothing listens on port " + port + "' - not a firewall.", "1" });
+            else if (tcpErr == "refused" && !double.IsNaN(pingAvg) && tcpFailMs > 0) find.Add(new[] { "The 'no' took about as long as the trip to the server - the server itself answered 'nothing listens on port " + port + "'.", "1" });
+            else if (tcpErr == "refused") find.Add(new[] { "Port " + port + " was refused - by the server, or by a firewall that rejects instead of dropping (ping is blocked, so the timing can't tell which).", "1" });
             else if (tcpErr == "timeout" && last >= 0) find.Add(new[] { "The server answers ping, but port " + port + " gets silence - a firewall is quietly dropping that port.", "2" });
             else if (tcpErr == "timeout") find.Add(new[] { "Silence on port " + port + " and the trace never reached the server - it's down, or a firewall hides it completely.", "2" });
             else if (last < 0 && tcpMs > 0) find.Add(Row("The trace stops before the server, yet your port connects fine: a firewall near the server blocks traceroute but lets real traffic through.", "0"));

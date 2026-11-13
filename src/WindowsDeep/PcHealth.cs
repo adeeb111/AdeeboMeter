@@ -146,7 +146,10 @@ namespace AdeeboMeter
             {
                 var app = Regex.Match(e.Text, @"(?:Faulting application name|The program)\s*:?\s*([^\s,]+)", RegexOptions.IgnoreCase);
                 var mod = Regex.Match(e.Text, @"Faulting module name\s*:\s*([^\s,]+)", RegexOptions.IgnoreCase);
-                return new { e, App = app.Success ? app.Groups[1].Value : "a program", Mod = mod.Success ? mod.Groups[1].Value : "", Hang = e.Id == 1002 };
+                // the event's own data (the same in every language): 1000 and 1002 carry the program first, 1000 the module 4th
+                var data = Regex.Matches(e.Xml ?? "", @"<Data(?: Name=['""][^'""]*['""])?>([^<]*)</Data>").Cast<Match>().Select(z => System.Net.WebUtility.HtmlDecode(z.Groups[1].Value).Trim()).ToList();
+                string appX = data.Count > 0 && data[0].EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? data[0] : "", modX = e.Id == 1000 && data.Count > 3 && data[3] != "" ? data[3] : "";
+                return new { e, App = appX != "" ? appX : app.Success ? app.Groups[1].Value : "a program", Mod = modX != "" ? modX : mod.Success ? mod.Groups[1].Value : "", Hang = e.Id == 1002 };
             }).GroupBy(x => x.App + (x.Hang ? " (hang)" : "")).OrderByDescending(x => x.Count()).Take(8);
             foreach (var x in g)
             {

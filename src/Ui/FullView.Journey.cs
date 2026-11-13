@@ -42,7 +42,7 @@ namespace AdeeboMeter
         // the conversation the story is showing becomes the journey's, unless one was picked from Connections
         Journey.Flow JFlowFromStory()
         {
-            if (jFlow != null && (jFlow.Remote == storyIp || (jFlow.Remote == "" && storyIp == "") || (jSess != null && jSess.F == jFlow))) return jFlow;
+            if (jFlow != null && ((jFlow.Remote == storyIp && (storyPort == 0 || jFlow.RemotePort == 0 || jFlow.RemotePort == storyPort)) || (jFlow.Remote == "" && storyIp == "") || (jSess != null && jSess.F == jFlow))) return jFlow;
             if (storyIp == "") return null;
             var conv = connSnap.FirstOrDefault(c => c.RemoteIp == storyIp && c.RemotePort == storyPort && (storyApp == null || c.Proc == storyApp));
             jFlow = new Journey.Flow { Remote = storyIp, RemotePort = storyPort, LocalPort = conv != null ? conv.LocalPort : 0, Udp = conv != null && conv.Proto.StartsWith("UDP", StringComparison.Ordinal), App = storyApp ?? "" };
@@ -228,9 +228,9 @@ namespace AdeeboMeter
         void JCapture()
         {
             var f = jFlow; if (f == null) return; string ifc = Packets.Iface(M); if (ifc == "") return;
-            if (f.Udp && f.Remote != "" && f.LocalPort == 0) f.LocalPort = 0;
             var sess = new Journey.Session(f, jQuick);
             try { foreach (var n in NetworkInterface.GetAllNetworkInterfaces()) foreach (var u in n.GetIPProperties().UnicastAddresses) { string a = u.Address.ToString(); int z = a.IndexOf('%'); sess.Mine.Add(z > 0 ? a.Substring(0, z) : a); } } catch (NetworkInformationException) { }
+            LabSim.LastRealCwnd = null;   // a new capture: the old one's window line leaves the TCP lab now, Explain or not
             jSess = sess; jNotes = null; jKind = ""; jPlay = 0; jPlaying = false; JTimer(false);   // while recording, each new batch repaints (twice a second) - no timer
             Task.Factory.StartNew(() => sess.Run(ifc, delegate { try { BeginInvoke((Action)delegate { if (jSess == sess) { if (sess.Done) { JTimer(false); jPlay = 0; } travelCanvas.Invalidate(); } }); } catch (InvalidOperationException) { } }), TaskCreationOptions.LongRunning);
             travelCanvas.Invalidate();

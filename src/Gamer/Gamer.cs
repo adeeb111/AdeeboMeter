@@ -226,9 +226,18 @@ namespace AdeeboMeter
             try
             {
                 var names = new HashSet<string>(Process.GetProcesses().Select(p => { try { using (p) return p.ProcessName; } catch (InvalidOperationException) { return ""; } }), StringComparer.OrdinalIgnoreCase);
-                return games.FirstOrDefault(g => monitored.Contains(g.Id) && g.Exes.Any(names.Contains));
+                // javaw is any Java program (Eclipse, a server...): it counts as Minecraft only when it runs from Minecraft's own Java
+                return games.FirstOrDefault(g => monitored.Contains(g.Id) && g.Exes.Any(x => names.Contains(x) && (!string.Equals(x, "javaw", StringComparison.OrdinalIgnoreCase) || JavaIsMinecraft())));
             }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; return null; }
+        }
+        static bool JavaIsMinecraft()
+        {
+            foreach (var p in Process.GetProcessesByName("javaw"))
+                using (p)
+                    try { var f = p.MainModule.FileName ?? ""; if (f.IndexOf("minecraft", StringComparison.OrdinalIgnoreCase) >= 0) return true; }   // the launcher's own runtime: ...\.minecraft\runtime\... or Minecraft Launcher\runtime
+                    catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception || e is NotSupportedException)) throw; }
+            return false;
         }
     }
 
@@ -368,14 +377,13 @@ namespace AdeeboMeter
             if (Cfg.GameBgSec > 0)
                 foreach (var g in games.Where(g => monitored.Contains(g.Id) && !g.Soon && g.Servers.Count > 0 && (p == null || g.Id != p.Id || !Cfg.GameFast)))
                 {
-                    if (r.Count(x => x.Item3 > 1) >= Cfg.GameBgServers || r.Count >= MaxServers) break;   /* background: the best regions, at most GameBgServers */
+                    if (r.Count(x => x.Item3 > 1) >= Cfg.GameBgServers) break;   /* background: the best regions, at most GameBgServers - on top of the playing ones, so a match never starves the other games */
                     r.Add(Tuple.Create(g.Id, Best(g) ?? g.Servers[0], Cfg.GameBgSec));
                 }
-            r = r.Take(MaxServers).ToList();
             // a slow survey of every other region (once every 5 minutes each, 30 on Penny) so "best region" compares like with like
             if (Cfg.GameBgSec > 0)
                 foreach (var g in games.Where(g => monitored.Contains(g.Id) && !g.Soon))
-                    foreach (var s in g.Servers.Take(12)) if (!r.Any(x => x.Item1 == g.Id && x.Item2.Name == s.Name)) r.Add(Tuple.Create(g.Id, s, SurveySec));
+                    foreach (var s in g.Servers) if (!r.Any(x => x.Item1 == g.Id && x.Item2.Name == s.Name)) r.Add(Tuple.Create(g.Id, s, SurveySec));
             return r;
         }
         public static int SurveySec { get { return Cfg.GameBgSec >= 60 ? 1800 : 300; } }   // Penny (game ping every 60 s) surveys every 30 min   // Penny surveys each region every 30 min
@@ -422,7 +430,7 @@ namespace AdeeboMeter
                     var now = Clock.Mono; var go = new List<Tuple<string, GameServer, int>>();
                     foreach (var p in plan)
                     {
-                        string key = p.Item1 + "|" + p.Item2.Name; DateTime d;
+                        string key = p.Item1 + "|" + p.Item2.Host + "|" + p.Item2.Port; DateTime d;   // by address, as the stats are: two servers with one name both get probed
                         if (!due.TryGetValue(key, out d) || d <= now) { go.Add(p); due[key] = now.AddSeconds(p.Item3); }
                         if (go.Count >= MaxPerSecond) break;
                     }
@@ -440,7 +448,7 @@ namespace AdeeboMeter
             var ss = Session; if (ss == null || !ss.Open || mon == null) return;
             var g = games.FirstOrDefault(z => z.Id == ss.GameId); var srv = g == null ? null : g.Servers.FirstOrDefault(z => z.Name == ss.Server);
             double gm = double.NaN;
-            if (srv != null) { var st = Stat(g.Id, srv); if ((DateTime.Now - st.LastAt).TotalSeconds < 3) { var v = st.Recent(1); if (v.Length > 0) gm = v[0]; } }
+            if (srv != null) { var st = Stat(g.Id, srv); if ((DateTime.Now - st.LastAt).TotalSeconds < (Cfg.GameFast ? 3 : Math.Max(1, Cfg.GameBgSec) + 3))   /* fresh for its pace: once a second with GameFast, else the background pace */ { var v = st.Recent(1); if (v.Length > 0) gm = v[0]; } }
             var snap = mon.Latest;
             ss.Add(new GameSession.Sec { T = DateTime.Now, Game = gm, Router = mon.GwPing.Last, Net = mon.NetPing.Last, Signal = mon.WifiSignal, Down = snap.Down, Up = snap.Up, Cpu = snap.Cpu });
         }
@@ -453,9 +461,11 @@ namespace AdeeboMeter
             // a spike: double the usual and 30 ms more - who to blame is read from the home and internet checks at the same moment
             if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= 20 && v > med * 2 && v > med + 30)
             {
-                double gw = mon != null ? mon.GwPing.Last : double.NaN, net = mon != null ? mon.NetPing.Last : double.NaN;
+                // the home and internet samples count only if they're from around now (the view closed, they can be a minute old)
+                var nowM = Clock.Mono; bool gwFresh = mon != null && (nowM - mon.GwAt).TotalSeconds <= 10, netFresh = mon != null && (nowM - mon.NetAt).TotalSeconds <= 10;
+                double gw = gwFresh ? mon.GwPing.Last : double.NaN, net = netFresh ? mon.NetPing.Last : double.NaN;
                 int sig = mon != null ? mon.WifiSignal : -1;
-                string blame = Blame(gw, net, sig, mon != null ? mon.GwPing.Avg(20) : double.NaN);
+                string blame = mon == null || !gwFresh ? "not known (no home-network check at that moment)" : Blame(gw, net, sig, mon.GwPing.Avg(20), mon.GwEverReplied, mon.NetPing.Avg(20));
                 string busy = "", hop = "";
                 if (mon != null)
                 {
@@ -472,20 +482,44 @@ namespace AdeeboMeter
                 lock (Spikes) { Spikes.Insert(0, new Spike { T = DateTime.Now, Game = game, Server = s.Name, Ms = v, Normal = med, Blame = blame, Busy = busy, Hop = hop }); if (Spikes.Count > 50) Spikes.RemoveAt(Spikes.Count - 1); }
             }
         }
-        public static string Blame(double gwNow, double netNow, int sig, double gwUsual)
+        public static string Blame(double gwNow, double netNow, int sig, double gwUsual) { return Blame(gwNow, netNow, sig, gwUsual, true, double.NaN); }
+        // gwEver: has the router ever answered a ping? (some ignore ping - silence then says nothing about the router)
+        // netUsual: the internet check's own usual - a slow line that's always 90 ms isn't the provider's fault at the spike
+        public static string Blame(double gwNow, double netNow, int sig, double gwUsual, bool gwEver, double netUsual)
         {
             if (!double.IsNaN(gwNow) && gwNow > Math.Max(20, (double.IsNaN(gwUsual) ? 5 : gwUsual) * 3)) return sig >= 0 && sig < 60 ? "your Wi-Fi (weak signal)" : sig >= 0 ? "your Wi-Fi" : "your home network";
-            if (double.IsNaN(gwNow)) return "your home network (the router didn't answer)";
-            if (!double.IsNaN(netNow) && netNow > 80) return "your provider";
+            if (double.IsNaN(gwNow) && gwEver) return "your home network (the router didn't answer)";
+            if (!double.IsNaN(netNow) && netNow > Math.Max(80, double.IsNaN(netUsual) ? 0 : netUsual * 2 + 20)) return "your provider";
+            if (double.IsNaN(gwNow) && !double.IsNaN(netNow)) return "past your provider (game server side) - the router ignores ping, so home can't be judged";
             return "past your provider (game server side)";
         }
         // ICMP first (Auto / ICMP only), TCP connect timing when ping is ignored (Auto) or chosen
+        // a server name is looked up once and kept 5 minutes (not 16 lookups a second while playing); one lookup, IPv4 first
+        // when this PC has an IPv4 route, else IPv6. A failed lookup is retried at the next probe.
+        static readonly Dictionary<string, Tuple<IPAddress, DateTime>> resolved = new Dictionary<string, Tuple<IPAddress, DateTime>>(StringComparer.OrdinalIgnoreCase);
+        static IPAddress Resolve(string host)
+        {
+            IPAddress ip; if (IPAddress.TryParse(host, out ip)) return ip;
+            Tuple<IPAddress, DateTime> c; lock (resolved) if (resolved.TryGetValue(host, out c) && Clock.Mono < c.Item2) return c.Item1;
+            IPAddress[] all;
+            try { all = Dns.GetHostAddresses(host); } catch (SocketException) { return null; } catch (ArgumentException) { return null; }
+            bool v4 = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable() && HasV4();
+            ip = (v4 ? all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) : null) ?? all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetworkV6) ?? all.FirstOrDefault();
+            if (ip != null) lock (resolved) { if (resolved.Count > 200) resolved.Clear(); resolved[host] = Tuple.Create(ip, Clock.Mono.AddMinutes(5)); }
+            return ip;
+        }
+        static DateTime v4At; static bool v4Has = true;
+        static bool HasV4()   // an IPv4 default route on any adapter that's up - checked once a minute
+        {
+            if (Clock.Mono < v4At) return v4Has;
+            try { v4Has = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up).Any(n => n.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork && !g.Address.Equals(IPAddress.Any))); }
+            catch (System.Net.NetworkInformation.NetworkInformationException) { v4Has = true; }
+            v4At = Clock.Mono.AddMinutes(1); return v4Has;
+        }
         public static double Probe(GameServer s, out string used)
         {
             used = null;
-            IPAddress ip;
-            try { ip = IPAddress.TryParse(s.Host, out ip) ? ip : Dns.GetHostAddresses(s.Host).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? Dns.GetHostAddresses(s.Host).FirstOrDefault(); }
-            catch (SocketException) { return double.NaN; } catch (ArgumentException) { return double.NaN; }
+            IPAddress ip = Resolve(s.Host);
             if (ip == null) return double.NaN;
             if (s.Port <= 0)
             {
@@ -614,7 +648,7 @@ namespace AdeeboMeter
         public void Add(Sec s) { lock (k) { Rows.Add(s); if (Rows.Count > 4 * 3600) Rows.RemoveAt(0); } }
         public List<Sec> Around(DateTime t, int secs) { lock (k) return Rows.Where(r => Math.Abs((r.T - t).TotalSeconds) <= secs).ToList(); }
         public List<Sec> All() { lock (k) return Rows.ToList(); }
-        public void Mark() { lock (k) if (Marks.Count < 50) Marks.Add(DateTime.Now); }
+        public void Mark() { lock (k) if (Marks.Count < 1000) Marks.Add(DateTime.Now); }   // only times: a long session keeps them all
         // match path recording: each router on the way, timed every 5 s (one ping each) while the match runs
         List<string> hops = new List<string>(); readonly List<double[]> hopMs = new List<double[]>();
         public int HopCount { get { lock (k) return hops.Count; } }
@@ -668,7 +702,7 @@ namespace AdeeboMeter
             var gv = rows.Select(r => r.Game).ToArray();
             DateTime end = Open ? DateTime.Now : End;
             sb.AppendLine("AdeeboMeter match report - " + GameName + " (" + Server + ")");
-            sb.AppendLine(Start.ToString("ddd d MMM yyyy HH:mm", c) + " - " + end.ToString("HH:mm", c) + "  (" + Math.Round((end - Start).TotalMinutes) + " min, " + rows.Count + " samples, one a second)");
+            sb.AppendLine(Start.ToString("ddd d MMM yyyy HH:mm", c) + " - " + end.ToString("HH:mm", c) + "  (" + Math.Round((end - Start).TotalMinutes) + " min, " + rows.Count + " samples" + (rows.Count > 1 && (end - Start).TotalSeconds > 0 ? ", one every " + Math.Max(1, (end - Start).TotalSeconds / rows.Count).ToString("0.#", c) + " s" : "") + ")");
             sb.AppendLine("Game ping: avg " + Fx(GameStat.Avg(gv)) + " ms, 95% " + Fx(GameStat.Pct(gv, 0.95)) + " ms, jitter " + Fx(GameStat.Jitter(gv)) + " ms, loss " + Fx(GameStat.Loss(gv)) + "%");
             sb.AppendLine("Router: avg " + Fx(GameStat.Avg(rows.Select(r => r.Router).ToArray())) + " ms · Internet check: avg " + Fx(GameStat.Avg(rows.Select(r => r.Net).ToArray())) + " ms");
             var mine = spikes.Where(z => z.Game == GameId && z.T >= Start && z.T <= end).ToList();
@@ -735,7 +769,7 @@ namespace AdeeboMeter
             if (ports.Count == 0) return g.Name + " isn't running, or hasn't opened its game connection yet - start a match first.";
             string ifc = "\\Device\\NPF_{" + gid.ToString().ToUpperInvariant() + "}";
             string filter = "udp and (" + string.Join(" or ", ports.Select(p => "port " + p.ToString(CultureInfo.InvariantCulture))) + ")";
-            string args = "-i \"" + ifc + "\" -n -a duration:8 -c 4000 -f \"" + filter + "\" -T fields -e ip.src -e ip.dst";
+            string args = "-i \"" + ifc + "\" -n -a duration:8 -c 4000 -f \"" + filter + "\" -T fields -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst";   // IPv6 matches too
             string text;
             try { text = Job.Run(LiveCapture.Tshark, args, 20000) ?? ""; }
             catch (Exception e) { return "Capture failed: " + Draw.Trunc(e.Message, 80); }
@@ -759,7 +793,14 @@ namespace AdeeboMeter
             foreach (var line in (tsharkFields ?? "").Split('\n'))
                 foreach (var f in line.Trim().Split('\t'))
                 {
-                    IPAddress a; if (!IPAddress.TryParse(f.Trim(), out a) || a.AddressFamily != AddressFamily.InterNetwork) continue;
+                    IPAddress a; if (!IPAddress.TryParse(f.Trim(), out a)) continue;
+                    if (a.AddressFamily == AddressFamily.InterNetworkV6)
+                    {
+                        var b6 = a.GetAddressBytes();   // a global unicast address (2000::/3) - not link-local, unique-local, multicast or loopback
+                        if ((b6[0] & 0xE0) != 0x20 || (mine != null && mine.Contains(a.ToString()))) continue;
+                        int c6; count.TryGetValue(a.ToString(), out c6); count[a.ToString()] = c6 + 1; continue;
+                    }
+                    if (a.AddressFamily != AddressFamily.InterNetwork) continue;
                     var b = a.GetAddressBytes();
                     bool priv = b[0] == 10 || b[0] == 127 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168) || (b[0] == 169 && b[1] == 254) || b[0] >= 224 || (b[0] == 100 && b[1] >= 64 && b[1] <= 127);
                     if (priv || (mine != null && mine.Contains(a.ToString()))) continue;

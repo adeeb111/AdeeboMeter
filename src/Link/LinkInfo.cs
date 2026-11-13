@@ -338,7 +338,14 @@ namespace AdeeboMeter
         public static List<string> Ask(string name, string server, int timeoutMs, out string err)
         {
             err = ""; IPAddress srv;
-            if (!IPAddress.TryParse(server, out srv) || srv.AddressFamily != AddressFamily.InterNetwork) { err = "bad server"; return new List<string>(); }
+            if (!IPAddress.TryParse(server, out srv)) { err = "bad server"; return new List<string>(); }
+            if (srv.AddressFamily == AddressFamily.InterNetworkV6)   // Windows' DnsQuery takes IPv4 servers only: ask an IPv6 one ourselves
+            {
+                var t6 = Task.Factory.StartNew(() => Toolkit.Query(srv, name, 1, true));
+                if (!t6.Wait(timeoutMs) || t6.Result == null) { err = "no answer"; return new List<string>(); }
+                if (t6.Result.Rcode == 3) return new List<string> { "NXDOMAIN" };
+                return t6.Result.Rrs.Where(r => r.Section == 1 && r.Type == "A").Select(r => r.Data).ToList();
+            }
             var t = Task.Factory.StartNew(() =>
             {
                 var res = new List<string>(); IntPtr arr = Marshal.AllocHGlobal(8), recs = IntPtr.Zero;
@@ -392,7 +399,7 @@ namespace AdeeboMeter
         static readonly string[] DateFormats = { "M-d-yyyy", "MM-dd-yyyy" };
         public static double AgeYears(string date)
         {
-            DateTime d; return DateTime.TryParseExact(date, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) ? (DateTime.Now - d).TotalDays / 365.25 : -1;
+            DateTime d; return DateTime.TryParseExact(date, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) ? Math.Max(-1, (DateTime.Now - d).TotalDays / 365.25) : -1;   /* dated in the future: unknown (-1), never "this year" */
         }
     }
 
@@ -569,7 +576,7 @@ namespace AdeeboMeter
                 s.Address.Add(new[] { "IPv4 address", v4 == null ? "-" : v4.Address + (v4.IPv4Mask != null ? " / " + v4.IPv4Mask : "") });
                 s.Address.Add(new[] { "IPv6", v6 ?? "none (IPv4 only)" });
                 s.Address.Add(new[] { "Gateway (router)", gw == "" ? "-" : gw });
-                s.Address.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.Where(a => a.AddressFamily == AddressFamily.InterNetwork).Select(a => a.ToString()).Take(3)) });
+                s.Address.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.OrderBy(a => a.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).Select(a => a.ToString()).Take(4))   /* IPv4 first, then IPv6 */ });
                 var p4 = ip.GetIPv4Properties();
                 s.Address.Add(new[] { "Address from", p4 != null && p4.IsDhcpEnabled ? "DHCP" + (ip.DhcpServerAddresses.Count > 0 ? " (" + ip.DhcpServerAddresses[0] + ")" : "") : "set by hand (static)" });
                 s.Address.Add(new[] { "Packet size (MTU)", p4 != null ? p4.Mtu + " bytes" : "-" });

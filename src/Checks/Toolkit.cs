@@ -71,7 +71,7 @@ namespace AdeeboMeter
             return s;
         }
         // "https:/example.com" (one slash, a common slip) is the URL that was meant - never the host "https"
-        static string OneSlash(string input) { return Regex.Replace((input ?? "").Trim(), @"^(https?|ftp|wss?):/(?!/)", "$1://", RegexOptions.IgnoreCase); }
+        internal static string OneSlash(string input) { return Regex.Replace((input ?? "").Trim(), @"^(https?|ftp|wss?):/(?!/)", "$1://", RegexOptions.IgnoreCase); }
         public static string UrlToTarget(string input, bool withPort)
         {
             string s = OneSlash(input); if (s.IndexOf("://", StringComparison.Ordinal) <= 0) return s;
@@ -134,7 +134,10 @@ namespace AdeeboMeter
             var raw = (options ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries).ToList();
             var fixedOpts = string.Join(" ", raw.Select(x => x == "-P" ? "--parallel" : x == "-S" ? "--tos" : x == "-R" ? "--reverse" : x == "-O" ? "--omit" : x == "-M" ? "--set-mss" : x));
             var o = ParseOpts(fixedOpts);
-            int c = host.LastIndexOf(':'); if (c > 0 && host.IndexOf(':') == c) { int pp; if (int.TryParse(host.Substring(c + 1), out pp) && pp > 0 && pp < 65536) o.Port = pp; else { rows.Add(R(2, "Server", "port must be 1-65535", "", "u")); return rows; } host = host.Substring(0, c); }
+            // [2001:db8::1]:5201 and [2001:db8::1] - the bracketed IPv6 forms the Toolbox documents
+            var bm = Regex.Match(host, @"^\[([0-9A-Fa-f:.%]+)\](?::([0-9]+))?$");
+            if (bm.Success) { host = bm.Groups[1].Value; if (bm.Groups[2].Success) { int bp; if (int.TryParse(bm.Groups[2].Value, out bp) && bp > 0 && bp < 65536) o.Port = bp; else { rows.Add(R(2, "Server", "port must be 1-65535", "", "u")); return rows; } } }
+            int c = host.LastIndexOf(':'); if (!bm.Success && c > 0 && host.IndexOf(':') == c) { int pp; if (int.TryParse(host.Substring(c + 1), out pp) && pp > 0 && pp < 65536) o.Port = pp; else { rows.Add(R(2, "Server", "port must be 1-65535", "", "u")); return rows; } host = host.Substring(0, c); }
             if (host == "") { rows.Add(R(2, "Server", "type your iperf3 server, e.g. 10.0.0.5 or lab.example.com:5201", "On the other machine run:  iperf3 -s   (AdeeboMeter is only the client - it never listens)", "u")); return rows; }
             run.SeriesUnit = "Mb/s";
             rows.Add(R(3, "Settings", (o.Udp ? "UDP at " + (o.Rate / 1e6).ToString("0.#", CultureInfo.CurrentCulture) + " Mb/s" : "TCP") + " · " + o.Par + " stream" + (o.Par == 1 ? "" : "s") + " · " + o.Secs + " s" + (o.Omit > 0 ? " (+" + o.Omit + " s warm-up not counted)" : "") + (o.Len > 0 ? " · " + o.Len + "-byte writes" : "") + (o.Window > 0 ? " · window " + (o.Window / 1024) + " KB" : "") + (o.Mss > 0 ? " · MSS " + o.Mss : "") + (o.Tos > 0 ? " · TOS 0x" + o.Tos.ToString("X2", CultureInfo.InvariantCulture) : "") + " · port " + o.Port,
@@ -178,7 +181,7 @@ namespace AdeeboMeter
             // ping target: the one you typed; otherwise the iperf3 server itself (its queue is the one being filled), or 1.1.1.1 if it doesn't answer pings
             bool typed = !string.IsNullOrWhiteSpace(target);
             string srvHost = server.Trim(); int sc = srvHost.LastIndexOf(':'); if (sc > 0 && srvHost.IndexOf(':') == sc) srvHost = srvHost.Substring(0, sc);
-            var dst = Icmp.Resolve4(typed ? target : srvHost); if (dst == null && typed) { rows.Add(R(2, "Ping target", "couldn't find " + target, "", "u")); return rows; }
+            var dst = Icmp.Resolve4(typed ? target : srvHost); if (dst == null) { rows.Add(R(2, typed ? "Ping target" : "Server", "couldn't find " + (typed ? target : srvHost) + " (or it has no IPv4 address)", "", "u")); return rows; }
             run.SeriesUnit = "ms";
             Func<int, Func<bool>, List<double>> pings = (max, stop) =>
             {
@@ -393,7 +396,7 @@ namespace AdeeboMeter
             }
             var s = run.Copy(); var ok = s.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList();
             int lostN = s.Count - ok.Count, burst = 0, cur = 0; foreach (var x in s) { cur = double.IsNaN(x) ? cur + 1 : 0; burst = Math.Max(burst, cur); }
-            double jit = 0; for (int i = 1; i < s.Count; i++) if (!double.IsNaN(s[i]) && !double.IsNaN(s[i - 1])) jit += Math.Abs(s[i] - s[i - 1]); int pairs = Math.Max(1, s.Count - 1 - lostN); jit /= pairs;
+            double jit = 0; int pairs = 0; for (int i = 1; i < s.Count; i++) if (!double.IsNaN(s[i]) && !double.IsNaN(s[i - 1])) { jit += Math.Abs(s[i] - s[i - 1]); pairs++; } pairs = Math.Max(1, pairs);   /* divide by the pairs actually summed */ jit /= pairs;
             double loss = s.Count > 0 ? 100.0 * lostN / s.Count : 0;
             rows.Add(R(loss > 2 ? 2 : loss > 0 ? 1 : 0, "Lost", lostN + " of " + s.Count + " (" + loss.ToString("0.#", CultureInfo.CurrentCulture) + "%)" + (burst > 1 ? " · longest gap " + burst + " in a row (" + (burst * iv / 1000.0).ToString("0.#", CultureInfo.CurrentCulture) + " s)" : ""), burst > 3 ? "Losses come in bursts - typical of Wi-Fi roaming, interference or a link flapping, not of a busy line." : "", "m"));
             if (ok.Count > 0)
@@ -629,8 +632,10 @@ namespace AdeeboMeter
             if (sni != "" && Uri.CheckHostName(sni) != UriHostNameType.Dns) { rows.Add(R(2, "Name to ask for", "a host name - e.g. www.example.com", "", "u")); return rows; }
             if (sni != "") rows.Add(R(3, "Asking for", sni + " at " + u.Host, "The connection goes to " + u.Host + "; the name sent (TLS SNI and the Host header) is " + sni + ".", "u"));
             string first = u.Host;
+            bool followed = false;
             for (int hop = 0; hop < 8; hop++)
             {
+                followed = false;
                 try
                 {
                     var req = (HttpWebRequest)WebRequest.Create(u); req.AllowAutoRedirect = false; req.Method = "GET"; req.Timeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
@@ -643,8 +648,8 @@ namespace AdeeboMeter
                     using (resp)
                     {
                         int code = (int)resp.StatusCode; string loc = resp.Headers["Location"] ?? "";
-                        rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, (hop == 0 ? "" : "then ") + code + " " + resp.StatusDescription, u + " · " + sw.ElapsedMilliseconds + " ms" + (loc != "" ? " → " + loc : ""), "", "m"));
-                        if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) { u = n; continue; } }
+                        rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, (hop == 0 ? "" : "then ") + code + " " + resp.StatusDescription, Reach.NoUser(u) + " · " + sw.ElapsedMilliseconds + " ms" + (loc != "" ? " → " + Reach.NoUser(loc) : ""), "", "m"));
+                        if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) { u = n; followed = true; continue; } }
                         foreach (var h in new[] { "Server", "Alt-Svc", "Content-Type", "Cache-Control", "Via", "X-Cache", "CF-Ray" })
                             if (!string.IsNullOrEmpty(resp.Headers[h])) rows.Add(R(3, h, Draw.Trunc(resp.Headers[h], 120), h == "Alt-Svc" && resp.Headers[h].Contains("h3") ? "The site also offers HTTP/3 (QUIC over UDP 443) - browsers switch to it after the first visit." : "", "m"));
                         rows.AddRange(SecurityHeaders(resp.Headers, u.Scheme == "https"));
@@ -656,6 +661,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { rows.Add(R(2, "Request", Draw.Trunc(e.Message, 100), "", "m")); break; }
             }
+            if (followed) rows.Add(R(1, "Stopped", "after 8 redirects - the chain goes on (a redirect loop?)", "", "m"));
             if (u.Scheme == "https") rows.AddRange(Tls(u.Host, u.Port, u.Host == first && sni != "" ? sni : u.Host));
             return rows;
         }
@@ -690,7 +696,7 @@ namespace AdeeboMeter
                 {
                     if (tc == null) { rows.Add(R(2, "Revocation", "couldn't connect to " + host, "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))
-                    { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException) { hd = cert != null; } if (!hd && cert == null) { rows.Add(R(2, "Revocation", "no TLS answer in 8 s", "", "m")); return rows; } }
+                    { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException) { hd = cert != null; } if (!hd) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } } if (!hd && cert == null) { rows.Add(R(2, "Revocation", "no TLS answer in 8 s", "", "m")); return rows; } }
                 }
                 if (cert == null) { rows.Add(R(2, "Revocation", "no certificate", "", "m")); return rows; }
                 using (cert) using (var chain = new X509Chain())
@@ -727,7 +733,7 @@ namespace AdeeboMeter
                     {
                         if (tc == null) { rows.Add(R(2, proto.Item1, "couldn't connect", "", "m")); continue; }
                         using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); if (chainRows == null && ch != null) chainRows = Chain(ch); errs = e; return e == SslPolicyErrors.None; }))
-                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
+                        { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
                 catch (Exception e) { rows.Add(R(3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }

@@ -188,7 +188,7 @@ namespace AdeeboMeter
             foreach (var d in History.Days().Where(d => d >= DateTime.Today.AddDays(-27)))
             {
                 if (run != null && run.Stop) break; if (run != null) run.Status = "Reading " + d.ToString("d MMM", CultureInfo.CurrentCulture) + "...";
-                foreach (var r in History.Load(d).M) { int h = Math.Min(23, (int)(r[0] / 3600)), dw = (int)d.DayOfWeek; if (!double.IsNaN(r[5])) { sum[dw, h] += r[5]; n[dw, h]++; } if (r[1] >= 1) bad[dw, h]++; }
+                foreach (var r in History.Load(d).M) { int h = Math.Min(23, (int)(r[0] / 3600)), dw = (int)d.DayOfWeek; if (!double.IsNaN(r[5])) { sum[dw, h] += r[5]; n[dw, h]++; } if (r[1] >= 2) bad[dw, h]++;   /* "rough" means a problem minute - the same rule as the month review */ }
             }
             var c = CultureInfo.CurrentCulture; int found = 0;
             double all = 0; int alln = 0; for (int a = 0; a < 7; a++) for (int b = 0; b < 24; b++) { all += sum[a, b]; alln += n[a, b]; }
@@ -212,7 +212,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); var evs = new List<Timeline.Ev>();
             if (Cfg.History) foreach (var d in History.Days().Where(d => d >= DateTime.Today.AddDays(-29))) evs.AddRange(History.EventsOf(d).Where(e => e.Kind == "wake"));
-            foreach (var e in m.Events.Recent(300)) if (e.Kind == "wake" && !evs.Any(x => x.T == e.T && x.Text == e.Text)) evs.Add(e);
+            foreach (var e in m.Events.Recent(300)) if (e.Kind == "wake" && !evs.Any(x => Math.Abs((x.T - e.T).TotalSeconds) < 1.5 && x.Text == e.Text)) evs.Add(e);   /* History keeps whole seconds */
             var secs = new List<Tuple<DateTime, double, double>>();   // when, seconds to the router, seconds to DNS (NaN: DNS never answered)
             int failed = 0;   // woke, and the router never answered in 2 minutes
             foreach (var e in evs)
@@ -269,7 +269,7 @@ namespace AdeeboMeter
                     foreach (var r in day.M) if (!double.IsNaN(r[4])) { int h = Math.Min(23, (int)(r[0] / 3600)); if (r[4] > hourPeak[h]) hourPeak[h] = r[4]; }
                 }
             if (SpeedTest.Last != null && !double.IsNaN(SpeedTest.Last.Down) && !tests.Any(x => Math.Abs((x.Item1 - SpeedTest.Last.T).TotalMinutes) < 2)) tests.Add(Tuple.Create(SpeedTest.Last.T, SpeedTest.Last.Down));
-            Func<double, string> dur = mbps => { double s = gb * 8000 / mbps / 0.94; return s < 3600 ? Math.Ceiling(s / 60) + " min" : Math.Floor(s / 3600) + " h " + Math.Round(s % 3600 / 60) + " min"; };
+            Func<double, string> dur = mbps => { double s = gb * 8000 / mbps / 0.94; return s < 3600 ? Math.Ceiling(s / 60) + " min" : (Math.Round(s / 60) / 60 >= 1 ? Math.Floor(Math.Round(s / 60) / 60) + " h " + (Math.Round(s / 60) % 60) + " min" : "1 h 0 min"); };   /* minutes rounded first, so 59.6 min never prints "1 h 60 min" */
             var c = CultureInfo.CurrentCulture;
             if (tests.Count > 0)
             {
@@ -291,6 +291,7 @@ namespace AdeeboMeter
         static double ParseGB(string s)
         {
             var mm = Regex.Match((s ?? "").Trim(), @"^([\d.,]+)\s*(tb|gb|mb|g|m|t)?b?$", RegexOptions.IgnoreCase); if (!mm.Success) return double.NaN;
+            if (mm.Groups[2].Value == "" && Regex.IsMatch(s.Trim(), "b$", RegexOptions.IgnoreCase)) return double.NaN;   // "50 B" is bytes, not gigabytes: say it wasn't understood
             string num = mm.Groups[1].Value; num = Regex.IsMatch(num, @"^[0-9]{1,3}(,[0-9]{3})+(\.[0-9]+)?$") ? num.Replace(",", "") : num.Replace(',', '.');   // 1,000 is a thousand; 1,5 is one and a half
             double v; if (!double.TryParse(num, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) return double.NaN;
             string u = mm.Groups[2].Value.ToLowerInvariant(); return u.StartsWith("t", StringComparison.Ordinal) ? v * 1000 : u.StartsWith("m", StringComparison.Ordinal) ? v / 1000 : v;
@@ -310,7 +311,7 @@ namespace AdeeboMeter
                     var v6 = p.UnicastAddresses.Where(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal).Select(a => a.Address.ToString()).ToList(); if (v6.Count > 0) s[k + " · IPv6"] = string.Join(", ", v6.Take(4));
                     s[k + " · router"] = string.Join(", ", p.GatewayAddresses.Select(g => g.Address.ToString()).Where(g => g != "0.0.0.0"));
                     s[k + " · DNS servers"] = string.Join(", ", p.DnsAddresses.Select(d => d.ToString()));
-                    try { s[k + " · DHCP"] = p.GetIPv4Properties() != null && p.GetIPv4Properties().IsDhcpEnabled ? "on" : "off (fixed address)"; } catch (NetworkInformationException) { }
+                    try { { var p4 = p.GetIPv4Properties(); s[k + " · DHCP"] = p4 == null ? "no IPv4" : p4.IsDhcpEnabled ? "on" : "off (fixed address)"; } } catch (NetworkInformationException) { }
                     if (p.DnsSuffix != "") s[k + " · DNS suffix"] = p.DnsSuffix;
                 }
                 using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings"))
@@ -445,7 +446,7 @@ namespace AdeeboMeter
                 run.Status = "Trying IPv6...";
                 var six = StunVia(s6, 3478, null);
                 if (six != null) { leaks++; rows.Add(R(2, "IPv6 outside the tunnel", "IPv6 traffic leaves directly as " + six.Address, "Your VPN carries only IPv4. Sites that prefer IPv6 see your real address. Turn on the VPN's IPv6 protection, or turn IPv6 off on this adapter while you use it.", "m")); }
-                else rows.Add(R(0, "IPv6", "blocked while the VPN is up", "", "m"));
+                else { unknown++; rows.Add(R(1, "IPv6", "couldn't tell - the IPv6 STUN server didn't answer (blocked by the VPN, or just filtered)", "Not proof IPv6 is protected.", "m")); }
             }
             else if (v6Phys && !v6Vpn) { unknown++; rows.Add(R(1, "IPv6", "couldn't check - this network has IPv6 but no IPv6 STUN address was found", "", "m")); }
             else rows.Add(R(0, "IPv6", v6Vpn ? "the VPN carries IPv6 too" : "no IPv6 on this network - nothing to leak", "", "w"));
@@ -518,7 +519,7 @@ namespace AdeeboMeter
             var o = Outages.Last(m, 1); if (o.Count > 0) sb.Append("Outages today: ").Append(o.Count).Append('\n');
             string txt = GameSession.Redact(sb.ToString(), "");
             txt = Regex.Replace(txt, @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", "x.x.x.x");
-            return txt.Length > max ? txt.Substring(0, max) : txt;
+            if (txt.Length <= max) return txt; int cut = max; if (cut > 0 && char.IsHighSurrogate(txt[cut - 1])) cut--; return txt.Substring(0, cut);   /* never half a character */
         }
         static string Word(int lv) { return lv == 0 ? "OK" : lv == 1 ? "Busy" : lv == 2 ? "Problem" : "-"; }
 

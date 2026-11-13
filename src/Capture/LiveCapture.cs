@@ -137,7 +137,7 @@ namespace AdeeboMeter
         void Restart(string guid) { int g = gen; ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(300); lock (life) { if (g == gen) Start2(guid); restarting = false; } }); }
         void Stop2()
         {
-            gen++; restarting = false;   // a Stop inside the restart window must not leave the flag up for good
+            gen++;   // (restarting is cleared by Restart itself, after the replacement is up - or after a Stop cancelled it)
             bool was = running; running = false;
             if (limit != null) { limit.Dispose(); limit = null; }
             // tshark runs its own dumpcap: stop that child too, or it keeps the adapter until its next write fails
@@ -166,7 +166,9 @@ namespace AdeeboMeter
                 }
             }
             catch { }
-            if (!running) ThreadPool.QueueUserWorkItem(delegate { Stop(); });
+            // the old tshark's reader ending after a Stop: tidy up only if that tshark is still the current one - a restart has already
+            // put a new one in place, and stopping now would kill the replacement (round-2 hunt H2)
+            if (!running) { var mine = p; ThreadPool.QueueUserWorkItem(delegate { lock (life) if (ts == null || ts == mine) Stop2(); }); }
             // tshark ended on its own (sleep, an adapter reset, Wi-Fi gone) while we still think we're capturing: say so and stop,
             // never "capturing 47:12" with nothing coming in. (A restart without the extra fields swaps ts first - not this.)
             else if (p == ts && !restarting) { Error = "Capture stopped by itself - the adapter went away or the PC slept. Press Start again."; ThreadPool.QueueUserWorkItem(delegate { Stop(); }); }
@@ -186,7 +188,7 @@ namespace AdeeboMeter
         void Parse(string line)
         {
             var f = line.Split('\t'); if (f.Length < 16) return;
-            long len; if (!long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out len)) len = 0;
+            long len; if (!long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out len)) len = -1;   /* garbage in the length: a bad line (dropped below), never a 0-byte packet */
             string src = First(f[2]), dst = First(f[3]); if (src == "") { src = First(f[4]); dst = First(f[5]); }
             int et = f[1].IndexOf("ethertype:", StringComparison.Ordinal);
             string proto = et >= 0 ? f[1].Substring(et + 10) : f[1];

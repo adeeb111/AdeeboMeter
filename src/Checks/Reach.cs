@@ -17,6 +17,9 @@ namespace AdeeboMeter
     {
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
         static string I(long n) { return n.ToString(CultureInfo.InvariantCulture); }
+        // an address as shown in results: any user:password in it is left out (results get copied and saved)
+        internal static string NoUser(Uri u) { if (u == null) return ""; if (u.UserInfo == "") return u.ToString(); var b = new UriBuilder(u) { UserName = "", Password = "" }; return b.Uri.ToString(); }
+        internal static string NoUser(string s) { Uri u; return Uri.TryCreate(s, UriKind.Absolute, out u) ? NoUser(u) : System.Text.RegularExpressions.Regex.Replace(s ?? "", @"//[^/@\s]*@", "//"); }
 
         // ---------- HTTP request builder: method, headers and body you choose; redirects shown, not followed
         static readonly char[] BadHdr = { '\r', '\n', '\0' };
@@ -24,7 +27,7 @@ namespace AdeeboMeter
         public static List<string[]> Http(string url, string method, string headers, string body) { return Http(url, method, headers, body, null); }
         public static List<string[]> Http(string url, string method, string headers, string body, Toolkit.Run run)
         {
-            var rows = new List<string[]>(); string u = (url ?? "").Trim(); if (u != "" && !u.Contains("://")) u = "https://" + u;
+            var rows = new List<string[]>(); string u = Toolkit.OneSlash(url); if (u != "" && !u.Contains("://")) u = "https://" + u;
             Uri uri; if (!Uri.TryCreate(u, UriKind.Absolute, out uri) || (uri.Scheme != "http" && uri.Scheme != "https") || u.Length > 2000) { rows.Add(R(2, "URL", "type a web address - e.g. https://example.com/api/health", "", "u")); return rows; }
             string m = (method ?? "").Trim().ToUpperInvariant(); if (m == "") m = (body ?? "") != "" ? "POST" : "GET";
             if (Array.IndexOf(Methods, m) < 0) { rows.Add(R(2, "Method", "one of " + string.Join(", ", Methods), "", "u")); return rows; }
@@ -55,7 +58,7 @@ namespace AdeeboMeter
                 }
                 catch (ArgumentException) { skipped.Add(n); }
             }
-            if ((body ?? "").Length > 65536) { rows.Add(R(2, "Body", "64 KB at most", "", "u")); return rows; }
+            if (Encoding.UTF8.GetByteCount(body ?? "") > 65536) { rows.Add(R(2, "Body", "64 KB at most", "", "u")); return rows; }   // bytes on the wire, not characters
             var data = Encoding.UTF8.GetBytes(body ?? "");
             if (data.Length > 0 && (m == "GET" || m == "HEAD")) rows.Add(R(1, "Body", "not sent - a " + m + " request has no body (use POST or PUT)", "", "u"));
             var sw = Stopwatch.StartNew(); HttpWebResponse r = null;
@@ -79,7 +82,8 @@ namespace AdeeboMeter
                 int code = (int)r.StatusCode;
                 rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, m + " " + Draw.Trunc(uri.ToString(), 80), I(code) + " " + r.StatusDescription + " · " + sw.ElapsedMilliseconds + " ms · " + I(buf.Length) + (buf.Length >= 65536 ? "+" : "") + " bytes",
                     (code >= 300 && code < 400 ? "A redirect - shown, not followed. " : "") + (skipped.Count > 0 ? "Not sent (Windows sets these itself, or not a valid header): " + string.Join(", ", skipped) + ". " : "") + "Sent through your proxy settings, like a browser.", "m"));
-                foreach (string k in r.Headers.AllKeys.Take(80)) rows.Add(R(3, k, Draw.Trunc(r.Headers[k], 300), "", "m"));
+                if (r.Headers.Count > 80) rows.Add(R(3, "Headers", r.Headers.Count + " - the first 80 shown", "", "m"));
+                foreach (string k in r.Headers.AllKeys.Take(80)) rows.Add(R(3, k, string.Equals(k, "Set-Cookie", StringComparison.OrdinalIgnoreCase) ? "(" + (r.Headers[k] ?? "").Length + " characters)" : Draw.Trunc(r.Headers[k], 300), string.Equals(k, "Set-Cookie", StringComparison.OrdinalIgnoreCase) ? "Cookie values are never shown or copied - they can be a signed-in session." : "", "m"));
                 var bytes = buf.ToArray(); if (bytes.Length == 0) return rows;
                 bool text = bytes.Take(2000).All(x => x == 9 || x == 10 || x == 13 || x >= 32);
                 rows.Add(R(4, "Body", text ? Draw.Trunc(Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 3000)), 3000) : string.Join(" ", bytes.Take(96).Select(x => x.ToString("x2", CultureInfo.InvariantCulture))) + " …", "", "m"));
@@ -93,8 +97,9 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string h; int port;
             if (!Lab.Split(server, 3478, out h, out port)) { rows.Add(R(2, "Server", "type a STUN server - e.g. stun.example.com:3478", "Teams, Zoom and most VoIP providers run one; your own SBC or PBX may too.", "u")); return rows; }
             var a = Lab.Addr(h); if (a == null) { rows.Add(R(2, "Server", "couldn't find " + h, "", "m")); return rows; }
-            var tid = new byte[12]; new Random().NextBytes(tid);
+            var tid = new byte[12]; using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create()) rng.GetBytes(tid);   // never two calls with one ID
             var req = new byte[20]; req[1] = 1; req[4] = 0x21; req[5] = 0x12; req[6] = 0xA4; req[7] = 0x42; Array.Copy(tid, 0, req, 8, 12);
+            bool bad = false;
             using (var u = new UdpClient(a.AddressFamily))
             {
                 u.Client.ReceiveTimeout = 1500; u.Connect(a, port); int local = ((IPEndPoint)u.Client.LocalEndPoint).Port;
@@ -103,13 +108,13 @@ namespace AdeeboMeter
                     var sw = Stopwatch.StartNew(); u.Send(req, req.Length); byte[] r;
                     try { var ep = new IPEndPoint(IPAddress.Any, 0); r = u.Receive(ref ep); } catch (SocketException) { continue; }
                     IPEndPoint mapped = ParseStun(r, tid);
-                    if (mapped == null) { rows.Add(R(2, a + ":" + port, "answered, but not with an address", "", "m")); return rows; }
+                    if (mapped == null) { bad = true; continue; }   // a stray or malformed datagram: the other tries still count
                     rows.Add(R(0, "The internet sees you as", mapped.ToString(), "From " + a + ":" + port + " in " + sw.ElapsedMilliseconds + " ms.", "m"));
                     rows.Add(R(3, "Your side", "UDP port " + local + (mapped.Port == local ? " - kept the same through NAT" : " - changed to " + mapped.Port + " by NAT"), mapped.Port == local ? "A NAT that keeps ports is friendlier to calls." : "Normal for most routers; calls still work when the NAT keeps the same mapping for each destination - the Teams UDP test checks that.", "m"));
                     return rows;
                 }
             }
-            rows.Add(R(2, a + ":" + port, "no answer to 3 tries", "UDP to that port is blocked here, or it isn't a STUN server.", "m"));
+            rows.Add(bad ? R(2, a + ":" + port, "answered, but not with an address", "", "m") : R(2, a + ":" + port, "no answer to 3 tries", "UDP to that port is blocked here, or it isn't a STUN server.", "m"));
             return rows;
         }
         public static IPEndPoint ParseStun(byte[] r, byte[] tid)
@@ -229,9 +234,9 @@ namespace AdeeboMeter
             rows.Add(Cmd("Forget a changed key", "ssh-keygen -R " + (p != 22 ? "[" + h + "]:" + p : h), "Only after you've confirmed the device really was replaced or re-keyed."));
             rows.Add(Cmd("Make my own key", "ssh-keygen -t ed25519", "Then put the .pub file on the device to log in without a password."));
             rows.Add(R(4, "Is it there?", "", "", "m"));
-            rows.Add(Cmd("Port open?", "Test-NetConnection " + h + " -Port " + p, "PowerShell's own port test."));
+            rows.Add(Cmd("Port open?", "Test-NetConnection " + h.Trim('[', ']') + " -Port " + p, "PowerShell's own port test."));
             if (curl) rows.Add(Cmd("Web page headers", "curl.exe -vkI https://" + h + "/", "-k skips the certificate check - for devices with self-signed certificates only."));
-            rows.Add(Cmd("Banner (telnet-style)", "curl.exe -v telnet://" + h + ":" + p, "What the port says when you connect - Ctrl+C to leave."));
+            if (curl) rows.Add(Cmd("Banner (telnet-style)", "curl.exe -v telnet://" + h + ":" + p, "What the port says when you connect - Ctrl+C to leave."));
             return rows;
         }
     }

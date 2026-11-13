@@ -63,6 +63,7 @@ namespace AdeeboMeter
         // ---------- HTTP timing, repeated (like curl -w)
         public static List<string[]> HttpTiming(string url, string countIn, Toolkit.Run run)
         {
+            url = Toolkit.OneSlash(url);   // "https:/x" is https://x, never the host "https"
             var rows = new List<string[]>(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url.Trim();
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "URL", "not a web address", "", "u")); return rows; }
             int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5);
@@ -193,13 +194,14 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h; int p; if (!Split(target, 587, out h, out p)) { rows.Add(R(2, "Server", "type host or host:port, e.g. smtp.office365.com:587", "", "u")); return rows; }
             bool implicitTls = p == 465 || p == 993 || p == 995; string kind = p == 143 || p == 993 ? "IMAP" : p == 110 || p == 995 ? "POP" : "SMTP";
+            X509Certificate2 cert = null;   // out here: an untrusted certificate is still shown when the handshake stops
             try
             {
                 var sw = Stopwatch.StartNew();   // from before the connect, as it always was
                 using (var tc = Toolkit.Open(h, p, 6000))
                 {
                     if (tc == null) throw new TimeoutException("no answer on port " + p);
-                    Stream st = tc.GetStream(); st.ReadTimeout = 8000; X509Certificate2 cert = null;
+                    Stream st = tc.GetStream(); st.ReadTimeout = 8000;
                     if (implicitTls) { var ssl = new SslStream(st, false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); st = ssl; }
                     var rd = new Lines(st, 20, run); var wr = new StreamWriter(st, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true };
                     string banner = rd.Next() ?? "";
@@ -219,10 +221,10 @@ namespace AdeeboMeter
                     }
                     else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = rd.Next() ?? ""; rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
                     else { wr.WriteLine("CAPA"); var caps = new List<string>(); string l; while ((l = rd.Next()) != null && l != "." && caps.Count < 20) caps.Add(l); rows.Add(R(3, "Offers", string.Join(" · ", caps.Skip(1)), "", "m")); wr.WriteLine("QUIT"); }
-                    if (cert != null) using (cert) { double days = (cert.NotAfter - DateTime.Now).TotalDays; rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cert.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m")); }
+                    if (cert != null) using (var cc = cert) { cert = null; double days = (cc.NotAfter - DateTime.Now).TotalDays; rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cc.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + cc.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m")); }
                 }
             }
-            catch (Exception e) { if (e is AggregateException && e.InnerException != null) e = e.InnerException; rows.Add(R(2, h + ":" + p, Draw.Trunc(e.Message, 100), p == 25 ? "Home providers usually block outgoing port 25 - use 587." : "", "m")); }
+            catch (Exception e) { if (e is AggregateException && e.InnerException != null) e = e.InnerException; if (cert != null) using (cert) rows.Add(R(2, "Certificate (not trusted)", cert.GetNameInfo(X509NameType.SimpleName, false) + " · from " + cert.GetNameInfo(X509NameType.SimpleName, true) + " · until " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m")); rows.Add(R(2, h + ":" + p, Draw.Trunc(e.Message, 100), p == 25 ? "Home providers usually block outgoing port 25 - use 587." : "", "m")); }
             return rows;
         }
 
@@ -236,7 +238,9 @@ namespace AdeeboMeter
                 using (var tc = Toolkit.Open(h, p, 5000))
                 {
                     if (tc == null) throw new TimeoutException("no answer on port " + p);
-                    var st = tc.GetStream(); st.ReadTimeout = 5000; var buf = new byte[256]; int n = st.Read(buf, 0, buf.Length);
+                    var st = tc.GetStream(); st.ReadTimeout = 5000; var buf = new byte[256]; int n = 0, got;
+                    n = st.Read(buf, 0, buf.Length); st.ReadTimeout = 2000;
+                    try { while (n > 0 && n < buf.Length && Array.IndexOf(buf, (byte)'\n', 0, n) < 0 && (got = st.Read(buf, n, buf.Length - n)) > 0) n += got; } catch (IOException) { }   // the rest of a banner that came in pieces   // the banner may arrive in pieces
                     string b = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\r', '\n')[0];
                     rows.Add(R(b.StartsWith("SSH-", StringComparison.Ordinal) ? 0 : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", b.StartsWith("SSH-", StringComparison.Ordinal) ? b : "connected, but it isn't SSH: " + Draw.Trunc(b, 80), b.StartsWith("SSH-1", StringComparison.Ordinal) ? "SSH version 1 is broken and should be off." : "", "m"));
                 }
@@ -396,6 +400,7 @@ namespace AdeeboMeter
                 }
             }
             catch (SocketException) { Array.Clear(sec, 0, sec.Length); rows.Add(R(2, h + ":" + p, "no answer in 3 s", "RADIUS servers stay silent for: a wrong shared secret, a client (NAS) entry that doesn't include this PC's address, Status-Server not enabled, or UDP " + p + " blocked. FreeRADIUS: status_server = yes and a client entry for this PC.", "m")); }
+            finally { Array.Clear(sec, 0, sec.Length); }   // every exit, including ones that aren't socket errors
             return rows;
         }
 

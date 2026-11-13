@@ -23,7 +23,7 @@ namespace AdeeboMeter
         public static List<string[]> Run(string target, string port, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string h = (target ?? "").Trim(); int p;
-            if (!int.TryParse((port ?? "").Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out p)) p = 443;
+            if ((port ?? "").Trim() == "") p = 443; else if (!int.TryParse(port.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out p)) p = -1;   // "abc" is an error, not 443
             if (p != 443 && p != 53) { rows.Add(R(2, "Port", "443 (a QUIC server - most big websites) or 53 (a DNS server)", "", "")); return rows; }
             if (h == "") h = p == 53 ? "1.1.1.1" : "cloudflare.com";
             if (!Games.ValidHost(h)) { rows.Add(R(2, "Target", "a host name or an IP", "", "")); return rows; }
@@ -47,7 +47,7 @@ namespace AdeeboMeter
                         while (DateTime.UtcNow < until)
                         {
                             try { var ep = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref ep); if (p == 443 ? IsVn(r) : IsDns(r, pkt)) return 1; }
-                            catch (SocketException e) { if (e.SocketErrorCode == SocketError.TimedOut) break; if (e.SocketErrorCode == SocketError.ConnectionReset) return 0; throw; }
+                            catch (SocketException e) { if (e.SocketErrorCode == SocketError.TimedOut) break; if (e.SocketErrorCode == SocketError.ConnectionReset) return 2; throw; }   /* "port unreachable": the packet arrived (nothing listens) - the size got through */
                         }
                     }
                     return 0;
@@ -55,16 +55,19 @@ namespace AdeeboMeter
                 try
                 {
                     run.Status = "Checking the server answers...";
-                    if (probe(p == 443 ? 1200 - hdr : 100) != 1)
+                    int gate = probe(p == 443 ? 1200 : 100);   /* QUIC: the first datagram must be at least 1200 bytes of UDP payload (RFC 9000 14.1) */
+                    if (run.Stop) { rows.Add(R(1, "Stopped", "", "", "m")); return rows; }
+                    if (gate == 2) { rows.Add(R(2, a + ":" + p, "refused - nothing listens on UDP " + p + " there", "", "m")); return rows; }
+                    if (gate != 1)
                     {
                         if (p == 443) { rows.Add(R(2, a + ":" + p, "no QUIC answer", "Either this server doesn't speak QUIC (HTTP/3), or UDP 443 is blocked on the way - many company networks block it so browsers fall back to TCP. Try cloudflare.com or google.com, or port 53 with a DNS server.", "m")); return rows; }
                         if (p == 53) { rows.Add(R(2, a + ":" + p, "no DNS answer", "This isn't a DNS server, or UDP 53 to it is blocked. Try 1.1.1.1 or your own DNS server.", "m")); return rows; }
                     }
-                    lo = p == 443 ? 1200 - hdr : 100;
+                    lo = p == 443 ? 1200 : 100;
                     while (hi - lo > 8 && !run.Stop)
                     {
-                        int mid = (lo + hi) / 2; run.Status = "Trying " + (mid + hdr) + " bytes..."; run.Add(mid + hdr);
-                        int r = probe(mid); if (r == 1) lo = mid; else { hi = mid; if (r == -1) local = true; }
+                        int mid = (lo + hi) / 2; run.Status = "Trying " + (mid + hdr) + " bytes...";
+                        int r = probe(mid); if (r == 1 || r == 2) lo = mid; else { hi = mid; if (r == -1) local = true; }
                     }
                 }
                 catch (SocketException e) { rows.Add(R(2, "Send", Draw.Trunc(e.Message, 100), "", "m")); return rows; }

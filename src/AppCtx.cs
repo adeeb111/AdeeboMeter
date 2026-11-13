@@ -308,6 +308,8 @@ namespace AdeeboMeter
                 if (quitWait == null) { quitWait = new System.Windows.Forms.Timer { Interval = 100 }; quitWait.Tick += delegate { quitWait.Stop(); Quit(); }; }
                 quitWait.Start(); return;
             }
+            // a dialog that refused to close in 3 s: quitting now would dispose the view under it - give up this quit instead
+            if (!quitting && full != null && !full.IsDisposed && full.IsHandleCreated && !IsWindowEnabled(full.Handle)) { quitTries = 0; Program.Log("quit: a dialog is still open - quit abandoned"); return; }
             if (quitWait != null) { quitWait.Stop(); quitWait.Dispose(); quitWait = null; }
             Microsoft.Win32.SystemEvents.SessionEnding -= OnSessionEnding;
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go

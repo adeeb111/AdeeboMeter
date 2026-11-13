@@ -55,7 +55,7 @@ namespace AdeeboMeter
         static readonly string[] SetS8 = { "5 s", "10 s", "30 s", "Off" };
         static readonly int[] SetN9 = { 5, 10, 30, 0 };
         static readonly string[] SetS10 = { "On", "Off" };
-        static readonly string[] LeaveTools = { "Tools you press", "Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.", "1" };
+        static readonly string[] LeaveTools = { "Tools you press", "Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: 21 name lookups to each server it races (yours, the router, 1.1.1.1, 8.8.8.8, 9.9.9.9 - about 100 in all). Walk test: 20 pings to your router per room. Only when you press them.", "1" };
         static readonly string[] HistDayNames = { "1 day", "3 days", "7 days", "14 days", "30 days", "60 days", "90 days", "6 months" };
         static readonly string[] CapNames = { "Off", "10 GB", "25 GB", "50 GB", "100 GB", "250 GB", "500 GB" };
         static readonly string[] SetS11 = { "5 min", "15 min", "30 min" };
@@ -303,7 +303,7 @@ namespace AdeeboMeter
 
         // ---------- About: the whole story, told simply
         static readonly string[] LeaveIsp = { "Report for my ISP", "Only when you run it: an MTR to the destinations you chose for the minutes you chose; your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes.", "1" };
-        static readonly string[] LeaveChecks = { "Checks you start", "Check a destination sends only what you ask for, to where you ask, when you press Check - plus one DNS question for the same name to 1.1.1.1 (8.8.8.8 if that fails), the second opinion that spots a filter. An IT policy with online_lookups = off stops it.", "1" };
+        static readonly string[] LeaveChecks = { "Checks you start", "Check a destination sends only what you ask for, to where you ask, when you press Check - plus one DNS question for the same name to 1.1.1.1 (8.8.8.8 if that fails) - or, when an IT policy turns online lookups off, to your own DNS server, the second opinion that spots a filter. An IT policy with online_lookups = off sends it to your own DNS server instead.", "1" };
         static readonly string[] LeaveLive = { "Live capture", "Listens to your own adapter only while you press Start. Nothing is sent; captures are deleted when AdeeboMeter exits.", "-1" };
         static readonly string[] LeaveNever = { "Never", "No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.", "0" };
         static readonly string[][] AboutNav = {
@@ -313,11 +313,11 @@ namespace AdeeboMeter
                     new[] { "Learn anything", "When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears." },
                     new[] { "Tune it", "Settings decides how much AdeeboMeter watches in the background - from Penny to Engineer." } };
         static readonly string[][] AboutTrust = {
-                    new[] { "One readable file", "The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows." },
+                    new[] { "Readable source", "The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows." },
                     new[] { "No admin rights", "Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show." },
-                    new[] { "Secure by default", "Checks use TLS 1.2 or newer with Windows' own certificate validation - it never skips a certificate check. Inputs are validated; no shell is ever used." },
+                    new[] { "Secure by default", "Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used." },
                     new[] { "Light as a feather", "Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves." },
-                    new[] { "Leaves no trace", "Settings and a small log live next to the exe. Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it." } };
+                    new[] { "Leaves no trace", "Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it." } };
         static readonly string[][] AboutTabs =
         {
             new[] { "Connections", "Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark." },
@@ -328,7 +328,7 @@ namespace AdeeboMeter
             new[] { "What changed", "The diary. Every roam, drop, DNS change, VPN flap and app hiccup in the last two hours, with the time it happened - so 'it was slow at 2:15' finally has an answer." },
             new[] { "How it travels", "Your own connection, one layer at a time: which route won and why, your router's hardware address, MTU and packet anatomy, the handshake as a ladder with the time of each step, and with Wireshark the real packets explained field by field. Plus Teams and Office end to end." },
             new[] { "Inside Windows", "Who started whom (the process tree), what each svchost is hosting, what a program is doing right now (CPU, memory, disk, connections) and why it started, everything that starts with Windows - and the deep dives on the processes people ask about." },
-            new[] { "Learn (Ctrl+K)", "Press Ctrl+K anywhere to jump to a tab, a program, a term or a protocol. Learn mode explains each protocol with its ladder diagram and, with Wireshark, shows it live on your PC for ten seconds." },
+            new[] { "Learn (Ctrl+K)", "Press Ctrl+K anywhere in this window to jump to a tab, a program, a term or a protocol. Learn mode explains each protocol with its ladder diagram and, with Wireshark, shows it live on your PC for ten seconds." },
             new[] { "Live capture", "Wireshark's engine (tshark), only if you have Wireshark installed and only while you press Start. It shows what your traffic is made of, who you talk to by name, and Wireshark's own warnings. It stops by itself." }
         };
         static readonly string[][] AboutLinks =

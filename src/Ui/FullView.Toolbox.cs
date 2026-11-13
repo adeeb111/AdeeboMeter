@@ -228,10 +228,10 @@ namespace AdeeboMeter
         static readonly HashSet<string> LabGate = new HashSet<string> { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "manyports", "syslog" };   // need the tick on a company network
         // tools outside the Traffic Lab that still send traffic of their own making (to a reflector, a RADIUS server, many DNS
         // servers, mail servers, oversized UDP): the same tick on a company network, the same "never for points"
-        static readonly HashSet<string> SenderGate = new HashSet<string> { "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
+        static readonly HashSet<string> SenderGate = new HashSet<string> { "twamp", "udpmtu", "radius", "radiuslab", "smtppath", "dnsrace" };
         internal static IEnumerable<string> LabGateIds { get { return LabGate.Concat(SenderGate); } }
         // every tool that sends traffic it builds, wherever it sits - the self-test checks each one is behind the tick
-        public static readonly string[] Senders = { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "manyports", "syslog", "twamp", "udpmtu", "radiuslab", "smtppath", "dnsrace" };
+        public static readonly string[] Senders = { "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "manyports", "syslog", "twamp", "udpmtu", "radius", "radiuslab", "smtppath", "dnsrace" };
         // Traffic Lab tools that don't send packets they build (or that came with their own rules before the Lab) - the self-test fails if a new Lab tool is in neither list
         public static readonly HashSet<string> LabExempt = new HashSet<string> { "wol", "iperf", "bloat", "dscp" };
         public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Concat(SenderGate).Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))).Concat(Senders.Where(id => !LabGate.Contains(id) && !SenderGate.Contains(id))); }
@@ -485,6 +485,12 @@ namespace AdeeboMeter
             switch (id)
             {
                 case "mtu": return "a few seconds to trace, then about 8 small pings per hop you measure";
+                case "dnsrace": return "10-20 seconds for five servers (21 lookups each); longer if a server is slow";
+                case "hotel": return "about 10 seconds, up to 20 on a slow network";
+                case "whats": return "10-20 seconds - it re-tests what's out of date";
+                case "gpn": return "about 30 seconds: a trace, then 5 pings per router on the way";
+                case "console": if (!int.TryParse(a.Length > 2 ? a[2] : "", out n)) n = 30; n = Math.Max(10, Math.Min(120, n)); return n + " seconds";
+                case "sixmonths": case "month": return "a few seconds to read History";
                 case "mtr": if (!int.TryParse(a[1], out n)) n = 1; n = Math.Max(1, Math.Min(10, n)); return n + (n == 1 ? " minute" : " minutes") + ", after 5-30 seconds to find the path";
                 case "rlisten": case "discover": if (!int.TryParse(a[0], out n)) n = 60; return Math.Max(10, Math.Min(120, n)) + " seconds";
                 case "ping": if (!int.TryParse(a[1], out n)) n = 50; if (!int.TryParse(a[2], out m)) m = 200; n = Math.Max(10, Math.Min(2000, n)); m = Math.Max(20, Math.Min(5000, m)); return RunSecs(n * m / 1000) + " if it answers - up to " + RunSecs(n * Math.Max(m, 1000) / 1000) + " if it doesn't";
@@ -502,7 +508,7 @@ namespace AdeeboMeter
                 case "join": case "dot1x": case "icmpexplain": case "samplelab": case "dhcpreplay": case "rareplay": case "eapreplay": return "a few seconds - nothing is sent";
                 case "certcmp": return "a few seconds - one TLS handshake to the site";
                 case "radiuslab": return "up to 4 seconds - one Access-Request, then one TACACS+ connection test";
-                case "smtppath": return "up to half a minute - one DNS question, then a short SMTP conversation with the top 2 mail servers (stops before sending)";
+                case "smtppath": return "usually a few seconds; up to about a minute if a mail server stalls - one DNS question, then a short SMTP conversation with the top 2 mail servers (stops before sending)";
                 case "keys": case "newkey": case "recipients": case "certmatch": case "csrmake": case "selfsigned": return "a few seconds - nothing is sent";
                 case "encrypt": case "decrypt": return "a second or two to make the key from the code, then about as long as copying the file - nothing is sent";
                 case "certlive": return "a few seconds - one TLS handshake to the server";
@@ -525,7 +531,7 @@ namespace AdeeboMeter
                 case "udpsend": if (!int.TryParse(a[2], out n)) n = 1; return RunSecs(Math.Max(1, Math.Min(1000, n)) / 10 + 1);
                 case "cloud": case "owners": case "ret": return "about 20-40 seconds";
                 case "ping6": return "about 10-30 seconds";
-                case "space": return "up to a minute on a big disk";
+                case "space": return "up to 20 seconds on a big disk";
                 case "teams": return "about 10 seconds";
                 case "mibs": return "a moment - the first search after you add MIB files reads them once (a minute or two)";
                 default: return "a few seconds";
@@ -545,7 +551,7 @@ namespace AdeeboMeter
             { "bandwidth", "iperf bloat" }, { "throughput", "speedtest iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "netsnap snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
             { "cert", "certs certfile http" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "certs http" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
-            { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "snmpprn discover arp sweep" }, { "devices", "sweep arp discover snmp" }, { "scan", "sweep" },
+            { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "snmpprn discover arp sweep" }, { "devices", "inventory sweep arp snmp" }, { "scan", "sweep" },
             { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "encrypt", "encrypt decrypt recipients" }, { "decrypt", "decrypt encrypt" }, { "adeebo", "decrypt encrypt" }, { "p7m", "decrypt encrypt" }, { "key", "keys newkey csrmake certmatch" }, { "keys", "keys newkey" }, { "self-signed", "selfsigned" }, { "selfsigned", "selfsigned" }, { "backup", "keys" }, { "join", "join dot1x dhcpreplay" }, { "rogue", "dhcpreplay rareplay" }, { "radius", "radius radiuslab tacacs" }, { "pcap", "dhcpreplay rareplay icmpexplain samplelab" }, { "capture", "dhcpreplay rareplay icmpexplain samplelab" }, { "mx", "smtppath dig" }, { "inspection", "certcmp" }, { "email", "mail" }, { "smtp", "smtppath mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },
             { "bgp", "owners" }, { "ospf", "rlisten" }, { "vrrp", "gateway rlisten" }, { "hsrp", "gateway rlisten" }, { "stp", "rlisten" }, { "lldp", "snmplldp rlisten" }, { "mdns", "discover" }, { "bonjour", "discover" }, { "upnp", "discover" }, { "llmnr", "discover nbname" },
@@ -845,7 +851,7 @@ namespace AdeeboMeter
                     // two lines: the tool, and what it answers in plain words
                     var te = Explain.Term("tb." + t.Id); string tag = te != null ? te.Tag : ""; float rh = tag != "" ? 44 * S : 28 * S;
                     bool snmpRow = !searching && t.Id == "snmp", on = !tbHome && (t.Id == tbSel || snmpRow && SnmpView(tbSel));
-                    string title = snmpRow ? "SNMP - ask a switch or router" : t.Title; if (snmpRow) tag = "Ports, traffic, CPU, neighbours, sensors, any OID.";
+                    string title = L.T(snmpRow ? "SNMP - ask a switch or router" : t.Title); if (snmpRow) tag = "Ports, traffic, CPU, neighbours, sensors, any OID.";
                     if (searching && SectionOf(t) != tbSection) tag = SectionName(SectionOf(t)) + " · " + tag;   // a result from another section says where it lives
                     var rr = new RectangleF(0, y, tbList.ClientSize.Width, rh);
                     if (on) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, rr);
@@ -901,8 +907,8 @@ namespace AdeeboMeter
                     g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y + 3 * S); float rx = x + g.MeasureString("RECENT", Draw.fTiny).Width + 12 * S;
                     foreach (var t in recent)
                     {
-                        var ts = g.MeasureString(t.Title, Draw.fSmall); if (rx + ts.Width > x + w) break;
-                        g.DrawString(t.Title, Draw.fSmall, lb, rx, y); string id = t.Id; Act(tbCanvas, new RectangleF(rx, y, ts.Width, ts.Height), delegate { OpenTool(id); }); rx += ts.Width + 18 * S;
+                        string tt = L.T(t.Title); var ts = g.MeasureString(tt, Draw.fSmall); if (rx + ts.Width > x + w) break;
+                        g.DrawString(tt, Draw.fSmall, lb, rx, y); string id = t.Id; Act(tbCanvas, new RectangleF(rx, y, ts.Width, ts.Height), delegate { OpenTool(id); }); rx += ts.Width + 18 * S;
                     }
                     y += 30 * S;
                 }
@@ -970,7 +976,7 @@ namespace AdeeboMeter
                         y += 46 * S; g.DrawLine(line, x, y - 6 * S, x + w, y - 6 * S);
                     }
                 }
-                g.DrawString(tbTitle.ToUpperInvariant() + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + L.T("EXAMPLE") : "  ·  DONE " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fTiny, muted, x, y);
+                g.DrawString(L.T(tbTitle).ToUpperInvariant() + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + L.T("EXAMPLE") : "  ·  DONE " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fTiny, muted, x, y);
                 if (tbAward != "" && tbRows != null && !tbBusy)
                 {
                     float hw = g.MeasureString(tbTitle.ToUpperInvariant() + "  ·  DONE 00:00", Draw.fTiny).Width;

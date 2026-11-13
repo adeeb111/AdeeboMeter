@@ -80,7 +80,8 @@ namespace AdeeboMeter
             w.MovedLately = w.MyChByDay.Values.Distinct().Count() > 1;
             // a network = its name on that band (hidden ones by address); yours = the access point you were connected to;
             // other access points with your network's name (mesh, extenders) are kept apart and never counted as neighbours
-            Func<Row, string> key = r => r.Mine ? "\u0001mine" : (r.Ssid == "" ? r.Bssid : r.Ssid) + (r.Same ? "\u0002same" : "") + "|" + r.Band;
+            // two neighbours both called "xfinitywifi" are two access points: each is its own network (by its address)
+            Func<Row, string> key = r => r.Mine ? "\u0001mine" : (r.Ssid == "" ? r.Bssid : r.Same || (r.Bssid ?? "") == "" ? r.Ssid : r.Ssid + "\u0003" + r.Bssid) + (r.Same ? "\u0002same" : "") + "|" + r.Band;
             foreach (var gr in rows.Where(r => r.Band == w.MyBand).GroupBy(key))
             {
                 var hourly = gr.GroupBy(r => r.T).Select(h => h.OrderByDescending(r => r.Rssi).First()).ToList();

@@ -74,7 +74,7 @@ namespace AdeeboMeter
                 // an IP: the device's own ARP table turns it into a MAC (a router or layer-3 switch has one)
                 var arp = Col(ep, c, "1.3.6.1.2.1.4.22.1.2", run, out err);
                 foreach (var kv in arp) if (kv.Key.EndsWith("." + ip, StringComparison.Ordinal) && kv.Value.Raw.Length == 6) { mac = string.Join(":", kv.Value.Raw.Select(x => x.ToString("x2", CultureInfo.InvariantCulture))); break; }
-                if (mac == null && arp.Count >= 1990) { rows.Add(R(1, ip.ToString(), "not in the first " + arp.Count + " entries of this device's ARP table - the table is longer than AdeeboMeter reads, so it may be further down", "Type the MAC instead, or ask a smaller router / the switch for that VLAN.", "m")); return rows; }
+                if (mac == null && arp.Count >= 2000) { rows.Add(R(1, ip.ToString(), "not in the first " + arp.Count + " entries of this device's ARP table - the table is longer than AdeeboMeter reads, so it may be further down", "Type the MAC instead, or ask a smaller router / the switch for that VLAN.", "m")); return rows; }
                 if (mac == null) { rows.Add(R(1, ip.ToString(), "this device doesn't have it in its ARP table", "A plain switch has no ARP table - ask the router or core switch for the IP, or type the MAC. A device that hasn't talked for a few minutes also drops out.", "m")); return rows; }
                 rows.Add(R(3, ip.ToString(), "is " + mac + " (from the device's ARP table)", "", "m"));
             }
@@ -95,8 +95,15 @@ namespace AdeeboMeter
                 if (hits.Count == 0)
                 {
                     // the walk reads at most 2,000 entries: ask for this one MAC directly (BRIDGE-MIB dot1dTpFdbPort.<mac>), which has no cap
-                    string get; var one = Snmp.Request(ep, c, 0xA0, 0, 0, new[] { "1.3.6.1.2.1.17.4.3.1.2." + string.Join(".", mac.Split(':').Select(h => Convert.ToInt32(h, 16).ToString(CultureInfo.InvariantCulture))) }, out get);
-                    if (one != null && one.Count == 1 && !one[0].End && one[0].Raw.Length > 0) hits.Add(new { Mac = mac, Vlan = "", Port = I((long)Snmp.Num(one[0])) });
+                    // ... or, on a Q-BRIDGE switch (the table the walk used), dot1qTpFdbPort.<vlan>.<mac> for each VLAN the walk saw
+                    string macIdx = string.Join(".", mac.Split(':').Select(h => Convert.ToInt32(h, 16).ToString(CultureInfo.InvariantCulture)));
+                    var asks = qb ? all.Select(e => e.Vlan).Where(v => v != "").Distinct().Take(8).Select(v => Tuple.Create(v, "1.3.6.1.2.1.17.7.1.2.2.1.2." + v + "." + macIdx)).ToList() : new List<Tuple<string, string>>();
+                    asks.Add(Tuple.Create("", "1.3.6.1.2.1.17.4.3.1.2." + macIdx));
+                    foreach (var ask in asks)
+                    {
+                        string get; var one = Snmp.Request(ep, c, 0xA0, 0, 0, new[] { ask.Item2 }, out get);
+                        if (one != null && one.Count == 1 && !one[0].End && one[0].Raw.Length > 0 && Snmp.HasNum(one[0])) { hits.Add(new { Mac = mac, Vlan = ask.Item1, Port = I((long)Snmp.Num(one[0])) }); break; }
+                    }
                 }
                 if (hits.Count == 0 && fdb.Count >= 2000)
                 {
@@ -264,7 +271,7 @@ namespace AdeeboMeter
             string panel = string.Join(" | ", lines.Values.Select(v => Snmp.Text(v, "", null)).Where(z => z.Trim() != "").Take(4));
             if (panel != "") rows.Add(R(3, "Panel says", panel, "", "m"));
             var life = Col(ep, c, "1.3.6.1.2.1.43.10.2.1.4", run, out err);
-            if (life.Count > 0) rows.Add(R(3, "Pages printed", I(life.Values.Sum(v => (long)Snmp.Num(v))), "Over the printer's life.", "m"));
+            if (life.Count > 0) rows.Add(R(3, "Pages printed", I(life.Values.Max(v => (long)Snmp.Num(v))), "Over the printer's life (the counter is kept per marker - a colour printer has one for each colour - so the largest is shown, not their sum).", "m"));
             var max = Col(ep, c, s + "8", run, out err); var lvl = Col(ep, c, s + "9", run, out err);
             foreach (var k in sd.Keys.OrderBy(z => z, Comparer<string>.Create(IdxCmp)).Take(30))
             {
@@ -304,7 +311,7 @@ namespace AdeeboMeter
                 if (G(w, 1) == null && G(w, 4) == null) { rows.Add(R(3, ep.ToString(), "not a UPS, or it offers neither UPS-MIB nor APC's MIB", "Search the MIB folder for battery to find the vendor's own table.", "m")); return rows; }
                 model = G(w, 0) != null ? Snmp.Text(G(w, 0), "", null) : "";
                 long ab = Gl(w, 1); bat = ab == 2 ? 2 : ab == 3 ? 3 : ab == 4 ? 4 : 1; chg = Gl(w, 2); long rt = Gl(w, 3); mins = rt >= 0 ? rt / 6000 : -1; temp = Gl(w, 6); load = Gl(w, 5); alarms = -1;
-                long os = Gl(w, 4); src = os == 2 || os == 12 || os == 4 ? 3 : os == 3 ? 5 : os == 6 || os == 9 || os == 10 ? 4 : os == 7 ? 2 : os < 0 ? -1 : 1; onBat = -1;
+                long os = Gl(w, 4); src = os == 2 ? 3 : os == 4 ? 6 : os == 12 ? 7 : os == 3 ? 5 : os == 6 || os == 9 || os == 10 ? 4 : os == 7 ? 2 : os < 0 ? -1 : 1; onBat = -1;
             }
             if (model != "") rows.Add(R(3, "UPS", model, "", "m"));
             string[] srcs = { "", "other", "OFF - no output", "on mains", "on bypass (not protected)", "ON BATTERY", "boosting low mains", "trimming high mains" };

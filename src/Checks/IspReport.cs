@@ -31,7 +31,7 @@ namespace AdeeboMeter
         static double Avg(PathTools.Hop h) { int got = h.Sent - h.Lost; return got > 0 ? h.Sum / got : double.NaN; }
         static double Loss(PathTools.Hop h) { return h.Sent > 0 ? 100.0 * h.Lost / h.Sent : double.NaN; }
 
-        sealed class Route { public string Label, Host; public IPAddress Ip; public List<PathTools.Hop> Hops = new List<PathTools.Hop>(); }
+        sealed class Route { public bool V6Only; public string Label, Host; public IPAddress Ip; public List<PathTools.Hop> Hops = new List<PathTools.Hop>(); }
 
         // input: a game you added ("valorant"), a host name or an IP; minutes: 1, 2 or 5
         public static List<string[]> Run(Monitor m, string what, string minutes, Toolkit.Run run) { return Run(m, what, minutes, "", run); }
@@ -60,9 +60,11 @@ namespace AdeeboMeter
             else { rows.Add(R(2, "Target", "add a game in the Gamer Zone, or type a host name or IP", "", "")); return rows; }
             foreach (var r in routes)
             {
-                try { IPAddress ip; r.Ip = IPAddress.TryParse(r.Host, out ip) ? ip : Dns.GetHostAddresses(r.Host).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); }
+                try { IPAddress ip; var all = IPAddress.TryParse(r.Host, out ip) ? new[] { ip } : Dns.GetHostAddresses(r.Host); r.Ip = all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); if (r.Ip == null && all.Length > 0) r.V6Only = true; }
                 catch (SocketException) { r.Ip = null; } catch (ArgumentException) { r.Ip = null; }
             }
+            // this report measures IPv4 (the hop probes are IPv4 ICMP): an IPv6 address, or a name with only IPv6 ones, says so
+            if (routes.Count > 0 && routes[0].Ip == null && routes[0].V6Only) { rows.Add(R(3, "Target", routes[0].Host + " has only IPv6 addresses - this report measures the IPv4 path only", "", "u")); return rows; }
             routes.RemoveAll(r => r.Ip == null);
             if (routes.Count == 0) { rows.Add(R(2, "Target", "the name doesn't resolve - check the spelling, or DNS is down (try What's wrong?)", "", "m")); return rows; }
 
@@ -109,7 +111,7 @@ namespace AdeeboMeter
             if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), "", "m"));
             if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), "Provider, first hop (" + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
             if (start >= 0) { var h = main.Hops[start]; rows.Add(R(2, "Where loss starts (hop " + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
-            if (end != null) rows.Add(R(Lv(Loss(end)), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
+            if (end != null) rows.Add(R(Shown(Loss(end), start >= 0 && end.N >= main.Hops[start].N), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
 
             // hop by hop
             // who owns each public hop: only with online lookups switched on (public addresses go to RIPEstat) - otherwise said
@@ -140,7 +142,7 @@ namespace AdeeboMeter
                 string h0 = HandOff(routes[0].Hops, nm), h1 = HandOff(routes[1].Hops, nm);
                 if (a0 != null && a1 != null && h0 != "" && h1 != "" && h0 != h1 && Math.Abs(Loss(a0) - Loss(a1)) >= 1)
                     rows.Add(R(1, "What it means", "Only the route that leaves at " + (Loss(a0) > Loss(a1) ? h0 : h1) + " loses packets - the problem is on that hand-off, not your line. Your provider can steer that traffic another way.", "", "i"));
-                else rows.Add(R(3, "What it means", h0 == h1 ? "Both routes leave the provider at the same place, so this comparison can't single out a hand-off." : "No clear difference between the routes in this run.", "", "i"));
+                else rows.Add(R(3, "What it means", h0 == h1 && h0 != "" ? "Both routes leave the provider at the same place, so this comparison can't single out a hand-off." : "No clear difference between the routes in this run.", "", "i"));
             }
 
             // 7 days by hour of day
@@ -159,10 +161,10 @@ namespace AdeeboMeter
             rows.Add(R(wifi ? 1 : 0, "Connection", wifi ? "Wi-Fi - a provider will ask you to test on a cable first" : "Ethernet (cable)", "", "w"));
             rows.Add(R(3, "DNS", string.IsNullOrEmpty(dns) ? "-" : dns, "", "w"));
             int pmtu; lock (m.L) pmtu = m.PrimaryMtu;
-            bool v6 = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().Any(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && n.GetIPProperties().UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !Private(u.Address)));
+            bool v6 = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().Any(n => { try { return n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && n.GetIPProperties().UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !Private(u.Address)); } catch (System.Net.NetworkInformation.NetworkInformationException) { return false; } });   /* one failing adapter must not sink the report */
             rows.Add(R(3, "Addresses", "IPv4" + (v6 ? " and IPv6 (a public IPv6 address)" : " only - no public IPv6") + (pmtu > 0 ? " · adapter MTU " + pmtu : ""), "", "w"));
             var spd = SpeedTest.Last;
-            if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms") + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
+            if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + (double.IsNaN(spd.LoadDown) && double.IsNaN(spd.LoadUp) ? "-" : F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms")) + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
             else rows.Add(R(3, "Speed and queueing", "not measured today - press Test my speed on the home page, then make the report again", "", "u"));
             if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
             {
@@ -174,7 +176,7 @@ namespace AdeeboMeter
 
             // worst moments: spikes and outages
             rows.Add(R(-1, "WORST MOMENTS", "", "", "m"));
-            List<Spike> sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Where(z => game == null || z.Game == game.Id).OrderByDescending(z => z.Ms).Take(5).ToList();
+            List<Spike> sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Where(z => game != null && z.Game == game.Id)   /* a typed host: other games' spikes aren't about it */.OrderByDescending(z => z.Ms).Take(5).ToList();
             foreach (var s in sp) rows.Add(R(1, s.T.ToString("ddd HH:mm:ss", CultureInfo.CurrentCulture), s.Server + " " + F(s.Normal, "") + " -> " + F(s.Ms, " ms") + " · " + s.Blame, "", "m"));
             foreach (var o in Outages.Last(m, 7).Take(5)) rows.Add(R(2, "Internet outage", Outages.Text(o), "", "h"));
             if (sp.Count == 0) rows.Add(R(3, "Spikes", "none recorded yet", "", "m"));

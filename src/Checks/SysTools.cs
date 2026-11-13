@@ -88,7 +88,9 @@ namespace AdeeboMeter
                             if (got > DateTime.MinValue) rows.Add(R(3, "Obtained", got.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " (" + Ago(now - got) + " ago)", "", "w"));
                             if (t1 > DateTime.MinValue) rows.Add(R(3, "Renews (T1)", t1.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (t1 > now ? " (in " + Ago(t1 - now) + ")" : " (due - renewing)"), "Halfway through the lease Windows asks the same server to extend it.", "w"));
                             if (t2 > DateTime.MinValue) rows.Add(R(3, "Rebinds (T2)", t2.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture), "If renewing failed, Windows asks any DHCP server.", "w"));
-                            if (end > DateTime.MinValue) rows.Add(R(end < now ? 2 : (end - now).TotalMinutes < 10 ? 1 : 0, "Expires", end.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (end > now ? " (in " + Ago(end - now) + ")" : " (expired)"), got > DateTime.MinValue && (end - got).TotalMinutes < 60 ? "A short lease (under an hour) - common on guest Wi-Fi; renewals happen often." : "", "w"));
+                            object rawEnd = k.GetValue("LeaseTerminatesTime"); long rawE; bool infinite = rawEnd != null && long.TryParse(rawEnd.ToString(), out rawE) && rawE == 0xFFFFFFFFL;   // RFC 2132: all ones = an infinite lease
+                            if (infinite) rows.Add(R(0, "Expires", "never (an infinite lease)", "", "w"));
+                            else if (end > DateTime.MinValue) rows.Add(R(end < now ? 2 : (end - now).TotalMinutes < 10 ? 1 : 0, "Expires", end.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (end > now ? " (in " + Ago(end - now) + ")" : " (expired)"), got > DateTime.MinValue && (end - got).TotalMinutes < 60 ? "A short lease (under an hour) - common on guest Wi-Fi; renewals happen often." : "", "w"));
                             string gw = str("DhcpDefaultGateway"), dns = str("DhcpNameServer"), dom = str("DhcpDomain");
                             if (gw != "") rows.Add(R(3, "Router (option 3)", gw, "", "w"));
                             if (dns != "") rows.Add(R(3, "DNS (option 6)", dns, "", "w"));
@@ -112,7 +114,7 @@ namespace AdeeboMeter
             return rows;
         }
         static string Life(long s) { return s <= 0 ? "0" : s >= uint.MaxValue ? "forever" : Ago(TimeSpan.FromSeconds(s)); }
-        static string Ago(TimeSpan t) { return t.TotalMinutes < 1 ? (int)t.TotalSeconds + " s" : t.TotalHours < 1 ? (int)t.TotalMinutes + " min" : t.TotalDays < 2 ? t.TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : t.TotalDays.ToString("0", CultureInfo.CurrentCulture) + " days"; }
+        static string Ago(TimeSpan t) { if (t < TimeSpan.Zero) t = TimeSpan.Zero; return t.TotalMinutes < 1 ? (int)t.TotalSeconds + " s" : t.TotalHours < 1 ? (int)t.TotalMinutes + " min" : t.TotalDays < 2 ? t.TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : t.TotalDays.ToString("0", CultureInfo.CurrentCulture) + " days"; }
         static bool HasV6() { try { return NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up).SelectMany(n => n.GetIPProperties().UnicastAddresses).Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !IPAddress.IsLoopback(u.Address) && !u.Address.ToString().StartsWith("fd", StringComparison.OrdinalIgnoreCase)); } catch { return false; } }
         static IPAddress Resolve6(string host)
         {
@@ -219,11 +221,12 @@ namespace AdeeboMeter
                     foreach (var c in st.Certificates.Cast<X509Certificate2>().OrderBy(c => c.NotAfter))
                     {
                         double days = (c.NotAfter - DateTime.Now).TotalDays; string name = c.GetNameInfo(X509NameType.SimpleName, false);
-                        string use = string.Join(", ", c.Extensions.OfType<X509EnhancedKeyUsageExtension>().SelectMany(e => e.EnhancedKeyUsages.Cast<System.Security.Cryptography.Oid>()).Select(x => x.FriendlyName ?? x.Value).Take(3));
+                        var ekus = c.Extensions.OfType<X509EnhancedKeyUsageExtension>().SelectMany(e => e.EnhancedKeyUsages.Cast<System.Security.Cryptography.Oid>()).ToList();
+                        string use = string.Join(", ", ekus.Select(x => x.FriendlyName ?? x.Value).Take(3)); bool clientAuth = ekus.Any(x => x.Value == "1.3.6.1.5.5.7.3.2");   // by OID: the friendly name is translated
                         int lv = days < 0 ? 2 : days < 30 ? 1 : 0;
                         if (lv == 0 && rows.Count > 25) continue;
                         rows.Add(R(lv, (loc == StoreLocation.CurrentUser ? "Yours · " : "This PC · ") + Draw.Trunc(name, 40), (days < 0 ? "EXPIRED " : "expires ") + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days >= 0 ? " (" + (int)days + " days)" : "") + (use != "" ? " · " + use : "") + (c.HasPrivateKey ? "" : " · no private key"),
-                            lv > 0 && use.Contains("Client Authentication") ? "Wi-Fi / VPN sign-in with a certificate stops working when it expires - your IT renews it, often by connecting to the company network." : "", "w"));
+                            lv > 0 && clientAuth ? "Wi-Fi / VPN sign-in with a certificate stops working when it expires - your IT renews it, often by connecting to the company network." : "", "w"));
                         c.Dispose();
                     }
                 }
@@ -263,6 +266,8 @@ namespace AdeeboMeter
         }
 
         // ---------- what's listening on this PC
+        // "[fe80::1]:443" -> "fe80::1", "192.168.1.5:443" -> "192.168.1.5"
+        static string LocalHost(string ep) { if (ep.StartsWith("[", StringComparison.Ordinal)) { int e = ep.IndexOf(']'); return e > 0 ? ep.Substring(1, e - 1) : ep; } int c = ep.LastIndexOf(':'); return c > 0 ? ep.Substring(0, c) : ep; }
         public static List<string[]> Listening(Monitor m)
         {
             var rows = new List<string[]>(); List<Conn> all; try { all = m.Connections(true); } catch { all = new List<Conn>(); }
@@ -276,7 +281,7 @@ namespace AdeeboMeter
             {
                 var ports = g.Select(c => c.LocalPort).Distinct().OrderBy(p => p).ToList();
                 string known = string.Join(", ", ports.Select(p => Known(p)).Where(k => k != "").Distinct());
-                rows.Add(R(3, Draw.Trunc(g.Key, 30), "TCP " + string.Join(", ", ports.Take(8)) + (ports.Count > 8 ? " +" + (ports.Count - 8) : "") + (g.First().Local.StartsWith("0.0.0.0", StringComparison.Ordinal) ? " · every network" : " · " + g.First().Local.Split(':')[0]) + (known != "" ? " · " + known : ""), "", "w"));
+                rows.Add(R(3, Draw.Trunc(g.Key, 30), "TCP " + string.Join(", ", ports.Take(8)) + (ports.Count > 8 ? " +" + (ports.Count - 8) : "") + (g.First().Local.StartsWith("0.0.0.0", StringComparison.Ordinal) || g.First().Local.StartsWith("[::]", StringComparison.Ordinal) ? " · every network" : " · " + LocalHost(g.First().Local)) + (known != "" ? " · " + known : ""), "", "w"));
             }
             if (local.Count > 0) rows.Add(R(3, "Only to this PC (127.0.0.1)", string.Join(", ", local.GroupBy(c => c.Proc).Select(g => g.Key + " " + string.Join("/", g.Select(c => c.LocalPort).Distinct().Take(3))).Take(12)), "Loopback ports can't be reached from the network.", "w"));
             return rows;
@@ -330,7 +335,7 @@ namespace AdeeboMeter
             bool w32err = src.IndexOf("0x8007", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
             if (w32err) { rows.Add(R(2, "Current source", Draw.Trunc(src.Replace("\r", " ").Replace("\n", " "), 140), src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) >= 0 ? "The Windows Time service isn't running, so the clock isn't being synced. It starts on its own on most PCs; on others it's started by the domain." : "", "w")); src = ""; }
             if (src != "") rows.Add(R(src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("Free-running", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 0, "Current source", src, src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 ? "It runs on its own clock - no server has set it recently. Settings > Time > Sync now." : src.IndexOf("access is denied", StringComparison.OrdinalIgnoreCase) >= 0 ? "" : "", "w"));
-            if (server != "") rows.Add(R(3, "Configured server", server.Replace(",0x9", "").Replace(",0x1", "").Replace(",0x8", ""), "", "w"));
+            if (server != "") rows.Add(R(3, "Configured server", Regex.Replace(server, @",0x[0-9a-fA-F]+", ""), "", "w"));
             rows.Add(R(3, "Check it", "Use the NTP tool on the same server to see how far off this PC is.", "", "i"));
             return rows;
         }

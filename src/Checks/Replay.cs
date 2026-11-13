@@ -39,7 +39,8 @@ namespace AdeeboMeter
             if (b == null || b.Length < 240 || b[236] != 99 || b[237] != 130 || b[238] != 83 || b[239] != 99) return null;
             var d = new Dhcp { T = t, Xid = (uint)(b[4] << 24 | b[5] << 16 | b[6] << 8 | b[7]) };
             d.Your = new IPAddress(new[] { b[16], b[17], b[18], b[19] }).ToString(); var gi = new IPAddress(new[] { b[24], b[25], b[26], b[27] }); if (!gi.Equals(IPAddress.Any)) d.Relay = gi.ToString();
-            d.Client = string.Join(":", Enumerable.Range(28, 6).Select(i => b[i].ToString("x2", CultureInfo.InvariantCulture)));
+            int hlen = b[2] >= 1 && b[2] <= 16 ? b[2] : 6;   // the hardware address length the packet says (6 on Ethernet)
+            d.Client = string.Join(":", Enumerable.Range(28, hlen).Select(i => b[i].ToString("x2", CultureInfo.InvariantCulture)));
             for (int p = 240; p < b.Length;)
             {
                 int code = b[p]; if (code == 255) break; if (code == 0) { p++; continue; }
@@ -96,7 +97,7 @@ namespace AdeeboMeter
                     if (changed.Count > 0) findings.Add(R(1, "What changed between leases", string.Join(" · ", changed.Select(k => k == -1 ? "address " + a.Your + " > " + b.Your : OptName[k] + " " + Opt(a, k) + " > " + Opt(b, k))), "Compare a good and a bad lease: a different router or DNS server is the usual reason one works and the other doesn't.", "p"));
                 }
                 if (g.Any(d => d.Opt82)) findings.Add(R(3, "Option 82", "the relay added its own information (which switch port the client is on)", "Normal on enterprise networks - the server can use it to pick the pool.", "p"));
-                if (acks.Count > 0 && servers.Count <= 1 && !g.Any(d => d.Type == 6)) { var last = acks.Last(); findings.Add(R(0, "Lease for " + g.Key, last.Your + " from " + last.Server + " in " + T(last.T - g.Min(d => d.T)), "", "p")); }
+                if (acks.Count > 0 && servers.Count <= 1 && !g.Any(d => d.Type == 6)) { var last = acks.Last(); findings.Add(R(0, "Lease for " + g.Key, last.Your + " from " + (last.Server != "" ? last.Server : "?") + " in " + T(last.T - g.Min(d => d.T)), "", "p")); }
             }
             rows.Insert(1, R(-1, "WHAT IT SHOWS", "", "", "p"));
             rows.InsertRange(2, findings);
@@ -232,6 +233,7 @@ namespace AdeeboMeter
             else if (failure && nak) { verdict = "The PC and the server couldn't agree on a sign-in method - the server offered " + (method != "" ? method : "one method") + " and the PC asked for another. Match the PC's network profile to the server's policy."; lv = 2; }
             else if (failure && (method == "EAP-TLS" || method == "PEAP" || method == "EAP-TTLS")) { verdict = "The server refused after starting " + method + " - usually a certificate the other side doesn't trust (the PC's, or the server's), or the account / policy for " + (identity != "" ? identity : "this identity") + "."; lv = 2; }
             else if (failure) { verdict = "The server refused the sign-in (EAP-Failure)" + (identity != "" ? " for " + identity : "") + " - the server's log says which rule."; lv = 2; }
+            else if (nak) { verdict = "The PC answered with a NAK (it wants another sign-in method) and then nothing more came - the server and the PC have no method in common, or the server stopped answering."; lv = 1; }
             else if (idReq > 0 && !pcAnswered) { verdict = "The switch asked " + idReq + " time(s) who's there and the PC never answered - 802.1X isn't turned on for this adapter (Wired AutoConfig service), or the port expects it and the PC doesn't do it."; lv = 2; }
             else { verdict = "The exchange stops without Success or Failure - the server (RADIUS) may not be answering the switch."; lv = 1; }
             rows.Add(R(-1, "WHAT IT SHOWS", "", "", "p")); rows.Add(R(lv, "Verdict", verdict, "", "i"));

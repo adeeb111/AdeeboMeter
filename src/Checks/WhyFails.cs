@@ -27,7 +27,7 @@ namespace AdeeboMeter
         // ---------- which proxy a URL uses
         public static List<string[]> Proxy(string url)
         {
-            var rows = new List<string[]>();
+            var rows = new List<string[]>(); url = Toolkit.OneSlash(url);
             if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url;
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
             try
@@ -94,7 +94,7 @@ namespace AdeeboMeter
             var rnd = new byte[6]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(rnd);
             string fake = "adeebometer-" + string.Concat(rnd.Select(b => b.ToString("x2", CultureInfo.InvariantCulture))) + ".com";
             try { var a = Dns.GetHostAddresses(fake); rows.Add(R(2, "Made-up name", fake + " → " + string.Join(", ", a.Select(x => x.ToString()).Take(3)), "Your DNS answers names that don't exist (usually your provider's ad page). Typos land on their page, and some apps get confused. Your router or provider settings can turn it off - or use another DNS.", "m")); }
-            catch (SocketException) { rows.Add(R(0, "Made-up name", "correctly not found", "Your DNS tells the truth about names that don't exist.", "m")); }
+            catch (SocketException se) { if (se.SocketErrorCode == SocketError.HostNotFound) rows.Add(R(0, "Made-up name", "correctly not found", "Your DNS tells the truth about names that don't exist.", "m")); else rows.Add(R(3, "Made-up name", "couldn't tell - DNS didn't answer (" + se.SocketErrorCode + ")", "A timeout isn't a clean bill - try again when DNS works.", "m")); }
             catch (Exception e) { rows.Add(R(1, "Made-up name", e.Message, "", "u")); }
             int n = 0;
             foreach (var path in new[] { @"SOFTWARE\Policies\Microsoft\Windows NT\DNSClient\DnsPolicyConfig", @"SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DnsPolicyConfig" })
@@ -162,7 +162,7 @@ namespace AdeeboMeter
                         try
                         {
                             // one socket for both relays (the NAT test needs the same local port), so every answer is checked: from that relay, port 3478, our transaction
-                            u.Send(req, req.Length, new IPEndPoint(r, 3478)); var until = DateTime.UtcNow.AddMilliseconds(1500);
+                            sw.Restart(); u.Send(req, req.Length, new IPEndPoint(r, 3478)); var until = DateTime.UtcNow.AddMilliseconds(1500);
                             while (got == null && DateTime.UtcNow < until)
                             {
                                 var from = new IPEndPoint(IPAddress.Any, 0); var resp = u.Receive(ref from);

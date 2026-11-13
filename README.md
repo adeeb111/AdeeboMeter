@@ -79,7 +79,7 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 - **Online lookups** (BGP and network owners) are off by default; switched on, they run for 5 minutes to 3 hours, then turn themselves off. They send public IP addresses to RIPEstat and PeeringDB; with them on, the Security checkup also asks Cloudflare's encrypted DNS about www.microsoft.com and opens one TLS handshake with it.
 - History, data usage and what's normal stay on your PC and delete themselves (3 days by default). Live captures are deleted when you stop, at the next start and at logoff.
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in; DLLs load only from System32.
-- TLS 1.2/1.3 only with Windows' certificate validation.
+- TLS with Windows' own certificate validation (Windows picks the version - 1.2 or 1.3 on a current Windows).
 - Builds clean against Microsoft's .NET security and quality analyzers with every rule on.
 - `AdeeboMeter.exe --selftest` runs 71 checks, including "never listens", leak tests and parser tests. `--deeptest` feeds every tool hostile input, repeats them to catch leaks and stresses the UI.
 

@@ -398,10 +398,11 @@ namespace AdeeboMeter
             string name = LS("d.name", "www.wikipedia.org"); float cx = x;
             cx += Choice(h, g, "d.name", "Name", new[] { new[] { "www.wikipedia.org", "wikipedia.org" }, new[] { "github.com", "github.com" }, new[] { "outlook.office.com", "outlook.office.com" } }, "www.wikipedia.org", cx, y);
             y += 60 * S;
-            string[] actors = { "This PC", "Your DNS server", "Root (.)", "." + name.Split('.').Last() + " servers", name.Substring(name.IndexOf('.') + 1) + " servers" };
+            string zone = name.Split('.').Length > 2 ? name.Substring(name.IndexOf('.') + 1) : name;   // github.com's own servers, not "com" twice
+            string[] actors = { "This PC", "Your DNS server", "Root (.)", "." + name.Split('.').Last() + " servers", zone + " servers" };
             var steps = new List<string[]> {
                 new[] { "0", "1", "Where is " + name + "? (if Windows remembers, it stops here)", "" }, new[] { "1", "2", "Where is " + name + "?", "" }, new[] { "2", "1", "Don't know - ask the ." + name.Split('.').Last() + " servers", "" },
-                new[] { "1", "3", "Where is " + name + "?", "" }, new[] { "3", "1", "Ask " + name.Substring(name.IndexOf('.') + 1) + "'s own servers", "" },
+                new[] { "1", "3", "Where is " + name + "?", "" }, new[] { "3", "1", "Ask " + zone + "'s own servers", "" },
                 new[] { "1", "4", "Where is " + name + "?", "" }, new[] { "4", "1", "Here: the address (and how long to remember it)", "" }, new[] { "1", "0", "The address - remembered for next time", "" } };
             y = DrawLadder(g, h, actors, steps, x, y, w);
             y = Lead2(g, "Your DNS server does the walking and keeps the answer for as long as the site allows (its TTL), so the second person to ask gets it at once - that's why a site you just visited answers in 1 ms and a new one in 50.", x, y, w);

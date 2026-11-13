@@ -59,7 +59,7 @@ namespace AdeeboMeter
             try
             {
                 if (File.Exists(FilePath))
-                    foreach (var line in File.ReadAllLines(FilePath).Take(200))
+                    foreach (var line in File.ReadLines(FilePath).Take(200))
                     {
                         var p = line.Split('|'); if (p.Length < 5 || p[0] != "server") continue;
                         var s = new Server { Id = Clean(p[1], 40).ToLowerInvariant(), Provider = Clean(p[2], 40), Where = Clean(p[3], 40), Down = p[4].Trim(), Up = p.Length > 5 ? p[5].Trim() : "" };
@@ -176,8 +176,10 @@ namespace AdeeboMeter
             try
             {
                 IPAddress ip;
-                try { ip = Dns.GetHostAddresses(srv.Host).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); }
-                catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; }
+IPAddress[] found;
+                try { found = Dns.GetHostAddresses(srv.Host); } catch (SocketException) { found = Array.Empty<IPAddress>(); } catch (ArgumentException) { found = Array.Empty<IPAddress>(); }
+                ip = found.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+                if (ip == null && found.Length > 0) { res.Error = srv.Host + " has only IPv6 addresses - this speed test runs over IPv4; pick another server"; return res; }
                 if (ip == null) { res.Error = "couldn't find " + srv.Host + " - the server's name doesn't resolve, or DNS / the internet is down"; return res; }
                 // a server from speedservers.txt whose name points into this PC or the LAN (127.0.0.1.nip.io, localtest.me): never
                 if (!Reachable(ip)) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }

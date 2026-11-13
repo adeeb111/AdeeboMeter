@@ -133,13 +133,14 @@ namespace AdeeboMeter
             if (sp.Count > 0) { var top = sp.GroupBy(x => x.Blame).OrderByDescending(gr => gr.Count()).First(); rows.Add(R(sp.Count >= 3 ? 1 : 3, "Spikes (30 min)", sp.Count + " · most blamed on " + top.Key, "", "i")); }
             // verdict: the worst leg wins; all clean = not the network
             string verdict, next;
-            if (lvHome == 2 || (lvHome == 1 && lvIsp < 2 && lvSrv < 2)) { verdict = kind == "Wi-Fi" ? "Your Wi-Fi" + (sig >= 0 && sig < 60 ? " (weak signal)" : "") + " - the lag starts before the router" : "Your home network - the lag starts before the router"; next = kind == "Wi-Fi" ? "Move closer to the router or use a cable for one match: if the lag goes, that was it." : "Check the cable and the router (restart it)."; }
+            if (lvHome == 3 && lvIsp == 3 && lvSrv == 3) { verdict = "Nothing was measured - the router and internet checks are off and no game is known"; next = "Turn the checks on in Settings, start the game (or add it in the Gamer Zone), then run this again."; }
+            else if (lvHome == 2 || (lvHome == 1 && lvIsp < 2 && lvSrv < 2)) { verdict = kind == "Wi-Fi" ? "Your Wi-Fi" + (sig >= 0 && sig < 60 ? " (weak signal)" : "") + " - the lag starts before the router" : "Your home network - the lag starts before the router"; next = kind == "Wi-Fi" ? "Move closer to the router or use a cable for one match: if the lag goes, that was it." : "Check the cable and the router (restart it)."; }
             else if (lvIsp == 2 || lvIsp == 1) { verdict = "Your provider - the router is fine, the delay is past it"; next = lvLoad == 1 ? "First stop the upload that's running, then test again; if it stays, the Report for my ISP shows them the numbers." : "Report for my ISP collects the proof (times, loss, the hop where it starts)."; }
             else if (lvSrv >= 1 && lvSrv != 3) { verdict = "The game server's side - your connection is clean up to the internet"; next = "Try a closer region in the game, or Find my match server in the Gamer Zone to see the real server."; }
             else if (lvPc == 1) { verdict = "This PC is too busy - the network is fine"; next = "Close what's using the CPU (Monitor shows it) and lower the game's settings."; }
             else if (lvLoad == 1) { verdict = "An upload is running - the legs look fine right now"; next = "Pause the backup or sync while you play."; }
             else { verdict = "The network looks fine - likely the PC or the game itself (frame rate)"; next = "Turn on the game's own frame-rate counter: if it drops when it lags, it's the PC, not the connection."; }
-            int vlv = verdict.StartsWith("The network looks fine", StringComparison.Ordinal) ? 0 : 1;
+            int vlv = verdict.StartsWith("Nothing was measured", StringComparison.Ordinal) ? 3 : verdict.StartsWith("The network looks fine", StringComparison.Ordinal) ? 0 : 1;
             rows.Insert(0, R(vlv, "Verdict", verdict, "Next: " + next + " For the full picture, Capture this conversation in the packet journey shows the game's own packets - stalls, bursts and gaps.", "i"));
             rows.Add(R(3, "Honest limits", "AdeeboMeter measures the network with its own probes; it can't read the game's in-game ping or frame rate.", "", "i"));
             return rows;

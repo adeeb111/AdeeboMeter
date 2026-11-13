@@ -58,6 +58,7 @@ namespace AdeeboMeter
             var nets = new[] { 0, 1, 10, 50, 68, 178 };
             var room = new Room { F = f, Rnd = r, Net = nets[r.Next(nets.Length)], Pc = 20 + r.Next(170), Gw = r.Next(3) == 0 ? 254 : 1, Base = 9 + r.Next(25) };
             room.Rogue = room.Gw == 1 ? 66 + r.Next(30) : 100 + r.Next(30);
+            while (room.Rogue == room.Pc) room.Rogue++;   // never the PC's own address
             room.PcMac = Mac(r, "3c:52:82"); room.GwMac = Mac(r, "f4:f2:6d"); room.RogueMac = Mac(r, "b8:27:eb");
             var others = Faults.Where(z => z.Id != f.Id).OrderBy(z => r.Next()).Take(4).Select(z => z.Name).ToList(); others.Add(f.Name);
             room.FaultChoices = Shuffle(r, others); room.FixChoices = Shuffle(r, f.WrongFixes.Concat(new[] { f.Fix }));
@@ -114,7 +115,7 @@ namespace AdeeboMeter
                     return sb.ToString();
                 case "pingdf":
                     if (id == "mtu") return "Pinging 1.1.1.1 with 1472 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\nPackets: Sent = 4, Received = 0, Lost = 4 (100% loss)\n(32-byte pings to the same address work fine.)";
-                    if (id == "apipa" || id == "gateway") return "Pinging 1.1.1.1 with 1472 bytes of data:\nRequest timed out.\nPackets: Sent = 4, Received = 0, Lost = 4 (100% loss)";
+                    if (id == "apipa" || id == "gateway") return "Pinging 1.1.1.1 with 1472 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\nPackets: Sent = 4, Received = 0, Lost = 4 (100% loss)";
                     return "Pinging 1.1.1.1 with 1472 bytes of data:\n" + pingTo("1.1.1.1");
                 case "arp":
                     sb.Append("Interface: " + pc + "\n  Internet Address      Physical Address      Type\n");
@@ -135,7 +136,8 @@ namespace AdeeboMeter
                     if (id == "wifi") return "WLAN-AutoConfig 8003  WLAN AutoConfig service has successfully disconnected from a wireless network.\nWLAN-AutoConfig 8001  ... has successfully connected (x" + (5 + r.Next(6)) + " today)";
                     return "No network errors in the last 24 hours.";
                 case "web":
-                    if (id == "dns" || id == "apipa") return "This site can't be reached. DNS_PROBE_FINISHED_NO_INTERNET";
+                    if (id == "dns") return "This site can't be reached. DNS_PROBE_FINISHED_BAD_CONFIG";
+                    if (id == "apipa") return "This site can't be reached. DNS_PROBE_FINISHED_NO_INTERNET";
                     if (id == "gateway") return "This site can't be reached. ERR_NETWORK_CHANGED / ERR_CONNECTION_TIMED_OUT";
                     if (id == "hosts") return "This site can't be reached. example.com took too long to respond. ERR_CONNECTION_TIMED_OUT";
                     if (id == "mtu") return "Connecting... (the page starts, then hangs on 'Waiting for example.com'. Small sites sometimes load.)";
@@ -168,9 +170,9 @@ namespace AdeeboMeter
             switch (id)
             {
                 case "night":
-                    fam.Add(new Device { Name = "android-" + H(r) + H(r), Ip = ip(100 + r.Next(50)), Mac = "de:" + H(r) + ":" + H(r) + ":" + H(r) + ":" + H(r) + ":" + H(r), Maker = "(private address)", First = "6 days ago", Data = N(r, 18, 30) + " GB", Thief = true });
+                    string thiefName = "android-" + H(r) + H(r); fam.Add(new Device { Name = thiefName, Ip = ip(100 + r.Next(50)), Mac = "de:" + H(r) + ":" + H(r) + ":" + H(r) + ":" + H(r) + ":" + H(r), Maker = "(private address)", First = "6 days ago", Data = N(r, 18, 30) + " GB", Thief = true });
                     c.Story = "The internet has been slow every night this week, and the data cap is nearly gone. Nobody at home stays up past midnight.";
-                    c.Log.Add("02:13  DHCP lease  android-xxxx  (new device)"); c.Log.Add("02:14  Wi-Fi  joined with the home password"); c.Log.Add("04:50  Wi-Fi  left");
+                    c.Log.Add("02:13  DHCP lease  " + thiefName + "  (new device)"); c.Log.Add("02:14  Wi-Fi  joined with the home password"); c.Log.Add("04:50  Wi-Fi  left");
                     c.Clues = new[] { "Two devices have private (random) hardware addresses. That alone is normal - phones do it.", "One of them has been here every day for months. The other appeared 6 days ago.", "The new one joins only between 1 and 5 in the morning - and moves the most data." };
                     c.Explain = "A neighbour has the Wi-Fi password. Random MACs are normal, so the tell was the timing and the data, not the address. Change the Wi-Fi password and turn on WPA3 if the router has it.";
                     break;

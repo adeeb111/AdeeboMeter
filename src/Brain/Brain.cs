@@ -32,27 +32,26 @@ namespace AdeeboMeter
         }
 
         // ---------- one-minute accumulation
-        static int minute = -1, n, worst; static double cpu, mem, down, up, gw, net, wifi, rx, gwMax, netMax, mbDown, mbUp; static int gwN, netN, wifiN, rxN, lossN, lossBad;
-        static double lastGw = double.NaN, lastNet = double.NaN;
+        static int minute = -1, n, worst; static double cpu, mem, down, up, gw, net, wifi, rx, gwMax, netMax, mbDown, mbUp; static int gwN, netN, wifiN, rxN, lossN, lossBad, cpuN, memN, downN, upN;   // each average over its own real samples
+        static DateTime lastGwAt, lastNetAt, minuteAt;   // a new sample = a new probe (by its time), never "the value changed"; minuteAt: the minute the samples belong to
         public static void Second(Monitor m)
         {
             try
             {
                 LearnNetwork(m);
                 var now = DateTime.Now; int mm = now.Hour * 60 + now.Minute;
-                if (minute >= 0 && mm != minute && n > 0) Flush(m, now.AddMinutes(-1));
-                if (mm != minute) { minute = mm; Reset(); }
+                if (minute >= 0 && mm != minute && n > 0) Flush(m, minuteAt);   // stamped with its own minute: after sleep, not the minute of waking
+                if (mm != minute) { minute = mm; minuteAt = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, now.Kind); Reset(); }
                 n++;
                 var s = m.Latest; worst = Math.Max(worst, s.Level);
-                Add(ref cpu, m.Cpu.Last); Add(ref mem, m.Mem.Last);
+                double cv = m.Cpu.Last, mv = m.Mem.Last; if (!double.IsNaN(cv)) { cpu += cv; cpuN++; } if (!double.IsNaN(mv)) { mem += mv; memN++; }
                 double d = m.Down.Last, u = m.Up.Last;
-                if (!double.IsNaN(d)) { down += d; mbDown += d / 8; }
-                if (!double.IsNaN(u)) { up += u; mbUp += u / 8; }
+                if (!double.IsNaN(d)) { down += d; downN++; mbDown += d / 8; }
+                if (!double.IsNaN(u)) { up += u; upN++; mbUp += u / 8; }
                 double g = m.GwPing.Last, t = m.NetPing.Last;
-                if (!double.IsNaN(g) && g != lastGw) { gw += g; gwN++; gwMax = Math.Max(gwMax, g); Bloat.Sample(g, d, u); }
-                lastGw = g;
-                if (t != lastNet) { if (double.IsNaN(t)) lossBad++; else { net += t; netN++; netMax = Math.Max(netMax, t); } lossN++; }
-                lastNet = t;
+                DateTime gAt = m.GwAt, tAt = m.NetAt;
+                if (gAt != lastGwAt) { if (!double.IsNaN(g)) { gw += g; gwN++; gwMax = Math.Max(gwMax, g); Bloat.Sample(g, d, u); } lastGwAt = gAt; }
+                if (tAt != lastNetAt) { if (double.IsNaN(t)) lossBad++; else { net += t; netN++; netMax = Math.Max(netMax, t); } lossN++; lastNetAt = tAt; }
                 int sig, rate; bool call; lock (m.L) { sig = m.WifiSignal; rate = m.RxRate; call = m.CallLikely; }
                 if (sig >= 0) { wifi += sig; wifiN++; }
                 if (rate > 0) { rx += rate; rxN++; }
@@ -72,7 +71,6 @@ namespace AdeeboMeter
             }
             catch (Exception e) { Program.Log("brain: " + e.Message); }
         }
-        static void Add(ref double acc, double v) { if (!double.IsNaN(v)) acc += v; }
         static int tick; static double diskMs, faults; static int diskN, faultN; static readonly object pcLock = new object(); static int pcBusy;
         // one PC job at a time, on a background thread, lowest priority; skipped if the previous one is still running
         // one long-lived, lowest-priority worker for the PC jobs (not a new thread every 5 s); a job that comes while the last
@@ -96,11 +94,11 @@ namespace AdeeboMeter
             }
             bgGo.Set();
         }
-        static void Reset() { diskMs = faults = 0; diskN = faultN = 0; n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = 0; }
+        static void Reset() { diskMs = faults = 0; diskN = faultN = 0; n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = cpuN = memN = downN = upN = 0; }
         static void Flush(Monitor m, DateTime t)
         {
             double gwAvg = gwN > 0 ? gw / gwN : double.NaN, netAvg = netN > 0 ? net / netN : double.NaN, loss = lossN > 0 ? 100.0 * lossBad / lossN : double.NaN;
-            History.Minute(t, new[] { worst, cpu / n, mem / n, down / n, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, up / n, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
+            History.Minute(t, new[] { worst, cpuN > 0 ? cpu / cpuN : 0, memN > 0 ? mem / memN : 0, downN > 0 ? down / downN : 0, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, upN > 0 ? up / upN : 0, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
             if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));

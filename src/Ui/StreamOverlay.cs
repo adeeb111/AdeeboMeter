@@ -47,7 +47,7 @@ namespace AdeeboMeter
             tick.Tick += delegate
             {
                 // repaint (and encode the PNG) only when what it shows changed
-                string t; double[] v; Series(out t, out v); var rv = M.GwPing.Values(60);
+                string t; double[] v; int st; Series(out t, out v, out st); var rv = M.GwPing.Values(60);
                 string key = t + "|" + green + "|" + Spikes() + "|" + string.Join(",", v.Concat(rv).Select(x => double.IsNaN(x) ? "x" : Math.Round(x).ToString(CultureInfo.InvariantCulture)));
                 if (key == lastKey) return; lastKey = key; Invalidate(); if (png) WritePng();
             };
@@ -55,16 +55,16 @@ namespace AdeeboMeter
             FormClosed += delegate { tick.Stop(); tick.Dispose(); menu.Dispose(); f1.Dispose(); f2.Dispose(); if (open == this) open = null; };
         }
         // what to show: the game you're playing (its best server), else the internet check
-        void Series(out string title, out double[] v)
+        void Series(out string title, out double[] v, out int step)   // step: seconds between samples
         {
             var gp = GamePing.Me; string id = gp.Playing;
             var game = id != null ? Games.All.FirstOrDefault(z => z.Id == id) : null;
             if (game != null)
             {
                 var best = gp.Best(game) ?? (game.Servers.Count > 0 ? game.Servers[0] : null);
-                if (best != null) { title = game.Name + " · " + best.Name; v = gp.Stat(game.Id, best).Recent(60); return; }
+                if (best != null) { step = Cfg.GameFast ? 1 : Math.Max(1, Cfg.GameBgSec); title = game.Name + " · " + best.Name; v = gp.Stat(game.Id, best).Recent(Math.Max(2, 60 / step)); return; }
             }
-            title = "Internet ping"; v = M.NetPing.Values(60);
+            step = Math.Max(1, M.NetSecNow); title = "Internet ping"; v = M.NetPing.Values(Math.Max(2, 60 / step));
         }
         // spikes in the open game session - so viewers see whether it was "his Wi-Fi" or not
         static int Spikes() { var gp = GamePing.Me; var ss = gp.Session; if (ss == null || !ss.Open) return -1; lock (gp.Spikes) return gp.Spikes.Count(z => z.Game == ss.GameId && z.T >= ss.Start); }
@@ -72,7 +72,7 @@ namespace AdeeboMeter
         void Paint1(Graphics g, Size sz)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            string title; double[] v; Series(out title, out v);
+            string title; double[] v; int step; Series(out title, out v, out step);
             g.Clear(green ? Color.FromArgb(0, 255, 0) : Color.FromArgb(20, 24, 31));
             var box = new RectangleF(4, 4, sz.Width - 8, sz.Height - 8);
             using (var bg = new SolidBrush(Color.FromArgb(230, 20, 24, 31))) using (var path = Round(box, 12)) g.FillPath(bg, path);
@@ -95,20 +95,21 @@ namespace AdeeboMeter
                 double max = Math.Max(60, ok.Length > 0 ? ok.Max() * 1.15 : 60);
                 float dx = gr.Width / 59f;
                 // your router on the same scale, thin and grey: flat while the game line jumps = not your home network
-                var rv = M.GwPing.Values(60);
-                if (rv.Length > 1)
+                // both lines are placed by time (newest at the right edge, one router sample every GwSecNow s) - never squeezed
+                int rstep = Math.Max(1, M.GwSecNow); var rv = M.GwPing.Values(Math.Max(2, 60 / rstep));
+                if (rv.Length > 1 && (Clock.Mono - M.GwAt).TotalSeconds < 60)
                     using (var rp = new Pen(Color.FromArgb(150, 200, 210, 220), 1.2f) { DashStyle = DashStyle.Dash })
                     {
-                        PointF? lr = null; int roff = 60 - rv.Length;
-                        for (int i = 0; i < rv.Length; i++) { if (double.IsNaN(rv[i])) { lr = null; continue; } var pt = new PointF(gr.X + (roff + i) * dx, gr.Bottom - (float)(Math.Min(rv[i], max) / max) * gr.Height); if (lr != null) g.DrawLine(rp, lr.Value, pt); lr = pt; }
+                        PointF? lr = null; int roff = 60 - rv.Length * rstep;
+                        for (int i = 0; i < rv.Length; i++) { if (double.IsNaN(rv[i])) { lr = null; continue; } var pt = new PointF(gr.X + (roff + (i + 1) * rstep - 1) * dx, gr.Bottom - (float)(Math.Min(rv[i], max) / max) * gr.Height); if (lr != null) g.DrawLine(rp, lr.Value, pt); lr = pt; }
                     }
                 using (var lf = new SolidBrush(Color.FromArgb(170, 200, 210, 220))) g.DrawString("- - router", f1, lf, gr.Right - 64, gr.Y - 12);
                 using (var pen = new Pen(Color.FromArgb(120, 170, 255), 2f)) using (var red = new SolidBrush(Color.FromArgb(240, 80, 80)))
                 {
-                    PointF? last = null; int off = 60 - v.Length;
+                    PointF? last = null; int off = 60 - v.Length * step;
                     for (int i = 0; i < v.Length; i++)
                     {
-                        float x = gr.X + (off + i) * dx;
+                        float x = gr.X + (off + (i + 1) * step - 1) * dx;
                         if (double.IsNaN(v[i])) { g.FillRectangle(red, x - 1, gr.Bottom - 6, 3, 6); last = null; continue; }
                         var pt = new PointF(x, gr.Bottom - (float)(v[i] / max) * gr.Height);
                         if (last != null) g.DrawLine(pen, last.Value, pt); last = pt;

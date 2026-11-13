@@ -282,6 +282,8 @@ namespace AdeeboMeter
             string user = Environment.UserName, home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             if (!string.IsNullOrEmpty(home)) s = s.Replace(home, "%USERPROFILE%");
             if (!string.IsNullOrEmpty(user) && user.Length > 2) s = s.Replace(user, "<user>");
+            // any other folder (D:\Clients\..., a share, OneDrive): only the file's own name is kept
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z])([A-Za-z]:\\|\\\\)[^\s""<>|:*?]*\\", "<folder>\\");
             return s.Length > 6000 ? s.Substring(0, 6000) : s;
         }
         // GitHub's "new issue" page with the crash filled in. Opens in your browser; nothing is sent until you press Submit there.

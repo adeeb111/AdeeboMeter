@@ -58,7 +58,7 @@ namespace AdeeboMeter
                         return e == SslPolicyErrors.None;   // an untrusted certificate is still recorded above - then the handshake stops
                     }))
                     {
-                        var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); if (!hs.Wait(8000)) throw new TimeoutException("no TLS answer in 8 s");
+                        var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); if (!hs.Wait(8000)) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } throw new TimeoutException("no TLS answer in 8 s"); }   // close first, so the callback is done with snap.Chain
                     }
                 }
             }
@@ -69,7 +69,7 @@ namespace AdeeboMeter
             all.Add(snap); all = all.Skip(Math.Max(0, all.Count - 40)).ToList();
             try { File.WriteAllLines(CertFile, all.Select(CertLine)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             rows.Add(R(errs == SslPolicyErrors.None ? 0 : 2, snap.Name, snap.Trust, "", "m"));
-            for (int i = 0; i < snap.Chain.Count; i++) rows.Add(R(3, i == 0 ? "Site certificate" : i == snap.Chain.Count - 1 ? "Root" : "Intermediate", snap.Chain[i][0] + " · from " + snap.Chain[i][1] + " · expires " + snap.Chain[i][3], "SHA-256 " + snap.Chain[i][2] + (i == 0 && snap.Chain[i].Length > 4 && snap.Chain[i][4] != "" ? " · names: " + snap.Chain[i][4] : ""), "m"));
+            for (int i = 0; i < snap.Chain.Count; i++) rows.Add(R(3, i == 0 ? "Site certificate" : i == snap.Chain.Count - 1 && snap.Chain[i][0] == snap.Chain[i][1] ? "Root" : "Intermediate", snap.Chain[i][0] + " · from " + snap.Chain[i][1] + " · expires " + snap.Chain[i][3], "SHA-256 " + snap.Chain[i][2] + (i == 0 && snap.Chain[i].Length > 4 && snap.Chain[i][4] != "" ? " · names: " + snap.Chain[i][4] : ""), "m"));
             if (prev == null) { rows.Add(R(3, "Next", "now change one thing - VPN on / off, another network, the proxy - and run again with another name", "", "")); return rows; }
             rows.Add(R(-1, "COMPARED WITH \"" + prev.Name.ToUpperInvariant() + "\" (" + prev.T.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + ")", "", "", "m"));
             rows.Add(CertVerdict(prev, snap));
@@ -288,6 +288,7 @@ namespace AdeeboMeter
                 }
             }
             catch (SocketException e) { error = e.SocketErrorCode == SocketError.TimedOut ? "no answer in 4 s" : e.SocketErrorCode == SocketError.ConnectionReset ? "refused - nothing listens on UDP " + port : e.Message; }
+            catch { Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); throw; }   // any other failure: the secret still goes
             bool hasMa = false, signed = reply != null && Protocols.ReplyOk(reply, id, auth, sec, out hasMa);
             Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length);
             string code; var attrRows = new List<string[]>();

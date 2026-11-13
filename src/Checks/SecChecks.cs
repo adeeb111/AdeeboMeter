@@ -187,9 +187,9 @@ namespace AdeeboMeter
         static List<string[]> NameServices(Monitor m, List<string> s)
         {
             bool llmnr = RegInt(LM, @"SOFTWARE\Policies\Microsoft\Windows NT\DNSClient", "EnableMulticast", 1) != 0, mdns = RegInt(LM, @"SYSTEM\CurrentControlSet\Services\Dnscache\Parameters", "EnableMDNS", 1) != 0;
-            NetworkInterface nic; lock (m.L) nic = m.Primary; bool nb = true;
-            if (nic != null) { int o = RegInt(LM, @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_" + nic.Id, "NetbiosOptions", 0); nb = o != 2; }
-            var on = new List<string>(); if (llmnr) on.Add("LLMNR"); if (nb) on.Add("NetBIOS"); if (mdns) on.Add("mDNS");
+            NetworkInterface nic; lock (m.L) nic = m.Primary; bool nb = true; int nbO = 0;
+            if (nic != null) { nbO = RegInt(LM, @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_" + nic.Id, "NetbiosOptions", 0); nb = nbO != 2; }   // 0: the DHCP server decides
+            var on = new List<string>(); if (llmnr) on.Add("LLMNR"); if (nb) on.Add(nbO == 0 ? "NetBIOS (as the DHCP server says - usually on)" : "NetBIOS"); if (mdns) on.Add("mDNS");
             return One(on.Count == 0 ? 0 : 3, "Name broadcasts", on.Count == 0 ? "LLMNR, NetBIOS and mDNS all off" : string.Join(", ", on) + " on · this PC answers to \"" + Environment.MachineName + "\" on the local network", on.Count == 0 ? "" : "Handy at home; on public Wi-Fi an attacker can answer these name questions falsely and catch sign-in attempts. Companies often turn LLMNR and NetBIOS off by policy.", "ncpa.cpl");
         }
         static List<string[]> Wpad(Monitor m, List<string> s)
@@ -241,7 +241,7 @@ namespace AdeeboMeter
             foreach (var l in lines)
             {
                 var t = Regex.Replace(l, "#.*", "").Trim(); if (t == "") continue; var p = t.Split((char[])null, StringSplitOptions.RemoveEmptyEntries); if (p.Length < 2) continue;
-                bool sink = p[0] == "0.0.0.0" || p[0] == "127.0.0.1" || p[0] == "::1" || p[0] == "::";
+                bool sink = p[0] == "0.0.0.0" || p[0].StartsWith("127.", StringComparison.Ordinal) || p[0] == "::1" || p[0] == "::";
                 foreach (var h in p.Skip(1)) { if (sink) blocked++; else if (BigSites.Any(b => h.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0)) redirect.Add(h + " -> " + p[0]); }
             }
             if (redirect.Count > 0) return One(2, "Hosts file", "sends " + string.Join(", ", redirect.Take(5)) + " elsewhere", "Malware does this to fake sign-in pages or block updates. Unless you added it for testing, remove those lines (Notepad as administrator).", null);
@@ -256,7 +256,7 @@ namespace AdeeboMeter
             bool policy = Reg(LM, @"SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings", "ProxySettingsPerUser") != null || Reg(CU, @"Software\Policies\Microsoft\Internet Explorer\Control Panel", "Proxy") != null;
             if (en == 0 && pac == "") return One(0, "Proxy", "none - straight to the internet", "", "ms-settings:network-proxy");
             string what = (en != 0 ? "proxy " + srv : "") + (pac != "" ? (en != 0 ? " · " : "") + "script " + pac : "");
-            bool local = Regex.IsMatch(srv + " " + pac, @"127\.0\.0\.1|localhost|\[::1\]");
+            bool local = Regex.IsMatch(srv + " " + pac, @"\b127\.[0-9]+\.[0-9]+\.[0-9]+|localhost|\[::1\]");
             return One(policy || Company(m) ? 3 : local ? 1 : 1, "Proxy", what, policy || Company(m) ? "Set by your company - expected." : local ? "A program on this PC sees your web traffic first (a debugging tool, an antivirus, or adware). Fine if you know which." : "Your web traffic goes through this server. If you didn't set it, remove it.", "ms-settings:network-proxy");
         }
         static List<string[]> Startup(Monitor m, List<string> s)
@@ -271,12 +271,27 @@ namespace AdeeboMeter
             var unsigned = new List<string>();
             foreach (var it in items)
             {
-                var mm = Regex.Match(it.Item2, "^\\s*\"([^\"]+)\"|^\\s*(\\S+\\.exe)", RegexOptions.IgnoreCase); string exe = mm.Success ? (mm.Groups[1].Success ? mm.Groups[1].Value : mm.Groups[2].Value) : it.Item2;
-                exe = Environment.ExpandEnvironmentVariables(exe); if (!exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || !File.Exists(exe)) continue;
+                string exe = StartExe(it.Item2); if (exe == null) continue;
                 if (string.Equals(Path.GetFileName(exe), "AdeeboMeter.exe", StringComparison.OrdinalIgnoreCase)) continue;   /* this app: unsigned, and you chose to start it */
                 try { using (X509Certificate.CreateFromSignedFile(exe)) { } } catch (System.Security.Cryptography.CryptographicException) { unsigned.Add(it.Item1 + " (" + Path.GetFileName(exe) + ")"); }
             }
             return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", items.Count + " start automatically" + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · all .exe programs signed"), unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
+        }
+        // the program a Run / Startup entry starts: "quoted path", C:\Program Files\app.exe unquoted (the longest
+        // path ending in .exe that exists), or a bare name Windows finds on the PATH. null when it isn't an .exe here.
+        internal static string StartExe(string cmd)
+        {
+            string c = Environment.ExpandEnvironmentVariables(cmd ?? "").Trim();
+            var q = Regex.Match(c, "^\"([^\"]+)\""); if (q.Success) { string f = q.Groups[1].Value; return f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && File.Exists(f) ? f : null; }
+            string best = null; int at = -1;
+            while ((at = c.IndexOf(".exe", at + 1, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                int end = at + 4; if (end < c.Length && !char.IsWhiteSpace(c[end])) continue;
+                string f = c.Substring(0, end); if (f.IndexOfAny(Path.GetInvalidPathChars()) >= 0) break;
+                if (f.IndexOf('\\') < 0) { foreach (var d in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';').Concat(new[] { Environment.SystemDirectory })) { try { if (d.Trim() != "" && File.Exists(Path.Combine(d.Trim(), f))) { best = Path.Combine(d.Trim(), f); break; } } catch (ArgumentException) { } } if (best != null) break; continue; }
+                if (File.Exists(f)) best = f;   // keep going: a longer one ("C:\a b.exe c.exe") wins
+            }
+            return best;
         }
         static List<string[]> Tasks(Monitor m, List<string> s)
         {
@@ -286,7 +301,7 @@ namespace AdeeboMeter
             foreach (var l in o.Split('\n'))
             {
                 var c = Regex.Matches(l, "\"([^\"]*)\"").Cast<Match>().Select(x => x.Groups[1].Value).ToList(); if (c.Count < 9 || c[1] == "TaskName") continue; n++;
-                string run = c[8].ToLowerInvariant();
+                string run = Environment.ExpandEnvironmentVariables(c[8]).ToLowerInvariant();   // %TEMP%\x.exe is still Temp
                 if (Regex.IsMatch(run, @"\\(temp|downloads)\\|\\appdata\\roaming\\[^\\]+\.exe|\\users\\public\\") && !bad.Contains(c[1])) bad.Add(c[1]);
             }
             return One(bad.Count == 0 ? 0 : 1, "Scheduled tasks", bad.Count == 0 ? "none run from Temp, Downloads or other folders anyone can write to" : bad.Count + " run from a folder anyone can write to: " + string.Join(", ", bad.Take(4)), bad.Count > 0 ? "A common trick to keep malware running. Check them in Task Scheduler; delete any you don't recognise." : "", "taskschd.msc");
@@ -378,20 +393,26 @@ namespace AdeeboMeter
         static List<string[]> TlsIntercept(Monitor m, List<string> s)
         {
             if (!Online.On) return One(3, "Encrypted traffic inspected?", "not checked - online lookups are off", "Turn on online lookups (Settings) to check whether something on the way decrypts your https traffic.", null);
-            string root = null;
+            string root = null; byte[] leafRaw = null;
             try
             {
                 using (var c = new TcpClient())
                 {
                     if (!c.ConnectAsync("www.microsoft.com", 443).Wait(5000)) return One(3, "Encrypted traffic inspected?", "couldn't reach www.microsoft.com", "", null);
-                    using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (ch != null && ch.ChainElements.Count > 0) root = ch.ChainElements[ch.ChainElements.Count - 1].Certificate.Subject; return true; }))
-                        if (!System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient("www.microsoft.com")).Wait(8000)) return One(3, "Encrypted traffic inspected?", "no TLS answer in 8 s", "", null);
+                    using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) leafRaw = cert.GetRawCertData(); if (ch != null && ch.ChainElements.Count > 0) root = ch.ChainElements[ch.ChainElements.Count - 1].Certificate.Subject; return true; }))
+                    {
+                        var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient("www.microsoft.com"));
+                        if (!hs.Wait(8000)) { c.Close(); try { hs.Wait(1000); } catch (AggregateException) { } return One(3, "Encrypted traffic inspected?", "no TLS answer in 8 s", "", null); }
+                    }
                 }
             }
             catch (AggregateException) { return One(3, "Encrypted traffic inspected?", "couldn't check", "", null); }
             catch (SocketException) { return One(3, "Encrypted traffic inspected?", "couldn't reach www.microsoft.com", "", null); }
             if (root == null) return One(3, "Encrypted traffic inspected?", "couldn't see the chain", "", null);
-            bool known = Regex.IsMatch(root, "Microsoft|DigiCert|Baltimore|GlobalSign|Sectigo|Comodo|USERTrust|ISRG|Let's Encrypt|Entrust|GoDaddy|Starfield|Amazon|Google Trust|IdenTrust|Certum|QuoVadis", RegexOptions.IgnoreCase);
+            // the same thumbprint test as everywhere else - a name like "DigiCert Inc" can be borrowed by any root (round-2 hunt M9)
+            string by = ""; if (leafRaw != null) using (var leaf = new System.Security.Cryptography.X509Certificates.X509Certificate2(leafRaw)) by = Inspection.InspectedBy(leaf);
+            bool known = by == "";
+            if (!known) { var cn = Regex.Match(root, "CN=([^,]+)").Groups[1].Value; root = "CN=" + (cn != "" ? cn : by); }
             return known ? One(0, "Encrypted traffic inspected?", "no - www.microsoft.com's certificate comes from a public authority", "", null)
                 : One(Company(m) ? 3 : 1, "Encrypted traffic inspected?", "YES - signed by \"" + Regex.Match(root, "CN=([^,]+)").Groups[1].Value + "\", not a public authority", Company(m) ? "Your company's web filter decrypts https to inspect it - common and expected at work." : "Something between you and the internet (an antivirus web shield, a proxy, or worse) decrypts your https traffic. Find out what installed that root certificate.", "certmgr.msc");
         }
@@ -469,6 +490,7 @@ namespace AdeeboMeter
             var vnics = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && Monitor.IsVpn(n)).ToList();
             var vdns = new HashSet<string>(vnics.SelectMany(n => n.GetIPProperties().DnsAddresses.Select(a => a.ToString())));
             string first = (dns ?? "").Split(',')[0].Trim();
+            if (first == "") return One(3, "DNS while on VPN", "couldn't tell - no DNS server recorded for this network yet", "", null);
             if (vdns.Count == 0) return One(3, "DNS while on VPN", "the VPN didn't set its own DNS servers", "Your names are asked of " + first + " - fine if that's reached through the VPN.", "ms-settings:network-vpn");
             bool inside = vdns.Contains(first);
             return One(inside ? 0 : 1, "DNS while on VPN", inside ? "names go to the VPN's DNS (" + first + ")" : "names go to " + first + ", not the VPN's DNS (" + string.Join(", ", vdns.Take(2)) + ")", inside ? "" : "A DNS leak: the network you're on can see which sites you visit. Split-tunnel VPNs do this on purpose for local names - check with IT.", "ms-settings:network-vpn");
@@ -483,7 +505,7 @@ namespace AdeeboMeter
         // ================================================================== YOUR SITES
         public static string HostOf(string site)
         {
-            string t = (site ?? "").Trim(); if (t == "") return null; if (!t.Contains("://")) t = "https://" + t;
+            string t = Toolkit.OneSlash(site); if (t == "") return null; if (!t.Contains("://")) t = "https://" + t;
             Uri u; return Uri.TryCreate(t, UriKind.Absolute, out u) && Regex.IsMatch(u.Host, @"^[a-z0-9.-]+\.[a-z]{2,}$", RegexOptions.IgnoreCase) ? u.Host.ToLowerInvariant() : null;
         }
         static List<string[]> PerSite(List<string> sites, string title, Func<string, string[]> f)
@@ -505,7 +527,7 @@ namespace AdeeboMeter
                     using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new X509Certificate2(cert); return true; }))
                     {
                         var t = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto, false));
-                        if (!t.Wait(8000)) { err = "no TLS answer"; return null; }
+                        if (!t.Wait(8000)) { c.Close(); try { t.Wait(1000); } catch (AggregateException) { } err = "no TLS answer"; return null; }   // close first: the stuck handshake ends before the stream is disposed
                     }
                 }
             }
@@ -565,13 +587,16 @@ namespace AdeeboMeter
                 Func<string, List<string>> txt = n => { var r = Toolkit.Query(srv, n, 16, true); if (r == null) { noAnswer = true; return new List<string>(); } return r.Rrs.Where(x => x.Section == 1 && x.Type == "TXT").Select(x => x.Data).ToList(); };
                 var spf = txt(d).FirstOrDefault(x => x.IndexOf("v=spf1", StringComparison.OrdinalIgnoreCase) >= 0); var dm = txt("_dmarc." + d).FirstOrDefault(x => x.IndexOf("v=DMARC1", StringComparison.OrdinalIgnoreCase) >= 0);
                 string pol = dm != null ? Regex.Match(dm, @"(?:^|;)\s*p\s*=\s*(\w+)", RegexOptions.IgnoreCase).Groups[1].Value.ToLowerInvariant() : "";   // p=, never the sp= / np= in front of it
-                string dk = Selectors.FirstOrDefault(sel => txt(sel + "._domainkey." + d).Any(x => x.Contains("p=")));
+                bool spfDmNo = noAnswer; noAnswer = false;   // only SPF and DMARC must answer: a slow DKIM selector just means "not found"
+                string dk = Selectors.FirstOrDefault(sel => txt(sel + "._domainkey." + d).Any(x => Regex.IsMatch(x, @"(?:^|;)\s*p\s*=\s*[A-Za-z0-9+/]")));   // an empty p= is a revoked key (RFC 6376)
+                noAnswer = spfDmNo;
                 if (noAnswer) return R(3, "Mail protection · " + d, "couldn't check - your DNS server didn't answer every question", "", null);
                 var miss = new List<string>(); if (spf == null) miss.Add("SPF"); if (dm == null) miss.Add("DMARC");
                 string val = (spf != null ? "SPF " + (spf.Contains("-all") ? "strict (-all)" : spf.Contains("~all") ? "soft (~all)" : "set") : "no SPF") + " · " + (dm != null ? "DMARC p=" + pol : "no DMARC") + " · " + (dk != null ? "DKIM found (" + dk + ")" : "DKIM not found under common selectors");
                 bool plusAll = spf != null && Regex.IsMatch(spf, @"(^|\s)\+all\b");   // "+all": anyone on the internet may send as this domain
                 if (plusAll) val = val.Replace("SPF set", "SPF +all (lets anyone send)");
-                int lv = miss.Count > 0 ? (miss.Count == 2 ? 2 : 1) : pol == "none" || plusAll ? 1 : 0;
+                if (dm != null && pol == "") val = val.Replace("DMARC p=", "DMARC without a policy (no p=)");
+                int lv = miss.Count > 0 ? (miss.Count == 2 ? 2 : 1) : pol == "none" || pol == "" || plusAll ? 1 : 0;   // no p= at all is invalid (RFC 7489): not protection
                 return R(lv, "Mail protection · " + d, val, lv == 0 ? "" : "Without SPF and DMARC (p=quarantine or reject) anyone can send email that looks like it's from " + d + ". Your mail provider's admin page has the records to add.", null);
             });
         }

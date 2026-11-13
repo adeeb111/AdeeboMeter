@@ -51,7 +51,7 @@ namespace AdeeboMeter
         }
         public static void Parse(IEnumerable<string> lines)
         {
-            foreach (var raw in lines.Take(200))
+            foreach (var raw in lines.Take(2000))
             {
                 string line = raw; int hash = line.IndexOf('#'); if (hash >= 0) line = line.Substring(0, hash);
                 int eq = line.IndexOf('='); if (eq <= 0) continue;

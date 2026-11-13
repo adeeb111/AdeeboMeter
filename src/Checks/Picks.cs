@@ -44,7 +44,7 @@ namespace AdeeboMeter
             int n = 0;
             foreach (var c in ch.OrderBy(c => c.T))
             {
-                if (++n > 80) break;
+                if (++n > 80) { rows.Add(R(3, "...", "and " + (ch.Count - 80) + " more changes", "", "i")); break; }
                 bool after = c.T > at.AddMinutes(1);
                 rows.Add(R(c.Lv, Hm(c.T) + (after ? "  (after)" : ""), c.What, "", c.Kind == "update" || c.Kind == "driver" || c.Kind == "install" ? "w" : "i"));
             }
@@ -145,6 +145,7 @@ namespace AdeeboMeter
                 else if (msg.Rcode == 3 || msg.Rrs.All(r => r.Section != 1)) add(0, "DNS", "honest - a name that doesn't exist gets \"no such name\"", "");
                 else add(2, "DNS", "it answers for names that don't exist - this network rewrites DNS (ads, filters, or worse)", "Use your VPN, or set a DNS-over-HTTPS server in Windows' network settings.");
             }
+            else add(3, "DNS", "couldn't check - no IPv4 DNS server to ask on this network", "");
             // 4. who else can reach you: the network profile and the neighbours already in the ARP table
             string cat = ProfileCategory(ssid);
             if (cat == "Private") add(2, "Windows treats it as", "a Private (home) network - other guests can find this PC and its shared folders", "Settings › Network › this network › set it to Public.");
@@ -158,7 +159,7 @@ namespace AdeeboMeter
                 using (var tc = new TcpClient())
                     if (tc.ConnectAsync("www.microsoft.com", 443).Wait(5000))
                         using (var ssl = new System.Net.Security.SslStream(tc.GetStream(), false, (s, c, ch2, e2) => { seen = c; errs = e2; return e2 == System.Net.Security.SslPolicyErrors.None; }))
-                            try { ssl.AuthenticateAsClient("www.microsoft.com"); } catch (System.Security.Authentication.AuthenticationException) { }
+                            try { tc.ReceiveTimeout = 8000; tc.SendTimeout = 8000; ssl.AuthenticateAsClient("www.microsoft.com"); } catch (System.Security.Authentication.AuthenticationException) { } catch (System.IO.IOException) { }   /* a middlebox that accepts and then stalls: 8 s, not forever */
                 if (seen == null) add(3, "HTTPS", "couldn't check - no answer from microsoft.com", "");
                 else if (errs != System.Net.Security.SslPolicyErrors.None) add(2, "HTTPS", "the certificate this network shows for microsoft.com isn't trusted - something on the way is pretending to be the site", "Don't sign in to anything here; use your phone's hotspot.");
                 else { string by; using (var sc = new System.Security.Cryptography.X509Certificates.X509Certificate2(seen)) by = Inspection.InspectedBy(sc); if (by != "") add(2, "HTTPS", "someone on this network opens your HTTPS (certificate from " + Draw.Trunc(by, 40) + ")", "Fine on your company's network; on a hotel or cafe network, stop and use your phone instead."); else add(0, "HTTPS", "not opened on the way - certificates come straight from the sites", ""); }
@@ -166,7 +167,7 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; add(3, "HTTPS", "couldn't check (" + Draw.Trunc(e.GetBaseException().Message, 60) + ")", ""); }
             if (vpn) add(0, "VPN", "on - everything above matters much less: your traffic is wrapped until it reaches the VPN", "");
             else if (bad > 0 || warn > 0) add(1, "VPN", "off - turn it on before you sign in to anything", "");
-            rows.Insert(0, R(bad > 0 ? 2 : warn > 0 ? 1 : 0, "Verdict", bad > 0 ? (vpn ? "Risky network, but your VPN covers it" : "Don't trust this network - use a VPN or your phone's hotspot") : warn > 0 ? "Usable - mind the notes below" : "Looks fine to use", "Checks the Wi-Fi lock, sign-in pages, DNS honesty, who else can reach you and HTTPS inspection. Two requests go out: Windows' own internet test and one HTTPS connection to microsoft.com.", "i"));
+            rows.Insert(0, R(bad > 0 ? (vpn ? 1 : 2) : warn > 0 ? 1 : 0, "Verdict", bad > 0 ? (vpn ? "Risky network, but your VPN covers it" : "Don't trust this network - use a VPN or your phone's hotspot") : warn > 0 ? "Usable - mind the notes below" : "Looks fine to use", "Checks the Wi-Fi lock, sign-in pages, DNS honesty, who else can reach you and HTTPS inspection. Three requests go out: Windows' own internet test, one DNS question for a made-up name (to catch a lying DNS) and one HTTPS connection to microsoft.com.", "i"));
             return rows;
         }
         // Windows' own label for the network (NetworkList profiles: 0 Public, 1 Private, 2 Domain) - read only
@@ -193,7 +194,7 @@ namespace AdeeboMeter
             foreach (var d in (dns ?? "").Split(',').Select(x => x.Trim()).Where(x => x != "").Take(3)) { IPAddress a; if (IPAddress.TryParse(d, out a) && !servers.Any(s => s.Item2.Equals(a))) servers.Add(Tuple.Create("Yours (" + d + ")", a)); }
             IPAddress ga; if (IPAddress.TryParse(gw ?? "", out ga) && !servers.Any(s => s.Item2.Equals(ga))) servers.Add(Tuple.Create("Your router (" + gw + ")", ga));
             foreach (var p in new[] { new[] { "Cloudflare", "1.1.1.1" }, new[] { "Google", "8.8.8.8" }, new[] { "Quad9", "9.9.9.9" } }) { var a = IPAddress.Parse(p[1]); if (!servers.Any(s => s.Item2.Equals(a))) servers.Add(Tuple.Create(p[0] + " (" + p[1] + ")", a)); }
-            foreach (var x in (extra ?? "").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries).Take(3)) { IPAddress a; if (!IPAddress.TryParse(x, out a)) { rows.Add(R(2, "Extra server", "\"" + x + "\" isn't an IP address", "", "u")); return rows; } if (!servers.Any(s => s.Item2.Equals(a))) servers.Add(Tuple.Create(x, a)); }
+            foreach (var x in (extra ?? "").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries).Take(3)) { IPAddress a; if (!IPAddress.TryParse(x, out a)) { rows.Add(R(1, "Extra server", "\"" + x + "\" isn't an IP address - left out, the others race", "", "u")); continue; } if (!servers.Any(s => s.Item2.Equals(a))) servers.Add(Tuple.Create(x, a)); }
             string[] names = { "www.google.com", "www.microsoft.com", "www.wikipedia.org", "outlook.office.com", "www.amazon.com", "www.youtube.com" };
             var res = new List<Tuple<string, double, double, int>>();   // name, typical cached, typical fresh, failures
             foreach (var s in servers)
@@ -216,7 +217,7 @@ namespace AdeeboMeter
             bool mineBest = mine != null && (mine == best || (!double.IsNaN(mine.Item2) && mine.Item2 - best.Item2 < 5));
             rows.Add(R(mineBest ? 0 : 1, "Winner", best.Item1 + " - " + best.Item2.ToString("0", CultureInfo.CurrentCulture) + " ms for a name it knows, " + (double.IsNaN(best.Item3) ? "-" : best.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms for a new one", mineBest ? "Yours is as fast as any - nothing to change." : "Yours is slower here. Speed isn't everything: your provider's DNS may steer you to closer servers, and a company PC must keep its own DNS.", "m"));
             foreach (var r in res) rows.Add(R(r.Item4 > 3 ? 1 : 3, r.Item1, double.IsNaN(r.Item2) ? "no answer" : r.Item2.ToString("0", CultureInfo.CurrentCulture) + " ms known · " + (double.IsNaN(r.Item3) ? "-" : r.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms new" + (r.Item4 > 0 ? " · " + r.Item4 + " unanswered" : ""), "", "m"));
-            rows.Add(R(3, "How", "each server was asked for 6 popular names three times (known = its cached answer) and for 3 made-up names (new = it had to go and find out). Typical (middle) times shown.", "", "i"));
+            rows.Add(R(3, "How", "each server was asked for 6 popular names three times and for 3 made-up names. Known = the 2nd and 3rd asks (its cached answer); new = the first ask of each name plus the made-up ones (it had to go and find out). Typical (middle) times shown.", "", "i"));
             return rows;
         }
 
@@ -266,7 +267,7 @@ namespace AdeeboMeter
                 }
                 var here = new HashSet<string>(now.Where(e => e.Dynamic).Select(e => e.Mac));
                 var mine = inv.Where(x => x.Net == net).OrderByDescending(x => here.Contains(x.Mac)).ThenByDescending(x => x.Last).ToList();
-                rows.Insert(0, R(3, Brain.NetLabel, mine.Count + " devices seen here · " + mine.Count(x => here.Contains(x.Mac)) + " here now", "From the ARP table AdeeboMeter reads every ten minutes - devices that talked to this PC or the router recently. A Ping sweep fills it in.", "i"));
+                rows.Insert(0, R(3, Brain.NetLabel, mine.Count + " devices seen here" + (mine.Count > 200 ? " (the first 200 shown)" : "") + " · " + mine.Count(x => here.Contains(x.Mac)) + " here now", "From the ARP table AdeeboMeter reads every ten minutes - devices that talked to this PC or the router recently. A Ping sweep fills it in.", "i"));
                 foreach (var d in mine.Take(200))
                 {
                     string maker = Toolkit.Vendor(d.Mac); bool now2 = here.Contains(d.Mac);

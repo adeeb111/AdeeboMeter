@@ -52,7 +52,7 @@ namespace AdeeboMeter
             // startup programs
             int su = 0;
             foreach (var h in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
-                try { using (var b = RegistryKey.OpenBaseKey(h, RegistryView.Registry64)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) su += k.ValueCount; } catch (System.Security.SecurityException) { }
+                try { using (var b = RegistryKey.OpenBaseKey(h, RegistryView.Registry64)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) su += k.ValueCount; } catch (Exception rex) { if (!(rex is System.Security.SecurityException || rex is IOException || rex is UnauthorizedAccessException)) throw; }   /* one unreadable key must not stop the rest */
             try { su += Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Startup)).Count(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             rows.Add(Rf(su > 15 ? 1 : 3, "Programs that start with Windows", su + " start by themselves", su > 15 ? "Each one slows start-up a little. Turn off the ones you don't need at once (Startup apps shows their impact)." : "", "ms-settings:startupapps"));
             // frozen or memory-hungry programs
@@ -76,7 +76,7 @@ namespace AdeeboMeter
                     using (var b = RegistryKey.OpenBaseKey(h, RegistryView.Registry64)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall"))
                         if (k != null) foreach (var n in k.GetSubKeyNames().Take(2000)) using (var e = k.OpenSubKey(n)) { if (e == null) continue; DateTime dt; string dn = Convert.ToString(e.GetValue("DisplayName"), CultureInfo.InvariantCulture); if (!string.IsNullOrEmpty(dn) && DateTime.TryParseExact(Convert.ToString(e.GetValue("InstallDate"), CultureInfo.InvariantCulture), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt) && dt > DateTime.Now.AddDays(-7)) recent.Add(dn); }
                 }
-                catch (System.Security.SecurityException) { }
+                catch (Exception rex) { if (!(rex is System.Security.SecurityException || rex is IOException || rex is UnauthorizedAccessException)) throw; }   /* one unreadable key must not stop the rest */
             rows.Add(Rf(3, "Installed in the last 7 days", recent.Count == 0 ? "nothing" : string.Join(", ", recent.Distinct().Take(6)), recent.Count > 0 ? "If problems started this week, a new program is a good suspect - uninstall it in Installed apps (some need admin)." : "", "ms-settings:appsfeatures"));
             rows.Add(R(3, "Names stuck after a network change", "type  ipconfig /flushdns  in a Command Prompt", "Works without admin; Windows forgets cached names and asks again. AdeeboMeter doesn't run it for you.", "w"));
             return rows;
@@ -178,8 +178,9 @@ namespace AdeeboMeter
                 string n; PortName.TryGetValue(p, out n);
                 res.Add(R(st == "open" ? 0 : st == "refused" ? 1 : 2, I(p) + (n != null ? " " + n : ""), st + (double.IsNaN(ms) ? "" : " · " + ms.ToString("0", CultureInfo.CurrentCulture) + " ms"), st == "refused" ? "The host answered: nothing listens there." : st == "no answer" ? "Dropped on the way - usually a firewall." : "", "m"));
             }
-            rows.Add(R(open == ports.Length ? 0 : open == 0 ? 2 : 1, a + (a.ToString() != h ? " (" + h + ")" : ""), open + " of " + ports.Length + " ports open", "One TCP connection per port, closed at once - no data sent.", "m"));
-            rows.AddRange(res); return rows;
+            bool stopped = res.Count < ports.Length; int tried = res.Count;
+            rows.Add(R(open == tried ? 0 : open == 0 ? 2 : 1, a + (a.ToString() != h ? " (" + h + ")" : ""), open + " of " + tried + " ports open" + (stopped ? " (" + (ports.Length - tried) + " not tried)" : ""), "One TCP connection per port, closed at once - no data sent.", "m"));
+            rows.AddRange(res); if (res.Count < ports.Length) rows.Add(R(3, "Stopped", "stopped by you - the untested ports are not counted", "", "m")); return rows;
         }
 
         // ================================================================== Every IP behind a name
@@ -214,7 +215,7 @@ namespace AdeeboMeter
                 X509Days(h, out ms);
                 int days = double.IsNaN(ms) ? -1 : (int)ms;
                 bool expired = !double.IsNaN(ms) && ms < 0;
-                rows.Add(R(expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a[0] + (expired ? " · certificate EXPIRED " + (-days) + " days ago" : !double.IsNaN(ms) ? " · certificate " + days + " days left" : " · certificate not read"), expired ? "Visitors get a security warning - renew it." : "", "m"));
+                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a[0] + (expired ? " · certificate EXPIRED " + (-days) + " days ago" : !double.IsNaN(ms) ? " · certificate " + days + " days left" : " · certificate not read"), expired ? "Visitors get a security warning - renew it." : "", "m"));
             }
             return rows;
         }
@@ -224,7 +225,7 @@ namespace AdeeboMeter
             days = double.NaN; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
             try
             {
-                using (var c = Toolkit.Open(h, 443, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)).Wait(6000); }
+                using (var c = Toolkit.Open(h, 443, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) { var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); if (!hs.Wait(6000)) { c.Close(); try { hs.Wait(1000); } catch (AggregateException) { } } } }   /* close first: the stuck handshake ends before the stream is disposed */
             }
             catch (AggregateException) { } catch (SocketException) { } catch (IOException) { }
             if (got != null) using (got) days = Math.Floor((got.NotAfter - DateTime.Now).TotalDays);
@@ -236,10 +237,10 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string[] la, lb; string err;
             if ((la = ReadSaved(fa, out err)) == null) { rows.Add(R(2, "First file", err, "Save a result on each PC (Save... on any Toolbox result), then put both files here.", "u")); return rows; }
             if ((lb = ReadSaved(fb, out err)) == null) { rows.Add(R(2, "Second file", err, "", "u")); return rows; }
-            Func<string[], Dictionary<string, string>> kv = ls => { var d = new Dictionary<string, string>(); foreach (var l in ls) { int c = l.IndexOf(": ", StringComparison.Ordinal); if (c > 0 && c < 80) { string k = l.Substring(0, c).Trim(); if (!d.ContainsKey(k)) d[k] = l.Substring(c + 2).Trim(); } } return d; };
+            Func<string[], Dictionary<string, string>> kv = ls => { var d = new Dictionary<string, string>(); foreach (var l in ls) { int c = l.IndexOf(": ", StringComparison.Ordinal); if (c > 0 && c < 80) { string k = l.Substring(0, c).Trim(); string k2 = k; for (int n = 2; d.ContainsKey(k2); n++) k2 = k + " #" + n; d[k2] = l.Substring(c + 2).Trim(); } } return d; };   /* several rows with one name ("Checked"): each is compared, as name #2, #3... */
             var A = kv(la); var B = kv(lb); var keys = A.Keys.Union(B.Keys).ToList();
             var diff = keys.Where(k => { string x, y; A.TryGetValue(k, out x); B.TryGetValue(k, out y); return x != y; }).ToList();
-            rows.Add(R(diff.Count == 0 ? 0 : 3, Path.GetFileName(fa.Trim().Trim('"')) + " vs " + Path.GetFileName(fb.Trim().Trim('"')), keys.Count + " lines · " + diff.Count + " differ", "Where the two PCs disagree is where to look - e.g. one gets a different DNS answer, route or certificate.", "w"));
+            rows.Add(R(diff.Count == 0 ? 0 : 3, Path.GetFileName(fa.Trim().Trim('"')) + " vs " + Path.GetFileName(fb.Trim().Trim('"')), keys.Count + " rows · " + diff.Count + " differ", "Where the two PCs disagree is where to look - e.g. one gets a different DNS answer, route or certificate.", "w"));
             foreach (var k in diff.Take(200)) { string x, y; A.TryGetValue(k, out x); B.TryGetValue(k, out y); rows.Add(R(1, Draw.Trunc(k, 60), (x == null ? "(not on the first)" : Draw.Trunc(x, 140)) + "   |   " + (y == null ? "(not on the second)" : Draw.Trunc(y, 140)), "", "w")); }
             return rows;
         }
@@ -348,7 +349,7 @@ namespace AdeeboMeter
             {
                 var sw = Stopwatch.StartNew();
                 try { if (!c.ConnectAsync(a, port).Wait(3000)) { rows.Add(R(2, a + ":" + port, "no answer in 3 s", "", "m")); return rows; } }
-                catch (AggregateException) { rows.Add(R(2, a + ":" + port, "refused - not an LDAP server", "", "m")); return rows; }
+                catch (AggregateException ae) { var se = ae.InnerException as SocketException; rows.Add(R(2, a + ":" + port, se != null && se.SocketErrorCode == SocketError.ConnectionRefused ? "refused - nothing listens there (not an LDAP server)" : "couldn't connect: " + (ae.InnerException ?? ae).Message, "", "m")); return rows; }
                 var s = c.GetStream(); s.ReadTimeout = 4000; var req = RootDseRequest(); var b = new byte[16384]; int n = 0;
                 try { s.Write(req, 0, req.Length); var until = DateTime.UtcNow.AddSeconds(4); while (n < b.Length && DateTime.UtcNow < until) { int k = s.Read(b, n, b.Length - n); if (k <= 0) break; n += k; if (LdapDone(b, n)) break; } } catch (IOException) { }
                 var d = ParseRootDse(b, n);
@@ -359,7 +360,7 @@ namespace AdeeboMeter
                 {
                     string v = kv.Value; int f;
                     if (kv.Key == "domainFunctionality" && int.TryParse(v, out f) && f >= 0 && f < fl.Length && fl[f] != "") v = "Windows Server " + fl[f] + " level";
-                    if (kv.Key == "currentTime") { DateTime t; if (DateTime.TryParseExact(v.Replace(".0Z", "Z"), "yyyyMMddHHmmssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out t)) { double skew = (DateTime.UtcNow - t).TotalSeconds; rows.Add(R(Math.Abs(skew) > 300 ? 2 : Math.Abs(skew) > 60 ? 1 : 0, "Clock difference", skew.ToString("0", CultureInfo.CurrentCulture) + " s", Math.Abs(skew) > 300 ? "Over 5 minutes breaks Kerberos sign-in." : "", "m")); continue; } }
+                    if (kv.Key == "currentTime") { DateTime t; if (DateTime.TryParseExact(Regex.Replace(v, @"\.[0-9]+Z$", "Z"), "yyyyMMddHHmmssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out t)) { double skew = (DateTime.UtcNow - t).TotalSeconds; rows.Add(R(Math.Abs(skew) > 300 ? 2 : Math.Abs(skew) > 60 ? 1 : 0, "Clock difference", skew.ToString("0", CultureInfo.CurrentCulture) + " s", Math.Abs(skew) > 300 ? "Over 5 minutes breaks Kerberos sign-in." : "", "m")); continue; } }
                     rows.Add(R(3, kv.Key, Draw.Trunc(v, 200), "", "m"));
                 }
             }
@@ -399,7 +400,7 @@ namespace AdeeboMeter
             foreach (var g in by.Take(25))
             {
                 var f = g.First(); bool crash = g.Any(x => x.e.Id == 7031 || x.e.Id == 7034);
-                rows.Add(R(crash ? 2 : 1, g.Key, g.Count() + "× · last " + f.e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " · " + (crash ? "stopped unexpectedly" : f.e.Id == 7009 || f.e.Id == 7011 ? "timed out starting" : f.e.Id == 7001 ? "a service it needs failed" : "failed to start"), Draw.Trunc(f.e.Text, 200), "w"));
+                rows.Add(R(crash ? 2 : 1, g.Key, g.Count() + "× · last " + f.e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " · " + (crash ? "stopped unexpectedly" : f.e.Id == 7009 || f.e.Id == 7011 ? "timed out starting" : f.e.Id == 7001 ? "a service it needs failed" : f.e.Id == 7022 ? "hung while starting" : f.e.Id == 7023 || f.e.Id == 7024 ? "started, then stopped with an error" : "failed to start"), Draw.Trunc(f.e.Text, 200), "w"));
             }
             return rows;
         }

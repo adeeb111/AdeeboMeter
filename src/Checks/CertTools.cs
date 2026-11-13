@@ -135,7 +135,8 @@ namespace AdeeboMeter
                 if (want != "")
                 {
                     string which = tokens.Contains(a) ? "SHA-256" : tokens.Contains(b) ? "SHA-1" : tokens.Contains(c) ? "MD5" : null;
-                    rows.Add(which != null ? R(0, "Matches", which + " is the same as the one you pasted", which == "SHA-256" ? "The file is exactly what was published." : which + " is old; a match is still good evidence the download isn't damaged, but SHA-256 is the one to trust.", "m")
+                    if (which == null && tokens.Count > 0 && tokens.All(t => t.Length != 64 && t.Length != 40 && t.Length != 32)) { rows.Add(R(3, "Can't compare", "the pasted hash is " + tokens[0].Length * 4 + " bits long - this tool computes SHA-256, SHA-1 and MD5 (compare by eye with certutil -hashfile <file> SHA512)", "", "u")); want = ""; }
+                    else rows.Add(which != null ? R(0, "Matches", which + " is the same as the one you pasted", which == "SHA-256" ? "The file is exactly what was published." : which + " is old; a match is still good evidence the download isn't damaged, but SHA-256 is the one to trust.", "m")
                         : R(2, "DOESN'T MATCH", "none of the three is the hash you pasted", "The file is damaged or not the one published - download it again from the official page. Check you copied the whole hash.", "m"));
                 }
                 rows.Add(R(3, fi.Name, fi.Length.ToString("N0", CultureInfo.CurrentCulture) + " bytes", "", "m"));

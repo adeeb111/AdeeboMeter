@@ -268,7 +268,23 @@ namespace AdeeboMeter
                 case 1: case 3: case 6: case 42: case 44: case 54: case 150: return string.Join(", ", Enumerable.Range(0, d.Length / 4).Select(k => ip(k * 4)));
                 case 51: { if (d.Length < 4) return "?"; long s = (long)d[0] << 24 | (long)d[1] << 16 | (long)d[2] << 8 | d[3]; return TimeSpan.FromSeconds(s).TotalHours >= 1 ? (s / 3600.0).ToString("0.#", CultureInfo.InvariantCulture) + " h" : I(s) + " s"; }
                 case 15: case 66: case 67: case 252: return Encoding.ASCII.GetString(d).TrimEnd('\0');
-                case 119: { var names = new List<string>(); int p = 0; while (p < d.Length) { var parts = new List<string>(); while (p < d.Length && d[p] != 0 && (d[p] & 0xC0) == 0) { int l = d[p]; if (p + 1 + l > d.Length) { p = d.Length; break; } parts.Add(Encoding.ASCII.GetString(d, p + 1, l)); p += l + 1; } if (p < d.Length && (d[p] & 0xC0) == 0xC0) p += 2; else p++; if (parts.Count > 0) names.Add(string.Join(".", parts)); } return string.Join(", ", names); }
+                case 119:   // RFC 3397: a list of names; a name may end in a pointer to labels earlier in the option
+                    {
+                        var names = new List<string>(); int p = 0;
+                        while (p < d.Length && names.Count < 32)
+                        {
+                            var parts = new List<string>(); int q = p, jumps = 0; bool jumped = false;
+                            while (q < d.Length && d[q] != 0)
+                            {
+                                if ((d[q] & 0xC0) == 0xC0) { if (q + 1 >= d.Length || ++jumps > 10) { q = d.Length; break; } int to = (d[q] & 0x3F) << 8 | d[q + 1]; if (!jumped) p = q + 2; jumped = true; if (to >= d.Length) { q = d.Length; break; } q = to; continue; }   // loop guard: 10 jumps at most
+                                int l = d[q]; if ((l & 0xC0) != 0 || q + 1 + l > d.Length) { q = d.Length; break; }
+                                parts.Add(Encoding.ASCII.GetString(d, q + 1, l)); q += l + 1;
+                            }
+                            if (!jumped) p = q + 1;
+                            if (parts.Count > 0) names.Add(string.Join(".", parts)); else if (!jumped && q >= d.Length) break;
+                        }
+                        return string.Join(", ", names);
+                    }
                 case 121:
                     {
                         var r = new List<string>(); int p = 0;

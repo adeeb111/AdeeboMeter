@@ -72,7 +72,7 @@ namespace AdeeboMeter
             using (var nowrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
                 var pg = playing == null ? null : games.FirstOrDefault(z => z.Id == playing);
-                string head = pg != null ? "Playing " + pg.Name + " · every server checked once a second" : mon.Count == 0 ? "Your games" : "Your games · watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
+                string head = pg != null ? "Playing " + pg.Name + (Cfg.GameFast ? " · up to " + GamePing.MaxServers + " servers checked once a second" : " · checked every " + Math.Max(1, Cfg.GameBgSec) + " s (once a second is off in Settings)") : mon.Count == 0 ? "Your games" : "Your games · watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
                 g.DrawString(head, Draw.fTitle, ink, x, y); y += 32 * S;
                 string lead = mon.Count == 0 ? "Games on this PC are already here. Click one to start monitoring it - nothing is sent to a game company's servers until you do." : "Click another game to add it. Monitoring starts by itself whenever a game you added opens" + (Cfg.GameAuto ? "." : " (that's off in Settings).");
                 var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 10 * S;
@@ -136,7 +136,7 @@ namespace AdeeboMeter
                     }
                 }
                 y += 8 * S;
-                string foot = "How it measures: a ping, or a timed TCP connection when a server ignores ping - never game traffic. \"Estimate\" rows measure the cloud region the game runs in; Valve rows are Valve's own servers. At most 8 servers, 10 probes a second.";
+                string foot = "How it measures: a ping, or a timed TCP connection when a server ignores ping - never game traffic. \"Estimate\" rows measure the cloud region the game runs in; Valve rows are Valve's own servers. At most " + GamePing.MaxServers + " servers while you play (16 on the Gamer preset), " + GamePing.MaxPerSecond + " probes a second.";
                 var fh = Draw.Measure(foot, Draw.fSmall, (int)w).Height; g.DrawString(foot, Draw.fSmall, muted, new RectangleF(x, y, w, fh + 4)); y += fh + 16 * S;
             }
             var need = new Size(0, (int)(y + 20 * S)); SetNeed(gamerCanvas, need);
@@ -318,7 +318,8 @@ namespace AdeeboMeter
             }
             return top + h + 14 * S;
         }
-        // the game's own conversation (its busiest UDP socket, or its TCP one) on the packet journey
+        // the game's own conversation on the packet journey: its newest UDP socket (the highest local port - the table has no
+        // traffic counts to rank by), else a TCP one to the internet
         void GameJourney(Game pg)
         {
             List<Conn> all; try { all = M.Connections(true); } catch (Exception e) { Program.Log("game journey: " + e.Message); gamerNote = "Couldn't read the connection table."; gamerCanvas.Invalidate(); return; }

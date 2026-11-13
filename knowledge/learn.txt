@@ -1,5 +1,5 @@
 # Learn mode (short on purpose: two lines and a picture), the deep dives and the app stories. Format: see src/Knowledge/Knowledge.cs.
-# kind: protocol | windows | apps.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
+# kind: basics | protocol | provider | mobile | windows | apps.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
 # try: what to do while it records. Keys after == are the names a topic answers to (lower case for Windows processes).
 
 

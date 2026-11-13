@@ -44,6 +44,7 @@ namespace AdeeboMeter
                 LastFailover = DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + lastMac + " → " + mac;
                 m.Events.Add(1, "gw", "The gateway " + gw + " moved to another device (" + lastMac + " → " + mac + ")" + (kind == "" ? " - a router failover or a replaced router" : ""));
             }
+            if (gw != lastGw && lastGw != "") LastFailover = "";   // another network: a takeover seen on the old one isn't this one's
             lastGw = gw; lastMac = mac;
         }
 
@@ -59,7 +60,7 @@ namespace AdeeboMeter
             rows.Add(R(LastFailover != "" ? 1 : 3, "Takeovers seen", LastFailover != "" ? LastFailover : "none since AdeeboMeter started", "", "m"));
             rows.Add(R(wait != "" ? 1 : 3, "Plug-in to network", wait != "" ? wait : "nothing slow seen (it's measured when a cable is plugged in while AdeeboMeter runs)", wait != "" ? "Around 30 s of silence after plugging in is classic spanning tree on a switch port without 'port fast' / 'edge port'. The network team can turn it on for user ports." : "", "i"));
             var others = Arp.Table().Where(e => Virtual(e.Mac, out g) != "" && e.Ip != gw).ToList();
-            foreach (var o in others.Take(4)) rows.Add(R(3, "Another virtual router", o.Ip + "  ·  " + Virtual(o.Mac, out g) + " group " + g, "", "m"));
+            foreach (var o in others.Take(4)) rows.Add(R(3, "Another virtual router", o.Ip + "  ·  " + Virtual(o.Mac, out g) + (g != "" ? " group " + g : ""), "", "m"));
             return rows;
         }
 
@@ -75,7 +76,7 @@ namespace AdeeboMeter
             foreach (var e in list.Take(200))
             {
                 string g, v = Virtual(e.Mac, out g), name; names.TryGetValue(e.IfIndex, out name);
-                string what = e.Ip == gw ? "your gateway" + (v != "" ? " (" + v + " group " + g + ")" : "") : v != "" ? v + " virtual router" : Arp.Randomised(e.Mac) ? "private (random) address - a phone or laptop" : Toolkit.Vendor(e.Mac).Trim('(', ')');
+                string what = e.Ip == gw ? "your gateway" + (v != "" ? " (" + v + (g != "" ? " group " + g : "") + ")" : "") : v != "" ? v + " virtual router" : Arp.Randomised(e.Mac) ? "private (random) address - a phone or laptop" : Toolkit.Vendor(e.Mac).Trim('(', ')');
                 rows.Add(R(e.Ip == gw ? 0 : 3, e.Ip, e.Mac + (what != "" ? "  ·  " + what : "") + (e.Dynamic ? "" : "  ·  static entry") + (name != null && names.Count > 1 ? "  ·  " + name : ""), "", "w"));
             }
             return rows;

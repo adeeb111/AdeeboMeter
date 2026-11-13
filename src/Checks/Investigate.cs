@@ -72,8 +72,9 @@ namespace AdeeboMeter
             if (!double.IsNaN(mem)) r.Obs("w", mem > 90 ? 2 : mem > 80 ? 1 : 0, "Your PC: memory", F(mem, "% in use"));
             if (wifi) r.Obs(sig < 0 ? "u" : "w", sig >= 0 && sig < 40 ? 1 : sig < 0 ? 3 : 0, "Wi-Fi signal and link rate", sig < 0 ? "hidden by Windows (location is off)" + (rate > 0 ? " · link " + rate + " Mb/s" : "") : sig + "%" + (rate > 0 ? " · link " + rate + " Mb/s" : ""));
             else r.Obs("w", 0, "Connection", kind);
-            r.Obs("m", double.IsNaN(gw) ? 2 : gw > 50 ? 2 : gw > 15 ? 1 : 0, "Your router answers in", double.IsNaN(gw) ? "no answer" : F(gw, " ms") + " (worst " + F(gwMax, " ms") + ")");
-            r.Obs("m", double.IsNaN(net) ? 2 : net > 150 ? 2 : net > 80 ? 1 : 0, "The internet answers in", F(net, " ms") + (double.IsNaN(jit) ? "" : " · jitter " + F(jit, " ms")));
+            bool gwOff = m.GwPing.Values(60).Length == 0, netOff = m.NetPing.Values(60).Length == 0;   // no samples at all = the check is off (or just started), not "no answer"
+            r.Obs(gwOff ? "u" : "m", gwOff ? 3 : double.IsNaN(gw) ? 2 : gw > 50 ? 2 : gw > 15 ? 1 : 0, "Your router answers in", gwOff ? "not measured - the router check is off (Settings)" : double.IsNaN(gw) ? "no answer" : F(gw, " ms") + " (worst " + F(gwMax, " ms") + ")");
+            r.Obs(netOff ? "u" : "m", netOff ? 3 : double.IsNaN(net) ? 2 : net > 150 ? 2 : net > 80 ? 1 : 0, "The internet answers in", netOff ? "not measured - the internet check is off (Settings)" : F(net, " ms") + (double.IsNaN(jit) ? "" : " · jitter " + F(jit, " ms")));
             if (!double.IsNaN(loss)) r.Obs("m", loss > 5 ? 2 : loss > 1 ? 1 : 0, "Lost replies", loss.ToString("0.#", CultureInfo.CurrentCulture) + "%");
             r.Obs(double.IsNaN(dns) ? "u" : "m", double.IsNaN(dns) ? 3 : dns > 300 ? 2 : dns > 120 ? 1 : 0, "Name lookups (DNS)", double.IsNaN(dns) ? "not measured yet" : F(dns, " ms"));
             r.Obs("w", up > 3 ? 1 : 0, "Your PC is using", (double.IsNaN(down) ? "?" : down.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s down · " + (double.IsNaN(up) ? "?" : up.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s up");
@@ -83,13 +84,14 @@ namespace AdeeboMeter
 
             // the first place it goes wrong, from your PC outwards
             if (cpu > 90) { r.Conclude(1, "Your PC itself is the bottleneck right now - the processor is " + F(cpu, "%") + " busy, so everything feels slow, including the network."); r.Next.Add("Open What's running and sort by CPU - see what's busy before you close anything."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
-            else if (double.IsNaN(gw) || gw > 50 || (wifi && sig >= 0 && sig < 35))
+            else if (gwOff && netOff) { r.Conclude(3, "Nothing to judge: the router and internet checks are off. Turn them on in Settings > Background checks, wait a minute and run this again."); }
+            else if ((double.IsNaN(gw) && !gwOff) || gw > 50 || (wifi && sig >= 0 && sig < 35))
             {
                 r.Conclude(2, double.IsNaN(gw) ? "Your router isn't answering at all" + (wifi ? " over Wi-Fi" : "") + " - the problem is right next to you: the " + (wifi ? "Wi-Fi link" : "cable or the router") + ", before anything else is involved." : wifi ? "The slowness starts between your PC and your router - on the Wi-Fi. Everything after it has to wait for this first hop." : "Your router is slow to answer (" + F(gw, " ms") + "), even over a cable. Restart the router, or check what else on the network is busy.");
                 if (wifi) { r.Next.Add("Move closer to the router, or switch to 5 GHz if you're on 2.4 GHz."); r.Next.Add("Open Your Wi-Fi for the advisor (quieter channel, power saving) and the walk test."); r.GoTab = "link"; r.GoLabel = "Open Your Wi-Fi"; }
             }
             else if (!double.IsNaN(bloat) && bloat > 80 && up > 2) { r.Conclude(1, "Your own uploads are filling the line - the router adds " + F(bloat, " ms") + " while your PC sends. Pause OneDrive or the big upload and it clears."); r.Next.Add("Check what's uploading in What's running (bytes per app in Live capture)."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
-            else if (double.IsNaN(net) || net > 150 || (!double.IsNaN(loss) && loss > 3)) { r.Conclude(2, "Your PC and router are fine (" + F(gw, " ms") + "); the delay starts beyond the router - your provider or the internet."); r.Next.Add("Run Check a destination on the site that's slow to see which hop adds the time."); r.Next.Add("If it lasts, restart the modem; then call your provider with the times shown here."); r.GoTab = "dest"; r.GoLabel = "Check a destination"; }
+            else if ((double.IsNaN(net) && !netOff) || net > 150 || (!double.IsNaN(loss) && loss > 3)) { r.Conclude(2, "Your PC and router are fine (" + F(gw, " ms") + "); the delay starts beyond the router - your provider or the internet."); r.Next.Add("Run Check a destination on the site that's slow to see which hop adds the time."); r.Next.Add("If it lasts, restart the modem; then call your provider with the times shown here."); r.GoTab = "dest"; r.GoLabel = "Check a destination"; }
             else if (!double.IsNaN(dns) && dns > 300) { r.Conclude(1, "Pages start slowly because name lookups take " + F(dns, " ms") + ". Once a page starts, the network itself is fine."); r.Next.Add("Run the DNS speed test (Health and tools) to see if another DNS server answers faster."); r.GoTab = "health"; r.GoLabel = "Open Health and tools"; }
             else if (r.ObservedCopy().Any(o => o[1] == "1"))
             {
@@ -115,12 +117,14 @@ namespace AdeeboMeter
             string[] what = { "1. Name (DNS)", "2. Route", "3. Ping", "4. Door (TCP)", "5. Lock (TLS)", "6. Answer (HTTP)" };
             string[] ev = { "m", "w", "m", "m", "m", "m" };
             int first = -1;
+            int amberAt = -1;
             for (int i = 0; i < 6; i++)
             {
                 int lv = d.Lv[i]; string v = d.Val[i] ?? "";
                 if (lv < 0) { r.Obs("u", 3, what[i], "not reached"); continue; }
                 r.Obs(ev[i], lv, what[i], v == "" ? (lv == 0 ? "ok" : "-") : v);
                 if (lv == 2 && first < 0 && i != 2) first = i;   // ping is often blocked on purpose - not a failure by itself
+                if (lv == 1 && amberAt < 0 && i != 2) amberAt = i;   // slow DNS, a slow door, a 404, a certificate about to expire
             }
             if (d.Inspected != "") r.Obs("i", 1, "Certificate re-signed by", d.Inspected);
             string hostOnly = d.Target != "" ? d.Target : input;
@@ -138,7 +142,9 @@ namespace AdeeboMeter
                 case 3: r.Conclude(2, "The address answers but the door is shut: the TCP connection to port " + (d.Port > 0 ? d.Port.ToString(CultureInfo.CurrentCulture) : "443") + " fails. A firewall (company or the site's) blocks it, or the service is down."); r.Next.Add("Try it from your phone on mobile data: if it works there, it's this network's firewall."); r.GoTab = "dest"; r.GoLabel = "See the full check"; break;
                 case 4: r.Conclude(2, "The connection opens but the secure lock fails (TLS)" + (d.Inspected != "" ? " - and the certificate was re-signed by " + d.Inspected + ", a company proxy or something in the middle." : " - an expired or wrong certificate, or something in the middle.")); r.Next.Add("Open Network story > Layer by layer to see the certificate the PC received."); r.GoTab = "travel"; r.GoLabel = "Open Network story"; break;
                 case 5: r.Conclude(1, "The network path works all the way; the server itself answered with an error (" + (d.Val[5] ?? "") + "). The problem is the site or your account, not your network."); r.Next.Add("Try again later or check the service's status page."); r.GoTab = "dest"; r.GoLabel = "See the full check"; break;
-                default: r.Conclude(0, "The network path to " + t + " works: name, route, door, lock and answer all fine" + (double.IsNaN(d.TtfbMs) ? "." : " (first byte in " + F(d.TtfbMs, " ms") + ").") + " If the app still fails, it's the app, the sign-in or the account."); r.Next.Add("Sign out and in again, or clear the app's cache."); r.GoTab = "dest"; r.GoLabel = "See the full check"; break;
+                default:
+                    if (amberAt >= 0) { r.Conclude(1, "The network path to " + t + " works, but not cleanly: " + what[amberAt] + " - " + (d.Val[amberAt] ?? "") + ". " + (amberAt == 5 ? "The server answered with a warning or an error - the site or your account, not your network." : amberAt == 4 ? "Look at the lock (certificate) row." : "Slow steps make the site feel sluggish even though it opens.")); break; }
+                    r.Conclude(0, "The network path to " + t + " works: name, route, door, lock and answer all fine" + (double.IsNaN(d.TtfbMs) ? "." : " (first byte in " + F(d.TtfbMs, " ms") + ").") + " If the app still fails, it's the app, the sign-in or the account."); r.Next.Add("Sign out and in again, or clear the app's cache."); r.GoTab = "dest"; r.GoLabel = "See the full check"; break;
             }
             r.NotEst.Add("Whether the site works for other people right now.");
             r.NotEst.Add("Anything after the first page - sign-in, the app's own API calls.");
@@ -159,8 +165,8 @@ namespace AdeeboMeter
             if (vpn) r.Obs("w", 1, "VPN", "on - call media may go through the company first");
             string fb = ""; try { fb = M365.TcpFallback(m, M365.Connections(m)); } catch (Exception e) { Program.Log("fallback: " + e.Message); }
             if (fb != "") r.Obs("i", fb.Contains("over TCP 443") && !fb.Contains("no call") ? 2 : 0, "Teams media path", fb);
-            changed(); var stun = WhyFails.TeamsUdp(); bool udpOk = stun.Any(x => x[0] == "0" && x[1].StartsWith("UDP", StringComparison.Ordinal));
-            r.Obs("m", udpOk ? 0 : 2, "UDP 3478 to Teams' relays", udpOk ? "works" : "blocked - calls go over TCP 443");
+            changed(); var stun = WhyFails.TeamsUdp(); bool udpOk = stun.Any(x => x[0] == "0" && x[1].StartsWith("UDP", StringComparison.Ordinal)), relayUnknown = !udpOk && stun.Count > 0 && stun.All(x => x[1].StartsWith("Teams relay", StringComparison.Ordinal));
+            r.Obs(relayUnknown ? "u" : "m", udpOk ? 0 : relayUnknown ? 3 : 2, "UDP 3478 to Teams' relays", udpOk ? "works" : relayUnknown ? "couldn't test - " + stun[0][2] : "blocked - calls go over TCP 443");
             var nat = stun.FirstOrDefault(x => x[1] == "NAT type"); if (nat != null) r.Obs("i", nat[0] == "0" ? 0 : 1, "NAT type", nat[2]);
             string last = ""; lock (global::AdeeboMeter.Calls.Summaries) if (global::AdeeboMeter.Calls.Summaries.Count > 0) last = global::AdeeboMeter.Calls.Summaries[0][1];
             if (last != "") r.Obs("i", 3, "Your last call", last);
@@ -168,6 +174,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(loss) && loss > 2) { r.Conclude(2, "Packets are getting lost (" + loss.ToString("0.#", CultureInfo.CurrentCulture) + "%) - calls fill the gaps with robot sounds. " + (wifi ? "On Wi-Fi this is usually signal or interference." : "Restart the modem; if it stays, it's your provider.")); r.GoTab = wifi ? "link" : "dest"; r.GoLabel = wifi ? "Open Your Wi-Fi" : "Check a destination"; }
             else if (!double.IsNaN(bloat) && bloat > 80 && up > 2) { r.Conclude(2, "Your own upload fills the line while you talk - the router adds " + F(bloat, " ms") + ". Pause OneDrive / backups during calls."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
             else if (!double.IsNaN(jit) && jit > 30) { r.Conclude(1, "The delay jumps around (jitter " + F(jit, " ms") + ") - that's what makes voices freeze and catch up. " + (wifi ? "Wi-Fi is the usual cause; a cable fixes it." : "Usually congestion at your provider.")); r.GoTab = wifi ? "link" : "dest"; r.GoLabel = wifi ? "Open Your Wi-Fi" : "Check a destination"; }
+            else if (relayUnknown) { r.Conclude(3, "Couldn't test UDP to Teams - the relay's name didn't resolve (" + stun[0][2] + "). Check DNS first (A website won't open, with teams.microsoft.com)."); }
             else if (!udpOk) { r.Conclude(2, "UDP to Teams is blocked on this network - every call is squeezed into TCP 443, which stutters as soon as anything is lost or busy. Ask IT to allow UDP 3478-3481."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (fb.Contains("over TCP 443") && !fb.Contains("no call")) { r.Conclude(1, "Teams is carrying the call over TCP 443 because UDP is blocked - fine on a quiet line, stuttery under load. Ask IT to allow UDP 3478-3481."); r.GoTab = "travel"; r.GoLabel = "Open Network story"; }
             else { r.Conclude(0, "Your end looks fine for calls right now: low jitter, no loss" + (double.IsNaN(bloat) ? "." : ", and your router keeps up under load.") + " If calls still break up, it's likely the other person's connection."); r.GoTab = "live"; r.GoLabel = "Open Live capture"; }
@@ -211,7 +218,7 @@ namespace AdeeboMeter
         static void Drops(Monitor m, GuideRun r)
         {
             var evs = new List<Timeline.Ev>(m.Events.Recent(300));
-            try { var today = History.Load(DateTime.Today).E; foreach (var e in today) if (!evs.Any(x => Math.Abs((x.T - e.T).TotalSeconds) < 2 && x.Text == e.Text)) evs.Add(e); } catch (Exception e) { Program.Log("drops history: " + e.Message); }
+            try { var today = History.Load(DateTime.Today.AddDays(-1)).E.Where(e => e.T >= DateTime.Now.AddDays(-1)).Concat(History.Load(DateTime.Today).E); foreach (var e in today)   /* 24 hours reach into yesterday */ if (!evs.Any(x => Math.Abs((x.T - e.T).TotalSeconds) < 2 && x.Text == e.Text)) evs.Add(e); } catch (Exception e) { Program.Log("drops history: " + e.Message); }
             var since = DateTime.Now.AddHours(-24); evs = evs.Where(e => e.T >= since).OrderBy(e => e.T).ToList();
             Func<Timeline.Ev, bool> drop = e => (e.Kind == "wifi" && e.Lv == 2) || e.Kind == "inet" && e.Lv == 2;
             var drops = evs.Where(drop).ToList();
@@ -249,7 +256,7 @@ namespace AdeeboMeter
             string target = (r.Input ?? "").Trim(); bool vpn; lock (m.L) vpn = m.VpnUp;
             r.Obs("w", 3, "VPN", vpn ? "connected" : "not connected right now");
             r.Status = "Looking for overlapping networks..."; changed();
-            var ov = PathTools.Overlap(); var bad = ov.FirstOrDefault(x => x[0] == "2" || x[0] == "1");
+            var ov = PathTools.Overlap(); var bad = ov.FirstOrDefault(x => x[0] == "2") ?? ov.FirstOrDefault(x => x[0] == "1");   // the worst overlap first
             r.Obs("w", bad != null ? int.Parse(bad[0], CultureInfo.InvariantCulture) : 0, "Overlapping networks", bad != null ? bad[2] : "none");
             var rules = WhyFails.DnsRules(); var hij = rules.First(); r.Obs(hij[4], int.Parse(hij[0], CultureInfo.InvariantCulture), "DNS for made-up names", hij[2]);
             int nrpt = rules.Count(x => x[1] == "Name rule"); r.Obs("w", 3, "VPN name rules", nrpt > 0 ? nrpt + " rule(s) send company names to the VPN's DNS" : "none");
@@ -269,13 +276,14 @@ namespace AdeeboMeter
                 {
                     r.Status = "Checking the packet size on the way..."; changed();
                     var hops = PathTools.Trace(dst, 20, () => false); var lastH = hops.LastOrDefault(h => h.Ip != "");
-                    if (lastH != null) { PathTools.MtuAt(dst, lastH, 1500); r.Obs("m", lastH.Mtu > 0 && lastH.Mtu < 1400 ? 1 : lastH.BlackHole ? 2 : 0, "Biggest packet that gets there", lastH.Mtu > 0 ? lastH.Mtu + " bytes - " + lastH.MtuNote : lastH.MtuNote); if (lastH.BlackHole) { verdict = "Big packets vanish on the way to " + target + " (an MTU black hole at " + lastH.Mtu + " bytes): small requests work, anything bigger hangs - pages half-load, file shares stall. The VPN or a firewall needs to lower the size (MSS clamping) - tell IT this number."; lv = 2; } }
+                    if (lastH != null) { PathTools.MtuAt(dst, lastH, 1500); r.Obs("m", lastH.Mtu > 0 && lastH.Mtu < 1400 ? 1 : lastH.BlackHole ? 2 : lastH.Mtu <= 0 ? 3 : 0, "Biggest packet that gets there", lastH.Mtu > 0 ? lastH.Mtu + " bytes - " + lastH.MtuNote : lastH.MtuNote); if (lastH.BlackHole) { verdict = "Big packets vanish on the way to " + target + " (an MTU black hole at " + lastH.Mtu + " bytes): small requests work, anything bigger hangs - pages half-load, file shares stall. The VPN or a firewall needs to lower the size (MSS clamping) - tell IT this number."; lv = 2; } }
                 }
             }
             if (verdict == "" && bad != null && bad[0] == "2") { verdict = bad[2] + " - addresses in that range can only be reached on one of them, so company servers there look 'down' from home. Change the home router's network (e.g. to 192.168.77.x)."; lv = 2; }
             // a level-1 overlap (the VPN's routes cover the home network) is on screen too - never "looks fine" next to it
             if (verdict == "" && bad != null && bad[0] == "1") { verdict = bad[2] + " - while the VPN is up, devices on your home network in that range (printers, a NAS) may not be reachable, and company servers there may not be either."; lv = 1; }
             if (verdict == "" && hij[0] == "2" && nrpt == 0 && vpn) { verdict = "Your DNS answers names that don't exist and the VPN sets no name rules, so company names may land on the provider's page instead of the company server."; lv = 1; }
+            if (verdict == "" && !vpn && target != "") { verdict = "You're not on the VPN right now, so this tested the direct path to " + target + " - not the VPN path where the problem is. Connect the VPN and run this again."; lv = 3; }
             if (verdict == "") { verdict = target == "" ? "Nothing obvious on this PC. Type the server or site that fails in the box and run this again - it then tests the door, the proxy and the packet size to it." : "The path to " + target + " looks fine from here: the door opens and full packets get through. The difference is likely in the server's own rules (who it accepts) or your account."; lv = 0; }
             r.Conclude(lv, verdict);
             r.Next.Add("Toolbox > MTU per hop shows exactly where the size drops."); r.Next.Add("Toolbox > Which proxy does this URL use? for browser-only failures.");

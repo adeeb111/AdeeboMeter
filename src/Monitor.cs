@@ -109,7 +109,8 @@ namespace AdeeboMeter
             lock (suppress)
             {
                 if (suppress.TryGetValue(key, out t) && (DateTime.Now - t).TotalSeconds < seconds) return;
-                if (suppress.Count > 500) suppress.Clear();
+                if (suppress.Count > 500) foreach (var old in suppress.Where(kv => (DateTime.Now - kv.Value).TotalHours >= 1).Select(kv => kv.Key).ToList()) suppress.Remove(old);   // forget the old ones, never every window at once
+                if (suppress.Count > 2000) suppress.Clear();
                 suppress[key] = DateTime.Now;
             }
             Events.Add(lv, kind, text);
@@ -218,6 +219,7 @@ namespace AdeeboMeter
                     bool fast = ViewOpen || CallLikely;
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
                     int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? 2 : Cfg.GwSec,   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? 1 : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
+                    GwSecNow = gwSec; NetSecNow = netSec;   // the pace the rings fill at (the overlay plots them by time)
                     if (gwSec > 0 && (t0 - lastGw).TotalSeconds >= gwSec - 0.2)
                     {
                         lastGw = t0;
@@ -443,7 +445,7 @@ namespace AdeeboMeter
                 else if ((k == "BSSID" || k == "AP BSSID" || k.IndexOf("BSSID", StringComparison.OrdinalIgnoreCase) >= 0) && Regex.IsMatch(v, "^[0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}$")) bssid = v;   // "BSSID du point d'accès" too
                 else if (ChanKeys.Contains(kl)) ch = v;
                 else if (StateKeys.Contains(kl)) state = NormState(v);
-                else if (kl.StartsWith("receive rate", StringComparison.Ordinal)) { double r; if (double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r)) rate = (int)r; }
+                else if (kl.StartsWith("receive rate", StringComparison.Ordinal) || kl.StartsWith("vitesse de réception", StringComparison.Ordinal) || kl.StartsWith("empfangsrate", StringComparison.Ordinal) || kl.StartsWith("velocidad de recepción", StringComparison.Ordinal) || kl.StartsWith("taxa de recepção", StringComparison.Ordinal))   /* English, French, German, Spanish, Portuguese */ { double r; if (double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r)) rate = (int)r; }
             }
         }
         public volatile bool WifiBlocked;
@@ -460,12 +462,12 @@ namespace AdeeboMeter
                 int sig, rate; string ssid, ch, bssid, state; outp = LinkInfo.ActiveBlock(outp); ParseWifi(outp, out sig, out ssid, out ch, out bssid, out state, out rate);
                 // netsh that timed out or answered nothing (a busy PC) is not "Wi-Fi gone": keep the last reading for up to three
                 // empty answers (the adapter itself going away is seen at once - it stops being the Wi-Fi adapter above)
-                if (state == "" && sig < 0 && ssid == "") { if (++wifiEmpty < 3) return; lock (L) { HasWifi = true; WifiSignal = -1; } return; }
+                if (state == "" && sig < 0 && ssid == "") { if (++wifiEmpty < 3) return; lock (L) { HasWifi = true; WifiSignal = -1; Ssid = ""; Bssid = ""; WifiChannel = ""; RxRate = -1; } return; }   /* nothing seen 3 times: no stale network name */
                 wifiEmpty = 0;
                 lock (L) { HasWifi = true; WifiSignal = sig; Ssid = ssid; WifiChannel = ch; Bssid = bssid; WifiState = state; RxRate = rate; }
                 WifiEvents(state, bssid, ch, sig, rate);
             }
-            catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception || e is IOException || e is TimeoutException)) throw; if (++wifiEmpty >= 3) lock (L) WifiSignal = -1; }
+            catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception || e is IOException || e is TimeoutException)) throw; if (++wifiEmpty >= 3) lock (L) WifiSignal = -1; }   /* netsh failing isn't "no network": the name stays */
         }
         int wifiEmpty;
 
@@ -481,22 +483,24 @@ namespace AdeeboMeter
             if (wakeAt == DateTime.MinValue) return;
             if (gwOk && double.IsNaN(wakeGw)) wakeGw = (t0 - wakeAt).TotalSeconds;
             bool timeout = (t0 - wakeAt).TotalSeconds >= 120;
-            if ((dnsOk && !double.IsNaN(wakeGw)) || timeout)
+            if ((dnsOk && (!double.IsNaN(wakeGw) || !GwEverReplied)) || timeout)   /* a router that never answers ping: DNS alone says the network is back */
             {
                 var c = CultureInfo.InvariantCulture; double dn = dnsOk ? (t0 - wakeAt).TotalSeconds : double.NaN;
                 if (!double.IsNaN(wakeGw)) Events.Add(wakeGw > 30 || double.IsNaN(dn) ? 1 : 3, "wake", "Back online after waking: router " + wakeGw.ToString("0.#", c) + " s" + (double.IsNaN(dn) ? " · DNS didn't answer within 2 minutes" : " · DNS " + dn.ToString("0.#", c) + " s"));
-                else Events.Add(1, "wake", "Woke up, but the router didn't answer within 2 minutes");
+                else if (!double.IsNaN(dn)) Events.Add(dn > 30 ? 1 : 3, "wake", "Back online after waking: DNS " + dn.ToString("0.#", c) + " s (the router doesn't answer ping, so its time isn't known)");
+                else Events.Add(1, "wake", GwEverReplied ? "Woke up, but the router didn't answer within 2 minutes" : "Woke up, but neither DNS nor the router answered within 2 minutes");
                 wakeAt = DateTime.MinValue;
             }
         }
         // Your provider's name: the first public router after your own is theirs, and its reverse-DNS name usually says so
         // (what "nslookup <hop>" would show). Learned once per network: a 6-hop trace toward 1.1.1.1 and one name lookup.
         public volatile string Isp = ""; string ispKey = ""; volatile bool ispBusy;
+        int ispTries; string ispNet = "";   // retries for one network (a failed trace is tried again, 3 times at most)
         void LearnIsp()
         {
             string key; bool vpn; lock (L) { key = IfaceId + "|" + Gateway + "|" + Ssid; vpn = VpnUp; }
             if (key == ispKey || ispBusy || Cfg.NetSec == 0 || vpn || Gateway == "") return;
-            ispKey = key; ispBusy = true; Isp = "";
+            if (key != ispNet) { ispNet = key; ispTries = 0; } ispKey = key; ispBusy = true; Isp = "";
             ThreadPool.QueueUserWorkItem(delegate
             {
                 try
@@ -512,6 +516,7 @@ namespace AdeeboMeter
                     }
                 }
                 catch (Exception e) { Program.Log("isp: " + e.Message); }
+                if (Isp == "" && ispTries++ < 3) ispKey = "";   // nothing learned (a transient failure): try again next time, up to 3 times per network
                 ispBusy = false;
             });
         }
@@ -625,7 +630,7 @@ namespace AdeeboMeter
         {
             // Teams opens UDP media sockets (default 50000-50059) only while a call is running.
             bool call = false; Dictionary<int, string> names; lock (L) names = PidNames;
-            if (!names.ContainsValue("Teams")) { lock (L) CallLikely = false; return; }
+            if (!names.ContainsValue("Teams")) { lock (L) CallLikely = false; if (prevCall) Events.Add(0, "call", "Teams call ended (Teams closed)"); prevCall = false; return; }
             foreach (var u in Tables.Udp())
             {
                 string n; if (!names.TryGetValue(u.Value, out n) || n != "Teams") continue;
@@ -824,6 +829,7 @@ namespace AdeeboMeter
         }
         void Set(int l, string h) { level = l; headline = h; }
         string flow = ""; DateTime netAt;
+        public volatile int GwSecNow = 2, NetSecNow = 5;
         public DateTime GwAt; public DateTime NetAt { get { return netAt; } }   // steady-clock time of the newest router / internet sample (old after sleep)
 
         Snap BuildSnap()
