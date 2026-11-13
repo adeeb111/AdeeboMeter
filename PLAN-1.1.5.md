@@ -495,12 +495,33 @@ Gamer ─ Gamer Zone
 Time machine ─ history, replay, what changed
 Learn ─ cards, labs, games, glossary
 ```
-- Network story, Security checkup, Check a destination, reports and packet evidence are no longer top-level: they open
+- Network story, Security checkup, Check a destination, reports and packet evidence move to More (11.11b) and also open
   from a result with that incident already selected ("See the story", "Check security", "Make a report"), and stay
   reachable from Toolbox and search (typing "security" or "story" goes straight there).
 - Same five in both layouts: coloured tabs (Classic) or sidebar rows (Sidebar). Old deep links / keyboard shortcuts
   to removed tabs land on the right page inside Home or Toolbox, so testers' habits don't break.
 - Settings, About, Points stay in the header.
+
+### 11.11b More menu + your own tabs (13 Nov, Adeeb: "no need to hide or drop anything")
+```
+Home · Toolbox · Gamer · Time machine · Learn · More ▾          (defaults)
+                                               ├ Network story
+                                               ├ Security
+                                               ├ Check a destination
+                                               ├ Calculators
+                                               └ Reports
+```
+- Nothing is hidden or dropped: the five plus a "More" menu holding Network story, Security, Check a destination,
+  Calculators and Reports. Results still open them with the incident selected (11.11).
+- Settings > Navigation: drag to reorder; pin anything from More to the main bar or move a main tab into More; rename
+  nothing that is built in (so help and search keep matching).
+- Your own tabs: "+ New tab", named by the user (up to 3), holding pinned tools, calculators, pages, saved destinations
+  and settings for one-click open (e.g. "Work": VPN check, my sites, subnet calc). Pin from any tool page or search
+  result with a pin icon.
+- Guard rails: Home always first and can't be removed (the app always has a landing page); at most 7 tabs on the bar
+  (Classic must fit a laptop width) - the rest go to More automatically; "Reset to default" button; works the same in
+  Classic and Sidebar; Ctrl+1..7 jump to the tabs in their current order.
+- Saved with the settings (and in settings export / import), so it moves with the user to a new PC.
 
 ### 11.11a Search everything (13 Nov, Adeeb)
 - A big search bar in the header of every page (both layouts), "Search anything..."; Ctrl+K or / from anywhere.
