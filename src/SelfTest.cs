@@ -34,6 +34,19 @@ namespace AdeeboMeter
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351", Justification = "checks RADIUS (RFC 2865) password hiding, which is defined with MD5")]
         static byte[] Md5(byte[] d) { using (var h = System.Security.Cryptography.MD5.Create()) return h.ComputeHash(d); }
+        /* Is this ASCII word in the bytes - as single bytes, or as UTF-16 (each letter followed by a zero byte)? No copies made. */
+        static bool InBytes(byte[] hay, string word, bool wide, bool ignoreCase)
+        {
+            int step = wide ? 2 : 1, n = word.Length * step;
+            Func<int, int> low = c => ignoreCase && c >= 'A' && c <= 'Z' ? c + 32 : c;
+            for (int i = 0; i + n <= hay.Length; i++)
+            {
+                int k = 0;
+                while (k < word.Length && low(hay[i + k * step]) == low(word[k]) && (!wide || hay[i + k * step + 1] == 0)) k++;
+                if (k == word.Length) return true;
+            }
+            return false;
+        }
         // --perf: how long each page takes to switch to, to paint, and what the 2-a-second timer costs - written to AdeeboMeter-perf.txt
         public static int Perf()
         {
@@ -547,17 +560,15 @@ namespace AdeeboMeter
             {
                 var exe = System.IO.File.ReadAllBytes(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 string word = ((char)('m' + 1)).ToString(CultureInfo.InvariantCulture) + "ok" + "ia";   // built at run time so this test doesn't find itself
-                foreach (var enc in new Encoding[] { Encoding.ASCII, Encoding.Unicode })
-                {
-                    var hay = enc.GetString(exe).ToLowerInvariant();
-                    if (hay.Contains(word)) throw new InvalidOperationException("found in the exe (" + enc.WebName + ")");
-                }
+                /* searched in the raw bytes, as ASCII and as UTF-16: turning the 3 MB exe into text made ten copies of up to 12 MB,
+                   and Windows' .NET kept that memory - the "memory after everything" check then failed at 104-115 MB */
+                foreach (bool wide in new[] { false, true }) if (InBytes(exe, word, wide, true)) throw new InvalidOperationException("found in the exe (" + (wide ? "utf-16" : "ascii") + ")");
                 foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("found in " + pack);
                 // its products too (the operating system and router families), built at run time for the same reason
                 Func<string, string, string> j = (x, y) => x + y;   // joined at run time - "a" + "b" would be folded into one literal
                 foreach (var w in new[] { j("S", "R OS"), j("S", "R-OS"), j("Ti", "MOS"), j("Alca", "tel") })
                 {
-                    foreach (var enc in new Encoding[] { Encoding.ASCII, Encoding.Unicode }) if (enc.GetString(exe).IndexOf(w, StringComparison.Ordinal) >= 0) throw new InvalidOperationException("product name in the exe: " + w);
+                    foreach (bool wide in new[] { false, true }) if (InBytes(exe, w, wide, false)) throw new InvalidOperationException("product name in the exe: " + w);
                     foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(w, StringComparison.Ordinal) >= 0) throw new InvalidOperationException("product name in " + pack + ": " + w);
                 }
             });
