@@ -354,6 +354,7 @@ namespace AdeeboMeter
         }
         public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
         Thread th; volatile bool stop; Monitor mon;
+        public static long Ver;   // goes up with every new sample: the Gamer page repaints only when something changed
         public static int MaxPerSecond { get { return MaxServers + 2; } }   // every playing server each second, plus room for the background ones
         public static int MaxServers { get { return Cfg.GameBgServers >= 5 ? 16 : 8; } }   // set by the Gamer preset (5 regions watched) - tweaking another row keeps it   // the Gamer preset watches twice as many
 
@@ -439,7 +440,7 @@ namespace AdeeboMeter
                     }
                     if (go.Count > 0) Task.WaitAll(go.Select(p => Task.Factory.StartNew(() => ProbeOne(p.Item1, p.Item2))).ToArray(), 2500);
                     Evidence(games);
-                    var ses = Session; if (ses != null && ses.Open && ses.HopCount > 0 && (Clock.Mono - lastHops).TotalSeconds >= 5) { lastHops = Clock.Mono; System.Threading.Tasks.Task.Factory.StartNew(() => ses.TimeHops()); }
+                    var ses = Session; if (ses != null && ses.Open && ses.HopCount > 0 && Cfg.GameBgSec < 60 && (Clock.Mono - lastHops).TotalSeconds >= 15)   /* the routers on the match path: every 15 s (not on Penny) */ { lastHops = Clock.Mono; System.Threading.Tasks.Task.Factory.StartNew(() => ses.TimeHops()); }
                     if ((Clock.Mono - lastMinute).TotalSeconds >= 60) { lastMinute = Clock.Mono; GameHistory.Minute(this, plan); GameHistory.Warm(mon2); }   /* the week verdicts are read here, off the screen's thread */
                 }
                 catch (Exception e) { Program.Log("gameping: " + e.Message); }
@@ -461,7 +462,7 @@ namespace AdeeboMeter
             var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null) st.Used = used;
             if ((DateTime.Now - began).TotalSeconds > 4) return;   // it outran the second it belonged to (a stuck lookup): filed late, it would shift the series
             var prev = st.Window(60, 900); double med = GameStat.Pct(prev, 0.5);
-            st.Add(v);
+            st.Add(v); System.Threading.Interlocked.Increment(ref Ver);
             // a spike: double the usual and 30 ms more - who to blame is read from the home and internet checks at the same moment
             if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= 20 && v > med * 2 && v > med + 30)
             {
@@ -588,31 +589,52 @@ namespace AdeeboMeter
                 try { Directory.CreateDirectory(History.Dir); File.AppendAllLines(File0(DateTime.Today), lines); Tidy(); }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("game history: " + e.Message); }
         }
+        static IEnumerable<string> GzLines(string gz)
+        {
+            using (var s = File.OpenRead(gz)) using (var z = new System.IO.Compression.GZipStream(s, System.IO.Compression.CompressionMode.Decompress)) using (var rd = new StreamReader(z))
+            { string l; int n = 0; while ((l = rd.ReadLine()) != null && n++ < 60000) yield return l; }
+        }
         static DateTime tidied;
+        // past days are packed (.csv.gz, about a tenth of the size - like History's own days); days past GameDays go
         static void Tidy()
         {
             if ((DateTime.Now - tidied).TotalHours < 6) return; tidied = DateTime.Now;
-            foreach (var f in Directory.GetFiles(History.Dir, "games-*.csv"))
+            foreach (var f in Directory.GetFiles(History.Dir, "games-*"))
             {
-                DateTime d; if (DateTime.TryParseExact(Path.GetFileNameWithoutExtension(f).Substring(6), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d) && d < DateTime.Today.AddDays(-(Cfg.GameDays - 1)))
-                    try { File.Delete(f); } catch (IOException) { }
+                string name = Path.GetFileName(f), stem = name.EndsWith(".csv.gz", StringComparison.OrdinalIgnoreCase) ? name.Substring(0, name.Length - 7) : name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? name.Substring(0, name.Length - 4) : null;
+                DateTime d; if (stem == null || stem.Length < 14 || !DateTime.TryParseExact(stem.Substring(6), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d)) continue;
+                try
+                {
+                    if (d < DateTime.Today.AddDays(-(Cfg.GameDays - 1))) { File.Delete(f); continue; }
+                    if (d < DateTime.Today && name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string tmp = f + ".gz.part";
+                        using (var src = File.OpenRead(f)) using (var dst = File.Create(tmp)) using (var z = new System.IO.Compression.GZipStream(dst, System.IO.Compression.CompressionLevel.Optimal)) src.CopyTo(z);
+                        if (File.Exists(f + ".gz")) File.Delete(f + ".gz"); File.Move(tmp, f + ".gz"); File.Delete(f);
+                    }
+                }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             }
         }
         public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit; }
+        // one day's rows for one game, or for every game (game == null: one read of the file for all of them)
         public static List<Row> Read(DateTime day, string game)
         {
-            var r = new List<Row>(); string f = File0(day);
+            var r = new List<Row>(); string f = File0(day), gz = f + ".gz";
             try
             {
-                if (!File.Exists(f) || new FileInfo(f).Length > 8 * 1024 * 1024) return r;
+                IEnumerable<string> lines;
+                if (File.Exists(f)) { if (new FileInfo(f).Length > 8 * 1024 * 1024) return r; lines = File.ReadLines(f); }
+                else if (File.Exists(gz)) { if (new FileInfo(gz).Length > 2 * 1024 * 1024) return r; lines = GzLines(gz); }
+                else return r;
                 Func<string, double> P = s => { double v; return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; };
-                foreach (var line in File.ReadLines(f).Take(60000))
+                foreach (var line in lines.Take(60000))
                 {
-                    var c = line.Split(','); TimeSpan t; if (c.Length < 8 || c[1] != game || !TimeSpan.TryParse(c[0], CultureInfo.InvariantCulture, out t)) continue;
+                    var c = line.Split(','); TimeSpan t; if (c.Length < 8 || (game != null && c[1] != game) || !TimeSpan.TryParse(c[0], CultureInfo.InvariantCulture, out t)) continue;
                     r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]) });
                 }
             }
-            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is InvalidDataException)) throw; }   // a damaged day: skipped
             return r;
         }
         // per server over the last 7 days: { avg ms, loss %, jitter, evenings with trouble (of days with data), days with data }

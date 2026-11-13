@@ -85,7 +85,7 @@ Each part below follows the same pattern: **what it is · how it works · why it
 ### 5.2 `Cfg` — your settings
 - **What:** every choice you can make in *Settings*: how often to ping the router, check the internet, read Wi-Fi, scan apps; call detection; history; widget fade; saved destinations.
 - **How:** plain `key=value` lines in `AdeeboMeter.settings`. Every value is checked against a short list of allowed values when it's read, so a broken file can't do harm. Saving writes a temporary file and swaps it in, so a power cut can't leave half a file.
-- **Presets:** *Penny* (~8 checks a minute: router every 30 s, internet every 5 min), *Balanced* (~71, the default: router every 2 s, internet every 15 s), *Engineer* (the same timings) and *Gamer* (the same, plus up to 16 game servers and the best regions every 10 s). The DNS lookup runs at most once a minute. These counts are on top of the once-a-second counter read the widget always does.
+- **Presets:** *Penny* (~8 checks a minute: router every 30 s, internet every 5 min), *Balanced* (~71, the default: router every 2 s, internet every 15 s; it took over Engineer, which had the same timings) and *Gamer* (the same, plus up to 16 game servers and the best regions every 10 s). The DNS lookup runs at most once a minute. These counts are on top of the once-a-second counter read the widget always does.
 
 ### 5.3 `Single` and `Job` — good manners
 - **`Single`** uses a named mutex so only one AdeeboMeter runs, plus named events so a second start can ask the first to open its window.

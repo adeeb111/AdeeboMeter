@@ -88,8 +88,11 @@ namespace AdeeboMeter
         public int Total { get { lock (k) return Math.Min(Max, map.Where(kv => Known(kv.Key)).Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) && Replay.Contains(kv.Key) ? ReplayPts : 0))); } }
         public const int Max = 800;   // a little above everything there is (about 750 - the self-test fails if it grows past this): a file saying more was edited by hand
         static readonly Dictionary<string, bool> known = new Dictionary<string, bool>(StringComparer.Ordinal);
+        // tools that were removed: points already earned with them stay earned (a total never drops on an update)
+        static readonly HashSet<string> Retired = new HashSet<string>(StringComparer.Ordinal) { "finddev" };
         public static bool Known(string id)
         {
+            if (Retired.Contains(id)) return true;
             lock (known) { bool v; if (known.TryGetValue(id, out v)) return v; v = FullView.PtKeyKnown(id); if (known.Count < 5000) known[id] = v; return v; }
         }
         // a question answered wrong the first time: kept (0 points) so a restart can't pay for it

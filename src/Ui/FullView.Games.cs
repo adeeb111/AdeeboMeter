@@ -21,6 +21,8 @@ namespace AdeeboMeter
         static readonly Random GameRnd = new Random();
 
         DateTime gameAway = DateTime.MinValue;   // when the game page was left with a clock running: the clock waits for you
+        // like Check yourself: right first time earns - an answer you were just shown doesn't
+        string EarnFirst(string key) { return Points.Me.Tried(key) ? "" : EarnPts(key, true, true); }
         void GameTick(bool on)
         {
             if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; roomStart += away; if (quick != null) quick.Start += away; gameAway = DateTime.MinValue; }
@@ -120,7 +122,7 @@ namespace AdeeboMeter
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("THE FIX?"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Options(g, room.FixChoices, x, y, w, o => 0, o =>
                 {
-                    if (o == room.F.Fix) { roomStage = 2; string earned = EarnPts("game.room." + room.F.Id, true, true); roomMsg = L.T("You escaped in") + " " + Clock2((int)(DateTime.UtcNow - roomStart).TotalSeconds) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
+                    if (o == room.F.Fix) { roomStage = 2; string earned = roomMiss >= 3 ? "" : EarnFirst("game.room." + room.F.Id);   /* clicking through every option isn't solving it */ roomMsg = L.T("You escaped in") + " " + Clock2((int)(DateTime.UtcNow - roomStart).TotalSeconds) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
                     else { roomMiss++; roomMsg = L.T("That wouldn't fix it - another minute gone."); }
                     learnInfo.Invalidate();
                 });
@@ -154,7 +156,7 @@ namespace AdeeboMeter
                     else if (picked) using (var b = new SolidBrush(Theme.LvSoft(2))) g.FillRectangle(b, rr);
                     string[] cells = { d.Name, d.Ip, d.Mac, d.Maker, d.First, d.Data };
                     for (int i = 0; i < cells.Length; i++) g.DrawString(cells[i], i == 2 ? Draw.fMono : Draw.fBody, i == 0 ? ink : sub, new RectangleF(x + cols[i] * w, y, (i + 1 < cols.Length ? cols[i + 1] : 1f) * w - cols[i] * w - 6 * S, 20 * S), nw);
-                    if (!done && d.Name != "Router") { var dd = d; Act(learnInfo, rr, delegate { thiefPick = dd.Mac; if (dd.Thief) EarnPts("game.thief." + thief.Id, true, true); learnInfo.Invalidate(); }); }
+                    if (!done && d.Name != "Router") { var dd = d; Act(learnInfo, rr, delegate { thiefPick = dd.Mac; if (dd.Thief) EarnFirst("game.thief." + thief.Id); else Points.Me.MarkTried("game.thief." + thief.Id); learnInfo.Invalidate(); }); }
                     y += 26 * S;
                 }
                 y += 10 * S;
@@ -197,7 +199,7 @@ namespace AdeeboMeter
                     g.DrawString(f[0] + " s", Draw.fMono, sub, x + 12 * S, y + 11 * S);
                     g.DrawString(f[1], Draw.fBodyB, ink, x + 90 * S, y + 10 * S);
                     g.DrawString(L.T(f[2]), Draw.fBody, ink, new RectangleF(x + 260 * S, y + 10 * S, w - 270 * S, 22 * S), GameNoWrap);
-                    int ii = i; if (detPick < 0) Act(learnInfo, r, delegate { detPick = ii; if (ii == wrong) EarnPts("game.detective." + (detIdx % LearnGames.Detective.Length + 1).ToString(CultureInfo.InvariantCulture), true, true); learnInfo.Invalidate(); });
+                    int ii = i; if (detPick < 0) Act(learnInfo, r, delegate { detPick = ii; string dk = "game.detective." + (detIdx % LearnGames.Detective.Length + 1).ToString(CultureInfo.InvariantCulture); if (ii == wrong) EarnFirst(dk); else Points.Me.MarkTried(dk); learnInfo.Invalidate(); });
                     y += 48 * S;
                 }
             if (detPick >= 0)
@@ -228,7 +230,7 @@ namespace AdeeboMeter
             {
                 var q = quick.Q[quick.At];
                 y = Say(g, q[0], 1, x, y, w);
-                y = Options(g, q.Skip(2).ToArray(), x, y, w, o => 0, o => { bool ok = o == q[1]; if (ok) quick.Right++; quickMsg = ok ? L.T("Right") : L.T("No") + " - " + q[1]; quick.At++; learnInfo.Invalidate(); });
+                y = Options(g, q.Skip(2).ToArray(), x, y, w, o => 0, o => { bool ok = o == q[1]; if (ok) quick.Right++; quickMsg = ok ? L.T("Right") : L.T("No") + " - " + L.T(q[1]); quick.At++; learnInfo.Invalidate(); });
                 if (quickMsg != "") using (var b = new SolidBrush(quickMsg == L.T("Right") ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(quickMsg, Draw.fSmall, b, x, y);
                 y += 26 * S;
             }

@@ -520,10 +520,10 @@ namespace AdeeboMeter
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
-            if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0.0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 20) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
+            if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if (destRunning || pinRunning) destCanvas.Invalidate();
             if (tbBusy && tab == "toolbox" && tbCanvas != null) tbCanvas.Invalidate();
-            if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) gamerCanvas.Invalidate();   // nothing moves until a game is watched
+            if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gk = System.Threading.Interlocked.Read(ref GamePing.Ver) + "|" + GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerCanvas.Invalidate(); } }   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); }

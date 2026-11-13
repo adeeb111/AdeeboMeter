@@ -103,7 +103,7 @@ namespace AdeeboMeter
             switch (card)
             {
                 case "labs": foreach (var lab in Labs) l.Add(new[] { "lab:" + lab[0], lab[1], lab[2], Points.Me.Has("lab." + lab[0]) || (lab[0] == "quiz" && Points.Me.Has("quiz.10")) ? "1" : "" }); break;
-                case "games": foreach (var gm in LearnGames.All) { string pre = GamePrefix(gm[0]); l.Add(new[] { "game:" + gm[0], gm[1], gm[2] + " · " + gm[3], LearnGames.Keys().Where(k => k.StartsWith(pre, StringComparison.Ordinal)).All(Points.Me.Has) ? "1" : "" }); } break;
+                case "games": foreach (var gm in LearnGames.All) { string pre = GamePrefix(gm[0]); l.Add(new[] { "game:" + gm[0], gm[1], L.T(gm[2]) + " · " + L.T(gm[3]), LearnGames.Keys().Where(k => k.StartsWith(pre, StringComparison.Ordinal)).All(Points.Me.Has) ? "1" : "" }); } break;
                 case "check": foreach (var t in Knowledge.Learn().Where(t => t["check"] != "")) l.Add(new[] { "topic:" + t.Id, t["title"], CheckParts(t["check"])[0], Points.Me.Has("check." + t.Id) ? "1" : "" }); break;
                 default: foreach (var t in Knowledge.Learn().Where(t => t["kind"] == card)) l.Add(new[] { "topic:" + t.Id, t["title"], t["tag"], Points.Me.Has("learn." + t.Id) ? "1" : "" }); break;
             }

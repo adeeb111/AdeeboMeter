@@ -2,8 +2,8 @@
 // .NET Framework 4.x, C# 5: builds with the csc.exe that ships with Windows (build_exe.cmd), no admin.
 // No cloud. No telemetry. Never listens. Every packet it sends is listed in About ("What leaves your PC") - and you can switch
 // each background one off. (It never listens on any port, never updates itself, never downloads anything.)
-// In the background (Balanced, the default - Settings changes the pace): a ping to your gateway every 5 s; a ping to 1.1.1.1 and
-// one DNS lookup every 30 s (TCP 443 to it instead when ping never answers); once per network a 6-hop trace toward 1.1.1.1 with
+// In the background (Balanced, the default - Settings changes the pace): a ping to your gateway every 2 s; a ping to 1.1.1.1 every 15 s and
+// one DNS lookup a minute at most (TCP 443 to it instead when ping never answers); once per network a 6-hop trace toward 1.1.1.1 with
 // reverse-DNS names (to name your provider); and, only if you turn them on, one ping to your first pinned destination every 30 s
 // and your added games' servers. Everything else - every Toolbox tool, the speed test, the ISP report, the Steam server list,
 // Check a destination - runs only when you press it; when a check you started fails, Windows' own test page
@@ -332,9 +332,8 @@ namespace AdeeboMeter
         public static void ApplyPreset(string p)
         {
             Preset = p;
-            // Penny: the lightest touch. Balanced (the default) and Engineer: every check close. Gamer: the same, plus more game servers, more often.
+            // Penny: the lightest touch. Balanced (the default; Engineer was merged into it - the same timings): every check close. Gamer: the same, plus more game servers, more often.
             if (p == "penny") { GwSec = 30; NetSec = 300; WifiSec = 120; AppsSec = 30; Call = false; GameBgSec = 60; GameBgServers = 3; }
-            else if (p == "engineer") { GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 30; GameBgServers = 3; }
             else if (p == "gamer") { GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 10; GameBgServers = 5; }
             else { Preset = "balanced"; GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 30; GameBgServers = 3; }
         }
@@ -374,7 +373,7 @@ namespace AdeeboMeter
         {
             switch (k)
             {
-                case "preset": PresetSaved = true; Preset = v == "penny" || v == "engineer" || v == "gamer" || v == "custom" ? v : "balanced"; break;
+                case "preset": PresetSaved = true; Preset = v == "penny" || v == "gamer" || v == "custom" ? v : "balanced";   /* "engineer" (merged): Balanced */ break;
                 case "gw": GwSec = Pick(v, 2, 2, 5, 10, 30, 0); break;
                 case "net": NetSec = Pick(v, 15, 15, 30, 60, 300, 0); break;
                 case "wifi": WifiSec = Pick(v, 10, 10, 30, 120, 0); break;

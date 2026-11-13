@@ -19,7 +19,7 @@ namespace AdeeboMeter
     //   traffic_lab    = off        Toolbox › Traffic Lab (building and sending test packets)
     //   live_capture   = off        Live capture and Find my match server (Wireshark's tshark)
     //   gamer_zone     = off        game pings in the background (the tab says it's off)
-    //   history_days   = 3          keep at most this many days of history (1-30)
+    //   history_days   = 3          keep at most this many days of history (1-180)
     //   mode           = simple     always Simple mode
     //
     // Both files are read and combined - the strictest wins - so an empty file next to the exe can't cancel IT's file in
@@ -65,7 +65,7 @@ namespace AdeeboMeter
                     case "traffic_lab": NoLab |= off; break;
                     case "live_capture": NoCapture |= off; break;
                     case "gamer_zone": NoGamer |= off; break;
-                    case "history_days": int d; if (int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out d) && d >= 1 && d <= 30) MaxHistoryDays = MaxHistoryDays == 0 ? d : Math.Min(MaxHistoryDays, d); break;
+                    case "history_days": int d; if (int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out d) && d >= 1) { d = Math.Min(d, 180); MaxHistoryDays = MaxHistoryDays == 0 ? d : Math.Min(MaxHistoryDays, d); } else Program.Log("policy: history_days = " + v + " isn't a number of days (1-180) - ignored"); break;
                     case "mode": if (v == "simple") Mode = v; break;   // only ever narrows: "pro" isn't a policy
                 }
             }

@@ -8,7 +8,7 @@ body:
       value: |
         Congratulations on the **Adeebo Award**! 🏆
         Copy the four things below **exactly as they are on your card** (AdeeboMeter copied them for you when you saved it - just paste). A check runs straight away: if the claim code matches, you're on the [Hall of Fame page](https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html) within a couple of minutes and this issue closes itself.
-        Your name, points, date and picture become public. Nothing else is asked or kept.
+        Only your name goes on the page - and a social handle, if you add one below. The points, date and code are kept to check your card.
   - type: input
     id: name
     attributes:
@@ -37,8 +37,24 @@ body:
       placeholder: ADB-XXXX-XXXX-XXXX-XXXX
     validations:
       required: true
-  - type: textarea
-    id: picture
+  - type: dropdown
+    id: where
     attributes:
-      label: Your card
-      description: Drag your card picture (the PNG AdeeboMeter saved) into this box. Optional, but it goes on the page next to your name.
+      label: Where people can find you (optional)
+      options:
+        - Nowhere - just my name
+        - GitHub
+        - LinkedIn
+        - X
+        - Instagram
+        - Bluesky
+    validations:
+      required: false
+  - type: input
+    id: handle
+    attributes:
+      label: Your handle (optional)
+      description: Just the handle (ada-lovelace, @ada) or your profile link. Shown next to your name as a link.
+      placeholder: ada-lovelace
+    validations:
+      required: false

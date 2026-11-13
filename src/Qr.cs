@@ -124,7 +124,8 @@ namespace AdeeboMeter
                     for (int b = 0; b + 6 < size; b++)
                         if (line[b] && !line[b + 1] && line[b + 2] && line[b + 3] && line[b + 4] && !line[b + 5] && line[b + 6])
                         {
-                            bool before = b >= 4 && !line[b - 1] && !line[b - 2] && !line[b - 3] && !line[b - 4], after = b + 10 < size && !line[b + 7] && !line[b + 8] && !line[b + 9] && !line[b + 10];
+                            Func<int, bool> light = i => i < 0 || i >= size || !line[i];   // outside the symbol is the quiet zone - light, as the spec counts it
+                            bool before = light(b - 1) && light(b - 2) && light(b - 3) && light(b - 4), after = light(b + 7) && light(b + 8) && light(b + 9) && light(b + 10);
                             if (before || after) p += 40;
                         }
                 }

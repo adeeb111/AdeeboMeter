@@ -15,7 +15,7 @@ namespace AdeeboMeter
     // ping / jitter / loss / grade, the best region over 7 days, and who caused each spike.
     sealed partial class FullView
     {
-        Panel gamerPage; DB gamerCanvas; string gamerNote = ""; volatile bool valveBusy;
+        Panel gamerPage; DB gamerCanvas; string gamerNote = "", gamerKey = ""; volatile bool valveBusy;
         Panel BuildGamerPage()
         {
             gamerPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };

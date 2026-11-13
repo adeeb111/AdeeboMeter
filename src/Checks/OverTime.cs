@@ -29,43 +29,58 @@ namespace AdeeboMeter
         // ---------- one period summed up: the numbers the month and six-month reviews share
         public sealed class Period
         {
-            public DateTime From, To; public int Days, Minutes, BadMinutes, OutageCount; public double OutageMin, GwAvg, NetAvg, LossAvg, GBDown, GBUp, PeakDown;
+            public DateTime From, To; public int Days, Minutes, BadMinutes, OutageCount; public double OutageMin, OutageUnrecorded, GwAvg, NetAvg, LossAvg, GBDown, GBUp, PeakDown;
             public DateTime BestDay, WorstDay; public double BestScore = double.NaN, WorstScore = double.NaN;
-            public int RushDow = -1, RushHour = -1; public double RushGw = double.NaN; public string Laggiest = ""; public double LaggiestMs = double.NaN; public List<string> Speeds = new List<string>();
+            public int RushDow = -1, RushHour = -1; public double RushGw = double.NaN; public string Laggiest = ""; public double LaggiestMs = double.NaN; public Dictionary<DateTime, Period> Months; internal double gwSum; internal long gwCount;   /* filled in the same pass when asked (the six-month review) */ public List<string> Speeds = new List<string>();
         }
-        public static Period Sum(Monitor m, DateTime from, DateTime to, Toolkit.Run run)
+        public static Period Sum(Monitor m, DateTime from, DateTime to, Toolkit.Run run) { return Sum(m, from, to, run, true, false); }
+        public static Period Sum(Monitor m, DateTime from, DateTime to, Toolkit.Run run, bool games) { return Sum(m, from, to, run, games, false); }
+        public static Period Sum(Monitor m, DateTime from, DateTime to, Toolkit.Run run, bool games, bool months)   // months: one Period per month, from the same read; games: the laggiest-game pass (not needed for a comparison or a month line)
         {
             var p = new Period { From = from.Date, To = to.Date };
-            var hourGw = new double[7, 24]; var hourN = new int[7, 24]; var gws = new List<double>(); var nets = new List<double>(); var loss = new List<double>();
+            var badAt = new HashSet<long>();   // the rough minutes, by minute: an outage minute already counted as rough isn't counted twice
+            var hourGw = new double[7, 24]; var hourN = new int[7, 24];
+            double gwS = 0, netS = 0, lossS = 0; long gwN = 0, netN = 0, lossN = 0;   // running sums: never a list of every minute of six months
+            if (months) p.Months = new Dictionary<DateTime, Period>();
             foreach (var d in History.Days().Where(d => d >= p.From && d <= p.To).OrderBy(d => d))
             {
                 if (run != null) { if (run.Stop) break; run.Status = "Reading " + d.ToString("d MMM", CultureInfo.CurrentCulture) + "..."; }
                 var day = History.Load(d); if (day.M.Count == 0) continue;
                 p.Days++; p.Minutes += day.M.Count;
                 int bad = day.M.Count(r => r[1] >= 2); p.BadMinutes += bad;
+                Period mp = null; double mgS = 0; long mgN = 0;
+                if (months) { var key = new DateTime(d.Year, d.Month, 1); if (!p.Months.TryGetValue(key, out mp)) { mp = new Period { From = key, To = key.AddMonths(1).AddDays(-1) }; p.Months[key] = mp; } mp.Days++; mp.Minutes += day.M.Count; mp.BadMinutes += bad; }
+                foreach (var r in day.M) if (r[1] >= 2) badAt.Add(d.Date.Ticks / TimeSpan.TicksPerMinute + (long)(r[0] / 60));
                 double dg = Avg(day.M.Select(r => r[5])); double score = bad * 10 + (double.IsNaN(dg) ? 0 : dg);
                 if (double.IsNaN(p.BestScore) || score < p.BestScore) { p.BestScore = score; p.BestDay = d; }
                 if (double.IsNaN(p.WorstScore) || score > p.WorstScore) { p.WorstScore = score; p.WorstDay = d; }
                 foreach (var r in day.M)
                 {
-                    if (!double.IsNaN(r[5])) { gws.Add(r[5]); int dw = (int)d.DayOfWeek, h = Math.Min(23, (int)(r[0] / 3600)); hourGw[dw, h] += r[5]; hourN[dw, h]++; }
-                    if (!double.IsNaN(r[6])) nets.Add(r[6]); if (!double.IsNaN(r[11])) loss.Add(r[11]);
-                    if (!double.IsNaN(r[13])) p.GBDown += r[13] / 1024; if (!double.IsNaN(r[14])) p.GBUp += r[14] / 1024;
+                    if (!double.IsNaN(r[5])) { gwS += r[5]; gwN++; mgS += r[5]; mgN++; int dw = (int)d.DayOfWeek, h = Math.Min(23, (int)(r[0] / 3600)); hourGw[dw, h] += r[5]; hourN[dw, h]++; }
+                    if (!double.IsNaN(r[6])) { netS += r[6]; netN++; } if (!double.IsNaN(r[11])) { lossS += r[11]; lossN++; }
+                    if (!double.IsNaN(r[13])) { p.GBDown += r[13] / 1024; if (mp != null) mp.GBDown += r[13] / 1024; } if (!double.IsNaN(r[14])) p.GBUp += r[14] / 1024;
                     if (!double.IsNaN(r[4]) && r[4] > p.PeakDown) p.PeakDown = r[4];
                 }
+                if (mp != null) { mp.gwSum += mgS; mp.gwCount += mgN; }
                 foreach (var e in day.E) if (e.Kind == "speed" && p.Speeds.Count < 40) p.Speeds.Add(e.T.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + " · " + e.Text);
             }
-            p.GwAvg = Avg(gws); p.NetAvg = Avg(nets); p.LossAvg = Avg(loss);
-            foreach (var o in Outages.Last(m, Math.Max(1, (int)(DateTime.Today - p.From).TotalDays + 1)).Where(o => o.From.Date >= p.From && o.From.Date <= p.To)) { p.OutageCount++; if (!o.EndUnseen) p.OutageMin += o.Len.TotalMinutes; }
+            p.GwAvg = gwN > 0 ? gwS / gwN : double.NaN; p.NetAvg = netN > 0 ? netS / netN : double.NaN; p.LossAvg = lossN > 0 ? lossS / lossN : double.NaN;
+            if (months) foreach (var mo in p.Months.Values) mo.GwAvg = mo.gwCount > 0 ? mo.gwSum / mo.gwCount : double.NaN;
+            foreach (var o in Outages.Last(m, Math.Max(1, (int)(DateTime.Today - p.From).TotalDays + 1)).Where(o => o.From.Date >= p.From && o.From.Date <= p.To)) { p.OutageCount++; Period om; if (months && p.Months.TryGetValue(new DateTime(o.From.Year, o.From.Month, 1), out om)) om.OutageCount++; if (!o.EndUnseen) { p.OutageMin += o.Len.TotalMinutes; long a = o.From.Ticks / TimeSpan.TicksPerMinute, b = a + (long)Math.Min(o.Len.TotalMinutes, 60 * 24 * 31); for (long x = a; x < b; x++) if (!badAt.Contains(x)) p.OutageUnrecorded++; } }
             // rush hour: the slowest (weekday, hour) by router delay, among hours with at least 30 minutes of data
             for (int dw = 0; dw < 7; dw++) for (int h = 0; h < 24; h++) if (hourN[dw, h] >= 30) { double a = hourGw[dw, h] / hourN[dw, h]; if (double.IsNaN(p.RushGw) || a > p.RushGw) { p.RushGw = a; p.RushDow = dw; p.RushHour = h; } }
             // the laggiest game: highest average ping across its history rows in the period (game history is kept GameDays)
-            foreach (var g in Games.All)
+            if (games)
             {
-                double sum = 0; int n = 0;   // a running average - never a list of every minute
-                for (var d = p.From; d <= p.To && (run == null || !run.Stop); d = d.AddDays(1)) foreach (var x in GameHistory.Read(d, g.Id)) if (!double.IsNaN(x.Avg)) { sum += x.Avg; n++; }
-                if (n < 30) continue; double a = sum / n;
-                if (double.IsNaN(p.LaggiestMs) || a > p.LaggiestMs) { p.LaggiestMs = a; p.Laggiest = g.Name; }
+                // each day's game file read once for every game (running sums per game - never a list of every minute)
+                var gs = new Dictionary<string, double[]>();
+                for (var d = p.From; d <= p.To && (run == null || !run.Stop); d = d.AddDays(1))
+                    foreach (var x in GameHistory.Read(d, null)) if (!double.IsNaN(x.Avg)) { double[] a; if (!gs.TryGetValue(x.Game, out a)) { a = new double[2]; gs[x.Game] = a; } a[0] += x.Avg; a[1]++; }
+                foreach (var g in Games.All)
+                {
+                    double[] a; if (!gs.TryGetValue(g.Id, out a) || a[1] < 30) continue; double avg = a[0] / a[1];
+                    if (double.IsNaN(p.LaggiestMs) || avg > p.LaggiestMs) { p.LaggiestMs = avg; p.Laggiest = g.Name; }
+                }
             }
             return p;
         }
@@ -81,7 +96,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(p.WorstScore) && p.WorstDay != p.BestDay) rows.Add(R(1, "Worst day", p.WorstDay.ToString("dddd d MMMM", c), "Open it in the Time machine to see what happened.", "m"));
             if (p.RushHour >= 0) rows.Add(R(3, "Rush hour", DayNames[p.RushDow] + "s " + p.RushHour.ToString("00", c) + ":00-" + ((p.RushHour + 1) % 24).ToString("00", c) + ":00 · router " + N1(p.RushGw) + " ms", "The slowest hour of the week on your own network.", "m"));
             if (p.Laggiest != "") rows.Add(R(3, "Laggiest game", p.Laggiest + " · " + N0(p.LaggiestMs) + " ms on average", "From the Gamer Zone's history (kept " + Cfg.GameDays + " days).", "m"));
-            double waits = p.OutageMin + p.BadMinutes; if (waits > 0) rows.Add(R(3, "Time lost waiting", N0(waits / 60.0) + " hours of outages and rough minutes", "", "i"));
+            double waits = p.BadMinutes + p.OutageUnrecorded;   // rough minutes, plus the outage minutes History didn't already count as rough if (waits > 0) rows.Add(R(3, "Time lost waiting", N0(waits / 60.0) + " hours of outages and rough minutes", "", "i"));
         }
 
         // ---------- your month on the network ("2026-10", "october", empty = last month, "this" = this month so far)
@@ -105,11 +120,11 @@ namespace AdeeboMeter
             rows.Add(R(-1, first.ToString("MMMM yyyy", CultureInfo.CurrentCulture).ToUpper(CultureInfo.CurrentCulture) + " ON YOUR NETWORK", "", "", "m"));
             if (p.Days == 0) { rows.Add(R(1, "History", "nothing recorded in " + first.ToString("MMMM", CultureInfo.CurrentCulture), "History keeps " + Cfg.HistoryDays + " days (Settings).", "u")); return rows; }
             PeriodRows(p, rows);
-            var prev = Sum(m, first.AddMonths(-1), first.AddDays(-1), run);
+            var prev = Sum(m, first.AddMonths(-1), first.AddDays(-1), run, false);
             if (prev.Days >= 7 && !double.IsNaN(prev.GwAvg) && !double.IsNaN(p.GwAvg))
             {
                 double now = 100.0 * p.BadMinutes / Math.Max(1, p.Minutes), was = 100.0 * prev.BadMinutes / Math.Max(1, prev.Minutes);
-                rows.Add(R(now <= was ? 0 : 1, "Compared with " + first.AddMonths(-1).ToString("MMMM", CultureInfo.CurrentCulture), (now <= was ? "smoother" : "rougher") + " - " + N1(now) + "% rough minutes (was " + N1(was) + "%), " + N0(p.OutageMin) + " outage minutes (was " + N0(prev.OutageMin) + ")", "", "m"));
+                rows.Add(R(now <= was ? 0 : 1, "Compared with " + first.AddMonths(-1).ToString("MMMM", CultureInfo.CurrentCulture), (now <= was ? "smoother" : "rougher") + " - " + N1(now) + "% rough minutes (was " + N1(was) + "%), " + N1(p.OutageMin / Math.Max(1, p.Days)) + " outage min a day (was " + N1(prev.OutageMin / Math.Max(1, prev.Days)) + ")", "", "m"));   /* per day: this month may be only part-way through */
             }
             return rows;
         }
@@ -119,7 +134,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Cfg.History || History.Days().Count == 0) return NoHistory();
             var days = History.Days(); var from = days.Min(); var to = DateTime.Today; if ((to - from).TotalDays > 183) from = to.AddDays(-182);
-            var p = Sum(m, from, to, run);
+            var p = Sum(m, from, to, run, true, true);
             rows.Add(R(-1, "SIX MONTHS ON YOUR NETWORK", from.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " - " + to.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m"));
             if ((to - from).TotalDays < 150) rows.Add(R(3, "So far", p.Days + " days recorded - a full review needs about six months. Keep history for 180 days (Settings) to get there.", "", "i"));
             PeriodRows(p, rows);
@@ -127,7 +142,7 @@ namespace AdeeboMeter
             rows.Add(R(-1, "MONTH BY MONTH", "", "", "m"));
             for (var mo = new DateTime(from.Year, from.Month, 1); mo <= to; mo = mo.AddMonths(1))
             {
-                if (run != null && run.Stop) break; var mp = Sum(m, mo < from ? from : mo, mo.AddMonths(1).AddDays(-1) > to ? to : mo.AddMonths(1).AddDays(-1), run); if (mp.Days == 0) continue;
+                if (run != null && run.Stop) break; Period mp; if (!p.Months.TryGetValue(mo, out mp) || mp.Days == 0) continue;
                 double rough = 100.0 * mp.BadMinutes / Math.Max(1, mp.Minutes);
                 rows.Add(R(rough < 1 ? 0 : rough < 5 ? 1 : 2, mo.ToString("MMMM", CultureInfo.CurrentCulture), N1(100 - rough) + "% smooth · " + mp.OutageCount + " outages · router " + N1(mp.GwAvg) + " ms · " + N1(mp.GBDown) + " GB down", "", "m"));
             }
@@ -137,16 +152,18 @@ namespace AdeeboMeter
             return rows;
         }
         // History's rolling delete calls this first: when six months are about to roll off, the review is written once
+        static DateTime rollTried;
         public static void BeforeRollOff()
         {
             try
             {
                 if (Cfg.HistoryDays < 180 || !Cfg.History) return;
+                if ((DateTime.UtcNow - rollTried).TotalHours < 24) return;   // a review that couldn't be saved (read-only folder): tried again tomorrow, not every 6 h
                 string dir = Path.Combine(Program.DataDir, "reports");
                 var days = History.Days(); if (days.Count == 0 || (DateTime.Today - days.Min()).TotalDays < 175) return;   // the span, not the count: a PC that's often off still gets its review
                 // only an automatic review (or a manual one that already covered ~5 months) counts as done
                 if (Directory.Exists(dir) && Directory.GetFiles(dir, "Six-months-*.html").Any(f => (DateTime.Now - File.GetLastWriteTime(f)).TotalDays < 170 && Covered(f) >= 150)) return;
-                SixMonths(null, null);
+                rollTried = DateTime.UtcNow; SixMonths(null, null);
                 Program.Log("six-month review written before history rolls off");
                 Alerts.Raise("review", "Your six months on the network are ready to look at and share: Toolbox > Six months on your network. The oldest days now roll off as usual.", 60 * 24);
             }
@@ -217,7 +234,9 @@ namespace AdeeboMeter
             int failed = 0;   // woke, and the router never answered in 2 minutes
             foreach (var e in evs)
             {
-                var mm = Regex.Match(e.Text, @"router ([0-9]+(?:\.[0-9]+)?) s(?:.*?DNS ([0-9]+(?:\.[0-9]+)?) s)?", RegexOptions.CultureInvariant); if (!mm.Success) { if (e.Text.IndexOf("didn't answer within 2 minutes", StringComparison.Ordinal) >= 0) failed++; continue; }
+                var mm = Regex.Match(e.Text, @"router ([0-9]+(?:\.[0-9]+)?) s(?:.*?DNS ([0-9]+(?:\.[0-9]+)?) s)?", RegexOptions.CultureInvariant);
+                if (!mm.Success) { var dm = Regex.Match(e.Text, @"waking: DNS ([0-9]+(?:\.[0-9]+)?) s", RegexOptions.CultureInvariant); if (dm.Success) { double t = double.Parse(dm.Groups[1].Value, CultureInfo.InvariantCulture); secs.Add(Tuple.Create(e.T, t, t)); continue; } }   // a router that ignores ping: DNS answering is "back online"
+                if (!mm.Success) { if (e.Text.IndexOf("within 2 minutes", StringComparison.Ordinal) >= 0) failed++; continue; }
                 double r = double.Parse(mm.Groups[1].Value, CultureInfo.InvariantCulture), dn = mm.Groups[2].Success ? double.Parse(mm.Groups[2].Value, CultureInfo.InvariantCulture) : double.NaN;
                 secs.Add(Tuple.Create(e.T, r, dn));
             }

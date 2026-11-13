@@ -483,11 +483,11 @@ breaks: Labels add 4 bytes each; if the core's MTU wasn't raised to carry them, 
 ladder: Customer router > Provider edge PE1: IP packet to 10.2.0.9 | PE1 > Core P1: label 300 (path) + label 17 (customer VPN) + packet | P1 > P2: label 410 + 17 + packet (swapped) | P2 > PE2: label 17 + packet (outer label popped) | PE2 > Customer site B: IP packet to 10.2.0.9
 
 == l3vpn
-title: L3VPN (VRF, VPRN) - a private network inside the provider
+title: L3VPN (VRF) - a private network inside the provider
 kind: provider
 tag: Many companies on one provider network, each in its own walled routing table.
 check: Two companies both use 10.0.0.0/8 over the same provider. What keeps them apart? | Each has its own routing table (a VRF) and its own VPN label | They take turns | The provider changes their addresses | Wi-Fi encryption
-line: An enterprise connects its offices through the provider. The provider edge keeps a separate routing table per customer (a VRF - some vendors call the service a VPRN), so overlapping private addresses never mix.
+line: An enterprise connects its offices through the provider. The provider edge keeps a separate routing table per customer (a VRF - virtual routing and forwarding), so overlapping private addresses never mix.
 more: Customer routes are learned at each site (static, OSPF or BGP), then carried between provider edges by MP-BGP as VPN-IPv4 routes: the customer's prefix plus a route distinguisher to keep it unique, plus route targets that say which VRFs import it - that's how a hub-and-spoke or a shared-services VPN is built. In the core the traffic rides MPLS (or segment routing / SRv6) with an inner VPN label. Internet access for the same company is often just another VRF. EVPN is the same idea for Ethernet (layer 2) services and data-centre fabrics.
 breaks: A route-target typo means a branch silently can't see head office. Overlapping addresses are fine inside separate VRFs and break the moment two are joined.
 ladder: Branch router > PE-Branch: OSPF - I have 10.20.0.0/16 | PE-Branch > Route reflector: MP-BGP - RD 64500:7 10.20.0.0/16, label 22, target "Acme" | Route reflector > PE-Head office: the same route | PE-Head office > Head-office router: 10.20.0.0/16 is reachable through me | Head office > Branch: traffic, carried with VPN label 22
@@ -530,7 +530,7 @@ tag: Your phone, the radio towers, and a core network that decides who you are a
 check: What are the three big parts of a mobile network? | The phone, the radio access network (towers), and the core network | Wi-Fi, Bluetooth and cable | The SIM, the screen and the battery | DNS, DHCP and NAT
 line: The phone (UE) talks by radio to a base station (eNodeB in 4G, gNodeB in 5G). The base stations connect over fibre to the core, which checks your SIM, gives you an IP address and sends your data to the internet.
 more: The radio access network (RAN) handles the air: scheduling who transmits when, handovers between cells, signal quality. The core does everything else: authentication (from the SIM's secret key), mobility (which tower you're under), sessions (your IP address and the path for your data), policy and charging. Control (signalling) and user data travel separately: signalling to the core's control functions, your packets through user-plane gateways. "Registered but no data" is a classic case where the control side worked and the data session didn't. A cellular router or a phone hotspot looks like any other router to your PC - AdeeboMeter sees the link to it, DNS and reachability, not the radio or the core.
-breaks: Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Weak signal with steady bars is often a busy cell - many users sharing it.
+breaks: Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Slow data with full bars is often a busy cell - many users sharing it.
 ladder: Phone > Tower: radio connection | Tower > Core (control): who is this, may they connect? | Core > Phone: welcome, here is your IP address | Phone > Tower > Core (user plane): your data | Core > Internet: your data, from the phone's address
 
 == ran
@@ -541,7 +541,7 @@ check: What is a gNodeB? | The 5G base station (the "tower" equipment) | A type 
 line: eNodeB is the 4G base station, gNodeB the 5G one. They schedule the radio, measure your signal, hand you to a better cell, and connect to the core over S1 (4G) or N2 and N3 (5G).
 more: Each cell broadcasts its identity; the phone measures signal strength (RSRP) and quality (RSRQ, SINR) and reports them, and the base station decides handovers - directly over the X2/Xn link to the neighbour cell when it can. A 5G gNodeB is often split: a radio unit on the mast, distributed and central units further back (CU/DU split, O-RAN). Early 5G is "non-standalone" (NSA): 5G radio added to a 4G eNodeB, still on the 4G core. "Standalone" (SA) uses the 5G core. RedCap is a lighter 5G for sensors and routers that don't need full speed.
 breaks: Good RSRP but poor SINR means interference or a busy cell, not distance. Constant handovers at a cell edge show up as short stalls and jitter.
-ladder: Phone > gNodeB: random access - I'd like to talk | gNodeB > Phone: radio resources granted | Phone > gNodeB: measurement report - neighbour cell is stronger | gNodeB > Neighbour gNodeB: handover request (Xn) | Neighbour > Phone: you're mine now
+ladder: Phone > gNodeB: random access - I'd like to talk | gNodeB > Phone: radio resources granted | Phone > gNodeB: measurement report - neighbour cell is stronger | gNodeB > Neighbour gNodeB: handover request (Xn) | Neighbour gNodeB > gNodeB: handover accepted | gNodeB > Phone: handover command - move to the neighbour cell | Phone > Neighbour gNodeB: random access - I'm here
 
 == epc
 title: The 4G core: MME, SGW, PGW, HSS

@@ -179,7 +179,13 @@ namespace AdeeboMeter
         }
         // MB down + up; key null = every network
         public static double Today(string key) { return Sum(key, DateTime.Today, DateTime.Today); }
-        public static double Month(string key) { var t = DateTime.Today; return Sum(key, new DateTime(t.Year, t.Month, 1), t); }
+        static double monthAll = double.NaN; static DateTime monthAt;   // the widget's hover asks every second: kept 30 s
+        public static double Month(string key)
+        {
+            var t = DateTime.Today;
+            if (key == null) { lock (k) if (!double.IsNaN(monthAll) && (DateTime.UtcNow - monthAt).TotalSeconds < 30) return monthAll; double v = Sum(null, new DateTime(t.Year, t.Month, 1), t); lock (k) { monthAll = v; monthAt = DateTime.UtcNow; } return v; }
+            return Sum(key, new DateTime(t.Year, t.Month, 1), t);
+        }
         static double Sum(string key, DateTime from, DateTime to)
         {
             lock (k)

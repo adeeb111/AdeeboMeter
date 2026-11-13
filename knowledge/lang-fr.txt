@@ -184,7 +184,7 @@ Tell me when a new device joins	Me prévenir quand un appareil arrive
 Test these now	Tester maintenant
 Test under load...	Tester sous charge...
 That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.	Pas de souci. Dites-moi ce que vous remarquez, ou touchez le plus proche. Tout fonctionne hors ligne - même quand vous ne pouvez pas chercher sur Google.
-The default. Router every 2 s, internet every 15 s - notices trouble within seconds.	Par défaut. Routeur toutes les 2 s, internet toutes les 15 s - repère un problème en quelques secondes.
+The default - every check close. Router every 2 s, internet every 15 s: notices trouble within seconds.	Par défaut - chaque contrôle de près. Routeur toutes les 2 s, internet toutes les 15 s : repère un problème en quelques secondes.
 The internet is slow	Internet est lent
 Theme	Thème
 Time machine	Retour arrière
@@ -200,7 +200,6 @@ WHAT'S WRONG?	QU'EST-CE QUI CLOCHE ?
 WHERE EVERYTHING LIVES	OÙ SE TROUVE CHAQUE CHOSE
 Watch and suggest	Surveiller et suggérer
 Watch my first pinned destination all day	Surveiller ma première destination épinglée toute la journée
-Every check close, for when something is wrong and you want every clue.	Chaque contrôle de près, quand quelque chose cloche et que vous voulez chaque indice.
 What changed	Ce qui a changé
 What's running	Ce qui tourne
 Wi-Fi	Wi-Fi
@@ -783,3 +782,178 @@ plus about	plus environ
 game pings a minute for the games you watch (one a second per server while you play)	pings de jeu par minute pour vos jeux suivis (un par seconde et par serveur pendant que vous jouez)
 on top of the widget's once-a-second read of Windows' own counters.	en plus de la lecture des compteurs de Windows par le widget, une fois par seconde.
 The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	Le widget reste toujours léger. Le travail de fond (capture en direct, liste complète des connexions, chemins) ne tourne que fenêtre ouverte. Ces réglages décident de la surveillance en arrière-plan - vérifications par minute, plus les pings de jeu dès que vous suivez un jeu.
+# Learn games (escape room, catch the thief, packet detective, quick-fire)
+The DNS server is down	Le serveur DNS est en panne
+Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	Utilisez un autre serveur DNS (1.1.1.1, par exemple) - ou redémarrez le routeur, qui est le serveur DNS ici
+Addresses work. Names don't.	Les adresses marchent. Les noms, non.
+Compare ping 1.1.1.1 with ping example.com, then ask nslookup.	Comparez ping 1.1.1.1 et ping example.com, puis demandez à nslookup.
+A hosts-file line sends one site to the wrong place	Une ligne du fichier hosts envoie un site au mauvais endroit
+Remove the line from the hosts file (Notepad as administrator)	Retirez la ligne du fichier hosts (Bloc-notes en administrateur)
+nslookup asks the DNS server. ping uses Windows' own list first.	nslookup demande au serveur DNS. ping regarde d'abord la liste de Windows.
+Open the hosts file.	Ouvrez le fichier hosts.
+An MTU black hole: big packets vanish	Un trou noir MTU : les gros paquets disparaissent
+Lower the MTU (e.g. 1400) or ask the provider - small packets pass, big ones are dropped silently	Baissez le MTU (par ex. 1400) ou appelez le fournisseur - les petits paquets passent, les gros sont jetés sans bruit
+Small things work. Big things hang.	Les petites choses marchent. Les grosses bloquent.
+Try the don't-fragment ping at full size.	Essayez le ping « ne pas fragmenter » à pleine taille.
+A rogue DHCP server handed out the addresses	Un serveur DHCP pirate a distribué les adresses
+Find and unplug the device at that address - a second router or a misconfigured box giving out leases	Trouvez et débranchez l'appareil à cette adresse - un deuxième routeur ou un boîtier mal réglé qui distribue des baux
+Who gave you your router and DNS addresses?	Qui vous a donné vos adresses de routeur et de DNS ?
+Look at ipconfig's DHCP server, then arp -a.	Regardez le serveur DHCP dans ipconfig, puis arp -a.
+Another device has the same IP address	Un autre appareil a la même adresse IP
+Give the other device an address outside the DHCP range (or a reservation) - then renew	Donnez à l'autre appareil une adresse hors de la plage DHCP (ou une réservation) - puis renouvelez
+Something answers some of the time.	Quelque chose répond, mais pas toujours.
+The event log keeps a note when Windows sees it.	Le journal d'événements le note quand Windows le voit.
+The default gateway is set wrong	La passerelle par défaut est mal réglée
+Set the gateway to the real router (or switch the adapter back to automatic / DHCP)	Réglez la passerelle sur le vrai routeur (ou remettez la carte en automatique / DHCP)
+The router you're told to use doesn't answer.	Le routeur qu'on vous indique ne répond pas.
+Compare ipconfig's gateway with what arp -a sees.	Comparez la passerelle d'ipconfig avec ce que voit arp -a.
+DHCP failed - no address from the router	Le DHCP a échoué - aucune adresse du routeur
+Restart the router (or check its DHCP server is on), then renew the address	Redémarrez le routeur (ou vérifiez que son serveur DHCP est actif), puis renouvelez l'adresse
+Look at the address itself.	Regardez l'adresse elle-même.
+169.254 means Windows gave itself one.	169.254 veut dire que Windows s'en est donné une.
+A sign-in page (captive portal) is in the way	Une page de connexion (portail captif) bloque le chemin
+Open a browser to an http:// site and accept the network's sign-in page	Ouvrez un site http:// dans le navigateur et acceptez la page de connexion du réseau
+Pings work. The web shows something else.	Les pings marchent. Le web affiche autre chose.
+Open the website and read what comes back.	Ouvrez le site et lisez ce qui revient.
+A proxy that doesn't exist is set	Un proxy qui n'existe pas est configuré
+Turn the proxy off (Settings > Network > Proxy) - and check for adware that set it	Désactivez le proxy (Paramètres > Réseau > Proxy) - et cherchez le logiciel publicitaire qui l'a réglé
+Everything answers - except the browser.	Tout répond - sauf le navigateur.
+Look at the proxy settings.	Regardez les paramètres du proxy.
+Weak, crowded Wi-Fi	Wi-Fi faible et encombré
+Move closer, switch to 5 GHz, or use a cable	Rapprochez-vous, passez au 5 GHz ou utilisez un câble
+Even the router is slow and drops pings.	Même le routeur est lent et perd des pings.
+Read the Wi-Fi status.	Lisez l'état du Wi-Fi.
+Lower the MTU	Baisser le MTU
+Remove a line from the hosts file	Retirer une ligne du fichier hosts
+Move closer to the Wi-Fi	Se rapprocher du Wi-Fi
+Change the DNS server	Changer de serveur DNS
+Turn off the proxy	Désactiver le proxy
+Renew the DHCP lease	Renouveler le bail DHCP
+Restart the PC	Redémarrer le PC
+Change the Wi-Fi channel	Changer de canal Wi-Fi
+The internet has been slow every night this week, and the data cap is nearly gone. Nobody at home stays up past midnight.	Internet est lent chaque nuit cette semaine, et le forfait de données est presque épuisé. Personne à la maison ne veille après minuit.
+Since this evening, sites are slow and some show certificate warnings. Every device is affected.	Depuis ce soir, les sites sont lents et certains affichent des alertes de certificat. Tous les appareils sont touchés.
+Some devices lost the internet after a new gadget arrived. Others are fine. Restarting fixes it - sometimes.	Certains appareils ont perdu internet après l'arrivée d'un nouveau gadget. D'autres vont bien. Redémarrer règle le problème - parfois.
+Someone set up a device to look like part of the furniture. It's been busy.	Quelqu'un a installé un appareil qui se fond dans le décor. Il a été très actif.
+Gaming has lagged in the evenings for two weeks. The Wi-Fi password was given to a 'friend of a friend' once.	Les jeux ralentissent le soir depuis deux semaines. Le mot de passe Wi-Fi a été donné une fois à « l'ami d'un ami ».
+Two devices have private (random) hardware addresses. That alone is normal - phones do it.	Deux appareils ont des adresses matérielles privées (aléatoires). Ça seul est normal - les téléphones le font.
+One of them has been here every day for months. The other appeared 6 days ago.	L'un est là chaque jour depuis des mois. L'autre est apparu il y a 6 jours.
+The new one joins only between 1 and 5 in the morning - and moves the most data.	Le nouveau ne se connecte qu'entre 1 h et 5 h du matin - et transfère le plus de données.
+Look at which hardware address claims to be the router.	Regardez quelle adresse matérielle prétend être le routeur.
+The router's real address starts f4:f2:6d (TP-Link).	La vraie adresse du routeur commence par f4:f2:6d (TP-Link).
+One PC on the network now says 'I am the router' - every packet goes through it first.	Un PC du réseau dit maintenant « je suis le routeur » - chaque paquet passe d'abord par lui.
+Two DHCP servers answer. Only the router should.	Deux serveurs DHCP répondent. Seul le routeur devrait.
+Devices that take the second offer get the wrong gateway.	Les appareils qui prennent la deuxième offre reçoivent la mauvaise passerelle.
+The second offer comes from a device that arrived yesterday.	La deuxième offre vient d'un appareil arrivé hier.
+There are two printers. You own one.	Il y a deux imprimantes. Vous en avez une.
+A printer moving 10 GB? Printers barely use the network.	Une imprimante qui transfère 10 Go ? Les imprimantes utilisent à peine le réseau.
+Its maker (from the hardware address) isn't HP at all.	Son fabricant (d'après l'adresse matérielle) n'est pas du tout HP.
+The family has no Samsung phone.	La famille n'a pas de téléphone Samsung.
+It joins at 18:00 every day and leaves before midnight.	Il se connecte à 18:00 chaque jour et part avant minuit.
+It uploads for hours - uploads hurt game ping most.	Il envoie des données pendant des heures - l'envoi nuit le plus au ping des jeux.
+A neighbour has the Wi-Fi password. Random MACs are normal, so the tell was the timing and the data, not the address. Change the Wi-Fi password and turn on WPA3 if the router has it.	Un voisin a le mot de passe Wi-Fi. Les MAC aléatoires sont normales : l'indice, c'était l'horaire et les données, pas l'adresse. Changez le mot de passe Wi-Fi et activez WPA3 si le routeur l'a.
+ARP spoofing: a PC answered for the router's address so traffic flows through it (a man in the middle). Usually malware or a 'network tool' left running. Unplug it and scan it.	Usurpation ARP : un PC a répondu à la place du routeur pour que le trafic passe par lui (un intermédiaire). Souvent un logiciel malveillant ou un « outil réseau » oublié. Débranchez-le et analysez-le.
+A rogue DHCP server: a Raspberry Pi set up as a router answers before the real one. Turn off its DHCP server. Switches with DHCP snooping stop this at work.	Un serveur DHCP pirate : un Raspberry Pi réglé en routeur répond avant le vrai. Désactivez son serveur DHCP. Au bureau, les commutateurs avec DHCP snooping l'empêchent.
+A name is just a label anyone can type. The maker comes from the hardware address, and the data use gave it away. Block it in the router and change the Wi-Fi password.	Un nom n'est qu'une étiquette que n'importe qui peut taper. Le fabricant vient de l'adresse matérielle, et la consommation de données l'a trahi. Bloquez-le dans le routeur et changez le mot de passe Wi-Fi.
+A guest who kept the password. Change it, and give visitors the router's guest network next time.	Un invité qui a gardé le mot de passe. Changez-le, et donnez aux visiteurs le réseau invité du routeur la prochaine fois.
+Opening a web connection	Ouvrir une connexion web
+The server can't acknowledge alone before it says SYN: the second step is one packet, SYN-ACK. Here a lone ACK came first.	Le serveur ne peut pas acquitter seul avant de dire SYN : la deuxième étape est un seul paquet, SYN-ACK. Ici, un ACK seul est arrivé en premier.
+SYN - let's talk, my sequence starts at 1000	SYN - parlons, ma séquence commence à 1000
+ACK 1001 - got it	ACK 1001 - bien reçu
+SYN-ACK - fine, mine starts at 5000, ack 1001	SYN-ACK - d'accord, la mienne commence à 5000, ack 1001
+Getting an address (DHCP)	Obtenir une adresse (DHCP)
+The order is Discover, Offer, Request, Ack. The PC asked for an address before anyone offered one.	L'ordre est Discover, Offer, Request, Ack. Le PC a demandé une adresse avant que quiconque en offre une.
+DISCOVER - any DHCP server?	DISCOVER - un serveur DHCP ?
+REQUEST - I'll take 192.168.1.37	REQUEST - je prends 192.168.1.37
+OFFER - you can have 192.168.1.37	OFFER - vous pouvez avoir 192.168.1.37
+ACK - it's yours for 24 h	ACK - elle est à vous pour 24 h
+Finding a name (DNS)	Trouver un nom (DNS)
+The PC asked the router, but the answer came from 8.8.8.8. A real answer comes from the server you asked - this is how DNS spoofing looks.	Le PC a demandé au routeur, mais la réponse vient de 8.8.8.8. Une vraie réponse vient du serveur interrogé - voilà à quoi ressemble une usurpation DNS.
+Query: where is example.com? (id 0x3a1f)	Requête : où est example.com ? (id 0x3a1f)
+Answer: 93.184.215.14 (id 0x3a1f)	Réponse : 93.184.215.14 (id 0x3a1f)
+SYN to port 443	SYN vers le port 443
+A secure page (TLS)	Une page sécurisée (TLS)
+The client always speaks first in TLS: ClientHello, then ServerHello. A server can't answer a question nobody asked.	En TLS, le client parle toujours en premier : ClientHello, puis ServerHello. Un serveur ne peut pas répondre à une question que personne n'a posée.
+TCP handshake done	Poignée de main TCP faite
+ServerHello - let's use TLS 1.3, here's my key	ServerHello - utilisons TLS 1.3, voici ma clé
+ClientHello - I speak TLS 1.3 and 1.2	ClientHello - je parle TLS 1.3 et 1.2
+Certificate, Finished	Certificat, Finished
+A traceroute	Un traceroute
+With TTL 2 the packet dies at the second router, which says 'time exceeded'. 1.1.1.1 can't answer a packet that never reached it.	Avec un TTL de 2, le paquet meurt au deuxième routeur, qui dit « délai dépassé ». 1.1.1.1 ne peut pas répondre à un paquet qui ne l'a jamais atteint.
+Time exceeded (TTL ran out here)	Délai dépassé (le TTL s'est épuisé ici)
+ping, TTL 2 - reply from 1.1.1.1 directly, TTL 64	ping, TTL 2 - réponse directe de 1.1.1.1, TTL 64
+Time exceeded	Délai dépassé
+A big packet, don't fragment	Un gros paquet, ne pas fragmenter
+A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes.	Un routeur n'envoie « fragmentation nécessaire » que si le lien suivant est plus petit que le paquet. Un MTU de 1600 aurait transporté 1500 octets.
+1500-byte packet, don't fragment	Paquet de 1500 octets, ne pas fragmenter
+ICMP: fragmentation needed, next-hop MTU 1600	ICMP : fragmentation nécessaire, MTU du saut suivant 1600
+1400-byte packet, don't fragment	Paquet de 1400 octets, ne pas fragmenter
+Who has this address? (ARP)	Qui a cette adresse ? (ARP)
+A second device claims the router's address with its own hardware address, unasked - a gratuitous ARP spoof. The real router already answered.	Un deuxième appareil revendique l'adresse du routeur avec sa propre adresse matérielle, sans qu'on lui demande - une usurpation ARP gratuite. Le vrai routeur avait déjà répondu.
+ARP: who has 192.168.1.1? Tell 192.168.1.37	ARP : qui a 192.168.1.1 ? Répondez à 192.168.1.37
+ARP: 192.168.1.1 is at f4:f2:6d:4a:10:01	ARP : 192.168.1.1 est à f4:f2:6d:4a:10:01
+ARP: 192.168.1.1 is at 00:d8:61:aa:bb:cc	ARP : 192.168.1.1 est à 00:d8:61:aa:bb:cc
+data to f4:f2:6d:4a:10:01	données vers f4:f2:6d:4a:10:01
+Closing a connection	Fermer une connexion
+After a FIN the PC waits for the server's own FIN (and then TIME_WAIT) before reusing the same ports. A SYN on the same pair mid-close is wrong.	Après un FIN, le PC attend le FIN du serveur (puis TIME_WAIT) avant de réutiliser les mêmes ports. Un SYN sur la même paire en pleine fermeture est faux.
+FIN - I'm done sending	FIN - j'ai fini d'envoyer
+data: 4 KB	données : 4 Ko
+SYN - start a new connection on the same ports	SYN - nouvelle connexion sur les mêmes ports
+A ping	Un ping
+A reply carries the same id as its request. id 9 belongs to someone else's ping - Windows would ignore it.	Une réponse porte le même id que sa requête. L'id 9 appartient au ping de quelqu'un d'autre - Windows l'ignorerait.
+Echo request, id 7, seq 1	Requête d'écho, id 7, seq 1
+Echo reply, id 7, seq 1	Réponse d'écho, id 7, seq 1
+Echo request, id 7, seq 2	Requête d'écho, id 7, seq 2
+Echo reply, id 9, seq 2	Réponse d'écho, id 9, seq 2
+A UDP game packet	Un paquet UDP de jeu
+UDP has no ACKs - nothing is acknowledged at the transport layer. A game that needs one builds it into its own messages.	UDP n'a pas d'ACK - rien n'est acquitté au niveau transport. Un jeu qui en a besoin l'intègre à ses propres messages.
+UDP game input (40 bytes)	Commande de jeu UDP (40 octets)
+UDP world update (900 bytes)	Mise à jour du monde UDP (900 octets)
+TCP ACK for the update	ACK TCP pour la mise à jour
+UDP game input	Commande de jeu UDP
+a web page over HTTPS	une page web en HTTPS
+plain HTTP	HTTP simple
+Remote Desktop	Bureau à distance
+mail from a mail app (submission)	courriel depuis une app de courriel (soumission)
+IMAP over TLS	IMAP sur TLS
+NTP (the clock)	NTP (l'horloge)
+a DHCP server	un serveur DHCP
+SNMP queries	requêtes SNMP
+SNMP traps	traps SNMP
+Windows file sharing (SMB)	partage de fichiers Windows (SMB)
+RADIUS sign-in	connexion RADIUS
+an iperf3 server	un serveur iperf3
+STUN (calls finding their public address)	STUN (les appels trouvent leur adresse publique)
+FTP (control)	FTP (contrôle)
+mail between servers (SMTP)	courriel entre serveurs (SMTP)
+private (home or office)	privée (maison ou bureau)
+public (the internet)	publique (internet)
+loopback (this PC)	bouclage (ce PC)
+link-local (no DHCP answer)	lien local (pas de réponse DHCP)
+shared by your provider (CGNAT)	partagée par votre fournisseur (CGNAT)
+multicast (a group)	multidiffusion (un groupe)
+documentation (examples only)	documentation (exemples seulement)
+Which port:	Quel port :
+What kind of address is	Quel type d'adresse est
+10 scenarios	10 scénarios
+5 cases	5 enquêtes
+10 puzzles	10 énigmes
+8 right to win	8 bonnes réponses pour gagner
+Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.	Votre PC n'arrive pas à joindre example.com. Tout ce qui suit est une simulation - lancez les commandes et trouvez pourquoi.
+hint used	indice utilisé
+wrong guess	mauvaise réponse
+wrong guesses	mauvaises réponses
+the clock lost	le chrono a perdu
+min to hints and guesses	min en indices et erreurs
+Address	Adresse
+Hardware address	Adresse matérielle
+Maker	Fabricant
+First seen	Vu la première fois
+Data	Données
+Labs	Labos
+ping the router	pinger le routeur
+Wi-Fi status	état du Wi-Fi
+proxy settings	paramètres du proxy
+hosts file	fichier hosts
+event log (network)	journal d'événements (réseau)
+open https://example.com	ouvrir https://example.com

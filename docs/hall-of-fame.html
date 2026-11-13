@@ -11,7 +11,7 @@
 <meta property="og:title" content="AdeeboMeter Hall of Fame">
 <meta property="og:description" content="500 Adeebo Points: every tool tried, every topic read, every lab challenge met.">
 <meta property="og:image" content="https://adeeb111.github.io/AdeeboMeter/img/screenshot.png">
-<!-- No fonts, trackers or pictures from anywhere else: winners' cards are links to GitHub, never loaded into this page. -->
+<!-- No fonts, trackers or pictures from anywhere else. A winner shows as a name, and a link to their profile only if they gave one. -->
 <script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <style>
 :root{
@@ -191,7 +191,7 @@ footer a{color:inherit}
         <a class="pill" href="https://github.com/adeeb111/AdeeboMeter/issues/new?template=hall-of-fame.yml">Send it with the GitHub form</a>
         <a class="pill ghost" id="mail" href="#join">Email it</a>
       </div>
-      <p class="sub" style="margin-top:8px">With the <b>GitHub form</b> it's automatic: paste what AdeeboMeter copied, drag in the picture, and a check runs straight away. If the code matches, you're on this page within a couple of minutes. By <b>email</b>, paste the same text and attach the picture. You'll be added by hand, usually within a few days.</p></li>
+      <p class="sub" style="margin-top:8px">With the <b>GitHub form</b> it's automatic: paste what AdeeboMeter copied (add a social handle if you'd like one shown), and a check runs straight away. If the code matches, you're on this page within a couple of minutes. By <b>email</b>, paste the same text. You'll be added by hand, usually within a few days.</p></li>
   </ol>
 
   <h3>How a card is checked</h3>
@@ -200,7 +200,7 @@ footer a{color:inherit}
 
   <h3>Questions</h3>
   <details><summary>Does AdeeboMeter send my points anywhere?</summary><p>No. AdeeboMeter never sends anything about your points. It only saves a picture, and you decide whether to share it.</p></details>
-  <details><summary>What goes on this page?</summary><p>The name you typed on the card, your points, the date and the claim code, plus a link to your picture if you sent one with the GitHub form. Nothing else. Pictures aren't loaded into this page; they're links to GitHub.</p></details>
+  <details><summary>What goes on this page?</summary><p>Your name - and a link to your GitHub, LinkedIn, X, Instagram or Bluesky profile if you gave a handle. Nothing else is shown. The points, date and claim code are kept in the list behind the page (hall-of-fame.json) so a card can be checked again; nothing else about you is kept.</p></details>
   <details><summary>Can I be taken off?</summary><p>Yes. Open an issue or send an email and you'll be removed.</p></details>
   <details><summary>My code doesn't match.</summary><p>Type the name, points and date exactly as they are on the card, or paste the text AdeeboMeter copied. If you've earned more points since, make the card again and send the new one.</p></details>
   <details><summary>I'm under 500 - where am I?</summary><p>Press the Adeebo button in AdeeboMeter. The bar shows how far you are from the next rank, and each learning path shows what's left.</p></details>
@@ -217,6 +217,13 @@ footer a{color:inherit}
   if (MAIL.indexOf('@') > 0) m.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Adeebo Award - Hall of Fame');
   else m.style.display = 'none';
 
+  var SITES = {
+    github: { name: 'GitHub', url: 'https://github.com/', rx: /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/ },
+    linkedin: { name: 'LinkedIn', url: 'https://www.linkedin.com/in/', rx: /^[A-Za-z0-9-]{3,100}$/ },
+    x: { name: 'X', url: 'https://x.com/', rx: /^[A-Za-z0-9_]{1,15}$/ },
+    instagram: { name: 'Instagram', url: 'https://www.instagram.com/', rx: /^[A-Za-z0-9_.]{1,30}$/ },
+    bluesky: { name: 'Bluesky', url: 'https://bsky.app/profile/', rx: /^[A-Za-z0-9.-]{3,253}$/ }
+  };
   // the winners: read from hall-of-fame.json (same site), every field written as text - never as HTML
   var grid = document.getElementById('grid'), count = document.getElementById('count');
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -229,10 +236,9 @@ footer a{color:inherit}
       var c = el('div', 'winner');
       c.appendChild(el('div', 'k', '★ ADEEBO AWARD'));
       c.appendChild(el('div', 'n', String(w.name || '')));
-      c.appendChild(el('div', 'p', String(w.points | 0) + ' Adeebo Points · ' + String(w.date || '')));
-      c.appendChild(el('div', 'c', String(w.code || '')));
-      var pic = String(w.picture || '');
-      if (/^https:\/\/github\.com\/user-attachments\/assets\/[0-9a-fA-F-]{36}$/.test(pic)) { var a = el('a', null, 'See the card ›'); a.href = pic; a.rel = 'noopener nofollow'; a.target = '_blank'; c.appendChild(a); }
+      // just the name - and a handle, if they gave one: the link is built here from a known site, never taken from the file
+      var site = SITES[String(w.site || '')], h = String(w.handle || '');
+      if (site && site.rx.test(h)) { var a = el('a', null, (w.site === 'linkedin' ? '' : '@') + h + ' on ' + site.name + ' ›'); a.href = site.url + encodeURIComponent(h); a.rel = 'noopener nofollow'; a.target = '_blank'; c.appendChild(a); }
       grid.appendChild(c);
     });
   }).catch(function () { count.textContent = "Couldn't load the list right now - try again in a moment."; });

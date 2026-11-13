@@ -239,14 +239,14 @@ namespace AdeeboMeter
                 foreach (var p in PortPool.OrderBy(x => r.Next()).Take(10))
                 {
                     var opts = PortPool.Where(x => x[1] != p[1]).Select(x => x[1]).Distinct().OrderBy(x => r.Next()).Take(3).Concat(new[] { p[1] }).OrderBy(x => r.Next()).ToArray();
-                    q.Q.Add(new[] { "Which port: " + p[0] + "?", p[1] }.Concat(opts).ToArray());
+                    q.Q.Add(new[] { L.T("Which port:") + " " + L.T(p[0]) + "?", p[1] }.Concat(opts).ToArray());
                 }
             else
                 for (int i = 0; i < 10; i++)
                 {
                     string a, cls; Addr(r, out a, out cls);
                     var opts = AddrKinds.Where(k => k != cls).OrderBy(x => r.Next()).Take(3).Concat(new[] { cls }).OrderBy(x => r.Next()).ToArray();
-                    q.Q.Add(new[] { "What kind of address is " + a + "?", cls }.Concat(opts).ToArray());
+                    q.Q.Add(new[] { L.T("What kind of address is") + " " + a + "?", cls }.Concat(opts).ToArray());
                 }
             return q;
         }

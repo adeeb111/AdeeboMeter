@@ -6,8 +6,8 @@ entry that came by email), computes the claim code with the secret key - exactly
 does - and only on a match adds the entry to docs/hall-of-fame.json.
 
 Never trusts the text it reads: the issue body arrives in an environment variable (never pasted into a shell line),
-names are cleaned to the same safe characters the app allows, the picture link must be a GitHub attachment, and the
-page shows every field as text (never as HTML).
+names are cleaned to the same safe characters the app allows, a social handle must fit that site's own rules (the page
+builds the link itself - never one typed in), and the page shows every field as text (never as HTML).
 
 Exit codes: 0 added (or already there), 2 the code doesn't match, 3 something is missing or wrong in the entry.
 Writes a short result to $GITHUB_OUTPUT (result=..., message=...) for the workflow to comment on the issue.
@@ -61,6 +61,31 @@ def field(body, label):
     return "" if v == "_No response_" else v
 
 
+# where a winner can be found: the site, the characters its handles allow, and the profile link the page builds from it
+SOCIAL = {
+    "github": (r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?", "github.com/"),
+    "linkedin": (r"[A-Za-z0-9-]{3,100}", "linkedin.com/in/"),
+    "x": (r"[A-Za-z0-9_]{1,15}", "x.com/"),
+    "instagram": (r"[A-Za-z0-9_.]{1,30}", "instagram.com/"),
+    "bluesky": (r"[A-Za-z0-9.-]{3,253}", "bsky.app/profile/"),
+}
+
+
+def social(where, handle):
+    # ("x", "ada") from the form's two fields; ("", "") when there's none or it doesn't fit the site's rules
+    w = (where or "").strip().lower()
+    w = {"github": "github", "linkedin": "linkedin", "x": "x", "instagram": "instagram", "bluesky": "bluesky"}.get(w, "")
+    h = (handle or "").strip()
+    if not w or not h:
+        return "", ""
+    rx, base = SOCIAL[w]
+    m = re.search(r"(?:https?://)?(?:www\.)?" + re.escape(base) + r"([^/?#\s]+)", h, re.I)   # a pasted profile link
+    if m:
+        h = m.group(1)
+    h = h.lstrip("@").strip().rstrip("/")
+    return (w, h) if re.fullmatch(rx, h) else ("", "")
+
+
 def out(result, message):
     p = os.environ.get("GITHUB_OUTPUT")
     if p:
@@ -77,10 +102,11 @@ def main():
         return 3
     body = os.environ.get("ISSUE_BODY", "")
     if body:
-        name, total, date, claim, pic = field(body, "Name on the card"), field(body, "Points on the card"), field(body, "Date on the card"), field(body, "Claim code"), field(body, "Your card")
+        name, total, date, claim = field(body, "Name on the card"), field(body, "Points on the card"), field(body, "Date on the card"), field(body, "Claim code")
+        where, handle = field(body, "Where people can find you (optional)"), field(body, "Your handle (optional)")
         via, ref = "form", os.environ.get("ISSUE_URL", "")
     else:
-        name, total, date, claim, pic = (os.environ.get(k, "") for k in ("IN_NAME", "IN_POINTS", "IN_DATE", "IN_CODE", "IN_PICTURE"))
+        name, total, date, claim, where, handle = (os.environ.get(k, "") for k in ("IN_NAME", "IN_POINTS", "IN_DATE", "IN_CODE", "IN_WHERE", "IN_HANDLE"))
         via, ref = "email", ""
     name = clean_name(name)
     claim = re.sub(r"\s+", "", claim or "").upper()
@@ -99,9 +125,7 @@ def main():
     if not hmac.compare_digest(code(key, name, total, date), claim):
         out("mismatch", "The claim code doesn't match the name, points and date. Type them exactly as they are on the card - or make the card again in AdeeboMeter.")
         return 2
-    # the picture: only a GitHub attachment link (the form's upload), never any other site
-    m = re.search(r"https://github\.com/user-attachments/assets/[0-9a-fA-F-]{36}", pic or "")
-    picture = m.group(0) if m else ""
+    site, handle = social(where, handle)
     with open(JSON, encoding="utf-8") as f:
         data = json.load(f)
     entries = data.setdefault("entries", [])
@@ -114,7 +138,7 @@ def main():
     author = os.environ.get("ISSUE_AUTHOR", "")
     if not re.fullmatch(r"[A-Za-z0-9-]{1,39}", author or ""):
         author = ""
-    entries.append({"name": name, "points": total, "date": date, "code": claim, "picture": picture, "via": via, "by": author, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
+    entries.append({"name": name, "points": total, "date": date, "code": claim, "site": site, "handle": handle, "via": via, "by": author, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
     entries.sort(key=lambda e: (e["date"], e["name"].lower()))
     with open(JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
