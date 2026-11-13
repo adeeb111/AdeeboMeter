@@ -416,7 +416,9 @@ AdeeboMeter differences from Topogram's version of this plan
 - Health tint: the page background shifts to a calm soft tint when green and flat grey when red - one repaint when the
   state changes, no particles, nothing moving.
 - Hour mark: at the top of each hour the face does one ~1 s reaction (blink or smile); at 22:00 and 23:00 a sleepy face
-  for a second. Full window only - the corner widget stays still. Skipped during a call, a game or a running tool.
+  for a second. In the full window AND on the corner widget (Adeeb, 13 Nov). On the widget it stays at its fade level
+  (never brightens), takes no clicks and draws ~10 extra frames once an hour. Skipped during a call, a game, a running
+  tool, a full-screen app or presentation / screen share.
 - "What the buddy noticed" strip on Overview: only after several days of history, only patterns seen 3+ times, only
   what was measured ("quieter since Tuesday", never "since you moved the router").
 - Shareable cards (award, roast, ISP letter, recap) hide network name, IPs, provider and place by default; an explicit
