@@ -299,7 +299,7 @@ namespace AdeeboMeter
     static class Cfg
     {
         // background work while only the widget runs
-        public static volatile int GwSec = 2, NetSec = 15, WifiSec = 10, AppsSec = 5;   /* Balanced (Adeeb, 2026-11-12: Balanced takes the old Engineer timings, Penny is the light plan). The internet check is on from a fresh install (Adeeb, 2026-11-09): it pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
+        public static volatile int GwSec = 2, NetSec = 15, WifiSec = 30, AppsSec = 5;   /* Wi-Fi every 30 s with the window closed (every 10 s while it is open) - one netsh start every 30 s, not every 10. */ /* Balanced (Adeeb, 2026-11-12: Balanced takes the old Engineer timings, Penny is the light plan). The internet check is on from a fresh install (Adeeb, 2026-11-09): it pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
         public static volatile bool Call = true;
         // engineer view (only while it's open)
         public static volatile string WidgetScreen = "";   // the screen the widget sits on ("" = the main screen); falls back to the main one if it's gone
@@ -335,7 +335,7 @@ namespace AdeeboMeter
             // Penny: the lightest touch. Balanced (the default; Engineer was merged into it - the same timings): every check close. Gamer: the same, plus more game servers, more often.
             if (p == "penny") { GwSec = 30; NetSec = 300; WifiSec = 120; AppsSec = 30; Call = false; GameBgSec = 60; GameBgServers = 3; }
             else if (p == "gamer") { GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 10; GameBgServers = 5; }
-            else { Preset = "balanced"; GwSec = 2; NetSec = 15; WifiSec = 10; AppsSec = 5; Call = true; GameBgSec = 30; GameBgServers = 3; }
+            else { Preset = "balanced"; GwSec = 2; NetSec = 15; WifiSec = 30; AppsSec = 5; Call = true; GameBgSec = 30; GameBgServers = 3; }
         }
         // background checks per minute, on top of the once-a-second counter read the widget always does
         public static int JobsPerMinute() { return JobsPerMinute(GwSec, NetSec, WifiSec, AppsSec, Preset == "penny" ? 60 : 10); }
@@ -352,7 +352,7 @@ namespace AdeeboMeter
         public static int JobsForPreset(string p)
         {
             if (p == "penny") return JobsPerMinute(30, 300, 120, 30, 60);
-            return JobsPerMinute(2, 15, 10, 5, 10);
+            return JobsPerMinute(2, 15, p == "gamer" ? 10 : 30, 5, 10);   // Balanced checks Wi-Fi every 30 s, Gamer every 10 s
         }
         public static IEnumerable<string> Lines()
         {
