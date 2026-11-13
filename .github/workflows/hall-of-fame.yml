@@ -53,11 +53,15 @@ jobs:
           git add docs/hall-of-fame.json
           git commit -m "Hall of Fame: a new Adeebo Award"
           # the claim code this run added - after any retry, success means it is really in the pushed file
-          CODE=$(python3 -c "import json; print(json.load(open('docs/hall-of-fame.json'))['entries'][-1]['code'])")
+          # the entry this run added: the one in the new file that wasn't in the old (the list is sorted by date, so not "the last")
+          git show HEAD~1:docs/hall-of-fame.json > /tmp/hof-old.json
+          CODE=$(python3 -c "import json; o={x['code'] for x in json.load(open('/tmp/hof-old.json'))['entries']}; print([x for x in json.load(open('docs/hall-of-fame.json'))['entries'] if x['code'] not in o][0]['code'])")
+          NAME=$(python3 -c "import json; o={x['code'] for x in json.load(open('/tmp/hof-old.json'))['entries']}; print([x for x in json.load(open('docs/hall-of-fame.json'))['entries'] if x['code'] not in o][0]['name'])")
           # someone else's card (or Adeeb) may have pushed meanwhile: take theirs and put ours on top, a few times
           for i in 1 2 3 4 5; do
             if git push; then
-              if grep -q "\"$CODE\"" docs/hall-of-fame.json; then exit 0; fi
+              # the entry with this code must carry this claimant's name - a code someone else already claimed isn't "added"
+              if CODE="$CODE" NAME="$NAME" python3 -c "import json,os,sys; e=json.load(open('docs/hall-of-fame.json'))['entries']; sys.exit(0 if any(x.get('code')==os.environ['CODE'] and x.get('name')==os.environ['NAME'] for x in e) else 1)"; then exit 0; fi
               echo "Pushed, but the entry isn't in the file (the issue changed meanwhile)"; exit 1
             fi
             sleep $((i * 3))

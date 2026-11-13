@@ -57,7 +57,7 @@ namespace AdeeboMeter
                 {
                     float[] ll = null; foreach (var kv in Places) if ((s.Where ?? "").IndexOf(kv.Key, StringComparison.OrdinalIgnoreCase) >= 0 || (s.Name ?? "").IndexOf(kv.Key, StringComparison.OrdinalIgnoreCase) >= 0) { ll = kv.Value; break; }
                     if (ll == null) { missing.Add(s.Name); continue; }
-                    var v = gp.Stat(gm.Id, s).Recent(60); double a = GameStat.Avg(v);
+                    var v = gp.Stat(gm.Id, s).Window(60, 3600); double a = GameStat.Avg(v);
                     Color c = double.IsNaN(a) ? Theme.Muted : a < 50 ? Theme.Green : a < 100 ? Theme.Amber : Theme.Red;
                     var pt = P(ll[1], ll[0]); float r = (best == s ? 9 : 7) * S;
                     using (var b = new SolidBrush(c)) using (var pen = new Pen(c, 2.5f * S))

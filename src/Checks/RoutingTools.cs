@@ -130,7 +130,7 @@ namespace AdeeboMeter
         }
 
         // ---------- listen for routing / switching control traffic on this segment (needs Wireshark + Npcap, nothing sent, nothing saved)
-        const string Filter = "ip proto 89 or ip proto 88 or ip proto 103 or ip proto 112 or ip proto 2 or udp port 520 or udp port 521 or udp port 1985 or udp port 3222 or udp port 646 or udp port 3784 or udp port 67 or (icmp6 and ip6[40] == 134) or ether proto 0x88cc or ether dst 01:00:0c:cc:cc:cc or ether dst 01:00:0c:cc:cc:cd or ether dst 01:80:c2:00:00:00 or ether dst 01:80:c2:00:00:14 or ether dst 01:80:c2:00:00:15 or ether dst 09:00:2b:00:00:05";
+        const string Filter = "ip proto 89 or ip proto 88 or ip proto 103 or ip proto 112 or ip proto 2 or udp port 520 or udp port 521 or udp port 1985 or udp port 3222 or udp port 646 or udp port 3784 or udp port 67 or udp port 546 or udp port 547 or (icmp6 and ip6[40] == 134) or ether proto 0x88cc or ether dst 01:00:0c:cc:cc:cc or ether dst 01:00:0c:cc:cc:cd or ether dst 01:80:c2:00:00:00 or ether dst 01:80:c2:00:00:14 or ether dst 01:80:c2:00:00:15 or ether dst 09:00:2b:00:00:05";
         static readonly string[] Fields = { "frame.protocols", "eth.src", "ip.src", "ipv6.src", "ospf.area_id", "vrrp.virt_rtr_id", "hsrp.group", "eigrp.as", "stp.root.hw", "stp.flags.tc", "dhcp.option.dhcp_server_id" };
         // the "who announces itself" preset: mDNS, SSDP / UPnP, LLMNR and NetBIOS - names and devices, not routing
         const string DiscFilter = "udp port 5353 or udp port 1900 or udp port 5355 or udp port 137 or udp port 138";
@@ -163,12 +163,12 @@ namespace AdeeboMeter
             // older Wireshark refuses some field names: only then once more with fewer (a quiet network is not a reason to listen twice)
             if (text.IndexOf("aren't valid", StringComparison.OrdinalIgnoreCase) >= 0) text = go(fields.Take(4).ToArray());
             if (text.StartsWith("ERR ", StringComparison.Ordinal)) { rows.Add(R(2, "Capture", Draw.Trunc(text.Substring(4), 90), "", "u")); return rows; }
-            var seen = new Dictionary<string, List<string[]>>();
+            var seen = new Dictionary<string, List<string[]>>(); var heard = new Dictionary<string, int>();   // every packet counted; the first 200 kept
             foreach (var line in text.Split('\n'))
             {
                 var f = line.TrimEnd('\r').Split('|'); if (f.Length < 4 || f[0] == "") continue;
                 string k = discovery ? DiscKind(f[0]) : Kind(f[0]); if (k == "") continue;
-                List<string[]> l; if (!seen.TryGetValue(k, out l)) { l = new List<string[]>(); seen[k] = l; } if (l.Count < 200) l.Add(f);
+                List<string[]> l; if (!seen.TryGetValue(k, out l)) { l = new List<string[]>(); seen[k] = l; } if (l.Count < 200) l.Add(f); int hc; heard.TryGetValue(k, out hc); heard[k] = hc + 1;
             }
             if (seen.Count == 0) rows.Add(discovery ? R(0, "Heard nothing", "no mDNS, SSDP, LLMNR or NetBIOS in " + secs + " s", "A quiet, well-run network - or one that blocks multicast between devices (common on guest Wi-Fi).", "m") : R(0, "Heard nothing", "no routing protocol, redundancy or switch control traffic in " + secs + " s", "That's how a user segment should look: routers keep their protocols on their own links.", "m"));
             foreach (var kv in seen.OrderBy(x => Order(x.Key)))
@@ -177,7 +177,7 @@ namespace AdeeboMeter
                 // DHCP: clients renewing send from their own address too - only distinct server ids (OFFER / ACK) are servers
                 int sources = kv.Key == "DHCP" ? kv.Value.Where(x => x.Length > 10 && x[10].Trim() != "").Select(x => x[10].Trim()).Distinct().Count() : from.Count;
                 string extra = discovery ? DiscExtra(kv.Value) : Extra(kv.Key, kv.Value); int lv; string adv = discovery ? DiscAdvice(kv.Key, out lv) : Advice(kv.Key, sources, out lv);
-                rows.Add(R(lv, kv.Key, kv.Value.Count + " packets from " + string.Join(", ", from.Take(4)) + (from.Count > 4 ? " +" + (from.Count - 4) : "") + extra, adv, "m"));
+                rows.Add(R(lv, kv.Key, heard[kv.Key] + " packets from " + string.Join(", ", from.Take(4)) + (from.Count > 4 ? " +" + (from.Count - 4) : "") + extra, adv, "m"));
             }
             return rows;
         }
@@ -187,7 +187,7 @@ namespace AdeeboMeter
             if (p.Contains(":ospf:")) return "OSPF"; if (p.Contains(":eigrp:")) return "EIGRP"; if (p.Contains(":rip:")) return "RIP"; if (p.Contains(":ripng:")) return "RIPng"; if (p.Contains(":pim:")) return "PIM";
             if (p.Contains(":isis:") || p.Contains(":osi:")) return "IS-IS"; if (p.Contains(":ldp:")) return "LDP"; if (p.Contains(":bfd")) return "BFD";
             if (p.Contains(":vrrp:")) return "VRRP"; if (p.Contains(":hsrp")) return "HSRP"; if (p.Contains(":glbp:")) return "GLBP";
-            if (p.Contains(":igmp:")) return "IGMP"; if (p.Contains(":icmpv6:")) return "IPv6 router advertisement"; if (p.Contains(":dhcp:") || p.Contains(":bootp:")) return "DHCP";
+            if (p.Contains(":igmp:")) return "IGMP"; if (p.Contains(":icmpv6:")) return "IPv6 router advertisement"; if (p.Contains(":dhcpv6:")) return "DHCPv6"; if (p.Contains(":dhcp:") || p.Contains(":bootp:")) return "DHCP";
             if (p.Contains(":lldp:")) return "LLDP"; if (p.Contains(":cdp:")) return "CDP"; if (p.Contains(":stp:")) return "Spanning tree"; if (p.Contains(":dtp:")) return "DTP"; if (p.Contains(":vtp:")) return "VTP";
             return "";
         }

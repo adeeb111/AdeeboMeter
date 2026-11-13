@@ -152,7 +152,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); var mon = Games.Monitored(); var gp = GamePing.Me;
             var list = Games.All.Where(g => mon.Contains(g.Id) && !g.Soon).Select(g =>
             {
-                var b = Best(g); var v = b == null ? Array.Empty<double>() : gp.Stat(g.Id, b).Recent(60);
+                var b = Best(g); var v = b == null ? Array.Empty<double>() : gp.Stat(g.Id, b).Window(60, 3600);
                 return new { G = g, B = b, Avg = GameStat.Avg(v), Loss = GameStat.Loss(v), Jit = GameStat.Jitter(v), N = v.Count(x => !double.IsNaN(x)) };
             }).Where(x => x.B != null && x.N > 0).OrderBy(x => x.Avg + 20 * (double.IsNaN(x.Loss) ? 0 : x.Loss) + 2 * (double.IsNaN(x.Jit) ? 0 : x.Jit)).ToList();
             if (list.Count == 0) { rows.Add(R(1, "No pings yet", "watch at least one game in the Gamer Zone - background game ping then measures its best region", "", "u")); return rows; }

@@ -130,7 +130,7 @@ namespace AdeeboMeter
             string hostOnly = d.Target != "" ? d.Target : input;
             var pin = WhyFails.Hosts(hostOnly).FirstOrDefault(x => x[1] == "Pins your site"); if (pin != null) r.Obs("w", 2, "Hosts file", pin[2]);
             var px = WhyFails.Proxy(hostOnly).FirstOrDefault(); if (px != null) r.Obs("w", 3, "Proxy", px[2]);
-            var clk = WhyFails.Clock().FirstOrDefault(); if (clk != null && clk[0] != "0") r.Obs(clk[4], int.Parse(clk[0], CultureInfo.InvariantCulture), "Your clock", clk[2]);
+            var clk = first == 4 ? WhyFails.Clock().FirstOrDefault() : null; /* only when the lock (TLS) failed - the one case it explains */ if (clk != null && clk[0] != "0") r.Obs(clk[4], int.Parse(clk[0], CultureInfo.InvariantCulture), "Your clock", clk[2]);
             string t = d.Target != "" ? d.Target : input;
             if (pin != null && (first < 0 || first >= 3)) { r.Conclude(2, "Your hosts file pins " + hostOnly + " to a fixed address (" + pin[2] + ") - this PC ignores DNS for it. If that address is old, the site breaks only here."); r.Next.Add("Remove the line from the hosts file (needs admin, or ask IT)."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; first = 99; }
             if (clk != null && clk[0] == "2" && first == 4) { r.Conclude(2, "The lock fails because your clock is wrong (" + clk[2] + ") - certificates look not-yet-valid or expired."); r.Next.Add("Settings > Time > Sync now."); first = 99; }

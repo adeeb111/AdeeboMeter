@@ -301,7 +301,7 @@ namespace AdeeboMeter
         {
             hits.Clear();
             var t = GamerTarget(); if (t == null) return Draw.Card(s, hits);   // the game ended between choosing this card and drawing it
-            var st = GamePing.Me.Stat(t.Item1.Id, t.Item2); var v = st.Recent(60);
+            var st = GamePing.Me.Stat(t.Item1.Id, t.Item2); var v = st.Window(60, 3600);
             double now = v.Length > 0 ? v[v.Length - 1] : double.NaN, avg = GameStat.Avg(v), jit = GameStat.Jitter(v), loss = GameStat.Loss(v);
             string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
             Color gc = grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey;

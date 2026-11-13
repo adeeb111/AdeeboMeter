@@ -1109,7 +1109,7 @@ why: Tells you when an outage began and ended.
 without: Down while the gateway is fine = provider problem.
 
 == kind.gw
-friendly: Gateway
+friendly: Gateway slow
 cat: term
 close: -1
 tag: Your router's response time.
@@ -1349,7 +1349,7 @@ why: Shows what latency and jitter really are, and whether a problem is the netw
 without: The stack and timing work without Wireshark.
 
 == travel.JTIME
-friendly: Where the time goes
+friendly: Where the time goes (pings)
 cat: term
 close: -1
 tag: Latency split into Wi-Fi, provider, distance and queues.
@@ -1479,7 +1479,7 @@ why: Most slowness is on the PC (a huge mailbox file, add-ins), not the network.
 without: -
 
 == travel.REAL
-friendly: The real packets
+friendly: The real packets (handshake)
 cat: term
 close: -1
 tag: The actual handshake, as Wireshark saw it.
@@ -2439,7 +2439,7 @@ why: 'Memory 70% used' says little; 400 pages a second read back from disk says 
 without: Local.
 
 == tb.disk
-friendly: Disk
+friendly: Disk (tool)
 cat: term
 close: -1
 tag: Who uses the disk, its health and its space.

@@ -49,7 +49,7 @@ namespace AdeeboMeter
             {
                 var best = GamePing.Me.Best(game) ?? game.Servers[0];
                 routes.Add(new Route { Label = game.Name + " " + best.Name, Host = best.Host });
-                var second = game.Servers.Where(z => z.Name != best.Name).Select(z => new { z, a = GameStat.Avg(GamePing.Me.Stat(game.Id, z).Recent(60)) }).OrderBy(z => double.IsNaN(z.a) ? 9999 : z.a).Select(z => z.z).FirstOrDefault();
+                var second = game.Servers.Where(z => z.Name != best.Name).Select(z => new { z, a = GameStat.Avg(GamePing.Me.Stat(game.Id, z).Window(60, 3600)) }).OrderBy(z => double.IsNaN(z.a) ? 9999 : z.a).Select(z => z.z).FirstOrDefault();
                 if (second != null) routes.Add(new Route { Label = game.Name + " " + second.Name, Host = second.Host });
             }
             else if (q != "")
@@ -261,13 +261,17 @@ namespace AdeeboMeter
             return r;
         }
         static List<double> Nums(string body, string rx) { return Regex.Matches(body, rx).Cast<Match>().Take(64).Select(mm => { double v; return double.TryParse(mm.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }).Where(v => !double.IsNaN(v)).ToList(); }
-        static string Get(string url)
+        static string Get(string url) { return Get(url, 1); }
+        // one redirect is followed when it stays on the modem itself (a status page that moved): never off to another host
+        static string Get(string url, int redirects)
         {
             try
             {
                 var req = (HttpWebRequest)WebRequest.Create(url); req.Timeout = 3000; req.ReadWriteTimeout = 3000; req.AllowAutoRedirect = false; req.Proxy = null;
                 using (var resp = (HttpWebResponse)req.GetResponse()) using (var s = resp.GetResponseStream()) using (var rd = new StreamReader(s))
                 {
+                    int code = (int)resp.StatusCode; string loc = resp.Headers["Location"] ?? ""; Uri next;
+                    if (code >= 300 && code < 400 && loc != "" && redirects > 0 && Uri.TryCreate(new Uri(url), loc, out next) && next.Host == new Uri(url).Host && (next.Scheme == "http" || next.Scheme == "https")) return Get(next.ToString(), redirects - 1);
                     var buf = new char[512 * 1024]; int n = 0, got; while (n < buf.Length && (got = rd.Read(buf, n, buf.Length - n)) > 0) n += got;
                     return new string(buf, 0, n);
                 }

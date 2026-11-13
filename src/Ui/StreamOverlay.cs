@@ -34,6 +34,9 @@ namespace AdeeboMeter
             M = m; FormBorderStyle = FormBorderStyle.None; TopMost = true; ShowInTaskbar = true; Text = "AdeeboMeter - lag graph";
             StartPosition = FormStartPosition.Manual; Size = new Size(Sc(320), Sc(110));
             var wa = Screen.PrimaryScreen.WorkingArea; Location = new Point(wa.Left + Sc(24), wa.Top + Sc(24));
+            // back where it was left - if that spot is still on a screen (a monitor unplugged since: the primary's corner)
+            var at = Cfg.OverlayAt.Split(','); int ox, oy;
+            if (at.Length == 2 && int.TryParse(at[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out ox) && int.TryParse(at[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out oy) && Screen.AllScreens.Any(sc => sc.WorkingArea.Contains(new Point(ox + Sc(20), oy + Sc(20))))) Location = new Point(ox, oy);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) down = e.Location; };
             MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) Location = new Point(Location.X + e.X - down.X, Location.Y + e.Y - down.Y); };
@@ -52,7 +55,7 @@ namespace AdeeboMeter
                 if (key == lastKey) return; lastKey = key; Invalidate(); if (png) WritePng();
             };
             tick.Start();
-            FormClosed += delegate { tick.Stop(); tick.Dispose(); menu.Dispose(); f1.Dispose(); f2.Dispose(); if (open == this) open = null; };
+            FormClosed += delegate { Cfg.OverlayAt = Location.X.ToString(CultureInfo.InvariantCulture) + "," + Location.Y.ToString(CultureInfo.InvariantCulture); Cfg.Save(); tick.Stop(); tick.Dispose(); menu.Dispose(); f1.Dispose(); f2.Dispose(); if (open == this) open = null; };
         }
         // what to show: the game you're playing (its best server), else the internet check
         void Series(out string title, out double[] v, out int step)   // step: seconds between samples

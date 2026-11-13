@@ -81,7 +81,7 @@ namespace AdeeboMeter
             if (err != null) { rows.Add(R(2, "Layers", "\"" + err + "\" isn't a layer I know - try: " + string.Join(", ", Known.Select(k => k.Key)) + ", or a preset: " + string.Join(", ", Presets.Select(p => p[0])), "", "u")); return rows; }
             int mtu = 1500; if (!string.IsNullOrWhiteSpace(mtuText) && (!int.TryParse(mtuText.Trim().Replace(",", ""), NumberStyles.None, CultureInfo.InvariantCulture, out mtu) || mtu < 576 || mtu > 9216)) { rows.Add(R(2, "MTU", "type a link MTU between 576 and 9216 (1500 = normal Ethernet)", "", "u")); return rows; }
             int payload = -1; if (!string.IsNullOrWhiteSpace(payloadText) && !int.TryParse(payloadText.Trim().Replace(",", ""), NumberStyles.None, CultureInfo.InvariantCulture, out payload)) { rows.Add(R(2, "Payload", "type the data size in bytes, e.g. 1400", "", "u")); return rows; }
-            int ips = st.Count(x => x.Kind == "i"); if (ips == 0) { rows.Add(R(2, "Layers", "add an IP layer (ipv4 or ipv6) - the MTU is counted against it", "", "u")); return rows; }
+            int ips = st.Count(x => x.Kind == "i"); if (ips > 1) rows.Add(R(1, "Layers", ips + " IP layers - both are counted inside the MTU. A tunnel's outer IP belongs to the tunnel layer (gre, ipsec, vxlan...), which already carries it.", "", "u")); if (ips == 0) { rows.Add(R(2, "Layers", "add an IP layer (ipv4 or ipv6) - the MTU is counted against it", "", "u")); return rows; }
             int pay = st.Where(x => x.Kind == "p").Sum(x => x.Bytes), ip = st.Where(x => x.Kind == "i").Sum(x => x.Bytes), tun = st.Where(x => x.Kind == "t").Sum(x => x.Bytes), shim = st.Where(x => x.Kind == "l").Sum(x => x.Bytes), frame = st.Where(x => x.Kind == "f").Sum(x => x.Bytes);
             bool approx = st.Any(x => x.Approx && x.Kind != "r"); string ap = approx ? "~" : "";
             int innerMtu = mtu - shim - tun;          // what the inner IP packet may be
@@ -170,6 +170,7 @@ namespace AdeeboMeter
                 double t = bytes * 8 / bps;
                 rows.Add(R(0, "Time", Dur(t) + " at the full " + Bits(bps), "", "i"));
                 rows.Add(R(3, "Realistic", Dur(t / 0.94) + " - TCP and IP headers take about 5-6%; Wi-Fi usually gets half to two thirds of its link rate", "", "i"));
+                if (!double.IsNaN(secs)) rows.Add(R(Math.Abs(secs - t) > Math.Max(1, t * 0.1) ? 1 : 3, "Your time", Dur(secs) + (Math.Abs(secs - t) > Math.Max(1, t * 0.1) ? " doesn't fit the size and speed (" + Dur(t) + ") - the size and speed were used" : " fits the size and speed"), "", "i"));
             }
             else if (!double.IsNaN(bytes) && !double.IsNaN(secs) && secs > 0)
             { bps = bytes * 8 / secs; rows.Add(R(0, "Speed needed", Bits(bps) + "  (" + ByteRate(bps) + ")", "Plus about 6% for headers: " + Bits(bps / 0.94) + " on the line.", "i")); }

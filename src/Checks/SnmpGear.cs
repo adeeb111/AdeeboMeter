@@ -14,6 +14,7 @@ namespace AdeeboMeter
     {
         static long Sn(Snmp.Vb v) { if (v == null || !Snmp.HasNum(v)) return -2; long n = v.Type == 2 && (v.Raw[0] & 0x80) != 0 ? -1 : 0; foreach (var b in v.Raw) n = n << 8 | b; return n; }
         static string I(long n) { return n.ToString(CultureInfo.InvariantCulture); }
+        static void More(List<string[]> rows, int total, int cap, string what) { if (total > cap) rows.Add(R(3, "Shown", "the first " + cap + " of " + total + " " + what, "", "m")); }   // a capped table says so
 
         // ---------- Snapshot: overview, interfaces, CPU and memory, sensors, neighbours - one run, one deadline, one Copy / Save
         public static List<string[]> Snapshot(string dev, string cred, Toolkit.Run run)
@@ -121,7 +122,9 @@ namespace AdeeboMeter
             }
             rows.Add(R(0, ep.ToString(), (fdb.Count >= 2000 ? "the first " : "") + all.Count + " MACs on " + perPort.Count + " ports" + (fdb.Count >= 2000 ? " - the table has more (reading stops at 2,000)" : ""), "Ports with many MACs are uplinks to other switches or access points. Type a MAC or IP to find one device.", "m"));
             Table(rows, new[] { "Port", "MACs", "VLANs", "One of them" }, all.GroupBy(e => e.Port).OrderByDescending(g => g.Count()).Take(300).Select(g => new[] { portName(g.Key), I(g.Count()), string.Join(",", g.Select(e => e.Vlan).Where(v => v != "").Distinct().Take(6)), g.First().Mac }).ToList(), all.GroupBy(e => e.Port).Take(300).Select(g => false).ToList());
+            More(rows, all.Select(e => e.Port).Distinct().Count(), 300, "ports");
             Table(rows, new[] { "MAC", "VLAN", "Port" }, all.Take(1000).Select(e => new[] { e.Mac, e.Vlan, portName(e.Port) }).ToList(), all.Take(1000).Select(e => false).ToList());
+            More(rows, all.Count, 1000, "MACs");
             return rows;
         }
 
@@ -141,6 +144,7 @@ namespace AdeeboMeter
                 var vm = Col(ep, c, "1.3.6.1.4.1.9.9.68.1.2.2.1.2", run, out err); var ifn0 = IfNames(ep, c, run);
                 rows.Add(R(0, ep.ToString(), vtp.Count + " VLANs (VTP)", "Access ports and their VLAN below; trunks carry many VLANs and aren't listed per VLAN here.", "m"));
                 Table(rows, new[] { "VLAN", "Name", "Access ports" }, vtp.Keys.OrderBy(k => k, Comparer<string>.Create(IdxCmp)).Take(500).Select(k => { string id = k.Split('.').Last(); return new[] { id, S(vtp, k, "", null), string.Join(", ", vm.Where(z => I((long)Snmp.Num(z.Value)) == id).Select(z => ifn0(z.Key)).Take(40)) }; }).ToList(), vtp.Keys.Take(500).Select(k => false).ToList());
+                More(rows, vtp.Count, 500, "VLANs");
                 return rows;
             }
             var pvid = Col(ep, c, q + "5.1.1", run, out err); var pn = BridgeNames(ep, c, run);
@@ -153,6 +157,7 @@ namespace AdeeboMeter
             rows.Add(R(0, ep.ToString(), list.Count + " VLANs" + (pvid.Count > 0 ? " · " + pvid.Count + " ports with a native VLAN" : ""), "Untagged: the port's own VLAN (a PC or printer). Tagged: trunks to other switches, access points or servers. A VLAN with no ports carries nothing here.", "m"));
             Missing(rows);
             Table(rows, new[] { "VLAN", "Name", "Untagged", "Tagged" }, list.Take(500).Select(r => new[] { r.i, r.Name, r.Un.Count == 0 ? "-" : r.Un.Count + ": " + string.Join(", ", r.Un), r.Tg.Count == 0 ? "-" : r.Tg.Count + ": " + string.Join(", ", r.Tg) }).ToList(), list.Take(500).Select(r => r.Empty).ToList());
+            More(rows, list.Count, 500, "VLANs");
             foreach (var r in list.Take(500)) rows.Add(new[] { "8", "", "VLAN " + r.i + " " + r.Name + "  untagged: " + string.Join(", ", r.Un) + "  tagged: " + string.Join(", ", r.Tg), "", "" });   // every port - for Copy as text only
             if (pvid.Count > 0)
             {
@@ -192,6 +197,7 @@ namespace AdeeboMeter
             rows.Add(R(list.Any(r => r.Bad) ? 2 : 0, ep.ToString(), list.Count(r => r.State == "powering") + " ports powering a device · " + list.Count(r => r.Bad) + " faults", "A fault is often a damaged cable or a device asking for more power than the port gives. Port numbers are the PoE table's own (group/port).", "m"));
             Missing(rows);
             Table(rows, new[] { "Port", "PoE", "State", "Class" }, list.Take(500).Select(r => new[] { r.Port, r.Adm, r.State, r.Cls }).ToList(), list.Take(500).Select(r => r.Bad).ToList());
+            More(rows, list.Count, 500, "ports");
             return rows;
         }
 
@@ -223,6 +229,7 @@ namespace AdeeboMeter
                 var mem = stack.Keys.Select(k => k.Split('.')).Where(z => z.Length == 2 && lags.Contains(z[0]) && z[1] != "0").Select(z => new { Lag = z[0], If = z[1], Up = L(op, z[1]) == 1, Known = L(op, z[1]) >= 0 }).ToList();
                 rows.Add(R(mem.Any(z => z.Known && !z.Up) ? 1 : 0, ep.ToString(), lags.Count + " LAGs · " + mem.Count + " member ports · " + mem.Count(z => z.Known && !z.Up) + " down", "From the interface stack - this device doesn't offer the LACP table, so only up / down is known, not whether each member is really in the bundle.", "m"));
                 Table(rows, new[] { "LAG", "Member", "Member link" }, mem.Take(500).Select(z => new[] { ifn0(z.Lag), ifn0(z.If), z.Known ? (z.Up ? "up" : "down") : "n/a" }).ToList(), mem.Take(500).Select(z => z.Known && !z.Up).ToList());
+                More(rows, mem.Count, 500, "members");
                 return rows;
             }
             var sel = Col(ep, c, a + "12", run, out err); var act = Col(ep, c, a + "21", run, out err, "member state"); var psys = Col(ep, c, a + "9", run, out err, "partner");   /* SelectedAggID, ActorOperState, PartnerOperSystemID */ var ifn = IfNames(ep, c, run);
@@ -236,11 +243,14 @@ namespace AdeeboMeter
             var partner = list.Where(r => r.Agg != "" && r.Ps != "n/a").GroupBy(r => r.Agg).ToDictionary(g => g.Key, g => g.GroupBy(r => r.Ps).OrderByDescending(h => h.Count()).First().Key);
             var shown = list.Where(r => r.Agg != "" || r.St != "n/a").Select(r => new { r.i, r.Lag, r.St, r.Ps, Odd = r.Agg != "" && partner.ContainsKey(r.Agg) && r.Ps != "n/a" && r.Ps != partner[r.Agg], Bad = r.St != "in bundle" && r.St != "n/a" || !r.Attached })
                 .Where(r => r.Lag != "-").OrderBy(r => r.Bad || r.Odd ? 0 : 1).ThenBy(r => r.Lag).ThenBy(r => r.i, Comparer<string>.Create(IdxCmp)).ToList();
-            if (shown.Count == 0) { rows.Add(R(3, ep.ToString(), "LACP is offered but no port is in a bundle", "", "m")); return rows; }
+            if (shown.Count == 0) { var lone0 = list.Where(r => r.St != "n/a").ToList(); rows.Add(R(lone0.Count > 0 ? 1 : 3, ep.ToString(), "LACP is offered but no port is in a bundle" + (lone0.Count > 0 ? " - " + lone0.Count + " port" + (lone0.Count == 1 ? "" : "s") + " run LACP without joining one: " + string.Join(", ", lone0.Take(20).Select(r => ifn(r.i))) : ""), "", "m")); return rows; }
             int nBad = shown.Count(r => r.Bad || r.Odd);
             rows.Add(R(nBad > 0 ? 1 : 0, ep.ToString(), shown.Select(r => r.Lag).Distinct().Count() + " LAGs · " + shown.Count + " members · " + nBad + " not right", "A member that isn't in sync, collecting and distributing carries no traffic. A partner different from the other members means that cable goes to a different switch.", "m"));
+            var lone = list.Where(r => r.Lag == "-" && r.St != "n/a").ToList();   // LACP on, but in no bundle: exactly what an admin looks for
+            if (lone.Count > 0) rows.Add(R(1, "Not in any bundle", lone.Count + " port" + (lone.Count == 1 ? "" : "s") + " run LACP but joined no LAG: " + string.Join(", ", lone.Take(20).Select(r => ifn(r.i))) + (lone.Count > 20 ? " ..." : ""), "Usually the other end isn't set up for LACP on that port, or it's in another bundle there.", "m"));
             Missing(rows);
             Table(rows, new[] { "LAG", "Member", "State", "Partner" }, shown.Take(500).Select(r => new[] { r.Lag, ifn(r.i), r.St + (r.Odd ? " · DIFFERENT PARTNER" : ""), r.Ps }).ToList(), shown.Take(500).Select(r => r.Bad || r.Odd).ToList());
+            More(rows, shown.Count, 500, "members");
             return rows;
         }
 

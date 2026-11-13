@@ -124,15 +124,17 @@ namespace AdeeboMeter
             // from the first second and shows the disk once they're ready
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
+                PerformanceCounter r = null, w = null, i = null;
                 try
                 {
-                    var r = new PerformanceCounter("PhysicalDisk", "Disk Read Bytes/sec", "_Total");
-                    var w = new PerformanceCounter("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
-                    var i = new PerformanceCounter("PhysicalDisk", "% Idle Time", "_Total");
+                    r = new PerformanceCounter("PhysicalDisk", "Disk Read Bytes/sec", "_Total");
+                    w = new PerformanceCounter("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
+                    i = new PerformanceCounter("PhysicalDisk", "% Idle Time", "_Total");
                     i.NextValue(); r.NextValue(); w.NextValue();
+                    if (stopping.WaitOne(0)) throw new OperationCanceledException("stopped");   // the sampler already ended: nobody would dispose them
                     pcRead = r; pcWrite = w; pcIdle = i;   // pcIdle last: the sampler starts using them when it is set
                 }
-                catch (Exception e) { pcIdle = null; Program.Log("Disk counters unavailable: " + e.Message); }
+                catch (Exception e) { pcIdle = null; foreach (var pc in new[] { r, w, i }) if (pc != null) try { pc.Dispose(); } catch { } if (!(e is OperationCanceledException)) Program.Log("Disk counters unavailable: " + e.Message); }
             });
             while (!stop)
             {

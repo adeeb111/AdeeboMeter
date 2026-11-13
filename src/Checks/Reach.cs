@@ -188,7 +188,7 @@ namespace AdeeboMeter
                 }
             }
             string rev = a.AddressFamily == AddressFamily.InterNetwork ? string.Join(".", a.GetAddressBytes().Reverse()) + ".in-addr.arpa" : string.Join(".", a.GetAddressBytes().Reverse().SelectMany(x => new[] { (x & 15).ToString("x", CultureInfo.InvariantCulture), (x >> 4).ToString("x", CultureInfo.InvariantCulture) })) + ".ip6.arpa";
-            var ll = Ask(a, 5355, DnsQ(rev, 12, 0x4242), 1000); string ln = ll != null ? FirstPtr(ll) : null;
+            var ll = Ask(a, 5355, DnsQ(rev, 12, 0x4242), 1000); string ln = ll != null && ll.Length >= 2 && ll[0] == 0x42 && ll[1] == 0x42 ? FirstPtr(ll) : null;   // only the answer to our own question (ID 0x4242)
             if (ln != null) { any = true; rows.Add(R(0, "LLMNR name", ln, "Windows answers this on home and work networks unless LLMNR is turned off by policy.", "m")); }
             var md = Ask(a, 5353, DnsQ(rev, 12, 0), 1000); string mn = md != null ? FirstPtr(md) : null;
             if (mn != null) { any = true; rows.Add(R(0, "mDNS (Bonjour) name", mn, "Apple devices, printers, smart TVs and Linux usually answer this.", "m")); }

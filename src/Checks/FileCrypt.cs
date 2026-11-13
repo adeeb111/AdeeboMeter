@@ -183,6 +183,13 @@ namespace AdeeboMeter
             return f;
         }
         static void Drop(string tmp) { try { if (tmp != null && File.Exists(tmp)) { File.SetAttributes(tmp, FileAttributes.Normal); File.Delete(tmp); } if (tmp != null && !File.Exists(tmp)) Track(tmp, false); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        // bytes that are already in memory, written the same safe way: a temp file first, renamed when complete
+        static void WriteSafe(string dest, byte[] data)
+        {
+            string tmp = null;
+            try { using (var o = Temp(Path.GetDirectoryName(dest), out tmp)) o.Write(data, 0, data.Length); Keep(tmp, dest); tmp = null; }
+            finally { if (tmp != null) Drop(tmp); }
+        }
         static void Keep(string tmp, string dest) { File.SetAttributes(tmp, FileAttributes.Normal); File.Move(tmp, dest); Track(tmp, false); }
         // the list of temp files in progress (data folder, parts.txt): a crash, a kill or a logoff can't leave hidden
         // half-decrypted plaintext behind for good - SweepParts at the next start deletes what's still listed
@@ -309,7 +316,7 @@ namespace AdeeboMeter
                 run.Status = "Encrypting for " + string.Join(", ", names) + "...";
                 var env = new EnvelopedCms(new ContentInfo(File.ReadAllBytes(file)), new AlgorithmIdentifier(new Oid("2.16.840.1.101.3.4.1.42")));   // AES-256-CBC
                 var rc = new CmsRecipientCollection(); foreach (var c in certs) rc.Add(new CmsRecipient(SubjectIdentifierType.IssuerAndSerialNumber, c));
-                env.Encrypt(rc); File.WriteAllBytes(outP7m, env.Encode());
+                env.Encrypt(rc); WriteSafe(outP7m, env.Encode());
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; rows.Add(R(2, "Encrypt", e.Message, "Recipients need an RSA certificate.", "")); return rows; }
             finally { foreach (var c in certs) c.Dispose(); }
@@ -359,7 +366,7 @@ namespace AdeeboMeter
                     run.Status = "Looking for your key and opening it...";
                     var env = new EnvelopedCms(); env.Decode(File.ReadAllBytes(file)); env.Decrypt();   // Windows finds the matching private key in your store
                     string name = fi.Name.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase) ? fi.Name.Substring(0, fi.Name.Length - 4) : fi.Name + ".opened";
-                    string dest = FreeName(fi.DirectoryName, name); File.WriteAllBytes(dest, env.ContentInfo.Content);
+                    string dest = FreeName(fi.DirectoryName, name); WriteSafe(dest, env.ContentInfo.Content);
                     rows.Add(new[] { "0", "Opened", Path.GetFileName(dest), "", "m", "show:" + dest });
                     rows.Add(R(3, "Tamper check", "none in this format", "A standard .p7m is encrypted but not sealed: a change on the way isn't detected. The .adeebo format checks it.", ""));
                     if (Risky(dest)) rows.Add(R(1, "It's a program", Path.GetExtension(dest) + " - it runs when opened", "Only open it if you were expecting a program from this person.", ""));

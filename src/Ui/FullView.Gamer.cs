@@ -289,14 +289,15 @@ namespace AdeeboMeter
                 float c1 = cx + 230 * S, c2 = c1 + 90 * S, c3 = c2 + 80 * S, c4 = c3 + 70 * S, c5 = c4 + 110 * S;
                 foreach (var s in rows)
                 {
-                    var st = GamePing.Me.Stat(gm.Id, s); var v = st.Recent(60);
+                    var st = GamePing.Me.Stat(gm.Id, s); var v = st.Window(60, 3600);
                     double avg = GameStat.Avg(v), p95 = GameStat.Pct(v, 0.95), jit = GameStat.Jitter(v), loss = GameStat.Loss(v), now = v.Length > 0 ? v[v.Length - 1] : double.NaN;
                     string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
                     bool isBest = best != null && best.Name == s.Name;
                     g.DrawString(s.Name + (isBest ? "  ★" : ""), Draw.fBodyB, ink, new RectangleF(cx, cy, 220 * S, 18 * S), nowrap);
                     string how = (s.Where ?? "") + " · " + (s.Kind == "valve" ? "Valve server" : s.Kind == "exact" ? "exact" : "region estimate") + " · " + (st.Used != "" ? st.Used : s.Method);
                     g.DrawString(how, Draw.fSmall, muted, new RectangleF(cx, cy + 17 * S, 220 * S, 16 * S), nowrap);
-                    using (var pb = new SolidBrush(GradeColor(grade))) g.DrawString(Ms(now) + " ms", Draw.fBodyB, pb, c1, cy + 6 * S);
+                    double ageS = st.LastAt == DateTime.MinValue ? 0 : (DateTime.Now - st.LastAt).TotalSeconds;   // a slow-paced server: say how old "now" is
+                    using (var pb = new SolidBrush(GradeColor(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
                     g.DrawString("avg " + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
                     g.DrawString("jitter " + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
                     g.DrawString("loss " + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);

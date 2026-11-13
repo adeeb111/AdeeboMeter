@@ -123,11 +123,10 @@ namespace AdeeboMeter
                     if (ip == null) why = "no address";
                     else using (var sock = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
                     {
-                        var ar = sock.BeginConnect(ip, 80, null, null);
-                        if (!ar.AsyncWaitHandle.WaitOne(4000)) why = "port 80 blocked";
+                        if (!Toolkit.ConnectWithin(sock, ip, 80, 4000)) why = "port 80 blocked";
                         else
                         {
-                            sock.EndConnect(ar); sock.ReceiveTimeout = 4000;
+                            sock.ReceiveTimeout = 4000;
                             var req = Encoding.ASCII.GetBytes("GET /connecttest.txt HTTP/1.1\r\nHost: " + NcsiHost + "\r\nUser-Agent: AdeeboMeter\r\nConnection: close\r\n\r\n");
                             sock.Send(req);
                             var buf = new byte[4096]; int got = 0, n;
@@ -238,9 +237,9 @@ namespace AdeeboMeter
             try
             {
                 sock = new Socket(target.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                tcpSw = Stopwatch.StartNew(); var ar = sock.BeginConnect(target, port, null, null);
-                if (!ar.AsyncWaitHandle.WaitOne(4000)) { tcpErr = "timeout"; sock.Close(); sock = null; }
-                else { sock.EndConnect(ar); tcpMs = tcpSw.Elapsed.TotalMilliseconds; r.TcpMs = tcpMs; r.Ip = target.ToString(); r.Port = port; }
+                tcpSw = Stopwatch.StartNew();
+                if (!Toolkit.ConnectWithin(sock, target, port, 4000)) { tcpErr = "timeout"; sock = null; }
+                else { tcpMs = tcpSw.Elapsed.TotalMilliseconds; r.TcpMs = tcpMs; r.Ip = target.ToString(); r.Port = port; }
             }
             catch (SocketException se) { tcpFailMs = tcpSw != null ? tcpSw.Elapsed.TotalMilliseconds : 0; tcpErr = se.SocketErrorCode == SocketError.ConnectionRefused ? "refused" : se.SocketErrorCode.ToString(); if (sock != null) sock.Close(); sock = null; }
             catch (ObjectDisposedException) { tcpErr = "timeout"; sock = null; }
@@ -278,8 +277,8 @@ namespace AdeeboMeter
                 var sw = Stopwatch.StartNew(); string sni = IPAddress.TryParse(host, out lit) ? target.ToString() : host;
                 var allowed = SslProtocols.Tls12 | (Tls13Client() ? (SslProtocols)12288 : 0);
                 var task = Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, allowed, false));
-                bool done = false; string tErr = "";
-                try { done = task.Wait(8000); } catch (AggregateException ae) { Exception ie = ae; while (ie.InnerException != null) ie = ie.InnerException; tErr = ie.Message; done = true; }
+                bool done = false; string tErr = ""; int tCode = 0;
+                try { done = task.Wait(8000); } catch (AggregateException ae) { Exception ie = ae; while (ie.InnerException != null) ie = ie.InnerException; tErr = ie.Message; var w32 = ie as System.ComponentModel.Win32Exception; tCode = w32 != null ? w32.NativeErrorCode : ie.HResult; done = true; }
                 tlsUntrusted = cert != null && errs != SslPolicyErrors.None;
                 if (!done) { tlsStalled = true; step(4, 2, "stalls"); try { sock.Close(); } catch { } try { task.Wait(2000); } catch { } try { ssl.Dispose(); } catch { } stream = Stream.Null; }
                 else if (tlsUntrusted || tErr == "")
@@ -303,7 +302,7 @@ namespace AdeeboMeter
                 else
                 {
                     // handshake refused before any certificate: most often the server only speaks TLS 1.0 / 1.1
-                    tlsLegacy = cert == null && (tErr.IndexOf("algorithm", StringComparison.OrdinalIgnoreCase) >= 0 || tErr.IndexOf("protocol", StringComparison.OrdinalIgnoreCase) >= 0 || tErr.IndexOf("handshake", StringComparison.OrdinalIgnoreCase) >= 0);
+                    tlsLegacy = cert == null && (tCode == unchecked((int)0x80090331) || tCode == unchecked((int)0x80090302) || tCode == unchecked((int)0x80090326) || tErr.IndexOf("algorithm", StringComparison.OrdinalIgnoreCase) >= 0 || tErr.IndexOf("protocol", StringComparison.OrdinalIgnoreCase) >= 0 || tErr.IndexOf("handshake", StringComparison.OrdinalIgnoreCase) >= 0);   // Windows' own error codes (any language): no common algorithm / unsupported / illegal message; the words are only a fallback
                     tlsFailed = true; step(4, 2, tlsLegacy ? "legacy TLS?" : "failed");
                     r.AddCard("TLS", new List<string[]> { new[] { "Error", Draw.Trunc(tErr, 40), "2" }, new[] { "Offered by AdeeboMeter", Tls13Client() ? "TLS 1.2, 1.3" : "TLS 1.2" } });
                     try { ssl.Dispose(); } catch { } stream = Stream.Null;
@@ -347,8 +346,8 @@ namespace AdeeboMeter
                 {
                     using (var s6 = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp))
                     {
-                        var sw6 = Stopwatch.StartNew(); var ar6 = s6.BeginConnect(v6, port, null, null);
-                        if (ar6.AsyncWaitHandle.WaitOne(3000)) { s6.EndConnect(ar6); t6 = sw6.Elapsed.TotalMilliseconds; } else err6 = "timeout";
+                        var sw6 = Stopwatch.StartNew();
+                        if (Toolkit.ConnectWithin(s6, v6, port, 3000)) { t6 = sw6.Elapsed.TotalMilliseconds; } else err6 = "timeout";
                     }
                 }
                 catch (SocketException se6) { err6 = se6.SocketErrorCode == SocketError.NetworkUnreachable || se6.SocketErrorCode == SocketError.HostUnreachable ? "this network has no IPv6 route" : se6.SocketErrorCode.ToString(); }

@@ -249,7 +249,7 @@ namespace AdeeboMeter
             err = ""; p = (p ?? "").Trim().Trim('"');
             try
             {
-                if (p == "" || !Path.IsPathRooted(p) || p.StartsWith(@"\\", StringComparison.Ordinal)) { err = "type the full path of a saved .txt result"; return null; }
+                if (p == "" || !Path.IsPathRooted(p) || p.StartsWith(@"\\", StringComparison.Ordinal)) { err = p.StartsWith(@"\\", StringComparison.Ordinal) ? "local paths only - copy the file from the share to this PC first" : "type the full path of a saved .txt result"; return null; }
                 var fi = new FileInfo(p); if (!fi.Exists) { err = "not found"; return null; } if (fi.Length > 4 << 20) { err = "bigger than 4 MB - not a saved result"; return null; }
                 return File.ReadAllLines(fi.FullName);
             }
@@ -375,7 +375,9 @@ namespace AdeeboMeter
         public static List<string[]> Shares(string host)
         {
             var rows = new List<string[]>(); string h = (host ?? "").Trim().TrimStart('\\');
-            if (h == "" || !Regex.IsMatch(h, @"^[\w.-]{1,253}$")) { rows.Add(R(2, "Host", "type a PC, NAS or server name - e.g. nas01 or 192.168.1.20", "", "u")); return rows; }
+            IPAddress v6h; if (h.StartsWith("[", StringComparison.Ordinal) && h.EndsWith("]", StringComparison.Ordinal)) h = h.Substring(1, h.Length - 2);   // [2001:db8::1] - Windows takes the bare address
+            bool isV6 = IPAddress.TryParse(h, out v6h) && v6h.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6;
+            if (h == "" || (!isV6 && !Regex.IsMatch(h, @"^[\w.-]{1,253}$"))) { rows.Add(R(2, "Host", "type a PC, NAS or server name - e.g. nas01 or 192.168.1.20", "", "u")); return rows; }
             IntPtr buf; int read, total, rc;
             try { rc = NetShareEnum(@"\\" + h, 1, out buf, -1, out read, out total, IntPtr.Zero); }
             catch (DllNotFoundException) { rows.Add(R(3, h, "not available on this system", "", "m")); return rows; } catch (EntryPointNotFoundException) { rows.Add(R(3, h, "not available on this system", "", "m")); return rows; }
@@ -386,6 +388,7 @@ namespace AdeeboMeter
             var vis = list.Where(x => !x.Name.EndsWith("$", StringComparison.Ordinal)).ToList(); var hid = list.Count - vis.Count;
             rows.Add(R(0, @"\\" + h, vis.Count + " shared folders" + (hid > 0 ? " · " + hid + " hidden admin shares ($)" : ""), "Listed with your own Windows account - nothing is opened or read.", "m"));
             foreach (var x in vis.Concat(list.Where(z => z.Name.EndsWith("$", StringComparison.Ordinal))).Take(100)) rows.Add(R(3, x.Name, ((x.Type & 0xFF) == 0 ? "folder" : (x.Type & 0xFF) == 1 ? "printer" : (x.Type & 0xFF) == 3 ? "IPC" : "special") + (string.IsNullOrEmpty(x.Remark) ? "" : " · " + x.Remark), "", "m"));
+            if (list.Count > 100) rows.Add(R(3, "Shown", "the first 100 of " + list.Count + " shares", "", "m"));
             return rows;
         }
 
@@ -396,7 +399,7 @@ namespace AdeeboMeter
             var evs = EvLog.Recent("System", "EventID=7000 or EventID=7001 or EventID=7009 or EventID=7011 or EventID=7022 or EventID=7023 or EventID=7024 or EventID=7031 or EventID=7034", 24 * 7, 500, out err);
             if (err != "") { rows.Add(R(3, "System log", err, "", "w")); return rows; }
             var by = evs.Select(e => new { e, Svc = EvLog.Field(e.Xml, "param1") }).Where(x => x.Svc != "").GroupBy(x => x.Svc).OrderByDescending(g => g.Count()).ToList();
-            rows.Add(R(by.Count == 0 ? 0 : 1, "Last 7 days", by.Count == 0 ? "no service failed to start or stopped unexpectedly" : by.Count + " services had trouble", "From Windows' own System log (Service Control Manager).", "w"));
+            rows.Add(R(by.Count == 0 ? 0 : 1, "Last 7 days", by.Count == 0 ? "no service failed to start or stopped unexpectedly" : by.Count + " services had trouble" + (evs.Count >= 500 ? " (from the newest 500 events)" : ""), "From Windows' own System log (Service Control Manager).", "w"));
             foreach (var g in by.Take(25))
             {
                 var f = g.First(); bool crash = g.Any(x => x.e.Id == 7031 || x.e.Id == 7034);

@@ -319,7 +319,7 @@ namespace AdeeboMeter
         public static volatile string WidgetStyle = "auto";
         // Simple (the dots, What's wrong?, speed, history, Gamer Zone) or Pro (every tab). "" = not chosen yet (a new install:
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
-        public static volatile string Mode = "", Lang = "en", TbView = "q", LearnView = "goal";   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
+        public static volatile string Mode = "", Lang = "en", TbView = "q", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
         public static volatile bool Points = true;   // Adeebo Points (Settings): on from day 1; off hides the button and pauses earning, the total is kept
         public static volatile string SpeedServer = "auto";   // the speed test's server: "auto" (Cloudflare, nearest) or an id from the list
         public static bool Simple { get { return Mode != "pro"; } }   // auto (follows what you are doing) / everyday / gamer
@@ -363,7 +363,7 @@ namespace AdeeboMeter
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
-            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "lview=" + LearnView; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
+            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
@@ -406,6 +406,7 @@ namespace AdeeboMeter
                 case "speedsrv": SpeedServer = System.Text.RegularExpressions.Regex.IsMatch(v ?? "", "^[a-z0-9-]{1,40}$") ? v : "auto"; break;
                 case "tbview": TbView = v == "list" ? "list" : "q"; break;
                 case "lview": LearnView = v == "all" ? "all" : "goal"; break;
+                case "ovat": OverlayAt = System.Text.RegularExpressions.Regex.IsMatch(v, "^-?[0-9]{1,6},-?[0-9]{1,6}$") ? v : ""; break;
                 case "lang": Lang = L.Languages.Any(l => l[0] == v) ? v : "en"; break;
                 case "mode": Mode = v == "simple" || v == "pro" ? v : ""; break;
                 case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" || v == "calls" || v == "engineer" ? v : "auto"; break;
@@ -486,6 +487,7 @@ namespace AdeeboMeter
     {
         static IntPtr h = IntPtr.Zero;
         static readonly object k = new object();
+        static volatile bool jobWarned;
         public static void Add(Process p)
         {
             try
@@ -503,7 +505,7 @@ namespace AdeeboMeter
                         finally { Marshal.FreeHGlobal(buf); }
                     }
                 }
-                Native.AssignProcessToJobObject(h, p.Handle);
+                if (!Native.AssignProcessToJobObject(h, p.Handle) && !jobWarned) { jobWarned = true; Program.Log("job: couldn't attach a helper to the kill-on-exit job (this app may run inside another job) - helpers may outlive a crash"); }
             }
             catch { }
         }

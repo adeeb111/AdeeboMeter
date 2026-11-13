@@ -82,6 +82,7 @@ namespace AdeeboMeter
             var list = new List<Rec>();
             foreach (var k in pk.OrderBy(x => x.Abs))
             {
+                if ((k.Proto == 1 || k.Proto == 58) && f.Remote != "" && !Belongs(k, f)) continue;   // ICMP kept before the far end was known, about someone else
                 string s = Plain(k.Src);
                 var r = new Rec { T = k.Abs - t0, Out = s != f.Remote, Len = k.Len, IpLen = k.IpLen, Proto = k.Proto, Flags = k.Flags, Win = k.Win, PayLen = k.PayLen, Ttl = k.Ttl, Dscp = k.Dscp, Seq = k.Seq, Ack = k.Ack };
                 r.LPort = r.Out ? k.SrcPort : k.DstPort;
@@ -110,8 +111,8 @@ namespace AdeeboMeter
                 if (r.PayLen > 0)
                 {
                     uint end = r.Seq + (uint)r.PayLen;
-                    if (have && (int)(end - hi0) <= 0) r.Resend = true;
-                    else seen[r.Out] = end;
+                    if (have && (int)(r.Seq - hi0) < 0) r.Resend = true;   // starts below what was already sent: resent, even when only partly
+                    if (!have || (int)(end - hi0) > 0) seen[r.Out] = end;
                 }
                 else if ((r.Flags & 0x02) != 0) seen[r.Out] = r.Seq + 1;   // SYN takes one sequence number
                 if (r.PayLen == 0 && (r.Flags & 0x10) != 0 && (r.Flags & 0x07) == 0)
@@ -243,7 +244,7 @@ namespace AdeeboMeter
             if (kind == "local") Local(findings, data);
             // the verdict comes first: the worst finding, or "looks healthy"
             var worst = findings.OrderByDescending(n => n.Lv == 2 ? 3 : n.Lv == 1 ? 2 : n.Lv == 0 ? 0 : 1).FirstOrDefault();
-            string summary = data.Count + " packets over " + At(dur) + " · " + inb.Count + " in, " + outb.Count + " out · " + KindName(kind);
+            int icmpN = list.Count - data.Count; string summary = list.Count + " packets over " + At(dur) + " · " + inb.Count + " in, " + outb.Count + " out" + (icmpN > 0 ? ", " + icmpN + " ICMP" : "") + " · " + KindName(kind);
             if (worst == null || (worst.Lv != 1 && worst.Lv != 2)) notes.Add(N(0, "Looks healthy", summary + ". Nothing in these packets points at a problem.", double.NaN));
             else notes.Add(N(worst.Lv, "In short: " + worst.Title.Substring(0, 1).ToLowerInvariant() + worst.Title.Substring(1), summary + ". The details are below.", worst.At));
             notes.AddRange(findings.OrderByDescending(n => n.Lv == 2 ? 3 : n.Lv == 1 ? 2 : n.Lv == 0 ? 1 : 0).ThenBy(n => double.IsNaN(n.At) ? 1e9 : n.At));
@@ -345,7 +346,7 @@ namespace AdeeboMeter
             if (q.Count > 0 && a.Count == 0) { n.Add(N(2, "The DNS server didn't answer", q.Count + " question(s), no answer - this server is down or blocked; Windows tries the next one after about a second.", q[0].T)); return; }
             if (q.Count > a.Count && a.Count > 0) n.Add(N(1, "Some questions were asked twice", (q.Count - a.Count) + " question(s) went unanswered and were repeated - each costs about a second.", q[0].T));
             var times = new List<double>(); foreach (var r in a) { var before = q.LastOrDefault(x => x.T <= r.T); if (before != null) times.Add(r.T - before.T); }
-            if (times.Count > 0) { double m = Median(times); n.Add(N(m > 0.1 ? 1 : 0, "Answer time", Ms(m) + " typical" + (m > 0.1 ? " - slow; every new site waits this long first" : "") + ".", double.NaN)); }
+            if (times.Count > 0) { double m = Median(times); n.Add(N(m > 0.1 ? 1 : 0, "Answer time", Ms(m) + " typical" + (m > 0.1 ? " - slow; every new site waits this long first" : "") + ". (Each answer is paired with the question just before it - a resent question can make this look a little faster.)", double.NaN)); }
         }
         static void Vpn(List<Note> n, List<Rec> data)
         {
@@ -357,8 +358,20 @@ namespace AdeeboMeter
         static void Local(List<Note> n, List<Rec> data)
         {
             var times = new List<double>();
-            for (int i = 0; i < data.Count; i++) if (data[i].Out && (data[i].PayLen > 0 || data[i].Proto != 6)) { var rep = data.Skip(i + 1).FirstOrDefault(x => !x.Out); if (rep != null) times.Add(rep.T - data[i].T); }
-            if (times.Count == 0) return; double m = Median(times), mx = times.Max();
+            // a request (data from this PC) and the device's next packet with data in it - a bare ACK is not an answer
+            Func<Rec, bool> hasData = x => x.PayLen > 0 || x.Proto != 6;
+            int j = 0;
+            for (int i = 0; i < data.Count; i++)
+            {
+                if (!data[i].Out || !hasData(data[i])) continue;
+                if (j <= i) j = i + 1; while (j < data.Count && (data[j].Out || !hasData(data[j]))) j++;
+                if (j < data.Count) times.Add(data[j].T - data[i].T);
+            }
+            if (times.Count == 0)
+            {
+                if (data.Any(x => !x.Out && hasData(x))) n.Add(N(3, "How fast the device answers", "can't tell from this one - only the device sent data (a download), this PC just acknowledged it. Its speed shows in the transfer itself.", double.NaN));
+                return;
+            } double m = Median(times), mx = times.Max();
             n.Add(N(m > 0.2 ? 1 : 0, "How fast the device answers", Ms(m) + " typical, " + Ms(mx) + " at worst" + (m > 0.2 ? " - slow for a device on your own network; the device itself is busy or asleep (printers and NAS drives wake up slowly)" : " - the local network is fine") + ".", double.NaN));
         }
 
@@ -435,7 +448,9 @@ namespace AdeeboMeter
                 try
                 {
                     if (F.Remote == "" || !Directory.Exists(LiveCapture.RingDir)) return got;
-                    var newest = Directory.GetFiles(LiveCapture.RingDir, "*.pcapng").OrderByDescending(x => System.IO.File.GetLastWriteTimeUtc(x)).Take(1).ToList();   // the newest file only: one 20 MB read, then let go
+                    var ring = Directory.GetFiles(LiveCapture.RingDir, "*.pcapng").OrderByDescending(x => System.IO.File.GetLastWriteTimeUtc(x)).Take(2).ToList();
+                    // the newest file; the one before too only when the newest began inside the last 20 s (two 20 MB reads at most, then let go)
+                    var newest = ring.Take(ring.Count > 1 && (DateTime.UtcNow - System.IO.File.GetCreationTimeUtc(ring[0])).TotalSeconds < 20 ? 2 : 1).ToList();
                     foreach (var rf in newest)
                     {
                         byte[] b; using (var fs = new FileStream(rf, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) { if (fs.Length > 32L * 1024 * 1024) continue; b = new byte[fs.Length]; int g = 0, n; while (g < b.Length && (n = fs.Read(b, g, b.Length - g)) > 0) g += n; }

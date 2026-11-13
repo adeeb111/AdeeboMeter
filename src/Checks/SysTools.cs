@@ -145,7 +145,7 @@ namespace AdeeboMeter
                 {
                     var targets = msg.Rrs.Where(x => x.Type == "SRV").Select(x => x.Data.Split(' ').Last().TrimEnd('.')).Distinct().Take(6).ToList();
                     rows.Add(R(0, "DNS record for domain controllers", targets.Count + " listed: " + string.Join(", ", targets), "", "m"));
-                    foreach (var t in targets.Take(3)) { try { var ip = Dns.GetHostAddresses(t).FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork); if (ip != null) dcs.Add(Tuple.Create(t, ip)); } catch { } }
+                    foreach (var t in targets.Take(3)) { try { var all = Dns.GetHostAddresses(t); var ip = all.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork) ?? all.FirstOrDefault(); if (ip != null) dcs.Add(Tuple.Create(t, ip)); else rows.Add(R(2, t, "its name doesn't resolve - its ports weren't tested", "", "m")); } catch { } }
                 }
             }
             var ports = new[] { new[] { "88", "Kerberos" }, new[] { "389", "LDAP" }, new[] { "636", "LDAPS" }, new[] { "445", "SMB (Group Policy files)" }, new[] { "135", "RPC" }, new[] { "3268", "Global catalog" } };
@@ -204,7 +204,7 @@ namespace AdeeboMeter
             }
             var groups = Regex.Match(o, @"The user is a part of the following security groups\s*-+\s*([\s\S]*?)(\r?\n\s*\r?\n|$)");
             if (groups.Success) { var g = groups.Groups[1].Value.Split('\n').Select(x => x.Trim()).Where(x => x != "").ToList(); rows.Add(R(3, "Your security groups", g.Count + ": " + Draw.Trunc(string.Join(", ", g.Take(15)), 300), "", "w")); }
-            if (rows.Count == 0) rows.Add(R(3, "Group Policy", Draw.Trunc(o.Trim(), 200), "", "w"));
+            if (rows.Count == 0) rows.Add(R(3, "Group Policy", Draw.Trunc(o.Trim(), 200), "Windows answered in a language this view can't read line by line - rsop.msc shows the same results in full.", "w"));
             return rows;
         }
 
@@ -276,7 +276,7 @@ namespace AdeeboMeter
             Func<Conn, bool> loop = c => c.Local.StartsWith("127.", StringComparison.Ordinal) || c.Local.StartsWith("[::1]", StringComparison.Ordinal);
             var exposed = tcp.Where(c => !loop(c)).OrderBy(c => c.LocalPort).ToList();
             var local = tcp.Where(loop).ToList();
-            rows.Add(R(3, "Listening", exposed.Count + " TCP ports open to the network · " + local.Count + " only to this PC · " + udp.Count + " UDP", "Ports open to the network can be reached by other devices if the firewall lets them. AdeeboMeter itself never listens.", "w"));
+            rows.Add(R(3, "Listening", exposed.Count + " TCP ports open to the network · " + local.Count + " only to this PC · " + udp.Count + " UDP sockets (their bind address isn't shown, so some may be this-PC-only)", "Ports open to the network can be reached by other devices if the firewall lets them. AdeeboMeter itself never listens.", "w"));
             foreach (var g in exposed.GroupBy(c => c.Proc).OrderBy(g => g.Min(c => c.LocalPort)).Take(25))
             {
                 var ports = g.Select(c => c.LocalPort).Distinct().OrderBy(p => p).ToList();

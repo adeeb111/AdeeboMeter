@@ -47,7 +47,7 @@ namespace AdeeboMeter
             }
             // 3. power: selective suspend, battery saver
             string ss = SelectiveSuspend();
-            if (ss == "on") { rows.Add(R(1, "USB power saving", "on - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings › USB selective suspend › Disabled (you change it; AdeeboMeter doesn't).", "w")); warn++; if (next == "") next = "Turn off USB selective suspend and see if it stops."; }
+            if (ss.StartsWith("on", StringComparison.Ordinal)) { rows.Add(R(1, "USB power saving", ss + " - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings › USB selective suspend › Disabled (you change it; AdeeboMeter doesn't).", "w")); warn++; if (next == "") next = "Turn off USB selective suspend and see if it stops."; }
             else if (ss == "off") rows.Add(R(0, "USB power saving", "off - Windows won't put USB devices to sleep", "", "w"));
             PowerStatus ps; if (GetSystemPowerStatus(out ps) && ps.SystemStatus == 1) { rows.Add(R(1, "Battery saver", "on - it cuts power to some devices", "Plug the laptop in, or turn battery saver off, and try again.", "w")); warn++; }
             // 4. a USB network adapter or a phone's tethering: is the link actually up?
@@ -77,7 +77,8 @@ namespace AdeeboMeter
                 string t = Job.Run(pc, "/qh SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226", 8000) ?? "";
                 var m = Regex.Matches(t, @"0x0000000([01])\s*$", RegexOptions.Multiline);
                 if (m.Count == 0) return "";
-                return m.Cast<Match>().Any(x => x.Groups[1].Value == "1") ? "on" : "off";
+                if (m.Count >= 2) { bool ac = m[0].Groups[1].Value == "1", dc = m[1].Groups[1].Value == "1"; return ac && dc ? "on" : !ac && !dc ? "off" : ac ? "on when plugged in, off on battery" : "on on battery, off when plugged in"; }   // AC first, then DC
+                return m[0].Groups[1].Value == "1" ? "on" : "off";
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("powercfg: " + e.Message); return ""; }
         }
@@ -97,7 +98,7 @@ namespace AdeeboMeter
             Func<double[], double> avg = GameStat.Avg; Func<double[], double> jit = GameStat.Jitter; Func<double[], double> loss = GameStat.Loss;
             double gA = avg(gw), gJ = jit(gw), gL = loss(gw), nA = avg(net), nJ = jit(net), nL = loss(net);
             double[] srv = Array.Empty<double>(); string srvName = "";
-            if (g != null) { var b = gp.Best(g); if (b != null) { srv = gp.Stat(g.Id, b).Recent(60); srvName = b.Name; } }
+            if (g != null) { var b = gp.Best(g); if (b != null) { srv = gp.Stat(g.Id, b).Window(60, 3600); srvName = b.Name; } }
             double sA = avg(srv), sJ = jit(srv), sL = loss(srv);
             bool playing = g != null && gp.Playing == g.Id;
             rows.Add(R(3, "Game", g == null ? "none in the Gamer Zone - the checks below are for the connection itself" : g.Name + (playing ? " (running now)" : " (not running - start a match for the truest picture)") + (srvName != "" ? " · server " + srvName : ""), "", "i"));

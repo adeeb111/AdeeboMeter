@@ -103,7 +103,8 @@ namespace AdeeboMeter
                     using (var k = Registry.LocalMachine.OpenSubKey(path))
                     {
                         if (k == null) continue;
-                        foreach (var sub in k.GetSubKeyNames().Take(20))
+                        var subs = k.GetSubKeyNames(); if (subs.Length > 20) rows.Add(R(3, "Name rules (NRPT)", subs.Length + " rules - the first 20 shown", "", "w"));
+                        foreach (var sub in subs.Take(20))
                             using (var s = k.OpenSubKey(sub))
                             {
                                 if (s == null) continue;
@@ -130,12 +131,11 @@ namespace AdeeboMeter
             {
                 using (var s = new Socket(a.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
                 {
-                    var ar = s.BeginConnect(a, p, null, null);
-                    if (!ar.AsyncWaitHandle.WaitOne(4000)) { res = "no answer in 4 s - silently dropped (a firewall on the way, or the server's)"; lv = 2; }
-                    else { s.EndConnect(ar); res = "open - connected in " + sw.ElapsedMilliseconds + " ms"; lv = 0; }
+                    if (!Toolkit.ConnectWithin(s, a, p, 4000)) { res = "no answer in 4 s - silently dropped (a firewall on the way, or the server's)"; lv = 2; }
+                    else { res = "open - connected in " + sw.ElapsedMilliseconds + " ms"; lv = 0; }
                 }
             }
-            catch (SocketException se) { res = se.SocketErrorCode == SocketError.ConnectionRefused ? "refused - the server is there but nothing listens on port " + p : se.SocketErrorCode.ToString(); lv = se.SocketErrorCode == SocketError.ConnectionRefused ? 1 : 2; }
+            catch (SocketException se) { res = se.SocketErrorCode == SocketError.ConnectionRefused ? "refused - the server is there but nothing listens on port " + p : Toolkit.SockWords(se.SocketErrorCode); lv = se.SocketErrorCode == SocketError.ConnectionRefused ? 1 : 2; }
             rows.Add(R(lv, h + ":" + p.ToString(CultureInfo.InvariantCulture), res, lv == 2 ? "Dropped means a firewall ate it - refused means the server answered 'not here'. Try from your phone on mobile data to tell your network's firewall from theirs." : "", "m"));
             rows.Add(R(3, "Address", a.ToString(), "", "m"));
             return rows;

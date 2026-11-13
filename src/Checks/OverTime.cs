@@ -366,6 +366,7 @@ namespace AdeeboMeter
         // ---------- IPv6 readiness: one score from the pieces that are scattered elsewhere
         public static List<string[]> Ipv6Score(Monitor m, Toolkit.Run run)
         {
+            if (run == null) run = new Toolkit.Run();   // callers without a run still get a status to write to
             var rows = new List<string[]>(); int score = 0;
             var ups = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && n.NetworkInterfaceType != NetworkInterfaceType.Tunnel && !Monitor.IsVpn(n) && Props(n) != null).ToList();   // a VPN's IPv6 isn't the home network's
             var v6 = ups.SelectMany(n => n.GetIPProperties().UnicastAddresses).Where(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal && !a.Address.IsIPv6SiteLocal && (a.Address.GetAddressBytes()[0] & 0xE0) == 0x20).ToList();
@@ -418,6 +419,7 @@ namespace AdeeboMeter
         }
         public static List<string[]> VpnLeak(Monitor m, Toolkit.Run run)
         {
+            if (run == null) run = new Toolkit.Run();   // callers without a run still get a status to write to
             var rows = new List<string[]>();
             if (Policy.NoOnline || !Online.On) { rows.Add(R(1, "Online lookups", Policy.NoOnline ? "turned off by your IT team" : "off", "This check asks a public STUN server (Cloudflare) which address it sees - turn on Online lookups (top of the window) to run it.", "u")); return rows; }
             var all = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && Props(n) != null).ToList();
@@ -453,6 +455,7 @@ namespace AdeeboMeter
             var dnsPhys = phys.SelectMany(n => n.GetIPProperties().DnsAddresses).Where(a => !IPAddress.IsLoopback(a)).Distinct().ToList();
             var dnsVpn = vpn.GetIPProperties().DnsAddresses.ToList();
             if (dnsVpn.Count == 0 && dnsPhys.Count > 0) { leaks++; rows.Add(R(1, "DNS", "the VPN sets no DNS server - names are asked via " + string.Join(", ", dnsPhys.Take(2)), "Your provider can see every site name you visit. Most VPN apps have a \"use VPN DNS\" switch.", "w")); }
+            else if (dnsVpn.Count > 0 && dnsVpn.Any(dnsPhys.Contains)) { unknown++; rows.Add(R(1, "DNS", "couldn't tell - the VPN sets the same DNS server as your network (" + string.Join(", ", dnsVpn.Where(dnsPhys.Contains).Take(2)) + ")", "Security > DNS leak on VPN checks which one Windows actually uses.", "w")); }
             else rows.Add(R(0, "DNS", dnsVpn.Count > 0 ? "the VPN sets its own DNS server (" + string.Join(", ", dnsVpn.Take(2)) + ")" : "-", "Security > DNS leak on VPN checks which one Windows actually uses.", "w"));
             rows.Insert(0, R(leaks > 0 ? 2 : unknown > 0 ? 1 : 0, "VPN leaks", leaks > 0 ? leaks + " found" : unknown > 0 ? "none found - but " + unknown + " check" + (unknown == 1 ? "" : "s") + " couldn't tell" : "none found", leaks == 0 && unknown == 0 ? "Your traffic, IPv6 and DNS stay inside the tunnel." : leaks == 0 ? "See the amber lines - those parts weren't checked." : "Details below - the first red line matters most.", "m"));
             return rows;
@@ -518,8 +521,14 @@ namespace AdeeboMeter
             for (int i = 0; i < 5 && i < s.PathLabel.Length; i++) sb.Append(s.PathLabel[i]).Append(' ').Append(Word(s.Path[i])).Append(string.IsNullOrEmpty(s.PathMain[i]) ? "" : " " + s.PathMain[i]).Append('\n');
             var o = Outages.Last(m, 1); if (o.Count > 0) sb.Append("Outages today: ").Append(o.Count).Append('\n');
             string txt = GameSession.Redact(sb.ToString(), "");
-            txt = Regex.Replace(txt, @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", "x.x.x.x");
+            txt = NoAddr(txt);
             if (txt.Length <= max) return txt; int cut = max; if (cut > 0 && char.IsHighSurrogate(txt[cut - 1])) cut--; return txt.Substring(0, cut);   /* never half a character */
+        }
+        // every address out - public ones too (a DNS server, the probe target, a global IPv6): "addresses are left out" means all
+        static string NoAddr(string t)
+        {
+            t = Regex.Replace(t ?? "", @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", "x.x.x.x");
+            return Regex.Replace(t, @"(?<![0-9A-Za-z:])(?:[0-9a-fA-F]{1,4}|)(?::[0-9a-fA-F]{0,4}){3,7}(?![0-9A-Za-z:])", m => m.Value.Contains("::") || m.Value.Count(ch => ch == ':') >= 3 ? "x:x::x" : m.Value);   // 3+ colons: never a clock time
         }
         static string Word(int lv) { return lv == 0 ? "OK" : lv == 1 ? "Busy" : lv == 2 ? "Problem" : "-"; }
 
@@ -533,7 +542,7 @@ namespace AdeeboMeter
             {
                 var s = m.Latest; var sb = new StringBuilder(Summary(m, 4000));
                 sb.Append("\nWhere to look\n");
-                for (int i = 0; i < 5 && i < s.PathLabel.Length; i++) if (s.Path[i] == 1 || s.Path[i] == 2) sb.Append("- ").Append(s.PathLabel[i]).Append(": ").Append(GameSession.Redact((s.PathMain[i] ?? "") + " " + (s.PathSub[i] ?? ""), "").Trim()).Append('\n');
+                for (int i = 0; i < 5 && i < s.PathLabel.Length; i++) if (s.Path[i] == 1 || s.Path[i] == 2) sb.Append("- ").Append(s.PathLabel[i]).Append(": ").Append(NoAddr(GameSession.Redact((s.PathMain[i] ?? "") + " " + (s.PathSub[i] ?? ""), "").Trim())).Append('\n');
                 sb.Append("\nOpen this file in AdeeboMeter (Toolbox > Decrypt) with the code you were given, then run Fix a problem on your own PC to compare.\n");
                 File.WriteAllText(txt, sb.ToString(), new UTF8Encoding(false));
                 rows.AddRange(FileCrypt.Encrypt(txt, "code", "", run));

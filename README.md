@@ -76,6 +76,7 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 
 - Never listens on a port (it checks itself at every start), no cloud, no account, no telemetry, no updater.
 - Tests and tools run only when you press them, and contact only what you typed or what they name on screen.
+- In the background it pings your router and one internet address and asks DNS now and then (8 to about 70 small checks a minute, by preset); About > What leaves your PC lists every one.
 - **Online lookups** (BGP and network owners) are off by default; switched on, they run for 5 minutes to 3 hours, then turn themselves off. They send public IP addresses to RIPEstat and PeeringDB; with them on, the Security checkup also asks Cloudflare's encrypted DNS about www.microsoft.com and opens one TLS handshake with it.
 - History, data usage and what's normal stay on your PC and delete themselves (3 days by default). Live captures are deleted when you stop, at the next start and at logoff.
 - No admin rights; no shell; tools run by full System32 path; inputs validated; capture paths fenced in; DLLs load only from System32.

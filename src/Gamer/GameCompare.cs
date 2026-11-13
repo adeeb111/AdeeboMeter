@@ -100,13 +100,15 @@ namespace AdeeboMeter
         // compares the two newest runs on what a gamer feels: jitter and loss first, then the average
         public static string Verdict(Saved a, Saved b)
         {
-            Func<Saved, Func<RunRow, double>, double> mean = (s, f) => { var v = s.Rows.Select(f).Where(x => !double.IsNaN(x)).ToList(); return v.Count == 0 ? double.NaN : v.Average(); };
+            var both = new HashSet<string>(a.Rows.Select(r => r.Server).Intersect(b.Rows.Select(r => r.Server)));   // like with like: only the servers both runs measured
+            bool sameSet = both.Count == a.Rows.Count && both.Count == b.Rows.Count; if (both.Count == 0) return "These runs measured different servers - nothing to compare.";
+            Func<Saved, Func<RunRow, double>, double> mean = (s, f) => { var v = s.Rows.Where(r => both.Contains(r.Server)).Select(f).Where(x => !double.IsNaN(x)).ToList(); return v.Count == 0 ? double.NaN : v.Average(); };
             double ja = mean(a, r => r.Jit), jb = mean(b, r => r.Jit), la = mean(a, r => r.Loss), lb = mean(b, r => r.Loss), aa = mean(a, r => r.Avg), ab = mean(b, r => r.Avg);
             var bits = new List<string>();
             if (!double.IsNaN(la) && !double.IsNaN(lb) && Math.Abs(la - lb) >= 0.5) bits.Add((la < lb ? a.Name : b.Name) + " loses fewer packets (" + Math.Min(la, lb).ToString("0.#", CultureInfo.InvariantCulture) + "% vs " + Math.Max(la, lb).ToString("0.#", CultureInfo.InvariantCulture) + "%)");
             if (!double.IsNaN(ja) && !double.IsNaN(jb) && Math.Abs(ja - jb) >= 3) bits.Add((ja < jb ? a.Name : b.Name) + " is steadier (jitter " + F(Math.Min(ja, jb)) + " vs " + F(Math.Max(ja, jb)) + " ms)");
             if (!double.IsNaN(aa) && !double.IsNaN(ab) && Math.Abs(aa - ab) >= 3) bits.Add((aa < ab ? a.Name : b.Name) + " is " + F(Math.Abs(aa - ab)) + " ms quicker on average");
-            return bits.Count == 0 ? "No real difference between " + a.Name + " and " + b.Name + " in these runs." : string.Join("; ", bits) + ".";
+            return (bits.Count == 0 ? "No real difference between " + a.Name + " and " + b.Name + " in these runs." : string.Join("; ", bits) + ".") + (sameSet ? "" : " (Compared on the " + both.Count + " servers both runs measured.)");
         }
     }
 }

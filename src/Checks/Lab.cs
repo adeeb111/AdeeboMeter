@@ -32,10 +32,11 @@ namespace AdeeboMeter
             return vpn || machineDomain != "" || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase) || CloudManaged();   /* the PC's domain too - a local account on a company PC counts */
         }
         // joined to Entra ID (Azure AD) or enrolled in Intune / another MDM: a company PC even with a local account and no VPN
-        static int cloudManaged = -1;
+        static int cloudManaged = -1; static DateTime cloudAt;
         static bool CloudManaged()
         {
-            if (cloudManaged >= 0) return cloudManaged == 1;
+            if (cloudManaged >= 0 && (DateTime.UtcNow - cloudAt).TotalHours < 24) return cloudManaged == 1;   // looked at again once a day: a PC can be enrolled later
+            cloudAt = DateTime.UtcNow;
             bool yes = false;
             try
             {

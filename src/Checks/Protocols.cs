@@ -73,10 +73,18 @@ namespace AdeeboMeter
                 run.Status = "Request " + (i + 1) + " / " + n; var t = new double[5]; string status = "";
                 try
                 {
-                    var sw = Stopwatch.StartNew(); var a = Dns.GetHostAddresses(u.Host).First(); t[0] = sw.Elapsed.TotalMilliseconds;
-                    using (var tc = new TcpClient(a.AddressFamily))
+                    var sw = Stopwatch.StartNew(); var addrs = Dns.GetHostAddresses(u.Host); t[0] = sw.Elapsed.TotalMilliseconds;
+                    // every address in turn (IPv4 first), as a browser would: a dead first address (broken IPv6) isn't the site's fault
+                    TcpClient conn = null; string connErr = "connect timed out";
+                    foreach (var a in addrs.OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).Take(4))
                     {
-                        if (!tc.ConnectAsync(a, u.Port).Wait(5000)) throw new TimeoutException("connect timed out");
+                        var c = new TcpClient(a.AddressFamily);
+                        try { if (c.ConnectAsync(a, u.Port).Wait(addrs.Length > 1 ? 3000 : 5000)) { conn = c; break; } } catch (AggregateException ae) { connErr = (ae.InnerException ?? ae).Message; }
+                        c.Close();
+                    }
+                    if (conn == null) throw new TimeoutException(connErr);
+                    using (var tc = conn)
+                    {
                         t[1] = sw.Elapsed.TotalMilliseconds; Stream st = tc.GetStream(); st.ReadTimeout = 8000;
                         if (u.Scheme == "https") { var ssl = new SslStream(st, false); Tls(ssl, u.Host, tc, 8000); st = ssl; }
                         t[2] = sw.Elapsed.TotalMilliseconds;

@@ -71,6 +71,34 @@ namespace AdeeboMeter
             return s;
         }
         // "https:/example.com" (one slash, a common slip) is the URL that was meant - never the host "https"
+        // a TCP connect with a deadline: true when connected. On timeout the socket is closed and the attempt ended
+        // (EndConnect, wait handle released) - nothing left running. A refusal still throws SocketException.
+        internal static bool ConnectWithin(Socket s, IPAddress a, int port, int ms)
+        {
+            var ar = s.BeginConnect(a, port, null, null);
+            using (var wh = ar.AsyncWaitHandle)
+            {
+                if (wh.WaitOne(ms)) { s.EndConnect(ar); return true; }
+                try { s.Close(); } catch (SocketException) { }
+                try { s.EndConnect(ar); } catch (SocketException) { } catch (ObjectDisposedException) { }
+                return false;
+            }
+        }
+        // a socket error in plain words
+        internal static string SockWords(SocketError e)
+        {
+            switch (e)
+            {
+                case SocketError.ConnectionRefused: return "refused";
+                case SocketError.NetworkUnreachable: return "no route to that network";
+                case SocketError.HostUnreachable: return "the host can't be reached";
+                case SocketError.TimedOut: return "no answer in time";
+                case SocketError.ConnectionReset: return "the connection was reset";
+                case SocketError.AccessDenied: return "blocked on this PC (a firewall or security software)";
+                case SocketError.AddressNotAvailable: return "that address can't be used from here";
+                default: return e.ToString();
+            }
+        }
         internal static string OneSlash(string input) { return Regex.Replace((input ?? "").Trim(), @"^(https?|ftp|wss?):/(?!/)", "$1://", RegexOptions.IgnoreCase); }
         public static string UrlToTarget(string input, bool withPort)
         {
@@ -368,6 +396,7 @@ namespace AdeeboMeter
         {
             if (o.Window > 0) { s.SendBufferSize = (int)o.Window; s.ReceiveBufferSize = (int)o.Window; }
             if (o.Tos > 0 && s.AddressFamily == AddressFamily.InterNetwork) try { s.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.TypeOfService, o.Tos); } catch (SocketException) { }
+            if (o.Tos > 0 && s.AddressFamily == AddressFamily.InterNetworkV6) try { s.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)39, o.Tos); } catch (SocketException) { }   // IPV6_TCLASS: the same marking over IPv6 (Windows may still need a QoS policy to send it)
         }
         static string Explain(double mbps)
         {
@@ -433,6 +462,9 @@ namespace AdeeboMeter
             {
                 // the server you typed is the server asked - never a quiet fall back to this PC's DNS
                 string svh = sv; int c53 = sv.LastIndexOf(':'); if (sv.StartsWith("[", StringComparison.Ordinal) && sv.Contains("]")) svh = sv.Substring(1, sv.IndexOf(']') - 1); else if (c53 > 0 && sv.IndexOf(':') == c53 && sv.Substring(c53 + 1) == "53") svh = sv.Substring(0, c53);
+                // a port other than 53 ("1.1.1.1:5353", "[2001:db8::1]:5353"): said, never misread as a name or ignored
+                var portM = System.Text.RegularExpressions.Regex.Match(sv, @"^(?:\[[^\]]+\]|[^:\[\]]+):([0-9]+)$");
+                if (portM.Success && portM.Groups[1].Value != "53") { rows.Add(R(2, "Server", "only port 53 is supported - type the server without :" + portM.Groups[1].Value, "", "u")); return rows; }
                 if (sv != "" && !IPAddress.TryParse(svh, out srv))
                 {
                     IPAddress[] byName = null; try { byName = Dns.GetHostAddresses(svh); } catch (SocketException) { } catch (ArgumentException) { }
@@ -468,9 +500,9 @@ namespace AdeeboMeter
                 if (ns.Count == 0) { rows.Add(R(1, "step " + (step + 1), sname + " gave no referral", "", "m")); break; }
                 string zone = msg.Rrs.First(x => x.Section == 2 && x.Type == "NS").Name;
                 rows.Add(R(3, "step " + (step + 1), sname + " (" + msg.Ms + " ms) says: ask the servers for " + (zone == "" ? "." : zone) + " - " + string.Join(", ", ns.Take(3)), step == 0 ? "The root servers only know who runs each top-level domain." : "", "m"));
-                var glue = msg.Rrs.FirstOrDefault(x => x.Section == 3 && x.Type == "A" && ns.Contains(x.Name, StringComparer.OrdinalIgnoreCase));
+                var glue = msg.Rrs.Where(x => x.Section == 3 && (x.Type == "A" || x.Type == "AAAA") && ns.Contains(x.Name, StringComparer.OrdinalIgnoreCase)).OrderBy(x => x.Type == "A" ? 0 : 1).FirstOrDefault();   // IPv6-only glue is glue too
                 IPAddress next = null; if (glue != null && !IPAddress.TryParse(glue.Data, out next)) next = null;
-                if (next == null) try { next = Dns.GetHostAddresses(ns[0]).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); } catch { }
+                if (next == null) try { var na = Dns.GetHostAddresses(ns[0]); next = na.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? na.FirstOrDefault(); } catch { }
                 if (next == null) { rows.Add(R(1, "next", "couldn't find the address of " + ns[0], "", "m")); break; }
                 server = next; sname = glue != null ? glue.Name : ns[0];
             }

@@ -116,7 +116,7 @@ namespace AdeeboMeter
                 if (sec == "Open" || sec == "WEP") add(2, "Wi-Fi lock", (ssid != "" ? "\"" + ssid + "\" " : "This network ") + (sec == "Open" ? "has no password - anyone nearby can see which sites you visit (not what's inside HTTPS) and can pretend to be it" : "uses WEP, broken for 20 years"), "Use a VPN on it, or your phone's hotspot.");
                 else if (sec == "Enhanced Open") add(1, "Wi-Fi lock", "no password, but each device's traffic is encrypted (Enhanced Open) - better than open, still anyone can join", "");
                 else if (sec != "") add(0, "Wi-Fi lock", sec + " - a password protects the air", "Everyone who has the password (all the guests) is still on the same network as you.");
-                else add(3, "Wi-Fi lock", "couldn't read it (location access is off for desktop apps)", "");
+                else add(3, "Wi-Fi lock", LinkInfo.Blocked(werr) || (bss.Count == 0 && werr != "") ? "couldn't read it (location access is off for desktop apps)" : "couldn't read it - this access point wasn't in Windows' scan list (a hidden network, or the scan missed it)", "");
                 var twins = bss.Where(b => b.Ssid == ssid && b.Ssid != "").Select(b => b.Sec).Where(s => s != "").Distinct().ToList();
                 if (twins.Count > 1 && twins.Any(WlanApi.Weak) && twins.Any(s => !WlanApi.Weak(s))) add(2, "Look-alike network", "\"" + ssid + "\" is on the air both with and without a password - make sure you joined the protected one", "");
             }
@@ -289,9 +289,9 @@ namespace AdeeboMeter
             foreach (var cls in new[] { new[] { "Net", "Network adapters" }, new[] { "Bluetooth", "Bluetooth" }, new[] { "USB", "USB controllers and hubs" } })
             {
                 var l = all.Where(d => string.Equals(d.Class, cls[0], StringComparison.OrdinalIgnoreCase) && d.DriverVer != "" && d.Name.IndexOf("WAN Miniport", StringComparison.OrdinalIgnoreCase) < 0 && d.Name.IndexOf("Kernel Debug", StringComparison.OrdinalIgnoreCase) < 0)
-                           .GroupBy(d => d.Name).Select(gr => gr.First()).OrderBy(d => d.Name).Take(15).ToList();
+                           .GroupBy(d => d.Name).Select(gr => gr.First()).OrderBy(d => d.Name).ToList();
                 if (l.Count == 0) continue;
-                rows.Add(R(3, cls[1].ToUpperInvariant(), "", "", "w"));
+                rows.Add(R(3, cls[1].ToUpperInvariant(), l.Count > 15 ? "the first 15 of " + l.Count : "", "", "w")); l = l.Take(15).ToList();
                 foreach (var d in l)
                 {
                     double years = d.DriverDate == DateTime.MinValue || DevInfo.Inbox(d.DriverDate) ? 0 : (DateTime.Now - d.DriverDate).TotalDays / 365.25; bool old = cls[0] == "Net" && years >= 3 && d.Provider.IndexOf("Microsoft", StringComparison.OrdinalIgnoreCase) < 0;

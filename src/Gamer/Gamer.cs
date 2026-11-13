@@ -301,6 +301,9 @@ namespace AdeeboMeter
         public GameStat(string game, GameServer s) { GameId = game; S = s; }
         public void Add(double v) { lock (k) { ms.Add(v); at.Add(DateTime.Now); if (ms.Count > 900) { ms.RemoveAt(0); at.RemoveAt(0); } } }
         public double[] Recent(int n) { lock (k) return ms.Skip(Math.Max(0, ms.Count - n)).ToArray(); }
+        // the newest n samples, but none older than secs: 60 samples are a minute while playing and hours for a slow survey -
+        // the card, map, best region and spike rule judge "lately", not a mix of minutes and hours
+        public double[] Window(int n, int secs) { lock (k) { var since = DateTime.Now.AddSeconds(-secs); var r = new List<double>(); for (int i = ms.Count - 1; i >= 0 && r.Count < n && at[i] >= since; i--) r.Add(ms[i]); r.Reverse(); return r.ToArray(); } }
         public DateTime LastAt { get { lock (k) return at.Count > 0 ? at[at.Count - 1] : DateTime.MinValue; } }
         public static double Avg(double[] v) { var ok = v.Where(x => !double.IsNaN(x)).ToArray(); return ok.Length == 0 ? double.NaN : ok.Average(); }
         public static double Pct(double[] v, double p) { var ok = v.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToArray(); return ok.Length == 0 ? double.NaN : ok[Math.Min(ok.Length - 1, (int)Math.Ceiling(p * ok.Length) - 1 < 0 ? 0 : (int)Math.Ceiling(p * ok.Length) - 1)]; }
@@ -396,7 +399,7 @@ namespace AdeeboMeter
             {
                 double[] w; double sc;
                 if (week.TryGetValue(s.Name, out w) && !double.IsNaN(w[0])) sc = w[0] + 20 * w[1] + w[2];   // avg + 20 x loss% + jitter
-                else { var st = Stat(g.Id, s); var v = st.Recent(60); double a = GameStat.Avg(v); if (double.IsNaN(a)) continue; sc = a + 20 * GameStat.Loss(v) + 1000; }   // recent-only ranks below a known week
+                else { var st = Stat(g.Id, s); var v = st.Window(60, 3600); double a = GameStat.Avg(v); if (double.IsNaN(a)) continue; sc = a + 20 * GameStat.Loss(v) + 1000; }   // recent-only ranks below a known week
                 if (sc < score) { score = sc; best = s; }
             }
             return best;
@@ -437,7 +440,7 @@ namespace AdeeboMeter
                     if (go.Count > 0) Task.WaitAll(go.Select(p => Task.Factory.StartNew(() => ProbeOne(p.Item1, p.Item2))).ToArray(), 2500);
                     Evidence(games);
                     var ses = Session; if (ses != null && ses.Open && ses.HopCount > 0 && (Clock.Mono - lastHops).TotalSeconds >= 5) { lastHops = Clock.Mono; System.Threading.Tasks.Task.Factory.StartNew(() => ses.TimeHops()); }
-                    if ((Clock.Mono - lastMinute).TotalSeconds >= 60) { lastMinute = Clock.Mono; GameHistory.Minute(this, plan); }
+                    if ((Clock.Mono - lastMinute).TotalSeconds >= 60) { lastMinute = Clock.Mono; GameHistory.Minute(this, plan); GameHistory.Warm(mon2); }   /* the week verdicts are read here, off the screen's thread */
                 }
                 catch (Exception e) { Program.Log("gameping: " + e.Message); }
             }
@@ -455,8 +458,9 @@ namespace AdeeboMeter
         void ProbeOne(string game, GameServer s)
         {
             var st = Stat(game, s);
-            string used; double v = Probe(s, out used); if (used != null) st.Used = used;
-            var prev = st.Recent(60); double med = GameStat.Pct(prev, 0.5);
+            var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null) st.Used = used;
+            if ((DateTime.Now - began).TotalSeconds > 4) return;   // it outran the second it belonged to (a stuck lookup): filed late, it would shift the series
+            var prev = st.Window(60, 900); double med = GameStat.Pct(prev, 0.5);
             st.Add(v);
             // a spike: double the usual and 30 ms more - who to blame is read from the home and internet checks at the same moment
             if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= 20 && v > med * 2 && v > med + 30)
@@ -565,7 +569,7 @@ namespace AdeeboMeter
     {
         static string File0(DateTime d) { return Path.Combine(History.Dir, "games-" + d.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".csv"); }
         static readonly object k = new object();
-        static Dictionary<string, Dictionary<string, double[]>> weekCache = new Dictionary<string, Dictionary<string, double[]>>(); static DateTime weekAt;
+        static readonly Dictionary<string, Tuple<DateTime, Dictionary<string, double[]>>> weekCache = new Dictionary<string, Tuple<DateTime, Dictionary<string, double[]>>>();
         static string F(double v) { return double.IsNaN(v) ? "" : v.ToString("0.#", CultureInfo.InvariantCulture); }
         public static void Minute(GamePing gp, List<Tuple<string, GameServer, int>> plan)
         {
@@ -612,13 +616,23 @@ namespace AdeeboMeter
             return r;
         }
         // per server over the last 7 days: { avg ms, loss %, jitter, evenings with trouble (of days with data), days with data }
+        // The screen gets the last result straight away (any age up to 30 min); the game-ping thread refreshes it every 10
+        // minutes (Warm), so the 7 days of files are read there - never while the Gamer Zone or the overlay paints.
         public static Dictionary<string, double[]> Week(string game)
+        {
+            lock (k) { Tuple<DateTime, Dictionary<string, double[]>> c; if (weekCache.TryGetValue(game, out c) && (DateTime.UtcNow - c.Item1).TotalMinutes < 30) return c.Item2; }
+            return Load(game);
+        }
+        public static void Warm(IEnumerable<string> games)
+        {
+            foreach (var g in games) { Tuple<DateTime, Dictionary<string, double[]>> c; bool fresh; lock (k) fresh = weekCache.TryGetValue(g, out c) && (DateTime.UtcNow - c.Item1).TotalMinutes < 10; if (!fresh) Load(g); }
+        }
+        static Dictionary<string, double[]> Load(string game)
         {
             lock (k)
             {
                 Dictionary<string, double[]> w;
-                if ((DateTime.UtcNow - weekAt).TotalMinutes < 10 && weekCache.TryGetValue(game, out w)) return w;
-                if ((DateTime.UtcNow - weekAt).TotalMinutes >= 10) { weekCache.Clear(); weekAt = DateTime.UtcNow; }
+                if (weekCache.Count > 50) weekCache.Clear();
                 var rows = new List<Row>(); for (int i = 0; i < 7; i++) rows.AddRange(Read(DateTime.Today.AddDays(-i), game));
                 w = new Dictionary<string, double[]>();
                 foreach (var grp in rows.GroupBy(x => x.Server))
@@ -627,7 +641,7 @@ namespace AdeeboMeter
                     int bad = days.Count(d => d.Where(x => x.T.Hour >= 18 && x.T.Hour <= 23).Any(x => x.Loss >= 1 || x.P95 > 2 * Math.Max(1, grp.Average(y => double.IsNaN(y.Avg) ? 0 : y.Avg))));
                     w[grp.Key] = new[] { GameStat.Avg(grp.Select(x => x.Avg).ToArray()), GameStat.Avg(grp.Select(x => x.Loss).ToArray()), GameStat.Avg(grp.Select(x => x.Jit).ToArray()), bad, days.Count };
                 }
-                weekCache[game] = w; return w;
+                weekCache[game] = Tuple.Create(DateTime.UtcNow, w); return w;
             }
         }
     }
@@ -806,7 +820,7 @@ namespace AdeeboMeter
                     if (priv || (mine != null && mine.Contains(a.ToString()))) continue;
                     int c; count.TryGetValue(a.ToString(), out c); count[a.ToString()] = c + 1;
                 }
-            return count.Count == 0 ? null : count.OrderByDescending(kv => kv.Value).First().Key;
+            return count.Count == 0 ? null : count.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).First().Key;   // a tie: the same pick every run
         }
     }
 }

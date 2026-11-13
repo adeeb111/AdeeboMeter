@@ -20,9 +20,11 @@ namespace AdeeboMeter
         System.Windows.Forms.Timer gameTimer;
         static readonly Random GameRnd = new Random();
 
+        DateTime gameAway = DateTime.MinValue;   // when the game page was left with a clock running: the clock waits for you
         void GameTick(bool on)
         {
-            if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); return; } learnInfo.Invalidate(); }; }
+            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; roomStart += away; if (quick != null) quick.Start += away; gameAway = DateTime.MinValue; }
+            if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
         static string Clock2(int secs) { return (secs / 60).ToString(CultureInfo.InvariantCulture) + ":" + (secs % 60).ToString("00", CultureInfo.InvariantCulture); }

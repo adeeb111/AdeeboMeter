@@ -450,7 +450,6 @@ line: When memory is full, Windows parks parts of programs on the disk and reads
 breaks: Many pages read back per second, or a disk taking more than 15 ms per request, makes everything stutter.
 ladder: App > Memory: I need my code | Memory > Disk: it was parked - read it back | Disk > Memory: here (12 ms later) | Memory > App: carry on
 live:
-try: Open a heavy app.
 
 # ---------------------------------------------------------------- inside a provider's network (kind: provider)
 == bgp

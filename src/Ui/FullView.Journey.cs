@@ -62,6 +62,13 @@ namespace AdeeboMeter
             return y;
         }
 
+        // a device on your own network (a printer, a NAS): the packet never reaches the router's internet side, the provider
+        // or the internet - the journey shows only the stops it really makes. 100.64/10 is the provider's (CGNAT), not yours.
+        static bool JLocal(Journey.Flow f)
+        {
+            IPAddress a; if (f == null || !IPAddress.TryParse(f.Remote ?? "", out a) || Watch.IsPublic(f.Remote)) return false;
+            var b = a.GetAddressBytes(); return !(b.Length == 4 && b[0] == 100 && b[1] >= 64 && b[1] < 128);
+        }
         // ---------- 1. the label stack at each stop
         float PaintJStack(Graphics g, float x, float y, float w, Journey.Flow f)
         {
@@ -75,6 +82,10 @@ namespace AdeeboMeter
                 new[] { "Provider", top + l4 + " " + ip + (vpn ? " wireguard" : "") + " ethernet", "Your provider reads only the outer IP address" + (vpn ? " - the VPN tunnel" : "") + ". Inside their network they may add labels (MPLS) or tags you never see; they come off before the packet leaves." },
                 new[] { "Internet", top + l4 + " " + ip + (vpn ? " wireguard" : "") + " ethernet", "Each network hands it on; every router lowers the hop count (TTL) by one and builds a new frame for the next link. The IP packet itself stays the same." },
                 new[] { "Server", top + l4 + " " + ip + " ethernet", (vpn ? "The VPN server unwraps the tunnel first. " : "") + "The server takes off each layer in reverse and hands the data to its app, then answers the same way back." } };
+            if (JLocal(f)) stops = new List<string[]> {   // on your own network: straight there, no NAT, no provider
+                new[] { "This PC", top + l4 + " " + ip + " " + link, "Windows wraps the app's data: " + (f.Udp ? "UDP" : "TCP") + " ports, then IP addresses, then the " + (kind == "Wi-Fi" ? "Wi-Fi" : "Ethernet") + " frame addressed to the device's own hardware address." },
+                new[] { "Your network", top + l4 + " " + ip + " ethernet", (kind == "Wi-Fi" ? "The Wi-Fi access point turns the Wi-Fi frame into an Ethernet one; " : "") + "switches pass the frame on by its hardware address. Nothing is translated - no NAT, no provider, the addresses stay yours." },
+                new[] { "Device", top + l4 + " " + ip + " ethernet", "The device takes off each layer in reverse and hands the data to its own app." } };
             float colW = (w - 4 * 10 * S) / 5, chipH = 20 * S; float maxY = y;
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap, Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
@@ -135,6 +146,8 @@ namespace AdeeboMeter
                                 Tuple.Create("Your provider", b, LayerCol[3], "From your router into the internet. Evening slowdowns usually live here."),
                                 Tuple.Create("Distance to the server", c, LayerCol[1], "Light in fibre covers about 200 km per ms - this part only shrinks with a closer server."),
                                 Tuple.Create("Waiting in queues", q, LayerCol[5], "Packets queued behind others somewhere (a busy upload, Wi-Fi airtime, a crowded link). It changes from packet to packet - that change is jitter.") };
+            if (JLocal(f)) parts = new[] { Tuple.Create(kind == "Wi-Fi" ? "Your Wi-Fi to the device" : "Your network to the device", tMin, LayerCol[4], "All of it stays at home: the air or cable, the switch and the device's own answer time."),
+                                           Tuple.Create("Waiting in queues", q, LayerCol[5], "Packets queued behind others - a busy Wi-Fi channel or a busy device.") };
             double total = parts.Sum(p => p.Item2); if (total <= 0) total = 1;
             float bx = x, bh = 26 * S;
             foreach (var p in parts) { float pw = (float)(p.Item2 / total) * w; if (pw > 0.5f) using (var br = new SolidBrush(p.Item3)) g.FillRectangle(br, bx, y, Math.Max(1, pw - 2 * S), bh); bx += pw; }
@@ -172,6 +185,7 @@ namespace AdeeboMeter
         {
             y = Head(g, "THE REAL PACKETS", x, y, w, "travel.JREAL");
             bool rec = jSess != null && !jSess.Done, can = LiveCapture.Available && !Policy.NoCapture;
+            if (jNoIface && !rec) { y = Lead(g, "No network adapter is up right now - connect, then capture again.", x, y, w, true); }
             if (!can && (jSess == null || jSess.Snapshot().Count == 0)) return Lead(g, Policy.NoCapture ? "Capturing packets is turned off by your IT team (AdeeboMeter.policy). The stack and the timing above still work." : "Recording the real packets needs Wireshark (with Npcap). The stack and the timing above work without it.", x, y, w, true);
             // controls: mode, capture / stop
             float cx = x;
@@ -225,9 +239,10 @@ namespace AdeeboMeter
             if (!rec) y = PaintJExplain(g, x, y, w, recs);
             return y;
         }
+        bool jNoIface;   // the last Capture click found no adapter up: said, never a silent no-op
         void JCapture()
         {
-            var f = jFlow; if (f == null) return; string ifc = Packets.Iface(M); if (ifc == "") return;
+            var f = jFlow; if (f == null) return; string ifc = Packets.Iface(M); if (ifc == "") { jNoIface = true; travelCanvas.Invalidate(); return; } jNoIface = false;
             var sess = new Journey.Session(f, jQuick);
             try { foreach (var n in NetworkInterface.GetAllNetworkInterfaces()) foreach (var u in n.GetIPProperties().UnicastAddresses) { string a = u.Address.ToString(); int z = a.IndexOf('%'); sess.Mine.Add(z > 0 ? a.Substring(0, z) : a); } } catch (NetworkInformationException) { }
             LabSim.LastRealCwnd = null;   // a new capture: the old one's window line leaves the TCP lab now, Explain or not
@@ -289,11 +304,12 @@ namespace AdeeboMeter
             string[] stops = { "This PC", "Router", "Provider", "Internet", "Server" };
             // where the stops sit: by measured time when we have it, evenly otherwise
             float[] at = { 0f, 0.15f, 0.35f, 0.6f, 1f };
-            if (jPing != null) { var v = jPing.Where(d => !double.IsNaN(d)).ToList(); double gw = MinOf(M.GwPing), net = MinOf(M.NetPing); if (v.Count > 0 && !double.IsNaN(gw) && !double.IsNaN(net) && v.Min() > net) { double t = v.Min(); at = new[] { 0f, (float)Math.Max(0.08, gw / t), (float)Math.Max(0.16, Math.Min(0.8, net / t)), (float)Math.Max(0.2, Math.Min(0.9, (net + (t - net) / 2) / t)), 1f }; for (int i = 1; i < at.Length; i++) at[i] = Math.Max(at[i], at[i - 1] + 0.08f); for (int i = 0; i < at.Length; i++) at[i] = Math.Min(1f, at[i]); } }
+            if (jPing != null) { var v = jPing.Where(d => !double.IsNaN(d)).ToList(); double gw = MinOf(M.GwPing), net = MinOf(M.NetPing); if (v.Count > 0 && !double.IsNaN(gw) && !double.IsNaN(net) && v.Min() > net) { double t = v.Min(); at = new[] { 0f, (float)Math.Max(0.08, gw / t), (float)Math.Max(0.16, Math.Min(0.8, net / t)), (float)Math.Max(0.2, Math.Min(0.9, (net + (t - net) / 2) / t)), 1f }; for (int i = 1; i < at.Length; i++) at[i] = Math.Max(at[i], at[i - 1] + 0.08f); float top = at[at.Length - 1]; if (top > 1f) for (int i = 0; i < at.Length; i++) at[i] /= top; } }   /* scaled back into the lane: the gaps stay, no two stops on one spot */
+            bool laneLocal = jFlow != null && JLocal(jFlow); if (laneLocal) { stops = new[] { "This PC", "Your network", "", "", "Device" }; at = new[] { 0f, 0.5f, 0.5f, 0.5f, 1f }; }   // a device at home: three stops
             float lx = lane.X + 60 * S, rx = lane.Right - 60 * S, mid = lane.Y + lane.Height / 2;
             using (var rail = new Pen(Theme.Rail, 2 * S)) g.DrawLine(rail, lx, mid, rx, mid);
             using (var mb = new SolidBrush(Theme.Muted)) using (var ce = new StringFormat { Alignment = StringAlignment.Center })
-                for (int i = 0; i < stops.Length; i++) { float sx = lx + at[i] * (rx - lx); using (var nb = new SolidBrush(Theme.Card)) g.FillEllipse(nb, sx - 7 * S, mid - 7 * S, 14 * S, 14 * S); using (var np = new Pen(Theme.Sub, 2 * S)) g.DrawEllipse(np, sx - 7 * S, mid - 7 * S, 14 * S, 14 * S); g.DrawString(L.T(stops[i]), Draw.fTiny, mb, new RectangleF(sx - 50 * S, lane.Bottom - 18 * S, 100 * S, 16 * S), ce); }
+                for (int i = 0; i < stops.Length; i++) { if (stops[i] == "") continue; float sx = lx + at[i] * (rx - lx); using (var nb = new SolidBrush(Theme.Card)) g.FillEllipse(nb, sx - 7 * S, mid - 7 * S, 14 * S, 14 * S); using (var np = new Pen(Theme.Sub, 2 * S)) g.DrawEllipse(np, sx - 7 * S, mid - 7 * S, 14 * S, 14 * S); g.DrawString(L.T(stops[i]), Draw.fTiny, mb, new RectangleF(sx - 50 * S, lane.Bottom - 18 * S, 100 * S, 16 * S), ce); }
             // packets in flight at the play head: a packet starts at its own time and takes JTravel (screen seconds) to cross
             double trip = rec ? 0.4 : JTrip();
             var fly = new List<Journey.Rec>();
@@ -303,7 +319,7 @@ namespace AdeeboMeter
                 double prog = (jPlay - r.T) / trip; if (prog < 0 || prog > 1) continue;
                 float bw = Math.Max(4 * S, Math.Min(46 * S, (4 + 42f * Math.Min(1500, Math.Max(40, r.IpLen)) / 1500f) * S)), bh = 16 * S;
                 float px; float py = r.Out ? mid - 22 * S : mid + 6 * S;
-                if (r.IcmpType >= 0 && r.FromRouter) { float from = lx + at[3] * (rx - lx); px = from - (float)prog * (from - lx); }   // a router's message comes from somewhere on the way
+                if (r.IcmpType >= 0 && r.FromRouter) { float from = lx + (at[1] + at[3]) / 2 * (rx - lx); px = from - (float)prog * (from - lx); }   // a router's message comes from somewhere on the way
                 else px = r.Out ? lx + (float)prog * (rx - lx) : rx - (float)prog * (rx - lx);
                 Color c = r.IcmpType >= 0 ? Theme.Red : r.Resend ? Theme.Amber : r.Out ? Theme.Blue : Theme.Green;
                 var br = new RectangleF(px - bw / 2, py, bw, bh);

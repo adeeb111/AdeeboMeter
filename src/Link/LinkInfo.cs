@@ -243,7 +243,7 @@ namespace AdeeboMeter
         static readonly int[] Upper5 = { 149, 153, 157, 161 }, Dfs5 = { 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144 };
         public static int[] LeastCrowded(List<Ap> aps, string band, int mine, string myBssid)
         {
-            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48 } : Array.Empty<int>();
+            int[] cand = band.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : band.StartsWith("5", StringComparison.Ordinal) ? new[] { 36, 40, 44, 48 } : band.StartsWith("6", StringComparison.Ordinal) ? new[] { 5, 21, 37, 53, 69, 85 } : Array.Empty<int>();   // 6 GHz: the preferred scanning channels of UNII-5, allowed wherever 6 GHz Wi-Fi is
             // 5 GHz: 36-48 work everywhere. The upper block (149-161, not allowed in much of Europe and Japan) and the radar (DFS) channels
             // 52-144 are offered only when your router or the networks around already use them - proof that they are allowed here
             if (cand.Length == 4)
@@ -424,8 +424,27 @@ namespace AdeeboMeter
         public static Dictionary<string, string> Fields(string text)
         {
             var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var line in (text ?? "").Split('\n')) { var m = kv.Match(line); if (m.Success && !d.ContainsKey(m.Groups[1].Value)) d[m.Groups[1].Value] = m.Groups[2].Value; }
+            foreach (var line in (text ?? "").Split('\n')) { var m = kv.Match(line); if (!m.Success) continue; string k = NormKey(m.Groups[1].Value); if (!d.ContainsKey(k)) d[k] = m.Groups[2].Value; }
             return d;
+        }
+        // netsh's labels are translated: the common languages' words for the ones read here become the English label
+        // (English, French, German, Spanish, Italian, Portuguese, Dutch, Polish; anything else is kept as it is)
+        static readonly Dictionary<string, string> KeyWords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "signal", "Signal" }, { "señal", "Signal" }, { "segnale", "Signal" }, { "sinal", "Signal" }, { "signaal", "Signal" }, { "sygnał", "Signal" },
+            { "channel", "Channel" }, { "canal", "Channel" }, { "kanal", "Channel" }, { "canale", "Channel" }, { "kanaal", "Channel" }, { "kanał", "Channel" },
+            { "band", "Band" }, { "bande", "Band" }, { "banda", "Band" }, { "pasmo", "Band" },
+            { "radio type", "Radio type" }, { "type de radio", "Radio type" }, { "funktyp", "Radio type" }, { "tipo de radio", "Radio type" }, { "tipo radio", "Radio type" }, { "tipo de rádio", "Radio type" }, { "radiotype", "Radio type" }, { "typ radia", "Radio type" },
+            { "authentication", "Authentication" }, { "authentification", "Authentication" }, { "authentifizierung", "Authentication" }, { "autenticación", "Authentication" }, { "autenticazione", "Authentication" }, { "autenticação", "Authentication" }, { "verificatie", "Authentication" }, { "uwierzytelnianie", "Authentication" },
+            { "cipher", "Cipher" }, { "chiffrement", "Cipher" }, { "verschlüsselung", "Cipher" }, { "cifrado", "Cipher" }, { "crittografia", "Cipher" }, { "codificação", "Cipher" }, { "cifra", "Cipher" }, { "codering", "Cipher" }, { "szyfr", "Cipher" }
+        };
+        internal static string NormKey(string k)
+        {
+            string t = (k ?? "").Trim(), w; if (KeyWords.TryGetValue(t, out w)) return w;
+            string l = t.ToLowerInvariant();
+            if (l.StartsWith("receive rate", StringComparison.Ordinal) || l.StartsWith("vitesse de réception", StringComparison.Ordinal) || l.StartsWith("empfangsrate", StringComparison.Ordinal) || l.StartsWith("velocidad de recepción", StringComparison.Ordinal) || l.StartsWith("taxa de recepção", StringComparison.Ordinal) || l.StartsWith("velocità di ricezione", StringComparison.Ordinal)) return "Receive rate (Mbps)";
+            if (l.StartsWith("transmit rate", StringComparison.Ordinal) || l.StartsWith("vitesse de transmission", StringComparison.Ordinal) || l.StartsWith("übertragungsrate", StringComparison.Ordinal) || l.StartsWith("velocidad de transmisión", StringComparison.Ordinal) || l.StartsWith("taxa de transmissão", StringComparison.Ordinal) || l.StartsWith("velocità di trasmissione", StringComparison.Ordinal)) return "Transmit rate (Mbps)";
+            return t;
         }
         // netsh lists each Wi-Fi adapter as its own block (blank line between): keep the one that's connected - the one with
         // a signal %, or whose state reads connected in any language
@@ -455,7 +474,7 @@ namespace AdeeboMeter
             foreach (var raw in (text ?? "").Split('\n'))
             {
                 var m = kv.Match(raw); if (!m.Success) continue;
-                string k = m.Groups[1].Value, v = m.Groups[2].Value; int x;
+                string k = NormKey(m.Groups[1].Value), v = m.Groups[2].Value; int x;
                 if (Regex.IsMatch(k, @"^SSID \d+$")) { ssid = Program.Plain(v); cur = null; }
                 else if (Regex.IsMatch(k, @"^BSSID \d+$")) { cur = new Ap { Ssid = ssid == "" ? "(hidden network)" : ssid, Bssid = v }; list.Add(cur); }
                 else if (cur == null) continue;

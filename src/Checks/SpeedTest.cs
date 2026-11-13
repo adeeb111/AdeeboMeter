@@ -277,7 +277,7 @@ IPAddress[] found;
             while (!done()) { double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v); Thread.Sleep(250); }
             double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1);   // the measured window ends here, not after waiting for the threads
             long c = Interlocked.Read(ref counted);
-            foreach (var t in th) t.Join(3000); total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
+            foreach (var t in th) t.Join(3000); foreach (var t in th) t.Join(9000);   /* a stream stuck in a read (8 s timeout) ends before the next test may start */ total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
             return c <= 0 ? double.NaN : c * 8 / 1e6 / secs;
         }
     }
