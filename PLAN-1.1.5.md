@@ -487,9 +487,47 @@ Tests that fail the build
 - Deep test: 60 s on the busiest page - own CPU over 1% average, or memory over 64 MB, fails.
 - The "slow tick" (over 60 ms) and "window froze" logs stay, so a slow PC shows us which page and how long.
 
+### 11.11 Five sections (13 Nov, Adeeb: "build the five sections navigating") - replaces the 9 tabs in 11.1
+```
+Home ─ Overview + Monitor + Investigate merged: buddy, path, "What's wrong?" tiles, live health, alerts
+Toolbox ─ every tool by question, search, calculators
+Gamer ─ Gamer Zone
+Time machine ─ history, replay, what changed
+Learn ─ cards, labs, games, glossary
+```
+- Network story, Security checkup, Check a destination, reports and packet evidence are no longer top-level: they open
+  from a result with that incident already selected ("See the story", "Check security", "Make a report"), and stay
+  reachable from Toolbox and search (typing "security" or "story" goes straight there).
+- Same five in both layouts: coloured tabs (Classic) or sidebar rows (Sidebar). Old deep links / keyboard shortcuts
+  to removed tabs land on the right page inside Home or Toolbox, so testers' habits don't break.
+- Settings, About, Points stay in the header.
+
+### 11.12 Calculators (13 Nov) - our own maths from public formulas; NOTHING copied from internal tools
+Existing (upgrade to the new tool page): packet stack vs MTU, VLSM planner, bandwidth / transfer time,
+decimal / hex / binary. New, grouped by who needs them:
+| Group | Calculators |
+|---|---|
+| Network | subnet + "will this mask work with my gateway?" check (the /31-in-a-/21 case), IPv6 prefix split, wildcard mask, BDP / TCP window for a link, VPN / tunnel overhead on the MTU |
+| Wireless | LTE and 5G NR throughput (bandwidth, MIMO, modulation), radio overhead per packet, link budget (Wi-Fi / microwave: power, gains, path loss, margin), Wi-Fi channel width vs speed |
+| Servers and IT admin | RAID usable capacity, backup / restore time over a link, UPS runtime, uptime % -> downtime per year/month (SLA), storage growth |
+| Streamers | bitrate for resolution + fps + codec, upload you need (with headroom), data per hour of stream / recording size |
+| Everyday people | how long a download takes, monthly data use (streaming, calls, gaming hours), "is my plan fast enough for N people" |
+| Conversions | binary <-> hex <-> decimal (any width), IP <-> integer <-> hex, bits <-> bytes, Mbps <-> MB/s, time units |
+| TDM (generic maths only) | E1/T1 timeslots and bandwidth, jitter buffer size from packet delay variation |
+- Each is one tool page (11.6): inputs as fields with units, a big answer, a one-line "what this means", Details for
+  the formula. Pure arithmetic: nothing sent, nothing read from the PC.
+
+### 11.13 Decided against / not yet (13 Nov)
+- Freehand drawing tool: dropped (not a network companion; adds weight).
+- Evidence record + the "website or app won't open" end-to-end milestone + three tester cases (DNS fails / TCP times out
+  after DNS / TLS rejects the certificate): agreed as the next milestone; NOT in tonight's build unless Adeeb says so.
+- Topogram bridge: only a generic, redacted incident-file export on AdeeboMeter's side (no vendor names); any import
+  and SR OS alignment lives in topogram.
+- Tagline stays "is it me or the network?"; Home subtitle "See where a connection fails and what to check next."
+
 ### 11.9 Build order (after Adeeb approves this section and the line packs)
 1. Drawing kit: Inter, text hint, palette, card / button / chip / switch / tile / big back button, scrolling.
-2. Frame: Classic + Sidebar, slim health strip, header with Details behaviour + Mood button.
+2. Frame: the five sections (11.11) in Classic + Sidebar, slim health strip, header with Details behaviour + Mood button.
 3. Shared tool page + input swaps; Toolbox page.
 4. The other pages (11.5).
 5. Mood + persona engine, 14 packs, Settings section.
