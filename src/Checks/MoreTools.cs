@@ -162,7 +162,11 @@ namespace AdeeboMeter
             if (!Presets.TryGetValue(w, out ports))
             {
                 // whole numbers only: "100000" is a mistake, not port 10000
-                var all = Regex.Matches(w, @"\d+").Cast<Match>().Select(x => x.Value).ToList();
+                // a range ("8000-8010") becomes its ports - still 20 at most
+                string tooWide = null;
+                w = Regex.Replace(w, @"([0-9]{1,5})\s*-\s*([0-9]{1,5})", mr => { int a1 = int.Parse(mr.Groups[1].Value, CultureInfo.InvariantCulture), b1 = int.Parse(mr.Groups[2].Value, CultureInfo.InvariantCulture); if (b1 < a1 || b1 - a1 >= 20) { tooWide = mr.Value; return " "; } return string.Join(",", Enumerable.Range(a1, b1 - a1 + 1)); });
+                if (tooWide != null) { rows.Add(R(2, "Ports", tooWide + " - a range of up to 20 ports (this isn't a port scanner)", "", "u")); return rows; }
+                var all = Regex.Matches(w, @"[0-9]+").Cast<Match>().Select(x => x.Value).ToList();
                 var badNum = all.FirstOrDefault(x => x.Length > 5 || int.Parse(x, CultureInfo.InvariantCulture) < 1 || int.Parse(x, CultureInfo.InvariantCulture) > 65535);
                 if (badNum != null) { rows.Add(R(2, "Ports", badNum + " isn't a port (1-65535)", "", "u")); return rows; }
                 var nums = all.Select(x => int.Parse(x, CultureInfo.InvariantCulture)).Distinct().ToArray();
@@ -203,7 +207,8 @@ namespace AdeeboMeter
         // ================================================================== My sites: the pinned sites, each walked once
         public static List<string[]> MySites(Toolkit.Run run)
         {
-            var rows = new List<string[]>(); var hosts = Cfg.Pins.ToArray() /* a copy: the list is the UI thread's, this runs on a worker */.Select(Security.HostOf).Where(x => x != null).Distinct().Take(15).ToList();
+            var rows = new List<string[]>(); string[] pins; lock (Cfg.Pins) pins = Cfg.Pins.ToArray();   /* this runs on a worker; the UI thread changes the list under the same lock */
+            var hosts = pins.Select(Security.HostOf).Where(x => x != null).Distinct().Take(15).ToList();
             if (hosts.Count == 0) { rows.Add(R(3, "My sites", "no sites yet", "Pin the sites and services you care about in Investigate › Check a destination - they appear here, and the Security checkup checks their certificates.", "u")); return rows; }
             foreach (var h in hosts)
             {
@@ -332,7 +337,19 @@ namespace AdeeboMeter
                     if (RootAttrs.Contains(t))
                     {
                         int j = i + 2 + b[i + 1]; var vals = new List<string>();
-                        if (j + 2 < n && b[j] == 0x31) { int setLen = b[j + 1], k = j + 2; if (setLen >= 0x80) { k += setLen & 0x7F; setLen = 0; for (int q = 0; q < (b[j + 1] & 0x7F); q++) setLen = setLen << 8 | b[j + 2 + q]; } int end = Math.Min(n, k + setLen); while (k + 2 <= end && b[k] == 0x04) { int l = b[k + 1], o = k + 2; if (l >= 0x80) { int lb = l & 0x7F; l = 0; for (int q = 0; q < lb; q++) l = l << 8 | b[o + q]; o += lb; } if (o + l > end) break; vals.Add(Encoding.UTF8.GetString(b, o, l)); k = o + l; } }
+                        if (j + 2 < n && b[j] == 0x31)
+                        {
+                            // BER lengths of 1-3 bytes only, each read checked against the end (a hostile reply can't index past it)
+                            int setLen = b[j + 1], k = j + 2, slb = setLen & 0x7F;
+                            if (setLen >= 0x80) { if (slb == 0 || slb > 3 || k + slb > n) { i = j; continue; } setLen = 0; for (int q = 0; q < slb; q++) setLen = setLen << 8 | b[k + q]; k += slb; }
+                            int end = (int)Math.Min(n, (long)k + setLen);
+                            while (k + 2 <= end && b[k] == 0x04)
+                            {
+                                int l = b[k + 1], o = k + 2;
+                                if (l >= 0x80) { int lb = l & 0x7F; if (lb == 0 || lb > 3 || o + lb > end) break; l = 0; for (int q = 0; q < lb; q++) l = l << 8 | b[o + q]; o += lb; }
+                                if (l < 0 || o + l > end) break; vals.Add(Encoding.UTF8.GetString(b, o, l)); k = o + l;
+                            }
+                        }
                         d[t] = string.Join(", ", vals); i = j; continue;
                     }
                 }

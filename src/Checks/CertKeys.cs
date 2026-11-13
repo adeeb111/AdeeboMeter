@@ -73,7 +73,7 @@ namespace AdeeboMeter
                     return Persist(c, name);
             }
         }
-        static string Cn(string s) { return Safe(s, 64).Replace(",", " ").Replace("=", " "); }
+        static string Cn(string s) { string t = (s ?? "").Trim(); bool wild = t.StartsWith("*.", StringComparison.Ordinal); return (wild ? "*." : "") + Safe(wild ? t.Substring(2) : t, wild ? 62 : 64).Replace(",", " ").Replace("=", " "); }   // a wildcard name keeps its leading "*."
         static void Decorate(CertificateRequest req, string preset, IList<string> sans)
         {
             bool server = preset == "https" || preset == "lab", client = preset == "mtls";
@@ -209,8 +209,10 @@ namespace AdeeboMeter
         }
         static X509Certificate2 Load(string input)
         {
-            string s = (input ?? "").Trim().Trim('"');
-            byte[] data = File.Exists(s) ? File.ReadAllBytes(s) : Encoding.ASCII.GetBytes(s);
+            // the same rules as every certificate box: pasted text, or a full local path (never \\server\share - Windows would send
+            // your sign-in to it), at most 1 MB
+            var why = new List<string[]>(); string label; byte[] data = CertTools.Input(input, why, out label);
+            if (data == null) throw new CryptographicException(why.Count > 0 ? why[0][2] : "no certificate given");
             string t = Encoding.ASCII.GetString(data); var m = Regex.Match(t, "-----BEGIN CERTIFICATE-----([A-Za-z0-9+/=\\s]+)-----END CERTIFICATE-----");
             return new X509Certificate2(m.Success ? Convert.FromBase64String(Regex.Replace(m.Groups[1].Value, "\\s", "")) : data);
         }
@@ -246,7 +248,9 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); X509Certificate2 want;
             try { want = Load(certIn); } catch (Exception e) { if (!(e is CryptographicException || e is IOException || e is FormatException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Certificate", "couldn't read it - a .cer, .crt or .pem file, or paste the PEM text", "", "")); return rows; }
-            string h; int port; if (!Lab.Split((server ?? "").Trim(), 443, out h, out port) || !Games.ValidHost(h)) { want.Dispose(); rows.Add(R(2, "Server", "type the server - e.g. vpn.example.com or 10.0.0.5:8443", "", "")); return rows; }
+            string sv = (server ?? "").Trim(); Uri su;   // a pasted URL works too: https://vpn.example.com:8443/ -> vpn.example.com:8443
+            if (sv.IndexOf("://", StringComparison.Ordinal) > 0 && Uri.TryCreate(sv, UriKind.Absolute, out su) && su.Host != "") sv = (su.HostNameType == UriHostNameType.IPv6 ? "[" + su.Host.Trim('[', ']') + "]" : su.IdnHost) + ":" + su.Port.ToString(CultureInfo.InvariantCulture);
+            string h; int port; if (!Lab.Split(sv, 443, out h, out port) || !Games.ValidHost(h)) { want.Dispose(); rows.Add(R(2, "Server", "type the server - e.g. vpn.example.com or 10.0.0.5:8443", "", "")); return rows; }
             var sent = new List<X509Certificate2>(); SslPolicyErrors errs = SslPolicyErrors.None; string hsErr = "";
             try
             {
@@ -278,7 +282,9 @@ namespace AdeeboMeter
             {
                 if (n == "") { rows.Add(R(2, "Name", "type the person's name - you'll pick them by it when you encrypt", "", "")); return rows; }
                 if (n.Equals("code", StringComparison.OrdinalIgnoreCase)) { rows.Add(R(2, "Name", "\"code\" means \"share with a code\" when you encrypt - give them another name", "", "")); return rows; }
-                string ci = certIn.Trim().Trim('"'); string txt = File.Exists(ci) ? File.ReadAllText(ci) : ci; string kn;
+                var why = new List<string[]>(); string lbl; var raw = CertTools.Input(certIn, why, out lbl);
+                if (raw == null) { rows.AddRange(why); return rows; }
+                string txt = lbl == "pasted text" ? certIn.Trim().Trim('"') : Encoding.UTF8.GetString(raw); string kn;
                 var ecPub = EcKeys.ReadPublic(txt, out kn);
                 // a key changing under the same name is how someone else's key slips in: never silently
                 string ecFile = Path.Combine(RecipDir, n + ".adeebokey"), cerFile = Path.Combine(RecipDir, n + ".cer");

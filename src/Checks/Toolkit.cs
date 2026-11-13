@@ -155,8 +155,10 @@ namespace AdeeboMeter
             }
             return o;
         }
+        static List<string[]> LabOff() { return new List<string[]> { R(2, "Traffic Lab", "turned off by your IT team (AdeeboMeter.policy: traffic_lab = off)", "", "u") }; }
         public static List<string[]> Iperf(string server, string options, Run run)
         {
+            if (Policy.NoLab) return LabOff();   // traffic_lab = off covers the whole Traffic Lab section, these too
             var rows = new List<string[]>(); string host = (server ?? "").Trim();
             // -P is parallel and -p is the port: switch() lower-cases, so read -P separately
             var raw = (options ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -183,7 +185,8 @@ namespace AdeeboMeter
         public static readonly Dictionary<string, int> Dscp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "EF", 46 }, { "AF41", 34 }, { "AF42", 36 }, { "AF31", 26 }, { "AF21", 18 }, { "AF11", 10 }, { "CS1", 8 }, { "CS2", 16 }, { "CS3", 24 }, { "CS4", 32 }, { "CS5", 40 }, { "CS6", 48 }, { "CS7", 56 }, { "BE", 0 } };
         public static List<string[]> DscpPing(string target, string dscp, string count, Run run)
         {
-            var rows = new List<string[]>(); var dst = Icmp.Resolve4(target); if (dst == null) { rows.Add(R(2, "Target", "couldn't find " + target + " (IPv4)", "", "u")); return rows; }
+            if (Policy.NoLab) return LabOff();   // traffic_lab = off covers the whole Traffic Lab section, these too
+            var rows = new List<string[]>(); var dst = Icmp.Resolve4(target); if (dst == null) { rows.Add(R(2, "Target", Icmp.Why(target, "couldn't find " + target + " (IPv4)"), "", "u")); return rows; }
             int d; string dn = (dscp ?? "").Trim(); if (!Dscp.TryGetValue(dn, out d) && !(int.TryParse(dn, out d) && d >= 0 && d <= 63)) { rows.Add(R(2, "DSCP", "use a name (EF, AF41, CS6...) or 0-63", "", "u")); return rows; }
             int n; if (!int.TryParse(count, out n)) n = 20; n = Math.Max(2, Math.Min(200, n));
             var mk = new List<double>(); var pl = new List<double>(); run.SeriesUnit = "ms";
@@ -205,11 +208,12 @@ namespace AdeeboMeter
         // ---------- latency under load (bufferbloat): ping while your own iperf3 server fills the line, one direction at a time
         public static List<string[]> Loaded(string server, string target, Run run)
         {
+            if (Policy.NoLab) return LabOff();   // traffic_lab = off covers the whole Traffic Lab section, these too
             var rows = new List<string[]>(); if ((server ?? "").Trim() == "") { rows.Add(R(2, "Server", "type your iperf3 server", "It has to be on the far side of the link you want to test - for your internet line, a server out on the internet (iperf3 -s).", "u")); return rows; }
             // ping target: the one you typed; otherwise the iperf3 server itself (its queue is the one being filled), or 1.1.1.1 if it doesn't answer pings
             bool typed = !string.IsNullOrWhiteSpace(target);
             string srvHost = server.Trim(); int sc = srvHost.LastIndexOf(':'); if (sc > 0 && srvHost.IndexOf(':') == sc) srvHost = srvHost.Substring(0, sc);
-            var dst = Icmp.Resolve4(typed ? target : srvHost); if (dst == null) { rows.Add(R(2, typed ? "Ping target" : "Server", "couldn't find " + (typed ? target : srvHost) + " (or it has no IPv4 address)", "", "u")); return rows; }
+            var dst = Icmp.Resolve4(typed ? target : srvHost); if (dst == null) { rows.Add(R(2, typed ? "Ping target" : "Server", Icmp.Why(target, "couldn't find " + (typed ? target : srvHost) + " (or it has no IPv4 address)"), "", "u")); return rows; }
             run.SeriesUnit = "ms";
             Func<int, Func<bool>, List<double>> pings = (max, stop) =>
             {
@@ -261,7 +265,8 @@ namespace AdeeboMeter
         {
             bool udp = o.Udp; int port = o.Port, par = o.Par, secs = o.Secs + o.Omit; long udpRate = o.Rate; int len = BlockLen(o);
             var rows = new List<string[]>();
-            var addr = Dns.GetHostAddresses(host).First(a => o.V6 ? a.AddressFamily == AddressFamily.InterNetworkV6 : o.V4 ? a.AddressFamily == AddressFamily.InterNetwork : a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6);
+            var addr = Dns.GetHostAddresses(host).FirstOrDefault(a => o.V6 ? a.AddressFamily == AddressFamily.InterNetworkV6 : o.V4 ? a.AddressFamily == AddressFamily.InterNetwork : a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6);
+            if (addr == null) throw new InvalidOperationException(o.V6 ? "this server has no IPv6 address" : o.V4 ? "this server has no IPv4 address" : "this name has no address");
             var rnd = new byte[36]; using (var g = RandomNumberGenerator.Create()) g.GetBytes(rnd);
             var cookie = new byte[Cookie]; const string abc = "abcdefghijklmnopqrstuvwxyz234567"; for (int i = 0; i < 36; i++) cookie[i] = (byte)abc[rnd[i] % 32];
             using (var ctl = new TcpClient(addr.AddressFamily))
@@ -285,8 +290,9 @@ namespace AdeeboMeter
                         string js = "{" + (udp ? "\"udp\":true,\"bandwidth\":" + udpRate + "," : "\"tcp\":true,") + "\"len\":" + len + "," + (o.Window > 0 ? "\"window\":" + o.Window + "," : "") + (o.Mss > 0 ? "\"MSS\":" + o.Mss + "," : "") + (o.Tos > 0 ? "\"TOS\":" + o.Tos + "," : "") + "\"omit\":" + o.Omit + ",\"time\":" + o.Secs + ",\"num\":0,\"blockcount\":0,\"parallel\":" + par + (reverse ? ",\"reverse\":true" : "") + ",\"pacing_timer\":1000,\"client_version\":\"3.16\"}";
                         SendJson(cs, js);
                     }
-                    else if (st == 10)   // CREATE_STREAMS
+                    else if (st == 10)   // CREATE_STREAMS - once only: a server that asks again must not make us open socket after socket
                     {
+                        if (streams.Count > 0) throw new InvalidOperationException("the server asked for its streams twice - stopped (that isn't how iperf3 behaves)");
                         for (int i = 0; i < par; i++)
                         {
                             if (udp)
@@ -311,6 +317,7 @@ namespace AdeeboMeter
                     else if (st == 1) { }   // TEST_START
                     else if (st == 2)   // TEST_RUNNING: go
                     {
+                        if (sw.IsRunning) throw new InvalidOperationException("the server started the test twice - stopped");
                         sw.Start(); var end = DateTime.UtcNow.AddSeconds(secs);
                         foreach (var s0 in streams)
                         {
@@ -336,7 +343,7 @@ namespace AdeeboMeter
                                         }
                                         else
                                         {
-                                            int n; try { n = s.Receive(buf); } catch (SocketException) { continue; }
+                                            int n; try { n = s.Receive(buf); } catch (SocketException se) { if (se.SocketErrorCode == SocketError.TimedOut) continue; break; }   // only the 2 s timeout means "wait more" - a reset stream ends here
                                             if (n <= 0) break; Interlocked.Add(ref bytes[0], n);
                                             if (udp && n >= 12)
                                             {
@@ -406,6 +413,7 @@ namespace AdeeboMeter
         static double Num(Dictionary<string, object> d, string k) { object v; return d.TryGetValue(k, out v) && v is double ? (double)v : 0; }
         static void SendJson(NetworkStream s, string js) { var b = Encoding.UTF8.GetBytes(js); var l = new byte[4]; Be(l, 0, (uint)b.Length); s.Write(l, 0, 4); s.Write(b, 0, b.Length); }
         static string ReadJson(NetworkStream s) { var l = ReadN(s, 4); int n = (int)Ub(l, 0); if (n <= 0 || n > 1 << 20) throw new InvalidOperationException("bad results from the server"); return Encoding.UTF8.GetString(ReadN(s, n)); }
+        static byte[] ReadN(NetworkStream s, int n, Stopwatch since, int maxMs) { var b = new byte[n]; int got = 0; while (got < n) { if (since.ElapsedMilliseconds > maxMs) throw new System.IO.IOException("too slow - stopped after " + maxMs / 1000 + " s"); int r = s.Read(b, got, n - got); if (r <= 0) throw new InvalidOperationException("server closed the connection"); got += r; } return b; }
         static byte[] ReadN(NetworkStream s, int n) { var b = new byte[n]; int got = 0; while (got < n) { int r = s.Read(b, got, n - got); if (r <= 0) throw new InvalidOperationException("server closed the connection"); got += r; } return b; }
         static void Be(byte[] b, int o, uint v) { b[o] = (byte)(v >> 24); b[o + 1] = (byte)(v >> 16); b[o + 2] = (byte)(v >> 8); b[o + 3] = (byte)v; }
         static uint Ub(byte[] b, int o) { return (uint)(b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]); }
@@ -414,7 +422,7 @@ namespace AdeeboMeter
         public static List<string[]> Sustained(string target, string countIn, string ivIn, Run run)
         {
             var rows = new List<string[]>(); var a = Icmp.Resolve4(target);
-            if (a == null) { rows.Add(R(2, "Target", "couldn't find " + target + " (IPv4)", "", "u")); return rows; }
+            if (a == null) { rows.Add(R(2, "Target", Icmp.Why(target, "couldn't find " + target + " (IPv4)"), "", "u")); return rows; }
             int n, iv; if (!int.TryParse(countIn, out n)) n = 200; if (!int.TryParse(ivIn, out iv)) iv = 200; n = Math.Max(10, Math.Min(2000, n)); iv = Math.Max(20, Math.Min(5000, iv));
             run.SeriesUnit = "ms";
             for (int i = 0; i < n && !run.Stop; i++)
@@ -474,7 +482,7 @@ namespace AdeeboMeter
                 }
                 else if (sv == "" && !IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out srv)) { rows.Add(R(2, "Server", "no DNS server to ask - type one, e.g. 1.1.1.1, or a DoH address", "", "u")); return rows; }
                 msg = Query(srv, name, t, true); srvName = srv;
-                if (msg == null) { rows.Add(R(2, "Answer", "no answer from " + srv + " in 3 s", "", "m")); return rows; }
+                if (msg == null) { rows.Add(Question(name, 1, true, new byte[2]) == null ? R(2, "Name", "a part of the name is empty or longer than 63 characters - nothing was sent", "", "u") : R(2, "Answer", "no answer from " + srv + " in 3 s", "", "m")); return rows; }
             }
             object srv2 = srvName;
             rows.Add(R(msg.Rcode == 0 ? 0 : msg.Rcode == 3 ? 1 : 2, "Status", (msg.Rcode == 0 ? "NOERROR" : msg.Rcode == 3 ? "NXDOMAIN - the name doesn't exist" : msg.Rcode == 2 ? "SERVFAIL - the server couldn't get an answer" : "error " + msg.Rcode) + " from " + srv2 + " in " + msg.Ms + " ms" + (msg.Aa ? " · authoritative" : "") + (msg.Ad ? " · DNSSEC validated (AD)" : ""), msg.Rcode == 2 ? "Often a DNSSEC failure or the domain's own servers being down." : "", "m"));
@@ -526,7 +534,7 @@ namespace AdeeboMeter
                     {
                         if (!tc.ConnectAsync(server, 53).Wait(3000)) return null; var s = tc.GetStream(); s.ReadTimeout = 3000;
                         var l = new[] { (byte)(q.Count >> 8), (byte)q.Count }; s.Write(l, 0, 2); s.Write(q.ToArray(), 0, q.Count);
-                        var lb = ReadN(s, 2); resp = ReadN(s, lb[0] << 8 | lb[1]);
+                        var lb = ReadN(s, 2, sw, 8000); resp = ReadN(s, lb[0] << 8 | lb[1], sw, 8000);   // 8 s in all for the whole question - a dripping server can't hold dig
                         if (resp == null || resp.Length < 12 || resp[0] != id[0] || resp[1] != id[1]) return null;
                     }
             }
@@ -567,7 +575,7 @@ namespace AdeeboMeter
                 {
                     if (!(resp.ContentType ?? "").StartsWith("application/dns-message", StringComparison.OrdinalIgnoreCase)) { why = "the server answered " + (int)resp.StatusCode + " " + Draw.Trunc(resp.ContentType ?? "", 40) + ", not DNS"; return null; }
                     var ms = new System.IO.MemoryStream(); var buf = new byte[4096]; int n;
-                    while ((n = st.Read(buf, 0, buf.Length)) > 0) { ms.Write(buf, 0, n); if (ms.Length > 65535) { why = "answer too big"; return null; } }
+                    while ((n = st.Read(buf, 0, buf.Length)) > 0) { ms.Write(buf, 0, n); if (ms.Length > 65535) { why = "answer too big"; return null; } if (sw.ElapsedMilliseconds > 8000) { why = "too slow - stopped after 8 s"; return null; } }
                     var b = ms.ToArray(); if (b.Length < 12) { why = "short answer"; return null; }
                     return Parse(b, sw.ElapsedMilliseconds, url.Host);
                 }
@@ -719,8 +727,11 @@ namespace AdeeboMeter
             return rows;
         }
         // revocation is checked only when you press it: Windows then asks the certificate authority's OCSP / CRL servers
-        public static List<string[]> Revocation(string host, int port)
+        public static List<string[]> Revocation(string host, int port) { return Revocation(host, port, null); }
+        public static List<string[]> Revocation(string host, int port, string sni)
         {
+            if (Policy.NoOnline || !CertCfg.Revocation) return new List<string[]> { R(3, "Revocation", "not checked - revocation checks are off", "", "m") };
+            sni = string.IsNullOrEmpty(sni) ? host : sni;   // the name the inspector asked for - the same certificate the rows above described
             var rows = new List<string[]>(); X509Certificate2 cert = null;
             try
             {
@@ -728,7 +739,7 @@ namespace AdeeboMeter
                 {
                     if (tc == null) { rows.Add(R(2, "Revocation", "couldn't connect to " + host, "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (cert == null && c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))
-                    { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException) { hd = cert != null; } if (!hd) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } } if (!hd && cert == null) { rows.Add(R(2, "Revocation", "no TLS answer in 8 s", "", "m")); return rows; } }
+                    { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException) { hd = cert != null; } if (!hd) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } } if (!hd && cert == null) { rows.Add(R(2, "Revocation", "no TLS answer in 8 s", "", "m")); return rows; } }
                 }
                 if (cert == null) { rows.Add(R(2, "Revocation", "no certificate", "", "m")); return rows; }
                 using (cert) using (var chain = new X509Chain())
@@ -781,7 +792,8 @@ namespace AdeeboMeter
                     if (ins != "") rows.Add(R(1, "Inspected on the way", "re-signed by " + ins, "A company proxy (or something in the middle) decrypts and re-encrypts this connection.", "i"));
                     if (cert.NotBefore > DateTime.Now) rows.Add(R(2, "Not valid yet", "valid from " + cert.NotBefore.ToString("d MMM yyyy HH:mm", CultureInfo.CurrentCulture), "Either the site's new certificate went live early, or this PC's clock is behind.", "m"));
                     if (chainRows != null) rows.AddRange(chainRows);
-                    rows.Add(new[] { "3", "Revocation", "not checked - press to ask the authority (OCSP / CRL)", "This is the only part that contacts a server other than the site: the certificate authority's own.", "m", "revoke:" + host + ":" + port.ToString(CultureInfo.InvariantCulture) });
+                    if (Policy.NoOnline || !CertCfg.Revocation) rows.Add(R(3, "Revocation", Policy.NoOnline ? "not checked - your IT team has switched online lookups off" : "not checked - certificate revocation checks are off (Settings › Privacy & online lookups)", "Asking the certificate authority is the one part that would contact a server other than the site.", "m"));
+                    else rows.Add(new[] { "3", "Revocation", "not checked - press to ask the authority (OCSP / CRL)", "This is the only part that contacts a server other than the site: the certificate authority's own.", "m", "revoke:" + host + ":" + port.ToString(CultureInfo.InvariantCulture) + "|" + sni });
                 }
             return rows;
         }
@@ -887,6 +899,7 @@ namespace AdeeboMeter
         public static List<string[]> Wake(string macIn) { return Wake(macIn, ""); }
         public static List<string[]> Wake(string macIn, string secureOn)
         {
+            if (Policy.NoLab) return LabOff();   // traffic_lab = off covers the whole Traffic Lab section, these too
             var rows = new List<string[]>(); string hex = new string((macIn ?? "").Where(Uri.IsHexDigit).ToArray());
             if (hex.Length != 12) { rows.Add(R(2, "Hardware address", "type the PC's MAC, e.g. 3C:84:6A:12:34:56", "Your Wi-Fi > devices on your network lists the ones your PC has seen.", "u")); return rows; }
             var mac = Enumerable.Range(0, 6).Select(i => Convert.ToByte(hex.Substring(i * 2, 2), 16)).ToArray();
@@ -925,6 +938,7 @@ namespace AdeeboMeter
                 else { prefix = MaskBits(mk.GetAddressBytes()); var mb = mk.GetAddressBytes(); var want = new byte[mb.Length]; for (int i = 0; i < Math.Max(0, prefix); i++) want[i / 8] |= (byte)(0x80 >> (i % 8)); if (prefix < 0 || !mb.SequenceEqual(want)) bad = sp[1] + " isn't a contiguous mask"; }
             }
             else if (sp.Length > 2) bad = "too many parts - one address and a prefix or mask";
+            if (bad == null && Regex.IsMatch(ipPart, @"^[0-9.]+$") && !Regex.IsMatch(ipPart, @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$")) bad = "write the address as four plain numbers, no leading zeros (Windows reads 010 as 8)";
             IPAddress ip; if (bad != null || !IPAddress.TryParse(ipPart, out ip) || (ip.AddressFamily == AddressFamily.InterNetwork && ipPart.Count(ch => ch == '.') != 3)) { rows.Add(R(2, "Input", (bad != null ? bad + " - " : "") + "type e.g. 10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64", "", "u")); return rows; }
             int bits = ip.AddressFamily == AddressFamily.InterNetwork ? 32 : 128; if (prefix < 0) prefix = bits;
             if (sp.Length == 2 && slash < 0 && IPAddress.Parse(sp[1]).AddressFamily != ip.AddressFamily) { rows.Add(R(2, "Mask", "an IPv" + (bits == 32 ? "6" : "4") + " mask on an IPv" + (bits == 32 ? "4" : "6") + " address", "", "u")); return rows; } if (prefix > bits) { rows.Add(R(2, "Prefix", "/" + prefix + " is too long", "", "u")); return rows; }
@@ -1003,7 +1017,7 @@ namespace AdeeboMeter
         public static List<string[]> ReturnPath(string target, Run run)
         {
             var rows = new List<string[]>(); var a = Icmp.Resolve4(target);
-            if (a == null) { rows.Add(R(2, "Target", "couldn't find " + target + " (IPv4)", "", "u")); return rows; }
+            if (a == null) { rows.Add(R(2, "Target", Icmp.Why(target, "couldn't find " + target + " (IPv4)"), "", "u")); return rows; }
             run.Status = "Tracing to " + a + "...";
             var hops = PathTools.Trace(a, 30, () => run.Stop);
             foreach (var h in hops)

@@ -118,10 +118,13 @@ namespace AdeeboMeter
             return rows;
         }
         // Windows' wording is technical; add the plain meaning for the common ones.
+        // "disconnected by the user" in the languages Windows writes it in (the reason is a translated sentence)
+        static readonly string[] UserWords = { "by the user", "vom benutzer", "par l'utilisateur", "par l’utilisateur", "por el usuario", "dall'utente", "pelo usuário", "pelo utilizador", "door de gebruiker", "przez użytkownika", "пользователем", "ユーザーによって", "用户", "使用者", "사용자", "kullanıcı tarafından", "بواسطة المستخدم" };
+        public static bool ByUser(string reason) { string r = (reason ?? "").ToLowerInvariant(); return UserWords.Any(w => r.Contains(w)); }
         public static string Plain(string reason)
         {
             string r = reason.ToLowerInvariant();
-            if (r.Contains("disconnected by the user")) return reason + " (you or an app chose to disconnect)";
+            if (ByUser(reason)) return reason + " (you or an app chose to disconnect)";
             if (r.Contains("driver disconnected") || r.Contains("deauth") || r.Contains("disassociat")) return reason + " (the access point or the driver dropped the link)";
             if (r.Contains("roam")) return reason + " (moved to another access point)";
             if (r.Contains("authentication") || r.Contains("security")) return reason + " (sign-in to the network failed - password or certificate)";
@@ -187,16 +190,23 @@ namespace AdeeboMeter
         // One handle per call, closed at once. The connected adapter wins; with none connected, the first one's state.
         public sealed class Now { public int Signal = -1, Rate = -1; public string Ssid = "", Bssid = "", Channel = "", State = ""; }
         static readonly string[] States = { "not ready", "connected", "ad hoc", "disconnecting", "disconnected", "associating", "discovering", "authenticating" };
-        public static int Current(out Now now)
+        public static int Current(out Now now) { return Current(out now, null); }
+        // prefer: the adapter Windows routes through (NetworkInterface.Id, "{guid}") - with two Wi-Fi adapters, that one's state counts.
+        // -2: no Wi-Fi adapter right now (asleep, unplugged) - not "this Windows can't".
+        public static int Current(out Now now, string prefer)
         {
             now = null; IntPtr h = IntPtr.Zero, ifl = IntPtr.Zero;
             try
             {
                 int ver; if (WlanOpenHandle(2, IntPtr.Zero, out ver, out h) != 0) return -1;
                 if (WlanEnumInterfaces(h, IntPtr.Zero, out ifl) != 0) return -1;
-                int n = Marshal.ReadInt32(ifl); if (n <= 0) return -1;
-                int pick = 0;
-                for (int i = 0; i < n && i < 8; i++) if (Marshal.ReadInt32(ifl + 8 + i * 532 + 528) == 1) { pick = i; break; }   // WLAN_INTERFACE_INFO.isState: 1 = connected
+                int n = Marshal.ReadInt32(ifl); if (n <= 0) return -2;
+                Guid want; bool hasWant = Guid.TryParse(prefer ?? "", out want);
+                int pick = -1;
+                for (int i = 0; i < n && i < 8 && hasWant; i++) { var gi = new byte[16]; Marshal.Copy(ifl + 8 + i * 532, gi, 0, 16); if (new Guid(gi) == want) { pick = i; break; } }
+                for (int i = 0; i < n && i < 8 && pick < 0; i++) if (Marshal.ReadInt32(ifl + 8 + i * 532 + 528) == 1) pick = i;   // WLAN_INTERFACE_INFO.isState: 1 = connected
+                for (int i = 0; i < n && i < 8 && pick < 0; i++) if (Marshal.ReadInt32(ifl + 8 + i * 532 + 528) != 4) pick = i;   // reconnecting (associating...) beats an idle one that's disconnected
+                if (pick < 0) pick = 0;
                 var gb = new byte[16]; Marshal.Copy(ifl + 8 + pick * 532, gb, 0, 16); var g = new Guid(gb);
                 int st = Marshal.ReadInt32(ifl + 8 + pick * 532 + 528);
                 var r = new Now { State = st >= 0 && st < States.Length ? States[st] : "" };
@@ -272,13 +282,21 @@ namespace AdeeboMeter
         {
             int end = p + len, q = p + 2 + 4; if (q + 2 > end) return "WPA2";
             int pc = ies[q] | ies[q + 1] << 8; q += 2 + 4 * pc; if (q + 2 > end) return "WPA2";
-            int ac = ies[q] | ies[q + 1] << 8; q += 2; bool sae = false, psk = false, ent = false, owe = false, ent3 = false;
+            int ac = ies[q] | ies[q + 1] << 8; q += 2; bool sae = false, psk = false, ent = false, owe = false, ent3 = false, sha256only = false, ent1 = false;
             for (int i = 0; i < ac && q + 4 <= end; i++, q += 4)
             {
                 if (ies[q] != 0x00 || ies[q + 1] != 0x0F || ies[q + 2] != 0xAC) continue; int t = ies[q + 3];
-                if (t == 8 || t == 9 || t == 24 || t == 25) sae = true; else if (t == 2 || t == 4 || t == 6) psk = true; else if (t == 12 || t == 13) ent3 = true; else if (t == 1 || t == 3 || t == 5 || t == 11) ent = true; else if (t == 18) owe = true;
+                if (t == 8 || t == 9 || t == 24 || t == 25) sae = true;
+                else if (t == 2 || t == 4 || t == 6) psk = true;
+                else if (t == 12 || t == 13) ent3 = true;
+                else if (t == 5) { ent = true; sha256only = true; }
+                else if (t == 1 || t == 3 || t == 11 || t == 14 || t == 15) { ent = true; ent1 = true; }   // 14/15: FILS - a fast 802.1X sign-in
+                else if (t == 18) owe = true;
             }
-            if (ent3) return "WPA3-Enterprise"; if (ent) return "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return "WPA2";
+            // RSN capabilities after the AKM list: bit 6 = management frame protection required. 802.1X-SHA256 alone with it
+            // required is WPA3-Enterprise ("only" mode)
+            bool mfpr = q + 2 <= end && (ies[q] & 0x40) != 0;
+            if (ent3 || (sha256only && !ent1 && mfpr)) return "WPA3-Enterprise"; if (ent) return "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return "WPA2";
         }
         public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)"; }
         // the least crowded channel in a band: each neighbour weighs by its signal (squared - a strong one hurts far more),
@@ -331,6 +349,11 @@ namespace AdeeboMeter
                     if ((prm & (1 << 15)) != 0) q += 1;               // co-hosted BSS
                     if ((prm & (1 << 17)) != 0 && q + 2 <= p + len)   // 6 GHz operation info
                     { int cw = ies[q + 1] & 0x03; b.Width = Math.Max(b.Width, cw == 0 ? 20 : cw == 1 ? 40 : cw == 2 ? 80 : 160); }
+                }
+                else if (id == 255 && len >= 7 && ies[p] == 106)   // EHT Operation (Wi-Fi 7): the width, 320 MHz included
+                {
+                    int prm = ies[p + 1], q = p + 1 + 1 + 4;          // params, basic EHT-MCS and NSS set
+                    if ((prm & 0x01) != 0 && q < p + len) { int cw = ies[q] & 0x07; b.Width = Math.Max(b.Width, cw == 0 ? 20 : cw == 1 ? 40 : cw == 2 ? 80 : cw == 3 ? 160 : cw == 4 ? 320 : 20); }
                 }
                 else if (id == 48 && len >= 8) b.Sec = Rsn(ies, p, len);
                 else if (id == 221 && len >= 4 && ies[p] == 0x00 && ies[p + 1] == 0x50 && ies[p + 2] == 0xF2 && ies[p + 3] == 1 && b.Sec == "") b.Sec = "WPA (old)";
@@ -467,13 +490,26 @@ namespace AdeeboMeter
         public static Dictionary<string, string> Fields(string text)
         {
             var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var line in (text ?? "").Split('\n')) { var m = kv.Match(line); if (!m.Success) continue; string k = NormKey(m.Groups[1].Value); if (!d.ContainsKey(k)) d[k] = m.Groups[2].Value; }
+            int rates = 0;
+            foreach (var line in (text ?? "").Split('\n'))
+            {
+                var m = kv.Match(line); if (!m.Success) continue; string k = NormKey(m.Groups[1].Value);
+                if (k != "Receive rate (Mbps)" && k != "Transmit rate (Mbps)") { int rk = RateKind(m.Groups[1].Value); if (rk == 3) rk = rates == 0 ? 1 : 2; if (rk > 0) { rates++; k = rk == 1 ? "Receive rate (Mbps)" : "Transmit rate (Mbps)"; } }
+                if (!d.ContainsKey(k)) d[k] = m.Groups[2].Value;
+            }
             return d;
         }
         // netsh's labels are translated: the common languages' words for the ones read here become the English label
         // (English, French, German, Spanish, Italian, Portuguese, Dutch, Polish; anything else is kept as it is)
         static readonly Dictionary<string, string> KeyWords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Russian, Japanese, Chinese (simplified and traditional), Korean, Arabic, Turkish - the per-network labels
+            { "сигнал", "Signal" }, { "シグナル", "Signal" }, { "信号", "Signal" }, { "訊號", "Signal" }, { "信號", "Signal" }, { "신호", "Signal" }, { "الإشارة", "Signal" }, { "الاشارة", "Signal" }, { "sinyal", "Signal" },
+            { "канал", "Channel" }, { "チャネル", "Channel" }, { "チャンネル", "Channel" }, { "信道", "Channel" }, { "通道", "Channel" }, { "채널", "Channel" }, { "القناة", "Channel" },
+            { "диапазон", "Band" }, { "バンド", "Band" }, { "波段", "Band" }, { "频带", "Band" }, { "頻帶", "Band" }, { "대역", "Band" }, { "النطاق", "Band" }, { "bant", "Band" },
+            { "тип радиомодуля", "Radio type" }, { "無線の種類", "Radio type" }, { "无线电类型", "Radio type" }, { "無線電類型", "Radio type" }, { "무선 유형", "Radio type" }, { "نوع الراديو", "Radio type" }, { "radyo türü", "Radio type" }, { "tipo frequenza radio", "Radio type" },
+            { "проверка подлинности", "Authentication" }, { "認証", "Authentication" }, { "身份验证", "Authentication" }, { "驗證", "Authentication" }, { "인증", "Authentication" }, { "المصادقة", "Authentication" }, { "kimlik doğrulama", "Authentication" },
+            { "шифр", "Cipher" }, { "шифрование", "Cipher" }, { "暗号", "Cipher" }, { "密码", "Cipher" }, { "加密", "Cipher" }, { "암호", "Cipher" }, { "التشفير", "Cipher" }, { "şifre", "Cipher" },
             { "signal", "Signal" }, { "señal", "Signal" }, { "segnale", "Signal" }, { "sinal", "Signal" }, { "signaal", "Signal" }, { "sygnał", "Signal" },
             { "channel", "Channel" }, { "canal", "Channel" }, { "kanal", "Channel" }, { "canale", "Channel" }, { "kanaal", "Channel" }, { "kanał", "Channel" },
             { "band", "Band" }, { "bande", "Band" }, { "banda", "Band" }, { "pasmo", "Band" },
@@ -481,6 +517,26 @@ namespace AdeeboMeter
             { "authentication", "Authentication" }, { "authentification", "Authentication" }, { "authentifizierung", "Authentication" }, { "autenticación", "Authentication" }, { "autenticazione", "Authentication" }, { "autenticação", "Authentication" }, { "verificatie", "Authentication" }, { "uwierzytelnianie", "Authentication" },
             { "cipher", "Cipher" }, { "chiffrement", "Cipher" }, { "verschlüsselung", "Cipher" }, { "cifrado", "Cipher" }, { "crittografia", "Cipher" }, { "codificação", "Cipher" }, { "cifra", "Cipher" }, { "codering", "Cipher" }, { "szyfr", "Cipher" }
         };
+        // the receive / transmit rate labels in any language: a rate line has its unit in the label ("(Mbps)", "(Mbit/s)", "(Мбит/с)")
+        // and a word for which way; 0 = not a rate line, 3 = a rate line that doesn't say which way (the caller takes receive first)
+        static readonly string[] RxWords = { "receive", "réception", "empfang", "recepción", "ricezione", "recepção", "ontvang", "odbier", "прием", "приём", "受信", "接收", "수신", "استقبال", "alma" };
+        static readonly string[] TxWords = { "transmit", "transmission", "übertragung", "transmisión", "trasmissione", "transmissão", "verzend", "wysył", "передач", "送信", "传输", "發送", "傳送", "송신", "إرسال", "gönderme", "iletim" };
+        internal static int RateKind(string label)
+        {
+            string l = (label ?? "").ToLowerInvariant();
+            bool unit = l.Contains("(mb") || l.Contains("mbps") || l.Contains("mbit") || l.Contains("мбит") || l.Contains("mb/s");
+            if (RxWords.Any(w => l.Contains(w))) return unit || l.Contains("rate") ? 1 : 0;
+            if (TxWords.Any(w => l.Contains(w))) return unit || l.Contains("rate") ? 2 : 0;
+            return unit ? 3 : 0;
+        }
+        internal static double RateOf(string v) { var m = Regex.Match(v ?? "", @"\d+(?:[.,]\d+)?"); double r; return m.Success && double.TryParse(m.Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out r) ? r : -1; }
+        // "2,4 GHz", "2.4 GHz", "2,4 ГГц", "5 GHz" -> "2.4 GHz" / "5 GHz" / "6 GHz": the band by its leading digit, in any language
+        public static string NormBand(string v)
+        {
+            var m = Regex.Match(v ?? "", @"^\s*(2\s*[.,]\s*4|5|6)(?![0-9])");
+            if (!m.Success) return "";
+            return m.Groups[1].Value.StartsWith("2", StringComparison.Ordinal) ? "2.4 GHz" : m.Groups[1].Value + " GHz";
+        }
         internal static string NormKey(string k)
         {
             string t = (k ?? "").Trim(), w; if (KeyWords.TryGetValue(t, out w)) return w;
@@ -523,7 +579,9 @@ namespace AdeeboMeter
                 else if (cur == null) continue;
                 else if (k == "Signal" && int.TryParse(v.TrimEnd('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Signal = x;
                 else if (k == "Channel" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Channel = x;
-                else if (k == "Band") cur.Band = v;
+                else if (k == "Band") cur.Band = NormBand(v);
+                else if (cur.Signal < 0 && Regex.IsMatch(v, @"^(\d{1,3}\s*%|%\s*\d{1,3})$")) { var pm = Regex.Match(v, @"\d{1,3}"); int.TryParse(pm.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out x); if (x <= 100) cur.Signal = x; }   // a label we don't know: a "74%" is the signal
+                else if (cur.Band == "" && Regex.IsMatch(v, @"^\s*(2\s*[.,]\s*4|5|6)\s*(GHz|ГГц|ギガヘルツ|千兆赫)", RegexOptions.IgnoreCase)) cur.Band = NormBand(v);
                 else if (k == "Radio type") cur.Radio = v;
                 else if (k == "Connected Stations" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x)) cur.Stations = x;
                 else if (k == "Channel Utilization") { var um = Regex.Match(v, @"\((\d+)\s*%\)"); int u; if (um.Success && int.TryParse(um.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out u)) cur.Util = Math.Min(100, u); }
@@ -566,7 +624,7 @@ namespace AdeeboMeter
                 string iface = "", nets = "";
                 try { iface = Job.Run(Job.Netsh, "wlan show interfaces", 4000); } catch { }
                 try { nets = Job.Run(Job.Netsh, "wlan show networks mode=bssid", 6000); } catch { }
-                if (Blocked(iface) || Blocked(nets)) s.LocationBlocked = true;
+                if (Blocked(iface) || Blocked(nets) || m.WifiBlocked) s.LocationBlocked = true;   // m.WifiBlocked: Windows' Wi-Fi service said so - in any language
                 iface = ActiveBlock(iface);   // two Wi-Fi adapters: the connected one's lines only, never a mix of both
                 var f = Fields(iface); string v; int ch = -1, sig = -1;
                 if (f.TryGetValue("Channel", out v)) int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch);
@@ -577,8 +635,8 @@ namespace AdeeboMeter
                 // the band from Windows' Wi-Fi API when it knows this access point (6 GHz channel 5 isn't 2.4 GHz channel 5)
                 string apiBand = "";
                 string myB = f.TryGetValue("AP BSSID", out v) ? v : f.TryGetValue("BSSID", out v) ? v : pbssid;
-                if (!f.ContainsKey("Band") && myB != "") { string werr; var me = WlanApi.List(false, out werr).FirstOrDefault(b => string.Equals(b.Bssid, myB.Replace('-', ':'), StringComparison.OrdinalIgnoreCase)); if (me != null) { apiBand = me.Band; if (ch < 0) ch = me.Channel; } }
-                string band = BandOf(ch, f.TryGetValue("Band", out v) ? v : apiBand), radio = f.TryGetValue("Radio type", out v) ? v : "";
+                if ((!f.ContainsKey("Band") || NormBand(f["Band"]) == "") && myB != "") { string werr; var me = WlanApi.List(false, out werr).FirstOrDefault(b => string.Equals(b.Bssid, myB.Replace('-', ':'), StringComparison.OrdinalIgnoreCase)); if (me != null) { apiBand = me.Band; if (ch < 0) ch = me.Channel; } }
+                string band = BandOf(ch, f.TryGetValue("Band", out v) && NormBand(v) != "" ? NormBand(v) : apiBand), radio = f.TryGetValue("Radio type", out v) ? v : "";
                 string bssid = f.TryGetValue("AP BSSID", out v) ? v : f.TryGetValue("BSSID", out v) ? v : pbssid;
                 if (s.Wifi && sig < 0 && ch < 0) unknownAir = true;
                 s.MyChannel = ch; s.MyBand = band; s.MyBssid = bssid;
@@ -617,7 +675,7 @@ namespace AdeeboMeter
                         int idx = s.Radio.FindIndex(r => r[0] == "Signal");
                         if (idx >= 0 && me.Rssi < 0) s.Radio[idx] = new[] { "Signal", sig + "%  ·  " + me.Rssi + " dBm", me.Rssi < -75 ? "2" : me.Rssi < -67 ? "1" : "0" };
                     }
-                    if (band.StartsWith("2.4", StringComparison.Ordinal) && s.Aps.Any(a => a.Ssid == F("SSID") && !a.Band.StartsWith("2.4", StringComparison.Ordinal)))
+                    if (band.StartsWith("2.4", StringComparison.Ordinal) && s.Aps.Any(a => a.Ssid == F("SSID") && a.Band != "" && !a.Band.StartsWith("2.4", StringComparison.Ordinal)))
                         notes.Add(Voice.P("You're on 2.4 GHz, but your network also offers a faster band. Moving a bit closer usually lets Windows switch.", "Your network also has 5/6 GHz; 2.4 GHz is slower and more crowded."));
                 }
             }
@@ -673,7 +731,7 @@ namespace AdeeboMeter
             string de;
             if (s.Wifi) { s.Drops = EvLog.WifiDrops(24, out de); s.DropsErr = de; }
             s.Dhcp = EvLog.DhcpProblems(24, out de); s.DhcpErr = de;
-            int realDrops = s.Drops.Count(d => d[1].IndexOf("by the user", StringComparison.OrdinalIgnoreCase) < 0);
+            int realDrops = s.Drops.Count(d => !EvLog.ByUser(d[1]));
             if (realDrops >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your Wi-Fi dropped " + realDrops + " times in the last day - the reasons are below.", realDrops + " Wi-Fi drops in 24 h.")); }
             // ---- devices on your network (the ARP table - nothing is scanned), names from your router's DNS
             try

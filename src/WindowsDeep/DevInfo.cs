@@ -48,7 +48,7 @@ namespace AdeeboMeter
                     d.Present = s2 == 0; if (s2 == 0 && (st & 0x400) != 0) d.Problem = pr;   // DN_HAS_PROBLEM
                     d.Name = Str(inst, Name); if (d.Name == "") d.Name = Str(inst, Desc);
                     d.Class = Str(inst, Class); d.DriverVer = Str(inst, DrvVer); d.Provider = Str(inst, DrvProv);
-                    d.DriverDate = Time(inst, DrvDate); d.Arrived = Time(inst, Arrived); d.Removed = Time(inst, Removed);
+                    d.DriverDate = Time(inst, DrvDate, true); d.Arrived = Time(inst, Arrived); d.Removed = Time(inst, Removed);
                     res.Add(d);
                 }
             }
@@ -64,11 +64,13 @@ namespace AdeeboMeter
             return CM_Get_DevNode_PropertyW(inst, ref key, out type, b, ref size, 0) == 0 ? b : null;
         }
         static string Str(int inst, Key k) { int t; var b = Raw(inst, k, out t); if (b == null || t != 0x12) return ""; return Program.Plain(System.Text.Encoding.Unicode.GetString(b).TrimEnd('\0')); }
-        static DateTime Time(int inst, Key k)
+        static DateTime Time(int inst, Key k) { return Time(inst, k, false); }
+        // dateOnly: a driver's date is a calendar date written as midnight UTC - kept in UTC, so it never shows a day early west of Greenwich
+        static DateTime Time(int inst, Key k, bool dateOnly)
         {
             int t; var b = Raw(inst, k, out t); if (b == null || t != 0x10 || b.Length < 8) return DateTime.MinValue;
             long ft = BitConverter.ToInt64(b, 0); if (ft <= 0) return DateTime.MinValue;
-            try { return DateTime.FromFileTimeUtc(ft).ToLocalTime(); } catch (ArgumentOutOfRangeException) { return DateTime.MinValue; }
+            try { var u = DateTime.FromFileTimeUtc(ft); return dateOnly ? DateTime.SpecifyKind(u.Date, DateTimeKind.Unspecified) : u.ToLocalTime(); } catch (ArgumentOutOfRangeException) { return DateTime.MinValue; }
         }
 
         // the Windows problem code in plain words: what it means, and the one thing to try

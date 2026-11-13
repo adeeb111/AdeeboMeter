@@ -97,7 +97,7 @@ namespace AdeeboMeter
                 string reason = Reason(e.Text);
                 rows.Add(R(2, e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture), Draw.Trunc(reason != "" ? reason : First(e.Text), 140), Hint(e.Text), "w"));
             }
-            if (rows.Count == 0) rows.Add(R(0, "Network sign-in", e1 != "" && e2 != "" ? e1 : "no failed sign-ins in the last 7 days (Wi-Fi or wired 802.1X)", "", e1 != "" && e2 != "" ? "u" : "w"));
+            if (rows.Count == 0) rows.Add(R(e1 != "" && e2 != "" ? 1 : 0, "Network sign-in", e1 != "" && e2 != "" ? e1 : "no failed sign-ins in the last 7 days (" + (e1 != "" ? "wired 802.1X - the Wi-Fi log couldn't be read" : e2 != "" ? "Wi-Fi - the wired 802.1X log couldn't be read" : "Wi-Fi or wired 802.1X") + ")", "", e1 != "" || e2 != "" ? "u" : "w"));
             return rows;
         }
         static string Reason(string t)

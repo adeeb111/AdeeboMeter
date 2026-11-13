@@ -36,8 +36,9 @@ jobs:
         shell: pwsh
         # the one secret the build sees: the Hall of Fame key, so official award cards carry a claim code (see src/HallOfFame.cs).
         # It goes into one generated file (obj/HofKey.cs) that release.ps1 deletes after compiling; every other byte is this source.
+        # Only a release (or a by-hand rebuild of a tagged release) gets it: a push build is an "unofficial build" whose cards carry no code.
         env:
-          HOF_KEY: ${{ secrets.HOF_KEY }}
+          HOF_KEY: ${{ (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')) && secrets.HOF_KEY || '' }}
         run: ./release.ps1
       - name: Self-test - nothing is uploaded or released if it fails
         shell: pwsh

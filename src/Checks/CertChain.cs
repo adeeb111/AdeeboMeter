@@ -66,6 +66,13 @@ namespace AdeeboMeter
             var cur = leaf; var now = DateTime.Now;
             for (int depth = 0; depth < 8; depth++)
             {
+                // a cross-signed copy of a root this PC trusts (same name, same key): Windows and browsers stop at the trusted one
+                if (chain.Count > 1 && !SelfSigned(cur))
+                {
+                    var c0 = cur; byte[] k0; try { k0 = c0.PublicKey.EncodedKeyValue.RawData; } catch (CryptographicException) { k0 = null; }
+                    var anchor = k0 == null ? null : roots.FirstOrDefault(r => SameName(r.SubjectName, c0.SubjectName) && r.PublicKey.EncodedKeyValue.RawData.SequenceEqual(k0));
+                    if (anchor != null) { trusted = true; chain[chain.Count - 1].From += " - the same key as a trusted root, so the chain ends here"; break; }
+                }
                 if (SelfSigned(cur))
                 {
                     trusted = roots.Any(r => r.Thumbprint == cur.Thumbprint);
@@ -77,7 +84,7 @@ namespace AdeeboMeter
                 var cands = given.Where(names).Select(c => Tuple.Create(c, "you gave it"))
                     .Concat(ca.Where(names).Select(c => Tuple.Create(c, "Windows' store")))
                     .Concat(roots.Where(names).Select(c => Tuple.Create(c, "Windows' trusted roots")))
-                    .OrderBy(t => SignedBy(cur, t.Item1) ? 0 : 1).ThenBy(t => now >= t.Item1.NotBefore && now <= t.Item1.NotAfter ? 0 : 1).ToList();
+                    .OrderBy(t => SignedBy(cur, t.Item1) ? 0 : 1).ThenBy(t => t.Item2 == "Windows' trusted roots" ? 0 : 1).ThenBy(t => now >= t.Item1.NotBefore && now <= t.Item1.NotAfter ? 0 : 1).ToList();   // a trusted root beats a cross-signed copy of it
                 if (cands.Count == 0) { missing = true; missingName = cur.IssuerName.Name; break; }
                 var up = cands[0];
                 var link = new Link { Cert = up.Item1, From = up.Item2 };
@@ -86,6 +93,14 @@ namespace AdeeboMeter
                 chain.Add(link);
                 if (chain.Take(chain.Count - 1).Any(l => l.Cert.Thumbprint == up.Item1.Thumbprint)) { link.Bad.Add("the chain loops back on itself"); break; }
                 cur = up.Item1;
+            }
+            for (int i = 0; i < chain.Count; i++)
+            {
+                // what today's apps refuse: an RSA key under 2048 bits, a SHA-1 or MD5 signature (a root's own signature doesn't count)
+                var l0 = chain[i]; bool selfRoot = SelfSigned(l0.Cert);
+                try { using (var rsa = l0.Cert.GetRSAPublicKey()) if (rsa != null && rsa.KeySize < 2048) l0.Bad.Add("weak key: RSA " + rsa.KeySize + " bits (apps want 2048 or more)"); } catch (CryptographicException) { }
+                string sig = l0.Cert.SignatureAlgorithm != null ? l0.Cert.SignatureAlgorithm.Value : "";
+                if (!selfRoot && (sig == "1.2.840.113549.1.1.5" || sig == "1.2.840.10045.4.1" || sig == "1.2.840.113549.1.1.4" || sig == "1.3.14.3.2.29")) l0.Bad.Add("weak signature: " + (sig == "1.2.840.113549.1.1.4" ? "MD5" : "SHA-1") + " (apps refuse it)");
             }
             foreach (var l in chain)
             {
@@ -101,9 +116,19 @@ namespace AdeeboMeter
         {
             bool missing, trusted; string missingName;
             var chain = Walk(leaf, given, out missing, out trusted, out missingName);
+            // the missing one is the root when the last certificate we have is itself a CA: servers aren't meant to send roots
+            bool rootMissing = missing && chain.Count > 1 && IsCa(chain[chain.Count - 1].Cert);
+            bool stopped = !missing && !trusted && !SelfSigned(chain[chain.Count - 1].Cert);   // the walk hit its 9-certificate limit
+            if (fromServer)
+            {
+                var eku = leaf.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault();
+                if (eku != null && eku.EnhancedKeyUsages.Count > 0 && !eku.EnhancedKeyUsages.Cast<Oid>().Any(o => o.Value == "1.3.6.1.5.5.7.3.1" || o.Value == "2.5.29.37.0")) chain[0].Bad.Add("not made for servers (its 'used for' list has no server authentication)");
+            }
             int at = rows.Count;
             rows.Add(R(-1, "THE CHAIN OF TRUST, ROOT AT THE TOP", "", "", "m"));
-            if (missing) rows.Add(R(2, "✗  missing", "the certificate that signed the one below (" + Draw.Trunc(Cn(missingName), 50) + ")", fromServer ? "The server should send it with its own certificate - its admin adds the intermediate (chain) file to the server's setup." : "Add the intermediate file (from the issuer's site or the server's admin) to the box above.", "m"));
+            if (stopped) rows.Add(R(1, "…  stopped", "the chain is longer than 9 certificates - the walk stopped here", "Real chains have 2-4. A chain this long is a mistake, or a loop of cross-signs.", "m"));
+            if (rootMissing) rows.Add(R(1, "?  root", "not on this PC: " + Draw.Trunc(Cn(missingName), 50), "Windows fetches a public root the first time a site needs it; a private CA's root must be installed. Servers don't need to send it.", "m"));
+            else if (missing) rows.Add(R(2, "✗  missing", "the certificate that signed the one below (" + Draw.Trunc(Cn(missingName), 50) + ")", fromServer ? "The server should send it with its own certificate - its admin adds the intermediate (chain) file to the server's setup." : "Add the intermediate file (from the issuer's site or the server's admin) to the box above.", "m"));
             for (int i = chain.Count - 1; i >= 0; i--)
             {
                 var l = chain[i]; bool root = i == chain.Count - 1 && SelfSigned(l.Cert) && !missing;
@@ -114,7 +139,8 @@ namespace AdeeboMeter
                 rows.Add(R(lv, (lv == 2 ? "✗  " : "✓  ") + role, Draw.Trunc(l.Cert.GetNameInfo(X509NameType.SimpleName, false), 50) + " · until " + l.Cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + from,
                     l.Bad.Count > 0 ? string.Join("; ", l.Bad) + "." : l.Warn ? "Expires within 30 days." : i == 0 ? "Signed by the one above." : root ? "Trusted by Windows - the top of the ladder." : "Signed by the one above, and allowed to sign the one below.", "m"));
             }
-            rows.Insert(at, R(chain.Any(l => l.Bad.Count > 0) || missing ? 2 : chain.Any(l => l.Warn) ? 1 : 0, "In plain words", Plain(chain, missing, trusted, fromServer), "", "i"));
+            int plv = chain.Any(l => l.Bad.Count > 0) || (missing && !rootMissing) ? 2 : rootMissing || stopped || !trusted || chain.Any(l => l.Warn) ? 1 : 0;
+            rows.Insert(at, R(plv, "In plain words", stopped ? "The chain is longer than 9 certificates, so it wasn't followed to the end - that alone is a problem worth fixing." : rootMissing && chain.All(l => l.Bad.Count == 0) ? "Every certificate here holds, but the root at the top (" + Draw.Trunc(Cn(missingName), 40) + ") isn't on this PC yet. A public root arrives by itself the first time Windows needs it; a private one has to be installed." : Plain(chain, missing, trusted, fromServer), "", "i"));
         }
         static string Cn(string dn) { var m = System.Text.RegularExpressions.Regex.Match(dn ?? "", @"CN=([^,]+)"); return m.Success ? m.Groups[1].Value : dn; }
         static string Plain(List<Link> chain, bool missing, bool trusted, bool fromServer)
@@ -124,6 +150,8 @@ namespace AdeeboMeter
             if (leaf.Bad.Any(b => b.StartsWith("not valid until", StringComparison.Ordinal))) return "Your certificate isn't valid yet - or this PC's clock is behind. Check the clock first (Toolbox › Clock check).";
             if (missing) return leaf.Bad.Count == 0 ? (fromServer ? "Your certificate is fine, but the server forgot to send the middle certificate." : "Your certificate is fine, but the middle certificate is missing - add it to the files above.") : "The middle certificate is missing, and your certificate has a problem too (see below).";
             var bad = chain.Skip(1).FirstOrDefault(l => l.Bad.Count > 0);
+            if (chain.Any(l => l.Bad.Any(b => b.StartsWith("weak", StringComparison.Ordinal)))) return "The chain links up, but it uses a weak key or an old signature (RSA under 2048 bits, SHA-1 or MD5) - today's browsers and apps refuse it. Get a new certificate.";
+            if (leaf.Bad.Any(b => b.StartsWith("not made for servers", StringComparison.Ordinal))) return "This certificate isn't made for a server - its 'used for' list has no server authentication, so browsers refuse it.";
             if (chain.Any(l => l.Bad.Any(b => b.StartsWith("the signature", StringComparison.Ordinal)))) return "A signature doesn't check out - one certificate wasn't really signed by the one above it. A wrong file, or a tampered one.";
             if (bad != null && bad.Bad.Any(b => b.StartsWith("expired", StringComparison.Ordinal))) return "Your certificate is fine, but one above it has expired - the whole chain fails with it. Get the current intermediate from the issuer.";
             if (bad != null && bad.Bad.Any(b => b.StartsWith("it isn't allowed", StringComparison.Ordinal))) return "A certificate that isn't a CA signed another one - apps refuse that chain.";
@@ -138,14 +166,17 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string label;
             var certs = CertTools.LoadCerts(input, rows, out label); if (certs == null) return rows;
             if (certs.Count == 0) { rows.Add(R(2, label, "no certificate in it", "", "u")); return rows; }
-            var given = certs.Skip(1).ToList();
+            // a bundle (.p7b, a pasted chain) may be stored root first: "your certificate" is the one that signed none of the others
+            var leafC = certs[0];
+            if (certs.Count > 1) { var notIssuer = certs.Where(c => !SelfSigned(c) && !certs.Any(o => !ReferenceEquals(o, c) && SameName(o.IssuerName, c.SubjectName))).ToList(); leafC = notIssuer.Count > 0 ? notIssuer[0] : certs[0]; }
+            var given = certs.Where(c => !ReferenceEquals(c, leafC)).ToList();
             foreach (var part in (others ?? "").Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x != "").Take(8))
             {
                 string l2; var more = CertTools.LoadCerts(part, rows, out l2); if (more != null) given.AddRange(more);
             }
             rows.Add(R(3, label, given.Count == 0 ? "1 certificate - the rest of its chain comes from Windows' own stores" : "1 certificate + " + given.Count + " to build its chain from (then Windows' own stores)", "Checked on this PC: nothing is fetched from the internet.", "m"));
-            Ladder(rows, certs[0], given, false);
-            if (CertCfg.Revocation && !Policy.NoOnline) Revocation(rows, certs[0], given);
+            Ladder(rows, leafC, given, false);
+            if (CertCfg.Revocation && !Policy.NoOnline) Revocation(rows, leafC, given);
             foreach (var c in certs.Concat(given)) c.Dispose();
             return rows;
         }
@@ -161,7 +192,12 @@ namespace AdeeboMeter
                 try { ch.Build(leaf); } catch (CryptographicException e) { rows.Add(R(3, "Revocation", "couldn't check: " + Draw.Trunc(e.Message, 60), "", "m")); return; }
                 var st = ch.ChainStatus.Select(s => s.Status).ToList();
                 if (st.Contains(X509ChainStatusFlags.Revoked)) rows.Add(R(2, "Revocation", "REVOKED - its issuer has withdrawn it", "Revoked certificates must not be used: a new one is needed.", "m"));
-                else if (st.Contains(X509ChainStatusFlags.RevocationStatusUnknown) || st.Contains(X509ChainStatusFlags.OfflineRevocation)) rows.Add(R(1, "Revocation", "couldn't tell - the issuer's list didn't answer in 10 s", "", "m"));
+                else if (st.Contains(X509ChainStatusFlags.RevocationStatusUnknown) || st.Contains(X509ChainStatusFlags.OfflineRevocation))
+                {
+                    // no CRL address and no OCSP address at all: nothing to ask - not a timeout
+                    bool where = leaf.Extensions.Cast<X509Extension>().Any(x => x.Oid != null && (x.Oid.Value == "2.5.29.31" || (x.Oid.Value == "1.3.6.1.5.5.7.1.1" && x.Format(false).IndexOf("OCSP", StringComparison.OrdinalIgnoreCase) >= 0)));
+                    rows.Add(R(1, "Revocation", !where ? "can't be checked - the certificate names no revocation list or OCSP server (common for a private CA)" : st.Contains(X509ChainStatusFlags.OfflineRevocation) ? "couldn't tell - the issuer's list didn't answer in 10 s" : "couldn't tell - the issuer's list or OCSP server gave no usable answer", "", "m"));
+                }
                 else rows.Add(R(0, "Revocation", "not revoked (the issuer's list was asked)", "", "m"));
             }
         }
@@ -295,6 +331,7 @@ namespace AdeeboMeter
             IPAddress ip; if (!IPAddress.TryParse(host, out ip)) { try { var all = Dns.GetHostAddresses(host); ip = all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? all.FirstOrDefault(); } catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; } }
             if (ip == null) { rows.Add(R(2, host, "the name doesn't resolve", "Check the spelling, or DNS (Toolbox › DNS).", "m")); return rows; }
             string sni = host;
+            if (sni.Any(ch => ch > 127)) { try { sni = new System.Globalization.IdnMapping().GetAscii(sni); } catch (ArgumentException) { } }   // bücher.de goes out as xn--bcher-kva.de, never "b?cher"
 
             // 1. Windows' own handshake - what every app on this PC gets: version, cipher, full validation, the name
             run.Status = "TLS handshake with " + host + "...";
@@ -335,8 +372,9 @@ namespace AdeeboMeter
             else if (expired) { verdict = "The site's certificate expired on " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " - the site's owner has to renew it."; vlv = 2; }
             else if (nameBad) { verdict = "The certificate isn't for " + host + " - it's for " + Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, false), 40) + ". The wrong server, a wrong name, or something in the middle."; vlv = 2; }
             else if (chainBad) { verdict = "Windows doesn't trust this certificate's chain - see the ladder below for which link breaks."; vlv = 2; }
+            else if (proto == "") { verdict = "The certificate checks out, but the handshake didn't finish" + (hsErr != "" ? " (" + Draw.Trunc(hsErr, 60) + ")" : "") + " - the server may want a client certificate, or it stopped answering."; vlv = 2; }
             else { verdict = "A good padlock: " + proto + ", the right name, a chain Windows trusts" + ((cert.NotAfter - now).TotalDays < 30 ? " - but it expires in " + (int)(cert.NotAfter - now).TotalDays + " days" : "") + "."; vlv = (cert.NotAfter - now).TotalDays < 30 ? 1 : 0; }
-            rows.Add(R(vlv, host + ":" + port, verdict, "Two short handshakes, no HTTP request: one by Windows (what your apps get), one TLS 1.2 hello to read the certificates as the server sends them.", "m"));
+            rows.Add(R(vlv, host + ":" + port, verdict, "Two short handshakes, no HTTP request to the site: one by Windows (what your apps get), one TLS 1.2 hello to read the certificates as the server sends them." + (clock != null && Cfg.Portal && !Policy.NoOnline ? " The certificate's dates looked wrong, so the clock was also compared with msftconnecttest.com (Settings › Sign-in page check turns that off)." : ""), "m"));
 
             // the connection
             rows.Add(R(-1, "THE CONNECTION", "", "", "m"));
@@ -350,9 +388,12 @@ namespace AdeeboMeter
             {
                 int days = (int)Math.Floor((cert.NotAfter - now).TotalDays);
                 rows.Add(R(nameBad ? 2 : 0, "Name matches", nameBad ? "no - it's for " + Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, false), 50) : "yes - valid for " + host, "", "m"));
-                rows.Add(R(expired ? 2 : early ? 2 : days < 30 ? 1 : 0, "Expires", expired ? "expired " + Math.Max(1, -days) + " days ago" : early ? "not valid until " + cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "in " + days + " days (" + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ")", "", "m"));
+                rows.Add(R(expired ? 2 : early ? 2 : days < 30 ? 1 : 0, "Expires", expired ? ((now - cert.NotAfter).TotalHours < 24 ? "expired " + Math.Max(1, (int)(now - cert.NotAfter).TotalHours) + " h ago" : "expired " + (int)(now - cert.NotAfter).TotalDays + " days ago") : early ? "not valid until " + cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "in " + days + " days (" + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ")", "", "m"));
                 string insp = !chainBad ? Inspection.InspectedBy(cert) : "";
-                if (insp != "") rows.Add(R(1, "HTTPS inspection", Voice.P("Your company is inspecting HTTPS (" + Draw.Trunc(insp, 40) + "). Not a fault - just good to know when a site misbehaves.", "Inspected on the way by " + Draw.Trunc(insp, 40) + " (a company proxy) - not a fault, but worth knowing when a site misbehaves."), "This PC trusts that company root on purpose, so the padlock still shows. Nothing here tries to get around it.", "w"));
+                // a private root can be a company proxy inspecting HTTPS - or simply an intranet / home-lab CA that signs this site itself.
+                // Only a public website signed that way points at inspection (Security checkup tests that with www.microsoft.com).
+                bool publicSite = ip != null && DestCheck.Kind(ip.ToString()) == "public" && host.Contains(".") && !host.EndsWith(".local", StringComparison.OrdinalIgnoreCase) && !host.EndsWith(".lan", StringComparison.OrdinalIgnoreCase) && !host.EndsWith(".corp", StringComparison.OrdinalIgnoreCase) && !host.EndsWith(".internal", StringComparison.OrdinalIgnoreCase) && !host.EndsWith(".home", StringComparison.OrdinalIgnoreCase);
+                if (insp != "") rows.Add(R(publicSite ? 1 : 3, "Private root", "signed by a root this PC trusts but the public doesn't: " + Draw.Trunc(insp, 40), publicSite ? Voice.P("On a public website that usually means your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.", "On a public site this usually means HTTPS inspection by a company proxy.") : "Normal for an intranet site or your own CA (a NAS, a home lab). On a public website it would mean HTTPS inspection.", "w"));
             }
             if (clock != null) rows.AddRange(clock);
 

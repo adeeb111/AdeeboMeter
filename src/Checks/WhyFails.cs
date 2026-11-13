@@ -77,9 +77,13 @@ namespace AdeeboMeter
             {
                 var lines = File.ReadAllLines(f).Select(l => { int c = l.IndexOf('#'); return (c >= 0 ? l.Substring(0, c) : l).Trim(); }).Where(l => l != "").ToList();
                 if (lines.Count == 0) rows.Add(R(0, "Hosts file", "empty - every name goes to DNS", "", "w"));
-                foreach (var l in lines.Take(40))
+                // every line is checked for your site (an ad-block hosts file has thousands); only the first 40 others are listed
+                Func<string, bool> pins = l => name != "" && l.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Skip(1).Any(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase));
+                var show = lines.Where(pins).Take(10).Concat(lines.Where(l => !pins(l)).Take(40)).ToList();
+                if (lines.Count > show.Count) rows.Add(R(3, "Hosts file", lines.Count.ToString(CultureInfo.CurrentCulture) + " entries - every one checked" + (name != "" ? " for " + name : "") + ", the first 40 listed", "", "w"));
+                foreach (var l in show)
                 {
-                    bool hit = name != "" && l.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Skip(1).Any(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase));
+                    bool hit = pins(l);
                     rows.Add(R(hit ? 2 : 3, hit ? "Pins your site" : "Entry", l, hit ? "This line overrides DNS for " + name + " - if the address is old, the site breaks only on this PC. Remove the line (needs admin, or ask IT)." : "", "w"));
                 }
             }
@@ -202,9 +206,15 @@ namespace AdeeboMeter
         }
 
         // ---------- clock check against the Date of a server answer (the page Windows itself uses to test the internet)
-        public static List<string[]> Clock()
+        public static List<string[]> Clock() { return Clock(false); }
+        // asked: the Clock check tool itself (you pressed it) - the policy still wins, the Sign-in page switch doesn't apply
+        public static List<string[]> Clock(bool asked)
         {
             var rows = new List<string[]>();
+            // the clock comparison asks msftconnecttest.com for its time - the same request as the sign-in page check, so the same
+            // switches turn it off (Settings › Sign-in page check, or the policy's online_lookups). Then only this PC's own time shows.
+            if ((!asked && !Cfg.Portal) || Policy.NoOnline) rows.Add(R(3, "Clock", "not compared online - " + (Policy.NoOnline ? "your IT team switched online lookups off" : "the sign-in page check is off in Settings"), "", "i"));
+            else
             try
             {
                 var req = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt");

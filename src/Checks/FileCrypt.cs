@@ -17,7 +17,8 @@ namespace AdeeboMeter
     //    Format v1 (all big-endian), built only from standard pieces:
     //      "ADEEBO" 0x01 0x01 | iterations (4) | salt (16) | IV (16) | AES-256-CBC( name length (2) | name (UTF-8) | file ) | HMAC-SHA256 (32)
     //    Keys: PBKDF2-HMAC-SHA256(code, salt, iterations) -> 64 bytes: AES key, then HMAC key. The HMAC covers everything
-    //    before it and is checked BEFORE anything is decrypted - a changed or damaged file is refused, never half-opened.
+    //    before it; it is checked as the file is decrypted (into a hidden temp file), and on a mismatch everything decrypted is
+    //    thrown away - a changed or damaged file is refused, never half-opened.
     //  * Encrypt for a recipient - a standard CMS / S/MIME .p7m (AES-256) for their certificate; opens in AdeeboMeter,
     //    OpenSSL (openssl cms -decrypt) or Outlook-compatible tools. Windows finds the recipient's private key by itself.
     // Codes are never saved or logged; the original file is never changed.
@@ -25,7 +26,7 @@ namespace AdeeboMeter
     {
         static readonly byte[] Magic = { (byte)'A', (byte)'D', (byte)'E', (byte)'E', (byte)'B', (byte)'O', 1, 1 };
         public const int Iterations = 600000, HeaderLen = 8 + 4 + 16 + 16, MacLen = 32;
-        public const long MaxBytes = 4L * 1024 * 1024 * 1024, MaxCms = 50L * 1024 * 1024, MaxCmsOpen = 100L * 1024 * 1024;   // a standard .p7m is built in memory (several copies): made up to 50 MB; one someone sends is opened up to 100 MB; .adeebo streams up to 4 GB
+        public const long MaxBytes = 4L * 1024 * 1024 * 1024, MaxCms = 25L * 1024 * 1024, MaxCmsOpen = 50L * 1024 * 1024;   // a standard .p7m is built in memory (.NET has no streaming CMS; about four copies at once): made up to 25 MB (the usual mail limit); one someone sends is opened up to 50 MB; .adeebo streams up to 4 GB
         const string Alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";   // no 0/O, 1/I/L - easy to read out on the phone
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
 
@@ -301,7 +302,7 @@ namespace AdeeboMeter
                 rows.Add(R(3, "To open it", "they open it in AdeeboMeter (Open an encrypted file) - their key is found by itself, no code needed", "Only AdeeboMeter opens these: the strongest choice, unique to the app.", ""));
                 return rows;
             }
-            if (fi.Length > MaxCms) { rows.Add(R(2, "File", "a standard (RSA) .p7m holds up to 50 MB - for bigger files use a code, or a P-384 key (.adeebo streams up to 4 GB)", "", "")); return rows; }
+            if (fi.Length > MaxCms) { rows.Add(R(2, "File", "a standard (RSA) .p7m holds up to 25 MB - for bigger files use a code, or a P-384 key (.adeebo streams up to 4 GB)", "", "")); return rows; }
             var certs = new List<X509Certificate2>(); var names = new List<string>();
             foreach (var nm in t.Split(',').Select(x => x.Trim()).Where(x => x != ""))
             {
@@ -362,7 +363,7 @@ namespace AdeeboMeter
                 else if (h8.Take(6).SequenceEqual(Magic.Take(6))) { rows.Add(R(2, "Open", "an AdeeboMeter file of a kind this version doesn't know - made by a newer AdeeboMeter?", "Update AdeeboMeter and open it again.", "")); return rows; }
                 else
                 {
-                    if (fi.Length > MaxCmsOpen) { rows.Add(R(2, "File", "bigger than 100 MB - too big to open as a .p7m here (it is decoded in memory)", "", "")); return rows; }
+                    if (fi.Length > MaxCmsOpen) { rows.Add(R(2, "File", "bigger than 50 MB - too big to open as a .p7m here (it is decoded in memory)", "", "")); return rows; }
                     run.Status = "Looking for your key and opening it...";
                     var env = new EnvelopedCms(); env.Decode(File.ReadAllBytes(file)); env.Decrypt();   // Windows finds the matching private key in your store
                     string name = fi.Name.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase) ? fi.Name.Substring(0, fi.Name.Length - 4) : fi.Name + ".opened";

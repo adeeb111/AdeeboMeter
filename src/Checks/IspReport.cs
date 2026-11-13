@@ -90,8 +90,11 @@ namespace AdeeboMeter
             // (a provider's modem in front of your own router, double NAT)
             string gwIp; lock (m.L) gwIp = m.Gateway;
             int gwIdx = main.Hops.FindIndex(h => h.Ip != "" && h.Ip == gwIp);
-            int firstIsp = gwIdx < 0 ? main.Hops.FindIndex(h => { IPAddress a; return IPAddress.TryParse(h.Ip, out a) && !Private(a); })   // router not seen on the path (a VPN): the first public hop
-                : main.Hops.FindIndex(gwIdx + 1, h => { IPAddress a; if (!IPAddress.TryParse(h.Ip, out a)) return false; var b = a.GetAddressBytes(); return !(b.Length == 4 && b[0] == 192 && b[1] == 168) && !IPAddress.IsLoopback(a); });
+            // the router itself not seen on the path (it ignores the trace, or answers from another of its addresses): the first hop
+            // that isn't a 192.168 home address is the provider's - 10.x and CGNAT 100.64.x first hops included
+            Func<PathTools.Hop, bool> notHome = h => { IPAddress a; if (!IPAddress.TryParse(h.Ip, out a)) return false; var b = a.GetAddressBytes(); return !(b.Length == 4 && b[0] == 192 && b[1] == 168) && !IPAddress.IsLoopback(a) && !(a.IsIPv6LinkLocal); };
+            bool vpnOn; lock (m.L) vpnOn = m.VpnUp;
+            int firstIsp = main.Hops.FindIndex(Math.Max(0, gwIdx + 1), h => notHome(h));
             string verdict = PathTools.MtrVerdict(main.Hops);
             int start = StartOfLoss(main.Hops);
             var router = main.Hops.FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var end = main.Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
@@ -101,6 +104,7 @@ namespace AdeeboMeter
             // finding in one line
             string finding;
             if (start >= 0 && firstIsp >= 0 && start >= firstIsp) finding = "Loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + "), inside or past the provider's network, and carries through to the destination. The home network was clean.";
+            else if (start >= 0 && vpnOn && gwIdx < 0) finding = "Loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + ") - inside the VPN tunnel or at its server. Try once with the VPN off: if the loss goes away, it's the VPN's side.";
             else if (start >= 0) finding = "Loss starts at hop " + main.Hops[start].N + " - before the provider (" + (wifi ? "Wi-Fi or the router" : "the home network") + "). Fix the home side first.";
             else if (end != null && Loss(end) >= 1 && !silentEnd) finding = "Only the destination drops some probes - it rate-limits pings; the path itself is clean.";
             else finding = (silentEnd && end != null ? "The destination doesn't answer pings, so this is judged up to the last router that does (hop " + end.N + "). " : "") + "No real loss on the path during the " + min + "-minute run. If it's an evening problem, run it again in the evening - the 7-day pattern below shows when.";
@@ -134,14 +138,15 @@ namespace AdeeboMeter
                 rows.Add(R(-1, "SAME TIME, TWO ROUTES", "", "", "m"));
                 foreach (var r in routes)
                 {
-                    var e = r.Hops.LastOrDefault(h => h.Sent > 0); int s = StartOfLoss(r.Hops);
+                    var e = r.Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); int s = StartOfLoss(r.Hops);   // the last hop that answered - a silent tail hop isn't "100% loss"
                     string handoff = HandOff(r.Hops, nm);
-                    rows.Add(R(e == null ? 3 : Lv(Loss(e)), r.Label, (e == null ? "no reply" : F(Avg(e), " ms") + " avg · loss " + F(Loss(e), "%")) + (handoff != "" ? " · leaves the provider at " + handoff : "") + (s >= 0 ? " · loss from hop " + r.Hops[s].N : ""), "", "m"));
+                    rows.Add(R(e == null ? 3 : s >= 0 ? Lv(Loss(e)) : 0, r.Label, (e == null ? "doesn't answer ping" : F(Avg(e), " ms") + " avg · loss " + F(s >= 0 ? Loss(e) : 0, "%") + (r.Hops.Any(h => h.Reached && h.Lost < h.Sent) ? "" : " (up to hop " + e.N + " - the end doesn't answer ping)")) + (handoff != "" ? " · leaves the provider at " + handoff : "") + (s >= 0 ? " · loss from hop " + r.Hops[s].N : ""), "", "m"));
                 }
-                var a0 = routes[0].Hops.LastOrDefault(h => h.Sent > 0); var a1 = routes[1].Hops.LastOrDefault(h => h.Sent > 0);
+                var a0 = routes[0].Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var a1 = routes[1].Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
                 string h0 = HandOff(routes[0].Hops, nm), h1 = HandOff(routes[1].Hops, nm);
-                if (a0 != null && a1 != null && h0 != "" && h1 != "" && h0 != h1 && Math.Abs(Loss(a0) - Loss(a1)) >= 1)
-                    rows.Add(R(1, "What it means", "Only the route that leaves at " + (Loss(a0) > Loss(a1) ? h0 : h1) + " loses packets - the problem is on that hand-off, not your line. Your provider can steer that traffic another way.", "", "i"));
+                bool real0 = StartOfLoss(routes[0].Hops) >= 0, real1 = StartOfLoss(routes[1].Hops) >= 0;   // only loss that carries on counts - not a router ignoring pings
+                if (a0 != null && a1 != null && h0 != "" && h1 != "" && h0 != h1 && real0 != real1)
+                    rows.Add(R(1, "What it means", "Only the route that leaves at " + (real0 ? h0 : h1) + " loses packets - the problem is on that hand-off, not your line. Your provider can steer that traffic another way.", "", "i"));
                 else rows.Add(R(3, "What it means", h0 == h1 && h0 != "" ? "Both routes leave the provider at the same place, so this comparison can't single out a hand-off." : "No clear difference between the routes in this run.", "", "i"));
             }
 
@@ -195,7 +200,7 @@ namespace AdeeboMeter
             foreach (var r in ruled) rows.Add(R(0, "Checked", r, "", "m"));
 
             // the message to paste, and the report file
-            string msg = Message(finding, routes, main, start, firstIsp, wifi, nm, heat);
+            string msg = GameSession.Redact(Message(finding, routes, main, start, firstIsp, wifi, nm, heat), ssid);   // pasted into a support chat: no home addresses, no Wi-Fi name
             rows.Add(R(-1, "MESSAGE FOR YOUR PROVIDER'S SUPPORT CHAT", "click to copy", "", "i"));
             rows.Add(new[] { "3", "Message", msg, "", "i", "copy:" + msg });
             string file = Save(rows, ssid);
@@ -283,9 +288,11 @@ namespace AdeeboMeter
             var sb = new StringBuilder("Hi - ");
             var bad = heat.Where(kv => kv.Value >= 1).Select(kv => kv.Key).OrderBy(k => k).ToList();
             if (bad.Count > 0) sb.Append("I see packet loss " + (bad.All(h => h >= 17 && h <= 23) ? "in the evenings (" + bad.First().ToString("00", CultureInfo.InvariantCulture) + ":00-" + (bad.Last() + 1).ToString("00", CultureInfo.InvariantCulture) + ":00)" : "at " + string.Join(", ", bad.Select(h => h.ToString("00", CultureInfo.InvariantCulture) + ":00"))) + " over the last week. ");
-            sb.Append(wifi ? "This was measured on Wi-Fi. " : "This was measured on a cable, with my router answering normally. ");
+            var rt = main.Hops.FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);   // "my router answering normally" only when it was
+            bool routerFine = rt != null && Loss(rt) < 1 && !(start >= 0 && rt.N >= main.Hops[start].N);
+            sb.Append(wifi ? "This was measured on Wi-Fi. " : routerFine ? "This was measured on a cable, with my router answering normally. " : "This was measured on a cable. ");
             if (start >= 0) sb.Append("The loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + ") and continues to the destination (" + main.Label + "). ");
-            if (routes.Count > 1) { var e0 = routes[0].Hops.LastOrDefault(h => h.Sent > 0); var e1 = routes[1].Hops.LastOrDefault(h => h.Sent > 0); if (e0 != null && e1 != null) sb.Append("At the same time " + routes[1].Label + " had " + F(Loss(e1), "%") + " loss against " + F(Loss(e0), "%") + ". "); }
+            if (routes.Count > 1) { var e0 = routes[0].Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var e1 = routes[1].Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); bool r0 = StartOfLoss(routes[0].Hops) >= 0, r1 = StartOfLoss(routes[1].Hops) >= 0; if (e0 != null && e1 != null && r0 != r1) sb.Append("At the same time " + routes[1].Label + " had " + F(r1 ? Loss(e1) : 0, "%") + " loss against " + F(r0 ? Loss(e0) : 0, "%") + ". "); }
             sb.Append(start >= 0 && firstIsp >= 0 && start >= firstIsp ? "Could your network team check that link, or route this traffic another way? " : "Could you check my line? ");
             sb.Append("I have the full report and raw data if you'd like them.");
             return sb.ToString();

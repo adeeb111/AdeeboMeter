@@ -94,12 +94,27 @@ namespace AdeeboMeter
             finally { if (buf != IntPtr.Zero) Marshal.FreeHGlobal(buf); IcmpCloseHandle(h); }
         }
 
+        // why the last Resolve4 on this thread said no ("" = just not found): a broadcast, a group, or an address typed in a form Windows reads differently
+        [ThreadStatic] static string why;
+        public static string LastWhy { get { return why ?? ""; } }
+        public static string Why(string target, string fallback) { return LastWhy != "" ? LastWhy : fallback; }
         public static IPAddress Resolve4(string host)
         {
+            why = "";
             IPAddress a; string h = Toolkit.HostOnly(host);   // a URL first, then name:port - "https://x" must not become "https"
-            if (IPAddress.TryParse(h, out a)) return a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? a : null;
-            string hh; int p; bool t; string e; if (!DestCheck.Parse(h, out hh, out p, out t, out e)) return null;
-            try { return Dns.GetHostAddresses(hh).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); } catch { return null; }
+            // numbers only (or 0x...): four plain numbers, no leading zeros - "010.0.0.1" is 8.0.0.1 to Windows, "4294967295" is 255.255.255.255
+            if (System.Text.RegularExpressions.Regex.IsMatch(h ?? "", @"^(0x[0-9a-fA-F]+|[0-9.]+|[0-9a-fA-Fx.]*0x[0-9a-fA-Fx.]*)$") && !System.Text.RegularExpressions.Regex.IsMatch(h, @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$"))
+            { why = h + " isn't four plain numbers (like 192.168.1.10) - leading zeros, hex or short forms are read as a different address"; return null; }
+            IPAddress got = null;
+            if (IPAddress.TryParse(h, out a)) got = a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? a : null;
+            else
+            {
+                string hh; int p; bool t; string e; if (!DestCheck.Parse(h, out hh, out p, out t, out e)) return null;
+                try { got = Dns.GetHostAddresses(hh).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); } catch { return null; }
+            }
+            // one device only: never a broadcast or a multicast group (the sweep and the ICMP builder never allow it either)
+            if (got != null) { string no = Lab.NotOne(got); if (no != "") { why = no; return null; } }
+            return got;
         }
         public static string Text(int status)
         {

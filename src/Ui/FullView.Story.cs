@@ -35,6 +35,8 @@ namespace AdeeboMeter
         {
             string t = travelBox.Box.Text.Trim(); if (t == "") return;
             storyApp = null; storyTarget = t; storyIp = ""; storyPort = 0; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
+            // a plain IPv4 address: the route card answers it straight away (the routing table is local - nothing is sent for it)
+            System.Net.IPAddress typed; if (System.Net.IPAddress.TryParse(t, out typed) && typed.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && t.Count(ch => ch == '.') == 3) storyIp = typed.ToString();
             FollowPacket();
         }
 

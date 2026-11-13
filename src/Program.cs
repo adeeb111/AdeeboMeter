@@ -8,7 +8,7 @@
 // and your added games' servers. Everything else - every Toolbox tool, the speed test, the ISP report, the Steam server list,
 // Check a destination - runs only when you press it; when a check you started fails, Windows' own test page
 // (msftconnecttest.com) is asked once (Settings can turn that off).
-// Settings and the log live next to the exe (a Store or portable copy: in its data folder); history, usage, baselines, known
+// Settings and the log live next to the exe (a Store copy: in its data folder; a portable copy: next to the exe too); history, usage, baselines, known
 // devices and seen apps live in %LOCALAPPDATA%\AdeeboMeter (a portable copy: its data folder; History settings delete them); captures are deleted on exit.
 
 using System;
@@ -112,8 +112,8 @@ namespace AdeeboMeter
             try { int n = 0; return Native.GetCurrentPackageFullName(ref n, null) == 122; }   /* 122 = buffer too small: there IS a package; 15700 = none */
             catch (EntryPointNotFoundException) { return false; }
         }
-        public const string Version = "1.1.4";
-        public const string FileVersion = "1.1.4.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
+        public const string Version = "1.1.5";
+        public const string FileVersion = "1.1.5.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "is it me or the network?";
         public static int ForceTheme = -1;
@@ -299,7 +299,7 @@ namespace AdeeboMeter
     static class Cfg
     {
         // background work while only the widget runs
-        public static volatile int GwSec = 2, NetSec = 15, WifiSec = 30, AppsSec = 5;   /* Wi-Fi every 30 s with the window closed (every 10 s while it is open) - one netsh start every 30 s, not every 10. */ /* Balanced (Adeeb, 2026-11-12: Balanced takes the old Engineer timings, Penny is the light plan). The internet check is on from a fresh install (Adeeb, 2026-11-09): it pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
+        public static volatile int GwSec = 2, NetSec = 15, WifiSec = 30, AppsSec = 5;   /* Wi-Fi every 30 s with the window closed (every 10 s while it is open) - one quick Wi-Fi service query each (netsh only as a fallback) */ /* Balanced (Adeeb, 2026-11-12: Balanced takes the old Engineer timings, Penny is the light plan). The internet check is on from a fresh install (Adeeb, 2026-11-09): it pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
         public static volatile bool Call = true;
         // engineer view (only while it's open)
         public static volatile string WidgetScreen = "";   // the screen the widget sits on ("" = the main screen); falls back to the main one if it's gone
@@ -324,7 +324,7 @@ namespace AdeeboMeter
         public static volatile string SpeedServer = "auto";   // the speed test's server: "auto" (Cloudflare, nearest) or an id from the list
         public static bool Simple { get { return Mode != "pro"; } }   // auto (follows what you are doing) / everyday / gamer
         public static string Preset = "balanced";
-        public static readonly List<string> Pins = new List<string>();   // saved destinations, max 5, UI thread only
+        public static readonly List<string> Pins = new List<string>();   // saved destinations, max 5. Changed on the UI thread under lock (Pins); readers on other threads copy it under the same lock
         public static Action Save = delegate { };
         public static Action<int> SetTheme = delegate { }; public static Func<int> GetTheme = () => -1;
         public static Action<bool> SetAutoStart = delegate { }; public static Func<bool> GetAutoStart = () => false;
@@ -364,10 +364,11 @@ namespace AdeeboMeter
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
             yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
-            foreach (var p in Pins) yield return "pin=" + p;
+            string[] pins; lock (Pins) pins = Pins.ToArray();
+            foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)
         {
@@ -420,7 +421,7 @@ namespace AdeeboMeter
                 case "dwell": DwellMs = Pick(v, 450, 300, 450, 800); break;
                 case "pin":
                     string h; int pt; bool t; string e;
-                    if (Pins.Count < 5 && DestCheck.Parse(v, out h, out pt, out t, out e) && !Pins.Contains(v, StringComparer.OrdinalIgnoreCase)) Pins.Add(v.Trim());
+                    if (Pins.Count < 5 && DestCheck.Parse(v, out h, out pt, out t, out e) && !Pins.Contains(v, StringComparer.OrdinalIgnoreCase)) lock (Pins) Pins.Add(v.Trim());
                     break;
             }
         }

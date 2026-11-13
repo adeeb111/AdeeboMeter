@@ -54,9 +54,12 @@ namespace AdeeboMeter
             foreach (var raw in lines.Take(2000))
             {
                 string line = raw; int hash = line.IndexOf('#'); if (hash >= 0) line = line.Substring(0, hash);
-                int eq = line.IndexOf('='); if (eq <= 0) continue;
-                string k = line.Substring(0, eq).Trim().ToLowerInvariant(), v = line.Substring(eq + 1).Trim().ToLowerInvariant();
-                bool off = v == "off" || v == "no" || v == "false" || v == "0";
+                int eq = line.IndexOf('='); if (eq <= 0) eq = line.IndexOf(':');   // "key: off" too
+                if (eq <= 0) { if (line.Trim() != "") Program.Log("policy: ignored a line with no '=': " + line.Trim()); continue; }
+                string k = line.Substring(0, eq).Trim().ToLowerInvariant(), v = line.Substring(eq + 1).Trim().Trim('"', '\'').Trim().ToLowerInvariant();
+                bool off = v == "off" || v == "no" || v == "n" || v == "false" || v == "0" || v == "disable" || v == "disabled";
+                bool on = v == "on" || v == "yes" || v == "y" || v == "true" || v == "1" || v == "enable" || v == "enabled";
+                if (k != "history_days" && k != "mode" && !off && !on) Program.Log("policy: \"" + k + " = " + v + "\" changes nothing - use off to switch it off");
                 switch (k)
                 {
                     case "internet_check": NoInternetCheck |= off; break;
@@ -66,7 +69,8 @@ namespace AdeeboMeter
                     case "live_capture": NoCapture |= off; break;
                     case "gamer_zone": NoGamer |= off; break;
                     case "history_days": int d; if (int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out d) && d >= 1) { d = Math.Min(d, 180); MaxHistoryDays = MaxHistoryDays == 0 ? d : Math.Min(MaxHistoryDays, d); } else Program.Log("policy: history_days = " + v + " isn't a number of days (1-180) - ignored"); break;
-                    case "mode": if (v == "simple") Mode = v; break;   // only ever narrows: "pro" isn't a policy
+                    case "mode": if (v == "simple") Mode = v; else Program.Log("policy: mode can only be simple"); break;   // only ever narrows: "pro" isn't a policy
+                    default: Program.Log("policy: unknown setting \"" + k + "\" - ignored"); break;
                 }
             }
         }

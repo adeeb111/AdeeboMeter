@@ -9,7 +9,7 @@ using System.Text;
 
 namespace AdeeboMeter
 {
-    // History (on by default, Settings: 1-90 days, rolling): one line a minute (worst level, averages and peaks) plus every
+    // History (on by default, Settings: 1-180 days, rolling): one line a minute (worst level, averages and peaks) plus every
     // event, one file per day in the data folder's history (%LOCALAPPDATA%\AdeeboMeter\history when installed). Today stays plain text; older days are compressed
     // (.csv.gz, ~15 KB a day) and only opened when you look at them. Every night anything older than your setting goes.
     static class History
@@ -33,6 +33,7 @@ namespace AdeeboMeter
         }
         public static void Event(int lv, string kind, string text)
         {
+            if (Report.Active) return;   // --report writes only the file it was asked for
             if (!Cfg.History) return;
             Write(FileFor(DateTime.Now, "ev"), DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "," + lv.ToString(CultureInfo.InvariantCulture) + "," + kind + "," + (text ?? "").Replace('\n', ' ').Replace("\r", ""));
         }
@@ -54,6 +55,7 @@ namespace AdeeboMeter
         {
             // keeping 180 days: before the oldest days go, the six-month review is written once (Toolbox > Six months on your network)
             if (Cfg.HistoryDays >= 180) OverTime.BeforeRollOff();
+            GameHistory.TidyNow();
             lock (k)
             {
                 try

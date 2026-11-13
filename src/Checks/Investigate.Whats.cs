@@ -54,7 +54,7 @@ namespace AdeeboMeter
             if ((Clock.Mono - gAt).TotalSeconds > 20) gw = double.NaN;
             if ((Clock.Mono - nAt).TotalSeconds > 20) net = double.NaN;
             bool wifi, vpn; int sig; string adapter, gws, dnsSrv, target; NetworkInterface nic;
-            lock (m.L) { wifi = m.AdapterKind == "Wi-Fi"; sig = m.WifiSignal; adapter = m.Adapter; gws = m.Gateway; dnsSrv = m.DnsServer; vpn = m.VpnUp; target = m.NetTarget; nic = m.Primary; }
+            lock (m.L) { wifi = m.AdapterKind == "Wi-Fi"; sig = m.WifiSignal; adapter = m.Adapter; gws = m.Gateway != "" ? m.Gateway : m.Gateway6; /* an IPv6-only network: its router is the IPv6 one - not "DHCP didn't finish" */ dnsSrv = m.DnsServer; vpn = m.VpnUp; target = m.NetTarget; nic = m.Primary; }
             string normal = Baseline.Normal(Brain.NetKey);
             Action<string> step = t => { r.Status = t; changed(); };
 
@@ -154,7 +154,8 @@ namespace AdeeboMeter
             // 6. the way in: Windows' own connectivity test (a sign-in page answers it with something else)
             step("Checking for a sign-in page...");
             string portal, portalErr; PortalTest(out portal, out portalErr);
-            if (portalErr == "off") { r.NotEst.Add("Whether a sign-in page stands in the way - the sign-in page check is off in Settings."); portalErr = ""; }
+            bool portalOff = portalErr == "off";
+            if (portalOff) { r.NotEst.Add("Whether a sign-in page stands in the way - the sign-in page check is off in Settings."); portalErr = ""; }
             else r.Obs(portal == "" && portalErr != "" ? "u" : "m", portal != "" ? 1 : portalErr != "" ? 3 : 0, "6. The way in", portal != "" ? "Windows' connectivity test got " + portal : portalErr != "" ? "Windows' connectivity test couldn't run (" + portalErr + ") - web traffic may need a proxy here" : "Windows' connectivity test passes" + (vpn ? " · VPN on" : ""));
             if (portalErr != "") r.NotEst.Add("Whether a sign-in page or proxy stands in the way - the web test couldn't connect (" + portalErr + ").");
             if (portal != "")
@@ -162,8 +163,13 @@ namespace AdeeboMeter
                 r.Conclude(1, "Everything up to the internet works, but web traffic is intercepted (" + portal + ") - a hotel / airport sign-in page, or a proxy that needs you to sign in.");
                 r.Next.Add("Open any http:// site in the browser to get the sign-in page."); r.GoTab = "guide:vpn"; r.GoLabel = "Run Works at home, not at work"; around(); return;
             }
+            if (portalErr != "")   // the web test itself couldn't connect while everything else works: not "all clear"
+            {
+                r.Conclude(1, "Your PC, the " + (wifi ? "Wi-Fi" : "link") + ", your router, the internet and names work - but Windows' own web test couldn't connect (" + portalErr + "). Web traffic may need a proxy here, or something blocks plain web requests.");
+                r.Next.Add("Open any http:// site in the browser: a sign-in page or a proxy prompt would show there."); r.GoTab = "guide:vpn"; r.GoLabel = "Run Works at home, not at work"; around(); return;
+            }
             // nothing broken - but something slow or weak is still worth saying, never "all clear"
-            var weak = r.ObservedCopy().Where(o => o[1] == "1" && o[2].Length > 2 && char.IsDigit(o[2][0])).ToList();
+            var weak = r.ObservedCopy().Where(o => o[1] == "1" && o[2].Length > 2 && char.IsDigit(o[2][0]) && !(gwSilent && o[2].StartsWith("3. Your router", StringComparison.Ordinal))).ToList();   // a router that only ignores ping, with the internet working, isn't "weak"
             if (weak.Count > 0)
             {
                 var w = weak[0]; r.Conclude(1, "Nothing is broken, but " + w[2].Substring(3).ToLowerInvariant() + " is weak: " + w[3] + ". That's where to look if things feel slow or unreliable.");
@@ -171,7 +177,7 @@ namespace AdeeboMeter
                 r.NotEst.Add("Problems that come and go - this is a check of right now."); around(); return;
             }
             // all fine: say what was checked, hand to the guided checks for a named symptom
-            r.Conclude(0, "Nothing is wrong right now - your PC, the " + (wifi ? "Wi-Fi" : "link") + ", your router, the internet, names and the way in all work. If something still fails, it's one site or app, or it comes and goes.");
+            r.Conclude(0, "Nothing is wrong right now - your PC, the " + (wifi ? "Wi-Fi" : "link") + ", your router, the internet" + (portalOff ? " and names" : ", names and the way in") + " all work. If something still fails, it's one site or app, or it comes and goes.");
             r.Next.Add("If one site or app fails: run A website or app won't open with its address.");
             r.Next.Add("If it comes and goes: leave AdeeboMeter running - Time machine shows what happened when it breaks.");
             r.GoTab = "guide:site"; r.GoLabel = "Run A website won't open";

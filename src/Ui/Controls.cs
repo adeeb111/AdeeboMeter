@@ -39,7 +39,7 @@ namespace AdeeboMeter
         protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); try { if (!Native.SetWindowDisplayAffinity(Handle, 0x11 /*WDA_EXCLUDEFROMCAPTURE*/)) Program.Log("widget: capture exclusion not available"); } catch (EntryPointNotFoundException) { } }
         public Rectangle Placed { get; private set; }
         public static volatile bool HoldTop;   // the tray menu is open: don't climb over it
-        DateTime failLogged;
+        DateTime failLogged, lastTop;
         public void Present(Bitmap bmp, byte alpha, int x, int y)
         {
             IntPtr screen = Native.GetDC(IntPtr.Zero), mem = Native.CreateCompatibleDC(screen), hb = IntPtr.Zero, old = IntPtr.Zero;
@@ -57,7 +57,7 @@ namespace AdeeboMeter
                 Placed = new Rectangle(x, y, bmp.Width, bmp.Height);
                 // Windows can drop a small always-on-top window out of the top layer (sleep, unlock, monitors reconnecting) -
                 // then a maximised window hides it. Claim the top again, without taking focus.
-                if (alpha > 0 && !HoldTop) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040);
+                if (alpha > 0 && !HoldTop && ((Native.GetWindowLong(Handle, -20) & 0x8) == 0 || (DateTime.UtcNow - lastTop).TotalSeconds > 30)) /* when it lost WS_EX_TOPMOST, else once in 30 s - not on every draw */ { lastTop = DateTime.UtcNow; Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040); }
             }
             finally
             {

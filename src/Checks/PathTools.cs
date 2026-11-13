@@ -125,9 +125,12 @@ namespace AdeeboMeter
         {
             var h = hops[i]; if (h.Sent <= 0) return false; if (h.Lost < h.Sent) return true; if (h.Ip == "") return false;
             if (h.Reached) return true;
-            int dark = hops.Count(x => x.Sent > 0 && x.Ip != "" && x.Lost >= x.Sent);
-            return dark >= 2;
+            // traced, then silent: an outage only when the destination (which answered the trace) went silent too - otherwise these
+            // are routers that simply ignore pings, however many of them
+            return DestDark(hops);
         }
+        // the destination answered the trace, then lost every ping of the run: it (or the way to it) went down meanwhile
+        static bool DestDark(List<Hop> hops) { var d = hops.LastOrDefault(x => x.Reached); return d != null && d.Sent > 0 && d.Lost >= d.Sent; }
         static double LossOf(Hop h) { return 100.0 * h.Lost / h.Sent; }
         public static int LossStart(List<Hop> hops)
         {
@@ -136,6 +139,8 @@ namespace AdeeboMeter
                 var h = hops[i]; if (!Answers(hops, i)) continue; double l = LossOf(h); if (l < 3) continue;
                 var later = Enumerable.Range(i + 1, Math.Max(0, hops.Count - i - 1)).Where(j => Answers(hops, j)).Select(j => hops[j]).ToList();
                 if (later.Count == 0) continue;   // loss only at the last hop that answers (the destination too) is that box rate-limiting pings - it has to carry on to count
+                // a lightly lossy hop before an outage isn't where the outage starts - the first dark hop is
+                if (l < 50 && later.Any(x => x.Lost >= x.Sent)) continue;
                 if (later.All(x => LossOf(x) >= l * 0.6)) return i;
             }
             return -1;
@@ -143,11 +148,18 @@ namespace AdeeboMeter
         public static string MtrVerdict(List<Hop> hops)
         {
             var last = hops.LastOrDefault(Answers); if (last == null) return "No hop answered - probes are blocked on the way out (a firewall or VPN).";
-            bool silentEnd = !hops.Any(h => h.Reached && Answers(h));
-            string tail = silentEnd ? " The destination doesn't answer pings at all, so this is judged by the last router that does (hop " + last.N + ")." : "";
+            bool dark = DestDark(hops), silentEnd = !dark && !hops.Any(h => h.Reached && Answers(h));
+            string tail = dark ? " The destination answered the trace, then stopped answering during the run - it (or the way to it) went down." : silentEnd ? " The destination doesn't answer pings at all, so this is judged by the last router that does (hop " + last.N + ")." : "";
             int i = LossStart(hops);
             if (i >= 0) { var h = hops[i]; return "Real loss starts at hop " + h.N + " (" + h.Ip + ") and carries on to the end - " + LossOf(h).ToString("0", CultureInfo.CurrentCulture) + "% lost from there." + tail; }
+            if (dark) { var d = hops.Last(x => x.Reached); return "The destination stopped answering during the run (all " + d.Sent + " pings lost after it answered the trace) - the server or the way to it went down." + (hops.Any(x => x.N < d.N && Answers(x) && x.Lost < x.Sent) ? " The routers before it still answer." : ""); }
             double endLoss = LossOf(last);
+            // a little loss (1-3%) that every answering hop from some point on keeps: too little to locate for sure, but it isn't the
+            // destination's doing - and it's the kind that makes calls sound robotic
+            var ans = hops.Where(Answers).ToList();
+            for (int k = 0; k + 1 < ans.Count; k++)
+                if (ans.Skip(k).All(x => LossOf(x) >= 1) && LossOf(ans[k]) < 3)
+                    return "A little loss (about " + LossOf(ans[k]).ToString("0.#", CultureInfo.CurrentCulture) + "%) from hop " + ans[k].N + " (" + ans[k].Ip + ") to the end - too little to pin down for sure with this many pings, but it carries on, so it isn't one router ignoring pings. Enough to make calls sound robotic; a longer run shows it better." + tail;
             if (endLoss < 1 || silentEnd) return "No real loss: any loss at a middle hop doesn't carry on - that router just ignores some pings (normal)." + tail;
             return "Loss at the destination only (" + endLoss.ToString("0", CultureInfo.CurrentCulture) + "%) - the server itself drops or rate-limits pings.";
         }

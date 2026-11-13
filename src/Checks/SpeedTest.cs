@@ -19,7 +19,7 @@ namespace AdeeboMeter
     static class SpeedTest
     {
         // a public address that is really out there: not private, and not the documentation or benchmarking ranges either
-        static bool Reachable(IPAddress ip)
+        internal static bool Reachable(IPAddress ip)
         {
             if (!Watch.IsPublic(ip.ToString())) return false;
             if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4(); var b = ip.GetAddressBytes();
@@ -164,6 +164,10 @@ namespace AdeeboMeter
         {
             var req = (HttpWebRequest)WebRequest.Create(url);
             req.Timeout = 6000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy(); req.AllowAutoRedirect = false;
+            // the address Windows really connects to is checked at connect time (a name can answer public first, private next): without
+            // a proxy in the way, never this PC or the LAN
+            var u = req.RequestUri; bool direct; try { direct = req.Proxy == null || req.Proxy.IsBypassed(u); } catch (Exception e) { if (e is OutOfMemoryException) throw; direct = true; }
+            if (direct) req.ServicePoint.BindIPEndPointDelegate = (sp, remote, retry) => { if (remote != null && !Reachable(remote.Address)) throw new WebException(u.Host + " points to a private address (" + remote.Address + ") - refused"); return null; };
             return req;
         }
 
@@ -196,6 +200,10 @@ IPAddress[] found;
                 if (run != null && run.Stop) { res.Error = "stopped"; return res; }
                 if (srv.Up != "")
                 {
+                    // the upload host may be another name: it gets the same check before a single byte goes to it
+                    Uri upU; IPAddress[] upIps = null;
+                    if (Uri.TryCreate(srv.Up, UriKind.Absolute, out upU)) { try { upIps = Dns.GetHostAddresses(upU.DnsSafeHost); } catch (SocketException) { upIps = null; } catch (ArgumentException) { upIps = null; } }
+                    if (upIps == null || upIps.Length == 0 || upIps.Any(a => !Reachable(a))) { res.Error = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped"; res.MB = down / 1e6; return res; }
                     if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
                     var pu = new List<double>(); string c2 = "";
                     res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);

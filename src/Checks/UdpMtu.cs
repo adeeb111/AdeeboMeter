@@ -29,6 +29,7 @@ namespace AdeeboMeter
             if (!Games.ValidHost(h)) { rows.Add(R(2, "Target", "a host name or an IP", "", "")); return rows; }
             var a = Lab.Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; }
             if (a.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "Target", "IPv4 only for now - type an IPv4 address", "", "")); return rows; }
+            string notOne = Lab.NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "This test talks to one server only - never to a whole network.", "")); return rows; }
             Program.Log("udp mtu to " + a + ":" + p);
             int hdr = 28;   // IPv4 20 + UDP 8
             int lo = 0, hi = 1500 - hdr, tries = 0; bool local = false;

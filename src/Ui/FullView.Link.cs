@@ -88,9 +88,9 @@ namespace AdeeboMeter
             y = ListCard(g, "ADDRESS (DHCP) TROUBLE IN THE LAST 24 HOURS", ls.Dhcp, ls.DhcpErr != "" ? ls.DhcpErr : "None - your address renewed without a hitch.", "link.DHCP", x, y, w);
             y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), "None in Windows' table yet.", "link.LAN", x, y, w);
             if (ls.Wifi && ls.MyChannel > 0 && ls.Aps.Count > 0) y = PaintChannelMap(g, ls, x, y, w);
-            if (ls.Wifi) y = PaintWars(g, x, y, w);
-            else if (ls.Wifi && ls.Aps.Count == 0 && !ls.LocationBlocked)
+            if (ls.Wifi && ls.Aps.Count == 0 && !ls.LocationBlocked)
                 using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so."), Draw.fBody, mb, x, y); y += 30 * S; }
+            if (ls.Wifi) y = PaintWars(g, x, y, w);
             if (!ls.Wifi)
             {
                 string tip = Voice.P("Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.", "Wired links have no radio interference; look further along the path if problems persist.");

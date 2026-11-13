@@ -108,7 +108,7 @@ namespace AdeeboMeter
             };
             // General
             add("General", "Mode", TagPc, () => Cfg.Simple ? "Simple: the dots, What's wrong?, speed, history and the Gamer Zone." : "Pro: every tab - Monitor, Security, Toolbox, Network story and Learn too.", SetMode, () => Cfg.Simple ? 0 : 1, i => SetModeTo(i == 0 ? "simple" : "pro"), null, "simple pro engineer advanced beginner tabs");
-            add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. More languages come as their translations are finished. A change takes full effect after a restart." : "Français - aperçu : les réglages, les menus et les messages courants sont traduits ; les noms des outils, les résultats et l'aide restent en anglais pour l'instant. Redémarrez AdeeboMeter pour tout changer.", AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français langue english");
+            add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. More languages come as their translations are finished. A change takes full effect after a restart." : "Français - aperçu : les réglages, les menus et les messages courants sont traduits ; les noms des outils aussi ; les résultats détaillés et une partie de l'aide restent en anglais pour l'instant. Redémarrez AdeeboMeter pour tout changer.", AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français langue english");
             add("General", "Theme", TagPc, () => "Follow Windows switches light and dark with your Windows setting.", SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : th == 0 ? 1 : 2; }, i => Cfg.SetTheme(i == 0 ? -1 : i == 1 ? 0 : 1), null, "dark light colour color");
             add("General", "Voice", TagPc, () => Voice.Serious ? "Plain, serious wording - no jokes at all." : MoodHelp(), SetVoice, () => Voice.Serious ? SetVoice.Length - 1 : Math.Max(0, Array.IndexOf(Mood.Ids, Mood.Name)), i => { Voice.Serious = i == SetVoice.Length - 1; if (!Voice.Serious) Mood.Name = Mood.Ids[i]; Cfg.Save(); Invalidate(true); }, null, "jokes wording tone mood personality sarcastic anxious conspiracy brutal honest");
             add("General", "Adeebo Points", TagPc, () => Cfg.Points ? "On: the Adeebo button in the header - your rank, how to earn, and every feature in one place. " + Points.Rank(Points.Me.Total) + " · " + Points.Me.Total + " so far, kept on this PC only." : "Off: the button is hidden and nothing is earned" + (Points.Me.Total > 0 ? " - your " + Points.Me.Total + " points are kept." : "."), SetOnOff, () => Cfg.Points ? 0 : 1, i => { Cfg.Points = i == 0; Cfg.Save(); SyncPointsBtn(); if (!Cfg.Points && tab == "points") { tab = "settings"; ShowTab(); } Invalidate(true); }, null, "points adeebo rank reward learn examples dashboard every feature");
@@ -124,7 +124,7 @@ namespace AdeeboMeter
             // Background checks
             add("Background checks", "Router ping", TagLan, () => Cfg.GwSec == 0 ? "Off: the LAN / Wi-Fi dot goes grey and slow-router alerts stop." : "Pings your router " + Every(Cfg.GwSec) + " - tells Wi-Fi trouble apart from internet trouble.", SetS2, () => Array.IndexOf(SetN3, Cfg.GwSec), i => { Cfg.GwSec = SetN3[i]; Custom(); }, null, "ping gateway lan wifi");
             add("Background checks", "Internet and DNS check", TagNet, () => Cfg.NetSec == 0 ? "Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey." : "One tiny ping to a public server " + Every(Cfg.NetSec) + ", and one name lookup at most once a minute.", SetS4, () => Array.IndexOf(SetN5, Cfg.NetSec), i => { Cfg.NetSec = SetN5[i]; Custom(); }, null, "ping internet dns 1.1.1.1 8.8.8.8");
-            add("Background checks", "Wi-Fi watch", TagPc, () => Cfg.WifiSec == 0 ? "Off: no roam, signal or channel alerts." : "Asks Windows for signal, channel and access point " + Every(Cfg.WifiSec) + ". The priciest job here - it starts a small Windows tool (netsh) each time.", SetS6, () => Array.IndexOf(SetN7, Cfg.WifiSec), i => { Cfg.WifiSec = SetN7[i]; Custom(); }, null, "wifi signal roam");
+            add("Background checks", "Wi-Fi watch", TagPc, () => Cfg.WifiSec == 0 ? "Off: no roam, signal or channel alerts." : "Asks Windows for signal, channel and access point " + Every(Cfg.WifiSec) + " (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead.", SetS6, () => Array.IndexOf(SetN7, Cfg.WifiSec), i => { Cfg.WifiSec = SetN7[i]; Custom(); }, null, "wifi signal roam");
             add("Background checks", "App and connection watch", TagPc, () => Cfg.AppsSec == 0 ? "Off: the verdict can't name the app to close, and connection bursts go unnoticed." : "Reads the process list and connection table " + Every(Cfg.AppsSec) + " - powers 'top apps', connection bursts and stuck-connection alerts.", SetS8, () => Array.IndexOf(SetN9, Cfg.AppsSec), i => { Cfg.AppsSec = SetN9[i]; Custom(); }, null, "apps processes connections");
             add("Background checks", "Teams call detection", TagPc, () => Cfg.Call ? "Notices when a Teams call starts and watches the network more closely during it." : "Off: calls get no extra attention.", SetS10, () => Cfg.Call ? 0 : 1, i => { Cfg.Call = i == 0; Custom(); }, null, "teams call meeting");
             add("Background checks", "Watch my first pinned destination all day", TagNet, () => Cfg.Pins.Count == 0 ? "Pin a destination on Check a destination first." : Cfg.PinWatch ? "One ping to " + Cfg.Pins[0] + " every 30 s, graphed on Check a destination." : "Off - pinned destinations are only checked when you press Run all.", SetOnOff, () => Cfg.PinWatch ? 0 : 1, i => { Cfg.PinWatch = i == 0 && Cfg.Pins.Count > 0; Cfg.Save(); }, null, "pin ping destination");
@@ -141,8 +141,8 @@ namespace AdeeboMeter
             add("Alerts", "Watch and suggest", TagPc, () => Cfg.Watch ? "Notices programs talking to the internet for the first time, from odd folders or at night, and big uploads - and suggests what to look at. It never blocks anything. (First 24 hours: learning what's normal.)" : "Off.", SetOnOff, () => Cfg.Watch ? 0 : 1, i => { Cfg.Watch = i == 0; Cfg.Save(); }, null, "suspicious program upload");
             add("Alerts", "Monthly data cap", TagPc, () => Cfg.CapGB > 0 ? "Warns at 80% of " + Cfg.CapGB + " GB (hotspots, metered plans). Counted on this PC from Windows' own counters." : "Off - usage is still counted in What changed.", CapNames, () => Array.IndexOf(Cfg.CapChoices, Cfg.CapGB), i => { Cfg.CapGB = Cfg.CapChoices[i]; Cfg.Save(); }, null, "data usage limit gb metered");
             // History & data
-            add("History & data", "History", TagPc, () => Cfg.History ? "One small line a minute plus every change, on this PC only (" + Usage.Mb(HistBytesCached() / 1048576.0) + " now; about 15 KB a day once compressed). Powers past days, the week heatmap and 'slower than usual', and Neighbour wars (the Wi-Fi networks Windows lists, once an hour, 7 days)." : "Off: nothing is written to disk (the Neighbour wars log is deleted too) - What changed only remembers the last 2 hours, in memory.", SetOnOff, () => Cfg.History ? 0 : 1, i => { Cfg.History = i == 0; Cfg.Save(); }, null, "time machine record disk");
-            add("History & data", "Keep history for", TagPc, () => "Every night anything older goes (rolling). 6 months of minutes is still only a few MB (games you watch add a little more) - and before it rolls off, AdeeboMeter writes your six-month review (Toolbox > Six months on your network) to keep or share." + (Policy.MaxHistoryDays > 0 ? " Your IT team keeps it to " + Policy.MaxHistoryDays + " days at most." : ""), HistDayNames, () => Array.FindLastIndex(Cfg.HistDayChoices, d => d <= Cfg.HistoryDays), i => { int d = Cfg.HistDayChoices[i]; Cfg.HistoryDays = Policy.MaxHistoryDays > 0 ? Math.Min(d, Policy.MaxHistoryDays) : d; Cfg.Save(); System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { History.Tidy(); } catch (Exception e) { Program.Log("history tidy: " + e.Message); } }); }, () => Cfg.History, "days retention");   /* off the window's thread: the six-month review can take seconds */
+            add("History & data", "History", TagPc, () => Cfg.History ? "One small line a minute plus every change, on this PC only (" + Usage.Mb(HistBytesCached() / 1e6) + " now; about 15 KB a day once compressed). Powers past days, the week heatmap and 'slower than usual', and Neighbour wars (the Wi-Fi networks Windows lists, once an hour, 7 days)." : "Off: nothing is written to disk (the Neighbour wars log is deleted too) - What changed only remembers the last 2 hours, in memory.", SetOnOff, () => Cfg.History ? 0 : 1, i => { Cfg.History = i == 0; Cfg.Save(); }, null, "time machine record disk");
+            add("History & data", "Keep history for", TagPc, () => "Every night anything older goes (rolling). 6 months of minutes is still only a few MB (games you watch add a little more) - and before it rolls off, AdeeboMeter writes your six-month review (Toolbox > Six months on your network) to keep or share." + (Policy.MaxHistoryDays > 0 ? " Your IT team keeps it to " + Policy.MaxHistoryDays + " days at most." : ""), HistDayNames, () => Array.IndexOf(Cfg.HistDayChoices, Cfg.HistoryDays) >= 0 || Policy.MaxHistoryDays == 0 ? Array.FindLastIndex(Cfg.HistDayChoices, d => d <= Cfg.HistoryDays) : -1,   /* an IT limit that isn't one of the choices (5 days): none lit - the help says the real number */ i => { int d = Cfg.HistDayChoices[i]; Cfg.HistoryDays = Policy.MaxHistoryDays > 0 ? Math.Min(d, Policy.MaxHistoryDays) : d; Cfg.Save(); System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { History.Tidy(); } catch (Exception e) { Program.Log("history tidy: " + e.Message); } }); }, () => Cfg.History, "days retention");   /* off the window's thread: the six-month review can take seconds */
             // Privacy & online lookups
             add("Privacy & online lookups", "BGP and who owns the network", TagOnline, () => Online.On ? "On for " + Math.Ceiling(Online.Left.TotalMinutes) + " more min: public IP addresses (never private ones or names you typed) go to RIPEstat and PeeringDB to name each network on the path, its route and RPKI." : "Off. When on, Toolbox can name every network on your path (AS numbers), where they hand over, the destination's route and RPKI, and how the internet reaches you.", SetOnOff, () => Online.On ? 0 : 1, i => { if (i == 0) Online.Start(); else Online.Stop(); SyncOnlineChip(); Invalidate(true); }, null, "online bgp asn ripe peeringdb");
             add("Privacy & online lookups", "Switch them off by themselves after", TagOnline, () => "So they're never left on by mistake.", SetOnlineMin, () => Array.IndexOf(Cfg.OnlineChoices, Cfg.OnlineMin), i => { Cfg.OnlineMin = Cfg.OnlineChoices[i]; Cfg.Save(); if (Online.On) Online.Start(); }, null, "timer online");
@@ -168,8 +168,11 @@ namespace AdeeboMeter
         {
             if (q.Length == 0) return true;
             // every typed word must start a word somewhere in the setting ("ping" finds Router ping, not "dropping")
-            var words = Regex.Split((it.Sec + " " + it.Label + " " + it.Keys + " " + it.Help()).ToLowerInvariant(), @"[^a-z0-9.]+");
-            return q.ToLowerInvariant().Split(SpaceSep, StringSplitOptions.RemoveEmptyEntries).All(t => words.Any(wd => wd.StartsWith(t, StringComparison.Ordinal)));
+            // the same split for the setting and for what you type ("Wi-Fi" -> wi + fi, "français" stays whole); "wifi" also finds "Wi-Fi"
+            const string sep = @"[^\p{L}0-9.]+";
+            string text = (it.Sec + " " + it.Label + " " + it.Keys + " " + it.Help()).ToLowerInvariant();
+            var words = Regex.Split(text, sep).Concat(Regex.Split(text.Replace("-", ""), sep)).ToList();
+            return Regex.Split(q.ToLowerInvariant(), sep).Where(t => t != "").All(t => words.Any(wd => wd.StartsWith(t, StringComparison.Ordinal)));
         }
         void PaintSettings(Graphics g)
         {
@@ -224,7 +227,7 @@ namespace AdeeboMeter
                     {
                         string lead = L.T("The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.");
                         var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 14 * S;
-                        string[][] presets = { new[] { "penny", "Penny", "The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching." }, SetS0, SetSG };
+                        string[][] presets = { new[] { "penny", "Penny", "The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min (every 10 s while this window is open), no call watching." }, SetS0, SetSG };
                         int cols = w > 640 * S ? 3 : 2; float pw = (w - (cols - 1) * 12 * S) / cols, ph = 96 * S;
                         for (int i = 0; i < presets.Length; i++)
                         {
@@ -282,7 +285,11 @@ namespace AdeeboMeter
         float SetRow(Graphics g, float x, float y, float w, string label, string help, string[] opts, int cur, Action<int> set, string tag)
         {
             float ow = 0; var widths = opts.Select(o => g.MeasureString(o, Draw.fSmall).Width + 24 * S).ToArray(); ow = widths.Sum() + 2 * S;
-            float tw = w - ow - 24 * S;
+            // many choices on a narrow window (1366 x 768 at 125 %, or French): the choices go on their own line under the text,
+            // never over the label or the side menu
+            bool wrap = ow > w * 0.6f;
+            if (wrap && ow > w) { float k = (w - 2 * S) / (ow - 2 * S); for (int i = 0; i < widths.Length; i++) widths[i] *= k; ow = w; }
+            float tw = wrap ? w : w - ow - 24 * S;
             float hh = Draw.Measure(help, Draw.fSmall, (int)tw).Height;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -300,7 +307,7 @@ namespace AdeeboMeter
                 }
                 g.DrawString(help, Draw.fSmall, muted, new RectangleF(x, y + 20 * S, tw, hh + 4));
             }
-            var seg = new RectangleF(x + w - ow, y + 4 * S, ow, 30 * S);
+            var seg = wrap ? new RectangleF(x, y + 26 * S + hh + 6 * S, ow, 30 * S) : new RectangleF(x + w - ow, y + 4 * S, ow, 30 * S);
             Theme.Fill(g, seg, 15 * S, Theme.Soft); Theme.Stroke(g, seg, 15 * S, Theme.Line, 1);
             float sx = seg.X + 1 * S;
             using (var center = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
@@ -312,11 +319,11 @@ namespace AdeeboMeter
                     int idx = i; Act(settingsCanvas, r, delegate { set(idx); settingsCanvas.Invalidate(); });
                     sx += widths[i];
                 }
-            return y + Math.Max(44 * S, 26 * S + hh) + 10 * S;
+            return wrap ? seg.Bottom + 12 * S : y + Math.Max(44 * S, 26 * S + hh) + 10 * S;
         }
 
         // ---------- About: the whole story, told simply
-        static readonly string[] LeaveIsp = { "Report for my ISP", "Only when you run it: an MTR to the destinations you chose for the minutes you chose; your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes.", "1" };
+        static readonly string[] LeaveIsp = { "Report for my ISP", "Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes.", "1" };
         static readonly string[] LeaveChecks = { "Checks you start", "Check a destination sends only what you ask for, to where you ask, when you press Check - plus one DNS question for the same name to 1.1.1.1 (8.8.8.8 if that fails) - or, when an IT policy turns online lookups off, to your own DNS server, the second opinion that spots a filter. An IT policy with online_lookups = off sends it to your own DNS server instead.", "1" };
         static readonly string[] LeaveLive = { "Live capture", "Listens to your own adapter only while you press Start. Nothing is sent; captures are deleted when AdeeboMeter exits.", "-1" };
         static readonly string[] LeaveNever = { "Never", "No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.", "0" };
@@ -325,7 +332,7 @@ namespace AdeeboMeter
                     new[] { "Back to the corner", "Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching." },
                     new[] { "Quit completely", "Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper." },
                     new[] { "Learn anything", "When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears." },
-                    new[] { "Tune it", "Settings decides how much AdeeboMeter watches in the background - from Penny to Engineer." } };
+                    new[] { "Tune it", "Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer." } };
         static readonly string[][] AboutTrust = {
                     new[] { "Readable source", "The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows." },
                     new[] { "No admin rights", "Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show." },
@@ -388,7 +395,7 @@ namespace AdeeboMeter
                 var leaves = new List<string[]> {
                     new[] { "Router ping", Cfg.GwSec > 0 ? "A tiny ping to your own router, " + every(Cfg.GwSec) + " (every " + (Cfg.GwSec >= 30 ? 5 : 2) + " s while this window is open). Stays on your local network." : "Off.", Cfg.GwSec > 0 ? "0" : "-1" },
                     new[] { "Internet and DNS check", Cfg.NetSec > 0 ? "One ping to 1.1.1.1 (or 8.8.8.8) " + every(Cfg.NetSec) + (Cfg.NetSec > 5 ? " (every 5 s while this window is open or a call runs)" : "") + ", and one name lookup at most once a minute (every 15 s with this window open). On networks that block ping: a timed connection to port 443 of the same address instead, closed at once." : "Off - nothing goes to the internet in the background.", Cfg.NetSec > 0 ? "1" : "-1" },
-                    new[] { "Provider name", Cfg.NetSec > 0 ? "Once per network: a short trace (6 hops) toward 1.1.1.1 and one name lookup, to put your provider's name on the ISP dot." : "Off (follows the internet check).", Cfg.NetSec > 0 ? "1" : "-1" },
+                    new[] { "Provider name", Cfg.NetSec > 0 ? "Once per network (tried twice more only if no router answered): a short trace (6 hops) toward 1.1.1.1 and one name lookup, to put your provider's name on the ISP dot." : "Off (follows the internet check).", Cfg.NetSec > 0 ? "1" : "-1" },
                     new[] { "Wi-Fi watch", Cfg.WifiSec > 0 ? "Asks Windows about your Wi-Fi, " + every(Cfg.WifiSec) + ". Nothing is sent anywhere." : "Off.", "-1" },
                     LeaveChecks,
                     LeaveTools,
@@ -544,11 +551,11 @@ namespace AdeeboMeter
                         if (Cfg.Known.Contains(k)) kv.Add(new KeyValuePair<string, string>(k, v));
                     }
                     if (kv.Count == 0) { settingsNote = "That isn't an AdeeboMeter settings file - nothing changed."; settingsCanvas.Invalidate(); return; }
-                    int n = 0; if (kv.Any(x => x.Key == "pin")) Cfg.Pins.Clear();   // pins are replaced only when the file has its own
+                    int n = 0; if (kv.Any(x => x.Key == "pin")) lock (Cfg.Pins) Cfg.Pins.Clear();   // pins are replaced only when the file has its own
                     foreach (var x in kv)
                     {
                         string k = x.Key, v = x.Value;
-                        if (k == "autostart") Cfg.SetAutoStart(v == "1");
+                        if (k == "autostart") { if ((v == "1") != Cfg.GetAutoStart()) Cfg.SetAutoStart(v == "1"); }   // only a real change (a Store copy would open Windows' Startup settings)
                         else if (k == "serious") Voice.Serious = v == "1";
                         else if (k == "theme") Cfg.SetTheme(v == "dark" ? 1 : v == "light" ? 0 : -1);
                         else if (k == "widget") continue;   // the corner widget's on/off stays as it is on this PC - not counted
@@ -556,7 +563,10 @@ namespace AdeeboMeter
                         n++;
                     }
                     Policy.Apply();   // an IT policy still wins over an imported file
-                    Cfg.Save(); M.Nudge(); BuildPinBar(); settingsNote = "Loaded " + n + " settings.";
+                    Cfg.Save(); M.Nudge(); BuildPinBar();
+                    // the open window takes them up at once: the tabs (Simple / Pro), the Adeebo button, the language
+                    L.Use(Cfg.Lang); ApplyMode(); SyncPointsBtn(); Invalidate(true);
+                    settingsNote = "Loaded " + n + " settings." + (kv.Any(x => x.Key == "lang") ? " Some captions switch language at the next start." : "");
                 }
                 catch (Exception e) { settingsNote = "Couldn't read it: " + e.Message; }
             }

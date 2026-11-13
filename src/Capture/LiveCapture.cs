@@ -259,16 +259,17 @@ namespace AdeeboMeter
             if (!double.TryParse(tRel, NumberStyles.Float, CultureInfo.InvariantCulture, out t) || !long.TryParse(seqS, NumberStyles.Integer, CultureInfo.InvariantCulture, out seq) || !long.TryParse(tsS, NumberStyles.Integer, CultureInfo.InvariantCulture, out ts)) return;
             string key = dir + "|" + ssrc; Rtp r;
             if (!rtp.TryGetValue(key, out r)) { if (rtp.Count >= 60) return; r = new Rtp { Dir = dir, Remote = remote, FirstT = t, FirstTs = ts }; rtp[key] = r; }
-            // a real wrap: the old number was near the top (65535) and the new one near the bottom. Anything else that goes
-            // backwards a long way is the sender starting its numbering again - not 65,536 lost packets
-            if (r.LastSeq >= 0 && seq < r.LastSeq && r.LastSeq - seq > 30000)
+            // RFC 3550 A.1: a step of under 3,000 forward is in order (across the 65535 -> 0 wrap too); a step back of under 100 is a
+            // late packet; anything else is the sender starting a new numbering run - not thousands of lost packets
+            bool late = false;
+            if (r.LastSeq >= 0)
             {
-                if (r.LastSeq > 60000 && seq < 5536) r.Cycles++;
-                else { if (r.BaseExt >= 0) r.PrevExpected += r.MaxExt - r.BaseExt + 1; r.BaseExt = -1; r.MaxExt = -1; }   /* a new numbering run: keep what the old one expected, start counting again */
+                long ud = ((seq - r.LastSeq) % 65536 + 65536) % 65536;
+                if (ud > 0 && ud < 3000) { if (seq < r.LastSeq) r.Cycles++; }
+                else if (ud >= 65536 - 100) late = true;
+                else if (ud != 0) { if (r.BaseExt >= 0) r.PrevExpected += r.MaxExt - r.BaseExt + 1; r.BaseExt = -1; r.MaxExt = -1; r.Cycles = 0; }   /* a new run: keep what the old one expected, count again */
             }
-            // a sender restarting higher up (random start number) - a jump forward of 30,000+ in one step - is a new run too, not lost packets
-            else if (r.LastSeq >= 0 && seq > r.LastSeq && seq - r.LastSeq > 30000) { if (r.BaseExt >= 0) r.PrevExpected += r.MaxExt - r.BaseExt + 1; r.BaseExt = -1; r.MaxExt = -1; }
-            long ext = r.Cycles * 65536 + seq;
+            long ext = r.Cycles * 65536 + seq; if (late && seq > r.LastSeq) ext -= 65536;   // a late packet from before the wrap
             if (r.BaseExt < 0) r.BaseExt = ext;
             if (ext > r.MaxExt) r.MaxExt = ext;
             // the clock rate, from at least half a second of timestamps (a 30 fps video sends 60 packets well inside that,
@@ -284,7 +285,7 @@ namespace AdeeboMeter
                 double d = (t - r.PrevT) - (ts - r.PrevTs) / r.Rate;
                 if (Math.Abs(d) < 1) r.Jitter += (Math.Abs(d) - r.Jitter) / 16;
             }
-            r.Count++; r.LastSeq = seq; r.PrevT = t; r.PrevTs = ts;
+            r.Count++; if (!late) r.LastSeq = seq; r.PrevT = t; r.PrevTs = ts;
         }
         // ITU-T G.107 E-model, simplified: one-way delay plus jitter buffer and packet loss -> R factor -> MOS (1-4.5).
         public static double Mos(double delayMs, double jitterMs, double lossPct)
@@ -417,7 +418,7 @@ namespace AdeeboMeter
                 }
                 if (!fp.WaitForExit(20000)) { try { fp.Kill(); fp.WaitForExit(2000); } catch { } }   // never left running
                 if (File.Exists(fwd)) parts.Add(fwd);
-                string final = Program.SafeCapturePath("adebometer_" + new string(c.Proc.Where(char.IsLetterOrDigit).Take(20).ToArray()) + "_" + DateTime.Now.ToString("HHmmss", CultureInfo.CurrentCulture) + ".pcapng");
+                string final = Program.SafeCapturePath("adebometer_" + new string(c.Proc.Where(char.IsLetterOrDigit).Take(20).ToArray()) + "_" + DateTime.Now.ToString("HHmmss-fff", CultureInfo.CurrentCulture) + ".pcapng");
                 if (parts.Count == 0) { status("Nothing captured for that flow."); return; }
                 Job.Run(Mergecap, "-w \"" + final + "\" " + string.Join(" ", parts.Select(x => "\"" + x + "\"")), 60000);
                 string ws = Path.Combine(WsDir, "Wireshark.exe");

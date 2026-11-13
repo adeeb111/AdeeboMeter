@@ -121,7 +121,7 @@ without: Windows restarts the whole PC within a minute. It's also attackers' fav
 == svchost
 friendly: Service Host
 cat: Windows core
-close: 1
+close: 2
 tag: An apartment building for Windows services.
 what: Each copy is home to one or more Windows services: DHCP (your IP address), DNS client (name lookups), Wi-Fi, Windows Update, time sync, Bluetooth and dozens more.
 how: Services are written as libraries, not programs, so they need a host to live in. With enough RAM, Windows gives most services their own copy so one crash can't take the others down.

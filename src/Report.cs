@@ -17,8 +17,10 @@ namespace AdeeboMeter
     // Usable from a script, Intune or an RMM tool. Nothing is written except the file you name and the usual log.
     static class Report
     {
+        public static volatile bool Active;   // set for the whole --report run: History, Usage, Baseline, devices and the provider trace stay untouched
         public static int Run(string outPath, int seconds)
         {
+            Active = true;
             string file;
             try { file = Path.GetFullPath(outPath); } catch (Exception e) { if (!(e is ArgumentException || e is NotSupportedException || e is PathTooLongException || e is System.Security.SecurityException)) throw; return 4; }
             if (!file.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) { Program.Log("--report: the file name must end in .json"); return 4; }
@@ -92,7 +94,9 @@ namespace AdeeboMeter
             sb.Append("  \"time\": ").Append(Q(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture))).Append(",\n");
             sb.Append("  \"computer\": ").Append(Q(Environment.MachineName)).Append(",\n");
             sb.Append("  \"verdict\": ").Append(Q(words[lv])).Append(", \"exit_code\": ").Append(lv).Append(",\n");
-            sb.Append("  \"finding\": ").Append(Q(r.Finding)).Append(",\n");
+            string finding = r.Finding;   // the verdict was downgraded to "unknown": the finding must not still say everything works
+            if (lv == 3 && r.Lv == 0) { var skipped = r.ObservedCopy().Where(o => o.Length > 2 && o[0] == "u" && o[1] == "3").Select(o => o[2]).Distinct().ToList(); finding = "Couldn't confirm everything: " + (skipped.Count > 0 ? string.Join(", ", skipped) : "a step") + " couldn't be checked. What did run looked fine."; }
+            sb.Append("  \"finding\": ").Append(Q(finding)).Append(",\n");
             sb.Append("  \"network\": { \"kind\": ").Append(Q(kind)).Append(", \"adapter\": ").Append(Q(adapter)).Append(", \"wifi_signal\": ").Append(sig >= 0 ? sig.ToString(CultureInfo.InvariantCulture) : "null")
               .Append(", \"wifi_name\": ").Append(Q(ssid)).Append(", \"gateway\": ").Append(Q(gw)).Append(", \"dns\": ").Append(Q(dns)).Append(", \"vpn\": ").Append(vpn ? "true" : "false").Append(", \"vpn_name\": ").Append(Q(vpnName)).Append(" },\n");
             sb.Append("  \"measured_ms\": { \"router\": ").Append(N(m.GwPing.Avg(6))).Append(", \"internet\": ").Append(N(m.NetPing.Avg(6))).Append(", \"internet_via\": ").Append(Q(viaTcp ? "tcp443" : "icmp"))

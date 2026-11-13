@@ -20,8 +20,9 @@ namespace AdeeboMeter
         sealed class Probe { public string Status = "OK"; public long Ms; public int Rows; public double MemMb; public int Handles, Gdi, Threads; }
 
         static readonly string[] Hostile = { "", " ", "x;rm -rf /", "$(calc)", "&calc&", "'\"<>|%n%s", new string('a', 5000), "999.999.999.999", "::::::", "-1", "http://", "a\u0000b", "😀.example", "../../windows/win.ini", "127.0.0.1:99999" };
-        // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (TESTPLAN-1.1.md)
-        static readonly HashSet<string> ByHand = new HashSet<string> { "ldapcheck", "shares", "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certcmp", "radiuslab", "smtppath", "samplelab" };
+        // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (docs\LIVE-TESTS.md).
+        // dc talks to the company's domain controllers; friend writes an encrypted file to Documents whose code nobody would see
+        static readonly HashSet<string> ByHand = new HashSet<string> { "dc", "friend", "ldapcheck", "shares", "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certcmp", "radiuslab", "smtppath", "samplelab" };
 
         Probe RunOne(Tool t, string[] a, int limitMs)
         {
@@ -87,7 +88,8 @@ namespace AdeeboMeter
                     { "port", new[] { gw + ":80", "", "" } }, { "tcpping", new[] { gw + ":80", "5", "" } }, { "ping", new[] { gw, "20", "200" } }, { "dig", new[] { "github.com", "A", "" } },
                     { "http", new[] { "github.com", "", "" } }, { "httptime", new[] { "www.microsoft.com", "3", "" } }, { "proxy", new[] { "https://outlook.office.com", "", "" } }, { "ip46", new[] { "www.google.com", "", "" } },
                     { "ret", new[] { "github.com", "", "" } }, { "ping6", new[] { "www.google.com", "", "" } }, { "ntp", new[] { "time.windows.com", "", "" } } }) inputs[kv.Key] = kv.Value;
-            var netNoInput = new HashSet<string> { "dnsrules", "teams", "clock", "cloud", "doh", "hairpin" };
+            // no-input tools that still reach out (the internet, game servers, the VPN, Windows' connectivity test): skipped with --local
+            var netNoInput = new HashSet<string> { "dnsrules", "teams", "clock", "cloud", "doh", "hairpin", "ipv6score", "hotel", "tonight", "prematch", "vpn", "dupip", "vpnleak", "speedtest", "rushhour" };
             foreach (var t in Tools2().Where(x => x.Do != null && !ByHand.Contains(x.Id) && !LabGate.Contains(x.Id) && !SenderGate.Contains(x.Id)))   /* senders: hostile input only (to loopback), never a real run */
             {
                 if (late()) { sb.AppendLine("      (time cap reached - rest skipped)"); break; }

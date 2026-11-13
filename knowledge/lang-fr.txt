@@ -651,7 +651,7 @@ A simulation with the numbers you pick - not a measurement of your line (only ro
 Save your Adeebo Award card	Enregistrer votre carte Prix Adeebo
 Couldn't save the card	Impossible d'enregistrer la carte
 Your card is saved	Votre carte est enregistrée
-Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically - or email it (the address is on the Hall of Fame page). Its text is copied, ready to paste.	Envoyez-la au Temple de la renommée : le formulaire GitHub vérifie le code et vous ajoute automatiquement - ou envoyez-la par e-mail (l'adresse est sur la page du Temple de la renommée). Son texte est copié, prêt à coller.
+Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically. Its text is copied, ready to paste.	Envoyez-la au Temple de la renommée : le formulaire GitHub vérifie le code et vous ajoute automatiquement. Son texte est copié, prêt à coller.
 This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can.	Cette copie d'AdeeboMeter a été compilée depuis le code source : la carte n'a pas de code et ne peut pas entrer au Temple de la renommée. Le téléchargement du site, oui.
 Your Adeebo Award card	Votre carte Prix Adeebo
 Your name as it should appear in the Hall of Fame. Letters, numbers, spaces and . - _ ' - up to 32.	Votre nom tel qu'il doit apparaître au Temple de la renommée. Lettres, chiffres, espaces et . - _ ' - 32 au plus.
@@ -980,7 +980,6 @@ Not quite - this one actually works.	Pas tout à fait - celle-ci marche vraiment
 Not quite - it fails.	Pas tout à fait - ça échoue.
 Next attack	Attaque suivante
 See how you did	Voir votre résultat
-Play again	Rejouer
 You know the Adeebo Award inside out	Vous connaissez le prix Adeebo sur le bout des doigts
 Mallory fooled you a few times	Mallory vous a eu quelques fois
 The code stops the easy cheats. The honest limit of an offline app: points live on your own PC, so the Hall of Fame is for bragging rights, not prizes.	Le code arrête les tricheries faciles. La limite honnête d'une app hors ligne : les points restent sur votre PC, donc le Temple de la renommée, c'est pour la fierté, pas pour des prix.
@@ -1047,3 +1046,37 @@ DNS is broken - switch DNS server	Le DNS est cassé - changez de serveur DNS
 It's the PC - pause the install	C'est le PC - mettez l'installation en pause
 Check the cable and the port	Vérifiez le câble et le port
 Bufferbloat - turn on SQM/QoS in the router	Bufferbloat - activez SQM/QoS dans le routeur
+DONE	TERMINÉ
+By question	Par question
+All tools (list)	Tous les outils (liste)
+Filter by app, host, IP or port	Filtrer par appli, hôte, IP ou port
+host, IP or URL - e.g. github.com:443	hôte, IP ou URL - ex. github.com:443
+Find a process or app	Trouver un processus ou une appli
+Site, app or server - e.g. outlook.office.com	Site, appli ou serveur - ex. outlook.office.com
+Find a process	Trouver un processus
+Search: DNS, TCP, svchost, jitter...	Rechercher : DNS, TCP, svchost, gigue...
+Jump to a tab, program, term or protocol...	Aller à un onglet, un programme, un terme ou un protocole...
+Find a feature... mtr, dns, wifi, certificate	Trouver une fonction... mtr, dns, wifi, certificat
+Your website or mail domain (optional)	Votre site ou domaine de messagerie (facultatif)
+Or type a site - e.g. github.com	Ou tapez un site - ex. github.com
+Room name - e.g. Kitchen	Nom de la pièce - ex. Cuisine
+Pre-call check	Vérif. avant appel
+DNS speed test	Test de vitesse DNS
+VPN map	Carte du VPN
+What can AdeeboMeter see here?	Que voit AdeeboMeter ici ?
+Memory, disk, heat	Mémoire, disque, chaleur
+Disk	Disque
+Background jobs	Tâches en arrière-plan
+Crashes and hangs	Plantages et blocages
+Graphics per app	Graphisme par appli
+What changed (7 days)	Ce qui a changé (7 jours)
+Battery	Batterie
+Your cable	Votre câble
+Cable	Câble
+Copy as text	Copier en texte
+Save...	Enregistrer...
+still running - press Stop first to open something else	encore en cours - appuyez d'abord sur Arrêter pour ouvrir autre chose
+Speed tests are turned off by your IT team.	Les tests de vitesse sont désactivés par votre service informatique.
+Live capture is turned off by your IT team (AdeeboMeter.policy).	La capture en direct est désactivée par votre service informatique (AdeeboMeter.policy).
+Your name needs at least one letter or number - emoji and symbols alone can't go on the card.	Votre nom doit contenir au moins une lettre ou un chiffre - des emoji ou des symboles seuls ne peuvent pas figurer sur la carte.
+One word in your name mixes Latin letters with Cyrillic or Greek look-alikes - type it in one alphabet.	Un mot de votre nom mélange des lettres latines et des sosies cyrilliques ou grecs - tapez-le dans un seul alphabet.

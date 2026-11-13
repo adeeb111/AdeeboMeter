@@ -60,9 +60,15 @@ namespace AdeeboMeter
         public static bool Split(string s, int defPort, out string host, out int port)
         {
             host = (s ?? "").Trim(); port = defPort;
-            int rb = host.IndexOf("]:", StringComparison.Ordinal), c = host.LastIndexOf(':');
-            if (host.StartsWith("[", StringComparison.Ordinal) && rb > 0) { if (!int.TryParse(host.Substring(rb + 2), out port)) return false; host = host.Substring(1, rb - 1); }
-            else if (c > 0 && host.IndexOf(':') == c) { if (!int.TryParse(host.Substring(c + 1), out port)) return false; host = host.Substring(0, c); }
+            int c = host.LastIndexOf(':');
+            if (host.StartsWith("[", StringComparison.Ordinal))   // [v6] or [v6]:port - and nothing else after the bracket
+            {
+                int rb = host.IndexOf(']'); if (rb < 2) return false;
+                string rest = host.Substring(rb + 1);
+                if (rest != "") { if (!rest.StartsWith(":", StringComparison.Ordinal) || !int.TryParse(rest.Substring(1), NumberStyles.None, CultureInfo.InvariantCulture, out port)) return false; }
+                host = host.Substring(1, rb - 1);
+            }
+            else if (c > 0 && host.IndexOf(':') == c) { if (!int.TryParse(host.Substring(c + 1), NumberStyles.None, CultureInfo.InvariantCulture, out port)) return false; host = host.Substring(0, c); }
             return host != "" && host.Length <= 253 && port >= 1 && port <= 65535 && Regex.IsMatch(host, @"^[\w.:%-]+$");
         }
         // one device: not a broadcast (255.255.255.255 or this network's), not multicast, not "any" (0.0.0.0 / ::)
@@ -121,7 +127,11 @@ namespace AdeeboMeter
             string h = (target ?? "").Trim(); if (h == "" || !Regex.IsMatch(h, @"^[\w.:%-]+$") || h.Length > 253) { rows.Add(R(2, "Target", "type an address or name", "", "u")); return rows; }
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             int n = Count(count, 10), size = 32, ttl = 128, gap = 1000, dscp = -1; bool df = false, cmp = false; string o = (opts ?? "").ToLowerInvariant(), bad = "";
-            foreach (Match mm in Regex.Matches(o, @"(size|ttl|every|gap)\s*=?\s*(\d+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}\d{0,2}|\d{1,4})\b|\b(compare)\b"))
+            // Windows ping's own words work too: -l size, -f don't fragment, -i TTL, -n count is the Count box
+            o = Regex.Replace(o, @"(^|\s)-l\s*", "$1size "); o = Regex.Replace(o, @"(^|\s)-i\s*", "$1ttl "); o = Regex.Replace(o, @"(^|\s)-f\b", "$1df");
+            const string optRx = @"(size|ttl|every|gap)\s*=?\s*([0-9]+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}[0-9]{0,2}|[0-9]{1,4})\b|\b(compare)\b";
+            string left = Regex.Replace(o, optRx, " ").Trim(); if (left != "") bad = "not understood: " + Draw.Trunc(left, 40) + " - nothing was sent";
+            foreach (Match mm in Regex.Matches(o, optRx))
             {
                 if (mm.Groups[3].Success) { df = true; continue; }
                 if (mm.Groups[5].Success) { cmp = true; continue; }
@@ -138,28 +148,28 @@ namespace AdeeboMeter
             var buf = new byte[size]; for (int i = 0; i < size; i++) buf[i] = (byte)('a' + i % 23);
             // two buckets: [0] as asked (marked when dscp is set), [1] unmarked - only used with compare, every other packet
             var times = new[] { new List<long>(), new List<long>() }; var sentB = new int[2]; var lostB = new int[2];
-            var froms = new Dictionary<string, int>(); int sent = 0, frag = 0;
+            var froms = new Dictionary<string, int>(); int sent = 0, frag = 0; bool okNow = false;
             using (var p = new Ping())
                 for (int i = 0; i < n && !run.Stop; i++)
                 {
                     var sw = Stopwatch.StartNew(); sent++; int b = cmp && i % 2 == 1 ? 1 : 0; sentB[b]++;
                     try
                     {
-                        IPStatus st; long rtt; string from;
+                        IPStatus st = IPStatus.TimedOut; long rtt; string from; okNow = false;
                         if (dscp >= 0)
                         {
                             var r = AdeeboMeter.Icmp.Echo(a, size, ttl, df, 2000, false, b == 0 ? (byte)(dscp << 2) : (byte)0);
                             st = r.Status == AdeeboMeter.Icmp.Ok ? IPStatus.Success : r.Status == AdeeboMeter.Icmp.TooBig ? IPStatus.PacketTooBig : r.Status == AdeeboMeter.Icmp.TtlExpired ? IPStatus.TtlExpired : IPStatus.TimedOut; rtt = Math.Max(0, r.Rtt); from = r.From;
                         }
                         else { var r = p.Send(a, 2000, buf, new PingOptions(ttl, df)); st = r.Status; rtt = r.RoundtripTime; from = r.Address != null ? r.Address.ToString() : ""; }
-                        if (st == IPStatus.Success) times[b].Add(rtt);
+                        if (st == IPStatus.Success) { times[b].Add(rtt); okNow = true; }
                         else if (st == IPStatus.PacketTooBig) frag++;
                         else if (st == IPStatus.TtlExpired || st == IPStatus.TimeExceeded) { string k = from + " (TTL ran out there)"; int c; froms.TryGetValue(k, out c); froms[k] = c + 1; }
                         else lostB[b]++;
                     }
                     catch (PingException) { lostB[b]++; }
                     catch (InvalidOperationException) { lostB[b]++; }
-                    run.Status = "Sent " + sent + " of " + n + (cmp ? (b == 0 ? " (marked)" : " (unmarked)") : "") + "..."; run.Add(times[b].Count > 0 ? times[b].Last() : 0);
+                    run.Status = "Sent " + sent + " of " + n + (cmp ? (b == 0 ? " (marked)" : " (unmarked)") : "") + "..."; run.Add(okNow ? times[b].Last() : double.NaN);   // a lost packet is a gap in the chart, not the last reply again
                     int wait = gap - (int)sw.ElapsedMilliseconds; while (wait > 0 && !run.Stop && i < n - 1) { Thread.Sleep(Math.Min(wait, 100)); wait -= 100; }
                 }
             Func<int, string> line = k => I(sentB[k]) + " sent · " + I(times[k].Count) + " answered" + (times[k].Count > 0 ? " · " + times[k].Min() + " / " + (long)times[k].Average() + " / " + times[k].Max() + " ms (min / avg / max)" : "");
@@ -337,8 +347,9 @@ namespace AdeeboMeter
         static byte[] Vb(string oid, byte[] val) { return Tlv(0x30, Cat(Tlv(6, Snmp.OidBytes(oid)), val)); }
         public static byte[] TrapPacket(string community, uint ticks, int reqId, string text)
         {
-            var up = BitConverter.GetBytes(ticks).Reverse().ToArray();
-            var vbs = Tlv(0x30, Cat(Vb("1.3.6.1.2.1.1.3.0", Tlv(0x43, up.SkipWhile((x, i) => x == 0 && i < 3).ToArray())), Vb("1.3.6.1.6.3.1.1.4.1.0", Tlv(6, Snmp.OidBytes("1.3.6.1.4.1.8072.2.3.0.1"))), Vb("1.3.6.1.2.1.1.1.0", Tlv(4, Encoding.UTF8.GetBytes(text)))));
+            var up = BitConverter.GetBytes(ticks).Reverse().SkipWhile((x, i) => x == 0 && i < 3).ToList();
+            if ((up[0] & 0x80) != 0) up.Insert(0, 0);   // TimeTicks is encoded like an INTEGER: a top bit set would read as negative
+            var vbs = Tlv(0x30, Cat(Vb("1.3.6.1.2.1.1.3.0", Tlv(0x43, up.ToArray())), Vb("1.3.6.1.6.3.1.1.4.1.0", Tlv(6, Snmp.OidBytes("1.3.6.1.4.1.8072.2.3.0.1"))), Vb("1.3.6.1.2.1.1.1.0", Tlv(4, Encoding.UTF8.GetBytes(text)))));
             var pdu = Tlv(0xA7, Cat(Int(reqId), Int(0), Int(0), vbs));
             return Tlv(0x30, Cat(Int(1), Tlv(4, Encoding.UTF8.GetBytes(community)), pdu));
         }

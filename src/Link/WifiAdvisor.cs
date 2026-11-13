@@ -101,7 +101,7 @@ namespace AdeeboMeter
                 // the same network on a better band
                 if (band.StartsWith("2.4", StringComparison.Ordinal))
                 {
-                    var five = aps.Where(a => a.Ssid == ssid && !a.Band.StartsWith("2.4", StringComparison.Ordinal) && a.Signal >= 40).OrderByDescending(a => a.Signal).FirstOrDefault();
+                    var five = aps.Where(a => a.Ssid == ssid && a.Band != "" && !a.Band.StartsWith("2.4", StringComparison.Ordinal) && a.Signal >= 40).OrderByDescending(a => a.Signal).FirstOrDefault();
                     if (five != null) x.Advice.Add(new[] { "1", "You're on 2.4 GHz, but \"" + ssid + "\" is also on " + five.Band + " here at " + five.Signal + "% - faster and less crowded. Forget and rejoin the network, or give the 5 GHz band its own name in the router." });
                 }
                 // sticky client: clinging to a far access point while a much stronger one of the same network is near

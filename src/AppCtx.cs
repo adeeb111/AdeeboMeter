@@ -139,9 +139,9 @@ namespace AdeeboMeter
             prefHandler = delegate
             {
                 // Windows may raise this on its own thread: the theme switch always happens on the UI thread
-                if (marshal.InvokeRequired) { try { marshal.BeginInvoke((Action)delegate { bool d2 = Program.WantDark(); if (d2 != Theme.Dark) { Theme.Apply(d2); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); } }); } catch (InvalidOperationException) { } return; }
+                if (marshal.InvokeRequired) { try { marshal.BeginInvoke((Action)delegate { bool d2 = Program.WantDark(); if (d2 != Theme.Dark || SystemInformation.HighContrast != Theme.AppliedContrast) { Theme.Apply(d2); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); } }); } catch (InvalidOperationException) { } return; }
                 bool d = Program.WantDark();
-                if (d != Theme.Dark) { Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); }
+                if (d != Theme.Dark || SystemInformation.HighContrast != Theme.AppliedContrast) { Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); }
             };
             SystemEvents.UserPreferenceChanged += prefHandler;
             ui.Interval = 50; ui.Tick += delegate { OnUi(); }; ui.Start();
@@ -191,7 +191,7 @@ namespace AdeeboMeter
         // ---------- settings (written atomically: temp file + replace)
         void LoadSettings()
         {
-            bool first = !File.Exists(settingsPath);
+            bool first = !File.Exists(settingsPath); int keys = 0;   // keys: lines other than the installer's own "autostart"
             try
             {
                 if (!first)
@@ -199,6 +199,7 @@ namespace AdeeboMeter
                     {
                         int eq = line.IndexOf('='); if (eq <= 0) continue;
                         var kv = new[] { line.Substring(0, eq), line.Substring(eq + 1) };
+                        if (kv[0] != "autostart") keys++;
                         if (kv[0] == "autostart") autoStart = kv[1] == "1";
                         else if (kv[0] == "widget") widgetOn = kv[1] == "1";
                         else if (kv[0] == "serious") Voice.Serious = kv[1] == "1";
@@ -207,12 +208,14 @@ namespace AdeeboMeter
                     }
             }
             catch { }
+            if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
             if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
-            // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") and the game settings are kept.
+            // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") is kept; a named preset sets the game timings too.
             if (Cfg.PresetSaved && Cfg.Preset != "custom") Cfg.ApplyPreset(Cfg.Preset);   // the Gamer Zone rows switch to "custom" when changed, so a named preset means all its timings
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
             if (first) { ApplyAutoStart(); SaveSettings(); }
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate { GameHistory.TidyNow(); });   // old game days go even when nothing writes new ones
         }
         void SaveSettings()
         {
@@ -292,6 +295,7 @@ namespace AdeeboMeter
             Action stop = delegate { try { if (full != null && !full.IsDisposed) full.StopCaptures(); } catch (Exception ex) { Program.Log("session end: " + ex.Message); } };
             try { if (marshal.InvokeRequired) marshal.Invoke(stop); else stop(); } catch (InvalidOperationException ex) { Program.Log("session end: " + ex.Message); }
             Program.CleanCaptures();
+            try { Usage.Save(); } catch (Exception ex) { if (ex is OutOfMemoryException) throw; Program.Log("session end: usage " + ex.Message); }   // Windows ends us after this: keep the last minutes of data used
         }
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsWindowEnabled(IntPtr h);
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr GetLastActivePopup(IntPtr h);
@@ -378,6 +382,7 @@ namespace AdeeboMeter
                     hovered = revealed;
                 }
                 else { hovered = inside; dwell = 0; }
+                M.HoverOpen = hovered;
                 string key = "";
                 if (hovered) foreach (var kv in hits) { var r = kv.Value; if (new RectangleF(widget.Placed.X + r.X, widget.Placed.Y + r.Y, r.Width, r.Height).Contains(cur)) { key = kv.Key; break; } }
                 hoverKey = key;

@@ -45,9 +45,10 @@ namespace AdeeboMeter
             }
             catch { return false; }
         }
+        public static bool AppliedContrast;   // the high-contrast state the colours were made for (a change re-applies them)
         public static void Apply(bool dark)
         {
-            Dark = dark;
+            Dark = dark; AppliedContrast = SystemInformation.HighContrast;
             if (!dark)
             {
                 Ink = C("#1B2330"); Muted = C("#5B6B7C"); Sub = C("#3D4B5A"); Line = C("#D6DEE8"); Line2 = C("#EEF2F6"); Track = C("#E6ECF3"); Soft = C("#F4F7FB");
@@ -70,7 +71,7 @@ namespace AdeeboMeter
             if (SystemInformation.HighContrast)
             {
                 Ink = Sub = SystemColors.WindowText; Muted = SystemColors.GrayText; Card = Soft = RowHot = SystemColors.Window; Bg = SystemColors.Control;
-                Line = Line2 = Rail = Track = SystemColors.WindowFrame; RowSel = SystemColors.Highlight; BlueDark = SystemColors.HotTrack;
+                Line = Line2 = Rail = Track = SystemColors.WindowFrame; RowSel = SystemColors.Highlight; BlueDark = SystemColors.HotTrack; BlueSoft = SystemColors.Window;   // tinted panels: the window colour, so their text stays readable
                 for (int i = 0; i < 4; i++) { lvText[i] = SystemColors.WindowText; lvSoft[i] = SystemColors.Window; }
             }
         }
@@ -189,7 +190,7 @@ namespace AdeeboMeter
         public static Font fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput;
         static readonly Bitmap measureBmp = new Bitmap(1, 1);
         static Graphics measureG;
-        public static Font fHero, fValue;
+        public static Font fHero, fValue, fCardNum, fZ;   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
         public static string Fam(params string[] names)
         {
             try
@@ -226,6 +227,7 @@ namespace AdeeboMeter
             fTitle = new Font(disp, 16 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fHero = new Font(disp, 30 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fValue = new Font(disp, 14 * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            fCardNum = new Font(semi, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fInput = new Font(mono, 13 * S, FontStyle.Regular, GraphicsUnit.Pixel);
             measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
         }
@@ -318,7 +320,7 @@ namespace AdeeboMeter
                     case "asleep":
                         g.DrawArc(p, cx - ex - 2 * u, ey - u, 4 * u, 3 * u, 20, 140); g.DrawArc(p, cx + ex - 2 * u, ey - u, 4 * u, 3 * u, 20, 140);
                         g.DrawLine(p, cx - 1.5f * u, r.Y + 14 * u, cx + 1.5f * u, r.Y + 14 * u);
-                        using (var zb = new SolidBrush(Theme.Muted)) using (var zf = new Font("Segoe UI", Math.Max(5f, 4.5f * u), FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("z", zf, zb, r.Right - 4 * u, r.Y - 2 * u);
+                        using (var zb = new SolidBrush(Theme.Muted)) g.DrawString("z", fZ ?? fTiny, zb, r.Right - 4 * u, r.Y - 2 * u);
                         break;
                     case "smug":
                         g.DrawLine(p, cx - ex - 1.5f * u, ey, cx - ex + 1.5f * u, ey);   // half-closed, pleased
@@ -422,7 +424,7 @@ namespace AdeeboMeter
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
                 hits["game"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 80 * S);
                 string big = double.IsNaN(now) ? "-" : Math.Round(now).ToString(CultureInfo.InvariantCulture);
-                using (var bf = new Font(fHead.FontFamily, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel)) using (var bb = new SolidBrush(gc))
+                var bf = fCardNum; using (var bb = new SolidBrush(gc))
                 {
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
                     g.DrawString(L.T("ms"), fBody, muted, pad + bw - 2 * S, y + 16 * S);
@@ -486,7 +488,7 @@ namespace AdeeboMeter
                 y += 24 * S;
                 g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
                 hits["main"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 80 * S);
-                using (var bf = new Font(fHead.FontFamily, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel)) using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
+                var bf = fCardNum; using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
                 {
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
                     g.DrawString(unit, fBody, muted, pad + bw - 2 * S, y + 16 * S);
@@ -579,7 +581,7 @@ namespace AdeeboMeter
                 {
                     g.DrawString("today ↓ " + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
                     string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
-                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1024).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
+                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
                 }
             }
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }

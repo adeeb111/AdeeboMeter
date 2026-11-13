@@ -103,7 +103,9 @@ namespace AdeeboMeter
                 {
                     // TCP: segments of maxData. Fragments: each carries a multiple of 8 bytes of the inner packet's payload, and
                     // the UDP/ICMP header rides only in the first one - so count the whole datagram, not data per packet
-                    int fragData = (innerMtu - ip) / 8 * 8;
+                    // an IPv6 fragment also carries the 8-byte Fragment header (the innermost IP is what gets split)
+                    var innerIp = st.LastOrDefault(x => x.Kind == "i"); int fragHdr = innerIp != null && innerIp.Key == "ipv6" ? 8 : 0;
+                    int fragData = (innerMtu - ip - fragHdr) / 8 * 8;
                     int n = tcp ? (int)Math.Ceiling(payload / (double)maxData) : (int)Math.Ceiling((payload + pay) / (double)Math.Max(8, fragData));
                     if (tcp) rows.Add(R(3, I(payload) + " bytes of data", "TCP sends it as " + n + " segments - normal", "", "i"));
                     else rows.Add(R(1, I(payload) + " bytes of data", "too big for one packet: IP splits it into " + n + " fragments, or drops it if Don't Fragment is set (IPv6 never splits on the way)", "Fragments get lost or blocked by firewalls more often - keep UDP data under " + maxData + ".", "i"));
@@ -159,12 +161,13 @@ namespace AdeeboMeter
         public static List<string[]> Bandwidth(string sizeText, string speedText, string timeText)
         {
             var rows = new List<string[]>(); double bytes = Size(sizeText), bps = Speed(speedText), secs = Time(timeText);
-            if (double.IsNaN(bytes) && !string.IsNullOrWhiteSpace(sizeText)) { rows.Add(R(2, "Size", "type e.g. 4.7 GB, 300 MB or 1.2 TB", "", "u")); return rows; }
+            if (double.IsNaN(bytes) && !string.IsNullOrWhiteSpace(sizeText)) { rows.Add(R(2, "Size", "type e.g. 4.7 GB, 300 MB or 1.2 TB (in bytes - \"Gb\" is gigabits; and write 1000 or 1,000, not 1.000)", "", "u")); return rows; }
             if (double.IsNaN(bps) && !string.IsNullOrWhiteSpace(speedText)) { rows.Add(R(2, "Speed", "type e.g. 100 Mbps, 1 Gbps or 12 MB/s", "", "u")); return rows; }
             if (double.IsNaN(secs) && !string.IsNullOrWhiteSpace(timeText)) { rows.Add(R(2, "Time", "type e.g. 90 s, 10 min or 2 h", "", "u")); return rows; }
             int have = (double.IsNaN(bytes) ? 0 : 1) + (double.IsNaN(bps) ? 0 : 1) + (double.IsNaN(secs) ? 0 : 1);
             if (have == 0) { rows.Add(R(2, "Input", "type a size and a speed (how long?), a size and a time (how fast?), or just a speed (conversions)", "", "u")); return rows; }
             if (bps == 0 || secs == 0) { rows.Add(R(2, bps == 0 ? "Speed" : "Time", "has to be more than 0", "", "u")); return rows; }
+            if (have == 1 && double.IsNaN(bps)) { rows.Add(R(2, double.IsNaN(bytes) ? "Time" : "Size", "needs one more value: a " + (double.IsNaN(bytes) ? "size (how much moves in that time at a speed?) or a speed" : "speed (how long does it take?) or a time (how fast must it go?)"), "", "u")); return rows; }
             if (!double.IsNaN(bytes) && !double.IsNaN(bps) && bps > 0)
             {
                 double t = bytes * 8 / bps;
@@ -187,24 +190,26 @@ namespace AdeeboMeter
         static double Parse2(string t, out string unit)
         {
             unit = ""; var m = Num.Match(t ?? ""); if (!m.Success) return double.NaN; unit = m.Groups[2].Value; string n = m.Groups[1].Value;
+            if (Regex.IsMatch(n, @"^[0-9]{1,3}\.[0-9]{3}$")) return double.NaN;   // "1.000" - one, or a thousand written the European way? Not guessed: refused
             n = Regex.IsMatch(n, @"^[0-9]{1,3}(,[0-9]{3})+(\.[0-9]+)?$") ? n.Replace(",", "") : n.Replace(',', '.');
             double v; return double.TryParse(n, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out v) && !double.IsInfinity(v) ? v : double.NaN;
         }
         static double Size(string t)
         {
             if (string.IsNullOrWhiteSpace(t)) return double.NaN; string u; double v = Parse2(t, out u); if (double.IsNaN(v)) return v;
+            if (u.Length >= 2 && u.EndsWith("b", StringComparison.Ordinal) && char.IsUpper(u[0]) && u.Length == 2) return double.NaN;   // "Gb", "Mb": bits - a size is in bytes (GB, MB)
             switch (u.ToLowerInvariant()) { case "": case "b": case "bytes": return v; case "kb": return v * 1e3; case "mb": return v * 1e6; case "gb": return v * 1e9; case "tb": return v * 1e12; case "kib": return v * 1024; case "mib": return v * 1048576; case "gib": return v * 1073741824.0; case "tib": return v * 1099511627776.0; default: return double.NaN; }
         }
         static double Speed(string t)
         {
             if (string.IsNullOrWhiteSpace(t)) return double.NaN; string u; double v = Parse2(t, out u); if (double.IsNaN(v)) return v;
             string k = u.Replace("/s", "ps"); if (k == "") return v * 1e6;   // a bare number is Mbps, how ISPs sell it
-            switch (k) { case "bps": return v; case "kbps": case "Kbps": case "kbit": case "kbitps": return v * 1e3; case "Mbps": case "mbps": case "Mbit": case "mbit": case "Mbitps": case "mbitps": return v * 1e6; case "Gbps": case "gbps": case "Gbit": case "gbit": case "Gbitps": case "gbitps": return v * 1e9; case "Bps": return v * 8; case "KBps": case "kBps": return v * 8e3; case "MBps": return v * 8e6; case "GBps": return v * 8e9; case "KiBps": return v * 8 * 1024; case "MiBps": return v * 8 * 1048576; case "GiBps": return v * 8 * 1073741824.0; default: return double.NaN; }
+            switch (k) { case "bps": return v; case "kbps": case "Kbps": case "kbit": case "kbitps": case "Kbit": case "Kbitps": return v * 1e3; case "Tbps": case "tbps": case "Tbit": case "Tbitps": return v * 1e12; case "Mb": return v * 1e6; case "Gb": return v * 1e9; case "Mbps": case "mbps": case "Mbit": case "mbit": case "Mbitps": case "mbitps": return v * 1e6; case "Gbps": case "gbps": case "Gbit": case "gbit": case "Gbitps": case "gbitps": return v * 1e9; case "Bps": return v * 8; case "KBps": case "kBps": return v * 8e3; case "MBps": return v * 8e6; case "GBps": return v * 8e9; case "KiBps": return v * 8 * 1024; case "MiBps": return v * 8 * 1048576; case "GiBps": return v * 8 * 1073741824.0; default: return double.NaN; }
         }
         static double Time(string t)
         {
             if (string.IsNullOrWhiteSpace(t)) return double.NaN; string u; double v = Parse2(t, out u); if (double.IsNaN(v)) return v;
-            switch (u.ToLowerInvariant()) { case "": case "s": case "sec": case "secs": return v; case "ms": return v / 1000; case "m": case "min": case "mins": return v * 60; case "h": case "hr": case "hrs": case "hour": case "hours": return v * 3600; case "d": case "day": case "days": return v * 86400; default: return double.NaN; }
+            switch (u.ToLowerInvariant()) { case "": case "s": case "sec": case "secs": case "second": case "seconds": return v; case "ms": return v / 1000; case "m": case "min": case "mins": case "minute": case "minutes": return v * 60; case "h": case "hr": case "hrs": case "hour": case "hours": return v * 3600; case "d": case "day": case "days": return v * 86400; default: return double.NaN; }
         }
         static string Bits(double bps) { return bps >= 1e9 ? F(bps / 1e9, "0.##") + " Gbps" : bps >= 1e6 ? F(bps / 1e6, "0.##") + " Mbps" : bps >= 1e3 ? F(bps / 1e3, "0.##") + " kbps" : F(bps, "0") + " bps"; }
         static string ByteRate(double bps) { return ByteSize(bps / 8) + "/s"; }

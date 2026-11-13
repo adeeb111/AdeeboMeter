@@ -49,8 +49,8 @@ namespace AdeeboMeter
             var old = g.Clip; g.SetClip(map);
             using (var land = new SolidBrush(Theme.Dark ? Color.FromArgb(48, 255, 255, 255) : Color.FromArgb(24, 0, 0, 0)))
                 foreach (var l in Lands) { var pts = new PointF[l.Length / 2]; for (int i = 0; i < pts.Length; i++) pts[i] = P(l[2 * i], l[2 * i + 1]); g.FillPolygon(land, pts); }
-            g.Clip = old;
-            var gp = GamePing.Me; var best = gp.Best(gm); int off = 0; var missing = new List<string>();
+            g.Clip = old; old.Dispose();   /* g.Clip hands back a new Region each time */
+            var gp = GamePing.Me; var best = gp.Best(gm); var labs = new List<Tuple<PointF, float, string, bool>>(); var missing = new List<string>();
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
                 foreach (var s in gm.Servers)
@@ -66,16 +66,44 @@ namespace AdeeboMeter
                         else g.FillEllipse(b, pt.X - r, pt.Y - r, 2 * r, 2 * r);
                     }
                     string lab = (s.Name ?? "") + " " + (double.IsNaN(a) ? "-" : Math.Round(a).ToString(CultureInfo.CurrentCulture) + " ms");
-                    var ls = g.MeasureString(lab, Draw.fTiny); float lx = Math.Min(map.Right - ls.Width - 4 * S, Math.Max(map.X + 4 * S, pt.X - ls.Width / 2)), ly = pt.Y + r + 2 * S + (off++ % 2) * 12 * S;
-                    if (ly + ls.Height > map.Bottom) ly = pt.Y - r - ls.Height - 2 * S;
-                    g.DrawString(lab, Draw.fTiny, best == s ? ink : muted, lx, ly);
+                    labs.Add(Tuple.Create(pt, r, lab, best == s));
                     Hint(gamerCanvas, new RectangleF(pt.X - r, pt.Y - r, 2 * r, 2 * r), "gz.map");
                 }
+                PlaceLabels(g, labs, map, ink, muted);
                 y += mh + 8 * S;
                 string legend = L.T("green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server") + (missing.Count > 0 ? "  ·  " + L.T("not on the map") + ": " + string.Join(", ", missing.Take(4)) + (missing.Count > 4 ? " " + L.T("and") + " " + (missing.Count - 4) + " " + L.T("more") : "") : "");
                 var lh = Draw.Measure(legend, Draw.fSmall, (int)w).Height; g.DrawString(legend, Draw.fSmall, muted, new RectangleF(x, y, w, lh + 4)); y += lh + 16 * S;
             }
             return y;
+        }
+    
+        /* Labels go after every dot is drawn, so a label never sits on a dot. Each one tries below, above,
+           right, left, then further below/above, and takes the first spot that hits no dot and no earlier label.
+           The best server is placed first so it always gets its first choice. */
+        static void PlaceLabels(Graphics g, List<Tuple<PointF, float, string, bool>> labs, RectangleF map, Brush ink, Brush muted)
+        {
+            var taken = new List<RectangleF>();
+            foreach (var t in labs) taken.Add(new RectangleF(t.Item1.X - t.Item2, t.Item1.Y - t.Item2, 2 * t.Item2, 2 * t.Item2));
+            foreach (var t in labs.OrderBy(t => t.Item4 ? 0 : 1))
+            {
+                PointF pt = t.Item1; float r = t.Item2; var ls = g.MeasureString(t.Item3, Draw.fTiny); float gap = 2 * S;
+                var tries = new List<PointF>
+                {
+                    new PointF(pt.X - ls.Width / 2, pt.Y + r + gap), new PointF(pt.X - ls.Width / 2, pt.Y - r - gap - ls.Height),
+                    new PointF(pt.X + r + gap, pt.Y - ls.Height / 2), new PointF(pt.X - r - gap - ls.Width, pt.Y - ls.Height / 2)
+                };
+                for (int k = 1; k <= 4; k++) { tries.Add(new PointF(pt.X - ls.Width / 2, pt.Y + r + gap + k * ls.Height)); tries.Add(new PointF(pt.X - ls.Width / 2, pt.Y - r - gap - (k + 1) * ls.Height)); }
+                RectangleF pick = RectangleF.Empty, first = RectangleF.Empty;
+                foreach (var c in tries)
+                {
+                    var rc = new RectangleF(Math.Min(map.Right - ls.Width - 4 * S, Math.Max(map.X + 4 * S, c.X)), Math.Min(map.Bottom - ls.Height - 2 * S, Math.Max(map.Y + 2 * S, c.Y)), ls.Width, ls.Height);
+                    if (first.IsEmpty) first = rc;
+                    if (!taken.Any(o => o.IntersectsWith(rc))) { pick = rc; break; }
+                }
+                if (pick.IsEmpty) pick = first; /* nowhere free: crowded map, fall back to below the dot */
+                taken.Add(pick);
+                g.DrawString(t.Item3, Draw.fTiny, t.Item4 ? ink : muted, pick.X, pick.Y);
+            }
         }
     }
 }

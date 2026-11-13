@@ -208,7 +208,7 @@ namespace AdeeboMeter
         public static List<string[]> Roast(Monitor m, Toolkit.Run run)
         {
             run.Status = "Collecting receipts...";
-            var w = Measure(m, 7, run); string g = Grade(w); var burns = Burns(w, g, m.Isp);
+            var w = Measure(m, 7, run); string g = Grade(w); var burns = Burns(w, g, "");   // made to be posted: never the provider's name (it says where you live)
             var rows = new List<string[]> { R(g.StartsWith("A", StringComparison.Ordinal) ? 0 : g == "F" || g == "D" ? 2 : 1, "Grade", g + (w.History ? " · the last " + w.Days + " days" : " · the last few minutes (turn on History for a week)"), "", "m") };
             foreach (var b in burns) rows.Add(R(3, "", b, "", "m"));
             string file = null;
@@ -260,7 +260,7 @@ namespace AdeeboMeter
             if (w.WorstDay != "" && w.Outages > 0) sb.Append("The worst day was " + w.WorstDay + ". ");
             if (w.Rush != "") sb.Append("It's slowest on " + w.Rush + ". ");
             sb.Append("\n\n");
-            if (home) sb.Append("To be fair to you: part of this is my own Wi-Fi (my router took " + N1(w.Gw) + " ms on average to answer), and I'm fixing that. The outages above are the internet check getting no answer at all, which my Wi-Fi alone doesn't explain.\n\n");
+            if (home) sb.Append("To be fair to you: part of this is my own Wi-Fi (my router took " + N1(w.Gw) + " ms on average to answer), and I'm fixing that." + (w.Outages > 0 ? " The outages above are the internet check getting no answer at all, which my Wi-Fi alone doesn't explain." : "") + "\n\n");
             else if (!double.IsNaN(w.Gw)) sb.Append("My own network isn't the problem: my router answered in " + N1(w.Gw) + " ms on average the whole time, so the trouble is past my router.\n\n");
             if (w.Speeds.Count > 0) { sb.Append("Recent speed tests:\n"); foreach (var s in w.Speeds.Skip(Math.Max(0, w.Speeds.Count - 5))) sb.Append("- " + s + "\n"); sb.Append('\n'); }
             sb.Append(Voice.P("I'm not angry. I'm just measuring. ", "") + "Could you check my line and tell me what you find? I can send the full measurements if they help.\n\nThank you,\n");

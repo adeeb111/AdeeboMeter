@@ -174,23 +174,30 @@ namespace AdeeboMeter
                 try { if (Directory.Exists(dir)) foreach (var f in Directory.GetFiles(dir).Where(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase))) r.Add(new Item { Name = Path.GetFileNameWithoutExtension(f), Command = f, Where = dir.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), StringComparison.OrdinalIgnoreCase) ? "your Startup folder" : "the shared Startup folder", Exe = Path.GetFileName(f) }); }
                 catch { }
             // whether Windows' own Startup apps switch is off for it (Task Manager → Startup apps)
+            // Run, the 32-bit Run list (Run32) and the Startup folder (StartupFolder, by file name with its extension) each have their own list
             foreach (var it in r)
+            {
+                bool off = false; string file = Path.GetFileName(it.Command ?? "");
                 foreach (var root in new[] { Registry.CurrentUser, Registry.LocalMachine })
-                    try
-                    {
-                        using (var k = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"))
+                    foreach (var sub in new[] { "Run", "Run32", "StartupFolder" })
+                        try
                         {
-                            var v = k == null ? null : k.GetValue(it.Name) as byte[];
-                            if (v != null && v.Length > 0 && (v[0] & 1) == 1) it.Where += " · switched off in Task Manager";
+                            using (var k = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\" + sub))
+                            {
+                                var v = k == null ? null : (k.GetValue(sub == "StartupFolder" ? file : it.Name) as byte[]);
+                                if (v != null && v.Length > 0 && (v[0] & 1) == 1) off = true;
+                            }
                         }
-                    }
-                    catch { }
+                        catch { }
+                if (off) it.Where += " · switched off in Task Manager";
+            }
             return r;
         }
         static string ExeOf(string cmd)
         {
             if (string.IsNullOrEmpty(cmd)) return "";
-            cmd = cmd.Trim(); string exe = cmd.StartsWith("\"", StringComparison.Ordinal) ? cmd.Substring(1, Math.Max(0, cmd.IndexOf('"', 1) - 1)) : cmd.Split(' ')[0];
+            cmd = cmd.Trim(); int dotExe = cmd.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+            string exe = cmd.StartsWith("\"", StringComparison.Ordinal) ? cmd.Substring(1, Math.Max(0, cmd.IndexOf('"', 1) - 1)) : dotExe > 0 ? cmd.Substring(0, dotExe + 4) : cmd.Split(' ')[0];   // unquoted "C:\Program Files\...\x.exe -s": up to the .exe
             // a stray quote or tab in a Run value must not hide it (and every entry after it): take the last part by hand
             exe = exe.Trim('"', ' ', '\t'); int cut = Math.Max(exe.LastIndexOf('\\'), exe.LastIndexOf('/'));
             return cut >= 0 ? exe.Substring(cut + 1) : exe;

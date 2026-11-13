@@ -85,7 +85,8 @@ namespace AdeeboMeter
             // the first place it goes wrong, from your PC outwards
             if (cpu > 90) { r.Conclude(1, "Your PC itself is the bottleneck right now - the processor is " + F(cpu, "%") + " busy, so everything feels slow, including the network."); r.Next.Add("Open What's running and sort by CPU - see what's busy before you close anything."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
             else if (gwOff && netOff) { r.Conclude(3, "Nothing to judge: the router and internet checks are off. Turn them on in Settings > Background checks, wait a minute and run this again."); }
-            else if ((double.IsNaN(gw) && !gwOff) || gw > 50 || (wifi && sig >= 0 && sig < 35))
+            // a router that doesn't answer ping while the internet answers fine just ignores ping - only silence on both counts
+            else if ((double.IsNaN(gw) && !gwOff && (double.IsNaN(net) || netOff)) || gw > 50 || (wifi && sig >= 0 && sig < 35))
             {
                 r.Conclude(2, double.IsNaN(gw) ? "Your router isn't answering at all" + (wifi ? " over Wi-Fi" : "") + " - the problem is right next to you: the " + (wifi ? "Wi-Fi link" : "cable or the router") + ", before anything else is involved." : wifi ? "The slowness starts between your PC and your router - on the Wi-Fi. Everything after it has to wait for this first hop." : "Your router is slow to answer (" + F(gw, " ms") + "), even over a cable. Restart the router, or check what else on the network is busy.");
                 if (wifi) { r.Next.Add("Move closer to the router, or switch to 5 GHz if you're on 2.4 GHz."); r.Next.Add("Open Your Wi-Fi for the advisor (quieter channel, power saving) and the walk test."); r.GoTab = "link"; r.GoLabel = "Open Your Wi-Fi"; }
@@ -99,7 +100,7 @@ namespace AdeeboMeter
                 r.Conclude(1, "Nothing is badly slow, but not everything is clean: " + string.Join("; ", amber) + ". That's enough to notice on calls or games; on browsing it usually isn't.");
                 r.Next.Add("Run it again when it feels slow - if the same thing is worse then, that's the cause.");
             }
-            else { r.Conclude(0, "Nothing on the path is slow right now: router " + F(gw, " ms") + ", internet " + F(net, " ms") + ". If one site or app feels slow, it's most likely that service, not your network."); r.Next.Add("Run A website or app won't open with that site's name - it times each step."); r.GoTab = "dest"; r.GoLabel = "Check a destination"; }
+            else { r.Conclude(0, "Nothing on the path is slow right now: router " + (double.IsNaN(gw) ? (gwOff ? "not measured" : "ignores ping") : F(gw, " ms")) + ", internet " + (double.IsNaN(net) ? "not measured" : F(net, " ms")) + ". If one site or app feels slow, it's most likely that service, not your network."); r.Next.Add("Run A website or app won't open with that site's name - it times each step."); r.GoTab = "dest"; r.GoLabel = "Check a destination"; }
 
             r.NotEst.Add("Your provider's speed plan - this check sends almost nothing; the Speed test in the Toolbox measures it when you ask.");
             r.NotEst.Add("What the slow site's own servers are doing.");

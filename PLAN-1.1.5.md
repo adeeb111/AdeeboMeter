@@ -5,7 +5,7 @@ One release, everything together (Adeeb's rule). Nothing is built, tested, commi
 
 ## Rules every item keeps
 No admin · never listens · offline by default (third parties only after the user asks or opts in) · nothing stored beyond
-what each feature documents · SNMP read-only · secrets never kept · C# 5 / .NET 4.8 · never mention or reference Nokia.
+what each feature documents · SNMP read-only · secrets never kept · C# 5 / .NET 4.8 · no outside vendor names anywhere.
 
 ## 1. Microsoft Store version (branch `store`, commits 2501630 + 75c3bdb)
 - Done on the branch: Store detection (GetCurrentPackageFullName), writable files in %LOCALAPPDATA%\AdeeboMeter when packaged,

@@ -35,7 +35,7 @@ namespace AdeeboMeter
             if (Policy.NoCapture) { err = "Capturing packets is turned off by your IT team (AdeeboMeter.policy)."; return list; }
             string ifc = Iface(m); if (ifc == "") { err = "No active network adapter."; return list; }
             if (filter != "" && !SafeFilter(filter)) { err = "Bad filter."; return list; }
-            file = Program.SafeCapturePath("journey-" + DateTime.Now.ToString("HHmmss", CultureInfo.InvariantCulture) + ".pcapng");
+            file = Program.SafeCapturePath("journey-" + DateTime.Now.ToString("HHmmss-fff", CultureInfo.InvariantCulture) + ".pcapng");
             if (file == null) { err = "Capture folder unavailable."; return list; }
             var psi = new ProcessStartInfo(LiveCapture.Dumpcap, "-i \"" + ifc + "\" -p -q " + (filter != "" ? "-f \"" + filter + "\" " : "") + "-a duration:" + seconds.ToString(CultureInfo.InvariantCulture) + " -w \"" + file + "\"") { WorkingDirectory = Path.GetDirectoryName(LiveCapture.Dumpcap), UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
             try

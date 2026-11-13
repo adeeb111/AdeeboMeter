@@ -35,7 +35,7 @@ namespace AdeeboMeter
             {
                 lock (drops) { drops.Add(e.T); drops.RemoveAll(t => (e.T - t).TotalMinutes > 10); if (drops.Count >= 3) Raise("drops", "Wi-Fi dropped " + drops.Count + " times in 10 minutes. Move closer to the router, or switch to 5 GHz if it's offered.", 30); }
             }
-            else if (e.Kind == "net" && e.Lv == 2 && e.Text.IndexOf("hardware address", StringComparison.OrdinalIgnoreCase) >= 0) Raise("arp", "Your router's hardware address changed on the same network - possible spoofing. Use the VPN until you know why.", 60);
+            else if (e.Kind == "net" && e.Lv == 2 && (e.Text.IndexOf("hardware address", StringComparison.OrdinalIgnoreCase) >= 0 || e.Text.IndexOf("ARP spoofing", StringComparison.OrdinalIgnoreCase) >= 0)) /* both voices: the serious text is worded differently */ Raise("arp", "Your router's hardware address changed on the same network - possible spoofing. Use the VPN until you know why.", 60);
             else if (e.Kind == "inet" && e.Lv == 2) Raise("inet", Monitor.GwAnswering ? "The internet went quiet. Your router still answers - it's your provider or the line, not your PC." : "The internet went quiet, and your router isn't answering either - check the Wi-Fi or cable first, then the router.", 20);
             else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1);
         }
@@ -68,8 +68,10 @@ namespace AdeeboMeter
         static void Summarise()
         {
             if (rows.Count < 20) return;
-            var mins = (int)Math.Round((DateTime.Now - started).TotalMinutes);
-            var lost = rows.Count(r => double.IsNaN(r.Net)); double lossPct = 100.0 * lost / rows.Count;
+            var mins = Math.Max(1, (int)Math.Round((DateTime.Now - started).TotalMinutes));   // never a "0-minute call"
+            // loss only when the internet check really ran: with it off (Settings or policy) every sample is empty, which says nothing
+            bool checking = Cfg.NetSec > 0 && !Policy.NoInternetCheck && rows.Any(r => !double.IsNaN(r.Net));
+            var lost = rows.Count(r => double.IsNaN(r.Net)); double lossPct = checking ? 100.0 * lost / rows.Count : 0;
             var worst = rows.Where(r => !double.IsNaN(r.Gw)).OrderByDescending(r => r.Gw).FirstOrDefault();
             string when = started.ToString("HH:mm", CultureInfo.CurrentCulture);
             string s; int lv = 0;
@@ -283,7 +285,8 @@ namespace AdeeboMeter
             if (!string.IsNullOrEmpty(home)) s = s.Replace(home, "%USERPROFILE%");
             if (!string.IsNullOrEmpty(user) && user.Length > 2) s = s.Replace(user, "<user>");
             // any other folder (D:\Clients\..., a share, OneDrive): only the file's own name is kept
-            s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z])([A-Za-z]:\\|\\\\)[^\s""<>|:*?]*\\", "<folder>\\");
+            // (folder names with spaces too: everything up to the last backslash on the line, stopping only at a quote or a colon)
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z])([A-Za-z]:\\|\\\\|%USERPROFILE%\\)[^""'<>|:*?\r\n]*\\", "<folder>\\");
             return s.Length > 6000 ? s.Substring(0, 6000) : s;
         }
         // GitHub's "new issue" page with the crash filled in. Opens in your browser; nothing is sent until you press Submit there.

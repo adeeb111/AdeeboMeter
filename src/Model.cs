@@ -122,9 +122,11 @@ namespace AdeeboMeter
             try { Alerts.OnEvent(ev); Calls.OnEvent(ev); } catch { }
         }
         public List<Ev> Recent(int n) { lock (k) { var r = list.Skip(Math.Max(0, list.Count - n)).ToList(); r.Reverse(); return r; } }
-        public static string Ago(DateTime t)
+        public static string Ago(DateTime t) { return Ago(DateTime.Now - t); }
+        /* Callers that measured on Clock.Mono pass the span, so a clock or DST change can't stretch or shrink it */
+        public static string Ago(TimeSpan d)
         {
-            var d = DateTime.Now - t; if (d < TimeSpan.Zero) d = TimeSpan.Zero;   // a clock or DST change never shows "-59 min"
+            if (d < TimeSpan.Zero) d = TimeSpan.Zero;   // never "-59 min"
             return d.TotalSeconds < 60 ? ((int)d.TotalSeconds) + " s" : d.TotalMinutes < 60 ? ((int)d.TotalMinutes) + " min" : ((int)d.TotalHours) + " h " + d.Minutes + " min";
         }
     }

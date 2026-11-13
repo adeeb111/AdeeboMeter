@@ -598,6 +598,7 @@ namespace AdeeboMeter
             {
                 var bad = new List<string>();
                 if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
+                foreach (var line in Cfg.Lines()) { int eq = line.IndexOf('='); if (eq > 0 && !Cfg.Known.Contains(line.Substring(0, eq))) bad.Add("saved setting " + line.Substring(0, eq) + " is dropped by Import settings (add it to Cfg.Known)"); }
                 foreach (var id in FullView.LabGateIds) if (Points.Value(id) != 0) bad.Add(id + " earns behind the 'my own network' tick");
                 foreach (var id in new[] { "speedtest", "iperf", "bloat" }) if (Points.Replay.Contains(id)) bad.Add(id + " has a replay bonus (moves a lot of data)");
                 string f = Path.Combine(Path.GetTempPath(), "am-points-" + Guid.NewGuid().ToString("N") + ".txt");
@@ -678,6 +679,8 @@ namespace AdeeboMeter
                 if (HallOfFame.Code("test-key-1", "Ada", 513, "2026-11-12") == HallOfFame.Code("test-key-1", "Ada", 512, "2026-11-12")) bad.Add("points not in the code");
                 if (HallOfFame.CleanName("  <script>alert(1)</script>  Bob ") != "scriptalert1script Bob") bad.Add("clean: " + HallOfFame.CleanName("  <script>alert(1)</script>  Bob "));
                 if (HallOfFame.CleanName(new string('a', 50)).Length != 32) bad.Add("name length");
+                if (HallOfFame.CleanName("Z" + new string('\u0301', 31) + " Bob") != "\u0179\u0301\u0301 Bob") bad.Add("accent marks not capped: " + HallOfFame.CleanName("Z" + new string('\u0301', 31)).Length);
+                if (!HallOfFame.MixedScript("\u0410deeb") || HallOfFame.MixedScript("\u0410\u0434\u0438\u0431 Adeeb") || HallOfFame.MixedScript("Jos\u00e9")) bad.Add("look-alike names");
                 if (HallOfFame.Unmask(new byte[] { (byte)('k' ^ 41), (byte)('y' ^ 114) }) != "ky") bad.Add("unmask");
                 var st = new HallOfFame.Stats { Tools = 120, ToolsAll = 131, Topics = 46, TopicsAll = 46, Checks = 44, Labs = 11, LabsAll = 11, Paths = new[] { "Home user", "Gamer" } };
                 using (var b = HallOfFame.Card("Ada Lovelace", 512, "2026-11-12", "ADB-I5IU-AQRM-QTIL-TP2C", st)) if (b.Width != 1200 || b.Height != 675) bad.Add("card size");
@@ -1176,7 +1179,7 @@ namespace AdeeboMeter
             T("memory after everything", () =>
             {
                 GC.Collect(); GC.WaitForPendingFinalizers();
-                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (budget 64)"); if (mb > 96) throw new InvalidOperationException(mb + " MB"); }
+                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (64 MB in normal use; up to 96 here, where every page and tool has just been opened at once)"); if (mb > 96) throw new InvalidOperationException(mb + " MB"); }
             });
             T("install: paths, settings line, icon", () =>
             {
@@ -1197,7 +1200,11 @@ namespace AdeeboMeter
             });
             T("GDI / user handles", () =>
             {
-                using (var p = Process.GetCurrentProcess()) sb.AppendLine("      handles=" + p.HandleCount);
+                int gdi = Native.GetGuiResources(Native.GetCurrentProcess(), 0), user = Native.GetGuiResources(Native.GetCurrentProcess(), 1);
+                using (var p = Process.GetCurrentProcess()) sb.AppendLine("      handles=" + p.HandleCount + " · GDI " + gdi + " · USER " + user);
+                // Windows' own limit is 10,000 per process: well past 2,000 after this run means something is created and never freed
+                if (!Program.IsWine && (gdi == 0 || user == 0)) throw new InvalidOperationException("couldn't read the GDI / USER counts");
+                if (gdi > 2000 || user > 2000) throw new InvalidOperationException("GDI " + gdi + " / USER " + user + " - something isn't freed");
             });
             sb.AppendLine(fails == 0 ? "ALL PASSED" : fails + " FAILED");
             try { File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-selftest.txt"), sb.ToString()); } catch { }

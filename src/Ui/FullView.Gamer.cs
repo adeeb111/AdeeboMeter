@@ -252,7 +252,7 @@ namespace AdeeboMeter
         {
             var week = GameHistory.Week(gm.Id); var best = GamePing.Me.Best(gm);
             float top = y, pad = 14 * S, rowH = 34 * S;
-            var rows = gm.Servers.Take(GamePing.MaxServers).ToList();
+            var rows = GamePing.Me.Ranked(gm, null).Take(GamePing.MaxServers).ToList();   // the best region first - never cut off the card
             float h = pad + 30 * S + 22 * S + rows.Count * rowH + 40 * S;
             var card = new RectangleF(x, y, w, h);
             Theme.Fill(g, card, 12 * S, Theme.Card); Theme.Stroke(g, card, 12 * S, playing ? Theme.Blue : Theme.Line, playing ? 2 : 1);

@@ -27,15 +27,24 @@ namespace AdeeboMeter
         // the same line for a few minutes, then another - never a new joke every second
         static string Pick(string[] l, int salt) { if (l.Length == 0) return ""; long slot = DateTime.Now.Ticks / TimeSpan.TicksPerMinute / 5; return l[(int)((slot + salt) % l.Length + l.Length) % l.Length]; }
 
-        static DateTime downSince = DateTime.MinValue, greenSince = DateTime.MinValue, koanFrom = DateTime.MinValue; static string koanDone = "";
+        // the outage and all-green clocks: kept by the Monitor every second (Track), read when a line is drawn. Ticks in longs,
+        // swapped with Interlocked - the Monitor thread writes, the UI thread reads.
+        static long downTicks, greenTicks; static DateTime koanFrom = DateTime.MinValue; static string koanDone = "";
+        static DateTime downSince { get { long t = System.Threading.Interlocked.Read(ref downTicks); return t == 0 ? DateTime.MinValue : new DateTime(t); } }
+        static DateTime greenSince { get { long t = System.Threading.Interlocked.Read(ref greenTicks); return t == 0 ? DateTime.MinValue : new DateTime(t); } }
+        public static void Track(Snap s)
+        {
+            int lv, at = Worst(s, out lv);
+            bool down = at >= 2 && lv == 2, green = at < 0 && s.Level == 0;
+            if (!down) System.Threading.Interlocked.Exchange(ref downTicks, 0); else System.Threading.Interlocked.CompareExchange(ref downTicks, DateTime.Now.Ticks, 0);
+            if (!green) System.Threading.Interlocked.Exchange(ref greenTicks, 0); else System.Threading.Interlocked.CompareExchange(ref greenTicks, DateTime.Now.Ticks, 0);
+        }
         // one line of personality for the verdict; "" when the mood is Companion or Serious (or there's nothing to add)
         public static string Quip(Snap s) { return Quip(s, Isp); }
         public static string Quip(Snap s, string isp)
         {
             int lv, at = Worst(s, out lv);
-            bool down = at >= 2 && lv == 2;
-            if (down) { if (downSince == DateTime.MinValue) downSince = DateTime.Now; } else downSince = DateTime.MinValue;
-            if (at < 0 && s.Level == 0) { if (greenSince == DateTime.MinValue) greenSince = DateTime.Now; } else greenSince = DateTime.MinValue;
+            bool down = at >= 2 && lv == 2 && downSince != DateTime.MinValue;
             if (Voice.Serious) return "";
             // the provider's excuses: the longer it lasts, the better the story (every mood, Companion too)
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) return Excuse((DateTime.Now - downSince).TotalMinutes, isp);

@@ -191,11 +191,13 @@ namespace AdeeboMeter
                 double cpu = V(2), mem = V(3), down = V(4), gw = V(5), net = V(6), wifi = V(7), up = V(8), gwMax = V(9), netMax = V(10), loss = V(11), rx = V(12), mbD = V(13), mbU = V(14);
                 string netName = replayIdx < data.Net.Count ? data.Net[replayIdx] : "";
                 g.DrawString("AT " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " ON " + at.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant() + (netName != "" && Cfg.Details ? "  ·  ROUTER " + Draw.Trunc(netName, 24).ToUpperInvariant() : ""), Draw.fTiny, muted, x, y); y += 22 * S;
-                Func<double, string> ms = v => double.IsNaN(v) ? "no answer" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+                // no sample in that minute (Penny checks the internet every 5 min; a check switched off; a router that ignores ping) is
+                // "not measured" - grey, never a red outage
+                Func<double, string> ms = v => double.IsNaN(v) ? "not measured" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
                 double pd0 = replayIdx < data.Pc.Count ? data.Pc[replayIdx][0] : double.NaN, pf0 = replayIdx < data.Pc.Count ? data.Pc[replayIdx][1] : double.NaN;
                 int pcLv = (cpu > 90 || mem > 92 || pd0 > 50 || pf0 > 300) ? 2 : (cpu > 75 || mem > 85 || pd0 > 15 || pf0 > 60) ? 1 : double.IsNaN(cpu) ? 3 : 0;
-                int lanLv = double.IsNaN(gw) ? 2 : gw > 50 ? 2 : gw > 15 ? 1 : (wifi >= 0 && wifi < 35) ? 1 : 0;
-                int netLv = double.IsNaN(net) ? 2 : (net > 150 || loss > 5) ? 2 : (net > 80 || loss > 1) ? 1 : 0;
+                int lanLv = double.IsNaN(gw) ? 3 : gw > 50 ? 2 : gw > 15 ? 1 : (wifi >= 0 && wifi < 35) ? 1 : 0;
+                int netLv = double.IsNaN(net) ? 3 : (net > 150 || loss > 5) ? 2 : (net > 80 || loss > 1) ? 1 : 0;
                 var snapAt = new Snap { Level = lvAll };
                 snapAt.Path = new[] { pcLv, lanLv, netLv, 3, netLv };
                 snapAt.PathMain = new[] { double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "% CPU", ms(gw), double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost", "not kept", ms(net) };
@@ -218,8 +220,8 @@ namespace AdeeboMeter
                 // in plain words
                 string plain = lvAll == 0 ? "Everything was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": router " + ms(gw) + ", internet " + ms(net) + "."
                     : pcLv == 2 ? "Your PC was the busy one at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + (pd0 > 50 ? "the disk took " + pd0.ToString("0", CultureInfo.CurrentCulture) + " ms per request" : pf0 > 300 ? "memory was full" : "CPU " + cpu.ToString("0", CultureInfo.CurrentCulture) + "%") + ") - it wasn't the network."
-                    : lanLv >= 1 && lanLv >= netLv ? "The trouble at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " was close to you - the router took " + ms(gw) + (wifi >= 0 ? " with Wi-Fi at " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "") + "."
-                    : netLv >= 1 ? "Your side was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (router " + ms(gw) + "); the internet was slow or dropping (" + ms(net) + (double.IsNaN(loss) ? "" : ", " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost") + ")."
+                    : (lanLv == 1 || lanLv == 2) && (netLv == 3 || lanLv >= netLv) ? "The trouble at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " was close to you - the router took " + ms(gw) + (wifi >= 0 ? " with Wi-Fi at " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "") + "."
+                    : netLv == 1 || netLv == 2 ? "Your side was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (router " + ms(gw) + "); the internet was slow or dropping (" + ms(net) + (double.IsNaN(loss) ? "" : ", " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost") + ")."
                     : "Something needed attention at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " - see what changed around then below.";
                 float plh = Draw.Measure(plain, Draw.fName, (int)(w - 36 * S)).Height;
                 var pr = new RectangleF(x, y, w, plh + 24 * S); Theme.Fill(g, pr, 12 * S, Theme.LvSoft(lvAll));

@@ -58,7 +58,7 @@ namespace AdeeboMeter
                 {
                     if (!double.IsNaN(r[5])) { gwS += r[5]; gwN++; mgS += r[5]; mgN++; int dw = (int)d.DayOfWeek, h = Math.Min(23, (int)(r[0] / 3600)); hourGw[dw, h] += r[5]; hourN[dw, h]++; }
                     if (!double.IsNaN(r[6])) { netS += r[6]; netN++; } if (!double.IsNaN(r[11])) { lossS += r[11]; lossN++; }
-                    if (!double.IsNaN(r[13])) { p.GBDown += r[13] / 1024; if (mp != null) mp.GBDown += r[13] / 1024; } if (!double.IsNaN(r[14])) p.GBUp += r[14] / 1024;
+                    if (!double.IsNaN(r[13])) { p.GBDown += r[13] / 1000; if (mp != null) mp.GBDown += r[13] / 1000; } if (!double.IsNaN(r[14])) p.GBUp += r[14] / 1000;
                     if (!double.IsNaN(r[4]) && r[4] > p.PeakDown) p.PeakDown = r[4];
                 }
                 if (mp != null) { mp.gwSum += mgS; mp.gwCount += mgN; }
@@ -96,7 +96,8 @@ namespace AdeeboMeter
             if (!double.IsNaN(p.WorstScore) && p.WorstDay != p.BestDay) rows.Add(R(1, "Worst day", p.WorstDay.ToString("dddd d MMMM", c), "Open it in the Time machine to see what happened.", "m"));
             if (p.RushHour >= 0) rows.Add(R(3, "Rush hour", DayNames[p.RushDow] + "s " + p.RushHour.ToString("00", c) + ":00-" + ((p.RushHour + 1) % 24).ToString("00", c) + ":00 · router " + N1(p.RushGw) + " ms", "The slowest hour of the week on your own network.", "m"));
             if (p.Laggiest != "") rows.Add(R(3, "Laggiest game", p.Laggiest + " · " + N0(p.LaggiestMs) + " ms on average", "From the Gamer Zone's history (kept " + Cfg.GameDays + " days).", "m"));
-            double waits = p.BadMinutes + p.OutageUnrecorded;   // rough minutes, plus the outage minutes History didn't already count as rough if (waits > 0) rows.Add(R(3, "Time lost waiting", N0(waits / 60.0) + " hours of outages and rough minutes", "", "i"));
+            double waits = p.BadMinutes + p.OutageUnrecorded;   // rough minutes, plus the outage minutes History didn't already count as rough
+            if (waits > 0) rows.Add(R(3, "Time lost waiting", N0(waits / 60.0) + " hours of outages and rough minutes", "", "i"));
         }
 
         // ---------- your month on the network ("2026-10", "october", empty = last month, "this" = this month so far)
@@ -257,7 +258,7 @@ namespace AdeeboMeter
         public static List<string[]> CapForecast()
         {
             var rows = new List<string[]>(); var t = DateTime.Today; int dim = DateTime.DaysInMonth(t.Year, t.Month);
-            double gb = Usage.Month(null) / 1024, perDay = gb / Math.Max(1, t.Day), atEnd = perDay * dim;
+            double gb = Usage.Month(null) / 1000, perDay = gb / Math.Max(1, t.Day), atEnd = perDay * dim;
             rows.Add(R(3, "This month so far", N1(gb) + " GB down + up in " + t.Day + " days · " + N1(perDay) + " GB a day", "Counted on this PC from Windows' own counters - other devices on the plan aren't included.", "w"));
             if (Cfg.CapGB <= 0) { rows.Add(R(3, "At this pace", N1(atEnd) + " GB by the end of the month", "Set your plan's cap in Settings > Alerts to get a date.", "i")); return rows; }
             if (gb >= Cfg.CapGB) { rows.Add(R(2, "Cap", "already over: " + N1(gb) + " of " + Cfg.CapGB + " GB", "", "w")); return rows; }

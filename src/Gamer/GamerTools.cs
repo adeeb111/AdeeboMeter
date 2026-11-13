@@ -28,6 +28,8 @@ namespace AdeeboMeter
             if (g == null && q == "" && GamePing.Me.Playing != null) g = games.FirstOrDefault(x => x.Id == GamePing.Me.Playing);
             if (g == null && q == "") { var mon = Games.Monitored(); g = games.FirstOrDefault(x => mon.Contains(x.Id)); }
             if (g == null) err = q != "" ? "\"" + q + "\" isn't in the Gamer Zone - add it there first (it knows the game's servers)" : "no game watched yet - click a game in the Gamer Zone first";
+            // the Gamer Zone's promise: nothing goes to a game company's servers until you click that game there
+            else if (!Games.Monitored().Contains(g.Id)) { err = g.Name + ": click it in the Gamer Zone first - that's your OK to contact its servers"; g = null; }
             return g;
         }
         static GameServer Best(Game g) { return GamePing.Me.Best(g) ?? (g.Servers.Count > 0 ? g.Servers[0] : null); }

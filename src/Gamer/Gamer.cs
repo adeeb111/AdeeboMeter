@@ -19,7 +19,7 @@ namespace AdeeboMeter
     // ================================================================== Gamer Zone: games, their servers, and how we measure them
     // Rules: nothing is sent to a game company's servers until the user clicks that game (Cfg.GameIds = consent). Installed games
     // are found by READING the launchers' own install lists. Probes are ICMP echo or a TCP connect (timed, then closed) - never
-    // game traffic, never listening. Caps: 8 servers at once, 1 probe a second each, 10 probes a second in total.
+    // game traffic, never listening. Caps: 8 servers at once (16 on the Gamer preset), 1 probe a second each, MaxServers + 2 probes a second in total.
     sealed class GameServer
     {
         public string Name, Where, Host, Kind = "estimate";   // Kind: estimate (cloud region the game runs in) / exact (captured or typed) / valve (Valve's list)
@@ -86,7 +86,8 @@ namespace AdeeboMeter
                     if (all != null) return all;
                     all = BuiltIn();
                     try { if (File.Exists(FilePath)) ApplyFile(File.ReadLines(FilePath).Take(500)); } catch (Exception e) { Program.Log("games: " + e.Message); }
-                    foreach (var g in all.Where(x => x.Valve)) g.Servers = Valve.Cached() ?? g.Servers;
+                    // Valve's relay list, plus the servers you added yourself (Edit servers, "My match") - never instead of them
+                    foreach (var g in all.Where(x => x.Valve)) { var v = Valve.Cached(); if (v == null) continue; var mine = g.Servers.Where(s => s.Kind == "exact" && !v.Any(z => z.Name == s.Name)).ToList(); g.Servers = mine.Concat(v).ToList(); }
                     return all;
                 }
             }
@@ -339,7 +340,7 @@ namespace AdeeboMeter
             var b = Best(g) ?? (g.Servers.Count > 0 ? g.Servers[0] : null);
             var ns = new GameSession { GameId = g.Id, GameName = g.Name, Server = b != null ? b.Name : "-", Start = DateTime.Now, Manual = manual };
             Session = ns;
-            // match path recording: the routers on the way, found once (a short trace), then timed every 5 s while the session is open
+            // match path recording: the routers on the way, found once (a short trace), then timed every 15 s while the session is open
             if (b != null && Cfg.GameFast) System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 try
@@ -354,6 +355,7 @@ namespace AdeeboMeter
         }
         public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
         Thread th; volatile bool stop; Monitor mon;
+        public double RouterAvg() { var m = mon; return m == null || Cfg.GwSec == 0 ? double.NaN : m.GwPing.Avg(60 / Math.Max(1, Cfg.GwSec)); }
         public static long Ver;   // goes up with every new sample: the Gamer page repaints only when something changed
         public static int MaxPerSecond { get { return MaxServers + 2; } }   // every playing server each second, plus room for the background ones
         public static int MaxServers { get { return Cfg.GameBgServers >= 5 ? 16 : 8; } }   // set by the Gamer preset (5 regions watched) - tweaking another row keeps it   // the Gamer preset watches twice as many
@@ -376,8 +378,11 @@ namespace AdeeboMeter
         public List<Tuple<string, GameServer, int>> Plan(List<Game> games, HashSet<string> monitored, string playing)
         {
             var r = new List<Tuple<string, GameServer, int>>();
+            // an open match session counts as playing that game (Start session pressed, or the game's exe not spotted)
+            var ss = Session; if (playing == null && ss != null && ss.Open) playing = ss.GameId;
             var p = playing == null ? null : games.FirstOrDefault(g => g.Id == playing);
-            if (p != null && Cfg.GameFast && monitored.Contains(p.Id)) foreach (var s in p.Servers.Take(MaxServers)) r.Add(Tuple.Create(p.Id, s, 1));
+            if (p != null && Cfg.GameFast && monitored.Contains(p.Id))
+                foreach (var s in Ranked(p, ss != null && ss.Open && ss.GameId == p.Id ? ss.Server : null).Take(MaxServers)) r.Add(Tuple.Create(p.Id, s, 1));
             if (Cfg.GameBgSec > 0)
                 foreach (var g in games.Where(g => monitored.Contains(g.Id) && !g.Soon && g.Servers.Count > 0 && (p == null || g.Id != p.Id || !Cfg.GameFast)))
                 {
@@ -388,8 +393,20 @@ namespace AdeeboMeter
             if (Cfg.GameBgSec > 0)
                 foreach (var g in games.Where(g => monitored.Contains(g.Id) && !g.Soon))
                     foreach (var s in g.Servers) if (!r.Any(x => x.Item1 == g.Id && x.Item2.Name == s.Name)) r.Add(Tuple.Create(g.Id, s, SurveySec));
+            lock (paceLock) { pace.Clear(); foreach (var t in r) { string key = t.Item1 + "|" + t.Item2.Name; int cur; if (!pace.TryGetValue(key, out cur) || t.Item3 < cur) pace[key] = t.Item3; } }
             return r;
         }
+        // the servers in the order worth probing: the session's server, the best region, then the lowest recent average (never list order -
+        // a Valve list of 30 relays, or a best region that's 9th in the list, would otherwise never be probed every second)
+        public List<GameServer> Ranked(Game g, string first)
+        {
+            var best = Best(g);
+            return g.Servers.OrderBy(s => s.Name == first ? 0 : best != null && s.Name == best.Name ? 1 : 2)
+                .ThenBy(s => { double a = GameStat.Avg(Stat(g.Id, s).Window(60, 3600)); return double.IsNaN(a) ? double.MaxValue : a; }).ToList();
+        }
+        // how often a server is probed right now (seconds): what the session's "fresh" means
+        public int PaceOf(string game, string server) { lock (paceLock) { int v; return pace.TryGetValue(game + "|" + server, out v) ? v : 0; } }
+        readonly Dictionary<string, int> pace = new Dictionary<string, int>(); readonly object paceLock = new object();
         public static int SurveySec { get { return Cfg.GameBgSec >= 60 ? 1800 : 300; } }   // Penny (game ping every 60 s) surveys every 30 min   // Penny surveys each region every 30 min
         // the best region: lowest 7-day average with little loss, from history; before there's history, the lowest recent average
         public GameServer Best(Game g)
@@ -438,7 +455,14 @@ namespace AdeeboMeter
                         if (!due.TryGetValue(key, out d) || d <= now) { go.Add(p); due[key] = now.AddSeconds(p.Item3); }
                         if (go.Count >= MaxPerSecond) break;
                     }
-                    if (go.Count > 0) Task.WaitAll(go.Select(p => Task.Factory.StartNew(() => ProbeOne(p.Item1, p.Item2))).ToArray(), 2500);
+                    // a server whose last probe is still out (a slow DNS answer, a 1.5 s TCP wait) is skipped this second - the pool never piles up
+                    var started = new List<Task>();
+                    foreach (var p in go)
+                    {
+                        string bk = p.Item1 + "|" + p.Item2.Host + "|" + p.Item2.Port; lock (inFlight) if (!inFlight.Add(bk)) continue;
+                        var pp = p; started.Add(Task.Factory.StartNew(() => { try { ProbeOne(pp.Item1, pp.Item2); } finally { lock (inFlight) inFlight.Remove(bk); } }));
+                    }
+                    if (started.Count > 0) Task.WaitAll(started.ToArray(), 2500);
                     Evidence(games);
                     var ses = Session; if (ses != null && ses.Open && ses.HopCount > 0 && Cfg.GameBgSec < 60 && (Clock.Mono - lastHops).TotalSeconds >= 15)   /* the routers on the match path: every 15 s (not on Penny) */ { lastHops = Clock.Mono; System.Threading.Tasks.Task.Factory.StartNew(() => ses.TimeHops()); }
                     if ((Clock.Mono - lastMinute).TotalSeconds >= 60) { lastMinute = Clock.Mono; GameHistory.Minute(this, plan); GameHistory.Warm(mon2); }   /* the week verdicts are read here, off the screen's thread */
@@ -452,7 +476,7 @@ namespace AdeeboMeter
             var ss = Session; if (ss == null || !ss.Open || mon == null) return;
             var g = games.FirstOrDefault(z => z.Id == ss.GameId); var srv = g == null ? null : g.Servers.FirstOrDefault(z => z.Name == ss.Server);
             double gm = double.NaN;
-            if (srv != null) { var st = Stat(g.Id, srv); if ((DateTime.Now - st.LastAt).TotalSeconds < (Cfg.GameFast ? 3 : Math.Max(1, Cfg.GameBgSec) + 3))   /* fresh for its pace: once a second with GameFast, else the background pace */ { var v = st.Recent(1); if (v.Length > 0) gm = v[0]; } }
+            if (srv != null) { var st = Stat(g.Id, srv); int pc = PaceOf(g.Id, srv.Name); if (pc > 0 && (DateTime.Now - st.LastAt).TotalSeconds < pc + 3)   /* fresh for its pace: once a second with GameFast, else the background pace */ { var v = st.Recent(1); if (v.Length > 0) gm = v[0]; } }
             var snap = mon.Latest;
             ss.Add(new GameSession.Sec { T = DateTime.Now, Game = gm, Router = mon.GwPing.Last, Net = mon.NetPing.Last, Signal = mon.WifiSignal, Down = snap.Down, Up = snap.Up, Cpu = snap.Cpu });
         }
@@ -501,13 +525,15 @@ namespace AdeeboMeter
         // ICMP first (Auto / ICMP only), TCP connect timing when ping is ignored (Auto) or chosen
         // a server name is looked up once and kept 5 minutes (not 16 lookups a second while playing); one lookup, IPv4 first
         // when this PC has an IPv4 route, else IPv6. A failed lookup is retried at the next probe.
+        readonly HashSet<string> inFlight = new HashSet<string>();
         static readonly Dictionary<string, Tuple<IPAddress, DateTime>> resolved = new Dictionary<string, Tuple<IPAddress, DateTime>>(StringComparer.OrdinalIgnoreCase);
         static IPAddress Resolve(string host)
         {
             IPAddress ip; if (IPAddress.TryParse(host, out ip)) return ip;
-            Tuple<IPAddress, DateTime> c; lock (resolved) if (resolved.TryGetValue(host, out c) && Clock.Mono < c.Item2) return c.Item1;
+            Tuple<IPAddress, DateTime> c; lock (resolved) if (resolved.TryGetValue(host, out c) && Clock.Mono < c.Item2) return c.Item1;   // a failure is remembered too (as null, for 30 s)
             IPAddress[] all;
-            try { all = Dns.GetHostAddresses(host); } catch (SocketException) { return null; } catch (ArgumentException) { return null; }
+            Action failed = () => { lock (resolved) { if (resolved.Count > 200) resolved.Clear(); resolved[host] = Tuple.Create((IPAddress)null, Clock.Mono.AddSeconds(30)); } };
+            try { all = Dns.GetHostAddresses(host); } catch (SocketException) { failed(); return null; } catch (ArgumentException) { failed(); return null; }
             bool v4 = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable() && HasV4();
             ip = (v4 ? all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) : null) ?? all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetworkV6) ?? all.FirstOrDefault();
             if (ip != null) lock (resolved) { if (resolved.Count > 200) resolved.Clear(); resolved[host] = Tuple.Create(ip, Clock.Mono.AddMinutes(5)); }
@@ -576,7 +602,7 @@ namespace AdeeboMeter
         {
             if (!Cfg.History) return;
             var lines = new List<string>(); string t = DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
-            double gw = double.NaN;
+            double gw = gp.RouterAvg();   // the router's own ping for that minute: tells a slow game from a slow home network
             foreach (var p in plan)
             {
                 var st = gp.Stat(p.Item1, p.Item2); if ((DateTime.Now - st.LastAt).TotalSeconds > 70) continue;
@@ -595,6 +621,8 @@ namespace AdeeboMeter
             { string l; int n = 0; while ((l = rd.ReadLine()) != null && n++ < 60000) yield return l; }
         }
         static DateTime tidied;
+        // from History's own roll-off and once at start: game days past "Keep game history for" go even with History off or no game watched
+        public static void TidyNow() { try { if (Directory.Exists(History.Dir)) Tidy(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("game history tidy: " + e.Message); } }
         // past days are packed (.csv.gz, about a tenth of the size - like History's own days); days past GameDays go
         static void Tidy()
         {
@@ -651,19 +679,19 @@ namespace AdeeboMeter
         }
         static Dictionary<string, double[]> Load(string game)
         {
-            lock (k)
+            // the files are read and summed outside the lock (a Gamer paint waiting on Week never waits for this); the average is
+            // worked out once per server, not once per evening row
+            var rows = new List<Row>(); for (int i = 0; i < 7; i++) rows.AddRange(Read(DateTime.Today.AddDays(-i), game));
+            var w = new Dictionary<string, double[]>();
             {
-                Dictionary<string, double[]> w;
-                if (weekCache.Count > 50) weekCache.Clear();
-                var rows = new List<Row>(); for (int i = 0; i < 7; i++) rows.AddRange(Read(DateTime.Today.AddDays(-i), game));
-                w = new Dictionary<string, double[]>();
                 foreach (var grp in rows.GroupBy(x => x.Server))
                 {
                     var days = grp.GroupBy(x => x.T.Date).ToList();
-                    int bad = days.Count(d => d.Where(x => x.T.Hour >= 18 && x.T.Hour <= 23).Any(x => x.Loss >= 1 || x.P95 > 2 * Math.Max(1, grp.Average(y => double.IsNaN(y.Avg) ? 0 : y.Avg))));
+                    double lim = 2 * Math.Max(1, grp.Average(y => double.IsNaN(y.Avg) ? 0 : y.Avg));
+                    int bad = days.Count(d => d.Where(x => x.T.Hour >= 18 && x.T.Hour <= 23).Any(x => x.Loss >= 1 || x.P95 > lim));
                     w[grp.Key] = new[] { GameStat.Avg(grp.Select(x => x.Avg).ToArray()), GameStat.Avg(grp.Select(x => x.Loss).ToArray()), GameStat.Avg(grp.Select(x => x.Jit).ToArray()), bad, days.Count };
                 }
-                weekCache[game] = Tuple.Create(DateTime.UtcNow, w); return w;
+                lock (k) { if (weekCache.Count > 50) weekCache.Clear(); weekCache[game] = Tuple.Create(DateTime.UtcNow, w); } return w;
             }
         }
     }
@@ -685,7 +713,7 @@ namespace AdeeboMeter
         public List<Sec> Around(DateTime t, int secs) { lock (k) return Rows.Where(r => Math.Abs((r.T - t).TotalSeconds) <= secs).ToList(); }
         public List<Sec> All() { lock (k) return Rows.ToList(); }
         public void Mark() { lock (k) if (Marks.Count < 1000) Marks.Add(DateTime.Now); }   // only times: a long session keeps them all
-        // match path recording: each router on the way, timed every 5 s (one ping each) while the match runs
+        // match path recording: each router on the way, timed every 15 s (one ping each) while the match runs
         List<string> hops = new List<string>(); readonly List<double[]> hopMs = new List<double[]>();
         public int HopCount { get { lock (k) return hops.Count; } }
         public void SetHops(List<string> h) { lock (k) hops = h; }
@@ -745,7 +773,7 @@ namespace AdeeboMeter
             sb.AppendLine("Spikes: " + mine.Count + (mine.Count > 0 ? " - " + string.Join(", ", mine.GroupBy(z => z.Blame).Select(gr => gr.Count() + " " + gr.Key)) : ""));
             foreach (var z in mine.OrderByDescending(z => z.Ms).Take(5))
             {
-                var at = Around(z.T, 0).FirstOrDefault();
+                var at = Around(z.T, 1).OrderBy(r => Math.Abs((r.T - z.T).TotalMilliseconds)).FirstOrDefault();   // the nearest second: the spike and the row are timed on different threads
                 sb.AppendLine("  " + z.T.ToString("HH:mm:ss", c) + "  " + Fx(z.Normal) + " -> " + Fx(z.Ms) + " ms  · " + z.Blame + (at != null ? "  (router " + Fx(at.Router) + " ms, Wi-Fi " + (at.Signal >= 0 ? at.Signal + "%" : "-") + ", traffic down " + Fx(at.Down) + " / up " + Fx(at.Up) + " Mb/s, CPU " + Fx(at.Cpu) + "%)" : ""));
                 if (z.Hop != "") sb.AppendLine("      the path jumped at " + z.Hop);
                 if (z.Busy != "") sb.AppendLine("      " + z.Busy + " (connections, not bytes per app)");

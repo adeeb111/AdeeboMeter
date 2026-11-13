@@ -22,7 +22,7 @@ MAX_POINTS = 900   # AdeeboMeter never counts more (Points.Max): everything ther
 def clean_name(n):
     # the same rule as HallOfFame.CleanName: NFC; letters and their marks (L*, Mn, Mc, any plane), decimal digits,
     # . - _ ' ; single spaces; at most 32 characters (code points)
-    out, sp = [], False
+    out, sp, marks = [], False, 0
     for c in unicodedata.normalize("NFC", (n or "").strip()):
         if c.isspace():
             if not sp and out:
@@ -31,8 +31,12 @@ def clean_name(n):
             continue
         cat = unicodedata.category(c)
         if cat[0] == "L" or cat in ("Mn", "Mc", "Nd") or c in ".-_'":
+            mark = cat in ("Mn", "Mc")
+            if mark and (not out or out[-1] == " " or marks >= 2):
+                continue  # a mark with no letter under it, or a third one on the same letter
             out.append(c)
             sp = False
+            marks = marks + 1 if mark else 0
     while out and out[-1] == " ":
         out.pop()
     if len(out) > 32:
@@ -40,6 +44,30 @@ def clean_name(n):
         while out and out[-1] == " ":
             out.pop()
     return "".join(out)
+
+
+def script(c):
+    o = ord(c)
+    if "A" <= c <= "Z" or "a" <= c <= "z" or (0xC0 <= o <= 0x24F and o not in (0xD7, 0xF7)) or 0x1E00 <= o <= 0x1EFF:
+        return 1
+    if 0x400 <= o <= 0x52F:
+        return 2
+    if 0x370 <= o <= 0x3FF or 0x1F00 <= o <= 0x1FFF:
+        return 3
+    return 0
+
+
+def mixed_script(name):
+    # the same rule as HallOfFame.MixedScript: one word mixing Latin with Cyrillic or Greek is a look-alike of someone else
+    for w in name.split(" "):
+        seen = 0
+        for c in w:
+            s = script(c)
+            if s and seen and s != seen:
+                return True
+            if s:
+                seen = s
+    return False
 
 
 def same_person(a, b):
@@ -95,6 +123,12 @@ def out(result, message):
     print(result + ": " + message)
 
 
+def save(data):
+    with open(JSON, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
 def main():
     key = os.environ.get("HOF_KEY", "")
     if not key:
@@ -109,10 +143,19 @@ def main():
         name, total, date, claim, where, handle = (os.environ.get(k, "") for k in ("IN_NAME", "IN_POINTS", "IN_DATE", "IN_CODE", "IN_WHERE", "IN_HANDLE"))
         via, ref = "email", ""
     name = clean_name(name)
-    claim = re.sub(r"\s+", "", claim or "").upper()
+    # a code pasted from Word or Outlook: non-breaking hyphens, en dashes, full-width letters - folded back to plain ASCII
+    claim = unicodedata.normalize("NFKC", claim or "")
+    claim = re.sub(r"[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]", "-", claim)
+    claim = re.sub(r"\s+", "", claim).upper()
+    if claim and not re.fullmatch(r"[A-Z0-9-]{1,40}", claim):
+        out("mismatch", "The claim code has characters that aren't on the card - type it as it is shown (letters, numbers and dashes).")
+        return 2
     if not name or not re.fullmatch(r"[1-9]\d{0,5}", (total or "").strip()) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", (date or "").strip()):
         out("missing", "The name, points and date have to be exactly as they are on the card (points like 512, date like 2026-11-12).")
         return 3
+    if mixed_script(name):
+        out("mismatch", "A word in the name mixes Latin letters with Cyrillic or Greek look-alikes - AdeeboMeter never makes a card like that.")
+        return 2
     total, date = int(total.strip()), date.strip()
     try:
         d = datetime.date.fromisoformat(date)
@@ -126,23 +169,35 @@ def main():
         out("mismatch", "The claim code doesn't match the name, points and date. Type them exactly as they are on the card - or make the card again in AdeeboMeter.")
         return 2
     site, handle = social(where, handle)
+    author = os.environ.get("ISSUE_AUTHOR", "")
+    if not re.fullmatch(r"[A-Za-z0-9-]{1,39}", author or ""):
+        author = ""
+    # a GitHub link must be the account that sent it: a card is made to be shared, so anyone can type its code
+    if site == "github" and handle.lower() != author.lower():
+        site, handle = "", ""
     with open(JSON, encoding="utf-8") as f:
         data = json.load(f)
     entries = data.setdefault("entries", [])
-    if any(e.get("code") == claim for e in entries):
-        out("already", "%s is already in the Hall of Fame." % name)
+    mine = next((e for e in entries if e.get("code") == claim), None)
+    if mine is not None:
+        by = (mine.get("by") or "").lower()
+        if author and by == author.lower():   # the same sender again: let them fix their link
+            mine["site"], mine["handle"] = site, handle
+            save(data)
+            out("updated", "Updated your link in the Hall of Fame, %s." % name)
+        elif author and by and by != author.lower():   # a second sender for the same card: nobody's link until Adeeb checks
+            mine["site"], mine["handle"], mine["disputed"] = "", "", True
+            save(data)
+            out("review", "Someone else already sent this card. Its link is off until Adeeb checks who it belongs to - reply on this issue with anything that shows it's yours.")
+        else:
+            out("already", "%s is already in the Hall of Fame." % name)
         return 0
     if any(same_person(e.get("name", ""), name) for e in entries):
         out("already", "There's already a %s in the Hall of Fame. If that isn't you, put something extra in your name on the card (an initial or your city) and send the new card." % name)
         return 0
-    author = os.environ.get("ISSUE_AUTHOR", "")
-    if not re.fullmatch(r"[A-Za-z0-9-]{1,39}", author or ""):
-        author = ""
     entries.append({"name": name, "points": total, "date": date, "code": claim, "site": site, "handle": handle, "via": via, "by": author, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
     entries.sort(key=lambda e: (e["date"], e["name"].lower()))
-    with open(JSON, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    save(data)
     out("added", "Welcome to the Hall of Fame, %s! You'll be on the page in a minute or two: https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html" % name)
     return 0
 

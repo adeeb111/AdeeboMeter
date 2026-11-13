@@ -12,7 +12,7 @@ namespace AdeeboMeter
     // tests), once. Learn topics, their check questions, lab challenges, subnetting streaks, the packet journey and the
     // learning paths earn too (see Value). 500 is the Adeebo Award. Tools where a second look teaches something carry a
     // replay bonus: the first real run again, at least 10 minutes later -> +3, once. Everything after that, a stopped run or a run that only asked for input -> 0.
-    // Off until you turn it on (Settings); off pauses earning and keeps the total. Local only: one line per tool in
+    // On from day 1 (Settings can turn it off); off pauses earning and keeps the total. Local only: one line per tool in
     // points.txt in AdeeboMeter's data folder ("id|first award time|replay award time"), written once per award - so
     // reopening the app, pressing Run twice or replaying again can never add more.
     sealed class Points
@@ -25,7 +25,7 @@ namespace AdeeboMeter
         // longer tests are worth +4 the first time; everything else +2 (see Value(): paths 10, labs and escape rooms 4, games 3)
         public static readonly HashSet<string> Big = new HashSet<string>(StringComparer.Ordinal) { "mtr", "ispreport", "speedtest", "iperf", "bloat", "gamecompare", "mtu" };
         public static readonly TimeSpan ReplayGap = TimeSpan.FromMinutes(10);
-        // 1.1.5: every item is worth more, and there is more to earn (about 580 in all), so 500 means you've done nearly everything
+        // 1.1.5: every item is worth more, and there is more to earn (about 810 in all), so 500 means you've done nearly everything
         public const int AwardAt = 500, ReplayPts = 3;
         static readonly string[][] Ranks = { new[] { "0", "Beginner" }, new[] { "30", "Learner" }, new[] { "100", "Troubleshooter" }, new[] { "200", "Expert" }, new[] { "300", "Network detective" }, new[] { "400", "Packet whisperer" }, new[] { "500", "Adeebo Award" } };
         public static int[] Floors { get { return Ranks.Select(r => int.Parse(r[0], CultureInfo.InvariantCulture)).ToArray(); } }

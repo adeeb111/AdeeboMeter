@@ -100,6 +100,9 @@ namespace AdeeboMeter
         {
             int total = Points.Me.Total; if (total < Points.AwardAt) return;
             string name = AskName(awardName); if (name == null) return; name = HallOfFame.CleanName(name);
+            // a name of only emoji or symbols cleans to nothing: the card would show "A network detective" but its code would be for an
+            // empty name - a card nobody could ever claim. Ask again instead.
+            while (name == "" || HallOfFame.MixedScript(name)) { MessageBox.Show(this, name == "" ? L.T("Your name needs at least one letter or number - emoji and symbols alone can't go on the card.") : L.T("One word in your name mixes Latin letters with Cyrillic or Greek look-alikes - type it in one alphabet."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); name = AskName(""); if (name == null) return; name = HallOfFame.CleanName(name); }
             string date = HallOfFame.Date(DateTime.Now), code = HallOfFame.Code(HallOfFame.Key, name, total, date);
             var all = PtAll(); var toolIds = new HashSet<string>(Tools2().Select(t => t.Id));
             var st = new HallOfFame.Stats
@@ -124,7 +127,7 @@ namespace AdeeboMeter
         {
             var box = new RectangleF(x, y, w, 128 * S); Theme.Fill(g, box, 14 * S, Theme.Soft);
             g.DrawString(L.T("Your card is saved") + " - " + System.IO.Path.GetFileName(awardFile) + (awardCode != "" ? "  ·  " + awardCode : ""), Draw.fBodyB, ink, x + 18 * S, y + 14 * S);
-            g.DrawString(awardCode != "" ? L.T("Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically - or email it (the address is on the Hall of Fame page). Its text is copied, ready to paste.") : L.T("This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can."), Draw.fSmall, sub, new RectangleF(x + 18 * S, y + 40 * S, w - 36 * S, 40 * S));
+            g.DrawString(awardCode != "" ? L.T("Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically. Its text is copied, ready to paste.") : L.T("This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can."), Draw.fSmall, sub, new RectangleF(x + 18 * S, y + 40 * S, w - 36 * S, 40 * S));
             float bx = x + 18 * S;
             foreach (var b in new[] { new[] { "Send it with the GitHub form ›", HallOfFame.Form }, new[] { "The Hall of Fame page ›", HallOfFame.Page }, new[] { "Show the picture", "" } })
             {

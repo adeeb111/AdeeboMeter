@@ -50,7 +50,7 @@ namespace AdeeboMeter
             var cancel = new PillButton("Cancel", PillButton.K.Chip); cancel.Click += delegate { Close(); };
             var save = new PillButton("Save", PillButton.K.Primary); save.Click += delegate { Save(); };
             foreach (var b in new Control[] { add, test, imp, expo, reset, cancel, save }) { b.Margin = new Padding(0, 0, Sc(8), 0); bottom.Controls.Add(b); }
-            var note = new Label { Dock = DockStyle.Bottom, Height = Sc(36), Font = Draw.fSmall, ForeColor = Theme.Muted, BackColor = Theme.Card, Text = "Auto tries a ping first and times a TCP connection when the server ignores ping. Host names are looked up fresh each time, so they follow a game's IP changes. At most 12 servers per game; 8 are watched at once." };
+            var note = new Label { Dock = DockStyle.Bottom, Height = Sc(36), Font = Draw.fSmall, ForeColor = Theme.Muted, BackColor = Theme.Card, Text = "Auto tries a ping first and times a TCP connection when the server ignores ping. Host names are looked up fresh each time, so they follow a game's IP changes. At most 12 servers per game; " + GamePing.MaxServers + " are watched at once." };
 
             Controls.Add(list); Controls.Add(head); Controls.Add(top); Controls.Add(err); Controls.Add(note); Controls.Add(bottom);
             foreach (var s in game.Servers.Take(12)) AddLine(s);

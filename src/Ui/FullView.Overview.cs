@@ -46,13 +46,15 @@ namespace AdeeboMeter
                 menu.Items.Add(sub);
             }
             menu.Items.Add(new ToolStripSeparator());
-            var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("speedtest"); if (tbBoxes.Count > 0) tbBoxes[0].Box.Text = "list"; }; menu.Items.Add(more);
+            var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); if (tbBusy) { BusyNote(); return; } OpenTool("speedtest"); if (tbSel == "speedtest" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "list"; };   // never into a running tool's boxes menu.Items.Add(more);
             menu.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)menu.Dispose); else menu.Dispose(); } catch (InvalidOperationException) { menu.Dispose(); } };
             menu.Show(overviewCanvas, at);
         }
         void FindClosestSpeed()
         {
-            if (SpeedTest.Busy || speedFinding) return; speedFinding = true; speedErr = ""; speedNote = ""; overviewCanvas.Invalidate();
+            if (SpeedTest.Busy || speedFinding) return;
+            if (Policy.NoSpeed) { speedErr = L.T("Speed tests are turned off by your IT team."); overviewCanvas.Invalidate(); return; }   // the policy covers this too: it pings every server
+            speedFinding = true; speedErr = ""; speedNote = ""; overviewCanvas.Invalidate();
             new System.Threading.Thread(() =>
             {
                 string best = null; double bestMs = double.MaxValue;
@@ -60,7 +62,7 @@ namespace AdeeboMeter
                 {
                     try
                     {
-                        var ip = System.Net.Dns.GetHostAddresses(sv.Host).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); if (ip == null) continue;
+                        var ip = System.Net.Dns.GetHostAddresses(sv.Host).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); if (ip == null || !SpeedTest.Reachable(ip)) continue;   // never into this PC or the LAN
                         var r = Icmp.Echo(ip, 32, 64, false, 800, false); double ms = r.Status == Icmp.Ok && r.Rtt >= 0 ? r.Rtt : GamePing.TcpMs(ip, 443, 800);
                         if (!double.IsNaN(ms) && ms < bestMs) { bestMs = ms; best = sv.Id; }
                     }

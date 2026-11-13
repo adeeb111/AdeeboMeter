@@ -56,7 +56,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>
             {
                 new[] { "Today", Usage.Mb(Usage.Today(null)) + (net != "" ? "  ·  " + Usage.Mb(Usage.Today(Brain.NetKey)) + " on " + net : "") },
-                new[] { "This month", Usage.Mb(Usage.Month(null)) + (Cfg.CapGB > 0 ? "  of " + Cfg.CapGB + " GB  (" + (Usage.Month(null) / 1024 / Cfg.CapGB * 100).ToString("0", CultureInfo.CurrentCulture) + "%)" : "") },
+                new[] { "This month", Usage.Mb(Usage.Month(null)) + (Cfg.CapGB > 0 ? "  of " + Cfg.CapGB + " GB  (" + (Usage.Month(null) / 1000 / Cfg.CapGB * 100).ToString("0", CultureInfo.CurrentCulture) + "%)" : "") },
             };
             foreach (var r in Usage.MonthByNetwork().Take(4)) rows.Add(new[] { "  " + Draw.Trunc(r[0], 26), Usage.Mb(Store.D(r[1])) + " down · " + Usage.Mb(Store.D(r[2])) + " up" });
             string normal = Baseline.Normal(Brain.NetKey);

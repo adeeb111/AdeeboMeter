@@ -35,7 +35,7 @@ namespace AdeeboMeter
         public static readonly string[] CloseText =
         {
             "Safe to close. It's an app - you only lose what's open in it.",
-            "Leave it be. If it misbehaves, closing it is OK - Windows (or the app) brings it back.",
+            "Leave it be. If it misbehaves, closing it is usually OK - see what you lose below first.",
             "Don't close it. Windows needs it - closing it can sign you out or crash the PC.",
             "Managed by your IT team. It's protected on purpose, so leave it running."
         };
@@ -74,7 +74,7 @@ namespace AdeeboMeter
             string pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string roam = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), temp = Path.GetTempPath();
             Func<string, bool> under = delegate(string root) { return root != "" && path.StartsWith(root.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase); };
-            if (under(temp)) return "temp";
+            if (under(temp) || (win != "" && under(Path.Combine(win, "Temp"))) || path.IndexOf("\\Temp\\", StringComparison.OrdinalIgnoreCase) >= 0) return "temp";   // C:\Windows\Temp is a temp folder, not "ships with Windows"
             if (under(win)) return "windows";
             if (under(pf) || under(pf86)) return "programfiles";
             if (under(local) || under(roam) || under(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))) return "user";

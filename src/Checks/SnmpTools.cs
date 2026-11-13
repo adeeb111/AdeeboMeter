@@ -128,6 +128,8 @@ namespace AdeeboMeter
         static void Changes(List<string[]> rows, IfSnap old, IfSnap now)
         {
             bool reboot = now.Up > 0 && old.Up > 0 && now.Up < old.Up;
+            // uptime (hundredths of a second) that grew much less than the time between the runs - or more: a restart in between
+            if (!reboot && now.Up > 0 && old.Up > 0) { double upSec = (now.Up - old.Up) / 100.0, wall = (now.At - old.At).TotalSeconds; if (upSec < wall - 120 || upSec > wall + 120) reboot = true; }
             // uptime unknown: counters going backwards on any port mean the device restarted - then no port's delta is trusted
             if (!reboot && (now.Up == 0 || old.Up == 0)) reboot = now.P.Any(kv => { long[] o; return old.P.TryGetValue(kv.Key, out o) && Enumerable.Range(0, Math.Min(o.Length, kv.Value.Length)).Any(k => o[k] >= 0 && kv.Value[k] >= 0 && kv.Value[k] < o[k]); });
             double mins = (now.At - old.At).TotalMinutes; string when = old.At.ToString("HH:mm", CultureInfo.CurrentCulture), span = mins < 1 ? (int)(mins * 60) + " s" : mins.ToString("0", CultureInfo.CurrentCulture) + " min";
@@ -160,6 +162,9 @@ namespace AdeeboMeter
             // each direction timed on its own (a monotonic clock, at the middle of its walk): on a big device the two walks are seconds apart
             var clock = global::System.Diagnostics.Stopwatch.StartNew(); double tIn1, tOut1, tIn2, tOut2;
             Func<string, double, Tuple<Dictionary<string, Snmp.Vb>, double>> walk = (o, dummy) => { double a0 = clock.Elapsed.TotalSeconds; var d = Col(ep, c, o, run, out err); return Tuple.Create(d, (a0 + clock.Elapsed.TotalSeconds) / 2); };
+            // sysUpTime before and after: a restart in between makes every "rate" a reset, not traffic
+            Func<ulong> upNow = () => { string ue0; var uv = Snmp.Request(ep, c, 0xA0, 0, 0, new[] { "1.3.6.1.2.1.1.3.0" }, out ue0); return uv != null && uv.Count == 1 && !uv[0].End ? Snmp.Num(uv[0]) : 0; };
+            ulong up1 = upNow();
             var w1 = walk(x + "6", 0); var w2 = walk(x + "10", 0);
             if (w1.Item1.Count == 0) { hc = false; w1 = walk("1.3.6.1.2.1.2.2.1.10", 0); w2 = walk("1.3.6.1.2.1.2.2.1.16", 0); }
             var in1 = w1.Item1; var out1 = w2.Item1; tIn1 = w1.Item2; tOut1 = w2.Item2;
@@ -167,6 +172,7 @@ namespace AdeeboMeter
             for (int i = 0; i < 50 && !run.Stop; i++) { run.Status = "Measuring for 5 s..."; Thread.Sleep(100); }
             var w3 = walk(hc ? x + "6" : "1.3.6.1.2.1.2.2.1.10", 0); var w4 = walk(hc ? x + "10" : "1.3.6.1.2.1.2.2.1.16", 0);
             var in2 = w3.Item1; var out2 = w4.Item1; tIn2 = w3.Item2; tOut2 = w4.Item2; double secs = tIn2 - tIn1, secsOut = tOut2 - tOut1;
+            ulong up2 = upNow(); bool restarted = up1 > 0 && up2 > 0 && up2 < up1;
             var name = Col(ep, c, x + "1", run, out err); var hs = Col(ep, c, x + "15", run, out err);
             // no ifXTable (that's exactly when the counters are 32-bit): the port speed comes from ifSpeed (bits/s) instead
             var ls = hc ? new Dictionary<string, Snmp.Vb>() : Col(ep, c, "1.3.6.1.2.1.2.2.1.5", run, out err);
@@ -174,6 +180,7 @@ namespace AdeeboMeter
             Func<Dictionary<string, Snmp.Vb>, Dictionary<string, Snmp.Vb>, string, double, double> rate = (a, b, i, dt) =>
             {
                 Snmp.Vb va = V(a, i), vb2 = V(b, i); if (va == null || vb2 == null || dt <= 0) return -1; ulong p = Snmp.Num(va), q = Snmp.Num(vb2);
+                if (restarted) return -2;
                 if (q < p && hc) return -2;
                 if (!hc && (p > uint.MaxValue || q > uint.MaxValue)) return -2;   // not a 32-bit counter after all
                 if (q >= p) return (q - p) * 8.0 / dt;
@@ -182,10 +189,10 @@ namespace AdeeboMeter
                 double wrapped = (uint.MaxValue - p + q + 1) * 8.0 / dt;
                 var sv = V(hs, i); double port = sv != null ? Snmp.Num(sv) * 1e6 : 0;
                 if (port <= 0) { var lv = V(ls, i); if (lv != null) port = Snmp.Num(lv); }
-                if (port <= 0) return wrapped <= 10e9 ? wrapped : -2;   // speed unknown: one wrap at a believable rate
+                if (port <= 0) return wrapped <= 1e9 ? wrapped : -2;   // speed unknown: one wrap at a believable rate (a port with 32-bit counters is rarely past 1 Gb/s)
                 return wrapped <= port * 1.05 ? wrapped : -2;
             };
-            var list = in1.Keys.Select(i => new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : "if " + i, In = rate(in1, in2, i, secs), Out = rate(out1, out2, i, secsOut), Sp = V(hs, i) != null ? Snmp.Num(V(hs, i)) * 1e6 : 0 })
+            var list = in1.Keys.Select(i => new { i, Name = S(name, i, "", null) != "" ? S(name, i, "", null) : "if " + i, In = rate(in1, in2, i, secs), Out = rate(out1, out2, i, secsOut), Sp = V(hs, i) != null && Snmp.Num(V(hs, i)) > 0 ? Snmp.Num(V(hs, i)) * 1e6 : V(ls, i) != null ? (double)Snmp.Num(V(ls, i)) : 0 })
                 .Where(r => r.In != -1 || r.Out != -1).OrderByDescending(r => Math.Max(r.In, r.Out)).ToList();
             Func<double, string> bps = v => v == -1 ? "n/a" : v == -2 ? "reset" : v >= 1e9 ? (v / 1e9).ToString("0.00", CultureInfo.CurrentCulture) + " Gb/s" : v >= 1e6 ? (v / 1e6).ToString("0.0", CultureInfo.CurrentCulture) + " Mb/s" : (v / 1e3).ToString("0", CultureInfo.CurrentCulture) + " kb/s";
             rows.Add(R(0, ep.ToString(), list.Count + " interfaces over " + secs.ToString("0.0", CultureInfo.CurrentCulture) + " s" + (hc ? "" : " (32-bit counters - fast links can wrap)"), "Busiest first. A port near 100% of its speed is the bottleneck.", "m"));

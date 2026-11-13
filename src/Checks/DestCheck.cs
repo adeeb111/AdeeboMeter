@@ -65,6 +65,9 @@ namespace AdeeboMeter
             {
                 Uri u; if (!Uri.TryCreate(s, UriKind.Absolute, out u) || string.IsNullOrEmpty(u.Host)) { err = "That URL doesn't parse."; return false; }
                 host = u.IdnHost.Trim('[', ']'); port = u.Port; tls = u.Scheme == "https";
+                // Uri has already turned "http://010.1.1.1/" into 8.1.1.1: judge the host as it was typed
+                var typed = Regex.Match(s, @"^https?://(?:[^@/]*@)?(\[[^\]]*\]|[^/:?#]+)", RegexOptions.IgnoreCase);
+                if (typed.Success && !typed.Groups[1].Value.StartsWith("[", StringComparison.Ordinal)) { string th = typed.Groups[1].Value; if (Regex.IsMatch(th, @"^(0x[0-9a-fA-F]+|[0-9]+)(\.(0x[0-9a-fA-F]+|[0-9]+))*$")) host = th; }
             }
             else
             {
@@ -78,6 +81,8 @@ namespace AdeeboMeter
                     int colon = s.LastIndexOf(':');
                     if (colon > 0) { int p; if (!int.TryParse(s.Substring(colon + 1), out p)) { err = "The port after ':' must be a number."; return false; } port = p; s = s.Substring(0, colon); }
                     host = s;
+                    // a name in another script ("bücher.de"): its DNS form (xn--bcher-kva.de), as a URL would get
+                    if (host.Any(ch => ch > 127)) { try { host = new System.Globalization.IdnMapping().GetAscii(host); } catch (ArgumentException) { } }
                 }
                 tls = port != 80;
                 if (tls && port != 443 && port != 8443 && port != 993 && port != 995 && port != 465 && port != 636 && port != 853) tls = false;
@@ -130,7 +135,8 @@ namespace AdeeboMeter
                             var req = Encoding.ASCII.GetBytes("GET /connecttest.txt HTTP/1.1\r\nHost: " + NcsiHost + "\r\nUser-Agent: AdeeboMeter\r\nConnection: close\r\n\r\n");
                             sock.Send(req);
                             var buf = new byte[4096]; int got = 0, n;
-                            try { while (got < buf.Length && (n = sock.Receive(buf, got, buf.Length - got, SocketFlags.None)) > 0) got += n; } catch (SocketException) { }
+                            var total = Stopwatch.StartNew();   // 6 s in all: a page that drips a byte at a time can't hold the check for hours
+                            try { while (got < buf.Length && total.ElapsedMilliseconds < 6000 && (n = sock.Receive(buf, got, buf.Length - got, SocketFlags.None)) > 0) got += n; } catch (SocketException) { }
                             resp = Encoding.ASCII.GetString(buf, 0, got);
                         }
                     }
@@ -160,7 +166,7 @@ namespace AdeeboMeter
             if (!m.Success) return 2;
             int status = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
             string body = head.Length > 1 ? head[1].Trim() : "";
-            if (status == 200 && body.StartsWith(NcsiBody, StringComparison.Ordinal)) return 0;
+            if (status == 200 && body.IndexOf(NcsiBody, StringComparison.Ordinal) >= 0 && body.Length < NcsiBody.Length + 64) return 0;   // a proxy may re-send it chunked ("16\r\nMicrosoft Connect Test\r\n0")
             if (status >= 300 && status < 400)
             {
                 foreach (var l in lines)
@@ -319,7 +325,9 @@ namespace AdeeboMeter
 
             // 6. HTTP (one HEAD request, nothing else sent)
             int status = 0;
-            if ((port == 80 || port == 8080 || tls) && stream != Stream.Null && stream.CanWrite)
+            bool webPort = port == 80 || port == 8080 || port == 443 || port == 8443;   // DNS over TLS (853), LDAPS, mail: no HTTP to ask - a HEAD would only hang
+            if (!webPort && tls && stream != Stream.Null) step(5, 3, "not a web port - no HTTP asked");
+            if (webPort && stream != Stream.Null && stream.CanWrite)
             {
                 try
                 {
@@ -338,7 +346,7 @@ namespace AdeeboMeter
                 }
                 catch { step(5, 1, "no answer"); }
             }
-            else step(5, 3, "skipped");
+            else if (webPort || !tls || stream == Stream.Null) step(5, 3, "skipped");
             try { stream.Dispose(); } catch { }
             try { sock.Close(); } catch { }
 
@@ -373,8 +381,8 @@ namespace AdeeboMeter
                 if (DfPing(target, 1472)) mtu = 1500;
                 else
                 {
-                    int lo = 1172, hi = 1471; if (!DfPing(target, lo)) { lo = 548; if (!DfPing(target, lo)) lo = -1; }
-                    if (lo > 0) { for (int i = 0; i < 9 && lo < hi; i++) { int mid = (lo + hi + 1) / 2; if (DfPing(target, mid)) lo = mid; else hi = mid - 1; } mtu = lo + 28; }
+                    int lo = 1172, hi = 1471; if (!DfPing(target, lo)) { lo = 548; hi = 1171; if (!DfPing(target, lo)) lo = -1; }   // 1172 failed: the answer is below it
+                    if (lo > 0) { for (int i = 0; i < 11 && lo < hi; i++) { int mid = (lo + hi + 1) / 2; if (DfPing(target, mid)) lo = mid; else hi = mid - 1; } mtu = lo + 28; }
                     else mtu = -1;   // no don't-fragment ping passed at any size: unknown, not 576
                 }
                 int lmtu; lock (m.L) lmtu = viaVpn && m.VpnMtu > 0 ? m.VpnMtu : m.PrimaryMtu;

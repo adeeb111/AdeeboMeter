@@ -141,7 +141,7 @@ namespace AdeeboMeter
         public static string Kind(Flow f, List<Rec> r)
         {
             int rp = f.RemotePort; IPAddress ip; if (!IPAddress.TryParse(f.Remote, out ip)) ip = null;
-            if (rp == 53 || rp == 853 || rp == 5353) return "dns";
+            if ((rp == 53 || rp == 5353) && f.Udp) return "dns";   // one question, one answer: plain DNS over UDP only - DNS over TCP and DoT (853) follow the TCP rules
             if (rp == 51820 || rp == 500 || rp == 4500 || rp == 1194 || rp == 1701 || (rp == 443 && f.App.IndexOf("vpn", StringComparison.OrdinalIgnoreCase) >= 0)) return "vpn";
             if (ip != null && !Watch.IsPublic(f.Remote)) return "local";
             var data = r.Where(x => x.IcmpType < 0).ToList(); double dur = data.Count > 1 ? data[data.Count - 1].T - data[0].T : 0;

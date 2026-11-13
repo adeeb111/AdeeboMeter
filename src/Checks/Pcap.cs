@@ -24,7 +24,7 @@ namespace AdeeboMeter
             public double Abs; public int Len, IpLen, Dscp = -1, Flags, Win, PayLen; public uint Seq, Ack;
         }
         public const int Eapol = -2;   // Proto for 802.1X frames (no IP header; Payload = the EAPOL header and body)
-        public const long MaxBytes = 64L * 1024 * 1024; public const int MaxPackets = 200000;
+        public const long MaxBytes = 64L * 1024 * 1024; public const int MaxPackets = 50000;   /* kept packets, not read ones: 50k decoded packets is about 50 MB of memory */
 
         public static List<Pkt> Read(string path, out string error)
         {

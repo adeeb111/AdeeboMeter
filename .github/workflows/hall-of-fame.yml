@@ -81,6 +81,31 @@ jobs:
           IN_CODE: ${{ github.event.inputs.code }}
           IN_WHERE: ${{ github.event.inputs.where }}
           IN_HANDLE: ${{ github.event.inputs.handle }}
+      - name: Save a changed link
+        id: change
+        if: steps.v.outputs.result == 'updated' || steps.v.outputs.result == 'review'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/hall-of-fame.json
+          git commit -m "Hall of Fame: a link changed" || exit 0
+          for i in 1 2 3 4 5; do
+            if git push; then exit 0; fi
+            sleep $((i * 3))
+            git pull --rebase origin main || { git rebase --abort; git reset --hard origin/main; python3 .github/scripts/hof_verify.py > /dev/null || true; git add docs/hall-of-fame.json; git commit -m "Hall of Fame: a link changed" || true; }
+          done
+          echo "Couldn't push the change after 5 tries"; exit 1
+        env:
+          HOF_KEY: ${{ secrets.HOF_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          IN_NAME: ${{ github.event.inputs.name }}
+          IN_POINTS: ${{ github.event.inputs.points }}
+          IN_DATE: ${{ github.event.inputs.date }}
+          IN_CODE: ${{ github.event.inputs.code }}
+          IN_WHERE: ${{ github.event.inputs.where }}
+          IN_HANDLE: ${{ github.event.inputs.handle }}
       - name: Answer on the issue
         if: always() && github.event_name == 'issues'
         env:
@@ -93,9 +118,15 @@ jobs:
         run: |
           if [ "$RESULT" = "added" ] && [ "$PUSHED" != "success" ]; then
             gh issue comment "$NUM" --body "Your card checked out, but saving it failed this time. Edit the issue (any small change) and it runs again."
-          elif [ "$RESULT" = "added" ] || [ "$RESULT" = "already" ]; then
+          elif [ "$RESULT" = "added" ] || [ "$RESULT" = "already" ] || [ "$RESULT" = "updated" ]; then
             gh issue comment "$NUM" --body "$MESSAGE"
             gh issue close "$NUM" --reason completed
+          elif [ "$RESULT" = "review" ]; then
+            gh issue comment "$NUM" --body "$MESSAGE"
+            gh issue edit "$NUM" --add-label "needs review"
+          elif [ -z "$RESULT" ]; then
+            gh issue comment "$NUM" --body "The check itself failed on our side - nothing is wrong with your card as far as we know. Adeeb has been told; edit the issue later and it runs again."
+            gh issue edit "$NUM" --add-label "needs review"
           else
             gh issue comment "$NUM" --body "$MESSAGE (Edit the issue to fix it - the check runs again by itself.)"
             gh issue edit "$NUM" --add-label "not verified"

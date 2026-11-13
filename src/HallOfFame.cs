@@ -39,7 +39,7 @@ namespace AdeeboMeter
         public static string CleanName(string n)
         {
             string src; try { src = (n ?? "").Trim().Normalize(NormalizationForm.FormC); } catch (ArgumentException) { src = (n ?? "").Trim(); }
-            var parts = new List<string>(); bool sp = false;
+            var parts = new List<string>(); bool sp = false; int marks = 0;   /* accent marks on the current letter: at most 2, so "Z" plus 30 marks can't draw over the card */
             for (int i = 0; i < src.Length; i++)
             {
                 bool pair = char.IsSurrogatePair(src, i); string cp = pair ? src.Substring(i, 2) : src.Substring(i, 1);
@@ -48,11 +48,31 @@ namespace AdeeboMeter
                 var cat = CharUnicodeInfo.GetUnicodeCategory(cp, 0);
                 bool ok = cat == UnicodeCategory.UppercaseLetter || cat == UnicodeCategory.LowercaseLetter || cat == UnicodeCategory.TitlecaseLetter || cat == UnicodeCategory.ModifierLetter || cat == UnicodeCategory.OtherLetter
                        || cat == UnicodeCategory.NonSpacingMark || cat == UnicodeCategory.SpacingCombiningMark || cat == UnicodeCategory.DecimalDigitNumber || cp == "." || cp == "-" || cp == "_" || cp == "'";
-                if (ok) { parts.Add(cp); sp = false; }
+                bool mark = cat == UnicodeCategory.NonSpacingMark || cat == UnicodeCategory.SpacingCombiningMark;
+                if (ok && mark && (parts.Count == 0 || parts[parts.Count - 1] == " " || marks >= 2)) continue;   /* a mark with no letter under it, or a third one */
+                if (ok) { parts.Add(cp); sp = false; marks = mark ? marks + 1 : 0; }
             }
             while (parts.Count > 0 && parts[parts.Count - 1] == " ") parts.RemoveAt(parts.Count - 1);
             if (parts.Count > 32) { parts = parts.Take(32).ToList(); while (parts.Count > 0 && parts[parts.Count - 1] == " ") parts.RemoveAt(parts.Count - 1); }
             return string.Concat(parts);
+        }
+        /* A word that mixes Latin letters with Cyrillic or Greek ones ("Аdeeb" with a Cyrillic А) is a look-alike of
+           someone else's name. Each alphabet alone is fine. hof_verify.py refuses the same thing. */
+        static int Script(int c)
+        {
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= 0xC0 && c <= 0x24F && c != 0xD7 && c != 0xF7) || (c >= 0x1E00 && c <= 0x1EFF)) return 1;
+            if (c >= 0x400 && c <= 0x52F) return 2;
+            if ((c >= 0x370 && c <= 0x3FF) || (c >= 0x1F00 && c <= 0x1FFF)) return 3;
+            return 0;
+        }
+        public static bool MixedScript(string name)
+        {
+            foreach (var w in (name ?? "").Split(' '))
+            {
+                int seen = 0;
+                foreach (char ch in w) { int s = Script(ch); if (s == 0) continue; if (seen != 0 && s != seen) return true; seen = s; }
+            }
+            return false;
         }
         public static string Date(DateTime d) { return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); }
         // ADB-XXXX-XXXX-XXXX-XXXX: the first 80 bits of the HMAC in base32 (no 0/1/8/9 mix-ups: the RFC 4648 alphabet)
@@ -138,7 +158,7 @@ namespace AdeeboMeter
             {
                 var f = new Font("Segoe UI", z, FontStyle.Bold, GraphicsUnit.Pixel);
                 if (g.MeasureString(s, f).Width <= maxW) return f;
-                if (z <= 18) return f;   // the whole name, always - smaller rather than cut: the claim is typed from the picture (32 characters fit at 18 px)
+                if (z <= 18) return f;   // the whole name, always - smaller rather than cut: the claim is typed from the picture (32 characters fit at 16 px)
                 f.Dispose();
             }
         }

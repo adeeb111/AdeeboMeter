@@ -321,7 +321,7 @@ namespace AdeeboMeter
                 if (G(w, 1) == null && G(w, 4) == null) { rows.Add(R(3, ep.ToString(), "not a UPS, or it offers neither UPS-MIB nor APC's MIB", "Search the MIB folder for battery to find the vendor's own table.", "m")); return rows; }
                 model = G(w, 0) != null ? Snmp.Text(G(w, 0), "", null) : "";
                 long ab = Gl(w, 1); bat = ab == 2 ? 2 : ab == 3 ? 3 : ab == 4 ? 4 : 1; chg = Gl(w, 2); long rt = Gl(w, 3); mins = rt >= 0 ? rt / 6000 : -1; temp = Gl(w, 6); load = Gl(w, 5); alarms = -1;
-                long os = Gl(w, 4); src = os == 2 ? 3 : os == 4 ? 6 : os == 12 ? 7 : os == 3 ? 5 : os == 6 || os == 9 || os == 10 ? 4 : os == 7 ? 2 : os < 0 ? -1 : 1; onBat = -1;
+                long os = Gl(w, 4); src = os == 2 ? 3 : os == 4 ? 6 : os == 12 ? 7 : os == 3 ? 5 : os == 6 || os == 9 || os == 10 ? 4 : os == 7 || os == 5 || os == 8 || os == 11 ? 2 : os < 0 ? -1 : 1;   /* 5 sleeping, 8 rebooting, 11 sleeping until power returns: no output */ onBat = -1;
             }
             if (model != "") rows.Add(R(3, "UPS", model, "", "m"));
             string[] srcs = { "", "other", "OFF - no output", "on mains", "on bypass (not protected)", "ON BATTERY", "boosting low mains", "trimming high mains" };

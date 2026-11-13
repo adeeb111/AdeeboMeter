@@ -24,7 +24,7 @@ namespace AdeeboMeter
         public static List<Step> Tcp(TcpIn p)
         {
             var res = new List<Step>(); var rnd = new Random(p.Seed);
-            double bdp = Bdp(p.Mbps, p.RttMs), cap = bdp * (1 + Math.Max(0, p.BufferBdp));
+            double bdp = Bdp(p.Mbps, p.RttMs), cap = Math.Max(bdp * (1 + Math.Max(0, p.BufferBdp)), 8);   /* any real router holds at least 8 packets: on a tiny link (BDP under 2) a buffer sized only in BDPs lost a packet every other round trip */
             double cwnd = 10, ss = double.PositiveInfinity, wmax = 0, k = 0; int sinceLoss = 0; bool cubic = p.Algo == "cubic", recovering = false;
             const double C = 0.4, Beta = 0.7;
             for (int r = 0; r < p.Rounds; r++)

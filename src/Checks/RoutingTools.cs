@@ -36,16 +36,17 @@ namespace AdeeboMeter
         static string lastGw = "", lastMac = ""; public static string LastFailover = "";
         public static void GwTick(Monitor m)
         {
-            string gw; lock (m.L) gw = m.Gateway; if (gw == "") return;
+            string gw, net; lock (m.L) { gw = m.Gateway; net = m.IfaceId + "|" + m.Ssid; } if (gw == "") return;   // the network too: another network with the same router address isn't a failover
             string mac = Arp.MacOf(gw); if (mac == "") return;
-            if (gw == lastGw && lastMac != "" && mac != lastMac)
+            string key = net + "|" + gw;
+            if (key == lastGw && lastMac != "" && mac != lastMac)
             {
                 string g, kind = Virtual(mac, out g);
                 LastFailover = DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + lastMac + " → " + mac;
                 m.Events.Add(1, "gw", "The gateway " + gw + " moved to another device (" + lastMac + " → " + mac + ")" + (kind == "" ? " - a router failover or a replaced router" : ""));
             }
-            if (gw != lastGw && lastGw != "") LastFailover = "";   // another network: a takeover seen on the old one isn't this one's
-            lastGw = gw; lastMac = mac;
+            if (key != lastGw && lastGw != "") LastFailover = "";   // another network: a takeover seen on the old one isn't this one's
+            lastGw = key; lastMac = mac;
         }
 
         public static List<string[]> Gateway(Monitor m)

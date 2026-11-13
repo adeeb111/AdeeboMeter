@@ -97,6 +97,7 @@ namespace AdeeboMeter
         static void Reset() { diskMs = faults = 0; diskN = faultN = 0; n = 0; worst = 0; cpu = mem = down = up = gw = net = wifi = rx = gwMax = netMax = mbDown = mbUp = 0; gwN = netN = wifiN = rxN = lossN = lossBad = cpuN = memN = downN = upN = 0; }
         static void Flush(Monitor m, DateTime t)
         {
+            if (Report.Active) return;   // --report: watch only - nothing goes into the history, usage or device lists
             double gwAvg = gwN > 0 ? gw / gwN : double.NaN, netAvg = netN > 0 ? net / netN : double.NaN, loss = lossN > 0 ? 100.0 * lossBad / lossN : double.NaN;
             History.Minute(t, new[] { worst, cpuN > 0 ? cpu / cpuN : 0, memN > 0 ? mem / memN : 0, downN > 0 ? down / downN : 0, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, upN > 0 ? up / upN : 0, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
@@ -150,7 +151,7 @@ namespace AdeeboMeter
             }
             if (Cfg.CapGB > 0)
             {
-                double month = Month(null) / 1024;
+                double month = Month(null) / 1000;
                 if (month >= Cfg.CapGB * 0.8 && !capWarned) { capWarned = true; Alerts.Raise("cap", "You've used " + month.ToString("0.#", CultureInfo.CurrentCulture) + " GB of your " + Cfg.CapGB + " GB this month.", 24 * 60); }
                 if (month < Cfg.CapGB * 0.8) capWarned = false;
             }
@@ -205,7 +206,7 @@ namespace AdeeboMeter
                     .OrderByDescending(x => Store.D(x[1]) + Store.D(x[2])).ToList();
             }
         }
-        public static string Mb(double mb) { return mb >= 1024 ? (mb / 1024).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }
+        public static string Mb(double mb) { return mb >= 1000 ? (mb / 1000).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }
     }
 
     // ================================================================== what's normal for each network ("slower than usual")

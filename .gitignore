@@ -14,3 +14,14 @@ store/obj/
 secrets/
 HALL-OF-FAME-SETUP.txt
 *.key
+
+# release and portable-mode outputs, Python caches - never committed (a portable run from the checkout writes your history,
+# neighbours' Wi-Fi and keys under data\)
+dist/
+data/
+*.sha256
+AdeeboMeter.portable
+AdeeboMeter.policy
+sample_*.png
+__pycache__/
+*.pyc

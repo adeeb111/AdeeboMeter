@@ -22,7 +22,7 @@ namespace AdeeboMeter
         const long MaxFile = 1 << 20;
 
         // a path to a file, or the PEM / Base64 text pasted straight in
-        static byte[] Input(string s, List<string[]> rows, out string label)
+        internal static byte[] Input(string s, List<string[]> rows, out string label)
         {
             label = ""; s = (s ?? "").Trim().Trim('"');
             if (s == "") { rows.Add(R(2, "File", "type or paste the file's full path - or paste the text itself", "Tip: Shift + right-click the file in Explorer › Copy as path.", "u")); return null; }
@@ -152,6 +152,8 @@ namespace AdeeboMeter
         static List<X509Certificate2> P7b(byte[] b)
         {
             var l = new List<X509Certificate2>();
+            // only a real PKCS #7 bundle is imported: a PFX wrapped in a PKCS7 header would put its key in Windows' key store
+            try { X509ContentType kind; try { kind = X509Certificate2.GetCertContentType(b); } catch (CryptographicException) { kind = X509ContentType.Unknown; } if (kind != X509ContentType.Pkcs7) return l; } catch (Exception e) { if (e is OutOfMemoryException) throw; return l; }
             try { var col = new X509Certificate2Collection(); col.Import(b); foreach (X509Certificate2 c in col) { if (l.Count < 10 && !c.HasPrivateKey) l.Add(c); else c.Dispose(); } }
             catch (CryptographicException) { }
             return l;
@@ -251,12 +253,9 @@ namespace AdeeboMeter
                 var leaf = keyed.FirstOrDefault();
                 if (leaf != null)
                 {
-                    using (var ch = new X509Chain())
-                    {
-                        ch.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck; ch.ChainPolicy.ExtraStore.AddRange(col); ch.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                        ch.Build(leaf); int n = ch.ChainElements.Count; bool selfEnd = n > 0 && ch.ChainElements[n - 1].Certificate.Subject == ch.ChainElements[n - 1].Certificate.Issuer;
-                        rows.Add(R(selfEnd ? 0 : 1, "Chain", n + " levels" + (selfEnd ? " up to a root" : " - stops before a root"), selfEnd ? "" : "Servers need the intermediate certificates too; add them to the PFX or the server's chain.", "m"));
-                    }
+                    // the chain from the PFX's own certificates and Windows' stores as they are - never Windows' chain builder, which would
+                    // quietly download a missing middle certificate from the internet (and then call an incomplete PFX complete)
+                    CertChain.Ladder(rows, leaf, col.Cast<X509Certificate2>().Where(c => !ReferenceEquals(c, leaf)).ToList(), false);
                 }
             }
             finally { foreach (var c in col) c.Dispose(); }

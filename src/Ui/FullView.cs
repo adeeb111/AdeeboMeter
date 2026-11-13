@@ -240,11 +240,11 @@ namespace AdeeboMeter
             var lb = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
             liveBtn = new PillButton("Start live capture", PillButton.K.Primary); liveBtn.Click += delegate { ToggleLive(); };
             lb.Controls.Add(liveBtn);
-            Func<string> liveText = () => LiveCapture.Available ? "Wireshark's tshark decodes your PC's own traffic. Off until you press Start; stops when you leave this tab, close the view, or after " + Cfg.LiveMin + " min (Settings)." : "Needs Wireshark (tshark) and Npcap - not found on this PC.";
+            Func<string> liveText = () => Policy.NoCapture ? L.T("Live capture is turned off by your IT team (AdeeboMeter.policy).") : LiveCapture.Available ? "Wireshark's tshark decodes your PC's own traffic. Off until you press Start; stops when you leave this tab, close the view, or after " + Cfg.LiveMin + " min (Settings)." : "Needs Wireshark (tshark) and Npcap - not found on this PC.";
             var liveLbl = new Label { Text = liveText(), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0) };
             liveLbl.VisibleChanged += delegate { if (liveLbl.Visible) liveLbl.Text = liveText(); };   // the minutes follow Settings
             lb.Controls.Add(liveLbl);
-            liveBtn.Enabled = LiveCapture.Available;
+            liveBtn.Enabled = LiveCapture.Available && !Policy.NoCapture;
             liveCanvas = new DB { Name = "liveCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             liveCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintLive(e.Graphics); }; Wire(liveCanvas);
             livePage.Controls.Add(liveCanvas); livePage.Controls.Add(lb);
@@ -357,7 +357,8 @@ namespace AdeeboMeter
             };
             tipTimer.Tick += delegate { tipTimer.Stop(); ShowTip(); };
             // Minimising means "get out of my way": same as Esc / Back to corner - the view closes, frees its memory, the widget keeps watching.
-            Resize += delegate { if (WindowState == FormWindowState.Minimized && Visible) BeginInvoke((Action)Close); };
+            // ...except while a tool or a capture runs: then it just stays minimised (a 60-minute MTR mustn't end because of Win+D)
+            Resize += delegate { if (WindowState == FormWindowState.Minimized && Visible && !tbBusy && !sniffing) BeginInvoke((Action)Close); };
             if (!Cfg.SeenTip) BuildTipBar();
             Deactivate += delegate { SetTipKey(null); };
             FormClosed += delegate
@@ -511,18 +512,18 @@ namespace AdeeboMeter
         }
         void OnTimer2()
         {
-            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour; if (hk != headKey) { headKey = hk; header.Invalidate(); }
+            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour + "|" + Mood.Quip(snap);   /* the mood line changes on its own (excuses, koans) */ if (hk != headKey) { headKey = hk; header.Invalidate(); }
                 // the path strip and the side panel repaint only when what they print changed
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }
                 string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(h => h.Length > 0 ? h.Length + ":" + h[0].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h[h.Length - 1].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h.Where(z => !double.IsNaN(z)).DefaultIfEmpty(0).Max().ToString("0.#", CultureInfo.InvariantCulture) + ":" + h.Where(z => !double.IsNaN(z)).DefaultIfEmpty(0).Min().ToString("0.#", CultureInfo.InvariantCulture) : "")) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
-                if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") changesCanvas.Invalidate(); if (tab == "overview") OverviewTick(); }
+                if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if (destRunning || pinRunning) destCanvas.Invalidate();
-            if (tbBusy && tab == "toolbox" && tbCanvas != null) tbCanvas.Invalidate();
+            if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = rr == null ? "" : rr.Status + "|" + rr.Copy().Count + "|" + (footTick / 4);   /* and every 2 s anyway: tables like MTR's hops fill in without a status change */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gk = System.Threading.Interlocked.Read(ref GamePing.Ver) + "|" + GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerCanvas.Invalidate(); } }   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
@@ -554,6 +555,7 @@ namespace AdeeboMeter
             try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(Handle, 20 /*immersive dark title bar*/, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch { }
             Refresh();
         }
+        string changesKey = "", tbBusyKey = "", travelKey = "";   // repaint only on change (What changed, a running tool, the story's connection list)
         static void Recolor(Control root)
         {
             foreach (Control c in root.Controls)
@@ -564,6 +566,7 @@ namespace AdeeboMeter
                 else if (tag == "line") c.BackColor = Theme.Line;
                 else if (c is TextBox) { c.BackColor = Theme.Card; c.ForeColor = Theme.Ink; }
                 else if (c is Label) { c.BackColor = Theme.Card; c.ForeColor = Theme.Muted; }
+                else if (c is CheckBox || c is RadioButton) { c.BackColor = Theme.Card; c.ForeColor = Theme.Ink; }   // the Toolbox's safety tick must stay readable after a theme switch
                 else if (!(c is ScrollBar)) c.BackColor = Theme.Card;
                 Recolor(c); c.Invalidate();
             }
@@ -579,7 +582,7 @@ namespace AdeeboMeter
             {
                 List<Conn> l = null;
                 try { if (names && Cfg.IpNames) M.RefreshIpNames(); l = M.Connections(true); } catch (Exception e) { Program.Log("conns: " + e.Message); }
-                try { if (!IsDisposed) BeginInvoke((Action)delegate { refreshing = false; if (l != null && !IsDisposed) { list.Merge(l); connSnap = l; if (tab == "travel" && storyTarget == "") travelCanvas.Invalidate(); } }); else refreshing = false; } catch { refreshing = false; }
+                try { if (!IsDisposed) BeginInvoke((Action)delegate { refreshing = false; if (l != null && !IsDisposed) { list.Merge(l); connSnap = l; if (tab == "travel" && storyTarget == "") { string tvk = l.Count + "|" + string.Join(",", l.Select(z => z.Key + z.State + z.Host).OrderBy(z => z, StringComparer.Ordinal)).GetHashCode(); if (tvk != travelKey) { travelKey = tvk; travelCanvas.Invalidate(); } } } }); else refreshing = false; } catch { refreshing = false; }
             });
         }
 
@@ -790,7 +793,7 @@ namespace AdeeboMeter
                 db.Announce(say != "" ? say : "item " + (i + 1) + " of " + l.Count);
                 db.Invalidate(); return true;
             };
-            db.Press = () => { var r = mark(); if (r.Width <= 0) return; var l = ActsInOrder(db); int i; if (actFocus.TryGetValue(db, out i) && i < l.Count) { UiActivity.Doing = "key on " + db.Name + " (" + tab + ")"; l[i].Value(); } };
+            db.Press = () => { var r = mark(); if (r.Width <= 0) return; var l = ActsInOrder(db); int i; if (actFocus.TryGetValue(db, out i) && i < l.Count) { UiActivity.Doing = "key on " + db.Name + " (" + tab + ")"; string usedKeyTab = tab; l[i].Value(); PageUsed(usedKeyTab); } };
         }
         void Wire(Control c)
         {

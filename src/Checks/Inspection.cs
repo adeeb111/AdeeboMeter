@@ -18,16 +18,14 @@ namespace AdeeboMeter
         {
             try
             {
-                using (var chain = new X509Chain())
-                {
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;   // no network: this is only about who signed it
-                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
-                    chain.Build(leaf);
-                    if (chain.ChainElements.Count == 0) return "";
-                    var root = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                    if (OnPublicList(root)) return "";
-                    return root.GetNameInfo(X509NameType.SimpleName, false);
-                }
+                /* Walked with this PC's own stores only. Windows' chain builder (X509Chain) would download a missing
+                   middle certificate from the address inside the certificate - a request nobody asked for. */
+                bool missing, trusted; string missingName;
+                var chain = CertChain.Walk(leaf, new List<X509Certificate2>(), out missing, out trusted, out missingName);
+                if (missing || !trusted || chain.Count == 0) return "";   /* doesn't reach a root this PC trusts: can't tell */
+                var root = chain[chain.Count - 1].Cert;
+                if (OnPublicList(root)) return "";
+                return root.GetNameInfo(X509NameType.SimpleName, false);
             }
             catch { return ""; }
         }
@@ -67,7 +65,9 @@ namespace AdeeboMeter
                     using (var st = new X509Store(StoreName.AuthRoot, loc))
                     {
                         st.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
-                        if (st.Certificates.Cast<X509Certificate2>().Any(c => c.Thumbprint == root.Thumbprint)) return true;
+                        // AuthRoot isn't only Microsoft's list: Group Policy's "Third-Party Root CAs" land there too - so the same
+                        // thumbprint test as for any other root
+                        if (st.Certificates.Cast<X509Certificate2>().Any(c => c.Thumbprint == root.Thumbprint)) return IsWellKnown(root) || InWindowsList(root);
                     }
                 }
                 catch { }

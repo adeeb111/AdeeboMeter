@@ -601,7 +601,7 @@ tag: Change one bit, get a completely different fingerprint.
 check: You change one letter in a 2 GB file. What happens to its SHA-256 fingerprint? | It changes completely | It changes by one letter too | It stays the same | It gets shorter
 line: A hash squeezes any file into a short fingerprint (SHA-256: 64 hex digits). The same file always gives the same one.
 breaks: A download whose hash doesn't match the published one is damaged or not the real file - get it again.
-more: You can't turn a fingerprint back into the file, and you can't build a second file with the same fingerprint (with SHA-256 - MD5 and SHA-1 are broken for that). Certificates, Windows Update and package managers all lean on this.
+more: You can't turn a fingerprint back into the file, and nobody can make two different files with the same fingerprint (with SHA-256 - MD5 and SHA-1 are broken for that: someone can make a matching pair, though not a match for a file that already exists). Certificates, Windows Update and package managers all lean on this.
 ladder: Download page > You: setup.exe is 3f2a...9c1d | Your PC > Your PC: hash the file I got - 3f2a...9c1d | Your PC > You: same fingerprint - it's the real file
 
 == aes|symmetric|encryption key

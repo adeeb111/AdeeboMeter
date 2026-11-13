@@ -40,12 +40,12 @@ namespace AdeeboMeter
         {
             string t = Norm(destBox.Box.Text);
             int i = Cfg.Pins.FindIndex(p => string.Equals(p, t, StringComparison.OrdinalIgnoreCase));
-            if (i >= 0) Cfg.Pins.RemoveAt(i);
+            if (i >= 0) lock (Cfg.Pins) Cfg.Pins.RemoveAt(i);
             else
             {
                 string h; int pt; bool tl; string err;
                 if (Cfg.Pins.Count >= 5 || !DestCheck.Parse(t, out h, out pt, out tl, out err)) { SyncPinBtn(); return; }
-                Cfg.Pins.Add(t);
+                lock (Cfg.Pins) Cfg.Pins.Add(t);
             }
             Cfg.Save(); BuildPinBar(); SyncPinBtn();
         }

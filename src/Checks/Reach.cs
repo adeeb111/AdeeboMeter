@@ -80,7 +80,7 @@ namespace AdeeboMeter
                 try { using (var s = r.GetResponseStream()) { var b = new byte[8192]; int k; while (buf.Length < 65536 && (k = s.Read(b, 0, b.Length)) > 0) { buf.Write(b, 0, k); if (dl.ElapsedMilliseconds > 20000 || (run != null && run.Stop)) { cut = true; break; } } } } catch (IOException) { } catch (WebException) { }
                 if (cut) rows.Add(R(1, "Body", "stopped reading after " + I((int)buf.Length) + " bytes - the server was sending very slowly (or you pressed Stop)", "", "m"));
                 int code = (int)r.StatusCode;
-                rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, m + " " + Draw.Trunc(uri.ToString(), 80), I(code) + " " + r.StatusDescription + " · " + sw.ElapsedMilliseconds + " ms · " + I(buf.Length) + (buf.Length >= 65536 ? "+" : "") + " bytes",
+                rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, m + " " + Draw.Trunc(NoUser(uri.ToString()), 80), I(code) + " " + r.StatusDescription + " · " + sw.ElapsedMilliseconds + " ms · " + I(buf.Length) + (buf.Length >= 65536 ? "+" : "") + " bytes",
                     (code >= 300 && code < 400 ? "A redirect - shown, not followed. " : "") + (skipped.Count > 0 ? "Not sent (Windows sets these itself, or not a valid header): " + string.Join(", ", skipped) + ". " : "") + "Sent through your proxy settings, like a browser.", "m"));
                 if (r.Headers.Count > 80) rows.Add(R(3, "Headers", r.Headers.Count + " - the first 80 shown", "", "m"));
                 foreach (string k in r.Headers.AllKeys.Take(80)) rows.Add(R(3, k, string.Equals(k, "Set-Cookie", StringComparison.OrdinalIgnoreCase) ? "(" + (r.Headers[k] ?? "").Length + " characters)" : Draw.Trunc(r.Headers[k], 300), string.Equals(k, "Set-Cookie", StringComparison.OrdinalIgnoreCase) ? "Cookie values are never shown or copied - they can be a signed-in session." : "", "m"));
@@ -129,6 +129,12 @@ namespace AdeeboMeter
                 {
                     int port = r[v + 2] << 8 | r[v + 3]; var ip = new byte[4]; Array.Copy(r, v + 4, ip, 0, 4);
                     if (ty == 0x0020) { port ^= 0x2112; ip[0] ^= 0x21; ip[1] ^= 0x12; ip[2] ^= 0xA4; ip[3] ^= 0x42; return new IPEndPoint(new IPAddress(ip), port); }
+                    plain = new IPEndPoint(new IPAddress(ip), port);
+                }
+                else if ((ty == 0x0020 || ty == 0x0001) && len >= 20 && r[v + 1] == 2)   // IPv6 (RFC 5389 15.2: XORed with the cookie and the transaction id)
+                {
+                    int port = r[v + 2] << 8 | r[v + 3]; var ip = new byte[16]; Array.Copy(r, v + 4, ip, 0, 16);
+                    if (ty == 0x0020) { port ^= 0x2112; var key = new byte[] { 0x21, 0x12, 0xA4, 0x42 }.Concat(tid.Take(12)).ToArray(); for (int k = 0; k < 16; k++) ip[k] ^= key[k]; return new IPEndPoint(new IPAddress(ip), port); }
                     plain = new IPEndPoint(new IPAddress(ip), port);
                 }
                 p = v + ((len + 3) & ~3);

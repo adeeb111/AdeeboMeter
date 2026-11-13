@@ -125,6 +125,9 @@ namespace AdeeboMeter
             }
         }
 
+        // a datagram that isn't our answer (junk, another community, another request, a forged or unsigned one): skipped, and the
+        // wait goes on - but if nothing better comes, its reason is the one reported instead of "no answer"
+        static bool Stray(string e) { return e != "" && !e.StartsWith("time window", StringComparison.Ordinal) && !e.StartsWith("the device reported", StringComparison.Ordinal) && !e.StartsWith("SNMP error", StringComparison.Ordinal) && !e.StartsWith("the device's answers", StringComparison.Ordinal); }
         // Sends one PDU and returns its varbinds; error is "" when it worked.
         public static List<Vb> Request(IPEndPoint ep, Cred c, byte pduType, int a, int b, IEnumerable<string> oids, out string error)
         {
@@ -133,9 +136,9 @@ namespace AdeeboMeter
             byte[] pdu = Pdu(pduType, id, a, b, oids), reply;
             if (c.Version == 2)
             {
-                var msg = Tlv(0x30, Cat(Int(1), Str(Encoding.UTF8.GetBytes(c.Community)), pdu)); bool refused;
-                reply = Exchange(ep, msg, 3000, r => { string pe; Parse2(r, id, c.Community, out pe); return pe != "a reply to a different request"; }, out refused);
-                if (reply == null) { error = refused ? "nothing listens on UDP " + ep.Port + " there (port unreachable) - SNMP is off on that device" : "no answer in 3 s"; return null; }
+                var msg = Tlv(0x30, Cat(Int(1), Str(Encoding.UTF8.GetBytes(c.Community)), pdu)); bool refused; string skipped = "";
+                reply = Exchange(ep, msg, 3000, r => { string pe; Parse2(r, id, c.Community, out pe); if (Stray(pe)) { skipped = pe; return false; } return true; }, out refused);
+                if (reply == null) { error = refused ? "nothing listens on UDP " + ep.Port + " there (port unreachable) - SNMP is off on that device" : skipped != "" ? skipped : "no answer in 3 s"; return null; }
                 return Parse2(reply, id, c.Community, out error);
             }
             Engine e; string ek = ep.ToString();
@@ -145,8 +148,9 @@ namespace AdeeboMeter
                 e = Discover(ep, out error); if (e == null) return null;
                 lock (engines) engines[ek] = e;
             }
-            reply = Exchange(ep, Message3(c, e, pdu, id), 3000);
-            if (reply == null) { error = "no answer in 3 s"; return null; }
+            string skip3 = ""; bool ref3; var e0 = e;
+            reply = Exchange(ep, Message3(c, e, pdu, id), 3000, r => { string pe; Parse3(r, c, e0, id, out pe); if (Stray(pe)) { skip3 = pe; return false; } return true; }, out ref3);
+            if (reply == null) { error = skip3 != "" ? skip3 : "no answer in 3 s"; return null; }
             var vbs = Parse3(reply, c, e, id, out error);
             if (error.IndexOf("time window", StringComparison.Ordinal) >= 0)   // the device restarted or our clock drifted: learn its time again, once
             {
@@ -164,7 +168,8 @@ namespace AdeeboMeter
             int p = hl, end = hl + len;
             if (!T(r, p, end, out tag, out hl, out len) || tag != 2 || ReadInt(r, p + hl, len) != 1) { error = "not an SNMP v2c reply"; return null; }
             p += hl + len; if (!T(r, p, end, out tag, out hl, out len) || tag != 4) { error = "not an SNMP reply"; return null; }
-            if (Encoding.ASCII.GetString(r, p + hl, len) != community) { error = "a reply for a different community"; return null; }
+            var want = Encoding.UTF8.GetBytes(community ?? "");   // the bytes we sent, compared as bytes ("café" too)
+            if (len != want.Length || !r.Skip(p + hl).Take(len).SequenceEqual(want)) { error = "a reply for a different community"; return null; }
             p += hl + len;
             return ReadPdu(r, p, end, id, out error);
         }
@@ -367,7 +372,7 @@ namespace AdeeboMeter
         public static List<Vb> Walk(IPEndPoint ep, Cred c, string baseOid, int max, Toolkit.Run run, out string error)
         {
             // one deadline per view (set on the run), so a view of ten walks can't take ten times two minutes
-            error = ""; var all = new List<Vb>(); string cur = baseOid.Trim('.'), pre = cur + "."; var deadline = run != null && run.Deadline != default(DateTime) ? run.Deadline : DateTime.UtcNow.AddSeconds(120);
+            error = ""; var all = new List<Vb>(); string cur = baseOid.Trim('.'), pre = cur + "."; long kept = 0; /* kept: bytes of answers held - 4 MB at most (a device can send 60 KB values) */ var deadline = run != null && run.Deadline != default(DateTime) ? run.Deadline : DateTime.UtcNow.AddSeconds(120);
             while (all.Count < max)
             {
                 if (run != null && run.Stop) { error = "stopped by you - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }
@@ -382,9 +387,11 @@ namespace AdeeboMeter
                     // every answer must come after the last one (compared number by number): an agent that loops or goes
                     // backwards would repeat data forever and look like a clean finish
                     if (OidCompare(v.Oid, cur) <= 0) { error = "the device's answers stopped moving forward (OID not increasing at " + v.Oid + ") - " + all.Count + " values so far"; return all.Count > 0 ? all : null; }
+                    if (v.Raw.Length > 4096) v.Raw = v.Raw.Take(4096).ToArray();   // one value: 4 KB is plenty to show
+                    kept += v.Raw.Length + v.Oid.Length; if (kept > 4 << 20) { error = "stopped at 4 MB of answers - " + all.Count + " values so far"; return all; }
                     all.Add(v); cur = v.Oid; moved = true; if (all.Count >= max) break;
                 }
-                if (!moved) break;
+                if (!moved) { if (vbs.Count > 0 && vbs.All(v => string.CompareOrdinal(v.Oid, cur) == 0)) error = "the device's answers stopped moving forward (it repeated " + cur + ") - " + all.Count + " values so far"; break; }
                 if (run != null) run.Status = all.Count + " values from " + ep.Address + "...";
                 Thread.Sleep(20);
             }
@@ -613,9 +620,12 @@ namespace AdeeboMeter
             }
             return sb.ToString();
         }
-        static readonly Regex RxTc = new Regex(@"([A-Za-z][\w-]*)\s*::=\s*TEXTUAL-CONVENTION.*?SYNTAX\s+([\w-]+(?:\s+[\w-]+)?)\s*(\{[^}]*\})?", RegexOptions.Singleline | RegexOptions.Compiled);
+        // the lazy parts are bounded (a TEXTUAL-CONVENTION or OBJECT-TYPE body is never that long) and every pattern has a time limit:
+        // one crafted MIB file can't make the index build run for hours
+        static readonly TimeSpan RxLimit = TimeSpan.FromSeconds(5);
+        static readonly Regex RxTc = new Regex(@"([A-Za-z][\w-]*)\s*::=\s*TEXTUAL-CONVENTION[\s\S]{0,6000}?SYNTAX\s+([\w-]+(?:\s+[\w-]+)?)\s*(\{[^}]*\})?", RegexOptions.Compiled, RxLimit);
         static readonly Regex RxTypeAlias = new Regex(@"^\s*([A-Z][\w-]*)\s*::=\s*(INTEGER|Integer32)\s*(\{[^}]*\})", RegexOptions.Multiline | RegexOptions.Compiled);
-        static readonly Regex RxDef = new Regex(@"([a-z][\w-]*)\s+(OBJECT-TYPE|OBJECT IDENTIFIER|MODULE-IDENTITY|OBJECT-IDENTITY)(.*?)::=\s*\{\s*([\w-]+)\s+(\d+)\s*\}", RegexOptions.Singleline | RegexOptions.Compiled);
+        static readonly Regex RxDef = new Regex(@"([a-z][\w-]*)\s+(OBJECT-TYPE|OBJECT IDENTIFIER|MODULE-IDENTITY|OBJECT-IDENTITY)([\s\S]{0,30000}?)::=\s*\{\s*([\w-]+)\s+(\d+)\s*\}", RegexOptions.Compiled, RxLimit);
         static readonly Regex RxEnum = new Regex(@"([\w-]+)\s*\(\s*(-?\d+)\s*\)", RegexOptions.Compiled);
         static readonly Regex RxSyntax = new Regex(@"SYNTAX\s+([\w-]+(?:\s+OF\s+[\w-]+)?)\s*(\{[^}]*\})?", RegexOptions.Compiled);
         static readonly Regex RxDesc = new Regex("DESCRIPTION\\s*\"([^\"]*)\"", RegexOptions.Compiled);
@@ -639,6 +649,14 @@ namespace AdeeboMeter
             foreach (var raw in texts)
             {
                 string t = StripComments(raw ?? "");
+                try { ReadMib(t, defs, tcs); }
+                catch (RegexMatchTimeoutException) { Program.Log("mib: a file took too long to read - skipped"); }
+            }
+            return Resolve(defs, tcs);
+        }
+        static void ReadMib(string t, Dictionary<string, Raw> defs, Dictionary<string, object> tcs)
+        {
+            {
                 foreach (Match m in RxTc.Matches(t))
                 {
                     if (m.Groups[3].Success) tcs[m.Groups[1].Value] = Enums(m.Groups[3].Value); else if (!tcs.ContainsKey(m.Groups[1].Value)) tcs[m.Groups[1].Value] = m.Groups[2].Value;
@@ -653,6 +671,9 @@ namespace AdeeboMeter
                     defs[m.Groups[1].Value] = r;
                 }
             }
+        }
+        static List<string> Resolve(Dictionary<string, Raw> defs, Dictionary<string, object> tcs)
+        {
             var oid = new Dictionary<string, string>();
             Func<string, int, string> res = null;
             res = (name, depth) =>

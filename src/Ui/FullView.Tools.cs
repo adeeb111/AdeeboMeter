@@ -56,7 +56,7 @@ namespace AdeeboMeter
         float PaintToolResult(Graphics g, float x, float y, float w)
         {
             if (!toolBusy && toolRows == null) return y;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(toolTitle.ToUpperInvariant() + (toolBusy ? "  ·  " + toolStatus : "  ·  DONE " + DateTime.Now.ToString("HH:mm", CultureInfo.CurrentCulture)), Draw.fTiny, mb, x, y + 6 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(toolTitle.ToUpperInvariant() + (toolBusy ? "  ·  " + toolStatus : "  ·  " + L.T("DONE") + " " + toolAt.ToString("HH:mm", CultureInfo.CurrentCulture)), Draw.fTiny, mb, x, y + 6 * S);
             y += 28 * S;
             if (toolRows == null) return y + 10 * S;
             {

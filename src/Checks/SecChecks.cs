@@ -148,7 +148,7 @@ namespace AdeeboMeter
         }
         public static List<string[]> VersionVerdict(string build, string edition, string dv, DateTime today)
         {
-            bool ent = Regex.IsMatch(edition ?? "", "Enterprise|Education", RegexOptions.IgnoreCase), ltsc = (edition ?? "").IndexOf("LTSC", StringComparison.OrdinalIgnoreCase) >= 0 || (edition ?? "").EndsWith("S", StringComparison.Ordinal) && ent;
+            bool ent = Regex.IsMatch(edition ?? "", "^(Enterprise|Education|IoTEnterprise)", RegexOptions.IgnoreCase)   /* EditionID: "ProfessionalEducation" (Pro Education) follows Home/Pro dates */, ltsc = (edition ?? "").IndexOf("LTSC", StringComparison.OrdinalIgnoreCase) >= 0 || (edition ?? "").EndsWith("S", StringComparison.Ordinal) && ent;
             var row = Life.FirstOrDefault(r => r[0] == build);
             if (ltsc) return One(3, "Windows version", "Windows LTSC build " + build, "Long-term servicing editions have their own, longer support dates.", "ms-settings:windowsupdate");
             if (row == null)
@@ -263,7 +263,7 @@ namespace AdeeboMeter
         {
             var items = new List<Tuple<string, string>>();
             // the 64-bit Run keys, and LM's 32-bit one (WOW6432Node) where 32-bit programs register themselves
-            foreach (var hv in new[] { Tuple.Create(CU, RegistryView.Registry64), Tuple.Create(CU, RegistryView.Registry32), Tuple.Create(LM, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry32) })
+            foreach (var hv in new[] { Tuple.Create(CU, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry32) } /* HKCU isn't split for 32-bit apps: one view, or every entry counts twice */)
                 try { using (var b = RegistryKey.OpenBaseKey(hv.Item1, hv.Item2)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) foreach (var n in k.GetValueNames()) items.Add(Tuple.Create(n, Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture) ?? "")); }
                 catch (System.Security.SecurityException) { }
             foreach (var d in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })
@@ -273,6 +273,7 @@ namespace AdeeboMeter
             {
                 string exe = StartExe(it.Item2); if (exe == null) continue;
                 if (string.Equals(Path.GetFileName(exe), "AdeeboMeter.exe", StringComparison.OrdinalIgnoreCase)) continue;   /* this app: unsigned, and you chose to start it */
+                string win = Environment.GetFolderPath(Environment.SpecialFolder.Windows); if (win != "" && exe.StartsWith(win.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase)) continue;   /* Windows' own (catalog-signed, which this check can't read) */
                 try { using (X509Certificate.CreateFromSignedFile(exe)) { } } catch (System.Security.Cryptography.CryptographicException) { unsigned.Add(it.Item1 + " (" + Path.GetFileName(exe) + ")"); }
             }
             return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", items.Count + " start automatically" + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · all .exe programs signed"), unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
@@ -367,9 +368,10 @@ namespace AdeeboMeter
         static List<string[]> WifiSec(Monitor m, List<string> s)
         {
             var o = Run("netsh.exe", "wlan show interfaces", 8000);
-            var a = o == null ? null : Regex.Match(o, @"Authentication\s*:\s*(.+?)\s*$", RegexOptions.Multiline);
-            if (a == null || !a.Success) return One(3, "This Wi-Fi's security", "not on Wi-Fi, or Windows doesn't show it", "", null);
-            string v = a.Groups[1].Value; bool open = Regex.IsMatch(v, "^Open|None", RegexOptions.IgnoreCase), wep = v.IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0, wpa3 = v.IndexOf("WPA3", StringComparison.OrdinalIgnoreCase) >= 0;
+            // the label in any language Windows writes it in (LinkInfo knows the translations); the connected adapter's block only
+            string v; var f = o == null ? null : LinkInfo.Fields(LinkInfo.ActiveBlock(o));
+            if (f == null || !f.TryGetValue("Authentication", out v) || v.Trim() == "") return One(3, "This Wi-Fi's security", "not on Wi-Fi, or Windows doesn't show it", "", null);
+            bool open = Regex.IsMatch(v, "^(Open|None|Ouvert|Ouvrir|Offen|Abierta|Abierto|Aperto|Aberto|Aberta|Open systeem|Otwarte|Открыт|オープン|开放|開放|개방|Açık|مفتوح)", RegexOptions.IgnoreCase), wep = v.IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0, wpa3 = v.IndexOf("WPA3", StringComparison.OrdinalIgnoreCase) >= 0;
             return One(open || wep ? 2 : wpa3 ? 0 : (v.IndexOf("WPA2", StringComparison.OrdinalIgnoreCase) >= 0 ? 0 : 1), "This Wi-Fi's security", v, open ? "An open network: anyone nearby can see unencrypted traffic. Websites with https are still private; use a VPN for the rest." : wep ? "WEP can be broken in minutes - change the router to WPA2 or WPA3." : wpa3 ? "" : v.IndexOf("WPA2", StringComparison.OrdinalIgnoreCase) >= 0 ? "Good. WPA3 is better if your router and devices support it." : "Old WPA (TKIP) is weak - use WPA2 or WPA3.", "ms-settings:network-wifi");
         }
         static List<string[]> DnsHijack(Monitor m, List<string> s)
@@ -541,7 +543,7 @@ namespace AdeeboMeter
             {
                 string err; var c = SiteCert(h, SslProtocols.Tls12 | (SslProtocols)12288, out err);
                 if (c == null) return R(3, "Certificate · " + h, "couldn't check - " + Draw.Trunc(err, 60), "", null);
-                using (c) { int d = (int)(c.NotAfter - DateTime.Now).TotalDays; return R(d < 0 ? 2 : d < 14 ? 2 : d < 30 ? 1 : 0, "Certificate · " + h, d < 0 ? "EXPIRED " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : d + " days left (" + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")", d < 30 ? "Renew it before visitors get a warning." : "", null); }
+                using (c) { int d = DateTime.Now > c.NotAfter ? -1 : (int)(c.NotAfter - DateTime.Now).TotalDays; /* expired is expired, even 12 hours ago */ return R(d < 0 ? 2 : d < 14 ? 2 : d < 30 ? 1 : 0, "Certificate · " + h, d < 0 ? "EXPIRED " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : d + " days left (" + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")", d < 30 ? "Renew it before visitors get a warning." : "", null); }
             });
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5397", Justification = "asking whether a site still accepts old TLS is the point of the check")]

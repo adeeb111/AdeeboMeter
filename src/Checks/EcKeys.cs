@@ -20,7 +20,7 @@ namespace AdeeboMeter
     //    A random 64-byte file key (AES key + HMAC key) is made per file; for each recipient a fresh one-time P-384 key
     //    agrees a secret with their public key, SHA-384(prefix | secret) -> 48 bytes, expanded with SHA-512 to the 64-byte
     //    pad the file key is XORed with (one-time, never reused). The HMAC covers the whole header, so a wrong key or a
-    //    changed file is refused before anything is decrypted.
+    //    changed file is refused (whatever was decrypted on the way is thrown away, never shown or saved).
     static class EcKeys
     {
         public sealed class Key { public string Name = "", KeyName = "", Pub = ""; public DateTime Made;
@@ -180,6 +180,8 @@ namespace AdeeboMeter
         public static bool IsBackup(byte[] head8) { return head8.Length >= 8 && head8.Take(8).SequenceEqual(Magic3); }
         public static Key Restore(Stream input, string passphrase)
         {
+            // a real key backup is under 1 KB: anything much bigger isn't one (and must not be decrypted into memory to find out)
+            try { if (input.CanSeek && input.Length > 64 * 1024) throw new CryptographicException("this isn't a key backup (it's far too big)"); } catch (NotSupportedException) { }
             using (var o = new MemoryStream())
             {
                 FileCrypt.DecryptCode(input, o, passphrase, Magic3); var body = o.ToArray();
