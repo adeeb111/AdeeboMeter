@@ -502,6 +502,17 @@ Learn ─ cards, labs, games, glossary
   to removed tabs land on the right page inside Home or Toolbox, so testers' habits don't break.
 - Settings, About, Points stay in the header.
 
+### 11.11a Search everything (13 Nov, Adeeb)
+- A big search bar in the header of every page (both layouts), "Search anything..."; Ctrl+K or / from anywhere.
+- Searches tools, pages, settings, Learn cards, glossary terms, calculators, today's events from Time machine, and
+  questions in plain words ("why is my wifi slow", "valorant lag") using the Toolbox synonyms; forgives typos.
+- Results grouped (Tools · Pages · Settings · Learn · Terms · History), the best one highlighted, Enter opens it,
+  arrow keys move; a setting opens with that setting highlighted. Empty box shows recent searches.
+- Nothing found: one buddy line in the current mood with an example to try - never blank.
+- Penny: one small in-memory index (~1,000 entries, well under 1 MB) built once at start; each keystroke searches it
+  in under 5 ms on the window thread; history items read from the day already loaded. Nothing leaves the PC.
+- Replaces the separate Toolbox search box (Toolbox keeps a filter for its own list).
+
 ### 11.12 Calculators (13 Nov) - our own maths from public formulas; NOTHING copied from internal tools
 Existing (upgrade to the new tool page): packet stack vs MTU, VLSM planner, bandwidth / transfer time,
 decimal / hex / binary. New, grouped by who needs them:
@@ -528,7 +539,7 @@ decimal / hex / binary. New, grouped by who needs them:
 ### 11.9 Build order (after Adeeb approves this section and the line packs)
 1. Drawing kit: Inter, text hint, palette, card / button / chip / switch / tile / big back button, scrolling.
 2. Frame: the five sections (11.11) in Classic + Sidebar, slim health strip, header with Details behaviour + Mood button.
-3. Shared tool page + input swaps; Toolbox page.
+3. Shared tool page + input swaps; search everything (11.11a); Toolbox page.
 4. The other pages (11.5, merged into the five sections), then the calculators (11.12).
 5. Mood + persona engine, 14 packs, Settings section.
 6. Analyzer + self-test + deep test; screenshots of every page in both layouts and themes for Adeeb; real-PC check.
