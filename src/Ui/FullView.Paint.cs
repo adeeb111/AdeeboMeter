@@ -42,7 +42,7 @@ namespace AdeeboMeter
             }
             string w = Draw.Word(snap.Level);
             Theme.Pill(g, w, Draw.fPill, x, cy - 8 * S, snap.Level, S); x += g.MeasureString(w, Draw.fPill).Width + 22 * S;
-            string head = (snap.Level == 0 && !Voice.Serious ? Voice.Greet() + " " : "") + snap.Headline;
+            string quip = Mood.Quip(snap); string head = (snap.Level == 0 && !Voice.Serious && quip == "" ? Voice.Greet() + " " : "") + snap.Headline + (quip != "" ? "  ·  " + quip : "");
             using (var hb = new SolidBrush(snap.Level == 0 ? Theme.Ink : Theme.LvText(snap.Level)))
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {

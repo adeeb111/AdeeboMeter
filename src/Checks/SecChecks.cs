@@ -414,7 +414,7 @@ namespace AdeeboMeter
             bool known = by == "";
             if (!known) { var cn = Regex.Match(root, "CN=([^,]+)").Groups[1].Value; root = "CN=" + (cn != "" ? cn : by); }
             return known ? One(0, "Encrypted traffic inspected?", "no - www.microsoft.com's certificate comes from a public authority", "", null)
-                : One(Company(m) ? 3 : 1, "Encrypted traffic inspected?", "YES - signed by \"" + Regex.Match(root, "CN=([^,]+)").Groups[1].Value + "\", not a public authority", Company(m) ? "Your company's web filter decrypts https to inspect it - common and expected at work." : "Something between you and the internet (an antivirus web shield, a proxy, or worse) decrypts your https traffic. Find out what installed that root certificate.", "certmgr.msc");
+                : One(Company(m) ? 3 : 1, "Encrypted traffic inspected?", "YES - signed by \"" + Regex.Match(root, "CN=([^,]+)").Groups[1].Value + "\", not a public authority", Company(m) ? Voice.P("Your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.", "Your company's web filter decrypts HTTPS to inspect it - common and expected at work.") : "Something between you and the internet (an antivirus web shield, a proxy, or worse) decrypts your https traffic. Find out what installed that root certificate.", "certmgr.msc");
         }
         static List<string[]> ArpSpoof(Monitor m, List<string> s)
         {

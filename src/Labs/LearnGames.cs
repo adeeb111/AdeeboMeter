@@ -17,16 +17,65 @@ namespace AdeeboMeter
             new[] { "thief", "Catch the thief", "Someone is on your network who shouldn't be. Read the evidence, point at them.", "5 cases" },
             new[] { "detective", "Packet detective", "One packet in the conversation is wrong. Spot it.", "10 puzzles" },
             new[] { "ports", "Port quick-fire", "Ten questions, sixty seconds: which port does it use?", "8 right to win" },
-            new[] { "addr", "Address quick-fire", "Private, public, loopback, CGNAT? Ten addresses, sixty seconds.", "8 right to win" } };
+            new[] { "addr", "Address quick-fire", "Private, public, loopback, CGNAT? Ten addresses, sixty seconds.", "8 right to win" },
+            new[] { "heist", "Break the Adeebo Award", "Mallory the hacker tries ten ways to fake an award card. Will each one work?", "8 right to win" },
+            new[] { "outage", "Survive the outage", "Eight broken networks, fifteen seconds each. Read the dots, call the cause. Faster scores more.", "6 right to win" },
+            new[] { "dungeon", "The packet dungeon", "Eight rooms, from the cable to the vault. Three hearts. Each room you clear leaves a scroll.", "reach the treasure" } };
         public static int Pts(string key) { return key.StartsWith("game.room.", StringComparison.Ordinal) ? 4 : 3; }
         public static IEnumerable<string> Keys()
         {
             foreach (var f in Faults) yield return "game.room." + f.Id;
             foreach (var c in ThiefCases) yield return "game.thief." + c;
             for (int i = 0; i < Detective.Length; i++) yield return "game.detective." + (i + 1).ToString(CultureInfo.InvariantCulture);
-            yield return "game.quick.ports"; yield return "game.quick.addr";
+            yield return "game.quick.ports"; yield return "game.quick.addr"; yield return "game.heist"; yield return "game.outage"; yield return "game.dungeon";
         }
         public static bool Known(string key) { return Keys().Contains(key); }
+
+        // ================================================================== break the Adeebo Award
+        // How the claim code really works (src/HallOfFame.cs): AdeeboMeter mixes "name | points | date" with a secret key
+        // (HMAC-SHA256) and prints the first 80 bits as ADB-XXXX-XXXX-XXXX-XXXX. The Hall of Fame does the same mix with the
+        // same key; a card only gets in when the codes match. Each attack: what Mallory tries, does it work ("1") or not ("0"),
+        // and why - the honest limits included.
+        // ================================================================== survive the outage
+        // path (PC, LAN, ISP, DNS, Internet - 0 fine, 1 slow, 2 broken, 3 unknown), two clues, the right call, three wrong ones, why
+        public static readonly string[][] Outage = {
+            new[] { "0,0,2,2,2", "Router answers in 2 ms", "Internet: no answer for 3 minutes - your phone on mobile data works fine", "Provider outage - wait, or call them", "Restart the PC", "Move closer to the router", "Change the DNS server", "Your side answers instantly; everything past the router is silent. Nothing you own will fix that." },
+            new[] { "0,2,3,3,3", "Wi-Fi signal 22%", "Router: 180 ms, 12% of replies lost", "Weak Wi-Fi - move closer, or use a cable", "Provider outage", "DNS is down", "The PC needs more memory", "Trouble starts at the very first hop, with a weak signal. Fix the Wi-Fi and the rest follows." },
+            new[] { "0,0,0,2,0", "Pinging 1.1.1.1 works - 14 ms", "Every website says \"server not found\"", "DNS is broken - switch DNS server", "The cable is loose", "Provider outage", "A firewall blocks port 443", "Numbers work, names don't: that's DNS, the internet's phone book." },
+            new[] { "2,0,0,0,0", "CPU at 99% - a game is installing", "Router 2 ms, internet 15 ms", "It's the PC - pause the install", "Provider outage", "Weak Wi-Fi", "DNS is slow", "The network is fine end to end. The PC is too busy to keep up." },
+            new[] { "0,2,2,2,2", "\"Network cable unplugged\"", "Address 169.254.x.x - no DHCP answer", "Check the cable and the port", "Change the DNS server", "Call the provider first", "Update the browser", "No link, no address: the problem is the plug, before anything else." },
+            new[] { "0,0,1,0,1", "Every evening from 20:00: 120 ms and 3% lost", "Your router stays at 2 ms the whole time", "Evening congestion at the provider - report it with numbers", "Your Wi-Fi channel", "Antivirus on the PC", "Change the DNS server", "Your side never changes; the provider's part slows down when everyone's online." },
+            new[] { "0,1,1,1,1", "Ping jumps to 400 ms while someone uploads a video", "Idle, everything is 15 ms", "Bufferbloat - turn on SQM/QoS in the router", "Buy a faster PC", "DNS is slow", "Wi-Fi too far away", "A full upload fills the router's queue; every other packet waits behind it." },
+            new[] { "0,0,0,0,2", "Only one game's servers don't answer", "Other sites and games are fine; the trace stops inside the game company's network", "The game's servers are down - check their status page", "Your router", "Your provider", "Reinstall Windows", "Everything else works. The broken part belongs to someone else." },
+            new[] { "0,2,3,3,3", "Windows: \"IP address conflict\"", "Started when a new printer was set up", "Two devices share an address - fix the printer's address", "Provider outage", "DNS is broken", "Weak Wi-Fi", "Two devices with the same address keep stealing each other's packets." },
+            new[] { "0,1,0,0,0", "Wi-Fi signal 90%, but 14 other networks on the same 2.4 GHz channel", "Router replies jump between 3 and 60 ms", "Crowded channel - switch to 5 GHz or another channel", "Signal too weak", "Provider outage", "The PC is busy", "A strong signal on a crowded channel still has to wait its turn." } };
+        public const int OutageSecs = 15, OutageRounds = 8, OutageWin = 6;
+
+        // ================================================================== the packet dungeon
+        // room, the guardian's riddle, right answer, two wrong ones, why, the Learn topic it unlocks
+        public static readonly string[][] Dungeon = {
+            new[] { "The Cable Crypt", "A skeleton rattles a cable. \"Windows says 'Network cable unplugged', but it IS plugged in. Where is the fault?\"", "The cable or the port - the very bottom layer", "DNS", "The website", "Nothing above works without a link. Swap the cable or the port first.", "osi" },
+            new[] { "The Wi-Fi Swamp", "A frog croaks from the fog. \"Which band reaches further through walls?\"", "2.4 GHz", "5 GHz", "6 GHz", "Lower frequencies go through walls better - slower, but further.", "wifi" },
+            new[] { "The Hall of Echoes", "Voices shout the same question. \"Your PC knows the router's IP address. How does it learn the router's hardware address?\"", "It asks everyone with ARP: who has this address?", "It looks it up in DNS", "It guesses", "ARP shouts on the local network; only the owner answers.", "arp" },
+            new[] { "The Gate of Leases", "The gate shows 169.254.12.7. \"What happened to this traveller?\"", "No DHCP server answered", "They're directly on the internet", "Their DNS is broken", "169.254 is what Windows picks for itself when nobody hands out an address.", "dhcp" },
+            new[] { "The Oracle of Names", "The Oracle opens one eye. \"I turn names into...\"", "IP addresses", "Hardware addresses", "Passwords", "DNS: you ask for a name, it answers with the address to talk to.", "dns" },
+            new[] { "The Bridge of Three", "A troll blocks the bridge. \"Three messages must cross before any data. Which?\"", "SYN, SYN-ACK, ACK", "HELLO, OK, BYE", "GET, POST, PUT", "TCP's handshake: both sides agree they're ready before a single byte of data.", "tcp" },
+            new[] { "The Packet Dragon", "A 1,500-byte packet must fit through a 1,400-byte tunnel, marked \"don't fragment\". The dragon asks: \"What happens?\"", "It's dropped, and an ICMP 'too big' message goes back", "It's squeezed smaller", "It goes through anyway", "Too big and not allowed to split: dropped. A path that blocks the 'too big' message breaks quietly.", "mtu" },
+            new[] { "The TLS Vault", "The vault's guardian holds up a certificate. \"What proves I'm real?\"", "Signatures up to a root your PC already trusts", "The padlock is green", "The site says so", "The chain of trust: each certificate signed by the one above, up to a root in Windows' store.", "tls" } };
+        public const int DungeonHearts = 3;
+
+        public static readonly string[][] Heist = {
+            new[] { "Mallory opens Ada's award card in a picture editor and changes 512 points to 799.", "0", "The code was made from the name, the points and the date. Change any one of them and the Hall of Fame's own mix gives a different code - the card is turned away." },
+            new[] { "She copies Ada's card exactly and types her own name over Ada's.", "0", "The name is inside the code too. A new name needs a new code, and only the secret key can make one." },
+            new[] { "She guesses a claim code at random - lots of them.", "0", "16 characters of base 32 is 80 bits: about 1.2 million billion billion codes. At a billion guesses a second that's some 38 million years - for one card." },
+            new[] { "She builds AdeeboMeter herself from the open source code, to print her own codes.", "0", "The key isn't in the public code. A home-made build has none, so its cards say 'unofficial build' and carry no claim code at all." },
+            new[] { "She collects ten real cards and their codes, to work out the key from them.", "0", "HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the key that went in. Ten cards or ten thousand." },
+            new[] { "She sends Ada's real card again, to get Ada listed twice.", "0", "One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing." },
+            new[] { "She sends a card that claims 2,000 points.", "0", "There are only about 800 points to earn in all. An impossible total is turned away before the code is even checked." },
+            new[] { "She types <script>alert(1)</script> as her name, hoping the website runs it.", "0", "Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code." },
+            new[] { "She edits the points file on her own PC to 500, then makes a card the normal way.", "1", "This one works - honestly. AdeeboMeter is offline and your points live on your PC, so the code proves the card came out of AdeeboMeter unchanged, not that every point was earned. That's why the Hall of Fame is for fun, not prizes." },
+            new[] { "She takes the official AdeeboMeter apart with a decompiler, looking for the key.", "1", "With enough patience, yes: an app that makes codes offline has to carry its key somewhere inside. The code stops the easy cheats - an edited picture, a copied card - not a determined expert with time to spare." } };
+        public const int HeistWin = 8;
         static string[] Shuffle(Random r, IEnumerable<string> s) { return s.OrderBy(x => r.Next()).ToArray(); }
 
         // ================================================================== escape room

@@ -957,3 +957,93 @@ proxy settings	paramètres du proxy
 hosts file	fichier hosts
 event log (network)	journal d'événements (réseau)
 open https://example.com	ouvrir https://example.com
+# Certificates & HTTPS
+Is the padlock OK?	Le cadenas est-il bon ?
+Chain check (the ladder of trust)	Vérifier la chaîne (l'échelle de confiance)
+HTTPS check	Vérifier HTTPS
+Locks and keys	Serrures et clés
+Hashes, keys, signatures, certificates and the padlock - why HTTPS works, and why it breaks.	Empreintes, clés, signatures, certificats et cadenas - pourquoi HTTPS marche, et pourquoi il casse.
+LOCKS AND KEYS - CERTIFICATES AND HTTPS	SERRURES ET CLÉS - CERTIFICATS ET HTTPS
+# Break the Adeebo Award
+Break the Adeebo Award	Craquer le prix Adeebo
+Mallory the hacker tries ten ways to fake an award card. Will each one work?	Mallory la pirate essaie dix façons de truquer une carte de prix. Chacune va-t-elle marcher ?
+How a card's claim code is made - and checked:	Comment le code d'une carte est fabriqué - et vérifié :
+AdeeboMeter > AdeeboMeter: name + points + date, mixed with a secret key (HMAC-SHA256)	AdeeboMeter > AdeeboMeter: nom + points + date, mélangés avec une clé secrète (HMAC-SHA256)
+AdeeboMeter > You: your card + its code	AdeeboMeter > Vous: votre carte + son code
+You > Hall of Fame: the card	Vous > Temple de la renommée: la carte
+Hall of Fame > Hall of Fame: same mix, same key - same code? You're in	Temple de la renommée > Temple de la renommée: même mélange, même clé - même code ? Vous êtes dedans
+It works	Ça marche
+It fails	Ça échoue
+Right - this one gets through.	Exact - celle-ci passe.
+Right - it fails.	Exact - ça échoue.
+Not quite - this one actually works.	Pas tout à fait - celle-ci marche vraiment.
+Not quite - it fails.	Pas tout à fait - ça échoue.
+Next attack	Attaque suivante
+See how you did	Voir votre résultat
+Play again	Rejouer
+You know the Adeebo Award inside out	Vous connaissez le prix Adeebo sur le bout des doigts
+Mallory fooled you a few times	Mallory vous a eu quelques fois
+The code stops the easy cheats. The honest limit of an offline app: points live on your own PC, so the Hall of Fame is for bragging rights, not prizes.	Le code arrête les tricheries faciles. La limite honnête d'une app hors ligne : les points restent sur votre PC, donc le Temple de la renommée, c'est pour la fierté, pas pour des prix.
+Mallory opens Ada's award card in a picture editor and changes 512 points to 799.	Mallory ouvre la carte d'Ada dans un éditeur d'images et change 512 points en 799.
+The code was made from the name, the points and the date. Change any one of them and the Hall of Fame's own mix gives a different code - the card is turned away.	Le code vient du nom, des points et de la date. Changez-en un seul et le mélange du Temple de la renommée donne un autre code - la carte est refusée.
+She copies Ada's card exactly and types her own name over Ada's.	Elle copie la carte d'Ada à l'identique et tape son propre nom par-dessus.
+The name is inside the code too. A new name needs a new code, and only the secret key can make one.	Le nom fait aussi partie du code. Un nouveau nom demande un nouveau code, et seule la clé secrète peut le fabriquer.
+She guesses a claim code at random - lots of them.	Elle devine des codes au hasard - beaucoup.
+16 characters of base 32 is 80 bits: about 1.2 million billion billion codes. At a billion guesses a second that's some 38 million years - for one card.	16 caractères en base 32, c'est 80 bits : environ 1.2 million de milliards de milliards de codes. À un milliard d'essais par seconde, il faut quelque 38 millions d'années - pour une seule carte.
+She builds AdeeboMeter herself from the open source code, to print her own codes.	Elle compile AdeeboMeter elle-même à partir du code source ouvert, pour imprimer ses propres codes.
+The key isn't in the public code. A home-made build has none, so its cards say 'unofficial build' and carry no claim code at all.	La clé n'est pas dans le code public. Une version maison n'en a pas : ses cartes indiquent « version non officielle » et n'ont aucun code.
+She collects ten real cards and their codes, to work out the key from them.	Elle rassemble dix vraies cartes et leurs codes, pour en déduire la clé.
+HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the key that went in. Ten cards or ten thousand.	HMAC-SHA256 ne marche que dans un sens : voir ce qui sort ne dit rien de la clé qui est entrée. Dix cartes ou dix mille.
+She sends Ada's real card again, to get Ada listed twice.	Elle renvoie la vraie carte d'Ada, pour qu'Ada apparaisse deux fois.
+One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing.	Une entrée par carte et par nom : la vérification répond « déjà au Temple de la renommée » et n'ajoute rien.
+She sends a card that claims 2,000 points.	Elle envoie une carte qui annonce 2,000 points.
+There are only about 800 points to earn in all. An impossible total is turned away before the code is even checked.	Il n'y a qu'environ 800 points à gagner en tout. Un total impossible est refusé avant même de vérifier le code.
+She types <script>alert(1)</script> as her name, hoping the website runs it.	Elle tape <script>alert(1)</script> comme nom, en espérant que le site l'exécute.
+Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code.	Les noms sont réduits à des lettres, des chiffres et quelques signes avant tout le reste, et la page affiche chaque champ en texte simple - jamais comme du code.
+She edits the points file on her own PC to 500, then makes a card the normal way.	Elle modifie le fichier de points sur son propre PC à 500, puis fait une carte normalement.
+This one works - honestly. AdeeboMeter is offline and your points live on your PC, so the code proves the card came out of AdeeboMeter unchanged, not that every point was earned. That's why the Hall of Fame is for fun, not prizes.	Celle-ci marche - honnêtement. AdeeboMeter est hors ligne et vos points restent sur votre PC : le code prouve que la carte sort d'AdeeboMeter sans changement, pas que chaque point a été gagné. C'est pour ça que le Temple de la renommée est pour le plaisir, pas pour des prix.
+She takes the official AdeeboMeter apart with a decompiler, looking for the key.	Elle démonte l'AdeeboMeter officiel avec un décompilateur, à la recherche de la clé.
+With enough patience, yes: an app that makes codes offline has to carry its key somewhere inside. The code stops the easy cheats - an edited picture, a copied card - not a determined expert with time to spare.	Avec assez de patience, oui : une app qui fabrique des codes hors ligne doit garder sa clé quelque part à l'intérieur. Le code arrête les tricheries faciles - une image retouchée, une carte copiée - pas un expert déterminé qui a du temps.
+JUST FOR FUN	JUSTE POUR RIRE
+Make it fun	Pour s'amuser
+Roast my network	Clashe mon réseau
+Network therapy (the story of a bad day)	Thérapie réseau (l'histoire d'une mauvaise journée)
+Letter to my provider	Lettre à mon fournisseur
+Buddy	Copain
+Buddy's hat	Le chapeau du copain
+None	Aucun
+Cap	Casquette
+Party hat	Chapeau de fête
+Crown	Couronne
+Survive the outage	Survivre à la panne
+Eight broken networks, fifteen seconds each. Read the dots, call the cause. Faster scores more.	Huit réseaux en panne, quinze secondes chacun. Lisez les points, trouvez la cause. Plus vite, plus de points.
+6 right to win	6 bonnes réponses pour gagner
+The packet dungeon	Le donjon des paquets
+Eight rooms, from the cable to the vault. Three hearts. Each room you clear leaves a scroll.	Huit salles, du câble jusqu'au coffre. Trois cœurs. Chaque salle franchie laisse un parchemin.
+reach the treasure	atteindre le trésor
+Your widget turns red. Fifteen seconds to say why. Right answers score 100, plus 10 for every second left. Six right survives.	Votre widget passe au rouge. Quinze secondes pour dire pourquoi. Une bonne réponse vaut 100, plus 10 par seconde restante. Six bonnes réponses et vous survivez.
+Your best:	Votre record :
+points of speed	points de vitesse
+A new personal best - kept on this PC.	Nouveau record personnel - gardé sur ce PC.
+Out of time.	Temps écoulé.
+Not this time.	Pas cette fois.
+Next outage	Panne suivante
+Eight rooms stand between you and the treasure - from the cable at the bottom to the encrypted vault at the top. Each has a guardian with a riddle. A wrong answer costs a heart; lose all three and you start again.	Huit salles vous séparent du trésor - du câble tout en bas au coffre chiffré tout en haut. Chacune a un gardien et une énigme. Une mauvaise réponse coûte un cœur ; perdez les trois et vous recommencez.
+Enter the dungeon	Entrer dans le donjon
+Open the treasure	Ouvrir le trésor
+Try again	Réessayer
+Scroll found:	Parchemin trouvé :
+The Cable Crypt	La crypte du câble
+The Wi-Fi Swamp	Le marais du Wi-Fi
+The Hall of Echoes	La salle des échos
+The Gate of Leases	La porte des baux
+The Oracle of Names	L'oracle des noms
+The Bridge of Three	Le pont des trois
+The Packet Dragon	Le dragon des paquets
+The TLS Vault	Le coffre TLS
+Provider outage - wait, or call them	Panne du fournisseur - attendez, ou appelez-le
+Weak Wi-Fi - move closer, or use a cable	Wi-Fi faible - rapprochez-vous, ou prenez un câble
+DNS is broken - switch DNS server	Le DNS est cassé - changez de serveur DNS
+It's the PC - pause the install	C'est le PC - mettez l'installation en pause
+Check the cable and the port	Vérifiez le câble et le port
+Bufferbloat - turn on SQM/QoS in the router	Bufferbloat - activez SQM/QoS dans le routeur

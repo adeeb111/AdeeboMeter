@@ -315,7 +315,7 @@ namespace AdeeboMeter
         // to up to GameBgServers servers; every second while a game is open (GameFast); history kept GameDays
         public static string GameIds = "";
         public static volatile int GameBgSec = 30, GameBgServers = 3, GameDays = 14;
-        public static volatile bool GameFast = true, GameAuto = true, GameWidget = true;
+        public static volatile bool GameFast = true, GameAuto = true, GameWidget = true, Buddy = true; public static int OutageBest; public static volatile string BuddyHat = "";   // Buddy: the widget shows a little face that feels what the network feels
         public static volatile string WidgetStyle = "auto";
         // Simple (the dots, What's wrong?, speed, history, Gamer Zone) or Pro (every tab). "" = not chosen yet (a new install:
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
@@ -358,11 +358,11 @@ namespace AdeeboMeter
         {
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
+            yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
-            yield return "gfast=" + (GameFast ? 1 : 0); yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
+            yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             foreach (var p in Pins) yield return "pin=" + p;
         }
@@ -380,6 +380,8 @@ namespace AdeeboMeter
                 case "apps": AppsSec = Pick(v, 5, 5, 10, 30, 0); break;
                 case "call": Call = v == "1"; break;
                 case "ipnames": IpNames = v == "1"; break;
+                case "mood": if (Array.IndexOf(Mood.Ids, v) >= 0) Mood.Name = v; break;
+                case "crlrev": CertCfg.Revocation = v == "1"; break;
                 case "details": Details = v == "1"; break;
                 case "bigwidget": BigWidget = v == "1"; break;
                 case "wscreen": WidgetScreen = v.StartsWith(@"\\.\DISPLAY", StringComparison.OrdinalIgnoreCase) && v.Length < 40 ? v : ""; break;
@@ -399,6 +401,9 @@ namespace AdeeboMeter
                 case "gsrv": GameBgServers = Pick(v, 3, 1, 3, 5); break;
                 case "gdays": GameDays = Pick(v, 14, 7, 14, 30); break;
                 case "gfast": GameFast = v != "0"; break;
+                case "buddy": Buddy = v != "0"; break;
+                case "hat": BuddyHat = Draw.Hats.Contains(v) ? v : ""; break;
+                case "outagebest": int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out OutageBest); OutageBest = Math.Max(0, Math.Min(99999, OutageBest)); break;
                 case "gauto": GameAuto = v != "0"; break;
                 case "gwidget": GameWidget = v != "0"; break;
                 case "points": Points = v == "1"; break;

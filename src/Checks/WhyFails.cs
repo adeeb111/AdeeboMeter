@@ -220,6 +220,23 @@ namespace AdeeboMeter
                 }
             }
             catch (Exception e) { rows.Add(R(1, "Clock", "couldn't compare: " + Draw.Trunc(e.Message, 60), "", "u")); }
+            rows.Add(R(3, "This PC's time", DateTime.Now.ToString("ddd d MMM yyyy, HH:mm:ss", CultureInfo.CurrentCulture) + " (" + TimeZoneInfo.Local.StandardName + ")", "Certificates have a start and an end date: a wrong clock breaks HTTPS before the network does.", "w"));
+            rows.AddRange(WindowsTime());
+            return rows;
+        }
+        // Windows Time: where the clock syncs from and when it last did (w32tm /query /status needs no admin; when Windows
+        // refuses, or answers in a language these labels don't cover, the rows are simply left out)
+        static List<string[]> WindowsTime()
+        {
+            var rows = new List<string[]>();
+            try
+            {
+                string o = Job.Run(Job.Sys("w32tm.exe"), "/query /status", 6000) ?? "";
+                var src = Regex.Match(o, @"^\s*Source:\s*(.+?)\s*$", RegexOptions.Multiline); var last = Regex.Match(o, @"^\s*Last Successful Sync Time:\s*(.+?)\s*$", RegexOptions.Multiline);
+                if (src.Success) rows.Add(R(3, "Syncs from", Regex.Replace(src.Groups[1].Value, @",0x[0-9a-fA-F]+", ""), src.Groups[1].Value.IndexOf("Local CMOS Clock", StringComparison.OrdinalIgnoreCase) >= 0 || src.Groups[1].Value.IndexOf("Free-running", StringComparison.OrdinalIgnoreCase) >= 0 ? "It isn't syncing with any time server - only the PC's own clock chip, which drifts." : "", "w"));
+                if (last.Success) rows.Add(R(3, "Last sync", last.Groups[1].Value, "", "w"));
+            }
+            catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception || e is IOException || e is TimeoutException)) throw; }
             return rows;
         }
         static string Dur(double s) { return s >= 120 ? (s / 60).ToString("0", CultureInfo.CurrentCulture) + " minutes" : s.ToString("0", CultureInfo.CurrentCulture) + " seconds"; }

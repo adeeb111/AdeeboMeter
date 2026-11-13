@@ -52,25 +52,47 @@ namespace AdeeboMeter
         static string Hex(byte[] b) { return string.Concat(b.Select(x => x.ToString("X2", CultureInfo.InvariantCulture))); }
         static void Describe(List<string[]> rows, X509Certificate2 c, string label)
         {
-            var now = DateTime.Now; int days = (int)(c.NotAfter - now).TotalDays;
-            int lv = now > c.NotAfter ? 2 : now < c.NotBefore ? 2 : days < 30 ? 1 : 0;
-            rows.Add(R(4, label, c.GetNameInfo(X509NameType.SimpleName, false), "", "m"));
-            rows.Add(R(3, "Subject", c.Subject, "", "m"));
+            var now = DateTime.Now; double left = (c.NotAfter - now).TotalDays; int days = (int)Math.Floor(left);
+            bool expired = now > c.NotAfter, early = now < c.NotBefore;
+            rows.Add(R(expired || (!early && days < 30) ? 2 : early ? 3 : 0, label, c.GetNameInfo(X509NameType.SimpleName, false) + " - " + Verdict(c), "", "m"));
+            rows.Add(R(3, "Subject", c.Subject, "Who it is for.", "m"));
             bool self = c.Subject == c.Issuer;
-            rows.Add(R(3, "Issued by", c.Issuer + (self ? " (itself - self-signed)" : ""), self ? "Self-signed: browsers and apps won't trust it unless it's added to their trust list - normal for devices and private CAs." : "", "m"));
-            rows.Add(R(lv, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (now > c.NotAfter ? " · EXPIRED" : now < c.NotBefore ? " · not valid yet" : " · " + days + " days left"), "", "m"));
+            rows.Add(R(3, "Issued by", c.Issuer + (self ? " (itself - self-signed)" : ""), self ? "Who vouches for it - here, nobody but itself: apps trust it only if it's added to their trust list (normal for devices and private CAs)." : "Who vouches for it.", "m"));
+            rows.Add(R(expired ? 2 : early ? 3 : days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + Math.Max(1, -days) + " days ago" : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
+                early ? "Its start date is still ahead - or this PC's clock is behind." : "Outside these dates every app refuses it.", "m"));
+            string ka = KeyName(c); int bits = KeyBits(c);
+            rows.Add(R(ka == "RSA" && bits > 0 && bits < 2048 ? 1 : 3, "Key", ka + (bits > 0 ? (ka == "ECDSA" ? " P-" + bits : " " + bits) : ""), ka == "RSA" && bits > 0 && bits < 2048 ? "Under 2048 bits is weak; most systems refuse it now." : "The public half of the key pair - the server proves it holds the private half.", "m"));
+            string sa = c.SignatureAlgorithm.FriendlyName ?? c.SignatureAlgorithm.Value;
+            bool weakSig = sa.StartsWith("sha1", StringComparison.OrdinalIgnoreCase) || sa.StartsWith("md5", StringComparison.OrdinalIgnoreCase);
+            rows.Add(R(weakSig ? 1 : 3, "Signature", sa, weakSig ? "SHA-1 and MD5 signatures are no longer trusted by browsers." : "How the issuer signed it - the seal on the passport.", "m"));
+            rows.Add(R(3, "Serial number", c.SerialNumber, "Its ID - revocation lists name certificates by this.", "m"));
             foreach (var e in c.Extensions)
             {
-                string n = e.Oid.Value == "2.5.29.17" ? "Names (SAN)" : e.Oid.Value == "2.5.29.37" ? "Used for" : e.Oid.Value == "2.5.29.15" ? "Key usage" : e.Oid.Value == "2.5.29.19" ? "Basic constraints" : null;
-                if (n != null) rows.Add(R(3, n, Draw.Trunc(e.Format(false), 400), n == "Names (SAN)" ? "Browsers check the name you typed against these, not the subject." : "", "m"));
+                string v = Draw.Trunc(e.Format(false), 400);
+                if (e.Oid.Value == "2.5.29.15") rows.Add(R(3, "Key usage", v, "What the key may do (sign, encrypt, sign other certificates).", "m"));
+                else if (e.Oid.Value == "2.5.29.37") rows.Add(R(3, "Used for", v, "The jobs it is allowed: server, client sign-in, code signing...", "m"));
+                else if (e.Oid.Value == "2.5.29.17") rows.Add(R(3, "Names (SAN)", v, "The names it is valid for - browsers check the name you typed against these, not the subject.", "m"));
             }
-            string ka = c.PublicKey.Oid.FriendlyName ?? c.PublicKey.Oid.Value; int bits = KeyBits(c);
-            rows.Add(R(ka == "RSA" && bits > 0 && bits < 2048 ? 1 : 3, "Key", ka + (bits > 0 ? " " + bits + " bits" : ""), ka == "RSA" && bits > 0 && bits < 2048 ? "Under 2048 bits is weak; most systems refuse it now." : "", "m"));
-            string sa = c.SignatureAlgorithm.FriendlyName ?? c.SignatureAlgorithm.Value;
-            rows.Add(R(sa.StartsWith("sha1", StringComparison.OrdinalIgnoreCase) || sa.StartsWith("md5", StringComparison.OrdinalIgnoreCase) ? 1 : 3, "Signed with", sa, sa.StartsWith("sha1", StringComparison.OrdinalIgnoreCase) ? "SHA-1 signatures are no longer trusted by browsers." : "", "m"));
-            rows.Add(R(3, "Serial", c.SerialNumber, "", "m"));
-            using (var h = SHA256.Create()) rows.Add(R(3, "SHA-256 fingerprint", Hex(h.ComputeHash(c.RawData)), "", "m"));
+            var bc = c.Extensions.OfType<X509BasicConstraintsExtension>().FirstOrDefault();
+            rows.Add(R(3, "Is it a CA?", bc != null && bc.CertificateAuthority ? "yes - it can sign other certificates" + (bc.HasPathLengthConstraint ? " (at most " + bc.PathLengthConstraint + " level" + (bc.PathLengthConstraint == 1 ? "" : "s") + " below it)" : "") : "no - an end certificate (a server, a person, a device)", "CA:true means it vouches for others; a site's own certificate should say no.", "m"));
+            string fp; using (var h = SHA256.Create()) fp = Hex(h.ComputeHash(c.RawData));
+            rows.Add(new[] { "3", "SHA-256 fingerprint", fp, "Click to copy. The same certificate always has the same fingerprint - compare it with what the owner tells you.", "m", "copy:" + fp });
             rows.Add(R(3, "SHA-1 thumbprint", c.Thumbprint, "What Windows shows as Thumbprint.", "m"));
+        }
+        // one plain line with a smile - or a plain one, in Serious voice
+        public static string Verdict(X509Certificate2 c)
+        {
+            var now = DateTime.Now; int days = (int)Math.Floor((c.NotAfter - now).TotalDays);
+            if (now > c.NotAfter) return Voice.P("expired " + Math.Max(1, -days) + " days ago. This pumpkin used to be a carriage.", "expired " + Math.Max(1, -days) + " days ago.");
+            if (now < c.NotBefore) return Voice.P("not valid until " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ". It's from the future - or your clock is from the past.", "not valid until " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ".");
+            if (days < 7) return Voice.P("expires in " + days + " day" + (days == 1 ? "" : "s") + ". This one is about to turn into a pumpkin.", "expires in " + days + " day" + (days == 1 ? "" : "s") + " - renew it now.");
+            if (days < 30) return Voice.P("expires in " + days + " days. Time to book the renewal.", "expires in " + days + " days - renew it soon.");
+            return Voice.P("good for " + days + " more days. Nothing to do.", "valid for " + days + " more days.");
+        }
+        static string KeyName(X509Certificate2 c)
+        {
+            string o = c.PublicKey.Oid.Value;
+            return o == "1.2.840.113549.1.1.1" ? "RSA" : o == "1.2.840.10045.2.1" ? "ECDSA" : o == "1.3.101.112" ? "Ed25519" : (c.PublicKey.Oid.FriendlyName ?? o);
         }
         static int KeyBits(X509Certificate2 c)
         {
@@ -79,6 +101,23 @@ namespace AdeeboMeter
             return 0;
         }
 
+        // every certificate in a file or pasted text: PEM (one or many), DER, or a .p7b bundle. A PFX is refused here - it holds a
+        // private key and needs its password (Check a PFX / P12). null after a row saying what's wrong.
+        internal static List<X509Certificate2> LoadCerts(string input, List<string[]> rows, out string label)
+        {
+            var data = Input(input, rows, out label); if (data == null) return null;
+            var certs = new List<X509Certificate2>();
+            foreach (var b in Blocks(data, "CERTIFICATE").Take(10)) try { if (X509Certificate2.GetCertContentType(b) == X509ContentType.Cert) certs.Add(new X509Certificate2(b)); } catch (CryptographicException) { }
+            if (certs.Count == 0) foreach (var b in Blocks(data, "PKCS7").Take(2)) certs.AddRange(P7b(b));
+            if (certs.Count == 0)
+            {
+                X509ContentType ct; try { ct = X509Certificate2.GetCertContentType(data); } catch (CryptographicException) { ct = X509ContentType.Unknown; }
+                if (ct == X509ContentType.Pkcs7) certs.AddRange(P7b(data));
+                else if (ct == X509ContentType.Pfx) { rows.Add(R(2, label, "a PFX / P12 - it holds a private key under a password", "Use Check a PFX / P12 for it.", "u")); return null; }
+            }
+            if (certs.Count == 0) { rows.Add(R(2, label, "no certificate found in it", "", "u")); return null; }
+            return certs;
+        }
         // ---------- Inspect a certificate file (.cer .crt .pem .der, or a chain in one PEM)
         public static List<string[]> Inspect(string input)
         {
@@ -87,6 +126,14 @@ namespace AdeeboMeter
             var certs = new List<X509Certificate2>();
             // only plain certificates: a PFX handed in here would otherwise have its private key imported into the user's key store
             foreach (var b in Blocks(data, "CERTIFICATE").Take(10)) try { if (X509Certificate2.GetCertContentType(b) == X509ContentType.Cert) certs.Add(new X509Certificate2(b)); } catch (CryptographicException) { }
+            // a .p7b (PKCS#7 bundle: certificates only, never a key) - binary or "-----BEGIN PKCS7-----"
+            if (certs.Count == 0) foreach (var b in Blocks(data, "PKCS7").Take(2)) certs.AddRange(P7b(b));
+            if (certs.Count == 0)
+            {
+                X509ContentType ct; try { ct = X509Certificate2.GetCertContentType(data); } catch (CryptographicException) { ct = X509ContentType.Unknown; }
+                if (ct == X509ContentType.Pkcs7) certs.AddRange(P7b(data));
+                else if (ct == X509ContentType.Pfx) { rows.Add(R(2, label, "this is a PFX / P12 (a certificate with its private key, under a password)", "Use Check a PFX / P12 - it asks for the password, keeps it only while it reads the file, and never shows or saves the key.", "u")); return rows; }
+            }
             if (certs.Count == 0)
             {
                 string t = Encoding.ASCII.GetString(data);
@@ -101,6 +148,15 @@ namespace AdeeboMeter
             return rows;
         }
 
+        // the certificates in a PKCS#7 bundle (.p7b). Such a bundle holds no private key, so nothing reaches a key store.
+        static List<X509Certificate2> P7b(byte[] b)
+        {
+            var l = new List<X509Certificate2>();
+            try { var col = new X509Certificate2Collection(); col.Import(b); foreach (X509Certificate2 c in col) { if (l.Count < 10 && !c.HasPrivateKey) l.Add(c); else c.Dispose(); } }
+            catch (CryptographicException) { }
+            return l;
+        }
+
         // ---------- Hash a file and compare: SHA-256, SHA-1 and MD5 at once, against what the download page says
         [SuppressMessage("Security", "CA5350", Justification = "SHA-1 shown only to compare with a published checksum")]
         [SuppressMessage("Security", "CA5351", Justification = "MD5 shown only to compare with a published checksum")]
@@ -109,7 +165,10 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string p = (path ?? "").Trim().Trim('"');
             if (p == "" || p.StartsWith(@"\\", StringComparison.Ordinal) || p.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(p)) { rows.Add(R(2, "File", "type the file's full path - e.g. C:\\Downloads\\setup.exe", "Shift + right-click the file in Explorer › Copy as path.", "u")); return rows; }
             FileInfo fi; try { fi = new FileInfo(p); if (!fi.Exists) { rows.Add(R(2, "File", "not found", "", "u")); return rows; } } catch (Exception e) { if (!(e is ArgumentException || e is NotSupportedException || e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "File", Draw.Trunc(e.Message, 90), "", "u")); return rows; }
-            using (var s256 = SHA256.Create()) using (var s1 = SHA1.Create()) using (var m5 = MD5.Create())
+            // SHA-384 and SHA-512 too, when the pasted hash is that long (96 or 128 hex digits) - on request, not every time
+            string ex = Regex.Replace(expected ?? "", @"(?<=\b[0-9a-fA-F]{2}) (?=[0-9a-fA-F]{2}\b)", "");
+            bool big = Regex.IsMatch(ex, @"\b([0-9a-fA-F]{96}|[0-9a-fA-F]{128})\b");
+            using (var s256 = SHA256.Create()) using (var s1 = SHA1.Create()) using (var m5 = MD5.Create()) using (var s384 = SHA384.Create()) using (var s512 = SHA512.Create())
             {
                 try
                 {
@@ -119,14 +178,14 @@ namespace AdeeboMeter
                         while ((n = f.Read(buf, 0, buf.Length)) > 0)
                         {
                             if (run.Stop) { rows.Add(R(1, "Stopped", "stopped by you", "", "m")); return rows; }
-                            s256.TransformBlock(buf, 0, n, null, 0); s1.TransformBlock(buf, 0, n, null, 0); m5.TransformBlock(buf, 0, n, null, 0); done += n;
+                            s256.TransformBlock(buf, 0, n, null, 0); s1.TransformBlock(buf, 0, n, null, 0); m5.TransformBlock(buf, 0, n, null, 0); if (big) { s384.TransformBlock(buf, 0, n, null, 0); s512.TransformBlock(buf, 0, n, null, 0); } done += n;
                             run.Status = "Reading " + (done * 100 / Math.Max(1, fi.Length)) + "%...";
                         }
-                        s256.TransformFinalBlock(buf, 0, 0); s1.TransformFinalBlock(buf, 0, 0); m5.TransformFinalBlock(buf, 0, 0);
+                        s256.TransformFinalBlock(buf, 0, 0); s1.TransformFinalBlock(buf, 0, 0); m5.TransformFinalBlock(buf, 0, 0); if (big) { s384.TransformFinalBlock(buf, 0, 0); s512.TransformFinalBlock(buf, 0, 0); }
                     }
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "File", Draw.Trunc(e.Message, 90), "", "u")); return rows; }
-                string a = Hex(s256.Hash), b = Hex(s1.Hash), c = Hex(m5.Hash);
+                string a = Hex(s256.Hash), b = Hex(s1.Hash), c = Hex(m5.Hash), d384 = big ? Hex(s384.Hash) : "", d512 = big ? Hex(s512.Hash) : "";
                 // the hash out of whatever was pasted ("SHA256: e3b0...", certutil's "SHA256 hash of f.txt:" line, spaced pairs):
                 // runs of hex 32-128 long; certutil's spaced pairs are joined first. Never the letters of the words around it.
                 string pasted = (expected ?? "").Trim(); var joined = Regex.Replace(pasted, @"(?<=\b[0-9a-fA-F]{2}) (?=[0-9a-fA-F]{2}\b)", "");
@@ -134,13 +193,14 @@ namespace AdeeboMeter
                 string want = pasted == "" ? "" : tokens.Count > 0 ? tokens[0] : "?";
                 if (want != "")
                 {
-                    string which = tokens.Contains(a) ? "SHA-256" : tokens.Contains(b) ? "SHA-1" : tokens.Contains(c) ? "MD5" : null;
-                    if (which == null && tokens.Count > 0 && tokens.All(t => t.Length != 64 && t.Length != 40 && t.Length != 32)) { rows.Add(R(3, "Can't compare", "the pasted hash is " + tokens[0].Length * 4 + " bits long - this tool computes SHA-256, SHA-1 and MD5 (compare by eye with certutil -hashfile <file> SHA512)", "", "u")); want = ""; }
-                    else rows.Add(which != null ? R(0, "Matches", which + " is the same as the one you pasted", which == "SHA-256" ? "The file is exactly what was published." : which + " is old; a match is still good evidence the download isn't damaged, but SHA-256 is the one to trust.", "m")
-                        : R(2, "DOESN'T MATCH", "none of the three is the hash you pasted", "The file is damaged or not the one published - download it again from the official page. Check you copied the whole hash.", "m"));
+                    string which = tokens.Contains(a) ? "SHA-256" : big && tokens.Contains(d512) ? "SHA-512" : big && tokens.Contains(d384) ? "SHA-384" : tokens.Contains(b) ? "SHA-1" : tokens.Contains(c) ? "MD5" : null;
+                    rows.Add(which != null ? R(0, "Matches", which + " is the same as the one you pasted", which == "SHA-256" || which == "SHA-384" || which == "SHA-512" ? "The file is exactly what was published." : which + " is old; a match is still good evidence the download isn't damaged, but SHA-256 is the one to trust.", "m")
+                        : R(2, "DOESN'T MATCH", (big ? "none of the five is the hash you pasted" : "none of the three is the hash you pasted"), "The file is damaged or not the one published - download it again from the official page. Check you copied the whole hash.", "m"));
                 }
                 rows.Add(R(3, fi.Name, fi.Length.ToString("N0", CultureInfo.CurrentCulture) + " bytes", "", "m"));
-                rows.Add(R(3, "SHA-256", a, "", "m")); rows.Add(R(3, "SHA-1", b, "", "m")); rows.Add(R(3, "MD5", c, "", "m"));
+                rows.Add(new[] { "3", "SHA-256", a, "Click to copy. A fingerprint changes completely if even one bit of the file changes.", "m", "copy:" + a });
+                if (big) { rows.Add(new[] { "3", "SHA-384", d384, "", "m", "copy:" + d384 }); rows.Add(new[] { "3", "SHA-512", d512, "", "m", "copy:" + d512 }); }
+                rows.Add(R(3, "SHA-1", b, "", "m")); rows.Add(R(3, "MD5", c, "", "m"));
             }
             return rows;
         }

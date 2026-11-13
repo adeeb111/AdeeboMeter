@@ -3288,6 +3288,36 @@ how: AES-256 with a code made on this PC. The plain text copy is deleted.
 why: Help family or a colleague without screenshots or a remote-control app.
 without: They need AdeeboMeter to open it.
 
+== tb.roast
+friendly: Roast my network
+cat: term
+close: -1
+tag: A grade and a few honest burns, as a square picture to post.
+what: Grades the last 7 days from History (smooth minutes, outages, loss) and writes three or four burns from the real numbers. Saves a 1080x1080 picture.
+how: Read from History on this PC; drawn here. No Wi-Fi name, addresses or provider name on the picture.
+why: Your network, but make it content.
+without: With History off it grades only the last few minutes.
+
+== tb.therapy
+friendly: Network therapy (the story of a bad day)
+cat: term
+close: -1
+tag: The worst stretch of a day, told as a short story - with pictures.
+what: Finds the worst run of problems in a day (the worst of the week by default) and tells it in five chapters: how it started, the low point, healing, and whose fault it was.
+how: Built from the timeline and the outage log. Saves Markdown and a web page with a face for each chapter; the Wi-Fi name and addresses are left out.
+why: A post-mortem you'll actually read - and something to show whoever shares your Wi-Fi.
+without: Days other than today need History on.
+
+== tb.letter
+friendly: Letter to my provider
+cat: term
+close: -1
+tag: A polite, measured, devastating letter to your provider.
+what: Writes a letter from History: outages, how long they lasted, how smooth the line was, the slowest hour and recent speed tests. If your own Wi-Fi was slow too, the letter says so.
+how: Read from History on this PC. Nothing is sent - you copy it into an email or a support chat.
+why: Numbers get answers. Complaints get scripts.
+without: Needs at least an hour of History. For hop-by-hop proof, add Report for my ISP.
+
 == tb.bluetooth
 friendly: My Bluetooth devices
 cat: term
@@ -3317,3 +3347,23 @@ what: Green under 50 ms, amber under 100, red above. A ring is a region estimate
 how: The Gamer Zone's own pings - nothing new is sent.
 why: See at a glance which region is closest for you.
 without: Places are approximate - it's a picture, not a map to navigate by.
+
+== tb.chain
+friendly: Chain check
+cat: term
+close: -1
+tag: The ladder of trust, link by link.
+what: Draws a certificate's chain as a ladder - root at the top, your certificate at the bottom - and marks each link: who signed it, is the signature real, is the signer allowed to sign, are the dates right, is a middle certificate missing.
+how: All on this PC: the files you give, then Windows' own certificate stores. Nothing is fetched from the internet (revocation only if you switch it on in Settings).
+why: "The site works in Chrome but not in my app" is very often a missing middle certificate.
+without: certutil -verify -urlfetch does it in text (and goes online).
+
+== tb.https
+friendly: HTTPS check
+cat: term
+close: -1
+tag: How a site's padlock is built.
+what: One site, on click: the TLS version, the cipher in four plain parts (key agreement, server's key, encryption, hash), whether the name matches, days to expiry, the chain as the server sends it, and HTTPS inspection on the way.
+how: Two short handshakes and no HTTP request: one by Windows (what your apps get) and one TLS 1.2 hello that reads the certificates exactly as the server sends them. If the certificate's dates look wrong, your clock is compared too.
+why: Name mismatch, expired, a missing middle certificate, a wrong clock, an old TLS-only server - each has a different fix.
+without: Your browser's padlock › Certificate shows part of this.

@@ -14,7 +14,34 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         Panel replayPage; DB replayCanvas; DateTime? replayDay; History.Day replayData; bool replayExample; int replayIdx = -1; Bitmap replayBmp; string replayKey = "";
-        RectangleF replayTrack; bool replayDrag, replayLoading; double pendingAt = -1; double[] replayMed = new double[History.Cols];
+        int rewindIdx = -1; RectangleF replayTrack; bool replayDrag, replayLoading; double pendingAt = -1; double[] replayMed = new double[History.Cols];
+        // a little celebration when the cursor crosses a new device or a Wi-Fi hop: a burst of dots from the LAN dot, about a
+        // second long; the timer runs only while there are dots to move
+        readonly List<float[]> sparks = new List<float[]>(); System.Windows.Forms.Timer sparkT; int sparkIdx = -1; string sparkLabel = ""; PointF sparkAt; DateTime sparkUntil;
+        static readonly Color[] SparkCol = { Color.FromArgb(255, 196, 60), Color.FromArgb(70, 200, 120), Color.FromArgb(90, 160, 230), Color.FromArgb(230, 90, 160) };
+        void Spark(PointF at, string label)
+        {
+            var rnd = new Random(); sparks.Clear(); sparkAt = at; sparkLabel = label; sparkUntil = Clock.Mono.AddSeconds(1.6);
+            for (int i = 0; i < 28; i++) { double a = rnd.NextDouble() * Math.PI * 2, v = (2 + rnd.NextDouble() * 5) * S; sparks.Add(new[] { at.X, at.Y, (float)(Math.Cos(a) * v), (float)(Math.Sin(a) * v) - 2 * S, 1f, i % SparkCol.Length }); }
+            if (sparkT == null) { sparkT = new System.Windows.Forms.Timer { Interval = 33 }; sparkT.Tick += delegate { SparkTick(); }; }
+            sparkT.Start();
+        }
+        void SparkTick()
+        {
+            foreach (var p in sparks) { p[0] += p[2]; p[1] += p[3]; p[3] += 0.35f * S; p[4] -= 0.035f; }
+            sparks.RemoveAll(p => p[4] <= 0);
+            if (sparks.Count == 0 && Clock.Mono > sparkUntil) sparkT.Stop();
+            if (replayCanvas.Visible) replayCanvas.Invalidate();
+        }
+        void PaintSparks(Graphics g)
+        {
+            foreach (var p in sparks) using (var b = new SolidBrush(Color.FromArgb((int)(255 * Math.Max(0, Math.Min(1, p[4]))), SparkCol[(int)p[5]]))) g.FillEllipse(b, p[0] - 3 * S, p[1] - 3 * S, 6 * S, 6 * S);
+            if (Clock.Mono < sparkUntil && sparkLabel != "")
+            {
+                var ts = g.MeasureString(sparkLabel, Draw.fBodyB); var r = new RectangleF(sparkAt.X - ts.Width / 2 - 10 * S, sparkAt.Y - 46 * S, ts.Width + 20 * S, ts.Height + 8 * S);
+                Theme.Fill(g, r, r.Height / 2, Theme.Blue); g.DrawString(sparkLabel, Draw.fBodyB, Brushes.White, r.X + 10 * S, r.Y + 4 * S);
+            }
+        }
 
         Panel BuildReplayPage()
         {
@@ -173,7 +200,19 @@ namespace AdeeboMeter
                 snapAt.Path = new[] { pcLv, lanLv, netLv, 3, netLv };
                 snapAt.PathMain = new[] { double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "% CPU", ms(gw), double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost", "not kept", ms(net) };
                 snapAt.PathSub = new[] { double.IsNaN(mem) ? "" : mem.ToString("0", CultureInfo.CurrentCulture) + "% memory", wifi >= 0 ? "Wi-Fi " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "router", "provider", "in history", "internet" };
-                Draw.PathStrip(g, snapAt, new RectangleF(x, y + 6 * S, w, 80 * S), true);
+                snapAt.Headline = Voice.P("Time travelling: ", "Replaying ") + at.ToString("ddd HH:mm", CultureInfo.CurrentCulture); snapAt.Chip = "⏪ " + at.ToString("HH:mm", CultureInfo.CurrentCulture);
+                Draw.PathStrip(g, snapAt, new RectangleF(x, y + 6 * S, w - (Cfg.Buddy ? 70 * S : 0), 80 * S), true);
+                if (Cfg.Buddy) Draw.Buddy(g, new RectangleF(x + w - 56 * S, y + 2 * S, 52 * S, 52 * S), snapAt, false);
+                // the widget on the desktop travels with you while you drag (and for a few seconds after), then comes back to now
+                if (!replayExample && (replayDrag || (rewindIdx >= 0 && replayIdx != rewindIdx))) { AppCtx.Rewind = snapAt; AppCtx.RewindUntil = Clock.Mono.AddSeconds(5); }
+                rewindIdx = replayIdx;   // opening the page isn't time travel - only moving the cursor is
+                // crossing a new device or a Wi-Fi hop: a burst of dots
+                if (replayIdx != sparkIdx)
+                {
+                    bool first = sparkIdx < 0; sparkIdx = replayIdx;
+                    var hit = data.E.FirstOrDefault(e => Math.Abs((e.T - at).TotalSeconds) <= 60 && ((e.Kind == "lan" && e.Text.StartsWith("New on", StringComparison.Ordinal)) || (e.Kind == "wifi" && e.Text.IndexOf("access point", StringComparison.Ordinal) >= 0)));
+                    if (hit != null && !first) Spark(new PointF(x + (w - (Cfg.Buddy ? 70 * S : 0)) * 0.3f, y + 6 * S + 9 * S), hit.Kind == "lan" ? Voice.P("✨ New device!", "New device") : Voice.P("🦘 Wi-Fi hop!", "Wi-Fi roamed"));
+                }
                 y += 100 * S;
 
                 // in plain words
@@ -236,6 +275,7 @@ namespace AdeeboMeter
                 g.DrawString(L.T("DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC."), Draw.fSmall, muted, new RectangleF(x, y, w, 36 * S));
                 y += 40 * S;
             }
+            PaintSparks(g);
             var need = new Size(0, (int)(y + 20 * S));
             SetNeed(replayCanvas, need);
         }

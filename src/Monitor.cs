@@ -511,7 +511,7 @@ namespace AdeeboMeter
         {
             string key; bool vpn; lock (L) { key = IfaceId + "|" + Gateway + "|" + Ssid; vpn = VpnUp; }
             if (key == ispKey || ispBusy || Cfg.NetSec == 0 || vpn || Gateway == "") return;
-            if (key != ispNet) { ispNet = key; ispTries = 0; } ispKey = key; ispBusy = true; Isp = "";
+            if (key != ispNet) { ispNet = key; ispTries = 0; } ispKey = key; ispBusy = true; Isp = ""; Mood.Isp = "";
             ThreadPool.QueueUserWorkItem(delegate
             {
                 try
@@ -523,7 +523,7 @@ namespace AdeeboMeter
                         string name = ""; var t = Task.Factory.StartNew(() => { try { return Native.PtrName(first); } catch { return ""; } });
                         if (t.Wait(3000)) name = t.Result;
                         string owner = name != first ? DestCheck.OwnerOf(name) : null;
-                        if (owner != null && owner != "cloudflare.com" && owner != "Cloudflare") { Isp = owner; Program.Log("provider: " + owner); }
+                        if (owner != null && owner != "cloudflare.com" && owner != "Cloudflare") { Isp = owner; Mood.Isp = owner; Program.Log("provider: " + owner); }
                     }
                 }
                 catch (Exception e) { Program.Log("isp: " + e.Message); }

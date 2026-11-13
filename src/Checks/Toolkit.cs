@@ -254,7 +254,7 @@ namespace AdeeboMeter
             string grade = worst < 5 ? "A+" : worst < 30 ? "A" : worst < 60 ? "B" : worst < 200 ? "C" : worst < 400 ? "D" : "F";
             rows.Insert(0, R(worst >= 200 ? 2 : worst >= 60 ? 1 : 0, "Bufferbloat grade", grade + " · latency rises up to " + worst.ToString("0", CultureInfo.CurrentCulture) + " ms when the line is full",
                 (worst >= 60 ? "Calls and games stutter while someone uploads or downloads. The fix is on the router: turn on SQM / Smart Queue / fq_codel / cake, set a little under your real speed." : "Busy line or not, calls stay smooth.")
-                + " The grade assumes iperf3 filled the line: if the speeds below are well under what you pay for, the server or this PC was the limit and the line wasn't really full.", "i"));
+                + " The grade assumes iperf3 filled the line: if the speeds below are well under what you pay for, the server or this PC was the limit and the line wasn't really full." + (Mood.Grade(grade) != "" ? " " + Mood.Grade(grade) : ""), "i"));
             return rows;
         }
         static List<string[]> IperfOne(string host, Opt o, bool reverse, Run run)

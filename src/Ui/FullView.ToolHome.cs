@@ -21,12 +21,14 @@ namespace AdeeboMeter
             new[] { "lan", "What's on my network?", "SWITCHES & ROUTERS (SNMP)|ON YOUR NETWORK|REMOTE ACCESS", "inventory|snmp|arp" },
             new[] { "join", "Why can't it join?", "WHY CAN'T IT JOIN?|REPLAY A CAPTURE|TRUST & MAIL", "join|radiuslab|dhcpreplay" },
             new[] { "keys", "Keys and encryption", "KEYS & ENCRYPTION", "encrypt|decrypt|keys" },
-            new[] { "win", "Windows and certificates", "WINDOWS|CERTIFICATES & FILES", "winev|certs|fw" },
+            new[] { "cert", "Is the padlock OK?", "CERTIFICATES & HTTPS", "https|chain|certfile" },
+            new[] { "win", "Windows", "WINDOWS", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
             new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },   // the PC's own checks: on no other card
             new[] { "calc", "Work it out", "CALCULATORS", "subnet|stack|bandwidth" },   // pure arithmetic, nothing sent
             new[] { "game", "Is it my game?", "GAMING", "prematch|gpn|tonight" },
-            new[] { "time", "How has my network been?", "OVER TIME|SHARE A DIAGNOSIS|PRIVACY & IPV6", "month|rushhour|vpnleak" } };
+            new[] { "time", "How has my network been?", "OVER TIME|SHARE A DIAGNOSIS|PRIVACY & IPV6", "month|rushhour|vpnleak" },
+            new[] { "fun", "Make it fun", "JUST FOR FUN", "roast|therapy|letter" } };
         string tbQ = "";   // the question page open ("" = all questions)
         DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
         static bool ByQuestion { get { return Cfg.TbView != "list"; } }

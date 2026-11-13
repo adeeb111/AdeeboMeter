@@ -256,18 +256,115 @@ namespace AdeeboMeter
         public static string MemStr(long b) { return b >= 1073741824 ? (b / 1073741824.0).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : (b / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB"; }
         public static string Word(int l) { return l == 2 ? "Problem" : l == 1 ? "Busy" : "OK"; }
 
+        // ---------- the buddy: a little face for the five dots. All green: smug (a wink now and then). Your PC busy: sweating.
+        // Your Wi-Fi or router: dizzy. Past the router (provider, DNS, internet) red: betrayed. Amber anywhere: worried. Asleep
+        // on the folded chip while all is quiet. Drawn with a few lines - no pictures, nothing loaded.
+        public static string BuddyMood(Snap s)
+        {
+            int worst = -1, lv = 0; for (int i = 0; i < 5 && i < s.Path.Length; i++) if (s.Path[i] >= 1 && s.Path[i] <= 2 && s.Path[i] > lv) { lv = s.Path[i]; worst = i; }
+            if (lv == 0) return "smug"; if (lv == 1) return worst == 0 ? "sweaty" : "worried";
+            return worst == 0 ? "sweaty" : worst == 1 ? "dizzy" : "betrayed";
+        }
+        // hats, unlocked by points (Learn and the games earn them); at Halloween and in December the buddy dresses up on its own
+        // unless you've picked one. Too small to see on the folded chip, so only drawn on the card and bigger.
+        public static readonly string[] Hats = { "", "cap", "party", "crown" }; public static readonly int[] HatPts = { 0, 50, 150, 400 };
+        public static string HatNow()
+        {
+            string h = Cfg.BuddyHat; int i = Array.IndexOf(Hats, h);
+            if (i > 0 && Points.Me.Total >= HatPts[i]) return h;
+            string se = Mood.Season(); return Voice.Serious ? "" : se == "halloween" ? "witch" : DateTime.Today.Month == 12 ? "santa" : "";
+        }
+        static void Hat(Graphics g, RectangleF r, string hat)
+        {
+            float u = r.Width / 20f, cx = r.X + r.Width / 2, top = r.Y + 1.5f * u;
+            switch (hat)
+            {
+                case "cap":
+                    using (var b = new SolidBrush(Color.FromArgb(31, 111, 235))) { g.FillPie(b, cx - 6 * u, top - 5 * u, 12 * u, 10 * u, 180, 180); g.FillRectangle(b, cx - 1 * u, top - 0.6f * u, 9 * u, 1.6f * u); }
+                    break;
+                case "party":
+                    using (var b = new SolidBrush(Color.FromArgb(230, 90, 160))) g.FillPolygon(b, new[] { new PointF(cx - 4.5f * u, top + 0.5f * u), new PointF(cx + 4.5f * u, top + 0.5f * u), new PointF(cx + 1 * u, top - 9 * u) });
+                    using (var p = new Pen(Color.FromArgb(255, 210, 70), 1.1f * u)) { g.DrawLine(p, cx - 3 * u, top - 1.5f * u, cx + 3.2f * u, top - 1.5f * u); g.DrawLine(p, cx - 1.4f * u, top - 4.5f * u, cx + 2.2f * u, top - 4.5f * u); }
+                    using (var b = new SolidBrush(Color.FromArgb(255, 210, 70))) g.FillEllipse(b, cx - 0.4f * u, top - 10.5f * u, 2.8f * u, 2.8f * u);
+                    break;
+                case "crown":
+                    using (var b = new SolidBrush(Color.FromArgb(240, 190, 40))) g.FillPolygon(b, new[] { new PointF(cx - 6 * u, top + 0.5f * u), new PointF(cx - 6 * u, top - 4.5f * u), new PointF(cx - 3 * u, top - 1.5f * u), new PointF(cx, top - 6 * u), new PointF(cx + 3 * u, top - 1.5f * u), new PointF(cx + 6 * u, top - 4.5f * u), new PointF(cx + 6 * u, top + 0.5f * u) });
+                    using (var b = new SolidBrush(Color.FromArgb(207, 34, 46))) g.FillEllipse(b, cx - 1 * u, top - 2 * u, 2 * u, 2 * u);
+                    break;
+                case "santa":
+                    using (var b = new SolidBrush(Color.FromArgb(207, 34, 46))) g.FillPolygon(b, new[] { new PointF(cx - 6 * u, top), new PointF(cx + 6 * u, top), new PointF(cx + 2.5f * u, top - 5 * u), new PointF(cx + 8 * u, top - 4 * u), new PointF(cx - 1 * u, top - 7.5f * u) });
+                    using (var b = new SolidBrush(Color.FromArgb(245, 245, 245))) using (var p = new Pen(Color.FromArgb(200, 200, 200), Math.Max(1f, u / 3))) { g.FillRectangle(b, cx - 6.5f * u, top - 1 * u, 13 * u, 2.2f * u); g.DrawRectangle(p, cx - 6.5f * u, top - 1 * u, 13 * u, 2.2f * u); g.FillEllipse(b, cx + 7 * u, top - 5.3f * u, 2.6f * u, 2.6f * u); g.DrawEllipse(p, cx + 7 * u, top - 5.3f * u, 2.6f * u, 2.6f * u); }
+                    break;
+                case "witch":
+                    using (var b = new SolidBrush(Color.FromArgb(40, 30, 60))) { g.FillPolygon(b, new[] { new PointF(cx - 4 * u, top), new PointF(cx + 4 * u, top), new PointF(cx + 2.5f * u, top - 9 * u) }); g.FillEllipse(b, cx - 8 * u, top - 1 * u, 16 * u, 2.4f * u); }
+                    using (var b = new SolidBrush(Color.FromArgb(230, 120, 30))) g.FillRectangle(b, cx - 3.6f * u, top - 2 * u, 7.2f * u, 1.2f * u);
+                    break;
+            }
+        }
+        public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep)
+        {
+            string m = asleep ? "asleep" : BuddyMood(s);
+            Color body = m == "betrayed" || m == "dizzy" ? Theme.LvSoft(2) : m == "worried" || m == "sweaty" ? Theme.LvSoft(1) : Theme.LvSoft(0);
+            Color ink = Theme.Dark ? Color.FromArgb(230, 235, 240) : Color.FromArgb(40, 48, 60);
+            using (var b = new SolidBrush(body)) g.FillEllipse(b, r);
+            using (var p = new Pen(m == "betrayed" || m == "dizzy" ? Theme.Red : m == "worried" || m == "sweaty" ? Theme.Amber : Theme.Green, Math.Max(1f, r.Width / 16))) g.DrawEllipse(p, r);
+            float u = r.Width / 20f, cx = r.X + r.Width / 2, ey = r.Y + 8 * u, ex = 4 * u;
+            using (var p = new Pen(ink, Math.Max(1f, 1.4f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+            using (var b = new SolidBrush(ink))
+            {
+                bool wink = m == "smug" && DateTime.Now.Second % 12 == 0;   // now and then - only seen while the card is open
+                switch (m)
+                {
+                    case "asleep":
+                        g.DrawArc(p, cx - ex - 2 * u, ey - u, 4 * u, 3 * u, 20, 140); g.DrawArc(p, cx + ex - 2 * u, ey - u, 4 * u, 3 * u, 20, 140);
+                        g.DrawLine(p, cx - 1.5f * u, r.Y + 14 * u, cx + 1.5f * u, r.Y + 14 * u);
+                        using (var zb = new SolidBrush(Theme.Muted)) using (var zf = new Font("Segoe UI", Math.Max(5f, 4.5f * u), FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("z", zf, zb, r.Right - 4 * u, r.Y - 2 * u);
+                        break;
+                    case "smug":
+                        g.DrawLine(p, cx - ex - 1.5f * u, ey, cx - ex + 1.5f * u, ey);   // half-closed, pleased
+                        if (wink) g.DrawLine(p, cx + ex - 1.5f * u, ey, cx + ex + 1.5f * u, ey); else g.FillEllipse(b, cx + ex - 1.2f * u, ey - 1.5f * u, 2.4f * u, 2.4f * u);
+                        g.DrawArc(p, cx - 4 * u, r.Y + 10 * u, 8 * u, 5 * u, 10, 140);   // a sideways smirk
+                        break;
+                    case "worried":
+                        g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
+                        g.DrawLine(p, cx - ex - 2 * u, ey - 3 * u, cx - ex + 1.5f * u, ey - 4 * u); g.DrawLine(p, cx + ex + 2 * u, ey - 3 * u, cx + ex - 1.5f * u, ey - 4 * u);   // brows up
+                        g.DrawLine(p, cx - 3 * u, r.Y + 14 * u, cx + 3 * u, r.Y + 14 * u);
+                        break;
+                    case "sweaty":
+                        g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
+                        g.DrawArc(p, cx - 3 * u, r.Y + 13 * u, 6 * u, 4 * u, 200, 140);
+                        using (var db = new SolidBrush(Color.FromArgb(90, 160, 230))) g.FillEllipse(db, r.X + 16 * u, r.Y + 3.2f * u, 2.2f * u, 3.2f * u);   // a drop of sweat
+                        break;
+                    case "dizzy":
+                        foreach (var dx in new[] { -ex, ex }) { g.DrawLine(p, cx + dx - 1.5f * u, ey - 1.5f * u, cx + dx + 1.5f * u, ey + 1.5f * u); g.DrawLine(p, cx + dx - 1.5f * u, ey + 1.5f * u, cx + dx + 1.5f * u, ey - 1.5f * u); }
+                        g.DrawEllipse(p, cx - 1.5f * u, r.Y + 12.5f * u, 3 * u, 3 * u);
+                        break;
+                    default:   // betrayed: wide eyes, a wobbly frown, one tear (a hat, if any, is drawn after the switch)
+                        g.FillEllipse(b, cx - ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u); g.FillEllipse(b, cx + ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u);   // big wet eyes: dark, with a shine
+                        using (var hb = new SolidBrush(Color.White)) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
+                        g.DrawArc(p, cx - 3.5f * u, r.Y + 13.5f * u, 7 * u, 4 * u, 200, 140);
+                        using (var tb = new SolidBrush(Color.FromArgb(90, 160, 230))) g.FillEllipse(tb, cx - ex - 0.8f * u, ey + 3.2f * u, 1.6f * u, 2.6f * u);
+                        break;
+                }
+            }
+            if (!asleep && r.Width >= 22 * S) { string h = HatNow(); if (h != "") Hat(g, r, h); }
+        }
         public static Bitmap Chip(Snap s, double dwell)
         {
             var ts = Measure(s.Chip, fSmall, 0);
-            int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S), H = (int)(26 * S);
+            int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0)), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
                 Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); Theme.Stroke(g, r, H / 2f, Theme.Line, 1);
                 float x = 9 * S;
-                Theme.Logo(g, new RectangleF(x, (H - 16 * S) / 2, 16 * S, 16 * S), false); x += 22 * S;
-                using (var b = new SolidBrush(Theme.Lv(s.Level))) g.FillEllipse(b, x, (H - 8 * S) / 2, 8 * S, 8 * S); x += 14 * S;
+                if (Cfg.Buddy) { Buddy(g, new RectangleF(x - 2 * S, (H - 20 * S) / 2, 20 * S, 20 * S), s, s.Level == 0 && !s.Call); x += 36 * S; }   // folded and all quiet: asleep
+                else
+                {
+                    Theme.Logo(g, new RectangleF(x, (H - 16 * S) / 2, 16 * S, 16 * S), false); x += 22 * S;
+                    using (var b = new SolidBrush(Theme.Lv(s.Level))) g.FillEllipse(b, x, (H - 8 * S) / 2, 8 * S, 8 * S); x += 14 * S;
+                }
                 using (var b = new SolidBrush(Theme.Ink)) g.DrawString(s.Chip, fSmall, b, x, (H - ts.Height) / 2);
                 if (dwell > 0)
                 {
@@ -420,7 +517,9 @@ namespace AdeeboMeter
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(s.Headline, fHead, (int)inner).Height;
             float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure("Why: " + s.Hint, fSmall, (int)inner).Height + 4 * S;
-            float h = pad + 24 * S + headH + hintH + 10 * S + 52 * S + (s.Call ? 44 * S : 0) + 3 * 20 * S + 6 * S + 17 * S + 34 * S + pad;
+            string quip = ReferenceEquals(s, AppCtx.Rewind) ? "" : Mood.Quip(s), season = Mood.SeasonLine(s);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */ string extra = (quip + (quip != "" && season != "" ? "\n" : "") + season).Trim();
+            float quipH = extra == "" ? 0 : Measure(extra, fSmall, (int)inner).Height + 4 * S;
+            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 52 * S + (s.Call ? 44 * S : 0) + 3 * 20 * S + 6 * S + 17 * S + 34 * S + pad;
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
@@ -435,10 +534,12 @@ namespace AdeeboMeter
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
                 Theme.Pill(g, Word(s.Level), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Level, S);
-                if (CardHovered) { string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0); g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S); }   // the countdown only while you look: unhovered, the card isn't redrawn each second
+                if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 24 * S, y, 24 * S, 24 * S), s, false);   // the buddy, awake, in the corner of the card
+                else if (CardHovered) { string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0); g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S); }   // the countdown only while you look: unhovered, the card isn't redrawn each second
                 y += 24 * S;
                 using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2));
                 y += headH;
+                if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH)); y += quipH; }   // the mood's line and the season's - personality, after the facts
                 if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString("Why: " + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
                 y += 10 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 52 * S);

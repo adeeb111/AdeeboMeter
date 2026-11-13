@@ -134,7 +134,7 @@ namespace AdeeboMeter
         static readonly string[] Fields = { "frame.protocols", "eth.src", "ip.src", "ipv6.src", "ospf.area_id", "vrrp.virt_rtr_id", "hsrp.group", "eigrp.as", "stp.root.hw", "stp.flags.tc", "dhcp.option.dhcp_server_id" };
         // the "who announces itself" preset: mDNS, SSDP / UPnP, LLMNR and NetBIOS - names and devices, not routing
         const string DiscFilter = "udp port 5353 or udp port 1900 or udp port 5355 or udp port 137 or udp port 138";
-        static readonly string[] DiscFields = { "frame.protocols", "eth.src", "ip.src", "ipv6.src", "dns.qry.name", "nbns.name", "http.server" };
+        static readonly string[] DiscFields = { "frame.protocols", "eth.src", "ip.src", "ipv6.src", "dns.qry.name", "nbns.name", "http.server", "dns.resp.name" };
         public static List<string[]> Listen(Monitor m, string secsIn, Toolkit.Run run) { return Listen(m, secsIn, run, false); }
         public static List<string[]> Listen(Monitor m, string secsIn, Toolkit.Run run, bool discovery)
         {
@@ -171,6 +171,7 @@ namespace AdeeboMeter
                 List<string[]> l; if (!seen.TryGetValue(k, out l)) { l = new List<string[]>(); seen[k] = l; } if (l.Count < 200) l.Add(f); int hc; heard.TryGetValue(k, out hc); heard[k] = hc + 1;
             }
             if (seen.Count == 0) rows.Add(discovery ? R(0, "Heard nothing", "no mDNS, SSDP, LLMNR or NetBIOS in " + secs + " s", "A quiet, well-run network - or one that blocks multicast between devices (common on guest Wi-Fi).", "m") : R(0, "Heard nothing", "no routing protocol, redundancy or switch control traffic in " + secs + " s", "That's how a user segment should look: routers keep their protocols on their own links.", "m"));
+            if (discovery) rows.AddRange(Things(seen.Values.SelectMany(v => v)));
             foreach (var kv in seen.OrderBy(x => Order(x.Key)))
             {
                 var from = kv.Value.Select(x => x[2] != "" ? x[2] : x[3] != "" ? x[3] : x[1]).Distinct().ToList();
@@ -201,6 +202,50 @@ namespace AdeeboMeter
         {
             var names = l.SelectMany(x => x.Skip(4).Take(3)).SelectMany(x => x.Split(',')).Select(x => x.Trim()).Where(x => x != "").Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList();
             return names.Count > 0 ? " · " + string.Join(", ", names) : "";
+        }
+        // ---------- what the smart things are: guessed from the service names they announce. Look, never touch: AdeeboMeter
+        // sends them nothing, asks for no password and has no buttons that control them - each hint says which app does.
+        static readonly string[][] ThingKinds = {
+            new[] { "_googlecast", "Chromecast / Google TV", "Cast to it from YouTube or Chrome; settings live in the Google Home app." },
+            new[] { "_airplay", "AirPlay device (Apple TV, AirPlay speaker or TV)", "Use it from an iPhone or Mac's AirPlay menu; settings on the device or in the Home app." },
+            new[] { "_raop", "AirPlay speaker", "Plays sound from Apple devices; settings in its maker's app." },
+            new[] { "_hap", "HomeKit accessory", "Control it from Apple's Home app." },
+            new[] { "_matter", "Matter smart-home device", "Works with Google Home, Apple Home, Alexa or SmartThings - whichever you set it up with." },
+            new[] { "_hue", "Philips Hue bridge", "Control the lights from the Hue app." },
+            new[] { "_spotify-connect", "Spotify Connect speaker", "Pick it in Spotify's device list." },
+            new[] { "_sonos", "Sonos speaker", "The Sonos app." },
+            new[] { "_amzn-wplay", "Fire TV", "The Fire TV remote or app." },
+            new[] { "_ipp", "Printer", "Windows finds it in Settings > Printers; its own page is usually its address in a browser." },
+            new[] { "_printer", "Printer", "Windows finds it in Settings > Printers." },
+            new[] { "_home-assistant", "Home Assistant", "Your smart-home hub - its own web page and app." },
+            new[] { "_esphomelib", "ESPHome gadget", "Managed from Home Assistant or ESPHome." },
+            new[] { "_companion-link", "Apple device (iPhone, iPad or Mac)", "Just announcing itself to other Apple devices." },
+            new[] { "_smb", "Shared folders", "A PC or NAS sharing files - Toolbox › Shares lists them." },
+            new[] { "_ssh", "Something with SSH open", "A computer, NAS or router you can log into. Fine if it's yours and has a strong password." },
+            new[] { "roku", "Roku", "The Roku remote or app." },
+            new[] { "mediarenderer", "TV or speaker that accepts media (DLNA)", "Cast from a media app that supports DLNA." },
+            new[] { "dial-multiscreen", "Smart TV (casting)", "YouTube and Netflix can cast to it from a phone." },
+            new[] { "internetgatewaydevice", "Your router, offering UPnP", "UPnP lets devices open ports on your router by themselves - handy for games and consoles, a risk if something unwanted is inside. You can turn it off in the router's settings." } };
+        static List<string[]> Things(IEnumerable<string[]> lines)
+        {
+            var found = new Dictionary<int, HashSet<string>>();
+            foreach (var f in lines)
+            {
+                string all = string.Join(" ", f.Skip(4)).ToLowerInvariant(); if (all.Trim() == "") continue;
+                string who = f.Length > 2 && f[2] != "" ? f[2] : f.Length > 3 ? f[3] : "";
+                for (int i = 0; i < ThingKinds.Length; i++) if (all.Contains(ThingKinds[i][0])) { HashSet<string> h; if (!found.TryGetValue(i, out h)) { h = new HashSet<string>(); found[i] = h; } if (who != "" && h.Count < 4) h.Add(who); }
+            }
+            var rows = new List<string[]>();
+            if (found.Count == 0) return rows;
+            rows.Add(R(-1, "Smart things here", "", "", ""));
+            var named = new HashSet<string>();
+            foreach (var kv in found.OrderBy(x => x.Key))
+            {
+                var t = ThingKinds[kv.Key]; if (!named.Add(t[1])) continue; int lv = t[0] == "internetgatewaydevice" || t[0] == "_ssh" ? 1 : 3;
+                rows.Add(R(lv, t[1], kv.Value.Count > 0 ? string.Join(", ", kv.Value) : "heard on the network", t[2], "m"));
+            }
+            rows.Add(R(3, "Look, don't touch", "AdeeboMeter only listens to what these devices announce", "It never sends them commands or asks for their passwords - control stays in each device's own app.", "i"));
+            return rows;
         }
         static string DiscAdvice(string k, out int lv)
         {

@@ -617,10 +617,39 @@ in: 192.0.2.31
 1|LAPTOP01.example.net|machine certificate · expires in 12 days|Renews by itself on the company network - connect once before then.|w
 
 == certfile
-in: C:\certs\server.crt
-0|Certificate|vpn.example.com · valid until 9 Jun 2027||m
-3|Names|vpn.example.com, 203.0.113.40||m
-3|Issued by|Example CA R3 · RSA 2048 · SHA-256||m
+in: -----BEGIN CERTIFICATE-----MIIB6DCCAY2gAwIBAgICMAMwCgYIKoZIzj0EAwIwQDEoMCYGA1UEAwwfQWRlZWJvTWV0ZXIgU2FtcGxlIEludGVybWVkaWF0ZTEUMBIGA1UECgwLRXhhbXBsZSBPcmcwHhcNMjYxMTEzMDMyMjQ5WhcNMjgxMTEyMDMyMjQ5WjAaMRgwFgYDVQQDDA93d3cuZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATy7I8sNF/h201jSxV7ZvVqJWFlDf0TLcLle8eUzp8fGWmvOnCcQ2iLNNakAjbxx/AW59g3E9kXGVcRkOC2fQpqo4GcMIGZMAkGA1UdEwQCMAAwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMBMCcGA1UdEQQgMB6CD3d3dy5leGFtcGxlLmNvbYILZXhhbXBsZS5jb20wHQYDVR0OBBYEFLsutWw+dZGsegHTFwpPHKh07A20MB8GA1UdIwQYMBaAFKaGxbpE81z8lxwuAQOwUMyZgWLyMAoGCCqGSM49BAMCA0kAMEYCIQDMoH11ylwwYl76EA1By240WRBL76GzIm8cOGrPIcZt1QIhALTVNDy+Di0mN3WfTmRUOlGbtgb+HzmnJru6IwioQ6gb-----END CERTIFICATE-----
+0|Certificate|www.example.com - good for 730 more days. Nothing to do.||m
+3|Subject|CN=www.example.com|Who it is for.|m
+3|Issued by|CN=AdeeboMeter Sample Intermediate, O=Example Org|Who vouches for it.|m
+0|Valid|2026-11-12 to 2028-11-12 · expires in 730 days|Outside these dates every app refuses it.|m
+3|Key|ECDSA P-256|The public half of the key pair - the server proves it holds the private half.|m
+3|Names (SAN)|DNS Name=www.example.com, DNS Name=example.com|The names it is valid for.|m
+3|Is it a CA?|no - an end certificate (a server, a person, a device)|CA:true means it vouches for others; a site's own certificate should say no.|m
+3|SHA-256 fingerprint|26C1DAC4CC280BD55DD8C169010E7B53E387B6EEDD33E3353B2C212B4297FAF2|Click to copy.|m
+
+== chain
+in: -----BEGIN CERTIFICATE-----MIIB6DCCAY2gAwIBAgICMAMwCgYIKoZIzj0EAwIwQDEoMCYGA1UEAwwfQWRlZWJvTWV0ZXIgU2FtcGxlIEludGVybWVkaWF0ZTEUMBIGA1UECgwLRXhhbXBsZSBPcmcwHhcNMjYxMTEzMDMyMjQ5WhcNMjgxMTEyMDMyMjQ5WjAaMRgwFgYDVQQDDA93d3cuZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATy7I8sNF/h201jSxV7ZvVqJWFlDf0TLcLle8eUzp8fGWmvOnCcQ2iLNNakAjbxx/AW59g3E9kXGVcRkOC2fQpqo4GcMIGZMAkGA1UdEwQCMAAwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMBMCcGA1UdEQQgMB6CD3d3dy5leGFtcGxlLmNvbYILZXhhbXBsZS5jb20wHQYDVR0OBBYEFLsutWw+dZGsegHTFwpPHKh07A20MB8GA1UdIwQYMBaAFKaGxbpE81z8lxwuAQOwUMyZgWLyMAoGCCqGSM49BAMCA0kAMEYCIQDMoH11ylwwYl76EA1By240WRBL76GzIm8cOGrPIcZt1QIhALTVNDy+Di0mN3WfTmRUOlGbtgb+HzmnJru6IwioQ6gb-----END CERTIFICATE----------BEGIN CERTIFICATE-----MIIB0jCCAXegAwIBAgICIAIwCgYIKoZIzj0EAwIwOzEjMCEGA1UEAwwaQWRlZWJvTWV0ZXIgU2FtcGxlIFJvb3QgQ0ExFDASBgNVBAoMC0V4YW1wbGUgT3JnMB4XDTI2MTExMzAzMjI0OVoXDTMxMTExMjAzMjI0OVowQDEoMCYGA1UEAwwfQWRlZWJvTWV0ZXIgU2FtcGxlIEludGVybWVkaWF0ZTEUMBIGA1UECgwLRXhhbXBsZSBPcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQaHNOVS9dDD3s7qEK29njoitQYx7sfh7oggp5jhg0yhCr+aNv4KZC2fXFFoOWosrZ9h8ndXGzGqCR8xktFwRuYo2YwZDASBgNVHRMBAf8ECDAGAQH/AgEAMA4GA1UdDwEB/wQEAwIBBjAdBgNVHQ4EFgQUpobFukTzXPyXHC4BA7BQzJmBYvIwHwYDVR0jBBgwFoAUKP35BHBt7RaTb08QJraTbBITVVowCgYIKoZIzj0EAwIDSQAwRgIhANIBCBBiAPnXnGveDBcE9lZAqAWirHgpGID5X33vbhK0AiEA2ZtpRWIw8ugLR7lT+3mqz0C/oA0dGlc7z0sDvh22904=-----END CERTIFICATE----------BEGIN CERTIFICATE-----MIIByTCCAW+gAwIBAgICEAEwCgYIKoZIzj0EAwIwOzEjMCEGA1UEAwwaQWRlZWJvTWV0ZXIgU2FtcGxlIFJvb3QgQ0ExFDASBgNVBAoMC0V4YW1wbGUgT3JnMB4XDTI2MTExMzAzMjI0OVoXDTM2MTExMDAzMjI0OVowOzEjMCEGA1UEAwwaQWRlZWJvTWV0ZXIgU2FtcGxlIFJvb3QgQ0ExFDASBgNVBAoMC0V4YW1wbGUgT3JnMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEyyzk3XPElqY36Dd5q5ze6vlSTz4C53paQlL0E7xqvT5mw593Oy51Y3Huevl2QYGa0lqq4Cx43RaCw5mF/e25G6NjMGEwHQYDVR0OBBYEFCj9+QRwbe0Wk29PECa2k2wSE1VaMB8GA1UdIwQYMBaAFCj9+QRwbe0Wk29PECa2k2wSE1VaMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMCA0gAMEUCIQCTT8WK1zZNzkU/Xsv91LimfoCIolBIYOWR9FYRvI1fMgIgOlX+WaCpXC14g3AQmgV8SgaZXdl2z03EA1gGipqHZBc=-----END CERTIFICATE-----|
+2|In plain words|Every link holds, but the top is a root this PC doesn't trust - a private CA (add it to Windows' trusted roots if it's yours) or something in the middle.||i
+-1|THE CHAIN OF TRUST, ROOT AT THE TOP|||m
+2|✗  root|AdeeboMeter Sample Root CA · until 10 Nov 2036 · you gave it|a root this PC doesn't trust (not in Windows' trusted roots).|m
+0|✓  middle (intermediate)|AdeeboMeter Sample Intermediate · until 12 Nov 2031 · you gave it|Signed by the one above, and allowed to sign the one below.|m
+0|✓  your certificate|www.example.com · until 12 Nov 2028|Signed by the one above.|m
+
+== https
+in: www.example.com
+0|www.example.com:443|A good padlock: TLS 1.3, the right name, a chain Windows trusts.|Two short handshakes, no HTTP request.|m
+-1|THE CONNECTION|||m
+0|TLS version|TLS 1.3 (TLS 1.2 works too) · handshake 38 ms||m
+3|Key agreement|ECDHE|A fresh secret for every session (forward secrecy): a key stolen later can't open today's traffic.|m
+3|Server's key|ECDSA|A small, fast elliptic-curve key proves who the server is.|m
+3|Encryption|AES-256-GCM|Locks the data and seals it, so any change on the way is caught.|m
+3|Hash|SHA-384|Mixes the keys and checks the handshake wasn't tampered with.|m
+0|Name matches|yes - valid for www.example.com||m
+0|Expires|in 214 days (14 Jun 2027)||m
+1|In plain words|Your certificate is fine, but the server forgot to send the middle certificate.||i
+-1|THE CHAIN OF TRUST, ROOT AT THE TOP|||m
+2|✗  missing|the certificate that signed the one below (Example CA R3)|The server should send it with its own certificate.|m
+0|✓  your certificate|www.example.com · until 14 Jun 2027|Signed by the one above.|m
 
 == pfx
 in: C:\certs\vpn.pfx|
@@ -891,6 +920,35 @@ in: 50 GB
 == qr
 0|QR code|ready - click to show it, then point your phone's camera at it|The code holds only this text: no link, no address, nothing to download.|i
 3|What it says|AdeeboMeter 2026-11-12 17:30 · Problem: Wi-Fi signal is weak · Why: 31% · PC OK · LAN Problem · ISP OK|Names, Wi-Fi name and addresses are left out.|i
+
+== roast
+0|Grade|A · the last 7 days||m
+3||Router delay 1.8 ms. Your home network ate. No notes.||m
+3||14 ms to the internet. Main character ping.||m
+3||Slowest: Thursdays around 21:00. Everyone's online and so is your lag.||m
+3||Honestly? Hard to roast. Your provider is doing okay. For now.||m
+0|The picture|Roast-20261112-1730.png - square, ready to post|No Wi-Fi name, no addresses, no provider name - just the grade and the burns.|m
+3|Copy as text|for a chat||m
+
+== therapy
+in: yesterday
+-1|Network therapy: yesterday evening||
+3|Let's talk about it|Let's talk about yesterday evening. You're safe now. The packets are flowing. Take a breath.||m
+3|How it started|At 19:42 something felt off. Wi-Fi signal dropped to 38%. It seemed small. It always seems small.||m
+2|The low point|Then, at 19:51: the internet went quiet. The internet went quiet once - 6 min with nothing. In total 5 things went wrong in 24 min. It's okay to feel things about this.||m
+3|Healing|At 20:06 it came back: the internet is back. Healing isn't linear, but it got there.||m
+3|What we learned|This wasn't you. The trouble lived past your router, in your provider's part of the world. You can't fix them. You can only send them a letter (Toolbox › Letter to my provider).||m
+-1|Keep it||
+0|The illustrated story|Therapy-20261111-1942.html - opens in your browser|A page with a picture for each chapter. Print > Save as PDF to keep it.|m
+3|Markdown|Therapy-20261111-1942.md|For notes, a blog, Discord or GitHub.|m
+3|Copy the story|as Markdown, to paste anywhere|Your Wi-Fi name and addresses are left out.|m
+
+== letter
+in: 30
+1|Your case|3 outages · 41 min · smooth 98.7%||m
+3|The letter|Subject: My connection over the last 30 days, measured ¶ Hello, ¶ I've been measuring my connection from my PC for the last 30 days. In that time it dropped completely 3 times, for 41 min in total. It was smooth 98.7% of the time. That sounds high until you work it out: it's roughly 9.4 h of trouble a month. ¶ My own network isn't the problem: my router answered in 2.1 ms on average the whole time, so the trouble is past my router. ¶ I'm not angry. I'm just measuring. Could you check my line and tell me what you find?|Read it before you send it - it's your name on it.|m
+3|Saved|Letter-20261112-1730.txt||m
+3|Want proof too?|Toolbox › Report for my ISP|Traces the route and shows the hop where the loss starts - attach it to the letter.|i
 
 == friend
 0|Encrypted|AdeeboMeter-diagnosis-20261112-1730.txt.adeebo - next to the original||m

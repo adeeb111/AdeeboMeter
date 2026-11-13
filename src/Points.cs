@@ -86,7 +86,7 @@ namespace AdeeboMeter
         // Only items AdeeboMeter can really award count (a line typed into points.txt for something that doesn't exist
         // counts 0), the replay bonus only for the replay tools, and never more than everything there is to earn.
         public int Total { get { lock (k) return Math.Min(Max, map.Where(kv => Known(kv.Key)).Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) && Replay.Contains(kv.Key) ? ReplayPts : 0))); } }
-        public const int Max = 800;   // a little above everything there is (about 750 - the self-test fails if it grows past this): a file saying more was edited by hand
+        public const int Max = 900;   // a little above everything there is (about 810 - the self-test fails if it grows past this): a file saying more was edited by hand
         static readonly Dictionary<string, bool> known = new Dictionary<string, bool>(StringComparer.Ordinal);
         // tools that were removed: points already earned with them stay earned (a total never drops on an update)
         static readonly HashSet<string> Retired = new HashSet<string>(StringComparer.Ordinal) { "finddev" };

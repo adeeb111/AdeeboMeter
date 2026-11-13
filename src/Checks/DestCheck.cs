@@ -295,7 +295,14 @@ namespace AdeeboMeter
                             new[] { "Expires", days < 0 ? "expired " + (-days) + " days ago" : "in " + days + " days", days < 14 ? "2" : "0" },
                             new[] { "Version", tlsUntrusted ? "not completed" : proto },
                             new[] { "Trusted by Windows", tlsUntrusted ? "no - " + errs : "yes", tlsUntrusted ? "2" : "0" },
-                            new[] { "Inspected on the way", r.Inspected == "" ? "no - straight to the server" : "yes - by " + Draw.Trunc(r.Inspected, 26), r.Inspected == "" ? "0" : "1" } });
+                            new[] { "Encryption", tlsUntrusted ? "-" : string.Join(" · ", CertChain.PartsFrom(ssl, cert, proto).Select(p => p[1]).Where(p => p != "-")) },
+                            new[] { "Inspected on the way", r.Inspected == "" ? "no - straight to the server" : Voice.P("yes - your company inspects HTTPS (" + Draw.Trunc(r.Inspected, 20) + "). Not a fault.", "yes - by " + Draw.Trunc(r.Inspected, 26) + " (a company proxy)"), r.Inspected == "" ? "0" : "1" } });
+                    // a certificate out of its dates: is it the site, or this PC's clock? (one HEAD to Windows' own test page)
+                    if (cert != null && (DateTime.Now > cert.NotAfter || DateTime.Now < cert.NotBefore))
+                    {
+                        var clk = WhyFails.Clock().FirstOrDefault();
+                        if (clk != null && clk[0] == "2") { var f0 = r.Findings ?? new List<string[]>(); f0.Add(Row(Voice.P("Your clock is off (" + clk[2] + ") - every certificate looks " + (DateTime.Now < cert.NotBefore ? "'not yet valid'" : "expired") + " to your PC. Fix the clock and HTTPS comes back.", "This PC's clock is wrong (" + clk[2] + "), so certificates look " + (DateTime.Now < cert.NotBefore ? "not yet valid" : "expired") + ". Correct the clock."))); r.Findings = f0; }
+                    }
                     if (tlsUntrusted) { try { ssl.Dispose(); } catch { } stream = Stream.Null; }
                     else stream = ssl;
                 }

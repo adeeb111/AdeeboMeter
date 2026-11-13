@@ -1,5 +1,5 @@
 # Learn mode (short on purpose: two lines and a picture), the deep dives and the app stories. Format: see src/Knowledge/Knowledge.cs.
-# kind: basics | protocol | provider | mobile | windows | apps.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
+# kind: basics | protocol | provider | mobile | crypto | windows | apps.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
 # try: what to do while it records. Keys after == are the names a topic answers to (lower case for Windows processes).
 
 
@@ -592,3 +592,89 @@ line: NSA adds 5G radio to a 4G anchor cell: the phone signals over 4G and gets 
 more: NSA (option 3x) gave early 5G its speed without a new core. Features that need the 5G core - network slicing, the lower-latency user plane, RedCap devices, the newer session handling - only come with SA. On NSA, losing the 4G anchor drops the 5G leg too, so a "5G" icon can flicker while data stalls. Routers usually show which one they're on (EN-DC means NSA). Latency on NSA is close to good 4G; on SA with a nearby UPF it can be lower.
 breaks: A device that only supports SA in a place that only has NSA (or the reverse) falls back to 4G - working, slower.
 ladder: Phone > 4G anchor cell: attach (as in 4G) | 4G anchor > 5G cell: add a 5G leg for this phone (EN-DC) | 5G cell > Phone: extra capacity | Phone > 4G core: all signalling stays here | 4G core > Internet: your data
+
+# ---------------------------------------------------------------- locks and keys: certificates and HTTPS
+== hash|fingerprint|sha-256
+title: A hash - a file's fingerprint
+kind: crypto
+tag: Change one bit, get a completely different fingerprint.
+check: You change one letter in a 2 GB file. What happens to its SHA-256 fingerprint? | It changes completely | It changes by one letter too | It stays the same | It gets shorter
+line: A hash squeezes any file into a short fingerprint (SHA-256: 64 hex digits). The same file always gives the same one.
+breaks: A download whose hash doesn't match the published one is damaged or not the real file - get it again.
+more: You can't turn a fingerprint back into the file, and you can't build a second file with the same fingerprint (with SHA-256 - MD5 and SHA-1 are broken for that). Certificates, Windows Update and package managers all lean on this.
+ladder: Download page > You: setup.exe is 3f2a...9c1d | Your PC > Your PC: hash the file I got - 3f2a...9c1d | Your PC > You: same fingerprint - it's the real file
+
+== aes|symmetric|encryption key
+title: AES - one key locks and unlocks
+kind: crypto
+tag: The fast lock that carries all your data.
+check: In AES, what unlocks the data? | The same key that locked it | The server's certificate | Any long password | The website's address
+line: AES uses one shared key: the same key locks and unlocks. It is fast enough to encrypt everything you send.
+breaks: The hard part isn't the lock - it's getting the same key to both sides without anyone seeing it. That's what the key agreement solves.
+more: AES-GCM also seals the data, so any change on the way is caught. A 128-bit key already has more combinations than anyone could ever try; 256-bit is for the long haul.
+ladder: Your PC > Server: AES-locked data (key K) | Server > Server: unlock with the same key K | Server > Your PC: AES-locked answer (key K)
+
+== diffie-hellman|dh|ecdhe|key exchange
+title: Diffie-Hellman - mixing paint in public
+kind: crypto
+tag: Two strangers agree on a secret while everyone listens.
+check: What do both sides end up with after Diffie-Hellman? | The same secret, never sent across | Each other's password | A certificate | The website's IP address
+line: Both start with a public colour, add their own secret colour and swap the mixes. Each adds its secret again - both get the same final colour; a listener can't unmix it.
+breaks: On its own it doesn't prove who you're talking to - the certificate does that. ECDHE makes a fresh secret every session (forward secrecy).
+ladder: You > Server: public yellow + my secret red = orange | Server > You: public yellow + my secret blue = green | You > You: green + my red = brown | Server > Server: orange + my blue = the same brown
+
+== public-key|private key|key pair|rsa|ecdsa
+title: Public and private keys
+kind: crypto
+tag: Hand out the padlock, keep the only key.
+check: Which half of a key pair must stay secret? | The private key | The public key | Both | Neither
+line: A key pair: anyone may have the public key; only the owner has the private key. What one half does, only the other half can undo.
+breaks: A leaked private key means anyone can pretend to be you - the certificate has to be revoked and replaced.
+more: RSA and ECDSA are the two common kinds. ECDSA keys are much smaller for the same strength (P-256 is about RSA 3072).
+ladder: Server > Everyone: here's my public key | You > Server: (checks against the public key) | Server > Server: only my private key can do this part
+
+== signature|digital signature
+title: A signature - sign with private, check with public
+kind: crypto
+tag: Proves who wrote it, and that nobody changed it.
+check: How do you check a digital signature? | With the signer's public key | With the signer's private key | With your own password | With the file's name
+line: The signer hashes the document and seals the hash with their private key. Anyone checks it with the signer's public key.
+breaks: Change one bit of the document and the check fails - that's the point. "Bad signature" means altered, or signed by someone else.
+ladder: Signer > Signer: hash the document, seal it with my private key | Signer > You: document + signature | You > You: open the seal with the public key - the hash matches
+
+== certificate|cert|x.509|passport
+title: A certificate - the server's passport
+kind: crypto
+tag: Name, photo (the public key), dates, and the issuer's stamp.
+check: Who vouches for a certificate? | Its issuer, a certificate authority | The website itself, always | Your internet provider | Windows Update
+line: A certificate ties a name (www.example.com) to a public key, with start and end dates, signed by an issuer that vouches for it.
+breaks: Wrong name, past its end date, or an issuer your PC doesn't trust: the padlock breaks. Toolbox › HTTPS check says which.
+more: The names it is valid for are in the SAN list. A site's own certificate says CA: false; only issuers say CA: true.
+ladder: Issuer > Server: I checked you own www.example.com - here's your signed passport | Server > You: my passport | You > You: right name, in date, stamp from an issuer I trust
+
+== chain-of-trust|chain|intermediate|root ca
+title: The chain of trust - a ladder
+kind: crypto
+tag: Root at the top, your certificate at the bottom.
+check: A site works in a browser but an app says "untrusted". What's the usual cause? | The server doesn't send its middle certificate | The site is down | The DNS is wrong | The Wi-Fi is weak
+line: Your PC trusts a few roots. A root signs a middle (intermediate) certificate, which signs the site's - each link checked up to a root.
+breaks: The classic break: the server forgets the middle certificate. Browsers often find it anyway; apps and devices don't. Toolbox › Chain check shows the ladder.
+ladder: Root CA > Middle CA: I vouch for you (signed) | Middle CA > Site: I vouch for you (signed) | Site > Your PC: my certificate + the middle one | Your PC > Your PC: climb the ladder to a root I trust
+
+== revocation|crl|ocsp|revoked
+title: Revocation - cancelling a passport early
+kind: crypto
+tag: A list of certificates that must not be trusted any more.
+check: What does a revocation list (CRL) hold? | Serial numbers of certificates withdrawn early | Every website's address | Expired passwords | The fastest servers
+line: When a private key leaks, the issuer withdraws the certificate before its end date and lists its serial number (CRL) - or answers "revoked" when asked (OCSP).
+breaks: Checking means asking the issuer over the internet, so it can be slow or blocked - AdeeboMeter only asks if you turn it on in Settings.
+ladder: Your PC > Issuer: is serial 3003 still good? | Issuer > Your PC: good (signed answer) | Your PC > Your PC: trust it for now
+
+== clock|time|why the clock matters
+title: Why the clock matters for HTTPS
+kind: crypto
+tag: A wrong clock breaks the padlock before the network does.
+check: Your PC thinks it's the year 2000. What happens to HTTPS? | Every certificate looks "not yet valid" | Pages load faster | Nothing - the clock doesn't matter | Only video breaks
+line: Certificates have a start and an end date. Your PC checks them against its own clock - so a clock that's far off fails every site at once.
+breaks: All sites showing certificate errors at the same time? Check the clock first (Toolbox › Clock check).
+ladder: Server > Your PC: my certificate, valid Nov 2026 - Nov 2027 | Your PC > Your PC: my clock says 2000 - not valid yet | Your PC > You: certificate error on every site

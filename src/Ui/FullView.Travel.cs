@@ -124,6 +124,17 @@ namespace AdeeboMeter
             {
                 int a = int.Parse(st[0], CultureInfo.InvariantCulture), b = int.Parse(st[1], CultureInfo.InvariantCulture);
                 float x1 = x + a * colW + colW / 2, x2 = x + b * colW + colW / 2;
+                if (a == b)   // a step on its own side ("hash the file I got"): a small loop, the words beside it
+                {
+                    using (var p = new Pen(Theme.Muted, 2 * S)) { p.CustomEndCap = Cap45; g.DrawLines(p, new[] { new PointF(x1, sy - 8 * S), new PointF(x1 + 14 * S, sy - 8 * S), new PointF(x1 + 14 * S, sy), new PointF(x1 + 3 * S, sy) }); }
+                    using (var sub = new SolidBrush(Theme.Sub)) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) {
+                        // beside the loop - on the left when the last column leaves no room on the right
+                        float lx = x1 + 20 * S, room = x + w - lx; var ts = g.MeasureString(st[2], Draw.fSmall);
+                        if (room < ts.Width && x1 - x - 24 * S > room) using (var rf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(st[2], Draw.fSmall, sub, new RectangleF(x, sy - 6 * S, x1 - x - 6 * S, 16 * S), rf);
+                        else g.DrawString(st[2], Draw.fSmall, sub, new RectangleF(lx, sy - 12 * S, Math.Max(40 * S, room), 16 * S), nw);
+                    }
+                    sy += rowH; continue;
+                }
                 using (var p = new Pen(a < b ? Theme.Blue : Theme.Green, 2 * S)) { p.CustomEndCap = Cap45; g.DrawLine(p, x1, sy, x2 + (a < b ? -4 * S : 4 * S), sy); }
                 using (var sub = new SolidBrush(Theme.Sub)) using (var c = new StringFormat { Alignment = StringAlignment.Center })
                     g.DrawString(st[2], Draw.fSmall, sub, new RectangleF(Math.Min(x1, x2), sy - 17 * S, Math.Abs(x2 - x1), 16 * S), c);

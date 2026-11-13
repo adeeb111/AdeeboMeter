@@ -122,6 +122,8 @@ namespace AdeeboMeter
                 T("encrypt", "KEYS", "Encrypt a file", "File - path of the file|For - code (share with a code) or recipient names, e.g. Munif, Lab team|Also for me? - yes (default) or no", (a, r) => FileCrypt.Encrypt(a[0], a[1], a[2], r)),
                 T("decrypt", "KEYS", "Open an encrypted file", "File - a .adeebo or .p7m|Code - for files shared with a code, or a key backup's passphrase", (a, r) => FileCrypt.Decrypt(a[0], a[1], r)),
                 T("certfile", "CERTS", "Inspect a certificate file", "File path, or paste the PEM text", (a, r) => CertTools.Inspect(a[0])),
+                T("chain", "CERTS", "Chain check (the ladder of trust)", "Certificate - file path or pasted PEM|Its intermediate / root files (optional, separate with ;) - empty uses Windows' own stores", (a, r) => CertChain.Check(a[0], a[1])),
+                T("https", "CERTS", "HTTPS check", "Site - e.g. example.com or vpn.example.com:8443", (a, r) => CertChain.Https(a[0], r)),
                 T("pfx", "CERTS", "Check a PFX / P12", "File path|Password - used once, never kept", (a, r) => CertTools.Pfx(a[0], a[1])),
                 T("csr", "CERTS", "Decode a CSR", "File path, or paste the PEM text", (a, r) => CertTools.Csr(a[0])),
                 T("certconv", "CERTS", "Convert a certificate (PEM / DER)", "File path - the new file goes next to it", (a, r) => CertTools.ConvertCert(a[0])),
@@ -165,6 +167,9 @@ namespace AdeeboMeter
                 T("vpnleak", "PRIVACY & IPV6", "VPN leak test (IPv4, IPv6, DNS)", null, (a, r) => OverTime.VpnLeak(M, r)),
                 T("qr", "SHARE A DIAGNOSIS", "QR code to read it on your phone", null, (a, r) => QrRows()),
                 T("friend", "SHARE A DIAGNOSIS", "Help-a-friend bundle (encrypted file)", null, (a, r) => OverTime.FriendBundle(M, r)),
+                T("roast", "JUST FOR FUN", "Roast my network", null, (a, r) => Fun.Roast(M, r)),
+                T("therapy", "JUST FOR FUN", "Network therapy (the story of a bad day)", "Which day - today, yesterday or a date like 2026-11-03 (empty = the worst of the last 7 days)", (a, r) => Fun.Therapy(M, a[0], r)),
+                T("letter", "JUST FOR FUN", "Letter to my provider", "How many days to look back (1-180, empty = 30)", (a, r) => Fun.Letter(M, a[0], r)),
                 T("bluetooth", "THE PC", "My Bluetooth devices", null, (a, r) => OverTime.Bluetooth()),
                 T("dupip", "ON YOUR NETWORK", "Is another device using my address?", null, (a, r) => OverTime.DuplicateIp(M)),
                 T("winev", "WINDOWS", "Windows' own evidence", null, (a, r) => WinEvidence.All(M)),
@@ -203,6 +208,7 @@ namespace AdeeboMeter
             new[] { "OVER TIME", "month", "sixmonths", "rushhour", "wakeup", "capfc", "dltime", "netsnap" },
             new[] { "PRIVACY & IPV6", "vpnleak", "ipv6score" },
             new[] { "SHARE A DIAGNOSIS", "qr", "friend" },
+            new[] { "JUST FOR FUN", "roast", "therapy", "letter" },
             new[] { "WHY CAN'T IT JOIN?", "join", "dot1x", "radiuslab" },
             new[] { "REPLAY A CAPTURE", "dhcpreplay", "eapreplay", "rareplay", "icmpexplain", "samplelab" },
             new[] { "TRUST & MAIL", "certcmp", "smtppath" },
@@ -216,11 +222,11 @@ namespace AdeeboMeter
             new[] { "LOAD & QUEUES", "iperf", "bloat", "dscp" },
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
             new[] { "KEYS & ENCRYPTION", "encrypt", "decrypt", "keys", "newkey", "recipients", "csrmake", "selfsigned", "certmatch", "certlive" },
-            new[] { "CERTIFICATES & FILES", "certfile", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
+            new[] { "CERTIFICATES & HTTPS", "https", "certfile", "chain", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
             new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
-            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "CALCULATORS", "net" },
-            { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & FILES", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
+            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "CALCULATORS", "net" },
+            { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
@@ -266,7 +272,7 @@ namespace AdeeboMeter
         // a clickable result row: walk this object, or open the MIB folder
         static readonly char[] PipeSep = { '|' };
         // tools whose boxes take a URL, a file path or free text as it is
-        static readonly HashSet<string> UrlTools = new HashSet<string> { "http", "httptime", "httpreq", "proxy", "speedtest", "b64", "certfile", "csr", "pfx", "certconv", "certcmds", "hashf", "twopc", "encrypt", "decrypt", "recipients", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "samplelab", "events", "fw", "hosts", "mibs", "certmatch", "certlive" };
+        static readonly HashSet<string> UrlTools = new HashSet<string> { "http", "httptime", "httpreq", "proxy", "speedtest", "b64", "certfile", "chain", "https", "csr", "pfx", "certconv", "certcmds", "hashf", "twopc", "encrypt", "decrypt", "recipients", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "samplelab", "events", "fw", "hosts", "mibs", "certmatch", "certlive" };
         static bool PayloadBox(string id, int i) { return (id == "udpsend" || id == "tcpsend" || id == "syslog") && i >= 1; }
         PillButton tbEx; string tbAward = ""; readonly HashSet<string> exOpened = new HashSet<string>();
         // a finished real run: Adeebo Points once (only after the Example was opened; replay bonus once, 10+ minutes later)
@@ -491,6 +497,7 @@ namespace AdeeboMeter
                 case "gpn": return "about 30 seconds: a trace, then 5 pings per router on the way";
                 case "console": if (!int.TryParse(a.Length > 2 ? a[2] : "", out n)) n = 30; n = Math.Max(10, Math.Min(120, n)); return n + " seconds";
                 case "sixmonths": case "month": return "a few seconds to read History";
+                case "roast": case "therapy": case "letter": return "a few seconds to read History - nothing is measured or sent";
                 case "mtr": if (!int.TryParse(a[1], out n)) n = 1; n = Math.Max(1, Math.Min(10, n)); return n + (n == 1 ? " minute" : " minutes") + ", after 5-30 seconds to find the path";
                 case "rlisten": case "discover": if (!int.TryParse(a[0], out n)) n = 60; return Math.Max(10, Math.Min(120, n)) + " seconds";
                 case "ping": if (!int.TryParse(a[1], out n)) n = 50; if (!int.TryParse(a[2], out m)) m = 200; n = Math.Max(10, Math.Min(2000, n)); m = Math.Max(20, Math.Min(5000, m)); return RunSecs(n * m / 1000) + " if it answers - up to " + RunSecs(n * Math.Max(m, 1000) / 1000) + " if it doesn't";
@@ -507,6 +514,8 @@ namespace AdeeboMeter
                 case "bloat": return "about 30 seconds (idle, 10 s download, 10 s upload)";
                 case "join": case "dot1x": case "icmpexplain": case "samplelab": case "dhcpreplay": case "rareplay": case "eapreplay": return "a few seconds - nothing is sent";
                 case "certcmp": return "a few seconds - one TLS handshake to the site";
+                case "https": return "a few seconds - two short handshakes (no HTTP request); revocation adds up to 10 s when it is on in Settings";
+                case "chain": return "a second - all on this PC";
                 case "radiuslab": return "up to 4 seconds - one Access-Request, then one TACACS+ connection test";
                 case "smtppath": return "usually a few seconds; up to about a minute if a mail server stalls - one DNS question, then a short SMTP conversation with the top 2 mail servers (stops before sending)";
                 case "keys": case "newkey": case "recipients": case "certmatch": case "csrmake": case "selfsigned": return "a few seconds - nothing is sent";
@@ -545,12 +554,12 @@ namespace AdeeboMeter
         {
             { "gpn", "gpn" }, { "exitlag", "gpn" }, { "booster", "gpn prematch" }, { "console", "console" }, { "playstation", "console" }, { "ps5", "console" }, { "xbox", "console" },
             { "month", "month sixmonths" }, { "review", "sixmonths month" }, { "monthly", "month" }, { "rush", "rushhour" }, { "sleep", "wakeup" }, { "lid", "wakeup" }, { "cap", "capfc" }, { "forecast", "capfc" },
-            { "download", "dltime speedtest" }, { "ipv6", "ipv6score ping6 v6routers ip46" }, { "leak", "vpnleak" }, { "qr", "qr" }, { "phone", "qr" }, { "friend", "friend" },
+            { "download", "dltime speedtest" }, { "ipv6", "ipv6score ping6 v6routers ip46" }, { "leak", "vpnleak" }, { "qr", "qr" }, { "phone", "qr" }, { "friend", "friend" }, { "roast", "roast" }, { "burn", "roast" }, { "grade", "roast" }, { "therapy", "therapy" }, { "story", "therapy" }, { "postmortem", "therapy" }, { "letter", "letter" }, { "complain", "letter ispreport" }, { "complaint", "letter ispreport" },
             { "bluetooth", "bluetooth" }, { "headset", "bluetooth usb" }, { "conflict", "dupip" }, { "duplicate", "dupip" },
             { "wifi", "roams dhcp arp" }, { "wi-fi", "roams dhcp arp" }, { "wireless", "roams" }, { "roaming", "roams" }, { "slow", "speedtest lag bloat ping mtr" }, { "speed", "speedtest iperf bloat cloud" },
             { "bandwidth", "iperf bloat" }, { "throughput", "speedtest iperf" }, { "lag", "ping bloat mtr snmplag" }, { "lacp", "snmplag" }, { "etherchannel", "snmplag" }, { "portchannel", "snmplag" }, { "bond", "snmplag" }, { "vlan", "snmpvlan" }, { "trunk", "snmpvlan snmplag" }, { "poe", "snmppoe" }, { "mac", "snmpmac arp" }, { "toner", "snmpprn" }, { "ups", "snmpups" }, { "snapshot", "netsnap snmpsnap beforeafter" }, { "latency", "ping tcpping bloat mtr" }, { "jitter", "ping twamp" }, { "drops", "ping mtr roams" }, { "loss", "ping mtr twamp" },
             { "traceroute", "mtr mtu ret" }, { "tracert", "mtr mtu ret" }, { "trace", "mtr mtu ret" }, { "pathping", "mtr" }, { "nslookup", "dig" }, { "dns", "dig doh dnsrules hosts dnscmp" },
-            { "cert", "certs certfile http" }, { "certificate", "http certs certfile pfx csr" }, { "ssl", "certs http" }, { "https", "http httptime" }, { "web", "http httptime proxy" },
+            { "cert", "certs certfile chain https http" }, { "certificate", "https certfile chain http certs pfx csr" }, { "ssl", "https certs http" }, { "https", "https http httptime" }, { "chain", "chain https certcmp" }, { "intermediate", "chain https" }, { "padlock", "https chain" }, { "cipher", "https" }, { "tls", "https http" }, { "web", "http httptime proxy" },
             { "switch", "snmpif snmplldp snmp" }, { "router", "gateway snmp hairpin" }, { "printer", "snmpprn discover arp sweep" }, { "devices", "inventory sweep arp snmp" }, { "scan", "sweep" },
             { "ip", "subnet arp dhcp allips" }, { "lease", "dhcp" }, { "vpn", "vpn overlap route proxy dnsrules" }, { "encrypt", "encrypt decrypt recipients" }, { "decrypt", "decrypt encrypt" }, { "adeebo", "decrypt encrypt" }, { "p7m", "decrypt encrypt" }, { "key", "keys newkey csrmake certmatch" }, { "keys", "keys newkey" }, { "self-signed", "selfsigned" }, { "selfsigned", "selfsigned" }, { "backup", "keys" }, { "join", "join dot1x dhcpreplay" }, { "rogue", "dhcpreplay rareplay" }, { "radius", "radius radiuslab tacacs" }, { "pcap", "dhcpreplay rareplay icmpexplain samplelab" }, { "capture", "dhcpreplay rareplay icmpexplain samplelab" }, { "mx", "smtppath dig" }, { "inspection", "certcmp" }, { "email", "mail" }, { "smtp", "smtppath mail" }, { "outlook", "mail http proxy" },
             { "time", "ntp clock timesrc" }, { "temperature", "snmpsens" }, { "fan", "snmpsens mibs" }, { "optic", "snmpsens mibs" }, { "sfp", "snmpsens mibs" }, { "interface", "snmpif" }, { "port", "port snmpif tcpping" },

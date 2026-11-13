@@ -33,6 +33,7 @@ namespace AdeeboMeter
         readonly LayeredForm widget = new LayeredForm(), detailWin = new LayeredForm();
         readonly NotifyIcon tray = new NotifyIcon();
         readonly System.Windows.Forms.Timer ui = new System.Windows.Forms.Timer();
+        public static volatile Snap Rewind; public static DateTime RewindUntil;   // the Time machine's minute, shown on the widget while you drag
         readonly Control marshal = new Control();
         readonly Icon appIcon;
         FullView full;
@@ -380,8 +381,9 @@ namespace AdeeboMeter
                 string key = "";
                 if (hovered) foreach (var kv in hits) { var r = kv.Value; if (new RectangleF(widget.Placed.X + r.X, widget.Placed.Y + r.Y, r.Width, r.Height).Contains(cur)) { key = kv.Key; break; } }
                 hoverKey = key;
-                Snap s = M.Latest; bool compact = !hovered && (covered || (s.Level == 0 && !s.Call));
-                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget;
+                var rw = Rewind; if (rw != null && Clock.Mono > RewindUntil) { Rewind = null; rw = null; }
+                Snap s = rw ?? M.Latest; bool compact = !hovered && (covered || (s.Level == 0 && !s.Call));
+                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "");
                 bool fresh = M.Version != drawnVersion;
                 // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
                 // and unhovered only when its level or headline changes (or every 10 s for the numbers)

@@ -25,7 +25,7 @@ namespace AdeeboMeter
         string EarnFirst(string key) { return Points.Me.Tried(key) ? "" : EarnPts(key, true, true); }
         void GameTick(bool on)
         {
-            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; roomStart += away; if (quick != null) quick.Start += away; gameAway = DateTime.MinValue; }
+            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; roomStart += away; outStart += away; if (quick != null) quick.Start += away; gameAway = DateTime.MinValue; }
             if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
@@ -38,7 +38,7 @@ namespace AdeeboMeter
             y = Lead2(g, L.T(d[2]) + (Cfg.Points ? "  ·  " + done + " / " + all + " " + L.T("solved") : "") + "  ·  " + L.T("everything here is made up - nothing real is sent or changed"), x, y, w);
             return y;
         }
-        static string GamePrefix(string id) { return id == "room" ? "game.room." : id == "thief" ? "game.thief." : id == "detective" ? "game.detective." : "game.quick." + id; }
+        static string GamePrefix(string id) { return id == "room" ? "game.room." : id == "thief" ? "game.thief." : id == "detective" ? "game.detective." : id == "heist" ? "game.heist" : id == "outage" ? "game.outage" : id == "dungeon" ? "game.dungeon" : "game.quick." + id; }
         float Option(Graphics g, RectangleF r, string text, int state, Action a)   // state: 0 open, 1 right, 2 wrong, 3 dimmed
         {
             Theme.Fill(g, r, 10 * S, state == 1 ? Theme.LvSoft(0) : state == 2 ? Theme.LvSoft(2) : Theme.Soft);
@@ -73,6 +73,9 @@ namespace AdeeboMeter
                 case "room": return PaintRoom(g, x, y, w);
                 case "thief": return PaintThief(g, x, y, w);
                 case "detective": return PaintDetective(g, x, y, w);
+                case "heist": return PaintHeist(g, x, y, w);
+                case "outage": return PaintOutage(g, x, y, w);
+                case "dungeon": return PaintDungeon(g, x, y, w);
                 default: return PaintQuick(g, id, x, y, w);
             }
         }
@@ -207,6 +210,153 @@ namespace AdeeboMeter
                 y = Say(g, detPick == wrong ? "Spotted." : "Not that one - the green one is wrong.", detPick == wrong ? 0 : 2, x, y + 4 * S, w);
                 y = Lead2(g, L.T(p[3]), x, y, w);
                 Button(learnInfo, g, "Next puzzle", true, delegate { detIdx++; detPick = -1; learnInfo.Invalidate(); }, x, y); y += 46 * S;
+            }
+            return y;
+        }
+
+        // ---------- break the Adeebo Award: how the card's claim code works, told as ten attacks - and the two that do get through
+        int heistIdx, heistPick = -1, heistRight; string heistEarn; static readonly string[] HeistOpts = { "It works", "It fails" };
+        float PaintHeist(Graphics g, float x, float y, float w)
+        {
+            GameTick(false);
+            if (heistIdx == 0 && heistPick < 0)
+            {
+                y = Lead2(g, L.T("How a card's claim code is made - and checked:"), x, y, w);
+                y = DrawKnowledgeLadder(g, learnInfo, L.T("AdeeboMeter > AdeeboMeter: name + points + date, mixed with a secret key (HMAC-SHA256)") + " | " + L.T("AdeeboMeter > You: your card + its code") + " | " + L.T("You > Hall of Fame: the card") + " | " + L.T("Hall of Fame > Hall of Fame: same mix, same key - same code? You're in"), x, y, w);
+            }
+            if (heistIdx >= LearnGames.Heist.Length)
+            {
+                bool won = heistRight >= LearnGames.HeistWin;
+                if (heistEarn == null) heistEarn = won ? EarnFirst("game.heist") : "";
+                y = Say(g, (won ? L.T("You know the Adeebo Award inside out") : L.T("Mallory fooled you a few times")) + " - " + heistRight + " / " + LearnGames.Heist.Length + ". " + heistEarn, won ? 0 : 2, x, y, w);
+                y = Lead2(g, L.T("The code stops the easy cheats. The honest limit of an offline app: points live on your own PC, so the Hall of Fame is for bragging rights, not prizes."), x, y, w);
+                if (!won) Points.Me.MarkTried("game.heist");
+                Button(learnInfo, g, "Play again", true, delegate { heistIdx = 0; heistPick = -1; heistRight = 0; heistEarn = null; learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            var h = LearnGames.Heist[heistIdx]; bool works = h[1] == "1";
+            y = Say(g, (heistIdx + 1) + " / " + LearnGames.Heist.Length + "  ·  " + L.T(h[0]), 1, x, y, w);
+            string answer = works ? "It works" : "It fails", picked = heistPick == 0 ? "It works" : "It fails";
+            y = Options(g, HeistOpts, x, y, w, o => heistPick < 0 ? 0 : o == answer ? 1 : o == picked ? 2 : 3,
+                heistPick >= 0 ? (Action<string>)null : o => { heistPick = o == "It works" ? 0 : 1; if ((heistPick == 0) == works) heistRight++; learnInfo.Invalidate(); });
+            if (heistPick >= 0)
+            {
+                bool right = (heistPick == 0) == works;
+                y = Say(g, right ? (works ? L.T("Right - this one gets through.") : L.T("Right - it fails.")) : (works ? L.T("Not quite - this one actually works.") : L.T("Not quite - it fails.")), right ? 0 : 2, x, y, w);
+                y = Lead2(g, L.T(h[2]), x, y, w);
+                Button(learnInfo, g, heistIdx + 1 < LearnGames.Heist.Length ? "Next attack" : "See how you did", true, delegate { heistIdx++; heistPick = -1; learnInfo.Invalidate(); }, x, y); y += 46 * S;
+            }
+            return y;
+        }
+
+        // ---------- survive the outage: eight made-up broken networks, fifteen seconds each; right and fast scores more
+        List<int> outOrder; int outAt, outRight, outScore, outPick = -1; DateTime outStart; string outEarn; string[] outOpts;
+        void NewOutage() { outOrder = Enumerable.Range(0, LearnGames.Outage.Length).OrderBy(i => GameRnd.Next()).Take(LearnGames.OutageRounds).ToList(); outAt = 0; outRight = 0; outScore = 0; outPick = -1; outEarn = null; OutRound(); }
+        void OutRound() { if (outAt < outOrder.Count) { var o = LearnGames.Outage[outOrder[outAt]]; outOpts = new[] { o[3], o[4], o[5], o[6] }.OrderBy(z => GameRnd.Next()).ToArray(); } outStart = DateTime.UtcNow; outPick = -1; }
+        float PaintOutage(Graphics g, float x, float y, float w)
+        {
+            if (outOrder == null)
+            {
+                GameTick(false);
+                y = Lead2(g, L.T("Your widget turns red. Fifteen seconds to say why. Right answers score 100, plus 10 for every second left. Six right survives."), x, y, w);
+                if (Cfg.OutageBest > 0) y = Lead2(g, L.T("Your best:") + " " + Cfg.OutageBest, x, y, w);
+                Button(learnInfo, g, "Start", true, delegate { NewOutage(); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            if (outAt >= outOrder.Count)
+            {
+                GameTick(false);
+                bool won = outRight >= LearnGames.OutageWin, best = outScore > Cfg.OutageBest;
+                if (outEarn == null) { outEarn = won ? EarnFirst("game.outage") : ""; if (!won) Points.Me.MarkTried("game.outage"); if (best) { Cfg.OutageBest = outScore; Cfg.Save(); } }
+                y = Say(g, (won ? Voice.P("You survived. ", "Passed. ") : Voice.P("The outage won this time. ", "Not passed. ")) + outRight + " / " + outOrder.Count + "  ·  " + outScore + " " + L.T("points of speed") + ". " + outEarn, won ? 0 : 2, x, y, w);
+                if (outScore >= Cfg.OutageBest && outScore > 0) y = Lead2(g, L.T("A new personal best - kept on this PC."), x, y, w);
+                Button(learnInfo, g, "Play again", true, delegate { NewOutage(); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            var o = LearnGames.Outage[outOrder[outAt]];
+            int left = Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds);
+            if (left == 0 && outPick < 0) outPick = 99;   // out of time: counts as wrong
+            GameTick(outPick < 0);
+            using (var mb = new SolidBrush(left <= 5 && outPick < 0 ? Theme.LvText(2) : Theme.Ink)) g.DrawString((outPick < 0 ? left + " s" : L.T("Done")) + "  ·  " + (outAt + 1) + " / " + outOrder.Count + "  ·  " + outScore, Draw.fHead, mb, x, y);
+            y += 40 * S;
+            var snap = new Snap(); snap.Path = o[0].Split(',').Select(z => int.Parse(z, CultureInfo.InvariantCulture)).ToArray();
+            Draw.PathStrip(g, snap, new RectangleF(x, y + 6 * S, w - (Cfg.Buddy ? 70 * S : 0), 60 * S), false);
+            if (Cfg.Buddy) Draw.Buddy(g, new RectangleF(x + w - 52 * S, y, 46 * S, 46 * S), snap, false);
+            y += 66 * S;
+            y = Lead2(g, "• " + L.T(o[1]) + "\n• " + L.T(o[2]), x, y, w);
+            y = Options(g, outOpts, x, y, w, z => outPick < 0 ? 0 : z == o[3] ? 1 : outPick < 4 && outOpts[outPick] == z ? 2 : 3,
+                outPick >= 0 ? (Action<string>)null : z => { if ((DateTime.UtcNow - outStart).TotalSeconds >= LearnGames.OutageSecs) { outPick = 99; learnInfo.Invalidate(); return; }   /* the clock ran out between two ticks: too late */
+                    outPick = Array.IndexOf(outOpts, z); if (z == o[3]) { outRight++; outScore += 100 + 10 * Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds); } learnInfo.Invalidate(); });
+            if (outPick >= 0)
+            {
+                bool right = outPick < 4 && outOpts[outPick] == o[3];
+                y = Say(g, right ? Voice.P("Called it.", "Right.") : outPick == 99 ? L.T("Out of time.") : L.T("Not this time."), right ? 0 : 2, x, y, w);
+                y = Lead2(g, L.T(o[7]), x, y, w);
+                Button(learnInfo, g, outAt + 1 < outOrder.Count ? "Next outage" : "See how you did", true, delegate { outAt++; OutRound(); learnInfo.Invalidate(); }, x, y); y += 46 * S;
+            }
+            return y;
+        }
+
+        // ---------- the packet dungeon: the Theory of Everything, one room per layer; three hearts; every room leaves a scroll
+        int dunRoom, dunHearts = LearnGames.DungeonHearts, dunPick = -1; string dunEarn; string[] dunOpts; bool dunStarted;
+        void DunOpts() { var d = LearnGames.Dungeon[dunRoom]; dunOpts = new[] { d[2], d[3], d[4] }.OrderBy(z => GameRnd.Next()).ToArray(); dunPick = -1; }
+        float PaintDungeon(Graphics g, float x, float y, float w)
+        {
+            GameTick(false);
+            if (!dunStarted)
+            {
+                y = Lead2(g, L.T("Eight rooms stand between you and the treasure - from the cable at the bottom to the encrypted vault at the top. Each has a guardian with a riddle. A wrong answer costs a heart; lose all three and you start again."), x, y, w);
+                Button(learnInfo, g, "Enter the dungeon", true, delegate { dunStarted = true; dunRoom = 0; dunHearts = LearnGames.DungeonHearts; dunEarn = null; DunOpts(); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            // the map: one square per room, cleared ones green
+            float sq = Math.Min(34 * S, (w - 7 * 8 * S) / 8);
+            for (int i = 0; i < LearnGames.Dungeon.Length; i++)
+            {
+                var r = new RectangleF(x + i * (sq + 8 * S), y, sq, sq);
+                Theme.Fill(g, r, 6 * S, i < dunRoom ? Theme.LvSoft(0) : i == dunRoom ? Theme.Blue : Theme.Soft);
+                using (var tb = new SolidBrush(i == dunRoom ? Color.White : Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(i < dunRoom ? "✓" : (i + 1).ToString(CultureInfo.InvariantCulture), Draw.fBodyB, tb, r, c);
+            }
+            float hx = x + LearnGames.Dungeon.Length * (sq + 8 * S) + 10 * S;   // hearts: full ones red, lost ones grey (one glyph - the outline heart is missing from some fonts)
+            for (int i = 0; i < LearnGames.DungeonHearts; i++)
+                using (var hb = new SolidBrush(i < dunHearts ? Theme.Red : Theme.Track))
+                {
+                    float hs = 22 * S, h0 = hx + i * (hs + 8 * S), v0 = y + (sq - hs) / 2;   // drawn, not a font glyph: the same size on every PC
+                    g.FillEllipse(hb, h0, v0, hs * 0.55f, hs * 0.55f); g.FillEllipse(hb, h0 + hs * 0.45f, v0, hs * 0.55f, hs * 0.55f);
+                    g.FillPolygon(hb, new[] { new PointF(h0 + hs * 0.02f, v0 + hs * 0.36f), new PointF(h0 + hs * 0.98f, v0 + hs * 0.36f), new PointF(h0 + hs / 2, v0 + hs * 0.95f) });
+                }
+            y += sq + 16 * S;
+            if (dunRoom >= LearnGames.Dungeon.Length)
+            {
+                if (dunEarn == null) dunEarn = EarnFirst("game.dungeon");
+                y = Say(g, Voice.P("The treasure is yours: a packet that made it all the way from the cable to the vault - just like every packet you send. ", "All eight rooms cleared. ") + dunEarn, 0, x, y, w);
+                Button(learnInfo, g, "Play again", true, delegate { dunStarted = false; learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            if (dunHearts <= 0)
+            {
+                if (dunEarn == null) { Points.Me.MarkTried("game.dungeon"); dunEarn = ""; }
+                y = Say(g, Voice.P("Out of hearts in " + L.T(LearnGames.Dungeon[dunRoom][0]) + ". The dungeon keeps its treasure - for now.", "Out of hearts."), 2, x, y, w);
+                Button(learnInfo, g, "Try again", true, delegate { dunStarted = false; learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            var d = LearnGames.Dungeon[dunRoom];
+            y = Say(g, L.T(d[0]), 1, x, y, w);
+            y = Lead2(g, L.T(d[1]), x, y, w);
+            int right = Array.IndexOf(dunOpts, d[2]);
+            y = Options(g, dunOpts, x, y, w, z => dunPick < 0 ? 0 : z == d[2] ? (dunPick == right ? 1 : 3) : dunOpts[dunPick] == z ? 2 : 3,
+                dunPick >= 0 && dunPick == right ? (Action<string>)null : z => { int at = Array.IndexOf(dunOpts, z); if (at == dunPick) return; dunPick = at; if (dunPick != right) dunHearts--; learnInfo.Invalidate(); });
+            if (dunPick >= 0)
+            {
+                bool ok = dunPick == right;
+                y = Say(g, ok ? Voice.P("The guardian steps aside.", "Right.") : Voice.P("Ouch - a heart lost. Try again.", "Not right - one heart lost."), ok ? 0 : 2, x, y, w);
+                if (ok)
+                {
+                    y = Lead2(g, L.T(d[5]), x, y, w);
+                    string topic = d[6]; var tk = Knowledge.Learn().FirstOrDefault(t => t.Id == topic);
+                    if (tk != null)
+                    {
+                        string sc = L.T("Scroll found:") + " " + L.T(tk["title"]) + "  ›"; var ss = g.MeasureString(sc, Draw.fBodyB);
+                        using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sc, Draw.fBodyB, lb, x, y);
+                        Act(learnInfo, new RectangleF(x, y, ss.Width, ss.Height), delegate { learnSel = "topic:" + topic; learnPkts = null; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); });
+                        y += ss.Height + 10 * S;
+                    }
+                    Button(learnInfo, g, dunRoom + 1 < LearnGames.Dungeon.Length ? "Next room" : "Open the treasure", true, delegate { dunRoom++; if (dunRoom < LearnGames.Dungeon.Length) DunOpts(); learnInfo.Invalidate(); }, x, y); y += 46 * S;
+                }
             }
             return y;
         }
