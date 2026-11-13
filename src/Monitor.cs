@@ -458,10 +458,19 @@ namespace AdeeboMeter
             if (!wifi) { lock (L) { HasWifi = false; WifiSignal = -1; } WifiBlocked = false; return; }
             try
             {
-                string outp = Job.Run(Job.Netsh, "wlan show interfaces", 3000);
-                if (LinkInfo.Blocked(outp)) { WifiBlocked = true; wifiEmpty = 0; lock (L) { HasWifi = true; WifiSignal = -1; } return; }
-                WifiBlocked = false;
-                int sig, rate; string ssid, ch, bssid, state; outp = LinkInfo.ActiveBlock(outp); ParseWifi(outp, out sig, out ssid, out ch, out bssid, out state, out rate);
+                int sig, rate; string ssid, ch, bssid, state;
+                // Windows' Wi-Fi service first: no program started. netsh only when this Windows can't answer that way.
+                WlanApi.Now now = null; int rc = wlanApiOk ? WlanApi.Current(out now) : -1;
+                if (rc == 5) { WifiBlocked = true; wifiEmpty = 0; lock (L) { HasWifi = true; WifiSignal = -1; } return; }
+                if (rc == 0 && now != null) { wlanApiFails = 0; WifiBlocked = false; sig = now.Signal; ssid = now.Ssid; ch = now.Channel; bssid = now.Bssid; state = now.State; rate = now.Rate; }
+                else
+                {
+                    if (rc != 0 && wlanApiOk && ++wlanApiFails >= 3) { wlanApiOk = false; Program.Log("Wi-Fi: Windows' Wi-Fi service didn't answer (" + rc + ") - reading netsh instead"); }
+                    string outp = Job.Run(Job.Netsh, "wlan show interfaces", 3000);
+                    if (LinkInfo.Blocked(outp)) { WifiBlocked = true; wifiEmpty = 0; lock (L) { HasWifi = true; WifiSignal = -1; } return; }
+                    WifiBlocked = false;
+                    outp = LinkInfo.ActiveBlock(outp); ParseWifi(outp, out sig, out ssid, out ch, out bssid, out state, out rate);
+                }
                 // netsh that timed out or answered nothing (a busy PC) is not "Wi-Fi gone": keep the last reading for up to three
                 // empty answers (the adapter itself going away is seen at once - it stops being the Wi-Fi adapter above)
                 if (state == "" && sig < 0 && ssid == "") { if (++wifiEmpty < 3) return; lock (L) { HasWifi = true; WifiSignal = -1; Ssid = ""; Bssid = ""; WifiChannel = ""; RxRate = -1; } return; }   /* nothing seen 3 times: no stale network name */
@@ -471,7 +480,7 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception || e is IOException || e is TimeoutException)) throw; if (++wifiEmpty >= 3) lock (L) WifiSignal = -1; }   /* netsh failing isn't "no network": the name stays */
         }
-        int wifiEmpty;
+        int wifiEmpty, wlanApiFails; bool wlanApiOk = true;   // three failed answers from the Wi-Fi service: netsh from then on
 
         // ARP spoofing alarm: the router's hardware address should not change while you stay on the same network.
         string gwMacKey = "", gwMac = ""; readonly Dictionary<string, DateTime> gwMacSeen = new Dictionary<string, DateTime>();

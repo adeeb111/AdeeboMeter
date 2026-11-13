@@ -139,6 +139,7 @@ namespace AdeeboMeter
         [DllImport("wlanapi.dll")] static extern int WlanGetNetworkBssList(IntPtr handle, ref Guid iface, IntPtr ssid, int bssType, [MarshalAs(UnmanagedType.Bool)] bool secOnly, IntPtr reserved, out IntPtr list);
         [DllImport("wlanapi.dll")] static extern int WlanScan(IntPtr handle, ref Guid iface, IntPtr ssid, IntPtr ie, IntPtr reserved);
         [DllImport("wlanapi.dll")] static extern void WlanFreeMemory(IntPtr p);
+        [DllImport("wlanapi.dll")] static extern int WlanQueryInterface(IntPtr handle, ref Guid iface, int opCode, IntPtr reserved, out int size, out IntPtr data, IntPtr opType);
 
         [DllImport("wlanapi.dll")] static extern int WlanGetProfileList(IntPtr handle, ref Guid iface, IntPtr reserved, out IntPtr list);
         [DllImport("wlanapi.dll", CharSet = CharSet.Unicode)] static extern int WlanGetProfile(IntPtr handle, ref Guid iface, string name, IntPtr reserved, out IntPtr xml, ref int flags, out int access);
@@ -178,6 +179,48 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; return null; }
             finally { if (ifl != IntPtr.Zero) WlanFreeMemory(ifl); if (h != IntPtr.Zero && WlanCloseHandle(h, IntPtr.Zero) != 0) Program.Log("Wi-Fi handle close failed"); }
             return res;
+        }
+
+        // The Wi-Fi you're on, straight from Windows' Wi-Fi service: no netsh.exe to start (and no console host with it), the
+        // same numbers netsh prints - signal quality %, receive rate, channel, the access point - and labels in no language.
+        // rc: 0 read; 5 Windows hides it (location access is off); anything else: this Windows can't say (netsh is used then).
+        // One handle per call, closed at once. The connected adapter wins; with none connected, the first one's state.
+        public sealed class Now { public int Signal = -1, Rate = -1; public string Ssid = "", Bssid = "", Channel = "", State = ""; }
+        static readonly string[] States = { "not ready", "connected", "ad hoc", "disconnecting", "disconnected", "associating", "discovering", "authenticating" };
+        public static int Current(out Now now)
+        {
+            now = null; IntPtr h = IntPtr.Zero, ifl = IntPtr.Zero;
+            try
+            {
+                int ver; if (WlanOpenHandle(2, IntPtr.Zero, out ver, out h) != 0) return -1;
+                if (WlanEnumInterfaces(h, IntPtr.Zero, out ifl) != 0) return -1;
+                int n = Marshal.ReadInt32(ifl); if (n <= 0) return -1;
+                int pick = 0;
+                for (int i = 0; i < n && i < 8; i++) if (Marshal.ReadInt32(ifl + 8 + i * 532 + 528) == 1) { pick = i; break; }   // WLAN_INTERFACE_INFO.isState: 1 = connected
+                var gb = new byte[16]; Marshal.Copy(ifl + 8 + pick * 532, gb, 0, 16); var g = new Guid(gb);
+                int st = Marshal.ReadInt32(ifl + 8 + pick * 532 + 528);
+                var r = new Now { State = st >= 0 && st < States.Length ? States[st] : "" };
+                if (st != 1) { now = r; return 0; }   // not connected: nothing more to read
+                int size; IntPtr data;
+                int rc = WlanQueryInterface(h, ref g, 7 /*current_connection*/, IntPtr.Zero, out size, out data, IntPtr.Zero);
+                if (rc != 0) return rc;
+                try
+                {
+                    if (size < 588) return -1;
+                    // WLAN_CONNECTION_ATTRIBUTES: state, mode, profile name WCHAR[256] (8..520), then the association:
+                    // SSID length + 32 bytes (520), BSS type (556), BSSID (560), PHY type (568), PHY index (572), signal quality (576), rx kbps (580), tx kbps (584)
+                    int sl = Math.Min(32, Math.Max(0, Marshal.ReadInt32(data, 520))); var sb = new byte[sl]; Marshal.Copy(data + 524, sb, 0, sl); r.Ssid = Program.Plain(Encoding.UTF8.GetString(sb));
+                    var mac = new byte[6]; Marshal.Copy(data + 560, mac, 0, 6); r.Bssid = string.Join(":", mac.Select(x => x.ToString("x2", CultureInfo.InvariantCulture)));
+                    int q = Marshal.ReadInt32(data, 576); r.Signal = q >= 0 && q <= 100 ? q : -1;
+                    long rx = (uint)Marshal.ReadInt32(data, 580); r.Rate = rx > 0 ? (int)(rx / 1000) : -1;
+                }
+                finally { WlanFreeMemory(data); }
+                if (WlanQueryInterface(h, ref g, 8 /*channel_number*/, IntPtr.Zero, out size, out data, IntPtr.Zero) == 0)
+                    try { if (size >= 4) { int c = Marshal.ReadInt32(data); if (c > 0 && c < 300) r.Channel = c.ToString(CultureInfo.InvariantCulture); } } finally { WlanFreeMemory(data); }
+                now = r; return 0;
+            }
+            catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; return -1; }
+            finally { if (ifl != IntPtr.Zero) WlanFreeMemory(ifl); if (h != IntPtr.Zero && WlanCloseHandle(h, IntPtr.Zero) != 0) Program.Log("Wi-Fi handle close failed"); }
         }
 
         public sealed class Bss { public string Bssid = "", Ssid = "", Sec = ""; public int Rssi, FreqMHz, Channel, Width = 20; public bool K, V, R; public string Band = ""; }
