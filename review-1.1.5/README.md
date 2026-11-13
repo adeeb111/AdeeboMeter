@@ -28,3 +28,8 @@ Independent review. Findings only; nothing in the product was changed.
 
 **Start here: `round-2/claude-code.md`**. It covers the fix status of all 244 round-1 findings, 131 findings (plus #81, withdrawn), the cost table, the top 15, and where Muse is wrong.
 Section files: `round-2/R2-fixcheck.md`, `R2-calc-labs.md`, `R2-hof-points-update.md`, `R2-core-tools.md`, `R2-perf.md`. Muse's round-2 reports: `round-2/muse.md`, `round-2/muse-200-bugs.md`; the check of Muse's Mediums goes in `round-2/muse-200-check.md`.
+
+## Round 4 - deep inspection (e80412e)
+
+**Start here: `round-4/claude-code.md`**. It has 137 findings (merged from 151 across 8 areas), the top 20, rule breaks, what's still open from earlier rounds, and what held up.
+Area reports: `round-4/S1-core.md` ... `S8-ui-rest-ci-docs.md`.
