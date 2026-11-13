@@ -529,10 +529,11 @@ decimal / hex / binary. New, grouped by who needs them:
 1. Drawing kit: Inter, text hint, palette, card / button / chip / switch / tile / big back button, scrolling.
 2. Frame: the five sections (11.11) in Classic + Sidebar, slim health strip, header with Details behaviour + Mood button.
 3. Shared tool page + input swaps; Toolbox page.
-4. The other pages (11.5).
+4. The other pages (11.5, merged into the five sections), then the calculators (11.12).
 5. Mood + persona engine, 14 packs, Settings section.
 6. Analyzer + self-test + deep test; screenshots of every page in both layouts and themes for Adeeb; real-PC check.
 
 ### 11.10 Open questions
-- Default layout: Classic chosen (least surprise after 1.1.4) - Adeeb can flip it.
-- Persona names on screen: keep "Dark Ages" / "Revolution" or give them fun titles ("Ye Olde", "Viva la Router")?
+- Default layout: decided - Classic, with a one-time Sidebar card.
+- Persona names: decided - plain names.
+- Faith quotes: who checks each faith's wording before shipping, besides the reviewer?
