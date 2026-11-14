@@ -45,19 +45,26 @@ namespace AdeeboMeter
             float room = Math.Max(0, right - x - lw); if (room < 60 * S) return x;
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                float hw = Math.Min(g.MeasureString(head, Draw.fBodyB).Width + 2, room);
-                using (var hb = new SolidBrush(snap.Level == 0 || snap.Level == 3 ? Theme.Ink : Theme.LvText(snap.Level))) g.DrawString(head, Draw.fBodyB, hb, new RectangleF(x, cy - 10 * S, hw, 22 * S), sf);
+                float full = g.MeasureString(head, Draw.fBodyB).Width + 2, hw = Math.Min(full, room);
+                // the buddy's line must not be cut off (Adeeb, 14 Nov): when both don't fit on one line, the line goes under the verdict
+                float qneed = quip == "" ? 0 : g.MeasureString("  ·  " + quip, Draw.fBody).Width + 2; bool stack = quip != "" && full + qneed > room;
+                float hy = stack ? cy - 19 * S : cy - 10 * S;
+                using (var hb = new SolidBrush(snap.Level == 0 || snap.Level == 3 ? Theme.Ink : Theme.LvText(snap.Level))) g.DrawString(head, Draw.fBodyB, hb, new RectangleF(x, hy, hw, 22 * S), sf);
                 float qx = x + hw;
-                if (quip != "" && room - hw > 80 * S)
+                if (stack)
                 {
-                    string q = "  ·  " + quip; float qw = Math.Min(g.MeasureString(q, Draw.fBody).Width + 2, room - hw);
+                    using (var qb = new SolidBrush(Theme.Sub)) g.DrawString(quip, Draw.fSmall, qb, new RectangleF(x, cy + 2 * S, room + lw, 20 * S), sf);
+                }
+                else if (quip != "")
+                {
+                    string q = "  ·  " + quip; float qw = Math.Min(qneed, room - hw);
                     using (var qb = new SolidBrush(Theme.Sub)) g.DrawString(q, Draw.fBody, qb, new RectangleF(qx, cy - 10 * S, qw, 22 * S), sf);
                     qx += qw;
                 }
                 if (lw > 0)
                 {
                     // a problem leads straight to the check that investigates it
-                    var lr = new RectangleF(qx + 14 * S, cy - 10 * S, lw - 14 * S, 22 * S); string fl = snap.Flow;
+                    var lr = new RectangleF(qx + 14 * S, hy, lw - 14 * S, 22 * S); string fl = snap.Flow;
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(link, Draw.fBodyB, lb, lr.X, lr.Y);
                     Act(on, lr, delegate { tab = "guide"; ShowTab(); StartGuide(fl, false); });
                     qx = lr.Right;
