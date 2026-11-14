@@ -900,6 +900,24 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("UI 1.1.5 wave 3: search finds tools, forgives typos, groups; tool chips make sense", () =>
+            {
+                var vocab = new HashSet<string>(StringComparer.Ordinal) { "wifi", "dns", "traceroute", "certificate", "port" };
+                if (FullView.Fix("wfii", vocab) != "wifi" || FullView.Fix("tracerout", vocab) != "traceroute" || FullView.Fix("certifcate", vocab) != "certificate" || FullView.Fix("443", vocab) != null || FullView.Fix("dns", vocab) != null || FullView.Fix("zzzzzz", vocab) != null) throw new InvalidOperationException("typo fixing wrong: " + FullView.Fix("wfii", vocab));
+                var it = new PalItem { Title = "Wi-Fi roams and drops", Words = "wi-fi roams and drops" };
+                if (FullView.Score(it, new[] { "wi" }) == 0 || FullView.Score(it, new[] { "roams" }) == 0 || FullView.Score(it, new[] { "oams" }) >= FullView.Score(it, new[] { "roams" }) || FullView.Score(it, new[] { "printer" }) != 0) throw new InvalidOperationException("search scoring wrong");
+                bool br; var c = FullView.AssistFor("Record type - A, AAAA, MX, TXT", "", "", null, out br);
+                if (c.Count != 4 || c[0] != "A" || br) throw new InvalidOperationException("choices from the hint: " + string.Join(",", c));
+                if (FullView.AssistFor("URL - e.g. github.com or https://203.0.113.5", "10.0.0.1", "", null, out br).Any(z => z.Contains(":") && !z.Contains("."))) throw new InvalidOperationException("URL example read as choices");
+                if (FullView.AssistFor("host:port - e.g. smtp.office365.com:587", "10.0.0.1", "", null, out br).FirstOrDefault() != "10.0.0.1:587" || FullView.AssistFor("Second saved result (.txt)", "10.0.0.1", "", null, out br).Count != 0 || !br || FullView.AssistFor("Name this run - e.g. VPN off", "10.0.0.1", "", null, out br).Count != 0 || FullView.AssistFor("Hosts each subnet needs - e.g. 200, 60, 12, 2", "", "", null, out br).Count != 0) throw new InvalidOperationException("host:port chip has no port");
+                if (FullView.AssistFor("Shared secret", "10.0.0.1", "x", null, out br).Count != 0) throw new InvalidOperationException("chips on a secret");
+                using (var icon = Theme.MakeIcon(16))
+                {
+                    var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
+                    try { string bad = fv.AssistCheck(sb); if (bad != "") throw new InvalidOperationException(bad); }
+                    finally { fv.Close(); fv.Dispose(); }
+                }
+            });
             T("wave 4: UDP MTU packets, neighbour filter, speed grade, mode setting", () =>
             {
                 foreach (int n in new[] { 100, 572, 1200, 1472 }) { var d = UdpMtu.DnsPad(n); if (d.Length != n) throw new InvalidOperationException("DNS pad " + n + " -> " + d.Length); if (!UdpMtu.IsDns(new byte[] { d[0], d[1], 0x81, 0x80, 0, 1, 0, 0, 0, 0, 0, 0 }, d)) throw new InvalidOperationException("DNS reply match"); }

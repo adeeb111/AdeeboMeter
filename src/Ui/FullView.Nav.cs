@@ -44,7 +44,7 @@ namespace AdeeboMeter
             string s = SecOf(page); return s == "" ? "" : s;
         }
         string curMine = "";
-        void OpenNav(string id)
+        internal void OpenNav(string id)
         {
             if (tbBusy && tab == "toolbox" && (id == "calc" || id == "reports" || id == "toolbox")) { BusyNote(); return; }
             switch (id)

@@ -1080,3 +1080,38 @@ Speed tests are turned off by your IT team.	Les tests de vitesse sont désactiv�
 Live capture is turned off by your IT team (AdeeboMeter.policy).	La capture en direct est désactivée par votre service informatique (AdeeboMeter.policy).
 Your name needs at least one letter or number - emoji and symbols alone can't go on the card.	Votre nom doit contenir au moins une lettre ou un chiffre - des emoji ou des symboles seuls ne peuvent pas figurer sur la carte.
 One word in your name mixes Latin letters with Cyrillic or Greek look-alikes - type it in one alphabet.	Un mot de votre nom mélange des lettres latines et des sosies cyrilliques ou grecs - tapez-le dans un seul alphabet.
+# 1.1.5 UI refresh: navigation, search, tool pages
+More	Plus
+Search anything...	Chercher n'importe quoi...
+Search anything... try	Chercher n'importe quoi... essayez
+Arrange tabs...	Organiser les onglets...
+My tab	Mon onglet
+Your own tab - one click to what you use most.	Votre onglet - un clic vers ce que vous utilisez le plus.
+Nothing pinned yet. Open a tool and press the pin, or pin a search result.	Rien d'épinglé pour l'instant. Ouvrez un outil et appuyez sur l'épingle, ou épinglez un résultat de recherche.
+Details on for the full path	Activez Détails pour le chemin complet
+Pinned	Épinglé
+Pinned to your tab	Épinglé à votre onglet
+Earned	Gagné
+points	points
+fine	OK
+to watch	à surveiller
+problems	problèmes
+Recent searches	Recherches récentes
+Tools	Outils
+Fix a problem	Régler un problème
+Programs	Programmes
+Today	Aujourd'hui
+Sites	Sites
+Showing results for	Résultats pour
+Nothing by that name	Rien sous ce nom
+Browse every tool	Parcourir tous les outils
+Pick a file	Choisir un fichier
+Browse...	Parcourir...
+Make a report	Faire un rapport
+↑↓ move · Enter open · Ctrl+P pin to your tab · Esc close	↑↓ se déplacer · Entrée ouvrir · Ctrl+P épingler à votre onglet · Échap fermer
+Nothing here by that name. Fewer words usually find it.	Rien sous ce nom. Moins de mots, ça trouve souvent.
+Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	Rien trouvé. Cherchez la chose, pas le symptôme : « dns », « wifi », « port ».
+Not a thing I have. Yet. Try another word?	Je n'ai pas ça. Pas encore. Un autre mot ?
+Searched every drawer. Try a shorter word.	J'ai fouillé tous les tiroirs. Essayez un mot plus court.
+RIGHT NOW	EN CE MOMENT
+Pick a question - the right tool comes up.	Choisissez une question - le bon outil apparaît.
