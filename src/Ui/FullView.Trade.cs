@@ -33,6 +33,17 @@ namespace AdeeboMeter
             new[] { "Wealthsimple", "wealthsimple.com" }, new[] { "Questrade", "questrade.com" }, new[] { "Interactive Brokers", "interactivebrokers.com" },
             new[] { "TD Direct Investing", "td.com" }, new[] { "RBC Direct Investing", "rbcdirectinvesting.com" }, new[] { "Robinhood", "robinhood.com" },
             new[] { "Coinbase", "coinbase.com" }, new[] { "Kraken", "kraken.com" }, new[] { "Binance", "binance.com" } };
+        // the broker choice as a settings row: None, the list, Other... (asks for the address)
+        static readonly string[] BrokerOptList = new[] { "None" }.Concat(Brokers.Select(b => b[0].Replace(" Direct Investing", "").Replace("Interactive Brokers", "IBKR"))).Concat(new[] { "Other..." })   /* short names: they fit the choice cards */.ToArray();
+        static string[] BrokerOpts() { return BrokerOptList; }
+        static int BrokerIdx() { if (!Cfg.TradeLive || Cfg.TradeHost == "") return 0; int i = Array.FindIndex(Brokers, b => b[1] == Cfg.TradeHost); return i >= 0 ? i + 1 : Brokers.Length + 1; }
+        void SetBroker(int i)
+        {
+            if (i <= 0) { Cfg.TradeLive = false; Cfg.TradeHost = ""; }
+            else if (i <= Brokers.Length) { Cfg.TradeHost = Brokers[i - 1][1]; Cfg.TradeLive = true; }
+            else { string h = Cfg.CleanHost(Ask(L.T("Your broker's web address (e.g. mybroker.com)"), Cfg.TradeHost) ?? ""); if (h == "") return; Cfg.TradeHost = h; Cfg.TradeLive = true; }
+            Cfg.Save(); if (tradeCanvas != null) tradeCanvas.Invalidate();
+        }
         static string BrokerName(string host) { var b = Brokers.FirstOrDefault(z => z[1] == host); return b != null ? b[0] : host; }
 
         void PaintTrade(Graphics g)
@@ -62,7 +73,10 @@ namespace AdeeboMeter
                     y = PaintModeLine(g, !openNow ? "trade.closed" : tlv == 2 ? "trade.slow" : "trade.ok", null, tlv == 2, x, y, w);
                 }
                 if (active) y = PaintBrokerLive(g, x, y, w, true);
+                string hol = Markets.TodayNote(Trading.EasternNow());
+                if (hol != "") { var hr = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, hr, 12 * S, Theme.LvSoft(1)); using (var hb = new SolidBrush(Theme.LvText(1))) g.DrawString(hol, Draw.fBodyB, hb, hr.X + 14 * S, hr.Y + 8 * S); y = hr.Bottom + 14 * S; }
                 y = PaintFx(g, x, y, w);
+                y = PaintCommodities(g, x, y, w);
                 if (!active) y = PaintBrokerLive(g, x, y, w, false);
                 var past = WatchKit.Recent("trade").Take(10).ToList();
                 if (past.Count > 0)
@@ -80,7 +94,7 @@ namespace AdeeboMeter
                     }
                     y += 22 * S;
                 }
-                g.DrawString(L.T("Stock lists, oil and gas, and market movers arrive once their free data sources are confirmed."), Draw.fSmall, muted, x, y); y += 30 * S;
+                g.DrawString(L.T("Stock lists and market movers arrive once their free data sources are confirmed."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             Need(tradeCanvas, y);
         }
@@ -192,10 +206,44 @@ namespace AdeeboMeter
             menu.Show(tradeCanvas, at); box.Focus();
         }
 
+        // weekly commodities: one card per group - this week's change, four weeks' change, and the five-week line
+        static float PaintCommodities(Graphics g, float x, float y, float w)
+        {
+            if (!Cfg.TradeFx) return y;
+            List<Trading.Index> idx; lock (Trading.k) idx = Trading.Indexes.ToList();
+            if (idx.Count == 0) return y;   // first visit: the rates' card already says it's fetching
+            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
+            {
+                g.DrawString(L.T("COMMODITIES · WEEKLY · CHANGE IN PRICE"), Draw.fTiny, muted, x, y); y += 20 * S;
+                int cols = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 10 * S) / cols, chh = 112 * S;
+                for (int i = 0; i < idx.Count; i++)
+                {
+                    var it = idx[i]; var rr = new RectangleF(x + (i % cols) * (cw + 10 * S), y + (i / cols) * (chh + 10 * S), cw, chh); Kit.Box(g, rr, 14 * S);
+                    string nm, what; Trading.IdxNames.TryGetValue(it.Code, out nm); Trading.IdxWhat.TryGetValue(it.Code, out what);
+                    g.DrawString(L.T(nm ?? it.Code), Draw.fBodyB, ink, rr.X + 14 * S, rr.Y + 10 * S);
+                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(what ?? ""), Draw.fSmall, muted, new RectangleF(rr.X + 14 * S, rr.Y + 30 * S, cw - 24 * S, 18 * S), nf);
+                    double wk = Trading.Change(it, 1), mo = Trading.Change(it, 4);
+                    string wt = double.IsNaN(wk) ? "-" : (wk > 0.005 ? "▲ " : wk < -0.005 ? "▼ " : "") + Math.Abs(wk).ToString("0.0", CultureInfo.CurrentCulture) + "%";
+                    using (var cb = new SolidBrush(double.IsNaN(wk) || Math.Abs(wk) < 0.05 ? Theme.Ink : Theme.LvText(wk > 0 ? 0 : 2))) g.DrawString(wt, Draw.fName, cb, rr.X + 14 * S, rr.Y + 52 * S);
+                    g.DrawString(L.T("week") + (double.IsNaN(mo) ? "" : " · " + L.T("4 weeks ") + (mo > 0 ? "+" : "") + mo.ToString("0.0", CultureInfo.CurrentCulture) + "%"), Draw.fSmall, sub, rr.X + 14 * S, rr.Y + 84 * S);
+                    // the five-week line, scaled to its own range so a small move still shows
+                    if (it.V.Length >= 2)
+                    {
+                        var sr = new RectangleF(rr.Right - 74 * S, rr.Y + 54 * S, 60 * S, 26 * S); double lo = it.V.Min(), hi = it.V.Max(), span = Math.Max(hi - lo, hi * 0.002);
+                        var pts = it.V.Select((v, j) => new PointF(sr.X + j * sr.Width / (it.V.Length - 1), sr.Bottom - (float)((v - lo) / span) * sr.Height)).ToArray();
+                        using (var p = new Pen(Kit.Accent("trade"), 2 * S)) g.DrawLines(p, pts);
+                    }
+                }
+                y += ((idx.Count + cols - 1) / cols) * (chh + 10 * S);
+                g.DrawString(L.T("Source: Bank of Canada commodity price index, week of ") + idx.Max(z => z.Day).ToString("d MMM", CultureInfo.CurrentCulture) + L.T(" (posted about a week later). An index of world prices in US dollars - the change is what to read. ▲ = prices went up."), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
+                return y + 44 * S;
+            }
+        }
+
         float PaintFx(Graphics g, float x, float y, float w)
         {
             if (!Cfg.TradeFx) return y;
-            Trading.LoadFx(); if (Trading.FxStale()) Trading.FetchFx(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (tradeCanvas != null) tradeCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
+            Trading.LoadFx(); if (Trading.FxStale() || Trading.IdxStale()) Trading.FetchFx(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (tradeCanvas != null) tradeCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
             List<Trading.Rate> rates; string note; lock (Trading.k) { rates = Trading.Rates.ToList(); note = Trading.FxNote; }
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -218,7 +266,14 @@ namespace AdeeboMeter
                 y += ((rates.Count + cols - 1) / cols) * (chh + 10 * S);
                 var day = rates.Max(z => z.Day);
                 g.DrawString(L.T("Source: Bank of Canada daily exchange rates, ") + day.ToString("ddd d MMM", CultureInfo.CurrentCulture) + L.T(" - indicative rates, not for trading. ▲ = the currency got dearer in CAD since the day before.") + (note != "" ? " " + note : ""), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
-                return y + 44 * S;
+                y += 44 * S;
+                // opt-in: the corner widget shows the close for a while each weekday evening, then goes back by itself
+                string et = L.T("Evening summary in the widget, 17:30-19:00: ") + (Cfg.TradeEvening ? L.T("on") : L.T("off")); var es = g.MeasureString(et, Draw.fSmall);
+                var er = new RectangleF(x, y - 6 * S, es.Width + 22 * S, 28 * S); Theme.Fill(g, er, 14 * S, Cfg.TradeEvening ? Kit.Accent("trade") : Theme.Soft);
+                using (var eb = new SolidBrush(Cfg.TradeEvening ? Theme.OnBlue : Theme.Ink)) g.DrawString(et, Draw.fSmall, eb, er.X + 11 * S, er.Y + (28 * S - es.Height) / 2);
+                Act(tradeCanvas, er, delegate { Cfg.TradeEvening = !Cfg.TradeEvening; Cfg.Save(); tradeCanvas.Invalidate(); });
+                g.DrawString(L.T("Shows the US dollar and energy's week instead of \"All quiet\". A problem always takes the spot back."), Draw.fSmall, muted, er.Right + 10 * S, er.Y + 6 * S);
+                return y + 36 * S;
             }
         }
     }

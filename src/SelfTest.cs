@@ -1024,6 +1024,35 @@ namespace AdeeboMeter
                 finally { Cfg.HiddenSecs = hid0; Cfg.Preset = pre0; Cfg.Details = det0; }
                 if (!Trading.MarketOpen(new DateTime(2026, 11, 13, 10, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 9, 29, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 16, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 14, 11, 0, 0))) throw new InvalidOperationException("market hours wrong");
             });
+            T("market holidays, weekly commodities and the evening line", () =>
+            {
+                // holidays (2026: Thanksgiving US Thu 26 Nov, Canada Mon 12 Oct; Christmas Fri, Boxing Day Sat -> Mon 28; Good Friday 3 Apr)
+                var want = new[] { "2026-11-26 us Thanksgiving", "2026-10-12 ca Thanksgiving", "2026-04-03 us Good Friday", "2026-04-03 ca Good Friday", "2026-12-28 ca Boxing Day", "2026-07-03 us Independence Day", "2026-05-18 ca Victoria Day", "2026-08-03 ca Civic Holiday", "2026-06-19 us Juneteenth", "2027-12-24 us Christmas", "2028-12-26 ca Boxing Day", "2027-12-27 ca Christmas", "2026-01-19 us Martin Luther King Jr. Day" };
+                foreach (var w in want)
+                {
+                    var p = w.Split(new[] { ' ' }, 3); var d = DateTime.ParseExact(p[0], "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    string h = Markets.Holiday(d, p[1]); if (h != p[2]) throw new InvalidOperationException(w + " -> " + (h ?? "open"));
+                }
+                if (Markets.Holiday(new DateTime(2026, 11, 26), "ca") != null || Markets.Holiday(new DateTime(2026, 10, 12), "us") != null || Markets.Holiday(new DateTime(2027, 12, 31), "us") != null) throw new InvalidOperationException("a trading day taken for a holiday");
+                if (Markets.Easter(2026) != new DateTime(2026, 4, 5) || Markets.Easter(2027) != new DateTime(2027, 3, 28)) throw new InvalidOperationException("Easter");
+                if (!Trading.MarketOpen(new DateTime(2026, 11, 26, 11, 0, 0))) throw new InvalidOperationException("US Thanksgiving: Toronto still trades");
+                if (Trading.MarketOpen(new DateTime(2026, 4, 3, 11, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 12, 24, 13, 30, 0)) || !Trading.MarketOpen(new DateTime(2026, 12, 24, 12, 30, 0))) throw new InvalidOperationException("Good Friday / Christmas Eve half day");
+                if (!Trading.MarketOpen(new DateTime(2026, 11, 27, 14, 0, 0)) || Markets.Open(new DateTime(2026, 11, 27, 14, 0, 0), "us")) throw new InvalidOperationException("day after Thanksgiving: US closes 13:00, Toronto open");
+                if (Markets.TodayNote(new DateTime(2026, 11, 26, 10, 0, 0)).IndexOf("Thanksgiving", StringComparison.Ordinal) < 0 || Markets.TodayNote(new DateTime(2026, 11, 13, 10, 0, 0)) != "") throw new InvalidOperationException("holiday note");
+                // the Bank of Canada's weekly index
+                string js = "{\"observations\":[{\"d\":\"2026-11-04\",\"W.MTLS\":{\"v\":\"1088.31\"},\"W.ENER\":{\"v\":\"1592.96\"}},{\"d\":\"2026-10-28\",\"W.MTLS\":{\"v\":\"1095.74\"},\"W.ENER\":{\"v\":\"1650.99\"}},{\"d\":\"2026-10-07\",\"W.ENER\":{\"v\":\"1543.23\"}}]}";
+                var ix = Trading.ParseIdx(js); var en = ix.FirstOrDefault(i => i.Code == "ENER");
+                if (ix.Count != 2 || en == null || en.Day != new DateTime(2026, 11, 4) || en.V.Length != 3 || Math.Abs(en.V[2] - 1592.96) > 0.001) throw new InvalidOperationException("weekly index parse");
+                double wk = Trading.Change(en, 1); if (Math.Abs(wk - (1592.96 - 1650.99) / 1650.99 * 100) > 0.001 || !double.IsNaN(Trading.Change(en, 4))) throw new InvalidOperationException("weekly change");
+                if (Trading.ParseIdx("<html>nope</html>").Count != 0) throw new InvalidOperationException("junk must give nothing");
+                // the evening line: only in its window, and it says what it has
+                if (!Trading.EveningNow(new DateTime(2026, 11, 13, 17, 30, 0)) || Trading.EveningNow(new DateTime(2026, 11, 13, 19, 0, 0)) || Trading.EveningNow(new DateTime(2026, 11, 14, 18, 0, 0))) throw new InvalidOperationException("evening window");
+                var rates = new List<Trading.Rate> { new Trading.Rate { Code = "USD", Day = new DateTime(2026, 11, 13), Cad = 1.395, Prev = 1.392 } };
+                string ev = Trading.EveningText(rates, ix, new DateTime(2026, 11, 13));
+                if (ev == null || ev.IndexOf("1", StringComparison.Ordinal) < 0 || ev.IndexOf("▲", StringComparison.Ordinal) < 0 || ev.IndexOf("▼", StringComparison.Ordinal) < 0) throw new InvalidOperationException("evening line: " + ev);
+                if (Trading.EveningText(new List<Trading.Rate>(), new List<Trading.Index>(), DateTime.Today) != null) throw new InvalidOperationException("no numbers: no evening line");
+                bool eve0 = Cfg.TradeEvening; try { Cfg.TradeEvening = false; if (Trading.EveningLine() != null) throw new InvalidOperationException("evening line while off"); } finally { Cfg.TradeEvening = eve0; }
+            });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
             {
                 var bad = new List<string>(); var sn = new Snap { Down = 12.43, Up = 1.07, DownHist = new[] { 1.0, 5, 12, 8 }, UpHist = new[] { 0.5, 1, 1.2, 0.9 }, TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 12 } } };

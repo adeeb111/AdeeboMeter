@@ -19,6 +19,7 @@ namespace AdeeboMeter
             { "Navigation", new[] { "layout", "learn", "How do you want to get around?" } },
             { "Background checks", new[] { "speed", "time", "How much should it watch?" } },
             { "Gamer Zone", new[] { "game", "gamer", "Do you play online games?" } },
+            { "Streaming & trading", new[] { "app", "stream", "Do you stream or trade?" } },
             { "Alerts", new[] { "report", "q.break", "When should it tell you?" } },
             { "History & data", new[] { "time", "q.keys", "What should it remember?" } },
             { "Privacy & online lookups", new[] { "lock", "q.padlock", "What may it ask the internet?" } },
@@ -34,6 +35,7 @@ namespace AdeeboMeter
                 case "Companion": return new[] { "Mood" };
                 case "Navigation": return new[] { "Layout" };
                 case "Gamer Zone": return new[] { "Game ping in the background" };
+                case "Streaming & trading": return new[] { "Notice streams", "Your broker" };
                 case "Alerts": return new[] { "Alerts" };
                 case "History & data": return new[] { "History", "Keep history for" };
                 default: return Array.Empty<string>();
