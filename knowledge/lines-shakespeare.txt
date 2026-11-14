@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Shakespeare persona (our own lines in the style; no quotations). key|text.
+app.open|Good morrow, {addr}. I keep watch upon thy network.
+app.open|The watch begins. Thy packets are in my care.
+all.good|All is well, {addr}. Fair weather on every wire.
+all.good|Thy PC, thy Wi-Fi, thy internet: all sound.
+all.good|No trouble doth stir tonight.
+pc.busy|Thy PC doth labour sore. CPU at {v}.
+pc.busy|The fault lies in thy PC, not the network.
+pc.busy|Too many tasks burden thy machine. Release one.
+wifi.drops|Thy Wi-Fi hath fled {v} times today.
+wifi.drops|{v} drops. Draw nearer to thy router, good {addr}.
+net.none|No network, alas. Thou art cut off.
+net.none|Offline. Seek the cable or the Wi-Fi.
+inet.slow|Thy router is swift. The slowness lies beyond.
+inet.slow|Thy house is sound. Thy provider doth dawdle.
+inet.slow|The delay is born past thy router.
+busy|I toil... {v}
+busy|Patience. The work proceeds.
+busy|Anon, anon.
+idle|Quiet hours. I watch still.
+idle|Naught new to tell.
+idle|All rests.
+search.empty|Speak, {addr}. What troubles thee?
+search.empty|Name thy grievance.
+freeze|A moment ({v}). The burden is heavy.
+freeze|Stay awhile ({v}). I catch up.
+speedrunner|Soft, soft! I am yet upon the last.
+speedrunner|One deed at a time, good {addr}.
+back.again|Thou art returned. {v} things befell.
+back.again|Welcome back. Here is the tale.
+dns.slow|The names come slowly: DNS at {v}.
+dns.slow|Lookups tarry {v}. A slothful server.
+speed.great|{v} down. Swift as thought.
+speed.great|Download {v}. A noble speed.
+speed.bloat|Swift, yet when busy it stumbles {v}.
+speed.bloat|Fast alone, slow in company. {v} of delay.
+game.lag|The lag springs from thy Wi-Fi, not the server.
+game.lag|The server is blameless. Thy Wi-Fi falters.
+game.good|Ping {v}. Go forth.
+game.good|A steady line. Fortune favours thee.
+vpn.on|Thy traffic goes masked. VPN on.
+vpn.on|In disguise thou travellest.
+vpn.slow|The masque costs {v}.
+vpn.slow|The VPN adds {v} to thy journey.
+portal|This Wi-Fi demands thy name at the gate.
+portal|Sign thou in, ere thou pass.
+gw.down|Thy router speaketh not. Restart it.
+gw.down|No word from the router.
+isp.down|Thy house stands. The internet is fallen.
+isp.down|Thy provider is gone dark.
+mtu.small|Great packets pass not. MTU {v}.
+mtu.small|The path is narrow: {v}.
+port.open|{v} doth answer.
+port.open|The door {v} stands open.
+port.closed|{v} answereth not.
+port.closed|The door {v} is barred.
+cert.ok|The seal is true. Certificate valid.
+cert.ok|An honest padlock.
+cert.expired|Their seal expired on {v}.
+cert.expired|Expired since {v}. Their neglect.
+sec.ok|Thy walls are strong. Checkup passed.
+sec.ok|No breach in thy defences.
+sec.issue|{v} weaknesses found. Mend them.
+sec.issue|The checkup reveals {v} faults.
+mtr.lossy|At hop {v}, thy packets are lost.
+mtr.lossy|Loss beginneth at hop {v}.
+mtr.clean|No loss on all the road.
+mtr.clean|Every hop is faithful.
+devices.found|{v} devices dwell upon thy network.
+devices.found|I count {v}.
+encrypt.done|Sealed. None but thy friend may read it.
+encrypt.done|Locked fast.
+decrypt.done|Opened. Untouched by any hand.
+decrypt.done|Unsealed, unaltered.
+points.earned|+{v} points. Well done.
+points.earned|+{v}. Thy learning grows.
+award|Five hundred points! The Adeebo Award is thine.
+award|Honour to thee: the Adeebo Award.
+late.night|The hour grows late. I keep watch.
+late.night|Night. Rest; I watch.
+morning|Good morrow. The night passed quiet.
+morning|Dawn, and naught amiss.
+update.suspect|Since the update on {v}, ill fortune.
+update.suspect|The trouble came with the {v} update.
+call.on|Thou art in counsel. I watch the call.
+call.on|A call proceeds. I listen for faults.

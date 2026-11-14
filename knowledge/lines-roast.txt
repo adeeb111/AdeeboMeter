@@ -1,0 +1,93 @@
+# AdeeboMeter buddy lines - Roast. Roasts the gear, never the person. key|text.
+app.open|Booted again. Fine, router, I'm watching you.
+app.open|Booted. Let's see what your router messes up today.
+app.open|I'm up. Your Wi-Fi had better behave.
+all.good|Everything works. Suspicious, but I'll allow it.
+all.good|All green. Enjoy it while the router cooperates.
+all.good|No problems. Your gear is having a rare good day.
+pc.busy|Your PC is wheezing. The network's innocent here.
+pc.busy|CPU at {v}. Your PC is doing its best. Its best is slow.
+pc.busy|It's not the internet. Your PC is the bottleneck.
+wifi.drops|Your Wi-Fi quit {v} times today. Commitment issues.
+wifi.drops|{v} Wi-Fi drops. That router needs a pep talk.
+wifi.drops|Wi-Fi bailed {v} times. Signal strength of a wet noodle.
+net.none|No network. Bold strategy, adapter, for an internet app.
+net.none|Offline. The cable or the Wi-Fi took a break.
+net.none|Not connected. Your adapter is on a break.
+inet.slow|Your router's fast. Your provider, less so.
+inet.slow|Home network fine. Your provider is dragging its feet.
+inet.slow|The slow bit lives past your router. Provider's problem.
+busy|Working on it... {v}
+busy|Hold on, doing the heavy lifting.
+busy|Measuring. Unlike your router, I finish things.
+idle|Nothing's broken. Give your router time.
+idle|Quiet. Too quiet for this Wi-Fi.
+idle|Still watching. Still unimpressed.
+search.empty|Go on, tell me what broke.
+search.empty|Type the problem. I've seen worse routers.
+search.empty|What's acting up this time?
+freeze|Catching up ({v}). Even I need a breather.
+freeze|Busy for {v}. Clicks are queued, relax.
+freeze|Heavy one. Back in {v}.
+speedrunner|Easy, speedrunner. Still on the last one.
+speedrunner|Clicking faster won't make your router faster.
+speedrunner|One thing at a time. I'm not your router.
+back.again|Back. {v} things happened. The router kept busy.
+back.again|Welcome back. Your Wi-Fi was up to things.
+back.again|You're back. The router behaved. Mostly.
+dns.slow|DNS takes {v}. Your name server is napping.
+dns.slow|Lookups at {v}. That DNS server needs coffee.
+speed.great|{v} down. Okay, that's actually fast.
+speed.great|Download {v}. Your provider earned its money today.
+speed.bloat|Fast, but the line chokes {v} under load.
+speed.bloat|Great speed, terrible manners: delay jumps {v} when busy.
+game.lag|The lag is your Wi-Fi, not the server. Sorry, Wi-Fi.
+game.lag|Server's fine. Your Wi-Fi is the one throwing.
+game.good|Ping {v}. The network has no excuses left.
+game.good|Connection's clean. The network's carrying its weight today.
+vpn.on|VPN on. Your traffic's taking the scenic route.
+vpn.on|VPN connected. Let's see how slow it makes things.
+vpn.slow|The VPN adds {v}. It's the slow middleman.
+vpn.slow|VPN tax: {v} of extra delay.
+portal|This Wi-Fi wants you to sign in. Classic hotel move.
+portal|Sign-in page first. Coffee shop Wi-Fi, as always.
+gw.down|Your router stopped answering. Typical.
+gw.down|Router's ghosting us. Check its lights.
+isp.down|Your router works. Your provider took the day off.
+isp.down|Internet's down past your router. Provider moment.
+mtu.small|Big packets don't fit. MTU {v}. Someone shrank the pipe.
+mtu.small|Path MTU {v}. Something on the way is stingy.
+port.open|{v} is open. At least something answers.
+port.open|{v} answered. Polite of it.
+port.closed|{v} ignored us. Rude.
+port.closed|{v} is closed. Or shy.
+cert.ok|Certificate's valid. Someone did their job.
+cert.ok|Padlock's fine. Rare competence.
+cert.expired|Certificate expired on {v}. Somebody forgot a calendar.
+cert.expired|Expired since {v}. Their admin is having a week.
+sec.ok|Checkup clean. Your PC is surprisingly well behaved.
+sec.ok|No risky settings. Nice and boring.
+sec.issue|{v} items in the checkup. Your PC has some explaining to do.
+sec.issue|Checkup found {v} things. Windows left the doors open.
+mtr.lossy|Packets vanish at hop {v}. That router is slacking.
+mtr.lossy|Loss from hop {v}. Whoever runs that hop is slacking.
+mtr.clean|Clean all the way. Shockingly well run.
+mtr.clean|No loss anywhere. Who are these routers?
+devices.found|{v} devices on your network. Busy neighbourhood.
+devices.found|Found {v} devices. Half of them are probably smart bulbs.
+encrypt.done|Locked tight. Tighter than any factory router default.
+encrypt.done|Encrypted. Nobody's peeking.
+decrypt.done|Opened. Nobody tampered with it.
+decrypt.done|Unlocked and untouched.
+points.earned|+{v} points. Nicely done.
+points.earned|+{v}. Your router can't say the same.
+award|500 points. Fine, you're good at this.
+award|Adeebo Award. Your router should be taking notes.
+late.night|Still up? Your router isn't sleeping either.
+late.night|Late night. The Wi-Fi's tired too.
+morning|Morning. The router survived the night.
+morning|Good morning. Nothing broke. Yet.
+update.suspect|Things went downhill after the update on {v}. Thanks, Windows.
+update.suspect|Broken since the update on {v}. Windows strikes again.
+call.on|On a call. Let's hope the Wi-Fi behaves.
+call.on|Call detected. Wi-Fi, don't embarrass us.

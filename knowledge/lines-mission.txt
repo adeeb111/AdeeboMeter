@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Mission control persona. key|text.
+app.open|Mission control online. All stations, report.
+app.open|Flight, we're go for network monitoring.
+all.good|All systems go.
+all.good|Telemetry nominal. PC, Wi-Fi, internet green.
+all.good|We are go across the board.
+pc.busy|PC load at {v}. Recommend shedding a process.
+pc.busy|Guidance: the PC is the constraint, not comms.
+pc.busy|Onboard computer overloaded. Comms nominal.
+wifi.drops|Loss of signal {v} times today on Wi-Fi.
+wifi.drops|{v} Wi-Fi dropouts. Recommend moving closer.
+net.none|Loss of signal. No network.
+net.none|Comms offline. Reconnect cable or Wi-Fi.
+inet.slow|Local systems nominal. Delay is downrange, past the router.
+inet.slow|Home link green. Provider segment is slow.
+inet.slow|Latency originates outside the home network.
+busy|Running the procedure... {v}
+busy|Collecting telemetry.
+busy|Standby.
+idle|Steady state. Monitoring.
+idle|No anomalies.
+idle|Quiet on the loop.
+search.empty|State the anomaly, {addr}.
+search.empty|What are we troubleshooting?
+freeze|Processing ({v}). Stand by.
+freeze|Data catching up ({v}).
+speedrunner|Hold. Previous procedure still running.
+speedrunner|One command at a time, flight.
+back.again|Welcome back. {v} events on the log.
+back.again|Back on console. Here's the summary.
+dns.slow|Name resolution slow: {v}.
+dns.slow|DNS latency {v}. Recommend a faster server.
+speed.great|{v} down. Excellent throughput.
+speed.great|Download {v}. Go for data.
+speed.bloat|Throughput good. Latency rises {v} under load.
+speed.bloat|Queue delay {v} under load. Check router settings.
+game.lag|Lag source: your Wi-Fi, not the server.
+game.lag|Server nominal. Wi-Fi unstable.
+game.good|Ping {v}. Go for launch.
+game.good|Link stable. You are go.
+vpn.on|VPN tunnel established.
+vpn.on|Secure link active.
+vpn.slow|VPN adds {v} latency.
+vpn.slow|Tunnel overhead: {v}.
+portal|Captive portal detected. Authenticate first.
+portal|Sign-in required before uplink.
+gw.down|Router not responding. Power cycle.
+gw.down|No contact with the router.
+isp.down|Home systems nominal. Provider link down.
+isp.down|Uplink lost at the provider.
+mtu.small|Oversized packets dropped. Path MTU {v}.
+mtu.small|MTU {v} on this path.
+port.open|{v} responding.
+port.open|{v} is go.
+port.closed|{v} no response.
+port.closed|{v} is no-go.
+cert.ok|Certificate verified.
+cert.ok|Trust chain nominal.
+cert.expired|Certificate expired {v}.
+cert.expired|Expired since {v}. Their side.
+sec.ok|Security checklist complete. All green.
+sec.ok|No findings.
+sec.issue|{v} items on the checklist.
+sec.issue|Checkup flags {v} findings.
+mtr.lossy|Packet loss from hop {v}.
+mtr.lossy|Loss begins at hop {v}. Downrange.
+mtr.clean|Zero loss, all hops.
+mtr.clean|Clean trajectory.
+devices.found|{v} devices on the network.
+devices.found|Tracking {v} devices.
+encrypt.done|Payload encrypted.
+encrypt.done|Secured.
+decrypt.done|Payload opened. Integrity confirmed.
+decrypt.done|Decrypted. No tampering.
+points.earned|+{v} points.
+points.earned|+{v}. Good work, flight.
+award|500 points. Mission accomplished: Adeebo Award.
+award|Adeebo Award. Outstanding.
+late.night|Night shift on console.
+late.night|Overnight monitoring active.
+morning|Good morning. Quiet overnight.
+morning|Morning. No anomalies overnight.
+update.suspect|Degradation after the update on {v}.
+update.suspect|Anomaly correlates with the {v} update.
+call.on|Voice loop active. Monitoring quality.
+call.on|Call in progress. Watching jitter.

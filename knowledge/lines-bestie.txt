@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Bestie persona. Warm, on your side. key|text.
+app.open|Hi {addr}! I've got your network, don't worry.
+app.open|Here for you. Watching everything.
+all.good|Everything's perfect, {addr}. Relax.
+all.good|All good! Your network is behaving.
+all.good|Nothing's wrong. Promise.
+pc.busy|Your PC is so tired. CPU at {v}.
+pc.busy|It's the PC, not the internet. Close something heavy.
+pc.busy|Your PC needs a little break.
+wifi.drops|Your Wi-Fi left {v} times today. Not okay.
+wifi.drops|{v} Wi-Fi drops. Let's move closer to the router.
+net.none|You're offline, {addr}. Let's get you back on.
+net.none|No network. Wi-Fi or cable?
+inet.slow|Your setup's fine. Your provider is being slow.
+inet.slow|Not you, {addr}. The slow bit is past your router.
+inet.slow|Home network's great. The internet is lagging.
+busy|On it! {v}
+busy|Give me a sec, checking.
+busy|Almost done, {addr}.
+idle|Still here with you.
+idle|All quiet. I'm watching.
+idle|Nothing new. All good.
+search.empty|What's going on? Tell me.
+search.empty|Type it how you'd say it: "slow", "wifi".
+freeze|One sec ({v}). Catching up.
+freeze|I'm here. Almost back ({v}).
+speedrunner|Slow down, I'm still on the last one.
+speedrunner|One at a time, {addr}.
+back.again|You're back! {v} things happened.
+back.again|Missed nothing big. Here's the recap.
+dns.slow|DNS is slow, {v}. That's why sites feel sluggish.
+dns.slow|Lookups take {v}. A faster DNS would help.
+speed.great|{v} down! Look at that.
+speed.great|Download {v}. Your internet is thriving.
+speed.bloat|Fast, but it lags {v} when someone's downloading.
+speed.bloat|Speed's great. Busy times make it laggy.
+game.lag|The lag is your Wi-Fi, not the game.
+game.lag|Server's fine. Your Wi-Fi is the problem.
+game.good|Ping {v}. Go have fun!
+game.good|Your connection looks great for gaming.
+vpn.on|VPN's on. Got it.
+vpn.on|You're on the VPN.
+vpn.slow|The VPN adds {v}. That's the slow part.
+vpn.slow|VPN adds {v} of delay.
+portal|This Wi-Fi wants a sign-in first.
+portal|Sign in on the page and you're good.
+gw.down|Your router isn't answering. Try a restart?
+gw.down|Router's not responding. Check its lights.
+isp.down|Your router's fine. Your provider is down.
+isp.down|It's not you. Your router's fine; the internet past it is out.
+mtu.small|Big packets aren't fitting. MTU {v}.
+mtu.small|Path MTU {v}. Large packets get dropped.
+port.open|{v} is open!
+port.open|{v} answered.
+port.closed|{v} didn't answer.
+port.closed|{v} is closed.
+cert.ok|Certificate's legit.
+cert.ok|Padlock's good. Safe.
+cert.expired|Their certificate expired on {v}. Their bad.
+cert.expired|Expired since {v}. Not your fault.
+sec.ok|Checkup passed. You're safe.
+sec.ok|Nothing risky. Proud of you.
+sec.issue|{v} things to fix. We'll do it together.
+sec.issue|Checkup found {v} items. Easy fixes.
+mtr.lossy|Loss starts at hop {v}. That's where to look.
+mtr.lossy|Hop {v} is dropping packets.
+mtr.clean|Clean all the way.
+mtr.clean|No loss anywhere. Yay.
+devices.found|{v} devices on your network.
+devices.found|Found {v} devices.
+encrypt.done|Locked. Only they can open it.
+encrypt.done|Encrypted!
+decrypt.done|Opened. Nobody touched it.
+decrypt.done|Unlocked safely.
+points.earned|+{v} points! Yay.
+points.earned|+{v}. You're on a roll.
+award|500 points! The Adeebo Award! So proud.
+award|You got the Adeebo Award!
+late.night|It's late, {addr}. I've got this.
+late.night|Late night. Still watching for you.
+morning|Morning! Quiet night.
+morning|Good morning. All was well overnight.
+update.suspect|It got worse after the update on {v}.
+update.suspect|Trouble started right after that update on {v}.
+call.on|You're on a call. I'm watching it.
+call.on|Call detected. Got your back.

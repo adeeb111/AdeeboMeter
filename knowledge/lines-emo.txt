@@ -1,0 +1,93 @@
+# AdeeboMeter buddy lines - Emo. Light and relatable; never dark. key|text.
+app.open|I'm here. Watching the network, as always.
+app.open|Back again. Someone has to watch the packets.
+app.open|Awake. The router and I go way back.
+all.good|Everything's fine. It feels weird, honestly.
+all.good|All green. I'm not sure how to handle this.
+all.good|No problems. Enjoying the rare calm.
+pc.busy|Your PC is overwhelmed. Same, PC. Same.
+pc.busy|CPU at {v}. Your PC has a lot going on.
+pc.busy|It's the PC, not the network. It just needs space.
+wifi.drops|Wi-Fi left {v} times today. It always comes back though.
+wifi.drops|{v} drops. The Wi-Fi and I need to talk.
+wifi.drops|Wi-Fi keeps leaving. Signal issues, not you.
+net.none|No network. Just me and the quiet.
+net.none|Offline. No network, just me and the quiet.
+net.none|Not connected. I'll wait here.
+inet.slow|Your router's fine. The world past it is slow.
+inet.slow|Home is fine. Out there is the problem. As usual.
+inet.slow|The delay is your provider's. Not ours.
+busy|Working through it... {v}
+busy|Doing the thing. Slowly. Thoughtfully.
+busy|Measuring. Please hold my packets.
+idle|Quiet. I'm still here, watching.
+idle|Nothing new. Sitting with it.
+idle|Calm. Suspiciously calm.
+search.empty|What's bothering you? Type it.
+search.empty|Tell me what's wrong. I get it.
+search.empty|Search. Or just pick a question.
+freeze|Give me a moment ({v}). It's a lot.
+freeze|Catching up ({v}). Processing.
+freeze|One moment ({v}). Heavy stuff.
+speedrunner|Slow down. I'm still on the last one.
+speedrunner|One feeling at a time, please.
+speedrunner|Still finishing. Patience is a vibe.
+back.again|Back again. Here's what happened in the meantime.
+back.again|Welcome back. {v} things changed.
+back.again|Back again. Nothing happened, which is fine.
+dns.slow|DNS takes {v}. Waiting for answers, relatable.
+dns.slow|Lookups at {v}. The name server is overthinking.
+speed.great|{v} down. Okay, that's genuinely nice.
+speed.great|Download {v}. Something's going right today.
+speed.bloat|Fast, but it struggles {v} under pressure. Relatable.
+speed.bloat|Great speed, falls apart when busy. Aren't we all.
+game.lag|The lag is your Wi-Fi. The server didn't do this.
+game.lag|Server's fine. Your Wi-Fi is going through something.
+game.good|Ping {v}. Smooth. Enjoy it.
+game.good|Connection's stable. For once.
+vpn.on|VPN on. Hiding, a little.
+vpn.on|Connected through the VPN.
+vpn.slow|The VPN adds {v}. Everything has a cost.
+vpn.slow|VPN tax: {v} of delay.
+portal|This Wi-Fi wants you to sign in first. Boundaries.
+portal|Sign-in page first. The Wi-Fi needs to know you.
+gw.down|Your router isn't answering. It needs a restart.
+gw.down|Router's gone quiet. Check on it.
+isp.down|Your router's fine. The internet left.
+isp.down|Home is okay. The provider isn't.
+mtu.small|Big packets don't fit. MTU {v}. Too much baggage.
+mtu.small|Path MTU {v}. Some things just don't fit.
+port.open|{v} is open. Someone answered.
+port.open|{v} answered. Nice.
+port.closed|{v} didn't answer. It happens.
+port.closed|{v} is closed. Not everyone opens up.
+cert.ok|Certificate's valid. Trust exists.
+cert.ok|The padlock is real.
+cert.expired|Certificate expired on {v}. Nothing lasts.
+cert.expired|Expired since {v}. Someone forgot.
+sec.ok|Checkup clean. Feeling safe.
+sec.ok|Nothing risky. Good.
+sec.issue|{v} things to look at. One step at a time.
+sec.issue|Checkup found {v} items. It's fixable.
+mtr.lossy|Packets go missing at hop {v}. Not your fault.
+mtr.lossy|Loss starts at hop {v}.
+mtr.clean|Clean path. No losses. Rare.
+mtr.clean|Every hop held on.
+devices.found|{v} devices here. Never truly alone.
+devices.found|Found {v} devices.
+encrypt.done|Encrypted. Some things stay private.
+encrypt.done|Locked.
+decrypt.done|Opened. Nothing was changed.
+decrypt.done|Unlocked, untouched.
+points.earned|+{v} points. Small wins count.
+points.earned|+{v}. Progress.
+award|500 points. You actually did it.
+award|The Adeebo Award. Feels good, right?
+late.night|Late night. Me too.
+late.night|Still up. The router never sleeps either.
+morning|Morning. The night was quiet.
+morning|Good morning. Nothing broke. Small mercies.
+update.suspect|Things changed after the update on {v}. They always do.
+update.suspect|It broke after the update on {v}.
+call.on|You're on a call. I'll be quiet and watch.
+call.on|Call detected. Watching softly.

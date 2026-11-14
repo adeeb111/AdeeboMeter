@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Gamer persona. key|text.
+app.open|Player one ready. Network watch loaded.
+app.open|GG, we're live. Watching your connection, {addr}.
+all.good|All green. Zero lag, full send.
+all.good|Clean lobby. PC, Wi-Fi and internet all good.
+all.good|No debuffs. You're good to go.
+pc.busy|Your PC is at {v}. Frame drops incoming.
+pc.busy|PC's the bottleneck, not the server. Close a tab.
+pc.busy|Your rig is overloaded. Network's fine.
+wifi.drops|Wi-Fi disconnected {v} times. That's a rage quit.
+wifi.drops|{v} Wi-Fi drops today. Get a cable for ranked.
+net.none|No connection. You're playing offline.
+net.none|Disconnected from everything. Plug in, {addr}.
+inet.slow|Your router's fine. Lag starts at your provider.
+inet.slow|Home setup is clean. The ISP is the lag.
+inet.slow|High ping past your router. Not your fault.
+busy|Loading... {v}
+busy|Running the check. Don't alt-F4.
+busy|Buffering the results...
+idle|AFK check: still watching.
+idle|Nothing new. Lobby's quiet.
+idle|Idle, but the network's still on my radar.
+search.empty|What are we debugging, {addr}?
+search.empty|Type it: "lag", "ping", "wifi".
+freeze|Loading screen ({v}). Hang on.
+freeze|Catching up ({v}). No input lag, promise.
+speedrunner|Speedrunner detected. Still on the last one.
+speedrunner|No button mashing. One at a time.
+back.again|Respawned. {v} things happened.
+back.again|Welcome back, {addr}. Here's the recap.
+dns.slow|DNS at {v}. Slow server lookup.
+dns.slow|Name lookups lag at {v}. Swap DNS servers.
+speed.great|{v} down. Download the whole game library.
+speed.great|Download {v}. Patch day won't hurt.
+speed.bloat|Fast, but ping spikes {v} when someone downloads.
+speed.bloat|Bufferbloat: {v} extra under load. That's your lag spike.
+game.lag|Lag starts at your Wi-Fi. Cable up for ranked.
+game.lag|Server's fine. Your Wi-Fi is throwing the match.
+game.good|Ping {v}. Go carry.
+game.good|Clean connection. The network's carrying its weight today.
+vpn.on|VPN on. Watch your ping.
+vpn.on|Connected through a VPN.
+vpn.slow|VPN adds {v}. Turn it off for matches.
+vpn.slow|The VPN is your extra {v} of ping.
+portal|Wi-Fi wants a sign-in first. Tutorial level.
+portal|Captive portal. Log in, then queue up.
+gw.down|Router's not responding. Restart it.
+gw.down|Your router went AFK.
+isp.down|Router's fine. Internet's down at the provider.
+isp.down|Server down? No - your provider is.
+mtu.small|Big packets dropped. MTU {v}.
+mtu.small|Path MTU {v}. Some packets don't fit.
+port.open|{v} is open. Connection works.
+port.open|{v} answered.
+port.closed|{v} is closed. NAT says no.
+port.closed|{v} didn't answer.
+cert.ok|Certificate valid. Legit site.
+cert.ok|Padlock's good.
+cert.expired|Certificate expired {v}. Sketchy.
+cert.expired|Expired since {v}. Their side, not yours.
+sec.ok|Security check: passed. Full armour.
+sec.ok|No weak spots found.
+sec.issue|{v} security items. Patch them up.
+sec.issue|Checkup found {v} things. Fix before the boss fight.
+mtr.lossy|Packet loss from hop {v}. That's where the lag spawns.
+mtr.lossy|Hop {v} is dropping packets.
+mtr.clean|Zero loss on every hop. Clean route.
+mtr.clean|No loss. Flawless route.
+devices.found|{v} devices on the network.
+devices.found|Found {v} players in the lobby.
+encrypt.done|Encrypted. Loot secured.
+encrypt.done|Locked.
+decrypt.done|Opened. Untouched.
+decrypt.done|Unlocked. No tampering.
+points.earned|+{v} XP.
+points.earned|+{v} points. Level up soon.
+award|500 points. Achievement unlocked: Adeebo Award.
+award|Adeebo Award unlocked. GG.
+late.night|Late-night session. I'm still watching.
+late.night|One more game? I'll watch the ping.
+morning|Morning. Servers held all night.
+morning|Good morning. No lag overnight.
+update.suspect|It broke after the update on {v}. Patch nerfed it.
+update.suspect|Things got worse after the {v} update.
+call.on|Voice chat detected. Watching quality.
+call.on|On a call. Watching jitter.

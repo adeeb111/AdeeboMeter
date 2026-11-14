@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Gen-Z persona. Light slang, never forced. key|text.
+app.open|Hey {addr}, I'm on it. Network watch, activated.
+app.open|We're so back. Watching your network.
+all.good|All green. Vibes are immaculate.
+all.good|No problems. Your setup is lowkey elite.
+all.good|Everything's working. Rare W.
+pc.busy|Your PC is cooked. CPU at {v}.
+pc.busy|It's the PC, not the Wi-Fi. Close a tab or ten.
+pc.busy|PC's carrying too much. Give it a break.
+wifi.drops|Wi-Fi ghosted you {v} times today.
+wifi.drops|{v} drops. The router's being so flaky.
+net.none|No network. Plug in or pick a Wi-Fi.
+net.none|Offline. Not the vibe.
+inet.slow|Your router's fine. The provider is the problem, fr.
+inet.slow|Home network ate. The internet past it did not.
+inet.slow|Not your fault. The slowdown is past your router.
+busy|Cooking... {v}
+busy|On it, give me a sec.
+busy|Loading, one sec.
+idle|Still here. Chilling.
+idle|Nothing new. Quiet era.
+idle|All quiet on my end.
+search.empty|What's the issue, {addr}?
+search.empty|Type it like you'd text it: "wifi slow".
+freeze|One sec ({v}). Catching up.
+freeze|Lagging myself ({v}). Brb.
+speedrunner|Speedrun any%? Still on the last one.
+speedrunner|Easy, I'm still finishing that.
+back.again|You're back! {v} things happened.
+back.again|Welcome back. Here's the tea.
+dns.slow|DNS is slow, {v}. That's the delay.
+dns.slow|Lookups take {v}. Mid DNS server.
+speed.great|{v} down. Speed is insane.
+speed.great|Download {v}. Honestly elite.
+speed.bloat|Fast, but it lags {v} when someone downloads. Not ideal.
+speed.bloat|Fast until it's busy. Then +{v}.
+game.lag|Lag is your Wi-Fi, not the server. Cable it.
+game.lag|Server's fine. Wi-Fi is fumbling.
+game.good|Ping {v}. You're so ready.
+game.good|Connection is clean. Go off.
+vpn.on|VPN on. Incognito mode.
+vpn.on|Running through a VPN.
+vpn.slow|VPN adds {v}. That's the lag.
+vpn.slow|The VPN tax is {v}.
+portal|This Wi-Fi wants you to sign in first.
+portal|Sign-in page first. Hotel Wi-Fi things.
+gw.down|Router's not answering. Restart it.
+gw.down|Your router went offline.
+isp.down|Router's fine. The provider is down. Big L for them.
+isp.down|Internet's out at your provider, not you.
+mtu.small|Big packets don't fit. MTU {v}.
+mtu.small|MTU {v}. Packets too big for the path.
+port.open|{v} is open.
+port.open|{v} answered. Love that.
+port.closed|{v} left you on read.
+port.closed|{v} is closed.
+cert.ok|Certificate's legit.
+cert.ok|Padlock checks out.
+cert.expired|Their certificate expired on {v}. Not a good look.
+cert.expired|Expired since {v}. Their fault.
+sec.ok|Security checkup passed. Locked in.
+sec.ok|Nothing sus.
+sec.issue|{v} things to fix. Quick wins.
+sec.issue|Checkup found {v} items. Lowkey easy.
+mtr.lossy|Packets go missing at hop {v}.
+mtr.lossy|Loss from hop {v}. That's where it goes wrong.
+mtr.clean|Zero loss. Clean.
+mtr.clean|Every hop passed the vibe check.
+devices.found|{v} devices on your network.
+devices.found|Found {v} devices. Busy.
+encrypt.done|Encrypted. Private.
+encrypt.done|Locked.
+decrypt.done|Opened. Nobody touched it.
+decrypt.done|Unlocked. All good.
+points.earned|+{v} points. W.
+points.earned|+{v}. Keep going.
+award|500 points. Adeebo Award. Iconic.
+award|You got the Adeebo Award. Main character energy.
+late.night|It's late. I'm still up.
+late.night|Late night. Watching.
+morning|Morning. Quiet night.
+morning|Good morning. No drama overnight.
+update.suspect|It broke after the update on {v}. Classic.
+update.suspect|That update on {v} did something.
+call.on|On a call. I'll stay quiet.
+call.on|Call detected. Watching.

@@ -239,7 +239,14 @@ namespace AdeeboMeter
             var lr = new RectangleF(right - 30 * S, cy - 15 * S, 30 * S, 30 * S);
             Kit.Icon(g, "layout", new RectangleF(lr.X + 5 * S, lr.Y + 5 * S, 20 * S, 20 * S), Theme.Muted);
             Act(header, lr, delegate { SetLayout(Cfg.Layout == "sidebar" ? "classic" : "sidebar"); }); Hint(header, lr, "layout.switch");
-            return lr.X - 8 * S;
+            // the Mood button (PLAN 11.7): the face of the current mood and who's talking; one click opens the menu
+            string who = Voice.Serious ? L.T("Plain") : Lines.Persona == "none" ? L.T(Lines.MoodName(Lines.Mood)) : L.T(Lines.PersonaName(Lines.Persona == "surprise" ? Lines.Today() : Lines.Persona));
+            var ws = g.MeasureString(who, Draw.fBtn); var mr = new RectangleF(lr.X - 8 * S - ws.Width - 40 * S, cy - 15 * S, ws.Width + 40 * S, 30 * S);
+            Theme.Fill(g, mr, 15 * S, Voice.Serious ? Theme.Soft : Kit.Soft("mine"));
+            Kit.Icon(g, Voice.Serious ? "check" : "mood", new RectangleF(mr.X + 10 * S, mr.Y + 7 * S, 16 * S, 16 * S), Voice.Serious ? Theme.Muted : Kit.Accent("mine"));
+            using (var b = new SolidBrush(Voice.Serious ? Theme.Sub : Kit.Ink("mine"))) g.DrawString(who, Draw.fBtn, b, mr.X + 31 * S, mr.Y + (mr.Height - ws.Height) / 2);
+            Act(header, mr, delegate { ShowMoodMenu(header, Point.Round(new PointF(mr.X, mr.Bottom + 4 * S))); }); Hint(header, mr, "buddy.mood");
+            return mr.X - 8 * S;
         }
         SearchPill navSearch;
 

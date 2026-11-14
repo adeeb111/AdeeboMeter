@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Noir detective persona. key|text.
+app.open|Another night in the city. I'm watching your network.
+app.open|Case file open, {addr}. Every packet's a witness.
+all.good|Quiet streets tonight. No trouble.
+all.good|Everybody's clean. PC, Wi-Fi, internet.
+all.good|Nothing to report. That's how I like it.
+pc.busy|Your PC's sweating at {v}. It knows something.
+pc.busy|The PC's the bottleneck. The network has an alibi.
+pc.busy|Too many jobs on one desk. CPU at {v}.
+wifi.drops|The Wi-Fi skipped town {v} times today.
+wifi.drops|{v} drops. The signal's been nervous.
+net.none|No network. The trail's gone cold.
+net.none|Offline. Nobody's talking.
+inet.slow|Your router's clean. The trouble's past it.
+inet.slow|Home's got an alibi. The provider's the suspect.
+inet.slow|The delay starts outside your door, {addr}.
+busy|Following a lead... {v}
+busy|Asking around.
+busy|Working the case.
+idle|Quiet night. I'm still watching.
+idle|Nothing new. The city sleeps.
+idle|No calls. No trouble.
+search.empty|What's the case, {addr}?
+search.empty|Tell me what went wrong.
+freeze|Give me a minute ({v}). The files are heavy.
+freeze|Catching up on the paperwork ({v}).
+speedrunner|Easy, pal. One case at a time.
+speedrunner|Still working the last lead.
+back.again|You're back. {v} things happened while you were out.
+back.again|Welcome back. Here's the file.
+dns.slow|The phone book's slow. DNS at {v}.
+dns.slow|Names take {v} to answer. Somebody's stalling.
+speed.great|{v} down. Fast, clean, no questions.
+speed.great|Download {v}. Smooth operator.
+speed.bloat|Fast, but it chokes {v} when the street gets busy.
+speed.bloat|Speed's fine. Under pressure, it cracks. {v}.
+game.lag|The lag's your Wi-Fi. The server's innocent.
+game.lag|Server checks out. The Wi-Fi did it.
+game.good|Ping {v}. Clean getaway.
+game.good|Steady line. No funny business.
+vpn.on|VPN on. Going undercover.
+vpn.on|Traffic's wearing a disguise now.
+vpn.slow|The disguise costs {v} of delay.
+vpn.slow|VPN adds {v}. Long way around town.
+portal|This joint wants you to sign in at the door.
+portal|Captive portal. Show your papers first.
+gw.down|The router's gone silent. Restart it.
+gw.down|Router won't talk. Check its lights.
+isp.down|Your router's clean. The provider's gone dark.
+isp.down|Home's fine. The internet left town.
+mtu.small|Big packets don't make it past the door. MTU {v}.
+mtu.small|Path MTU {v}. Somebody's squeezing the packets.
+port.open|{v} answered the door.
+port.open|{v} is open. Someone's home.
+port.closed|{v} won't open up.
+port.closed|Nobody home at {v}.
+cert.ok|The papers check out. Certificate valid.
+cert.ok|Padlock's legit.
+cert.expired|Their papers expired on {v}.
+cert.expired|Expired since {v}. Sloppy work, their side.
+sec.ok|Clean record. Checkup passed.
+sec.ok|No weak spots in this place.
+sec.issue|{v} loose ends in the checkup.
+sec.issue|Found {v} things that don't add up.
+mtr.lossy|Packets disappear at hop {v}. Follow the trail.
+mtr.lossy|Loss starts at hop {v}. That's where the trail leads.
+mtr.clean|Every hop's clean. Case closed.
+mtr.clean|No loss. Nothing to see here.
+devices.found|{v} faces on your network.
+devices.found|Counted {v} devices in the room.
+encrypt.done|Sealed. Only the right person opens it.
+encrypt.done|Locked up tight.
+decrypt.done|Opened. Nobody tampered with the evidence.
+decrypt.done|Envelope opened. Seal was intact.
+points.earned|+{v} points. Nice work, detective.
+points.earned|+{v}. The chief noticed.
+award|500 points. The Adeebo Award. Case of the year.
+award|Adeebo Award earned. You cracked it.
+late.night|Late. The city's quiet. I'm still here.
+late.night|Midnight shift. Watching the streets.
+morning|Morning. Quiet night on the beat.
+morning|Sun's up. Nothing broke overnight.
+update.suspect|It started after the update on {v}. Prime suspect.
+update.suspect|Trouble since the {v} update. Funny timing.
+call.on|You're on a call. I'll keep watch.
+call.on|Call in progress. Listening for trouble.

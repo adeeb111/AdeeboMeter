@@ -1,0 +1,118 @@
+# AdeeboMeter buddy lines - Bro code. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|Yo. I got your network, bro.
+app.open|Bro's here. Watching everything.
+app.open|We're live, bro. Chill, I got this.
+app.open|Up and running. Bro mode on.
+app.open|Sup. Checking your setup, bro.
+all.good|All good, bro. Nothing to fix.
+all.good|We're vibing. Network's clean.
+all.good|Bro, everything's solid.
+all.good|Zero problems. Go do your thing.
+all.good|Clean as a fresh fade, bro.
+pc.busy|Bro, your PC is carrying the whole team.
+pc.busy|PC's maxed out, bro. Close something.
+pc.busy|Too many tabs, bro. Your PC is tapping out.
+pc.busy|Your PC needs a rest day, bro.
+pc.busy|Something's hogging your CPU, bro. Not cool.
+wifi.drops|Bro. Your Wi-Fi bailed {v} times. Not cool, bro.
+wifi.drops|Wi-Fi ghosted you {v} times today, bro.
+wifi.drops|Bro, your Wi-Fi keeps leaving the party.
+wifi.drops|{v} drops, bro. Your Wi-Fi needs a talk.
+wifi.drops|Your Wi-Fi isn't a real one, bro. {v} drops.
+net.none|Bro, you're not connected to anything.
+net.none|No network, bro. Plug in or pick a Wi-Fi.
+net.none|You're offline, bro. Totally.
+net.none|Bro, zero bars. Zero cable.
+net.none|Nothing's connected, bro. We're stranded.
+inet.slow|Your router's fine, bro. Internet's the slow one.
+inet.slow|Not your fault, bro. It's past your router.
+inet.slow|Bro, your provider is slacking.
+inet.slow|Home side's solid, bro. Internet's dragging.
+inet.slow|Bro, the lag lives outside your house.
+busy|On it, bro...
+busy|Hold up, bro. Checking.
+busy|Give me a sec, bro.
+busy|Working on it, bro. Hit Stop to cancel.
+busy|Running it, bro...
+idle|Still here, bro. All chill.
+idle|Nothing new, bro.
+idle|Quiet day, bro.
+idle|Just vibing. Watching your network.
+idle|Bro, nothing's happening. That's good.
+search.empty|What's up, bro? Type the problem.
+search.empty|Tell me what's broken, bro.
+search.empty|Type it, bro. "slow", "wifi", anything.
+search.empty|What we checking, bro?
+search.empty|Bro, search a tool or pick a question.
+freeze|Hold up, bro. Catching up ({v}).
+freeze|My bad, bro. One sec ({v}).
+freeze|Bro, lagging a bit. Back in {v}.
+freeze|Still here, bro. Catching my breath ({v}).
+freeze|Give me {v}, bro.
+speedrunner|Easy, speedrunner. Still on the last one.
+speedrunner|Bro, slow down. One at a time.
+speedrunner|Chill, bro. Still finishing your last click.
+speedrunner|Bro's clicking faster than my CPU.
+speedrunner|Relax, bro. I'm on it.
+back.again|Welcome back, bro. Here's what happened.
+back.again|Bro's back. {v} things changed.
+back.again|Missed you, bro. Nothing changed.
+back.again|Back already, bro? All quiet.
+back.again|Sup, bro. Here's the recap.
+dns.slow|Bro, your DNS is slow. {v} a lookup.
+dns.slow|Names are loading slow, bro. Try another DNS.
+speed.great|{v} down. Bro, that's fast.
+speed.great|Bro, your internet is goated.
+speed.bloat|Fast, bro, but it lags when someone downloads.
+speed.bloat|Bro, full line = lag. Classic bufferbloat.
+game.lag|Not the server, bro. Your Wi-Fi's throwing.
+game.lag|Bro, your Wi-Fi is why you're lagging.
+game.good|Ping {v}. Go win, bro.
+game.good|Bro, your connection is ranked-ready.
+vpn.on|VPN's on, bro.
+vpn.on|Going through the VPN, bro.
+vpn.slow|VPN adds {v}, bro. That's the lag.
+vpn.slow|Bro, the VPN is slowing you down.
+portal|Bro, this Wi-Fi wants you to sign in first.
+portal|Open a browser, bro. Sign-in page.
+gw.down|Your router's not answering, bro.
+gw.down|Bro, restart the router.
+isp.down|Router's fine, bro. The internet's down.
+isp.down|Bro, your provider is down. Not you.
+mtu.small|Big packets aren't making it, bro. MTU {v}.
+mtu.small|Bro, the path can't take full-size packets.
+port.open|{v} is open, bro.
+port.open|Connected, bro.
+port.closed|{v} said no, bro.
+port.closed|Bro, something's blocking it.
+cert.ok|Padlock's legit, bro.
+cert.ok|Certificate checks out, bro.
+cert.expired|Cert expired on {v}, bro. Not good.
+cert.expired|Bro, that padlock is fake news.
+sec.ok|You're locked down, bro.
+sec.ok|Security's clean, bro.
+sec.issue|{v} things to fix, bro.
+sec.issue|Bro, a few doors are open.
+mtr.lossy|Packets bailing at hop {v}, bro.
+mtr.lossy|Bro, loss starts mid-route.
+mtr.clean|Every hop's clean, bro.
+mtr.clean|Zero loss, bro. Clean path.
+devices.found|{v} devices on your network, bro.
+devices.found|Here's who's on your Wi-Fi, bro.
+encrypt.done|Locked, bro.
+encrypt.done|Encrypted. Only your people can open it.
+decrypt.done|Opened, bro. Nobody touched it.
+decrypt.done|Decrypted, bro. All legit.
+points.earned|+{v}, bro.
+points.earned|Bro's stacking points. +{v}.
+award|500 points, bro. Legend.
+award|Adeebo Award, bro. You earned it.
+late.night|Late night, bro. I'm still up.
+late.night|Bro, it's late. All quiet.
+morning|Morning, bro. Quiet night.
+morning|Rise and shine, bro. Here's last night.
+update.suspect|Bro, it broke after the update on {v}.
+update.suspect|Windows update might've done this, bro.
+call.on|You're on a call, bro. Watching it.
+call.on|Call mode, bro. I'll watch the lag.

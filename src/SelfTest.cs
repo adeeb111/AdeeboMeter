@@ -919,6 +919,30 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("buddy lines: every built-in line passes the tone rules, every persona falls back, nothing is blank", () =>
+            {
+                var bad = new List<string>(); int n = 0;
+                foreach (var id in new[] { "plain" }.Concat(Lines.Moods.Where(m => m != "plain")).Concat(Lines.Personas.Select(p => p[0])))
+                {
+                    string raw = Knowledge.RawText("lines-" + id); if (raw == "") { bad.Add(id + ": no file"); continue; }
+                    bad.AddRange(Lines.Check(id, raw)); n += Lines.Parse(raw).Values.Sum(l => l.Count);
+                }
+                string pm = Lines.Mood, pp = Lines.Persona, pa = Lines.Addr; bool ps = Voice.Serious;
+                try
+                {
+                    Voice.Serious = false;
+                    foreach (var p in Lines.Personas.Select(z => z[0]).Concat(new[] { "none", "surprise" }))
+                    {
+                        Lines.Persona = p;
+                        foreach (var key in Lines.Keys) { string t = Lines.Line(key, "42"); if (t == "" || t.Contains("{")) bad.Add(p + "/" + key + ": '" + t + "'"); }
+                    }
+                    Lines.Persona = "epic-fantasy"; Lines.Addr = "maam"; if (!Lines.Line("all.good", null).Contains("lady") && !Lines.AddrFor("epic-fantasy").Contains("lady")) bad.Add("address");
+                    Lines.Persona = "surprise"; if (Lines.Who() == "none" || Lines.Who() == "plain") bad.Add("Surprise me picked " + Lines.Who());
+                }
+                finally { Lines.Mood = pm; Lines.Persona = pp; Lines.Addr = pa; Voice.Serious = ps; }
+                sb.AppendLine("      " + n + " built-in lines in " + (1 + Lines.Moods.Length - 1 + Lines.Personas.Length) + " files");
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)) + (bad.Count > 8 ? " (+" + (bad.Count - 8) + " more)" : ""));
+            });
             T("calculators 1.1.5: NR, LTE, Wi-Fi, link budget, RAID, SLA, jitter buffer give the textbook numbers", () =>
             {
                 Func<List<string[]>, string> v0 = r => r.Count > 0 ? r[0][2] : "";

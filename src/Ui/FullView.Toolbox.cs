@@ -277,7 +277,7 @@ namespace AdeeboMeter
         // a click refused while a tool runs: said for 4 s, then the run's own status comes back (most tools set it only once)
         void BusyNote()
         {
-            var run = tbRun0; if (run == null) return; string was = run.Status, note = L.T("still running - press Stop first to open something else");
+            var run = tbRun0; if (run == null) return; string was = run.Status, note = Lines.Speaks("state") ? Lines.Line("speedrunner", null) + "  " + L.T("(Stop first to open something else)") : L.T("still running - press Stop first to open something else");
             if (was == note) return; run.Status = note; if (tbCanvas != null) tbCanvas.Invalidate();
             var t = new System.Windows.Forms.Timer { Interval = 4000 }; t.Tick += delegate { t.Stop(); t.Dispose(); if (run.Status == note) run.Status = was; if (tbCanvas != null && !tbCanvas.IsDisposed) tbCanvas.Invalidate(); }; t.Start();
         }
@@ -1091,6 +1091,7 @@ namespace AdeeboMeter
                 if (tbSel == "mtu" && !isEx) y = PaintMtu(g, x, y, w);
                 if (tbSel == "mtr" && mtrHops != null && !isEx) y = PaintMtr(g, x, y, w);
                 if (run != null) { var s = run.Copy(); if (s.Count > 1) y = PaintSeries(g, s, run.SeriesUnit, x, y, w); }
+                y = PaintBuddyLine(g, x, y, w);
                 if (tbRows != null && !tbBusy) y = PaintTbSummary(g, x, y, w);
                 if (tbRows != null)
                 {

@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Industrial persona (steam, gears, factory floor). key|text.
+app.open|Boilers lit. The network works are running, {addr}.
+app.open|Shift started. Gauges checked, pipes watched.
+all.good|All machinery running smooth.
+all.good|Every gauge in the green. PC, Wi-Fi, internet.
+all.good|The works hum along nicely.
+pc.busy|The PC engine is overworked. CPU at {v}.
+pc.busy|Pressure's high in the PC. The network pipes are fine.
+pc.busy|Too many looms running. Shut one down.
+wifi.drops|The Wi-Fi belt slipped {v} times today.
+wifi.drops|{v} drops. The signal pipe is leaking.
+net.none|No line to the works. Connect the cable.
+net.none|Offline. The telegraph is down.
+inet.slow|Your factory's fine. The railway past it is slow.
+inet.slow|Home works quick. The provider's line is sluggish.
+inet.slow|The holdup is beyond your router.
+busy|Turning the cogs... {v}
+busy|Building up steam.
+busy|The machine runs.
+idle|Steady hum. Nothing to report.
+idle|The works are quiet.
+idle|Gauges steady.
+search.empty|Which machine needs inspecting?
+search.empty|Name the faulty part, {addr}.
+freeze|Building pressure ({v}). Hold on.
+freeze|The gears catch up ({v}).
+speedrunner|One lever at a time. The last job's still running.
+speedrunner|Easy on the controls.
+back.again|Back on the floor. {v} things happened.
+back.again|Welcome back. Here's the shift report.
+dns.slow|The directory clerk is slow. DNS at {v}.
+dns.slow|Lookups take {v}. The ledger's dusty.
+speed.great|{v} down. Full steam.
+speed.great|Download {v}. Express line.
+speed.bloat|Fast, but the pipes clog {v} under load.
+speed.bloat|Pressure backs up {v} when the line is full.
+game.lag|The lag is the Wi-Fi belt, not the server.
+game.lag|The server runs true. Your Wi-Fi slips.
+game.good|Ping {v}. Machines ready.
+game.good|Steady output. Go play.
+vpn.on|Traffic routed through a sealed pipe. VPN on.
+vpn.on|VPN connected. Sealed line.
+vpn.slow|The sealed pipe adds {v}.
+vpn.slow|VPN adds {v} of delay.
+portal|This mill wants your name at the gate. Sign in.
+portal|Gatekeeper Wi-Fi. Sign in first.
+gw.down|The router stalled. Restart the engine.
+gw.down|No signal from the router. Check its lamps.
+isp.down|Your works are fine. The supply line is cut.
+isp.down|Provider's line is down. Not your machinery.
+mtu.small|Crates too big for the chute. MTU {v}.
+mtu.small|Path MTU {v}. Narrow pipe.
+port.open|Valve {v} is open.
+port.open|{v} answered.
+port.closed|Valve {v} is shut.
+port.closed|{v} didn't answer.
+cert.ok|Certified. Stamp's genuine.
+cert.ok|The padlock passed inspection.
+cert.expired|Their certificate lapsed on {v}.
+cert.expired|Expired since {v}. Overdue inspection.
+sec.ok|Safety inspection passed.
+sec.ok|No hazards on the floor.
+sec.issue|{v} safety faults flagged.
+sec.issue|The inspection found {v} items.
+mtr.lossy|Leak in the line from hop {v}.
+mtr.lossy|Packets spill at hop {v}.
+mtr.clean|No leaks anywhere on the line.
+mtr.clean|Clean pipes end to end.
+devices.found|{v} machines on your network.
+devices.found|Counted {v} devices.
+encrypt.done|Sealed in the strongbox.
+encrypt.done|Encrypted.
+decrypt.done|Strongbox opened. Contents intact.
+decrypt.done|Unlocked, untouched.
+points.earned|+{v} points on the ledger.
+points.earned|+{v}. Productive shift.
+award|500 points. Foreman's medal: the Adeebo Award.
+award|Adeebo Award. Fine work.
+late.night|Night shift. The works keep running.
+late.night|Late hours on the floor.
+morning|Morning whistle. Quiet night.
+morning|Fresh shift. Nothing broke overnight.
+update.suspect|Running rough since the update on {v}.
+update.suspect|The {v} update threw a spanner in.
+call.on|A call is on. Keeping the line clear.
+call.on|Call in progress. Watching the line.

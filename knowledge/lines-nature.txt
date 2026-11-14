@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Nature documentary persona. Whispered narration. key|text.
+app.open|Here, in its natural habitat, the network awakens.
+app.open|We join the network at dawn. All is calm.
+all.good|The network rests peacefully. A rare sight.
+all.good|Every creature thrives. PC, Wi-Fi, internet.
+all.good|Harmony across the ecosystem.
+pc.busy|The PC struggles under a heavy load. CPU at {v}.
+pc.busy|Overwhelmed, the PC slows. The network is unharmed.
+pc.busy|The PC must shed weight to survive. Close an app.
+wifi.drops|The Wi-Fi flees {v} times today. Elusive creature.
+wifi.drops|{v} drops. The signal weakens far from the router.
+net.none|No network. The habitat is silent.
+net.none|Cut off from the herd. Reconnect to rejoin.
+inet.slow|The home network is healthy. Danger lurks beyond the router.
+inet.slow|The slowdown lives in the provider's territory.
+inet.slow|Here, past the router, the packets slow.
+busy|Observing carefully... {v}
+busy|We wait, patiently.
+busy|The measurement continues.
+idle|Stillness. The network sleeps.
+idle|Nothing stirs.
+idle|A quiet hour in the wild.
+search.empty|What shall we observe today?
+search.empty|Name the creature you seek.
+freeze|We pause ({v}) as the system catches up.
+freeze|A moment of stillness ({v}).
+speedrunner|Patience. The last observation continues.
+speedrunner|Gently. One at a time.
+back.again|You return. {v} events unfolded.
+back.again|Welcome back. Here is what we saw.
+dns.slow|The name lookup crawls at {v}.
+dns.slow|DNS, slow as a sloth: {v}.
+speed.great|{v} down. Swift as a falcon.
+speed.great|Download {v}. Remarkable speed.
+speed.bloat|Fast, yet it falters {v} when the herd is busy.
+speed.bloat|Under pressure, the delay grows {v}.
+game.lag|The lag comes from the Wi-Fi, not the distant server.
+game.lag|The server stands strong. The Wi-Fi wavers.
+game.good|Ping {v}. The hunt can begin.
+game.good|A steady connection. Ideal conditions.
+vpn.on|The traffic hides in a tunnel. VPN on.
+vpn.on|Camouflaged. VPN connected.
+vpn.slow|The tunnel adds {v} to the journey.
+vpn.slow|VPN detour: {v}.
+portal|This watering hole requires a sign-in.
+portal|Before drinking, the traveller must sign in.
+gw.down|The router has gone quiet. Restart it.
+gw.down|No call from the router.
+isp.down|The home is safe. The wider world is unreachable.
+isp.down|The provider's territory has gone dark.
+mtu.small|Large packets cannot pass. MTU {v}.
+mtu.small|The path narrows to {v}.
+port.open|{v} is open. Contact made.
+port.open|{v} responds.
+port.closed|{v} remains hidden.
+port.closed|No sign of life at {v}.
+cert.ok|Genuine markings. Certificate valid.
+cert.ok|The padlock is authentic.
+cert.expired|Its markings faded: the certificate expired on {v}.
+cert.expired|Expired since {v}.
+sec.ok|No predators found. Checkup passed.
+sec.ok|The den is secure.
+sec.issue|{v} weaknesses observed.
+sec.issue|The checkup reveals {v} items.
+mtr.lossy|Packets are lost at hop {v}.
+mtr.lossy|From hop {v}, the herd thins.
+mtr.clean|The migration is complete. No losses.
+mtr.clean|Every hop crossed safely.
+devices.found|{v} devices share this habitat.
+devices.found|We count {v} devices.
+encrypt.done|Safely hidden. Encrypted.
+encrypt.done|The file is protected.
+decrypt.done|Opened, undisturbed.
+decrypt.done|Unlocked. Nothing changed.
+points.earned|+{v} points. A rare display of skill.
+points.earned|+{v}. Growth observed.
+award|500 points. A magnificent achievement: the Adeebo Award.
+award|The Adeebo Award. Truly remarkable.
+late.night|Night falls. The watcher stays.
+late.night|Nocturnal hours. Still observing.
+morning|Morning breaks. A quiet night.
+morning|Dawn. Nothing disturbed the network.
+update.suspect|After the update on {v}, behaviour changed.
+update.suspect|Since the {v} update, the system struggles.
+call.on|A call begins. We observe quietly.
+call.on|Voices travel. Watching the call.

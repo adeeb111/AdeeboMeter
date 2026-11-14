@@ -1,0 +1,141 @@
+// The buddy's line on a tool page (PLAN 11.7): one line while it runs (busy) and one when it's done (the verdict in the
+// current persona or mood). Words only - the rows below are the facts and stay exactly as they are.
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace AdeeboMeter
+{
+    partial class FullView
+    {
+        string buddyFor; string buddyText = "";   // the rows (or run) the line was picked for: one pick per result, not per repaint
+        float PaintBuddyLine(Graphics g, float x, float y, float w)
+        {
+            string text = "";
+            if (tbBusy && tbRun0 != null)
+            {
+                string k0 = "busy|" + tbRun0.GetHashCode();
+                if (buddyFor != k0) { buddyFor = k0; buddyText = Lines.Speaks("state") ? Lines.Line("busy", null) : ""; }
+                text = buddyText;
+            }
+            else if (tbRows != null && !Examples.IsExample(tbRows))
+            {
+                string k1 = "rows|" + tbSel + "|" + tbRows.GetHashCode();
+                if (buddyFor != k1)
+                {
+                    buddyFor = k1; string v; string key = VerdictKey(tbSel, tbRows, Inputs(), out v);
+                    int worst = WorstLevel(tbRows);
+                    buddyText = key == null || !Lines.Speaks(worst >= 2 ? "problem" : "state") ? "" : Lines.Line(key, v);
+                }
+                text = buddyText;
+            }
+            if (text == "") return y;
+            var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
+            using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);
+            return y + r.Height + 12 * S;
+        }
+        static int WorstLevel(List<string[]> rows)
+        {
+            int worst = 0, lv; foreach (var o in rows) if (o.Length > 0 && int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv) && lv >= 0 && lv <= 2 && lv > worst) worst = lv;
+            return worst;
+        }
+        // which moment a tool's result is, and the value the line may quote; null = this tool has no buddy verdict
+        internal static string VerdictKey(string tool, List<string[]> rows, string[] inputs, out string v)
+        {
+            v = null; int worst = WorstLevel(rows); string target = inputs != null && inputs.Length > 0 ? inputs[0] ?? "" : "";
+            Func<string, string[]> row = name => rows.FirstOrDefault(o => o.Length > 2 && o[1].IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+            switch (tool)
+            {
+                case "port": case "tcpping": v = target != "" ? target : null; return worst >= 2 ? "port.closed" : "port.open";
+                case "mtr":
+                    { var lossy = rows.FirstOrDefault(o => o.Length > 2 && o[0] != "0" && Regex.IsMatch(o[1], @"^\s*(hop\s*)?\d+", RegexOptions.IgnoreCase) && o[2].Contains("%") && !o[2].StartsWith("0%", StringComparison.Ordinal));
+                      if (worst >= 1 && lossy != null) { var m = Regex.Match(lossy[1], @"\d+"); v = m.Success ? m.Value : null; return "mtr.lossy"; }
+                      return worst == 0 ? "mtr.clean" : null; }
+                case "mtu": case "udpmtu": { if (worst == 0) return null; var m = rows.Select(o => o.Length > 2 ? Regex.Match(o[2], @"\b(\d{3,4})\b") : Match.Empty).FirstOrDefault(z => z.Success); v = m != null ? m.Groups[1].Value : null; return "mtu.small"; }
+                case "speedtest": { var d = row("Download"); if (d != null) v = Regex.Match(d[2], @"[0-9.,]+\s*[MG]bps").Value; if (v == "") v = null; return worst >= 1 ? "speed.bloat" : "speed.great"; }
+                case "bloat": return worst >= 1 ? "speed.bloat" : null;
+                case "http": case "certlive": case "https": case "chain":
+                    { var ex = rows.FirstOrDefault(o => o.Length > 2 && o[0] == "2" && o[2].IndexOf("expired", StringComparison.OrdinalIgnoreCase) >= 0);
+                      if (ex != null) { var m = Regex.Match(ex[2], @"\d{4}-\d{2}-\d{2}|\d{1,2} \w+ \d{4}"); v = m.Success ? m.Value : null; return "cert.expired"; }
+                      return worst == 0 ? "cert.ok" : null; }
+                case "inventory": case "arp": case "sweep": { int n = rows.Count(o => o.Length > 2 && o[0] != "-1" && Regex.IsMatch(o[1], @"\d+\.\d+\.\d+\.\d+|[0-9a-f]{2}[:-][0-9a-f]{2}", RegexOptions.IgnoreCase)); if (n == 0) return null; v = n.ToString(CultureInfo.CurrentCulture); return "devices.found"; }
+                case "encrypt": return worst == 0 ? "encrypt.done" : null;
+                case "decrypt": return worst == 0 ? "decrypt.done" : null;
+                case "lag": case "gamecompare": case "prematch": return worst >= 1 ? "game.lag" : "game.good";
+                case "vpn": return worst >= 1 ? "vpn.slow" : "vpn.on";
+                case "winupdate": case "changed": return worst >= 1 ? "update.suspect" : null;
+                case "dig": case "dnsrace": return worst >= 1 ? "dns.slow" : null;
+            }
+            return null;
+        }
+        // the Mood menu: Fun lines on/off, the moods, who talks (Surprise me first), and the rest of the companion settings
+        void ShowMoodMenu(System.Windows.Forms.Control at, Point p)
+        {
+            var m = new System.Windows.Forms.ContextMenuStrip { ShowImageMargin = true, Font = Draw.fBody };
+            System.Windows.Forms.ToolStripMenuItem fun = new System.Windows.Forms.ToolStripMenuItem(L.T("Fun lines")) { Checked = !Voice.Serious };
+            fun.Click += delegate { Voice.Serious = !Voice.Serious; Cfg.Save(); Invalidate(true); }; m.Items.Add(fun);
+            m.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+            m.Items.Add(new System.Windows.Forms.ToolStripLabel(L.T("MOOD")) { Font = Draw.fTiny, ForeColor = Theme.Muted });
+            for (int i = 0; i < Lines.Moods.Length; i++)
+            {
+                string id = Lines.Moods[i]; var it = new System.Windows.Forms.ToolStripMenuItem(L.T(Lines.MoodNames[i])) { Checked = !Voice.Serious && Lines.Mood == id };
+                it.Click += delegate { if (id == "plain") { Voice.Serious = true; } else { Voice.Serious = false; Lines.Mood = id; } Cfg.Save(); Invalidate(true); };
+                m.Items.Add(it);
+            }
+            m.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+            var talk = new System.Windows.Forms.ToolStripMenuItem(L.T("Talk like...") + "  (" + L.T(Lines.PersonaName(Lines.Persona)) + ")");
+            Action<System.Windows.Forms.ToolStripMenuItem, string> addP = (parent, id) =>
+            {
+                var it = new System.Windows.Forms.ToolStripMenuItem(L.T(Lines.PersonaName(id))) { Checked = Lines.Persona == id };
+                it.Click += delegate { Lines.Persona = id; Voice.Serious = false; Cfg.Save(); Invalidate(true); };
+                parent.DropDownItems.Add(it);
+            };
+            addP(talk, "surprise");
+            for (int i = 0; i < Lines.Featured; i++) addP(talk, Lines.Personas[i][0]);
+            var more = new System.Windows.Forms.ToolStripMenuItem(L.T("More personas"));
+            for (int i = Lines.Featured; i < Lines.Personas.Length; i++) addP(more, Lines.Personas[i][0]);
+            talk.DropDownItems.Add(more); talk.DropDownItems.Add(new System.Windows.Forms.ToolStripSeparator()); addP(talk, "none");
+            m.Items.Add(talk);
+            var set = new System.Windows.Forms.ToolStripMenuItem(L.T("Companion settings...")); set.Click += delegate { OpenSettingsAt("Companion"); }; m.Items.Add(set);
+            m.Closed += delegate { BeginInvoke((Action)m.Dispose); };
+            m.Show(at, p);
+        }
+        // Settings > Companion: a live preview, then "Talk like..." as tiles - Surprise me first, the featured ones, the rest
+        float PaintCompanion(Graphics g, float x, float y, float w)
+        {
+            string who = Lines.Who(), sample = Voice.Serious ? "" : Lines.Steady("all.good", null);
+            var pr = new RectangleF(x, y, Math.Min(w, 620 * S), 54 * S); Theme.Fill(g, pr, 12 * S, Kit.Soft("mine"));
+            Kit.Icon(g, "mood", new RectangleF(pr.X + 14 * S, pr.Y + 17 * S, 20 * S, 20 * S), Kit.Accent("mine"));
+            using (var b = new SolidBrush(Kit.Ink("mine"))) using (var m = new SolidBrush(Theme.Muted))
+            {
+                g.DrawString(L.T("PREVIEW") + "  ·  " + L.T(Lines.PersonaName(Lines.Persona == "surprise" ? who : Lines.Persona == "none" ? Lines.Mood : Lines.Persona)).ToUpperInvariant(), Draw.fTiny, m, pr.X + 46 * S, pr.Y + 9 * S);
+                g.DrawString(Voice.Serious ? L.T("Fun lines are off - plain words everywhere.") : sample, Draw.fBody, b, new RectangleF(pr.X + 46 * S, pr.Y + 26 * S, pr.Width - 56 * S, 22 * S));
+            }
+            y = pr.Bottom + 18 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("TALK LIKE..."), Draw.fTiny, m, x, y); y += 22 * S;
+            var ids = new List<string> { "surprise" }; ids.AddRange(Lines.Personas.Select(p => p[0])); ids.Add("none");
+            int cols = w > 820 * S ? 4 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 10 * S) / cols, ch = 50 * S; int k = 0;
+            foreach (var id0 in ids)
+            {
+                string id = id0; bool on = Lines.Persona == id && !Voice.Serious;
+                var r = new RectangleF(x + (k % cols) * (cw + 10 * S), y + (k / cols) * (ch + 10 * S), cw, ch);
+                Theme.Fill(g, r, 12 * S, on ? Kit.Soft("mine") : Theme.Soft); if (on) Theme.Stroke(g, r, 12 * S, Kit.Accent("mine"), 1.5f * S);
+                Kit.Icon(g, id == "surprise" ? "star" : id == "none" ? "mood" : "app", new RectangleF(r.X + 12 * S, r.Y + 17 * S, 16 * S, 16 * S), on ? Kit.Accent("mine") : Theme.Muted);
+                using (var b = new SolidBrush(on ? Kit.Ink("mine") : Theme.Ink)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                    g.DrawString(L.T(Lines.PersonaName(id)), Draw.fBodyB, b, new RectangleF(r.X + 36 * S, r.Y + 15 * S, r.Width - 44 * S, 20 * S), sf);
+                Act(settingsCanvas, r, delegate { Lines.Persona = id; Voice.Serious = false; Cfg.Save(); Invalidate(true); });
+                k++;
+            }
+            y += ((k + cols - 1) / cols) * (ch + 10 * S) + 10 * S;
+            var jf = new RectangleF(x, y, 260 * S, 30 * S);
+            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Just the facts (Plain, Details on, face only)"), Draw.fBodyB, b, jf.X, jf.Y + 4 * S);
+            Act(settingsCanvas, jf, delegate { Voice.Serious = true; Lines.Chat = "face"; Cfg.Details = true; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
+            return y + 44 * S;
+        }
+    }
+}

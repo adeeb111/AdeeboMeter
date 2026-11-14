@@ -1,0 +1,93 @@
+# AdeeboMeter buddy lines - Hype. Big energy, still says where. key|text.
+app.open|Let's go, {addr}! Network watch is live!
+app.open|We're up! Watching everything, full power.
+app.open|Game on. Your network's in good hands.
+all.good|All green! Everything's flying!
+all.good|Perfect run! PC, Wi-Fi, internet - all clean!
+all.good|Zero problems! Love to see it!
+pc.busy|Your PC is maxed at {v}! Close something, then go!
+pc.busy|PC's the bottleneck right now. Free it up!
+pc.busy|Your PC is working overtime. The network's ready though!
+wifi.drops|Wi-Fi dropped {v} times! Let's find out why!
+wifi.drops|{v} Wi-Fi drops today. We can fix this!
+wifi.drops|Wi-Fi blinked {v} times. Closer to the router helps!
+net.none|No network! Plug in or pick a Wi-Fi!
+net.none|Offline right now. Let's get you connected!
+net.none|Not connected yet. Cable or Wi-Fi, your call!
+inet.slow|Home network's great! The slow part is your provider!
+inet.slow|Router's fast! The delay starts past it!
+inet.slow|Your setup's solid. The internet out there is lagging!
+busy|On it! {v}
+busy|Running hard! Almost there!
+busy|Measuring at full speed!
+idle|Still watching! All good!
+idle|Quiet hour, strong network!
+idle|Nothing new. Steady as ever!
+search.empty|What are we checking? Type it!
+search.empty|Name the problem, we'll hunt it down!
+search.empty|Search anything! Let's go!
+freeze|Catching up ({v})! Right back!
+freeze|Big job! Back in {v}!
+freeze|Hang tight! Almost there ({v})!
+speedrunner|Speedrunner! Love it. Still on the last one!
+speedrunner|So fast! Finishing your last click first!
+speedrunner|Hold up, champ! One at a time!
+back.again|You're back! {v} things happened!
+back.again|Welcome back! Here's the action!
+back.again|Back in the game! All was quiet!
+dns.slow|DNS is slow at {v}! A faster server would fix it!
+dns.slow|Lookups take {v}! Your DNS server is the drag!
+speed.great|{v} down! That's fast!
+speed.great|Download {v}! Your line is flying!
+speed.bloat|Big speed, but delay jumps {v} under load!
+speed.bloat|Fast line! Just laggy when someone's downloading!
+game.lag|The lag is your Wi-Fi, not the server! A cable wins!
+game.lag|Server's fine! Your Wi-Fi is the weak link!
+game.good|Ping {v}! Go get them!
+game.good|Clean connection! You're good to play!
+vpn.on|VPN's on and running!
+vpn.on|Connected through the VPN!
+vpn.slow|The VPN adds {v}! That's where the lag is!
+vpn.slow|VPN costs {v} of delay right now!
+portal|This Wi-Fi needs a quick sign-in first!
+portal|Sign in on the page and you're in!
+gw.down|Your router's not answering! Restart time!
+gw.down|Router's quiet! Check its lights!
+isp.down|Your router's fine! The provider's out!
+isp.down|Home network good! Internet's down at your provider!
+mtu.small|Big packets are getting dropped! MTU {v}!
+mtu.small|Path MTU {v}! Something's squeezing the packets!
+port.open|{v} is open! It answered!
+port.open|{v} is live!
+port.closed|{v} didn't answer!
+port.closed|{v} is closed!
+cert.ok|Certificate's valid! Padlock's solid!
+cert.ok|Trusted and valid!
+cert.expired|Certificate expired on {v}!
+cert.expired|Expired since {v}! Browsers won't like it!
+sec.ok|Security checkup passed! Locked down!
+sec.ok|Nothing risky! You're solid!
+sec.issue|{v} things to fix! Let's knock them out!
+sec.issue|Checkup found {v} items! Quick wins!
+mtr.lossy|Loss starts at hop {v}! Found it!
+mtr.lossy|Hop {v} is dropping packets!
+mtr.clean|Clean all the way! Every hop!
+mtr.clean|Zero loss! Beautiful path!
+devices.found|{v} devices on your network!
+devices.found|Found {v} devices!
+encrypt.done|Locked! Only they can open it!
+encrypt.done|Encrypted!
+decrypt.done|Opened! Untouched!
+decrypt.done|Unlocked and verified!
+points.earned|+{v} points! Let's go!
+points.earned|+{v}! Keep it up!
+award|500 points! Adeebo Award! Legend!
+award|You did it! The Adeebo Award!
+late.night|Late night! I'm still on it!
+late.night|Night owl mode! Still watching!
+morning|Good morning! Clean night!
+morning|Rise and shine! Nothing broke!
+update.suspect|Trouble started after the update on {v}! Found the clue!
+update.suspect|It broke after the update on {v}!
+call.on|You're on a call! Watching it!
+call.on|Call detected! Quality watch on!

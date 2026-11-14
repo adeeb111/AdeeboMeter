@@ -1,0 +1,118 @@
+# AdeeboMeter buddy lines - Plain. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|AdeeboMeter is running. Everything is being watched.
+app.open|Ready. Your PC and network are being checked.
+app.open|Started. First readings in a few seconds.
+app.open|Watching your network quietly in the corner.
+app.open|Back on. Checking your PC, Wi-Fi and internet.
+all.good|All quiet. Nothing to fix.
+all.good|Everything looks normal.
+all.good|No problems found right now.
+all.good|PC, Wi-Fi and internet are all fine.
+all.good|All green. Nothing needs you.
+pc.busy|Your PC is busy. Close something before opening more.
+pc.busy|CPU is at {v}. One program is using most of it.
+pc.busy|Memory is almost full. New apps will be slow.
+pc.busy|Your PC is the bottleneck right now, not the network.
+pc.busy|High load. The network may feel slow because of it.
+wifi.drops|Wi-Fi disconnected {v} times today.
+wifi.drops|Your Wi-Fi dropped {v} times. See what happened just before.
+wifi.drops|{v} Wi-Fi drops today. Signal or roaming is the usual cause.
+wifi.drops|The Wi-Fi link reset {v} times today.
+wifi.drops|Wi-Fi drops today: {v}. Worth a look.
+net.none|Not connected to any network.
+net.none|No network. Plug in a cable or pick a Wi-Fi network.
+net.none|No connection at all. The internet checks are paused.
+net.none|Offline. Nothing can reach the internet right now.
+net.none|No network adapter is connected.
+inet.slow|The delay starts past your router.
+inet.slow|Your router is fast. The internet is slow.
+inet.slow|Internet delay is {v}. The cause is past your home network.
+inet.slow|Slow internet. Your provider's side is the likely cause.
+inet.slow|Home network fine, internet slow.
+busy|Working... {v}
+busy|Checking... {v}
+busy|Still working. You can keep using the app.
+busy|Running. Press Stop to cancel.
+busy|Measuring... almost done.
+idle|Nothing new. Still watching.
+idle|All quiet for a while.
+idle|No changes in the last hour.
+idle|Still here, still watching.
+idle|Steady. Nothing to report.
+search.empty|Search tools by name or question.
+search.empty|Type a problem, like "slow" or "wifi".
+search.empty|Type a tool name, like "mtu" or "dns".
+search.empty|What do you want to check?
+search.empty|Search, or pick a question below.
+freeze|Still working. The window is catching up ({v}).
+freeze|One moment. Catching up ({v}).
+freeze|Busy for {v}. Clicks will work again shortly.
+freeze|Catching up after a heavy task ({v}).
+freeze|Please wait. Almost back ({v}).
+speedrunner|Still finishing the last one.
+speedrunner|One at a time - the last check is still running.
+speedrunner|Give it a second to catch up.
+speedrunner|Last request still running.
+speedrunner|Working on your previous click first.
+back.again|Welcome back. Here is what changed.
+back.again|Back. {v} changes since you last looked.
+back.again|Welcome back. Nothing changed.
+back.again|Back again. Everything was quiet.
+back.again|Welcome back. See what happened while you were away.
+dns.slow|Name lookups are slow ({v}).
+dns.slow|DNS is slow. Try a different DNS server.
+speed.great|Download {v}. A fast connection.
+speed.great|Fast and steady. Good for everything.
+speed.bloat|Fast, but delay rises {v} when the line is full.
+speed.bloat|Downloads make the line laggy. This is called bufferbloat.
+game.lag|Lag starts at your Wi-Fi, not the game server.
+game.lag|Ping spikes match your Wi-Fi signal drops.
+game.good|Game ping is steady at {v}.
+game.good|Good for competitive play.
+vpn.on|VPN connected.
+vpn.on|Traffic is going through your VPN.
+vpn.slow|The VPN adds {v} of delay.
+vpn.slow|Slow through the VPN, fine without it.
+portal|This Wi-Fi needs a sign-in page first.
+portal|Open a browser to sign in to this network.
+gw.down|Your router isn't answering.
+gw.down|No reply from your router. Restart it or check the cable.
+isp.down|Your router works, but the internet doesn't.
+isp.down|The internet is down past your router. Check your provider's status.
+mtu.small|Large packets are being dropped. Path MTU is {v}.
+mtu.small|The path can't carry full-size packets.
+port.open|{v} is open and answering.
+port.open|Connection succeeded.
+port.closed|{v} refused or didn't answer.
+port.closed|Connection failed. Something is blocking it.
+cert.ok|The certificate is valid and trusted.
+cert.ok|The padlock checks out.
+cert.expired|The certificate expired on {v}.
+cert.expired|The certificate isn't valid. Browsers will warn.
+sec.ok|Security checkup passed.
+sec.ok|No security problems found.
+sec.issue|{v} security items need attention.
+sec.issue|Some security settings are off.
+mtr.lossy|Loss starts at hop {v}.
+mtr.lossy|Packets are lost along the way. See where it starts.
+mtr.clean|No loss on any hop.
+mtr.clean|The whole path is clean.
+devices.found|{v} devices seen on your network.
+devices.found|Here are the devices your PC has talked to.
+encrypt.done|File encrypted.
+encrypt.done|Locked. Only the right person can open it.
+decrypt.done|File opened. It wasn't changed.
+decrypt.done|Decrypted and checked.
+points.earned|+{v} Adeebo points.
+points.earned|You earned {v} points.
+award|You reached 500 points: the Adeebo Award.
+award|Adeebo Award unlocked. Make your card.
+late.night|It's late. Everything is still being watched.
+late.night|Late night. All quiet.
+morning|Good morning. All quiet overnight.
+morning|Good morning. Here is last night.
+update.suspect|Things got worse after a Windows update on {v}.
+update.suspect|A recent update may be the cause.
+call.on|Call detected. Watching call quality.
+call.on|In a call. Jitter and loss are being tracked.

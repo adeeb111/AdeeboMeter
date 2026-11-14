@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Dark Ages persona (silly, never grim). key|text.
+app.open|Hark! The network watch is begun, {addr}.
+app.open|The castle gates open. I watch the realm's wires.
+all.good|All is well in the kingdom. Most suspicious.
+all.good|The peasants report no problems. PC, Wi-Fi, internet fine.
+all.good|No trouble. The court jester is bored.
+pc.busy|Thy PC is overburdened. CPU at {v}. Too many quests.
+pc.busy|The PC labours like an ox. The network is blameless.
+pc.busy|Lighten thy PC's cart. Close something.
+wifi.drops|The Wi-Fi hath wandered off {v} times. Like a goat.
+wifi.drops|{v} drops. Move the router nearer the hall.
+net.none|No network. We are back to carrier pigeons.
+net.none|Offline. Fetch the cable, good {addr}.
+inet.slow|Thy castle is fine. The road beyond is muddy.
+inet.slow|The delay lies past thy router, in the provider's swamp.
+inet.slow|Thy keep is swift. The provider's cart is slow.
+busy|The monks are copying... {v}
+busy|Consulting the scrolls.
+busy|The messenger rides.
+idle|Quiet in the village. Too quiet.
+idle|Nothing stirs but a lone chicken.
+idle|Still on watch from the tower.
+search.empty|What vexes thee, {addr}?
+search.empty|Speak thy problem to the scribe.
+freeze|The drawbridge is heavy ({v}). One moment.
+freeze|The scribes catch up ({v}).
+speedrunner|Patience! The last messenger still rides.
+speedrunner|Patience, {addr}. One quest at a time.
+back.again|Thou hast returned! {v} tidings await.
+back.again|Welcome back to the castle.
+dns.slow|The town crier is slow: DNS at {v}.
+dns.slow|Names take {v}. The crier lost his voice.
+speed.great|{v} down. Faster than any horse.
+speed.great|Download {v}. Witchcraft? No, good fibre.
+speed.bloat|Fast, but when the market's busy it slows {v}.
+speed.bloat|Swift road, crowded on market day: {v} extra.
+game.lag|The lag is thy Wi-Fi, not the enemy castle.
+game.lag|The server stands. Thy Wi-Fi wobbles.
+game.good|Ping {v}. To the tournament!
+game.good|A steady steed. Ride forth.
+vpn.on|Traveling in disguise. VPN on.
+vpn.on|Thy traffic wears a hood.
+vpn.slow|The secret passage adds {v}.
+vpn.slow|VPN detour: {v}.
+portal|The innkeeper demands thy name. Sign in first.
+portal|Tavern Wi-Fi. Pay the toll by signing in.
+gw.down|The router answers not. Turn it off and on.
+gw.down|No word from the gatehouse router.
+isp.down|Thy castle stands. The kingdom's roads are closed.
+isp.down|The provider's bridge is out.
+mtu.small|The cart is too wide for the gate. MTU {v}.
+mtu.small|Big packets stuck at the gate. MTU {v}.
+port.open|Gate {v} is open.
+port.open|{v} lowered the drawbridge.
+port.closed|Gate {v} is shut.
+port.closed|{v} keeps its drawbridge up.
+cert.ok|The royal seal is genuine.
+cert.ok|A true padlock, by the king's word.
+cert.expired|Their royal seal expired on {v}.
+cert.expired|Expired since {v}. The scribe forgot.
+sec.ok|The walls hold. Checkup passed.
+sec.ok|No holes in the castle wall.
+sec.issue|{v} holes in the wall. Mend them.
+sec.issue|The checkup found {v} weak gates.
+mtr.lossy|Messengers vanish at hop {v}.
+mtr.lossy|Loss begins at hop {v}. Bandits, surely.
+mtr.clean|Every messenger arrived.
+mtr.clean|No loss on the king's road.
+devices.found|{v} souls on thy network.
+devices.found|Counted {v} devices in the hall.
+encrypt.done|Sealed with wax. Only they may read.
+encrypt.done|The scroll is locked.
+decrypt.done|Scroll opened. Seal unbroken.
+decrypt.done|Unlocked, untouched.
+points.earned|+{v} gold coins.
+points.earned|+{v} points. A knighthood nears.
+award|500 points! Thou art knighted: the Adeebo Award.
+award|The Adeebo Award! Fanfare, please.
+late.night|The candles burn low. I watch on.
+late.night|Midnight in the castle.
+morning|The rooster crows. A quiet night.
+morning|Good morrow. The realm slept soundly.
+update.suspect|Trouble began after the update on {v}. Most vexing.
+update.suspect|Since the {v} update, mischief.
+call.on|Thou art in council. I watch the call.
+call.on|A call is underway. The herald listens.

@@ -1,0 +1,93 @@
+# AdeeboMeter buddy lines - Chill (the default mood). key|text. {addr} = how you like to be called, {v} = the measured value.
+app.open|Hey {addr}. I've got the network, you do your thing.
+app.open|All set. Watching quietly from the corner.
+app.open|Back on watch. First readings in a few seconds.
+all.good|All calm. Nothing needs you.
+all.good|Smooth sailing. PC, Wi-Fi and internet all fine.
+all.good|Everything's chill. Carry on.
+pc.busy|Your PC is working hard. The network's fine.
+pc.busy|CPU at {v}. Maybe close something heavy.
+pc.busy|The slowness is your PC, not the internet.
+wifi.drops|Wi-Fi dropped {v} times today. Worth a look.
+wifi.drops|Your Wi-Fi blinked out {v} times. Signal's the usual suspect.
+wifi.drops|A few Wi-Fi drops today. I noted what came before.
+net.none|No network right now. Cable or Wi-Fi?
+net.none|You're offline. Pick a Wi-Fi or plug in.
+net.none|Not connected. I'll wait.
+inet.slow|Home network's fine. The slow part is past your router.
+inet.slow|Your router's quick. The internet out there is the slow bit.
+inet.slow|Delay starts at your provider, not at home.
+busy|On it... {v}
+busy|Working on it. Keep clicking around.
+busy|Measuring. Won't be long.
+idle|Still here. Still quiet.
+idle|Nothing new. All steady.
+idle|Calm hour. I'm watching anyway.
+search.empty|What do you want to check?
+search.empty|Type a problem, like "slow" or "wifi".
+search.empty|Search, or pick a question below.
+freeze|One sec, catching up ({v}).
+freeze|Still here. Window's catching up ({v}).
+freeze|Heavy job. Back in a moment ({v}).
+speedrunner|Easy - still on the last one.
+speedrunner|One at a time. Finishing your last click.
+speedrunner|Give me a second to catch up.
+back.again|Welcome back. Here's what changed.
+back.again|Hey again. {v} changes while you were away.
+back.again|Back. Things stayed quiet.
+dns.slow|Name lookups are slow, {v}. Your DNS server is lagging.
+dns.slow|DNS is taking {v}. Sites feel slow to start.
+speed.great|{v} down. Nice and fast.
+speed.great|Download {v}. Your line's doing great.
+speed.bloat|Fast, but delay jumps {v} when the line is busy.
+speed.bloat|Speed's good. Calls may stutter during big downloads.
+game.lag|The lag starts at your Wi-Fi, not the game server.
+game.lag|Game server's fine. Your Wi-Fi is the bumpy part.
+game.good|Ping steady at {v}. Have fun.
+game.good|Game connection looks smooth.
+vpn.on|VPN's on. Watching it too.
+vpn.on|Connected through the VPN.
+vpn.slow|The VPN adds {v} of delay.
+vpn.slow|VPN's the slow part right now, adding {v}.
+portal|This Wi-Fi wants a sign-in page first.
+portal|Hotel-style Wi-Fi. Sign in on the page, then you're online.
+gw.down|Your router isn't answering. Give it a restart?
+gw.down|Can't reach your router. Check its lights.
+isp.down|Router's fine. The internet past it is down.
+isp.down|Home network okay. Your provider seems to be out.
+mtu.small|Big packets get dropped on the way. MTU {v}.
+mtu.small|Large packets don't fit through. Path MTU is {v}.
+port.open|{v} is open and answering.
+port.open|{v} said hello. It's open.
+port.closed|{v} didn't answer.
+port.closed|{v} is closed or blocked.
+cert.ok|Padlock checks out. Certificate's valid.
+cert.ok|Certificate valid and trusted.
+cert.expired|That certificate expired on {v}.
+cert.expired|Expired certificate, since {v}. Browsers will complain.
+sec.ok|Security checkup passed. Nice.
+sec.ok|Nothing risky found. All good.
+sec.issue|{v} things worth a look in the checkup.
+sec.issue|Checkup found {v} items to tidy up.
+mtr.lossy|Loss starts at hop {v}.
+mtr.lossy|Packets start going missing at hop {v}.
+mtr.clean|Every hop is clean. No loss.
+mtr.clean|Clean path, start to end.
+devices.found|{v} devices on your network.
+devices.found|Found {v} devices around you.
+encrypt.done|Locked. Only your recipient can open it.
+encrypt.done|File encrypted.
+decrypt.done|Opened. Nobody changed it.
+decrypt.done|File opened and checked. Untouched.
+points.earned|+{v} Adeebo points.
+points.earned|Nice, +{v} points.
+award|500 points. The Adeebo Award is yours.
+award|You made it to the Adeebo Award.
+late.night|Late one. I'm still watching.
+late.night|Night shift. All quiet here.
+morning|Morning. Quiet night on the network.
+morning|Good morning. Nothing broke overnight.
+update.suspect|Things got worse after the Windows update on {v}.
+update.suspect|Trouble started after an update on {v}.
+call.on|On a call. Watching the quality.
+call.on|Call detected. I'll keep an eye on it.

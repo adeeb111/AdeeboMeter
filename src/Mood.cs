@@ -48,42 +48,20 @@ namespace AdeeboMeter
             if (Voice.Serious) return "";
             // the provider's excuses: the longer it lasts, the better the story (every mood, Companion too)
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) return Excuse((DateTime.Now - downSince).TotalMinutes, isp);
-            if (!On) return Koan();
-            string prov = string.IsNullOrEmpty(isp) ? "your provider" : isp;
-            string[] l;
-            switch (Name)
+            // 1.1.5: the words come from the lines files (Lines) - the persona if one talks, else the mood
+            string key, v = null, kind = "state";
+            if (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) && s.Level == 0) { key = DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 5 ? "late.night" : DateTime.Now.Hour < 11 ? "morning" : "app.open"; kind = "greet"; }
+            else if (at < 0) { if (s.Call) key = "call.on"; else { string koan = Koan(); if (koan != "") return Lines.Speaks("idle") ? koan : ""; key = "all.good"; kind = Lines.Who() == Lines.Mood ? "idle" : "state"; } }
+            else
             {
-                case "sarcastic":
-                    l = at < 0 ? new[] { "Everything works. Suspicious, but I'll allow it.", "All green. Enjoy it, it won't last.", "Network's fine. Go touch grass." }
-                      : at == 0 ? new[] { "It's not the internet, it's your PC. Close a few of those tabs, champ.", "Your PC is the bottleneck. Shocking, I know." }
-                      : at == 1 ? new[] { "Your Wi-Fi is doing its best. Its best isn't great.", "The router's having a moment. Have you tried being closer to it?" }
-                      : at == 3 ? new[] { "DNS is slow. It's always DNS. It's literally always DNS." }
-                      : new[] { prov + " is having a moment again. Don't reboot the modem - it's not you.", "Classic " + prov + ". Your setup is fine; theirs isn't." };
-                    break;
-                case "anxious":
-                    l = at < 0 ? new[] { "Everything's okay. I checked. Twice. Okay, five times.", "All quiet... I'll keep watching, just in case." }
-                      : at == 0 ? new[] { "Your PC is working so hard. Should we close something? I'm a little worried." }
-                      : at == 1 ? new[] { "I've been watching the Wi-Fi for a while now. I'm worried. Can we talk about the channel?", "The router's slow and I don't like it. Are you near the microwave?" }
-                      : at == 3 ? new[] { "DNS is taking forever and I can't stop thinking about it." }
-                      : new[] { "The internet past your router isn't okay and I need you to know I noticed.", prov + " isn't answering properly. I'm not panicking. (I'm panicking a little.)" };
-                    break;
-                case "conspiracy":
-                    l = at < 0 ? new[] { "All green. Exactly what they'd want you to see.", "Quiet. Too quiet. The gateway MAC hasn't changed... yet." }
-                      : at == 0 ? new[] { "Something on this PC is busy. Coincidence? Probably. Check the Apps tab anyway." }
-                      : at == 1 ? new[] { "Your router got slower right when you sat down. Interesting timing.", "Something is crowding your Wi-Fi channel. Neighbours. Or are they." }
-                      : at == 3 ? new[] { "DNS is slow. Who's really answering your questions? (Toolbox › DNS honesty knows.)" }
-                      : new[] { prov + " is dropping packets. They know. They always know.", "The trouble starts past your router - in " + prov + "'s territory. Follow the hops." };
-                    break;
-                case "brutal":
-                    l = at < 0 ? new[] { "Everything's fine. Don't get used to it.", "All green. Not because of anything you did." }
-                      : at == 0 ? new[] { "Your PC is the problem. Yes, those 47 tabs.", "It's not the network. It's you. Well, your PC." }
-                      : at == 1 ? new[] { "Your Wi-Fi is bad and you know it. A cable costs less than your lunch." }
-                      : at == 3 ? new[] { "Your DNS server is slow. Change it - Toolbox › DNS race tells you to what." }
-                      : new[] { prov + " is failing you, and the numbers prove it. Toolbox › Report for my ISP writes the letter." };
-                    break;
-                default: l = Array.Empty<string>(); break;
+                kind = lv >= 2 ? "problem" : "state";
+                if (at == 0) { key = "pc.busy"; if (!double.IsNaN(s.Cpu)) v = s.Cpu.ToString("0", CultureInfo.CurrentCulture) + "%"; }
+                else if (at == 1) key = s.PathMain != null && s.PathMain.Length > 1 && (s.PathMain[1] ?? "").IndexOf("not connected", StringComparison.OrdinalIgnoreCase) >= 0 || s.Headline.IndexOf("not connected to any network", StringComparison.OrdinalIgnoreCase) >= 0 ? "net.none" : lv >= 2 ? "gw.down" : "wifi.drops";
+                else if (at == 3) { key = "dns.slow"; if (s.DnsMs > 0) v = s.DnsMs.ToString("0", CultureInfo.CurrentCulture) + " ms"; }
+                else key = lv >= 2 ? "isp.down" : "inet.slow";
             }
-            return Pick(l, at + 2);
+            if (!Lines.Speaks(kind)) return "";
+            return Lines.Steady(key, v);
         }
         // the rare koan: only after two hours of all green, at most once a day, and only for a few minutes
         static readonly string[] Koans = {

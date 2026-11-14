@@ -1160,3 +1160,32 @@ Monthly data use	Données utilisées par mois
 Is my plan fast enough?	Mon forfait est-il assez rapide ?
 E1 and T1 timeslots	Intervalles de temps E1 et T1
 Jitter buffer size	Taille du tampon de gigue
+Fun lines	Répliques amusantes
+Mood	Humeur
+Address me as	M'appeler
+How chatty	Bavardage
+Chill	Cool
+Roast	Taquin
+Hype	Enthousiaste
+Support	Soutien
+Bossy	Autoritaire
+Emo	Émo
+Plain	Neutre
+Neutral (boss)	Neutre (chef)
+Sir	Monsieur
+Ma'am	Madame
+My name	Mon nom
+Face only	Visage seulement
+Quiet	Discret
+Normal	Normal
+Chatty	Bavard
+Talk like...	Parler comme...
+More personas	Autres personnages
+Companion settings...	Réglages du compagnon...
+Surprise me	Surprends-moi
+PREVIEW	APERÇU
+TALK LIKE...	PARLER COMME...
+What should I call you?	Comment dois-je vous appeler ?
+Just the facts (Plain, Details on, face only)	Juste les faits (neutre, détails, visage seulement)
+Fun lines are off - plain words everywhere.	Répliques désactivées - mots simples partout.
+MOOD	HUMEUR

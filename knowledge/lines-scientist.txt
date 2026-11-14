@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Scientist persona. key|text.
+app.open|Experiment running. Observing your network.
+app.open|Data collection started. Hypothesis: all is fine.
+all.good|Results: nominal. Hypothesis confirmed.
+all.good|All variables within normal range.
+all.good|PC, Wi-Fi and internet: no anomalies.
+pc.busy|CPU at {v}. The PC is the limiting factor.
+pc.busy|Control test: the network is fine. The PC is not.
+pc.busy|Reduce the load. Close one process and remeasure.
+wifi.drops|Observed {v} Wi-Fi disconnections today.
+wifi.drops|{v} drops. Correlates with signal strength.
+net.none|No network. Zero data points.
+net.none|Offline. Connection required to continue.
+inet.slow|Local link fast. Delay originates past the router.
+inet.slow|Variable isolated: the provider is slow.
+inet.slow|The slowdown is external to your home network.
+busy|Measuring... {v}
+busy|Collecting samples.
+busy|Running trials.
+idle|No significant change.
+idle|Baseline stable.
+idle|Observing. Nothing to report.
+search.empty|What is the research question?
+search.empty|Describe the symptom.
+freeze|Processing data ({v}).
+freeze|Analysis in progress ({v}).
+speedrunner|One variable at a time, please.
+speedrunner|Previous trial still running.
+back.again|You're back. {v} events recorded.
+back.again|Welcome back. Results below.
+dns.slow|DNS lookup time: {v}. Above normal.
+dns.slow|Name resolution slow: {v}.
+speed.great|{v} down. Excellent result.
+speed.great|Download {v}. Statistically impressive.
+speed.bloat|Under load, latency increases {v}. Bufferbloat.
+speed.bloat|Fast idle, slow loaded: {v} difference.
+game.lag|Lag source identified: your Wi-Fi.
+game.lag|Server stable. Wi-Fi variance high.
+game.good|Ping {v}. Low variance.
+game.good|Connection stable. Proceed.
+vpn.on|VPN active. New variable introduced.
+vpn.on|Traffic encapsulated.
+vpn.slow|VPN adds {v} latency.
+vpn.slow|Encapsulation overhead: {v}.
+portal|Captive portal detected. Sign in first.
+portal|Authentication required.
+gw.down|Router unresponsive. Restart and retest.
+gw.down|No response from the gateway.
+isp.down|Local network fine. Provider unreachable.
+isp.down|Fault located at the provider.
+mtu.small|Path MTU measured at {v}.
+mtu.small|Packets above {v} bytes are dropped.
+port.open|{v} responds.
+port.open|{v} is open.
+port.closed|{v}: no response.
+port.closed|{v} is closed.
+cert.ok|Certificate valid. Chain verified.
+cert.ok|Trust verified.
+cert.expired|Certificate expired {v}.
+cert.expired|Expired since {v}.
+sec.ok|No vulnerabilities observed.
+sec.ok|Checkup passed.
+sec.issue|{v} findings require attention.
+sec.issue|Checkup recorded {v} items.
+mtr.lossy|Loss begins at hop {v}.
+mtr.lossy|Packet loss detected from hop {v}.
+mtr.clean|Zero loss. Clean data.
+mtr.clean|No loss observed.
+devices.found|Sample size: {v} devices.
+devices.found|{v} devices detected.
+encrypt.done|Encrypted. Integrity protected.
+encrypt.done|Sealed.
+decrypt.done|Decrypted. Integrity verified.
+decrypt.done|Unchanged. Verified.
+points.earned|+{v} points.
+points.earned|+{v}. Learning curve rising.
+award|500 points. Peer-reviewed: the Adeebo Award.
+award|Adeebo Award granted.
+late.night|Late-night data collection.
+late.night|Observations continue overnight.
+morning|Good morning. Overnight data: quiet.
+morning|Morning. No anomalies overnight.
+update.suspect|Change observed after the update on {v}.
+update.suspect|Strong correlation with the {v} update.
+call.on|Call detected. Measuring quality.
+call.on|Voice call in progress. Sampling jitter.

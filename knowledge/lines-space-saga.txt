@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Space saga persona (our own lines; no film names or quotes). key|text.
+app.open|Systems online, {addr}. Scanners sweeping the network.
+app.open|Ship's computer awake. All stations reporting.
+all.good|All systems nominal. The fleet holds.
+all.good|Clear space ahead. No anomalies.
+all.good|Shields up, engines green, network calm.
+pc.busy|Your ship's core is overheating. CPU at {v}.
+pc.busy|Onboard computer overloaded. The comms are fine.
+pc.busy|Power to the PC is maxed. Shut down a subsystem.
+wifi.drops|Your Wi-Fi link dropped {v} times. Ion storm nearby?
+wifi.drops|{v} signal losses. Bring the ship closer to the beacon.
+net.none|No signal. Drifting in the dark, {addr}.
+net.none|All comms offline. Reconnect the docking cable.
+inet.slow|Your ship is fine. Slowdown in the outer sectors.
+inet.slow|Local systems green. The provider's relay is sluggish.
+inet.slow|Delay starts beyond your router. Sector control's problem.
+busy|Calculating jump... {v}
+busy|Scanning the route.
+busy|Running diagnostics, {addr}.
+idle|Holding position. All quiet.
+idle|Long-range scan: nothing new.
+idle|Silent space. Still watching.
+search.empty|State your mission, {addr}.
+search.empty|What sector needs scanning?
+freeze|Rerouting power ({v}). Stand by.
+freeze|Flight computer catching up ({v}).
+speedrunner|Easy, pilot. Still processing the last jump.
+speedrunner|One jump at a time.
+back.again|Welcome back aboard. {v} events logged.
+back.again|Back on the bridge. Here's the log.
+dns.slow|Star charts load slowly: DNS at {v}.
+dns.slow|Name lookups take {v}. The archive is slow.
+speed.great|{v} down. Hyperspace speed.
+speed.great|Download {v}. Jump drive engaged.
+speed.bloat|Fast, but delay jumps {v} under load. Traffic jam in orbit.
+speed.bloat|Top speed's great. Busy lanes slow you {v}.
+game.lag|Turbulence is your Wi-Fi, not the distant station.
+game.lag|The server is steady. Your Wi-Fi is shaking.
+game.good|Ping {v}. Cleared for launch.
+game.good|Signal steady. Fly well, {addr}.
+vpn.on|Cloaking device engaged. VPN on.
+vpn.on|Traffic routed through a hidden relay.
+vpn.slow|The relay adds {v}. A long way around.
+vpn.slow|VPN detour costs {v}.
+portal|This port requires docking clearance. Sign in first.
+portal|Station Wi-Fi wants credentials.
+gw.down|Home beacon silent. Restart your router.
+gw.down|No reply from the router. Check its lights.
+isp.down|Your ship's fine. The relay network is down.
+isp.down|Home systems green. Provider offline.
+mtu.small|Cargo too large for the hatch. MTU {v}.
+mtu.small|Big packets don't fit through the airlock. MTU {v}.
+port.open|Hangar {v} is open.
+port.open|{v} answered our hail.
+port.closed|{v} ignored our hail.
+port.closed|Hangar {v} is sealed.
+cert.ok|Transponder verified. Certificate valid.
+cert.ok|Identity confirmed. The padlock is real.
+cert.expired|Their clearance expired on {v}.
+cert.expired|Transponder code expired {v}.
+sec.ok|Hull integrity: perfect. Checkup passed.
+sec.ok|No breaches found.
+sec.issue|{v} hull breaches flagged. Patch them.
+sec.issue|Security scan found {v} weak points.
+mtr.lossy|Signal loss from relay {v} onwards.
+mtr.lossy|Packets vanish near hop {v}. Asteroid field.
+mtr.clean|Clear route, every relay.
+mtr.clean|No loss on the whole jump.
+devices.found|{v} ships in your space.
+devices.found|Scanners show {v} devices.
+encrypt.done|Message encoded. Only they can read it.
+encrypt.done|Transmission encrypted.
+decrypt.done|Message decoded. Untampered.
+decrypt.done|Decoded and verified.
+points.earned|+{v} points. Promotion pending.
+points.earned|+{v}. Rank rising, pilot.
+award|500 points. Medal ceremony: the Adeebo Award.
+award|Adeebo Award earned. The fleet salutes you.
+late.night|Night cycle. Bridge still manned.
+late.night|Late shift on the bridge.
+morning|Morning cycle. Quiet night in orbit.
+morning|Good morning, {addr}. No incidents overnight.
+update.suspect|Systems degraded after the update on {v}.
+update.suspect|Trouble began after the {v} update.
+call.on|Holo-call active. Monitoring signal.
+call.on|Comms channel open. Watching quality.

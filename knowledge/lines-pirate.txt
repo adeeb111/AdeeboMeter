@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Pirate persona. key|text.
+app.open|Ahoy, {addr}! Lookout's in the crow's nest.
+app.open|Anchors up. Watching the seas of your network.
+all.good|Calm seas, {addr}. Nothing on the horizon.
+all.good|Fair winds. Ship, sails and rigging all sound.
+all.good|All shipshape.
+pc.busy|Yer PC be sinking under the load. CPU at {v}.
+pc.busy|The ship's hold is too full. Close something, matey.
+pc.busy|PC's the slow one, not the seas.
+wifi.drops|Yer Wi-Fi went overboard {v} times today.
+wifi.drops|{v} Wi-Fi drops. Sail closer to the router.
+net.none|Shipwrecked. No network in sight.
+net.none|No land, no network. Plug in, {addr}.
+inet.slow|Yer harbour be fine. Rough seas past the router.
+inet.slow|Home port's quick. The provider's waters be slow.
+inet.slow|The delay starts out at sea, not at home.
+busy|Hoisting the sails... {v}
+busy|Charting the course.
+busy|Swabbing the packets.
+idle|Quiet waters. Still on watch.
+idle|Nothing on the horizon.
+idle|Lookout reports: all calm.
+search.empty|What be the trouble, {addr}?
+search.empty|Name yer problem, matey.
+freeze|Heavy cargo ({v}). Hold fast.
+freeze|Catching the wind ({v}).
+speedrunner|Avast! Still on the last one.
+speedrunner|One sail at a time, matey.
+back.again|Back aboard! {v} things happened at sea.
+back.again|Welcome back, {addr}. Here be the log.
+dns.slow|The map's slow to read. DNS at {v}.
+dns.slow|Lookups take {v}. The chart keeper dozes.
+speed.great|{v} down. Full sail!
+speed.great|Download {v}. Fastest ship in the fleet.
+speed.bloat|Fast ship, but it lags {v} in a storm of downloads.
+speed.bloat|Swift, until the hold fills. {v} of extra delay.
+game.lag|The lag be yer Wi-Fi, not the enemy ship.
+game.lag|Server be steady. Yer Wi-Fi be choppy.
+game.good|Ping {v}. Raise the colours.
+game.good|Steady winds. Go plunder.
+vpn.on|Sailing under a false flag. VPN on.
+vpn.on|Hidden route set. VPN connected.
+vpn.slow|The secret route costs {v}.
+vpn.slow|VPN adds {v}. Long way round the cape.
+portal|This harbour wants papers. Sign in first.
+portal|Port Wi-Fi demands a sign-in.
+gw.down|The router's gone silent. Restart it, matey.
+gw.down|No word from the router. Check its lanterns.
+isp.down|Yer ship's sound. The provider's ocean be empty.
+isp.down|Home fine, internet lost at sea.
+mtu.small|Barrels too big for the hatch. MTU {v}.
+mtu.small|Large packets won't fit. MTU {v}.
+port.open|Port {v} be open!
+port.open|{v} answered the call.
+port.closed|{v} be shut tight.
+port.closed|No answer from {v}.
+cert.ok|Seal's genuine. Certificate valid.
+cert.ok|The padlock be true.
+cert.expired|Their seal expired on {v}.
+cert.expired|Expired papers since {v}. Their fault.
+sec.ok|No leaks in the hull. Checkup passed.
+sec.ok|Ship be secure.
+sec.issue|{v} leaks in the hull. Patch 'em.
+sec.issue|Checkup found {v} things to mend.
+mtr.lossy|Cargo lost from hop {v}.
+mtr.lossy|Packets go overboard at hop {v}.
+mtr.clean|Not a barrel lost. Clean route.
+mtr.clean|Every hop sailed clean.
+devices.found|{v} ships in yer waters.
+devices.found|Spotted {v} devices.
+encrypt.done|Locked in the chest. Only they have the key.
+encrypt.done|Treasure locked.
+decrypt.done|Chest opened. Nothing stolen.
+decrypt.done|Unlocked, untouched.
+points.earned|+{v} doubloons.
+points.earned|+{v} points of treasure.
+award|500 doubloons! The Adeebo Award be yours.
+award|Captain's honours: the Adeebo Award.
+late.night|Night watch, {addr}. I'm on deck.
+late.night|Late tide. Still watching.
+morning|Morning, {addr}. Calm night at sea.
+morning|Dawn. No storms overnight.
+update.suspect|The trouble began after the update on {v}.
+update.suspect|Rough seas since the {v} update.
+call.on|Parley in progress. Watching the call.
+call.on|On a call. Lookout's watching.

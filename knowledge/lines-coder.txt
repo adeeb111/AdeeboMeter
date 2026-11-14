@@ -1,0 +1,86 @@
+# AdeeboMeter buddy lines - Coder persona. key|text.
+app.open|Process started. Watching the network loop.
+app.open|Hello, world. Monitoring {addr}'s network.
+all.good|All tests passing.
+all.good|Build green. PC, Wi-Fi, internet OK.
+all.good|No errors. No warnings.
+pc.busy|CPU at {v}. Something's in a tight loop.
+pc.busy|Bottleneck: the PC, not the network.
+pc.busy|Too many processes. End one and rerun.
+wifi.drops|Wi-Fi threw {v} disconnect exceptions today.
+wifi.drops|{v} drops. Unhandled signal issues.
+net.none|No network. 404: internet not found.
+net.none|Offline. Connect and retry.
+inet.slow|Local is fast. Latency is upstream, past the router.
+inet.slow|Not your code. The provider is slow.
+inet.slow|The delay starts outside your network.
+busy|Running... {v}
+busy|Compiling results.
+busy|Executing.
+idle|Idle loop. Nothing new.
+idle|No new commits.
+idle|Waiting for events.
+search.empty|What are we debugging?
+search.empty|grep for it: "slow", "dns", "wifi".
+freeze|Garbage collecting ({v}).
+freeze|Catching up ({v}). Async in progress.
+speedrunner|Request queued. Last one still running.
+speedrunner|Rate limited. One at a time.
+back.again|Welcome back. {v} new log entries.
+back.again|Back. Here's the changelog.
+dns.slow|DNS resolve time {v}. Slow upstream.
+dns.slow|Lookups at {v}. Cache miss city.
+speed.great|{v} down. Clone the whole repo.
+speed.great|Download {v}. Fast pipe.
+speed.bloat|Throughput fine, latency +{v} under load.
+speed.bloat|Bufferbloat: {v} extra when busy.
+game.lag|Lag source: Wi-Fi, not the server.
+game.lag|Server returns fast. Wi-Fi is flaky.
+game.good|Ping {v}. Ship it.
+game.good|Stable connection.
+vpn.on|VPN tunnel up.
+vpn.on|Routing through the VPN.
+vpn.slow|VPN overhead: {v}.
+vpn.slow|The tunnel adds {v}.
+portal|HTTP redirect to a sign-in page. Log in first.
+portal|Captive portal. Authenticate to continue.
+gw.down|Gateway timeout. Restart the router.
+gw.down|Router not responding.
+isp.down|Local OK. Upstream is down.
+isp.down|Provider returns nothing.
+mtu.small|Packets over {v} bytes get dropped.
+mtu.small|MTU {v}. Fragmentation trouble.
+port.open|{v}: connection accepted.
+port.open|{v} is listening.
+port.closed|{v}: connection refused or timed out.
+port.closed|{v} isn't listening.
+cert.ok|Certificate valid. Chain OK.
+cert.ok|TLS handshake clean.
+cert.expired|Certificate expired {v}. Someone forgot a renewal job.
+cert.expired|Expired since {v}.
+sec.ok|Security lint: passed.
+sec.ok|No issues found.
+sec.issue|{v} security warnings.
+sec.issue|Checkup returned {v} items.
+mtr.lossy|Packet loss from hop {v}.
+mtr.lossy|Drops start at hop {v}.
+mtr.clean|0% loss. Clean trace.
+mtr.clean|No loss across all hops.
+devices.found|{v} hosts up.
+devices.found|Found {v} devices.
+encrypt.done|Encrypted. Only the recipient's key opens it.
+encrypt.done|Done. Ciphertext ready.
+decrypt.done|Decrypted. Hash matches.
+decrypt.done|Opened. Integrity OK.
+points.earned|+{v} points.
+points.earned|+{v}. Level up incoming.
+award|500 points. Achievement: Adeebo Award.
+award|Adeebo Award merged.
+late.night|Late-night session. Still running.
+late.night|Night build. Watching.
+morning|Morning. Overnight run was clean.
+morning|Good morning. No errors overnight.
+update.suspect|Regression after the update on {v}.
+update.suspect|Broke after the {v} update. Bisect points there.
+call.on|Call detected. Watching jitter.
+call.on|On a call. Monitoring.

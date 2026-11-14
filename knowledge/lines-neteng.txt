@@ -1,0 +1,118 @@
+# AdeeboMeter buddy lines - Network engineer. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|Monitoring started. Gateway, DNS and internet probes up.
+app.open|Agent up. First samples in 2 s.
+app.open|Polling: gw 2 s, internet 15 s.
+app.open|Baseline collection started.
+app.open|Probes armed. Listening: none. Outbound only.
+all.good|All paths green. No action needed.
+all.good|RTT nominal, 0% loss, no flaps.
+all.good|L1-L7 green.
+all.good|No anomalies on gw, DNS or internet.
+all.good|Steady state. Nothing to troubleshoot.
+pc.busy|CPU {v}. Host is the bottleneck, not the path.
+pc.busy|Host saturated. Expect app-side latency.
+pc.busy|Memory pressure high. Paging likely.
+pc.busy|Local resource contention. Shed load.
+pc.busy|High CPU. Network numbers may be skewed.
+wifi.drops|wlan flapped x{v}. Check RSSI and roaming.
+wifi.drops|{v} disassociations today. Check the reason codes.
+wifi.drops|Link flaps x{v}. Likely RF or AP deauth.
+wifi.drops|{v} Wi-Fi drops. Check co-channel and roaming threshold.
+wifi.drops|WLAN link down x{v}. Review the event log.
+net.none|No IP, no gateway. Link down.
+net.none|All interfaces down.
+net.none|No default route. Probes suspended.
+net.none|L1 down on all adapters.
+net.none|No carrier.
+inet.slow|Gateway RTT low, internet RTT {v}. Delay is past the CPE.
+inet.slow|Latency added upstream of the gateway.
+inet.slow|LAN clean. Upstream latency elevated.
+inet.slow|Delta gw to internet: {v}. Provider side.
+inet.slow|Upstream issue. Run MTR to find the hop.
+busy|Probing... {v}
+busy|Collecting samples...
+busy|Running. Stop available.
+busy|Measuring...
+busy|Test in progress...
+idle|No state changes.
+idle|Steady. Baseline holding.
+idle|No events in the last hour.
+idle|Polling continues. Nothing new.
+idle|Quiet.
+search.empty|Search: mtu, dns, arp, mtr, snmp...
+search.empty|Tool name or symptom.
+search.empty|Query a tool.
+search.empty|What layer?
+search.empty|Type a protocol or a symptom.
+freeze|UI thread blocked {v}. Recovering.
+freeze|UI stall {v}. Work continues.
+freeze|Render delayed {v}.
+freeze|Main thread busy {v}.
+freeze|UI catching up ({v}).
+speedrunner|Previous job still running.
+speedrunner|Queue full. One at a time.
+speedrunner|Request rate exceeded. Waiting on the last one.
+speedrunner|Last test not complete.
+speedrunner|Busy. Retry after the current run.
+back.again|{v} events since last view.
+back.again|No events since last view.
+back.again|Delta since last view: see Changes.
+back.again|Here's the log while you were away.
+back.again|Welcome back. Event summary ready.
+dns.slow|DNS {v}. Try a different resolver.
+dns.slow|Resolver latency high.
+speed.great|{v} down, low RTT.
+speed.great|Throughput good. No loss.
+speed.bloat|Loaded latency +{v}. Bufferbloat. Enable SQM if you can.
+speed.bloat|Queueing delay under load.
+game.lag|Game RTT spikes correlate with RSSI drops. Local RF.
+game.lag|Jitter originates on the WLAN.
+game.good|Game RTT {v}, jitter low, 0% loss.
+game.good|Path to game server clean.
+vpn.on|Tunnel up.
+vpn.on|Default route via tunnel.
+vpn.slow|Tunnel overhead +{v}.
+vpn.slow|Latency added by the VPN headend.
+portal|HTTP 302 to a portal. Auth required.
+portal|Captive portal detected.
+gw.down|Gateway unreachable. ARP or L2 issue.
+gw.down|No ICMP from the gateway.
+isp.down|Gateway up, upstream unreachable.
+isp.down|WAN down past the CPE.
+mtu.small|Path MTU {v}. Check for a PMTUD blackhole.
+mtu.small|DF packets dropped above {v}.
+port.open|TCP {v} open, handshake in {v}.
+port.open|SYN-ACK received.
+port.closed|TCP {v} RST or timeout.
+port.closed|No SYN-ACK. Filtered or closed.
+cert.ok|Chain valid, trusted root.
+cert.ok|TLS chain OK.
+cert.expired|Leaf expired {v}.
+cert.expired|Chain invalid: expired.
+sec.ok|Hardening checks pass.
+sec.ok|No findings.
+sec.issue|{v} findings.
+sec.issue|Hardening gaps found.
+mtr.lossy|Loss begins at hop {v} and persists to the destination.
+mtr.lossy|Forwarding loss mid-path.
+mtr.clean|0% loss all hops.
+mtr.clean|Path clean end to end.
+devices.found|{v} ARP entries.
+devices.found|Neighbour table loaded.
+encrypt.done|Encrypted (AES-256).
+encrypt.done|Payload sealed.
+decrypt.done|Decrypted, integrity verified.
+decrypt.done|MAC OK.
+points.earned|+{v}.
+points.earned|Points +{v}.
+award|500 points. Adeebo Award.
+award|Award threshold reached.
+late.night|Off-peak. Path quiet.
+late.night|Late. All probes nominal.
+morning|Overnight: no events.
+morning|Overnight summary ready.
+update.suspect|Regression after the update on {v}.
+update.suspect|Change correlates with a Windows update.
+call.on|RTP flows detected. Monitoring jitter and loss.
+call.on|Call in progress. QoS watch on.
