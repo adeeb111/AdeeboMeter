@@ -211,6 +211,7 @@ namespace AdeeboMeter
             string t = DateTime.Now < pointsFlashUntil ? pointsFlash : "Adeebo · " + Points.Me.Total.ToString(CultureInfo.CurrentCulture);
             if (pointsBtn.Text != L.T(t)) pointsBtn.Text = t;
             pointsBtn.Selected = tab == "points";
+            bool dot = DateTime.Now < pointsFlashUntil; if (dotsBtn.Dot != dot) { dotsBtn.Dot = dot; dotsBtn.Invalidate(); }   // points just earned: a gold dot on the ⋯ button
         }
         // "first use" means doing something there - a click or a key on the page - not just opening the tab
         readonly HashSet<string> useWatched = new HashSet<string>();

@@ -29,35 +29,40 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         // ---------- painting
+        // the top line: logo and name, then the controls (PlaceTop); the buddy's face is painted in its slot by the gear
         void PaintHeader(Graphics g, Rectangle r)
         {
             float x = Sc(18), cy = r.Height / 2f; Begin(header);
             Theme.Logo(g, new RectangleF(x, cy - 15 * S, 30 * S, 30 * S), true); x += 40 * S;
-            using (var b = new SolidBrush(Theme.Ink)) using (var mb = new SolidBrush(Theme.Muted))
-            {
-                var ts = g.MeasureString("AdeeboMeter", Draw.fBig); var tg = g.MeasureString(Program.Tagline, Draw.fSmall);
-                g.DrawString(L.T("AdeeboMeter"), Draw.fBig, b, x, cy - ts.Height / 2 - 8 * S);
-                g.DrawString(Program.Tagline, Draw.fSmall, mb, x + 1 * S, cy + ts.Height / 2 - 6 * S);
-                x += Math.Max(ts.Width, tg.Width) + 10 * S;
-            }
-            string w = Draw.Word(snap.Level);
-            Theme.Pill(g, w, Draw.fPill, x, cy - 8 * S, snap.Level, S); x += g.MeasureString(w, Draw.fPill).Width + 22 * S;
-            string quip = Mood.Quip(snap); string head = (snap.Level == 0 && !Voice.Serious && quip == "" ? Voice.Greet() + " " : "") + snap.Headline + (quip != "" ? "  ·  " + quip : "");
-            using (var hb = new SolidBrush(snap.Level == 0 ? Theme.Ink : Theme.LvText(snap.Level)))
+            using (var b = new SolidBrush(Theme.Ink)) { var ts = g.MeasureString(L.T("AdeeboMeter"), Draw.fBig); g.DrawString(L.T("AdeeboMeter"), Draw.fBig, b, x, cy - ts.Height / 2); }
+            PaintMood(g, gearBtn.Left - 8 * S, cy);
+        }
+        // the verdict, beside the path it explains: "Not connected to any network · ...   Investigate ›" - returns where it ends
+        float PaintVerdict(Graphics g, Control on, float x, float cy, float right)
+        {
+            string quip = Mood.Quip(snap); string head = (snap.Level == 0 && !Voice.Serious && quip == "" ? Voice.Greet() + " " : "") + snap.Headline;
+            string link = L.T("Investigate") + "  ›"; float lw = snap.Level > 0 && snap.Flow != "" ? g.MeasureString(link, Draw.fBodyB).Width + 16 * S : 0;
+            float room = Math.Max(0, right - x - lw); if (room < 60 * S) return x;
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                float right = PaintHeaderSearch(g, themeSw.Left - 16 * S, cy);
-                float room = Math.Max(0, right - x - 16 * S), lw = 0; string link = "Investigate  ›";
-                if (snap.Level > 0 && snap.Flow != "") lw = g.MeasureString(link, Draw.fBodyB).Width + 14 * S;
-                float hw = Math.Max(0, Math.Min(g.MeasureString(head, Draw.fHead).Width, room - lw));
-                g.DrawString(head, Draw.fHead, hb, new RectangleF(x, cy - 10 * S, Math.Max(0, hw), 22 * S), sf);
+                float hw = Math.Min(g.MeasureString(head, Draw.fBodyB).Width + 2, room);
+                using (var hb = new SolidBrush(snap.Level == 0 || snap.Level == 3 ? Theme.Ink : Theme.LvText(snap.Level))) g.DrawString(head, Draw.fBodyB, hb, new RectangleF(x, cy - 10 * S, hw, 22 * S), sf);
+                float qx = x + hw;
+                if (quip != "" && room - hw > 80 * S)
+                {
+                    string q = "  ·  " + quip; float qw = Math.Min(g.MeasureString(q, Draw.fBody).Width + 2, room - hw);
+                    using (var qb = new SolidBrush(Theme.Sub)) g.DrawString(q, Draw.fBody, qb, new RectangleF(qx, cy - 10 * S, qw, 22 * S), sf);
+                    qx += qw;
+                }
                 if (lw > 0)
                 {
                     // a problem leads straight to the check that investigates it
-                    var lr = new RectangleF(x + hw + 14 * S, cy - 9 * S, lw - 14 * S, 22 * S); string fl = snap.Flow;
+                    var lr = new RectangleF(qx + 14 * S, cy - 10 * S, lw - 14 * S, 22 * S); string fl = snap.Flow;
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(link, Draw.fBodyB, lb, lr.X, lr.Y);
-                    Act(header, lr, delegate { tab = "guide"; ShowTab(); StartGuide(fl, false); });
+                    Act(on, lr, delegate { tab = "guide"; ShowTab(); StartGuide(fl, false); });
+                    qx = lr.Right;
                 }
+                return qx;
             }
         }
 

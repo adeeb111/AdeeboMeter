@@ -52,7 +52,7 @@ namespace AdeeboMeter
         List<AppStat> procs = new List<AppStat>(); string procSel; string[] procFacts; string procPathSel = ""; DateTime lastProcs = DateTime.MinValue;
         readonly Dictionary<string, string> procWhere = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); bool whereBusy;
         // Settings
-        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly SlideSwitch detailsBtn; readonly PillButton settingsBtn, aboutBtn, backBtn, onlineChip; readonly ViewButton viewBtn; readonly ThemeSwitch themeSw; Panel tipBar;
+        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly SlideSwitch detailsBtn; readonly PillButton settingsBtn, aboutBtn, backBtn, onlineChip; readonly ViewButton viewBtn; readonly IconButton gearBtn, dotsBtn; readonly SearchPill headSearch; readonly ThemeSwitch themeSw; Panel tipBar;
         // Saved destinations
         readonly FlowLayoutPanel pinBar; readonly PillButton pinBtn; List<DestResult> pinResults; volatile bool pinRunning;
         // hover explanations + clickable painted areas, rebuilt on every paint
@@ -99,30 +99,31 @@ namespace AdeeboMeter
             viewBtn.Click += delegate { ViewMenu(); };
             viewBtn.MouseEnter += delegate { SetTipKey("ov.VIEW"); }; viewBtn.MouseLeave += delegate { SetTipKey(null); };
             detailsBtn = new SlideSwitch("Details", Cfg.Details);   // a sliding on/off switch: the engineer view
-            detailsBtn.Click += delegate { Cfg.Details = detailsBtn.On; Cfg.Save(); if (pathPanel != null) pathPanel.Height = PathHeight; Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
+            detailsBtn.Click += delegate { SetDetails(detailsBtn.On); };
             detailsBtn.MouseEnter += delegate { SetTipKey("ov.DETAILS"); }; detailsBtn.MouseLeave += delegate { SetTipKey(null); };
             onlineChip = new PillButton("Online lookups on", PillButton.K.Chip) { Visible = false };
             onlineChip.Click += delegate { Online.Stop(); SyncOnlineChip(); };
             onlineChip.MouseEnter += delegate { SetTipKey("ov.ONLINE"); }; onlineChip.MouseLeave += delegate { SetTipKey(null); };
             themeSw = new ThemeSwitch();
             themeSw.MouseEnter += delegate { SetTipKey("theme.toggle"); }; themeSw.MouseLeave += delegate { SetTipKey(null); };
-            header.Controls.Add(themeSw); header.Controls.Add(onlineChip); header.Controls.Add(viewBtn); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(pointsBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
-            EventHandler place = delegate
-            {
-                int xr = header.Width - Sc(20);
-                foreach (var b in new Control[] { backBtn, settingsBtn, pointsBtn, aboutBtn, detailsBtn, viewBtn, onlineChip, themeSw }) { if (!b.Visible && (b == onlineChip || b == pointsBtn)) continue; xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
-            };
-            header.Resize += place; detailsBtn.Resize += place; viewBtn.Resize += place; onlineChip.Resize += place; onlineChip.VisibleChanged += place; settingsBtn.Resize += place; aboutBtn.Resize += place; pointsBtn.Resize += place; pointsBtn.VisibleChanged += place; backBtn.Resize += place;
+            // the top line (Adeeb, 14 Nov): logo · your view · search · theme · buddy · Settings · ⋯ · Back to corner. Details,
+            // the layout, points and About live in the ⋯ menu; the verdict moved down beside the path it explains.
+            gearBtn = new IconButton("settings", "Settings"); gearBtn.Click += delegate { tab = tab == "settings" ? lastPage : "settings"; ShowTab(); };
+            dotsBtn = new IconButton("more", "More: Details, layout, points, About"); dotsBtn.Click += delegate { TopMenu(); };
+            headSearch = new SearchPill(); headSearch.Click += delegate { OpenPalette(); };
+            header.Controls.Add(themeSw); header.Controls.Add(viewBtn); header.Controls.Add(headSearch); header.Controls.Add(gearBtn); header.Controls.Add(dotsBtn); header.Controls.Add(backBtn);
+            EventHandler place = delegate { PlaceTop(); };
+            header.Resize += place; viewBtn.Resize += place; backBtn.Resize += place;
             pathPanel = new DB { Name = "pathPanel", Dock = DockStyle.Top, Height = Sc(128), BackColor = Theme.Card };
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
                 Prep(e.Graphics);
                 if (!Cfg.Details) { PaintPlainPath(e.Graphics, pathPanel.ClientRectangle); return; }   // Details off: three plain chips (PLAN 11.4)
-                using (var mb = new SolidBrush(Theme.Muted)) e.Graphics.DrawString(L.T("IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS"), Draw.fTiny, mb, Sc(20), Sc(12));
-                if (!string.IsNullOrEmpty(snap.Hint))
-                    using (var hintBrush = new SolidBrush(Theme.LvText(1))) using (var sf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                        e.Graphics.DrawString("Why: " + snap.Hint, Draw.fBodyB, hintBrush, new RectangleF(Sc(220), Sc(9), pathPanel.Width - Sc(240), Sc(20)), sf);
                 Begin(pathPanel);
+                float vend = PaintVerdict(e.Graphics, pathPanel, Sc(20), Sc(18), pathPanel.Width * 0.62f);
+                if (!string.IsNullOrEmpty(snap.Hint) && vend < pathPanel.Width * 0.62f + 1)
+                    using (var hintBrush = new SolidBrush(Theme.LvText(1))) using (var sf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+                        e.Graphics.DrawString("Why: " + snap.Hint, Draw.fBodyB, hintBrush, new RectangleF(pathPanel.Width * 0.62f + Sc(16), Sc(9), pathPanel.Width * 0.38f - Sc(36) - (onlineChip.Visible ? onlineChip.Width + Sc(12) : 0), Sc(20)), sf);
                 var pr = new RectangleF(Sc(20), Sc(36), pathPanel.Width - Sc(40), Sc(86));
                 Draw.PathStrip(e.Graphics, snap, pr, true);
                 float slot = pr.Width / 5;
@@ -135,6 +136,9 @@ namespace AdeeboMeter
                 }
             };
             Wire(pathPanel);
+            pathPanel.Controls.Add(onlineChip);   // online lookups: at the end of the path line, not crowding the top
+            EventHandler placeChip = delegate { onlineChip.Location = new Point(pathPanel.Width - onlineChip.Width - Sc(20), Cfg.Details ? Sc(6) : (pathPanel.Height - onlineChip.Height) / 2); };
+            pathPanel.Resize += placeChip; onlineChip.Resize += placeChip; onlineChip.VisibleChanged += placeChip;
             footer = new DB { Name = "footer", Dock = DockStyle.Bottom, Height = Sc(30), BackColor = Theme.Card };
             footer.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintFooter(e.Graphics, footer.ClientRectangle); };
 
@@ -316,6 +320,7 @@ namespace AdeeboMeter
             {
                 if (e.KeyCode == Keys.Escape)
                 {
+                    if (topMenu != null && topMenu.Visible) { e.SuppressKeyPress = true; HideTopMenu(); return; }
                     if (viewSheet != null && viewSheet.Visible) { e.SuppressKeyPress = true; if (switchingTo == null) HideViewSheet(); return; }   // the view sheet closes first
                     if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return;   // its own handler clears it
                     if (tab == "toolbox" && tbSearch != null && tbSearch.Box.Text != "" && toolboxPage.ContainsFocus) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; return; }   // a filter is on: Esc clears it first
@@ -422,7 +427,7 @@ namespace AdeeboMeter
         void ShowTab2()
         {
             connPage.Visible = tab == "conn"; destPage.Visible = tab == "dest"; healthPage.Visible = tab == "health"; livePage.Visible = tab == "live"; changesPage.Visible = tab == "changes";
-            procPage.Visible = tab == "procs"; settingsPage.Visible = tab == "settings"; settingsBtn.Selected = tab == "settings"; M.ProcsTab = tab == "procs";
+            procPage.Visible = tab == "procs"; settingsPage.Visible = tab == "settings"; settingsBtn.Selected = tab == "settings"; gearBtn.Selected = tab == "settings"; dotsBtn.Selected = tab == "about" || tab == "points"; M.ProcsTab = tab == "procs";
             aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about"; pointsPage.Visible = tab == "points"; if (tab == "points") pointsCanvas.Invalidate();
             linkPage.Visible = tab == "link"; if (tab == "link") RefreshLink(true);
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
@@ -522,7 +527,7 @@ namespace AdeeboMeter
         }
         void OnTimer2()
         {
-            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour + "|" + Mood.Quip(snap);   /* the mood line changes on its own (excuses, koans) */ if (hk != headKey) { headKey = hk; header.Invalidate(); }
+            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour + "|" + Mood.Quip(snap);   /* the mood line changes on its own (excuses, koans) */ if (hk != headKey) { headKey = hk; pathPanel.Invalidate(); header.Invalidate(); }
                 // the path strip and the side panel repaint only when what they print changed
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }

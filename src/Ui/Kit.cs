@@ -218,7 +218,14 @@ namespace AdeeboMeter
                     case "check": g.DrawLines(p, new[] { new PointF(X(5), Y(12.5f)), new PointF(X(10), Y(17)), new PointF(X(19), Y(7)) }); break;
                     case "star": g.DrawPolygon(p, new[] { new PointF(X(12), Y(3)), new PointF(X(14.6f), Y(9)), new PointF(X(21), Y(9.5f)), new PointF(X(16), Y(13.7f)), new PointF(X(17.6f), Y(20)), new PointF(X(12), Y(16.6f)), new PointF(X(6.4f), Y(20)), new PointF(X(8), Y(13.7f)), new PointF(X(3), Y(9.5f)), new PointF(X(9.4f), Y(9)) }); break;
                     case "mood": g.DrawEllipse(p, X(3), Y(3), 18 * u, 18 * u); g.FillEllipse(b, X(8), Y(8.5f), 2.2f * u, 2.2f * u); g.FillEllipse(b, X(13.8f), Y(8.5f), 2.2f * u, 2.2f * u); g.DrawArc(p, X(7.5f), Y(9), 9 * u, 8 * u, 20, 140); break;
-                    case "settings": g.DrawEllipse(p, X(8.5f), Y(8.5f), 7 * u, 7 * u); for (int i = 0; i < 8; i++) { double a = i * Math.PI / 4; g.DrawLine(p, X(12 + (float)Math.Cos(a) * 6.5f), Y(12 + (float)Math.Sin(a) * 6.5f), X(12 + (float)Math.Cos(a) * 9f), Y(12 + (float)Math.Sin(a) * 9f)); } break;
+                    case "settings":
+                        {
+                            // a gear: a ring with eight square teeth and a hole - reads as a gear, not a star
+                            using (var tp = new Pen(c, 2.6f * u) { StartCap = LineCap.Flat, EndCap = LineCap.Flat })
+                                for (int i = 0; i < 8; i++) { double a = i * Math.PI / 4; g.DrawLine(tp, X(12 + (float)Math.Cos(a) * 7.4f), Y(12 + (float)Math.Sin(a) * 7.4f), X(12 + (float)Math.Cos(a) * 10f), Y(12 + (float)Math.Sin(a) * 10f)); }
+                            g.DrawEllipse(p, X(5), Y(5), 14 * u, 14 * u); g.DrawEllipse(p, X(9.25f), Y(9.25f), 5.5f * u, 5.5f * u);
+                        }
+                        break;
                     case "layout": g.DrawRectangle(p, X(3), Y(4), 18 * u, 16 * u); g.DrawLine(p, X(9), Y(4), X(9), Y(20)); break;
                     default: g.FillEllipse(b, X(9), Y(9), 6 * u, 6 * u); break;
                 }

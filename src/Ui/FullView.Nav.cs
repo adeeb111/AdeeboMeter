@@ -66,7 +66,7 @@ namespace AdeeboMeter
         void BuildNavBar()
         {
             tabs.SuspendLayout();
-            foreach (Control c in tabs.Controls.Cast<Control>().ToList()) { tabs.Controls.Remove(c); if (c != navSearch) c.Dispose(); }   // the search pill is kept and put back
+            foreach (Control c in tabs.Controls.Cast<Control>().ToList()) { tabs.Controls.Remove(c); c.Dispose(); }   // search lives in the top line now
             foreach (var id in NavBar())
             {
                 var b = new PillButton(NavName(id), PillButton.K.Tab) { Tag = id, Accent = NavAccent(id) };
@@ -76,24 +76,7 @@ namespace AdeeboMeter
             moreBtn = new PillButton(L.T("More") + "  ▾", PillButton.K.Tab) { Tag = "more" };
             moreBtn.Click += delegate { ShowMoreMenu(moreBtn, new Point(0, moreBtn.Height)); };
             tabs.Controls.Add(moreBtn);
-            if (navSearch == null) { navSearch = new SearchPill(); navSearch.Click += delegate { OpenPalette(); }; tabs.Resize += delegate { PlaceSearch(); }; tabs.Layout += delegate { if (!placing && IsHandleCreated) BeginInvoke((Action)PlaceSearch); }; }
-            tabs.Controls.Add(navSearch);
-            tabs.ResumeLayout(true); PlaceSearch(); SyncNav();
-        }
-        // the search pill hugs the right end of the tab row; on a narrow window it drops to its own line rather than overlap
-        bool placing;
-        void PlaceSearch()
-        {
-            if (navSearch == null || tabs == null || placing || tabs.ClientSize.Width < Sc(300)) return;
-            placing = true; try { PlaceSearch2(); } finally { placing = false; }
-        }
-        void PlaceSearch2()
-        {
-            int used = tabs.Controls.Cast<Control>().Where(c => c != navSearch && c.Visible).Sum(c => c.Width + c.Margin.Horizontal) + tabs.Padding.Horizontal;
-            int room = tabs.ClientSize.Width - used - Sc(16);
-            navSearch.Width = Math.Max(Sc(200), Math.Min(Sc(320), room - Sc(8)));
-            int left = Math.Max(Sc(8), room - navSearch.Width);
-            if (navSearch.Margin.Left != left || navSearch.Margin.Top != Sc(5)) navSearch.Margin = new Padding(left, Sc(5), 0, 0);
+            tabs.ResumeLayout(true); SyncNav();
         }
         void SyncNav()
         {
@@ -198,6 +181,7 @@ namespace AdeeboMeter
             SizeSide();
             ResumeLayout(true);
             if (tabs != null && !sb) BuildNavBar(); else SyncNav();
+            PlaceTop();
         }
         void SizeSide()
         {
@@ -240,14 +224,13 @@ namespace AdeeboMeter
 
         // ---------- the header: the layout switch (Classic tabs <-> Sidebar). The big search sits at the end of the tab row
         // (Classic) or the top of the sidebar, where there's room - the header keeps its width for the headline.
-        float PaintHeaderSearch(Graphics g, float right, float cy)
+        // the buddy's face (the Mood button) in its slot left of the gear; the layout switch moved to the ⋯ menu
+        float PaintMood(Graphics g, float right, float cy)
         {
-            var lr = new RectangleF(right - 30 * S, cy - 15 * S, 30 * S, 30 * S);
-            Kit.Icon(g, "layout", new RectangleF(lr.X + 5 * S, lr.Y + 5 * S, 20 * S, 20 * S), Theme.Muted);
-            Act(header, lr, delegate { SetLayout(Cfg.Layout == "sidebar" ? "classic" : "sidebar"); }); Hint(header, lr, "layout.switch");
+            var lr = new RectangleF(right + 8 * S, cy, 0, 0);
             // the Mood button (PLAN 11.7): the face of the current mood and who's talking; one click opens the menu
             string who = Voice.Serious ? L.T("Plain") : Lines.Persona == "none" ? L.T(Lines.MoodName(Lines.Mood)) : L.T(Lines.PersonaName(Lines.Persona == "surprise" ? Lines.Today() : Lines.Persona));
-            if (header.ClientSize.Width < 1420 * S) who = "";   // a narrow header keeps its room for the headline: the face alone (the name is in the menu)
+            who = "";   // the face alone: the top line stays calm (the name is in the menu)
             var ws = who == "" ? SizeF.Empty : g.MeasureString(who, Draw.fBtn); var mr = new RectangleF(lr.X - 8 * S - ws.Width - (who == "" ? 30 : 40) * S, cy - 15 * S, ws.Width + (who == "" ? 30 : 40) * S, 30 * S);
             Theme.Fill(g, mr, 15 * S, Voice.Serious ? Theme.Soft : Kit.Soft("mine"));
             Kit.Icon(g, Voice.Serious ? "check" : "mood", new RectangleF(mr.X + (who == "" ? 7 : 10) * S, mr.Y + 7 * S, 16 * S, 16 * S), Voice.Serious ? Theme.Muted : Kit.Accent("mine"));
@@ -255,7 +238,6 @@ namespace AdeeboMeter
             Act(header, mr, delegate { ShowMoodMenu(header, Point.Round(new PointF(mr.X, mr.Bottom + 4 * S))); }); Hint(header, mr, "buddy.mood");
             return mr.X - 8 * S;
         }
-        SearchPill navSearch;
 
         // ---------- Details off: the plain path - three chips instead of the five-dot strip (11.4)
         void PaintPlainPath(Graphics g, Rectangle r)
@@ -282,7 +264,7 @@ namespace AdeeboMeter
                 string go = (string)it[4]; Act(pathPanel, cr, delegate { tab = go; ShowTab(); SyncNav(); }); Hint(pathPanel, cr, "path." + it[1]);
                 x += cr.Width + 10 * S;
             }
-            using (var m = new SolidBrush(Theme.Muted)) { string hint = L.T("Details on for the full path"); var hs = g.MeasureString(hint, Draw.fSmall); if (x + hs.Width + 20 * S < r.Width) g.DrawString(hint, Draw.fSmall, m, r.Width - hs.Width - Sc(20), (r.Height - hs.Height) / 2); }
+            PaintVerdict(g, pathPanel, x + 10 * S, r.Height / 2f, r.Width - (onlineChip.Visible ? onlineChip.Width + 40 * S : 20 * S));
         }
         static int PathHeight { get { return Cfg.Details ? Sc(128) : Sc(58); } }
         void OpenSettingsAt(string sec)
