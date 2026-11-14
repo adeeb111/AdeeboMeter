@@ -90,10 +90,14 @@ namespace AdeeboMeter
                 {
                     var gm = order[i]; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
                     bool on = mon.Contains(gm.Id), here = inst.Contains(gm.Id);
-                    Theme.Fill(g, r, 10 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 10 * S, on ? Theme.Blue : here ? Theme.Blue : Theme.Line, on ? 2 : 1);
+                    // each game in its own colour: a tinted raised tile, the badge solid, a ring in that colour while monitored
+                    var gc = gm.Soon ? Theme.Grey : Hex(gm.Color);
+                    Kit.Box(g, r, 14 * S);
+                    Theme.Fill(g, r, 14 * S, Kit.Mix(Theme.Card, gc, gm.Soon ? 0.04f : on ? (Theme.Dark ? 0.26f : 0.14f) : (Theme.Dark ? 0.12f : 0.06f)));
+                    if (on) Theme.Stroke(g, r, 14 * S, gc, 2); else if (here) Theme.Stroke(g, r, 14 * S, Kit.Mix(Theme.Line, gc, 0.5f), 1);
                     var ic = new RectangleF(r.X + 10 * S, r.Y + 14 * S, 30 * S, 30 * S);
-                    Theme.Fill(g, ic, 8 * S, gm.Soon ? Theme.Grey : Hex(gm.Color));
-                    using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
+                    Theme.Fill(g, ic, 10 * S, gc);
+                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
                     using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
                     string state;
                     if (gm.Soon) state = "Coming when it launches on PC";
@@ -255,7 +259,9 @@ namespace AdeeboMeter
             var rows = GamePing.Me.Ranked(gm, null).Take(GamePing.MaxServers).ToList();   // the best region first - never cut off the card
             float h = pad + 30 * S + 22 * S + rows.Count * rowH + 40 * S;
             var card = new RectangleF(x, y, w, h);
-            Theme.Fill(g, card, 12 * S, Theme.Card); Theme.Stroke(g, card, 12 * S, playing ? Theme.Blue : Theme.Line, playing ? 2 : 1);
+            var gcol = Hex(gm.Color);
+            Kit.Box(g, card); if (playing) Theme.Stroke(g, card, 16 * S, gcol, 2);
+            { var st = g.Save(); g.SetClip(new RectangleF(card.X, card.Y, card.Width, 5 * S)); Theme.Fill(g, card, 16 * S, gcol); g.Restore(st); }   // the game's colour along the top
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
             using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
             using (var nowrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })

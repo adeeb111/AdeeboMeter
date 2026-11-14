@@ -1265,3 +1265,8 @@ Press Start live capture. Nothing runs until you do.	Appuyez sur Démarrer la ca
 Which apps and conversations use the most traffic	Quelles applis et conversations consomment le plus
 Call quality (loss, jitter, MOS) and Wireshark's own warnings	Qualité des appels (pertes, gigue, MOS) et alertes de Wireshark
 Stays on this PC - nothing is uploaded	Tout reste sur ce PC - rien n'est envoyé
+Follow one connection, box by box	Suivez une connexion, case par case
+Pick an app above, or type a site, and I'll walk its traffic from this PC out to the far end - seven boxes, each one clickable.	Choisissez une appli ci-dessus ou tapez un site, et je suis son trafic de ce PC jusqu'au bout - sept cases, chacune cliquable.
+The app and the port it uses	L'appli et le port qu'elle utilise
+Your Wi-Fi or cable, the router and your provider	Votre Wi-Fi ou câble, le routeur et votre fournisseur
+How many networks it crosses and who answers at the end	Combien de réseaux il traverse et qui répond au bout

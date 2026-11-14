@@ -242,6 +242,8 @@ namespace AdeeboMeter
                 if (!double.IsNaN(pfault)) rows.Add(new object[] { "Memory read back from disk", pfault.ToString("0", CultureInfo.CurrentCulture) + " pages/s" + (pfault > 60 ? " - memory was full" : ""), "w", double.NaN, double.NaN, "" });
                 if (Cfg.Details) { rows.Add(new object[] { "Wi-Fi link rate", double.IsNaN(rx) ? "-" : rx.ToString("0", CultureInfo.CurrentCulture) + " Mb/s", "w", replayMed[12], rx, " Mb/s" }); rows.Add(new object[] { "Data that minute", (double.IsNaN(mbD) ? "?" : mbD.ToString("0.0", CultureInfo.CurrentCulture)) + " MB down · " + (double.IsNaN(mbU) ? "?" : mbU.ToString("0.0", CultureInfo.CurrentCulture)) + " MB up", "w", double.NaN, double.NaN, "" }); }
                 float nameW = Math.Min(230 * S, w * 0.3f), cmpW = Math.Min(220 * S, w * 0.28f);
+                // the rows sit on a raised card
+                Kit.Box(g, new RectangleF(x, y, w, rows.Count * 30 * S + 12 * S)); float rx0 = x, rw0 = w; x += 16 * S; w -= 32 * S; y += 6 * S; int ri = 0;
                 foreach (var rr in rows)
                 {
                     g.DrawString((string)rr[0], Draw.fBodyB, ink, x, y + 5 * S);
@@ -255,9 +257,9 @@ namespace AdeeboMeter
                     }
                     Evidence.Pill(g, (string)rr[2], x + w - 130 * S, y + 6 * S, at);
                     Hint(replayCanvas, new RectangleF(x + w - 130 * S, y, 130 * S, 28 * S), Evidence.Key((string)rr[2]));
-                    y += 30 * S; g.DrawLine(line, x, y, x + w, y);
+                    y += 30 * S; if (++ri < rows.Count) g.DrawLine(line, x, y, x + w, y);
                 }
-                y += 16 * S;
+                x = rx0; w = rw0; y += 22 * S;
 
                 // what changed around then
                 var near = data.E.Where(e => Math.Abs((e.T - at).TotalMinutes) <= 15).OrderBy(e => e.T).ToList();

@@ -40,6 +40,7 @@ namespace AdeeboMeter
             FollowPacket();
         }
 
+        static readonly string[] StoryPoints = { "The app and the port it uses", "Your Wi-Fi or cable, the router and your provider", "How many networks it crosses and who answers at the end" };
         float PaintStory(Graphics g, float x, float y, float w)
         {
             // apps using the internet right now
@@ -56,7 +57,7 @@ namespace AdeeboMeter
             }
             if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Nothing is talking to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 4 * S);
             y += 46 * S;
-            if (storyTarget == "") return y;
+            if (storyTarget == "") return Kit.Empty(g, x, y, Math.Min(w, 760 * S), "story", "home", "Follow one connection, box by box", "Pick an app above, or type a site, and I'll walk its traffic from this PC out to the far end - seven boxes, each one clickable.", StoryPoints);
 
             // the seven boxes
             var r = travelDest != null && travelDest.Input == storyTarget ? travelDest : null;
@@ -81,7 +82,7 @@ namespace AdeeboMeter
             for (int i = 0; i < 7; i++)
             {
                 var br = new RectangleF(x + i * (bw + 14 * S), y, bw, bh); bool on = storyBox == i; int lv = int.Parse(box[i][2], CultureInfo.InvariantCulture);
-                Theme.Fill(g, br, 12 * S, on ? Theme.BlueSoft : Theme.Soft); if (on) Theme.Stroke(g, br, 12 * S, Theme.Blue, 2);
+                Kit.Box(g, br, 14 * S); if (on) { Theme.Fill(g, br, 14 * S, Theme.BlueSoft); Theme.Stroke(g, br, 14 * S, Theme.Blue, 2); }
                 Draw.LvDot(g, lv, br.X + 10 * S, br.Y + 12 * S, 9 * S, 9 * S);
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString((i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]).ToUpperInvariant(), Draw.fTiny, mb, br.X + 24 * S, br.Y + 9 * S);
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
