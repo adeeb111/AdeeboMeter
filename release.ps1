@@ -36,6 +36,13 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.knowledge.$($k.BaseName).gz"
     }
+    # the Inter font (assets\fonts, SIL Open Font License - assets\fonts\OFL.txt) rides compressed the same way
+    foreach ($k in Get-ChildItem assets\fonts\*.ttf) {
+        $b = [IO.File]::ReadAllBytes($k.FullName); $gz = "obj\$($k.BaseName).ttf.gz"
+        $o = [IO.File]::Create($gz); $z = New-Object IO.Compression.GZipStream($o, [IO.Compression.CompressionLevel]::Optimal)
+        $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
+        $res += "/resource:$gz,AdeeboMeter.font.$($k.BaseName).gz"
+    }
     # the Hall of Fame key (the Adeebo Award's claim code): from the HOF_KEY secret on GitHub's build, or secrets\hof.key
     # on Adeeb's PC - never in the source. One generated file, removed again right after the build.
     $hk = $env:HOF_KEY; if (-not $hk -and (Test-Path secrets\hof.key)) { $hk = (Get-Content -Raw secrets\hof.key).Trim() }

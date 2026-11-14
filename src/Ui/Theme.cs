@@ -190,7 +190,7 @@ namespace AdeeboMeter
         public static Font fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput;
         static readonly Bitmap measureBmp = new Bitmap(1, 1);
         static Graphics measureG;
-        public static Font fHero, fValue, fCardNum, fZ;   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
+        public static Font fHero, fValue, fCardNum, fZ, fBtn;   // fBtn: buttons and tabs (Inter SemiBold)   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
         public static string Fam(params string[] names)
         {
             try
@@ -204,30 +204,62 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("fonts: " + e.Message); }
             return names[names.Length - 1];
         }
+        // Inter (assets\fonts, SIL Open Font License): the UI font for titles, headings, buttons and big numbers - the look
+        // the drawing kit is built around (PLAN 11.2). Loaded once from the exe into this process only (nothing installed);
+        // body text stays on Windows' own font so names in any script (a Chinese Wi-Fi name...) still get Windows' fallback.
+        static System.Drawing.Text.PrivateFontCollection inter;
+        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI";
+        public static FontStyle UiSemiStyle = FontStyle.Bold;
+        static void LoadInter()
+        {
+            try
+            {
+                var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
+                foreach (var w in new[] { "Regular", "SemiBold", "Bold" })
+                    using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font.Inter-" + w + ".gz"))
+                    {
+                        if (rs == null) return;
+                        byte[] data; using (var gz = new System.IO.Compression.GZipStream(rs, System.IO.Compression.CompressionMode.Decompress)) using (var ms = new MemoryStream()) { gz.CopyTo(ms); data = ms.ToArray(); }
+                        IntPtr mem = Marshal.AllocCoTaskMem(data.Length); Marshal.Copy(data, 0, mem, data.Length);   // kept for the life of the process: GDI+ and GDI read the font from it
+                        pfc.AddMemoryFont(mem, data.Length);
+                        uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
+                    }
+                inter = pfc;
+                foreach (var f in pfc.Families) { if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
+                if (UiFam == "Inter" && UiSemi == "Segoe UI") { UiSemi = "Inter"; UiSemiStyle = FontStyle.Bold; }
+            }
+            catch (Exception e) { Program.Log("Inter font: " + e.Message); UiFam = UiSemi = "Segoe UI"; UiSemiStyle = FontStyle.Bold; }
+        }
+        static FontFamily UiFamily(string name)
+        {
+            if (inter != null) foreach (var f in inter.Families) if (f.Name == name) return f;
+            return new FontFamily(name);
+        }
+        static Font Ui(string fam, float px, FontStyle st) { return new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
         public static void Init(float s)
         {
             if (fName != null) return;
-            S = s;
+            S = s; LoadInter();
             // Windows 11 type (Segoe UI Variable, Cascadia Mono) when it's there; Windows 10 falls back to Segoe UI / Consolas.
             string text = Fam("Segoe UI Variable Text", "Segoe UI"), disp = Fam("Segoe UI Variable Display", "Segoe UI"), semi = Fam("Segoe UI Semibold", "Segoe UI"), mono = Fam("Cascadia Mono", "Consolas");
             FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;
             // GDI+ can't pick a variable font's real bold - it smears the regular one. Bold text uses Segoe UI's true bold.
             if (disp.IndexOf("Variable", StringComparison.Ordinal) >= 0) disp = "Segoe UI";
             string tb = text.IndexOf("Variable", StringComparison.Ordinal) >= 0 ? "Segoe UI" : text;
-            fName = new Font(disp, 12.5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fHead = new Font(semi, 13.5f * S, semiStyle, GraphicsUnit.Pixel);
+            fName = Ui(UiFam, 12.5f * S, FontStyle.Bold);
+            fHead = Ui(UiSemi, 13.5f * S, UiSemiStyle);
             fBody = new Font(text, 12.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fBodyB = new Font(semi, 12.5f * S, semiStyle, GraphicsUnit.Pixel);
             fSmall = new Font(text, 11 * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = new Font(tb, 9.5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fPill = new Font(tb, 10 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fBig = new Font(disp, 20 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fTitle = new Font(disp, 16 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fHero = new Font(disp, 30 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fValue = new Font(disp, 14 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fCardNum = new Font(semi, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            fTiny = Ui(UiSemi, 9.5f * S, UiSemiStyle);
+            fPill = Ui(UiSemi, 10.5f * S, UiSemiStyle);
+            fBig = Ui(UiFam, 20 * S, FontStyle.Bold);
+            fTitle = Ui(UiFam, 16 * S, FontStyle.Bold);
+            fHero = Ui(UiFam, 30 * S, FontStyle.Bold);
+            fValue = Ui(UiFam, 14 * S, FontStyle.Bold);
+            fCardNum = Ui(UiSemi, 26 * S, UiSemiStyle); fBtn = Ui(UiSemi, 12.5f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fInput = new Font(mono, 13 * S, FontStyle.Regular, GraphicsUnit.Pixel);
             measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
         }

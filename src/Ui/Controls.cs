@@ -95,6 +95,14 @@ namespace AdeeboMeter
         }
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+        // wheel: 60 px a notch, in proportion for a touchpad's small steps (Windows' default jumps whole screens on some pages)
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            if (!AutoScroll || !VerticalScroll.Visible) { base.OnMouseWheel(e); return; }
+            int y = -AutoScrollPosition.Y - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S);
+            AutoScrollPosition = new Point(-AutoScrollPosition.X, Math.Max(0, y));
+            var h = e as HandledMouseEventArgs; if (h != null) h.Handled = true;
+        }
         public void Announce(string name) { AccessibleName = name; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); AccessibilityNotifyClients(AccessibleEvents.Focus, -1); }
         // a paint slower than 40 ms is written to the log (at most once a minute per panel), so "it feels laggy" has numbers
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
@@ -115,22 +123,24 @@ namespace AdeeboMeter
     {
         public enum K { Primary, Chip, Tab }
         public readonly K Kind; bool sel, hot, down;
+        // the section colour (Kit.Accents) a tab or button wears; null = the app blue
+        string accent; public string Accent { get { return accent; } set { accent = value; Invalidate(); } }
         public bool Selected { get { return sel; } set { if (sel != value) { sel = value; AccessibleDescription = value ? "selected" : null; AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); Invalidate(); } } }
         string badge = ""; int badgeLv = -1;
         // A small count or flag at the end of a tab ("16", "3 new", "REC"). lv: -1 neutral, 0-2 green/amber/red, 4 blue.
         public void SetBadge(string b, int lv) { b = b ?? ""; if (b == badge && lv == badgeLv) return; badge = b; badgeLv = lv; Fit(); Invalidate(); }
-        int BadgeW { get { return badge == "" ? 0 : TextRenderer.MeasureText(badge, Draw.fTiny).Width + (int)(16 * Draw.S); } }
-        void Fit() { var sz = TextRenderer.MeasureText(Text, Font, Size.Empty, TextFormatFlags.NoPrefix); Width = sz.Width + (int)((Kind == K.Chip ? 22 : 30) * Draw.S) + BadgeW; }
+        int BadgeW { get { return badge == "" ? 0 : (int)Draw.Measure(badge, Draw.fTiny, 0).Width + (int)(16 * Draw.S); } }
+        void Fit() { if (Font == null) return; var sz = Draw.Measure(Text, Font, 0); Width = (int)Math.Ceiling(sz.Width) + (int)((Kind == K.Chip ? 22 : 30) * Draw.S) + BadgeW; }
         public override string Text { get { return base.Text; } set { base.Text = L.T(value); } }   // every caption goes through the language table
         public PillButton(string text, K kind)
         {
             Kind = kind; Text = text;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.StandardClick, true);
-            Font = kind == K.Tab ? Draw.fBodyB : kind == K.Primary ? Draw.fBodyB : Draw.fBody;
+            Font = kind == K.Chip ? Draw.fBody : Draw.fBtn;
             Cursor = Cursors.Hand; TabStop = true; BackColor = Theme.Card;
-            var sz = TextRenderer.MeasureText(Text, Font);   // the translated caption, not the English
+            var sz = Draw.Measure(Text, Font, 0);   // the translated caption, not the English
             float S = Draw.S;
-            Size = new Size(sz.Width + (int)((kind == K.Chip ? 22 : 30) * S), (int)((kind == K.Tab ? 42 : kind == K.Primary ? 36 : 30) * S));
+            Size = new Size((int)Math.Ceiling(sz.Width) + (int)((kind == K.Chip ? 22 : 30) * S), (int)((kind == K.Tab ? 42 : kind == K.Primary ? 36 : 30) * S));
             Margin = new Padding(0, 0, (int)((kind == K.Tab ? 2 : 6) * S), 0);
             AccessibleRole = AccessibleRole.PushButton; AccessibleName = Text;
         }
@@ -149,29 +159,32 @@ namespace AdeeboMeter
         protected override void OnTextChanged(EventArgs e) { Fit(); Invalidate(); AccessibleName = Text; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); base.OnTextChanged(e); }   // "Start live capture" -> "Stop" is announced
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
             float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
+            Color ac = Kit.Accent(accent), acSoft = accent == null ? Theme.BlueSoft : Kit.Soft(accent), acInk = accent == null ? Theme.BlueDark : Kit.Ink(accent);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             Color fg;
             if (Kind == K.Primary)
             {
-                Color bg = !Enabled ? Theme.Grey : down ? Theme.BlueDark : hot ? Theme.BlueHot : Theme.Blue;
-                Theme.Fill(g, r, 8 * S, bg); fg = Color.White;
+                Color bg = !Enabled ? Theme.Grey : down ? Kit.Mix(ac, Color.Black, 0.25f) : hot ? Kit.Mix(ac, Color.Black, 0.12f) : ac;
+                Theme.Fill(g, r, 10 * S, bg); fg = Color.White;
             }
             else if (Kind == K.Chip)
             {
-                Theme.Fill(g, r, r.Height / 2, sel ? Theme.BlueSoft : hot ? Theme.Soft : Theme.Card);
-                Theme.Stroke(g, r, r.Height / 2, sel ? Theme.Blue : Theme.Line, 1);
-                fg = sel ? Theme.BlueDark : Theme.Sub;
+                Theme.Fill(g, r, r.Height / 2, sel ? acSoft : hot ? Theme.Soft : Theme.Card);
+                Theme.Stroke(g, r, r.Height / 2, sel ? ac : Theme.Line, sel ? 1.5f * S : 1);
+                fg = sel ? acInk : Theme.Sub;
             }
             else
             {
-                if (hot && !sel) Theme.Fill(g, new RectangleF(2, 4 * S, Width - 4, Height - 10 * S), 6 * S, Theme.Soft);
-                fg = sel ? Theme.Blue : Theme.Sub;
-                if (sel) using (var b = new SolidBrush(Theme.Blue)) g.FillRectangle(b, 6 * S, Height - 3 * S, Width - 12 * S, 3 * S);
+                if (sel) Theme.Fill(g, new RectangleF(2, 5 * S, Width - 4, Height - 12 * S), 8 * S, acSoft);
+                else if (hot) Theme.Fill(g, new RectangleF(2, 5 * S, Width - 4, Height - 12 * S), 8 * S, Theme.Soft);
+                fg = sel ? acInk : Theme.Sub;
+                if (sel) Theme.Fill(g, new RectangleF(10 * S, Height - 4 * S, Width - 20 * S, 3 * S), 1.5f * S, ac);
             }
             int bw = BadgeW;
-            TextRenderer.DrawText(g, Text, Font, new Rectangle(0, Kind == K.Tab ? -(int)(1 * S) : 0, Width - bw, Height), fg, TextFormatFlags.NoPrefix | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            using (var tb = new SolidBrush(fg)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, HotkeyPrefix = System.Drawing.Text.HotkeyPrefix.None, FormatFlags = StringFormatFlags.NoWrap })
+                g.DrawString(Text, Font, tb, new RectangleF(0, Kind == K.Tab ? -1 * S : 0, Width - bw, Height), sf);
             if (bw > 0)
             {
                 var br = new RectangleF(Width - bw - 6 * S, Height / 2f - 9 * S, bw - 4 * S, 18 * S);
@@ -330,7 +343,7 @@ namespace AdeeboMeter
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             int w = Width - sb.Width; var cols = Cols(Width); float x0 = 14 * S;
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
             using (var line = new Pen(Theme.Line2))
@@ -492,7 +505,7 @@ namespace AdeeboMeter
         protected override void Dispose(bool disposing) { if (disposing) anim.Dispose(); base.Dispose(disposing); }
         protected override void OnPaint(PaintEventArgs pe)
         {
-            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; float S = Draw.S;
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; float S = Draw.S;
             using (var bg = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(bg, ClientRectangle);
             string t = L.T(Text); var ts = g.MeasureString(t, Draw.fBody);
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fBody, ink, 0, (Height - ts.Height) / 2);
@@ -590,7 +603,7 @@ namespace AdeeboMeter
         }
         protected override void OnPaint(PaintEventArgs pe)
         {
-            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             using (var b = new SolidBrush(Theme.Card)) g.FillRectangle(b, ClientRectangle);
             using (var p = new Pen(Theme.Line)) g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
             using (var a = new SolidBrush(Theme.Blue)) g.FillRectangle(a, 0, 0, 4 * Draw.S, Height);

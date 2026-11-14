@@ -381,7 +381,7 @@ namespace AdeeboMeter
             if (on && onlineChip.Text != t) onlineChip.Text = t;
         }
         static System.Collections.Generic.IEnumerable<Control> Descendants(Control r) { foreach (Control c in r.Controls) { yield return c; foreach (var d in Descendants(c)) yield return d; } }
-        static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; }
+        static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; }
 
         void ShowTab()
         {

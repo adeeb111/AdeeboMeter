@@ -29,6 +29,7 @@ namespace AdeeboMeter
     // ================================================================== Win32
     static class Native
     {
+        [DllImport("gdi32.dll")] public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pdv, out uint pcFonts);
         [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
         [DllImport("kernel32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetDefaultDllDirectories(uint flags);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr GetModuleHandle(string name);
