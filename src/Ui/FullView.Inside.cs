@@ -113,7 +113,7 @@ namespace AdeeboMeter
                     if (i < first || i > last) { y += rh; continue; }   // draw only what's on screen
                     var it = items[i]; int depth = int.Parse(it[3], CultureInfo.InvariantCulture); float ix = x + Math.Min(depth, 12) * 16 * S;
                     var rr = new RectangleF(0, y, insideList.ClientSize.Width, rh);
-                    if (it[0] == insideSelKey) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, rr);
+                    if (it[0] == insideSelKey) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
                     if (depth > 0) using (var tp = new Pen(Theme.Line, 1)) { g.DrawLine(tp, ix - 10 * S, y, ix - 10 * S, y + rh / 2); g.DrawLine(tp, ix - 10 * S, y + rh / 2, ix - 3 * S, y + rh / 2); }
                     g.DrawString(it[1], Draw.fBodyB, ink, new RectangleF(ix, y + 3 * S, w - (ix - x), 18 * S), nowrap);
                     g.DrawString(it[2], Draw.fSmall, muted, new RectangleF(ix, y + 21 * S, w - (ix - x), 16 * S), nowrap);

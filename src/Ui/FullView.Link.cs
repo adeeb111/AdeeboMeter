@@ -44,7 +44,7 @@ namespace AdeeboMeter
         }
         float RowsCard(Graphics g, string title, List<string[]> rows, RectangleF cr, string keyPrefix)
         {
-            Theme.Stroke(g, cr, 10 * S, Theme.Track, 1);
+            Kit.Box(g, cr);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, cr.X + 14 * S, cr.Y + 12 * S);
             Hint(linkCanvas, new RectangleF(cr.X, cr.Y, cr.Width, 26 * S), keyPrefix + title);
             float ry = cr.Y + 34 * S, lw = Math.Min(170 * S, cr.Width * 0.42f);
@@ -102,7 +102,7 @@ namespace AdeeboMeter
         float ListCard(Graphics g, string title, List<string[]> rows, string empty, string key, float x, float y, float w)
         {
             float rh = 22 * S; var card = new RectangleF(x, y, w, 40 * S + Math.Max(1, rows.Count) * rh);
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), key);
             float ry = y + 34 * S;
@@ -124,7 +124,7 @@ namespace AdeeboMeter
         float PaintSwitch(Graphics g, float x, float y, float w)
         {
             var card = new RectangleF(x, y, w, switchInfo != null ? 150 * S : 86 * S);
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.SWITCH");
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
@@ -168,7 +168,7 @@ namespace AdeeboMeter
             var inBand = ls.Aps.Where(a => a.Band == band && a.Channel > 0).ToList();
             var chans = inBand.Select(a => a.Channel).Concat(new[] { ls.MyChannel }).Distinct().OrderBy(c => c).ToList();
             float ch = 170 * S; var card = new RectangleF(x, y, w, ch + 70 * S);
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("WHO ELSE IS ON THE AIR  ·  " + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.CHANNEL MAP");
             float plotX = x + 20 * S, plotW = w - 40 * S, base0 = y + 34 * S + ch - 30 * S, colW = Math.Min(64 * S, plotW / Math.Max(1, chans.Count));
@@ -210,7 +210,7 @@ namespace AdeeboMeter
 
             var top = ls.Aps.OrderByDescending(a => a.Signal).Take(12).ToList();
             float rh = 24 * S; var card2 = new RectangleF(x, y, w, 40 * S + top.Count * rh);
-            Theme.Stroke(g, card2, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card2);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("STRONGEST NEIGHBOURS"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.NEIGHBOURS");
             float ry = y + 34 * S;

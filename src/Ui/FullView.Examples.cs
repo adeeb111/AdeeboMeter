@@ -72,7 +72,7 @@ namespace AdeeboMeter
         static float PaintExampleBanner(Graphics g, float x, float y, float w, List<string[]> rows)
         {
             var br = new RectangleF(x, y, w, 30 * S);
-            using (var fb = new SolidBrush(Color.FromArgb(Theme.Dark ? 60 : 36, Theme.Amber))) g.FillRectangle(fb, br);
+            Theme.Fill(g, br, 10 * S, Color.FromArgb(Theme.Dark ? 60 : 36, Theme.Amber));
             using (var ab = new SolidBrush(Theme.Amber)) g.FillRectangle(ab, x, y, 4 * S, br.Height);
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("EXAMPLE") + "  ·  " + L.T("Made-up data - not your PC or network. Nothing was sent."), Draw.fSmall, ink, x + 12 * S, y + 7 * S);
             y += br.Height + 10 * S;

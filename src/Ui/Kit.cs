@@ -58,6 +58,20 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(Color.FromArgb(a[i], 15, 23, 42))) g.FillPath(b, p);
             }
         }
+        // a raised frame for a panel whose inside is already drawn: the soft shadow only outside it, a light edge on it -
+        // turns the older outlined boxes into 1.1.5 cards without repainting what's inside (works in any drawing order)
+        // a raised card: theme card colour, soft shadow, hairline edge, rounded
+        public static void Box(Graphics g, RectangleF r) { Box(g, r, 16 * S); }
+        public static void Box(Graphics g, RectangleF r, float rad) { if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }
+        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, 16 * S); }
+        public static void Frame(Graphics g, RectangleF r, float rad)
+        {
+            if (Off(g, r)) return;
+            var st = g.Save();
+            using (var inside = Theme.Round(r, rad)) using (var rg = new Region(inside)) { g.ExcludeClip(rg); Shadow(g, r, rad); }
+            g.Restore(st);
+            Theme.Stroke(g, r, rad, Theme.Dark ? Theme.Line : Theme.Line2, 1);
+        }
         // off screen (scrolled away): nothing to draw
         public static bool Off(Graphics g, RectangleF r) { var c = g.ClipBounds; return r.Bottom + 8 * S < c.Top || r.Top - 8 * S > c.Bottom || r.Right + 8 * S < c.Left || r.Left - 8 * S > c.Right; }
         public static void Card(Graphics g, RectangleF r, string accent, bool hot)

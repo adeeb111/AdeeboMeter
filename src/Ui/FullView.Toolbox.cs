@@ -908,7 +908,7 @@ namespace AdeeboMeter
                     string title = L.T(snmpRow ? "SNMP - ask a switch or router" : t.Title); if (snmpRow) tag = "Ports, traffic, CPU, neighbours, sensors, any OID.";
                     if (searching && SectionOf(t) != tbSection) tag = SectionName(SectionOf(t)) + " · " + tag;   // a result from another section says where it lives
                     var rr = new RectangleF(0, y, tbList.ClientSize.Width, rh);
-                    if (on) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, rr);
+                    if (on) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
                     if (on && tbList.Focused) using (var fp = new Pen(Theme.Blue, Math.Max(1, 2 * S))) g.DrawRectangle(fp, 1 * S, y + 1 * S, tbList.ClientSize.Width - 3 * S, rh - 2 * S);   // where the keyboard is
                     g.DrawString(title, Draw.fBody, ink, new RectangleF(x + 4 * S, y + 5 * S, w - 4 * S, 18 * S), nowrap);
                     if (tag != "") g.DrawString(tag, Draw.fSmall, muted, new RectangleF(x + 4 * S, y + 23 * S, w - 4 * S, 17 * S), nowrap);
@@ -973,7 +973,7 @@ namespace AdeeboMeter
                     var items = snmp ? SnmpTabs.Take(5).Select(z => new[] { z[0], z[1] }).ToList() : grp.Take(4).Select(t => new[] { t.Id, t.Title }).ToList();
                     float cx = x + col * (cw + gap), ch = 46 * S + items.Count * 26 * S + 28 * S;
                     var r = new RectangleF(cx, rowY, cw, ch);
-                    Theme.Fill(g, r, 10 * S, Theme.Card); Theme.Stroke(g, r, 10 * S, Theme.Line, 1);
+                    Theme.Fill(g, r, 16 * S, Theme.Card); Kit.Frame(g, r);
                     g.DrawString(grp.Key, Draw.fTiny, muted, cx + 14 * S, rowY + 14 * S);
                     float iy = rowY + 38 * S;
                     foreach (var it in items)
@@ -1038,7 +1038,7 @@ namespace AdeeboMeter
                             // each view a button: filled when it's the one you're on
                             bool on = tab0[0] == tbSel; var ts = g.MeasureString(tab0[1], Draw.fBody); var pr = new RectangleF(tx, y, ts.Width + 26 * S, 32 * S);
                             if (pr.Right > x + w) { tx = x; y += 40 * S; pr = new RectangleF(tx, y, ts.Width + 26 * S, 32 * S); }
-                            Theme.Fill(g, pr, 16 * S, on ? Theme.Blue : Theme.Card); if (!on) Theme.Stroke(g, pr, 16 * S, Theme.Line, 1);
+                            Theme.Fill(g, pr, 16 * S, on ? Theme.Blue : Theme.Card); if (!on) Kit.Frame(g, pr);
                             using (var tb2 = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(tab0[1], Draw.fBody, tb2, tx + 13 * S, y + (32 * S - ts.Height) / 2);
                             string tid = tab0[0]; if (!on) Act(tbCanvas, pr, delegate { SelectTool(tid); });
                             tx += pr.Width + 8 * S;
@@ -1104,7 +1104,7 @@ namespace AdeeboMeter
                         {
                             // a table line: fixed width, one line, clipped at the edge (Copy as text has all of it)
                             float lh = 19 * S;
-                            if (lv == 7) using (var tb = new SolidBrush(Theme.LvSoft(2))) g.FillRectangle(tb, x - 4 * S, y, w + 8 * S, lh);
+                            if (lv == 7) Theme.Fill(g, new RectangleF(x - 4 * S, y, w + 8 * S, lh), 4 * S, Theme.LvSoft(2));
                             using (var lb = new SolidBrush(lv == 7 ? Theme.LvText(2) : Theme.Ink)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.None })
                                 g.DrawString(o[2], Draw.fMonoS, lb, new RectangleF(x, y + 2 * S, w, lh), nf);
                             y += lh; continue;
@@ -1114,7 +1114,7 @@ namespace AdeeboMeter
                         if (tbCompare && prev != null) { var pr = prev.Rows.FirstOrDefault(z => z.Length > 2 && z[1] == o[1]); was = pr == null ? "new since " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) : pr[2] != o[2] ? "at " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + pr[2] : ""; }
                         if (was != "") adv = was + (adv != "" ? "\n" + adv : "");
                         float tw = w - nameW - pillW - 10 * S, vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(Math.Max(30 * S, vh + ah + 12 * S), Draw.Measure(o[1], Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
-                        if (lv == 4) using (var hb = new SolidBrush(Theme.BlueSoft)) g.FillRectangle(hb, x - 4 * S, y, w + 8 * S, rh);
+                        if (lv == 4) Theme.Fill(g, new RectangleF(x - 4 * S, y, w + 8 * S, rh), 10 * S, Theme.BlueSoft); else if (lv == 1 || lv == 2) Theme.Fill(g, new RectangleF(x - 6 * S, y, w + 12 * S, rh), 10 * S, Theme.LvSoft(lv));   // problem rows stand out, rounded
                         Draw.LvDot(g, lv == 4 ? 3 : lv, x, y + 9 * S, 10 * S, 10 * S);
                         g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));
                         using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(o[2], Draw.fBody, vb, new RectangleF(x + nameW, y + 5 * S, tw, vh + 4));
@@ -1204,7 +1204,7 @@ namespace AdeeboMeter
         }
         static float PaintSeries(Graphics g, List<double> s, string unit, float x, float y, float w)
         {
-            float h = 120 * S; var r = new RectangleF(x, y, w, h); Theme.Stroke(g, r, 8 * S, Theme.Track, 1);
+            float h = 120 * S; var r = new RectangleF(x, y, w, h); Kit.Box(g, r);
             var ok = s.Where(v => !double.IsNaN(v)).ToList(); double max = ok.Count > 0 ? Math.Max(1, ok.Max()) * 1.1 : 1;
             float bw = (w - 20 * S) / Math.Max(1, s.Count), bx = x + 10 * S, base0 = y + h - 10 * S, ph = h - 26 * S;
             using (var bb = new SolidBrush(unit == "ms" ? Theme.Blue : Theme.Green)) using (var lost = new SolidBrush(Theme.Red))

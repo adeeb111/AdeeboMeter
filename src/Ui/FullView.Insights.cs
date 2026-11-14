@@ -106,7 +106,7 @@ namespace AdeeboMeter
         {
             float lw = 170 * S, tw = w - lw - 28 * S; var hs = rows.Select(r => Math.Max(22 * S, Math.Max(Draw.Measure(r[1], Draw.fBody, (int)tw).Height, Draw.Measure(r[0], Draw.fBody, (int)(lw - 8 * S)).Height) + 6 * S)).ToList();
             var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(changesCanvas, new RectangleF(x, y, w, 26 * S), key);
             float ry = y + 34 * S;

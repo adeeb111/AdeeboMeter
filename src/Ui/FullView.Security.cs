@@ -116,7 +116,7 @@ namespace AdeeboMeter
                             int lv = int.Parse(o[0], CultureInfo.InvariantCulture); string fix = o.Length > 5 && o[5].StartsWith("fix:", StringComparison.Ordinal) ? o[5].Substring(4) : "";
                             float nameW = Math.Min(260 * S, w * 0.32f), tw = w - nameW - 150 * S;
                             float vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = o[3] == "" ? 0 : Draw.Measure(o[3], Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(34 * S, vh + ah + 14 * S);
-                            if (lv == 2 || lv == 1) using (var hb = new SolidBrush(Theme.LvSoft(lv))) g.FillRectangle(hb, x - 6 * S, y, w + 12 * S, rh);
+                            if (lv == 2 || lv == 1) Theme.Fill(g, new RectangleF(x - 6 * S, y, w + 12 * S, rh), 10 * S, Theme.LvSoft(lv));
                             using (var b = new SolidBrush(done ? Theme.Lv(lv) : Theme.Line)) g.FillEllipse(b, x, y + 11 * S, 10 * S, 10 * S);
                             g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 7 * S, nameW - 24 * S, rh));
                             using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(o[2], Draw.fBody, vb, new RectangleF(x + nameW, y + 7 * S, tw, vh + 4));

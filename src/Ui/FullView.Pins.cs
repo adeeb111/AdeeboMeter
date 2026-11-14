@@ -85,7 +85,7 @@ namespace AdeeboMeter
         float PaintPinTable(Graphics g, List<DestResult> pr, float x, float y, float w)
         {
             float rh = 40 * S, h = 34 * S + pr.Count * rh;
-            var card = new RectangleF(x, y, w, h); Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            var card = new RectangleF(x, y, w, h); Kit.Box(g, card);
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
@@ -94,7 +94,7 @@ namespace AdeeboMeter
                 foreach (var r in pr)
                 {
                     var row = new RectangleF(x + 1, yy, w - 2, rh);
-                    if (r == dest) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, row);
+                    if (r == dest) Theme.Fill(g, row, 8 * S, Theme.RowSel);
                     bool done = r.Done;
                     if (done) Draw.LvDot(g, r.Level, x + 14 * S, yy + rh / 2 - 6 * S, 12 * S, 12 * S);
                     else using (var p = new Pen(Theme.Blue, 2 * S)) g.DrawEllipse(p, x + 14 * S, yy + rh / 2 - 6 * S, 12 * S, 12 * S);
@@ -115,7 +115,7 @@ namespace AdeeboMeter
         float PaintPinWatch(Graphics g, float x, float y, float w)
         {
             var v = Pinned.Ms.Values(2880); var card = new RectangleF(x, y, w, 120 * S);
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             int lost = v.Count(double.IsNaN); var ok = v.Where(a => !double.IsNaN(a)).ToList();
             string head = "WATCHING " + Pinned.Host.ToUpperInvariant() + " ALL DAY  ·  " + (v.Length == 0 ? "FIRST PING IN A MOMENT" : (ok.Count > 0 ? "TYPICAL " + ok.OrderBy(a => a).ElementAt(ok.Count / 2).ToString("0", CultureInfo.CurrentCulture) + " MS  ·  " : "") + "LOST " + lost + " OF " + v.Length + "  ·  LAST " + (v.Length / 2 >= 60 ? (v.Length / 120.0).ToString("0.#", CultureInfo.CurrentCulture) + " H" : v.Length / 2 + " MIN"));
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(head, Draw.fTiny, mb, x + 14 * S, y + 12 * S);

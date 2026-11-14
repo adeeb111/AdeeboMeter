@@ -92,7 +92,7 @@ namespace AdeeboMeter
                     bool on = mon.Contains(gm.Id), here = inst.Contains(gm.Id);
                     Theme.Fill(g, r, 10 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 10 * S, on ? Theme.Blue : here ? Theme.Blue : Theme.Line, on ? 2 : 1);
                     var ic = new RectangleF(r.X + 10 * S, r.Y + 14 * S, 30 * S, 30 * S);
-                    using (var ib = new SolidBrush(gm.Soon ? Theme.Grey : Hex(gm.Color))) g.FillRectangle(ib, ic);
+                    Theme.Fill(g, ic, 8 * S, gm.Soon ? Theme.Grey : Hex(gm.Color));
                     using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
                     using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
                     string state;
@@ -109,7 +109,7 @@ namespace AdeeboMeter
                 }
                 {
                     int i = order.Count; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
-                    Theme.Stroke(g, r, 10 * S, Theme.Line, 1);
+                    Kit.Box(g, r);
                     g.DrawString(L.T("+ Add your own game"), Draw.fBodyB, blue, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 20 * S, 20 * S), nowrap);
                     g.DrawString(L.T("any game, any server IP"), Draw.fSmall, muted, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 20 * S, 18 * S), nowrap);
                     Act(gamerCanvas, r, delegate { EditGame(new Game { Name = "", Custom = true }, true); });
@@ -187,7 +187,7 @@ namespace AdeeboMeter
                 Func<string, bool, Action, float> btn = (t, primary, a) =>
                 { t = L.T(t);
                     var sz = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
-                    Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Theme.Stroke(g, r, 17 * S, Theme.Line, 1);
+                    Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Kit.Frame(g, r);
                     using (var tb = new SolidBrush(primary ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
                     Act(gamerCanvas, r, a); bx += r.Width + 10 * S; return r.Width;
                 };

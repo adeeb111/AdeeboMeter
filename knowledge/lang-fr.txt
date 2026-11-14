@@ -1248,3 +1248,8 @@ Neon	Néon
 Midnight	Minuit
 Sunset	Coucher de soleil
 Mint	Menthe
+All problems	Tous les problèmes
+It's fixed	C'est réglé
+Still broken - check again	Toujours en panne - revérifier
+Copy for someone who can help	Copier pour quelqu'un qui peut aider
+Copied	Copié

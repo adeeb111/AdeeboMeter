@@ -115,7 +115,7 @@ namespace AdeeboMeter
                     foreach (var i in rows)
                     {
                         var a = i.A; var rr = new RectangleF(0, y, w + 8 * S, rh);
-                        if (a.Name == procSel) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, rr);
+                        if (a.Name == procSel) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
                         Theme.Fill(g, new RectangleF(x, y + rh / 2 - 5 * S, 10 * S, 10 * S), 5 * S, i.E == null ? Theme.Grey : i.E.Close == 2 ? Theme.Red : i.E.Close == 3 ? Theme.C("#8250DF") : i.E.Close == 1 ? Theme.Amber : Theme.Green);
                         string title = i.E != null ? i.E.Friendly : a.Name;
                         string subl = (i.E != null ? i.E.Tag : "not in the guide - click to see what the file says") + (a.Count > 1 ? "   ·   " + a.Count + " copies" : "");

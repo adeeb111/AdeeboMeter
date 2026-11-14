@@ -81,7 +81,7 @@ namespace AdeeboMeter
             y = TextCard(g, "WI-FI ADVISOR", adv, "link.ADVISOR", x, y, w);
             // health score (always; the only Wi-Fi view when location is off)
             var hcard = new RectangleF(x, y, w, 70 * S + ex.Health.Count * 22 * S);
-            Theme.Stroke(g, hcard, 10 * S, Theme.Track, 1);
+            Kit.Box(g, hcard);
             int lv = ex.Score >= 80 ? 0 : ex.Score >= 55 ? 1 : 2;
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.HEALTH");
@@ -98,7 +98,7 @@ namespace AdeeboMeter
             if (ex.Twins.Count > 0) y = TextCard(g, "LOOK-ALIKE NETWORKS NEARBY", ex.Twins.Select(t => new[] { t[0] + "  ·  " + t[1], t[2], "1" }).ToList(), "link.TWINS", x, y, w);
             // walk test
             var wr = new RectangleF(x, y, w, (spots.Count == 0 ? 74 : 92 + spots.Count * 30) * S);
-            Theme.Stroke(g, wr, 10 * S, Theme.Track, 1);
+            Kit.Box(g, wr);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.WALK");
             var start = new RectangleF(x + 14 * S, y + 36 * S, 260 * S, 22 * S);
@@ -146,7 +146,7 @@ namespace AdeeboMeter
         {
             float tw = w - 160 * S; var hs = rows.Select(r => Draw.Measure(r[1], Draw.fBody, (int)tw).Height + 10 * S).ToList();
             var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), key);
             float ry = y + 34 * S;

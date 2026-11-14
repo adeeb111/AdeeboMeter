@@ -69,7 +69,7 @@ namespace AdeeboMeter
         float LearnRow(Graphics g, string key, string title, string sub, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap)
         {
             var rr = new RectangleF(0, y, learnList.ClientSize.Width, 30 * S);
-            if (key == learnSel) using (var b = new SolidBrush(Theme.RowSel)) g.FillRectangle(b, rr);
+            if (key == learnSel) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
             g.DrawString(title, Draw.fBody, ink, new RectangleF(x, y + 6 * S, w, 18 * S), nowrap);
             Act(learnList, rr, delegate { learnSel = key; learnPkts = null; learnErr = ""; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); });
             return y + 30 * S;

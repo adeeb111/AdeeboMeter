@@ -160,8 +160,8 @@ namespace AdeeboMeter
                 {
                     var rr = new RectangleF(x - 6 * S, y - 3 * S, w + 12 * S, 26 * S);
                     bool picked = thiefPick == d.Mac, done = thiefPick != "";
-                    if (done && d.Thief) using (var b = new SolidBrush(Theme.LvSoft(0))) g.FillRectangle(b, rr);
-                    else if (picked) using (var b = new SolidBrush(Theme.LvSoft(2))) g.FillRectangle(b, rr);
+                    if (done && d.Thief) Theme.Fill(g, rr, 8 * S, Theme.LvSoft(0));
+                    else if (picked) Theme.Fill(g, rr, 8 * S, Theme.LvSoft(2));
                     string[] cells = { d.Name, d.Ip, d.Mac, d.Maker, d.First, d.Data };
                     for (int i = 0; i < cells.Length; i++) g.DrawString(cells[i], i == 2 ? Draw.fMono : Draw.fBody, i == 0 ? ink : sub, new RectangleF(x + cols[i] * w, y, (i + 1 < cols.Length ? cols[i + 1] : 1f) * w - cols[i] * w - 6 * S, 20 * S), nw);
                     if (!done && d.Name != "Router") { var dd = d; Act(learnInfo, rr, delegate { thiefPick = dd.Mac; if (dd.Thief) EarnFirst("game.thief." + thief.Id); else Points.Me.MarkTried("game.thief." + thief.Id); learnInfo.Invalidate(); }); }

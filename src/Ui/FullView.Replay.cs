@@ -177,7 +177,7 @@ namespace AdeeboMeter
                 foreach (var b in new[] { new object[] { "< problem", 0 }, new object[] { "< 10 min", -10 }, new object[] { "< 1 min", -1 }, new object[] { "1 min >", 1 }, new object[] { "10 min >", 10 }, new object[] { "problem >", 0 } })
                 {
                     string t = (string)b[0]; int by = (int)b[1]; var ts = g.MeasureString(t, Draw.fSmall); var br = new RectangleF(cx, y, ts.Width + 18 * S, 26 * S);
-                    Theme.Stroke(g, br, 13 * S, Theme.Track, 1); g.DrawString(t, Draw.fSmall, ink, cx + 9 * S, y + (26 * S - ts.Height) / 2);
+                    Kit.Box(g, br, br.Height / 2); g.DrawString(t, Draw.fSmall, ink, cx + 9 * S, y + (26 * S - ts.Height) / 2);
                     if (t.EndsWith("problem", StringComparison.Ordinal)) Act(replayCanvas, br, delegate { ReplayNextProblem(-1); });
                     else if (t.StartsWith("problem", StringComparison.Ordinal)) Act(replayCanvas, br, delegate { ReplayNextProblem(1); });
                     else Act(replayCanvas, br, delegate { ReplayStep(by); });

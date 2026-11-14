@@ -261,7 +261,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < tiles.Length; i++)
                 {
                     var t = tiles[i]; var tr = new RectangleF(x + (i % cols) * (tw + 12 * S), y + (i / cols) * (th + 12 * S), tw, th);
-                    Theme.Stroke(g, tr, 12 * S, Theme.Track, 1);
+                    Kit.Box(g, tr);
                     int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
                     Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
                     g.DrawString(t[0].ToUpperInvariant(), Draw.fTiny, muted, tr.X + 30 * S, tr.Y + 14 * S);
@@ -283,7 +283,7 @@ namespace AdeeboMeter
                     var cur = SpeedTest.Pick(Cfg.SpeedServer) ?? SpeedTest.Pick("auto");
                     string ct = speedFinding ? "Finding the closest..." : "Server: " + (cur.Id == "cloudflare" ? "Cloudflare, nearest" : cur.Label) + "  ·  change"; var csz = g.MeasureString(ct, Draw.fBody);
                     var cr = new RectangleF(sb2.Right + 8 * S, sb2.Y, csz.Width + 24 * S, 32 * S);
-                    Theme.Stroke(g, cr, 16 * S, Theme.Track, 1); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(ct, Draw.fBody, tb, cr.X + 12 * S, cr.Y + (32 * S - csz.Height) / 2);
+                    Kit.Box(g, cr, cr.Height / 2); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(ct, Draw.fBody, tb, cr.X + 12 * S, cr.Y + (32 * S - csz.Height) / 2);
                     Act(overviewCanvas, cr, delegate { if (!SpeedTest.Busy) SpeedMenu(new Point((int)cr.X, (int)(cr.Bottom + overviewCanvas.AutoScrollPosition.Y))); });
                     sb2 = new RectangleF(sb2.X, sb2.Y, cr.Right - sb2.X, sb2.Height);
                     string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : speedNote != "" ? speedNote : last != null ? last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (last.Where != "" && last.Where.StartsWith("data centre", StringComparison.Ordinal) ? last.Where.Substring(12) + " · " : "") + SpeedTest.Mbps(last.Down) + " down" + (last.NoUpload ? "" : " / " + SpeedTest.Mbps(last.Up) + " up") + " Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
@@ -308,7 +308,7 @@ namespace AdeeboMeter
                     var card = new RectangleF(x, y, w, 0);
                     int sc = Math.Max(1, Math.Min(3, (int)(cw / (240 * S)))); int sr = (Symptoms.Length + sc - 1) / sc; float sbh = 58 * S, sbw = (cw - (sc - 1) * 10 * S) / sc;
                     card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
-                    Theme.Fill(g, card, 14 * S, Theme.Soft); Theme.Stroke(g, card, 14 * S, Theme.Line, 1);
+                    Theme.Fill(g, card, 16 * S, Theme.Card); Kit.Frame(g, card);
                     // the big button, right
                     string big = L.T("Find what's wrong");   /* the quick network walk; "Full checkup" at the top checks everything */ var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
                     Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
@@ -336,7 +336,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < Symptoms.Length; i++)
                     {
                         var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
-                        Theme.Fill(g, br, 10 * S, Theme.Card); Theme.Stroke(g, br, 10 * S, Theme.Track, 1);
+                        Theme.Fill(g, br, 16 * S, Theme.Card); Kit.Frame(g, br);
                         g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
                         g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, 18 * S));
                         string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
@@ -350,7 +350,7 @@ namespace AdeeboMeter
                     {
                         var ks = g.MeasureString(L.T(probs[i][1]), Draw.fBody); var kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S);
                         if (kr.Right > x + w && kx > x) { kx = x; y += 42 * S; kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S); }
-                        Theme.Stroke(g, kr, 17 * S, Theme.Track, 1); g.DrawString(L.T(probs[i][1]), Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
+                        Kit.Box(g, kr, kr.Height / 2); g.DrawString(L.T(probs[i][1]), Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
                         string go = probs[i][0]; Act(overviewCanvas, kr, delegate { FixGo(go); });
                         if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, kr, "guide." + go.Substring(6));
                         kx += kr.Width + 8 * S;

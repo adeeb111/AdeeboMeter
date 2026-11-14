@@ -83,7 +83,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
             {
                 float h1 = 16 * S + 22 * S + snap.Health.Count * 24 * S + 8 * S;
-                var c1 = new RectangleF(x, y, w - 1, h1); Theme.Fill(g, c1, 12 * S, Theme.Card); Theme.Stroke(g, c1, 12 * S, Theme.Line, 1);
+                var c1 = new RectangleF(x, y, w - 1, h1); Theme.Fill(g, c1, 16 * S, Theme.Card); Kit.Frame(g, c1);
                 float yy = y + 14 * S, xx = x + 14 * S, ww = w - 28 * S;
                 g.DrawString(L.T("TCP / IP HEALTH"), Draw.fTiny, muted, xx, yy);
                 var ns = g.MeasureString(L.T("Windows counters · no admin"), Draw.fSmall); g.DrawString(L.T("Windows counters · no admin"), Draw.fSmall, muted, xx + ww - ns.Width, yy - 2 * S);
@@ -101,7 +101,7 @@ namespace AdeeboMeter
                 }
                 y += h1 + 14 * S;
                 float h2 = 16 * S + 20 * S + 4 * 20 * S + 8 * S;
-                var c2 = new RectangleF(x, y, w - 1, h2); Theme.Fill(g, c2, 12 * S, Theme.Card); Theme.Stroke(g, c2, 12 * S, Theme.Line, 1);
+                var c2 = new RectangleF(x, y, w - 1, h2); Theme.Fill(g, c2, 16 * S, Theme.Card); Kit.Frame(g, c2);
                 yy = y + 14 * S; g.DrawString(L.T("THIS PC"), Draw.fTiny, muted, xx, yy); yy += 20 * S;
                 float yb = yy; Draw.Bar(g, "", "CPU", snap.Cpu, Draw.Fmt(snap.Cpu, "0", "%"), 60, 88, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "CPU");
                 yb = yy; Draw.Bar(g, "", "Memory", snap.Mem, snap.MemText, 80, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Memory");
@@ -112,7 +112,7 @@ namespace AdeeboMeter
                 int n = Math.Max(0, Math.Min(Math.Min(6, fit), Math.Max(snap.TopMem.Count, snap.TopCpu.Count)));
                 if (n == 0) return;
                 float h3 = 16 * S + 18 * S + n * 20 * S + 8 * S;
-                var c3 = new RectangleF(x, y, w - 1, h3); Theme.Fill(g, c3, 12 * S, Theme.Card); Theme.Stroke(g, c3, 12 * S, Theme.Line, 1);
+                var c3 = new RectangleF(x, y, w - 1, h3); Theme.Fill(g, c3, 16 * S, Theme.Card); Kit.Frame(g, c3);
                 yy = y + 14 * S; float colW = (ww - 16 * S) / 2;
                 g.DrawString(L.T("TOP BY MEMORY"), Draw.fTiny, muted, xx, yy); g.DrawString(L.T("TOP BY CPU"), Draw.fTiny, muted, xx + colW + 16 * S, yy);
                 Hint(side, new RectangleF(xx, yy, colW, 16 * S), "Top by memory"); Hint(side, new RectangleF(xx + colW + 16 * S, yy, colW, 16 * S), "Top by CPU"); yy += 18 * S;
@@ -225,7 +225,7 @@ namespace AdeeboMeter
                     for (int j = i; j < Math.Min(cards.Count, i + per); j++)
                     {
                         var cr = new RectangleF(x + (j - i) * (cw + 12 * S), y, cw, rowsH);
-                        Theme.Stroke(g, cr, 10 * S, Theme.Track, 1);
+                        Kit.Box(g, cr);
                         using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(cards[j].Key, Draw.fTiny, mb, new RectangleF(cr.X + 14 * S, cr.Y + 12 * S, inner, 16 * S));
                         Hint(destCanvas, new RectangleF(cr.X, cr.Y, cr.Width, 26 * S), CardKey(cards[j].Key));
                         float ry = cr.Y + 30 * S;
@@ -377,7 +377,7 @@ namespace AdeeboMeter
         static float PaintDayChart(Graphics g, History.Day d, float x, float y, float w)
         {
             float h = 150 * S; var card = new RectangleF(x, y, w, h + 46 * S);
-            Theme.Stroke(g, card, 10 * S, Theme.Track, 1);
+            Kit.Box(g, card);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             float px = x + 40 * S, pw = w - 60 * S, top = y + 34 * S, bandY = top + h - 18 * S, ph = h - 30 * S;
             Func<double, float> X = sec => px + (float)(sec / 86400.0) * pw;
@@ -447,7 +447,7 @@ namespace AdeeboMeter
                 float colW = (w - 24 * S) / 2, cardH = 0;
                 // protocol hierarchy
                 var c1 = new RectangleF(x, y, colW, 34 * S + Math.Max(1, v.Phs.Count) * 20 * S);
-                Theme.Stroke(g, c1, 10 * S, Theme.Track, 1);
+                Kit.Box(g, c1);
                 g.DrawString(L.T("PROTOCOL HIERARCHY (BY PACKETS)"), Draw.fTiny, muted, c1.X + 14 * S, c1.Y + 12 * S); Hint(liveCanvas, new RectangleF(c1.X, c1.Y, c1.Width, 26 * S), "live.PROTOCOL HIERARCHY");
                 float yy = c1.Y + 30 * S;
                 foreach (var r in v.Phs)
@@ -462,7 +462,7 @@ namespace AdeeboMeter
                 cardH = c1.Height;
                 // expert info
                 var c3 = new RectangleF(x + colW + 24 * S, y, colW, 34 * S + v.Expert.Count * 20 * S);
-                Theme.Stroke(g, c3, 10 * S, Theme.Track, 1);
+                Kit.Box(g, c3);
                 g.DrawString(L.T("EXPERT INFO (WIRESHARK)"), Draw.fTiny, muted, c3.X + 14 * S, c3.Y + 12 * S); Hint(liveCanvas, new RectangleF(c3.X, c3.Y, c3.Width, 26 * S), "live.EXPERT INFO");
                 yy = c3.Y + 30 * S;
                 foreach (var e in v.Expert)
@@ -476,7 +476,7 @@ namespace AdeeboMeter
                 y += cardH + 14 * S;
                 // bytes per app + call quality
                 var c4 = new RectangleF(x, y, colW, 34 * S + Math.Max(1, v.ByApp.Count) * 20 * S);
-                Theme.Stroke(g, c4, 10 * S, Theme.Track, 1);
+                Kit.Box(g, c4);
                 g.DrawString(L.T("BYTES PER APP (SINCE START)"), Draw.fTiny, muted, c4.X + 14 * S, c4.Y + 12 * S); Hint(liveCanvas, new RectangleF(c4.X, c4.Y, c4.Width, 26 * S), "live.BY APP");
                 yy = c4.Y + 30 * S;
                 if (v.ByApp.Count == 0) g.DrawString(L.T("-"), Draw.fBody, muted, c4.X + 14 * S, yy);
@@ -490,7 +490,7 @@ namespace AdeeboMeter
                     yy += 20 * S;
                 }
                 var c5 = new RectangleF(x + colW + 24 * S, y, colW, 34 * S + Math.Max(2, v.Calls.Count) * 20 * S);
-                Theme.Stroke(g, c5, 10 * S, Theme.Track, 1);
+                Kit.Box(g, c5);
                 g.DrawString(L.T("CALL QUALITY (TEAMS AND OTHER CALLS)"), Draw.fTiny, muted, c5.X + 14 * S, c5.Y + 12 * S); Hint(liveCanvas, new RectangleF(c5.X, c5.Y, c5.Width, 26 * S), "live.CALL QUALITY");
                 yy = c5.Y + 30 * S;
                 if (!v.Extras) g.DrawString(L.T("Needs a newer Wireshark (3.0 or later)."), Draw.fBody, muted, new RectangleF(c5.X + 14 * S, yy, colW - 28 * S, 40 * S));
@@ -508,7 +508,7 @@ namespace AdeeboMeter
                 y += Math.Max(c4.Height, c5.Height) + 14 * S;
                 // conversations
                 var c2 = new RectangleF(x, y, w, 34 * S + Math.Max(1, v.Top.Count) * 36 * S);
-                Theme.Stroke(g, c2, 10 * S, Theme.Track, 1);
+                Kit.Box(g, c2);
                 g.DrawString(L.T("TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC"), Draw.fTiny, muted, c2.X + 14 * S, c2.Y + 12 * S); Hint(liveCanvas, new RectangleF(c2.X, c2.Y, c2.Width, 26 * S), "live.TOP CONVERSATIONS");
                 yy = c2.Y + 30 * S;
                 if (v.Top.Count == 0) g.DrawString(Voice.P("Quiet out there.", "No traffic yet."), Draw.fBody, muted, c2.X + 14 * S, yy);

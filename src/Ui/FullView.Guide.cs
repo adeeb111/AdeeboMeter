@@ -132,11 +132,11 @@ namespace AdeeboMeter
                 }
                 else
                 {
-                    string back = "<  All problems"; var bs = g.MeasureString(back, Draw.fBodyB);
-                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(back, Draw.fBodyB, lb, x, y);
-                    Act(guideCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { if (!guideBusy) { guideRun = null; guideCanvas.Invalidate(); } });
-                    g.DrawString(r.Title.ToUpperInvariant() + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input.ToUpperInvariant() : "") + "  ·  " + (r.Done ? "DONE " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : "WORKING...")), Draw.fTiny, muted, x + bs.Width + 16 * S, y + 3 * S);
-                    y += 32 * S;
+                    var bk = Kit.Back(g, "All problems", x, y, "home", false);
+                    Act(guideCanvas, bk, delegate { if (!guideBusy) { guideRun = null; guideCanvas.Invalidate(); } });
+                    y += bk.Height + 14 * S;
+                    g.DrawString(r.Title.ToUpperInvariant() + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input.ToUpperInvariant() : "") + "  ·  " + (r.Done ? "DONE " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : "WORKING...")), Draw.fTiny, muted, x, y);
+                    y += 26 * S;
                     // the finding
                     string fin = r.Done ? r.Finding : Voice.P("Looking...", "Running...");
                     float fh = Draw.Measure(fin, Draw.fName, (int)(w - 40 * S)).Height;
@@ -151,6 +151,11 @@ namespace AdeeboMeter
                     {
                         g.DrawString(L.T("WHAT I OBSERVED"), Draw.fTiny, muted, x, y); y += 22 * S;
                         float nameW = Math.Min(280 * S, w * 0.34f), pillW = Cfg.Details ? 170 * S : 120 * S;
+                        float ox = x, ow = w; x += 16 * S; w -= 32 * S;   // rows sit inside a raised card
+                        float oh = 12 * S;
+                        foreach (var o in obs) oh += Math.Max(30 * S, Draw.Measure(o[3], Draw.fBody, (int)(w - nameW - pillW - 30 * S)).Height + 12 * S);
+                        Kit.Box(g, new RectangleF(ox, y, ow, oh + 6 * S)); y += 9 * S;
+                        int oi = 0;
                         foreach (var o in obs)
                         {
                             int lv; int.TryParse(o[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
@@ -161,9 +166,9 @@ namespace AdeeboMeter
                             DateTime at; DateTime? atN = DateTime.TryParse(o[4], CultureInfo.CurrentCulture, DateTimeStyles.None, out at) ? at : (DateTime?)null;
                             float px = x + w - pillW + 4 * S; Evidence.Pill(g, o[0], px, y + 6 * S, atN);
                             Hint(guideCanvas, new RectangleF(px, y, pillW, rh), Evidence.Key(o[0]));
-                            y += rh; g.DrawLine(line, x, y, x + w, y);
+                            y += rh; if (++oi < obs.Count) g.DrawLine(line, x, y, x + w, y);
                         }
-                        y += 16 * S;
+                        x = ox; w = ow; y += 24 * S;
                     }
                     if (r.Done)
                     {
@@ -186,17 +191,19 @@ namespace AdeeboMeter
                         }
                         // for everyone: did it help, try again, or hand it to someone who can help
                         float lx = x; var r2 = r;
-                        using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                        using (var lb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark))
                             foreach (var a in new[] { "It's fixed", "Still broken - check again", (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : "Copy for someone who can help" })
                             {
-                                var asz = g.MeasureString(a, Draw.fBodyB); var ar = new RectangleF(lx, y, asz.Width, asz.Height);
-                                g.DrawString(a, Draw.fBodyB, lb, lx, y);
+                                var asz = g.MeasureString(L.T(a), Draw.fBodyB); var ar = new RectangleF(lx, y, asz.Width + 28 * S, 34 * S);
+                                if (ar.Right > x + w && lx > x) { lx = x; y += 44 * S; ar = new RectangleF(lx, y, ar.Width, ar.Height); }
+                                Theme.Fill(g, ar, 17 * S, a == "It's fixed" ? Theme.BlueSoft : Theme.Soft);
+                                g.DrawString(L.T(a), Draw.fBodyB, lb, lx + 14 * S, y + (34 * S - asz.Height) / 2);
                                 if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = "Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."; guideRun = null; guideCanvas.Invalidate(); });
                                 else if (a.StartsWith("Still", StringComparison.Ordinal)) Act(guideCanvas, ar, delegate { if (!guideBusy) StartGuide(r2.Id, false); });
                                 else Act(guideCanvas, ar, delegate { try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(GameSession.Redact(GuideText(r2), ssid)); guideCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } guideCanvas.Invalidate(); });
-                                lx += asz.Width + 26 * S;
+                                lx += ar.Width + 10 * S;
                             }
-                        y += 34 * S;
+                        y += 48 * S;
                     }
                 }
             }
