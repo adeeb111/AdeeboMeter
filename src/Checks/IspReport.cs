@@ -185,6 +185,14 @@ namespace AdeeboMeter
             foreach (var s in sp) rows.Add(R(1, s.T.ToString("ddd HH:mm:ss", CultureInfo.CurrentCulture), s.Server + " " + F(s.Normal, "") + " -> " + F(s.Ms, " ms") + " · " + s.Blame, "", "m"));
             foreach (var o in Outages.Last(m, 7).Take(5)) rows.Add(R(2, "Internet outage", Outages.Text(o), "", "h"));
             if (sp.Count == 0) rows.Add(R(3, "Spikes", "none recorded yet", "", "m"));
+            // the rest of the week's evidence: every slow moment the streaming, trading and gaming records put past the router
+            var pm = Weekly.ProviderMoments(7);
+            if (pm.Count > 0)
+            {
+                rows.Add(R(-1, "FROM YOUR RECORDS · LAST 7 DAYS", pm.Count + (pm.Count == 1 ? " slow moment" : " slow moments") + " while streaming, trading or gaming - each with your router answering fine, so past it", "", "h"));
+                foreach (var e in pm.Take(12)) rows.Add(R(1, e.T.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture), e.What + " · " + e.Text, "", "h"));
+                if (pm.Count > 12) rows.Add(R(3, "And", (pm.Count - 12) + " more - the Streaming and Trading pages keep each record with its evidence", "", "h"));
+            }
 
             // what's already ruled out - the first things a support desk asks you to check
             var ruled = new List<string>();

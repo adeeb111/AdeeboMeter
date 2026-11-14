@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdeeboMeter for streaming - why did it buffer?</title>
+<meta name="description" content="Netflix, YouTube, IPTV or anime buffering? AdeeboMeter notices what&#x27;s playing and tells you whose fault each dip was: your PC, your Wi-Fi, your provider or the stream&#x27;s server. Free, offline, for Windows.">
+<link rel="canonical" href="https://adeebometer.com/streaming.html">
+<meta property="og:title" content="AdeeboMeter for streaming - why did it buffer?">
+<meta property="og:description" content="Netflix, YouTube, IPTV or anime buffering? AdeeboMeter notices what&#x27;s playing and tells you whose fault each dip was: your PC, your Wi-Fi, your provider or the stream&#x27;s server. Free, offline, for Windows.">
+<meta property="og:image" content="https://adeebometer.com/img/streaming.jpg">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<main>
+<p><a href="./">← AdeeboMeter</a></p>
+<div class="hero">
+<h1>Why did it buffer?</h1>
+<p>Netflix, YouTube, Prime, Twitch, Crunchyroll, IPTV players - when something plays, in an app or a browser, AdeeboMeter notices and keeps an eye on it. When the picture drops, it tells you whose fault it was.</p>
+</div>
+<img class="shot" src="img/streaming.jpg" alt="The Streaming page: what you watched over the last days, the dips in each stream and whose fault they were" width="951" loading="lazy">
+<div class="grid">
+  <div class="card"><h3>It notices by itself</h3><p>By the servers&#x27; names Windows already knows - never your tabs, titles or what you watch inside a service. Not listed? Tell it in one line.</p></div>
+  <div class="card"><h3>Whose fault, every dip</h3><p>Your PC too busy, your Wi-Fi, your home network, your provider, or the stream&#x27;s own server - with the evidence beside each one.</p></div>
+  <div class="card"><h3>90 days of records</h3><p>Every stream kept on your PC: when it dipped, how long, and why. A grid shows the hours your streams suffer most.</p></div>
+  <div class="card"><h3>Can I stream 4K right now?</h3><p>One button: SD, HD, Full HD and 4K - safe, risky or no, judged on a real speed test and your Wi-Fi.</p></div>
+  <div class="card"><h3>Ready for your provider</h3><p>Dates, times and the evidence, copied in one click for a chat or an email with your provider.</p></div>
+  <div class="card"><h3>Learn why</h3><p>Short lessons and games: how streams adapt, what a CDN is, and how to tell your Wi-Fi from your provider.</p></div>
+</div>
+<div class="short" style="margin-top:22px"><p>It never sees what you watch. It times a tiny connection to the stream&#x27;s server (no data) every 10 seconds while something plays - and stops trying after six misses if the server ignores it.</p></div>
+<a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><a class="more" href="./">Everything else it does ›</a>
+<p class="others">Also: <a href="trading.html">AdeeboMeter for trading</a> · <a href="gaming.html">AdeeboMeter for gaming</a> · <a href="privacy.html">Privacy</a></p>
+<footer>AdeeboMeter for Windows · no account, no cloud, no telemetry · runs without admin rights</footer>
+</main>
+</body>
+</html>

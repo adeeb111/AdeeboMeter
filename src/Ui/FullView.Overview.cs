@@ -388,6 +388,9 @@ namespace AdeeboMeter
                     }
                 y += 14 * S;
 
+                // your week, everything together (only once there's a record)
+                y = PaintWeek(g, x, y, w);
+
                 // today
                 string today = "Used today on this network: " + Usage.Mb(Usage.Today(Brain.NetKey));
                 string lastCall = ""; lock (Calls.Summaries) if (Calls.Summaries.Count > 0) lastCall = "Last call (" + Calls.Summaries[0][0] + "): " + Calls.Summaries[0][1];

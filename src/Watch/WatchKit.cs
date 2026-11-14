@@ -31,6 +31,18 @@ namespace AdeeboMeter
             public Dictionary<string, int> Tally() { var d = Blames.ToDictionary(b => b, b => 0); foreach (var x in Dips) { int c; if (d.TryGetValue(x.Blame, out c)) d[x.Blame] = c + 1; } return d; }
         }
         public static readonly string[] Blames = { "pc", "wifi", "home", "provider", "far", "unsure" };
+        // the 2-minute lesson that fits a verdict: { Learn topic id, what the link says }
+        public static string[] Lesson(string blame, string mode)
+        {
+            switch (blame)
+            {
+                case "wifi": return new[] { "wifi", "Wi-Fi - why it drops and how to steady it" };
+                case "pc": return new[] { "memory-pressure", "Why a PC gets too busy to keep up" };
+                case "home": return new[] { "speed-vs-delay", "Speed vs delay - what a slow home network does" };
+                case "far": return mode == "trade" ? new[] { "inv-connection", "What your connection means for trading" } : new[] { "cdn", "How streams reach you - and why a server gets slow" };
+                default: return mode == "trade" ? new[] { "inv-connection", "What your connection means for trading" } : new[] { "stream-fault", "Whose fault is the buffering?" };
+            }
+        }
         public static string BlameName(string b, string farName)
         {
             switch (b)

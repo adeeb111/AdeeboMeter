@@ -413,6 +413,18 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(x, y, 56 * S, 56 * S), true);
                 g.DrawString(L.T("AdeeboMeter"), Draw.fHero, ink, x + 70 * S, y - 2 * S);
                 g.DrawString(L.T("Is it me or the network? One glance tells you."), Draw.fHead, blue, x + 72 * S, y + 38 * S);
+                // found a bug? the report is put on the clipboard, the person pastes and sends it themselves
+                {
+                    string bt = L.T((DateTime.Now - bugCopied).TotalSeconds < 6 ? "Copied - paste it into the page that opened" : "Found a bug? Report it"); var bs = g.MeasureString(bt, Draw.fBodyB);
+                    var br = new RectangleF(x + w - bs.Width - 30 * S, y + 6 * S, bs.Width + 30 * S, 34 * S); Theme.Fill(g, br, 17 * S, Theme.Soft); Theme.Stroke(g, br, 17 * S, Theme.Line, 1);
+                    g.DrawString(bt, Draw.fBodyB, ink, br.X + 15 * S, br.Y + (34 * S - bs.Height) / 2);
+                    Act(aboutCanvas, br, delegate
+                    {
+                        try { Clipboard.SetText(BugReport.Text(bugPage)); bugCopied = DateTime.Now; Crash.OpenUrl(BugReport.NewIssue); }
+                        catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; }
+                        aboutCanvas.Invalidate();
+                    });
+                }
                 y += 84 * S;
                 y = Para(g, "When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.", x, y, w, sub, Draw.fBody);
                 y = Para(g, "No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.", x, y, w, ink, Draw.fBodyB);

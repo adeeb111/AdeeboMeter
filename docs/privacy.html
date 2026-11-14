@@ -32,7 +32,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <main>
 <p><a href="./">← AdeeboMeter</a></p>
 <h1>Privacy Policy</h1>
-<p class="date">AdeeboMeter for Windows · last updated 12 November 2026</p>
+<p class="date">AdeeboMeter for Windows · last updated 14 November 2026</p>
 
 <div class="short"><p><b>In short:</b> AdeeboMeter collects nothing about you. There is no account, no telemetry, no analytics and no server. Everything it learns stays on your PC, and it never accepts a connection from anywhere.</p></div>
 
@@ -47,6 +47,8 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Adeebo Points</b> (<code>points.txt</code>): which features you've tried and when. Nothing else.</li>
   <li><b>Network settings snapshot</b> (<code>netsnap.txt</code>, only when you press Save): your adapters' addresses, routers and DNS servers, the proxy, and a fingerprint of the hosts file - to show what changed later.</li>
   <li><b>Reviews</b> (the <code>reports</code> folder): the six-month review you save - and, when History is kept for 6 months, the one AdeeboMeter writes before the oldest days roll off. Names, the Wi-Fi name and addresses are left out. They stay until you delete them.</li>
+  <li><b>Stream and broker records</b> (in History, kept 90 days): for each stream - the service's name (from its servers' names, never your tabs or titles), when it played and its dips; for the broker watch - each trading day's slow moments. Your account and what you watch inside a service are never seen.</li>
+  <li><b>The day's numbers</b> (<code>fx.txt</code>, <code>bcpi.txt</code>): the last exchange rates and commodity index from the Bank of Canada, so the Trading page opens without asking again.</li>
   <li><b>Wake-ups</b> (in History): how many seconds after waking the router and DNS answered.</li>
   <li><b>Captures</b> and <b>saved results</b>, but only the ones you choose to make or save.</li>
 </ul>
@@ -64,6 +66,10 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Sign-in page check:</b> only when a check fails, one request to the test page Windows itself uses (<code>msftconnecttest.com</code>).</li>
   <li><b>Pinned destination watch:</b> one ping every 30 seconds to a destination you pinned, only if you switch it on.</li>
   <li><b>Gamer Zone:</b> nothing until you click a game. Then pings (or timed connections) to that game's regions; the Valve server list from <code>api.steampowered.com</code> only when you add a Valve game or press Refresh.</li>
+
+  <li><b>Streaming:</b> only while something streams, a timed connection (no data) to the stream's own server every 10 seconds (30 on Penny), to tell its slowdowns from yours - six tries at most if it never answers. Off in Settings › "Do you stream or trade?".</li>
+  <li><b>Broker watch:</b> nothing until you pick your broker. Then a timed connection (no data, no sign-in) to its public address at your preset's pace, only while the market is open (or around the clock, if you choose that for crypto).</li>
+  <li><b>Bank of Canada numbers:</b> only when the Trading page is open (or the evening summary is on) and newer numbers should be out: one request for the day's exchange rates and, about weekly, one for the commodity index, to <code>bankofcanada.ca</code>. Nothing about you is sent.</li>
 </ul>
 <p><b>Only when you start them:</b></p>
 <ul>
@@ -72,6 +78,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Report for my ISP:</b> pings and traces to the destinations you choose; your public IP (one request to <code>www.cloudflare.com/cdn-cgi/trace</code>) only if you type yes.</li>
   <li><b>Online lookups</b> (off by default, and they switch themselves off after the time you choose): public IP addresses of a path go to RIPEstat (<code>stat.ripe.net</code>) and PeeringDB over HTTPS; the Security checkup then also asks Cloudflare's encrypted DNS (<code>cloudflare-dns.com</code>) one question and opens one TLS handshake with <code>www.microsoft.com</code>. The VPN leak test (Toolbox, when you press it) asks Cloudflare's STUN server (<code>stun.cloudflare.com</code>, UDP 3478) which address it sees, once through the normal route and once through your Wi-Fi or cable directly. The Encrypted DNS (DoH / DoT) tool asks the server you choose when you run it.</li>
   <li><b>Links you click</b> (GitHub, Donate) open in your browser; the app itself sends nothing.</li>
+  <li><b>Report a bug</b> (About): puts a bug report on your clipboard - the app's version, Windows version, the page you were on and the last lines of its log with names, the PC's name and addresses taken out - and opens a new GitHub issue page. You read it, paste it and send it yourself; nothing is sent by the app.</li>
   <li><b>Crash reports:</b> if the app crashes, the next start offers to open a GitHub issue page in your browser with the details filled in. Nothing is sent unless you choose to submit it, and you can read and edit it first.</li>
 </ul>
 <p>AdeeboMeter never listens: it opens no ports and runs no server, and only receives replies to requests it made.</p>

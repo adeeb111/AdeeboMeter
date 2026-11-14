@@ -106,19 +106,38 @@ namespace AdeeboMeter
             using (var m = new SolidBrush(Theme.Sub)) g.DrawString(help, Draw.fSmall, m, new RectangleF(x, y + 2 * S, w, hh + 4)); y += hh + 18 * S;
             return y;
         }
-        // ---------- first run: three questions on Home, big cards, Skip any time (new installs only)
-        int setupStep;
+        // ---------- first run: four questions on Home, big cards, Skip any time (new installs only). The first one - what the
+        // internet is for - shows only the pages that person needs (the rest stay one switch away in Settings › Navigation).
+        int setupStep; readonly HashSet<string> setupUses = new HashSet<string>(StringComparer.Ordinal);
+        internal static readonly string[][] SetupUses = {
+            new[] { "calls", "Work calls", "Teams, Zoom, Meet - notices a call and watches closer", "dest" },
+            new[] { "game", "Gaming", "Your game servers' ping and whose lag it is", "gamer" },
+            new[] { "stream", "Streaming", "Netflix, YouTube, IPTV - why it buffered", "stream" },
+            new[] { "trade", "Trading", "Your line to your broker, the day's numbers", "trade" },
+            new[] { "fix", "Troubleshooting", "Every tool: ping, trace, DNS, Wi-Fi, certificates", "toolbox" },
+            new[] { "check", "Just checking", "Is it me or the network? - the light version", "home" } };
+        // what the first answer does: the sections that fit, calls on if chosen, every tool for troubleshooters
+        internal static void ApplyUses(ICollection<string> uses, Action<string> setMode)
+        {
+            if (uses.Count == 0) return;   // nothing picked: leave everything shown
+            Cfg.SetOff("stream", !uses.Contains("stream")); Cfg.SetOff("trade", !uses.Contains("trade")); Cfg.SetOff("gamer", !uses.Contains("game"));
+            if (uses.Contains("calls")) Cfg.Call = true;
+            if (uses.Contains("fix") && setMode != null) setMode("pro");
+        }
+        // the pace that suits the answer: games want Gamer, a light look wants Penny
+        internal static string SuggestedPreset(ICollection<string> uses) { return uses.Contains("game") ? "gamer" : uses.Count > 0 && uses.All(u => u == "check") ? "penny" : "balanced"; }
         float PaintSetup(Graphics g, float x, float y, float w)
         {
+            if (setupStep == 0) return PaintSetupUses(g, x, y, w);
             string[] qs = { "How should the corner widget look?", "How much should it watch?", "How should the buddy talk?" };
             string[][][] opts = {
                 new[] { new[] { "speed", "Speed only", "Just the speeds, like DU Meter" }, new[] { "speedstatus", "Speed + status", "Speeds plus OK / Busy / Problem" }, new[] { "everyday", "Everyday", "The verdict, dots, CPU and speed" }, new[] { "auto", "Auto", "Changes for games and calls" } },
                 new[] { new[] { "penny", "Penny", "The lightest touch" }, new[] { "balanced", "Balanced", "Notices trouble in seconds" }, new[] { "gamer", "Gamer", "Plus your game servers" } },
                 new[] { new[] { "surprise", "Surprise me", "A new personality each day" }, new[] { "none", "Chill", "Easy-going, no character" }, new[] { "plain", "Plain", "Just the facts, no jokes" } } };
-            int st = Math.Max(0, Math.Min(2, setupStep));
+            int st = Math.Max(0, Math.Min(2, setupStep - 1)); string sugg = SuggestedPreset(setupUses);
             var card = new RectangleF(x, y, w, 10); float top = y;
             y += 16 * S;
-            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  " + (st + 1) + " / 3", Draw.fTiny, m, x + 18 * S, y);
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  " + (st + 2) + " / 4", Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
             Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Cfg.Save(); overviewCanvas.Invalidate(); });
@@ -132,6 +151,7 @@ namespace AdeeboMeter
                 using (var ink = new SolidBrush(Theme.Ink)) using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 {
                     g.DrawString(L.T(o[i][1]), Draw.fHead, ink, r.X + 14 * S, r.Y + 12 * S);
+                    if (st == 1 && o[i][0] == sugg) { string rt = L.T("Suits you"); var rs = g.MeasureString(rt, Draw.fTiny); var rr = new RectangleF(r.Right - rs.Width - 26 * S, r.Y + 12 * S, rs.Width + 14 * S, 20 * S); Theme.Fill(g, rr, 10 * S, Kit.Soft("home")); using (var rb = new SolidBrush(Kit.Ink("home"))) g.DrawString(rt, Draw.fTiny, rb, rr.X + 7 * S, rr.Y + (20 * S - rs.Height) / 2); }
                     g.DrawString(L.T(o[i][2]), Draw.fSmall, m, new RectangleF(r.X + 14 * S, r.Y + 36 * S, r.Width - 28 * S, 18 * S), sf);
                 }
                 if (st == 0) { var pic = WPic(o[i][0], false); if (pic != null) { float k = Math.Min(1f, (r.Width - 28 * S) / pic.Width); g.DrawImage(pic, new RectangleF(r.X + 14 * S, r.Y + 62 * S, pic.Width * k, pic.Height * k)); } }
@@ -141,11 +161,44 @@ namespace AdeeboMeter
                     if (step == 0) Cfg.WidgetStyle = id;
                     else if (step == 1) { Cfg.ApplyPreset(id); Policy.Apply(); M.Nudge(); }
                     else { if (id == "plain") Voice.Serious = true; else { Voice.Serious = false; Lines.Persona = id; Lines.Mood = "chill"; } }
-                    if (step == 2) Cfg.SetupDone = true; else setupStep = step + 1;
+                    if (step == 2) Cfg.SetupDone = true; else setupStep = step + 2;
                     Cfg.Save(); Invalidate(true);
                 });
             }
             y += ((o.Length + cols - 1) / cols) * (ch + 10 * S) + 10 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("All of this can be changed any time in Settings."), Draw.fSmall, m, x + 18 * S, y); y += 26 * S;
+            card.Height = y - top; Theme.Stroke(g, card, 14 * S, Kit.Accent("home"), 1.5f * S);
+            return y + 14 * S;
+        }
+        float PaintSetupUses(Graphics g, float x, float y, float w)
+        {
+            var card = new RectangleF(x, y, w, 10); float top = y; y += 16 * S;
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  1 / 4", Draw.fTiny, m, x + 18 * S, y);
+            string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
+            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
+            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+            y += 22 * S;
+            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("What do you use your internet for?"), Draw.fTitle, ink, x + 18 * S, y); y += 34 * S;
+            using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings."), Draw.fBody, m, x + 18 * S, y); y += 30 * S;
+            int cols = w > 900 * S ? 3 : 2; float cw = (w - 36 * S - (cols - 1) * 10 * S) / cols, ch = 66 * S;
+            for (int i = 0; i < SetupUses.Length; i++)
+            {
+                var u = SetupUses[i]; bool on = setupUses.Contains(u[0]);
+                var r = new RectangleF(x + 18 * S + (i % cols) * (cw + 10 * S), y + (i / cols) * (ch + 10 * S), cw, ch);
+                Theme.Fill(g, r, 12 * S, on ? Kit.Soft(u[3]) : Theme.Card); Theme.Stroke(g, r, 12 * S, on ? Kit.Accent(u[3]) : Theme.Line, on ? 2 : 1);
+                if (on) Kit.Icon(g, "check", new RectangleF(r.Right - 26 * S, r.Y + 10 * S, 16 * S, 16 * S), Kit.Accent(u[3]));
+                using (var ink = new SolidBrush(on ? Kit.Ink(u[3]) : Theme.Ink)) using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                {
+                    g.DrawString(L.T(u[1]), Draw.fHead, ink, r.X + 14 * S, r.Y + 11 * S);
+                    g.DrawString(L.T(u[2]), Draw.fSmall, m, new RectangleF(r.X + 14 * S, r.Y + 38 * S, r.Width - 28 * S, 18 * S), sf);
+                }
+                string id = u[0]; Act(overviewCanvas, r, delegate { if (!setupUses.Remove(id)) setupUses.Add(id); overviewCanvas.Invalidate(); });
+            }
+            y += ((SetupUses.Length + cols - 1) / cols) * (ch + 10 * S) + 6 * S;
+            string go = setupUses.Count == 0 ? L.T("Show me everything") : L.T("Next"); var gs = g.MeasureString(go, Draw.fBodyB); var gr = new RectangleF(x + 18 * S, y, gs.Width + 36 * S, 36 * S);
+            Theme.Fill(g, gr, 18 * S, Kit.Accent("home")); using (var b = new SolidBrush(Theme.OnBlue)) g.DrawString(go, Draw.fBodyB, b, gr.X + 18 * S, gr.Y + (36 * S - gs.Height) / 2);
+            Act(overviewCanvas, gr, delegate { ApplyUses(setupUses, SetModeTo); setupStep = 1; Cfg.Save(); ApplyLayout(); Invalidate(true); });
+            y = gr.Bottom + 12 * S;
             using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("All of this can be changed any time in Settings."), Draw.fSmall, m, x + 18 * S, y); y += 26 * S;
             card.Height = y - top; Theme.Stroke(g, card, 14 * S, Kit.Accent("home"), 1.5f * S);
             return y + 14 * S;

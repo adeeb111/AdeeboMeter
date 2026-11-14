@@ -1053,6 +1053,38 @@ namespace AdeeboMeter
                 if (Trading.EveningText(new List<Trading.Rate>(), new List<Trading.Index>(), DateTime.Today) != null) throw new InvalidOperationException("no numbers: no evening line");
                 bool eve0 = Cfg.TradeEvening; try { Cfg.TradeEvening = false; if (Trading.EveningLine() != null) throw new InvalidOperationException("evening line while off"); } finally { Cfg.TradeEvening = eve0; }
             });
+            T("your week, the provider's evidence, lessons, the first question and the bug report", () =>
+            {
+                var t0 = new DateTime(2026, 11, 10, 20, 0, 0);
+                Func<string, string, string[], WatchKit.Session> sess = (mode, what, blames) => { var x = new WatchKit.Session { Mode = mode, What = what, Far = "wealthsimple.com", Start = t0, End = t0.AddHours(2) }; foreach (var bl in blames) x.Dips.Add(new WatchKit.Dip { T = t0.AddMinutes(10), Secs = 20, Blame = bl, Evidence = "test" }); return x; };
+                var st = new List<WatchKit.Session> { sess("stream", "Netflix", new[] { "wifi", "wifi", "provider" }), sess("stream", "YouTube", Array.Empty<string>()) };
+                var tr = new List<WatchKit.Session> { sess("trade", "wealthsimple.com", new[] { "wifi" }) };
+                var gm = new List<GameHistory.Row> { new GameHistory.Row { T = t0, Game = "valorant", Server = "NA", Avg = 40, P95 = 200, Loss = 0, Gw = 5 }, new GameHistory.Row { T = t0.AddMinutes(1), Game = "valorant", Server = "NA", Avg = 40, P95 = 45, Loss = 0, Gw = 4 } };
+                var outs = new List<Outages.O> { new Outages.O { From = t0, To = t0.AddMinutes(12) } };
+                var r = Weekly.Build(st, tr, gm, outs, t0.Date.AddDays(-6), t0);
+                if (r.Parts.Count != 4 || r.Blame["wifi"] != 3 || r.Blame["provider"] != 2 || Weekly.TopBlame(r) != "wifi") throw new InvalidOperationException("weekly tally: " + string.Join(",", r.Blame.Select(kv => kv.Key + kv.Value)));
+                if (r.Head.IndexOf("Wi-Fi", StringComparison.Ordinal) < 0 || r.Head.IndexOf("3 of 5", StringComparison.Ordinal) < 0) throw new InvalidOperationException("weekly headline: " + r.Head);
+                if (Weekly.Text(r).Split('\n').Length < 5) throw new InvalidOperationException("weekly text");
+                var quiet = Weekly.Build(new List<WatchKit.Session> { sess("stream", "Netflix", Array.Empty<string>()) }, new List<WatchKit.Session>(), new List<GameHistory.Row>(), new List<Outages.O>(), t0.Date.AddDays(-6), t0);
+                if (quiet.Head.IndexOf("smooth", StringComparison.Ordinal) < 0 || quiet.Lv != 0) throw new InvalidOperationException("a quiet week: " + quiet.Head);
+                if (Weekly.Build(new List<WatchKit.Session>(), new List<WatchKit.Session>(), new List<GameHistory.Row>(), new List<Outages.O>(), t0, t0).Parts.Count != 0) throw new InvalidOperationException("no records: no card");
+                // every verdict has a lesson, and every lesson exists in Learn
+                foreach (var bl in new[] { "pc", "wifi", "home", "provider", "far", "unsure" }) foreach (var mode in new[] { "stream", "trade" }) { var l = WatchKit.Lesson(bl, mode); if (Knowledge.Topic(l[0]) == null) throw new InvalidOperationException("lesson missing: " + l[0]); }
+                // the first question
+                string hid0 = Cfg.HiddenSecs; bool call0 = Cfg.Call;
+                try
+                {
+                    Cfg.HiddenSecs = ""; FullView.ApplyUses(new HashSet<string> { "stream", "calls" }, null);
+                    if (Cfg.Off("stream") || !Cfg.Off("trade") || !Cfg.Off("gamer") || !Cfg.Call) throw new InvalidOperationException("first question: " + Cfg.HiddenSecs);
+                    Cfg.HiddenSecs = ""; FullView.ApplyUses(new HashSet<string>(), null); if (Cfg.HiddenSecs != "") throw new InvalidOperationException("nothing picked must hide nothing");
+                    if (FullView.SuggestedPreset(new HashSet<string> { "game", "stream" }) != "gamer" || FullView.SuggestedPreset(new HashSet<string> { "check" }) != "penny" || FullView.SuggestedPreset(new HashSet<string> { "trade" }) != "balanced") throw new InvalidOperationException("suggested pace");
+                }
+                finally { Cfg.HiddenSecs = hid0; Cfg.Call = call0; }
+                // the bug report keeps nothing personal
+                string scr = BugReport.Scrub(@"open C:\Users\ahasa\Documents\x.txt on DESKTOP-ABC1 by ahasa: 192.168.1.20 fe80:0:0:0:1:2:3:4 aa:bb:cc:dd:ee:ff me@mail.com", "ahasa", "DESKTOP-ABC1");
+                foreach (var leak in new[] { "ahasa", "DESKTOP-ABC1", "192.168", "aa:bb", "me@mail", "fe80" }) if (scr.IndexOf(leak, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("bug report leaks " + leak + ": " + scr);
+                var bt = BugReport.Text("trade"); if (bt.IndexOf(Program.Version, StringComparison.Ordinal) < 0 || bt.IndexOf("Page: trade", StringComparison.Ordinal) < 0) throw new InvalidOperationException("bug report text");
+            });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
             {
                 var bad = new List<string>(); var sn = new Snap { Down = 12.43, Up = 1.07, DownHist = new[] { 1.0, 5, 12, 8 }, UpHist = new[] { 0.5, 1, 1.2, 0.9 }, TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 12 } } };

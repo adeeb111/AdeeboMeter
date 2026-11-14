@@ -642,7 +642,7 @@ namespace AdeeboMeter
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             }
         }
-        public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit; }
+        public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit, Gw = double.NaN; }   // Gw: the router's ping that minute (older files: none)
         // one day's rows for one game, or for every game (game == null: one read of the file for all of them)
         public static List<Row> Read(DateTime day, string game)
         {
@@ -657,7 +657,7 @@ namespace AdeeboMeter
                 foreach (var line in lines.Take(60000))
                 {
                     var c = line.Split(','); TimeSpan t; if (c.Length < 8 || (game != null && c[1] != game) || !TimeSpan.TryParse(c[0], CultureInfo.InvariantCulture, out t)) continue;
-                    r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]) });
+                    r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]), Gw = c.Length > 8 ? P(c[8]) : double.NaN });
                 }
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is InvalidDataException)) throw; }   // a damaged day: skipped

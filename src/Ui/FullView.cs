@@ -383,9 +383,10 @@ namespace AdeeboMeter
         static System.Collections.Generic.IEnumerable<Control> Descendants(Control r) { foreach (Control c in r.Controls) { yield return c; foreach (var d in Descendants(c)) yield return d; } }
         static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; }
 
+        string bugPage = "overview"; DateTime bugCopied = DateTime.MinValue;   // the page a bug report names: the last one before About
         void ShowTab()
         {
-            UiActivity.Doing = "switching to " + tab;
+            UiActivity.Doing = "switching to " + tab; if (tab != "about") bugPage = tab;
             if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open
             if (tab != "stream" && tab != "trade") WatchKit.Drop();   // the 90 days of records only live while their page is open
             // one layout pass for the whole switch, not one per page shown or hidden
