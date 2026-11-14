@@ -367,7 +367,7 @@ namespace AdeeboMeter
                 float tw = g.MeasureString(o.Key, Draw.fBody).Width + 26 * S; var r = new RectangleF(cx, y, tw, 30 * S);
                 bool on = histDay == o.Value;
                 Theme.Fill(g, r, 15 * S, on ? Theme.Blue : Theme.Soft); if (!on) Theme.Stroke(g, r, 15 * S, Theme.Line, 1);
-                using (var b = new SolidBrush(on ? Color.White : Theme.Sub)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(o.Key, Draw.fBody, b, r, c);
+                using (var b = new SolidBrush(on ? Theme.OnBlue : Theme.Sub)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(o.Key, Draw.fBody, b, r, c);
                 var pick = o.Value; Act(changesCanvas, r, delegate { histDay = pick; histData = pick == null ? null : History.Load(pick.Value); changesCanvas.AutoScrollPosition = Point.Empty; changesCanvas.Invalidate(); });
                 cx += tw + 8 * S; if (cx > x + w - 120 * S) break;
             }

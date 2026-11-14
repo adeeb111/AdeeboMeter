@@ -133,7 +133,7 @@ namespace AdeeboMeter
             {
                 string lab = jPinging ? "Measuring - 10 pings..." : "Measure to " + (f.Remote != "" ? f.Remote : "the server") + " (10 pings)  >";
                 var ls = g.MeasureString(lab, Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 32 * S);
-                Theme.Fill(g, lr, 16 * S, jPinging || f.Remote == "" ? Theme.Soft : Theme.Blue); using (var wb = new SolidBrush(jPinging || f.Remote == "" ? Theme.Muted : Color.White)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (32 * S - ls.Height) / 2);
+                Theme.Fill(g, lr, 16 * S, jPinging || f.Remote == "" ? Theme.Soft : Theme.Blue); using (var wb = new SolidBrush(jPinging || f.Remote == "" ? Theme.Muted : Theme.OnBlue)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (32 * S - ls.Height) / 2);
                 if (!jPinging && f.Remote != "") Act(travelCanvas, lr, JMeasure);
                 y += 40 * S;
                 return Lead(g, f.Remote == "" ? "Capture first - the far end of a UDP conversation shows up in its packets." : "Latency is distance plus waiting in queues. Jitter is how much the waiting changes from one packet to the next. Ten pings to the same server split it up (one small packet a second).", x, y, w, true);
@@ -199,7 +199,7 @@ namespace AdeeboMeter
             }
             string lab = rec ? "Stop" : jSess != null ? "Capture again" : "Capture this conversation";
             var ls = g.MeasureString(L.T(lab), Draw.fBodyB); var lr = new RectangleF(cx + 10 * S, y, ls.Width + 28 * S, 34 * S);
-            Theme.Fill(g, lr, 17 * S, !can ? Theme.Soft : rec ? Theme.Red : Theme.Blue); using (var wb = new SolidBrush(can ? Color.White : Theme.Muted)) g.DrawString(L.T(lab), Draw.fBodyB, wb, lr.X + 14 * S, y + (34 * S - ls.Height) / 2);
+            Theme.Fill(g, lr, 17 * S, !can ? Theme.Soft : rec ? Theme.Red : Theme.Blue); using (var wb = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) g.DrawString(L.T(lab), Draw.fBodyB, wb, lr.X + 14 * S, y + (34 * S - ls.Height) / 2);
             if (can) Act(travelCanvas, lr, delegate { if (jSess != null && !jSess.Done) jSess.Stop(); else JCapture(); });
             y += 44 * S;
             var recs = jSess != null ? jSess.Snapshot() : new List<Journey.Rec>();
@@ -356,7 +356,7 @@ namespace AdeeboMeter
             if (jNotes == null)
             {
                 var ls = g.MeasureString(L.T("Explain this capture"), Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
-                Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(L.T("Explain this capture"), Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
+                Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(L.T("Explain this capture"), Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                 Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); if (rs.Count > 0) EarnPts("journey.explain", true, true); /* Adeebo Points: the first capture explained */ travelCanvas.Invalidate(); });
                 y += 42 * S;
                 return Lead(g, "Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.", x, y, w, true);

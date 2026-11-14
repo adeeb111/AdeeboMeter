@@ -32,7 +32,7 @@ namespace AdeeboMeter
         // Colour tokens. Light and dark follow Windows' own "app mode" setting and switch live.
         public static bool Dark;
         public static Color Ink, Muted, Sub, Line, Line2, Track, Soft, Card, Bg, Rail, UpText, BlueSoft, BlueDark, RowNew, RowGone, RowSel, RowHot, Grey;
-        public static readonly Color Blue = C("#1F6FEB"), BlueHot = C("#1A5FCC"), Orange = C("#E36209"), Green = C("#2DA44E"), Amber = C("#BF8700"), Red = C("#CF222E");
+        public static Color Blue = C("#1F6FEB"), BlueHot = C("#1A5FCC"); public static readonly Color Orange = C("#E36209"), Green = C("#2DA44E"), Amber = C("#BF8700"), Red = C("#CF222E");
         static readonly Color[] lvText = new Color[4], lvSoft = new Color[4];
         static Theme() { Apply(false); }
         public static Color C(string h) { return ColorTranslator.FromHtml(h); }
@@ -45,6 +45,21 @@ namespace AdeeboMeter
             }
             catch { return false; }
         }
+        // the themes past Light and Dark (ForceTheme 2, 3, ...): name -> bg, card, soft, line, line2, track, ink, muted, sub, rail,
+        // blueSoft, blueDark, accent, rowSel, rowHot, grey, upText, ok/warn/bad text, ok/warn/bad wash
+        public static readonly string[] Palettes = { "neon", "midnight", "sunset", "mint" };
+        public static readonly string[] PaletteNames = { "Neon", "Midnight", "Sunset", "Mint" };
+        public static readonly bool[] PaletteDark = { true, true, true, false };
+        public static readonly Dictionary<string, string[]> PaletteColors = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            { "neon", new[] { "#07080D", "#10121A", "#161925", "#262B3D", "#1A1E2B", "#222739", "#EEF4FF", "#9AA2BA", "#C9D0E0", "#323A52", "#0C2A33", "#7FF7FF", "#00E5FF", "#0F2A36", "#141826", "#4C536C", "#FF9EF0", "#5CFFB0", "#FFE066", "#FF7A99", "#0D2A1E", "#2D2709", "#331421" } },
+            { "midnight", new[] { "#08142B", "#0E1F3D", "#12264A", "#22396A", "#162B52", "#1C3360", "#E8F1FF", "#9DB0CF", "#C6D5EE", "#2C4878", "#10355A", "#8AF0DD", "#3DE0C2", "#133158", "#11264A", "#4A6290", "#FFC38A", "#7EE8B0", "#F5D06A", "#FF9A9A", "#0F3326", "#3A3112", "#3D1C26" } },
+            { "sunset", new[] { "#1A1016", "#241720", "#2C1C27", "#43303B", "#301F2A", "#3A2531", "#FBEFF2", "#C9AEBA", "#EBD2DC", "#563846", "#3E2230", "#FFC2A3", "#FF7A59", "#3A2030", "#2A1A24", "#6B4C5A", "#FFD27A", "#86E5A6", "#FFD36E", "#FF9C9C", "#16301F", "#3A2F12", "#43191F" } },
+            { "mint", new[] { "#EEF7F4", "#FFFFFF", "#F2FAF7", "#CBE3DA", "#E4F2ED", "#DDEFE8", "#14302A", "#4F6A62", "#2F4C45", "#B2D1C6", "#E0F5EE", "#0B6E58", "#0E9C78", "#DDF3EC", "#F5FBF9", "#9FBAB1", "#9A4A00", "#116329", "#7D4E00", "#B42318", "#DAFBE1", "#FFF8C5", "#FFEBE9" } }
+        };
+        public static string Palette = "standard";
+        // text on the main accent: white on deep blues, near-black on Neon's cyan and Midnight's aqua
+        public static Color OnBlue { get { double l = (0.2126 * Blue.R + 0.7152 * Blue.G + 0.0722 * Blue.B) / 255; return l > 0.55 ? C("#06121A") : Color.White; } }
         public static bool AppliedContrast;   // the high-contrast state the colours were made for (a change re-applies them)
         public static void Apply(bool dark)
         {
@@ -64,6 +79,18 @@ namespace AdeeboMeter
                 RowNew = C("#11301D"); RowGone = C("#3B1B1E"); RowSel = C("#1B2B44"); RowHot = C("#1A222C"); Grey = C("#4A5868");
                 lvText[0] = C("#7EE2A8"); lvText[1] = C("#F2CC60"); lvText[2] = C("#FFA198");
                 lvSoft[0] = C("#12301C"); lvSoft[1] = C("#3A2F0B"); lvSoft[2] = C("#3A1A1D");
+            }
+            Blue = C("#1F6FEB"); BlueHot = C("#1A5FCC"); Palette = "standard";
+            // 1.1.5 themes on top of Light / Dark: their own background, cards, lines and main accent. Green, amber and red
+            // keep their meaning in every one (only their shades move), and the text stays readable (self-tested).
+            string pal = Program.ForceTheme >= 2 && Program.ForceTheme < Palettes.Length + 2 ? Palettes[Program.ForceTheme - 2] : "standard";
+            string[] v; if (pal != "standard" && PaletteColors.TryGetValue(pal, out v) && Program.WantDark() == dark)
+            {
+                Palette = pal;
+                Bg = C(v[0]); Card = C(v[1]); Soft = C(v[2]); Line = C(v[3]); Line2 = C(v[4]); Track = C(v[5]); Ink = C(v[6]); Muted = C(v[7]); Sub = C(v[8]); Rail = C(v[9]);
+                BlueSoft = C(v[10]); BlueDark = C(v[11]); Blue = C(v[12]); BlueHot = Kit.Mix(Blue, dark ? Color.White : Color.Black, 0.15f); RowSel = C(v[13]); RowHot = C(v[14]); Grey = C(v[15]); UpText = C(v[16]);
+                lvText[0] = C(v[17]); lvText[1] = C(v[18]); lvText[2] = C(v[19]); lvSoft[0] = C(v[20]); lvSoft[1] = C(v[21]); lvSoft[2] = C(v[22]);
+                RowNew = lvSoft[0]; RowGone = lvSoft[2];
             }
             lvText[3] = Muted; lvSoft[3] = Line2;
             // Windows High Contrast: the user's own colours for text, background and lines (levels keep their hue, text the
@@ -248,9 +275,10 @@ namespace AdeeboMeter
             string tb = text.IndexOf("Variable", StringComparison.Ordinal) >= 0 ? "Segoe UI" : text;
             fName = Ui(UiFam, 12.5f * S, FontStyle.Bold);
             fHead = Ui(UiSemi, 13.5f * S, UiSemiStyle);
-            fBody = new Font(text, 12.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fBodyB = new Font(semi, 12.5f * S, semiStyle, GraphicsUnit.Pixel);
-            fSmall = new Font(text, 11 * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            // 1.1.5: the writing is Inter too - one modern typeface from headline to footnote (Segoe UI only if Inter failed to load)
+            fBody = Ui(UiFam, 12.5f * S, FontStyle.Regular);
+            fBodyB = Ui(UiSemi, 12.5f * S, UiSemiStyle);
+            fSmall = Ui(UiFam, 11 * S, FontStyle.Regular);
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fTiny = Ui(UiSemi, 9.5f * S, UiSemiStyle);
@@ -260,7 +288,7 @@ namespace AdeeboMeter
             fHero = Ui(UiFam, 30 * S, FontStyle.Bold);
             fValue = Ui(UiFam, 14 * S, FontStyle.Bold);
             fCardNum = Ui(UiSemi, 26 * S, UiSemiStyle); fBtn = Ui(UiSemi, 12.5f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fInput = new Font(mono, 13 * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            fInput = Ui(UiFam, 13 * S, FontStyle.Regular);
             measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)

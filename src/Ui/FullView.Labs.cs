@@ -92,7 +92,7 @@ namespace AdeeboMeter
         float Button(Control h, Graphics g, string t, bool primary, Action a, float x, float y)
         {
             t = L.T(t); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(x, y, ts.Width + 28 * S, 32 * S);
-            Theme.Fill(g, r, 16 * S, primary ? Theme.Blue : Theme.Soft); using (var tb = new SolidBrush(primary ? Color.White : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, x + 14 * S, y + (32 * S - ts.Height) / 2);
+            Theme.Fill(g, r, 16 * S, primary ? Theme.Blue : Theme.Soft); using (var tb = new SolidBrush(primary ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, x + 14 * S, y + (32 * S - ts.Height) / 2);
             if (a != null) Act(h, r, a); return r.Width + 10 * S;
         }
         static float Big(Graphics g, string t, int lv, float x, float y, float w) { using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : lv == 0 ? Theme.LvText(0) : Theme.Ink)) g.DrawString(t, Draw.fName, b, new RectangleF(x, y, w, 40 * S)); return y + Draw.Measure(t, Draw.fName, (int)w).Height + 8 * S; }

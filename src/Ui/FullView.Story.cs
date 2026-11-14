@@ -51,7 +51,7 @@ namespace AdeeboMeter
             {
                 var ts = g.MeasureString(a, Draw.fBody); var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S); if (cr.Right > x + w) break;
                 bool on = a == storyApp; Theme.Fill(g, cr, 14 * S, on ? Theme.Blue : Theme.Soft);
-                using (var tb = new SolidBrush(on ? Color.White : Theme.Ink)) g.DrawString(a, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
+                using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(a, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
                 string aa = a; Act(travelCanvas, cr, delegate { StoryPick(aa); }); cx += cr.Width + 8 * S;
             }
             if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Nothing is talking to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 4 * S);
@@ -143,7 +143,7 @@ namespace AdeeboMeter
             if (r == null || (!r.Done && !travelBusy))
             {
                 string lab = "Time each step to " + Draw.Trunc(storyTarget, 40) + "  >"; var ls = g.MeasureString(lab, Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
-                Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
+                Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                 Act(travelCanvas, lr, delegate { travelBox.Box.Text = storyTarget; FollowPacket(); travelBox.Box.Text = ""; });
                 y += 42 * S;
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent."), Draw.fSmall, mb, new RectangleF(x, y, w, 34 * S));

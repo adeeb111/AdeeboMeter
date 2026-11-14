@@ -209,7 +209,7 @@ namespace AdeeboMeter
                     using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("New: the Sidebar layout - sections down the left, search on top, a live meter."), Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + 19 * S, cr.Width - 300 * S, 22 * S));
                     string tt = L.T("Try it"), nt = L.T("No thanks"); var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
                     var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + 13 * S, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
-                    Theme.Fill(g, tr, 10 * S, Kit.Accent("home")); using (var wb = new SolidBrush(Color.White)) g.DrawString(tt, Draw.fBtn, wb, tr.X + 10 * S, tr.Y + (32 * S - ts.Height) / 2);
+                    Theme.Fill(g, tr, 10 * S, Kit.Accent("home")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tt, Draw.fBtn, wb, tr.X + 10 * S, tr.Y + (32 * S - ts.Height) / 2);
                     using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(nt, Draw.fBtn, mb, nr.X + 8 * S, nr.Y + (32 * S - ns.Height) / 2);
                     Act(overviewCanvas, tr, delegate { SetLayout("sidebar"); });
                     Act(overviewCanvas, nr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
@@ -311,7 +311,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, card, 14 * S, Theme.Soft); Theme.Stroke(g, card, 14 * S, Theme.Line, 1);
                     // the big button, right
                     string big = L.T("Find what's wrong");   /* the quick network walk; "Full checkup" at the top checks everything */ var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
-                    Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
+                    Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
                     Act(overviewCanvas, bbr, delegate { GoGuide("whats"); });
                     float tw0 = bbr.X - cx0 - 16 * S;
                     g.DrawString(L.T("Not sure what's wrong?"), Draw.fTitle, ink, new RectangleF(cx0, cy, tw0, 30 * S));

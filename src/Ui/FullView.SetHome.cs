@@ -68,6 +68,22 @@ namespace AdeeboMeter
             }
             return y + ((k + cols - 1) / cols) * (ch + 12 * S) + 10 * S;
         }
+        // a theme's colours in a little pill: its background, a card, its accent, its text (Follow Windows shows light and dark)
+        static void ThemeSwatch(Graphics g, RectangleF r, int theme)
+        {
+            string[] bg, card, acc, ink;
+            if (theme >= 2 && theme - 2 < Theme.Palettes.Length) { var v = Theme.PaletteColors[Theme.Palettes[theme - 2]]; bg = new[] { v[0] }; card = new[] { v[1] }; acc = new[] { v[12] }; ink = new[] { v[6] }; }
+            else if (theme == 1) { bg = new[] { "#0E1319" }; card = new[] { "#161D26" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#E6EDF3" }; }
+            else if (theme == 0) { bg = new[] { "#F2F5F9" }; card = new[] { "#FFFFFF" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#1B2330" }; }
+            else { bg = new[] { "#F2F5F9", "#0E1319" }; card = new[] { "#FFFFFF", "#161D26" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#1B2330" }; }
+            Theme.Fill(g, r, r.Height / 2, Theme.C(bg[0]));
+            if (bg.Length > 1) { var st = g.Save(); g.SetClip(new RectangleF(r.X + r.Width / 2, r.Y, r.Width / 2, r.Height)); Theme.Fill(g, r, r.Height / 2, Theme.C(bg[1])); g.Restore(st); }
+            Theme.Stroke(g, r, r.Height / 2, Theme.Line, 1);
+            float d = r.Height - 8 * S;
+            using (var b = new SolidBrush(Theme.C(card[0]))) g.FillEllipse(b, r.X + 6 * S, r.Y + 4 * S, d, d);
+            using (var b = new SolidBrush(Theme.C(acc[0]))) g.FillEllipse(b, r.X + 6 * S + d * 0.8f, r.Y + 4 * S, d, d);
+            using (var b = new SolidBrush(Theme.C(ink[0]))) g.FillEllipse(b, r.X + 6 * S + d * 1.6f, r.Y + 4 * S, d, d);
+        }
         // one setting as big cards: its options side by side, the chosen one marked, its help underneath
         float PaintBigChoice(Graphics g, float x, float y, float w, SetItem it, string acc)
         {
@@ -78,6 +94,7 @@ namespace AdeeboMeter
                 var r = new RectangleF(x + (i % cols) * (cw + 10 * S), y + (i / cols) * (ch + 10 * S), cw, ch); bool on = i == cur;
                 Theme.Fill(g, r, 12 * S, on ? Kit.Soft(acc) : Theme.Soft); Theme.Stroke(g, r, 12 * S, on ? Kit.Accent(acc) : Theme.Line, on ? 2 : 1);
                 if (on) Kit.Icon(g, "check", new RectangleF(r.Right - 26 * S, r.Y + 10 * S, 16 * S, 16 * S), Kit.Accent(acc));
+                if (it.Label == "Theme") ThemeSwatch(g, new RectangleF(r.Right - (on ? 92 : 70) * S, r.Y + (ch - 22 * S) / 2, 56 * S, 22 * S), i - 1);
                 using (var b = new SolidBrush(on ? Kit.Ink(acc) : Theme.Ink)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                     g.DrawString(L.T(it.Opts[i]), Draw.fHead, b, new RectangleF(r.X + 14 * S, r.Y + (ch - 22 * S) / 2, r.Width - 44 * S, 24 * S), sf);
                 int k = i; var set = it.Set; Act(settingsCanvas, r, delegate { set(k); settingsCanvas.Invalidate(); });

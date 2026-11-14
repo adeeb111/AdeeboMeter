@@ -64,7 +64,7 @@ namespace AdeeboMeter
         static readonly int[] SetN15 = { 51, 77, 128, 191, 255 };
         static readonly string[] SetS16 = { "0.3 s", "0.45 s", "0.8 s" };
         static readonly int[] SetN17 = { 300, 450, 800 };
-        static readonly string[] SetS18 = { "Follow Windows", "Light", "Dark" };
+        static readonly string[] SetS18 = { "Follow Windows", "Light", "Dark", "Neon", "Midnight", "Sunset", "Mint" };
         static readonly string[] SetVoice = { "Companion", "Sarcastic", "Anxious", "Conspiracy", "Brutal", "Serious" }, SetSize = { "Small", "Bigger" };
         static string MoodHelp()
         {
@@ -109,7 +109,7 @@ namespace AdeeboMeter
             // General
             add("General", "Mode", TagPc, () => Cfg.Simple ? "Simple: the dots, What's wrong?, speed, history and the Gamer Zone." : "Pro: every tab - Monitor, Security, Toolbox, Network story and Learn too.", SetMode, () => Cfg.Simple ? 0 : 1, i => SetModeTo(i == 0 ? "simple" : "pro"), null, "simple pro engineer advanced beginner tabs");
             add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. More languages come as their translations are finished. A change takes full effect after a restart." : "Français - aperçu : les réglages, les menus et les messages courants sont traduits ; les noms des outils aussi ; les résultats détaillés et une partie de l'aide restent en anglais pour l'instant. Redémarrez AdeeboMeter pour tout changer.", AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français langue english");
-            add("General", "Theme", TagPc, () => "Follow Windows switches light and dark with your Windows setting.", SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : th == 0 ? 1 : 2; }, i => Cfg.SetTheme(i == 0 ? -1 : i == 1 ? 0 : 1), null, "dark light colour color");
+            add("General", "Theme", TagPc, () => { int th = Cfg.GetTheme(); return th == 2 ? "Neon: near-black with electric cyan - accents glow softly." : th == 3 ? "Midnight: deep navy with aqua - calm for long nights." : th == 4 ? "Sunset: warm plum with coral." : th == 5 ? "Mint: light and fresh, soft green." : "Follow Windows switches light and dark with your Windows setting."; }, SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : Math.Min(SetS18.Length - 1, th + 1); }, i => Cfg.SetTheme(i - 1), null, "dark light colour color theme neon midnight sunset mint");
             // Companion (PLAN 11.7c): words only - data, reports and anything copied stay Plain
             add("Companion", "Fun lines", TagPc, () => Voice.Serious ? "Off: plain words everywhere, the buddy's face stays." : "On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.", SetOnOff, () => Voice.Serious ? 1 : 0, i => { Voice.Serious = i == 1; Cfg.Save(); Invalidate(true); }, null, "jokes wording tone fun lines plain serious buddy");
             add("Companion", "Mood", TagPc, () => "How the buddy feels: Chill is easy-going, Roast teases the gear (never you), Hype cheers, Support is kind, Bossy gives orders, Emo is relatable.", Lines.MoodNames, () => Voice.Serious ? Lines.Moods.Length - 1 : Math.Max(0, Array.IndexOf(Lines.Moods, Lines.Mood)), i => { if (Lines.Moods[i] == "plain") Voice.Serious = true; else { Voice.Serious = false; Lines.Mood = Lines.Moods[i]; } Cfg.Save(); Invalidate(true); }, null, "mood chill roast hype support bossy emo sarcastic personality");
@@ -345,7 +345,7 @@ namespace AdeeboMeter
                 {
                     var r = new RectangleF(sx, seg.Y + 2 * S, widths[i], seg.Height - 4 * S);
                     if (i == cur) Theme.Fill(g, r, 13 * S, Theme.Blue);
-                    using (var b = new SolidBrush(i == cur ? Color.White : Theme.Sub)) g.DrawString(opts[i], Draw.fSmall, b, r, center);
+                    using (var b = new SolidBrush(i == cur ? Theme.OnBlue : Theme.Sub)) g.DrawString(opts[i], Draw.fSmall, b, r, center);
                     int idx = i; Act(settingsCanvas, r, delegate { set(idx); settingsCanvas.Invalidate(); });
                     sx += widths[i];
                 }

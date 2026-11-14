@@ -1039,7 +1039,7 @@ namespace AdeeboMeter
                             bool on = tab0[0] == tbSel; var ts = g.MeasureString(tab0[1], Draw.fBody); var pr = new RectangleF(tx, y, ts.Width + 26 * S, 32 * S);
                             if (pr.Right > x + w) { tx = x; y += 40 * S; pr = new RectangleF(tx, y, ts.Width + 26 * S, 32 * S); }
                             Theme.Fill(g, pr, 16 * S, on ? Theme.Blue : Theme.Card); if (!on) Theme.Stroke(g, pr, 16 * S, Theme.Line, 1);
-                            using (var tb2 = new SolidBrush(on ? Color.White : Theme.Ink)) g.DrawString(tab0[1], Draw.fBody, tb2, tx + 13 * S, y + (32 * S - ts.Height) / 2);
+                            using (var tb2 = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(tab0[1], Draw.fBody, tb2, tx + 13 * S, y + (32 * S - ts.Height) / 2);
                             string tid = tab0[0]; if (!on) Act(tbCanvas, pr, delegate { SelectTool(tid); });
                             tx += pr.Width + 8 * S;
                         }
@@ -1135,7 +1135,7 @@ namespace AdeeboMeter
             foreach (var b in new[] { "Next hop  >", "Probe all", "Start again" })
             {
                 var ts = g.MeasureString(b, Draw.fBodyB); var br = new RectangleF(cx, y, ts.Width + 26 * S, 32 * S); bool prim = b.StartsWith("Next", StringComparison.Ordinal);
-                Theme.Fill(g, br, 16 * S, prim ? Theme.Blue : Theme.Soft); using (var tb = new SolidBrush(prim ? Color.White : Theme.Ink)) g.DrawString(b, Draw.fBodyB, tb, cx + 13 * S, y + (32 * S - ts.Height) / 2);
+                Theme.Fill(g, br, 16 * S, prim ? Theme.Blue : Theme.Soft); using (var tb = new SolidBrush(prim ? Theme.OnBlue : Theme.Ink)) g.DrawString(b, Draw.fBodyB, tb, cx + 13 * S, y + (32 * S - ts.Height) / 2);
                 string bb = b;
                 Act(tbCanvas, br, delegate
                 {

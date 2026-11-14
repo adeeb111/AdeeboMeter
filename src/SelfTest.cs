@@ -989,6 +989,28 @@ namespace AdeeboMeter
                 if (!r.Done || r.Finding == "" || !obs.Any(o => o[2].StartsWith("1. This PC", StringComparison.Ordinal)) || !obs.Any(o => o[2].StartsWith("3. ", StringComparison.Ordinal)) || !r.NotEst.Any(n => n.Contains("speed test"))) bad.Add("full checkup layers missing: " + string.Join(" | ", obs.Select(o => o[2]).Take(6)));
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("themes: every theme's text is readable and green / amber / red keep their meaning", () =>
+            {
+                var bad = new List<string>(); int f0 = Program.ForceTheme;
+                Func<Color, double> lum = c => { Func<double, double> ch = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.Pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * ch(c.R) + 0.7152 * ch(c.G) + 0.0722 * ch(c.B); };
+                Func<Color, Color, double> cr = (a, b) => { double l1 = lum(a), l2 = lum(b); return (Math.Max(l1, l2) + 0.05) / (Math.Min(l1, l2) + 0.05); };
+                try
+                {
+                    for (int t = 0; t < 2 + Theme.Palettes.Length; t++)
+                    {
+                        Program.ForceTheme = t; Theme.Apply(Program.WantDark()); string n = t == 0 ? "Light" : t == 1 ? "Dark" : Theme.PaletteNames[t - 2];
+                        if (t >= 2 && Theme.Palette != Theme.Palettes[t - 2]) bad.Add(n + " didn't apply");
+                        if (cr(Theme.Ink, Theme.Card) < 7) bad.Add(n + ": text on cards " + cr(Theme.Ink, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));
+                        if (cr(Theme.Ink, Theme.Bg) < 7) bad.Add(n + ": text on the page");
+                        if (cr(Theme.Muted, Theme.Card) < 4.5) bad.Add(n + ": grey text " + cr(Theme.Muted, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));
+                        for (int l = 0; l < 3; l++) if (cr(Theme.LvText(l), Theme.LvSoft(l)) < 4.5) bad.Add(n + ": level " + l + " text " + cr(Theme.LvText(l), Theme.LvSoft(l)).ToString("0.0", CultureInfo.InvariantCulture));
+                        var gr = Theme.LvText(0); var rd = Theme.LvText(2); if (!(gr.G > gr.R && rd.R > rd.G)) bad.Add(n + ": green or red changed meaning");
+                        if (cr(Theme.OnBlue, Theme.Blue) < 2.5) bad.Add(n + ": button text " + cr(Theme.OnBlue, Theme.Blue).ToString("0.0", CultureInfo.InvariantCulture));
+                    }
+                }
+                finally { Program.ForceTheme = f0; Theme.Apply(Program.WantDark()); }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("calculators 1.1.5: NR, LTE, Wi-Fi, link budget, RAID, SLA, jitter buffer give the textbook numbers", () =>
             {
                 Func<List<string[]>, string> v0 = r => r.Count > 0 ? r[0][2] : "";

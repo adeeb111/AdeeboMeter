@@ -1244,3 +1244,7 @@ Skip	Passer
 All of this can be changed any time in Settings.	Tout ceci peut être changé à tout moment dans les Réglages.
 Plain - no jokes	Neutre - sans blagues
 checks a minute	vérifications par minute
+Neon	Néon
+Midnight	Minuit
+Sunset	Coucher de soleil
+Mint	Menthe

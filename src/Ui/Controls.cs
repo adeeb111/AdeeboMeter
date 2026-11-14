@@ -167,7 +167,7 @@ namespace AdeeboMeter
             if (Kind == K.Primary)
             {
                 Color bg = !Enabled ? Theme.Grey : down ? Kit.Mix(ac, Color.Black, 0.25f) : hot ? Kit.Mix(ac, Color.Black, 0.12f) : ac;
-                Theme.Fill(g, r, 10 * S, bg); fg = Color.White;
+                Theme.Fill(g, r, 10 * S, bg); fg = Theme.OnBlue;
             }
             else if (Kind == K.Chip)
             {

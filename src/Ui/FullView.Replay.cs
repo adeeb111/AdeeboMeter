@@ -114,7 +114,7 @@ namespace AdeeboMeter
                     var dd = d0; string t = dd == DateTime.Today ? "Today" : dd == DateTime.Today.AddDays(-1) ? "Yesterday" : dd.ToString("ddd d MMM", CultureInfo.CurrentCulture);
                     var ts = g.MeasureString(t, Draw.fBody); var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S); bool on = replayDay == dd;
                     Theme.Fill(g, cr, 14 * S, on ? Theme.Blue : Theme.Soft);
-                    using (var tb = new SolidBrush(on ? Color.White : Theme.Ink)) g.DrawString(t, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
+                    using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
                     Act(replayCanvas, cr, delegate { replayDay = dd; replayData = null; replayExample = false; ReplayOpen(); });
                     cx += cr.Width + 8 * S;
                 }

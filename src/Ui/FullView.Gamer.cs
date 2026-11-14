@@ -93,7 +93,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, r, 10 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 10 * S, on ? Theme.Blue : here ? Theme.Blue : Theme.Line, on ? 2 : 1);
                     var ic = new RectangleF(r.X + 10 * S, r.Y + 14 * S, 30 * S, 30 * S);
                     using (var ib = new SolidBrush(gm.Soon ? Theme.Grey : Hex(gm.Color))) g.FillRectangle(ib, ic);
-                    using (var wb = new SolidBrush(Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
+                    using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
                     using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
                     string state;
                     if (gm.Soon) state = "Coming when it launches on PC";
@@ -188,7 +188,7 @@ namespace AdeeboMeter
                 { t = L.T(t);
                     var sz = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
                     Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Theme.Stroke(g, r, 17 * S, Theme.Line, 1);
-                    using (var tb = new SolidBrush(primary ? Color.White : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
+                    using (var tb = new SolidBrush(primary ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
                     Act(gamerCanvas, r, a); bx += r.Width + 10 * S; return r.Width;
                 };
                 if (open)

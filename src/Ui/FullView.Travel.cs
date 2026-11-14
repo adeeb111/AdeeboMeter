@@ -100,7 +100,7 @@ namespace AdeeboMeter
             {
                 float pw = p.Item2 == payload ? Math.Max(min, p.Item2 * scale) : min;
                 Theme.Fill(g, new RectangleF(bx, y, pw - 3 * S, bh), 6 * S, p.Item3);
-                using (var wb = new SolidBrush(Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(p.Item1, Draw.fSmall, wb, new RectangleF(bx, y, pw - 3 * S, bh), c);
+                using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(p.Item1, Draw.fSmall, wb, new RectangleF(bx, y, pw - 3 * S, bh), c);
                 bx += pw;
             }
             y += bh + 10 * S;

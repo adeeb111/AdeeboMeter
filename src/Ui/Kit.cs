@@ -28,7 +28,7 @@ namespace AdeeboMeter
         };
         public static Color Accent(string id)
         {
-            Color c; if (id != null && Accents.TryGetValue(id, out c)) return Theme.HighContrast ? SystemColors.HotTrack : c;
+            Color c; if (id != null && Accents.TryGetValue(id, out c)) return Theme.HighContrast ? SystemColors.HotTrack : id == "home" ? Theme.Blue : Theme.Palette == "neon" ? Mix(c, Color.White, 0.22f) : c;   // home follows the theme's own accent; Neon lifts every accent
             return Theme.HighContrast ? SystemColors.HotTrack : Theme.Blue;
         }
         // the soft wash of an accent behind a selected tab, a chip, a tile's icon: mixed into the card colour, so it works on
@@ -67,6 +67,11 @@ namespace AdeeboMeter
             Shadow(g, r, rad);
             Theme.Fill(g, r, rad, Theme.Card);
             Theme.Stroke(g, r, rad, hot && accent != null ? Accent(accent) : Theme.Dark ? Theme.Line : Theme.Line2, hot ? 1.5f * S : 1);
+            if (accent != null && Theme.Palette == "neon" && !Theme.HighContrast)   // Neon: the accent edge glows a little - two faint strokes, drawn once
+            {
+                using (var p = Theme.Round(new RectangleF(r.X - 1.5f * S, r.Y - 1.5f * S, r.Width + 3 * S, r.Height + 3 * S), rad + 1.5f * S)) using (var pen = new Pen(Color.FromArgb(40, Accent(accent)), 3 * S)) g.DrawPath(pen, p);
+                Theme.Stroke(g, r, rad, Color.FromArgb(150, Accent(accent)), 1);
+            }
             if (accent != null)
             {
                 var st = g.Save();

@@ -131,7 +131,7 @@ namespace AdeeboMeter
             bool can = LiveCapture.Available && !switchBusy;
             Theme.Fill(g, btn, 16 * S, can ? Theme.Blue : Theme.Track);
             string bt = switchBusy ? "Listening... " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : "Find my switch port";
-            using (var bb = new SolidBrush(can ? Color.White : Theme.Muted)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(bt, Draw.fBodyB, bb, btn, c);
+            using (var bb = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(bt, Draw.fBodyB, bb, btn, c);
             if (can) Act(linkCanvas, btn, StartSwitch);
             string note = !LiveCapture.Available ? "Needs Wireshark and Npcap on this PC." : switchErr != "" ? switchErr : "Switches announce themselves every 30-60 s. I listen for up to 65 s - nothing is sent.";
             using (var nb = new SolidBrush(switchErr != "" ? Theme.LvText(1) : Theme.Muted)) g.DrawString(note, Draw.fSmall, nb, new RectangleF(btn.Right + 14 * S, btn.Y, w - btn.Width - 56 * S, 34 * S));

@@ -316,7 +316,7 @@ namespace AdeeboMeter
             {
                 var r = new RectangleF(x + i * (sq + 8 * S), y, sq, sq);
                 Theme.Fill(g, r, 6 * S, i < dunRoom ? Theme.LvSoft(0) : i == dunRoom ? Theme.Blue : Theme.Soft);
-                using (var tb = new SolidBrush(i == dunRoom ? Color.White : Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(i < dunRoom ? "✓" : (i + 1).ToString(CultureInfo.InvariantCulture), Draw.fBodyB, tb, r, c);
+                using (var tb = new SolidBrush(i == dunRoom ? Theme.OnBlue : Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(i < dunRoom ? "✓" : (i + 1).ToString(CultureInfo.InvariantCulture), Draw.fBodyB, tb, r, c);
             }
             float hx = x + LearnGames.Dungeon.Length * (sq + 8 * S) + 10 * S;   // hearts: full ones red, lost ones grey (one glyph - the outline heart is missing from some fonts)
             for (int i = 0; i < LearnGames.DungeonHearts; i++)

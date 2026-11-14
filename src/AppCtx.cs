@@ -212,7 +212,7 @@ namespace AdeeboMeter
                         if (kv[0] == "autostart") autoStart = kv[1] == "1";
                         else if (kv[0] == "widget") widgetOn = kv[1] == "1";
                         else if (kv[0] == "serious") Voice.Serious = kv[1] == "1";
-                        else if (kv[0] == "theme" && !forcedByArgs) Program.ForceTheme = kv[1] == "dark" ? 1 : kv[1] == "light" ? 0 : -1;
+                        else if (kv[0] == "theme" && !forcedByArgs) { int pi = Array.IndexOf(Theme.Palettes, kv[1]); Program.ForceTheme = pi >= 0 ? pi + 2 : kv[1] == "dark" ? 1 : kv[1] == "light" ? 0 : -1; }
                         else Cfg.Read(kv[0], kv[1]);
                     }
             }
@@ -231,7 +231,7 @@ namespace AdeeboMeter
             try
             {
                 string tmp = settingsPath + ".tmp";
-                File.WriteAllLines(tmp, new[] { "autostart=" + (autoStart ? 1 : 0), "widget=" + (widgetOn ? 1 : 0), "serious=" + (Voice.Serious ? 1 : 0), "theme=" + (Program.ForceTheme == 1 ? "dark" : Program.ForceTheme == 0 ? "light" : "auto") }.Concat(Cfg.Lines()));
+                File.WriteAllLines(tmp, new[] { "autostart=" + (autoStart ? 1 : 0), "widget=" + (widgetOn ? 1 : 0), "serious=" + (Voice.Serious ? 1 : 0), "theme=" + (Program.ForceTheme >= 2 && Program.ForceTheme < Theme.Palettes.Length + 2 ? Theme.Palettes[Program.ForceTheme - 2] : Program.ForceTheme == 1 ? "dark" : Program.ForceTheme == 0 ? "light" : "auto") }.Concat(Cfg.Lines()));
                 Program.ReplaceFile(tmp, settingsPath);
             }
             catch (Exception e) { Program.Log("settings: " + e.Message); }
@@ -279,7 +279,7 @@ namespace AdeeboMeter
         {
             Program.ForceTheme = choice; SaveSettings();
             bool d = Program.WantDark();
-            if (d != Theme.Dark) { Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); }
+            Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme();   // always: Neon and Midnight are both dark but not the same
         }
 
         void ToggleFull()

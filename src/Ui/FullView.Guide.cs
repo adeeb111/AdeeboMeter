@@ -66,7 +66,7 @@ namespace AdeeboMeter
             var br = new RectangleF(cr.Right - bw - 16 * S, cr.Y + 19 * S, bw, 36 * S);
             Theme.Fill(g, br, 10 * S, running ? Theme.Soft : Kit.Accent("home"));
             string bt = running ? L.T("See it  ›") : L.T("Run full checkup"); var bs = g.MeasureString(bt, Draw.fBtn);
-            using (var wb = new SolidBrush(running ? Theme.Ink : Color.White)) g.DrawString(bt, Draw.fBtn, wb, br.X + (br.Width - bs.Width) / 2, br.Y + (br.Height - bs.Height) / 2);
+            using (var wb = new SolidBrush(running ? Theme.Ink : Theme.OnBlue)) g.DrawString(bt, Draw.fBtn, wb, br.X + (br.Width - bs.Width) / 2, br.Y + (br.Height - bs.Height) / 2);
             Act(overviewCanvas, br, delegate { StartCheckup(); });
             return cr.Bottom + 14 * S;
         }
@@ -180,7 +180,7 @@ namespace AdeeboMeter
                         {
                             var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                             Theme.Fill(g, br, 17 * S, Theme.Blue);
-                            using (var wb = new SolidBrush(Color.White)) g.DrawString(r.GoLabel + "  >", Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
+                            using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(r.GoLabel + "  >", Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                             string go = r.GoTab; Act(guideCanvas, br, delegate { if (go.StartsWith("guide:", StringComparison.Ordinal)) StartGuide(go.Substring(6), false); else { tab = go; ShowTab(); } });
                             y += 50 * S;
                         }
