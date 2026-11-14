@@ -91,12 +91,12 @@ namespace AdeeboMeter
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
-                Theme.Fill(g, cr, 12 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 12 * S, status && s.Level >= 1 && s.Level <= 2 ? Theme.Lv(s.Level) : Theme.Line, 1);
+                Theme.Fill(g, cr, 16 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 16 * S, status && s.Level >= 1 && s.Level <= 2 ? Theme.Lv(s.Level) : Theme.Line, 1);
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 string tag = L.T("SPEED"); float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width; var tr = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tag, fTiny, 0).Width + 10 * S, 15 * S);
-                Theme.Fill(g, tr, 5 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tag, fTiny, tb, tr.X + 5 * S, tr.Y + 1 * S);
+                Theme.Fill(g, tr, tr.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tag, fTiny, tb, tr.X + 5 * S, tr.Y + 1 * S);
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 22 * S, y - 2 * S, 22 * S, 22 * S), s, false);
                 y += 24 * S;
                 if (status) { using (var hb = new SolidBrush(s.Level >= 1 && s.Level <= 2 ? Theme.LvText(s.Level) : Theme.Sub)) g.DrawString(s.Headline, fSmall, hb, new RectangleF(pad, y, inner, headH)); y += headH; }
@@ -114,7 +114,7 @@ namespace AdeeboMeter
                 y += 64 * S;
                 if (Cfg.WGraph)
                 {
-                    var sr = new RectangleF(pad, y, inner, 38 * S); Theme.Fill(g, sr, 6 * S, Theme.Soft);
+                    var sr = new RectangleF(pad, y, inner, 38 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                     var dv = s.DownHist ?? Array.Empty<double>(); var uv = s.UpHist ?? Array.Empty<double>(); double cap = 1; foreach (var q in dv.Concat(uv)) if (!double.IsNaN(q) && q > cap) cap = q;
                     if (Cfg.WDir != "up") Theme.Spark(g, dv, sr, Theme.Blue, cap * 1.1, true);
                     if (Cfg.WDir != "down") Theme.Spark(g, uv, sr, Theme.Green, cap * 1.1, false);

@@ -397,10 +397,18 @@ namespace AdeeboMeter
         {
             g.TranslateTransform(aboutCanvas.AutoScrollPosition.X, aboutCanvas.AutoScrollPosition.Y);
             Begin(aboutCanvas);
-            float W = aboutCanvas.ClientSize.Width, w = Math.Min(W - 64 * S, 860 * S), x = (W - w) / 2, y = 34 * S;
+            float W = aboutCanvas.ClientSize.Width, w = Math.Min(W - 100 * S, 860 * S), x = (W - w) / 2, y = 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
             {
+                // each numbered section sits on a raised card: the canvas is already the card colour, so a frame (edge + soft
+                // shadow) drawn once the section's height is known lifts it without hiding what's inside
+                float secTop = -1;
+                Func<float, float> Sec = delegate(float yy)
+                {
+                    if (secTop >= 0) { Kit.Frame(g, new RectangleF(x - 22 * S, secTop, w + 44 * S, yy - secTop + 12 * S)); yy += 28 * S; }
+                    secTop = yy; return yy - 2 * S;
+                };
                 Theme.Logo(g, new RectangleF(x, y, 56 * S, 56 * S), true);
                 g.DrawString(L.T("AdeeboMeter"), Draw.fHero, ink, x + 70 * S, y - 2 * S);
                 g.DrawString(L.T("Is it me or the network? One glance tells you."), Draw.fHead, blue, x + 72 * S, y + 38 * S);
@@ -408,19 +416,19 @@ namespace AdeeboMeter
                 y = Para(g, "When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.", x, y, w, sub, Draw.fBody);
                 y = Para(g, "No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.", x, y, w, ink, Draw.fBodyB);
 
-                y = AboutHead(g, "1", "The corner widget", x, y, w);
+                y = Sec(y); y = AboutHead(g, "1", "The corner widget", x, y, w);
                 y = Para(g, "A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.", x, y, w, sub, Draw.fBody);
 
-                y = AboutHead(g, "2", "Getting around", x, y, w);
+                y = Sec(y); y = AboutHead(g, "2", "Getting around", x, y, w);
                 y = Rows(g, AboutNav, x, y, w);
 
-                y = AboutHead(g, "3", "Is it me or the network?", x, y, w);
+                y = Sec(y); y = AboutHead(g, "3", "Is it me or the network?", x, y, w);
                 y = Para(g, "The five dots at the top follow your traffic out of the building: your PC, your Wi-Fi or cable to the router, your provider (or VPN), DNS - the internet's phone book - and the internet itself. The first dot that isn't green is where the trouble starts. Everything before it is fine; everything after it is a victim, not a cause. That's the whole trick.", x, y, w, sub, Draw.fBody);
 
-                y = AboutHead(g, "4", "What each tab does", x, y, w);
+                y = Sec(y); y = AboutHead(g, "4", "What each tab does", x, y, w);
                 y = Rows(g, AboutTabs, x, y, w);
 
-                y = AboutHead(g, "5", "What leaves your PC - and what never does", x, y, w);
+                y = Sec(y); y = AboutHead(g, "5", "What leaves your PC - and what never does", x, y, w);
                 Func<int, string> every = sec => sec <= 0 ? "Off" : sec >= 60 ? "every " + sec / 60 + " min" : "every " + sec + " s";
                 var leaves = new List<string[]> {
                     new[] { "Router ping", Cfg.GwSec > 0 ? "A tiny ping to your own router, " + every(Cfg.GwSec) + " (every " + (Cfg.GwSec >= 30 ? 5 : 2) + " s while this window is open). Stays on your local network." : "Off.", Cfg.GwSec > 0 ? "0" : "-1" },
@@ -446,12 +454,12 @@ namespace AdeeboMeter
                 Act(aboutCanvas, setLink, delegate { tab = "settings"; ShowTab(); });
                 y += 34 * S;
 
-                y = AboutHead(g, "6", "Built to be trusted", x, y, w);
+                y = Sec(y); y = AboutHead(g, "6", "Built to be trusted", x, y, w);
                 y = Rows(g, AboutTrust, x, y, w);
 
                 // community and support: links that open in the browser - AdeeboMeter itself sends nothing
                 y += 6 * S;
-                y = AboutHead(g, "7", "Community and support", x, y, w);
+                y = Sec(y); y = AboutHead(g, "7", "Community and support", x, y, w);
                 g.DrawString(L.T("AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing."), Draw.fBody, sub, new RectangleF(x, y, w, 24 * S)); y += 32 * S;
                 foreach (var lk in AboutLinks)
                 {
@@ -476,8 +484,8 @@ namespace AdeeboMeter
                 y += 44 * S;
                 g.DrawString(L.T("PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter."), Draw.fSmall, muted, x, y); y += 30 * S;
 
-                y += 10 * S;
-                using (var line = new Pen(Theme.Line)) g.DrawLine(line, x, y, x + w, y); y += 14 * S;
+                y = Sec(y) + 10 * S; secTop = -1;
+                y += 14 * S;
                 g.DrawString("AdeeboMeter " + Program.Version + "  ·  made by Adeeb Khan  ·  " + Program.Tagline, Draw.fSmall, muted, x, y); y += 26 * S;
                 var upd = new RectangleF(x, y, 420 * S, 22 * S);
                 g.DrawString(L.T("Check for updates  >"), Draw.fBodyB, blue, upd.X, upd.Y);

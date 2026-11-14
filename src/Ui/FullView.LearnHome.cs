@@ -127,11 +127,17 @@ namespace AdeeboMeter
             for (int i = 0; i < items.Count; i++)
             {
                 var it = items[i]; var r = new RectangleF(x + (i % cols) * (cw + 12 * S), y + (i / cols) * (ch + 10 * S), cw, ch);
-                Theme.Fill(g, r, 10 * S, Theme.Soft);
-                using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var okb = new SolidBrush(Theme.LvText(0)))
+                // a raised tile with a dot in the group's colour (a tick once you've done it)
+                Kit.Box(g, r, 14 * S); bool done = it[3] == "1";
+                var dot = new RectangleF(r.X + 14 * S, r.Y + (ch - 22 * S) / 2, 22 * S, 22 * S);
+                Theme.Fill(g, dot, 11 * S, done ? Theme.LvSoft(0) : Kit.Soft("learn"));
+                if (done) Kit.Icon(g, "check", new RectangleF(dot.X + 4 * S, dot.Y + 4 * S, 14 * S, 14 * S), Theme.LvText(0));
+                else Theme.Fill(g, new RectangleF(dot.X + 8 * S, dot.Y + 8 * S, 6 * S, 6 * S), 3 * S, Kit.Accent("learn"));
+                float tx = r.X + 48 * S, tw = r.Width - 62 * S;
+                using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
                 {
-                    g.DrawString((it[3] == "1" ? "✓ " : "") + L.T(it[1]), Draw.fBodyB, it[3] == "1" ? okb : ink, new RectangleF(r.X + 14 * S, r.Y + 10 * S, r.Width - 28 * S, 22 * S), GameNoWrap);
-                    g.DrawString(L.T(it[2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 28 * S, 22 * S), GameNoWrap);
+                    g.DrawString(L.T(it[1]), Draw.fBodyB, ink, new RectangleF(tx, r.Y + 12 * S, tw, 22 * S), GameNoWrap);
+                    g.DrawString(L.T(it[2]), Draw.fSmall, sub, new RectangleF(tx, r.Y + 36 * S, tw, 22 * S), GameNoWrap);
                 }
                 string key = it[0]; Act(learnInfo, r, delegate { learnSel = key; learnPkts = null; learnErr = ""; learnInfo.AutoScrollPosition = Point.Empty; learnInfo.Invalidate(); });
             }
@@ -139,10 +145,11 @@ namespace AdeeboMeter
         }
         float BackLink(Graphics g, string t, float x, float y, Action a)
         {
-            var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(x, y, ts.Width + 4 * S, ts.Height + 4 * S);
-            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(t, Draw.fBodyB, b, x, y);
+            // the big Back button, in Learn's colour (the "‹ " callers pass is dropped - the button draws its own arrow)
+            if (t.StartsWith("‹ ", StringComparison.Ordinal)) t = t.Substring(2);
+            var r = Kit.Back(g, t, x, y, "learn", false);
             Act(learnInfo, r, delegate { a(); learnInfo.AutoScrollPosition = Point.Empty; learnInfo.Invalidate(); });
-            return y + 30 * S;
+            return r.Bottom + 14 * S;
         }
         // the games in the All list
         float PaintGameList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
