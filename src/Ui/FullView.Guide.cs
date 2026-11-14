@@ -1,5 +1,6 @@
 // AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -56,6 +57,14 @@ namespace AdeeboMeter
             foreach (var n in r.NotEst) sb.AppendLine("Not established: " + n);
             return sb.ToString();
         }
+        // icon, colour and one line per problem (the long description stays for hover and the result page)
+        static readonly Dictionary<string, string[]> GuideLook = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            { "whats", new[] { "question", "home", "Layer by layer, stops at the first broken one" } }, { "slow", new[] { "speed", "q.slow", "Finds where the delay starts" } },
+            { "site", new[] { "dest", "q.reach", "Name, route, door, lock, answer" } }, { "calls", new[] { "phone", "q.join", "Jitter, loss, upload, Wi-Fi, VPN" } },
+            { "drops", new[] { "wifioff", "q.break", "Today's drops and what came just before" } }, { "vpn", new[] { "lock", "q.padlock", "Overlaps, proxy, VPN names, MTU" } },
+            { "pc", new[] { "cpu", "q.windows", "CPU, memory, disk, heat, drivers" } }
+        };
         void PaintGuide(Graphics g)
         {
             g.TranslateTransform(guideCanvas.AutoScrollPosition.X, guideCanvas.AutoScrollPosition.Y);
@@ -67,18 +76,17 @@ namespace AdeeboMeter
                 if (r == null)
                 {
                     if (guideNote != "") { using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString(guideNote, Draw.fBodyB, gb, x, y); y += 30 * S; }
-                    g.DrawString(L.T("WHAT'S WRONG?"), Draw.fTiny, muted, x, y); y += 24 * S;
-                    float cw = (w - 14 * S) / 2, chh = 104 * S;
+                    y = Kit.Header(g, x, y, w, "question", "What's wrong?", "Pick what it feels like - I check it step by step.", "home");
+                    // icon tiles, one line each (PLAN 11.5); the full description shows on hover
+                    int cols = w > 760 * S ? 3 : 2; float cw = (w - 14 * S * (cols - 1)) / cols, chh = 76 * S;
                     for (int i = 0; i < Investigate.All.Length; i++)
                     {
-                        var f = Investigate.All[i];
-                        var cr = new RectangleF(x + (i % 2) * (cw + 14 * S), y + (i / 2) * (chh + 14 * S), cw, chh);
-                        Theme.Fill(g, cr, 12 * S, Theme.Soft); Theme.Stroke(g, cr, 12 * S, Theme.Track, 1);
-                        g.DrawString(f.Title, Draw.fName, ink, cr.X + 16 * S, cr.Y + 14 * S);
-                        g.DrawString(f.Ask, Draw.fBody, sub, new RectangleF(cr.X + 16 * S, cr.Y + 42 * S, cr.Width - 32 * S, cr.Height - 48 * S));
+                        var f = Investigate.All[i]; string[] look; if (!GuideLook.TryGetValue(f.Id, out look)) look = new[] { "question", "home", "" };
+                        var cr = new RectangleF(x + (i % cols) * (cw + 14 * S), y + (i / cols) * (chh + 14 * S), cw, chh);
+                        Kit.Tile(g, cr, look[0], f.Title.Replace(" (I can't name it)", ""), look[2], look[1], false, -1);
                         string id = f.Id; Act(guideCanvas, cr, delegate { StartGuide(id, false); }); Hint(guideCanvas, cr, "guide." + id);
                     }
-                    y += ((Investigate.All.Length + 1) / 2) * (chh + 14 * S) + 10 * S;
+                    y += ((Investigate.All.Length + cols - 1) / cols) * (chh + 14 * S) + 10 * S;
                     g.DrawString(Voice.P("Every answer says where each fact came from - measured, Windows-reported, seen in packets or inferred - and what I couldn't establish.", "Each fact is labelled: measured, Windows-reported, seen in packets, inferred or unavailable."), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
                     y += 40 * S;
                 }

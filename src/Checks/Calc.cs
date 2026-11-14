@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // Pure arithmetic - nothing is sent, nothing is read from the PC. The packet stack is also the engine the packet
     // journey draws its label stacks with.
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1861", Justification = "result rows and small tables, built once")]
-    static class Calc
+    static partial class Calc
     {
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
         static string I(long n) { return n.ToString("N0", CultureInfo.CurrentCulture); }

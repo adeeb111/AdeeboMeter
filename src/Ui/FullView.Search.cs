@@ -133,6 +133,7 @@ namespace AdeeboMeter
         readonly RoundBox box; readonly ListBox list; readonly Label foot; string fixedNote = "";
         public Action Chosen; public string Pinned;
         static float S { get { return Draw.S; } }
+        static readonly StringFormat TitleFmt = new StringFormat(StringFormatFlags.NoWrap) { Trimming = StringTrimming.EllipsisCharacter }, SubFmt = new StringFormat(StringFormatFlags.NoWrap) { Trimming = StringTrimming.EllipsisCharacter, Alignment = StringAlignment.Far };
         public Palette(List<PalItem> items, Func<string, List<PalItem>> toolHits, HashSet<string> vocab, Action<string> pin)
         {
             all = items; this.toolHits = toolHits; this.vocab = vocab; this.pin = pin;
@@ -183,8 +184,8 @@ namespace AdeeboMeter
             float tx = ic.Right + 10 * S, right = r.Right - 8 * S;
             if (sel && it.Pin != null) { string ph = "Ctrl+P"; var ps = g.MeasureString(ph, Draw.fTiny); using (var m = new SolidBrush(Theme.Muted)) g.DrawString(ph, Draw.fTiny, m, right - ps.Width, r.Y + (r.Height - ps.Height) / 2); right -= ps.Width + 10 * S; }
             float subW = 0;
-            if (it.Sub != "") { subW = Math.Min(g.MeasureString(it.Sub, Draw.fSmall).Width + 4, (right - tx) * 0.45f); using (var m = new SolidBrush(Theme.Muted)) g.DrawString(it.Sub, Draw.fSmall, m, new RectangleF(right - subW, r.Y + (r.Height - 18 * S) / 2, subW, 18 * S), new StringFormat(StringFormatFlags.NoWrap) { Trimming = StringTrimming.EllipsisCharacter, Alignment = StringAlignment.Far }); }
-            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(it.Title, Draw.fBody, ink, new RectangleF(tx, r.Y + (r.Height - 20 * S) / 2, right - tx - subW - 10 * S, 22 * S), new StringFormat(StringFormatFlags.NoWrap) { Trimming = StringTrimming.EllipsisCharacter });
+            if (it.Sub != "") { subW = Math.Min(g.MeasureString(it.Sub, Draw.fSmall).Width + 4, (right - tx) * 0.45f); using (var m = new SolidBrush(Theme.Muted)) g.DrawString(it.Sub, Draw.fSmall, m, new RectangleF(right - subW, r.Y + (r.Height - 18 * S) / 2, subW, 18 * S), SubFmt); }
+            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(it.Title, Draw.fBody, ink, new RectangleF(tx, r.Y + (r.Height - 20 * S) / 2, right - tx - subW - 10 * S, 22 * S), TitleFmt);
         }
 
         void Step(int dir)

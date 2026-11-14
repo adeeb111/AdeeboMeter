@@ -968,3 +968,95 @@ in: 30
 3|6 Nov 19:40|the other device: 00-00-5E-00-53-12||w
 3|Your address now|192.0.2.37||w
 
+
+# ---------------------------------------------------------------- 1.1.5 calculators
+== wildcard
+in: /22
+0|Mask|255.255.252.0||i
+0|Wildcard|0.0.3.255||i
+3|Addresses|1,024 in the block · 1,022 usable||i
+
+== v6split
+in: 2001:db8:abcd::/48|/56
+0|Pieces|256 × /56||i
+3|Each one holds|256 LAN-sized /64s||i
+3|First|2001:db8:abcd::/56||i
+
+== bdp
+in: 1 Gbps|80 ms|64 KB
+0|In flight|10 MB - the window TCP needs to fill 1 Gbps at 80 ms||i
+1|With a 64 kB window|at most 6.4 Mbps - the window, not the link, is the limit||i
+
+== units
+in: 100 Mbps
+0|Bits|100 Mbps||i
+0|Bytes|12.5 MB/s||i
+3|An hour|45 GB · a day 1.08 TB||i
+
+== cellular
+in: NR|100 MHz|4x4 256QAM|30
+0|Peak (downlink)|2337 Mbps||i
+3|Carrier|100 MHz · 273 resource blocks at 30 kHz · 4 layers · 256QAM||i
+3|What you'll see|about 701-1402 Mbps on a good day||i
+
+== wifirate
+in: 6|80|2
+0|Link rate|1201 Mbps||i
+3|Real downloads|about 661-841 Mbps close to the router||i
+
+== linkbudget
+in: 20 dBm|23 and 23|5 km at 5.8 GHz|-80
+0|Received|-55.7 dBm||i
+0|Margin|24.3 dB - comfortable||i
+3|Keep clear|8 m around the line at the middle (first Fresnel zone)||i
+
+== raid
+in: 6|6|4 TB
+0|Usable|16 TB  (14.55 TiB as Windows shows it)||i
+0|Survives|2 failed disks||i
+
+== backup
+in: 2 TB|1 Gbps|5%
+0|Full copy|6.3 h at about 70% of 1 Gbps||i
+0|Each night|100 GB changes · 19 min||i
+
+== ups
+in: 2 x 12 V 9 Ah|300 W
+0|Runtime|about 22 min at 300 W||i
+3|On paper|36.7 min from 216 Wh at 85% efficiency||i
+
+== sla
+in: 99.9%
+0|Uptime|99.9%  (3 nines)||i
+3|Down a year|8.8 h||i
+3|Down a month|43.8 min||i
+
+== growth
+in: 10 TB|3% a month|40 TB
+0|Full in|3.9 years · 80% in 3.3 years||i
+3|In 12 months|14.26 TB||i
+
+== stream
+in: 1080p60|H264|10 Mbps
+0|Bitrate|7 Mbps (H.264, video 6.84 Mbps + audio 160 kbps)||i
+1|Your upload|10 Mbps - just about; no headroom||i
+
+== datause
+in: 3 h HD|1|2
+0|A month|310 GB||i
+3|Video|274 GB||i
+
+== plan
+in: 300 Mbps|20 Mbps|2 4k, 1 call, 1 game
+0|Download|57 Mbps needed of your 300 - plenty||i
+0|Upload|5.4 Mbps needed of your 20||i
+
+== tdm
+in: E1|30
+0|Bandwidth|1,920 kbps for 30 timeslots||i
+3|Calls|30 uncompressed G.711 calls||i
+
+== jitterbuf
+in: 20-70 ms|20|G711
+0|Buffer|80 ms (4 packets of 20 ms)||i
+0|Mouth to ear|about 121 ms - fine||i

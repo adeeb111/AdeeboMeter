@@ -26,7 +26,7 @@ namespace AdeeboMeter
             new[] { "win", "Windows", "WINDOWS", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
             new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },   // the PC's own checks: on no other card
-            new[] { "calc", "Work it out", "CALCULATORS", "subnet|stack|bandwidth" },   // pure arithmetic, nothing sent
+            new[] { "calc", "Work it out", "NETWORK MATHS|WIRELESS MATHS|SERVERS & IT MATHS|STREAMING & HOME MATHS|VOICE & TDM MATHS", "subnet|plan|stream" },   // pure arithmetic, nothing sent
             new[] { "game", "Is it my game?", "GAMING", "prematch|gpn|tonight" },
             new[] { "time", "How has my network been?", "OVER TIME|PRIVACY & IPV6", "month|rushhour|vpnleak" },
             new[] { "report", "Make a report", "SHARE A DIAGNOSIS", "ispreport|qr|friend" },   // More > Reports opens this
@@ -49,8 +49,9 @@ namespace AdeeboMeter
         static string QuestionOf(Tool t) { var q = Questions.FirstOrDefault(z => z[2].Split('|').Contains(t.Group)); return q != null ? q[0] : ""; }
         List<Tool> ToolsOf(string q)
         {
-            var groups = Questions.First(z => z[0] == q)[2].Split('|');
-            return Tools2().Where(t => groups.Contains(t.Group) && (!SnmpView(t.Id) || t.Id == "snmp")).ToList();
+            var qd = Questions.First(z => z[0] == q); var groups = qd[2].Split('|'); var feat = qd[3].Split('|');
+            // its groups' tools, plus a featured tool that lives in another group (Make a report shows the ISP report too)
+            return Tools2().Where(t => (groups.Contains(t.Group) || feat.Contains(t.Id)) && (!SnmpView(t.Id) || t.Id == "snmp")).ToList();
         }
         // the two ways to see the Toolbox: by question (roomy) or the classic all-at-once list
         void ApplyTbView()
@@ -172,8 +173,16 @@ namespace AdeeboMeter
                     y += 40 * S;
                     if (tbQ == "lab") { string note = L.T("Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan."); g.DrawString(note, Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += Draw.Measure(note, Draw.fBody, (int)w).Height + 12 * S; }
                     var list = ToolsOf(tbQ); int c2 = Math.Min(cols, 2); float rw = (w - gap * (c2 - 1)) / c2; int i = 0;
-                    foreach (var t in list) { toolRow(t, new RectangleF(x + (i % c2) * (rw + gap), y + (i / c2) * 52 * S, rw, 44 * S), ""); i++; }
-                    Need(tbCanvas, y + ((i + c2 - 1) / c2) * 52 * S + 10 * S); return;
+                    // a question that spans groups (the calculators) gets a small heading per group
+                    var grps = list.Select(t => t.Group).Distinct().ToList();
+                    foreach (var gname in grps)
+                    {
+                        if (grps.Count > 1) { using (var hb = new SolidBrush(Kit.Ink(QAccent(tbQ)))) g.DrawString(L.T(gname), Draw.fTiny, hb, x, y + 4 * S); y += 24 * S; }
+                        i = 0;
+                        foreach (var t in list.Where(z => z.Group == gname)) { toolRow(t, new RectangleF(x + (i % c2) * (rw + gap), y + (i / c2) * 52 * S, rw, 44 * S), ""); i++; }
+                        y += ((i + c2 - 1) / c2) * 52 * S + (grps.Count > 1 ? 10 * S : 0);
+                    }
+                    Need(tbCanvas, y + 10 * S); return;
                 }
                 // all questions
                 g.DrawString(L.T("Toolbox"), Draw.fTitle, ink, x, y); y += 38 * S;

@@ -911,12 +911,35 @@ namespace AdeeboMeter
                 if (FullView.AssistFor("URL - e.g. github.com or https://203.0.113.5", "10.0.0.1", "", null, out br).Any(z => z.Contains(":") && !z.Contains("."))) throw new InvalidOperationException("URL example read as choices");
                 if (FullView.AssistFor("host:port - e.g. smtp.office365.com:587", "10.0.0.1", "", null, out br).FirstOrDefault() != "10.0.0.1:587" || FullView.AssistFor("Second saved result (.txt)", "10.0.0.1", "", null, out br).Count != 0 || !br || FullView.AssistFor("Name this run - e.g. VPN off", "10.0.0.1", "", null, out br).Count != 0 || FullView.AssistFor("Hosts each subnet needs - e.g. 200, 60, 12, 2", "", "", null, out br).Count != 0) throw new InvalidOperationException("host:port chip has no port");
                 if (FullView.AssistFor("Shared secret", "10.0.0.1", "x", null, out br).Count != 0) throw new InvalidOperationException("chips on a secret");
+                if (FullView.NavAfterDelete("home,mine1,toolbox,mine3,mine2", "mine2") != "home,mine1,toolbox,mine2" || Cfg.NavClean("toolbox,home,bogus,gamer,a,b,c,d,e,f,g,time,learn,story,security") .Split(',').Length > 7 || !Cfg.NavClean("toolbox").StartsWith("home,", StringComparison.Ordinal)) throw new InvalidOperationException("tab order rules wrong: " + FullView.NavAfterDelete("home,mine1,toolbox,mine3,mine2", "mine2"));
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
                     try { string bad = fv.AssistCheck(sb); if (bad != "") throw new InvalidOperationException(bad); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
+            });
+            T("calculators 1.1.5: NR, LTE, Wi-Fi, link budget, RAID, SLA, jitter buffer give the textbook numbers", () =>
+            {
+                Func<List<string[]>, string> v0 = r => r.Count > 0 ? r[0][2] : "";
+                var want = new Dictionary<string, string> {
+                    { "NR", v0(Calc.Cellular("NR", "100 MHz", "4x4 256QAM", "30")) + "|2337 Mbps" }, { "LTE", v0(Calc.Cellular("LTE", "20 MHz", "2x2 64QAM", "")) + "|151 Mbps" },
+                    { "Wi-Fi 6", v0(Calc.WifiRate("6", "80", "2")) + "|1201 Mbps" }, { "Wi-Fi 5", v0(Calc.WifiRate("ac", "80", "1")) + "|433 Mbps" }, { "Wi-Fi 7", v0(Calc.WifiRate("7", "320", "1")) + "|2882 Mbps" },
+                    { "wildcard", v0(Calc.Wildcard("0.0.3.255")) + "|255.255.252.0" }, { "SLA", Calc.Sla("99.9%")[1][2] + "|8.8 h" }, { "jitter", v0(Calc.JitterBuf("20-70 ms", "20", "")).Split(' ')[0] + "|80" },
+                    { "E1", v0(Calc.Tdm("E1", "30")).Split(' ')[0] + "|" + (1920).ToString("N0", CultureInfo.CurrentCulture) },
+                    { "v6", v0(Calc.V6Split("2001:db8:abcd::/48", "/56")).Split(' ')[0] + "|256" }, { "units", Calc.Units("100 Mbps")[1][2] + "|12.5 MB/s".Replace(".", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator) } };
+                var bad = want.Where(kv => { var p = kv.Value.Split('|'); return p[0] != p[1]; }).Select(kv => kv.Key + " gave " + kv.Value.Split('|')[0]).ToList();
+                if (!Calc.Raid("6", "6", "4 TB")[0][2].StartsWith("16 TB", StringComparison.Ordinal)) bad.Add("RAID 6");
+                if (Calc.Raid("10", "5", "4 TB")[0][0] != "2" || Calc.Raid("5", "2", "4 TB")[0][0] != "2") bad.Add("RAID refusals");
+                if (!Calc.LinkBudget("20 dBm", "23 and 23", "5 km at 5.8 GHz", "-80")[0][2].StartsWith("-55", StringComparison.Ordinal)) bad.Add("link budget");
+                if (Calc.Ups("1500 VA", "300 W", "")[0][0] != "2") bad.Add("UPS from VA alone should ask for Wh");
+                if (Calc.Plan("300 Mbps", "", "2 4k, 1 call")[0][0] != "0" || Calc.Plan("10 Mbps", "", "2 4k")[0][0] != "2") bad.Add("plan");
+                foreach (var junk in new[] { "", "zzz", "-1", "999999999999999999999", "1e400", "/", "::" })
+                {
+                    Calc.Wildcard(junk); Calc.V6Split(junk, junk); Calc.Bdp(junk, junk, junk); Calc.Units(junk); Calc.Cellular(junk, junk, junk, junk); Calc.WifiRate(junk, junk, junk); Calc.LinkBudget(junk, junk, junk, junk);
+                    Calc.Raid(junk, junk, junk); Calc.Backup(junk, junk, junk); Calc.Ups(junk, junk, junk); Calc.Sla(junk); Calc.Growth(junk, junk, junk); Calc.Stream(junk, junk, junk); Calc.DataUse(junk, junk, junk); Calc.Plan(junk, junk, junk); Calc.Tdm(junk, junk); Calc.JitterBuf(junk, junk, junk);
+                }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("wave 4: UDP MTU packets, neighbour filter, speed grade, mode setting", () =>
             {

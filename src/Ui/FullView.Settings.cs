@@ -83,7 +83,7 @@ namespace AdeeboMeter
         {
             public string Sec, Label, Tag, Keys = ""; public Func<string> Help; public string[] Opts; public Func<int> Cur; public Action<int> Set; public Func<bool> Show;
         }
-        internal static readonly string[] SetSections = { "General", "Widget", "Background checks", "Gamer Zone", "Alerts", "History & data", "Privacy & online lookups", "Capture & advanced" };
+        internal static readonly string[] SetSections = { "General", "Navigation", "Widget", "Background checks", "Gamer Zone", "Alerts", "History & data", "Privacy & online lookups", "Capture & advanced" };
         const string TagGame = "BACKGROUND · GAME SERVERS", TagPc = "ON THIS PC", TagLan = "BACKGROUND · YOUR NETWORK", TagNet = "BACKGROUND · INTERNET", TagOnline = "ONLINE LOOKUP", TagWin = "ONLY WHILE THIS WINDOW IS OPEN";
         string setSec = "General";
         RoundBox settingsSearch;
@@ -113,6 +113,8 @@ namespace AdeeboMeter
             add("General", "Voice", TagPc, () => Voice.Serious ? "Plain, serious wording - no jokes at all." : MoodHelp(), SetVoice, () => Voice.Serious ? SetVoice.Length - 1 : Math.Max(0, Array.IndexOf(Mood.Ids, Mood.Name)), i => { Voice.Serious = i == SetVoice.Length - 1; if (!Voice.Serious) Mood.Name = Mood.Ids[i]; Cfg.Save(); Invalidate(true); }, null, "jokes wording tone mood personality sarcastic anxious conspiracy brutal honest");
             add("General", "Adeebo Points", TagPc, () => Cfg.Points ? "On: the Adeebo button in the header - your rank, how to earn, and every feature in one place. " + Points.Rank(Points.Me.Total) + " · " + Points.Me.Total + " so far, kept on this PC only." : "Off: the button is hidden and nothing is earned" + (Points.Me.Total > 0 ? " - your " + Points.Me.Total + " points are kept." : "."), SetOnOff, () => Cfg.Points ? 0 : 1, i => { Cfg.Points = i == 0; Cfg.Save(); SyncPointsBtn(); if (!Cfg.Points && tab == "points") { tab = "settings"; ShowTab(); } Invalidate(true); }, null, "points adeebo rank reward learn examples dashboard every feature");
             add("General", "Start with Windows", TagPc, () => Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.", SetS10, () => Cfg.GetAutoStart() ? 0 : 1, i => Cfg.SetAutoStart(i == 0), null, "startup boot login autostart");
+            // Navigation (the tab list itself is drawn below the rows - PaintNavSettings)
+            add("Navigation", "Layout", TagPc, () => Cfg.Layout == "sidebar" ? "Sidebar: the sections down the left, with search and a live meter. Fold it to icons with the arrow." : "Classic: tabs along the top, the health panel on the right.", SetLayoutOpts, () => Cfg.Layout == "sidebar" ? 1 : 0, i => SetLayout(i == 1 ? "sidebar" : "classic"), null, "layout sidebar classic tabs menu left top");
             // Widget
             add("Widget", "Corner widget size", TagPc, () => Cfg.BigWidget ? "A little bigger (1.3x) - easier to read at a glance." : "Small - out of the way.", SetSize, () => Cfg.BigWidget ? 1 : 0, i => { Cfg.BigWidget = i == 1; Cfg.Save(); Invalidate(true); }, null, "big small scale");
             add("Widget", "Widget style", TagPc, () => Cfg.WidgetStyle == "gamer" ? "Always the gamer card: your game's ping, jitter, loss and grade." : Cfg.WidgetStyle == "everyday" ? "Always the everyday card: the verdict, the five dots, CPU, memory and speed." : Cfg.WidgetStyle == "calls" ? "Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up." : Cfg.WidgetStyle == "engineer" ? (Cfg.Simple ? "The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card." : "Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.") : "Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.", WStyle, () => Math.Max(0, Array.IndexOf(WStyleIds, Cfg.WidgetStyle)), i => { Cfg.WidgetStyle = WStyleIds[i]; Cfg.Save(); }, null, "layout gamer game everyday card calls teams zoom engineer");
@@ -245,6 +247,7 @@ namespace AdeeboMeter
                     }
                     foreach (var it in items.Where(i2 => i2.Sec == setSec))
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
+                    if (setSec == "Navigation") y = PaintNavSettings(g, x, y + 6 * S, w);
                     if (setSec == "History & data" && HistDaysCached() > 0)
                     {
                         var clr = new RectangleF(x, y, 240 * S, 22 * S);
@@ -261,7 +264,7 @@ namespace AdeeboMeter
             }
             var need = new Size(0, (int)(Math.Max(y, my) + 20 * S)); SetNeed(settingsCanvas, need);
         }
-        static readonly string[] SetOnOff = { "On", "Off" };
+        static readonly string[] SetOnOff = { "On", "Off" }, SetLayoutOpts = { "Classic", "Sidebar" };
         static readonly string[] SetHat = { "None", "Cap", "Party hat", "Crown" };
         static readonly string[] WStyle = { "Auto", "Everyday", "Gamer", "Calls", "Engineer" }, WStyleIds = { "auto", "everyday", "gamer", "calls", "engineer" };
         static readonly string[] GzBg = { "10 s", "30 s", "60 s", "Off" }, GzSrv = { "1", "3", "5" }, GzDays = { "7 days", "14 days", "30 days" };

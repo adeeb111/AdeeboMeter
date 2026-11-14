@@ -14,6 +14,9 @@ namespace AdeeboMeter
     {
         TableLayoutPanel learnSplit; PillButton learnViewG, learnViewA; readonly List<PillButton> learnChips = new List<PillButton>(); Label learnTip;
         string learnGroup = "", learnFilter = "all";
+        static readonly Dictionary<string, string> LearnIcons = new Dictionary<string, string>(StringComparer.Ordinal) {
+            { "basics", "star" }, { "protocol", "traffic" }, { "provider", "route" }, { "mobile", "phone" }, { "crypto", "lock" }, { "windows", "windows" },
+            { "apps", "app" }, { "labs", "speed" }, { "games", "game" }, { "check", "check" }, { "paths", "go" } };
         static readonly string[][] LearnCards = {
             new[] { "basics", "Start here", "How apps use the internet - in plain words." },
             new[] { "protocol", "How your packets talk", "DNS, DHCP, TCP, TLS, Wi-Fi... two lines and a picture each." },
@@ -75,21 +78,26 @@ namespace AdeeboMeter
             if (learnGroup != "") return PaintLearnGroup(g, x, y, w);
             y = Title2(g, L.T("Learn"), x, y, w);
             y = Lead2(g, L.T("Pick a goal. New to networking? Start here. Want to play? Games and Labs. Search above shows everything at once."), x, y, w);
-            int cols = w > 900 * S ? 4 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 118 * S;
+            int cols = w > 900 * S ? 4 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 128 * S;
             for (int i = 0; i < LearnCards.Length; i++)
             {
                 var c = LearnCards[i]; var r = new RectangleF(x + (i % cols) * (cw + 12 * S), y + (i / cols) * (ch + 12 * S), cw, ch);
                 int all, done = LearnDone(c[0], out all);
-                Theme.Fill(g, r, 12 * S, c[0] == "games" ? Theme.BlueSoft : Theme.Soft);
-                using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var mb = new SolidBrush(Theme.Muted))
+                // an icon card with a progress ring (PLAN 11.5)
+                string acc = c[0] == "games" ? "gamer" : c[0] == "labs" ? "toolbox" : "learn", icon; if (!LearnIcons.TryGetValue(c[0], out icon)) icon = "learn";
+                Kit.Card(g, r, acc, false);
+                using (var cb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(cb, r.X + 14 * S, r.Y + 16 * S, 34 * S, 34 * S);
+                Kit.Icon(g, icon, new RectangleF(r.X + 22 * S, r.Y + 24 * S, 18 * S, 18 * S), Kit.Accent(acc));
+                var ring = new RectangleF(r.Right - 52 * S, r.Y + 14 * S, 38 * S, 38 * S);
+                using (var tp = new Pen(Theme.Track, 4 * S)) g.DrawEllipse(tp, ring);
+                if (all > 0 && done > 0) using (var ap = new Pen(done >= all ? Theme.Green : Kit.Accent(acc), 4 * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round }) g.DrawArc(ap, ring, -90, 360f * done / all);
+                bool full = done >= all && all > 0;
+                using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var mb = new SolidBrush(full ? Theme.Green : Theme.Muted))
+                using (var center = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 {
-                    g.DrawString(L.T(c[1]), Draw.fHead, ink, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 28 * S, 24 * S), GameNoWrap);
-                    g.DrawString(L.T(c[2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 40 * S, r.Width - 28 * S, 40 * S));
-                    string cnt = done + " / " + all + " " + L.T(c[0] == "paths" ? "finished" : "done");
-                    g.DrawString(cnt, Draw.fTiny, mb, r.X + 14 * S, r.Bottom - 28 * S);
-                    var bar = new RectangleF(r.X + 14 * S, r.Bottom - 12 * S, r.Width - 28 * S, 4 * S);
-                    using (var bb = new SolidBrush(Theme.Line)) g.FillRectangle(bb, bar);
-                    if (all > 0 && done > 0) using (var fb = new SolidBrush(Theme.Green)) g.FillRectangle(fb, bar.X, bar.Y, bar.Width * done / all, bar.Height);
+                    g.DrawString(full ? "✓" : done + "/" + all, Draw.fTiny, mb, ring, center);
+                    g.DrawString(L.T(c[1]), Draw.fHead, ink, new RectangleF(r.X + 14 * S, r.Y + 60 * S, r.Width - 28 * S, 24 * S), GameNoWrap);
+                    g.DrawString(L.T(c[2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 86 * S, r.Width - 28 * S, 36 * S), GameNoWrap);
                 }
                 string id = c[0];
                 Act(learnInfo, r, delegate { if (id == "paths") { tab = "points"; ShowTab(); return; } learnGroup = id; learnInfo.AutoScrollPosition = Point.Empty; learnInfo.Invalidate(); });

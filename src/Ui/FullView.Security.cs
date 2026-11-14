@@ -80,7 +80,7 @@ namespace AdeeboMeter
                 // the scorecard
                 int[] n = new int[4]; foreach (var r in res.Values) n[SecLevel(r)]++;
                 g.DrawString(L.T("Security checkup"), Draw.fTitle, ink, x, y); y += 30 * S;
-                string sub = secBusy ? "Checking: " + secNow + "...  (" + res.Count + " of " + Security.All.Count + ")" : res.Count == 0 ? Security.All.Count + " checks of this PC, your network and your sites. Mostly reads settings. On your own router it also asks 7 ports (FTP, Telnet, SSH, TR-069, web, the admin page) and DHCP once - skipped on a company network. It never tries a password and never touches anything beyond your router. Each fix opens the Windows screen where you change it yourself." : "Checked at " + secAt.ToString("HH:mm", CultureInfo.CurrentCulture) + " · click a check to run it again";
+                string sub = secBusy ? "Checking: " + secNow + "...  (" + res.Count + " of " + Security.All.Count + ")" : res.Count == 0 ? Security.All.Count + " checks of this PC, your network and your sites. Mostly reads settings; on your own router it asks 7 ports and DHCP once. Never tries a password; each fix opens the Windows screen where you change it." : "Checked at " + secAt.ToString("HH:mm", CultureInfo.CurrentCulture) + " · click a check to run it again";
                 if (res.Count > 0 && !secBusy)
                 {
                     string ct = secCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text"; var cs = g.MeasureString(ct, Draw.fSmall); var cr = new RectangleF(x + w - cs.Width, y - 26 * S, cs.Width, cs.Height);
@@ -104,10 +104,13 @@ namespace AdeeboMeter
                     g.DrawString(grp[1], Draw.fTiny, muted, x, y + 4 * S); y += 24 * S;
                     // problems first once checked; the plan order before
                     var checks = Security.All.Where(c => c.Group == grp[0]).OrderBy(c => { List<string[]> r; if (!res.TryGetValue(c.Id, out r)) return 9; int l = SecLevel(r); return l == 2 ? 0 : l == 1 ? 1 : l == 3 ? 2 : 3; }).ToList();
+                    // status tiles (PLAN 11.5): every check that's fine, informational or not run yet is one small tile;
+                        // only the ones worth a look or risky open up into full rows with their advice and fix
+                    var tiles = checks.Where(c => { List<string[]> r0; return !res.TryGetValue(c.Id, out r0) || r0.All(o => o[0] == "0" || o[0] == "3"); }).ToList();
                     foreach (var c in checks)
                     {
+                        if (tiles.Contains(c)) continue;
                         List<string[]> rows; bool done = res.TryGetValue(c.Id, out rows);
-                        if (!done) rows = new List<string[]> { new[] { "3", c.Title, secBusy && secNow == c.Title ? "checking..." : "not checked yet", "", "", "" } };
                         foreach (var o in rows)
                         {
                             int lv = int.Parse(o[0], CultureInfo.InvariantCulture); string fix = o.Length > 5 && o[5].StartsWith("fix:", StringComparison.Ordinal) ? o[5].Substring(4) : "";
@@ -128,6 +131,20 @@ namespace AdeeboMeter
                             else Act(secCanvas, new RectangleF(x - 6 * S, y, w + 12 * S, rh), delegate { SecRun(id); });
                             y += rh + 2 * S;
                         }
+                    }
+                    if (tiles.Count > 0)
+                    {
+                        int cols = w > 900 * S ? 3 : w > 560 * S ? 2 : 1; float cw = (w - 10 * S * (cols - 1)) / cols, th = 58 * S; int k = 0;
+                        foreach (var c in tiles)
+                        {
+                            List<string[]> rows; bool done = res.TryGetValue(c.Id, out rows); int lv = done ? (rows.Any(o => o[0] == "0") ? 0 : 3) : -1;
+                            string hint = done ? rows[0][2] : secBusy && secNow == c.Title ? L.T("checking...") : L.T("not checked yet");
+                            var tr = new RectangleF(x + (k % cols) * (cw + 10 * S), y + (k / cols) * (th + 10 * S), cw, th);
+                            Kit.Tile(g, tr, lv == 0 ? "check" : lv == 3 ? "question" : "shield", c.Title, hint, "q.windows", false, lv == 3 ? -1 : lv);   // grey until checked - not red before anything is known
+                            string id = c.Id; Act(secCanvas, tr, delegate { SecRun(id); });
+                            k++;
+                        }
+                        y += ((k + cols - 1) / cols) * (th + 10 * S);
                     }
                     y += 14 * S;
                 }

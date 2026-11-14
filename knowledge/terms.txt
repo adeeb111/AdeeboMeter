@@ -3367,3 +3367,175 @@ what: One site, on click: the TLS version, the cipher in four plain parts (key a
 how: Two short handshakes and no HTTP request: one by Windows (what your apps get) and one TLS 1.2 hello that reads the certificates exactly as the server sends them. If the certificate's dates look wrong, your clock is compared too.
 why: Name mismatch, expired, a missing middle certificate, a wrong clock, an old TLS-only server - each has a different fix.
 without: Your browser's padlock › Certificate shows part of this.
+
+# ---------------------------------------------------------------- 1.1.5 calculators
+== tb.wildcard
+friendly: Wildcard mask
+cat: term
+close: -1
+tag: Mask, prefix and wildcard - one from the other.
+what: Turns 255.255.252.0, /22 or 0.0.3.255 into the other two, with the block size and an ACL line. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Says how many addresses the block holds and spots a mask with gaps.
+without: Offline.
+
+== tb.v6split
+friendly: IPv6 prefix split
+cat: term
+close: -1
+tag: Cut an IPv6 prefix into smaller ones.
+what: Splits a /48 into /56s, /64s or a number of pieces, and lists the first and last. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Shows how many LAN-sized /64s each piece holds.
+without: Offline.
+
+== tb.bdp
+friendly: BDP and TCP window
+cat: term
+close: -1
+tag: How much is in flight, and the window to fill a link.
+what: Speed × round trip gives the bytes in flight - the TCP window a single stream needs. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Shows the most one stream gets with a given window: why long links feel slow.
+without: Offline.
+
+== tb.units
+friendly: Bits, bytes and units
+cat: term
+close: -1
+tag: One value in every unit.
+what: Mbps and MB/s, GB and GiB, bits and bytes, minutes and seconds. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Explains why Windows shows less space than the box says.
+without: Offline.
+
+== tb.cellular
+friendly: LTE and 5G throughput
+cat: term
+close: -1
+tag: Peak speed of an LTE or 5G NR carrier.
+what: Bandwidth, MIMO layers and modulation give the peak, using the formula in 3GPP TS 38.306 for NR. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Also gives a realistic range - cells are shared and signals aren't perfect.
+without: Offline.
+
+== tb.wifirate
+friendly: Wi-Fi speed by channel width
+cat: term
+close: -1
+tag: Link rate for a Wi-Fi generation, width and streams.
+what: Data subcarriers × bits per symbol × streams for Wi-Fi 4 to 7, at the top MCS. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Shows what you'll really get, and when a narrower channel wins.
+without: Offline.
+
+== tb.linkbudget
+friendly: Link budget (Wi-Fi, microwave)
+cat: term
+close: -1
+tag: Will a radio link reach, and with how much margin?
+what: Transmit power plus antenna gains minus free-space loss, against the receiver's sensitivity. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Also gives the Fresnel zone to keep clear of trees and roofs.
+without: Offline.
+
+== tb.raid
+friendly: RAID capacity
+cat: term
+close: -1
+tag: Usable space and how many disks it survives.
+what: RAID 0, 1, 5, 6 or 10 with your disk count and size. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Shows TB and the TiB Windows shows, and reminds you RAID isn't a backup.
+without: Offline.
+
+== tb.backup
+friendly: Backup and restore time
+cat: term
+close: -1
+tag: How long a full copy and a nightly change take.
+what: Data and link speed at a realistic 70%, plus the daily change. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Warns when a nightly backup won't finish before morning.
+without: Offline.
+
+== tb.ups
+friendly: UPS runtime
+cat: term
+close: -1
+tag: How long the UPS keeps things running.
+what: Battery energy (Wh, or volts and amp-hours) × efficiency ÷ load. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Allows for battery age - the label number is the best case.
+without: Offline.
+
+== tb.sla
+friendly: Uptime and downtime (SLA)
+cat: term
+close: -1
+tag: 99.9% means how much downtime?
+what: Uptime to downtime per year, month, week and day - or the other way round. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Also shows what two parts in a row give.
+without: Offline.
+
+== tb.growth
+friendly: When does storage fill up?
+cat: term
+close: -1
+tag: Months until the disks are full.
+what: Size now and growth (a % or a fixed amount) against the capacity. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Says when you hit 80% - the time to order more.
+without: Offline.
+
+== tb.stream
+friendly: Streaming bitrate and upload
+cat: term
+close: -1
+tag: The bitrate for a resolution and frame rate.
+what: Pixels × frames × bits per pixel for H.264, HEVC or AV1, plus audio. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Says the upload you need with headroom, and the data an hour.
+without: Offline.
+
+== tb.datause
+friendly: Monthly data use
+cat: term
+close: -1
+tag: How many GB a month video, calls and games use.
+what: Hours a day of each, at the figures the big services publish. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Says whether it fits a capped plan.
+without: Offline.
+
+== tb.plan
+friendly: Is my plan fast enough?
+cat: term
+close: -1
+tag: Enough speed for everyone at once?
+what: Adds up what each person is doing (4K, calls, games, streams) against your plan. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Checks the upload too - calls and streams break up first.
+without: Offline.
+
+== tb.tdm
+friendly: E1 and T1 timeslots
+cat: term
+close: -1
+tag: Bandwidth of E1 and T1 timeslots.
+what: 64 kbps per timeslot; E1 is 32, T1 is 24 plus framing. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Also the robbed-bit 56k case and how many calls fit.
+without: Offline.
+
+== tb.jitterbuf
+friendly: Jitter buffer size
+cat: term
+close: -1
+tag: How big the voice jitter buffer should be.
+what: About 1.5 × the delay variation, in whole packets. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Estimates mouth-to-ear delay against the 150 ms target.
+without: Offline.
+

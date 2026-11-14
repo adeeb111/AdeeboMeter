@@ -245,6 +245,33 @@ namespace AdeeboMeter
         }
         bool LearnPending { get { return Cfg.Points && tab == "learn" && learnSel.StartsWith("topic:", StringComparison.Ordinal) && !Points.Me.Has("learn." + learnSel.Substring(6)); } }
 
+        // the badge wall (PLAN 11.5): one badge per group - in colour once every item in it is done, a ring for how far along, grey before
+        static readonly Dictionary<string, string> BadgeIcons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+            { "Network", "route" }, { "Devices", "devices" }, { "Traffic Lab", "traffic" }, { "Security", "lock" }, { "The PC", "cpu" }, { "Windows", "windows" }, { "Learn", "learn" },
+            { "Games", "game" }, { "Challenges", "star" }, { "Check yourself", "check" }, { "Learning paths", "go" }, { "Pages", "home" } };
+        float PaintBadges(Graphics g, float x, float y, float w)
+        {
+            var groups = PtAll().Where(i => i.Group != "").GroupBy(i => i.Group).ToList(); if (groups.Count == 0) return y;
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(L.T("BADGES"), Draw.fTiny, muted, x, y); y += 22 * S;
+            float bw = 104 * S, bh = 112 * S; int per = Math.Max(1, (int)((w + 10 * S) / (bw + 10 * S))); int k = 0;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
+            using (var center = new StringFormat { Alignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                foreach (var gr in groups)
+                {
+                    int all = gr.Count(), done = gr.Count(i => Points.Me.Has(i.Key)); bool full = done == all && all > 0, some = done > 0;
+                    var r = new RectangleF(x + (k % per) * (bw + 10 * S), y + (k / per) * (bh + 10 * S), bw, bh);
+                    var c = new RectangleF(r.X + (bw - 56 * S) / 2, r.Y + 6 * S, 56 * S, 56 * S);
+                    using (var fb = new SolidBrush(full ? Theme.LvSoft(1) : some ? Kit.Soft("learn") : Theme.Soft)) g.FillEllipse(fb, c);
+                    using (var tp = new Pen(full ? Theme.Amber : Theme.Track, 3 * S)) g.DrawEllipse(tp, c);
+                    if (some && !full) using (var ap = new Pen(Kit.Accent("learn"), 3 * S)) g.DrawArc(ap, c, -90, 360f * done / all);
+                    string icon; if (!BadgeIcons.TryGetValue(gr.Key, out icon)) icon = "star";
+                    Kit.Icon(g, icon, new RectangleF(c.X + 16 * S, c.Y + 16 * S, 24 * S, 24 * S), full ? Theme.Amber : some ? Kit.Accent("learn") : Theme.Muted);
+                    g.DrawString(L.T(gr.Key), Draw.fSmall, some ? ink : muted, new RectangleF(r.X, c.Bottom + 6 * S, bw, 18 * S), center);
+                    g.DrawString(done + " / " + all, Draw.fTiny, muted, new RectangleF(r.X, c.Bottom + 24 * S, bw, 16 * S), center);
+                    k++;
+                }
+            return y + ((k + per - 1) / per) * (bh + 10 * S) + 12 * S;
+        }
         void PaintPoints(Graphics g)
         {
             g.TranslateTransform(pointsCanvas.AutoScrollPosition.X, pointsCanvas.AutoScrollPosition.Y); Begin(pointsCanvas);
@@ -281,6 +308,7 @@ namespace AdeeboMeter
                     }
                     y += card.Height + 18 * S;
                     if (award && awardFile != "") y = PaintAwardSent(g, x, y, w, ink, sub, blue);
+                    y = PaintBadges(g, x, y, w);
                     // how to earn
                     g.DrawString(L.T("HOW TO EARN"), Draw.fTiny, muted, x, y); y += 20 * S;
                     foreach (var h in new[] { new[] { "Open a tool's Example, then run it for real", "+2, or +4 for the longer tests" }, new[] { "Run a tool marked replay again, 10 minutes or more later", "+3, once" }, new[] { "Read a Learn topic to the end", "+2" }, new[] { "Answer its Check yourself question right first time", "+2" }, new[] { "Meet a lab's challenge", "+4" }, new[] { "Subnetting practice: 5 in a row, then 10 in a row", "+3, then +5" }, new[] { "Explain a packet journey of your own", "+3" }, new[] { "Use a page for the first time", "+2" }, new[] { "Finish a learning path", "+10" }, new[] { "Reach " + Points.AwardAt, "the Adeebo Award" } })

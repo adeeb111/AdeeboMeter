@@ -919,6 +919,7 @@ namespace AdeeboMeter
         {
             if (destRunning) return;
             string input = destBox.Box.Text;
+            string rk = (input ?? "").Trim(); if (rk.Length > 0 && rk.Length < 120) { destRecent.Remove(rk); destRecent.Insert(0, rk); if (destRecent.Count > 6) destRecent.RemoveAt(6); }   // this session only, never saved
             dest = new DestResult(); pinResults = null; destRunning = true; checkBtn.Enabled = false; destCanvas.Invalidate();
             var r = dest;
             Task.Factory.StartNew(() =>

@@ -127,6 +127,8 @@ namespace AdeeboMeter
             }
         }
 
+        static readonly string[] DestIcons = { "search", "route", "speed", "join", "lock", "dest", "traffic", "go" };   // DNS, Route, Ping, TCP, TLS, HTTP, Path MTU, Path
+        readonly List<string> destRecent = new List<string>();
         void PaintDest(Graphics g)
         {
             g.TranslateTransform(destCanvas.AutoScrollPosition.X, destCanvas.AutoScrollPosition.Y);
@@ -154,6 +156,28 @@ namespace AdeeboMeter
             Theme.Fill(g, vb, 10 * S, bg);
             using (var b = new SolidBrush(fg)) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 20 * S;
+            if (d == null)
+            {
+                // one tap to check again: this session's checks and your pinned places (PLAN 11.5)
+                var chips = destRecent.Concat(Cfg.Pins).Distinct(StringComparer.OrdinalIgnoreCase).Take(10).ToList();
+                if (chips.Count > 0)
+                {
+                    float cx0 = x;
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("AGAIN"), Draw.fTiny, mb, cx0, y + 8 * S);
+                    cx0 += g.MeasureString(L.T("AGAIN"), Draw.fTiny).Width + 12 * S; float cy0 = y;
+                    foreach (var c0 in chips)
+                    {
+                        string c = c0; bool pin = Cfg.Pins.Contains(c); var cs = g.MeasureString(c, Draw.fSmall); float cw = cs.Width + (pin ? 38 : 24) * S;
+                        if (cx0 + cw > x + w) { cx0 = x; cy0 += 36 * S; }
+                        var cr = new RectangleF(cx0, cy0, cw, 28 * S); Theme.Fill(g, cr, 14 * S, Kit.Soft("dest"));
+                        if (pin) Kit.Icon(g, "pin", new RectangleF(cr.X + 10 * S, cr.Y + 7 * S, 14 * S, 14 * S), Kit.Accent("dest"));
+                        using (var cb = new SolidBrush(Kit.Ink("dest"))) g.DrawString(c, Draw.fSmall, cb, cr.X + (pin ? 26 : 12) * S, cr.Y + (cr.Height - cs.Height) / 2);
+                        Act(destCanvas, cr, delegate { if (destRunning) return; destBox.Box.Text = c; StartDest(); });
+                        cx0 += cw + 8 * S;
+                    }
+                    y = cy0 + 46 * S;
+                }
+            }
             if (done)
             {
                 // Copy as text and Save: only when you press them, only where you choose
@@ -163,15 +187,18 @@ namespace AdeeboMeter
                 var dd = d; Act(destCanvas, cr, delegate { try { Clipboard.SetText(dd.Text()); destCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } destCanvas.Invalidate(); });
                 Act(destCanvas, sr, delegate { SaveText("AdeeboMeter-check-" + Draw.Trunc(dd.Target, 40).Replace(':', '-'), dd.Text()); });
             }
-            int n = DestResult.Steps.Length; float slot = w / n, dot = 18 * S;
+            int n = DestResult.Steps.Length; float slot = w / n, dot = 30 * S;
             using (var line = new Pen(Theme.Rail, 2 * S)) for (int i = 0; i < n - 1; i++) g.DrawLine(line, x + slot * i + slot / 2 + dot / 2 + 2 * S, y + dot / 2, x + slot * (i + 1) + slot / 2 - dot / 2 - 2 * S, y + dot / 2);
             using (var center = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 for (int i = 0; i < n; i++)
                 {
                     float cx = x + slot * i + slot / 2;
                     int sl = d == null ? -1 : d.Lv[i]; bool cur = d != null && !done && d.Running == i;
-                    if (cur) { using (var b = new SolidBrush(Theme.Card)) g.FillEllipse(b, cx - dot / 2, y, dot, dot); using (var p = new Pen(Theme.Blue, 3 * S)) g.DrawEllipse(p, cx - dot / 2, y, dot, dot); }
-                    else using (var b = new SolidBrush(sl < 0 ? Theme.Track : Theme.Lv(sl))) g.FillEllipse(b, cx - dot / 2, y, dot, dot);
+                    // each step has its icon; it lights up in its result's colour as the check passes it
+                    var dr = new RectangleF(cx - dot / 2, y, dot, dot);
+                    if (cur) { using (var b = new SolidBrush(Theme.Card)) g.FillEllipse(b, dr); using (var p = new Pen(Theme.Blue, 3 * S)) g.DrawEllipse(p, dr); }
+                    else using (var b = new SolidBrush(sl < 0 ? Theme.Track : Theme.LvSoft(sl))) g.FillEllipse(b, dr);
+                    Kit.Icon(g, DestIcons[i], new RectangleF(dr.X + 8 * S, dr.Y + 8 * S, dot - 16 * S, dot - 16 * S), cur ? Theme.Blue : sl < 0 ? Theme.Muted : Theme.Lv(sl));
                     using (var b = new SolidBrush(Theme.Ink)) g.DrawString(DestResult.Steps[i], Draw.fName, b, new RectangleF(cx - slot / 2, y + dot + 3 * S, slot, 18 * S), center);
                     Hint(destCanvas, new RectangleF(cx - slot / 2, y - 4 * S, slot, dot + 44 * S), "step." + DestResult.Steps[i]);
                     string v = d == null ? "-" : cur ? "checking..." : d.Val[i] ?? "-";

@@ -1113,5 +1113,50 @@ Nothing here by that name. Fewer words usually find it.	Rien sous ce nom. Moins 
 Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	Rien trouvé. Cherchez la chose, pas le symptôme : « dns », « wifi », « port ».
 Not a thing I have. Yet. Try another word?	Je n'ai pas ça. Pas encore. Un autre mot ?
 Searched every drawer. Try a shorter word.	J'ai fouillé tous les tiroirs. Essayez un mot plus court.
-RIGHT NOW	EN CE MOMENT
 Pick a question - the right tool comes up.	Choisissez une question - le bon outil apparaît.
+Navigation	Navigation
+Layout	Disposition
+Classic	Classique
+Sidebar	Barre latérale
+ON YOUR BAR	SUR VOTRE BARRE
+IN MORE	DANS PLUS
+YOUR OWN TABS	VOS ONGLETS
+always first	toujours en premier
+To More	Vers Plus
+Up	Monter
+Down	Descendre
+To the bar	Vers la barre
+Bar is full	Barre pleine
+Everything is on the bar.	Tout est sur la barre.
+item	élément
+items	éléments
+Delete	Supprimer
+Rename tab	Renommer l'onglet
+Name your tab	Nommez votre onglet
+Work	Travail
+New tab	Nouvel onglet
+Delete this tab and its pins?	Supprimer cet onglet et ses épingles ?
+Pin tools, pages, sites and settings to a tab from a tool page (Pin) or a search result (Ctrl+P).	Épinglez outils, pages, sites et réglages à un onglet depuis la page d'un outil (Épingler) ou un résultat de recherche (Ctrl+P).
+Reset to default	Rétablir par défaut
+NETWORK MATHS	CALCULS RÉSEAU
+WIRELESS MATHS	CALCULS RADIO
+SERVERS & IT MATHS	CALCULS SERVEURS ET TI
+STREAMING & HOME MATHS	CALCULS STREAMING ET MAISON
+VOICE & TDM MATHS	CALCULS VOIX ET TDM
+Wildcard mask	Masque générique (wildcard)
+IPv6 prefix split	Découper un préfixe IPv6
+BDP and TCP window	BDP et fenêtre TCP
+Bits, bytes and units	Bits, octets et unités
+LTE and 5G throughput	Débit LTE et 5G
+Wi-Fi speed by channel width	Vitesse Wi-Fi selon la largeur de canal
+Link budget (Wi-Fi, microwave)	Bilan de liaison (Wi-Fi, micro-ondes)
+RAID capacity	Capacité RAID
+Backup and restore time	Durée de sauvegarde et de restauration
+UPS runtime	Autonomie de l'onduleur
+Uptime and downtime (SLA)	Disponibilité et indisponibilité (SLA)
+When does storage fill up?	Quand le stockage sera-t-il plein ?
+Streaming bitrate and upload	Débit de streaming et envoi
+Monthly data use	Données utilisées par mois
+Is my plan fast enough?	Mon forfait est-il assez rapide ?
+E1 and T1 timeslots	Intervalles de temps E1 et T1
+Jitter buffer size	Taille du tampon de gigue
