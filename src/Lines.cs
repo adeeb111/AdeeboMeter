@@ -36,8 +36,10 @@ namespace AdeeboMeter
         // ---------- words of comfort (opt-in, PLAN 11.7d): a verse from a public-domain translation, word for word, with its
         // reference. Only in calm moments - a greeting or a quiet stretch - never in Roast, never next to a problem, never
         // in Surprise me, and never chosen for you.
-        public static readonly string[] Faiths = { "off", "islam", "christianity", "judaism", "hinduism", "buddhism", "sikhism" };
-        public static readonly string[] FaithNames = { "Off", "Islam", "Christianity", "Judaism", "Hinduism", "Buddhism", "Sikhism" };
+        // "common": no faith named - short lines on what the traditions share (patience, kindness, gratitude), in plain words,
+        // never presented as a quote from any scripture
+        public static readonly string[] Faiths = { "off", "common", "islam", "christianity", "judaism", "hinduism", "buddhism", "sikhism" };
+        public static readonly string[] FaithNames = { "Off", "Common to all", "Islam", "Christianity", "Judaism", "Hinduism", "Buddhism", "Sikhism" };
         public static volatile string Faith = "off";
         static List<string[]> comfort;
         public static List<string[]> Comforts()
@@ -55,7 +57,8 @@ namespace AdeeboMeter
         {
             if (Faith == "off" || Voice.Serious || Mood == "roast") return "";
             var l = Comforts().Where(c => c[0] == Faith).ToList(); if (l.Count == 0) return "";
-            var c0 = l[DateTime.Today.DayOfYear % l.Count]; return "\u201C" + c0[1] + "\u201D  - " + c0[2];
+            var c0 = l[DateTime.Today.DayOfYear % l.Count];
+            return Faith == "common" ? c0[1] + "  - " + c0[2] : "\u201C" + c0[1] + "\u201D  - " + c0[2];   // our own words get no quotation marks
         }
 
         // ---------- settings (Cfg reads and writes these; volatile: the Monitor thread draws the widget line)

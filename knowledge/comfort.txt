@@ -24,3 +24,13 @@ buddhism|Let us live happily then, not hating those who hate us! among men who h
 hinduism|Let right deeds be Thy motive, not the fruit which comes from them.|Bhagavad Gita, Chapter II (Edwin Arnold)
 # Sikhism - Max Arthur Macauliffe, The Sikh Religion (1909)
 sikhism|There is but one God whose name is True, the Creator, devoid of fear and enmity, immortal, unborn, self-existent, great, and bountiful.|Japji, preamble (Macauliffe)
+# Common to all - no faith named: plain words on what the traditions share. Written for AdeeboMeter, never presented
+# as a quote from any scripture; the reference line says so.
+common|Treat others the way you hope to be treated.|The golden rule - shared by many faiths
+common|Hard times pass. Patience is honoured in every tradition.|Shared by many faiths
+common|Be grateful for what is going right today.|Shared by many faiths
+common|Speak gently. Kindness is never wasted.|Shared by many faiths
+common|Rest is part of the work. Breathe.|Shared by many faiths
+common|Forgive, and your own load gets lighter.|Shared by many faiths
+common|Help someone today, even in a small way.|Shared by many faiths
+common|Peace starts in a quiet heart.|Shared by many faiths

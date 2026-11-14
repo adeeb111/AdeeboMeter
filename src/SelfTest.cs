@@ -941,7 +941,7 @@ namespace AdeeboMeter
                 }
                 finally { Lines.Mood = pm; Lines.Persona = pp; Lines.Addr = pa; Voice.Serious = ps; }
                 foreach (var f in Lines.Faiths.Skip(1)) if (!Lines.Comforts().Any(c => c[0] == f)) bad.Add("comfort: nothing for " + f);
-                if (Lines.Comforts().Any(c => c[1].Length < 10 || c[2].IndexOf('(') < 0)) bad.Add("comfort: a verse without its translation");
+                if (Lines.Comforts().Any(c => c[1].Length < 10 || (c[0] == "common" ? c[2].IndexOf("faiths", StringComparison.Ordinal) < 0 : c[2].IndexOf('(') < 0))) bad.Add("comfort: a verse without its translation (or a shared line that doesn't say it's shared)");
                 string fm = Lines.Faith, mo = Lines.Mood; try { Lines.Faith = "islam"; Lines.Mood = "roast"; if (Lines.Comfort() != "") bad.Add("comfort shown in Roast"); Lines.Mood = "chill"; if (Lines.Comfort() == "") bad.Add("comfort missing"); } finally { Lines.Faith = fm; Lines.Mood = mo; }
                 foreach (var m in new[] { "smug", "sweaty", "worried", "dizzy", "betrayed", "asleep", "smile" }) if (typeof(Draw).Assembly.GetManifestResourceStream("AdeeboMeter.emoji." + Draw.EmojiFor(m) + ".png") == null) bad.Add("emoji face missing for " + m);
                 int surprise = Enumerable.Range(0, 366).Count(d => Draw.SurpriseFace(new DateTime(2027, 1, 1).AddDays(d)) != null); if (surprise < 5 || surprise > 40) bad.Add("surprise faces on " + surprise + " days a year");
