@@ -66,6 +66,7 @@ namespace AdeeboMeter
 
         public FullView(Icon icon, Monitor m)
         {
+            Draw.Use(Draw.ViewScale);   // the window's zoom (the corner widget keeps the screen's own scale)
             M = m; snap = m.Latest; Knowledge.Hold = true;
             // freeze watchdog: the window answers a ping every second; if it doesn't for 2 s, the log says what it was doing
             watchdog = new System.Threading.Timer(delegate
@@ -312,15 +313,22 @@ namespace AdeeboMeter
             int ti = 0; foreach (var c in left.Controls.Cast<Control>().Where(c => c.Dock == DockStyle.Top).OrderBy(c => c.Top)) c.TabIndex = ti++;
             foreach (var c in left.Controls.Cast<Control>().Where(c => c.Dock != DockStyle.Top)) c.TabIndex = 100 + ti++;
             pathPanel.Height = PathHeight; ApplyLayout(); ApplyMode();
+            if (StartTab != null) { tab = StartTab; StartTab = null; }   // built again after a zoom: the same page
             ShowTab();
 
             timer = new System.Windows.Forms.Timer { Interval = 500 };
             timer.Tick += delegate { OnTimer(); };
             KeyDown += delegate(object s, KeyEventArgs e)
             {
+                // zoom: Ctrl + / Ctrl - / Ctrl 0 (the main keyboard and the number pad)
+                if (e.Control && (e.KeyCode == Keys.Oemplus || e.KeyCode == Keys.Add)) { e.SuppressKeyPress = true; ZoomBy(1); return; }
+                if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract)) { e.SuppressKeyPress = true; ZoomBy(-1); return; }
+                if (e.Control && (e.KeyCode == Keys.D0 || e.KeyCode == Keys.NumPad0)) { e.SuppressKeyPress = true; ZoomTo(100); return; }
                 if (e.KeyCode == Keys.Escape)
                 {
                     if (topMenu != null && topMenu.Visible) { e.SuppressKeyPress = true; HideTopMenu(); return; }
+                    if (buddySheet != null && buddySheet.Visible) { e.SuppressKeyPress = true; HideBuddySheet(); return; }
+                    if (pageMenu != null && pageMenu.Visible) { e.SuppressKeyPress = true; HidePageMenu(); return; }
                     if (viewSheet != null && viewSheet.Visible) { e.SuppressKeyPress = true; if (switchingTo == null) HideViewSheet(); return; }   // the view sheet closes first
                     if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return;   // its own handler clears it
                     if (tab == "toolbox" && tbSearch != null && tbSearch.Box.Text != "" && toolboxPage.ContainsFocus) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; return; }   // a filter is on: Esc clears it first
@@ -390,7 +398,7 @@ namespace AdeeboMeter
             if (on && onlineChip.Text != t) onlineChip.Text = t;
         }
         static System.Collections.Generic.IEnumerable<Control> Descendants(Control r) { foreach (Control c in r.Controls) { yield return c; foreach (var d in Descendants(c)) yield return d; } }
-        static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; }
+        static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; }
 
         string bugPage = "overview"; DateTime bugCopied = DateTime.MinValue;   // the page a bug report names: the last one before About
         void ShowTab()
@@ -830,7 +838,8 @@ namespace AdeeboMeter
                 List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) return;
                 for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; string usedTab = tab; l[i].Value(); PageUsed(usedTab); return; }   /* Adeebo Points: a page counts as used when something on it was really clicked */
             };
-            c.MouseWheel += delegate { SetTipKey(null); };
+            c.MouseWheel += delegate(object s, MouseEventArgs e) { SetTipKey(null); if (ModifierKeys == Keys.Control && e.Delta != 0) ZoomBy(e.Delta > 0 ? 1 : -1); };   // Ctrl + wheel zooms
+            c.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Right && !IsPopup(c)) PageMenu(c, e.Location); };
         }
         void SetTipKey(string key)
         {

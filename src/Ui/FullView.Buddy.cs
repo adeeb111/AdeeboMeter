@@ -86,38 +86,6 @@ namespace AdeeboMeter
             }
             return null;
         }
-        // the Mood menu: Fun lines on/off, the moods, who talks (Surprise me first), and the rest of the companion settings
-        void ShowMoodMenu(System.Windows.Forms.Control at, Point p)
-        {
-            var m = new System.Windows.Forms.ContextMenuStrip { ShowImageMargin = true, Font = Draw.fBody };
-            System.Windows.Forms.ToolStripMenuItem fun = new System.Windows.Forms.ToolStripMenuItem(L.T("Fun lines")) { Checked = !Voice.Serious };
-            fun.Click += delegate { Voice.Serious = !Voice.Serious; Cfg.Save(); Invalidate(true); }; m.Items.Add(fun);
-            m.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            m.Items.Add(new System.Windows.Forms.ToolStripLabel(L.T("MOOD")) { Font = Draw.fTiny, ForeColor = Theme.Muted });
-            for (int i = 0; i < Lines.Moods.Length; i++)
-            {
-                string id = Lines.Moods[i]; var it = new System.Windows.Forms.ToolStripMenuItem(L.T(Lines.MoodNames[i])) { Checked = !Voice.Serious && Lines.Mood == id };
-                it.Click += delegate { if (id == "plain") { Voice.Serious = true; } else { Voice.Serious = false; Lines.Mood = id; } Cfg.Save(); Invalidate(true); };
-                m.Items.Add(it);
-            }
-            m.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            var talk = new System.Windows.Forms.ToolStripMenuItem(L.T("Talk like...") + "  (" + L.T(Lines.PersonaName(Lines.Persona)) + ")");
-            Action<System.Windows.Forms.ToolStripMenuItem, string> addP = (parent, id) =>
-            {
-                var it = new System.Windows.Forms.ToolStripMenuItem(L.T(Lines.PersonaName(id))) { Checked = Lines.Persona == id };
-                it.Click += delegate { Lines.Persona = id; Voice.Serious = false; Cfg.Save(); Invalidate(true); };
-                parent.DropDownItems.Add(it);
-            };
-            addP(talk, "surprise");
-            for (int i = 0; i < Lines.Featured; i++) addP(talk, Lines.Personas[i][0]);
-            var more = new System.Windows.Forms.ToolStripMenuItem(L.T("More personas"));
-            for (int i = Lines.Featured; i < Lines.Personas.Length; i++) addP(more, Lines.Personas[i][0]);
-            talk.DropDownItems.Add(more); talk.DropDownItems.Add(new System.Windows.Forms.ToolStripSeparator()); addP(talk, "none");
-            m.Items.Add(talk);
-            var set = new System.Windows.Forms.ToolStripMenuItem(L.T("Companion settings...")); set.Click += delegate { OpenSettingsAt("Companion"); }; m.Items.Add(set);
-            m.Closed += delegate { BeginInvoke((Action)m.Dispose); };
-            m.Show(at, p);
-        }
         // Settings > Companion: a live preview, then "Talk like..." as tiles - Surprise me first, the featured ones, the rest
         float PaintCompanion(Graphics g, float x, float y, float w)
         {

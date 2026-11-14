@@ -168,7 +168,7 @@ namespace AdeeboMeter
         void DrawRow(object s, DrawItemEventArgs e)
         {
             if (e.Index < 0) return; var it = (PalItem)list.Items[e.Index]; var g = e.Graphics; var b0 = e.Bounds;
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
             using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, b0);
             if (it.Header)
             {

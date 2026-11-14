@@ -54,7 +54,7 @@ namespace AdeeboMeter
         public AppCtx()
         {
             float sc; using (var g = Graphics.FromHwnd(IntPtr.Zero)) sc = g.DpiX / 96f;
-            Draw.Init(sc);
+            Draw.Init(sc); Draw.Base = sc;
             appIcon = Theme.MakeIcon(32);
             marshal.CreateControl(); var h = marshal.Handle;
             settingsPath = Path.Combine(Program.WriteDir, "AdeeboMeter.settings");
@@ -279,7 +279,13 @@ namespace AdeeboMeter
                 };
             }
             M.ViewOpen = true; M.Nudge();
-            full.Show(); if (full.WindowState == FormWindowState.Minimized) full.WindowState = FormWindowState.Maximized;
+            full.Show();
+            FullView.ReopenAsked = delegate
+            {
+                // a new zoom: the window is built again at the new size, on the same page
+                if (full == null || full.IsDisposed) return;
+                var old = full; full = null; old.Close(); OpenFull();
+            }; if (full.WindowState == FormWindowState.Minimized) full.WindowState = FormWindowState.Maximized;
             full.Activate();
         }
 
@@ -419,6 +425,11 @@ namespace AdeeboMeter
         }
 
         void Render(Snap s, bool compact)
+        {
+            float keep = Draw.S; Draw.Use(Draw.Base);   // the corner widget is drawn at the screen's own scale - the window's zoom isn't for it
+            try { RenderAt(s, compact); } finally { Draw.Use(keep); }
+        }
+        void RenderAt(Snap s, bool compact)
         {
             var wa = WidgetScreen().WorkingArea; int m = (int)(10 * Draw.S);
             using (var bmp = compact ? Draw.Chip(s, dwell) : Draw.Card(s, hits))

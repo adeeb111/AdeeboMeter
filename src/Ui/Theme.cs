@@ -214,6 +214,22 @@ namespace AdeeboMeter
             }
         }
         public static float S = 1;
+        public static float Base = 1;   // the screen's own scale; the window adds its zoom on top (Cfg.Zoom), the corner widget never does
+        // switch the drawing scale: each scale's fonts are made once and kept (at most three sets), so swapping is instant
+        static readonly Dictionary<int, Font[]> sets = new Dictionary<int, Font[]>();
+        static int K(float s) { return (int)Math.Round(s * 1000); }
+        static Font[] Grab() { return new[] { fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput, fHero, fValue, fCardNum, fZ, fBtn }; }
+        static void Put(Font[] a) { fName = a[0]; fHead = a[1]; fBody = a[2]; fBodyB = a[3]; fMono = a[4]; fMonoS = a[5]; fTiny = a[6]; fPill = a[7]; fSmall = a[8]; fBig = a[9]; fTitle = a[10]; fInput = a[11]; fHero = a[12]; fValue = a[13]; fCardNum = a[14]; fZ = a[15]; fBtn = a[16]; }
+        public static void Use(float s)
+        {
+            if (fName == null) { Init(s); return; }
+            if (Math.Abs(s - S) < 0.0005f) return;
+            if (!sets.ContainsKey(K(S))) sets[K(S)] = Grab();
+            Font[] f; if (sets.TryGetValue(K(s), out f)) { Put(f); S = s; return; }
+            if (sets.Count >= 3) foreach (var key in sets.Keys.Where(z => z != K(Base) && z != K(S)).ToList()) { foreach (var x in sets[key]) x.Dispose(); sets.Remove(key); }   // an old zoom: let it go
+            fName = null; Init(s); sets[K(s)] = Grab();
+        }
+        public static float ViewScale { get { return Base * Math.Max(80, Math.Min(175, Cfg.Zoom)) / 100f; } }
         public static Font fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput;
         static readonly Bitmap measureBmp = new Bitmap(1, 1);
         static Graphics measureG;
@@ -278,11 +294,13 @@ namespace AdeeboMeter
             // 1.1.5: the writing is Inter too - one modern typeface from headline to footnote (Segoe UI only if Inter failed to load)
             fBody = Ui(UiFam, 12.5f * S, FontStyle.Regular);
             fBodyB = Ui(UiSemi, 12.5f * S, UiSemiStyle);
-            fSmall = Ui(UiFam, 11 * S, FontStyle.Regular);
+            // Adeeb, 14 Nov: "the small writing is not even sharp" - Inter has no hinting, so below 12 px it goes soft on Windows.
+            // The small sizes use Windows' own text face (hinted for exactly these sizes); headings and body stay Inter.
+            fSmall = new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);   // 12 px: readable without a magnifier (was 11)
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = Ui(UiSemi, 9.5f * S, UiSemiStyle);
-            fPill = Ui(UiSemi, 10.5f * S, UiSemiStyle);
+            fTiny = new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals (was 9.5)
+            fPill = new Font(semi, 11 * S, semiStyle, GraphicsUnit.Pixel);
             fBig = Ui(UiFam, 20 * S, FontStyle.Bold);
             fTitle = Ui(UiFam, 16 * S, FontStyle.Bold);
             fHero = Ui(UiFam, 30 * S, FontStyle.Bold);
@@ -365,7 +383,7 @@ namespace AdeeboMeter
         }
         // ---------- emoji faces (PLAN 11.7c): Twemoji, CC-BY 4.0 (assets\emoji\CREDIT.txt), embedded PNGs loaded on first use
         static readonly Dictionary<string, Bitmap> emoji = new Dictionary<string, Bitmap>(StringComparer.Ordinal);
-        static Bitmap Emoji(string code)
+        internal static Bitmap Emoji(string code)
         {
             lock (emoji)
             {
@@ -374,6 +392,11 @@ namespace AdeeboMeter
                 emoji[code] = b; return b;
             }
         }
+        // the window's text: ClearType when Windows uses it (sharp on an LCD, on the window's solid backgrounds), plain
+        // smoothing otherwise; the corner widget keeps plain smoothing (it's drawn on see-through pixels)
+        public static TextRenderingHint WindowText { get { try { return SystemInformation.IsFontSmoothingEnabled && SystemInformation.FontSmoothingType == 2 ? TextRenderingHint.ClearTypeGridFit : TextRenderingHint.AntiAliasGridFit; } catch (InvalidOperationException) { return TextRenderingHint.AntiAliasGridFit; } } }
+        // the calm face of a mood (the buddy sheet's chips)
+        public static string MoodEmoji(string mood) { switch (mood) { case "roast": return "1f60f"; case "hype": return "1f929"; case "support": return "1f60a"; case "bossy": return "1f624"; case "emo": return "1f614"; case "plain": return "1f610"; default: return "1f60c"; } }
         // the face for a state; the calm face follows the mood
         public static string EmojiFor(string m)
         {

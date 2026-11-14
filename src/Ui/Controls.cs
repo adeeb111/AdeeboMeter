@@ -159,7 +159,7 @@ namespace AdeeboMeter
         protected override void OnTextChanged(EventArgs e) { Fit(); Invalidate(); AccessibleName = Text; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); base.OnTextChanged(e); }   // "Start live capture" -> "Stop" is announced
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
             float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             Color ac = Kit.Accent(accent), acSoft = accent == null ? Theme.BlueSoft : Kit.Soft(accent), acInk = accent == null ? Theme.BlueDark : Kit.Ink(accent);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
@@ -215,7 +215,7 @@ namespace AdeeboMeter
         protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2); float h = r.Height;
             // calm: a soft grey pill with no hard edge; the blue magnifier is what catches the eye
@@ -410,7 +410,7 @@ namespace AdeeboMeter
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
             int w = Width - sb.Width; var cols = Cols(Width); float x0 = 14 * S;
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
             using (var line = new Pen(Theme.Line2))
@@ -573,7 +573,7 @@ namespace AdeeboMeter
         protected override void Dispose(bool disposing) { if (disposing) anim.Dispose(); base.Dispose(disposing); }
         protected override void OnPaint(PaintEventArgs pe)
         {
-            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; float S = Draw.S;
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; float S = Draw.S;
             using (var bg = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(bg, ClientRectangle);
             string t = L.T(Text); var ts = g.MeasureString(t, Draw.fBody);
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fBody, ink, 0, (Height - ts.Height) / 2);
@@ -671,7 +671,7 @@ namespace AdeeboMeter
         }
         protected override void OnPaint(PaintEventArgs pe)
         {
-            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
             using (var b = new SolidBrush(Theme.Card)) g.FillRectangle(b, ClientRectangle);
             using (var p = new Pen(Theme.Line)) g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
             using (var a = new SolidBrush(Theme.Blue)) g.FillRectangle(a, 0, 0, 4 * Draw.S, Height);
