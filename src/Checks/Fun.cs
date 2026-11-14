@@ -224,7 +224,7 @@ namespace AdeeboMeter
                     using (var f1 = new Font("Segoe UI", 54, FontStyle.Bold, GraphicsUnit.Pixel)) using (var wb = new SolidBrush(Color.White)) gr.DrawString("my network got roasted", f1, wb, 72, 70);
                     using (var f2 = new Font("Segoe UI", 300, FontStyle.Bold, GraphicsUnit.Pixel)) using (var gb = new SolidBrush(gc)) gr.DrawString(g, f2, gb, 50, 130);
                     var face = new Snap(); face.Path = !w.History && w.Path != null ? w.Path : g.StartsWith("A", StringComparison.Ordinal) ? new[] { 0, 0, 0, 0, 0 } : g == "B" || g == "C" ? new[] { 0, 0, 1, 0, 0 } : new[] { 0, 0, 2, 0, 0 };
-                    Draw.Buddy(gr, new RectangleF(Z - 400, 190, 300, 300), face, false);
+                    Draw.Buddy(gr, new RectangleF(Z - 400, 190, 300, 300), face, false, true);
                     float y = 560;
                     using (var f3 = new Font("Segoe UI", 38, FontStyle.Regular, GraphicsUnit.Pixel)) using (var tb = new SolidBrush(Color.FromArgb(240, 240, 250)))
                         foreach (var b in burns) { var sz = gr.MeasureString(b, f3, Z - 144); if (y + sz.Height > Z - 110) break; gr.DrawString(b, f3, tb, new RectangleF(72, y, Z - 144, sz.Height + 4)); y += sz.Height + 22; }

@@ -1205,3 +1205,6 @@ Import lines	Importer des répliques
 Add these lines to yours?	Ajouter ces répliques aux vôtres ?
 Couldn't save your lines.	Impossible d'enregistrer vos répliques.
 Credits	Crédits
+New: the Sidebar layout - sections down the left, search on top, a live meter.	Nouveau : la barre latérale - les sections à gauche, la recherche en haut, un compteur en direct.
+Try it	Essayer
+No thanks	Non merci

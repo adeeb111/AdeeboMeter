@@ -952,6 +952,22 @@ namespace AdeeboMeter
                 sb.AppendLine("      " + n + " built-in lines in " + (1 + Lines.Moods.Length - 1 + Lines.Personas.Length) + " files");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)) + (bad.Count > 8 ? " (+" + (bad.Count - 8) + " more)" : ""));
             });
+            T("never slow, never silent: pages draw fast in both layouts and themes, tools start off the window thread, the freeze card shows", () =>
+            {
+                using (var icon = Theme.MakeIcon(16))
+                {
+                    var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
+                    try
+                    {
+                        // 30 ms on a real PC; Wine draws text in software, so the self-test there allows 4x and reports the numbers
+                        double lim = Program.IsWine ? 120 : 30;
+                        string b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, Program.IsWine ? 400 : 100), b3 = FullView.FreezeCheck(sb);
+                        string all = string.Join("; ", new[] { b1, b2, b3 }.Where(z => z != ""));
+                        if (all != "") throw new InvalidOperationException(all);
+                    }
+                    finally { fv.Close(); fv.Dispose(); }
+                }
+            });
             T("calculators 1.1.5: NR, LTE, Wi-Fi, link budget, RAID, SLA, jitter buffer give the textbook numbers", () =>
             {
                 Func<List<string[]>, string> v0 = r => r.Count > 0 ? r[0][2] : "";

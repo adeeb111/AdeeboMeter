@@ -49,16 +49,20 @@ namespace AdeeboMeter
         public static void Shadow(Graphics g, RectangleF r, float rad)
         {
             if (Theme.HighContrast) return;
-            int[] a = Theme.Dark ? new[] { 40, 26, 16, 8 } : new[] { 14, 10, 7, 4 };
-            for (int i = 0; i < 4; i++)
+            // two soft layers (four cost twice the time for a difference nobody sees - PLAN 11.8a, 30 ms a page)
+            int[] a = Theme.Dark ? new[] { 46, 18 } : new[] { 18, 8 };
+            for (int i = 0; i < 2; i++)
             {
-                float k = (i + 1) * S;
+                float k = (i * 2 + 1.5f) * S;
                 using (var p = Theme.Round(new RectangleF(r.X - k * 0.5f, r.Y + k * 0.6f, r.Width + k, r.Height + k * 0.5f), rad + k))
                 using (var b = new SolidBrush(Color.FromArgb(a[i], 15, 23, 42))) g.FillPath(b, p);
             }
         }
+        // off screen (scrolled away): nothing to draw
+        public static bool Off(Graphics g, RectangleF r) { var c = g.ClipBounds; return r.Bottom + 8 * S < c.Top || r.Top - 8 * S > c.Bottom || r.Right + 8 * S < c.Left || r.Left - 8 * S > c.Right; }
         public static void Card(Graphics g, RectangleF r, string accent, bool hot)
         {
+            if (Off(g, r)) return;
             float rad = 16 * S;
             Shadow(g, r, rad);
             Theme.Fill(g, r, rad, Theme.Card);
@@ -89,6 +93,7 @@ namespace AdeeboMeter
         // the More menu and anywhere a choice was a paragraph.
         public static void Tile(Graphics g, RectangleF r, string icon, string title, string hint, string accent, bool hot, int level)
         {
+            if (Off(g, r)) return;
             Card(g, r, null, hot);
             if (hot) Theme.Stroke(g, r, 16 * S, Accent(accent), 1.5f * S);
             float d = Math.Min(38 * S, r.Height - 20 * S), cx = r.X + 14 * S, cy = r.Y + (r.Height - d) / 2;

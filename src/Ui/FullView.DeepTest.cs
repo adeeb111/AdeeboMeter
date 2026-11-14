@@ -178,6 +178,18 @@ namespace AdeeboMeter
             }, 2000);
             ui("every section 3 times", () => { for (int i = 0; i < 3; i++) foreach (var sc in Secs) { tab = sc[2]; ShowTab(); Refresh(); Application.DoEvents(); } tab = "toolbox"; ShowTab(); }, 3 * Secs.Length * 400);
 
+            // penny rule (PLAN 11.8a): 60 s sitting on the busiest page - own CPU over 1% of the PC, or memory over 64 MB, fails
+            if (!skipped)
+            {
+                head("Penny check: 60 s on Home, idle");
+                tab = "overview"; ShowTab(); Application.DoEvents(); GC.Collect(); me.Refresh();
+                var cpu0 = me.TotalProcessorTime; var wall = Stopwatch.StartNew();
+                while (wall.Elapsed.TotalSeconds < 60) { Application.DoEvents(); Thread.Sleep(50); }
+                me.Refresh(); double pct = (me.TotalProcessorTime - cpu0).TotalMilliseconds / (wall.Elapsed.TotalMilliseconds * Environment.ProcessorCount) * 100; long mb = me.PrivateMemorySize64 / 1048576;
+                bool ok = pct <= 1.0 && mb <= 64;
+                sb.AppendLine((ok ? "PASS" : "FAIL") + "  own CPU " + pct.ToString("0.00", CultureInfo.InvariantCulture) + "% of this PC (" + Environment.ProcessorCount + " cores) · memory " + mb + " MB (limits 1% and 64 MB)");
+                if (!ok) fails++;
+            }
             // summary
             GC.Collect(); GC.WaitForPendingFinalizers(); Thread.Sleep(500); me.Refresh();
             head("Summary");

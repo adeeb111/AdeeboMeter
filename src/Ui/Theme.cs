@@ -378,12 +378,14 @@ namespace AdeeboMeter
             if (now.Minute != 0 || now.Second > 2 || s == null || s.Call || s.Level > 0 || UiActivity.ToolRunning) return null;
             return now.Hour == 22 || now.Hour == 23 ? "asleep" : "smile";
         }
-        public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep)
+        public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep) { Buddy(g, r, s, asleep, false); }
+        // forFile: a picture that gets saved or shared - never the surprise face or the hour mark (they're on-screen moments)
+        public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep, bool forFile)
         {
             string m = asleep ? "asleep" : BuddyMood(s);
-            string hm = asleep ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
-            string face = m == "smug" || m == "smile" ? SurpriseFace(DateTime.Today) : null;
-            if (face == null && Cfg.BuddyFace == "emoji") face = EmojiFor(m);
+            string hm = asleep || forFile ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
+            string face = !forFile && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
+            if (face == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
             var em = face != null ? Emoji(face) : null;
             if (em != null)
             {

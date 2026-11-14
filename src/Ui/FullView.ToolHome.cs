@@ -132,6 +132,7 @@ namespace AdeeboMeter
                 // search, and its points: "+2" not tried yet, a tick once earned
                 Func<Tool, RectangleF, string, float> toolRow = (t, r, where) =>
                 {
+                    if (Kit.Off(g, r)) { string id0 = t.Id; Act(tbCanvas, r, delegate { tbSearch.Box.Text = ""; OpenTool(id0); }); Hint(tbCanvas, r, "tb." + id0); return r.Height; }   // scrolled away: clickable, not drawn
                     string q = QuestionOf(t), acc = QAccent(q);
                     Theme.Fill(g, r, 10 * S, Theme.Soft);
                     string title = t.Id == "snmp" ? L.T("SNMP - ask a switch or router") : L.T(t.Title);

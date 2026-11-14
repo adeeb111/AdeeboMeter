@@ -36,7 +36,7 @@ namespace AdeeboMeter
         readonly FlowLayoutPanel tabs, chips; readonly PillButton idle, checkBtn, healthBtn;
         readonly System.Windows.Forms.Timer timer;
         Snap snap; int lastVersion = -1;
-        System.Threading.Timer watchdog; DateTime lastPong = DateTime.UtcNow; volatile bool pinged, frozenLogged; string frozeDoing = "";
+        System.Threading.Timer watchdog; volatile bool Visible0; Rectangle lastBounds; DateTime lastPong = DateTime.UtcNow; volatile bool pinged, frozenLogged; string frozeDoing = "";
         Panel leftPane; string tab = "overview", lastPage = "overview", curSec;
         readonly FlowLayoutPanel subTabs; readonly Dictionary<string, List<Control>> subBtns = new Dictionary<string, List<Control>>(); readonly Dictionary<string, string> lastIn = new Dictionary<string, string>();
         readonly string dumpcap, wireshark; readonly bool npcap;
@@ -73,7 +73,8 @@ namespace AdeeboMeter
                 if (!IsHandleCreated || IsDisposed || Disposing) return;
                 var since = DateTime.UtcNow - lastPong;
                 if (since.TotalSeconds >= 2 && !frozenLogged) { frozenLogged = true; frozeDoing = UiActivity.Doing; Program.Log("window froze (" + since.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s so far) while " + frozeDoing); }
-                if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; }); } catch (Exception) { pinged = false; } }   /* the window may be closing: an exception here would end the whole process (a timer thread) */
+                if (since.TotalSeconds >= 2 && Visible0) FreezeCard.Show(lastBounds, (int)since.TotalSeconds, UiActivity.Doing);   // the card on its own thread: you see it even while this window is stuck
+                if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; FreezeCard.Hide(); Visible0 = Visible && WindowState != FormWindowState.Minimized; if (Visible0) lastBounds = Bounds; }); } catch (Exception) { pinged = false; } }   /* the window may be closing: an exception here would end the whole process (a timer thread) */
             }, null, 1000, 1000);
             Text = "AdeeboMeter - " + Program.Tagline; Icon = icon; BackColor = Theme.Bg; Font = Draw.fBody;
             // Start at the size of the screen it opens on, so it fits even if maximizing is refused.
@@ -366,7 +367,7 @@ namespace AdeeboMeter
                 if (weekBmp != null) { weekBmp.Dispose(); weekBmp = null; }
                 // WinForms makes a small copy of the window icon for each window; resetting the icon releases it now, not "someday".
                 try { ShowIcon = false; Icon = null; } catch { }
-                Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
+                Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); FreezeCard.Hide(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
                 try { if (tip.IsHandleCreated) tip.Close(); } catch { } tip.Dispose(); live.Dispose(); list.ReleaseAll(); procs = new List<AppStat>(); pinResults = null;
                 foreach (var l in subBtns.Values) foreach (var c in l) if (!c.IsDisposed) c.Dispose(); subBtns.Clear(); connSnap = new List<Conn>(); treeRows = null; treeBy = null; svcs = null; startups = null; realPkts = null; realDecode = null; chatPkts = null; learnPkts = null; m365Rows = null; routeTable = null; travelDest = null; guideRun = null; replayDay = null; if (tbRun0 != null) tbRun0.Stop = true; mtuHops = null; mtrHops = null; tbRows = null; if (replayBmp != null) { replayBmp.Dispose(); replayBmp = null; } };
             Load += delegate { ApplyTheme(); };

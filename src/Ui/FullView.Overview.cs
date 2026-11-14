@@ -200,6 +200,20 @@ namespace AdeeboMeter
             var s = snap;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {
+                // once, after updating to 1.1.5: "Try the new Sidebar layout?" - closed or tried, never shown again (PLAN 11.7d)
+                if (!Cfg.SidebarTried && Cfg.Layout != "sidebar")
+                {
+                    var cr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
+                    Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + 19 * S, 20 * S, 20 * S), Kit.Accent("home"));
+                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("New: the Sidebar layout - sections down the left, search on top, a live meter."), Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + 19 * S, cr.Width - 300 * S, 22 * S));
+                    string tt = L.T("Try it"), nt = L.T("No thanks"); var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
+                    var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + 13 * S, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
+                    Theme.Fill(g, tr, 10 * S, Kit.Accent("home")); using (var wb = new SolidBrush(Color.White)) g.DrawString(tt, Draw.fBtn, wb, tr.X + 10 * S, tr.Y + (32 * S - ts.Height) / 2);
+                    using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(nt, Draw.fBtn, mb, nr.X + 8 * S, nr.Y + (32 * S - ns.Height) / 2);
+                    Act(overviewCanvas, tr, delegate { SetLayout("sidebar"); });
+                    Act(overviewCanvas, nr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+                    y += cr.Height + 14 * S;
+                }
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
                 string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
