@@ -20,7 +20,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> NavInfo = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             { "home", new[] { "Home", "home", "home" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
-            { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "time", new[] { "Time machine", "time", "time" } },
+            { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "trade", new[] { "Trading", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
             { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
             { "calc", new[] { "Calculators", "calc", "calc" } }, { "reports", new[] { "Reports", "report", "reports" } }

@@ -101,6 +101,7 @@ namespace AdeeboMeter
         public void Stop()
         {
             stop = true; wake.Set(); stopping.Set();
+            Trading.stopAll = true; try { Streams.End(DateTime.Now); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("streams end: " + e.Message); }   // a stream playing at exit still gets its record
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
             foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(1500);   // both finish their tick (the stop event wakes them; quitting never waits long) and release their counters
             samplerT = null; probeT = null;   // so Start() can run again
@@ -273,7 +274,8 @@ namespace AdeeboMeter
                     if (appsSec > 0 && (t0 - lastConnT).TotalSeconds >= appsSec - 0.2) ProbeConns();
                     if (procSec > 0 && (t0 - lastProc).TotalSeconds >= procSec - 0.2) { lastProc = t0; ProbeProcesses(lastCpu, ref lastProcT); }
                     if (Cfg.Call || ViewOpen) ProbeCall(); else lock (L) CallLikely = false;
-                    if (Streams.Active) Streams.Tick(this);   // a stream playing: one look at the whole path every 5 s
+                    if (Streams.Active) Streams.Tick(this);
+                    if (Cfg.TradeLive) Trading.Ensure(this);   // market open: the broker check runs on its own thread, every 2 s   // a stream playing: one look at the whole path every 5 s
                 }
                 catch (Exception e) { Program.Log("probe: " + e.Message); }
                 // Sleep until the next job is due (2 s with the view open or a call; 1 s just after waking; up to 30 s on Penny).

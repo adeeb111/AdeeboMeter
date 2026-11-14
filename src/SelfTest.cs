@@ -1001,6 +1001,19 @@ namespace AdeeboMeter
                 var v = Streams.Verdict4K(18, 3, 41, true); if (!v[3].StartsWith("4K|no", StringComparison.Ordinal) && !v[3].StartsWith("4K|risky", StringComparison.Ordinal)) throw new InvalidOperationException("18 Mb/s is not safe for 4K: " + v[3]);
                 if (!v[1].StartsWith("HD|safe", StringComparison.Ordinal) || v[4].IndexOf("Wi-Fi", StringComparison.Ordinal) < 0) throw new InvalidOperationException("18 Mb/s on weak Wi-Fi: HD safe, Wi-Fi named");
             });
+            T("trading: Bank of Canada rates parse with the day before, broker addresses are cleaned, market hours are Eastern weekdays", () =>
+            {
+                string json = "{\"terms\":{\"url\":\"x\"},\"seriesDetail\":{\"FXUSDCAD\":{\"label\":\"USD/CAD\"}},\"observations\":[{\"d\":\"2026-11-12\",\"FXUSDCAD\":{\"v\":\"1.3900\"},\"FXEURCAD\":{\"v\":\"1.5100\"}},{\"d\":\"2026-11-13\",\"FXUSDCAD\":{\"v\":\"1.3950\"},\"FXEURCAD\":{\"v\":\"1.5000\"},\"FXJPYCAD\":{\"v\":\"0.00912\"}}]}";
+                var r = Trading.ParseFx(json);
+                var usd = r.FirstOrDefault(z => z.Code == "USD"); var eur = r.FirstOrDefault(z => z.Code == "EUR"); var jpy = r.FirstOrDefault(z => z.Code == "JPY");
+                if (usd == null || usd.Cad != 1.395 || usd.Prev != 1.39 || usd.Day != new DateTime(2026, 11, 13)) throw new InvalidOperationException("USD wrong");
+                if (eur == null || eur.Cad != 1.5 || eur.Prev != 1.51) throw new InvalidOperationException("EUR wrong");
+                if (jpy == null || !double.IsNaN(jpy.Prev)) throw new InvalidOperationException("JPY with one day must have no change");
+                if (Trading.ParseFx("<html>error</html>").Count != 0 || Trading.ParseFx(null).Count != 0) throw new InvalidOperationException("junk read as rates");
+                var hosts = new Dictionary<string, string> { { "https://my.wealthsimple.com/app/home?x=1", "my.wealthsimple.com" }, { "Questrade.com", "questrade.com" }, { "1.2.3.4:443", "1.2.3.4" }, { "evil.com; rm -rf", "" }, { "", "" }, { "a b.com", "" } };
+                foreach (var kv in hosts) if (Cfg.CleanHost(kv.Key) != kv.Value) throw new InvalidOperationException("CleanHost(" + kv.Key + ") = " + Cfg.CleanHost(kv.Key));
+                if (!Trading.MarketOpen(new DateTime(2026, 11, 13, 10, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 9, 29, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 16, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 14, 11, 0, 0))) throw new InvalidOperationException("market hours wrong");
+            });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
             {
                 var bad = new List<string>(); var sn = new Snap { Down = 12.43, Up = 1.07, DownHist = new[] { 1.0, 5, 12, 8 }, UpHist = new[] { 0.5, 1, 1.2, 0.9 }, TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 12 } } };

@@ -307,7 +307,9 @@ namespace AdeeboMeter
         public static volatile bool IpNames = true, Portal = true, SeenTip, Details, BigWidget;   // BigWidget: the corner widget drawn 1.3x   // Details: the engineer toggle - raw values, sources and times on every finding
         // history on by default (kept HistoryDays, rolling), alerts with quiet hours, watch-and-suggest, data cap, pinned watch
         public static volatile bool History = true, Alerts = true, Quiet = true, Watch = true, PinWatch;
-        public static volatile bool Streams = true;   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
+        public static volatile bool Streams = true;
+        // Trading: the live broker panel is opt-in (a check every 2 s in market hours); end-of-day currencies on by default
+        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx = true; public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
         public static volatile int DevAlerts;   // new-device pop-ups: 0 off (default - they're still listed), 1 home networks only
         public static volatile int HistoryDays = 3, CapGB, OnlineMin = 30;   // OnlineMin: online lookups switch themselves off after this
         public static volatile int LiveMin = 15, SniffSec = 30;
@@ -323,7 +325,7 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,toolbox,gamer,stream,time,learn", Layout = "classic", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile string Nav = "home,stream,trade,toolbox,time,learn", Layout = "classic", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
         public static volatile bool WGraph = true, WTotal = true, SetupDone = true;   // SetupDone: false only on a fresh install until the 3 questions are answered or skipped   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string Mode = "", Lang = "en", TbView = "q", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
@@ -365,7 +367,7 @@ namespace AdeeboMeter
         {
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "streams=" + (Streams ? 1 : 0); yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
+            yield return "streams=" + (Streams ? 1 : 0); yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx=" + (TradeFx ? 1 : 0); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
@@ -376,14 +378,22 @@ namespace AdeeboMeter
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
-        public static readonly string[] NavIds = { "home", "toolbox", "gamer", "stream", "time", "learn", "story", "security", "dest", "calc", "reports" };
+        public static readonly string[] NavIds = { "home", "stream", "trade", "toolbox", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports" };
         public static string NavClean(string v)
         {
             var l = new List<string> { "home" };
             foreach (var p in (v ?? "").Split(',')) { var t = p.Trim(); if ((NavIds.Contains(t) || (t.StartsWith("mine", StringComparison.Ordinal) && t.Length == 5 && t[4] >= '1' && t[4] <= '3')) && !l.Contains(t) && l.Count < 7) l.Add(t); }
             return string.Join(",", l);
+        }
+        // a host name or an IP only: letters, digits, dots and dashes (a pasted URL loses its scheme and path)
+        static readonly char[] HostCut = { '/', '?', '#', ':' };
+        public static string CleanHost(string v)
+        {
+            v = (v ?? "").Trim().ToLowerInvariant(); int i = v.IndexOf("://", StringComparison.Ordinal); if (i >= 0) v = v.Substring(i + 3);
+            i = v.IndexOfAny(HostCut); if (i >= 0) v = v.Substring(0, i);
+            return v.Length > 0 && v.Length <= 100 && v.All(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-') ? v : "";
         }
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)
@@ -398,6 +408,12 @@ namespace AdeeboMeter
                 case "call": Call = v == "1"; break;
                 case "ipnames": IpNames = v == "1"; break;
                 case "streams": Streams = v != "0"; break;
+                case "tradelive": TradeLive = v == "1"; break;
+                case "tradecrypto": TradeCrypto = v == "1"; break;
+                case "tradealert": TradeAlert = v != "0"; break;
+                case "tradefx": TradeFx = v != "0"; break;
+                case "tradehost": TradeHost = CleanHost(v); break;
+                case "trademode": TradeMode = v == "casual" ? "casual" : "active"; break;
                 case "mood": if (Array.IndexOf(Mood.Ids, v) >= 0) { Mood.Name = v; if (!mood2Seen) AdeeboMeter.Lines.Mood = v == "sarcastic" ? "roast" : v == "anxious" ? "emo" : v == "brutal" ? "bossy" : "chill"; } break;   // a 1.1.4 voice carries over to the closest 1.1.5 mood
                 case "crlrev": CertCfg.Revocation = v == "1"; break;
                 case "details": Details = v == "1"; break;
