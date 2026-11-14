@@ -81,6 +81,8 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (Day == null) return;
+                // crypto runs past midnight and the user can change broker mid-day: each day and each broker is its own record
+                if (Day.Start.Date != DateTime.Today || Day.Far != host) { Close(); Day = new WatchKit.Session { Mode = "trade", What = host, Via = "", Far = host, Start = DateTime.Now, End = DateTime.Now }; }
                 Samples.Add(s); while (Samples.Count > 600 / Sec) Samples.RemoveAt(0);   // the last 10 minutes
                 var farOk = Samples.Where(z => !double.IsNaN(z.Far)).Select(z => z.Far).ToList(); double normal = Streams.Median(farOk);
                 // the trader's own rule: over 100 ms to the broker, or a lost reply, is a moment to wait

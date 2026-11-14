@@ -65,18 +65,7 @@ namespace AdeeboMeter
         static readonly string[] SetS16 = { "0.3 s", "0.45 s", "0.8 s" };
         static readonly int[] SetN17 = { 300, 450, 800 };
         static readonly string[] SetS18 = { "Follow Windows", "Light", "Dark", "Neon", "Midnight", "Sunset", "Mint" };
-        static readonly string[] SetVoice = { "Companion", "Sarcastic", "Anxious", "Conspiracy", "Brutal", "Serious" }, SetSize = { "Small", "Bigger" };
-        static string MoodHelp()
-        {
-            switch (Mood.Name)
-            {
-                case "sarcastic": return "Sarcastic engineer: \"Classic provider. Don't reboot the modem, it's not you.\" The facts first, then the eye-roll.";
-                case "anxious": return "Anxious network parent: \"I've been watching the retransmits. I'm worried.\" Cares a lot. Maybe too much.";
-                case "conspiracy": return "Conspiracy mode: \"Quiet. Too quiet.\" Every number still true - just said very dramatically.";
-                case "brutal": return "Brutally honest: \"Your bufferbloat grade is F and you know it.\" No sugar-coating.";
-                default: return "The companion - a joke first, then the fix. Serious drops the jokes.";
-            }
-        }
+        static readonly string[] SetSize = { "Small", "Bigger" };
         // Settings: one list of rows, each in a section and tagged with what it touches; a side menu picks the section,
         // the search box (settingsSearch) shows every match across sections.
         sealed class SetItem
@@ -180,7 +169,6 @@ namespace AdeeboMeter
             if (!SetMatch(new SetItem { Sec = "Background checks", Label = "Router ping", Help = () => "" }, "router PING")) bad.Add("case");
             return bad.Count == 0;
         }
-        static readonly char[] SpaceSep = { ' ' };
         static bool SetMatch(SetItem it, string q)
         {
             if (q.Length == 0) return true;

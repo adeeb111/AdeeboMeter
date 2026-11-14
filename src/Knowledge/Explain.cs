@@ -39,7 +39,6 @@ namespace AdeeboMeter
             "Don't close it. Windows needs it - closing it can sign you out or crash the PC.",
             "Managed by your IT team. It's protected on purpose, so leave it running."
         };
-        public static readonly string[] CloseShort = { "safe to close", "leave it", "Windows needs it", "managed by IT" };
         public const string Core = "Windows core", Sec = "Security", It = "Company / IT tools", App = "Your apps", Help = "Windows helpers", Other = "Other";
         public static readonly string[] CatOrder = { App, It, Sec, Help, Core, Other };
 

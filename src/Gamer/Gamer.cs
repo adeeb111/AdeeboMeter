@@ -252,7 +252,6 @@ namespace AdeeboMeter
         {
             try { return File.Exists(FilePath) ? Parse(File.ReadAllText(FilePath)) : null; } catch (IOException) { return null; }
         }
-        public static DateTime? CachedAt() { try { return File.Exists(FilePath) ? File.GetLastWriteTime(FilePath) : (DateTime?)null; } catch (IOException) { return null; } }
         // GetSDRConfig: "pops": { "iad": { "desc": "Sterling (Washington DC)", "geo": [...], "relays": [ { "ipv4": "1.2.3.4", ... } ] } ... }
         public static List<GameServer> Parse(string json)
         {
@@ -371,7 +370,6 @@ namespace AdeeboMeter
                 return st;
             }
         }
-        public List<GameStat> StatsFor(string game) { lock (k) return stats.Values.Where(x => x.GameId == game).ToList(); }
 
         // which servers to probe now, and how often (seconds): the game being played - all its servers (up to 8), every second;
         // otherwise each monitored game's best region, up to Cfg.GameBgServers, every Cfg.GameBgSec

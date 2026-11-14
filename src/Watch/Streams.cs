@@ -62,7 +62,7 @@ namespace AdeeboMeter
         {
             public WatchKit.Session S; public string FarIp = ""; public int FarPort = 443; public DateTime LastSeen, LastFar = DateTime.MinValue, LastSample = DateTime.MinValue;
             public List<WatchKit.Sample> Samples = new List<WatchKit.Sample>(); public WatchKit.DipMaker Maker = new WatchKit.DipMaker();
-            public List<double> FarAll = new List<double>(); public double MinuteDown, MinuteFar; public int MinuteN, MinuteFarN, MinuteIdx = -1;
+            public List<double> FarAll = new List<double>(); public int FarFails; public double MinuteDown, MinuteFar; public int MinuteN, MinuteFarN, MinuteIdx = -1;
         }
         public static Live Now;            // the stream playing now (null: none)
         public static string Manual = "";  // "I'm watching..." when nothing was recognised
@@ -94,14 +94,15 @@ namespace AdeeboMeter
             }
             if (svc == null && Manual != "") { svc = Manual; via = "you said so"; far = ""; }
             // a stream pulls video: at least 1.5 Mb/s over the last 15 s (a menu page, a paused video or a closed tab doesn't)
-            bool playing = svc != null && (down >= 1.5 || Manual != "");
+            // (a stream the user named still has to pull something - a paused or closed one ends like any other)
+            bool playing = svc != null && (down >= 1.5 || (svc == Manual && down >= 0.3));
             lock (k)
             {
                 if (playing)
                 {
                     if (Now != null && Now.S.What != svc) End(DateTime.Now);
                     if (Now == null) { Now = new Live { S = new WatchKit.Session { Mode = "stream", What = svc, Via = via, Start = DateTime.Now, End = DateTime.Now } }; Ver++; m.Events.Add(0, "stream", svc + " started streaming" + (via != "" ? " in " + via : "")); }
-                    Now.LastSeen = DateTime.Now; if (far != "") { Now.FarIp = far; Now.FarPort = port; }
+                    Now.LastSeen = DateTime.Now; if (far != "" && far != Now.FarIp) { Now.FarIp = far; Now.FarPort = port; Now.FarFails = 0; }
                 }
             }
             if (!playing) Expire();
@@ -121,10 +122,11 @@ namespace AdeeboMeter
                 s.Down = Avg(m.Down.Values(5)); s.Cpu = Avg(m.Cpu.Values(5)); s.Wifi = m.AdapterKind == "Wi-Fi"; s.Signal = m.WifiSignal;
                 var busy = m.Apps.OrderByDescending(a => a.Cpu).FirstOrDefault(); if (busy != null && busy.Cpu >= 30) s.Busy = busy.Name;
             }
-            if (l.FarIp != "" && (now - l.LastFar).TotalSeconds >= FarSec - 0.2)
+            // a server that never answers a knock (some block them) gets six tries, then no more - each miss holds this loop 1.5 s
+            if (l.FarIp != "" && !(l.FarFails >= 6 && l.FarAll.Count == 0) && (now - l.LastFar).TotalSeconds >= FarSec - 0.2)
             {
                 l.LastFar = now; IPAddress ip;
-                if (IPAddress.TryParse(l.FarIp, out ip)) { s.Far = GamePing.TcpMs(ip, l.FarPort > 0 ? l.FarPort : 443, 1500); s.FarLost = double.IsNaN(s.Far); }
+                if (IPAddress.TryParse(l.FarIp, out ip)) { s.Far = GamePing.TcpMs(ip, l.FarPort > 0 ? l.FarPort : 443, 1500); s.FarLost = double.IsNaN(s.Far); if (s.FarLost) l.FarFails++; }
             }
             lock (k)
             {

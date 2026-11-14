@@ -140,6 +140,7 @@ namespace AdeeboMeter
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch store: " + e.Message); }
         }
         static List<Session> cache; static DateTime cacheAt;
+        public static void Drop() { lock (k) cache = null; }
         // the last 90 days, newest first (cached for a minute: the page asks on every paint)
         public static List<Session> Recent(string mode)
         {

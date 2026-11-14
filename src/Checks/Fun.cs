@@ -52,7 +52,6 @@ namespace AdeeboMeter
                 default: return -1;
             }
         }
-        static readonly string[] LayerName = { "this PC", "your Wi-Fi and router", "the internet past your router", "DNS (the internet's phone book)" };
 
         // ================================================================== network therapy
         public static List<string[]> Therapy(Monitor m, string which, Toolkit.Run run)
