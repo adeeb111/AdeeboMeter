@@ -197,6 +197,40 @@ namespace AdeeboMeter
         }
     }
 
+    // The big "Search anything" pill at the end of the tab row (PLAN 11.11a): looks like a box, opens the search (Ctrl+K / "/").
+    sealed class SearchPill : Control
+    {
+        bool hot;
+        public SearchPill()
+        {
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.StandardClick, true);
+            Size = new Size((int)(280 * Draw.S), (int)(34 * Draw.S)); Cursor = Cursors.IBeam; TabStop = true; BackColor = Theme.Card;
+            AccessibleRole = AccessibleRole.PushButton; AccessibleName = L.T("Search anything"); Text = AccessibleName;
+        }
+        protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { hot = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override bool IsInputKey(Keys k) { return k == Keys.Enter || k == Keys.Space || base.IsInputKey(k); }
+        protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = true; OnClick(EventArgs.Empty); } base.OnKeyDown(e); }
+        protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+        protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
+            var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2); float h = r.Height;
+            Theme.Fill(g, r, h / 2, hot || Focused ? Kit.Soft("home") : Theme.Soft);
+            Theme.Stroke(g, r, h / 2, hot || Focused ? Kit.Accent("home") : Theme.Line, hot || Focused ? 1.5f * S : 1);
+            Kit.Icon(g, "search", new RectangleF(12 * S, (Height - 16 * S) / 2, 16 * S, 16 * S), hot ? Kit.Accent("home") : Theme.Muted);
+            string k = "Ctrl K"; var ks = g.MeasureString(k, Draw.fTiny);
+            using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap, LineAlignment = StringAlignment.Center })
+            {
+                g.DrawString(L.T("Search anything..."), Draw.fBody, m, new RectangleF(34 * S, 0, Width - 60 * S - ks.Width, Height), sf);
+                var kr = new RectangleF(Width - ks.Width - 22 * S, (Height - 18 * S) / 2, ks.Width + 8 * S, 18 * S);
+                Theme.Stroke(g, kr, 4 * S, Theme.Line, 1); g.DrawString(k, Draw.fTiny, m, kr.X + 4 * S, kr.Y + 2 * S);
+            }
+        }
+    }
+
     // A text box inside a rounded frame (the stock 3D border is gone).
     sealed class RoundBox : Panel
     {

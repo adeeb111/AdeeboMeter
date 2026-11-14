@@ -877,7 +877,7 @@ namespace AdeeboMeter
             s.PathMain = new[]
             {
                 "CPU " + Draw.Fmt(s.Cpu, "0", "%") + " · RAM " + Draw.Fmt(s.Mem, "0", "%"),
-                (hasWifi ? "signal " + sig + "% · " : "") + "gw " + Draw.Fmt(gw, "0", " ms"),
+                (hasWifi ? (sig >= 0 ? "signal " + sig + "% · " : "signal hidden by Windows · ") : "") + "gw " + Draw.Fmt(gw, "0", " ms"),   /* -1 = Windows won't say (location off) - never "signal -1%" */
                 !double.IsNaN(net) && !double.IsNaN(gw) ? "+" + Math.Max(0, net - gw).ToString("0", CultureInfo.CurrentCulture) + " ms past router" : (vpn ? "tunnel up" : "-"),
                 Draw.Fmt(dns, "0", " ms"),
                 netEver ? Draw.Fmt(net, "0", " ms") + (viaTcp ? " (TCP)" : "") + " · loss " + Draw.Fmt(loss, "0", "%") : "no reply yet"

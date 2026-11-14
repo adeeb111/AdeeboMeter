@@ -95,7 +95,7 @@ namespace AdeeboMeter
             backBtn = new PillButton("Back to corner", PillButton.K.Primary);
             backBtn.Click += delegate { Close(); };
             detailsBtn = new SlideSwitch("Details", Cfg.Details);   // a sliding on/off switch: the engineer view
-            detailsBtn.Click += delegate { Cfg.Details = detailsBtn.On; Cfg.Save(); Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
+            detailsBtn.Click += delegate { Cfg.Details = detailsBtn.On; Cfg.Save(); if (pathPanel != null) pathPanel.Height = PathHeight; Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
             detailsBtn.MouseEnter += delegate { SetTipKey("ov.DETAILS"); }; detailsBtn.MouseLeave += delegate { SetTipKey(null); };
             onlineChip = new PillButton("Online lookups on", PillButton.K.Chip) { Visible = false };
             onlineChip.Click += delegate { Online.Stop(); SyncOnlineChip(); };
@@ -113,6 +113,7 @@ namespace AdeeboMeter
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
                 Prep(e.Graphics);
+                if (!Cfg.Details) { PaintPlainPath(e.Graphics, pathPanel.ClientRectangle); return; }   // Details off: three plain chips (PLAN 11.4)
                 using (var mb = new SolidBrush(Theme.Muted)) e.Graphics.DrawString(L.T("IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS"), Draw.fTiny, mb, Sc(20), Sc(12));
                 if (!string.IsNullOrEmpty(snap.Hint))
                     using (var hintBrush = new SolidBrush(Theme.LvText(1))) using (var sf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -135,17 +136,12 @@ namespace AdeeboMeter
 
             var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Padding = new Padding(Sc(14)), BackColor = Theme.Bg, Tag = "bg" };
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(390)));
-            body.Resize += delegate { float sw = Math.Max(Sc(300), Math.Min(Sc(390), body.Width * 0.30f)); if (Math.Abs(body.ColumnStyles[1].Width - sw) > 1) body.ColumnStyles[1].Width = sw; };
+            bodyGrid = body; body.Resize += delegate { SizeSide(); };
 
             var left = leftPane = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0, 0, Sc(14), 0) };
             tabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(48), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(4), 0, 0), WrapContents = false };
             // six sections, each with its own pages underneath (room to grow without the tab row falling off the edge)
-            foreach (var sec in Secs)
-            {
-                var b = new PillButton(sec[1], PillButton.K.Tab) { Tag = sec[0] };
-                b.Click += delegate(object s, EventArgs e) { string id = (string)((Control)s).Tag; string pg; tab = lastIn.TryGetValue(id, out pg) ? pg : Secs.First(x => x[0] == id)[2]; ShowTab(); };
-                tabs.Controls.Add(b);
-            }
+            // the bar (five sections + More, the user's order) is built by BuildNavBar (FullView.Nav) once the pages exist
             subTabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(44), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(6), 0, 0), WrapContents = false, Visible = false };
             var tabLine = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Theme.Track, Tag = "line" };
             // Small screens / high scaling: switch to short tab names instead of letting tabs fall off the edge.
@@ -298,15 +294,16 @@ namespace AdeeboMeter
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
             left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage());
-            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
+            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
             body.Controls.Add(left, 0, 0); body.Controls.Add(side, 1, 0);
-            Controls.Add(body); Controls.Add(footer); Controls.Add(new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Theme.Line, Tag = "line" }); Controls.Add(pathPanel); Controls.Add(header);
+            Controls.Add(body); Controls.Add(footer); Controls.Add(new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Theme.Line, Tag = "line" }); Controls.Add(pathPanel); Controls.Add(header); Controls.Add(BuildSideNav());   // the sidebar docks last: full height, left of everything
             // docking adds the fill first, which would make Tab visit the page before its tabs: put reading order back
             header.TabIndex = 0; pathPanel.TabIndex = 1; body.TabIndex = 2; footer.TabIndex = 3; left.TabIndex = 0; side.TabIndex = 1;
             int ti = 0; foreach (var c in left.Controls.Cast<Control>().Where(c => c.Dock == DockStyle.Top).OrderBy(c => c.Top)) c.TabIndex = ti++;
             foreach (var c in left.Controls.Cast<Control>().Where(c => c.Dock != DockStyle.Top)) c.TabIndex = 100 + ti++;
+            pathPanel.Height = PathHeight; ApplyLayout(); ApplyMode();
             ShowTab();
 
             timer = new System.Windows.Forms.Timer { Interval = 500 };
@@ -333,6 +330,8 @@ namespace AdeeboMeter
                     e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { CopyFailed(ce); }   // Ctrl+C copies the result, like the link
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
+                else if (e.KeyCode == Keys.OemQuestion && !e.Shift && !e.Control && !e.Alt && ActiveTextBox() == null) { e.SuppressKeyPress = true; OpenPalette(); }   // "/" = search anything
+                else if (e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7) { var bar = NavBar(); int k = e.KeyCode - Keys.D1; if (k < bar.Count) { e.SuppressKeyPress = true; OpenNav(bar[k]); } }
                 else if (e.KeyCode == Keys.F1)
                 {
                     // F1: the explanation for what's under the mouse, or for the tool you're in - no hovering needed
@@ -430,29 +429,30 @@ namespace AdeeboMeter
             if (tab == "procs") RefreshProcs();
             SetTipKey(null); ThemeScrollbars(leftPane ?? (Control)this);
             if (tab != "live" && live.Running) { live.Stop(); liveBtn.Text = "Start live capture"; liveView = null; }
-            foreach (Control c in tabs.Controls) ((PillButton)c).Selected = (string)c.Tag == sec;
+            SyncNav(); if (minePage != null) minePage.Visible = tab == "mine";
             foreach (Control c in subTabs.Controls) ((PillButton)c).Selected = (string)c.Tag == tab;
             if (tab == "dest") destBox.Box.Focus();
         }
         // sections: id, name, then its pages in order (the first is where the section opens the first time)
+        // 1.1.5: Home merges Overview, Monitor and Investigate (PLAN 11.11); Network story, Security and Check a destination
+        // sit under More by default (FullView.Nav) - the order and what is on the bar are the user's
         static readonly string[][] Secs = {
-            new[] { "overview", "Overview", "overview" },
-            new[] { "monitor", "Monitor", "conn", "link", "procs", "live" },
-            new[] { "investigate", "Investigate", "guide", "dest", "health" },
-            new[] { "security", "Security", "security" },
+            new[] { "home", "Home", "overview", "guide", "conn", "link", "procs", "live", "health" },
             new[] { "toolbox", "Toolbox", "toolbox" },
-            new[] { "gamer", "Gamer Zone", "gamer" },
-            new[] { "story", "Network story", "travel" },
+            new[] { "gamer", "Gamer", "gamer" },
             new[] { "time", "Time machine", "replay", "changes" },
-            new[] { "learn", "Learn", "learn", "windows" } };
+            new[] { "learn", "Learn", "learn", "windows" },
+            new[] { "story", "Network story", "travel" },
+            new[] { "security", "Security", "security" },
+            new[] { "dest", "Check a destination", "dest" } };
         // Simple mode shows only these sections; pages of the others still open when something links to them (a Fix a problem
         // answer that needs a Toolbox tool, say) - only their tab is hidden
-        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "overview", "investigate", "gamer", "time" };
+        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "gamer", "time" };
         void ApplyMode()
         {
             if (tabs == null) return;
             tabs.SuspendLayout();
-            foreach (Control c in tabs.Controls) c.Visible = !Cfg.Simple || SimpleSecs.Contains((string)c.Tag);
+            foreach (Control c in tabs.Controls) c.Visible = !Cfg.Simple || SimpleSecs.Contains(c.Tag as string ?? "") || !(c is PillButton) || (string)c.Tag == "more";
             tabs.ResumeLayout(true);
         }
         void SetModeTo(string m)
@@ -462,9 +462,9 @@ namespace AdeeboMeter
         }
         static string SecOf(string page) { foreach (var sc in Secs) for (int i = 2; i < sc.Length; i++) if (sc[i] == page) return sc[0]; return ""; }
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
-            { "overview", new[] { "Overview", "Overview" } },
+            { "overview", new[] { "Today", "Today" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
-            { "guide", new[] { "Investigate a problem", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "security", new[] { "Security", "Security" } },
+            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } } };
@@ -893,7 +893,7 @@ namespace AdeeboMeter
             // a section shows only what needs attention (not counts)
             foreach (Control c in tabs.Controls)
             {
-                var b = (PillButton)c; var def = Secs.First(x => x[0] == (string)b.Tag); string bt = ""; int bl = -1;
+                var b = c as PillButton; if (b == null) continue; var def = Secs.FirstOrDefault(x => x[0] == (string)b.Tag); if (def == null) continue; string bt = ""; int bl = -1;   /* More, Calculators, Reports and your own tabs carry no page badges */
                 for (int i = 2; i < def.Length && bt == ""; i++) { if (def[i] == "conn" || def[i] == "procs") continue; PageBadge(def[i], out bt, out bl); }
                 b.SetBadge(bt, bl);
             }

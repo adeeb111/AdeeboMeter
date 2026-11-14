@@ -383,8 +383,8 @@ namespace AdeeboMeter
                 // where things live
                 g.DrawString(L.T("WHERE EVERYTHING LIVES"), Draw.fTiny, muted, x, y); y += 24 * S;
                 var map = new[] {
-                    new[] { "monitor", "Monitor", "Connections, your Wi-Fi or cable, what's running, live capture." },
-                    new[] { "investigate", "Investigate", "Guided problems, check a destination, health and tools." },
+                    new[] { "toolbox", "Toolbox", "Every tool by question, the calculators and search." },
+                    new[] { "dest", "Check a destination", "Name, route, door, lock and answer for any site or app." },
                     new[] { "story", "Network story", "Your traffic layer by layer, routing, Teams & Office, real packets." },
                     new[] { "time", "Time machine", "Replay any minute, what changed, the week, usage, calls." },
                     new[] { "learn", "Learn", "Protocols, Teams and Office, inside Windows, every term." } };
@@ -395,7 +395,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, mr, 12 * S, Theme.Soft);
                     g.DrawString(m[1], Draw.fBodyB, ink, mr.X + 14 * S, mr.Y + 12 * S);
                     g.DrawString(m[2], Draw.fSmall, sub, new RectangleF(mr.X + 14 * S, mr.Y + 34 * S, mr.Width - 24 * S, mr.Height - 38 * S));
-                    string id = m[0]; Act(overviewCanvas, mr, delegate { string pg; tab = lastIn.TryGetValue(id, out pg) ? pg : Secs.First(z => z[0] == id)[2]; ShowTab(); });
+                    string id = m[0]; Act(overviewCanvas, mr, delegate { OpenNav(id); });
                 }
                 y += ((map.Length + mc - 1) / mc) * (mh + 10 * S) + 10 * S;
                 g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;

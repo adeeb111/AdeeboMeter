@@ -46,7 +46,8 @@ namespace AdeeboMeter
             using (var hb = new SolidBrush(snap.Level == 0 ? Theme.Ink : Theme.LvText(snap.Level)))
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                float room = Math.Max(0, themeSw.Left - x - 16 * S), lw = 0; string link = "Investigate  ›";
+                float right = PaintHeaderSearch(g, themeSw.Left - 16 * S, cy);
+                float room = Math.Max(0, right - x - 16 * S), lw = 0; string link = "Investigate  ›";
                 if (snap.Level > 0 && snap.Flow != "") lw = g.MeasureString(link, Draw.fBodyB).Width + 14 * S;
                 float hw = Math.Max(0, Math.Min(g.MeasureString(head, Draw.fHead).Width, room - lw));
                 g.DrawString(head, Draw.fHead, hb, new RectangleF(x, cy - 10 * S, Math.Max(0, hw), 22 * S), sf);
@@ -76,6 +77,7 @@ namespace AdeeboMeter
 
         void PaintSide(Graphics g, Rectangle r)
         {
+            if (!Cfg.SideOpen) { PaintSlim(g, r); return; }
             float x = 0, y = 0, w = r.Width;
             Begin(side);
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
