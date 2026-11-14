@@ -38,7 +38,7 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
@@ -123,16 +123,22 @@ namespace AdeeboMeter
                 if (!Native.CanNotify()) return;
                 try { marshal.BeginInvoke((Action)delegate { if (quitting) return; balloonUrl = null; tray.ShowBalloonTip(8000, title, text, ToolTipIcon.Info); }); } catch { }
             };
-            tray.BalloonTipClicked += delegate { if (balloonUrl != null) { Crash.OpenUrl(balloonUrl); balloonUrl = null; } else OpenFull(); };
+            tray.BalloonTipClicked += delegate
+            {
+                // a crash note: the report box, with the note in it - the person reads it and presses Send
+                if (crashNote != null) { string n = crashNote; crashNote = null; OpenFull(); if (full != null && !full.IsDisposed) full.ReportDialog("bug", "It closed unexpectedly. I was doing: \n\n---\nCrash note (no user names or folders):\n" + n); return; }
+                if (balloonUrl != null) { Crash.OpenUrl(balloonUrl); balloonUrl = null; } else OpenFull();
+            };
+            Relay.Flush();   // reports written while offline go now
             Task.Factory.StartNew(() => History.Tidy());
-            // A crash last time left a note next to the exe: offer to report it (opens GitHub in your browser; you see it before sending).
+            // A crash last time left a note next to the exe: offer to report it (the report box, with the note; you see it before sending).
             try
             {
                 if (File.Exists(Crash.FilePath))
                 {
                     string note = File.ReadAllText(Crash.FilePath); File.Delete(Crash.FilePath + ".seen"); File.Move(Crash.FilePath, Crash.FilePath + ".seen");
                     var once = new System.Windows.Forms.Timer { Interval = 4000 };
-                    once.Tick += delegate { once.Stop(); once.Dispose(); balloonUrl = Crash.IssueUrl(note); tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it on GitHub - you'll see exactly what is sent before anything goes.", ToolTipIcon.Warning); };
+                    once.Tick += delegate { once.Stop(); once.Dispose(); crashNote = note.Length > 6000 ? note.Substring(0, 6000) : note; tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it - you'll see exactly what is sent before anything goes. No account needed.", ToolTipIcon.Warning); };
                     once.Start();
                 }
             }
@@ -399,7 +405,7 @@ namespace AdeeboMeter
                 hoverKey = key;
                 var rw = Rewind; if (rw != null && Clock.Mono > RewindUntil) { Rewind = null; rw = null; }
                 Snap s = rw ?? M.Latest; bool compact = !hovered && (covered || Draw.SpeedStyle || (s.Level == 0 && !s.Call));   // a speed widget stays a strip until you hover it
-                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "");
+                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "") + "|" + Moments.FaceFor(s);   /* a moment's face shows and goes */
                 bool fresh = M.Version != drawnVersion;
                 // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
                 // and unhovered only when its level or headline changes (or every 10 s for the numbers)

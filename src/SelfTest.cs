@@ -696,7 +696,7 @@ namespace AdeeboMeter
                 var st = new HallOfFame.Stats { Tools = 120, ToolsAll = 131, Topics = 46, TopicsAll = 46, Checks = 44, Labs = 11, LabsAll = 11, Paths = new[] { "Home user", "Gamer" } };
                 using (var b = HallOfFame.Card("Ada Lovelace", 512, "2026-11-12", "ADB-I5IU-AQRM-QTIL-TP2C", st)) if (b.Width != 1200 || b.Height != 675) bad.Add("card size");
                 using (var b = HallOfFame.Card("", 500, "2026-11-12", "", null)) if (b.Width != 1200) bad.Add("unofficial card");
-                if (!Crash.Allowed(HallOfFame.Form) || !Crash.Allowed(HallOfFame.Page)) bad.Add("Hall of Fame links not allowed to open");
+                if (HallOfFame.Form != "app:hof" || !Crash.Allowed(HallOfFame.Page)) bad.Add("Hall of Fame: sent from the app, page allowed to open");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("What did Windows Update break: before/after per install, KB names", () =>
@@ -1111,6 +1111,37 @@ namespace AdeeboMeter
                     foreach (var b in Views.BuiltIn) if (Views.Default(b[0]) == null) throw new InvalidOperationException("no defaults for " + b[0]);
                 }
                 finally { Views.Load(line0); Cfg.View = view0; Views.Put(st0); Policy.Apply(); }
+            });
+            T("moments in the corner, the quiet corner, sending a report without an account", () =>
+            {
+                string c0 = Cfg.Corner;
+                try
+                {
+                    Moments.Reset(); Cfg.Corner = Moments.Quiet;
+                    Moments.StreamEnded("Netflix", 90, 0); if (Moments.Face != null) throw new InvalidOperationException("the quiet corner showed a moment");
+                    Cfg.Corner = Moments.WithMoments;
+                    Moments.StreamEnded("Netflix", 90, 2); if (Moments.Face != null) throw new InvalidOperationException("a stream with dips is no moment");
+                    Moments.StreamEnded("Netflix", 90, 0); if (Moments.Face != "1f60c" || (Moments.Line ?? "").IndexOf("Netflix", StringComparison.Ordinal) < 0) throw new InvalidOperationException("a clean stream: " + Moments.Line);
+                    if (Moments.Fire("stream", "1f60c", "again")) throw new InvalidOperationException("once a day per kind");
+                    var calm = new Snap { Level = 0 }; var red = new Snap { Level = 2 }; var call = new Snap { Level = 0, Call = true };
+                    if (Moments.FaceFor(calm) == null || Moments.FaceFor(red) != null || Moments.FaceFor(call) != null) throw new InvalidOperationException("never during a problem or a call");
+                    if (Mood.Quip(calm).IndexOf("Netflix", StringComparison.Ordinal) < 0) throw new InvalidOperationException("the hover line says why");
+                    Moments.Reset(); Moments.GameEnded("Valorant", DateTime.Now.AddMinutes(-40), DateTime.Now, 1); if (Moments.Face != "1f60e") throw new InvalidOperationException("a clean game session");
+                    Moments.Reset(); Moments.GameEnded("Valorant", DateTime.Now.AddMinutes(-40), DateTime.Now, 9); if (Moments.Face != null) throw new InvalidOperationException("a laggy session is no moment");
+                    Moments.Reset(); Moments.Back(TimeSpan.FromSeconds(20)); if (Moments.Face != null) throw new InvalidOperationException("a 20-second blip is no moment");
+                    foreach (var e in new[] { "1f60e", "1f60c", "1f607", "1f92f", "1f973", "1f929" }) using (var st = typeof(Draw).Assembly.GetManifestResourceStream("AdeeboMeter.emoji." + e + ".png")) if (st == null) throw new InvalidOperationException("moment face missing: " + e);
+                    // Follows my view only: the view's words in the corner
+                    Cfg.Corner = Moments.Quiet; if (Views.ChipLine() != null) throw new InvalidOperationException("view words in a quiet corner");
+                }
+                finally { Cfg.Corner = c0; Moments.Reset(); }
+                // the report: JSON escaped, the answer read, our website allowed, GitHub's issue pages no longer opened from the app
+                string js = Relay.Json("bug", "a \"quote\" and \\ slash", "line1\nline2\u0001", null);
+                if (js.IndexOf("\\\"quote\\\"", StringComparison.Ordinal) < 0 || js.IndexOf("line1\\nline2\"", StringComparison.Ordinal) < 0 || js.IndexOf("\"from\":\"app\"", StringComparison.Ordinal) < 0) throw new InvalidOperationException("report JSON: " + js);
+                string hj = Relay.Json("hof", "", "", new Dictionary<string, string> { { "name", "Ada" }, { "code", "ADB-1" } }); if (hj.IndexOf("\"card\":{\"name\":\"Ada\",\"code\":\"ADB-1\"}", StringComparison.Ordinal) < 0) throw new InvalidOperationException("card JSON: " + hj);
+                var ok = Relay.Parse("{\"ok\":true,\"number\":42}"); var no = Relay.Parse("{\"ok\":false,\"why\":\"too long\"}");
+                if (!ok.Ok || ok.Number != 42 || no.Ok || no.Why != "too long" || Relay.Parse("<html>").Ok) throw new InvalidOperationException("relay answers");
+                if (!Crash.Allowed("https://adeebometer.com/#feedback") || Crash.Allowed("https://adeebometer.com.evil.example/")) throw new InvalidOperationException("our website");
+                if (BugReport.Tech("trade").IndexOf("Page: trade", StringComparison.Ordinal) < 0 || BugReport.Tech("x").IndexOf("What happened", StringComparison.Ordinal) >= 0) throw new InvalidOperationException("the technical part");
             });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
             {

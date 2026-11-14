@@ -180,7 +180,7 @@ namespace AdeeboMeter
                 k.SetValue("DisplayIcon", exe + ",0");
                 k.SetValue("InstallLocation", dst);
                 k.SetValue("UninstallString", "\"" + exe + "\" --uninstall");
-                k.SetValue("URLInfoAbout", "https://github.com/adeeb111/AdeeboMeter");
+                k.SetValue("URLInfoAbout", "https://adeebometer.com");
                 k.SetValue("InstallDate", DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
                 k.SetValue("EstimatedSize", (int)(new FileInfo(exe).Length / 1024 + 1), RegistryValueKind.DWord);
                 k.SetValue("NoModify", 1, RegistryValueKind.DWord); k.SetValue("NoRepair", 1, RegistryValueKind.DWord);

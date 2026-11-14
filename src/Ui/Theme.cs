@@ -413,6 +413,7 @@ namespace AdeeboMeter
             string m = asleep ? "asleep" : BuddyMood(s);
             string hm = asleep || forFile ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
             string face = !forFile && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
+            if (!forFile && !asleep) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment: its face for 12 s
             if (face == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
             var em = face != null ? Emoji(face) : null;
             if (em != null)

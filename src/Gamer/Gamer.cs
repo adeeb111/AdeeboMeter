@@ -352,7 +352,11 @@ namespace AdeeboMeter
                 catch (Exception e) { if (!(e is SocketException || e is ArgumentException || e is PingException || e is InvalidOperationException)) throw; }
             });
         }
-        public void EndSession() { var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; } Session = null; }
+        public void EndSession()
+        {
+            var s = Session; if (s != null && s.Open) { s.End = DateTime.Now; LastSession = s; Moments.GameEnded(s.GameName, s.Start, s.End, s.All().Count(r => double.IsNaN(r.Game) || r.Game > 150)); }
+            Session = null;
+        }
         Thread th; volatile bool stop; Monitor mon;
         public double RouterAvg() { var m = mon; return m == null || Cfg.GwSec == 0 ? double.NaN : m.GwPing.Avg(60 / Math.Max(1, Cfg.GwSec)); }
         public static long Ver;   // goes up with every new sample: the Gamer page repaints only when something changed

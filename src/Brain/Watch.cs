@@ -289,20 +289,7 @@ namespace AdeeboMeter
             s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z])([A-Za-z]:\\|\\\\|%USERPROFILE%\\)[^""'<>|:*?\r\n]*\\", "<folder>\\");
             return s.Length > 6000 ? s.Substring(0, 6000) : s;
         }
-        // GitHub's "new issue" page with the crash filled in. Opens in your browser; nothing is sent until you press Submit there.
-        public static string IssueUrl(string text)
-        {
-            // the whole address stays under ~7,000 characters (GitHub refuses much longer ones): shorten the note until it fits
-            string note = text ?? ""; string url;
-            do
-            {
-                string body = "**What were you doing when it crashed?**\n\n\n**Crash note** (no user names or folders):\n```\n" + note + "\n```";
-                url = "https://github.com/adeeb111/AdeeboMeter/issues/new?labels=bug&title=" + Uri.EscapeDataString("Crash in " + Program.Version) + "&body=" + Uri.EscapeDataString(body);
-                note = note.Length > 200 ? note.Substring(0, note.Length * 3 / 4) : "";
-            } while (url.Length > 7000 && note != "");
-            return url;
-        }
-        // only AdeeboMeter's own pages (GitHub, the website) and Adeeb's PayPal donation link ever open
+        // only AdeeboMeter's own pages (the website, the source on GitHub) and Adeeb's PayPal donation link ever open
         static readonly char[] Slash = { '/' };
         public static bool Allowed(string url)
         {
@@ -312,6 +299,7 @@ namespace AdeeboMeter
             string host = u.Host.ToLowerInvariant();
             if (host == "github.com") return seg.Length >= 2 && seg[0] == "adeeb111" && string.Equals(seg[1], "AdeeboMeter", StringComparison.OrdinalIgnoreCase);
             if (host == "adeeb111.github.io") return seg.Length >= 1 && seg[0] == "AdeeboMeter";
+            if (host == "adeebometer.com" || host == "www.adeebometer.com") return true;   // our own website
             if (host == "paypal.me") return seg.Length >= 1 && seg[0] == "adeeb1111" && seg.Length <= 2;
             return false;
         }

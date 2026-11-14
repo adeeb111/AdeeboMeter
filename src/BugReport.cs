@@ -14,13 +14,14 @@ namespace AdeeboMeter
     // are taken out of the log lines before they're copied.
     static class BugReport
     {
-        public const string NewIssue = "https://github.com/adeeb111/AdeeboMeter/issues/new";
         public static string Text(string page)
         {
+            return "**What happened?**\n(What you clicked, what you expected, what you saw instead. A screenshot helps.)\n\n" + Tech(page);
+        }
+        // the technical part only (the report box shows it before anything goes)
+        public static string Tech(string page)
+        {
             var sb = new StringBuilder();
-            sb.AppendLine("**What happened?**");
-            sb.AppendLine("(What you clicked, what you expected, what you saw instead. A screenshot helps.)");
-            sb.AppendLine();
             sb.AppendLine("**About this PC** - filled in by AdeeboMeter, nothing personal");
             sb.AppendLine("- AdeeboMeter " + Program.Version + " (" + (Program.Packaged ? "Microsoft Store" : Setup.RunningInstalled ? "installed" : Program.Portable ? "portable" : "not installed") + ")");
             sb.AppendLine("- Windows " + Environment.OSVersion.Version + (Environment.Is64BitOperatingSystem ? ", 64-bit" : ", 32-bit") + " · screen scale " + Math.Round(Draw.S * 100).ToString(CultureInfo.InvariantCulture) + "% · language " + Cfg.Lang);

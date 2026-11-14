@@ -95,7 +95,7 @@ namespace AdeeboMeter
         }
 
         // ---------- the Adeebo Award card (500 points): a picture you send yourself - AdeeboMeter sends nothing
-        string awardFile = "", awardCode = "", awardName = ""; DateTime awardCopied;
+        string awardFile = "", awardCode = "", awardName = "", awardDate = ""; int awardTotal; DateTime awardCopied;
         void MakeAwardCard()
         {
             int total = Points.Me.Total; if (total < Points.AwardAt) return;
@@ -116,7 +116,7 @@ namespace AdeeboMeter
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 try { using (var bmp = HallOfFame.Card(name, total, date, code, st)) bmp.Save(d.FileName, System.Drawing.Imaging.ImageFormat.Png); }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("award card: " + e.Message); pointsFlash = L.T("Couldn't save the card") + " - " + e.Message; pointsFlashUntil = DateTime.Now.AddSeconds(8); SyncPointsBtn(); return; }
-                awardFile = d.FileName; awardCode = code; awardName = name;
+                awardFile = d.FileName; awardCode = code; awardName = name; awardTotal = total; awardDate = date;
                 try { Clipboard.SetText(HallOfFame.Text(name, total, date, code)); awardCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); }
                 Program.Log("award card saved (" + (code != "" ? "official" : "unofficial build") + ")");
             }
@@ -127,14 +127,14 @@ namespace AdeeboMeter
         {
             var box = new RectangleF(x, y, w, 128 * S); Theme.Fill(g, box, 14 * S, Theme.Soft);
             g.DrawString(L.T("Your card is saved") + " - " + System.IO.Path.GetFileName(awardFile) + (awardCode != "" ? "  ·  " + awardCode : ""), Draw.fBodyB, ink, x + 18 * S, y + 14 * S);
-            g.DrawString(awardCode != "" ? L.T("Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically. Its text is copied, ready to paste.") : L.T("This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can."), Draw.fSmall, sub, new RectangleF(x + 18 * S, y + 40 * S, w - 36 * S, 40 * S));
+            g.DrawString(awardCode != "" ? L.T("Send it to the Hall of Fame: the claim code is checked and you're added automatically - no account needed.") : L.T("This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can."), Draw.fSmall, sub, new RectangleF(x + 18 * S, y + 40 * S, w - 36 * S, 40 * S));
             float bx = x + 18 * S;
-            foreach (var b in new[] { new[] { "Send it with the GitHub form ›", HallOfFame.Form }, new[] { "The Hall of Fame page ›", HallOfFame.Page }, new[] { "Show the picture", "" } })
+            foreach (var b in new[] { new[] { "Send it to the Hall of Fame ›", HallOfFame.Form }, new[] { "The Hall of Fame page ›", HallOfFame.Page }, new[] { "Show the picture", "" } })
             {
                 if (awardCode == "" && b[1] == HallOfFame.Form) continue;
                 var sz = g.MeasureString(L.T(b[0]), Draw.fBodyB); var r = new RectangleF(bx, y + 86 * S, sz.Width + 4 * S, 26 * S);
                 g.DrawString(L.T(b[0]), Draw.fBodyB, blue, bx, y + 88 * S); string url = b[1];
-                Act(pointsCanvas, r, delegate { if (url != "") Crash.OpenUrl(url); else try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + awardFile + "\""); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("award card: " + e.Message); } });
+                Act(pointsCanvas, r, delegate { if (url == HallOfFame.Form) SendCard(); else if (url != "") Crash.OpenUrl(url); else try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + awardFile + "\""); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("award card: " + e.Message); } });
                 bx += sz.Width + 28 * S;
             }
             return box.Bottom + 18 * S;

@@ -179,6 +179,7 @@ namespace AdeeboMeter
         // names what's playing and how it's going, the Trader view the broker line while the market is open
         public static string ChipLine()
         {
+            if (Cfg.Corner != Moments.FollowView) return null;   // the quiet corners never change their words by themselves
             if (Cfg.View == "streamer" && Streams.Active)
             {
                 Streams.Live l; lock (Streams.k) l = Streams.Now; if (l == null) return null;

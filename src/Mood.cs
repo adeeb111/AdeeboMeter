@@ -45,6 +45,7 @@ namespace AdeeboMeter
         {
             int lv, at = Worst(s, out lv);
             bool down = at >= 2 && lv == 2 && downSince != DateTime.MinValue;
+            string mo = Moments.FaceFor(s) != null ? Moments.Line : null; if (mo != null) return mo;   // a moment says why the face changed (even in serious mode: it's a fact)
             if (Voice.Serious) return "";
             // the provider's excuses: the longer it lasts, the better the story (every mood, Companion too)
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) return Excuse((DateTime.Now - downSince).TotalMinutes, isp);

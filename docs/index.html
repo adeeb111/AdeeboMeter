@@ -334,6 +334,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 }
 </style>
 <script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -341,7 +342,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>AdeeboMeter</a>
   <nav class="links">
     <a href="#watch">Watch</a><a href="#theory">How it works</a><a href="#privacy">Privacy</a><a href="#install">Install</a><a href="#feedback">Feedback</a>
-    <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>
+    <a href="#feedback">Feedback</a>
     <a class="donate-top" href="#donate" aria-label="Donate">&#9829;<span class="t"> Donate</span></a>
     <button class="theme" type="button" aria-label="Switch day / night"><span class="knob"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="#BF8700" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" fill="#9CC2FF"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></span></button>
     <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a>
@@ -780,13 +781,13 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="kicker">The path story</div>
   <h2>Who carries your traffic — and what's in the way.</h2>
   <div class="body">
-    <svg viewBox="0 0 1100 120" style="width:100%;height:auto" aria-label="Example path: your PC, your network, Rogers, NTT, GitHub">
+    <svg viewBox="0 0 1100 120" style="width:100%;height:auto" aria-label="Example path: your PC, your network, Rogers, NTT, Wikipedia">
       <g font-size="16" text-anchor="middle">
         <rect x="0" y="30" width="170" height="60" rx="14" fill="#E6F4EA"/><text x="85" y="66" fill="#1A7F37" font-weight="700">Your PC</text>
         <rect x="230" y="30" width="170" height="60" rx="14" fill="#E6F4EA"/><text x="315" y="58" fill="#1A7F37" font-weight="700">Your network</text><text x="315" y="78" fill="#4A5568" font-size="13">192.168.x · NAT</text>
         <rect x="460" y="30" width="170" height="60" rx="14" fill="#E8F0FE"/><text x="545" y="58" fill="#1F6FEB" font-weight="700">Rogers</text><text x="545" y="78" fill="#4A5568" font-size="13">Toronto?</text>
         <rect x="690" y="30" width="170" height="60" rx="14" fill="#F1EAFE"/><text x="775" y="66" fill="#8250DF" font-weight="700">NTT</text>
-        <rect x="920" y="30" width="170" height="60" rx="14" fill="#FFF4D6"/><text x="1005" y="66" fill="#7D5A00" font-weight="700">GitHub</text>
+        <rect x="920" y="30" width="170" height="60" rx="14" fill="#FFF4D6"/><text x="1005" y="66" fill="#7D5A00" font-weight="700">Wikipedia</text>
         <g stroke="#8A96A8" stroke-width="2.5"><line x1="172" y1="60" x2="228" y2="60"/><line x1="402" y1="60" x2="458" y2="60"/><line x1="632" y1="60" x2="688" y2="60"/><line x1="862" y1="60" x2="918" y2="60"/></g>
         <text x="660" y="18" fill="#6B7685" font-size="13">networks hand over here (BGP decides)</text>
       </g>
@@ -918,7 +919,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <h2>One file. It installs itself.</h2>
   <div class="body">
     <div class="grid g3">
-      <div class="card b"><span class="num">1</span><h3>Download</h3><p>The zip from the website or GitHub Releases. Open it.</p></div>
+      <div class="card b"><span class="num">1</span><h3>Download</h3><p>The zip from this website. Open it.</p></div>
       <div class="card g"><span class="num">2</span><h3>Double-click AdeeboMeter.exe</h3><p>Choose <b>Install</b>. It goes in just for you — a Start menu entry, an entry in Settings › Apps, no admin rights.</p></div>
       <div class="card"><span class="num">3</span><h3>Look at the corner</h3><p>It's already running, bottom-right. Tray icon or Ctrl+Alt+A for the full story.</p></div>
     </div>
@@ -961,7 +962,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <div class="step"><b>2</b><h3>Double-click, Install</h3><p>It goes in for you only — a Start menu entry, an entry in Settings › Apps, no admin rights.</p></div>
     <div class="step"><b>3</b><h3>Look at the corner</h3><p>It's already there, bottom-right. Click the tray icon or press Ctrl+Alt+A for the full story.</p></div>
   </div>
-  <p class="note">Download it only from this site or <a href="https://github.com/adeeb111/AdeeboMeter/releases">GitHub Releases</a> — fake copies of network tools are a favourite trick of malicious ads. Windows may say <i>“Windows protected your PC”</i> because AdeeboMeter isn't code-signed yet — choose <b>More info → Run anyway</b>. Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (<code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code>). To remove it: Settings › Apps › AdeeboMeter › Uninstall.</p>
+  <p class="note">Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. Windows may say <i>“Windows protected your PC”</i> because AdeeboMeter isn't code-signed yet — choose <b>More info → Run anyway</b>. Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (<code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code>). To remove it: Settings › Apps › AdeeboMeter › Uninstall.</p>
   </div>
 </section>
 
@@ -994,8 +995,9 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <label class="fld"><span id="fb-body-label">Tell us more</span><textarea id="fb-body" maxlength="4000" placeholder="What would you like it to do, and why would it help?"></textarea></label>
       <label class="fld only-problem"><span>Your Windows and AdeeboMeter version (optional)</span><input id="fb-env" maxlength="120" placeholder="Windows 11 23H2 · AdeeboMeter 1.1"></label>
       <div class="send">
-        <p class="fine">Nothing is sent from this page. <b>Continue on GitHub</b> opens your message there, ready to post with your free GitHub account — so you can follow the replies.</p>
-        <button class="btn primary" id="fb-send" type="button" disabled>Continue on GitHub →</button>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="fbHuman" data-size="flexible"></div>
+        <p class="fine" id="fb-note">Goes straight to Adeeb — no account needed. Nothing is sent until you press Send.</p>
+        <button class="btn primary" id="fb-send" type="button" disabled>Send →</button>
       </div>
     </form>
     <div class="community">
@@ -1075,9 +1077,10 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     try { localStorage.setItem('am-theme', nx); } catch (e) {}
   });
 
-  // suggestion box: builds a GitHub link with the message filled in; the page itself sends nothing
-  var box = document.querySelector('.box'), kind = 'idea', REPO = 'https://github.com/adeeb111/AdeeboMeter';
-  var title = document.getElementById('fb-title'), body = document.getElementById('fb-body'), env = document.getElementById('fb-env'), send = document.getElementById('fb-send');
+  // suggestion box: sent to AdeeboMeter's relay (a small Cloudflare Worker that files it for Adeeb) - no account needed.
+  // A free Cloudflare Turnstile check shows the relay a person is here; only the box's own words are sent.
+  var box = document.querySelector('.box'), kind = 'idea', RELAY = 'https://adeebometer-relay.orkoadeeb.workers.dev/send', human = '';
+  var title = document.getElementById('fb-title'), body = document.getElementById('fb-body'), env = document.getElementById('fb-env'), send = document.getElementById('fb-send'), note = document.getElementById('fb-note');
   var hints = {
     idea: ['Show the Wi-Fi channel in the corner widget', 'What would you like it to do, and why would it help?', 'Tell us more'],
     problem: ['The widget disappears after sleep', 'What happened? What did you expect? Steps to make it happen again help a lot.', 'What happened'],
@@ -1089,19 +1092,22 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       title.placeholder = hints[kind][0]; body.placeholder = hints[kind][1]; document.getElementById('fb-body-label').textContent = hints[kind][2];
     });
   });
-  function ready() { send.disabled = !(title.value.trim() && body.value.trim()); }
+  function ready() { send.disabled = !(title.value.trim() && body.value.trim() && human); }
+  window.fbHuman = function (t) { human = t; ready(); };
   title.addEventListener('input', ready); body.addEventListener('input', ready);
   send.addEventListener('click', function () {
-    var t = title.value.trim().slice(0, 200), b = body.value.trim().slice(0, 2500), u;   // a link GitHub will open
-    if (kind === 'problem') {
-      b = '### What happened\n' + b + '\n\n### Windows / AdeeboMeter version\n' + (env.value.trim() || '(not given)') + '\n\n_Sent from the suggestion box on the website._';
-      u = REPO + '/issues/new?title=' + encodeURIComponent(t) + '&body=' + encodeURIComponent(b);
-    } else {
-      b += '\n\n_Sent from the suggestion box on the website._';
-      // the Ideas form fills its own field (idea); Q&A takes the body
-      u = REPO + '/discussions/new?category=' + (kind === 'idea' ? 'ideas' : 'q-a') + '&title=' + encodeURIComponent(t) + (kind === 'idea' ? '&idea=' : '&body=') + encodeURIComponent(b);
-    }
-    window.open(u, '_blank', 'noopener');
+    var t = title.value.trim().slice(0, 100), b = body.value.trim().slice(0, 4000);
+    if (kind === 'problem') b += '\n\nWindows / AdeeboMeter version: ' + (env.value.trim() || '(not given)');
+    else if (kind === 'question') t = 'Question: ' + t;
+    send.disabled = true; note.textContent = 'Sending…';
+    fetch(RELAY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind === 'problem' ? 'bug' : 'feedback', from: 'site', title: t, body: b, turnstile: human }) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false, why: 'no answer' }; }); })
+      .then(function (j) {
+        if (j.ok) { note.textContent = 'Sent — thank you! Adeeb reads every one.'; title.value = ''; body.value = ''; env.value = ''; }
+        else { note.textContent = 'Couldn’t send: ' + (j.why || 'try again in a minute') + '.'; send.disabled = false; }
+        human = ''; try { turnstile.reset(); } catch (e) {}
+      })
+      .catch(function () { note.textContent = 'Couldn’t reach the server — check your connection and try again.'; send.disabled = false; });
   });
 
   // the download button always points at the newest release (falls back to the link built into the page)
@@ -1132,7 +1138,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   function cantCheck() {
     var mine = (new URLSearchParams(location.search)).get('v'); if (!mine || !/^\d{1,3}(\.\d{1,4}){1,3}$/.test(mine)) return;
     var b = document.getElementById('update'); if (!b || !b.hidden) return;
-    b.innerHTML = 'Couldn\u2019t check for a newer version right now - see <a href="https://github.com/adeeb111/AdeeboMeter/releases">GitHub Releases</a> (you have ' + mine + ').';
+    b.innerHTML = 'Couldn\u2019t check for a newer version right now - try again in a few minutes, or download the newest from the button above (you have ' + mine + ').';
     b.className = 'upd ok'; b.hidden = false;
   }
 })();

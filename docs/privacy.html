@@ -32,7 +32,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <main>
 <p><a href="./">← AdeeboMeter</a></p>
 <h1>Privacy Policy</h1>
-<p class="date">AdeeboMeter for Windows · last updated 14 November 2026</p>
+<p class="date">AdeeboMeter for Windows · last updated 14 November 2026 (evening)</p>
 
 <div class="short"><p><b>In short:</b> AdeeboMeter collects nothing about you. There is no account, no telemetry, no analytics and no server. Everything it learns stays on your PC, and it never accepts a connection from anywhere.</p></div>
 
@@ -78,7 +78,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Report for my ISP:</b> pings and traces to the destinations you choose; your public IP (one request to <code>www.cloudflare.com/cdn-cgi/trace</code>) only if you type yes.</li>
   <li><b>Online lookups</b> (off by default, and they switch themselves off after the time you choose): public IP addresses of a path go to RIPEstat (<code>stat.ripe.net</code>) and PeeringDB over HTTPS; the Security checkup then also asks Cloudflare's encrypted DNS (<code>cloudflare-dns.com</code>) one question and opens one TLS handshake with <code>www.microsoft.com</code>. The VPN leak test (Toolbox, when you press it) asks Cloudflare's STUN server (<code>stun.cloudflare.com</code>, UDP 3478) which address it sees, once through the normal route and once through your Wi-Fi or cable directly. The Encrypted DNS (DoH / DoT) tool asks the server you choose when you run it.</li>
   <li><b>Links you click</b> (GitHub, Donate) open in your browser; the app itself sends nothing.</li>
-  <li><b>Report a bug</b> (About): puts a bug report on your clipboard - the app's version, Windows version, the page you were on and the last lines of its log with names, the PC's name and addresses taken out - and opens a new GitHub issue page. You read it, paste it and send it yourself; nothing is sent by the app.</li>
+  <li><b>Report a bug, send feedback, send your Hall of Fame card:</b> only when you press <b>Send</b> in its box, after seeing exactly what goes. It goes to AdeeboMeter's relay (a small Cloudflare Worker) which files it for Adeeb - no account needed. A bug report can add the app's version, Windows version, the page you were on and the last lines of its log, with names, the PC's name, paths and addresses taken out; the relay strips e-mail and IP addresses again. Your internet address is used only to count sends (five an hour) and is kept only as a one-way hash for a day. Without internet, the report waits on your PC and goes the next time AdeeboMeter starts online. Off when your IT team turns online lookups off.</li>
   <li><b>Crash reports:</b> if the app crashes, the next start offers to open a GitHub issue page in your browser with the details filled in. Nothing is sent unless you choose to submit it, and you can read and edit it first.</li>
 </ul>
 <p>AdeeboMeter never listens: it opens no ports and runs no server, and only receives replies to requests it made.</p>
@@ -87,7 +87,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <p>If AdeeboMeter is offered in the Microsoft Store and you installed AdeeboMeter from the Microsoft Store, Microsoft handles the download, updates and any purchase data under <a href="https://privacy.microsoft.com/privacystatement">Microsoft's privacy statement</a>. The developer only sees the anonymous totals Microsoft provides to every publisher, such as the number of installs.</p>
 
 <h2>This website</h2>
-<p>The page loads nothing from other sites, with one exception: it asks GitHub's API (<code>api.github.com</code>) for the latest version number, so GitHub sees your IP address the way any website you visit does.</p>
+<p>The pages load nothing from other sites, with two exceptions: the home page asks <code>api.github.com</code> for the latest version number, and the feedback and Hall of Fame forms load Cloudflare Turnstile (<code>challenges.cloudflare.com</code>) - a free check that a person, not a robot, is sending, with no puzzle and no tracking cookies. Those sites see your IP address the way any website you visit does. A message you send goes through AdeeboMeter's relay, as described above.</p>
 
 <h2>Children</h2>
 <p>AdeeboMeter doesn't collect personal information from anyone, including children.</p>

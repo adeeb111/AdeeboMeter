@@ -213,7 +213,7 @@ IPAddress[] found;
                 res.MB = (down + up) / 1e6;
                 if (double.IsNaN(res.Down)) { res.Error = srv.Label + " didn't send its test file (" + srv.Host + ")"; return res; }
                 res.Grade = GradeOf(res.Idle, double.IsNaN(res.LoadDown) ? res.LoadUp : double.IsNaN(res.LoadUp) ? res.LoadDown : Math.Max(res.LoadDown, res.LoadUp));   // nothing measured: no grade
-                Last = res;
+                Last = res; Moments.Speed(res.Down);
                 History.Event(0, "speed", "Speed test to " + srv.Label + ": " + Mbps(res.Down) + " down" + (res.NoUpload ? "" : " / " + Mbps(res.Up) + " up") + " Mbps · ping " + (double.IsNaN(res.Idle) ? "-" : Math.Round(res.Idle).ToString(CultureInfo.InvariantCulture)) + " ms" + (res.Grade != "" ? " · under load " + res.Grade : ""));
                 Program.Log("speed test " + srv.Id + " " + Mbps(res.Down) + "/" + Mbps(res.Up) + " Mbps, " + Math.Round(res.MB) + " MB");
                 return res;

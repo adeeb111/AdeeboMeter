@@ -102,6 +102,7 @@ namespace AdeeboMeter
             if (Day == null) return;
             var d = maker.Close(FarName); if (d != null) Day.Dips.Add(d);
             if (Day.Length.TotalMinutes >= 5) WatchKit.Save(Day);
+            Moments.BrokerDay(Day.Length.TotalHours, Day.Dips.Count, Streams.Median(Samples.Where(x => !double.IsNaN(x.Far)).Select(x => x.Far).ToList()));
             Day = null; Samples.Clear();
         }
         // the verdict line at the top of the panel
@@ -162,6 +163,7 @@ namespace AdeeboMeter
                             var l = ParseFx(body);
                             if (l.Count == 0) throw new InvalidDataException("no rates in the answer");
                             lock (k) { Rates = l; FxNote = ""; Ver++; }
+                            Moments.Moves(l, Indexes.ToList());
                             Keep(FxFile, body);
                         }
                         catch (Exception e) { if (e is OutOfMemoryException) throw; lock (k) FxNote = Rates.Count > 0 ? "Couldn't reach the Bank of Canada just now - showing the last rates." : "Couldn't reach the Bank of Canada just now - it tries again in 30 minutes."; Program.Log("fx: " + e.Message); }
@@ -193,7 +195,7 @@ namespace AdeeboMeter
         public static bool EveningNow(DateTime local) { return local.DayOfWeek != DayOfWeek.Saturday && local.DayOfWeek != DayOfWeek.Sunday && local.TimeOfDay >= new TimeSpan(17, 30, 0) && local.TimeOfDay < new TimeSpan(19, 0, 0); }
         public static string EveningLine()
         {
-            if (!Cfg.TradeEvening || !Cfg.TradeFx || Cfg.Off("trade") || !EveningNow(DateTime.Now)) return null;
+            if (!Cfg.TradeEvening || !Cfg.TradeFx || Cfg.Off("trade") || Cfg.Corner == Moments.Quiet || !EveningNow(DateTime.Now)) return null;
             LoadFx(); if (FxStale() || IdxStale()) FetchFx(null);
             lock (k) return EveningText(Rates, Indexes, EasternNow().Date);
         }

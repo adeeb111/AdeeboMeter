@@ -159,6 +159,7 @@ namespace AdeeboMeter
             l.S.End = at > l.S.Start ? at : l.S.End;
             var downs = l.Samples.Where(x => !double.IsNaN(x.Down)).Select(x => x.Down).ToList(); l.S.AvgDown = downs.Count > 0 ? downs.Average() : double.NaN;
             if (l.S.Length.TotalMinutes >= 2) WatchKit.Save(l.S);   // a two-minute clip isn't worth a record
+            Moments.StreamEnded(l.S.What, l.S.Length.TotalMinutes, l.S.Dips.Count);
         }
         public static void SetManual(string what) { lock (k) { Manual = (what ?? "").Trim(); if (Manual.Length > 60) Manual = Manual.Substring(0, 60); Ver++; } }
 

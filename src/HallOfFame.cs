@@ -25,8 +25,8 @@ namespace AdeeboMeter
     // name), and every entry in the Hall of Fame can be removed by hand.
     static partial class HallOfFame
     {
-        public const string Page = "https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html";
-        public const string Form = "https://github.com/adeeb111/AdeeboMeter/issues/new?template=hall-of-fame.yml";
+        public const string Page = "https://adeebometer.com/hall-of-fame.html";
+        public const string Form = "app:hof";   // sent from the app through the relay (Relay.cs) - no account needed
 
         static partial void BuildKey(ref string key);   // only the official build has a body for this (obj/HofKey.cs)
         public static string Key { get { string k = null; BuildKey(ref k); return k ?? ""; } }
@@ -145,7 +145,7 @@ namespace AdeeboMeter
                 }
                 using (var fw = new Font("Segoe UI", 18f, FontStyle.Regular, GraphicsUnit.Pixel))
                 {
-                    const string site = "adeeb111.github.io/AdeeboMeter/hall-of-fame"; var sw = g.MeasureString(site, fw).Width;
+                    const string site = "adeebometer.com/hall-of-fame"; var sw = g.MeasureString(site, fw).Width;
                     g.DrawString("Send it to the Hall of Fame", fw, faint, box.Right - sw - 22, box.Y + 12); g.DrawString(site, fw, soft, box.Right - sw - 22, box.Y + 38);
                 }
                 gold.Dispose(); soft.Dispose(); faint.Dispose();

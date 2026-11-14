@@ -66,6 +66,7 @@ namespace AdeeboMeter
         static readonly int[] SetN17 = { 300, 450, 800 };
         static readonly string[] SetS18 = { "Follow Windows", "Light", "Dark", "Neon", "Midnight", "Sunset", "Mint" };
         static readonly string[] SetSize = { "Small", "Bigger" };
+        static readonly string[] SetCorner = { "Quiet", "Quiet + moments", "Follows my view" };
         // Settings: one list of rows, each in a section and tagged with what it touches; a side menu picks the section,
         // the search box (settingsSearch) shows every match across sections.
         sealed class SetItem
@@ -121,6 +122,7 @@ namespace AdeeboMeter
             add("Widget", "Show", TagPc, () => "Which way the speed widget shows.", SetDir, () => Cfg.WDir == "down" ? 1 : Cfg.WDir == "up" ? 2 : 0, i => { Cfg.WDir = i == 1 ? "down" : i == 2 ? "up" : "both"; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "download upload both direction widget");
             add("Widget", "Mini graph", TagPc, () => Cfg.WGraph ? "The last 30 seconds next to the numbers, and a minute on the card." : "Numbers only.", SetOnOff, () => Cfg.WGraph ? 0 : 1, i => { Cfg.WGraph = i == 0; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "graph sparkline chart widget");
             add("Widget", "Today's total", TagPc, () => Cfg.WTotal ? "Downloaded and uploaded since midnight, on the card." : "Off.", SetOnOff, () => Cfg.WTotal ? 0 : 1, i => { Cfg.WTotal = i == 0; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "total today data usage gb widget");
+            add("Widget", "How it behaves", TagPc, () => Cfg.Corner == Moments.Quiet ? "Quiet: the corner never changes by itself - no moments, no evening summary, no words from your view. Just like before 1.1.5." : Cfg.Corner == Moments.FollowView ? "Follows my view: the Streamer view names what's playing, the Trader view the broker's delay - plus the moments." : "Quiet + moments: calm all day; the buddy's face changes for a few seconds when something good happens (a clean game session, a stream with no dips, the internet back, a new speed record...). Hover to see why.", SetCorner, () => Cfg.Corner == Moments.Quiet ? 0 : Cfg.Corner == Moments.FollowView ? 2 : 1, i => { Cfg.Corner = i == 0 ? Moments.Quiet : i == 2 ? Moments.FollowView : Moments.WithMoments; Cfg.Save(); }, null, "quiet corner moments emoji face calm widget behaviour classic");
             add("Widget", "Corner widget size", TagPc, () => Cfg.BigWidget ? "A little bigger (1.3x) - easier to read at a glance." : "Small - out of the way.", SetSize, () => Cfg.BigWidget ? 1 : 0, i => { Cfg.BigWidget = i == 1; Cfg.Save(); Invalidate(true); }, null, "big small scale");
             add("Widget", "Widget style", TagPc, () => Cfg.WidgetStyle == "gamer" ? "Always the gamer card: your game's ping, jitter, loss and grade." : Cfg.WidgetStyle == "everyday" ? "Always the everyday card: the verdict, the five dots, CPU, memory and speed." : Cfg.WidgetStyle == "calls" ? "Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up." : Cfg.WidgetStyle == "engineer" ? (Cfg.Simple ? "The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card." : "Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.") : "Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.", WStyle, () => Math.Max(0, Array.IndexOf(WStyleIds, Cfg.WidgetStyle)), i => { Cfg.WidgetStyle = WStyleIds[i]; Cfg.Save(); }, null, "layout gamer game everyday card calls teams zoom engineer");
             add("Widget", "Buddy", TagPc, () => Cfg.Buddy ? "A little face on the widget that feels what your network feels: smug when all is green, sweaty when your PC is busy, dizzy when your Wi-Fi is bad, betrayed when your provider lets you down. Asleep on the folded chip." : "Off: the widget shows the logo and the coloured dot.", SetOnOff, () => Cfg.Buddy ? 0 : 1, i => { Cfg.Buddy = i == 0; Cfg.Save(); Invalidate(true); }, null, "buddy face creature mascot emoji widget");
@@ -385,9 +387,9 @@ namespace AdeeboMeter
         };
         static readonly string[][] AboutLinks =
         {
-            new[] { "Ask a question or share an idea", "GitHub Discussions - other users and Adeeb answer there", "https://github.com/adeeb111/AdeeboMeter/discussions" },
-            new[] { "Report a bug", "GitHub Issues - say what you did and what you expected; Copy as text from the tool helps", "https://github.com/adeeb111/AdeeboMeter/issues/new/choose" },
-            new[] { "Source code and releases", "everything AdeeboMeter does can be read there", "https://github.com/adeeb111/AdeeboMeter" },
+            new[] { "Ask a question or share an idea", "straight to Adeeb - no account needed", "app:feedback" },
+            new[] { "Report a bug", "say what you did and what you expected - no account needed", "app:bug" },
+            new[] { "Source code on GitHub", "everything AdeeboMeter does can be read there", "https://github.com/adeeb111/AdeeboMeter" },
         };
         static readonly string[][] Donate =
         {
@@ -420,9 +422,7 @@ namespace AdeeboMeter
                     g.DrawString(bt, Draw.fBodyB, ink, br.X + 15 * S, br.Y + (34 * S - bs.Height) / 2);
                     Act(aboutCanvas, br, delegate
                     {
-                        try { Clipboard.SetText(BugReport.Text(bugPage)); bugCopied = DateTime.Now; Crash.OpenUrl(BugReport.NewIssue); }
-                        catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; }
-                        aboutCanvas.Invalidate();
+                        ReportDialog("bug", "");
                     });
                 }
                 y += 84 * S;
@@ -456,6 +456,7 @@ namespace AdeeboMeter
                     new[] { "Streaming", Cfg.Streams && !Cfg.Off("stream") ? "Only while something streams: a timed TCP connection (no data) to the stream's own server every " + Streams.FarSec + " s, to tell its slowdowns from yours - six tries at most if it never answers. Which service it is comes from Windows' own list of names, read on this PC." : "Off.", Cfg.Streams && !Cfg.Off("stream") ? "1" : "-1" },
                     new[] { "Broker watch", Cfg.TradeLive && Cfg.TradeHost != "" && !Cfg.Off("trade") ? "A timed TCP connection (no data, no sign-in) to " + Cfg.TradeHost + " " + Every(Trading.Sec) + ", only while the market is open" + (Cfg.TradeCrypto ? " - around the clock, as you chose for crypto" : "") + "." : "Off - until you pick your broker on the Trading page.", Cfg.TradeLive && Cfg.TradeHost != "" && !Cfg.Off("trade") ? "1" : "-1" },
                     new[] { "Bank of Canada numbers", Cfg.TradeFx && !Policy.NoOnline ? "Only when the Trading page is open (or the evening summary is on) and newer numbers should be out: one request for the day's exchange rates and, about weekly, one for the commodity index, to bankofcanada.ca. No account, nothing about you is sent." : "Off.", Cfg.TradeFx && !Policy.NoOnline ? "1" : "-1" },
+                    new[] { "Reports you send", Policy.NoOnline ? "Off - your IT team turned online sending off." : "Only when you press Send in a report box (a bug, an idea, your Hall of Fame card), after seeing exactly what goes: to AdeeboMeter's relay, which files it for Adeeb. No account.", Policy.NoOnline ? "-1" : "1" },
                     new[] { "Speed test", "Only when you press Test my speed (or Run in the Toolbox): about 8 s of download from the server you picked (Cloudflare's nearest by default, or a Vultr or OVHcloud test file in a city), 8 s of upload where it offers it, and pings to it - up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. Find the closest: one ping to each server. Never by itself.", "1" },
                     new[] { "Online lookups (BGP)", Online.On ? "ON for " + Math.Ceiling(Online.Left.TotalMinutes) + " more min: public IP addresses of the path you look at go to stat.ripe.net and peeringdb.com (HTTPS)." : "Off (you switch them on; they switch themselves off after " + Cfg.OnlineMin + " min).", Online.On ? "1" : "-1" },
                     new[] { "Security checkup", Online.On ? "With online lookups on, when you run it: one encrypted-DNS question for www.microsoft.com to cloudflare-dns.com, and one TLS handshake with www.microsoft.com (to see whether something on the way reads encrypted traffic)." : "Nothing leaves - its two online checks wait for online lookups.", Online.On ? "1" : "-1" },
@@ -476,13 +477,13 @@ namespace AdeeboMeter
                 // community and support: links that open in the browser - AdeeboMeter itself sends nothing
                 y += 6 * S;
                 y = Sec(y); y = AboutHead(g, "7", "Community and support", x, y, w);
-                g.DrawString(L.T("AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing."), Draw.fBody, sub, new RectangleF(x, y, w, 24 * S)); y += 32 * S;
+                g.DrawString(L.T("AdeeboMeter is free and open source. A report goes only when you press Send in its box."), Draw.fBody, sub, new RectangleF(x, y, w, 24 * S)); y += 32 * S;
                 foreach (var lk in AboutLinks)
                 {
                     string url = lk[2]; var ls = g.MeasureString(L.T(lk[0]) + "  >", Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width, ls.Height);
                     g.DrawString(L.T(lk[0]) + "  >", Draw.fBodyB, blue, lr.X, lr.Y);
                     g.DrawString(L.T(lk[1]), Draw.fSmall, muted, new RectangleF(x + Math.Max(ls.Width + 12 * S, 300 * S), y + 2 * S, w - 300 * S, 20 * S));
-                    Act(aboutCanvas, lr, delegate { Crash.OpenUrl(url); });
+                    Act(aboutCanvas, lr, delegate { if (url.StartsWith("app:", StringComparison.Ordinal)) ReportDialog(url.Substring(4), ""); else Crash.OpenUrl(url); });
                     y += 30 * S;
                 }
                 y += 6 * S;
@@ -506,7 +507,7 @@ namespace AdeeboMeter
                 var upd = new RectangleF(x, y, 420 * S, 22 * S);
                 g.DrawString(L.T("Check for updates  >"), Draw.fBodyB, blue, upd.X, upd.Y);
                 g.DrawString(L.T("opens the website in your browser - AdeeboMeter itself never checks"), Draw.fSmall, muted, x + g.MeasureString("Check for updates  >", Draw.fBodyB).Width + 10 * S, y + 2 * S);
-                Act(aboutCanvas, upd, delegate { Crash.OpenUrl("https://adeeb111.github.io/AdeeboMeter/?v=" + Uri.EscapeDataString(Program.Version) + "#update"); });
+                Act(aboutCanvas, upd, delegate { Crash.OpenUrl("https://adeebometer.com/?v=" + Uri.EscapeDataString(Program.Version) + "#update"); });
                 y += 30 * S;
                 // credits the licences ask for
                 string cred = L.T("Credits") + ":  Inter typeface, (c) The Inter Project Authors, SIL Open Font License 1.1  ·  Twemoji faces, (c) Twitter, Inc and other contributors, CC-BY 4.0  ·  "

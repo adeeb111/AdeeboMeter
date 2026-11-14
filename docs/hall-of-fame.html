@@ -6,11 +6,11 @@
 <title>Hall of Fame — AdeeboMeter</title>
 <meta name="description" content="The people who reached 500 Adeebo Points and earned the Adeebo Award - and how Adeebo Points work: what earns them, the ranks, the learning paths and how to join.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html">
+<link rel="canonical" href="https://adeebometer.com/hall-of-fame.html">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="AdeeboMeter Hall of Fame">
 <meta property="og:description" content="500 Adeebo Points: every tool tried, every topic read, every lab challenge met.">
-<meta property="og:image" content="https://adeeb111.github.io/AdeeboMeter/img/screenshot.png">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <!-- No fonts, trackers or pictures from anywhere else. A winner shows as a name, and a link to their profile only if they gave one. -->
 <script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <style>
@@ -84,6 +84,7 @@ details p{color:var(--sub);margin-top:8px}
 footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:13.5px;margin-top:20px}
 footer a{color:inherit}
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -186,12 +187,16 @@ footer a{color:inherit}
   <ol class="steps">
     <li><b>Make your card.</b> On the Adeebo page, press <b>Make my award card</b> and type your name the way you want it shown. AdeeboMeter saves the picture to your Pictures folder and copies its text (name, points, date and claim code) so you can paste it.</li>
     <li><b>Share it anywhere you like</b> - LinkedIn, X, a group chat. It's your picture.</li>
-    <li><b>Send it here</b>, one of two ways:
-      <div class="cta" style="justify-content:flex-start;margin-top:10px">
-        <a class="pill" href="https://github.com/adeeb111/AdeeboMeter/issues/new?template=hall-of-fame.yml">Send it with the GitHub form</a>
-        <a class="pill ghost" id="mail" href="#join">Email it</a>
-      </div>
-      <p class="sub" style="margin-top:8px">With the <b>GitHub form</b> it's automatic: paste what AdeeboMeter copied (add a social handle if you'd like one shown), and a check runs straight away. If the code matches, you're on this page within a couple of minutes. By <b>email</b>, paste the same text. You'll be added by hand, usually within a few days.</p></li>
+    <li><b>Send it.</b> Easiest: press <b>Send it to the Hall of Fame</b> in AdeeboMeter, right under your card. Or fill in the four lines here - no account needed. The check runs straight away; if the code matches, you're on this page within a couple of minutes.
+      <form id="hof" class="hof-form" onsubmit="return false" style="display:grid;gap:8px;max-width:520px;margin-top:12px">
+        <input id="h-name" maxlength="40" placeholder="Name on the card" required>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="h-points" maxlength="6" inputmode="numeric" placeholder="Points (e.g. 512)"><input id="h-date" maxlength="10" placeholder="Date (2026-11-12)"></div>
+        <input id="h-code" maxlength="30" placeholder="Claim code (ADB-XXXX-XXXX-XXXX-XXXX)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id="h-where"><option value="">Show a profile link? (optional)</option><option>linkedin</option><option>x</option><option>instagram</option><option>bluesky</option><option>github</option></select><input id="h-handle" maxlength="40" placeholder="Your handle there (optional)"></div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="hofHuman"></div>
+        <div class="cta" style="justify-content:flex-start"><button class="pill" id="h-send" type="button" disabled>Send my card</button> <a class="pill ghost" id="mail" href="#join">Or email it</a></div>
+        <p class="sub" id="h-note" style="margin:0">Only your name (and a handle, if you add one) goes on this page.</p>
+      </form></li>
   </ol>
 
   <h3>How a card is checked</h3>
@@ -210,6 +215,21 @@ footer a{color:inherit}
 <footer><div class="wrap">Created by Adeeb Khan · <a href="./">AdeeboMeter</a> · <a href="privacy.html">Privacy</a> · <a href="https://github.com/adeeb111/AdeeboMeter">Source</a></div></footer>
 
 <script>
+// the card form: sent to AdeeboMeter's relay, which files it for the same automatic check (no account needed)
+(function () {
+  var human = '', f = function (id) { return document.getElementById(id); }, send = f('h-send'), note = f('h-note');
+  function ready() { send.disabled = !(f('h-name').value.trim() && f('h-points').value.trim() && f('h-date').value.trim() && f('h-code').value.trim() && human); }
+  window.hofHuman = function (t) { human = t; ready(); };
+  ['h-name', 'h-points', 'h-date', 'h-code'].forEach(function (id) { f(id).addEventListener('input', ready); });
+  send.addEventListener('click', function () {
+    send.disabled = true; note.textContent = 'Sending…';
+    var card = { name: f('h-name').value, points: f('h-points').value, date: f('h-date').value, code: f('h-code').value, where: f('h-where').value, handle: f('h-handle').value };
+    fetch('https://adeebometer-relay.orkoadeeb.workers.dev/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'hof', from: 'site', card: card, turnstile: human }) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; if (!j.ok) send.disabled = false; human = ''; try { turnstile.reset(); } catch (e) {} })
+      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again.'; send.disabled = false; });
+  });
+})();
 (function () {
   // the address for cards sent by email (one place to change it)
   var MAIL = 'HALL-OF-FAME-EMAIL';

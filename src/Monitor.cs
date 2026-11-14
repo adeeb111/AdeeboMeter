@@ -64,7 +64,7 @@ namespace AdeeboMeter
         string pAdapter, pGw, pDns, pIp, pState, pBssid = "", pCh = ""; bool pVpn; int pRate = -1, pSig = -1;
         DateTime lastRoam = DateTime.MinValue, lastSigDrop = DateTime.MinValue, netDownSince, lastConnT = Clock.Mono, netDownMono;
         public bool NetQuiet { get { return netDown >= 3; } }
-        int netDown, prevLevel = -1; bool gwFlag, prevCall; double gwBase = double.NaN; string hint = "";
+        int netDown, prevLevel = -1; DateTime redFrom = DateTime.MinValue; bool gwFlag, prevCall; double gwBase = double.NaN; string hint = "";
         HashSet<string> prevKeys; readonly Dictionary<string, DateTime> synFirst = new Dictionary<string, DateTime>();
         readonly Dictionary<string, DateTime> suppress = new Dictionary<string, DateTime>();
         volatile bool netChanged;
@@ -836,7 +836,8 @@ namespace AdeeboMeter
             }
             // red in / out
             if (prevLevel >= 0 && level == 2 && prevLevel != 2) Events.Add(2, "verdict", headline);
-            else if (prevLevel == 2 && level != 2) Events.Add(0, "verdict", Voice.P("Back to normal.", "Recovered.") + " " + headline);
+            else if (prevLevel == 2 && level != 2) { Events.Add(0, "verdict", Voice.P("Back to normal.", "Recovered.") + " " + headline); if (redFrom != DateTime.MinValue) Moments.Back(DateTime.Now - redFrom); }
+            if (level == 2 && prevLevel != 2) redFrom = DateTime.Now; else if (level != 2) redFrom = DateTime.MinValue;
             prevLevel = level;
 
             // cause hints: put two facts side by side, only when both are true now
