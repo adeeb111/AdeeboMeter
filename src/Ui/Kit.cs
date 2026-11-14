@@ -16,7 +16,7 @@ namespace AdeeboMeter
         // ---------- colours: one accent per section, the same everywhere it appears (tab, card stripe, tool header, back button)
         public static readonly Dictionary<string, Color> Accents = new Dictionary<string, Color>(StringComparer.Ordinal)
         {
-            { "home", Theme.C("#1F6FEB") }, { "toolbox", Theme.C("#B7791F") }, { "gamer", Theme.C("#E0484A") },
+            { "home", Theme.C("#1F6FEB") }, { "toolbox", Theme.C("#B7791F") }, { "gamer", Theme.C("#E0484A") }, { "stream", Theme.C("#5B8C0A") },
             { "time", Theme.C("#16967A") }, { "learn", Theme.C("#7A6FD8") }, { "story", Theme.C("#3A86D8") },
             { "security", Theme.C("#CF4F7C") }, { "dest", Theme.C("#0E95A2") }, { "calc", Theme.C("#D0582E") },
             { "reports", Theme.C("#5F6B7A") }, { "mine", Theme.C("#8A5CD6") },

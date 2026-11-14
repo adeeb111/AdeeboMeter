@@ -968,6 +968,39 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("watch engine and streaming: verdicts blame the earliest broken hop, dips merge, records survive a save, streams are found by server name", () =>
+            {
+                Func<WatchKit.Sample> ok = () => new WatchKit.Sample { T = DateTime.Now, Router = 3, Net = 20, Far = 40, Down = 8, Cpu = 10, Wifi = true, Signal = 80 };
+                var s = ok(); if (WatchKit.Judge(s, 40) != null) throw new InvalidOperationException("a healthy path got a verdict");
+                s = ok(); s.Router = 200; s.Net = 400; s.Far = 900; if (WatchKit.Judge(s, 40) != "wifi") throw new InvalidOperationException("slow router on Wi-Fi must blame Wi-Fi, not " + WatchKit.Judge(s, 40));
+                s = ok(); s.Wifi = false; s.RouterLost = true; if (WatchKit.Judge(s, 40) != "home") throw new InvalidOperationException("lost router on a cable must blame the home network");
+                s = ok(); s.NetLost = true; s.Far = 900; if (WatchKit.Judge(s, 40) != "provider") throw new InvalidOperationException("internet loss with a fine router must blame the provider");
+                s = ok(); s.Far = 400; if (WatchKit.Judge(s, 40) != "far") throw new InvalidOperationException("only the server slow must blame the server");
+                s = ok(); s.Far = 100; if (WatchKit.Judge(s, 40) != null) throw new InvalidOperationException("100 ms against a 40 ms normal is not a dip (needs 150 and 3x)");
+                s = ok(); s.Cpu = 97; if (WatchKit.Judge(s, 40) != "pc") throw new InvalidOperationException("a pegged processor must blame the PC");
+                s = ok(); s.Signal = 20; if (WatchKit.Judge(s, 40) != "wifi") throw new InvalidOperationException("20% signal must blame Wi-Fi");
+                // three bad samples 5 s apart are one dip; a gap of a minute starts another
+                var mk = new WatchKit.DipMaker(); var t0 = new DateTime(2026, 11, 11, 21, 10, 0); var dips = new List<WatchKit.Dip>();
+                Action<int, string> feed = (sec, b) => { var x = ok(); x.T = t0.AddSeconds(sec); if (b == "far") x.Far = 400; if (b == "provider") x.NetLost = true; var d = mk.Add(x, WatchKit.Judge(x, 40), 5, "the stream's server"); if (d != null) dips.Add(d); };
+                feed(0, "far"); feed(5, "far"); feed(10, "provider"); feed(15, null); feed(20, null); feed(80, "provider"); feed(85, null); feed(100, null);
+                var last = mk.Close("the stream's server"); if (last != null) dips.Add(last);
+                if (dips.Count != 2 || dips[0].Blame != "far" || dips[0].Secs != 10 || dips[1].Blame != "provider") throw new InvalidOperationException("dips merged wrong: " + string.Join(", ", dips.Select(d => d.Blame + "/" + d.Secs)));
+                if (dips[0].Evidence.IndexOf("The stream's server", StringComparison.Ordinal) < 0) throw new InvalidOperationException("evidence must name the server: " + dips[0].Evidence);
+                // a record survives encoding, tabs and all
+                var ses = new WatchKit.Session { Mode = "stream", What = "TiviMate\t(IPTV)", Via = "Chrome", Far = "1.2.3.4", Start = t0, End = t0.AddMinutes(125), AvgDown = 8.4, FarNormal = 41 };
+                ses.Dips.AddRange(dips); ses.Line.Add(new[] { 0f, 8.2f, 40f }); ses.Line.Add(new[] { 1f, 7.9f, -1f });
+                var back = WatchKit.Decode(WatchKit.Encode(ses));
+                if (back == null || back.Dips.Count != 2 || back.Line.Count != 2 || back.Length.TotalMinutes != 125 || back.Dips[1].Blame != "provider" || Math.Abs(back.AvgDown - 8.4) > 0.01) throw new InvalidOperationException("the record didn't survive a save");
+                if (WatchKit.Decode("junk\tline") != null || WatchKit.Decode("") != null) throw new InvalidOperationException("junk read as a record");
+                var tally = back.Tally(); if (tally["far"] != 1 || tally["provider"] != 1 || tally.Values.Sum() != 2) throw new InvalidOperationException("tally wrong");
+                if (!WatchKit.MonthReport(new List<WatchKit.Session> { back }, t0, "Streaming").Contains("beyond my router")) throw new InvalidOperationException("the monthly report lost its line for the provider");
+                // found by server name, apps and players alike
+                var want = new Dictionary<string, string> { { "rr3---sn-ab5l6n7s.googlevideo.com", "YouTube" }, { "ipv4-c001-yyz001-ix.1.oca.nflxvideo.net", "Netflix" }, { "video-weaver.yto01.hls.ttvnw.net", "Twitch" }, { "googlevideo.com.evil.example", null }, { "notnetflix.com", null }, { "", null } };
+                foreach (var kv in want) if (Streams.ServiceOf(kv.Key) != kv.Value) throw new InvalidOperationException(kv.Key + " -> " + Streams.ServiceOf(kv.Key) + ", wanted " + kv.Value);
+                if (Streams.PlayerOf("vlc") != "VLC" || Streams.PlayerOf("Kodi.exe") != "Kodi" || Streams.PlayerOf("chrome") != null) throw new InvalidOperationException("player apps not recognised");
+                var v = Streams.Verdict4K(18, 3, 41, true); if (!v[3].StartsWith("4K|no", StringComparison.Ordinal) && !v[3].StartsWith("4K|risky", StringComparison.Ordinal)) throw new InvalidOperationException("18 Mb/s is not safe for 4K: " + v[3]);
+                if (!v[1].StartsWith("HD|safe", StringComparison.Ordinal) || v[4].IndexOf("Wi-Fi", StringComparison.Ordinal) < 0) throw new InvalidOperationException("18 Mb/s on weak Wi-Fi: HD safe, Wi-Fi named");
+            });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
             {
                 var bad = new List<string>(); var sn = new Snap { Down = 12.43, Up = 1.07, DownHist = new[] { 1.0, 5, 12, 8 }, UpHist = new[] { 0.5, 1, 1.2, 0.9 }, TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 12 } } };
