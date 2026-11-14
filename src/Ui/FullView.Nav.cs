@@ -270,7 +270,7 @@ namespace AdeeboMeter
             }
             using (var m = new SolidBrush(Theme.Muted)) { string hint = L.T("Details on for the full path"); var hs = g.MeasureString(hint, Draw.fSmall); if (x + hs.Width + 20 * S < r.Width) g.DrawString(hint, Draw.fSmall, m, r.Width - hs.Width - Sc(20), (r.Height - hs.Height) / 2); }
         }
-        int PathHeight { get { return Cfg.Details ? Sc(128) : Sc(58); } }
+        static int PathHeight { get { return Cfg.Details ? Sc(128) : Sc(58); } }
         void OpenSettingsAt(string sec)
         {
             tab = "settings"; ShowTab(); SyncNav();
