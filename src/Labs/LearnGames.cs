@@ -12,7 +12,7 @@ namespace AdeeboMeter
     // scenario earns Adeebo Points (game.<kind>.<id>), so replaying can't farm them.
     static class LearnGames
     {
-        public static readonly string[][] All = {
+        static readonly string[][] Base = {
             new[] { "room", "Network escape room", "Something is broken. Ten minutes, a console, and your wits.", "10 scenarios" },
             new[] { "thief", "Catch the thief", "Someone is on your network who shouldn't be. Read the evidence, point at them.", "5 cases" },
             new[] { "detective", "Packet detective", "One packet in the conversation is wrong. Spot it.", "10 puzzles" },
@@ -21,6 +21,7 @@ namespace AdeeboMeter
             new[] { "heist", "Break the Adeebo Award", "Mallory the hacker tries ten ways to fake an award card. Will each one work?", "8 right to win" },
             new[] { "outage", "Survive the outage", "Eight broken networks, fifteen seconds each. Read the dots, call the cause. Faster scores more.", "6 right to win" },
             new[] { "dungeon", "The packet dungeon", "Eight rooms, from the cable to the vault. Three hearts. Each room you clear leaves a scroll.", "reach the treasure" } };
+        public static readonly string[][] All = Base.Concat(LearnRounds.Games.Select(g => new[] { g[0], g[1], g[2], LearnRounds.Win + " of 6 to win" })).ToArray();
         public static int Pts(string key) { return key.StartsWith("game.room.", StringComparison.Ordinal) ? 4 : 3; }
         public static IEnumerable<string> Keys()
         {
@@ -28,6 +29,7 @@ namespace AdeeboMeter
             foreach (var c in ThiefCases) yield return "game.thief." + c;
             for (int i = 0; i < Detective.Length; i++) yield return "game.detective." + (i + 1).ToString(CultureInfo.InvariantCulture);
             yield return "game.quick.ports"; yield return "game.quick.addr"; yield return "game.heist"; yield return "game.outage"; yield return "game.dungeon";
+            foreach (var g in LearnRounds.Games) yield return "game.rounds." + g[0];
         }
         public static bool Known(string key) { return Keys().Contains(key); }
 
@@ -71,7 +73,7 @@ namespace AdeeboMeter
             new[] { "She builds AdeeboMeter herself from the open source code, to print her own codes.", "0", "The key isn't in the public code. A home-made build has none, so its cards say 'unofficial build' and carry no claim code at all." },
             new[] { "She collects ten real cards and their codes, to work out the key from them.", "0", "HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the key that went in. Ten cards or ten thousand." },
             new[] { "She sends Ada's real card again, to get Ada listed twice.", "0", "One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing." },
-            new[] { "She sends a card that claims 2,000 points.", "0", "There are only about 800 points to earn in all. An impossible total is turned away before the code is even checked." },
+            new[] { "She sends a card that claims 2,000 points.", "0", "There are only about 900 points to earn in all. An impossible total is turned away before the code is even checked." },
             new[] { "She types <script>alert(1)</script> as her name, hoping the website runs it.", "0", "Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code." },
             new[] { "She edits the points file on her own PC to 500, then makes a card the normal way.", "1", "This one works - honestly. AdeeboMeter is offline and your points live on your PC, so the code proves the card came out of AdeeboMeter unchanged, not that every point was earned. That's why the Hall of Fame is for fun, not prizes." },
             new[] { "She takes the official AdeeboMeter apart with a decompiler, looking for the key.", "1", "With enough patience, yes: an app that makes codes offline has to carry its key somewhere inside. The code stops the easy cheats - an edited picture, a copied card - not a determined expert with time to spare." } };

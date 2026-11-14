@@ -43,7 +43,7 @@ namespace AdeeboMeter
             y = Lead2(g, L.T(d[2]) + (Cfg.Points ? "  ·  " + done + " / " + all + " " + L.T("solved") : "") + "  ·  " + L.T("everything here is made up - nothing real is sent or changed"), x, y, w);
             return y;
         }
-        static string GamePrefix(string id) { return id == "room" ? "game.room." : id == "thief" ? "game.thief." : id == "detective" ? "game.detective." : id == "heist" ? "game.heist" : id == "outage" ? "game.outage" : id == "dungeon" ? "game.dungeon" : "game.quick." + id; }
+        static string GamePrefix(string id) { return id == "room" ? "game.room." : id == "thief" ? "game.thief." : id == "detective" ? "game.detective." : id == "heist" ? "game.heist" : id == "outage" ? "game.outage" : id == "dungeon" ? "game.dungeon" : LearnRounds.Is(id) ? "game.rounds." + id : "game.quick." + id; }
         float Option(Graphics g, RectangleF r, string text, int state, Action a)   // state: 0 open, 1 right, 2 wrong, 3 dimmed
         {
             Theme.Fill(g, r, 10 * S, state == 1 ? Theme.LvSoft(0) : state == 2 ? Theme.LvSoft(2) : Theme.Soft);
@@ -81,7 +81,7 @@ namespace AdeeboMeter
                 case "heist": return PaintHeist(g, x, y, w);
                 case "outage": return PaintOutage(g, x, y, w);
                 case "dungeon": return PaintDungeon(g, x, y, w);
-                default: return PaintQuick(g, id, x, y, w);
+                default: return LearnRounds.Is(id) ? PaintRounds(g, id, x, y, w) : PaintQuick(g, id, x, y, w);
             }
         }
 
@@ -220,6 +220,37 @@ namespace AdeeboMeter
         }
 
         // ---------- break the Adeebo Award: how the card's claim code works, told as ten attacks - and the two that do get through
+        // ---------- the round games (LearnRounds): six situations, four answers, the why after each pick
+        sealed class RoundRun { public int Idx, Right, Pick = -1; public string Earn; public string[] Opts; public List<int> Order; }
+        readonly Dictionary<string, RoundRun> rounds = new Dictionary<string, RoundRun>();
+        float PaintRounds(Graphics g, string id, float x, float y, float w)
+        {
+            GameTick(false);
+            var set = LearnRounds.Rounds[id]; string key = "game.rounds." + id; RoundRun r;
+            if (!rounds.TryGetValue(id, out r) || r.Order == null) { r = new RoundRun { Order = Enumerable.Range(0, set.Length).OrderBy(i => GameRnd.Next()).ToList() }; rounds[id] = r; NewRun(key); }
+            if (r.Idx >= set.Length)
+            {
+                bool won = r.Right >= LearnRounds.Win;
+                if (r.Earn == null) { r.Earn = won ? EarnFirst(key) : ""; if (!won) Points.Me.MarkTried(key); }
+                y = Say(g, (won ? L.T("Well read") : L.T("A few got past you")) + " - " + r.Right + " / " + set.Length + ". " + r.Earn, won ? 0 : 2, x, y, w);
+                if (LearnRounds.Group(id) == "investing") y = Lead2(g, L.T("Learning only - AdeeboMeter never says what to buy or sell."), x, y, w);
+                Button(learnInfo, g, "Play again", true, delegate { rounds.Remove(id); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+            }
+            var q = set[r.Order[r.Idx]];
+            if (r.Opts == null) r.Opts = new[] { q[1], q[2], q[3], q[4] }.OrderBy(z => GameRnd.Next()).ToArray();
+            y = Say(g, (r.Idx + 1) + " / " + set.Length + "  ·  " + L.T(q[0]), 1, x, y, w);
+            var run = r;
+            y = Options(g, r.Opts, x, y, w, o => run.Pick < 0 ? 0 : o == q[1] ? 1 : run.Opts[run.Pick] == o ? 2 : 3,
+                r.Pick >= 0 ? (Action<string>)null : o => { run.Pick = Array.IndexOf(run.Opts, o); if (o == q[1]) run.Right++; Revealed(key); learnInfo.Invalidate(); });
+            if (r.Pick >= 0)
+            {
+                bool right = r.Opts[r.Pick] == q[1];
+                y = Say(g, right ? L.T("Right.") : L.T("Not quite - it's: ") + L.T(q[1]), right ? 0 : 2, x, y, w);
+                y = Lead2(g, L.T(q[5]), x, y, w);
+                Button(learnInfo, g, r.Idx + 1 < set.Length ? "Next" : "See how you did", true, delegate { run.Idx++; run.Pick = -1; run.Opts = null; learnInfo.Invalidate(); }, x, y); y += 46 * S;
+            }
+            return y;
+        }
         int heistIdx, heistPick = -1, heistRight; string heistEarn; static readonly string[] HeistOpts = { "It works", "It fails" };
         float PaintHeist(Graphics g, float x, float y, float w)
         {

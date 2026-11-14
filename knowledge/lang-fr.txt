@@ -996,7 +996,7 @@ HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the
 She sends Ada's real card again, to get Ada listed twice.	Elle renvoie la vraie carte d'Ada, pour qu'Ada apparaisse deux fois.
 One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing.	Une entrée par carte et par nom : la vérification répond « déjà au Temple de la renommée » et n'ajoute rien.
 She sends a card that claims 2,000 points.	Elle envoie une carte qui annonce 2,000 points.
-There are only about 800 points to earn in all. An impossible total is turned away before the code is even checked.	Il n'y a qu'environ 800 points à gagner en tout. Un total impossible est refusé avant même de vérifier le code.
+There are only about 900 points to earn in all. An impossible total is turned away before the code is even checked.	Il n'y a qu'environ 900 points à gagner en tout. Un total impossible est refusé avant même de vérifier le code.
 She types <script>alert(1)</script> as her name, hoping the website runs it.	Elle tape <script>alert(1)</script> comme nom, en espérant que le site l'exécute.
 Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code.	Les noms sont réduits à des lettres, des chiffres et quelques signes avant tout le reste, et la page affiche chaque champ en texte simple - jamais comme du code.
 She edits the points file on her own PC to 500, then makes a card the normal way.	Elle modifie le fichier de points sur son propre PC à 500, puis fait une carte normalement.

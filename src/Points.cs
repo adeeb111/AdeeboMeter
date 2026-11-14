@@ -25,7 +25,7 @@ namespace AdeeboMeter
         // longer tests are worth +4 the first time; everything else +2 (see Value(): paths 10, labs and escape rooms 4, games 3)
         public static readonly HashSet<string> Big = new HashSet<string>(StringComparer.Ordinal) { "mtr", "ispreport", "speedtest", "iperf", "bloat", "gamecompare", "mtu" };
         public static readonly TimeSpan ReplayGap = TimeSpan.FromMinutes(10);
-        // 1.1.5: every item is worth more, and there is more to earn (about 810 in all), so 500 means you've done nearly everything
+        // 1.1.5: every item is worth more, and there is more to earn (about 910 in all), so 500 means you've done nearly everything
         public const int AwardAt = 500, ReplayPts = 3;
         static readonly string[][] Ranks = { new[] { "0", "Beginner" }, new[] { "30", "Learner" }, new[] { "100", "Troubleshooter" }, new[] { "200", "Expert" }, new[] { "300", "Network detective" }, new[] { "400", "Packet whisperer" }, new[] { "500", "Adeebo Award" } };
         public static int[] Floors { get { return Ranks.Select(r => int.Parse(r[0], CultureInfo.InvariantCulture)).ToArray(); } }
@@ -86,7 +86,7 @@ namespace AdeeboMeter
         // Only items AdeeboMeter can really award count (a line typed into points.txt for something that doesn't exist
         // counts 0), the replay bonus only for the replay tools, and never more than everything there is to earn.
         public int Total { get { lock (k) return Math.Min(Max, map.Where(kv => Known(kv.Key)).Sum(kv => Value(kv.Key) + (kv.Value.Again != default(DateTime) && Replay.Contains(kv.Key) ? ReplayPts : 0))); } }
-        public const int Max = 900;   // a little above everything there is (about 810 - the self-test fails if it grows past this): a file saying more was edited by hand
+        public const int Max = 1000;   // a little above everything there is (about 910 - the self-test fails if it grows past this): a file saying more was edited by hand
         static readonly Dictionary<string, bool> known = new Dictionary<string, bool>(StringComparer.Ordinal);
         // tools that were removed: points already earned with them stay earned (a total never drops on an update)
         static readonly HashSet<string> Retired = new HashSet<string>(StringComparer.Ordinal) { "finddev" };

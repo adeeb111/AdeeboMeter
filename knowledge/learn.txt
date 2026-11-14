@@ -678,3 +678,128 @@ check: Your PC thinks it's the year 2000. What happens to HTTPS? | Every certifi
 line: Certificates have a start and an end date. Your PC checks them against its own clock - so a clock that's far off fails every site at once.
 breaks: All sites showing certificate errors at the same time? Check the clock first (Toolbox › Clock check).
 ladder: Server > Your PC: my certificate, valid Nov 2026 - Nov 2027 | Your PC > Your PC: my clock says 2000 - not valid yet | Your PC > You: certificate error on every site
+
+# ---------- Streaming (1.1.5): how video reaches you and why it buffers
+
+== stream-how
+title: How a video stream works
+kind: streaming
+tag: Small chunks, downloaded a little ahead of what you watch.
+check: What is a video's "buffer"? | Video already downloaded, waiting to be shown | A setting that makes video sharper | The server's copy of the film | A cable that carries the picture
+line: The player downloads the video in chunks of a few seconds and keeps some ready before you need them - that store is the buffer.
+breaks: When chunks arrive slower than you watch them, the buffer empties and the spinner appears.
+ladder: Player > Server: chunk 1 please (4 s of video) | Server > Player: chunk 1 | Player > Server: chunk 2 please | Server > Player: chunk 2 (buffer: 8 s ready)
+live: tcp port 443
+try: Play a video and watch the download graph pulse every few seconds.
+
+== stream-adaptive
+title: Adaptive quality - why the picture goes blurry
+kind: streaming
+tag: Blurrier beats spinning.
+check: The speed drops for a minute. What does a modern player usually do? | Picks a lower quality for the next chunks so it keeps playing | Stops and waits for the speed to return | Switches to 4K to catch up | Closes the app
+line: Every chunk comes in several qualities. The player measures how fast the last chunks arrived and picks the next one to fit.
+breaks: A line that keeps dipping makes the picture switch between sharp and blurry - a cable or a closer router usually steadies it.
+ladder: Player > Server: next chunk in 4K | Server > Player: (slow - took 6 s for 4 s of video) | Player > Server: next chunk in HD instead | Server > Player: HD chunk (on time)
+try: Watch a video while something big downloads - the quality steps down.
+
+== stream-cdn
+title: Where the video comes from - CDNs
+kind: streaming
+tag: A copy of the show in a building near you.
+check: Why do Netflix, YouTube and others keep copies of videos close to viewers? | Shorter trips mean faster, steadier streams | Copies are cheaper to film | It hides the video from the internet | Routers can only reach nearby servers
+line: Big services copy popular videos to servers inside or near your provider's network (a content delivery network), so a stream rarely crosses the whole internet.
+breaks: When the nearby copy is busy or down, the player is sent further away - the stream server's delay jumps while your own line is fine.
+ladder: Your PC > Service: play this show | Service > Your PC: get it from the server in your city | Your PC > Nearby server: chunk 1 | Nearby server > Your PC: chunk 1
+try: Start a show: Connections lists the nearby video server by name.
+
+== stream-4k
+title: What 4K really needs
+kind: streaming
+tag: About 25 Mb/s - steady, not just at the speed test.
+check: Roughly how much steady speed does a 4K stream need? | About 25 Mb/s | About 2 Mb/s | About 500 Mb/s | 4K doesn't depend on speed
+line: SD needs about 3 Mb/s, HD about 5, Full HD about 8 and 4K about 25 - and the line has to hold it the whole time, not just for a moment.
+breaks: A 100 Mb/s plan can still struggle with 4K on weak Wi-Fi in a far room: the speed that reaches the TV or PC is what counts.
+ladder: Your PC > Speed check: how fast right now? | Speed check > Your PC: 18 Mb/s on Wi-Fi | AdeeboMeter > You: HD is safe, 4K is risky here
+try: Run "Can I stream 4K right now?" in Streaming.
+
+== stream-iptv
+title: IPTV and live channels
+kind: streaming
+tag: Live TV over the internet - less buffer, less forgiveness.
+check: Why does live TV stutter more easily than a movie? | It keeps only a few seconds of buffer, so short dips show | Live TV is a much bigger file | Live TV uses a slower kind of cable | Movies are stored on your router
+line: A live channel can't download far ahead - the next minute hasn't happened yet - so it keeps only a few seconds in the buffer.
+breaks: Many stutters on a live channel come from the channel's own server; when your router and provider look fine, the record says "the stream's server".
+ladder: Player > Channel server: next few seconds, please | Channel server > Player: 2 s of live video | Player > Channel server: next 2 s | Channel server > Player: (late - the picture freezes)
+try: Watch a live channel and open its record in Streaming afterwards.
+
+== stream-fault
+title: Whose fault is the buffering?
+kind: streaming
+tag: The first broken hop is the culprit.
+check: Your router answers fast, but the internet check loses replies. Whose fault? | Your provider's - the trouble is past your router | Your Wi-Fi's | The PC's | The video's
+line: AdeeboMeter checks each hop of the path - PC, Wi-Fi, router, provider, the stream's server. Everything after the first broken hop is a victim, not a cause.
+breaks: Evening-only dips with a healthy router usually mean the provider's busy hours - the monthly report gives you the evidence to show them.
+ladder: AdeeboMeter > Router: 2 ms - fine | AdeeboMeter > Internet: 3 of 10 lost - broken | AdeeboMeter > Stream server: no answer | AdeeboMeter > You: your provider
+try: Open a stream record and look at the evidence for each dip.
+
+# ---------- Investing basics (1.1.5): learning, never advice
+
+== inv-stock
+title: Stocks, indexes and ETFs
+kind: investing
+tag: A slice of a company, a scoreboard, and a basket.
+check: What is an index like the S&P 500 or the TSX? | A scoreboard that tracks a group of companies | A single company's share price | A bank account with interest | A government bond
+line: A share is a small piece of one company. An index tracks a group of companies to show how a market is doing. An ETF is a fund you can buy that holds a whole basket, often following an index.
+breaks: One company can fall a lot on its own news; a basket spreads that out - which is why indexes move less wildly than single stocks.
+ladder: You > Broker: buy 1 share of a company | Broker > Exchange: order | Exchange > Broker: filled | Broker > You: you own a slice
+try: Look at today's close in Trading: the S&P and TSX are indexes.
+
+== inv-move
+title: Why prices move
+kind: investing
+tag: More buyers than sellers - for whatever reason.
+check: What actually moves a share price during the day? | The balance of people wanting to buy and to sell | The company's office opening hours | The weather at the exchange | The price your broker chooses
+line: A price is simply the last trade. When more people want to buy than sell, buyers pay up and the price rises; news, results and rumours shift that balance.
+breaks: A big move on no news, in a small company, is often just a few traders - not a sign of anything.
+ladder: Buyer > Exchange: I'll pay $10.05 | Seller > Exchange: I'll sell at $10.05 | Exchange > Everyone: last trade $10.05
+try: Compare a big company and a tiny one in Market movers.
+
+== inv-data
+title: End-of-day, delayed and live prices
+kind: investing
+tag: Know which clock your number is on.
+check: Prices on many free websites are usually... | Delayed by about 15 minutes | Live to the second | From yesterday only | Made up
+line: Live prices are what your broker shows to take orders. Free sites often show prices about 15 minutes late. AdeeboMeter's Trading summary uses end-of-day numbers, after the close.
+breaks: Comparing a live price with a delayed one makes it look like something jumped - check the time stamp first.
+ladder: Exchange > Broker: live price | Exchange > Free website: price, 15 min later | Exchange > Summary: closing price, after 16:00
+try: Look at the source line under Trading's numbers.
+
+== inv-fx
+title: Currencies and your money
+kind: investing
+tag: A US stock in Canada is two bets: the stock and the dollar.
+check: You own a US stock that stays flat, but the US dollar falls against the Canadian dollar. In CAD your holding... | Is worth less | Is worth more | Stays exactly the same | Doubles
+line: Anything priced in another currency moves with the exchange rate too. Banks and apps also add a spread - the difference between their rate and the daily rate - which is a fee.
+breaks: "No-fee" conversions often hide the fee in a worse rate. Compare with the day's rate in Trading.
+ladder: You > Bank: change 1,000 CAD to USD | Bank > You: at 1.38 (daily rate 1.35) | You > You: the 0.03 per dollar is the fee
+try: Check today's currencies in Trading.
+
+== inv-scams
+title: Spotting investment scams
+kind: investing
+tag: "Guaranteed", "urgent", "secret" and "send crypto" - walk away.
+check: A stranger promises guaranteed returns if you send crypto to their wallet. What is it? | A scam | A normal crypto deal | A bank product | A government programme
+line: Real investments carry risk and never promise a fixed big return. Scams lean on urgency, secrecy, fake screenshots, celebrity videos and pressure to pay in crypto or gift cards.
+breaks: Pump-and-dump groups hype a tiny stock so the organisers can sell to the people they excited. Recovery services that promise to get scam money back for a fee are scams too.
+ladder: Stranger > You: guaranteed 30% a month! | You > Stranger: (sends crypto) | Stranger > You: (blocks you)
+try: Play "Spot the scam" in Games.
+
+== inv-connection
+title: What your connection means for trading
+kind: investing
+tag: The network carries the order; it doesn't fill it.
+check: What can AdeeboMeter's broker check NOT tell you? | How fast the broker actually fills your order | Your delay to the broker's server | Whether your Wi-Fi is dropping | Whether your provider is losing packets
+line: Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every 2 seconds while the market is open and says whose side a slow moment is on.
+breaks: If the order screen spins after a lost reply, check your orders list before clicking again - a second click can mean a second order.
+ladder: You > Router: Buy (2 ms) | Router > Provider: Buy (15 ms) | Provider > Broker: Buy (12 ms) | Broker > You: order received
+try: Turn on the live broker check in Trading.

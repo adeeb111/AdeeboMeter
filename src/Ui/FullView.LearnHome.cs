@@ -16,7 +16,7 @@ namespace AdeeboMeter
         string learnGroup = "", learnFilter = "all";
         static readonly Dictionary<string, string> LearnIcons = new Dictionary<string, string>(StringComparer.Ordinal) {
             { "basics", "star" }, { "protocol", "traffic" }, { "provider", "route" }, { "mobile", "phone" }, { "crypto", "lock" }, { "windows", "windows" },
-            { "apps", "app" }, { "labs", "speed" }, { "games", "game" }, { "check", "check" }, { "paths", "go" } };
+            { "apps", "app" }, { "streaming", "app" }, { "investing", "traffic" }, { "labs", "speed" }, { "games", "game" }, { "check", "check" }, { "paths", "go" } };
         static readonly string[][] LearnCards = {
             new[] { "basics", "Start here", "How apps use the internet - in plain words." },
             new[] { "protocol", "How your packets talk", "DNS, DHCP, TCP, TLS, Wi-Fi... two lines and a picture each." },
@@ -25,6 +25,8 @@ namespace AdeeboMeter
             new[] { "crypto", "Locks and keys", "Hashes, keys, signatures, certificates and the padlock - why HTTPS works, and why it breaks." },
             new[] { "windows", "Inside Windows", "What all those processes and services are for." },
             new[] { "apps", "Teams and office apps", "What a call or a sync really does on the network." },
+            new[] { "streaming", "Streaming", "How video reaches you, why it buffers, and whose fault it is - with three games." },
+            new[] { "investing", "Investing basics", "Stocks, prices, currencies and scams - learning, never advice. Five games." },
             new[] { "labs", "Labs", "Play with how networks behave, with your own numbers." },
             new[] { "games", "Games", "An escape room, catch the thief, packet detective, quick-fire rounds." },
             new[] { "check", "Check yourself", "One question per topic - right first time earns." },
@@ -114,7 +116,10 @@ namespace AdeeboMeter
                 case "labs": foreach (var lab in Labs) l.Add(new[] { "lab:" + lab[0], lab[1], lab[2], Points.Me.Has("lab." + lab[0]) || (lab[0] == "quiz" && Points.Me.Has("quiz.10")) ? "1" : "" }); break;
                 case "games": foreach (var gm in LearnGames.All) { string pre = GamePrefix(gm[0]); l.Add(new[] { "game:" + gm[0], gm[1], L.T(gm[2]) + " · " + L.T(gm[3]), LearnGames.Keys().Where(k => k.StartsWith(pre, StringComparison.Ordinal)).All(Points.Me.Has) ? "1" : "" }); } break;
                 case "check": foreach (var t in Knowledge.Learn().Where(t => t["check"] != "")) l.Add(new[] { "topic:" + t.Id, t["title"], CheckParts(t["check"])[0], Points.Me.Has("check." + t.Id) ? "1" : "" }); break;
-                default: foreach (var t in Knowledge.Learn().Where(t => t["kind"] == card)) l.Add(new[] { "topic:" + t.Id, t["title"], t["tag"], Points.Me.Has("learn." + t.Id) ? "1" : "" }); break;
+                default:
+                    foreach (var t in Knowledge.Learn().Where(t => t["kind"] == card)) l.Add(new[] { "topic:" + t.Id, t["title"], t["tag"], Points.Me.Has("learn." + t.Id) ? "1" : "" });
+                    foreach (var gm in LearnRounds.Games.Where(z => z[3] == card)) l.Add(new[] { "game:" + gm[0], gm[1] + " (" + L.T("game") + ")", gm[2], Points.Me.Has("game.rounds." + gm[0]) ? "1" : "" });
+                    break;
             }
             return l;
         }
