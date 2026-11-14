@@ -91,7 +91,7 @@ update.suspect|Things got worse after the Windows update on {v}.
 update.suspect|Trouble started after an update on {v}.
 call.on|On a call. Watching the quality.
 call.on|Call detected. I'll keep an eye on it.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} is rolling smooth. Grab the snacks.
 stream.on|Smooth stream, easy evening. I am keeping an eye on it.
 stream.dip|Little hiccup there. {v}

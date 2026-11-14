@@ -84,7 +84,7 @@ update.suspect|It broke after the update on {v}. Patch nerfed it.
 update.suspect|Things got worse after the {v} update.
 call.on|Voice chat detected. Watching quality.
 call.on|On a call. Watching jitter.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} running at full frames. No lag spikes.
 stream.on|Stream is smooth. Zero stutter so far.
 stream.dip|Lag spike on the stream. {v}

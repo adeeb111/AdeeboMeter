@@ -91,7 +91,7 @@ update.suspect|Things changed after the Windows update on {v}.
 update.suspect|The trouble began after an update on {v}.
 call.on|You're on a call. I'm watching the quality.
 call.on|Call detected. I'll keep an eye on it.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} is playing well. I am here if it changes.
 stream.on|Your stream looks good. Enjoy.
 stream.dip|Your stream had a short dip. {v}

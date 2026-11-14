@@ -84,7 +84,7 @@ update.suspect|It got worse after the update on {v}.
 update.suspect|Trouble started right after that update on {v}.
 call.on|You're on a call. I'm watching it.
 call.on|Call detected. Got your back.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} is smooth! Movie night is safe.
 stream.on|Stream is perfect, enjoy it!
 stream.dip|Ugh, a little dip. {v}

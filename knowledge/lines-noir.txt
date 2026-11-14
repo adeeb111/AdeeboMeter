@@ -84,7 +84,7 @@ update.suspect|It started after the update on {v}. Prime suspect.
 update.suspect|Trouble since the {v} update. Funny timing.
 call.on|You're on a call. I'll keep watch.
 call.on|Call in progress. Listening for trouble.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} plays clean. Too clean. I am watching.
 stream.on|The stream runs smooth tonight. For now.
 stream.dip|The stream stumbled. {v}

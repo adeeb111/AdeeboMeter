@@ -84,7 +84,7 @@ update.suspect|The trouble began after the update on {v}.
 update.suspect|Rough seas since the {v} update.
 call.on|Parley in progress. Watching the call.
 call.on|On a call. Lookout's watching.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} sails smooth, matey. Calm seas.
 stream.on|The show flows like fair winds.
 stream.dip|Rough water on the stream. {v}

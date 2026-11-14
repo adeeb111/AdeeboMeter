@@ -91,7 +91,7 @@ update.suspect|Trouble started after the update on {v}! Found the clue!
 update.suspect|It broke after the update on {v}!
 call.on|You're on a call! Watching it!
 call.on|Call detected! Quality watch on!
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} is SMOOTH! Zero dips!
 stream.on|Stream is flawless! Enjoy every second!
 stream.dip|Dip alert! {v}

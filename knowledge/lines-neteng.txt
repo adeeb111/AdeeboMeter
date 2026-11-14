@@ -116,7 +116,7 @@ update.suspect|Regression after the update on {v}.
 update.suspect|Change correlates with a Windows update.
 call.on|RTP flows detected. Monitoring jitter and loss.
 call.on|Call in progress. QoS watch on.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v}: path clean, no loss, CDN latency nominal.
 stream.on|Stream healthy. Gateway, ISP and edge all within baseline.
 stream.dip|Stream degradation. {v}

@@ -116,7 +116,7 @@ update.suspect|Bro, it broke after the update on {v}.
 update.suspect|Windows update might've done this, bro.
 call.on|You're on a call, bro. Watching it.
 call.on|Call mode, bro. I'll watch the lag.
-# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
 stream.on|{v} is smooth, bro. Enjoy the show.
 stream.on|Stream is clean, bro. I got the path.
 stream.dip|Bro, the stream dipped. {v}
