@@ -201,7 +201,8 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {
                 // once, after updating to 1.1.5: "Try the new Sidebar layout?" - closed or tried, never shown again (PLAN 11.7d)
-                if (!Cfg.SidebarTried && Cfg.Layout != "sidebar")
+                if (!Cfg.SetupDone) y = PaintSetup(g, x, y, w);
+                else if (!Cfg.SidebarTried && Cfg.Layout != "sidebar")
                 {
                     var cr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
                     Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + 19 * S, 20 * S, 20 * S), Kit.Accent("home"));

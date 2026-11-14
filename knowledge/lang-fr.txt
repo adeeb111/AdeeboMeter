@@ -1227,3 +1227,20 @@ SPEED	VITESSE
 Download	Téléchargement
 BUSIEST APPS (CPU)	APPLIS LES PLUS ACTIVES (CPU)
 Nothing busy.	Rien d'actif.
+All settings	Tous les réglages
+FINE-TUNE	AJUSTER
+How should the app look and start?	Comment l'appli doit-elle s'afficher et démarrer ?
+How should the corner widget look?	À quoi doit ressembler le widget ?
+How should the buddy talk?	Comment le compagnon doit-il parler ?
+How do you want to get around?	Comment voulez-vous naviguer ?
+How much should it watch?	Combien doit-il surveiller ?
+Do you play online games?	Jouez-vous en ligne ?
+When should it tell you?	Quand doit-il vous prévenir ?
+What should it remember?	Que doit-il retenir ?
+What may it ask the internet?	Que peut-il demander à internet ?
+For engineers: capture limits	Pour les ingénieurs : limites de capture
+QUICK SETUP	CONFIGURATION RAPIDE
+Skip	Passer
+All of this can be changed any time in Settings.	Tout ceci peut être changé à tout moment dans les Réglages.
+Plain - no jokes	Neutre - sans blagues
+checks a minute	vérifications par minute

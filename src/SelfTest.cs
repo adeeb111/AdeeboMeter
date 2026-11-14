@@ -961,8 +961,8 @@ namespace AdeeboMeter
                     {
                         // 30 ms on a real PC; Wine draws text in software, so the self-test there allows 4x and reports the numbers
                         double lim = Program.IsWine ? 120 : 30;
-                        string b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, Program.IsWine ? 400 : 100), b3 = FullView.FreezeCheck(sb);
-                        string all = string.Join("; ", new[] { b1, b2, b3 }.Where(z => z != ""));
+                        string b0 = fv.QuestionCheck(), b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, Program.IsWine ? 400 : 100), b3 = FullView.FreezeCheck(sb);
+                        string all = string.Join("; ", new[] { b0, b1, b2, b3 }.Where(z => z != ""));
                         if (all != "") throw new InvalidOperationException(all);
                     }
                     finally { fv.Close(); fv.Dispose(); }

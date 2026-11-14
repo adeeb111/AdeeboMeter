@@ -223,7 +223,7 @@ namespace AdeeboMeter
             if (Cfg.PresetSaved && Cfg.Preset != "custom") Cfg.ApplyPreset(Cfg.Preset);   // the Gamer Zone rows switch to "custom" when changed, so a named preset means all its timings
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
-            if (first) { ApplyAutoStart(); SaveSettings(); }
+            if (first) { Cfg.SetupDone = false; ApplyAutoStart(); SaveSettings(); }   // a fresh install gets the 3-question setup on Home; an upgrade never does
             System.Threading.ThreadPool.QueueUserWorkItem(delegate { GameHistory.TidyNow(); });   // old game days go even when nothing writes new ones
         }
         void SaveSettings()

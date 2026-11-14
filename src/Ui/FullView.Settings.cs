@@ -83,9 +83,9 @@ namespace AdeeboMeter
         {
             public string Sec, Label, Tag, Keys = ""; public Func<string> Help; public string[] Opts; public Func<int> Cur; public Action<int> Set; public Func<bool> Show;
         }
-        internal static readonly string[] SetSections = { "Widget", "General", "Navigation", "Companion", "Background checks", "Gamer Zone", "Alerts", "History & data", "Privacy & online lookups", "Capture & advanced" };
+        internal static readonly string[] SetSections = { "General", "Widget", "Companion", "Navigation", "Background checks", "Gamer Zone", "Alerts", "History & data", "Privacy & online lookups", "Capture & advanced" };
         const string TagGame = "BACKGROUND · GAME SERVERS", TagPc = "ON THIS PC", TagLan = "BACKGROUND · YOUR NETWORK", TagNet = "BACKGROUND · INTERNET", TagOnline = "ONLINE LOOKUP", TagWin = "ONLY WHILE THIS WINDOW IS OPEN";
-        string setSec = "Widget";   // the first thing people change (Adeeb, 14 Nov): how the corner widget looks
+        string setSec = "";   // "" = the question cards (Adeeb, 14 Nov): General first, then the widget, then the rest
         RoundBox settingsSearch;
         static string Every(int sec) { return sec <= 0 ? "off" : sec >= 60 ? "every " + sec / 60 + " min" : "every " + sec + " s"; }
         internal static string SendingNow()
@@ -199,7 +199,14 @@ namespace AdeeboMeter
             using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
             using (var nowrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter, LineAlignment = StringAlignment.Center })
             {
-                // side menu
+                // side menu: All settings (the question cards), then each question by its short name
+                {
+                    var ar = new RectangleF(mx, my, mw, 36 * S); bool aon = q.Length == 0 && setSec == "";
+                    if (aon) Theme.Fill(g, ar, 8 * S, Theme.BlueSoft);
+                    using (var tb = new SolidBrush(aon ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Sub)) g.DrawString(L.T("All settings"), aon ? Draw.fBodyB : Draw.fBody, tb, new RectangleF(ar.X + 12 * S, ar.Y, ar.Width - 44 * S, ar.Height), nowrap);
+                    Act(settingsCanvas, ar, delegate { setSec = ""; if (settingsSearch != null) settingsSearch.Box.Text = ""; settingsCanvas.AutoScrollPosition = Point.Empty; settingsCanvas.Invalidate(); });
+                    my += 44 * S;
+                }
                 foreach (var sec in SetSections)
                 {
                     var r = new RectangleF(mx, my, mw, 36 * S); bool on = q.Length == 0 && sec == setSec;
@@ -232,9 +239,13 @@ namespace AdeeboMeter
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     }
                 }
+                else if (setSec == "") y = PaintSettingsHome(g, x, y, w, items);
                 else
                 {
-                    g.DrawString(L.T(setSec), Draw.fTitle, ink, x, y); y += 34 * S;
+                    // a question page: back, the question, the big choices, then everything else under Fine-tune
+                    var bk = Kit.Back(g, "All settings", x, y, SetQLookOf(setSec)[1], false); Act(settingsCanvas, bk, delegate { setSec = ""; settingsCanvas.AutoScrollPosition = Point.Empty; settingsCanvas.Invalidate(); }); y += 50 * S;
+                    y = Kit.Header(g, x, y, w, SetQLookOf(setSec)[0], SetQLookOf(setSec)[2], L.T(setSec), SetQLookOf(setSec)[1]);
+                    foreach (var lab in BigOnes(setSec)) { var bi = items.FirstOrDefault(i2 => i2.Sec == setSec && i2.Label == lab); if (bi != null) y = PaintBigChoice(g, x, y, w, bi, SetQLookOf(setSec)[1]); }
                     if (setSec == "Widget") y = PaintWidgetPicker(g, x, y, w);
                     if (setSec == "Background checks")
                     {
@@ -256,7 +267,9 @@ namespace AdeeboMeter
                         int gj = Cfg.GameJobsPerMinute(); string cnt = L.T("Right now: about") + " " + Cfg.JobsPerMinute() + " " + L.T("checks a minute in the background") + (Cfg.Preset == "custom" ? " (" + L.T("your own mix") + ")" : "") + (gj > 0 ? ", " + L.T("plus about") + " " + gj + " " + L.T("game pings a minute for the games you watch (one a second per server while you play)") : "") + ", " + L.T("on top of the widget's once-a-second read of Windows' own counters.");
                         var ch = Draw.Measure(cnt, Draw.fSmall, (int)w).Height; g.DrawString(cnt, Draw.fSmall, muted, new RectangleF(x, y, w, ch + 4)); y += ch + 18 * S;
                     }
-                    foreach (var it in items.Where(i2 => i2.Sec == setSec && i2.Label != "Widget style"))   // the style is the picture picker above (the row still turns up in a search)
+                    var fine = items.Where(i2 => i2.Sec == setSec && i2.Label != "Widget style" && !BigOnes(setSec).Contains(i2.Label)).ToList();   // the big ones are above (all still turn up in a search)
+                    if (fine.Count > 0 && (BigOnes(setSec).Length > 0 || setSec == "Widget" || setSec == "Background checks")) y = SetHead(g, L.T("FINE-TUNE"), x, y + 6 * S, w);
+                    foreach (var it in fine)
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     if (setSec == "Navigation") y = PaintNavSettings(g, x, y + 6 * S, w);
                     if (setSec == "Companion") y = PaintCompanion(g, x, y + 6 * S, w);
