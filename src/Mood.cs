@@ -50,6 +50,8 @@ namespace AdeeboMeter
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) return Excuse((DateTime.Now - downSince).TotalMinutes, isp);
             // 1.1.5: the words come from the lines files (Lines) - the persona if one talks, else the mood
             string key, v = null, kind = "state";
+            string comfort = s.Level == 0 && !s.Call ? Lines.Comfort() : "";
+            if (comfort != "" && (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) || (DateTime.Now.Minute < 5 && Lines.Speaks("idle")))) return comfort;   // calm moments only: the greeting, and the first minutes of a quiet hour
             if (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) && s.Level == 0) { key = DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 5 ? "late.night" : DateTime.Now.Hour < 11 ? "morning" : "app.open"; kind = "greet"; }
             else if (at < 0) { if (s.Call) key = "call.on"; else { string koan = Koan(); if (koan != "") return Lines.Speaks("idle") ? koan : ""; key = "all.good"; kind = Lines.Who() == Lines.Mood ? "idle" : "state"; } }
             else

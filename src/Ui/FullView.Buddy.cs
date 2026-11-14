@@ -135,7 +135,51 @@ namespace AdeeboMeter
             var jf = new RectangleF(x, y, 260 * S, 30 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Just the facts (Plain, Details on, face only)"), Draw.fBodyB, b, jf.X, jf.Y + 4 * S);
             Act(settingsCanvas, jf, delegate { Voice.Serious = true; Lines.Chat = "face"; Cfg.Details = true; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
-            return y + 44 * S;
+            y += 44 * S;
+            // your own lines: import (checked and fixed, never silent), export to share, clear
+            int own = Lines.MineCount; float bx = x;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR OWN LINES") + "  ·  " + own, Draw.fTiny, m, x, y); y += 22 * S;
+            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                foreach (var a in new[] { "Import...", "Export...", "Clear" })
+                {
+                    if (a != "Import..." && own == 0) continue;
+                    string t = L.T(a); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, ts.Width + 4, 24 * S);
+                    g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); string a0 = a;
+                    Act(settingsCanvas, r, delegate { if (a0 == "Import...") ImportLines(); else if (a0 == "Export...") SaveText("AdeeboMeter-my-lines", Lines.MineText()); else { Lines.ClearMine(); Invalidate(true); } });
+                    bx += ts.Width + 24 * S;
+                }
+            y += 30 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("A text file, one line each: key|text - for example all.good|All calm, {addr}. Yours come first."), Draw.fSmall, m, new RectangleF(x, y, w, 36 * S));
+            return y + 40 * S;
+        }
+        void ImportLines()
+        {
+            string path;
+            using (var d = new System.Windows.Forms.OpenFileDialog { Filter = L.T("Text files") + " (*.txt)|*.txt|" + L.T("All files") + "|*.*", Title = L.T("Import lines") })
+            { if (d.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return; path = d.FileName; }
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                List<string> kept = null, report;
+                try
+                {
+                    var fi = new System.IO.FileInfo(path);
+                    if (fi.Length > 1048576) report = new List<string> { L.T("Refused: the file is over 1 MB.") };
+                    else report = Lines.Import(System.IO.File.ReadAllText(path, System.Text.Encoding.UTF8), out kept);
+                }
+                catch (Exception e) { report = new List<string> { L.T("Couldn't read the file: ") + e.Message }; }
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        string msg = string.Join("\n", report.Take(18)) + (report.Count > 18 ? "\n(+" + (report.Count - 18) + " more)" : "");
+                        if (kept == null || kept.Count == 0) { System.Windows.Forms.MessageBox.Show(this, msg, "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information); return; }
+                        if (System.Windows.Forms.MessageBox.Show(this, msg + "\n\n" + L.T("Add these lines to yours?"), "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OKCancel, System.Windows.Forms.MessageBoxIcon.Question) != System.Windows.Forms.DialogResult.OK) return;
+                        if (!Lines.SaveMine(kept, true)) System.Windows.Forms.MessageBox.Show(this, L.T("Couldn't save your lines."), "AdeeboMeter");
+                        Invalidate(true);
+                    });
+                }
+                catch (InvalidOperationException) { }
+            });
         }
     }
 }

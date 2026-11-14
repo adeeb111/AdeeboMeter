@@ -1189,3 +1189,19 @@ What should I call you?	Comment dois-je vous appeler ?
 Just the facts (Plain, Details on, face only)	Juste les faits (neutre, détails, visage seulement)
 Fun lines are off - plain words everywhere.	Répliques désactivées - mots simples partout.
 MOOD	HUMEUR
+Words of comfort	Mots de réconfort
+Buddy face	Visage du compagnon
+Drawn	Dessiné
+Emoji	Émoji
+Islam	Islam
+Christianity	Christianisme
+Judaism	Judaïsme
+Hinduism	Hindouisme
+Buddhism	Bouddhisme
+Sikhism	Sikhisme
+YOUR OWN LINES	VOS PROPRES RÉPLIQUES
+Clear	Effacer
+Import lines	Importer des répliques
+Add these lines to yours?	Ajouter ces répliques aux vôtres ?
+Couldn't save your lines.	Impossible d'enregistrer vos répliques.
+Credits	Crédits

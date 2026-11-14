@@ -73,7 +73,7 @@ namespace AdeeboMeter
 
     // ================================================================== own controls (no stock Windows look - the topogram lesson)
     // what the window was doing last - read by the freeze watchdog so "it hangs" comes with a cause in the log
-    static class UiActivity { public static volatile string Doing = ""; }
+    static class UiActivity { public static volatile string Doing = ""; public static volatile bool ToolRunning; }
     sealed class DB : Panel
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }

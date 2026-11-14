@@ -33,6 +33,31 @@ namespace AdeeboMeter
         public static readonly string[] Addrs = { "neutral", "sir", "maam", "name" };
         public static readonly string[] AddrNames = { "Neutral (boss)", "Sir", "Ma'am", "My name" };
 
+        // ---------- words of comfort (opt-in, PLAN 11.7d): a verse from a public-domain translation, word for word, with its
+        // reference. Only in calm moments - a greeting or a quiet stretch - never in Roast, never next to a problem, never
+        // in Surprise me, and never chosen for you.
+        public static readonly string[] Faiths = { "off", "islam", "christianity", "judaism", "hinduism", "buddhism", "sikhism" };
+        public static readonly string[] FaithNames = { "Off", "Islam", "Christianity", "Judaism", "Hinduism", "Buddhism", "Sikhism" };
+        public static volatile string Faith = "off";
+        static List<string[]> comfort;
+        public static List<string[]> Comforts()
+        {
+            lock (k)
+            {
+                if (comfort != null) return comfort;
+                comfort = new List<string[]>();
+                foreach (var l0 in Knowledge.RawText("comfort").Split('\n')) { var l = l0.Trim(); if (l == "" || l[0] == '#') continue; var p = l.Split('|'); if (p.Length == 3) comfort.Add(new[] { p[0].Trim(), p[1].Trim(), p[2].Trim() }); }
+                return comfort;
+            }
+        }
+        // one verse a day for the chosen faith ("" when off, in Roast or Plain)
+        public static string Comfort()
+        {
+            if (Faith == "off" || Voice.Serious || Mood == "roast") return "";
+            var l = Comforts().Where(c => c[0] == Faith).ToList(); if (l.Count == 0) return "";
+            var c0 = l[DateTime.Today.DayOfYear % l.Count]; return "\u201C" + c0[1] + "\u201D  - " + c0[2];
+        }
+
         // ---------- settings (Cfg reads and writes these; volatile: the Monitor thread draws the widget line)
         public static volatile string Mood = "chill", Persona = "surprise", Addr = "neutral", Name = "", Chat = "normal";
 
@@ -91,6 +116,7 @@ namespace AdeeboMeter
         public static string Line(string key, string v) { return Line(key, v, Who()); }
         public static string Line(string key, string v, string who)
         {
+            string own = MineLine(key, v != null); if (own != null) return Fill(own, v, who);
             foreach (var id in Chain(who))
             {
                 var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
@@ -113,6 +139,7 @@ namespace AdeeboMeter
         }
         static string RawLine(string key, bool haveV, string who)
         {
+            string own = MineLine(key, haveV); if (own != null) return own;
             foreach (var id in Chain(who))
             {
                 var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
@@ -186,6 +213,89 @@ namespace AdeeboMeter
             }
             if (id == "plain") foreach (var key in Keys) if (!p.ContainsKey(key)) bad.Add("plain: no line for " + key);
             return bad;
+        }
+
+        // ---------- your own lines (PLAN 11.7c): on top of the built-ins, in %LOCALAPPDATA%\AdeeboMeter\lines\mine.txt
+        // (DataDir), surviving updates. Imported text is untrusted: shown as text only, control and direction-override
+        // characters removed, only {addr} and {v} filled. Limits: 1 MB, 600 lines, 200 characters a line, 2 s.
+        static string MinePath { get { return System.IO.Path.Combine(System.IO.Path.Combine(Program.DataDir, "lines"), "mine.txt"); } }
+        static Dictionary<string, List<string>> mine; static bool mineRead;
+        static Dictionary<string, List<string>> Mine()
+        {
+            lock (k)
+            {
+                if (mineRead) return mine; mineRead = true;
+                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8)); }
+                catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { }
+                return mine;
+            }
+        }
+        public static int MineCount { get { var m = Mine(); return m == null ? 0 : m.Values.Sum(l => l.Count); } }
+        // a line of yours for this key, if you wrote one (picked like the others)
+        static string MineLine(string key, bool haveV)
+        {
+            var m = Mine(); List<string> l; if (m == null || !m.TryGetValue(key, out l)) return null;
+            var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).ToList(); if (ok.Count == 0) return null;
+            lock (k) return ok[rnd.Next(ok.Count)];
+        }
+        static readonly Regex Bidi = new Regex(@"[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F‎‏‪-‮⁦-⁩]", RegexOptions.CultureInvariant);
+        // check a file and fix what can be fixed; returns what happened, line by line, never silently
+        public static List<string> Import(string text, out List<string> kept)
+        {
+            var report = new List<string>(); kept = new List<string>(); var sw = System.Diagnostics.Stopwatch.StartNew();
+            var rows = (text ?? "").Replace("\r", "").Split('\n');
+            if (rows.Length > 600) { report.Add("Refused: " + rows.Length + " lines - the limit is 600 a file."); return report; }
+            int n = 0;
+            foreach (var r0 in rows)
+            {
+                n++; if (sw.ElapsedMilliseconds > 2000) { report.Add("Stopped at line " + n + ": took longer than 2 seconds."); break; }
+                string r = Bidi.Replace(r0, "").Trim(); if (r.Length == 0 || r[0] == '#') continue;
+                if (r.Length > 200) { report.Add("Line " + n + " refused: over 200 characters."); continue; }
+                // wrong separator: a tab, a semicolon or " - " after the key -> "|"
+                var sep = Regex.Match(r, @"^([a-z]+\.?[a-z]*)\s*(\||\t|;|:| - )\s*(.+)$", RegexOptions.CultureInvariant);
+                if (!sep.Success) { report.Add("Line " + n + " refused: write it as key|text, e.g. all.good|All calm."); continue; }
+                string key = sep.Groups[1].Value, t = sep.Groups[3].Value.Trim();
+                if (sep.Groups[2].Value.Trim() != "|") report.Add("Line " + n + " fixed: separator changed to |.");
+                if (t.IndexOf('|') > 0) { var parts = t.Split('|'); if (Array.IndexOf(Moods, parts[0].Trim()) >= 0 || Personas.Any(p => p[0] == parts[0].Trim())) t = parts[parts.Length - 1].Trim(); }   // "key|mood|text": the mood is dropped - your lines are for every mood
+                if (Array.IndexOf(Keys, key) < 0)
+                {
+                    string near = Keys.OrderBy(kk => EditDist(kk, key)).First();
+                    if (EditDist(near, key) <= 3) { report.Add("Line " + n + " fixed: key '" + key + "' -> '" + near + "'."); key = near; }
+                    else { report.Add("Line " + n + " refused: unknown key '" + key + "'."); continue; }
+                }
+                t = Regex.Replace(t, @"\{([^}]*)\}", m =>
+                {
+                    string ph = m.Groups[1].Value.Trim().ToLowerInvariant(); if (ph == "v" || ph == "addr") return "{" + (m.Groups[1].Value.Trim() == "Addr" ? "Addr" : ph) + "}";
+                    string fix = EditDist(ph, "addr") <= EditDist(ph, "v") + 1 ? "addr" : "v"; report.Add("Line " + n + " fixed: placeholder {" + m.Groups[1].Value + "} -> {" + fix + "}."); return "{" + fix + "}";
+                });
+                var words = t.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length > 16) { t = string.Join(" ", words.Take(16)).TrimEnd(',', ';', ':') + "..."; report.Add("Line " + n + " fixed: shortened to 16 words."); }
+                kept.Add(key + "|" + t);
+            }
+            report.Insert(0, kept.Count + " line" + (kept.Count == 1 ? "" : "s") + " ready.");
+            return report;
+        }
+        public static bool SaveMine(List<string> lines, bool append)
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(MinePath));
+                var all = new List<string>(); if (append && System.IO.File.Exists(MinePath)) all.AddRange(System.IO.File.ReadAllLines(MinePath, System.Text.Encoding.UTF8).Where(l => l.Trim() != "" && !l.StartsWith("#", StringComparison.Ordinal)));
+                all.AddRange(lines); if (all.Count > 600) all = all.Skip(all.Count - 600).ToList();
+                System.IO.File.WriteAllText(MinePath, "# My AdeeboMeter lines: key|text. {addr} = how I like to be called, {v} = the measured value.\n" + string.Join("\n", all) + "\n", new System.Text.UTF8Encoding(false));
+                lock (k) { mineRead = false; mine = null; }
+                return true;
+            }
+            catch (System.IO.IOException) { return false; } catch (UnauthorizedAccessException) { return false; }
+        }
+        public static string MineText() { try { return System.IO.File.Exists(MinePath) ? System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8) : ""; } catch (System.IO.IOException) { return ""; } catch (UnauthorizedAccessException) { return ""; } }
+        public static void ClearMine() { try { if (System.IO.File.Exists(MinePath)) System.IO.File.Delete(MinePath); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { } lock (k) { mineRead = false; mine = null; } }
+        static int EditDist(string a, string b)
+        {
+            var d = new int[a.Length + 1, b.Length + 1];
+            for (int i = 0; i <= a.Length; i++) d[i, 0] = i; for (int j = 0; j <= b.Length; j++) d[0, j] = j;
+            for (int i = 1; i <= a.Length; i++) for (int j = 1; j <= b.Length; j++) d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1), d[i - 1, j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
+            return d[a.Length, b.Length];
         }
     }
 }

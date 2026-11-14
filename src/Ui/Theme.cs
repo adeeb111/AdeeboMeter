@@ -335,9 +335,64 @@ namespace AdeeboMeter
                     break;
             }
         }
+        // ---------- emoji faces (PLAN 11.7c): Twemoji, CC-BY 4.0 (assets\emoji\CREDIT.txt), embedded PNGs loaded on first use
+        static readonly Dictionary<string, Bitmap> emoji = new Dictionary<string, Bitmap>(StringComparer.Ordinal);
+        static Bitmap Emoji(string code)
+        {
+            lock (emoji)
+            {
+                Bitmap b; if (emoji.TryGetValue(code, out b)) return b;
+                try { using (var st = typeof(Draw).Assembly.GetManifestResourceStream("AdeeboMeter.emoji." + code + ".png")) b = st == null ? null : new Bitmap(st); } catch (ArgumentException) { b = null; }
+                emoji[code] = b; return b;
+            }
+        }
+        // the face for a state; the calm face follows the mood
+        public static string EmojiFor(string m)
+        {
+            switch (m)
+            {
+                case "asleep": return "1f634";
+                case "sweaty": return "1f613";
+                case "worried": return "1f61f";
+                case "dizzy": return "1f635";
+                case "betrayed": return "1f612";
+                case "smile": return "1f60a";
+                default:
+                    if (Voice.Serious) return "1f610";
+                    switch (Lines.Mood) { case "roast": return "1f60f"; case "hype": return "1f929"; case "support": return "1f60a"; case "bossy": return "1f624"; case "emo": return "1f614"; default: return "1f60c"; }
+            }
+        }
+        // our trick: now and then (New Year, a rare day) the calm face wears a surprise for the day - every mode, Plain too.
+        // Only the face, only while all is well, never in anything copied or saved, never permanent.
+        static readonly string[] Surprises = { "1f920", "1f92f", "1f970", "1f607", "1f973", "1f929", "1f60e" };
+        public static string SurpriseFace(DateTime d)
+        {
+            if (d.Month == 1 && d.Day == 1) return "1f973";
+            uint h = (uint)(d.Year * 1000 + d.DayOfYear) * 2654435761u;
+            return h % 23 == 0 ? Surprises[(int)(h / 23 % (uint)Surprises.Length)] : null;
+        }
+        // the hour mark (PLAN 11.7d): for a moment at the top of the hour the face smiles; at 22:00 and 23:00 it's sleepy.
+        // Not during a call or when something's wrong; it only shows if the face is drawn anyway (no extra repaints).
+        public static string HourMark(Snap s, DateTime now)
+        {
+            if (now.Minute != 0 || now.Second > 2 || s == null || s.Call || s.Level > 0 || UiActivity.ToolRunning) return null;
+            return now.Hour == 22 || now.Hour == 23 ? "asleep" : "smile";
+        }
         public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep)
         {
             string m = asleep ? "asleep" : BuddyMood(s);
+            string hm = asleep ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
+            string face = m == "smug" || m == "smile" ? SurpriseFace(DateTime.Today) : null;
+            if (face == null && Cfg.BuddyFace == "emoji") face = EmojiFor(m);
+            var em = face != null ? Emoji(face) : null;
+            if (em != null)
+            {
+                var q = g.InterpolationMode; g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(em, r); g.InterpolationMode = q;
+                if (!asleep && r.Width >= 22 * S) { string hat = HatNow(); if (hat != "") Hat(g, r, hat); }
+                return;
+            }
+            if (m == "smile") m = "smug";
             Color body = m == "betrayed" || m == "dizzy" ? Theme.LvSoft(2) : m == "worried" || m == "sweaty" ? Theme.LvSoft(1) : Theme.LvSoft(0);
             Color ink = Theme.Dark ? Color.FromArgb(230, 235, 240) : Color.FromArgb(40, 48, 60);
             using (var b = new SolidBrush(body)) g.FillEllipse(b, r);

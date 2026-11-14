@@ -43,6 +43,8 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.font.$($k.BaseName).gz"
     }
+    # the emoji faces (assets\emoji, Twemoji, CC-BY 4.0 - assets\emoji\CREDIT.txt): small PNGs, already compressed
+    foreach ($k in Get-ChildItem assets\emoji\*.png) { $res += "/resource:$($k.FullName),AdeeboMeter.emoji.$($k.BaseName).png" }
     # the Hall of Fame key (the Adeebo Award's claim code): from the HOF_KEY secret on GitHub's build, or secrets\hof.key
     # on Adeeb's PC - never in the source. One generated file, removed again right after the build.
     $hk = $env:HOF_KEY; if (-not $hk -and (Test-Path secrets\hof.key)) { $hk = (Get-Content -Raw secrets\hof.key).Trim() }
