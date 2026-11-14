@@ -1253,3 +1253,15 @@ It's fixed	C'est réglé
 Still broken - check again	Toujours en panne - revérifier
 Copy for someone who can help	Copier pour quelqu'un qui peut aider
 Copied	Copié
+A quick once-over of this PC	Un rapide tour de ce PC
+Press Run health check and I'll look at the things that make a PC feel slow or flaky. Takes a few seconds.	Appuyez sur Lancer le bilan et je regarde ce qui rend un PC lent ou capricieux. Quelques secondes.
+Press Run health check. Takes a few seconds.	Appuyez sur Lancer le bilan. Quelques secondes.
+How long since a restart, and whether Windows is waiting for one	Depuis quand le PC n'a pas redémarré, et si Windows attend un redémarrage
+Memory and free disk space	Mémoire et espace disque libre
+Your network adapter, Wi-Fi channel crowding, DNS, VPN and power settings	Votre carte réseau, l'encombrement du canal Wi-Fi, le DNS, le VPN et l'alimentation
+See your traffic, live	Votre trafic, en direct
+Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.	Appuyez sur Démarrer et je branche le cerveau de Wireshark sur votre trafic. Rien ne tourne avant.
+Press Start live capture. Nothing runs until you do.	Appuyez sur Démarrer la capture. Rien ne tourne avant.
+Which apps and conversations use the most traffic	Quelles applis et conversations consomment le plus
+Call quality (loss, jitter, MOS) and Wireshark's own warnings	Qualité des appels (pertes, gigue, MOS) et alertes de Wireshark
+Stays on this PC - nothing is uploaded	Tout reste sur ce PC - rien n'est envoyé

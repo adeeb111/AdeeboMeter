@@ -137,8 +137,9 @@ namespace AdeeboMeter
         {
             g.TranslateTransform(procInfo.AutoScrollPosition.X, procInfo.AutoScrollPosition.Y);
             Begin(procInfo);
-            float x = 20 * S, y = 14 * S, w = procInfo.ClientSize.Width - 40 * S;
-            using (var line = new Pen(Theme.Line)) g.DrawLine(line, 0, 0, 0, Math.Max(procInfo.ClientSize.Height, procInfo.AutoScrollMinSize.Height));
+            float x = 32 * S, y = 26 * S, w = procInfo.ClientSize.Width - 64 * S;
+            // the story sits on a raised card that runs the panel's full height
+            Kit.Box(g, new RectangleF(12 * S, 6 * S, procInfo.ClientSize.Width - 24 * S, Math.Max(procInfo.ClientSize.Height, procInfo.AutoScrollMinSize.Height) - 18 * S));
             var a = procs.FirstOrDefault(p => p.Name == procSel);
             if (a == null)
             {

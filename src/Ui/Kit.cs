@@ -60,6 +60,31 @@ namespace AdeeboMeter
         }
         // a raised frame for a panel whose inside is already drawn: the soft shadow only outside it, a light edge on it -
         // turns the older outlined boxes into 1.1.5 cards without repainting what's inside (works in any drawing order)
+        // ---------- an empty-state card: big tinted icon, a title, one line, and up to three "what you'll get" points. Returns the y below it.
+        public static float Empty(Graphics g, float x, float y, float w, string icon, string accent, string title, string body, string[] points)
+        {
+            title = L.T(title); body = L.T(body);
+            float tw = w - 104 * S, bh = Draw.Measure(body, Draw.fBody, (int)tw).Height;
+            float ph = 0; if (points != null) foreach (var p in points) ph += Draw.Measure(L.T(p), Draw.fBody, (int)(tw - 20 * S)).Height + 6 * S;
+            var r = new RectangleF(x, y, w, Math.Max(108 * S, 58 * S + bh + (ph > 0 ? ph + 12 * S : 0) + 22 * S));
+            Box(g, r);
+            var ic = new RectangleF(r.X + 24 * S, r.Y + 24 * S, 56 * S, 56 * S); Theme.Fill(g, ic, 16 * S, Soft(accent));
+            Icon(g, icon, new RectangleF(ic.X + 14 * S, ic.Y + 14 * S, 28 * S, 28 * S), Accent(accent));
+            float tx = r.X + 104 * S, ty = r.Y + 24 * S;
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(title, Draw.fTitle, ib, tx, ty);
+            ty += 32 * S;
+            using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(body, Draw.fBody, sb, new RectangleF(tx, ty, tw, bh + 4)); ty += bh + 12 * S;
+            if (points != null)
+                using (var sb = new SolidBrush(Theme.Sub))
+                    foreach (var p in points)
+                    {
+                        string t = L.T(p); float h = Draw.Measure(t, Draw.fBody, (int)(tw - 20 * S)).Height;
+                        Theme.Fill(g, new RectangleF(tx + 2 * S, ty + 6 * S, 7 * S, 7 * S), 3.5f * S, Accent(accent));
+                        g.DrawString(t, Draw.fBody, sb, new RectangleF(tx + 20 * S, ty, tw - 20 * S, h + 4)); ty += h + 6 * S;
+                    }
+            return r.Bottom + 12 * S;
+        }
+
         // a raised card: theme card colour, soft shadow, hairline edge, rounded
         public static void Box(Graphics g, RectangleF r) { Box(g, r, 16 * S); }
         public static void Box(Graphics g, RectangleF r, float rad) { if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }

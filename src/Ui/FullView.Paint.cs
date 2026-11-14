@@ -255,6 +255,8 @@ namespace AdeeboMeter
             Need(destCanvas, y);
         }
 
+        static readonly string[] HealthPoints = { "How long since a restart, and whether Windows is waiting for one", "Memory and free disk space", "Your network adapter, Wi-Fi channel crowding, DNS, VPN and power settings" },
+            LivePoints = { "Which apps and conversations use the most traffic", "Call quality (loss, jitter, MOS) and Wireshark's own warnings", "Stays on this PC - nothing is uploaded" };
         void PaintHealth(Graphics g)
         {
             g.TranslateTransform(healthCanvas.AutoScrollPosition.X, healthCanvas.AutoScrollPosition.Y);
@@ -267,7 +269,9 @@ namespace AdeeboMeter
                 if (health == null && (toolRows != null || toolBusy)) { var need0 = new Size(0, (int)(y + 20 * S)); SetNeed(healthCanvas, need0); return; }
                 if (health == null)
                 {
-                    g.DrawString(healthRunning ? Voice.P("Poking around...", "Running...") : Voice.P("Press the button and I'll give your PC a quick once-over.", "Press Run health check."), Draw.fBody, muted, x, y + 6 * S);
+                    if (healthRunning) g.DrawString(Voice.P("Poking around...", "Running..."), Draw.fBody, muted, x, y + 6 * S);
+                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "cpu", "home", "A quick once-over of this PC", Voice.P("Press Run health check and I'll look at the things that make a PC feel slow or flaky. Takes a few seconds.", "Press Run health check. Takes a few seconds."),
+                        HealthPoints);
                     return;
                 }
                 float nameW = 250 * S;
@@ -433,7 +437,9 @@ namespace AdeeboMeter
                 var v = liveView;
                 if (!live.Running || v == null)
                 {
-                    g.DrawString(live.Running ? Voice.P("Warming up tshark...", "Starting...") : Voice.P("Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.", "Press Start live capture."), Draw.fBody, muted, x, y + 6 * S);
+                    if (live.Running) g.DrawString(Voice.P("Warming up tshark...", "Starting..."), Draw.fBody, muted, x, y + 6 * S);
+                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "traffic", "home", "See your traffic, live", Voice.P("Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.", "Press Start live capture. Nothing runs until you do."),
+                        LivePoints);
                     return;
                 }
                 g.DrawString(v.State + "   ·   " + v.Pkts.ToString("N0", CultureInfo.CurrentCulture) + " packets   ·   " + Draw.MemStr(v.Bytes) + "   ·   " + v.Pps.ToString("0", CultureInfo.CurrentCulture) + " pkt/s", Draw.fMonoS, sub, x, y); y += 24 * S;

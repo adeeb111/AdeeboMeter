@@ -397,8 +397,9 @@ namespace AdeeboMeter
                     else if (!r.Initial && (now - r.First).TotalSeconds < 3) bg = Theme.RowNew;
                     else if (c.Key == selKey) bg = Theme.RowSel;
                     else if (i == hover) bg = Theme.RowHot;
-                    using (var b = new SolidBrush(bg)) g.FillRectangle(b, 0, y, w, RowH);
-                    g.DrawLine(line, 0, y + RowH - 1, w, y + RowH - 1);
+                    using (var b = new SolidBrush(Theme.Card)) g.FillRectangle(b, 0, y, w, RowH);
+                    if (bg != Theme.Card) Theme.Fill(g, new RectangleF(4 * S, y + 2 * S, w - 8 * S, RowH - 4 * S), 10 * S, bg);   // rounded row tint
+                    else if (i + 1 < view.Count) g.DrawLine(line, x0, y + RowH - 1, w - x0, y + RowH - 1);
                     x = x0; float cy = y + RowH / 2f;
                     var badge = new RectangleF(x, cy - 13 * S, 26 * S, 26 * S);
                     Theme.Fill(g, badge, 7 * S, AppColor(c.Proc));
@@ -413,19 +414,19 @@ namespace AdeeboMeter
                     Text2(g, c.Host, addr, x, y, cols[3], ink, muted, Draw.fBodyB, Draw.fMonoS);
                     x += cols[3] + 8 * S;
                     var sc = StateColors(c.State); var ss = g.MeasureString(c.State, Draw.fMonoS);
-                    Theme.Fill(g, new RectangleF(x, cy - ss.Height / 2 - 3 * S, ss.Width + 8 * S, ss.Height + 6 * S), 5 * S, sc[0]);
-                    using (var b = new SolidBrush(sc[1])) g.DrawString(c.State, Draw.fMonoS, b, x + 4 * S, cy - ss.Height / 2);
+                    Theme.Fill(g, new RectangleF(x, cy - ss.Height / 2 - 3 * S, ss.Width + 14 * S, ss.Height + 6 * S), (ss.Height + 6 * S) / 2, sc[0]);
+                    using (var b = new SolidBrush(sc[1])) g.DrawString(c.State, Draw.fMonoS, b, x + 7 * S, cy - ss.Height / 2);
                     x += cols[4] + 8 * S;
                     g.DrawString(Age(r, now), Draw.fMonoS, sub, x, cy - 7 * S);
                     x += cols[5] + 8 * S;
                     bool can = CanSniff && c.State != "BOUND";
                     bool jn = Journeyable(c); var jr = new RectangleF(x, cy - 13 * S, 66 * S, 26 * S);
-                    Theme.Fill(g, jr, 6 * S, jn ? Theme.Soft : Theme.Line2); Theme.Stroke(g, jr, 6 * S, jn ? Theme.Blue : Theme.Line2, 1);
-                    using (var b = new SolidBrush(jn ? (Theme.Dark ? Theme.BlueDark : Theme.Blue) : Theme.Muted)) g.DrawString(L.T("Journey"), Draw.fSmall, b, jr, center);
+                    Theme.Fill(g, jr, 13 * S, jn ? Theme.BlueSoft : Theme.Line2);
+                    using (var b = new SolidBrush(jn ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Muted)) g.DrawString(L.T("Journey"), Draw.fSmall, b, jr, center);
                     x += 72 * S;
                     var br = new RectangleF(x, cy - 13 * S, 58 * S, 26 * S);
-                    Theme.Fill(g, br, 6 * S, can ? Theme.Blue : Theme.Line2);
-                    using (var b = new SolidBrush(can ? Color.White : Theme.Muted)) g.DrawString(L.T("Sniff"), Draw.fSmall, b, br, center);
+                    Theme.Fill(g, br, 13 * S, can ? Theme.Blue : Theme.Line2);
+                    using (var b = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) g.DrawString(L.T("Sniff"), Draw.fSmall, b, br, center);
                 }
                 g.ResetClip();
                 if (view.Count == 0) g.DrawString(Voice.P("Nothing matches. Either the filter's too picky or it's really quiet out there.", "No connections match."), Draw.fBody, muted, x0, HeadH + 14 * S);

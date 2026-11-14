@@ -127,7 +127,12 @@ namespace AdeeboMeter
 
         // ---------- Sidebar: the navy column (topogram's look: faint highlight + a 3 px aqua bar, never a solid block)
         DB sideNav;
-        static readonly Color Navy = Theme.C("#0B1B3A"), Navy2 = Theme.C("#13284D"), Aqua = Theme.C("#3DE0C2"), NavyText = Theme.C("#B5C6E0");
+        // the rail: navy for the standard themes; the colour themes get a deep shade of their own so it doesn't clash (Sunset was navy-on-plum)
+        static bool StdRail { get { return Theme.Palette == "standard" || Theme.Palette == ""; } }
+        static Color Navy { get { return StdRail ? Theme.C("#0B1B3A") : Theme.Dark ? Kit.Mix(Kit.Mix(Theme.Bg, Color.Black, 0.35f), Theme.Blue, 0.05f) : Kit.Mix(Theme.Blue, Color.Black, 0.78f); } }
+        static Color Navy2 { get { return StdRail ? Theme.C("#13284D") : Kit.Mix(Navy, Color.White, 0.08f); } }
+        static Color Aqua { get { return StdRail ? Theme.C("#3DE0C2") : Theme.Blue; } }
+        static Color NavyText { get { return StdRail ? Theme.C("#B5C6E0") : Kit.Mix(Navy, Color.White, 0.72f); } }
         DB BuildSideNav()
         {
             sideNav = new DB { Name = "sideNav", Dock = DockStyle.Left, Width = Sc(214), BackColor = Navy, Visible = false };
@@ -139,6 +144,7 @@ namespace AdeeboMeter
         {
             Begin(sideNav); bool hc = Theme.HighContrast;
             Color bg = hc ? SystemColors.Control : Navy, ink = hc ? SystemColors.ControlText : Color.White, sub = hc ? SystemColors.GrayText : NavyText;
+            if (!hc && sideNav.BackColor != bg) sideNav.BackColor = bg;
             using (var b = new SolidBrush(bg)) g.FillRectangle(b, r);
             float x = 10 * S, y = 14 * S, w = r.Width - 20 * S; string cur = NavOf(tab);
             var sr = new RectangleF(x, y, w, 34 * S);
