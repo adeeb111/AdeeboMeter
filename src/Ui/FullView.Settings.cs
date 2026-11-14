@@ -121,6 +121,11 @@ namespace AdeeboMeter
             add("General", "Start with Windows", TagPc, () => Program.Packaged ? "Windows keeps this switch: choosing opens Settings › Apps › Startup - turn AdeeboMeter on or off there." : "Starts quietly when you sign in. Exit from the tray stops it completely - nothing stays behind.", SetS10, () => Cfg.GetAutoStart() ? 0 : 1, i => Cfg.SetAutoStart(i == 0), null, "startup boot login autostart");
             // Navigation (the tab list itself is drawn below the rows - PaintNavSettings)
             add("Navigation", "Layout", TagPc, () => Cfg.Layout == "sidebar" ? "Sidebar: the sections down the left, with search and a live meter. Fold it to icons with the arrow." : "Classic: tabs along the top, the health panel on the right.", SetLayoutOpts, () => Cfg.Layout == "sidebar" ? 1 : 0, i => SetLayout(i == 1 ? "sidebar" : "classic"), null, "layout sidebar classic tabs menu left top");
+            foreach (var hs in Cfg.Hideable)
+            {
+                string sec = hs, nm = sec == "stream" ? "Streaming" : sec == "trade" ? "Trading" : "Gamer";
+                add("Navigation", "Show " + nm, TagPc, () => Cfg.Off(sec) ? "Off: hidden everywhere, and its background checks are stopped." : "On: in the bar or under More - move it in the list below.", SetS10, () => Cfg.Off(sec) ? 1 : 0, i => { Cfg.SetOff(sec, i == 1); Cfg.Save(); if (i == 1 && tab != null && SecOf(tab) == sec) { tab = "overview"; ShowTab(); } ApplyLayout(); settingsCanvas.Invalidate(); }, null, "hide turn off section " + nm.ToLowerInvariant());
+            }
             // Widget
             add("Widget", "Speed in", TagPc, () => Cfg.WUnits == "bytes" ? "MB/s - like a download in your browser." : "Mb/s - like your internet plan and speed tests.", SetUnits, () => Cfg.WUnits == "bytes" ? 1 : 0, i => { Cfg.WUnits = i == 1 ? "bytes" : "bits"; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "units bits bytes mbps mb/s speed widget");
             add("Widget", "Show", TagPc, () => "Which way the speed widget shows.", SetDir, () => Cfg.WDir == "down" ? 1 : Cfg.WDir == "up" ? 2 : 0, i => { Cfg.WDir = i == 1 ? "down" : i == 2 ? "up" : "both"; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "download upload both direction widget");

@@ -116,3 +116,16 @@ update.suspect|Bro, it broke after the update on {v}.
 update.suspect|Windows update might've done this, bro.
 call.on|You're on a call, bro. Watching it.
 call.on|Call mode, bro. I'll watch the lag.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is smooth, bro. Enjoy the show.
+stream.on|Stream is clean, bro. I got the path.
+stream.dip|Bro, the stream dipped. {v}
+stream.dip|Little stutter, bro. {v}
+stream.none|Nothing streaming, bro.
+stream.none|No show on, bro. I will spot it when you start.
+trade.ok|Broker line is fast, bro.
+trade.ok|Connection to your broker is solid, bro.
+trade.slow|Hold up, bro. Broker line is slow.
+trade.slow|Bro, wait a sec before you click. {v}
+trade.closed|Market is closed, bro. Rest up.
+trade.closed|No trading now, bro. Opens at 9:30.

@@ -91,3 +91,16 @@ update.suspect|Things changed after the Windows update on {v}.
 update.suspect|The trouble began after an update on {v}.
 call.on|You're on a call. I'm watching the quality.
 call.on|Call detected. I'll keep an eye on it.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is playing well. I am here if it changes.
+stream.on|Your stream looks good. Enjoy.
+stream.dip|Your stream had a short dip. {v}
+stream.dip|A small dip happened. {v}
+stream.none|Nothing is streaming at the moment.
+stream.none|No stream right now. I will notice when one starts.
+trade.ok|Your connection to the broker looks good.
+trade.ok|Everything is steady to your broker.
+trade.slow|Your broker is slow right now. Please wait a moment.
+trade.slow|A slow moment to the broker. {v}
+trade.closed|The market is closed for today.
+trade.closed|Markets are closed. Checks resume at 9:30.

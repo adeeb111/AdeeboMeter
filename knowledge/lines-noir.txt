@@ -84,3 +84,16 @@ update.suspect|It started after the update on {v}. Prime suspect.
 update.suspect|Trouble since the {v} update. Funny timing.
 call.on|You're on a call. I'll keep watch.
 call.on|Call in progress. Listening for trouble.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} plays clean. Too clean. I am watching.
+stream.on|The stream runs smooth tonight. For now.
+stream.dip|The stream stumbled. {v}
+stream.dip|A dip in the dark. {v}
+stream.none|No stream. The city is quiet.
+stream.none|Nothing playing. Just me and the rain.
+trade.ok|The broker answers fast. No trouble yet.
+trade.ok|Line to the broker holds steady.
+trade.slow|The broker went slow. Wait it out.
+trade.slow|Somebody slowed the broker line. {v}
+trade.closed|Market is closed. The deals sleep.
+trade.closed|Closed for the night. Opens at 9:30.

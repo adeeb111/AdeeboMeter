@@ -56,6 +56,11 @@ namespace AdeeboMeter
                 y += 32 * S;
                 string lead = active ? Voice.P("Live: your line to your broker, second by second while the market is open. Below: the day's numbers.", "Live broker connection in market hours; end-of-day numbers below.") : Voice.P("The day's numbers after the close, plus how your connection to your broker held up.", "End-of-day numbers and your broker connection's record.");
                 g.DrawString(lead + " " + L.T("Not advice - just the numbers."), Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += 36 * S;
+                if (Cfg.TradeLive && Cfg.TradeHost != "")
+                {
+                    int tlv; Trading.Headline(out tlv); bool openNow = Trading.MarketOpen(Trading.EasternNow()) || Cfg.TradeCrypto;
+                    y = PaintModeLine(g, !openNow ? "trade.closed" : tlv == 2 ? "trade.slow" : "trade.ok", null, tlv == 2, x, y, w);
+                }
                 if (active) y = PaintBrokerLive(g, x, y, w, true);
                 y = PaintFx(g, x, y, w);
                 if (!active) y = PaintBrokerLive(g, x, y, w, false);
@@ -90,7 +95,7 @@ namespace AdeeboMeter
                     float h = big ? 210 * S : 150 * S; var card = new RectangleF(x, y, w, h); Kit.Box(g, card);
                     float cx = x + 22 * S, cy = y + 18 * S;
                     g.DrawString(L.T("Watch your line to your broker"), Draw.fName, ink, cx, cy); cy += 28 * S;
-                    g.DrawString(L.T("A light knock on your broker's server every 2 seconds, only 9:30-16:00 Eastern on weekdays (or 24/7 for crypto, if you choose). It never logs in or sees your account."), Draw.fBody, sub, new RectangleF(cx, cy, w - 44 * S, 44 * S)); cy += 48 * S;
+                    g.DrawString(L.T("A light knock on your broker's server") + " " + L.T("every") + " " + Trading.Sec + " s " + L.T("(your preset's pace; every 2 s with Details on), only 9:30-16:00 Eastern on weekdays (or 24/7 for crypto, if you choose). It never logs in or sees your account."), Draw.fBody, sub, new RectangleF(cx, cy, w - 44 * S, 44 * S)); cy += 48 * S;
                     float sbx = cx;
                     foreach (var b in Brokers)
                     {
@@ -124,7 +129,7 @@ namespace AdeeboMeter
                 {
                     var far = samples.Where(z => !double.IsNaN(z.Far)).Select(z => z.Far).ToList(); var last = samples.LastOrDefault();
                     double jit = far.Count >= 3 ? Enumerable.Range(1, far.Count - 1).Average(i => Math.Abs(far[i] - far[i - 1])) : double.NaN;
-                    int lost = samples.Skip(Math.Max(0, samples.Count - 30)).Count(z => z.FarLost); int n = Math.Min(30, samples.Count);
+                    int per = Math.Max(1, 60 / Trading.Sec); int lost = samples.Skip(Math.Max(0, samples.Count - per)).Count(z => z.FarLost); int n = Math.Min(per, samples.Count);
                     var lastDip = day != null && day.Dips.Count > 0 ? day.Dips.Last() : null;
                     string[][] tiles = {
                         new[] { "BROKER DELAY", last == null || double.IsNaN(last.Far) ? "-" : Ms(last.Far) + " ms", day == null || double.IsNaN(day.FarNormal) ? "" : L.T("usual ") + Ms(day.FarNormal) },
@@ -140,7 +145,7 @@ namespace AdeeboMeter
                         if (tiles[i][2] != "") using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(tiles[i][2], Draw.fSmall, sub, new RectangleF(tr.X + 12 * S, tr.Y + 47 * S, tw - 20 * S, 18 * S), nf);
                     }
                     cy2 += 80 * S;
-                    g.DrawString(L.T("LAST 10 MINUTES · one check every 2 s · dashed = 100 ms, the \"wait\" line"), Draw.fTiny, muted, cx2, cy2); cy2 += 18 * S;
+                    g.DrawString(L.T("LAST 10 MINUTES") + " · " + L.T("one check every") + " " + Trading.Sec + " s · " + L.T("dashed = 100 ms, the \"wait\" line"), Draw.fTiny, muted, cx2, cy2); cy2 += 18 * S;
                     var ch = new RectangleF(cx2, cy2, w - 44 * S, 70 * S); double mx = Math.Max(150, far.DefaultIfEmpty(0).Max() * 1.1);
                     using (var dp = new Pen(Theme.Amber, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash }) { float ly = ch.Bottom - (float)(100 / mx) * ch.Height; g.DrawLine(dp, ch.X, ly, ch.Right, ly); }
                     if (samples.Count >= 2)

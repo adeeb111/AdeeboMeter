@@ -1012,6 +1012,16 @@ namespace AdeeboMeter
                 if (Trading.ParseFx("<html>error</html>").Count != 0 || Trading.ParseFx(null).Count != 0) throw new InvalidOperationException("junk read as rates");
                 var hosts = new Dictionary<string, string> { { "https://my.wealthsimple.com/app/home?x=1", "my.wealthsimple.com" }, { "Questrade.com", "questrade.com" }, { "1.2.3.4:443", "1.2.3.4" }, { "evil.com; rm -rf", "" }, { "", "" }, { "a b.com", "" } };
                 foreach (var kv in hosts) if (Cfg.CleanHost(kv.Key) != kv.Value) throw new InvalidOperationException("CleanHost(" + kv.Key + ") = " + Cfg.CleanHost(kv.Key));
+                string hid0 = Cfg.HiddenSecs, pre0 = Cfg.Preset; bool det0 = Cfg.Details;
+                try
+                {
+                    Cfg.HiddenSecs = ""; Cfg.SetOff("trade", true); Cfg.SetOff("bogus", true); Cfg.SetOff("stream", true); Cfg.SetOff("trade", false);
+                    if (Cfg.HiddenSecs != "stream" || !Cfg.Off("stream") || Cfg.Off("trade") || Cfg.Off("strea")) throw new InvalidOperationException("hiding sections: " + Cfg.HiddenSecs);
+                    Cfg.Details = false; Cfg.Preset = "penny"; if (Trading.Sec != 30 || Streams.SampleSec != 30) throw new InvalidOperationException("Penny must check every 30 s");
+                    Cfg.Preset = "balanced"; if (Trading.Sec != 10 || Streams.SampleSec != 5) throw new InvalidOperationException("Balanced: broker 10 s, stream 5 s");
+                    Cfg.Details = true; if (Trading.Sec != 2) throw new InvalidOperationException("2 s only with Details on");
+                }
+                finally { Cfg.HiddenSecs = hid0; Cfg.Preset = pre0; Cfg.Details = det0; }
                 if (!Trading.MarketOpen(new DateTime(2026, 11, 13, 10, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 9, 29, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 16, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 14, 11, 0, 0))) throw new InvalidOperationException("market hours wrong");
             });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>

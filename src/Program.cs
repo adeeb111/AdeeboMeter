@@ -308,6 +308,11 @@ namespace AdeeboMeter
         // history on by default (kept HistoryDays, rolling), alerts with quiet hours, watch-and-suggest, data cap, pinned watch
         public static volatile bool History = true, Alerts = true, Quiet = true, Watch = true, PinWatch;
         public static volatile bool Streams = true;
+        // whole sections someone doesn't want: hidden from the bar and More, and their background work stops
+        public static volatile string HiddenSecs = ""; public static readonly string[] Hideable = { "stream", "trade", "gamer" };
+        public static bool Off(string sec) { return ("," + HiddenSecs + ",").Contains("," + sec + ","); }
+        static readonly char[] CommaOnly = { ',' };
+        public static void SetOff(string sec, bool off) { var l = HiddenSecs.Split(CommaOnly, StringSplitOptions.RemoveEmptyEntries).Where(z => z != sec && Hideable.Contains(z)).ToList(); if (off) l.Add(sec); HiddenSecs = string.Join(",", l); }
         // Trading: the live broker panel is opt-in (a check every 2 s in market hours); end-of-day currencies on by default
         public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx = true; public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
         public static volatile int DevAlerts;   // new-device pop-ups: 0 off (default - they're still listed), 1 home networks only
@@ -367,7 +372,7 @@ namespace AdeeboMeter
         {
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "streams=" + (Streams ? 1 : 0); yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx=" + (TradeFx ? 1 : 0); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
+            yield return "streams=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx=" + (TradeFx ? 1 : 0); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
@@ -378,7 +383,7 @@ namespace AdeeboMeter
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
         public static readonly string[] NavIds = { "home", "stream", "trade", "toolbox", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports" };
         public static string NavClean(string v)
@@ -408,6 +413,7 @@ namespace AdeeboMeter
                 case "call": Call = v == "1"; break;
                 case "ipnames": IpNames = v == "1"; break;
                 case "streams": Streams = v != "0"; break;
+                case "hidden": HiddenSecs = string.Join(",", (v ?? "").Split(',').Where(z => Hideable.Contains(z)).Distinct()); break;
                 case "tradelive": TradeLive = v == "1"; break;
                 case "tradecrypto": TradeCrypto = v == "1"; break;
                 case "tradealert": TradeAlert = v != "0"; break;

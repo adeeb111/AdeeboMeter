@@ -91,3 +91,16 @@ update.suspect|Trouble started after the update on {v}! Found the clue!
 update.suspect|It broke after the update on {v}!
 call.on|You're on a call! Watching it!
 call.on|Call detected! Quality watch on!
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is SMOOTH! Zero dips!
+stream.on|Stream is flawless! Enjoy every second!
+stream.dip|Dip alert! {v}
+stream.dip|Stream stumble! {v}
+stream.none|No stream yet. Ready when you are!
+stream.none|Nothing playing. Hit play, I am ready!
+trade.ok|Broker line is FAST! All clear!
+trade.ok|Lightning connection to your broker!
+trade.slow|Slow broker line! Wait a moment!
+trade.slow|Broker lag! {v}
+trade.closed|Market closed! Back at 9:30!
+trade.closed|Markets are resting! See you at the open!

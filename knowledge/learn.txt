@@ -799,7 +799,7 @@ title: What your connection means for trading
 kind: investing
 tag: The network carries the order; it doesn't fill it.
 check: What can AdeeboMeter's broker check NOT tell you? | How fast the broker actually fills your order | Your delay to the broker's server | Whether your Wi-Fi is dropping | Whether your provider is losing packets
-line: Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every 2 seconds while the market is open and says whose side a slow moment is on.
+line: Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every few seconds while the market is open and says whose side a slow moment is on.
 breaks: If the order screen spins after a lost reply, check your orders list before clicking again - a second click can mean a second order.
 ladder: You > Router: Buy (2 ms) | Router > Provider: Buy (15 ms) | Provider > Broker: Buy (12 ms) | Broker > You: order received
 try: Turn on the live broker check in Trading.

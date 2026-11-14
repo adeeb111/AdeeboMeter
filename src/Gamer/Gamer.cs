@@ -431,7 +431,7 @@ namespace AdeeboMeter
                 try
                 {
                     Thread.Sleep(idle ? 5000 : 1000);
-                    var mon2 = Games.Monitored();
+                    var mon2 = Cfg.Off("gamer") ? new HashSet<string>() : Games.Monitored();   // Gamer switched off in Settings: no game pings at all
                     idle = mon2.Count == 0;
                     if (idle) { Playing = null; continue; }   // nothing clicked yet: nothing is sent, and the loop wakes only every 5 s
                     var games = Games.All;

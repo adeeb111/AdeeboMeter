@@ -84,3 +84,16 @@ update.suspect|It got worse after the update on {v}.
 update.suspect|Trouble started right after that update on {v}.
 call.on|You're on a call. I'm watching it.
 call.on|Call detected. Got your back.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is smooth! Movie night is safe.
+stream.on|Stream is perfect, enjoy it!
+stream.dip|Ugh, a little dip. {v}
+stream.dip|Tiny stutter, sorry! {v}
+stream.none|Nothing on yet. Pick something good!
+stream.none|No stream. Want me to watch when you start?
+trade.ok|Your broker line is quick. All good!
+trade.ok|Connection is steady, you are fine.
+trade.slow|Wait a sec, the broker is slow.
+trade.slow|Slow broker moment. {v}
+trade.closed|Market is closed. Go relax!
+trade.closed|No trading now. Opens at 9:30.

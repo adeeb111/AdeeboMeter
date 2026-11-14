@@ -84,3 +84,16 @@ update.suspect|It broke after the update on {v}. Patch nerfed it.
 update.suspect|Things got worse after the {v} update.
 call.on|Voice chat detected. Watching quality.
 call.on|On a call. Watching jitter.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} running at full frames. No lag spikes.
+stream.on|Stream is smooth. Zero stutter so far.
+stream.dip|Lag spike on the stream. {v}
+stream.dip|Frame drop detected. {v}
+stream.none|No stream in queue.
+stream.none|Stream lobby empty. Press play to start.
+trade.ok|Broker ping is low. You are good to go.
+trade.ok|Low ping to the broker. Clean connection.
+trade.slow|High ping to the broker. Do not click yet.
+trade.slow|Broker lag spike. {v}
+trade.closed|Market server is offline until 9:30.
+trade.closed|Market closed. Respawn at 9:30.

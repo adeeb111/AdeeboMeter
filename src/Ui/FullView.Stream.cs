@@ -69,6 +69,12 @@ namespace AdeeboMeter
                     Act(streamCanvas, on, delegate { Cfg.Streams = true; Cfg.Save(); streamCanvas.Invalidate(); });
                     Need(streamCanvas, on.Bottom + 20 * S); return;
                 }
+                {
+                    WatchKit.Session ns = null; lock (Streams.k) if (Streams.Now != null) ns = Streams.Now.S;
+                    var ld = ns != null && ns.Dips.Count > 0 ? ns.Dips.Last() : null;
+                    if (ld != null && (DateTime.Now - ld.T).TotalMinutes < 3) y = PaintModeLine(g, "stream.dip", WatchKit.BlameName(ld.Blame, Streams.FarName) + ".", true, x, y, w);
+                    else y = PaintModeLine(g, ns != null ? "stream.on" : "stream.none", ns != null ? ns.What : null, false, x, y, w);
+                }
                 if (stream4k) y = PaintStream4K(g, x, y, w);
                 y = PaintStreamNow(g, x, y, w);
                 // the records

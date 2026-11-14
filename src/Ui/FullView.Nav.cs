@@ -28,10 +28,10 @@ namespace AdeeboMeter
         static string NavName(string id) { string[] i; if (NavInfo.TryGetValue(id, out i)) return i[0]; var t = MyTab(id); return t != null ? t.Name : id; }
         static string NavIcon(string id) { string[] i; return NavInfo.TryGetValue(id, out i) ? i[1] : "star"; }
         static string NavAccent(string id) { string[] i; return NavInfo.TryGetValue(id, out i) ? i[2] : "mine"; }
-        static List<string> NavBar() { return Cfg.NavClean(Cfg.Nav).Split(',').Where(z => z.StartsWith("mine", StringComparison.Ordinal) ? MyTab(z) != null : true).ToList(); }
+        static List<string> NavBar() { return Cfg.NavClean(Cfg.Nav).Split(',').Where(z => !Cfg.Off(z) && (z.StartsWith("mine", StringComparison.Ordinal) ? MyTab(z) != null : true)).ToList(); }
         static List<string> NavMore()
         {
-            var bar = NavBar(); var l = Cfg.NavIds.Where(z => !bar.Contains(z)).ToList();
+            var bar = NavBar(); var l = Cfg.NavIds.Where(z => !bar.Contains(z) && !Cfg.Off(z)).ToList();
             foreach (var t in MyTabs()) if (!bar.Contains(t.Id)) l.Add(t.Id);
             return l;
         }

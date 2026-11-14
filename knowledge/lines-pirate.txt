@@ -84,3 +84,16 @@ update.suspect|The trouble began after the update on {v}.
 update.suspect|Rough seas since the {v} update.
 call.on|Parley in progress. Watching the call.
 call.on|On a call. Lookout's watching.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} sails smooth, matey. Calm seas.
+stream.on|The show flows like fair winds.
+stream.dip|Rough water on the stream. {v}
+stream.dip|A squall hit the stream. {v}
+stream.none|No show on the horizon.
+stream.none|No stream sighted, captain.
+trade.ok|The line to the broker is shipshape.
+trade.ok|Fair winds to your broker.
+trade.slow|Storm on the broker line. Hold fast.
+trade.slow|Broker line is choppy. {v}
+trade.closed|The market is in port. Back at 9:30.
+trade.closed|Market closed. The harbour sleeps.

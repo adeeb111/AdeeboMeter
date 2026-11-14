@@ -91,3 +91,16 @@ update.suspect|Things got worse after the Windows update on {v}.
 update.suspect|Trouble started after an update on {v}.
 call.on|On a call. Watching the quality.
 call.on|Call detected. I'll keep an eye on it.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is rolling smooth. Grab the snacks.
+stream.on|Smooth stream, easy evening. I am keeping an eye on it.
+stream.dip|Little hiccup there. {v}
+stream.dip|Small wobble in the stream. {v}
+stream.none|No stream on. Enjoy the quiet.
+stream.none|Nothing playing. I will notice when you hit play.
+trade.ok|Line to the broker is calm and quick.
+trade.ok|All steady to your broker. No rush.
+trade.slow|Broker line is slow. Breathe, then click.
+trade.slow|Slow patch to the broker. {v}
+trade.closed|Market is closed. Everyone gets a rest.
+trade.closed|Market closed. See you at 9:30.

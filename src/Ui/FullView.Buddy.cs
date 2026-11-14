@@ -12,6 +12,19 @@ namespace AdeeboMeter
     partial class FullView
     {
         string buddyFor; string buddyText = "";   // the rows (or run) the line was picked for: one pick per result, not per repaint
+        // a mode's buddy line (Streaming, Trading): one steady line for the state it's in; quiet when the buddy is quiet
+        static float PaintModeLine(Graphics g, string key, string v, bool problem, float x, float y, float w)
+        {
+            if (!Lines.Speaks(problem ? "problem" : "state")) return y;
+            bool money = key.StartsWith("trade.", StringComparison.Ordinal);
+            string text = money && Lines.Faith != "off" ? Lines.SteadyAs(key, v, "plain") : Lines.Steady(key, v);
+            if (text == "") return y;
+            var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
+            using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);
+            return y + r.Height + 12 * S;
+        }
         float PaintBuddyLine(Graphics g, float x, float y, float w)
         {
             string text = "";

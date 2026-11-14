@@ -129,9 +129,11 @@ namespace AdeeboMeter
             return "";
         }
         // the same line for a few minutes for a state that lasts (the header, the widget)
-        public static string Steady(string key, string v)
+        public static string Steady(string key, string v) { return SteadyAs(key, v, Who()); }
+        // the same, in a given voice (Trading speaks Plain when a faith is chosen: money is no joke there)
+        public static string SteadyAs(string key, string v, string who)
         {
-            string who = Who(), sk = who + "|" + key; KeyValuePair<DateTime, string> s;
+            string sk = who + "|" + key; KeyValuePair<DateTime, string> s;
             lock (k) if (sticky.TryGetValue(sk, out s) && (DateTime.Now - s.Key).TotalMinutes < 5) return Fill(s.Value, v, who);
             string raw = RawLine(key, v != null, who); if (raw == "") return "";
             lock (k) { if (sticky.Count > 40) sticky.Clear(); sticky[sk] = new KeyValuePair<DateTime, string>(DateTime.Now, raw); }
@@ -192,7 +194,7 @@ namespace AdeeboMeter
         // ---------- the self-test's lines check: every built-in line, every file
         public static readonly string[] Keys = { "app.open", "all.good", "pc.busy", "wifi.drops", "net.none", "inet.slow", "busy", "idle", "search.empty", "freeze", "speedrunner", "back.again",
             "award", "call.on", "cert.expired", "cert.ok", "decrypt.done", "devices.found", "dns.slow", "encrypt.done", "game.good", "game.lag", "gw.down", "isp.down", "late.night", "morning",
-            "mtr.clean", "mtr.lossy", "mtu.small", "points.earned", "port.closed", "port.open", "portal", "sec.issue", "sec.ok", "speed.bloat", "speed.great", "update.suspect", "vpn.on", "vpn.slow" };
+            "mtr.clean", "mtr.lossy", "mtu.small", "points.earned", "port.closed", "port.open", "portal", "sec.issue", "sec.ok", "speed.bloat", "speed.great", "update.suspect", "vpn.on", "vpn.slow", "stream.on", "stream.dip", "stream.none", "trade.ok", "trade.slow", "trade.closed" };
         // banned: dark topics, slurs-adjacent words, trademarked names from the two film-style personas, famous catchphrases
         static readonly Regex Banned = new Regex(@"\b(kill\w*|dead|death|die|dies|died|dying|suicide|murder\w*|blood\w*|war|wars|warfare|gun|guns|bomb\w*|nazi\w*|hitler|rape|corpse\w*|grave\w*|stupid|idiot\w*|dumb|ugly|loser\w*|noob\w*|fuck\w*|shit\w*|damn\w*|hell|crap\w*)\b"
             + @"|winter is coming|lannister|stark|targaryen|westeros|jon snow|khaleesi|iron throne|jedi|sith\b|skywalker|vader|yoda|lightsaber|the force|death star|wookiee", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);

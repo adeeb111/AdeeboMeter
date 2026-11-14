@@ -116,3 +116,16 @@ update.suspect|Things got worse after a Windows update on {v}.
 update.suspect|A recent update may be the cause.
 call.on|Call detected. Watching call quality.
 call.on|In a call. Jitter and loss are being tracked.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is playing smoothly. I am watching the path.
+stream.on|Streaming {v}. No dips so far.
+stream.dip|The stream dipped. {v}
+stream.dip|A dip just now. {v}
+stream.none|Nothing is streaming right now.
+stream.none|No stream playing. I will notice when one starts.
+trade.ok|Your line to the broker is fast and steady.
+trade.ok|Broker answering normally. Nothing to wait for.
+trade.slow|Slow moment to your broker. Wait before you click.
+trade.slow|Your broker is slow right now. {v}
+trade.closed|Market closed. The broker check sleeps until 9:30.
+trade.closed|Markets are closed. Nothing is being checked.

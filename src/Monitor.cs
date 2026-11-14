@@ -224,7 +224,7 @@ namespace AdeeboMeter
                 DateTime t0 = Clock.Mono;
                 try
                 {
-                    bool fast = ViewOpen || CallLikely || Streams.Active;   // a stream playing counts like a call: the internet check every 5 s
+                    bool fast = ViewOpen || CallLikely || (Streams.Active && Cfg.Preset != "penny");   // a stream playing counts like a call: the internet check every 5 s
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
                     int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? 1 : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
                     GwSecNow = gwSec; NetSecNow = netSec;   // the pace the rings fill at (the overlay plots them by time)
@@ -279,7 +279,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("probe: " + e.Message); }
                 // Sleep until the next job is due (2 s with the view open or a call; 1 s just after waking; up to 30 s on Penny).
-                int pace = Waking(Clock.Mono) ? 1 : ViewOpen || CallLikely ? 2 : Streams.Active ? 5 : new[] { Cfg.GwSec, Cfg.NetSec, Cfg.WifiSec, Cfg.AppsSec, IfEvery }.Where(v => v > 0).Min();
+                int pace = Waking(Clock.Mono) ? 1 : ViewOpen || CallLikely ? 2 : Streams.Active ? Streams.SampleSec : new[] { Cfg.GwSec, Cfg.NetSec, Cfg.WifiSec, Cfg.AppsSec, IfEvery }.Where(v => v > 0).Min();
                 int wait = Math.Max(Waking(Clock.Mono) ? 1 : 2, pace) * 1000 - (int)(Clock.Mono - t0).TotalMilliseconds;
                 if (wait > 0) wake.WaitOne(wait);
             }

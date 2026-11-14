@@ -116,3 +116,16 @@ update.suspect|Regression after the update on {v}.
 update.suspect|Change correlates with a Windows update.
 call.on|RTP flows detected. Monitoring jitter and loss.
 call.on|Call in progress. QoS watch on.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v}: path clean, no loss, CDN latency nominal.
+stream.on|Stream healthy. Gateway, ISP and edge all within baseline.
+stream.dip|Stream degradation. {v}
+stream.dip|Dip logged with evidence. {v}
+stream.none|No video flows detected.
+stream.none|No streaming sessions. Detector idle.
+trade.ok|Broker RTT nominal, no loss on the path.
+trade.ok|TCP connect to broker within baseline.
+trade.slow|Broker RTT above 100 ms. Hold orders.
+trade.slow|Broker path degraded. {v}
+trade.closed|Outside market hours. Broker probe stopped.
+trade.closed|Market closed. Probe idle until 09:30 ET.

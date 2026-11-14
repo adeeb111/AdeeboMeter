@@ -91,3 +91,16 @@ update.suspect|Things went downhill after the update on {v}. Thanks, Windows.
 update.suspect|Broken since the update on {v}. Windows strikes again.
 call.on|On a call. Let's hope the Wi-Fi behaves.
 call.on|Call detected. Wi-Fi, don't embarrass us.
+# 1.1.5 batch 2: Streaming and Trading (draft - waiting for Adeeb)
+stream.on|{v} is smooth. Shocking, given your Wi-Fi.
+stream.on|Stream is fine. Enjoy it while it lasts.
+stream.dip|Your stream dipped. {v}
+stream.dip|Another dip. {v} Not my fault.
+stream.none|Nothing streaming. Touch grass?
+stream.none|No stream. Even your router is bored.
+trade.ok|Broker line is fast. The rest is on you.
+trade.ok|Connection is fine. Your picks, not my problem.
+trade.slow|Slow broker line. Do not panic-click.
+trade.slow|Broker lag. {v} Do not blame me.
+trade.closed|Market is closed. Your wallet thanks it.
+trade.closed|Closed. Go do something else.

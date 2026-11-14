@@ -11,7 +11,8 @@ using System.Threading;
 namespace AdeeboMeter
 {
     // ================================================================== Trading (PLAN-modes.md 3)
-    // Active traders: a light TCP knock on their broker every 2 s, only while the market is open (or 24/7 for crypto, if
+    // Active traders: a light TCP knock on their broker (Penny every 30 s, Balanced 10 s, Gamer 5 s, every 2 s only with the
+    // engineer Details switch on), only while the market is open (or 24/7 for crypto, if
     // they say so) - delay, jitter, loss, whose fault, and an alert before they click Buy. Never logs in, never sees an
     // account, never suggests a trade. Casual investors: end-of-day numbers (currencies from the Bank of Canada first).
     static class Trading
@@ -25,6 +26,9 @@ namespace AdeeboMeter
         static IPAddress hostIp; static DateTime resolvedAt = DateTime.MinValue; static string resolvedFor = "";
         public static string Status = "";
         public const string FarName = "your broker";
+        // how often: the preset's pace - a check every 2 s is a lot of knocks on someone else's server (about 12,000 a
+        // trading day), so only the engineer view asks for it
+        public static int Sec { get { return Cfg.Details ? 2 : Cfg.Preset == "penny" ? 30 : Cfg.Preset == "gamer" ? 5 : 10; } }
 
         // ---------- market hours (US/Canada stocks: 9:30-16:00 Eastern, Monday to Friday; holidays are not known here)
         static TimeZoneInfo eastern;
@@ -34,7 +38,7 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is TimeZoneNotFoundException || e is InvalidTimeZoneException)) throw; return DateTime.UtcNow.AddHours(-5); }
         }
         public static bool MarketOpen(DateTime et) { return et.DayOfWeek != DayOfWeek.Saturday && et.DayOfWeek != DayOfWeek.Sunday && et.TimeOfDay >= new TimeSpan(9, 30, 0) && et.TimeOfDay < new TimeSpan(16, 0, 0); }
-        public static bool Watching { get { return Cfg.TradeLive && Cfg.TradeHost != "" && (Cfg.TradeCrypto || MarketOpen(EasternNow())); } }
+        public static bool Watching { get { return Cfg.TradeLive && !Cfg.Off("trade") && Cfg.TradeHost != "" && (Cfg.TradeCrypto || MarketOpen(EasternNow())); } }
 
         // started by the Monitor's probe loop: a thread of its own that ends by itself when the market closes
         public static void Ensure(Monitor m)
@@ -51,7 +55,7 @@ namespace AdeeboMeter
                 while (Watching && !stopAll)
                 {
                     var t0 = DateTime.UtcNow; Step(m);
-                    int wait = 2000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds; if (wait > 0) Thread.Sleep(wait);
+                    int wait = Sec * 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds; if (wait > 0) Thread.Sleep(wait);
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("broker watch: " + e.Message); }
@@ -77,13 +81,13 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (Day == null) return;
-                Samples.Add(s); while (Samples.Count > 300) Samples.RemoveAt(0);
+                Samples.Add(s); while (Samples.Count > 600 / Sec) Samples.RemoveAt(0);   // the last 10 minutes
                 var farOk = Samples.Where(z => !double.IsNaN(z.Far)).Select(z => z.Far).ToList(); double normal = Streams.Median(farOk);
                 // the trader's own rule: over 100 ms to the broker, or a lost reply, is a moment to wait
                 string blame = WatchKit.Judge(s, normal);
                 if (blame == null && (!double.IsNaN(s.Far) && s.Far > 100)) blame = "far";
                 if (blame == "far" && s.FarLost && farOk.Count == 0) blame = null;
-                var d = maker.Add(s, blame, 2, FarName); if (d != null) Day.Dips.Add(d);
+                var d = maker.Add(s, blame, Sec, FarName); if (d != null) Day.Dips.Add(d);
                 if (blame != null && Cfg.TradeAlert) Alerts.Raise("broker", "Wait before you trade: " + WatchKit.BlameName(blame, FarName).ToLowerInvariant() + " - " + WatchKit.Evidence(s, blame, FarName), 2);
                 int mi = (int)(s.T - Day.Start).TotalMinutes;
                 if (Day.Line.Count == 0 || Day.Line.Last()[0] < mi) Day.Line.Add(new[] { (float)mi, 0f, double.IsNaN(s.Far) ? -1f : (float)s.Far });

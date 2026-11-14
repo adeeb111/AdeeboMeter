@@ -70,11 +70,14 @@ namespace AdeeboMeter
         public static long Ver;            // bumps on every change the page should repaint for
         static DateTime lastNames = DateTime.MinValue;
         public static bool Active { get { lock (k) return Now != null; } }
+        // the preset's pace: Penny looks every 30 s, everything else every 5 s (the server knock every 10 s)
+        public static int SampleSec { get { return Cfg.Preset == "penny" ? 30 : 5; } }
+        public static int FarSec { get { return Cfg.Preset == "penny" ? 30 : 10; } }
 
         // From Monitor.ProbeConns (every few seconds): is something streaming, and from where?
         public static void Conns(Monitor m, List<Conn> list)
         {
-            if (!Cfg.Streams) { End(DateTime.Now); return; }
+            if (!Cfg.Streams || Cfg.Off("stream")) { End(DateTime.Now); return; }
             var est = list.Where(c => c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp)).ToList();
             if (est.Count == 0) { Expire(); return; }
             // names: Windows' DNS cache, re-read at most once a minute (nothing goes on the network)
@@ -109,7 +112,7 @@ namespace AdeeboMeter
         public static void Tick(Monitor m)
         {
             Live l; lock (k) l = Now; if (l == null) return;
-            var now = DateTime.Now; if ((now - l.LastSample).TotalSeconds < 4.8) return;
+            var now = DateTime.Now; if ((now - l.LastSample).TotalSeconds < SampleSec - 0.2) return;
             l.LastSample = now;
             var s = new WatchKit.Sample { T = now };
             lock (m.L)
@@ -118,7 +121,7 @@ namespace AdeeboMeter
                 s.Down = Avg(m.Down.Values(5)); s.Cpu = Avg(m.Cpu.Values(5)); s.Wifi = m.AdapterKind == "Wi-Fi"; s.Signal = m.WifiSignal;
                 var busy = m.Apps.OrderByDescending(a => a.Cpu).FirstOrDefault(); if (busy != null && busy.Cpu >= 30) s.Busy = busy.Name;
             }
-            if (l.FarIp != "" && (now - l.LastFar).TotalSeconds >= 9.8)
+            if (l.FarIp != "" && (now - l.LastFar).TotalSeconds >= FarSec - 0.2)
             {
                 l.LastFar = now; IPAddress ip;
                 if (IPAddress.TryParse(l.FarIp, out ip)) { s.Far = GamePing.TcpMs(ip, l.FarPort > 0 ? l.FarPort : 443, 1500); s.FarLost = double.IsNaN(s.Far); }
@@ -130,7 +133,7 @@ namespace AdeeboMeter
                 double farNormal = Median(l.FarAll);
                 string blame = WatchKit.Judge(s, farNormal);
                 if (blame == "far" && s.FarLost && l.FarAll.Count == 0) blame = null;   // a server that never answered a knock (some block it): no verdict on it
-                var d = l.Maker.Add(s, blame, 5, FarName); if (d != null) { l.S.Dips.Add(d); Ver++; }
+                var d = l.Maker.Add(s, blame, SampleSec, FarName); if (d != null) { l.S.Dips.Add(d); Ver++; }
                 l.Samples.Add(s); if (l.Samples.Count > 180) l.Samples.RemoveAt(0);   // the last 15 minutes for the live chart
                 int mi = (int)(now - l.S.Start).TotalMinutes;
                 if (mi != l.MinuteIdx && l.MinuteIdx >= 0 && l.MinuteN > 0) Point(l);
