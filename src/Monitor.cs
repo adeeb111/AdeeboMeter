@@ -52,7 +52,7 @@ namespace AdeeboMeter
         // cable plugged in -> first answer from the gateway: 30-50 s is classic spanning tree on a port without "edge / port fast"
         readonly Dictionary<string, DateTime> ethUp = new Dictionary<string, DateTime>(); bool ethSeen; public string LinkWait = "";
         public string NetTarget = "1.1.1.1";
-        public double DownBytesTotal;
+        public double DownBytesTotal; public double DayDown, DayUp; DateTime dayOf = DateTime.Today;
         public List<AppStat> Apps = new List<AppStat>();
         public Dictionary<int, string> PidNames = new Dictionary<int, string>();
         public Dictionary<string, string> IpNames = new Dictionary<string, string>();
@@ -190,6 +190,9 @@ namespace AdeeboMeter
                     {
                         double sec = Math.Max(0.2, (now - pNetT).TotalSeconds);
                         Down.Add((rx - pRx) * 8 / sec / 1e6); Up.Add((tx - pTx) * 8 / sec / 1e6); DownBytesTotal += rx - pRx;
+                        // today's totals for the speed widget (like DU Meter): reset at midnight, this adapter's bytes while AdeeboMeter runs
+                        if (DateTime.Today != dayOf) { dayOf = DateTime.Today; DayDown = 0; DayUp = 0; }
+                        DayDown += rx - pRx; DayUp += tx - pTx;
                     }
                     pRx = rx; pTx = tx; pNetT = now;
                 }
@@ -869,7 +872,7 @@ namespace AdeeboMeter
                 gwS = Gateway; adapter = Adapter; speed = LinkSpeed; dnsSrv = DnsServer; vpnName = VpnName; ssid = Ssid; ch = WifiChannel; target = NetTarget; cfree = CFree;
                 hasWifi = HasWifi; vpn = VpnUp; netEver = NetEverReplied; sig = WifiSignal; vmtu = VpnMtu; pmtu = PrimaryMtu; viaTcp = NetViaTcp;
                 gw = GwPing.Last; net = NetPing.Last; dns = Dns.Last; loss = NetEverReplied ? Loss.Avg(10) * 100 : double.NaN; jit = NetPing.Jitter(10);
-                s.Call = CallLikely; readMB = DiskReadMBs; writeMB = DiskWriteMBs; downTot = DownBytesTotal;
+                s.Call = CallLikely; readMB = DiskReadMBs; writeMB = DiskWriteMBs; downTot = DownBytesTotal; s.TodayDown = DayDown; s.TodayUp = DayUp;
             }
             s.Ping = net; s.Jitter = jit; s.LossPct = loss; s.DnsMs = dns; s.GwMs = gw; s.NetHist = NetPing.Values(60);
             s.PathLabel = new[] { "PC", hasWifi ? "Wi-Fi" : "LAN", vpn ? "VPN" : "ISP", "DNS", "Internet" };

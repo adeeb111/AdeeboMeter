@@ -30,13 +30,53 @@ namespace AdeeboMeter
         }
 
         // test = run right here on this thread (self-test; only the flows that send nothing new)
+        // Full checkup (1.1.5): from Home or the widget's menu; the report opens on What's wrong? like the other checks
+        internal void StartCheckup()
+        {
+            if (guideBusy) { tab = "guide"; ShowTab(); SyncNav(); return; }
+            Investigate.CheckupSpeed = checkupSpeed;
+            tab = "guide"; ShowTab(); SyncNav(); StartGuide("full", false);
+        }
+        bool? checkupTick;
+        bool checkupSpeed { get { if (checkupTick == null) checkupTick = !CheckupMetered(); return checkupTick.Value; } set { checkupTick = value; } }
+        bool CheckupMetered()
+        {
+            if (Cfg.CapGB > 0) return true;   // a monthly cap set in Alerts: don't spend it without asking
+            try { System.Net.NetworkInformation.NetworkInterface p; lock (M.L) p = M.Primary; return p != null && (p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wwanpp || p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wwanpp2 || p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Ppp); }
+            catch (InvalidOperationException) { return false; }
+        }
+        float PaintCheckupCard(Graphics g, float x, float y, float w)
+        {
+            var r = guideRun; bool running = guideBusy && r != null && r.Id == "full";
+            var cr = new RectangleF(x, y, w, 74 * S); Kit.Card(g, cr, "home", false);
+            using (var cb = new SolidBrush(Kit.Soft("home"))) g.FillEllipse(cb, cr.X + 16 * S, cr.Y + 19 * S, 38 * S, 38 * S);
+            Kit.Icon(g, "check", new RectangleF(cr.X + 25 * S, cr.Y + 28 * S, 20 * S, 20 * S), Kit.Accent("home"));
+            float tx = cr.X + 66 * S, bw = 190 * S;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+            {
+                g.DrawString(L.T("Full checkup"), Draw.fHead, ink, tx, cr.Y + 14 * S);
+                g.DrawString(running ? L.T("Running") + ": " + r.Status : L.T("This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first."), Draw.fSmall, m, new RectangleF(tx, cr.Y + 38 * S, Math.Max(40 * S, cr.Width - (tx - cr.X) - bw - 262 * S), 18 * S), sf);
+            }
+            // the speed-test tick (off on a capped or mobile connection) and the button
+            var tk = new RectangleF(cr.Right - bw - 230 * S, cr.Y + 26 * S, 220 * S, 22 * S);
+            var box = new RectangleF(tk.X, tk.Y + 3 * S, 16 * S, 16 * S); Theme.Fill(g, box, 4 * S, checkupSpeed ? Kit.Accent("home") : Theme.Card); Theme.Stroke(g, box, 4 * S, checkupSpeed ? Kit.Accent("home") : Theme.Line, 1);
+            if (checkupSpeed) Kit.Icon(g, "check", new RectangleF(box.X + 2 * S, box.Y + 2 * S, 12 * S, 12 * S), Color.White);
+            using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Include a speed test (100-300 MB)"), Draw.fSmall, sb2, box.Right + 6 * S, tk.Y + 2 * S);
+            Act(overviewCanvas, tk, delegate { checkupSpeed = !checkupSpeed; overviewCanvas.Invalidate(); });
+            var br = new RectangleF(cr.Right - bw - 16 * S, cr.Y + 19 * S, bw, 36 * S);
+            Theme.Fill(g, br, 10 * S, running ? Theme.Soft : Kit.Accent("home"));
+            string bt = running ? L.T("See it  ›") : L.T("Run full checkup"); var bs = g.MeasureString(bt, Draw.fBtn);
+            using (var wb = new SolidBrush(running ? Theme.Ink : Color.White)) g.DrawString(bt, Draw.fBtn, wb, br.X + (br.Width - bs.Width) / 2, br.Y + (br.Height - bs.Height) / 2);
+            Act(overviewCanvas, br, delegate { StartCheckup(); });
+            return cr.Bottom + 14 * S;
+        }
         void StartGuide(string id, bool test)
         {
             guideNote = "";
             if (guideBusy) return;
             var r = new GuideRun { Input = guideBox.Box.Text };
             guideRun = r; guideCanvas.AutoScrollPosition = Point.Empty;
-            if (test) { if (id == "slow" || id == "drops") Investigate.Run(id, M, r, delegate { }); else { r.Id = id; r.Title = Investigate.All.First(f => f.Id == id).Title; r.Conclude(3, "(self-test: not run - it would send traffic)"); r.Done = true; } guideCanvas.Invalidate(); return; }
+            if (test) { if (id == "slow" || id == "drops") Investigate.Run(id, M, r, delegate { }); else { r.Id = id; r.Title = id == "full" ? "Full checkup" : Investigate.All.First(f => f.Id == id).Title; r.Conclude(3, "(self-test: not run - it would send traffic)"); r.Done = true; } guideCanvas.Invalidate(); return; }
             guideBusy = true; guideCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {

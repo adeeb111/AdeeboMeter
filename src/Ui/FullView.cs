@@ -386,6 +386,7 @@ namespace AdeeboMeter
         void ShowTab()
         {
             UiActivity.Doing = "switching to " + tab;
+            if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open
             // one layout pass for the whole switch, not one per page shown or hidden
             if (leftPane != null) leftPane.SuspendLayout();
             try { ShowTab2(); FitBars(this); } finally { if (leftPane != null) leftPane.ResumeLayout(true); }

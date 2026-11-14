@@ -87,6 +87,15 @@ namespace AdeeboMeter
                 }
             };
             miScreen.DropDownItems.Add("...");
+            var miStyle = new ToolStripMenuItem("Widget style");   // the same eight as Settings > Widget, with pictures there
+            foreach (var st in new[] { new[] { "speed", "Speed only" }, new[] { "speedstatus", "Speed + status" }, new[] { "speedapps", "Speed + apps" }, null, new[] { "everyday", "Everyday" }, new[] { "gamer", "Gamer" }, new[] { "calls", "Calls" }, new[] { "engineer", "Engineer" }, new[] { "auto", "Auto" } })
+            {
+                if (st == null) { miStyle.DropDownItems.Add(new ToolStripSeparator()); continue; }
+                string id = st[0]; var it = new ToolStripMenuItem(L.T(st[1])) { Tag = id }; it.Click += delegate { Cfg.WidgetStyle = id; SaveSettings(); drawnKey = ""; };
+                miStyle.DropDownItems.Add(it);
+            }
+            miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
+            var miCheckup = new ToolStripMenuItem("Run full checkup"); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
             var miTheme = new ToolStripMenuItem("Theme");
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
             miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
@@ -97,7 +106,7 @@ namespace AdeeboMeter
             var miExit = new ToolStripMenuItem("Exit AdeeboMeter"); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
             menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(miFull); menu.Items.Add(miSettings); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
+            menu.Items.Add(miFull); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
             menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
             menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
@@ -387,13 +396,13 @@ namespace AdeeboMeter
                 if (hovered) foreach (var kv in hits) { var r = kv.Value; if (new RectangleF(widget.Placed.X + r.X, widget.Placed.Y + r.Y, r.Width, r.Height).Contains(cur)) { key = kv.Key; break; } }
                 hoverKey = key;
                 var rw = Rewind; if (rw != null && Clock.Mono > RewindUntil) { Rewind = null; rw = null; }
-                Snap s = rw ?? M.Latest; bool compact = !hovered && (covered || (s.Level == 0 && !s.Call));
+                Snap s = rw ?? M.Latest; bool compact = !hovered && (covered || Draw.SpeedStyle || (s.Level == 0 && !s.Call));   // a speed widget stays a strip until you hover it
                 string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "");
                 bool fresh = M.Version != drawnVersion;
                 // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
                 // and unhovered only when its level or headline changes (or every 10 s for the numbers)
                 bool cardDue = !compact && (hovered || s.Level != lastLevel || s.Headline != lastHead || (Clock.Mono - lastCard).TotalSeconds >= 10);
-                if (state != drawnKey || (fresh && (cardDue || (compact && (s.Chip != lastChip || s.Level != lastLevel)))))
+                if (state != drawnKey || (fresh && (cardDue || (compact && (Draw.ChipKey(s) != lastChip || s.Level != lastLevel)))))
                 {
                     Draw.CardHovered = hovered; Render(s, compact); drawnKey = state; drawnVersion = M.Version; if (!compact) { lastCard = Clock.Mono; lastHead = s.Headline; }
                 }
@@ -409,7 +418,7 @@ namespace AdeeboMeter
                 if (compact) hits.Clear();
                 widget.Present(bmp, hovered ? (byte)255 : FADE, wa.Right - m - bmp.Width, wa.Bottom - m - bmp.Height);
             }
-            lastChip = s.Chip; lastLevel = s.Level;
+            lastChip = Draw.ChipKey(s); lastLevel = s.Level;
             Detail d;
             if (!compact && hovered && hoverKey != "" && s.Details.TryGetValue(hoverKey, out d))
                 using (var db = Draw.DetailCard(d)) detailWin.Present(db, 255, Math.Max(wa.Left, widget.Placed.X - db.Width - (int)(8 * Draw.S)), Math.Max(wa.Top, wa.Bottom - m - db.Height));   /* on this screen, never above its top */

@@ -165,7 +165,7 @@ namespace AdeeboMeter
         void FixFind()
         {
             string q = fixBox == null ? "" : fixBox.Box.Text.Trim();
-            if (q.Length == 0) { fixHint = "Type what you notice, or press Check everything for me."; fixGo = null; }
+            if (q.Length == 0) { fixHint = "Type what you notice, or press Find what's wrong."; fixGo = null; }
             else
             {
                 var r = FixMatch(q);
@@ -214,6 +214,7 @@ namespace AdeeboMeter
                     Act(overviewCanvas, nr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
                     y += cr.Height + 14 * S;
                 }
+                y = PaintCheckupCard(g, x, y, w);
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
                 string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
@@ -308,7 +309,7 @@ namespace AdeeboMeter
                     card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
                     Theme.Fill(g, card, 14 * S, Theme.Soft); Theme.Stroke(g, card, 14 * S, Theme.Line, 1);
                     // the big button, right
-                    string big = L.T("Check everything for me"); var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
+                    string big = L.T("Find what's wrong");   /* the quick network walk; "Full checkup" at the top checks everything */ var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
                     Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Color.White)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
                     Act(overviewCanvas, bbr, delegate { GoGuide("whats"); });
                     float tw0 = bbr.X - cx0 - 16 * S;

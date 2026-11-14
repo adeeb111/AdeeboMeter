@@ -42,7 +42,7 @@ namespace AdeeboMeter
 
         public static void Run(string id, Monitor m, GuideRun r, Action changed)
         {
-            r.Id = id; var flow = All.FirstOrDefault(f => f.Id == id); r.Title = flow != null ? flow.Title : id;
+            r.Id = id; var flow = All.FirstOrDefault(f => f.Id == id); r.Title = flow != null ? flow.Title : id == "full" ? "Full checkup" : id;
             try
             {
                 if (id == "whats") Whats(m, r, changed);
@@ -52,6 +52,7 @@ namespace AdeeboMeter
                 else if (id == "drops") Drops(m, r);
                 else if (id == "vpn") Vpn(m, r, changed);
                 else if (id == "pc") Pc(m, r, changed);
+                else if (id == "full") Full(m, r, changed);
             }
             catch (Exception e) { Program.Log("investigate " + id + ": " + e); if (r.Finding == "") r.Conclude(3, "Couldn't finish: " + e.Message); }
             r.Status = ""; r.Done = true; changed();

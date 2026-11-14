@@ -1208,3 +1208,22 @@ Credits	Crédits
 New: the Sidebar layout - sections down the left, search on top, a live meter.	Nouveau : la barre latérale - les sections à gauche, la recherche en haut, un compteur en direct.
 Try it	Essayer
 No thanks	Non merci
+Find what's wrong	Trouver le problème
+Type what you notice, or press Find what's wrong.	Écrivez ce que vous remarquez, ou appuyez sur Trouver le problème.
+Full checkup	Bilan complet
+Run full checkup	Lancer le bilan complet
+Include a speed test (100-300 MB)	Inclure un test de vitesse (100-300 Mo)
+This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	Ce PC, ses disques et applis, votre Wi-Fi, routeur, internet et noms - un rapport, le plus gros problème d'abord.
+See it  ›	Voir  ›
+Speed only	Vitesse seulement
+Speed + status	Vitesse + état
+Speed + apps	Vitesse + applis
+Speed in	Vitesse en
+Mini graph	Mini graphique
+Today's total	Total du jour
+How the corner widget looks - pick one. Hover the widget for its card.	L'apparence du widget - choisissez. Survolez le widget pour sa carte.
+example	exemple
+SPEED	VITESSE
+Download	Téléchargement
+BUSIEST APPS (CPU)	APPLIS LES PLUS ACTIVES (CPU)
+Nothing busy.	Rien d'actif.

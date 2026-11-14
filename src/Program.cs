@@ -322,7 +322,8 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,toolbox,gamer,time,learn", Layout = "classic", MyTabs = "", Searches = "", BuddyFace = "drawn";   // Searches: the last few "Search anything" words, newest first, "|" between
+        public static volatile string Nav = "home,toolbox,gamer,time,learn", Layout = "classic", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile bool WGraph = true, WTotal = true;   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string Mode = "", Lang = "en", TbView = "q", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
         public static volatile bool Points = true;   // Adeebo Points (Settings): on from day 1; off hides the button and pauses earning, the total is kept
@@ -368,13 +369,13 @@ namespace AdeeboMeter
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
             yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
-            yield return "nav=" + Nav; yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "bface=" + BuddyFace;
+            yield return "nav=" + Nav; yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "bface=" + BuddyFace; yield return "wunits=" + WUnits; yield return "wdir=" + WDir; yield return "wgraph=" + (WGraph ? 1 : 0); yield return "wtotal=" + (WTotal ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             string[] pins; lock (Pins) pins = Pins.ToArray();
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
         public static readonly string[] NavIds = { "home", "toolbox", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports" };
         public static string NavClean(string v)
@@ -436,13 +437,17 @@ namespace AdeeboMeter
                 case "addr": if (Array.IndexOf(AdeeboMeter.Lines.Addrs, v) >= 0) AdeeboMeter.Lines.Addr = v; break;
                 case "addrname": AdeeboMeter.Lines.Name = new string(v.Where(c => !char.IsControl(c) && c != '\u202E' && c != '\u202D').Take(24).ToArray()).Trim(); break;
                 case "chatty": if (Array.IndexOf(AdeeboMeter.Lines.Chatty, v) >= 0) AdeeboMeter.Lines.Chat = v; break;
+                case "wunits": WUnits = v == "bytes" ? "bytes" : "bits"; break;
+                case "wdir": WDir = v == "down" || v == "up" ? v : "both"; break;
+                case "wgraph": WGraph = v != "0"; break;
+                case "wtotal": WTotal = v != "0"; break;
                 case "bface": BuddyFace = v == "emoji" ? "emoji" : "drawn"; break;
                 case "faith": if (Array.IndexOf(AdeeboMeter.Lines.Faiths, v) >= 0) AdeeboMeter.Lines.Faith = v; break;
                 case "lview": LearnView = v == "all" ? "all" : "goal"; break;
                 case "ovat": OverlayAt = System.Text.RegularExpressions.Regex.IsMatch(v, "^-?[0-9]{1,6},-?[0-9]{1,6}$") ? v : ""; break;
                 case "lang": Lang = L.Languages.Any(l => l[0] == v) ? v : "en"; break;
                 case "mode": Mode = v == "simple" || v == "pro" ? v : ""; break;
-                case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" || v == "calls" || v == "engineer" ? v : "auto"; break;
+                case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" || v == "calls" || v == "engineer" || v == "speed" || v == "speedstatus" || v == "speedapps" ? v : "auto"; break;
                 case "livemin": LiveMin = Pick(v, 15, 5, 15, 30); break;
                 case "sniffsec": SniffSec = Pick(v, 30, 30, 60); break;
                 case "fade": Fade = Pick(v, 77, 51, 77, 128, 191, 255); break;

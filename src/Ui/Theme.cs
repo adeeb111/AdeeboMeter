@@ -172,7 +172,7 @@ namespace AdeeboMeter
     }
 
     // All fonts made once; nothing is created per paint (a lesson from topogram).
-    static class Draw
+    static partial class Draw
     {
         // a status dot that doesn't rely on colour alone: a problem carries a bar across it, a "worth a look" a short upright
         // stroke - red / amber / green still tell apart for colour-blind eyes and in high contrast
@@ -442,6 +442,7 @@ namespace AdeeboMeter
         }
         public static Bitmap Chip(Snap s, double dwell)
         {
+            if (SpeedStyle) return SpeedChip(s);
             var ts = Measure(s.Chip, fSmall, 0);
             int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0)), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
@@ -471,7 +472,7 @@ namespace AdeeboMeter
         // a call - and is Everyday the rest of the time. Engineer is chosen by hand (Pro mode).
         public static string Layout(bool call)
         {
-            string st = Cfg.WidgetStyle; var gp = GamePing.Me.Playing;
+            string st = Style; var gp = GamePing.Me.Playing;
             if (st == "gamer" || (st == "auto" && gp != null && Cfg.GameWidget)) return GamerTarget() != null ? "gamer" : "everyday";
             if (st == "calls" || (st == "auto" && call)) return "calls";
             if (st == "engineer") return Cfg.Simple ? "everyday" : "engineer";
@@ -600,6 +601,7 @@ namespace AdeeboMeter
         public static volatile bool CardHovered = true;   // set by the widget before it draws the card
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
+            if (SpeedStyle) return SpeedCard(s, hits);
             string lay = Layout(s.Call);
             if (lay == "gamer") return GamerCard(s, hits);
             if (lay == "calls") return CallsCard(s, hits);

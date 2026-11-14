@@ -141,7 +141,7 @@ namespace AdeeboMeter
         public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping, Jitter, LossPct, DnsMs;
         public double[] DownHist = Array.Empty<double>(), UpHist = Array.Empty<double>(), NetHist = Array.Empty<double>();   // NetHist: the internet check, last 60
         public double GwMs = double.NaN;
-        public bool Call;
+        public bool Call; public double TodayDown, TodayUp;   // bytes since midnight (while AdeeboMeter ran)
         public string MemText = "", DiskText = "";
         public Dictionary<string, Detail> Details = new Dictionary<string, Detail>();
         public List<string[]> Health = new List<string[]>();

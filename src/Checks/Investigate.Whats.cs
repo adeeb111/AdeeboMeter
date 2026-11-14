@@ -1,5 +1,6 @@
 // AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -69,7 +70,17 @@ namespace AdeeboMeter
             step("Checking this PC...");
             r.Obs("w", cpu > 95 ? 2 : cpu > 80 ? 1 : 0, "1. This PC: processor", F(cpu, "% busy"));
             if (!double.IsNaN(mem)) r.Obs("w", mem > 95 ? 2 : mem > 88 ? 1 : 0, "1. This PC: memory", F(mem, "% in use"));
-            if (cpu > 95 || mem > 95)
+            // 1.1.5: the busiest app and a nearly full system drive - before anything gets blamed on the network
+            List<AppStat> busy; lock (m.L) busy = m.Apps.Where(a => a.Name != "AdeeboMeter" && a.Name != "Idle").OrderByDescending(a => a.Cpu).Take(1).ToList();
+            if (busy.Count > 0 && busy[0].Cpu >= 1) r.Obs("w", busy[0].Cpu > 60 ? 1 : 0, "1. This PC: busiest app", busy[0].Name + " - " + F(busy[0].Cpu, "% of the processor"));
+            try
+            {
+                var sys = new System.IO.DriveInfo(System.IO.Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\");
+                if (sys.IsReady) { double free = sys.AvailableFreeSpace * 100.0 / Math.Max(1, sys.TotalSize); r.Obs("w", free < 5 ? 2 : free < 10 ? 1 : 0, "1. This PC: system drive " + sys.Name.TrimEnd('\\'), F(free, "% free") + " (" + (sys.AvailableFreeSpace / 1073741824.0).ToString("0", CultureInfo.CurrentCulture) + " GB)");
+                    if (free < 5) r.Next.Add("Your system drive is almost full - Windows slows down and updates fail. Free some space (Toolbox > What's using my disk)."); }
+            }
+            catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { } catch (ArgumentException) { }
+            if ((cpu > 95 || mem > 95) && !fullMode)   // in a full checkup it notes this and still checks the network
             {
                 r.Conclude(1, "This PC itself is overloaded (" + (cpu > 95 ? "processor " + F(cpu, "%") : "memory " + F(mem, "%")) + ") - that makes everything slow, including the network, before the network is even involved.");
                 r.Next.Add("Run \"My PC is slow\" for what's using it."); r.GoTab = "guide:pc"; r.GoLabel = "Run My PC is slow"; around(); return;

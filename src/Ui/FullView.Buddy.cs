@@ -181,5 +181,52 @@ namespace AdeeboMeter
                 catch (InvalidOperationException) { }
             });
         }
+        // Settings > Widget: every style as a live picture drawn by the widget's own code - the folded strip on top, the card
+        // you get on hover below. Pictures are kept for 10 s (they show live numbers) and redrawn on theme or option changes.
+        readonly Dictionary<string, Bitmap> wpics = new Dictionary<string, Bitmap>(StringComparer.Ordinal); DateTime wpicsAt; string wpicsKey = "";
+        Bitmap WPic(string style, bool card)
+        {
+            string key = Theme.Dark + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood;
+            if (key != wpicsKey || (DateTime.Now - wpicsAt).TotalSeconds > 10) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); wpicsKey = key; wpicsAt = DateTime.Now; }
+            Bitmap bm; string k = style + (card ? "|c" : "|s");
+            if (!wpics.TryGetValue(k, out bm)) { try { bm = Draw.Preview(PreviewSnap(), style, card); } catch (Exception e) { Program.Log("widget preview " + style + ": " + e.Message); bm = null; } wpics[k] = bm; }
+            return bm;
+        }
+        // the live minute when there is one; example numbers (marked on the tile) before the first readings or offline
+        bool previewExample;
+        Snap PreviewSnap()
+        {
+            var s = snap ?? new Snap(); previewExample = double.IsNaN(s.Down) || s.DownHist == null || s.DownHist.Length < 5;
+            if (!previewExample) return s;
+            var e = new Snap { Level = 0, Headline = L.T("All quiet. Nothing needs you."), Chip = "All quiet", Down = 24.6, Up = 3.2, Cpu = 12, Mem = 41, Disk = 3, TodayDown = 3.1e9, TodayUp = 4.2e8, Path = new[] { 0, 0, 0, 0, 0 } };
+            e.DownHist = Enumerable.Range(0, 60).Select(i => 18 + 10 * Math.Sin(i / 5.0) + (i % 7)).ToArray(); e.UpHist = Enumerable.Range(0, 60).Select(i => 2.5 + Math.Cos(i / 4.0)).ToArray(); e.NetHist = Enumerable.Range(0, 60).Select(i => 18 + (double)(i % 5)).ToArray();
+            e.TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 9.4 }, new AppStat { Name = "OneDrive", Cpu = 3.1 }, new AppStat { Name = "Teams", Cpu = 2.2 } };
+            return e;
+        }
+        float PaintWidgetPicker(Graphics g, float x, float y, float w)
+        {
+            using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("How the corner widget looks - pick one. Hover the widget for its card."), Draw.fBody, m, x, y); y += 30 * S;
+            int cols = w > 980 * S ? 4 : w > 700 * S ? 3 : 2; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 250 * S; int k = 0;
+            for (int i = 0; i < WStyleIds.Length; i++)
+            {
+                string id = WStyleIds[i]; bool on = Cfg.WidgetStyle == id;
+                var r = new RectangleF(x + (k % cols) * (cw + 12 * S), y + (k / cols) * (ch + 12 * S), cw, ch); k++;
+                if (Kit.Off(g, r)) { Act(settingsCanvas, r, delegate { Cfg.WidgetStyle = id; Cfg.Save(); Invalidate(true); }); continue; }
+                Theme.Fill(g, r, 12 * S, on ? Theme.BlueSoft : Theme.Soft); Theme.Stroke(g, r, 12 * S, on ? Theme.Blue : Theme.Line, on ? 2 : 1);
+                using (var tb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Ink)) g.DrawString(L.T(WStyle[i]), Draw.fBodyB, tb, r.X + 12 * S, r.Y + 10 * S);
+                using (var hb = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                    g.DrawString(L.T(WStyleHint[i]), Draw.fSmall, hb, new RectangleF(r.X + 12 * S, r.Y + 30 * S, r.Width - 24 * S, 18 * S), sf);
+                // the pictures, scaled to fit the tile (never up)
+                var area = new RectangleF(r.X + 10 * S, r.Y + 54 * S, r.Width - 20 * S, r.Height - 64 * S);
+                var strip = WPic(id, false); var card = WPic(id, true); float py = area.Y;
+                var q = g.InterpolationMode; g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                if (strip != null) { float k1 = Math.Min(1f, area.Width / strip.Width); var sr = new RectangleF(area.X, py, strip.Width * k1, strip.Height * k1); g.DrawImage(strip, sr); py += sr.Height + 8 * S; }
+                if (card != null) { float k2 = Math.Min(Math.Min(1f, area.Width / card.Width), (area.Bottom - py) / card.Height); if (k2 > 0.1f) g.DrawImage(card, new RectangleF(area.X, py, card.Width * k2, card.Height * k2)); }
+                g.InterpolationMode = q;
+                if (previewExample) using (var eb = new SolidBrush(Theme.Muted)) { string ex = L.T("example"); var es = g.MeasureString(ex, Draw.fTiny); g.DrawString(ex, Draw.fTiny, eb, r.Right - es.Width - 10 * S, r.Y + 12 * S); }
+                Act(settingsCanvas, r, delegate { Cfg.WidgetStyle = id; Cfg.Save(); Invalidate(true); });
+            }
+            return y + ((k + cols - 1) / cols) * (ch + 12 * S) + 10 * S;
+        }
     }
 }

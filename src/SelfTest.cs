@@ -968,6 +968,27 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
+            {
+                var bad = new List<string>(); var sn = new Snap { Down = 12.43, Up = 1.07, DownHist = new[] { 1.0, 5, 12, 8 }, UpHist = new[] { 0.5, 1, 1.2, 0.9 }, TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 12 } } };
+                foreach (var st in new[] { "speed", "speedstatus", "speedapps", "everyday", "gamer", "calls", "engineer", "auto" })
+                    foreach (bool card in new[] { false, true })
+                        using (var b = Draw.Preview(sn, st, card)) if (b == null || b.Width < 50 || b.Height < 20) bad.Add(st + (card ? " card" : " strip"));
+                string u0 = Cfg.WUnits, w0 = Cfg.WidgetStyle;
+                try
+                {
+                    Cfg.WidgetStyle = "speed"; Cfg.WUnits = "bits"; string k1 = Draw.ChipKey(sn); sn.Headline = "something else"; if (Draw.ChipKey(sn) != k1) bad.Add("the speed strip redraws for words it doesn't show");
+                    sn.Down = 12.44; if (Draw.ChipKey(sn) != k1) bad.Add("the strip redraws for a digit it doesn't show"); sn.Down = 13.9; if (Draw.ChipKey(sn) == k1) bad.Add("the strip didn't change with its number");
+                    if (Draw.Rate(0.85, true) != (0.85 * 1000).ToString("0", CultureInfo.CurrentCulture) + " kb/s" || Draw.Rate(940, true) != "940 Mb/s") bad.Add("rates in bits: " + Draw.Rate(0.85, true));
+                    Cfg.WUnits = "bytes"; if (Draw.Rate(100, true) != (12.5).ToString("0", CultureInfo.CurrentCulture) + " MB/s") bad.Add("rates in bytes: " + Draw.Rate(100, true));
+                }
+                finally { Cfg.WUnits = u0; Cfg.WidgetStyle = w0; }
+                var r = new GuideRun(); bool sp = Investigate.CheckupSpeed; Investigate.CheckupSpeed = false;
+                try { Investigate.Run("full", M, r, delegate { }); } finally { Investigate.CheckupSpeed = sp; }
+                var obs = r.ObservedCopy(); sb.AppendLine("      full checkup: " + obs.Count + " facts, verdict level " + r.Lv + ": " + Draw.Trunc(r.Finding, 90));
+                if (!r.Done || r.Finding == "" || !obs.Any(o => o[2].StartsWith("1. This PC", StringComparison.Ordinal)) || !obs.Any(o => o[2].StartsWith("3. ", StringComparison.Ordinal)) || !r.NotEst.Any(n => n.Contains("speed test"))) bad.Add("full checkup layers missing: " + string.Join(" | ", obs.Select(o => o[2]).Take(6)));
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("calculators 1.1.5: NR, LTE, Wi-Fi, link budget, RAID, SLA, jitter buffer give the textbook numbers", () =>
             {
                 Func<List<string[]>, string> v0 = r => r.Count > 0 ? r[0][2] : "";

@@ -83,9 +83,9 @@ namespace AdeeboMeter
         {
             public string Sec, Label, Tag, Keys = ""; public Func<string> Help; public string[] Opts; public Func<int> Cur; public Action<int> Set; public Func<bool> Show;
         }
-        internal static readonly string[] SetSections = { "General", "Navigation", "Companion", "Widget", "Background checks", "Gamer Zone", "Alerts", "History & data", "Privacy & online lookups", "Capture & advanced" };
+        internal static readonly string[] SetSections = { "Widget", "General", "Navigation", "Companion", "Background checks", "Gamer Zone", "Alerts", "History & data", "Privacy & online lookups", "Capture & advanced" };
         const string TagGame = "BACKGROUND · GAME SERVERS", TagPc = "ON THIS PC", TagLan = "BACKGROUND · YOUR NETWORK", TagNet = "BACKGROUND · INTERNET", TagOnline = "ONLINE LOOKUP", TagWin = "ONLY WHILE THIS WINDOW IS OPEN";
-        string setSec = "General";
+        string setSec = "Widget";   // the first thing people change (Adeeb, 14 Nov): how the corner widget looks
         RoundBox settingsSearch;
         static string Every(int sec) { return sec <= 0 ? "off" : sec >= 60 ? "every " + sec / 60 + " min" : "every " + sec + " s"; }
         internal static string SendingNow()
@@ -122,6 +122,10 @@ namespace AdeeboMeter
             // Navigation (the tab list itself is drawn below the rows - PaintNavSettings)
             add("Navigation", "Layout", TagPc, () => Cfg.Layout == "sidebar" ? "Sidebar: the sections down the left, with search and a live meter. Fold it to icons with the arrow." : "Classic: tabs along the top, the health panel on the right.", SetLayoutOpts, () => Cfg.Layout == "sidebar" ? 1 : 0, i => SetLayout(i == 1 ? "sidebar" : "classic"), null, "layout sidebar classic tabs menu left top");
             // Widget
+            add("Widget", "Speed in", TagPc, () => Cfg.WUnits == "bytes" ? "MB/s - like a download in your browser." : "Mb/s - like your internet plan and speed tests.", SetUnits, () => Cfg.WUnits == "bytes" ? 1 : 0, i => { Cfg.WUnits = i == 1 ? "bytes" : "bits"; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "units bits bytes mbps mb/s speed widget");
+            add("Widget", "Show", TagPc, () => "Which way the speed widget shows.", SetDir, () => Cfg.WDir == "down" ? 1 : Cfg.WDir == "up" ? 2 : 0, i => { Cfg.WDir = i == 1 ? "down" : i == 2 ? "up" : "both"; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "download upload both direction widget");
+            add("Widget", "Mini graph", TagPc, () => Cfg.WGraph ? "The last 30 seconds next to the numbers, and a minute on the card." : "Numbers only.", SetOnOff, () => Cfg.WGraph ? 0 : 1, i => { Cfg.WGraph = i == 0; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "graph sparkline chart widget");
+            add("Widget", "Today's total", TagPc, () => Cfg.WTotal ? "Downloaded and uploaded since midnight, on the card." : "Off.", SetOnOff, () => Cfg.WTotal ? 0 : 1, i => { Cfg.WTotal = i == 0; Cfg.Save(); Invalidate(true); }, () => Draw.SpeedStyle, "total today data usage gb widget");
             add("Widget", "Corner widget size", TagPc, () => Cfg.BigWidget ? "A little bigger (1.3x) - easier to read at a glance." : "Small - out of the way.", SetSize, () => Cfg.BigWidget ? 1 : 0, i => { Cfg.BigWidget = i == 1; Cfg.Save(); Invalidate(true); }, null, "big small scale");
             add("Widget", "Widget style", TagPc, () => Cfg.WidgetStyle == "gamer" ? "Always the gamer card: your game's ping, jitter, loss and grade." : Cfg.WidgetStyle == "everyday" ? "Always the everyday card: the verdict, the five dots, CPU, memory and speed." : Cfg.WidgetStyle == "calls" ? "Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up." : Cfg.WidgetStyle == "engineer" ? (Cfg.Simple ? "The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card." : "Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.") : "Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.", WStyle, () => Math.Max(0, Array.IndexOf(WStyleIds, Cfg.WidgetStyle)), i => { Cfg.WidgetStyle = WStyleIds[i]; Cfg.Save(); }, null, "layout gamer game everyday card calls teams zoom engineer");
             add("Widget", "Buddy", TagPc, () => Cfg.Buddy ? "A little face on the widget that feels what your network feels: smug when all is green, sweaty when your PC is busy, dizzy when your Wi-Fi is bad, betrayed when your provider lets you down. Asleep on the folded chip." : "Off: the widget shows the logo and the coloured dot.", SetOnOff, () => Cfg.Buddy ? 0 : 1, i => { Cfg.Buddy = i == 0; Cfg.Save(); Invalidate(true); }, null, "buddy face creature mascot emoji widget");
@@ -231,6 +235,7 @@ namespace AdeeboMeter
                 else
                 {
                     g.DrawString(L.T(setSec), Draw.fTitle, ink, x, y); y += 34 * S;
+                    if (setSec == "Widget") y = PaintWidgetPicker(g, x, y, w);
                     if (setSec == "Background checks")
                     {
                         string lead = L.T("The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.");
@@ -251,7 +256,7 @@ namespace AdeeboMeter
                         int gj = Cfg.GameJobsPerMinute(); string cnt = L.T("Right now: about") + " " + Cfg.JobsPerMinute() + " " + L.T("checks a minute in the background") + (Cfg.Preset == "custom" ? " (" + L.T("your own mix") + ")" : "") + (gj > 0 ? ", " + L.T("plus about") + " " + gj + " " + L.T("game pings a minute for the games you watch (one a second per server while you play)") : "") + ", " + L.T("on top of the widget's once-a-second read of Windows' own counters.");
                         var ch = Draw.Measure(cnt, Draw.fSmall, (int)w).Height; g.DrawString(cnt, Draw.fSmall, muted, new RectangleF(x, y, w, ch + 4)); y += ch + 18 * S;
                     }
-                    foreach (var it in items.Where(i2 => i2.Sec == setSec))
+                    foreach (var it in items.Where(i2 => i2.Sec == setSec && i2.Label != "Widget style"))   // the style is the picture picker above (the row still turns up in a search)
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     if (setSec == "Navigation") y = PaintNavSettings(g, x, y + 6 * S, w);
                     if (setSec == "Companion") y = PaintCompanion(g, x, y + 6 * S, w);
@@ -273,7 +278,9 @@ namespace AdeeboMeter
         }
         static readonly string[] SetOnOff = { "On", "Off" }, SetLayoutOpts = { "Classic", "Sidebar" }, SetFace = { "Drawn", "Emoji" };
         static readonly string[] SetHat = { "None", "Cap", "Party hat", "Crown" };
-        static readonly string[] WStyle = { "Auto", "Everyday", "Gamer", "Calls", "Engineer" }, WStyleIds = { "auto", "everyday", "gamer", "calls", "engineer" };
+        static readonly string[] WStyle = { "Speed only", "Speed + status", "Speed + apps", "Everyday", "Gamer", "Calls", "Engineer", "Auto" }, WStyleIds = { "speed", "speedstatus", "speedapps", "everyday", "gamer", "calls", "engineer", "auto" };
+        static readonly string[] WStyleHint = { "Just the speeds, like DU Meter.", "Speeds plus OK / Busy / Problem.", "Speeds plus the busiest apps.", "The verdict, five dots, CPU, memory, speed.", "Your game's ping, jitter, loss and grade.", "Jitter, loss and delay for calls.", "Router, internet, DNS, retransmits (Pro).", "Follows what you're doing." };
+        static readonly string[] SetUnits = { "Bits (Mb/s)", "Bytes (MB/s)" }, SetDir = { "Both", "Download", "Upload" };
         static readonly string[] GzBg = { "10 s", "30 s", "60 s", "Off" }, GzSrv = { "1", "3", "5" }, GzDays = { "7 days", "14 days", "30 days" };
         static readonly int[] GzBgN = { 10, 30, 60, 0 }, GzSrvN = { 1, 3, 5 }, GzDaysN = { 7, 14, 30 };
         static readonly string[] DevAlertNames = { "Off", "Home networks only" };
