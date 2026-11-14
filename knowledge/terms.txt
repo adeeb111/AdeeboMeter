@@ -1778,6 +1778,16 @@ how: Same data, more of it on screen. Remembered between runs.
 why: Plain English for everyone; the raw numbers for whoever has to prove it.
 without: Off keeps pages calm; on is for troubleshooting.
 
+== ov.VIEW
+friendly: View
+cat: term
+close: -1
+tag: One switch for what you're doing.
+what: Changes which pages show, how hard AdeeboMeter watches, what the corner widget shows and whether Details is on - Everyday, Gamer, Streamer, Trader, Engineer, or a view you made.
+how: Each view keeps your own changes, so switching back finds it as you left it. Learn is in every view.
+why: A gamer who wants to learn trading turns Trading on in one click - and back again.
+without: Everything stays as it is; Settings › Navigation still hides and shows pages one by one.
+
 == tb.mtu
 friendly: MTU per hop
 cat: term

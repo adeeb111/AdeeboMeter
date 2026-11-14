@@ -97,3 +97,5 @@ trade.slow|The broker went slow. Wait it out.
 trade.slow|Somebody slowed the broker line. {v}
 trade.closed|Market is closed. The deals sleep.
 trade.closed|Closed for the night. Opens at 9:30.
+view.switch|The {v} view. The city looks different from here.
+view.switch|Switching to {v}. New case, same streets.

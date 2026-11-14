@@ -104,3 +104,5 @@ trade.slow|Slow broker line. Do not panic-click.
 trade.slow|Broker lag. {v} Do not blame me.
 trade.closed|Market is closed. Your wallet thanks it.
 trade.closed|Closed. Go do something else.
+view.switch|{v}, huh? Bold choice. Let us see it.
+view.switch|Switching to {v}. Try to keep up this time.

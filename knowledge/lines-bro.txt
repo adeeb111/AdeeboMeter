@@ -129,3 +129,5 @@ trade.slow|Hold up, bro. Broker line is slow.
 trade.slow|Bro, wait a sec before you click. {v}
 trade.closed|Market is closed, bro. Rest up.
 trade.closed|No trading now, bro. Opens at 9:30.
+view.switch|{v} mode, bro. Let's go.
+view.switch|Switching to {v}, bro. Same app, new vibe.

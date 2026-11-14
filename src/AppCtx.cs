@@ -223,13 +223,15 @@ namespace AdeeboMeter
             if (Cfg.PresetSaved && Cfg.Preset != "custom") Cfg.ApplyPreset(Cfg.Preset);   // the Gamer Zone rows switch to "custom" when changed, so a named preset means all its timings
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
-            if (first) { Cfg.SetupDone = false; ApplyAutoStart(); SaveSettings(); }   // a fresh install gets the 3-question setup on Home; an upgrade never does
+            if (first) { Cfg.SetupDone = false; ApplyAutoStart(); SaveSettings(); }
+            else { Views.EnsureStarted(); }   // 1.1.5 views: an upgrade keeps exactly what it had, as "My setup"   // a fresh install gets the 3-question setup on Home; an upgrade never does
             System.Threading.ThreadPool.QueueUserWorkItem(delegate { GameHistory.TidyNow(); });   // old game days go even when nothing writes new ones
         }
         void SaveSettings()
         {
             try
             {
+                Views.Remember();   // the view in use keeps what was just changed
                 string tmp = settingsPath + ".tmp";
                 File.WriteAllLines(tmp, new[] { "autostart=" + (autoStart ? 1 : 0), "widget=" + (widgetOn ? 1 : 0), "serious=" + (Voice.Serious ? 1 : 0), "theme=" + (Program.ForceTheme >= 2 && Program.ForceTheme < Theme.Palettes.Length + 2 ? Theme.Palettes[Program.ForceTheme - 2] : Program.ForceTheme == 1 ? "dark" : Program.ForceTheme == 0 ? "light" : "auto") }.Concat(Cfg.Lines()));
                 Program.ReplaceFile(tmp, settingsPath);

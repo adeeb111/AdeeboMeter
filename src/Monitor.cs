@@ -865,7 +865,7 @@ namespace AdeeboMeter
         {
             var s = new Snap { Level = level, Headline = headline, Flow = flow, Countdown = countdown, Path = path, Hint = hint, Recent = Events.Recent(3) };
             s.Chip = level == 2 ? Voice.P("Needs you", "Problem") : level == 1 ? "Busy" : Voice.P("All quiet", "OK");
-            if (level == 0) { string eve = Trading.EveningLine(); if (eve != null) s.Chip = eve; }   // opt-in: the day's close, 17:30-19:00 - a problem always wins
+            if (level == 0) { string eve = Trading.EveningLine() ?? Views.ChipLine(); if (eve != null) s.Chip = eve; }   // opt-in: the day's close, 17:30-19:00 - a problem always wins
             s.Cpu = Cpu.Last; s.Mem = Mem.Last; s.Disk = Disk.Last; s.Down = Down.Last; s.Up = Up.Last;
             s.DownHist = Down.Values(60); s.UpHist = Up.Values(60);
             s.MemText = UsedGB.ToString("0.0", CultureInfo.CurrentCulture) + " / " + TotalGB.ToString("0", CultureInfo.CurrentCulture) + " GB";

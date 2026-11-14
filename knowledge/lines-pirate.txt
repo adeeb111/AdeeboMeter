@@ -97,3 +97,5 @@ trade.slow|Storm on the broker line. Hold fast.
 trade.slow|Broker line is choppy. {v}
 trade.closed|The market is in port. Back at 9:30.
 trade.closed|Market closed. The harbour sleeps.
+view.switch|Hoisting the {v} colours, matey!
+view.switch|All hands, we sail under {v} now!

@@ -97,3 +97,5 @@ trade.slow|High ping to the broker. Do not click yet.
 trade.slow|Broker lag spike. {v}
 trade.closed|Market server is offline until 9:30.
 trade.closed|Market closed. Respawn at 9:30.
+view.switch|Loading {v} loadout. Respawning the menus.
+view.switch|Swapping to the {v} build. GG in a second.

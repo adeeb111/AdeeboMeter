@@ -104,3 +104,5 @@ trade.slow|Your broker is slow right now. Please wait a moment.
 trade.slow|A slow moment to the broker. {v}
 trade.closed|The market is closed for today.
 trade.closed|Markets are closed. Checks resume at 9:30.
+view.switch|Switching you to {v}. Your own changes come with it.
+view.switch|Setting up the {v} view for you now.

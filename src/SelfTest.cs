@@ -1085,6 +1085,33 @@ namespace AdeeboMeter
                 foreach (var leak in new[] { "ahasa", "DESKTOP-ABC1", "192.168", "aa:bb", "me@mail", "fe80" }) if (scr.IndexOf(leak, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("bug report leaks " + leak + ": " + scr);
                 var bt = BugReport.Text("trade"); if (bt.IndexOf(Program.Version, StringComparison.Ordinal) < 0 || bt.IndexOf("Page: trade", StringComparison.Ordinal) < 0) throw new InvalidOperationException("bug report text");
             });
+            T("views: switching keeps each view's own changes, yours are made and removed, junk is ignored", () =>
+            {
+                var st0 = Views.Current(); string view0 = Cfg.View, line0 = Views.Line();
+                try
+                {
+                    Views.Load(""); Cfg.View = "";
+                    if (!Views.Switch("gamer") || Cfg.View != "gamer" || Cfg.Off("gamer") || !Cfg.Off("trade") || Cfg.Preset != "gamer" || Cfg.GameBgSec != 10) throw new InvalidOperationException("gamer view: " + Views.Current().Line());
+                    Cfg.SetOff("trade", false); Views.Remember();   // the gamer wants to learn trading: Trading on, in the Gamer view
+                    if (!Cfg.Nav.StartsWith("home,gamer", StringComparison.Ordinal)) throw new InvalidOperationException("the Gamer view puts the Gamer Zone in the bar: " + Cfg.Nav);
+                    foreach (var b in Views.BuiltIn) foreach (var sec in Cfg.Hideable) if (!Views.Default(b[0]).Hidden.Contains(sec) && Views.Default(b[0]).Nav.IndexOf(sec, StringComparison.Ordinal) < 0 && b[0] != "engineer") throw new InvalidOperationException(b[0] + " shows " + sec + " but not in its bar");
+                    Views.Switch("engineer"); if (Cfg.Mode != "pro" || !Cfg.Details || Cfg.HiddenSecs != "") throw new InvalidOperationException("engineer view");
+                    Views.Switch("gamer"); if (Cfg.Off("trade")) throw new InvalidOperationException("the Gamer view forgot Trading was turned on");
+                    Views.Reset("gamer"); if (!Cfg.Off("trade")) throw new InvalidOperationException("reset the Gamer view");
+                    Views.Switch("everyday"); if (Cfg.Preset != "penny" || !Cfg.Off("gamer") || Cfg.Mode != "simple") throw new InvalidOperationException("everyday view");
+                    string mine = Views.Make("Gaming + trading"); if (mine == null || Cfg.View != mine || Views.NameOf(mine) != "Gaming + trading") throw new InvalidOperationException("make a view");
+                    if (Views.Make("  ") != null) throw new InvalidOperationException("an empty name must not make a view");
+                    string saved = Views.Line(); Views.Load(saved); if (Views.Line() != saved || !Views.All().Any(v => v[0] == mine)) throw new InvalidOperationException("views must survive a restart: " + saved);
+                    Views.Delete(mine); if (Views.All().Any(v => v[0] == mine) || Cfg.View != "everyday") throw new InvalidOperationException("remove a view");
+                    Views.Load("bad|x~y~z|gamer~G~pro/stream/penny/everyday/1/1/2/15/30/5/30/3|my-1~A~nope|../../x~B~simple//balanced/auto/0/1/2/15/30/5/30/3");
+                    if (Views.All().Count != Views.BuiltIn.Length) throw new InvalidOperationException("junk views loaded: " + Views.Line());
+                    var ps = Views.State.Parse("simple/stream+evil+trade/penny/hack/0/1/99999/15/30/5/30/3"); if (ps != null) throw new InvalidOperationException("an out-of-range pace must be refused");
+                    ps = Views.State.Parse("simple/stream+evil+trade/penny/hack/0/1/2/15/30/5/30/3"); if (ps == null || ps.Hidden != "stream,trade" || ps.Widget != "auto") throw new InvalidOperationException("view state not cleaned: " + (ps == null ? "null" : ps.Line()));
+                    if (Views.FromUses(new[] { "game" }) != "gamer" || Views.FromUses(new[] { "check", "calls" }) != "everyday" || Views.FromUses(new[] { "game", "trade" }) != "play-trade" || Views.FromUses(new[] { "game", "stream", "trade" }) != "everything" || Views.FromUses(new[] { "fix" }) != "engineer") throw new InvalidOperationException("view from the first question");
+                    foreach (var b in Views.BuiltIn) if (Views.Default(b[0]) == null) throw new InvalidOperationException("no defaults for " + b[0]);
+                }
+                finally { Views.Load(line0); Cfg.View = view0; Views.Put(st0); Policy.Apply(); }
+            });
             T("speed widgets and full checkup: every style draws, the strip only changes with its numbers, the checkup reports every layer", () =>
             {
                 var bad = new List<string>(); var sn = new Snap { Down = 12.43, Up = 1.07, DownHist = new[] { 1.0, 5, 12, 8 }, UpHist = new[] { 0.5, 1, 1.2, 0.9 }, TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "chrome", Cpu = 12 } } };

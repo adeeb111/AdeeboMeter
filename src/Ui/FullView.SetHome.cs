@@ -31,7 +31,7 @@ namespace AdeeboMeter
         {
             switch (sec)
             {
-                case "General": return new[] { "Mode", "Theme" };
+                case "General": return new[] { "View", "Theme" };
                 case "Companion": return new[] { "Mood" };
                 case "Navigation": return new[] { "Layout" };
                 case "Gamer Zone": return new[] { "Game ping in the background" };
@@ -176,7 +176,7 @@ namespace AdeeboMeter
             using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  1 / 4", Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
-            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Views.EnsureStarted(); Cfg.Save(); AfterView(); overviewCanvas.Invalidate(); });
             y += 22 * S;
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("What do you use your internet for?"), Draw.fTitle, ink, x + 18 * S, y); y += 34 * S;
             using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings."), Draw.fBody, m, x + 18 * S, y); y += 30 * S;
@@ -197,7 +197,14 @@ namespace AdeeboMeter
             y += ((SetupUses.Length + cols - 1) / cols) * (ch + 10 * S) + 6 * S;
             string go = setupUses.Count == 0 ? L.T("Show me everything") : L.T("Next"); var gs = g.MeasureString(go, Draw.fBodyB); var gr = new RectangleF(x + 18 * S, y, gs.Width + 36 * S, 36 * S);
             Theme.Fill(g, gr, 18 * S, Kit.Accent("home")); using (var b = new SolidBrush(Theme.OnBlue)) g.DrawString(go, Draw.fBodyB, b, gr.X + 18 * S, gr.Y + (36 * S - gs.Height) / 2);
-            Act(overviewCanvas, gr, delegate { ApplyUses(setupUses, SetModeTo); setupStep = 1; Cfg.Save(); ApplyLayout(); Invalidate(true); });
+            Act(overviewCanvas, gr, delegate
+            {
+                // the view that fits (one main use), or a view of their own made from what they picked
+                string vid = Views.FromUses(setupUses);
+                Views.Switch(vid);
+                ApplyUses(setupUses, SetModeTo);
+                setupStep = 1; Cfg.Save(); AfterView(); Invalidate(true);
+            });
             y = gr.Bottom + 12 * S;
             using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("All of this can be changed any time in Settings."), Draw.fSmall, m, x + 18 * S, y); y += 26 * S;
             card.Height = y - top; Theme.Stroke(g, card, 14 * S, Kit.Accent("home"), 1.5f * S);

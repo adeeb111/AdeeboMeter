@@ -52,7 +52,7 @@ namespace AdeeboMeter
         List<AppStat> procs = new List<AppStat>(); string procSel; string[] procFacts; string procPathSel = ""; DateTime lastProcs = DateTime.MinValue;
         readonly Dictionary<string, string> procWhere = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); bool whereBusy;
         // Settings
-        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly SlideSwitch detailsBtn; readonly PillButton settingsBtn, aboutBtn, backBtn, onlineChip; readonly ThemeSwitch themeSw; Panel tipBar;
+        readonly Panel settingsPage, aboutPage; readonly DB settingsCanvas, aboutCanvas; readonly SlideSwitch detailsBtn; readonly PillButton settingsBtn, aboutBtn, backBtn, onlineChip; readonly ViewButton viewBtn; readonly ThemeSwitch themeSw; Panel tipBar;
         // Saved destinations
         readonly FlowLayoutPanel pinBar; readonly PillButton pinBtn; List<DestResult> pinResults; volatile bool pinRunning;
         // hover explanations + clickable painted areas, rebuilt on every paint
@@ -95,6 +95,9 @@ namespace AdeeboMeter
             pointsBtn.Click += delegate { tab = tab == "points" ? lastPage : "points"; ShowTab(); };
             backBtn = new PillButton("Back to corner", PillButton.K.Primary);
             backBtn.Click += delegate { Close(); };
+            viewBtn = new ViewButton(); SyncViewBtn();
+            viewBtn.Click += delegate { ViewMenu(); };
+            viewBtn.MouseEnter += delegate { SetTipKey("ov.VIEW"); }; viewBtn.MouseLeave += delegate { SetTipKey(null); };
             detailsBtn = new SlideSwitch("Details", Cfg.Details);   // a sliding on/off switch: the engineer view
             detailsBtn.Click += delegate { Cfg.Details = detailsBtn.On; Cfg.Save(); if (pathPanel != null) pathPanel.Height = PathHeight; Refresh(); foreach (Control c in Descendants(this)) c.Invalidate(); };
             detailsBtn.MouseEnter += delegate { SetTipKey("ov.DETAILS"); }; detailsBtn.MouseLeave += delegate { SetTipKey(null); };
@@ -103,13 +106,13 @@ namespace AdeeboMeter
             onlineChip.MouseEnter += delegate { SetTipKey("ov.ONLINE"); }; onlineChip.MouseLeave += delegate { SetTipKey(null); };
             themeSw = new ThemeSwitch();
             themeSw.MouseEnter += delegate { SetTipKey("theme.toggle"); }; themeSw.MouseLeave += delegate { SetTipKey(null); };
-            header.Controls.Add(themeSw); header.Controls.Add(onlineChip); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(pointsBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
+            header.Controls.Add(themeSw); header.Controls.Add(onlineChip); header.Controls.Add(viewBtn); header.Controls.Add(detailsBtn); header.Controls.Add(aboutBtn); header.Controls.Add(pointsBtn); header.Controls.Add(settingsBtn); header.Controls.Add(backBtn);
             EventHandler place = delegate
             {
                 int xr = header.Width - Sc(20);
-                foreach (var b in new Control[] { backBtn, settingsBtn, pointsBtn, aboutBtn, detailsBtn, onlineChip, themeSw }) { if (!b.Visible && (b == onlineChip || b == pointsBtn)) continue; xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
+                foreach (var b in new Control[] { backBtn, settingsBtn, pointsBtn, aboutBtn, detailsBtn, viewBtn, onlineChip, themeSw }) { if (!b.Visible && (b == onlineChip || b == pointsBtn)) continue; xr -= b.Width; b.Location = new Point(xr, (header.Height - b.Height) / 2); xr -= Sc(b == detailsBtn ? 14 : 8); }
             };
-            header.Resize += place; detailsBtn.Resize += place; onlineChip.Resize += place; onlineChip.VisibleChanged += place; settingsBtn.Resize += place; aboutBtn.Resize += place; pointsBtn.Resize += place; pointsBtn.VisibleChanged += place; backBtn.Resize += place;
+            header.Resize += place; detailsBtn.Resize += place; viewBtn.Resize += place; onlineChip.Resize += place; onlineChip.VisibleChanged += place; settingsBtn.Resize += place; aboutBtn.Resize += place; pointsBtn.Resize += place; pointsBtn.VisibleChanged += place; backBtn.Resize += place;
             pathPanel = new DB { Name = "pathPanel", Dock = DockStyle.Top, Height = Sc(128), BackColor = Theme.Card };
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
@@ -313,6 +316,7 @@ namespace AdeeboMeter
             {
                 if (e.KeyCode == Keys.Escape)
                 {
+                    if (viewSheet != null && viewSheet.Visible) { e.SuppressKeyPress = true; if (switchingTo == null) HideViewSheet(); return; }   // the view sheet closes first
                     if (tbSearch != null && tbSearch.Box.Focused && tbSearch.Box.Text != "") return;   // its own handler clears it
                     if (tab == "toolbox" && tbSearch != null && tbSearch.Box.Text != "" && toolboxPage.ContainsFocus) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; return; }   // a filter is on: Esc clears it first
                     // typing in any box: Esc clears that box (and stays) - it never throws away a running check or a result
@@ -453,7 +457,7 @@ namespace AdeeboMeter
             new[] { "dest", "Check a destination", "dest" } };
         // Simple mode shows only these sections; pages of the others still open when something links to them (a Fix a problem
         // answer that needs a Toolbox tool, say) - only their tab is hidden
-        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "gamer", "stream", "time" };
+        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "gamer", "stream", "trade", "time", "learn" };   // Learn is in every view
         void ApplyMode()
         {
             if (tabs == null) return;

@@ -129,3 +129,5 @@ trade.slow|Broker RTT above 100 ms. Hold orders.
 trade.slow|Broker path degraded. {v}
 trade.closed|Outside market hours. Broker probe stopped.
 trade.closed|Market closed. Probe idle until 09:30 ET.
+view.switch|Applying the {v} profile. Config pushed, no reboot needed.
+view.switch|Loading the {v} template. Committing changes.

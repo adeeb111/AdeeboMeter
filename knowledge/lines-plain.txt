@@ -129,3 +129,5 @@ trade.slow|Slow moment to your broker. Wait before you click.
 trade.slow|Your broker is slow right now. {v}
 trade.closed|Market closed. The broker check sleeps until 9:30.
 trade.closed|Markets are closed. Nothing is being checked.
+view.switch|Switching to {v}. Your settings for it are coming back.
+view.switch|Changing to the {v} view. One moment.

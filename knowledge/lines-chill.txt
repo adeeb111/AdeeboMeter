@@ -104,3 +104,5 @@ trade.slow|Broker line is slow. Breathe, then click.
 trade.slow|Slow patch to the broker. {v}
 trade.closed|Market is closed. Everyone gets a rest.
 trade.closed|Market closed. See you at 9:30.
+view.switch|Sliding into {v} mode. Easy does it.
+view.switch|{v} view, coming right up. No rush.

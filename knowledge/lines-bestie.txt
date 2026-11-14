@@ -97,3 +97,5 @@ trade.slow|Wait a sec, the broker is slow.
 trade.slow|Slow broker moment. {v}
 trade.closed|Market is closed. Go relax!
 trade.closed|No trading now. Opens at 9:30.
+view.switch|Ooh, {v} mode! Love that for you.
+view.switch|{v} it is, bestie. Getting it ready.

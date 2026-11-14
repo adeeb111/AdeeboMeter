@@ -194,7 +194,7 @@ namespace AdeeboMeter
         // ---------- the self-test's lines check: every built-in line, every file
         public static readonly string[] Keys = { "app.open", "all.good", "pc.busy", "wifi.drops", "net.none", "inet.slow", "busy", "idle", "search.empty", "freeze", "speedrunner", "back.again",
             "award", "call.on", "cert.expired", "cert.ok", "decrypt.done", "devices.found", "dns.slow", "encrypt.done", "game.good", "game.lag", "gw.down", "isp.down", "late.night", "morning",
-            "mtr.clean", "mtr.lossy", "mtu.small", "points.earned", "port.closed", "port.open", "portal", "sec.issue", "sec.ok", "speed.bloat", "speed.great", "update.suspect", "vpn.on", "vpn.slow", "stream.on", "stream.dip", "stream.none", "trade.ok", "trade.slow", "trade.closed" };
+            "mtr.clean", "mtr.lossy", "mtu.small", "points.earned", "port.closed", "port.open", "portal", "sec.issue", "sec.ok", "speed.bloat", "speed.great", "update.suspect", "vpn.on", "vpn.slow", "stream.on", "stream.dip", "stream.none", "view.switch", "trade.ok", "trade.slow", "trade.closed" };
         // banned: dark topics, slurs-adjacent words, trademarked names from the two film-style personas, famous catchphrases
         static readonly Regex Banned = new Regex(@"\b(kill\w*|dead|death|die|dies|died|dying|suicide|murder\w*|blood\w*|war|wars|warfare|gun|guns|bomb\w*|nazi\w*|hitler|rape|corpse\w*|grave\w*|stupid|idiot\w*|dumb|ugly|loser\w*|noob\w*|fuck\w*|shit\w*|damn\w*|hell|crap\w*)\b"
             + @"|winter is coming|lannister|stark|targaryen|westeros|jon snow|khaleesi|iron throne|jedi|sith\b|skywalker|vader|yoda|lightsaber|the force|death star|wookiee", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
