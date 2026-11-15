@@ -59,7 +59,7 @@ namespace AdeeboMeter
             using (var bmp = Qr.Picture(m, px))
             using (var f = new Form { Text = L.T("Scan with your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Color.White, ShowInTaskbar = false })
             using (var pb = new PictureBox { Image = bmp, SizeMode = PictureBoxSizeMode.AutoSize, Location = new Point(Sc(16), Sc(16)) })
-            using (var note = new Label { Text = L.T("Point your phone's camera at it, then tap the link - your result opens with charts. The numbers stay on your phone."), AutoSize = true, ForeColor = Color.FromArgb(91, 102, 117), Font = Draw.fSmall, Location = new Point(Sc(16), Sc(24) + bmp.Height) })
+            using (var note = new Label { Text = L.T("Point your phone's camera at it (on some Android phones: Google Lens), then tap the link - your result opens with charts."), AutoSize = true, ForeColor = Color.FromArgb(91, 102, 117), Font = Draw.fSmall, Location = new Point(Sc(16), Sc(24) + bmp.Height) })
             {
                 f.Controls.Add(pb); f.Controls.Add(note);
                 f.ClientSize = new Size(bmp.Width + Sc(32), bmp.Height + Sc(60));

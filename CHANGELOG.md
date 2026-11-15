@@ -22,6 +22,8 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
   Works when this PC has no internet at all: the phone loads the page on its own data.
 - Send by Bluetooth hands the picture to Windows' own Bluetooth sender, for another PC or an Android phone. AdeeboMeter itself
   still never listens.
+- Android: Quick Share appears beside Send by Bluetooth when Google's Quick Share for Windows is installed (fast - Wi-Fi carries
+  the file); Bluetooth and the QR say what to tap on Android (Accept, Downloads, Google Lens); the phone page adds Android tips.
 - The phone pages get Copy for AI: the result as a ready question to paste into ChatGPT, Claude or Gemini.
 
 ### New: QR code opens your result on the phone

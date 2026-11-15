@@ -36,7 +36,7 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
-            link("report", "Save picture", SavePicture); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); link("devices", "Send by Bluetooth", SendBluetooth);
+            link("report", "Save picture", SavePicture); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8) using (var b = new SolidBrush(Theme.LvText(0))) g.DrawString(barNote, Draw.fSmall, b, lx, y + 2 * S);
             return y + 30 * S;
         }
@@ -88,9 +88,35 @@ namespace AdeeboMeter
                 string fsq = Path.Combine(Environment.SystemDirectory, "fsquirt.exe");
                 if (File.Exists(fsq)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(fsq, "-send") { UseShellExecute = false });
                 System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + file + "\"");
-                Toast(L.T("Saved - in the Bluetooth window pick the other device, then Browse to the selected file (or right-click it > Send to > Bluetooth)"));
+                Toast(L.T("Saved - in the Bluetooth window pick the device and Browse to the selected file. On Android, tap Accept - it lands in Downloads"));
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("bluetooth send: " + e.Message); Toast(L.T("Couldn't start Bluetooth - is it on? Settings > Bluetooth & devices")); }
+        }
+        // Android: Google's Quick Share for Windows (if installed) - Bluetooth finds the phone, Wi-Fi carries the file, so it's fast
+        static string qsExe; static DateTime qsAt;
+        static string QuickShareExe()
+        {
+            if ((DateTime.Now - qsAt).TotalMinutes < 5) return qsExe; qsAt = DateTime.Now; qsExe = null;
+            foreach (var root in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) })
+            {
+                if (string.IsNullOrEmpty(root)) continue;
+                foreach (var rel in QsPaths) { string f = Path.Combine(root, rel); if (File.Exists(f)) { qsExe = f; return f; } }
+            }
+            return null;
+        }
+        static readonly string[] QsPaths = { @"Google\NearbyShare\nearby_share.exe", @"Google\QuickShare\quick_share.exe", @"Programs\NearbyShare\nearby_share.exe" };
+        void SendQuickShare()
+        {
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
+                string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".png");
+                using (var bmp = PictureBitmap()) bmp.Save(file, ImageFormat.Png);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(QuickShareExe()) { UseShellExecute = false });
+                System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + file + "\"");
+                Toast(L.T("Saved - drag the selected file onto Quick Share, then accept it on your Android phone"));
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("quick share: " + e.Message); Toast(L.T("Couldn't start Quick Share")); }
         }
         void OpenOnPhone() { string link = PhoneLink(); if (link != null) ShowQr(link); }
 
