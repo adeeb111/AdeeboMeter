@@ -96,7 +96,9 @@ namespace AdeeboMeter
                 T("beforeafter", "WEB", "Before / after snapshot", "Name this moment - e.g. VPN off", (a, r) => MoreTools.Snapshot(M, a[0])),
                 T("twopc", "WEB", "Compare two saved results (two PCs)", "First saved result (.txt)|Second saved result (.txt)", (a, r) => MoreTools.TwoPc(a[0], a[1])),
                 T("srvchange", "WEB", "What changed on my server?", "Server - e.g. mail.example.com", (a, r) => Sectors.ServerChange(a[0], M, r)),
-                T("board", "WEB", "Service board - my hosts and ports", "Hosts and ports - e.g. nas.local:445, mail.example.com:587 (empty = your pinned sites)", (a, r) => Sectors.Board(a[0], r)),
+                T("board", "WEB", "Service board - my hosts and ports", "Hosts and ports - e.g. nas.local:445, mail.example.com:587 (empty = your pinned sites)|Keep watching every - minutes, e.g. 5 (empty = once, off = stop)", (a, r) => Sectors.Board(a[0], a[1], r)),
+                T("uptime", "WEB", "Uptime report", "Days - 1 to 35 (empty = 7)", (a, r) => Sectors.Uptime(a[0])),
+                T("certcal", "WEB", "Certificate calendar", "Sites - e.g. mail.example.com, vpn.example.com (empty = the ones you watch)", (a, r) => Sectors.CertCalendar(a[0], r)),
                 T("mysites", "WEB", "My sites", null, (a, r) => MoreTools.MySites(r)),
                 T("shares", "YOUR NETWORK", "Shared folders on a PC or NAS (SMB)", "Host - e.g. nas01 or 192.168.1.20", (a, r) => MoreTools.Shares(a[0])),
                 T("svcfail", "WINDOWS", "Services that failed to start (7 days)", null, (a, r) => MoreTools.FailedServices()),
@@ -186,6 +188,7 @@ namespace AdeeboMeter
                 T("winupdate", "THE PC", "What did Windows Update break?", null, (a, r) => UpdateBreak.Run()),
                 T("gpn", "GAMING", "Would a GPN (ping booster) help me?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => GamerTools.Gpn(M, a[0], r)),
                 T("afterstream", "GAMING", "After-stream report", "Which stream - last, yesterday or a date (empty = the latest)", (a, r) => Sectors.SessionRows("stream", a[0])),
+                T("obs", "GAMING", "OBS link - why frames drop", "OBS WebSocket password - not saved (empty if none)|Port - empty = 4455", (a, r) => Sectors.Obs(M, a[0], a[1], r)),
                 T("golive", "GAMING", "Ready to stream? (go-live check)", "Bitrate in kbps - empty = 6000|Service - Twitch, YouTube, Kick or an ingest host", (a, r) => Sectors.GoLive(M, a[0], a[1], r)),
                 T("prematch", "GAMING", "Ready to play? (pre-match checklist)", null, (a, r) => GamerTools.PreMatch(M, r)),
                 T("besttime", "GAMING", "Best time to play", "Game (optional) - e.g. fortnite (empty = the one you play)", (a, r) => GamerTools.BestTime(a[0])),
@@ -238,8 +241,8 @@ namespace AdeeboMeter
             new[] { "PATH & ROUTING", "mtu", "udpmtu", "mtr", "ret", "route", "gateway", "v6routers", "rlisten", "ping6", "ip46", "overlap", "owners" },
             new[] { "IS IT REACHABLE?", "port", "tcpping", "http", "httptime", "httpreq", "stun", "manyports", "allips", "rdpcheck", "ldapcheck", "proxy", "vpn", "teams", "ssh", "mail", "radius", "tacacs" },
             new[] { "SPEED & QUALITY", "lag", "speedtest", "ping", "twamp", "cloud", "ispreport", "marketopen", "tradetape", "gamecompare" },
-            new[] { "COMPARE & WATCH", "timeline", "beforeafter", "twopc", "mysites", "board", "srvchange" },
-            new[] { "GAMING", "prematch", "golive", "afterstream", "gpn", "tonight", "besttime", "console" },
+            new[] { "COMPARE & WATCH", "timeline", "beforeafter", "twopc", "mysites", "board", "srvchange", "uptime", "certcal" },
+            new[] { "GAMING", "prematch", "golive", "obs", "afterstream", "gpn", "tonight", "besttime", "console" },
             new[] { "OVER TIME", "month", "sixmonths", "rushhour", "wakeup", "capfc", "dltime", "netsnap" },
             new[] { "PRIVACY & IPV6", "vpnleak", "ipv6score" },
             new[] { "SHARE A DIAGNOSIS", "qr", "friend" },
@@ -605,7 +608,7 @@ namespace AdeeboMeter
         // everyday words -> the tools they mean, best first (ids, not more words - so "wifi" finds the Wi-Fi tool, not every page that says "speed")
         static readonly Dictionary<string, string> Synonyms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "raid", "raid" }, { "sla", "sla" }, { "uptime", "sla board" }, { "downtime", "sla" }, { "nines", "sla" }, { "bitrate", "stream" }, { "obs", "golive stream" }, { "twitch", "golive stream" }, { "streamer", "stream" },
+            { "raid", "raid" }, { "sla", "sla" }, { "uptime", "uptime sla board" }, { "downtime", "sla" }, { "nines", "sla" }, { "bitrate", "stream" }, { "obs", "obs golive stream" }, { "twitch", "golive stream" }, { "streamer", "stream" },
             { "lte", "cellular" }, { "5g", "cellular" }, { "4g", "cellular" }, { "fresnel", "linkbudget" }, { "dbm", "linkbudget" }, { "microwave", "linkbudget" }, { "wildcard", "wildcard" }, { "acl", "wildcard" },
             { "bdp", "bdp" }, { "window", "bdp" }, { "e1", "tdm" }, { "t1", "tdm" }, { "timeslot", "tdm" }, { "units", "units" }, { "gib", "units" }, { "mib", "units snmpwalk mibs" }, { "battery", "ups battery" },
             { "calculator", "subnet bandwidth units plan" }, { "calc", "subnet bandwidth units plan" }, { "prefix", "v6split subnet" }, { "data", "datause" }, { "plan", "plan" },

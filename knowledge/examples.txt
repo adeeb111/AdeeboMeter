@@ -1174,3 +1174,26 @@ in: last
 1|21:30:44|5 s · this PC · CPU 97%||m
 1|21:58:10|6 s · your Wi-Fi · signal 39%||m
 1|Most of it|your Wi-Fi|A cable, or the 5 GHz band closer to the router, ends most of these.|i
+
+== uptime
+in: 7
+3|Period|last 7 days · 6048 checks · watching every 5 min||m
+0|mail.example.com:587|100% up · 2016 checks · p50 28 ms · p95 41 ms||m
+1|nas.local:445|99.6% up · 2016 checks · p50 1 ms · p95 3 ms · last down Thu 12 Nov 03:10||m
+2|192.0.2.10:22|97.2% up · 2016 checks · p50 14 ms · p95 180 ms · last down Sat 14 Nov 21:45||m
+
+== certcal
+in: mail.example.com, vpn.example.com, www.example.com
+2|vpn.example.com|expires in 9 days · Example CA R3|Renew it now - automatic renewals usually run 30 days ahead; if this one didn't, check why.|m
+1|mail.example.com|expires in 26 days · Example CA R3|Renew it now - automatic renewals usually run 30 days ahead; if this one didn't, check why.|m
+0|www.example.com|expires in 214 days · Example CA R3||m
+
+== obs
+in: |
+1|OBS link|1 thing dropping frames - each has its cause below|Only asks OBS; never starts, stops or changes anything.|i
+0|Streaming|live · sending 5920 kbps right now||m
+2|Dropped (network)|3.4% of frames · congestion 41%|The upload can't keep up: lower the bitrate (Ready to stream? suggests a safe one), use a cable, or pause uploads.|m
+0|Skipped (encoding)|0.1% of frames||m
+0|Lagged (rendering)|0.3% of frames · 60 fps||m
+3|OBS's CPU|18%||m
+3|Your network right then|upload 6.1 Mbps · router 2 ms · internet 21 ms||m

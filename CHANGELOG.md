@@ -31,6 +31,14 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Trading session tape: the broker all session from the Trading page's record - its answer time each minute, market open and
   close marked, every slow moment as a band coloured by who caused it (PC, Wi-Fi, home, provider, the broker).
 - After-stream report: the same for a stream from the Streaming page - the download each minute, every drop and its cause.
+- Service board can keep watching: a number of minutes in its second box re-checks the list that often while AdeeboMeter runs
+  (3 handshakes each, in the background) and logs every check; "off" stops it.
+- Uptime report: from that log, per host:port - % up, checks, p50 / p95 handshake time and the last time it was down (1-35 days).
+- Certificate calendar: every site you watch (typed, pinned, on the board or checked for changes), sorted by days left, with
+  the 30-day line - renewals that didn't happen show red.
+- OBS link (why frames drop): reads OBS's own numbers through its WebSocket on this PC (OBS 28+, Tools > WebSocket Server
+  Settings) - frames dropped by the network vs skipped by the encoder vs lagged by rendering, OBS's CPU, the bitrate it's
+  sending - next to your upload, router and internet at that moment. The password isn't saved; it only asks, never changes OBS.
 - New motto: Know what's wrong. Show anyone.
 
 ### New: take any picture with you - Save, Copy, phone, Bluetooth

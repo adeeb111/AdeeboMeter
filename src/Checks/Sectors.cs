@@ -80,8 +80,12 @@ namespace AdeeboMeter
 
         // ---------- server people: your hosts and ports, right now
         static readonly char[] ListSep = { ',', ' ', ';', '\n' };
-        public static List<string[]> Board(string list, Toolkit.Run run)
+        public static List<string[]> Board(string list, Toolkit.Run run) { return Board(list, "", run); }
+        public static List<string[]> Board(string list, string every, Toolkit.Run run)
         {
+            string ev = (every ?? "").Trim().ToLowerInvariant(); int mins;
+            if (ev == "off" || ev == "stop") { SetWatch(0, ""); }
+            else if (int.TryParse(ev, NumberStyles.None, CultureInfo.InvariantCulture, out mins) && mins >= 1) SetWatch(Math.Min(1440, mins), list ?? "");
             var rows = new List<string[]>(); var items = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).ToList();
             if (items.Count == 0) { string[] pins; lock (Cfg.Pins) pins = Cfg.Pins.ToArray(); items = pins.Select(Security.HostOf).Where(x => x != null).Distinct().ToList(); }
             if (items.Count == 0) { rows.Add(R(3, "Service board", "type hosts and ports, e.g. nas.local:445, mail.example.com:587, 192.0.2.10:22", "Or pin sites in Investigate › Check a destination - they show here.", "u")); return rows; }
@@ -91,11 +95,13 @@ namespace AdeeboMeter
                 if (run.Stop) break; string host; int port; if (!Split(it, 443, out host, out port)) { rows.Add(R(2, it, "not a host name or address", "", "u")); continue; }
                 n++; run.Status = host + ":" + port + "...";
                 var k = Knock(host, port, 5, run);
+                Log(host + ":" + port, k);
                 if (k.Ms.Count == 0) { rows.Add(R(2, host + ":" + port, "down - no answer to 5 tries", "", "m")); continue; }
                 up++; int lv = k.Lost > 0 || k.Avg > 200 ? 1 : 0;
                 rows.Add(R(lv, host + ":" + port, Ms(k.Avg) + " · min " + Ms(k.Min) + " · max " + Ms(k.Max) + (k.Lost > 0 ? " · " + k.Lost + " of 5 lost" : ""), "", "m"));
             }
             rows.Insert(0, R(up == n ? 0 : up == 0 ? 2 : 1, "Up right now", up + " of " + n, "TCP handshakes only - connect, time it, close.", "m"));
+            int wm; string wl; Watch(out wm, out wl); rows.Add(R(3, "Watching", wm > 0 ? "every " + wm + " min while AdeeboMeter runs - see Uptime report" : "off - type a number of minutes in the second box to keep watching", "", "i"));
             return rows;
         }
 

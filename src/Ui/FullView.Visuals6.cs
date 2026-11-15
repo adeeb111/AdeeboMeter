@@ -18,7 +18,7 @@ namespace AdeeboMeter
         static readonly HashSet<string> Pictured6 = new HashSet<string> {
             "timeline", "winupdate", "changed", "usb", "rushhour", "besttime", "sixmonths", "wakeup", "dltime", "leaks", "gpu", "bg", "certs", "pressure", "disk",
             "capfc", "month", "svcfail", "events", "winev", "drivers", "bluetooth", "prematch", "tonight", "keys", "newkey", "recipients", "selfsigned", "csrmake",
-            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr", "marketopen", "board", "golive", "srvchange", "tradetape", "afterstream" };
+            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr", "marketopen", "board", "golive", "srvchange", "tradetape", "afterstream", "uptime", "certcal", "obs" };
         static readonly HashSet<string> Moving6 = new HashSet<string> { "board", "srvchange", "tradetape", "afterstream", "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
         static readonly string[] DotSep6 = { " · " };
 
@@ -42,7 +42,7 @@ namespace AdeeboMeter
                     }
 
                 // ---------------------------------------------------------------- how much: bars
-                case "rushhour": case "besttime": case "sixmonths": case "wakeup": case "dltime": case "leaks": case "gpu": case "bg": case "certs":
+                case "rushhour": case "besttime": case "sixmonths": case "wakeup": case "dltime": case "leaks": case "gpu": case "bg": case "certs": case "certcal": case "uptime":
                     {
                         var bars = new List<Tuple<string, double, string, int>>(); string cap, unit = "", foot; double mark = double.NaN;
                         switch (tbSel)
@@ -55,6 +55,7 @@ namespace AdeeboMeter
                             case "leaks": foreach (var o in res) { var m = Regex.Match(o[2], @"([0-9.]+)\s*(MB|GB)\s*→\s*([0-9.]+)\s*(MB|GB)"); double to = m.Success ? double.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture) * (m.Groups[4].Value == "GB" ? 1024 : 1) : double.NaN; bars.Add(Tuple.Create(Regex.Replace(o[2], ":.*$", ""), to, Regex.Replace(o[2], "^[^:]*:\\s*", ""), Lv(o))); } unit = "MB"; cap = "WHAT KEEPS GROWING"; foot = Or(res.Where(o => o.Length > 3).Select(o => o[3]).FirstOrDefault(), "Memory that only goes up, never down, is a leak - a restart gives it back."); break;
                             case "gpu": foreach (var o in res) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)%"), P(o[2], 1), Lv(o))); unit = "%"; cap = "THE GRAPHICS CARD, PER APP"; foot = "Video memory full = stutter; a busy GPU at 100% = the game is limited by graphics, not the network."; break;
                             case "bg": foreach (var o in res) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)%\s*CPU"), P(o[2], 0) + (P(o[2], 2) != "" ? " · " + P(o[2], 2) : ""), Lv(o))); unit = "% CPU"; cap = "WORKING IN THE BACKGROUND RIGHT NOW"; foot = "Uploads and updates in the background eat the line too - pause them before a call or a match."; break;
+                            case "uptime": foreach (var o in res.Where(o => o[2].Contains("% up"))) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)%"), P(o[2], 2) + " · " + P(o[2], 3), Lv(o))); unit = "%"; mark = 99; cap = "UPTIME - " + Or(P(RV("Period"), 0), "").ToUpperInvariant(); foot = "The line is 99%. Each bar is the share of checks that got an answer; p50/p95 is the usual and the slow handshake."; break;
                             default: foreach (var o in res.Where(o => o[2].Contains("expires in"))) bars.Add(Tuple.Create(o[1], VNum(o[2], @"expires in\s*(\d+)"), P(o[2], 0), Lv(o))); unit = "days"; mark = 30; cap = "CERTIFICATES AND THE DAYS THEY HAVE LEFT"; foot = Or(res.Where(o => o.Length > 3 && o[3] != "").Select(o => o[3]).FirstOrDefault(), "The line is 30 days. Company certificates renew by themselves on the company network."); break;
                         }
                         return Bars(g, x, y, w, st, cap, bars, unit, mark, foot);
@@ -78,17 +79,17 @@ namespace AdeeboMeter
                     return Forecast(g, x, y, w, st);
 
                 // ---------------------------------------------------------------- tiles: facts, devices, a checklist
-                case "marketopen": case "month": case "svcfail": case "events": case "winev": case "drivers": case "bluetooth": case "prematch":
+                case "obs": case "marketopen": case "month": case "svcfail": case "events": case "winev": case "drivers": case "bluetooth": case "prematch":
                     {
                         var t = new List<string[]>(); string grp = ""; string cap;
                         foreach (var o in VisRows().Where(o => o.Length > 2))
                         {
-                            if (tbSel == "marketopen" && o[1] == "Market-open check") continue;
+                            if ((tbSel == "marketopen" && o[1] == "Market-open check") || (tbSel == "obs" && o[1] == "OBS link")) continue;
                             if (o[0] == "-1" || (o[2] == "" && string.Equals(o[1], o[1].ToUpperInvariant(), StringComparison.Ordinal))) { grp = o[1]; continue; }
                             if (tbSel == "month" && o[1] == "Compared with September") { t.Add(new[] { o[1], o[2], o[0], L.T("AGAINST LAST MONTH") }); continue; }
                             t.Add(new[] { o[1], P(o[2], 0) + (P(o[2], 1) != "" ? " · " + P(o[2], 1) : ""), o[0], tbSel == "drivers" || tbSel == "bluetooth" ? grp : "" });
                         }
-                        cap = tbSel == "marketopen" ? Or(RV("Market-open check"), "MARKET-OPEN CHECK") : tbSel == "month" ? Or(VisRows().Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "YOUR MONTH") : tbSel == "svcfail" ? "SERVICES THAT FAILED TO START" : tbSel == "events" || tbSel == "winev" ? "WHAT WINDOWS WROTE DOWN" : tbSel == "drivers" ? "DEVICES, DRIVERS AND USB" : tbSel == "bluetooth" ? "BLUETOOTH" : Or(P(RV("Ready to play"), 0), "READY TO PLAY?").ToUpperInvariant();
+                        cap = tbSel == "obs" ? Or(RV("OBS link"), "OBS LINK") : tbSel == "marketopen" ? Or(RV("Market-open check"), "MARKET-OPEN CHECK") : tbSel == "month" ? Or(VisRows().Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "YOUR MONTH") : tbSel == "svcfail" ? "SERVICES THAT FAILED TO START" : tbSel == "events" || tbSel == "winev" ? "WHAT WINDOWS WROTE DOWN" : tbSel == "drivers" ? "DEVICES, DRIVERS AND USB" : tbSel == "bluetooth" ? "BLUETOOTH" : Or(P(RV("Ready to play"), 0), "READY TO PLAY?").ToUpperInvariant();
                         return Tiles(g, x, y, w, st, cap.ToUpperInvariant(), t, tbSel == "prematch" ? Or(RRow("Ready to play") != null && RRow("Ready to play").Length > 3 ? RRow("Ready to play")[3] : "", "Amber is worth fixing before the match.") : "Red needs you; amber is worth a look; the rest is for the record.");
                     }
                 case "srvchange":
