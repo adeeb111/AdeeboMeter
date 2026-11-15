@@ -184,13 +184,7 @@ namespace AdeeboMeter
                 finally { fxBusy = false; if (done != null) done(); }
             }) { IsBackground = true, Name = "fx" }.Start();
         }
-        static string Get(string url)
-        {
-            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
-            string body; using (var r = q.GetResponse()) using (var rd = new StreamReader(r.GetResponseStream())) body = rd.ReadToEnd();
-            if (body.Length > 200000) throw new InvalidDataException("answer too large");
-            return body;
-        }
+        static string Get(string url) { return HttpSmall.Get(url, 200); }   // AM-CG-127: capped while reading
         static void Keep(string file, string body) { try { File.WriteAllText(file, body); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
 
         // ---------- the evening line (opt-in): for an hour and a half after work the folded widget shows the day's close

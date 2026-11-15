@@ -28,6 +28,8 @@ namespace AdeeboMeter
             public List<Dip> Dips = new List<Dip>();
             public List<float[]> Line = new List<float[]>();   // one point a minute: minute index, download Mb/s, far ms (NaN as -1)
             public TimeSpan Length { get { return End - Start; } }
+            // a reader's own copy, taken under the writer's lock - never a list that grows while it's read (AM-CG-131/148)
+            public Session Copy() { return new Session { Mode = Mode, What = What, Via = Via, Far = Far, Start = Start, End = End, AvgDown = AvgDown, FarNormal = FarNormal, Dips = Dips.ToList(), Line = Line.Select(p => (float[])p.Clone()).ToList() }; }
             public Dictionary<string, int> Tally() { var d = Blames.ToDictionary(b => b, b => 0); foreach (var x in Dips) { int c; if (d.TryGetValue(x.Blame, out c)) d[x.Blame] = c + 1; } return d; }
         }
         public static readonly string[] Blames = { "pc", "wifi", "home", "provider", "far", "unsure" };

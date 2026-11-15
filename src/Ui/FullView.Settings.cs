@@ -597,11 +597,22 @@ namespace AdeeboMeter
             using (var d = new SaveFileDialog { FileName = "AdeeboMeter.settings", Filter = "AdeeboMeter settings|*.settings", OverwritePrompt = true })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
-                try { Cfg.Save(); File.Copy(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"), d.FileName, true); settingsNote = "Saved to " + Path.GetFileName(d.FileName) + "."; }
+                try
+                {
+                    Cfg.Save();
+                    var keep = File.ReadAllLines(Path.Combine(Program.WriteDir, "AdeeboMeter.settings")).Where(l => !PrivateKeys.Any(p => l.StartsWith(p + "=", StringComparison.Ordinal))).ToList();
+                    WriteSafe(d.FileName, string.Join("\r\n", keep) + "\r\n", false);
+                    settingsNote = "Saved to " + Path.GetFileName(d.FileName) + " - without your weather place, broker and teams (they stay on this PC).";
+                }
                 catch (Exception e) { settingsNote = "Couldn't save: " + e.Message; }
             }
             settingsCanvas.Invalidate();
         }
+        // never in an exported file: where you are, your broker, the teams you follow (AM-CG-122/164)
+        static readonly string[] PrivateKeys = { "wplace", "tradehost", "sportteams" };
+        // settings that make AdeeboMeter reach out to someone else's server on its own: an imported file asks first (AM-CG-124)
+        static readonly string[][] OutboundKeys = { new[] { "tradelive", "watch your broker in market hours" }, new[] { "tradecrypto", "watch your broker around the clock" }, new[] { "streams2", "notice streams and check their server" },
+            new[] { "weather", "fetch the weather" }, new[] { "tradefx2", "fetch the day's currency rates" }, new[] { "sports", "fetch sports scores and headlines" } };
         void ImportSettings()
         {
             using (var d = new OpenFileDialog { Filter = "AdeeboMeter settings|*.settings|All files|*.*" })
@@ -618,6 +629,9 @@ namespace AdeeboMeter
                         if (Cfg.Known.Contains(k)) kv.Add(new KeyValuePair<string, string>(k, v));
                     }
                     if (kv.Count == 0) { settingsNote = "That isn't an AdeeboMeter settings file - nothing changed."; settingsCanvas.Invalidate(); return; }
+                    var turnsOn = OutboundKeys.Where(o => kv.Any(x => x.Key == o[0] && x.Value == "1")).ToList();
+                    if (turnsOn.Count > 0 && MessageBox.Show(this, L.T("This file would also turn on:") + "\n\n- " + string.Join("\n- ", turnsOn.Select(o => L.T(o[1])).ToArray()) + "\n\n" + L.T("Each of these contacts a server on its own. Turn them on too? (No = import everything else and leave these as they are.)"), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                        kv = kv.Where(x => !turnsOn.Any(o => o[0] == x.Key) && x.Key != "tradehost").ToList();
                     int n = 0; if (kv.Any(x => x.Key == "pin")) lock (Cfg.Pins) Cfg.Pins.Clear();   // pins are replaced only when the file has its own
                     foreach (var x in kv)
                     {

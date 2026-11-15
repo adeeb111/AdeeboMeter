@@ -90,8 +90,8 @@ namespace AdeeboMeter
         public static WatchKit.Session PickSession(string mode, string which)
         {
             WatchKit.Session live = null;
-            if (mode == "trade") lock (Trading.k) live = Trading.Day;
-            else { var n = Streams.Now; if (n != null) live = n.S; }
+            if (mode == "trade") lock (Trading.k) live = Trading.Day == null ? null : Trading.Day.Copy();
+            else lock (Streams.k) { var n = Streams.Now; if (n != null) live = n.S.Copy(); }
             var all = WatchKit.Recent(mode).OrderBy(s => s.Start).ToList(); if (live != null && !all.Contains(live)) all.Add(live);
             string w = (which ?? "").Trim().ToLowerInvariant(); DateTime d;
             if (w == "" || w == "last") return all.LastOrDefault();

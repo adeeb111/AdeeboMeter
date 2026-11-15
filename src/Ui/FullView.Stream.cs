@@ -67,7 +67,7 @@ namespace AdeeboMeter
                 string tb = L.T(SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBodyB);
                 var tbr = new RectangleF(x + w - tbs.Width - 32 * S, y - 2 * S, tbs.Width + 32 * S, 34 * S);
                 Theme.Fill(g, tbr, 17 * S, Kit.Accent("stream")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tb, Draw.fBodyB, wb, tbr.X + 16 * S, tbr.Y + (34 * S - tbs.Height) / 2);
-                Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } stream4k = true; StartSpeed(); streamCanvas.Invalidate(); });
+                Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && MessageBox.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); });
                 y += 32 * S;
                 float lh = Draw.Measure(lead, Draw.fBody, (int)(w - tbr.Width - 20 * S)).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w - tbr.Width - 20 * S, lh + 4)); y += lh + 14 * S;
                 if (streamNote != "") { using (var nb = new SolidBrush(Kit.Ink("stream"))) g.DrawString(streamNote, Draw.fSmall, nb, x, y); y += 22 * S; }
@@ -193,6 +193,8 @@ namespace AdeeboMeter
                 g.DrawString(L.T("CAN I STREAM 4K RIGHT NOW?"), Draw.fTiny, muted, cx, cy); cy += 20 * S;
                 if (busy || res == null) { g.DrawString(busy ? speedRun.Status : L.T("Starting the speed test..."), Draw.fBody, sub, cx, cy); return card.Bottom + 18 * S; }
                 if (res.Error != "") { g.DrawString(L.T("The speed test didn't finish: ") + res.Error, Draw.fBody, sub, cx, cy); return card.Bottom + 18 * S; }
+                double age = (DateTime.Now - res.T).TotalMinutes;   // AM-CG-149: a test from earlier (or another network) isn't "right now"
+                if (age > 15) { g.DrawString(L.T("The last speed test was ") + Dur(DateTime.Now - res.T) + L.T(" ago - too old to say what you can stream right now. Press the button for a fresh one."), Draw.fBody, sub, new RectangleF(cx, cy, w - 44 * S, 40 * S)); return card.Bottom + 18 * S; }
                 var v = Streams.Verdict4K(res.Down, gw, sig, wifi);
                 g.DrawString(L.T("Download ") + res.Down.ToString("0", CultureInfo.CurrentCulture) + " Mb/s · " + res.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fName, ink, cx, cy); cy += 30 * S;
                 float bw = (w - 44 * S - 30 * S) / 4;
@@ -335,12 +337,13 @@ namespace AdeeboMeter
         {
             var t = s.Tally(); int home = t["pc"] + t["wifi"] + t["home"];
             var parts = t.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => kv.Value + " " + WatchKit.BlameName(kv.Key, farName).ToLowerInvariant());
-            return (home == 0 ? L.T("your home network was fine the whole time. ") : "") + L.T("The dips: ") + string.Join(", ", parts) + ".";
+            string lead = home == 0 && t["unsure"] == 0 ? L.T("no dip was on your home network. ") : home == 0 ? L.T("no dip was clearly on your home network (some couldn't be pinned on anyone). ") : "";   // AM-CG-140: absence of blame isn't proof
+            return lead + L.T("The dips: ") + string.Join(", ", parts) + ".";
         }
         static string RecordText(WatchKit.Session s)
         {
             var sb = new System.Text.StringBuilder(); string farName = Streams.FarName;
-            sb.AppendLine(s.What + " on " + s.Start.ToString("ddd d MMM yyyy, HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + Dur(s.Length) + "), measured by AdeeboMeter on my PC");
+            sb.AppendLine((s.Via == "you said so" ? "A stream" : s.What) + " on " + s.Start.ToString("ddd d MMM yyyy, HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + Dur(s.Length) + "), measured by AdeeboMeter on my PC");
             sb.AppendLine(s.Dips.Count == 0 ? "No dips." : OneLine(s, farName));
             foreach (var d in s.Dips) sb.AppendLine(d.T.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "  " + d.Secs + " s  " + WatchKit.BlameName(d.Blame, farName) + ": " + d.Evidence);
             return sb.ToString();

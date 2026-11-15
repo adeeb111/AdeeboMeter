@@ -30,7 +30,7 @@ namespace AdeeboMeter
                 var found = new List<Weather.Place>(); Weather.Place picked = null;
                 Action go = delegate
                 {
-                    string q = tb.Text.Trim(); if (q.Length < 2) return;
+                    string q = tb.Text.Trim(); if (q.Length < 2 || !find.Enabled) return;   // AM-CG-166: one search at a time
                     list.Items.Clear(); list.Items.Add(L.T("Looking...")); find.Enabled = false; ok.Enabled = false;
                     Weather.Find(q, r =>
                     {
@@ -55,7 +55,13 @@ namespace AdeeboMeter
                 list.DoubleClick += delegate { if (ok.Enabled) f.DialogResult = DialogResult.OK; };
                 ok.Click += delegate { if (ok.Enabled) f.DialogResult = DialogResult.OK; };
                 no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
+                // AM-CG-167: laid out from what each piece needs (long translations, 150-200 % scaling) - nothing fixed-height
+                int cw = Math.Max(Sc(388), find.Width + Sc(290) + Sc(12));
+                lb.MaximumSize = new Size(cw, 0); note.AutoSize = true; note.MaximumSize = new Size(cw, 0);
                 f.Controls.AddRange(new Control[] { lb, tb, find, list, note, ok, no });
+                tb.Top = lb.Bottom + Sc(10); find.Location = new Point(tb.Right + Sc(12), tb.Top - Sc(2)); list.Top = Math.Max(tb.Bottom, find.Bottom) + Sc(10); list.Width = cw;
+                note.Top = list.Bottom + Sc(6); ok.Top = note.Bottom + Sc(12); no.Location = new Point(ok.Right + Sc(12), ok.Top + Sc(2));
+                f.ClientSize = new Size(cw + Sc(32), Math.Max(ok.Bottom, no.Bottom) + Sc(16));
                 var cur = Weather.Current; if (cur != null) tb.Text = cur.Name.Split(',')[0];
                 if (f.ShowDialog(this) != DialogResult.OK) return null;
                 if (list.SelectedIndex >= 0 && list.SelectedIndex < found.Count) picked = found[list.SelectedIndex];

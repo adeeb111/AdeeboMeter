@@ -137,13 +137,16 @@ namespace AdeeboMeter
         public static List<string[]> Obs(Monitor m, string password, string port, Toolkit.Run run)
         {
             var rows = new List<string[]>(); int p; if (!int.TryParse((port ?? "").Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out p) || p <= 0 || p > 65535) p = 4455;
+            string stage = "connect";   // AM-CG-152: which step failed decides what to tell you
             using (var ws = new ClientWebSocket())
             {
                 try
                 {
-                    run.Status = "Connecting to OBS on this PC..."; var cts = new CancellationTokenSource(6000);
-                    ws.ConnectAsync(new Uri("ws://127.0.0.1:" + p.ToString(CultureInfo.InvariantCulture)), cts.Token).Wait();
-                    string hello = Recv(ws, run); if (!Op(hello, 0)) throw new InvalidOperationException("not OBS");
+                    run.Status = "Connecting to OBS on this PC...";
+                    using (var cts = new CancellationTokenSource(6000)) { var ct = ws.ConnectAsync(new Uri("ws://127.0.0.1:" + p.ToString(CultureInfo.InvariantCulture)), cts.Token); while (!ct.Wait(100)) if (run.Stop) { cts.Cancel(); throw new OperationCanceledException(); } }
+                    stage = "hello";
+                    string hello = Recv(ws, run); if (!Op(hello, 0)) throw new InvalidDataException("not OBS");
+                    stage = "auth";
                     string auth = "";
                     var ch = Regex.Match(hello, "\"challenge\"\\s*:\\s*\"([^\"]+)\""); var sa = Regex.Match(hello, "\"salt\"\\s*:\\s*\"([^\"]+)\"");
                     if (ch.Success && sa.Success)
@@ -153,14 +156,17 @@ namespace AdeeboMeter
                     }
                     Send(ws, "{\"op\":1,\"d\":{\"rpcVersion\":1" + (auth != "" ? ",\"authentication\":\"" + auth + "\"" : "") + ",\"eventSubscriptions\":0}}");
                     string id = Recv(ws, run); if (!Op(id, 2)) { rows.Add(R(2, "OBS", "refused the password", "Check it in OBS > Tools > WebSocket Server Settings > Show connect info.", "u")); return rows; }
-                    run.Status = "Reading OBS's stream and stats...";
-                    string s1 = Ask(ws, "GetStreamStatus", "1", run), st1 = Ask(ws, "GetStats", "2", run); for (int w = 0; w < 30 && !run.Stop; w++) Thread.Sleep(100); string s2 = Ask(ws, "GetStreamStatus", "3", run);
+                    run.Status = "Reading OBS's stream and stats..."; stage = "ask";
+                    // AM-CG-151: the real time between the two readings, not an assumed 3 s
+                    string s1 = Ask(ws, "GetStreamStatus", "1", run); var gap = System.Diagnostics.Stopwatch.StartNew(); string st1 = Ask(ws, "GetStats", "2", run); for (int w = 0; w < 30 && !run.Stop; w++) Thread.Sleep(100); string s2 = Ask(ws, "GetStreamStatus", "3", run); double secs = gap.Elapsed.TotalSeconds;
                     if (run.Stop) { rows.Add(R(3, "OBS link", "stopped", "", "i")); return rows; }
                     if (!Ok(s1) || !Ok(st1) || !Ok(s2)) { rows.Add(R(1, "OBS link", "connected, but OBS didn't return its numbers", "Update OBS to 28 or newer, then run it again.", "u")); return rows; }
                     bool live = Regex.IsMatch(s1, "\"outputActive\"\\s*:\\s*true");
                     double cpu = J(st1, "cpuUsage"), fps = J(st1, "activeFps"), rLag = J(st1, "renderSkippedFrames"), rTot = J(st1, "renderTotalFrames"), eLag = J(st1, "outputSkippedFrames"), eTot = J(st1, "outputTotalFrames");
                     double sk = J(s2, "outputSkippedFrames"), tot = J(s2, "outputTotalFrames"), cong = J(s2, "outputCongestion"), b1 = J(s1, "outputBytes"), b2 = J(s2, "outputBytes");
-                    double kbps = !double.IsNaN(b1) && !double.IsNaN(b2) && b2 > b1 ? (b2 - b1) * 8 / 3.0 / 1000 : double.NaN;
+                    // a stream that started or stopped between the two readings has no rate (the bytes counter restarted)
+                    bool live2 = Regex.IsMatch(s2, "\"outputActive\"\\s*:\\s*true");
+                    double kbps = live && live2 && !double.IsNaN(b1) && !double.IsNaN(b2) && b2 > b1 && secs > 0.5 ? (b2 - b1) * 8 / secs / 1000 : double.NaN;
                     int warn = 0; var s = m.Latest;
                     rows.Add(R(live ? 0 : 3, "Streaming", live ? "live" + (!double.IsNaN(kbps) ? " · sending " + Math.Round(kbps) + " kbps right now" : "") : "not live right now (the numbers below are OBS's since it started)", "", "m"));
                     double netDrop = tot > 0 ? 100 * sk / tot : double.NaN; bool nd = netDrop >= 1; if (nd) warn++;
@@ -177,8 +183,11 @@ namespace AdeeboMeter
                 catch (Exception e)
                 {
                     if (e is OutOfMemoryException) throw;
-                    rows.Clear(); if (run.Stop) { rows.Add(R(3, "OBS link", "stopped", "", "i")); return rows; }
-                    rows.Add(R(1, "OBS link", "can't reach OBS on this PC (port " + p + ")", "Open OBS, then Tools > WebSocket Server Settings > Enable WebSocket server. OBS 28 or newer has it built in.", "u"));
+                    rows.Clear(); if (run.Stop || e is OperationCanceledException || e.InnerException is OperationCanceledException) { rows.Add(R(3, "OBS link", run.Stop ? "stopped" : "OBS didn't answer in time", run.Stop ? "" : "OBS may be busy - try again in a moment.", "i")); return rows; }
+                    if (stage == "connect") rows.Add(R(1, "OBS link", "can't reach OBS on this PC (port " + p + ")", "Open OBS, then Tools > WebSocket Server Settings > Enable WebSocket server. OBS 28 or newer has it built in.", "u"));
+                    else if (stage == "hello") rows.Add(R(1, "OBS link", "something answered on port " + p + ", but it isn't OBS's websocket", "Check the port in OBS > Tools > WebSocket Server Settings.", "u"));
+                    else if (stage == "auth") rows.Add(R(2, "OBS link", "OBS closed the connection while signing in", "Usually a wrong password - check it in OBS > Tools > WebSocket Server Settings > Show connect info.", "u"));
+                    else rows.Add(R(1, "OBS link", "connected, but OBS stopped answering while being asked for its numbers", "Update OBS to 28 or newer and try again.", "u"));
                 }
             }
             return rows;

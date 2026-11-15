@@ -104,19 +104,7 @@ namespace AdeeboMeter
             try { a(); }
             catch (Exception e) { if (e is OutOfMemoryException) throw; notes[what] = e is WebException ? "couldn't reach it (" + ((WebException)e).Status + ")" : "its answer couldn't be read"; Program.Log("sports " + what + ": " + e.Message); }
         }
-        // a bounded GET: the timeouts are set before the request goes out, and at most 600 KB is read
-        internal static string Get(string url, string header, string value)
-        {
-            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
-            if (header != null) q.Headers[header] = value;
-            using (var r = q.GetResponse()) using (var s = r.GetResponseStream())
-            {
-                var buf = new byte[600 * 1024]; int got = 0, n;
-                while (got < buf.Length && (n = s.Read(buf, got, buf.Length - got)) > 0) got += n;
-                if (got == buf.Length) throw new InvalidDataException("answer too large");
-                return Encoding.UTF8.GetString(buf, 0, got);
-            }
-        }
+        internal static string Get(string url, string header, string value) { return HttpSmall.Get(url, 600, header, value); }
         static Dictionary<string, object> D(object o) { return o as Dictionary<string, object>; }
         static List<object> A(object o) { return o as List<object>; }
         static string Sv(Dictionary<string, object> d, string key) { object o; return d != null && d.TryGetValue(key, out o) && o != null ? Convert.ToString(o, CultureInfo.InvariantCulture) : ""; }

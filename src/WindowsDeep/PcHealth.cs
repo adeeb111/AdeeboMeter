@@ -262,6 +262,7 @@ namespace AdeeboMeter
             }
         }
         // the program that moved the most disk data in the last minute ("" when nothing moved 5 MB)
+        internal static long IoLastMinute(string name) { lock (ioMin) { if (ioMin.Count == 0) return 0; long b; return ioMin[ioMin.Count - 1].TryGetValue(name, out b) ? b : 0; } }
         internal static string TopIo() { lock (ioMin) { if (ioMin.Count == 0) return ""; var d = ioMin[ioMin.Count - 1]; var top = d.OrderByDescending(x => x.Value).FirstOrDefault(); return top.Value > 5L << 20 ? top.Key : ""; } }
         public static List<string[]> Disk(Monitor m)
         {

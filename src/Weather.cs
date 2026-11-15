@@ -35,7 +35,7 @@ namespace AdeeboMeter
         public static string CleanPlace(string v)
         {
             var p = (v ?? "").Split(Semi, 3); double la, lo;
-            if (p.Length < 3 || !double.TryParse(p[0], NumberStyles.Float, CultureInfo.InvariantCulture, out la) || !double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lo) || Math.Abs(la) > 90 || Math.Abs(lo) > 180) return "";
+            if (p.Length < 3 || !double.TryParse(p[0], NumberStyles.Float, CultureInfo.InvariantCulture, out la) || !double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lo) || !Finite(la) || !Finite(lo) || Math.Abs(la) > 90 || Math.Abs(lo) > 180) return "";
             string n = new string(p[2].Where(c => c != '|' && c != '=' && c != ';' && !char.IsControl(c)).ToArray()).Trim(); if (n.Length > 80) n = n.Substring(0, 80);
             return n == "" ? "" : Line(new Place { Lat = la, Lon = lo, Name = n });
         }
@@ -45,17 +45,19 @@ namespace AdeeboMeter
             get
             {
                 var p = (Cfg.WeatherPlace ?? "").Split(Semi, 3); double la, lo;
-                if (p.Length < 3 || !double.TryParse(p[0], NumberStyles.Float, CultureInfo.InvariantCulture, out la) || !double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lo)) return null;
+                if (p.Length < 3 || !double.TryParse(p[0], NumberStyles.Float, CultureInfo.InvariantCulture, out la) || !double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lo) || !Finite(la) || !Finite(lo) || Math.Abs(la) > 90 || Math.Abs(lo) > 180) return null;
                 return new Place { Lat = la, Lon = lo, Name = p[2] };
             }
         }
+        static bool Finite(double v) { return !double.IsNaN(v) && !double.IsInfinity(v); }
         public static bool Active { get { return Cfg.WeatherOn && Current != null && !Policy.NoOnline; } }
 
         // ---------- finding a place by name ("Ottawa", "Dhaka, Bangladesh", "Ottawa, Illinois")
         public static string SearchUrl(string typed)
         {
             string q = (typed ?? "").Split(',')[0].Trim(); if (q.Length > 60) q = q.Substring(0, 60);
-            return "https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&format=json&name=" + Uri.EscapeDataString(q);
+            bool qualified = (typed ?? "").IndexOf(',') >= 0;   // AM-CG-154: "Springfield, Illinois" - 10 Springfields may not include Illinois
+            return "https://geocoding-api.open-meteo.com/v1/search?count=" + (qualified ? "100" : "10") + "&language=en&format=json&name=" + Uri.EscapeDataString(q);
         }
         static readonly Regex objRx = new Regex("\\{[^{}]*\"latitude\"[^{}]*\\}"), strRx = new Regex("\"(name|country|admin1)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""), numRx = new Regex("\"(latitude|longitude)\"\\s*:\\s*(-?[0-9.]+)");
         public static List<Place> ParsePlaces(string json, string typed)
@@ -68,7 +70,7 @@ namespace AdeeboMeter
                 foreach (Match m in numRx.Matches(o.Value)) d[m.Groups[1].Value] = m.Groups[2].Value;
                 double la, lo; string nm, la0, lo0;
                 if (!d.TryGetValue("name", out nm) || !d.TryGetValue("latitude", out la0) || !d.TryGetValue("longitude", out lo0)) continue;
-                if (!double.TryParse(la0, NumberStyles.Float, CultureInfo.InvariantCulture, out la) || !double.TryParse(lo0, NumberStyles.Float, CultureInfo.InvariantCulture, out lo)) continue;
+                if (!double.TryParse(la0, NumberStyles.Float, CultureInfo.InvariantCulture, out la) || !double.TryParse(lo0, NumberStyles.Float, CultureInfo.InvariantCulture, out lo) || !Finite(la) || !Finite(lo) || Math.Abs(la) > 90 || Math.Abs(lo) > 180) continue;
                 string a1, co; d.TryGetValue("admin1", out a1); d.TryGetValue("country", out co);
                 var names = new[] { nm, a1, co }.Where(z => !string.IsNullOrEmpty(z) && z != null).Distinct().ToList();
                 string full = string.Join(", ", names);
@@ -95,27 +97,37 @@ namespace AdeeboMeter
         public static string ForecastUrl(Place p)
         {
             return "https://api.open-meteo.com/v1/forecast?latitude=" + p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + "&longitude=" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture)
-                + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability&forecast_days=3&timezone=auto";
+                + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability&forecast_days=3&timezone=auto&timeformat=unixtime";
         }
         static double[] Nums(string json, string key)
         {
             var m = Regex.Match(json, "\"" + key + "\"\\s*:\\s*\\[([^\\]]*)\\]"); if (!m.Success) return null;
             return m.Groups[1].Value.Split(',').Select(z => { double v; return double.TryParse(z.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }).ToArray();
         }
-        // {"utc_offset_seconds":-18000,...,"hourly":{"time":["2026-11-14T00:00",...],"temperature_2m":[...],...}} - times are the place's own
+        // the codes Open-Meteo uses (WMO): anything else is unknown, never "clear"
+        static readonly HashSet<int> KnownCodes = new HashSet<int> { 0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99 };
+        public static int PlaceOffset = int.MinValue;   // the place's own UTC offset (seconds), to say when its times aren't the PC's
+        // unix times (AM-CG-159); older answers with local "2026-11-14T00:00" times still read. Every value is checked: a
+        // temperature outside -90..60 C, a chance outside 0..100 % or an unknown code is "unknown" (AM-CG-156)
         public static List<Hour> ParseForecast(string json)
         {
             var list = new List<Hour>(); json = json ?? "";
-            var om = Regex.Match(json, "\"utc_offset_seconds\"\\s*:\\s*(-?[0-9]+)"); int off = om.Success ? int.Parse(om.Groups[1].Value, CultureInfo.InvariantCulture) : 0;
+            var om = Regex.Match(json, "\"utc_offset_seconds\"\\s*:\\s*(-?[0-9]+)"); long off = 0;
+            if (om.Success && (!long.TryParse(om.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out off) || Math.Abs(off) > 18 * 3600)) throw new InvalidDataException("the place's time offset doesn't make sense");   // AM-CG-158
+            PlaceOffset = om.Success ? (int)off : int.MinValue;
             var tm = Regex.Match(json, "\"time\"\\s*:\\s*\\[([^\\]]*)\\]"); if (!tm.Success) return list;
-            var times = Regex.Matches(tm.Groups[1].Value, "\"([0-9T:\\-]+)\"").Cast<Match>().Select(m => m.Groups[1].Value).ToList();
+            var raw = tm.Groups[1].Value.Split(',').Select(z => z.Trim().Trim('"')).Where(z => z != "").ToList();
             double[] t = Nums(json, "temperature_2m"), f = Nums(json, "apparent_temperature"), c = Nums(json, "weather_code"), p = Nums(json, "precipitation_probability");
-            for (int i = 0; i < times.Count; i++)
+            for (int i = 0; i < raw.Count; i++)
             {
-                DateTime local; if (!DateTime.TryParseExact(times[i], "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out local)) continue;
-                var h = new Hour { Utc = DateTime.SpecifyKind(local.AddSeconds(-off), DateTimeKind.Utc) };
-                if (t != null && i < t.Length) h.Temp = t[i]; if (f != null && i < f.Length) h.Feels = f[i];
-                if (c != null && i < c.Length && !double.IsNaN(c[i])) h.Code = (int)c[i]; if (p != null && i < p.Length && !double.IsNaN(p[i])) h.Pop = (int)p[i];
+                DateTime utc; long unix;
+                if (long.TryParse(raw[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out unix) && unix > 946684800 && unix < 4102444800) utc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unix);
+                else { DateTime local; if (!DateTime.TryParseExact(raw[i], "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out local)) continue; utc = DateTime.SpecifyKind(local.AddSeconds(-off), DateTimeKind.Utc); }
+                var h = new Hour { Utc = utc };
+                if (t != null && i < t.Length && Finite(t[i]) && t[i] > -90 && t[i] < 60) h.Temp = t[i];
+                if (f != null && i < f.Length && Finite(f[i]) && f[i] > -100 && f[i] < 70) h.Feels = f[i];
+                if (c != null && i < c.Length && Finite(c[i]) && c[i] == Math.Floor(c[i]) && KnownCodes.Contains((int)c[i])) h.Code = (int)c[i];
+                if (p != null && i < p.Length && Finite(p[i]) && p[i] >= 0 && p[i] <= 100) h.Pop = (int)p[i];
                 list.Add(h);
             }
             return list;
@@ -126,6 +138,7 @@ namespace AdeeboMeter
         {
             if (have == null || have.Count == 0) return true;
             if ((have.Max(h => h.Utc) - nowUtc).TotalHours < 24) return true;                       // less than a day of forecast left
+            if (have.Count(h => h.Utc > nowUtc && h.Utc <= nowUtc.AddHours(24) && h.Code >= 0 && !double.IsNaN(h.Temp)) < 18) return true;   // AM-CG-163: holes or unknown hours in the next day
             return acc == "better" && (nowUtc - fetched).TotalHours >= BetterHours;                  // Better: every 6 hours while the PC is on
         }
         // only the last day and what's ahead: 3-4 days at most
@@ -139,33 +152,32 @@ namespace AdeeboMeter
             if ((now - checkedUtc).TotalSeconds < 60 || (now - started).TotalSeconds < 45) return;   // not in the first moments after start
             checkedUtc = now; Load();
             List<Hour> have; DateTime f; lock (k) { have = forPlace == Cfg.WeatherPlace ? hours.ToList() : new List<Hour>(); f = fetchedUtc; }
-            if (!NeedFetch(have, f, now, Cfg.WeatherAcc) || (now - triedUtc).TotalMinutes < 30) return;   // a failed try waits half an hour
+            if (!NeedFetch(have, f, now, Cfg.WeatherAcc) || (triedFor == Cfg.WeatherPlace && (now - triedUtc).TotalMinutes < 30)) return;   // a failed try waits half an hour (for that place only)
             Fetch();
         }
+        static string triedFor = ""; static int gen; static volatile bool again;
         public static void Fetch()
         {
-            var p = Current; if (p == null || busy || Policy.NoOnline) return;
-            busy = true; triedUtc = DateTime.UtcNow; string place = Cfg.WeatherPlace;
+            var p = Current; if (p == null || Policy.NoOnline) return;
+            if (busy) { again = true; return; }   // AM-CG-161: the new place goes as soon as the old request is done
+            busy = true; triedUtc = DateTime.UtcNow; string place = Cfg.WeatherPlace; triedFor = place; int g0 = gen;
             new Thread(() =>
             {
                 try
                 {
                     var l = Trim(ParseForecast(Get(ForecastUrl(p))), DateTime.UtcNow);
                     if (l.Count == 0) throw new InvalidDataException("no hours in the answer");
+                    // AM-CG-160: removed, switched off or changed while this was out - keep nothing of it
+                    if (g0 != gen || !Cfg.WeatherOn || Cfg.WeatherPlace != place) return;
                     lock (k) { hours = l; fetchedUtc = DateTime.UtcNow; forPlace = place; } Note = ""; Save();
-                    Program.Log("weather: " + l.Count + " hours for " + p.Name);
+                    Program.Log("weather: " + l.Count + " hours");   // AM-CG-164: never the place's name in the log
                 }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach Open-Meteo - trying again in half an hour."; Program.Log("weather: " + e.Message); }
-                finally { busy = false; }
+                catch (InvalidDataException e) { if (g0 == gen) Note = "Open-Meteo's answer didn't make sense - trying again in half an hour."; Program.Log("weather: " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; if (g0 == gen) Note = "Couldn't reach Open-Meteo - trying again in half an hour."; Program.Log("weather: " + e.GetType().Name); }
+                finally { busy = false; if (again) { again = false; if (Cfg.WeatherPlace != place) Fetch(); } }
             }) { IsBackground = true, Name = "weather" }.Start();
         }
-        static string Get(string url)
-        {
-            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
-            string body; using (var r = q.GetResponse()) using (var rd = new StreamReader(r.GetResponseStream())) body = rd.ReadToEnd();
-            if (body.Length > 300000) throw new InvalidDataException("answer too large");
-            return body;
-        }
+        static string Get(string url) { return HttpSmall.Get(url, 300); }   // AM-CG-165: capped while reading
 
         // ---------- kept on disk: "place=..." / "fetched=..." / "utc|temp|feels|code|pop" lines
         static string File0 { get { return Path.Combine(Program.DataDir, "weather.txt"); } }
@@ -180,10 +192,11 @@ namespace AdeeboMeter
                 {
                     if (line.StartsWith("place=", StringComparison.Ordinal)) { place = line.Substring(6); continue; }
                     if (line.StartsWith("fetched=", StringComparison.Ordinal)) { DateTime.TryParse(line.Substring(8), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out f); continue; }
-                    var c = line.Split('|'); DateTime u; double t, fe; int co, po;
+                    var c = line.Split('|'); DateTime u; double t = double.NaN, fe = double.NaN; int co = -1, po = -1;
                     if (c.Length < 5 || !DateTime.TryParseExact(c[0], "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out u)) continue;
-                    double.TryParse(c[1], NumberStyles.Float, CultureInfo.InvariantCulture, out t); double.TryParse(c[2], NumberStyles.Float, CultureInfo.InvariantCulture, out fe);
-                    int.TryParse(c[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out co); int.TryParse(c[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out po);
+                    if ((c[1] != "" && !double.TryParse(c[1], NumberStyles.Float, CultureInfo.InvariantCulture, out t)) | (c[2] != "" && !double.TryParse(c[2], NumberStyles.Float, CultureInfo.InvariantCulture, out fe))
+                        | (c[3] != "" && !int.TryParse(c[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out co)) | (c[4] != "" && !int.TryParse(c[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out po))) continue;   // AM-CG-162
+                    if (c[3] != "" && !KnownCodes.Contains(co)) co = -1; if (c[4] != "" && (po < 0 || po > 100)) po = -1;
                     l.Add(new Hour { Utc = DateTime.SpecifyKind(u, DateTimeKind.Utc), Temp = c[1] == "" ? double.NaN : t, Feels = c[2] == "" ? double.NaN : fe, Code = c[3] == "" ? -1 : co, Pop = c[4] == "" ? -1 : po });
                 }
                 lock (k) { hours = Trim(l, DateTime.UtcNow); fetchedUtc = f; forPlace = place; }
@@ -204,6 +217,7 @@ namespace AdeeboMeter
         // Remove (or turning it off): the place and the kept forecast go
         public static void Forget()
         {
+            gen++;   // a fetch still out comes back to nothing (AM-CG-160)
             lock (k) { hours = new List<Hour>(); fetchedUtc = DateTime.MinValue; forPlace = ""; } Note = "";
             try { if (File.Exists(File0)) File.Delete(File0); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
         }
@@ -239,8 +253,8 @@ namespace AdeeboMeter
         public static string Words(int code)
         {
             if (code < 0) return ""; if (code == 0) return "clear"; if (code == 1) return "mostly clear"; if (code == 2) return "partly cloudy"; if (code == 3) return "cloudy";
-            if (code == 45 || code == 48) return "fog"; if (code >= 51 && code <= 57) return "drizzle"; if (code >= 61 && code <= 67) return "rain"; if (code >= 71 && code <= 77) return "snow";
-            if (code >= 80 && code <= 82) return "showers"; if (code == 85 || code == 86) return "snow showers"; return code >= 95 ? "thunderstorm" : "";
+            if (code == 45 || code == 48) return "fog"; if (code == 56 || code == 57) return "freezing drizzle"; if (code >= 51 && code <= 55) return "drizzle"; if (code == 66 || code == 67) return "freezing rain"; if (code >= 61 && code <= 65) return "rain"; if (code >= 71 && code <= 77) return "snow";
+            if (code >= 80 && code <= 82) return "showers"; if (code == 85 || code == 86) return "snow showers"; return code == 96 || code == 99 ? "thunderstorm with hail" : code == 95 ? "thunderstorm" : "";
         }
         static bool Wet(int code) { return code >= 51 && code != 45 && code != 48; }
         public static string Temp(double c) { if (double.IsNaN(c)) return "-"; return Cfg.WeatherF ? (c * 9 / 5 + 32).ToString("0", CultureInfo.CurrentCulture) + "°F" : c.ToString("0", CultureInfo.CurrentCulture) + "°C"; }
@@ -251,8 +265,10 @@ namespace AdeeboMeter
         {
             var h = Now(nowUtc); if (h == null) return null;
             string head = Temp(h.Temp), w = Words(h.Code); var next = Ahead(nowUtc, 13).Where(z => z.Utc > nowUtc).ToList();
-            if (Wet(h.Code)) { var dry = next.FirstOrDefault(z => !Wet(z.Code)); return head + " · " + w + (dry != null ? " " + L.T("until") + " " + At(dry.Utc) : ""); }
-            var wet = next.FirstOrDefault(z => Wet(z.Code)); if (wet != null) return head + " · " + Words(wet.Code) + " " + L.T("from") + " " + At(wet.Utc);
+            var known = next.TakeWhile(z => z.Code >= 0).ToList();   // AM-CG-157: a missing hour ends what can be said
+            string zone = PlaceOffset != int.MinValue && Math.Abs(PlaceOffset - (int)TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalSeconds) >= 3600 ? " " + L.T("(your PC's time)") : "";
+            if (Wet(h.Code)) { var dry = known.FirstOrDefault(z => !Wet(z.Code)); return head + " · " + w + (dry != null ? " " + L.T("until") + " " + At(dry.Utc) + zone : ""); }
+            var wet = known.FirstOrDefault(z => Wet(z.Code)); if (wet != null) return head + " · " + Words(wet.Code) + " " + L.T("from") + " " + At(wet.Utc) + zone;
             return head + (w != "" ? " · " + L.T(w) : "");
         }
         // the chip's few characters: "4°" with the hour's emoji beside it (drawn as a picture)
