@@ -59,11 +59,22 @@ namespace AdeeboMeter
         };
         public static string Palette = "standard";
         // text on the main accent: white on deep blues, near-black on Neon's cyan and Midnight's aqua
-        public static Color OnBlue { get { double l = (0.2126 * Blue.R + 0.7152 * Blue.G + 0.0722 * Blue.B) / 255; return l > 0.55 ? C("#06121A") : Color.White; } }
+        public static Color OnBlue { get { return OnColor(Blue); } }
+        // AM-CG-198: Mint's white-on-green was 3.47:1 - choose the foreground by computed contrast
+        public static Color OnColor(Color bg)
+        {
+            Func<double, double> lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); };
+            double L = 0.2126 * lin(bg.R) + 0.7152 * lin(bg.G) + 0.0722 * lin(bg.B); var dark = C("#06121A"); double Ld = 0.2126 * lin(dark.R) + 0.7152 * lin(dark.G) + 0.0722 * lin(dark.B);
+            return 1.05 / (L + 0.05) >= (L + 0.05) / (Ld + 0.05) ? Color.White : dark;
+        }
+        // AM-CG-204: a change from one contrast theme to another (still high contrast) re-applies too
+        public static string AppliedSig = "";
+        public static string ContrastSig() { return SystemColors.Window.ToArgb() + "|" + SystemColors.WindowText.ToArgb() + "|" + SystemColors.Highlight.ToArgb() + "|" + SystemColors.HighlightText.ToArgb() + "|" + SystemColors.HotTrack.ToArgb(); }
+        public static bool ContrastChanged() { return System.Windows.Forms.SystemInformation.HighContrast != AppliedContrast || (System.Windows.Forms.SystemInformation.HighContrast && ContrastSig() != AppliedSig); }
         public static bool AppliedContrast;   // the high-contrast state the colours were made for (a change re-applies them)
         public static void Apply(bool dark)
         {
-            Dark = dark; AppliedContrast = SystemInformation.HighContrast;
+            Dark = dark; AppliedContrast = SystemInformation.HighContrast; AppliedSig = ContrastSig();
             if (!dark)
             {
                 Ink = C("#1B2330"); Muted = C("#5B6B7C"); Sub = C("#3D4B5A"); Line = C("#D6DEE8"); Line2 = C("#EEF2F6"); Track = C("#E6ECF3"); Soft = C("#F4F7FB");
@@ -494,7 +505,7 @@ namespace AdeeboMeter
         }
         public static Bitmap Chip(Snap s, double dwell)
         {
-            if (SpeedStyle) return SpeedChip(s);
+            if (SpeedStyle) return SpeedChip(s, dwell);
             var ts = Measure(s.Chip, fSmall, 0);
             float ww = WeatherChipW(); int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);

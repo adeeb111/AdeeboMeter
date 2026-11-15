@@ -37,17 +37,20 @@ namespace AdeeboMeter
         public static string ChipKey(Snap s)
         {
             if (!SpeedStyle) return s.Chip + WeatherKeyPart();
-            return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark5(s.DownHist) : "") + WeatherKeyPart();
+            return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark5(Cfg.WDir == "up" ? s.UpHist : s.DownHist) : "") + WeatherKeyPart();
         }
         static string SpeedText(Snap s)
         {
-            string d = "↓ " + Rate(s.Down, false), u = "↑ " + Rate(s.Up, false), unit = Unit(Math.Max(Num(s.Down), Num(s.Up)));
-            return (Cfg.WDir == "up" ? u : Cfg.WDir == "down" ? d : d + "  " + u) + " " + unit;
+            if (Cfg.WDir == "up") return "↑ " + Rate(s.Up, true);       // AM-CG-193: the shown figure's own unit
+            if (Cfg.WDir == "down") return "↓ " + Rate(s.Down, true);
+            string ud = Unit(Num(s.Down)), uu = Unit(Num(s.Up));
+            return ud == uu ? "↓ " + Rate(s.Down, false) + "  ↑ " + Rate(s.Up, false) + " " + ud : "↓ " + Rate(s.Down, true) + "  ↑ " + Rate(s.Up, true);
         }
         static double Num(double v) { return double.IsNaN(v) ? 0 : v; }
         static string Spark5(double[] h) { if (h == null || h.Length == 0) return ""; return string.Join(",", h.Skip(Math.Max(0, h.Length - 12)).Select(v => double.IsNaN(v) ? "-" : ((int)(v * 2)).ToString(CultureInfo.InvariantCulture))); }
 
-        static Bitmap SpeedChip(Snap s)
+        static Bitmap SpeedChip(Snap s) { return SpeedChip(s, 0); }
+        static Bitmap SpeedChip(Snap s, double dwell)
         {
             bool status = Style != "speed"; string txt = SpeedText(s);
             // width from a template, not the live digits - the strip doesn't wobble as numbers change
@@ -72,11 +75,17 @@ namespace AdeeboMeter
                 if (Cfg.WGraph)
                 {
                     var gr = new RectangleF(x, 6 * S, 40 * S, H - 12 * S);
-                    var v = (s.DownHist ?? Array.Empty<double>()); v = v.Skip(Math.Max(0, v.Length - 30)).ToArray(); double cap = 1; foreach (var q in v) if (!double.IsNaN(q) && q > cap) cap = q;
-                    Theme.Spark(g, v, gr, Theme.Blue, cap * 1.1, true);
+                    var v = ((Cfg.WDir == "up" ? s.UpHist : s.DownHist) ?? Array.Empty<double>()); v = v.Skip(Math.Max(0, v.Length - 30)).ToArray(); double cap = 1; foreach (var q in v) if (!double.IsNaN(q) && q > cap) cap = q;
+                    Theme.Spark(g, v, gr, Cfg.WDir == "up" ? Theme.Green : Theme.Blue, cap * 1.1, true);
                     x += gw;
                 }
                 if (ww > 0) WeatherChipDraw(g, x + 2 * S, H);
+                if (dwell > 0)   // AM-CG-195
+                {
+                    var tr = new RectangleF(12 * S, H - 4 * S, W - 24 * S, 2 * S);
+                    using (var b = new SolidBrush(Theme.Track)) g.FillRectangle(b, tr);
+                    using (var b = new SolidBrush(Theme.Blue)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
+                }
             }
             return bmp;
         }
@@ -117,7 +126,7 @@ namespace AdeeboMeter
                 if (Cfg.WGraph)
                 {
                     var sr = new RectangleF(pad, y, inner, 38 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
-                    var dv = s.DownHist ?? Array.Empty<double>(); var uv = s.UpHist ?? Array.Empty<double>(); double cap = 1; foreach (var q in dv.Concat(uv)) if (!double.IsNaN(q) && q > cap) cap = q;
+                    var dv = s.DownHist ?? Array.Empty<double>(); var uv = s.UpHist ?? Array.Empty<double>(); double cap = 1; foreach (var q in (Cfg.WDir == "up" ? uv : Cfg.WDir == "down" ? dv : dv.Concat(uv))) if (!double.IsNaN(q) && q > cap) cap = q;   // AM-CG-194: scaled to what's drawn
                     if (Cfg.WDir != "up") Theme.Spark(g, dv, sr, Theme.Blue, cap * 1.1, true);
                     if (Cfg.WDir != "down") Theme.Spark(g, uv, sr, Theme.Green, cap * 1.1, false);
                     y += 46 * S;

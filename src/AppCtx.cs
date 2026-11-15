@@ -38,7 +38,7 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote, balloonTool; HotKey slowKey;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
@@ -103,6 +103,13 @@ namespace AdeeboMeter
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
             miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
             miTheme.DropDownItems.Add(miThemeAuto); miTheme.DropDownItems.Add(miThemeLight); miTheme.DropDownItems.Add(miThemeDark);
+            miTheme.DropDownItems.Add(new ToolStripSeparator());
+            for (int pi = 0; pi < Theme.Palettes.Length; pi++)
+            {
+                int th = pi + 2; string nm = Theme.Palettes[pi]; var it = new ToolStripMenuItem(char.ToUpperInvariant(nm[0]) + nm.Substring(1)) { Tag = th }; it.Click += delegate { SetTheme(th); };
+                miTheme.DropDownItems.Add(it);
+            }
+            miTheme.DropDownOpening += delegate { foreach (ToolStripItem ti in miTheme.DropDownItems) { var mi = ti as ToolStripMenuItem; if (mi != null && mi.Tag is int) mi.Checked = Program.ForceTheme == (int)mi.Tag; } };   // AM-CG-202
             miAuto = new ToolStripMenuItem("Start with Windows"); miAuto.Click += delegate { Cfg.SetAutoStart(!Cfg.GetAutoStart()); };
             var miRemove = new ToolStripMenuItem("Uninstall AdeeboMeter...");
             miRemove.Click += delegate { try { using (Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--uninstall") { UseShellExecute = false })) { } } catch (Exception e) { Program.Log("uninstall: " + e.Message); } };
@@ -158,9 +165,9 @@ namespace AdeeboMeter
             prefHandler = delegate
             {
                 // Windows may raise this on its own thread: the theme switch always happens on the UI thread
-                if (marshal.InvokeRequired) { try { marshal.BeginInvoke((Action)delegate { bool d2 = Program.WantDark(); if (d2 != Theme.Dark || SystemInformation.HighContrast != Theme.AppliedContrast) { Theme.Apply(d2); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); } }); } catch (InvalidOperationException) { } return; }
+                if (marshal.InvokeRequired) { try { marshal.BeginInvoke((Action)delegate { bool d2 = Program.WantDark(); if (d2 != Theme.Dark || Theme.ContrastChanged()) { Theme.Apply(d2); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); } }); } catch (InvalidOperationException) { } return; }
                 bool d = Program.WantDark();
-                if (d != Theme.Dark || SystemInformation.HighContrast != Theme.AppliedContrast) { Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); }
+                if (d != Theme.Dark || Theme.ContrastChanged()) { Theme.Apply(d); drawnKey = ""; if (full != null && !full.IsDisposed) full.ApplyTheme(); }
             };
             SystemEvents.UserPreferenceChanged += prefHandler;
             ui.Interval = 50; ui.Tick += delegate { OnUi(); }; ui.Start();
@@ -388,13 +395,20 @@ namespace AdeeboMeter
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
                 if (ui.Interval != want) ui.Interval = want;
-                if ((Clock.Mono - lastCover).TotalMilliseconds >= 400)
+                if ((Clock.Mono - lastCover).TotalMilliseconds >= 400 && !hovered)   // AM-CG-192: re-judged when folded again, not by the open card's size
                 {
                     lastCover = Clock.Mono;
                     bool c = WindowOver(Zone());
                     if (c != covered) { covered = c; revealed = false; dwellStart = DateTime.MinValue; drawnKey = ""; }
                 }
-                var cur = Cursor.Position; bool inside = widget.Placed.Contains(cur);
+                var cur = Cursor.Position; var zone = widget.Placed;
+                if (hovered)
+                {
+                    if (foldedAt.Width > 1) zone = Rectangle.Union(zone, foldedAt);
+                    if (detailWin.Placed.Width > 1) zone = Rectangle.Union(zone, detailWin.Placed);   // and the corridor to it (the union spans the gap)
+                }
+                bool inside = zone.Contains(cur);
+                if (inside) insideAt = Clock.Mono; else if (hovered && (Clock.Mono - insideAt).TotalMilliseconds < 350) inside = true;   // grace: no fold on a passing wobble
                 if (covered)
                 {
                     if (inside)
@@ -416,14 +430,14 @@ namespace AdeeboMeter
                 hoverKey = key;
                 var rw = Rewind; if (rw != null && Clock.Mono > RewindUntil) { Rewind = null; rw = null; }
                 Snap s = rw ?? M.Latest; bool compact = !hovered && (covered || Draw.SpeedStyle || (s.Level == 0 && !s.Call));   // a speed widget stays a strip until you hover it
-                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "") + "|" + Moments.FaceFor(s);   /* a moment's face shows and goes */
+                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + Cfg.WidgetStyle + "|" + Cfg.WDir + "|" + Cfg.WUnits + "|" + Cfg.WGraph + "|" + Theme.Palette + "|" + Theme.Dark + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "") + "|" + Moments.FaceFor(s);   /* a moment's face shows and goes */
                 bool fresh = M.Version != drawnVersion;
                 // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
                 // and unhovered only when its level or headline changes (or every 10 s for the numbers)
                 bool cardDue = !compact && (hovered || s.Level != lastLevel || s.Headline != lastHead || (Clock.Mono - lastCard).TotalSeconds >= 10);
                 if (state != drawnKey || (fresh && (cardDue || (compact && (Draw.ChipKey(s) != lastChip || s.Level != lastLevel)))))
                 {
-                    Draw.CardHovered = hovered; Render(s, compact); drawnKey = state; drawnVersion = M.Version; if (!compact) { lastCard = Clock.Mono; lastHead = s.Headline; }
+                    Draw.CardHovered = hovered; Render(s, compact); if (compact) foldedAt = widget.Placed; drawnKey = state; drawnVersion = M.Version; if (!compact) { lastCard = Clock.Mono; lastHead = s.Headline; }
                 }
             }
             catch (Exception e) { Program.Log("ui: " + e.Message); }
@@ -440,7 +454,7 @@ namespace AdeeboMeter
             using (var bmp = compact ? Draw.Chip(s, dwell) : Draw.Card(s, hits))
             {
                 if (compact) hits.Clear();
-                widget.Present(bmp, hovered ? (byte)255 : FADE, wa.Right - m - bmp.Width, wa.Bottom - m - bmp.Height);
+                widget.Present(bmp, hovered ? (byte)255 : FADE, Math.Max(wa.Left, wa.Right - m - bmp.Width), Math.Max(wa.Top, wa.Bottom - m - bmp.Height));   // AM-CG-201: inside the work area
             }
             lastChip = Draw.ChipKey(s); lastLevel = s.Level;
             Detail d;
