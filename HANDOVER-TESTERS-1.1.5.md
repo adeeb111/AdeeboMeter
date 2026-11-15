@@ -22,6 +22,29 @@ light and dark theme · both layouts (top tabs / sidebar).
 
 ---
 
+## 2a. New in r3 (15 Nov, evening) - test these first
+
+**Hardware nerds** - a new Toolbox section (sidebar › Toolbox › Hardware nerds). Every part is judged against its own ceiling, worked out from its specs, and each result explains how that part works in this PC's own numbers.
+
+| Tool | What to check |
+|---|---|
+| Why is this PC struggling? | Run it while the PC is busy (many browser tabs open): it should name what's full, what that does, the maths, why, and fixes with what each gives back |
+| How this PC works - live | The parts picture; the dots should move with real disk / network traffic |
+| It felt slow (and **Ctrl+Alt+S** / tray › It feels slow right now) | Press it when the PC is slow: a note says this PC / the internet / the app; clicking it opens the 2-minute picture |
+| Disk speed vs its ceiling | Writes a test file (deleted after). Type `yes` in the second box for the long test (up to 8 GB / 25 s) |
+| Memory, Graphics, Processor held back?, Internet vs link and disk | Compare the specs shown with Task Manager › Performance |
+| Slow PC, fine internet - hidden reasons | Days since restart, startup apps, browser memory, errors |
+| Used laptop check | Try it with seller words, e.g. `i5, 16GB, 512GB SSD` |
+| Screen / Keyboard / Speakers-mic-camera tests | Hands-on: a full-screen colour test, a key grid, left/right tones and the mic level |
+
+Run once as admin too: the laptop check then also shows disk wear, hours used and temperature.
+
+**Also new:** the sidebar is the default layout (the first Home card offers Classic tabs). Settings is in the sidebar as well as the gear at the top right. When the PC struggles, "Investigate" / What's wrong › My PC is slow now explains why step by step.
+
+**Fixed since r2:** the square frames around the Home tabs after switching sections (V01), and the "Day or night" help card that stayed on screen (V02).
+
+**Not fixed yet (known - don't re-report):** R2-01 to R2-17 from the r2 check, including Hotel Wi-Fi (R2-11) and GDI growth (R2-13). They're next.
+
 ## 2. What's new in this round (15 Nov) - please cover these first
 
 ### A. Pictures for (almost) every tool - 178 of 191
