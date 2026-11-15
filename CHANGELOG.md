@@ -14,9 +14,20 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### Security: hardening pass
+- CSV exports (and the ISP report's raw data) can't run formulas: a cell starting with = + - @ gets a leading apostrophe.
+- Secret boxes (passwords, communities, shared secrets - now the OBS password too) never reach a picture, a phone link or an
+  export, on top of never being shown, saved or logged.
+- The phone page treats a link's content as text only (tested with script and image-handler payloads), caps long texts, and says
+  that AdeeboMeter can't check who made a link.
+- Files AdeeboMeter keeps (board watch list and log, server snapshots) and files you save are written whole, then swapped in.
+- Self-test: hostile strings (script tags, quotes, formulas, ../, right-to-left overrides, nulls, 5,000 characters) go through
+  every exit - report HTML, draw.io XML, JSON, CSV, phone links, file names - and fail the test if any guard leaks.
+- The code check also fails on deserializers that run code and on shell command lines.
+
 ### New: philosophers for the companion
 - Four new buddy personas, our own lines in each style (never invented quotes): Marcus Aurelius (Stoic), Aristotle, Taoist (Laozi)
-  and Confucius - "The slowness lies beyond your router - not in your power, so not your burden."
+  and Confucius - "The delay lies beyond your router - not yours to carry."
 - Words of comfort adds Marcus Aurelius, Aristotle, Taoism and Confucius: short passages from public-domain translations
   (Casaubon, Chase, Legge), word for word with their reference - in calm moments only, like the verses.
 

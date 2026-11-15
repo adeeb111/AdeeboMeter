@@ -90,7 +90,7 @@ namespace AdeeboMeter
                 using (var d = new SaveFileDialog { Filter = filter, InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + "." + ext })
                 {
                     if (d.ShowDialog(this) != DialogResult.OK) return;
-                    File.WriteAllText(d.FileName, text, new UTF8Encoding(ext == "csv")); Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName) + (ext == "drawio" ? " - open it at app.diagrams.net or in draw.io" : ""));
+                    { string tmp = d.FileName + ".new"; File.WriteAllText(tmp, text, new UTF8Encoding(ext == "csv")); if (File.Exists(d.FileName)) File.Replace(tmp, d.FileName, null); else File.Move(tmp, d.FileName); } Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName) + (ext == "drawio" ? " - open it at app.diagrams.net or in draw.io" : ""));
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("save " + ext + ": " + e.Message); Toast(L.T("Couldn't save it")); }
@@ -199,7 +199,7 @@ namespace AdeeboMeter
             sb.Append(",\n  \"rows\": [\n" + string.Join(",\n", ResRows().Select(o => "    { \"level\": " + Js(o[0]) + ", \"name\": " + Js(o[1]) + ", \"value\": " + Js(o[2]) + ", \"advice\": " + Js(o.Length > 3 ? o[3] : "") + " }").ToArray()) + "\n  ]\n}\n");
             return sb.ToString();
         }
-        static string Cv(string s) { s = s ?? ""; return s.IndexOfAny(CsvSpecial) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s; }
+        internal static string Cv(string s) { s = s ?? ""; if (s.Length > 0 && "=+-@\t\r".IndexOf(s[0]) >= 0) s = "'" + s; return s.IndexOfAny(CsvSpecial) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s; }
         static readonly char[] CsvSpecial = { ',', '"', '\n', '\r' };
         internal string Csv()
         {

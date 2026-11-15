@@ -67,7 +67,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   var t = p[1] || "", when = new Date(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10));
   var lv = (p[2] || "333333").split("").map(Number), overall = lv[0], legs = lv.slice(1);
   var v = (p[3] || "").split(","), M = { gw: n(v[0]), ping: n(v[1]), jit: n(v[2]), loss: n(v[3]), dns: n(v[4]), down: n(v[5]), up: n(v[6]), cpu: n(v[7]), mem: n(v[8]), wifi: n(v[9]), outages: n(v[10]), cable: v[11] === "c" };
-  var net = ser(p[4], "ms"), gws = ser(p[5], "ms"), loss = ser(p[6], "loss"), head = (p[7] || "").replace(/\+/g, " ");
+  var net = ser(p[4], "ms").slice(0, 60), gws = ser(p[5], "ms").slice(0, 60), loss = ser(p[6], "loss").slice(0, 60), head = (p[7] || "").replace(/\+/g, " ").slice(0, 120);
   var names = ["This PC", M.cable ? "Cable" : "Wi-Fi", "Provider", "DNS", "Internet"];
 
   // ---- worked out here: a grade for each number, in plain words
@@ -153,7 +153,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   h += '<div class="card"><div class="btns"><button class="main" id="isp">Send to my internet provider</button><button id="share">Share</button><button id="pdf">Save as PDF</button><button id="copyall">Copy everything</button><button id="ai">Copy for AI</button></div></div>';
   h += '<div class="card" id="msgcard"><h2>THE MESSAGE (EDIT IT IF YOU LIKE)</h2><textarea id="msg"></textarea><div class="btns" style="margin-top:10px"><button id="copy">Copy message</button><button id="mail">Email it</button></div></div>';
   if (/Android/i.test(navigator.userAgent)) h += '<p class="note">Android: Share sends this to any app. From the PC, Send by Bluetooth or Quick Share drops a picture straight into Downloads.</p>';
-  h += '<p class="note">These numbers came inside the link you scanned - they stayed on this phone and were never sent to adeebometer.com.</p>';
+  h += '<p class="note">These numbers came inside the link you scanned - they stayed on this phone and were never sent to adeebometer.com. AdeeboMeter can\'t check who made a link: trust it as much as the person who sent it.</p>';
   app.innerHTML = h;
   var ta = document.getElementById("msg"); ta.value = msg();
   function copy() { ta.select(); try { navigator.clipboard.writeText(ta.value).then(function () { toast("Copied - paste it into the support chat"); }, function () { document.execCommand("copy"); toast("Copied"); }); } catch (e) { document.execCommand("copy"); toast("Copied"); } }
@@ -167,7 +167,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
 
   // ================================================================== v2: any tool's picture, redrawn here
   function v2(h) {
-    var D = function (x) { try { return decodeURIComponent((x || "").replace(/\+/g, " ")); } catch (e) { return x || ""; } };
+    var D = function (x) { var v; try { v = decodeURIComponent((x || "").replace(/\+/g, " ")); } catch (e) { v = x || ""; } return v.slice(0, 300); };
     var f = h.split("!"), t = f[1] || "", when = new Date(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10));
     var title = D(f[2]), cap = D(f[3]), kind = f[4] || "", A = f[5] || "", B = f[6] || "", R = f[7] || "";
     var items = function (x) { return x ? x.split("~").map(function (i) { return i.split(","); }) : []; };
@@ -220,7 +220,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div></div>'; }).join("") + '</div>';
     h2 += '<div class="card"><div class="btns"><button class="main" id="cp">Copy</button><button id="sh">Share</button><button id="img">Save image</button><button id="ai2">Copy for AI</button><button id="pdf2">Save as PDF</button></div></div>';
     if (/Android/i.test(navigator.userAgent)) h2 += '<p class="note">Android: Save image opens the share sheet - pick Files, Photos or any app. From the PC, Send by Bluetooth or Quick Share drops the picture straight into Downloads.</p>';
-    h2 += '<p class="note">Made with AdeeboMeter on a PC. The result came inside the link and was drawn here, on this phone.</p>';
+    h2 += '<p class="note">Made with AdeeboMeter on a PC. The result came inside the link and was drawn here, on this phone - AdeeboMeter can\'t check who made a link, so trust it as much as the person who sent it.</p>';
     app.innerHTML = h2;
     var text = function () { return title + (cap ? " - " + cap : "") + (whenT ? " (" + whenT + ")" : "") + "\n" + rows.map(function (r) { return "- " + D(r[1]) + ": " + D(r[2]); }).join("\n") + "\n" + location.href; };
     document.getElementById("cp").onclick = function () { try { navigator.clipboard.writeText(text()).then(function () { toast("Copied - paste it anywhere"); }); } catch (e) { toast("Couldn't copy"); } };

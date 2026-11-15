@@ -26,9 +26,15 @@ namespace AdeeboMeter
             try { if (!File.Exists(WatchFile)) return; var l = File.ReadAllLines(WatchFile); if (l.Length > 0) int.TryParse(l[0], NumberStyles.None, CultureInfo.InvariantCulture, out minutes); if (l.Length > 1) list = l[1]; }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
+        // a file written whole: next to it first, then swapped in - a crash or a full disk never leaves half a file
+        internal static void WriteWhole(string path, string text)
+        {
+            string tmp = path + ".new"; File.WriteAllText(tmp, text, new UTF8Encoding(false));
+            if (File.Exists(path)) File.Replace(tmp, path, null); else File.Move(tmp, path);
+        }
         static void SetWatch(int minutes, string list)
         {
-            try { if (minutes <= 0) { if (File.Exists(WatchFile)) File.Delete(WatchFile); } else File.WriteAllLines(WatchFile, new[] { minutes.ToString(CultureInfo.InvariantCulture), list }); }
+            try { if (minutes <= 0) { if (File.Exists(WatchFile)) File.Delete(WatchFile); } else WriteWhole(WatchFile, minutes.ToString(CultureInfo.InvariantCulture) + "\n" + (list ?? "").Replace("\n", " ") + "\n"); }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
         static void Log(string target, Knocks k)
@@ -64,7 +70,7 @@ namespace AdeeboMeter
                 {
                     if (!File.Exists(LogFile) || new FileInfo(LogFile).Length < 2000000) return;
                     string cut = DateTime.Now.AddDays(-35).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                    File.WriteAllLines(LogFile, File.ReadAllLines(LogFile).Where(l => string.CompareOrdinal(l, cut) >= 0).ToArray());
+                    WriteWhole(LogFile, string.Join("\n", File.ReadAllLines(LogFile).Where(l => string.CompareOrdinal(l, cut) >= 0).ToArray()) + "\n");
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
         }

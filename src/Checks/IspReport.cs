@@ -343,7 +343,7 @@ namespace AdeeboMeter
                     foreach (var h in r.Hops)
                     {
                         IPAddress a; string ip = IPAddress.TryParse(h.Ip, out a) && Private(a) ? "(private)" : h.Ip;
-                        sb.Append(string.Join(",", new[] { "\"" + r.Label.Replace("\"", "'") + "\"", h.N.ToString(CultureInfo.InvariantCulture), ip, h.Sent.ToString(CultureInfo.InvariantCulture), h.Lost.ToString(CultureInfo.InvariantCulture), Num(Loss(h)), Num(Avg(h)), Num(h.Best), Num(h.Worst), Num(h.Jit) })).Append("\r\n");
+                        sb.Append(string.Join(",", new[] { FullView.Cv(r.Label), h.N.ToString(CultureInfo.InvariantCulture), ip, h.Sent.ToString(CultureInfo.InvariantCulture), h.Lost.ToString(CultureInfo.InvariantCulture), Num(Loss(h)), Num(Avg(h)), Num(h.Best), Num(h.Worst), Num(h.Jit) })).Append("\r\n");
                     }
                 string file = Path.ChangeExtension(html, ".csv"); File.WriteAllText(file, sb.ToString(), new UTF8Encoding(false)); return file;
             }
@@ -365,6 +365,6 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (!(e is WebException || e is IOException)) throw; return ""; }
         }
-        static string Esc(string s) { return System.Net.WebUtility.HtmlEncode(s ?? ""); }
+        internal static string Esc(string s) { return System.Net.WebUtility.HtmlEncode(s ?? ""); }
     }
 }

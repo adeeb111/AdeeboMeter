@@ -44,7 +44,7 @@ namespace AdeeboMeter
             var last = hist.Count > 0 ? hist[hist.Count - 1].Value : null; var changes = new List<string[]>();
             if (last != null) foreach (var k in now.Keys.Union(last.Keys).OrderBy(z => z, StringComparer.Ordinal)) { string a, b; last.TryGetValue(k, out a); now.TryGetValue(k, out b); if ((a ?? "") != (b ?? "")) changes.Add(new[] { k, a ?? "(none)", b ?? "(gone)" }); }
             hist.Add(new KeyValuePair<DateTime, Dictionary<string, string>>(DateTime.Now, now.ToDictionary(z => z.Key, z => z.Value)));
-            try { Directory.CreateDirectory(dir); File.WriteAllLines(file, hist.Skip(Math.Max(0, hist.Count - 30)).Select(h => h.Key.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "\t" + string.Join("\t", h.Value.Select(z => z.Key + "=" + z.Value.Replace("\t", " ")).ToArray())).ToArray()); }
+            try { Directory.CreateDirectory(dir); WriteWhole(file, string.Join("\n", hist.Skip(Math.Max(0, hist.Count - 30)).Select(h => h.Key.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "\t" + string.Join("\t", h.Value.Select(z => z.Key + "=" + z.Value.Replace("\t", " ").Replace("\n", " ")).ToArray())).ToArray()) + "\n"); }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
 
             if (last == null) rows.Add(R(3, "First check", host + " - " + now.Count + " things noted. Run it again later (after a deploy, a renewal, a migration) to see what changed.", "Kept in AdeeboMeter's own folder (servers), last 30 checks.", "m"));
@@ -59,7 +59,7 @@ namespace AdeeboMeter
             if (past.Count > 0) { rows.Add(R(-1, "EARLIER CHANGES", hist.Count + " checks kept", "", "m")); rows.AddRange(past); }
             return rows;
         }
-        static string Safe(string host) { var sb = new StringBuilder(); foreach (char c in host) sb.Append(char.IsLetterOrDigit(c) || c == '.' || c == '-' ? c : '_'); return sb.ToString(); }
+        internal static string Safe(string host) { var sb = new StringBuilder(); foreach (char c in host) sb.Append(char.IsLetterOrDigit(c) || c == '.' || c == '-' ? c : '_'); return sb.ToString(); }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5359", Justification = "reads the certificate only - nothing is sent")]
         static void Cert(string host, out string issuer, out string expires, out string fp)
         {

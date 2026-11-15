@@ -12,6 +12,8 @@ R=""; for a in mscorlib System System.Core System.Management System.Security Sys
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 dotnet exec "$SDK/Roslyn/bincore/csc.dll" -nologo -noconfig -nostdlib -langversion:5 -target:winexe -out:"$T/ca.exe" $AN \
   -analyzerconfig:tools/analyzers.globalconfig $R -recurse:'src/*.cs' > "$T/out.txt" 2>&1 || true
+# banned patterns the analyzers can't see: deserializers that run code, a shell given a command line, eval-like script hosts
+grep -rnE 'BinaryFormatter|NetDataContractSerializer|SoapFormatter|LosFormatter|"cmd(\.exe)?" *, *"/c|powershell(\.exe)?" *,|UseShellExecute *= *true[^;]*Arguments|ScriptControl|Microsoft\.JScript' src --include=*.cs | sed 's/^/banned: /' >> "$T/out.txt" || true
 n=$(grep -c . "$T/out.txt" || true)
 cat "$T/out.txt"; echo "analyzer findings: $n"
 [ "$n" -eq 0 ]

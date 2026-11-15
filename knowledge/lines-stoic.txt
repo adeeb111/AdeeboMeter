@@ -7,7 +7,7 @@ pc.busy|The PC labours at {v}. Ask less of it, and it will serve better.
 pc.busy|Too many tasks. Choose the necessary one.
 wifi.drops|The Wi-Fi left {v} times. Move closer; the rest is not ours to fret over.
 net.none|No network. Annoyance changes nothing. Check the cable or the Wi-Fi.
-inet.slow|Your side is sound. The slowness lies beyond your router - not in your power, so not your burden.
+inet.slow|Your side is sound. The delay lies beyond your router - not yours to carry.
 busy|Working on it, steadily... {v}
 idle|Quiet. A good hour to be content.
 search.empty|What troubles you? Name it plainly.

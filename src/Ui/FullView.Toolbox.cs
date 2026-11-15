@@ -188,7 +188,7 @@ namespace AdeeboMeter
                 T("winupdate", "THE PC", "What did Windows Update break?", null, (a, r) => UpdateBreak.Run()),
                 T("gpn", "GAMING", "Would a GPN (ping booster) help me?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => GamerTools.Gpn(M, a[0], r)),
                 T("afterstream", "GAMING", "After-stream report", "Which stream - last, yesterday or a date (empty = the latest)", (a, r) => Sectors.SessionRows("stream", a[0])),
-                T("obs", "GAMING", "OBS link - why frames drop", "OBS WebSocket password - not saved (empty if none)|Port - empty = 4455", (a, r) => Sectors.Obs(M, a[0], a[1], r)),
+                T("obs", "GAMING", "OBS link - why frames drop", "Password - from OBS > Tools > WebSocket Server Settings (empty if none); never saved|Port - empty = 4455", (a, r) => Sectors.Obs(M, a[0], a[1], r)),
                 T("golive", "GAMING", "Ready to stream? (go-live check)", "Bitrate in kbps - empty = 6000|Service - Twitch, YouTube, Kick or an ingest host", (a, r) => Sectors.GoLive(M, a[0], a[1], r)),
                 T("prematch", "GAMING", "Ready to play? (pre-match checklist)", null, (a, r) => GamerTools.PreMatch(M, r)),
                 T("besttime", "GAMING", "Best time to play", "Game (optional) - e.g. fortnite (empty = the one you play)", (a, r) => GamerTools.BestTime(a[0])),

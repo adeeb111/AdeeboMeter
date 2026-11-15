@@ -24,6 +24,7 @@ namespace AdeeboMeter
         public static bool HasPicture(string id) { return Pictured.Contains(id) || IsCalc(id) || InWave3(id); }
         string visFail = "";
         // self-test: every picture draws before a run and with its Example, and the Example's picture grows from the result
+        static readonly char[] Angle = { '<', '>' }, LinkBad = { '<', '>', '"', '!', '~', ' ', '\n' };
         internal string VisualCheck()
         {
             EnsureToolbox(); var bad = new List<string>();
@@ -49,6 +50,16 @@ namespace AdeeboMeter
             if (Cases.Sure(gr) < 2) bad.Add("a case backed by measurements isn't 'likely' or better");
             try { string f = MakeReport(cs); if (!System.IO.File.Exists(f)) bad.Add("report not written"); else { if (f.EndsWith(".html", StringComparison.Ordinal) && !System.IO.File.ReadAllText(f).Contains("data:image/png;base64,")) bad.Add("report has no pages"); System.IO.File.Delete(f); } }
             catch (Exception e) { bad.Add("report: " + e.GetType().Name + " " + e.Message); }
+            // hostile input at every exit: script tags, quotes, formulas, path tricks, right-to-left overrides, nulls, very long text
+            foreach (var h in new[] { "<script>alert(1)</script>", "\"'><img src=x onerror=a()>", "=cmd|' /C calc'!A0", "+1-2", "@SUM(A1)", "-2+3", "../../win.ini", "a\u202Eexe.txt", "nul\0byte", new string('A', 5000) + "<" })
+            {
+                if (IspReport.Esc(h).IndexOfAny(Angle) >= 0) bad.Add("hostile: report HTML lets " + Cut(h, 20) + " through");
+                if (Hv(h).IndexOfAny(Angle) >= 0) bad.Add("hostile: draw.io lets " + Cut(h, 20) + " through");
+                string js = Js(h); if (js.Substring(1, js.Length - 2).Replace("\\\\", "").Replace("\\\"", "").Contains("\"") || js.Contains("\0")) bad.Add("hostile: JSON lets " + Cut(h, 20) + " through");
+                string cv = Cv(h); if ("=+-@".IndexOf(cv.TrimStart('"')[0]) >= 0) bad.Add("hostile: CSV formula " + Cut(h, 20));
+                if (E(h).IndexOfAny(LinkBad) >= 0) bad.Add("hostile: phone link lets " + Cut(h, 20) + " through");
+                string sf = Sectors.Safe(h); if (sf.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0 || sf.Contains("/") || sf.Contains("\\")) bad.Add("hostile: file name from " + Cut(h, 20));
+            }
             // the ISP report's picture pages draw (a made-up evening problem)
             try { string isp = IspReport.Sample(); if (isp == null || !System.IO.File.ReadAllText(isp).Contains("<svg")) bad.Add("ISP report: no picture pages"); }
             catch (Exception e) { bad.Add("ISP report pages: " + e.GetType().Name + " " + e.Message); }
@@ -114,7 +125,8 @@ namespace AdeeboMeter
             string[] a;
             if (VisEx()) { var ex = Examples.Get(tbSel); a = ex == null ? null : ex.In; }
             else a = tbRows != null && tbShown != null ? tbShown : Inputs();
-            var r = new string[4]; for (int i = 0; i < 4; i++) r[i] = a != null && i < a.Length && a[i] != null ? a[i].Trim() : ""; return r;
+            var t = Tools2().FirstOrDefault(z => z.Id == tbSel);   // secret boxes (passwords, communities, shared secrets) never reach a picture, a phone link or an export
+            var r = new string[4]; for (int i = 0; i < 4; i++) r[i] = a != null && i < a.Length && a[i] != null && !(t != null && i < t.Inputs.Length && SecretInput(t.Inputs[i])) ? a[i].Trim() : ""; return r;
         }
         // the result rows without the example banner and table lines
         List<string[]> VisRows()
