@@ -14,6 +14,16 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: take any picture with you - Save, Copy, phone, Bluetooth
+- Under every tool picture: Save picture (PNG with a "made with AdeeboMeter" footer), Copy picture (paste into a chat or a mail),
+  Open on my phone and Send by Bluetooth.
+- Open on my phone: a QR code (now up to 858 bytes) carries that picture's own data - the packet exchange, the race, the path or
+  the bars - plus the result rows. The phone redraws it at adeebometer.com/r with Copy, Share, Save image, Copy for AI and PDF.
+  Works when this PC has no internet at all: the phone loads the page on its own data.
+- Send by Bluetooth hands the picture to Windows' own Bluetooth sender, for another PC or an Android phone. AdeeboMeter itself
+  still never listens.
+- The phone pages get Copy for AI: the result as a ready question to paste into ChatGPT, Claude or Gemini.
+
 ### New: QR code opens your result on the phone
 - The QR code now shows big in the tool itself (no extra click) and holds a link to adeebometer.com/r. Your result rides in the
   link after the # - the part browsers never send - so the site never sees it; the phone draws the page itself.

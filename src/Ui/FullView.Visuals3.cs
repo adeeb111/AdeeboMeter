@@ -93,6 +93,7 @@ namespace AdeeboMeter
         }
         float ExchangeCard(Graphics g, float x, float y, float w, string st, string caption, string[] actors, List<XStep> steps, string foot)
         {
+            PhoneX = Tuple.Create(caption, actors, steps); PhoneKind = "x";
             float h = 44 * S + 30 * S + 16 * S + steps.Count * 44 * S + 12 * S + (foot != "" ? 40 * S : 0);
             var r = VisCard(g, x, y, w, h, caption, st);
             Exchange(g, r, r.Y + 40 * S, actors, steps);
@@ -120,6 +121,7 @@ namespace AdeeboMeter
         // lanes racing: a packet out and back on each, the fastest home first (wave 3's races, and wave 5's DNS, cloud, VPN, legs)
         static float RaceCard(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, double, double, int>> lanes, string foot)
         {
+            PhoneR = Tuple.Create(cap, lanes.ToList()); PhoneKind = "r";
             lanes = lanes.Where(l => !double.IsNaN(l.Item2)).ToList(); if (lanes.Count == 0) lanes.Add(Tuple.Create(L.T("(run it to see the race)"), 0.0, double.NaN, -1));
             bool two = lanes.Any(l => !double.IsNaN(l.Item3));
             var r = VisCard(g, x, y, w, 60 * S + lanes.Count * 40 * S + 56 * S, cap, st);

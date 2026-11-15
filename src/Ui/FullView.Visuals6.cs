@@ -139,6 +139,7 @@ namespace AdeeboMeter
         // one bar per thing, longest = most; an optional line (your usual, 30 days) to measure against
         static float Bars(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, double, string, int>> bars, string unit, double mark, string foot)
         {
+            PhoneB = Tuple.Create(cap, unit, bars.ToList()); PhoneKind = "b";
             bars = bars.Where(b => !double.IsNaN(b.Item2)).Take(10).ToList();
             if (bars.Count == 0) bars = new List<Tuple<string, double, string, int>> { Tuple.Create(L.T("(run it to see)"), 0.0, "", -1) };
             var r = VisCard(g, x, y, w, 56 * S + bars.Count * 34 * S + 50 * S, cap, st);

@@ -288,6 +288,7 @@ namespace AdeeboMeter
         // a road of hops: the ms above each one, a coloured band per owner, the hop where the delay starts in red, a packet driving it
         static float HopRoad(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, string, double, string, int>> hops, string foot)
         {
+            PhoneP = Tuple.Create(cap, hops.ToList()); PhoneKind = "p";
             hops = hops.Take(10).ToList(); bool hasMs = hops.Any(h => !double.IsNaN(h.Item3)); var r = VisCard(g, x, y, w, (hasMs ? 250 : 190) * S, cap, st);
             float x0 = r.X + 50 * S, x1 = r.Right - 50 * S, cy = r.Y + (hasMs ? 120 : 64) * S, step = (x1 - x0) / Math.Max(1, hops.Count - 1);
             double max = hasMs ? hops.Where(h => !double.IsNaN(h.Item3)).Max(h => h.Item3) : 1; if (max <= 0) max = 1;

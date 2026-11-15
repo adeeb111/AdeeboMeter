@@ -1106,7 +1106,7 @@ namespace AdeeboMeter
                     y += 30 * S;
                     g.DrawString(L.T("Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer."), Draw.fSmall, muted, new RectangleF(x, y, w, 34 * S)); y += 36 * S;
                 }
-                y = PaintToolVisual(g, x, y, w);   // the picture: how it works before a run, the result after (FullView.Visuals.cs)
+                y = PaintToolVisual(g, x, y, w); y = PaintPictureBar(g, x, y - 4 * S, w);   // the picture: how it works before a run, the result after (FullView.Visuals.cs)
                 if (tbSel == "mtu" && !isEx) y = PaintMtu(g, x, y, w);
                 if (tbSel == "mtr" && mtrHops != null && !isEx) y = PaintMtr(g, x, y, w);
                 if (run != null) { var s = run.Copy(); if (s.Count > 1) y = PaintSeries(g, s, run.SeriesUnit, x, y, w); }
