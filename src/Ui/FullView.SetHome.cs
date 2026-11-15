@@ -15,6 +15,7 @@ namespace AdeeboMeter
         {
             { "General", new[] { "settings", "home", "How should the app look and start?" } },
             { "Widget", new[] { "app", "dest", "How should the corner widget look?" } },
+            { "Weather", new[] { "time", "home", "Weather on the buddy and the widget?" } },
             { "Companion", new[] { "mood", "mine", "How should the buddy talk?" } },
             { "Navigation", new[] { "layout", "learn", "How do you want to get around?" } },
             { "Background checks", new[] { "speed", "time", "How much should it watch?" } },
@@ -32,6 +33,7 @@ namespace AdeeboMeter
             switch (sec)
             {
                 case "General": return new[] { "View", "Theme" };
+                case "Weather": return new[] { "Weather" };
                 case "Companion": return new[] { "Mood" };
                 case "Navigation": return new[] { "Layout" };
                 case "Gamer Zone": return new[] { "Game ping in the background" };

@@ -373,6 +373,7 @@ namespace AdeeboMeter
             try
             {
                 uiTick++;
+                if ((uiTick & 15) == 0) Weather.Tick();   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
                 if (WidgetScreen() == null) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
                 bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;

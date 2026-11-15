@@ -311,6 +311,8 @@ namespace AdeeboMeter
         // whole sections someone doesn't want: hidden from the bar and More, and their background work stops
         public static volatile string View = "";
         public static volatile string Corner = "moments";
+        // Weather (Adeeb, 14 Nov): off until you turn it on; the place is one you typed (never located); "lat;lon;name"
+        public static volatile bool WeatherOn, WeatherF, WWeather = true; public static volatile string WeatherPlace = "", WeatherAcc = "normal";
         public static volatile int Zoom = 100;   // the window's zoom in percent (80-175): Ctrl + / Ctrl - / Ctrl 0, Ctrl+wheel, right-click   // how the corner behaves: quiet (never changes by itself) / moments / view (Moments.cs)   // the view in use (Views.cs): everyday / gamer / streamer / trader / engineer / my-N
         public static volatile string HiddenSecs = ""; public static readonly string[] Hideable = { "stream", "trade", "gamer" };
         public static bool Off(string sec) { return ("," + HiddenSecs + ",").Contains("," + sec + ","); }
@@ -375,7 +377,7 @@ namespace AdeeboMeter
         {
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "streams=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx=" + (TradeFx ? 1 : 0); yield return "tradeeve=" + (TradeEvening ? 1 : 0); yield return "view=" + View; yield return "corner=" + Corner; yield return "zoom=" + Zoom.ToString(CultureInfo.InvariantCulture); yield return "views=" + Views.Line(); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
+            yield return "streams=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx=" + (TradeFx ? 1 : 0); yield return "tradeeve=" + (TradeEvening ? 1 : 0); yield return "view=" + View; yield return "corner=" + Corner; yield return "weather=" + (WeatherOn ? 1 : 0); yield return "wplace=" + WeatherPlace; yield return "wacc=" + WeatherAcc; yield return "wtempf=" + (WeatherF ? 1 : 0); yield return "wweather=" + (WWeather ? 1 : 0); yield return "zoom=" + Zoom.ToString(CultureInfo.InvariantCulture); yield return "views=" + Views.Line(); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
@@ -386,7 +388,7 @@ namespace AdeeboMeter
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradeeve", "view", "views", "corner", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
         public static readonly string[] NavIds = { "home", "stream", "trade", "toolbox", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports" };
         public static string NavClean(string v)
@@ -425,6 +427,11 @@ namespace AdeeboMeter
                 case "view": View = v.Length <= 24 && (Views.IsBuiltIn(v) || v.StartsWith("my-", StringComparison.Ordinal)) ? v : ""; break;
                 case "views": Views.Load(v); break;
                 case "corner": Corner = v == "quiet" || v == "view" ? v : "moments"; break;
+                case "weather": WeatherOn = v == "1"; break;
+                case "wplace": WeatherPlace = Weather.CleanPlace(v); break;
+                case "wacc": WeatherAcc = v == "better" ? "better" : "normal"; break;
+                case "wtempf": WeatherF = v == "1"; break;
+                case "wweather": WWeather = v != "0"; break;
                 case "zoom": { int z; if (int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out z)) Zoom = Math.Max(80, Math.Min(175, z)); } break;
                 case "tradehost": TradeHost = CleanHost(v); break;
                 case "trademode": TradeMode = v == "casual" ? "casual" : "active"; break;

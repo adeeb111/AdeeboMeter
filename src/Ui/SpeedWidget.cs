@@ -36,8 +36,8 @@ namespace AdeeboMeter
         // what the folded strip shows: it's redrawn only when this changes
         public static string ChipKey(Snap s)
         {
-            if (!SpeedStyle) return s.Chip;
-            return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark5(s.DownHist) : "");
+            if (!SpeedStyle) return s.Chip + WeatherKeyPart();
+            return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark5(s.DownHist) : "") + WeatherKeyPart();
         }
         static string SpeedText(Snap s)
         {
@@ -53,7 +53,7 @@ namespace AdeeboMeter
             // width from a template, not the live digits - the strip doesn't wobble as numbers change
             string tpl = (Cfg.WDir == "both" ? "↓ 888  ↑ 888" : "↓ 888") + " " + (Cfg.WUnits == "bytes" ? "MB/s" : "Mb/s");
             float tw = Math.Max(Measure(tpl, fBtn, 0).Width, Measure(txt, fBtn, 0).Width), sw = status ? Measure(s.Chip, fSmall, 0).Width + 22 * S : 0, gw = Cfg.WGraph ? 46 * S : 0;
-            int W = (int)(10 * S + (Cfg.Buddy ? 26 * S : 12 * S) + sw + tw + gw + 12 * S), H = (int)(28 * S);
+            float ww = WeatherChipW(); int W = (int)(10 * S + (Cfg.Buddy ? 26 * S : 12 * S) + sw + tw + gw + ww + 12 * S), H = (int)(28 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
             {
@@ -74,7 +74,9 @@ namespace AdeeboMeter
                     var gr = new RectangleF(x, 6 * S, 40 * S, H - 12 * S);
                     var v = (s.DownHist ?? Array.Empty<double>()); v = v.Skip(Math.Max(0, v.Length - 30)).ToArray(); double cap = 1; foreach (var q in v) if (!double.IsNaN(q) && q > cap) cap = q;
                     Theme.Spark(g, v, gr, Theme.Blue, cap * 1.1, true);
+                    x += gw;
                 }
+                if (ww > 0) WeatherChipDraw(g, x + 2 * S, H);
             }
             return bmp;
         }
@@ -85,7 +87,7 @@ namespace AdeeboMeter
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             var top = (s.TopCpu ?? new List<AppStat>()).Where(a => a != null && a.Name != "AdeeboMeter").Take(3).ToList();
             float headH = status ? Measure(s.Headline, fSmall, (int)inner).Height + 6 * S : 0;
-            float h = pad + 24 * S + headH + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 22 * S + pad;
+            string wtx = WeatherCardText(); float h = pad + 24 * S + headH + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (wtx != null ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 22 * S + pad;
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
@@ -125,6 +127,7 @@ namespace AdeeboMeter
                     string t = L.T("Today") + "  ↓ " + MB(s.TodayDown) + "   ↑ " + MB(s.TodayUp);
                     g.DrawString(t, fSmall, muted, pad, y); y += 22 * S;
                 }
+                if (wtx != null) { WeatherCardDraw(g, pad, y, inner, wtx); y += 22 * S; }
                 if (apps)
                 {
                     using (var hb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("BUSIEST APPS (CPU)"), fTiny, hb, pad, y + 4 * S); y += 22 * S;

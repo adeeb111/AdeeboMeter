@@ -900,6 +900,58 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("weather: places by name, the forecast parses to UTC, kinds, when to ask, what's kept, the face's minutes", () =>
+            {
+                var bad = new List<string>();
+                string geo = "{\"results\":[{\"id\":6094817,\"name\":\"Ottawa\",\"latitude\":45.41117,\"longitude\":-75.69812,\"feature_code\":\"PPLC\",\"country_code\":\"CA\",\"admin1\":\"Ontario\",\"country\":\"Canada\",\"postcodes\":[\"K1A\"]},{\"id\":4904996,\"name\":\"Ottawa\",\"latitude\":41.34559,\"longitude\":-88.84258,\"admin1\":\"Illinois\",\"country\":\"United States\"},{\"id\":6077243,\"name\":\"Montr\\u00e9al\",\"latitude\":45.50884,\"longitude\":-73.58781,\"admin1\":\"Quebec\",\"country\":\"Canada\"}],\"generationtime_ms\":0.5}";
+                var all = Weather.ParsePlaces(geo, "Ottawa"); if (all.Count != 3 || all[0].Name != "Ottawa, Ontario, Canada" || Math.Abs(all[0].Lat - 45.41117) > 1e-6) bad.Add("places: " + string.Join(" / ", all.Select(z => z.Name).ToArray()));
+                if (!all.Any(z => z.Name.StartsWith("Montréal", StringComparison.Ordinal))) bad.Add("unicode name not unescaped");
+                var il = Weather.ParsePlaces(geo, "Ottawa, Illinois"); if (il.Count != 1 || !il[0].Name.Contains("Illinois")) bad.Add("Ottawa, Illinois didn't narrow");
+                if (!Weather.SearchUrl("Dhaka, Bangladesh").EndsWith("name=Dhaka", StringComparison.Ordinal)) bad.Add("search sends more than the first part: " + Weather.SearchUrl("Dhaka, Bangladesh"));
+                if (Weather.CleanPlace("45.41;-75.7;Ottawa=x|y") != "45.41;-75.7;Ottawax y" && Weather.CleanPlace("45.41;-75.7;Ottawa=x|y") != "45.41;-75.7;Ottawaxy") bad.Add("place not cleaned: " + Weather.CleanPlace("45.41;-75.7;Ottawa=x|y"));
+                if (Weather.CleanPlace("95;10;Nowhere") != "" || Weather.CleanPlace("junk") != "") bad.Add("a bad place was kept");
+                if (Weather.ForecastUrl(all[0]).Contains("Ottawa")) bad.Add("the forecast request carries the name");
+                string fc = "{\"latitude\":45.4,\"utc_offset_seconds\":-18000,\"hourly_units\":{\"time\":\"iso8601\",\"temperature_2m\":\"°C\"},\"hourly\":{\"time\":[\"2026-11-14T00:00\",\"2026-11-14T01:00\",\"2026-11-14T02:00\"],\"temperature_2m\":[3.1,2.4,null],\"apparent_temperature\":[-1.0,-2.2,-3],\"weather_code\":[3,61,95],\"precipitation_probability\":[10,80,90]}}";
+                var hs = Weather.ParseForecast(fc);
+                if (hs.Count != 3 || hs[0].Utc != new DateTime(2026, 11, 14, 5, 0, 0, DateTimeKind.Utc) || hs[1].Code != 61 || hs[1].Pop != 80 || !double.IsNaN(hs[2].Temp) || Math.Abs(hs[0].Feels + 1) > 1e-9) bad.Add("forecast parse");
+                if (Weather.Kind(hs[0]) != null || Weather.Kind(hs[1]) != "rain" || Weather.Kind(hs[2]) != "storm") bad.Add("kinds from codes");
+                if (Weather.Kind(new Weather.Hour { Code = 73 }) != "snow" || Weather.Kind(new Weather.Hour { Code = 0, Feels = 31 }) != "hot" || Weather.Kind(new Weather.Hour { Code = 2, Temp = -3, Feels = -14 }) != "cold" || Weather.Kind(new Weather.Hour { Code = 2, Temp = -9, Feels = -9 }) != null) bad.Add("hot / cold / snow");
+                var now = new DateTime(2026, 11, 14, 17, 0, 0, DateTimeKind.Utc);
+                Func<int, int, List<Weather.Hour>> span = (from, to) => Enumerable.Range(from, to - from + 1).Select(i => new Weather.Hour { Utc = now.AddHours(i), Temp = 4, Code = 3 }).ToList();
+                if (!Weather.NeedFetch(new List<Weather.Hour>(), now, now, "normal")) bad.Add("nothing kept but no fetch");
+                if (Weather.NeedFetch(span(-2, 60), now.AddHours(-7), now, "normal")) bad.Add("normal fetched with 60 h left");
+                if (!Weather.NeedFetch(span(-2, 20), now.AddHours(-30), now, "normal")) bad.Add("normal didn't fetch with 20 h left");
+                if (!Weather.NeedFetch(span(-2, 60), now.AddHours(-7), now, "better")) bad.Add("better didn't refresh after 7 h");
+                if (Weather.NeedFetch(span(-2, 60), now.AddHours(-2), now, "better")) bad.Add("better refreshed after 2 h");
+                var trimmed = Weather.Trim(span(-50, 80), now); if (trimmed.First().Utc < now.AddHours(-24) || trimmed.Last().Utc > now.AddDays(4)) bad.Add("kept more than 3-4 days");
+                if (!Weather.InWindow(new DateTime(2026, 11, 14, 9, 12, 0)) || Weather.InWindow(new DateTime(2026, 11, 14, 9, 15, 0)) || !Weather.InWindow(new DateTime(2026, 11, 14, 9, 54, 20)) || Weather.InWindow(new DateTime(2026, 11, 14, 9, 55, 0))) bad.Add("face minutes");
+                int win = Enumerable.Range(0, 3600).Count(sec => Weather.InWindow(new DateTime(2026, 11, 14, 9, 0, 0).AddSeconds(sec))); if (win < 400 || win > 540) bad.Add("face shows " + win + " s an hour, want 6-9 min");
+                // the line and the face, with a forecast on hand (settings put back after)
+                bool on0 = Cfg.WeatherOn; string pl0 = Cfg.WeatherPlace, co0 = Cfg.Corner; bool f0 = Cfg.WeatherF;
+                try
+                {
+                    Cfg.WeatherOn = true; Cfg.WeatherPlace = "45.41;-75.7;Ottawa, Ontario, Canada"; Cfg.Corner = Moments.WithMoments; Cfg.WeatherF = false;
+                    var nowU = DateTime.UtcNow; var hb = new DateTime(nowU.Year, nowU.Month, nowU.Day, nowU.Hour, 0, 0, DateTimeKind.Utc);
+                    var l = Enumerable.Range(-1, 30).Select(i => new Weather.Hour { Utc = hb.AddHours(i), Temp = 4, Feels = 1, Code = i >= 0 && i < 3 ? 61 : 3 }).ToList();
+                    Weather.Inject(l, Cfg.WeatherPlace);
+                    string t = Weather.Text(nowU); if (t == null || !t.StartsWith("4°C · rain until", StringComparison.Ordinal)) bad.Add("line: " + t);
+                    if (Weather.Chip(nowU) != "4°" || Weather.ChipEmoji(nowU) != "1f327") bad.Add("chip: " + Weather.Chip(nowU) + " " + Weather.ChipEmoji(nowU));
+                    Cfg.WeatherF = true; if (Weather.Chip(nowU) != "39°") bad.Add("°F: " + Weather.Chip(nowU)); Cfg.WeatherF = false;
+                    var nx = Enumerable.Range(-1, 30).Select(i => new Weather.Hour { Utc = hb.AddHours(i), Temp = 4, Code = i >= 2 ? 71 : 3 }).ToList(); Weather.Inject(nx, Cfg.WeatherPlace);
+                    t = Weather.Text(nowU); if (t == null || !t.Contains("snow from")) bad.Add("coming snow: " + t);
+                    Weather.Inject(l, Cfg.WeatherPlace);
+                    var inWin = hb.ToLocalTime().AddMinutes(12.5).ToUniversalTime(); var hb0 = hb; 
+                    if (inWin.Hour == hb0.Hour && Weather.Face(inWin) != "1f327") bad.Add("no rain face in its minutes");
+                    if (Weather.Face(hb.AddMinutes(20)) != null) bad.Add("a face outside its minutes");
+                    Cfg.Corner = Moments.Quiet; if (Weather.Face(inWin) != null) bad.Add("a face in the Quiet corner"); Cfg.Corner = Moments.WithMoments;
+                    var sn = new Snap { Call = true }; if (Moments.FaceFor(sn) != null) bad.Add("a face during a call");
+                    Weather.Inject(l, "1;1;Elsewhere"); if (Weather.Text(nowU) != null) bad.Add("another place's forecast shown");
+                    Cfg.WeatherOn = false; if (Weather.Chip(nowU) != null || Weather.Face(inWin) != null) bad.Add("shows while off");
+                    foreach (var e in new[] { "1f975", "1f976", "1f327", "1f328", "26c8" }) if (Draw.Emoji(e) == null) bad.Add("emoji " + e + " not built in");
+                }
+                finally { Cfg.WeatherOn = on0; Cfg.WeatherPlace = pl0; Cfg.Corner = co0; Cfg.WeatherF = f0; Weather.Inject(new List<Weather.Hour>(), ""); }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)));
+            });
             T("tool pictures: each one draws before a run and with its Example, and the Example fills it", () =>
             {
                 using (var icon = Theme.MakeIcon(16))

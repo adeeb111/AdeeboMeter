@@ -6,6 +6,13 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### New: weather on the buddy and the widget
+- Off until you turn it on (Settings > Weather). You type the place - a city or a country; the matches are listed so Ottawa, Ontario and Ottawa, Illinois can't mix. The place you picked shows under the switch, with Change and Remove. The PC's location is never used, so it works where IT has location off.
+- Open-Meteo, free and without an account. Normal: one request for today and the next 2 days, then quiet until less than a day is left. Better: every 6 hours while the PC is on. Only the coordinates are sent; only the last day and the coming ones are kept (weather.txt), no history.
+- The buddy shows hot, cold, rain, snow or a thunderstorm for 2.5 minutes at :12, :32 and :52 when the hour calls for it - never in the Quiet corner, during a call or with a problem. Hot and cold go by feels-like (28°C and above, -10°C and below).
+- Widget: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card. °C or °F.
+- Moments now show on the folded strip too (they waited for the card before).
+
 ### New: tool pictures (first wave)
 - 14 tools draw what they do: packet stack (one full-size packet, layer by layer, against the MTU), encrypt and open (the file, the lock, the code on its own road), ping and TCP ping (the round trip on a scale from great to laggy), dig (who asks whom), HTTP and TLS (the handshake, then the page), speed test (download and upload dials, lag when busy), subnet (the 32 bits, the range with the gateway and your address on it), MTR and MTU (the path, router by router), port test (open, refused or dropped), Wi-Fi link rate and Wi-Fi roams (a day on a line).
 - Before a run the picture shows how it works from what is in the boxes; Example and a real run fill it with the result. Drawn from the screen only - nothing is sent to draw it.

@@ -436,7 +436,7 @@ namespace AdeeboMeter
             string m = asleep ? "asleep" : BuddyMood(s);
             string hm = asleep || forFile ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
             string face = !forFile && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
-            if (!forFile && !asleep) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment: its face for 12 s
+            if (!forFile) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment (12 s) or the weather (2.5 min) wakes the folded chip too
             if (face == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
             var em = face != null ? Emoji(face) : null;
             if (em != null)
@@ -496,7 +496,7 @@ namespace AdeeboMeter
         {
             if (SpeedStyle) return SpeedChip(s);
             var ts = Measure(s.Chip, fSmall, 0);
-            int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0)), H = (int)(26 * S);
+            float ww = WeatherChipW(); int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
             {
@@ -510,6 +510,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(Theme.Lv(s.Level))) g.FillEllipse(b, x, (H - 8 * S) / 2, 8 * S, 8 * S); x += 14 * S;
                 }
                 using (var b = new SolidBrush(Theme.Ink)) g.DrawString(s.Chip, fSmall, b, x, (H - ts.Height) / 2);
+                if (ww > 0) WeatherChipDraw(g, x + ts.Width + 6 * S, H);
                 if (dwell > 0)
                 {
                     var tr = new RectangleF(10 * S, H - 4 * S, W - 20 * S, 2 * S);
@@ -664,7 +665,8 @@ namespace AdeeboMeter
             float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure("Why: " + s.Hint, fSmall, (int)inner).Height + 4 * S;
             string quip = ReferenceEquals(s, AppCtx.Rewind) ? "" : Mood.Quip(s), season = Mood.SeasonLine(s);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */ string extra = (quip + (quip != "" && season != "" ? "\n" : "") + season).Trim();
             float quipH = extra == "" ? 0 : Measure(extra, fSmall, (int)inner).Height + 4 * S;
-            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 52 * S + (s.Call ? 44 * S : 0) + 3 * 20 * S + 6 * S + 17 * S + 34 * S + pad;
+            string wtx = WeatherCardText();
+            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 52 * S + (s.Call ? 44 * S : 0) + 3 * 20 * S + 6 * S + 17 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
@@ -726,6 +728,7 @@ namespace AdeeboMeter
                     string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
                     if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
                 }
+                if (wtx != null) WeatherCardDraw(g, pad, gr.Bottom + 8 * S, inner, wtx);
             }
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
             return bmp;

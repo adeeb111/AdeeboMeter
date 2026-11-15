@@ -33,7 +33,7 @@ namespace AdeeboMeter
             return true;
         }
         // the face to draw now (null = the usual one): not during a call or a problem
-        public static string FaceFor(Snap s) { return s == null || s.Call || s.Level > 0 ? null : Face; }
+        public static string FaceFor(Snap s) { return s == null || s.Call || s.Level > 0 ? null : Face ?? Weather.Face(DateTime.UtcNow); }   // then the weather: 2.5 min three times an hour
 
         // ---------- the moments
         // a game session ended clean: 15 minutes or more, at most 2 spiky seconds
