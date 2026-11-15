@@ -219,6 +219,9 @@ namespace AdeeboMeter
             foreach (var it in items) if (!SetSections.Contains(it.Sec)) bad.Add(it.Label + " has no question (" + it.Sec + ")");
             foreach (var sec in SetSections) { if (!SetQLook.ContainsKey(sec)) bad.Add(sec + " has no question"); foreach (var b in BigOnes(sec)) if (!items.Any(i => i.Sec == sec && i.Label == b)) bad.Add(sec + ": big card '" + b + "' isn't a setting"); SecSummary(sec, items); }
             if (SetSections[0] != "General" || SetSections[1] != "Widget") bad.Add("General first, Widget second");
+            // every Toolbox tool sits under a question (or is shown through one), so question view can always reach it
+            foreach (var t in Tools2()) if (QuestionOf(t) == "" && !Questions.Any(q => q[3].Split('|').Contains(t.Id))) bad.Add("tool " + t.Id + " (" + t.Group + ") has no question");
+            foreach (var q in Questions) if (ToolsOf(q[0]).Count == 0) bad.Add("question " + q[0] + " shows no tools");
             return string.Join("; ", bad);
         }
     }

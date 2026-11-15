@@ -54,6 +54,8 @@ namespace AdeeboMeter
             return Tools2().Where(t => (groups.Contains(t.Group) || feat.Contains(t.Id)) && (!SnmpView(t.Id) || t.Id == "snmp")).ToList();
         }
         // the two ways to see the Toolbox: by question (roomy) or the classic all-at-once list
+        // the search box: roomy in question view, never wider than the page (narrow windows, 150-200 % scaling)
+        int TbSearchW(bool q) { return Math.Max(Sc(160), Math.Min(toolboxPage.Width - Sc(48), q ? Math.Max(Sc(420), toolboxPage.Width - Sc(420)) : Sc(320))); }
         void ApplyTbView()
         {
             if (tbSplit == null) return;
@@ -62,7 +64,7 @@ namespace AdeeboMeter
             tbSplit.ColumnStyles[0].Width = q ? 0 : Sc(290); tbLeft.Visible = !q;
             foreach (var c in tbClassic) c.Visible = !q;
             tbViewQ.Selected = q; tbViewL.Selected = !q;
-            tbSearch.Width = q ? Math.Max(Sc(420), toolboxPage.Width - Sc(420)) : Sc(320);
+            tbSearch.Width = TbSearchW(q);
             toolboxPage.ResumeLayout(true);
             if (q && tbHome) tbBar.Visible = false; if (tbAssist != null) tbAssist.Visible = false;
             tbHead.Visible = q && !tbHome;

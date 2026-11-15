@@ -114,13 +114,15 @@ namespace AdeeboMeter
         // leaves the PC. Only the status line and the Location host are read; the redirect is never followed.
         const string NcsiHost = "www.msftconnecttest.com", NcsiBody = "Microsoft Connect Test";
         static readonly string[] PortalAsked = { "Asked", "msftconnecttest.com (as Windows does)" }, HeadEnd = { "\r\n\r\n" };
+        static readonly object PortalK = new object(); static Task<IPAddress[]> portalDns;
         static void Portal(DestResult r, Action changed)
         {
             r.Note = Voice.P("One more thing - checking whether a Wi-Fi sign-in page is in the way...", "Checking for a captive portal (sign-in page)..."); changed();
             string resp = null, why = "";
             try
             {
-                var dns = Task.Factory.StartNew(() => Dns.GetHostAddresses(NcsiHost));
+                Task<IPAddress[]> dns;   // async (no thread held while Windows waits) and shared: a retry while one is pending joins it
+                lock (PortalK) { if (portalDns == null || portalDns.IsCompleted) portalDns = Dns.GetHostAddressesAsync(NcsiHost); dns = portalDns; }
                 if (!dns.Wait(4000)) why = "no DNS answer";
                 else
                 {

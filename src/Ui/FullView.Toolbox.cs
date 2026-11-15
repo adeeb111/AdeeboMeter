@@ -709,7 +709,7 @@ namespace AdeeboMeter
             toolboxPage.Controls.Add(split); toolboxPage.Controls.Add(topBar);
             toolboxPage.ResumeLayout(true);
             SelectTool(tbSel); ShowSection("net"); ThemeScrollbars(toolboxPage);
-            toolboxPage.Resize += delegate { if (ByQuestion && tbSearch != null) { int want = Math.Max(Sc(420), toolboxPage.Width - Sc(420)); if (Math.Abs(tbSearch.Width - want) > 4) tbSearch.Width = want; } };
+            toolboxPage.Resize += delegate { if (ByQuestion && tbSearch != null) { int want = TbSearchW(true); if (Math.Abs(tbSearch.Width - want) > 4) tbSearch.Width = want; } };
             ApplyTbView(); if (ByQuestion) ShowQuestions("");
         }
         void SelectTool(string id)

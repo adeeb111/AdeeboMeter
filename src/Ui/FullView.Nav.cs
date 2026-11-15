@@ -135,19 +135,30 @@ namespace AdeeboMeter
             Kit.Icon(g, "search", new RectangleF(sr.X + 12 * S, sr.Y + 9 * S, 16 * S, 16 * S), sub);
             using (var b = new SolidBrush(sub)) g.DrawString(L.T("Search anything..."), Draw.fBody, b, sr.X + 34 * S, sr.Y + 8 * S);
             Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); y += 48 * S;
+            // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
+            // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
+            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S;
+            bool compact = bar.Count * 46 * S + more.Count * 38 * S > room; float bigH = compact ? 36 : 44;
+            int fitMore = more.Count; if (compact) { float left = room - bar.Count * 38 * S; fitMore = Math.Max(0, (int)(left / (38 * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
             Action<string, bool> row = (id, small) =>
             {
-                float h = (small ? 36 : 44) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
+                float h = (small ? 36 : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
                 if (sel) { using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, rr); using (var b = new SolidBrush(hc ? SystemColors.Highlight : Aqua)) g.FillRectangle(b, rr.X, rr.Y + 6 * S, 3 * S, h - 12 * S); }
                 Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(sel ? ink : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
                 string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id);
                 y += h + 2 * S;
             };
-            foreach (var id in NavBar()) row(id, false);
+            foreach (var id in bar) row(id, false);
             y += 8 * S;
             using (var b = new SolidBrush(sub)) g.DrawString(L.T("MORE"), Draw.fTiny, b, x + 14 * S, y); y += 20 * S;
-            foreach (var id in NavMore()) row(id, true);
+            foreach (var id in more.Take(fitMore)) row(id, true);
+            if (fitMore < more.Count)
+            {
+                var rr = new RectangleF(x, y, w, 36 * S); Kit.Icon(g, "more", new RectangleF(x + 14 * S, y + 9 * S, 18 * S, 18 * S), sub);
+                using (var b = new SolidBrush(sub)) g.DrawString(L.T("More...") + "  (" + (more.Count - fitMore).ToString(CultureInfo.CurrentCulture) + ")", Draw.fBody, b, x + 42 * S, y + (36 * S - Draw.fBody.GetHeight(g)) / 2);
+                Act(sideNav, rr, delegate { ShowMoreMenu(sideNav, new Point((int)rr.X, (int)rr.Bottom)); }); y += 38 * S;
+            }
             // the live meter at the bottom (replaces the right-hand panel in this layout)
             float mh = 96 * S, my = r.Height - mh - 12 * S;
             if (my > y + 8 * S)

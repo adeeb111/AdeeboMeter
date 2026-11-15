@@ -207,6 +207,7 @@ namespace AdeeboMeter
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
+        static readonly System.Text.RegularExpressions.Regex PartName = new System.Text.RegularExpressions.Regex(@"^\.[0-9a-f]{32}\.part$");
         public static void SweepParts()
         {
             lock (pk)
@@ -214,7 +215,7 @@ namespace AdeeboMeter
                 {
                     if (!File.Exists(PartsFile)) return;
                     foreach (var p in File.ReadAllLines(PartsFile).Take(200))
-                        if (Path.GetFileName(p).StartsWith(".", StringComparison.Ordinal) && p.EndsWith(".part", StringComparison.OrdinalIgnoreCase) && File.Exists(p))   // only our own hidden .<guid>.part files
+                        if (Path.IsPathRooted(p) && PartName.IsMatch(Path.GetFileName(p)) && File.Exists(p))   // only our own hidden .<32 hex>.part files, full paths
                             try { File.SetAttributes(p, FileAttributes.Normal); File.Delete(p); Program.Log("removed a leftover decrypt temp file: " + p); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                     File.Delete(PartsFile);
                 }

@@ -575,7 +575,7 @@ namespace AdeeboMeter
         // Light / dark: recolour every control; the painted parts read the theme on their next paint.
         public void ApplyTheme()
         {
-            BackColor = Theme.Bg; Recolor(this); themedScroll.Clear(); ThemeScrollbars(this);
+            BackColor = Theme.Bg; Recolor(this); themedScroll.Clear(); foreach (var nb in navBmps.Values) nb.Dispose(); navBmps.Clear();   // icons are cached per colour; a new theme starts fresh ThemeScrollbars(this);
             try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(Handle, 20 /*immersive dark title bar*/, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch { }
             Refresh();
         }

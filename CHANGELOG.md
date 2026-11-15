@@ -6,6 +6,14 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### Fixed: tester audit, round 1
+- Sidebar: with many tabs on a short screen or at 150-200 % scaling, rows get compact and the rest goes behind a "More... (n)" row - nothing is cut off.
+- Toolbox search box never grows wider than the page (narrow windows, high scaling), on first show and on resize.
+- Captive-portal check: the DNS lookup no longer holds a thread while Windows waits, and a retry joins the pending lookup.
+- Leftover decrypt temp files: cleanup only removes our exact hidden .<id>.part names given as full paths.
+- Sidebar icon cache is freed when the theme changes.
+- Self-test: every Toolbox tool must belong to a question, and every question must show tools.
+
 ### New: tool pictures (third wave) - packets going back and forth
 - Exchange pictures: each tool draws who talks to whom (PC, router, DNS, servers), and a packet travels each step in order, out and back.
   The packet in flight shows what it carries ("Discover · broadcast to everyone · UDP 68 → 67"). Sealed packets carry a padlock.
