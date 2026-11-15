@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AdeeboMeter Result</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- The result arrives in the link after the # - browsers never send that part to the server, so adeebometer.com never sees it.
+     Everything below is worked out here, on the phone. Format (v1): see src/Ui/FullView.Share.cs, QrLink(). -->
+<style>
+:root{--blue:#1F6FEB;--blue-s:#E8F0FE;--green:#2DA44E;--green-s:#E6F4EA;--amber:#BF8700;--amber-s:#FFF4D6;--red:#CF222E;--red-s:#FDE7E9;--purple:#8250DF;--ink:#1B2330;--sub:#4A5568;--muted:#6B7685;--line:#E3E8EF;--bg:#F6F8FB;--card:#fff;--grey-s:#EEF1F5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue-s:#16233A;--green-s:#132A1B;--amber-s:#2E2410;--red-s:#3A1519;--ink:#E6EAF0;--sub:#B4BDC9;--muted:#8A94A3;--line:#2A3340;--bg:#0E131A;--card:#161C25;--grey-s:#1F2630}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;margin:4px 0 12px}.brand img{width:22px;height:22px}.brand small{font-weight:400;color:var(--muted);margin-left:auto;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px}
+.verdict{border-left:6px solid var(--muted)}.verdict h1{font-size:22px;line-height:1.25;margin:4px 0 6px}.verdict p{margin:0;color:var(--sub)}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:99px}
+.l0{--c:var(--green);--s:var(--green-s)}.l1{--c:var(--amber);--s:var(--amber-s)}.l2{--c:var(--red);--s:var(--red-s)}.l3{--c:var(--muted);--s:var(--grey-s)}
+.verdict.l0,.verdict.l1,.verdict.l2{border-left-color:var(--c)}.tag{background:var(--s);color:var(--c)}
+h2{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:700}
+.path{display:flex;align-items:flex-start;gap:0}.leg{flex:1;text-align:center;font-size:13px;position:relative}
+.leg .dot{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;background:var(--s);border:3px solid var(--c)}
+.leg:not(:last-child):after{content:"";position:absolute;top:13px;left:calc(50% + 16px);right:calc(-50% + 16px);height:3px;background:var(--line)}
+.leg b{display:block}.leg span{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.num{background:var(--s,var(--grey-s));border-radius:12px;padding:10px 12px}
+.num .k{font-size:12px;color:var(--sub)}.num .v{font-size:20px;font-weight:700}.num .w{font-size:12px;color:var(--c,var(--muted))}
+svg{display:block;width:100%;height:auto}.cap{font-size:12px;color:var(--muted);margin-top:6px}
+ol{margin:0;padding-left:20px}ol li{margin:0 0 8px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:14px 10px;cursor:pointer;background:var(--blue-s);color:var(--blue)}
+button.main{grid-column:1/-1;background:var(--blue);color:#fff;font-size:17px;padding:16px}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:10px;font:14px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--ink)}
+.note{font-size:12px;color:var(--muted);text-align:center;margin:8px 0 24px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+.empty{text-align:center;padding:40px 16px}
+@media print{body{background:#fff}.btns,#msgcard,.note button,#toast{display:none}.card{break-inside:avoid;border-color:#ccc}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="toast"></div>
+<script>
+(function () {
+  "use strict";
+  var A = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.";
+  var app = document.getElementById("app");
+  function el(h) { var d = document.createElement("div"); d.innerHTML = h; return d.firstElementChild; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function toast(t) { var e = document.getElementById("toast"); e.textContent = t; e.className = "on"; setTimeout(function () { e.className = ""; }, 1800); }
+  function n(v) { return v === "" || v == null ? NaN : parseFloat(v); }
+  function f(v, d) { return isNaN(v) ? "–" : (Math.round(v * Math.pow(10, d || 0)) / Math.pow(10, d || 0)).toString(); }
+  function ser(s, kind) { var out = []; for (var i = 0; i < (s || "").length; i++) { var c = s[i]; if (c === "-") { out.push(null); continue; } var k = A.indexOf(c); out.push(k < 0 ? NaN : kind === "loss" ? k : (k / 2) * (k / 2)); } return out; }
+
+  var rawHash = (location.hash || "").replace(/^#/, "");
+  if (rawHash.slice(0, 2) === "2!") { v2(rawHash); return; }
+  var raw = decodeURIComponent(rawHash);
+  var p = raw.split("!");
+  if (p[0] !== "1" || p.length < 4) {
+    app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">Nothing to show yet</h1><p>Open this page by scanning the QR code in AdeeboMeter on your PC (Toolbox › QR code). The result travels inside the link and stays on your phone.</p><p><a href="./">What is AdeeboMeter?</a></p></div>';
+    return;
+  }
+  // ---- the result
+  var t = p[1] || "", when = new Date(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10));
+  var lv = (p[2] || "333333").split("").map(Number), overall = lv[0], legs = lv.slice(1);
+  var v = (p[3] || "").split(","), M = { gw: n(v[0]), ping: n(v[1]), jit: n(v[2]), loss: n(v[3]), dns: n(v[4]), down: n(v[5]), up: n(v[6]), cpu: n(v[7]), mem: n(v[8]), wifi: n(v[9]), outages: n(v[10]), cable: v[11] === "c" };
+  var net = ser(p[4], "ms").slice(0, 60), gws = ser(p[5], "ms").slice(0, 60), loss = ser(p[6], "loss").slice(0, 60), head = (p[7] || "").replace(/\+/g, " ").slice(0, 120);
+  var names = ["This PC", M.cable ? "Cable" : "Wi-Fi", "Provider", "DNS", "Internet"];
+
+  // ---- worked out here: a grade for each number, in plain words
+  function grade(k, x) {
+    if (isNaN(x)) return [3, "not measured"];
+    switch (k) {
+      case "gw": return x < 10 ? [0, "your home network is quick"] : x < 40 ? [1, "slow for a home network"] : [2, "your home network is struggling"];
+      case "ping": return x < 40 ? [0, "great for calls and games"] : x < 100 ? [1, "fine for browsing, laggy for games"] : [2, "slow - calls and games suffer"];
+      case "jit": return x < 10 ? [0, "steady"] : x < 30 ? [1, "wobbly - calls may stutter"] : [2, "very unsteady"];
+      case "loss": return x < 0.5 ? [0, "nothing lost"] : x < 2 ? [1, "a little lost"] : [2, "packets are being lost"];
+      case "dns": return x < 50 ? [0, "names answer fast"] : x < 200 ? [1, "names are slow"] : [2, "names are very slow"];
+      case "wifi": return x >= 60 ? [0, "strong signal"] : x >= 40 ? [1, "weak - move closer"] : [2, "very weak signal"];
+      case "cpu": case "mem": return x < 80 ? [0, "room to spare"] : x < 95 ? [1, "busy"] : [2, "maxed out"];
+      default: return [3, ""];
+    }
+  }
+  var worst = -1; for (var i = 0; i < 5; i++) if (legs[i] === 2) { worst = i; break; } if (worst < 0) for (i = 0; i < 5; i++) if (legs[i] === 1) { worst = i; break; }
+  var means = [
+    "The PC itself is the bottleneck - something on it is using the processor, memory or disk.",
+    M.cable ? "The trouble is inside your home - the cable, the router or the switch." : "The trouble is your Wi-Fi - between this PC and the router, not your provider.",
+    "Your home network is fine - the trouble starts at your internet provider.",
+    "The internet works, but looking up names is slow or failing (DNS).",
+    "Your line to the provider is fine - the slowdown is out on the internet, near the site or service."];
+  var todo = [
+    ["Close what's heavy (AdeeboMeter's Toolbox › Background jobs shows it)", "Restart the PC if it has been on for days", "Check again after"],
+    M.cable ? ["Try another cable and another router port", "Restart the router (unplug 30 seconds)", "If one device only: its network card or driver"] : ["Move closer to the router, or remove walls in between", "Use 5 GHz, or a cable for calls and games", "Restart the router (unplug 30 seconds)"],
+    ["Restart the modem and router once (unplug 30 seconds)", "Run it again - if it's the same, send this to your provider (button below)", "Note the times it happens - evenings point to congestion"],
+    ["Try another DNS server (1.1.1.1 or 8.8.8.8) in Windows' network settings", "Restart the router - it often serves DNS", "If only some sites fail: those sites' DNS"],
+    ["Wait a little - it's usually the service, not you", "Check the service's status page", "If every site is slow: send this to your provider"]];
+  var title = head || (overall === 0 ? "All good right now" : worst >= 0 ? names[worst] + (overall === 2 ? " is the problem" : " needs a look") : "Something needs a look");
+  var word = ["ALL GOOD", "WORTH A LOOK", "PROBLEM", "NOT SURE"][overall] || "RESULT";
+  var ago = Math.round((Date.now() - when.getTime()) / 60000), agoT = isNaN(ago) ? "" : ago < 2 ? "just now" : ago < 90 ? ago + " min ago" : ago < 2880 ? Math.round(ago / 60) + " h ago" : Math.round(ago / 1440) + " days ago";
+  var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  // ---- charts, drawn here
+  function chart(series, color, label, maxFloor, unit, lossSeries) {
+    var W = 600, H = 150, pad = 26, vals = series.filter(function (x) { return x != null && !isNaN(x); });
+    if (!vals.length) return "";
+    var max = Math.max(maxFloor, Math.max.apply(null, vals) * 1.15), bw = (W - pad) / Math.max(1, series.length), s = '<svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" role="img" aria-label="' + esc(label) + '">';
+    [0.5, 1].forEach(function (g) { var y = H - (H - 10) * g; s += '<line x1="' + pad + '" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="var(--line)"/><text x="0" y="' + (y + 4) + '" font-size="11" fill="var(--muted)">' + Math.round(max * g) + '</text>'; });
+    series.forEach(function (x, i) {
+      var X = pad + i * bw + 1;
+      if (x == null) { s += '<rect x="' + X + '" y="' + (H - 16) + '" width="' + Math.max(2, bw - 2) + '" height="16" rx="2" fill="var(--red)"/>'; return; }
+      var h = Math.max(2, (H - 10) * x / max), c = lossSeries && lossSeries[i] >= 2 ? "var(--red)" : x > max * 0.6 && maxFloor < 100 ? "var(--amber)" : color;
+      s += '<rect x="' + X + '" y="' + (H - h) + '" width="' + Math.max(2, bw - 2) + '" height="' + h + '" rx="2" fill="' + c + '"/>';
+    });
+    s += '<text x="' + pad + '" y="' + (H + 15) + '" font-size="11" fill="var(--muted)">older</text><text x="' + W + '" y="' + (H + 15) + '" font-size="11" fill="var(--muted)" text-anchor="end">now · ' + unit + '</text></svg>';
+    return s;
+  }
+
+  // ---- the message for the provider (and for anyone else)
+  function msg() {
+    var L = [];
+    L.push("Hello - I'm having trouble with my internet connection. Measured by AdeeboMeter on " + whenT + ":");
+    L.push("");
+    L.push("- Result: " + title + " (" + word.toLowerCase() + ")");
+    L.push("- Connection: " + (M.cable ? "wired (cable) - Wi-Fi is not involved" : "Wi-Fi" + (isNaN(M.wifi) ? "" : ", signal " + f(M.wifi) + "%")));
+    L.push("- My router answers in " + f(M.gw) + " ms (my home network " + (grade("gw", M.gw)[0] === 0 ? "is fine" : "is slow") + ")");
+    L.push("- Internet: " + f(M.ping) + " ms, jitter " + f(M.jit, 1) + " ms, loss " + f(M.loss, 1) + "%");
+    if (!isNaN(M.down)) L.push("- Speed: " + f(M.down) + " down / " + f(M.up) + " up (Mbps)");
+    if (M.outages > 0) L.push("- Outages today: " + f(M.outages));
+    var lost = loss.filter(function (x) { return x >= 2; }).length; if (lost) L.push("- Packet loss in " + lost + " of the last " + loss.length + " minutes");
+    L.push("");
+    L.push(worst === 2 ? "My home network checks out, so the problem looks like it's on your side. Could you check my line (signal levels, errors) and the node I'm on, especially at the times above?" : "Could you check my line for errors and the node I'm on?");
+    L.push("");
+    L.push("The full result with charts: " + location.href);
+    return L.join("\n");
+  }
+
+  // ---- the page
+  var leg = function (i) { var l = legs[i] == null ? 3 : legs[i], sub = i === 0 ? (isNaN(M.cpu) ? "" : "CPU " + f(M.cpu) + "%") : i === 1 ? (M.cable ? "cable" : isNaN(M.wifi) ? "" : f(M.wifi) + "% signal") : i === 2 ? (isNaN(M.loss) ? "" : f(M.loss, 1) + "% lost") : i === 3 ? (isNaN(M.dns) ? "" : f(M.dns) + " ms") : (isNaN(M.ping) ? "" : f(M.ping) + " ms"); return '<div class="leg l' + l + '"><div class="dot"></div><b>' + names[i] + '</b><span>' + sub + '</span></div>'; };
+  var num = function (k, label, x, unit, d) { var g = grade(k, x); return '<div class="num l' + g[0] + '"><div class="k">' + label + '</div><div class="v">' + f(x, d) + ' <small>' + unit + '</small></div><div class="w">' + g[1] + '</div></div>'; };
+  var h = "";
+  h += '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT ? " · " + agoT : "") + '</small></div>';
+  h += '<div class="card verdict l' + overall + '"><span class="tag">' + word + '</span><h1>' + esc(title) + '</h1><p>' + (worst >= 0 ? means[worst] : "Every part of the path checked out.") + '</p></div>';
+  h += '<div class="card"><h2>FROM THIS PC TO THE INTERNET</h2><div class="path">' + [0, 1, 2, 3, 4].map(leg).join("") + '</div></div>';
+  h += '<div class="card"><h2>THE NUMBERS, IN PLAIN WORDS</h2><div class="grid">' + num("gw", "Your router answers in", M.gw, "ms") + num("ping", "The internet answers in", M.ping, "ms") + num("jit", "Wobble (jitter)", M.jit, "ms", 1) + num("loss", "Lost on the way", M.loss, "%", 1) + num("dns", "Names (DNS)", M.dns, "ms") + (M.cable ? num("cpu", "This PC's processor", M.cpu, "%") : num("wifi", "Wi-Fi signal", M.wifi, "%")) + '</div>' + (isNaN(M.down) ? "" : '<p class="cap">Traffic right then: ' + f(M.down, 1) + ' Mbps down · ' + f(M.up, 1) + ' Mbps up</p>') + '</div>';
+  var c1 = chart(net, "var(--blue)", "internet checks", 60, "ms", null);
+  if (c1) h += '<div class="card"><h2>THE LAST INTERNET CHECKS</h2>' + c1 + '<p class="cap">Each bar is one check. Red at the bottom = no answer at all.</p></div>';
+  var c2 = chart(gws, "var(--green)", "router, per minute", 20, "ms", loss);
+  if (c2) h += '<div class="card"><h2>YOUR ROUTER, MINUTE BY MINUTE</h2>' + c2 + '<p class="cap">Red bars are minutes with packet loss. A flat, low router line with trouble elsewhere means your home network is not the problem.</p></div>';
+  h += '<div class="card"><h2>WHAT TO DO</h2><ol>' + (worst >= 0 ? todo[worst] : ["Nothing right now - scan again when it acts up, so the result shows the problem"]).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ol></div>';
+  h += '<div class="card"><div class="btns"><button class="main" id="isp">Send to my internet provider</button><button id="share">Share</button><button id="pdf">Save as PDF</button><button id="copyall">Copy everything</button><button id="ai">Copy for AI</button></div></div>';
+  h += '<div class="card" id="msgcard"><h2>THE MESSAGE (EDIT IT IF YOU LIKE)</h2><textarea id="msg"></textarea><div class="btns" style="margin-top:10px"><button id="copy">Copy message</button><button id="mail">Email it</button></div></div>';
+  if (/Android/i.test(navigator.userAgent)) h += '<p class="note">Android: Share sends this to any app. From the PC, Send by Bluetooth or Quick Share drops a picture straight into Downloads.</p>';
+  h += '<p class="note">These numbers came inside the link you scanned - they stayed on this phone and were never sent to adeebometer.com. AdeeboMeter can\'t check who made a link: trust it as much as the person who sent it.</p>';
+  app.innerHTML = h;
+  var ta = document.getElementById("msg"); ta.value = msg();
+  function copy() { ta.select(); try { navigator.clipboard.writeText(ta.value).then(function () { toast("Copied - paste it into the support chat"); }, function () { document.execCommand("copy"); toast("Copied"); }); } catch (e) { document.execCommand("copy"); toast("Copied"); } }
+  document.getElementById("copy").onclick = copy;
+  document.getElementById("mail").onclick = function () { location.href = "mailto:?subject=" + encodeURIComponent("Internet problem - measured " + whenT) + "&body=" + encodeURIComponent(ta.value); };
+  document.getElementById("isp").onclick = function () { if (navigator.share) navigator.share({ title: "My internet problem", text: ta.value }).catch(function () {}); else copy(); };
+  document.getElementById("share").onclick = function () { if (navigator.share) navigator.share({ title: "AdeeboMeter result", text: title, url: location.href }).catch(function () {}); else { try { navigator.clipboard.writeText(location.href); toast("Link copied"); } catch (e) {} } };
+  document.getElementById("pdf").onclick = function () { window.print(); };
+  document.getElementById("ai").onclick = function () { var q = "My Windows PC has a network problem. AdeeboMeter measured this:\n\n" + msg().split("\n").slice(2, -2).join("\n") + "\n\nWhat should I check next, step by step? Assume I can only use this PC's Windows settings and my phone."; try { navigator.clipboard.writeText(q).then(function () { toast("Copied - paste it into ChatGPT, Claude or Gemini"); }); } catch (e) {} };
+  document.getElementById("copyall").onclick = function () { try { navigator.clipboard.writeText(msg()).then(function () { toast("Copied - paste it anywhere"); }); } catch (e) { copy(); } };
+
+  // ================================================================== v2: any tool's picture, redrawn here
+  function v2(h) {
+    var D = function (x) { var v; try { v = decodeURIComponent((x || "").replace(/\+/g, " ")); } catch (e) { v = x || ""; } return v.slice(0, 300); };
+    var f = h.split("!"), t = f[1] || "", when = new Date(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10));
+    var title = D(f[2]), cap = D(f[3]), kind = f[4] || "", A = f[5] || "", B = f[6] || "", R = f[7] || "";
+    var items = function (x) { return x ? x.split("~").map(function (i) { return i.split(","); }) : []; };
+    var col = function (lv, back) { return lv == 2 ? "var(--red)" : lv == 1 ? "var(--amber)" : back ? "var(--green)" : "var(--blue)"; };
+    var W = 600, svg = "";
+    if (kind === "x") {
+      var act = A.split("~").map(D), st = items(B), n = act.length, x0 = 64, x1 = W - 64, cw = n > 1 ? (x1 - x0) / (n - 1) : 0, rowH = 58, top = 46, H = top + st.length * rowH + 10;
+      var X = function (i) { return n > 1 ? x0 + cw * i : W / 2; };
+      svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,sans-serif">';
+      act.forEach(function (a, i) { svg += '<rect x="' + (X(i) - 58) + '" y="4" width="116" height="28" rx="8" fill="var(--grey-s)"/><text x="' + X(i) + '" y="23" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">' + esc(a.length > 16 ? a.slice(0, 15) + "…" : a) + '</text><line x1="' + X(i) + '" x2="' + X(i) + '" y1="34" y2="' + H + '" stroke="var(--line)" stroke-dasharray="4 4"/>'; });
+      st.forEach(function (p, i) {
+        var fr = +p[0], to = +p[1], lv = +p[2], sealed = p[3] === "1", all = p[4] === "1", ms = p[5], lab = D(p[6]), det = D(p[7]), y = top + i * rowH + 26, c = col(lv, to < fr);
+        if (fr === to) svg += '<path d="M' + X(fr) + ' ' + (y - 8) + ' q40 8 0 16" fill="none" stroke="' + c + '" stroke-width="2"/>';
+        else svg += '<line x1="' + X(fr) + '" x2="' + X(to) + '" y1="' + y + '" y2="' + y + '" stroke="' + c + '" stroke-width="2.4"' + (all ? ' stroke-dasharray="6 4"' : "") + '/><path d="M' + X(to) + ' ' + y + ' l' + (to > fr ? -9 : 9) + ' -5 v10 z" fill="' + c + '"/>';
+        var mid = fr === to ? X(fr) + 60 : (X(fr) + X(to)) / 2, anc = fr === to ? "start" : "middle";
+        svg += '<text x="' + mid + '" y="' + (y - 7) + '" font-size="13" text-anchor="' + anc + '" fill="var(--ink)">' + (sealed ? "🔒 " : "") + esc(lab) + '</text>';
+        if (det) svg += '<text x="' + mid + '" y="' + (y + 16) + '" font-size="11" text-anchor="' + anc + '" fill="var(--muted)">' + esc(det.length > 70 ? det.slice(0, 69) + "…" : det) + '</text>';
+        if (ms) svg += '<text x="' + (W - 2) + '" y="' + (y + 4) + '" font-size="12" font-weight="700" text-anchor="end" fill="var(--sub)">' + esc(ms) + ' ms</text>';
+      });
+      svg += "</svg>";
+    } else if (kind === "r" || kind === "b") {
+      var L = items(B), unit = kind === "b" ? D(A) : "ms", max = Math.max.apply(null, L.map(function (l) { return Math.max(+l[1] || 0, +l[2] || 0); }).concat([1])) * 1.1; if (unit === "%") max = 100;
+      var H2 = 10 + L.length * 52;
+      svg = '<svg viewBox="0 0 ' + W + ' ' + H2 + '" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,sans-serif">';
+      L.forEach(function (l, i) {
+        var y = 10 + i * 52, v1 = l[1] === "" ? NaN : +l[1], v2 = kind === "r" && l[2] !== "" ? +l[2] : NaN, lv = +(kind === "r" ? l[3] : l[3]), lab = kind === "b" ? D(l[2]) : "";
+        svg += '<text x="0" y="' + (y + 14) + '" font-size="13" font-weight="700" fill="var(--ink)">' + esc(D(l[0])) + '</text><rect x="0" y="' + (y + 22) + '" width="' + (W - 120) + '" height="14" rx="7" fill="var(--grey-s)"/>';
+        if (!isNaN(v1)) svg += '<rect x="0" y="' + (y + 22) + '" width="' + Math.max(4, (W - 120) * v1 / max) + '" height="14" rx="7" fill="' + col(lv) + '"/>';
+        if (!isNaN(v2)) svg += '<rect x="0" y="' + (y + 38) + '" width="' + Math.max(4, (W - 120) * v2 / max) + '" height="6" rx="3" fill="var(--purple)"/>';
+        svg += '<text x="' + (W - 110) + '" y="' + (y + 34) + '" font-size="13" fill="var(--sub)">' + (isNaN(v1) ? "–" : v1) + ' ' + esc(unit) + (isNaN(v2) ? "" : " / " + v2) + '</text>';
+        if (lab) svg += '<text x="' + (W - 2) + '" y="' + (y + 14) + '" font-size="11" text-anchor="end" fill="var(--muted)">' + esc(lab) + '</text>';
+      });
+      svg += "</svg>";
+    } else if (kind === "p") {
+      var Hp = items(B), maxp = Math.max.apply(null, Hp.map(function (h) { return +h[2] || 0; }).concat([10])) * 1.1, H3 = 10 + Hp.length * 44;
+      svg = '<svg viewBox="0 0 ' + W + ' ' + H3 + '" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,sans-serif"><line x1="16" x2="16" y1="16" y2="' + (H3 - 16) + '" stroke="var(--line)" stroke-width="4"/>';
+      Hp.forEach(function (h, i) {
+        var y = 16 + i * 44, lv = +h[4], ms = h[2] === "" ? NaN : +h[2], c = col(lv);
+        svg += '<circle cx="16" cy="' + y + '" r="10" fill="var(--card)" stroke="' + c + '" stroke-width="3"/><text x="16" y="' + (y + 4) + '" font-size="10" text-anchor="middle" fill="var(--ink)">' + esc(D(h[0])) + '</text>';
+        svg += '<text x="36" y="' + (y - 2) + '" font-size="13" fill="var(--ink)">' + esc(D(h[1])) + '</text><text x="36" y="' + (y + 14) + '" font-size="11" fill="var(--muted)">' + esc(D(h[3])) + '</text>';
+        if (!isNaN(ms)) svg += '<rect x="330" y="' + (y - 7) + '" width="' + Math.max(3, 200 * ms / maxp) + '" height="12" rx="4" fill="' + c + '"/><text x="' + (W - 2) + '" y="' + (y + 4) + '" font-size="12" text-anchor="end" fill="var(--sub)">' + ms + ' ms</text>';
+      });
+      svg += "</svg>";
+    }
+    var rows = items(R), worst = rows.reduce(function (m, r) { return Math.max(m, +r[0] === 3 ? -1 : +r[0]); }, -1);
+    var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    var h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + '</small></div>';
+    h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(cap ? cap.toUpperCase() : "RESULT") + '</span><h1>' + esc(title) + '</h1></div>';
+    if (svg) h2 += '<div class="card" id="pic">' + svg + '</div>';
+    if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div></div>'; }).join("") + '</div>';
+    h2 += '<div class="card"><div class="btns"><button class="main" id="cp">Copy</button><button id="sh">Share</button><button id="img">Save image</button><button id="ai2">Copy for AI</button><button id="pdf2">Save as PDF</button></div></div>';
+    if (/Android/i.test(navigator.userAgent)) h2 += '<p class="note">Android: Save image opens the share sheet - pick Files, Photos or any app. From the PC, Send by Bluetooth or Quick Share drops the picture straight into Downloads.</p>';
+    h2 += '<p class="note">Made with AdeeboMeter on a PC. The result came inside the link and was drawn here, on this phone - AdeeboMeter can\'t check who made a link, so trust it as much as the person who sent it.</p>';
+    app.innerHTML = h2;
+    var text = function () { return title + (cap ? " - " + cap : "") + (whenT ? " (" + whenT + ")" : "") + "\n" + rows.map(function (r) { return "- " + D(r[1]) + ": " + D(r[2]); }).join("\n") + "\n" + location.href; };
+    document.getElementById("cp").onclick = function () { try { navigator.clipboard.writeText(text()).then(function () { toast("Copied - paste it anywhere"); }); } catch (e) { toast("Couldn't copy"); } };
+    document.getElementById("sh").onclick = function () { if (navigator.share) navigator.share({ title: title, text: text(), url: location.href }).catch(function () {}); else document.getElementById("cp").onclick(); };
+    document.getElementById("pdf2").onclick = function () { window.print(); };
+    document.getElementById("ai2").onclick = function () { var q = "I ran \"" + title + "\" in AdeeboMeter on my Windows PC. The result:\n\n" + text() + "\n\nWhat does it mean, and what should I check next, step by step?"; try { navigator.clipboard.writeText(q).then(function () { toast("Copied - paste it into ChatGPT, Claude or Gemini"); }); } catch (e) {} };
+    document.getElementById("img").onclick = function () {
+      var el2 = document.querySelector("#pic svg"); if (!el2) { toast("No picture for this one - use Copy"); return; }
+      var cs = getComputedStyle(document.documentElement), xml = new XMLSerializer().serializeToString(el2).replace(/var\(--([a-z-]+)\)/g, function (m, k) { return cs.getPropertyValue("--" + k).trim() || "#888"; });
+      var vb = el2.viewBox.baseVal, img = new Image(), sc = 2;
+      img.onload = function () {
+        var c = document.createElement("canvas"); c.width = vb.width * sc; c.height = (vb.height + 30) * sc; var x = c.getContext("2d");
+        x.fillStyle = cs.getPropertyValue("--card").trim() || "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, vb.width * sc, vb.height * sc);
+        x.fillStyle = cs.getPropertyValue("--muted").trim() || "#888"; x.font = (11 * sc) + "px -apple-system,sans-serif"; x.fillText(title + " · made with AdeeboMeter", 4 * sc, (vb.height + 20) * sc);
+        c.toBlob(function (b) {
+          var file = new File([b], "adeebometer.png", { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: title }).catch(function () {});
+          else { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "adeebometer.png"; a.click(); }
+        }, "image/png");
+      };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+    };
+  }
+})();
+</script>
+</body>
+</html>
