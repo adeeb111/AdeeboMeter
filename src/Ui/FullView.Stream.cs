@@ -10,7 +10,7 @@ namespace AdeeboMeter
 {
     // ================================================================== Streaming tab (PLAN-modes.md 2)
     // Now streaming (found by itself), the 4K check, the 90-day records with who caused each dip, when dips happen,
-    // and the monthly report for the provider. Scores and the sport newspaper come with the teams feature.
+    // and the monthly report for the provider. Scores and the sport newspaper are next door (FullView.Sports.cs).
     sealed partial class FullView
     {
         Panel streamPage; DB streamCanvas; string streamSel = "", streamKey = "", streamNote = ""; bool stream4k; DateTime streamCopied = DateTime.MinValue;
@@ -52,6 +52,16 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(L.T("Streaming"), Draw.fTitle, ink, x, y);
+                // watching your team? its live score, from Sports (fetched at most every 5 min while a stream plays) - a stutter
+                // below gets its verdict here, the score lives next door
+                var lm = Cfg.Sports ? Sports.LiveMine() : null;
+                if (lm != null)
+                {
+                    string t = L.T("LIVE") + "  " + lm.Away + " " + lm.AwayScore + " · " + lm.Home + " " + lm.HomeScore + (lm.Detail != "" ? "  (" + lm.Detail + ")" : "") + "   " + L.T("Sports ›"); var ts = g.MeasureString(t, Draw.fBtn);
+                    var lr = new RectangleF(x + w - ts.Width - 30 * S, y + 2 * S, ts.Width + 26 * S, 30 * S); Theme.Fill(g, lr, 15 * S, Theme.LvSoft(2));
+                    using (var lb = new SolidBrush(Theme.LvText(2))) g.DrawString(t, Draw.fBtn, lb, lr.X + 13 * S, lr.Y + (30 * S - ts.Height) / 2);
+                    Act(streamCanvas, lr, delegate { tab = "sports"; ShowTab(); SyncNav(); });
+                }
                 string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
                 // Test before I watch
                 string tb = L.T(SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBodyB);

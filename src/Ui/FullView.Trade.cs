@@ -136,9 +136,21 @@ namespace AdeeboMeter
                 float cx2 = x + 22 * S, cy2 = y + 18 * S;
                 Draw.LvDot(g, live ? lv : 3, cx2, cy2 + 8 * S, 14 * S, 14 * S);
                 g.DrawString(live ? (head.Contains("answering in") ? L.T(head.Split('·')[0].Trim()) + " · " + BrokerName(Cfg.TradeHost) + head.Substring(head.IndexOf("answering", StringComparison.Ordinal) - 1) : L.T(head)) : BrokerName(Cfg.TradeHost) + (open || Cfg.TradeCrypto ? L.T(" · starting...") : L.T(" · market closed - the live check sleeps until 9:30 Eastern")), Draw.fTitle, ink, cx2 + 24 * S, cy2);
-                string tag = open ? L.T("LIVE · MARKET OPEN") : Cfg.TradeCrypto ? L.T("LIVE · CRYPTO 24/7") : L.T("MARKET CLOSED"); var tgs = g.MeasureString(tag, Draw.fTiny);
+                string tag = open ? L.T("LIVE") + " · " + L.T(Trading.VenueName) + " " + L.T("OPEN") : Cfg.TradeCrypto ? L.T("LIVE · CRYPTO 24/7") : L.T(Trading.VenueName) + " " + L.T("CLOSED"); var tgs = g.MeasureString(tag, Draw.fTiny);
                 var tgr = new RectangleF(x + w - tgs.Width - 40 * S, cy2 + 2 * S, tgs.Width + 18 * S, 22 * S); Theme.Fill(g, tgr, 11 * S, open || Cfg.TradeCrypto ? Theme.Red : Theme.Soft);
                 using (var tb = new SolidBrush(open || Cfg.TradeCrypto ? Color.White : Theme.Sub)) g.DrawString(tag, Draw.fTiny, tb, tgr.X + 9 * S, tgr.Y + (22 * S - tgs.Height) / 2);
+                // which market "open" means (AM-CG-108): a US-only trader picks US, a Toronto-only trader Toronto
+                {
+                    float vx = x + w - 22 * S; var opts = new[] { new[] { "both", "Either" }, new[] { "ca", "Toronto" }, new[] { "us", "US" } };
+                    foreach (var o in opts)
+                    {
+                        bool on = Cfg.TradeVenue == o[0]; string t = L.T(o[1]); var ts = g.MeasureString(t, on ? Draw.fTiny : Draw.fTiny); vx -= ts.Width + 10 * S;
+                        var vr = new RectangleF(vx - 4 * S, tgr.Bottom + 6 * S, ts.Width + 8 * S, 18 * S); if (on) Theme.Fill(g, vr, 9 * S, Kit.Soft("trade"));
+                        using (var vb = new SolidBrush(on ? Kit.Ink("trade") : Theme.Muted)) g.DrawString(t, Draw.fTiny, vb, vx, vr.Y + 1 * S);
+                        string id = o[0]; Act(tradeCanvas, vr, delegate { Cfg.TradeVenue = id; Cfg.Save(); tradeCanvas.Invalidate(); });
+                    }
+                    using (var mb = new SolidBrush(Theme.Muted)) { var ms = g.MeasureString(L.T("Market:"), Draw.fTiny); g.DrawString(L.T("Market:"), Draw.fTiny, mb, vx - ms.Width - 6 * S, tgr.Bottom + 7 * S); }
+                }
                 cy2 += 40 * S;
                 if (big)
                 {
@@ -243,7 +255,21 @@ namespace AdeeboMeter
 
         float PaintFx(Graphics g, float x, float y, float w)
         {
-            if (!Cfg.TradeFx) return y;
+            if (!Cfg.TradeFx)
+            {
+                // off by default (nothing is fetched until you say so): one click turns the day's numbers on
+                var cr = new RectangleF(x, y, w, 70 * S); Kit.Box(g, cr, 14 * S);
+                Kit.Icon(g, "speed", new RectangleF(cr.X + 16 * S, cr.Y + 24 * S, 20 * S, 20 * S), Kit.Accent("trade"));
+                using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Currency rates and commodity prices"), Draw.fBodyB, ib, cr.X + 48 * S, cr.Y + 14 * S);
+                using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on."), Draw.fSmall, sb, new RectangleF(cr.X + 48 * S, cr.Y + 36 * S, cr.Width - 220 * S, 30 * S));
+                if (!Policy.NoOnline)
+                {
+                    string bt = L.T("Turn on"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(cr.Right - bs.Width - 40 * S, cr.Y + 19 * S, bs.Width + 24 * S, 32 * S);
+                    Theme.Fill(g, br, 10 * S, Kit.Accent("trade")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(bt, Draw.fBtn, wb, br.X + 12 * S, br.Y + (32 * S - bs.Height) / 2);
+                    Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); });
+                }
+                return cr.Bottom + 22 * S;
+            }
             Trading.LoadFx(); if (Trading.FxStale() || Trading.IdxStale()) Trading.FetchFx(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (tradeCanvas != null) tradeCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
             List<Trading.Rate> rates; string note; lock (Trading.k) { rates = Trading.Rates.ToList(); note = Trading.FxNote; }
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))

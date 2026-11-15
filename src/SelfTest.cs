@@ -189,6 +189,17 @@ namespace AdeeboMeter
                     if (!HwTools.Explain("cores", fake).StartsWith("4 cores", StringComparison.Ordinal)) throw new InvalidOperationException("explanations don't use this PC's numbers");
                     HwTools.Errors(30); HwTools.Hidden(M); HwTools.Map(M); HwTools.Gpu();
                 }
+                // Sports: each feed's shape read right, from made-up answers (nothing is fetched here)
+                {
+                    var hk = Sports.HockeyFrom("{\"games\":[{\"gameState\":\"LIVE\",\"startTimeUTC\":\"2026-11-15T23:00:00Z\",\"homeTeam\":{\"abbrev\":\"TOR\",\"score\":2},\"awayTeam\":{\"abbrev\":\"MTL\",\"score\":1},\"periodDescriptor\":{\"number\":2},\"clock\":{\"timeRemaining\":\"12:34\",\"inIntermission\":false}},{\"gameState\":\"FUT\",\"homeTeam\":{\"abbrev\":\"OTT\"},\"awayTeam\":{\"abbrev\":\"BOS\"}}]}");
+                    if (hk.Count != 2 || hk[0].State != "live" || hk[0].HomeScore != "2" || !hk[0].Detail.Contains("P2") || hk[1].State != "soon") throw new InvalidOperationException("hockey scores read wrong");
+                    var fb = Sports.FootballFrom("{\"matches\":[{\"status\":\"PAUSED\",\"utcDate\":\"2026-11-15T15:00:00Z\",\"competition\":{\"name\":\"Premier League\"},\"homeTeam\":{\"shortName\":\"Arsenal\"},\"awayTeam\":{\"shortName\":\"Chelsea\"},\"score\":{\"fullTime\":{\"home\":1,\"away\":0}}}]}");
+                    if (fb.Count != 1 || fb[0].State != "live" || fb[0].Detail != "half time" || fb[0].HomeScore != "1") throw new InvalidOperationException("football scores read wrong");
+                    var ck = Sports.CricketFrom("{\"status\":\"success\",\"data\":[{\"matchType\":\"odi\",\"status\":\"India need 45 runs\",\"teams\":[\"India\",\"Bangladesh\"],\"score\":[{\"r\":250,\"w\":8,\"o\":50,\"inning\":\"Bangladesh Inning 1\"},{\"r\":206,\"w\":3,\"o\":38.2,\"inning\":\"India Inning 1\"}],\"matchStarted\":true,\"matchEnded\":false}]}");
+                    if (ck.Count != 1 || ck[0].State != "live" || ck[0].AwayScore != "250/8 (50)" || ck[0].HomeScore != "206/3 (38.2)") throw new InvalidOperationException("cricket scores read wrong: " + (ck.Count > 0 ? ck[0].HomeScore + " | " + ck[0].AwayScore : "none"));
+                    var rs = Sports.Rss("<rss><channel><item><title><![CDATA[Big win &amp; more]]></title><description>A <b>great</b> day</description><link>https://www.bbc.co.uk/sport/x</link></item><item><title>No link</title><link>javascript:bad()</link></item></channel></rss>", "top");
+                    if (rs.Count != 1 || rs[0].Title != "Big win & more" || rs[0].Summary != "A great day") throw new InvalidOperationException("sports headlines read wrong");
+                }
                 int n = PathTools.Overlap().Count + WhyFails.Hosts("").Count + WinEvidence.All(M).Count + PcHealth.Pressure(M).Count + PcHealth.Crashes().Count + PcHealth.Leaks().Count;
                 var msg = Toolkit.Query(System.Net.IPAddress.Loopback, "example.com", 1, true);   // nothing listens on 127.0.0.1:53 - must just say "no answer"
                 if (PathTools.BackHops(57) != 8 || PathTools.BackHops(120) != 9 || PathTools.Kind(1492).IndexOf("PPPoE", StringComparison.Ordinal) < 0) throw new InvalidOperationException("path helpers wrong");

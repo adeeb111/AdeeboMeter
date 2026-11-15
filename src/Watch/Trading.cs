@@ -28,7 +28,8 @@ namespace AdeeboMeter
         public const string FarName = "your broker";
         // how often: the preset's pace - a check every 2 s is a lot of knocks on someone else's server (about 12,000 a
         // trading day), so only the engineer view asks for it
-        public static int Sec { get { return Cfg.Details ? 2 : Cfg.Preset == "penny" ? 30 : Cfg.Preset == "gamer" ? 5 : 10; } }
+        public static int Sec { get { return Cfg.Details && viewOpen ? 2 : Cfg.Preset == "penny" ? 30 : Cfg.Preset == "gamer" ? 5 : 10; } }
+        static volatile bool viewOpen;
 
         // ---------- market hours (US/Canada stocks: 9:30-16:00 Eastern, Monday to Friday; holidays are not known here)
         static TimeZoneInfo eastern;
@@ -38,12 +39,14 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is TimeZoneNotFoundException || e is InvalidTimeZoneException)) throw; return DateTime.UtcNow.AddHours(-5); }
         }
         // open if either the US (NYSE/Nasdaq) or the Toronto exchange is: a Canadian broker trades both
-        public static bool MarketOpen(DateTime et) { return Markets.Open(et, "us") || Markets.Open(et, "ca"); }
+        public static bool MarketOpen(DateTime et) { return Cfg.TradeVenue == "us" ? Markets.Open(et, "us") : Cfg.TradeVenue == "ca" ? Markets.Open(et, "ca") : Markets.Open(et, "us") || Markets.Open(et, "ca"); }
+        public static string VenueName { get { return Cfg.TradeVenue == "us" ? "US MARKET" : Cfg.TradeVenue == "ca" ? "TORONTO" : "US OR TORONTO"; } }
         public static bool Watching { get { return Cfg.TradeLive && !Cfg.Off("trade") && Cfg.TradeHost != "" && (Cfg.TradeCrypto || MarketOpen(EasternNow())); } }
 
         // started by the Monitor's probe loop: a thread of its own that ends by itself when the market closes
         public static void Ensure(Monitor m)
         {
+            if (m != null) viewOpen = m.ViewOpen;
             if (running || !Watching || m == null) return;
             running = true; stopAll = false;
             thread = new Thread(() => Loop(m)) { IsBackground = true, Name = "broker watch", Priority = ThreadPriority.BelowNormal }; thread.Start();
