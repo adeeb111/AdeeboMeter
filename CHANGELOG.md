@@ -14,6 +14,19 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: QR code opens your result on the phone
+- The QR code now shows big in the tool itself (no extra click) and holds a link to adeebometer.com/r. Your result rides in the
+  link after the # - the part browsers never send - so the site never sees it; the phone draws the page itself.
+- On the phone: the verdict in plain words, This PC → Wi-Fi/cable → provider → DNS → internet, every number graded, the last internet
+  checks and your router minute by minute (loss in red), what to do - and Send to my internet provider (a ready message), Share,
+  Save as PDF, Copy, Email. Names, the Wi-Fi name and addresses are left out.
+
+### New: Report for my ISP, with pictures
+- Picture pages in front of the full table: the answer with what's already ruled out and what we ask the provider to check;
+  the path hop by hop (whose stretch, usual vs worst time, loss red only where it starts and carries on); every probe of the run
+  for the router, the provider's first hop and the destination; loss by hour of day; 7 days x 24 hours of rough minutes; two routes
+  side by side; the message. One self-contained file - Print > Save as PDF keeps the pages.
+
 ### New: tool pictures (sixth wave) - over time, the PC, keys
 - Timelines: what happened before it broke (the break red, the first suspect amber), updates and what came after, this week's
   changes, what a USB device did - a cursor walks them in order.

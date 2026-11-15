@@ -47,6 +47,9 @@ namespace AdeeboMeter
             if (Cases.Sure(gr) < 2) bad.Add("a case backed by measurements isn't 'likely' or better");
             try { string f = MakeReport(cs); if (!System.IO.File.Exists(f)) bad.Add("report not written"); else { if (f.EndsWith(".html", StringComparison.Ordinal) && !System.IO.File.ReadAllText(f).Contains("data:image/png;base64,")) bad.Add("report has no pages"); System.IO.File.Delete(f); } }
             catch (Exception e) { bad.Add("report: " + e.GetType().Name + " " + e.Message); }
+            // the ISP report's picture pages draw (a made-up evening problem)
+            try { string isp = IspReport.Sample(); if (isp == null || !System.IO.File.ReadAllText(isp).Contains("<svg")) bad.Add("ISP report: no picture pages"); }
+            catch (Exception e) { bad.Add("ISP report pages: " + e.GetType().Name + " " + e.Message); }
             // Ten years of money: always-index gets forced to sell in a bad year; emergency-fund-first never does
             double s1 = 0, i1 = 0, f1 = 0, s3 = 0, i3 = 0, f3 = 0; for (int yr = 0; yr < 10; yr++) { f1 += YrStep(yr, 1, ref s1, ref i1); f3 += YrStep(yr, 3, ref s3, ref i3); }
             if (f1 > 0 || f3 <= 0) bad.Add("ten years of money: forced sales " + f1 + " / " + f3);

@@ -17,7 +17,7 @@ namespace AdeeboMeter
     // doesn't carry on isn't real" rule, the hour-of-day pattern over 7 days, the same moment over two routes, the line itself
     // (cable modem levels when the modem shows them), what was ruled out, the worst moments - and a message to paste.
     // Everything is measured from this PC when you press Run; the report file is written to AdeeboMeter's own folder.
-    static class IspReport
+    static partial class IspReport
     {
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
         static string F(double v, string unit) { return double.IsNaN(v) ? "-" : (v < 10 ? v.ToString("0.0", CultureInfo.InvariantCulture) : Math.Round(v).ToString(CultureInfo.InvariantCulture)) + unit; }
@@ -211,7 +211,7 @@ namespace AdeeboMeter
             string msg = GameSession.Redact(Message(finding, routes, main, start, firstIsp, wifi, nm, heat), ssid);   // pasted into a support chat: no home addresses, no Wi-Fi name
             rows.Add(R(-1, "MESSAGE FOR YOUR PROVIDER'S SUPPORT CHAT", "click to copy", "", "i"));
             rows.Add(new[] { "3", "Message", msg, "", "i", "copy:" + msg });
-            string file = Save(rows, ssid);
+            string file = Save(rows, ssid, new Visual { Main = main, Routes = routes, Start = start, FirstIsp = firstIsp, GwIdx = gwIdx, Nm = nm, Owners = owners, Heat = heat, Wifi = wifi, Finding = finding, Ruled = ruled, Msg = msg, Minutes = min, Game = game });
             if (file != null) rows.Add(new[] { "0", "Report saved", Path.GetFileName(file) + " - open it in your browser and Print > Save as PDF to attach it", "", "m", "show:" + file });
             string csv = SaveCsv(routes, file);
             if (csv != null) rows.Add(new[] { "3", "Raw data", Path.GetFileName(csv) + " - every hop of every route, for a network engineer", "", "m", "show:" + csv });
@@ -306,13 +306,16 @@ namespace AdeeboMeter
             return sb.ToString();
         }
         // a self-contained web page in AdeeboMeter's own folder (data\reports); internal addresses, hardware addresses and the Wi-Fi name removed
-        static string Save(List<string[]> rows, string ssid)
+        static string Save(List<string[]> rows, string ssid, Visual v)
         {
             try
             {
                 string dir = Path.Combine(Program.DataDir, "reports"); Directory.CreateDirectory(dir);
                 string file = Path.Combine(dir, "ISP-report-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".html");
-                var sb = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Connection quality report</title><style>body{font:14px/1.5 'Segoe UI',sans-serif;color:#1B2330;max-width:900px;margin:32px auto;padding:0 16px}h1{font-size:24px;margin:0 0 4px}h2{font-size:13px;letter-spacing:.06em;color:#4A5568;margin:22px 0 6px;border-bottom:1px solid #E3E8EF;padding-bottom:4px}table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px solid #F0F2F5;vertical-align:top}td.n{font-weight:600;width:240px}.l2{color:#B42318}.l1{color:#8A5A00}.m{color:#4A5568;font-size:12px}.box{background:#F3F5F9;border-radius:8px;padding:12px}@media print{body{margin:0}}</style></head><body>");
+                var sb = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Connection quality report</title><style>body{font:14px/1.5 'Segoe UI',sans-serif;color:#1B2330;max-width:900px;margin:32px auto;padding:0 16px}h1{font-size:24px;margin:0 0 4px}h2{font-size:13px;letter-spacing:.06em;color:#4A5568;margin:22px 0 6px;border-bottom:1px solid #E3E8EF;padding-bottom:4px}table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px solid #F0F2F5;vertical-align:top}td.n{font-weight:600;width:240px}.l2{color:#B42318}.l1{color:#8A5A00}.m{color:#4A5568;font-size:12px}.box{background:#F3F5F9;border-radius:8px;padding:12px}@media print{body{margin:0}}.pb{break-before:page;page-break-before:always;height:0}.tag{font-size:11px;letter-spacing:.08em;font-weight:700;color:#6B7685;margin:28px 0 6px}.big{font-size:22px;font-weight:700;line-height:1.3;margin:6px 0 10px}.v0{border-left:6px solid #2DA44E}.v1{border-left:6px solid #BF8700}.v2{border-left:6px solid #CF222E}.card{border:1px solid #E3E8EF;border-radius:12px;padding:14px 18px;margin:0 0 14px;break-inside:avoid}.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.chip{border-radius:10px;padding:8px 12px;background:#F6F8FB;min-width:150px}.chip b{display:block;font-size:18px}.chip span{font-size:12px;color:#4A5568}.ok{color:#2DA44E;font-weight:700}.ask li{margin:0 0 6px}.cap{font-size:12px;color:#6B7685}svg{max-width:100%;height:auto}@media print{body{margin:0 auto}.card{border-color:#ccc}}</style></head><body>");
+                Func<string, string> XX = z => Esc(GameSession.Redact(z ?? "", ssid));
+                try { sb.Append(Pages(v, XX)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("isp report pictures: " + e.Message); }
+                sb.Append("<div class=\"pb\"></div><div class=\"tag\">FOR TIER 2 · EVERY MEASUREMENT</div>");
                 sb.Append("<h1>Connection quality report</h1><div class=\"m\">Measured from the customer's PC with AdeeboMeter (free, open source) on " + Esc(DateTime.Now.ToString("ddd d MMM yyyy HH:mm", CultureInfo.CurrentCulture)) + ". Pings and TCP connects from this PC - not the game's own data.</div><table>");
                 foreach (var r in rows)
                 {
