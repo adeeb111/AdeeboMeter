@@ -26,7 +26,8 @@ namespace AdeeboMeter
             new[] { "epic-fantasy", "Epic fantasy" }, new[] { "space-saga", "Space saga" }, new[] { "pirate", "Pirate" }, new[] { "noir", "Noir detective" },
             new[] { "nature", "Nature documentary" }, new[] { "shakespeare", "Shakespeare" }, new[] { "dark-ages", "Dark Ages" }, new[] { "industrial", "Industrial" },
             new[] { "revolution", "Revolution" }, new[] { "mission", "Mission control" }, new[] { "poetic", "Poetic" }, new[] { "scientist", "Scientist" },
-            new[] { "coder", "Coder" }, new[] { "genz", "Gen-Z" } };
+            new[] { "coder", "Coder" }, new[] { "genz", "Gen-Z" },
+            new[] { "stoic", "Philosopher: Marcus Aurelius (Stoic)" }, new[] { "aristotle", "Philosopher: Aristotle" }, new[] { "tao", "Philosopher: Taoist (Laozi)" }, new[] { "confucius", "Philosopher: Confucius" } };
         public const int Featured = 8;
         public static readonly string[] Chatty = { "face", "quiet", "normal", "chatty" };
         public static readonly string[] ChattyNames = { "Face only", "Quiet", "Normal", "Chatty" };
@@ -38,8 +39,8 @@ namespace AdeeboMeter
         // in Surprise me, and never chosen for you.
         // "common": no faith named - short lines on what the traditions share (patience, kindness, gratitude), in plain words,
         // never presented as a quote from any scripture
-        public static readonly string[] Faiths = { "off", "common", "islam", "christianity", "judaism", "hinduism", "buddhism", "sikhism" };
-        public static readonly string[] FaithNames = { "Off", "Common to all", "Islam", "Christianity", "Judaism", "Hinduism", "Buddhism", "Sikhism" };
+        public static readonly string[] Faiths = { "off", "common", "islam", "christianity", "judaism", "hinduism", "buddhism", "sikhism", "stoic", "aristotle", "tao", "confucius" };
+        public static readonly string[] FaithNames = { "Off", "Common to all", "Islam", "Christianity", "Judaism", "Hinduism", "Buddhism", "Sikhism", "Marcus Aurelius", "Aristotle", "Taoism", "Confucius" };
         public static volatile string Faith = "off";
         static List<string[]> comfort;
         public static List<string[]> Comforts()

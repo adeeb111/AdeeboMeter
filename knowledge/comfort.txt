@@ -34,3 +34,25 @@ common|Rest is part of the work. Breathe.|Shared by many faiths
 common|Forgive, and your own load gets lighter.|Shared by many faiths
 common|Help someone today, even in a small way.|Shared by many faiths
 common|Peace starts in a quiet heart.|Shared by many faiths
+# Philosophy (also opt-in here): public-domain translations, word for word; "…" marks a quote that starts or ends mid-sentence.
+# Marcus Aurelius - Meditations, tr. Meric Casaubon (1634), Project Gutenberg #2680
+stoic|A man cannot any whither retire better than to his own soul|Meditations IV 3 (Casaubon)
+stoic|By tranquillity I understand a decent orderly disposition and carriage, free from all confusion and tumultuousness.|Meditations IV 3 (Casaubon)
+stoic|Give thyself leisure to learn some good thing, and cease roving and wandering to and fro.|Meditations II 4 (Casaubon)
+stoic|Let opinion be taken away, and no man will think himself wronged.|Meditations IV 7 (Casaubon)
+# Aristotle - Ethics, tr. D. P. Chase, Project Gutenberg #8438
+aristotle|…for as it is not one swallow or one fine day that makes a spring…|Ethics I 5 (Chase)
+aristotle|…by doing just actions we come to be just…|Ethics II 1 (Chase)
+aristotle|Virtue then is in a sense a mean state, since it certainly has an aptitude for aiming at the mean.|Ethics II 5 (Chase)
+aristotle|For the man who is truly good and sensible bears all fortunes, we presume, becomingly…|Ethics I 8 (Chase)
+# Taoism - Tao Te Ching, tr. James Legge (1891), Project Gutenberg #216
+tao|The highest excellence is like (that of) water.|Tao Te Ching 8 (Legge)
+tao|Who can (make) the muddy water (clear)? Let it be still, and it will gradually become clear.|Tao Te Ching 15 (Legge)
+tao|He who knows other men is discerning; he who knows himself is intelligent.|Tao Te Ching 33 (Legge)
+tao|Therefore the sufficiency of contentment is an enduring and unchanging sufficiency.|Tao Te Ching 46 (Legge)
+tao|…the journey of a thousand li commenced with a single step.|Tao Te Ching 64 (Legge)
+# Confucius - The Analects, tr. James Legge, Project Gutenberg #3330
+confucius|…Is it not pleasant to learn with a constant perseverance and application?|Analects I 1 (Legge)
+confucius|When you have faults, do not fear to abandon them.|Analects I 8 (Legge)
+confucius|What I do not wish men to do to me, I also wish not to do to men.|Analects V 11 (Legge)
+confucius|The Master said, 'I will not be afflicted at men's not knowing me; I will be afflicted that I do not know men.'|Analects I 16 (Legge)

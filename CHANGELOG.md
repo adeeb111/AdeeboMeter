@@ -14,6 +14,12 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: philosophers for the companion
+- Four new buddy personas, our own lines in each style (never invented quotes): Marcus Aurelius (Stoic), Aristotle, Taoist (Laozi)
+  and Confucius - "The slowness lies beyond your router - not in your power, so not your burden."
+- Words of comfort adds Marcus Aurelius, Aristotle, Taoism and Confucius: short passages from public-domain translations
+  (Casaubon, Chase, Legge), word for word with their reference - in calm moments only, like the verses.
+
 ### New: for traders, server people and streamers
 - Market-open check (GO / CAREFUL / HOLD): 10 timed connections to your broker (average, jitter, worst, lost), your clock against
   a time server (order and fill times), the router, this PC's traffic, updaters and sync apps - shown as a board of tiles.
