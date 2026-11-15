@@ -25,7 +25,8 @@ namespace AdeeboMeter
             new[] { "cert", "Is the padlock OK?", "CERTIFICATES & HTTPS", "https|chain|certfile" },
             new[] { "win", "Windows", "WINDOWS", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
-            new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },   // the PC's own checks: on no other card
+            new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },
+            new[] { "hw", "Hardware nerds", "HARDWARE NERDS", "feltslow|hwmap|diskspeed" },   // the PC's own checks: on no other card
             new[] { "calc", "Work it out", "NETWORK MATHS|WIRELESS MATHS|SERVERS & IT MATHS|STREAMING & HOME MATHS|VOICE & TDM MATHS|MONEY & MARKETS MATHS|COMMODITY MATHS|GAMING MATHS", "subnet|plan|stream" },   // pure arithmetic, nothing sent
             new[] { "game", "Is it my game?", "GAMING", "prematch|gpn|tonight" },
             new[] { "time", "How has my network been?", "OVER TIME|PRIVACY & IPV6", "month|rushhour|vpnleak" },
@@ -37,7 +38,7 @@ namespace AdeeboMeter
         {
             { "reach", new[] { "q.reach", "dest" } }, { "slow", new[] { "q.slow", "speed" } }, { "path", new[] { "q.break", "route" } },
             { "lan", new[] { "q.network", "devices" } }, { "join", new[] { "q.join", "join" } }, { "keys", new[] { "q.keys", "key" } },
-            { "cert", new[] { "q.padlock", "lock" } }, { "win", new[] { "q.windows", "windows" } }, { "lab", new[] { "q.traffic", "traffic" } },
+            { "cert", new[] { "q.padlock", "lock" } }, { "hw", new[] { "q.hw", "cpu" } }, { "win", new[] { "q.windows", "windows" } }, { "lab", new[] { "q.traffic", "traffic" } },
             { "pc", new[] { "q.windows", "cpu" } }, { "calc", new[] { "calc", "calc" } }, { "game", new[] { "gamer", "game" } },
             { "time", new[] { "time", "time" } }, { "report", new[] { "reports", "report" } }, { "fun", new[] { "q.keys", "mood" } }
         };

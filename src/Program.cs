@@ -335,7 +335,7 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,stream,trade,toolbox,time,learn", Layout = "classic", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile string Nav = "home,stream,trade,toolbox,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
         public static volatile bool WGraph = true, WTotal = true, SetupDone = true;   // SetupDone: false only on a fresh install until the 3 questions are answered or skipped   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string Mode = "", Lang = "en", TbView = "q", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)

@@ -159,8 +159,17 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(sub)) g.DrawString(L.T("More...") + "  (" + (more.Count - fitMore).ToString(CultureInfo.CurrentCulture) + ")", Draw.fBody, b, x + 42 * S, y + (36 * S - Draw.fBody.GetHeight(g)) / 2);
                 Act(sideNav, rr, delegate { ShowMoreMenu(sideNav, new Point((int)rr.X, (int)rr.Bottom)); }); y += 38 * S;
             }
-            // the live meter at the bottom (replaces the right-hand panel in this layout)
+            // the live meter at the bottom (replaces the right-hand panel in this layout), Settings just above it - the gear
+            // at the top right is the other way in
             float mh = 96 * S, my = r.Height - mh - 12 * S;
+            if (my - 46 * S > y + 4 * S)
+            {
+                var srr = new RectangleF(x, my - 46 * S, w, 38 * S); bool ssel = tab == "settings";
+                if (ssel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, srr);
+                Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
+                using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
+                Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings");
+            }
             if (my > y + 8 * S)
             {
                 var mr = new RectangleF(x, my, w, mh);

@@ -19,8 +19,8 @@ namespace AdeeboMeter
             "twamp", "dscp", "wol", "proxy", "vpnleak", "ping6", "v6routers", "rareplay", "discover", "nbname", "clock", "timesrc", "hairpin", "dot1x", "auth", "eapreplay",
             "dhcpreplay", "udpmtu", "iperf", "https", "certlive", "radiuslab",
             "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk" };
-        static bool InWave3(string id) { return Pictured3.Contains(id) || Pictured4.Contains(id) || Pictured5.Contains(id) || Pictured6.Contains(id); }
-        static bool Animates3(string id) { return Animated3.Contains(id) || Deep3.Contains(id) || Pictured4.Contains(id) || (Pictured5.Contains(id) && !Still5.Contains(id)) || Moving6.Contains(id); }
+        static bool InWave3(string id) { return Pictured3.Contains(id) || Pictured4.Contains(id) || Pictured5.Contains(id) || Pictured6.Contains(id) || Pictured7.Contains(id); }
+        static bool Animates3(string id) { return Animated3.Contains(id) || Deep3.Contains(id) || Pictured4.Contains(id) || (Pictured5.Contains(id) && !Still5.Contains(id)) || Moving6.Contains(id) || Moving7.Contains(id); }
 
         // ---------- reading the result
         static readonly string[] Dot = { " · " }, EapSep = { "→", " · " };
@@ -406,7 +406,7 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- SNMP: the question, then every value that came back
                 default:
                     {
-                        string[] q; if (!SnmpAsk.TryGetValue(id, out q)) return Pictured5.Contains(id) ? Wave5(g, x, y, w, st) : Pictured6.Contains(id) ? Wave6(g, x, y, w, st) : y;
+                        string[] q; if (!SnmpAsk.TryGetValue(id, out q)) return Pictured5.Contains(id) ? Wave5(g, x, y, w, st) : Pictured6.Contains(id) ? Wave6(g, x, y, w, st) : Pictured7.Contains(id) ? Wave7(g, x, y, w, st) : y;
                         string t = HostOf(Tg("192.0.2.2")), com = VisIn().Length > 1 ? VisIn()[1] : ""; bool v3 = com.Contains(":") || com.StartsWith("v3", StringComparison.OrdinalIgnoreCase);
                         who = new[] { L.T("This PC"), t };
                         var vals = res.Take(6).ToList();

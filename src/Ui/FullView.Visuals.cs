@@ -29,7 +29,7 @@ namespace AdeeboMeter
         {
             EnsureToolbox(); var bad = new List<string>();
             using (var bmp = new Bitmap(1000, 2400)) using (var g = Graphics.FromImage(bmp))
-                foreach (var id in Pictured.Concat(Pictured3).Concat(Pictured4).Concat(Pictured5).Concat(Pictured6).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
+                foreach (var id in Pictured.Concat(Pictured3).Concat(Pictured4).Concat(Pictured5).Concat(Pictured6).Concat(Pictured7).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
                 {
                     SelectTool(id); visFail = "";
                     float y0 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("idle " + visFail); else if (y0 <= 10) bad.Add(id + ": no picture before a run");

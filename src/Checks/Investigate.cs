@@ -82,9 +82,12 @@ namespace AdeeboMeter
             if (!double.IsNaN(bloat)) r.Obs("i", bloat > 80 ? 2 : bloat > 20 ? 1 : 0, "Your router under load adds", F(bloat, " ms"));
             if (vpn) r.Obs("w", 0, "VPN", "connected (" + Draw.Trunc(vpnName, 30) + ") - company traffic takes the long way");
             if (normal != "") r.Obs("i", 3, "Normal for this network", normal);
+            var cap = PcRecord.Judge(PcRecord.Last(120), DateTime.Now);
+            if (cap.Pts.Count >= 3) r.Obs("m", cap.Who == "pc" || cap.Who == "both" ? cap.Lv : 0, "Your PC, last 2 minutes", cap.Who == "pc" || cap.Who == "both" ? cap.Cause + (cap.Culprit != "" ? " (" + cap.Culprit + ")" : "") : "fine - processor, disk, memory and drivers all quiet");
 
             // the first place it goes wrong, from your PC outwards
             if (cpu > 90) { r.Conclude(1, "Your PC itself is the bottleneck right now - the processor is " + F(cpu, "%") + " busy, so everything feels slow, including the network."); r.Next.Add("Open What's running and sort by CPU - see what's busy before you close anything."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
+            else if ((cap.Who == "pc" || cap.Who == "both") && cap.Lv >= 1) { r.Conclude(cap.Lv, cap.Text); r.Next.Add("Hardware nerds > It felt slow keeps every moment you mark (tray menu or Ctrl+Alt+S) - the pattern shows who's to blame most often."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (gwOff && netOff) { r.Conclude(3, "Nothing to judge: the router and internet checks are off. Turn them on in Settings > Background checks, wait a minute and run this again."); }
             // a router that doesn't answer ping while the internet answers fine just ignores ping - only silence on both counts
             else if ((double.IsNaN(gw) && !gwOff && (double.IsNaN(net) || netOff)) || gw > 50 || (wifi && sig >= 0 && sig < 35))
@@ -305,15 +308,29 @@ namespace AdeeboMeter
             var bg = PcHealth.Background(); foreach (var row in bg.Where(x => x[0] != "0" || x[1] != "Background jobs").Take(4)) r.Obs(row[4], int.Parse(row[0], CultureInfo.InvariantCulture), row[1], row[2]);
             var hung = m.Events.Recent(300).Where(e => e.Kind == "pc" && e.T > DateTime.Now.AddHours(-2)).ToList();
             r.Obs("w", hung.Count > 0 ? 1 : 0, "Frozen windows (2 h)", hung.Count == 0 ? "none" : string.Join("; ", hung.Take(3).Select(e => e.Text)));
+            r.Status = "Quick disk test and the hidden reasons (restarts, errors, memory lanes)..."; changed();
+            var quick = new List<string[]>(); try { quick = HwTools.Quick(m, new Toolkit.Run { Deadline = DateTime.Now.AddSeconds(40) }); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("quick hw: " + e.Message); }
+            foreach (var q in quick) r.Obs(q[4], int.Parse(q[0], CultureInfo.InvariantCulture), q[1], q[2] + (q[3] != "" ? " - " + q[3] : ""));
+            var cap = PcRecord.Judge(PcRecord.Last(120), DateTime.Now); if (cap.Pts.Count >= 3) r.Obs("m", cap.Who == "pc" || cap.Who == "both" ? cap.Lv : 0, "The last 2 minutes", cap.Who == "pc" || cap.Who == "both" ? cap.Cause : "quiet");
+            string pat = PcRecord.Pattern(); if (pat != "") r.Obs("m", 3, "When it felt slow before", pat);
+            List<string[]> why = new List<string[]>(); try { why = HwTools.WhySlow(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("why slow: " + e.Message); }
+            foreach (var w in why.Where(x => x[1] != "Verdict" && x[0] != "-1")) r.Obs(w[4] == "" ? "i" : w[4], int.Parse(w[0], CultureInfo.InvariantCulture), w[1], w[2]);
+            var whyV = why.FirstOrDefault(x => x[1] == "Verdict");
             var obs = r.ObservedCopy(); Func<string, int> L = name => obs.Where(o => o[2].StartsWith(name, StringComparison.Ordinal)).Select(o => int.Parse(o[1], CultureInfo.InvariantCulture)).DefaultIfEmpty(0).Max();
-            if (L("Memory read back") == 2 || L("Committed memory") == 2) { r.Conclude(2, "Memory is full: Windows keeps reading programs back from the disk, which is what makes everything feel slow. Close the heaviest app (What's running, sorted by memory)."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
+            // the step-by-step answer (what's full, what that does, the maths, why, the fix) beats a one-liner
+            if (whyV != null && whyV[0] == "2") { r.Conclude(2, whyV[2]); r.Next.Add("Toolbox > Hardware nerds > Why is this PC struggling? shows the same steps as a picture, with what each fix gives back."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (L("Memory read back") == 2 || L("Committed memory") == 2) { r.Conclude(2, "Memory is full: Windows keeps reading programs back from the disk, which is what makes everything feel slow. Close the heaviest app (What's running, sorted by memory)."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
             else if (L("Disk latency") == 2) { r.Conclude(2, "The disk is the bottleneck - each request takes far longer than normal. Toolbox > Disk shows who is using it and whether Windows sees the disk failing."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (cpu > 90) { r.Conclude(2, "The processor is maxed out (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%) - see which program in What's running."); r.GoTab = "procs"; r.GoLabel = "Open What's running"; }
             else if (L("Processor speed") >= 1) { r.Conclude(1, "The processor is being held back (heat, battery saver or the power plan) - it runs well below its speed."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (L("Driver interrupts") >= 1) { r.Conclude(1, "A driver keeps the processor busy with interrupts - the classic cause of stutter and crackling audio. Update Wi-Fi, audio and graphics drivers."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (bg.Any(x => x[0] == "1")) { r.Conclude(1, "A background job is busy right now (" + bg.First(x => x[0] == "1")[1] + ") - it finishes on its own."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else if (hung.Count > 0) { r.Conclude(1, "The PC itself is fine, but a program keeps freezing (" + hung[0].Text + ")."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (quick.Any(q => q[0] == "2")) { var q = quick.First(z => z[0] == "2"); r.Conclude(2, q[1] + ": " + q[2] + (q[3] != "" ? ". " + q[3] : "")); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            else if (quick.Any(q => q[0] == "1")) { var q = quick.First(z => z[0] == "1"); r.Conclude(1, "Nothing is slow right this second, but: " + q[1].ToLowerInvariant() + " - " + q[2] + (q[3] != "" ? ". " + q[3] : "")); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
             else { r.Conclude(0, "Nothing on the PC is slow right now - processor, memory, disk and drivers are all fine. If one app is slow, it's that app (or the network: try The internet is slow)."); r.GoTab = "toolbox"; r.GoLabel = "Open the Toolbox"; }
+            r.Next.Add("When it feels slow next time, press Ctrl+Alt+S (or the tray menu): the moment is frozen and judged - this PC, the internet, or the app.");
+            r.Next.Add("Toolbox > Hardware nerds: each part against its own ceiling (disk, memory, graphics, processor) and the hidden reasons.");
             r.Next.Add("Toolbox > Crashes and hangs, Slow leaks and What changed in 7 days - if it got slow recently, start there.");
             r.Next.Add("Time machine > Replay now shows disk and memory for every minute: find when it was slow.");
             r.NotEst.Add("Why Windows took long to start - that log is admin-only.");

@@ -167,6 +167,28 @@ namespace AdeeboMeter
                 if (!g1.StartsWith("2:Will not work", StringComparison.Ordinal) || !g1.Contains("Use /21") || !g2.StartsWith("2:", StringComparison.Ordinal) || !g2.Contains("network address") || !g3.Contains("broadcast") || !g4.Contains("own address")
                     || !g5.StartsWith("1:", StringComparison.Ordinal) || !g6.StartsWith("0:", StringComparison.Ordinal) || !g6.Contains("first") || !g7.StartsWith("0:", StringComparison.Ordinal) || !g8.StartsWith("0:", StringComparison.Ordinal) || !g9.Contains("not the first") || !g10.Contains("10.1.2.1 (first)") || !g11.Contains("/20"))
                     throw new InvalidOperationException("subnet gateway checks wrong: " + string.Join(" | ", g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11));
+                // Hardware nerds: the specs read, every verdict side of "it felt slow", the ceilings, the seller's words
+                {
+                    var hs = HwSpecs.Get(); if (hs == null) throw new InvalidOperationException("hardware specs not read");
+                    Func<double, double, double, double, bool, PcRecord.Pt> pt = (c, b, net, gw, lost) => new PcRecord.Pt { T = DateTime.Now, Cpu = c, Busy = b, DiskMs = b > 90 ? 120 : 2, Faults = 5, Perf = 100, Dpc = 1, Net = net, Gw = gw, Lost = lost, TopIo = "MsMpEng", TopCpu = "chrome" };
+                    var pcSlow = PcRecord.Judge(Enumerable.Range(0, 20).Select(i => pt(30, 99, 14, 2, false)).ToList(), DateTime.Now);
+                    var netSlow = PcRecord.Judge(Enumerable.Range(0, 20).Select(i => pt(10, 5, 400, 2, i % 3 == 0)).ToList(), DateTime.Now);
+                    var appSlow = PcRecord.Judge(Enumerable.Range(0, 20).Select(i => pt(10, 5, 14, 2, false)).ToList(), DateTime.Now);
+                    if (pcSlow.Who != "pc" || !pcSlow.Text.Contains("MsMpEng") || netSlow.Who != "internet" || appSlow.Who != "app" || PcRecord.Judge(new List<PcRecord.Pt>(), DateTime.Now).Who != "unknown")
+                        throw new InvalidOperationException("felt-slow verdicts wrong: " + pcSlow.Who + "/" + netSlow.Who + "/" + appSlow.Who);
+                    if (!PcRecord.Series(Enumerable.Range(0, 3).Select(i => pt(50, 60, 20, 2, i == 1)).ToList()).Contains("Ping 20 x 20")) throw new InvalidOperationException("felt-slow series wrong");
+                    string why; var nvme = new HwSpecs.Disk { Bus = "NVMe", Media = "SSD", LinkGen = 3, LinkWidth = 4 }; var hdd = new HwSpecs.Disk { Bus = "SATA", Media = "HDD", Rpm = 5400 };
+                    if (Math.Abs(HwSpecs.DiskCeiling(nvme, out why) - 3546) > 5 || HwSpecs.DiskCeiling(hdd, out why) != 110 || HwSpecs.DiskCeiling(new HwSpecs.Disk { Bus = "SATA", Media = "SSD" }, out why) != 550) throw new InvalidOperationException("disk ceilings wrong");
+                    var two = new List<HwSpecs.Ram> { new HwSpecs.Ram { Slot = "BANK 0 ChannelA-DIMM0", Mts = 3200 }, new HwSpecs.Ram { Slot = "BANK 2 ChannelB-DIMM0", Mts = 3200 } }; var one = new List<HwSpecs.Ram> { new HwSpecs.Ram { Slot = "DIMM A1", Mts = 3200 } };
+                    if (HwSpecs.ChannelsOf(two) != 2 || HwSpecs.ChannelsOf(one) != 1) throw new InvalidOperationException("memory channels wrong");
+                    var fake = new HwSpecs.Specs { Cpu = "Intel(R) Core(TM) i5-8250U CPU", RamGb = 8, Cores = 4, Threads = 8, BaseMhz = 1600 }; fake.Disks.Add(new HwSpecs.Disk { Gb = 512, Media = "HDD", Bus = "SATA", System = true }); fake.Gpus.Add(new HwSpecs.Gpu { Name = "Intel UHD Graphics 620", Integrated = true });
+                    var sel = HwTools.Seller("i7, 16GB RAM, 512GB SSD, RTX 3050", fake);
+                    if (sel.Count != 4 || sel.Count(x => x[0] == "2") != 4 || !sel.Any(x => x[2].Contains("spinning"))) throw new InvalidOperationException("seller check wrong: " + string.Join(" | ", sel.Select(x => x[0] + " " + x[1] + " " + x[2]).ToArray()));
+                    if (HwTools.Seller("i5 8gb 512gb ssd", fake).Count(x => x[0] == "0") != 2) throw new InvalidOperationException("seller check: matching specs not matched");
+                    foreach (var part in new[] { "cores", "clock", "ram", "disk", "link", "gpu", "net", "battery", "cache" }) if (HwTools.Explain(part, fake).Length < 80) throw new InvalidOperationException("no explanation for " + part);
+                    if (!HwTools.Explain("cores", fake).StartsWith("4 cores", StringComparison.Ordinal)) throw new InvalidOperationException("explanations don't use this PC's numbers");
+                    HwTools.Errors(30); HwTools.Hidden(M); HwTools.Map(M); HwTools.Gpu();
+                }
                 int n = PathTools.Overlap().Count + WhyFails.Hosts("").Count + WinEvidence.All(M).Count + PcHealth.Pressure(M).Count + PcHealth.Crashes().Count + PcHealth.Leaks().Count;
                 var msg = Toolkit.Query(System.Net.IPAddress.Loopback, "example.com", 1, true);   // nothing listens on 127.0.0.1:53 - must just say "no answer"
                 if (PathTools.BackHops(57) != 8 || PathTools.BackHops(120) != 9 || PathTools.Kind(1492).IndexOf("PPPoE", StringComparison.Ordinal) < 0) throw new InvalidOperationException("path helpers wrong");

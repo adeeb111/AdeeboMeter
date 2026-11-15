@@ -25,7 +25,8 @@ namespace AdeeboMeter
         static readonly string[][] Wanted = {
             new[] { "faults", "Memory", "Pages Input/sec", "" }, new[] { "commit", "Memory", "Committed Bytes", "" }, new[] { "limit", "Memory", "Commit Limit", "" },
             new[] { "diskms", "PhysicalDisk", "Avg. Disk sec/Transfer", "_Total" }, new[] { "queue", "PhysicalDisk", "Current Disk Queue Length", "_Total" },
-            new[] { "perf", "Processor Information", "% Processor Performance", "_Total" }, new[] { "intr", "Processor", "% Interrupt Time", "_Total" }, new[] { "dpc", "Processor", "% DPC Time", "_Total" } };
+            new[] { "perf", "Processor Information", "% Processor Performance", "_Total" }, new[] { "intr", "Processor", "% Interrupt Time", "_Total" }, new[] { "dpc", "Processor", "% DPC Time", "_Total" },
+            new[] { "idle", "PhysicalDisk", "% Idle Time", "_Total" }, new[] { "dbytes", "PhysicalDisk", "Disk Bytes/sec", "_Total" } };
         public static Dictionary<string, double> Sample()
         {
             var v = new Dictionary<string, double>();
@@ -260,6 +261,8 @@ namespace AdeeboMeter
                 ioMin.Add(delta); while (ioMin.Count > 60) ioMin.RemoveAt(0);
             }
         }
+        // the program that moved the most disk data in the last minute ("" when nothing moved 5 MB)
+        internal static string TopIo() { lock (ioMin) { if (ioMin.Count == 0) return ""; var d = ioMin[ioMin.Count - 1]; var top = d.OrderByDescending(x => x.Value).FirstOrDefault(); return top.Value > 5L << 20 ? top.Key : ""; } }
         public static List<string[]> Disk(Monitor m)
         {
             var rows = new List<string[]>();

@@ -24,7 +24,7 @@ namespace AdeeboMeter
             // Windows grey, test traffic coral
             { "q.reach", Theme.C("#16967A") }, { "q.slow", Theme.C("#B7791F") }, { "q.break", Theme.C("#E0484A") },
             { "q.network", Theme.C("#3A86D8") }, { "q.join", Theme.C("#7A6FD8") }, { "q.keys", Theme.C("#CF4F7C") },
-            { "q.padlock", Theme.C("#2E8B3E") }, { "q.windows", Theme.C("#6B7785") }, { "q.traffic", Theme.C("#D0582E") }
+            { "q.padlock", Theme.C("#2E8B3E") }, { "q.windows", Theme.C("#6B7785") }, { "q.traffic", Theme.C("#D0582E") }, { "q.hw", Theme.C("#8250DF") }
         };
         public static Color Accent(string id)
         {

@@ -1197,3 +1197,133 @@ in: |
 0|Lagged (rendering)|0.3% of frames · 60 fps||m
 3|OBS's CPU|18%||m
 3|Your network right then|upload 6.1 Mbps · router 2 ms · internet 21 ms||m
+
+== hwmap
+1|Narrowest pipe|the disk's write speed (310 of 3,150 MB/s)||i
+3|Processor|Intel Core i7-1260P · 12C/16T · 23% busy now · 96% speed under load (last test)|12 cores = 12 workers that each run their own job at the same moment. 16 threads: each core juggles two streams of work. 2.1 GHz = 2.1 billion ticks a second.|w
+3|Memory|16 GB DDR4 · 2 ch · ceiling 51.2 GB/s · measured 31 · 61% in use|16 GB of memory is the desk: open programs, tabs and files lie here while you use them, about 1,000 times faster than an SSD.|w
+3|Disk C:|Samsung SSD 980 · SSD NVMe · PCIe 3.0 x4 · ceiling 3,546 MB/s · measured 2,980 read / 310 write|The disk is the filing cabinet: everything kept when the power is off.|w
+0|Disk now|12% busy · 18 MB/s moving||m
+3|Built-in graphics|Intel Iris Xe Graphics · borrows up to 7.9 GB|A graphics chip has thousands of small cores doing the same maths on many pixels at once.|w
+3|Network|Wi-Fi · 866 Mbps link · 42 Mb/s down now|The network link is the front door: data can't arrive faster than the door is wide.|w
+
+== feltslow
+2|Verdict|At 2:14 PM: this PC, not the internet. The disk was 100% busy, up to 180 ms per request - mostly MsMpEng. The internet answered in 14 ms.|Try: let it finish, or move that job to the night|m
+2|Who|this PC||i
+0|Processor|average 34% · peak 61% · busiest: MsMpEng||m
+1|Disk|busy 92% on average · up to 180 ms per request · busiest: MsMpEng||m
+0|Memory|58% in use · read back from disk up to 40 pages/s||m
+0|Internet|14 ms on average · 0 lost replies · router 2 ms||m
+3|Timeline (5 s steps)|CPU 12 15 18 30 55 61 48 40 38 35 34 30 ; Disk 8 10 40 96 100 100 99 100 100 98 95 90 ; Ping 14 13 15 14 14 16 14 13 15 14 14 15||m
+3|Pattern|Of the last 6 times it felt slow: this PC 4×, the internet 1×, the site / app 1×.||m
+
+== diskspeed
+in: |yes
+1|Verdict|Fast at first, then slow: the SSD's write cache fills after about 14 GB. Normal for a budget SSD; big copies will crawl.||m
+3|The disk|KINGSTON NV2 · SSD on NVMe · 500 GB · C:||w
+0|Its link|PCIe 4.0 x4 now · up to PCIe 4.0 x4||w
+3|Ceiling|7,088 MB/s - PCIe 4.0 x4 link ≈ 7,088 MB/s usable||i
+0|Busy before the test|3%||m
+0|Read|3,410 MB/s · 48% of its ceiling||m
+1|Write|1,240 MB/s · 17% of its ceiling (8 GB written)||m
+1|Write cache runs out|after about 4.8 GB the speed drops to 410 MB/s||m
+0|One small read|0.09 ms · 9,800 per second - SSD-fast||m
+3|Write speed each ½ s|MB/s 2810 2790 2840 2805 2820 2790 2810 2800 2830 2795 2810 2790 2815 2820 2805 2800 2795 2810 420 405 410 398 415 402 410 408 400 412 405 410||m
+3|How a disk works|The disk is the filing cabinet: everything kept when the power is off - Windows, programs, your files.||i
+
+== ramcheck
+1|Verdict|Single-channel memory: 8 GB on one channel runs at half the speed it could. The built-in graphics share it, so they lose the most. A second matching stick fixes it.||m
+3|BANK 0 ChannelA-DIMM0|8 GB DDR4 · 3200 MT/s||w
+1|Total|8 GB||w
+1|Channels|1 - single channel: half the memory speed|Adding a second matching stick doubles memory speed - the integrated graphics gain the most.|i
+3|Ceiling|25.6 GB/s = 3200 MT/s × 8 bytes × 1 channel||i
+0|Measured|14.1 GB/s copying · 55% of the ceiling (50-70% is normal for a copy)||m
+1|Built-in graphics borrows|up to 3.9 GB of this memory (AMD Radeon Graphics)||w
+3|How memory works|8 GB of memory is the desk: open programs, tabs and files lie here while you use them.||i
+
+== gpucheck
+1|Verdict|Cyberpunk2077 runs on the built-in graphics (Intel UHD Graphics) while the stronger NVIDIA GeForce RTX 3060 Laptop GPU waits. Settings > System > Display > Graphics > Cyberpunk2077 > High performance.||m
+-1|BUILT-IN: Intel UHD Graphics|||
+3|Memory|none of its own · borrows up to 7.9 GB of the PC's memory||w
+0|In use now|78% busy · 1,450 MB borrowed||m
+0|  Cyberpunk2077|76% of this card||m
+-1|GRAPHICS CARD: NVIDIA GeForce RTX 3060 Laptop GPU|||
+3|Memory|6 GB of its own · can borrow 7.9 GB more||w
+0|In use now|0% busy · 310 MB of its memory||m
+0|Link|PCIe 4.0 x8 (15.8 GB/s) now · up to PCIe 4.0 x8 (15.8 GB/s)||w
+3|How graphics work|A graphics chip has thousands of small cores doing the same maths on many pixels at once.||i
+
+== cpuheld
+1|Verdict|Held back to 68% of its speed under load ≈ 1.9 GHz - it slowed as it heated up: heat.||m
+3|Processor|AMD Ryzen 5 5500U with Radeon Graphics · 6 cores / 12 threads · rated 2.1 GHz||w
+1|Speed under full load|68% of its rated speed ≈ 1.43 GHz||m
+1|Slowed while running|104% → 61% within 3 seconds|It slowed down as it warmed up - heat. Clean the vents and fan.|m
+3|Work done|412 million steps/s on all threads · 61 on one||m
+0|Power|plugged in · plan: Balanced||w
+3|How cores work|6 cores = 6 workers that each run their own job at the same moment.||i
+
+== netcap
+2|Verdict|Your internet does 940 Mbps, but your disk can only take 95 MB/s (760 Mbps). Big downloads are limited by the disk, not your ISP.||m
+3|Internet (last speed test)|940 Mbps = 117.5 MB/s||m
+0|This PC's link|Cable · 1,000 Mbps (Realtek PCIe GbE Family Controller)||w
+2|Disk write speed|95 MB/s = 760 Mbps|Downloads can't land faster than the disk writes: your disk, not your internet, is the limit.|m
+3|How the link works|The network link is the front door: data can't arrive faster than the door is wide.||i
+
+== laptop
+in: i7, 16GB, 512GB SSD
+1|Verdict|Things to weigh (or haggle with): battery at 71% of new; disk speed: fast at first, then slow.||m
+-1|WHAT'S INSIDE|||
+3|Model|LENOVO 82JW · BIOS from 2022-03-14||w
+3|Processor|Intel Core i7-1165G7 · 4 cores||w
+0|Seller said: 16 GB memory|matches (16 GB)||w
+0|Seller said: 512GB SSD|size matches (512 GB)||w
+0|Seller said: i7|matches (Intel Core i7-1165G7)||w
+-1|BATTERY|||
+1|Battery health|71% of new (40.2 of 56.6 Wh) · 412 charge cycles||w
+-1|DISK|||
+1|Disk speed|Fast at first, then slow: the SSD's write cache fills after about 6 GB.||m
+0|Disk wear|4% worn · 3,120 hours used · 38 °C||w
+-1|MEMORY, GRAPHICS, PROCESSOR|||
+0|Memory|Memory is set up right: 16 GB on 2 channels, 38 GB/s measured.||m
+0|Graphics|Built-in graphics only (Intel Iris Xe Graphics): fine for work and video.||m
+0|Processor|The processor runs at full speed under load (97%).||m
+-1|HIDDEN TROUBLE|||
+0|Errors in 30 days|none - no disk, hardware or power-off errors||w
+
+== hidden
+1|Verdict|The likeliest hidden cause: last restart - 38 days ago. Windows collects leaks and half-done updates over weeks. A real restart (not shut down - Fast Startup keeps the old state) clears them.||i
+1|Last restart|38 days ago|Windows collects leaks and half-done updates over weeks. A real restart clears them.|w
+1|Restart waiting|an update is waiting for a restart||w
+1|Start with Windows|17 programs: OneDrive, Teams, Spotify, Steam, Discord, Zoom …|Task Manager > Startup apps turns them off.|w
+1|Browser: msedge|3,840 MB in 38 processes · 4% processor|Tabs add up: close what you don't need, or use sleeping tabs.|m
+0|Power|plan: Balanced||w
+0|Windows is on|an SSD (Samsung SSD 980)||w
+0|Free space on C:|31% free||w
+0|Memory|16 GB · 2 channels||w
+0|Hardware errors (30 days)|none||w
+
+== screentest
+3|Verdict|7 full-screen colours shown. Look for dots that stay the same colour (dead or stuck pixels) and bright patches near the edges on black (backlight bleed).||m
+3|What to look for|black: lit dots and bright edges · white: dark dots · red, green, blue: dots that stay another colour · grey: uneven patches||m
+
+== keytest
+1|Verdict|84 keys pressed. Not pressed: F11 RCtrl|If you pressed one of these and it didn't light, that key is dead or sticky.|m
+
+== soundtest
+1|Verdict|Something didn't work - see below.||m
+0|Left speaker|heard||m
+2|Right speaker|not heard on the right||m
+0|Microphone|loudest 46% of full scale||m
+3|Camera|Windows' Camera app opened - check the picture is clear and the light next to the camera comes on||m
+
+== pcwhy
+2|Verdict|Memory is 93% full (14.9 of 16 GB). When memory is full, Windows moves parts of programs you're not using this second to the disk, and reads them back the moment you touch them again (paging). It's the apps: Microsoft Edge (38 processes; one per tab) 3.7 GB, Teams 1.4 GB, Photoshop 1.2 GB. Best fix: Close Microsoft Edge (38 processes; one per tab).||m
+-1|WHAT'S FULL|||
+2|1. Symptom|Memory is 93% full (14.9 of 16 GB), 96% of what Windows promised programs||m
+3|2. What that does|When memory is full, Windows moves parts of programs you're not using this second to the disk, and reads them back the moment you touch them again (paging). Each read-back waits for the disk - so the click waits, the tab freezes, the typing lags.||i
+1|3. The maths|420 pages read back a second × 0.2 ms each (this disk) ≈ 84 ms of waiting every second - small on this fast disk, so you'll notice it mostly as apps reloading||m
+1|4. Why it's full|It's the apps: Microsoft Edge (38 processes; one per tab) 3.7 GB, Teams 1.4 GB, Photoshop 1.2 GB.||m
+-1|WHAT FIXES IT|||
+3|Fix 1|Close Microsoft Edge (38 processes; one per tab) - frees about 3.7 GB, memory drops to ≈ 70% and the paging stops||i
+3|Fix 2|Close Photoshop - frees about 1.2 GB, memory drops to ≈ 86%||i
+3|Fix 3|Restart (it's been 23 days) - clears leaks and half-finished updates||i

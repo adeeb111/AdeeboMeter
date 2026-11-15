@@ -200,19 +200,20 @@ namespace AdeeboMeter
             var s = snap;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {
-                // once, after updating to 1.1.5: "Try the new Sidebar layout?" - closed or tried, never shown again (PLAN 11.7d)
+                // once, after updating to 1.1.5: the sidebar is the new default; "Prefer the Classic tabs?" - kept or switched,
+                // never shown again (PLAN 11.7d)
                 if (!Cfg.SetupDone) y = PaintSetup(g, x, y, w);
-                else if (!Cfg.SidebarTried && Cfg.Layout != "sidebar")
+                else if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
                 {
                     var cr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
                     Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + 19 * S, 20 * S, 20 * S), Kit.Accent("home"));
-                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("New: the Sidebar layout - sections down the left, search on top, a live meter."), Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + 19 * S, cr.Width - 300 * S, 22 * S));
-                    string tt = L.T("Try it"), nt = L.T("No thanks"); var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
+                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("New look: sections down the left, search on top, a live meter. Prefer the Classic tabs?"), Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + 19 * S, cr.Width - 300 * S, 22 * S));
+                    string tt = L.T("Keep this"), nt = L.T("Classic tabs"); var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
                     var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + 13 * S, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
                     Theme.Fill(g, tr, 10 * S, Kit.Accent("home")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tt, Draw.fBtn, wb, tr.X + 10 * S, tr.Y + (32 * S - ts.Height) / 2);
                     using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(nt, Draw.fBtn, mb, nr.X + 8 * S, nr.Y + (32 * S - ns.Height) / 2);
-                    Act(overviewCanvas, tr, delegate { SetLayout("sidebar"); });
-                    Act(overviewCanvas, nr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+                    Act(overviewCanvas, tr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+                    Act(overviewCanvas, nr, delegate { SetLayout("classic"); });
                     y += cr.Height + 14 * S;
                 }
                 y = PaintFrontDoor(g, x, y, w);   // the front door: "What's going on?" (FullView.Case.cs)

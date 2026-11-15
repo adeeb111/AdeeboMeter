@@ -62,7 +62,7 @@ namespace AdeeboMeter
                 tick++;
                 // (off the sampler thread: reading counters the first time can take seconds, and the corner widget must never wait)
                 int k = Cfg.Preset == "penny" ? 3 : 1;   // Penny watches the PC three times less often
-                if (tick % (5 * k) == 0) Bg(delegate { var pv = PcHealth.Sample(); double dm = pv["diskms"], pf = pv["faults"]; lock (pcLock) { if (!double.IsNaN(dm)) { diskMs += dm; diskN++; } if (!double.IsNaN(pf)) { faults += pf; faultN++; } } });
+                if (tick % (5 * k) == 0) Bg(delegate { var pv = PcHealth.Sample(); PcRecord.Add(m, pv); double dm = pv["diskms"], pf = pv["faults"]; lock (pcLock) { if (!double.IsNaN(dm)) { diskMs += dm; diskN++; } if (!double.IsNaN(pf)) { faults += pf; faultN++; } } });
                 if (tick % (10 * k) == 0) Bg(delegate { PcHealth.HungTick(m); });
                 if (tick % (60 * k) == 30) Bg(PcHealth.IoTick);
                 if (tick % (30 * k) == 7) Bg(delegate { RoutingTools.GwTick(m); });

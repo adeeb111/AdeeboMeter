@@ -538,11 +538,13 @@ namespace AdeeboMeter
     sealed class HotKey : NativeWindow, IDisposable
     {
         readonly Action press; public readonly bool Ok;
-        public HotKey(Action onPress)
+        public HotKey(Action onPress) : this(Keys.A, onPress) { }
+        // Ctrl+Alt+<key>: Ctrl+Alt+A opens the app, Ctrl+Alt+S is "it feels slow right now"
+        public HotKey(Keys key, Action onPress)
         {
             press = onPress; CreateHandle(new CreateParams());
-            // not on a keyboard where AltGr+A types a letter: the hotkey would eat that letter in every app
-            Ok = !Native.AltGrTypes(Keys.A) && Native.RegisterHotKey(Handle, 1, 0x0001 /*ALT*/ | 0x0002 /*CTRL*/ | 0x4000 /*NOREPEAT*/, (uint)Keys.A);
+            // not on a keyboard where AltGr+<key> types a letter: the hotkey would eat that letter in every app
+            Ok = !Native.AltGrTypes(key) && Native.RegisterHotKey(Handle, 1, 0x0001 /*ALT*/ | 0x0002 /*CTRL*/ | 0x4000 /*NOREPEAT*/, (uint)key);
         }
         protected override void WndProc(ref Message m) { if (m.Msg == 0x0312) { try { press(); } catch { } } base.WndProc(ref m); }
         public void Dispose() { if (Handle != IntPtr.Zero) { Native.UnregisterHotKey(Handle, 1); DestroyHandle(); } }

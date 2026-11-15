@@ -59,6 +59,16 @@ namespace AdeeboMeter
                 catch (Exception e) { r.NotEst.Add("Speed test: " + e.Message); }
             }
             else r.NotEst.Add("Internet speed - the speed test wasn't ticked (it uses 100-300 MB).");
+            // 5. the parts between the internet and your files: a disk or a link slower than the plan caps every download
+            {
+                var spd = SpeedTest.Last; double wr = HwTests.LastNum("disk", 1);
+                if (spd != null && !double.IsNaN(spd.Down) && (DateTime.Now - spd.T).TotalHours < 24 && !double.IsNaN(wr))
+                {
+                    bool cap = wr * 8 < spd.Down; r.Obs("m", cap ? 2 : 0, "5. Disk vs internet", HwSpecs.Fmt(wr) + " MB/s disk write = " + HwSpecs.Fmt(wr * 8) + " Mbps · internet " + HwSpecs.Fmt(spd.Down) + " Mbps");
+                    if (cap) found.Add(new KeyValuePair<int, string>(2, "Your disk writes slower than your internet delivers (" + HwSpecs.Fmt(wr * 8) + " vs " + HwSpecs.Fmt(spd.Down) + " Mbps) - big downloads are limited by the disk, not your ISP."));
+                }
+                var nl = HwTools.NetLinkIssue(m, HwSpecs.Get()); if (nl != null) { r.Obs("w", int.Parse(nl[0], CultureInfo.InvariantCulture), "5. " + nl[1], nl[2]); found.Add(new KeyValuePair<int, string>(int.Parse(nl[0], CultureInfo.InvariantCulture), nl[1] + ": " + nl[2] + " - " + nl[3])); }
+            }
             // the report: biggest problem first
             var ranked = found.OrderByDescending(f => f.Key).Select(f => f.Value).Distinct().ToList();
             int worst = found.Count == 0 ? 0 : found.Max(f => f.Key);

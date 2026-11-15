@@ -176,6 +176,17 @@ namespace AdeeboMeter
                 run.Status = "Asking Cloudflare for your public address (you said yes)...";
                 string pub = PublicIp(); rows.Add(R(3, "Your public address", pub != "" ? pub : "couldn't get it", "Your provider can find your line by it. Leave it out if you'll post the report publicly.", "m"));
             }
+            {
+                var pts = PcRecord.Last(900); var hs = HwSpecs.Get(); var nl = HwTools.NetLinkIssue(m, hs);
+                if (pts.Count >= 6)
+                {
+                    double c = pts.Where(p => !double.IsNaN(p.Cpu)).Select(p => p.Cpu).DefaultIfEmpty(double.NaN).Average(), d = pts.Where(p => !double.IsNaN(p.Busy)).Select(p => p.Busy).DefaultIfEmpty(double.NaN).Average();
+                    bool ok = !(c > 85) && !(d > 85);
+                    rows.Add(R(ok ? 0 : 1, "This PC (last 15 min)", ok ? "healthy - processor " + F(c, "%") + ", disk " + F(d, "%") + " busy: the slowness isn't the computer" : "busy - processor " + F(c, "%") + ", disk " + F(d, "%") + " busy (fix this before blaming the line)", "", "m"));
+                }
+                if (nl != null) rows.Add(R(int.Parse(nl[0], CultureInfo.InvariantCulture), "This PC's link", nl[2], nl[3], "w"));
+                else if (!double.IsNaN(hs.NicMbps)) rows.Add(R(0, "This PC's link", hs.NicKind + " at " + HwSpecs.Fmt(hs.NicMbps) + " Mbps - wide enough", "", "w"));
+            }
             run.Status = "Reading the cable modem (if it shows its levels)...";
             foreach (var l in Modem()) rows.Add(l);
 

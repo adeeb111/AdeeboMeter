@@ -38,7 +38,7 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote, balloonTool; HotKey slowKey;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
@@ -61,6 +61,7 @@ namespace AdeeboMeter
             try { string old = Path.Combine(Program.WriteDir, OldName + ".settings"); if (!File.Exists(settingsPath) && File.Exists(old)) File.Copy(old, settingsPath); } catch (Exception e) { Program.Log("settings migrate: " + e.Message); }
             Cfg.ApplyPreset("balanced");
             LoadSettings(); ApplyAutoStart();
+            if (!Cfg.SidebarTried) Cfg.Layout = "sidebar";   // 1.1.5: the sidebar is the default look; whoever chose a layout keeps theirs (Classic is in ⋯ and Settings)
             Cfg.Save = SaveSettings; Cfg.SetTheme = SetTheme; Cfg.GetTheme = () => Program.ForceTheme;
             Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
             Theme.Apply(Program.WantDark());
@@ -96,6 +97,8 @@ namespace AdeeboMeter
             }
             miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
             var miCheckup = new ToolStripMenuItem("Run full checkup"); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
+            var miSlow = new ToolStripMenuItem("It feels slow right now   Ctrl+Alt+S"); miSlow.Click += delegate { FeltSlow(); };
+            try { slowKey = new HotKey(Keys.S, FeltSlow); if (!slowKey.Ok) Program.Log("Ctrl+Alt+S is taken by another app"); } catch (Exception e) { Program.Log("slow hotkey: " + e.Message); }   // taken = just the menu item
             var miTheme = new ToolStripMenuItem("Theme");
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
             miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
@@ -106,7 +109,7 @@ namespace AdeeboMeter
             var miExit = new ToolStripMenuItem("Exit AdeeboMeter"); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
             menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(miFull); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
+            menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
             menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
             menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
@@ -127,6 +130,7 @@ namespace AdeeboMeter
             {
                 // a crash note: the report box, with the note in it - the person reads it and presses Send
                 if (crashNote != null) { string n = crashNote; crashNote = null; OpenFull(); if (full != null && !full.IsDisposed) full.ReportDialog("bug", "It closed unexpectedly. I was doing: \n\n---\nCrash note (no user names or folders):\n" + n); return; }
+                if (balloonTool != null) { string t = balloonTool; balloonTool = null; OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool(t, true); return; }
                 if (balloonUrl != null) { Crash.OpenUrl(balloonUrl); balloonUrl = null; } else OpenFull();
             };
             Relay.Flush();   // reports written while offline go now
@@ -471,6 +475,19 @@ namespace AdeeboMeter
             }, IntPtr.Zero);
             return found;
         }
+        // "It feels slow right now": freeze the last 2 minutes, judge them, say who it was in a note (click = the whole picture)
+        void FeltSlow()
+        {
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    var c = PcRecord.FeltSlow();
+                    marshal.BeginInvoke((Action)delegate { if (quitting) return; balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info); });
+                }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("felt slow: " + e.Message); }
+            });
+        }
     }
 
     // The Store copy's "Start with Windows": its package declares a startup entry (Package.appxmanifest, TaskId AdeeboMeter).
@@ -502,5 +519,6 @@ namespace AdeeboMeter
             try { using (Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true })) { } }
             catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is InvalidOperationException)) throw; Program.Log("startup apps: " + e.Message); }
         }
+
     }
 }
