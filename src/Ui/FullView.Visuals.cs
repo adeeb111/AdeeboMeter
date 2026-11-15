@@ -38,6 +38,15 @@ namespace AdeeboMeter
                     if (VisState() != "EXAMPLE") bad.Add(id + ": example not marked");
                 }
             if (HopsNowCount("mtr") < 3) bad.Add("mtr example: hops not read");
+            // the front door: words people use find the right case; tool names alone don't
+            foreach (var t in new[] { new[] { "my teams call keeps freezing", "calls" }, new[] { "netflix buffering", "buffer" }, new[] { "wifi keeps dropping", "drops" }, new[] { "check everything", "full" }, new[] { "game lag", "game" }, new[] { "mtu", "" }, new[] { "dig", "" }, new[] { "subnet", "" } })
+            { var m = Cases.Match(t[0]); if ((m == null ? "" : m[0]) != t[1]) bad.Add("case for \"" + t[0] + "\": " + (m == null ? "none" : m[0])); }
+            // a finished case makes a report (an HTML file here - Wine has no Microsoft Print to PDF), with its pages as pictures
+            var cs = Cases.New("calls", "search", "a test", DateTime.Now.AddMinutes(-20), DateTime.Now); var gr = new GuideRun { Id = "calls", Title = "Calls" };
+            gr.Obs("m", 2, "Jitter", "48 ms"); gr.Obs("m", 0, "Your router answers in", "2 ms"); gr.Obs("w", 1, "Wi-Fi signal", "31%"); gr.NotEst.Add("whether the other side's line is fine"); gr.Next.Add("Use a cable for calls"); gr.Conclude(2, "Your Wi-Fi: jitter jumps when the signal drops."); gr.Done = true; cs.Run = gr;
+            if (Cases.Sure(gr) < 2) bad.Add("a case backed by measurements isn't 'likely' or better");
+            try { string f = MakeReport(cs); if (!System.IO.File.Exists(f)) bad.Add("report not written"); else { if (f.EndsWith(".html", StringComparison.Ordinal) && !System.IO.File.ReadAllText(f).Contains("data:image/png;base64,")) bad.Add("report has no pages"); System.IO.File.Delete(f); } }
+            catch (Exception e) { bad.Add("report: " + e.GetType().Name + " " + e.Message); }
             // Ten years of money: always-index gets forced to sell in a bad year; emergency-fund-first never does
             double s1 = 0, i1 = 0, f1 = 0, s3 = 0, i3 = 0, f3 = 0; for (int yr = 0; yr < 10; yr++) { f1 += YrStep(yr, 1, ref s1, ref i1); f3 += YrStep(yr, 3, ref s3, ref i3); }
             if (f1 > 0 || f3 <= 0) bad.Add("ten years of money: forced sales " + f1 + " / " + f3);

@@ -6,6 +6,12 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### New: one front door, side doors, cases and a report
+- Front door: type a problem in your own words in the search box ("my Teams call keeps freezing", "netflix buffering") and it opens a case; tool names still open tools. Home has "What's going on?" chips and your recent cases.
+- Side doors: "Investigate this ›" where something went wrong - Your week, a stream with dips, a broker day with slow moments, a failed tool result. The case starts with what AdeeboMeter recorded there.
+- The case page: what, when and from where; how sure (very sure, fairly sure, likely, a first guess); the minutes around it from History (router, internet, Wi-Fi, lost replies); then the investigation - finding, what was observed with where each fact came from, not established, what to try.
+- Make a report: a PDF through Windows' own Microsoft Print to PDF (no admin, nothing installed), or one HTML file where that printer is gone. Verdict, how sure, the path, the minutes, ruled out, not established, next steps and every observation. User, PC and Wi-Fi names left out; made on this PC, nothing sent.
+
 ### New: Learn › Money & investing
 - Ten new topics, each with a picture and a check question: bull and bear markets, recession, inflation, compound growth, making money work for you, dips and corrections, emergency fund, money management (50/30/20), spreading the risk, fees and time. Learning only - made-up numbers, never advice.
 - Game: Ten years of money - $6,000 a year to place before you know what the year brings; a bear market, a recession with a lost job, an inflation spike and surprise bills; a forced sale in a dip shows what an emergency fund prevents. You against a savings-only ghost and a panic-seller ghost.

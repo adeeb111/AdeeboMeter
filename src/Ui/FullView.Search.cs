@@ -66,7 +66,14 @@ namespace AdeeboMeter
             foreach (var w in Synonyms.Keys) vocab.Add(w.ToLowerInvariant());
             foreach (var t in tools) foreach (var w in (t.Id + " " + t.Title).ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries)) vocab.Add(w);
             foreach (var it in items) foreach (var w in it.Words.Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries)) if (w.Length > 2) vocab.Add(w);
-            using (var pal = new Palette(items, toolHits, vocab, PinToMine))
+            // the front door: a problem in your own words opens a case ("teams keeps freezing" -> Calls freeze), above the tools
+            Func<string, List<PalItem>> hits = q =>
+            {
+                var l = toolHits(q); var sym = Cases.Match(q);
+                if (sym != null) { string sid = sym[0]; l.Insert(0, new PalItem { Group = L.T("Investigate"), Title = L.T("Investigate") + ": " + L.T(sym[1]), Sub = L.T("Runs the checks that fit, then a report you can keep"), Icon = "question", Acc = "home", Pin = "", Words = sym[3], Go = delegate { OpenCase(sid, "search", "", null, null); } }); }
+                return l;
+            };
+            using (var pal = new Palette(items, hits, vocab, PinToMine))
             {
                 pal.StartPosition = FormStartPosition.Manual; pal.Location = new Point(Left + (Width - pal.Width) / 2, Top + Sc(90));
                 pal.ShowDialog(this);

@@ -1111,6 +1111,14 @@ namespace AdeeboMeter
                 if (run != null) { var s = run.Copy(); if (s.Count > 1) y = PaintSeries(g, s, run.SeriesUnit, x, y, w); }
                 y = PaintBuddyLine(g, x, y, w);
                 if (tbRows != null && !tbBusy) y = PaintTbSummary(g, x, y, w);
+                if (tbRows != null && !tbBusy && !isEx && !IsCalc(tbSel) && tbRows.Any(o => o.Length > 2 && o[0] == "2"))
+                {
+                    // a side door: something failed - open it as a case, which looks at the rest of the path too
+                    string q = QuestionOf(cur), sym = q == "reach" ? "site" : q == "slow" || q == "path" ? "slow" : q == "join" ? "drops" : q == "game" ? "game" : q == "pc" || q == "win" ? "pc" : "full";
+                    var bad = tbRows.First(o => o.Length > 2 && o[0] == "2"); string ctx = sym == "site" ? (tbShown != null && tbShown.Length > 0 ? tbShown[0] : "") : L.T(tbTitle) + ": " + bad[1] + " - " + bad[2];
+                    using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Something failed here."), Draw.fBody, mb, x, y + 1 * S);
+                    InvLink(g, tbCanvas, x + g.MeasureString(L.T("Something failed here."), Draw.fBody).Width + 8 * S, y, sym, "tool", ctx, null, null); y += 32 * S;
+                }
                 if (tbRows != null)
                 {
                     float nameW = Math.Min(260 * S, w * 0.32f), pillW = Cfg.Details ? 170 * S : 120 * S;

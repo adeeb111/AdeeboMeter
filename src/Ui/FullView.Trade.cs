@@ -89,6 +89,7 @@ namespace AdeeboMeter
                         g.DrawString(BrokerName(s.Far) + " · " + L.T("usual ") + Ms(s.FarNormal) + " ms", Draw.fBodyB, ink, x + 120 * S, y + 8 * S);
                         string tt = s.Dips.Count == 0 ? L.T("no slow moments") : s.Dips.Count + L.T(" slow moments · ") + string.Join(" · ", s.Tally().Where(kv => kv.Value > 0).Select(kv => WatchKit.BlameName(kv.Key, Trading.FarName).ToLowerInvariant() + " " + kv.Value));
                         var ts = g.MeasureString(tt, Draw.fSmall); var p = new RectangleF(x + w - ts.Width - 34 * S, y + 6 * S, ts.Width + 18 * S, 22 * S);
+                        if (s.Dips.Count > 0) { var ss0 = s; var ivs = g.MeasureString(L.T("Investigate this ›"), Draw.fBodyB); InvLink(g, tradeCanvas, p.X - ivs.Width - 16 * S, y + 7 * S, "trade", "trade", BrokerName(ss0.Far) + " " + ss0.Start.ToString("ddd d MMM", CultureInfo.CurrentCulture) + ": " + tt, ss0.Start, ss0.End > ss0.Start ? ss0.End : ss0.Start.AddHours(7)); }   // a side door
                         Theme.Fill(g, p, 11 * S, Theme.LvSoft(s.Dips.Count == 0 ? 0 : 1)); using (var pb = new SolidBrush(Theme.LvText(s.Dips.Count == 0 ? 0 : 1))) g.DrawString(tt, Draw.fSmall, pb, p.X + 9 * S, p.Y + (22 * S - ts.Height) / 2);
                         y += rh;
                     }

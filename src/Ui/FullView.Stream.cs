@@ -317,7 +317,7 @@ namespace AdeeboMeter
                 var cr = new RectangleF(x, y, cs.Width + 30 * S, 34 * S); Theme.Fill(g, cr, 17 * S, Theme.Soft); g.DrawString(ct, Draw.fBodyB, ink, cr.X + 15 * S, cr.Y + (34 * S - cs.Height) / 2);
                 var rec = s; Act(streamCanvas, cr, delegate { try { Clipboard.SetText(RecordText(rec)); streamCopied = DateTime.Now; } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; } streamCanvas.Invalidate(); });
                 // the lesson that fits what went wrong most, right where it's needed
-                if (s.Dips.Count > 0) LessonLink(g, streamCanvas, WatchKit.Lesson(top.Key, "stream"), cr.Right + 16 * S, cr.Y + 8 * S);
+                if (s.Dips.Count > 0) { float lx2 = InvLink(g, streamCanvas, cr.Right + 16 * S, cr.Y + 8 * S, top.Key == "wifi" ? "drops" : "buffer", "stream", OneLine(s, farName), s.Start, s.End > s.Start ? s.End : DateTime.Now); LessonLink(g, streamCanvas, WatchKit.Lesson(top.Key, "stream"), lx2, cr.Y + 8 * S); }
                 return cr.Bottom + 20 * S;
             }
         }

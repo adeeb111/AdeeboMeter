@@ -215,6 +215,7 @@ namespace AdeeboMeter
                     Act(overviewCanvas, nr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
                     y += cr.Height + 14 * S;
                 }
+                y = PaintFrontDoor(g, x, y, w);   // the front door: "What's going on?" (FullView.Case.cs)
                 y = PaintCheckupCard(g, x, y, w);
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;

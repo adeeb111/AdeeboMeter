@@ -46,6 +46,7 @@ namespace AdeeboMeter
                     Act(overviewCanvas, pr, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); });
                     lx = pr.Right + 20 * S;
                 }
+                if (r.Lv > 0) lx = InvLink(g, overviewCanvas, lx, cy + 8 * S, tb == "wifi" ? "drops" : tb == "pc" ? "pc" : "slow", "week", L.T(r.Head), DateTime.Now.AddDays(-7), DateTime.Now);   // a side door: the week's bad moments as a case
                 if (tb != null) LessonLink(g, overviewCanvas, WatchKit.Lesson(tb, "stream"), lx, cy + 8 * S);
                 return card.Bottom + 22 * S;
             }
