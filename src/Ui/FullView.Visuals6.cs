@@ -35,6 +35,7 @@ namespace AdeeboMeter
                         else if (tbSel == "winupdate") foreach (var o in res.Where(o => o[1].Contains(" · ")).Reverse()) ev.Add(new[] { P(o[1], 0), P(o[1], 1) + ": " + Regex.Replace(o[2], @"\s*-\s*(things|no change).*$", ""), Lv(o).ToString(CultureInfo.InvariantCulture), Regex.Match(o[2], @"ping\s*[0-9.]+\s*ms\s*→\s*[0-9.]+\s*ms").Value });
                         else if (tbSel == "changed") foreach (var o in res) ev.Add(new[] { Regex.Match(o[2], @"\((\w+)\)").Groups[1].Value, o[1] + ": " + Regex.Replace(o[2], @"\s*\(\w+\)$", ""), Lv(o).ToString(CultureInfo.InvariantCulture) });
                         else foreach (var o in res.Where(o => o[1] != "Verdict")) ev.Add(new[] { Or(Regex.Match(o[2], @"\d{1,2}:\d{2}").Value, "·"), o[1] + ": " + Cut(o[2], 50), Lv(o).ToString(CultureInfo.InvariantCulture) });
+                        string fs = RV("First suspect"); if (fs != "") foreach (var e in ev) if (fs.StartsWith(e[1], StringComparison.Ordinal) && e[2] != "2") e[2] = "1";
                         string sus = tbSel == "timeline" ? RV("First suspect") : tbSel == "usb" ? RV("Verdict") : tbSel == "winupdate" ? RV("Verdict") : "";
                         return Timeline(g, x, y, w, st, tbSel == "timeline" ? L.T("WHAT HAPPENED BEFORE IT BROKE AT") + " " + Or(RV("The break"), "?") : tbSel == "winupdate" ? "UPDATES AND WHAT CAME AFTER" : tbSel == "changed" ? "WHAT CHANGED THIS WEEK" : "WHAT YOUR USB DEVICE DID", ev,
                             Or(Cut(sus, 220), "Things in the order they happened - the red one is when it broke; the amber one is the likeliest cause."));
@@ -124,7 +125,7 @@ namespace AdeeboMeter
             for (int i = 0; i < ev.Count; i++)
             {
                 var e = ev[i]; int lv; if (!int.TryParse(e[2], out lv)) lv = -1; float ey = top + i * 34 * S + 4 * S; Color c = lv == 2 ? Theme.Red : lv == 1 ? Theme.Amber : lv == 0 ? Theme.Green : VSlate;
-                bool lit = i < cur; using (var b = new SolidBrush(lit ? c : Theme.Line)) g.FillEllipse(b, lx - 7 * S, ey - 7 * S, 14 * S, 14 * S);
+                bool lit = true; using (var b = new SolidBrush(lit ? c : Theme.Line)) g.FillEllipse(b, lx - 7 * S, ey - 7 * S, 14 * S, 14 * S);
                 if ((int)cur == i) using (var p = new Pen(c, 2 * S)) g.DrawEllipse(p, lx - 12 * S, ey - 12 * S, 24 * S, 24 * S);
                 var ts = g.MeasureString(e[0], Draw.fBodyB); VText(g, e[0], Draw.fBodyB, lit ? Theme.Ink : Theme.Muted, lx - 18 * S - ts.Width, ey - 9 * S);
                 using (var b = new SolidBrush(lit ? (lv == 2 ? Theme.Red : Theme.Ink) : Theme.Muted)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -202,13 +203,13 @@ namespace AdeeboMeter
                 default: name = Or(VisIn()[0], "vpn-2027"); detail = RV("CSR"); break;
             }
             if (people.Count == 0) people = tbSel == "csrmake" ? new List<string> { L.T("your CA (signs it)") } : tbSel == "selfsigned" ? new List<string> { L.T("clients you tell to trust it") } : new List<string> { L.T("anyone who encrypts a file for you") };
-            var r = VisCard(g, x, y, w, 90 * S + Math.Max(2, people.Count) * 40 * S + 44 * S, tbSel == "csrmake" ? "A NEW KEY PAIR AND ITS REQUEST" : tbSel == "selfsigned" ? "A CERTIFICATE THAT VOUCHES FOR ITSELF" : "ONE KEY, TWO HALVES", st);
+            var r = VisCard(g, x, y, w, 90 * S + people.Count * 40 * S + 60 * S, tbSel == "csrmake" ? "A NEW KEY PAIR AND ITS REQUEST" : tbSel == "selfsigned" ? "A CERTIFICATE THAT VOUCHES FOR ITSELF" : "ONE KEY, TWO HALVES", st);
             float cy = r.Y + 70 * S + (people.Count - 1) * 20 * S; var priv = new RectangleF(r.X + 24 * S, cy - 28 * S, 200 * S, 56 * S); var pub = new RectangleF(priv.Right + 40 * S, cy - 28 * S, 180 * S, 56 * S);
             Theme.Fill(g, priv, 10 * S, Color.FromArgb(40, Theme.Red)); Kit.Icon(g, "lock", new RectangleF(priv.X + 10 * S, priv.Y + 18 * S, 20 * S, 20 * S), Theme.Red);
             VText(g, L.T("private half"), Draw.fBodyB, Theme.Ink, priv.X + 38 * S, priv.Y + 8 * S); VText(g, L.T("stays here - Windows keeps it"), Draw.fTiny, Theme.Sub, priv.X + 38 * S, priv.Y + 30 * S);
             Theme.Fill(g, pub, 10 * S, Color.FromArgb(40, Theme.Green)); Kit.Icon(g, "key", new RectangleF(pub.X + 10 * S, pub.Y + 18 * S, 20 * S, 20 * S), Theme.Green);
             VText(g, tbSel == "csrmake" ? L.T("public half + names") : L.T("public half"), Draw.fBodyB, Theme.Ink, pub.X + 38 * S, pub.Y + 8 * S); VText(g, tbSel == "csrmake" ? Cut(P(detail, 0), 24) : L.T("safe to share"), Draw.fTiny, Theme.Sub, pub.X + 38 * S, pub.Y + 30 * S);
-            VTextC(g, Cut(name, 40), Draw.fBodyB, VPurple, (priv.X + pub.Right) / 2, priv.Y - 26 * S, pub.Right - priv.X);
+            VText(g, Cut(name, 40), Draw.fBodyB, VPurple, priv.X, priv.Y - 24 * S);
             var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias; float px0 = pub.Right + 10 * S, px1 = r.Right - 230 * S;
             for (int i = 0; i < people.Count; i++)
             {
@@ -260,7 +261,7 @@ namespace AdeeboMeter
                     {
                         var a = res.FirstOrDefault(o => o[1].StartsWith("Saved", StringComparison.Ordinal)); var b = RRow("Compared"); la = a != null ? Regex.Match(a[1], "\"([^\"]+)\"").Groups[1].Value : L.T("before"); lb = b != null ? Regex.Match(b[1], "\"([^\"]+)\"").Groups[1].Value : L.T("after"); cap = "BEFORE AND AFTER";
                         var av = a != null ? a[2].Split(DotSep6, StringSplitOptions.None) : Array.Empty<string>(); var bv = b != null ? b[2].Split(DotSep6, StringSplitOptions.None) : Array.Empty<string>();
-                        foreach (var p in av) { string k = Regex.Match(p, @"^[a-zA-Z ]+?(?=\s+\d|\s+hidden|$)").Value.Trim(); var q = bv.FirstOrDefault(z => k != "" && z.StartsWith(k, StringComparison.Ordinal)); rows.Add(new[] { k, p.Replace(k, "").Trim(), q != null ? q.Replace(k, "").Trim() : "", q != null && q.Contains("+") ? "1" : "0" }); }
+                        foreach (var p in av) { string k = Regex.Match(p, @"^[a-zA-Z ]+?(?=\s+\d|\s+hidden|$)").Value.Trim(); var q = bv.FirstOrDefault(z => k != "" && z.StartsWith(k, StringComparison.Ordinal)); rows.Add(new[] { k, p.Replace(k, "").Trim(), q != null ? q.Replace(k, "").Trim() : L.T("(not compared)"), q != null && q.Contains("+") ? "1" : "-1" }); }
                         foreach (var q in bv.Where(z => !av.Any(p => { string k = Regex.Match(p, @"^[a-zA-Z ]+?(?=\s+\d|\s+hidden|$)").Value.Trim(); return k != "" && z.StartsWith(k, StringComparison.Ordinal); }))) rows.Add(new[] { L.T("new"), "", q, "1" });
                     }
                     break;

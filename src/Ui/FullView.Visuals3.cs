@@ -120,6 +120,7 @@ namespace AdeeboMeter
         // lanes racing: a packet out and back on each, the fastest home first (wave 3's races, and wave 5's DNS, cloud, VPN, legs)
         static float RaceCard(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, double, double, int>> lanes, string foot)
         {
+            lanes = lanes.Where(l => !double.IsNaN(l.Item2)).ToList(); if (lanes.Count == 0) lanes.Add(Tuple.Create(L.T("(run it to see the race)"), 0.0, double.NaN, -1));
             bool two = lanes.Any(l => !double.IsNaN(l.Item3));
             var r = VisCard(g, x, y, w, 60 * S + lanes.Count * 40 * S + 56 * S, cap, st);
             float nx = r.X + 18 * S, lx = r.X + 210 * S, lw = r.Width - 340 * S, ly = r.Y + 48 * S; double max = lanes.Max(l => Math.Max(l.Item2, double.IsNaN(l.Item3) ? 0 : l.Item3)) * 1.1; if (double.IsNaN(max) || max <= 0) max = 50;
