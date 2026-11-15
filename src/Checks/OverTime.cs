@@ -545,7 +545,7 @@ namespace AdeeboMeter
             if (txt.Length <= max) return txt; int cut = max; if (cut > 0 && char.IsHighSurrogate(txt[cut - 1])) cut--; return txt.Substring(0, cut);   /* never half a character */
         }
         // every address out - public ones too (a DNS server, the probe target, a global IPv6): "addresses are left out" means all
-        static string NoAddr(string t)
+        internal static string NoAddr(string t)
         {
             t = Regex.Replace(t ?? "", @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", "x.x.x.x");
             return Regex.Replace(t, @"(?<![0-9A-Za-z:])(?:[0-9a-fA-F]{1,4}|)(?::[0-9a-fA-F]{0,4}){3,7}(?![0-9A-Za-z:])", m => m.Value.Contains("::") || m.Value.Count(ch => ch == ':') >= 3 ? "x:x::x" : m.Value);   // 3+ colons: never a clock time

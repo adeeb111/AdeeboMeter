@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace AdeeboMeter
@@ -11,16 +13,44 @@ namespace AdeeboMeter
     // Share a diagnosis: a QR code the phone's camera reads (made here, offline - the picture is just the text).
     sealed partial class FullView
     {
+        // The QR holds a link to adeebometer.com/r with the result after the # - the part of a link browsers never send to the
+        // server, so the site never sees it; the phone's own browser draws the page (docs/r.html) from it: the verdict, the path,
+        // charts, what to do, and buttons to send it to the provider. Addresses and names are left out. Format v1, fields by "!":
+        // 1 ! yyMMddHHmm ! levels (overall + PC, LAN, ISP, DNS, Internet) ! gw,ping,jitter,loss,dns,down,up,cpu,mem,wifi,outages,c|w
+        //   ! last 30 internet checks ! router per minute (30 min) ! loss % per minute ! headline (+ for spaces)
+        // A series is one character per value from QrAlpha: ms as round(2*sqrt(ms)) (back: (k/2)^2), loss as the %, "-" = no answer.
+        const string QrAlpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.";
+        const string QrSite = "https://adeebometer.com/r#";
+        static char QrMs(double ms) { return double.IsNaN(ms) || ms < 0 ? '-' : QrAlpha[(int)Math.Min(63, Math.Round(2 * Math.Sqrt(ms)))]; }
+        static string QrNum(double v, int d) { return double.IsNaN(v) || double.IsInfinity(v) ? "" : Math.Round(v, d).ToString(CultureInfo.InvariantCulture); }
+        static readonly string[] QrPhoneRow = { "3", "On the phone", "the verdict, the path, the numbers in plain words, two charts, what to do - and Send to my provider, Share, Save as PDF", "Names, the Wi-Fi name and addresses are left out.", "i" };
+        internal string QrLink()
+        {
+            var s = M.Latest; var now = DateTime.Now; var c = CultureInfo.InvariantCulture;
+            var mins = Cases.Minutes(now.AddMinutes(-30), now); var wifi = mins.Wifi.Where(z => !double.IsNaN(z) && z > 0).ToList();
+            string link = mins.T.Count == 0 ? "" : wifi.Count == 0 ? "c" : "w";
+            var lv = new StringBuilder().Append(Math.Max(0, Math.Min(3, s.Level))); for (int i = 0; i < 5; i++) lv.Append(i < s.Path.Length ? Math.Max(0, Math.Min(3, s.Path[i])) : 3);
+            int outs = 0; try { outs = Outages.Last(M, 1).Count; } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            string nums = string.Join(",", new[] { QrNum(s.GwMs, 0), QrNum(s.Ping, 0), QrNum(s.Jitter, 1), QrNum(s.LossPct, 1), QrNum(s.DnsMs, 0), QrNum(s.Down, 1), QrNum(s.Up, 1), QrNum(s.Cpu, 0), QrNum(s.Mem, 0), wifi.Count > 0 ? QrNum(wifi[wifi.Count - 1], 0) : "", outs.ToString(c), link });
+            var net = new StringBuilder(); foreach (var v in s.NetHist.Skip(Math.Max(0, s.NetHist.Length - 30))) net.Append(QrMs(v));
+            var gw = new StringBuilder(); var lo = new StringBuilder();
+            for (int i = Math.Max(0, mins.T.Count - 30); i < mins.T.Count; i++) { gw.Append(QrMs(mins.Gw[i])); lo.Append(double.IsNaN(mins.Loss[i]) ? '0' : QrAlpha[(int)Math.Max(0, Math.Min(63, Math.Round(mins.Loss[i])))]); }
+            string head = OverTime.NoAddr(GameSession.Redact(s.Headline ?? "", "")); head = Regex.Replace(head, @"[^\w .,%'()-]", "").Trim().Replace(' ', '+');
+            string body = "1!" + now.ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!";
+            // the QR holds at most Qr.MaxBytes: the headline gives way first, then the oldest of each series
+            int room = Qr.MaxBytes - QrSite.Length - body.Length; if (room < head.Length) head = room > 8 ? head.Substring(0, room) : "";
+            while (QrSite.Length + body.Length + head.Length > Qr.MaxBytes && net.Length > 10) { net.Remove(0, 1); if (gw.Length > 10) { gw.Remove(0, 1); lo.Remove(0, 1); } body = "1!" + now.ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!"; }
+            return QrSite + body + head;
+        }
         List<string[]> QrRows()
         {
-            string t = OverTime.Summary(M, 400);
-            while (Encoding.UTF8.GetByteCount(t) > Qr.MaxBytes - 1) t = t.Substring(0, t.Length - (t.Length > 1 && char.IsLowSurrogate(t[t.Length - 1]) ? 2 : 1));   // whole characters only
-            var rows = new List<string[]>
+            string link = QrLink();
+            return new List<string[]>
             {
-                new[] { "0", "QR code", "ready - click to show it, then point your phone's camera at it", "The code holds only this text: no link, no address, nothing to download.", "i", "qr:" + t },
-                new[] { "3", "What it says", t.Replace("\n", " · "), "Names, Wi-Fi name and addresses are left out.", "i" }
+                new[] { "0", "Scan it with your phone", "point the camera at the code above - one tap opens your result with charts", "It opens adeebometer.com/r. The numbers ride in the link after the # and stay on your phone - the site never sees them.", "i", "qr:" + link },
+                QrPhoneRow,
+                new[] { "3", "Bigger code", "click to open it full size", "", "i", "qr:" + link }
             };
-            return rows;
         }
         void ShowQr(string text)
         {
@@ -29,7 +59,7 @@ namespace AdeeboMeter
             using (var bmp = Qr.Picture(m, px))
             using (var f = new Form { Text = L.T("Scan with your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Color.White, ShowInTaskbar = false })
             using (var pb = new PictureBox { Image = bmp, SizeMode = PictureBoxSizeMode.AutoSize, Location = new Point(Sc(16), Sc(16)) })
-            using (var note = new Label { Text = L.T("Your phone's camera reads it - nothing is sent."), AutoSize = true, ForeColor = Color.FromArgb(91, 102, 117), Font = Draw.fSmall, Location = new Point(Sc(16), Sc(24) + bmp.Height) })
+            using (var note = new Label { Text = L.T("Point your phone's camera at it, then tap the link - your result opens with charts. The numbers stay on your phone."), AutoSize = true, ForeColor = Color.FromArgb(91, 102, 117), Font = Draw.fSmall, Location = new Point(Sc(16), Sc(24) + bmp.Height) })
             {
                 f.Controls.Add(pb); f.Controls.Add(note);
                 f.ClientSize = new Size(bmp.Width + Sc(32), bmp.Height + Sc(60));

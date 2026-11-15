@@ -18,7 +18,7 @@ namespace AdeeboMeter
         static readonly HashSet<string> Pictured6 = new HashSet<string> {
             "timeline", "winupdate", "changed", "usb", "rushhour", "besttime", "sixmonths", "wakeup", "dltime", "leaks", "gpu", "bg", "certs", "pressure", "disk",
             "capfc", "month", "svcfail", "events", "winev", "drivers", "bluetooth", "prematch", "tonight", "keys", "newkey", "recipients", "selfsigned", "csrmake",
-            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport" };
+            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr" };
         static readonly HashSet<string> Moving6 = new HashSet<string> { "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
         static readonly string[] DotSep6 = { " · " };
 
@@ -106,6 +106,8 @@ namespace AdeeboMeter
                     return KeyPair(g, x, y, w, st);
                 case "hashf":
                     return HashPic(g, x, y, w, st);
+                case "qr":
+                    return QrPic(g, x, y, w, st);
 
                 // ---------------------------------------------------------------- side by side
                 default:   // certconv, certcmp, beforeafter, twopc
@@ -219,6 +221,21 @@ namespace AdeeboMeter
             }
             g.SmoothingMode = sm;
             VFoot(g, r, trust != "" ? Cut(trust, 120) : Cut(detail, 140) + (detail != "" ? " - " : "") + L.T("What's locked with the public half only the private half opens."));
+            return r.Bottom + 14 * S;
+        }
+        // the QR code itself, big, right in the tool - no extra click - with what the phone will show
+        string qrKey = "", qrLink = ""; Bitmap qrBmp; DateTime qrAt;   // the link is rebuilt at most every 30 s (it reads History)
+        float QrPic(Graphics g, float x, float y, float w, string st)
+        {
+            if ((DateTime.Now - qrAt).TotalSeconds > 30 || qrLink == "") { qrLink = QrLink(); qrAt = DateTime.Now; } string link = qrLink, key = link;
+            if (key != qrKey || qrBmp == null) { if (qrBmp != null) qrBmp.Dispose(); var m = Qr.Encode(link); qrBmp = m == null ? null : Qr.Picture(m, Math.Max(3, (int)(5 * S))); qrKey = key; }
+            float side = qrBmp == null ? 0 : qrBmp.Width; var r = VisCard(g, x, y, w, Math.Max(side + 70 * S, 260 * S), "SCAN WITH YOUR PHONE'S CAMERA", st);
+            if (qrBmp != null) { g.InterpolationMode = InterpolationMode.NearestNeighbor; g.DrawImage(qrBmp, r.X + 24 * S, r.Y + 44 * S, side, side); }
+            float tx = r.X + 48 * S + side, ty = r.Y + 48 * S, tw = r.Right - tx - 24 * S;
+            VText(g, L.T("One tap opens your result"), Draw.fBtn, Theme.Ink, tx, ty); ty += 34 * S;
+            string[] lines = { L.T("the verdict and where the trouble is"), L.T("the numbers in plain words"), L.T("charts of the last checks and minutes"), L.T("what to do next"), L.T("Send to my provider · Share · Save as PDF") };
+            foreach (var l in lines) { Theme.Fill(g, new RectangleF(tx, ty + 6 * S, 8 * S, 8 * S), 4 * S, Theme.Green); VText(g, l, Draw.fBody, Theme.Ink, tx + 16 * S, ty); ty += 24 * S; }
+            using (var b = new SolidBrush(Theme.Sub)) g.DrawString(L.T("It opens adeebometer.com/r. Your numbers ride in the link after the # - that part never leaves the phone, so the site never sees them. Names and addresses are left out."), Draw.fSmall, b, new RectangleF(tx, ty + 8 * S, tw, 60 * S));
             return r.Bottom + 14 * S;
         }
         // a file's fingerprint: change one byte and the whole hash changes; compare it with the one the site published
