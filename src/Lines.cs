@@ -287,6 +287,7 @@ namespace AdeeboMeter
                 t = Regex.Replace(t, @"\{([^}]*)\}", m =>
                 {
                     string ph = m.Groups[1].Value.Trim().ToLowerInvariant(); if (ph == "v" || ph == "addr") return "{" + (m.Groups[1].Value.Trim() == "Addr" ? "Addr" : ph) + "}";
+                    if (ph.Length >= 3 && EditDist(ph, "addr") == 1) { report.Add("Line " + n + " fixed: {" + m.Groups[1].Value + "} -> {addr} (one letter off)."); return "{addr}"; }
                     report.Add("Line " + n + ": {" + m.Groups[1].Value + "} isn't a placeholder ({v} or {addr}) - kept as plain text, nothing filled in."); return "(" + m.Groups[1].Value + ")";
                 });
                 var words = t.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);

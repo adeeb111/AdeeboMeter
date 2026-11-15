@@ -194,18 +194,25 @@ namespace AdeeboMeter
             if (v == null || v.Length < 2) return;
             double mx = cap;
             if (mx <= 0) { mx = 1; foreach (var x in v) if (!double.IsNaN(x) && x > mx) mx = x; mx *= 1.15; }
-            var pts = new PointF[v.Length];
+            // AM-CG-205: each run of measured samples is drawn on its own; a missing sample is a gap, never a dip to zero
+            var run = new List<PointF>();
+            Action flush = () =>
+            {
+                if (run.Count >= 2)
+                {
+                    if (fill) { var poly = new List<PointF>(run); poly.Add(new PointF(run[run.Count - 1].X, r.Bottom)); poly.Add(new PointF(run[0].X, r.Bottom)); using (var b = new SolidBrush(Color.FromArgb(56, c))) g.FillPolygon(b, poly.ToArray()); }
+                    using (var p = new Pen(c, 1.4f)) g.DrawLines(p, run.ToArray());
+                }
+                else if (run.Count == 1) using (var b = new SolidBrush(c)) g.FillEllipse(b, run[0].X - 1.2f, run[0].Y - 1.2f, 2.4f, 2.4f);
+                run.Clear();
+            };
             for (int i = 0; i < v.Length; i++)
             {
-                double y = double.IsNaN(v[i]) ? 0 : Math.Min(1, v[i] / mx);
-                pts[i] = new PointF(r.X + (float)i / (v.Length - 1) * r.Width, r.Bottom - 1 - (float)y * (r.Height - 2));
+                if (double.IsNaN(v[i])) { flush(); continue; }
+                double y = Math.Min(1, v[i] / mx);
+                run.Add(new PointF(r.X + (float)i / (v.Length - 1) * r.Width, r.Bottom - 1 - (float)y * (r.Height - 2)));
             }
-            if (fill)
-            {
-                var poly = new List<PointF>(pts); poly.Add(new PointF(r.Right, r.Bottom)); poly.Add(new PointF(r.X, r.Bottom));
-                using (var b = new SolidBrush(Color.FromArgb(56, c))) g.FillPolygon(b, poly.ToArray());
-            }
-            using (var p = new Pen(c, 1.4f)) g.DrawLines(p, pts);
+            flush();
         }
     }
 
@@ -507,7 +514,7 @@ namespace AdeeboMeter
         {
             if (SpeedStyle) return SpeedChip(s, dwell);
             var ts = Measure(s.Chip, fSmall, 0);
-            float ww = WeatherChipW(); int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
+            float ww = Layout(s.Call) == "everyday" ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
             {
@@ -537,7 +544,7 @@ namespace AdeeboMeter
         public static string Layout(bool call)
         {
             string st = Style; var gp = GamePing.Me.Playing;
-            if (st == "gamer" || (st == "auto" && gp != null && Cfg.GameWidget)) return GamerTarget() != null ? "gamer" : "everyday";
+            if (st == "gamer" || (st == "auto" && gp != null && Cfg.GameWidget)) { if (GamerTarget() != null) return "gamer"; if (st == "gamer") return "everyday"; }   // AM-CG-213: auto goes on to the call check
             if (st == "calls" || (st == "auto" && call)) return "calls";
             if (st == "engineer") return Cfg.Simple ? "everyday" : "engineer";
             return "everyday";
@@ -576,7 +583,7 @@ namespace AdeeboMeter
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(L.T("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
-                hits["game"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 80 * S);
+                // (AM-CG-207: no hover area here - there's no detail card for it)
                 string big = double.IsNaN(now) ? "-" : Math.Round(now).ToString(CultureInfo.InvariantCulture);
                 var bf = fCardNum; using (var bb = new SolidBrush(gc))
                 {
@@ -603,9 +610,10 @@ namespace AdeeboMeter
         public static Bitmap CallsCard(Snap s, Dictionary<string, RectangleF> hits)
         {
             double jit = s.Jitter, loss = s.LossPct, ping = s.Ping;
-            int lv = double.IsNaN(ping) ? 3 : (jit > 30 || loss > 3 || ping > 250) ? 2 : (jit > 15 || loss > 1 || ping > 150) ? 1 : 0;
-            string grade = lv == 0 ? "CLEAR" : lv == 1 ? "SOME BREAKUP" : lv == 2 ? "CHOPPY" : "WAITING";
-            string head = s.Call ? (lv == 0 ? "Your call should sound clear." : lv == 1 ? "Your call may break up now and then." : lv == 2 ? "Your call will sound choppy." : "Measuring your call...") : "No call right now - this is how one would sound.";
+            bool partial = double.IsNaN(jit) || double.IsNaN(loss);
+            int lv = double.IsNaN(ping) ? 3 : (jit > 30 || loss > 3 || ping > 250) ? 2 : (jit > 15 || loss > 1 || ping > 150) ? 1 : partial ? 3 : 0;   // AM-CG-208: missing jitter or loss is never "clear"
+            string grade = lv == 0 ? "LINE OK" : lv == 1 ? "SOME BREAKUP" : lv == 2 ? "CHOPPY" : "WAITING";
+            string head = s.Call ? (lv == 0 ? "Your connection looks fine for calls (an estimate from the line - your call app's own numbers can differ)." : lv == 1 ? "Your connection may make calls break up now and then." : lv == 2 ? "Your connection will likely make calls choppy." : partial && !double.IsNaN(ping) ? "Not enough measured yet to judge calls (jitter or loss still missing)." : "Measuring your connection...") : "No call right now - this is how the line looks for one.";
             string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? "through the VPN · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
             return MetricCard(s, hits, "CALL", head, lv, double.IsNaN(jit) ? "-" : Math.Round(jit).ToString(CultureInfo.InvariantCulture), "ms jitter", grade,
                 s.NetHist, new[] { "delay " + Fmt(ping, "0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↑" + Fmt(s.Up, "0.0", " Mb/s"), vpnLine });
@@ -641,7 +649,7 @@ namespace AdeeboMeter
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
                 g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
-                hits["main"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 80 * S);
+                // (AM-CG-207: no hover area here - there's no detail card for it)
                 var bf = fCardNum; using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
                 {
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;

@@ -29,7 +29,7 @@ namespace AdeeboMeter
         // how often: the preset's pace - a check every 2 s is a lot of knocks on someone else's server (about 12,000 a
         // trading day), so only the engineer view asks for it
         public static int Sec { get { return Cfg.Details && viewOpen ? 2 : Cfg.Preset == "penny" ? 30 : Cfg.Preset == "gamer" ? 5 : 10; } }
-        static volatile bool viewOpen;
+        internal static volatile bool viewOpen;
 
         // ---------- market hours (US/Canada stocks: 9:30-16:00 Eastern, Monday to Friday; holidays are not known here)
         static TimeZoneInfo eastern;

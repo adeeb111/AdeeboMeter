@@ -385,17 +385,17 @@ namespace AdeeboMeter
             {
                 uiTick++;
                 if ((uiTick & 15) == 0) { Weather.Tick(); Sectors.WatchTick(); }   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
-                if (WidgetScreen() == null) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
+                if (WidgetScreen() == null) { hovered = false; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
                 bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
                 if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; widget.ClaimTop(); }   // every 30 s: claim the top layer back - no redraw
                 if ((uiTick & 7) == 0) presenting = Native.Presenting();   // checked twice a second at most
-                if (!widgetOn || viewUp || presenting || locked) { if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
+                if (!widgetOn || viewUp || presenting || locked) { hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
                 if (ui.Interval != want) ui.Interval = want;
-                if ((Clock.Mono - lastCover).TotalMilliseconds >= 400 && !hovered)   // AM-CG-192: re-judged when folded again, not by the open card's size
+                if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 400 : 2000) && !hovered)   // AM-CG-214   // AM-CG-192: re-judged when folded again, not by the open card's size
                 {
                     lastCover = Clock.Mono;
                     bool c = WindowOver(Zone());

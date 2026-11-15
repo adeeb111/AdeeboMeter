@@ -30,6 +30,7 @@ namespace AdeeboMeter
             animTimer = calcTimer = null; jTimer = labTimer = sparkT = switchTimer = null;
             if (qrBmp != null) { qrBmp.Dispose(); qrBmp = null; }
             foreach (var b in navBmps.Values) b.Dispose(); navBmps.Clear();
+            foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear();   // AM-CG-210: the widget previews too
             PhoneX = null; PhoneR = null; PhoneP = null; PhoneB = null; PhoneKind = "";   // statics: don't keep the last view's data alive
         }
         // written whole beside the target under a name nobody else uses, then swapped in; never left behind

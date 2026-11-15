@@ -291,6 +291,7 @@ namespace AdeeboMeter
         }
         // only AdeeboMeter's own pages (the website, the source on GitHub) and Adeeb's PayPal donation link ever open
         static readonly char[] Slash = { '/' };
+        static readonly string[] Donations = { "5CAD", "10CAD", "20CAD", "50CAD" };
         public static bool Allowed(string url)
         {
             // parsed, then host and path compared exactly - "AdeeboMeterEvil" or "AdeeboMeter@evil" never pass a prefix test
@@ -300,7 +301,7 @@ namespace AdeeboMeter
             if (host == "github.com") return seg.Length >= 2 && seg[0] == "adeeb111" && string.Equals(seg[1], "AdeeboMeter", StringComparison.OrdinalIgnoreCase);
             if (host == "adeeb111.github.io") return seg.Length >= 1 && seg[0] == "AdeeboMeter";
             if (host == "adeebometer.com" || host == "www.adeebometer.com") return true;   // our own website
-            if (host == "paypal.me") return seg.Length >= 1 && seg[0] == "adeeb1111" && seg.Length <= 2;
+            if (host == "paypal.me") return u.Query == "" && u.Fragment == "" && seg.Length >= 1 && seg[0] == "adeeb1111" && (seg.Length == 1 || (seg.Length == 2 && Array.IndexOf(Donations, seg[1]) >= 0));   // exactly the five buttons
             return false;
         }
         public static void OpenUrl(string url)

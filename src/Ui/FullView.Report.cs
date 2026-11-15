@@ -21,7 +21,7 @@ namespace AdeeboMeter
                 var tech = new CheckBox { Text = L.T("Add the technical details below (no names, PC name, paths or addresses)"), Checked = bug, Visible = bug, Location = new Point(x, y), AutoSize = true, ForeColor = Theme.Sub };
                 var preview = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Font = Draw.fSmall, Location = new Point(x, y + Sc(28)), Size = new Size(w, Sc(160)), Text = bug ? BugReport.Tech(bugPage) : "", Visible = bug, BackColor = Theme.Soft, ForeColor = Theme.Sub };
                 if (bug) y += Sc(200);
-                var note = new Label { Text = L.T(Relay.Ready ? "Sent to Adeeb's tracker - no account needed. Nothing goes until you press Send." : Policy.NoOnline ? "Your IT team turned online sending off - Copy puts it on the clipboard instead." : "Sending isn't switched on yet - Copy puts it on the clipboard for the form on adeebometer.com."), ForeColor = Theme.Muted, Font = Draw.fSmall, Location = new Point(x, y), Size = new Size(w, Sc(36)) }; y += Sc(42);
+                var note = new Label { Text = L.T(Relay.Ready ? "Posted as a PUBLIC issue on GitHub - anyone can read it. Leave out anything private. What you see above (and the details box) is exactly what goes, and nothing goes until you press Send." : Policy.NoOnline ? "Your IT team turned online sending off - Copy puts it on the clipboard instead." : "Sending isn't switched on yet - Copy puts it on the clipboard for the form on adeebometer.com."), ForeColor = Theme.Muted, Font = Draw.fSmall, Location = new Point(x, y), Size = new Size(w, Sc(36)) }; y += Sc(42);
                 var send = new PillButton(Relay.Ready ? "Send" : "Copy", PillButton.K.Primary) { Location = new Point(x, y) };
                 var cancel = new PillButton("Close", PillButton.K.Chip) { Location = new Point(x + Sc(130), y + Sc(2)) };
                 var status = new Label { Text = "", ForeColor = Theme.Ink, Font = Draw.fBodyB, Location = new Point(x + Sc(240), y + Sc(8)), Size = new Size(w - Sc(240), Sc(40)) };
@@ -37,6 +37,7 @@ namespace AdeeboMeter
                         catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; status.Text = L.T("Couldn't copy - try again."); }
                         return;
                     }
+                    if (MessageBox.Show(f, L.T("This becomes a public GitHub issue that anyone can read:") + "\n\n" + (body.Length > 700 ? body.Substring(0, 700) + "\n..." : body) + "\n\n" + L.T("Send it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
                     send.Enabled = false; status.Text = L.T("Sending...");
                     string first = text.Split('\n')[0].Trim(); if (first.Length > 80) first = first.Substring(0, 80);
                     Relay.Send(Relay.Json(bug ? "bug" : "feedback", first, body, null), r =>

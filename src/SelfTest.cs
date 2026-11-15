@@ -1092,6 +1092,8 @@ namespace AdeeboMeter
                 var want = new Dictionary<string, string> { { "rr3---sn-ab5l6n7s.googlevideo.com", "YouTube" }, { "ipv4-c001-yyz001-ix.1.oca.nflxvideo.net", "Netflix" }, { "video-weaver.yto01.hls.ttvnw.net", "Twitch" }, { "googlevideo.com.evil.example", null }, { "notnetflix.com", null }, { "", null } };
                 foreach (var kv in want) if (Streams.ServiceOf(kv.Key) != kv.Value) throw new InvalidOperationException(kv.Key + " -> " + Streams.ServiceOf(kv.Key) + ", wanted " + kv.Value);
                 if (Streams.PlayerOf("vlc") != "VLC" || Streams.PlayerOf("Kodi.exe") != "Kodi" || Streams.PlayerOf("chrome") != null) throw new InvalidOperationException("player apps not recognised");
+                var vw = Streams.Verdict4K(45, 200, 10, true); if (!vw[3].StartsWith("4K|risky", StringComparison.Ordinal) || vw[4].IndexOf("Wi-Fi", StringComparison.Ordinal) < 0) throw new InvalidOperationException("45 Mb/s on 10% Wi-Fi must not be 4K-safe (AM-CG-138)");
+                if (Streams.Median(new List<double> { 10, 90 }) != 50) throw new InvalidOperationException("median of 10 and 90 must be 50 (AM-CG-137)");
                 var v = Streams.Verdict4K(18, 3, 41, true); if (!v[3].StartsWith("4K|no", StringComparison.Ordinal) && !v[3].StartsWith("4K|risky", StringComparison.Ordinal)) throw new InvalidOperationException("18 Mb/s is not safe for 4K: " + v[3]);
                 if (!v[1].StartsWith("HD|safe", StringComparison.Ordinal) || v[4].IndexOf("Wi-Fi", StringComparison.Ordinal) < 0) throw new InvalidOperationException("18 Mb/s on weak Wi-Fi: HD safe, Wi-Fi named");
             });
@@ -1113,7 +1115,8 @@ namespace AdeeboMeter
                     if (Cfg.HiddenSecs != "stream" || !Cfg.Off("stream") || Cfg.Off("trade") || Cfg.Off("strea")) throw new InvalidOperationException("hiding sections: " + Cfg.HiddenSecs);
                     Cfg.Details = false; Cfg.Preset = "penny"; if (Trading.Sec != 30 || Streams.SampleSec != 30) throw new InvalidOperationException("Penny must check every 30 s");
                     Cfg.Preset = "balanced"; if (Trading.Sec != 10 || Streams.SampleSec != 5) throw new InvalidOperationException("Balanced: broker 10 s, stream 5 s");
-                    Cfg.Details = true; if (Trading.Sec != 2) throw new InvalidOperationException("2 s only with Details on");
+                    Cfg.Details = true; Trading.viewOpen = true; if (Trading.Sec != 2) throw new InvalidOperationException("2 s only with Details on and the view open");
+                    Trading.viewOpen = false; if (Trading.Sec != 10) throw new InvalidOperationException("Details in the corner: back to the preset's pace (AM-CG-114)");
                 }
                 finally { Cfg.HiddenSecs = hid0; Cfg.Preset = pre0; Cfg.Details = det0; }
                 if (!Trading.MarketOpen(new DateTime(2026, 11, 13, 10, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 9, 29, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 13, 16, 0, 0)) || Trading.MarketOpen(new DateTime(2026, 11, 14, 11, 0, 0))) throw new InvalidOperationException("market hours wrong");

@@ -203,8 +203,8 @@ namespace AdeeboMeter
                 r.Add(q[0] + "|" + (double.IsNaN(mbps) ? "unknown" : mbps >= need * 1.6 ? "safe" : mbps >= need ? "risky" : "no") + "|" + need);
             }
             // AM-CG-138: enough speed isn't enough when the path is shaky - weak Wi-Fi or a slow router make 4K "risky" whatever the speed
-            bool weakWifi = wifi && signal >= 0 && signal < 35, slowRouter = !double.IsNaN(gwMs) && gwMs > 60;
-            if (weakWifi || slowRouter) for (int i = 0; i < r.Count; i++) r[i] = r[i].Replace("|safe|", "|risky|");
+            bool weakWifi = wifi && signal >= 0 && signal < 50, slowRouter = !double.IsNaN(gwMs) && gwMs > 60;
+            if (weakWifi || slowRouter) for (int i = 0; i < r.Count; i++) if (r[i].StartsWith("4K|", StringComparison.Ordinal) || r[i].StartsWith("Full HD|", StringComparison.Ordinal)) r[i] = r[i].Replace("|safe|", "|risky|");
             string path = weakWifi ? "your Wi-Fi signal is weak (" + signal + "%)" : slowRouter ? "your router is slow to answer (" + gwMs.ToString("0", CultureInfo.InvariantCulture) + " ms)" : "";
             // AM-CG-139: a low number has several possible causes - say which ones, don't pick one
             string why = double.IsNaN(mbps) ? "The speed test didn't finish."

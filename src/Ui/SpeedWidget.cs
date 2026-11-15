@@ -37,7 +37,7 @@ namespace AdeeboMeter
         public static string ChipKey(Snap s)
         {
             if (!SpeedStyle) return s.Chip + WeatherKeyPart();
-            return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark5(Cfg.WDir == "up" ? s.UpHist : s.DownHist) : "") + WeatherKeyPart();
+            return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark30(Cfg.WDir == "up" ? s.UpHist : s.DownHist) : "") + WeatherKeyPart();
         }
         static string SpeedText(Snap s)
         {
@@ -47,6 +47,12 @@ namespace AdeeboMeter
             return ud == uu ? "↓ " + Rate(s.Down, false) + "  ↑ " + Rate(s.Up, false) + " " + ud : "↓ " + Rate(s.Down, true) + "  ↑ " + Rate(s.Up, true);
         }
         static double Num(double v) { return double.IsNaN(v) ? 0 : v; }
+        // AM-CG-206: all 30 plotted samples, as the pixel rows they land on (and the scale they share)
+        static string Spark30(double[] h)
+        {
+            if (h == null || h.Length == 0) return ""; var v = h.Skip(Math.Max(0, h.Length - 30)).ToArray(); double cap = 1; foreach (var q in v) if (!double.IsNaN(q) && q > cap) cap = q;
+            return Math.Round(cap, 1).ToString(CultureInfo.InvariantCulture) + ":" + string.Join(",", v.Select(q => double.IsNaN(q) ? "-" : ((int)(q / (cap * 1.1) * 16)).ToString(CultureInfo.InvariantCulture)));
+        }
         static string Spark5(double[] h) { if (h == null || h.Length == 0) return ""; return string.Join(",", h.Skip(Math.Max(0, h.Length - 12)).Select(v => double.IsNaN(v) ? "-" : ((int)(v * 2)).ToString(CultureInfo.InvariantCulture))); }
 
         static Bitmap SpeedChip(Snap s) { return SpeedChip(s, 0); }
@@ -111,7 +117,7 @@ namespace AdeeboMeter
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 22 * S, y - 2 * S, 22 * S, 22 * S), s, false);
                 y += 24 * S;
                 if (status) { using (var hb = new SolidBrush(s.Level >= 1 && s.Level <= 2 ? Theme.LvText(s.Level) : Theme.Sub)) g.DrawString(s.Headline, fSmall, hb, new RectangleF(pad, y, inner, headH)); y += headH; }
-                hits["main"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 70 * S);
+                // (AM-CG-207: no hover area here - there's no detail card for it)
                 // the two big numbers
                 float half = inner / 2;
                 for (int i = 0; i < 2; i++)

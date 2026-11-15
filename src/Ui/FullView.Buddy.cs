@@ -190,7 +190,7 @@ namespace AdeeboMeter
         readonly Dictionary<string, Bitmap> wpics = new Dictionary<string, Bitmap>(StringComparer.Ordinal); DateTime wpicsAt; string wpicsKey = "";
         Bitmap WPic(string style, bool card)
         {
-            string key = Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious;   // AM-CG-200
+            string key = previewExample + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious;   // AM-CG-200
             if (key != wpicsKey || (DateTime.Now - wpicsAt).TotalSeconds > 10) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); wpicsKey = key; wpicsAt = DateTime.Now; }
             Bitmap bm; string k = style + (card ? "|c" : "|s");
             if (!wpics.TryGetValue(k, out bm)) { try { bm = Draw.Preview(PreviewSnap(), style, card); } catch (Exception e) { Program.Log("widget preview " + style + ": " + e.Message); bm = null; } wpics[k] = bm; }
