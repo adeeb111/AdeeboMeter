@@ -421,7 +421,7 @@ namespace AdeeboMeter
                 };
                 Theme.Logo(g, new RectangleF(x, y, 56 * S, 56 * S), true);
                 g.DrawString(L.T("AdeeboMeter"), Draw.fHero, ink, x + 70 * S, y - 2 * S);
-                g.DrawString(L.T("Is it me or the network? One glance tells you."), Draw.fHead, blue, x + 72 * S, y + 38 * S);
+                g.DrawString(L.T("Know what's wrong. Show anyone."), Draw.fHead, blue, x + 72 * S, y + 38 * S);
                 // found a bug? the report is put on the clipboard, the person pastes and sends it themselves
                 {
                     string bt = L.T((DateTime.Now - bugCopied).TotalSeconds < 6 ? "Copied - paste it into the page that opened" : "Found a bug? Report it"); var bs = g.MeasureString(bt, Draw.fBodyB);

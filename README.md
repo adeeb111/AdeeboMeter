@@ -17,7 +17,7 @@
 
 <p align="center"><img src="docs/img/screenshot.png" alt="AdeeboMeter: the engineer view and the corner widget on a Windows desktop" width="860"></p>
 
-**Is it me or the network?** One glance tells you.
+**Know what's wrong. Show anyone.** Is it me, my PC or the network? One glance tells you - and one click shows it to anyone.
 
 AdeeboMeter is a small Windows companion for people who live on the network. A faded card in the corner of your screen tells you — in one plain sentence — whether your PC, your Wi-Fi, your provider, DNS or the internet is the problem, and what to do about it. When something is really wrong, one click opens an engineer view with everything you'd otherwise dig out of Task Manager, `ping`, `tracert`, `netsh` and Wireshark.
 

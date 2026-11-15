@@ -45,7 +45,7 @@ using Microsoft.Win32;
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
 [assembly: System.Reflection.AssemblyTitle("AdeeboMeter")]
 [assembly: System.Reflection.AssemblyProduct("AdeeboMeter")]
-[assembly: System.Reflection.AssemblyDescription("Is it me or the network? An offline Windows network and PC companion.")]
+[assembly: System.Reflection.AssemblyDescription("Know what's wrong. Show anyone. An offline Windows network and PC companion.")]
 [assembly: System.Reflection.AssemblyCopyright("MIT License")]
 [assembly: System.Reflection.AssemblyVersion(AdeeboMeter.Program.FileVersion)]
 [assembly: System.Reflection.AssemblyFileVersion(AdeeboMeter.Program.FileVersion)]
@@ -116,7 +116,7 @@ namespace AdeeboMeter
         public const string Version = "1.1.5";
         public const string FileVersion = "1.1.5.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
-        public const string Tagline = "is it me or the network?";
+        public const string Tagline = "know what's wrong. Show anyone.";
         public static int ForceTheme = -1;
         public static string StartView, StartTip, StartDest;   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes

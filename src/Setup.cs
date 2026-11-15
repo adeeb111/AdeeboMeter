@@ -126,7 +126,7 @@ namespace AdeeboMeter
                 var lt = lnk.GetType();
                 Action<string, object> set = delegate(string n, object v) { lt.InvokeMember(n, System.Reflection.BindingFlags.SetProperty, null, lnk, new[] { v }, CultureInfo.InvariantCulture); };
                 set("TargetPath", exe); set("WorkingDirectory", Path.GetDirectoryName(exe));
-                set("Description", "AdeeboMeter - is it me or the network?"); set("IconLocation", exe + ",0");
+                set("Description", "AdeeboMeter - know what's wrong. Show anyone."); set("IconLocation", exe + ",0");
                 lt.InvokeMember("Save", System.Reflection.BindingFlags.InvokeMethod, null, lnk, null, CultureInfo.InvariantCulture);
             }
             finally { if (lnk != null) Marshal.FinalReleaseComObject(lnk); Marshal.FinalReleaseComObject(sh); }
@@ -358,7 +358,7 @@ namespace AdeeboMeter
 
             if (st == St.Offer)
             {
-                Center(g, "Is it me or the network?", fTag, Theme.Blue, y, W); y += fTag.Height + 26 * S;
+                Center(g, "Know what's wrong. Show anyone.", fTag, Theme.Blue, y, W); y += fTag.Height + 26 * S;
                 string[] lines = {
                     "Lives quietly in the corner of your screen.",
                     "No cloud. No telemetry. Never listens.",

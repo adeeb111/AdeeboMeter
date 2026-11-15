@@ -1,4 +1,4 @@
-AdeeboMeter __VERSION__  -  is it me or the network?
+AdeeboMeter __VERSION__  -  know what's wrong. Show anyone.
 No cloud. No telemetry. Never listens. Every packet it sends is listed in About - and you can switch each one off.
 
 Install (about ten seconds, no administrator rights)
