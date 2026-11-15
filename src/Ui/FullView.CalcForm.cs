@@ -283,7 +283,7 @@ namespace AdeeboMeter
         static bool WindowsAnimates() { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } }
         void AnimTick()
         {
-            bool on = tab == "toolbox" && Visible && WindowState != FormWindowState.Minimized && Form.ActiveForm == this && (Animated.Contains(tbSel) || Animated3.Contains(tbSel)) && !tbHome && !tbBusy && visRect.Height > 0 && WindowsAnimates();
+            bool on = tab == "toolbox" && Visible && WindowState != FormWindowState.Minimized && Form.ActiveForm == this && (Animated.Contains(tbSel) || Animates3(tbSel)) && !tbHome && !tbBusy && visRect.Height > 0 && WindowsAnimates();
             if (!on) return;
             var r = new Rectangle((int)visRect.X + tbCanvas.AutoScrollPosition.X, (int)visRect.Y + tbCanvas.AutoScrollPosition.Y, (int)visRect.Width + 1, (int)visRect.Height + 1);
             if (r.Bottom < 0 || r.Top > tbCanvas.ClientSize.Height) return;   // scrolled away

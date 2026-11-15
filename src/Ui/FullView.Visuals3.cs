@@ -41,7 +41,7 @@ namespace AdeeboMeter
                 case "battery": return VisBattery(g, x, y, w, st);
                 case "hotel": return VisHotel(g, x, y, w, st);
             }
-            return y;
+            return Wave4(g, x, y, w, st);
         }
 
         // ================================================================== the exchange: a packet at a time, with what it says
@@ -62,7 +62,7 @@ namespace AdeeboMeter
                 using (var p = new Pen(Theme.Line, 1.5f * S) { DashStyle = DashStyle.Dash }) g.DrawLine(p, AX(i), lifeTop, AX(i), bottom);
             }
             // where we are in the loop
-            bool live = WindowsAnimates() && Animated3.Contains(tbSel);
+            bool live = WindowsAnimates() && Animates3(tbSel);
             var dur = steps.Select(s => 0.8 + Math.Min(1.2, double.IsNaN(s.Ms) ? 0.3 : s.Ms / 150.0)).ToList(); double total = dur.Sum() + 1.6, t = live ? AnimT % total : total;
             int cur = steps.Count; double into = 0; { double acc = 0; for (int i = 0; i < steps.Count; i++) { if (t < acc + dur[i]) { cur = i; into = (t - acc) / dur[i]; break; } acc += dur[i]; } }
             var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;

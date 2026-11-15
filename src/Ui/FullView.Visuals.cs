@@ -21,14 +21,14 @@ namespace AdeeboMeter
         static readonly string[] DotSep = { " · " }; static readonly char[] SpaceSep = { ' ' };
         static readonly Color VPurple = Theme.C("#8250DF"), VSlate = Theme.C("#57606A");
         static readonly HashSet<string> Pictured = new HashSet<string> { "stack", "encrypt", "decrypt", "ping", "tcpping", "dig", "http", "speedtest", "subnet", "mtr", "mtu", "port", "wifirate", "roams" };
-        public static bool HasPicture(string id) { return Pictured.Contains(id) || IsCalc(id) || Pictured3.Contains(id); }
+        public static bool HasPicture(string id) { return Pictured.Contains(id) || IsCalc(id) || InWave3(id); }
         string visFail = "";
         // self-test: every picture draws before a run and with its Example, and the Example's picture grows from the result
         internal string VisualCheck()
         {
             EnsureToolbox(); var bad = new List<string>();
             using (var bmp = new Bitmap(1000, 2400)) using (var g = Graphics.FromImage(bmp))
-                foreach (var id in Pictured.Concat(Pictured3).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
+                foreach (var id in Pictured.Concat(Pictured3).Concat(Pictured4).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
                 {
                     SelectTool(id); visFail = "";
                     float y0 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("idle " + visFail); else if (y0 <= 10) bad.Add(id + ": no picture before a run");
@@ -92,7 +92,7 @@ namespace AdeeboMeter
                     case "port": return VisPort(g, x, y, w, st);
                     case "wifirate": return VisRate(g, x, y, w, st);
                     case "roams": return VisRoams(g, x, y, w, st);
-                    default: return Pictured3.Contains(tbSel) ? Wave3(g, x, y, w, st) : CalcPicture(g, x, y, w, st);
+                    default: return InWave3(tbSel) ? Wave3(g, x, y, w, st) : CalcPicture(g, x, y, w, st);
                 }
             }
             catch (Exception e) { visFail = tbSel + ": " + e.GetType().Name + " " + e.Message; Program.Log("tool picture " + visFail); }   // a picture never breaks the page

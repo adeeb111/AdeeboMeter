@@ -14,6 +14,12 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: tool pictures (fourth wave) - every protocol, talking
+- 50 more tools show their exchange packet by packet: mail and SMTP delivery, SSH banner, STUN and Teams NAT, LDAP, RDP, DHCP options,
+  ICMP/UDP/TCP senders, HTTP requests, TWAMP, DSCP marks, Wake-on-LAN, proxy/PAC, VPN leaks, IPv6 ping and router adverts, mDNS/SSDP,
+  NetBIOS names, clock and time source, hairpin NAT, 802.1X (EAPOL to RADIUS), UDP MTU, iperf3, HTTPS/certificates, RADIUS lab, and all 14 SNMP tools.
+- One-way protocols (syslog, traps, NetFlow) show that no answer comes - by design. A red result turns the step that failed red.
+
 ### New: tool pictures (third wave) - packets going back and forth
 - Exchange pictures: each tool draws who talks to whom (PC, router, DNS, servers), and a packet travels each step in order, out and back.
   The packet in flight shows what it carries ("Discover · broadcast to everyone · UDP 68 → 67"). Sealed packets carry a padlock.
