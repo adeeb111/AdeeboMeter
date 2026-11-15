@@ -6,6 +6,11 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### New: tool pictures (first wave)
+- 14 tools draw what they do: packet stack (one full-size packet, layer by layer, against the MTU), encrypt and open (the file, the lock, the code on its own road), ping and TCP ping (the round trip on a scale from great to laggy), dig (who asks whom), HTTP and TLS (the handshake, then the page), speed test (download and upload dials, lag when busy), subnet (the 32 bits, the range with the gateway and your address on it), MTR and MTU (the path, router by router), port test (open, refused or dropped), Wi-Fi link rate and Wi-Fi roams (a day on a line).
+- Before a run the picture shows how it works from what is in the boxes; Example and a real run fill it with the result. Drawn from the screen only - nothing is sent to draw it.
+- Empty pages (no streams yet, no traffic yet) show a faint sketch of what will land there.
+
 ### New: packet journey (Network story)
 - Any conversation - a Journey button on every Connections row (UDP game sockets included) and in the Gamer Zone. Shows the label stack at each stop (PC, router, provider, internet, server) and where the time goes: Wi-Fi or cable, provider, distance and queues, from ten pings when you press Measure.
 - Capture this conversation (Wireshark with Npcap): one conversation plus ICMP about it, filtered in the capture driver, headers only (128 bytes per packet), stops by itself - Quick 100 packets, Normal 1,000 or 30 s. Uses the rewind buffer for the seconds before you clicked when it's running.

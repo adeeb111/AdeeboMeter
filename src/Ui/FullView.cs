@@ -671,7 +671,7 @@ namespace AdeeboMeter
             if (page == "security" && sub == "run") SecRun(null);
             if (page == "settings" && sub != null) { if (sub.StartsWith("q=", StringComparison.Ordinal)) settingsSearch.Box.Text = sub.Substring(2); else { var hit = SetSections.FirstOrDefault(z => z.StartsWith(sub, StringComparison.OrdinalIgnoreCase)); if (hit != null) setSec = hit; } settingsCanvas.Invalidate(); }
             if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
-            if (page == "toolbox" && sub != null) { EnsureToolbox(); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else OpenTool(sub); }
+            if (page == "toolbox" && sub != null) { EnsureToolbox(); bool ex = sub.EndsWith(":ex", StringComparison.Ordinal); if (ex) sub = sub.Substring(0, sub.Length - 3); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else { OpenTool(sub); if (ex) ShowExample(); } }   // toolbox:ping:ex opens its Example (screenshots)
             if (destIn == "demo-story" && page == "dest")
             {
                 // screenshot aid: a typical home route, with made-up router names

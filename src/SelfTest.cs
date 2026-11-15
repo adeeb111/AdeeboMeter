@@ -900,6 +900,15 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("tool pictures: each one draws before a run and with its Example, and the Example fills it", () =>
+            {
+                using (var icon = Theme.MakeIcon(16))
+                {
+                    var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
+                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); }
+                    finally { fv.Close(); fv.Dispose(); }
+                }
+            });
             T("UI 1.1.5 wave 3: search finds tools, forgives typos, groups; tool chips make sense", () =>
             {
                 var vocab = new HashSet<string>(StringComparer.Ordinal) { "wifi", "dns", "traceroute", "certificate", "port" };

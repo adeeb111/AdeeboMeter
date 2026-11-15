@@ -64,10 +64,12 @@ namespace AdeeboMeter
         public static float Empty(Graphics g, float x, float y, float w, string icon, string accent, string title, string body, string[] points)
         {
             title = L.T(title); body = L.T(body);
-            float tw = w - 104 * S, bh = Draw.Measure(body, Draw.fBody, (int)tw).Height;
+            bool art = w >= 640 * S; float artW = art ? 210 * S : 0;   // wide enough: a faint sketch of what will land here
+            float tw = w - 104 * S - (art ? artW + 16 * S : 0), bh = Draw.Measure(body, Draw.fBody, (int)tw).Height;
             float ph = 0; if (points != null) foreach (var p in points) ph += Draw.Measure(L.T(p), Draw.fBody, (int)(tw - 20 * S)).Height + 6 * S;
             var r = new RectangleF(x, y, w, Math.Max(108 * S, 58 * S + bh + (ph > 0 ? ph + 12 * S : 0) + 22 * S));
             Box(g, r);
+            if (art) EmptyArt(g, new RectangleF(r.Right - artW - 20 * S, r.Y + 20 * S, artW, Math.Min(96 * S, r.Height - 40 * S)), icon, Accent(accent));
             var ic = new RectangleF(r.X + 24 * S, r.Y + 24 * S, 56 * S, 56 * S); Theme.Fill(g, ic, 16 * S, Soft(accent));
             Icon(g, icon, new RectangleF(ic.X + 14 * S, ic.Y + 14 * S, 28 * S, 28 * S), Accent(accent));
             float tx = r.X + 104 * S, ty = r.Y + 24 * S;
@@ -83,6 +85,41 @@ namespace AdeeboMeter
                         g.DrawString(t, Draw.fBody, sb, new RectangleF(tx + 20 * S, ty, tw - 20 * S, h + 4)); ty += h + 6 * S;
                     }
             return r.Bottom + 12 * S;
+        }
+
+        // the empty state's sketch: a ghost of the picture that fills in once there's something to show - never real data
+        static void EmptyArt(Graphics g, RectangleF r, string icon, Color accent)
+        {
+            Theme.Fill(g, r, 12 * S, Mix(Theme.Card, accent, Theme.Dark ? 0.10f : 0.06f));
+            var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
+            Color ghost = Mix(Theme.Card, accent, 0.55f), faint = Mix(Theme.Card, Theme.Muted, 0.45f);
+            float x0 = r.X + 14 * S, x1 = r.Right - 14 * S, base0 = r.Bottom - 18 * S, top = r.Y + 16 * S, h = base0 - top;
+            using (var bl = new Pen(faint, 1.5f * S) { DashStyle = DashStyle.Dot }) g.DrawLine(bl, x0, base0, x1, base0);
+            using (var p = new Pen(ghost, 2.5f * S) { LineJoin = LineJoin.Round, StartCap = LineCap.Round, EndCap = LineCap.Round })
+            using (var dip = new SolidBrush(Mix(Theme.Card, Theme.Amber, 0.45f)))
+            {
+                int n = 24; var pts = new List<PointF>(); var rnd = new[] { 0.62, 0.66, 0.64, 0.7, 0.68, 0.71, 0.69, 0.3, 0.25, 0.6, 0.67, 0.7, 0.72, 0.69, 0.7, 0.66, 0.68, 0.35, 0.62, 0.7, 0.71, 0.69, 0.72, 0.7 };
+                switch (icon)
+                {
+                    case "time": case "app":   // a stream's record: steady, with two dips marked
+                        for (int i = 0; i < n; i++) pts.Add(new PointF(x0 + (x1 - x0) * i / (n - 1), base0 - h * (float)rnd[i]));
+                        g.FillRectangle(dip, pts[7].X - 4 * S, top, pts[8].X - pts[7].X + 8 * S, h); g.FillRectangle(dip, pts[17].X - 4 * S, top, 8 * S, h);
+                        g.DrawLines(p, pts.ToArray()); break;
+                    case "traffic":   // bars of who's using what
+                        float bw = (x1 - x0) / 9f; var hs = new[] { 0.9f, 0.62f, 0.45f, 0.3f, 0.22f, 0.15f, 0.1f };
+                        for (int i = 0; i < hs.Length; i++) Theme.Fill(g, new RectangleF(x0 + i * bw * 1.25f, base0 - h * hs[i], bw, h * hs[i]), 3 * S, ghost);
+                        break;
+                    case "story":   // a connection, box by box
+                        for (int i = 0; i < 4; i++) { float cx = x0 + 12 * S + (x1 - x0 - 24 * S) * i / 3f; Theme.Stroke(g, new RectangleF(cx - 12 * S, top + h / 2 - 12 * S, 24 * S, 24 * S), 6 * S, ghost, 2 * S); if (i < 3) g.DrawLine(p, cx + 16 * S, top + h / 2, cx + (x1 - x0 - 24 * S) / 3f - 16 * S, top + h / 2); }
+                        break;
+                    default:   // a health ring and a few lines
+                        float d = Math.Min(h, 64 * S); var ring = new RectangleF(x0, top + (h - d) / 2, d, d);
+                        using (var rp = new Pen(faint, 6 * S)) g.DrawEllipse(rp, ring); using (var rp = new Pen(ghost, 6 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawArc(rp, ring, -90, 250);
+                        for (int i = 0; i < 3; i++) Theme.Fill(g, new RectangleF(x0 + d + 16 * S, top + (h - d) / 2 + 8 * S + i * 18 * S, (x1 - x0 - d - 16 * S) * (i == 0 ? 0.9f : i == 1 ? 0.7f : 0.5f), 7 * S), 3.5f * S, faint);
+                        break;
+                }
+            }
+            g.SmoothingMode = sm;
         }
 
         // a raised card: theme card colour, soft shadow, hairline edge, rounded
