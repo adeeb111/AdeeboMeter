@@ -76,7 +76,7 @@ namespace AdeeboMeter
             moreBtn = new PillButton(L.T("More") + "  ▾", PillButton.K.Tab) { Tag = "more" };
             moreBtn.Click += delegate { ShowMoreMenu(moreBtn, new Point(0, moreBtn.Height)); };
             tabs.Controls.Add(moreBtn);
-            tabs.ResumeLayout(true); SyncNav();
+            tabs.ResumeLayout(true); tabs.Invalidate(true); SyncNav();
         }
         void SyncNav()
         {

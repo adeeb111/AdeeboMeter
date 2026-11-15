@@ -151,6 +151,8 @@ namespace AdeeboMeter
         protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
         protected override void OnLostFocus(EventArgs e) { held = false; Invalidate(); base.OnLostFocus(e); }
         protected override void OnEnabledChanged(EventArgs e) { Invalidate(); base.OnEnabledChanged(e); }
+        // moved to another strip (sections share their tab buttons): paint fresh there, and make the old strip repaint where it stood
+        protected override void OnParentChanged(EventArgs e) { Invalidate(); if (Parent != null) Parent.Invalidate(Bounds); base.OnParentChanged(e); }
         protected override bool IsInputKey(Keys k) { return k == Keys.Enter || k == Keys.Space || base.IsInputKey(k); }
         // a held key repeats KeyDown: press once per press, not once per repeat (a held Enter mustn't start and stop a capture 30 times)
         bool held;

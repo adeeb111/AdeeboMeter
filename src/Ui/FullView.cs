@@ -372,7 +372,12 @@ namespace AdeeboMeter
                 warm.Tick += delegate { warm.Stop(); warm.Dispose(); if (!IsDisposed && tab != "toolbox") EnsureToolbox(); };
                 warm.Start();
             };
-            tipTimer.Tick += delegate { tipTimer.Stop(); ShowTip(); };
+            tipTimer.Tick += delegate
+            {
+                tipTimer.Stop();
+                if (tipWatch) { if (!tip.Visible) { tipWatch = false; return; } if (tipKey == null || !TipStillWanted()) { tipKey = null; tip.Hide(); tipWatch = false; return; } tipTimer.Interval = 400; tipTimer.Start(); return; }
+                ShowTip();
+            };
             // Minimising means "get out of my way": same as Esc / Back to corner - the view closes, frees its memory, the widget keeps watching.
             // ...except while a tool or a capture runs: then it just stays minimised (a 60-minute MTR mustn't end because of Win+D)
             Resize += delegate { if (WindowState == FormWindowState.Minimized && Visible && !tbBusy && !sniffing) BeginInvoke((Action)Close); };
@@ -405,6 +410,7 @@ namespace AdeeboMeter
         void ShowTab()
         {
             UiActivity.Doing = "switching to " + tab; if (tab != "about") bugPage = tab;
+            SetTipKey(null);   // the old page's help card goes with it
             if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open
             if (tab != "stream" && tab != "trade") WatchKit.Drop();   // the 90 days of records only live while their page is open
             // one layout pass for the whole switch, not one per page shown or hidden
@@ -513,6 +519,7 @@ namespace AdeeboMeter
             foreach (var c in btns) { string[] n; if (tabNames.TryGetValue((string)c.Tag, out n)) c.Text = n[shortTabs ? 1 : 0]; }
             subTabs.Visible = subTabs.Controls.Count > 0;
             subTabs.ResumeLayout(); UpdateBadges();
+            subTabs.Invalidate(true);   // V01: the strip and every tab repaint after a swap - left alone, the last section's tab edges stayed as square lines
         }
         bool shortTabs;
         void FitTabs()
@@ -576,7 +583,7 @@ namespace AdeeboMeter
         // Light / dark: recolour every control; the painted parts read the theme on their next paint.
         public void ApplyTheme()
         {
-            BackColor = Theme.Bg; Recolor(this); themedScroll.Clear(); foreach (var nb in navBmps.Values) nb.Dispose(); navBmps.Clear();   // icons are cached per colour; a new theme starts fresh ThemeScrollbars(this);
+            SetTipKey(null); BackColor = Theme.Bg; Recolor(this); themedScroll.Clear(); foreach (var nb in navBmps.Values) nb.Dispose(); navBmps.Clear();   // icons are cached per colour; a new theme starts fresh ThemeScrollbars(this);
             try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(Handle, 20 /*immersive dark title bar*/, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch { }
             Refresh();
         }
@@ -853,8 +860,13 @@ namespace AdeeboMeter
         {
             if (IsDisposed || tipKey == null || !Visible || WindowState == FormWindowState.Minimized) return;
             var e = TipEntry(tipKey); if (e == null) return;
-            tip.ShowAt(e, Cursor.Position, this);
+            tip.ShowAt(e, Cursor.Position, this); tipOver = WindowFromPoint(Cursor.Position);
+            tipWatch = true; tipTimer.Interval = 400; tipTimer.Start();   // keep checking: a theme flip or a page change never fires MouseLeave
         }
+        // V02 (r1 visual pass): the "Day or night" card stayed over What's running and Time machine - the pointer had left
+        bool tipWatch; IntPtr tipOver;
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr WindowFromPoint(Point p);
+        bool TipStillWanted() { var w = WindowFromPoint(Cursor.Position); return w == tipOver || w == tip.Handle; }
         static Explain.Entry TipEntry(string key)
         {
             if (key.StartsWith("proc:", StringComparison.Ordinal)) return ProcEntry(key.Substring(5), null, null);
