@@ -134,9 +134,10 @@ namespace AdeeboMeter
                     for (int i = 0; i < t.Inputs.Length; i++)
                     {
                         var b = tbBoxes[i]; if (t.Inputs[i] == "") { if (b != null) throw new InvalidOperationException(t.Id + ": a box where there should be none"); continue; }
-                        if (b == null || b.IsDisposed || b.Parent != tbBar || !b.Visible || (b.Tag as string) != t.Inputs[i] || b.Label == "") throw new InvalidOperationException(t.Id + ": box " + (i + 1) + " isn't the one on screen");
+                        bool calc = IsCalc(t.Id);   // a calculator's boxes stay hidden behind its form - they must still be the tool's own
+                        if (b == null || b.IsDisposed || b.Parent != tbBar || b.Visible == calc || (b.Tag as string) != t.Inputs[i] || b.Label == "") throw new InvalidOperationException(t.Id + ": box " + (i + 1) + " isn't the one on screen");
                     }
-                    if (tbPool.Count(b => b.Visible) != tbBoxes.Count(b => b != null)) throw new InvalidOperationException(t.Id + ": a leftover box is still showing");
+                    if (IsCalc(t.Id) ? (calcHost == null || !calcHost.Visible || tbPool.Any(b => b.Visible)) : (calcHost != null && calcHost.Visible) || tbPool.Count(b => b.Visible) != tbBoxes.Count(b => b != null)) throw new InvalidOperationException(t.Id + ": a leftover box is still showing");
                 }
                 // typing goes where the tool reads it
                 SelectTool("subnet"); tbBoxes[0].Box.Text = "10.9.8.7/24"; if (Inputs()[0] != "10.9.8.7/24") throw new InvalidOperationException("the tool doesn't read the box you typed in");

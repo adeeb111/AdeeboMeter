@@ -26,7 +26,7 @@ namespace AdeeboMeter
             new[] { "windows", "Inside Windows", "What all those processes and services are for." },
             new[] { "apps", "Teams and office apps", "What a call or a sync really does on the network." },
             new[] { "streaming", "Streaming", "How video reaches you, why it buffers, and whose fault it is - with three games." },
-            new[] { "investing", "Investing basics", "Stocks, prices, currencies and scams - learning, never advice. Five games." },
+            new[] { "investing", "Money & investing", "Bull and bear markets, recessions, inflation, compound growth, emergency funds, budgets and scams - learning, never advice. Seven games." },
             new[] { "labs", "Labs", "Play with how networks behave, with your own numbers." },
             new[] { "games", "Games", "An escape room, catch the thief, packet detective, quick-fire rounds." },
             new[] { "check", "Check yourself", "One question per topic - right first time earns." },
@@ -118,6 +118,7 @@ namespace AdeeboMeter
                 case "check": foreach (var t in Knowledge.Learn().Where(t => t["check"] != "")) l.Add(new[] { "topic:" + t.Id, t["title"], CheckParts(t["check"])[0], Points.Me.Has("check." + t.Id) ? "1" : "" }); break;
                 default:
                     foreach (var t in Knowledge.Learn().Where(t => t["kind"] == card)) l.Add(new[] { "topic:" + t.Id, t["title"], t["tag"], Points.Me.Has("learn." + t.Id) ? "1" : "" });
+                    if (card == "investing") l.Add(new[] { "game:years", L.T("Ten years of money") + " (" + L.T("game") + ")", L.T("Crashes, a recession, inflation and surprise bills - where does your money go?"), Points.Me.Has("game.years") ? "1" : "" });
                     foreach (var gm in LearnRounds.Games.Where(z => z[3] == card)) l.Add(new[] { "game:" + gm[0], gm[1] + " (" + L.T("game") + ")", gm[2], Points.Me.Has("game.rounds." + gm[0]) ? "1" : "" });
                     break;
             }

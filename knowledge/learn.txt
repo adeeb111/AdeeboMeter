@@ -803,3 +803,105 @@ line: Your order travels from your PC through Wi-Fi, your router and your provid
 breaks: If the order screen spins after a lost reply, check your orders list before clicking again - a second click can mean a second order.
 ladder: You > Router: Buy (2 ms) | Router > Provider: Buy (15 ms) | Provider > Broker: Buy (12 ms) | Broker > You: order received
 try: Turn on the live broker check in Trading.
+
+# ---------- Money & investing (Adeeb, 14 Nov): learning, never advice
+
+== inv-bullbear
+title: Bull and bear markets
+kind: investing
+tag: Up 20% from a low is a bull; down 20% from a high is a bear.
+check: A bear market means prices have... | Fallen 20% or more from their last high | Risen 20% from a low | Stayed flat for a year | Fallen 1% in a day
+line: In a bull market prices are rising and people feel confident. A bear market is a fall of 20% or more from the last high - usually with plenty of fear in the news.
+breaks: Bears have always ended so far, but some took years to recover - money you need soon doesn't belong in shares.
+pic: bullbear
+try: Play "Ten years of money" in Games and live through one.
+
+== inv-recession
+title: Recession
+kind: investing
+tag: When the whole economy shrinks for a while - jobs, spending and profits together.
+check: A common rule of thumb for a recession is... | Two quarters in a row of shrinking GDP | Any day the stock market falls | Inflation above 2% | Interest rates going up once
+line: A recession is a broad fall in economic activity lasting months. A common rule of thumb is two quarters in a row of shrinking GDP (everything a country produces). Jobs get scarcer, people spend less, profits fall.
+breaks: Shares often fall before a recession is announced and recover before it ends - the news and the prices don't move on the same clock.
+pic: recession
+try: An emergency fund is what carries you through a lost job - see that topic.
+
+== inv-inflation
+title: Inflation
+kind: investing
+tag: The same $100 buys a little less each year.
+check: At 3% inflation, $100 kept as cash for 10 years buys about... | $74 worth of today's goods | $100 worth | $130 worth | $3 less
+line: Inflation is prices rising over time. The Bank of Canada aims for about 2% a year. At 3%, $100 of groceries today costs about $134 in ten years - so $100 in a drawer quietly buys about a quarter less.
+breaks: Cash feels safe because the number never drops - but at 3% inflation it loses half its buying power in about 24 years.
+pic: inflation
+try: See what a savings rate does against it in Compound growth (Toolbox › Work it out).
+
+== inv-compound
+title: Compound growth
+kind: investing
+tag: Growth on your growth - slow at first, then fast.
+check: With the rule of 72, money growing 8% a year doubles in about... | 9 years | 72 years | 8 years | 2 years
+line: Money that grows earns on what it already earned. At 6% a year it roughly doubles every 12 years (the rule of 72: 72 ÷ 6 = 12). Time matters more than the amount: starting ten years earlier can beat putting in twice as much later.
+breaks: Compounding works on debt too: a credit card at 20% doubles what you owe in under 4 years.
+pic: compound
+try: Try your own numbers: Toolbox › Work it out › Compound growth.
+
+== inv-work
+title: Making money work for you
+kind: investing
+tag: Under the mattress, in savings, or invested - three very different paths.
+check: Why does money for next year's rent usually not go into shares? | A fall could hit just when you need it | Shares are illegal for rent | Banks forbid it | Shares only pay out after 30 years
+line: Cash in a drawer earns nothing and loses to inflation. A savings account pays a little and is safe. A broad index fund has historically grown far more over long periods - with big drops on the way, and nothing is ever guaranteed.
+breaks: The higher the possible growth, the bigger the swings. Money for next year's rent wants safety; money for 20 years from now can ride the swings.
+pic: work
+try: Compare the paths in Compound growth with 0%, 2% and 6%.
+
+== inv-dip
+title: Dips and corrections
+kind: investing
+tag: A 10% fall is normal weather, not a storm.
+check: A correction is usually defined as a fall of... | 10% or more from a recent high | Exactly 1% | 50% or more | Any red day
+line: A correction is a fall of 10% or more from a high. Historically, broad markets have had one roughly every year or two, and most recovered within months.
+breaks: Selling in a dip turns a paper loss into a real one - and you then have to guess when to get back in.
+pic: dip
+try: Play "Bull or bear?" in this section.
+
+== inv-emergency
+title: Emergency fund
+kind: investing
+tag: Cash set aside so a surprise doesn't become a disaster.
+check: An emergency fund is usually about... | 3-6 months of essential costs, kept safe | All your money, invested in shares | One week of costs | Whatever is left after a holiday
+line: Keep about 3-6 months of essential costs in a safe, easy-to-reach account. When the car breaks or a job ends, you pay from the fund instead of a credit card - or instead of selling investments at a bad moment.
+breaks: Without one, the worst surprises tend to arrive together: a recession can cost you your job and push prices down at the same time.
+pic: emergency
+try: Play "Ten years of money": watch what a job loss does without one.
+
+== inv-budget
+title: Money management
+kind: investing
+tag: A plan for every dollar before the month spends it for you.
+check: In the 50/30/20 rule, the 20 is for... | Saving and paying off debt | Rent | Holidays | Taxes
+line: A simple start is 50/30/20: about half of take-home pay for needs (rent, food, bills), 30% for wants, 20% for saving and paying off debt. Pay yourself first: move the saving on payday, not at the end of the month.
+breaks: High-interest debt first: paying off a 20% card beats almost any investment.
+pic: budget
+try: Write your own three numbers down - that's the whole method.
+
+== inv-diversify
+title: Spreading the risk
+kind: investing
+tag: One company can sink; a basket rarely does.
+check: Why does an index fund usually swing less than one company's shares? | Many companies average each other out | It's guaranteed by the government | It only holds banks | It never falls
+line: Holding many companies (an index fund holds hundreds) means one bad company barely dents the whole. Spreading across countries and types of investment smooths things further.
+breaks: Owning five tech companies isn't spread - they tend to fall together.
+pic: diversify
+try: Look at the S&P and TSX in Trading - each is hundreds of companies.
+
+== inv-fees
+title: Fees and time
+kind: investing
+tag: A small yearly fee eats a big slice over decades.
+check: Over 30 years, a 2% yearly fee instead of 0.2% leaves you with roughly... | 40% less | 2% less | the same | twice as much
+line: A fee is taken every year from the whole amount, so it compounds against you. Over 30 years at 6% growth, a 2% yearly fee leaves about 40% less than a 0.2% fee does.
+breaks: Fees hide in names like MER and management expense - look for the percentage.
+pic: fees
+try: Run Compound growth at 6% and at 4% to see it.

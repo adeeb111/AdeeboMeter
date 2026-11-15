@@ -26,7 +26,7 @@ namespace AdeeboMeter
             new[] { "win", "Windows", "WINDOWS", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
             new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },   // the PC's own checks: on no other card
-            new[] { "calc", "Work it out", "NETWORK MATHS|WIRELESS MATHS|SERVERS & IT MATHS|STREAMING & HOME MATHS|VOICE & TDM MATHS", "subnet|plan|stream" },   // pure arithmetic, nothing sent
+            new[] { "calc", "Work it out", "NETWORK MATHS|WIRELESS MATHS|SERVERS & IT MATHS|STREAMING & HOME MATHS|VOICE & TDM MATHS|MONEY & MARKETS MATHS|COMMODITY MATHS|GAMING MATHS", "subnet|plan|stream" },   // pure arithmetic, nothing sent
             new[] { "game", "Is it my game?", "GAMING", "prematch|gpn|tonight" },
             new[] { "time", "How has my network been?", "OVER TIME|PRIVACY & IPV6", "month|rushhour|vpnleak" },
             new[] { "report", "Make a report", "SHARE A DIAGNOSIS", "ispreport|qr|friend" },   // More > Reports opens this

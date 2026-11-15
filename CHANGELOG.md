@@ -6,6 +6,19 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### New: Learn › Money & investing
+- Ten new topics, each with a picture and a check question: bull and bear markets, recession, inflation, compound growth, making money work for you, dips and corrections, emergency fund, money management (50/30/20), spreading the risk, fees and time. Learning only - made-up numbers, never advice.
+- Game: Ten years of money - $6,000 a year to place before you know what the year brings; a bear market, a recession with a lost job, an inflation spike and surprise bills; a forced sale in a dip shows what an emergency fund prevents. You against a savings-only ghost and a panic-seller ghost.
+- Game: Bull or bear? - six made-up headlines: bull, bear, correction, recession, inflation or noise.
+
+### New: calculators you can see (Work it out)
+- One value per box: numbers with a unit picker, choices as chips, counts with - and +, lists with + add - no more "2 4k, 1 call, 1 game" or "200, 60, 12, 2". Typing the old way still works behind the scenes (Copy, Save and Example are unchanged).
+- Live: the result follows as you type (150 ms after the last key) - no Run button; only the picture and what's under it repaint.
+- A picture for every calculator. Some move - only their own rectangle, only while you can see the window, never with Windows' animations off: LTE/5G and Wi-Fi (a radio sending lanes of parcels: lanes = antennas, lane width = bandwidth, parcel = bits a symbol), E1/T1 (a train of timeslots, one frame every 125 µs), your plan (what's busy filling the line), a file down the line, data in flight (BDP), jitter buffer, UPS, trading latency and game ticks. The rest are drawn still: link budget in dB steps, RAID disks, SLA year bar, storage and compound curves, VLSM block, bits, IPv6 split, stream and data shares.
+- New - money and markets (the numbers only, not advice): currency converter (Bank of Canada rate, and what a bank's markup keeps), profit, loss and break-even with fees, position size from risk, average cost, compound growth, a fall and the rise to get back, is my connection fast enough to trade.
+- New - commodities: units (barrels, troy ounces, bushels by crop, MMBtu), futures contract value and tick (CME specs), price per unit in Canadian dollars (US$ a barrel to CA$ a litre).
+- New - games: ticks behind (tick rate, ping and the game's smoothing).
+
 ### New: weather on the buddy and the widget
 - Off until you turn it on (Settings > Weather). You type the place - a city or a country; the matches are listed so Ottawa, Ontario and Ottawa, Illinois can't mix. The place you picked shows under the switch, with Change and Remove. The PC's location is never used, so it works where IT has location off.
 - Open-Meteo, free and without an account. Normal: one request for today and the next 2 days, then quiet until less than a day is left. Better: every 6 hours while the PC is on. Only the coordinates are sent; only the last day and the coming ones are kept (weather.txt), no history.

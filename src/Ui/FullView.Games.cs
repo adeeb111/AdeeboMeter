@@ -43,7 +43,7 @@ namespace AdeeboMeter
             y = Lead2(g, L.T(d[2]) + (Cfg.Points ? "  ·  " + done + " / " + all + " " + L.T("solved") : "") + "  ·  " + L.T("everything here is made up - nothing real is sent or changed"), x, y, w);
             return y;
         }
-        static string GamePrefix(string id) { return id == "room" ? "game.room." : id == "thief" ? "game.thief." : id == "detective" ? "game.detective." : id == "heist" ? "game.heist" : id == "outage" ? "game.outage" : id == "dungeon" ? "game.dungeon" : LearnRounds.Is(id) ? "game.rounds." + id : "game.quick." + id; }
+        static string GamePrefix(string id) { return id == "room" ? "game.room." : id == "thief" ? "game.thief." : id == "detective" ? "game.detective." : id == "heist" ? "game.heist" : id == "outage" ? "game.outage" : id == "dungeon" ? "game.dungeon" : id == "years" ? "game.years" : LearnRounds.Is(id) ? "game.rounds." + id : "game.quick." + id; }
         float Option(Graphics g, RectangleF r, string text, int state, Action a)   // state: 0 open, 1 right, 2 wrong, 3 dimmed
         {
             Theme.Fill(g, r, 10 * S, state == 1 ? Theme.LvSoft(0) : state == 2 ? Theme.LvSoft(2) : Theme.Soft);
@@ -81,6 +81,7 @@ namespace AdeeboMeter
                 case "heist": return PaintHeist(g, x, y, w);
                 case "outage": return PaintOutage(g, x, y, w);
                 case "dungeon": return PaintDungeon(g, x, y, w);
+                case "years": return PaintYears(g, x, y, w);
                 default: return LearnRounds.Is(id) ? PaintRounds(g, id, x, y, w) : PaintQuick(g, id, x, y, w);
             }
         }

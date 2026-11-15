@@ -1060,3 +1060,48 @@ in: E1|30
 in: 20-70 ms|20|G711
 0|Buffer|80 ms (4 packets of 20 ms)||i
 0|Mouth to ear|about 121 ms - fine||i
+
+# ---------------------------------------------------------------- money, commodities, games
+== fxconv
+in: 1000|USD|CAD|2.5
+0|At the official rate|1,000.00 USD = 1,397.40 CAD||i
+1|What a bank usually gives|1,362.47 CAD  (2.5% markup)||i
+== pnl
+in: 150|165|20|9.99
+0|Profit|$279.99  (+9.31%)||i
+0|Break-even sell price|$151.00  (+0.67% just to cover the fees)||i
+== possize
+in: 20000|1%|50|47
+0|Shares|66 - each loses $3.00 if the stop is hit||i
+3|Position|$3,300 = 17% of the account||i
+== avgcost
+in: 50, 45, 40|10, 10, 20
+0|Average cost|$43.75 a share||i
+== compound
+in: 5000|300|6|20
+0|After 20 years|$155,239||i
+3|Doubles about every|12 years (rule of 72)||i
+== pctback
+in: -30%
+1|To get back|+42.86% needed after a -30% fall||i
+== tradelat
+in: 40 ms|150|2
+0|Typical move while your order travels|$0.00 on $150.00 (0.0026%)||i
+== comunits
+in: 1|barrel|wheat
+0|1.00 barrel|volume||i
+3|litre|158.99||i
+3|US gallon|42.00||i
+== futures
+in: WTI crude oil|75|1|2
+0|One contract controls|1,000 barrels = $75,000||i
+1|A +2% move|$1,500||i
+3|Smallest move (one tick)|$0.01 a barrel = $10.00||i
+== perunit
+in: 75|barrel|litre|CAD
+0|In CA$|0.66 a litre||i
+0|In US$|0.47 a litre||i
+== tickrate
+in: 64|40 ms|2
+0|You see the game|51 ms late = 3.3 ticks behind||i
+3|One tick|15.6 ms at 64 Hz||i

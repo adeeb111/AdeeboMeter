@@ -1429,7 +1429,7 @@ namespace AdeeboMeter
                     if (Explain.Find(n) == null && Explain.Find(Monitor.RawOf(n)) == null) throw new InvalidOperationException("process not in guide: " + n);
                 var topics = Knowledge.Learn();
                 foreach (var id in new[] { "dns", "dhcp", "tcp", "tls", "svchost", "boot-chain", "teams-call", "outlook-flow", "osi", "open-website", "apps-internet", "ports", "speed-vs-delay", "streaming-vs-calls", "background-chatter", "push" }) if (Knowledge.Topic(id) == null) throw new InvalidOperationException("learn topic missing: " + id);
-                foreach (var t in topics) if (t["title"] == "" || t["kind"] == "" || t["line"] == "" || t["ladder"] == "") throw new InvalidOperationException("learn topic incomplete: " + t.Id);
+                foreach (var t in topics) if (t["title"] == "" || t["kind"] == "" || t["line"] == "" || (t["ladder"] == "" && t["pic"] == "")) throw new InvalidOperationException("learn topic incomplete: " + t.Id);
                 sb.AppendLine("      " + Explain.Count + " processes, " + Explain.AllTerms.Count() + " terms and " + topics.Count + " learn topics explained (packed: knowledge rides compressed in the exe)");
             });
             T("captive portal: tell a sign-in page from the real answer", () =>

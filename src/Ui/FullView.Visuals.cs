@@ -21,14 +21,14 @@ namespace AdeeboMeter
         static readonly string[] DotSep = { " · " }; static readonly char[] SpaceSep = { ' ' };
         static readonly Color VPurple = Theme.C("#8250DF"), VSlate = Theme.C("#57606A");
         static readonly HashSet<string> Pictured = new HashSet<string> { "stack", "encrypt", "decrypt", "ping", "tcpping", "dig", "http", "speedtest", "subnet", "mtr", "mtu", "port", "wifirate", "roams" };
-        public static bool HasPicture(string id) { return Pictured.Contains(id); }
+        public static bool HasPicture(string id) { return Pictured.Contains(id) || IsCalc(id); }
         string visFail = "";
         // self-test: every picture draws before a run and with its Example, and the Example's picture grows from the result
         internal string VisualCheck()
         {
             EnsureToolbox(); var bad = new List<string>();
             using (var bmp = new Bitmap(1000, 2400)) using (var g = Graphics.FromImage(bmp))
-                foreach (var id in Pictured)
+                foreach (var id in Pictured.Concat(CalcSpecs().Select(z => z.Id)).Distinct())
                 {
                     SelectTool(id); visFail = "";
                     float y0 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("idle " + visFail); else if (y0 <= 10) bad.Add(id + ": no picture before a run");
@@ -38,6 +38,20 @@ namespace AdeeboMeter
                     if (VisState() != "EXAMPLE") bad.Add(id + ": example not marked");
                 }
             if (HopsNowCount("mtr") < 3) bad.Add("mtr example: hops not read");
+            // Ten years of money: always-index gets forced to sell in a bad year; emergency-fund-first never does
+            double s1 = 0, i1 = 0, f1 = 0, s3 = 0, i3 = 0, f3 = 0; for (int yr = 0; yr < 10; yr++) { f1 += YrStep(yr, 1, ref s1, ref i1); f3 += YrStep(yr, 3, ref s3, ref i3); }
+            if (f1 > 0 || f3 <= 0) bad.Add("ten years of money: forced sales " + f1 + " / " + f3);
+            using (var bmp = new Bitmap(900, 400)) using (var g2 = Graphics.FromImage(bmp))
+                foreach (var t in Knowledge.Learn().Where(z => z["pic"] != "")) { try { MoneyPic(g2, t["pic"], 0, 0, 860); } catch (Exception e) { bad.Add("money picture " + t["pic"] + ": " + e.Message); } }
+            // every calculator's form: its defaults give a clean result, and reading its own text back changes nothing
+            foreach (var sp in CalcSpecs())
+            {
+                var t = Tools2().FirstOrDefault(z => z.Id == sp.Id); if (t == null) { bad.Add(sp.Id + ": no tool"); continue; }
+                if (sp.F.Max(f => f.Map) >= t.Inputs.Length) bad.Add(sp.Id + ": the form writes more boxes than the tool has");
+                var a = Compose(sp); List<string[]> rows; try { rows = t.Do(a, new Toolkit.Run()); } catch (Exception e) { bad.Add(sp.Id + ": " + e.Message); continue; }
+                var b2 = rows == null ? null : rows.FirstOrDefault(o => o[0] == "2"); if (rows == null || rows.Count == 0 || (b2 != null && sp.Id != "fxconv")) bad.Add(sp.Id + " defaults: " + (b2 == null ? "nothing" : b2[1] + " " + b2[2]));
+                var back = SpecOf(sp.Id); FillSpec(back, a); if (string.Join("|", Compose(back)) != string.Join("|", a)) bad.Add(sp.Id + ": the form doesn't read its own text back (" + string.Join("|", a) + " -> " + string.Join("|", Compose(back)) + ")");
+            }
             using (var bmp = new Bitmap(1000, 400)) using (var g = Graphics.FromImage(bmp))
                 foreach (var ic in EmptyIcons) { try { Kit.Empty(g, 10, 10, 760 * S, ic, "stream", "t", "b", null); } catch (Exception e) { bad.Add("empty-state sketch " + ic + ": " + e.Message); } }
             return string.Join("; ", bad.Take(8));
@@ -46,10 +60,15 @@ namespace AdeeboMeter
 
         float PaintToolVisual(Graphics g, float x, float y, float w)
         {
-            if (!Pictured.Contains(tbSel) || tbBusy) return y;
+            if (!HasPicture(tbSel) || tbBusy) { visRect = RectangleF.Empty; return y; }
+            float y0 = y; float yEnd = PaintToolVisual0(g, x, y, w); visRect = yEnd > y0 ? new RectangleF(x, y0, w, yEnd - y0 - 14 * S) : RectangleF.Empty; return yEnd;
+        }
+        float PaintToolVisual0(Graphics g, float x, float y, float w)
+        {
             try
             {
                 string st = VisState();
+                if (st == "YOUR RESULT" && IsCalc(tbSel)) st = "YOUR NUMBERS";
                 switch (tbSel)
                 {
                     case "stack": return VisStack(g, x, y, w, st);
@@ -64,6 +83,7 @@ namespace AdeeboMeter
                     case "port": return VisPort(g, x, y, w, st);
                     case "wifirate": return VisRate(g, x, y, w, st);
                     case "roams": return VisRoams(g, x, y, w, st);
+                    default: return CalcPicture(g, x, y, w, st);
                 }
             }
             catch (Exception e) { visFail = tbSel + ": " + e.GetType().Name + " " + e.Message; Program.Log("tool picture " + visFail); }   // a picture never breaks the page
@@ -109,8 +129,8 @@ namespace AdeeboMeter
             var r = new RectangleF(x, y, w, h); Kit.Box(g, r, 14 * S);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T(caption), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
             string sl = L.T(state); var ss = g.MeasureString(sl, Draw.fTiny); var pr = new RectangleF(x + w - ss.Width - 30 * S, y + 9 * S, ss.Width + 16 * S, ss.Height + 4 * S);
-            Theme.Fill(g, pr, pr.Height / 2, state == "YOUR RESULT" ? Theme.LvSoft(0) : state == "EXAMPLE" ? Theme.LvSoft(1) : Theme.Soft);
-            using (var sb = new SolidBrush(state == "YOUR RESULT" ? Theme.LvText(0) : state == "EXAMPLE" ? Theme.LvText(1) : Theme.Sub)) g.DrawString(sl, Draw.fTiny, sb, pr.X + 8 * S, pr.Y + 2 * S);
+            Theme.Fill(g, pr, pr.Height / 2, state == "YOUR RESULT" || state == "YOUR NUMBERS" ? Theme.LvSoft(0) : state == "EXAMPLE" ? Theme.LvSoft(1) : Theme.Soft);
+            using (var sb = new SolidBrush(state == "YOUR RESULT" || state == "YOUR NUMBERS" ? Theme.LvText(0) : state == "EXAMPLE" ? Theme.LvText(1) : Theme.Sub)) g.DrawString(sl, Draw.fTiny, sb, pr.X + 8 * S, pr.Y + 2 * S);
             return r;
         }
         // a round stop: filled when it's done or reached, an outline while it's only the plan

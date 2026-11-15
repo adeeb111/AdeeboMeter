@@ -3549,3 +3549,112 @@ how: Pure arithmetic, nothing sent.
 why: Estimates mouth-to-ear delay against the 150 ms target.
 without: Offline.
 
+== tb.fxconv
+friendly: Currency converter
+cat: term
+close: -1
+tag: An amount from one currency to another, at the Bank of Canada's rate.
+what: Through the Canadian dollar, at the day's indicative rate the Trading page keeps - then what a bank's markup leaves you. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: An amount from one currency to another, at the Bank of Canada's rate.
+without: Offline.
+
+== tb.pnl
+friendly: Profit, loss and break-even
+cat: term
+close: -1
+tag: Profit or loss on a trade, after fees.
+what: Commission each way and a currency fee, and the sell price that only covers the fees. Not advice. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Profit or loss on a trade, after fees.
+without: Offline.
+
+== tb.possize
+friendly: Position size from risk
+cat: term
+close: -1
+tag: How many shares fit the risk you'll accept.
+what: Account × risk % ÷ (entry - stop). A stop isn't guaranteed - prices can jump past it. Not advice. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: How many shares fit the risk you'll accept.
+without: Offline.
+
+== tb.avgcost
+friendly: Average cost of buying in steps
+cat: term
+close: -1
+tag: Your average price after several buys.
+what: Total paid ÷ total shares. Not advice. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Your average price after several buys.
+without: Offline.
+
+== tb.compound
+friendly: Compound growth
+cat: term
+close: -1
+tag: What a start amount and monthly additions grow to at a steady rate.
+what: Monthly compounding; real returns go up and down. Not advice. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: What a start amount and monthly additions grow to at a steady rate.
+without: Offline.
+
+== tb.pctback
+friendly: A fall and the rise to get back
+cat: term
+close: -1
+tag: Why -50% needs +100% to recover.
+what: Percentages work on different bases going down and up. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Why -50% needs +100% to recover.
+without: Offline.
+
+== tb.tradelat
+friendly: Is my connection fast enough to trade?
+cat: term
+close: -1
+tag: How far a price typically moves while your order travels.
+what: One standard deviation of a day's move, scaled to your round trip. Your reaction time matters far more. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: How far a price typically moves while your order travels.
+without: Offline.
+
+== tb.comunits
+friendly: Commodity units
+cat: term
+close: -1
+tag: Barrels, gallons and litres; troy ounces and grams; bushels and tonnes; MMBtu and GJ.
+what: Bushels are volumes: wheat and soybeans weigh 60 lb, corn 56 lb. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: Barrels, gallons and litres; troy ounces and grams; bushels and tonnes; MMBtu and GJ.
+without: Offline.
+
+== tb.futures
+friendly: Futures contract value
+cat: term
+close: -1
+tag: What one contract controls, its tick and a $1 move.
+what: CME contract sizes and ticks. Futures run on margin. Not advice. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: What one contract controls, its tick and a $1 move.
+without: Offline.
+
+== tb.perunit
+friendly: Commodity price per unit
+cat: term
+close: -1
+tag: A price per barrel or ounce, per litre or gram, in Canadian dollars.
+what: Uses the Bank of Canada's US dollar rate. The raw commodity only - taxes and refining come on top. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: A price per barrel or ounce, per litre or gram, in Canadian dollars.
+without: Offline.
+
+== tb.tickrate
+friendly: Ticks behind in a game
+cat: term
+close: -1
+tag: How late you see the game: half your ping plus the game's smoothing.
+what: At 64 Hz one tick is 15.6 ms; games add 2 ticks of interpolation on purpose. Pure arithmetic, nothing sent.
+how: Pure arithmetic, nothing sent.
+why: How late you see the game: half your ping plus the game's smoothing.
+without: Offline.

@@ -161,6 +161,17 @@ namespace AdeeboMeter
                 T("plan", "CALC", "Is my plan fast enough?", "Plan download - e.g. 300 Mbps|Plan upload (optional) - e.g. 20 Mbps|Busy at once - e.g. 2 4k, 1 call, 1 game", (a, r) => Calc.Plan(a[0], a[1], a[2])),
                 T("tdm", "CALC", "E1 and T1 timeslots", "Line - E1 or T1|Timeslots (optional) - 1 to 31", (a, r) => Calc.Tdm(a[0], a[1])),
                 T("jitterbuf", "CALC", "Jitter buffer size", "Delay variation - e.g. 30 ms, or the range 20-70 ms|Packet time (ms) - 10, 20 or 30|Codec (optional) - G711, G729 or Opus", (a, r) => Calc.JitterBuf(a[0], a[1], a[2])),
+                T("fxconv", "CALC", "Currency converter", "Amount|From|To|Bank markup", (a, r) => Calc.FxConv(a[0], a[1], a[2], a[3])),
+                T("pnl", "CALC", "Profit, loss and break-even", "Buy price|Sell price|Shares|Fees", (a, r) => Calc.Pnl(a[0], a[1], a[2], a[3])),
+                T("possize", "CALC", "Position size from risk", "Account|Risk per trade|Entry price|Stop price", (a, r) => Calc.PosSize(a[0], a[1], a[2], a[3])),
+                T("avgcost", "CALC", "Average cost of buying in steps", "Prices|Shares", (a, r) => Calc.AvgCost(a[0], a[1])),
+                T("compound", "CALC", "Compound growth", "Start with|Add each month|Growth a year|Years", (a, r) => Calc.CompoundCalc(a[0], a[1], a[2], a[3])),
+                T("pctback", "CALC", "A fall and the rise to get back", "Change", (a, r) => Calc.PctBack(a[0])),
+                T("tradelat", "CALC", "Is my connection fast enough to trade?", "Ping|Price|Daily move", (a, r) => Calc.TradeLat(a[0], a[1], a[2])),
+                T("comunits", "CALC", "Commodity units", "Amount|Unit|Crop", (a, r) => Calc.ComConv(a[0], a[1], a[2])),
+                T("futures", "CALC", "Futures contract value", "Contract|Price|Contracts|Move", (a, r) => Calc.FuturesCalc(a[0], a[1], a[2], a[3])),
+                T("perunit", "CALC", "Commodity price per unit", "Price|Per|Show per|Currency", (a, r) => Calc.PerUnit(a[0], a[1], a[2], a[3])),
+                T("tickrate", "CALC", "Ticks behind in a game", "Tick rate|Ping|Smoothing", (a, r) => Calc.TickRate(a[0], a[1], a[2])),
                 T("timeline", "WATCH", "What changed when it broke?", "When it broke - e.g. 18:40 or yesterday 18:40 (empty = the last outage)", (a, r) => Picks.Timeline(M, a[0])),
                 T("hotel", "YOUR NETWORK", "Is this Wi-Fi OK to use? (hotel, cafe)", null, (a, r) => Picks.Hotel(M, r)),
                 T("dnsrace", "NAMES", "DNS race - which server is fastest here", "Extra servers to race (optional) - e.g. 208.67.222.222", (a, r) => Picks.DnsRace(M, a[0], r)),
@@ -238,6 +249,9 @@ namespace AdeeboMeter
             new[] { "SERVERS & IT MATHS", "raid", "backup", "ups", "sla", "growth" },
             new[] { "STREAMING & HOME MATHS", "bandwidth", "stream", "datause", "plan" },
             new[] { "VOICE & TDM MATHS", "jitterbuf", "tdm" },
+            new[] { "MONEY & MARKETS MATHS", "fxconv", "pnl", "possize", "avgcost", "compound", "pctback", "tradelat" },
+            new[] { "COMMODITY MATHS", "comunits", "futures", "perunit" },
+            new[] { "GAMING MATHS", "tickrate" },
             new[] { "REMOTE ACCESS", "remote" },
             new[] { "BUILD A PACKET", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "wol" },
             new[] { "TEST A COLLECTOR", "syslog", "trap", "netflow" },
@@ -247,7 +261,7 @@ namespace AdeeboMeter
             new[] { "CERTIFICATES & HTTPS", "https", "certfile", "chain", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
             new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
-            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "NETWORK MATHS", "net" }, { "WIRELESS MATHS", "net" }, { "SERVERS & IT MATHS", "net" }, { "STREAMING & HOME MATHS", "net" }, { "VOICE & TDM MATHS", "net" },
+            { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "NETWORK MATHS", "net" }, { "WIRELESS MATHS", "net" }, { "SERVERS & IT MATHS", "net" }, { "STREAMING & HOME MATHS", "net" }, { "VOICE & TDM MATHS", "net" }, { "MONEY & MARKETS MATHS", "net" }, { "COMMODITY MATHS", "net" }, { "GAMING MATHS", "net" },
             { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
@@ -325,6 +339,7 @@ namespace AdeeboMeter
             for (int i = 0; i < ex.In.Length && i < tbBoxes.Count; i++) { var b = tbBoxes[i]; if (b == null || b.Box.UseSystemPasswordChar) continue; b.Box.Text = ex.In[i]; }
             var first = tbBoxes.FirstOrDefault(b => b != null); if (first != null) first.Box.Focus();
             tbRows = null; tbRowsKey = ""; tbCanvas.Invalidate();
+            if (calcNow != null && calcNow.Id == id) { ReadBoxes(); CalcNow(); }
         }
         // the P-384 keys' actions: public key file, encrypted backup with a recovery passphrase, delete (asks first)
         List<string[]> EcAction(string what, string keyName)
@@ -740,6 +755,8 @@ namespace AdeeboMeter
             if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
             tbRun.Text = "Run"; tbRun.Accent = QAccent(QuestionOf(t)); tbEx.Visible = Examples.Get(t.Id) != null;
             tbBar.ResumeLayout();
+            if (IsCalc(t.Id)) { var keep = tbShown; BuildCalcForm(t.Id); if (keep != null && calcNow != null) { FillSpec(calcNow, keep); BuildCalcFormKeep(t.Id); WriteBoxes(); CalcNow(); } EnsureAnim(); }   // calculators: a form, live (FullView.CalcForm.cs)
+            else if (calcNow != null || (calcHost != null && calcHost.Visible)) { calcNow = null; calcHost.Visible = false; tbRun.Visible = true; }
             FillAssist(tbPool.Select((b, k) => new { b, k }).Where(z => z.b.Visible && z.b.Box.Text == "").Select(z => z.k).DefaultIfEmpty(0).First());
             if (t.Id != "mtu") { mtuHops = null; }
             tbList.Refresh(); tbCanvas.Invalidate();

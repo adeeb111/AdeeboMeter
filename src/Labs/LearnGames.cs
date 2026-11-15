@@ -20,6 +20,7 @@ namespace AdeeboMeter
             new[] { "addr", "Address quick-fire", "Private, public, loopback, CGNAT? Ten addresses, sixty seconds.", "8 right to win" },
             new[] { "heist", "Break the Adeebo Award", "Mallory the hacker tries ten ways to fake an award card. Will each one work?", "8 right to win" },
             new[] { "outage", "Survive the outage", "Eight broken networks, fifteen seconds each. Read the dots, call the cause. Faster scores more.", "6 right to win" },
+            new[] { "years", "Ten years of money", "Ten made-up years: crashes, a recession, inflation, surprise bills. Where does your money go each year?", "finish all ten" },
             new[] { "dungeon", "The packet dungeon", "Eight rooms, from the cable to the vault. Three hearts. Each room you clear leaves a scroll.", "reach the treasure" } };
         public static readonly string[][] All = Base.Concat(LearnRounds.Games.Select(g => new[] { g[0], g[1], g[2], LearnRounds.Win + " of 6 to win" })).ToArray();
         public static int Pts(string key) { return key.StartsWith("game.room.", StringComparison.Ordinal) ? 4 : 3; }
@@ -28,7 +29,7 @@ namespace AdeeboMeter
             foreach (var f in Faults) yield return "game.room." + f.Id;
             foreach (var c in ThiefCases) yield return "game.thief." + c;
             for (int i = 0; i < Detective.Length; i++) yield return "game.detective." + (i + 1).ToString(CultureInfo.InvariantCulture);
-            yield return "game.quick.ports"; yield return "game.quick.addr"; yield return "game.heist"; yield return "game.outage"; yield return "game.dungeon";
+            yield return "game.quick.ports"; yield return "game.quick.addr"; yield return "game.heist"; yield return "game.outage"; yield return "game.dungeon"; yield return "game.years";
             foreach (var g in LearnRounds.Games) yield return "game.rounds." + g[0];
         }
         public static bool Known(string key) { return Keys().Contains(key); }

@@ -20,7 +20,8 @@ namespace AdeeboMeter
             new[] { "penny", "The penny-stock trap", "Why +300% lists are full of tiny, risky companies.", "investing" },
             new[] { "delay", "Delayed or live?", "Which clock is each price on?", "investing" },
             new[] { "fxtrip", "Currency trip", "A US stock bought in Canadian dollars - follow the money.", "investing" },
-            new[] { "lag", "Lag lab", "Your connection, your broker and what a slow moment really changes.", "investing" } };
+            new[] { "lag", "Lag lab", "Your connection, your broker and what a slow moment really changes.", "investing" },
+            new[] { "bullbear", "Bull or bear?", "Six made-up headlines and charts: bull, bear, dip or recession?", "investing" } };
         // per game: situation, the right answer, three wrong ones, why
         public static readonly Dictionary<string, string[][]> Rounds = new Dictionary<string, string[][]>
         {
@@ -73,6 +74,13 @@ namespace AdeeboMeter
                 new[] { "Your bank converts at 1.38 while the day's rate is 1.35. The 0.03 difference is...", "The bank's conversion fee (the spread)", "A government tax", "A mistake in your favour", "Interest you earned", "Banks and apps earn on the gap between their rate and the market's - it's a fee, even when nothing says \"fee\"." },
                 new[] { "Sending money from Canada to family abroad, what decides how much arrives?", "The exchange rate used and the transfer fees", "Only the amount you send", "The weather", "The receiver's phone model", "Two things matter: the rate the service gives you and what it charges on top. Compare both." },
                 new[] { "A \"no fee\" conversion offers a rate much worse than the day's rate. It...", "Still costs you - the fee is hidden in the rate", "Is free", "Pays you extra", "Is illegal", "A worse rate is a fee by another name. Compare with the day's rate in Trading." } } },
+            { "bullbear", new[] {
+                new[] { "An index rose 25% from its low over 18 months, and people are cheerful about shares.", "A bull market", "A bear market", "A recession", "A correction", "Up 20% or more from a low, with confidence rising - the textbook bull market." },
+                new[] { "An index fell 11% in three weeks, then went sideways. The economy is still growing.", "A correction (a dip)", "A bear market", "A recession", "A bull market", "A fall of 10-20% is a correction - common, and usually recovered within months." },
+                new[] { "An index is 27% below its high after eight months of falls. The news is full of fear.", "A bear market", "A correction", "A bull market", "Normal daily noise", "20% or more below the last high is a bear market." },
+                new[] { "The country's output shrank two quarters in a row; job losses are rising.", "A recession", "A bull market", "A correction", "Inflation", "Two quarters of shrinking GDP is the common rule of thumb for a recession." },
+                new[] { "Groceries, rent and fuel all cost 7% more than a year ago.", "High inflation", "A recession", "A bear market", "A bull market", "Prices rising across the board is inflation - here well above the Bank of Canada's 2% target." },
+                new[] { "Shares fell 2% today on one piece of news and recovered by the close.", "Normal daily noise", "A bear market", "A recession", "A crash", "A 2% day is ordinary. Labels like bear or correction are about falls lasting weeks or months." } } },
             { "lag", new[] {
                 new[] { "Your delay to your broker is 30 ms. When you click Buy, the order reaches them in...", "A small fraction of a second - the network isn't the problem", "About a minute", "Tomorrow", "Never", "30 ms is three hundredths of a second. At that speed the network is not what you should worry about." },
                 new[] { "The delay jumps to 300 ms for a few seconds at the open. For a casual trader that means...", "The order arrives a moment later; in a fast market the price can move a little", "The order is cancelled", "You pay double", "Nothing at all, ever", "A third of a second is noticeable in very fast markets, rarely for a casual order - but it's worth knowing when it happens." },
