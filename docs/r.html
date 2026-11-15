@@ -48,6 +48,13 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   "use strict";
   var A = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.";
   var app = document.getElementById("app");
+  function copyText(text, ok) {
+    var fallback = function () { var t = document.createElement("textarea"); t.value = text; t.setAttribute("readonly", ""); t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select(); var done = false; try { done = document.execCommand("copy"); } catch (e) { done = false; } document.body.removeChild(t); toast(done ? ok : "Couldn't copy - press and hold the text to copy it"); };
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast(ok); }, fallback); else fallback(); } catch (e) { fallback(); }
+  }
+  // the time comes as UTC (yyMMddHHmm) and shows in the phone's own zone; a clock ahead of the phone is said, not called "just now"
+  function utc(t) { return new Date(Date.UTC(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10))); }
+  function age(when) { var a = Math.round((Date.now() - when.getTime()) / 60000); return isNaN(a) ? "" : a < -5 ? "the PC's clock is ahead of this phone" : a < 2 ? "just now" : a < 90 ? a + " min ago" : a < 2880 ? Math.round(a / 60) + " h ago" : Math.round(a / 1440) + " days ago"; }
   function el(h) { var d = document.createElement("div"); d.innerHTML = h; return d.firstElementChild; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function toast(t) { var e = document.getElementById("toast"); e.textContent = t; e.className = "on"; setTimeout(function () { e.className = ""; }, 1800); }
@@ -57,18 +64,18 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
 
   var rawHash = (location.hash || "").replace(/^#/, "");
   if (rawHash.slice(0, 2) === "2!") { v2(rawHash); return; }
-  var raw = decodeURIComponent(rawHash);
+  var raw; try { raw = decodeURIComponent(rawHash); } catch (e) { raw = ""; }
   var p = raw.split("!");
   if (p[0] !== "1" || p.length < 4) {
     app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">Nothing to show yet</h1><p>Open this page by scanning the QR code in AdeeboMeter on your PC (Toolbox › QR code). The result travels inside the link and stays on your phone.</p><p><a href="./">What is AdeeboMeter?</a></p></div>';
     return;
   }
   // ---- the result
-  var t = p[1] || "", when = new Date(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10));
+  var t = p[1] || "", when = utc(t);
   var lv = (p[2] || "333333").split("").map(Number), overall = lv[0], legs = lv.slice(1);
   var v = (p[3] || "").split(","), M = { gw: n(v[0]), ping: n(v[1]), jit: n(v[2]), loss: n(v[3]), dns: n(v[4]), down: n(v[5]), up: n(v[6]), cpu: n(v[7]), mem: n(v[8]), wifi: n(v[9]), outages: n(v[10]), cable: v[11] === "c" };
   var net = ser(p[4], "ms").slice(0, 60), gws = ser(p[5], "ms").slice(0, 60), loss = ser(p[6], "loss").slice(0, 60), head = (p[7] || "").replace(/\+/g, " ").slice(0, 120);
-  var names = ["This PC", M.cable ? "Cable" : "Wi-Fi", "Provider", "DNS", "Internet"];
+  var names = ["This PC", M.cable ? "Cable" : v[11] === "w" ? "Wi-Fi" : "Home network", "Provider", "DNS", "Internet"];
 
   // ---- worked out here: a grade for each number, in plain words
   function grade(k, x) {
@@ -99,21 +106,23 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     ["Wait a little - it's usually the service, not you", "Check the service's status page", "If every site is slow: send this to your provider"]];
   var title = head || (overall === 0 ? "All good right now" : worst >= 0 ? names[worst] + (overall === 2 ? " is the problem" : " needs a look") : "Something needs a look");
   var word = ["ALL GOOD", "WORTH A LOOK", "PROBLEM", "NOT SURE"][overall] || "RESULT";
-  var ago = Math.round((Date.now() - when.getTime()) / 60000), agoT = isNaN(ago) ? "" : ago < 2 ? "just now" : ago < 90 ? ago + " min ago" : ago < 2880 ? Math.round(ago / 60) + " h ago" : Math.round(ago / 1440) + " days ago";
+  var agoT = age(when);
   var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
   // ---- charts, drawn here
   function chart(series, color, label, maxFloor, unit, lossSeries) {
     var W = 600, H = 150, pad = 26, vals = series.filter(function (x) { return x != null && !isNaN(x); });
-    if (!vals.length) return "";
-    var max = Math.max(maxFloor, Math.max.apply(null, vals) * 1.15), bw = (W - pad) / Math.max(1, series.length), s = '<svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" role="img" aria-label="' + esc(label) + '">';
+    if (!series.length) return "";
+    var max = Math.max(maxFloor, vals.length ? Math.max.apply(null, vals) * 1.15 : 0), bw = (W - pad) / Math.max(1, series.length), s = '<svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" role="img" aria-label="' + esc(label) + '">';
     [0.5, 1].forEach(function (g) { var y = H - (H - 10) * g; s += '<line x1="' + pad + '" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="var(--line)"/><text x="0" y="' + (y + 4) + '" font-size="11" fill="var(--muted)">' + Math.round(max * g) + '</text>'; });
     series.forEach(function (x, i) {
       var X = pad + i * bw + 1;
+      if (x !== null && isNaN(x)) return;
       if (x == null) { s += '<rect x="' + X + '" y="' + (H - 16) + '" width="' + Math.max(2, bw - 2) + '" height="16" rx="2" fill="var(--red)"/>'; return; }
       var h = Math.max(2, (H - 10) * x / max), c = lossSeries && lossSeries[i] >= 2 ? "var(--red)" : x > max * 0.6 && maxFloor < 100 ? "var(--amber)" : color;
       s += '<rect x="' + X + '" y="' + (H - h) + '" width="' + Math.max(2, bw - 2) + '" height="' + h + '" rx="2" fill="' + c + '"/>';
     });
+    if (vals.some(function (v) { return v >= 990; })) s += '<text x="' + W + '" y="12" font-size="11" fill="var(--muted)" text-anchor="end">top = 1 s or more</text>';
     s += '<text x="' + pad + '" y="' + (H + 15) + '" font-size="11" fill="var(--muted)">older</text><text x="' + W + '" y="' + (H + 15) + '" font-size="11" fill="var(--muted)" text-anchor="end">now · ' + unit + '</text></svg>';
     return s;
   }
@@ -124,8 +133,8 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     L.push("Hello - I'm having trouble with my internet connection. Measured by AdeeboMeter on " + whenT + ":");
     L.push("");
     L.push("- Result: " + title + " (" + word.toLowerCase() + ")");
-    L.push("- Connection: " + (M.cable ? "wired (cable) - Wi-Fi is not involved" : "Wi-Fi" + (isNaN(M.wifi) ? "" : ", signal " + f(M.wifi) + "%")));
-    L.push("- My router answers in " + f(M.gw) + " ms (my home network " + (grade("gw", M.gw)[0] === 0 ? "is fine" : "is slow") + ")");
+    L.push("- Connection: " + (M.cable ? "wired (cable) - Wi-Fi is not involved" : v[11] !== "w" ? "not recorded" : "Wi-Fi" + (isNaN(M.wifi) ? "" : ", signal " + f(M.wifi) + "%")));
+    L.push(isNaN(M.gw) ? "- My router: not measured" : "- My router answers in " + f(M.gw) + " ms (my home network " + (grade("gw", M.gw)[0] === 0 ? "is fine" : "is slow") + ")");
     L.push("- Internet: " + f(M.ping) + " ms, jitter " + f(M.jit, 1) + " ms, loss " + f(M.loss, 1) + "%");
     if (!isNaN(M.down)) L.push("- Speed: " + f(M.down) + " down / " + f(M.up) + " up (Mbps)");
     if (M.outages > 0) L.push("- Outages today: " + f(M.outages));
@@ -142,7 +151,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   var num = function (k, label, x, unit, d) { var g = grade(k, x); return '<div class="num l' + g[0] + '"><div class="k">' + label + '</div><div class="v">' + f(x, d) + ' <small>' + unit + '</small></div><div class="w">' + g[1] + '</div></div>'; };
   var h = "";
   h += '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT ? " · " + agoT : "") + '</small></div>';
-  h += '<div class="card verdict l' + overall + '"><span class="tag">' + word + '</span><h1>' + esc(title) + '</h1><p>' + (worst >= 0 ? means[worst] : "Every part of the path checked out.") + '</p></div>';
+  h += '<div class="card verdict l' + overall + '"><span class="tag">' + word + '</span><h1>' + esc(title) + '</h1><p>' + (worst >= 0 ? means[worst] : legs.every(function (x) { return x === 3; }) || overall === 3 ? "Not enough was measured to say where the trouble is - run it again on the PC." : "Every part of the path checked out.") + '</p></div>';
   h += '<div class="card"><h2>FROM THIS PC TO THE INTERNET</h2><div class="path">' + [0, 1, 2, 3, 4].map(leg).join("") + '</div></div>';
   h += '<div class="card"><h2>THE NUMBERS, IN PLAIN WORDS</h2><div class="grid">' + num("gw", "Your router answers in", M.gw, "ms") + num("ping", "The internet answers in", M.ping, "ms") + num("jit", "Wobble (jitter)", M.jit, "ms", 1) + num("loss", "Lost on the way", M.loss, "%", 1) + num("dns", "Names (DNS)", M.dns, "ms") + (M.cable ? num("cpu", "This PC's processor", M.cpu, "%") : num("wifi", "Wi-Fi signal", M.wifi, "%")) + '</div>' + (isNaN(M.down) ? "" : '<p class="cap">Traffic right then: ' + f(M.down, 1) + ' Mbps down · ' + f(M.up, 1) + ' Mbps up</p>') + '</div>';
   var c1 = chart(net, "var(--blue)", "internet checks", 60, "ms", null);
@@ -156,19 +165,19 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   h += '<p class="note">These numbers came inside the link you scanned - they stayed on this phone and were never sent to adeebometer.com. AdeeboMeter can\'t check who made a link: trust it as much as the person who sent it.</p>';
   app.innerHTML = h;
   var ta = document.getElementById("msg"); ta.value = msg();
-  function copy() { ta.select(); try { navigator.clipboard.writeText(ta.value).then(function () { toast("Copied - paste it into the support chat"); }, function () { document.execCommand("copy"); toast("Copied"); }); } catch (e) { document.execCommand("copy"); toast("Copied"); } }
+  function copy() { copyText(ta.value, "Copied - paste it into the support chat"); }
   document.getElementById("copy").onclick = copy;
   document.getElementById("mail").onclick = function () { location.href = "mailto:?subject=" + encodeURIComponent("Internet problem - measured " + whenT) + "&body=" + encodeURIComponent(ta.value); };
   document.getElementById("isp").onclick = function () { if (navigator.share) navigator.share({ title: "My internet problem", text: ta.value }).catch(function () {}); else copy(); };
-  document.getElementById("share").onclick = function () { if (navigator.share) navigator.share({ title: "AdeeboMeter result", text: title, url: location.href }).catch(function () {}); else { try { navigator.clipboard.writeText(location.href); toast("Link copied"); } catch (e) {} } };
+  document.getElementById("share").onclick = function () { if (navigator.share) navigator.share({ title: "AdeeboMeter result", text: title, url: location.href }).catch(function () {}); else copyText(location.href, "Link copied"); };
   document.getElementById("pdf").onclick = function () { window.print(); };
-  document.getElementById("ai").onclick = function () { var q = "My Windows PC has a network problem. AdeeboMeter measured this:\n\n" + msg().split("\n").slice(2, -2).join("\n") + "\n\nWhat should I check next, step by step? Assume I can only use this PC's Windows settings and my phone."; try { navigator.clipboard.writeText(q).then(function () { toast("Copied - paste it into ChatGPT, Claude or Gemini"); }); } catch (e) {} };
-  document.getElementById("copyall").onclick = function () { try { navigator.clipboard.writeText(msg()).then(function () { toast("Copied - paste it anywhere"); }); } catch (e) { copy(); } };
+  document.getElementById("ai").onclick = function () { var q = "My Windows PC has a network problem. AdeeboMeter measured this:\n\n" + msg().split("\n").slice(2, -2).join("\n") + "\n\nWhat should I check next, step by step? Assume I can only use this PC's Windows settings and my phone."; copyText(q, "Copied - paste it into ChatGPT, Claude or Gemini"); };
+  document.getElementById("copyall").onclick = function () { copyText(msg(), "Copied - paste it anywhere"); };
 
   // ================================================================== v2: any tool's picture, redrawn here
   function v2(h) {
     var D = function (x) { var v; try { v = decodeURIComponent((x || "").replace(/\+/g, " ")); } catch (e) { v = x || ""; } return v.slice(0, 300); };
-    var f = h.split("!"), t = f[1] || "", when = new Date(2000 + +t.slice(0, 2), +t.slice(2, 4) - 1, +t.slice(4, 6), +t.slice(6, 8), +t.slice(8, 10));
+    var f = h.split("!"), t = f[1] || "", when = utc(t);
     var title = D(f[2]), cap = D(f[3]), kind = f[4] || "", A = f[5] || "", B = f[6] || "", R = f[7] || "";
     var items = function (x) { return x ? x.split("~").map(function (i) { return i.split(","); }) : []; };
     var col = function (lv, back) { return lv == 2 ? "var(--red)" : lv == 1 ? "var(--amber)" : back ? "var(--green)" : "var(--blue)"; };
@@ -182,7 +191,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
         var fr = +p[0], to = +p[1], lv = +p[2], sealed = p[3] === "1", all = p[4] === "1", ms = p[5], lab = D(p[6]), det = D(p[7]), y = top + i * rowH + 26, c = col(lv, to < fr);
         if (fr === to) svg += '<path d="M' + X(fr) + ' ' + (y - 8) + ' q40 8 0 16" fill="none" stroke="' + c + '" stroke-width="2"/>';
         else svg += '<line x1="' + X(fr) + '" x2="' + X(to) + '" y1="' + y + '" y2="' + y + '" stroke="' + c + '" stroke-width="2.4"' + (all ? ' stroke-dasharray="6 4"' : "") + '/><path d="M' + X(to) + ' ' + y + ' l' + (to > fr ? -9 : 9) + ' -5 v10 z" fill="' + c + '"/>';
-        var mid = fr === to ? X(fr) + 60 : (X(fr) + X(to)) / 2, anc = fr === to ? "start" : "middle";
+        var mid = fr === to ? X(fr) + 60 : (X(fr) + X(to)) / 2, anc = fr === to ? "start" : "middle", room = Math.max(12, Math.floor((fr === to ? (W - mid - 50) : Math.abs(X(to) - X(fr)) + 40) / 7)); if (lab.length > room) lab = lab.slice(0, room - 1) + "…"; if (det.length > room + 10) det = det.slice(0, room + 9) + "…";
         svg += '<text x="' + mid + '" y="' + (y - 7) + '" font-size="13" text-anchor="' + anc + '" fill="var(--ink)">' + (sealed ? "🔒 " : "") + esc(lab) + '</text>';
         if (det) svg += '<text x="' + mid + '" y="' + (y + 16) + '" font-size="11" text-anchor="' + anc + '" fill="var(--muted)">' + esc(det.length > 70 ? det.slice(0, 69) + "…" : det) + '</text>';
         if (ms) svg += '<text x="' + (W - 2) + '" y="' + (y + 4) + '" font-size="12" font-weight="700" text-anchor="end" fill="var(--sub)">' + esc(ms) + ' ms</text>';
@@ -195,8 +204,8 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
       L.forEach(function (l, i) {
         var y = 10 + i * 52, v1 = l[1] === "" ? NaN : +l[1], v2 = kind === "r" && l[2] !== "" ? +l[2] : NaN, lv = +(kind === "r" ? l[3] : l[3]), lab = kind === "b" ? D(l[2]) : "";
         svg += '<text x="0" y="' + (y + 14) + '" font-size="13" font-weight="700" fill="var(--ink)">' + esc(D(l[0])) + '</text><rect x="0" y="' + (y + 22) + '" width="' + (W - 120) + '" height="14" rx="7" fill="var(--grey-s)"/>';
-        if (!isNaN(v1)) svg += '<rect x="0" y="' + (y + 22) + '" width="' + Math.max(4, (W - 120) * v1 / max) + '" height="14" rx="7" fill="' + col(lv) + '"/>';
-        if (!isNaN(v2)) svg += '<rect x="0" y="' + (y + 38) + '" width="' + Math.max(4, (W - 120) * v2 / max) + '" height="6" rx="3" fill="var(--purple)"/>';
+        if (!isNaN(v1)) svg += '<rect x="0" y="' + (y + 22) + '" width="' + Math.min(W - 120, Math.max(4, (W - 120) * v1 / max)) + '" height="14" rx="7" fill="' + col(lv) + '"/>';
+        if (!isNaN(v2)) svg += '<rect x="0" y="' + (y + 38) + '" width="' + Math.min(W - 120, Math.max(4, (W - 120) * v2 / max)) + '" height="6" rx="3" fill="var(--purple)"/>';
         svg += '<text x="' + (W - 110) + '" y="' + (y + 34) + '" font-size="13" fill="var(--sub)">' + (isNaN(v1) ? "–" : v1) + ' ' + esc(unit) + (isNaN(v2) ? "" : " / " + v2) + '</text>';
         if (lab) svg += '<text x="' + (W - 2) + '" y="' + (y + 14) + '" font-size="11" text-anchor="end" fill="var(--muted)">' + esc(lab) + '</text>';
       });
@@ -205,7 +214,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
       var Hp = items(B), maxp = Math.max.apply(null, Hp.map(function (h) { return +h[2] || 0; }).concat([10])) * 1.1, H3 = 10 + Hp.length * 44;
       svg = '<svg viewBox="0 0 ' + W + ' ' + H3 + '" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,sans-serif"><line x1="16" x2="16" y1="16" y2="' + (H3 - 16) + '" stroke="var(--line)" stroke-width="4"/>';
       Hp.forEach(function (h, i) {
-        var y = 16 + i * 44, lv = +h[4], ms = h[2] === "" ? NaN : +h[2], c = col(lv);
+        var y = 16 + i * 44, lv = +h[4], ms = h[2] === "" ? NaN : +h[2], c = (lv < 0 || isNaN(lv)) && isNaN(ms) ? "var(--muted)" : col(lv);
         svg += '<circle cx="16" cy="' + y + '" r="10" fill="var(--card)" stroke="' + c + '" stroke-width="3"/><text x="16" y="' + (y + 4) + '" font-size="10" text-anchor="middle" fill="var(--ink)">' + esc(D(h[0])) + '</text>';
         svg += '<text x="36" y="' + (y - 2) + '" font-size="13" fill="var(--ink)">' + esc(D(h[1])) + '</text><text x="36" y="' + (y + 14) + '" font-size="11" fill="var(--muted)">' + esc(D(h[3])) + '</text>';
         if (!isNaN(ms)) svg += '<rect x="330" y="' + (y - 7) + '" width="' + Math.max(3, 200 * ms / maxp) + '" height="12" rx="4" fill="' + c + '"/><text x="' + (W - 2) + '" y="' + (y + 4) + '" font-size="12" text-anchor="end" fill="var(--sub)">' + ms + ' ms</text>';
@@ -214,20 +223,20 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     }
     var rows = items(R), worst = rows.reduce(function (m, r) { return Math.max(m, +r[0] === 3 ? -1 : +r[0]); }, -1);
     var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-    var h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + '</small></div>';
+    var agoT2 = age(when), h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT2 ? " · " + agoT2 : "") + '</small></div>';
     h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(cap ? cap.toUpperCase() : "RESULT") + '</span><h1>' + esc(title) + '</h1></div>';
     if (svg) h2 += '<div class="card" id="pic">' + svg + '</div>';
-    if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div></div>'; }).join("") + '</div>';
-    h2 += '<div class="card"><div class="btns"><button class="main" id="cp">Copy</button><button id="sh">Share</button><button id="img">Save image</button><button id="ai2">Copy for AI</button><button id="pdf2">Save as PDF</button></div></div>';
+    if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div>' + (r[3] ? '<div class="w" style="font-size:13px;margin-top:4px">' + esc(D(r[3])) + '</div>' : '') + '</div>'; }).join("") + '</div>';
+    h2 += '<div class="card"><div class="btns"><button class="main" id="cp">Copy</button><button id="sh">Share</button>' + (svg ? '<button id="img">Save image</button>' : '') + '<button id="ai2">Copy for AI</button><button id="pdf2">Save as PDF</button></div></div>';
     if (/Android/i.test(navigator.userAgent)) h2 += '<p class="note">Android: Save image opens the share sheet - pick Files, Photos or any app. From the PC, Send by Bluetooth or Quick Share drops the picture straight into Downloads.</p>';
     h2 += '<p class="note">Made with AdeeboMeter on a PC. The result came inside the link and was drawn here, on this phone - AdeeboMeter can\'t check who made a link, so trust it as much as the person who sent it.</p>';
     app.innerHTML = h2;
-    var text = function () { return title + (cap ? " - " + cap : "") + (whenT ? " (" + whenT + ")" : "") + "\n" + rows.map(function (r) { return "- " + D(r[1]) + ": " + D(r[2]); }).join("\n") + "\n" + location.href; };
-    document.getElementById("cp").onclick = function () { try { navigator.clipboard.writeText(text()).then(function () { toast("Copied - paste it anywhere"); }); } catch (e) { toast("Couldn't copy"); } };
-    document.getElementById("sh").onclick = function () { if (navigator.share) navigator.share({ title: title, text: text(), url: location.href }).catch(function () {}); else document.getElementById("cp").onclick(); };
+    var text = function (noUrl) { return title + (cap ? " - " + cap : "") + (whenT ? " (" + whenT + ")" : "") + "\n" + rows.map(function (r) { return "- " + D(r[1]) + ": " + D(r[2]) + (r[3] ? " (" + D(r[3]) + ")" : ""); }).join("\n") + (noUrl ? "" : "\n" + location.href); };
+    document.getElementById("cp").onclick = function () { copyText(text(), "Copied - paste it anywhere"); };
+    document.getElementById("sh").onclick = function () { if (navigator.share) navigator.share({ title: title, text: text(true), url: location.href }).catch(function (e) { if (!e || e.name !== "AbortError") document.getElementById("cp").onclick(); }); else document.getElementById("cp").onclick(); };
     document.getElementById("pdf2").onclick = function () { window.print(); };
-    document.getElementById("ai2").onclick = function () { var q = "I ran \"" + title + "\" in AdeeboMeter on my Windows PC. The result:\n\n" + text() + "\n\nWhat does it mean, and what should I check next, step by step?"; try { navigator.clipboard.writeText(q).then(function () { toast("Copied - paste it into ChatGPT, Claude or Gemini"); }); } catch (e) {} };
-    document.getElementById("img").onclick = function () {
+    document.getElementById("ai2").onclick = function () { var q = "I ran \"" + title + "\" in AdeeboMeter on my Windows PC. The result:\n\n" + text() + "\n\nWhat does it mean, and what should I check next, step by step?"; copyText(q, "Copied - paste it into ChatGPT, Claude or Gemini"); };
+    if (svg) document.getElementById("img").onclick = function () {
       var el2 = document.querySelector("#pic svg"); if (!el2) { toast("No picture for this one - use Copy"); return; }
       var cs = getComputedStyle(document.documentElement), xml = new XMLSerializer().serializeToString(el2).replace(/var\(--([a-z-]+)\)/g, function (m, k) { return cs.getPropertyValue("--" + k).trim() || "#888"; });
       var vb = el2.viewBox.baseVal, img = new Image(), sc = 2;
@@ -236,11 +245,14 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
         x.fillStyle = cs.getPropertyValue("--card").trim() || "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, vb.width * sc, vb.height * sc);
         x.fillStyle = cs.getPropertyValue("--muted").trim() || "#888"; x.font = (11 * sc) + "px -apple-system,sans-serif"; x.fillText(title + " · made with AdeeboMeter", 4 * sc, (vb.height + 20) * sc);
         c.toBlob(function (b) {
-          var file = new File([b], "adeebometer.png", { type: "image/png" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: title }).catch(function () {});
-          else { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "adeebometer.png"; a.click(); }
+          var file = b ? new File([b], "adeebometer.png", { type: "image/png" }) : null;
+          var dl = function () { var a = document.createElement("a"), u = URL.createObjectURL(b); a.href = u; a.download = "adeebometer.png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast("Picture saved"); };
+          if (!b) { toast("Couldn't make the picture - use Copy"); return; }
+          if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: title }).catch(function (e) { if (!e || e.name !== "AbortError") dl(); });
+          else dl();
         }, "image/png");
       };
+      img.onerror = function () { toast("Couldn't make the picture - use Copy"); };
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
     };
   }
