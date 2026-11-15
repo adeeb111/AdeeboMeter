@@ -18,7 +18,10 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - 50 more tools show their exchange packet by packet: mail and SMTP delivery, SSH banner, STUN and Teams NAT, LDAP, RDP, DHCP options,
   ICMP/UDP/TCP senders, HTTP requests, TWAMP, DSCP marks, Wake-on-LAN, proxy/PAC, VPN leaks, IPv6 ping and router adverts, mDNS/SSDP,
   NetBIOS names, clock and time source, hairpin NAT, 802.1X (EAPOL to RADIUS), UDP MTU, iperf3, HTTPS/certificates, RADIUS lab, and all 14 SNMP tools.
-- One-way protocols (syslog, traps, NetFlow) show that no answer comes - by design. A red result turns the step that failed red.
+- Built from your result, not a template: the banner the server really sent, the address STUN saw, each 802.1X event in the order
+  Windows logged it, every router that announced itself (the rogue one red), each SNMP value that came back, the leak outside the VPN,
+  marked vs unmarked ping times, the proxy the PAC file chose. Before a run the same exchange shows how the protocol works.
+- One-way protocols (syslog, traps, NetFlow) show that no answer comes - by design. The step that failed is red.
 
 ### New: tool pictures (third wave) - packets going back and forth
 - Exchange pictures: each tool draws who talks to whom (PC, router, DNS, servers), and a packet travels each step in order, out and back.
