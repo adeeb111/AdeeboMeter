@@ -18,9 +18,10 @@ namespace AdeeboMeter
         Panel BuildLearnPage()
         {
             learnPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
-            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
+            // AM-CG-255: the row wraps on a narrow window or at 150-200% and grows to fit, instead of cutting off the filters
+            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(64)), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, Sc(6)), WrapContents = true };
             learnSearch = new RoundBox(Sc(300), Draw.fBody, "Search: DNS, TCP, svchost, jitter...");
-            learnSearch.Box.TextChanged += delegate { if (learnSearch.Box.Text.Trim() != "" && Cfg.LearnView != "all") SetLearnView("all"); learnList.AutoScrollPosition = Point.Empty; learnList.Invalidate(); };   // searching shows everything
+            learnSearch.Box.TextChanged += delegate { if (learnSearch.Box.Text.Trim() != "") { if (learnFilter != "all") { learnFilter = "all"; SyncLearnView(); } if (Cfg.LearnView != "all") SetLearnView("all"); } learnList.AutoScrollPosition = Point.Empty; learnList.Invalidate(); };   // searching shows everything
             AddLearnViewButtons(bar);
             bar.Controls.Add(learnSearch);
             learnTip = new Label { Text = "Tip: press Ctrl+K anywhere to jump straight to a tab, a program, a term or a protocol.", AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(4), Sc(10), 0, 0) };
@@ -103,13 +104,16 @@ namespace AdeeboMeter
             {
                 y += 6 * S;
                 var go = new RectangleF(x, y, 420 * S, 24 * S);
-                string label = !LiveCapture.Available ? "See it live on my PC - needs Wireshark" : learnBusy ? "Recording 10 seconds of " + topic["title"] + "..." : "See it live on my PC (10 seconds)  →";
-                using (var lb = new SolidBrush(LiveCapture.Available ? (Theme.Dark ? Theme.BlueDark : Theme.Blue) : Theme.Muted)) g.DrawString(label, Draw.fBodyB, lb, go.X, go.Y);
+                bool mine = learnBusy && learnLiveFor == topic.Id;
+                string label = !LiveCapture.Available ? "See it live on my PC - needs Wireshark" : mine ? (learnPhase == "decoding" ? "Decoding what was recorded..." : "Recording 10 seconds of " + topic["title"] + "...  Stop") : learnBusy ? "Another lesson is recording - wait or stop it there" : "See it live on my PC (10 seconds)  →";
+                using (var lb = new SolidBrush(LiveCapture.Available && (!learnBusy || mine) ? (Theme.Dark ? Theme.BlueDark : Theme.Blue) : Theme.Muted)) g.DrawString(label, Draw.fBodyB, lb, go.X, go.Y);
                 if (LiveCapture.Available && !learnBusy) Act(learnInfo, go, delegate { LearnLive(topic); });
+                else if (mine && learnPhase != "decoding") Act(learnInfo, go, delegate { learnStop = true; learnInfo.Invalidate(); });
                 y += 32 * S;
+                if (LiveCapture.Available && !mine) y = Lead2(g, "Records this lesson's traffic (" + topic["live"] + ") on your active adapter for 10 s: packet headers only, up to 5 MB, deleted as soon as it's decoded.", x, y, w);
                 if (topic["try"] != "") y = Lead2(g, "While it records: " + topic["try"], x, y, w);
-                if (learnErr != "") y = Lead2(g, learnErr, x, y, w);
-                if (learnPkts != null)
+                if (learnErr != "" && learnPktsFor == topic.Id) y = Lead2(g, learnErr, x, y, w);
+                if (learnPkts != null && learnPktsFor == topic.Id)
                 {
                     if (learnPkts.Count == 0) y = Lead2(g, "Nothing of that kind happened in those 10 seconds. " + (topic["try"] != "" ? "Try it while you " + topic["try"].TrimEnd('.').ToLowerInvariant() + "." : ""), x, y, w);
                     else y = InfoCardOn(learnInfo, g, "WHAT YOUR PC JUST DID  ·  " + learnPkts.Count + " PACKETS", learnPkts.Take(30).Select(p => new[] { p.T.ToString("0.00", CultureInfo.InvariantCulture) + " s  " + p.Proto, Draw.Trunc(p.Src, 22) + " → " + Draw.Trunc(p.Dst, 22) + "   " + p.Info, "3" }).ToList(), null, x, y, w);
@@ -128,6 +132,7 @@ namespace AdeeboMeter
             var opts = p.Skip(1).Where(o => o != "").OrderBy(o => Hash(id + o)).ToList();
             bool earned = Points.Me.Has("check." + id), tried = !earned && Points.Me.Tried("check." + id);
             if (picked == null && tried) picked = "\u0001";   // answered wrong before: show the answer, no buttons
+            if (picked == null && !Cfg.Points && Points.Me.Right("check." + id)) picked = right;   // answered right with Points off: stays answered
             float qh = Draw.Measure(L.T(q), Draw.fBodyB, (int)(w - 32 * S)).Height, ow = (w - 46 * S) / 2, oh = 40 * S;
             var card = new RectangleF(x, y, w, 44 * S + qh + (float)Math.Ceiling(opts.Count / 2.0) * (oh + 10 * S) + (picked != null ? 34 * S : 0));
             Theme.Fill(g, card, 12 * S, Theme.Soft);
@@ -140,7 +145,7 @@ namespace AdeeboMeter
                 bool isRight = o == right, isPick = o == picked, done = picked != null;
                 Theme.Fill(g, r, 10 * S, done && isRight ? Theme.LvSoft(0) : isPick ? Theme.LvSoft(2) : Theme.Card); if (done && isRight) Theme.Stroke(g, r, 10 * S, Theme.Green, 2);
                 using (var tb = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord }) g.DrawString(L.T(o), Draw.fBody, tb, new RectangleF(r.X + 12 * S, r.Y, r.Width - 20 * S, r.Height), c);
-                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) EarnPts("check." + id, true, true); else Points.Me.MarkTried("check." + id);   /* remembered even with Points off: a revealed answer can never pay later */ learnInfo.Invalidate(); });
+                if (!done) Act(learnInfo, r, delegate { checkPick[id] = o; if (o == right) { if (Cfg.Points) EarnPts("check." + id, true, true); else Points.Me.MarkRight("check." + id); } else Points.Me.MarkTried("check." + id);   /* remembered even with Points off: a revealed answer can never pay later */ learnInfo.Invalidate(); });
             }
             if (picked != null)
             {
@@ -151,14 +156,16 @@ namespace AdeeboMeter
         }
         static int Hash(string s) { unchecked { int h = 17; foreach (char c in s ?? "") h = h * 31 + c; return h; } }
 
+        int learnGen; volatile bool learnStop; string learnPhase = "", learnLiveFor = "", learnPktsFor = "";
         void LearnLive(Knowledge.Rec t)
         {
-            learnBusy = true; learnPkts = null; learnErr = ""; learnInfo.Invalidate();
+            // AM-CG-249: the result belongs to the lesson (and the run) that started it - another lesson never shows it
+            int gen = ++learnGen; string forId = t.Id; learnBusy = true; learnStop = false; learnPhase = "recording"; learnLiveFor = forId; learnPkts = null; learnPktsFor = ""; learnErr = ""; learnInfo.Invalidate();
             string filter = t["live"];
             Task.Factory.StartNew(() =>
             {
-                string err, file; var pk = Packets.Capture(M, filter, 10, null, out file, out err);
-                try { BeginInvoke((Action)delegate { learnBusy = false; learnPkts = err == "" ? pk : null; learnErr = err; learnInfo.Invalidate(); }); } catch { learnBusy = false; }
+                string err, file; var pk = Packets.Capture(M, filter, 10, null, out file, out err, true, () => learnStop, ph => { try { BeginInvoke((Action)delegate { if (gen == learnGen) { learnPhase = ph; learnInfo.Invalidate(); } }); } catch (InvalidOperationException) { } });
+                try { BeginInvoke((Action)delegate { if (gen != learnGen) return; learnBusy = false; learnLiveFor = ""; learnPkts = err == "" ? pk : null; learnPktsFor = forId; learnErr = err; learnInfo.Invalidate(); }); } catch { learnBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
     }

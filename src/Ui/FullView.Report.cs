@@ -18,7 +18,7 @@ namespace AdeeboMeter
                 int x = Sc(18), w = Sc(564), y = Sc(14);
                 var head = new Label { Text = L.T(bug ? "What happened? What did you expect?" : "Your idea or question"), Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(x, y), AutoSize = true }; y += Sc(28);
                 var what = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, Font = Draw.fInput, Location = new Point(x, y), Size = new Size(w, Sc(130)), MaxLength = 4000, Text = prefill ?? "", BackColor = Theme.Card, ForeColor = Theme.Ink }; y += Sc(140);
-                var tech = new CheckBox { Text = L.T("Add the technical details below (no names, PC name, paths or addresses)"), Checked = bug, Visible = bug, Location = new Point(x, y), AutoSize = true, ForeColor = Theme.Sub };
+                var tech = new CheckBox { Text = L.T("Add the technical details below (names, PC name, paths and addresses are taken out - read them first)"), Checked = false, Visible = bug, Location = new Point(x, y), AutoSize = true, ForeColor = Theme.Sub };
                 var preview = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Font = Draw.fSmall, Location = new Point(x, y + Sc(28)), Size = new Size(w, Sc(160)), Text = bug ? BugReport.Tech(bugPage) : "", Visible = bug, BackColor = Theme.Soft, ForeColor = Theme.Sub };
                 if (bug) y += Sc(200);
                 var note = new Label { Text = L.T(Relay.Ready ? "Posted as a PUBLIC issue on GitHub - anyone can read it. Leave out anything private. What you see above (and the details box) is exactly what goes, and nothing goes until you press Send." : Policy.NoOnline ? "Your IT team turned online sending off - Copy puts it on the clipboard instead." : "Sending isn't switched on yet - Copy puts it on the clipboard for the form on adeebometer.com."), ForeColor = Theme.Muted, Font = Draw.fSmall, Location = new Point(x, y), Size = new Size(w, Sc(36)) }; y += Sc(42);
@@ -56,6 +56,19 @@ namespace AdeeboMeter
                     });
                 };
                 f.Controls.AddRange(new Control[] { head, what, tech, preview, note, send, cancel, status });
+                // AM-CG-216: reports kept while offline can be read and removed before they go
+                if (Relay.Waiting > 0)
+                {
+                    var wl = new LinkLabel { Text = Relay.Waiting + " " + L.T("earlier report(s) waiting to send when you're online - Read · Delete"), AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.Blue };
+                    string tx = wl.Text; int ri = tx.LastIndexOf(L.T("Read"), StringComparison.Ordinal), di = tx.LastIndexOf(L.T("Delete"), StringComparison.Ordinal);
+                    wl.Links.Clear(); if (ri >= 0) wl.Links.Add(ri, L.T("Read").Length, "read"); if (di >= 0) wl.Links.Add(di, L.T("Delete").Length, "del");
+                    wl.LinkClicked += delegate(object s2, LinkLabelLinkClickedEventArgs e2)
+                    {
+                        if ((string)e2.Link.LinkData == "read") MessageBox.Show(f, Relay.WaitingText(), L.T("Waiting to send"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        else if (MessageBox.Show(f, L.T("Delete the waiting report(s)? They won't be sent."), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK) { wl.Text = Relay.DropWaiting() ? L.T("Deleted - nothing is waiting.") : L.T("Couldn't delete them."); wl.Links.Clear(); }
+                    };
+                    f.Controls.Add(wl); f.ClientSize = new Size(f.ClientSize.Width, Math.Max(f.ClientSize.Height, wl.Bottom + Sc(14)));
+                }
                 f.ShowDialog(this);
             }
         }

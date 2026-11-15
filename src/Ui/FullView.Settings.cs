@@ -620,18 +620,40 @@ namespace AdeeboMeter
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 try
                 {
-                    // read the whole file first; nothing changes unless it really is a settings file
+                    // read the whole file first; nothing changes unless it really is a settings file. A settings file is a few KB:
+                    // anything over 64 KB, or a line over 2,000 characters, isn't one (AM-CG-221)
+                    if (new FileInfo(d.FileName).Length > 64 * 1024) { settingsNote = "That file is too big to be AdeeboMeter settings - nothing changed."; settingsCanvas.Invalidate(); return; }
                     var kv = new List<KeyValuePair<string, string>>();
-                    foreach (var line in File.ReadLines(d.FileName).Take(200))
+                    foreach (var line in File.ReadLines(d.FileName).Take(400))
                     {
+                        if (line.Length > 2000) continue;
                         int eq = line.IndexOf('='); if (eq <= 0) continue;
                         string k = line.Substring(0, eq), v = line.Substring(eq + 1);
                         if (Cfg.Known.Contains(k)) kv.Add(new KeyValuePair<string, string>(k, v));
                     }
                     if (kv.Count == 0) { settingsNote = "That isn't an AdeeboMeter settings file - nothing changed."; settingsCanvas.Invalidate(); return; }
-                    var turnsOn = OutboundKeys.Where(o => kv.Any(x => x.Key == o[0] && x.Value == "1")).ToList();
-                    if (turnsOn.Count > 0 && MessageBox.Show(this, L.T("This file would also turn on:") + "\n\n- " + string.Join("\n- ", turnsOn.Select(o => L.T(o[1])).ToArray()) + "\n\n" + L.T("Each of these contacts a server on its own. Turn them on too? (No = import everything else and leave these as they are.)"), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-                        kv = kv.Where(x => !turnsOn.Any(o => o[0] == x.Key) && x.Key != "tradehost").ToList();
+                    // changes that start things on their own (with Windows, in the background, to a server) or keep data are
+                    // shown first and only applied on a yes; the rest of the file loads either way
+                    var now = new Dictionary<string, string>(); foreach (var l in Cfg.Lines()) { int e2 = l.IndexOf('='); if (e2 > 0) now[l.Substring(0, e2)] = l.Substring(e2 + 1); }
+                    var asks = new List<string[]>();
+                    foreach (var x in kv)
+                    {
+                        string cur; now.TryGetValue(x.Key, out cur);
+                        if (x.Key == "autostart") { if ((x.Value == "1") != Cfg.GetAutoStart()) asks.Add(new[] { x.Key, x.Value == "1" ? "start AdeeboMeter with Windows" : "stop starting with Windows" }); continue; }
+                        if (cur == x.Value) continue;
+                        var ob = OutboundKeys.FirstOrDefault(o => o[0] == x.Key);
+                        if (ob != null) { if (x.Value == "1") asks.Add(new[] { x.Key, ob[1] + " (contacts a server on its own)" }); }
+                        else if (x.Key == "tradehost") asks.Add(new[] { x.Key, "watch a different broker address: " + (x.Value.Length > 60 ? x.Value.Substring(0, 60) + "..." : x.Value) });
+                        else if (x.Key == "history2") asks.Add(new[] { x.Key, x.Value == "1" ? "keep a history of your connection" : "stop keeping history" });
+                        else if (x.Key == "histdays") asks.Add(new[] { x.Key, "keep history for " + x.Value + " days" });
+                        else if (x.Key == "wplace") asks.Add(new[] { x.Key, "change the weather place" });
+                    }
+                    if (asks.Count > 0)
+                    {
+                        var ans = MessageBox.Show(this, L.T("This file would also:") + "\n\n- " + string.Join("\n- ", asks.Select(o => L.T(o[1])).ToArray()) + "\n\n" + L.T("Yes: apply these too.  No: load the rest of the file without them.  Cancel: change nothing."), "AdeeboMeter", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                        if (ans == DialogResult.Cancel) { settingsNote = "Nothing changed."; settingsCanvas.Invalidate(); return; }
+                        if (ans != DialogResult.Yes) kv = kv.Where(x => !asks.Any(o => o[0] == x.Key)).ToList();
+                    }
                     int n = 0; if (kv.Any(x => x.Key == "pin")) lock (Cfg.Pins) Cfg.Pins.Clear();   // pins are replaced only when the file has its own
                     foreach (var x in kv)
                     {

@@ -25,9 +25,20 @@ namespace AdeeboMeter
         string visFail = "";
         // self-test: every picture draws before a run and with its Example, and the Example's picture grows from the result
         static readonly char[] Angle = { '<', '>' }, LinkBad = { '<', '>', '"', '!', '~', ' ', '\n' };
+        static readonly string[][] SecretFixture = { new[] { "0", "Encrypted", "a.txt.adeebo", "", "m" }, new[] { "1", "The code", "SECRETCODE123", "", "k", "copy:SECRETCODE123" }, new[] { "3", "Link", "https://x.test/p?tok=SECRETTOK", "", "" } };
         internal string VisualCheck()
         {
             EnsureToolbox(); var bad = new List<string>();
+            // AM-CG-220/227: a secret row (a code, a recovery passphrase) never reaches a shared copy
+            var keep = tbRows; string keepSel = tbSel;
+            try
+            {
+                tbSel = "encrypt"; tbRows = SecretFixture.Select(z => (string[])z.Clone()).ToList();
+                foreach (var o in new[] { Csv(), ResultCsv(), ResultText(), string.Join("|", VisRows().SelectMany(z => z).ToArray()), string.Join("|", ResRows().SelectMany(z => z).ToArray()) })
+                    if (o.Contains("SECRETCODE123") || o.Contains("SECRETTOK")) bad.Add("secret in a shared copy: " + o.Substring(0, Math.Min(80, o.Length)));
+            }
+            catch (Exception e) { bad.Add("secret check: " + e.Message); }
+            finally { tbRows = keep; tbSel = keepSel; }
             using (var bmp = new Bitmap(1000, 2400)) using (var g = Graphics.FromImage(bmp))
                 foreach (var id in Pictured.Concat(Pictured3).Concat(Pictured4).Concat(Pictured5).Concat(Pictured6).Concat(Pictured7).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
                 {
@@ -126,13 +137,13 @@ namespace AdeeboMeter
             if (VisEx()) { var ex = Examples.Get(tbSel); a = ex == null ? null : ex.In; }
             else a = tbRows != null && tbShown != null ? tbShown : Inputs();
             var t = Tools2().FirstOrDefault(z => z.Id == tbSel);   // secret boxes (passwords, communities, shared secrets) never reach a picture, a phone link or an export
-            var r = new string[4]; for (int i = 0; i < 4; i++) r[i] = a != null && i < a.Length && a[i] != null && !(t != null && i < t.Inputs.Length && SecretInput(t.Inputs[i])) ? a[i].Trim() : ""; return r;
+            var r = new string[4]; for (int i = 0; i < 4; i++) r[i] = a != null && i < a.Length && a[i] != null && !(t != null && i < t.Inputs.Length && SecretInput(t.Inputs[i])) ? ShareCell(a[i].Trim()) : ""; return r;
         }
         // the result rows without the example banner and table lines
         List<string[]> VisRows()
         {
             if (tbRows == null) return new List<string[]>();
-            return tbRows.Where(o => o.Length > 2 && o[1] != Examples.Mark && o[0] != "6" && o[0] != "7" && o[0] != "8").ToList();
+            return ShareRows().Where(o => o[1] != Examples.Mark && o[0] != "6" && o[0] != "7" && o[0] != "8").ToList();
         }
         string[] VRow(string name) { return VisRows().FirstOrDefault(o => o[1].StartsWith(name, StringComparison.OrdinalIgnoreCase)); }
         string VisText() { return string.Join("  ", VisRows().Select(o => o[1] + " " + o[2]).ToArray()); }
@@ -267,17 +278,19 @@ namespace AdeeboMeter
             string file = VFile(a[0]); if (file == "") file = enc ? L.T("your file") : L.T("the .adeebo file");
             bool code = a.Length < 2 || a[1] == "" || a[1].Equals("code", StringComparison.OrdinalIgnoreCase);
             var r = VisCard(g, x, y, w, 214 * S, enc ? "WHAT HAPPENS TO YOUR FILE" : "OPENING A LOCKED FILE", state);
-            string[][] stops;
+            string[][] stops; bool p7open = false;
             if (enc)
             {
                 string outName = file.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) ? file : file + (code ? ".adeebo" : ".p7m");
                 var er = VRow("Encrypted"); if (er != null) { string v = er[2]; int k = v.IndexOf(" - ", StringComparison.Ordinal); outName = k > 0 ? v.Substring(0, k) : v; }
-                stops = new[] { new[] { "doc", file, L.T("stays as it is") }, new[] { "lock", L.T("Locked"), "AES-256 + a seal (HMAC)" }, new[] { "doc", outName, L.T("send it any way - email, USB, cloud") }, new[] { "devices", code ? L.T("The other person") : a[1], L.T("opens it in AdeeboMeter") } };
+                bool p7 = outName.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase);   // AM-CG-235: a standard .p7m has no seal - the picture says so
+                stops = new[] { new[] { "doc", file, L.T("stays as it is") }, new[] { "lock", L.T("Locked"), p7 ? L.T("AES-256, no seal (standard .p7m)") : "AES-256 + a seal (HMAC)" }, new[] { "doc", outName, L.T("send it any way - email, USB, cloud") }, new[] { "devices", code ? L.T("The other person") : a[1], L.T("opens it in AdeeboMeter") } };
             }
             else
             {
                 string got = L.T("the original file"); var orow = VRow("Opened"); if (orow != null) { string v = orow[2]; int k = v.IndexOf(" - ", StringComparison.Ordinal); got = k > 0 ? v.Substring(0, k) : v; }
-                stops = new[] { new[] { "doc", file, L.T("locked") }, new[] { "key", a[1] != "" ? L.T("The code") : L.T("Your key"), L.T("unlocks it") }, new[] { "doc", got, L.T("saved next to it") }, new[] { "check", L.T("Seal checked"), L.T("not changed since it was locked") } };
+                bool p7 = p7open = VRow("Tamper check") != null || file.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase);
+                stops = new[] { new[] { "doc", file, L.T("locked") }, new[] { "key", a[1] != "" ? L.T("The code") : L.T("Your key"), L.T("unlocks it") }, new[] { "doc", got, L.T("saved next to it") }, p7 ? new[] { "question", L.T("No seal"), L.T("a .p7m can't show a change on the way") } : new[] { "check", L.T("Seal checked"), L.T("not changed since it was locked - sender not proven") } };
             }
             float colW = (r.Width - 32 * S) / stops.Length, cy = r.Y + 70 * S, rad = 24 * S;
             for (int i = 0; i < stops.Length; i++)
@@ -292,8 +305,8 @@ namespace AdeeboMeter
             float ky = r.Bottom - 30 * S, x1 = r.X + 16 * S + colW * 1.5f, x2 = r.X + 16 * S + colW * 3.5f;
             if (enc)
             {
-                string kc = ""; var cr = VRow("The code"); if (cr != null) kc = cr[2];
-                string kt = code ? (kc != "" ? L.T("The code") + " " + kc + " - " + L.T("by phone or text, never with the file") : L.T("The code goes another way - by phone or text, never with the file")) : L.T("Their public key: only they can open it - no code to share");
+                // AM-CG-234: the code itself is never drawn - this picture is what Copy, Save, Bluetooth and Quick Share send
+                string kt = code ? L.T("The code goes another way - by phone or text, never with the file") : L.T("Their public key: only they can open it - no code to share");
                 using (var p = new Pen(code ? Theme.Orange : VPurple, 2 * S) { DashStyle = DashStyle.Dash }) { p.CustomEndCap = Cap45; g.DrawLines(p, new[] { new PointF(x1, cy + rad + 44 * S), new PointF(x1, ky), new PointF(x2, ky), new PointF(x2, cy + rad + 44 * S) }); }
                 using (var tb = new SolidBrush(code ? Theme.LvText(1) : Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 {
@@ -303,7 +316,7 @@ namespace AdeeboMeter
                 }
             }
             else using (var sb = new SolidBrush(bad ? Theme.LvText(2) : Theme.Sub))
-                g.DrawString(bad ? L.T("Didn't open: a wrong code, the wrong key - or the file was changed after it was locked. The seal can't be faked.") : L.T("If even one byte was changed on the way, the seal doesn't match and nothing is opened."), Draw.fSmall, sb, new RectangleF(r.X + 18 * S, ky - 8 * S, r.Width - 36 * S, 22 * S));
+                g.DrawString(bad ? L.T("Didn't open: a wrong code, the wrong key - or the file was changed after it was locked. The seal can't be faked.") : p7open ? L.T("A standard .p7m is only locked, not sealed: a change on the way wouldn't be noticed.") : L.T("If even one byte was changed on the way, the seal doesn't match and nothing is opened."), Draw.fSmall, sb, new RectangleF(r.X + 18 * S, ky - 8 * S, r.Width - 36 * S, 22 * S));
             return r.Bottom + 14 * S;
         }
 

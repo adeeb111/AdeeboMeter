@@ -127,9 +127,26 @@ namespace AdeeboMeter
         // decryptor together, so what's decrypted is exactly what was checked (a share or USB stick that serves different
         // bytes on a second read can't slip anything in). The output is a temp file (or memory) that the caller only keeps
         // when this returns - a bad tag throws and the temp is deleted. A padding error is reported as the MAC failure.
+        // AM-CG-225: when the file can be read twice (a file on disk, opened so nobody else can write to it), the tag is checked
+        // FIRST, before a single plaintext byte is written - a wrong code, a wrong key or a changed file never leaves plaintext
+        // behind, even for a moment. The second pass still checks the tag again, so bytes that change between the passes fail too.
         public static string Open(Stream input, Stream output, byte[] head, byte[] ek, byte[] mk, byte[] iv)
         {
             long ctStart = input.Position, ctLen = input.Length - ctStart - MacLen; if (ctLen < 16) throw new CryptographicException("file is cut short");
+            if (input.CanSeek)
+            {
+                using (var pre = new HMACSHA256(mk))
+                {
+                    pre.TransformBlock(head, 0, head.Length, null, 0);
+                    var buf = new byte[81920]; long left = ctLen;
+                    while (left > 0) { int n = input.Read(buf, 0, (int)Math.Min(buf.Length, left)); if (n <= 0) throw new CryptographicException("file is cut short"); pre.TransformBlock(buf, 0, n, null, 0); left -= n; }
+                    pre.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+                    var tag0 = new byte[MacLen]; ReadAll(input, tag0);
+                    int d0 = 0; for (int i = 0; i < MacLen; i++) d0 |= tag0[i] ^ pre.Hash[i];
+                    if (d0 != 0) throw new CryptographicException("wrong code or key, or the file was changed or damaged");
+                }
+                input.Position = ctStart;
+            }
             using (var hmac = new HMACSHA256(mk))
             using (var aes = Aes.Create())
             {
@@ -178,8 +195,11 @@ namespace AdeeboMeter
         static FileStream Temp(string dir, out string tmp)
         {
             tmp = Path.Combine(dir, "." + Guid.NewGuid().ToString("N") + ".part");
-            Track(tmp, true);   // written down first: if AdeeboMeter is killed mid-way, the next start removes it
-            var f = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write);
+            if (!Track(tmp, true)) throw new IOException("couldn't note the temporary file in AdeeboMeter's data folder - nothing was written");   // written down first: if AdeeboMeter is killed mid-way, the next start removes it
+            // only your account can read it while it's in progress (AM-CG-231); once kept, it takes the folder's normal permissions
+            var fsec = new System.Security.AccessControl.FileSecurity(); fsec.SetAccessRuleProtection(true, false);
+            using (var me = System.Security.Principal.WindowsIdentity.GetCurrent()) fsec.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(me.User, System.Security.AccessControl.FileSystemRights.FullControl, System.Security.AccessControl.AccessControlType.Allow));
+            var f = new FileStream(tmp, FileMode.CreateNew, System.Security.AccessControl.FileSystemRights.Write | System.Security.AccessControl.FileSystemRights.Read | System.Security.AccessControl.FileSystemRights.Delete, FileShare.None, 4096, FileOptions.None, fsec);
             try { File.SetAttributes(tmp, FileAttributes.Hidden | FileAttributes.NotContentIndexed); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             return f;
         }
@@ -191,12 +211,47 @@ namespace AdeeboMeter
             try { using (var o = Temp(Path.GetDirectoryName(dest), out tmp)) o.Write(data, 0, data.Length); Keep(tmp, dest); tmp = null; }
             finally { if (tmp != null) Drop(tmp); }
         }
-        static void Keep(string tmp, string dest) { File.SetAttributes(tmp, FileAttributes.Normal); File.Move(tmp, dest); Track(tmp, false); }
+        static void Keep(string tmp, string dest)
+        {
+            File.SetAttributes(tmp, FileAttributes.Normal); File.Move(tmp, dest); Track(tmp, false);
+            try
+            {
+                var s = File.GetAccessControl(dest); s.SetAccessRuleProtection(false, false);
+                foreach (System.Security.AccessControl.FileSystemAccessRule r in s.GetAccessRules(true, false, typeof(System.Security.Principal.SecurityIdentifier))) s.RemoveAccessRuleSpecific(r);
+                File.SetAccessControl(dest, s);
+            }   // back to the folder's own permissions
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is InvalidOperationException || e is PlatformNotSupportedException || e is System.Security.AccessControl.PrivilegeNotHeldException)) throw; Program.Log("keep permissions: " + e.Message); }
+        }
+        // AM-CG-232: a file that came from the internet (it carries Windows' "downloaded" mark) passes the mark on to what's
+        // opened from it, so Windows still warns before a program or a macro inside runs
+        static void Zone(string from, string to)
+        {
+            try
+            {
+                string z = ZoneRead(from + ":Zone.Identifier"); if (z == null) return;
+                using (var h = CreateFileW(to + ":Zone.Identifier", 0x40000000 /* write */, 0, IntPtr.Zero, 2 /* create always */, 0x80, IntPtr.Zero))
+                {
+                    if (h.IsInvalid) return;
+                    using (var fs = new FileStream(h, FileAccess.Write)) { var b = Encoding.ASCII.GetBytes(z.Length > 4096 ? z.Substring(0, 4096) : z); fs.Write(b, 0, b.Length); }
+                }
+            }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is DllNotFoundException || e is EntryPointNotFoundException)) throw; Program.Log("zone mark: " + e.Message); }
+        }
+        static string ZoneRead(string path)
+        {
+            using (var h = CreateFileW(path, 0x80000000 /* read */, 1, IntPtr.Zero, 3 /* open existing */, 0x80, IntPtr.Zero))
+            {
+                if (h.IsInvalid) return null;
+                using (var fs = new FileStream(h, FileAccess.Read)) { var b = new byte[4096]; int n = fs.Read(b, 0, b.Length); return n <= 0 ? null : Encoding.ASCII.GetString(b, 0, n); }
+            }
+        }
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+        static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr sa, uint disposition, uint flags, IntPtr template);
         // the list of temp files in progress (data folder, parts.txt): a crash, a kill or a logoff can't leave hidden
         // half-decrypted plaintext behind for good - SweepParts at the next start deletes what's still listed
         static readonly object pk = new object();
         static string PartsFile { get { return Path.Combine(Program.DataDir, "parts.txt"); } }
-        static void Track(string tmp, bool add)
+        static bool Track(string tmp, bool add)
         {
             lock (pk)
                 try
@@ -204,8 +259,9 @@ namespace AdeeboMeter
                     var l = File.Exists(PartsFile) ? File.ReadAllLines(PartsFile).Where(x => x != "" && x != tmp).Take(200).ToList() : new List<string>();
                     if (add) l.Add(tmp);
                     if (l.Count == 0) { if (File.Exists(PartsFile)) File.Delete(PartsFile); } else File.WriteAllLines(PartsFile, l);
+                    return true;
                 }
-                catch (IOException) { } catch (UnauthorizedAccessException) { }
+                catch (IOException e) { Program.Log("parts list: " + e.Message); return false; } catch (UnauthorizedAccessException e) { Program.Log("parts list: " + e.Message); return false; }
         }
         static readonly System.Text.RegularExpressions.Regex PartName = new System.Text.RegularExpressions.Regex(@"^\.[0-9a-f]{32}\.part$");
         public static void SweepParts()
@@ -252,7 +308,7 @@ namespace AdeeboMeter
             // never a device name (CON, NUL, COM1...) and never longer than 120 characters
             string n = name ?? ""; int cut = Math.Max(n.LastIndexOf('\\'), n.LastIndexOf('/')); if (cut >= 0) n = n.Substring(cut + 1);
             var bad = Path.GetInvalidFileNameChars(); n = new string(n.Where(c => !bad.Contains(c) && !char.IsControl(c) && CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.Format).ToArray()).Trim().TrimStart('.').TrimEnd('.', ' ');   // Format: right-to-left overrides that make "x.exe" look like "x.pdf"
-            if (n.Length > 120) { string ext = Path.GetExtension(n); n = n.Substring(0, 120 - Math.Min(ext.Length, 20)) + (ext.Length <= 20 ? ext : ""); }
+            if (n.Length > 120) { string ext = Path.GetExtension(n); if (ext.Length > 60) ext = ""; n = n.Substring(0, 120 - ext.Length).TrimEnd('.', ' ') + ext; }   // AM-CG-242: the type (up to 60 characters) survives a shortened name
             string stem = n.Split('.')[0].TrimEnd(' ').ToUpperInvariant();
             if (n == "" || Reserved.Contains(stem)) n = "opened-file" + (n == "" ? "" : "-" + n);
             string p = Path.Combine(dir, n); int i = 2;
@@ -269,6 +325,9 @@ namespace AdeeboMeter
             if (file == "" || !File.Exists(file)) { rows.Add(R(2, "File", file == "" ? "type or paste the path of the file to encrypt" : "not found: " + file, "", "")); return rows; }
             var fi = new FileInfo(file); if (fi.Length > MaxBytes) { rows.Add(R(2, "File", "bigger than 4 GB", "", "")); return rows; }
             string t = (to ?? "").Trim();
+            // AM-CG-238: Also for me is yes, no or empty (yes) - a typo is asked about, never guessed
+            string am = (alsoMe ?? "").Trim().ToLowerInvariant(); bool selfCopy = am == "" || am == "yes" || am == "y";
+            if (!selfCopy && am != "no" && am != "n") { rows.Add(R(2, "Also for me", "\"" + alsoMe.Trim() + "\" - type yes or no", "", "")); return rows; }
             if (t == "" || t.Equals("code", StringComparison.OrdinalIgnoreCase))
             {
                 string code = NewCode(), outFile, tmpE = null;
@@ -293,14 +352,15 @@ namespace AdeeboMeter
             {
                 if (ecs.Any(x => x == null)) { rows.Add(R(2, "Recipients", "mix of key types: " + string.Join(", ", names0.Where((x, i) => ecs[i] == null)) + " have standard (RSA) keys, the others P-384", "Encrypt twice - once for each kind - or ask them for the same kind of key.", "")); return rows; }
                 var list = ecs.ToList(); var who = names0.ToList();
-                if (!string.Equals((alsoMe ?? "").Trim(), "no", StringComparison.OrdinalIgnoreCase)) { var me = EcKeys.All().FirstOrDefault(k => k.Here); if (me != null) { list.Add(Convert.FromBase64String(me.Pub)); who.Add("you (" + me.Name + ")"); } else rows.Add(R(1, "Also for you", "you have no P-384 key of your own on this PC - you won't be able to open this file yourself", "Make one with New key (P-384) first if you need to.", "")); }
+                if (selfCopy) { var me = EcKeys.All().FirstOrDefault(k => k.Here); if (me != null) { list.Add(Convert.FromBase64String(me.Pub)); who.Add("you (" + me.Name + ")"); } else { rows.Add(R(2, "Also for you", "you asked for a copy you can open, but there's no P-384 key of your own on this PC - nothing was made", "Make one with New key (P-384), or type no in Also for me to encrypt only for them.", "")); return rows; } }
                 string outEc, tmpE = null;
                 try { run.Status = "Encrypting for " + string.Join(", ", who) + " (EC P-384)..."; using (var i = In(file, run)) using (var o = Temp(fi.DirectoryName, out tmpE)) EcKeys.Encrypt(i, fi.Name, o, list); outEc = FreeName(fi.DirectoryName, fi.Name + ".adeebo"); Keep(tmpE, outEc); }
                 catch (OperationCanceledException) { Drop(tmpE); rows.Add(R(1, "Encrypt", "stopped - nothing was saved", "", "")); return rows; }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; Drop(tmpE); rows.Add(R(2, "Encrypt", e.Message, "", "")); return rows; }
                 Program.Log("encrypted a file for " + list.Count + " P-384 recipient(s)");
                 rows.Add(new[] { "0", "Encrypted", Path.GetFileName(outEc) + " for " + string.Join(", ", who) + " · EC P-384", "", "m", "show:" + outEc });
-                rows.Add(R(3, "To open it", "they open it in AdeeboMeter (Open an encrypted file) - their key is found by itself, no code needed", "Only AdeeboMeter opens these: the strongest choice, unique to the app.", ""));
+                foreach (var nm in names0) rows.Add(R(3, "Key used for " + nm, CertKeys.UsedPrint(nm) + (CertKeys.PendPrint(nm) != null ? " · a newer key is waiting in Recipients, not used" : ""), "", ""));
+                rows.Add(R(3, "To open it", "they open it in AdeeboMeter (Open an encrypted file) - their key is found by itself, no code needed", "Only AdeeboMeter opens these. The format is AdeeboMeter's own and hasn't had an independent review yet; anyone who later gets their private key can open this file too.", ""));
                 return rows;
             }
             if (fi.Length > MaxCms) { rows.Add(R(2, "File", "a standard (RSA) .p7m holds up to 25 MB - for bigger files use a code, or a P-384 key (.adeebo streams up to 4 GB)", "", "")); return rows; }
@@ -310,8 +370,8 @@ namespace AdeeboMeter
                 var c = CertKeys.Recipient(nm); if (c == null) { rows.Add(R(2, "Recipient", "no saved recipient called \"" + nm + "\"", "Save them first with Recipients (their .cer file) - or type code to share with a code.", "")); return rows; }
                 certs.Add(c); names.Add(nm);
             }
-            if (string.Equals((alsoMe ?? "").Trim(), "no", StringComparison.OrdinalIgnoreCase) == false)
-            { var me = CertKeys.MyEncryptionCert(); if (me != null) { certs.Add(me); names.Add("you (" + me.GetNameInfo(X509NameType.SimpleName, false) + ")"); } else rows.Add(R(1, "Also for you", "you have no key of your own yet - you won't be able to open this copy", "Make one in My keys (New key) to read files you encrypt for others.", "")); }
+            if (selfCopy)
+            { var me = CertKeys.MyEncryptionCert(); if (me != null) { certs.Add(me); names.Add("you (" + me.GetNameInfo(X509NameType.SimpleName, false) + ")"); } else { foreach (var c in certs) c.Dispose(); rows.Add(R(2, "Also for you", "you asked for a copy you can open, but you have no key of your own yet - nothing was made", "Make one in My keys (New key), or type no in Also for me to encrypt only for them.", "")); return rows; } }
             string outP7m = FreeName(fi.DirectoryName, fi.Name + ".p7m");
             try
             {
@@ -324,6 +384,7 @@ namespace AdeeboMeter
             finally { foreach (var c in certs) c.Dispose(); }
             Program.Log("encrypted a file for " + names.Count + " recipient(s)");
             rows.Add(new[] { "0", "Encrypted", Path.GetFileName(outP7m) + " for " + string.Join(", ", names), "", "m", "show:" + outP7m });
+            foreach (var nm in t.Split(',').Select(x => x.Trim()).Where(x => x != "")) rows.Add(R(3, "Key used for " + nm, CertKeys.UsedPrint(nm) + (CertKeys.PendPrint(nm) != null ? " · a newer key is waiting in Recipients, not used" : ""), "", ""));
             rows.Add(R(3, "To open it", "they open it with the private key they already hold: AdeeboMeter (Open an encrypted file), or  openssl cms -decrypt -in file.p7m -inform DER -inkey key.pem -out file", "Standard CMS (S/MIME) with AES-256 - no code to pass around.", ""));
             return rows;
         }
@@ -341,23 +402,28 @@ namespace AdeeboMeter
                 {
                     run.Status = "Looking for your P-384 key and checking the file..."; string name, used;
                     using (var i = In(file, run)) using (var o = Temp(fi.DirectoryName, out tmp)) name = EcKeys.Decrypt(i, o, out used);
-                    string dest = FreeName(fi.DirectoryName, name); Keep(tmp, dest);
+                    if (run.Stop) throw new OperationCanceledException();   // AM-CG-241: the last point Stop counts - nothing is kept after it
+                    string dest = FreeName(fi.DirectoryName, name); Keep(tmp, dest); Zone(file, dest);
+                    rows.Add(R(1, "Who sent it", "not proven", "Anyone who has your public key can make a file for you - the check proves it arrived intact, not who made it.", ""));   // AM-CG-228: first, before the file
                     rows.Add(new[] { "0", "Opened", Path.GetFileName(dest) + " - with your key " + used + "; not changed or damaged since it was encrypted", "", "m", "show:" + dest });
-                    rows.Add(R(3, "Who sent it", "not proven", "Anyone who has your public key can make a file for you - the check proves it arrived intact, not who made it.", ""));
                     if (Risky(dest)) rows.Add(R(1, "It's a program", Path.GetExtension(dest) + " - it runs when opened", "Only open it if you were expecting a program from this person.", ""));
                 }
                 else if (EcKeys.IsBackup(h8))
                 {
                     if (Clean(code).Length == 0) { rows.Add(R(2, "Recovery passphrase", "this is a key backup - type its recovery passphrase in the Code box", "", "")); return rows; }
-                    run.Status = "Restoring the key..."; EcKeys.Key k; using (var i = File.OpenRead(file)) k = EcKeys.Restore(i, code);
-                    rows.Add(R(0, "Key restored", k.Name + " is back in My keys (EC P-384, kept by Windows) · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "", "w"));
+                    // AM-CG-239: opening a backup only shows what's in it - adding a key to Windows is its own button, pressed after
+                    run.Status = "Checking the key backup..."; string fp, kn; using (var i = In(file, run)) kn = EcKeys.Peek(i, code, out fp);
+                    rows.Add(R(1, "This is a key backup", kn + " · EC P-384 · fingerprint " + fp, "Restoring adds this private key to Windows for your account: files encrypted to it open on this PC. Compare the fingerprint with the one you noted when you made it.", "w"));
+                    rows.Add(new[] { "3", "Restore this key", "adds it to My keys - uses the passphrase in the Code box again", "", "w", "restorekey:" + file });
                 }
                 else if (h8.Take(6).SequenceEqual(Magic.Take(6)) && h8[6] == 1 && h8[7] == 1)   // the file's own first bytes decide, not its name
                 {
                     if (Clean(code).Length == 0) { rows.Add(R(2, "Code", "type the code you were given", "", "")); return rows; }
                     run.Status = "Checking the file, then opening it..."; string name;
                     using (var i = In(file, run)) using (var o = Temp(fi.DirectoryName, out tmp)) name = DecryptCode(i, o, code);
-                    string dest = FreeName(fi.DirectoryName, name); Keep(tmp, dest);
+                    if (run.Stop) throw new OperationCanceledException();
+                    string dest = FreeName(fi.DirectoryName, name); Keep(tmp, dest); Zone(file, dest);
+                    rows.Add(R(1, "Who sent it", "someone who knows the code", "The code proves the file wasn't changed by anyone without it - not which person who has it made the file.", ""));
                     rows.Add(new[] { "0", "Opened", Path.GetFileName(dest) + " - not changed or damaged since it was encrypted", "", "m", "show:" + dest });
                     if (Risky(dest)) rows.Add(R(1, "It's a program", Path.GetExtension(dest) + " - it runs when opened", "Only open it if you were expecting a program from this person.", ""));
                 }
@@ -368,7 +434,7 @@ namespace AdeeboMeter
                     run.Status = "Looking for your key and opening it...";
                     var env = new EnvelopedCms(); env.Decode(File.ReadAllBytes(file)); env.Decrypt();   // Windows finds the matching private key in your store
                     string name = fi.Name.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase) ? fi.Name.Substring(0, fi.Name.Length - 4) : fi.Name + ".opened";
-                    string dest = FreeName(fi.DirectoryName, name); WriteSafe(dest, env.ContentInfo.Content);
+                    string dest = FreeName(fi.DirectoryName, name); WriteSafe(dest, env.ContentInfo.Content); Zone(file, dest);
                     rows.Add(new[] { "0", "Opened", Path.GetFileName(dest), "", "m", "show:" + dest });
                     rows.Add(R(3, "Tamper check", "none in this format", "A standard .p7m is encrypted but not sealed: a change on the way isn't detected. The .adeebo format checks it.", ""));
                     if (Risky(dest)) rows.Add(R(1, "It's a program", Path.GetExtension(dest) + " - it runs when opened", "Only open it if you were expecting a program from this person.", ""));

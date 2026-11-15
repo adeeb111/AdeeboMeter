@@ -146,6 +146,7 @@ namespace AdeeboMeter
             var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Padding = new Padding(Sc(14)), BackColor = Theme.Bg, Tag = "bg" };
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(390)));
             bodyGrid = body; body.Resize += delegate { SizeSide(); };
+            Resize += delegate { if (WindowState == FormWindowState.Minimized) learnSeen = ""; }; VisibleChanged += delegate { if (!Visible) learnSeen = ""; };
 
             var left = leftPane = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0, 0, Sc(14), 0) };
             tabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(48), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(4), 0, 0), WrapContents = false };
@@ -411,6 +412,7 @@ namespace AdeeboMeter
         {
             UiActivity.Doing = "switching to " + tab; if (tab != "about") bugPage = tab;
             SetTipKey(null);   // the old page's help card goes with it
+            learnSeen = "";    // AM-CG-254: reading time restarts when you come back - time away isn't reading
             if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open
             if (tab != "stream" && tab != "trade") WatchKit.Drop();   // the 90 days of records only live while their page is open
             // one layout pass for the whole switch, not one per page shown or hidden

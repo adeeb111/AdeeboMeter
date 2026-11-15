@@ -93,7 +93,7 @@ ladder: Your PC > Server: GET / | Server > Your PC: 200 OK + the page
 title: Ping and traceroute (ICMP)
 kind: protocol
 tag: Are you there? How far? Which way?
-check: What does traceroute show? | Each router your packets pass on the way | The speed of your Wi-Fi | Which apps use the internet | The website's certificate
+check: What does traceroute show? | The routers that answer along the path your probes took (silent hops show as *) | The speed of your Wi-Fi | Which apps use the internet | The website's certificate
 line: The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.
 breaks: No ping reply doesn't always mean down - many servers ignore ping on purpose.
 ladder: Your PC > Router: echo request (TTL 1) | Router > Your PC: time exceeded - I'm hop 1 | Your PC > Server: echo request | Server > Your PC: echo reply - 22 ms
@@ -769,7 +769,7 @@ title: End-of-day, delayed and live prices
 kind: investing
 tag: Know which clock your number is on.
 check: Prices on many free websites are usually... | Delayed by about 15 minutes | Live to the second | From yesterday only | Made up
-line: Live prices are what your broker shows to take orders. Free sites often show prices about 15 minutes late. AdeeboMeter's Trading summary uses end-of-day numbers, after the close.
+line: Check the time stamp on any price you trade on: brokers can take orders while showing delayed quotes, and live data is often a subscription. Free sites often show prices about 15 minutes late. AdeeboMeter's Trading summary uses end-of-day numbers, after the close.
 breaks: Comparing a live price with a delayed one makes it look like something jumped - check the time stamp first.
 ladder: Exchange > Broker: live price | Exchange > Free website: price, 15 min later | Exchange > Summary: closing price, after 16:00
 try: Look at the source line under Trading's numbers.

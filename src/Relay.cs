@@ -44,7 +44,7 @@ namespace AdeeboMeter
                 Result r;
                 try { r = Post(json); }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; r = new Result { Why = e.Message }; }
-                if (!r.Ok && r.Why == "offline") { Keep(json); r.Queued = true; }
+                if (!r.Ok && r.Why == "offline") { r.Queued = Keep(BugReport.Scrub(json)); if (!r.Queued) r.Why = "couldn't keep it to send later"; }   // cleaned before it touches the disk
                 if (done != null) done(r);
             }) { IsBackground = true, Name = "relay" }.Start();
         }
@@ -81,7 +81,10 @@ namespace AdeeboMeter
 
         // ---------- the outbox: reports written while offline
         static string Box { get { return Path.Combine(Program.DataDir, "outbox"); } }
-        static void Keep(string json)
+        public static int Waiting { get { try { return Directory.Exists(Box) ? new DirectoryInfo(Box).GetFiles("*.json").Length : 0; } catch (IOException) { return 0; } catch (UnauthorizedAccessException) { return 0; } } }
+        public static string WaitingText() { try { return Directory.Exists(Box) ? string.Join("\n\n---\n\n", new DirectoryInfo(Box).GetFiles("*.json").OrderBy(f => f.Name).Select(f => File.ReadAllText(f.FullName)).ToArray()) : ""; } catch (IOException) { return ""; } catch (UnauthorizedAccessException) { return ""; } }
+        public static bool DropWaiting() { try { if (Directory.Exists(Box)) foreach (var f in new DirectoryInfo(Box).GetFiles("*.json")) f.Delete(); return true; } catch (IOException) { return false; } catch (UnauthorizedAccessException) { return false; } }
+        static bool Keep(string json)
         {
             try
             {
@@ -89,8 +92,9 @@ namespace AdeeboMeter
                 var old = new DirectoryInfo(Box).GetFiles("*.json").OrderBy(f => f.LastWriteTimeUtc).ToList();
                 while (old.Count >= 3) { old[0].Delete(); old.RemoveAt(0); }
                 File.WriteAllText(Path.Combine(Box, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture) + ".json"), json);
+                return true;
             }
-            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return false; }
         }
         // at start (once online): send what waited; a week-old report is dropped
         public static void Flush()

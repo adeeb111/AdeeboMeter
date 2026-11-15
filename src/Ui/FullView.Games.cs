@@ -24,14 +24,16 @@ namespace AdeeboMeter
         // like Check yourself: right first time earns - an answer you were just shown doesn't
         // A game pays only for a run that started before any of its answers were shown. The first answer a run reveals marks the
         // game "tried" on disk at once (leaving mid-game, or restarting the app, can't wipe it); that same run may still earn.
-        string cleanRun;
-        string EarnFirst(string key) { return Points.Me.Tried(key) && cleanRun != key ? "" : EarnPts(key, true, true); }
-        void Revealed(string key) { if (cleanRun == key || Points.Me.Has(key)) return; if (!Points.Me.Tried(key)) cleanRun = key; Points.Me.MarkTried(key); }
-        void NewRun(string key) { if (cleanRun == key) cleanRun = null; }
+        // AM-CG-252: one first-try flag per game run, so playing a second game can't take the first one's away
+        readonly HashSet<string> cleanRuns = new HashSet<string>();
+        string EarnFirst(string key) { return Points.Me.Tried(key) && !cleanRuns.Contains(key) ? "" : EarnPts(key, true, true); }
+        void Revealed(string key) { if (cleanRuns.Contains(key) || Points.Me.Has(key)) return; if (!Points.Me.Tried(key)) cleanRuns.Add(key); Points.Me.MarkTried(key); }
+        void NewRun(string key) { cleanRuns.Remove(key); }
+        long quickAway;
         void GameTick(bool on)
         {
-            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; roomStart += away; outStart += away; if (quick != null) quick.Start += away; gameAway = DateTime.MinValue; }
-            if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; return; } learnInfo.Invalidate(); }; }
+            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; if (away < TimeSpan.Zero) away = TimeSpan.Zero; roomStart += away; outStart += away; if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
+            if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; quickAway = LearnGames.Mono.ElapsedMilliseconds; return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
         static string Clock2(int secs) { return (secs / 60).ToString(CultureInfo.InvariantCulture) + ":" + (secs % 60).ToString("00", CultureInfo.InvariantCulture); }
@@ -417,7 +419,7 @@ namespace AdeeboMeter
             {
                 var q = quick.Q[quick.At];
                 y = Say(g, q[0], 1, x, y, w);
-                y = Options(g, q.Skip(2).ToArray(), x, y, w, o => 0, o => { bool ok = o == q[1]; if (ok) quick.Right++; else Revealed("game.quick." + id); quickMsg = ok ? L.T("Right") : L.T("No") + " - " + L.T(q[1]); quick.At++; learnInfo.Invalidate(); });
+                y = Options(g, q.Skip(2).ToArray(), x, y, w, o => 0, o => { bool ok = o == q[1]; if (!LearnGames.Answer(quick, ok)) { learnInfo.Invalidate(); return; } if (!ok) Revealed("game.quick." + id); quickMsg = ok ? L.T("Right") : L.T("No") + " - " + L.T(q[1]); learnInfo.Invalidate(); });
                 if (quickMsg != "") using (var b = new SolidBrush(quickMsg == L.T("Right") ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(quickMsg, Draw.fSmall, b, x, y);
                 y += 26 * S;
             }

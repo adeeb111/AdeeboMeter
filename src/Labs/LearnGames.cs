@@ -283,10 +283,10 @@ namespace AdeeboMeter
             new[] { "IMAP over TLS", "993" }, new[] { "NTP (the clock)", "123" }, new[] { "a DHCP server", "67" }, new[] { "SNMP queries", "161" }, new[] { "SNMP traps", "162" }, new[] { "LDAP", "389" },
             new[] { "Windows file sharing (SMB)", "445" }, new[] { "RADIUS sign-in", "1812" }, new[] { "syslog", "514" }, new[] { "TACACS+", "49" }, new[] { "BGP", "179" }, new[] { "Telnet", "23" },
             new[] { "an iperf3 server", "5201" }, new[] { "STUN (calls finding their public address)", "3478" }, new[] { "FTP (control)", "21" }, new[] { "mail between servers (SMTP)", "25" }, new[] { "Kerberos", "88" }, new[] { "MySQL", "3306" } };
-        public sealed class Quick { public string Kind; public List<string[]> Q = new List<string[]>(); public int At, Right; public DateTime Start; public string Last = ""; }   // Q: question, right, a, b, c, d
+        public sealed class Quick { public string Kind; public List<string[]> Q = new List<string[]>(); public int At, Right; public long StartMs; public string Last = ""; }   // Q: question, right, a, b, c, d
         public static Quick NewQuick(string kind, int seed)
         {
-            var r = new Random(seed); var q = new Quick { Kind = kind, Start = DateTime.UtcNow };
+            var r = new Random(seed); var q = new Quick { Kind = kind, StartMs = Mono.ElapsedMilliseconds };
             if (kind == "ports")
                 foreach (var p in PortPool.OrderBy(x => r.Next()).Take(10))
                 {
@@ -302,7 +302,7 @@ namespace AdeeboMeter
                 }
             return q;
         }
-        public static readonly string[] AddrKinds = { "private (home or office)", "public (the internet)", "loopback (this PC)", "link-local (no DHCP answer)", "shared by your provider (CGNAT)", "multicast (a group)", "documentation (examples only)" };
+        public static readonly string[] AddrKinds = { "private (home or office)", "public (the internet)", "loopback (this PC)", "IPv4 link-local (self-assigned)", "shared by your provider (CGNAT)", "multicast (a group)", "documentation (examples only)" };
         public static void Addr(Random r, out string a, out string cls)
         {
             int k = r.Next(AddrKinds.Length); cls = AddrKinds[k];
@@ -319,7 +319,10 @@ namespace AdeeboMeter
             }
         }
         // the quick-fire rule: 8 of 10 within 60 s
-        public static bool Won(Quick q) { return q.Right >= 8; }   // eight right within the minute wins - all ten don't have to be answered
-        public static int SecondsLeft(Quick q) { return Math.Max(0, 60 - (int)(DateTime.UtcNow - q.Start).TotalSeconds); }
+        // AM-CG-251: a monotonic clock (changing the PC's clock can't add time), and an answer after the minute doesn't count
+        public static readonly System.Diagnostics.Stopwatch Mono = System.Diagnostics.Stopwatch.StartNew();
+        public static bool Won(Quick q) { return q.Right >= 8; }   // eight right within the minute wins - Answer refuses anything after it
+        public static int SecondsLeft(Quick q) { long el = Math.Max(0, Mono.ElapsedMilliseconds - q.StartMs); return (int)Math.Max(0, Math.Min(60, 60 - el / 1000)); }
+        public static bool Answer(Quick q, bool right) { if (SecondsLeft(q) == 0 || q.At >= q.Q.Count) return false; if (right) q.Right++; q.At++; return true; }
     }
 }

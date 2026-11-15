@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace AdeeboMeter
@@ -55,7 +56,7 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
-            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
+            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
             if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · C copy · Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
             {
@@ -138,7 +139,12 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; PhoneKind = ""; }
             tbCanvas.Invalidate();
         }
-        List<string[]> ResRows() { return (tbRows ?? new List<string[]>()).Where(o => o.Length > 2 && o[0] != "-2").ToList(); }
+        // AM-CG-220: every share path (picture, phone link, CSV, JSON, text) starts from ShareRows, which never carries a secret row
+        // AM-CG-224: shared copies show a web address as origin and path - the query and fragment (where tokens live) only stay on screen
+        List<string[]> ShareRows() { return (tbRows ?? new List<string[]>()).Where(o => o != null && o.Length > 2 && !IsSecretRow(o)).Select(o => o.Select((c, i) => i >= 1 && i <= 3 ? ShareCell(c) : c).ToArray()).ToList(); }
+        static readonly Regex UrlTail = new Regex(@"(https?://[^\s?#""'<>]+)([?#][^\s""'<>]*)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        internal static string ShareCell(string c) { return string.IsNullOrEmpty(c) ? c : UrlTail.Replace(c, m => m.Groups[1].Value + (m.Groups[2].Value.StartsWith("#", StringComparison.Ordinal) ? "#…" : "?…")); }
+        List<string[]> ResRows() { return ShareRows().Where(o => o[0] != "-2").ToList(); }
 
         // ---------- draw.io: an uncompressed mxGraph file - every actor, step, hop, lane and row a separate shape
         static string Xa(string s) { return System.Security.SecurityElement.Escape(s ?? "") ?? ""; }
@@ -285,11 +291,27 @@ namespace AdeeboMeter
             foreach (var root in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) })
             {
                 if (string.IsNullOrEmpty(root)) continue;
-                foreach (var rel in QsPaths) { string f = Path.Combine(root, rel); if (File.Exists(f)) { qsExe = f; return f; } }
+                foreach (var rel in QsPaths) { string f = Path.Combine(root, rel); if (File.Exists(f) && Signed.By(f, "Google LLC")) { qsExe = f; return f; } }   // AM-CG-222: only Google's own, signed
             }
             return null;
         }
         static readonly string[] QsPaths = { @"Google\NearbyShare\nearby_share.exe", @"Google\QuickShare\quick_share.exe", @"Programs\NearbyShare\nearby_share.exe" };
+        // AM-CG-226: the protected way - the picture is saved, then Encrypt a file opens with it filled in; you pick a code or a
+        // person, and send the .adeebo (Bluetooth, Quick Share, mail) instead of the PNG
+        void EncryptPicture()
+        {
+            try
+            {
+                if (tbSel == "encrypt" || tbSel == "decrypt") { Toast(L.T("This picture is from the encryption tools - nothing to encrypt")); return; }
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
+                string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png");
+                using (var bmp = PictureBitmap()) bmp.Save(file, ImageFormat.Png);
+                SelectTool("encrypt");
+                if (tbBoxes.Count > 1) { tbBoxes[0].Box.Text = file; tbBoxes[1].Box.Text = ""; tbBoxes[1].Box.Focus(); }
+                Toast(L.T("Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\\AdeeboMeter"));
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("encrypt picture: " + e.Message); Toast(L.T("Couldn't save the picture")); }
+        }
         void SendQuickShare()
         {
             try
@@ -297,13 +319,27 @@ namespace AdeeboMeter
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
                 string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png");
                 using (var bmp = PictureBitmap()) bmp.Save(file, ImageFormat.Png);
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(QuickShareExe()) { UseShellExecute = false });
-                System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + file + "\"");
-                Toast(L.T("Saved - drag the selected file onto Quick Share, then accept it on your Android phone"));
+                qsAt = DateTime.MinValue; string qs = QuickShareExe();   // the signature is checked again right before it starts, not trusted from the cache
+                if (qs != null) using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(qs) { UseShellExecute = false })) { }
+                using (System.Diagnostics.Process.Start(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), "/select,\"" + file + "\"")) { }
+                Toast(L.T(qs != null ? "Saved - drag the selected file onto Quick Share, then accept it on your Android phone" : "Saved - open Quick Share yourself from the Start menu (AdeeboMeter only starts it when Google's signature checks out)"));
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("quick share: " + e.Message); Toast(L.T("Couldn't start Quick Share")); }
         }
-        void OpenOnPhone() { string link = PhoneLink(); if (link != null) ShowQr(link); }
+        // AM-CG-219: before the code shows, the exact lines the link carries (anyone with the link can read them) - once a session
+        static bool phoneSeen;
+        void OpenOnPhone()
+        {
+            string link = PhoneLink(); if (link == null) return;
+            if (!phoneSeen)
+            {
+                var rows = ResRows().Where(o => o[0] != "-1").Take(14).Select(o => "• " + o[1] + ": " + Cut(o[2], 70)).ToList();
+                string what = string.Join("\n", rows) + (ResRows().Count > 14 ? "\n• ..." : "") + (VisIn().Any(v => v != "") ? "\n\n" + L.T("and what you typed:") + " " + string.Join(", ", VisIn().Where(v => v != "").ToArray()) : "");
+                if (MessageBox.Show(this, L.T("The link in the code carries these lines, so anyone you give it to can read them (nothing goes to a server - it all sits in the link itself):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                phoneSeen = true;
+            }
+            ShowQr(link);
+        }
 
         // ---------- the link: adeebometer.com/r#2!time!tool!caption!kind!A!B!rows  (fields "!", items "~", parts ",";
         // every text escaped, then spaces as "+"). Kinds: x exchange (A actors, B steps), r race, p path, b bars, "" rows only.
@@ -314,7 +350,7 @@ namespace AdeeboMeter
         {
             CapturePicture(); string cap = "", a = "", b = "";
             string when = DateTime.UtcNow.ToString("yyMMddHHmm", CultureInfo.InvariantCulture);   // UTC: the phone shows it in its own time zone
-            var rows = (tbRows ?? new List<string[]>()).Where(o => o.Length > 2 && o[0] != "-1" && o[0] != "-2").ToList();
+            var rows = ShareRows().Where(o => o[0] != "-1" && o[0] != "-2").ToList();
             for (int detail = 1; detail >= -1; detail--)   // the details give way first, then the picture itself - never the rows
             {
                 switch (detail < 0 ? "" : PhoneKind)

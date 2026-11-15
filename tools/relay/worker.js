@@ -6,6 +6,8 @@
 //   TURNSTILE_SECRET  the secret half of the free Turnstile widget on adeebometer.com/report
 // Binding:
 //   RL                a KV namespace, used to count sends per address (5 an hour, 20 a day)
+//   LIMITER           optional: a Cloudflare Rate Limiting binding (atomic). When it's there it decides first - KV counts
+//                     alone can be raced by simultaneous requests (AM-CG-217)
 //
 // What it refuses: anything not JSON, over 12 KB, a kind it doesn't know, a website send without a passing Turnstile
 // check, and an address that already sent too much. What it strips again: e-mail addresses, IP addresses, Windows
@@ -23,11 +25,22 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (req.method !== "POST" || new URL(req.url).pathname !== "/send") return out(404, { ok: false, why: "not here" });
 
-    const raw = await req.text();
-    if (raw.length > 12000) return out(413, { ok: false, why: "too long" });
+    // AM-CG-218: the size limit holds while reading - a huge body is cut off, not read whole first
+    if (+(req.headers.get("Content-Length") || 0) > 12000) return out(413, { ok: false, why: "too long" });
+    let raw = "";
+    { const rd = req.body ? req.body.getReader() : null, dec = new TextDecoder(); let n = 0;
+      if (rd) for (;;) { const { done, value } = await rd.read(); if (done) break; n += value.length; if (n > 12000) { try { await rd.cancel(); } catch {} return out(413, { ok: false, why: "too long" }); } raw += dec.decode(value, { stream: true }); }
+      raw += dec.decode(); }
     let m; try { m = JSON.parse(raw); } catch { return out(400, { ok: false, why: "not JSON" }); }
-    const kind = KINDS[m.kind] ? m.kind : null, from = m.from === "site" ? "site" : m.from === "app" ? "app" : null;
-    if (!kind || !from) return out(400, { ok: false, why: "unknown kind" });
+    if (!m || typeof m !== "object" || Array.isArray(m)) return out(400, { ok: false, why: "not a report" });   // a record, before any field is read
+    for (const k of ["kind", "from", "title", "body", "version", "turnstile"]) if (m[k] !== undefined && typeof m[k] !== "string") return out(400, { ok: false, why: "bad field" });
+    if (m.card !== undefined && (m.card === null || typeof m.card !== "object" || Array.isArray(m.card))) return out(400, { ok: false, why: "bad card" });
+    const kind = Object.prototype.hasOwnProperty.call(KINDS, m.kind) ? m.kind : null;
+    // AM-CG-217: the sender's own label isn't trusted - anything a browser sends (it carries an Origin) must pass Turnstile,
+    // whatever it calls itself; only a request with no browser origin is treated as the app (and gets the app's limits)
+    const browser = origin !== "", from = browser ? "site" : "app";
+    if (!kind) return out(400, { ok: false, why: "unknown kind" });
+    if (browser && !ORIGINS.includes(origin)) return out(403, { ok: false, why: "not from adeebometer.com" });
 
     // the website proves a person is there (Turnstile); the app can't, so it leans on the counts below
     if (from === "site") {
@@ -37,6 +50,7 @@ export default {
     }
     // at most 5 an hour and 20 a day from one address (the address itself is only hashed, never kept)
     const ip = req.headers.get("CF-Connecting-IP") || "?";
+    if (env.LIMITER) { const { success } = await env.LIMITER.limit({ key: ip + "|" + from }); if (!success) return out(429, { ok: false, why: "a lot sent already - try again later" }); }
     const h = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip + "|am")))).slice(0, 12).map(b => b.toString(16).padStart(2, "0")).join("");
     const hourKey = "h:" + h + ":" + Math.floor(Date.now() / 3600000), dayKey = "d:" + h + ":" + Math.floor(Date.now() / 86400000);
     const [hn, dn] = await Promise.all([env.RL.get(hourKey), env.RL.get(dayKey)]);
@@ -46,7 +60,10 @@ export default {
     const clean = s => String(s || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
       .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "<email>")
       .replace(/\b\d{1,3}(\.\d{1,3}){3}\b/g, "<ip>")
-      .replace(/([A-Za-z]:\\Users\\)[^\\\s]+/gi, "$1<user>")
+      .replace(/(?<![\w:])(?:[0-9A-Fa-f]{1,4}:){0,7}:(?:[0-9A-Fa-f]{1,4}:?){0,7}(?:%[\w.-]+)?(?![\w:])/g, x => x.includes("::") && x.length > 2 ? "<ipv6>" : x)   // AM-CG-215: compressed / scoped IPv6
+      .replace(/\b([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/g, "<ipv6>")
+      .replace(/\\\\[\w.$-]+(?:\\[^\s"'<>|]*)?/g, "<path>")                     // \\server\share\...
+      .replace(/\b[A-Za-z]:\\[^\s"'<>|]+/g, "<path>")                              // any drive path
       .replace(/@(?=\w)/g, "@​");   // no accidental @mentions of real GitHub users
     let title = clean(m.title).replace(/\s+/g, " ").trim().slice(0, 100), body = clean(m.body).slice(0, 8000);
     const version = clean(m.version).slice(0, 20);

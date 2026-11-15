@@ -10,7 +10,8 @@ using System.Text;
 namespace AdeeboMeter
 {
     // ================================================================== EC P-384 keys and .adeebo files for a recipient
-    // The "strongest" choice, unique to AdeeboMeter: elliptic-curve Diffie-Hellman on NIST P-384.
+    // AdeeboMeter's own format (not independently reviewed - AM-CG-233): elliptic-curve Diffie-Hellman on NIST P-384.
+    // A one-time sender key per file, but no forward secrecy: whoever later holds the recipient's private key opens every file sent to it.
     //  * The private key is a named key in Windows' own key storage for your account (Microsoft Software Key Storage
     //    Provider, no admin); AdeeboMeter keeps only its name and public half in keys-ec.txt.
     //  * Your public key travels as a small .adeebokey text file; its fingerprint is what you read out to check it.
@@ -34,13 +35,14 @@ namespace AdeeboMeter
         {
             get { try { using (var k = CngKey.Create(CngAlgorithm.ECDiffieHellmanP384)) return k != null; } catch (Exception e) { if (!(e is CryptographicException || e is PlatformNotSupportedException || e is NotImplementedException || e is TypeLoadException || e is EntryPointNotFoundException || e is DllNotFoundException)) throw; return false; } }
         }
+        public const int MaxKeys = 100;   // AM-CG-236: the index holds this many - Create refuses the next one instead of losing it
         public static List<Key> All()
         {
             var l = new List<Key>();
             try
             {
                 if (File.Exists(IndexFile))
-                    foreach (var line in File.ReadAllLines(IndexFile).Take(100))
+                    foreach (var line in File.ReadAllLines(IndexFile).Take(MaxKeys))
                     {
                         var p = line.Split('|'); DateTime t; if (p.Length != 5 || p[0] != "ec" || !DateTime.TryParseExact(p[4], "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) continue;
                         // a damaged line is skipped: the public key must be a whole P-384 key (104 bytes of valid base64)
@@ -71,6 +73,7 @@ namespace AdeeboMeter
         // a new P-384 key, kept by Windows for this user; exportable only so you can back it up
         public static Key Create(string name, byte[] importPrivate)
         {
+            if (All().Count >= MaxKeys) throw new CryptographicException("you already have " + MaxKeys + " P-384 keys - delete one you no longer use first");
             string kn = "AdeeboMeter-" + Guid.NewGuid().ToString("N").Substring(0, 12);
             var p = new CngKeyCreationParameters { ExportPolicy = CngExportPolicies.AllowPlaintextExport, KeyCreationOptions = CngKeyCreationOptions.None, KeyUsage = CngKeyUsages.KeyAgreement, Provider = CngProvider.MicrosoftSoftwareKeyStorageProvider };
             if (importPrivate != null) p.Parameters.Add(new CngProperty(CngKeyBlobFormat.EccPrivateBlob.Format, importPrivate, CngPropertyOptions.None));
@@ -151,7 +154,8 @@ namespace AdeeboMeter
                 // a one-time key must be a P-384 ECDH public key ("ECK3", 48-byte X and Y) - anything else is a damaged or crafted file
                 if (ephPub[0] != 0x45 || ephPub[1] != 0x43 || ephPub[2] != 0x4B || ephPub[3] != 0x33 || ephPub[4] != 48 || ephPub[5] != 0 || ephPub[6] != 0 || ephPub[7] != 0) throw new CryptographicException("damaged header");
                 if (fileKey != null) continue;
-                var k = mine.FirstOrDefault(m => KeyId(Convert.FromBase64String(m.Pub)).SequenceEqual(id)); if (k == null || !CngKey.Exists(k.KeyName)) continue;
+                // AM-CG-237: every entry for this key is tried - a stale entry whose Windows key is gone doesn't hide a restored copy
+                var k = mine.FirstOrDefault(m => KeyId(Convert.FromBase64String(m.Pub)).SequenceEqual(id) && CngKey.Exists(m.KeyName)); if (k == null) continue;
                 using (var ck = CngKey.Open(k.KeyName)) using (var dh = new ECDiffieHellmanCng(ck))
                 {
                     var secret = Agree(dh, ephPub, ephPub, Convert.FromBase64String(k.Pub)); var pad = Pad(secret);
@@ -172,30 +176,53 @@ namespace AdeeboMeter
             try
             {
                 var payload = Encoding.UTF8.GetBytes(k.Name).Length.ToString(CultureInfo.InvariantCulture) + "|" + k.Name + "|";
-                var body = Encoding.UTF8.GetBytes(payload).Concat(priv).ToArray();
-                using (var o = new MemoryStream()) { FileCrypt.EncryptCode(new MemoryStream(body), "key", o, passphrase, FileCrypt.Iterations, Magic3); Array.Clear(body, 0, body.Length); return o.ToArray(); }
+                byte[] body = null;
+                try { body = Encoding.UTF8.GetBytes(payload).Concat(priv).ToArray(); using (var o = new MemoryStream()) { FileCrypt.EncryptCode(new MemoryStream(body, false), "key", o, passphrase, FileCrypt.Iterations, Magic3); return o.ToArray(); } }
+                finally { if (body != null) Array.Clear(body, 0, body.Length); }   // AM-CG-243: cleared on every path, not only success
             }
             finally { Array.Clear(priv, 0, priv.Length); }
         }
         public static bool IsBackup(byte[] head8) { return head8.Length >= 8 && head8.Take(8).SequenceEqual(Magic3); }
+        // opens a key backup without touching Windows' key store: its name and the fingerprint you'd compare (AM-CG-239)
+        public static string Peek(Stream input, string passphrase, out string fingerprint)
+        {
+            string name = null; string fp = null;
+            Open(input, passphrase, (n, priv) => { name = n; var pub = new byte[104]; Buffer.BlockCopy(priv, 0, pub, 0, 104); pub[3] = 0x33; /* ECK4 private -> ECK3 public, X and Y stay */ fp = Fingerprint(pub); Array.Clear(pub, 0, pub.Length); });
+            fingerprint = fp; return name;
+        }
         public static Key Restore(Stream input, string passphrase)
+        {
+            Key made = null;
+            Open(input, passphrase, (name, priv) =>
+            {
+                // AM-CG-240: names compare without case (as Find does): a second copy gets its own name
+                var have = new HashSet<string>(All().Select(x => x.Name), StringComparer.OrdinalIgnoreCase); string nm = name;
+                for (int i = 1; have.Contains(nm); i++) nm = name + (i == 1 ? " (restored)" : " (restored " + i + ")");
+                made = Create(nm, priv);
+            });
+            return made;
+        }
+        static void Open(Stream input, string passphrase, Action<string, byte[]> use)
         {
             // a real key backup is under 1 KB: anything much bigger isn't one (and must not be decrypted into memory to find out)
             try { if (input.CanSeek && input.Length > 64 * 1024) throw new CryptographicException("this isn't a key backup (it's far too big)"); } catch (NotSupportedException) { }
-            using (var o = new MemoryStream())
+            var o = new MemoryStream(); byte[] body = null, priv = null;
+            try
             {
-                FileCrypt.DecryptCode(input, o, passphrase, Magic3); var body = o.ToArray();
-                try
-                {
-                    // the body is untrusted until it parses: "<name length>|<name>|<private key>", nothing else
-                    int bar = Array.IndexOf(body, (byte)'|'), nlen;
-                    if (bar <= 0 || bar > 4 || !int.TryParse(Encoding.ASCII.GetString(body, 0, bar), NumberStyles.None, CultureInfo.InvariantCulture, out nlen) || nlen < 0 || nlen > 240 || bar + 1 + nlen + 1 > body.Length || body[bar + 1 + nlen] != (byte)'|')
-                        throw new CryptographicException("this key backup is damaged");
-                    string name = SafeName(Encoding.UTF8.GetString(body, bar + 1, nlen)); var priv = body.Skip(bar + 1 + nlen + 1).ToArray();
-                    var existing = All().FirstOrDefault(x => x.Name == name); if (existing != null) name += " (restored)";
-                    try { return Create(name, priv); } finally { Array.Clear(priv, 0, priv.Length); }
-                }
-                finally { Array.Clear(body, 0, body.Length); }
+                FileCrypt.DecryptCode(input, o, passphrase, Magic3); body = o.ToArray();
+                // the body is untrusted until it parses: "<name length>|<name>|<private key>", nothing else
+                int bar = Array.IndexOf(body, (byte)'|'), nlen;
+                if (bar <= 0 || bar > 4 || !int.TryParse(Encoding.ASCII.GetString(body, 0, bar), NumberStyles.None, CultureInfo.InvariantCulture, out nlen) || nlen < 0 || nlen > 240 || bar + 1 + nlen + 1 > body.Length || body[bar + 1 + nlen] != (byte)'|')
+                    throw new CryptographicException("this key backup is damaged");
+                string name = SafeName(Encoding.UTF8.GetString(body, bar + 1, nlen)); priv = body.Skip(bar + 1 + nlen + 1).ToArray();
+                if (priv.Length < 104 + 48 || priv[0] != 0x45 || priv[1] != 0x43 || priv[2] != 0x4B || priv[3] != 0x34) throw new CryptographicException("this key backup is damaged");
+                use(name, priv);
+            }
+            finally
+            {
+                // AM-CG-243: every copy of the private key this method owns is wiped, success or not - the stream's own buffer too
+                if (priv != null) Array.Clear(priv, 0, priv.Length); if (body != null) Array.Clear(body, 0, body.Length);
+                var gb = o.GetBuffer(); Array.Clear(gb, 0, gb.Length); o.Dispose();
             }
         }
     }

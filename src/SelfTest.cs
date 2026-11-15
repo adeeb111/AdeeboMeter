@@ -573,9 +573,15 @@ namespace AdeeboMeter
                 {
                     var b = (byte[])enc.Clone(); int at = rnd.Next(b.Length); if (at >= 8 && at < 12) at = 12; b[at] ^= (byte)(1 + rnd.Next(255));
                     if (n % 6 == 5) Array.Resize(ref b, rnd.Next(b.Length));
-                    try { using (var o = new MemoryStream()) FileCrypt.DecryptCode(new MemoryStream(b), o, "ABCD2345EFGH6789JKMN2345"); throw new InvalidOperationException("a changed file opened (byte " + at + ")"); }
-                    catch (System.Security.Cryptography.CryptographicException) { }
+                    var ob = new MemoryStream();
+                    try { FileCrypt.DecryptCode(new MemoryStream(b), ob, "ABCD2345EFGH6789JKMN2345"); throw new InvalidOperationException("a changed file opened (byte " + at + ")"); }
+                    catch (System.Security.Cryptography.CryptographicException) { if (ob.Length != 0) throw new InvalidOperationException("AM-CG-225: plaintext written before the check (byte " + at + ")"); }
                 }
+                using (var ow = new MemoryStream()) { try { FileCrypt.DecryptCode(new MemoryStream(enc), ow, "ABCD2345EFGH6789JKMN2346"); throw new InvalidOperationException("wrong code opened"); } catch (System.Security.Cryptography.CryptographicException) { if (ow.Length != 0) throw new InvalidOperationException("AM-CG-225: wrong code wrote plaintext"); } }
+                using (var ok = new MemoryStream()) { FileCrypt.DecryptCode(new MemoryStream(enc), ok, "ABCD2345EFGH6789JKMN2345"); if (Encoding.UTF8.GetString(ok.ToArray()) != "hello") throw new InvalidOperationException("code round trip"); }
+                // AM-CG-224: shared copies keep origin and path, never the query or fragment
+                foreach (var u in new[] { new[] { "see https://a.example/p/q?token=SECRET1&x=1 now", "see https://a.example/p/q?… now" }, new[] { "http://h.test/x#SECRET2", "http://h.test/x#…" }, new[] { "https://h.test/plain", "https://h.test/plain" } })
+                    if (FullView.ShareCell(u[0]) != u[1]) throw new InvalidOperationException("ShareCell: " + FullView.ShareCell(u[0]));
                 var big = (byte[])enc.Clone(); big[8] = 0x7F; try { FileCrypt.DecryptCode(new MemoryStream(big), new MemoryStream(), "x"); throw new InvalidOperationException("huge iteration count accepted"); } catch (System.Security.Cryptography.CryptographicException) { }
                 // mangled public key text
                 string nm; foreach (var t in new[] { "", "ADEEBOMETER PUBLIC KEY v1", "ADEEBOMETER PUBLIC KEY v1\nkey: ###", "ADEEBOMETER PUBLIC KEY v1\nkey: QUJD", "ADEEBOMETER PUBLIC KEY v1\nname: x\nkey: " + new string('A', 5000) }) if (EcKeys.ReadPublic(t, out nm) != null) throw new InvalidOperationException("bad key text accepted");

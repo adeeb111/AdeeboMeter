@@ -119,7 +119,7 @@ namespace AdeeboMeter
                 T("ispreport", "SPEED", "Report for my ISP", "A game you added, or a host / IP (empty = the game you play)|How long - 1, 2 or 5 minutes|Include my public IP? type yes (it asks Cloudflare once) - no by default", (a, r) => IspReport.Run(M, a[0], a[1], a[2], r)),
                 T("tidy", "THE PC", "Quick tidy (you do it, I show where)", null, (a, r) => MoreTools.Tidy(M, r)),
                 T("keys", "KEYS", "My keys", null, (a, r) => CertKeys.MyKeys()),
-                T("newkey", "KEYS", "New key", "Name - e.g. Adeeb work|Purpose - files (default), server or client|Type for files - standard (RSA, .p7m, opens anywhere) or P-384 (strongest, .adeebo, AdeeboMeter only)", (a, r) => CertKeys.NewKey(a[0], a[1], a[2])),
+                T("newkey", "KEYS", "New key", "Name - e.g. Adeeb work|Purpose - files (default), server or client|Type for files - standard (RSA, .p7m, opens anywhere) or P-384 (.adeebo, AdeeboMeter only)", (a, r) => CertKeys.NewKey(a[0], a[1], a[2])),
                 T("csrmake", "KEYS", "Generate a CSR", "Key - one of My keys, or a new name to make one|Names - DNS names and IPs, e.g. vpn.example.com, 10.0.0.5|Subject (optional) - e.g. CN=vpn.example.com, O=Example", (a, r) => CertKeys.Csr(a[0], a[1], a[2])),
                 T("selfsigned", "KEYS", "Create a self-signed certificate", "Preset - Local HTTPS, Lab server or mTLS client|Names - e.g. lab01.lab, 10.0.0.5", (a, r) => CertKeys.SelfSigned(a[0], a[1])),
                 T("certmatch", "KEYS", "Check certificate and key", "Certificate - the file your CA sent back, or paste it|Put them together? type yes", (a, r) => CertKeys.Match(a[0], a[1])),
@@ -393,6 +393,7 @@ namespace AdeeboMeter
         }
         // a code or passphrase made for you: shown on screen once - never in Copy, Save, or the result kept for this session
         static bool IsSecretRow(string[] r) { return r.Length > 4 && r[4] == "k"; }
+        static readonly char[] Colon = { ':' };
         void RowAction(string act)
         {
             if (tbBusy) return;
@@ -426,6 +427,41 @@ namespace AdeeboMeter
                 }
                 else return;
                 tbRows = res; tbAt = DateTime.Now; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+                return;
+            }
+            if (act.StartsWith("restorekey:", StringComparison.Ordinal))
+            {
+                // AM-CG-239: the key store only changes on this press, with the fingerprint already in front of you
+                string file = act.Substring(11), code = tbSel == "decrypt" ? Inputs()[1] : "";
+                if (code.Trim() == "") { tbRows = new List<string[]> { Row5("2", "Recovery passphrase", "type it in the Code box again, then press Restore this key", "", "w") }; tbCanvas.Invalidate(); return; }
+                var run = new Toolkit.Run { Status = "Restoring the key..." }; tbRun0 = run; tbBusy = UiActivity.ToolRunning = true; tbCanvas.Invalidate();
+                new System.Threading.Thread(() =>
+                {
+                    List<string[]> r = new List<string[]>();
+                    try
+                    {
+                        if (run.Stop) throw new OperationCanceledException();   // AM-CG-241: Stop before the key store changes means nothing changes
+                        EcKeys.Key k; using (var i = System.IO.File.OpenRead(file)) k = EcKeys.Restore(i, code);
+                        r.Add(new[] { "0", "Key restored", k.Name + " is back in My keys (EC P-384, kept by Windows) · fingerprint " + EcKeys.Fingerprint(Convert.FromBase64String(k.Pub)), "", "w" });
+                    }
+                    catch (OperationCanceledException) { r.Add(Row5("1", "Restore", "stopped - nothing was added", "", "w")); }
+                    catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException || e is System.Security.Cryptography.CryptographicException)) throw; r.Add(new[] { "2", "Restore", e.Message, "", "w" }); }
+                    try { BeginInvoke((Action)delegate { tbRows = r; tbAt = DateTime.Now; tbBusy = UiActivity.ToolRunning = false; tbCanvas.Invalidate(); }); } catch (InvalidOperationException) { tbBusy = UiActivity.ToolRunning = false; }
+                }) { IsBackground = true, Name = "key restore" }.Start();
+                return;
+            }
+            if (act.StartsWith("recip:", StringComparison.Ordinal))
+            {
+                // AM-CG-223: a changed recipient key is only used once you've said yes with its fingerprint in front of you
+                var p = act.Split(Colon, 3); if (p.Length != 3) return; string who = p[2], fp = CertKeys.PendPrint(who);
+                if (fp == null) return;
+                if (p[1] == "keep")
+                {
+                    if (MessageBox.Show(this, L.T("Use the new key for") + " " + who + "?\n\n" + L.T("New:") + " " + fp + "\n" + L.T("Now:") + " " + CertKeys.UsedPrint(who) + "\n\n" + L.T("Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                    try { CertKeys.ConfirmPending(who); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException || e is System.Security.Cryptography.CryptographicException)) throw; Program.Log("recipient confirm: " + e.Message); }
+                }
+                else CertKeys.DropPending(who);
+                tbRows = CertKeys.Recipients("", ""); tbAt = DateTime.Now; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
                 return;
             }
             if (act.StartsWith("exfill:", StringComparison.Ordinal)) { FillExample(act.Substring(7)); return; }
@@ -504,7 +540,7 @@ namespace AdeeboMeter
             {
                 int lv; int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
                 string word = lv == 2 || lv == 7 ? "problem" : lv == 1 ? "warning" : lv == 0 ? "ok" : "info";
-                sb.Append(q(word)).Append(sp).Append(q(o.Length > 1 ? o[1] : "")).Append(sp).Append(q(o.Length > 2 ? o[2] : "")).Append(sp).Append(q(o.Length > 3 ? o[3] : "")).AppendLine();
+                sb.Append(q(word)).Append(sp).Append(q(o.Length > 1 ? ShareCell(o[1]) : "")).Append(sp).Append(q(o.Length > 2 ? ShareCell(o[2]) : "")).Append(sp).Append(q(o.Length > 3 ? ShareCell(o[3]) : "")).AppendLine();
             }
             return sb.ToString();
         }
@@ -514,7 +550,7 @@ namespace AdeeboMeter
             if (Examples.IsExample(tbRows)) return "";   // made-up data is never copied
             var sb = new System.Text.StringBuilder(); var t = Tools2().First(x => x.Id == tbSel);
             sb.AppendLine("AdeeboMeter " + Program.Version + " · " + t.Title + " · " + tbAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + a[i]);
+            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + ShareCell(a[i]));
             sb.AppendLine();
             if (tbSel == "mtu" && mtuHops != null) foreach (var h in mtuHops) sb.AppendLine(("hop " + h.N).PadRight(8) + (h.Ip == "" ? "*" : h.Ip).PadRight(40) + (h.Mtu > 0 ? h.Mtu + "  " + h.MtuNote : h.MtuNote));
             if (tbSel == "mtr" && mtrHops != null)
@@ -526,10 +562,10 @@ namespace AdeeboMeter
             if (tbRows != null)
                 foreach (var o in tbRows.Where(x => !IsSecretRow(x)))
                 {
-                    if (o[0] == "6" || o[0] == "7" || o[0] == "8") { sb.AppendLine((o[0] == "7" ? "! " : "  ") + o[2]); continue; }   // table lines, as they are
+                    if (o[0] == "6" || o[0] == "7" || o[0] == "8") { sb.AppendLine((o[0] == "7" ? "! " : "  ") + ShareCell(o[2])); continue; }   // table lines, as they are
                     string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     ";
-                    sb.AppendLine(lv + o[1] + ": " + o[2]);
-                    if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + o[3]);
+                    sb.AppendLine(lv + ShareCell(o[1]) + ": " + ShareCell(o[2]));
+                    if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + ShareCell(o[3]));
                 }
             return sb.ToString();
         }

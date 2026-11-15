@@ -101,6 +101,13 @@ namespace AdeeboMeter
         {
             lock (k) { if (map.ContainsKey("tried." + id) || map.ContainsKey(id)) return; map["tried." + id] = new Entry { First = DateTime.UtcNow, Pts = 0 }; if (!TrySave()) map.Remove("tried." + id); }
         }
+        // AM-CG-253: a question answered right with Points off - kept (0 points) so the answer stays answered; the points
+        // themselves are still paid when Points is on and you answer it
+        public bool Right(string id) { lock (k) return map.ContainsKey("right." + id); }
+        public void MarkRight(string id)
+        {
+            lock (k) { if (map.ContainsKey("right." + id) || map.ContainsKey(id) || map.ContainsKey("tried." + id)) return; map["right." + id] = new Entry { First = DateTime.UtcNow, Pts = 0 }; if (!TrySave()) map.Remove("right." + id); }
+        }
         public int Done { get { lock (k) return map.Keys.Count(Known); } }
         public bool Has(string id) { lock (k) return map.ContainsKey(id); }
         public bool Replayed(string id) { lock (k) { Entry e; return map.TryGetValue(id, out e) && e.Again != default(DateTime); } }

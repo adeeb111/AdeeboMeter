@@ -28,7 +28,10 @@ namespace AdeeboMeter
         static bool SafeFilter(string f) { return f.All(c => char.IsLetterOrDigit(c) || " .:-()".IndexOf(c) >= 0) && f.Length < 200; }
 
         // Record for `seconds` (optionally doing something meanwhile), then read the packets back. err explains a failure.
-        public static List<Pkt> Capture(Monitor m, string filter, int seconds, Action during, out string file, out string err)
+        public static List<Pkt> Capture(Monitor m, string filter, int seconds, Action during, out string file, out string err) { return Capture(m, filter, seconds, during, out file, out err, false, null, null); }
+        // lesson: a Learn recording - packet headers only (512 bytes each), at most 5 MB, deleted as soon as it's decoded (AM-CG-248).
+        // stop: checked while recording; phase: "recording" then "decoding" (AM-CG-250)
+        public static List<Pkt> Capture(Monitor m, string filter, int seconds, Action during, out string file, out string err, bool lesson, Func<bool> stop, Action<string> phase)
         {
             err = ""; file = ""; var list = new List<Pkt>();
             if (!LiveCapture.Available) { err = "Needs Wireshark (with Npcap) - not found on this PC."; return list; }
@@ -37,7 +40,7 @@ namespace AdeeboMeter
             if (filter != "" && !SafeFilter(filter)) { err = "Bad filter."; return list; }
             file = Program.SafeCapturePath("journey-" + DateTime.Now.ToString("HHmmss-fff", CultureInfo.InvariantCulture) + ".pcapng");
             if (file == null) { err = "Capture folder unavailable."; return list; }
-            var psi = new ProcessStartInfo(LiveCapture.Dumpcap, "-i \"" + ifc + "\" -p -q " + (filter != "" ? "-f \"" + filter + "\" " : "") + "-a duration:" + seconds.ToString(CultureInfo.InvariantCulture) + " -w \"" + file + "\"") { WorkingDirectory = Path.GetDirectoryName(LiveCapture.Dumpcap), UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
+            var psi = new ProcessStartInfo(LiveCapture.Dumpcap, "-i \"" + ifc + "\" -p -q " + (filter != "" ? "-f \"" + filter + "\" " : "") + (lesson ? "-s 512 -a filesize:5000 " : "") + "-a duration:" + seconds.ToString(CultureInfo.InvariantCulture) + " -w \"" + file + "\"") { WorkingDirectory = Path.GetDirectoryName(LiveCapture.Dumpcap), UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
             try
             {
                 using (var p = Process.Start(psi))
@@ -45,13 +48,19 @@ namespace AdeeboMeter
                     Job.Add(p); p.StandardError.ReadToEndAsync();
                     System.Threading.Thread.Sleep(900);     // dumpcap needs a moment before it sees packets
                     if (during != null) try { during(); } catch (Exception e) { Program.Log("capture action: " + e.Message); }
-                    if (!p.WaitForExit((seconds + 8) * 1000)) { try { p.Kill(); } catch { } }
+                    if (phase != null) phase("recording");
+                    var until = DateTime.UtcNow.AddSeconds(seconds + 8); bool stopped = false;
+                    while (!p.WaitForExit(250)) { if ((stop != null && stop()) || DateTime.UtcNow > until) { stopped = stop != null && stop(); try { p.Kill(); } catch { } break; } }
+                    if (stopped) { err = "Stopped - nothing kept."; try { p.WaitForExit(2000); } catch { } if (lesson) Forget(file); return list; }
                 }
             }
             catch (Exception e) { err = Draw.Trunc(e.Message, 80); return list; }
             if (!File.Exists(file)) { err = "Nothing was recorded."; return list; }
-            return Read(file, "", 400, out err);
+            if (phase != null) phase("decoding");
+            try { return Read(file, "", 400, out err); }
+            finally { if (lesson) Forget(file); }
         }
+        static void Forget(string file) { try { if (File.Exists(file)) File.Delete(file); } catch (IOException e) { Program.Log("lesson capture: " + e.Message); } catch (UnauthorizedAccessException e) { Program.Log("lesson capture: " + e.Message); } }
         public static List<Pkt> Read(string file, string display, int max, out string err)
         {
             err = ""; var list = new List<Pkt>();
