@@ -17,6 +17,9 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 ### New: take any picture with you - Save, Copy, phone, Bluetooth
 - Under every tool picture: Save picture (PNG with a "made with AdeeboMeter" footer), Copy picture (paste into a chat or a mail),
   Open on my phone and Send by Bluetooth.
+- Save picture ... offers four files: the picture (PNG); a draw.io / diagrams.net diagram (.drawio) where every actor, step,
+  hop, lane and result row is its own box or arrow to move, restyle and annotate; the data as JSON (the picture's own data plus
+  every row, for scripts and other tools); and CSV for Excel.
 - Open on my phone: a QR code (now up to 858 bytes) carries that picture's own data - the packet exchange, the race, the path or
   the bars - plus the result rows. The phone redraws it at adeebometer.com/r with Copy, Share, Save image, Copy for AI and PDF.
   Works when this PC has no internet at all: the phone loads the page on its own data.

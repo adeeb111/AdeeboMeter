@@ -36,7 +36,7 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
-            link("report", "Save picture", SavePicture); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
+            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8) using (var b = new SolidBrush(Theme.LvText(0))) g.DrawString(barNote, Draw.fSmall, b, lx, y + 2 * S);
             return y + 30 * S;
         }
@@ -70,6 +70,142 @@ namespace AdeeboMeter
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("save picture: " + e.Message); Toast(L.T("Couldn't save the picture")); }
+        }
+        // Save picture ...: PNG, a draw.io diagram (real boxes and arrows to edit), or the data behind it (JSON, CSV)
+        void SaveMenu()
+        {
+            var m = new ContextMenuStrip { Font = Draw.fBody };
+            m.Items.Add(L.T("Picture (PNG)"), null, delegate { SavePicture(); });
+            m.Items.Add(L.T("Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box"), null, delegate { SaveText("drawio", "draw.io diagram|*.drawio", DrawIo()); });
+            m.Items.Add(L.T("Data (JSON) - for scripts and other tools"), null, delegate { SaveText("json", "JSON|*.json", Json()); });
+            m.Items.Add(L.T("Data (CSV) - opens in Excel"), null, delegate { SaveText("csv", "CSV|*.csv", Csv()); });
+            m.Closed += delegate { BeginInvoke((Action)m.Dispose); };
+            m.Show(Cursor.Position);
+        }
+        void SaveText(string ext, string filter, string text)
+        {
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
+                using (var d = new SaveFileDialog { Filter = filter, InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + "." + ext })
+                {
+                    if (d.ShowDialog(this) != DialogResult.OK) return;
+                    File.WriteAllText(d.FileName, text, new UTF8Encoding(ext == "csv")); Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName) + (ext == "drawio" ? " - open it at app.diagrams.net or in draw.io" : ""));
+                }
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("save " + ext + ": " + e.Message); Toast(L.T("Couldn't save it")); }
+        }
+        // draw the picture once off-screen so PhoneKind and its data describe what's on screen now
+        void CapturePicture()
+        {
+            try { using (var probe = new Bitmap(10, 10)) using (var pg = Graphics.FromImage(probe)) PaintToolVisual0(pg, 0, 0, 900 * S); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; PhoneKind = ""; }
+            tbCanvas.Invalidate();
+        }
+        List<string[]> ResRows() { return (tbRows ?? new List<string[]>()).Where(o => o.Length > 2 && o[0] != "-2").ToList(); }
+
+        // ---------- draw.io: an uncompressed mxGraph file - every actor, step, hop, lane and row a separate shape
+        static string Xa(string s) { return System.Security.SecurityElement.Escape(s ?? "") ?? ""; }
+        // a label as draw.io wants it with html=1: each line HTML-escaped, lines joined by <br>, then escaped for the XML attribute
+        static string Hv(string v) { return Xa(string.Join("<br>", (v ?? "").Split('\n').Select(System.Net.WebUtility.HtmlEncode).ToArray())); }
+        static string LvFill(int lv) { return lv == 2 ? "#FDE7E9" : lv == 1 ? "#FFF4D6" : lv == 0 ? "#E6F4EA" : "#EEF1F5"; }
+        static string LvLine(int lv) { return lv == 2 ? "#CF222E" : lv == 1 ? "#BF8700" : lv == 0 ? "#2DA44E" : "#6B7685"; }
+        internal string DrawIo()
+        {
+            CapturePicture(); var sb = new StringBuilder(); int id = 2; var ic = CultureInfo.InvariantCulture;
+            Action<string, string, double, double, double, double> box = (v, style, x, y, w, h) => sb.Append("<mxCell id=\"c" + (id++) + "\" value=\"" + Hv(v) + "\" style=\"" + style + "\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"" + x.ToString("0", ic) + "\" y=\"" + y.ToString("0", ic) + "\" width=\"" + w.ToString("0", ic) + "\" height=\"" + h.ToString("0", ic) + "\" as=\"geometry\"/></mxCell>");
+            Action<string, string, double, double, double, double> line = (v, style, x1, y1, x2, y2) => sb.Append("<mxCell id=\"c" + (id++) + "\" value=\"" + Hv(v) + "\" style=\"" + style + "\" edge=\"1\" parent=\"1\"><mxGeometry relative=\"1\" as=\"geometry\"><mxPoint x=\"" + x1.ToString("0", ic) + "\" y=\"" + y1.ToString("0", ic) + "\" as=\"sourcePoint\"/><mxPoint x=\"" + x2.ToString("0", ic) + "\" y=\"" + y2.ToString("0", ic) + "\" as=\"targetPoint\"/></mxGeometry></mxCell>");
+            const string Txt = "text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=12;";
+            string title = ToolName(); double y0 = 70;
+            box(title, "text;html=1;fontSize=20;fontStyle=1;align=left;", 20, 10, 700, 30);
+            switch (PhoneKind)
+            {
+                case "x":
+                    {
+                        var act = PhoneX.Item2; var st = PhoneX.Item3; double gap = 200, top = y0 + 20, rowH = 70, bottom = top + 50 + st.Count * rowH;
+                        box(PhoneX.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
+                        for (int i = 0; i < act.Length; i++) { box(act[i], "rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF1F5;strokeColor=#E3E8EF;fontStyle=1;", 40 + i * gap, top, 160, 36); line("", "endArrow=none;dashed=1;html=1;strokeColor=#B4BDC9;", 120 + i * gap, top + 36, 120 + i * gap, bottom); }
+                        for (int i = 0; i < st.Count; i++)
+                        {
+                            var s = st[i]; int to = s.All ? act.Length - 1 : s.To; double y = top + 70 + i * rowH, x1 = 120 + s.From * gap, x2 = 120 + to * gap; string c = s.Lv == 2 ? "#CF222E" : s.Lv == 1 ? "#BF8700" : to < s.From ? "#2DA44E" : "#1F6FEB";
+                            string v = (s.Sealed ? "\U0001F512 " : "") + s.Label + (s.Detail != "" ? "\n" + s.Detail : "") + (double.IsNaN(s.Ms) ? "" : "  (" + Nm(s.Ms) + " ms)");
+                            if (s.From == to) box(v, Txt + "fontColor=" + c + ";", x1 + 10, y - 18, 300, 40);
+                            else line(v, "endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=" + c + ";fontSize=11;labelBackgroundColor=#FFFFFF;" + (s.All ? "dashed=1;" : ""), x1, y, x2, y);
+                        }
+                        y0 = bottom + 20;
+                    }
+                    break;
+                case "p":
+                    {
+                        var hops = PhoneP.Item2; var owners = hops.Select(h => h.Item4).Distinct().ToList(); string[] pal = { "#E8F0FE", "#F1EAFE", "#FFF4D6", "#E6F4EA", "#EEF1F5" };
+                        box(PhoneP.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
+                        for (int i = 0; i < hops.Count; i++)
+                        {
+                            var h = hops[i]; double x = 40 + i * 150;
+                            if (i > 0) line("", "endArrow=block;html=1;strokeWidth=3;strokeColor=#B4BDC9;", x - 70, y0 + 60, x + 10, y0 + 60);
+                            box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, y0 + 35, 50, 50);
+                            box(h.Item2 + (double.IsNaN(h.Item3) ? "" : "\n" + Nm(h.Item3) + " ms") + "\n" + h.Item4, "rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=" + pal[owners.IndexOf(h.Item4) % pal.Length] + ";strokeColor=none;", x - 20, y0 + 95, 130, 70);
+                        }
+                        y0 += 190;
+                    }
+                    break;
+                case "r": case "b":
+                    {
+                        var lanes = PhoneKind == "r" ? PhoneR.Item2.Select(l => Tuple.Create(l.Item1, l.Item2, Nm(l.Item2) + " ms" + (double.IsNaN(l.Item3) ? "" : " / " + Nm(l.Item3) + " ms"), l.Item4)).ToList() : PhoneB.Item3.Select(b => Tuple.Create(b.Item1, b.Item2, Nm(b.Item2) + " " + PhoneB.Item2 + (b.Item3 != "" ? " · " + b.Item3 : ""), b.Item4)).ToList();
+                        box(PhoneKind == "r" ? PhoneR.Item1 : PhoneB.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
+                        double max = Math.Max(1, lanes.Select(l => double.IsNaN(l.Item2) ? 0 : l.Item2).DefaultIfEmpty(1).Max());
+                        for (int i = 0; i < lanes.Count; i++)
+                        {
+                            var l = lanes[i]; double y = y0 + 20 + i * 40, w = double.IsNaN(l.Item2) ? 4 : Math.Max(4, 400 * l.Item2 / max);
+                            box(l.Item1, Txt + "fontStyle=1;", 20, y, 200, 26); box("", "rounded=1;html=1;fillColor=" + LvLine(l.Item4 < 0 ? -9 : l.Item4).Replace("#6B7685", "#1F6FEB") + ";strokeColor=none;", 230, y + 4, w, 18); box(l.Item3, Txt + "fontColor=#4A5568;", 240 + w, y, 260, 26);
+                        }
+                        y0 += 40 + lanes.Count * 40;
+                    }
+                    break;
+            }
+            // the result rows, as a column of cards
+            var rows = ResRows(); double ry = y0 + 10;
+            if (rows.Count > 0) box(L.T("THE RESULT"), Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry, 300, 20); ry += 26;
+            foreach (var o in rows.Take(40))
+            {
+                int lv; if (!int.TryParse(o[0], out lv)) lv = 3;
+                if (lv == -1) { box(o[1], Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry + 6, 700, 20); ry += 30; continue; }
+                box(o[1] + "\n" + o[2], "rounded=1;whiteSpace=wrap;html=1;align=left;spacingLeft=10;fontSize=12;fillColor=" + LvFill(lv) + ";strokeColor=" + LvLine(lv) + ";", 20, ry, 700, 46); ry += 54;
+            }
+            box(L.T("made with AdeeboMeter") + " · adeebometer.com · " + DateTime.Now.ToString("d MMM yyyy HH:mm", CultureInfo.CurrentCulture), Txt + "fontSize=10;fontColor=#6B7685;", 20, ry + 10, 500, 20);
+            return "<mxfile host=\"AdeeboMeter\"><diagram name=\"" + Xa(title) + "\"><mxGraphModel dx=\"1000\" dy=\"800\" grid=\"1\" gridSize=\"10\" page=\"1\" pageWidth=\"1100\" pageHeight=\"850\"><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>" + sb + "</root></mxGraphModel></diagram></mxfile>";
+        }
+
+        // ---------- the data: JSON (the picture's own data + every row) and CSV (the rows)
+        static string Js(string s)
+        {
+            var sb = new StringBuilder("\""); foreach (char c in s ?? "") { if (c == '"' || c == '\\') sb.Append('\\').Append(c); else if (c < ' ') sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture)); else sb.Append(c); }
+            return sb.Append('"').ToString();
+        }
+        static string Jn(double v) { return double.IsNaN(v) || double.IsInfinity(v) ? "null" : v.ToString("0.###", CultureInfo.InvariantCulture); }
+        internal string Json()
+        {
+            CapturePicture(); var sb = new StringBuilder("{\n");
+            sb.Append("  \"tool\": " + Js(tbSel) + ",\n  \"title\": " + Js(ToolName()) + ",\n  \"made\": " + Js(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture)) + ",\n  \"state\": " + Js(VisState()) + ",\n");
+            sb.Append("  \"inputs\": [" + string.Join(", ", VisIn().Select(Js).ToArray()) + "],\n  \"picture\": ");
+            switch (PhoneKind)
+            {
+                case "x": sb.Append("{ \"kind\": \"exchange\", \"caption\": " + Js(PhoneX.Item1) + ", \"actors\": [" + string.Join(", ", PhoneX.Item2.Select(Js).ToArray()) + "], \"steps\": [\n" + string.Join(",\n", PhoneX.Item3.Select(s => "    { \"from\": " + s.From + ", \"to\": " + (s.All ? PhoneX.Item2.Length - 1 : s.To) + ", \"broadcast\": " + (s.All ? "true" : "false") + ", \"sealed\": " + (s.Sealed ? "true" : "false") + ", \"level\": " + s.Lv + ", \"label\": " + Js(s.Label) + ", \"detail\": " + Js(s.Detail) + ", \"ms\": " + Jn(s.Ms) + " }").ToArray()) + "\n  ] }"); break;
+                case "r": sb.Append("{ \"kind\": \"race\", \"caption\": " + Js(PhoneR.Item1) + ", \"lanes\": [\n" + string.Join(",\n", PhoneR.Item2.Select(l => "    { \"name\": " + Js(l.Item1) + ", \"ms\": " + Jn(l.Item2) + ", \"ms2\": " + Jn(l.Item3) + ", \"level\": " + l.Item4 + " }").ToArray()) + "\n  ] }"); break;
+                case "p": sb.Append("{ \"kind\": \"path\", \"caption\": " + Js(PhoneP.Item1) + ", \"hops\": [\n" + string.Join(",\n", PhoneP.Item2.Select(h => "    { \"hop\": " + Js(h.Item1) + ", \"address\": " + Js(h.Item2) + ", \"ms\": " + Jn(h.Item3) + ", \"owner\": " + Js(h.Item4) + ", \"level\": " + h.Item5 + " }").ToArray()) + "\n  ] }"); break;
+                case "b": sb.Append("{ \"kind\": \"bars\", \"caption\": " + Js(PhoneB.Item1) + ", \"unit\": " + Js(PhoneB.Item2) + ", \"bars\": [\n" + string.Join(",\n", PhoneB.Item3.Select(b => "    { \"name\": " + Js(b.Item1) + ", \"value\": " + Jn(b.Item2) + ", \"label\": " + Js(b.Item3) + ", \"level\": " + b.Item4 + " }").ToArray()) + "\n  ] }"); break;
+                default: sb.Append("null"); break;
+            }
+            sb.Append(",\n  \"rows\": [\n" + string.Join(",\n", ResRows().Select(o => "    { \"level\": " + Js(o[0]) + ", \"name\": " + Js(o[1]) + ", \"value\": " + Js(o[2]) + ", \"advice\": " + Js(o.Length > 3 ? o[3] : "") + " }").ToArray()) + "\n  ]\n}\n");
+            return sb.ToString();
+        }
+        static string Cv(string s) { s = s ?? ""; return s.IndexOfAny(CsvSpecial) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s; }
+        static readonly char[] CsvSpecial = { ',', '"', '\n', '\r' };
+        internal string Csv()
+        {
+            var sb = new StringBuilder("level,name,value,advice\r\n");
+            foreach (var o in ResRows()) sb.Append(Cv(o[0] == "0" ? "ok" : o[0] == "1" ? "watch" : o[0] == "2" ? "problem" : o[0] == "-1" ? "section" : "info")).Append(',').Append(Cv(o[1])).Append(',').Append(Cv(o[2])).Append(',').Append(Cv(o.Length > 3 ? o[3] : "")).Append("\r\n");
+            return sb.ToString();
         }
         void CopyPicture()
         {
@@ -126,10 +262,7 @@ namespace AdeeboMeter
         static string Nm(double v) { return double.IsNaN(v) || double.IsInfinity(v) ? "" : Math.Round(v, v < 10 ? 1 : 0).ToString(CultureInfo.InvariantCulture); }
         internal string PhoneLink()
         {
-            try { using (var probe = new Bitmap(10, 10)) using (var pg = Graphics.FromImage(probe)) PaintToolVisual0(pg, 0, 0, 900 * S); }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; PhoneKind = ""; }
-            tbCanvas.Invalidate();
-            string cap = "", a = "", b = "";
+            CapturePicture(); string cap = "", a = "", b = "";
             for (int detail = 1; detail >= 0; detail--)   // the details give way first when it's too long for one QR code
             {
                 switch (PhoneKind)
