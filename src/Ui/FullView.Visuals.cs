@@ -28,7 +28,7 @@ namespace AdeeboMeter
         {
             EnsureToolbox(); var bad = new List<string>();
             using (var bmp = new Bitmap(1000, 2400)) using (var g = Graphics.FromImage(bmp))
-                foreach (var id in Pictured.Concat(Pictured3).Concat(Pictured4).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
+                foreach (var id in Pictured.Concat(Pictured3).Concat(Pictured4).Concat(Pictured5).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
                 {
                     SelectTool(id); visFail = "";
                     float y0 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("idle " + visFail); else if (y0 <= 10) bad.Add(id + ": no picture before a run");
@@ -84,7 +84,7 @@ namespace AdeeboMeter
                     case "encrypt": return VisCrypt(g, x, y, w, st, true);
                     case "decrypt": return VisCrypt(g, x, y, w, st, false);
                     case "ping": case "tcpping": return VisPing(g, x, y, w, st);
-                    case "dig": return VisDig(g, x, y, w, st);
+                    case "dig": return DeepExchange(g, x, y, w, st);
                     case "http": return VisHttp(g, x, y, w, st);
                     case "speedtest": return VisSpeed(g, x, y, w, st);
                     case "subnet": return VisSubnet(g, x, y, w, st);
@@ -366,28 +366,6 @@ namespace AdeeboMeter
         }
 
         // ================================================================== dig: who your PC asks, and who they ask
-        float VisDig(Graphics g, float x, float y, float w, string state)
-        {
-            var a = VisIn(); string name = a[0] != "" ? a[0] : "example.com", type = a[1] != "" ? a[1].ToUpperInvariant() : "A";
-            if (type == "TRACE") type = "A";
-            string server = a[2] != "" ? a[2] : L.T("Your DNS server"); if (server.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) server = "DoH " + server.Substring(8).Split('/')[0];
-            string ans = L.T("the answer"), ms = "";
-            var rs = VisRows(); var first = rs.FirstOrDefault(o => o[0] == "0" || o[0] == "2");
-            if (first != null) { string v = first[2]; int k = v.IndexOf(" · ", StringComparison.Ordinal); ans = first[0] == "2" ? L.T("no answer") : Draw.Trunc(k > 0 ? v.Substring(0, k) : v, 34); }
-            double t = VNum(VisText(), @"([0-9]+)\s*ms"); if (!double.IsNaN(t)) ms = t.ToString("0", CultureInfo.InvariantCulture) + " ms";
-            string zone = name.Contains(".") ? name.Substring(name.LastIndexOf('.')) : ".com";
-            // packets back and forth (FullView.Visuals3.cs): the full walk the first time a name is asked
-            var st = new List<XStep> {
-                X(0, 1, type + " " + L.T("for") + " " + name + "?", "DNS · UDP 53", double.NaN),
-                X(1, 2, L.T("who knows") + " " + name + "?", L.T("the root, then") + " " + zone, double.NaN),
-                X(2, 1, L.T("ask its own servers"), L.T("a referral, not the answer"), double.NaN),
-                X(1, 3, type + " " + L.T("for") + " " + name + "?", L.T("to the name's own servers"), double.NaN),
-                X(3, 1, ans, L.T("the answer, with how long to keep it (TTL)"), double.NaN),
-                X(1, 0, ans, L.T("kept until its TTL runs out"), double.IsNaN(t) ? double.NaN : t) };
-            if (first != null && first[0] == "2") { st[4].Lv = 2; st[5].Lv = 2; }
-            return ExchangeCard(g, x, y, w, state, "WHO ASKS WHOM - A NAME BECOMES AN ADDRESS", new[] { L.T("This PC"), Draw.Trunc(server, 22), L.T("Root and") + " " + zone, Draw.Trunc(name, 18) + L.T("'s servers") }, st,
-                (ms != "" ? L.T("Answered in") + " " + ms + ". " : "") + L.T("Usually the server already remembers the answer and skips the middle steps - that's why repeat lookups take 1-2 ms."));
-        }
 
         // ================================================================== HTTP and TLS: the handshake, then the page
         float VisHttp(Graphics g, float x, float y, float w, string state)

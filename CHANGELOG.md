@@ -14,6 +14,18 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: tool pictures (fifth wave) - and wave 3's exchanges, from the whole result
+- dig, DoH, DHCP, NTP, ARP and address conflicts, RADIUS/TACACS+ and HTTP timing now carry every value of the result: each record
+  and TTL (signed or not), the DNS server DoH really uses, gateway and DNS from the lease plus IPv6, stratum and offset, each conflict
+  with the other device's MAC, which share of a page load was biggest.
+- Roads: who carries your traffic (a colour per network), the hop where the game delay starts, the way out vs the way back.
+- Races: cloud regions, two DNS servers, with and without the VPN, a console's four legs.
+- Staircases: how far a PC got joining the network, IPv6 readiness - the step it stopped on in red.
+- Tiles: open ports, your sites, the doors open on this PC (open to the network vs this PC only), shares, Group Policies.
+- Certificates, CSRs, PFX files and key matches as ID cards with a validity bar and today on it; what changed since a snapshot.
+- Exchanges: routing protocols heard on the segment, your gateway, DNS hijack and VPN name rules, an ICMP message explained,
+  finding the domain controller, the firewall and an app, where Windows looks first (hosts file).
+
 ### New: tool pictures (fourth wave) - every protocol, talking
 - 50 more tools show their exchange packet by packet: mail and SMTP delivery, SSH banner, STUN and Teams NAT, LDAP, RDP, DHCP options,
   ICMP/UDP/TCP senders, HTTP requests, TWAMP, DSCP marks, Wake-on-LAN, proxy/PAC, VPN leaks, IPv6 ping and router adverts, mDNS/SSDP,

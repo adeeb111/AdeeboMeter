@@ -21,14 +21,9 @@ namespace AdeeboMeter
 
         float Wave3(Graphics g, float x, float y, float w, string st)
         {
+            if (Deep3.Contains(tbSel)) return DeepExchange(g, x, y, w, st);
             switch (tbSel)
             {
-                case "httptime": return VisHttpTime(g, x, y, w, st);
-                case "doh": return VisDoh(g, x, y, w, st);
-                case "dhcp": return VisDhcp(g, x, y, w, st);
-                case "dupip": case "arpwho": return VisArpClash(g, x, y, w, st);
-                case "ntp": return VisNtp(g, x, y, w, st);
-                case "radius": case "tacacs": return VisAaa(g, x, y, w, st);
                 case "dnsrace": case "ip46": case "gamecompare": case "allips": return VisRace(g, x, y, w, st);
                 case "bloat": return VisQueue(g, x, y, w, st);
                 case "lag": return VisBlame(g, x, y, w, st);
@@ -105,80 +100,6 @@ namespace AdeeboMeter
             return r.Bottom + 14 * S;
         }
 
-        // ---------- HTTP timing: name, connection, lock, question, answer - each with its share of the time
-        float VisHttpTime(Graphics g, float x, float y, float w, string st)
-        {
-            var a = VisIn(); string host = a[0] != "" ? Regex.Replace(a[0], @"^[a-z]+://", "", RegexOptions.IgnoreCase).Split('/', ':')[0] : "example.com";
-            double dns = RowMs(Big("DNS")), con = RowMs(Big("Connect")), tls = RowMs(Big("TLS")), fb = RowMs(Big("First byte"));
-            var steps = new List<XStep> {
-                X(0, 1, L.T("where is") + " " + host + "?", "DNS · UDP 53", double.NaN), X(1, 0, L.T("its address"), "DNS answer", dns),
-                X(0, 2, L.T("hello (SYN)"), "TCP 443", double.NaN), X(2, 0, L.T("hello back (SYN-ACK)"), "the connection is open", con),
-                X(0, 2, L.T("TLS hello - name") + ": " + host, "ClientHello", double.NaN), X(2, 0, L.T("certificate + keys"), "ServerHello · TLS", tls),
-                X(0, 2, "GET /", L.T("sealed from here on"), double.NaN), X(2, 0, L.T("first byte of the page"), L.T("after the server thought about it"), fb) };
-            foreach (var s in steps.Skip(4)) s.Sealed = true;
-            return ExchangeCard(g, x, y, w, st, "ONE PAGE LOAD, PACKET BY PACKET", new[] { L.T("This PC"), L.T("DNS server"), host }, steps,
-                "Repeat tries usually skip the first two steps - the name is remembered. A slow first byte is the server thinking, not your line.");
-        }
-        // ---------- encrypted DNS: the same question on a postcard, and sealed in an envelope
-        float VisDoh(Graphics g, float x, float y, float w, string st)
-        {
-            string res = Big("Encrypted DNS"); bool on = res != "" && res.IndexOf("uses", StringComparison.OrdinalIgnoreCase) >= 0 && res.IndexOf("not", StringComparison.OrdinalIgnoreCase) < 0;
-            var steps = new List<XStep> {
-                X(0, 2, L.T("where is example.com?"), L.T("plain DNS · UDP 53 - readable on the way"), double.NaN),
-                X(2, 0, L.T("its address"), L.T("readable - and changeable - on the way"), double.NaN),
-                new XStep { From = 0, To = 2, Label = L.T("(sealed question)"), Detail = L.T("DNS over HTTPS · TCP 443 - the network sees only that you asked"), Sealed = true },
-                new XStep { From = 2, To = 0, Label = L.T("(sealed answer)"), Detail = L.T("nobody on the way can read or change it"), Sealed = true } };
-            steps[0].Lv = steps[1].Lv = 1;
-            return ExchangeCard(g, x, y, w, st, on ? "YOUR PC ASKS IN A SEALED ENVELOPE" : "A POSTCARD AND A SEALED ENVELOPE", new[] { L.T("This PC"), L.T("Wi-Fi, provider - on the way"), L.T("DNS server") }, steps,
-                "The first two are plain DNS: anyone on the way sees every name you look up. The last two are encrypted DNS (DoH/DoT).");
-        }
-        // ---------- DHCP: Discover, Offer, Request, Ack - how a PC gets its address
-        float VisDhcp(Graphics g, float x, float y, float w, string st)
-        {
-            string lease = Big("IPv4 lease"); string ip = lease != "" ? lease.Split(' ')[0] : "192.168.1.20";
-            var steps = new List<XStep> {
-                new XStep { From = 0, To = 1, Label = L.T("Discover: can anyone give me an address?"), Detail = L.T("broadcast to everyone · UDP 68 → 67"), All = true },
-                X(1, 0, L.T("Offer") + ": " + ip, L.T("with a mask, a gateway and DNS servers"), double.NaN),
-                X(0, 1, L.T("Request: yes please,") + " " + ip, L.T("still broadcast - other servers learn it's taken"), double.NaN),
-                X(1, 0, L.T("Ack: it's yours"), lease != "" ? lease : L.T("for a lease time - renewed at half time"), double.NaN) };
-            return ExchangeCard(g, x, y, w, st, "HOW THIS PC GOT ITS ADDRESS (DORA)", new[] { L.T("This PC"), L.T("DHCP server (your router)") }, steps,
-                "Halfway through the lease the PC quietly asks to keep it. No answer by the end, and it falls back to a 169.254 address - no internet.");
-        }
-        // ---------- ARP and address clashes: "who has this address?" - and two answers
-        float VisArpClash(Graphics g, float x, float y, float w, string st)
-        {
-            string me = Big("Your address now"); if (me == "") me = VisIn()[0] != "" ? VisIn()[0] : "192.0.2.37";
-            var other = VisRows().FirstOrDefault(o => Regex.IsMatch(o[1], @"^\d")); string mac = other != null ? Regex.Match(other[2], @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value : "00-00-5E-00-53-12";
-            bool clash = tbSel == "dupip";
-            var steps = new List<XStep> {
-                new XStep { From = 0, To = 2, Label = L.T("who has") + " " + me + "?", Detail = L.T("ARP · broadcast to every device here"), All = true },
-                X(1, 0, clash ? L.T("me!") + " " + mac : L.T("me - here's my MAC address"), clash ? L.T("another device answers for YOUR address") : "ARP reply", double.NaN) };
-            if (clash) { steps[1].Lv = 2; steps.Add(X(0, 1, L.T("conflict - Windows warns and may stop using it"), L.T("usually a device with a fixed address inside the router's range"), double.NaN)); steps[2].Lv = 2; }
-            return ExchangeCard(g, x, y, w, st, clash ? "TWO DEVICES, ONE ADDRESS" : "ASKING THE NETWORK WHO HAS AN ADDRESS", new[] { L.T("This PC"), clash ? L.T("another device") : L.T("the device"), L.T("everyone else") }, steps,
-                clash ? "Fix it by giving the other device an address outside the router's DHCP range, or a reservation." : "ARP turns an IP address into a MAC address - only on your own network; beyond the router it's the router's job.");
-        }
-        // ---------- NTP: four timestamps, and how far your clock is off
-        float VisNtp(Graphics g, float x, float y, float w, string st)
-        {
-            string ans = Big("Time server"), clock = Big("Your clock"); double ms = RowMs(ans);
-            var steps = new List<XStep> {
-                X(0, 1, L.T("what time is it? (sent at T1)"), "NTP · UDP 123", double.NaN),
-                X(1, 0, L.T("got it at T2, answered at T3"), ans != "" ? ans : L.T("stratum = how far from an atomic clock"), ms),
-                X(0, 0, L.T("arrived at T4 - offset = ((T2-T1) + (T3-T4)) / 2"), clock != "" ? clock : L.T("the trip is cancelled out"), double.NaN) };
-            return ExchangeCard(g, x, y, w, st, "ASKING A TIME SERVER", new[] { L.T("This PC"), L.T("Time server") }, steps,
-                "Sign-ins, certificates and logs break when the clock is more than a few minutes off - Kerberos allows 5.");
-        }
-        // ---------- RADIUS / TACACS+: is the server there?
-        float VisAaa(Graphics g, float x, float y, float w, string st)
-        {
-            bool rad = tbSel == "radius"; string res = rad ? Big("RADIUS") : Big("TACACS+"); string srv = VisIn()[0] != "" ? VisIn()[0] : rad ? "192.0.2.30" : "192.0.2.31"; double ms = RowMs(res);
-            List<XStep> steps;
-            if (rad) steps = new List<XStep> { X(0, 1, L.T("Access-Request: a test name"), "UDP 1812 · signed with the shared secret", double.NaN), X(1, 0, res.Contains("Accept") ? "Access-Accept" : "Access-Reject", L.T("any answer means it's alive - a reject is fine for a test name"), ms) };
-            else steps = new List<XStep> { X(0, 1, L.T("hello (SYN)"), "TCP 49", double.NaN), X(1, 0, L.T("hello back (SYN-ACK)"), L.T("it accepts connections - the server is there"), ms), X(0, 1, L.T("(no sign-in sent)"), L.T("AdeeboMeter stops here - nothing is tried"), double.NaN) };
-            if (res.IndexOf("no answer", StringComparison.OrdinalIgnoreCase) >= 0 || res.IndexOf("timed out", StringComparison.OrdinalIgnoreCase) >= 0) steps[1].Lv = 2;
-            return ExchangeCard(g, x, y, w, st, rad ? "A RADIUS SERVER, ASKED" : "A TACACS+ SERVER, KNOCKED ON", new[] { L.T("This PC"), srv }, steps,
-                rad ? "No answer at all usually means a wrong shared secret (the server ignores you) or a firewall - not a down server." : "TACACS+ runs over TCP, so 'is it there' is just a handshake.");
-        }
 
         // ================================================================== races: packets out and back, side by side
         float VisRace(Graphics g, float x, float y, float w, string st)
@@ -193,6 +114,12 @@ namespace AdeeboMeter
                 default: cap = "THE SAME GAME, SIDE BY SIDE"; foreach (var o in VisRows().Where(o => o[2].Contains(" ms") || Regex.IsMatch(o[2], @":\s*\d+ ms"))) { double m1 = VNum(o[2], @":\s*([0-9.]+)\s*ms"), p95 = VNum(o[2], @"95%\s*([0-9.]+)"); if (!double.IsNaN(m1)) lanes.Add(Tuple.Create(o[1], m1, p95, o[0] == "1" ? 1 : 0)); } break;
             }
             if (lanes.Count == 0) lanes = tbSel == "ip46" ? new List<Tuple<string, double, double, int>> { Tuple.Create("IPv4", 21.0, double.NaN, 0), Tuple.Create("IPv6", 19.0, double.NaN, 0) } : new List<Tuple<string, double, double, int>> { Tuple.Create(L.T("your DNS"), 8.0, 30.0, 0), Tuple.Create("1.1.1.1", 12.0, 24.0, 0), Tuple.Create("8.8.8.8", 14.0, 40.0, 0) };
+            return RaceCard(g, x, y, w, st, cap, lanes, tbSel == "dnsrace" ? "Blue: a name the server already knows (its memory). Purple: a new name it has to look up. Shorter is faster." : tbSel == "gamecompare" ? "Blue: the usual ping. Purple: the worst 5% - what you feel as lag. Steadier wins, not just lower." : "Each dot goes there and back; the first one home is the fastest.");
+        }
+
+        // lanes racing: a packet out and back on each, the fastest home first (wave 3's races, and wave 5's DNS, cloud, VPN, legs)
+        static float RaceCard(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, double, double, int>> lanes, string foot)
+        {
             bool two = lanes.Any(l => !double.IsNaN(l.Item3));
             var r = VisCard(g, x, y, w, 60 * S + lanes.Count * 40 * S + 56 * S, cap, st);
             float nx = r.X + 18 * S, lx = r.X + 210 * S, lw = r.Width - 340 * S, ly = r.Y + 48 * S; double max = lanes.Max(l => Math.Max(l.Item2, double.IsNaN(l.Item3) ? 0 : l.Item3)) * 1.1; if (double.IsNaN(max) || max <= 0) max = 50;
@@ -217,7 +144,7 @@ namespace AdeeboMeter
                 ly += 40 * S;
             }
             g.SmoothingMode = sm;
-            VFoot(g, r, tbSel == "dnsrace" ? "Blue: a name the server already knows (its memory). Purple: a new name it has to look up. Shorter is faster." : tbSel == "gamecompare" ? "Blue: the usual ping. Purple: the worst 5% - what you feel as lag. Steadier wins, not just lower." : "Each dot goes there and back; the first one home is the fastest.");
+            VFoot(g, r, foot);
             return r.Bottom + 14 * S;
         }
 
