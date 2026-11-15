@@ -18,8 +18,8 @@ namespace AdeeboMeter
         static readonly HashSet<string> Pictured6 = new HashSet<string> {
             "timeline", "winupdate", "changed", "usb", "rushhour", "besttime", "sixmonths", "wakeup", "dltime", "leaks", "gpu", "bg", "certs", "pressure", "disk",
             "capfc", "month", "svcfail", "events", "winev", "drivers", "bluetooth", "prematch", "tonight", "keys", "newkey", "recipients", "selfsigned", "csrmake",
-            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr" };
-        static readonly HashSet<string> Moving6 = new HashSet<string> { "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
+            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr", "marketopen", "board", "golive" };
+        static readonly HashSet<string> Moving6 = new HashSet<string> { "board", "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
         static readonly string[] DotSep6 = { " · " };
 
         float Wave6(Graphics g, float x, float y, float w, string st)
@@ -78,7 +78,7 @@ namespace AdeeboMeter
                     return Forecast(g, x, y, w, st);
 
                 // ---------------------------------------------------------------- tiles: facts, devices, a checklist
-                case "month": case "svcfail": case "events": case "winev": case "drivers": case "bluetooth": case "prematch":
+                case "marketopen": case "month": case "svcfail": case "events": case "winev": case "drivers": case "bluetooth": case "prematch":
                     {
                         var t = new List<string[]>(); string grp = ""; string cap;
                         foreach (var o in VisRows().Where(o => o.Length > 2))
@@ -87,8 +87,24 @@ namespace AdeeboMeter
                             if (tbSel == "month" && o[1] == "Compared with September") { t.Add(new[] { o[1], o[2], o[0], L.T("AGAINST LAST MONTH") }); continue; }
                             t.Add(new[] { o[1], P(o[2], 0) + (P(o[2], 1) != "" ? " · " + P(o[2], 1) : ""), o[0], tbSel == "drivers" || tbSel == "bluetooth" ? grp : "" });
                         }
-                        cap = tbSel == "month" ? Or(VisRows().Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "YOUR MONTH") : tbSel == "svcfail" ? "SERVICES THAT FAILED TO START" : tbSel == "events" || tbSel == "winev" ? "WHAT WINDOWS WROTE DOWN" : tbSel == "drivers" ? "DEVICES, DRIVERS AND USB" : tbSel == "bluetooth" ? "BLUETOOTH" : Or(P(RV("Ready to play"), 0), "READY TO PLAY?").ToUpperInvariant();
+                        cap = tbSel == "marketopen" ? Or(RV("Market-open check"), "MARKET-OPEN CHECK") : tbSel == "month" ? Or(VisRows().Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "YOUR MONTH") : tbSel == "svcfail" ? "SERVICES THAT FAILED TO START" : tbSel == "events" || tbSel == "winev" ? "WHAT WINDOWS WROTE DOWN" : tbSel == "drivers" ? "DEVICES, DRIVERS AND USB" : tbSel == "bluetooth" ? "BLUETOOTH" : Or(P(RV("Ready to play"), 0), "READY TO PLAY?").ToUpperInvariant();
                         return Tiles(g, x, y, w, st, cap.ToUpperInvariant(), t, tbSel == "prematch" ? Or(RRow("Ready to play") != null && RRow("Ready to play").Length > 3 ? RRow("Ready to play")[3] : "", "Amber is worth fixing before the match.") : "Red needs you; amber is worth a look; the rest is for the record.");
+                    }
+                case "board":
+                    {
+                        var lanes = res.Where(o => o[1].Contains(":") && o[1] != "Up right now").Select(o => Tuple.Create(o[1], RowMs(o[2]), VNum(o[2], @"max\s*([0-9.]+)"), Lv(o))).ToList();
+                        foreach (var o in res.Where(o => Lv(o) == 2 && o[1].Contains(":"))) lanes.RemoveAll(l => l.Item1 == o[1]);
+                        var down = res.Where(o => Lv(o) == 2 && o[1].Contains(":")).Select(o => o[1]).ToList();
+                        return RaceCard(g, x, y, w, st, "SERVICE BOARD - " + Or(RV("Up right now"), "").ToUpperInvariant() + " UP", lanes, down.Count > 0 ? L.T("Down:") + " " + string.Join(", ", down.ToArray()) : "Blue: the average handshake. Purple: the slowest of 5 tries. Every service answered.");
+                    }
+                case "golive":
+                    {
+                        var bars = new List<Tuple<string, double, string, int>>(); double kb = VNum(RV("Your bitrate"), @"([0-9.]+)");
+                        var u = RRow("Your upload"); if (u != null) bars.Add(Tuple.Create(L.T("Your upload"), VNum(u[2], @"([0-9.]+)\s*Mbps") * 1000, P(u[2], 0), Lv(u)));
+                        var sf = RRow("Safe bitrate"); if (sf != null) bars.Add(Tuple.Create(L.T("Safe bitrate"), VNum(sf[2], @"([0-9.]+)"), "", Lv(sf)));
+                        if (!double.IsNaN(kb)) bars.Add(Tuple.Create(L.T("Your bitrate"), kb, "", RLv("Your bitrate")));
+                        var iu = RRow("Upload in use"); if (iu != null) bars.Add(Tuple.Create(L.T("Already uploading"), VNum(iu[2], @"([0-9.]+)") * 1000, "", Lv(iu)));
+                        return Bars(g, x, y, w, st, Or(RV("Go-live check"), "GO-LIVE CHECK").ToUpperInvariant(), bars, "kbps", kb, Or(res.Where(o => o[1].EndsWith(" ingest", StringComparison.Ordinal)).Select(o => o[1] + ": " + o[2]).FirstOrDefault(), "The line is your bitrate. Your upload should be about 1.5x it."));
                     }
                 case "tonight":
                     {

@@ -1105,3 +1105,32 @@ in: 75|barrel|litre|CAD
 in: 64|40 ms|2
 0|You see the game|51 ms late = 3.3 ticks behind||i
 3|One tick|15.6 ms at 64 Hz||i
+
+== marketopen
+in: mybroker.example.com
+1|Market-open check|CAREFUL - 2 things to fix first|AdeeboMeter only checks - it never trades, closes or changes anything.|i
+0|Connection|cable||w
+0|Your router|1.8 ms||m
+1|Background|OneDrive is syncing|Pause it - it can start a big transfer any second.|w
+0|Broker mybroker.example.com|24 ms average · jitter 3.1 ms · worst 31 ms · 0 of 10 lost||m
+1|Clock|1.9 s slow|Order and fill times are stamped by this clock - fix it in Settings > Time > Sync now.|m
+0|This PC's traffic|0.3 down · 0.1 up (Mbps)|Quiet.|w
+
+== board
+in: nas.local:445, mail.example.com:587, 192.0.2.10:22, intranet.example.net:443
+1|Up right now|3 of 4|TCP handshakes only - connect, time it, close.|m
+0|nas.local:445|1.2 ms · min 0.9 ms · max 1.6 ms||m
+0|mail.example.com:587|28 ms · min 25 ms · max 33 ms||m
+1|192.0.2.10:22|61 ms · min 12 ms · max 210 ms · 1 of 5 lost||m
+2|intranet.example.net:443|down - no answer to 5 tries||m
+
+== golive
+in: 6000|Twitch
+1|Go-live check|1 thing to fix first|AdeeboMeter only checks - it never changes OBS or closes anything.|i
+0|Connection|cable||w
+0|Your router|1.6 ms||m
+0|Your upload|11.2 Mbps (measured 19:42)||m
+0|Your bitrate|6000 kbps||u
+0|Safe bitrate|7800 kbps|Your bitrate fits.|i
+1|Upload in use now|2.4 Mbps|Something on this PC is already uploading (a backup, cloud sync) - it competes with the stream.|w
+0|Twitch ingest|18 ms · jitter 1.2 ms||m

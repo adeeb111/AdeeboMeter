@@ -93,7 +93,7 @@ namespace AdeeboMeter
         }
 
         // ---------- before you queue: what could spoil the match right now. Suggestions only - nothing is closed for you.
-        static readonly string[][] Updaters = { new[] { "TiWorker", "Windows Update is installing" }, new[] { "MoUsoCoreWorker", "Windows Update is working" }, new[] { "OneDrive", "OneDrive is running (it syncs in the background)" }, new[] { "steamwebhelper", "" }, new[] { "EpicGamesLauncher", "Epic Games Launcher is open (it downloads updates)" }, new[] { "Battle.net", "Battle.net is open (it downloads updates)" }, new[] { "Dropbox", "Dropbox is running" }, new[] { "GoogleDriveFS", "Google Drive is syncing" }, new[] { "qbittorrent", "a torrent program is open" }, new[] { "utorrent", "a torrent program is open" } };
+        internal static readonly string[][] Updaters = { new[] { "TiWorker", "Windows Update is installing" }, new[] { "MoUsoCoreWorker", "Windows Update is working" }, new[] { "OneDrive", "OneDrive is running (it syncs in the background)" }, new[] { "steamwebhelper", "" }, new[] { "EpicGamesLauncher", "Epic Games Launcher is open (it downloads updates)" }, new[] { "Battle.net", "Battle.net is open (it downloads updates)" }, new[] { "Dropbox", "Dropbox is running" }, new[] { "GoogleDriveFS", "Google Drive is syncing" }, new[] { "qbittorrent", "a torrent program is open" }, new[] { "utorrent", "a torrent program is open" } };
         public static List<string[]> PreMatch(Monitor m, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var s = m.Latest; int warn = 0;

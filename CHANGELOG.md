@@ -14,6 +14,14 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: for traders, server people and streamers
+- Market-open check (GO / CAREFUL / HOLD): 10 timed connections to your broker (average, jitter, worst, lost), your clock against
+  a time server (order and fill times), the router, this PC's traffic, updaters and sync apps - shown as a board of tiles.
+- Service board: your hosts and ports (or your pinned sites), 5 timed handshakes each - racing lanes, the down ones named.
+- Ready to stream? (go-live check): your measured upload against your bitrate, the safe bitrate (about 70% of the upload), what's
+  already uploading, and the Twitch / YouTube / Kick ingest server's handshake time - bars with your bitrate as the line.
+- New motto: Know what's wrong. Show anyone.
+
 ### New: take any picture with you - Save, Copy, phone, Bluetooth
 - Under every tool picture: Save picture (PNG with a "made with AdeeboMeter" footer), Copy picture (paste into a chat or a mail),
   Open on my phone and Send by Bluetooth.
