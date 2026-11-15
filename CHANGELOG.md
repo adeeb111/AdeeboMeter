@@ -14,6 +14,17 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Sidebar icon cache is freed when the theme changes.
 - Self-test: every Toolbox tool must belong to a question, and every question must show tools.
 
+### New: tool pictures (sixth wave) - over time, the PC, keys
+- Timelines: what happened before it broke (the break red, the first suspect amber), updates and what came after, this week's
+  changes, what a USB device did - a cursor walks them in order.
+- Bars: the slowest hour of each day against your usual, best and worst hours to play, six months month by month, wake-ups by day,
+  download time at your real speeds, what keeps growing, GPU per app, background jobs, certificates and their days left (30-day line).
+- Gauges for memory, disk and heat; a forecast line that shows the day this month's data reaches your cap.
+- Tiles for your month, failed services, Windows' own evidence, drivers and USB history, Bluetooth, the pre-match checklist.
+- Keys as two halves (private stays, public travels - to your recipients, your CA, the clients that trust it); a file's fingerprint
+  as colours; PEM vs DER, two certificate chains, before/after and two PCs side by side with the differences marked.
+- Which game plays best right now races; the ISP report shows the three hops a provider cares about.
+
 ### New: tool pictures (fifth wave) - and wave 3's exchanges, from the whole result
 - dig, DoH, DHCP, NTP, ARP and address conflicts, RADIUS/TACACS+ and HTTP timing now carry every value of the result: each record
   and TTL (signed or not), the DNS server DoH really uses, gateway and DNS from the lease plus IPv6, stratum and offset, each conflict
