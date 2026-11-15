@@ -384,6 +384,7 @@ namespace AdeeboMeter
                 if (weekBmp != null) { weekBmp.Dispose(); weekBmp = null; }
                 // WinForms makes a small copy of the window icon for each window; resetting the icon releases it now, not "someday".
                 try { ShowIcon = false; Icon = null; } catch { }
+                ReleaseExtras();   // the picture animation, calculator, journey, lab, replay and switch timers, and cached bitmaps (FullView.Export.cs)
                 Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); FreezeCard.Hide(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
                 try { if (tip.IsHandleCreated) tip.Close(); } catch { } tip.Dispose(); live.Dispose(); list.ReleaseAll(); procs = new List<AppStat>(); pinResults = null;
                 foreach (var l in subBtns.Values) foreach (var c in l) if (!c.IsDisposed) c.Dispose(); subBtns.Clear(); connSnap = new List<Conn>(); treeRows = null; treeBy = null; svcs = null; startups = null; realPkts = null; realDecode = null; chatPkts = null; learnPkts = null; m365Rows = null; routeTable = null; travelDest = null; guideRun = null; replayDay = null; if (tbRun0 != null) tbRun0.Stop = true; mtuHops = null; mtrHops = null; tbRows = null; if (replayBmp != null) { replayBmp.Dispose(); replayBmp = null; } };

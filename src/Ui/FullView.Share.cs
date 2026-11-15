@@ -28,18 +28,18 @@ namespace AdeeboMeter
         {
             var s = M.Latest; var now = DateTime.Now; var c = CultureInfo.InvariantCulture;
             var mins = Cases.Minutes(now.AddMinutes(-30), now); var wifi = mins.Wifi.Where(z => !double.IsNaN(z) && z > 0).ToList();
-            string link = mins.T.Count == 0 ? "" : wifi.Count == 0 ? "c" : "w";
+            string kindNow; lock (M.L) kindNow = M.AdapterKind ?? ""; string link = kindNow.IndexOf("Wi", StringComparison.OrdinalIgnoreCase) >= 0 ? "w" : kindNow == "LAN" ? "c" : "";   // the connection now, not the last 30 minutes
             var lv = new StringBuilder().Append(Math.Max(0, Math.Min(3, s.Level))); for (int i = 0; i < 5; i++) lv.Append(i < s.Path.Length ? Math.Max(0, Math.Min(3, s.Path[i])) : 3);
             int outs = 0; try { outs = Outages.Last(M, 1).Count; } catch (Exception e) { if (e is OutOfMemoryException) throw; }
-            string nums = string.Join(",", new[] { QrNum(s.GwMs, 0), QrNum(s.Ping, 0), QrNum(s.Jitter, 1), QrNum(s.LossPct, 1), QrNum(s.DnsMs, 0), QrNum(s.Down, 1), QrNum(s.Up, 1), QrNum(s.Cpu, 0), QrNum(s.Mem, 0), wifi.Count > 0 ? QrNum(wifi[wifi.Count - 1], 0) : "", outs.ToString(c), link });
+            string nums = string.Join(",", new[] { QrNum(s.GwMs, 0), QrNum(s.Ping, 0), QrNum(s.Jitter, 1), QrNum(s.LossPct, 1), QrNum(s.DnsMs, 0), QrNum(s.Down, 1), QrNum(s.Up, 1), QrNum(s.Cpu, 0), QrNum(s.Mem, 0), link == "w" && wifi.Count > 0 ? QrNum(wifi[wifi.Count - 1], 0) : "", outs.ToString(c), link });
             var net = new StringBuilder(); foreach (var v in s.NetHist.Skip(Math.Max(0, s.NetHist.Length - 30))) net.Append(QrMs(v));
             var gw = new StringBuilder(); var lo = new StringBuilder();
-            for (int i = Math.Max(0, mins.T.Count - 30); i < mins.T.Count; i++) { gw.Append(QrMs(mins.Gw[i])); lo.Append(double.IsNaN(mins.Loss[i]) ? '0' : QrAlpha[(int)Math.Max(0, Math.Min(63, Math.Round(mins.Loss[i])))]); }
+            for (int i = Math.Max(0, mins.T.Count - 30); i < mins.T.Count; i++) { gw.Append(QrMs(mins.Gw[i])); lo.Append(double.IsNaN(mins.Loss[i]) ? '-' : QrAlpha[(int)Math.Max(0, Math.Min(63, Math.Round(mins.Loss[i])))]); }
             string head = OverTime.NoAddr(GameSession.Redact(s.Headline ?? "", "")); head = Regex.Replace(head, @"[^\w .,%'()-]", "").Trim().Replace(' ', '+');
-            string body = "1!" + now.ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!";
+            string body = "1!" + now.ToUniversalTime().ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!";
             // the QR holds at most Qr.MaxBytes: the headline gives way first, then the oldest of each series
             int room = Qr.MaxBytes - QrSite.Length - body.Length; if (room < head.Length) head = room > 8 ? head.Substring(0, room) : "";
-            while (QrSite.Length + body.Length + head.Length > Qr.MaxBytes && net.Length > 10) { net.Remove(0, 1); if (gw.Length > 10) { gw.Remove(0, 1); lo.Remove(0, 1); } body = "1!" + now.ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!"; }
+            while (QrSite.Length + body.Length + head.Length > Qr.MaxBytes && net.Length > 10) { net.Remove(0, 1); if (gw.Length > 10) { gw.Remove(0, 1); lo.Remove(0, 1); } body = "1!" + now.ToUniversalTime().ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!"; }
             return QrSite + body + head;
         }
         List<string[]> QrRows()
@@ -55,7 +55,7 @@ namespace AdeeboMeter
         void ShowQr(string text)
         {
             var m = Qr.Encode(text); if (m == null) return;
-            int px = Math.Max(4, (int)(6 * S));
+            int px = Math.Max(4, (int)(6 * S)); var wa = Screen.FromControl(this).WorkingArea; int fit = (Math.Min(wa.Width, wa.Height) - Sc(140)) / (m.GetLength(0) + 8); if (fit >= 2 && fit < px) px = fit;   // a dense code on a small screen still fits
             using (var bmp = Qr.Picture(m, px))
             using (var f = new Form { Text = L.T("Scan with your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Color.White, ShowInTaskbar = false })
             using (var pb = new PictureBox { Image = bmp, SizeMode = PictureBoxSizeMode.AutoSize, Location = new Point(Sc(16), Sc(16)) })

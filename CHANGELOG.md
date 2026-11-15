@@ -6,6 +6,18 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### Fixed: QA round 2 (F001-F083)
+- Closing a full window now stops and frees its timers and pictures - repeated opens no longer pile up GDI/USER objects or memory.
+- Phone page: a broken link shows a message instead of a blank page; times are sent in UTC and shown in the phone's own time, with "the PC's clock is ahead" when it is; unknown values say "not measured" instead of a guess; Copy has a fallback and only says "Copied" when it worked; Save image only appears with a picture, and failed shares fall back to a download.
+- Phone link: long results keep the start and end of a path and say how many rows were left out; advice travels with each row.
+- Saving files: written to a temporary file first, then swapped in - a crash never leaves half a file; file names carry seconds.
+- Board watching: "off" only stops; bad intervals and more than 16 hosts are reported; stopping mid-run logs nothing.
+- Uptime uses a true median and never rounds to 100 % while failures exist; the certificate calendar keeps the port and counts days to the exact expiry.
+- Server change tracker checks the port you asked for and never saves an outage as the new normal.
+- Market-open and go-live checks count an unknown clock, upload or ingest host as a warning, not a pass.
+- OBS link tolerates any spacing, checks each answer, and can be stopped.
+- Addresses: [IPv6]:port and scheme default ports (https, ssh, rdp, rtmp...) are understood.
+
 ### Fixed: tester audit, round 1
 - Sidebar: with many tabs on a short screen or at 150-200 % scaling, rows get compact and the rest goes behind a "More... (n)" row - nothing is cut off.
 - Toolbox search box never grows wider than the page (narrow windows, high scaling), on first show and on resize.

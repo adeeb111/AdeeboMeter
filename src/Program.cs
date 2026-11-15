@@ -116,7 +116,7 @@ namespace AdeeboMeter
         public const string Version = "1.1.5";
         public const string FileVersion = "1.1.5.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
-        public const string Tagline = "know what's wrong. Show anyone.";
+        public const string Tagline = "Know what's wrong. Show anyone.";
         public static int ForceTheme = -1;
         public static string StartView, StartTip, StartDest;   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes

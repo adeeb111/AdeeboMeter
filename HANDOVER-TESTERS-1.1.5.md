@@ -9,7 +9,8 @@ round, and what only a real Windows PC can prove. Automated tests already pass h
 
 ## 1. Start in 5 minutes
 
-1. Get the build from Adeeb (a zip - unzip it, run `AdeeboMeter.exe`; no admin needed, nothing installs).
+1. Get the build from Adeeb (a zip - unzip it, run `AdeeboMeter.exe`; no admin needed). On first start it asks
+   **Install** or **Just run it from here** - choose **Just run it from here** so the test build stays in its folder.
 2. On first start it sits in the bottom-right corner. Click the tray icon to open the full window.
 3. Every tool has an **Example** button: it fills made-up data so you see the picture and result without touching the network.
    Then press **Run** for the real thing.
@@ -36,8 +37,7 @@ cloud regions), hop-by-hop roads, staircases (joining a network, IPv6), tiles, g
 - [ ] **Save picture ...** offers PNG, draw.io diagram (.drawio), JSON and CSV. Open the .drawio at app.diagrams.net - boxes
       and arrows should be movable. Open the CSV in Excel - columns line up, nothing runs as a formula.
 - [ ] **Copy picture** -> paste into Teams/WhatsApp Web/Word: the picture appears with a small footer.
-- [ ] **Open on my phone**: scan the QR with an iPhone and an Android phone. ⚠ The phone page goes live only after the website
-      is updated from `main` - until Adeeb merges it, the link opens "page not found". Expected on the phone: the same picture
+- [ ] **Open on my phone**: scan the QR with an iPhone and an Android phone. The phone page is live on adeebometer.com. Expected on the phone: the same picture
       redrawn, the result rows, **Copy · Share · Save image · Copy for AI · Save as PDF**.
 - [ ] Do the QR test with the PC's internet **off** (unplug / airplane): the phone still opens the page on its own data.
 - [ ] **Send by Bluetooth**: Windows' Bluetooth window opens and Explorer selects the PNG. Send to another PC and to an

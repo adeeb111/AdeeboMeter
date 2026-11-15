@@ -22,6 +22,23 @@ namespace AdeeboMeter
         static Tuple<string, string[], List<XStep>> PhoneX; static Tuple<string, List<Tuple<string, double, double, int>>> PhoneR;
         static Tuple<string, List<Tuple<string, string, double, string, int>>> PhoneP; static Tuple<string, string, List<Tuple<string, double, string, int>>> PhoneB;
 
+        // everything a closed window must let go of: a running WinForms timer keeps a hidden window (a USER object) and, through
+        // its Tick handler, the whole closed view alive - the QA's "+71 USER, +360 GDI, 128 MB over 30 opens" on real Windows
+        void ReleaseExtras()
+        {
+            foreach (var t in new[] { animTimer, calcTimer, jTimer, labTimer, sparkT, switchTimer }) if (t != null) { t.Stop(); t.Dispose(); }
+            animTimer = calcTimer = null; jTimer = labTimer = sparkT = switchTimer = null;
+            if (qrBmp != null) { qrBmp.Dispose(); qrBmp = null; }
+            foreach (var b in navBmps.Values) b.Dispose(); navBmps.Clear();
+            PhoneX = null; PhoneR = null; PhoneP = null; PhoneB = null; PhoneKind = "";   // statics: don't keep the last view's data alive
+        }
+        // written whole beside the target under a name nobody else uses, then swapped in; never left behind
+        internal static void WriteSafe(string path, string text, bool bom)
+        {
+            string tmp = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path)) ?? ".", "." + Path.GetFileName(path) + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".tmp");
+            try { File.WriteAllText(tmp, text, new UTF8Encoding(bom)); if (File.Exists(path)) File.Replace(tmp, path, null); else File.Move(tmp, path); }
+            finally { try { if (File.Exists(tmp)) File.Delete(tmp); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        }
         // a short note beside the links after a save or a copy
         string barNote = ""; DateTime barAt;
         void Toast(string t) { barNote = t; barAt = DateTime.Now; tbCanvas.Invalidate(); }
@@ -32,12 +49,17 @@ namespace AdeeboMeter
             float lx = x + 4 * S; var col = Theme.Dark ? Theme.BlueDark : Theme.Blue;
             Action<string, string, Action> link = (icon, t, a) =>
             {
-                var ts = g.MeasureString(L.T(t), Draw.fBodyB); Kit.Icon(g, icon, new RectangleF(lx, y + 2 * S, 16 * S, 16 * S), col);
+                var ts = g.MeasureString(L.T(t), Draw.fBodyB); if (lx > x + 4 * S && lx + ts.Width + 24 * S > x + w) { lx = x + 4 * S; y += 26 * S; }
+                Kit.Icon(g, icon, new RectangleF(lx, y + 2 * S, 16 * S, 16 * S), col);
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
-            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
-            if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8) using (var b = new SolidBrush(Theme.LvText(0))) g.DrawString(barNote, Draw.fSmall, b, lx, y + 2 * S);
+            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
+            if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
+            {
+                var ns = g.MeasureString(barNote, Draw.fSmall); if (lx + ns.Width > x + w) { lx = x + 4 * S; y += 26 * S; }
+                using (var b = new SolidBrush(Theme.LvText(0))) g.DrawString(barNote, Draw.fSmall, b, new RectangleF(lx, y + 2 * S, x + w - lx, 40 * S));
+            }
             return y + 30 * S;
         }
 
@@ -76,13 +98,13 @@ namespace AdeeboMeter
         {
             var m = new ContextMenuStrip { Font = Draw.fBody };
             m.Items.Add(L.T("Picture (PNG)"), null, delegate { SavePicture(); });
-            m.Items.Add(L.T("Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box"), null, delegate { SaveText("drawio", "draw.io diagram|*.drawio", DrawIo()); });
-            m.Items.Add(L.T("Data (JSON) - for scripts and other tools"), null, delegate { SaveText("json", "JSON|*.json", Json()); });
-            m.Items.Add(L.T("Data (CSV) - opens in Excel"), null, delegate { SaveText("csv", "CSV|*.csv", Csv()); });
+            m.Items.Add(L.T("Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box"), null, delegate { SaveText("drawio", "draw.io diagram|*.drawio", DrawIo); });
+            m.Items.Add(L.T("Data (JSON) - for scripts and other tools"), null, delegate { SaveText("json", "JSON|*.json", Json); });
+            m.Items.Add(L.T("Data (CSV) - opens in Excel"), null, delegate { SaveText("csv", "CSV|*.csv", Csv); });
             m.Closed += delegate { BeginInvoke((Action)m.Dispose); };
             m.Show(Cursor.Position);
         }
-        void SaveText(string ext, string filter, string text)
+        void SaveText(string ext, string filter, Func<string> make)
         {
             try
             {
@@ -90,7 +112,7 @@ namespace AdeeboMeter
                 using (var d = new SaveFileDialog { Filter = filter, InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + "." + ext })
                 {
                     if (d.ShowDialog(this) != DialogResult.OK) return;
-                    { string tmp = d.FileName + ".new"; File.WriteAllText(tmp, text, new UTF8Encoding(ext == "csv")); if (File.Exists(d.FileName)) File.Replace(tmp, d.FileName, null); else File.Move(tmp, d.FileName); } Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName) + (ext == "drawio" ? " - open it at app.diagrams.net or in draw.io" : ""));
+                    WriteSafe(d.FileName, make(), ext == "csv"); Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName) + (ext == "drawio" ? " - open it at app.diagrams.net or in draw.io" : ""));
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("save " + ext + ": " + e.Message); Toast(L.T("Couldn't save it")); }
@@ -137,13 +159,14 @@ namespace AdeeboMeter
                     break;
                 case "p":
                     {
+                        int prevHop = 0;
                         var hops = PhoneP.Item2; var owners = hops.Select(h => h.Item4).Distinct().ToList(); string[] pal = { "#E8F0FE", "#F1EAFE", "#FFF4D6", "#E6F4EA", "#EEF1F5" };
                         box(PhoneP.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
                         for (int i = 0; i < hops.Count; i++)
                         {
                             var h = hops[i]; double x = 40 + i * 150;
-                            if (i > 0) line("", "endArrow=block;html=1;strokeWidth=3;strokeColor=#B4BDC9;", x - 70, y0 + 60, x + 10, y0 + 60);
-                            box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, y0 + 35, 50, 50);
+                            int me = id; if (i > 0) sb.Append("<mxCell id=\"c" + (id++) + "\" style=\"endArrow=block;html=1;strokeWidth=3;strokeColor=#B4BDC9;\" edge=\"1\" parent=\"1\" source=\"c" + prevHop + "\" target=\"c" + (me + 1) + "\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>");
+                            prevHop = id; box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, y0 + 35, 50, 50);
                             box(h.Item2 + (double.IsNaN(h.Item3) ? "" : "\n" + Nm(h.Item3) + " ms") + "\n" + h.Item4, "rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=" + pal[owners.IndexOf(h.Item4) % pal.Length] + ";strokeColor=none;", x - 20, y0 + 95, 130, 70);
                         }
                         y0 += 190;
@@ -166,11 +189,12 @@ namespace AdeeboMeter
             // the result rows, as a column of cards
             var rows = ResRows(); double ry = y0 + 10;
             if (rows.Count > 0) box(L.T("THE RESULT"), Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry, 300, 20); ry += 26;
+            if (rows.Count > 40) { box((rows.Count - 40) + " " + L.T("more rows not drawn - every row is in the JSON and CSV"), Txt + "fontColor=#6B7685;", 20, ry, 700, 20); ry += 24; }
             foreach (var o in rows.Take(40))
             {
                 int lv; if (!int.TryParse(o[0], out lv)) lv = 3;
                 if (lv == -1) { box(o[1], Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry + 6, 700, 20); ry += 30; continue; }
-                box(o[1] + "\n" + o[2], "rounded=1;whiteSpace=wrap;html=1;align=left;spacingLeft=10;fontSize=12;fillColor=" + LvFill(lv) + ";strokeColor=" + LvLine(lv) + ";", 20, ry, 700, 46); ry += 54;
+                double ch = 30 + 16 * Math.Ceiling(Math.Max(1, (o[1].Length + o[2].Length) / 95.0)); box(o[1] + "\n" + o[2], "rounded=1;whiteSpace=wrap;html=1;align=left;spacingLeft=10;fontSize=12;fillColor=" + LvFill(lv) + ";strokeColor=" + LvLine(lv) + ";", 20, ry, 700, ch); ry += ch + 8;
             }
             box(L.T("made with AdeeboMeter") + " · adeebometer.com · " + DateTime.Now.ToString("d MMM yyyy HH:mm", CultureInfo.CurrentCulture), Txt + "fontSize=10;fontColor=#6B7685;", 20, ry + 10, 500, 20);
             return "<mxfile host=\"AdeeboMeter\"><diagram name=\"" + Xa(title) + "\"><mxGraphModel dx=\"1000\" dy=\"800\" grid=\"1\" gridSize=\"10\" page=\"1\" pageWidth=\"1100\" pageHeight=\"850\"><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/>" + sb + "</root></mxGraphModel></diagram></mxfile>";
@@ -186,7 +210,7 @@ namespace AdeeboMeter
         internal string Json()
         {
             CapturePicture(); var sb = new StringBuilder("{\n");
-            sb.Append("  \"tool\": " + Js(tbSel) + ",\n  \"title\": " + Js(ToolName()) + ",\n  \"made\": " + Js(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture)) + ",\n  \"state\": " + Js(VisState()) + ",\n");
+            sb.Append("  \"tool\": " + Js(tbSel) + ",\n  \"title\": " + Js(ToolName()) + ",\n  \"made\": " + Js(DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture)) + ",\n  \"state\": " + Js(VisState()) + ",\n");
             sb.Append("  \"inputs\": [" + string.Join(", ", VisIn().Select(Js).ToArray()) + "],\n  \"picture\": ");
             switch (PhoneKind)
             {
@@ -209,7 +233,7 @@ namespace AdeeboMeter
         }
         void CopyPicture()
         {
-            try { using (var bmp = PictureBitmap()) Clipboard.SetImage(bmp); Toast(L.T("Picture copied - paste it into a chat, a mail or a document")); }
+            try { using (var bmp = PictureBitmap()) Clipboard.SetDataObject(new DataObject(DataFormats.Bitmap, bmp), true, 6, 150); Toast(L.T("Picture copied - paste it into a chat, a mail or a document")); }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("copy picture: " + e.Message); Toast(L.T("Couldn't copy the picture")); }
         }
         // no internet on this PC? Windows' own Bluetooth sender takes the picture to another PC or an Android phone (iPhones don't
@@ -219,7 +243,7 @@ namespace AdeeboMeter
             try
             {
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
-                string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".png");
+                string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png");
                 using (var bmp = PictureBitmap()) bmp.Save(file, ImageFormat.Png);
                 string fsq = Path.Combine(Environment.SystemDirectory, "fsquirt.exe");
                 if (File.Exists(fsq)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(fsq, "-send") { UseShellExecute = false });
@@ -246,7 +270,7 @@ namespace AdeeboMeter
             try
             {
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
-                string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".png");
+                string file = Path.Combine(dir, tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png");
                 using (var bmp = PictureBitmap()) bmp.Save(file, ImageFormat.Png);
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(QuickShareExe()) { UseShellExecute = false });
                 System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + file + "\"");
@@ -260,34 +284,42 @@ namespace AdeeboMeter
         // every text escaped, then spaces as "+"). Kinds: x exchange (A actors, B steps), r race, p path, b bars, "" rows only.
         static string E(string s) { return Uri.EscapeDataString(s ?? "").Replace("~", "%7E").Replace("%20", "+"); }
         static string Nm(double v) { return double.IsNaN(v) || double.IsInfinity(v) ? "" : Math.Round(v, v < 10 ? 1 : 0).ToString(CultureInfo.InvariantCulture); }
+        static string More(int shown, int all) { return all > shown ? " (" + shown + " of " + all + ")" : ""; }
         internal string PhoneLink()
         {
             CapturePicture(); string cap = "", a = "", b = "";
-            for (int detail = 1; detail >= 0; detail--)   // the details give way first when it's too long for one QR code
+            string when = DateTime.UtcNow.ToString("yyMMddHHmm", CultureInfo.InvariantCulture);   // UTC: the phone shows it in its own time zone
+            var rows = (tbRows ?? new List<string[]>()).Where(o => o.Length > 2 && o[0] != "-1" && o[0] != "-2").ToList();
+            for (int detail = 1; detail >= -1; detail--)   // the details give way first, then the picture itself - never the rows
             {
-                switch (PhoneKind)
+                switch (detail < 0 ? "" : PhoneKind)
                 {
-                    case "x": cap = PhoneX.Item1; a = string.Join("~", PhoneX.Item2.Select(E).ToArray()); b = string.Join("~", PhoneX.Item3.Take(10).Select(s => s.From + "," + (s.All ? PhoneX.Item2.Length - 1 : s.To) + "," + s.Lv + "," + (s.Sealed ? 1 : 0) + "," + (s.All ? 1 : 0) + "," + Nm(s.Ms) + "," + E(Cut(s.Label, 60)) + "," + (detail == 1 ? E(Cut(s.Detail, 60)) : "")).ToArray()); break;
-                    case "r": cap = PhoneR.Item1; b = string.Join("~", PhoneR.Item2.Take(8).Select(l => E(Cut(l.Item1, 40)) + "," + Nm(l.Item2) + "," + Nm(l.Item3) + "," + l.Item4).ToArray()); break;
-                    case "p": cap = PhoneP.Item1; b = string.Join("~", PhoneP.Item2.Take(12).Select(h => E(h.Item1) + "," + E(Cut(h.Item2, 30)) + "," + Nm(h.Item3) + "," + (detail == 1 ? E(Cut(h.Item4, 30)) : "") + "," + h.Item5).ToArray()); break;
-                    case "b": cap = PhoneB.Item1; a = E(PhoneB.Item2); b = string.Join("~", PhoneB.Item3.Take(10).Select(z => E(Cut(z.Item1, 30)) + "," + Nm(z.Item2) + "," + (detail == 1 ? E(Cut(z.Item3, 30)) : "") + "," + z.Item4).ToArray()); break;
-                    default: cap = ""; break;
+                    case "x": cap = PhoneX.Item1 + More(Math.Min(10, PhoneX.Item3.Count), PhoneX.Item3.Count); a = string.Join("~", PhoneX.Item2.Select(E).ToArray()); b = string.Join("~", PhoneX.Item3.Take(10).Select(s => s.From + "," + (s.All ? PhoneX.Item2.Length - 1 : s.To) + "," + s.Lv + "," + (s.Sealed ? 1 : 0) + "," + (s.All ? 1 : 0) + "," + Nm(s.Ms) + "," + E(Cut(s.Label, 60)) + "," + (detail == 1 ? E(Cut(s.Detail, 60)) : "")).ToArray()); break;
+                    case "r": cap = PhoneR.Item1 + More(Math.Min(8, PhoneR.Item2.Count), PhoneR.Item2.Count); a = ""; b = string.Join("~", PhoneR.Item2.Take(8).Select(l => E(Cut(l.Item1, 40)) + "," + Nm(l.Item2) + "," + Nm(l.Item3) + "," + l.Item4).ToArray()); break;
+                    case "p":
+                        {   // a long path keeps its first hops and the last one (the destination), with the gap counted
+                            var hp = PhoneP.Item2; var keep = hp.Count <= 12 ? hp : hp.Take(11).Concat(new[] { hp[hp.Count - 1] }).ToList();
+                            cap = PhoneP.Item1 + More(keep.Count, hp.Count); a = ""; b = string.Join("~", keep.Select(h => E(h.Item1) + "," + E(Cut(h.Item2, 30)) + "," + Nm(h.Item3) + "," + (detail == 1 ? E(Cut(h.Item4, 30)) : "") + "," + h.Item5).ToArray()); break;
+                        }
+                    case "b": cap = PhoneB.Item1 + More(Math.Min(10, PhoneB.Item3.Count), PhoneB.Item3.Count); a = E(PhoneB.Item2); b = string.Join("~", PhoneB.Item3.Take(10).Select(z => E(Cut(z.Item1, 30)) + "," + Nm(z.Item2) + "," + (detail == 1 ? E(Cut(z.Item3, 30)) : "") + "," + z.Item4).ToArray()); break;
+                    default: cap = ""; a = ""; b = ""; break;
                 }
-                string head = "https://adeebometer.com/r#2!" + DateTime.Now.ToString("yyMMddHHmm", CultureInfo.InvariantCulture) + "!" + E(Cut(ToolName(), 60)) + "!" + E(Cut(cap, 70)) + "!" + PhoneKind + "!" + a + "!" + b + "!";
-                // the result rows fill what's left
-                var rows = (tbRows ?? new List<string[]>()).Where(o => o.Length > 2 && o[0] != "-1" && o[0] != "-2").ToList(); var sb = new StringBuilder();
+                string kind = detail < 0 ? "" : PhoneKind;
+                string head = "https://adeebometer.com/r#2!" + when + "!" + E(Cut(ToolName(), 60)) + "!" + E(Cut(cap, 80)) + "!" + kind + "!" + a + "!" + b + "!";
+                if (Encoding.UTF8.GetByteCount(head) > Qr.MaxBytes - 40) continue;
+                // the rows fill what's left: one that doesn't fit is skipped (the next may), and the rest are counted
+                var sb = new StringBuilder(); int put = 0;
                 foreach (var o in rows)
                 {
-                    string item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], 90));
-                    if (Encoding.UTF8.GetByteCount(head) + sb.Length + item.Length + 1 > Qr.MaxBytes) break;
-                    if (sb.Length > 0) sb.Append('~'); sb.Append(item);
+                    string item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], 90)) + (detail == 1 && o.Length > 3 && o[3] != "" ? "," + E(Cut(o[3], 90)) : "");
+                    if (Encoding.UTF8.GetByteCount(head) + sb.Length + item.Length + 30 > Qr.MaxBytes) { item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], 40)); if (Encoding.UTF8.GetByteCount(head) + sb.Length + item.Length + 30 > Qr.MaxBytes) continue; }
+                    if (sb.Length > 0) sb.Append('~'); sb.Append(item); put++;
                 }
+                if (put < rows.Count) { if (sb.Length > 0) sb.Append('~'); sb.Append("3," + E(L.T("Not shown")) + "," + E((rows.Count - put) + " " + L.T("more rows - see them on the PC"))); }
                 string link = head + sb;
                 if (Encoding.UTF8.GetByteCount(link) <= Qr.MaxBytes) return link;
             }
-            // still too long (a very long exchange): rows only
-            string min = "https://adeebometer.com/r#2!" + DateTime.Now.ToString("yyMMddHHmm", CultureInfo.InvariantCulture) + "!" + E(Cut(ToolName(), 60)) + "!!!!!";
-            return min;
+            return "https://adeebometer.com/r#2!" + when + "!" + E(Cut(ToolName(), 60)) + "!!!!!";
         }
     }
 }

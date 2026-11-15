@@ -31,7 +31,7 @@ namespace AdeeboMeter
             catch (SocketException) { now["DNS A"] = "(no answer)"; } catch (ArgumentException) { now["DNS A"] = "(not a name)"; }
             foreach (var t in MxNs) { if (run.Stop) return rows; var d = Toolkit.Dig(host, t, "", m).Where(r => r.Length > 2 && r[1] == t).Select(r => r[2].Split(DotS, StringSplitOptions.None)[0]).OrderBy(x => x, StringComparer.Ordinal).ToArray(); if (d.Length > 0) now["DNS " + t] = string.Join(" ", d); }
             run.Status = "Open ports..."; var open = new List<int>();
-            foreach (var p in Watched) { if (run.Stop) return rows; using (var c = Toolkit.Open(host, p, 2000)) if (c != null) open.Add(p); }
+            foreach (var p in Watched.Concat(Watched.Contains(port) ? Enumerable.Empty<int>() : new[] { port })) { if (run.Stop) return rows; using (var c = Toolkit.Open(host, p, 2000)) if (c != null) open.Add(p); }
             now["Open ports"] = open.Count == 0 ? "(none of " + Watched.Length + ")" : string.Join(" ", open.Select(p => p.ToString(CultureInfo.InvariantCulture)).ToArray());
             if (open.Contains(443)) { run.Status = "Certificate..."; string iss, exp, fp; Cert(host, out iss, out exp, out fp); if (iss != "") { now["Certificate issuer"] = iss; now["Certificate expires"] = exp; now["Certificate fingerprint"] = fp; } }
             if (open.Contains(22)) now["SSH banner"] = Banner(host, 22);
@@ -39,16 +39,19 @@ namespace AdeeboMeter
 
             // the history: one line per check, newest last, at most 30
             string dir = Path.Combine(Program.DataDir, "servers"), file = Path.Combine(dir, Safe(host) + ".txt"); var hist = new List<KeyValuePair<DateTime, Dictionary<string, string>>>();
-            try { if (File.Exists(file)) foreach (var line in File.ReadAllLines(file)) { var p = line.Split(Tab); DateTime t; if (p.Length < 1 || !DateTime.TryParseExact(p[0], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) continue; hist.Add(new KeyValuePair<DateTime, Dictionary<string, string>>(t, p.Skip(1).Select(z => z.Split(Eq, 2)).Where(z => z.Length == 2).ToDictionary(z => z[0], z => z[1]))); } }
+            try { if (File.Exists(file)) foreach (var line in File.ReadAllLines(file)) { var p = line.Split(Tab); DateTime t; if (p.Length < 1 || !DateTime.TryParseExact(p[0], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) continue; hist.Add(new KeyValuePair<DateTime, Dictionary<string, string>>(t, p.Skip(1).Select(z => z.Split(Eq, 2)).Where(z => z.Length == 2).GroupBy(z => z[0]).ToDictionary(z => z.Key, z => z.Last()[1]))); } }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
             var last = hist.Count > 0 ? hist[hist.Count - 1].Value : null; var changes = new List<string[]>();
             if (last != null) foreach (var k in now.Keys.Union(last.Keys).OrderBy(z => z, StringComparer.Ordinal)) { string a, b; last.TryGetValue(k, out a); now.TryGetValue(k, out b); if ((a ?? "") != (b ?? "")) changes.Add(new[] { k, a ?? "(none)", b ?? "(gone)" }); }
-            hist.Add(new KeyValuePair<DateTime, Dictionary<string, string>>(DateTime.Now, now.ToDictionary(z => z.Key, z => z.Value)));
-            try { Directory.CreateDirectory(dir); WriteWhole(file, string.Join("\n", hist.Skip(Math.Max(0, hist.Count - 30)).Select(h => h.Key.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "\t" + string.Join("\t", h.Value.Select(z => z.Key + "=" + z.Value.Replace("\t", " ").Replace("\n", " ")).ToArray())).ToArray()) + "\n"); }
+            bool outage = (now.ContainsKey("DNS A") && now["DNS A"].StartsWith("(", StringComparison.Ordinal)) || open.Count == 0; bool saved = false;
+            if (!outage) hist.Add(new KeyValuePair<DateTime, Dictionary<string, string>>(DateTime.Now, now.ToDictionary(z => z.Key, z => z.Value)));
+            if (!outage) try { Directory.CreateDirectory(dir); WriteWhole(file, string.Join("\n", hist.Skip(Math.Max(0, hist.Count - 30)).Select(h => h.Key.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "\t" + string.Join("\t", h.Value.Select(z => z.Key + "=" + z.Value.Replace("\t", " ").Replace("\n", " ")).ToArray())).ToArray()) + "\n"); saved = true; }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
+            if (outage) rows.Add(R(1, "Not kept", "no DNS answer or no open port - it looks like an outage, so this check isn't kept as the new baseline", "", "m"));
+            else if (!saved) rows.Add(R(1, "Not kept", "couldn't save this check - the next run will compare with the older one", "", "m"));
 
-            if (last == null) rows.Add(R(3, "First check", host + " - " + now.Count + " things noted. Run it again later (after a deploy, a renewal, a migration) to see what changed.", "Kept in AdeeboMeter's own folder (servers), last 30 checks.", "m"));
-            else rows.Add(R(changes.Count == 0 ? 0 : 1, "Since " + hist[hist.Count - 2].Key.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), changes.Count == 0 ? "nothing changed" : changes.Count + " change" + (changes.Count == 1 ? "" : "s"), "", "m"));
+            if (last == null) rows.Add(R(3, "First check", host + " - " + now.Count + " things noted" + (saved ? "" : " (not kept)") + ". Run it again later (after a deploy, a renewal, a migration) to see what changed.", "Kept in AdeeboMeter's own folder (servers), last 30 checks.", "m"));
+            else rows.Add(R(changes.Count == 0 ? 0 : 1, "Since " + hist[hist.Count - (outage ? 1 : 2)].Key.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), changes.Count == 0 ? "nothing changed" : changes.Count + " change" + (changes.Count == 1 ? "" : "s"), "", "m"));
             foreach (var c in changes) rows.Add(R(c[0].StartsWith("Certificate expires", StringComparison.Ordinal) || c[0] == "Open ports" || c[0] == "DNS A" ? 1 : 3, c[0], c[1] + "  →  " + c[2], "", "m"));
             rows.Add(R(-1, "NOW", "", "", "m"));
             foreach (var kv in now) rows.Add(R(3, kv.Key, kv.Value, "", "m"));
@@ -60,14 +63,15 @@ namespace AdeeboMeter
             return rows;
         }
         internal static string Safe(string host) { var sb = new StringBuilder(); foreach (char c in host) sb.Append(char.IsLetterOrDigit(c) || c == '.' || c == '-' ? c : '_'); return sb.ToString(); }
+        static void Cert(string host, out string issuer, out string expires, out string fp) { DateTime na; Cert(host, 443, out issuer, out expires, out fp, out na); }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5359", Justification = "reads the certificate only - nothing is sent")]
-        static void Cert(string host, out string issuer, out string expires, out string fp)
+        static void Cert(string host, int port, out string issuer, out string expires, out string fp, out DateTime notAfter)
         {
-            issuer = expires = fp = ""; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
-            try { using (var c = Toolkit.Open(host, 443, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) ssl.AuthenticateAsClient(host); } }
+            issuer = expires = fp = ""; notAfter = DateTime.MinValue; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
+            try { using (var c = Toolkit.Open(host, port, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) ssl.AuthenticateAsClient(host); } }
             catch (IOException) { } catch (System.Security.Authentication.AuthenticationException) { } catch (SocketException) { }
             if (got == null) return;
-            using (got) { issuer = got.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, true); expires = got.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); fp = got.GetCertHashString().Substring(0, 16); }
+            using (got) { notAfter = got.NotAfter; issuer = got.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, true); expires = got.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); fp = got.GetCertHashString().Substring(0, 16); }
         }
         static string Banner(string host, int port)
         {
@@ -90,14 +94,18 @@ namespace AdeeboMeter
             else { var n = Streams.Now; if (n != null) live = n.S; }
             var all = WatchKit.Recent(mode).OrderBy(s => s.Start).ToList(); if (live != null && !all.Contains(live)) all.Add(live);
             string w = (which ?? "").Trim().ToLowerInvariant(); DateTime d;
-            if (w == "" || w == "today" || w == "last") return all.LastOrDefault();
+            if (w == "" || w == "last") return all.LastOrDefault();
+            if (w == "today") return all.LastOrDefault(s => s.Start.Date == DateTime.Today);
             if (w == "yesterday") return all.LastOrDefault(s => s.Start.Date == DateTime.Today.AddDays(-1));
             if (DateTime.TryParse(w, CultureInfo.CurrentCulture, DateTimeStyles.None, out d)) return all.LastOrDefault(s => s.Start.Date == d.Date);
-            return all.LastOrDefault();
+            return null;
         }
         public static List<string[]> SessionRows(string mode, string which)
         {
             var rows = new List<string[]>(); var s = PickSession(mode, which); bool trade = mode == "trade";
+            string wq = (which ?? "").Trim(); DateTime dd;
+            if (s == null && wq != "" && !"today last yesterday".Split(' ').Contains(wq.ToLowerInvariant()) && !DateTime.TryParse(wq, CultureInfo.CurrentCulture, DateTimeStyles.None, out dd)) { rows.Add(R(1, "Which session", "didn't understand \"" + wq + "\" - type today, yesterday, last or a date like 14 Nov", "", "u")); return rows; }
+            if (s == null && wq != "") { rows.Add(R(3, trade ? "No session" : "No stream", "nothing recorded for " + wq, "", "u")); return rows; }
             if (s == null) { rows.Add(R(3, trade ? "No session yet" : "No stream yet", trade ? "turn on broker watching on the Trading page - it records the broker all session" : "the Streaming page records each stream by itself - watch something, then come back", "", "u")); return rows; }
             var far = s.Line.Where(p => p.Length > 2 && p[2] >= 0).Select(p => (double)p[2]).ToList(); var down = s.Line.Where(p => p.Length > 1 && p[1] >= 0).Select(p => (double)p[1]).ToList();
             var tally = s.Tally(); int dips = s.Dips.Count;
@@ -108,6 +116,7 @@ namespace AdeeboMeter
             if (dips > 0)
             {
                 rows.Add(R(-1, trade ? "EVERY SLOW MOMENT" : "EVERY DROP", "", "", "m"));
+                if (s.Dips.Count > 20) rows.Add(R(3, "Showing", "the first 20 of " + s.Dips.Count, "", "m"));
                 foreach (var d in s.Dips.Take(20)) rows.Add(R(d.Blame == "provider" || d.Blame == "far" ? 2 : 1, d.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), d.Secs + " s · " + WatchKit.BlameName(d.Blame, s.Far) + (d.Evidence != "" ? " · " + d.Evidence : ""), "", "m"));
                 var top = tally.OrderByDescending(z => z.Value).First(); var lesson = WatchKit.Lesson(top.Key, mode);
                 if (lesson != null && lesson.Length > 0) rows.Add(R(1, "Most of it", WatchKit.BlameName(top.Key, s.Far), string.Join(" ", lesson), "i"));
