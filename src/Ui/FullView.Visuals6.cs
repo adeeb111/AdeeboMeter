@@ -83,6 +83,7 @@ namespace AdeeboMeter
                         var t = new List<string[]>(); string grp = ""; string cap;
                         foreach (var o in VisRows().Where(o => o.Length > 2))
                         {
+                            if (tbSel == "marketopen" && o[1] == "Market-open check") continue;
                             if (o[0] == "-1" || (o[2] == "" && string.Equals(o[1], o[1].ToUpperInvariant(), StringComparison.Ordinal))) { grp = o[1]; continue; }
                             if (tbSel == "month" && o[1] == "Compared with September") { t.Add(new[] { o[1], o[2], o[0], L.T("AGAINST LAST MONTH") }); continue; }
                             t.Add(new[] { o[1], P(o[2], 0) + (P(o[2], 1) != "" ? " · " + P(o[2], 1) : ""), o[0], tbSel == "drivers" || tbSel == "bluetooth" ? grp : "" });
@@ -100,7 +101,7 @@ namespace AdeeboMeter
                 case "golive":
                     {
                         var bars = new List<Tuple<string, double, string, int>>(); double kb = VNum(RV("Your bitrate"), @"([0-9.]+)");
-                        var u = RRow("Your upload"); if (u != null) bars.Add(Tuple.Create(L.T("Your upload"), VNum(u[2], @"([0-9.]+)\s*Mbps") * 1000, P(u[2], 0), Lv(u)));
+                        var u = RRow("Your upload"); if (u != null) bars.Add(Tuple.Create(L.T("Your upload"), VNum(u[2], @"([0-9.]+)\s*Mbps") * 1000, "", Lv(u)));
                         var sf = RRow("Safe bitrate"); if (sf != null) bars.Add(Tuple.Create(L.T("Safe bitrate"), VNum(sf[2], @"([0-9.]+)"), "", Lv(sf)));
                         if (!double.IsNaN(kb)) bars.Add(Tuple.Create(L.T("Your bitrate"), kb, "", RLv("Your bitrate")));
                         var iu = RRow("Upload in use"); if (iu != null) bars.Add(Tuple.Create(L.T("Already uploading"), VNum(iu[2], @"([0-9.]+)") * 1000, "", Lv(iu)));
