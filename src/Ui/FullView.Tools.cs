@@ -47,7 +47,7 @@ namespace AdeeboMeter
         void SaveText(string name, string text)
         {
             foreach (var ch in System.IO.Path.GetInvalidFileNameChars()) name = name.Replace(ch, '-');
-            using (var d = new SaveFileDialog { Title = "Save the result", Filter = "Text (*.txt)|*.txt", FileName = name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".txt" })
+            using (var d = new SaveFileDialog { Title = "Save the result", Filter = "Text (*.txt)|*.txt", FileName = name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt" })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); MessageBox.Show(this, L.T("Couldn't save it:") + " " + e.Message, "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); }

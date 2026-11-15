@@ -21,6 +21,8 @@ namespace AdeeboMeter
         // A series is one character per value from QrAlpha: ms as round(2*sqrt(ms)) (back: (k/2)^2), loss as the %, "-" = no answer.
         const string QrAlpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.";
         const string QrSite = "https://adeebometer.com/r#";
+        // loss: 1 % steps up to 50 %, then about 4 % steps to 100 % - so 63 % and 100 % no longer look the same
+        static char QrLoss(double p) { p = Math.Max(0, Math.Min(100, p)); return QrAlpha[(int)(p <= 50 ? Math.Round(p) : 50 + Math.Round((p - 50) * 13 / 50))]; }
         static char QrMs(double ms) { return double.IsNaN(ms) || ms < 0 ? '-' : QrAlpha[(int)Math.Min(63, Math.Round(2 * Math.Sqrt(ms)))]; }
         static string QrNum(double v, int d) { return double.IsNaN(v) || double.IsInfinity(v) ? "" : Math.Round(v, d).ToString(CultureInfo.InvariantCulture); }
         static readonly string[] QrPhoneRow = { "3", "On the phone", "the verdict, the path, the numbers in plain words, two charts, what to do - and Send to my provider, Share, Save as PDF", "Names, the Wi-Fi name and addresses are left out.", "i" };
@@ -34,7 +36,7 @@ namespace AdeeboMeter
             string nums = string.Join(",", new[] { QrNum(s.GwMs, 0), QrNum(s.Ping, 0), QrNum(s.Jitter, 1), QrNum(s.LossPct, 1), QrNum(s.DnsMs, 0), QrNum(s.Down, 1), QrNum(s.Up, 1), QrNum(s.Cpu, 0), QrNum(s.Mem, 0), link == "w" && wifi.Count > 0 ? QrNum(wifi[wifi.Count - 1], 0) : "", outs.ToString(c), link });
             var net = new StringBuilder(); foreach (var v in s.NetHist.Skip(Math.Max(0, s.NetHist.Length - 30))) net.Append(QrMs(v));
             var gw = new StringBuilder(); var lo = new StringBuilder();
-            for (int i = Math.Max(0, mins.T.Count - 30); i < mins.T.Count; i++) { gw.Append(QrMs(mins.Gw[i])); lo.Append(double.IsNaN(mins.Loss[i]) ? '-' : QrAlpha[(int)Math.Max(0, Math.Min(63, Math.Round(mins.Loss[i])))]); }
+            for (int i = Math.Max(0, mins.T.Count - 30); i < mins.T.Count; i++) { gw.Append(QrMs(mins.Gw[i])); lo.Append(double.IsNaN(mins.Loss[i]) ? '-' : QrLoss(mins.Loss[i])); }
             string head = OverTime.NoAddr(GameSession.Redact(s.Headline ?? "", "")); head = Regex.Replace(head, @"[^\w .,%'()-]", "").Trim().Replace(' ', '+');
             string body = "1!" + now.ToUniversalTime().ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!";
             // the QR holds at most Qr.MaxBytes: the headline gives way first, then the oldest of each series

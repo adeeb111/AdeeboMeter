@@ -60,7 +60,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   function toast(t) { var e = document.getElementById("toast"); e.textContent = t; e.className = "on"; setTimeout(function () { e.className = ""; }, 1800); }
   function n(v) { return v === "" || v == null ? NaN : parseFloat(v); }
   function f(v, d) { return isNaN(v) ? "–" : (Math.round(v * Math.pow(10, d || 0)) / Math.pow(10, d || 0)).toString(); }
-  function ser(s, kind) { var out = []; for (var i = 0; i < (s || "").length; i++) { var c = s[i]; if (c === "-") { out.push(null); continue; } var k = A.indexOf(c); out.push(k < 0 ? NaN : kind === "loss" ? k : (k / 2) * (k / 2)); } return out; }
+  function ser(s, kind) { var out = []; for (var i = 0; i < (s || "").length; i++) { var c = s[i]; if (c === "-") { out.push(null); continue; } var k = A.indexOf(c); out.push(k < 0 ? NaN : kind === "loss" ? (k <= 50 ? k : 50 + (k - 50) * 50 / 13) : (k / 2) * (k / 2)); } return out; }
 
   var rawHash = (location.hash || "").replace(/^#/, "");
   if (rawHash.slice(0, 2) === "2!") { v2(rawHash); return; }

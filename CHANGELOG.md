@@ -17,6 +17,11 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Market-open and go-live checks count an unknown clock, upload or ingest host as a warning, not a pass.
 - OBS link tolerates any spacing, checks each answer, and can be stopped.
 - Addresses: [IPv6]:port and scheme default ports (https, ssh, rdp, rtmp...) are understood.
+- Keyboard: under any picture, Ctrl+Shift+S opens Save picture, Ctrl+Shift+C copies it, Ctrl+Shift+Q opens it on your phone.
+- Saved pictures are the same size whatever the window width; the footer never runs off the edge.
+- draw.io: race diagrams keep the second timing as its own bar; pictures without a box-and-arrow form go in as an image you can place. JSON says when a picture has no data form.
+- CSV uses Windows' list separator, so Excel splits it into columns in every region.
+- Phone link: loss above 50 % keeps its size (63 % and 100 % no longer look the same).
 
 ### Fixed: tester audit, round 1
 - Sidebar: with many tabs on a short screen or at 150-200 % scaling, rows get compact and the rest goes behind a "More... (n)" row - nothing is cut off.

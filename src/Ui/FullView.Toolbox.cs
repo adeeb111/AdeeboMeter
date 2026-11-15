@@ -468,7 +468,7 @@ namespace AdeeboMeter
         {
             if (Examples.IsExample(tbRows)) return;   // made-up data is never saved
             var t = Tools2().First(x => x.Id == tbSel); bool csvOk = tbRows != null;
-            using (var d = new SaveFileDialog { Title = "Save the result", Filter = csvOk ? "Text (*.txt)|*.txt|CSV for Excel (*.csv)|*.csv" : "Text (*.txt)|*.txt", FileName = "AdeeboMeter-" + t.Id + "-" + tbAt.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture), InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), OverwritePrompt = true, AddExtension = true })
+            using (var d = new SaveFileDialog { Title = "Save the result", Filter = csvOk ? "Text (*.txt)|*.txt|CSV for Excel (*.csv)|*.csv" : "Text (*.txt)|*.txt", FileName = "AdeeboMeter-" + t.Id + "-" + tbAt.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture), InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), OverwritePrompt = true, AddExtension = true })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 try
@@ -484,12 +484,12 @@ namespace AdeeboMeter
         string ResultCsv()
         {
             Func<string, string> q = v => { v = v ?? ""; var lead = v.TrimStart(' ', '\t', '\r', '\n'); if (lead.Length > 0 && "=+-@".IndexOf(lead[0]) >= 0 || v.Length > 0 && v[0] == '\t') v = "'" + v; return "\"" + v.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ") + "\""; };   // a leading = + - @ can't become a formula
-            var sb = new System.Text.StringBuilder(); sb.AppendLine("Level,Item,Value,Notes");
+            var sb = new System.Text.StringBuilder(); char sp = CsvSep; sb.AppendLine("Level" + sp + "Item" + sp + "Value" + sp + "Notes");
             foreach (var o in tbRows.Where(x => !IsSecretRow(x)))
             {
                 int lv; int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
                 string word = lv == 2 || lv == 7 ? "problem" : lv == 1 ? "warning" : lv == 0 ? "ok" : "info";
-                sb.Append(q(word)).Append(',').Append(q(o.Length > 1 ? o[1] : "")).Append(',').Append(q(o.Length > 2 ? o[2] : "")).Append(',').Append(q(o.Length > 3 ? o[3] : "")).AppendLine();
+                sb.Append(q(word)).Append(sp).Append(q(o.Length > 1 ? o[1] : "")).Append(sp).Append(q(o.Length > 2 ? o[2] : "")).Append(sp).Append(q(o.Length > 3 ? o[3] : "")).AppendLine();
             }
             return sb.ToString();
         }

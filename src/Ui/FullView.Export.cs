@@ -55,6 +55,7 @@ namespace AdeeboMeter
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
             link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Send by Bluetooth", SendBluetooth); if (QuickShareExe() != null) link("go", "Quick Share", SendQuickShare);
+            if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · C copy · Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
             {
                 var ns = g.MeasureString(barNote, Draw.fSmall); if (lx + ns.Width > x + w) { lx = x + 4 * S; y += 26 * S; }
@@ -63,17 +64,28 @@ namespace AdeeboMeter
             return y + 30 * S;
         }
 
+        // keyboard: the links under a picture (Ctrl+Shift+S save, C copy, Q phone)
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (tbCanvas != null && tbCanvas.Visible && !visRect.IsEmpty && !tbBusy)
+            {
+                if (keyData == (Keys.Control | Keys.Shift | Keys.S)) { SaveMenuAt(tbCanvas.PointToScreen(new Point((int)(20 * S), (int)Math.Min(tbCanvas.Height - 40 * S, visRect.Bottom)))); return true; }
+                if (keyData == (Keys.Control | Keys.Shift | Keys.C)) { CopyPicture(); return true; }
+                if (keyData == (Keys.Control | Keys.Shift | Keys.Q)) { OpenOnPhone(); return true; }
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
         // the picture alone, drawn again into a bitmap with a footer
         Bitmap PictureBitmap()
         {
-            float w = Math.Max(600 * S, visRect.Width); var size = new Size((int)(w + 40 * S), 4000);
+            float w = 860 * S; var size = new Size((int)(w + 40 * S), 4000);
             using (var probe = new Bitmap(10, 10)) using (var pg = Graphics.FromImage(probe)) { Prep(pg); float h0 = PaintToolVisual0(pg, 20 * S, 20 * S, w); size.Height = (int)(h0 + 40 * S); }
             var bmp = new Bitmap(size.Width, Math.Max(100, size.Height));
             using (var g = Graphics.FromImage(bmp))
             {
                 Prep(g); g.Clear(Theme.Bg); PaintToolVisual0(g, 20 * S, 20 * S, w);
                 string foot = L.T("made with AdeeboMeter") + " · adeebometer.com · " + DateTime.Now.ToString("d MMM yyyy HH:mm", CultureInfo.CurrentCulture);
-                using (var b = new SolidBrush(Theme.Muted)) { var fs = g.MeasureString(foot, Draw.fTiny); g.DrawString(foot, Draw.fTiny, b, bmp.Width - fs.Width - 20 * S, bmp.Height - fs.Height - 10 * S); }
+                using (var b = new SolidBrush(Theme.Muted)) { var fs = g.MeasureString(foot, Draw.fTiny); g.DrawString(foot, Draw.fTiny, b, new RectangleF(Math.Max(20 * S, bmp.Width - fs.Width - 20 * S), bmp.Height - fs.Height - 10 * S, bmp.Width - 40 * S, fs.Height + 2 * S)); }
             }
             tbCanvas.Invalidate();   // the click areas belong to the screen again
             return bmp;
@@ -85,7 +97,7 @@ namespace AdeeboMeter
             {
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
                 using (var bmp = PictureBitmap())
-                using (var d = new SaveFileDialog { Filter = "PNG picture|*.png", InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".png" })
+                using (var d = new SaveFileDialog { Filter = "PNG picture|*.png", InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png" })
                 {
                     if (d.ShowDialog(this) != DialogResult.OK) return;
                     bmp.Save(d.FileName, ImageFormat.Png); Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName));
@@ -94,7 +106,8 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("save picture: " + e.Message); Toast(L.T("Couldn't save the picture")); }
         }
         // Save picture ...: PNG, a draw.io diagram (real boxes and arrows to edit), or the data behind it (JSON, CSV)
-        void SaveMenu()
+        void SaveMenu() { SaveMenuAt(Cursor.Position); }
+        void SaveMenuAt(Point at)
         {
             var m = new ContextMenuStrip { Font = Draw.fBody };
             m.Items.Add(L.T("Picture (PNG)"), null, delegate { SavePicture(); });
@@ -102,14 +115,14 @@ namespace AdeeboMeter
             m.Items.Add(L.T("Data (JSON) - for scripts and other tools"), null, delegate { SaveText("json", "JSON|*.json", Json); });
             m.Items.Add(L.T("Data (CSV) - opens in Excel"), null, delegate { SaveText("csv", "CSV|*.csv", Csv); });
             m.Closed += delegate { BeginInvoke((Action)m.Dispose); };
-            m.Show(Cursor.Position);
+            m.Show(at); if (m.Items.Count > 0) m.Items[0].Select();
         }
         void SaveText(string ext, string filter, Func<string> make)
         {
             try
             {
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
-                using (var d = new SaveFileDialog { Filter = filter, InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + "." + ext })
+                using (var d = new SaveFileDialog { Filter = filter, InitialDirectory = dir, FileName = tbSel + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + "." + ext })
                 {
                     if (d.ShowDialog(this) != DialogResult.OK) return;
                     WriteSafe(d.FileName, make(), ext == "csv"); Toast(L.T("Saved") + " " + Path.GetFileName(d.FileName) + (ext == "drawio" ? " - open it at app.diagrams.net or in draw.io" : ""));
@@ -176,14 +189,23 @@ namespace AdeeboMeter
                     {
                         var lanes = PhoneKind == "r" ? PhoneR.Item2.Select(l => Tuple.Create(l.Item1, l.Item2, Nm(l.Item2) + " ms" + (double.IsNaN(l.Item3) ? "" : " / " + Nm(l.Item3) + " ms"), l.Item4)).ToList() : PhoneB.Item3.Select(b => Tuple.Create(b.Item1, b.Item2, Nm(b.Item2) + " " + PhoneB.Item2 + (b.Item3 != "" ? " · " + b.Item3 : ""), b.Item4)).ToList();
                         box(PhoneKind == "r" ? PhoneR.Item1 : PhoneB.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
-                        double max = Math.Max(1, lanes.Select(l => double.IsNaN(l.Item2) ? 0 : l.Item2).DefaultIfEmpty(1).Max());
+                        double max = Math.Max(1, lanes.Select(l => double.IsNaN(l.Item2) ? 0 : l.Item2).DefaultIfEmpty(1).Max()); if (PhoneKind == "r") max = Math.Max(max, PhoneR.Item2.Select(l => double.IsNaN(l.Item3) ? 0 : l.Item3).DefaultIfEmpty(0).Max());
                         for (int i = 0; i < lanes.Count; i++)
                         {
                             var l = lanes[i]; double y = y0 + 20 + i * 40, w = double.IsNaN(l.Item2) ? 4 : Math.Max(4, 400 * l.Item2 / max);
                             box(l.Item1, Txt + "fontStyle=1;", 20, y, 200, 26); box("", "rounded=1;html=1;fillColor=" + LvLine(l.Item4 < 0 ? -9 : l.Item4).Replace("#6B7685", "#1F6FEB") + ";strokeColor=none;", 230, y + 4, w, 18); box(l.Item3, Txt + "fontColor=#4A5568;", 240 + w, y, 260, 26);
+                            if (PhoneKind == "r" && !double.IsNaN(PhoneR.Item2[i].Item3)) box("", "rounded=1;html=1;fillColor=#8250DF;strokeColor=none;", 230, y + 24, Math.Max(4, 400 * PhoneR.Item2[i].Item3 / max), 6);
                         }
                         y0 += 40 + lanes.Count * 40;
                     }
+                    break;
+                default:
+                    if (!visRect.IsEmpty)
+                        using (var bmp = PictureBitmap()) using (var ms = new MemoryStream())
+                        {
+                            bmp.Save(ms, ImageFormat.Png); double iw = 700, ih = Math.Round(700.0 * bmp.Height / Math.Max(1, bmp.Width));
+                            box("", "shape=image;html=1;imageAspect=0;aspect=fixed;image=data:image/png," + Convert.ToBase64String(ms.ToArray()) + ";", 20, y0, iw, ih); y0 += ih + 10;
+                        }
                     break;
             }
             // the result rows, as a column of cards
@@ -218,17 +240,19 @@ namespace AdeeboMeter
                 case "r": sb.Append("{ \"kind\": \"race\", \"caption\": " + Js(PhoneR.Item1) + ", \"lanes\": [\n" + string.Join(",\n", PhoneR.Item2.Select(l => "    { \"name\": " + Js(l.Item1) + ", \"ms\": " + Jn(l.Item2) + ", \"ms2\": " + Jn(l.Item3) + ", \"level\": " + l.Item4 + " }").ToArray()) + "\n  ] }"); break;
                 case "p": sb.Append("{ \"kind\": \"path\", \"caption\": " + Js(PhoneP.Item1) + ", \"hops\": [\n" + string.Join(",\n", PhoneP.Item2.Select(h => "    { \"hop\": " + Js(h.Item1) + ", \"address\": " + Js(h.Item2) + ", \"ms\": " + Jn(h.Item3) + ", \"owner\": " + Js(h.Item4) + ", \"level\": " + h.Item5 + " }").ToArray()) + "\n  ] }"); break;
                 case "b": sb.Append("{ \"kind\": \"bars\", \"caption\": " + Js(PhoneB.Item1) + ", \"unit\": " + Js(PhoneB.Item2) + ", \"bars\": [\n" + string.Join(",\n", PhoneB.Item3.Select(b => "    { \"name\": " + Js(b.Item1) + ", \"value\": " + Jn(b.Item2) + ", \"label\": " + Js(b.Item3) + ", \"level\": " + b.Item4 + " }").ToArray()) + "\n  ] }"); break;
-                default: sb.Append("null"); break;
+                default: sb.Append(visRect.IsEmpty ? "null" : "{ \"kind\": \"image\", \"note\": \"this picture has no data form of its own - every number in it is in rows; Save picture gives the PNG\" }"); break;
             }
             sb.Append(",\n  \"rows\": [\n" + string.Join(",\n", ResRows().Select(o => "    { \"level\": " + Js(o[0]) + ", \"name\": " + Js(o[1]) + ", \"value\": " + Js(o[2]) + ", \"advice\": " + Js(o.Length > 3 ? o[3] : "") + " }").ToArray()) + "\n  ]\n}\n");
             return sb.ToString();
         }
-        internal static string Cv(string s) { s = s ?? ""; if (s.Length > 0 && "=+-@\t\r".IndexOf(s[0]) >= 0) s = "'" + s; return s.IndexOfAny(CsvSpecial) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s; }
-        static readonly char[] CsvSpecial = { ',', '"', '\n', '\r' };
+        internal static string Cv(string s) { s = s ?? ""; if (s.Length > 0 && "=+-@\t\r".IndexOf(s[0]) >= 0) s = "'" + s; return s.IndexOfAny(CsvSpecial) >= 0 || s.IndexOf(CsvSep) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s; }
+        static readonly char[] CsvSpecial = { ',', ';', '"', '\n', '\r' };
+        // Excel splits a double-clicked CSV on Windows' list separator: ',' in English, ';' in much of Europe
+        internal static char CsvSep { get { var ls = CultureInfo.CurrentCulture.TextInfo.ListSeparator; return ls != null && ls.Length == 1 && ls[0] != '"' && !char.IsLetterOrDigit(ls[0]) ? ls[0] : ','; } }
         internal string Csv()
         {
-            var sb = new StringBuilder("level,name,value,advice\r\n");
-            foreach (var o in ResRows()) sb.Append(Cv(o[0] == "0" ? "ok" : o[0] == "1" ? "watch" : o[0] == "2" ? "problem" : o[0] == "-1" ? "section" : "info")).Append(',').Append(Cv(o[1])).Append(',').Append(Cv(o[2])).Append(',').Append(Cv(o.Length > 3 ? o[3] : "")).Append("\r\n");
+            char sp = CsvSep; var sb = new StringBuilder("level" + sp + "name" + sp + "value" + sp + "advice\r\n");
+            foreach (var o in ResRows()) sb.Append(Cv(o[0] == "0" ? "ok" : o[0] == "1" ? "watch" : o[0] == "2" ? "problem" : o[0] == "-1" ? "section" : "info")).Append(sp).Append(Cv(o[1])).Append(sp).Append(Cv(o[2])).Append(sp).Append(Cv(o.Length > 3 ? o[3] : "")).Append("\r\n");
             return sb.ToString();
         }
         void CopyPicture()
