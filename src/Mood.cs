@@ -48,12 +48,13 @@ namespace AdeeboMeter
             string mo = Moments.FaceFor(s) != null ? Moments.Line : null; if (mo != null) return mo;   // a moment says why the face changed (even in serious mode: it's a fact)
             if (Voice.Serious) return "";
             // the provider's excuses: the longer it lasts, the better the story (every mood, Companion too)
-            if (down && (DateTime.Now - downSince).TotalMinutes >= 3) return Excuse((DateTime.Now - downSince).TotalMinutes, isp);
+            if (down && (DateTime.Now - downSince).TotalMinutes >= 3) { if (!Lines.Speaks("problem")) return ""; return Lines.Who() == Lines.Mood ? Excuse((DateTime.Now - downSince).TotalMinutes, isp) : Lines.Steady("isp.down", null); }   // AM-CG-188
             // 1.1.5: the words come from the lines files (Lines) - the persona if one talks, else the mood
             string key, v = null, kind = "state";
-            string comfort = s.Level == 0 && !s.Call ? Lines.Comfort() : "";
+            bool knownCalm = s.Path != null && s.Path.Length > 2 && s.Path[0] >= 0 && s.Path[0] <= 2 && s.Path.Skip(2).Any(p => p >= 0 && p <= 2);   // AM-CG-169
+            string comfort = s.Level == 0 && !s.Call && knownCalm && Lines.Speaks("idle") ? Lines.Comfort() : "";
             if (comfort != "" && (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) || (DateTime.Now.Minute < 5 && Lines.Speaks("idle")))) return comfort;   // calm moments only: the greeting, and the first minutes of a quiet hour
-            if (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) && s.Level == 0) { key = DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 5 ? "late.night" : DateTime.Now.Hour < 11 ? "morning" : "app.open"; kind = "greet"; }
+            if (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) && s.Level == 0 && knownCalm) { key = DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 5 ? "late.night" : DateTime.Now.Hour < 11 ? "morning" : "app.open"; kind = "greet"; }
             else if (at < 0) { if (s.Call) key = "call.on"; else { string koan = Koan(); if (koan != "") return Lines.Speaks("idle") ? koan : ""; key = "all.good"; kind = Lines.Who() == Lines.Mood ? "idle" : "state"; } }
             else
             {
@@ -70,7 +71,7 @@ namespace AdeeboMeter
         static readonly string[] Koans = {
             "A packet that is never lost was never really sent.",
             "The fastest route is the one you never notice.",
-            "Two hours, no retransmits. Somewhere a router is smiling.",
+            "Two hours, all green. Somewhere a router is smiling.",
             "The ping returns. The ping always returns.",
             "Bandwidth is what you buy. Latency is what you feel.",
             "In the quiet between packets, the network rests." };

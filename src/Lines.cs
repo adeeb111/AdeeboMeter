@@ -41,7 +41,7 @@ namespace AdeeboMeter
         // never presented as a quote from any scripture
         public static readonly string[] Faiths = { "off", "common", "islam", "christianity", "judaism", "hinduism", "buddhism", "sikhism", "stoic", "aristotle", "tao", "confucius" };
         public static readonly string[] FaithNames = { "Off", "Common to all", "Islam", "Christianity", "Judaism", "Hinduism", "Buddhism", "Sikhism", "Marcus Aurelius", "Aristotle", "Taoism", "Confucius" };
-        public static volatile string Faith = "off";
+        public static volatile string Faith = "off", LastFaith = "common";   // LastFaith: what turning comfort back on brings back, across restarts (AM-CG-184)
         static List<string[]> comfort;
         public static List<string[]> Comforts()
         {
@@ -71,11 +71,16 @@ namespace AdeeboMeter
 
         // Surprise me: one persona a day, the same all day (not a new one every line - that feels chaotic). Only personas
         // with their own file; never Plain, never a faith.
+        static List<string> haveIds; static string todayId; static DateTime todayFor;
         public static string Today()
         {
-            var have = Personas.Where(p => Has(p[0])).Select(p => p[0]).ToList(); if (have.Count == 0) return "none";
-            int seed = DateTime.Today.Year * 400 + DateTime.Today.DayOfYear;
-            return have[(int)((uint)(seed * 2654435761u) % (uint)have.Count)];
+            lock (k) if (todayId != null && todayFor == DateTime.Today) return todayId;
+            // AM-CG-186: whether a pack exists is checked once (its text, not a parse that the small cache would evict again)
+            if (haveIds == null) haveIds = Personas.Where(p => Knowledge.RawText("lines-" + p[0]) != "").Select(p => p[0]).ToList();
+            string pick = "none";
+            if (haveIds.Count > 0) { int seed = DateTime.Today.Year * 400 + DateTime.Today.DayOfYear; pick = haveIds[(int)((uint)(seed * 2654435761u) % (uint)haveIds.Count)]; }
+            lock (k) { todayId = pick; todayFor = DateTime.Today; }
+            return pick;
         }
         // who talks right now
         public static string Who() { string p = Persona; if (p == "surprise") p = Today(); return p == "none" || !Has(p) ? Mood : p; }
@@ -120,37 +125,46 @@ namespace AdeeboMeter
         public static string Line(string key, string v) { return Line(key, v, Who()); }
         public static string Line(string key, string v, string who)
         {
-            string own = MineLine(key, v != null); if (own != null) return Fill(own, v, who);
+            string own = OwnFor(key, v != null, who); if (own != null) return Fill(own, v, who);
             foreach (var id in Chain(who))
             {
                 var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
-                var ok = l.Where(t => v != null || t.IndexOf("{v}", StringComparison.Ordinal) < 0).ToList(); if (ok.Count == 0) continue;
-                string prev; lock (k) last.TryGetValue(key, out prev);
-                string pick;
-                lock (k) { var fresh = ok.Count > 1 ? ok.Where(t => t != prev).ToList() : ok; pick = fresh[rnd.Next(fresh.Count)]; last[key] = pick; }
-                return Fill(pick, v, id);
+                var ok = l.Where(t => v != null || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct().ToList(); if (ok.Count == 0) continue;
+                return Fill(Pick(key, ok), v, id);
             }
             return "";
+        }
+        // a random one, never the one shown last time - and never an empty choice (AM-CG-172: two identical variants)
+        static string Pick(string key, List<string> ok)
+        {
+            lock (k) { string prev; last.TryGetValue(key, out prev); var fresh = ok.Where(t => t != prev).ToList(); if (fresh.Count == 0) fresh = ok; var pick = fresh[rnd.Next(fresh.Count)]; last[key] = pick; return pick; }
+        }
+        // your line, marked as yours (AM-CG-176: never styled like a measured verdict), for the voice that's talking now
+        public const string MineMark = "✎ ";
+        static string OwnFor(string key, bool haveV, string who)
+        {
+            if (who == "plain" || who != Who()) return null;   // AM-CG-183: not in another voice's preview, not in the neutral voice
+            string own = MineLine(key, haveV); return own == null ? null : MineMark + own;
         }
         // the same line for a few minutes for a state that lasts (the header, the widget)
         public static string Steady(string key, string v) { return SteadyAs(key, v, Who()); }
         // the same, in a given voice (Trading speaks Plain when a faith is chosen: money is no joke there)
         public static string SteadyAs(string key, string v, string who)
         {
-            string sk = who + "|" + key; KeyValuePair<DateTime, string> s;
-            lock (k) if (sticky.TryGetValue(sk, out s) && (DateTime.Now - s.Key).TotalMinutes < 5) return Fill(s.Value, v, who);
+            string sk = who + "|" + key + "|" + (v != null ? "v" : "-"); KeyValuePair<DateTime, string> s;   // AM-CG-171: "with a number" and "without" cached apart
+            lock (k) if (sticky.TryGetValue(sk, out s) && (DateTime.Now - s.Key).TotalMinutes < 5 && (v != null || s.Value.IndexOf("{v}", StringComparison.Ordinal) < 0)) return Fill(s.Value, v, who);
             string raw = RawLine(key, v != null, who); if (raw == "") return "";
             lock (k) { if (sticky.Count > 40) sticky.Clear(); sticky[sk] = new KeyValuePair<DateTime, string>(DateTime.Now, raw); }
             return Fill(raw, v, who);
         }
         static string RawLine(string key, bool haveV, string who)
         {
-            string own = MineLine(key, haveV); if (own != null) return own;
+            string own = OwnFor(key, haveV, who); if (own != null) return own;
             foreach (var id in Chain(who))
             {
                 var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
-                var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).ToList(); if (ok.Count == 0) continue;
-                string prev; lock (k) { last.TryGetValue(key, out prev); var fresh = ok.Count > 1 ? ok.Where(t => t != prev).ToList() : ok; var pick = fresh[rnd.Next(fresh.Count)]; last[key] = pick; return pick; }
+                var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct().ToList(); if (ok.Count == 0) continue;
+                return Pick(key, ok);
             }
             return "";
         }
@@ -241,8 +255,8 @@ namespace AdeeboMeter
         static string MineLine(string key, bool haveV)
         {
             var m = Mine(); List<string> l; if (m == null || !m.TryGetValue(key, out l)) return null;
-            var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).ToList(); if (ok.Count == 0) return null;
-            lock (k) return ok[rnd.Next(ok.Count)];
+            var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList(); if (ok.Count == 0) return null;
+            return Pick("mine." + key, ok);   // AM-CG-177: no immediate repeats, duplicates don't weigh the pick
         }
         static readonly Regex Bidi = new Regex(@"[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F‎‏‪-‮⁦-⁩]", RegexOptions.CultureInvariant);
         // check a file and fix what can be fixed; returns what happened, line by line, never silently
@@ -250,7 +264,8 @@ namespace AdeeboMeter
         {
             var report = new List<string>(); kept = new List<string>(); var sw = System.Diagnostics.Stopwatch.StartNew();
             var rows = (text ?? "").Replace("\r", "").Split('\n');
-            if (rows.Length > 600) { report.Add("Refused: " + rows.Length + " lines - the limit is 600 a file."); return report; }
+            int real = rows.Count(r => r.Trim() != "" && !r.TrimStart().StartsWith("#", StringComparison.Ordinal));
+            if (real > 600) { report.Add("Refused: " + real + " lines - the limit is 600 a file."); return report; }
             int n = 0;
             foreach (var r0 in rows)
             {
@@ -262,7 +277,7 @@ namespace AdeeboMeter
                 if (!sep.Success) { report.Add("Line " + n + " refused: write it as key|text, e.g. all.good|All calm."); continue; }
                 string key = sep.Groups[1].Value, t = sep.Groups[3].Value.Trim();
                 if (sep.Groups[2].Value.Trim() != "|") report.Add("Line " + n + " fixed: separator changed to |.");
-                if (t.IndexOf('|') > 0) { var parts = t.Split('|'); if (Array.IndexOf(Moods, parts[0].Trim()) >= 0 || Personas.Any(p => p[0] == parts[0].Trim())) t = parts[parts.Length - 1].Trim(); }   // "key|mood|text": the mood is dropped - your lines are for every mood
+                if (t.IndexOf('|') > 0) { var parts = t.Split('|'); if (Array.IndexOf(Moods, parts[0].Trim()) >= 0 || Personas.Any(p => p[0] == parts[0].Trim())) { t = string.Join("|", parts.Skip(1)).Trim(); report.Add("Line " + n + " fixed: the mood '" + parts[0].Trim() + "' was dropped - kept: " + t); } }   // "key|mood|text": the mood is dropped - your lines are for every mood
                 if (Array.IndexOf(Keys, key) < 0)
                 {
                     string near = Keys.OrderBy(kk => EditDist(kk, key)).First();
@@ -272,30 +287,46 @@ namespace AdeeboMeter
                 t = Regex.Replace(t, @"\{([^}]*)\}", m =>
                 {
                     string ph = m.Groups[1].Value.Trim().ToLowerInvariant(); if (ph == "v" || ph == "addr") return "{" + (m.Groups[1].Value.Trim() == "Addr" ? "Addr" : ph) + "}";
-                    string fix = EditDist(ph, "addr") <= EditDist(ph, "v") + 1 ? "addr" : "v"; report.Add("Line " + n + " fixed: placeholder {" + m.Groups[1].Value + "} -> {" + fix + "}."); return "{" + fix + "}";
+                    report.Add("Line " + n + ": {" + m.Groups[1].Value + "} isn't a placeholder ({v} or {addr}) - kept as plain text, nothing filled in."); return "(" + m.Groups[1].Value + ")";
                 });
                 var words = t.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
                 if (words.Length > 16) { t = string.Join(" ", words.Take(16)).TrimEnd(',', ';', ':') + "..."; report.Add("Line " + n + " fixed: shortened to 16 words."); }
+                if (kept.Contains(key + "|" + t, StringComparer.OrdinalIgnoreCase)) { report.Add("Line " + n + " skipped: the same line is already in this file."); continue; }   // AM-CG-177
                 kept.Add(key + "|" + t);
             }
             report.Insert(0, kept.Count + " line" + (kept.Count == 1 ? "" : "s") + " ready.");
             return report;
         }
+        public static int LastDropped;   // how many of the oldest lines the last save had to let go (over 600)
         public static bool SaveMine(List<string> lines, bool append)
         {
             try
             {
                 System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(MinePath));
                 var all = new List<string>(); if (append && System.IO.File.Exists(MinePath)) all.AddRange(System.IO.File.ReadAllLines(MinePath, System.Text.Encoding.UTF8).Where(l => l.Trim() != "" && !l.StartsWith("#", StringComparison.Ordinal)));
-                all.AddRange(lines); if (all.Count > 600) all = all.Skip(all.Count - 600).ToList();
-                System.IO.File.WriteAllText(MinePath, "# My AdeeboMeter lines: key|text. {addr} = how I like to be called, {v} = the measured value.\n" + string.Join("\n", all) + "\n", new System.Text.UTF8Encoding(false));
+                all.AddRange(lines); all = all.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                LastDropped = Math.Max(0, all.Count - 600); if (LastDropped > 0) all = all.Skip(LastDropped).ToList();
+                FullView.WriteSafe(MinePath, "# My AdeeboMeter lines: key|text. {addr} = how I like to be called, {v} = the measured value.\n" + string.Join("\n", all) + "\n", false);
                 lock (k) { mineRead = false; mine = null; }
                 return true;
             }
             catch (System.IO.IOException) { return false; } catch (UnauthorizedAccessException) { return false; }
         }
         public static string MineText() { try { return System.IO.File.Exists(MinePath) ? System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8) : ""; } catch (System.IO.IOException) { return ""; } catch (UnauthorizedAccessException) { return ""; } }
-        public static void ClearMine() { try { if (System.IO.File.Exists(MinePath)) System.IO.File.Delete(MinePath); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { } lock (k) { mineRead = false; mine = null; } }
+        // Clear moves the file aside (mine.undo) so Undo can bring it back; false = Windows wouldn't let it (AM-CG-185)
+        public static bool ClearMine()
+        {
+            bool ok = true;
+            try { string u = MinePath + ".undo"; if (System.IO.File.Exists(MinePath)) { if (System.IO.File.Exists(u)) System.IO.File.Delete(u); System.IO.File.Move(MinePath, u); } }
+            catch (System.IO.IOException) { ok = false; } catch (UnauthorizedAccessException) { ok = false; }
+            lock (k) { mineRead = false; mine = null; } return ok;
+        }
+        public static bool CanUndoClear { get { return System.IO.File.Exists(MinePath + ".undo") && !System.IO.File.Exists(MinePath); } }
+        public static bool UndoClear()
+        {
+            try { System.IO.File.Move(MinePath + ".undo", MinePath); lock (k) { mineRead = false; mine = null; } return true; }
+            catch (System.IO.IOException) { return false; } catch (UnauthorizedAccessException) { return false; }
+        }
         static int EditDist(string a, string b)
         {
             var d = new int[a.Length + 1, b.Length + 1];

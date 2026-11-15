@@ -602,14 +602,14 @@ namespace AdeeboMeter
                     Cfg.Save();
                     var keep = File.ReadAllLines(Path.Combine(Program.WriteDir, "AdeeboMeter.settings")).Where(l => !PrivateKeys.Any(p => l.StartsWith(p + "=", StringComparison.Ordinal))).ToList();
                     WriteSafe(d.FileName, string.Join("\r\n", keep) + "\r\n", false);
-                    settingsNote = "Saved to " + Path.GetFileName(d.FileName) + " - without your weather place, broker and teams (they stay on this PC).";
+                    settingsNote = "Saved to " + Path.GetFileName(d.FileName) + " - without your weather place, broker, teams, the name you are called and your words of comfort (they stay on this PC).";
                 }
                 catch (Exception e) { settingsNote = "Couldn't save: " + e.Message; }
             }
             settingsCanvas.Invalidate();
         }
         // never in an exported file: where you are, your broker, the teams you follow (AM-CG-122/164)
-        static readonly string[] PrivateKeys = { "wplace", "tradehost", "sportteams" };
+        static readonly string[] PrivateKeys = { "wplace", "tradehost", "sportteams", "addrname", "faith", "faithlast" };
         // settings that make AdeeboMeter reach out to someone else's server on its own: an imported file asks first (AM-CG-124)
         static readonly string[][] OutboundKeys = { new[] { "tradelive", "watch your broker in market hours" }, new[] { "tradecrypto", "watch your broker around the clock" }, new[] { "streams2", "notice streams and check their server" },
             new[] { "weather", "fetch the weather" }, new[] { "tradefx2", "fetch the day's currency rates" }, new[] { "sports", "fetch sports scores and headlines" } };
