@@ -143,8 +143,8 @@ It walks the path from you outwards — *PC → Wi-Fi/LAN → ISP/VPN → DNS �
 ### 5.11 The engineer view (`FullView`)
 A full-screen window, built only when you open it and destroyed when you leave.
 
-- **Header:** the verdict, the day/night switch, *Details*, *About*, *Settings*, *Back to corner*.
-- **Seven sections**, each with its pages underneath: **Overview** · **Monitor** (Connections, Your Wi-Fi / cable, What's running, Live capture) · **Investigate** (Investigate a problem, Check a destination, Health) · **Toolbox** · **Network story** · **Time machine** (Replay, What changed) · **Learn** (Topics, Inside Windows). **Ctrl+K** jumps to anything.
+- **Header:** the logo, the **View** button, Search (Ctrl+K), the light/dark switch, the buddy's face, Settings, the ⋯ menu and *Back to corner*; the verdict sits on the line below with the five path dots.
+- **Sections** (a view decides which show): **Home** (Today, What's wrong?, Connections, Your Wi-Fi / cable, What's running, Live capture, Health) · **Streaming** · **Trading** · **Gamer** · **Toolbox** · **Time machine** (Replay, What changed) · **Learn** (Topics, Inside Windows) · **Network story** · **Security** · **Check a destination**. **Ctrl+K** jumps to anything.
 - **Details** shows raw values, sources and the exact time each was read, on every page that has them.
 - **The path strip:** five dots. **Click a dot** to jump to the page that explains it (PC → What's running, Wi-Fi/LAN → Your Wi-Fi, the rest → Check a destination).
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
@@ -312,6 +312,11 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | Security checkup | when you press it | your own router (a few ports, one UPnP question), your DHCP server, your DNS server; the sites you list; with online lookups on: www.microsoft.com and Cloudflare's DNS |
 | Traffic Lab | when you press Run | the one target you typed, capped at 10 packets a second and 1,000 in all; Wake-on-LAN to your own network |
 | Online lookups | opt-in, 5 min–3 h, then off by themselves | public IP addresses only, to RIPEstat and PeeringDB (HTTPS) |
+| Streaming | only while something plays (can be off) | a timed TCP connection (no data) to the stream's own server, to tell its slowdowns from yours |
+| Broker watch | opt-in, market hours (or 24/7 for crypto) | a timed TCP connection (no data, no sign-in) to the broker you named |
+| Bank of Canada numbers | when the Trading page or the evening summary needs newer ones | one request for the day's rates, about weekly one for the commodity index, to bankofcanada.ca |
+| Weather | opt-in; about every 2 days (every 6 h on Better) | only the coordinates of the place you typed, to api.open-meteo.com; finding the place sends its name once |
+| Reports you send | only when you press Send, after seeing what goes | AdeeboMeter's relay, which files it for Adeeb - no account, user and PC names removed |
 
 **Never:** cloud, account, telemetry, auto-updates, ads, crash reports sent, listening ports.
 
@@ -365,7 +370,10 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | `mibs\`, `mib-index.txt` | `%LOCALAPPDATA%\AdeeboMeter` | MIB files you put there yourself, and the small index of their names (rebuilt only when the folder changes) |
 | `history\` | `%LOCALAPPDATA%\AdeeboMeter` | one line a minute, kept 3 days by default (Settings 1–90), or cleared with one click |
 | `usage.txt`, `baselines.txt`, `seen-apps.txt`, `devices.txt`, `space.txt` | `%LOCALAPPDATA%\AdeeboMeter` | daily data use, what's normal per network, programs and devices already seen, free disk space once a day |
-| `AdeeboMeter-crash.txt` | next to the exe | only after a crash; nothing is sent - *Report this* opens a pre-filled GitHub issue you can read first |
+| `AdeeboMeter-crash.txt` | next to the exe | only after a crash; nothing is sent until you press *Send* in the report box (you see every line first) |
+| `fx.txt`, `bcpi.txt` | `%LOCALAPPDATA%\AdeeboMeter` | the last Bank of Canada rates and commodity index, so Trading opens without asking again |
+| `weather.txt` | `%LOCALAPPDATA%\AdeeboMeter` | only with weather on: the last day and the coming ones, about 2 KB - Remove deletes it |
+| `moments.txt`, `points.txt` | `%LOCALAPPDATA%\AdeeboMeter` | your best speed (for the "new record" moment) and your Adeebo Points |
 
 ---
 
@@ -389,6 +397,71 @@ to exit and removes the folder — it only ever removes `%LOCALAPPDATA%\Programs
 3. GitHub Actions runs `release.ps1` on a clean Windows machine and attaches `AdeeboMeter-<version>-win64.zip`
    (the exe, READ ME, the Theory of Everything PDF, SHA256SUMS), `AdeeboMeter.exe`, the source zip and `SHA256SUMS`;
    the release notes are the CHANGELOG section. The website's download button always points at the latest release.
+4. The **Microsoft Store** listing (9PFGXJPL9CLJ) gets the same version as a signed package; the website and README link it first.
+
+---
+
+## 12. What 1.1.5 added, part by part
+
+```
+            ┌──────────── the corner ────────────┐        ┌──────────────── the engineer view ────────────────┐
+            │ widget  ·  buddy face  ·  weather  │        │ View ▾ · Search · theme · face · ⚙ · ⋯             │
+            │ moments (12 s) · weather (2.5 min) │        │ Home · Streaming · Trading · Gamer · Toolbox ·     │
+            └────────────────┬───────────────────┘        │ Time machine · Learn · More                        │
+                             │ Cfg.Corner                 └──────────────┬─────────────────────────────────────┘
+          Quiet ── Quiet + moments ── Follows my view                    │ Views.cs: what each view shows
+```
+
+### 12.1 Views (`Views`, `FullView.View`)
+A view is a saved set of choices: which sections show, the widget style, background checks, details. Nine are built in
+(Everyday, Gamer, Streamer, Trader, Engineer, Everything and three pairs) and you can save your own. Each view keeps your
+own changes; switching shows a short card with a line from your buddy and never loses work - if anything fails, the old
+view is put back.
+
+### 12.2 The corner: Quiet, moments and weather (`Moments`, `Weather`)
+- **Quiet** - the corner never changes by itself, exactly like before 1.1.5.
+- **Quiet + moments** - when something good happens (a clean game session, a stream with no dips, a new speed record, a
+  steady broker day, the internet back) the buddy's face changes for 12 seconds. Each kind at most once a day, never during
+  a call or a problem.
+- **Weather** (opt-in) - you type a place; Open-Meteo answers with three days hour by hour. Hot, cold, rain, snow or storm
+  shows on the face for 2.5 minutes at :12, :32 and :52. Normal asks again only when less than a day is left; Better every
+  6 hours. Only coordinates leave the PC; only the coming days are kept.
+
+### 12.3 Streaming, Trading and the Gamer Zone
+Streams are recognised by their servers' names (never your tabs or titles); each one is recorded with its dips and whose
+fault they were - your Wi-Fi, your provider or the service. Trading watches the line to your broker in market hours
+(holidays and half days known) and shows the Bank of Canada's daily currencies and weekly commodity index. Home's
+**Your week** puts all three together: what went wrong, whose fault it was, and the Learn topic that explains it.
+
+### 12.4 Reports without an account (`Relay`, `BugReport`)
+A bug, an idea or a Hall of Fame card goes to a small relay that files it for Adeeb - nobody needs a GitHub login. Before
+anything is sent you see it all; user and PC names, folders, IP and MAC addresses and e-mails are removed first. Offline,
+a report waits (three at most, seven days) and goes when the internet is back.
+
+### 12.5 Pictures for tools and calculators (`FullView.Visuals`, `FullView.CalcVisuals`, `FullView.CalcForm`)
+
+```
+   before Run: HOW IT WORKS ──▶ Example: EXAMPLE ──▶ after Run: YOUR RESULT
+   (from the boxes)             (made-up data)        (from the result rows)
+```
+
+Fourteen tools draw what they do (packet stack, encrypt, ping, dig, HTTP/TLS, speed test, subnet, MTR, MTU, port test,
+Wi-Fi). Every calculator has a form - one value per box, units as chips, counts with - and +, lists with + add - that
+writes the same text the calculator always read, and works it out as you type. Its picture repaints only its own
+rectangle; the moving ones (a radio sending lanes of parcels, a train of E1 timeslots, a plan filling up) run only while
+the window is in front and never when Windows' animations are off.
+
+### 12.6 Money, commodities and Learn › Money & investing
+New calculators: currency (Bank of Canada rate and a bank's markup), profit and break-even with fees, position size from
+risk, average cost, compound growth, a fall and the rise to get back, trade latency, commodity units, futures contract
+value and tick, price per unit in Canadian dollars, and game ticks. Learn adds ten money topics (bull and bear markets,
+recession, inflation, compound growth, making money work, dips, emergency fund, 50/30/20, spreading risk, fees) and two
+games - *Ten years of money* and *Bull or bear?*. All learning: made-up numbers, never advice.
+
+### 12.7 Reading comfort (`Draw.ViewScale`, `FullView.Zoom`, `FullView.BuddySheet`)
+Ctrl + and Ctrl - (or Ctrl + wheel, or right-click > Zoom) scale the whole window from 80% to 175% and remember it. Small
+text uses Segoe UI with ClearType. The buddy sheet holds the face, the mood, the voice and *Words of comfort* - a line a day
+from your faith, or *Common to all* when none is chosen.
 
 ---
 
