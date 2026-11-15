@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // Market-open check (GO / HOLD before the bell), Service board (your hosts and ports, right now), Go-live check (is the upload
     // ready for your bitrate, and how far is the ingest server). Each one reuses what AdeeboMeter already measures; the new probes
     // are TCP handshakes only (connect, time it, close) - nothing is sent, nothing listens.
-    static class Sectors
+    static partial class Sectors
     {
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
         static string Ms(double v) { return double.IsNaN(v) ? "-" : v.ToString(v < 10 ? "0.0" : "0", CultureInfo.InvariantCulture) + " ms"; }

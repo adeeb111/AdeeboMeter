@@ -20,6 +20,11 @@ A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and
 - Service board: your hosts and ports (or your pinned sites), 5 timed handshakes each - racing lanes, the down ones named.
 - Ready to stream? (go-live check): your measured upload against your bitrate, the safe bitrate (about 70% of the upload), what's
   already uploading, and the Twitch / YouTube / Kick ingest server's handshake time - bars with your bitrate as the line.
+- What changed on my server? Each run keeps a snapshot - A/AAAA/MX/NS records, which of 10 common ports answer, the certificate
+  (issuer, expiry, fingerprint), SSH and SMTP banners - and compares it with the last one; a timeline of every change, last 30 kept.
+- Trading session tape: the broker all session from the Trading page's record - its answer time each minute, market open and
+  close marked, every slow moment as a band coloured by who caused it (PC, Wi-Fi, home, provider, the broker).
+- After-stream report: the same for a stream from the Streaming page - the download each minute, every drop and its cause.
 - New motto: Know what's wrong. Show anyone.
 
 ### New: take any picture with you - Save, Copy, phone, Bluetooth

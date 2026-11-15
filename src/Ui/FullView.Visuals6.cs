@@ -18,8 +18,8 @@ namespace AdeeboMeter
         static readonly HashSet<string> Pictured6 = new HashSet<string> {
             "timeline", "winupdate", "changed", "usb", "rushhour", "besttime", "sixmonths", "wakeup", "dltime", "leaks", "gpu", "bg", "certs", "pressure", "disk",
             "capfc", "month", "svcfail", "events", "winev", "drivers", "bluetooth", "prematch", "tonight", "keys", "newkey", "recipients", "selfsigned", "csrmake",
-            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr", "marketopen", "board", "golive" };
-        static readonly HashSet<string> Moving6 = new HashSet<string> { "board", "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
+            "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr", "marketopen", "board", "golive", "srvchange", "tradetape", "afterstream" };
+        static readonly HashSet<string> Moving6 = new HashSet<string> { "board", "srvchange", "tradetape", "afterstream", "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
         static readonly string[] DotSep6 = { " · " };
 
         float Wave6(Graphics g, float x, float y, float w, string st)
@@ -91,6 +91,16 @@ namespace AdeeboMeter
                         cap = tbSel == "marketopen" ? Or(RV("Market-open check"), "MARKET-OPEN CHECK") : tbSel == "month" ? Or(VisRows().Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "YOUR MONTH") : tbSel == "svcfail" ? "SERVICES THAT FAILED TO START" : tbSel == "events" || tbSel == "winev" ? "WHAT WINDOWS WROTE DOWN" : tbSel == "drivers" ? "DEVICES, DRIVERS AND USB" : tbSel == "bluetooth" ? "BLUETOOTH" : Or(P(RV("Ready to play"), 0), "READY TO PLAY?").ToUpperInvariant();
                         return Tiles(g, x, y, w, st, cap.ToUpperInvariant(), t, tbSel == "prematch" ? Or(RRow("Ready to play") != null && RRow("Ready to play").Length > 3 ? RRow("Ready to play")[3] : "", "Amber is worth fixing before the match.") : "Red needs you; amber is worth a look; the rest is for the record.");
                     }
+                case "srvchange":
+                    {
+                        var ev = new List<string[]>(); string since = res.Where(o => o[1].StartsWith("Since ", StringComparison.Ordinal)).Select(o => o[1].Substring(6)).FirstOrDefault() ?? "";
+                        var all = VisRows().Where(o => o.Length > 2).ToList(); foreach (var o in all.TakeWhile(o => o[0] != "-1").Where(o => o[2].Contains("→"))) ev.Add(new[] { L.T("now"), o[1] + ": " + o[2], o[1].StartsWith("Certificate expires", StringComparison.Ordinal) || o[1] == "Open ports" ? "2" : "1" });
+                        bool inPast = false; foreach (var o in all) { if (o[0] == "-1") { inPast = o[1] == "EARLIER CHANGES"; continue; } if (inPast) ev.Add(new[] { o[1], o[2], "3" }); }
+                        if (ev.Count == 0) ev.Add(new[] { L.T("now"), res.Count > 0 ? res[0][1] + ": " + res[0][2] : L.T("first check - nothing to compare yet"), "0" });
+                        return Timeline(g, x, y, w, st, L.T("WHAT CHANGED ON") + " " + Or(VisIn()[0], "THE SERVER").ToUpperInvariant() + (since != "" ? " · " + L.T("SINCE") + " " + since.ToUpperInvariant() : ""), ev, "Each check keeps a snapshot: DNS records, open ports, certificate, banners. A change right after a deploy is expected; one nobody made is worth a question.");
+                    }
+                case "tradetape": case "afterstream":
+                    return SessionPic(g, x, y, w, st);
                 case "board":
                     {
                         var lanes = res.Where(o => o[1].Contains(":") && o[1] != "Up right now").Select(o => Tuple.Create(o[1], RowMs(o[2]), VNum(o[2], @"max\s*([0-9.]+)"), Lv(o))).ToList();
@@ -130,6 +140,37 @@ namespace AdeeboMeter
                 default:   // certconv, certcmp, beforeafter, twopc
                     return TwoCols(g, x, y, w, st);
             }
+        }
+
+        // ================================================================== the session tape: the line all session, every dip a band coloured by who caused it
+        static readonly Dictionary<string, Color> BlameCol = new Dictionary<string, Color> { { "pc", Color.FromArgb(130, 80, 223) }, { "wifi", Color.FromArgb(191, 135, 0) }, { "home", Color.FromArgb(225, 112, 0) }, { "provider", Color.FromArgb(207, 34, 46) }, { "far", Color.FromArgb(87, 96, 106) }, { "unsure", Color.FromArgb(160, 168, 180) } };
+        float SessionPic(Graphics g, float x, float y, float w, string st)
+        {
+            bool trade = tbSel == "tradetape"; var s = st == "EXAMPLE" ? null : Sectors.PickSession(trade ? "trade" : "stream", VisIn()[0]);
+            if (s == null || s.Line.Count < 2)
+            {   // no recorded session here (the Example, or nothing yet): the moments from the rows, on a timeline
+                var ev = Res().Where(o => System.Text.RegularExpressions.Regex.IsMatch(o[1], @"^\d{1,2}:\d{2}")).Select(o => new[] { o[1], o[2], Lv(o).ToString(CultureInfo.InvariantCulture) }).ToList();
+                return Timeline(g, x, y, w, st, trade ? "THE SESSION, SLOW MOMENT BY SLOW MOMENT" : "THE STREAM, DROP BY DROP", ev, Or(RV(trade ? "Slow moments" : "Drops"), "Each moment with who caused it - your PC, the Wi-Fi, home, the provider or the far end."));
+            }
+            var r = VisCard(g, x, y, w, 250 * S, trade ? L.T("THE SESSION") + " · " + WatchKit.BlameName("far", s.Far).ToUpperInvariant() : L.T("THE STREAM") + " · " + s.What.ToUpperInvariant(), st);
+            float gx = r.X + 50 * S, gy = r.Y + 40 * S, gw = r.Width - 70 * S, gh = 130 * S; double mins = Math.Max(1, s.Length.TotalMinutes); int idx = trade ? 2 : 1;
+            var vals = s.Line.Where(p => p.Length > idx && p[idx] >= 0).Select(p => (double)p[idx]).ToList(); double max = Math.Max(trade ? 20 : 5, vals.Count > 0 ? vals.Max() * 1.15 : 1);
+            Func<double, float> X = m => gx + gw * (float)Math.Max(0, Math.Min(1, m / mins)); Func<double, float> Y = v => gy + gh - gh * (float)Math.Min(1, v / max);
+            using (var p = new Pen(Theme.Line, 1 * S)) { g.DrawLine(p, gx, gy + gh, gx + gw, gy + gh); g.DrawLine(p, gx, gy, gx, gy + gh); }
+            foreach (var d in s.Dips) { Color c; if (!BlameCol.TryGetValue(d.Blame, out c)) c = VSlate; double m0 = (d.T - s.Start).TotalMinutes; using (var b = new SolidBrush(Color.FromArgb(70, c))) g.FillRectangle(b, X(m0), gy, Math.Max(3 * S, X(m0 + d.Secs / 60.0) - X(m0)), gh); }
+            if (trade) foreach (var mk in new[] { Tuple.Create(new TimeSpan(9, 30, 0), L.T("open")), Tuple.Create(new TimeSpan(16, 0, 0), L.T("close")) })
+                { double m0 = (s.Start.Date + mk.Item1 - s.Start).TotalMinutes; if (m0 < 0 || m0 > mins) continue; using (var p = new Pen(Theme.Ink, 1.5f * S) { DashStyle = DashStyle.Dash }) g.DrawLine(p, X(m0), gy - 6 * S, X(m0), gy + gh); VText(g, mk.Item2, Draw.fTiny, Theme.Ink, X(m0) + 3 * S, gy - 8 * S); }
+            var pts = s.Line.Where(p => p.Length > idx && p[idx] >= 0).Select(p => new PointF(X(p[0]), Y(p[idx]))).ToArray();
+            var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
+            if (pts.Length > 1) using (var p = new Pen(trade ? Theme.Blue : Theme.Green, 2 * S)) g.DrawLines(p, pts);
+            if (WindowsAnimates() && pts.Length > 1) { int k = (int)(Wrap((float)AnimT * 0.15f, 1f) * (pts.Length - 1)); using (var b = new SolidBrush(Theme.Ink)) g.FillEllipse(b, pts[k].X - 4 * S, pts[k].Y - 4 * S, 8 * S, 8 * S); }
+            g.SmoothingMode = sm;
+            VText(g, max.ToString("0", CultureInfo.CurrentCulture) + (trade ? " ms" : " Mb/s"), Draw.fTiny, Theme.Sub, r.X + 8 * S, gy - 4 * S);
+            VText(g, s.Start.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, Theme.Sub, gx, gy + gh + 4 * S); var es = s.End.ToString("HH:mm", CultureInfo.CurrentCulture); VText(g, es, Draw.fTiny, Theme.Sub, gx + gw - g.MeasureString(es, Draw.fTiny).Width, gy + gh + 4 * S);
+            float lx = gx; var tally = s.Tally();
+            foreach (var kv in tally.Where(z => z.Value > 0)) { Color c; if (!BlameCol.TryGetValue(kv.Key, out c)) c = VSlate; Theme.Fill(g, new RectangleF(lx, gy + gh + 24 * S, 12 * S, 10 * S), 3 * S, c); string t = kv.Value + " " + WatchKit.BlameName(kv.Key, s.Far); VText(g, t, Draw.fSmall, Theme.Ink, lx + 16 * S, gy + gh + 21 * S); lx += 40 * S + g.MeasureString(t, Draw.fSmall).Width; }
+            VFoot(g, r, trade ? "The line is the broker's answer time each minute; each band is a slow moment, coloured by who caused it." : "The line is the download each minute; each band is a drop, coloured by who caused it.");
+            return r.Bottom + 14 * S;
         }
 
         // ================================================================== the drawings wave 6 adds
