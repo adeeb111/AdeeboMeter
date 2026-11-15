@@ -12,7 +12,8 @@
 
 <p align="center"><b>Free, offline network troubleshooter and monitor for Windows 10 and 11 — no admin rights, no cloud.</b><br>Is it your PC, your Wi-Fi, your router, your ISP, DNS or the internet? One glance tells you.</p>
 
-<p align="center"><b><a href="https://adeeb111.github.io/AdeeboMeter/">Website</a></b> · <a href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a> · <a href="https://adeeb111.github.io/AdeeboMeter/#theory">Theory of Everything</a> · <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Discussions</a></p>
+<p align="center"><a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ?mode=direct"><img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Get it from Microsoft Store"></a></p>
+<p align="center"><b><a href="https://adeebometer.com/">Website</a></b> · <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Microsoft Store</a> · <a href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a> · <a href="https://adeebometer.com/#theory">Theory of Everything</a> · <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Discussions</a></p>
 
 <p align="center"><img src="docs/img/screenshot.png" alt="AdeeboMeter: the engineer view and the corner widget on a Windows desktop" width="860"></p>
 
@@ -40,9 +41,9 @@ AdeeboMeter is a small Windows companion for people who live on the network. A f
 
 ## Get it
 
-**[adeeb111.github.io/AdeeboMeter](https://adeeb111.github.io/AdeeboMeter/)** — download, and the Theory of Everything as slides.
+**[adeebometer.com](https://adeebometer.com/)** — download, and the Theory of Everything as slides.
 
-1. Download `AdeeboMeter-<version>-win64.zip` from [Releases](../../releases) and open it.
+1. Easiest: **[get it from the Microsoft Store](https://apps.microsoft.com/detail/9PFGXJPL9CLJ)** (signed, updates itself). Or download `AdeeboMeter-<version>-win64.zip` from [Releases](../../releases) and open it.
 2. Double-click **AdeeboMeter.exe** and choose **Install**. (SmartScreen: *More info → Run anyway* — the exe isn't code-signed yet.)
 3. Look at the bottom-right corner of your screen.
 
@@ -50,7 +51,7 @@ It installs just for you — `%LOCALAPPDATA%\Programs\AdeeboMeter\<version>`, a 
 Settings > Apps — with no administrator rights. **Update**: run the new exe, choose *Update*; your settings come along.
 **Remove**: Settings > Apps, or the tray menu. Rather not install? Choose *Just run it from here*.
 
-Windows 10 or 11. **Download it only from [github.com/adeeb111/AdeeboMeter](https://github.com/adeeb111/AdeeboMeter/releases)** —
+Windows 10 or 11. **Download it only from the [Microsoft Store](https://apps.microsoft.com/detail/9PFGXJPL9CLJ) or [github.com/adeeb111/AdeeboMeter](https://github.com/adeeb111/AdeeboMeter/releases)** —
 fake copies of network tools are a favourite trick of malicious ads. The exe is built by GitHub Actions on a clean Windows
 machine with Microsoft's own .NET Framework compiler from this exact source; each release lists its SHA256, and GitHub's
 build provenance proves where a file came from: `gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter`.
