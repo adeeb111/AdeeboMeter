@@ -21,14 +21,14 @@ namespace AdeeboMeter
         static readonly string[] DotSep = { " · " }; static readonly char[] SpaceSep = { ' ' };
         static readonly Color VPurple = Theme.C("#8250DF"), VSlate = Theme.C("#57606A");
         static readonly HashSet<string> Pictured = new HashSet<string> { "stack", "encrypt", "decrypt", "ping", "tcpping", "dig", "http", "speedtest", "subnet", "mtr", "mtu", "port", "wifirate", "roams" };
-        public static bool HasPicture(string id) { return Pictured.Contains(id) || IsCalc(id); }
+        public static bool HasPicture(string id) { return Pictured.Contains(id) || IsCalc(id) || Pictured3.Contains(id); }
         string visFail = "";
         // self-test: every picture draws before a run and with its Example, and the Example's picture grows from the result
         internal string VisualCheck()
         {
             EnsureToolbox(); var bad = new List<string>();
             using (var bmp = new Bitmap(1000, 2400)) using (var g = Graphics.FromImage(bmp))
-                foreach (var id in Pictured.Concat(CalcSpecs().Select(z => z.Id)).Distinct())
+                foreach (var id in Pictured.Concat(Pictured3).Concat(CalcSpecs().Select(z => z.Id)).Distinct())
                 {
                     SelectTool(id); visFail = "";
                     float y0 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("idle " + visFail); else if (y0 <= 10) bad.Add(id + ": no picture before a run");
@@ -92,7 +92,7 @@ namespace AdeeboMeter
                     case "port": return VisPort(g, x, y, w, st);
                     case "wifirate": return VisRate(g, x, y, w, st);
                     case "roams": return VisRoams(g, x, y, w, st);
-                    default: return CalcPicture(g, x, y, w, st);
+                    default: return Pictured3.Contains(tbSel) ? Wave3(g, x, y, w, st) : CalcPicture(g, x, y, w, st);
                 }
             }
             catch (Exception e) { visFail = tbSel + ": " + e.GetType().Name + " " + e.Message; Program.Log("tool picture " + visFail); }   // a picture never breaks the page
@@ -376,17 +376,17 @@ namespace AdeeboMeter
             if (first != null) { string v = first[2]; int k = v.IndexOf(" · ", StringComparison.Ordinal); ans = first[0] == "2" ? L.T("no answer") : Draw.Trunc(k > 0 ? v.Substring(0, k) : v, 34); }
             double t = VNum(VisText(), @"([0-9]+)\s*ms"); if (!double.IsNaN(t)) ms = t.ToString("0", CultureInfo.InvariantCulture) + " ms";
             string zone = name.Contains(".") ? name.Substring(name.LastIndexOf('.')) : ".com";
-            string spec = "This PC > " + server + ": " + type + " for " + name + "?"
-                + " | " + server + " > Root and " + zone + ": who knows " + name + "?"
-                + " | Root and " + zone + " > " + server + ": ask " + name + "'s own servers"
-                + " | " + server + " > " + name + "'s servers: " + type + " for " + name + "?"
-                + " | " + name + "'s servers > " + server + ": " + ans
-                + " | " + server + " > This PC: " + ans + " (kept until its TTL runs out)";
-            int steps = 6; float h = 44 * S + 24 * S + steps * 30 * S + 8 * S + 44 * S;
-            var r = VisCard(g, x, y, w, h, "WHO ASKS WHOM - A NAME BECOMES AN ADDRESS", state);
-            float ly = DrawKnowledgeLadder(g, tbCanvas, spec, r.X + 12 * S, r.Y + 40 * S, r.Width - 24 * S);
-            using (var sb = new SolidBrush(Theme.Sub)) g.DrawString((ms != "" ? L.T("Answered in") + " " + ms + ".  " : "") + L.T("Usually the server already remembers the answer and skips the middle steps - that's why repeat lookups take 1-2 ms."), Draw.fSmall, sb, new RectangleF(r.X + 18 * S, ly - 4 * S, r.Width - 36 * S, 34 * S));
-            return r.Bottom + 14 * S;
+            // packets back and forth (FullView.Visuals3.cs): the full walk the first time a name is asked
+            var st = new List<XStep> {
+                X(0, 1, type + " " + L.T("for") + " " + name + "?", "DNS · UDP 53", double.NaN),
+                X(1, 2, L.T("who knows") + " " + name + "?", L.T("the root, then") + " " + zone, double.NaN),
+                X(2, 1, L.T("ask its own servers"), L.T("a referral, not the answer"), double.NaN),
+                X(1, 3, type + " " + L.T("for") + " " + name + "?", L.T("to the name's own servers"), double.NaN),
+                X(3, 1, ans, L.T("the answer, with how long to keep it (TTL)"), double.NaN),
+                X(1, 0, ans, L.T("kept until its TTL runs out"), double.IsNaN(t) ? double.NaN : t) };
+            if (first != null && first[0] == "2") { st[4].Lv = 2; st[5].Lv = 2; }
+            return ExchangeCard(g, x, y, w, state, "WHO ASKS WHOM - A NAME BECOMES AN ADDRESS", new[] { L.T("This PC"), Draw.Trunc(server, 22), L.T("Root and") + " " + zone, Draw.Trunc(name, 18) + L.T("'s servers") }, st,
+                (ms != "" ? L.T("Answered in") + " " + ms + ". " : "") + L.T("Usually the server already remembers the answer and skips the middle steps - that's why repeat lookups take 1-2 ms."));
         }
 
         // ================================================================== HTTP and TLS: the handshake, then the page
@@ -398,15 +398,12 @@ namespace AdeeboMeter
             string tlsv = "", status = L.T("the page"), cert = L.T("its certificate"), ms = "";
             var hr = VRow("HTTP"); if (hr != null) { string v = hr[2]; var parts = v.Split(DotSep, StringSplitOptions.None); status = parts[0]; foreach (var p in parts) { if (p.StartsWith("TLS", StringComparison.Ordinal)) tlsv = p; if (p.EndsWith(" ms", StringComparison.Ordinal)) ms = p; } }
             var cr = VRow("Certificate"); if (cr != null) { string v = cr[2]; int k = v.IndexOf(" · ", StringComparison.Ordinal); cert = L.T("certificate:") + " " + (k > 0 ? v.Substring(0, k) : v); }
-            string spec = "This PC > " + host + ": " + L.T("hello (TCP SYN) to port") + (plain ? " 80" : " 443") + " | " + host + " > This PC: " + L.T("hello back (SYN-ACK)");
-            if (!plain) spec += " | This PC > " + host + ": " + L.T("TLS hello - name:") + " " + sni + " | " + host + " > This PC: " + cert + (tlsv != "" ? " · " + tlsv : "");
-            spec += " | This PC > " + host + ": GET /" + (plain ? "" : "  " + L.T("(encrypted)")) + " | " + host + " > This PC: " + status;
-            int steps = plain ? 4 : 6; float h = 44 * S + 24 * S + steps * 30 * S + 8 * S + 44 * S;
-            var r = VisCard(g, x, y, w, h, plain ? "OPENING A PAGE - NOT ENCRYPTED" : "OPENING A PAGE SAFELY - THE HANDSHAKE, THEN THE PAGE", state);
-            float ly = DrawKnowledgeLadder(g, tbCanvas, spec, r.X + 12 * S, r.Y + 40 * S, r.Width - 24 * S);
-            using (var sb = new SolidBrush(plain ? Theme.LvText(1) : Theme.Sub))
-                g.DrawString((ms != "" ? L.T("All of it took") + " " + ms + ".  " : "") + (plain ? L.T("Plain HTTP: anyone on the way can read and change it.") : L.T("The name you ask for (SNI) picks the certificate; everything after the hello is encrypted.")), Draw.fSmall, sb, new RectangleF(r.X + 18 * S, ly - 4 * S, r.Width - 36 * S, 34 * S));
-            return r.Bottom + 14 * S;
+            var st = new List<XStep> { X(0, 1, L.T("hello (SYN)"), "TCP " + (plain ? "80" : "443"), double.NaN), X(1, 0, L.T("hello back (SYN-ACK)"), L.T("the connection is open"), double.NaN) };
+            if (!plain) { st.Add(X(0, 1, L.T("TLS hello - name") + ": " + sni, L.T("ClientHello - the name picks the certificate (SNI)"), double.NaN)); st.Add(X(1, 0, cert + (tlsv != "" ? " · " + tlsv : ""), L.T("ServerHello + certificate + keys"), double.NaN)); }
+            st.Add(X(0, 1, "GET /", plain ? L.T("readable by anyone on the way") : L.T("sealed"), double.NaN)); st.Add(X(1, 0, status, ms != "" ? L.T("all of it took") + " " + ms : L.T("the page"), double.NaN));
+            if (!plain) foreach (var z in st.Skip(4)) z.Sealed = true; else foreach (var z in st.Skip(2)) z.Lv = 1;
+            return ExchangeCard(g, x, y, w, state, plain ? "OPENING A PAGE - NOT ENCRYPTED" : "OPENING A PAGE SAFELY - THE HANDSHAKE, THEN THE PAGE", new[] { L.T("This PC"), Draw.Trunc(host, 26) }, st,
+                plain ? "Plain HTTP: anyone on the way can read and change it." : "The name you ask for (SNI) picks the certificate; everything after the hello is encrypted.");
         }
 
         // ================================================================== speed test: two dials and the lag under load

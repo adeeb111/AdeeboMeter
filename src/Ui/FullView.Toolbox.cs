@@ -755,6 +755,7 @@ namespace AdeeboMeter
             if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
             tbRun.Text = "Run"; tbRun.Accent = QAccent(QuestionOf(t)); tbEx.Visible = Examples.Get(t.Id) != null;
             tbBar.ResumeLayout();
+            EnsureAnim();   // the picture timer: does nothing unless this tool's picture moves
             if (IsCalc(t.Id)) { var keep = tbShown; BuildCalcForm(t.Id); if (keep != null && calcNow != null) { FillSpec(calcNow, keep); BuildCalcFormKeep(t.Id); WriteBoxes(); CalcNow(); } EnsureAnim(); }   // calculators: a form, live (FullView.CalcForm.cs)
             else if (calcNow != null || (calcHost != null && calcHost.Visible)) { calcNow = null; calcHost.Visible = false; tbRun.Visible = true; }
             FillAssist(tbPool.Select((b, k) => new { b, k }).Where(z => z.b.Visible && z.b.Box.Text == "").Select(z => z.k).DefaultIfEmpty(0).First());

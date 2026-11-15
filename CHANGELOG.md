@@ -6,6 +6,17 @@ Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
 
+### New: tool pictures (third wave) - packets going back and forth
+- Exchange pictures: each tool draws who talks to whom (PC, router, DNS, servers), and a packet travels each step in order, out and back.
+  The packet in flight shows what it carries ("Discover · broadcast to everyone · UDP 68 → 67"). Sealed packets carry a padlock.
+  Finished steps keep their label, detail and ms, and the next steps show faintly. The exchange loops from the start.
+- dig and HTTP now animate too. New pictures: HTTP timing, DoH, DHCP (DORA), duplicate IP, ARP who-has, NTP, RADIUS, TACACS+.
+- Races and queues: DNS race lanes (known vs new name), IPv4 vs IPv6, game server comparison, and bufferbloat
+  (your pings queued behind big blocks while the line is full).
+- Maps: game lag leg by leg, devices around the router (with an ARP ripple), sweep, the route fork (which road a packet takes, VPN or not),
+  certificate chain, subnet overlap, disk space treemap, crashes, battery, hotel Wi-Fi checks.
+- Only the picture redraws, and only while the window is active and Windows animations are on.
+
 ### New: one front door, side doors, cases and a report
 - Front door: type a problem in your own words in the search box ("my Teams call keeps freezing", "netflix buffering") and it opens a case; tool names still open tools. Home has "What's going on?" chips and your recent cases.
 - Side doors: "Investigate this ›" where something went wrong - Your week, a stream with dips, a broker day with slow moments, a failed tool result. The case starts with what AdeeboMeter recorded there.
