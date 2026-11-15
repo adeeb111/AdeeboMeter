@@ -151,7 +151,7 @@ namespace AdeeboMeter
             }
             // the lines: processor %, disk busy %, ping (own scale)
             Func<string, List<double>> ser = name => { var m = Regex.Match(tl, name + @"\s+([-\dx ]+)"); return m.Success ? m.Groups[1].Value.Trim().Split(' ').Select(t => t == "x" ? -1 : t == "-" ? double.NaN : double.Parse(t, CultureInfo.InvariantCulture)).ToList() : new List<double>(); };
-            var cpu = ser("CPU"); var disk = ser("Disk"); var ping = ser("Ping");
+            var cpu = ser("CPU"); var disk = ser("Disk"); var mem = ser("Memory"); var ping = ser("Ping");
             if (cpu.Count < 2) { cpu = new List<double> { 10, 12, 30, 20, 15, 12 }; disk = new List<double> { 5, 8, 10, 6, 5, 4 }; ping = new List<double> { 14, 15, 14, 16, 15, 14 }; }
             var gr = new RectangleF(r.X + 50 * S, r.Y + 100 * S, r.Width - 110 * S, 150 * S);
             using (var p = new Pen(Theme.Line, 1 * S)) { g.DrawRectangle(p, gr.X, gr.Y, gr.Width, gr.Height); g.DrawLine(p, gr.X, gr.Y + gr.Height * 0.1f, gr.Right, gr.Y + gr.Height * 0.1f); }
@@ -162,10 +162,10 @@ namespace AdeeboMeter
                 var pts = new List<PointF>(); for (int i = 0; i < v.Count; i++) { if (double.IsNaN(v[i]) || v[i] < 0) { if (pts.Count > 1) using (var p = new Pen(c, 2.5f * S)) g.DrawLines(p, pts.ToArray()); pts.Clear(); continue; } pts.Add(new PointF(gr.X + gr.Width * i / Math.Max(1, v.Count - 1), gr.Bottom - gr.Height * (float)Math.Min(1, v[i] / max))); }
                 if (pts.Count > 1) using (var p = new Pen(c, 2.5f * S)) g.DrawLines(p, pts.ToArray());
             };
-            line(cpu, 100, Theme.Blue); line(disk, 100, VPurple); line(ping, pmax, Theme.Amber);
+            line(cpu, 100, Theme.Blue); line(disk, 100, VPurple); line(mem, 100, Theme.Green); line(ping, pmax, Theme.Amber);
             for (int i = 0; i < ping.Count; i++) if (ping[i] < 0) { float px = gr.X + gr.Width * i / Math.Max(1, ping.Count - 1); VTextC(g, "×", Draw.fBodyB, Theme.Red, px, gr.Y + 4 * S, 20 * S); }
-            float lx = gr.X; foreach (var k in new[] { Tuple.Create("processor %", Theme.Blue), Tuple.Create("disk busy %", VPurple), Tuple.Create("internet ms (× = lost)", Theme.Amber) })
-            { Theme.Fill(g, new RectangleF(lx, gr.Bottom + 10 * S, 14 * S, 6 * S), 3 * S, k.Item2); VText(g, L.T(k.Item1), Draw.fTiny, Theme.Sub, lx + 18 * S, gr.Bottom + 5 * S); lx += 170 * S; }
+            float lx = gr.X; foreach (var k in new[] { Tuple.Create("processor %", Theme.Blue), Tuple.Create("disk busy %", VPurple), Tuple.Create("memory %", Theme.Green), Tuple.Create("internet ms (× = lost)", Theme.Amber) })
+            { Theme.Fill(g, new RectangleF(lx, gr.Bottom + 10 * S, 14 * S, 6 * S), 3 * S, k.Item2); VText(g, L.T(k.Item1), Draw.fTiny, Theme.Sub, lx + 18 * S, gr.Bottom + 5 * S); lx += 150 * S; }
             VFoot(g, r, Cut(Or(RV("Verdict"), "Press 'It feels slow' (tray menu, or Ctrl+Alt+S) the moment it happens: the last 2 minutes are frozen and judged."), 230));
             return r.Bottom + 14 * S;
         }

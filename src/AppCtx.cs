@@ -348,10 +348,10 @@ namespace AdeeboMeter
             if (quitting) return;
             quitting = true; ui.Stop(); GamePing.Me.Stop(); M.Stop(); Usage.Save();
             try { SystemEvents.UserPreferenceChanged -= prefHandler; } catch { }
-            if (hotkey != null) hotkey.Dispose();
+            if (hotkey != null) hotkey.Dispose(); if (slowKey != null) slowKey.Dispose();
             tray.Visible = false; tray.Dispose();
             // a dialog open over the view (Save, Export, Ctrl+K) goes first, so nothing runs on a disposed view when it returns
-            if (full != null && !full.IsDisposed) { foreach (var f in Application.OpenForms.Cast<Form>().Where(f => f != full && f.Modal).ToList()) try { f.Close(); } catch (InvalidOperationException) { } full.Close(); full.Dispose(); }
+            if (full != null && !full.IsDisposed) { foreach (var f in Application.OpenForms.Cast<Form>().Where(f => f != full && f.Modal).ToList()) try { f.Close(); } catch (InvalidOperationException) { } var fv = full; fv.Close(); fv.Dispose(); }   // AM-CG-101: closing clears 'full' (FormClosed) - dispose the one we held
             widget.Dispose(); detailWin.Dispose();
             Program.CleanCaptures();
             ExitThread();
@@ -483,7 +483,14 @@ namespace AdeeboMeter
                 try
                 {
                     var c = PcRecord.FeltSlow();
-                    marshal.BeginInvoke((Action)delegate { if (quitting) return; balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info); });
+                    marshal.BeginInvoke((Action)delegate
+                    {
+                        if (quitting) return;
+                        // the view already open, or Windows won't show a note (notifications off, Focus assist): the answer opens right away
+                        bool open = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized;
+                        if (open || !Native.CanNotify()) { OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool("feltslow", true); return; }
+                        balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
+                    });
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("felt slow: " + e.Message); }
             });

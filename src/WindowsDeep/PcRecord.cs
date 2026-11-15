@@ -16,7 +16,7 @@ namespace AdeeboMeter
     {
         internal sealed class Pt
         {
-            public DateTime T; public double DiskMBs = double.NaN, Cpu, Busy, DiskMs, Faults, Perf, Dpc, Net, Gw, Down, Up, Mem; public bool Lost; public string TopCpu = "", TopIo = ""; public double TopCpuPct;
+            public DateTime T; public double DiskMBs = double.NaN, Commit = double.NaN, Cpu, Busy, DiskMs, Faults, Perf, Dpc, Net, Gw, Down, Up, Mem; public bool Lost; public string TopCpu = "", TopIo = ""; public double TopCpuPct;
         }
         internal sealed class Capture { public DateTime T; public string Who = "", Text = "", Cause = "", Culprit = "", Fix = ""; public int Lv; public List<Pt> Pts = new List<Pt>(); }
         static readonly List<Pt> ring = new List<Pt>(); static readonly object k = new object();
@@ -30,6 +30,7 @@ namespace AdeeboMeter
             double i1, i2; p.Dpc = pv.TryGetValue("dpc", out i1) && pv.TryGetValue("intr", out i2) && !double.IsNaN(i1) && !double.IsNaN(i2) ? i1 + i2 : double.NaN;
             p.Busy = pv.TryGetValue("idle", out v) && !double.IsNaN(v) ? Math.Max(0, Math.Min(100, 100 - v)) : double.NaN;
             if (pv.TryGetValue("dbytes", out v) && !double.IsNaN(v)) p.DiskMBs = v / 1048576;
+            double cm, lim; if (pv.TryGetValue("commit", out cm) && pv.TryGetValue("limit", out lim) && lim > 0 && !double.IsNaN(cm)) p.Commit = 100 * cm / lim;
             DateTime nat = m.NetAt; p.Lost = nat != lastNetAt && double.IsNaN(m.NetPing.Last) && m.NetPing.Values(60).Length > 0; lastNetAt = nat;
             lock (m.L) { var top = m.Apps.Where(a => a.Name != "AdeeboMeter" && a.Name != "Idle" && a.Name != "_Total").OrderByDescending(a => a.Cpu).FirstOrDefault(); if (top != null) { p.TopCpu = top.Name; p.TopCpuPct = top.Cpu; } }
             p.TopIo = PcHealth.TopIo();
@@ -46,16 +47,17 @@ namespace AdeeboMeter
         {
             var c = new Capture { T = at, Pts = pts };
             if (pts.Count < 3) { c.Who = "unknown"; c.Lv = 3; c.Text = "Not enough of a record yet - AdeeboMeter keeps the last minutes once it has run for a little while. Press it again next time it feels slow."; return c; }
-            double cpuS = Share(pts, p => p.Cpu > 90), diskS = Share(pts, p => p.Busy > 90 || p.DiskMs > 50), pageS = Share(pts, p => p.Faults > 300), heldS = Share(pts, p => !double.IsNaN(p.Perf) && p.Perf < 60 && p.Cpu > 50), dpcS = Share(pts, p => p.Dpc > 15);
+            double memS = Share(pts, p => p.Mem > 90 || p.Commit > 92), cpuS = Share(pts, p => p.Cpu > 90), diskS = Share(pts, p => p.Busy > 90 || p.DiskMs > 50), pageS = Share(pts, p => p.Faults > 300), heldS = Share(pts, p => !double.IsNaN(p.Perf) && p.Perf < 60 && p.Cpu > 50), dpcS = Share(pts, p => p.Dpc > 15);
             int netN = pts.Count(p => !double.IsNaN(p.Net) || p.Lost);
             double netBadS = netN == 0 ? 0 : (double)pts.Count(p => p.Lost || p.Net > 150 || p.Gw > 50) / Math.Max(1, netN);
             var pc = new List<Tuple<double, string, string, string>>();   // share, cause, culprit, fix
-            if (pageS > 0) pc.Add(Tuple.Create(pageS + 0.05, "memory is full - Windows keeps reading programs back from the disk (" + HwSpecs.Fmt(Peak(pts, p => p.Faults)) + " pages/s at worst)", Most(pts.Select(p => p.TopCpu)), "close the heaviest app, or add memory"));
+            if (pageS > 0 || memS > 0) pc.Add(Tuple.Create(Math.Max(pageS, memS) + 0.05, "memory was " + HwSpecs.Fmt(Peak(pts, p => p.Mem)) + "% full" + (Peak(pts, p => p.Commit) > 92 ? " (" + HwSpecs.Fmt(Peak(pts, p => p.Commit)) + "% of what Windows promised programs)" : "") + " - Windows swaps programs out to the disk and back" + (double.IsNaN(Peak(pts, p => p.Faults)) ? "" : " (" + HwSpecs.Fmt(Peak(pts, p => p.Faults)) + " pages/s read back at worst)"), "", "close the heaviest app (Hardware nerds > Why is this PC struggling? shows how much each one frees), or add memory"));
             if (diskS > 0) pc.Add(Tuple.Create(diskS, "the disk was " + (Peak(pts, p => p.Busy) >= 99 ? "100%" : HwSpecs.Fmt(Peak(pts, p => p.Busy)) + "%") + " busy, up to " + HwSpecs.Fmt(Peak(pts, p => p.DiskMs)) + " ms per request", Most(pts.Select(p => p.TopIo)), "let it finish, or move that job to the night (Hardware nerds > Disk speed shows if the disk itself is slow)"));
             if (cpuS > 0) pc.Add(Tuple.Create(cpuS, "the processor was maxed out (" + HwSpecs.Fmt(Peak(pts, p => p.Cpu)) + "%)", Most(pts.Where(p => p.Cpu > 90).Select(p => p.TopCpu)), "close or pause that program"));
             if (heldS > 0) pc.Add(Tuple.Create(heldS, "the processor was held back to " + HwSpecs.Fmt(Avg(pts.Where(p => !double.IsNaN(p.Perf) && p.Perf < 60).ToList(), p => p.Perf)) + "% of its speed (heat, battery saver or the power plan)", "", "plug in, clear the vents, and pick Best performance in Settings > Power"));
             if (dpcS > 0) pc.Add(Tuple.Create(dpcS, "a driver kept the processor busy (" + HwSpecs.Fmt(Peak(pts, p => p.Dpc)) + "% on interrupts) - stutter, crackling sound, mouse lag", "", "update the Wi-Fi, audio and graphics drivers"));
             var best = pc.OrderByDescending(t => t.Item1).FirstOrDefault(); bool pcBad = best != null && best.Item1 >= 0.25, netBad = netBadS >= 0.25;
+            bool pcBlind = Share(pts, p => double.IsNaN(p.Busy) && double.IsNaN(p.Faults) && double.IsNaN(p.Mem)) > 0.5;
             string when = at.ToString("t", CultureInfo.CurrentCulture);
             string netNow = netN == 0 ? "the internet wasn't measured (the background checks are off)" : "the internet answered in " + HwSpecs.Fmt(Avg(pts, p => p.Net)) + " ms" + (pts.Any(p => p.Lost) ? " with lost replies" : "");
             if (pcBad)
@@ -71,6 +73,11 @@ namespace AdeeboMeter
                 c.Cause = near ? "your router / Wi-Fi was slow to answer (" + HwSpecs.Fmt(gwA) + " ms)" : "the internet beyond your router was slow or dropped replies (" + HwSpecs.Fmt(Avg(pts, p => p.Net)) + " ms)";
                 c.Text = "At " + when + ": the internet, not this PC. " + Up(c.Cause) + ". The PC itself was fine: processor " + HwSpecs.Fmt(Avg(pts, p => p.Cpu)) + "%, disk " + HwSpecs.Fmt(Avg(pts, p => p.Busy)) + "% busy.";
                 c.Fix = near ? "move closer to the router or use a cable" : "if it keeps happening, the Report for my ISP shows it with numbers";
+            }
+            else if (pcBlind)
+            {
+                c.Who = "unknown"; c.Lv = 3;
+                c.Text = "At " + when + ": " + Up(netNow) + ", but this PC's own counters (memory, disk) weren't readable for most of the 2 minutes - so I can't clear the PC. Press it again; if it keeps saying this, Windows' performance counters are switched off.";
             }
             else
             {
@@ -118,6 +125,7 @@ namespace AdeeboMeter
             var take = pts.Skip(Math.Max(0, pts.Count - 30)).ToList(); var sb = new StringBuilder();
             sb.Append("CPU ").Append(string.Join(" ", take.Select(p => n(p.Cpu)).ToArray()));
             sb.Append(" ; Disk ").Append(string.Join(" ", take.Select(p => n(p.Busy)).ToArray()));
+            sb.Append(" ; Memory ").Append(string.Join(" ", take.Select(p => n(p.Mem)).ToArray()));
             sb.Append(" ; Ping ").Append(string.Join(" ", take.Select(p => p.Lost ? "x" : n(p.Net)).ToArray()));
             return sb.ToString();
         }
@@ -135,11 +143,12 @@ namespace AdeeboMeter
                 rows.Add(R(c.Who == "pc" || c.Who == "both" ? 2 : c.Who == "internet" ? 0 : 0, "Who", c.Who == "pc" ? "this PC" : c.Who == "both" ? "this PC and the internet" : c.Who == "internet" ? "the internet / your router" : "the site or app itself", "", "i"));
                 rows.Add(R(Peak(pts, p => p.Cpu) > 90 ? 1 : 0, "Processor", "average " + HwSpecs.Fmt(Avg(pts, p => p.Cpu)) + "% · peak " + HwSpecs.Fmt(Peak(pts, p => p.Cpu)) + "%" + (Most(pts.Select(p => p.TopCpu)) != "" ? " · busiest: " + Most(pts.Select(p => p.TopCpu)) : ""), "", "m"));
                 rows.Add(R(Peak(pts, p => p.Busy) > 90 || Peak(pts, p => p.DiskMs) > 50 ? 1 : 0, "Disk", "busy " + HwSpecs.Fmt(Avg(pts, p => p.Busy)) + "% on average · up to " + HwSpecs.Fmt(Peak(pts, p => p.DiskMs)) + " ms per request" + (Most(pts.Select(p => p.TopIo)) != "" ? " · busiest: " + Most(pts.Select(p => p.TopIo)) : ""), "", "m"));
-                rows.Add(R(Peak(pts, p => p.Faults) > 300 ? 1 : 0, "Memory", HwSpecs.Fmt(Avg(pts, p => p.Mem)) + "% in use · read back from disk up to " + HwSpecs.Fmt(Peak(pts, p => p.Faults)) + " pages/s", "", "m"));
+                rows.Add(R(Peak(pts, p => p.Faults) > 300 || Peak(pts, p => p.Mem) > 90 ? 1 : 0, "Memory", HwSpecs.Fmt(Avg(pts, p => p.Mem)) + "% in use (peak " + HwSpecs.Fmt(Peak(pts, p => p.Mem)) + "%) · read back from disk up to " + HwSpecs.Fmt(Peak(pts, p => p.Faults)) + " pages/s", "", "m"));
                 double perf = Avg(pts, p => p.Perf); if (!double.IsNaN(perf)) rows.Add(R(perf < 60 ? 1 : 0, "Processor speed", HwSpecs.Fmt(perf) + "% of its rated speed", "", "m"));
                 double dpc = Peak(pts, p => p.Dpc); if (!double.IsNaN(dpc)) rows.Add(R(dpc > 15 ? 1 : 0, "Driver interrupts", "up to " + HwSpecs.Fmt(dpc) + "% of the processor", "", "m"));
                 rows.Add(R(c.Who == "internet" || c.Who == "both" ? 1 : 0, "Internet", double.IsNaN(Avg(pts, p => p.Net)) ? "not measured" : HwSpecs.Fmt(Avg(pts, p => p.Net)) + " ms on average · " + pts.Count(p => p.Lost) + " lost replies · router " + HwSpecs.Fmt(Avg(pts, p => p.Gw)) + " ms", "", "m"));
                 rows.Add(R(3, "Timeline (5 s steps)", Series(pts), "", "m"));
+                rows.Add(R(3, "Judged on", pts.First().T.ToString("T", CultureInfo.CurrentCulture) + " - " + pts.Last().T.ToString("T", CultureInfo.CurrentCulture) + " · " + pts.Count + " readings · a part counts as the cause when it's over its line for a quarter of them: processor over 90%, memory over 90% full, more than 300 pages/s read back, disk over 90% busy or 50 ms per request, processor below 60% of its speed while busy, drivers over 15%; the internet: over 150 ms, the router over 50 ms, or lost replies", "", "i"));
             }
             string pat = Pattern(); if (pat != "") rows.Add(R(3, "Pattern", pat, "", "m"));
             foreach (var e in Earlier().AsEnumerable().Reverse().Skip(c.Pts.Count >= 3 ? 1 : 0).Take(8))

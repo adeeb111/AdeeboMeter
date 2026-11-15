@@ -1214,7 +1214,7 @@ in: |
 1|Disk|busy 92% on average · up to 180 ms per request · busiest: MsMpEng||m
 0|Memory|58% in use · read back from disk up to 40 pages/s||m
 0|Internet|14 ms on average · 0 lost replies · router 2 ms||m
-3|Timeline (5 s steps)|CPU 12 15 18 30 55 61 48 40 38 35 34 30 ; Disk 8 10 40 96 100 100 99 100 100 98 95 90 ; Ping 14 13 15 14 14 16 14 13 15 14 14 15||m
+3|Timeline (5 s steps)|CPU 12 15 18 30 55 61 48 40 38 35 34 30 ; Disk 8 10 40 96 100 100 99 100 100 98 95 90 ; Memory 58 58 59 60 61 61 60 60 59 59 58 58 ; Ping 14 13 15 14 14 16 14 13 15 14 14 15||m
 3|Pattern|Of the last 6 times it felt slow: this PC 4×, the internet 1×, the site / app 1×.||m
 
 == diskspeed

@@ -137,7 +137,7 @@ namespace AdeeboMeter
             Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); y += 48 * S;
             // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
             // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
-            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S;
+            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S - 44 * S;   // 44: Settings always has its row at the bottom
             bool compact = bar.Count * 46 * S + more.Count * 38 * S > room; float bigH = compact ? 36 : 44;
             int fitMore = more.Count; if (compact) { float left = room - bar.Count * 38 * S; fitMore = Math.Max(0, (int)(left / (38 * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
             Action<string, bool> row = (id, small) =>
@@ -159,18 +159,18 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(sub)) g.DrawString(L.T("More...") + "  (" + (more.Count - fitMore).ToString(CultureInfo.CurrentCulture) + ")", Draw.fBody, b, x + 42 * S, y + (36 * S - Draw.fBody.GetHeight(g)) / 2);
                 Act(sideNav, rr, delegate { ShowMoreMenu(sideNav, new Point((int)rr.X, (int)rr.Bottom)); }); y += 38 * S;
             }
-            // the live meter at the bottom (replaces the right-hand panel in this layout), Settings just above it - the gear
-            // at the top right is the other way in
-            float mh = 96 * S, my = r.Height - mh - 12 * S;
-            if (my - 46 * S > y + 4 * S)
+            // Settings at the bottom, always (AM-CG-102: it went missing when the list filled the sidebar); the live meter sits
+            // under it when there's room - the gear at the top right is the other way in
+            float mh = 96 * S; bool meter = r.Height - 12 * S - mh - 46 * S > y + 8 * S;
+            float my = r.Height - mh - 12 * S;
             {
-                var srr = new RectangleF(x, my - 46 * S, w, 38 * S); bool ssel = tab == "settings";
+                var srr = new RectangleF(x, Math.Max(y, (meter ? my : r.Height - 4 * S) - 44 * S), w, 38 * S); bool ssel = tab == "settings";
                 if (ssel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, srr);
                 Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
                 Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings");
             }
-            if (my > y + 8 * S)
+            if (meter)
             {
                 var mr = new RectangleF(x, my, w, mh);
                 Theme.Fill(g, mr, 10 * S, hc ? SystemColors.Window : Navy2);

@@ -740,6 +740,7 @@ namespace AdeeboMeter
             EnsureToolbox(); if (tbBusy) { if (id != tbSel) BusyNote(); return; }
             if (SnmpView(tbSel) && SnmpView(id) && tbBoxes.Count > 1 && IsSnmp(tbSel)) { snmpDev = tbBoxes[0].Box.Text.Trim(); snmpCred = tbBoxes[1].Box.Text.Trim(); }   // switching SNMP tabs keeps the device you typed
             var t = Tools2().FirstOrDefault(x => x.Id == id) ?? Tools2()[0];
+            if (t.Id != tbSel && tbCanvas != null) tbCanvas.AutoScrollPosition = Point.Empty;   // AM-CG-104: a different tool starts at its top, not where the last one was scrolled
             tbHome = false; tbBar.Visible = true; if (tbHead != null) { tbHead.Visible = ByQuestion; tbHead.Invalidate(); } if (tbSection != SectionOf(t) && SectionOf(t) != "health") { tbSection = SectionOf(t); foreach (var c in tbChips) c.Selected = (string)c.Tag == tbSection; foreach (var o in Tools2().Where(z => SectionOf(z) == tbSection)) tbOpen.Add(o.Group); } tbSel = t.Id; tbRows = null; tbRun0 = null; tbTitle = t.Title; tbRowsKey = ""; tbAward = "";
             tbShown = null; PrevRun last; if (tbLast.TryGetValue(t.Id, out last)) { tbRows = last.Rows; tbAt = last.At; tbRowsKey = last.Inputs; tbShown = last.Shown; }   // coming back shows the last result
             // three input boxes made once and reused - switching tools creates no new windows
