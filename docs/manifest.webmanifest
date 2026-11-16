@@ -1,0 +1,24 @@
+{
+  "name": "AdeeboMeter",
+  "short_name": "AdeeboMeter",
+  "description": "Learn how your internet works, play network games, see today's markets and scores, and watch your own PC from your phone.",
+  "id": "/app.html",
+  "start_url": "/app.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0F141B",
+  "theme_color": "#1F6FEB",
+  "categories": ["education", "utilities", "productivity"],
+  "icons": [
+    { "src": "/img/app/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/app/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/app/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Learn", "url": "/learn/", "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Games", "url": "/games.html", "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Live", "url": "/live.html", "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Connect to my PC", "url": "/app.html#scan", "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wi-Fi - how your laptop joins and stays connected | Learn | AdeeboMeter</title>
+<meta name="description" content="Scan, authenticate, associate, then share the air. Radio between your PC and the access point - band, channel and signal decide how good it">
+<link rel="canonical" href="https://adeebometer.com/learn/wifi.html">
+<meta property="og:title" content="Wi-Fi - how your laptop joins and stays connected | Learn | AdeeboMeter">
+<meta property="og:description" content="Scan, authenticate, associate, then share the air. Radio between your PC and the access point - band, channel and signal decide how good it">
+<meta property="og:type" content="article">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
+a{color:var(--blue);overflow-wrap:anywhere}
+.top{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;margin-bottom:18px}
+.top b{margin-right:auto}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
+h2{font-size:18px;margin:28px 0 8px}
+.tag{font-size:18px;color:var(--sub);margin:0 0 18px}
+.chip{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);background:var(--tint);border-radius:999px;padding:2px 10px;text-decoration:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 10px}
+.card p{margin:0}
+.one{border-left:4px solid var(--green)}
+.warn{border-left:4px solid var(--amber)}
+.ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
+.lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.msg{padding:6px 0}
+.msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
+.msg.r p{text-align:right}
+.arrow{height:10px;position:relative}
+.arrow:before{content:"";position:absolute;left:0;right:8px;top:4px;border-top:2px solid var(--blue)}
+.arrow:after{content:"";position:absolute;right:0;top:0;border:5px solid transparent;border-left:9px solid var(--blue);border-right:0}
+.msg.r .arrow:before{left:8px;right:0}
+.msg.r .arrow:after{right:auto;left:0;border-left:0;border-right:9px solid var(--blue)}
+.msg.all .arrow:before{border-top-style:dashed}
+.quiz button{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:8px 0;cursor:pointer;min-height:44px}
+.quiz button.ok{border-color:var(--green);box-shadow:inset 4px 0 0 var(--green)}
+.quiz button.no{border-color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.quiz .say{font-weight:600;min-height:1.6em;margin:6px 0 0}
+.pn{display:flex;justify-content:space-between;gap:12px;margin-top:28px;font-size:15px}
+.pn a{max-width:48%}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:11px 20px;margin:6px 10px 0 0}
+.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+footer{margin-top:40px;color:var(--sub);font-size:14px}
+input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.grid a{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.grid a b{display:block;color:var(--blue);font-size:15px;line-height:1.3}
+.grid a span{display:block;color:var(--sub);font-size:14px;margin-top:3px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+.chips a{white-space:nowrap}
+@media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "Wi-Fi - how your laptop joins and stays connected", "description": "Scan, authenticate, associate, then share the air. Radio between your PC and the access point - band, channel and signal decide how good it", "url": "https://adeebometer.com/learn/wifi.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "How the internet talks", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
+</head>
+<body>
+<main>
+<nav class="top"><b><a href="../">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
+<a class="chip" href="./#protocol">How the internet talks</a>
+<h1>Wi-Fi - how your laptop joins and stays connected</h1>
+<p class="tag">Scan, authenticate, associate, then share the air.</p>
+<div class="card one"><p>Radio between your PC and the access point - band, channel and signal decide how good it is.</p></div>
+<h2>How the conversation goes</h2>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Your PC</span><span>Access point</span></div><ol aria-label="Messages between Your PC and Access point, in order">
+<li class="msg"><p><span class="sr">Your PC to Access point: </span>radio frame</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Access point to Your PC: </span>got it (ACK)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Access point → Router: on the cable</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
+<h2>When it goes wrong</h2>
+<div class="card warn"><p>Weak signal or a crowded channel: move closer, or use 5 GHz.</p></div>
+<h2>Quick check</h2>
+<div class="quiz" data-id="wifi"><p>What does a Wi-Fi device do before it can send data?</p>
+<button data-ok>Scans, authenticates and associates with an access point</button>
+<button>Asks DNS for permission</button>
+<button>Opens a TCP connection to the router</button>
+<button>Runs a speed test</button>
+<p class="say" aria-live="polite"></p></div>
+<h2>See it on your own PC</h2>
+<p>This lesson is built into the AdeeboMeter app, next to the checks that test Wi-Fi on your own connection.</p>
+<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
+<h2>Also in How the internet talks</h2>
+<div class="grid"><a href="dns.html"><b>DNS</b><span>You type a name; DNS finds the number.</span></a><a href="dhcp.html"><b>DHCP</b><span>Four messages, and you&#x27;re on the network.</span></a><a href="arp.html"><b>ARP</b><span>IP addresses for the journey, hardware addresses for the next step.</span></a><a href="tcp.html"><b>TCP</b><span>Numbered, acknowledged, resent when lost.</span></a></div>
+<div class="pn"><a href="mtu.html">← MTU</a><a href="802.1x.html">802.1X →</a></div>
+<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+</main>
+<script src="/voice.js"></script>
+<script>
+(function(){var q=document.querySelector('.quiz');if(!q)return;var bs=[].slice.call(q.querySelectorAll('button')),say=q.querySelector('.say'),done=false;
+for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
+bs.forEach(function(b){q.insertBefore(b,say)});
+bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
+var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
+</script>
+</body>
+</html>
