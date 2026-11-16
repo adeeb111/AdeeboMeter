@@ -176,20 +176,20 @@ with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8', newline='\n') 
 
 # sitemap: keep the hand-written pages, replace the learn ones
 sm = os.path.join(root, 'docs/sitemap.xml'); today = datetime.date.today().isoformat()
-keep = [l for l in open(sm, encoding='utf-8').read().splitlines() if '<url>' in l and '/learn/' not in l and 'games.html' not in l and 'live.html' not in l and 'app.html' not in l]
-new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{today}</lastmod></url>' for p in ['app.html', 'learn/', 'games.html', 'live.html'] + [f'learn/{t["id"]}.html' for t in topics]]
+keep = [l for l in open(sm, encoding='utf-8').read().splitlines() if '<url>' in l and '/learn/' not in l and 'games.html' not in l and 'live.html' not in l and 'app.html' not in l and 'files.html' not in l]
+new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{today}</lastmod></url>' for p in ['app.html', 'files.html', 'learn/', 'games.html', 'live.html'] + [f'learn/{t["id"]}.html' for t in topics]]
 with open(sm, 'w', encoding='utf-8', newline='\n') as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(keep + new) + '\n</urlset>\n')
 print(len(topics), 'lesson pages + index; sitemap', len(keep) + len(new), 'urls')
 
 # ---- the phone app (PWA): the same PWA tags on the hand-written pages, and the offline cache (docs/sw.js)
 import hashlib
-for page in ['index.html', 'games.html', 'live.html', 'remote.html', 'r.html']:
+for page in ['index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'files.html']:
     f = os.path.join(root, 'docs', page); h = open(f, encoding='utf-8').read()
     h = re.sub(r'<!--pwa-->.*?<!--/pwa-->\n?', '', h, flags=re.S)
     h = h.replace('</head>', PWA + '\n</head>', 1)
     with open(f, 'w', encoding='utf-8', newline='\n') as o: o.write(h)
-core = ['app.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
+core = ['app.html', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
         'favicon.svg', 'manifest.webmanifest', 'img/app/icon-192.png', 'img/app/apple-touch-icon.png']
 extra = [f'learn/{t["id"]}.html' for t in topics]
 ver = hashlib.sha256(b''.join(open(os.path.join(root, 'docs', x), 'rb').read() for x in core + extra)).hexdigest()[:12]

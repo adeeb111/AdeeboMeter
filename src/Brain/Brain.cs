@@ -57,7 +57,7 @@ namespace AdeeboMeter
                 if (rate > 0) { rx += rate; rxN++; }
                 Calls.Second(m, call, g, t, sig, rate, d, u);
                 Watch.Upload(m, u, call);
-                Pinned.Tick();
+                Pinned.Tick(); DevWatch.Tick();
                 // the PC itself, lightly: counters every 5 s, frozen windows every 10 s, disk users every minute, leaks every 5 min, free space every 6 h
                 tick++;
                 // (off the sampler thread: reading counters the first time can take seconds, and the corner widget must never wait)

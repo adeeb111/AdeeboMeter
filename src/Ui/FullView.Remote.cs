@@ -19,7 +19,7 @@ namespace AdeeboMeter
         static readonly HashSet<string> RemoteNo = new HashSet<string> { "sweep", "wol", "syslog", "remote", "tidy", "obs", "friend", "qr", "screentest", "keytest", "soundtest", "dhcpreplay", "rareplay", "eapreplay", "samplelab", "beforeafter", "twopc", "radius", "tacacs", "radiuslab", "httpreq", "shares", "mibs", "snmpwalk" };
         // AM-CG-317/318: boxes a phone may not fill - they change something on the PC (start or stop a watch, delete saved runs)
         // or put heavy load on it (the long disk test writes up to 8 GB). The phone never sees them; the PC always runs them empty.
-        static readonly Dictionary<string, int[]> RemoteLocked = new Dictionary<string, int[]> { { "board", new[] { 1 } }, { "gamecompare", new[] { 2 } }, { "diskspeed", new[] { 1 } } };
+        static readonly Dictionary<string, int[]> RemoteLocked = new Dictionary<string, int[]> { { "board", new[] { 1 } }, { "gamecompare", new[] { 2 } }, { "diskspeed", new[] { 1 } }, { "inventory", new[] { 0, 1 } } };
         static bool Locked(string id, int i) { int[] l; return RemoteLocked.TryGetValue(id, out l) && l.Contains(i); }
         static readonly HashSet<string> RemoteHeavy = new HashSet<string> { "speedtest", "bloat", "mtr", "iperf", "diskspeed", "ramcheck", "cpuheld", "checkup", "gamecompare", "hidden", "pcwhy" };
         bool RemoteOk(Tool t)

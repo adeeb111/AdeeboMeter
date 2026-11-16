@@ -207,10 +207,7 @@ namespace AdeeboMeter
         public static readonly List<string[]> Joined = new List<string[]>();   // { when, network, ip, mac, note }
         public static DateTime QuietUntil = DateTime.MinValue;   // after a ping sweep: learn what it found, without "new device" alerts
         static Dictionary<string, DateTime> netSince; static readonly Dictionary<string, DateTime> lastPop = new Dictionary<string, DateTime>();
-        // Every new device is listed (What changed). A pop-up only when you asked for it, on a home network AdeeboMeter
-        // has known for a day, for a device with a real (not private / random) hardware address, at most once an hour.
-        // Phones change their private address per network and over time, and office networks are full of other people's
-        // devices - announcing those would be noise.
+        // Every new device is listed (What changed) and in Devices on this network - never announced.
         public static void Check(Monitor m)
         {
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
@@ -243,11 +240,8 @@ namespace AdeeboMeter
                 }
                 if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
-                DateTime last; lastPop.TryGetValue(key, out last);
-                if (announce.Count == 0 || Cfg.DevAlerts == 0 || company || set.Count(x => !Arp.Randomised(x)) > 30 ||   /* a big network (many fixed addresses): phones' rotating private ones don't count towards it */ (DateTime.Now - last).TotalMinutes < 60) return;
-                lastPop[key] = DateTime.Now;
             }
-            Alerts.Raise("dev|" + key, (announce.Count == 1 ? "A new device joined " + label + ": " + announce[0].Ip : announce.Count + " new devices joined " + label + ": " + string.Join(", ", announce.Take(3).Select(e => e.Ip))) + ". If you don't recognise it, check your router's device list.", 60);
+            // no pop-up for a new device, ever (16 Nov): on a busy network it would be a storm - they are listed in What changed
         }
     }
 

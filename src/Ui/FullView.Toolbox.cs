@@ -181,7 +181,7 @@ namespace AdeeboMeter
                 T("timeline", "WATCH", "What changed when it broke?", "When it broke - e.g. 18:40 or yesterday 18:40 (empty = the last outage)", (a, r) => Picks.Timeline(M, a[0])),
                 T("hotel", "YOUR NETWORK", "Is this Wi-Fi OK to use? (hotel, cafe)", null, (a, r) => Picks.Hotel(M, r)),
                 T("dnsrace", "NAMES", "DNS race - which server is fastest here", "Extra servers to race (optional) - e.g. 208.67.222.222", (a, r) => Picks.DnsRace(M, a[0], r)),
-                T("inventory", "YOUR NETWORK", "Devices on this network (kept over time)", "Label one (optional) - e.g. aa:bb:cc:dd:ee:ff = Living room TV", (a, r) => Picks.Inventory(M, a[0])),
+                T("inventory", "YOUR NETWORK", "Devices on this network", "Label one (optional) - e.g. aa:bb:cc:dd:ee:ff = Living room TV|Watch one (optional) - its address or label, pinged every minute; -name stops", (a, r) => Picks.Inventory(M, a[0], a[1], r)),
                 T("drivers", "THE PC", "Drivers, device problems and USB history", null, (a, r) => Picks.Drivers()),
                 T("usb", "THE PC", "Why isn't my USB device working?", "Which device (optional) - part of its name, e.g. headset, mouse, disk", (a, r) => Guided.Usb(a[0])),
                 T("lag", "SPEED", "Why is my game lagging?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => Guided.Lag(M, a[0])),

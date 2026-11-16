@@ -224,14 +224,18 @@ namespace AdeeboMeter
         // ================================================================== devices on this network, kept over time
         // From the ARP table AdeeboMeter already reads every ten minutes: first and last seen, the address it had, a label
         // you can give it. Nothing is scanned for it.
-        sealed class Inv { public string Net = "", Mac = "", Ip = "", Label = ""; public DateTime First, Last; }
+        sealed class Inv { public string Net = "", Mac = "", Ip = "", Label = ""; public DateTime First, Last; public bool Watch; }
         static List<Inv> inv; static readonly object ik = new object();
         static void LoadInv()
         {
             if (inv != null) return; inv = new List<Inv>();
             foreach (var r in Store.Read("inventory.txt")) { if (r.Length < 6) continue; DateTime f, l; DateTime.TryParse(r[2], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out f); DateTime.TryParse(r[3], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out l); inv.Add(new Inv { Net = r[0], Mac = r[1], First = f, Last = l, Ip = r[4], Label = r[5] }); }
+            for (int n = 0; n < inv.Count; n++) inv[n].Watch = WatchSet.Contains(inv[n].Net + "|" + inv[n].Mac);
+            foreach (var w in inv.Where(x => x.Watch)) DevWatch.Set(w.Mac, w.Ip, w.Label, true);
         }
-        static void SaveInv() { Store.Write("inventory.txt", inv.Select(i => new[] { i.Net, i.Mac, i.First.ToString("o", CultureInfo.InvariantCulture), i.Last.ToString("o", CultureInfo.InvariantCulture), i.Ip, i.Label })); }
+        static void SaveInv() { Store.Write("inventory.txt", inv.Select(i => new[] { i.Net, i.Mac, i.First.ToString("o", CultureInfo.InvariantCulture), i.Last.ToString("o", CultureInfo.InvariantCulture), i.Ip, i.Label })); Store.Write("watched-devices.txt", inv.Where(i => i.Watch).Select(i => new[] { i.Net, i.Mac })); }
+        static HashSet<string> WatchSet { get { return new HashSet<string>(Store.Read("watched-devices.txt").Where(r => r.Length > 1).Select(r => r[0] + "|" + r[1])); } }
+        public static void LoadWatched() { lock (ik) LoadInv(); }
         public static void SeeDevices(string net, List<Arp.Entry> table, string gw)
         {
             if (net == "" || net == "offline") return;
@@ -247,31 +251,64 @@ namespace AdeeboMeter
                 SaveInv();
             }
         }
-        public static List<string[]> Inventory(Monitor m, string label)
+        // Devices on this network: kept over time (ARP), named the way devices name themselves (DevId), pinged once when you
+        // look, and the ones you watch pinged every minute (DevWatch). No alerts - a device going quiet is shown, never announced.
+        public static List<string[]> Inventory(Monitor m, string label) { return Inventory(m, label, "", new Toolkit.Run()); }
+        public static List<string[]> Inventory(Monitor m, string label, string watch, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string net = Brain.NetKey, gw; lock (m.L) gw = m.Gateway;
             if (net == "" || net == "offline") { rows.Add(R(2, "Network", "not connected", "", "u")); return rows; }
             List<Arp.Entry> now; try { now = Arp.Table(); } catch (Exception e) { if (e is OutOfMemoryException) throw; now = new List<Arp.Entry>(); }
             SeeDevices(net, now, gw);
+            string l = (label ?? "").Trim(), wt = (watch ?? "").Trim();
             lock (ik)
             {
-                string l = (label ?? "").Trim();
                 if (l != "")
                 {
                     var mm = Regex.Match(l, @"^([0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}|\d+\.\d+\.\d+\.\d+)\s*=\s*(.{0,40})$");
                     if (!mm.Success) { rows.Add(R(2, "Label", "type it as  aa:bb:cc:dd:ee:ff = Living room TV  or  192.168.1.20 = Printer  (empty after = removes the label)", "", "u")); return rows; }
                     string key = mm.Groups[1].Value.ToLowerInvariant().Replace('-', ':'); var it = inv.FirstOrDefault(x => x.Net == net && (string.Equals(x.Mac.Replace('-', ':'), key, StringComparison.OrdinalIgnoreCase) || x.Ip == key));
                     if (it == null) { rows.Add(R(2, "Label", key + " isn't in the list for this network", "", "u")); return rows; }
-                    it.Label = Program.Plain(mm.Groups[3].Value.Trim()); SaveInv();
+                    it.Label = Program.Plain(mm.Groups[3].Value.Trim()); SaveInv(); if (it.Watch) DevWatch.Set(it.Mac, it.Ip, it.Label, true);
                     rows.Add(R(0, "Label", it.Label == "" ? "removed from " + key : key + " is now \"" + it.Label + "\"", "", "i"));
                 }
-                var here = new HashSet<string>(now.Where(e => e.Dynamic).Select(e => e.Mac));
-                var mine = inv.Where(x => x.Net == net).OrderByDescending(x => here.Contains(x.Mac)).ThenByDescending(x => x.Last).ToList();
-                rows.Insert(0, R(3, Brain.NetLabel, mine.Count + " devices seen here" + (mine.Count > 200 ? " (the first 200 shown)" : "") + " · " + mine.Count(x => here.Contains(x.Mac)) + " here now", "From the ARP table AdeeboMeter reads every ten minutes - devices that talked to this PC or the router recently. A Ping sweep fills it in.", "i"));
+                if (wt != "")
+                {
+                    bool off = wt.StartsWith("-", StringComparison.Ordinal); string key = wt.TrimStart('-', ' ').Trim();
+                    var it = inv.FirstOrDefault(x => x.Net == net && (string.Equals(x.Mac.Replace('-', ':'), key.Replace('-', ':'), StringComparison.OrdinalIgnoreCase) || x.Ip == key || (x.Label != "" && string.Equals(x.Label, key, StringComparison.OrdinalIgnoreCase))));
+                    if (it == null) { rows.Add(R(2, "Watch", "\"" + key + "\" isn't in the list for this network - type its address or its label", "", "u")); return rows; }
+                    if (!off && !it.Watch && DevWatch.Count >= 16) { rows.Add(R(2, "Watch", "16 devices are watched already - stop one first (-name)", "", "u")); return rows; }
+                    it.Watch = !off; SaveInv(); DevWatch.Set(it.Mac, it.Ip, it.Label, !off);
+                    rows.Add(R(0, "Watch", (off ? "stopped watching " : "watching ") + (it.Label != "" ? it.Label : it.Ip) + (off ? "" : " - a ping a minute while AdeeboMeter runs, kept for 24 hours"), "", "i"));
+                }
+            }
+            // who they are (asked the way devices ask each other) and how quick they answer right now - in parallel, about 3 s
+            var here = new HashSet<string>(now.Where(e => e.Dynamic).Select(e => e.Mac));
+            var hereIps = now.Where(e => e.Dynamic).Select(e => e.Ip).Distinct().ToList();
+            run.Status = "Asking the devices who they are...";
+            Dictionary<string, DevId.Info> ids = new Dictionary<string, DevId.Info>(); Dictionary<string, string> dns = new Dictionary<string, string>(); var ping = new Dictionary<string, double>(); var pl = new object();
+            var tid = System.Threading.Tasks.Task.Factory.StartNew(() => { try { ids = DevId.Identify(() => run.Stop); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("devid: " + e.Message); } });
+            var tdn = System.Threading.Tasks.Task.Factory.StartNew(() => { if (Cfg.IpNames) dns = DevId.Names(hereIps); });
+            var tpg = System.Threading.Tasks.Task.Factory.StartNew(() => System.Threading.Tasks.Parallel.ForEach(hereIps.Take(64), new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 16 }, ip => { double v = Monitor.PingMs(ip); lock (pl) ping[ip] = v; }));
+            System.Threading.Tasks.Task.WaitAll(new[] { tid, tdn, tpg }, 8000);
+            lock (ik)
+            {
+                var mine = inv.Where(x => x.Net == net).OrderByDescending(x => x.Watch).ThenByDescending(x => here.Contains(x.Mac)).ThenByDescending(x => x.Last).ToList();
+                int nHere = mine.Count(x => here.Contains(x.Mac)), nKnown = mine.Count(x => ids.ContainsKey(x.Ip) || dns.ContainsKey(x.Ip) || x.Label != "");
+                rows.Insert(0, R(3, Brain.NetLabel, mine.Count + " devices seen here" + (mine.Count > 200 ? " (the first 200 shown)" : "") + " · " + nHere + " here now · " + nKnown + " told us who they are" + (DevWatch.Count > 0 ? " · watching " + DevWatch.Count : ""),
+                    "Names come from the devices themselves (Bonjour, UPnP) and your router; nothing is logged in to or changed. Phones and laptops often hide behind a random address. Watch one: type its address or label in the Watch box.", "i"));
                 foreach (var d in mine.Take(200))
                 {
-                    string maker = Toolkit.Vendor(d.Mac); bool now2 = here.Contains(d.Mac);
-                    rows.Add(R(now2 ? 0 : 3, d.Label != "" ? d.Label : d.Ip == gw ? "Your router" : maker != "" ? maker.Trim('(', ')') : d.Ip, d.Ip + "  ·  " + d.Mac + "  ·  " + (now2 ? "here now" : "last seen " + DevInfo.When(d.Last)) + "  ·  first seen " + DevInfo.When(d.First), "", "i"));
+                    string maker = Toolkit.Vendor(d.Mac).Trim('(', ')'); bool now2 = here.Contains(d.Mac); DevId.Info id; ids.TryGetValue(d.Ip, out id); string rd; dns.TryGetValue(d.Ip, out rd);
+                    if (id != null && id.Maker != "") maker = id.Maker;
+                    string name = d.Label != "" ? d.Label : id != null && id.Name != "" ? id.Name : d.Ip == gw ? "Your router" : !string.IsNullOrEmpty(rd) ? rd : maker != "" && !maker.StartsWith("random", StringComparison.Ordinal) ? maker + " device" : d.Ip;
+                    double ms = double.NaN; bool pinged = now2 && ping.TryGetValue(d.Ip, out ms);
+                    var w = d.Watch ? DevWatch.Get(d.Mac) : null;
+                    string what = string.Join(" · ", new[] { id != null ? id.Kind : "", id != null ? id.Model : "", maker != name && maker != "" ? maker : "" }.Where(z => z != "").Distinct());
+                    string val = d.Ip + "  ·  " + (what != "" ? what + "  ·  " : "") + (now2 ? "here now" + (pinged ? (double.IsNaN(ms) ? " (doesn't answer ping)" : ", " + Math.Round(ms).ToString(CultureInfo.InvariantCulture) + " ms") : "") : "last seen " + DevInfo.When(d.Last)) + "  ·  first seen " + DevInfo.When(d.First);
+                    string adv = (w != null ? "★ Watched: " + DevWatch.Summary(w) + ". " : "") + (id != null && id.Via != "" ? "Told us via " + id.Via + ". " : "") + d.Mac;
+                    int lv = w != null && w.Ms.Values(1).Length > 0 && double.IsNaN(w.Ms.Last) ? 1 : now2 ? 0 : 3;
+                    rows.Add(R(lv, (d.Watch ? "★ " : "") + name, val, adv, "i"));
                 }
             }
             return rows;

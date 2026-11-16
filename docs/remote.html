@@ -135,7 +135,6 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
       if (plain === null) { fail("Session closed to be safe", "A message didn't check out."); ws.close(); return; }
       var c; try { c = JSON.parse(plain); } catch (e) { return; }
       if (c.t === "live") { live = c; liveAt = Date.now(); [[hD, c.down], [hU, c.up], [hP, c.ping]].forEach(function (x) { x[0].push(x[1] == null ? null : x[1]); if (x[0].length > 120) x[0].shift(); });
-        if (view === "widget" && c.lv === 2 && lastLv !== 2 && navigator.vibrate) navigator.vibrate([120, 80, 120]); lastLv = c.lv;
         if (view === "live" || view === "game" || view === "stream" || view === "trade" || view === "widget") draw(); else left(); }
       else if (c.t === "result") { if (c.rid && c.rid === curRid) { busy = ""; curRid = ""; } else if (busy) c.late = 1; results.unshift(c); results = results.slice(0, 5); view = "tools"; tabsOn(); draw(); }
       else if (c.t === "mkt") { mkt = c; if (view === "trade") draw(); }
@@ -214,7 +213,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
         a += '<div class="card"><h2>RIGHT NOW</h2><div class="grid">' + num("Download", mb(L.down), 3) + num("Upload", mb(L.up), 3) + num("Ping (internet)", ms(L.ping), lvOf(L.ping, 80, 200)) + num("Router", ms(L.gw), lvOf(L.gw, 20, 80)) +
           num("Jitter", ms(L.jit), lvOf(L.jit, 20, 50)) + num("Loss", L.loss == null ? "–" : Math.round(L.loss * 10) / 10 + "<small> %</small>", lvOf(L.loss, 1, 3)) + num("CPU", L.cpu == null ? "–" : Math.round(L.cpu) + "<small> %</small>", lvOf(L.cpu, 80, 95)) + num("Memory", L.mem == null ? "–" : Math.round(L.mem) + "<small> %</small>", lvOf(L.mem, 85, 95)) + '</div>' +
           '<p style="font-size:13px;color:var(--muted);margin:10px 0 0">On ' + esc(L.link || "the network") + '. Updates every second.</p></div>';
-        a += '<div class="card"><h2>QUICK</h2><div class="tools"><button data-run="speedtest">Speed test</button><button data-run="checkup">Full checkup</button><button data-run="feltslow">It feels slow</button><button data-mute="60">Mute alerts 1 h</button></div></div>';
+        a += '<div class="card"><h2>QUICK</h2><div class="tools"><button data-run="speedtest">Speed test</button><button data-run="checkup">Full checkup</button><button data-run="feltslow">It feels slow</button><button data-mute="60">Mute alerts 1 h</button><button data-run="inventory">Devices on my network</button></div></div>';
         a += '<div class="card"><h2>WIDGET MODE</h2><p style="margin:0 0 10px;color:var(--sub)">Stand the phone next to your screen: big numbers, the last two minutes, screen kept on. Like the widget on your PC.</p><button class="main" data-wg="1" style="width:100%">Use this phone as a meter</button></div>';
       }
     } else if (view === "game") {
