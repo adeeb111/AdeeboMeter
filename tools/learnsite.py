@@ -70,7 +70,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 .chips a{white-space:nowrap}
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 """
-PWA = '<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->'
+PWA = '<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->'
 THEME = '<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>'
 FOOT = '<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>'
 
@@ -80,7 +80,7 @@ def head(title, desc, url, extra=''):
             f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="article">\n'
             f'<link rel="icon" href="../favicon.svg" type="image/svg+xml">\n{PWA}\n<style>\n{CSS}</style>\n{THEME}\n{extra}</head>\n<body>\n<main>\n')
 
-def top(): return '<nav class="top"><b><a href="../">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>\n'
+def top(): return '<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>\n'
 
 def ladder(s):
     steps = []

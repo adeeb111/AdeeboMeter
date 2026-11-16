@@ -141,12 +141,27 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
 .tile .ic{color:var(--k,var(--blue))}
 .k-dev{--k:#4CC3D4}.k-pc{--k:#7F8CFF}.k-tools{--k:#A68BF0}.k-send{--k:#E58AB0}.k-walk{--k:#45BFA9}.k-learn{--k:#F2A66A}.k-games{--k:#D98ACF}.k-live{--k:#62B8EE}.k-files{--k:#A48CEB}
 :root[data-theme="light"] .k-dev{--k:#138A9C}:root[data-theme="light"] .k-pc{--k:#4F5BD5}:root[data-theme="light"] .k-tools{--k:#7556D8}:root[data-theme="light"] .k-send{--k:#C2477C}:root[data-theme="light"] .k-walk{--k:#1E8C78}:root[data-theme="light"] .k-learn{--k:#C2621F}:root[data-theme="light"] .k-games{--k:#A8459C}:root[data-theme="light"] .k-live{--k:#1F7DB8}:root[data-theme="light"] .k-files{--k:#6B4FD0}
+/* your logo, a launch screen, a page pane that keeps you inside the app, and no bounce */
+html,body{overscroll-behavior:none}body{touch-action:manipulation;-webkit-text-size-adjust:100%}
+nav.tabs,.tile,.btn,.seg,.act,.row{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tile,.btn,.row,.act i,nav.tabs button{transition:transform .12s ease,background-color .15s ease}.tile:active,.btn:active,.act:active i{transform:scale(.97)}
+#app>*{animation:vin .18s ease-out}@keyframes vin{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#app>*{animation:none}.tile,.btn,.row{transition:none}}
+img.logo{width:34px;height:34px;flex:none;display:block}
+#splash{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}#splash b{font-size:24px;letter-spacing:-.01em}#splash.out{opacity:0;pointer-events:none}
+#web{position:fixed;left:0;right:0;top:0;bottom:calc(66px + env(safe-area-inset-bottom));z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
+.wbar{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--edge)}.wbar b{font-size:19px}
+#wframe{flex:1;width:100%;border:0;background:var(--bg)}
+body.inweb #app{display:none}
+@media (min-width:768px){#web{left:224px;bottom:0}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body>
+<div id="splash" aria-hidden="true"><img src="/img/logo.svg" alt="" width="96" height="96"><b>AdeeboMeter</b></div>
 <main id="app"></main>
+<div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back"></button><b id="wtitle"></b></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
 <nav class="tabs"><div class="in" id="tabs"></div></nav>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="/voice.js"></script>
@@ -483,9 +498,17 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
     return '<svg viewBox="0 0 ' + W + ' ' + (H + 2) + '" preserveAspectRatio="none" style="width:100%;height:56px;display:block;margin-top:6px"><path d="' + d + 'L' + x1 + ',' + H + 'L' + x0 + ',' + H + 'Z" fill="' + c + '" opacity=".14"/><path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
   }
   function band(ch) { var n = parseInt(ch, 10); if (/6\s*GHz/i.test(ch)) return "6 GHz"; if (/5\s*GHz/i.test(ch)) return "5 GHz"; if (/2\.4/i.test(ch)) return "2.4 GHz"; return isNaN(n) ? "" : n <= 14 ? "2.4 GHz" : n >= 32 && n <= 177 ? "5 GHz" : ""; }
-  function tile(go, icn, col, t, s, href) { return (href ? '<a class="tile" href="' + href + '"' + (phase === "live" ? ' target="_blank" rel="noopener"' : '') + '>' : '<button class="tile" data-go="' + go + '">') + '<span class="ic ' + col + '">' + ic(icn, 30) + '</span><b>' + t + '</b><span>' + s + '</span>' + (href ? '</a>' : '</button>'); }
+  function tile(go, icn, col, t, s, href) { return '<button class="tile" ' + (href ? 'data-web="' + href + '" data-title="' + t + '"' : 'data-go="' + go + '"') + '><span class="ic ' + col + '">' + ic(icn, 30) + '</span><b>' + t + '</b><span>' + s + '</span></button>'; }
+  // Learn, Games, Live and Lock files open inside the app (the PC stays connected; Back returns here)
+  var webHome = "", webFrom = "more";
+  function openWeb(url, title) { if (S.tab !== "web") webFrom = S.tab; webHome = url; $("wtitle").textContent = title; var f = $("wframe"); if (f.getAttribute("src") !== url) f.setAttribute("src", url); S.tab = "web"; draw(); }
+  function webBack() { var f = $("wframe"), p = ""; try { p = f.contentWindow.location.pathname; } catch (e) {} if (p && p !== webHome && p !== webHome.replace(/index\.html$/, "")) { try { f.contentWindow.history.back(); return; } catch (e) {} } S.tab = webFrom === "web" ? "more" : webFrom; draw(); }
   function rowBtn(attr, icn, col, t, s, right) { return '<button class="row" ' + attr + '>' + (icn ? '<span class="ic ' + col + '">' + ic(icn, 22) + '</span>' : '') + '<div class="tx"><b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') + '</div>' + (right == null ? '<span class="chev">' + ic("chev", 20) + '</span>' : right) + '</button>'; }
   function needPc(what) { return '<div class="card empty">' + ic("pc", 52) + '<b>' + (phase === "ended" ? "Your PC isn't connected" : "Connect your PC") + '</b><p>' + esc(what) + '</p><button class="btn" data-go="pair">How to connect</button></div>'; }
+
+  $("wback").innerHTML = ic("back", 26); $("wback").onclick = webBack;
+  $("wframe").addEventListener("load", function () { try { var d = this.contentDocument; d.documentElement.setAttribute("data-theme", document.documentElement.getAttribute("data-theme")); d.documentElement.classList.add("inapp"); [].forEach.call(d.querySelectorAll('a[href]'), function (a) { var h = a.getAttribute("href"); if (/(^|\/)app(\.html)?([#?]|$)/.test(h) || h === "/" || h === "./" || h === "../") a.addEventListener("click", function (e) { e.preventDefault(); S.tab = webFrom === "web" ? "more" : webFrom; draw(); }); else if (/^https?:/.test(h) && a.host !== location.host) a.target = "_blank"; }); } catch (e) {} });
+  setTimeout(function () { var sp = $("splash"); if (sp) { sp.className = "out"; setTimeout(function () { sp.remove(); }, 400); } }, 450);
 
   // ---------------------------------------------------------------- Install (the app is the website, kept on the phone)
   var bip = null, inst = false;
@@ -523,7 +546,7 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
   }
   var VIEWS = {};
   VIEWS.home = function () {
-    var a = hdr("AdeeboMeter", "Your network, devices and PC - in your pocket") + (wide() ? '<div class="two"><div>' : '');
+    var a = hdr("AdeeboMeter", "Your network, devices and PC - in your pocket").replace('<div class="t">', wide() ? '<div class="t">' : '<img class="logo" src="/img/logo.svg" alt="" width="40" height="40" style="width:40px;height:40px"><div class="t">') + (wide() ? '<div class="two"><div>' : '');
     a += hero() + say() + installCard(true);
     a += '<div class="grid">' + tile("devices", "wifi", "k-dev", "Devices", "Who's on my network") + tile("pc", "pc", "k-pc", "My PC", "Status, Wi-Fi and checks") + tile("tools", "tools", "k-tools", "Tools", "Fix a problem, or pick a check") + tile("send", "send", "k-send", "Send", "Files, text and clipboard") + tile("walk", "walk", "k-walk", "Walk", "Room-by-room Wi-Fi") + tile("learn", "book", "k-learn", "Learn", "Quick lessons, offline", "/learn/") + '</div>';
     a += '<button class="btn" data-act="report" style="margin:0 0 14px">' + ic("report", 20) + ' One-tap report</button>';
@@ -678,7 +701,7 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
   VIEWS.more = function () {
     return hdr("More", "") + installCard(false) + '<div class="grid">' + tile("", "book", "k-learn", "Learn", "90 lessons, offline", "/learn/") + tile("", "game", "k-games", "Games", "Quiz, subnets, ports", "/games.html") + tile("", "chart", "k-live", "Live", "Markets, scores, weather", "/live.html") + tile("", "lock", "k-files", "Lock files", ".adeebo, offline", "/files.html") + '</div>' +
       '<div class="card list">' + rowBtn('data-go="companion"', "smile", "c-blue bg-blue", "Companion", "Voice, how chatty, what it calls you") + rowBtn('data-go="settings"', "gear", "c-blue bg-blue", "Settings", "Mode, theme, contrast") + rowBtn('data-go="phone"', "phone", "c-blue bg-blue", "This phone", "Its own connection, as a browser sees it") + rowBtn('data-go="how"', "help", "c-blue bg-blue", "How it works", "What runs where, what's kept") + '</div>' +
-      (phase === "live" ? '<p class="note">Learn, Games, Live and Lock files open in a new tab so your PC stays connected here.</p>' : '');
+      "";
   };
   VIEWS.settings = function () {
     var M = { everyday: ["Everyday", "Plain answers and the next step."], advanced: ["Advanced", "Plus addresses, ping, router delay and loss."], engineer: ["Engineer", "Plus every check, raw rows and details."] };
@@ -709,26 +732,27 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
 
   // ---------------------------------------------------------------- frame
   var TABS = [["home", "home", "Home"], ["devices", "wifi", "Devices"], ["pc", "pc", "PC"], ["tools", "tools", "Tools"], ["more", "more", "More"]];
-  var TABOF = { settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
+  var TABOF = { web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
   function draw() {
     var th = S.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : S.theme;
     document.documentElement.setAttribute("data-theme", th); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
-    $("app").innerHTML = f();
+    $("app").innerHTML = S.tab === "web" ? "" : f(); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab;
-    $("tabs").innerHTML = '<div class="brand">' + faceHtml("happy") + 'AdeeboMeter</div>' + TABS.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '" aria-label="' + t[2] + '">' + ic(t[1], 24) + t[2] + '</button>'; }).join("");
+    $("tabs").innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TABS.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '" aria-label="' + t[2] + '">' + ic(t[1], 24) + t[2] + '</button>'; }).join("");
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
   }
-  function go(t) { if (t === "learn") { location.href = "/learn/"; return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
+  function go(t) { if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
   function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); return e ? (e.value.trim() || (drafts[open] && drafts[open][k] === "@broker" ? "@broker" : "")) : ""; }); }
 
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
+    if (A("data-web")) { openWeb(A("data-web"), A("data-title") || ""); return; }
     if (A("data-go") != null && A("data-go") !== "") { var pt = A("data-pctab"); go(A("data-go")); if (pt) { S.pcTab = pt; draw(); } return; }
     if (A("data-dev") != null) { S.dev = +A("data-dev"); if (S.tab !== "devices") S.tab = "devices"; draw(); if (!wide()) window.scrollTo(0, 0); return; }
     if (A("data-pct")) { S.pcTab = A("data-pct"); if (S.tab !== "pc") S.tab = "pc"; draw(); return; }

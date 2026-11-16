@@ -128,25 +128,21 @@ namespace AdeeboMeter
         public static void Fill(Graphics g, RectangleF r, float rad, Color c) { using (var p = Round(r, rad)) using (var b = new SolidBrush(c)) g.FillPath(b, p); }
         public static void Stroke(Graphics g, RectangleF r, float rad, Color c, float w) { using (var p = Round(r, rad)) using (var pen = new Pen(c, w)) g.DrawPath(pen, p); }
 
+        // The AdeeboMeter mark: a gauge (green, amber, red) with its needle, over a three-stop path. Same drawing as docs/img/logo.svg.
         public static void Logo(Graphics g, RectangleF r, bool arrows)
         {
-            float k = r.Width / 64f;
+            float k = r.Width / 64f; bool tiny = r.Width < 24;
             Func<float, float> X = delegate(float v) { return r.X + v * k; };
             Func<float, float> Y = delegate(float v) { return r.Y + v * k; };
-            Fill(g, new RectangleF(X(2), Y(2), 60 * k, 60 * k), 14 * k, Blue);
-            float w = (r.Width < 20 ? 8 : 7) * k;
-            using (var p1 = new Pen(C("#3FB950"), w)) g.DrawArc(p1, X(12), Y(20), 40 * k, 40 * k, 180, 60);
-            using (var p2 = new Pen(C("#F2CC60"), w)) g.DrawArc(p2, X(12), Y(20), 40 * k, 40 * k, 240, 60);
-            using (var p3 = new Pen(C("#FF7B72"), w)) g.DrawArc(p3, X(12), Y(20), 40 * k, 40 * k, 300, 60);
-            using (var pn = new Pen(Color.White, (r.Width < 20 ? 6 : 5) * k)) { pn.StartCap = LineCap.Round; pn.EndCap = LineCap.Round; g.DrawLine(pn, X(32), Y(40), X(43), Y(27)); }
-            if (r.Width >= 20) using (var wb = new SolidBrush(Color.White)) g.FillEllipse(wb, X(27), Y(35), 10 * k, 10 * k);
-            if (arrows && r.Width >= 28)
-                using (var pa = new Pen(Color.FromArgb(220, 255, 255, 255), 3 * k))
-                {
-                    pa.LineJoin = LineJoin.Round; pa.StartCap = pa.EndCap = LineCap.Round;
-                    g.DrawLines(pa, new[] { new PointF(X(22), Y(50)), new PointF(X(26), Y(54)), new PointF(X(30), Y(50)) });
-                    g.DrawLines(pa, new[] { new PointF(X(34), Y(54)), new PointF(X(38), Y(50)), new PointF(X(42), Y(54)) });
-                }
+            Fill(g, new RectangleF(X(4), Y(4), 56 * k, 56 * k), 14 * k, C("#1155E0"));
+            float w = (tiny ? 6.5f : 5f) * k;
+            var arc = new RectangleF(X(16), Y(17.6f), 32 * k, 32 * k);
+            foreach (var seg in new[] { new { a = 184f, c = "#5EF2B0" }, new { a = 248f, c = "#FCD34D" }, new { a = 312f, c = "#FF7A6B" } })
+                using (var p = new Pen(C(seg.c), w)) { p.StartCap = LineCap.Round; p.EndCap = LineCap.Round; g.DrawArc(p, arc, seg.a, 44); }
+            using (var pn = new Pen(Color.White, (tiny ? 3f : 1.6f) * k)) { pn.StartCap = LineCap.Round; pn.EndCap = LineCap.Round; g.DrawLine(pn, X(32), Y(33.6f), X(40.5f), Y(21.9f)); }
+            using (var wb = new SolidBrush(Color.White)) { float h = tiny ? 3.4f : 2.6f; g.FillEllipse(wb, X(32 - h), Y(33.6f - h), 2 * h * k, 2 * h * k); }
+            if (!tiny) using (var pl = new Pen(Color.White, 0.9f * k)) g.DrawLine(pl, X(18.8f), Y(42.6f), X(45.2f), Y(42.6f));
+            using (var db = new SolidBrush(C("#A8F5D4"))) { float d = tiny ? 3f : 2.3f; foreach (float cx in new[] { 18.8f, 32f, 45.2f }) g.FillEllipse(db, X(cx - d), Y(42.6f - d), 2 * d * k, 2 * d * k); }
         }
         public static Icon MakeIcon(int size)
         {

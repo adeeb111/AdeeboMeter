@@ -170,15 +170,7 @@ namespace AdeeboMeter
         // the AdeeboMeter mark, drawn (no image files): the blue tile and the three-colour gauge
         static void Mark(Graphics g, float x, float y, float s)
         {
-            float k = s / 64f;
-            using (var gp = Round(new RectangleF(x + 2 * k, y + 2 * k, 60 * k, 60 * k), 14 * k)) using (var b = new SolidBrush(Color.FromArgb(31, 111, 235))) g.FillPath(b, gp);
-            using (var w = new Pen(Color.FromArgb(120, 255, 255, 255), 1.5f)) using (var gp = Round(new RectangleF(x + 2 * k, y + 2 * k, 60 * k, 60 * k), 14 * k)) g.DrawPath(w, gp);
-            var arc = new RectangleF(x + 12 * k, y + 20 * k, 40 * k, 40 * k);
-            using (var p1 = new Pen(Color.FromArgb(63, 185, 80), 7 * k)) g.DrawArc(p1, arc, 180, 60);
-            using (var p2 = new Pen(Color.FromArgb(242, 204, 96), 7 * k)) g.DrawArc(p2, arc, 240, 60);
-            using (var p3 = new Pen(Color.FromArgb(255, 123, 114), 7 * k)) g.DrawArc(p3, arc, 300, 60);
-            using (var n = new Pen(Color.White, 5 * k) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawLine(n, x + 32 * k, y + 40 * k, x + 43 * k, y + 27 * k);
-            g.FillEllipse(Brushes.White, x + 27 * k, y + 35 * k, 10 * k, 10 * k);
+            Theme.Logo(g, new RectangleF(x, y, s, s), false);
         }
         static GraphicsPath Round(RectangleF r, float rad)
         {
