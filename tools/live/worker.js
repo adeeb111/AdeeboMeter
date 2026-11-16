@@ -225,7 +225,7 @@ export default {
           const r = await fetch("https://api.macvendors.com/" + p.replace(/(..)(?=.)/g, "$1:"), { signal: AbortSignal.timeout(6000) });
           if (r.status === 404) return { v: "" }; if (!r.ok) throw new Error("mac " + r.status); return { v: (await r.text()).slice(0, 80) };
         });
-        return reply(req, { v: e.v.error ? "" : e.v.v }, 3600);
+        return reply(req, e.v.error ? { error: "lookup failed" } : { v: e.v.v }, e.v.error ? 0 : 3600);   // a failed lookup is not "unknown maker" (AM-CG-407)
       }
       case "/me": {
         const ip = req.headers.get("CF-Connecting-IP") || "", cf = req.cf || {}, o = { org: String(cf.asOrganization || "").slice(0, 80), v6: ip.includes(":") ? 1 : 0, colo: cf.colo || "", country: cf.country || "" };
