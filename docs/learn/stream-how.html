@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "How a video stream works", "description": "Small chunks, downloaded a little ahead of what you watch. The player downloads the video in chunks of a few seconds and keeps some ready before you need…", "url": "https://adeebometer.com/learn/stream-how.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Streaming", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#streaming">Streaming</a>
 <h1>How a video stream works</h1>
 <p class="tag">Small chunks, downloaded a little ahead of what you watch.</p>
@@ -86,13 +86,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>The server&#x27;s copy of the film</button>
 <button>A cable that carries the picture</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>In the AdeeboMeter app, Learn › How a video stream works › <b>See it live</b> records these messages on your own network while you play a video and watch the download graph pulse every few seconds.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Streaming</h2>
-<div class="grid"><a href="stream-adaptive.html"><b>Adaptive quality</b><span>Blurrier beats spinning.</span></a><a href="stream-cdn.html"><b>Where the video comes from</b><span>A copy of the show in a building near you.</span></a><a href="stream-4k.html"><b>What 4K really needs</b><span>About 25 Mb/s - steady, not just at the speed test.</span></a><a href="stream-iptv.html"><b>IPTV and live channels</b><span>Live TV over the internet - less buffer, less forgiveness.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Streaming</h2>
+<div class="ui-rows"><a class="ui-row" href="stream-adaptive.html" data-id="stream-adaptive"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>Adaptive quality</b><small>Streaming</small></span><span data-ic="chev"></span></a><a class="ui-row" href="stream-cdn.html" data-id="stream-cdn"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>Where the video comes from</b><small>Streaming</small></span><span data-ic="chev"></span></a><a class="ui-row" href="stream-4k.html" data-id="stream-4k"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>What 4K really needs</b><small>Streaming</small></span><span data-ic="chev"></span></a><a class="ui-row" href="stream-iptv.html" data-id="stream-iptv"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>IPTV and live channels</b><small>Streaming</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="clock.html">← Why the clock matters for HTTPS</a><a href="stream-adaptive.html">Adaptive quality →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -103,5 +101,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("stream-how")<0)s.push("stream-how");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","stream-how")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

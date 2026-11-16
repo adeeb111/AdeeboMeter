@@ -149,10 +149,10 @@ nav.tabs,.tile,.btn,.seg,.act,.row{-webkit-user-select:none;user-select:none;-we
 @media (prefers-reduced-motion:reduce){#app>*{animation:none}.tile,.btn,.row{transition:none}}
 img.logo{width:34px;height:34px;flex:none;display:block}
 #splash{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}#splash b{font-size:24px;letter-spacing:-.01em}#splash.out{opacity:0;pointer-events:none}
-#web{position:fixed;left:0;right:0;top:0;bottom:calc(66px + env(safe-area-inset-bottom));z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
+#web{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
 .wbar{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--edge)}.wbar b{font-size:19px}
 #wframe{flex:1;width:100%;border:0;background:var(--bg)}
-body.inweb #app{display:none}
+body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{display:none}}
 @media (min-width:768px){#web{left:224px;bottom:0}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -161,7 +161,7 @@ body.inweb #app{display:none}
 <body>
 <div id="splash" aria-hidden="true"><img src="/img/logo.svg" alt="" width="96" height="96"><b>AdeeboMeter</b></div>
 <main id="app"></main>
-<div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back"></button><b id="wtitle"></b></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
+<div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back"></button><img class="logo" src="/img/logo.svg" alt="" width="30" height="30" style="width:30px;height:30px"><b>AdeeboMeter</b><span id="wtitle" hidden></span></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
 <nav class="tabs"><div class="in" id="tabs"></div></nav>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="/voice.js"></script>
@@ -502,7 +502,7 @@ body.inweb #app{display:none}
   // Learn, Games, Live and Lock files open inside the app (the PC stays connected; Back returns here)
   var webHome = "", webFrom = "more";
   function openWeb(url, title) { if (S.tab !== "web") webFrom = S.tab; webHome = url; $("wtitle").textContent = title; var f = $("wframe"); if (f.getAttribute("src") !== url) f.setAttribute("src", url); S.tab = "web"; draw(); }
-  function webBack() { var f = $("wframe"), p = ""; try { p = f.contentWindow.location.pathname; } catch (e) {} if (p && p !== webHome && p !== webHome.replace(/index\.html$/, "")) { try { f.contentWindow.history.back(); return; } catch (e) {} } S.tab = webFrom === "web" ? "more" : webFrom; draw(); }
+  function webBack() { var f = $("wframe"), p = ""; try { p = f.contentWindow.location.pathname; } catch (e) {} if (/^\/learn\/(?!index\.html$).+/.test(p)) { f.setAttribute("src", "/learn/"); return; } S.tab = webFrom === "web" ? "more" : webFrom; draw(); }
   function rowBtn(attr, icn, col, t, s, right) { return '<button class="row" ' + attr + '>' + (icn ? '<span class="ic ' + col + '">' + ic(icn, 22) + '</span>' : '') + '<div class="tx"><b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') + '</div>' + (right == null ? '<span class="chev">' + ic("chev", 20) + '</span>' : right) + '</button>'; }
   function needPc(what) { return '<div class="card empty">' + ic("pc", 52) + '<b>' + (phase === "ended" ? "Your PC isn't connected" : "Connect your PC") + '</b><p>' + esc(what) + '</p><button class="btn" data-go="pair">How to connect</button></div>'; }
 

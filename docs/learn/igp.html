@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "OSPF and IS-IS - the map inside one network", "description": "Every router knows the whole map of its own network, and the shortest way across it. Inside one provider, routers run a link-state protocol - OSPF or IS-IS -…", "url": "https://adeebometer.com/learn/igp.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Inside your provider", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#provider">Inside your provider</a>
 <h1>OSPF and IS-IS - the map inside one network</h1>
 <p class="tag">Every router knows the whole map of its own network, and the shortest way across it.</p>
@@ -89,13 +89,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>Wi-Fi passwords</button>
 <button>The public routes of other networks</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test OSPF and IS-IS on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Inside your provider</h2>
-<div class="grid"><a href="bgp.html"><b>BGP</b><span>Thousands of networks, each telling its neighbours what it can reach.</span></a><a href="mpls.html"><b>MPLS</b><span>A short label on the front of each packet decides where it goes next.</span></a><a href="l3vpn.html"><b>L3VPN (VRF)</b><span>Many companies on one provider network, each in its own walled routing table.</span></a><a href="multicast.html"><b>Multicast</b><span>Sent once, copied only where someone is watching.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Provider</h2>
+<div class="ui-rows"><a class="ui-row" href="bgp.html" data-id="bgp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="router"></span><span class="t"><b>BGP</b><small>Provider</small></span><span data-ic="chev"></span></a><a class="ui-row" href="mpls.html" data-id="mpls"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="router"></span><span class="t"><b>MPLS</b><small>Provider</small></span><span data-ic="chev"></span></a><a class="ui-row" href="l3vpn.html" data-id="l3vpn"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="router"></span><span class="t"><b>L3VPN (VRF)</b><small>Provider</small></span><span data-ic="chev"></span></a><a class="ui-row" href="multicast.html" data-id="multicast"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="router"></span><span class="t"><b>Multicast</b><small>Provider</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="bgp.html">← BGP</a><a href="mpls.html">MPLS →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -106,5 +104,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("igp")<0)s.push("igp");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","igp")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

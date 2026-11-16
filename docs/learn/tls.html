@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "TLS - the padlock", "description": "Proves who the server is, then encrypts everything. The padlock: proves the server is real and encrypts everything", "url": "https://adeebometer.com/learn/tls.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "How the internet talks", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#protocol">How the internet talks</a>
 <h1>TLS - the padlock</h1>
 <p class="tag">Proves who the server is, then encrypts everything.</p>
@@ -87,13 +87,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>That the site has no ads</button>
 <button>That your PC has no viruses</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>In the AdeeboMeter app, Learn › TLS › <b>See it live</b> records these messages on your own network while you open a website.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in How the internet talks</h2>
-<div class="grid"><a href="dns.html"><b>DNS</b><span>You type a name; DNS finds the number.</span></a><a href="dhcp.html"><b>DHCP</b><span>Four messages, and you&#x27;re on the network.</span></a><a href="arp.html"><b>ARP</b><span>IP addresses for the journey, hardware addresses for the next step.</span></a><a href="tcp.html"><b>TCP</b><span>Numbered, acknowledged, resent when lost.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Protocols</h2>
+<div class="ui-rows"><a class="ui-row" href="dns.html" data-id="dns"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DNS</b><small>Protocols</small></span><span data-ic="chev"></span></a><a class="ui-row" href="dhcp.html" data-id="dhcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DHCP</b><small>Protocols</small></span><span data-ic="chev"></span></a><a class="ui-row" href="arp.html" data-id="arp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>ARP</b><small>Protocols</small></span><span data-ic="chev"></span></a><a class="ui-row" href="tcp.html" data-id="tcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>TCP</b><small>Protocols</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="udp.html">← UDP</a><a href="quic.html">QUIC and HTTP/3 →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -104,5 +102,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("tls")<0)s.push("tls");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","tls")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

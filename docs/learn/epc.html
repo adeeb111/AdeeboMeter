@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "The 4G core: MME, SGW, PGW, HSS", "description": "The MME signals; the gateways carry your data. The MME authenticates you and tracks which area you're in. The SGW carries your data from the tower; the PGW…", "url": "https://adeebometer.com/learn/epc.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Mobile, LTE and 5G", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#mobile">Mobile, LTE and 5G</a>
 <h1>The 4G core: MME, SGW, PGW, HSS</h1>
 <p class="tag">The MME signals; the gateways carry your data.</p>
@@ -89,13 +89,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>The eNodeB</button>
 <button>The DNS server</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test The 4G core: MME, SGW, PGW, HSS on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Mobile, LTE and 5G</h2>
-<div class="grid"><a href="mobile.html"><b>The mobile network in plain words</b><span>Your phone, the radio towers, and a core network that decides who you are and where your data goes.</span></a><a href="ran.html"><b>eNodeB and gNodeB</b><span>The base station: radio on one side, fibre to the core on the other.</span></a><a href="5gc.html"><b>The 5G core: AMF, SMF, UPF and friends</b><span>Separate small functions that call each other over HTTP APIs.</span></a><a href="attach.html"><b>How a phone joins: LTE attach and 5G registration</b><span>Who are you, prove it, here&#x27;s your address.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Mobile</h2>
+<div class="ui-rows"><a class="ui-row" href="mobile.html" data-id="mobile"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>The mobile network in plain words</b><small>Mobile</small></span><span data-ic="chev"></span></a><a class="ui-row" href="ran.html" data-id="ran"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>eNodeB and gNodeB</b><small>Mobile</small></span><span data-ic="chev"></span></a><a class="ui-row" href="5gc.html" data-id="5gc"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>The 5G core: AMF, SMF, UPF and friends</b><small>Mobile</small></span><span data-ic="chev"></span></a><a class="ui-row" href="attach.html" data-id="attach"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>How a phone joins: LTE attach and 5G registration</b><small>Mobile</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="ran.html">← eNodeB and gNodeB</a><a href="5gc.html">The 5G core: AMF, SMF, UPF and friends →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -106,5 +104,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("epc")<0)s.push("epc");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","epc")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

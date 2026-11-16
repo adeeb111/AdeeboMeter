@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "How apps actually use the internet", "description": "Apps never touch the network - they ask Windows, through sockets. Apps never touch the network - they ask Windows for a connection (a", "url": "https://adeebometer.com/learn/apps-internet.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "The basics", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#basics">The basics</a>
 <h1>How apps actually use the internet</h1>
 <p class="tag">Apps never touch the network - they ask Windows, through sockets.</p>
@@ -88,13 +88,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>It sends email</button>
 <button>It uses Bluetooth</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>In the AdeeboMeter app, Learn › How apps actually use the internet › <b>See it live</b> records these messages on your own network while you open an app you haven&#x27;t used today.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in The basics</h2>
-<div class="grid"><a href="osi.html"><b>The layers, in plain words</b><span>A letter in envelopes inside envelopes - each layer adds one, the other side opens them in reverse.</span></a><a href="open-website.html"><b>What happens when you open a website</b><span>Six steps in about a fifth of a second.</span></a><a href="ports.html"><b>Ports</b><span>The IP address finds the building; the port finds the flat.</span></a><a href="speed-vs-delay.html"><b>Speed isn&#x27;t one number</b><span>Bandwidth, delay, jitter and loss - four different things that all feel like &quot;slow&quot;.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Basics</h2>
+<div class="ui-rows"><a class="ui-row" href="osi.html" data-id="osi"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>The layers, in plain words</b><small>Basics</small></span><span data-ic="chev"></span></a><a class="ui-row" href="open-website.html" data-id="open-website"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>What happens when you open a website</b><small>Basics</small></span><span data-ic="chev"></span></a><a class="ui-row" href="ports.html" data-id="ports"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>Ports</b><small>Basics</small></span><span data-ic="chev"></span></a><a class="ui-row" href="speed-vs-delay.html" data-id="speed-vs-delay"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>Speed isn&#x27;t one number</b><small>Basics</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="open-website.html">← What happens when you open a website</a><a href="ports.html">Ports →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -105,5 +103,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("apps-internet")<0)s.push("apps-internet");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","apps-internet")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

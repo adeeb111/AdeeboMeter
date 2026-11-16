@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "How Outlook gets your mail", "description": "Signs in once, keeps a copy on your PC, syncs in the background. Outlook keeps a copy of your mailbox on the PC and syncs it with Exchange Online over", "url": "https://adeebometer.com/learn/outlook-flow.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Apps on your PC", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#apps">Apps on your PC</a>
 <h1>How Outlook gets your mail</h1>
 <p class="tag">Signs in once, keeps a copy on your PC, syncs in the background.</p>
@@ -87,13 +87,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>The mail is stored in DNS</button>
 <button>It can&#x27;t</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test How Outlook gets your mail on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Apps on your PC</h2>
-<div class="grid"><a href="teams-call.html"><b>How a Teams call connects</b><span>Sign in, signal, find a path, then audio and video over UDP.</span></a><a href="onedrive.html"><b>OneDrive</b><span>Your files in the cloud, downloaded only when you open them.</span></a><a href="wam.html"><b>Sign-in broker (WAM)</b><span>Why Teams, Outlook and OneDrive never ask for your password separately.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Apps</h2>
+<div class="ui-rows"><a class="ui-row" href="teams-call.html" data-id="teams-call"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="apps"></span><span class="t"><b>How a Teams call connects</b><small>Apps</small></span><span data-ic="chev"></span></a><a class="ui-row" href="onedrive.html" data-id="onedrive"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="apps"></span><span class="t"><b>OneDrive</b><small>Apps</small></span><span data-ic="chev"></span></a><a class="ui-row" href="wam.html" data-id="wam"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="apps"></span><span class="t"><b>Sign-in broker (WAM)</b><small>Apps</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="teams-call.html">← How a Teams call connects</a><a href="onedrive.html">OneDrive →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -104,5 +102,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("outlook-flow")<0)s.push("outlook-flow");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","outlook-flow")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

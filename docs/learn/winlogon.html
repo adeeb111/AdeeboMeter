@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "winlogon.exe - your sign-in", "description": "Sign-in screen, Ctrl+Alt+Del, lock and sign out. Handles signing in, locking (Win+L) and Ctrl+Alt+Del. If sign-in hangs, a startup program or a profile…", "url": "https://adeebometer.com/learn/winlogon.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Your Windows PC", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#windows">Your Windows PC</a>
 <h1>winlogon.exe - your sign-in</h1>
 <p class="tag">Sign-in screen, Ctrl+Alt+Del, lock and sign out.</p>
@@ -85,13 +85,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>Downloading updates</button>
 <button>Your Wi-Fi</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test winlogon.exe on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Your Windows PC</h2>
-<div class="grid"><a href="boot-chain.html"><b>How Windows starts, from power to desktop</b><span>Each one starts the next - and if certain ones die, Windows dies with them.</span></a><a href="svchost.html"><b>svchost.exe</b><span>Why there are twenty of them, and what&#x27;s inside each.</span></a><a href="lsass.html"><b>lsass.exe</b><span>Checks every password and keeps your sign-in tokens.</span></a><a href="csrss.html"><b>csrss.exe</b><span>Old name, still essential.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Windows</h2>
+<div class="ui-rows"><a class="ui-row" href="boot-chain.html" data-id="boot-chain"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>How Windows starts, from power to desktop</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="svchost.html" data-id="svchost"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>svchost.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="lsass.html" data-id="lsass"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>lsass.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="csrss.html" data-id="csrss"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>csrss.exe</b><small>Windows</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="wininit.html">← wininit.exe</a><a href="services.html">services.exe →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -102,5 +100,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("winlogon")<0)s.push("winlogon");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","winlogon")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

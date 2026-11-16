@@ -10,6 +10,11 @@ KINDS = [('basics', 'The basics'), ('protocol', 'How the internet talks'), ('pro
          ('mobile', 'Mobile, LTE and 5G'), ('windows', 'Your Windows PC'), ('apps', 'Apps on your PC'),
          ('crypto', 'Encryption and keys'), ('streaming', 'Streaming'), ('investing', 'Trading and investing')]
 KN = dict(KINDS)
+# the flat look (docs/ui.css, docs/ui.js): an icon and a short name for each group
+KIC = {'basics': 'layers', 'protocol': 'globe', 'provider': 'router', 'mobile': 'signal', 'windows': 'monitor', 'apps': 'apps', 'crypto': 'lock', 'streaming': 'stream', 'investing': 'chart'}
+KSHORT = {'basics': 'Basics', 'protocol': 'Protocols', 'provider': 'Provider', 'mobile': 'Mobile', 'windows': 'Windows', 'apps': 'Apps', 'crypto': 'Encryption', 'streaming': 'Streaming', 'investing': 'Trading'}
+def lrow(t): return (f'<a class="ui-row" href="{t["id"]}.html" data-id="{t["id"]}"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="{KIC.get(t.get("kind"), "book")}"></span>'
+                     f'<span class="t"><b>{E(t["title"].split(" - ")[0])}</b><small>{E(KSHORT.get(t.get("kind"), ""))}</small></span><span data-ic="chev"></span></a>')
 E = lambda s: html.escape(s or '', quote=True)
 
 topics = []
@@ -72,15 +77,16 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 """
 PWA = '<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->'
 THEME = '<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>'
-FOOT = '<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>'
+FOOT = '<footer>Free · no account · the same lessons as the Windows app</footer>'
 
 def head(title, desc, url, extra=''):
     return ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
             f'<title>{E(title)}</title>\n<meta name="description" content="{E(desc)}">\n<link rel="canonical" href="{url}">\n'
             f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="article">\n'
-            f'<link rel="icon" href="../favicon.svg" type="image/svg+xml">\n{PWA}\n<style>\n{CSS}</style>\n{THEME}\n{extra}</head>\n<body>\n<main>\n')
+            f'<link rel="icon" href="../favicon.svg" type="image/svg+xml">\n{PWA}\n<style>\n{CSS}</style>\n{THEME}\n<link rel="stylesheet" href="/ui.css">\n{extra}</head>\n<body data-sec="learn">\n<main>\n')
 
-def top(): return '<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>\n'
+def top(): return ''
+def top_old(): return '<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>\n'
 
 def ladder(s):
     steps = []
@@ -132,19 +138,13 @@ def lesson(t, prev, nxt, same):
         h.append(f'<h2>Quick check</h2>\n<div class="quiz" data-id="{E(t["id"])}"><p>{E(q[0])}</p>\n')
         h.append(f'<button data-ok>{E(q[1])}</button>\n' + ''.join(f'<button>{E(o)}</button>\n' for o in q[2:]))
         h.append('<p class="say" aria-live="polite"></p></div>\n')
-    h.append('<h2>See it on your own PC</h2>\n<p>')
-    if t.get('live'):
-        h.append(f'In the AdeeboMeter app, Learn › {E(name)} › <b>See it live</b> records these messages on your own network')
-        h.append(f' while you {E(t["try"][0].lower() + t["try"][1:].rstrip("."))}.' if t.get('try') else '.')
-    else:
-        h.append(f'This lesson is built into the AdeeboMeter app, next to the checks that test {E(name)} on your own connection.')
-    h.append('</p>\n<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>\n')
+    h.append('<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>\n')
     if same:
-        h.append('<h2>Also in ' + E(KN.get(t.get('kind'), 'this group')) + '</h2>\n<div class="grid">' +
-                 ''.join(f'<a href="{s["id"]}.html"><b>{E(s["title"].split(" - ")[0])}</b><span>{E(s.get("tag"))}</span></a>' for s in same) + '</div>\n')
+        h.append('<h2>More in ' + E(KSHORT.get(t.get('kind'), 'this group')) + '</h2>\n<div class="ui-rows">' + ''.join(lrow(x) for x in same) + '</div>\n')
     h.append('<div class="pn">' + (f'<a href="{prev["id"]}.html">← {E(prev["title"].split(" - ")[0])}</a>' if prev else '<span></span>') +
              (f'<a href="{nxt["id"]}.html">{E(nxt["title"].split(" - ")[0])} →</a>' if nxt else '') + '</div>\n')
-    h.append(FOOT + '\n</main>\n' + ('<script src="/voice.js"></script>\n' + QUIZ_JS if len(q) >= 3 else '') + '</body>\n</html>\n')
+    seen = '<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("%s")<0)s.push("%s");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","%s")}catch(e){}</script>\n' % (t['id'], t['id'], t['id'])
+    h.append(FOOT + '\n</main>\n' + ('<script src="/voice.js"></script>\n' + QUIZ_JS if len(q) >= 3 else '') + seen + '<script src="/ui.js"></script>\n</body>\n</html>\n')
     return ''.join(h)
 
 def index():
@@ -152,19 +152,23 @@ def index():
     ld = {'@context': 'https://schema.org', '@type': 'ItemList', 'name': 'AdeeboMeter Learn', 'itemListElement':
           [{'@type': 'ListItem', 'position': i + 1, 'url': f'{SITE}learn/{t["id"]}.html', 'name': t['title']} for i, t in enumerate(topics)]}
     h = [head('Learn how your internet works | AdeeboMeter', desc, SITE + 'learn/', f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n'), top()]
-    h.append(f'<h1>Learn how your internet works</h1>\n<p class="tag">{len(topics)} lessons, two lines and a picture each. Free, no sign-up - the same lessons that sit inside the app.</p>\n')
-    h.append('<p><a class="cta" href="../games.html">Test yourself: network games</a></p>\n')
-    h.append('<input type="search" id="q" placeholder="Search lessons (DNS, Wi-Fi, 5G, VPN…)" aria-label="Search lessons">\n<p id="done" style="color:var(--sub);font-size:14px;margin:0"></p>\n')
-    h.append('<div class="chips">' + ''.join(f'<a class="chip" href="#{k}">{E(n)}</a>' for k, n in KINDS if any(t.get('kind') == k for t in topics)) + '</div>\n')
+    h.append('<header class="ui-head"><span class="ui-chip" style="--k:var(--c-learn)" data-ic="book" data-sz="28"></span><div><h1>Learn</h1><p>Short lessons, a picture each.</p></div></header>\n')
+    h.append(f'<a class="ui-hero" id="cont" href="{topics[0]["id"]}.html"><span class="tag" id="ctag">Start here</span><b id="ctit">{E(topics[0]["title"].split(" - ")[0])}</b><small id="cmeta">Lesson 1 of {len([x for x in topics if x.get("kind") == topics[0].get("kind")])} · {E(KSHORT.get(topics[0].get("kind"), ""))}</small><span class="go" data-ic="chev"></span><span class="ui-prog"><i><b id="cbar" style="width:0%"></b></i><span id="cpct">0%</span></span></a>\n')
+    h.append('<label class="ui-search" data-ic="search"><input type="search" id="q" placeholder="Search lessons" aria-label="Search lessons"></label>\n')
+    h.append('<div class="ui-pills" role="group" aria-label="Topics"><button class="on" data-f="">All</button>' + ''.join(f'<button data-f="{k}">{E(KSHORT.get(k, n))}</button>' for k, n in KINDS if any(t.get('kind') == k for t in topics)) + '</div>\n')
     for k, n in KINDS:
         g = [t for t in topics if t.get('kind') == k]
         if not g: continue
-        h.append(f'<section data-k="{k}"><h2 id="{k}">{E(n)}</h2>\n<div class="grid">')
-        h.append(''.join(f'<a href="{t["id"]}.html" data-s="{E((t["title"] + " " + t.get("tag", "") + " " + t.get("line", "")).lower())}"><b>{E(t["title"])}</b><span>{E(t.get("tag"))}</span></a>' for t in g))
-        h.append('</div></section>\n')
-    h.append(FOOT + '\n</main>\n<script>\n(function(){var q=document.getElementById("q");q.oninput=function(){var v=q.value.toLowerCase().trim();'
-             '[].forEach.call(document.querySelectorAll("section"),function(s){var n=0;[].forEach.call(s.querySelectorAll("a"),function(a){var m=!v||a.getAttribute("data-s").indexOf(v)>=0;a.style.display=m?"":"none";if(m)n++});s.style.display=n?"":"none"})};'
-             f'try{{var d=JSON.parse(localStorage.getItem("am-learn-done")||"[]");if(d.length)document.getElementById("done").textContent="You have answered "+d.length+" of {len(topics)} quick checks on this device.";}}catch(e){{}}}})();\n</script>\n</body>\n</html>\n')
+        h.append(f'<section data-k="{k}"><h2 class="ui-h2" id="{k}">{E(n)}</h2>\n<div class="ui-rows">' + ''.join(lrow(t).replace('<a class="ui-row"', f'<a class="ui-row" data-s="{E((t["title"] + " " + t.get("tag", "") + " " + t.get("line", "")).lower())}"', 1) for t in g) + '</div></section>\n')
+    L = json.dumps([[t['id'], t['title'].split(' - ')[0], t.get('kind', ''), KSHORT.get(t.get('kind'), '')] for t in topics], ensure_ascii=False, separators=(',', ':'))
+    h.append(FOOT + '\n</main>\n<script>\n(function(){var L=' + L + ',f="",q=document.getElementById("q");'
+             'function show(){var v=q.value.toLowerCase().trim();[].forEach.call(document.querySelectorAll("main section"),function(s){var n=0;if(!f||s.getAttribute("data-k")===f)[].forEach.call(s.querySelectorAll("a"),function(a){var m=!v||a.getAttribute("data-s").indexOf(v)>=0;a.style.display=m?"":"none";if(m)n++});s.style.display=n?"":"none"})}'
+             'q.oninput=show;[].forEach.call(document.querySelectorAll("[data-f]"),function(b){b.onclick=function(){f=b.getAttribute("data-f");[].forEach.call(document.querySelectorAll("[data-f]"),function(x){x.className=x===b?"on":""});show()}});'
+             'try{var seen=JSON.parse(localStorage.getItem("am-learn-seen")||"[]"),last=localStorage.getItem("am-learn-last");'
+             '[].forEach.call(document.querySelectorAll(".ui-row[data-id]"),function(a){if(seen.indexOf(a.getAttribute("data-id"))>=0){var s=a.querySelector("small");s.innerHTML=s.innerHTML+" · <span class=ok>✓ read</span>"}});'
+             'var t=null;L.forEach(function(x){if(x[0]===last)t=x});if(t){var g=L.filter(function(x){return x[2]===t[2]}),i=0,r=0;g.forEach(function(x,k){if(x[0]===t[0])i=k;if(seen.indexOf(x[0])>=0)r++});'
+             'var nx=g.filter(function(x){return seen.indexOf(x[0])<0})[0]||t;var j=g.indexOf(nx),p=Math.round(100*r/g.length);document.getElementById("cont").href=nx[0]+".html";document.getElementById("ctag").textContent=nx===t?"Read again":"Continue learning";'
+             'document.getElementById("ctit").textContent=nx[1];document.getElementById("cmeta").textContent="Lesson "+(j+1)+" of "+g.length+" · "+nx[3];document.getElementById("cbar").style.width=p+"%";document.getElementById("cpct").textContent=p+"%"}}catch(e){}})();\n</script>\n<script src="/ui.js"></script>\n</body>\n</html>\n')
     return ''.join(h)
 
 out = os.path.join(root, 'docs/learn'); os.makedirs(out, exist_ok=True)
@@ -210,7 +214,7 @@ for page in ['index.html', 'games.html', 'live.html', 'app.html', 'r.html', 'fil
     h = re.sub(r'<!--pwa-->.*?<!--/pwa-->\n?', '', h, flags=re.S)
     h = h.replace('</head>', PWA + '\n</head>', 1)
     with open(f, 'w', encoding='utf-8', newline='\n') as o: o.write(h)
-core = ['app.html', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
+core = ['app.html', 'ui.css', 'ui.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
         'favicon.svg', 'manifest.webmanifest', 'img/app/icon-192.png', 'img/app/apple-touch-icon.png']
 extra = [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
 ver = hashlib.sha256(b''.join(open(os.path.join(root, 'docs', x), 'rb').read() for x in core + extra)).hexdigest()[:12]

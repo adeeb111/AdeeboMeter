@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "A signature - sign with private, check with public", "description": "Proves who wrote it, and that nobody changed it. The signer hashes the document and seals the hash with their private key. Anyone checks it with the signer's…", "url": "https://adeebometer.com/learn/signature.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Encryption and keys", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#crypto">Encryption and keys</a>
 <h1>A signature - sign with private, check with public</h1>
 <p class="tag">Proves who wrote it, and that nobody changed it.</p>
@@ -85,13 +85,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>With your own password</button>
 <button>With the file&#x27;s name</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test A signature on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Encryption and keys</h2>
-<div class="grid"><a href="hash.html"><b>A hash</b><span>Change one bit, get a completely different fingerprint.</span></a><a href="aes.html"><b>AES</b><span>The fast lock that carries all your data.</span></a><a href="diffie-hellman.html"><b>Diffie-Hellman</b><span>Two strangers agree on a secret while everyone listens.</span></a><a href="public-key.html"><b>Public and private keys</b><span>Hand out the padlock, keep the only key.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Encryption</h2>
+<div class="ui-rows"><a class="ui-row" href="hash.html" data-id="hash"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="lock"></span><span class="t"><b>A hash</b><small>Encryption</small></span><span data-ic="chev"></span></a><a class="ui-row" href="aes.html" data-id="aes"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="lock"></span><span class="t"><b>AES</b><small>Encryption</small></span><span data-ic="chev"></span></a><a class="ui-row" href="diffie-hellman.html" data-id="diffie-hellman"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="lock"></span><span class="t"><b>Diffie-Hellman</b><small>Encryption</small></span><span data-ic="chev"></span></a><a class="ui-row" href="public-key.html" data-id="public-key"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="lock"></span><span class="t"><b>Public and private keys</b><small>Encryption</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="public-key.html">← Public and private keys</a><a href="certificate.html">A certificate →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -102,5 +100,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("signature")<0)s.push("signature");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","signature")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

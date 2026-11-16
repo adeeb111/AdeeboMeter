@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "What 4K really needs", "description": "About 25 Mb/s - steady, not just at the speed test. SD needs about 3 Mb/s, HD about 5, Full HD about 8 and 4K about 25 - and the line has to hold it the…", "url": "https://adeebometer.com/learn/stream-4k.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Streaming", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#streaming">Streaming</a>
 <h1>What 4K really needs</h1>
 <p class="tag">About 25 Mb/s - steady, not just at the speed test.</p>
@@ -85,13 +85,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>About 500 Mb/s</button>
 <button>4K doesn&#x27;t depend on speed</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test What 4K really needs on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Streaming</h2>
-<div class="grid"><a href="stream-how.html"><b>How a video stream works</b><span>Small chunks, downloaded a little ahead of what you watch.</span></a><a href="stream-adaptive.html"><b>Adaptive quality</b><span>Blurrier beats spinning.</span></a><a href="stream-cdn.html"><b>Where the video comes from</b><span>A copy of the show in a building near you.</span></a><a href="stream-iptv.html"><b>IPTV and live channels</b><span>Live TV over the internet - less buffer, less forgiveness.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Streaming</h2>
+<div class="ui-rows"><a class="ui-row" href="stream-how.html" data-id="stream-how"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>How a video stream works</b><small>Streaming</small></span><span data-ic="chev"></span></a><a class="ui-row" href="stream-adaptive.html" data-id="stream-adaptive"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>Adaptive quality</b><small>Streaming</small></span><span data-ic="chev"></span></a><a class="ui-row" href="stream-cdn.html" data-id="stream-cdn"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>Where the video comes from</b><small>Streaming</small></span><span data-ic="chev"></span></a><a class="ui-row" href="stream-iptv.html" data-id="stream-iptv"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="stream"></span><span class="t"><b>IPTV and live channels</b><small>Streaming</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="stream-cdn.html">← Where the video comes from</a><a href="stream-iptv.html">IPTV and live channels →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -102,5 +100,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("stream-4k")<0)s.push("stream-4k");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","stream-4k")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>
