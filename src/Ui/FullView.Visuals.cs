@@ -29,6 +29,16 @@ namespace AdeeboMeter
         internal string VisualCheck()
         {
             EnsureToolbox(); var bad = new List<string>();
+            // the phone remote's list: read-only checks in, keys / lab / passwords out, every part under the relay's message size
+            try
+            {
+                var parts = RemoteCatalog(); string all = string.Join("", parts.ToArray());
+                if (parts.Any(z => z.Length > 30000)) bad.Add("remote catalog part over 30 KB");
+                foreach (var ok in new[] { "\"mtu\"", "\"subnet\"", "\"speedtest\"", "\"dnscmp\"" }) if (!all.Contains("\"id\":" + ok)) bad.Add("remote catalog misses " + ok);
+                foreach (var no in new[] { "encrypt", "sweep", "udpsend", "snmpwalk", "tidy", "radius", "obs", "keytest" }) if (all.Contains("\"id\":\"" + no + "\"") || RemoteAllowed(no)) bad.Add("remote allows " + no);
+                if (Tools2().Count(RemoteOk) < 100) bad.Add("remote catalog has only " + Tools2().Count(RemoteOk) + " checks");
+            }
+            catch (Exception e) { bad.Add("remote catalog: " + e.Message); }
             // AM-CG-220/227: a secret row (a code, a recovery passphrase) never reaches a shared copy
             var keep = tbRows; string keepSel = tbSel;
             try

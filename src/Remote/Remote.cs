@@ -31,7 +31,7 @@ namespace AdeeboMeter
 
         // what the phone may start: network checks that read, measure or test - nothing that sends crafted traffic on
         // your LAN, touches keys or files, or changes the PC
-        public static readonly HashSet<string> Allowed = new HashSet<string> { "speedtest", "ping", "bloat", "tcpping", "mtu", "mtr", "ret", "route", "gateway", "ping6", "ip46", "port", "http", "httptime", "doh", "ntp", "cloud", "gamecompare", "marketopen", "teams", "clock", "checkup", "feltslow", "golive" };
+        // what the phone may start is decided by the Toolbox itself (FullView.RemoteOk): CanRun asks it, Catalog lists it
 
         public enum State { Connecting, Waiting, Asking, Paired, Ended }
         public volatile State St = State.Connecting; public volatile string Why = "";
@@ -41,7 +41,7 @@ namespace AdeeboMeter
         System.Threading.Timer tick;
 
         // the PC side hooks: ask "Allow?" on the UI thread, run a check, note a change for the window and the widget
-        public Func<string, bool> Ask; public Action<string, string[], Action<string, List<string[]>>> RunTool; public Action Changed; public Action FeltSlow;
+        public Func<string, bool> Ask; public Func<string, bool> CanRun; public Func<List<string>> Catalog; public Action<string, string[], Action<string, List<string[]>, List<string[]>>> RunTool; public Action Changed; public Action FeltSlow;
 
         Remote(Monitor m)
         {
@@ -99,7 +99,7 @@ namespace AdeeboMeter
                 tx = new RemoteCrypto.Lane(secret, z, 1); rx = new RemoteCrypto.Lane(secret, z, 2);
                 Send("{\"t\":\"ok\",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");
                 mine.Dispose(); mine = null;   // the one-time private key goes as soon as the session keys exist
-                St = State.Paired; Note(); SendLive(); return;
+                St = State.Paired; Note(); SendLive(); try { var cat = Catalog != null ? Catalog() : null; if (cat != null) foreach (var part in cat) Seal(part); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote catalog: " + e.Message); } return;
             }
             if (St != State.Paired || rx == null) return;
             string plain = j.S("s") != null ? rx.Open(j.S("s")) : null;
@@ -109,10 +109,10 @@ namespace AdeeboMeter
             {
                 case "run":
                     {
-                        string id = c.S("id") ?? ""; if (!Allowed.Contains(id)) { Seal("{\"t\":\"err\",\"msg\":\"That check can't be started from the phone.\"}"); return; }
+                        string id = c.S("id") ?? ""; if (id != "feltslow" && (CanRun == null || !CanRun(id))) { Seal("{\"t\":\"err\",\"msg\":\"That check can't be started from the phone.\"}"); return; }
                         if (id == "feltslow") { if (FeltSlow != null) FeltSlow(); Seal("{\"t\":\"note\",\"msg\":\"Marked: felt slow. The answer is on the PC.\"}"); return; }
                         var a = (c.A("in") ?? new List<string>()).Take(4).Select(x => Clip(x, 200)).ToArray();
-                        if (RunTool != null) RunTool(id, a, (title, rows) => SendResult(id, title, rows));
+                        if (RunTool != null) RunTool(id, a, (title, rows, hops) => SendResult(id, title, rows, hops));
                         return;
                     }
                 case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
@@ -125,7 +125,7 @@ namespace AdeeboMeter
             if (St == State.Ended) return;
             if (DateTime.UtcNow - Started > TimeSpan.FromMinutes(Minutes)) { End("30 minutes are up"); return; }
             if (St == State.Waiting && DateTime.UtcNow - Started > TimeSpan.FromMinutes(2)) { End("no phone joined within 2 minutes"); return; }
-            if (St == State.Paired) SendLive();
+            if (St == State.Paired) { SendLive(); if ((DateTime.UtcNow - mktAt).TotalMinutes >= 10) { mktAt = DateTime.UtcNow; SendMarkets(); } }
             Note();
         }
 
@@ -170,6 +170,21 @@ namespace AdeeboMeter
             Num(sb, "down", down); Num(sb, "far", far); sb.Append(",\"dips\":").Append(dips); Str(sb, "last", last); Num(sb, "mins", since == DateTime.MinValue ? double.NaN : (DateTime.Now - since).TotalMinutes);
             sb.Append('}');
         }
+        // the day's markets as the Trading page has them (Bank of Canada rates, commodity index) - every 10 minutes, not every second
+        DateTime mktAt = DateTime.MinValue;
+        void SendMarkets()
+        {
+            if (!Cfg.TradeFx) { Seal("{\"t\":\"mkt\",\"off\":1}"); return; }
+            try { Trading.LoadFx(); } catch (Exception e) { if (e is OutOfMemoryException) throw; }   // the saved copy only - nothing is fetched for the phone
+            List<Trading.Rate> rates; List<Trading.Index> idx; lock (Trading.k) { rates = Trading.Rates.ToList(); idx = Trading.Indexes.ToList(); }
+            var sb = new StringBuilder("{\"t\":\"mkt\",\"rates\":[");
+            sb.Append(string.Join(",", rates.Select(r => "[\"" + J(r.Code) + "\",\"" + J(FxName(r.Code)) + "\"," + N4(r.Cad) + "," + N4(r.Prev) + ",\"" + r.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "\"]").ToArray()));
+            sb.Append("],\"idx\":[");
+            sb.Append(string.Join(",", idx.Select(i => "[\"" + J(i.Code) + "\",\"" + i.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "\",[" + string.Join(",", (i.V ?? Array.Empty<double>()).Select(N4).ToArray()) + "]]").ToArray()));
+            sb.Append("]}"); Seal(sb.ToString());
+        }
+        static string FxName(string c) { string n; return Trading.FxNames.TryGetValue(c, out n) ? n : c; }
+        static string N4(double v) { return double.IsNaN(v) || double.IsInfinity(v) ? "null" : Math.Round(v, 4).ToString(CultureInfo.InvariantCulture); }
         static void Trade(StringBuilder sb)
         {
             if (Cfg.TradeHost == "") return;
@@ -178,7 +193,7 @@ namespace AdeeboMeter
             if (last != null) { Num(sb, "router", last.Router); Num(sb, "net", last.Net); Num(sb, "broker", last.Far); }
             sb.Append('}');
         }
-        void SendResult(string id, string title, List<string[]> rows)
+        void SendResult(string id, string title, List<string[]> rows, List<string[]> hops)
         {
             // AM-CG-284: a byte budget, not just a row count - sealed (AES padding + base64 + tag) it must stay well under the
             // relay's 64 KB per message, or the relay would end the session. Rows that don't fit are counted, never cut mid-way.
@@ -193,7 +208,14 @@ namespace AdeeboMeter
                 if (!first) sb.Append(','); first = false; sb.Append(item);
             }
             if (left > 0) { if (!first) sb.Append(','); sb.Append("[\"3\",\"Left on the PC\",\"").Append(left).Append(" more rows - open the result on the PC\",\"\"]"); }
-            sb.Append("]}"); Seal(sb.ToString());
+            sb.Append(']');
+            if (hops != null && hops.Count > 0)
+            {
+                sb.Append(",\"hops\":[");
+                for (int i = 0; i < Math.Min(30, hops.Count); i++) { var h = hops[i]; if (i > 0) sb.Append(','); sb.Append("[\"").Append(string.Join("\",\"", h.Select(x => J(Clip(x, 60))).ToArray())).Append("\"]"); }
+                sb.Append(']');
+            }
+            sb.Append('}'); Seal(sb.ToString());
         }
 
         // a parsed message: its text fields and one list of strings, nothing else is read

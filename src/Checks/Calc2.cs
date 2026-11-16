@@ -173,6 +173,7 @@ namespace AdeeboMeter
             string lv = Regex.Replace((levelText ?? "").ToLowerInvariant(), @"raid|\s", ""); int n = (int)First(disksText); double size = Size(sizeText);
             if (double.IsNaN(size)) { double v = First(sizeText); if (!double.IsNaN(v)) size = v * 1e12; }   // a bare number is TB
             if (n < 1 || double.IsNaN(First(disksText))) return Need("Disks", "type how many, e.g. 6");
+            if (!Regex.IsMatch((disksText ?? "").Trim(), @"^\d+(\s*(disks?|drives?))?$", RegexOptions.IgnoreCase)) return Need("Disks", "a whole number of disks, e.g. 6 - \"" + (disksText ?? "").Trim() + "\" isn't one");   // AM-CG-303: 3.9 disks isn't 3
             if (double.IsNaN(size) || size <= 0) return Need("Disk size", "type e.g. 4 TB");
             int min, data, survive; string note;
             switch (lv)

@@ -692,6 +692,8 @@ namespace AdeeboMeter
             toolboxPage.SuspendLayout();
             var split = tbSplit = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
             split.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(290))); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            // AM-CG-291: on a narrow window (or 150-200 %) the list gives way - never more than a third of the width, at least 170
+            split.Resize += delegate { float want = Math.Max(Sc(170), Math.Min(Sc(290), split.ClientSize.Width / 3f)); if (Math.Abs(split.ColumnStyles[0].Width - want) > 1) split.ColumnStyles[0].Width = want; };
             tbList = new DB { Name = "tbList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             tbList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbList(e.Graphics); }; Wire(tbList);
             // the list works from the keyboard too: arrows move, Enter goes to the first box, Home/End, typing jumps to search

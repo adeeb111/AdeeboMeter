@@ -327,16 +327,22 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("quick share: " + e.Message); Toast(L.T("Couldn't start Quick Share")); }
         }
         // AM-CG-219: before the code shows, the exact lines the link carries (anyone with the link can read them) - once a session
-        static bool phoneSeen;
+        // AM-CG-286: the preview is the link itself, decoded - every line and hop it carries, nothing else - and it's asked again
+        // whenever what would be shared changes (the same result shared twice isn't asked twice)
+        static string phoneOk = "";
         void OpenOnPhone()
         {
             string link = PhoneLink(); if (link == null) return;
-            if (!phoneSeen)
+            var f = link.Substring(link.IndexOf('#') + 1).Split('!'); string body = string.Join("!", f.Skip(2).ToArray());
+            if (body != phoneOk)
             {
-                var rows = ResRows().Where(o => o[0] != "-1").Take(14).Select(o => "• " + o[1] + ": " + Cut(o[2], 70)).ToList();
-                string what = string.Join("\n", rows) + (ResRows().Count > 14 ? "\n• ..." : "") + (VisIn().Any(v => v != "") ? "\n\n" + L.T("and what you typed:") + " " + string.Join(", ", VisIn().Where(v => v != "").ToArray()) : "");
-                if (MessageBox.Show(this, L.T("The link in the code carries these lines, so anyone you give it to can read them (nothing goes to a server - it all sits in the link itself):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
-                phoneSeen = true;
+                Func<string, string> D = x => { try { return Uri.UnescapeDataString((x ?? "").Replace("+", " ")); } catch (UriFormatException) { return x; } };
+                var lines = new List<string>();
+                if (f.Length > 4 && f[4] == "p" && f.Length > 6) foreach (var h in f[6].Split('~').Where(z => z != "")) { var p = h.Split(','); lines.Add("• " + L.T("Hop") + " " + D(p[0]) + (p.Length > 1 ? " · " + D(p[1]) : "") + (p.Length > 3 && p[3] != "" ? " · " + D(p[3]) : "")); }
+                if (f.Length > 7) foreach (var it in f[7].Split('~').Where(z => z != "")) { var p = it.Split(','); if (p.Length < 2) continue; lines.Add(p[0] == "-1" ? "\n" + D(p[1]).ToUpperInvariant() : "• " + D(p[1]) + (p.Length > 2 && p[2] != "" ? ": " + D(p[2]) : "") + (p.Length > 3 && p[3] != "" ? " (" + D(p[3]) + ")" : "")); }
+                string what = string.Join("\n", lines.Take(60)) + (lines.Count > 60 ? "\n• ... " + (lines.Count - 60) + " " + L.T("more lines") : "");
+                if (MessageBox.Show(this, L.T("Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                phoneOk = body;
             }
             ShowQr(link);
         }

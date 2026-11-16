@@ -59,6 +59,7 @@ namespace AdeeboMeter
             return false;
         }
         // --perf: how long each page takes to switch to, to paint, and what the 2-a-second timer costs - written to AdeeboMeter-perf.txt
+        static double Busy(Monitor M) { try { double c = M.Cpu.Last, m = M.Latest.Mem; return (!double.IsNaN(c) && c > 50) || (!double.IsNaN(m) && m > 85) ? 3 : 1; } catch (NullReferenceException) { return 1; } }
         public static int Perf()
         {
             var sb = new StringBuilder();
@@ -335,7 +336,7 @@ namespace AdeeboMeter
                     long ms = sw.ElapsedMilliseconds; sw.Restart();
                     fv.Close(); fv.Dispose(); Application.DoEvents();
                     sb.AppendLine("      opened in " + ms + " ms, closed in " + sw.ElapsedMilliseconds + " ms");
-                    if (ms > 2000) throw new InvalidOperationException("took " + ms + " ms");   /* 1 s is the aim; 2 s fails - a busy or high-DPI PC lands near 1.3 s */
+                    if (ms > 2000 * Busy(M)) throw new InvalidOperationException("took " + ms + " ms");   /* 1 s is the aim; 2 s fails - a busy or high-DPI PC lands near 1.3 s */
                 }
             });
             if (Environment.GetCommandLineArgs().Any(a => a == "--samples"))
@@ -1091,8 +1092,11 @@ namespace AdeeboMeter
                     try
                     {
                         // 30 ms on a real PC; Wine draws text in software, so the self-test there allows 4x and reports the numbers
-                        double lim = Program.IsWine ? 120 : 30;
-                        string b0 = fv.QuestionCheck(), b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, Program.IsWine ? 400 : 100), b3 = FullView.FreezeCheck(sb);
+                        // AM-CG-306: a PC that's already busy (CPU over 50 % or memory over 85 % before the test) gets 3x the room,
+                        // and the run says so - the numbers still show, so an idle PC's rerun is the real verdict
+                        double busy = Busy(M); double lim = (Program.IsWine ? 120 : 30) * busy;
+                        if (busy > 1) sb.AppendLine("      busy PC (CPU " + Math.Round(M.Cpu.Last) + "%, memory " + Math.Round(M.Latest.Mem) + "%): timing limits x3 - rerun on an idle PC for the real numbers");
+                        string b0 = fv.QuestionCheck(), b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, (Program.IsWine ? 400 : 100) * busy), b3 = FullView.FreezeCheck(sb);
                         string all = string.Join("; ", new[] { b0, b1, b2, b3 }.Where(z => z != ""));
                         if (all != "") throw new InvalidOperationException(all);
                     }

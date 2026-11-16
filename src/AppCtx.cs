@@ -287,19 +287,14 @@ namespace AdeeboMeter
             r.Ask = phone => { bool yes = false; try { marshal.Invoke((Action)delegate { yes = MessageBox.Show(remoteWin, (phone != "" ? phone + " " : L.T("A phone ")) + L.T("wants to watch this PC and start checks for up to 30 minutes.") + "\n\n" + L.T("Allow it only if it's your phone and you just scanned the code."), "AdeeboMeter - " + L.T("Phone remote"), MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes; }); } catch (InvalidOperationException) { } return yes; };
             r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (remoteWin != null && !remoteWin.IsDisposed) remoteWin.Sync(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
             r.FeltSlow = () => FeltSlow();
+            // checks run in a view that's never shown, so a game in front isn't interrupted; it also decides what's allowed
+            Func<FullView> runner = () => { if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; } return remoteRunner; };
+            r.CanRun = id => { bool ok = false; try { marshal.Invoke((Action)delegate { ok = runner().RemoteAllowed(id); }); } catch (InvalidOperationException) { } return ok; };
+            r.Catalog = () => { List<string> c = null; try { marshal.Invoke((Action)delegate { c = runner().RemoteCatalog(); }); } catch (InvalidOperationException) { } return c; };
             r.RunTool = (id, a, done) =>
             {
                 if (id == "checkup") { FullView.RemoteCheckup(M, done); return; }
-                try
-                {
-                    marshal.BeginInvoke((Action)delegate
-                    {
-                        // checks run in a view that's never shown, so a game in front isn't interrupted
-                        if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; }
-                        remoteRunner.RemoteRun(id, a, done);
-                    });
-                }
-                catch (InvalidOperationException) { }
+                try { marshal.BeginInvoke((Action)delegate { runner().RemoteRun(id, a, done); }); } catch (InvalidOperationException) { }
             };
             remoteWin = new RemoteWindow(r); remoteWin.Show();
         }

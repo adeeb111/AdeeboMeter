@@ -34,3 +34,14 @@ out = {'v': 1, 'tools': tools}
 os.makedirs(os.path.join(root, 'docs/kb'), exist_ok=True)
 with open(os.path.join(root, 'docs/kb/r1.json'), 'w', encoding='utf-8') as f: json.dump(out, f, ensure_ascii=False, separators=(',', ':'))
 print(len(tools), 'tools,', sum(len(v.get('labels', {})) for v in tools.values()), 'labels,', os.path.getsize(os.path.join(root, 'docs/kb/r1.json')), 'bytes')
+
+# the Learn topics for the phone remote's Learn tab (docs/kb/learn1.json): the same short lessons as the app
+topics = []
+for block in open(os.path.join(root, 'knowledge/learn.txt'), encoding='utf-8').read().split('\n== ')[1:]:
+    lines = block.split('\n'); d = {'id': lines[0].strip().split('|')[0]}
+    for l in lines[1:]:
+        m = re.match(r'(title|kind|tag|line|breaks|ladder|check|try): (.*)', l)
+        if m and m.group(1) not in d: d[m.group(1)] = m.group(2).strip()[:600]
+    if d.get('title'): topics.append(d)
+with open(os.path.join(root, 'docs/kb/learn1.json'), 'w', encoding='utf-8') as f: json.dump({'v': 1, 'topics': topics}, f, ensure_ascii=False, separators=(',', ':'))
+print(len(topics), 'learn topics,', os.path.getsize(os.path.join(root, 'docs/kb/learn1.json')), 'bytes')

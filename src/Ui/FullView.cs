@@ -725,12 +725,13 @@ namespace AdeeboMeter
             if (withTip) { SetTipKey("path.DNS"); ShowTip(); Application.DoEvents(); SetTipKey(null); }
             tab = "overview"; ShowTab();
         }
+        static string P0(long v) { return v.ToString(CultureInfo.InvariantCulture).PadLeft(5); }
         public string Perf()
         {
             var sb = new StringBuilder(); var sw = new Stopwatch();
             var pages = new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about", "points" };
             var canvas = new Dictionary<string, Control> { { "overview", overviewCanvas }, { "conn", list }, { "link", linkCanvas }, { "procs", procList }, { "live", liveCanvas }, { "guide", guideCanvas }, { "dest", destCanvas }, { "health", healthCanvas }, { "toolbox", toolboxPage },
-                { "travel", travelCanvas }, { "replay", replayCanvas }, { "changes", changesCanvas }, { "learn", learnList }, { "windows", insideList }, { "settings", settingsCanvas }, { "gamer", gamerCanvas }, { "about", aboutCanvas } };
+                { "travel", travelCanvas }, { "replay", replayCanvas }, { "changes", changesCanvas }, { "learn", learnList }, { "windows", insideList }, { "settings", settingsCanvas }, { "gamer", gamerCanvas }, { "about", aboutCanvas }, { "points", pointsCanvas } };
             sb.AppendLine("window " + Width + "x" + Height);
             sb.AppendLine("page       first  again  (show+paint)  page-paint  scroll-step  tick   ms");
             var first = new Dictionary<string, long>();
@@ -739,7 +740,8 @@ namespace AdeeboMeter
             {
                 tab = "about"; ShowTab(); Refresh(); Application.DoEvents();
                 sw.Restart(); tab = t; ShowTab(); long show = sw.ElapsedMilliseconds; Refresh(); long again = sw.ElapsedMilliseconds;
-                var c = canvas[t]; sw.Restart(); for (int i = 0; i < 5; i++) c.Refresh(); long pp = sw.ElapsedMilliseconds / 5;
+                Control c; if (!canvas.TryGetValue(t, out c) || c == null) { sb.AppendLine(t.PadRight(10) + P0(first[t]) + "  (no canvas to time)"); continue; }   // AM-CG-307: a page without a timing entry is reported, never a crash
+                sw.Restart(); for (int i = 0; i < 5; i++) c.Refresh(); long pp = sw.ElapsedMilliseconds / 5;
                 long scr = -1; var sc = c as ScrollableControl;
                 if (sc != null && sc.AutoScroll && sc.AutoScrollMinSize.Height > sc.ClientSize.Height + 200)
                 { sw.Restart(); for (int i = 1; i <= 5; i++) { sc.AutoScrollPosition = new Point(0, i * 60); sc.Update(); } scr = sw.ElapsedMilliseconds / 5; sc.AutoScrollPosition = Point.Empty; }

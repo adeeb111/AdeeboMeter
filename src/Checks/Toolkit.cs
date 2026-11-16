@@ -959,8 +959,14 @@ namespace AdeeboMeter
                 rows.Add(R(3, "Compressed", ip.ToString(), "", "i"));
                 rows.Add(R(3, "Addresses in it", prefix >= 64 && prefix <= 64 ? "2^64 (a standard LAN)" : "2^" + (bits - prefix), "", "i"));
             }
-            IPAddress q; if (!string.IsNullOrWhiteSpace(inside) && IPAddress.TryParse(inside.Trim(), out q) && q.AddressFamily == ip.AddressFamily)
-            { var qb = q.GetAddressBytes(); bool inNet = qb.Select((x, i) => (byte)(x & mask[i])).SequenceEqual(net); rows.Add(R(inNet ? 0 : 1, q + " inside?", inNet ? "yes" : "no", "", "i")); }
+            // AM-CG-302: an "inside?" value that isn't an address, or is from the other family, gets an answer - never silence
+            IPAddress q;
+            if (!string.IsNullOrWhiteSpace(inside))
+            {
+                if (!IPAddress.TryParse(inside.Trim(), out q)) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" isn't an IP address - type one like " + (ip.AddressFamily == AddressFamily.InterNetwork ? "10.1.2.50" : "2001:db8::50"), "", "u"));
+                else if (q.AddressFamily != ip.AddressFamily) rows.Add(R(1, q + " inside?", "can't be - it's IPv" + (q.AddressFamily == AddressFamily.InterNetwork ? "4" : "6") + " and this network is IPv" + (ip.AddressFamily == AddressFamily.InterNetwork ? "4" : "6"), "", "i"));
+                else { var qb = q.GetAddressBytes(); bool inNet = qb.Select((x, i) => (byte)(x & mask[i])).SequenceEqual(net); rows.Add(R(inNet ? 0 : 1, q + " inside?", inNet ? "yes" : "no", "", "i")); }
+            }
             var gwRows = GatewayRows(ip, prefix, net, bc, gateway);
             int at = rows.FindIndex(r => r[1] == "Network") + 1; rows.InsertRange(at, gwRows);
             return rows;
