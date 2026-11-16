@@ -37,7 +37,7 @@
   function load() { return index().then(function () { return Promise.all(chain().map(function (id) { return packs[id] ? 0 : get("kb/voice/" + id + ".json").then(function (p) { packs[id] = p; }).catch(function () {}); })); }); }   // a failed pack isn't kept as empty: it's tried again (AM-CG-381)
   if (typeof addEventListener === "function") addEventListener("online", function () { load().then(fire, function () {}); });
   function fire() { sticky = {}; fns.forEach(function (f) { try { f(); } catch (e) {} }); }
-  function save() { wr("am-voice", mine); wr("am-voice-chat", chat === "normal" ? "" : chat); wr("am-voice-addr", call === "neutral" ? "" : call); wr("am-voice-name", call === "name" ? name : ""); }
+  function save() { wr("am-voice", mine); wr("am-voice-chat", chat === "normal" ? "" : chat); wr("am-voice-addr", call === "neutral" ? "" : call); wr("am-voice-name", name); }   // FRESH-098: switching back to "My name" finds it again
 
   // ---- the face: one small drawing, its look set by the moment (calm, happy, worried, sleepy, party, thinking)
   function faceSvg(look, size) {
@@ -52,7 +52,7 @@
     }
     return '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" aria-hidden="true" style="flex:none;display:block"><rect x="2" y="2" width="60" height="60" rx="18" fill="#1F6FEB"/><path d="M10 52A26 26 0 0 1 14 20" stroke="#3FB950" stroke-width="4" fill="none" opacity=".55" stroke-linecap="round"/><path d="M50 20A26 26 0 0 1 54 52" stroke="#FF7B72" stroke-width="4" fill="none" opacity=".45" stroke-linecap="round"/>' + brow + eyes + mouth + extra + '</svg>';
   }
-  function lookNow() { var h = new Date().getHours(); return h >= 23 || h < 5 ? "sleepy" : "calm"; }
+  function lookNow() { var h = new Date().getHours(); return h >= 22 || h < 5 ? "sleepy" : "calm"; }   // FRESH-099: sleepy from 22:00, like the app
 
   var AMV = {
     ready: null,
@@ -81,27 +81,29 @@
     state: function () { return { mine: mine, chat: chat, call: call, pc: pc }; },
     talk: function (c) { if (["face", "quiet", "normal", "chatty"].indexOf(c) >= 0) { chat = c; save(); fire(); } },
     set: function (id) { mine = id || null; save(); load().then(fire); },
-    follow: function (id) { if (!id || id === pc) return; pc = id; load().then(fire); },   // the PC's voice, unless you picked one here
-    onchange: function (f) { fns.push(f); },
+    follow: function (id) { id = id || null; if (id === pc) return; pc = id; load().then(fire); },   // the PC's voice, unless you picked one here; null when the PC goes (FRESH-096)
+    onchange: function (f) { fns.push(f); return function () { var i = fns.indexOf(f); if (i >= 0) fns.splice(i, 1); }; },
     // the choices, the same as the app's: voice, how chatty, what it calls you
     picker: function (el) {
       index().then(function (j) {
         var S = 'style="font:inherit;font-size:14px;color:inherit;background:transparent;border:1px solid var(--line,#E3E8EF);border-radius:8px;padding:4px 6px;max-width:210px"';
         el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;color:var(--sub,#4A5568)">' +
-          '<label>Companion <select data-v ' + S + '><option value="">' + (pc ? "Same as my PC" : "Surprise me (a new one each day)") + '</option>' + (pc ? '<option value="surprise">Surprise me</option>' : "") +
+          '<label>Companion <select data-v ' + S + '><option value="">Same as my PC</option><option value="surprise">Surprise me (a new one each day)</option>' +
           '<optgroup label="Moods">' + j.moods.map(function (m) { return '<option value="' + m[0] + '">' + m[1] + (m[0] === "plain" ? " (just the facts)" : "") + '</option>'; }).join("") + '</optgroup>' +
           '<optgroup label="Personas">' + j.personas.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join("") + '</optgroup></select></label>' +
           '<label>Talks <select data-c ' + S + '><option value="face">Face only</option><option value="quiet">Quiet</option><option value="normal">Normal</option><option value="chatty">Chatty</option></select></label>' +
           '<label>Calls me <select data-a ' + S + '><option value="neutral">Boss (neutral)</option><option value="sir">Sir</option><option value="maam">Ma\'am</option><option value="name">My name</option></select></label>' +
           '<input data-n placeholder="Your name" maxlength="24" ' + S.replace("max-width:210px", "width:130px") + '></div>';
         var sv = el.querySelector("[data-v]"), sc = el.querySelector("[data-c]"), sa = el.querySelector("[data-a]"), sn = el.querySelector("[data-n]");
-        function sync() { sv.value = mine || ""; sc.value = chat; sa.value = call; sn.value = name; sn.style.display = call === "name" ? "" : "none"; sv.options[0].textContent = pc ? "Same as my PC" : "Surprise me (a new one each day)"; }
+        // FRESH-100: "Same as my PC" only while there is a PC; Surprise me is there either way, so a saved "surprise" always shows
+        function sync() { sv.options[0].hidden = sv.options[0].disabled = !pc; sv.value = mine || (pc ? "" : "surprise"); sc.value = chat; sa.value = call; sn.value = name; sn.style.display = call === "name" ? "" : "none"; }
         sync();
-        sv.onchange = function () { AMV.set(sv.value); };
+        sv.onchange = function () { AMV.set(sv.value === "surprise" && !pc ? "" : sv.value); };
         sc.onchange = function () { chat = sc.value; save(); fire(); };
         sa.onchange = function () { call = sa.value; sync(); save(); fire(); };
         sn.oninput = function () { name = sn.value.replace(/[<>{}]/g, "").slice(0, 24); save(); fire(); };
-        AMV.onchange(sync);
+        if (el._amvOff) el._amvOff();   // FRESH-097: mounting again replaces the old subscriber; a removed picker unsubscribes itself
+        var off = el._amvOff = AMV.onchange(function () { if (!el.isConnected) { off(); return; } sync(); });
       }).catch(function () {});
     }
   };

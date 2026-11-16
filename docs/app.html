@@ -287,7 +287,7 @@ textarea.in{resize:vertical;min-height:120px}
   // a session: rm and sec are the code's (or, for a remembered PC, derived from its key). quiet = one of several rooms
   // being tried, so a room that isn't there doesn't show as a failure. Resolves true once paired.
   // a fresh session never shows the last PC's data (AM-CG-356)
-  function resetSession() { live = null; liveAt = 0; cat = []; results = []; busy = ""; busyAt = 0; curRid = ""; sure = ""; open = ""; mkt = null; devs = null; devRid = ""; devAt = 0; report = null; hD = []; hU = []; hP = []; outF = null; inF = null; fromPc = ""; xmsg = ""; S.dev = -1; S.devKey = ""; }
+  function resetSession() { if (window.AMV) AMV.follow(null); live = null; liveAt = 0; cat = []; results = []; busy = ""; busyAt = 0; curRid = ""; sure = ""; open = ""; mkt = null; devs = null; devRid = ""; devAt = 0; report = null; hD = []; hU = []; hP = []; outF = null; inF = null; fromPc = ""; xmsg = ""; S.dev = -1; S.devKey = ""; }
   function start(rm, sec, quiet) {
     return new Promise(function (done) {
       var settled = false, sock = null, q = Promise.resolve();
@@ -1013,16 +1013,19 @@ textarea.in{resize:vertical;min-height:120px}
     var c = calcOf(S.calc); if (!c) { S.tab = "tools"; return VIEWS.tools(); }
     if (c[1] === "ports") return portsView();
     var v = CV[c[1]] || c[4].map(function (f) { return f[1]; });
-    if (c[1] === "fxconv" || c[1] === "perunit") feedRates();
+    var fxNote = "";
+    if (c[1] === "fxconv" || c[1] === "perunit") { feedRates(); if (!Object.keys(AMCALC.rates.list).length) fxNote = feedRates.busy ? '<p class="fine">' + ic("refresh", 14) + ' Getting today\'s Bank of Canada rates…</p>' : feedRates.failed ? '<div class="card"><b>Couldn\'t get today\'s rates</b><p class="fine" style="margin:4px 0 10px">This phone needs the internet for the Bank of Canada\'s rates once a day.</p><button class="btn ghost" data-act="fxretry">' + ic("refresh", 18) + ' Try again</button></div>' : ""; }   // FRESH-090
     return hdr(esc(c[3]), esc(gname(c[0])) + " · the same maths as the PC", "tools") +
       '<div class="card">' + c[4].map(function (f, k) { return '<label class="k" for="cin' + k + '">' + esc(f[0]) + '</label><input class="in" id="cin' + k + '" data-cin="' + k + '" value="' + esc(v[k] || "") + '" placeholder="' + esc(f[2] || f[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">'; }).join("") +
       (c[1] === "stack" ? '<div class="mini" style="grid-template-columns:repeat(3,1fr);margin-top:2px">' + ["web", "game", "call", "dsl", "vpn", "office vpn"].map(function (p) { return '<button data-cpre="' + p + '">' + p + '</button>'; }).join("") + '</div>' : '') + '</div>' +
-      '<div class="card" id="cres">' + rowsHtml(calcRows(c)) + '</div><p class="fine">Pure arithmetic on this phone - nothing is sent anywhere.</p>';
+      fxNote + '<div class="card" id="cres">' + rowsHtml(calcRows(c)) + '</div><p class="fine">Pure arithmetic on this phone - nothing is sent anywhere.</p>';
   };
   function feedRates() {   // the currency calculators use the day's Bank of Canada rates (fetched with Trading's numbers, once a day)
-    var m = DAY.trade && DAY.trade.m; if (m && m.fx && m.fx.items && window.AMCALC) { m.fx.items.forEach(function (i) { if (i.v) AMCALC.rates.list[i.c] = i.v; }); AMCALC.rates.day = m.fx.date ? new Date(m.fx.date + "T12:00:00") : null; return; }
-    if (feedRates.busy) return; feedRates.busy = 1;
-    tfetch(LIVE + "/all", 8000).then(function (r) { return r.ok ? r.json() : null; }).then(function (all) { feedRates.busy = 0; if (!all) return; DAY.trade = DAY.trade || { at: 0 }; DAY.trade.m = all.markets; keepDay(); if (S.tab === "calc") draw(); }, function () { feedRates.busy = 0; });
+    // one day's table replaces the last one whole, so a rate missing today isn't shown under today's date (FRESH-089)
+    var m = DAY.trade && DAY.trade.m; if (m && m.fx && m.fx.items && window.AMCALC) { var L = {}; m.fx.items.forEach(function (i) { if (i.v) L[i.c] = i.v; }); AMCALC.rates.list = L; AMCALC.rates.day = m.fx.date ? new Date(m.fx.date + "T12:00:00") : null; return; }
+    if (feedRates.busy || feedRates.failed) return; feedRates.busy = 1;
+    var done = function (ok) { feedRates.busy = 0; feedRates.failed = ok ? 0 : 1; if (S.tab === "calc") draw(); };
+    tfetch(LIVE + "/all", 8000).then(function (r) { return r.ok ? lim(r.json(), 8000) : null; }).then(function (all) { if (!all || !all.markets || !all.markets.fx) return done(false); DAY.trade = DAY.trade || { at: 0 }; DAY.trade.m = all.markets; keepDay(); done(true); }, function () { done(false); });
   }
   // ---- ports: the ones people meet at home and at work, in plain words
   var PORTS = [[20, "FTP data", "File transfer (old, unencrypted)"], [21, "FTP", "File transfer control - unencrypted; prefer SFTP"], [22, "SSH / SFTP", "Remote command line and secure file copy"], [23, "Telnet", "Old remote login - unencrypted; shouldn't be open"],
@@ -1587,18 +1590,33 @@ textarea.in{resize:vertical;min-height:120px}
   };
 
   // ---- My week: kept on this phone only (Adeeb: "we're just passthru"), 7 days, from the checks run here
-  var WEEK = (function () { try { var j = JSON.parse(rd("am-week") || "null"); if (j && j.d) return j; } catch (e) {} return { d: {} }; })();
+  // keys are calendar days written so they sort in order (2026-10-09 before 2026-10-10 - FRESH-085); a day is kept for
+  // 7 calendar days, checked on every load and write, not "the last 7 days with checks" (FRESH-086/087); each write reads
+  // the stored copy first, so a check saved by another tab isn't overwritten (FRESH-088)
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function dayKey(d) { return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()); }
+  function dayBack(i) { var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate() - i); }
+  function weekLoad() {
+    var w = { d: {} }; try { var j = JSON.parse(rd("am-week") || "null"); if (j && j.d && typeof j.d === "object") w = j; } catch (e) {}
+    var d = {}, oldest = dayKey(dayBack(6));
+    Object.keys(w.d).forEach(function (k) { var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(k), x = w.d[k]; if (!m || !x || !Array.isArray(x.s)) return;
+      var nk = m[1] + "-" + p2(+m[2]) + "-" + p2(+m[3]); if (nk < oldest) return;
+      if (d[nk]) { d[nk].n += x.n || 0; d[nk].bad += x.bad || 0; d[nk].s = d[nk].s.concat(x.s).slice(-60); } else d[nk] = { s: x.s.slice(-60), n: x.n || 0, bad: x.bad || 0 }; });
+    return { d: d };
+  }
+  var WEEK = weekLoad();
+  window.addEventListener("storage", function (e) { if (e.key === "am-week" || e.key === null) { WEEK = weekLoad(); if (S.tab === "tool" && S.tool === "week") draw(); } });
   function weekAdd(med, lv) {
-    if (!WEEK) return;
-    var k = today(), d = WEEK.d[k] || (WEEK.d[k] = { s: [], n: 0, bad: 0 }); d.n++; if (lv >= 2 && (med != null || addAct.trouble)) d.bad++;
+    WEEK = weekLoad();
+    var k = dayKey(new Date()), d = WEEK.d[k] || (WEEK.d[k] = { s: [], n: 0, bad: 0 }); d.n++; if (lv >= 2 && (med != null || addAct.trouble)) d.bad++;
     if (med != null) { d.s.push([new Date().getHours(), Math.round(med)]); if (d.s.length > 60) d.s.shift(); }
-    var keys = Object.keys(WEEK.d).sort(); while (keys.length > 7) delete WEEK.d[keys.shift()];
     try { localStorage.setItem("am-week", JSON.stringify(WEEK)); } catch (e) {}
   }
   function medOf(v) { if (!v.length) return null; v = v.slice().sort(function (a, b) { return a - b; }); return v[Math.floor(v.length / 2)]; }
   function weekSum() {
     var days = [], hours = {}, all = [];
-    for (var i = 6; i >= 0; i--) { var dd = new Date(Date.now() - i * 864e5), k = dd.getFullYear() + "-" + (dd.getMonth() + 1) + "-" + dd.getDate(), x = WEEK.d[k];
+    WEEK = weekLoad();
+    for (var i = 6; i >= 0; i--) { var dd = dayBack(i), k = dayKey(dd), x = WEEK.d[k];
       days.push({ k: k, dn: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dd.getDay()], n: x ? x.n : 0, bad: x ? x.bad : 0, med: x ? medOf(x.s.map(function (s) { return s[1]; })) : null });
       if (x) x.s.forEach(function (s) { (hours[s[0]] = hours[s[0]] || []).push(s[1]); all.push(s[1]); }); }
     var hk = Object.keys(hours).filter(function (h) { return hours[h].length >= 2; }).map(function (h) { return [+h, medOf(hours[h])]; }).sort(function (a, b) { return a[1] - b[1]; });
@@ -1914,6 +1932,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (act === "measure") { measure(A("data-k")); return; }
     if (act === "phone2") { phoneCheck(); return; }
     if (act === "roastshare") { roastShare(); return; }
+    if (act === "fxretry") { feedRates.failed = 0; feedRates(); draw(); return; }
     if (act === "wkclear") { WEEK = { d: {} }; try { localStorage.removeItem("am-week"); } catch (e) {} draw(); return; }
     if (act === "clearfind") { findQ = ""; draw(); return; }
     if (act === "bye") { if (confirm("End the session with your PC?")) { send({ t: "bye" }); setTimeout(function () { if (ws) try { ws.close(); } catch (e) {} }, 300); } return; }   // AM-CG-357

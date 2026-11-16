@@ -83,21 +83,27 @@ function rnd(n){return Math.floor(Math.random()*n)}
 function best(g,v){var k="am-game-"+g;try{var b=+localStorage.getItem(k)||0;if(v!=null&&v>b){localStorage.setItem(k,v);return v}return b}catch(e){return 0}}
 function showBest(){[].forEach.call(document.querySelectorAll("[data-best]"),function(i){var b=best(i.getAttribute("data-best"));i.textContent=b?"Your best: "+b:""})}
 // one download, and only the game picked last starts when it arrives (AM-CG-324)
-function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){L=d.topics});Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
+function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){if(!d||!Array.isArray(d.topics)||!d.topics.length)throw new Error("no lessons");L=d.topics});/* FRESH-093: a bad answer isn't kept */Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
+/* FRESH-092: no questions in the lessons - say so instead of breaking */
+function noDeck(){clearInterval(timer);G.over=true;$("left").textContent="";$("tb").style.width="0";$("stage").innerHTML="<div class='end'><p class='q' tabindex='-1'>No questions to play right now</p><p class='sub'>The lessons didn't come with any. Try again later.</p><a class='go ghost' href='learn/'>Lessons</a></div>";focusStage(".q")}
+/* FRESH-095: after an answer the buttons are disabled and replaced, so keyboard focus moves to the new question (or the score) */
+function focusStage(sel){var e=$("stage").querySelector(sel);if(e&&e.focus)try{e.focus({preventScroll:true})}catch(x){e.focus()}}
 function lessonId(t){return t.id.replace(/\s+/g,"-")}
 
 // --- shared: a round with a clock
 function start(g){G={sid:++sids,g:g,score:0,n:0,left:g==="quiz"?10:g==="order"?5:0,secs:g==="quiz"?15:60};$("menu").style.display="none";$("tb").parentNode.style.display=g==="order"?"none":"";$("game").style.display="block";window.scrollTo(0,0);
   if(g==="subnet"||g==="ports"){G.until=now()+60000;tick()} next()}
-function tick(){clearInterval(timer);timer=setInterval(function(){var ms=G.until-now();$("tb").style.width=Math.max(0,ms/(G.g==="quiz"?150:600))+"%";
+/* FRESH-094: the clock and bar are drawn straight away, not 250 ms later */
+function tick(){clearInterval(timer);var f=function(){if(!G)return true;var ms=G.until-now();$("tb").style.width=Math.max(0,ms/(G.g==="quiz"?150:600))+"%";
   if(G.g==="subnet"||G.g==="ports")$("left").textContent=Math.max(0,Math.ceil(ms/1000))+" s";
-  if(ms<=0){clearInterval(timer);if(G.g==="quiz")answer(null);else finish()}},250)}
-function bar(){$("score").textContent="Score "+G.score;if(G.g==="quiz"||G.g==="order")$("left").textContent=(G.n+1)+" of "+(G.g==="quiz"?10:5)}
+  if(ms<=0){clearInterval(timer);if(G.g==="quiz")answer(null);else finish();return true}};if(!f())timer=setInterval(f,250)}
+function bar(){$("score").textContent="Score "+G.score;if(G.g==="quiz"||G.g==="order"){var T=G.g==="quiz"?10:5;$("left").textContent=Math.min(G.n+1,T)+" of "+T}}/* FRESH-091: never 11 of 10 */
 function next(){if(!G||G.over)return;if((G.g==="subnet"||G.g==="ports")&&now()>=G.until)return finish();if(G.g==="quiz"||G.g==="order"){if(G.n>=(G.g==="quiz"?10:5))return finish()}bar();({quiz:quiz,order:order,subnet:subnet,ports:ports})[G.g]()}
 function opts(q,sub,right,wrong,more){
   var all=shuf([right].concat(wrong)),h="<p class='q'>"+esc(q)+"</p>"+(sub?"<p class='sub'>"+sub+"</p>":"")+"<div class='opts'>";
   all.forEach(function(o){h+="<button data-ok='"+(o===right?1:0)+"'>"+esc(o)+"</button>"});
-  $("stage").innerHTML=h+"</div><p class='say' aria-live='polite'></p>"+(more||"");
+  $("stage").innerHTML=h.replace("<p class='q'>","<p class='q' tabindex='-1'>")+"</div><p class='say' aria-live='polite'></p>"+(more||"");
+  focusStage(".q");
   [].forEach.call($("stage").querySelectorAll(".opts button"),function(b){b.onclick=function(){answer(b)}})}
 function answer(b){
   if(!G||G.over||G.answered===G.n)return;if(G.until&&now()>=G.until&&G.g!=="order"){if(G.g==="quiz")b=null;else return finish()}G.answered=G.n;
@@ -111,8 +117,9 @@ function answer(b){
   G.n++;bar();later(next,G.g==="quiz"?(ok?900:2200):ok?350:1200)}
 function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=best(G.g),nb=best(G.g,G.score);
   $("left").textContent="";$("tb").style.width="0";
-  $("stage").innerHTML="<div class='end'><span id='endface' style='display:inline-block' data-size='64'></span><p class='sub'>Your score</p><p class='big'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
+  $("stage").innerHTML="<div class='end'><span id='endface' style='display:inline-block' data-size='64'></span><p class='sub'>Your score</p><p class='big' tabindex='-1'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
     (window.AMV?"<p style='font-weight:600'>"+AMV.line(G.score>b&&G.score>0?"award":"points.earned",G.score)+"</p>":"")+"<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='learn/'>Lessons</a></div>";
+  focusStage(".big");
   $("again").onclick=function(){start(G.g)};if(window.AMV)AMV.face($("endface"),G.score>b&&G.score>0?"party":G.score>0?"happy":"calm");
   $("share").onclick=function(){var names={quiz:"the quick-fire network quiz",order:"Put it in order",subnet:"Subnet sprint",ports:"Port match"},t="I scored "+G.score+" in "+names[G.g]+" on AdeeboMeter - beat that: https://adeebometer.com/games.html";
     if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){$("share").textContent="Copied"})}}
@@ -121,11 +128,13 @@ $("quit").onclick=function(){clearInterval(timer);G=null;$("game").style.display
 
 // --- quick-fire: the lessons' own quick-check questions
 function quiz(){if(!G.deck)G.deck=shuf(L.filter(function(t){return t.check&&t.check.split(" | ").length>=3}));
+  if(!G.deck.length)return noDeck();
   var t=G.deck[G.n%G.deck.length],p=t.check.split(" | ");G.cur=t;G.until=now()+15000;tick();
   opts(p[0],esc(t.title.split(" - ")[0]),p[1],p.slice(2))}
 
 // --- put it in order: the lessons' message ladders
 function order(){if(!G.deck)G.deck=shuf(L.filter(function(t){var s=(t.ladder||"").split(" | ");return s.length>=3&&s.length<=6}));
+  if(!G.deck.length)return noDeck();
   var t=G.deck[G.n%G.deck.length],steps=t.ladder.split(" | "),want=0,miss=0;G.until=now()+60000;$("tb").style.width="100%";
   $("stage").innerHTML="<p class='q'>"+esc(t.title.split(" - ")[0])+"</p><p class='sub'>Tap the messages in the order they happen.</p><ol class='picked' id='pk'></ol><div class='opts' id='os'></div><p class='say' aria-live='polite'></p>";
   shuf(steps.map(function(s,i){return i})).forEach(function(i){var b=document.createElement("button");b.textContent=steps[i].replace(" > "," → ");b.onclick=function(){
