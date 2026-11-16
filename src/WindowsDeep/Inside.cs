@@ -69,7 +69,7 @@ namespace AdeeboMeter
         {
             string n = (p.Name ?? "").ToLowerInvariant(); P par; by.TryGetValue(p.Parent, out par);
             string pn = par != null ? par.Name.ToLowerInvariant() : "";
-            string where; if (startup != null && startup.TryGetValue(n, out where)) return "Starts with Windows - added in " + where + ".";
+            string where; if (startup != null && startup.TryGetValue(n, out where)) return "It's set to start with Windows (added in " + where + ") - that's the likely start; it can also have been opened by hand.";   // PC-063: the setting, not proof of this launch
             if (pn == "services.exe") return "A Windows service - started by the Service Control Manager (services.exe).";
             if (pn == "svchost.exe") return "Started by a Windows service (svchost) - often a scheduled task or a background helper.";
             if (pn == "explorer.exe") return "You started it (Start menu, taskbar, a shortcut or a double-click) - Explorer is its parent.";
@@ -154,50 +154,50 @@ namespace AdeeboMeter
     // ---------- what starts with Windows, and who put it there (read-only)
     static class Startup
     {
-        public sealed class Item { public string Name = "", Command = "", Where = "", Exe = ""; }
+        public sealed class Item { public string Name = "", Command = "", Where = "", Exe = "", Bucket = ""; public bool User, Off; public string Key { get { return (User ? "U" : "M") + "|" + Bucket + "|" + Name; } } }   // PC-055: scope, list and name
         public static List<Item> List()
         {
             var r = new List<Item>();
-            Action<RegistryKey, string, string> reg = delegate(RegistryKey root, string path, string label)
+            Action<RegistryKey, string, string, string> reg = delegate(RegistryKey root, string path, string label, string bucket)
             {
                 try
                 {
                     using (var k = root.OpenSubKey(path))
-                        if (k != null) foreach (var n in k.GetValueNames()) { string cmd; try { cmd = Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture); } catch (Exception ve) { if (!(ve is System.Security.SecurityException || ve is IOException || ve is UnauthorizedAccessException)) throw; cmd = "(couldn't read)"; } r.Add(new Item { Name = n, Command = cmd, Where = label, Exe = ExeOf(cmd) }); }
+                        if (k != null) foreach (var n in k.GetValueNames()) { string cmd; try { cmd = Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture); } catch (Exception ve) { if (!(ve is System.Security.SecurityException || ve is IOException || ve is UnauthorizedAccessException)) throw; cmd = "(couldn't read)"; } r.Add(new Item { Name = n, Command = cmd, Where = label, Exe = ExeOf(cmd), Bucket = bucket, User = root == Registry.CurrentUser }); }
                 }
                 catch { }
             };
-            reg(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Run", "your Run list (HKCU) - you or an app you installed");
-            reg(Registry.LocalMachine, @"Software\Microsoft\Windows\CurrentVersion\Run", "the PC's Run list (HKLM) - an installer or IT");
-            reg(Registry.LocalMachine, @"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run", "the PC's Run list (32-bit apps)");
+            reg(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Run", "your Run list (HKCU) - you or an app you installed", "Run");
+            reg(Registry.LocalMachine, @"Software\Microsoft\Windows\CurrentVersion\Run", "the PC's Run list (HKLM) - an installer or IT", "Run");
+            reg(Registry.LocalMachine, @"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run", "the PC's Run list (32-bit apps)", "Run32");
             foreach (var dir in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })
-                try { if (Directory.Exists(dir)) foreach (var f in Directory.GetFiles(dir).Where(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase))) r.Add(new Item { Name = Path.GetFileNameWithoutExtension(f), Command = f, Where = dir.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), StringComparison.OrdinalIgnoreCase) ? "your Startup folder" : "the shared Startup folder", Exe = Path.GetFileName(f) }); }
+                try { if (Directory.Exists(dir)) foreach (var f in Directory.GetFiles(dir).Where(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase))) r.Add(new Item { Name = Path.GetFileNameWithoutExtension(f), Command = f, Bucket = "StartupFolder", User = dir == Environment.GetFolderPath(Environment.SpecialFolder.Startup), Where = dir.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), StringComparison.OrdinalIgnoreCase) ? "your Startup folder" : "the shared Startup folder", Exe = Path.GetFileName(f) }); }
                 catch { }
             // whether Windows' own Startup apps switch is off for it (Task Manager → Startup apps)
             // Run, the 32-bit Run list (Run32) and the Startup folder (StartupFolder, by file name with its extension) each have their own list
+            // PC-062: the switch for an entry lives in its own scope (HKCU or HKLM) and its own list - never another entry's
             foreach (var it in r)
             {
-                bool off = false; string file = Path.GetFileName(it.Command ?? "");
-                foreach (var root in new[] { Registry.CurrentUser, Registry.LocalMachine })
-                    foreach (var sub in new[] { "Run", "Run32", "StartupFolder" })
-                        try
-                        {
-                            using (var k = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\" + sub))
-                            {
-                                var v = k == null ? null : (k.GetValue(sub == "StartupFolder" ? file : it.Name) as byte[]);
-                                if (v != null && v.Length > 0 && (v[0] & 1) == 1) off = true;
-                            }
-                        }
-                        catch { }
-                if (off) it.Where += " · switched off in Task Manager";
+                string file = Path.GetFileName(it.Command ?? "");
+                try
+                {
+                    using (var k = (it.User ? Registry.CurrentUser : Registry.LocalMachine).OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\" + it.Bucket))
+                    {
+                        var v = k == null ? null : (k.GetValue(it.Bucket == "StartupFolder" ? file : it.Name) as byte[]);
+                        it.Off = v != null && v.Length > 0 && (v[0] & 1) == 1;
+                    }
+                }
+                catch (System.Security.SecurityException) { } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                if (it.Off) it.Where += " · switched off in Task Manager";
             }
             return r;
         }
-        static string ExeOf(string cmd)
+        internal static string ExeOf(string cmd)
         {
             if (string.IsNullOrEmpty(cmd)) return "";
-            cmd = cmd.Trim(); int dotExe = cmd.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
-            string exe = cmd.StartsWith("\"", StringComparison.Ordinal) ? cmd.Substring(1, Math.Max(0, cmd.IndexOf('"', 1) - 1)) : dotExe > 0 ? cmd.Substring(0, dotExe + 4) : cmd.Split(' ')[0];   // unquoted "C:\Program Files\...\x.exe -s": up to the .exe
+            // PC-064: unquoted, the program ends at ".exe" followed by a space or the end - not at a folder called "x.exe.backup"
+            cmd = cmd.Trim(); var me = System.Text.RegularExpressions.Regex.Match(cmd, @"^(.*?\.exe)(?=\s|$)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            string exe = cmd.StartsWith("\"", StringComparison.Ordinal) ? cmd.Substring(1, Math.Max(0, cmd.IndexOf('"', 1) - 1)) : me.Success ? me.Groups[1].Value : cmd.Split(' ')[0];   // unquoted "C:\Program Files\...\x.exe -s": up to the .exe
             // a stray quote or tab in a Run value must not hide it (and every entry after it): take the last part by hand
             exe = exe.Trim('"', ' ', '\t'); int cut = Math.Max(exe.LastIndexOf('\\'), exe.LastIndexOf('/'));
             return cut >= 0 ? exe.Substring(cut + 1) : exe;
@@ -206,7 +206,7 @@ namespace AdeeboMeter
         public static Dictionary<string, string> ByExe()
         {
             var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var it in List()) if (it.Exe != "" && !d.ContainsKey(it.Exe.ToLowerInvariant())) d[it.Exe.ToLowerInvariant()] = it.Where;
+            foreach (var it in List()) if (it.Exe != "" && !it.Off && !d.ContainsKey(it.Exe.ToLowerInvariant())) d[it.Exe.ToLowerInvariant()] = it.Where;   // PC-063: a switched-off entry didn't start anything
             return d;
         }
     }

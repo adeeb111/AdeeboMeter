@@ -21,7 +21,8 @@ namespace AdeeboMeter
         internal static string Gb(double gb) { return gb >= 10 ? gb.ToString("0", CultureInfo.CurrentCulture) + " GB" : gb.ToString("0.#", CultureInfo.CurrentCulture) + " GB"; }
         static string Before(string what, double now, int i)
         {
-            var l = HwTests.Last(what); double prev; if (l == null || l.Length < 5 || !double.TryParse(l[4], NumberStyles.Float, CultureInfo.InvariantCulture, out prev) || prev <= 0 || double.IsNaN(now)) return "";
+            // PC-021: measure i (1 = first, 2 = second, 3 = third) against its own previous value, kept after the three new ones
+            var l = HwTests.Last(what); double prev; if (l == null || l.Length < 4 + i || !double.TryParse(l[3 + i], NumberStyles.Float, CultureInfo.InvariantCulture, out prev) || prev <= 0 || double.IsNaN(now)) return "";
             double ch = now / prev; return ch < 0.75 ? " · " + (100 - ch * 100).ToString("0", CultureInfo.CurrentCulture) + "% slower than the last run" : ch > 1.33 ? " · faster than the last run" : " · same as the last run";
         }
 
@@ -33,7 +34,7 @@ namespace AdeeboMeter
             {
                 case "cores": return s.Cores + " cores = " + s.Cores + " workers that each run their own job at the same moment. " + (s.Threads > s.Cores ? s.Threads + " threads: each core juggles two streams of work, filling the gaps while one waits for memory. " : "") + "One program often keeps only one or a few workers busy - so a game cares about the speed of one core, while exporting a video or zipping files uses all " + s.Cores + ".";
                 case "clock": return g + " GHz = " + g + " billion ticks a second; on each tick a core finishes a few small steps (add, compare, move a number). The clock isn't fixed: it drops when idle to save power, boosts above the rated speed when busy, and is held back when hot or on battery saver - that's what 'speed under load' measures.";
-                case "ram": return HwTools.Gb(s.RamGb) + " of memory is the desk: open programs, tabs and files lie here while you use them, because it answers about 1,000 times faster than even an SSD. When the desk is full, Windows puts things back in the drawer (the disk) and fetches them again - that's the slowness called paging. Speed = transfers per second × 8 bytes × channels; " + s.Channels + " channel" + (s.Channels > 1 ? "s" : "") + " here - two channels are two lanes to the desk.";
+                case "ram": return HwTools.Gb(s.RamGb) + " of memory is the desk: open programs, tabs and files lie here while you use them, because it answers about 1,000 times faster than even an SSD. When the desk is full, Windows puts things back in the drawer (the disk) and fetches them again - that's the slowness called paging. Speed = transfers per second × 8 bytes × channels; " + HwSpecs.ChText(s) + " here - two channels are two lanes to the desk.";
                 case "disk": return "The disk is the filing cabinet: everything kept when the power is off - Windows, programs, your files. Two numbers matter: MB/s for big files (copies, installs), and the wait for one small read for how quick everything feels. " + (sd != null && sd.Media == "HDD" ? "This one spins: each small read waits for the platter to turn under the head - half a turn on average, 30,000 ÷ rpm ms." : "An SSD has no moving parts: a small read takes about 0.1 ms, a spinning disk 5-15 ms.");
                 case "link": return "A PCIe link is a road made of lanes: x4 = 4 lanes, x16 = 16. Each generation doubles a lane's speed (PCIe 3.0 ≈ 1 GB/s per lane, 4.0 ≈ 2 GB/s). A fast drive on a narrow road can't use its speed.";
                 case "gpu": return (dg != null ? dg.Name + " is a separate card with " + HwTools.Gb(dg.DedicatedMb / 1024) + " of its own fast memory. " : "") + "A graphics chip has thousands of small cores doing the same maths on many pixels at once - drawing the screen 60+ times a second. " + (ig != null ? "The built-in graphics (" + ig.Name + ") have no memory of their own: they borrow the PC's memory, so they're only as fast as the memory is. " : "") + "When a card's own memory overflows, it borrows the PC's over the much slower link - that's stutter.";
@@ -56,13 +57,18 @@ namespace AdeeboMeter
             }
             rows.Add(R(3, "Ceiling", F(ceil) + " MB/s - " + why, "", "i"));
             var r = HwTests.Disk(letter, full, run);
+            if (r.Stopped) { rows.Insert(0, R(3, "Verdict", "Stopped - nothing was measured or kept.", "", "u")); return rows; }
+            if (r.IoFailed) { rows.Insert(0, R(2, "Verdict", "The disk test hit an error: " + r.Error, "", "m")); return rows; }   // PC-015/016: a failure, not a slow disk
             if (r.Error != "") { rows.Insert(0, R(3, "Verdict", "The speed test didn't run: " + r.Error, "", "u")); return rows; }
+            if (r.Volume != "") rows.Add(R(3, "Tested on", r.Volume + (r.Path != "" ? " (" + Path.GetDirectoryName(r.Path) + ")" : ""), "", "m"));   // PC-013
+            if (r.BusyUnknown) rows.Add(R(3, "Busy before the test", "not known - Windows' busy counter covers all disks together, and this PC has more than one", "", "u"));   // PC-014
             if (!double.IsNaN(r.BusyBefore)) rows.Add(R(r.BusyBefore > 40 ? 1 : 0, "Busy before the test", F(r.BusyBefore) + "%" + (r.Culprit != "" ? " - mostly " + r.Culprit : ""), r.BusyBefore > 40 ? "Something else was using the disk, so the numbers below are lower than the disk can do. Run it again when it's quiet." : "", "m"));
             double share = r.WriteMBs / ceil, rshare = r.ReadMBs / ceil;
-            rows.Add(R(rshare < 0.25 ? 2 : rshare < 0.5 ? 1 : 0, "Read", F(r.ReadMBs) + " MB/s · " + Pct(r.ReadMBs, ceil) + " of its ceiling" + Before("disk", r.ReadMBs, 2), "", "m"));
-            rows.Add(R(share < 0.2 ? 2 : share < 0.4 ? 1 : 0, "Write", F(r.WriteMBs) + " MB/s · " + Pct(r.WriteMBs, ceil) + " of its ceiling (" + Gb(r.Gb) + " written)" + Before("disk", r.WriteMBs, 1), "", "m"));
+            rows.Add(R(rshare < 0.25 ? 2 : rshare < 0.5 ? 1 : 0, "Read", F(r.ReadMBs) + " MB/s · " + Pct(r.ReadMBs, ceil) + " of its ceiling" + Before(r.Key, r.ReadMBs, 2), "", "m"));
+            rows.Add(R(share < 0.2 ? 2 : share < 0.4 ? 1 : 0, "Write", F(r.WriteMBs) + " MB/s · " + Pct(r.WriteMBs, ceil) + " of its ceiling (" + Gb(r.Gb) + " written)" + Before(r.Key, r.WriteMBs, 1), "", "m"));
             if (!double.IsNaN(r.CliffGb)) rows.Add(R(r.CliffMBs < 150 ? 2 : 1, "Write cache runs out", "after about " + Gb(Math.Max(0.1, r.CliffGb)) + " the speed drops to " + F(r.CliffMBs) + " MB/s", "This SSD writes fast into a small cache, then slows to its real speed. Copying big files or installing large games feels slow once the cache is full - it's how cheaper SSDs are built, not a fault.", "m"));
-            else if (full && r.Gb >= 2) rows.Add(R(0, "Write cache", "no drop in " + Gb(r.Gb) + " - steady all the way", "", "m"));
+            else if (full && r.Gb >= 2 && r.WriteSeries.Count >= 8) rows.Add(R(0, "Write cache", "no drop in " + Gb(r.Gb) + " - steady all the way", "", "m"));
+            else if (full && r.Gb >= 2) rows.Add(R(3, "Write cache", "too quick to tell - " + Gb(r.Gb) + " written in under 4 s", "", "m"));   // PC-023
             // the spin gives itself away: a small random read waits half a turn on average, 30,000 / rpm ms
             string kind = ""; if (!double.IsNaN(r.LatMs))
             {
@@ -89,16 +95,17 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); var s = HwSpecs.Get(); string type = HwSpecs.RamTypeOf(s);
             foreach (var r in s.Rams.Take(8)) rows.Add(R(r.Mts > 0 && r.RatedMts > r.Mts + 100 ? 1 : 3, r.Slot == "" ? "Memory stick" : r.Slot, Gb(r.Gb) + (type != "" ? " " + type : "") + " · " + (r.Mts > 0 ? r.Mts + " MT/s" : "speed not reported") + (r.RatedMts > r.Mts + 100 ? " (rated " + r.RatedMts + ")" : ""), r.RatedMts > r.Mts + 100 ? "Running below its rated speed - turn on XMP / EXPO in the BIOS, or the other stick is slower." : "", "w"));
             rows.Add(R(s.RamGb < 8 ? 1 : 0, "Total", Gb(s.RamGb) + (s.RamGb < 8 ? " - tight for Windows 11 and a browser" : ""), "", "w"));
-            rows.Add(R(s.Channels < 2 ? 1 : 0, "Channels", s.Channels + (s.Channels < 2 ? " - single channel: half the memory speed" : " - dual channel"), s.Channels < 2 && !s.Soldered ? "Adding a second matching stick doubles memory speed - the integrated graphics gain the most." : "", "i"));
+            rows.Add(R(s.Channels == 1 ? 1 : s.Channels == 0 ? 3 : 0, "Channels", s.Channels == 0 ? "not reported by Windows - can't tell" : s.Channels + (s.Channels == 1 ? " - single channel: half the memory speed" : s.Channels == 2 ? " - dual channel" : s.Channels == 3 ? " - triple channel" : " - quad channel or more"), s.Channels == 1 && !s.Soldered ? "Adding a second matching stick doubles memory speed - the integrated graphics gain the most." : "", "i"));
             double ceil = HwSpecs.RamCeilingGBs(s);
-            if (!double.IsNaN(ceil)) rows.Add(R(3, "Ceiling", F(ceil) + " GB/s = " + s.Rams.Max(x => x.Mts) + " MT/s × 8 bytes × " + s.Channels + " channel" + (s.Channels > 1 ? "s" : ""), "", "i"));
+            if (!double.IsNaN(ceil)) rows.Add(R(3, "Ceiling", F(ceil) + " GB/s = " + s.Rams.Max(x => x.Mts) + " MT/s × 8 bytes × " + HwSpecs.ChText(s), "", "i"));
             if (run != null) run.Status = "Measuring memory speed (1.5 s)...";
-            double got = HwTests.MemoryGBs(run);
+            string mwhy; double got = HwTests.MemoryGBs(run, out mwhy);
+            if (double.IsNaN(got)) { rows.Insert(0, R(mwhy == "stopped" ? 3 : 1, "Verdict", mwhy == "stopped" ? "Stopped - nothing was measured or kept." : "The memory test couldn't run: " + mwhy + ".", "", "u")); return rows; }   // PC-025/026
             rows.Add(R(!double.IsNaN(ceil) && got < ceil * 0.25 ? 1 : 0, "Measured", F(got) + " GB/s copying" + (double.IsNaN(ceil) ? "" : " · " + Pct(got, ceil) + " of the ceiling (50-70% is normal for a copy)") + Before("ram", got, 1), "", "m"));
             var ig = s.Gpus.FirstOrDefault(g => g.Integrated);
-            if (ig != null) rows.Add(R(s.Channels < 2 ? 1 : 3, "Built-in graphics borrows", "up to " + Gb(ig.SharedMb / 1024) + " of this memory (" + ig.Name + ")", s.Channels < 2 ? "Built-in graphics have no memory of their own: on one channel they get half the speed - games and video show it first." : "", "w"));
+            if (ig != null) rows.Add(R(s.Channels == 1 ? 1 : 3, "Built-in graphics borrows", "up to " + Gb(ig.SharedMb / 1024) + " of this memory (" + ig.Name + ")", s.Channels == 1 ? "Built-in graphics have no memory of their own: on one channel they get half the speed - games and video show it first." : "", "w"));
             int lv = rows.Max(x => x[0] == "3" ? 0 : int.Parse(x[0], CultureInfo.InvariantCulture));
-            rows.Insert(0, R(lv, "Verdict", s.Channels < 2 ? "Single-channel memory: " + Gb(s.RamGb) + " on one channel runs at half the speed it could." + (ig != null ? " The built-in graphics share it, so they lose the most." : "") + (s.Soldered ? " (It's soldered - this can't be changed.)" : " A second matching stick fixes it.")
+            rows.Insert(0, R(lv, "Verdict", s.Channels == 0 ? "Memory: " + Gb(s.RamGb) + ", " + F(got) + " GB/s measured - Windows doesn't say how the sticks are wired, so channels can't be judged." : s.Channels == 1 ? "Single-channel memory: " + Gb(s.RamGb) + " on one channel runs at half the speed it could." + (ig != null ? " The built-in graphics share it, so they lose the most." : "") + (s.Soldered ? " (It's soldered - this can't be changed.)" : " A second matching stick fixes it.")
                 : s.RamGb < 8 ? "Memory is fast enough but small (" + Gb(s.RamGb) + "): with a browser open Windows reads programs back from the disk." : "Memory is set up right: " + Gb(s.RamGb) + " on " + s.Channels + " channels, " + F(got) + " GB/s measured.", "", "m"));
             rows.Add(R(3, "How memory works", Explain("ram", s), "", "i"));
             return rows;
@@ -114,8 +121,8 @@ namespace AdeeboMeter
             {
                 Tuple<double, double, double, Dictionary<string, double>> u; use.TryGetValue(g.Luid, out u);
                 rows.Add(R(-1, (g.Integrated ? "BUILT-IN: " : "GRAPHICS CARD: ") + g.Name, "", "", ""));
-                rows.Add(R(3, "Memory", g.Integrated ? "none of its own · borrows up to " + Gb(g.SharedMb / 1024) + " of the PC's memory" : Gb(g.DedicatedMb / 1024) + " of its own" + (g.SharedMb > 0 ? " · can borrow " + Gb(g.SharedMb / 1024) + " more" : ""), "", "w"));
-                if (u != null) rows.Add(R(u.Item2 > g.DedicatedMb * 0.9 && !g.Integrated ? 1 : 0, "In use now", F(u.Item1) + "% busy · " + (g.Integrated ? F(u.Item3) + " MB borrowed" : F(u.Item2) + " MB of its memory" + (u.Item3 > 300 ? " + " + F(u.Item3) + " MB borrowed (overflow - stutter)" : "")), "", "m"));
+                rows.Add(R(3, "Memory", g.Integrated ? (g.DedicatedMb >= 64 ? Gb(g.DedicatedMb / 1024) + " set aside for it" : "none of its own") + " · borrows up to " + Gb(g.SharedMb / 1024) + " of the PC's memory" : Gb(g.DedicatedMb / 1024) + " of its own" + (g.SharedMb > 0 ? " · can borrow " + Gb(g.SharedMb / 1024) + " more" : ""), "", "w"));
+                if (u != null) rows.Add(R(u.Item2 > g.DedicatedMb * 0.9 && !g.Integrated ? 1 : 0, "In use now", F(u.Item1) + "% busy drawing (3D) · " + (g.Integrated ? F(u.Item3) + " MB borrowed" : F(u.Item2) + " MB of its memory" + (u.Item3 > 300 ? " + " + F(u.Item3) + " MB borrowed (overflow - stutter)" : "")), "", "m"));
                 if (g.MaxWidth > 0)
                 {
                     bool low = g.LinkWidth < g.MaxWidth || g.LinkGen < g.MaxGen; bool busy = u != null && u.Item1 > 30;
@@ -123,14 +130,17 @@ namespace AdeeboMeter
                     rows.Add(R(low && busy ? 1 : 0, "Link", "PCIe " + g.LinkGen + ".0 x" + g.LinkWidth + " (" + F(now / 1000) + " GB/s) now · up to PCIe " + g.MaxGen + ".0 x" + g.MaxWidth + " (" + F(max / 1000) + " GB/s)",
                         low ? (busy ? "Busy and still on a narrow link: check the card sits in the top full-length slot, or the riser cable." : "Idle cards lower the link to save power - run this again with a game open to judge it.") : "", "w"));
                 }
-                if (u != null) foreach (var a in u.Item4.OrderByDescending(x => x.Value).Take(4)) rows.Add(R(0, "  " + a.Key, F(a.Value) + "% of this card", "", "m"));
+                if (u != null) foreach (var a in u.Item4.OrderByDescending(x => x.Value).Take(4)) rows.Add(R(0, "  " + a.Key, F(Math.Min(100, a.Value)) + "% of its 3D engine", "", "m"));   // PC-042: an app is capped like the card
+                if (u != null) rows.Add(R(3, "Counts", "drawing (3D) only - video encode / decode and compute work aren't in these numbers", "", "i"));   // PC-041
             }
             // a gaming laptop's classic: the game on the weak built-in GPU
             var dg = real.FirstOrDefault(g => !g.Integrated); var igp = real.FirstOrDefault(g => g.Integrated); string verdict; int lv = 0;
             Tuple<double, double, double, Dictionary<string, double>> iu = null; if (igp != null) use.TryGetValue(igp.Luid, out iu);
             var heavy = iu == null ? null : iu.Item4.Where(x => x.Value > 25).OrderByDescending(x => x.Value).Select(x => x.Key).FirstOrDefault();
-            if (dg != null && igp != null && heavy != null) { lv = 1; verdict = heavy + " runs on the built-in graphics (" + igp.Name + ") while the stronger " + dg.Name + " waits. Settings > System > Display > Graphics > " + heavy + " > High performance."; }
-            else if (dg == null) verdict = "Built-in graphics only (" + igp.Name + "): fine for work and video; light games at low settings. " + (s.Channels < 2 ? "On single-channel memory it runs at half speed - a second stick helps most." : "");
+            Tuple<double, double, double, Dictionary<string, double>> du = null; if (dg != null) use.TryGetValue(dg.Luid, out du); bool dgIdle = du != null && du.Item1 < 10;   // PC-043: only "waits" when it was seen idle
+            if (dg != null && igp != null && heavy != null && !dgIdle) { lv = 3; verdict = heavy + " runs on the built-in graphics (" + igp.Name + "); the " + dg.Name + " is " + (du == null ? "not measured" : "busy too (" + F(du.Item1) + "%)") + ", so this may be on purpose."; }
+            else if (dg != null && igp != null && heavy != null) { lv = 1; verdict = heavy + " runs on the built-in graphics (" + igp.Name + ") while the stronger " + dg.Name + " waits. Settings > System > Display > Graphics > " + heavy + " > High performance."; }
+            else if (dg == null) verdict = "Built-in graphics only (" + igp.Name + "): fine for work and video; light games at low settings. " + (s.Channels == 1 ? "On single-channel memory it runs at half speed - a second stick helps most." : "");
             else verdict = dg.Name + " with " + Gb(dg.DedicatedMb / 1024) + " of its own memory" + (igp != null ? ", plus built-in graphics for light work (laptops switch between them)" : "") + ".";
             rows.Insert(0, R(lv, "Verdict", verdict.Trim(), "", "m"));
             rows.Add(R(3, "How graphics work", Explain("gpu", s), "", "i")); if (real.Any(g => g.MaxWidth > 0)) rows.Add(R(3, "How the link works", Explain("link", s), "", "i"));
@@ -180,19 +190,20 @@ namespace AdeeboMeter
             rows.Add(R(3, "Processor", (s.Cpu == "" ? "not reported" : s.Cpu) + " · " + s.Cores + " cores / " + s.Threads + " threads · rated " + (s.BaseMhz > 0 ? (s.BaseMhz / 1000.0).ToString("0.0#", CultureInfo.CurrentCulture) + " GHz" : "?"), "", "w"));
             if (run != null) run.Status = "Running every core for 3 seconds...";
             var r = HwTests.Cpu(run);
+            if (r.Stopped) { rows.Insert(0, R(3, "Verdict", "Stopped - nothing was measured; the last full score is kept.", "", "u")); return rows; }
             Func<double, string> ghz = p => s.BaseMhz <= 0 || double.IsNaN(p) ? "" : " ≈ " + (s.BaseMhz * p / 100000).ToString("0.0#", CultureInfo.CurrentCulture) + " GHz";
             bool onBat = System.Windows.Forms.SystemInformation.PowerStatus.PowerLineStatus == System.Windows.Forms.PowerLineStatus.Offline, saver = HwSpecs.BatterySaver();
             if (!double.IsNaN(r.PerfAvg))
             {
                 rows.Add(R(r.PerfAvg < 60 ? 2 : r.PerfAvg < 85 ? 1 : 0, "Speed under full load", F(r.PerfAvg) + "% of its rated speed" + ghz(r.PerfAvg), "", "m"));
-                if (r.PerfFirst - r.PerfLast > 20) rows.Add(R(1, "Slowed while running", F(r.PerfFirst) + "% → " + F(r.PerfLast) + "% within 3 seconds", "It slowed down as it warmed up - heat. Clean the vents and fan, don't run it on a bed or lap, and check the fan spins up.", "m"));
+                if (r.PerfFirst - r.PerfLast > 20) rows.Add(R(1, "Slowed while running", F(r.PerfFirst) + "% → " + F(r.PerfLast) + "% within 3 seconds", "It slowed within seconds: heat, or the processor dropping from its short boost to the power it can hold (normal on laptops). If it keeps dropping further, clean the vents and fan and don't run it on a bed or lap.", "m"));
             }
             rows.Add(R(3, "Work done", F(r.Score) + " million steps/s on all threads · " + F(r.OneScore) + " on one" + Before("cpu", r.Score, 1), "", "m"));
             rows.Add(R(onBat ? 1 : 0, "Power", (onBat ? "on battery" : "plugged in") + (saver ? " · battery saver ON" : "") + (s.Power != "" ? " · plan: " + s.Power : ""), onBat || saver ? "Laptops hold the processor back on battery and in battery saver - plug in for full speed." : "", "w"));
             string v; int lv;
             if (double.IsNaN(r.PerfAvg)) { lv = 3; v = "Windows didn't report the processor's speed here, so only the work done is shown (compare it with the next run)."; }
             else if (r.PerfAvg >= 85) { lv = 0; v = "The processor runs at full speed under load (" + F(r.PerfAvg) + "%" + ghz(r.PerfAvg) + ")."; }
-            else { lv = r.PerfAvg < 60 ? 2 : 1; v = "Held back to " + F(r.PerfAvg) + "% of its speed under load" + ghz(r.PerfAvg) + " - " + (saver ? "battery saver is on." : onBat ? "it's on battery." : r.PerfFirst - r.PerfLast > 20 ? "it slowed as it heated up: heat." : Regex.IsMatch(s.Power, "saver|quiet|eco", RegexOptions.IgnoreCase) ? "the power plan (" + s.Power + ") limits it." : "heat or a power limit (the maker's app may have a quiet / eco mode on)."); }
+            else { lv = r.PerfAvg < 60 ? 2 : 1; v = "Held back to " + F(r.PerfAvg) + "% of its speed under load" + ghz(r.PerfAvg) + " - " + (saver ? "battery saver is on." : onBat ? "it's on battery." : r.PerfFirst - r.PerfLast > 20 ? "it slowed within seconds - heat, or the end of its short boost (a power limit)." : Regex.IsMatch(s.Power, "saver|quiet|eco", RegexOptions.IgnoreCase) ? "the power plan (" + s.Power + ") limits it." : "heat or a power limit (the maker's app may have a quiet / eco mode on)."); }
             rows.Insert(0, R(lv, "Verdict", v, "", "m"));
             rows.Add(R(3, "How cores work", Explain("cores", s), "", "i")); rows.Add(R(3, "How the clock works", Explain("clock", s), "", "i"));
             return rows;
@@ -208,8 +219,9 @@ namespace AdeeboMeter
                 s.NicKind == "Cable" && s.NicMbps <= 100 ? "A cable link at 100 Mbps: a damaged cable (one of 4 pairs broken), an old cable, or a 100 Mbps port. Most PCs and routers do 1,000." : !double.IsNaN(plan) && s.NicMbps < plan * 1.1 ? "Your link can't carry your plan - it's the cap, not your ISP." : "", "w"));
             if (rate > 0) rows.Add(R(!double.IsNaN(plan) && rate < plan * 1.4 ? 1 : 0, "Wi-Fi link rate", rate + " Mbps (real throughput is about 60% of this)", !double.IsNaN(plan) && rate < plan * 1.4 ? "Wi-Fi delivers about 60% of its link rate, so this Wi-Fi can't reach your plan - closer to the router, 5 GHz, or a cable." : "", "w"));
             if (Regex.IsMatch(s.Nic, @"USB 2|USB2", RegexOptions.IgnoreCase)) rows.Add(R(1, "USB adapter", "a USB 2 network adapter tops out near 300 Mbps", "Plug it into a blue USB 3 port, or use a USB 3 adapter.", "w"));
-            // the disk can be the slowest part of a download: 1 Gbps internet = 125 MB/s
-            double wr = HwTests.LastNum("disk", 1);
+            // the disk can be the slowest part of a download: 1 Gbps internet = 125 MB/s. No speed test yet: no disk work either (PC-030)
+            if (double.IsNaN(plan)) { rows.Insert(0, R(3, "Verdict", "Run a speed test first (Toolbox > Speed test); then this compares your plan with every part on the way to your files.", "", "u")); rows.Add(R(3, "How the link works", Explain("net", s), "", "i")); return rows; }
+            double wr = HwTests.LastNum("disk", 1);   // the Windows drive's own result (downloads land there)
             if (double.IsNaN(wr)) { if (run != null) run.Status = "Quick disk write test (256 MB)..."; var dr = HwTests.Disk("", false, run); wr = dr.WriteMBs; }
             if (!double.IsNaN(wr)) rows.Add(R(!double.IsNaN(plan) && wr < plan / 8 ? 2 : 0, "Disk write speed", F(wr) + " MB/s = " + F(wr * 8) + " Mbps", !double.IsNaN(plan) && wr < plan / 8 ? "Downloads can't land faster than the disk writes: your disk, not your internet, is the limit." : "", "m"));
             string v; int lv = 0;
@@ -295,7 +307,7 @@ namespace AdeeboMeter
             {
                 foreach (var a in apps.Where(a => closeable(a) == 0).OrderByDescending(a => a.Mem).Take(2))
                 { double after = Math.Max(0, (usedMb - a.Mem / 1048576.0) / ramMb * 100); rows.Add(R(3, "Fix " + (++n), "Close " + who(a) + " - frees about " + Draw.MemStr(a.Mem) + ", memory drops to ≈ " + F(after) + "%" + (after < 80 ? " and the paging stops" : ""), "", "i")); }
-                if (s.RamGb > 0 && s.RamGb <= 8 && !s.Soldered) rows.Add(R(3, "Fix " + (++n), "Add memory: " + Gb(s.RamGb) + " → " + Gb(s.RamGb * 2) + (s.Channels < 2 ? " (a second stick also doubles memory speed)" : ""), "", "i"));
+                if (s.RamGb > 0 && s.RamGb <= 8 && !s.Soldered) rows.Add(R(3, "Fix " + (++n), "Add memory: " + Gb(s.RamGb) + " → " + Gb(s.RamGb * 2) + (s.Channels == 1 ? " (a second stick also doubles memory speed)" : ""), "", "i"));
             }
             else if (main.Item2.StartsWith("The processor", StringComparison.Ordinal))
             {
@@ -334,7 +346,7 @@ namespace AdeeboMeter
             var sd = HwSpecs.SystemDisk(s);
             if (sd != null) rows.Add(R(sd.Media == "HDD" ? 2 : 0, "Windows is on", (sd.Media == "HDD" ? "a spinning hard disk" : sd.Media == "" ? "a disk of unreported kind" : "an " + sd.Media) + " (" + sd.Name + ")", sd.Media == "HDD" ? "The biggest single cause of a slow PC. An SSD makes start-up and every program open several times faster." : "", "w"));
             try { var di = new DriveInfo(HwSpecs.SystemLetter()); double fr = (double)di.AvailableFreeSpace / di.TotalSize; rows.Add(R(fr < 0.1 ? 2 : fr < 0.15 ? 1 : 0, "Free space on " + di.Name.TrimEnd('\\'), (fr * 100).ToString("0", CultureInfo.CurrentCulture) + "% free", fr < 0.15 ? "An SSD slows down when nearly full, and Windows can't update. Toolbox > Where did my space go?" : "", "w")); } catch (IOException) { } catch (ArgumentException) { }
-            rows.Add(R(s.RamGb < 8 ? 1 : 0, "Memory", Gb(s.RamGb) + " · " + s.Channels + " channel" + (s.Channels > 1 ? "s" : ""), s.RamGb < 8 ? "8 GB is the comfortable minimum for Windows and a browser." : "", "w"));
+            rows.Add(R(s.RamGb < 8 ? 1 : 0, "Memory", Gb(s.RamGb) + " · " + HwSpecs.ChText(s), s.RamGb < 8 ? "8 GB is the comfortable minimum for Windows and a browser." : "", "w"));
             var errs = Errors(30); int bad = errs.Sum(e => e.Item3);
             rows.Add(R(errs.Any(e => e.Item1 == "disk" && e.Item3 > 0) ? 2 : bad > 0 ? 1 : 0, "Hardware errors (30 days)", bad == 0 ? "none" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + e.Item2).ToArray()), bad > 0 ? "Disk errors mean a failing disk or cable - back up now. Sudden power-offs mean a crash, overheating or a weak battery / charger." : "", "w"));
             string pat = PcRecord.Pattern(); if (pat != "") rows.Add(R(3, "When it felt slow", pat, "", "m"));
@@ -379,7 +391,7 @@ namespace AdeeboMeter
             double dr = HwTests.LastNum("disk", 2), dwr = HwTests.LastNum("disk", 1), ram = HwTests.LastNum("ram", 1), rc = HwSpecs.RamCeilingGBs(s), perf = HwTests.LastNum("cpu", 3);
             var pv = PcHealth.Sample(); double busy, bytes; pv.TryGetValue("idle", out busy); busy = double.IsNaN(busy) ? double.NaN : 100 - busy; pv.TryGetValue("dbytes", out bytes);
             rows.Add(R(3, "Processor", (s.Cpu == "" ? "?" : s.Cpu) + " · " + s.Cores + "C/" + s.Threads + "T · " + F(m.Cpu.Last) + "% busy now" + (double.IsNaN(perf) ? "" : " · " + F(perf) + "% speed under load (last test)"), "", "w"));
-            rows.Add(R(s.Channels < 2 ? 1 : 3, "Memory", Gb(s.RamGb) + " " + HwSpecs.RamTypeOf(s) + " · " + s.Channels + " ch · ceiling " + F(rc) + " GB/s" + (double.IsNaN(ram) ? "" : " · measured " + F(ram)) + " · " + F(m.Mem.Last) + "% in use", "", "w"));
+            rows.Add(R(s.Channels == 1 ? 1 : 3, "Memory", Gb(s.RamGb) + " " + HwSpecs.RamTypeOf(s) + " · " + HwSpecs.ChText(s) + " · ceiling " + F(rc) + " GB/s" + (double.IsNaN(ram) ? "" : " · measured " + F(ram)) + " · " + F(m.Mem.Last) + "% in use", "", "w"));
             foreach (var d in s.Disks.Take(3)) { string w; double c = HwSpecs.DiskCeiling(d, out w); rows.Add(R(d.Media == "HDD" && d.System ? 1 : 3, "Disk" + (d.Letters != "" ? " " + d.Letters : ""), d.Name + " · " + (d.Media == "" ? d.Bus : d.Media + " " + d.Bus) + (d.MaxWidth > 0 ? " · PCIe " + d.LinkGen + ".0 x" + d.LinkWidth : "") + " · ceiling " + F(c) + " MB/s" + (d.System && !double.IsNaN(dr) ? " · measured " + F(dr) + " read / " + F(dwr) + " write" : ""), "", "w")); }
             if (!double.IsNaN(busy)) rows.Add(R(busy > 90 ? 1 : 0, "Disk now", F(busy) + "% busy · " + F(bytes / 1048576) + " MB/s moving", "", "m"));
             foreach (var g in s.Gpus.Where(g => !g.Software)) rows.Add(R(3, g.Integrated ? "Built-in graphics" : "Graphics card", g.Name + " · " + (g.Integrated ? "borrows up to " + Gb(g.SharedMb / 1024) : Gb(g.DedicatedMb / 1024) + " own memory") + (g.MaxWidth > 0 ? " · PCIe " + g.LinkGen + ".0 x" + g.LinkWidth + " (max x" + g.MaxWidth + ")" : ""), "", "w"));
@@ -387,7 +399,7 @@ namespace AdeeboMeter
             // every part explained in its own numbers (the advice line under each row)
             foreach (var x in rows) if (x[3] == "") x[3] = x[1] == "Processor" ? Explain("cores", s) + " " + Explain("clock", s) : x[1] == "Memory" ? Explain("ram", s) : x[1].StartsWith("Disk ", StringComparison.Ordinal) || x[1] == "Disk" ? Explain("disk", s) : x[1].Contains("raphics") ? Explain("gpu", s) : x[1] == "Network" ? Explain("net", s) : "";
             // the narrowest pipe, from what's measured or specified
-            string neck = sd != null && sd.Media == "HDD" && sd.System ? "the spinning hard disk Windows runs from" : s.Channels < 2 && s.Gpus.Any(g => g.Integrated) && !s.Gpus.Any(g => !g.Integrated && !g.Software) ? "single-channel memory shared with the built-in graphics"
+            string neck = sd != null && sd.Media == "HDD" && sd.System ? "the spinning hard disk Windows runs from" : s.Channels == 1 && s.Gpus.Any(g => g.Integrated) && !s.Gpus.Any(g => !g.Integrated && !g.Software) ? "single-channel memory shared with the built-in graphics"
                 : !double.IsNaN(dwr) && !double.IsNaN(dc) && dwr < dc * 0.3 ? "the disk's write speed (" + F(dwr) + " of " + F(dc) + " MB/s)" : s.RamGb < 8 ? "the amount of memory (" + Gb(s.RamGb) + ")" : !double.IsNaN(perf) && perf < 70 ? "the processor held back to " + F(perf) + "%" : "";
             rows.Insert(0, R(neck == "" ? 0 : 1, "Narrowest pipe", neck == "" ? "nothing stands out - the parts are balanced" + (double.IsNaN(dr) ? " (run Disk speed and CPU held back? for measured numbers)" : "") : neck, "", "i"));
             return rows;
@@ -402,7 +414,7 @@ namespace AdeeboMeter
             sec("WHAT'S INSIDE");
             rows.Add(R(3, "Model", (s.Maker + " " + s.Model).Trim() + (s.Bios != "" ? " · BIOS from " + s.Bios : ""), "", "w"));
             rows.Add(R(3, "Processor", s.Cpu + " · " + s.Cores + " cores", "", "w"));
-            rows.Add(R(3, "Memory", Gb(s.RamGb) + " " + HwSpecs.RamTypeOf(s) + " · " + s.Channels + " channel" + (s.Channels > 1 ? "s" : "") + (s.Soldered ? " · soldered" : ""), "", "w"));
+            rows.Add(R(3, "Memory", Gb(s.RamGb) + " " + HwSpecs.RamTypeOf(s) + " · " + HwSpecs.ChText(s) + (s.Soldered ? " · soldered" : ""), "", "w"));
             foreach (var d in s.Disks.Where(d => d.Bus != "USB" && d.Bus != "Virtual").Take(2)) rows.Add(R(d.Health == 0 ? 3 : d.Health == 1 ? 1 : d.Health == 2 ? 2 : 3, "Disk", d.Name + " · " + F(d.Gb) + " GB " + d.Media + " " + d.Bus + (d.Health == 1 ? " · Windows: WARNING" : d.Health == 2 ? " · Windows: UNHEALTHY" : ""), "", "w"));
             foreach (var g in s.Gpus.Where(g => !g.Software)) rows.Add(R(3, g.Integrated ? "Built-in graphics" : "Graphics card", g.Name + (g.Integrated ? "" : " · " + Gb(g.DedicatedMb / 1024)), "", "w"));
             if (!string.IsNullOrWhiteSpace(seller)) foreach (var x in Seller(seller, s)) { rows.Add(x); if (x[0] == "2") bad.Add(x[1] + ": " + x[2]); }
@@ -464,7 +476,7 @@ namespace AdeeboMeter
                         busy ? "The disk was already " + F(r.BusyBefore) + "% busy" + (r.Culprit != "" ? " (" + r.Culprit + ")" : "") + " - that's what slows the PC now." : r.LatMs > 2.5 ? "Windows on a slow disk: an SSD is the biggest upgrade." : worst < c * 0.4 ? "Slower than its kind: Hardware nerds > Disk speed runs the full test." : "", "m"));
                 }
             }
-            if (s.Channels < 2 && s.RamSticks > 0) rows.Add(R(1, "Memory channels", "single channel (" + Gb(s.RamGb) + ")", s.Soldered ? "Half the memory speed (soldered - can't be changed)." : "Half the memory speed: a second matching stick doubles it.", "w"));
+            if (s.Channels == 1 && s.RamSticks > 0) rows.Add(R(1, "Memory channels", "single channel (" + Gb(s.RamGb) + ")", s.Soldered ? "Half the memory speed (soldered - can't be changed)." : "Half the memory speed: a second matching stick doubles it.", "w"));
             if (s.RamGb > 0 && s.RamGb < 8) rows.Add(R(1, "Memory size", Gb(s.RamGb), "Tight for Windows and a browser.", "w"));
             var errs = Errors(30); var de = errs.Where(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0).ToList();
             if (de.Count > 0) rows.Add(R(2, "Disk errors (30 days)", string.Join(" · ", de.Select(e => e.Item3 + " " + e.Item2).ToArray()), "A failing disk or cable - back up now.", "w"));

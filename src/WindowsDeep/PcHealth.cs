@@ -21,7 +21,7 @@ namespace AdeeboMeter
         static string Gb(double b) { return (b / 1073741824.0).ToString(b >= 10737418240 ? "0" : "0.0", CultureInfo.CurrentCulture) + " GB"; }
 
         // ---------- performance counters (made once, read every few seconds by Brain; NaN when Windows won't give them)
-        static readonly object k = new object(); static Dictionary<string, PerformanceCounter> pc; static bool pcBroken;
+        static readonly object k = new object(); static Dictionary<string, PerformanceCounter> pc; static DateTime pcBrokenAt = DateTime.MinValue;
         static readonly string[][] Wanted = {
             new[] { "faults", "Memory", "Pages Input/sec", "" }, new[] { "commit", "Memory", "Committed Bytes", "" }, new[] { "limit", "Memory", "Commit Limit", "" },
             new[] { "diskms", "PhysicalDisk", "Avg. Disk sec/Transfer", "_Total" }, new[] { "queue", "PhysicalDisk", "Current Disk Queue Length", "_Total" },
@@ -32,18 +32,18 @@ namespace AdeeboMeter
             var v = new Dictionary<string, double>();
             lock (k)
             {
-                if (pc == null && !pcBroken)
+                if (pc == null && (DateTime.UtcNow - pcBrokenAt).TotalSeconds > 60)   // PC-044: tried again a minute later - Windows' counters can come back
                 {
                     pc = new Dictionary<string, PerformanceCounter>();
                     foreach (var w in Wanted) try { var c = new PerformanceCounter(w[1], w[2], w[3], true); c.NextValue(); pc[w[0]] = c; } catch (Exception e) { Program.Log("counter " + w[2] + ": " + e.Message); }
-                    if (pc.Count == 0) { pcBroken = true; pc = null; }
+                    if (pc.Count == 0) { pcBrokenAt = DateTime.UtcNow; pc = null; }
                 }
                 foreach (var w in Wanted) { PerformanceCounter c; double x = double.NaN; if (pc != null && pc.TryGetValue(w[0], out c)) try { x = c.NextValue(); } catch { } v[w[0]] = x; }
             }
             if (!double.IsNaN(v["diskms"])) v["diskms"] *= 1000;
             return v;
         }
-        public static void Release() { lock (k) { if (pc != null) foreach (var c in pc.Values) c.Dispose(); pc = null; } }
+        public static void Release() { lock (k) { if (pc != null) foreach (var c in pc.Values) c.Dispose(); pc = null; pcBrokenAt = DateTime.MinValue; } }
 
         public static List<string[]> Pressure(Monitor m)
         {
@@ -95,19 +95,23 @@ namespace AdeeboMeter
         [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] static extern bool IsWindowVisible(IntPtr h);
         [DllImport("user32.dll")] static extern int GetWindowThreadProcessId(IntPtr h, out int pid);
         [DllImport("user32.dll")] static extern IntPtr GetWindow(IntPtr h, int cmd);
-        static readonly Dictionary<int, DateTime> hungSince = new Dictionary<int, DateTime>();
+        // PC-045: a frozen program is remembered by pid, name and start time, so an exit or a reused pid isn't told as "recovered"
+        sealed class Hung { public DateTime Since, Started; public string Name = "A program"; }
+        static DateTime StartOf(int pid) { try { using (var p = Process.GetProcessById(pid)) return p.StartTime; } catch (ArgumentException) { return DateTime.MinValue; } catch (InvalidOperationException) { return DateTime.MinValue; } catch (System.ComponentModel.Win32Exception) { return DateTime.MinValue; } catch (NotSupportedException) { return DateTime.MinValue; } }
+        static readonly Dictionary<int, Hung> hungSince = new Dictionary<int, Hung>();
         public static void HungTick(Monitor m)
         {
             var now = new HashSet<int>();
             EnumWindows(delegate(IntPtr h, IntPtr l) { if (IsWindowVisible(h) && GetWindow(h, 4) == IntPtr.Zero && IsHungAppWindow(h)) { int pid; if (GetWindowThreadProcessId(h, out pid) != 0) now.Add(pid); } return true; }, IntPtr.Zero);
             lock (hungSince)
             {
-                foreach (int pid in now) if (!hungSince.ContainsKey(pid)) hungSince[pid] = DateTime.Now;
+                foreach (int pid in now) if (!hungSince.ContainsKey(pid)) { var h = new Hung { Since = DateTime.Now, Started = StartOf(pid) }; try { using (var p = Process.GetProcessById(pid)) h.Name = p.ProcessName; } catch (ArgumentException) { } catch (InvalidOperationException) { } hungSince[pid] = h; }
                 foreach (var pid in hungSince.Keys.ToList())
                 {
-                    if (now.Contains(pid)) continue;
-                    var secs = (DateTime.Now - hungSince[pid]).TotalSeconds; hungSince.Remove(pid);
-                    if (secs >= 8) { string n = "A program"; try { using (var p = Process.GetProcessById(pid)) n = p.ProcessName; } catch { } m.Events.Add(1, "pc", n + " stopped responding for " + secs.ToString("0", CultureInfo.CurrentCulture) + " s"); }
+                    var h = hungSince[pid]; var st = StartOf(pid); bool same = st != DateTime.MinValue && st == h.Started;
+                    if (now.Contains(pid) && same) continue;
+                    var secs = (DateTime.Now - h.Since).TotalSeconds; hungSince.Remove(pid);
+                    if (secs >= 8) m.Events.Add(1, "pc", h.Name + (same ? " stopped responding for " + secs.ToString("0", CultureInfo.CurrentCulture) + " s" : " stopped responding and closed (after about " + secs.ToString("0", CultureInfo.CurrentCulture) + " s)"));
                 }
             }
         }
@@ -118,7 +122,7 @@ namespace AdeeboMeter
         {
             var d = new Dictionary<string, long[]>(StringComparer.OrdinalIgnoreCase);
             foreach (var p in Process.GetProcesses())
-                using (p) try { long[] o; if (!d.TryGetValue(p.ProcessName, out o)) d[p.ProcessName] = o = new long[2]; o[0] += p.PrivateMemorySize64; o[1] += p.HandleCount; } catch { }
+                using (p) try { long[] o; if (!d.TryGetValue(p.ProcessName, out o)) d[p.ProcessName] = o = new long[3]; o[0] += p.PrivateMemorySize64; o[1] += p.HandleCount; o[2]++; } catch { }
             lock (snaps) { snaps.Add(Tuple.Create(DateTime.Now, d)); while (snaps.Count > 25) snaps.RemoveAt(0); }
         }
         public static List<string[]> Leaks()
@@ -129,6 +133,9 @@ namespace AdeeboMeter
             foreach (var kv in b.Item2)
             {
                 long[] o; if (!a.Item2.TryGetValue(kv.Key, out o)) continue;
+                // PC-046: more copies of a program isn't a leak - growth only counts while the same number of copies runs
+                var counts = s.Select(x => { long[] y; return x.Item2.TryGetValue(kv.Key, out y) && y.Length > 2 ? y[2] : -1; }).ToList();
+                if (counts.Distinct().Count() > 1) { long dm2 = kv.Value[0] - o[0]; if (dm2 > 300L << 20) rows.Add(R(3, kv.Key, "+" + Gb(dm2) + " in " + hrs.ToString("0.#", CultureInfo.CurrentCulture) + " h, but it went from " + counts.First() + " to " + counts.Last() + " running copies - more windows or tabs, not a leak", "", "w")); continue; }
                 long dm = kv.Value[0] - o[0], dh = kv.Value[1] - o[1];
                 bool steady = s.Select(x => { long[] y; return x.Item2.TryGetValue(kv.Key, out y) ? y[0] : 0; }).Zip(s.Skip(1).Select(x => { long[] y; return x.Item2.TryGetValue(kv.Key, out y) ? y[0] : 0; }), (p, q) => q >= p).Count(t => t) >= (s.Count - 1) * 0.8;
                 if ((dm > 300L << 20 && steady) || dh > 3000) rows.Add(R(dm > 1L << 30 ? 2 : 1, kv.Key, (dm > 0 ? "+" + Gb(dm) : "") + (dh > 3000 ? (dm > 0 ? " · " : "") + "+" + dh + " handles" : "") + " in " + hrs.ToString("0.#", CultureInfo.CurrentCulture) + " h", "It keeps growing and never gives it back - restarting it frees the memory. If it happens every day, update the app.", "w"));
@@ -141,7 +148,8 @@ namespace AdeeboMeter
         public static List<string[]> Crashes()
         {
             var rows = new List<string[]>(); string err;
-            var evs = EvLog.Recent("Application", "EventID=1000 or EventID=1002", 24 * 7, 40, out err);
+            // PC-048: the crash and hang reporters only - other programs use IDs 1000 and 1002 too. PC-047: enough to cover a week, and said when it doesn't
+            const int Cap = 300; var evs = EvLog.Recent("Application", "(EventID=1000 and Provider[@Name='Application Error']) or (EventID=1002 and Provider[@Name='Application Hang'])", 24 * 7, Cap, out err);
             if (err != "") { rows.Add(R(3, "Crashes", err, "", "u")); return rows; }
             var g = evs.Select(e =>
             {
@@ -155,10 +163,11 @@ namespace AdeeboMeter
             foreach (var x in g)
             {
                 var mods = x.Where(y => y.Mod != "").GroupBy(y => y.Mod).OrderByDescending(y => y.Count()).Select(y => y.Key).Take(2).ToList();
-                rows.Add(R(x.Count() >= 3 ? 2 : 1, x.Key, x.Count() + (x.Count() == 1 ? " time" : " times") + " this week · last " + x.First().e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + (mods.Count > 0 ? " · in " + string.Join(", ", mods) : ""),
+                rows.Add(R(x.Count() >= 3 ? 2 : 1, x.Key, x.Count() + (x.Count() == 1 ? " time" : " times") + (evs.Count >= Cap ? " (at least)" : "") + " this week · last " + x.First().e.T.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + (mods.Count > 0 ? " · in " + string.Join(", ", mods) : ""),
                     mods.Any(mm => !mm.StartsWith("ntdll", StringComparison.OrdinalIgnoreCase) && !mm.StartsWith("KERNEL", StringComparison.OrdinalIgnoreCase) && !mm.Equals(x.First().App, StringComparison.OrdinalIgnoreCase)) ? "The same add-in or driver DLL each time is the likely culprit - disable or update it." : "Update the app; if it keeps happening, repair or reinstall it.", "w"));
             }
             if (rows.Count == 0) rows.Add(R(0, "Crashes", "no program crashed or hung in the last 7 days", "", "w"));
+            else if (evs.Count >= Cap) rows.Insert(0, R(3, "Counted", "the newest " + Cap + " crashes and hangs (" + evs.Last().T.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " onwards) - there were more this week, so the counts are at least these", "", "i"));
             return rows;
         }
 
@@ -231,14 +240,18 @@ namespace AdeeboMeter
             {
                 Job.Run(Job.Sys("powercfg.exe"), "/batteryreport /xml /output \"" + f + "\"", 20000);
                 string x = File.Exists(f) ? File.ReadAllText(f) : "";
-                Func<string, double> num = n => { var mm = Regex.Match(x, "<" + n + ">(\\d+)</" + n + ">"); double v; return mm.Success && double.TryParse(mm.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; };
-                double des = num("DesignCapacity"), full = num("FullChargeCapacity"), cyc = num("CycleCount");
-                if (double.IsNaN(des) || double.IsNaN(full) || des <= 0) rows.Add(R(3, "Battery", "Windows didn't report its capacity here", "", "u"));
-                else
+                // PC-049: each <Battery> on its own - a laptop with two batteries gets two answers, not the first one's numbers
+                var blocks = Regex.Matches(x, @"<Battery>(.*?)</Battery>", RegexOptions.Singleline).Cast<Match>().Select(mb => mb.Groups[1].Value).ToList(); if (blocks.Count == 0) blocks.Add(x);
+                int bi = 0;
+                foreach (var bx in blocks)
                 {
+                    bi++; string tag = blocks.Count > 1 ? " (battery " + bi + ")" : "";
+                    Func<string, double> num = n => { var mm = Regex.Match(bx, "<" + n + ">(\\d+)</" + n + ">"); double v; return mm.Success && double.TryParse(mm.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; };
+                    double des = num("DesignCapacity"), full = num("FullChargeCapacity"), cyc = num("CycleCount");
+                    if (double.IsNaN(des) || double.IsNaN(full) || des <= 0) { rows.Add(R(3, "Battery" + tag, "Windows didn't report its capacity here", "", "u")); continue; }
                     double h = 100 * full / des;
-                    rows.Add(R(h < 60 ? 2 : h < 80 ? 1 : 0, "Battery health", h.ToString("0", CultureInfo.CurrentCulture) + "% of its design capacity (" + (full / 1000).ToString("0.#", CultureInfo.CurrentCulture) + " of " + (des / 1000).ToString("0.#", CultureInfo.CurrentCulture) + " Wh)", h < 80 ? "Worn - it lasts noticeably less than when new. Below about 60% a replacement makes sense." : "", "w"));
-                    if (!double.IsNaN(cyc) && cyc > 0) rows.Add(R(3, "Charge cycles", cyc.ToString("0", CultureInfo.CurrentCulture), "", "w"));
+                    rows.Add(R(h < 60 ? 2 : h < 80 ? 1 : 0, "Battery health" + tag, h.ToString("0", CultureInfo.CurrentCulture) + "% of its design capacity (" + (full / 1000).ToString("0.#", CultureInfo.CurrentCulture) + " of " + (des / 1000).ToString("0.#", CultureInfo.CurrentCulture) + " Wh)", h < 80 ? "Worn - it lasts noticeably less than when new. Below about 60% a replacement makes sense." : "", "w"));
+                    if (!double.IsNaN(cyc) && cyc > 0) rows.Add(R(3, "Charge cycles" + tag, cyc.ToString("0", CultureInfo.CurrentCulture), "", "w"));
                 }
             }
             catch (Exception e) { rows.Add(R(3, "Battery", "couldn't read: " + Draw.Trunc(e.Message, 60), "", "u")); }
@@ -275,6 +288,7 @@ namespace AdeeboMeter
             foreach (var kv in tot.OrderByDescending(x => x.Value).Take(6).Where(x => x.Value > 10L << 20))
                 rows.Add(R(kv.Value > 5L << 30 ? 1 : 3, "Busy: " + kv.Key, Gb(kv.Value) + " read + written in the last " + mins.Count + " min", "", "w"));
             if (mins.Count == 0) rows.Add(R(3, "Who uses the disk", "still collecting - one sample a minute", "", "u"));
+            else rows.Add(R(3, "How it's counted", "one look a minute at the programs running then - one that starts, works and closes between two looks isn't counted", "", "i"));   // PC-065
             try
             {
                 var scope = new System.Management.ManagementScope(@"\\.\root\Microsoft\Windows\Storage");
@@ -286,7 +300,8 @@ namespace AdeeboMeter
                             rows.Add(R(hs == 0 ? 0 : hs == 1 ? 1 : hs == 2 ? 2 : 3, Convert.ToString(d["FriendlyName"], CultureInfo.InvariantCulture), (mt == 4 ? "SSD" : mt == 3 ? "hard disk" : "disk") + " · " + Gb(Convert.ToDouble(d["Size"] ?? 0, CultureInfo.InvariantCulture)) + " · Windows says: " + (hs == 0 ? "healthy" : hs == 1 ? "warning" : hs == 2 ? "unhealthy" : "unknown"), hs == 1 || hs == 2 ? "Back up now - Windows sees the disk failing." : "", "w"));
                         }
             }
-            catch (Exception e) { rows.Add(R(3, "Disk health", "Windows keeps this to admins here (" + Draw.Trunc(e.Message, 40) + ")", "", "u")); }
+            catch (Exception e) { bool denied = e is UnauthorizedAccessException || (e is System.Management.ManagementException && ((System.Management.ManagementException)e).ErrorCode == System.Management.ManagementStatus.AccessDenied);   // PC-066
+                rows.Add(R(3, "Disk health", denied ? "Windows keeps this to admins here" : "Windows' storage service didn't answer (" + Draw.Trunc(e.Message, 40) + ") - try again in a minute", "", "u")); }
             foreach (var d in DriveInfo.GetDrives().Where(x => x.DriveType == DriveType.Fixed && x.IsReady))
             {
                 double free = d.AvailableFreeSpace, size = d.TotalSize; string trend = SpaceTrend(d.Name);
@@ -301,25 +316,32 @@ namespace AdeeboMeter
             {
                 string day = DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 var rows = Store.Read("space.txt").Where(r => r.Length >= 3 && string.CompareOrdinal(r[0], DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)) >= 0 && r[0] != day).ToList();
-                foreach (var d in DriveInfo.GetDrives().Where(x => x.DriveType == DriveType.Fixed && x.IsReady)) rows.Add(new[] { day, d.Name, Store.S(d.AvailableFreeSpace / 1073741824.0) });
+                foreach (var d in DriveInfo.GetDrives().Where(x => x.DriveType == DriveType.Fixed && x.IsReady)) rows.Add(new[] { day, d.Name, Store.S(d.AvailableFreeSpace / 1073741824.0), VolId(d.Name) });   // PC-068: which volume, not only its letter
                 Store.Write("space.txt", rows);
             }
             catch (Exception e) { Program.Log("space: " + e.Message); }
         }
         static string SpaceTrend(string drive)
         {
-            var r = Store.Read("space.txt").Where(x => x.Length >= 3 && x[1] == drive).OrderBy(x => x[0]).ToList();
-            var week = r.FirstOrDefault(x => string.CompareOrdinal(x[0], DateTime.Today.AddDays(-7).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)) >= 0);
-            if (week == null || r.Count < 2) return ""; double d = Store.D(r.Last()[2]) - Store.D(week[2]);
+            string id = VolId(drive), from = DateTime.Today.AddDays(-7).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var r = Store.Read("space.txt").Where(x => x.Length >= 4 && x[1] == drive && x[3] == id && id != "" && string.CompareOrdinal(x[0], from) >= 0).OrderBy(x => x[0]).ToList();
+            var week = r.FirstOrDefault();
+            if (week == null || r.Count < 2 || week[0] == r.Last()[0]) return "";   // PC-067: two different days inside the week, or no trend
+            double d = Store.D(r.Last()[2]) - Store.D(week[2]);
             return Math.Abs(d) < 1 ? " · steady this week" : d < 0 ? " · lost " + (-d).ToString("0", CultureInfo.CurrentCulture) + " GB since " + week[0].Substring(5) : " · gained " + d.ToString("0", CultureInfo.CurrentCulture) + " GB since " + week[0].Substring(5);
         }
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] [return: MarshalAs(UnmanagedType.Bool)] static extern bool GetVolumeInformationW(string root, IntPtr name, int nameLen, out uint serial, out uint maxLen, out uint flags, IntPtr fs, int fsLen);
+        static string VolId(string root) { uint sn, ml, fl; try { return GetVolumeInformationW(root, IntPtr.Zero, 0, out sn, out ml, out fl, IntPtr.Zero, 0) ? sn.ToString("X8", CultureInfo.InvariantCulture) : ""; } catch (EntryPointNotFoundException) { return ""; } }
+        [DllImport("shell32.dll")] static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid id, uint flags, IntPtr token, out IntPtr path);
+        // PC-069: where Windows really keeps Downloads (it can be moved), not just the usual place
+        static string DownloadsDir(string profile) { IntPtr p; try { if (SHGetKnownFolderPath(new Guid("374DE290-123F-4565-9164-39C4925E467B"), 0, IntPtr.Zero, out p) == 0) { try { var s = Marshal.PtrToStringUni(p); if (!string.IsNullOrEmpty(s)) return s; } finally { Marshal.FreeCoTaskMem(p); } } } catch (EntryPointNotFoundException) { } return Path.Combine(profile, "Downloads"); }
         // where did my space go - the usual suspects, sized with a time limit (nothing is deleted)
         public static List<string[]> Space(Action<string> progress)
         {
             var found = new List<Tuple<long, string[]>>(); var deadline = DateTime.UtcNow.AddSeconds(20);
             string up = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), la = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ra = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), win = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
             var places = new[] {
-                new[] { "Downloads", Path.Combine(up, "Downloads"), "Old installers and files you downloaded - safe to sort and delete what you don't need." },
+                new[] { "Downloads", DownloadsDir(up), "Old installers and files you downloaded - safe to sort and delete what you don't need." },
                 new[] { "Temp files", Path.GetTempPath(), "Safe to clean: Settings > System > Storage > Temporary files." },
                 new[] { "Teams cache (classic)", Path.Combine(ra, "Microsoft", "Teams"), "Rebuilt by Teams; clearing it fixes many Teams glitches (quit Teams first)." },
                 new[] { "Teams cache (new)", Path.Combine(la, "Packages"), "" },
@@ -328,16 +350,20 @@ namespace AdeeboMeter
                 new[] { "OneDrive (copies on this PC)", Environment.GetEnvironmentVariable("OneDrive") ?? "", "Right-click the OneDrive folder > Free up space - files stay in the cloud." },
                 new[] { "Windows Update leftovers", Path.Combine(win, "SoftwareDistribution", "Download"), "Settings > System > Storage > Temporary files > Windows Update Cleanup." },
                 new[] { "Previous Windows", Path.Combine(Path.GetPathRoot(win) ?? "C:\\", "Windows.old"), "The old Windows from the last big upgrade - Storage > Temporary files removes it." } };
+            var skipped = new List<string>(); bool anyCut = false;   // PC-070: places not (fully) measured are said, not taken as small
             foreach (var pl in places)
             {
                 if (pl[1] == "" || !Directory.Exists(pl[1])) continue;
+                if (DateTime.UtcNow > deadline) { skipped.Add(pl[0]); continue; }
                 progress("Measuring " + pl[0] + "...");
                 bool cut; long b = Size(pl[1], deadline, pl[0].StartsWith("Teams cache (new)", StringComparison.Ordinal) ? "MSTeams_" : null, out cut);
-                if (b < 50L << 20) continue;
+                if (cut) anyCut = true;
+                if (b < 50L << 20) { if (cut) skipped.Add(pl[0]); continue; }
                 found.Add(Tuple.Create(b, R(b > 10L << 30 ? 1 : 3, pl[0], Gb(b) + (cut ? "+ (stopped counting - time limit)" : ""), (pl[2] + " AdeeboMeter never deletes anything.").Trim(), "w")));
             }
             var rows = found.OrderByDescending(x => x.Item1).Select(x => x.Item2).ToList();
-            if (rows.Count == 0) rows.Add(R(0, "Space", "none of the usual suspects is big", "", "w"));
+            if (skipped.Count > 0) rows.Add(R(3, "Not fully measured", string.Join(", ", skipped) + " - the 20-second limit ran out first", "", "u"));
+            if (found.Count == 0) rows.Insert(0, skipped.Count > 0 || anyCut ? R(3, "Space", "none of those measured is big, but not everything was measured", "", "u") : R(0, "Space", "none of the usual suspects is big", "", "w"));
             return rows;
         }
         static long Size(string dir, DateTime deadline, string onlySub, out bool cut)

@@ -189,6 +189,18 @@ namespace AdeeboMeter
                     if (pcSlow.Who != "pc" || !pcSlow.Text.Contains("MsMpEng") || netSlow.Who != "internet" || appSlow.Who != "app" || PcRecord.Judge(new List<PcRecord.Pt>(), DateTime.Now).Who != "unknown")
                         throw new InvalidOperationException("felt-slow verdicts wrong: " + pcSlow.Who + "/" + netSlow.Who + "/" + appSlow.Who);
                     if (!PcRecord.Series(Enumerable.Range(0, 3).Select(i => pt(50, 60, 20, 2, i == 1)).ToList()).Contains("Ping 20 x 20")) throw new InvalidOperationException("felt-slow series wrong");
+                    // PC-001..005: no internet readings isn't "fine"; blind counters don't clear the PC; a lone page spike isn't memory; router and internet each count against their own readings; all lost is loss
+                    var noNet = PcRecord.Judge(Enumerable.Range(0, 10).Select(i => pt(10, 5, double.NaN, double.NaN, false)).ToList(), DateTime.Now);
+                    var blind = PcRecord.Judge(Enumerable.Range(0, 10).Select(i => new PcRecord.Pt { T = DateTime.Now, Cpu = double.NaN, Busy = double.NaN, DiskMs = double.NaN, Faults = double.NaN, Perf = double.NaN, Dpc = double.NaN, Mem = double.NaN, Net = 400, Gw = 2 }).ToList(), DateTime.Now);
+                    var page = PcRecord.Judge(Enumerable.Range(0, 5).Select(i => new PcRecord.Pt { T = DateTime.Now, Cpu = 10, Busy = 5, DiskMs = 2, Faults = i == 0 ? 900 : 5, Perf = 100, Dpc = 1, Mem = 20, Net = 14, Gw = 2 }).ToList(), DateTime.Now);
+                    var gw1 = PcRecord.Judge(Enumerable.Range(0, 5).Select(i => new PcRecord.Pt { T = DateTime.Now, Cpu = 10, Busy = 5, DiskMs = 2, Faults = 5, Perf = 100, Dpc = 1, Mem = 20, Net = i == 0 ? 14 : double.NaN, Gw = i == 2 ? 90 : 2 }).ToList(), DateTime.Now);
+                    var allLost = PcRecord.Judge(Enumerable.Range(0, 6).Select(i => pt(10, 5, double.NaN, 2, true)).ToList(), DateTime.Now);
+                    if (noNet.Who != "notpc" || blind.Text.Contains("was fine") || page.Who == "pc" || gw1.Who == "internet" || allLost.Who != "internet" || allLost.Text.Contains("?"))
+                        throw new InvalidOperationException("felt-slow edge verdicts wrong: " + noNet.Who + "/" + blind.Text + "/" + page.Who + "/" + gw1.Who + "/" + allLost.Text);
+                    // PC-064: a folder named x.exe.backup isn't the program; PC-037/038: A1 + A2 is one channel, nothing listed is unknown
+                    string ex1 = Startup.ExeOf(@"C:\Apps\archive.exe.backup\launcher.exe --start"), ex2 = Startup.ExeOf(@"C:\Program Files\X\x.exe -s");
+                    int ch1 = HwSpecs.ChannelsOf(new List<HwSpecs.Ram> { new HwSpecs.Ram { Slot = "ChannelA-DIMM1" }, new HwSpecs.Ram { Slot = "ChannelA-DIMM2" } }), ch0 = HwSpecs.ChannelsOf(new List<HwSpecs.Ram>());
+                    if (ex1 != "launcher.exe" || ex2 != "x.exe" || ch1 != 1 || ch0 != 0) throw new InvalidOperationException("startup / channels: " + ex1 + " " + ex2 + " " + ch1 + " " + ch0);
                     string why; var nvme = new HwSpecs.Disk { Bus = "NVMe", Media = "SSD", LinkGen = 3, LinkWidth = 4 }; var hdd = new HwSpecs.Disk { Bus = "SATA", Media = "HDD", Rpm = 5400 };
                     if (Math.Abs(HwSpecs.DiskCeiling(nvme, out why) - 3546) > 5 || HwSpecs.DiskCeiling(hdd, out why) != 110 || HwSpecs.DiskCeiling(new HwSpecs.Disk { Bus = "SATA", Media = "SSD" }, out why) != 550) throw new InvalidOperationException("disk ceilings wrong");
                     var two = new List<HwSpecs.Ram> { new HwSpecs.Ram { Slot = "BANK 0 ChannelA-DIMM0", Mts = 3200 }, new HwSpecs.Ram { Slot = "BANK 2 ChannelB-DIMM0", Mts = 3200 } }; var one = new List<HwSpecs.Ram> { new HwSpecs.Ram { Slot = "DIMM A1", Mts = 3200 } };

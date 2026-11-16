@@ -568,7 +568,7 @@ namespace AdeeboMeter
                         // the view already open, or Windows won't show a note (notifications off, Focus assist): the answer opens right away
                         bool open = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized;
                         if (open || !Native.CanNotify()) { OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool("feltslow", true); return; }
-                        balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
+                        balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : c.Who == "notpc" ? "Not this PC" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
                     });
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("felt slow: " + e.Message); }

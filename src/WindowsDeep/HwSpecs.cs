@@ -30,7 +30,8 @@ namespace AdeeboMeter
             public DateTime At;
         }
         static Specs last; static readonly object k = new object();
-        public static Specs Get() { lock (k) { if (last == null || (DateTime.Now - last.At).TotalMinutes > 10) last = Read(); return last; } }
+        static DateTime nicAt;
+        public static Specs Get() { lock (k) { if (last == null || (DateTime.Now - last.At).TotalMinutes > 10) { last = Read(); nicAt = DateTime.Now; } else if ((DateTime.Now - nicAt).TotalSeconds > 20) { ReadNic(last); nicAt = DateTime.Now; } return last; } }   // PC-036: Wi-Fi to cable shows at once
 
         static string S(object o) { return Convert.ToString(o, CultureInfo.InvariantCulture) ?? ""; }
         static double D(object o) { try { return o == null ? 0 : Convert.ToDouble(o, CultureInfo.InvariantCulture); } catch (FormatException) { return 0; } catch (InvalidCastException) { return 0; } catch (OverflowException) { return 0; } }
@@ -61,15 +62,18 @@ namespace AdeeboMeter
             if (s.RamGb <= 0) { var ms = new MemStatus(); ms.Length = (uint)Marshal.SizeOf(typeof(MemStatus)); if (GlobalMemoryStatusEx(ref ms)) s.RamGb = ms.Total / 1073741824.0; }
             s.Channels = ChannelsOf(s.Rams);
             // disks: Windows' storage view (bus, media, spin speed) and which one holds C:
-            var sysDisk = new HashSet<string>(); var letters = new Dictionary<string, string>();
-            Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DiskNumber, DriveLetter FROM MSFT_Partition", o => { var dl = S(o["DriveLetter"]).Trim('\0', ' '); if (dl == "") return; string n = S(o["DiskNumber"]); string old; letters.TryGetValue(n, out old); letters[n] = (old ?? "") + dl + ":"; if (string.Equals(dl, SystemLetter(), StringComparison.OrdinalIgnoreCase)) sysDisk.Add(n); });
-            Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DeviceId, FriendlyName, BusType, MediaType, SpindleSpeed, Size, HealthStatus FROM MSFT_PhysicalDisk", o =>
+            // PC-032: a partition's DiskNumber is a disk (MSFT_Disk), which isn't always one physical disk (Storage Spaces, RAID).
+            // The two are joined by serial number, and only when that is one-to-one; otherwise the letters stay unknown
+            var sysDisk = new HashSet<string>(); var letters = new Dictionary<string, string>(); var serialOf = new Dictionary<string, string>(); var serialCount = new Dictionary<string, int>();
+            Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT Number, SerialNumber FROM MSFT_Disk", o => { string sn = S(o["SerialNumber"]).Trim(); if (sn == "") return; serialOf[S(o["Number"])] = sn; int c; serialCount.TryGetValue(sn, out c); serialCount[sn] = c + 1; });
+            Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DiskNumber, DriveLetter FROM MSFT_Partition", o => { var dl = S(o["DriveLetter"]).Trim('\0', ' '); if (dl == "") return; string sn; if (!serialOf.TryGetValue(S(o["DiskNumber"]), out sn) || serialCount[sn] != 1) return; string old; letters.TryGetValue(sn, out old); letters[sn] = (old ?? "") + dl + ":"; if (string.Equals(dl, SystemLetter(), StringComparison.OrdinalIgnoreCase)) sysDisk.Add(sn); });
+            Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DeviceId, SerialNumber, FriendlyName, BusType, MediaType, SpindleSpeed, Size, HealthStatus FROM MSFT_PhysicalDisk", o =>
             {
                 var d = new Disk { Name = S(o["FriendlyName"]).Trim(), Bus = BusName((int)D(o["BusType"])), Gb = D(o["Size"]) / 1e9, Health = (int)D(o["HealthStatus"] ?? 5) };
                 int mt = (int)D(o["MediaType"]); uint rpm = (uint)D(o["SpindleSpeed"]); d.Media = mt == 4 ? "SSD" : mt == 3 ? "HDD" : mt == 5 ? "SCM" : "";
                 if (rpm > 0 && rpm < 30000) { d.Rpm = (int)rpm; d.Media = "HDD"; } else if (rpm == 0 && d.Media == "") d.Media = "SSD";
                 if (d.Bus == "NVMe") d.Media = "SSD";
-                string id = S(o["DeviceId"]); d.System = sysDisk.Contains(id); string l; if (letters.TryGetValue(id, out l)) d.Letters = l;
+                string id = S(o["SerialNumber"]).Trim(); d.System = id != "" && sysDisk.Contains(id); string l; if (id != "" && letters.TryGetValue(id, out l)) d.Letters = l;
                 s.Disks.Add(d);
             });
             // graphics cards: DXGI says how much memory each has of its own and how much it may borrow from the PC
@@ -77,20 +81,16 @@ namespace AdeeboMeter
             // PCIe links: what each card and NVMe drive runs at now, and the most it can do (SetupAPI, no admin)
             var links = PciLinks(); var nv = links.Where(x => x.Item1 == 1 && x.Item2 == 8).ToList(); var vids = links.Where(x => x.Item1 == 3).ToList();
             var nvDisks = s.Disks.Where(d => d.Bus == "NVMe").ToList();
-            for (int i = 0; i < nvDisks.Count && i < nv.Count; i++) { var l = nv[i].Item3; nvDisks[i].LinkGen = l[0]; nvDisks[i].LinkWidth = l[1]; nvDisks[i].MaxGen = l[2]; nvDisks[i].MaxWidth = l[3]; }
+            // PC-033/034: Windows lists drives and PCI devices in its own orders, so a link is only given to a part when there's
+            // exactly one of its kind on each side - two NVMe drives or two cards from one maker keep "link not readable"
+            if (nvDisks.Count == 1 && nv.Count == 1) { var l = nv[0].Item3; nvDisks[0].LinkGen = l[0]; nvDisks[0].LinkWidth = l[1]; nvDisks[0].MaxGen = l[2]; nvDisks[0].MaxWidth = l[3]; }
             foreach (var g in s.Gpus.Where(g => !g.Software))
             {
+                if (s.Gpus.Count(x => !x.Software && x.Vendor == g.Vendor) != 1 || vids.Count(v => v.Item5 == g.Vendor) != 1) continue;
                 var m = vids.FirstOrDefault(v => v.Item5 == g.Vendor); if (m == null) continue;
                 vids.Remove(m); var l = m.Item3; g.LinkGen = l[0]; g.LinkWidth = l[1]; g.MaxGen = l[2]; g.MaxWidth = l[3];
             }
-            // the network link in use: the adapter with the default route
-            try
-            {
-                var best = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && n.GetIPProperties().GatewayAddresses.Any(gw => gw.Address != null && !gw.Address.Equals(System.Net.IPAddress.Any)))
-                    .OrderByDescending(n => n.Speed).FirstOrDefault();
-                if (best != null) { s.Nic = best.Description; s.NicKind = best.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ? "Wi-Fi" : "Cable"; if (best.Speed > 0) s.NicMbps = best.Speed / 1e6; }
-            }
-            catch (NetworkInformationException) { }
+            ReadNic(s);
             s.Boot = DateTime.Now - TimeSpan.FromMilliseconds(Environment.TickCount & int.MaxValue);
             try { s.Boot = DateTime.Now - TimeSpan.FromMilliseconds(GetTickCount64()); } catch (EntryPointNotFoundException) { }
             s.RestartPending = KeyThere(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired") || KeyThere(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending");
@@ -98,20 +98,39 @@ namespace AdeeboMeter
             s.Power = PowerPlan();
             return s;
         }
+        // the network link in use: the adapter Windows picks for the internet (its route, not the fastest card) - PC-035
+        [DllImport("iphlpapi.dll")] static extern int GetBestInterface(uint dest, out uint index);
+        static void ReadNic(Specs s)
+        {
+            try
+            {
+                var up = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && n.GetIPProperties().GatewayAddresses.Any(gw => gw.Address != null && !gw.Address.Equals(System.Net.IPAddress.Any))).ToList();
+                uint idx; NetworkInterface best = null;
+                if (GetBestInterface(0x08080808u, out idx) == 0) best = up.FirstOrDefault(n => { try { var p4 = n.GetIPProperties().GetIPv4Properties(); return p4 != null && p4.Index == idx; } catch (NetworkInformationException) { return false; } });
+                if (best == null) best = up.OrderByDescending(n => n.Speed).FirstOrDefault();
+                s.Nic = ""; s.NicKind = ""; s.NicMbps = double.NaN;
+                if (best != null) { s.Nic = best.Description; s.NicKind = best.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ? "Wi-Fi" : "Cable"; if (best.Speed > 0) s.NicMbps = best.Speed / 1e6; }
+            }
+            catch (NetworkInformationException) { } catch (EntryPointNotFoundException) { } catch (DllNotFoundException) { }
+        }
         internal static string SystemLetter() { try { return Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)).Substring(0, 1).ToUpperInvariant(); } catch (ArgumentException) { return "C"; } }
         static bool KeyThere(string p) { try { using (var kk = Registry.LocalMachine.OpenSubKey(p)) return kk != null; } catch (System.Security.SecurityException) { return false; } }
         static string BusName(int b) { switch (b) { case 1: return "SCSI"; case 3: return "ATA"; case 7: return "USB"; case 8: return "RAID"; case 10: return "SAS"; case 11: return "SATA"; case 12: return "SD"; case 13: return "MMC"; case 15: return "Virtual"; case 17: return "NVMe"; case 18: return "SCM"; case 19: return "UFS"; default: return ""; } }
         static string RamType(int t) { switch (t) { case 20: return "DDR"; case 21: return "DDR2"; case 24: return "DDR3"; case 26: return "DDR4"; case 27: return "LPDDR"; case 28: return "LPDDR2"; case 29: return "LPDDR3"; case 30: return "LPDDR4"; case 34: return "DDR5"; case 35: return "LPDDR5"; default: return ""; } }
         internal static string RamTypeOf(Specs s) { return s.Rams.Select(r => RamType(r.Type)).FirstOrDefault(t => t != "") ?? ""; }
         // memory channels: "ChannelA/ChannelB" or "DIMM A1/B1" in the slot names when Windows has them; otherwise two or more sticks = two
+        // 0 = not reported (PC-038): no sticks listed means nobody knows the wiring, not "single channel"
         internal static int ChannelsOf(List<Ram> rams)
         {
-            if (rams.Count == 0) return 1;
-            var ch = rams.Select(r => Regex.Match(r.Slot, @"(?:Channel\s*|CH\s*|DIMM\s*|\b)([A-D])\d?\b", RegexOptions.IgnoreCase)).Where(m => m.Success).Select(m => m.Groups[1].Value.ToUpperInvariant()).Distinct().Count();
+            if (rams.Count == 0) return 0;
+            var found = rams.Select(r => Regex.Match(r.Slot, @"(?:Channel\s*|CH\s*|DIMM\s*|\b)([A-D])\d?\b", RegexOptions.IgnoreCase)).Where(m => m.Success).Select(m => m.Groups[1].Value.ToUpperInvariant()).ToList();
+            int ch = found.Distinct().Count();
             bool lp = rams.Any(r => r.Type == 27 || r.Type == 28 || r.Type == 29 || r.Type == 30 || r.Type == 35);
             if (lp) return rams.Count >= 2 ? 2 : 1;   // soldered LPDDR is wide even when Windows lists it as many small chips
+            if (found.Count == rams.Count) return Math.Min(ch, 4);   // PC-037: every stick names its channel - A1 and A2 are one channel
             return ch >= 2 ? Math.Min(ch, 4) : Math.Min(rams.Count, 2);
         }
+        internal static string ChText(Specs s) { return s.Channels <= 0 ? "channels not reported" : s.Channels + " channel" + (s.Channels > 1 ? "s" : ""); }
 
         // ---------- ceilings: what each part can do at most, from its specs
         static readonly double[] LaneGBs = { 0, 0.25, 0.5, 0.985, 1.969, 3.938, 7.877 };   // PCIe gen 1..6, one lane, after line coding
@@ -132,10 +151,10 @@ namespace AdeeboMeter
             if (d.Bus == "USB") { why = "USB disk ≈ 400 MB/s at best (USB 3) - far less on USB 2"; return 400; }
             why = "kind not reported - judged as a SATA SSD (550 MB/s)"; return 550;
         }
-        internal static double RamCeilingGBs(Specs s) { int mts = s.Rams.Count > 0 ? s.Rams.Max(r => r.Mts) : 0; return mts <= 0 ? double.NaN : mts * 8.0 * s.Channels / 1000; }
+        internal static double RamCeilingGBs(Specs s) { int mts = s.Rams.Count > 0 ? s.Rams.Max(r => r.Mts) : 0; return mts <= 0 || s.Channels <= 0 ? double.NaN : mts * 8.0 * s.Channels / 1000; }
         internal static string Fmt(double v) { return double.IsNaN(v) ? "?" : v >= 100 ? v.ToString("#,0", CultureInfo.InvariantCulture) : v.ToString("0.#", CultureInfo.InvariantCulture); }   // invariant: the pictures read these numbers back
         internal static Disk SystemDisk(Specs s) { return s.Disks.FirstOrDefault(d => d.System) ?? s.Disks.FirstOrDefault(d => d.Letters.IndexOf(SystemLetter() + ":", StringComparison.OrdinalIgnoreCase) >= 0) ?? s.Disks.FirstOrDefault(); }
-        internal static Disk DiskFor(Specs s, string letter) { letter = (letter ?? "").Trim().TrimEnd(':', '\\').ToUpperInvariant(); return letter == "" ? SystemDisk(s) : s.Disks.FirstOrDefault(d => d.Letters.IndexOf(letter + ":", StringComparison.OrdinalIgnoreCase) >= 0) ?? SystemDisk(s); }
+        internal static Disk DiskFor(Specs s, string letter) { letter = (letter ?? "").Trim().TrimEnd(':', '\\').ToUpperInvariant(); return letter == "" || letter == SystemLetter() ? SystemDisk(s) : s.Disks.FirstOrDefault(d => d.Letters.IndexOf(letter + ":", StringComparison.OrdinalIgnoreCase) >= 0); }   // PC-024: never another disk's ceiling
 
         // ---------- graphics cards through DXGI (no admin, no DirectX drawing)
         [ComImport, Guid("770aae78-f26f-4dba-a829-253c83d1b387"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -174,7 +193,8 @@ namespace AdeeboMeter
                         {
                             AdapterDesc1 d; if (a.GetDesc1(out d) != 0) continue;
                             var g = new Gpu { Name = (d.Description ?? "").Trim(), DedicatedMb = d.DedicatedVideoMemory.ToUInt64() / 1048576.0, SharedMb = d.SharedSystemMemory.ToUInt64() / 1048576.0, Software = (d.Flags & 2) != 0 || d.VendorId == 0x1414, Vendor = (int)d.VendorId, Luid = ((long)d.LuidHigh << 32) | d.LuidLow };
-                            g.Integrated = !g.Software && g.DedicatedMb < 1024;
+                            // PC-040: small own memory alone doesn't make a card built in - Intel's are, and AMD / Qualcomm ones named as the processor's graphics
+                            g.Integrated = !g.Software && g.DedicatedMb < 1024 && (g.Vendor == 0x8086 && !Regex.IsMatch(g.Name, @"\bArc\b.*A\d{3}", RegexOptions.IgnoreCase) || g.Vendor == 0x5143 || Regex.IsMatch(g.Name, @"Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Radeon \d{3}M\b", RegexOptions.IgnoreCase));
                             if (!r.Any(x => x.Luid == g.Luid)) r.Add(g);
                         }
                         finally { Marshal.ReleaseComObject(a); }

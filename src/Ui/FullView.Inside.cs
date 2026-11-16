@@ -19,12 +19,12 @@ namespace AdeeboMeter
         Panel insidePage; DB insideList, insideInfo; FlowLayoutPanel insideModes; RoundBox insideSearch;
         string insideMode = "tree"; volatile bool insideBusy;
         List<KeyValuePair<ProcTree.P, int>> treeRows; Dictionary<int, ProcTree.P> treeBy; List<Svc.S> svcs; List<Startup.Item> startups; Dictionary<string, string> startupByExe;
-        int insideSelPid = -1; string insideSelKey = ""; string[] insideNow; DateTime insideNowAt;
+        int insideSelPid = -1, measureGen; string insideSelKey = ""; string[] insideNow; DateTime insideNowAt;
 
         Panel BuildInsidePage()
         {
             insidePage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
-            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
+            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(64)), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, Sc(8)), WrapContents = true };   // PC-051: modes wrap onto a second row on a narrow window
             insideSearch = new RoundBox(Sc(240), Draw.fBody, "Find a process");
             insideSearch.Box.TextChanged += delegate { insideList.AutoScrollPosition = Point.Empty; insideList.Invalidate(); };
             bar.Controls.Add(insideSearch);
@@ -57,7 +57,8 @@ namespace AdeeboMeter
                 {
                     var roots = ProcTree.Snapshot(out by); rows = new List<KeyValuePair<ProcTree.P, int>>();
                     Action<ProcTree.P, int> walk = null;
-                    walk = delegate(ProcTree.P p, int d) { rows.Add(new KeyValuePair<ProcTree.P, int>(p, d)); foreach (var k in p.Kids.OrderBy(k => k.Name, StringComparer.OrdinalIgnoreCase)) if (d < 30) walk(k, d + 1); };
+                    var seen = new HashSet<int>();   // PC-053: every process is listed however deep; only the indent is capped (when drawn)
+                    walk = delegate(ProcTree.P p, int d) { if (!seen.Add(p.Pid)) return; rows.Add(new KeyValuePair<ProcTree.P, int>(p, d)); foreach (var k in p.Kids.OrderBy(k => k.Name, StringComparer.OrdinalIgnoreCase)) walk(k, d + 1); };
                     foreach (var r in roots.OrderBy(r => r.Orphan).ThenBy(r => r.Pid)) walk(r, 0);
                     sv = Svc.List(); st = Startup.List(); sbe = Startup.ByExe();
                 }
@@ -74,15 +75,16 @@ namespace AdeeboMeter
             if (insideMode == "tree" && treeRows != null)
                 foreach (var kv in treeRows) { var p = kv.Key; if (hit(p.Name)) r.Add(new[] { "pid:" + p.Pid, p.Name, "PID " + p.Pid + (p.Kids.Count > 0 ? " · started " + p.Kids.Count : ""), q == "" ? kv.Value.ToString(CultureInfo.InvariantCulture) : "0" }); }
             else if (insideMode == "boot")
-                foreach (var n in BootOrder) r.Add(new[] { "boot:" + n, n + ".exe", BootWhen(n), "0" });
+                foreach (var n in BootOrder) { if (hit(n)) r.Add(new[] { "boot:" + n, n + ".exe", BootWhen(n), "0" }); }   // PC-052
             else if (insideMode == "services" && svcs != null)
                 foreach (var gr in svcs.Where(s => s.Pid > 0).GroupBy(s => s.Pid).OrderByDescending(g => g.Count()))
                 {
                     ProcTree.P hp; string host = treeBy != null && treeBy.TryGetValue(gr.Key, out hp) ? hp.Name : "?";
+                    if (!host.StartsWith("svchost", StringComparison.OrdinalIgnoreCase)) continue;   // PC-054: this view is svchost - other service hosts are in "Who started whom"
                     if (hit(host) || gr.Any(s => hit(s.Name) || hit(s.Display))) r.Add(new[] { "svc:" + gr.Key, host + "  ·  PID " + gr.Key, string.Join(", ", gr.Select(s => s.Name).Take(4)) + (gr.Count() > 4 ? " +" + (gr.Count() - 4) : ""), "0" });
                 }
             else if (insideMode == "startup" && startups != null)
-                foreach (var s in startups) { if (hit(s.Name) || hit(s.Exe)) r.Add(new[] { "start:" + s.Name, s.Name, s.Where, "0" }); }
+                foreach (var s in startups) { if (hit(s.Name) || hit(s.Exe)) r.Add(new[] { "start:" + s.Key, s.Name, s.Where, "0" }); }
             else if (insideMode == "dives")
                 foreach (var t in Knowledge.Learn().Where(t => t["kind"] == "windows")) if (hit(t["title"])) r.Add(new[] { "dive:" + t.Id, t["title"], t["tag"], "0" });
             return r;
@@ -136,7 +138,7 @@ namespace AdeeboMeter
         // what it's doing right now: CPU over one second, memory, disk, connections, window, services
         void MeasureNow()
         {
-            int pid = insideSelPid; if (pid <= 0) return;
+            int pid = insideSelPid; if (pid <= 0) return; int gen = ++measureGen;   // PC-059: only the newest measurement may answer
             Task.Factory.StartNew(() =>
             {
                 var r = new List<string>();
@@ -145,20 +147,24 @@ namespace AdeeboMeter
                     using (var p = Process.GetProcessById(pid))
                     {
                         TimeSpan t0 = TimeSpan.Zero; bool cpuOk = true; try { t0 = p.TotalProcessorTime; } catch { cpuOk = false; }
-                        var io0 = ProcIo.Of(pid); System.Threading.Thread.Sleep(1000); p.Refresh();
-                        string cpu = "hidden by Windows"; if (cpuOk) try { cpu = ((p.TotalProcessorTime - t0).TotalSeconds * 100 / Environment.ProcessorCount).ToString("0.0", CultureInfo.CurrentCulture) + "%"; } catch { }
+                        var io0 = ProcIo.Of(pid); var clock = Stopwatch.StartNew(); System.Threading.Thread.Sleep(1000); p.Refresh();
+                        double secs = Math.Max(0.001, clock.Elapsed.TotalSeconds);   // PC-056: per second of what really passed
+                        string cpu = "hidden by Windows"; if (cpuOk) try { cpu = ((p.TotalProcessorTime - t0).TotalSeconds / secs * 100 / Environment.ProcessorCount).ToString("0.0", CultureInfo.CurrentCulture) + "%"; } catch { }
                         string mem = "hidden"; try { mem = (p.WorkingSet64 / 1048576).ToString(CultureInfo.CurrentCulture) + " MB"; } catch { }
                         var io1 = ProcIo.Of(pid);
-                        string disk = io0 != null && io1 != null ? "reading " + ((io1[0] - io0[0]) / 1024.0).ToString("0", CultureInfo.CurrentCulture) + " KB/s · writing " + ((io1[1] - io0[1]) / 1024.0).ToString("0", CultureInfo.CurrentCulture) + " KB/s · " + ((io1[0] + io1[1]) / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB since it started" : "hidden by Windows";
+                        string disk = io0 != null && io1 != null ? "reading " + ((io1[0] - io0[0]) / 1024.0 / secs).ToString("0", CultureInfo.CurrentCulture) + " KB/s · writing " + ((io1[1] - io0[1]) / 1024.0 / secs).ToString("0", CultureInfo.CurrentCulture) + " KB/s · " + ((io1[0] + io1[1]) / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB since it started" : "hidden by Windows";
                         string win = ""; try { win = p.MainWindowTitle; } catch { }
                         Dictionary<int, string> names; lock (M.L) names = M.PidNames;
-                        int conns = 0; try { conns = Tables.Tcp(false, names).Count(c => c.Pid == pid); } catch { }
+                        // PC-057/058: a table that couldn't be read is "unavailable", not 0; UDP is counted next to TCP
+                        string conns; try { conns = Tables.Tcp(false, names).Count(c => c.Pid == pid).ToString(CultureInfo.CurrentCulture) + " TCP"; } catch (Exception ce) { if (ce is OutOfMemoryException) throw; conns = "TCP unavailable"; }
+                        try { conns += " · " + Tables.Udp().Count(u => u.Value == pid).ToString(CultureInfo.CurrentCulture) + " UDP endpoints"; } catch (Exception ue) { if (ue is OutOfMemoryException) throw; conns += " · UDP unavailable"; }
                         string threads = ""; try { threads = p.Threads.Count.ToString(CultureInfo.CurrentCulture); } catch { }
-                        r.AddRange(new[] { cpu, mem, disk, conns.ToString(CultureInfo.CurrentCulture), win, threads });
+                        r.AddRange(new[] { cpu, mem, disk, conns, win, threads });
                     }
                 }
-                catch { r.Clear(); r.Add("gone"); }
-                try { BeginInvoke((Action)delegate { if (insideSelPid == pid) { insideNow = r.ToArray(); insideNowAt = DateTime.Now; insideInfo.Invalidate(); } }); } catch { }
+                catch (ArgumentException) { r.Clear(); r.Add("gone"); }   // PC-060: only "no such process" means it exited
+                catch (Exception e) { if (e is OutOfMemoryException) throw; r.Clear(); bool alive = false; try { using (Process.GetProcessById(pid)) alive = true; } catch (ArgumentException) { } catch (InvalidOperationException) { } r.Add(alive ? "unavailable: " + Draw.Trunc(e.Message, 60) : "gone"); }
+                try { BeginInvoke((Action)delegate { if (insideSelPid == pid && gen == measureGen) { insideNow = r.ToArray(); insideNowAt = DateTime.Now; insideInfo.Invalidate(); } }); } catch { }
             });
         }
 
@@ -173,14 +179,14 @@ namespace AdeeboMeter
                 string intro = insideMode == "tree" ? "Every process on this PC, under the one that started it. Windows starts with the kernel (System), which starts the session manager, which starts the rest - down to Explorer and the apps you open. Click any of them." :
                                insideMode == "boot" ? "How Windows comes to life, in order - from the kernel to your desktop. Click a step for what it does and what happens if it dies. The PIDs and times are from this PC." :
                                insideMode == "services" ? "svchost.exe is a host: one program that runs many Windows services, so they share memory. Each line is one svchost and the services living in it. Click one to see what each service is for." :
-                               insideMode == "startup" ? "Everything set to start when you sign in, and who put it there. AdeeboMeter only explains - to turn one off, use Task Manager → Startup apps." :
+                               insideMode == "startup" ? "What the Run lists and Startup folders start when you sign in, and who put it there. Scheduled tasks and services can start programs at sign-in too - those aren't in this list. AdeeboMeter only explains - to turn one off, use Task Manager → Startup apps." :
                                "The stories behind the processes people ask about most.";
                 y = Lead2(g, intro, x, y, w); return;
             }
             if (key.StartsWith("dive:", StringComparison.Ordinal)) { y = PaintTopic(g, insideInfo, Knowledge.Topic(key.Substring(5)), x, y, w); Need(insideInfo, y); return; }
             if (key.StartsWith("start:", StringComparison.Ordinal))
             {
-                var s = startups == null ? null : startups.FirstOrDefault(t => t.Name == key.Substring(6));
+                var s = startups == null ? null : startups.FirstOrDefault(t => t.Key == key.Substring(6));
                 if (s != null)
                 {
                     y = Title2(g, s.Name, x, y, w);
@@ -209,8 +215,8 @@ namespace AdeeboMeter
                 var now = insideNow;
                 if (now != null && now.Length >= 6)
                     y = InfoCardOn(insideInfo, g, "WHAT IT'S DOING RIGHT NOW  ·  MEASURED " + insideNowAt.ToString("HH:mm:ss", CultureInfo.CurrentCulture), new List<string[]> {
-                        new[] { "CPU", now[0], "3" }, new[] { "Memory", now[1], "3" }, new[] { "Disk", now[2], "3" }, new[] { "Network connections", now[3], "3" }, new[] { "Threads", now[5], "3" }, new[] { "Window", now[4] == "" ? "none (works in the background)" : now[4], "3" } }, null, x, y, w);
-                else if (now != null) y = Lead2(g, "It has exited.", x, y, w);
+                        new[] { "CPU", now[0], "3" }, new[] { "Memory", now[1], "3" }, new[] { "Disk", now[2], "3" }, new[] { "Network", now[3], "3" }, new[] { "Threads", now[5], "3" }, new[] { "Window", now[4] == "" ? "none (works in the background)" : now[4], "3" } }, null, x, y, w);
+                else if (now != null) y = Lead2(g, now.Length == 1 && now[0].StartsWith("unavailable", StringComparison.Ordinal) ? "Still running, but Windows wouldn't give its numbers (" + now[0].Substring(13) + ")." : "It has exited.", x, y, w);
                 else y = Lead2(g, "Measuring for one second...", x, y, w);
                 var again = new RectangleF(x, y - 4 * S, 140 * S, 20 * S);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Measure again  ↻"), Draw.fBodyB, lb, again.X, again.Y);

@@ -38,8 +38,14 @@ namespace AdeeboMeter
             try
             {
                 int flags = (enumerator != "" ? 0x1 : 0) | (presentOnly ? 0x100 : 0), len; string filter = enumerator != "" ? enumerator : null;
-                int rc = CM_Get_Device_ID_List_SizeW(out len, filter, flags); if (rc != 0 || len <= 0) { err = rc == 0 ? "" : "Windows wouldn't list the devices (" + rc + ")."; return res; }
-                var buf = new char[len]; rc = CM_Get_Device_ID_ListW(filter, buf, len, flags); if (rc != 0) { err = "Windows wouldn't list the devices (" + rc + ")."; return res; }
+                // PC-050: a device plugged in between "how big?" and "give me the list" makes the list too small (CR_BUFFER_SMALL) - ask again
+                char[] buf = null; int rc = 0;
+                for (int tries = 0; tries < 4; tries++)
+                {
+                    rc = CM_Get_Device_ID_List_SizeW(out len, filter, flags); if (rc != 0 || len <= 0) { err = rc == 0 ? "" : "Windows wouldn't list the devices (" + rc + ")."; return res; }
+                    buf = new char[len + 1024]; rc = CM_Get_Device_ID_ListW(filter, buf, buf.Length, flags); if (rc != 0x1A) break;
+                }
+                if (rc != 0) { err = "Windows wouldn't list the devices (" + rc + ")."; return res; }
                 foreach (var id in new string(buf).Split(Nul, StringSplitOptions.RemoveEmptyEntries).Take(3000))
                 {
                     int inst; if (CM_Locate_DevNodeW(out inst, id, 1 /*phantom: devices not plugged in too*/) != 0) continue;
