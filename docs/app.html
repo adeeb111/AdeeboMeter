@@ -154,6 +154,8 @@ img.logo{width:34px;height:34px;flex:none;display:block}
 #wframe{flex:1;width:100%;border:0;background:var(--bg)}
 body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{display:none}}
 @media (min-width:768px){#web{left:224px;bottom:0}}
+.pcrow2{display:flex;align-items:center;gap:12px;width:100%;border:1px dashed var(--edge);background:none;color:var(--ink);font:inherit;text-align:left;border-radius:16px;padding:12px 14px;margin:8px 0 14px;cursor:pointer}.pcrow2 .tx{flex:1}.pcrow2 b{display:block}.pcrow2 .tx span{color:var(--sub);font-size:13px}
+.tog.on{background:var(--blue)}#qrbox svg{width:100%;height:auto;border-radius:8px}
 /* views (v4): the View chip and companion button, one result per view, game and service cards, quick buttons, activity, sheets */
 .vrow{display:flex;gap:8px;align-items:center;margin:0 0 12px}
 .vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:left}
@@ -199,7 +201,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
 <div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back"></button><img class="logo" src="/img/logo.svg" alt="" width="30" height="30" style="width:30px;height:30px"><b>AdeeboMeter</b><span id="wtitle" hidden></span></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
 <nav class="tabs"><div class="in" id="tabs"></div></nav>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="/voice.js"></script>
+<script src="/voice.js"></script><script src="/calc.js" defer></script><script src="/qr.js" defer></script>
 <script>
 (function () {
   "use strict";
@@ -751,7 +753,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   function quick() {
     var on = phase === "live", q = function (go, icn, k, t, act) { return '<button ' + (act ? 'data-act="' + act + '"' : 'data-go="' + go + '"') + '><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; };
     return '<div class="qa2"><div class="qh">ON THIS PHONE</div><div class="qa">' + q("", "report", "k-pc", "Report", "report") + q("walk", "walk", "k-walk", "Wi-Fi walk") + q("learn", "book", "k-learn", "Learn") + '<button data-web="/games.html" data-title="Games"><span class="ic qc k-games">' + ic("game", 18) + '</span>Games</button></div>' +
-      '<div class="qh">' + (on ? "YOUR PC" : 'WITH YOUR PC <button class="lnk" data-go="pair">Pair ›</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q("tools", "search", "k-tools", "Checks") + '</div></div>';
+      '<div class="qh">' + (on ? "YOUR PC" : 'WITH YOUR PC <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div></div>';
   }
   function actList(n) {
     var L = DAY.d === today() ? DAY.act : [];
@@ -928,12 +930,322 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
 
   // ---------------------------------------------------------------- Tools: start from the problem
   var JOURNEYS = [["Internet is slow", "speed vs delay, Wi-Fi, your provider, DNS", "checkup"], ["Games lag", "your game's servers: ping, loss, jitter", "gamecompare"], ["Calls keep breaking up", "delay when the line is busy", "bloat"], ["Websites won't load or are slow", "which DNS server is fastest here", "dnsrace"], ["A device disappeared", "who's here now, and who went quiet", "@devices"], ["Is this Wi-Fi OK to use?", "hotel, cafe or guest Wi-Fi", "hotel"], ["Is it my phone or my PC?", "your PC's checkup and this phone's view, side by side", "@report"]];
+  // ---------------------------------------------------------------- the phone's own toolbox: useful with no PC at all
+  // Everything here runs in this browser: timings are small web requests (no speed test), name lookups go to Cloudflare's
+  // and Google's public DNS-over-HTTPS, calculators are the PC's own maths (calc.js), the QR code is drawn here (qr.js).
+  // Nothing is stored anywhere but this phone. Tabs: with no PC, Devices and PC give way to Learn and Live.
+  function hasPc() { return phase === "live" || phase === "connecting" || phase === "asking" || !!recLoad(); }
+  var CALCS = [
+    ["NETWORK MATHS", "subnet", "Subnet", "Subnet calculator", [["Address", "10.1.2.3/22", "10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64"], ["Gateway (optional)", "", "e.g. 10.1.0.1 - may carry its own mask"], ["Is this IP inside? (optional)", "", "e.g. 10.1.3.200"]], [0, 2, 1]],
+    ["NETWORK MATHS", "vlsm", "Vlsm", "VLSM planner", [["Block", "10.0.0.0/22"], ["Hosts each subnet needs", "200, 60, 12, 2"]]],
+    ["NETWORK MATHS", "wildcard", "Wildcard", "Wildcard mask", [["Mask", "255.255.252.0", "255.255.252.0, /22 or 0.0.3.255"]]],
+    ["NETWORK MATHS", "v6split", "V6Split", "IPv6 prefix split", [["Prefix", "2001:db8:abcd::/48"], ["Split into", "/56", "/56, /64 or a count like 4"]]],
+    ["NETWORK MATHS", "stack", "Stack", "Packet stack and MTU", [["Layers, top to bottom", "tcp ipv4 ethernet", "or a preset: web, game, call, dsl, vpn, office vpn"], ["Link MTU", "1500"], ["Data size in bytes (optional)", ""]]],
+    ["NETWORK MATHS", "bdp", "Bdp", "BDP and TCP window", [["Link speed", "1 Gbps"], ["Round trip", "80 ms"], ["TCP window (optional)", "", "e.g. 64 KB"]]],
+    ["NETWORK MATHS", "binhex", "Number", "Decimal, hex and binary", [["Number, address or MAC", "200", "200, 0xC8, 0b11001000, 192.168.1.10, 00:1A:2B:3C:4D:5E"]]],
+    ["NETWORK MATHS", "units", "Units", "Bits, bytes and units", [["Value", "100 Mbps", "100 Mbps, 12 MB/s, 1 GiB or 90 min"]]],
+    ["NETWORK MATHS", "ports", "", "Port lookup", []],
+    ["WIRELESS MATHS", "cellular", "Cellular", "LTE and 5G throughput", [["Technology", "LTE", "LTE or NR"], ["Bandwidth", "20 MHz"], ["MIMO and modulation", "4x4 256QAM"], ["NR subcarrier spacing (kHz)", "30", "15, 30 or 60"]]],
+    ["WIRELESS MATHS", "wifirate", "WifiRate", "Wi-Fi speed by channel width", [["Wi-Fi generation", "6", "4, 5, 6 or 7"], ["Channel width (MHz)", "80", "20, 40, 80, 160 or 320"], ["Streams", "2", "1 to 4"]]],
+    ["WIRELESS MATHS", "linkbudget", "LinkBudget", "Link budget (Wi-Fi, microwave)", [["Transmit power", "20 dBm"], ["Antenna gains (TX and RX)", "23 and 23 dBi"], ["Distance and frequency", "5 km at 5.8 GHz"], ["Receiver sensitivity (optional)", "-80 dBm"]]],
+    ["SERVERS & IT MATHS", "raid", "Raid", "RAID capacity", [["RAID level", "5", "0, 1, 5, 6 or 10"], ["Disks", "6"], ["Disk size", "4 TB"]]],
+    ["SERVERS & IT MATHS", "backup", "Backup", "Backup and restore time", [["Data", "2 TB"], ["Link", "1 Gbps"], ["Changes each day (optional)", "5%"]]],
+    ["SERVERS & IT MATHS", "ups", "Ups", "UPS runtime", [["Battery", "2 x 12 V 9 Ah", "or 216 Wh"], ["Load", "300 W"], ["Inverter efficiency (optional)", "85%"]]],
+    ["SERVERS & IT MATHS", "sla", "Sla", "Uptime and downtime (SLA)", [["Uptime", "99.9%", "99.9%, or a downtime like 4 h a year"]]],
+    ["SERVERS & IT MATHS", "growth", "Growth", "When does storage fill up?", [["Storage now", "10 TB"], ["Growth", "3% a month", "3% a month or 2 TB a year"], ["Capacity (optional)", "40 TB"]]],
+    ["STREAMING & HOME MATHS", "bandwidth", "Bandwidth", "Bandwidth and transfer time", [["Size (optional)", "4.7 GB"], ["Speed", "100 Mbps", "100 Mbps or 12 MB/s"], ["Time (optional)", "", "any two give the third"]]],
+    ["STREAMING & HOME MATHS", "stream", "Stream", "Streaming bitrate and upload", [["Resolution and frame rate", "1080p60"], ["Codec", "H264", "H264, HEVC or AV1"], ["Your upload (optional)", "10 Mbps"]]],
+    ["STREAMING & HOME MATHS", "datause", "DataUse", "Monthly data use", [["Video hours a day", "3 h HD", "add SD or 4K"], ["Video call hours a day", "1"], ["Gaming hours a day", "2"]]],
+    ["STREAMING & HOME MATHS", "plan", "Plan", "Is my plan fast enough?", [["Plan download", "300 Mbps"], ["Plan upload (optional)", "20 Mbps"], ["Busy at once", "2 4k, 1 call, 1 game", "4k, hd, sd, call, game, stream, work, download, browse"]]],
+    ["VOICE & TDM MATHS", "jitterbuf", "JitterBuf", "Jitter buffer size", [["Delay variation", "20-70 ms", "30 ms, or the range 20-70 ms"], ["Packet time (ms)", "20", "10, 20 or 30"], ["Codec (optional)", "G711", "G711, G729 or Opus"]]],
+    ["VOICE & TDM MATHS", "tdm", "Tdm", "E1 and T1 timeslots", [["Line", "E1", "E1 or T1"], ["Timeslots (optional)", "4", "1 to 31"]]],
+    ["MONEY & MARKETS MATHS", "fxconv", "FxConv", "Currency converter", [["Amount", "1000"], ["From", "USD"], ["To", "CAD"], ["Bank markup %", "2.5"]]],
+    ["MONEY & MARKETS MATHS", "pnl", "Pnl", "Profit, loss and break-even", [["Buy price", "150"], ["Sell price (optional)", "165"], ["Shares", "20"], ["Fees", "9.99", "commission, and a % for FX"]]],
+    ["MONEY & MARKETS MATHS", "possize", "PosSize", "Position size from risk", [["Account", "20000"], ["Risk per trade", "1%"], ["Entry price", "50"], ["Stop price", "47"]]],
+    ["MONEY & MARKETS MATHS", "avgcost", "AvgCost", "Average cost of buying in steps", [["Prices you bought at", "50, 45, 40"], ["Shares each time", "10, 10, 20"]]],
+    ["MONEY & MARKETS MATHS", "compound", "CompoundCalc", "Compound growth", [["Start with", "5000"], ["Add each month", "300"], ["Growth a year", "6%"], ["Years", "20"]]],
+    ["MONEY & MARKETS MATHS", "pctback", "PctBack", "A fall and the rise to get back", [["A price falls or rises by", "-30%"]]],
+    ["MONEY & MARKETS MATHS", "tradelat", "TradeLat", "Is my connection fast enough to trade?", [["Your ping to the broker", "40 ms"], ["Share price", "150"], ["How much it moves a day (%)", "2"]]],
+    ["COMMODITY MATHS", "comunits", "ComConv", "Commodity units", [["Amount", "1"], ["Unit", "barrel", "barrel, US gallon, litre, troy oz, kg, lb, bushel, MMBtu, kWh..."], ["Crop (for bushels)", "wheat", "wheat, soybeans or corn"]]],
+    ["COMMODITY MATHS", "futures", "FuturesCalc", "Futures contract value", [["Contract", "WTI crude oil", "WTI crude oil, Natural gas, Gold, Silver, Copper, Corn, Wheat, Soybeans"], ["Price", "75"], ["Contracts", "1"], ["A move of (%)", "5%"]]],
+    ["COMMODITY MATHS", "perunit", "PerUnit", "Commodity price per unit", [["Price in US$", "75"], ["Per", "barrel"], ["Show per", "litre"], ["Currency", "USD", "USD or CAD"]]],
+    ["GAMING MATHS", "tickrate", "TickRate", "Ticks behind in a game", [["Server tick rate (Hz)", "64"], ["Your ping", "40"], ["Smoothing (ticks)", "2"]]]];
+  function gname(g) { return g.replace(" MATHS", "").toLowerCase().replace(/\b(tdm|it|lte)\b/g, function (x) { return x.toUpperCase(); }).replace(/(^|\s)[a-z]/g, function (x) { return x.toUpperCase(); }); }
+  function calcOf(id) { for (var i = 0; i < CALCS.length; i++) if (CALCS[i][1] === id) return CALCS[i]; return null; }
+  var CV = {};   // what's typed into each calculator, this visit only
+  function calcRows(c) {
+    if (!window.AMCALC) return [["2", "Calculator", "still loading - try again in a second", ""]];
+    var v = CV[c[1]] || c[4].map(function (f) { return f[1]; }), args = c[5] ? c[5].map(function (k) { return v[k]; }) : v;
+    try { return AMCALC.fn[c[2]].apply(null, args); } catch (e) { return [["2", "Calculator", "couldn't work that out - check the boxes", ""]]; }
+  }
+  VIEWS.calc = function () {
+    var c = calcOf(S.calc); if (!c) { S.tab = "tools"; return VIEWS.tools(); }
+    if (c[1] === "ports") return portsView();
+    var v = CV[c[1]] || c[4].map(function (f) { return f[1]; });
+    if (c[1] === "fxconv" || c[1] === "perunit") feedRates();
+    return hdr(esc(c[3]), esc(gname(c[0])) + " · the same maths as the PC", "tools") +
+      '<div class="card">' + c[4].map(function (f, k) { return '<label class="k" for="cin' + k + '">' + esc(f[0]) + '</label><input class="in" id="cin' + k + '" data-cin="' + k + '" value="' + esc(v[k] || "") + '" placeholder="' + esc(f[2] || f[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">'; }).join("") +
+      (c[1] === "stack" ? '<div class="mini" style="grid-template-columns:repeat(3,1fr);margin-top:2px">' + ["web", "game", "call", "dsl", "vpn", "office vpn"].map(function (p) { return '<button data-cpre="' + p + '">' + p + '</button>'; }).join("") + '</div>' : '') + '</div>' +
+      '<div class="card" id="cres">' + rowsHtml(calcRows(c)) + '</div><p class="fine">Pure arithmetic on this phone - nothing is sent anywhere.</p>';
+  };
+  function feedRates() {   // the currency calculators use the day's Bank of Canada rates (fetched with Trading's numbers, once a day)
+    var m = DAY.trade && DAY.trade.m; if (m && m.fx && m.fx.items && window.AMCALC) { m.fx.items.forEach(function (i) { if (i.v) AMCALC.rates.list[i.c] = i.v; }); AMCALC.rates.day = m.fx.date ? new Date(m.fx.date + "T12:00:00") : null; return; }
+    if (feedRates.busy) return; feedRates.busy = 1;
+    tfetch(LIVE + "/all", 8000).then(function (r) { return r.ok ? r.json() : null; }).then(function (all) { feedRates.busy = 0; if (!all) return; DAY.trade = DAY.trade || { at: 0 }; DAY.trade.m = all.markets; keepDay(); if (S.tab === "calc") draw(); }, function () { feedRates.busy = 0; });
+  }
+  // ---- ports: the ones people meet at home and at work, in plain words
+  var PORTS = [[20, "FTP data", "File transfer (old, unencrypted)"], [21, "FTP", "File transfer control - unencrypted; prefer SFTP"], [22, "SSH / SFTP", "Remote command line and secure file copy"], [23, "Telnet", "Old remote login - unencrypted; shouldn't be open"],
+    [25, "SMTP", "Mail between servers; many home providers block it"], [53, "DNS", "Name lookups (UDP, and TCP for big answers)"], [67, "DHCP server", "Hands out addresses on your network"], [68, "DHCP client", "Your device asking for an address"], [69, "TFTP", "Simple file transfer - phones, switches, PXE boot"],
+    [80, "HTTP", "Web, unencrypted"], [88, "Kerberos", "Windows domain sign-in"], [110, "POP3", "Fetching mail (old, unencrypted)"], [123, "NTP", "Clock sync"], [135, "RPC", "Windows remote procedure calls - keep inside the network"], [137, "NetBIOS name", "Old Windows naming"],
+    [139, "NetBIOS session", "Old Windows file sharing"], [143, "IMAP", "Mail (unencrypted)"], [161, "SNMP", "Asking switches, routers and printers how they are"], [162, "SNMP trap", "Devices reporting problems"], [179, "BGP", "How internet providers swap routes"],
+    [389, "LDAP", "Directory lookups (Active Directory)"], [443, "HTTPS", "Web, encrypted - almost everything today, and QUIC on UDP 443"], [445, "SMB", "Windows file sharing - never expose to the internet"], [465, "SMTPS", "Sending mail, encrypted"], [500, "IKE", "VPN key exchange (IPsec)"],
+    [514, "Syslog", "Devices sending their logs"], [515, "LPD", "Old printing"], [587, "Submission", "Sending mail from an app, with sign-in"], [631, "IPP", "Printing"], [636, "LDAPS", "Directory lookups, encrypted"], [853, "DNS over TLS", "Private name lookups"],
+    [993, "IMAPS", "Mail, encrypted"], [995, "POP3S", "Fetching mail, encrypted"], [1194, "OpenVPN", "VPN"], [1433, "SQL Server", "Microsoft database"], [1521, "Oracle", "Oracle database"], [1701, "L2TP", "Old VPN"], [1723, "PPTP", "Old, broken VPN - don't use"],
+    [1812, "RADIUS", "Wi-Fi and VPN sign-in checks"], [1883, "MQTT", "Smart-home and IoT messages"], [1900, "SSDP", "Devices announcing themselves (UPnP)"], [2049, "NFS", "Unix file sharing"], [3074, "Xbox Live", "Xbox and Call of Duty multiplayer"], [3306, "MySQL", "Database"],
+    [3389, "RDP", "Windows Remote Desktop - never open it to the internet"], [3478, "STUN / TURN", "Calls finding a way through NAT (Teams, Zoom, WebRTC)"], [3479, "PlayStation", "PlayStation Network"], [4500, "IPsec NAT-T", "VPN through home routers"], [5060, "SIP", "Phone calls (VoIP) signalling"],
+    [5061, "SIP TLS", "Phone calls signalling, encrypted"], [5222, "XMPP", "Chat"], [5353, "mDNS", "Devices finding each other (AirPlay, printers, Chromecast)"], [5432, "PostgreSQL", "Database"], [5900, "VNC", "Remote screen - keep it off the internet"], [6881, "BitTorrent", "File sharing"],
+    [7547, "TR-069", "Your provider managing your router"], [8000, "HTTP alt", "Cameras, dev servers"], [8080, "HTTP alt", "Proxies, router pages, dev servers"], [8443, "HTTPS alt", "Admin pages, controllers"], [8883, "MQTT TLS", "Smart-home messages, encrypted"], [9100, "Raw printing", "Sending straight to a printer"],
+    [25565, "Minecraft", "Minecraft Java servers"], [27015, "Steam / Source", "Steam game servers (CS2 and others)"], [51820, "WireGuard", "VPN"]];
+  var portQ = "";
+  function portsView() {
+    var q = portQ.trim().toLowerCase(), n = parseInt(q, 10), L = PORTS.filter(function (p) { return !q || String(p[0]) === q || (p[1] + " " + p[2]).toLowerCase().indexOf(q) >= 0 || (!isNaN(n) && String(p[0]).indexOf(String(n)) === 0); });
+    return hdr("Port lookup", "What runs where, in plain words", "tools") + '<input class="search" id="portq" placeholder="A number or a name - 443, rdp, mail..." value="' + esc(portQ) + '" inputmode="search">' +
+      '<div class="card list" id="pres">' + (L.length ? L.slice(0, 60).map(function (p) { return '<div class="row" style="cursor:default"><span class="badge off" style="min-width:58px;text-align:center">' + p[0] + '</span><div class="tx"><b>' + esc(p[1]) + '</b><span>' + esc(p[2]) + '</span></div></div>'; }).join("") : '<p style="color:var(--sub);margin:0">Not in the list. Above 49152, ports are usually short-lived ones a device picks for itself.</p>') + '</div>';
+  }
+
+  // ---- DNS over HTTPS from the browser: Cloudflare and Google, side by side
+  var DOH = { cf: ["Cloudflare", function (n, t) { return "https://cloudflare-dns.com/dns-query?name=" + encodeURIComponent(n) + "&type=" + t; }], gg: ["Google", function (n, t) { return "https://dns.google/resolve?name=" + encodeURIComponent(n) + "&type=" + t; }] };
+  function doh(which, name, type) { return tfetch(DOH[which][1](name, type), 6000).then(function (r) { if (!r.ok) throw 0; return r.json(); }); }
+  function hostOf(s) { s = String(s || "").trim().toLowerCase().replace(/^[a-z]+:\/\//, "").replace(/[\/?#].*$/, "").replace(/:\d+$/, ""); return /^[a-z0-9.-]{1,253}$/.test(s) && s.indexOf(".") > 0 ? s.replace(/\.$/, "") : ""; }
+  var TYPES = { 1: "A", 28: "AAAA", 15: "MX", 16: "TXT", 5: "CNAME", 2: "NS", 257: "CAA", 6: "SOA" };
+  var T = {};   // each tool's state: what was typed and its last answer (this visit only)
+  function tst(k) { return T[k] || (T[k] = {}); }
+  async function runTool(k) {
+    var st = tst(k); if (st.busy) return; st.busy = 1; st.err = ""; draw();
+    try {
+      if (k === "isdown") {
+        var h = hostOf(st.q); if (!h) { st.err = "Type a website, like netflix.com"; return; }
+        var r = await Promise.all([timeHost("https://" + h + "/", 5), doh("cf", h, "A").catch(function () { return null; }), doh("gg", h, "A").catch(function () { return null; }), doh("cf", h, "AAAA").catch(function () { return null; })]);
+        st.res = { h: h, t: r[0], cf: r[1], gg: r[2], v6: r[3], at: Date.now() };
+        var up = r[0].n > 0; addAct("everyday", h + (up ? " is up from here" : " didn't answer from here"), up ? r[0].med + " ms · " + r[0].fail + " of " + (r[0].n + r[0].fail) + " missed" : "", up ? (r[0].fail ? 1 : 0) : 2);
+      } else if (k === "dns") {
+        var hn = hostOf(st.q); if (!hn) { st.err = "Type a name, like github.com"; return; }
+        var ty = st.ty || "A", rr = await Promise.all([doh("cf", hn, ty).catch(function () { return null; }), doh("gg", hn, ty).catch(function () { return null; })]);
+        st.res = { h: hn, ty: ty, cf: rr[0], gg: rr[1], at: Date.now() };
+      } else if (k === "fastdns") {
+        var R3 = [["Cloudflare", "https://cloudflare-dns.com/dns-query"], ["Google", "https://dns.google/dns-query"], ["Quad9", "https://dns.quad9.net/dns-query"]];
+        var out = []; for (var i = 0; i < R3.length; i++) out.push(await timeDoh(R3[i][1]));
+        st.res = { at: Date.now(), rows: R3.map(function (x, i) { return [x[0], out[i]]; }).sort(function (a, b) { return (a[1].med == null ? 1e9 : a[1].med) - (b[1].med == null ? 1e9 : b[1].med); }) };
+        addAct("everyday", "Fastest DNS: " + st.res.rows[0][0], st.res.rows.map(function (x) { return x[0] + " " + (x[1].med == null ? "–" : x[1].med + " ms"); }).join(" · "), 3);
+      } else if (k === "email") {
+        var d = hostOf(st.q); if (!d) { st.err = "Type a domain, like example.com"; return; }
+        var e = await Promise.all([doh("cf", d, "MX").catch(function () { return null; }), doh("cf", d, "TXT").catch(function () { return null; }), doh("cf", "_dmarc." + d, "TXT").catch(function () { return null; })]);
+        st.res = { d: d, mx: e[0], txt: e[1], dmarc: e[2], at: Date.now() };
+      } else if (k === "regions") {
+        var o = await Promise.all(REG.map(function (r) { return timeHost("https://dynamodb." + r[2] + ".amazonaws.com/", 4).then(function (x) { x.r = r; return x; }); }));
+        o.sort(function (a, b) { return (a.med == null ? 1e9 : a.med) - (b.med == null ? 1e9 : b.med); }); st.res = { at: Date.now(), o: o };
+        addAct("everyday", "Nearest cloud region: " + o[0].r[0], o[0].med != null ? o[0].med + " ms · " + o[0].r[1] : "", 3);
+      } else if (k === "who") {
+        var x = await (await tfetch(LIVE + "/me?" + Date.now(), 6000)).json(); st.res = { org: x.org || "", v6: !!x.v6, colo: x.colo || "", at: Date.now() };
+      } else if (k === "status") {
+        var sres = await tfetch(LIVE + "/status", 8000); if (!sres.ok) throw new Error("status"); st.res = await sres.json(); st.res.at = Date.now();
+      } else if (k === "rdap") {
+        var q = String(st.q || "").trim().toLowerCase(), isIp = /^[0-9.]+$/.test(q) || q.indexOf(":") >= 0, path = isIp ? "ip/" + q : "domain/" + hostOf(q);
+        if (!isIp && !hostOf(q)) { st.err = "Type a domain (example.com) or an IP address"; return; }
+        var rd2 = await tfetch("https://rdap.org/" + path, 9000); if (!rd2.ok) throw new Error(rd2.status === 404 ? "not found" : "no answer"); st.res = { q: q, ip: isIp, j: await rd2.json(), at: Date.now() };
+      } else if (k === "mac") {
+        var hex = String(st.q || "").replace(/[^0-9a-f]/gi, "").slice(0, 6).toUpperCase(); if (hex.length < 6) { st.err = "Type at least the first half of the address, like 3C:84:6A"; return; }
+        var mr = await tfetch(LIVE + "/mac?p=" + hex, 8000), mj = mr.ok ? await mr.json() : null; st.res = { p: hex, v: mj && mj.v || "", rnd: (parseInt(hex.slice(0, 2), 16) & 2) !== 0, at: Date.now() };
+      }
+    } catch (e) { st.err = k === "status" || k === "mac" || k === "who" ? "Couldn't reach our small server - try again in a moment." : k === "rdap" ? "No registration answer" + (e && e.message ? " (" + e.message + ")" : "") + " - some registries don't answer browsers." : "That didn't work - check the connection and try again."; }
+    finally { st.busy = 0; keepDay(); draw(); }
+  }
+  // a lookup each resolver has to really make (a fresh random name), timed like the others; the first one is the handshake
+  function b64url(u8) { var s = ""; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function wireQ(name) { var b = [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0]; name.split(".").forEach(function (l) { b.push(l.length); for (var i = 0; i < l.length; i++) b.push(l.charCodeAt(i)); }); b.push(0, 0, 1, 0, 1); return new Uint8Array(b); }
+  async function timeDoh(url) {
+    var t = [], fail = 0;
+    for (var i = 0; i <= 5; i++) { var nm = "am" + Math.random().toString(36).slice(2, 10) + ".example.com", s0 = performance.now(); try { await tfetch(url + "?dns=" + b64url(wireQ(nm)), 5000, true); if (i) t.push(performance.now() - s0); } catch (e) { if (i) fail++; } }
+    t.sort(function (a, b) { return a - b; }); return { med: t.length ? Math.round(t[Math.floor(t.length / 2)]) : null, n: t.length, fail: fail };
+  }
+  function ans(j, ty) { return j && j.Answer ? j.Answer.filter(function (a) { return !ty || TYPES[a.type] === ty; }) : []; }
+  function btn(k, label) { var st = tst(k); return '<button class="btn" data-run="' + k + '"' + (st.busy ? " disabled" : "") + '>' + (st.busy ? "Checking..." : label) + '</button>'; }
+  function qbox(k, ph, mode) { return '<input class="search" id="tq_' + k + '" data-tq="' + k + '" placeholder="' + esc(ph) + '" value="' + esc(tst(k).q || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="' + (mode || "url") + '" enterkeyhint="go">'; }
+  function errBox(k) { var e = tst(k).err; return e ? '<p style="color:var(--amber);font-weight:600;margin:0 2px 12px">' + esc(e) + '</p>' : ''; }
+  function stamp(at, extra) { return '<div class="tag2">THIS PHONE · ' + hm(at) + (extra ? " · " + extra : "") + '</div>'; }
+  var TOOLV = {};
+  TOOLV.isdown = function () {
+    var st = tst("isdown"), r = st.res, a = qbox("isdown", "A website - netflix.com, teams.microsoft.com...") + errBox("isdown") + btn("isdown", "Check from this phone");
+    if (r) {
+      var nx = r.cf && r.cf.Status === 3, addrs = ans(r.cf, "A"), up = r.t.n > 0, tries = r.t.n + r.t.fail, lv = nx ? 2 : !up ? 2 : r.t.fail ? 1 : 0;
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, tries + " TRIES") + '<div class="vh">' + (nx ? "That name doesn't exist" : !up ? "Not reachable from here" : r.t.fail ? "Up, but some tries failed" : "Up from here") + '</div><div style="color:var(--sub);font-size:14px">' +
+        esc(nx ? "Check the spelling - DNS says " + r.h + " isn't a real name." : !up ? "If other sites load, " + r.h + " is likely down or blocking you. Try again on mobile data to tell which." : r.h + " answered " + r.t.n + " of " + tries + " times. If it still won't load, it's more likely the app, the page or your account than the network.") + '</div>' +
+        (up ? '<div class="big3"><div><small>Delay</small><b>' + ms(r.t.med) + '</b></div><div><small>Spread</small><b>' + ms(r.t.jit) + '</b></div><div><small>Missed</small><b>' + r.t.fail + '</b></div></div>' : '') + '</div>';
+      var cfA = addrs.map(function (x) { return x.data; }).sort().join(","), ggA = ans(r.gg, "A").map(function (x) { return x.data; }).sort().join(",");
+      a += rowsCard([[r.cf ? (addrs.length ? "0" : "2") : "1", "Name lookup", !r.cf ? "Cloudflare's DNS didn't answer" : addrs.length ? addrs.length + " address" + (addrs.length > 1 ? "es" : "") + (r.gg ? (cfA === ggA ? " · Cloudflare and Google agree" : " · Cloudflare and Google differ (normal for big sites)") : "") : "no IPv4 address", ""],
+        [ans(r.v6, "AAAA").length ? "0" : "3", "IPv6", ans(r.v6, "AAAA").length ? "has an IPv6 address" : "IPv4 only", ""], [up ? "0" : "2", "Secure connection", up ? "opened fine" : "didn't open", ""]]) +
+        '<div class="btns" style="margin-top:12px"><button class="btn ghost" data-tool="dns" data-tq2="' + esc(r.h) + '">' + ic("search", 18) + ' DNS details</button><button class="btn ghost" data-go="phone">' + ic("phone", 18) + ' My connection</button></div>';
+    }
+    return hdr("Is it down or just me?", "Times any website from this phone", "tools") + a;
+  };
+  TOOLV.dns = function () {
+    var st = tst("dns"), r = st.res, ty = st.ty || "A";
+    var a = qbox("dns", "A name - github.com") + '<div class="mini" style="grid-template-columns:repeat(4,1fr);margin:0 0 12px">' + ["A", "AAAA", "MX", "TXT", "CNAME", "NS", "CAA", "SOA"].map(function (t) { return '<button class="' + (ty === t ? "on" : "") + '" data-dty="' + t + '">' + t + '</button>'; }).join("") + '</div>' + errBox("dns") + btn("dns", "Look it up");
+    if (r) {
+      var one = function (j, who) { if (!j) return [["1", who, "didn't answer", ""]]; if (j.Status === 3) return [["2", who, "no such name (NXDOMAIN)", ""]]; var L = ans(j); if (!L.length) return [["3", who, "no " + r.ty + " records", ""]];
+        return L.map(function (x) { return [x.type === 5 && r.ty !== "CNAME" ? "3" : "0", (TYPES[x.type] || x.type) + " · " + who, x.data, "good for " + x.TTL + " s" + (x.name.replace(/\.$/, "") !== r.h ? " · for " + x.name.replace(/\.$/, "") : "")]; }); };
+      a += '<div class="card" style="margin-top:14px">' + stamp(r.at, r.h + " · " + r.ty) + rowsHtml(one(r.cf, "Cloudflare").concat(one(r.gg, "Google"))) + '</div>';
+      if (r.cf) a += rowsCard([[r.cf.AD ? "0" : "3", "DNSSEC", r.cf.AD ? "signed, and the signature checks out" : "not signed (most names aren't)", "DNSSEC proves an answer wasn't tampered with on the way."]]);
+    }
+    return hdr("DNS lookup", "From Cloudflare and Google, side by side", "tools") + a;
+  };
+  TOOLV.fastdns = function () {
+    var st = tst("fastdns"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Times 5 fresh lookups at each public DNS service, from this phone, over the web (DNS over HTTPS).</p>' + errBox("fastdns") + btn("fastdns", "Time them");
+    if (r) { var mx = Math.max.apply(null, r.rows.map(function (x) { return x[1].med || 0; }).concat([1]));
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "5 LOOKUPS EACH") + '<div class="vh">' + esc(r.rows[0][1].med == null ? "None answered" : r.rows[0][0] + " answered fastest") + '</div><div class="bars">' + r.rows.map(function (x, i) { return '<div><span>' + x[0] + '</span><i style="--w:' + Math.round(100 * (x[1].med || mx) / (mx * 1.15)) + '%;--c:var(' + (i === 0 ? "--green" : "--blue") + ')"></i><b>' + (x[1].med == null ? "–" : x[1].med) + '</b></div>'; }).join("") + '</div>' +
+        '<p class="fine">ms per lookup. To use one on the phone: Settings › Private DNS (Android) or a DNS profile (iPhone). Your router\'s own DNS: on your PC.</p></div>'; }
+    return hdr("Fastest DNS", "Cloudflare, Google and Quad9 from here", "tools") + a;
+  };
+  TOOLV.email = function () {
+    var st = tst("email"), r = st.res, a = qbox("email", "A domain - example.com") + errBox("email") + btn("email", "Check its email setup");
+    if (r) {
+      var mx = ans(r.mx, "MX"), txts = ans(r.txt, "TXT").map(function (x) { return x.data.replace(/^"|"$/g, "").replace(/" "/g, ""); }), spf = txts.filter(function (t) { return /^v=spf1/i.test(t); }), dm = ans(r.dmarc, "TXT").map(function (x) { return x.data.replace(/^"|"$/g, "").replace(/" "/g, ""); }).filter(function (t) { return /^v=DMARC1/i.test(t); });
+      var nullMx = mx.length === 1 && /^0 \.$/.test(mx[0].data), all = spf[0] ? (/[-~?+]all\b/.exec(spf[0]) || [""])[0] : "", pol = dm[0] ? ((/;\s*p=(\w+)/i.exec(dm[0]) || [])[1] || "").toLowerCase() : "";
+      a += rowsCard([
+        [!r.mx ? "1" : nullMx ? "3" : mx.length ? "0" : "2", "Mail servers (MX)", !r.mx ? "no answer" : nullMx ? "says it takes no mail (null MX)" : mx.length ? mx.map(function (x) { return x.data.replace(/\.$/, ""); }).slice(0, 4).join(" · ") : "none - mail to @" + r.d + " bounces", ""],
+        [spf.length === 1 ? (all === "+all" ? "2" : all === "?all" || !all ? "1" : "0") : spf.length > 1 ? "2" : "1", "SPF (who may send)", spf.length > 1 ? spf.length + " SPF records - only one is allowed; receivers treat it as broken" : spf.length ? (all === "-all" ? "strict (-all): others are refused" : all === "~all" ? "soft (~all): others are marked as suspicious" : all === "?all" ? "neutral (?all): doesn't protect" : all === "+all" ? "+all lets anyone send as you - fix it" : "no ending rule") : "missing - anyone can pretend to send as @" + r.d, spf[0] ? spf[0].slice(0, 160) : ""],
+        [dm.length ? (pol === "reject" || pol === "quarantine" ? "0" : "1") : "1", "DMARC (what to do with fakes)", dm.length ? "p=" + (pol || "?") + (pol === "none" ? " - only watching; fakes still arrive" : pol === "quarantine" ? " - fakes go to spam" : pol === "reject" ? " - fakes are refused" : "") : "missing - receivers decide on their own", dm[0] ? dm[0].slice(0, 160) : ""],
+        ["3", "DKIM (signatures)", "can't be checked from outside without the sender's selector name", "Look at a real email's headers: DKIM-Signature: ... s=<selector>."]]) + '<p class="fine">From Cloudflare\'s DNS · ' + hm(r.at) + '</p>';
+    }
+    return hdr("Email setup check", "MX, SPF and DMARC in plain words", "tools") + a;
+  };
+  TOOLV.regions = function () {
+    var st = tst("regions"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Delay to ' + REG.length + ' cloud regions around the world, from this phone. Handy for a VPN, travel, or choosing a game server.</p>' + errBox("regions") + btn("regions", "Check the world");
+    if (r) { var mx = Math.max.apply(null, r.o.map(function (x) { return x.med || 0; }).concat([1]));
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "4 TRIES EACH") + '<div class="vh">Nearest: ' + esc(r.o[0].r[0] + " · " + r.o[0].r[1]) + '</div><div class="bars">' + r.o.map(function (x) { var l = lvOf(x, 60, 150); return '<div><span>' + esc(x.r[1]) + '</span><i style="--w:' + Math.round(100 * (x.med || mx) / (mx * 1.1)) + '%;--c:var(' + (l === 0 ? "--green" : l === 1 ? "--amber" : "--red") + ')"></i><b>' + (x.med == null ? "–" : x.med) + '</b></div>'; }).join("") + '</div><p class="fine">Light in fibre needs about 1 ms per 100 km each way, so far regions are slow for everyone.</p></div>'; }
+    return hdr("How far is the internet?", "Delay to the world's cloud regions", "tools") + a;
+  };
+  TOOLV.who = function () {
+    var st = tst("who"), r = st.res; if (!r && !st.busy && !st.err) setTimeout(function () { runTool("who"); }, 30);
+    var a = errBox("who");
+    if (r) a += rowsCard([["3", "Provider", r.org || "not known", "From the public address this phone uses now - looked up by our small server for this answer only, never kept."], [r.v6 ? "0" : "3", "IPv6", r.v6 ? "this connection uses IPv6" : "IPv4 only", ""], ["3", "Nearest Cloudflare city", r.colo || "–", "Where your traffic meets the big networks."]]) + btn("who", "Check again");
+    else a += '<div class="card empty"><b>Asking...</b></div>';
+    return hdr("Who carries my connection?", "Provider, IPv6, where you meet the internet", "tools") + a + '<p class="fine">Your address itself is never shown or kept.</p>';
+  };
+  TOOLV.status = function () {
+    var st = tst("status"), r = st.res; if (!r && !st.busy && !st.err) setTimeout(function () { runTool("status"); }, 30);
+    var a = errBox("status");
+    if (r && r.list) a += '<div class="card list">' + r.list.map(function (s) { var l = s.i === "none" ? 0 : s.i === "minor" ? 1 : s.i ? 2 : 3; return '<div class="row" style="cursor:default"><span class="vdot sm ' + ["ok", "warn", "bad", "off"][l] + '">' + ic(l === 0 ? "check" : l === 3 ? "clock" : "bang", 14) + '</span><div class="tx"><b>' + esc(s.n) + '</b><span>' + esc(s.d || (l === 3 ? "no answer" : "")) + '</span></div></div>'; }).join("") + '</div><p class="fine">From each service\'s own public status page, checked by our small server · ' + hm(r.at) + '. If yours says all good but it isn\'t working, run "Is it down or just me?".</p>' + btn("status", "Check again");
+    else if (!st.err) a += '<div class="card empty"><b>Asking...</b></div>';
+    return hdr("Is it down for everyone?", "The big services' own status pages", "tools") + a;
+  };
+  TOOLV.rdap = function () {
+    var st = tst("rdap"), r = st.res, a = qbox("rdap", "A domain or an IP - example.com, 8.8.8.8") + errBox("rdap") + btn("rdap", "Look it up");
+    if (r) {
+      var j = r.j, ev = {}; (j.events || []).forEach(function (e) { ev[e.eventAction] = e.eventDate; });
+      var who = (j.entities || []).filter(function (e) { return (e.roles || []).some(function (x) { return x === "registrar" || x === "registrant"; }); }).map(function (e) { var v = e.vcardArray && e.vcardArray[1] ? e.vcardArray[1].filter(function (x) { return x[0] === "fn"; })[0] : null; return v ? v[3] : e.handle; })[0];
+      var d = function (s) { return s ? new Date(s).toLocaleDateString() : "–"; };
+      a += rowsCard(r.ip ? [["3", "Network", (j.name || "") + (j.startAddress ? " · " + j.startAddress + " - " + j.endAddress : ""), ""], ["3", "Held by", who || j.handle || "–", ""], ["3", "Country", j.country || "–", ""], ["3", "Registered", d(ev.registration), ""]]
+        : [["3", "Registrar", who || "–", ""], [ev.expiration && new Date(ev.expiration) - Date.now() < 30 * 864e5 ? "1" : "3", "Expires", d(ev.expiration), ""], ["3", "Created", d(ev.registration), ""], ["3", "Name servers", (j.nameservers || []).map(function (n) { return (n.ldhName || "").toLowerCase(); }).join(" · ") || "–", ""]]) + '<p class="fine">From the public registration database (RDAP) · ' + hm(r.at) + '</p>';
+    }
+    return hdr("Who owns this?", "A domain or IP address's registration", "tools") + a;
+  };
+  TOOLV.mac = function () {
+    var st = tst("mac"), r = st.res, a = qbox("mac", "A hardware address - 3C:84:6A:12:34:56", "text") + errBox("mac") + btn("mac", "Find the maker");
+    if (r) a += rowsCard([[r.v ? "0" : "3", "Maker", r.v || (r.rnd ? "none - it's a private (random) address" : "not in the public list"), r.rnd ? "Phones and laptops make up an address per network for privacy, so it doesn't belong to a maker." : "Only the first half (" + r.p.replace(/(..)(?=.)/g, "$1:") + ") is looked up - the rest stays on this phone."]]);
+    return hdr("Who made this device?", "The maker from a hardware (MAC) address", "tools") + a + '<p class="fine">Find addresses on your router\'s page of connected devices.</p>';
+  };
+  TOOLV.wifiqr = function () {
+    var st = tst("wifiqr"), sec = st.sec || "WPA", esc2 = function (s) { return String(s || "").replace(/([\\;,:"])/g, "\\$1"); };
+    var payload = st.ssid ? "WIFI:T:" + (sec === "none" ? "nopass" : sec) + ";S:" + esc2(st.ssid) + ";" + (sec === "none" ? "" : "P:" + esc2(st.pw) + ";") + (st.hid ? "H:true;" : "") + ";" : "";
+    return hdr("Share Wi-Fi as a QR code", "Guests scan it to join - made on this phone", "tools") +
+      '<div class="card"><label class="k" for="qs">Network name</label><input class="in" id="qs" data-qf="ssid" value="' + esc(st.ssid || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false"><label class="k" for="qp">Password</label><input class="in" id="qp" data-qf="pw" type="text" value="' + esc(st.pw || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<div class="mini" style="grid-template-columns:repeat(3,1fr)">' + [["WPA", "WPA2/3"], ["WEP", "WEP"], ["none", "Open"]].map(function (x) { return '<button class="' + (sec === x[0] ? "on" : "") + '" data-qsec="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div>' +
+      '<div class="sw" style="border-top:0;padding-bottom:0"><div class="tx"><b>Hidden network</b></div><button class="tog' + (st.hid ? " on" : "") + '" data-qhid="1" aria-pressed="' + !!st.hid + '"></button></div></div>' +
+      '<div class="card" id="qrbox" style="text-align:center">' + (payload && window.AMQR ? '<div style="max-width:300px;margin:0 auto">' + AMQR.svg(payload) + '</div><p style="margin:10px 0 0;font-weight:700">' + esc(st.ssid) + '</p><p class="fine" style="margin:4px 0 0">Point a phone camera at it. The password stays on this phone - nothing is sent.</p>' : '<p style="color:var(--sub);margin:0">Type the network name to make the code.</p>') + '</div>';
+  };
+  // ---- watch the connection: a check every 2 seconds while you watch, with a timeline
+  var W = { on: false, pts: [], t0: 0, mins: 3, h: null };
+  function watchTick() {
+    if (!W.on) return; var s0 = performance.now();
+    tfetch(LIVE + "/ping?w" + Date.now(), 3000).then(function (r) { if (!r.ok) throw 0; return r.text(); }).then(function () { W.pts.push([Date.now(), Math.round(performance.now() - s0)]); }, function () { W.pts.push([Date.now(), null]); })
+      .then(function () { if (Date.now() - W.t0 >= W.mins * 60000) watchStop(true); else if (S.tab === "tool" && S.tool === "watch") draw(); });
+  }
+  function watchStop(done) { W.on = false; clearInterval(W.h); W.h = null; if (done && W.pts.length) { var s = watchSum(); addAct("everyday", "Watched " + W.mins + " min: " + (s.drops ? s.drops + " dropout" + (s.drops > 1 ? "s" : "") : "no dropouts"), "median " + (s.med == null ? "–" : s.med + " ms") + " · worst " + (s.max == null ? "–" : s.max + " ms"), s.drops ? 2 : s.max > 300 ? 1 : 0); } draw(); }
+  function watchSum() { var ok = W.pts.filter(function (p) { return p[1] != null; }).map(function (p) { return p[1]; }).sort(function (a, b) { return a - b; }), drops = 0, run = 0, gap = 0; W.pts.forEach(function (p) { if (p[1] == null) { run++; gap = Math.max(gap, run); if (run === 1) drops++; } else run = 0; }); return { n: W.pts.length, med: ok.length ? ok[Math.floor(ok.length / 2)] : null, max: ok.length ? ok[ok.length - 1] : null, drops: drops, gap: gap * 2 }; }
+  TOOLV.watch = function () {
+    var s = watchSum(), a = '<div class="mini" style="grid-template-columns:repeat(4,1fr);margin:0 0 12px">' + [1, 3, 5, 10].map(function (m) { return '<button class="' + (W.mins === m ? "on" : "") + '" data-wmin="' + m + '"' + (W.on ? " disabled" : "") + '>' + m + ' min</button>'; }).join("") + '</div>' +
+      (W.on ? '<button class="btn ghost" data-wstop="1">' + ic("stop", 18) + ' Stop · ' + Math.max(0, Math.ceil((W.t0 + W.mins * 60000 - Date.now()) / 1000)) + ' s left</button>' : '<button class="btn" data-wgo="1">' + ic("play", 18) + ' Start watching</button>');
+    if (W.pts.length) {
+      var w = 320, h = 90, mx = Math.max(100, s.max || 0), n = Math.max(W.pts.length, 2), d = "", bars = "";
+      W.pts.forEach(function (p, i) { var x = Math.round(i * (w - 4) / (n - 1)) + 2; if (p[1] == null) bars += '<rect x="' + (x - 2) + '" y="0" width="4" height="' + h + '" fill="var(--red)" opacity=".7"/>'; else d += (d ? "L" : "M") + x + " " + Math.round(h - 4 - (h - 8) * p[1] / mx); });
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(W.t0, s.n + " CHECKS") + '<div class="vh">' + (s.drops ? s.drops + " dropout" + (s.drops > 1 ? "s" : "") + " · longest " + s.gap + " s" : s.max > 300 ? "No dropouts, some spikes" : "Steady, no dropouts") + '</div><svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;margin-top:8px" role="img" aria-label="Delay over time">' + bars + '<path d="' + d + '" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/></svg>' +
+        '<div class="big3"><div><small>Median</small><b>' + ms(s.med) + '</b></div><div><small>Worst</small><b>' + ms(s.max) + '</b></div><div><small>Dropouts</small><b>' + s.drops + '</b></div></div><p class="fine">Red is a check that got no answer in 3 seconds. Keep this page open while it runs.</p></div>';
+    }
+    return hdr("Watch my connection", "A check every 2 seconds - catches dropouts", "tools") + a;
+  };
+  // ---- Wi-Fi vs mobile data, and before / after a router restart: two checks of this phone side by side
+  var CMP = { a: null, b: null }, BA = { before: null, after: null };
+  function sideBySide(x, y, nx, ny) {
+    var row = function (lab, f) { return '<div class="row" style="cursor:default"><div class="tx"><b>' + lab + '</b></div><span style="min-width:84px;text-align:right;font-weight:700">' + (x ? f(x) : "–") + '</span><span style="min-width:84px;text-align:right;font-weight:700">' + (y ? f(y) : "–") + '</span></div>'; };
+    var dl = function (r) { return r.err ? "no answer" : Math.round(r.med) + " ms"; }, jt = function (r) { return r.err ? "–" : Math.round(r.jit) + " ms"; };
+    return '<div class="card list"><div class="row" style="cursor:default"><div class="tx"></div><span class="tag2" style="min-width:84px;text-align:right">' + nx + '</span><span class="tag2" style="min-width:84px;text-align:right">' + ny + '</span></div>' + row("Delay", dl) + row("Spread", jt) + row("Provider", function (r) { return esc((r.org || "–").split(" ")[0]); }) + row("IPv6", function (r) { return r.v6 == null ? "–" : r.v6 ? "yes" : "no"; }) + '</div>';
+  }
+  function better(x, y, nx, ny) { if (!x || !y) return ""; if (x.err && y.err) return "Neither reached the internet"; if (x.err || y.err) return (x.err ? ny : nx) + " works; " + (x.err ? nx : ny) + " doesn't"; var d = Math.round(x.med - y.med); return Math.abs(d) < 10 ? "About the same" : (d > 0 ? ny : nx) + " is " + Math.abs(d) + " ms quicker"; }
+  TOOLV.compare = function () {
+    var ty = navigator.connection && navigator.connection.type, a = '<p class="fine" style="margin:0 2px 12px">Check once on Wi-Fi, then turn Wi-Fi off and check on mobile data. Is it your Wi-Fi, or your provider?' + (ty ? " (This phone says it's on " + (ty === "wifi" ? "Wi-Fi" : ty === "cellular" ? "mobile data" : ty) + " now.)" : "") + '</p>' +
+      '<div class="btns"><button class="btn' + (CMP.a ? " ghost" : "") + '" data-cmp="a"' + (phoneBusy ? " disabled" : "") + '>' + ic("wifi", 18) + ' On Wi-Fi now</button><button class="btn' + (CMP.b || !CMP.a ? " ghost" : "") + '" data-cmp="b"' + (phoneBusy ? " disabled" : "") + '>' + ic("signal", 18) + ' On mobile now</button></div>';
+    if (CMP.a || CMP.b) a += '<div style="margin-top:14px">' + sideBySide(CMP.a, CMP.b, "WI-FI", "MOBILE") + '</div>' + (CMP.a && CMP.b ? '<div class="card vcard"><div class="vh">' + esc(better(CMP.a, CMP.b, "Wi-Fi", "Mobile data")) + '</div><p class="fine">' + (CMP.a.err || CMP.b.err ? "" : CMP.a.med > CMP.b.med + 30 ? "Your Wi-Fi (or the router) is the slow part - try Wi-Fi walk, or restart the router." : CMP.b.med > CMP.a.med + 30 ? "Your home line is quicker than mobile here - normal." : "Both are similar, so Wi-Fi isn't the problem.") + '</p></div>' : '');
+    return hdr("Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?", "tools") + a;
+  };
+  TOOLV.restart = function () {
+    var a = '<div class="card list">' +
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : "Before you touch anything") + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
+      '<div class="row" style="cursor:default"><span class="vdot sm off">2</span><div class="tx"><b>Restart the router</b><span>Unplug it, count to 30, plug it back in. Wait until its lights settle (about 2 minutes) and the phone is back on Wi-Fi.</span></div></div>' +
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : "After the restart") + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
+    if (BA.before && BA.after) a += sideBySide(BA.before, BA.after, "BEFORE", "AFTER") + '<div class="card vcard"><div class="vh">' + esc(better(BA.before, BA.after, "Before", "After")) + '</div><p class="fine">' + (!BA.after.err && !BA.before.err && BA.before.med > BA.after.med + 30 ? "The restart helped. If it keeps coming back, the router may be overheating or need a firmware update - or ask your provider." : "No real change - the router wasn't the problem. Try Wi-Fi vs mobile data next.") + '</p><button class="btn ghost" data-ba="reset">Start over</button></div>';
+    return hdr("Before and after", "Did restarting the router help?", "tools") + a;
+  };
+  // ---- fix-it guides: start from the problem; each step is a check this phone can run, or one thing to try
+  var GUIDES = [
+    ["noinet", "No internet", "Nothing loads, or only some apps", [["Check this phone", "phone"], ["Is it just one site?", "isdown"], ["Try mobile data", "compare", "Turn Wi-Fi off. If mobile data works, the problem is your Wi-Fi or home line."], ["Restart the router", "restart"], ["Still down? Is the provider down?", "status", "Look at your provider's outage page too - and call them with the report."], ["Make a report", "@report"]]],
+    ["slow", "Internet is slow", "Pages and videos take ages", [["Check this phone", "phone"], ["Wi-Fi or provider?", "compare"], ["Find a better room", "walk"], ["Restart the router", "restart"], ["Is your plan enough?", "@calc:plan"], ["Make a report", "@report"]]],
+    ["drops", "Wi-Fi keeps dropping", "It cuts out for a few seconds", [["Watch it for a few minutes", "watch"], ["Find the weak rooms", "walk"], ["Restart the router", "restart", "Also try moving the router up high and away from the microwave and metal."], ["Make a report", "@report"]]],
+    ["lag", "Games lag", "Rubber-banding, high ping", [["Delay to your game's servers", "@view:gaming"], ["Watch for spikes", "watch"], ["Wi-Fi or provider?", "compare", "Play on a cable if you can - Wi-Fi adds delay and spikes."], ["How far behind you really are", "@calc:tickrate"]]],
+    ["calls", "Calls keep breaking up", "Teams, Zoom, Meet freeze or robot voice", [["Delay to your call apps", "@view:calls"], ["Watch for dropouts", "watch"], ["Wi-Fi or provider?", "compare"], ["Is it down for everyone?", "status"]]],
+    ["site", "A site or app won't load", "Everything else works", [["Is it down or just me?", "isdown"], ["Is it down for everyone?", "status"], ["Look up its name", "dns"], ["Try a faster DNS", "fastdns"]]]];
+  function guideOf(id) { for (var i = 0; i < GUIDES.length; i++) if (GUIDES[i][0] === id) return GUIDES[i]; return null; }
+  TOOLV.guide = function () {
+    var g = guideOf(S.guide); if (!g) return TOOLV.isdown();
+    return hdr(esc(g[1]), esc(g[2]) + " · step by step", "tools") + '<div class="card list">' + g[3].map(function (s, i) { return '<button class="row" data-step="' + esc(s[1]) + '"><span class="vdot sm off" style="font-weight:800">' + (i + 1) + '</span><div class="tx"><b>' + esc(s[0]) + '</b>' + (s[2] ? '<span>' + esc(s[2]) + '</span>' : '') + '</div>' + ic("chev", 18) + '</button>'; }).join("") + '</div><p class="fine">Each step opens a check on this phone; Back brings you here.</p>';
+  };
+  VIEWS.tool = function () { var f = TOOLV[S.tool]; return f ? f() : VIEWS.tools(); };
+  function rowsCard(rows) { return '<div class="card">' + rowsHtml(rows) + '</div>'; }
+
+  // ---- the Tools tab: the phone's toolbox first; your PC's tools at the top when one is connected
+  var PT = [["CHECK FROM THIS PHONE", [["phone", "speedo", "My connection", "Delay, steadiness, provider, IPv6"], ["isdown", "globe", "Is it down or just me?", "Time any website from here"], ["watch", "chart", "Watch my connection", "Catches dropouts over a few minutes"], ["compare", "signal", "Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?"], ["restart", "refresh", "Before and after", "Did restarting the router help?"], ["regions", "globe", "How far is the internet?", "Delay to the world's cloud regions"], ["walk", "walk", "Wi-Fi walk", "Find the best room"], ["@view", "game", "Game, call or stream check", "Pick a view on Home"]]],
+    ["LOOK UP", [["dns", "search", "DNS lookup", "A, AAAA, MX, TXT and more - two resolvers"], ["fastdns", "chart", "Fastest DNS", "Cloudflare vs Google vs Quad9, from here"], ["email", "send", "Email setup check", "MX, SPF and DMARC for a domain"], ["status", "clock", "Is it down for everyone?", "The big services' status pages"], ["who", "router", "Who carries my connection?", "Provider, IPv6, nearest city"], ["rdap", "help", "Who owns this domain or IP?", "Registration, expiry, owner"], ["mac", "phone", "Who made this device?", "Maker from a hardware address"]]],
+    ["MAKE", [["wifiqr", "wifi", "Share Wi-Fi as a QR code", "Guests scan to join"], ["@files", "lock", "Lock a file", ".adeebo - open it on a PC or phone"]]]];
+  var TICON = { speedo: "signal", globe: "wifi" };
+  function toolMatch(q, t) { return !q || (t[2] + " " + t[3] + " " + t[0]).toLowerCase().indexOf(q) >= 0; }
   VIEWS.tools = function () {
-    var a = hdr("Tools", "Start from the problem - or pick a check") + (wide() ? '<div class="two"><div>' : '');
-    a += '<h2>Fix a problem</h2><div class="card list">' + JOURNEYS.map(function (j) { var pc = j[2] !== "@report"; return rowBtn('data-jr="' + j[2] + '"', "help", "c-amber bg-amber", j[0], j[1], where(j[2] === "@report" ? "both" : "pc").replace("ON THIS PHONE", "PHONE + PC")); }).join("") + '</div>';
-    a += (wide() ? '</div><div>' : '') + '<h2>On this phone</h2><div class="card list">' + rowBtn('data-act="phone"', "phone", "c-green", "This phone's connection", "delay, steadiness, DNS, IPv6, carrier", where("phone")) + rowBtn('data-go="walk"', "walk", "c-green", "Wi-Fi walk", "room by room, no speed test", where("phone")) + '</div>';
-    a += '<h2>Checks on your PC</h2>' + (phase === "live" ? '<div class="card list">' + [["ping", "Ping"], ["mtr", "Traceroute / MTR"], ["dig", "DNS lookup"], ["tcpping", "TCP ping (a port)"], ["httptime", "Website timing"], ["ip46", "IPv6 vs IPv4"]].map(function (x) { return rowBtn('data-open="' + x[0] + '" data-tab="pc"', "", "", x[1], "", where("pc")); }).join("") + '</div><button class="btn ghost" data-go="pc" data-pctab="checks">All ' + (cat.length || "120+") + ' checks</button>' : needPc("Checks run on your PC."));
-    return a + (wide() ? '</div></div>' : '');
+    var q = findQ.toLowerCase().trim(), on = phase === "live", a = hdr("Tools", on ? "Your PC and this phone" : "All from this phone - no PC needed") + '<input class="search" id="find" placeholder="Find a tool - dns, subnet, down, qr..." value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Find a tool">';
+    if (on && !q) a += '<h2>Your PC</h2><div class="card list">' + JOURNEYS.slice(0, 4).map(function (j) { return rowBtn('data-jr="' + j[2] + '"', "help", "k-pc", j[0], j[1]); }).join("") + rowBtn('data-pct="checks" data-go="pc"', "search", "k-pc", "All PC checks", "Ping, trace, ports, Wi-Fi, MTU... (100+)") + '</div>';
+    if (!q) a += '<h2>Fix it</h2><div class="card list">' + GUIDES.map(function (g) { return rowBtn('data-guide="' + g[0] + '"', "help", "k-tools", esc(g[1]), esc(g[2])); }).join("") + '</div>';
+    var any = false;
+    PT.forEach(function (sec) { var L = sec[1].filter(function (t) { return toolMatch(q, t); }); if (!L.length) return; any = true; a += '<h2>' + sec[0] + '</h2><div class="card list">' + L.map(function (t) { return rowBtn('data-tool="' + t[0] + '"', TICON[t[1]] || t[1], sec[0] === "MAKE" ? "k-files" : sec[0] === "LOOK UP" ? "k-tools" : "k-dev", esc(t[2]), esc(t[3])); }).join("") + '</div>'; });
+    var groups = []; CALCS.forEach(function (c) { if (q && (c[3] + " " + c[0] + " " + c[1]).toLowerCase().indexOf(q) < 0) return; var g = groups.filter(function (x) { return x.g === c[0]; })[0]; if (!g) groups.push(g = { g: c[0], l: [] }); g.l.push(c); });
+    if (groups.length) { any = true; a += '<h2>Calculators <span style="text-transform:none;letter-spacing:0;font-weight:600">' + CALCS.length + ', the same as the PC\'s</span></h2>' + groups.map(function (g) { var op = q || openG["c:" + g.g]; return '<div class="card list" style="padding:4px 16px">' + rowBtn('data-grp="c:' + esc(g.g) + '"', "", "", esc(gname(g.g)), g.l.length + " calculator" + (g.l.length > 1 ? "s" : ""), '<span class="chev">' + (op ? "▴" : "▾") + '</span>') + (op ? g.l.map(function (c) { return rowBtn('data-calc="' + c[1] + '"', "", "", esc(c[3]), "", null); }).join("") : '') + '</div>'; }).join(""); }
+    if (!any) a += '<div class="card empty"><b>No tools match "' + esc(findQ) + '"</b><p>Try a shorter word, like dns or subnet.</p><button class="btn ghost" data-act="clearfind">Show everything</button></div>';
+    if (!on && !q) a += '<button class="pcrow2" data-go="addpc">' + ic("pc", 24) + '<span class="tx"><b>With a Windows PC: 100+ more</b><span>Every device on your network, real game ping, history</span></span>' + ic("chev", 18) + '</button>';
+    return a;
+  };
+  // ---- what a PC adds: an upgrade, not a wall
+  VIEWS.addpc = function () {
+    var F2 = [["wifi", "k-dev", "Every device on your network", "The TV, printer, doorbell - and how quick each answers"], ["clock", "k-pc", "What happened while you were away", "Replay any minute; the day's events"], ["game", "k-games", "Real game ping, whose lag it is", "Your PC times the actual servers"], ["send", "k-send", "Send files and text", "Phone ⇄ PC, end-to-end encrypted"], ["tools", "k-tools", "100+ checks", "Trace route, ports, Wi-Fi signal, MTU..."]];
+    return hdr("Add your Windows PC", "Everything here keeps working", S.from2 || "home") + '<div style="display:flex;justify-content:center;gap:10px;align-items:center;color:var(--sub);margin:6px 0 14px">' + ic("phone", 34) + '<span style="font-size:22px">+</span>' + ic("pc", 40) + '</div>' +
+      '<div class="card list">' + F2.map(function (f) { return '<div class="row" style="cursor:default"><span class="ic ' + f[1] + '">' + ic(f[0], 20) + '</span><div class="tx"><b>' + f[2] + '</b><span>' + f[3] + '</span></div></div>'; }).join("") + '</div>' +
+      '<button class="btn" data-go="pair">' + ic("pc", 20) + ' Pair with a code</button><p class="note">No PC app yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ" target="_blank" rel="noopener">Get AdeeboMeter for Windows ›</a> - free, no admin rights.</p>';
   };
   VIEWS.phone = function () {
     var a = hdr("This phone", "What a browser can measure", "tools");
@@ -994,29 +1306,50 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
 
   // ---------------------------------------------------------------- frame
   var TABS = [["home", "home", "Home"], ["devices", "wifi", "Devices"], ["pc", "pc", "PC"], ["tools", "tools", "Tools"], ["more", "more", "More"]];
-  var TABOF = { web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
+  var TABS0 = [["home", "home", "Home"], ["tools", "tools", "Tools"], ["@/learn/", "book", "Learn"], ["@/live.html", "chart", "Live"], ["more", "more", "More"]];   // no PC: every tab works on its own
+  var TABOF = { tool: "tools", calc: "tools", addpc: "home", activity: "home", web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
   function draw() {
     var th = S.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : S.theme;
     document.documentElement.setAttribute("data-theme", th); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
     $("app").innerHTML = S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : ""); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
-    var cur = TABOF[S.tab] || S.tab;
-    var tb = $("tabs");
+    var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join();
+    if (S.tab === "web" && !hasPc()) cur = "@" + webHome;
+    var tb = $("tabs"); if (tb.getAttribute("data-built") !== tkey) tb.removeAttribute("data-built");
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
-    else { tb.setAttribute("data-built", "1"); tb.innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TABS.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
+    else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
   }
-  function go(t) { keepDraft(); if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
+  function go(t) { keepDraft(); if (t && t[0] === "@") { openWeb(t.slice(1), t.indexOf("live") >= 0 ? "Live" : "Learn"); return; }
+    if (t === "tools" && S.fromGuide && S.tab !== "tools") { S.tab = "tool"; S.tool = "guide"; S.guide = S.fromGuide; S.fromGuide = ""; draw(); window.scrollTo(0, 0); return; }
+    if (!hasPc() && (t === "devices" || t === "pc" || t === "send")) { S.from2 = S.tab === "web" ? "home" : S.tab; t = "addpc"; } if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
   function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); var was = (drafts[open] || T.in.map(function (y) { return y[2] || ""; }))[k]; return e ? (e.value.trim() || (/^@(broker|gw)$/.test(was) ? was : "")) : ""; }); }
 
   document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
+    if (A("data-tool")) { var tl = A("data-tool"); if (A("data-tq2")) tst(tl).q = A("data-tq2"); if (tl === "@view") { S.tab = "home"; S.sheet = "view"; draw(); return; } if (tl === "@files") { openWeb("/files.html", "Files"); return; } if (tl === "phone" || tl === "walk") { go(tl); return; } S.tool = tl; S.tab = "tool"; draw(); window.scrollTo(0, 0); if (A("data-tq2")) runTool(tl); return; }
+    if (A("data-calc")) { S.calc = A("data-calc"); S.tab = "calc"; draw(); window.scrollTo(0, 0); return; }
+    if (A("data-run")) { runTool(A("data-run")); return; }
+    if (A("data-dty")) { tst("dns").ty = A("data-dty"); if (tst("dns").q) runTool("dns"); else draw(); return; }
+    if (A("data-cpre")) { var cc = calcOf("stack"), cv = CV.stack || cc[4].map(function (f) { return f[1]; }); cv[0] = A("data-cpre"); CV.stack = cv; draw(); return; }
+    if (A("data-guide")) { S.guide = A("data-guide"); S.tool = "guide"; S.tab = "tool"; draw(); window.scrollTo(0, 0); return; }
+    if (A("data-step")) { var sp = A("data-step"); S.fromGuide = S.guide;
+      if (sp === "@report") { S.fromGuide = ""; oneTap(); return; } if (sp.indexOf("@calc:") === 0) { S.calc = sp.slice(6); S.tab = "calc"; draw(); window.scrollTo(0, 0); return; }
+      if (sp.indexOf("@view:") === 0) { S.fromGuide = ""; S.view = sp.slice(6); wr("am-view", S.view); S.tab = "home"; draw(); window.scrollTo(0, 0); return; }
+      if (sp === "phone" || sp === "walk") { go(sp); return; } S.tool = sp; S.tab = "tool"; draw(); window.scrollTo(0, 0); return; }
+    if (A("data-cmp")) { var which = A("data-cmp"); (phoneP || Promise.resolve()).then(phoneCheck).then(function (r) { CMP[which] = r; draw(); }); return; }
+    if (A("data-ba")) { var w2 = A("data-ba"); if (w2 === "reset") { BA = { before: null, after: null }; draw(); return; } (phoneP || Promise.resolve()).then(phoneCheck).then(function (r) { BA[w2] = r; draw(); }); return; }
+    if (A("data-wgo")) { W.on = true; W.pts = []; W.t0 = Date.now(); clearInterval(W.h); W.h = setInterval(watchTick, 2000); watchTick(); draw(); return; }
+    if (A("data-wstop")) { watchStop(true); return; }
+    if (A("data-wmin")) { W.mins = +A("data-wmin"); draw(); return; }
+    if (A("data-qsec")) { tst("wifiqr").sec = A("data-qsec"); draw(); return; }
+    if (A("data-qhid")) { tst("wifiqr").hid = !tst("wifiqr").hid; draw(); return; }
     if (A("data-setview")) { S.view = A("data-setview"); wr("am-view", S.view); S.sheet = ""; S.tab = "home"; draw(); window.scrollTo(0, 0); return; }
     if (A("data-voice") != null && window.AMV) { AMV.set(A("data-voice")); setTimeout(draw, 300); return; }
     if (A("data-talk") && window.AMV && AMV.talk) { AMV.talk(A("data-talk")); draw(); return; }
@@ -1078,11 +1411,17 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     var k = e.target.getAttribute && e.target.getAttribute("data-sel"); if (k) { S[k] = e.target.value; if (k === "theme") wr("am-theme", S.theme === "dark" ? "" : S.theme); draw(); return; }
     if (e.target.id === "fpick" && e.target.files[0]) sendFile(e.target.files[0]);
   });
+  var calcT = null;
+  document.addEventListener("keydown", function (e) { if (e.key !== "Enter") return; var tq = e.target.getAttribute && e.target.getAttribute("data-tq"); if (tq) { e.preventDefault(); tst(tq).q = e.target.value; e.target.blur(); runTool(tq); } });
   document.addEventListener("input", function (e) {
     var id = e.target.id;
     if (id === "ftxt") { txt = e.target.value; return; }
     if (id === "dq") { S.q = e.target.value; draw(); return; }
     if (id === "find") { findQ = e.target.value; draw(); return; }
+    if (id === "portq") { portQ = e.target.value; draw(); return; }
+    var ci = e.target.getAttribute && e.target.getAttribute("data-cin"); if (ci != null) { var c0 = calcOf(S.calc); if (!c0) return; var v0 = CV[c0[1]] || c0[4].map(function (f) { return f[1]; }); v0[+ci] = e.target.value; CV[c0[1]] = v0; clearTimeout(calcT); calcT = setTimeout(function () { var el = $("cres"); if (el) el.innerHTML = rowsHtml(calcRows(c0)); }, 120); return; }
+    var tq = e.target.getAttribute && e.target.getAttribute("data-tq"); if (tq) { tst(tq).q = e.target.value; return; }
+    var qf = e.target.getAttribute && e.target.getAttribute("data-qf"); if (qf) { tst("wifiqr")[qf] = e.target.value; clearTimeout(calcT); calcT = setTimeout(draw, 250); return; }
   });
   // the clock: stale readings show as not live, a check that never answers frees the buttons
   setInterval(function () {

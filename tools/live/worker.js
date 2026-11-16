@@ -4,6 +4,9 @@
 const ORIGINS = ["https://adeebometer.com", "https://www.adeebometer.com"];
 const FX = ["USD", "EUR", "GBP", "CNY", "JPY", "INR", "CHF", "AUD", "MXN", "HKD"];
 const IDX = ["ENER", "MTLS", "FOPR", "AGRI", "BCPI"];
+// services with a public Statuspage status feed (name, host)
+const STATUS = [["Zoom", "status.zoom.us"], ["Discord", "discordstatus.com"], ["GitHub", "www.githubstatus.com"], ["Cloudflare", "www.cloudflarestatus.com"], ["Reddit", "www.redditstatus.com"], ["OpenAI (ChatGPT)", "status.openai.com"],
+  ["Dropbox", "status.dropbox.com"], ["Epic Games (Fortnite)", "status.epicgames.com"], ["Atlassian (Jira, Trello)", "status.atlassian.com"], ["Twilio", "status.twilio.com"], ["Vercel", "www.vercel-status.com"], ["Notion", "status.notion.so"]];
 const memo = new Map(), flying = new Map(), MAX = 400;   // isolate memory only: key -> {t, v}; at most MAX entries
 
 // every answer carries "at" (when the source was last read). A failed refresh serves the last copy only up to maxStale,
@@ -106,6 +109,22 @@ export default {
       case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "", now: Date.now() }, 0);   // now: lets the phone check its clock (AM-CG-376)
       // the phone app's "this phone" card: who carries this connection and whether it came over IPv6 - for this answer only,
       // the address itself is never returned or kept
+      // "Is it down for everyone?" - the services' own public status pages (Statuspage), read every 2 minutes and shared
+      case "/status": {
+        const list = await Promise.all(STATUS.map(([n, host]) => cached("st:" + host, 120, 900, async () => { const j = await get("https://" + host + "/api/v2/status.json", 120); return { i: String((j.status || {}).indicator || ""), d: String((j.status || {}).description || "").slice(0, 80) }; })
+          .then(e => ({ n, i: e.v.error ? "" : e.v.i, d: e.v.error ? "" : e.v.d }))));
+        return reply(req, { list }, 60);
+      }
+      // "Who made this device?" - only the maker part of a hardware address (first 3 bytes) is looked up; cached a day
+      case "/mac": {
+        const p = (u.searchParams.get("p") || "").toUpperCase();
+        if (!/^[0-9A-F]{6}$/.test(p)) return reply(req, { error: "bad prefix" }, 0);
+        const e = await cached("mac:" + p, 86400, 86400 * 7, async () => {
+          const r = await fetch("https://api.macvendors.com/" + p.replace(/(..)(?=.)/g, "$1:"), { signal: AbortSignal.timeout(6000) });
+          if (r.status === 404) return { v: "" }; if (!r.ok) throw new Error("mac " + r.status); return { v: (await r.text()).slice(0, 80) };
+        });
+        return reply(req, { v: e.v.error ? "" : e.v.v }, 3600);
+      }
       case "/me": {
         const ip = req.headers.get("CF-Connecting-IP") || "", cf = req.cf || {};
         return reply(req, { org: String(cf.asOrganization || "").slice(0, 80), v6: ip.includes(":") ? 1 : 0, colo: cf.colo || "", country: cf.country || "" }, -1);

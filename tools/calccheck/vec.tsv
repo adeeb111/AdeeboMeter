@@ -1,0 +1,161 @@
+Stack	tcp ipv4 ethernet	1500	
+Stack	web		
+Stack	game		2000
+Stack	call	1500	160
+Stack	dsl		
+Stack	vpn	1500	1400
+Stack	office vpn		
+Stack	tcp ipv6 mpls x2 ethernet	9000	20000
+Stack	udp ipv6 ethernet	1500	3000
+Stack	foo		
+Stack	tcp ipv4 gre ipv4 ethernet	600	
+Vlsm	10.0.0.0/22	200, 60, 12, 2
+Vlsm	192.168.1.0/24	100 100 100
+Vlsm	10.0.0/22	5
+Bandwidth	4.7 GB	100 Mbps	
+Bandwidth		1 Gbps	
+Bandwidth	1,500 MB		10 min
+Bandwidth		12 MB/s	90 s
+Bandwidth	1.000 GB	100	
+Bandwidth	50 GB	300 Mbps	1 h
+Number	200
+Number	0xC8
+Number	0b11001000
+Number	192.168.1.10
+Number	255.255.252.0
+Number	00:1A:2B:3C:4D:5E
+Number	C8h
+Number	46
+Number	18446744073709551615
+Number	abc
+Number	nope!
+Wildcard	255.255.252.0
+Wildcard	/22
+Wildcard	0.0.3.255
+Wildcard	24
+Wildcard	255.0.255.0
+Wildcard	/31
+V6Split	2001:db8:abcd::/48	/56
+V6Split	2001:db8:abcd::/48	16
+V6Split	2001:db8::/32	/64
+V6Split	2001:db8:abcd:12::/64	/127
+V6Split	2001:db8:abcd::/48	
+V6Split	fe80::1/10	/64
+Bdp	1 Gbps	80 ms	
+Bdp	1 Gbps	80	64 KB
+Bdp	100 Mbps	20 ms	1 MB
+Cellular	LTE	20 MHz	4x4 256QAM	
+Cellular	NR	100 MHz	4x4 256QAM	30
+Cellular	NR	20 MHz	2x2 64QAM	15
+Cellular	NR	60 MHz	4x4	15
+Cellular	LTE	1.4 MHz	2x2 64qam	
+WifiRate	6	80	2
+WifiRate	ax	160	2
+WifiRate	5	80	3
+WifiRate	4	40	2
+WifiRate	7	320	4
+WifiRate	4	80	2
+LinkBudget	20 dBm	23 and 23 dBi	5 km at 5.8 GHz	-80 dBm
+LinkBudget	100 mW	2	200 m at 2.4 GHz	
+LinkBudget	1 W	30	10 mi at 900 MHz	-90
+Raid	5	6	4 TB
+Raid	10	6	8
+Raid	6	3	4 TB
+Raid	0	4	2 TB
+Raid	1	2	1 TB
+Raid	10	5	4 TB
+Raid	5	3.9	4 TB
+Backup	2 TB	1 Gbps	5%
+Backup	500 GB	100 Mbps	100 GB
+Ups	2 x 12 V 9 Ah	300 W	
+Ups	216 Wh	50 W	90%
+Ups	1500 VA	300 W	
+Sla	99.9%
+Sla	99.999%
+Sla	4 h a year
+Sla	30 min a month
+Sla	99.95
+Growth	10 TB	3% a month	40 TB
+Growth	10	2 TB a year	20
+Growth	50 TB	1 TB a month	40 TB
+Stream	1080p60	H264	10 Mbps
+Stream	4K60	AV1	
+Stream	720p30	HEVC	2 Mbps
+DataUse	3 h HD	1	2
+DataUse	4 h 4k	2	5
+Plan	300 Mbps	20 Mbps	2 4k, 1 call, 1 game
+Plan	50	5	3 hd 2 calls 1 stream 1 foo
+Units	100 Mbps
+Units	12 MB/s
+Units	1 GiB
+Units	90 min
+Units	1 Gb
+Tdm	E1	4
+Tdm	T1	
+Tdm	E1	31
+Tdm	T1	30
+JitterBuf	20-70 ms	20	G711
+JitterBuf	30 ms	20	opus
+JitterBuf	50	30	G729
+FxConv	1000	USD	CAD	2.5
+FxConv	250	EUR	USD	
+FxConv	1000	USD	JPY	
+Pnl	150	165	20	9.99
+Pnl	150	140	20	9.99 2%
+Pnl	150		100	
+PosSize	20000	1%	50	47
+PosSize	5000	2%	100	99
+AvgCost	50, 45, 40	10, 10, 20
+AvgCost	50 45 40	
+CompoundCalc	5000	300	6%	20
+CompoundCalc	0	100	0	10
+PctBack	-30%
+PctBack	+50%
+PctBack	-50%
+TradeLat	40	150	2
+TradeLat	250	10	5
+ComConv	1	barrel	
+ComConv	100	bushel	corn
+ComConv	1	troy oz	
+ComConv	2	MMBtu	
+FuturesCalc	WTI crude oil	75	1	
+FuturesCalc	Gold	2000	2	5%
+PerUnit	75	barrel	litre	CAD
+PerUnit	2000	troy oz	gram	USD
+PerUnit	75	barrel	kg	
+TickRate	64	40	2
+TickRate	20	120	
+Bandwidth	1.005 GB	1 Mbps	
+Units	0.125 s
+Units	1.5 TB
+Units	3 ms
+Units	512 KiB
+Units	10 Gbps
+Stack	tls tcp ipv6 pppoe vlan ethernet	1492	1400
+Stack	quic udp ipv4 wifi		
+Stack	icmp ipv4 ethernet	1500	1472
+Stack	icmp ipv4 ethernet	1500	1473
+Number	4294967296
+Number	0000.0c12.3456
+Number	65535
+Number	0
+Wildcard	0.0.0.0
+Wildcard	255.255.255.255
+Wildcard	/0
+V6Split	2001:db8::/32	1000
+V6Split	::/0	/1
+Cellular	5G	50 MHz	2x2 1024QAM	30
+Raid	raid 6	12 disks	16 TB
+Growth	5 TB	10% a year	
+Sla	1 h a week
+Sla	5 min a day
+Plan	1 Gbps		4 4k 2 gaming 3 zoom
+JitterBuf	-5 to 40	10	
+CompoundCalc	1000		7	30
+PctBack	+100%
+TradeLat	5	3000	1
+ComConv	500	kg	
+ComConv	1	kWh	
+PerUnit	3.5	MMBtu	kWh	
+FuturesCalc	Silver	30	3	-2%
+TickRate	128	15	1

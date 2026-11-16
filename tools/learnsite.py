@@ -214,7 +214,7 @@ for page in ['index.html', 'games.html', 'live.html', 'app.html', 'r.html', 'fil
     h = re.sub(r'<!--pwa-->.*?<!--/pwa-->\n?', '', h, flags=re.S)
     h = h.replace('</head>', PWA + '\n</head>', 1)
     with open(f, 'w', encoding='utf-8', newline='\n') as o: o.write(h)
-core = ['app.html', 'ui.css', 'ui.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
+core = ['app.html', 'ui.css', 'ui.js', 'calc.js', 'qr.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
         'favicon.svg', 'manifest.webmanifest', 'img/app/icon-192.png', 'img/app/apple-touch-icon.png']
 extra = [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
 ver = hashlib.sha256(b''.join(open(os.path.join(root, 'docs', x), 'rb').read() for x in core + extra)).hexdigest()[:12]
