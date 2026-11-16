@@ -333,6 +333,43 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   .frame .slide{width:1280px;height:720px;aspect-ratio:auto;border-radius:0;box-shadow:none;break-after:page;page-break-after:always}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* v3 flat home (approved Nov 2026): flat surfaces, 1-px lines, blue actions, soft section tints on icon chips only */
+:root{--c-learn:#C2621F;--c-games:#A8459C;--c-live:#1F7DB8;--c-files:#6B4FD0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#2F7BF6;--blue-d:#4A8CFF;--blue-s:#1E3E78;--green:#22C47A;--green-s:#123D2E;--amber:#F2B23C;--amber-s:#3D3014;--red:#F26464;--line:#22355A;--card:#121F38;--page:#0B1426;--soft:#182844;--sub:#93A6C6;--muted:#647A9E;--nav:rgba(11,20,38,.92);--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB}}
+:root[data-theme="dark"]{--blue:#2F7BF6;--blue-d:#4A8CFF;--blue-s:#1E3E78;--green:#22C47A;--green-s:#123D2E;--amber:#F2B23C;--amber-s:#3D3014;--red:#F26464;--line:#22355A;--card:#121F38;--page:#0B1426;--soft:#182844;--sub:#93A6C6;--muted:#647A9E;--nav:rgba(11,20,38,.92);--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB}
+.v3{padding:52px 0;border-bottom:1px solid var(--line)}
+.v3 svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.v3 h1{font-size:60px;line-height:1.03;letter-spacing:-.03em;margin:0 0 18px;font-weight:800;color:var(--ink)}
+.v3 h2{font-size:36px;letter-spacing:-.02em;margin:0 0 6px;line-height:1.1;text-align:left}
+.v3hero{padding:60px 0 54px}.v3grid{display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center}
+.v3lead{font-size:21px;color:var(--sub);margin:0 0 30px;max-width:560px}.v3sub{color:var(--sub);margin:0 0 26px;font-size:18px}.v3note{color:var(--sub);margin:16px 0 0;font-size:15px}
+.v3ctas{display:flex;gap:12px;flex-wrap:wrap}
+.v3btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:16px;border-radius:12px;padding:13px 20px;background:var(--blue);color:#fff!important;text-decoration:none;white-space:nowrap;border:0}
+.v3btn:hover{background:var(--blue-d)}.v3btn.line{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink)!important}.v3btn.line:hover{box-shadow:inset 0 0 0 1.5px var(--blue)}.v3btn.sm{padding:10px 16px;font-size:15px}
+.v3card{background:var(--card);border:1px solid var(--line);border-radius:18px;color:var(--ink);text-decoration:none}
+.v3eg{padding:6px}.v3eg .lab,.v3act .lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);padding:10px 14px 8px}
+.v3eg .in{background:var(--page);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.v3eg h3{display:flex;align-items:center;gap:10px;margin:8px 0 4px;font-size:22px}.v3p{color:var(--sub);margin:0 0 18px;font-size:15px}
+.v3path{display:grid;grid-template-columns:1fr 1fr 1fr;position:relative;text-align:center;margin-bottom:18px}
+.v3path:before{content:"";position:absolute;left:16.6%;right:50%;top:26px;border-top:3px solid var(--green)}.v3path:after{content:"";position:absolute;left:50%;right:16.6%;top:26px;border-top:3px dashed var(--line)}
+.v3path .n{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.v3path .n i{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1.5px solid var(--line);color:var(--ink)}.v3path .n i.w{border-color:var(--amber)}
+.v3path .n b{font-size:16px}.v3path .n small{color:var(--sub);font-size:13px}
+.v3tag{display:inline-block;font-size:12px;font-weight:700;border-radius:7px;padding:3px 9px}.v3tag.ok{background:var(--green-s);color:var(--green)}.v3tag.warn{background:var(--amber-s);color:var(--amber)}.v3tag.off{background:var(--soft);color:var(--sub)}
+.v3next{display:flex;align-items:center;gap:14px;border-top:1px solid var(--line);padding-top:14px}.v3next div{flex:1}.v3next small{color:var(--sub);display:block;font-size:14px}.v3next b{font-size:18px}
+.v3four{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.v3three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.v3tile{display:flex;flex-direction:column;gap:10px;padding:20px;position:relative}.v3tile:hover{border-color:var(--blue)}
+.v3tile .v3top{display:flex;align-items:center;gap:12px}.v3tile b{font-size:20px}.v3tile .d{color:var(--sub);font-size:15px;padding-right:26px}.v3tile .go{position:absolute;right:18px;bottom:18px;color:var(--sub)}
+.v3chip{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);flex:none}
+.v3step{padding:22px}.v3step .num{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;margin-bottom:12px}.v3step b{font-size:19px;display:block;margin-bottom:4px}.v3step p{margin:0;color:var(--sub);font-size:15px}
+.v3more{margin:20px 0 0;color:var(--sub)}
+.v3two{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;align-items:center}
+.v3act{padding:6px 18px 10px}.v3act .lab{padding:10px 0 4px}.v3act .r{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.v3act .r:nth-child(2){border-top:0}.v3act .r b{flex:1;font-weight:600}.v3act .r>span:last-child{color:var(--sub)}
+.v3act .d{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}.v3act .d.ok{background:var(--green)}.v3act .d.warn{background:var(--amber);color:#1a1100}
+.v3for{padding:30px 0}.v3for p{text-align:center;font-size:17px;margin:0 0 24px}
+@media (max-width:900px){.v3grid,.v3two{grid-template-columns:1fr;gap:26px}.v3hero{padding:34px 0 36px}.v3 h1{font-size:38px}.v3lead{font-size:18px}.v3ctas .v3btn{width:100%}
+ .v3four{grid-template-columns:1fr 1fr}.v3three{grid-template-columns:1fr}.v3 h2{font-size:27px}.v3{padding:36px 0}.v3tile{padding:16px}.v3tile b{font-size:17px}.v3tile .d{font-size:13px}.v3eg h3{font-size:18px}.v3path .n i{width:44px;height:44px}.v3path:before,.v3path:after{top:21px}}
 </style>
 <script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <!-- Turnstile loads only when someone starts the feedback form (see below) - never on the page with the donation buttons until then -->
@@ -343,8 +380,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 <header class="top"><div class="wrap">
   <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>AdeeboMeter</a>
   <nav class="links">
-    <a href="#watch">Watch</a><a href="#theory">How it works</a><a href="#privacy">Privacy</a><a href="#install">Install</a><a href="#feedback">Feedback</a>
-    <a href="#feedback">Feedback</a>
+    <a href="#how">How it works</a><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a><a href="files.html">Files</a><a href="/app.html">Open phone app ↗</a>
     <a class="donate-top" href="#donate" aria-label="Donate">&#9829;<span class="t"> Donate</span></a>
     <button class="theme" type="button" aria-label="Switch day / night"><span class="knob"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="#BF8700" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" fill="#9CC2FF"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></span></button>
     <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a>
@@ -362,64 +398,34 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </svg>
 
 <main>
-<section class="lhero"><div class="wrap">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="v3-win" viewBox="0 0 24 24"><path d="M3 5.5l8-1.1v7.1H3zM12 4.2L21 3v8.5h-9zM3 12.5h8v7.1l-8-1.1zM12 12.5h9V21l-9-1.2z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="v3-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+<symbol id="v3-wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0120 0"/><path d="M5.5 12.5a10 10 0 0113 0"/><path d="M9 16a5 5 0 016 0"/><circle cx="12" cy="19.5" r="1"/></symbol>
+<symbol id="v3-router" viewBox="0 0 24 24"><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 17h.01M11 17h.01M12 13V8"/></symbol>
+<symbol id="v3-dns" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+<symbol id="v3-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19"/></symbol>
+<symbol id="v3-book" viewBox="0 0 24 24"><path d="M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2z"/><path d="M22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/></symbol>
+<symbol id="v3-game" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/></symbol>
+<symbol id="v3-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/></symbol>
+<symbol id="v3-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+<symbol id="v3-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</defs></svg>
+<section class="v3 v3hero"><div class="wrap">
   <p id="update" class="upd" hidden></p>
-  <svg class="logo" viewBox="0 0 64 64" role="img" aria-label="AdeeboMeter logo"><use href="#mark"/></svg>
-  <p class="kind">AdeeboMeter · free Windows network troubleshooting tool</p>
-  <h1>Know what's wrong.<br><span>Show anyone.</span></h1>
-  <p class="sub">Is it me, my PC or the network? AdeeboMeter answers in one glance - then shows it as a picture you can send to your provider, a friend or your phone. A local-first network troubleshooter for Windows — no cloud account, no admin rights — that watches your PC, your Wi-Fi, your provider and the internet — and tells you, in one sentence, what's wrong and what to do.</p>
-  <div class="cta">
-    <a class="btn primary dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
-    <a class="store" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ?mode=direct" rel="noopener" aria-label="Get it from Microsoft Store"><img src="https://get.microsoft.com/images/en-us%20dark.svg" width="180" height="65" alt="Get it from Microsoft Store"></a>
-    <a class="btn ghost" href="#theory">See how it works ›</a>
+  <div class="v3grid">
+  <div>
+   <h1>Find out why your internet is slow.</h1>
+   <p class="v3lead">Check your connection step by step, see what changed, and know what to try next.</p>
+   <div class="v3ctas"><a class="v3btn" href="#install"><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg>Find the Windows app ↗</a><a class="v3btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg>Try the phone app ↗</a></div>
+   <p class="v3note">Troubleshoot from your Windows PC or phone.</p>
   </div>
-  <p class="meta"><span class="ver">Version 1.1.5</span> · Windows 10 &amp; 11 · free · no administrator rights</p>
-
-  <div class="scene" role="img" aria-label="AdeeboMeter on a Windows desktop: the engineer view open, the widget in the corner folding into a small chip">
-    <div class="ev" aria-hidden="true">
-      <div class="tb"><svg viewBox="0 0 64 64"><use href="#mark"/></svg>AdeeboMeter - is it me or the network?<span class="wc"><span>&#8212;</span><span>&#9633;</span><span>&#10005;</span></span></div>
-      <div class="hd"><svg viewBox="0 0 64 64"><use href="#mark"/></svg><div class="nm"><b>AdeeboMeter</b><span>is it me or the network?</span></div><span class="ok">OK</span>
-        <div class="say">Good evening, boss. All quiet. Nothing to fix &#8212; go get coffee.</div>
-        <div class="hb"><span class="tg"></span><span>Details</span><span>About</span><span>Settings</span><span class="bk">Back to corner</span></div></div>
-      <div class="ps"><div class="t">IS IT ME OR THE NETWORK? &#183; CLICK A DOT FOR DETAILS</div>
-        <div class="line">
-          <div class="st"><i></i><b>PC</b><span>CPU 12% &#183; RAM 61%</span><small>OK &#183; 8 threads &#183; 16 GB</small></div>
-          <div class="st"><i></i><b>Wi-Fi</b><span>signal 86% &#183; gw 3 ms</span><small>OK &#183; 5 GHz ch 44</small></div>
-          <div class="st"><i></i><b>ISP</b><span>+16 ms past router</span><small>OK &#183; MTU 1500</small></div>
-          <div class="st"><i></i><b>DNS</b><span>38 ms</span><small>OK &#183; your router</small></div>
-          <div class="st"><i></i><b>Internet</b><span>22 ms &#183; loss 0%</span><small>OK &#183; probe 1.1.1.1</small></div>
-        </div></div>
-      <div class="bd">
-        <div class="lp">
-          <div class="tabs"><span>Overview</span><span class="on">Monitor<em>28</em></span><span>Investigate</span><span>Toolbox</span><span>Network story</span><span>Time machine</span><span>Learn</span></div>
-          <div class="chips"><span class="f">Filter by app, host, IP or port</span><span class="on">All</span><span>Teams</span><span>Edge</span><span>Outlook</span><span>OneDrive</span><span>Other</span></div>
-          <table><tr><th>APP</th><th>PROTO</th><th>REMOTE</th><th>STATE</th><th>SEEN</th><th></th></tr><tr><td><span class="a" style="background:#5B5FC7">T</span>Teams<small>PID 8120</small></td><td>TCP</td><td><code>52.112.0.14</code><small style="margin-left:0"><code>52.112.0.14:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#0F6CBD">O</span>Outlook<small>PID 6604</small></td><td>TCP</td><td><code>52.96.88.130</code><small style="margin-left:0"><code>52.96.88.130:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#CF222E">E</span>Edge<small>PID 14532</small></td><td>TCP</td><td><code>13.107.42.14</code><small style="margin-left:0"><code>13.107.42.14:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#1F6FEB">O</span>OneDrive<small>PID 9048</small></td><td>TCP</td><td><code>20.190.151.6</code><small style="margin-left:0"><code>20.190.151.6:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#1DB954">S</span>Spotify<small>PID 11276</small></td><td>TCP</td><td><code>35.186.224.25</code><small style="margin-left:0"><code>35.186.224.25:4070</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr><tr><td><span class="a" style="background:#BF8700">C</span>Chrome<small>PID 7712</small></td><td>TCP</td><td><code>142.250.65.78</code><small style="margin-left:0"><code>142.250.65.78:443</code></small></td><td><span class="es">ESTABLISHED</span></td><td>2s+</td><td><span class="sn">Sniff</span></td></tr></table>
-        </div>
-        <div class="rp">
-          <div class="cd"><div class="t">TCP / IP HEALTH</div>
-            <div class="kv"><span>TCP retransmits</span><svg viewBox="0 0 60 14" preserveAspectRatio="none"><polyline fill="none" stroke="#2DA44E" stroke-width="1.2" points="0,12 8,12 10,6 12,12 14,9 16,12 60,12"/></svg><code>0.0 /s</code></div>
-            <div class="kv"><span>TCP resets sent</span><svg viewBox="0 0 60 14" preserveAspectRatio="none"><polyline fill="none" stroke="#2DA44E" stroke-width="1.2" points="0,12 20,12 22,7 24,12 30,12 32,5 34,12 60,12"/></svg><code>0.1 /s</code></div>
-            <div class="kv"><span>Failed connections</span><svg viewBox="0 0 60 14" preserveAspectRatio="none"><polyline fill="none" stroke="#2DA44E" stroke-width="1.2" points="0,12 60,12"/></svg><code>0 /min</code></div>
-            <div class="kv"><span>ICMP unreachable</span><svg viewBox="0 0 60 14" preserveAspectRatio="none"><polyline fill="none" stroke="#2DA44E" stroke-width="1.2" points="0,12 60,12"/></svg><code>0 /min</code></div></div>
-          <div class="cd"><div class="t">THIS PC</div>
-            <div class="kv"><span>CPU</span><div class="bar"><i style="width:12%"></i></div><code>12%</code></div>
-            <div class="kv"><span>Memory</span><div class="bar"><i style="width:61%"></i></div><code>9.8 GB</code></div>
-            <div class="kv"><span>Disk</span><div class="bar"><i style="width:2%"></i></div><code>1%</code></div>
-            <div class="kv"><span>Download</span><div class="bar"><i style="width:6%"></i></div><code>3.1 Mb/s</code></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="callout"><b class="c1">One glance. Never in your way.</b><b class="c2">Busy? It folds into a tiny chip.</b></div>
-    <div class="dwidget" aria-hidden="true">
-      <div class="h"><span>ADEEBOMETER</span><span class="ddots"><i style="background:#2DA44E"></i><i style="background:#2DA44E"></i><i style="background:#E3A008"></i><i style="background:#4B5563"></i><i style="background:#4B5563"></i></span></div>
-      <div class="v">Your provider is slow right now &#8212; it's not you.</div>
-      <div class="row"><span>CPU</span><span>7%</span></div><div class="bar"><i style="width:7%;background:#2DA44E"></i></div>
-      <div class="row"><span>Memory</span><span>58%</span></div><div class="bar"><i style="width:58%;background:#1F6FEB"></i></div>
-      <div class="row"><span>Router</span><span>3 ms</span></div><div class="bar"><i style="width:10%;background:#2DA44E"></i></div>
-      <div class="row"><span>Internet</span><span>184 ms</span></div><div class="bar"><i style="width:72%;background:#E3A008"></i></div>
-    </div>
-    <div class="taskbar" aria-hidden="true"><i></i><i></i><i class="me"><svg viewBox="0 0 64 64"><use href="#mark"/></svg></i><i></i><i></i></div>
-    <div class="chip" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#mark"/></svg><i></i>All quiet</div>
+  <div class="v3card v3eg" role="img" aria-label="Example result: DNS didn't respond. Gateway passed in 2 ms, DNS timed out, internet not checked. Next step: try the lookup again."><div class="lab">EXAMPLE RESULT</div><div class="in" aria-hidden="true">
+   <span class="v3tag warn">DNS issue</span>
+   <h3><svg class="i" viewBox="0 0 24 24"><use href="#v3-wifi"/></svg>DNS didn't respond</h3><p class="v3p">The gateway answered. The DNS request timed out.</p>
+   <div class="v3path"><div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-router"/></svg></i><b>Gateway</b><span class="v3tag ok">✓ Passed</span><small>2 ms</small></div><div class="n"><i class="w"><svg class="i" viewBox="0 0 24 24"><use href="#v3-dns"/></svg></i><b>DNS</b><span class="v3tag warn">! Timed out</span></div><div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-globe"/></svg></i><b>Internet</b><span class="v3tag off">— Not checked</span></div></div>
+   <div class="v3next"><div><small>Next step</small><b>Try the lookup again</b><small>If it keeps timing out, check which DNS server your device is using.</small></div><span class="v3btn sm">Check again</span></div>
+  </div></div>
   </div>
 </div></section>
 
@@ -434,21 +440,34 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   </div>
 </div></section>
 
-<section class="promise" id="privacy"><div class="wrap">
-  <h2>No cloud. No telemetry.<br>Never listens.</h2>
-  <p>Every packet it sends is listed — and you can switch each one off.</p>
+<section class="v3"><div class="wrap">
+  <h2>Try it in your browser</h2>
+  <p class="v3sub">Learn something, play a round, or open a tool.</p>
+  <div class="v3four"><a class="v3card v3tile" href="learn/"><span class="v3top"><span class="v3chip" style="--k:var(--c-learn)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-book"/></svg></span><b>Learn ↗</b></span><span class="d">Short lessons on Wi-Fi, DNS, routing and more.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="games.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-games)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-game"/></svg></span><b>Games ↗</b></span><span class="d">Practise networking with quick quizzes and challenges.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="live.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-live)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-live"/></svg></span><b>Live ↗</b></span><span class="d">Check markets, scores, and weather.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="files.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-files)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-folder"/></svg></span><b>Files ↗</b></span><span class="d">Lock files and open .adeebo files.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a></div>
 </div></section>
 
-<section class="wrap"><div class="tiles">
-  <div class="tile"><div class="ic" style="background:var(--green-s);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.5L16 9.5"/></svg></div>
-    <h3>One glance.</h3><p>Five dots from your PC to the internet. The first one that isn't green is where the trouble starts — and the fix is right there in plain English.</p></div>
-  <div class="tile"><div class="ic" style="background:var(--blue-s);color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18V9M10 18V5M16 18v-7M22 18H2"/></svg></div>
-    <h3>The whole story.</h3><p>Pick the problem and it investigates for you. 100+ engineer's tools, found by typing. Follow any app from your PC to the server. Replay any minute of the last days. Every fact says where it came from.</p></div>
-  <div class="tile"><div class="ic" style="background:var(--purple-s);color:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-    <h3>Yours alone.</h3><p>No account, no server, no admin rights. A penny of CPU in the background. Readable source, built by the compiler already inside Windows.</p></div>
+<section class="v3" id="how"><div class="wrap">
+  <h2>How it works</h2>
+  <p class="v3sub">Three steps, no account.</p>
+  <div class="v3three">
+   <div class="v3card v3step"><span class="num">1</span><b>Install on Windows</b><p>Free from the Microsoft Store. It watches quietly in a corner of your screen.</p></div>
+   <div class="v3card v3step"><span class="num">2</span><b>Ask it why</b><p>One checkup tests Wi-Fi, router, provider, DNS and websites - and names the slow step.</p></div>
+   <div class="v3card v3step"><span class="num">3</span><b>Check from your phone</b><p>Scan a code once. After that, Face ID reconnects you from anywhere.</p></div>
+  </div>
+  <p class="v3more"><a href="#theory">The whole story, slide by slide ›</a> · <a href="#watch">Watch the videos ›</a></p>
 </div></section>
 
-<section class="wrap" aria-label="Made for what you do"><p style="text-align:center;font-size:17px;margin:10px 0 30px">Made for what you do online: <a href="streaming.html">Streaming</a> · <a href="trading.html">Trading</a> · <a href="gaming.html">Gaming</a><br>Try it in your browser: <a href="learn/">Learn</a> · <a href="games.html">Games</a> · <a href="live.html">Live</a></p><div id="amv-today" style="display:none;max-width:520px;margin:0 auto 30px;align-items:center;gap:12px;border:1px solid rgba(127,127,127,.25);border-radius:16px;padding:12px 16px"><span id="amv-face"></span><div><small style="opacity:.7"><span id="amv-tk">Today's companion</span>: <b id="amv-tn"></b></small><div id="amv-tl" style="font-weight:600"></div></div></div><script src="/voice.js"></script><script>AMV.today().then(function(t){document.getElementById("amv-tn").textContent=t[1];if(t[2])document.getElementById("amv-tk").textContent="Your companion";AMV.ready.then(function(){var l=AMV.line("app.open");if(!l)return;document.getElementById("amv-tl").textContent=l;AMV.face(document.getElementById("amv-face"),"happy");document.getElementById("amv-today").style.display="flex"})}).catch(function(){})</script></section>
+<section class="v3" id="phone"><div class="wrap"><div class="v3two">
+  <div><h2>Your PC, from your phone</h2><p class="v3sub">Pair your PC to check its status and review what happened, even when you're away from your desk.</p>
+   <div class="v3ctas"><a class="v3btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg>Explore the phone app ↗</a></div>
+   <p class="v3note">No app store needed: open it, then use <b>Add to Home Screen</b> (iPhone) or <b>Install app</b> (Android) to keep it.</p></div>
+  <div class="v3card v3act"><div class="lab">EXAMPLE ACTIVITY</div>
+   <div class="r"><span class="d ok">✓</span><b>Connection check complete</b><span>10:24</span></div>
+   <div class="r"><span class="d warn">!</span><b>Office PC went quiet</b><span>10:18</span></div>
+  </div>
+</div></div></section>
+
+<section class="v3 v3for" aria-label="Made for what you do"><div class="wrap"><p>Made for what you do online: <a href="streaming.html">Streaming</a> · <a href="trading.html">Trading</a> · <a href="gaming.html">Gaming</a></p><div id="amv-today" style="display:none;max-width:520px;margin:0 auto 30px;align-items:center;gap:12px;border:1px solid rgba(127,127,127,.25);border-radius:16px;padding:12px 16px"><span id="amv-face"></span><div><small style="opacity:.7"><span id="amv-tk">Today's companion</span>: <b id="amv-tn"></b></small><div id="amv-tl" style="font-weight:600"></div></div></div><script src="/voice.js"></script><script>AMV.today().then(function(t){document.getElementById("amv-tn").textContent=t[1];if(t[2])document.getElementById("amv-tk").textContent="Your companion";AMV.ready.then(function(){var l=AMV.line("app.open");if(!l)return;document.getElementById("amv-tl").textContent=l;AMV.face(document.getElementById("amv-face"),"happy");document.getElementById("amv-today").style.display="flex"})}).catch(function(){})</script></div></section>
 
 <section id="theory">
   <div class="sh wrap">

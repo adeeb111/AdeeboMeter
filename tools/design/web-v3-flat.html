@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AdeeboMeter - website v3, flat (mockup)</title>
+<!-- MOCKUP of adeebometer.com in the app's flat theme: navy surfaces, brand blue for actions, soft section colours on icons only. -->
+<style>
+:root{--bg:#0B1426;--s1:#121F38;--s2:#182844;--line:#22355A;--ink:#EAF1FF;--sub:#93A6C6;--mut:#647A9E;--blue:#2F7BF6;--green:#22C47A;--green2:#123D2E;--amber:#F2B23C;--amber2:#3D3014;--c-dev:#4CC3D4;--c-pc:#7F8CFF;--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--c-tools:#A68BF0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mock{position:fixed;top:8px;right:12px;z-index:30;font-size:11px;font-weight:700;letter-spacing:.06em;color:#1a1100;background:var(--amber);border-radius:99px;padding:3px 10px}
+nav{border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:10}
+nav .wrap{display:flex;align-items:center;gap:26px;height:72px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px}
+.links{display:flex;gap:26px;color:var(--sub);font-weight:600;font-size:16px;padding-left:24px;border-left:1px solid var(--line)}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;font:inherit;font-weight:700;font-size:16px;border-radius:12px;padding:13px 20px;background:var(--blue);color:#fff;white-space:nowrap}
+.btn.line{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.sm{padding:10px 16px;font-size:15px}
+.menu{display:none}
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center;padding:64px 0 56px;border-bottom:1px solid var(--line)}
+h1{font-size:62px;line-height:1.02;letter-spacing:-.03em;margin:0 0 18px;font-weight:850}
+.lead{font-size:21px;color:var(--sub);margin:0 0 30px;max-width:560px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.trust{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.trust span{font-size:13px;font-weight:600;color:var(--sub);border:1px solid var(--line);border-radius:99px;padding:4px 12px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:18px}
+.eg{padding:6px}.eg .lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--mut);padding:10px 14px 8px}
+.eg .in{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.eg h3{display:flex;align-items:center;gap:10px;margin:0 0 18px;font-size:22px}
+.path{display:grid;grid-template-columns:1fr 1fr 1fr;position:relative;text-align:center;margin-bottom:18px}
+.path:before{content:"";position:absolute;left:16.6%;right:50%;top:26px;border-top:3px solid var(--green)}
+.path:after{content:"";position:absolute;left:50%;right:16.6%;top:26px;border-top:3px dashed var(--line)}
+.n{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.n i{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--s1);border:1.5px solid var(--line);color:var(--ink)}
+.n b{font-size:16px}.n small{color:var(--sub);font-size:13px}
+.tag{font-size:12px;font-weight:700;border-radius:7px;padding:3px 9px}
+.t-ok{background:var(--green2);color:var(--green)}.t-warn{background:var(--amber2);color:var(--amber)}.t-off{background:var(--s2);color:var(--sub)}
+.next{display:flex;align-items:center;gap:14px;border-top:1px solid var(--line);padding-top:14px}.next div{flex:1}.next small{color:var(--sub);display:block;font-size:14px}.next b{font-size:18px}
+section{padding:52px 0;border-bottom:1px solid var(--line)}
+h2{font-size:36px;letter-spacing:-.02em;margin:0 0 6px;line-height:1.1}
+.sub{color:var(--sub);margin:0 0 26px;font-size:18px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.tile{display:flex;flex-direction:column;gap:10px;padding:20px;position:relative}
+.tile .top{display:flex;align-items:center;gap:12px}.tile b{font-size:20px}
+.tile p{margin:0;color:var(--sub);font-size:15px;padding-right:26px}
+.tile .go{position:absolute;right:18px;bottom:18px;color:var(--sub)}
+.chip{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);flex:none}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.step{padding:22px}.step .num{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;margin-bottom:12px}
+.step b{font-size:19px;display:block;margin-bottom:4px}.step p{margin:0;color:var(--sub);font-size:15px}
+.link2{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;align-items:center}
+.pair{display:flex;align-items:center;justify-content:center;gap:14px}
+.pair .dash{flex:1;max-width:70px;border-top:2px dashed var(--line)}
+.linked{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--green);color:var(--green);border-radius:12px;padding:8px 14px;font-weight:700;background:var(--green2)}
+.feats{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.feats span{display:inline-flex;gap:6px;align-items:center;font-size:14px;font-weight:600;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:6px 11px}
+.priv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.priv div{padding:18px}.priv b{display:block;margin:8px 0 2px}.priv span{color:var(--sub);font-size:14px}
+footer{padding:28px 0 44px;color:var(--mut);font-size:14px}footer .wrap{display:flex;gap:20px;flex-wrap:wrap}footer a{color:var(--sub)}
+@media (max-width:900px){
+ .links,nav .btn{display:none}.menu{display:block;margin-left:auto;color:var(--sub)}
+ .hero,.link2{grid-template-columns:1fr;gap:26px;padding:34px 0 36px}
+ h1{font-size:38px}.lead{font-size:18px}.ctas .btn{width:100%}
+ .four,.priv{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr}
+ h2{font-size:27px}section{padding:36px 0}
+ .tile{padding:16px}.tile b{font-size:17px}.tile p{font-size:13px}
+ .pair{gap:8px}.pair svg:first-child{width:104px}.pair svg:last-child{width:46px}.pair .dash{max-width:22px}.linked{padding:6px 10px;font-size:14px}
+ main.wrap{overflow-x:hidden}
+ .eg h3{font-size:18px}.n i{width:44px;height:44px}.path:before,.path:after{top:21px}
+}
+</style>
+</head>
+<body>
+<div class="mock">MOCKUP</div>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="win" viewBox="0 0 24 24"><path d="M3 5.5l8-1.1v7.1H3zM12 4.2L21 3v8.5h-9zM3 12.5h8v7.1l-8-1.1zM12 12.5h9V21l-9-1.2z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+<symbol id="wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0120 0"/><path d="M5.5 12.5a10 10 0 0113 0"/><path d="M9 16a5 5 0 016 0"/><circle cx="12" cy="19.5" r="1"/></symbol>
+<symbol id="router" viewBox="0 0 24 24"><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 17h.01M11 17h.01M12 13V8"/></symbol>
+<symbol id="dns" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+<symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2z"/><path d="M22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/></symbol>
+<symbol id="game" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/></symbol>
+<symbol id="live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/></symbol>
+<symbol id="folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+<symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol>
+<symbol id="menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="dev" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+<symbol id="tools" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></symbol>
+</defs></svg>
+<script>function I(n,s){return '<svg class="i"'+(s?' style="width:'+s+'px;height:'+s+'px"':'')+'><use href="#'+n+'"/></svg>'}function C(n,k,s){return '<span class="chip" style="--k:var('+k+')">'+I(n,s)+'</span>'}</script>
+<nav><div class="wrap">
+ <a class="logo" href="#"><svg viewBox="0 0 64 64" width="34" height="34"><rect x="2" y="2" width="60" height="60" rx="16" fill="#2F7BF6"/><path d="M21 28q4-5 8 0M35 28q4-5 8 0" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round"/><path d="M22 38q10 10 20 0" stroke="#fff" stroke-width="3.8" fill="none" stroke-linecap="round"/></svg>AdeeboMeter</a>
+ <div class="links"><a href="#">How it works</a><a href="#">Learn</a><a href="#">Games</a><a href="#">Live</a><a href="#">Files</a></div>
+ <div class="sp"></div><a class="btn sm" href="#"><script>document.write(I("phone",18))</script>Open phone app</a>
+ <span class="menu"><script>document.write(I("menu",26))</script></span>
+</div></nav>
+<main class="wrap">
+ <div class="hero">
+  <div>
+   <h1>Find out why your internet is slow.</h1>
+   <p class="lead">Check your connection step by step, see what changed, and know what to try next.</p>
+   <div class="ctas"><a class="btn" href="#"><script>document.write(I("win",20))</script>Find the Windows app ↗</a><a class="btn line" href="#"><script>document.write(I("phone",20))</script>Try the phone app ↗</a></div><p style="color:var(--sub);margin:16px 0 0;font-size:15px">Troubleshoot from your Windows PC or phone.</p>
+   
+  </div>
+  <div class="card eg"><div class="lab">EXAMPLE RESULT</div><div class="in">
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="tag t-warn">DNS issue</span></div><h3 style="margin-bottom:4px"><script>document.write(I("wifi",26))</script>DNS didn't respond</h3><p style="color:var(--sub);margin:0 0 18px;font-size:15px">The gateway answered. The DNS request timed out.</p>
+   <div class="path"><div class="n"><i><script>document.write(I("router",24))</script></i><b>Gateway</b><span class="tag t-ok">✓ Passed</span><small>2 ms</small></div><div class="n"><i style="border-color:var(--amber)"><script>document.write(I("dns",24))</script></i><b>DNS</b><span class="tag t-warn">! Timed out</span></div><div class="n"><i><script>document.write(I("globe",24))</script></i><b>Internet</b><span class="tag t-off">— Not checked</span></div></div>
+   <div class="next"><div><small>Next step</small><b>Try the lookup again</b><small style="margin-top:2px">If it keeps timing out, check which DNS server your device is using.</small></div><a class="btn sm" href="#">Check again</a></div>
+  </div></div>
+ </div>
+
+ <section>
+  <h2>Try it in your browser</h2>
+  <p class="sub">Learn something, play a round, or open a tool.</p>
+  <div class="four">
+   <a class="card tile" href="#"><div class="top"><script>document.write(C("book","--c-learn"))</script><b>Learn</b></div><p>Short lessons on Wi-Fi, DNS, routing and more.</p><span class="go"><script>document.write(I("arrow"))</script></span></a>
+   <a class="card tile" href="#"><div class="top"><script>document.write(C("game","--c-games"))</script><b>Games</b></div><p>Practise networking with quick quizzes and challenges.</p><span class="go"><script>document.write(I("arrow"))</script></span></a>
+   <a class="card tile" href="#"><div class="top"><script>document.write(C("live","--c-live"))</script><b>Live</b></div><p>Check markets, scores, and weather.</p><span class="go"><script>document.write(I("arrow"))</script></span></a>
+   <a class="card tile" href="#"><div class="top"><script>document.write(C("folder","--c-files"))</script><b>Files</b></div><p>Lock files and open .adeebo files.</p><span class="go"><script>document.write(I("arrow"))</script></span></a>
+  </div>
+ </section>
+
+ <section id="how">
+  <h2>How it works</h2>
+  <p class="sub">Three steps, no account.</p>
+  <div class="three">
+   <div class="card step"><div class="num">1</div><b>Install on Windows</b><p>Free from the Microsoft Store. It watches quietly in a corner of your screen.</p></div>
+   <div class="card step"><div class="num">2</div><b>Ask it why</b><p>One checkup tests Wi-Fi, router, provider, DNS and websites - and names the slow step.</p></div>
+   <div class="card step"><div class="num">3</div><b>Check from your phone</b><p>Scan a code once. After that, Face ID reconnects you from anywhere.</p></div>
+  </div>
+ </section>
+
+ <section>
+  <div class="link2">
+   <div><h2>Your PC, from your phone</h2><p class="sub">Pair your PC to check its status and review what happened, even when you're away from your desk.</p><a class="btn line" href="#"><script>document.write(I("phone",20))</script>Explore the phone app ↗</a></div>
+   <div class="card" style="padding:16px 18px"><div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--mut);margin-bottom:8px">EXAMPLE ACTIVITY</div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)"><span style="width:28px;height:28px;border-radius:50%;background:var(--green);display:grid;place-items:center;color:#fff;font-weight:800">✓</span><b style="flex:1;font-weight:600">Connection check complete</b><span style="color:var(--sub)">10:24</span></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><span style="width:28px;height:28px;border-radius:50%;background:var(--amber);display:grid;place-items:center;color:#1a1100;font-weight:800">!</span><b style="flex:1;font-weight:600">Office PC went quiet</b><span style="color:var(--sub)">10:18</span></div>
+   </div>
+  </div>
+ </section>
+
+</main>
+<footer><div class="wrap"><span>© AdeeboMeter</span><a href="#" style="margin-left:auto;order:9">Back to top ↑</a><a href="#">Gaming</a><a href="#">Streaming</a><a href="#">Trading</a><a href="#">Privacy</a><a href="#">About</a></div></footer>
+</body>
+</html>

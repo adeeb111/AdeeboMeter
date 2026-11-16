@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AdeeboMeter phone app v3 - flat (mockup)</title>
+<!-- MOCKUP: the phone app in a flat style (solid surfaces, 1px lines, no glow, no gradients). Seven screens side by side. -->
+<style>
+:root{--c-home:#5B9BFF;--c-dev:#4CC3D4;--c-pc:#7F8CFF;--c-tools:#A68BF0;--c-send:#E58AB0;--c-walk:#45BFA9;--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--bg:#0B1426;--s1:#121F38;--s2:#182844;--line:#22355A;--ink:#EAF1FF;--sub:#93A6C6;--mut:#647A9E;--blue:#2F7BF6;--blue2:#1E3E78;--green:#22C47A;--green2:#123D2E;--amber:#F2B23C;--amber2:#3D3014;--red:#F26464;--purple:#8B6CF6;--cyan:#2CC3D6}
+*{box-sizing:border-box}
+body{margin:0;background:#070D1A;color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;padding:28px}
+.row{display:flex;gap:26px;flex-wrap:wrap;justify-content:center}
+.ph{--acc:var(--c-home);width:340px;height:720px;background:var(--bg);border:1.5px solid #2A3A5C;border-radius:44px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.cap{text-align:center;color:var(--sub);margin-top:10px;font-weight:600}
+.sb{display:flex;justify-content:space-between;padding:14px 26px 4px;font-size:13px;font-weight:700}
+.top{display:flex;align-items:center;gap:10px;padding:10px 20px 6px}.top b{font-size:19px;flex:1}
+.ib{width:38px;height:38px;border-radius:12px;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;color:var(--sub)}
+.body{flex:1;overflow:hidden;padding:6px 18px 0}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chipsel{display:inline-flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:600;margin:4px 0 12px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+.path{display:flex;align-items:flex-start;justify-content:space-between;margin:6px 4px 12px;position:relative}
+.node{display:flex;flex-direction:column;align-items:center;gap:6px;width:76px;z-index:1;font-size:13px;color:var(--sub)}
+.node i{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-style:normal}
+.ok i{background:var(--green)}.warn i{background:var(--amber)}.off i{background:var(--s2);color:var(--mut);border:1px solid var(--line)}
+.link{position:absolute;top:22px;height:3px;background:var(--green);z-index:0}.link.dash{background:none;border-top:3px dashed var(--line);height:0}
+.verdict{text-align:center;font-size:24px;font-weight:800;line-height:1.15;margin:4px 0 4px}
+.metric{text-align:center;color:var(--cyan);font-weight:600;margin-bottom:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;background:var(--blue);color:#fff;font:inherit;font-weight:700;font-size:16px;padding:13px}
+.btn.line{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btns{display:flex;gap:10px}.btns .btn{flex:1}
+h3{font-size:16px;margin:14px 2px 8px}
+.list{background:var(--s1);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}.li:first-child{border-top:0}
+.li .t{flex:1;min-width:0}.li .t b{display:block;font-weight:600}.li .t span{color:var(--sub);font-size:13px}
+.li time{color:var(--sub);font-size:13px}
+.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.d-ok{background:var(--green)}.d-warn{background:var(--amber)}.d-dev{background:var(--s2);color:var(--cyan);border:1px solid var(--line)}
+.tabs{display:flex;justify-content:space-around;margin:0 12px 18px;background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:6px}
+.tabs div{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--mut);padding:6px 0;border-radius:14px}
+.tabs .on{background:var(--blue);color:#fff}.tabs div[data-c]{color:var(--tc)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:5px 12px;font-weight:700;font-size:14px}
+.p-off{background:var(--amber2);color:var(--amber)}.p-ok{background:var(--green2);color:var(--green)}
+.big{display:flex;flex-direction:column;align-items:center;margin:4px 0 12px}
+.seg{display:flex;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:12px}
+.seg div{flex:1;text-align:center;padding:8px 0;border-radius:10px;color:var(--sub);font-weight:600}.seg .on{background:var(--blue);color:#fff}
+.opt{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:9px;font-weight:600;font-size:16px}
+.opt i{width:20px;height:20px;border-radius:50%;border:2px solid var(--sub)}.opt.on{background:var(--blue);border-color:var(--blue)}.opt.on i{border-color:#fff;background:radial-gradient(circle,#fff 40%,transparent 45%)}
+.bar{height:8px;background:var(--s2);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--green);border-radius:9px}
+.hours{display:grid;grid-template-columns:repeat(5,1fr);text-align:center;font-size:12px;color:var(--sub)}.hours div{border-left:1px solid var(--line);padding:4px 0}.hours div:first-child{border:0}.hours b{display:block;color:var(--ink);font-size:14px;margin-top:4px}.hours svg{display:block;margin:5px auto 0}
+.head{display:flex;gap:12px;align-items:flex-start;margin:2px 0 14px}.head b{font-size:26px;display:block;line-height:1.1}.head span{color:var(--sub);font-size:14px}
+.search{display:flex;gap:8px;align-items:center;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:11px 14px;color:var(--mut);margin-bottom:12px}
+.where{font-size:10px;font-weight:800;letter-spacing:.05em;border-radius:99px;padding:2px 8px;background:var(--blue2);color:#8DB6FF}
+.where.ph{background:var(--green2);color:var(--green)}
+.chip{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 4px}.tiles div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--sub)}
+.head .chip{width:48px;height:48px}
+.legend{max-width:1200px;margin:26px auto 0;color:var(--sub);font-size:14px;text-align:center}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></symbol>
+<symbol id="dev" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+<symbol id="pc" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></symbol>
+<symbol id="tools" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></symbol>
+<symbol id="phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+<symbol id="wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0120 0"/><path d="M5.5 12.5a10 10 0 0113 0"/><path d="M9 16a5 5 0 016 0"/><circle cx="12" cy="19.5" r="1"/></symbol>
+<symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19"/></symbol>
+<symbol id="router" viewBox="0 0 24 24"><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 17h.01M11 17h.01M12 13V8"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+<symbol id="bang" viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></symbol>
+<symbol id="share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2z"/><path d="M22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/></symbol>
+<symbol id="game" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/></symbol>
+<symbol id="live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/></symbol>
+<symbol id="folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol>
+<symbol id="file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M4 21h16"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 010-10 6 6 0 0111.5 2A4 4 0 0118 18z"/></symbol>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+</defs></svg>
+<script>
+function I(n,s){return '<svg class="i" style="width:'+(s||20)+'px;height:'+(s||20)+'px"><use href="#'+n+'"/></svg>'}
+var COL={Home:"--c-home",Devices:"--c-dev",PC:"--c-pc",Tools:"--c-tools",More:"",Learn:"--c-learn",Games:"--c-games",Live:"--c-live",Files:"--c-files"};
+function tabs(on,set){var T=set==="x"?[["book","Learn"],["game","Games"],["live","Live"],["folder","Files"]]:[["home","Home"],["dev","Devices"],["pc","PC"],["tools","Tools"],["more","More"]];return '<div class="tabs">'+T.map(function(t){var c=COL[t[1]];return '<div class="'+(t[1]===on?'on':'')+'"'+(c&&t[1]!==on?' data-c style="--tc:color-mix(in srgb,var('+c+') 70%,#93A6C6)"':'')+'>'+I(t[0],22)+t[1]+'</div>'}).join("")+'</div>'}
+function chip(n,c,s){return '<span class="chip" style="--k:var('+c+')">'+I(n,s||22)+'</span>'}
+function hdrx(back,title,right){return '<div class="sb"><span>10:24</span><span>▮▮▮ ◔ ▬</span></div><div class="top">'+(back?'<span class="ib">'+I("back")+'</span>':'<svg viewBox="0 0 64 64" width="30" height="30"><rect x="2" y="2" width="60" height="60" rx="16" fill="#2F7BF6"/><path d="M21 28q4-5 8 0M35 28q4-5 8 0" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round"/><path d="M22 38q10 10 20 0" stroke="#fff" stroke-width="3.8" fill="none" stroke-linecap="round"/></svg>')+'<b>'+title+'</b>'+(right||'<span class="ib">'+I("clock")+'</span>')+'</div>'}
+function path(nodes){var n=nodes.length,h='<div class="path">';nodes.forEach(function(x,i){if(i<n-1)h+='<div class="link'+(x[2]==="dash"?" dash":"")+'" style="left:calc('+(i*100/(n-1))+'% + 38px);width:calc('+(100/(n-1))+'% - 76px)"></div>'});
+ return h+nodes.map(function(x){return '<div class="node '+x[1]+'"><i>'+I(x[0],24)+'</i>'+x[3]+(x[4]?'<span class="pill '+(x[1]==="ok"?"p-ok":x[1]==="warn"?"p-off":"")+'" style="font-size:12px;padding:3px 9px;'+(x[1]==="off"?"background:var(--s2);color:var(--sub)":"")+'">'+x[4]+'</span>':'')+'</div>'}).join("")+'</div>'}
+var S={};
+S.home=hdrx(0,"AdeeboMeter")+'<div class="body"><span class="chipsel">'+I("phone")+'This phone '+I("chev",16).replace('class="i"','class="i" style="transform:rotate(90deg)"')+'</span>'+
+ '<div class="card">'+path([["phone","ok","","Phone"],["wifi","ok","","Wi-Fi"],["globe","ok","","Internet"]])+'<div class="verdict">Connection looks steady</div><div class="metric">18 ms delay · 0% loss</div><div class="btn">Run a check</div></div>'+
+ '<div class="tiles"><div>'+chip("dev","--c-dev")+'Devices</div><div>'+chip("pc","--c-pc")+'My PC</div><div>'+chip("tools","--c-tools")+'Tools</div><div>'+chip("share","--c-send")+'Send</div></div>'+
+ '<h3>Activity today</h3><div class="list"><div class="li"><span class="dot d-ok">'+I("check",15)+'</span><div class="t"><b>Connection check done</b></div><time>10:24</time>'+I("chev",16)+'</div><div class="li"><span class="dot d-warn">'+I("bang",15)+'</span><div class="t"><b>Office PC went quiet</b></div><time>10:18</time>'+I("chev",16)+'</div></div></div>'+tabs("Home");
+S.pc=hdrx(1,"Office PC")+'<div class="body"><div class="big"><svg viewBox="0 0 120 92" width="160"><rect x="8" y="4" width="104" height="66" rx="6" fill="#0F1D36" stroke="#EAF1FF" stroke-width="5"/><rect x="50" y="72" width="20" height="10" fill="#EAF1FF"/><rect x="36" y="82" width="48" height="6" rx="3" fill="#EAF1FF"/></svg><div class="verdict" style="margin-top:12px">Office PC</div><span class="pill p-off">● Not live</span><div style="color:var(--sub);margin-top:8px">Last reading today at 10:18</div></div><div class="btn">Reconnect with Face ID</div>'+
+ '<h3>Recent activity</h3><div class="list"><div class="li"><span class="dot d-ok">'+I("check",15)+'</span><div class="t"><b>Full checkup</b><span>Today, 10:12 · looks good</span></div>'+I("chev",16)+'</div><div class="li"><span class="dot d-warn">'+I("bang",15)+'</span><div class="t"><b>MTR to 8.8.8.8</b><span>Today, 9:54 · 3% loss at hop 4</span></div>'+I("chev",16)+'</div></div></div>'+tabs("PC");
+S.tool=hdrx(0,"AdeeboMeter")+'<div class="body"><div class="head"><div><b>Websites won\'t load</b><span>Checked from <span class="where">ON YOUR PC</span></span></div></div>'+
+ '<div class="card">'+path([["router","ok","","Router","✓ Passed"],["globe","warn","dash","DNS","! Failed"],["globe","off","","Internet","– Not checked"]])+'</div>'+
+ '<div class="card"><div style="color:var(--sub);font-size:13px;font-weight:700">RESULT</div><div style="font-size:22px;font-weight:800;margin:4px 0 6px">Name lookups time out</div><div style="color:var(--sub)">Your router\'s DNS didn\'t answer in 2 s. Cloudflare (1.1.1.1) answered in 14 ms.</div><div style="margin-top:10px;font-weight:600">Next: set DNS to 1.1.1.1, or restart the router.</div></div>'+
+ '<div class="btns"><div class="btn">Check again</div><div class="btn line">'+I("share",18)+'Share</div></div></div>'+tabs("Tools");
+S.learn=hdrx(1,"AdeeboMeter",'<span class="ib">'+I("search")+'</span>')+'<div class="body"><div class="head">'+chip("book","--c-learn",26)+'<div><b>Learn</b><span>Two lines and a picture each. Works offline.</span></div></div>'+
+ '<div class="card"><div style="font-size:24px;font-weight:800">How DNS works</div><div style="color:var(--sub);margin:4px 0 10px">The basics · 2 of 9 done</div><div class="bar"><i style="width:22%"></i></div><div style="display:flex;justify-content:center;gap:16px;align-items:center;margin:16px 0;color:var(--sub);font-size:13px"><div style="text-align:center">'+I("phone",36)+'<br>Phone</div><span style="font-size:22px">→</span><div style="text-align:center">'+I("router",36)+'<br>Resolver</div></div><div class="btn">Continue lesson '+I("chev",18)+'</div></div>'+
+ '<div class="search">'+I("search",18)+'Search lessons</div><h3 style="margin-top:4px">Next lessons</h3><div class="list"><div class="li">'+chip("wifi","--c-dev",18)+'<div class="t"><b>Why Wi-Fi gets slow</b></div>'+I("chev",16)+'</div><div class="li">'+chip("router","--c-tools",18)+'<div class="t"><b>How routing works</b></div>'+I("chev",16)+'</div></div></div>'+tabs("Learn","x");
+S.games=hdrx(1,"AdeeboMeter",'<span class="ib" style="width:auto;padding:0 10px;font-weight:700;color:var(--ink)">Best 14</span>')+'<div class="body"><div class="head">'+chip("game","--c-games",26)+'<div><b>Subnet sprint</b><span>60 seconds · score 6</span></div></div>'+
+ '<div class="card"><div style="display:flex;justify-content:space-between;color:var(--sub);font-size:13px;margin-bottom:8px"><span>Question 7</span><span>0:41</span></div><div class="bar" style="margin-bottom:14px"><i style="width:68%;background:var(--blue)"></i></div><div style="font-size:22px;font-weight:800;margin-bottom:14px">Which /28 holds 192.0.2.14?</div>'+
+ '<div class="opt"><i></i>192.0.2.0/28</div><div class="opt on"><i></i>192.0.2.16/28</div><div class="opt"><i></i>192.0.2.32/28</div><div class="opt"><i></i>192.0.2.48/28</div><div class="btn" style="margin-top:6px">Check answer '+I("chev",18)+'</div></div></div>'+tabs("Games","x");
+S.live=hdrx(1,"AdeeboMeter",'<span class="ib">'+I("search")+'</span>')+'<div class="body"><div class="head">'+chip("live","--c-live",26)+'<div><b>Live</b><span>Updated 10:24 · from public sources</span></div></div><div class="seg"><div>Markets</div><div>Scores</div><div class="on">Weather</div></div>'+
+ '<div class="card" style="display:flex;gap:16px;align-items:center">'+I("cloud",56)+'<div><div style="color:var(--sub)">Ottawa</div><div style="font-size:38px;font-weight:800;line-height:1">−3 °C</div><div style="color:var(--sub)">Partly cloudy · wind 18 km/h</div></div></div>'+
+ '<div class="card" style="padding:10px"><div class="hours"><div>Now'+I("cloud",18)+'<b>−3°</b></div><div>11 PM'+I("cloud",18)+'<b>−3°</b></div><div>12 AM'+I("cloud",18)+'<b>−4°</b></div><div>1 AM'+I("cloud",18)+'<b>−4°</b></div><div>2 AM'+I("cloud",18)+'<b>−5°</b></div></div></div>'+
+ '<h3>My places</h3><div class="list"><div class="li">★<div class="t"><b>Ottawa</b></div>−3 °C</div><div class="li">☆<div class="t"><b>Dhaka</b></div>24 °C</div></div></div>'+tabs("Live","x");
+S.files=hdrx(1,"AdeeboMeter")+'<div class="body"><div class="head">'+chip("folder","--c-files",26)+'<div><b>Files</b><span>Lock and open .adeebo files - on this phone, offline</span></div></div><div class="seg"><div class="on">Lock</div><div>Open</div></div>'+
+ '<div class="card" style="text-align:center;padding:22px 16px"><div style="width:84px;height:84px;border-radius:22px;background:var(--green);display:grid;place-items:center;margin:0 auto 12px;color:#fff">'+I("lock",44)+'</div><div style="font-size:24px;font-weight:800">File locked</div><div class="li" style="border:1px solid var(--line);border-radius:12px;margin:14px 0 10px;text-align:left">'+I("file")+'<div class="t"><b>lab-notes.adeebo</b><span>Code: 7KQ2-MX9P-…</span></div></div><div class="btn">'+I("down",18)+'Save the file</div><div class="btn line" style="margin-top:10px">'+I("lock",18)+'Lock another file</div></div></div>'+tabs("Files","x");
+var ACC={home:"--c-home",pc:"--c-pc",tool:"--c-tools",learn:"--c-learn",games:"--c-games",live:"--c-live",files:"--c-files"};
+document.write('<div class="row">'+["home","pc","tool"].map(function(k){return '<div><div class="ph" style="--acc:var('+ACC[k]+')">'+S[k]+'</div><div class="cap">'+{home:"Home",pc:"PC (remembered, not live)",tool:"Tool result"}[k]+'</div></div>'}).join("")+'</div><div class="row" style="margin-top:28px">'+["learn","games","live","files"].map(function(k){return '<div><div class="ph" style="--acc:var('+ACC[k]+')">'+S[k]+'</div><div class="cap">'+k[0].toUpperCase()+k.slice(1)+'</div></div>'}).join("")+'</div><p class="legend">One theme: navy surfaces, brand blue for every button and the open tab. Each place has a soft colour on its icons only, so you can tell them apart at a glance. Status keeps green / amber / red with ✓ ! ✕.</p>');
+</script>
+</body>
+</html>

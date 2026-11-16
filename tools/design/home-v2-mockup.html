@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>AdeeboMeter - home page v2 (mockup)</title>
+<!-- MOCKUP of the new adeebometer.com home page, in the phone app's style. Not live. -->
+<style>
+:root{--bg:#060E1F;--bg2:#0B1A36;--card:rgba(20,40,80,.55);--edge:rgba(120,170,255,.18);--edge2:rgba(110,170,255,.45);--ink:#EAF1FF;--sub:#9DB1D3;--mut:#6F86AD;--blue:#3B8BFF;--green:#3FD07A;--amber:#F2B84B;--purple:#A47BFF;--cyan:#3FD0E0;--glow:0 0 0 1px var(--edge),0 10px 30px rgba(0,20,60,.45)}
+:root[data-theme="light"]{--bg:#EEF3FB;--bg2:#E2EBF8;--card:rgba(255,255,255,.92);--edge:rgba(30,80,160,.14);--edge2:rgba(31,111,235,.45);--ink:#13223D;--sub:#4A5C7A;--mut:#7385A3;--blue:#1F6FEB;--green:#1E9E55;--glow:0 0 0 1px var(--edge),0 6px 18px rgba(20,50,100,.10)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(90% 60% at 85% -10%,#143F86 0%,transparent 55%),radial-gradient(70% 50% at -10% 40%,#0E2E66 0%,transparent 60%),var(--bg);color:var(--ink);font:17px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+:root[data-theme="light"] body{background:radial-gradient(90% 60% at 85% -10%,#D6E5FF 0%,transparent 55%),var(--bg)}
+a{color:var(--blue);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.mock{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:30;font-size:11px;font-weight:700;letter-spacing:.06em;color:#1a1100;background:var(--amber);border-radius:99px;padding:3px 12px}
+nav.top{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(6,14,31,.72);border-bottom:1px solid var(--edge)}
+:root[data-theme="light"] nav.top{background:rgba(255,255,255,.8)}
+nav.top .wrap{display:flex;align-items:center;gap:22px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--ink)}
+.links{display:flex;gap:20px;font-size:15px;font-weight:600;margin-left:12px}.links a{color:var(--sub)}.links a:hover{color:var(--ink)}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;font:inherit;font-weight:700;font-size:16px;border-radius:14px;padding:13px 20px;cursor:pointer;background:linear-gradient(180deg,#3B8BFF,#1F6FEB);color:#fff;box-shadow:0 8px 24px rgba(31,111,235,.35);white-space:nowrap}
+.btn.ghost{background:var(--card);color:var(--ink);box-shadow:var(--glow)}
+.btn.sm{padding:9px 14px;font-size:14px;border-radius:12px}
+.theme{background:none;border:1px solid var(--edge);color:var(--sub);border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:16px}
+/* hero */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;padding:64px 0 40px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:14px;font-weight:700;color:var(--green);background:rgba(63,208,122,.12);border-radius:99px;padding:5px 12px}
+h1{font-size:56px;line-height:1.04;letter-spacing:-.025em;margin:16px 0 14px;font-weight:850}
+h1 em{font-style:normal;background:linear-gradient(90deg,#58A6FF,#3FD0E0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:20px;color:var(--sub);margin:0 0 26px;max-width:560px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;font-size:14px;color:var(--mut)}.trust b{color:var(--sub);font-weight:600}
+.stage{position:relative;height:540px}
+.pc{position:absolute;right:0;top:30px;width:92%;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--edge2),0 30px 80px rgba(0,10,40,.6)}
+.pc img{display:block;width:100%}
+.pc .bar{height:26px;background:#0F1B33;display:flex;gap:6px;align-items:center;padding:0 10px}.pc .bar i{width:9px;height:9px;border-radius:50%;background:#3A4A66}
+.phone{position:absolute;left:0;bottom:0;width:220px;border-radius:34px;padding:8px;background:#0A1124;box-shadow:0 0 0 2px #2A3A5E,0 30px 70px rgba(0,10,40,.7)}
+.phone img{display:block;width:100%;border-radius:27px}
+.badge-live{position:absolute;left:180px;top:60px;background:var(--card);box-shadow:var(--glow);border-radius:14px;padding:10px 14px;font-size:14px;backdrop-filter:blur(10px)}
+.badge-live b{display:block;font-size:20px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);margin-right:6px}
+/* sections */
+section{padding:46px 0}
+h2{font-size:36px;letter-spacing:-.02em;margin:0 0 8px;line-height:1.1}
+.sub{color:var(--sub);margin:0 0 26px;font-size:18px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);box-shadow:var(--glow);border-radius:22px;padding:22px;backdrop-filter:blur(8px)}
+.card .ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:24px;margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:20px}.card p{margin:0;color:var(--sub);font-size:16px}
+.card .ex{margin-top:14px;font-size:14px;border-top:1px solid var(--edge);padding-top:12px;color:var(--ink)}
+.card .ex span{color:var(--mut)}
+.try{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.try a{display:block;color:inherit;background:var(--card);box-shadow:var(--glow);border-radius:20px;padding:18px}
+.try a b{display:block;font-size:18px;margin:8px 0 2px}.try a span{color:var(--sub);font-size:14px}
+.try .tag{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--green)}
+.who{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.who a{display:block;color:inherit;border-radius:20px;overflow:hidden;background:var(--card);box-shadow:var(--glow)}
+.who img{display:block;width:100%;height:120px;object-fit:cover;opacity:.85}.who div{padding:14px 16px}.who b{display:block;font-size:18px}.who span{color:var(--sub);font-size:14px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.comp{display:flex;gap:16px;align-items:center}
+.priv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center}
+.priv div{background:var(--card);box-shadow:var(--glow);border-radius:18px;padding:18px 12px}.priv b{display:block;font-size:17px;margin-top:6px}.priv span{color:var(--sub);font-size:14px}
+.final{text-align:center;padding:56px 0 70px}
+footer{border-top:1px solid var(--edge);padding:26px 0 40px;color:var(--mut);font-size:14px}
+footer .wrap{display:flex;gap:18px;flex-wrap:wrap}footer a{color:var(--sub)}
+@media (max-width:900px){
+ .links{display:none}
+ .hero{grid-template-columns:1fr;padding:36px 0 10px;gap:20px}
+ h1{font-size:40px}.lead{font-size:18px}
+ .stage{height:420px}.phone{width:170px}.badge-live{left:150px;top:30px}
+ .three,.split{grid-template-columns:1fr}.try,.who,.priv{grid-template-columns:1fr 1fr}
+ h2{font-size:28px}
+}
+@media (max-width:520px){nav.top .btn.ghost{display:none}nav.top .wrap{gap:10px}.logo{font-size:18px}}
+@media (max-width:420px){.ctas .btn{width:100%;justify-content:center}.stage{height:360px}.phone{width:150px}.badge-live{display:none}}
+</style>
+</head>
+<body>
+<div class="mock">MOCKUP · NOT LIVE</div>
+<nav class="top"><div class="wrap">
+ <a class="logo" href="#"><svg viewBox="0 0 64 64" width="32" height="32"><rect x="2" y="2" width="60" height="60" rx="18" fill="#1F6FEB"/><path d="M10 52A26 26 0 0114 20" stroke="#3FB950" stroke-width="4" fill="none" opacity=".7" stroke-linecap="round"/><path d="M50 20A26 26 0 0154 52" stroke="#FF7B72" stroke-width="4" fill="none" opacity=".6" stroke-linecap="round"/><path d="M21 28q4-5 8 0M35 28q4-5 8 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M22 38q10 10 20 0" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/></svg>AdeeboMeter</a>
+ <div class="links"><a href="#">Gaming</a><a href="#">Streaming</a><a href="#">Trading</a><a href="#">Learn</a><a href="#">Games</a><a href="#">Live</a></div>
+ <div class="sp"></div>
+ <button class="theme" onclick="var r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='light'?'dark':'light')" aria-label="Light or dark">◐</button>
+ <a class="btn ghost sm" href="#">Phone app</a><a class="btn sm" href="#">Get it free</a>
+</div></nav>
+
+<main class="wrap">
+ <div class="hero">
+  <div>
+   <span class="eyebrow"><span class="dot"></span>Free for Windows · works with your phone</span>
+   <h1>Know why your internet is slow - <em>and whose fault it is.</em></h1>
+   <p class="lead">AdeeboMeter watches your connection, your PC and the devices on your network, then tells you in plain words what's wrong and what to do. Check it all from your phone.</p>
+   <div class="ctas"><a class="btn" href="#">⬇ Get it free for Windows</a><a class="btn ghost" href="#">📱 Open the phone app</a></div>
+   <div class="trust"><span><b>No account</b></span><span><b>No cloud</b></span><span><b>No tracking</b></span><span><b>No admin needed</b></span></div>
+  </div>
+  <div class="stage">
+   <div class="pc"><div class="bar"><i></i><i></i><i></i></div><img src="img/pc.png" alt="AdeeboMeter on Windows"></div>
+   <div class="phone"><img src="img/phone.png" alt="AdeeboMeter on a phone"></div>
+   <div class="badge-live"><span class="dot"></span>Ping 18 ms<b>All quiet</b><span style="color:var(--sub);font-size:13px">your connection is fine</span></div>
+  </div>
+ </div>
+
+ <section>
+  <h2>Three things it does better than a speed test</h2>
+  <p class="sub">A speed test tells you a number. AdeeboMeter tells you what it means.</p>
+  <div class="three">
+   <div class="card"><div class="ic" style="background:rgba(242,184,75,.15)">🧭</div><h3>Finds the cause</h3><p>Wi-Fi, your router, your provider or the website - it checks each step and says which one is slow.</p><div class="ex"><span>Example:</span> "Your provider loses 3% at hop 4. Your Wi-Fi is fine."</div></div>
+   <div class="card"><div class="ic" style="background:rgba(63,208,224,.13)">📡</div><h3>Knows your devices</h3><p>The TV, the printer, the doorbell - named, with how quickly each one answers. Nothing is logged in to.</p><div class="ex"><span>Example:</span> "Printer · HP LaserJet · not answering for 14 min."</div></div>
+   <div class="card"><div class="ic" style="background:rgba(164,123,255,.15)">📱</div><h3>Your PC on your phone</h3><p>Live numbers, 100+ checks, files and text both ways - encrypted end to end, reconnect with Face ID.</p><div class="ex"><span>Example:</span> stand the phone by your screen as a game-ping meter.</div></div>
+  </div>
+ </section>
+
+ <section>
+  <h2>Try it now - no download</h2>
+  <p class="sub">These work in your browser, on any phone, even offline.</p>
+  <div class="try">
+   <a href="#"><span class="tag">90 LESSONS</span><b>📘 Learn</b><span>How DNS, Wi-Fi, 5G and VPNs really work - two lines and a picture each.</span></a>
+   <a href="#"><span class="tag">4 GAMES</span><b>🎯 Games</b><span>Quick-fire quiz, subnet sprint, port match, put it in order.</span></a>
+   <a href="#"><span class="tag">LIVE DATA</span><b>📈 Live</b><span>Exchange rates, oil and gas index, NHL scores, weather.</span></a>
+   <a href="#"><span class="tag">ON THIS PHONE</span><b>⚡ Check this phone</b><span>Delay, steadiness, DNS, IPv6 and your carrier, in 5 seconds.</span></a>
+  </div>
+ </section>
+
+ <section>
+  <h2>Made for what you do</h2>
+  <p class="sub">The same engine, tuned for how you use the internet.</p>
+  <div class="who">
+   <a href="#"><img src="../../docs/img/gaming.jpg" alt=""><div><b>Gaming</b><span>Your game's servers, lag spikes, who's hogging the line.</span></div></a>
+   <a href="#"><img src="../../docs/img/streaming.jpg" alt=""><div><b>Streaming</b><span>Upload headroom, dropped frames, your team's score on stream.</span></div></a>
+   <a href="#"><img src="../../docs/img/trading.jpg" alt=""><div><b>Trading</b><span>Your broker's response time, market-open checks.</span></div></a>
+   <a href="#"><img src="../../docs/img/screenshot.png" alt="" style="object-position:left top"><div><b>Home &amp; work</b><span>Calls breaking up, slow Wi-Fi, "is it me or them?"</span></div></a>
+  </div>
+ </section>
+
+ <section>
+  <div class="split">
+   <div class="card comp"><svg viewBox="0 0 64 64" width="72" height="72" style="flex:none"><rect x="2" y="2" width="60" height="60" rx="18" fill="#1F6FEB"/><path d="M21 28q4-5 8 0M35 28q4-5 8 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M22 38q10 10 20 0" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/></svg><div><div style="color:var(--sub);font-size:14px">Today's companion: <b style="color:var(--ink)">Pirate</b></div><div style="font-size:20px;font-weight:700;margin-top:4px">"Calm seas, captain. Nothing on the horizon."</div><div style="color:var(--sub);font-size:14px;margin-top:6px">29 voices, from Chill to Shakespeare - or Plain, just the facts. The numbers never change.</div></div></div>
+   <div class="card"><h3 style="margin-top:0">Your phone, your PC, one app</h3><p>Scan a code once. After that, your phone reconnects with Face ID - from home, from work, from mobile data. The PC never opens a port; the relay keeps nothing.</p><div style="margin-top:14px"><a class="btn sm" href="#">Open the phone app</a></div></div>
+  </div>
+ </section>
+
+ <section>
+  <h2 style="text-align:center">Private by design</h2>
+  <p class="sub" style="text-align:center">It's your network. It stays yours.</p>
+  <div class="priv"><div>🔒<b>No account</b><span>Nothing to sign up for</span></div><div>☁️<b>No cloud</b><span>Your data stays on your PC</span></div><div>🙈<b>No tracking</b><span>No ads, no telemetry</span></div><div>🛡️<b>No admin</b><span>Installs without admin rights</span></div></div>
+ </section>
+
+ <div class="final"><h2>See what your connection is really doing.</h2><p class="sub">Free from the Microsoft Store.</p><a class="btn" href="#">⬇ Get it free for Windows</a></div>
+</main>
+<footer><div class="wrap"><span>© AdeeboMeter</span><a href="#">Privacy</a><a href="#">Phone app</a><a href="#">Learn</a><a href="#">Hall of fame</a><a href="#">About</a></div></footer>
+</body>
+</html>
