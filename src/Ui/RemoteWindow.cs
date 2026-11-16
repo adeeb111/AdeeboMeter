@@ -8,7 +8,7 @@ namespace AdeeboMeter
     // The small window for the phone remote: the QR to scan, what's happening, and End. Closing it ends the session.
     sealed class RemoteWindow : Form
     {
-        readonly Remote r; readonly Label status, head, xfer; readonly Button end, sendFile, sendText, copy, openLink, openFolder; readonly TextBox got; string lastFile = ""; readonly Timer t = new Timer { Interval = 1000 };
+        readonly Remote r; readonly Label status, head, xfer; readonly Button end, sendFile, sendText, copy, openLink, openFolder; readonly TextBox got; readonly CheckBox autoClip; string lastFile = ""; readonly Timer t = new Timer { Interval = 1000 };
         public RemoteWindow(Remote session)
         {
             r = session; Text = L.T("Phone remote"); FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = true; StartPosition = FormStartPosition.CenterScreen; BackColor = Color.White; ShowInTaskbar = true;
@@ -39,8 +39,9 @@ namespace AdeeboMeter
             copy.Click += delegate { try { Clipboard.SetText(got.Text); xfer.Text = L.T("Copied."); } catch (System.Runtime.InteropServices.ExternalException) { } };
             openLink.Click += delegate { string u = got.Text.Trim(); if (System.Text.RegularExpressions.Regex.IsMatch(u, @"^https?://\S+$")) try { System.Diagnostics.Process.Start(u); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
             openFolder.Click += delegate { try { if (lastFile != "" && System.IO.File.Exists(lastFile)) System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + lastFile + "\""); else System.Diagnostics.Process.Start("explorer.exe", Remote.DropDir); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
-            Controls.AddRange(new Control[] { sendFile, sendText, xfer, got, copy, openLink, openFolder });
-            r.GotText = s => Ui(() => { got.Text = s; got.Visible = copy.Visible = true; openLink.Visible = System.Text.RegularExpressions.Regex.IsMatch(s.Trim(), @"^https?://\S+$"); xfer.Text = L.T("From your phone:"); Sync(); });
+            autoClip = new CheckBox { Text = L.T("Put text from my phone on this PC's clipboard"), AutoSize = true, Visible = false, Checked = false };   // off unless ticked, for this session only
+            Controls.AddRange(new Control[] { sendFile, sendText, xfer, got, copy, openLink, openFolder, autoClip });
+            r.GotText = s => Ui(() => { got.Text = s; if (autoClip.Checked) try { Clipboard.SetText(s); } catch (System.Runtime.InteropServices.ExternalException) { } got.Visible = copy.Visible = true; openLink.Visible = System.Text.RegularExpressions.Regex.IsMatch(s.Trim(), @"^https?://\S+$"); xfer.Text = L.T("From your phone:"); Sync(); });
             r.FileSaved = p => Ui(() => { lastFile = p; openFolder.Visible = true; xfer.Text = L.T("From your phone, saved to Downloads\\AdeeboMeter:") + " " + System.IO.Path.GetFileName(p); Sync(); });
             r.SendState = msg => Ui(() => { xfer.Text = msg; Sync(); });
             end = new Button { Text = L.T("End session"), AutoSize = true, Location = new Point(pad, y) }; end.Click += delegate { Close(); };
@@ -76,9 +77,9 @@ namespace AdeeboMeter
                 case Remote.State.Paired: status.Text = "📱 " + L.T("Connected") + (r.PhoneName != "" ? " - " + r.PhoneName : "") + " · " + left + " " + L.T("left"); break;
                 default: status.Text = L.T("Session over") + (r.Why != "" ? ": " + L.T(r.Why) : "."); end.Text = L.T("Close"); break;
             }
-            bool on = r.St == Remote.State.Paired; sendFile.Visible = sendText.Visible = on; if (!on) { got.Visible = copy.Visible = openLink.Visible = false; }
+            bool on = r.St == Remote.State.Paired; sendFile.Visible = sendText.Visible = autoClip.Visible = on; if (!on) { got.Visible = copy.Visible = openLink.Visible = false; }
             int x0 = status.Left, yy = status.Bottom + Sc(12);
-            if (on) { sendFile.Location = new Point(x0, yy); sendText.Location = new Point(sendFile.Right + Sc(8), yy); yy = sendFile.Bottom + Sc(8); }
+            if (on) { sendFile.Location = new Point(x0, yy); sendText.Location = new Point(sendFile.Right + Sc(8), yy); yy = sendFile.Bottom + Sc(6); autoClip.Location = new Point(x0, yy); yy = autoClip.Bottom + Sc(8); }
             xfer.Location = new Point(x0, yy); if (xfer.Text != "") yy = xfer.Bottom + Sc(6);
             if (got.Visible) { got.Location = new Point(x0, yy); yy = got.Bottom + Sc(6); copy.Location = new Point(x0, yy); openLink.Location = new Point(copy.Right + Sc(8), yy); yy = copy.Bottom + Sc(6); }
             if (openFolder.Visible) { openFolder.Location = new Point(x0, yy); yy = openFolder.Bottom + Sc(6); }

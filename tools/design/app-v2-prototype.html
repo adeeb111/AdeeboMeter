@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#071226">
+<title>AdeeboMeter app v2 - prototype</title>
+<!-- PROTOTYPE (design review only): every number here is a sample. Tap through Home, Devices, PC, Tools, More. -->
+<style>
+:root{--bg:#060E1F;--bg2:#0B1A36;--card:rgba(20,40,80,.55);--card2:rgba(28,56,108,.55);--edge:rgba(120,170,255,.18);--edge2:rgba(110,170,255,.45);--ink:#EAF1FF;--sub:#9DB1D3;--mut:#6F86AD;--blue:#3B8BFF;--blue2:#1F6FEB;--green:#3FD07A;--amber:#F2B84B;--red:#FF6B6B;--purple:#A47BFF;--cyan:#3FD0E0;--glow:0 0 0 1px var(--edge),0 10px 30px rgba(0,20,60,.45)}
+:root[data-theme="light"]{--bg:#EEF3FB;--bg2:#E2EBF8;--card:rgba(255,255,255,.9);--card2:rgba(255,255,255,.95);--edge:rgba(30,80,160,.14);--edge2:rgba(31,111,235,.45);--ink:#13223D;--sub:#4A5C7A;--mut:#7385A3;--glow:0 0 0 1px var(--edge),0 6px 18px rgba(20,50,100,.10)}
+:root[data-contrast="high"]{--sub:#D6E2F7;--mut:#B5C6E3;--edge:rgba(200,220,255,.5)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(120% 70% at 80% -10%,#123A7A 0%,transparent 55%),radial-gradient(90% 60% at -10% 110%,#0E2E66 0%,transparent 60%),var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+:root[data-theme="light"] body{background:var(--bg)}
+#app{max-width:480px;margin:0 auto;min-height:100dvh;padding:calc(10px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));position:relative}
+.sample{position:fixed;top:calc(6px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:30;font-size:11px;font-weight:700;letter-spacing:.06em;color:#1a1100;background:var(--amber);border-radius:99px;padding:2px 10px;opacity:.92}
+header{display:flex;align-items:center;gap:12px;margin:18px 0 16px}
+header .t{flex:1;min-width:0}header h1{font-size:28px;line-height:1.05;margin:0;font-weight:800;letter-spacing:-.01em}header p{margin:3px 0 0;color:var(--sub);font-size:14px}
+.ibtn{width:44px;height:44px;border-radius:14px;border:0;background:var(--card);box-shadow:var(--glow);color:var(--ink);display:grid;place-items:center;cursor:pointer;position:relative}
+.ibtn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.back{background:none;box-shadow:none;width:auto;padding:0 6px 0 0}
+svg.i{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.card{background:var(--card);box-shadow:var(--glow);border-radius:22px;padding:16px;margin:0 0 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hero{background:linear-gradient(135deg,rgba(31,111,235,.55),rgba(20,50,110,.6));box-shadow:0 0 0 1px var(--edge2),0 12px 40px rgba(31,111,235,.25);display:flex;align-items:center;gap:14px;cursor:pointer}
+:root[data-theme="light"] .hero{background:linear-gradient(135deg,#2F7BF5,#1C5FD6);color:#fff}:root[data-theme="light"] .hero .m{color:#DCE8FF}
+.hero .m{color:#C9DAF7;font-size:13px}.hero b{font-size:19px;display:block;margin:2px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700}.led{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.led.off{background:var(--mut);box-shadow:none}.led.warn{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
+.tile{background:var(--card);box-shadow:var(--glow);border-radius:20px;padding:15px;min-height:118px;cursor:pointer;border:0;text-align:left;color:inherit;font:inherit;display:flex;flex-direction:column;gap:6px}
+.tile b{font-size:18px}.tile span{color:var(--sub);font-size:13px;line-height:1.3}
+.ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center}
+.c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-purple{color:var(--purple)}.c-amber{color:var(--amber)}.c-cyan{color:var(--cyan)}.c-red{color:var(--red)}
+.where{display:inline-flex;gap:4px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.03em;border-radius:99px;padding:2px 8px;background:rgba(59,139,255,.16);color:var(--blue);white-space:nowrap}
+.where.ph{background:rgba(63,208,122,.15);color:var(--green)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--edge);cursor:pointer}.row:first-of-type{border-top:0}
+.row .tx{flex:1;min-width:0}.row .tx b{display:block;font-size:16px}.row .tx span{color:var(--sub);font-size:13px}
+.chev{color:var(--mut)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats.two{grid-template-columns:1fr 1fr}
+.st{background:rgba(10,25,55,.55);border:1px solid var(--edge);border-radius:14px;padding:10px 11px;display:flex;gap:8px;align-items:center}
+:root[data-theme="light"] .st{background:#F4F7FD}
+.st small{display:block;color:var(--sub);font-size:12px}.st b{font-size:19px;font-variant-numeric:tabular-nums}
+h2{font-size:13px;letter-spacing:.08em;color:var(--sub);margin:4px 2px 10px;font-weight:700;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.seg{display:flex;background:var(--card);box-shadow:var(--glow);border-radius:16px;padding:4px;gap:4px;margin:0 0 14px;overflow-x:auto;scrollbar-width:none}
+.seg button{flex:1;border:0;background:none;color:var(--sub);font:inherit;font-weight:600;font-size:15px;padding:10px 12px;border-radius:12px;cursor:pointer;white-space:nowrap;min-height:44px}
+.seg button.on{background:linear-gradient(180deg,#3B8BFF,#1F6FEB);color:#fff;box-shadow:0 4px 14px rgba(31,111,235,.45)}
+.acts{display:flex;justify-content:center;gap:28px;margin:4px 0 16px}
+.act{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:14px;color:var(--sub);background:none;border:0;font:inherit;cursor:pointer}
+.act i{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:var(--card);box-shadow:var(--glow);color:var(--ink)}
+.act.main i{background:linear-gradient(180deg,#3B8BFF,#1F6FEB);color:#fff;box-shadow:0 0 0 6px rgba(59,139,255,.18),0 8px 24px rgba(31,111,235,.5)}
+.act.main{color:var(--ink);font-weight:600}
+.pcart{display:grid;place-items:center;height:132px;margin:-6px 0 6px;position:relative}
+.pcart:before{content:"";position:absolute;inset:auto -16px 18px;height:70px;background:radial-gradient(60% 100% at 50% 100%,rgba(59,139,255,.45),transparent 70%)}
+.badge{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;background:rgba(63,208,122,.16);color:var(--green)}
+.badge.warn{background:rgba(242,184,75,.16);color:var(--amber)}.badge.off{background:rgba(111,134,173,.2);color:var(--sub)}
+input.search{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:0;box-shadow:var(--glow);border-radius:16px;padding:13px 14px 13px 44px;margin:0 0 14px;outline:none}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--edge)}.sw:first-of-type{border-top:0}
+.sw .tx{flex:1}.sw .tx span{display:block;color:var(--sub);font-size:13px}
+.tog{width:52px;height:32px;border-radius:99px;background:rgba(111,134,173,.35);position:relative;border:0;cursor:pointer;flex:none}.tog:after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:left .18s}
+.tog.on{background:var(--green)}.tog.on:after{left:23px}
+select{font:inherit;font-size:16px;color:var(--ink);background:var(--card2);border:1px solid var(--edge);border-radius:12px;padding:8px 10px}
+.btn{display:block;width:100%;border:0;font:inherit;font-weight:700;font-size:16px;border-radius:16px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#3B8BFF,#1F6FEB);color:#fff;min-height:50px}
+.btn.ghost{background:var(--card);color:var(--blue);box-shadow:var(--glow)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:rgba(6,14,31,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--edge)}
+:root[data-theme="light"] nav.tabs{background:rgba(255,255,255,.9)}
+nav.tabs .in{display:flex;max-width:480px;width:100%;justify-content:space-around}
+nav.tabs button{flex:1;border:0;background:none;color:var(--mut);font:inherit;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:14px;cursor:pointer;min-height:52px}
+nav.tabs button.on{color:var(--blue);background:rgba(59,139,255,.14)}
+.face{flex:none}
+.note{font-size:13px;color:var(--mut);text-align:center;margin:6px 0 16px}
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(0,6,20,.6);display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}.sheet .pan{background:var(--bg2);border-radius:26px 26px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -10px 40px rgba(0,0,0,.4);border-top:1px solid var(--edge2)}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--mut);margin:0 auto 14px;opacity:.5}
+.empty{text-align:center;padding:26px 10px}.empty b{display:block;font-size:19px;margin:10px 0 4px}.empty p{color:var(--sub);margin:0 0 16px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px}.kv dt{color:var(--sub)}.kv dd{margin:0;font-family:ui-monospace,Menlo,monospace;font-size:13px;overflow-wrap:anywhere}
+.tl{position:relative;padding-left:18px}.tl:before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--edge)}
+.tl div{position:relative;padding:6px 0}.tl div:before{content:"";position:absolute;left:-17px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--c,var(--blue))}
+.tl small{color:var(--sub)}
+.mode{display:flex;gap:6px}.mode button{flex:1}
+.two,.split{display:block}
+nav.tabs .brand{display:none;align-items:center;gap:10px;font-weight:800;font-size:19px;padding:4px 8px 18px}
+@media (min-width:768px){
+ #app{max-width:1400px;padding:calc(18px + env(safe-area-inset-top)) 32px 40px calc(256px + env(safe-area-inset-left))}
+ nav.tabs{top:0;bottom:0;right:auto;width:224px;padding:calc(22px + env(safe-area-inset-top)) 14px 22px;border-top:0;border-right:1px solid var(--edge);flex-direction:column;justify-content:flex-start}
+ nav.tabs .in{flex-direction:column;gap:6px;justify-content:flex-start}
+ nav.tabs .brand{display:flex}
+ nav.tabs button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;font-size:16px;padding:12px 14px;min-height:50px}
+ header h1{font-size:34px}
+ .grid{grid-template-columns:repeat(3,1fr)}
+ .two{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+ .split{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.3fr);gap:20px;align-items:start}
+ .split>.pane{position:sticky;top:18px}
+ .row.sel{background:rgba(59,139,255,.14);border-radius:14px;margin:0 -8px;padding:12px 8px}
+ .sample{left:calc(50% + 112px)}
+ .pcart{height:150px}
+}
+</style>
+</head>
+<body>
+<div class="sample">PROTOTYPE · SAMPLE DATA</div>
+<div id="app"></div>
+<nav class="tabs"><div class="in" id="tabs"></div></nav>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="pan" id="pan"></div></div>
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)};
+// ---- icons (simple strokes, one family)
+var I={home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',wifi:'<path d="M2 9a15 15 0 0120 0"/><path d="M5.5 12.5a10 10 0 0113 0"/><path d="M9 16a5 5 0 016 0"/><circle cx="12" cy="19.5" r="1"/>',pc:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',tools:'<path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',more:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>',
+bell:'<path d="M6 8a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21h4"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H3a2 2 0 010-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V3a2 2 0 014 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1z"/>',
+send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',walk:'<circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 6-8 12-8 12S4 16 4 10a8 8 0 018-8z"/>',book:'<path d="M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2z"/><path d="M22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/>',chev:'<path d="M9 6l6 6-6 6"/>',back:'<path d="M15 6l-6 6 6 6"/>',
+play:'<path d="M7 4l13 8-13 8z" fill="currentColor"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>',refresh:'<path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/>',up:'<path d="M12 19V5M5 12l7-7 7 7"/>',down:'<path d="M12 5v14M5 12l7 7 7-7"/>',cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',mem:'<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 11v2M10 11v2M14 11v2M18 11v2"/>',disk:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/>',
+search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',file:'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',game:'<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/>',chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',face:'<path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><path d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 005 0M12 10v3"/>',
+tv:'<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/>',printer:'<path d="M6 9V2h12v7"/><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M6 14h12v8H6z"/>',phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',router:'<rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 17h.01M10 17h.01M12 13V8M8 6a6 6 0 018 0"/>',bulb:'<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V16h8v-1.3A7 7 0 0012 2z"/>',spk:'<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M12 6h.01"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',help:'<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>'};
+function ic(n,s){return '<svg class="i" viewBox="0 0 24 24" style="width:'+(s||24)+'px;height:'+(s||24)+'px">'+I[n]+'</svg>'}
+function face(look,s){s=s||40;var e=look==="worried"?'<circle cx="25" cy="29" r="3.2" fill="#fff"/><circle cx="39" cy="29" r="3.2" fill="#fff"/><path d="M20 22l8 3M44 22l-8 3" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M24 44q8-6 16 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/>':'<path d="M21 28q4-5 8 0M35 28q4-5 8 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M22 38q10 10 20 0" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
+  return '<svg class="face" viewBox="0 0 64 64" width="'+s+'" height="'+s+'"><rect x="2" y="2" width="60" height="60" rx="18" fill="#1F6FEB"/><path d="M10 52A26 26 0 0114 20" stroke="#3FB950" stroke-width="4" fill="none" opacity=".6" stroke-linecap="round"/><path d="M50 20A26 26 0 0154 52" stroke="#FF7B72" stroke-width="4" fill="none" opacity=".5" stroke-linecap="round"/>'+e+'</svg>'}
+function where(pc){return pc?'<span class="where">'+ic("pc",12)+' ON YOUR PC</span>':'<span class="where ph">'+ic("phone",12)+' ON THIS PHONE</span>'}
+
+// ---- prototype state (sample)
+var S={tab:"home",sub:"",pc:"live",mode:"everyday",theme:"dark",remember:true,bio:true,pcTab:"overview",talk:"normal",voice:"Pirate",dev:null,q:""};
+var DEV=[{n:"Your router",k:"router",ip:"192.168.1.1",mac:"e8:6f:38:..",mk:"Hitron (Rogers modem)",ms:2,how:"It's the way out to the internet (your gateway), and it answered UPnP with its model.",seen:"here now"},
+ {n:"Living-room TV",k:"tv",ip:"192.168.1.41",mac:"a8:23:fe:..",mk:"LG webOS TV",ms:4,how:"It said its own name over Bonjour (_airplay) and UPnP.",seen:"here now",w:1},
+ {n:"Ring doorbell",k:"bulb",ip:"192.168.1.57",mac:"34:3e:a4:..",mk:"Ring",ms:14,how:"Its hardware address belongs to Ring. It doesn't announce a name.",seen:"here now",w:1},
+ {n:"Printer",k:"printer",ip:"192.168.1.30",mac:"3c:d9:2b:..",mk:"HP LaserJet M404",ms:null,how:"It said its model over Bonjour (_ipp). It isn't answering ping right now.",seen:"last seen 14 min ago",w:1,bad:1},
+ {n:"Kitchen speaker",k:"spk",ip:"192.168.1.62",mac:"5c:aa:fd:..",mk:"Sonos One",ms:6,how:"It answered Bonjour (_sonos) and UPnP with its room name.",seen:"here now"},
+ {n:"Phone",k:"phone",ip:"192.168.1.88",mac:"random",mk:"private address",ms:31,how:"It hides behind a random hardware address - phones and laptops do this for privacy.",seen:"here now"}];
+var JOURNEYS=[["Internet is slow","speed vs delay, Wi-Fi, provider, DNS",1],["A device disappeared","is it off, asleep, or did it move?",1],["Games lag","your game's servers, loss, jitter",1],["Calls keep breaking up","jitter, loss, upload under load",1],["Websites won't load","DNS, the way out, certificates",1],["Is it my phone or my PC?","the same checks from both, side by side",0]];
+var TOOLS=[["Ping","ping",1],["Traceroute / MTR","path",1],["DNS lookup","dns",1],["Port test","port",1],["Website timing","web",1],["Devices on this network","devices",1],["Clock check","clock",1],["DNS from this phone","dns",0],["Lag from this phone","lag",0]];
+var MODES={everyday:"Everyday",advanced:"Advanced",engineer:"Engineer"};
+
+function hdr(title,subt,left){return '<header>'+(left||'')+'<div class="t"><h1>'+title+'</h1>'+(subt?'<p>'+subt+'</p>':'')+'</div>'+(left?'<button class="ibtn" data-go="more">'+ic("more",22)+'</button>':'<button class="ibtn" data-go="settings" aria-label="Settings">'+ic("gear",22)+'</button>')+'</header>'}
+function hero(){
+  if(S.pc==="none")return '<div class="card hero" data-go="pair"><div style="font-size:0">'+ic("pc",54)+'</div><div style="flex:1"><span class="pill"><span class="led off"></span>No PC connected</span><b>Connect your PC</b><span class="m">Scan the code from AdeeboMeter on your PC</span></div>'+ic("chev")+'</div>';
+  if(S.pc==="stale")return '<div class="card hero" data-go="pair"><div style="font-size:0">'+ic("pc",54)+'</div><div style="flex:1"><span class="pill"><span class="led warn"></span>Not live · last reading 3 min ago</span><b>DESKTOP-ADEEB</b><span class="m">Tap to reconnect '+(S.bio?'(Face ID)':'')+'</span></div>'+ic("chev")+'</div>';
+  return '<div class="card hero" data-go="pc"><div style="display:flex;align-items:center;gap:6px">'+ic("pc",40)+'<span style="opacity:.8">⇄</span>'+ic("phone",30)+'</div><div style="flex:1;min-width:0"><span class="pill"><span class="led"></span>Connected · live</span><b>PC engine online</b><span class="m">DESKTOP-ADEEB · 🔒 encrypted</span></div>'+ic("chev")+'</div>';
+}
+function glance(){
+  var live=S.pc==="live";
+  return '<div class="card" data-go="pc" style="cursor:pointer"><h2><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)"><span class="led'+(live?'':' off')+'"></span>Live at a glance</span>'+ic("chev",20)+'</h2><p style="margin:-6px 2px 10px;color:var(--sub);font-size:13px">'+(live?'Last update: now':S.pc==="stale"?'Not live - these are from 3 min ago':'Connect your PC to see this')+'</p>'+
+  '<div class="stats"><div class="st"><span class="c-cyan">'+ic("devices"in I?"pc":"wifi",20)+'</span><div><b>'+(S.pc==="none"?"–":"6")+'</b><small>Devices</small></div></div><div class="st"><span class="c-green">'+ic("wifi",20)+'</span><div><b>'+(S.pc==="none"?"–":"18")+'<small style="display:inline"> ms</small></b><small>Ping</small></div></div><div class="st"><span class="c-purple">'+ic("cpu",20)+'</span><div><b>'+(S.pc==="none"?"–":"6%")+'</b><small>PC CPU</small></div></div></div></div>';
+}
+function tile(go,icn,col,t,s){return '<button class="tile" data-go="'+go+'"><span class="ic '+col+'">'+ic(icn,30)+'</span><b>'+t+'</b><span>'+s+'</span></button>'}
+
+var V={
+home:function(){return hdr('AdeeboMeter','Your network, devices and PC - in your pocket')+(wide()?'<div class="two"><div>':'')+
+  (S.pc==="stale"?'<div class="card" style="display:flex;gap:12px;align-items:center;box-shadow:0 0 0 1px rgba(242,184,75,.5)"><span class="c-amber">'+ic("help",26)+'</span><div style="flex:1"><b>The PC went quiet</b><div style="color:var(--sub);font-size:14px">Asleep, closed, or its internet dropped. Numbers below are not live.</div></div></div>':'')+
+  hero()+'<div style="display:flex;gap:10px;align-items:center;margin:-2px 2px 14px">'+face(S.pc==="stale"?"worried":"happy",36)+'<div style="font-weight:600">'+(S.talk==="face"?"":S.pc==="stale"?"Yer ship went quiet, captain. Let's find out why.":"Calm seas, captain. Nothing on the horizon.")+'</div></div>'+
+  '<div class="grid">'+tile("devices","wifi","c-green","Devices","Who's on my network")+tile("pc","pc","c-blue","My PC","Status, stats and checks")+tile("tools","tools","c-cyan","Tools","Fix a problem, or pick a check")+tile("send","send","c-purple","Send","Files and text, phone ⇄ PC")+tile("walk","walk","c-amber","Walk","Room-by-room Wi-Fi")+tile("learn","book","c-amber","Learn","Quick lessons, offline")+'</div>'+(wide()?'</div><div>'+glance()+'<h2>Devices <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--blue);cursor:pointer" data-go="devices">See all</span></h2><div class="card">'+DEV.slice(0,4).map(function(d,i){return '<div class="row" data-go="devices"><span class="ic c-cyan" style="background:rgba(63,208,224,.10)">'+ic(d.k,22)+'</span><div class="tx"><b>'+d.n+'</b><span>'+d.mk+'</span></div><span class="badge'+(d.bad?' warn':'')+'">'+(d.bad?'quiet':d.ms+' ms')+'</span></div>'}).join("")+'</div><h2>Last result</h2><div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)"><span class="badge warn">Worth a look</span><h3 style="margin:8px 0 4px">MTR to 8.8.8.8</h3><div style="color:var(--sub);font-size:14px">Hop 4 (your provider) loses 3%.</div></div></div></div>':glance())},
+devices:function(){
+  if(wide()){if(S.dev==null)S.dev=1;return hdr('Devices','6 here now · 3 watched · from your PC')+'<div class="split"><div>'+V.devlist(S.dev)+'</div><div class="pane">'+V.devone(true)+'</div></div>'}
+  if(S.dev!=null)return V.devone(false);
+  return hdr('Devices','6 here now · 3 watched · from your PC')+V.devlist(-1)},
+devone:function(inPane){var d=DEV[S.dev];return (inPane?'<header style="margin-top:0"><div class="t"><h1 style="font-size:26px">'+d.n+'</h1><p>'+d.mk+'</p></div></header>':hdr(d.n,d.mk,'<button class="ibtn back" data-dev="-1">'+ic("back",26)+'</button>'))+
+   '<div class="card" style="display:flex;gap:14px;align-items:center"><span class="ic c-cyan" style="width:56px;height:56px;background:rgba(63,208,224,.12)">'+ic(d.k,32)+'</span><div style="flex:1"><span class="badge'+(d.bad?' warn':'')+'">'+(d.bad?'Not answering':'Here now · '+d.ms+' ms')+'</span><div style="color:var(--sub);font-size:14px;margin-top:6px">'+d.seen+'</div></div></div>'+
+   '<h2>What we know</h2><div class="card"><p style="margin:0 0 10px">'+d.how+'</p><p style="margin:0;color:var(--sub);font-size:14px">Nothing was logged in to or changed - devices were only asked who they are.</p></div>'+
+   (d.w?'<h2>Watched · last 24 h</h2><div class="card"><svg viewBox="0 0 300 60" style="width:100%;height:60px"><path d="M0 40 L20 38 40 41 60 37 80 39 100 40 120 36 140 38 160 39 180 37'+(d.bad?' 200 37 M232 60 L300 60':' 200 38 220 36 240 39 260 37 280 38 300 36')+'" fill="none" stroke="'+(d.bad?'#F2B84B':'#3FD07A')+'" stroke-width="3"/></svg><div style="color:var(--sub);font-size:14px">'+(d.bad?'Answered 91% of the last 24 h · quiet since 14 min ago':'Answered 100% of the last 24 h · usually '+d.ms+' ms')+'</div></div>':'')+
+   '<h2>Test it</h2><div class="card">'+[["Ping it now",1],["Which ports are open",1],["Wake it up (Wake-on-LAN)",1]].map(function(t){return '<div class="row"><div class="tx"><b>'+t[0]+'</b>'+where(t[1])+'</div><span class="chev">'+ic("chev",20)+'</span></div>'}).join("")+'</div>'+
+   (S.mode!=="everyday"?'<h2>Details</h2><div class="card"><dl class="kv"><dt>Address</dt><dd>'+d.ip+'</dd><dt>Hardware</dt><dd>'+d.mac+'</dd><dt>Found by</dt><dd>ARP · Bonjour · UPnP</dd></dl></div>':'')+
+   '<button class="btn ghost">'+(d.w?'Stop watching':'Watch this device')+'</button>'},
+devlist:function(sel){return '<input class="search" placeholder="Find a device" style="background-image:none">'+
+   '<div class="card">'+DEV.map(function(d,i){return '<div class="row'+(i===sel?' sel':'')+'" data-dev="'+i+'"><span class="ic c-cyan" style="background:rgba(63,208,224,.10)">'+ic(d.k,24)+'</span><div class="tx"><b>'+(d.w?'★ ':'')+d.n+'</b><span>'+d.mk+(S.mode!=="everyday"?' · '+d.ip:'')+'</span></div><span class="badge'+(d.bad?' warn':'')+'">'+(d.bad?'quiet':d.ms+' ms')+'</span></div>'}).join("")+'</div>'+
+   '<p class="note">Read-only. Devices are asked who they are the way phones and TVs ask each other - nothing is logged in to. No alerts: you look when you want to.</p>'},
+pc:function(){
+  if(S.pc==="none")return hdr('My PC','')+'<div class="card empty">'+ic("pc",56)+'<b>No PC connected yet</b><p>Install AdeeboMeter on your Windows PC, then open Phone remote and scan its code with your camera.</p><button class="btn" data-go="pair">How to connect</button></div>';
+  var t=S.pcTab,a=hdr('My PC','<span class="pill"><span class="led'+(S.pc==="live"?'':' warn')+'"></span>DESKTOP-ADEEB '+(S.pc==="live"?'· live':'· not live')+'</span>')+
+   '<div class="pcart"><svg viewBox="0 0 120 90" width="150"><rect x="10" y="6" width="100" height="62" rx="7" fill="#0E2147" stroke="#CFE0FF" stroke-width="4"/><rect x="18" y="14" width="84" height="46" rx="3" fill="#1F6FEB"/><path d="M18 50 Q50 30 102 40 L102 60 L18 60z" fill="#3B8BFF" opacity=".6"/><rect x="46" y="70" width="28" height="8" fill="#CFE0FF"/><rect x="34" y="78" width="52" height="5" rx="2.5" fill="#CFE0FF"/></svg></div>'+
+   '<div class="acts"><button class="act main"><i>'+ic("play",24)+'</i>Checkup</button><button class="act"><i>'+ic("stop",20)+'</i>Stop</button><button class="act"><i>'+ic("refresh",22)+'</i>Refresh</button></div>'+
+   '<div class="seg">'+["overview","checks","results","files"].map(function(k){return '<button data-pct="'+k+'" class="'+(t===k?'on':'')+'">'+{overview:"Overview",checks:"Checks",results:"Results",files:"Files"}[k]+'</button>'}).join("")+'</div>';
+  if(t==="overview")a+=(wide()?'<div class="two"><div>':'')+'<div class="card"><h2 style="margin-bottom:12px"><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)">'+ic("pc",20)+' PC status</span><span class="badge'+(S.pc==="live"?'':' warn')+'">'+(S.pc==="live"?'Online':'3 min ago')+'</span></h2><div class="stats" style="margin-bottom:8px"><div class="st"><span class="c-blue">'+ic("cpu",20)+'</span><div><small>CPU</small><b>6%</b></div></div><div class="st"><span class="c-blue">'+ic("mem",20)+'</span><div><small>Memory</small><b>42%</b></div></div><div class="st"><span class="c-blue">'+ic("disk",20)+'</span><div><small>Disk</small><b>68%</b></div></div></div><div class="stats two"><div class="st"><span class="c-green">'+ic("up",22)+'</span><div><small>Up</small><b>12.4</b> <small style="display:inline">Mb/s</small></div></div><div class="st"><span class="c-purple">'+ic("down",22)+'</span><div><small>Down</small><b>85.7</b> <small style="display:inline">Mb/s</small></div></div></div></div>'+(wide()?'</div><div>':'')+
+   '<div class="card">'+[["search","Run a check on the PC","Ping, trace, ports, DNS, devices…","checks"],["list","Results","Your last checks, problems first","results"],["send","Send files and text","Phone ⇄ PC, encrypted","files"],["chart","Widget mode","Stand the phone by your screen","widget"]].map(function(r){return '<div class="row" data-pct="'+r[3]+'"><span class="ic c-blue" style="background:rgba(59,139,255,.12)">'+ic(r[0],22)+'</span><div class="tx"><b>'+r[1]+'</b><span>'+r[2]+'</span></div><span class="chev">'+ic("chev",20)+'</span></div>'}).join("")+'</div>'+(wide()?'</div></div>':'');
+  else if(t==="checks")a+='<p style="color:var(--sub);margin:0 2px 10px;font-size:14px">The phone can only start checks that read or measure. Anything that changes the PC stays on the PC.</p><div class="card">'+TOOLS.filter(function(x){return x[2]}).map(function(x){return '<div class="row"><div class="tx"><b>'+x[0]+'</b>'+where(1)+'</div><span class="chev">'+ic("chev",20)+'</span></div>'}).join("")+'</div><button class="btn ghost" data-go="tools">All 120+ checks</button>';
+  else if(t==="results")a+='<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)"><span class="badge warn">Worth a look</span><h3 style="margin:8px 0 4px">MTR to 8.8.8.8</h3><div style="color:var(--sub);font-size:14px">Hop 4 (your provider) loses 3% · everything after it is fine.</div><div class="tl" style="margin-top:10px"><div><b>1 · Your router</b> <small>2 ms</small></div><div><b>2 · 10.120.0.1</b> <small>9 ms</small></div><div style="--c:var(--amber)"><b>4 · rogers.net</b> <small>14 ms · 3% lost</small></div><div><b>8 · dns.google</b> <small>18 ms</small></div></div></div><div class="card"><span class="badge">Looks good</span><h3 style="margin:8px 0 4px">DNS lookup · github.com</h3><div style="color:var(--sub);font-size:14px">Your router&#39;s DNS answered in 11 ms.</div></div>';
+  else if(t==="widget")a+='<div class="card" style="background:#020814;text-align:center;padding:22px"><div style="display:flex;justify-content:space-between;color:var(--sub);font-size:13px"><span><span class="led" style="display:inline-block"></span> All quiet</span><span>🔒 24:10</span></div><div class="stats two" style="margin:14px 0"><div class="st" style="display:block"><small>↓ Download</small><b style="font-size:40px">85.7</b></div><div class="st" style="display:block"><small>↑ Upload</small><b style="font-size:40px">12.4</b></div></div><div class="st" style="display:block"><small>Ping · router 2 ms</small><b style="font-size:46px;color:var(--green)">18 ms</b></div></div><p class="note">Screen stays on. No buzz, no pop-ups. Turn the phone sideways for one row.</p>';
+  else a+='<div class="card"><h2>Send to your PC</h2><button class="btn" style="margin-bottom:10px">Choose a file</button><textarea rows="2" style="width:100%;font:inherit;font-size:16px;padding:10px;border-radius:14px;border:1px solid var(--edge);background:transparent;color:var(--ink)" placeholder="Paste a link or a note"></textarea><button class="btn ghost" style="margin-top:8px">Send text</button></div><div class="card"><h2>From your PC</h2><div class="row"><span class="c-blue">'+ic("file",24)+'</span><div class="tx"><b>isp-report.pdf</b><span>412 KB · arrived 2 min ago</span></div><span class="badge">Save</span></div></div><p class="note">Encrypted end to end. Your PC asks before saving anything.</p>';
+  return a},
+tools:function(){return hdr('Tools','Start from the problem - or pick a check')+'<input class="search" placeholder="Find a check: ping, mtu, dns, wifi…">'+(wide()?'<div class="two"><div>':'')+
+  '<h2>Fix a problem</h2><div class="card">'+JOURNEYS.map(function(j){return '<div class="row"><span class="ic c-amber" style="background:rgba(242,184,75,.12)">'+ic("help",22)+'</span><div class="tx"><b>'+j[0]+'</b><span>'+j[1]+'</span></div>'+where(j[2])+'</div>'}).join("")+'</div>'+
+  (wide()?'</div><div>':'')+'<h2>Quick checks</h2><div class="card">'+TOOLS.map(function(x){return '<div class="row"><div class="tx"><b>'+x[0]+'</b></div>'+where(x[2])+'</div>'}).join("")+'</div>'+
+  (S.mode==="engineer"?'<h2>Engineer</h2><div class="card"><div class="row"><div class="tx"><b>All 120+ checks, grouped</b><span>Raw rows, sources and times on every result</span></div>'+where(1)+'</div></div>':'<p class="note">More checks in Advanced and Engineer mode (More › Settings).</p>')+(wide()?'</div></div>':'')},
+more:function(){return hdr('More','')+'<div class="grid">'+tile("learn","book","c-amber","Learn","90 lessons, offline")+tile("games","game","c-green","Games","Quiz, subnets, ports")+tile("live","chart","c-cyan","Live","Markets, scores, weather")+tile("lockf","lock","c-purple","Lock files",".adeebo, offline")+'</div>'+
+  '<div class="card">'+[["smile","Companion","Pirate · talks normally","companion"],["gear","Settings","Mode, theme, this PC, Face ID","settings"],["help","How it works","What runs where, what's kept","how"]].map(function(r){return '<div class="row" data-go="'+r[3]+'"><span class="ic c-blue" style="background:rgba(59,139,255,.12)">'+ic(r[0],22)+'</span><div class="tx"><b>'+r[1]+'</b><span>'+r[2]+'</span></div><span class="chev">'+ic("chev",20)+'</span></div>'}).join("")+'</div>'},
+settings:function(){return hdr('Settings','','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+
+  '<h2>How much to show</h2><div class="card"><div class="seg" style="box-shadow:none;margin:0;background:transparent;padding:0">'+Object.keys(MODES).map(function(m){return '<button data-mode="'+m+'" class="'+(S.mode===m?'on':'')+'">'+MODES[m]+'</button>'}).join("")+'</div><p style="color:var(--sub);font-size:14px;margin:10px 2px 0">'+{everyday:"Plain answers and the next step.",advanced:"Plus addresses, ping, DNS and ports.",engineer:"Plus raw rows, sources and times, and every check."}[S.mode]+'</p></div>'+
+  '<h2>This PC</h2><div class="card"><div class="sw"><div class="tx"><b>Remember DESKTOP-ADEEB</b><span>Reconnect with one tap. A key is kept on this phone only; your PC still asks Allow.</span></div><button class="tog'+(S.remember?' on':'')+'" data-tog="remember"></button></div>'+
+  '<div class="sw"><div class="tx"><b>'+ic("face",18)+' Face ID / fingerprint to reconnect</b><span>Your phone checks it\'s you before the key is used. Nothing biometric leaves the phone.</span></div><button class="tog'+(S.bio&&S.remember?' on':'')+'" data-tog="bio"'+(S.remember?'':' disabled style="opacity:.4"')+'></button></div>'+
+  '<div class="sw"><div class="tx"><b style="color:var(--red)">Forget this PC</b><span>Deletes the key from this phone.</span></div></div></div>'+
+  '<h2>Look</h2><div class="card"><div class="sw"><div class="tx"><b>Theme</b></div><select data-sel="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">Same as phone</option></select></div><div class="sw"><div class="tx"><b>High contrast</b></div><button class="tog'+(S.hc?' on':'')+'" data-tog="hc"></button></div></div>'+
+  '<h2>Try other states (prototype only)</h2><div class="card"><div class="mode">'+[["live","Live"],["stale","Not live"],["none","No PC"]].map(function(x){return '<button class="btn'+(S.pc===x[0]?'':' ghost')+'" data-pcs="'+x[0]+'" style="padding:10px">'+x[1]+'</button>'}).join("")+'</div></div>'},
+companion:function(){return hdr('Companion','','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+'<div class="card" style="display:flex;gap:14px;align-items:center">'+face("happy",56)+'<div style="font-weight:600">Calm seas, captain. Nothing on the horizon.</div></div><div class="card"><div class="sw"><div class="tx"><b>Voice</b><span>29 voices - the words change, never the numbers</span></div><select><option>Pirate</option><option>Chill</option><option>Plain (just the facts)</option></select></div><div class="sw"><div class="tx"><b>Talks</b></div><select data-sel="talk"><option value="face">Face only</option><option value="quiet">Quiet</option><option value="normal">Normal</option><option value="chatty">Chatty</option></select></div><div class="sw"><div class="tx"><b>Calls me</b></div><select><option>Boss</option><option>Sir</option><option>Ma\'am</option><option>My name</option></select></div><div class="sw"><div class="tx"><b>Same voice as my PC</b><span>Follows the PC unless you pick here</span></div><button class="tog on"></button></div></div>'},
+pair:function(){return hdr(S.pc==="stale"?'Reconnect':'Connect your PC','','<button class="ibtn back" data-go="home">'+ic("back",26)+'</button>')+
+  (S.pc==="stale"&&S.remember?'<div class="card empty">'+ic("face",56)+'<b>Reconnect to DESKTOP-ADEEB</b><p>'+(S.bio?'Face ID checks it\'s you, then the PC asks Allow.':'The PC asks Allow.')+'</p><button class="btn" data-pcs="live">'+(S.bio?'Use Face ID':'Reconnect')+'</button></div>':
+  '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Right-click the AdeeboMeter tray icon › Phone remote</small></div><div><b>On this phone</b><br><small>Open your camera app and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div><p class="note">This app never asks for your camera - your camera app reads the code.</p>')},
+send:function(){S.tab="pc";S.pcTab="files";return V.pc()},
+walk:function(){return hdr('Wi-Fi walk','','<button class="ibtn back" data-go="home">'+ic("back",26)+'</button>')+'<div class="card"><p style="margin:0 0 10px">Stand in a room and tap Test here. Lag and drops from this phone, per room - no speed test.</p><button class="btn">Test here</button></div><div class="card">'+[["Office","12 ms · steady",0],["Living room","19 ms · steady",0],["Bedroom","48 ms · 2 drops",1]].map(function(r){return '<div class="row"><div class="tx"><b>'+r[0]+'</b><span>'+r[1]+'</span></div><span class="badge'+(r[2]?' warn':'')+'">'+(r[2]?'weak':'good')+'</span></div>'}).join("")+'</div><p class="note">'+where(0)+' · a browser can\'t read signal bars, so this measures what you feel: delay and drops.</p>'},
+how:function(){return hdr('How it works','','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+'<div class="card"><dl class="kv"><dt>'+where(1)+'</dt><dd style="font-family:inherit;font-size:14px">Real measurements: ping, trace, ports, devices, game and broker timing. Your PC does them.</dd><dt>'+where(0)+'</dt><dd style="font-family:inherit;font-size:14px">What a browser can: delay to the web, DNS, IPv6. No signal bars, no ping.</dd><dt><span class="where" style="background:rgba(164,123,255,.16);color:var(--purple)">OFFLINE</span></dt><dd style="font-family:inherit;font-size:14px">Learn, Games, .adeebo files, saved results.</dd></dl></div><div class="card" style="color:var(--sub);font-size:14px">The PC only connects out - it never listens. Phone and PC talk end to end encrypted through a relay that keeps nothing. No account, no alerts, no tracking.</div>'},
+learn:function(){return hdr('Learn','90 lessons, offline','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+'<div class="card">'+[["DNS","the internet's phone book"],["DHCP","how your PC gets an address"],["Wi-Fi","bands, channels and walls"],["MTU","why some packets don't fit"]].map(function(r){return '<div class="row"><span class="c-amber">'+ic("book",22)+'</span><div class="tx"><b>'+r[0]+'</b><span>'+r[1]+'</span></div><span class="chev">'+ic("chev",20)+'</span></div>'}).join("")+'</div>'}
+};
+V.games=function(){return hdr('Games','','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+'<div class="grid">'+tile("games","help","c-green","Quick-fire","10 questions")+tile("games","list","c-blue","In order","DNS, DHCP, TLS")+tile("games","chart","c-amber","Subnet sprint","60 seconds")+tile("games","tools","c-purple","Port match","60 seconds")+'</div>'};
+V.live=function(){return hdr('Live','','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+'<div class="card"><h2>Canadian dollar</h2><div class="row"><div class="tx"><b>US dollar</b></div><b>1.3912</b></div><div class="row"><div class="tx"><b>Euro</b></div><b>1.6101</b></div></div><div class="card"><h2>NHL today</h2><div class="row"><div class="tx"><b>OTT 2 @ TOR 3</b></div><span class="badge">P3 04:12</span></div></div>'};
+V.lockf=function(){return hdr('Lock files','.adeebo · offline','<button class="ibtn back" data-go="more">'+ic("back",26)+'</button>')+'<div class="card"><button class="btn" style="margin-bottom:10px">Open a .adeebo file</button><button class="btn ghost">Lock a file</button></div>'};
+
+function wide(){return matchMedia("(min-width:768px)").matches}
+var TABS=[["home","home","Home"],["devices","wifi","Devices"],["pc","pc","PC"],["tools","tools","Tools"],["more","more","More"]];
+var TABOF={settings:"more",companion:"more",how:"more",learn:"more",games:"more",live:"more",lockf:"more",pair:"home",walk:"home",send:"pc"};
+function draw(){
+  document.documentElement.setAttribute("data-theme",S.theme==="system"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):S.theme);
+  document.documentElement.setAttribute("data-contrast",S.hc?"high":"");
+  $("app").innerHTML=V[S.tab]();
+  var cur=TABOF[S.tab]||S.tab;
+  $("tabs").innerHTML='<div class="brand">'+face("happy",34)+'AdeeboMeter</div>'+TABS.map(function(t){return '<button data-go="'+t[0]+'" class="'+(cur===t[0]?'on':'')+'">'+ic(t[1],24)+t[2]+'</button>'}).join("");
+  [].forEach.call(document.querySelectorAll("select[data-sel]"),function(s){s.value=S[s.getAttribute("data-sel")]});
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-go],[data-dev],[data-pct],[data-mode],[data-tog],[data-pcs]");if(!b)return;
+  var g=b.getAttribute("data-go");if(g){if(g==="devices")S.dev=null;if(g==="pc"&&S.tab!=="pc")S.pcTab="overview";S.tab=g;draw();scrollTo(0,0);return}
+  var d=b.getAttribute("data-dev");if(d!=null){S.dev=+d<0?null:+d;draw();scrollTo(0,0);return}
+  var p=b.getAttribute("data-pct");if(p){S.pcTab=p;draw();return}
+  var m=b.getAttribute("data-mode");if(m){S.mode=m;draw();return}
+  var t=b.getAttribute("data-tog");if(t&&!b.disabled){S[t]=!S[t];if(t==="remember"&&!S.remember)S.bio=false;draw();return}
+  var s=b.getAttribute("data-pcs");if(s){S.pc=s;if(S.tab==="pair")S.tab="home";draw();return}
+});
+document.addEventListener("change",function(e){var k=e.target.getAttribute("data-sel");if(k){S[k]=e.target.value;draw()}});
+draw();
+var rt;addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(draw,120)});
+})();
+</script>
+</body>
+</html>

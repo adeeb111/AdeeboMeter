@@ -205,7 +205,7 @@ print('voices', len(have))
 
 # ---- the phone app (PWA): the same PWA tags on the hand-written pages, and the offline cache (docs/sw.js)
 import hashlib
-for page in ['index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'files.html']:
+for page in ['index.html', 'games.html', 'live.html', 'app.html', 'r.html', 'files.html']:
     f = os.path.join(root, 'docs', page); h = open(f, encoding='utf-8').read()
     h = re.sub(r'<!--pwa-->.*?<!--/pwa-->\n?', '', h, flags=re.S)
     h = h.replace('</head>', PWA + '\n</head>', 1)

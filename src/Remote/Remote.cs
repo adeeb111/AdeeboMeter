@@ -144,7 +144,10 @@ namespace AdeeboMeter
             Num(sb, "down", s.Down); Num(sb, "up", s.Up); Num(sb, "ping", s.Ping); Num(sb, "jit", s.Jitter); Num(sb, "loss", s.LossPct); Num(sb, "gw", s.GwMs); Num(sb, "dns", s.DnsMs);
             Num(sb, "cpu", s.Cpu); Num(sb, "mem", s.Mem); sb.Append(",\"lv\":").Append(s.Level);
             Str(sb, "head", s.Headline); Str(sb, "chip", s.Chip); Str(sb, "who", AdeeboMeter.Lines.Who());   // the PC's companion: the phone talks the same way unless told otherwise Num(sb, "left", Left.TotalSeconds);
-            string wifi; lock (M.L) wifi = M.AdapterKind; Str(sb, "link", wifi);
+            string wifi, ssid, ch, speed; int sig, rate; bool hw, blocked; lock (M.L) { wifi = M.AdapterKind; hw = M.HasWifi; ssid = M.Ssid; ch = M.WifiChannel; sig = M.WifiSignal; rate = M.RxRate; blocked = M.WifiBlocked; speed = M.LinkSpeed; }
+            Str(sb, "link", wifi); Str(sb, "speed", speed); Num(sb, "disk", s.Disk);
+            // the PC's Wi-Fi as Windows reports it (a phone's browser can't see any of this); empty when Windows hides it (location off)
+            if (hw) { sb.Append(",\"wifi\":{"); Str(sb, "ssid", ssid, true); Num(sb, "sig", sig < 0 ? double.NaN : sig); Str(sb, "ch", ch); Num(sb, "rate", rate < 0 ? double.NaN : rate); sb.Append(",\"hidden\":").Append(blocked ? 1 : 0).Append('}'); }
             try { Game(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
             try { Trade(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
             try { Stream(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }

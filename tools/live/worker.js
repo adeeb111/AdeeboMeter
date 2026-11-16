@@ -74,7 +74,7 @@ const places = q => cached("g" + q, 86400, 86400, async () => {
 function reply(req, body, maxAge) {
   const o = req.headers.get("Origin"), h = {
     "Content-Type": "application/json; charset=utf-8", "Cache-Control": maxAge > 0 ? "public, max-age=" + maxAge : maxAge < 0 ? "private, no-store" : "no-store",
-    "Access-Control-Allow-Origin": ORIGINS.includes(o) ? o : ORIGINS[0], "Vary": "Origin", "X-Content-Type-Options": "nosniff" };
+    "Access-Control-Allow-Origin": ORIGINS.includes(o) ? o : ORIGINS[0], "Vary": "Origin", "Timing-Allow-Origin": ORIGINS.includes(o) ? o : ORIGINS[0], "X-Content-Type-Options": "nosniff" };
   return new Response(typeof body === "string" ? body : JSON.stringify(body), { headers: h });
 }
 // a whole number, nothing after it, inside its own range (AM-CG-311); rounded to ~10 km so a forecast is shared by an area
@@ -103,7 +103,13 @@ export default {
         const q = (u.searchParams.get("q") || "").trim().slice(0, 60);
         return reply(req, q.length < 2 ? { places: [] } : out(await places(q.toLowerCase())), 3600);
       }
-      case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "" }, 0);   // for the page's honest "browser -> Cloudflare" timing
+      case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "" }, 0);
+      // the phone app's "this phone" card: who carries this connection and whether it came over IPv6 - for this answer only,
+      // the address itself is never returned or kept
+      case "/me": {
+        const ip = req.headers.get("CF-Connecting-IP") || "", cf = req.cf || {};
+        return reply(req, { org: String(cf.asOrganization || "").slice(0, 80), v6: ip.includes(":") ? 1 : 0, colo: cf.colo || "", country: cf.country || "" }, -1);
+      }   // for the page's honest "browser -> Cloudflare" timing
       default: return new Response("AdeeboMeter Live - see https://adeebometer.com/live.html", { status: 404 });
     }
   }
