@@ -293,7 +293,7 @@ var MV=null,mvk="up";
 function drawMv(){if(!MV){return}if(MV.error){$("mv").innerHTML="<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> <a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>Add your own free key</a>";return}
   var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":"")+" · under $1 left out";
   $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
-function movers(){var mine=!!key("av");(mine?kreq("av"):jr("/movers").then(function(d){if(d.error)throw new Error(d.error==="source unavailable"?"":d.error);return d})).then(function(d){MV=d;MV.mine=mine;drawMv()},function(er){MV={error:1,why:er&&er.message};drawMv()})}
+function movers(){var mine=!!key("av");(mine?kreq("av"):jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})).then(function(d){MV=d;MV.mine=mine;drawMv()},function(er){MV={error:1,why:er&&er.message};drawMv()})}
 $("mvseg").addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;mvk=b.getAttribute("data-mv");[].forEach.call($("mvseg").children,function(x){x.classList.toggle("on",x===b)});drawMv()});
 // live scores and more headlines with your own key, while this page is open
 var LIVE={t:null};
