@@ -60,6 +60,9 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 .me{font-weight:800;color:var(--blue)}tr.me td{color:var(--blue);font-weight:700}tr.th td{color:var(--sub);font-size:13px;font-weight:700}
 .lgname{font-size:12px;font-weight:800;color:var(--sub);letter-spacing:.04em;text-transform:uppercase;margin-top:8px}
 #table td:nth-child(2){text-align:left;padding-left:8px}#table td:first-child{width:28px}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.big3 div{background:var(--tint);border-radius:10px;padding:8px 4px;font-size:18px;font-weight:800}.big3 small{display:block;font-size:12px;color:var(--sub);font-weight:700}
+.yr .spark{width:100%;height:56px;margin:10px 0 4px}
+.rng{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}.rng i{flex:1;height:6px;border-radius:3px;background:var(--line);position:relative}.rng b{position:absolute;top:-4px;width:14px;height:14px;border-radius:50%;background:var(--blue);margin-left:-7px}
 .card.nolg,.dd.nolg{display:none!important}
 .btn.sm{padding:4px 12px;font-size:14px;margin-left:6px}
 @media (max-width:640px){.cards{grid-template-columns:1fr}h1{font-size:25px}.big{font-size:34px}}
@@ -104,7 +107,13 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </section>
 
 <section class="card" data-k="mkt">
-<h2 data-ic="chart">Oil, gas and more</h2>
+<h2 data-ic="chart">Oil and gas</h2>
+<p class="src" id="oilsrc">Bank of Canada energy index (oil, gas, coal), weekly</p>
+<div id="oil" class="mut">Loading…</div>
+</section>
+
+<section class="card" data-k="mkt">
+<h2 data-ic="chart">Other commodities</h2>
 <p class="src" id="ixsrc">Bank of Canada commodity price index, weekly</p>
 <div id="ix" class="mut">Loading…</div>
 </section>
@@ -159,7 +168,7 @@ function jr(p){return j(p).catch(function(){return new Promise(function(r){setTi
 function off2(fn){return"<span class='err'>Couldn't load this.</span> <button class='btn sm' data-retry='"+fn+"'>Try again</button>"}
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-retry]");if(b){var f=b.getAttribute("data-retry");if(f==="m")markets();else scores()}});
 function spark(v,dn){v=(v||[]).filter(function(x){return x!=null&&isFinite(x)});if(v.length<3)return"";var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),r=mx-mn||1;
-  return"<svg class='spark' viewBox='0 0 56 22' aria-hidden='true'><polyline fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' points='"+v.map(function(x,i){return(i*56/(v.length-1)).toFixed(1)+","+(19-(x-mn)/r*16).toFixed(1)}).join(" ")+"'/></svg>"}
+  return"<svg class='spark' viewBox='0 0 56 22' preserveAspectRatio='none' aria-hidden='true'><polyline fill='none' stroke='currentColor' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linecap='round' stroke-linejoin='round' points='"+v.map(function(x,i){return(i*56/(v.length-1)).toFixed(1)+","+(19-(x-mn)/r*16).toFixed(1)}).join(" ")+"'/></svg>"}
 function pc(a,b){if(!a||!b)return null;return(a-b)/b*100}
 function chip(d,dp){if(d==null)return"<span class='mut'>–</span>";return"<span class='"+(d>0.005?"up":d<-0.005?"dn":"mut")+"'>"+(d>0.005?"▲":d<-0.005?"▼":"")+Math.abs(d).toFixed(dp||1)+"%</span>"}
 // ---- markets
@@ -186,14 +195,20 @@ function drawM(){
   var b=MK.boc||{},a=MK.all||{},ix=MK.idx||{};
   $("fxsrc").textContent="1 unit in "+base+(a.date?" · "+a.date:"")+" · week from the Bank of Canada";
   $("fx").innerHTML=a.usd?fxRows():off2("m");
-  if(ix.s){$("ixsrc").textContent="Bank of Canada commodity index · 8 weeks to "+(ix.days||[]).slice(-1)[0];
-    $("ix").innerHTML=Object.keys(IXN).map(function(c){var v=ix.s[c]||[],l=v[v.length-1],d=pc(l,v[v.length-2]);return"<div class='mrow'><div class='n'><b>"+IXN[c]+"</b><span>index, week on week</span></div><span class='"+(d>0?"up":d<0?"dn":"mut")+"'>"+spark(v)+"</span><div class='v'>"+(l?l.toFixed(1):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}else $("ix").innerHTML=off2("m");
+  if(ix.s){var last=(ix.days||[]).slice(-1)[0];$("ixsrc").textContent="Bank of Canada commodity index · week of "+last+" · change on the week and the year";
+    var at=function(v,k){return v.length>k?v[v.length-1-k]:null};
+    var E=(ix.s.ENER||[]).filter(function(x){return x!=null}),el=E[E.length-1],hi=Math.max.apply(null,E),lo=Math.min.apply(null,E),posn=hi>lo?(el-lo)/(hi-lo)*100:50;
+    $("oilsrc").textContent="Bank of Canada energy index (oil, gas, coal) · week of "+last;
+    $("oil").innerHTML=E.length>2?"<div class='big3'><div><small>Week</small>"+chip(pc(el,at(E,1)))+"</div><div><small>Month</small>"+chip(pc(el,at(E,4)))+"</div><div><small>Year</small>"+chip(pc(el,at(E,52)||E[0]))+"</div></div>"+
+      "<div class='yr'><span class='"+(pc(el,E[0])>=0?"up":"dn")+"'>"+spark(E)+"</span></div>"+
+      "<div class='rng'><span>52-week low "+lo.toFixed(0)+"</span><i><b style='left:"+posn.toFixed(0)+"%'></b></i><span>high "+hi.toFixed(0)+"</span></div><p class='mut' style='margin:6px 0 0;font-size:13px'>Now "+el.toFixed(1)+" - "+(posn>80?"near the top of its year":posn<20?"near the bottom of its year":"mid-range for the year")+". An index (1972 = 100), not a price per barrel.</p>":off2("m");
+    $("ix").innerHTML=["MTLS","FOPR","AGRI","BCPI"].map(function(c){var v=(ix.s[c]||[]).filter(function(x){return x!=null}),l=v[v.length-1],d=pc(l,at(v,1)),y=pc(l,at(v,52)||v[0]);return"<div class='mrow'><div class='n'><b>"+IXN[c]+"</b><span>year "+(y==null?"–":(y>0?"+":"")+y.toFixed(1)+"%")+"</span></div><span class='"+(y>0?"up":y<0?"dn":"mut")+"'>"+spark(v.slice(-26))+"</span><div class='v'>"+(l?l.toFixed(1):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}else{$("ix").innerHTML=off2("m");$("oil").innerHTML=off2("m")}
   // the one-line summary: the first currency on your list against yours, energy, and whether the markets are open
-  var c1=(mine.filter(function(c){return c!==base})[0])||(base==="USD"?"EUR":"USD"),v1=rate(c1,base),w1=week(c1,base),e=ix.s&&ix.s.ENER,ed=e?pc(e[e.length-1],e[e.length-2]):null,o=openNow();
-  $("msum").innerHTML=v1?"<div class='tagl'>TODAY IN ONE LINE</div><div class='bigl'>1 "+c1+" = "+fmt(v1)+" "+base+(w1?" <small>"+chip(pc(w1[w1.length-1],w1[0]))+" this week</small>":"")+"</div><p>"+(ed!=null?"Oil and gas "+(ed>=0?"up ":"down ")+Math.abs(ed).toFixed(1)+"% on the week · ":"")+o+"</p>":off2("m");
+  var c1=(mine.filter(function(c){return c!==base})[0])||(base==="USD"?"EUR":"USD"),v1=rate(c1,base),w1=week(c1,base),e=ix.s&&ix.s.ENER,ed=e?pc(e[e.length-1],e[e.length-2]):null,ey=e&&e.length>40?pc(e[e.length-1],e[0]):null,o=openNow();
+  $("msum").innerHTML=v1?"<div class='tagl'>TODAY IN ONE LINE</div><div class='bigl'>1 "+c1+" = "+fmt(v1)+" "+base+(w1?" <small>"+chip(pc(w1[w1.length-1],w1[0]))+" this week</small>":"")+"</div><p>"+(ed!=null?"Oil and gas "+(ed>=0?"up ":"down ")+Math.abs(ed).toFixed(1)+"% on the week"+(ey!=null?", "+(ey>=0?"up ":"down ")+Math.abs(ey).toFixed(0)+"% on the year":"")+" · ":"")+o+"</p>":off2("m");
   hours();
 }
-function markets(){$("fx").innerHTML=$("ix").innerHTML="<span class='mut'>Loading…</span>";jr("/markets").then(function(d){MK=d;drawM()}).catch(function(){MK=null;$("fx").innerHTML=$("ix").innerHTML=$("msum").innerHTML=off2("m")})}
+function markets(){$("fx").innerHTML=$("ix").innerHTML=$("oil").innerHTML="<span class='mut'>Loading…</span>";jr("/markets").then(function(d){MK=d;drawM()}).catch(function(){MK=null;$("fx").innerHTML=$("ix").innerHTML=$("oil").innerHTML=$("msum").innerHTML=off2("m")})}
 $("base").onchange=function(){base=this.value;wr("am-lv-base",base);if(!$("fxedit").hidden)fxEdit();drawM()};
 $("mshow").onchange=function(){mshow=this.value;wr("am-lv-show",mshow);drawM()};
 // market hours: each exchange in its own time zone, regular sessions; the ones your currencies point at are added
@@ -239,7 +254,7 @@ function drawS(){
     if(my){var res="";if(last){var us=last.a.id===me?last.a:last.h,th=last.a.id===me?last.h:last.a,w=+us.s>+th.s;res=(w?"Won ":+us.s===+th.s?"Drew ":"Lost ")+esc(us.s)+"-"+esc(th.s)+" vs "+esc(th.n)}
       $("ssum").innerHTML="<div class='tagl'>★ "+esc(my.n.toUpperCase())+" · "+esc(nm)+"</div><div class='bigl'>"+(res||"No result in the last day")+"</div><p>"+(nxt?"Next: "+esc(when(nxt.d))+" vs "+esc((nxt.a.id===me?nxt.h:nxt.a).n):"No game in the next week")+(pos>=0?" · "+(pos+1)+(["st","nd","rd"][pos]||"th")+" in "+esc(grp.n):"")+"</p>"}
     else $("ssum").innerHTML="<div class='tagl'>"+esc(nm.toUpperCase())+"</div><div class='bigl'>"+(up.length?up.length+" game"+(up.length>1?"s":"")+" today":nx.length?"Next games in the coming week":"No games today")+"</div><p>"+(fin.length?fin.length+" final score"+(fin.length>1?"s":"")+" since yesterday · ":"")+"Pick your team to see it first.</p>"}
-  var n=d.news||{};$("newss").textContent=hd?"BBC Sport - opens on their site":"ESPN - opens on their site";
+  var n=d.news||{};$("newss").textContent=(hd?"BBC Sport":"ESPN")+" - opens on their site";if(!hd&&d.today&&d.today.at)$("todays").textContent=($("todays").textContent?$("todays").textContent+" · ":"")+"updated "+new Date(d.today.at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
   $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):"<li>"+off2("s")+"</li>";
 }
 function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<span class='mut'>Loading…</span>"});var want=lg;jr("/scores?lg="+lg).then(function(d){if(want!==lg)return;SC=d;drawS()}).catch(function(){if(want!==lg)return;SC=null;["today","yest","table"].forEach(function(i){$(i).innerHTML=off2("s")});$("news").innerHTML="<li>"+off2("s")+"</li>";$("ssum").innerHTML=off2("s")})}
@@ -247,7 +262,8 @@ $("lg").onchange=function(){lg=this.value;wr("am-lv-lg",lg);SC=null;drawS();scor
 $("team").onchange=function(){wr("am-lv-team-"+lg,this.value);drawS()};
 drawM();markets();drawS();scores();
 var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
-setInterval(function(){if(!document.hidden){scores()}},180000);
+// updated once a day on the relay - no live refresh here; the stamp says when
+
 
 // weather
 var WMO={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Freezing fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Showers",81:"Showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm, hail",99:"Thunderstorm, hail"};
