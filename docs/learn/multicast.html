@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,13 +71,13 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Sent once, copied only where someone is watching.</p>
 <div class="card one"><p>A live channel is one multicast group address. Your set-top box joins the group; routers copy the stream only onto links where somebody is watching.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Set-top box and Home router"><div class="lanes"><span>Set-top box</span><span>Home router</span></div>
-<div class="msg"><p>IGMP join 239.1.1.5 (channel 5)</p><div class="arrow"></div></div>
-<div class="msg r"><p>Home router → Provider router: join 239.1.1.5</p><div class="arrow"></div></div>
-<div class="msg r"><p>Provider router → Toward the TV head-end: PIM join (S,G)</p><div class="arrow"></div></div>
-<div class="msg r"><p>TV head-end → Many routers: one stream, copied at each branch</p><div class="arrow"></div></div>
-<div class="msg r"><p>Provider router → Set-top box: channel 5, 8 Mbps</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Set-top box</span><span>Home router</span></div><ol aria-label="Messages between Set-top box and Home router, in order">
+<li class="msg"><p><span class="sr">Set-top box to Home router: </span>IGMP join 239.1.1.5 (channel 5)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Home router → Provider router: join 239.1.1.5</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Provider router → Toward the TV head-end: PIM join (S,G)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>TV head-end → Many routers: one stream, copied at each branch</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Provider router → Set-top box: channel 5, 8 Mbps</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>IGMP snooping off on a home switch floods the TV stream to every port - Wi-Fi collapses. A join that never reaches the tree gives a black screen while the internet works fine.</p></div>
 <h2>Going deeper</h2>

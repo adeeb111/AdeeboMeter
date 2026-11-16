@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,13 +71,13 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">The name of the network you ask for, and the pipe you get.</p>
 <div class="card one"><p>The APN (4G) or DNN (5G) names the network you want: &quot;internet&quot;, a company&#x27;s private network, IMS for voice calls. The bearer (4G) or PDU session (5G) is the resulting pipe, with its own IP address and QoS.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Router and Core"><div class="lanes"><span>Router</span><span>Core</span></div>
-<div class="msg"><p>connect me to APN &quot;acme.corp&quot;</p><div class="arrow"></div></div>
-<div class="msg r"><p>Core → Subscriber database: is this SIM allowed on acme.corp?</p><div class="arrow"></div></div>
-<div class="msg r"><p>Subscriber database → Core: yes, fixed IP 10.40.0.17</p><div class="arrow"></div></div>
-<div class="msg r"><p>session up, IP 10.40.0.17, QoS 9</p><div class="arrow"></div></div>
-<div class="msg"><p>Router → Company network: data through the private APN</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Router</span><span>Core</span></div><ol aria-label="Messages between Router and Core, in order">
+<li class="msg"><p><span class="sr">Router to Core: </span>connect me to APN &quot;acme.corp&quot;</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Core → Subscriber database: is this SIM allowed on acme.corp?</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Subscriber database → Core: yes, fixed IP 10.40.0.17</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Core to Router: </span>session up, IP 10.40.0.17, QoS 9</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Router → Company network: data through the private APN</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Typo in the APN on a router: registered, no data. The wrong IP type (IPv4 vs IPv6 vs both) can also be refused.</p></div>
 <h2>Going deeper</h2>

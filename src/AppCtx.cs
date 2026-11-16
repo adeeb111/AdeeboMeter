@@ -279,6 +279,7 @@ namespace AdeeboMeter
 
         // ---------- phone remote: one session, its window, and the checks it may start
         RemoteWindow remoteWin; FullView remoteRunner;
+        static readonly string[] NotStarted = { "2", "Didn't start", "the PC is closing", "" };
         void OpenRemote()
         {
             if (quitting) return;
@@ -291,10 +292,10 @@ namespace AdeeboMeter
             Func<FullView> runner = () => { if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; } return remoteRunner; };
             r.CanRun = id => { bool ok = false; try { marshal.Invoke((Action)delegate { ok = runner().RemoteAllowed(id); }); } catch (InvalidOperationException) { } return ok; };
             r.Catalog = () => { List<string> c = null; try { marshal.Invoke((Action)delegate { c = runner().RemoteCatalog(); }); } catch (InvalidOperationException) { } return c; };
-            r.RunTool = (id, a, done) =>
+            r.RunTool = (id, a, run, done) =>
             {
                 if (id == "checkup") { FullView.RemoteCheckup(M, done); return; }
-                try { marshal.BeginInvoke((Action)delegate { runner().RemoteRun(id, a, done); }); } catch (InvalidOperationException) { }
+                try { marshal.BeginInvoke((Action)delegate { runner().RemoteRun(id, a, run, done); }); } catch (InvalidOperationException) { done(id, new List<string[]> { (string[])NotStarted.Clone() }, null); }
             };
             remoteWin = new RemoteWindow(r); remoteWin.Show();
         }

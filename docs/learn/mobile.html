@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,13 +71,13 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Your phone, the radio towers, and a core network that decides who you are and where your data goes.</p>
 <div class="card one"><p>The phone (UE) talks by radio to a base station (eNodeB in 4G, gNodeB in 5G). The base stations connect over fibre to the core, which checks your SIM, gives you an IP address and sends your data to the internet.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Phone and Tower"><div class="lanes"><span>Phone</span><span>Tower</span></div>
-<div class="msg"><p>radio connection</p><div class="arrow"></div></div>
-<div class="msg r"><p>Tower → Core (control): who is this, may they connect?</p><div class="arrow"></div></div>
-<div class="msg r"><p>Core → Phone: welcome, here is your IP address</p><div class="arrow"></div></div>
-<div class="msg"><p>Phone → Tower &gt; Core (user plane): your data</p><div class="arrow"></div></div>
-<div class="msg r"><p>Core → Internet: your data, from the phone&#x27;s address</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Phone</span><span>Tower</span></div><ol aria-label="Messages between Phone and Tower, in order">
+<li class="msg"><p><span class="sr">Phone to Tower: </span>radio connection</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Tower → Core (control): who is this, may they connect?</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Core → Phone: welcome, here is your IP address</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Phone → Tower &gt; Core (user plane): your data</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Core → Internet: your data, from the phone&#x27;s address</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Slow data with full bars is often a busy cell - many users sharing it.</p></div>
 <h2>Going deeper</h2>

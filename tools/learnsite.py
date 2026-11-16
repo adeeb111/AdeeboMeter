@@ -42,6 +42,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -90,13 +91,15 @@ def ladder(s):
     if not steps: return ''
     left = steps[0][0]
     right = next((b for a, b, _ in steps if b != left and b != 'Everyone'), None) or next((a for a, b, _ in steps if a != left), steps[0][1])
-    out = [f'<div class="ladder" role="img" aria-label="{E("Message flow between " + left + " and " + right)}"><div class="lanes"><span>{E(left)}</span><span>{E(right)}</span></div>']
+    # a real ordered list (AM-CG-325): screen readers hear every message with who sends it to whom; the arrows are decoration
+    out = [f'<div class="ladder"><div class="lanes" aria-hidden="true"><span>{E(left)}</span><span>{E(right)}</span></div><ol aria-label="{E("Messages between " + left + " and " + right + ", in order")}">']
     for a, b, msg in steps:
         cls = 'msg r' if a != left else 'msg'
         if b == 'Everyone': cls += ' all'
-        who = '' if (a in (left, right) and b in (left, right, 'Everyone')) else f'{E(a)} → {E(b)}: '
-        out.append(f'<div class="{cls}"><p>{who}{E(msg)}</p><div class="arrow"></div></div>')
-    out.append('</div>')
+        shown = a in (left, right) and b in (left, right, 'Everyone')
+        who = f'<span class="sr">{E(a)} to {E(b)}: </span>' if shown else f'{E(a)} → {E(b)}: '
+        out.append(f'<li class="{cls}"><p>{who}{E(msg)}</p><div class="arrow" aria-hidden="true"></div></li>')
+    out.append('</ol></div>')
     return '\n'.join(out)
 
 QUIZ_JS = """<script>

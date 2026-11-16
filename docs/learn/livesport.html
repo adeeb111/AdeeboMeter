@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,13 +71,13 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Live streams are chunked, cached and buffered - 20 to 60 seconds behind the pitch.</p>
 <div class="card one"><p>A live match goes camera → encoder → packager (chunks) → CDN → your player&#x27;s buffer. Each step adds seconds; classic HLS sits 20-45 s behind broadcast.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Stadium cameras and Encoder"><div class="lanes"><span>Stadium cameras</span><span>Encoder</span></div>
-<div class="msg"><p>live picture</p><div class="arrow"></div></div>
-<div class="msg r"><p>Encoder → Packager: video in 2 s chunks</p><div class="arrow"></div></div>
-<div class="msg r"><p>Packager → CDN: chunk 4512</p><div class="arrow"></div></div>
-<div class="msg r"><p>Your app → CDN: newest chunk, please</p><div class="arrow"></div></div>
-<div class="msg r"><p>CDN → Your app: chunk 4512 - it plays about 30 s after the kick</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Stadium cameras</span><span>Encoder</span></div><ol aria-label="Messages between Stadium cameras and Encoder, in order">
+<li class="msg"><p><span class="sr">Stadium cameras to Encoder: </span>live picture</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Encoder → Packager: video in 2 s chunks</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Packager → CDN: chunk 4512</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Your app → CDN: newest chunk, please</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>CDN → Your app: chunk 4512 - it plays about 30 s after the kick</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Shrinking the buffer for lower delay makes stalls more likely. A goal alert on your phone beats the stream because notifications don&#x27;t wait in a video buffer.</p></div>
 <h2>Going deeper</h2>

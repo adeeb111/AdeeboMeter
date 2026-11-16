@@ -77,8 +77,8 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </section>
 
 <section class="card" data-k="mkt">
-<h2>Market hours <span class="mut" style="font-weight:400;font-size:14px">(regular sessions)</span></h2>
-<p class="src">Toronto and New York, Eastern time</p>
+<h2>Market hours</h2>
+<p class="src"><b>Regular weekday hours only</b> - holidays and early closes aren't shown here (the app knows them). Eastern time.</p>
 <div id="hours"></div>
 <p class="app"><b>The app adds:</b> holidays and early closes, a market-open check of your broker connection, and an alert if it gets slow while you trade.</p>
 </section>
@@ -145,8 +145,8 @@ var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']
 function etNow(){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Toronto",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),o={};p.forEach(function(x){o[x.type]=x.value});return{d:o.weekday,m:(+o.hour)*60+(+o.minute)}}
 function hours(){var n=etNow(),wk=["Sat","Sun"].indexOf(n.d)<0,open=wk&&n.m>=570&&n.m<960,h="";
   [["Toronto (TSX)"],["New York (NYSE, Nasdaq)"]].forEach(function(x){var s;
-    if(open){var l=960-n.m;s="<span class='pill open'>Open</span> <span class='mut'>closes in "+(l>=60?Math.floor(l/60)+" h ":"")+(l%60)+" min</span>"}
-    else s="<span class='pill shut'>Closed</span> <span class='mut'>"+(wk&&n.m<570?"opens 9:30 today":"opens 9:30 next weekday")+"</span>";
+    if(open){var l=960-n.m;s="<span class='pill open'>Normally open</span> <span class='mut'>closes in "+(l>=60?Math.floor(l/60)+" h ":"")+(l%60)+" min</span>"}
+    else s="<span class='pill shut'>Normally closed</span> <span class='mut'>"+(wk&&n.m<570?"opens 9:30 today":"opens 9:30 next weekday")+"</span>";
     h+="<div class='game'><span>"+x[0]+"</span><span>"+s+"</span></div>"});
   $("hours").innerHTML=h}
 hours();setInterval(hours,30000);
@@ -161,9 +161,10 @@ function all(){j("/all").then(function(d){
     $("ix").innerHTML=m.idx.items.filter(function(i){return i.v}).map(function(i){return"<tr><td"+(i.c==="ENER"?" style='font-weight:600'":"")+">"+esc(IXN[i.c]||i.c)+"</td><td>"+i.v.toFixed(1)+"</td><td>"+chg(i.v,i.p,1)+"</td></tr>"}).join("")||"<tr><td>"+off()+"</td></tr>"}
   else $("ix").innerHTML="<tr><td>"+off()+"</td></tr>";
   var h=d.hockey||{};
-  if(h.games){$("nhlsrc").textContent="NHL scores · "+(h.date||"today")+" · updates every minute";
+  var asof=function(t){return t?new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):""},old=!h.at||h.stale||Date.now()-h.at>300000;
+  if(h.games){$("nhlsrc").textContent="NHL scores · "+(h.date||"today")+" · as of "+asof(h.at)+" · this page refreshes every 2 minutes"+(old?" · not current":"");
     $("nhl").innerHTML=h.games.length?h.games.map(function(g){var live=g.st==="LIVE"||g.st==="CRIT",fin=g.st==="FINAL"||g.st==="OFF",st;
-      if(live)st="<b class='up'>P"+(g.per||"")+" "+esc(g.clk||"")+"</b>";else if(fin)st="Final";else st=g.start?new Date(g.start).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
+      if(live)st=old?"P"+(g.per||"")+" "+esc(g.clk||"")+" (at "+asof(h.at)+")":"<b class='up'>P"+(g.per||"")+" "+esc(g.clk||"")+"</b>";else if(fin)st="Final";else st=g.start?new Date(g.start).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
       return"<div class='game'><span>"+esc(g.a)+" "+(g.as!=null&&(live||fin)?"<b>"+g.as+"</b>":"")+" @ "+esc(g.h)+" "+(g.hs!=null&&(live||fin)?"<b>"+g.hs+"</b>":"")+"</span><span>"+st+"</span></div>"}).join(""):"<span class='mut'>No games today.</span>"}
   else $("nhl").innerHTML=off();
   var n=d.news||{};
@@ -173,17 +174,18 @@ all();setInterval(function(){if(!document.hidden)all()},120000);
 
 // weather
 var WMO={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Freezing fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Showers",81:"Showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm, hail",99:"Thunderstorm, hail"};
-function wx(q){$("wx").innerHTML="Loading…";j("/weather"+(q||"")).then(function(d){if(d.error)throw 0;var c=d.cur||{},y=d.daily||{};
+var wxGen=0,findGen=0;
+function wx(q){var me=++wxGen;$("wx").innerHTML="Loading…";j("/weather"+(q||"")).then(function(d){if(me!==wxGen)return;if(d.error)throw 0;var c=d.cur||{},y=d.daily||{};
   $("place").textContent=d.place?"· "+d.place:"";
   var risk=[95,96,99].indexOf(c.weather_code)>=0?" <span class='pill' style='background:rgba(207,34,46,.12);color:var(--red)'>Storm - outages more likely</span>":"";
   var h="<div class='big'>"+Math.round(c.temperature_2m)+"°C</div><p style='margin:2px 0 0'>"+esc(WMO[c.weather_code]||"")+risk+" <span class='mut'>· feels "+Math.round(c.apparent_temperature)+"° · wind "+Math.round(c.wind_speed_10m)+" km/h</span></p><div class='days'>";
   (y.time||[]).forEach(function(t,i){h+="<div><b>"+(i?new Date(t+"T12:00").toLocaleDateString([],{weekday:"short"}):"Today")+"</b><br>"+Math.round(y.temperature_2m_max[i])+"° / "+Math.round(y.temperature_2m_min[i])+"°<br><span class='mut'>"+esc(WMO[y.weather_code[i]]||"")+(y.precipitation_probability_max&&y.precipitation_probability_max[i]>=30?" · "+y.precipitation_probability_max[i]+"%":"")+"</span></div>"});
-  $("wx").innerHTML=h+"</div>"}).catch(function(){$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
+  $("wx").innerHTML=h+"</div>"}).catch(function(){if(me!==wxGen)return;$("place").textContent="";$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
 wx("");
 function use(q){$("cities").innerHTML="";wx(q)}
-$("find").onclick=function(){var q=$("city").value.trim();if(q.length<2)return;j("/place?q="+encodeURIComponent(q)).then(function(d){
+$("find").onclick=function(){var q=$("city").value.trim();if(q.length<2)return;var me=++findGen;j("/place?q="+encodeURIComponent(q)).then(function(d){if(me!==findGen)return;
   $("cities").innerHTML=(d.places||[]).length?d.places.map(function(p,i){return"<button class='btn' data-i='"+i+"' style='margin:8px 6px 0 0'>"+esc(p.n)+" <span class='mut'>"+esc(p.r)+"</span></button>"}).join(""):"<p class='mut'>No place found.</p>";
-  [].forEach.call($("cities").querySelectorAll("button"),function(b){var p=d.places[+b.getAttribute("data-i")];b.onclick=function(){use("?lat="+p.lat+"&lon="+p.lon+"&n="+encodeURIComponent(p.n))}})}).catch(function(){$("cities").innerHTML="<p class='mut'>Search isn't available right now.</p>"})};
+  [].forEach.call($("cities").querySelectorAll("button"),function(b){var p=d.places[+b.getAttribute("data-i")];b.onclick=function(){use("?lat="+p.lat+"&lon="+p.lon+"&n="+encodeURIComponent(p.n))}})}).catch(function(){if(me===findGen)$("cities").innerHTML="<p class='mut'>Search isn't available right now.</p>"})};
 $("city").onkeydown=function(e){if(e.key==="Enter")$("find").click()};
 $("here").onclick=function(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(function(p){use("?lat="+p.coords.latitude.toFixed(1)+"&lon="+p.coords.longitude.toFixed(1)+"&n=Your+location")},function(){$("cities").innerHTML="<p class='mut'>Location wasn't shared - type a city instead.</p>"},{maximumAge:600000,timeout:10000})};
 

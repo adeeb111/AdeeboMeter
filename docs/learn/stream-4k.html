@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,11 +71,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">About 25 Mb/s - steady, not just at the speed test.</p>
 <div class="card one"><p>SD needs about 3 Mb/s, HD about 5, Full HD about 8 and 4K about 25 - and the line has to hold it the whole time, not just for a moment.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Your PC and Speed check"><div class="lanes"><span>Your PC</span><span>Speed check</span></div>
-<div class="msg"><p>how fast right now?</p><div class="arrow"></div></div>
-<div class="msg r"><p>18 Mb/s on Wi-Fi</p><div class="arrow"></div></div>
-<div class="msg r"><p>AdeeboMeter → You: HD is safe, 4K is risky here</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Your PC</span><span>Speed check</span></div><ol aria-label="Messages between Your PC and Speed check, in order">
+<li class="msg"><p><span class="sr">Your PC to Speed check: </span>how fast right now?</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Speed check to Your PC: </span>18 Mb/s on Wi-Fi</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>AdeeboMeter → You: HD is safe, 4K is risky here</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>A 100 Mb/s plan can still struggle with 4K on weak Wi-Fi in a far room: the speed that reaches the TV or PC is what counts.</p></div>
 <h2>Quick check</h2>

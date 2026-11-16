@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,12 +71,12 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Thousands of networks, each telling its neighbours what it can reach.</p>
 <div class="card one"><p>The internet is about 80,000 networks (autonomous systems, each with an AS number). BGP is how they tell each other &quot;I can reach these addresses, through me&quot;.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Your provider and Transit network"><div class="lanes"><span>Your provider</span><span>Transit network</span></div>
-<div class="msg"><p>UPDATE - 198.51.100.0/24 is reachable through AS64500</p><div class="arrow"></div></div>
-<div class="msg r"><p>Transit network → The world: UPDATE - 198.51.100.0/24 via AS64510 AS64500</p><div class="arrow"></div></div>
-<div class="msg r"><p>Content network → Transit network: traffic for 198.51.100.7</p><div class="arrow"></div></div>
-<div class="msg r"><p>forwarded, following the path it learned</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Your provider</span><span>Transit network</span></div><ol aria-label="Messages between Your provider and Transit network, in order">
+<li class="msg"><p><span class="sr">Your provider to Transit network: </span>UPDATE - 198.51.100.0/24 is reachable through AS64500</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Transit network → The world: UPDATE - 198.51.100.0/24 via AS64510 AS64500</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Content network → Transit network: traffic for 198.51.100.7</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Transit network to Your provider: </span>forwarded, following the path it learned</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>A wrong announcement (a &quot;route leak&quot; or hijack) can send traffic the wrong way for the whole internet in minutes. A slow site that&#x27;s slow for everyone on your provider is often a peering choice, not your line.</p></div>
 <h2>Going deeper</h2>

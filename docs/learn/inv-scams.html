@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,11 +71,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">&quot;Guaranteed&quot;, &quot;urgent&quot;, &quot;secret&quot; and &quot;send crypto&quot; - walk away.</p>
 <div class="card one"><p>Real investments carry risk and never promise a fixed big return. Scams lean on urgency, secrecy, fake screenshots, celebrity videos and pressure to pay in crypto or gift cards.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Stranger and You"><div class="lanes"><span>Stranger</span><span>You</span></div>
-<div class="msg"><p>guaranteed 30% a month!</p><div class="arrow"></div></div>
-<div class="msg r"><p>(sends crypto)</p><div class="arrow"></div></div>
-<div class="msg"><p>(blocks you)</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Stranger</span><span>You</span></div><ol aria-label="Messages between Stranger and You, in order">
+<li class="msg"><p><span class="sr">Stranger to You: </span>guaranteed 30% a month!</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">You to Stranger: </span>(sends crypto)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p><span class="sr">Stranger to You: </span>(blocks you)</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Pump-and-dump groups hype a tiny stock so the organisers can sell to the people they excited. Recovery services that promise to get scam money back for a fee are scams too.</p></div>
 <h2>Quick check</h2>

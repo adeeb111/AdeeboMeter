@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,13 +71,13 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">The film comes from a box inside your provider, a few chunks at a time.</p>
 <div class="card one"><p>Big streamers put cache servers (a CDN - Netflix&#x27;s is Open Connect) inside providers&#x27; networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Your TV and Streaming service"><div class="lanes"><span>Your TV</span><span>Streaming service</span></div>
-<div class="msg"><p>play this film (sign-in, licence)</p><div class="arrow"></div></div>
-<div class="msg r"><p>use the cache cache-12 near you, here&#x27;s the segment list</p><div class="arrow"></div></div>
-<div class="msg"><p>Your TV → Cache in your provider: segment 1, 1080p</p><div class="arrow"></div></div>
-<div class="msg r"><p>Cache → Your TV: 4 s of video</p><div class="arrow"></div></div>
-<div class="msg"><p>Your TV → Cache: segment 2, 4K (the buffer is healthy - go up a rung)</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Your TV</span><span>Streaming service</span></div><ol aria-label="Messages between Your TV and Streaming service, in order">
+<li class="msg"><p><span class="sr">Your TV to Streaming service: </span>play this film (sign-in, licence)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Streaming service to Your TV: </span>use the cache cache-12 near you, here&#x27;s the segment list</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Your TV → Cache in your provider: segment 1, 1080p</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Cache → Your TV: 4 s of video</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Your TV → Cache: segment 2, 4K (the buffer is healthy - go up a rung)</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>A busy evening Wi-Fi or a provider link to the CDN that&#x27;s full shows up as quality drops first, buffering second. A VPN can send you to a far-away cache - slower and lower quality.</p></div>
 <h2>Going deeper</h2>

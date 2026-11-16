@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,12 +71,12 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">The network carries the order; it doesn&#x27;t fill it.</p>
 <div class="card one"><p>Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every few seconds while the market is open and says whose side a slow moment is on.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between You and Router"><div class="lanes"><span>You</span><span>Router</span></div>
-<div class="msg"><p>Buy (2 ms)</p><div class="arrow"></div></div>
-<div class="msg r"><p>Router → Provider: Buy (15 ms)</p><div class="arrow"></div></div>
-<div class="msg r"><p>Provider → Broker: Buy (12 ms)</p><div class="arrow"></div></div>
-<div class="msg r"><p>Broker → You: order received</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>You</span><span>Router</span></div><ol aria-label="Messages between You and Router, in order">
+<li class="msg"><p><span class="sr">You to Router: </span>Buy (2 ms)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Router → Provider: Buy (15 ms)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Provider → Broker: Buy (12 ms)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Broker → You: order received</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>If the order screen spins after a lost reply, check your orders list before clicking again - a second click can mean a second order.</p></div>
 <h2>Quick check</h2>

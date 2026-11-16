@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,15 +71,15 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">The base station: radio on one side, fibre to the core on the other.</p>
 <div class="card one"><p>eNodeB is the 4G base station, gNodeB the 5G one. They schedule the radio, measure your signal, hand you to a better cell, and connect to the core over S1 (4G) or N2 and N3 (5G).</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Phone and gNodeB"><div class="lanes"><span>Phone</span><span>gNodeB</span></div>
-<div class="msg"><p>random access - I&#x27;d like to talk</p><div class="arrow"></div></div>
-<div class="msg r"><p>radio resources granted</p><div class="arrow"></div></div>
-<div class="msg"><p>measurement report - neighbour cell is stronger</p><div class="arrow"></div></div>
-<div class="msg r"><p>gNodeB → Neighbour gNodeB: handover request (Xn)</p><div class="arrow"></div></div>
-<div class="msg r"><p>Neighbour gNodeB → gNodeB: handover accepted</p><div class="arrow"></div></div>
-<div class="msg r"><p>handover command - move to the neighbour cell</p><div class="arrow"></div></div>
-<div class="msg"><p>Phone → Neighbour gNodeB: random access - I&#x27;m here</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Phone</span><span>gNodeB</span></div><ol aria-label="Messages between Phone and gNodeB, in order">
+<li class="msg"><p><span class="sr">Phone to gNodeB: </span>random access - I&#x27;d like to talk</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">gNodeB to Phone: </span>radio resources granted</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p><span class="sr">Phone to gNodeB: </span>measurement report - neighbour cell is stronger</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>gNodeB → Neighbour gNodeB: handover request (Xn)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Neighbour gNodeB → gNodeB: handover accepted</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">gNodeB to Phone: </span>handover command - move to the neighbour cell</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Phone → Neighbour gNodeB: random access - I&#x27;m here</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Good RSRP but poor SINR means interference or a busy cell, not distance. Constant handovers at a cell edge show up as short stalls and jitter.</p></div>
 <h2>Going deeper</h2>

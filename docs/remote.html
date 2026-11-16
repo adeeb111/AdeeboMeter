@@ -95,12 +95,12 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   if (h.length !== 2 || !/^[A-Za-z0-9_-]{22}$/.test(h[0]) || !/^[A-Za-z0-9_-]{43}$/.test(h[1])) { fail("Scan the code on your PC", "Open AdeeboMeter, right-click its tray icon and choose Phone remote. Then scan the code it shows."); return; }
   if (!subtle || !window.WebSocket) { fail("This browser can't do the encryption", "Open the link in Safari or Chrome."); return; }
   if (!RELAY) { fail("The phone relay isn't set up yet", "This build of AdeeboMeter doesn't have a relay address."); return; }
-  var room = h[0], secret = unb64u(h[1]), ws, tx, rx, view = "live", live = null, results = [], busy = "", cat = [], open = "", findQ = "", openG = {}, drafts = {}, mkt = null, learn = null, lesson = "", picked = {};
+  var room = h[0], secret = unb64u(h[1]), ws, tx, rx, view = "live", live = null, results = [], busy = "", cat = [], open = "", findQ = "", openG = {}, drafts = {}, mkt = null, learn = null, lesson = "", picked = {}, curRid = "", sure = "";
   var hD = [], hU = [], hP = [], wake = null, lastLv = -1, back = "live";   // widget mode: the last 2 minutes, in this page only
   // Learn: the same lessons as the app, read from this website (nothing about you is sent, nothing is kept)
   function loadLearn() { if (learn) return; learn = []; fetch("kb/learn1.json", { cache: "no-store", credentials: "omit" }).then(function (r) { return r.json(); }).then(function (j) { learn = j.topics || []; if (view === "learn") draw(); }).catch(function () { learn = null; toast("Couldn't load the lessons"); }); }
   var KINDS = { basics: "The basics", protocol: "How the internet talks", provider: "Your provider", mobile: "Phones and mobile data", windows: "Windows", streaming: "Streaming", investing: "Investing", crypto: "Crypto", apps: "Apps" };
-  function toolOf(id) { if (id === "checkup") return { id: id, t: "Full checkup", g: "", h: 1, in: [] }; if (id === "feltslow") return { id: id, t: "It feels slow", g: "", in: [] }; return cat.filter(function (t) { return t.id === id; })[0] || null; }
+  function toolOf(id) { id = String(id).split("@")[0]; if (id === "checkup") return { id: id, t: "Full checkup", g: "", h: 1, in: [] }; if (id === "feltslow") return { id: id, t: "It feels slow", g: "", in: [] }; return cat.filter(function (t) { return t.id === id; })[0] || null; }
   // MTR and MTU come back with their path: one dot per hop, coloured like the PC's picture (AM-CG-297)
   function hopsSvg(hp) {
     if (!hp || !hp.length) return ""; var H = 16 + hp.length * 40, W = 600, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="margin-top:10px"><line x1="14" x2="14" y1="14" y2="' + (H - 14) + '" stroke="var(--line)" stroke-width="4"/>';
@@ -136,11 +136,11 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
       var c; try { c = JSON.parse(plain); } catch (e) { return; }
       if (c.t === "live") { live = c; liveAt = Date.now(); [[hD, c.down], [hU, c.up], [hP, c.ping]].forEach(function (x) { x[0].push(x[1] == null ? null : x[1]); if (x[0].length > 120) x[0].shift(); });
         if (view === "widget" && c.lv === 2 && lastLv !== 2 && navigator.vibrate) navigator.vibrate([120, 80, 120]); lastLv = c.lv;
-        if (view !== "tools") draw(); else left(); }
-      else if (c.t === "result") { busy = ""; results.unshift(c); results = results.slice(0, 5); view = "tools"; tabsOn(); draw(); }
+        if (view === "live" || view === "game" || view === "stream" || view === "trade" || view === "widget") draw(); else left(); }
+      else if (c.t === "result") { if (c.rid && c.rid === curRid) { busy = ""; curRid = ""; } else if (busy) c.late = 1; results.unshift(c); results = results.slice(0, 5); view = "tools"; tabsOn(); draw(); }
       else if (c.t === "mkt") { mkt = c; if (view === "trade") draw(); }
       else if (c.t === "cat") { if (!cat.__part) cat = []; cat = cat.concat(c.tools || []); cat.__part = !c.last; if (view === "tools") draw(); }
-      else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && busy) { busy = ""; draw(); } }   // AM-CG-283: an error frees the buttons
+      else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && busy && (!c.rid || c.rid === curRid)) { busy = ""; curRid = ""; draw(); } }   // AM-CG-283: an error frees the buttons
       else if (c.t === "bye") ws.close();
     };
   }
@@ -153,7 +153,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   // AM-CG-285: readings carry their age - after 5 seconds without one, the page says so and greys the numbers
   var liveAt = 0;
   setInterval(function () {
-    if (busy && Date.now() - busyAt > 240000) { busy = ""; toast("No answer from the PC - the check may still finish there"); draw(); }
+    if (busy && Date.now() - busyAt > 420000) { busy = ""; curRid = ""; toast("No answer from the PC - the check may still finish there"); draw(); }
     var st = $("stale"); if (!tx || !liveAt) return; var age = Math.round((Date.now() - liveAt) / 1000);
     document.body.classList.toggle("stale", age > 5); if (view === "widget") { if (age > 5) draw(); return; }
     if (age > 5) { if (!st) { st = document.createElement("div"); st.id = "stale"; st.className = "card verdict l1"; var br = document.querySelector(".brand"); if (br) br.insertAdjacentElement("afterend", st); } st.innerHTML = '<span class="tag">NOT LIVE</span><h1>No reading from the PC for ' + (age < 120 ? age + " s" : Math.round(age / 60) + " min") + '</h1><p style="color:var(--sub);margin:6px 0 0">The numbers below are from before that - the PC may be asleep or its connection dropped.</p>'; document.body.style.setProperty("--stale", "1"); [].forEach.call(document.querySelectorAll(".num,.verdict:not(#stale)"), function (e) { e.style.opacity = ".45"; }); }
@@ -269,7 +269,8 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
         var T = toolOf(open), dv = drafts[open] || T.in.map(function (x) { return x[2] || ""; });
         a += '<div class="card"><button data-back="1" style="padding:6px 12px;font-size:13px;margin-bottom:10px">‹ All checks</button><h1 style="font-size:20px;margin:0 0 4px">' + esc(T.t) + '</h1><p style="color:var(--muted);font-size:13px;margin:0 0 12px">' + esc(T.g) + (T.h ? " · runs on the PC for a minute or more" : "") + '</p>' +
           T.in.map(function (x, k) { return '<label style="display:block;font-size:13px;color:var(--sub);margin:0 0 4px">' + esc(x[0]) + '</label><input data-k="' + k + '" value="' + esc(dv[k] === "@broker" ? "" : dv[k] || "") + '" placeholder="' + esc(dv[k] === "@broker" ? "your broker (from Trading on the PC)" : x[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">'; }).join("") +
-          '<button class="main" data-go="' + esc(open) + '" style="width:100%"' + (busy ? " disabled" : "") + '>' + (busy ? "Running " + esc(busy) + " on the PC..." : "Run on the PC") + '</button></div>';
+          (busy ? '<div style="display:flex;gap:8px"><button class="main" disabled style="flex:1">Running ' + esc(busy) + ' on the PC...</button><button data-stop="1">Stop</button></div></div>'
+            : '<button class="main" data-go="' + esc(open) + '" style="width:100%">' + (sure === open ? "Tap again to run - it loads the PC for a while" : "Run on the PC") + '</button>' + (T.h && sure !== open ? '<p style="font-size:12px;color:var(--muted);margin:6px 0 0">Heavy check: it uses the PC\'s network, disk or CPU for up to a few minutes. You\'ll be asked once more.</p>' : '') + '</div>');
       } else if (!cat.length) a += '<div class="card"><h2>CHECKS</h2>Getting the list from the PC...</div>';
       else {
         a += '<div class="card"><h2>RUN A CHECK ON THE PC · ' + cat.length + '</h2><input id="find" placeholder="Find a check (ping, mtu, dns, wifi...)" value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false">';
@@ -284,7 +285,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
       }
       results.forEach(function (r) {
         var rows = r.rows || [], worst = rows.reduce(function (m, o) { var l = +o[0]; l = l === 7 ? 1 : l; return l >= 0 && l <= 2 ? Math.max(m, l) : m; }, -1);
-        a += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + (worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT") + '</span><h1>' + esc(r.title) + '</h1>' + hopsSvg(r.hops) + '<div style="margin-top:10px">' +
+        a += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + (worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT") + '</span><h1>' + esc(r.title) + (r.late ? ' <small style="font-weight:400;color:var(--muted)">· an earlier check, finished late</small>' : '') + '</h1>' + hopsSvg(r.hops) + '<div style="margin-top:10px">' +
           rows.map(function (o) {
             var l = +o[0]; if (l === -1) return '<h2 style="margin:14px 0 4px">' + esc(String(o[1]).toUpperCase()) + '</h2>';
             if (l > 3) return '<div class="row' + (l === 7 ? ' l1' : '') + '"><i></i><div class="mono">' + (o[1] ? '<b>' + esc(o[1]) + '</b>' : '') + esc(o[2]) + (o[3] ? '<em>' + esc(o[3]) + '</em>' : '') + '</div></div>';
@@ -310,17 +311,19 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     var an = b.getAttribute("data-ans"); if (an != null && lesson) { picked[lesson] = an; draw(); return; }
     if (b.getAttribute("data-back")) { keepDraft(); open = ""; draw(); return; }
     var op = b.getAttribute("data-open"); if (op) { open = op; draw(); return; }
-    var go = b.getAttribute("data-go"); if (go) { if (busy) return; keepDraft(); run(go, drafts[go] || []); return; }
+    if (b.getAttribute("data-stop")) { if (curRid) send({ t: "stop", rid: curRid }); return; }
+    var go = b.getAttribute("data-go"); if (go) { if (busy) return; keepDraft(); var GT = toolOf(go); if (GT && GT.h && sure !== go) { sure = go; draw(); return; } sure = ""; run(go.split("@")[0], drafts[go] || []); return; }
     var id = b.getAttribute("data-run"); if (!id || busy) return;
     var given = b.getAttribute("data-in"), T = toolOf(id);
     if (given) { run(id, JSON.parse(given)); return; }
     // a quick button for a check with boxes opens its form (with the PC's defaults); one without boxes just runs
-    if (T && T.in.length) { if (b.getAttribute("data-ask")) drafts[id] = T.in.map(function (x, k) { return k === 0 ? "@broker" : x[2] || ""; }); open = id; view = "tools"; tabsOn(); draw(); return; }
-    run(id, []);
+    if (T && T.in.length) { var fk = id; if (b.getAttribute("data-ask")) { fk = id + "@broker"; if (!drafts[fk]) drafts[fk] = T.in.map(function (x, k) { return k === 0 ? "@broker" : x[2] || ""; }); } open = fk; view = "tools"; tabsOn(); draw(); return; }
+    if (T && T.h && sure !== id) { sure = id; toast("Tap again to run - " + T.t + " loads the PC for a while"); return; }
+    sure = ""; run(id, []);
   });
   function run(id, vals) {
-    if (id !== "feltslow") { var T = toolOf(id); busy = T ? T.t : id; busyAt = Date.now(); view = "tools"; tabsOn(); draw(); }
-    send({ t: "run", id: id, in: vals });
+    var rid = ""; if (id !== "feltslow") { var T = toolOf(id); busy = T ? T.t : id; busyAt = Date.now(); rid = curRid = b64u(crypto.getRandomValues(new Uint8Array(6))); view = "tools"; tabsOn(); draw(); }
+    send({ t: "run", id: id, in: vals, rid: rid });
   }
   // what you typed stays while you move around (in this page only - nothing is saved on the phone) (AM-CG-299)
   function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); return e ? (e.value.trim() || (drafts[open] && drafts[open][k] === "@broker" ? "@broker" : "")) : ""; }); }

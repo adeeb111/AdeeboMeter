@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,11 +71,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Proves who wrote it, and that nobody changed it.</p>
 <div class="card one"><p>The signer hashes the document and seals the hash with their private key. Anyone checks it with the signer&#x27;s public key.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Signer and You"><div class="lanes"><span>Signer</span><span>You</span></div>
-<div class="msg"><p>hash the document, seal it with my private key</p><div class="arrow"></div></div>
-<div class="msg"><p>document + signature</p><div class="arrow"></div></div>
-<div class="msg r"><p>open the seal with the public key - the hash matches</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Signer</span><span>You</span></div><ol aria-label="Messages between Signer and You, in order">
+<li class="msg"><p><span class="sr">Signer to Signer: </span>hash the document, seal it with my private key</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p><span class="sr">Signer to You: </span>document + signature</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">You to You: </span>open the seal with the public key - the hash matches</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Change one bit of the document and the check fails - that&#x27;s the point. &quot;Bad signature&quot; means altered, or signed by someone else.</p></div>
 <h2>Quick check</h2>

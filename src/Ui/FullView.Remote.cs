@@ -17,6 +17,10 @@ namespace AdeeboMeter
         // by id: the Toolbox renames its groups for display, so the rule can't lean on group names
         static readonly HashSet<string> RemoteNoGroups = new HashSet<string> { "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certfile", "pfx", "csr", "certconv", "hashf", "b64" };
         static readonly HashSet<string> RemoteNo = new HashSet<string> { "sweep", "wol", "syslog", "remote", "tidy", "obs", "friend", "qr", "screentest", "keytest", "soundtest", "dhcpreplay", "rareplay", "eapreplay", "samplelab", "beforeafter", "twopc", "radius", "tacacs", "radiuslab", "httpreq", "shares", "mibs", "snmpwalk" };
+        // AM-CG-317/318: boxes a phone may not fill - they change something on the PC (start or stop a watch, delete saved runs)
+        // or put heavy load on it (the long disk test writes up to 8 GB). The phone never sees them; the PC always runs them empty.
+        static readonly Dictionary<string, int[]> RemoteLocked = new Dictionary<string, int[]> { { "board", new[] { 1 } }, { "gamecompare", new[] { 2 } }, { "diskspeed", new[] { 1 } } };
+        static bool Locked(string id, int i) { int[] l; return RemoteLocked.TryGetValue(id, out l) && l.Contains(i); }
         static readonly HashSet<string> RemoteHeavy = new HashSet<string> { "speedtest", "bloat", "mtr", "iperf", "diskspeed", "ramcheck", "cpuheld", "checkup", "gamecompare", "hidden", "pcwhy" };
         bool RemoteOk(Tool t)
         {
@@ -40,7 +44,8 @@ namespace AdeeboMeter
                 {
                     string inp = t.Inputs[i]; int dash = inp.IndexOf(" - ", StringComparison.Ordinal);
                     string lab = dash > 0 ? inp.Substring(0, dash) : inp, cue = dash > 0 ? inp.Substring(dash + 3) : "";
-                    if (i > 0) sb.Append(',');
+                    if (Locked(t.Id, i)) continue;
+                    if (sb[sb.Length - 1] != '[') sb.Append(',');
                     sb.Append("[\"").Append(RJs(L.T(lab))).Append("\",\"").Append(RJs(L.T(cue))).Append("\",\"").Append(RJs(RemoteDefault(t.Id, i))).Append("\"]");
                 }
                 sb.Append("]}");
@@ -73,16 +78,17 @@ namespace AdeeboMeter
 
         // a check started from the phone: runs here off the UI thread (this view is never shown). done(title, rows, hops):
         // hops are the path (MTR, MTU) as number, address, ms, detail, level - drawn on the phone like on the PC
-        internal void RemoteRun(string id, string[] input, Action<string, List<string[]>, List<string[]>> done)
+        internal void RemoteRun(string id, string[] input, Toolkit.Run run, Action<string, List<string[]>, List<string[]>> done)
         {
             var t = Tools2().FirstOrDefault(z => z.Id == id);
             if (!RemoteOk(t)) { done(id, new List<string[]> { R4("2", "Not available", "this check runs on the PC only", "") }, null); return; }
-            var a = new string[t.Inputs.Length]; for (int i = 0; i < a.Length; i++) a[i] = i < input.Length ? (input[i] ?? "").Trim() : "";
+            // the phone sends only the boxes it was shown (locked ones are left out), so map them back by position
+            var a = new string[t.Inputs.Length]; int k = 0; for (int i = 0; i < a.Length; i++) a[i] = Locked(id, i) ? "" : k < input.Length ? (input[k++] ?? "").Trim() : "";
             for (int i = 0; i < a.Length; i++) if (a[i] == "@broker") a[i] = Cfg.TradeHost;   // AM-CG-289: "your broker" without the phone knowing its address
             if (id == "mtr" && a.Length > 1) { int m; a[1] = int.TryParse(a[1], out m) && m >= 1 && m <= 5 ? m.ToString(CultureInfo.InvariantCulture) : "1"; }   // at most 5 minutes from the phone
             Task.Factory.StartNew(() =>
             {
-                List<string[]> res; List<string[]> hops = null; var run = new Toolkit.Run { Deadline = DateTime.UtcNow.AddMinutes(6) };
+                List<string[]> res; List<string[]> hops = null;
                 try
                 {
                     if (id == "mtu") res = RemoteMtu(a.Length > 0 ? a[0] : "", run, out hops);

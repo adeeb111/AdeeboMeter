@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,16 +71,16 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Six steps in about a fifth of a second.</p>
 <div class="card one"><p>Find the address, open a connection, agree on encryption, ask for the page.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Your PC and DNS"><div class="lanes"><span>Your PC</span><span>DNS</span></div>
-<div class="msg"><p>where is github.com?</p><div class="arrow"></div></div>
-<div class="msg r"><p>140.82.112.3</p><div class="arrow"></div></div>
-<div class="msg"><p>Your PC → Server: SYN</p><div class="arrow"></div></div>
-<div class="msg r"><p>Server → Your PC: SYN-ACK</p><div class="arrow"></div></div>
-<div class="msg"><p>Your PC → Server: ACK + TLS hello</p><div class="arrow"></div></div>
-<div class="msg r"><p>Server → Your PC: certificate + key</p><div class="arrow"></div></div>
-<div class="msg"><p>Your PC → Server: GET /</p><div class="arrow"></div></div>
-<div class="msg r"><p>Server → Your PC: 200 OK + the page</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Your PC</span><span>DNS</span></div><ol aria-label="Messages between Your PC and DNS, in order">
+<li class="msg"><p><span class="sr">Your PC to DNS: </span>where is github.com?</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">DNS to Your PC: </span>140.82.112.3</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Your PC → Server: SYN</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Server → Your PC: SYN-ACK</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Your PC → Server: ACK + TLS hello</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Server → Your PC: certificate + key</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>Your PC → Server: GET /</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Server → Your PC: 200 OK + the page</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Far-away sites feel slow because each step costs a round trip.</p></div>
 <h2>Quick check</h2>

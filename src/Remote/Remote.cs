@@ -41,7 +41,9 @@ namespace AdeeboMeter
         System.Threading.Timer tick;
 
         // the PC side hooks: ask "Allow?" on the UI thread, run a check, note a change for the window and the widget
-        public Func<string, bool> Ask; public Func<string, bool> CanRun; public Func<List<string>> Catalog; public Action<string, string[], Action<string, List<string[]>, List<string[]>>> RunTool; public Action Changed; public Action FeltSlow;
+        public Func<string, bool> Ask; public Func<string, bool> CanRun; public Func<List<string>> Catalog; public Action<string, string[], Toolkit.Run, Action<string, List<string[]>, List<string[]>>> RunTool; public Action Changed; public Action FeltSlow;
+        // AM-CG-319/320: one check at a time from the phone, tagged with the phone's request id, stoppable from the phone
+        volatile Toolkit.Run op; volatile string opRid = "";
 
         Remote(Monitor m)
         {
@@ -109,13 +111,18 @@ namespace AdeeboMeter
             {
                 case "run":
                     {
-                        string id = c.S("id") ?? ""; if (id != "feltslow" && (CanRun == null || !CanRun(id))) { Seal("{\"t\":\"err\",\"msg\":\"That check can't be started from the phone.\"}"); return; }
+                        string id = c.S("id") ?? "", rid = Clip(c.S("rid") ?? "", 16).Replace("\"", "").Replace("\\", "");
+                        if (id != "feltslow" && (CanRun == null || !CanRun(id))) { Seal("{\"t\":\"err\",\"rid\":\"" + rid + "\",\"msg\":\"That check can't be started from the phone.\"}"); return; }
                         if (id == "feltslow") { if (FeltSlow != null) FeltSlow(); Seal("{\"t\":\"note\",\"msg\":\"Marked: felt slow. The answer is on the PC.\"}"); return; }
                         var a = (c.A("in") ?? new List<string>()).Take(4).Select(x => Clip(x, 200)).ToArray();
-                        if (RunTool != null) RunTool(id, a, (title, rows, hops) => SendResult(id, title, rows, hops));
+                        if (op != null) { Seal("{\"t\":\"err\",\"rid\":\"" + rid + "\",\"msg\":\"A check is still running on the PC - stop it first or wait for it.\"}"); return; }
+                        var run = new Toolkit.Run { Deadline = DateTime.UtcNow.AddMinutes(6) }; op = run; opRid = rid;
+                        if (RunTool != null) RunTool(id, a, run, (title, rows, hops) => { if (op == run) { op = null; opRid = ""; } SendResult(id, rid, title, rows, hops); });
+                        else op = null;
                         return;
                     }
                 case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
+                case "stop": { var o = op; if (o != null && (c.S("rid") ?? "") == opRid) { o.Stop = true; Seal("{\"t\":\"note\",\"msg\":\"Stopping the check on the PC...\"}"); } return; }
                 case "bye": End("the phone ended the session"); return;
             }
         }
@@ -193,12 +200,12 @@ namespace AdeeboMeter
             if (last != null) { Num(sb, "router", last.Router); Num(sb, "net", last.Net); Num(sb, "broker", last.Far); }
             sb.Append('}');
         }
-        void SendResult(string id, string title, List<string[]> rows, List<string[]> hops)
+        void SendResult(string id, string rid, string title, List<string[]> rows, List<string[]> hops)
         {
             // AM-CG-284: a byte budget, not just a row count - sealed (AES padding + base64 + tag) it must stay well under the
             // relay's 64 KB per message, or the relay would end the session. Rows that don't fit are counted, never cut mid-way.
             const int Budget = 40 * 1024;
-            var sb = new StringBuilder("{\"t\":\"result\""); Str(sb, "id", id); Str(sb, "title", title); sb.Append(",\"rows\":[");
+            var sb = new StringBuilder("{\"t\":\"result\""); Str(sb, "id", id); Str(sb, "rid", rid); Str(sb, "title", title); sb.Append(",\"rows\":[");
             bool first = true; int left = 0; var all = (rows ?? new List<string[]>()).Where(o => o != null && o.Length > 2 && o[0] != "-2" && !(o.Length > 4 && o[4] == "k")).ToList();
             for (int i = 0; i < all.Count; i++)
             {

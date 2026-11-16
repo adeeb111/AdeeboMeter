@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,12 +71,12 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Live TV over the internet - less buffer, less forgiveness.</p>
 <div class="card one"><p>A live channel can&#x27;t download far ahead - the next minute hasn&#x27;t happened yet - so it keeps only a few seconds in the buffer.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Player and Channel server"><div class="lanes"><span>Player</span><span>Channel server</span></div>
-<div class="msg"><p>next few seconds, please</p><div class="arrow"></div></div>
-<div class="msg r"><p>2 s of live video</p><div class="arrow"></div></div>
-<div class="msg"><p>next 2 s</p><div class="arrow"></div></div>
-<div class="msg r"><p>(late - the picture freezes)</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Player</span><span>Channel server</span></div><ol aria-label="Messages between Player and Channel server, in order">
+<li class="msg"><p><span class="sr">Player to Channel server: </span>next few seconds, please</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Channel server to Player: </span>2 s of live video</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p><span class="sr">Player to Channel server: </span>next 2 s</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">Channel server to Player: </span>(late - the picture freezes)</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Many stutters on a live channel come from the channel&#x27;s own server; when your router and provider look fine, the record says &quot;the stream&#x27;s server&quot;.</p></div>
 <h2>Quick check</h2>

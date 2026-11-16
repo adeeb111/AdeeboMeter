@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,14 +71,14 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Who are you, prove it, here&#x27;s your address.</p>
 <div class="card one"><p>Joining has two halves: registration (who you are, proven with the SIM&#x27;s key) and a data session (an IP address and a path). In 4G the default bearer comes with the attach; in 5G the PDU session is a separate step.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Phone and AMF"><div class="lanes"><span>Phone</span><span>AMF</span></div>
-<div class="msg"><p>Registration Request</p><div class="arrow"></div></div>
-<div class="msg r"><p>Authentication Request (challenge)</p><div class="arrow"></div></div>
-<div class="msg"><p>Authentication Response</p><div class="arrow"></div></div>
-<div class="msg r"><p>Registration Accept</p><div class="arrow"></div></div>
-<div class="msg"><p>PDU Session Establishment Request (DNN internet - passed on to the SMF)</p><div class="arrow"></div></div>
-<div class="msg r"><p>PDU Session Establishment Accept from the SMF - IP 100.70.3.9</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Phone</span><span>AMF</span></div><ol aria-label="Messages between Phone and AMF, in order">
+<li class="msg"><p><span class="sr">Phone to AMF: </span>Registration Request</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">AMF to Phone: </span>Authentication Request (challenge)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p><span class="sr">Phone to AMF: </span>Authentication Response</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">AMF to Phone: </span>Registration Accept</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p><span class="sr">Phone to AMF: </span>PDU Session Establishment Request (DNN internet - passed on to the SMF)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p><span class="sr">AMF to Phone: </span>PDU Session Establishment Accept from the SMF - IP 100.70.3.9</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>&quot;Registered&quot; on the router&#x27;s screen only means the first half worked. Look for the session accept and an IP address before blaming anything else.</p></div>
 <h2>Going deeper</h2>

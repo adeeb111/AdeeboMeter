@@ -72,36 +72,41 @@ footer{margin-top:40px;color:var(--sub);font-size:14px}
 <script>
 (function(){
 "use strict";
-var $=function(i){return document.getElementById(i)}, L=null, G=null, timer=0;
+var $=function(i){return document.getElementById(i)}, L=null, G=null, timer=0, sids=0, Lp=null, pick="";
+// a steady clock (AM-CG-315) and one id per game, so a late callback never touches a newer game
+function now(){return performance.now()}
+function later(f,ms){var sid=G&&G.sid;setTimeout(function(){if(G&&G.sid===sid&&!G.over)f()},ms)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
 function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
 function rnd(n){return Math.floor(Math.random()*n)}
 function best(g,v){var k="am-game-"+g;try{var b=+localStorage.getItem(k)||0;if(v!=null&&v>b){localStorage.setItem(k,v);return v}return b}catch(e){return 0}}
 function showBest(){[].forEach.call(document.querySelectorAll("[data-best]"),function(i){var b=best(i.getAttribute("data-best"));i.textContent=b?"Your best: "+b:""})}
-function lessons(cb){if(L)return cb();fetch("kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){L=d.topics;cb()}).catch(function(){$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
+// one download, and only the game picked last starts when it arrives (AM-CG-324)
+function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){L=d.topics});Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
 function lessonId(t){return t.id.replace(/\s+/g,"-")}
 
 // --- shared: a round with a clock
-function start(g){G={g:g,score:0,n:0,left:g==="quiz"?10:g==="order"?5:0,secs:g==="quiz"?15:60};$("menu").style.display="none";$("tb").parentNode.style.display=g==="order"?"none":"";$("game").style.display="block";window.scrollTo(0,0);
-  if(g==="subnet"||g==="ports"){G.until=Date.now()+60000;tick()} next()}
-function tick(){clearInterval(timer);timer=setInterval(function(){var ms=G.until-Date.now();$("tb").style.width=Math.max(0,ms/(G.g==="quiz"?150:600))+"%";
+function start(g){G={sid:++sids,g:g,score:0,n:0,left:g==="quiz"?10:g==="order"?5:0,secs:g==="quiz"?15:60};$("menu").style.display="none";$("tb").parentNode.style.display=g==="order"?"none":"";$("game").style.display="block";window.scrollTo(0,0);
+  if(g==="subnet"||g==="ports"){G.until=now()+60000;tick()} next()}
+function tick(){clearInterval(timer);timer=setInterval(function(){var ms=G.until-now();$("tb").style.width=Math.max(0,ms/(G.g==="quiz"?150:600))+"%";
   if(G.g==="subnet"||G.g==="ports")$("left").textContent=Math.max(0,Math.ceil(ms/1000))+" s";
   if(ms<=0){clearInterval(timer);if(G.g==="quiz")answer(null);else finish()}},250)}
 function bar(){$("score").textContent="Score "+G.score;if(G.g==="quiz"||G.g==="order")$("left").textContent=(G.n+1)+" of "+(G.g==="quiz"?10:5)}
-function next(){if(!G||G.over)return;if((G.g==="subnet"||G.g==="ports")&&Date.now()>=G.until)return finish();if(G.g==="quiz"||G.g==="order"){if(G.n>=(G.g==="quiz"?10:5))return finish()}bar();({quiz:quiz,order:order,subnet:subnet,ports:ports})[G.g]()}
+function next(){if(!G||G.over)return;if((G.g==="subnet"||G.g==="ports")&&now()>=G.until)return finish();if(G.g==="quiz"||G.g==="order"){if(G.n>=(G.g==="quiz"?10:5))return finish()}bar();({quiz:quiz,order:order,subnet:subnet,ports:ports})[G.g]()}
 function opts(q,sub,right,wrong,more){
   var all=shuf([right].concat(wrong)),h="<p class='q'>"+esc(q)+"</p>"+(sub?"<p class='sub'>"+sub+"</p>":"")+"<div class='opts'>";
   all.forEach(function(o){h+="<button data-ok='"+(o===right?1:0)+"'>"+esc(o)+"</button>"});
   $("stage").innerHTML=h+"</div><p class='say' aria-live='polite'></p>"+(more||"");
   [].forEach.call($("stage").querySelectorAll(".opts button"),function(b){b.onclick=function(){answer(b)}})}
 function answer(b){
+  if(!G||G.over||G.answered===G.n)return;if(G.until&&now()>=G.until&&G.g!=="order"){if(G.g==="quiz")b=null;else return finish()}G.answered=G.n;
   var bs=[].slice.call($("stage").querySelectorAll(".opts button")),ok=b&&b.getAttribute("data-ok")==="1";
   if(G.g==="quiz")clearInterval(timer);
   bs.forEach(function(x){x.disabled=true;if(x.getAttribute("data-ok")==="1")x.className="ok"});if(b&&!ok)b.className="no";
-  if(ok)G.score+=G.g==="quiz"?10+Math.ceil(Math.max(0,G.until-Date.now())/1500):1;
+  if(ok)G.score+=G.g==="quiz"?10+Math.ceil(Math.max(0,G.until-now())/1500):1;
   $("stage").querySelector(".say").innerHTML=ok?"Right.":b?"Not quite.":"Time's up.";
   if(G.g==="quiz"&&G.cur)$("stage").querySelector(".say").innerHTML+=" <a href='learn/"+lessonId(G.cur)+".html'>Read: "+esc(G.cur.title.split(" - ")[0])+"</a>";
-  G.n++;bar();setTimeout(next,G.g==="quiz"?(ok?900:2200):ok?350:1200)}
+  G.n++;bar();later(next,G.g==="quiz"?(ok?900:2200):ok?350:1200)}
 function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=best(G.g),nb=best(G.g,G.score);
   $("left").textContent="";$("tb").style.width="0";
   $("stage").innerHTML="<div class='end'><p class='sub'>Your score</p><p class='big'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
@@ -110,21 +115,21 @@ function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=be
   $("share").onclick=function(){var names={quiz:"the quick-fire network quiz",order:"Put it in order",subnet:"Subnet sprint",ports:"Port match"},t="I scored "+G.score+" in "+names[G.g]+" on AdeeboMeter - beat that: https://adeebometer.com/games.html";
     if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){$("share").textContent="Copied"})}}
 $("quit").onclick=function(){clearInterval(timer);G=null;$("game").style.display="none";$("menu").style.display="block";showBest()};
-[].forEach.call(document.querySelectorAll("[data-g]"),function(b){b.onclick=function(){var g=b.getAttribute("data-g");if(g==="quiz"||g==="order")lessons(function(){start(g)});else start(g)}});
+[].forEach.call(document.querySelectorAll("[data-g]"),function(b){b.onclick=function(){var g=b.getAttribute("data-g");if(g==="quiz"||g==="order"){pick=g;lessons(function(){if(pick===g&&$("menu").style.display!=="none")start(g)})}else{pick="";start(g)}}});
 
 // --- quick-fire: the lessons' own quick-check questions
 function quiz(){if(!G.deck)G.deck=shuf(L.filter(function(t){return t.check&&t.check.split(" | ").length>=3}));
-  var t=G.deck[G.n%G.deck.length],p=t.check.split(" | ");G.cur=t;G.until=Date.now()+15000;tick();
+  var t=G.deck[G.n%G.deck.length],p=t.check.split(" | ");G.cur=t;G.until=now()+15000;tick();
   opts(p[0],esc(t.title.split(" - ")[0]),p[1],p.slice(2))}
 
 // --- put it in order: the lessons' message ladders
 function order(){if(!G.deck)G.deck=shuf(L.filter(function(t){var s=(t.ladder||"").split(" | ");return s.length>=3&&s.length<=6}));
-  var t=G.deck[G.n%G.deck.length],steps=t.ladder.split(" | "),want=0,miss=0;G.until=Date.now()+60000;$("tb").style.width="100%";
+  var t=G.deck[G.n%G.deck.length],steps=t.ladder.split(" | "),want=0,miss=0;G.until=now()+60000;$("tb").style.width="100%";
   $("stage").innerHTML="<p class='q'>"+esc(t.title.split(" - ")[0])+"</p><p class='sub'>Tap the messages in the order they happen.</p><ol class='picked' id='pk'></ol><div class='opts' id='os'></div><p class='say' aria-live='polite'></p>";
   shuf(steps.map(function(s,i){return i})).forEach(function(i){var b=document.createElement("button");b.textContent=steps[i].replace(" > "," → ");b.onclick=function(){
     if(b.disabled)return;
     if(i===want){b.disabled=true;b.className="used";var li=document.createElement("li");li.textContent=b.textContent;$("pk").appendChild(li);want++;
-      if(want===steps.length){var pts=Math.max(1,steps.length*2-miss*2);G.score+=pts;$("stage").querySelector(".say").innerHTML=(miss?"Done.":"Perfect.")+" +"+pts+" · <a href='learn/"+lessonId(t)+".html'>See the lesson</a>";G.n++;bar();setTimeout(next,1800)}}
+      if(want===steps.length){var pts=Math.max(1,steps.length*2-miss*2);G.score+=pts;$("stage").querySelector(".say").innerHTML=(miss?"Done.":"Perfect.")+" +"+pts+" · <a href='learn/"+lessonId(t)+".html'>See the lesson</a>";G.n++;bar();later(next,1800)}}
     else{miss++;b.className="no";setTimeout(function(){if(!b.disabled)b.className=""},500)}};$("os").appendChild(b)})}
 
 // --- subnet sprint

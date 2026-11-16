@@ -28,7 +28,6 @@ a{color:var(--blue)}
 .btn{font:inherit;font-weight:600;border:0;border-radius:999px;padding:11px 20px;cursor:pointer;background:var(--blue);color:#fff}
 .ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
 #scan{display:none;margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
-#scan video{width:100%;border-radius:12px;background:#000;aspect-ratio:1;object-fit:cover}
 .hint{color:var(--sub);font-size:14px}
 #inst{display:none;margin:16px 0 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 footer{margin-top:28px;color:var(--sub);font-size:13px}
@@ -44,12 +43,17 @@ footer{margin-top:28px;color:var(--sub);font-size:13px}
 <a class="tile" href="/learn/"><div class="ic">📘</div><b>Learn</b><span>90 short lessons with pictures</span><i>Offline</i></a>
 <a class="tile" href="/games.html"><div class="ic">🎯</div><b>Games</b><span>Quiz, subnets, ports, order</span><i>Offline</i></a>
 <a class="tile" href="/live.html"><div class="ic">📈</div><b>Live</b><span>Markets, scores, weather, your connection</span></a>
-<button class="tile" id="remote"><div class="ic">💻</div><b>My PC</b><span>Scan the code on your PC to see it live</span></button>
+<button class="tile" id="remote"><div class="ic">💻</div><b>My PC</b><span>See your PC live - scan its code with your camera app</span></button>
 </div>
 <div id="scan">
-<video id="cam" playsinline muted></video>
-<p class="hint" id="sh">Point the camera at the code on your PC: AdeeboMeter tray icon › Phone remote.</p>
-<button class="btn ghost" id="stop">Close camera</button>
+<b>Connect to your PC</b>
+<ol class="hint" style="margin:6px 0 10px;padding-left:20px">
+<li>On the PC: right-click the AdeeboMeter tray icon › <b>Phone remote</b>.</li>
+<li>Open your phone's own <b>camera app</b> and point it at the code.</li>
+<li>Tap the link, then press <b>Allow</b> on the PC.</li>
+</ol>
+<p class="hint" style="margin:0 0 10px">This app never asks for your camera - your phone's camera app reads the code.</p>
+<button class="btn ghost" id="stop">OK</button>
 </div>
 <div id="inst"><b>Put AdeeboMeter on your home screen</b><p class="hint" id="ih" style="margin:4px 0 10px"></p><button class="btn" id="ib">Install</button></div>
 <p class="hint" style="margin-top:20px">No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a> - then the <b>My PC</b> tile shows your PC's live numbers, game pings, broker timing and 100+ checks, encrypted end to end.</p>
@@ -69,20 +73,9 @@ if(!standalone&&ios){$("ih").innerHTML="Tap <b>Share</b> <span aria-hidden='true
 $("ib").onclick=function(){if(!ask)return;ask.prompt();ask.userChoice.then(function(){ask=null;$("inst").style.display="none"})};
 addEventListener("appinstalled",function(){$("inst").style.display="none"});
 
-// My PC: scan the PC's code here (Chrome on Android has a built-in QR reader); otherwise the phone's camera app opens the link
-var stream=null,timer=0;
-function go(txt){var m=/^https:\/\/(?:www\.)?adeebometer\.com\/(remote|r)(?:\.html)?(#.+)$/.exec(String(txt||"").trim());if(!m)return false;stop();location.href="/"+m[1]+".html"+m[2];return true}
-function stop(){clearInterval(timer);if(stream)stream.getTracks().forEach(function(t){t.stop()});stream=null;$("scan").style.display="none"}
-function scan(){
-  if(!("BarcodeDetector"in window)||!navigator.mediaDevices){$("scan").style.display="block";$("cam").style.display="none";
-    $("sh").innerHTML="Open your phone's <b>camera app</b> and point it at the code on your PC (AdeeboMeter tray icon › Phone remote). The link opens your PC's live view.";return}
-  var det;try{det=new BarcodeDetector({formats:["qr_code"]})}catch(e){det=null}
-  if(!det){$("scan").style.display="block";$("cam").style.display="none";$("sh").innerHTML="Open your phone's <b>camera app</b> and point it at the code on your PC.";return}
-  navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false}).then(function(s){stream=s;var v=$("cam");v.style.display="";v.srcObject=s;v.play();$("scan").style.display="block";
-    timer=setInterval(function(){if(v.readyState<2)return;det.detect(v).then(function(c){for(var i=0;i<c.length;i++){if(go(c[i].rawValue))return;$("sh").textContent="That code isn't an AdeeboMeter one - scan the code from Phone remote on your PC."}}).catch(function(){})},300)})
-  .catch(function(){$("scan").style.display="block";$("cam").style.display="none";$("sh").innerHTML="The camera wasn't allowed. Use your phone's <b>camera app</b> on the code instead."})}
-$("remote").onclick=scan;$("stop").onclick=stop;
-addEventListener("pagehide",stop);
+// My PC: the phone's own camera app reads the PC's code - this app never asks for the camera
+function scan(){$("scan").style.display="block";$("scan").scrollIntoView({behavior:"smooth",block:"nearest"})}
+$("remote").onclick=scan;$("stop").onclick=function(){$("scan").style.display="none"};
 if(location.hash==="#scan")scan();
 })();
 </script>

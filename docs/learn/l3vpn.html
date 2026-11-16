@@ -32,6 +32,7 @@ h2{font-size:18px;margin:28px 0 8px}
 .ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
 .lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .msg{padding:6px 0}
 .msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
 .msg.r p{text-align:right}
@@ -70,13 +71,13 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <p class="tag">Many companies on one provider network, each in its own walled routing table.</p>
 <div class="card one"><p>An enterprise connects its offices through the provider. The provider edge keeps a separate routing table per customer (a VRF - virtual routing and forwarding), so overlapping private addresses never mix.</p></div>
 <h2>How the conversation goes</h2>
-<div class="ladder" role="img" aria-label="Message flow between Branch router and PE-Branch"><div class="lanes"><span>Branch router</span><span>PE-Branch</span></div>
-<div class="msg"><p>OSPF - I have 10.20.0.0/16</p><div class="arrow"></div></div>
-<div class="msg r"><p>PE-Branch → Route reflector: MP-BGP - RD 64500:7 10.20.0.0/16, label 22, target &quot;Acme&quot;</p><div class="arrow"></div></div>
-<div class="msg r"><p>Route reflector → PE-Head office: the same route</p><div class="arrow"></div></div>
-<div class="msg r"><p>PE-Head office → Head-office router: 10.20.0.0/16 is reachable through me</p><div class="arrow"></div></div>
-<div class="msg r"><p>Head office → Branch: traffic, carried with VPN label 22</p><div class="arrow"></div></div>
-</div>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Branch router</span><span>PE-Branch</span></div><ol aria-label="Messages between Branch router and PE-Branch, in order">
+<li class="msg"><p><span class="sr">Branch router to PE-Branch: </span>OSPF - I have 10.20.0.0/16</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>PE-Branch → Route reflector: MP-BGP - RD 64500:7 10.20.0.0/16, label 22, target &quot;Acme&quot;</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Route reflector → PE-Head office: the same route</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>PE-Head office → Head-office router: 10.20.0.0/16 is reachable through me</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Head office → Branch: traffic, carried with VPN label 22</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>A route-target typo means a branch silently can&#x27;t see head office. Overlapping addresses are fine inside separate VRFs and break the moment two are joined.</p></div>
 <h2>Going deeper</h2>
