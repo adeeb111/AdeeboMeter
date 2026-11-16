@@ -221,17 +221,35 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
       });
       svg += "</svg>";
     }
-    var rows = items(R), worst = rows.reduce(function (m, r) { return Math.max(m, +r[0] === 3 ? -1 : +r[0]); }, -1);
+    var rows = items(R), worst = rows.reduce(function (m, r) { return Math.max(m, +r[0] === 3 || +r[0] < 0 ? -1 : +r[0]); }, -1);
     var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     var agoT2 = age(when), h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT2 ? " · " + agoT2 : "") + '</small></div>';
-    h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(cap ? cap.toUpperCase() : "RESULT") + '</span><h1>' + esc(title) + '</h1></div>';
+    var tagT = cap ? cap.toUpperCase() : worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT";
+    var lead = rows.filter(function (r) { return +r[0] >= 0 && +r[0] <= 2; }).sort(function (a, b) { return +b[0] - +a[0]; })[0];
+    var nextT = lead && +lead[0] >= 1 && lead[3] ? D(lead[3]) : "";
+    h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(tagT) + '</span><h1>' + esc(title) + '</h1>' + (lead ? '<p style="margin:8px 0 0;color:var(--sub)">' + esc(D(lead[1])) + ': ' + esc(D(lead[2])) + '</p>' : '') + (nextT ? '<p style="margin:8px 0 0;color:var(--ink)"><b>Next:</b> ' + esc(nextT) + '</p>' : '') + '</div>';
+    if (!rows.length && !svg) h2 += '<div class="card"><h2>NO NUMBERS IN THIS LINK</h2><p style="margin:0;color:var(--sub)">The link only carried the tool\'s name, not its results. Open the result on the PC and scan its code again - newer versions of AdeeboMeter always fit the results in.</p></div>';
     if (svg) h2 += '<div class="card" id="pic">' + svg + '</div>';
-    if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div>' + (r[3] ? '<div class="w" style="font-size:13px;margin-top:4px">' + esc(D(r[3])) + '</div>' : '') + '</div>'; }).join("") + '</div>';
+    if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { if (+r[0] === -1) return '<h2 style="margin:16px 0 8px">' + esc(D(r[1]).toUpperCase()) + '</h2>'; var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div>' + (r[3] ? '<div class="w" style="font-size:13px;margin-top:4px">' + esc(D(r[3])) + '</div>' : '') + '</div>'; }).join("") + '</div>';
+    h2 += '<div id="kb"></div>';
     h2 += '<div class="card"><div class="btns"><button class="main" id="cp">Copy</button><button id="sh">Share</button>' + (svg ? '<button id="img">Save image</button>' : '') + '<button id="ai2">Copy for AI</button><button id="pdf2">Save as PDF</button></div></div>';
     if (/Android/i.test(navigator.userAgent)) h2 += '<p class="note">Android: Save image opens the share sheet - pick Files, Photos or any app. From the PC, Send by Bluetooth or Quick Share drops the picture straight into Downloads.</p>';
-    h2 += '<p class="note">Made with AdeeboMeter on a PC. The result came inside the link and was drawn here, on this phone - AdeeboMeter can\'t check who made a link, so trust it as much as the person who sent it.</p>';
+    h2 += '<p class="note">Measured by AdeeboMeter on a Windows PC. The numbers travelled inside this link and were drawn here on your phone - nothing was uploaded. Anyone can make a link like this, so trust it as much as you trust whoever sent it.</p>';
     app.innerHTML = h2;
-    var text = function (noUrl) { return title + (cap ? " - " + cap : "") + (whenT ? " (" + whenT + ")" : "") + "\n" + rows.map(function (r) { return "- " + D(r[1]) + ": " + D(r[2]) + (r[3] ? " (" + D(r[3]) + ")" : ""); }).join("\n") + (noUrl ? "" : "\n" + location.href); };
+    // the phrasebook: what this check is and why it matters, from the app's own text. Fetched like any page file - nothing
+    // about the result is sent, nothing is kept (no-store); offline or slow, the page stays exactly as the link drew it.
+    try {
+      var ctl = window.AbortController ? new AbortController() : null; if (ctl) setTimeout(function () { ctl.abort(); }, 4000);
+      fetch("kb/r1.json", { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl ? ctl.signal : undefined }).then(function (r) { return r.ok ? r.json() : null; }).then(function (kb) {
+        var t = kb && kb.tools && kb.tools[title]; if (!t) return;
+        var box = document.getElementById("kb"); if (!box) return;
+        var extra = rows.filter(function (r) { return !r[3] && t.labels && t.labels[D(r[1]) + "|" + r[0]] && +r[0] >= 1 && +r[0] <= 2; });
+        box.innerHTML = '<div class="card"><h2>ABOUT THIS CHECK</h2>' + (t.tag ? '<p style="margin:0 0 8px;font-weight:700">' + esc(t.tag) + '</p>' : '') + (t.what ? '<p style="margin:0 0 8px;color:var(--sub)">' + esc(t.what) + '</p>' : '') + (t.why ? '<p style="margin:0;color:var(--sub)"><b>Why it matters:</b> ' + esc(t.why) + '</p>' : '') +
+          (extra.length ? '<h2 style="margin:14px 0 6px">WHAT TO DO</h2>' + extra.map(function (r) { return '<p style="margin:0 0 6px"><b>' + esc(D(r[1])) + ':</b> ' + esc(t.labels[D(r[1]) + "|" + r[0]]) + '</p>'; }).join("") : '') + '</div>';
+      }).catch(function () {});
+    } catch (e) {}
+    var hopsT = kind === "p" ? items(B).map(function (h) { return "  " + D(h[0]) + ". " + D(h[1]) + (h[3] ? " - " + D(h[3]) : h[2] !== "" ? " - " + h[2] + " ms" : ""); }).join("\n") : "";
+    var text = function (noUrl) { return title + (cap ? " - " + cap : "") + (whenT ? " (" + whenT + ")" : "") + "\n" + (hopsT ? "Hops:\n" + hopsT + "\n" : "") + rows.map(function (r) { return +r[0] === -1 ? "\n" + D(r[1]).toUpperCase() : "- " + D(r[1]) + ": " + D(r[2]) + (r[3] ? " (" + D(r[3]) + ")" : ""); }).join("\n") + (noUrl ? "" : "\n" + location.href); };
     document.getElementById("cp").onclick = function () { copyText(text(), "Copied - paste it anywhere"); };
     document.getElementById("sh").onclick = function () { if (navigator.share) navigator.share({ title: title, text: text(true), url: location.href }).catch(function (e) { if (!e || e.name !== "AbortError") document.getElementById("cp").onclick(); }); else document.getElementById("cp").onclick(); };
     document.getElementById("pdf2").onclick = function () { window.print(); };
