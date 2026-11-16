@@ -99,7 +99,7 @@ namespace AdeeboMeter
         {
             if (Report.Active) return;   // --report: watch only - nothing goes into the history, usage or device lists
             double gwAvg = gwN > 0 ? gw / gwN : double.NaN, netAvg = netN > 0 ? net / netN : double.NaN, loss = lossN > 0 ? 100.0 * lossBad / lossN : double.NaN;
-            History.Minute(t, new[] { worst, cpuN > 0 ? cpu / cpuN : 0, memN > 0 ? mem / memN : 0, downN > 0 ? down / downN : 0, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, upN > 0 ? up / upN : 0, gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
+            History.Minute(t, new[] { worst, cpuN > 0 ? cpu / cpuN : double.NaN, memN > 0 ? mem / memN : double.NaN, downN > 0 ? down / downN : double.NaN, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, upN > 0 ? up / upN : double.NaN,   /* AM-CG-266: not measured stays empty, never a 0 */ gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
             if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));

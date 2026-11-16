@@ -63,18 +63,34 @@ namespace AdeeboMeter
             return replayPage;
         }
 
+        int replayGen; DateTime replayLoadedAt; double replayGap = -1;
+        // AM-CG-268: deleting history forgets every loaded day here and on the widget; a load still running is ignored
+        internal void ReplayForget() { replayGen++; replayDay = null; replayData = null; replayIdx = -1; replayMed = new double[History.Cols]; replayKey = ""; replayGap = -1; replayLoading = false; pendingAt = -1; rewindIdx = -1; AppCtx.Rewind = null; if (replayCanvas != null) replayCanvas.Invalidate(); }
+        // a calendar of the days history still keeps (bold), for anything older than the chips
+        DateTime? PickHistoryDay(List<DateTime> days)
+        {
+            if (days.Count == 0) return null;
+            using (var f = new Form { Text = L.T("Pick a day"), FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.CenterParent, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(Sc(10)) })
+            {
+                var cal = new MonthCalendar { MaxSelectionCount = 1, MinDate = days.Min(), MaxDate = days.Max(), BoldedDates = days.ToArray(), Dock = DockStyle.Fill };
+                DateTime? got = null; cal.DateSelected += (s, e) => { if (days.Contains(e.Start.Date)) { got = e.Start.Date; f.DialogResult = DialogResult.OK; } };
+                f.Controls.Add(cal); f.ShowDialog(this); return got;
+            }
+        }
         void ReplayOpen()
         {
             if (replayDay == null) { replayDay = DateTime.Today; replayData = null; }
-            if (replayData == null && !replayLoading)
+            // AM-CG-270: today keeps growing - coming back after a minute reads it again, keeping the cursor where it was
+            bool refresh = replayData != null && !replayExample && replayDay == DateTime.Today && (DateTime.UtcNow - replayLoadedAt).TotalSeconds > 60;
+            if ((replayData == null || refresh) && !replayLoading)
             {
                 // read the day's file off the UI thread - a full day is ~1,400 lines
-                replayLoading = true; var day = replayDay.Value;
+                replayLoading = true; var day = replayDay.Value; int gen = ++replayGen; double keepSec = refresh && replayIdx >= 0 && replayIdx < replayData.M.Count ? replayData.M[replayIdx][0] : -1; bool atEnd = refresh && replayIdx == replayData.M.Count - 1;
                 System.Threading.Tasks.Task.Factory.StartNew(() =>
                 {
                     History.Day d = null; var med = new double[History.Cols];
                     try { d = History.Load(day); for (int c = 0; c < History.Cols; c++) med[c] = Median(d, c); } catch (Exception e) { Program.Log("replay: " + e.Message); d = new History.Day(); }   /* a day that can't be read shows as empty - never "Reading that day..." forever */
-                    try { BeginInvoke((Action)delegate { replayLoading = false; if (replayDay != day || d == null) { if (replayDay != day) ReplayOpen(); return; } replayData = d; replayExample = false; replayMed = med; replayIdx = d.M.Count - 1; if (pendingAt >= 0) { double f = pendingAt; pendingAt = -1; ReplayAt(f); } replayCanvas.Invalidate(); }); } catch { replayLoading = false; }
+                    try { BeginInvoke((Action)delegate { if (gen != replayGen) return; replayLoading = false; if (replayDay != day || d == null) { if (replayDay != day) ReplayOpen(); return; } replayData = d; replayExample = false; replayMed = med; replayLoadedAt = DateTime.UtcNow; replayIdx = d.M.Count - 1; if (keepSec >= 0 && !atEnd) { int ki = d.M.FindIndex(rw => rw[0] >= keepSec); if (ki >= 0) replayIdx = ki; } if (pendingAt >= 0) { double f = pendingAt; pendingAt = -1; ReplayAt(f); } replayCanvas.Invalidate(); }); } catch { replayLoading = false; }
                 });
             }
             replayCanvas.Invalidate();
@@ -86,9 +102,10 @@ namespace AdeeboMeter
             var d = replayData; if (d.M.Count == 0) return;
             double sec = Math.Max(0, Math.Min(1, f)) * 86400; int best = 0; double bd = double.MaxValue;
             for (int i = 0; i < d.M.Count; i++) { double dd = Math.Abs(d.M[i][0] - sec); if (dd < bd) { bd = dd; best = i; } }
-            if (best != replayIdx) { replayIdx = best; replayCanvas.Invalidate(); }
+            double gap = bd > 180 ? sec : -1;   // AM-CG-264: more than 3 minutes from any reading: say so, don't pass the nearest off as that time
+            if (best != replayIdx || gap != replayGap) { replayIdx = best; replayGap = gap; replayCanvas.Invalidate(); }
         }
-        void ReplayStep(int by) { var d = replayData; if (d == null || d.M.Count == 0) return; replayIdx = Math.Max(0, Math.Min(d.M.Count - 1, replayIdx + by)); replayCanvas.Invalidate(); }
+        void ReplayStep(int by) { var d = replayData; if (d == null || d.M.Count == 0) return; replayGap = -1; replayIdx = Math.Max(0, Math.Min(d.M.Count - 1, replayIdx + by)); replayCanvas.Invalidate(); }
         void ReplayNextProblem(int dir)
         {
             var d = replayData; if (d == null) return;
@@ -96,7 +113,7 @@ namespace AdeeboMeter
                 if (!double.IsNaN(d.M[i][1]) && d.M[i][1] >= 1 && (i - dir < 0 || i - dir >= d.M.Count || double.IsNaN(d.M[i - dir][1]) || d.M[i - dir][1] < 1)) { replayIdx = i; replayCanvas.Invalidate(); return; }
         }
 
-        static double Median(History.Day d, int col) { var v = d.M.Select(r => r[col]).Where(x => !double.IsNaN(x) && x >= 0).OrderBy(x => x).ToList(); return v.Count == 0 ? double.NaN : v[v.Count / 2]; }
+        static double Median(History.Day d, int col) { var v = d.M.Select(r => r[col]).Where(x => !double.IsNaN(x) && x >= 0).OrderBy(x => x).ToList(); return v.Count == 0 ? double.NaN : v.Count % 2 == 1 ? v[v.Count / 2] : (v[v.Count / 2 - 1] + v[v.Count / 2]) / 2; }   // AM-CG-263: an even count averages the two middle values
 
         void PaintReplay(Graphics g)
         {
@@ -108,14 +125,19 @@ namespace AdeeboMeter
                 // day chips
                 if (histDays == null || (DateTime.UtcNow - histDaysAt).TotalSeconds > 30) { histDays = History.Days(); histDaysAt = DateTime.UtcNow; }
                 var days = histDays.ToList(); if (replayDay != null && !days.Contains(replayDay.Value)) days.Insert(0, replayDay.Value);
-                float cx = x;
-                foreach (var d0 in days.Take(8))
+                // AM-CG-267: the newest days as chips (wrapping on a narrow window), and Older... for every other kept day
+                float cx = x; var shown = days.Take(8).ToList(); if (replayDay != null && !shown.Contains(replayDay.Value)) shown.Add(replayDay.Value);
+                var chips = shown.Select(d0 => Tuple.Create(d0, d0 == DateTime.Today ? "Today" : d0 == DateTime.Today.AddDays(-1) ? "Yesterday" : d0.ToString("ddd d MMM", CultureInfo.CurrentCulture))).ToList();
+                if (days.Count > 8) chips.Add(Tuple.Create(DateTime.MinValue, L.T("Older...")));
+                foreach (var ch in chips)
                 {
-                    var dd = d0; string t = dd == DateTime.Today ? "Today" : dd == DateTime.Today.AddDays(-1) ? "Yesterday" : dd.ToString("ddd d MMM", CultureInfo.CurrentCulture);
-                    var ts = g.MeasureString(t, Draw.fBody); var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S); bool on = replayDay == dd;
+                    var dd = ch.Item1; string t = ch.Item2;
+                    var ts = g.MeasureString(t, Draw.fBody); if (cx > x && cx + ts.Width + 22 * S > x + w) { cx = x; y += 36 * S; }
+                    var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S); bool on = replayDay == dd;
                     Theme.Fill(g, cr, 14 * S, on ? Theme.Blue : Theme.Soft);
                     using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
-                    Act(replayCanvas, cr, delegate { replayDay = dd; replayData = null; replayExample = false; ReplayOpen(); });
+                    if (dd == DateTime.MinValue) Act(replayCanvas, cr, delegate { var pick = PickHistoryDay(days); if (pick != null) { replayDay = pick; replayData = null; replayExample = false; ReplayOpen(); } });
+                    else Act(replayCanvas, cr, delegate { replayDay = dd; replayData = null; replayExample = false; ReplayOpen(); });
                     cx += cr.Width + 8 * S;
                 }
                 y += 42 * S;
@@ -218,11 +240,18 @@ namespace AdeeboMeter
                 y += 100 * S;
 
                 // in plain words
-                string plain = lvAll == 0 ? "Everything was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": router " + ms(gw) + ", internet " + ms(net) + "."
-                    : pcLv == 2 ? "Your PC was the busy one at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + (pd0 > 50 ? "the disk took " + pd0.ToString("0", CultureInfo.CurrentCulture) + " ms per request" : pf0 > 300 ? "memory was full" : "CPU " + cpu.ToString("0", CultureInfo.CurrentCulture) + "%") + ") - it wasn't the network."
+                // AM-CG-265: only what was measured is vouched for, and more than one cause can be named
+                bool known = !double.IsNaN(gw) && !double.IsNaN(net);
+                string also = pcLv >= 1 && (netLv == 1 || netLv == 2) ? " The internet was slow too (" + ms(net) + ")." : "";
+                string plain = lvAll == 0 && known ? "Everything measured was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": router " + ms(gw) + ", internet " + ms(net) + "."
+                    : lvAll == 0 ? "Nothing looked wrong at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " in what was measured - router " + ms(gw) + ", internet " + ms(net) + "."
+                    : pcLv == 2 ? "Your PC was the busy one at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + (pd0 > 50 ? "the disk took " + pd0.ToString("0", CultureInfo.CurrentCulture) + " ms per request" : pf0 > 300 ? "memory was full" : "CPU " + cpu.ToString("0", CultureInfo.CurrentCulture) + "%") + ")" + (also != "" ? "." + also : " - it wasn't the network.")
                     : (lanLv == 1 || lanLv == 2) && (netLv == 3 || lanLv >= netLv) ? "The trouble at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " was close to you - the router took " + ms(gw) + (wifi >= 0 ? " with Wi-Fi at " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "") + "."
-                    : netLv == 1 || netLv == 2 ? "Your side was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (router " + ms(gw) + "); the internet was slow or dropping (" + ms(net) + (double.IsNaN(loss) ? "" : ", " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost") + ")."
+                    : netLv == 1 || netLv == 2 ? (lanLv == 0 ? "Your side was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (router " + ms(gw) + "); the internet" : "At " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " the internet") + " was slow or dropping (" + ms(net) + (double.IsNaN(loss) ? "" : ", " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost") + ")" + (lanLv == 3 ? " - the router wasn't measured then, so your side can't be cleared." : ".")
                     : "Something needed attention at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " - see what changed around then below.";
+                if (replayGap >= 0) plain = "No recording at " + replayDay.Value.Date.AddSeconds(replayGap).ToString("HH:mm", CultureInfo.CurrentCulture) + " - AdeeboMeter wasn't running or history was off. The nearest reading, " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + plain;
+                // AM-CG-269: the hour the clocks go back happens twice - the second one says so
+                if (replayIdx < data.Off.Count && data.Off[replayIdx] != int.MinValue) { int oi = data.Off[replayIdx]; if (Enumerable.Range(0, replayIdx).Any(j => j < data.Off.Count && data.Off[j] != int.MinValue && data.Off[j] != oi && Math.Abs(data.M[j][0] - sec) < 60)) plain = "(" + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " for the second time - the clocks went back) " + plain; }
                 float plh = Draw.Measure(plain, Draw.fName, (int)(w - 36 * S)).Height;
                 var pr = new RectangleF(x, y, w, plh + 24 * S); Theme.Fill(g, pr, 12 * S, Theme.LvSoft(lvAll));
                 using (var pb = new SolidBrush(lvAll == 0 || lvAll == 3 ? Theme.Ink : Theme.LvText(lvAll))) g.DrawString(plain, Draw.fName, pb, new RectangleF(x + 18 * S, y + 12 * S, w - 36 * S, plh + 6));

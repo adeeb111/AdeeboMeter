@@ -29,6 +29,7 @@ namespace AdeeboMeter
             var sb = new StringBuilder(t.ToString("HH:mm:ss", CultureInfo.InvariantCulture));
             for (int i = 0; i < Cols - 1; i++) sb.Append(',').Append(i < v.Length ? N(v[i]) : "");
             sb.Append(',').Append((net ?? "").Replace(',', ' ')).Append(',').Append(N(diskMs)).Append(',').Append(N(faults));   // the PC: disk ms per request, pages read back from disk per second
+            sb.Append(',').Append(((int)TimeZoneInfo.Local.GetUtcOffset(t).TotalMinutes).ToString(CultureInfo.InvariantCulture));   // AM-CG-269: the UTC offset, so the hour the clocks go back is told apart
             Write(FileFor(t, "m"), sb.ToString());
         }
         public static void Event(int lv, string kind, string text)
@@ -116,7 +117,7 @@ namespace AdeeboMeter
         }
 
         // M rows: [0] seconds of day, then the 14 numeric columns (older 10-second files fill the first 7; the rest are NaN).
-        public sealed class Day { public List<double[]> M = new List<double[]>(); public List<string> Net = new List<string>(); public List<double[]> Pc = new List<double[]>(); public List<Timeline.Ev> E = new List<Timeline.Ev>(); }
+        public sealed class Day { public List<double[]> M = new List<double[]>(); public List<string> Net = new List<string>(); public List<double[]> Pc = new List<double[]>(); public List<int> Off = new List<int>(); public List<Timeline.Ev> E = new List<Timeline.Ev>(); }
         // just the events of a day (cheap: no measurement rows) - the outage log reads these
         public static List<Timeline.Ev> EventsOf(DateTime d)
         {
@@ -144,6 +145,7 @@ namespace AdeeboMeter
                     var row = new double[Cols]; row[0] = t.TotalSeconds;
                     for (int i = 1; i < Cols; i++) row[i] = i < f.Length ? P(f[i]) : double.NaN;
                     day.M.Add(row); day.Net.Add(f.Length > Cols ? f[Cols] : ""); day.Pc.Add(new[] { f.Length > Cols + 1 ? P(f[Cols + 1]) : double.NaN, f.Length > Cols + 2 ? P(f[Cols + 2]) : double.NaN });
+                    int off; day.Off.Add(f.Length > Cols + 3 && int.TryParse(f[Cols + 3], NumberStyles.Integer, CultureInfo.InvariantCulture, out off) && off > -900 && off < 900 ? off : int.MinValue);
                 }
                 foreach (var line in Lines(FileFor(d, "ev"), 2000))
                 {

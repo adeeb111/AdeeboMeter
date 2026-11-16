@@ -16,7 +16,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         List<Conn> connSnap = new List<Conn>();
-        string storyApp, storyTarget = "", storyIp = ""; int storyPort, storyBox = -1;
+        string storyApp, storyTarget = "", storyIp = "", storyNote = ""; int storyPort, storyLocal, storyBox = -1;
 
         static readonly string[] BoxName = { "App", "Windows", "Wi-Fi", "Router", "Provider", "Internet", "Server" };
 
@@ -27,16 +27,19 @@ namespace AdeeboMeter
             var c = connSnap.Where(x => x.Proc == app && x.State == "ESTABLISHED" && Watch.IsPublic(x.RemoteIp))
                             .GroupBy(x => x.RemoteIp + ":" + x.RemotePort).OrderByDescending(gr => gr.Count() + (gr.First().RemotePort == 443 ? 100 : 0)).Select(gr => gr.First()).FirstOrDefault();
             if (c == null) return;
-            storyIp = c.RemoteIp; storyPort = c.RemotePort; storyTarget = (c.Host != "" ? c.Host : c.RemoteIp) + (c.RemotePort != 443 ? ":" + c.RemotePort : "");
+            storyIp = c.RemoteIp; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyNote = "";
+            string h = c.Host != "" ? c.Host : c.RemoteIp.Contains(":") ? "[" + c.RemoteIp + "]" : c.RemoteIp;   // AM-CG-261: an IPv6 address with a port is written [addr]:port
+            storyTarget = h + (c.RemotePort != 443 ? ":" + c.RemotePort : "");
             travelBox.Box.Text = ""; travelDest = null; realPkts = null; realDecode = null; realErr = "";
             travelCanvas.Invalidate();
         }
         void StorySite()
         {
             string t = travelBox.Box.Text.Trim(); if (t == "") return;
-            storyApp = null; storyTarget = t; storyIp = ""; storyPort = 0; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
+            storyApp = null; storyTarget = t; storyIp = ""; storyPort = 0; storyLocal = 0; storyNote = ""; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
             // a plain IPv4 address: the route card answers it straight away (the routing table is local - nothing is sent for it)
             System.Net.IPAddress typed; if (System.Net.IPAddress.TryParse(t, out typed) && typed.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && t.Count(ch => ch == '.') == 3) storyIp = typed.ToString();
+            else if (typed != null && typed.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) storyNote = "An IPv6 address: the route card covers IPv4 only - the trace still runs.";
             FollowPacket();
         }
 
@@ -50,13 +53,20 @@ namespace AdeeboMeter
             float cx = x + 60 * S;
             foreach (var a in apps)
             {
-                var ts = g.MeasureString(a, Draw.fBody); var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S); if (cr.Right > x + w) break;
+                string an = a.Length > 28 ? a.Substring(0, 27) + "…" : a; var ts = g.MeasureString(an, Draw.fBody); if (cx > x + 60 * S && cx + ts.Width + 22 * S > x + w) { cx = x + 60 * S; y += 36 * S; }   // AM-CG-262: wraps, never silently drops an app
+                var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S);
                 bool on = a == storyApp; Theme.Fill(g, cr, 14 * S, on ? Theme.Blue : Theme.Soft);
-                using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(a, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
+                using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(an, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
                 string aa = a; Act(travelCanvas, cr, delegate { StoryPick(aa); }); cx += cr.Width + 8 * S;
             }
-            if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Nothing is talking to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 4 * S);
-            y += 46 * S;
+            if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("No app has an open TCP connection to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 4 * S);
+            y += 36 * S;
+            // AM-CG-259: what this picker can see, and where the rest is
+            string seen = L.T("Shows apps with open TCP connections to internet addresses. UDP (calls, games), local devices and closed ones are in Connections") + "  ›"; var ss = g.MeasureString(seen, Draw.fSmall);
+            using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(seen, Draw.fSmall, lb, x, y);
+            Act(travelCanvas, new RectangleF(x, y, Math.Min(ss.Width, w), ss.Height), delegate { ShowPage("conn"); });
+            y += 24 * S;
+            if (storyNote != "") using (var nb = new SolidBrush(Theme.Sub)) { g.DrawString(L.T(storyNote), Draw.fSmall, nb, x, y); y += 20 * S; }
             if (storyTarget == "") return Kit.Empty(g, x, y, Math.Min(w, 760 * S), "story", "home", "Follow one connection, box by box", "Pick an app above, or type a site, and I'll walk its traffic from this PC out to the far end - seven boxes, each one clickable.", StoryPoints);
 
             // the seven boxes
@@ -75,13 +85,15 @@ namespace AdeeboMeter
                 new[] { conv != null ? conv.Proto.Split(' ')[0] + " :" + conv.LocalPort : "a socket", conv != null ? "to port " + conv.RemotePort : "port " + (storyPort > 0 ? storyPort : 443), "3" },
                 new[] { kind == "Wi-Fi" ? (ch != "" ? "channel " + ch : "radio") : (nic != null && nic.Speed > 0 ? (nic.Speed / 1e6).ToString("0", CultureInfo.CurrentCulture) + " Mb/s" : kind), kind == "Wi-Fi" ? (sig >= 0 ? sig + "% signal" : rx > 0 ? rx + " Mb/s link" : "signal hidden") : "to the switch", kind == "Wi-Fi" && sig >= 0 && sig < 40 ? "1" : "0" },
                 new[] { ms(gms), gw != "" ? gw : "router", double.IsNaN(gms) ? "2" : gms > 50 ? "2" : gms > 15 ? "1" : "0" },
-                new[] { double.IsNaN(nms) || double.IsNaN(gms) ? "-" : "+" + Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture) + " ms", vpn ? "VPN" : isp != "" ? Draw.Trunc(isp, 16) : "your provider", double.IsNaN(nms) ? "2" : nms - gms > 120 ? "1" : "0" },
+                new[] { double.IsNaN(nms) || double.IsNaN(gms) ? "-" : "+" + Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture) + " ms", vpn ? "VPN" : "router → internet gap", double.IsNaN(nms) ? "2" : nms - gms > 120 ? "1" : "0" },
                 new[] { hops > 0 ? hops + " networks" : ms(nms), hops > 0 ? "on the way" : "to the internet", "3" },
                 new[] { Draw.Trunc(conv != null && conv.Host != "" ? conv.Host : storyTarget, 22), role != "" ? Draw.Trunc(role, 24) : storyIp != "" ? storyIp : "", r != null && r.Level >= 0 ? r.Level.ToString(CultureInfo.InvariantCulture) : "3" } };
-            float bw = (w - 6 * 14 * S) / 7, bh = 84 * S;
+            // narrow window or large text: two rows of boxes (4 + 3) instead of seven squeezed ones
+            int per = (w - 6 * 14 * S) / 7 < 96 * S ? 4 : 7;
+            float bw = (w - (per - 1) * 14 * S) / per, bh = 84 * S;
             for (int i = 0; i < 7; i++)
             {
-                var br = new RectangleF(x + i * (bw + 14 * S), y, bw, bh); bool on = storyBox == i; int lv = int.Parse(box[i][2], CultureInfo.InvariantCulture);
+                var br = new RectangleF(x + (i % per) * (bw + 14 * S), y + (i / per) * (bh + 14 * S), bw, bh); bool on = storyBox == i; int lv = int.Parse(box[i][2], CultureInfo.InvariantCulture);
                 Kit.Box(g, br, 14 * S); if (on) { Theme.Fill(g, br, 14 * S, Theme.BlueSoft); Theme.Stroke(g, br, 14 * S, Theme.Blue, 2); }
                 Draw.LvDot(g, lv, br.X + 10 * S, br.Y + 12 * S, 9 * S, 9 * S);
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString((i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]).ToUpperInvariant(), Draw.fTiny, mb, br.X + 24 * S, br.Y + 9 * S);
@@ -90,12 +102,20 @@ namespace AdeeboMeter
                     using (var ib = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(box[i][0], Draw.fBodyB, ib, new RectangleF(br.X + 10 * S, br.Y + 32 * S, bw - 16 * S, 20 * S), nowrap);
                     using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(box[i][1], Draw.fSmall, sb, new RectangleF(br.X + 10 * S, br.Y + 54 * S, bw - 16 * S, 18 * S), nowrap);
                 }
-                if (i < 6) using (var ap = new Pen(Theme.Rail, 2 * S)) { ap.CustomEndCap = Cap34; g.DrawLine(ap, br.Right + 2 * S, br.Y + bh / 2, br.Right + 12 * S, br.Y + bh / 2); }
+                if (i < 6 && (i + 1) % per != 0) using (var ap = new Pen(Theme.Rail, 2 * S)) { ap.CustomEndCap = Cap34; g.DrawLine(ap, br.Right + 2 * S, br.Y + bh / 2, br.Right + 12 * S, br.Y + bh / 2); }
                 int ii = i; Act(travelCanvas, br, delegate { storyBox = storyBox == ii ? -1 : ii; if (ii == 3 && routeTable == null) LoadRoutes(); if (ii == 0 && m365Rows == null) LoadApps(); travelCanvas.Invalidate(); });
             }
-            y += bh + 8 * S;
+            y += bh + 8 * S + (per < 7 ? bh + 14 * S : 0);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(storyBox < 0 ? "Click a box to see what happens there." : "", Draw.fSmall, mb, x, y);
             y += 18 * S;
+            if (storyApp != null && storyIp != "")
+            {
+                // AM-CG-260: the app's own connection and the separate test are two different things - both shown
+                string ep = (storyIp.Contains(":") ? "[" + storyIp + "]" : storyIp) + ":" + storyPort;
+                string tested = r != null ? r.Ip ?? "" : "";
+                string two = L.T("The app's own connection:") + " " + ep + (storyLocal > 0 ? " (" + L.T("from local port") + " " + storyLocal + ")" : "") + ".  " + L.T("The trace and timing test reach") + " " + storyTarget + (tested != "" && tested != storyIp ? " = " + tested + " - " + L.T("a different server than the app's") : " " + L.T("on their own - they can land on a different server"));
+                float th = Draw.Measure(two, Draw.fSmall, (int)w).Height; using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString(two, Draw.fSmall, sb2, new RectangleF(x, y, w, th + 2)); y += th + 8 * S;
+            }
 
             // what happens in the chosen box: two lines, then what's behind it
             if (storyBox >= 0)
@@ -105,7 +125,7 @@ namespace AdeeboMeter
                     "Windows wraps the data: TCP or UDP with port numbers, then the IP addresses " + (localIp != "" ? localIp : "of your PC") + " → " + (storyIp != "" ? storyIp : storyTarget) + ".",
                     kind == "Wi-Fi" ? "The packet goes over the radio to your access point" + (ssid != "" ? " (" + ssid + ")" : "") + ". Signal and channel decide how fast and how reliably." : "The packet goes over the cable to the switch and your router.",
                     "Your router picks the way out (the default route) and swaps your private address for its public one (NAT). It answers in " + ms(gms) + ".",
-                    vpn ? "The VPN wraps the packet again and sends it to your company first." : "Your provider carries it into the internet" + (isp != "" ? " (" + isp + ")" : "") + " - it adds about " + (double.IsNaN(nms) || double.IsNaN(gms) ? "?" : Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture)) + " ms here.",
+                    vpn ? "The VPN wraps the packet again and sends it to your company first." : "Your provider carries it into the internet" + (isp != "" ? " (" + isp + ")" : "") + ". The internet test answers about " + (double.IsNaN(nms) || double.IsNaN(gms) ? "?" : Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture)) + " ms later than the router - that gap covers your provider and everything past it, so it isn't the provider's share alone.",
                     "Each network hands it to the next; where two meet, BGP decides the route." + (hops > 0 ? "" : " Press Time each step to see the networks on the way."),
                     "The server unwraps every layer and answers the same way back." + (role != "" ? " For " + (storyApp ?? "this app") + " this server is: " + role + "." : "") };
                 float th = Draw.Measure(two[storyBox], Draw.fBody, (int)(w - 28 * S)).Height;

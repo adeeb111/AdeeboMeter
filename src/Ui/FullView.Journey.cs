@@ -32,19 +32,24 @@ namespace AdeeboMeter
             bool udp = c.Proto.StartsWith("UDP", StringComparison.Ordinal);
             jFlow = new Journey.Flow { Remote = c.RemoteIp ?? "", RemotePort = c.RemotePort, LocalPort = c.LocalPort, Udp = udp, App = c.Proc ?? "" };
             JReset();
-            storyApp = c.Proc; storyIp = c.RemoteIp ?? ""; storyPort = c.RemotePort; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
+            storyApp = c.Proc; storyIp = c.RemoteIp ?? ""; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
             storyTarget = storyIp != "" ? (c.Host != "" && c.Host != c.RemoteIp ? c.Host : c.RemoteIp) + (c.RemotePort != 443 ? ":" + c.RemotePort : "") : (c.Proc ?? "app") + " (UDP " + c.LocalPort + ")";
             ShowPage("travel"); jScrollTo = true; travelCanvas.Invalidate();
         }
-        bool jScrollTo;
+        bool jScrollTo; string jHeld;
         void JReset() { if (jSess != null && !jSess.Done) jSess.Stop(); /* a new story never orphans a running capture */ jSess = null; jNotes = null; jKind = ""; jPlay = 0; jPlaying = false; jPing = null; JTimer(false); }
 
         // the conversation the story is showing becomes the journey's, unless one was picked from Connections
         Journey.Flow JFlowFromStory()
         {
-            if (jFlow != null && ((jFlow.Remote == storyIp && (storyPort == 0 || jFlow.RemotePort == 0 || jFlow.RemotePort == storyPort)) || (jFlow.Remote == "" && storyIp == "") || (jSess != null && jSess.F == jFlow))) return jFlow;
+            // AM-CG-256: a conversation is the app AND its own local port, not just the far address - two apps talking to the
+            // same server are two journeys
+            jHeld = null;
+            if (jFlow != null && ((jFlow.Remote == storyIp && (storyPort == 0 || jFlow.RemotePort == 0 || jFlow.RemotePort == storyPort) && (storyApp == null || jFlow.App == "" || jFlow.App == storyApp) && (storyLocal == 0 || jFlow.LocalPort == 0 || jFlow.LocalPort == storyLocal)) || (jFlow.Remote == "" && storyIp == ""))) return jFlow;
+            // AM-CG-257: a recording still running keeps its own conversation - and says so, with what you picked shown apart
+            if (jFlow != null && jSess != null && !jSess.Done && jSess.F == jFlow) { jHeld = storyTarget; return jFlow; }
             if (storyIp == "") return null;
-            var conv = connSnap.FirstOrDefault(c => c.RemoteIp == storyIp && c.RemotePort == storyPort && (storyApp == null || c.Proc == storyApp));
+            var conv = connSnap.FirstOrDefault(c => c.RemoteIp == storyIp && c.RemotePort == storyPort && (storyApp == null || c.Proc == storyApp) && (storyLocal == 0 || c.LocalPort == storyLocal));
             jFlow = new Journey.Flow { Remote = storyIp, RemotePort = storyPort, LocalPort = conv != null ? conv.LocalPort : 0, Udp = conv != null && conv.Proto.StartsWith("UDP", StringComparison.Ordinal), App = storyApp ?? "" };
             JReset(); return jFlow;
         }
@@ -55,6 +60,7 @@ namespace AdeeboMeter
             y += 10 * S; float top = y;
             y = Head(g, "PACKET JOURNEY" + (f != null ? "  ·  " + (f.App != "" ? f.App.ToUpperInvariant() + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : "UDP PORT " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
             if (f == null) return Lead(g, "Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything).", x, y, w, true);
+            if (jHeld != null) using (var hb = new SolidBrush(Theme.LvText(1))) { string ht = L.T("Still recording the conversation above. You picked") + " " + jHeld + " - " + L.T("stop the recording to follow it."); float hh = Draw.Measure(ht, Draw.fSmall, (int)w).Height; g.DrawString(ht, Draw.fSmall, hb, new RectangleF(x, y, w, hh + 2)); y += hh + 8 * S; }
             if (jScrollTo) { jScrollTo = false; int want = (int)top - Sc(20); BeginInvoke((Action)delegate { travelCanvas.AutoScrollPosition = new Point(0, Math.Max(0, want)); }); }
             y = PaintJStack(g, x, y, w, f);
             y = PaintJTime(g, x, y, w, f);
