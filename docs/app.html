@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AdeeboMeter app - learn, play, watch your PC</title>
+<meta name="description" content="AdeeboMeter on your phone: 90 network lessons and games that work offline, today's markets and scores, and a live window into your own PC.">
+<link rel="canonical" href="https://adeebometer.com/app.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--purple:#8250DF;--amber:#BF8700;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--purple:#A371F7;--amber:#D29922;--tint:#16233A}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--purple:#A371F7;--amber:#D29922;--tint:#16233A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:640px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+a{color:var(--blue)}
+.brand{display:flex;align-items:center;gap:10px;margin:0 0 4px}.brand img{width:40px;height:40px}.brand b{font-size:22px}
+.tag{color:var(--sub);margin:0 0 16px}
+.off{display:none;background:var(--tint);border-radius:10px;padding:8px 12px;font-size:14px;margin:0 0 12px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;min-height:150px;position:relative;cursor:pointer;font:inherit;text-align:left;width:100%}
+.tile .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:24px;margin-bottom:10px;background:var(--tint)}
+.tile b{display:block;font-size:18px}.tile span{display:block;color:var(--sub);font-size:14px;margin-top:2px}
+.tile i{position:absolute;top:14px;right:14px;font-style:normal;font-size:12px;font-weight:600;color:var(--green)}
+.wide{grid-column:1/-1;min-height:0;display:flex;gap:14px;align-items:center}.wide .ic{margin:0;flex:none}
+.btn{font:inherit;font-weight:600;border:0;border-radius:999px;padding:11px 20px;cursor:pointer;background:var(--blue);color:#fff}
+.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+#scan{display:none;margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+#scan video{width:100%;border-radius:12px;background:#000;aspect-ratio:1;object-fit:cover}
+.hint{color:var(--sub);font-size:14px}
+#inst{display:none;margin:16px 0 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+footer{margin-top:28px;color:var(--sub);font-size:13px}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<main>
+<div class="brand"><img src="/img/app/icon-192.png" alt=""><b>AdeeboMeter</b></div>
+<p class="tag">Learn how your internet works, play, check today's numbers - and watch your own PC.</p>
+<div class="off" id="off">You're offline. Learn and Games still work.</div>
+<div class="tiles">
+<a class="tile" href="/learn/"><div class="ic">📘</div><b>Learn</b><span>90 short lessons with pictures</span><i>Offline</i></a>
+<a class="tile" href="/games.html"><div class="ic">🎯</div><b>Games</b><span>Quiz, subnets, ports, order</span><i>Offline</i></a>
+<a class="tile" href="/live.html"><div class="ic">📈</div><b>Live</b><span>Markets, scores, weather, your connection</span></a>
+<button class="tile" id="remote"><div class="ic">💻</div><b>My PC</b><span>Scan the code on your PC to see it live</span></button>
+</div>
+<div id="scan">
+<video id="cam" playsinline muted></video>
+<p class="hint" id="sh">Point the camera at the code on your PC: AdeeboMeter tray icon › Phone remote.</p>
+<button class="btn ghost" id="stop">Close camera</button>
+</div>
+<div id="inst"><b>Put AdeeboMeter on your home screen</b><p class="hint" id="ih" style="margin:4px 0 10px"></p><button class="btn" id="ib">Install</button></div>
+<p class="hint" style="margin-top:20px">No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a> - then the <b>My PC</b> tile shows your PC's live numbers, game pings, broker timing and 100+ checks, encrypted end to end.</p>
+<footer>No account. Nothing about you is saved - the lessons and games are kept on this phone so they open without signal. <a href="/">adeebometer.com</a> · <a href="/privacy.html">Privacy</a></footer>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)};
+function net(){$("off").style.display=navigator.onLine?"none":"block"}addEventListener("online",net);addEventListener("offline",net);net();
+
+// install: Chrome/Edge/Samsung give a prompt; iPhone needs Share > Add to Home Screen; nothing shows once installed
+var standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,ask=null;
+var ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+addEventListener("beforeinstallprompt",function(e){e.preventDefault();ask=e;if(!standalone){$("ih").textContent="It opens full-screen like an app, and Learn and Games work without signal.";$("ib").style.display="";$("inst").style.display="block"}});
+if(!standalone&&ios){$("ih").innerHTML="Tap <b>Share</b> <span aria-hidden='true'>⬆︎</span> in Safari, then <b>Add to Home Screen</b>.";$("ib").style.display="none";$("inst").style.display="block"}
+$("ib").onclick=function(){if(!ask)return;ask.prompt();ask.userChoice.then(function(){ask=null;$("inst").style.display="none"})};
+addEventListener("appinstalled",function(){$("inst").style.display="none"});
+
+// My PC: scan the PC's code here (Chrome on Android has a built-in QR reader); otherwise the phone's camera app opens the link
+var stream=null,timer=0;
+function go(txt){var m=/^https:\/\/(?:www\.)?adeebometer\.com\/(remote|r)(?:\.html)?(#.+)$/.exec(String(txt||"").trim());if(!m)return false;stop();location.href="/"+m[1]+".html"+m[2];return true}
+function stop(){clearInterval(timer);if(stream)stream.getTracks().forEach(function(t){t.stop()});stream=null;$("scan").style.display="none"}
+function scan(){
+  if(!("BarcodeDetector"in window)||!navigator.mediaDevices){$("scan").style.display="block";$("cam").style.display="none";
+    $("sh").innerHTML="Open your phone's <b>camera app</b> and point it at the code on your PC (AdeeboMeter tray icon › Phone remote). The link opens your PC's live view.";return}
+  var det;try{det=new BarcodeDetector({formats:["qr_code"]})}catch(e){det=null}
+  if(!det){$("scan").style.display="block";$("cam").style.display="none";$("sh").innerHTML="Open your phone's <b>camera app</b> and point it at the code on your PC.";return}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false}).then(function(s){stream=s;var v=$("cam");v.style.display="";v.srcObject=s;v.play();$("scan").style.display="block";
+    timer=setInterval(function(){if(v.readyState<2)return;det.detect(v).then(function(c){for(var i=0;i<c.length;i++){if(go(c[i].rawValue))return;$("sh").textContent="That code isn't an AdeeboMeter one - scan the code from Phone remote on your PC."}}).catch(function(){})},300)})
+  .catch(function(){$("scan").style.display="block";$("cam").style.display="none";$("sh").innerHTML="The camera wasn't allowed. Use your phone's <b>camera app</b> on the code instead."})}
+$("remote").onclick=scan;$("stop").onclick=stop;
+addEventListener("pagehide",stop);
+if(location.hash==="#scan")scan();
+})();
+</script>
+</body>
+</html>
