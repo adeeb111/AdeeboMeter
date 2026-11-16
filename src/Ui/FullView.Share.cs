@@ -59,18 +59,48 @@ namespace AdeeboMeter
             var m = Qr.Encode(text); if (m == null) return;
             int px = Math.Max(4, (int)(6 * S)); var wa = Screen.FromControl(this).WorkingArea; int fit = (Math.Min(wa.Width, wa.Height) - Sc(140)) / (m.GetLength(0) + 8); if (fit >= 2 && fit < px) px = fit;   // a dense code on a small screen still fits
             string what = tbSel != null ? ToolName() : L.T("your result");
+            // drawn like the rest of the app: its colours (light or dark), its fonts, its rounded cards. The code itself always
+            // sits on white with a quiet margin - phone cameras need dark squares on light to read it.
             using (var bmp = Qr.Picture(m, px))
-            using (var f = new Form { Text = L.T("Open this result on your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Color.White, ShowInTaskbar = false })
-            using (var pb = new PictureBox { Image = bmp, SizeMode = PictureBoxSizeMode.AutoSize, Location = new Point(Sc(16), Sc(16)) })
-            using (var head = new Label { Text = L.T("Scan to see") + " " + what + " " + L.T("on your phone"), AutoSize = true, MaximumSize = new Size(Math.Max(bmp.Width, Sc(300)), 0), ForeColor = Color.FromArgb(17, 24, 39), Font = Draw.fBodyB, Location = new Point(Sc(16), Sc(26) + bmp.Height) })
-            using (var note = new Label { Text = "1.  " + L.T("Point your phone's camera at the code. On some Android phones, use Google Lens.") + "\n2.  " + L.T("Tap the link that appears. The result opens with its charts, ready to copy, share or save as a PDF.") + "\n\n" + L.T("The result travels inside the link itself. Nothing is uploaded, and adeebometer.com never receives it."), AutoSize = true, MaximumSize = new Size(Math.Max(bmp.Width, Sc(300)), 0), ForeColor = Color.FromArgb(75, 85, 99), Font = Draw.fSmall })
+            using (var f = new Form { Text = L.T("Open on your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Bg, ShowInTaskbar = false, Icon = Icon })
             {
-                // the words wrap to the code's width and the window grows to fit them - nothing is cut off at the edge
-                f.Controls.Add(pb); f.Controls.Add(head); f.Controls.Add(note);
-                note.Location = new Point(Sc(16), head.Bottom + Sc(8));
-                f.ClientSize = new Size(Math.Max(bmp.Width, Sc(300)) + Sc(32), note.Bottom + Sc(18));
-                pb.Left = (f.ClientSize.Width - bmp.Width) / 2;
-                f.KeyPreview = true; f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape) f.Close(); };
+                int pad = Sc(20), w = Math.Max(bmp.Width + Sc(32), Sc(340)), qrBox = bmp.Width + Sc(32);
+                var steps = new[] { L.T("Point your phone's camera at the code (on some Android phones, Google Lens)."), L.T("Tap the link that appears - the result opens with its charts, ready to copy, share or save as a PDF.") };
+                string privacy = L.T("The result travels inside the link itself. Nothing is uploaded, and adeebometer.com never receives it.");
+                float hHead = 0, hSteps = 0, hPriv = 0;
+                using (var mg = CreateGraphics())
+                {
+                    hHead = mg.MeasureString(what, Draw.fHead, w).Height;
+                    foreach (var st in steps) hSteps += mg.MeasureString(st, Draw.fBody, w - Sc(34)).Height + Sc(10);
+                    hPriv = mg.MeasureString(privacy, Draw.fSmall, w - Sc(32)).Height;
+                }
+                int yQr = pad + Sc(22) + (int)hHead + Sc(14), ySteps = yQr + qrBox + Sc(18), yPriv = ySteps + (int)hSteps + Sc(6), yBtn = yPriv + (int)hPriv + Sc(28) + Sc(14);
+                var done = new PillButton("Done", PillButton.K.Primary); done.Location = new Point(pad + w - done.Width, yBtn); done.Click += delegate { f.Close(); };
+                f.Controls.Add(done); f.AcceptButton = null; f.CancelButton = null;
+                f.ClientSize = new Size(w + pad * 2, done.Bottom + pad);
+                var canvas = new Panel { Bounds = new Rectangle(0, 0, f.ClientSize.Width, done.Top - Sc(4)), BackColor = Theme.Bg };
+                canvas.Paint += delegate(object s2, PaintEventArgs e)
+                {
+                    var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("SCAN TO OPEN"), Draw.fTiny, mb, pad, pad);
+                    using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(what, Draw.fHead, ib, new RectangleF(pad, pad + Sc(20), w, hHead + 4));
+                    var qr = new RectangleF(pad + (w - qrBox) / 2f, yQr, qrBox, qrBox);
+                    Theme.Fill(g, qr, Sc(16), Color.White); Theme.Stroke(g, qr, Sc(16), Theme.Line, 1);
+                    g.DrawImageUnscaled(bmp, (int)(qr.X + Sc(16)), (int)(qr.Y + Sc(16)));
+                    float y = ySteps;
+                    for (int k = 0; k < steps.Length; k++)
+                    {
+                        var dot = new RectangleF(pad, y, Sc(22), Sc(22)); Theme.Fill(g, dot, Sc(11), Theme.BlueSoft);
+                        using (var nb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString((k + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), Draw.fSmall, nb, dot, cf);
+                        float th = g.MeasureString(steps[k], Draw.fBody, w - Sc(34)).Height;
+                        using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(steps[k], Draw.fBody, ib, new RectangleF(pad + Sc(34), y + Sc(1), w - Sc(34), th + 2));
+                        y += th + Sc(10);
+                    }
+                    using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString("🔒 " + privacy, Draw.fSmall, sb2, new RectangleF(pad, yPriv, w, hPriv + Sc(4)));
+                };
+                f.Controls.Add(canvas);
+                f.Load += delegate { try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
+                f.KeyPreview = true; f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter) f.Close(); };
                 f.ShowDialog(this);
             }
         }

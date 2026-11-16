@@ -54,12 +54,17 @@ namespace AdeeboMeter
                 g.DrawString(L.T("Streaming"), Draw.fTitle, ink, x, y);
                 // watching your team? its live score, from Sports (fetched at most every 5 min while a stream plays) - a stutter
                 // below gets its verdict here, the score lives next door
-                var lm = Cfg.Sports ? Sports.LiveMine() : null;
-                if (lm != null)
+                // AM-CG-272/273/281: it's your followed team's game (not necessarily what's playing), with how old the score is;
+                // a score older than 15 minutes isn't shown as live, and the badge never runs past the title's room
+                var lm = Cfg.Sports ? Sports.LiveMine() : null; int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
+                if (lm != null && ageMin <= 15)
                 {
-                    string t = L.T("LIVE") + "  " + lm.Away + " " + lm.AwayScore + " · " + lm.Home + " " + lm.HomeScore + (lm.Detail != "" ? "  (" + lm.Detail + ")" : "") + "   " + L.T("Sports ›"); var ts = g.MeasureString(t, Draw.fBtn);
-                    var lr = new RectangleF(x + w - ts.Width - 30 * S, y + 2 * S, ts.Width + 26 * S, 30 * S); Theme.Fill(g, lr, 15 * S, Theme.LvSoft(2));
-                    using (var lb = new SolidBrush(Theme.LvText(2))) g.DrawString(t, Draw.fBtn, lb, lr.X + 13 * S, lr.Y + (30 * S - ts.Height) / 2);
+                    int more = Sports.LiveMineCount() - 1;
+                    string t = L.T("Your team") + "  " + lm.Away + " " + lm.AwayScore + " · " + lm.Home + " " + lm.HomeScore + (lm.Detail != "" ? "  (" + lm.Detail + ")" : "") + "  · " + (ageMin < 1 ? L.T("just now") : ageMin + " " + L.T("min ago")) + (more > 0 ? "  +" + more : "") + "   " + L.T("Sports ›");
+                    float room = Math.Max(160 * S, w - g.MeasureString(L.T("Streaming"), Draw.fTitle).Width - 30 * S);
+                    var ts = g.MeasureString(t, Draw.fSmall); float bwid = Math.Min(ts.Width + 26 * S, room);
+                    var lr = new RectangleF(x + w - bwid, y + 4 * S, bwid, 26 * S); Theme.Fill(g, lr, 13 * S, Theme.LvSoft(2));
+                    using (var lb = new SolidBrush(Theme.LvText(2))) using (var cf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(t, Draw.fSmall, lb, new RectangleF(lr.X + 13 * S, lr.Y + (26 * S - ts.Height) / 2, lr.Width - 20 * S, ts.Height + 2), cf);
                     Act(streamCanvas, lr, delegate { tab = "sports"; ShowTab(); SyncNav(); });
                 }
                 string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");

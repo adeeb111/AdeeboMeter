@@ -22,7 +22,10 @@ namespace AdeeboMeter
         public static WatchKit.Session Day;                 // today's broker session (saved when the market closes)
         public static List<WatchKit.Sample> Samples = new List<WatchKit.Sample>();   // the last 10 minutes
         static WatchKit.DipMaker maker = new WatchKit.DipMaker();
-        static Thread thread; static volatile bool running; public static volatile bool stopAll;
+        static Thread thread; static volatile bool running; static volatile bool stopAll; static readonly ManualResetEvent wake = new ManualResetEvent(false);
+        // AM-CG-121: Stop and app exit wake the watch at once, so it saves the day's recording instead of being cut off mid-sleep
+        public static void Stop() { stopAll = true; wake.Set(); }
+        public static bool Stopping { get { return stopAll; } }
         static IPAddress hostIp; static DateTime resolvedAt = DateTime.MinValue; static string resolvedFor = "";
         public static string Status = "";
         public const string FarName = "your broker";
@@ -48,7 +51,7 @@ namespace AdeeboMeter
         {
             if (m != null) viewOpen = m.ViewOpen;
             if (running || !Watching || m == null) return;
-            running = true; stopAll = false;
+            running = true; stopAll = false; wake.Reset();
             thread = new Thread(() => Loop(m)) { IsBackground = true, Name = "broker watch", Priority = ThreadPriority.BelowNormal }; thread.Start();
         }
         static void Loop(Monitor m)
@@ -59,7 +62,7 @@ namespace AdeeboMeter
                 while (Watching && !stopAll)
                 {
                     var t0 = DateTime.UtcNow; Step(m);
-                    int wait = Sec * 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds; if (wait > 0) Thread.Sleep(wait);
+                    int wait = Sec * 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds; if (wait > 0) wake.WaitOne(wait);
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("broker watch: " + e.Message); }
@@ -67,16 +70,16 @@ namespace AdeeboMeter
         }
         static void Step(Monitor m)
         {
-            string host = Cfg.TradeHost;
+            string host = Cfg.TradeHost, hn; int port; if (!Lab.Split(host, 443, out hn, out port)) { hn = host; port = 443; }   // the port you typed is the one tried
             if (hostIp == null || resolvedFor != host || (DateTime.UtcNow - resolvedAt).TotalMinutes > 10)
             {
                 resolvedFor = host; resolvedAt = DateTime.UtcNow; IPAddress ip;
-                if (IPAddress.TryParse(host, out ip)) hostIp = ip;
-                else try { hostIp = Dns.GetHostAddresses(host).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? Dns.GetHostAddresses(host).FirstOrDefault(); }
-                    catch (Exception e) { if (!(e is System.Net.Sockets.SocketException || e is ArgumentException)) throw; hostIp = null; Status = "Can't find " + host + " - check the name in Trading."; }
+                if (IPAddress.TryParse(hn, out ip)) hostIp = ip;
+                else try { hostIp = Dns.GetHostAddresses(hn).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? Dns.GetHostAddresses(hn).FirstOrDefault(); }
+                    catch (Exception e) { if (!(e is System.Net.Sockets.SocketException || e is ArgumentException)) throw; hostIp = null; Status = "Can't find " + hn + " - check the name in Trading."; }
             }
-            var s = new WatchKit.Sample { T = DateTime.Now };
-            if (hostIp != null) { s.Far = GamePing.TcpMs(hostIp, 443, 1500); s.FarLost = double.IsNaN(s.Far); if (!s.FarLost) Status = ""; }
+            var s = new WatchKit.Sample { T = DateTime.Now, NoProbe = hostIp == null };
+            if (hostIp != null) { s.Far = GamePing.TcpMs(hostIp, port, 1500); s.FarLost = double.IsNaN(s.Far); if (!s.FarLost) Status = ""; }
             lock (m.L)
             {
                 s.Router = m.GwPing.Last; s.RouterLost = m.GwEverReplied && double.IsNaN(s.Router); s.Net = m.NetPing.Last; s.NetLost = m.NetEverReplied && double.IsNaN(s.Net);
@@ -94,10 +97,14 @@ namespace AdeeboMeter
                 if (blame == null && (!double.IsNaN(s.Far) && s.Far > 100)) blame = "far";
                 if (blame == "far" && s.FarLost && farOk.Count == 0) blame = null;
                 var d = maker.Add(s, blame, Sec, FarName); if (d != null) Day.Dips.Add(d);
-                if (blame != null && Cfg.TradeAlert) Alerts.Raise("broker", "Wait before you trade: " + WatchKit.BlameName(blame, FarName).ToLowerInvariant() + " - " + WatchKit.Evidence(s, blame, FarName), 2);
+                if (blame != null && Cfg.TradeAlert) Alerts.Raise("broker", "Slow connection to your broker: " + WatchKit.BlameName(blame, FarName).ToLowerInvariant() + " - " + WatchKit.Evidence(s, blame, FarName), 2);
                 int mi = (int)(s.T - Day.Start).TotalMinutes;
-                if (Day.Line.Count == 0 || Day.Line.Last()[0] < mi) Day.Line.Add(new[] { (float)mi, 0f, double.IsNaN(s.Far) ? -1f : (float)s.Far });
-                Day.End = s.T; Day.FarNormal = normal; Ver++;
+                // AM-CG-118: one point a minute, the WORST of that minute (a lost reply beats any time), not the first
+                float fv = s.NoProbe ? float.NaN : double.IsNaN(s.Far) ? -1f : (float)s.Far;
+                if (!float.IsNaN(fv)) { if (Day.Line.Count == 0 || Day.Line.Last()[0] < mi) Day.Line.Add(new[] { (float)mi, 0f, fv }); else { var lp = Day.Line.Last(); if (lp[2] >= 0 && (fv < 0 || fv > lp[2])) lp[2] = fv; } }
+                // AM-CG-119: "normal" is the whole session's median, not just the last ten minutes
+                if (!double.IsNaN(s.Far)) { sessionFar.Add(s.Far); if (sessionFar.Count > 4000) sessionFar.RemoveRange(0, 1000); }
+                Day.End = s.T; Day.FarNormal = Streams.Median(sessionFar); Ver++;
             }
         }
         static void Close()
@@ -106,8 +113,9 @@ namespace AdeeboMeter
             var d = maker.Close(FarName); if (d != null) Day.Dips.Add(d);
             if (Day.Length.TotalMinutes >= 5) WatchKit.Save(Day);
             Moments.BrokerDay(Day.Length.TotalHours, Day.Dips.Count, Streams.Median(Samples.Where(x => !double.IsNaN(x.Far)).Select(x => x.Far).ToList()));
-            Day = null; Samples.Clear();
+            Day = null; Samples.Clear(); sessionFar.Clear();
         }
+        static readonly List<double> sessionFar = new List<double>();
         // the verdict line at the top of the panel
         public static string Headline(out int lv)
         {
@@ -115,11 +123,15 @@ namespace AdeeboMeter
             {
                 var last = Samples.LastOrDefault(); lv = 3;
                 if (last == null) return Status != "" ? Status : "Starting...";
+                // AM-CG-106: a reading older than three rounds of the watch is no verdict at all
+                double age = (DateTime.Now - last.T).TotalSeconds; if (age > Math.Max(15, Sec * 3)) return "No new reading for " + (age < 120 ? Math.Round(age) + " s" : Math.Round(age / 60) + " min") + " - the watch isn't updating";
+                if (last.NoProbe) return Status != "" ? Status : "Can't reach the broker's name - no reading";
                 var recent = Samples.Skip(Math.Max(0, Samples.Count - 5)).ToList();
                 bool bad = recent.Any(z => z.FarLost || (!double.IsNaN(z.Far) && z.Far > 100) || z.RouterLost || z.NetLost);
                 if (!bad && double.IsNaN(last.Far)) { lv = 3; return Status != "" ? Status : "Waiting for " + FarName + " to answer..."; }
                 lv = bad ? 2 : 0;
-                return bad ? "Slow - wait a moment before you trade" : "Safe to trade · " + FarName + " answering in " + (double.IsNaN(last.Far) ? "-" : last.Far.ToString("0", CultureInfo.InvariantCulture) + " ms");
+                // AM-CG-105: what was measured is the connection, not whether orders go through - the words say so
+                return bad ? "Slow connection to " + FarName + " right now" : "Connection to " + FarName + " is quick · " + (double.IsNaN(last.Far) ? "-" : last.Far.ToString("0", CultureInfo.InvariantCulture) + " ms") + " (the connection only, not order status)";
             }
         }
 
@@ -144,7 +156,7 @@ namespace AdeeboMeter
             {
                 var et = EasternNow(); var want = et.TimeOfDay >= new TimeSpan(16, 45, 0) ? et.Date : et.Date.AddDays(-1);
                 while (want.DayOfWeek == DayOfWeek.Saturday || want.DayOfWeek == DayOfWeek.Sunday) want = want.AddDays(-1);
-                return Rates.Count == 0 || Rates.Max(r => r.Day) < want;
+                return Rates.Count == 0 || Rates.Min(r => r.Day) < want;   // AM-CG-111: one stale currency makes the set stale - a fresh one can't hide it
             }
         }
         // the day's numbers, both from the Bank of Canada in one short visit: the rates when they're stale, and the weekly
@@ -201,7 +213,10 @@ namespace AdeeboMeter
         {
             var usd = rates.FirstOrDefault(r => r.Code == "USD"); var en = idx.FirstOrDefault(i => i.Code == "ENER");
             if (usd == null && en == null) return null;
-            var parts = new List<string> { usd != null && usd.Day != today ? L.T("Close ") + usd.Day.ToString("ddd", CultureInfo.CurrentCulture) : L.T("Close") };
+            // AM-CG-126: the Bank's figure is a daily average, not a close - and an older one carries its date
+            if (usd != null && (today - usd.Day).TotalDays > 4) usd = null;   // over a long weekend's age: too old for a "today" line
+            if (usd == null && en == null) return null;
+            var parts = new List<string> { usd != null ? (usd.Day == today ? L.T("Daily avg") : L.T("Daily avg") + " " + usd.Day.ToString("d MMM", CultureInfo.CurrentCulture)) : L.T("Week of") + " " + en.Day.ToString("d MMM", CultureInfo.CurrentCulture) };
             if (usd != null) parts.Add("US$ " + usd.Cad.ToString("0.0000", CultureInfo.CurrentCulture) + Arrow(double.IsNaN(usd.Prev) || usd.Prev <= 0 ? double.NaN : (usd.Cad - usd.Prev) / usd.Prev * 100, "0.00"));
             if (en != null) { double wk = Change(en, 1); if (!double.IsNaN(wk)) parts.Add(L.T("Energy") + Arrow(wk, "0.0") + " " + L.T("wk")); }
             return string.Join(" · ", parts);
@@ -263,8 +278,10 @@ namespace AdeeboMeter
             foreach (var c in Fx)
             {
                 List<Tuple<DateTime, double>> l; if (!byCode.TryGetValue(c, out l) || l.Count == 0) continue;
-                var o = l.OrderByDescending(t => t.Item1).ToList();
-                r.Add(new Rate { Code = c, Day = o[0].Item1, Cad = o[0].Item2, Prev = o.Count > 1 ? o[1].Item2 : double.NaN });
+                // AM-CG-112: one value per day - two rows for the same date are one observation (if they differ, the change is unknown)
+                var byDay = l.GroupBy(t => t.Item1.Date).OrderByDescending(gp => gp.Key).ToList();
+                var top = byDay[0]; bool clash = top.Select(t => t.Item2).Distinct().Count() > 1;
+                r.Add(new Rate { Code = c, Day = top.Key, Cad = top.First().Item2, Prev = !clash && byDay.Count > 1 && byDay[1].Select(t => t.Item2).Distinct().Count() == 1 ? byDay[1].First().Item2 : double.NaN });
             }
             return r;
         }

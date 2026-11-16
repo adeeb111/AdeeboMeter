@@ -301,6 +301,7 @@ namespace AdeeboMeter
             if (host == "github.com") return seg.Length >= 2 && seg[0] == "adeeb111" && string.Equals(seg[1], "AdeeboMeter", StringComparison.OrdinalIgnoreCase);
             if (host == "adeeb111.github.io") return seg.Length >= 1 && seg[0] == "AdeeboMeter";
             if (host == "adeebometer.com" || host == "www.adeebometer.com") return true;   // our own website
+            if (host == "www.bbc.co.uk" || host == "www.bbc.com") return seg.Length >= 1 && seg[0] == "sport";   // AM-CG-271: BBC Sport stories on the Sports page, nothing else at the BBC
             if (host == "paypal.me") return u.Query == "" && u.Fragment == "" && seg.Length >= 1 && seg[0] == "adeeb1111" && (seg.Length == 1 || (seg.Length == 2 && Array.IndexOf(Donations, seg[1]) >= 0));   // exactly the five buttons
             return false;
         }

@@ -19,7 +19,7 @@ namespace AdeeboMeter
         public sealed class Sample
         {
             public DateTime T; public double Router = double.NaN, Net = double.NaN, Far = double.NaN, Down = double.NaN, Cpu = double.NaN;
-            public bool RouterLost, NetLost, FarLost, Wifi; public int Signal = -1; public string Busy = "";
+            public bool RouterLost, NetLost, FarLost, Wifi, NoProbe;   /* NoProbe: the far end couldn't be tried (its name didn't resolve) - not a reply, not a loss */ public int Signal = -1; public string Busy = "";
         }
         public sealed class Dip { public DateTime T; public int Secs; public string Blame = "", Evidence = ""; }
         public sealed class Session

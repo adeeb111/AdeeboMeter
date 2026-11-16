@@ -77,6 +77,28 @@ namespace AdeeboMeter
     sealed class DB : Panel
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
+        // R2-15: painted buttons named for screen readers and UI automation - the painter lists them (name, place, action)
+        // each time it draws, and the panel reports them as buttons a reader can find and press
+        public readonly List<Tuple<string, Rectangle, Action>> Acc = new List<Tuple<string, Rectangle, Action>>();
+        protected override AccessibleObject CreateAccessibilityInstance() { return new DbAcc(this); }
+        sealed class DbAcc : ControlAccessibleObject
+        {
+            readonly DB o; public DbAcc(DB owner) : base(owner) { o = owner; }
+            public override int GetChildCount() { return o.Acc.Count; }
+            public override AccessibleObject GetChild(int i) { return i >= 0 && i < o.Acc.Count ? new Item(o, i, this) : null; }
+        }
+        sealed class Item : AccessibleObject
+        {
+            readonly DB o; readonly int i; readonly AccessibleObject parent;
+            public Item(DB owner, int index, AccessibleObject p) { o = owner; i = index; parent = p; }
+            Tuple<string, Rectangle, Action> T { get { return i < o.Acc.Count ? o.Acc[i] : null; } }
+            public override string Name { get { var t = T; return t == null ? "" : t.Item1; } }
+            public override AccessibleRole Role { get { return AccessibleRole.PushButton; } }
+            public override AccessibleObject Parent { get { return parent; } }
+            public override Rectangle Bounds { get { var t = T; return t == null || !o.IsHandleCreated ? Rectangle.Empty : o.RectangleToScreen(t.Item2); } }
+            public override string DefaultAction { get { return "Press"; } }
+            public override void DoDefaultAction() { var t = T; if (t != null && t.Item3 != null) o.BeginInvoke(t.Item3); }
+        }
         // KeyNav: the panel takes focus (click or Tab) and gets the arrow keys - for owner-drawn lists
         bool keyNav;
         public bool KeyNav { get { return keyNav; } set { keyNav = value; SetStyle(ControlStyles.Selectable, value); TabStop = value; } }

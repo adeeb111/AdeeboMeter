@@ -125,7 +125,7 @@ namespace AdeeboMeter
         }
         void PaintSideNav(Graphics g, Rectangle r)
         {
-            Begin(sideNav); bool hc = Theme.HighContrast;
+            Begin(sideNav); bool hc = Theme.HighContrast; sideNav.Acc.Clear();
             Color bg = hc ? SystemColors.Control : Navy, ink = hc ? SystemColors.ControlText : Color.White, sub = hc ? SystemColors.GrayText : NavyText;
             if (!hc && sideNav.BackColor != bg) sideNav.BackColor = bg;
             using (var b = new SolidBrush(bg)) g.FillRectangle(b, r);
@@ -134,7 +134,7 @@ namespace AdeeboMeter
             Theme.Fill(g, sr, 17 * S, hc ? SystemColors.Window : Navy2);
             Kit.Icon(g, "search", new RectangleF(sr.X + 12 * S, sr.Y + 9 * S, 16 * S, 16 * S), sub);
             using (var b = new SolidBrush(sub)) g.DrawString(L.T("Search anything..."), Draw.fBody, b, sr.X + 34 * S, sr.Y + 8 * S);
-            Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); y += 48 * S;
+            Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); sideNav.Acc.Add(Tuple.Create(L.T("Search anything"), Rectangle.Round(sr), (Action)OpenPalette)); y += 48 * S;
             // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
             // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
             var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S - 44 * S;   // 44: Settings always has its row at the bottom
@@ -146,7 +146,7 @@ namespace AdeeboMeter
                 if (sel) { using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, rr); using (var b = new SolidBrush(hc ? SystemColors.Highlight : Aqua)) g.FillRectangle(b, rr.X, rr.Y + 6 * S, 3 * S, h - 12 * S); }
                 Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(sel ? ink : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
-                string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id);
+                string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id); sideNav.Acc.Add(Tuple.Create(L.T(NavName(id)), Rectangle.Round(rr), (Action)delegate { OpenNav(nid); }));
                 y += h + 2 * S;
             };
             foreach (var id in bar) row(id, false);
@@ -168,7 +168,7 @@ namespace AdeeboMeter
                 if (ssel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, srr);
                 Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
-                Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings");
+                Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings"); sideNav.Acc.Add(Tuple.Create(L.T("Settings"), Rectangle.Round(srr), (Action)delegate { tab = "settings"; ShowTab(); SyncNav(); }));
             }
             if (meter)
             {

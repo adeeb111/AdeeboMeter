@@ -398,12 +398,18 @@ namespace AdeeboMeter
             return string.Join(",", l);
         }
         // a host name or an IP only: letters, digits, dots and dashes (a pasted URL loses its scheme and path)
-        static readonly char[] HostCut = { '/', '?', '#', ':' };
+        static readonly char[] HostCut = { '/', '?', '#' };
+        // a broker's address as people paste it: the scheme, any user:password@ (AM-CG-109 - never the host), the path go;
+        // a port the user typed stays (AM-CG-110), and an IPv6 address keeps its brackets: "host", "host:8443", "[v6]:8443"
         public static string CleanHost(string v)
         {
             v = (v ?? "").Trim().ToLowerInvariant(); int i = v.IndexOf("://", StringComparison.Ordinal); if (i >= 0) v = v.Substring(i + 3);
             i = v.IndexOfAny(HostCut); if (i >= 0) v = v.Substring(0, i);
-            return v.Length > 0 && v.Length <= 100 && v.All(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-') ? v : "";
+            i = v.LastIndexOf('@'); if (i >= 0) v = v.Substring(i + 1);
+            string h; int p; if (v.Length == 0 || v.Length > 110 || !Lab.Split(v, 443, out h, out p)) return "";
+            System.Net.IPAddress ip; bool isIp = System.Net.IPAddress.TryParse(h, out ip);
+            if (!isIp && !(h.Length <= 100 && h.All(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-'))) return "";
+            return (h.Contains(":") ? "[" + h + "]" : h) + (p == 443 ? "" : ":" + p.ToString(CultureInfo.InvariantCulture));
         }
         static int Pick(string v, int def, params int[] allowed) { int x; return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) && allowed.Contains(x) ? x : def; }
         public static void Read(string k, string v)

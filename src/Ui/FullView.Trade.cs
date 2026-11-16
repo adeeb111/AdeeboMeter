@@ -67,10 +67,17 @@ namespace AdeeboMeter
                 y += 32 * S;
                 string lead = active ? Voice.P("Live: your line to your broker, second by second while the market is open. Below: the day's numbers.", "Live broker connection in market hours; end-of-day numbers below.") : Voice.P("The day's numbers after the close, plus how your connection to your broker held up.", "End-of-day numbers and your broker connection's record.");
                 g.DrawString(lead + " " + L.T("Not advice - just the numbers."), Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += 36 * S;
+                // AM-CG-113: switching to Casual doesn't silently keep a watch going - it says so, with its pace and the alerts
+                if (!active && Cfg.TradeLive && Cfg.TradeHost != "")
+                {
+                    string bw = L.T("Still watching your broker in the background") + " - " + L.T("every") + " " + Trading.Sec + " s " + (Cfg.TradeCrypto ? L.T("around the clock (crypto)") : L.T("while the market is open")) + " · " + L.T("alerts") + " " + (Cfg.TradeAlert ? L.T("on") : L.T("off")) + ".  " + L.T("Stop watching") + " ›";
+                    var bs = g.MeasureString(bw, Draw.fSmall, (int)w); using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(bw, Draw.fSmall, lb, new RectangleF(x, y, w, bs.Height + 2));
+                    Act(tradeCanvas, new RectangleF(x, y, w, bs.Height), delegate { Cfg.TradeLive = false; Trading.Stop(); Cfg.Save(); tradeCanvas.Invalidate(); }); y += bs.Height + 10 * S;
+                }
                 if (Cfg.TradeLive && Cfg.TradeHost != "")
                 {
                     int tlv; Trading.Headline(out tlv); bool openNow = Trading.MarketOpen(Trading.EasternNow()) || Cfg.TradeCrypto;
-                    y = PaintModeLine(g, !openNow ? "trade.closed" : tlv == 2 ? "trade.slow" : "trade.ok", null, tlv == 2, x, y, w);
+                    if (!openNow || tlv == 0 || tlv == 2) y = PaintModeLine(g, !openNow ? "trade.closed" : tlv == 2 ? "trade.slow" : "trade.ok", null, tlv == 2, x, y, w);   // AM-CG-106: starting, stale or unknown says nothing, never "ok"
                 }
                 if (active) y = PaintBrokerLive(g, x, y, w, true);
                 string hol = Markets.TodayNote(Trading.EasternNow());
@@ -130,8 +137,8 @@ namespace AdeeboMeter
                     return bottom + 22 * S;
                 }
                 int lv; string head = Trading.Headline(out lv); var et = Trading.EasternNow(); bool open = Trading.MarketOpen(et);
-                List<WatchKit.Sample> samples; WatchKit.Session day; lock (Trading.k) { samples = Trading.Samples.ToList(); day = Trading.Day; }
-                bool live = samples.Count > 0 && (DateTime.Now - samples.Last().T).TotalSeconds < 10;
+                List<WatchKit.Sample> samples; WatchKit.Session day; lock (Trading.k) { samples = Trading.Samples.ToList(); day = Trading.Day == null ? null : Trading.Day.Copy(); }   // AM-CG-131: a copy, read while the watch adds
+                bool live = samples.Count > 0 && (DateTime.Now - samples.Last().T).TotalSeconds < Math.Max(15, Trading.Sec * 3);   // AM-CG-116: fresh for three rounds of the watch, whatever its pace
                 float hh = big ? 300 * S : 120 * S; var c2 = new RectangleF(x, y, w, hh); Kit.Box(g, c2); if (live) Theme.Stroke(g, c2, 16 * S, Theme.Lv(lv), 2);
                 float cx2 = x + 22 * S, cy2 = y + 18 * S;
                 Draw.LvDot(g, live ? lv : 3, cx2, cy2 + 8 * S, 14 * S, 14 * S);
@@ -156,13 +163,13 @@ namespace AdeeboMeter
                 {
                     var far = samples.Where(z => !double.IsNaN(z.Far)).Select(z => z.Far).ToList(); var last = samples.LastOrDefault();
                     double jit = far.Count >= 3 ? Enumerable.Range(1, far.Count - 1).Average(i => Math.Abs(far[i] - far[i - 1])) : double.NaN;
-                    int per = Math.Max(1, 60 / Trading.Sec); int lost = samples.Skip(Math.Max(0, samples.Count - per)).Count(z => z.FarLost); int n = Math.Min(per, samples.Count);
+                    int per = Math.Max(1, 60 / Trading.Sec); var lastMin = samples.Skip(Math.Max(0, samples.Count - per)).Where(z => !z.NoProbe).ToList(); int lost = lastMin.Count(z => z.FarLost); int n = lastMin.Count;   // AM-CG-117: a round that couldn't try isn't a reply
                     var lastDip = day != null && day.Dips.Count > 0 ? day.Dips.Last() : null;
                     string[][] tiles = {
                         new[] { "BROKER DELAY", last == null || double.IsNaN(last.Far) ? "-" : Ms(last.Far) + " ms", day == null || double.IsNaN(day.FarNormal) ? "" : L.T("usual ") + Ms(day.FarNormal) },
                         new[] { "JITTER", double.IsNaN(jit) ? "-" : Ms(jit) + " ms", double.IsNaN(jit) ? "" : jit < 10 ? L.T("steady") : L.T("jumpy") },
-                        new[] { "LOSS (1 MIN)", n == 0 ? "-" : (lost * 100 / n).ToString(CultureInfo.CurrentCulture) + "%", lost == 0 ? L.T("no drops") : lost + L.T(" lost") },
-                        new[] { "YOUR ROUTER", last == null ? "-" : last.RouterLost ? L.T("no reply") : double.IsNaN(last.Router) ? "-" : Ms(last.Router) + " ms", last != null && last.Wifi && last.Signal >= 0 ? "Wi-Fi " + last.Signal + "%" : L.T("cable") },
+                        new[] { "LOSS (1 MIN)", n == 0 ? "-" : (lost * 100 / n).ToString(CultureInfo.CurrentCulture) + "%", n == 0 ? L.T("not measured") : lost == 0 ? L.T("no drops") : lost + L.T(" lost") },
+                        new[] { "YOUR ROUTER", last == null ? "-" : last.RouterLost ? L.T("no reply") : double.IsNaN(last.Router) ? "-" : Ms(last.Router) + " ms", last == null ? "" : last.Wifi ? (last.Signal >= 0 ? "Wi-Fi " + last.Signal + "%" : L.T("Wi-Fi, signal hidden")) : L.T("cable") },   // AM-CG-129: Wi-Fi with location off is still Wi-Fi
                         new[] { "LAST HICCUP", lastDip == null ? "-" : lastDip.T.ToString("HH:mm", CultureInfo.CurrentCulture), lastDip == null ? L.T("none today") : WatchKit.BlameName(lastDip.Blame, Trading.FarName) } };
                     float tw = (w - 44 * S - 4 * 10 * S) / 5;
                     for (int i = 0; i < 5; i++)
@@ -291,7 +298,9 @@ namespace AdeeboMeter
                     }
                 }
                 y += ((rates.Count + cols - 1) / cols) * (chh + 10 * S);
-                var day = rates.Max(z => z.Day);
+                var day = rates.Max(z => z.Day); var oldOnes = rates.Where(z => z.Day < day).ToList();
+                // AM-CG-111: any currency from an older day is named with its own date - one fresh series can't hide a stale one
+                if (oldOnes.Count > 0) note = (note != "" ? note + " " : "") + L.T("Older:") + " " + string.Join(", ", oldOnes.Select(z => z.Code + " " + z.Day.ToString("d MMM", CultureInfo.CurrentCulture)).ToArray()) + ".";
                 g.DrawString(L.T("Source: Bank of Canada daily exchange rates, ") + day.ToString("ddd d MMM", CultureInfo.CurrentCulture) + L.T(" - indicative rates, not for trading. ▲ = the currency got dearer in CAD since the day before.") + (note != "" ? " " + note : ""), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
                 y += 44 * S;
                 // opt-in: the corner widget shows the close for a while each weekday evening, then goes back by itself

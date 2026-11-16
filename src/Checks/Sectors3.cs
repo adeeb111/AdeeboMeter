@@ -32,10 +32,11 @@ namespace AdeeboMeter
         {
             FullView.WriteSafe(path, text, false);
         }
-        static void SetWatch(int minutes, string list)
+        // R2-08: says whether it took - "stopped" is only shown when the watch file is really gone
+        static bool SetWatch(int minutes, string list)
         {
-            try { if (minutes <= 0) { if (File.Exists(WatchFile)) File.Delete(WatchFile); } else WriteWhole(WatchFile, minutes.ToString(CultureInfo.InvariantCulture) + "\n" + (list ?? "").Replace("\n", " ") + "\n"); }
-            catch (IOException) { } catch (UnauthorizedAccessException) { }
+            try { if (minutes <= 0) { if (File.Exists(WatchFile)) { File.SetAttributes(WatchFile, FileAttributes.Normal); File.Delete(WatchFile); } return !File.Exists(WatchFile); } WriteWhole(WatchFile, minutes.ToString(CultureInfo.InvariantCulture) + "\n" + (list ?? "").Replace("\n", " ") + "\n"); return true; }
+            catch (IOException e) { Program.Log("watch: " + e.Message); return false; } catch (UnauthorizedAccessException e) { Program.Log("watch: " + e.Message); return false; }
         }
         static void Log(string target, Knocks k) { Log(target, k, true); }
         static void Log(string target, Knocks k, bool auto)
@@ -78,10 +79,11 @@ namespace AdeeboMeter
         }
 
         // ---------- servers: the uptime report from the board's log
+        static string ManualNote(Dictionary<string, int> manual, string host) { int n; return manual.TryGetValue(host, out n) ? n + " check" + (n == 1 ? "" : "s") + " you ran by hand not counted" : ""; }
         public static List<string[]> Uptime(string days)
         {
             var rows = new List<string[]>(); int d; if (!int.TryParse((days ?? "").Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out d) || d < 1) d = 7; d = Math.Min(35, d);
-            var since = DateTime.Now.AddDays(-d); var by = new Dictionary<string, List<Tuple<DateTime, double>>>(StringComparer.OrdinalIgnoreCase);
+            var since = DateTime.Now.AddDays(-d); var by = new Dictionary<string, List<Tuple<DateTime, double>>>(StringComparer.OrdinalIgnoreCase); var manual = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             lock (wk)
                 try
                 {
@@ -89,12 +91,16 @@ namespace AdeeboMeter
                         foreach (var l in File.ReadAllLines(LogFile))
                         {
                             var p = l.Split(Tab); DateTime t; if (p.Length < 3 || !DateTime.TryParseExact(p[0], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t) || t < since) continue;
+                            // R2-07: uptime is the scheduled checks only - a check you ran by hand (often because something was
+                            // wrong) would skew it; those are counted apart
+                            if (p.Length > 3 && p[3] == "manual") { int mc; manual.TryGetValue(p[1], out mc); manual[p[1]] = mc + 1; continue; }
                             double ms; if (p[2] == "down") ms = double.NaN; else if (!double.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out ms)) continue;
                             List<Tuple<DateTime, double>> x; if (!by.TryGetValue(p[1], out x)) by[p[1]] = x = new List<Tuple<DateTime, double>>(); x.Add(Tuple.Create(t, ms));
                         }
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
             int wm; string wl; Watch(out wm, out wl);
+            if (by.Count == 0 && manual.Count > 0) { rows.Add(R(3, "Uptime report", "only checks you ran by hand so far (" + manual.Values.Sum() + ") - uptime counts scheduled checks", "Run the Service board with a number of minutes in its second box to start scheduled checks.", "u")); return rows; }
             if (by.Count == 0) { rows.Add(R(3, "Uptime report", "no checks recorded yet", "Run the Service board with a number of minutes in its second box - it keeps watching while AdeeboMeter runs and logs every check here.", "u")); return rows; }
             rows.Add(R(3, "Period", "last " + d + " day" + (d == 1 ? "" : "s") + " · " + by.Values.Sum(v => v.Count) + " checks" + (wm > 0 ? " · watching every " + wm + " min" : " · watching is off"), "", "m"));
             foreach (var kv in by.OrderBy(z => z.Key, StringComparer.OrdinalIgnoreCase))
@@ -102,7 +108,7 @@ namespace AdeeboMeter
                 var ok = kv.Value.Where(z => !double.IsNaN(z.Item2)).Select(z => z.Item2).OrderBy(z => z).ToList(); double up = 100.0 * ok.Count / kv.Value.Count;
                 var lastDown = kv.Value.LastOrDefault(z => double.IsNaN(z.Item2));
                 string p50 = ok.Count > 0 ? Math.Round(ok.Count % 2 == 1 ? ok[ok.Count / 2] : (ok[ok.Count / 2 - 1] + ok[ok.Count / 2]) / 2).ToString(CultureInfo.InvariantCulture) : "-", p95 = ok.Count > 0 ? Math.Round(ok[Math.Min(ok.Count - 1, (int)(ok.Count * 0.95))]).ToString(CultureInfo.InvariantCulture) : "-";
-                rows.Add(R(up >= 99.9 ? 0 : up >= 99 ? 1 : 2, kv.Key, (ok.Count == kv.Value.Count ? "100" : Math.Min(99.99, Math.Floor(up * 100) / 100).ToString(up >= 99.95 ? "0.00" : "0.0", CultureInfo.InvariantCulture)) + "% up · " + kv.Value.Count + " checks · p50 " + p50 + " ms · p95 " + p95 + " ms" + (lastDown != null ? " · last down " + lastDown.Item1.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) : ""), "", "m"));
+                rows.Add(R(up >= 99.9 ? 0 : up >= 99 ? 1 : 2, kv.Key, (ok.Count == kv.Value.Count ? "100" : Math.Min(99.99, Math.Floor(up * 100) / 100).ToString(up >= 99.95 ? "0.00" : "0.0", CultureInfo.InvariantCulture)) + "% up · " + kv.Value.Count + " scheduled checks · p50 " + p50 + " ms · p95 " + p95 + " ms" + (lastDown != null ? " · last down " + lastDown.Item1.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) : ""), ManualNote(manual, kv.Key), "m"));
             }
             return rows;
         }
@@ -117,7 +123,7 @@ namespace AdeeboMeter
                 int m; string wl; Watch(out m, out wl); items.AddRange(wl.Split(ListSep, StringSplitOptions.RemoveEmptyEntries));
                 try { string dir = Path.Combine(Program.DataDir, "servers"); if (Directory.Exists(dir)) items.AddRange(Directory.GetFiles(dir, "*.txt").Select(f => Path.GetFileNameWithoutExtension(f))); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             }
-            var hosts = items.Select(i => { string h; int p; return Split(i, 443, out h, out p) ? (p == 443 ? h : h + ":" + p.ToString(CultureInfo.InvariantCulture)) : null; }).Where(h => h != null).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
+            var hosts = items.Select(i => { string h; int p; return Split(i, 443, out h, out p) ? (h.Contains(":") ? "[" + h + "]" : h) + (p == 443 ? "" : ":" + p.ToString(CultureInfo.InvariantCulture)) : null;   /* R2-05: IPv6 keeps its brackets, so the port stays a port */ }).Where(h => h != null).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
             if (hosts.Count == 0) { rows.Add(R(3, "Certificate calendar", "type the sites to watch, e.g. mail.example.com, vpn.example.com", "Or pin sites, or add them to the Service board - they show here by themselves.", "u")); return rows; }
             var got = new List<Tuple<string, int, string>>();
             foreach (var h in hosts)

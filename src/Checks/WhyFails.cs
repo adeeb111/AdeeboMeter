@@ -231,6 +231,10 @@ namespace AdeeboMeter
             }
             catch (Exception e) { rows.Add(R(1, "Clock", "couldn't compare: " + Draw.Trunc(e.Message, 60), "", "u")); }
             rows.Add(R(3, "This PC's time", DateTime.Now.ToString("ddd d MMM yyyy, HH:mm:ss", CultureInfo.CurrentCulture) + " (" + TimeZoneInfo.Local.StandardName + ")", "Certificates have a start and an end date: a wrong clock breaks HTTPS before the network does.", "w"));
+            // the time zone: a PC set to UTC with its clock moved by hand to look right shows local time, but every time it
+            // stamps (logs, links, phone pages, certificates) is hours off
+            var tz = TimeZoneInfo.Local; var tzOff = tz.GetUtcOffset(DateTime.Now); bool utcZone = tzOff == TimeSpan.Zero && (tz.Id.IndexOf("UTC", StringComparison.OrdinalIgnoreCase) >= 0 || tz.Id.IndexOf("Coordinated", StringComparison.OrdinalIgnoreCase) >= 0);
+            rows.Add(R(utcZone ? 1 : 3, "Time zone", tz.DisplayName + " · UTC" + (tzOff < TimeSpan.Zero ? "-" : "+") + tzOff.ToString(@"h\:mm", CultureInfo.InvariantCulture), utcZone ? "Set to UTC itself - is that right? If you aren't in a UTC country, pick your zone in Settings > Time & language > Date & time (or turn on 'Set time zone automatically'). Times this PC sends - to phone pages, logs and sign-ins - are off by the difference." : "", "w"));
             rows.AddRange(WindowsTime());
             return rows;
         }

@@ -288,7 +288,9 @@ namespace AdeeboMeter
         float QrPic(Graphics g, float x, float y, float w, string st)
         {
             if ((DateTime.Now - qrAt).TotalSeconds > 30 || qrLink == "") { qrLink = QrLink(); qrAt = DateTime.Now; } string link = qrLink, key = link;
-            if (key != qrKey || qrBmp == null) { if (qrBmp != null) qrBmp.Dispose(); var m = Qr.Encode(link); qrBmp = m == null ? null : Qr.Picture(m, Math.Max(3, (int)(5 * S))); qrKey = key; }
+            // R2-17: the code fits in half the visible height, so it's whole on screen when the tool opens - no scrolling to scan it
+            int capH = tbCanvas != null && tbCanvas.ClientSize.Height > 0 ? tbCanvas.ClientSize.Height / 2 : 600; key += "|" + capH;
+            if (key != qrKey || qrBmp == null) { if (qrBmp != null) qrBmp.Dispose(); var m = Qr.Encode(link); qrBmp = m == null ? null : Qr.Picture(m, Math.Max(2, Math.Min((int)(5 * S), capH / (m.GetLength(0) + 8)))); qrKey = key; }
             float side = qrBmp == null ? 0 : qrBmp.Width; var r = VisCard(g, x, y, w, Math.Max(side + 70 * S, 260 * S), "SCAN WITH YOUR PHONE'S CAMERA", st);
             if (qrBmp != null) { g.InterpolationMode = InterpolationMode.NearestNeighbor; g.DrawImage(qrBmp, r.X + 24 * S, r.Y + 44 * S, side, side); }
             float tx = r.X + 48 * S + side, ty = r.Y + 48 * S, tw = r.Right - tx - 24 * S;

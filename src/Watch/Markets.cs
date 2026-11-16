@@ -54,7 +54,7 @@ namespace AdeeboMeter
                 if (d.Month == 12 && d.Day == 24) return new TimeSpan(13, 0, 0);
                 if (d.Month == 7 && d.Day == 3 && UsObserved(new DateTime(y, 7, 4)).Day == 4) return new TimeSpan(13, 0, 0);
             }
-            else if (d.Month == 12 && (d.Day == 24 || d.Day == 31)) return new TimeSpan(13, 0, 0);   // Toronto: Christmas Eve and New Year's Eve
+            else if (d.Month == 12 && d.Day == 24) return new TimeSpan(13, 0, 0);   // Toronto: Christmas Eve only - New Year's Eve is a full day (AM-CG-107, TMX calendar)
             return new TimeSpan(16, 0, 0);
         }
         public static bool Open(DateTime et, string market)

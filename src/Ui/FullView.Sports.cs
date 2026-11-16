@@ -56,7 +56,7 @@ namespace AdeeboMeter
                 {
                     var cr = new RectangleF(x, y, w, 96 * S); Kit.Box(g, cr, 14 * S);
                     g.DrawString(L.T("Today in sport - scores and headlines"), Draw.fBodyB, ink, cr.X + 20 * S, cr.Y + 16 * S);
-                    g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, only while this page is open: hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines - every 5 minutes at most."), Draw.fSmall, sub, new RectangleF(cr.X + 20 * S, cr.Y + 40 * S, cr.Width - 200 * S, 50 * S));
+                    g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines, every 5 minutes at most."), Draw.fSmall, sub, new RectangleF(cr.X + 20 * S, cr.Y + 40 * S, cr.Width - 200 * S, 50 * S));
                     if (!Policy.NoOnline)
                     {
                         string bt = L.T("Turn on"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(cr.Right - bs.Width - 44 * S, cr.Y + 32 * S, bs.Width + 24 * S, 32 * S);
@@ -83,7 +83,8 @@ namespace AdeeboMeter
                     }
                     y += 48 * S;
                 }
-                // the lead story
+                // the lead story (AM-CG-279: a headline feed that failed says so, it doesn't just look empty)
+                string topNote; if (notes.TryGetValue("news-top", out topNote)) { g.DrawString(L.T("BBC Sport's top stories didn't load") + " - " + L.T(topNote) + (stories.Any(s => s.Sport == "top") ? " · " + L.T("showing the last ones") : ""), Draw.fSmall, muted, new RectangleF(x, y, w, 20 * S)); y += 22 * S; }
                 var lead = stories.FirstOrDefault(s => s.Sport == "top");
                 if (lead != null)
                 {
@@ -132,6 +133,7 @@ namespace AdeeboMeter
                         var th = g.MeasureString(s.Title, serifBody, (int)colW); g.DrawString(s.Title, serifBody, ink, new RectangleF(cx, cy, colW, th.Height + 2 * S)); Act(sportsCanvas, new RectangleF(cx, cy, colW, th.Height), OpenLink(s.Link)); cy += th.Height + 2 * S;
                         var sm = g.MeasureString(Cut(s.Summary, 160), serifSmall, (int)colW); g.DrawString(Cut(s.Summary, 160), serifSmall, sub, new RectangleF(cx, cy, colW, sm.Height + 2 * S)); cy += sm.Height + 12 * S;
                     }
+                    string newsNote; if (notes.TryGetValue("news-" + sp, out newsNote)) { g.DrawString(L.T("Headlines didn't load") + " - " + L.T(newsNote), Draw.fTiny, muted, new RectangleF(cx, cy, colW, 30 * S)); cy += 24 * S; }
                     if (sp == "hockey" && !stories.Any(z => z.Sport == "hockey")) { g.DrawString(L.T("Hockey headlines aren't in BBC Sport's feeds - scores only."), Draw.fTiny, muted, new RectangleF(cx, cy, colW, 30 * S)); cy += 30 * S; }
                     bottom = Math.Max(bottom, cy); if (cols == 1) bottom = cy + 20 * S;
                 }
@@ -160,7 +162,7 @@ namespace AdeeboMeter
                 var tb = new TextBox { Location = new Point(Sc(14), Sc(62)), Width = Sc(430), UseSystemPasswordChar = true };
                 var ok = new Button { Text = L.T("Save"), DialogResult = DialogResult.OK, Location = new Point(Sc(274), Sc(104)), Size = new Size(Sc(80), Sc(30)) }; var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(364), Sc(104)), Size = new Size(Sc(80), Sc(30)) };
                 f.Controls.AddRange(new Control[] { lb, tb, ok, cancel }); f.AcceptButton = ok; f.CancelButton = cancel;
-                if (f.ShowDialog(this) == DialogResult.OK) { Sports.SetKey(sport, tb.Text); Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { sportsCanvas.Invalidate(); }); } catch (InvalidOperationException) { } }); }
+                if (f.ShowDialog(this) == DialogResult.OK) { if (!Sports.SetKey(sport, tb.Text)) MessageBox.Show(this, L.T("The key couldn't be saved - check that AdeeboMeter's data folder isn't read-only, then try again."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { sportsCanvas.Invalidate(); }); } catch (InvalidOperationException) { } }); }
                 tb.Text = "";
             }
         }

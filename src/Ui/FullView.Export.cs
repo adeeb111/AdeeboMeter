@@ -350,7 +350,9 @@ namespace AdeeboMeter
         internal string PhoneLink()
         {
             CapturePicture(); string cap = "", a = "", b = "";
-            string when = DateTime.UtcNow.ToString("yyMMddHHmm", CultureInfo.InvariantCulture);   // UTC: the phone shows it in its own time zone
+            // UTC (the phone shows it in its own time zone), then the PC's own offset: when the two disagree, the phone shows the
+            // PC's clock too - a PC set to the wrong zone is visible at a glance
+            string when = DateTime.UtcNow.ToString("yyMMddHHmm", CultureInfo.InvariantCulture) + "o" + ((int)TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalMinutes).ToString(CultureInfo.InvariantCulture);
             // section headings travel too (the phone shows the same groups as the PC); "-2" rows are layout only
             var rows = ShareRows().Where(o => o[0] != "-2").ToList();
             for (int detail = 1; detail >= -1; detail--)   // the details give way first, then the picture itself - never the rows

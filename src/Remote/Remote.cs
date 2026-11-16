@@ -31,7 +31,7 @@ namespace AdeeboMeter
 
         // what the phone may start: network checks that read, measure or test - nothing that sends crafted traffic on
         // your LAN, touches keys or files, or changes the PC
-        public static readonly HashSet<string> Allowed = new HashSet<string> { "speedtest", "ping", "bloat", "tcpping", "mtu", "mtr", "ret", "route", "gateway", "ping6", "ip46", "port", "http", "httptime", "doh", "ntp", "cloud", "gamecompare", "marketopen", "teams", "clock", "checkup", "feltslow" };
+        public static readonly HashSet<string> Allowed = new HashSet<string> { "speedtest", "ping", "bloat", "tcpping", "mtu", "mtr", "ret", "route", "gateway", "ping6", "ip46", "port", "http", "httptime", "doh", "ntp", "cloud", "gamecompare", "marketopen", "teams", "clock", "checkup", "feltslow", "golive" };
 
         public enum State { Connecting, Waiting, Asking, Paired, Ended }
         public volatile State St = State.Connecting; public volatile string Why = "";
@@ -139,6 +139,7 @@ namespace AdeeboMeter
             string wifi; lock (M.L) wifi = M.AdapterKind; Str(sb, "link", wifi);
             try { Game(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
             try { Trade(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            try { Stream(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
             sb.Append('}'); Seal(sb.ToString());
         }
         static void Game(StringBuilder sb)
@@ -151,6 +152,23 @@ namespace AdeeboMeter
             sb.Append(",\"game\":{"); Str(sb, "name", g.Name, true); Str(sb, "srv", srv.Name); Str(sb, "on", id == g.Id ? "1" : "0"); Num(sb, "now", now); Num(sb, "avg", avg); Num(sb, "jit", jit); Num(sb, "loss", loss);
             Str(sb, "grade", v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss));
             sb.Append(",\"hist\":[").Append(string.Join(",", v.Skip(Math.Max(0, v.Length - 60)).Select(x => double.IsNaN(x) ? "null" : Math.Round(x).ToString(CultureInfo.InvariantCulture)).ToArray())).Append("]}");
+        }
+        // streaming: what plays now (or nothing), its server's delay and the drops so far - and, for going live, the upload
+        static void Stream(StringBuilder sb)
+        {
+            string what = null; double down = double.NaN, far = double.NaN; int dips = 0; string last = ""; DateTime since = DateTime.MinValue;
+            lock (Streams.k)
+            {
+                var n = Streams.Now;
+                if (n != null)
+                {
+                    what = n.S.What; since = n.S.Start; dips = n.S.Dips.Count; var ld = n.S.Dips.LastOrDefault(); if (ld != null) last = ld.T.ToString("HH:mm", CultureInfo.InvariantCulture) + " · " + WatchKit.BlameName(ld.Blame, Streams.FarName);
+                    var ls = n.Samples.LastOrDefault(); if (ls != null) { down = ls.Down; far = ls.Far; }
+                }
+            }
+            sb.Append(",\"stream\":{"); Str(sb, "what", what ?? "", true); Str(sb, "on", what != null ? "1" : "0");
+            Num(sb, "down", down); Num(sb, "far", far); sb.Append(",\"dips\":").Append(dips); Str(sb, "last", last); Num(sb, "mins", since == DateTime.MinValue ? double.NaN : (DateTime.Now - since).TotalMinutes);
+            sb.Append('}');
         }
         static void Trade(StringBuilder sb)
         {

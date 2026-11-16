@@ -39,18 +39,18 @@ namespace AdeeboMeter
             if (sm.Success) { int sp; if (SchemePorts.TryGetValue(sm.Groups[1].Value.ToLowerInvariant(), out sp)) port = sp; host = host.Substring(sm.Length); }
             host = host.Split('/')[0];
             var v6 = System.Text.RegularExpressions.Regex.Match(host, @"^\[([0-9a-fA-F:.%]+)\](?::(\d{1,5}))?$"); int p;
-            if (v6.Success) { if (v6.Groups[2].Success && int.TryParse(v6.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture, out p) && p > 0 && p < 65536) port = p; host = v6.Groups[1].Value; return Games.ValidHost(host); }
+            if (v6.Success) { if (v6.Groups[2].Success) { if (!int.TryParse(v6.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture, out p) || p < 1 || p > 65535) return false; port = p; } host = v6.Groups[1].Value;   /* R2-04: a port that was typed and is wrong is refused, never swapped for the default */ return Games.ValidHost(host); }
             int c = host.LastIndexOf(':');
-            if (c > 0 && host.IndexOf(':') == c && int.TryParse(host.Substring(c + 1), NumberStyles.None, CultureInfo.InvariantCulture, out p) && p > 0 && p < 65536) { port = p; host = host.Substring(0, c); }
+            if (c > 0 && host.IndexOf(':') == c) { if (!int.TryParse(host.Substring(c + 1), NumberStyles.None, CultureInfo.InvariantCulture, out p) || p < 1 || p > 65535) return false; port = p; host = host.Substring(0, c); }
             return Games.ValidHost(host);
         }
         static List<string[]> Pc(Monitor m, ref int warn)
         {
             var rows = new List<string[]>(); var s = m.Latest; string kind; int sig; lock (m.L) { kind = m.AdapterKind; sig = m.WifiSignal; }
-            if (kind == "Wi-Fi") { bool weak = sig >= 0 && sig < 60; if (weak) warn++; rows.Add(R(weak ? 1 : 0, "Connection", "Wi-Fi · signal " + (sig < 0 ? "-" : sig + "%"), weak ? "Weak signal - a cable is the steadiest choice for this." : "A cable is steadier still.", "w")); }
+            if (kind == "Wi-Fi") { bool weak = sig >= 0 && sig < 60; if (weak) warn++; rows.Add(R(weak ? 1 : sig < 0 ? 3 : 0, "Connection", "Wi-Fi · signal " + (sig < 0 ? "hidden by Windows" : sig + "%"), weak ? "Weak signal - a cable is the steadiest choice for this." : "A cable is steadier still.", "w")); }
             else rows.Add(R(0, "Connection", kind == "LAN" ? "cable" : kind, "", "w"));
             double gw = m.GwPing.Avg(10); bool gwSlow = !double.IsNaN(gw) && gw > 15; if (gwSlow) warn++;
-            rows.Add(R(gwSlow ? 1 : 0, "Your router", Ms(gw), gwSlow ? "Slow for a home network - something on it is busy, or the Wi-Fi is." : "", "m"));
+            rows.Add(R(double.IsNaN(gw) ? 3 : gwSlow ? 1 : 0, "Your router", double.IsNaN(gw) ? "not measured" : Ms(gw), gwSlow ? "Slow for a home network - something on it is busy, or the Wi-Fi is." : "", "m"));   // AM-CG-132: unknown stays unknown
             if (!double.IsNaN(s.Cpu) && s.Cpu > 70) { warn++; var top = s.TopCpu.FirstOrDefault(); rows.Add(R(1, "CPU", Math.Round(s.Cpu) + "% busy" + (top != null ? " - most: " + top.Name : ""), "", "m")); }
             foreach (var u in GamerTools.Updaters)
             {
@@ -77,9 +77,12 @@ namespace AdeeboMeter
             var clock = Protocols.Ntp("time.windows.com").FirstOrDefault(r => r.Length > 2 && r[1] == "Your clock");
             if (clock != null) { int lv; if (!int.TryParse(clock[0], out lv)) lv = 3; if (lv >= 1) warn++; rows.Add(R(lv, "Clock", clock[2], lv >= 1 ? "Order and fill times are stamped by this clock - fix it in Settings > Time > Sync now." : "", "m")); }
             else { warn++; rows.Add(R(1, "Clock", "couldn't ask the time server - unchecked", "Order times are stamped by this clock; check it once (Settings > Time > Sync now).", "m")); }
-            var s = m.Latest; bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5; if (busy) warn++;
-            rows.Add(R(busy ? 1 : 0, "This PC's traffic", SpeedTest.Mbps(s.Down) + " down · " + SpeedTest.Mbps(s.Up) + " up (Mbps)", busy ? "Something is downloading or uploading - it adds delay to every order." : "Quiet.", "w"));
-            rows.Insert(0, R(warn == 0 ? 0 : bad ? 2 : 1, "Market-open check", warn == 0 ? "GO - nothing in the way" : (bad ? "HOLD - " : "CAREFUL - ") + warn + " thing" + (warn == 1 ? "" : "s") + " to fix first", "AdeeboMeter only checks - it never trades, closes or changes anything.", "i"));
+            var s = m.Latest; bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5, noTraffic = double.IsNaN(s.Down) && double.IsNaN(s.Up); if (busy) warn++;
+            rows.Add(R(noTraffic ? 3 : busy ? 1 : 0, "This PC's traffic", noTraffic ? "not measured" : SpeedTest.Mbps(s.Down) + " down · " + SpeedTest.Mbps(s.Up) + " up (Mbps)", busy ? "Something is downloading or uploading - it adds delay to every order." : noTraffic ? "" : "Quiet.", "w"));
+            // AM-CG-128: this checks the connection, not the market - the session is reported on its own line
+            var et = Trading.EasternNow(); bool mo = Trading.MarketOpen(et); string hol = Markets.TodayNote(et);
+            rows.Add(R(3, "Market", (mo ? L.T(Trading.VenueName) + " " + L.T("open now") : L.T(Trading.VenueName) + " " + L.T("closed now")) + (hol != "" ? " · " + hol : ""), mo ? "" : "The connection can be ready while the market isn't open.", "m"));
+            rows.Insert(0, R(warn == 0 ? 0 : bad ? 2 : 1, "Market-open check", warn == 0 ? "Connection ready - nothing in the way (broker under 120 ms, steady)" : (bad ? "HOLD - " : "CAREFUL - ") + warn + " thing" + (warn == 1 ? "" : "s") + " to fix first", "AdeeboMeter only checks - it never trades, closes or changes anything.", "i"));
             return rows;
         }
 
@@ -90,8 +93,8 @@ namespace AdeeboMeter
         {
             string ev = (every ?? "").Trim().ToLowerInvariant(); int mins;
             var rows = new List<string[]>();
-            if (ev == "off" || ev == "stop") { SetWatch(0, ""); rows.Add(R(0, "Watching", "stopped - no more background checks", "", "i")); return rows; }
-            if (ev != "") { if (int.TryParse(ev, NumberStyles.None, CultureInfo.InvariantCulture, out mins) && mins >= 1) SetWatch(Math.Min(1440, mins), list ?? ""); else rows.Add(R(1, "Watching", "didn't understand \"" + every + "\" - type minutes (1-1440) or off; watching is unchanged", "", "u")); } var items = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).ToList();
+            if (ev == "off" || ev == "stop") { if (SetWatch(0, "")) rows.Add(R(0, "Watching", "stopped - no more background checks", "", "i")); else rows.Add(R(2, "Watching", "couldn't stop it - the watch file can't be changed, so checks carry on", "Check that AdeeboMeter's data folder isn't read-only, then try Off again.", "i")); return rows; }
+            if (ev != "") { if (int.TryParse(ev, NumberStyles.None, CultureInfo.InvariantCulture, out mins) && mins >= 1) { if (!SetWatch(Math.Min(1440, mins), list ?? "")) rows.Add(R(2, "Watching", "couldn't save the schedule - the data folder can't be written", "", "i")); } else rows.Add(R(1, "Watching", "didn't understand \"" + every + "\" - type minutes (1-1440) or off; watching is unchanged", "", "u")); } var items = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).ToList();
             if (items.Count == 0) { string[] pins; lock (Cfg.Pins) pins = Cfg.Pins.ToArray(); items = pins.Select(Security.HostOf).Where(x => x != null).Distinct().ToList(); }
             if (items.Count == 0) { rows.Add(R(3, "Service board", "type hosts and ports, e.g. nas.local:445, mail.example.com:587, 192.0.2.10:22", "Or pin sites in Investigate › Check a destination - they show here.", "u")); return rows; }
             int up = 0, n = 0;
@@ -116,7 +119,7 @@ namespace AdeeboMeter
         public static List<string[]> GoLive(Monitor m, string bitrate, string service, Toolkit.Run run)
         {
             var rows = new List<string[]>(); int warn = 0; var ic = CultureInfo.InvariantCulture;
-            double kbps; if (!double.TryParse((bitrate ?? "").Trim().Replace("kbps", "").Trim(), NumberStyles.Float, ic, out kbps) || kbps <= 0) kbps = 6000;
+            double kbps; if (!double.TryParse((bitrate ?? "").Trim().Replace("kbps", "").Trim(), NumberStyles.Float, ic, out kbps) || double.IsNaN(kbps) || double.IsInfinity(kbps) || kbps <= 0 || kbps > 500000) kbps = 6000;   // R2-06: "NaN" and "Infinity" parse as numbers - not a bitrate
             string sv = (service ?? "").Trim().ToLowerInvariant(); var ing = Ingest.FirstOrDefault(z => sv == "" ? z[0] == "twitch" : z[0] == sv || string.Equals(z[1], sv, StringComparison.OrdinalIgnoreCase));
             string host = ing != null ? ing[2] : sv, name = ing != null ? ing[1] : sv;
             rows.AddRange(Pc(m, ref warn));

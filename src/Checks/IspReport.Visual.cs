@@ -95,7 +95,8 @@ namespace AdeeboMeter
         // the hop ladder: zone bands (home / provider / beyond), avg bar + worst whisker, loss % (red only where it carries on)
         static string PathSvg(Visual v, List<PathTools.Hop> hops, Func<string, string> X)
         {
-            hops = hops.Take(20).ToList(); int W = 860, rowH = 30, top = 10, H = top + hops.Count * rowH + 30, lx = 300, bw = 380;
+            hops = hops.Take(20).ToList(); int W = 990, rowH = 30,   // R2-16: room for "12.5% lost" and the zone name side by side
+            top = 10, H = top + hops.Count * rowH + 30, lx = 300, bw = 380;
             double max = Math.Max(20, hops.Select(h => double.IsNaN(h.Worst) ? Avg(h) : Math.Min(h.Worst, Avg(h) * 4 + 20)).Where(z => !double.IsNaN(z)).DefaultIfEmpty(20).Max() * 1.1);
             var sb = new StringBuilder("<svg viewBox=\"0 0 " + W + " " + H + "\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Segoe UI,sans-serif\" font-size=\"12\">");
             string ispOwner = ""; if (v.FirstIsp >= 0 && v.FirstIsp < v.Main.Hops.Count && !v.Owners.TryGetValue(v.Main.Hops[v.FirstIsp].Ip, out ispOwner)) ispOwner = ""; if (ispOwner == null) ispOwner = "";

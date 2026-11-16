@@ -210,6 +210,12 @@ namespace AdeeboMeter
                     if (ck.Count != 1 || ck[0].State != "live" || ck[0].AwayScore != "250/8 (50)" || ck[0].HomeScore != "206/3 (38.2)") throw new InvalidOperationException("cricket scores read wrong: " + (ck.Count > 0 ? ck[0].HomeScore + " | " + ck[0].AwayScore : "none"));
                     var rs = Sports.Rss("<rss><channel><item><title><![CDATA[Big win &amp; more]]></title><description>A <b>great</b> day</description><link>https://www.bbc.co.uk/sport/x</link></item><item><title>No link</title><link>javascript:bad()</link></item></channel></rss>", "top");
                     if (rs.Count != 1 || rs[0].Title != "Big win & more" || rs[0].Summary != "A great day") throw new InvalidOperationException("sports headlines read wrong");
+                    // AM-CG-276: a changed feed is an error, not "no games"; AM-CG-275: whole-word team matching; AM-CG-271: BBC Sport opens
+                    bool threw = false; try { Sports.HockeyFrom("{\"gamesX\":[]}"); } catch (InvalidDataException) { threw = true; } if (!threw) throw new InvalidOperationException("a wrong-shaped hockey feed read as no games");
+                    string teams0 = Cfg.SportTeams; Cfg.SportTeams = "In,TOR";
+                    try { var gx = new Sports.Game { Home = "India", Away = "Bangladesh" }; var gy = new Sports.Game { Home = "MTL", Away = "TOR" }; if (Sports.Mine(gx) || !Sports.Mine(gy)) throw new InvalidOperationException("team matching isn't whole-word"); }
+                    finally { Cfg.SportTeams = teams0; }
+                    if (!Crash.Allowed("https://www.bbc.co.uk/sport/football/123") || Crash.Allowed("https://www.bbc.co.uk/news/x") || Crash.Allowed("https://evil.bbc.co.uk.example/sport")) throw new InvalidOperationException("BBC Sport link rule");
                 }
                 int n = PathTools.Overlap().Count + WhyFails.Hosts("").Count + WinEvidence.All(M).Count + PcHealth.Pressure(M).Count + PcHealth.Crashes().Count + PcHealth.Leaks().Count;
                 var msg = Toolkit.Query(System.Net.IPAddress.Loopback, "example.com", 1, true);   // nothing listens on 127.0.0.1:53 - must just say "no answer"
@@ -1137,7 +1143,7 @@ namespace AdeeboMeter
                 if (eur == null || eur.Cad != 1.5 || eur.Prev != 1.51) throw new InvalidOperationException("EUR wrong");
                 if (jpy == null || !double.IsNaN(jpy.Prev)) throw new InvalidOperationException("JPY with one day must have no change");
                 if (Trading.ParseFx("<html>error</html>").Count != 0 || Trading.ParseFx(null).Count != 0) throw new InvalidOperationException("junk read as rates");
-                var hosts = new Dictionary<string, string> { { "https://my.wealthsimple.com/app/home?x=1", "my.wealthsimple.com" }, { "Questrade.com", "questrade.com" }, { "1.2.3.4:443", "1.2.3.4" }, { "evil.com; rm -rf", "" }, { "", "" }, { "a b.com", "" } };
+                var hosts = new Dictionary<string, string> { { "https://my.wealthsimple.com/app/home?x=1", "my.wealthsimple.com" }, { "Questrade.com", "questrade.com" }, { "1.2.3.4:443", "1.2.3.4" }, { "evil.com; rm -rf", "" }, { "", "" }, { "a b.com", "" }, { "https://jane:secret@broker.example/x", "broker.example" }, { "broker.example:8443", "broker.example:8443" }, { "[2001:DB8::1]:8443", "[2001:db8::1]:8443" }, { "broker.example:70000", "" } };
                 foreach (var kv in hosts) if (Cfg.CleanHost(kv.Key) != kv.Value) throw new InvalidOperationException("CleanHost(" + kv.Key + ") = " + Cfg.CleanHost(kv.Key));
                 string hid0 = Cfg.HiddenSecs, pre0 = Cfg.Preset; bool det0 = Cfg.Details;
                 try

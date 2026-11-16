@@ -125,10 +125,10 @@ namespace AdeeboMeter
             run.Status = "Checking for a sign-in page...";
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); req.Timeout = 5000; req.AllowAutoRedirect = false; req.Proxy = null; req.UserAgent = "AdeeboMeter";
+                var req = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); req.Timeout = 5000; req.ReadWriteTimeout = 5000; req.AllowAutoRedirect = false; req.Proxy = null; req.UserAgent = "AdeeboMeter";   // R2-11: set before the request goes out
                 using (var resp = (HttpWebResponse)req.GetResponse()) using (var sr = new System.IO.StreamReader(resp.GetResponseStream()))
                 {
-                    req.ReadWriteTimeout = 5000; var cb = new char[200]; int got = sr.ReadBlock(cb, 0, cb.Length); string body = new string(cb, 0, got);   // 200 characters at most: a portal that streams forever can't fill memory
+                    var cb = new char[200]; int got = sr.ReadBlock(cb, 0, cb.Length); string body = new string(cb, 0, got);   // 200 characters at most: a portal that streams forever can't fill memory
                     if ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400) add(1, "Sign-in page", "the network sends you to a sign-in page first (" + Draw.Trunc(resp.Headers["Location"] ?? "", 60) + ") - open a browser and accept it; until then apps can't get out", "");
                     else if (body.Trim() == "Microsoft Connect Test") add(0, "Sign-in page", "none in the way - you're through to the internet", "");
                     else add(1, "Sign-in page", "something answered in the internet's place - a sign-in page or a filter", "");

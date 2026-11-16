@@ -20,12 +20,13 @@ namespace AdeeboMeter
     // settings file, so an exported settings file never carries them.
     static class Sports
     {
-        internal sealed class Game { public string Sport = "", League = "", Home = "", Away = "", HomeScore = "", AwayScore = "", State = "", Detail = ""; public DateTime StartUtc; }
+        internal sealed class Game { public string Sport = "", League = "", Home = "", Away = "", HomeScore = "", AwayScore = "", State = "", Detail = "", HomeAlso = "", AwayAlso = ""; public DateTime StartUtc; }   // *Also: the full names, for matching what people type
         internal sealed class Story { public string Sport = "", Title = "", Summary = "", Link = ""; public DateTime When; }
         internal static readonly object k = new object();
         internal static List<Game> Games = new List<Game>(); internal static List<Story> Stories = new List<Story>();
         internal static readonly Dictionary<string, string> Note = new Dictionary<string, string>();   // sport -> why nothing shows ("no key", "limit reached", an error)
-        internal static DateTime FetchedAt = DateTime.MinValue; static volatile bool busy;
+        internal static DateTime FetchedAt = DateTime.MinValue; static volatile bool busy; static int keyGen;
+        internal static readonly Dictionary<string, DateTime> FeedAt = new Dictionary<string, DateTime>();   // AM-CG-278: when each feed last came in
         internal static long Ver;
         public static readonly string[] Kinds = { "football", "cricket", "hockey" };
         public static string Name(string sport) { return sport == "football" ? "Football" : sport == "cricket" ? "Cricket" : sport == "hockey" ? "Hockey" : "Sport"; }
@@ -46,17 +47,20 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("sport key: " + e.GetType().Name); }
             return "";
         }
-        internal static void SetKey(string sport, string key)
+        // AM-CG-280: says whether the key was saved; a fetch already running with the old key throws its answer away
+        internal static bool SetKey(string sport, string key)
         {
-            key = (key ?? "").Trim();
+            key = (key ?? "").Trim(); bool ok = false;
             try
             {
                 var lines = File.Exists(KeyFile) ? File.ReadAllLines(KeyFile).Where(l => !l.StartsWith(sport + "=", StringComparison.Ordinal)).ToList() : new List<string>();
                 if (key != "") lines.Add(sport + "=" + Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(key), null, DataProtectionScope.CurrentUser)));
                 FullView.WriteSafe(KeyFile, string.Join("\n", lines) + "\n", false);
+                ok = Key(sport) == key;
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("sport key save: " + e.GetType().Name); }
-            lock (k) FetchedAt = DateTime.MinValue;
+            lock (k) { FetchedAt = DateTime.MinValue; keyGen++; }
+            return ok;
         }
         internal static bool HasKey(string sport) { return sport == "hockey" || Key(sport) != ""; }
 
@@ -64,11 +68,17 @@ namespace AdeeboMeter
         internal static List<string> Teams() { return (Cfg.SportTeams ?? "").Split(',').Select(t => t.Trim()).Where(t => t.Length >= 2).Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToList(); }
         internal static bool Mine(Game g)
         {
+            // AM-CG-275: whole words only ("TOR" doesn't match "Toronto FC"'s neighbours, "In" never matches "India"), against the
+            // short code and the full name the feed gives
             foreach (var t in Teams())
-                if (g.Home.IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0 || g.Away.IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            {
+                var rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(t) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                if (rx.IsMatch(g.Home) || rx.IsMatch(g.Away) || rx.IsMatch(g.HomeAlso) || rx.IsMatch(g.AwayAlso)) return true;
+            }
             return false;
         }
         internal static Game LiveMine() { lock (k) return Games.FirstOrDefault(g => g.State == "live" && Mine(g)); }
+        internal static int LiveMineCount() { lock (k) return Games.Count(g => g.State == "live" && Mine(g)); }
 
         // ---------- cricket's free key: 100 calls a day - stop at 90 so a busy day never runs it dry
         static string HitsFile { get { return Path.Combine(Program.DataDir, "sporthits.txt"); } }
@@ -83,27 +93,39 @@ namespace AdeeboMeter
             busy = true;
             new Thread(() =>
             {
-                var games = new List<Game>(); var stories = new List<Story>(); var notes = new Dictionary<string, string>();
+                int gen; lock (k) gen = keyGen;
+                // AM-CG-278: each feed shows up as soon as it's in, and a feed that fails keeps what it had (marked as old)
+                Action<string, List<Game>, List<Story>, string> publish = (feed, gs, ss, note) =>
+                {
+                    lock (k)
+                    {
+                        if (gen != keyGen) return;   // the key changed while this ran - this answer is for the old one
+                        if (note == null) { Note.Remove(feed); FeedAt[feed] = DateTime.UtcNow; } else Note[feed] = note;
+                        if (gs != null) Games = Games.Where(z => z.Sport != feed).Concat(gs).ToList();
+                        if (ss != null) { string sp = feed.Substring(5); Stories = Stories.Where(z => z.Sport != sp).Concat(ss).ToList(); }
+                    }
+                    Interlocked.Increment(ref Ver); if (done != null) try { done(); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+                };
+                Func<string, Func<List<Game>>, bool> sport = (sp, f) => { try { publish(sp, f(), null, null); return true; } catch (Exception e) { if (e is OutOfMemoryException) throw; publish(sp, null, null, Why(e)); Program.Log("sports " + sp + ": " + e.Message); return false; } };
                 try
                 {
-                    Try(notes, "hockey", () => games.AddRange(Hockey()));
-                    if (Key("football") == "") notes["football"] = "nokey"; else Try(notes, "football", () => games.AddRange(Football(Key("football"))));
-                    if (Key("cricket") == "") notes["cricket"] = "nokey";
-                    else if (HitsToday() >= 90) notes["cricket"] = "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.";
-                    else Try(notes, "cricket", () => games.AddRange(Cricket(Key("cricket"))));
+                    sport("hockey", Hockey);
+                    if (Key("football") == "") publish("football", new List<Game>(), null, "nokey"); else sport("football", () => Football(Key("football")));
+                    if (Key("cricket") == "") publish("cricket", new List<Game>(), null, "nokey");
+                    else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
+                    else sport("cricket", () => Cricket(Key("cricket")));
                     foreach (var f in new[] { Tuple.Create("top", "https://feeds.bbci.co.uk/sport/rss.xml"), Tuple.Create("football", "https://feeds.bbci.co.uk/sport/football/rss.xml"), Tuple.Create("cricket", "https://feeds.bbci.co.uk/sport/cricket/rss.xml") })
-                        Try(notes, "news-" + f.Item1, () => stories.AddRange(Rss(Get(f.Item2, null, null), f.Item1).Take(10)));
-                    lock (k) { Games = games; Stories = stories; Note.Clear(); foreach (var n in notes) Note[n.Key] = n.Value; FetchedAt = DateTime.UtcNow; }
-                    Interlocked.Increment(ref Ver);
+                    {
+                        string feed = "news-" + f.Item1;
+                        try { publish(feed, null, Rss(Get(f.Item2, null, null), f.Item1).Take(10).ToList(), null); }
+                        catch (Exception e) { if (e is OutOfMemoryException) throw; publish(feed, null, null, Why(e)); Program.Log("sports " + feed + ": " + e.Message); }
+                    }
+                    lock (k) if (gen == keyGen) FetchedAt = DateTime.UtcNow;
                 }
                 finally { busy = false; if (done != null) done(); }
             }) { IsBackground = true, Name = "sports" }.Start();
         }
-        static void Try(Dictionary<string, string> notes, string what, Action a)
-        {
-            try { a(); }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; notes[what] = e is WebException ? "couldn't reach it (" + ((WebException)e).Status + ")" : "its answer couldn't be read"; Program.Log("sports " + what + ": " + e.Message); }
-        }
+        static string Why(Exception e) { return e is WebException ? "couldn't reach it (" + ((WebException)e).Status + ")" : "its answer couldn't be read"; }
         internal static string Get(string url, string header, string value) { return HttpSmall.Get(url, 600, header, value); }
         static Dictionary<string, object> D(object o) { return o as Dictionary<string, object>; }
         static List<object> A(object o) { return o as List<object>; }
@@ -115,14 +137,16 @@ namespace AdeeboMeter
         internal static List<Game> Hockey() { return HockeyFrom(Get("https://api-web.nhle.com/v1/score/now", null, null)); }
         internal static List<Game> HockeyFrom(string json)
         {
-            var r = new List<Game>(); var root = D(Json.Parse(json));
-            foreach (var o in A(V(root, "games")) ?? new List<object>())
+            var r = new List<Game>(); var root = D(Json.Parse(json)); var list = A(V(root, "games"));
+            if (list == null) throw new InvalidDataException("no games list in the NHL's answer");   // AM-CG-276: a changed feed isn't "no games today"
+            foreach (var o in list)
             {
                 var g = D(o); if (g == null) continue; var h = D(V(g, "homeTeam")); var a = D(V(g, "awayTeam")); string st = Sv(g, "gameState");
-                var x = new Game { Sport = "hockey", League = "NHL", Home = Sv(h, "abbrev"), Away = Sv(a, "abbrev"), HomeScore = Sv(h, "score"), AwayScore = Sv(a, "score"), StartUtc = Utc(Sv(g, "startTimeUTC")) };
-                x.State = st == "LIVE" || st == "CRIT" ? "live" : st == "FINAL" || st == "OFF" ? "done" : "soon";
+                var x = new Game { Sport = "hockey", League = "NHL", Home = Sv(h, "abbrev"), Away = Sv(a, "abbrev"), HomeAlso = Sv(D(V(h, "placeName")), "default") + " " + Sv(D(V(h, "name")), "default") + " " + Sv(D(V(h, "commonName")), "default"), AwayAlso = Sv(D(V(a, "placeName")), "default") + " " + Sv(D(V(a, "name")), "default") + " " + Sv(D(V(a, "commonName")), "default"), HomeScore = Sv(h, "score"), AwayScore = Sv(a, "score"), StartUtc = Utc(Sv(g, "startTimeUTC")) };
+                x.State = st == "LIVE" || st == "CRIT" ? "live" : st == "FINAL" || st == "OFF" ? "done" : st == "FUT" || st == "PRE" || st == "" ? "soon" : "off";   // AM-CG-282: anything else (postponed...) says what it is
                 var pd = D(V(g, "periodDescriptor")); var clock = D(V(g, "clock")); string per = Sv(pd, "number");
                 x.Detail = x.State == "live" ? (per != "" ? "P" + per : "") + (Sv(clock, "timeRemaining") != "" ? " · " + Sv(clock, "timeRemaining") : "") + (Sv(clock, "inIntermission") == "True" ? " · break" : "") : x.State == "done" ? "Final" + (Sv(pd, "periodType") == "OT" ? " (OT)" : Sv(pd, "periodType") == "SO" ? " (SO)" : "") : "";
+                if (x.State == "off") x.Detail = st.ToLowerInvariant();
                 if (x.Home != "" && x.Away != "") r.Add(x);
             }
             return r;
@@ -131,24 +155,34 @@ namespace AdeeboMeter
         internal static List<Game> Football(string key) { return FootballFrom(Get("https://api.football-data.org/v4/matches", "X-Auth-Token", key)); }
         internal static List<Game> FootballFrom(string json)
         {
-            var r = new List<Game>(); var root = D(Json.Parse(json));
-            foreach (var o in A(V(root, "matches")) ?? new List<object>())
+            var r = new List<Game>(); var root = D(Json.Parse(json)); var list = A(V(root, "matches"));
+            if (list == null) throw new InvalidDataException("no matches list in football-data.org's answer");
+            foreach (var o in list)
             {
                 var m = D(o); if (m == null) continue; var h = D(V(m, "homeTeam")); var a = D(V(m, "awayTeam")); var ft = D(V(D(V(m, "score")), "fullTime")); string st = Sv(m, "status");
-                var x = new Game { Sport = "football", League = Sv(D(V(m, "competition")), "name"), Home = Or(Sv(h, "shortName"), Sv(h, "name")), Away = Or(Sv(a, "shortName"), Sv(a, "name")), HomeScore = Sv(ft, "home"), AwayScore = Sv(ft, "away"), StartUtc = Utc(Sv(m, "utcDate")) };
+                var x = new Game { Sport = "football", League = Sv(D(V(m, "competition")), "name"), Home = Or(Sv(h, "shortName"), Sv(h, "name")), Away = Or(Sv(a, "shortName"), Sv(a, "name")), HomeAlso = Sv(h, "name") + " " + Sv(h, "tla"), AwayAlso = Sv(a, "name") + " " + Sv(a, "tla"), HomeScore = Sv(ft, "home"), AwayScore = Sv(ft, "away"), StartUtc = Utc(Sv(m, "utcDate")) };
                 x.State = st == "IN_PLAY" || st == "PAUSED" || st == "LIVE" ? "live" : st == "FINISHED" || st == "AWARDED" ? "done" : st == "POSTPONED" || st == "CANCELLED" || st == "SUSPENDED" ? "off" : "soon";
-                x.Detail = st == "PAUSED" ? "half time" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : "";
+                x.Detail = st == "PAUSED" ? "half time" : st == "AWARDED" ? "awarded" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : "";
                 if (x.Home != "") r.Add(x);
             }
             return r;
         }
         // CricketData (CricAPI): matches on now, with each innings' runs / wickets (overs)
-        internal static List<Game> Cricket(string key) { Hit(); return CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key), null, null)); }
-        internal static List<Game> CricketFrom(string json)
+        // AM-CG-277: the feed comes in pages - a second page is read when there is one (one more call), never more than two
+        internal static List<Game> Cricket(string key)
+        {
+            Hit(); int total; var r = CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key), null, null), out total);
+            if (total > r.Count && r.Count > 0 && HitsToday() < 89) { Hit(); int t2; r.AddRange(CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=" + r.Count + "&apikey=" + Uri.EscapeDataString(key), null, null), out t2)); }
+            return r;
+        }
+        internal static List<Game> CricketFrom(string json) { int total; return CricketFrom(json, out total); }
+        static List<Game> CricketFrom(string json, out int total)
         {
             var r = new List<Game>(); var root = D(Json.Parse(json));
             if (Sv(root, "status") == "failure") throw new InvalidDataException(Sv(root, "reason"));
-            foreach (var o in A(V(root, "data")) ?? new List<object>())
+            var list = A(V(root, "data")); if (list == null) throw new InvalidDataException("no match list in CricketData's answer");
+            if (!int.TryParse(Sv(D(V(root, "info")), "totalRows"), NumberStyles.Integer, CultureInfo.InvariantCulture, out total)) total = 0;
+            foreach (var o in list)
             {
                 var m = D(o); if (m == null) continue; var teams = (A(V(m, "teams")) ?? new List<object>()).Select(t => Convert.ToString(t, CultureInfo.InvariantCulture)).ToList(); if (teams.Count < 2) continue;
                 var x = new Game { Sport = "cricket", League = Sv(m, "matchType").ToUpperInvariant(), Home = teams[0], Away = teams[1], Detail = Sv(m, "status"), StartUtc = Utc(Sv(m, "dateTimeGMT")) };

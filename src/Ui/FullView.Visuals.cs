@@ -585,6 +585,13 @@ namespace AdeeboMeter
             var a = VisIn(); var hops = HopsNow(); bool idle = hops.Count == 0; string dest = a[0] != "" ? a[0] : L.T("the destination");
             if (idle) hops = new List<VHop> { new VHop { N = "1", Ip = L.T("Your router"), Val = L.T("at home") }, new VHop { N = "2", Ip = L.T("Your provider"), Val = L.T("their first router") }, new VHop { N = "…", Ip = L.T("The internet"), Val = L.T("a few more routers") }, new VHop { N = "", Ip = dest, Val = L.T("the far end"), Dest = true } };
             bool mtu = tbSel == "mtu";
+            // the phone gets every hop too (MTR and MTU keep their hops outside the result rows, so a phone link used to carry
+            // only the verdict): number, address, the ms for MTR, the hop's own line, its colour
+            if (!idle)
+            {
+                Func<VHop, double> msOf = h => { if (mtu) return double.NaN; var mm = System.Text.RegularExpressions.Regex.Match(h.Val ?? "", @"^([\d.]+)\s*ms"); double v; return mm.Success && double.TryParse(mm.Groups[1].Value, NumberStyles.Float, CultureInfo.CurrentCulture, out v) ? v : double.NaN; };
+                PhoneP = Tuple.Create(mtu ? "LARGEST PACKET EACH ROUTER PASSES" : "TIME AND LOSS AT EACH ROUTER", hops.Select(h => Tuple.Create(h.N, h.Ip == "" ? L.T("no answer") : h.Ip, msOf(h), h.Val ?? "", h.Ip == "" ? -1 : h.Lv)).ToList()); PhoneKind = "p";
+            }
             // the line sits low enough that labels above it clear the card's caption
             var r = VisCard(g, x, y, w, 208 * S, mtu ? "THE PATH · LARGEST PACKET EACH ROUTER PASSES" : "THE PATH · TIME AND LOSS AT EACH ROUTER", state);
             float bx = r.X + 44 * S, bw = r.Width - 104 * S, cy = r.Y + 96 * S;

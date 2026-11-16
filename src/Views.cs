@@ -170,6 +170,7 @@ namespace AdeeboMeter
         public static string FromUses(ICollection<string> uses)
         {
             var main = uses.Where(u => u == "game" || u == "stream" || u == "trade" || u == "fix").ToList();
+            if (uses.Count == 0) return "everything";   // R2-10: nothing picked is "Show me everything" - every page, not fewer
             if (main.Count == 0) return "everyday";
             if (main.Count == 1) return main[0] == "game" ? "gamer" : main[0] == "stream" ? "streamer" : main[0] == "trade" ? "trader" : "engineer";
             if (main.Count == 2 && !main.Contains("fix")) return main.Contains("game") && main.Contains("stream") ? "play-watch" : main.Contains("game") ? "play-trade" : "watch-trade";

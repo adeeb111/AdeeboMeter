@@ -101,7 +101,7 @@ namespace AdeeboMeter
         public void Stop()
         {
             stop = true; wake.Set(); stopping.Set();
-            Trading.stopAll = true; try { Streams.End(DateTime.Now); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("streams end: " + e.Message); }   // a stream playing at exit still gets its record
+            Trading.Stop(); try { Streams.End(DateTime.Now); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("streams end: " + e.Message); }   // a stream playing at exit still gets its record
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
             foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(1500);   // both finish their tick (the stop event wakes them; quitting never waits long) and release their counters
             samplerT = null; probeT = null;   // so Start() can run again

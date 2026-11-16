@@ -97,7 +97,12 @@ namespace AdeeboMeter
             if (w == "" || w == "last") return all.LastOrDefault();
             if (w == "today") return all.LastOrDefault(s => s.Start.Date == DateTime.Today);
             if (w == "yesterday") return all.LastOrDefault(s => s.Start.Date == DateTime.Today.AddDays(-1));
-            if (DateTime.TryParse(w, CultureInfo.CurrentCulture, DateTimeStyles.None, out d)) return all.LastOrDefault(s => s.Start.Date == d.Date);
+            if (DateTime.TryParse(w, CultureInfo.CurrentCulture, DateTimeStyles.None, out d))
+            {
+                // AM-CG-120: a time picks that day's session running then (or the nearest start), not just the day's last
+                if (d.TimeOfDay != TimeSpan.Zero) return all.Where(s => s.Start.Date == d.Date).OrderBy(s => d >= s.Start && d <= s.End ? 0 : Math.Abs((s.Start - d).TotalMinutes)).FirstOrDefault();
+                return all.LastOrDefault(s => s.Start.Date == d.Date);
+            }
             return null;
         }
         public static List<string[]> SessionRows(string mode, string which)
@@ -109,17 +114,22 @@ namespace AdeeboMeter
             if (s == null) { rows.Add(R(3, trade ? "No session yet" : "No stream yet", trade ? "turn on broker watching on the Trading page - it records the broker all session" : "the Streaming page records each stream by itself - watch something, then come back", "", "u")); return rows; }
             var far = s.Line.Where(p => p.Length > 2 && p[2] >= 0).Select(p => (double)p[2]).ToList(); var down = s.Line.Where(p => p.Length > 1 && p[1] >= 0).Select(p => (double)p[1]).ToList();
             var tally = s.Tally(); int dips = s.Dips.Count;
-            rows.Add(R(dips == 0 ? 0 : dips > 5 ? 2 : 1, trade ? "Session" : "Stream", (trade ? WatchKit.BlameName("far", s.Far) : s.What) + " · " + s.Start.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (int)s.Length.TotalMinutes + " min", "", "m"));
-            rows.Add(R(dips == 0 ? 0 : 1, trade ? "Slow moments" : "Drops", dips == 0 ? "none" : dips + " · " + string.Join(", ", tally.Where(z => z.Value > 0).OrderByDescending(z => z.Value).Select(z => z.Value + " " + WatchKit.BlameName(z.Key, s.Far)).ToArray()), "", "m"));
+            string farN = trade ? "your broker" : s.Far;   // AM-CG-123: a shared result names no broker address
+            var sameDay = WatchKit.Recent(mode).Where(o => o.Start.Date == s.Start.Date && Math.Abs((o.Start - s.Start).TotalSeconds) > 1).OrderBy(o => o.Start).ToList();
+            if (sameDay.Count > 0) rows.Add(R(3, "Other sessions that day", string.Join(", ", sameDay.Select(o => o.Start.ToString("HH:mm", CultureInfo.CurrentCulture) + "-" + o.End.ToString("HH:mm", CultureInfo.CurrentCulture)).ToArray()), "Type a start time (like " + sameDay[0].Start.ToString("HH:mm", CultureInfo.CurrentCulture) + ") to see one of them.", "m"));
+            // AM-CG-115: a session with no readings at all isn't a clean one
+            if (far.Count == 0 && down.Count == 0) { rows.Add(R(3, trade ? "Session" : "Stream", s.Start.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " · no readings were recorded, so it can't be judged", "", "m")); return rows; }
+            rows.Add(R(dips == 0 ? 0 : dips > 5 ? 2 : 1, trade ? "Session" : "Stream", (trade ? WatchKit.BlameName("far", farN) : s.What) + " · " + s.Start.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (int)s.Length.TotalMinutes + " min", "", "m"));
+            rows.Add(R(dips == 0 ? 0 : 1, trade ? "Slow moments" : "Drops", dips == 0 ? "none" : dips + " · " + string.Join(", ", tally.Where(z => z.Value > 0).OrderByDescending(z => z.Value).Select(z => z.Value + " " + WatchKit.BlameName(z.Key, farN)).ToArray()), "", "m"));
             if (far.Count > 0) rows.Add(R(3, trade ? "Broker" : "The service", Math.Round(far.Average()) + " ms on average · worst minute " + Math.Round(far.Max()) + " ms" + (!double.IsNaN(s.FarNormal) ? " · normal " + Math.Round(s.FarNormal) + " ms" : ""), "", "m"));
             if (!trade && down.Count > 0) rows.Add(R(3, "Download", Math.Round(down.Average(), 1) + " Mb/s on average · lowest minute " + Math.Round(down.Min(), 1), "", "m"));
             if (dips > 0)
             {
                 rows.Add(R(-1, trade ? "EVERY SLOW MOMENT" : "EVERY DROP", "", "", "m"));
                 if (s.Dips.Count > 20) rows.Add(R(3, "Showing", "the first 20 of " + s.Dips.Count, "", "m"));
-                foreach (var d in s.Dips.Take(20)) rows.Add(R(d.Blame == "provider" || d.Blame == "far" ? 2 : 1, d.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), d.Secs + " s · " + WatchKit.BlameName(d.Blame, s.Far) + (d.Evidence != "" ? " · " + d.Evidence : ""), "", "m"));
+                foreach (var d in s.Dips.Take(20)) rows.Add(R(d.Blame == "provider" || d.Blame == "far" ? 2 : 1, d.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), d.Secs + " s · " + WatchKit.BlameName(d.Blame, farN) + (d.Evidence != "" ? " · " + d.Evidence : ""), "", "m"));
                 var top = tally.OrderByDescending(z => z.Value).First(); var lesson = WatchKit.Lesson(top.Key, mode);
-                if (lesson != null && lesson.Length > 0) rows.Add(R(1, "Most of it", WatchKit.BlameName(top.Key, s.Far), string.Join(" ", lesson), "i"));
+                if (lesson != null && lesson.Length > 0) rows.Add(R(1, "Most of it", WatchKit.BlameName(top.Key, farN), string.Join(" ", lesson), "i"));
             }
             return rows;
         }
