@@ -1,6 +1,7 @@
 // AdeeboMeter Live - the website's showcase data (adeebometer.com/live.html).
 // A pass-through cache: each public source is fetched at most once every few minutes and every visitor gets the same copy.
 // Nothing is stored or logged; visitors' addresses never reach the sources. Sources and credit are shown on the page.
+import { connect } from "cloudflare:sockets";
 const ORIGINS = ["https://adeebometer.com", "https://www.adeebometer.com"];
 const FX = ["USD", "EUR", "GBP", "CNY", "JPY", "INR", "CHF", "AUD", "MXN", "HKD"];
 const IDX = ["ENER", "MTLS", "FOPR", "AGRI", "BCPI"];
@@ -74,6 +75,24 @@ const places = q => cached("g" + q, 86400, 86400, async () => {
   return { places: (d.results || []).map(p => ({ n: p.name, r: [p.admin1, p.country].filter(Boolean).join(", "), lat: +p.latitude.toFixed(1), lon: +p.longitude.toFixed(1) })) };
 });
 
+// the same network: the first 3 bytes of an IPv4 address, or the first 48 bits of IPv6
+function net(a) { if (!a.includes(":")) return a.split(".").slice(0, 3).join("."); const [h, t = ""] = a.split("::"), L = h ? h.split(":") : [], R2 = t ? t.split(":") : [], all = L.concat(Array(Math.max(0, 8 - L.length - R2.length)).fill("0"), R2); return all.slice(0, 3).map(x => parseInt(x || "0", 16)).join(":"); }
+const PRIV = /^(localhost|.*\.local|.*\.internal|10\.\d+\.\d+\.\d+|127\.\d+\.\d+\.\d+|169\.254\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|0\.\d+\.\d+\.\d+|\[.*\])$/i;
+async function siteHops(start) {
+  const hops = []; let cur = start;
+  for (let i = 0; i < 6; i++) {
+    const port = cur.port || (cur.protocol === "http:" ? "80" : "443");
+    if (!/^https?:$/.test(cur.protocol) || PRIV.test(cur.hostname) || !["80", "443", "8080", "8443"].includes(port)) { hops.push({ u: cur.href.slice(0, 200), err: "not checked (only public web addresses)" }); break; }
+    const t0 = Date.now(); let r;
+    try { r = await fetch(cur.href, { redirect: "manual", headers: { "User-Agent": "AdeeboMeter-Check (+https://adeebometer.com)" }, signal: AbortSignal.timeout(8000) }); }
+    catch (e) { const m = String(e && e.message || e); hops.push({ u: cur.href.slice(0, 200), err: /timeout|abort/i.test(m) ? "no answer in 8 s" : /certificate|ssl|tls/i.test(m) ? "secure connection failed (certificate)" : /dns|resolve|not found/i.test(m) ? "the name doesn't exist" : "couldn't connect" }); break; }
+    const ms = Date.now() - t0; try { if (r.body) await r.body.cancel(); } catch (e) {}
+    const H = n => (r.headers.get(n) || "").slice(0, 120), loc = H("location");
+    hops.push({ u: cur.href.slice(0, 200), s: r.status, ms, srv: H("server"), ct: H("content-type").split(";")[0], hsts: H("strict-transport-security") ? 1 : 0, loc: loc.slice(0, 200) });
+    if (r.status >= 300 && r.status < 400 && loc) { try { cur = new URL(loc, cur); } catch (e) { break; } } else break;
+  }
+  return { hops };
+}
 function reply(req, body, maxAge) {
   const o = req.headers.get("Origin"), h = {
     "Content-Type": "application/json; charset=utf-8", "Cache-Control": maxAge > 0 ? "public, max-age=" + maxAge : maxAge < 0 ? "private, no-store" : "no-store",
@@ -126,9 +145,35 @@ export default {
         return reply(req, { v: e.v.error ? "" : e.v.v }, 3600);
       }
       case "/me": {
-        const ip = req.headers.get("CF-Connecting-IP") || "", cf = req.cf || {};
-        return reply(req, { org: String(cf.asOrganization || "").slice(0, 80), v6: ip.includes(":") ? 1 : 0, colo: cf.colo || "", country: cf.country || "" }, -1);
+        const ip = req.headers.get("CF-Connecting-IP") || "", cf = req.cf || {}, o = { org: String(cf.asOrganization || "").slice(0, 80), v6: ip.includes(":") ? 1 : 0, colo: cf.colo || "", country: cf.country || "" };
+        // VPN leak check: the phone sends the address its video-call test (STUN) saw; only "same / same network" comes back
+        const c = (u.searchParams.get("cmp") || "").trim().toLowerCase().slice(0, 45);
+        if (c && /^[0-9a-f:.]+$/.test(c)) { const a = ip.toLowerCase(); o.fam = c.includes(":") === a.includes(":") ? 1 : 0; o.same = o.fam && c === a ? 1 : 0; o.near = o.fam && !o.same && net(c) === net(a) ? 1 : 0; }
+        return reply(req, o, -1);
       }   // for the page's honest "browser -> Cloudflare" timing
+      // "Is my port open?" - one TCP connection from Cloudflare to the address this request came from, and nowhere else,
+      // so it can't be used to probe anyone else. TCP only; port 25 can't be reached from Workers.
+      case "/port": {
+        const ip = req.headers.get("CF-Connecting-IP") || "", p = Number(u.searchParams.get("p")), v6 = ip.includes(":") ? 1 : 0;
+        if (!ip || !Number.isInteger(p) || p < 1 || p > 65535) return reply(req, { error: "bad port" }, 0);
+        if (p === 25) return reply(req, { v6, open: false, why: "25" }, -1);
+        const t0 = Date.now(); let sock = null, open = false, why = "";
+        try {
+          sock = connect({ hostname: ip, port: p });
+          await Promise.race([sock.opened, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 5000))]);
+          open = true;
+        } catch (e) { const m = String(e && e.message || e); why = /timeout/i.test(m) ? "timeout" : /cloudflare|specified address|prohibited/i.test(m) ? "cf" : "refused"; }
+        const msTaken = Date.now() - t0; try { if (sock) await sock.close(); } catch (e) {}
+        return reply(req, { v6, open, why, ms: open ? msTaken : null }, -1);
+      }
+      // "A website from outside" - status, redirects, timing and a few headers; never the page itself. Ports 80/443/8080/8443 only,
+      // no addresses inside private networks; the same address is answered from memory for 30 s so it can't be used to hammer a site
+      case "/site": {
+        let t = (u.searchParams.get("u") || "").trim().slice(0, 300); if (!/^https?:\/\//i.test(t)) t = "https://" + t;
+        let start; try { start = new URL(t); } catch (e) { return reply(req, { error: "bad address" }, 0); }
+        const e = await cached("site:" + start.href, 30, 30, () => siteHops(start));
+        return reply(req, Object.assign({ colo: (req.cf && req.cf.colo) || "" }, e.v.error ? { hops: [{ u: start.href.slice(0, 200), err: "couldn't check" }] } : e.v), 0);
+      }
       default: return new Response("AdeeboMeter Live - see https://adeebometer.com/live.html", { status: 404 });
     }
   }
