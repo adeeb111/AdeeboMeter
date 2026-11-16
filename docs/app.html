@@ -333,6 +333,8 @@ textarea.in{resize:vertical;min-height:120px}
       [[hD, c.down], [hU, c.up], [hP, c.ping]].forEach(function (x) { x[0].push(x[1] == null ? null : x[1]); if (x[0].length > 120) x[0].shift(); });
       if (view === "home" || view === "widget" || (view === "pc" && S.pcTab === "overview")) draw();
     }
+    else if ((c.t === "result" || c.t === "err") && c.rid && ALSO[c.rid]) alsoGot(c);
+    else if (c.t === "ask") answerAsk(c);
     else if (c.t === "result") {
       var mine = c.rid && c.rid === curRid; if (mine) { busy = ""; curRid = ""; } else if (busy && c.rid !== devRid) c.late = 1;
       if (c.rid && c.rid === devRid) { devs = parseDevs(c.rows || []); devAt = Date.now(); devRid = ""; draw(); return; }
@@ -1234,7 +1236,7 @@ textarea.in{resize:vertical;min-height:120px}
     var g = guideOf(S.guide); if (!g) return TOOLV.isdown();
     return hdr(esc(g[1]), esc(g[2]) + " · step by step", "tools") + '<div class="card list">' + g[3].map(function (s, i) { return '<button class="row" data-step="' + esc(s[1]) + '"><span class="vdot sm off" style="font-weight:800">' + (i + 1) + '</span><div class="tx"><b>' + esc(s[0]) + '</b>' + (s[2] ? '<span>' + esc(s[2]) + '</span>' : '') + '</div>' + ic("chev", 18) + '</button>'; }).join("") + '</div><p class="fine">Each step opens a check on this phone; Back brings you here.</p>';
   };
-  VIEWS.tool = function () { var f = TOOLV[S.tool]; return f ? f() : VIEWS.tools(); };
+  VIEWS.tool = function () { var f = TOOLV[S.tool]; return f ? f() + alsoPc(S.tool) : VIEWS.tools(); };
   function rowsCard(rows) { return '<div class="card">' + rowsHtml(rows) + '</div>'; }
 
   // ---- the Tools tab: the phone's toolbox first; your PC's tools at the top when one is connected
@@ -1612,7 +1614,91 @@ textarea.in{resize:vertical;min-height:120px}
       else if (b) { var u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = "roast.png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); } }, "image/png");
   }
   function shareText(t) { if (navigator.share) navigator.share({ text: t }).catch(function () {}); else if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast("Copied"); }, function () {}); }
-  var PT = [["CHECK FROM THIS PHONE", [["phone", "speedo", "My connection", "Delay, steadiness, provider, IPv6"], ["isdown", "globe", "Is it down or just me?", "Time any website from here"], ["watch", "chart", "Watch my connection", "Catches dropouts over a few minutes"], ["compare", "signal", "Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?"], ["restart", "refresh", "Before and after", "Did restarting the router help?"], ["regions", "globe", "How far is the internet?", "Delay to the world's cloud regions"], ["walk", "walk", "Wi-Fi walk", "Find the best room"], ["@view", "game", "Game, call or stream check", "Pick a view on Home"], ["week", "chart", "My week", "Your checks over 7 days - on this phone only"]]],
+  // ================================================================ speed test (Adeeb, 16 Nov: "ok then add speed test")
+  // Straight to Cloudflare's own speed test servers (speed.cloudflare.com) - none of it goes through AdeeboMeter's relay.
+  // Sizes grow until a transfer takes long enough to be honest, within a data budget (smaller on mobile data).
+  var SPD = "https://speed.cloudflare.com";
+  function spdCell() { var c = navigator.connection; return !!(c && (c.type === "cellular" || c.saveData)); }
+  function pct(v, p) { if (!v.length) return null; v = v.slice().sort(function (a, b) { return a - b; }); return v[Math.min(v.length - 1, Math.floor(p * (v.length - 1) + 0.5))]; }
+  function rtOf(u, t0, t1) { var e = performance.getEntriesByName(u)[0]; return e && e.responseStart > 0 && e.requestStart > 0 ? { ttfb: e.responseStart - e.requestStart, body: e.responseEnd > e.responseStart ? e.responseEnd - e.responseStart : null } : { ttfb: t1 - t0, body: null }; }
+  async function spdPing() { var u = SPD + "/__down?bytes=0&r=" + Math.random(), t0 = performance.now(); var r = await tfetch(u, 5000); await r.arrayBuffer(); return rtOf(u, t0, performance.now()).ttfb; }
+  async function spdDown(n, lat) { var u = SPD + "/__down?bytes=" + n + "&r=" + Math.random(), t0 = performance.now(); var r = await tfetch(u, 40000); if (!r.ok) throw 0; await r.arrayBuffer(); var t1 = performance.now(), rt = rtOf(u, t0, t1), ms = rt.body != null && rt.body > 5 ? rt.body : Math.max(1, t1 - t0 - (lat || 0)); return n * 8 / ms / 1000; }
+  async function spdUp(n, lat) {
+    var c = window.AbortController ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, 40000), o = { method: "POST", body: new Uint8Array(n), cache: "no-store" }; if (c) o.signal = c.signal;
+    var t0 = performance.now(); try { var r = await fetch(SPD + "/__up?r=" + Math.random(), o); await r.arrayBuffer(); } finally { clearTimeout(tm); }
+    return n * 8 / Math.max(1, performance.now() - t0 - (lat || 0)) / 1000;
+  }
+  RUN2.speed = async function (st) {
+    var cell = spdCell(), budD = cell ? 30e6 : 100e6, budU = cell ? 10e6 : 30e6, used = 0, t0 = Date.now();
+    var o = st.live = { phase: "Delay", at: Date.now(), cell: cell, down: [], up: [], idle: [], load: [] }, redraw = function () { if (S.tool === "speed" && S.tab === "tool") draw(); };
+    for (var i = 0; i < 8; i++) { try { o.idle.push(await spdPing()); } catch (e) {} }
+    if (o.idle.length < 3) throw fail("Cloudflare's speed test servers didn't answer - check the connection.");
+    var lat = pct(o.idle, 0.5); o.phase = "Download"; redraw();
+    var pinging = true, pl = (async function () { while (pinging) { try { o.load.push(await spdPing()); } catch (e) {} await new Promise(function (z) { setTimeout(z, 250); }); } })();
+    var DS = [[1e5, 1], [1e6, 3], [1e7, 3], [2.5e7, 3]];
+    try { for (var a = 0; a < DS.length; a++) for (var b = 0; b < DS[a][1]; b++) { if (used + DS[a][0] > budD || Date.now() - t0 > 20000) break; var m = await spdDown(DS[a][0], lat); used += DS[a][0]; o.down.push([DS[a][0], m]); o.dnow = m; redraw(); if (DS[a][0] * 8 / (m * 1e6) < 0.25 && a < DS.length - 1) break; } }   // a transfer over in a blink: on to the next size
+    finally { pinging = false; await pl; }
+    o.phase = "Upload"; redraw(); var usedU = 0, t1 = Date.now(), US = [[1e5, 1], [1e6, 3], [1e7, 2]];
+    for (var c2 = 0; c2 < US.length; c2++) for (var d2 = 0; d2 < US[c2][1]; d2++) { if (usedU + US[c2][0] > budU || Date.now() - t1 > 15000) break; try { var mu = await spdUp(US[c2][0], lat); usedU += US[c2][0]; o.up.push([US[c2][0], mu]); o.unow = mu; redraw(); if (US[c2][0] * 8 / (mu * 1e6) < 0.25 && c2 < US.length - 1) break; } catch (e) { break; } }
+    var big = function (L) { var x = L.filter(function (p) { return p[0] >= 1e6; }); return (x.length ? x : L).map(function (p) { return p[1]; }); };
+    var res = { at: Date.now(), cell: cell, down: pct(big(o.down), 0.9), up: pct(big(o.up), 0.9), idle: Math.round(lat), load: o.load.length ? Math.round(pct(o.load, 0.5)) : null, used: used + usedU };
+    res.bloat = res.load != null ? Math.max(0, res.load - res.idle) : null;
+    st.live = null; st.res = res;
+    addAct("everyday", "Speed test: " + fmtM(res.down) + " down, " + fmtM(res.up) + " up", "delay " + res.idle + " ms" + (res.bloat != null ? " · +" + res.bloat + " ms when busy" : ""), res.down == null ? 2 : res.down < 10 ? 1 : 0);
+  };
+  function fmtM(v) { return v == null ? "–" : v >= 100 ? Math.round(v) + " Mbps" : v >= 10 ? v.toFixed(1).replace(/\.0$/, "") + " Mbps" : v.toFixed(2).replace(/0$/, "") + " Mbps"; }
+  function bloatG(b) { return b == null ? ["–", 3] : b < 5 ? ["A+", 0] : b < 30 ? ["A", 0] : b < 60 ? ["B", 1] : b < 200 ? ["C", 1] : ["D", 2]; }
+  TOOLV.speed = function () {
+    var st = tst("speed"), r = st.res, L = st.live, cell = spdCell();
+    var a = '<p class="fine" style="margin:0 2px 12px">Download, upload and how much the delay grows while the line is busy. Straight to Cloudflare\'s speed test servers - nothing goes through AdeeboMeter.</p>' + errBox("speed") +
+      '<button class="btn" data-run="speed"' + (st.busy ? " disabled" : "") + '>' + (st.busy ? (L ? L.phase + "..." : "Testing...") : "Start the test") + '</button><p class="fine" style="text-align:center;margin:6px 0 0">' + (cell ? "On mobile data: uses up to about 40 MB" : "Uses up to about 130 MB of data - less on slow lines") + '</p>';
+    if (L) a += '<div class="card vcard" style="margin-top:14px"><div class="tag2">MEASURING · ' + esc(L.phase.toUpperCase()) + '</div><div class="big3"><div><small>Delay</small><b>' + ms(L.idle.length ? Math.round(pct(L.idle, 0.5)) : null) + '</b></div><div><small>Download</small><b>' + (L.dnow ? fmtM(L.dnow).replace(" Mbps", '<small> Mbps</small>') : "–") + '</b></div><div><small>Upload</small><b>' + (L.unow ? fmtM(L.unow).replace(" Mbps", '<small> Mbps</small>') : "–") + '</b></div></div></div>';
+    if (r && !L) { var g = bloatG(r.bloat), dn = r.down || 0, up = r.up || 0;
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, (r.cell ? "MOBILE DATA · " : "") + "CLOUDFLARE") + '<div class="big3"><div><small>Download</small><b>' + fmtM(r.down).replace(" Mbps", '<small> Mbps</small>') + '</b></div><div><small>Upload</small><b>' + fmtM(r.up).replace(" Mbps", '<small> Mbps</small>') + '</b></div><div><small>Delay</small><b>' + ms(r.idle) + '</b></div></div>' +
+        '<p class="fine">' + Math.round(r.used / 1e6) + ' MB used. The speed is the 90th percentile of the bigger transfers, the way Cloudflare reports it.</p></div>' +
+        rowsCard([[lvS(g[1]), "Lag when busy (bufferbloat) · " + g[0], r.bloat == null ? "not measured" : "+" + r.bloat + " ms while downloading (" + r.idle + " → " + r.load + " ms)", g[1] === 2 ? "Calls and games will stutter whenever someone downloads. A router with SQM / Smart Queue fixes this." : g[1] === 1 ? "Some lag when the line is busy - noticeable in games." : "The delay stays low even when the line is busy."],
+          [dn >= 25 ? "0" : dn >= 5 ? "1" : "2", "Streaming", dn >= 25 ? "4K is fine" : dn >= 5 ? "HD is fine, 4K may buffer" : "SD only", ""],
+          [up >= 3 && (r.bloat == null || r.bloat < 60) ? "0" : up >= 1 ? "1" : "2", "Video calls", (up >= 3 ? "HD video both ways" : up >= 1 ? "video works, maybe not HD" : "audio only - upload is too low") + (up >= 1 && r.bloat != null && r.bloat >= 60 ? " - but it may stutter when the line is busy" : ""), ""],
+          [r.idle < 60 && (r.bloat == null || r.bloat < 30) ? "0" : r.idle < 120 ? "1" : "2", "Online games", r.idle < 60 && (r.bloat == null || r.bloat < 30) ? "good" : r.idle < 120 ? "playable" : "laggy", "Game servers are elsewhere - the game view on Home times your game's regions."],
+          ["3", "A 50 GB game download", dn ? (50e3 * 8 / dn / 60 >= 60 ? (50e3 * 8 / dn / 3600).toFixed(1) + " hours" : Math.round(50e3 * 8 / dn / 60) + " minutes") : "–", "At this speed, if nothing else uses the line."]]) +
+        '<p class="fine">' + (r.cell ? "Mobile data speed changes with signal, crowding and your plan." : "This phone's Wi-Fi can be the limit: test next to the router to see what the line itself does.") + '</p>'; }
+    return hdr("Speed test", "Download, upload and lag under load", "tools") + a;
+  };
+
+  // ================================================================ the PC <-> phone link (Adeeb, 16 Nov: "build it")
+  // 1) "Also on my PC": a phone tool the PC also has runs there too (same encrypted session), shown under the phone's answer.
+  // 2) The PC can ask this phone for a check while AdeeboMeter is open here (PhoneAsk.cs on the PC): a banner says so.
+  var ALSO = {};
+  var PCID = { isdown: ["httptime", function (st) { return [(st.res && st.res.h) || hostOf(st.q), "5"]; }], dns: ["dig", function (st) { return [(st.res && st.res.h) || hostOf(st.q), st.ty || "A", ""]; }],
+    fastdns: ["dnsrace", function () { return [""]; }], regions: ["cloud", function () { return []; }], v6v4: ["ip46", function () { return ["www.google.com"]; }], speed: ["speedtest", function () { return [""]; }] };
+  function alsoPc(k) {
+    if (phase !== "live" || !PCID[k] || !toolOf(PCID[k][0])) return ""; var st = tst(k);
+    if (k !== "fastdns" && k !== "regions" && k !== "v6v4" && k !== "speed" && !PCID[k][1](st)[0]) return "";
+    return '<button class="btn ghost" style="margin-top:12px" data-alsopc="' + k + '"' + (st.pcBusy ? " disabled" : "") + '>' + ic("pc", 18) + (st.pcBusy ? " Your PC is checking..." : st.pc ? " Again on my PC" : " Also on my PC") + '</button>' +
+      (st.pc ? '<div class="card" style="margin-top:12px"><div class="tag2">YOUR PC · ' + esc(String(st.pc.title || "").toUpperCase()) + ' · ' + hm(st.pcAt || Date.now()) + '</div>' + rowsHtml((st.pc.rows || []).slice(0, 20)) + '</div>' : '');
+  }
+  function alsoRun(k) { var st = tst(k), m = PCID[k]; if (!m) return; var r = run(m[0], m[1](st), true); if (!r) return; ALSO[r] = k; st.pcBusy = 1; st.pc = null; draw(); }
+  function alsoGot(c) { var k = ALSO[c.rid]; if (!k) return false; delete ALSO[c.rid]; var st = tst(k); st.pcBusy = 0; if (c.t === "result") { st.pc = c; st.pcAt = Date.now(); } else toast(c.msg || "Your PC couldn't run it"); draw(); return true; }
+
+  var ASKN = 0;
+  async function answerAsk(c) {
+    var k = String(c.k || ""), q = String(c.q || "").slice(0, 200), rid = String(c.rid || "").slice(0, 16), head = "", rows = [];
+    if (!rid || ASKN >= 2 || ["check", "isdown", "week"].indexOf(k) < 0) return; ASKN++;
+    toast(k === "isdown" ? "Your PC asked this phone to try " + (hostOf(q) || "a website") : k === "week" ? "Your PC asked for this phone's week" : "Your PC asked this phone to check its connection");
+    try {
+      if (k === "check") { var r = await phoneCheck(); rows = phoneRows(r); head = (r.type === "cellular" ? "On mobile data" : r.type === "wifi" ? "On Wi-Fi" : "This phone") + (r.org ? " · " + r.org : ""); }
+      else if (k === "isdown") { var h = hostOf(q); if (!h) { head = "Not a website name"; } else { var st = tst("isdown"); st.q = h; await runTool("isdown"); var x = st.res;
+        if (!x || x.h !== h) head = "Couldn't check from this phone"; else { var up = x.t.n > 0; head = (up ? "Up from this phone" : "Not reachable from this phone") + (up ? " (" + x.t.med + " ms)" : "");
+          var ty = navigator.connection && navigator.connection.type; rows = [[up ? (x.t.fail ? "1" : "0") : "2", "Reached it", x.t.n + " of " + (x.t.n + x.t.fail) + " tries", ""], [x.cf && ans(x.cf, "A").length ? "0" : "2", "Name lookup", x.cf && x.cf.Status === 3 ? "no such name" : ans(x.cf, "A").length + " address(es)", ""], ["3", "Phone connected over", ty === "cellular" ? "mobile data" : ty === "wifi" ? "Wi-Fi" : "unknown (iPhone doesn't say)", ""]]; } } }
+      else if (k === "week") { var w = weekSum(); head = w.n ? w.n + " checks in 7 days" + (w.med != null ? " · typical " + w.med + " ms" : "") : "No checks on the phone this week";
+        rows = w.days.filter(function (d) { return d.n; }).map(function (d) { return [d.bad ? "2" : d.med == null ? "3" : d.med < 60 ? "0" : d.med < 150 ? "1" : "2", d.dn, (d.med == null ? "no timing" : d.med + " ms") + " · " + d.n + " check" + (d.n > 1 ? "s" : ""), d.bad ? "a check found real trouble" : ""]; });
+        if (w.best) rows.push(["3", "Best time", "around " + hh(w.best[0]), w.worst && w.worst[1] - w.best[1] >= 15 ? "slowest around " + hh(w.worst[0]) : ""]); }
+    } catch (e) { head = head || "The check didn't finish on the phone"; }
+    finally { ASKN--; }
+    var flat = []; rows.slice(0, 40).forEach(function (x) { flat.push(String(x[0]), String(x[1] || ""), String(x[2] || ""), String(x[3] || "")); });
+    send({ t: "pres", rid: rid, head: head, r: flat });
+  }
+  var PT = [["CHECK FROM THIS PHONE", [["phone", "speedo", "My connection", "Delay, steadiness, provider, IPv6"], ["speed", "chart", "Speed test", "Download, upload and lag under load"], ["isdown", "globe", "Is it down or just me?", "Time any website from here"], ["watch", "chart", "Watch my connection", "Catches dropouts over a few minutes"], ["compare", "signal", "Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?"], ["restart", "refresh", "Before and after", "Did restarting the router help?"], ["regions", "globe", "How far is the internet?", "Delay to the world's cloud regions"], ["walk", "walk", "Wi-Fi walk", "Find the best room"], ["@view", "game", "Game, call or stream check", "Pick a view on Home"], ["week", "chart", "My week", "Your checks over 7 days - on this phone only"]]],
     ["SAFE AND PRIVATE", [["wifisafe", "lock", "Is this Wi-Fi safe?", "Hotel, cafe, airport"], ["vpnleak", "lock", "VPN leak check", "Does your real address slip out?"], ["stun", "router", "Calls, games and NAT", "Your public address, how strict your NAT is"], ["v6v4", "signal", "IPv6 vs IPv4", "Do you have IPv6, and is it faster?"]]],
     ["YOUR SERVER OR HOME SETUP", [["portcheck", "router", "Is my port open?", "Tested from the internet, at your own address"], ["site", "search", "A website from outside", "Status, redirects, timing from Cloudflare"], ["spamlist", "send", "Is my address on a spam list?", "The main email blocklists"]]],
     ["LOOK UP", [["dns", "search", "DNS lookup", "A, AAAA, MX, TXT and more - two resolvers"], ["fastdns", "chart", "Fastest DNS", "Cloudflare vs Google vs Quad9, from here"], ["email", "send", "Email setup check", "MX, SPF and DMARC for a domain"], ["status", "clock", "Is it down for everyone?", "The big services' status pages"], ["who", "router", "Who carries my connection?", "Provider, IPv6, nearest city"], ["rdap", "help", "Who owns this domain or IP?", "Registration, expiry, owner"], ["mac", "phone", "Who made this device?", "Maker from a hardware address"]]],
@@ -1634,7 +1720,7 @@ textarea.in{resize:vertical;min-height:120px}
   };
   // ---- what a PC adds: an upgrade, not a wall
   VIEWS.addpc = function () {
-    var F2 = [["wifi", "k-dev", "Every device on your network", "The TV, printer, doorbell - and how quick each answers"], ["clock", "k-pc", "What happened while you were away", "Replay any minute; the day's events"], ["game", "k-games", "Real game ping, whose lag it is", "Your PC times the actual servers"], ["send", "k-send", "Send files and text", "Phone ⇄ PC, end-to-end encrypted"], ["tools", "k-tools", "100+ checks", "Trace route, ports, Wi-Fi signal, MTU..."]];
+    var F2 = [["wifi", "k-dev", "Every device on your network", "The TV, printer, doorbell - and how quick each answers"], ["clock", "k-pc", "What happened while you were away", "Replay any minute; the day's events"], ["game", "k-games", "Real game ping, whose lag it is", "Your PC times the actual servers"], ["send", "k-send", "Send files and text", "Phone ⇄ PC, end-to-end encrypted"], ["phone", "k-walk", "Your PC and phone check each other", "Same check on both - is it the PC, the Wi-Fi or the provider?"], ["tools", "k-tools", "100+ checks", "Trace route, ports, Wi-Fi signal, MTU..."]];
     return hdr("Add your Windows PC", "Everything here keeps working", S.from2 || "home") + '<div style="display:flex;justify-content:center;gap:10px;align-items:center;color:var(--sub);margin:6px 0 14px">' + ic("phone", 34) + '<span style="font-size:22px">+</span>' + ic("pc", 40) + '</div>' +
       '<div class="card list">' + F2.map(function (f) { return '<div class="row" style="cursor:default"><span class="ic ' + f[1] + '">' + ic(f[0], 20) + '</span><div class="tx"><b>' + f[2] + '</b><span>' + f[3] + '</span></div></div>'; }).join("") + '</div>' +
       '<button class="btn" data-go="pair">' + ic("pc", 20) + ' Pair with a code</button><p class="note">No PC app yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ" target="_blank" rel="noopener">Get AdeeboMeter for Windows ›</a> - free, no admin rights.</p>';
@@ -1722,9 +1808,10 @@ textarea.in{resize:vertical;min-height:120px}
 
   document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
+    if (A("data-alsopc")) { alsoRun(A("data-alsopc")); return; }
     if (A("data-pchip")) { tst("portcheck").q = A("data-pchip"); runTool("portcheck"); return; }
     if (A("data-tool")) { var tl = A("data-tool"); if (A("data-tq2")) tst(tl).q = A("data-tq2"); if (tl === "@view") { S.tab = "home"; S.sheet = "view"; draw(); return; } if (tl === "@files") { openWeb("/files.html", "Files"); return; } if (tl === "phone" || tl === "walk") { go(tl); return; } S.tool = tl; S.tab = "tool"; draw(); window.scrollTo(0, 0); if (A("data-tq2")) runTool(tl); return; }
     if (A("data-calc")) { S.calc = A("data-calc"); S.tab = "calc"; draw(); window.scrollTo(0, 0); return; }

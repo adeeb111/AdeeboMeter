@@ -44,6 +44,15 @@ namespace AdeeboMeter
         public Func<string, bool> Ask; public Func<string, bool> CanRun; public Func<List<string>> Catalog; public Action<string, string[], Toolkit.Run, Action<string, List<string[]>, List<string[]>>> RunTool; public Action Changed; public Action FeltSlow;
         // AM-CG-319/320: one check at a time from the phone, tagged with the phone's request id, stoppable from the phone
         volatile Toolkit.Run op; volatile string opRid = "";
+        // the other way round (PhoneAsk.cs): questions this PC sent the phone, by request id, until it answers or the session ends
+        readonly System.Collections.Concurrent.ConcurrentDictionary<string, Action<string, List<string[]>>> asks = new System.Collections.Concurrent.ConcurrentDictionary<string, Action<string, List<string[]>>>();
+        public bool AskPhone(string k, string q, Action<string, List<string[]>> done)
+        {
+            if (St != State.Paired || tx == null || asks.Count >= 4) return false;
+            string id = RemoteCrypto.B64u(RemoteCrypto.Random(6)); asks[id] = done;
+            Seal("{\"t\":\"ask\",\"rid\":\"" + id + "\",\"k\":\"" + J(Clip(k, 16)) + "\",\"q\":\"" + J(Clip(q, 200)) + "\"}");
+            return true;
+        }
 
         Remote(Monitor m)
         {
@@ -155,6 +164,15 @@ namespace AdeeboMeter
                     });
                     return;
                 case "forget": { string id = Clip(c.S("id") ?? "", 24); bool gone = id.Length > 0 && RemotePhones.Remove(id); Seal("{\"t\":\"forgot\",\"id\":\"" + J(id) + "\",\"ok\":" + (gone ? "true" : "false") + "}"); return; }   // AM-CG-329: only the phone it names, and say whether it was here
+                // the phone's answer to an ask: rows come flat (level, name, value, advice, ...) - only text, clipped, at most 40
+                case "pres":
+                    {
+                        Action<string, List<string[]>> d; if (!asks.TryRemove(c.S("rid") ?? "", out d)) return;
+                        var f = c.A("r") ?? new List<string>(); var rows = new List<string[]>();
+                        for (int i = 0; i + 3 < f.Count && rows.Count < 40; i += 4) { string lv = f[i] == "0" || f[i] == "1" || f[i] == "2" ? f[i] : "3"; rows.Add(new[] { lv, Clip(f[i + 1], 80), Clip(f[i + 2], 300), Clip(f[i + 3], 300), "i" }); }
+                        try { d(Clip(c.S("head") ?? "", 160), rows); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote ask: " + e.Message); }
+                        return;
+                    }
                 case "bye": End("the phone ended the session"); return;
             }
         }
@@ -305,6 +323,7 @@ namespace AdeeboMeter
             try { if (ws.State == WebSocketState.Open) ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None).Wait(2000); } catch (AggregateException) { } catch (ObjectDisposedException) { } catch (InvalidOperationException) { }
             try { cts.Cancel(); } catch (ObjectDisposedException) { }
             try { ws.Dispose(); } catch (ObjectDisposedException) { }
+            foreach (var key in asks.Keys.ToList()) { Action<string, List<string[]>> d; if (asks.TryRemove(key, out d)) try { d(null, null); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }
             FilesEnd(); tx = rx = null; if (mine != null) { mine.Dispose(); mine = null; }
             if (Now == this) Now = null;
             Note();

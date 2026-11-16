@@ -25,7 +25,7 @@ namespace AdeeboMeter
             new[] { "cert", "Is the padlock OK?", "CERTIFICATES & HTTPS", "https|chain|certfile" },
             new[] { "win", "Windows", "WINDOWS", "winev|certs|fw" },
             new[] { "lab", "Build test traffic", "BUILD A PACKET|TEST A COLLECTOR|LOAD & QUEUES", "icmpb|udpsend|iperf" },
-            new[] { "pc", "Is it this PC?", "THE PC", "usb|winupdate|drivers" },
+            new[] { "pc", "Is it this PC?", "THE PC|THIS PC AND YOUR PHONE", "phonevs|usb|winupdate" },
             new[] { "hw", "Hardware nerds", "HARDWARE NERDS", "feltslow|hwmap|diskspeed" },   // the PC's own checks: on no other card
             new[] { "calc", "Work it out", "NETWORK MATHS|WIRELESS MATHS|SERVERS & IT MATHS|STREAMING & HOME MATHS|VOICE & TDM MATHS|MONEY & MARKETS MATHS|COMMODITY MATHS|GAMING MATHS", "subnet|plan|stream" },   // pure arithmetic, nothing sent
             new[] { "game", "Is it my game?", "GAMING", "prematch|gpn|tonight" },

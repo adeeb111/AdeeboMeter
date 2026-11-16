@@ -1327,3 +1327,25 @@ in: i7, 16GB, 512GB SSD
 3|Fix 1|Close Microsoft Edge (38 processes; one per tab) - frees about 3.7 GB, memory drops to ≈ 70% and the paging stops||i
 3|Fix 2|Close Photoshop - frees about 1.2 GB, memory drops to ≈ 86%||i
 3|Fix 3|Restart (it's been 23 days) - clears leaks and half-finished updates||i
+
+== phonevs
+2|Verdict|This PC is slower than your phone|Your phone on mobile data is faster than the home connection right now - the home line or Wi-Fi is the slow part.|i
+3|This PC|180 ms to Cloudflare, spread 240 ms|7 small web requests, like the phone's.|i
+3|Your phone|42 ms to Cloudflare, spread 18 ms|On mobile data · Example Mobile|i
+0|Phone - Delay to the internet|42 ms to Cloudflare YYZ||i
+0|Phone - Request-time spread|18 ms between fastest and slowest of 6||i
+
+== phonedown
+in: example.com
+2|Verdict|Only this PC can't reach it|It's this PC: a proxy, VPN, firewall, the hosts file or its DNS. Try Hosts file and Which proxy does this URL use?|i
+2|This PC|couldn't reach it (Timeout)||i
+0|Your phone|Up from this phone (64 ms)||i
+0|Phone - Reached it|5 of 5 tries||i
+3|Phone - Phone connected over|mobile data||i
+
+== phoneweek
+3|Your phone's week|12 checks in 7 days · typical 38 ms|From the checks run on the phone, kept on the phone only. Shown here, not saved.|i
+0|Mon|35 ms · 3 checks||i
+2|Wed|160 ms · 2 checks|a check found real trouble|i
+0|Sat|31 ms · 4 checks||i
+3|Best time|around 9 am|slowest around 8 pm|i
