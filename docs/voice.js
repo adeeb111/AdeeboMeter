@@ -76,6 +76,10 @@
     // today's companion (Surprise me), for the home page: [id, name]
     today: function () { return index().then(function () { var id = who(); return [id, nameOf(id), !!(mine && mine !== "surprise")]; }); },
     face: function (el, look) { if (el) el.innerHTML = faceSvg(look || lookNow(), +el.getAttribute("data-size") || 44); },
+    // for the phone app's companion sheet: the list of voices, what's chosen now, and how much it talks
+    voices: function () { return index(); },
+    state: function () { return { mine: mine, chat: chat, call: call, pc: pc }; },
+    talk: function (c) { if (["face", "quiet", "normal", "chatty"].indexOf(c) >= 0) { chat = c; save(); fire(); } },
     set: function (id) { mine = id || null; save(); load().then(fire); },
     follow: function (id) { if (!id || id === pc) return; pc = id; load().then(fire); },   // the PC's voice, unless you picked one here
     onchange: function (f) { fns.push(f); },

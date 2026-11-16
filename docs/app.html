@@ -154,6 +154,41 @@ img.logo{width:34px;height:34px;flex:none;display:block}
 #wframe{flex:1;width:100%;border:0;background:var(--bg)}
 body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{display:none}}
 @media (min-width:768px){#web{left:224px;bottom:0}}
+/* views (v4): the View chip and companion button, one result per view, game and service cards, quick buttons, activity, sheets */
+.vrow{display:flex;gap:8px;align-items:center;margin:0 0 12px}
+.vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:left}
+.vchip small{color:var(--sub);font-weight:600;font-size:14px;margin-right:auto}.vchip b{white-space:nowrap}
+.cbtn{width:46px;height:46px;flex:none;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;display:grid;place-items:center;cursor:pointer;padding:0}.cbtn svg{width:30px!important;height:30px!important}
+.say2{display:flex;gap:8px;align-items:flex-end;margin:0 2px 12px}.say2>span:last-child{background:var(--card2);border-radius:14px 14px 14px 4px;padding:8px 12px;font-style:italic;color:var(--sub);font-size:14px;line-height:1.35}.say2>span:first-child svg{width:32px!important;height:32px!important}
+.vcard{padding:14px 16px}.vh{font-size:22px;font-weight:800;line-height:1.15;margin:3px 0 2px}.vbig{font-size:32px;font-weight:800;line-height:1.1;margin:2px 0}.vbig small,.big3 b small{font-size:14px;color:var(--sub);font-weight:600}
+.tag2{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--sub)}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 0}.big3>div{background:var(--well);border:1px solid var(--edge);border-radius:12px;padding:8px;text-align:center}.big3>div>small{display:block;font-size:12px;color:var(--sub)}.big3 b{font-size:20px}
+.fine{color:var(--sub);font-size:12px;margin:10px 2px 0;line-height:1.4}.fineh{color:var(--sub);font-size:12px}
+.hrow{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 8px}.hrow b{font-size:17px}
+.lnk{background:none;border:0;color:var(--blue);font:inherit;font-weight:700;font-size:14px;cursor:pointer;padding:0}
+.gscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 12px;padding:2px 16px}.gscroll::-webkit-scrollbar{display:none}
+.gcard{flex:none;width:126px;background:var(--card);border:1.5px solid var(--edge);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.gcard.on{border-color:var(--blue)}.gcard .gtop{height:50px;margin:-10px -10px 8px;background:linear-gradient(135deg,color-mix(in srgb,var(--g) 85%,#000),color-mix(in srgb,var(--g) 45%,#0B1426));display:grid;place-items:center;color:#fff}
+.gcard b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gcard small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gst{margin-top:6px;align-self:flex-start;font-size:12px;font-weight:800;border-radius:7px;padding:2px 8px}.gst.ok{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}.gst.warn{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}.gst.bad{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.gst.off{background:var(--card2);color:var(--sub)}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 4px}.sgrid .gcard{width:auto;cursor:default}.sgrid .gcard .gtop{height:38px}
+.bars{display:grid;gap:8px;margin-top:12px}.bars>div{display:grid;grid-template-columns:96px 1fr 34px;gap:8px;align-items:center;font-size:13px;color:var(--sub)}.bars i{height:8px;border-radius:9px;background:var(--card2);position:relative;overflow:hidden}.bars i:after{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--c);border-radius:9px}.bars b{color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.vdot{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}.vdot.sm{width:28px;height:28px}.vdot.ok{background:var(--green)}.vdot.warn{background:var(--amber);color:#1a1100}.vdot.bad{background:var(--red)}.vdot.off{background:var(--card2);color:var(--sub)}
+.qa2{background:var(--card);box-shadow:0 0 0 1px var(--edge);border-radius:18px;padding:10px 8px 8px;margin:14px 0}
+.qh{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--mut);padding:0 8px}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px 0 6px}.qa button{background:none;border:0;color:var(--sub);font:inherit;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:4px 0;min-height:64px}
+.ic.qc{width:40px;height:40px;border-radius:12px}.qa.pc .qc{opacity:.55}
+.dim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:86vh;overflow:auto;background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -1px 0 var(--edge);padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--edge);margin:0 auto 12px}.sheet h3{font-size:20px;margin:0 0 4px}
+.vopt{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:1px solid var(--edge);background:none;width:100%;color:var(--ink);font:inherit;text-align:left;cursor:pointer}.vopt:first-of-type{border-top:0}
+.vopt .tx{flex:1;min-width:0}.vopt .tx b{display:block}.vopt .tx span{color:var(--sub);font-size:13px}.vopt .ic{width:40px;height:40px;border-radius:12px}
+.tick{width:24px;height:24px;border-radius:50%;border:2px solid var(--edge);display:grid;place-items:center;flex:none}.tick.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.voices{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:8px;margin:8px -18px 4px;padding:2px 18px;overflow-x:auto;scrollbar-width:none;justify-content:start}.voices::-webkit-scrollbar{display:none}
+.voices button,.mini button{border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mini button{border-radius:10px;padding:9px 0}
+@media (min-width:768px){.sheet{left:auto;right:24px;bottom:24px;width:420px;border-radius:22px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
@@ -219,7 +254,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>', send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>', walk: '<circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 6-8 12-8 12S4 16 4 10a8 8 0 018-8z"/>', book: '<path d="M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2z"/><path d="M22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/>', chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 6l-6 6 6 6"/>',
     play: '<path d="M7 4l13 8-13 8z" fill="currentColor"/>', stop: '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>', refresh: '<path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/>', up: '<path d="M12 19V5M5 12l7-7 7 7"/>', down: '<path d="M12 5v14M5 12l7 7 7-7"/>', cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', mem: '<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 11v2M10 11v2M14 11v2M18 11v2"/>', disk: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>', list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', file: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>', lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>', game: '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/>', chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', smile: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>', map: '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>',
-    tv: '<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/>', printer: '<path d="M6 9V2h12v7"/><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M6 14h12v8H6z"/>', phone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>', router: '<rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 17h.01M10 17h.01M12 13V8M8 6a6 6 0 018 0"/>', bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V16h8v-1.3A7 7 0 0012 2z"/>', spk: '<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M12 6h.01"/>', help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>', report: '<path d="M9 2h6l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M9 13l2 2 4-4"/>', clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>', signal: '<path d="M4 20v-3M9 20v-7M14 20v-11M19 20V4"/>', share: '<path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/>', download: '<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>' };
+    tv: '<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/>', printer: '<path d="M6 9V2h12v7"/><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M6 14h12v8H6z"/>', phone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>', router: '<rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 17h.01M10 17h.01M12 13V8M8 6a6 6 0 018 0"/>', bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V16h8v-1.3A7 7 0 0012 2z"/>', spk: '<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M12 6h.01"/>', help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>', report: '<path d="M9 2h6l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M9 13l2 2 4-4"/>', clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>', signal: '<path d="M4 20v-3M9 20v-7M14 20v-11M19 20V4"/>', share: '<path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/>', download: '<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>', headset: '<path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>', clock: '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', bang: '<path d="M12 6v8M12 18h.01"/>', cdown: '<path d="M6 9l6 6 6-6"/>' };
   function ic(n, s) { return '<svg class="i" viewBox="0 0 24 24" style="width:' + (s || 24) + 'px;height:' + (s || 24) + 'px" aria-hidden="true">' + (I[n] || I.help) + '</svg>'; }
   function where(w) { return w === "pc" ? '<span class="where">' + ic("pc", 12) + ' ON YOUR PC</span>' : w === "off" ? '<span class="where off">OFFLINE</span>' : '<span class="where ph">' + ic("phone", 12) + ' ON THIS PHONE</span>'; }
   function hdr(title, sub, backTo) { return '<header>' + (backTo ? '<button class="ibtn back" data-go="' + backTo + '" aria-label="Back">' + ic("back", 26) + '</button>' : '') + '<div class="t"><h1>' + title + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (backTo ? '' : '<button class="ibtn" data-go="settings" aria-label="Settings">' + ic("gear", 22) + '</button>') + '</header>'; }
@@ -490,7 +525,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   // to the nearest Cloudflare site, the time to look up a name, and on Android whether it's Wi-Fi or mobile data
   var phoneBusy = false, phoneP = null;
   // a fetch that gives up (AM-CG-352)
-  function tfetch(u, ms) { var c = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (c) c.abort(); }, ms || 8000); return fetch(u, c ? { cache: "no-store", signal: c.signal } : { cache: "no-store" }).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; }); }
+  function tfetch(u, ms, nocors) { var c = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (c) c.abort(); }, ms || 8000), o = { cache: "no-store" }; if (c) o.signal = c.signal; if (nocors) { o.mode = "no-cors"; o.credentials = "omit"; o.referrerPolicy = "no-referrer"; } return fetch(u, o).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; }); }
   // one measurement at a time: a second caller waits for the same one (AM-CG-351); failed answers never count as samples (AM-CG-326/327)
   function phoneCheck() {
     if (phoneP) return phoneP; phoneBusy = true; draw();
@@ -512,7 +547,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
       var c = navigator.connection; if (c) { r.type = c.type || ""; r.eff = c.effectiveType || ""; }
       var v = r.t.slice().sort(function (a, b) { return a - b; }); r.med = v.length ? v[Math.floor(v.length / 2)] : null; r.jit = v.length > 1 ? v[v.length - 1] - v[0] : null;
       return r;
-    })().then(function (r) { me = r; phoneBusy = false; phoneP = null; draw(); return r; });
+    })().then(function (r) { me = r; phoneBusy = false; phoneP = null; var l = r.err ? 2 : Math.max(0, worst(phoneRows(r))); addAct("everyday", r.err ? "This phone couldn't reach the internet" : "This phone checked", r.err ? "" : Math.round(r.med) + " ms, spread " + Math.round(r.jit) + " ms" + (r.type === "wifi" ? " · Wi-Fi" : r.type === "cellular" ? " · mobile data" : ""), l); draw(); return r; });
     return phoneP;
   }
   function phoneRows(r) {
@@ -597,6 +632,154 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   }
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
+  // ---------------------------------------------------------------- Views: what this phone is for (the PC asks the same on its first run)
+  // Each view gives Home the same shape - one result that says what was measured, from which device and when; one main
+  // action; the quick buttons; and today's activity. Everything here is measured from this phone - no PC needed - and
+  // kept on this phone for the day only. Timings are the delay of small web requests (no speed test): honest about that.
+  var VIEWDEF = [["everyday", "home", "Everyday", "Is it me or the network? The light version"], ["gaming", "game", "Gaming", "Delay to your game's server regions"], ["calls", "headset", "Work calls", "Delay to Teams, Zoom and Meet"],
+    ["stream", "play", "Streaming", "Delay to the video services you use"], ["trade", "chart", "Trading", "Market hours and the day's numbers"], ["fix", "tools", "Troubleshooting", "Every tool, every detail"]];
+  function vdef(k) { for (var i = 0; i < VIEWDEF.length; i++) if (VIEWDEF[i][0] === k) return VIEWDEF[i]; return VIEWDEF[0]; }
+  // the cloud regions next to the game servers - the same estimate the PC uses when a game has no server list of its own
+  var REG = [["NA East", "Virginia", "us-east-1"], ["NA Central", "Ohio", "us-east-2"], ["NA West", "Oregon", "us-west-2"], ["Europe", "Frankfurt", "eu-central-1"], ["Europe West", "London", "eu-west-2"], ["Brazil", "São Paulo", "sa-east-1"],
+    ["Asia", "Tokyo", "ap-northeast-1"], ["Southeast Asia", "Singapore", "ap-southeast-1"], ["India", "Mumbai", "ap-south-1"], ["Oceania", "Sydney", "ap-southeast-2"], ["Middle East", "Bahrain", "me-south-1"]];
+  var GAMES = [["valorant", "Valorant", "#E5484D"], ["fortnite", "Fortnite", "#8250DF"], ["league", "League of Legends", "#1F6FEB"], ["cs2", "Counter-Strike 2", "#D29922", 1], ["roblox", "Roblox", "#64748B"], ["apex", "Apex Legends", "#C2410C"],
+    ["overwatch", "Overwatch 2", "#E3A008"], ["cod", "Call of Duty", "#4B5563"], ["rocketleague", "Rocket League", "#0EA5E9"], ["dota2", "Dota 2", "#B42318", 1], ["gtaonline", "GTA Online", "#2DA44E"], ["marvelrivals", "Marvel Rivals", "#9333EA"]];
+  var SVC = [["netflix", "Netflix", "#B42318", "https://www.netflix.com/"], ["youtube", "YouTube", "#DC2626", "https://www.youtube.com/"], ["prime", "Prime Video", "#0EA5E9", "https://www.primevideo.com/"], ["disney", "Disney+", "#1F6FEB", "https://www.disneyplus.com/"],
+    ["twitch", "Twitch", "#9146FF", "https://www.twitch.tv/"], ["crave", "Crave", "#2563EB", "https://www.crave.ca/"], ["apple", "Apple TV+", "#4B5563", "https://tv.apple.com/"], ["spotify", "Spotify", "#2DA44E", "https://open.spotify.com/"]];
+  var CALL = [["teams", "Microsoft Teams", "#5B5FC7", "https://teams.microsoft.com/"], ["zoom", "Zoom", "#2D8CFF", "https://zoom.us/"], ["meet", "Google Meet", "#00897B", "https://meet.google.com/"], ["webex", "Webex", "#0E7C3A", "https://www.webex.com/"], ["slack", "Slack huddles", "#7C3AED", "https://app.slack.com/"]];
+  function pick(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
+  function lst(k, d) { var v = rd(k); return v ? v.split(",").filter(Boolean) : d; }
+  S.view = rd("am-view") || ""; S.sheet = ""; S.game = rd("am-game") || "valorant";
+  var myGames = lst("am-games", ["valorant", "fortnite", "league", "roblox"]), mySvc = lst("am-svc", ["netflix", "youtube", "prime", "disney", "twitch", "crave"]), myCalls = lst("am-calls", ["teams", "zoom", "meet"]);
+  if (myGames.indexOf(S.game) < 0) S.game = myGames[0] || "valorant";
+
+  // the day's readings and activity, on this phone only; a new day starts empty (AM: "we're just a passthrough")
+  function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  var DAY = (function () { try { var j = JSON.parse(rd("am-day") || "null"); if (j && j.d === today()) return j; } catch (e) {} return { d: today(), act: [], game: {}, svc: {}, call: {}, trade: null }; })();
+  function keepDay() { if (DAY.d !== today()) DAY = { d: today(), act: [], game: {}, svc: {}, call: {}, trade: null }; try { localStorage.setItem("am-day", JSON.stringify(DAY)); } catch (e) {} }
+  function addAct(view, title, sub, lv) { if (DAY.d !== today()) keepDay(); DAY.act.unshift({ t: Date.now(), v: view, h: title, s: sub || "", l: lv }); DAY.act = DAY.act.slice(0, 30); keepDay(); }
+  function hm(t) { var d = new Date(t); return d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2); }
+
+  // time a few small requests to one place: the first one (name lookup, secure handshake) is left out
+  async function timeHost(url, n) {
+    var t = [], fail = 0;
+    for (var i = 0; i <= n; i++) { var s0 = performance.now(); try { await tfetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "am=" + Date.now() + i, 5000, true); if (i) t.push(performance.now() - s0); } catch (e) { if (i) fail++; } }
+    t.sort(function (a, b) { return a - b; });
+    return { med: t.length ? Math.round(t[Math.floor(t.length / 2)]) : null, jit: t.length > 1 ? Math.round(t[t.length - 1] - t[0]) : null, n: t.length, fail: fail, at: Date.now() };
+  }
+  function lvOf(r, good, ok) { return !r || r.med == null ? 3 : r.med < good && (r.jit == null || r.jit < 30) ? 0 : r.med < ok && (r.jit == null || r.jit < 80) ? 1 : 2; }
+  var measuring = "";
+  async function measure(kind) {
+    if (measuring) return; measuring = kind; draw();
+    try {
+      if (kind === "game") {
+        var g = pick(GAMES, S.game) || GAMES[0], out = await Promise.all(REG.map(function (r) { return timeHost("https://dynamodb." + r[2] + ".amazonaws.com/", 4).then(function (x) { x.r = r; return x; }); }));
+        out.sort(function (a, b) { return (a.med == null ? 1e9 : a.med) - (b.med == null ? 1e9 : b.med); });
+        DAY.game[g[0]] = { at: Date.now(), regs: out.map(function (x) { return [x.r[0], x.r[1], x.med, x.jit, x.n]; }) };
+        var b = out[0]; addAct("gaming", g[1] + ": lowest delay " + (b.med != null ? b.med + " ms" : "not measured"), b.med != null ? b.r[0] + " · spread " + b.jit + " ms" : "No region answered", lvOf(b, 60, 120));
+      } else if (kind === "svc" || kind === "call") {
+        var L = kind === "svc" ? SVC.filter(function (x) { return mySvc.indexOf(x[0]) >= 0; }) : CALL.filter(function (x) { return myCalls.indexOf(x[0]) >= 0; });
+        var res = await Promise.all(L.map(function (x) { return timeHost(x[3], 5); }));
+        var store = kind === "svc" ? DAY.svc : DAY.call, good = 0, bad = [];
+        L.forEach(function (x, i) { store[x[0]] = res[i]; var l = lvOf(res[i], kind === "svc" ? 80 : 100, 200); if (l === 0) good++; else bad.push(x[1]); });
+        addAct(kind === "svc" ? "stream" : "calls", (kind === "svc" ? "Streaming: " : "Calls: ") + good + " of " + L.length + " low, steady delay", bad.length ? bad.join(", ") + (bad.length > 1 ? " were" : " was") + " slower or jumpy" : "All steady", good === L.length ? 0 : good ? 1 : 2);
+      } else if (kind === "trade") {
+        var rs = await Promise.all([timeHost("https://dynamodb.ca-central-1.amazonaws.com/", 4), timeHost("https://dynamodb.us-east-1.amazonaws.com/", 4)]);
+        var all = null; try { var res2 = await tfetch(LIVE + "/all", 8000); if (res2.ok) all = await res2.json(); } catch (e) {}
+        DAY.trade = { at: Date.now(), ca: rs[0], us: rs[1], m: all && all.markets || (DAY.trade && DAY.trade.m) || null };
+        addAct("trade", "Line to the markets", "Canada " + (rs[0].med != null ? rs[0].med + " ms" : "–") + " · US East " + (rs[1].med != null ? rs[1].med + " ms" : "–"), Math.max(lvOf(rs[0], 60, 120), lvOf(rs[1], 60, 120)));
+      }
+    } catch (e) {}
+    keepDay(); measuring = ""; draw();
+  }
+
+  // ---- pieces of Home
+  function vrow() { var v = vdef(S.view); return '<div class="vrow"><button class="vchip" data-act="sheet" data-s="view">' + ic(v[1], 20) + '<small>View</small><b>' + v[2] + '</b>' + ic("cdown", 18) + '</button><button class="cbtn" data-act="sheet" data-s="comp" aria-label="Change the companion">' + faceHtml("happy") + '</button></div>'; }
+  function meta(r, who) { return (who || "This phone") + (r && r.at ? " · " + hm(r.at) : "") + (r && r.n ? " · " + r.n + " tries" : ""); }
+  function ms(v) { return v == null ? "–" : v + '<small> ms</small>'; }
+  function verdictEveryday() {
+    if (!me) { if (!phoneBusy) setTimeout(function () { if (!me && !phoneBusy) phoneCheck(); }, 50); return '<div class="card vcard"><div class="tag2">THIS PHONE</div><div class="vh">Measuring...</div><div style="color:var(--sub)">A few seconds.</div></div>'; }
+    var lv = worst(phoneRows(me)), ty = me.type === "cellular" ? "MOBILE DATA" : me.type === "wifi" ? "WI-FI" : "";
+    return '<div class="card vcard"><div class="tag2">THIS PHONE' + (ty ? " · " + ty : "") + (me.org ? " · " + esc(me.org.toUpperCase()) : "") + ' · ' + hm(me.at) + '</div><div class="vh">' + (me.err ? "Couldn't reach the internet" : lv <= 0 ? "Low, steady delay" : lv === 1 ? "A bit slow or uneven" : "Slow or uneven") + '</div>' +
+      (me.err ? '<div style="color:var(--sub)">' + esc(phoneRows(me)[0][3]) + '</div>' : '<div class="big3"><div><small>Delay</small><b>' + ms(Math.round(me.med)) + '</b></div><div><small>Spread</small><b>' + ms(Math.round(me.jit)) + '</b></div><div><small>IPv6</small><b>' + (me.v6 == null ? "–" : me.v6 ? "Yes" : "No") + '</b></div></div>') + '</div>' +
+      '<button class="btn" data-act="phone2"' + (phoneBusy ? " disabled" : "") + '>' + ic("refresh", 18) + (phoneBusy ? " Measuring..." : " Check this phone again") + '</button>';
+  }
+  function gameCards() {
+    return '<div class="hrow"><b>Your games</b><button class="lnk" data-act="sheet" data-s="games">Edit</button></div><div class="gscroll">' + myGames.map(function (id) {
+      var g = pick(GAMES, id); if (!g) return ""; var r = DAY.game[id], b = r && r.regs[0], l = b ? lvOf({ med: b[2], jit: b[3] }, 60, 120) : -1;
+      return '<button class="gcard' + (id === S.game ? " on" : "") + '" style="--g:' + g[2] + '" data-game="' + id + '"><span class="gtop">' + ic("game", 22) + '</span><b>' + esc(g[1]) + '</b><small>' + (b ? esc(b[0]) : g[3] ? "Region estimate" : "Not checked today") + '</small>' + (b && b[2] != null ? '<span class="gst ' + (l === 0 ? "ok" : l === 1 ? "warn" : "bad") + '">' + (l === 0 ? "✓ " : "! ") + b[2] + ' ms</span>' : '<span class="gst off">Tap to check</span>') + '</button>';
+    }).join("") + '</div>';
+  }
+  function verdictGaming() {
+    var g = pick(GAMES, S.game) || GAMES[0], r = DAY.game[g[0]], a = gameCards();
+    if (!r) a += '<div class="card vcard"><div class="tag2">' + esc(g[1].toUpperCase()) + '</div><div class="vh">Not checked yet today</div><div style="color:var(--sub);font-size:14px">Times ' + REG.length + ' server regions from this phone - about 10 seconds.</div></div>';
+    else {
+      var b = r.regs[0], l = lvOf({ med: b[2], jit: b[3] }, 60, 120), mx = Math.max.apply(null, r.regs.slice(0, 4).map(function (x) { return x[2] || 0; }).concat([1]));
+      a += '<div class="card vcard"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="tag2">' + esc(g[1].toUpperCase()) + ' · LOWEST MEASURED DELAY</div><div class="vbig">' + ms(b[2]) + '</div><div style="color:var(--sub);font-size:13px">' + esc(b[0] + " · " + b[1]) + ' · spread ' + b[3] + ' ms · this phone · ' + hm(r.at) + '</div></div><span class="badge' + (l === 0 ? "" : l === 1 ? " warn" : " bad") + '">' + (l === 0 ? "✓ Low delay" : l === 1 ? "! Some delay" : "! High delay") + '</span></div>' +
+        '<div class="bars">' + r.regs.slice(0, 4).map(function (x) { var ll = lvOf({ med: x[2], jit: x[3] }, 60, 120); return '<div><span>' + esc(x[0]) + '</span><i style="--w:' + Math.round(100 * (x[2] || mx) / (mx * 1.15)) + '%;--c:var(' + (ll === 0 ? "--green" : ll === 1 ? "--amber" : "--red") + ')"></i><b>' + (x[2] == null ? "–" : x[2]) + '</b></div>'; }).join("") + '</div>' +
+        (g[3] ? '<p class="fine">' + esc(g[1]) + ' uses its own relays, which a browser can\'t reach - these are the nearby cloud regions.</p>' : '<p class="fine">To the cloud region next to the servers - an estimate. Real game ping and whose lag it is: on your PC.</p>') + '</div>';
+    }
+    return a + '<div class="btns"><button class="btn" data-act="measure" data-k="game"' + (measuring ? " disabled" : "") + '>' + ic("game", 18) + (measuring === "game" ? " Checking..." : " Check now") + '</button><button class="btn ghost" data-go="walk">' + ic("walk", 18) + ' Wi-Fi walk</button></div>';
+  }
+  function svcCards(list, store, kind) {
+    var good = 0, done = 0, at = 0;
+    var cards = list.map(function (x) { var r = store[x[0]], l = r ? lvOf(r, kind === "svc" ? 80 : 100, 200) : -1; if (r) { done++; at = Math.max(at, r.at); if (l === 0) good++; }
+      return '<div class="gcard sv" style="--g:' + x[2] + '"><span class="gtop">' + ic(kind === "svc" ? "play" : "headset", 20) + '</span><b>' + esc(x[1]) + '</b><small>' + (r ? (r.med == null ? "didn't answer" : r.med + " ms · " + (r.jit < 30 ? "steady" : "jumpy")) : "not checked today") + '</small>' + (r ? '<span class="gst ' + (l === 0 ? "ok" : l === 1 ? "warn" : "bad") + '">' + (l === 0 ? "✓ Steady" : r.med == null ? "! No answer" : "! Jumpy") + '</span>' : '') + '</div>'; }).join("");
+    return { cards: cards, good: good, done: done, at: at };
+  }
+  function verdictList(kind) {
+    var L = kind === "svc" ? SVC.filter(function (x) { return mySvc.indexOf(x[0]) >= 0; }) : CALL.filter(function (x) { return myCalls.indexOf(x[0]) >= 0; });
+    var c = svcCards(L, kind === "svc" ? DAY.svc : DAY.call, kind), all = c.done && c.good === c.done;
+    var a = '<div class="card vcard" style="display:flex;gap:12px;align-items:center"><span class="vdot ' + (!c.done ? "off" : all ? "ok" : c.good ? "warn" : "bad") + '">' + ic(!c.done ? "clock" : all ? "check" : "bang", 22) + '</span><div style="flex:1;min-width:0"><div class="vh" style="font-size:20px">' +
+      (!c.done ? "Not checked yet today" : c.good + " of " + c.done + ": low, steady delay") + '</div><div style="color:var(--sub);font-size:13px">' + (c.done ? "This phone · " + hm(c.at) + " · 5 tries each" : kind === "svc" ? "Delay and steadiness to each service - no speed test" : "Delay and steadiness to each service, before you join") + '</div></div></div>';
+    a += '<div class="hrow"><b>' + (kind === "svc" ? "Your services" : "Your call apps") + '</b><button class="lnk" data-act="sheet" data-s="' + kind + '">Edit</button></div><div class="sgrid">' + c.cards + '</div>';
+    a += '<p class="fine">' + (kind === "svc" ? "Steady delay helps a stream start fast and keep going; it can't promise a picture quality. Why it buffered last night: on your PC." : "Calls want under 100 ms and little spread. It times each app's front door, not a real call.") + '</p>';
+    return a + '<button class="btn" data-act="measure" data-k="' + kind + '"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === kind ? " Checking..." : " Check now") + '</button>';
+  }
+  function etNow() { var p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()), o = {}; p.forEach(function (x) { o[x.type] = x.value; }); return { d: o.weekday, m: (+o.hour) * 60 + (+o.minute) }; }
+  function verdictTrade() {
+    var n = etNow(), wk = ["Sat", "Sun"].indexOf(n.d) < 0, open = wk && n.m >= 570 && n.m < 960, left = 960 - n.m, until = 570 - n.m;
+    var st = open ? "Normally open · closes in " + (left >= 60 ? Math.floor(left / 60) + " h " : "") + left % 60 + " min" : wk && n.m < 570 ? "Opens 9:30 · in " + (until >= 60 ? Math.floor(until / 60) + " h " : "") + until % 60 + " min" : "Closed · opens 9:30 next weekday";
+    var a = '<div class="card list">' + [["Toronto (TSX)"], ["New York (NYSE, Nasdaq)"]].map(function (x) { return '<div class="row" style="cursor:default"><span class="vdot sm ' + (open ? "ok" : "warn") + '">' + ic("clock", 16) + '</span><div class="tx"><b>' + x[0] + '</b><span>' + st + '</span></div></div>'; }).join("") + '</div>';
+    var T = DAY.trade, m = T && T.m, fx = m && m.fx && m.fx.items ? m.fx.items.filter(function (i) { return i.c === "USD" || i.c === "EUR"; }) : [], ix = m && m.idx && m.idx.items ? m.idx.items.filter(function (i) { return i.c === "ENER" || i.c === "BCPI"; }) : [];
+    var NM = { USD: "US dollar", EUR: "Euro", ENER: "Energy (oil, gas)", BCPI: "All commodities" };
+    if (fx.length || ix.length) a += '<div class="hrow"><b>Today\'s numbers</b><span class="fineh">Bank of Canada</span></div><div class="card list">' + fx.concat(ix).map(function (i) { var up = i.p != null && i.v > i.p, dn = i.p != null && i.v < i.p; return '<div class="row" style="cursor:default"><div class="tx"><b>' + NM[i.c] + '</b><span>' + (i.c.length === 3 ? "1 " + i.c + " in CAD" : "index, week before → now") + '</span></div><b>' + (i.v < 10 ? i.v.toFixed(4) : i.v.toFixed(1)) + (up ? ' <span style="color:var(--green)">▲</span>' : dn ? ' <span style="color:var(--red)">▼</span>' : '') + '</b></div>'; }).join("") + '</div>';
+    if (T) a += '<div class="card vcard"><div class="tag2">YOUR LINE TO THE MARKETS · THIS PHONE · ' + hm(T.at) + '</div><div class="big3"><div><small>Canada cloud</small><b>' + ms(T.ca.med) + '</b></div><div><small>US East cloud</small><b>' + ms(T.us.med) + '</b></div><div><small>Spread</small><b>' + ms(Math.max(T.ca.jit || 0, T.us.jit || 0)) + '</b></div></div><p class="fine">Your broker\'s own line: on your PC (Trading).</p></div>';
+    return a + '<button class="btn" data-act="measure" data-k="trade"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === "trade" ? " Checking..." : T ? " Check again" : " Check my line and today's numbers") + '</button>';
+  }
+  function viewBody() { var v = S.view || "everyday"; return v === "gaming" ? verdictGaming() : v === "calls" ? verdictList("call") : v === "stream" ? verdictList("svc") : v === "trade" ? verdictTrade() : verdictEveryday() + (v === "fix" ? '<button class="btn ghost" data-go="tools">' + ic("tools", 18) + ' Every tool</button>' : ''); }
+  function quick() {
+    var on = phase === "live", q = function (go, icn, k, t, act) { return '<button ' + (act ? 'data-act="' + act + '"' : 'data-go="' + go + '"') + '><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; };
+    return '<div class="qa2"><div class="qh">ON THIS PHONE</div><div class="qa">' + q("", "report", "k-pc", "Report", "report") + q("walk", "walk", "k-walk", "Wi-Fi walk") + q("learn", "book", "k-learn", "Learn") + '<button data-web="/games.html" data-title="Games"><span class="ic qc k-games">' + ic("game", 18) + '</span>Games</button></div>' +
+      '<div class="qh">' + (on ? "YOUR PC" : 'WITH YOUR PC <button class="lnk" data-go="pair">Pair ›</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q("tools", "search", "k-tools", "Checks") + '</div></div>';
+  }
+  function actList(n) {
+    var L = DAY.d === today() ? DAY.act : [];
+    if (!L.length) return n ? '' : '<div class="card empty"><b>Nothing yet today</b><p>Checks you run show here until midnight - on this phone only.</p></div>';
+    return (n ? '<div class="hrow"><b>Activity today</b>' + (L.length > n ? '<button class="lnk" data-go="activity">See all</button>' : '') + '</div>' : '') + '<div class="card list">' + L.slice(0, n || 30).map(function (x) { return '<button class="row" data-view="' + x.v + '"><span class="vdot sm ' + (x.l === 0 ? "ok" : x.l === 1 ? "warn" : x.l === 2 ? "bad" : "off") + '">' + ic(x.l === 0 ? "check" : x.l === 3 ? "clock" : "bang", 14) + '</span><div class="tx"><b>' + esc(x.h) + '</b><span>' + esc(x.s) + '</span></div><span style="color:var(--sub);font-size:13px">' + hm(x.t) + '</span></button>'; }).join("") + '</div>';
+  }
+
+  // ---- the sheets: View, Companion, and Edit for games, services and call apps
+  var vlist = null;
+  function sheetHtml() {
+    if (!S.sheet) return "";
+    var h = '<div class="dim" data-act="closesheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>';
+    if (S.sheet === "view") h += '<h3>What do you use the internet for?</h3><p class="fine" style="margin:0 0 6px">Home shows what fits. Change it any time.</p>' + VIEWDEF.map(function (v) { var on = (S.view || "everyday") === v[0]; return '<button class="vopt" data-setview="' + v[0] + '"><span class="ic">' + ic(v[1], 20) + '</span><span class="tx"><b>' + v[2] + '</b><span>' + v[3] + '</span></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
+    else if (S.sheet === "comp") {
+      var st = window.AMV && AMV.state ? AMV.state() : { mine: null, chat: "normal" };
+      if (!vlist && window.AMV && AMV.voices) AMV.voices().then(function (j) { vlist = j; if (S.sheet === "comp") draw(); });
+      var vs = [["", "Surprise me"], ["plain", "Plain"]].concat(vlist ? vlist.moods.filter(function (m) { return m[0] !== "plain"; }).concat(vlist.personas) : []);
+      h += '<h3>Your companion</h3><div class="voices">' + vs.map(function (v) { var on = (st.mine || "") === v[0]; return '<button class="' + (on ? "on" : "") + '" data-voice="' + v[0] + '">' + esc(v[1]) + '</button>'; }).join("") + '</div>' +
+        '<div class="tag2" style="margin:12px 0 6px">HOW MUCH IT TALKS</div><div class="mini">' + [["face", "Face only"], ["quiet", "Quiet"], ["normal", "Normal"], ["chatty", "Chatty"]].map(function (c) { return '<button class="' + (st.chat === c[0] ? "on" : "") + '" data-talk="' + c[0] + '">' + c[1] + '</button>'; }).join("") + '</div>' +
+        '<div class="tag2" style="margin:14px 0 6px">SOUNDS LIKE</div>' + bubble(V("app.open") || "(the face only - no words)") + '<p class="fine"><button class="lnk" data-go="companion">What it calls you, and more ›</button></p>';
+    } else {
+      var L = S.sheet === "games" ? GAMES : S.sheet === "svc" ? SVC : CALL, mine = S.sheet === "games" ? myGames : S.sheet === "svc" ? mySvc : myCalls;
+      h += '<h3>' + (S.sheet === "games" ? "Your games" : S.sheet === "svc" ? "Your services" : "Your call apps") + '</h3><p class="fine" style="margin:0 0 6px">Pick the ones you use. Kept on this phone.</p>' + L.map(function (x) { var on = mine.indexOf(x[0]) >= 0; return '<button class="vopt" data-pickone="' + x[0] + '"><span class="ic" style="--k:' + x[2] + '">' + ic(S.sheet === "games" ? "game" : S.sheet === "svc" ? "play" : "headset", 18) + '</span><span class="tx"><b>' + esc(x[1]) + '</b></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
+    }
+    return h + '<button class="btn" data-act="closesheet" style="margin-top:12px">Done</button></div>';
+  }
+  function bubble(t) { return '<div class="say2">' + faceHtml("happy") + '<span>' + esc(t || "") + '</span></div>'; }
+
   // ---------------------------------------------------------------- Home
   function hero() {
     var rec = recLoad();
@@ -616,18 +799,18 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   function say() {
     var L = live || {}, look = phase === "live" && !isLive() || phase === "ended" && liveAt ? "worried" : isLive() && L.lv === 2 ? "worried" : isLive() && L.lv === 1 ? "thinking" : isLive() ? "happy" : undefined;
     var h = new Date().getHours(), line = isLive() && L.head ? L.head : V(h >= 5 && h < 11 ? "morning" : h >= 23 || h < 5 ? "late.night" : "app.open");
-    return '<div style="display:flex;gap:10px;align-items:center;margin:-2px 2px 14px;min-height:40px">' + faceHtml(look) + '<div style="font-weight:600">' + esc(line || "") + '</div></div>';
+    if (!line) return "";
+    return '<div class="say2">' + faceHtml(look) + '<span>' + esc(line) + '</span></div>';
   }
   var VIEWS = {};
+  VIEWS.activity = function () { return hdr("Activity today", "On this phone only - it starts fresh each day", "home") + actList(0); };
   VIEWS.home = function () {
-    var a = hdr("AdeeboMeter", "Your network, devices and PC - in your pocket").replace('<div class="t">', wide() ? '<div class="t">' : '<img class="logo" src="/img/logo.svg" alt="" width="40" height="40" style="width:40px;height:40px"><div class="t">') + (wide() ? '<div class="two"><div>' : '');
-    a += hero() + say() + installCard(true);
-    a += '<div class="grid">' + tile("devices", "wifi", "k-dev", "Devices", "Who's on my network") + tile("pc", "pc", "k-pc", "My PC", "Status, Wi-Fi and checks") + tile("tools", "tools", "k-tools", "Tools", "Fix a problem, or pick a check") + tile("send", "send", "k-send", "Send", "Files, text and clipboard") + tile("walk", "walk", "k-walk", "Walk", "Room-by-room Wi-Fi") + tile("learn", "book", "k-learn", "Learn", "Quick lessons, offline", "/learn/") + '</div>';
-    a += '<button class="btn" data-act="report" style="margin:0 0 14px">' + ic("report", 20) + ' One-tap report</button>';
-    if (wide()) { a += '</div><div>' + glance(); if (devs) a += '<h2>Devices <span data-go="devices" style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--blue);cursor:pointer">See all</span></h2><div class="card list">' + devs.slice(0, 5).map(devRow).join("") + '</div>'; if (results[0]) a += '<h2>Last result</h2>' + resultCard(results[0]); a += '</div></div>'; }
-    else a += glance();
-    return a;
+    var a = hdr("AdeeboMeter", "").replace('<div class="t">', wide() ? '<div class="t">' : '<img class="logo" src="/img/logo.svg" alt="" width="36" height="36" style="width:36px;height:36px"><div class="t">');
+    var pcCard = phase !== "none" || recLoad() ? hero() : "";
+    if (wide()) return a + '<div class="two"><div>' + vrow() + say() + pcCard + viewBody() + '</div><div>' + quick() + actList(4) + (phase === "live" ? glance() : "") + installCard(true) + '</div></div>';
+    return a + vrow() + say() + pcCard + viewBody() + quick() + actList(3) + (phase === "live" ? glance() : "") + installCard(true);
   };
+
 
   // ---------------------------------------------------------------- Devices (list, map, one device)
   function devRow(d, i) { i = devs.indexOf(d); return '<button class="row' + (wide() && i === S.dev ? ' sel' : '') + '" data-dev="' + i + '"><span class="ic k-dev">' + ic(d.k, 22) + '</span><div class="tx"><b>' + (d.w ? '★ ' : '') + esc(d.n) + '</b><span>' + esc(d.what || (d.here ? "here now" : d.seen)) + (S.mode !== "everyday" ? ' · ' + esc(d.ip) : '') + '</span></div><span class="badge' + (!d.here ? ' off' : d.quiet ? ' warn' : '') + '">' + (!d.here ? 'away' : d.ms != null ? d.ms + ' ms' : 'quiet') + '</span></button>'; }
@@ -817,7 +1000,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     document.documentElement.setAttribute("data-theme", th); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
-    $("app").innerHTML = S.tab === "web" ? "" : f(); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
+    $("app").innerHTML = S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : ""); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab;
     var tb = $("tabs");
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
@@ -831,9 +1014,15 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
 
   document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
+    if (A("data-setview")) { S.view = A("data-setview"); wr("am-view", S.view); S.sheet = ""; S.tab = "home"; draw(); window.scrollTo(0, 0); return; }
+    if (A("data-voice") != null && window.AMV) { AMV.set(A("data-voice")); setTimeout(draw, 300); return; }
+    if (A("data-talk") && window.AMV && AMV.talk) { AMV.talk(A("data-talk")); draw(); return; }
+    if (A("data-pickone")) { var id = A("data-pickone"), L = S.sheet === "games" ? myGames : S.sheet === "svc" ? mySvc : myCalls, k = L.indexOf(id); if (k >= 0) { if (L.length > 1) L.splice(k, 1); } else L.push(id); wr(S.sheet === "games" ? "am-games" : S.sheet === "svc" ? "am-svc" : "am-calls", L.join(",")); if (S.sheet === "games" && myGames.indexOf(S.game) < 0) { S.game = myGames[0]; wr("am-game", S.game); } draw(); return; }
+    if (A("data-game")) { S.game = A("data-game"); wr("am-game", S.game); if (!DAY.game[S.game]) measure("game"); else draw(); return; }
+    if (A("data-view")) { var vv = A("data-view"); if (vv) { S.view = vv; wr("am-view", vv); } S.tab = "home"; draw(); window.scrollTo(0, 0); return; }
     if (A("data-web")) { openWeb(A("data-web"), A("data-title") || ""); return; }
     if (A("data-go") != null && A("data-go") !== "") { var pt = A("data-pctab"); go(A("data-go")); if (pt) { S.pcTab = pt; draw(); } return; }
     if (A("data-dev") != null) { S.dev = +A("data-dev"); S.devKey = devs && devs[S.dev] ? devs[S.dev].key : ""; if (S.tab !== "devices") S.tab = "devices"; draw(); if (!wide()) window.scrollTo(0, 0); return; }
@@ -853,6 +1042,10 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     }
     var act = A("data-act");
     if (act === "report") { oneTap(); return; }
+    if (act === "sheet") { S.sheet = A("data-s"); draw(); return; }
+    if (act === "closesheet") { if (S.sheet === "view" && !S.view) { S.view = "everyday"; wr("am-view", "everyday"); } S.sheet = ""; draw(); return; }
+    if (act === "measure") { measure(A("data-k")); return; }
+    if (act === "phone2") { phoneCheck(); return; }
     if (act === "clearfind") { findQ = ""; draw(); return; }
     if (act === "bye") { if (confirm("End the session with your PC?")) { send({ t: "bye" }); setTimeout(function () { if (ws) try { ws.close(); } catch (e) {} }, 300); } return; }   // AM-CG-357
     if (act === "install") { if (bip) { var b = bip; bip = null; b.prompt(); b.userChoice.then(function (r) { if (r && r.outcome === "accepted") inst = true; draw(); }, function () { draw(); }); } return; }
@@ -901,7 +1094,8 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   if (window.AMV) AMV.onchange(function () { if (view === "home" || view === "companion") draw(); });
 
   draw();
-  if (!secret && hash[0] === "scan") S.tab = "pair";   // the home-screen shortcut "Connect to my PC" (AM-CG-377)
+  if (!secret && hash[0] === "scan") S.tab = "pair";
+  if (!secret && !S.view && S.tab === "home") S.sheet = "view";   // the home-screen shortcut "Connect to my PC" (AM-CG-377)
   if (secret) start(room, secret, false).catch(function () { phase = "ended"; why = "This browser blocked the encryption - try Safari or Chrome."; draw(); });
 })();
 </script>
