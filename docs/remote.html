@@ -47,7 +47,7 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
 (function () {
   "use strict";
   // the relay's address - set when it's deployed (tools/remote). The PC uses the same one (src/Remote/Remote.cs).
-  var RELAY = "";
+  var RELAY = "https://adeebometer-remote.orkoadeeb.workers.dev";
   var subtle = window.crypto && window.crypto.subtle, te = new TextEncoder(), td = new TextDecoder();
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -109,13 +109,26 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
       var plain = m.s ? await rx.open(m.s) : null;
       if (plain === null) { fail("Session closed to be safe", "A message didn't check out."); ws.close(); return; }
       var c; try { c = JSON.parse(plain); } catch (e) { return; }
-      if (c.t === "live") { live = c; if (view !== "tools") draw(); else left(); }
+      if (c.t === "live") { live = c; liveAt = Date.now(); if (view !== "tools") draw(); else left(); }
       else if (c.t === "result") { busy = ""; results.unshift(c); results = results.slice(0, 5); view = "tools"; tabsOn(); draw(); }
-      else if (c.t === "note" || c.t === "err") toast(c.msg || "");
+      else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && busy) { busy = ""; draw(); } }   // AM-CG-283: an error frees the buttons
       else if (c.t === "bye") ws.close();
     };
   }
-  async function send(o) { if (!tx || ws.readyState !== 1) return; ws.send(JSON.stringify({ s: await tx.seal(JSON.stringify(o)) })); }
+  async function send(o) {
+    if (!tx || ws.readyState !== 1) { busy = ""; toast("Not connected to the PC"); draw(); return false; }
+    try { ws.send(JSON.stringify({ s: await tx.seal(JSON.stringify(o)) })); return true; } catch (e) { busy = ""; toast("Couldn't send - try again"); draw(); return false; }
+  }
+  // AM-CG-283: a check that never answers (the PC slept, the line dropped) frees the buttons after 4 minutes and says so
+  var busyAt = 0;
+  // AM-CG-285: readings carry their age - after 5 seconds without one, the page says so and greys the numbers
+  var liveAt = 0;
+  setInterval(function () {
+    if (busy && Date.now() - busyAt > 240000) { busy = ""; toast("No answer from the PC - the check may still finish there"); draw(); }
+    var st = $("stale"); if (!tx || !liveAt) return; var age = Math.round((Date.now() - liveAt) / 1000);
+    if (age > 5) { if (!st) { st = document.createElement("div"); st.id = "stale"; st.className = "card verdict l1"; var br = document.querySelector(".brand"); if (br) br.insertAdjacentElement("afterend", st); } st.innerHTML = '<span class="tag">NOT LIVE</span><h1>No reading from the PC for ' + (age < 120 ? age + " s" : Math.round(age / 60) + " min") + '</h1><p style="color:var(--sub);margin:6px 0 0">The numbers below are from before that - the PC may be asleep or its connection dropped.</p>'; document.body.style.setProperty("--stale", "1"); [].forEach.call(document.querySelectorAll(".num,.verdict:not(#stale)"), function (e) { e.style.opacity = ".45"; }); }
+    else if (st) st.remove();
+  }, 1000);
   function st(head, more) { $("app").innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small id="left"></small></div><div class="card verdict l3"><h1>' + esc(head) + '</h1><p style="color:var(--sub);margin:8px 0 0">' + esc(more) + '</p></div>'; }
 
   // ---- drawing
@@ -187,7 +200,7 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
     var id = b.getAttribute("data-run"); if (!id || busy) return;
     var needs = ["ping", "tcpping", "mtu", "mtr", "route", "port", "http", "httptime", "doh"].indexOf(id) >= 0, tg = $("tgt") ? $("tgt").value.trim() : "";
     if (needs && !tg) { if (view !== "tools") { view = "tools"; tabsOn(); draw(); } toast("Type a site or address first"); var i = $("tgt"); if (i) i.focus(); return; }
-    if (id !== "feltslow") { busy = b.textContent; view = "tools"; tabsOn(); draw(); }
+    if (id !== "feltslow") { busy = b.textContent; busyAt = Date.now(); view = "tools"; tabsOn(); draw(); }
     send({ t: "run", id: id, in: needs ? [tg] : [] });
   });
   start().catch(function () { fail("Couldn't start", "This browser blocked the encryption. Try Safari or Chrome."); });

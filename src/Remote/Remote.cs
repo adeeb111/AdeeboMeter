@@ -23,7 +23,7 @@ namespace AdeeboMeter
     sealed class Remote
     {
         // the relay's address, set when it's deployed (tools/remote). Empty: the feature says it isn't set up.
-        public static readonly string Relay = "";
+        public static readonly string Relay = "wss://adeebometer-remote.orkoadeeb.workers.dev";
         public const string Page = "https://adeebometer.com/remote#";
         public const int Minutes = 30;
         public static volatile Remote Now;                       // the one session, or null
@@ -180,13 +180,19 @@ namespace AdeeboMeter
         }
         void SendResult(string id, string title, List<string[]> rows)
         {
+            // AM-CG-284: a byte budget, not just a row count - sealed (AES padding + base64 + tag) it must stay well under the
+            // relay's 64 KB per message, or the relay would end the session. Rows that don't fit are counted, never cut mid-way.
+            const int Budget = 40 * 1024;
             var sb = new StringBuilder("{\"t\":\"result\""); Str(sb, "id", id); Str(sb, "title", title); sb.Append(",\"rows\":[");
-            bool first = true;
-            foreach (var o in (rows ?? new List<string[]>()).Where(o => o != null && o.Length > 2 && o[0] != "-2" && !(o.Length > 4 && o[4] == "k")).Take(200))
+            bool first = true; int left = 0; var all = (rows ?? new List<string[]>()).Where(o => o != null && o.Length > 2 && o[0] != "-2" && !(o.Length > 4 && o[4] == "k")).ToList();
+            for (int i = 0; i < all.Count; i++)
             {
-                if (!first) sb.Append(','); first = false;
-                sb.Append("[\"").Append(J(o[0])).Append("\",\"").Append(J(Clip(FullView.ShareCell(o[1]), 80))).Append("\",\"").Append(J(Clip(FullView.ShareCell(o[2]), 300))).Append("\",\"").Append(J(o.Length > 3 ? Clip(FullView.ShareCell(o[3]), 300) : "")).Append("\"]");
+                var o = all[i];
+                string item = "[\"" + J(o[0]) + "\",\"" + J(Clip(FullView.ShareCell(o[1]), 80)) + "\",\"" + J(Clip(FullView.ShareCell(o[2]), 300)) + "\",\"" + J(o.Length > 3 ? Clip(FullView.ShareCell(o[3]), 300) : "") + "\"]";
+                if (i >= 200 || Encoding.UTF8.GetByteCount(sb.ToString()) + Encoding.UTF8.GetByteCount(item) + 200 > Budget) { left = all.Count - i; break; }
+                if (!first) sb.Append(','); first = false; sb.Append(item);
             }
+            if (left > 0) { if (!first) sb.Append(','); sb.Append("[\"3\",\"Left on the PC\",\"").Append(left).Append(" more rows - open the result on the PC\",\"\"]"); }
             sb.Append("]}"); Seal(sb.ToString());
         }
 

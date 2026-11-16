@@ -1,6 +1,8 @@
 name = "adeebometer-remote"
 main = "worker.js"
 compatibility_date = "2025-06-01"
+workers_dev = true
+preview_urls = false
 
 # a room is a Durable Object held in memory only - no storage is written except the room's close-alarm time
 [[durable_objects.bindings]]
