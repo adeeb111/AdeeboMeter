@@ -185,19 +185,22 @@ function wx(q){var me=++wxGen;$("wx").innerHTML="Loading…";j("/weather"+(q||""
   (y.time||[]).forEach(function(t,i){h+="<div><b>"+(i?new Date(t+"T12:00").toLocaleDateString([],{weekday:"short"}):"Today")+"</b><br>"+Math.round(y.temperature_2m_max[i])+"° / "+Math.round(y.temperature_2m_min[i])+"°<br><span class='mut'>"+esc(WMO[y.weather_code[i]]||"")+(y.precipitation_probability_max&&y.precipitation_probability_max[i]>=30?" · "+y.precipitation_probability_max[i]+"%":"")+"</span></div>"});
   $("wx").innerHTML=h+"</div>"}).catch(function(){if(me!==wxGen)return;$("place").textContent="";$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
 wx("");
-function use(q){$("cities").innerHTML="";wx(q)}
+var pickGen=0;function use(q){pickGen++;$("cities").innerHTML="";wx(q)}
 $("find").onclick=function(){var q=$("city").value.trim();if(q.length<2)return;var me=++findGen;j("/place?q="+encodeURIComponent(q)).then(function(d){if(me!==findGen)return;
   $("cities").innerHTML=(d.places||[]).length?d.places.map(function(p,i){return"<button class='btn' data-i='"+i+"' style='margin:8px 6px 0 0'>"+esc(p.n)+" <span class='mut'>"+esc(p.r)+"</span></button>"}).join(""):"<p class='mut'>No place found.</p>";
   [].forEach.call($("cities").querySelectorAll("button"),function(b){var p=d.places[+b.getAttribute("data-i")];b.onclick=function(){use("?lat="+p.lat+"&lon="+p.lon+"&n="+encodeURIComponent(p.n))}})}).catch(function(){if(me===findGen)$("cities").innerHTML="<p class='mut'>Search isn't available right now.</p>"})};
 $("city").onkeydown=function(e){if(e.key==="Enter")$("find").click()};
-$("here").onclick=function(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(function(p){use("?lat="+p.coords.latitude.toFixed(1)+"&lon="+p.coords.longitude.toFixed(1)+"&n=Your+location")},function(){$("cities").innerHTML="<p class='mut'>Location wasn't shared - type a city instead.</p>"},{maximumAge:600000,timeout:10000})};
+$("here").onclick=function(){if(!navigator.geolocation)return;var g=++pickGen;navigator.geolocation.getCurrentPosition(function(p){if(g!==pickGen)return;use("?lat="+p.coords.latitude.toFixed(1)+"&lon="+p.coords.longitude.toFixed(1)+"&n=Your+location")},function(){$("cities").innerHTML="<p class='mut'>Location wasn't shared - type a city instead.</p>"},{maximumAge:600000,timeout:10000})};
 
 // the honest connection card: time small requests to the nearest Cloudflare server (first one warms up the connection)
-function lat(){$("lat").textContent="…";$("latx").textContent="";var t=[],colo="";
-  function one(i){var s=performance.now();return fetch(API+"/ping?"+i,{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){colo=d.colo||colo;if(i)t.push(performance.now()-s)})}
+var latGen=0;
+function lat(){var me=++latGen;$("lagain").disabled=true;$("lat").textContent="…";$("latx").textContent="";var t=[],colo="",bad=0;
+  // AM-CG-383/384: only answers that came back OK count; one run at a time, and an older run never overwrites a newer one
+  function one(i){var s=performance.now();return fetch(API+"/ping?"+i+"-"+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){colo=d.colo||colo;if(i)t.push(performance.now()-s)}).catch(function(){bad++})}
   var p=one(0);for(var i=1;i<=5;i++)(function(i){p=p.then(function(){return one(i)})})(i);
-  p.then(function(){t.sort(function(a,b){return a-b});var med=t[Math.floor(t.length/2)],jit=t[t.length-1]-t[0];
-    $("lat").textContent=Math.round(med)+" ms";$("latx").textContent="median of 5 web requests"+(colo?" to Cloudflare "+colo:"")+" · spread "+Math.round(jit)+" ms"+(med<40?" · quick":med<100?" · fine for browsing":" · slow - Wi-Fi or a busy line?")}).catch(function(){$("lat").textContent="—";$("latx").textContent="Couldn't reach the test server."})}
+  p.then(function(){if(me!==latGen)return;$("lagain").disabled=false;if(t.length<3){$("lat").textContent="—";$("latx").textContent="Couldn't reach the test server"+(t.length?" (only "+t.length+" of 5 answers)":"")+".";return}
+    t.sort(function(a,b){return a-b});var med=t[Math.floor(t.length/2)],jit=t[t.length-1]-t[0];
+    $("lat").textContent=Math.round(med)+" ms";$("latx").textContent="median of "+t.length+" web requests"+(bad?" ("+bad+" failed)":"")+(colo?" to Cloudflare "+colo:"")+" · spread "+Math.round(jit)+" ms"+(med<40?" · quick":med<100?" · fine for browsing":" · slow - Wi-Fi or a busy line?")})}
 lat();$("lagain").onclick=lat;
 })();
 </script>
