@@ -97,6 +97,29 @@ const cricket = () => cached("cri", 3 * 3600, 6 * 3600, async () => {
   (d.scores || []).forEach(sc => { const lg = String(((sc.leagues || [])[0] || {}).name || "").slice(0, 60); games(sc).forEach(g => { const t = Date.parse(g.d); if (t && Math.abs(now - t) < 4 * 86400000 && out2.length < 12) out2.push(Object.assign({ lg }, g)); }); });
   return { g: out2 };
 });
+// ---- stock movers (Adeeb, 16 Nov: option A) - Alpha Vantage's US top gainers / losers / most traded, once a day with the
+// relay's own free key (a Cloudflare secret, AV_KEY - set with "wrangler secret put AV_KEY"; never in this file)
+const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p: +x.price || null, c: parseFloat(x.change_percentage) || 0, v: +x.volume || 0 }))
+  .filter(x => x.t && x.p >= 1 && !/[^A-Z.]/.test(x.t) && !(x.t.length === 5 && /[WUR]$/.test(x.t))).slice(0, 5);   // under $1, warrants, units and rights are mostly noise
+const movers = (key, d) => { if (d.Information || d.Note || d["Error Message"]) throw new Error(String(d.Information || d.Note || d["Error Message"]).slice(0, 160)); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
+const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!env || !env.AV_KEY) throw new Error("nokey"); return movers(env.AV_KEY, await get("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), 12 * 3600)); });
+// a person's own key (Live > Your keys): it comes in a header, is used for this one call and dropped - never cached, logged or kept
+async function keyed(svc, key, u) {
+  const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000) };
+  const j2 = async (url, h) => { const r = await fetch(url, h ? { headers: Object.assign({}, nc.headers, h), signal: nc.signal } : nc); const t = await r.text(); let d; try { d = JSON.parse(t); } catch (e) { throw new Error("not JSON (" + r.status + ")"); } if (r.status === 401 || r.status === 403) throw new Error("the key was refused"); if (r.status === 429) throw new Error("the key's daily limit is used up"); if (!r.ok) throw new Error("answered " + r.status); return d; };
+  if (svc === "av") return movers(key, await j2("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(key)));
+  if (svc === "fd") { const d = await j2("https://api.football-data.org/v4/matches", { "X-Auth-Token": key });
+    return { g: (d.matches || []).slice(0, 40).map(m => ({ lg: String((m.competition || {}).name || "").slice(0, 40), d: m.utcDate, st: /IN_PLAY|PAUSED/.test(m.status) ? "in" : m.status === "FINISHED" ? "post" : "pre", det: m.status === "PAUSED" ? "Half-time" : m.minute ? m.minute + "'" : m.status === "IN_PLAY" ? "Live" : "",
+      a: { n: String((m.awayTeam || {}).shortName || (m.awayTeam || {}).name || "").slice(0, 30), ab: String((m.awayTeam || {}).tla || ""), id: "", s: (((m.score || {}).fullTime || {}).away ?? "") + "" },
+      h: { n: String((m.homeTeam || {}).shortName || (m.homeTeam || {}).name || "").slice(0, 30), ab: String((m.homeTeam || {}).tla || ""), id: "", s: (((m.score || {}).fullTime || {}).home ?? "") + "" } })) }; }
+  if (svc === "cd") { const d = await j2("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + encodeURIComponent(key)); if (d.status && d.status !== "success") throw new Error(String(d.reason || d.status).slice(0, 120));
+    return { hits: (d.info || {}).hitsToday || null, g: (d.data || []).slice(0, 25).map(m => { const sc = (m.score || []).map(x => (x.r ?? "") + "/" + (x.w ?? "") + " (" + (x.o ?? "") + ")"), tm = m.teams || [];
+      return { lg: String(m.matchType || "").toUpperCase().slice(0, 10) + (m.venue ? " · " + String(m.venue).slice(0, 40) : ""), d: m.dateTimeGMT ? m.dateTimeGMT + "Z" : m.date, st: m.matchEnded ? "post" : m.matchStarted ? "in" : "pre", det: "", sum: String(m.status || "").slice(0, 80),
+        a: { n: String(tm[1] || "").slice(0, 30), s: sc[1] || "" }, h: { n: String(tm[0] || "").slice(0, 30), s: sc[0] || "" } }; }) }; }
+  if (svc === "gn") { const q = (u.searchParams.get("q") || "").slice(0, 60), d = await j2("https://gnews.io/api/v4/" + (q ? "search?q=" + encodeURIComponent(q) + "&" : "top-headlines?category=sports&") + "lang=en&max=10&apikey=" + encodeURIComponent(key));
+    return { items: (d.articles || []).slice(0, 10).map(a => ({ t: String(a.title || "").slice(0, 200), l: String(a.url || ""), s: String((a.source || {}).name || "").slice(0, 40) })).filter(a => /^https:\/\//.test(a.l)) }; }
+  throw new Error("unknown service");
+}
 const weather = (lat, lon) => cached("w" + lat + "," + lon, 1800, 3 * 3600, async () => {
   const d = await get("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon +
     "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=4", 1800);
@@ -135,8 +158,10 @@ function reply(req, body, maxAge) {
 const coord = (v, lim) => { if (v == null || !/^\s*-?\d{1,3}(\.\d+)?\s*$/.test(String(v))) return null; const n = Math.round(Number(v) * 10) / 10; return Number.isFinite(n) && Math.abs(n) <= lim ? n : null; };
 
 export default {
-  async fetch(req) {
+  async fetch(req, env) {
     const u = new URL(req.url);
+    // the "your own key" calls carry the key in a header (not the address, which can end up in logs): the browser asks first
+    if (req.method === "OPTIONS" && u.pathname === "/k") { const o = req.headers.get("Origin"); return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": ORIGINS.includes(o) ? o : ORIGINS[0], "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "X-Key", "Access-Control-Max-Age": "86400", "Vary": "Origin" } }); }
     if (req.method !== "GET") return new Response("", { status: 405 });
     switch (u.pathname) {
       case "/all": {
@@ -171,6 +196,14 @@ export default {
         const [today, yest, st, nw] = await Promise.all([board(k, "", 3 * 3600), board(k, "?dates=" + ymd(y), 12 * 3600), table(k), espnNews(k)]);
         let next = null; if (!today.v.error && !(today.v.g || []).some(g => g.st !== "post")) next = await board(k, "?dates=" + ymd(new Date(now.getTime() + 86400000)) + "-" + ymd(new Date(now.getTime() + 8 * 86400000)), 12 * 3600);
         return reply(req, { lg: k, at: Date.now(), today: out(today), yest: out(yest), next: next ? out(next) : null, table: out(st), news: out(nw) }, 90);
+      }
+      // stock movers: the relay's shared daily copy (or "nokey" when no AV_KEY is set - the page then offers "your own key")
+      case "/movers": { const e = await avShared(env); return reply(req, out(e), 3600); }
+      // a person's own key: X-Key header, one call, nothing kept; only these four services
+      case "/k": {
+        const svc = u.searchParams.get("svc") || "", key = req.headers.get("X-Key") || "";
+        if (!["av", "fd", "cd", "gn"].includes(svc) || !/^[A-Za-z0-9_-]{8,80}$/.test(key)) return reply(req, { error: "bad request" }, 0);
+        try { return reply(req, await keyed(svc, key, u), -1); } catch (e) { return reply(req, { error: String(e && e.message || e).slice(0, 160) }, -1); }
       }
       case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "", now: Date.now() }, 0);   // now: lets the phone check its clock (AM-CG-376)
       // the phone app's "this phone" card: who carries this connection and whether it came over IPv6 - for this answer only,

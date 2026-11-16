@@ -63,6 +63,9 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 .big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.big3 div{background:var(--tint);border-radius:10px;padding:8px 4px;font-size:18px;font-weight:800}.big3 small{display:block;font-size:12px;color:var(--sub);font-weight:700}
 .yr .spark{width:100%;height:56px;margin:10px 0 4px}
 .rng{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}.rng i{flex:1;height:6px;border-radius:3px;background:var(--line);position:relative}.rng b{position:absolute;top:-4px;width:14px;height:14px;border-radius:50%;background:var(--blue);margin-left:-7px}
+.seg3{display:flex;gap:4px;background:var(--tint);border-radius:12px;padding:3px;margin:0 0 8px}.seg3 button{flex:1;font:inherit;font-weight:700;font-size:14px;border:0;background:none;color:var(--sub);border-radius:9px;padding:7px 0;cursor:pointer}.seg3 button.on{background:var(--blue);color:#fff}:root[data-pal] .seg3 button.on{color:var(--onblue,#fff)}
+.krow{border-top:1px solid var(--line);padding:10px 0}.krow:first-child{border-top:0}.krow .kh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.krow .kh b{font-weight:700}.krow .kh span{font-size:13px;color:var(--sub)}.krow .kin{display:flex;gap:6px;margin-top:6px}.krow .kin input{font-size:14px}.krow .kst{font-size:13px;margin-top:4px}
+.tk{font-weight:800;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
 .card.nolg,.dd.nolg{display:none!important}
 .btn.sm{padding:4px 12px;font-size:14px;margin-left:6px}
 @media (max-width:640px){.cards{grid-template-columns:1fr}h1{font-size:25px}.big{font-size:34px}}
@@ -99,6 +102,14 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </section>
 
 <section class="card" data-k="mkt">
+<h2 data-ic="chart">Stock movers</h2>
+<div class="pickrow"><label class="dd"><small>Exchange</small><select id="exch" aria-label="Exchange"><option value="us">US · NYSE and Nasdaq</option><option disabled>Toronto (TSX) - not yet</option><option disabled>London (LSE) - not yet</option><option disabled>India (NSE) - not yet</option><option disabled>Dhaka (DSE) - not yet</option></select></label></div>
+<div class="seg3" id="mvseg"><button class="on" data-mv="up">Best</button><button data-mv="dn">Worst</button><button data-mv="act">Most traded</button></div>
+<p class="src" id="mvsrc">End of day · Alpha Vantage</p>
+<div id="mv" class="mut">Loading…</div>
+</section>
+
+<section class="card" data-k="mkt">
 <h2 data-ic="dollar">Currencies</h2>
 <p class="src" id="fxsrc">Bank of Canada · ExchangeRate-API</p>
 <div id="fx" class="mut">Loading…</div>
@@ -129,10 +140,17 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <div class="sum" id="ssum"><span class="mut">Loading…</span></div>
 </section>
 
+<section class="card" data-k="sport" id="c-live" hidden><h2 data-ic="live" id="liveh">Live now</h2><p class="src" id="lives"></p><div id="live"></div></section>
 <section class="card" data-k="sport" id="c-today"><h2 data-ic="trophy" id="todayh">Today</h2><p class="src" id="todays"></p><div id="today" class="mut">Loading…</div></section>
 <section class="card" data-k="sport" id="c-yest"><h2 data-ic="trophy">Last night</h2><p class="src">Final scores</p><div id="yest" class="mut">Loading…</div></section>
 <section class="card" data-k="sport" id="c-table"><h2 data-ic="order">Standings</h2><p class="src" id="tables"></p><div id="table" class="mut">Loading…</div></section>
 <section class="card" data-k="sport"><h2 data-ic="file">Headlines</h2><p class="src" id="newss"></p><ul class="news" id="news"><li class="mut">Loading…</li></ul></section>
+
+<section class="card wide" data-k="mkt sport" id="keys">
+<h2 data-ic="lock">Your own keys <span class="mut" style="font-weight:400">(optional)</span></h2>
+<p class="src" style="white-space:normal">Free keys from these services unlock more. Kept only on this phone; each goes, through our relay, to its own service for that one request - never stored or logged.</p>
+<div id="keyrows"></div>
+</section>
 
 <section class="card wide" data-k="wx">
 <h2 data-ic="sun">Weather <span id="place" class="mut" style="font-weight:400"></span></h2>
@@ -146,7 +164,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </div>
 <a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
 <div id="amv-pick-at" style="margin:18px 0 0"></div>
-<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Open-Meteo (weather, CC BY 4.0). Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
+<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpha Vantage (US stock movers, end of day), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
 </main>
 <script>
 (function(){
@@ -158,7 +176,7 @@ function off(){return"<span class='err'>Not available right now.</span>"}
 // tabs
 [].forEach.call(document.querySelectorAll(".tabs button"),function(b){b.onclick=function(){var t=b.getAttribute("data-t");
   [].forEach.call(document.querySelectorAll(".tabs button"),function(x){x.setAttribute("aria-selected",x===b)});
-  [].forEach.call(document.querySelectorAll(".card"),function(c){c.style.display=t==="all"||c.getAttribute("data-k")===t?"":"none"});
+  [].forEach.call(document.querySelectorAll(".card"),function(c){c.style.display=t==="all"||(" "+c.getAttribute("data-k")+" ").indexOf(" "+t+" ")>=0?"":"none"});
   try{history.replaceState(null,"",t==="all"?location.pathname:"#"+t)}catch(e){}}});
 // ---- Live v2 (Adeeb, 16 Nov): pick your currency and your league; a day's summary, not a ticker. Picks stay in this browser.
 function rd(k,d){try{var v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}}
@@ -260,7 +278,44 @@ function drawS(){
 function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<span class='mut'>Loading…</span>"});var want=lg;jr("/scores?lg="+lg).then(function(d){if(want!==lg)return;SC=d;drawS()}).catch(function(){if(want!==lg)return;SC=null;["today","yest","table"].forEach(function(i){$(i).innerHTML=off2("s")});$("news").innerHTML="<li>"+off2("s")+"</li>";$("ssum").innerHTML=off2("s")})}
 $("lg").onchange=function(){lg=this.value;wr("am-lv-lg",lg);SC=null;drawS();scores()};
 $("team").onchange=function(){wr("am-lv-team-"+lg,this.value);drawS()};
-drawM();markets();drawS();scores();
+// ---- your own keys (Adeeb, 16 Nov: "keep an option for people to add their key ... same for live scores and news")
+var KEYS=[["av","Alpha Vantage","stock movers, when the shared daily copy is used up","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (100 calls a day - stops at 90)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
+function key(k){return rd("am-key-"+k,"")}
+function kreq(svc,q){var k=key(svc);if(!k)return Promise.reject(new Error("no key"));return fetch(API+"/k?svc="+svc+(q||""),{cache:"no-store",headers:{"X-Key":k}}).then(function(r){return r.json()}).then(function(d){if(d.error)throw new Error(d.error);return d})}
+function drawKeys(){$("keyrows").innerHTML=KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div></div>"}).join("")}
+$("keyrows").addEventListener("click",function(e){var b=e.target.closest("[data-ksave],[data-kdel]");if(!b)return;var s=b.getAttribute("data-ksave"),d=b.getAttribute("data-kdel");
+  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}drawKeys();refreshKeyed();return}
+  var v=$("key-"+s).value.trim();if(!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>That doesn't look like a key - letters and numbers, 8 to 80 long.</span>";return}
+  wr("am-key-"+s,v);$("kst-"+s).innerHTML="<span class='mut'>Checking…</span>";kreq(s,s==="gn"?"&q=sport":"").then(function(){drawKeys();refreshKeyed()},function(er){$("kst-"+s).innerHTML="<span class='dn'>Saved, but the service said: "+esc(er.message)+"</span>"})});
+drawKeys();
+// stock movers: the relay's shared daily copy, or your own key
+var MV=null,mvk="up";
+function drawMv(){if(!MV){return}if(MV.error){$("mv").innerHTML="<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> <a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>Add your own free key</a>";return}
+  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":"")+" · under $1 left out";
+  $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
+function movers(){var mine=!!key("av");(mine?kreq("av"):jr("/movers").then(function(d){if(d.error)throw new Error(d.error==="source unavailable"?"":d.error);return d})).then(function(d){MV=d;MV.mine=mine;drawMv()},function(er){MV={error:1,why:er&&er.message};drawMv()})}
+$("mvseg").addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;mvk=b.getAttribute("data-mv");[].forEach.call($("mvseg").children,function(x){x.classList.toggle("on",x===b)});drawMv()});
+// live scores and more headlines with your own key, while this page is open
+var LIVE={t:null};
+function liveKind(){return(lg==="epl"||lg==="ucl")&&key("fd")?"fd":lg==="cri"&&key("cd")?"cd":""}
+function cdHits(n){var k="am-cd-"+new Date().toDateString();if(n!=null)wr(k,String(n));return+rd(k,"0")}
+function liveTick(){var k=liveKind();clearTimeout(LIVE.t);if(!k){$("c-live").hidden=true;return}$("c-live").hidden=false;
+  if(k==="cd"&&cdHits()>=90){$("live").innerHTML="<span class='mut'>Today's free CricketData calls are used up (90 of 100) - back tomorrow.</span>";return}
+  kreq(k).then(function(d){if(k==="cd")cdHits(d.hits||cdHits()+1);var want=lg==="epl"?/premier league/i:lg==="ucl"?/champions league/i:null,G=(d.g||[]).filter(function(g){return!want||want.test(g.lg)});
+    $("liveh").lastChild.textContent=k==="cd"?"Live cricket":"Live now";$("lives").textContent=(k==="cd"?"CricketData":"football-data.org")+" · your key · updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(k==="cd"?" · every 3 min":" · every minute");
+    $("live").innerHTML=G.length?G.map(function(g){return(k==="cd"?"<div class='lgname'>"+esc(g.lg)+"</div>":"")+gameRow(g,"")}).join(""):"<span class='mut'>No matches today.</span>"},
+    function(er){$("live").innerHTML="<span class='err'>"+esc(er.message)+"</span>"});
+  LIVE.t=setTimeout(function(){if(!document.hidden)liveTick();else LIVE.t=setTimeout(liveTick,15000)},k==="cd"?180000:60000)}
+var GQ={nhl:"NHL",nba:"NBA",nfl:"NFL",mlb:"MLB baseball",epl:"Premier League",ucl:"Champions League",mls:"MLS soccer",cri:"cricket",ten:"tennis",f1:"Formula 1"};
+// one GNews call per league per visit (the free key has 100 a day); drawn again from memory after that
+var GN={};
+function gnDraw(){var d=GN[lg];if(!d||!d.items||!d.items.length)return;$("newss").textContent="GNews · your key - opens on each site";
+  $("news").innerHTML=d.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a>"+(i.s?" <span class='mut' style='font-size:13px'>· "+esc(i.s)+"</span>":"")+"</li>"}).join("")}
+function moreNews(force){if(!key("gn"))return;var want=lg;if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
+function refreshKeyed(){GN={};movers();liveTick();moreNews(1)}
+var _drawS=drawS;drawS=function(){_drawS();if(SC&&key("gn"))moreNews()};
+drawM();markets();drawS();scores();movers();liveTick();
+$("lg").addEventListener("change",function(){liveTick()});
 var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
 // updated once a day on the relay - no live refresh here; the stamp says when
 
