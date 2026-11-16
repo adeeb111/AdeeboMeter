@@ -59,7 +59,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <nav class="top"><b><a href="./">AdeeboMeter</a></b><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a></nav>
 <h1>Live</h1>
 <p class="tag">Today at a glance - and what the AdeeboMeter app adds when it runs on your own PC.</p>
-<p id="amv-say" style="font-weight:600;margin:-4px 0 14px;min-height:1.5em" aria-live="polite"></p>
+<div style="display:flex;gap:10px;align-items:center;margin:-4px 0 14px;min-height:44px"><span id="amv-face"></span><p id="amv-say" style="font-weight:600;margin:0" aria-live="polite"></p></div>
 <div class="tabs" role="tablist">
 <button role="tab" data-t="all" aria-selected="true">Everything</button>
 <button role="tab" data-t="mkt" aria-selected="false">Markets</button>
@@ -150,7 +150,9 @@ function hours(){var n=etNow(),wk=["Sat","Sun"].indexOf(n.d)<0,open=wk&&n.m>=570
     if(open){var l=960-n.m;s="<span class='pill open'>Normally open</span> <span class='mut'>closes in "+(l>=60?Math.floor(l/60)+" h ":"")+(l%60)+" min</span>"}
     else s="<span class='pill shut'>Normally closed</span> <span class='mut'>"+(wk&&n.m<570?"opens 9:30 today":"opens 9:30 next weekday")+"</span>";
     h+="<div class='game'><span>"+x[0]+"</span><span>"+s+"</span></div>"});
+  var say=window.AMV?AMV.line(open?"market.open":"trade.closed"):"";if(say)h+="<p style='margin:8px 0 0;font-weight:600'>"+esc(say)+"</p>";
   $("hours").innerHTML=h}
+if(window.AMV)AMV.onchange(hours);
 hours();setInterval(hours,30000);
 
 // markets, scores, headlines
@@ -179,7 +181,7 @@ var WMO={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Fr
 var wxGen=0,findGen=0;
 function wx(q){var me=++wxGen;$("wx").innerHTML="Loading…";j("/weather"+(q||"")).then(function(d){if(me!==wxGen)return;if(d.error)throw 0;var c=d.cur||{},y=d.daily||{};
   $("place").textContent=d.place?"· "+d.place:"";
-  var risk=[95,96,99].indexOf(c.weather_code)>=0?" <span class='pill' style='background:rgba(207,34,46,.12);color:var(--red)'>Storm - outages more likely</span>":"";
+  var storm=[95,96,99].indexOf(c.weather_code)>=0;if(window.AMV){window.amvLook=storm?"worried":undefined;AMV.face(document.getElementById("amv-face"),window.amvLook);if(storm){var sl=AMV.line("storm.near");if(sl)document.getElementById("amv-say").textContent=sl}}var risk=storm?" <span class='pill' style='background:rgba(207,34,46,.12);color:var(--red)'>Storm - outages more likely</span>":"";
   var h="<div class='big'>"+Math.round(c.temperature_2m)+"°C</div><p style='margin:2px 0 0'>"+esc(WMO[c.weather_code]||"")+risk+" <span class='mut'>· feels "+Math.round(c.apparent_temperature)+"° · wind "+Math.round(c.wind_speed_10m)+" km/h</span></p><div class='days'>";
   (y.time||[]).forEach(function(t,i){h+="<div><b>"+(i?new Date(t+"T12:00").toLocaleDateString([],{weekday:"short"}):"Today")+"</b><br>"+Math.round(y.temperature_2m_max[i])+"° / "+Math.round(y.temperature_2m_min[i])+"°<br><span class='mut'>"+esc(WMO[y.weather_code[i]]||"")+(y.precipitation_probability_max&&y.precipitation_probability_max[i]>=30?" · "+y.precipitation_probability_max[i]+"%":"")+"</span></div>"});
   $("wx").innerHTML=h+"</div>"}).catch(function(){if(me!==wxGen)return;$("place").textContent="";$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
@@ -201,6 +203,6 @@ lat();$("lagain").onclick=lat;
 })();
 </script>
 <script src="/voice.js"></script>
-<script>AMV.onchange(function(){var h=new Date().getHours(),k=h>=5&&h<11?"morning":h>=23||h<5?"late.night":"app.open",t=AMV.line(k)||AMV.line("app.open"),e=document.getElementById("amv-say");if(e&&t)e.textContent=t});AMV.picker(document.getElementById("amv-pick-at"))</script>
+<script>AMV.onchange(function(){var h=new Date().getHours(),k=h>=5&&h<11?"morning":h>=23||h<5?"late.night":"app.open",t=AMV.line(k)||AMV.line("app.open"),e=document.getElementById("amv-say");if(e)e.textContent=t;AMV.face(document.getElementById("amv-face"),window.amvLook)});AMV.face(document.getElementById("amv-face"));AMV.picker(document.getElementById("amv-pick-at"))</script>
 </body>
 </html>

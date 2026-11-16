@@ -84,3 +84,9 @@ update.suspect|Things worsened after the update on {v}.
 update.suspect|The {v} update brought trouble.
 call.on|The council is in session. Watching the call.
 call.on|A call is on. Monitoring.
+quiz.right|Correct, comrade!
+quiz.wrong|Wrong - the struggle continues!
+game.streak|{v} in a row - the people rejoice!
+game.timeup|Time's up - regroup!
+market.open|The markets open. Stay vigilant.
+storm.near|A storm gathers - hold the line.

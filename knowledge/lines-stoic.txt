@@ -49,3 +49,9 @@ trade.ok|Your line to the broker is steady. Decide with a calm mind.
 trade.slow|The broker is slow just now. Wait; haste is not wisdom.
 trade.closed|The market sleeps until 9:30. So may you.
 view.switch|Switching to {v}.
+quiz.right|Correct. Well reasoned.
+quiz.wrong|A mistake - and a lesson. Begin again.
+game.streak|{v} in a row. Remain humble.
+game.timeup|Time is up. It was never ours to keep.
+market.open|The markets open. Act, don't react.
+storm.near|A storm approaches. Prepare, then be calm.

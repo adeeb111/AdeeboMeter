@@ -107,8 +107,8 @@ QUIZ_JS = """<script>
 for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
 bs.forEach(function(b){q.insertBefore(b,say)});
 bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
-if(ok){done=true;say.textContent='Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
-else say.textContent='Not that one - try again.'}})})();
+var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
 """
 
@@ -144,7 +144,7 @@ def lesson(t, prev, nxt, same):
                  ''.join(f'<a href="{s["id"]}.html"><b>{E(s["title"].split(" - ")[0])}</b><span>{E(s.get("tag"))}</span></a>' for s in same) + '</div>\n')
     h.append('<div class="pn">' + (f'<a href="{prev["id"]}.html">← {E(prev["title"].split(" - ")[0])}</a>' if prev else '<span></span>') +
              (f'<a href="{nxt["id"]}.html">{E(nxt["title"].split(" - ")[0])} →</a>' if nxt else '') + '</div>\n')
-    h.append(FOOT + '\n</main>\n' + (QUIZ_JS if len(q) >= 3 else '') + '</body>\n</html>\n')
+    h.append(FOOT + '\n</main>\n' + ('<script src="/voice.js"></script>\n' + QUIZ_JS if len(q) >= 3 else '') + '</body>\n</html>\n')
     return ''.join(h)
 
 def index():

@@ -106,3 +106,9 @@ trade.closed|Market closed! Back at 9:30!
 trade.closed|Markets are resting! See you at the open!
 view.switch|{v} view incoming! This is going to be great!
 view.switch|Here comes {v}! Fresh pages, fresh energy!
+quiz.right|YES! Nailed it!
+quiz.wrong|Close! Shake it off, go again!
+game.streak|{v} IN A ROW! Unstoppable!
+game.timeup|Time! What a run!
+market.open|Bell's ringing - markets are LIVE!
+storm.near|Storm rolling in - stay sharp!

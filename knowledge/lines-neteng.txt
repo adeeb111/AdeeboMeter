@@ -131,3 +131,9 @@ trade.closed|Outside market hours. Broker probe stopped.
 trade.closed|Market closed. Probe idle until 09:30 ET.
 view.switch|Applying the {v} profile. Config pushed, no reboot needed.
 view.switch|Loading the {v} template. Committing changes.
+quiz.right|ACK. Correct.
+quiz.wrong|NACK. Retransmit and try again.
+game.streak|{v} in a row - zero packet loss.
+game.timeup|Timeout. TTL expired.
+market.open|Market open - watch the broker RTT.
+storm.near|Storm cell nearby - expect flaps.

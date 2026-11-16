@@ -84,3 +84,9 @@ update.suspect|Running rough since the update on {v}.
 update.suspect|The {v} update threw a spanner in.
 call.on|A call is on. Keeping the line clear.
 call.on|Call in progress. Watching the line.
+quiz.right|Correct. Quality check passed.
+quiz.wrong|Fault. Rework and resubmit.
+game.streak|{v} in a row - line running smooth.
+game.timeup|Shift's over.
+market.open|The exchange floor is running.
+storm.near|Storm nearby - power and lines may trip.

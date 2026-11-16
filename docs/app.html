@@ -38,14 +38,14 @@ footer{margin-top:28px;color:var(--sub);font-size:13px}
 <main>
 <div class="brand"><img src="/img/app/icon-192.png" alt=""><b>AdeeboMeter</b></div>
 <p class="tag">Learn how your internet works, play, check today's numbers - and watch your own PC.</p>
-<p id="amv-say" style="font-weight:600;margin:-8px 0 14px;min-height:1.5em" aria-live="polite"></p>
+<div style="display:flex;gap:10px;align-items:center;margin:-4px 0 14px;min-height:44px"><span id="amv-face"></span><p id="amv-say" style="font-weight:600;margin:0" aria-live="polite"></p></div>
 <div class="off" id="off">You're offline. Learn and Games still work.</div>
 <div class="tiles">
 <a class="tile" href="/learn/"><div class="ic">📘</div><b>Learn</b><span>90 short lessons with pictures</span><i>Offline</i></a>
 <a class="tile" href="/games.html"><div class="ic">🎯</div><b>Games</b><span>Quiz, subnets, ports, order</span><i>Offline</i></a>
 <a class="tile" href="/live.html"><div class="ic">📈</div><b>Live</b><span>Markets, scores, weather, your connection</span></a>
-<a class="tile wide" href="/files.html"><div class="ic">🔒</div><div><b>Lock and open files</b><span>.adeebo files with a code - works offline, nothing uploaded</span></div><i>Offline</i></a>
 <button class="tile" id="remote"><div class="ic">💻</div><b>My PC</b><span>See your PC live - scan its code with your camera app</span></button>
+<a class="tile wide" href="/files.html"><div class="ic">🔒</div><div><b>Lock and open files</b><span>.adeebo files with a code - works offline, nothing uploaded</span></div><i>Offline</i></a>
 </div>
 <div id="scan">
 <b>Connect to your PC</b>
@@ -60,7 +60,7 @@ footer{margin-top:28px;color:var(--sub);font-size:13px}
 <div id="inst"><b>Put AdeeboMeter on your home screen</b><p class="hint" id="ih" style="margin:4px 0 10px"></p><button class="btn" id="ib">Install</button></div>
 <p class="hint" style="margin-top:20px">No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a> - then the <b>My PC</b> tile shows your PC's live numbers, game pings, broker timing and 100+ checks, encrypted end to end.</p>
 <div id="amv-pick-at" style="margin:18px 0 0"></div>
-<footer>No account. Nothing about you is saved - the lessons and games are kept on this phone so they open without signal. <a href="/">adeebometer.com</a> · <a href="/privacy.html">Privacy</a></footer>
+<footer>No account, and nothing about you leaves this phone. The lessons and games are kept here so they open without signal; your companion choices stay on this phone only. <a href="/">adeebometer.com</a> · <a href="/privacy.html">Privacy</a></footer>
 </main>
 <script>
 (function(){
@@ -83,6 +83,6 @@ if(location.hash==="#scan")scan();
 })();
 </script>
 <script src="/voice.js"></script>
-<script>AMV.onchange(function(){var h=new Date().getHours(),k=h>=5&&h<11?"morning":h>=23||h<5?"late.night":"app.open",t=AMV.line(k)||AMV.line("app.open"),e=document.getElementById("amv-say");if(e&&t)e.textContent=t});AMV.picker(document.getElementById("amv-pick-at"))</script>
+<script>AMV.onchange(function(){var h=new Date().getHours(),k=h>=5&&h<11?"morning":h>=23||h<5?"late.night":"app.open",t=AMV.line(k)||AMV.line("app.open"),e=document.getElementById("amv-say");if(e)e.textContent=t;AMV.face(document.getElementById("amv-face"),window.amvLook)});AMV.face(document.getElementById("amv-face"));AMV.picker(document.getElementById("amv-pick-at"))</script>
 </body>
 </html>

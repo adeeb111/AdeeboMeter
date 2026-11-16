@@ -84,3 +84,9 @@ update.suspect|Trouble began after the update on {v}. Most vexing.
 update.suspect|Since the {v} update, mischief.
 call.on|Thou art in council. I watch the call.
 call.on|A call is underway. The herald listens.
+quiz.right|Thou art correct.
+quiz.wrong|Wrong, by my troth. Try again.
+game.streak|{v} in a row - a feat for the chronicles.
+game.timeup|The candle has burned down.
+market.open|The market square opens.
+storm.near|A great storm comes upon the land.

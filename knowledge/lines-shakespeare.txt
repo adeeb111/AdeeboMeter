@@ -84,3 +84,9 @@ update.suspect|Since the update on {v}, ill fortune.
 update.suspect|The trouble came with the {v} update.
 call.on|Thou art in counsel. I watch the call.
 call.on|A call proceeds. I listen for faults.
+quiz.right|Well said, good {addr}!
+quiz.wrong|Alack, 'tis not so.
+game.streak|{v} in a row - a triumph!
+game.timeup|Time hath run its course.
+market.open|The market's doors stand open.
+storm.near|A tempest nears - thy connection may falter.

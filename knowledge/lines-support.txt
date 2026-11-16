@@ -106,3 +106,9 @@ trade.closed|The market is closed for today.
 trade.closed|Markets are closed. Checks resume at 9:30.
 view.switch|Switching you to {v}. Your own changes come with it.
 view.switch|Setting up the {v} view for you now.
+quiz.right|That's right - well done.
+quiz.wrong|Not this time, and that's how learning works.
+game.streak|{v} in a row - you're getting this.
+game.timeup|Time's up. You did well to try.
+market.open|Markets are open. Take it steady.
+storm.near|There's a storm nearby; if things wobble, it's not you.

@@ -99,3 +99,9 @@ trade.closed|Market is closed. Go relax!
 trade.closed|No trading now. Opens at 9:30.
 view.switch|Ooh, {v} mode! Love that for you.
 view.switch|{v} it is, bestie. Getting it ready.
+quiz.right|Yesss, you got it!
+quiz.wrong|Aww, not that one - try again, bestie.
+game.streak|{v} in a row?! Obsessed.
+game.timeup|Time's up! You did amazing.
+market.open|Markets just opened, bestie.
+storm.near|Storm nearby - if the Wi-Fi acts up, it's the weather, not you.

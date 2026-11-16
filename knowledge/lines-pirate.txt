@@ -99,3 +99,9 @@ trade.closed|The market is in port. Back at 9:30.
 trade.closed|Market closed. The harbour sleeps.
 view.switch|Hoisting the {v} colours, matey!
 view.switch|All hands, we sail under {v} now!
+quiz.right|Aye, that be right!
+quiz.wrong|Nay, matey - try again.
+game.streak|{v} in a row! Ye be a legend of the seas.
+game.timeup|The hourglass be empty.
+market.open|The markets be open - mind yer doubloons.
+storm.near|A squall be coming - the rigging may rattle.

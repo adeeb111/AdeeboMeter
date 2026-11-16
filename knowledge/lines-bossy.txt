@@ -91,3 +91,9 @@ update.suspect|Broke after the update on {v}. Roll it back.
 update.suspect|Update on {v} is the suspect. Check it.
 call.on|Call active. Nobody start a download.
 call.on|On a call. Watching quality.
+quiz.right|Correct. Next.
+quiz.wrong|Wrong. Read it again.
+game.streak|{v} in a row. Keep going.
+game.timeup|Time's up. Faster next round.
+market.open|Markets are open. Check your broker connection.
+storm.near|Storm nearby. Save your work.

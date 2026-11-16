@@ -84,3 +84,9 @@ update.suspect|Systems degraded after the update on {v}.
 update.suspect|Trouble began after the {v} update.
 call.on|Holo-call active. Monitoring signal.
 call.on|Comms channel open. Watching quality.
+quiz.right|Target locked. Correct.
+quiz.wrong|Off course, {addr}. Adjust and retry.
+game.streak|{v} in a row - hyperdrive engaged.
+game.timeup|Mission clock expired.
+market.open|Trading stations are online.
+storm.near|Ion storm nearby - signal may degrade.

@@ -106,3 +106,9 @@ trade.closed|Market is closed. Everyone gets a rest.
 trade.closed|Market closed. See you at 9:30.
 view.switch|Sliding into {v} mode. Easy does it.
 view.switch|{v} view, coming right up. No rush.
+quiz.right|Nice, that's right.
+quiz.wrong|Not quite - no stress, look again.
+game.streak|On a roll, {addr}.
+game.timeup|Time's up. All good.
+market.open|Markets are open. Easy does it.
+storm.near|Storm nearby - the connection might wobble a bit.

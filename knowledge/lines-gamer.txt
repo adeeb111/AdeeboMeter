@@ -99,3 +99,9 @@ trade.closed|Market server is offline until 9:30.
 trade.closed|Market closed. Respawn at 9:30.
 view.switch|Loading {v} loadout. Respawning the menus.
 view.switch|Swapping to the {v} build. GG in a second.
+quiz.right|GG, that's right.
+quiz.wrong|Missed the shot. Respawn and retry.
+game.streak|{v}-streak! Carrying.
+game.timeup|Time's up - round over.
+market.open|Markets are live. New match started.
+storm.near|Storm incoming - lag spikes possible.

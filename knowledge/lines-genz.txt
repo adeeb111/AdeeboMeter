@@ -84,3 +84,9 @@ update.suspect|It broke after the update on {v}. Classic.
 update.suspect|That update on {v} did something.
 call.on|On a call. I'll stay quiet.
 call.on|Call detected. Watching.
+quiz.right|Ate that, no crumbs.
+quiz.wrong|Nah that's not it, bestie.
+game.streak|{v} in a row?? Main character.
+game.timeup|Time's up, it's giving speedrun.
+market.open|Markets are open, lowkey.
+storm.near|Storm's coming, Wi-Fi might be mid.

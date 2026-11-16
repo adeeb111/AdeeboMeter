@@ -105,14 +105,15 @@ function answer(b){
   if(G.g==="quiz")clearInterval(timer);
   bs.forEach(function(x){x.disabled=true;if(x.getAttribute("data-ok")==="1")x.className="ok"});if(b&&!ok)b.className="no";
   if(ok)G.score+=G.g==="quiz"?10+Math.ceil(Math.max(0,G.until-now())/1500):1;
-  $("stage").querySelector(".say").innerHTML=ok?"Right.":b?"Not quite.":"Time's up.";
+  G.streak=ok?(G.streak||0)+1:0;var V=window.AMV?AMV:null,vs=V?(ok?(G.streak>=3&&G.streak%3===0?V.line("game.streak",G.streak):V.line("quiz.right")):b?V.line("quiz.wrong"):V.line("game.timeup")):"";
+  $("stage").querySelector(".say").innerHTML=esc(vs||(ok?"Right.":b?"Not quite.":"Time's up."));
   if(G.g==="quiz"&&G.cur)$("stage").querySelector(".say").innerHTML+=" <a href='learn/"+lessonId(G.cur)+".html'>Read: "+esc(G.cur.title.split(" - ")[0])+"</a>";
   G.n++;bar();later(next,G.g==="quiz"?(ok?900:2200):ok?350:1200)}
 function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=best(G.g),nb=best(G.g,G.score);
   $("left").textContent="";$("tb").style.width="0";
-  $("stage").innerHTML="<div class='end'><p class='sub'>Your score</p><p class='big'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
+  $("stage").innerHTML="<div class='end'><span id='endface' style='display:inline-block' data-size='64'></span><p class='sub'>Your score</p><p class='big'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
     (window.AMV?"<p style='font-weight:600'>"+AMV.line(G.score>b&&G.score>0?"award":"points.earned",G.score)+"</p>":"")+"<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='learn/'>Lessons</a></div>";
-  $("again").onclick=function(){start(G.g)};
+  $("again").onclick=function(){start(G.g)};if(window.AMV)AMV.face($("endface"),G.score>b&&G.score>0?"party":G.score>0?"happy":"calm");
   $("share").onclick=function(){var names={quiz:"the quick-fire network quiz",order:"Put it in order",subnet:"Subnet sprint",ports:"Port match"},t="I scored "+G.score+" in "+names[G.g]+" on AdeeboMeter - beat that: https://adeebometer.com/games.html";
     if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){$("share").textContent="Copied"})}}
 $("quit").onclick=function(){clearInterval(timer);G=null;$("game").style.display="none";$("menu").style.display="block";showBest()};

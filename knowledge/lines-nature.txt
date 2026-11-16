@@ -84,3 +84,9 @@ update.suspect|After the update on {v}, behaviour changed.
 update.suspect|Since the {v} update, the system struggles.
 call.on|A call begins. We observe quietly.
 call.on|Voices travel. Watching the call.
+quiz.right|And there - a correct answer, in its natural habitat.
+quiz.wrong|A miss. Even the cheetah misses sometimes.
+game.streak|{v} in a row - a rare streak in the wild.
+game.timeup|The season ends.
+market.open|The markets awaken, like a herd at dawn.
+storm.near|A storm approaches the colony.

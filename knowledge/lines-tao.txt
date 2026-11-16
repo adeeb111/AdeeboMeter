@@ -49,3 +49,9 @@ trade.ok|Your line to the broker is calm and steady.
 trade.slow|The broker is slow. Wait - the still mind acts at the right moment.
 trade.closed|The market rests until 9:30.
 view.switch|Switching to {v}.
+quiz.right|It is so.
+quiz.wrong|Not this way. Flow and try again.
+game.streak|{v} in a row - like water finding its path.
+game.timeup|Time has passed, as it does.
+market.open|The markets open, like a river after the dam.
+storm.near|The storm comes; bend like the reed.

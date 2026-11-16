@@ -84,3 +84,9 @@ update.suspect|Change observed after the update on {v}.
 update.suspect|Strong correlation with the {v} update.
 call.on|Call detected. Measuring quality.
 call.on|Voice call in progress. Sampling jitter.
+quiz.right|Hypothesis confirmed.
+quiz.wrong|Result rejected. Revise and repeat.
+game.streak|{v} in a row - statistically impressive.
+game.timeup|Time's up. Experiment ended.
+market.open|Markets open. Collecting data.
+storm.near|Storm nearby: expect interference.

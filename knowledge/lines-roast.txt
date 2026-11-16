@@ -106,3 +106,9 @@ trade.closed|Market is closed. Your wallet thanks it.
 trade.closed|Closed. Go do something else.
 view.switch|{v}, huh? Bold choice. Let us see it.
 view.switch|Switching to {v}. Try to keep up this time.
+quiz.right|Correct. Shocking, I know.
+quiz.wrong|Wrong. Bold choice, {addr}.
+game.streak|{v} in a row. Who are you?
+game.timeup|Time's up. The clock won, again.
+market.open|Markets open. Try not to blame the Wi-Fi.
+storm.near|Storm coming. Your router's about to have opinions.

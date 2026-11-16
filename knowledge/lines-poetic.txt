@@ -84,3 +84,9 @@ update.suspect|After the update on {v}, things changed.
 update.suspect|Since {v}'s update, a shadow.
 call.on|Voices travel. I watch the call.
 call.on|A call is on. I listen for trouble.
+quiz.right|Yes - like a key that fits the lock.
+quiz.wrong|Not this one; the answer waits a little further on.
+game.streak|{v} in a row, a little string of pearls.
+game.timeup|The clock has closed its eyes.
+market.open|The markets wake and start to hum.
+storm.near|A storm leans close; the signal may tremble.

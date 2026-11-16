@@ -212,7 +212,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     if (view === "live") {
       if (!L) a += '<div class="card"><h2>LIVE</h2>' + esc(V("idle") || "Waiting for the first reading...") + '</div>';
       else {
-        a += '<div class="card verdict l' + (L.lv >= 0 && L.lv <= 2 ? L.lv : 3) + '"><span class="tag">' + esc(L.chip || "") + '</span><h1>' + esc(L.head || "") + '</h1></div>';
+        a += '<div class="card verdict l' + (L.lv >= 0 && L.lv <= 2 ? L.lv : 3) + '" style="display:flex;gap:12px;align-items:center"><span id="rface"></span><div style="min-width:0"><span class="tag">' + esc(L.chip || "") + '</span><h1>' + esc(L.head || "") + '</h1></div></div>';
         a += '<div class="card"><h2>RIGHT NOW</h2><div class="grid">' + num("Download", mb(L.down), 3) + num("Upload", mb(L.up), 3) + num("Ping (internet)", ms(L.ping), lvOf(L.ping, 80, 200)) + num("Router", ms(L.gw), lvOf(L.gw, 20, 80)) +
           num("Jitter", ms(L.jit), lvOf(L.jit, 20, 50)) + num("Loss", L.loss == null ? "–" : Math.round(L.loss * 10) / 10 + "<small> %</small>", lvOf(L.loss, 1, 3)) + num("CPU", L.cpu == null ? "–" : Math.round(L.cpu) + "<small> %</small>", lvOf(L.cpu, 80, 95)) + num("Memory", L.mem == null ? "–" : Math.round(L.mem) + "<small> %</small>", lvOf(L.mem, 85, 95)) + '</div>' +
           '<p style="font-size:13px;color:var(--muted);margin:10px 0 0">On ' + esc(L.link || "the network") + '. Updates every second.</p></div>';
@@ -297,6 +297,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     }
     a += '<p class="note">🔒 Encrypted end to end with the code you scanned. Nothing is saved on this phone or on the relay. <button id="bye" style="padding:4px 10px;font-size:12px">End session</button></p>';
     $("app").innerHTML = a; left();
+    var rf = $("rface"); if (rf && window.AMV && L) AMV.face(rf, L.lv === 2 ? "worried" : L.lv === 1 ? "thinking" : L.lv === 0 ? "happy" : "calm");
   }
   function tabsOn() { [].forEach.call(document.querySelectorAll(".tabs button"), function (b) { b.className = b.getAttribute("data-v") === view ? "on" : ""; }); }
   $("tabs").addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; view = b.getAttribute("data-v"); tabsOn(); draw(); });

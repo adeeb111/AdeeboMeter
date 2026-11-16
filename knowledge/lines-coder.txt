@@ -84,3 +84,9 @@ update.suspect|Regression after the update on {v}.
 update.suspect|Broke after the {v} update. Bisect points there.
 call.on|Call detected. Watching jitter.
 call.on|On a call. Monitoring.
+quiz.right|Tests pass. Correct.
+quiz.wrong|Assertion failed. Try again.
+game.streak|{v} in a row - green build.
+game.timeup|Timeout exceeded.
+market.open|Markets online. Status 200.
+storm.near|Storm nearby - expect dropped connections.

@@ -84,3 +84,9 @@ update.suspect|Degradation after the update on {v}.
 update.suspect|Anomaly correlates with the {v} update.
 call.on|Voice loop active. Monitoring quality.
 call.on|Call in progress. Watching jitter.
+quiz.right|Confirmed. Correct.
+quiz.wrong|Negative. Re-check and retry.
+game.streak|{v} in a row - all systems nominal.
+game.timeup|Clock's at zero.
+market.open|Markets are go.
+storm.near|Weather advisory: storm nearby, link may drop.

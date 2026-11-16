@@ -99,3 +99,9 @@ trade.closed|Market is closed. The deals sleep.
 trade.closed|Closed for the night. Opens at 9:30.
 view.switch|The {v} view. The city looks different from here.
 view.switch|Switching to {v}. New case, same streets.
+quiz.right|Right on the money.
+quiz.wrong|Wrong lead, pal. Back to the files.
+game.streak|{v} in a row. You're good at this.
+game.timeup|Time ran out. It always does.
+market.open|The market opened. The city's awake.
+storm.near|Storm's rolling in. Lines might go quiet.

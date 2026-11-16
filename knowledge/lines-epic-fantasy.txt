@@ -116,3 +116,9 @@ update.suspect|Trouble began after the king's decree of {v}.
 update.suspect|A recent Windows update may be the traitor.
 call.on|A council meeting. Watching the call.
 call.on|You hold court. The call is watched.
+quiz.right|Well answered, {addr}!
+quiz.wrong|Alas, the runes say otherwise.
+game.streak|{v} victories in a row - songs will be sung!
+game.timeup|The sands of the hourglass have run out.
+market.open|The great markets open their gates.
+storm.near|A tempest gathers over your realm.

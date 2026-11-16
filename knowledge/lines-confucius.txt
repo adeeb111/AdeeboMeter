@@ -49,3 +49,9 @@ trade.ok|Your line to the broker is quick and steady.
 trade.slow|The broker answers slowly. Consider twice before acting.
 trade.closed|The market is closed until 9:30.
 view.switch|Switching to {v}.
+quiz.right|Correct. You have learned well.
+quiz.wrong|Not so. To err and correct it is learning.
+game.streak|{v} in a row - study bears fruit.
+game.timeup|The time is finished.
+market.open|The market gates open.
+storm.near|A storm draws near; the prudent prepare.

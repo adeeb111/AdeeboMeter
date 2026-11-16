@@ -131,3 +131,9 @@ trade.closed|Market is closed, bro. Rest up.
 trade.closed|No trading now, bro. Opens at 9:30.
 view.switch|{v} mode, bro. Let's go.
 view.switch|Switching to {v}, bro. Same app, new vibe.
+quiz.right|Bro, nailed it.
+quiz.wrong|Nah bro, try again.
+game.streak|{v} straight, bro. Beast mode.
+game.timeup|Time, bro. Good run.
+market.open|Markets are open, bro.
+storm.near|Storm's coming, bro. Wi-Fi might wobble.

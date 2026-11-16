@@ -91,3 +91,9 @@ update.suspect|Things changed after the update on {v}. They always do.
 update.suspect|It broke after the update on {v}.
 call.on|You're on a call. I'll be quiet and watch.
 call.on|Call detected. Watching softly.
+quiz.right|Right. For once, something works.
+quiz.wrong|Wrong. Like everything else.
+game.streak|{v} in a row. It won't last.
+game.timeup|Time's gone. Like everything.
+market.open|The markets opened. The void opened too.
+storm.near|A storm is coming. Fitting.

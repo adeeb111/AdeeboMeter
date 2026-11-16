@@ -131,3 +131,9 @@ trade.closed|Market closed. The broker check sleeps until 9:30.
 trade.closed|Markets are closed. Nothing is being checked.
 view.switch|Switching to {v}. Your settings for it are coming back.
 view.switch|Changing to the {v} view. One moment.
+quiz.right|Correct.
+quiz.wrong|Incorrect.
+game.streak|{v} correct in a row.
+game.timeup|Time's up.
+market.open|Markets are open.
+storm.near|Storm nearby. Connections may drop.
