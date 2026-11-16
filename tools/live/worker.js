@@ -82,6 +82,29 @@ const bbc = sp => cached("bbc:" + sp, 3 * 3600, 6 * 3600, async () => ({ items: 
 // leagues the page offers; NHL and MLB come through the relay from the leagues' own feeds, the rest from ESPN on the phone
 const LG = { nhl: ["hockey", "nhl"], nba: ["basketball", "nba"], nfl: ["football", "nfl"], mlb: ["baseball", "mlb"], epl: ["soccer", "eng.1"], ucl: ["soccer", "uefa.champions"], mls: ["soccer", "usa.1"] };
 const HEAD = { cri: "cricket", ten: "tennis", f1: "formula1" };
+// ---- stock movers (Adeeb, 16 Nov: option A) - Alpha Vantage's US top gainers / losers / most traded, once a day with the
+// relay's own free key (a Cloudflare secret, AV_KEY - set with "wrangler secret put AV_KEY"; never in this file)
+const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p: +x.price || null, c: parseFloat(x.change_percentage) || 0, v: +x.volume || 0 }))
+  .filter(x => x.t && x.p >= 1 && !/[^A-Z.]/.test(x.t) && !(x.t.length === 5 && /[WUR]$/.test(x.t))).slice(0, 5);   // under $1, warrants, units and rights are mostly noise
+const movers = (key, d) => { if (d.Information || d.Note || d["Error Message"]) throw new Error(String(d.Information || d.Note || d["Error Message"]).slice(0, 160)); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
+const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!env || !env.AV_KEY) throw new Error("nokey"); return movers(env.AV_KEY, await get("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), 12 * 3600)); });
+// a person's own key (Live > Your keys): it comes in a header, is used for this one call and dropped - never cached, logged or kept
+async function keyed(svc, key, u) {
+  const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000) };
+  const j2 = async (url, h) => { const r = await fetch(url, h ? { headers: Object.assign({}, nc.headers, h), signal: nc.signal } : nc); const t = await r.text(); let d; try { d = JSON.parse(t); } catch (e) { throw new Error("not JSON (" + r.status + ")"); } if (r.status === 401 || r.status === 403) throw new Error("the key was refused"); if (r.status === 429) throw new Error("the key's daily limit is used up"); if (!r.ok) throw new Error("answered " + r.status); return d; };
+  if (svc === "av") return movers(key, await j2("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(key)));
+  if (svc === "fd") { const d = await j2("https://api.football-data.org/v4/matches", { "X-Auth-Token": key });
+    return { g: (d.matches || []).slice(0, 40).map(m => ({ lg: String((m.competition || {}).name || "").slice(0, 40), d: m.utcDate, st: /IN_PLAY|PAUSED/.test(m.status) ? "in" : m.status === "FINISHED" ? "post" : "pre", det: m.status === "PAUSED" ? "Half-time" : m.minute ? m.minute + "'" : m.status === "IN_PLAY" ? "Live" : "",
+      a: { n: String((m.awayTeam || {}).shortName || (m.awayTeam || {}).name || "").slice(0, 30), ab: String((m.awayTeam || {}).tla || ""), id: "", s: (((m.score || {}).fullTime || {}).away ?? "") + "" },
+      h: { n: String((m.homeTeam || {}).shortName || (m.homeTeam || {}).name || "").slice(0, 30), ab: String((m.homeTeam || {}).tla || ""), id: "", s: (((m.score || {}).fullTime || {}).home ?? "") + "" } })) }; }
+  if (svc === "cd") { const d = await j2("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + encodeURIComponent(key)); if (d.status && d.status !== "success") throw new Error(String(d.reason || d.status).slice(0, 120));
+    return { hits: (d.info || {}).hitsToday || null, g: (d.data || []).slice(0, 25).map(m => { const sc = (m.score || []).map(x => (x.r ?? "") + "/" + (x.w ?? "") + " (" + (x.o ?? "") + ")"), tm = m.teams || [];
+      return { lg: String(m.matchType || "").toUpperCase().slice(0, 10) + (m.venue ? " · " + String(m.venue).slice(0, 40) : ""), d: m.dateTimeGMT ? m.dateTimeGMT + "Z" : m.date, st: m.matchEnded ? "post" : m.matchStarted ? "in" : "pre", det: "", sum: String(m.status || "").slice(0, 80),
+        a: { n: String(tm[1] || "").slice(0, 30), s: sc[1] || "" }, h: { n: String(tm[0] || "").slice(0, 30), s: sc[0] || "" } }; }) }; }
+  if (svc === "gn") { const q = (u.searchParams.get("q") || "").slice(0, 60), d = await j2("https://gnews.io/api/v4/" + (q ? "search?q=" + encodeURIComponent(q) + "&" : "top-headlines?category=sports&") + "lang=en&max=10&apikey=" + encodeURIComponent(key));
+    return { items: (d.articles || []).slice(0, 10).map(a => ({ t: String(a.title || "").slice(0, 200), l: String(a.url || ""), s: String((a.source || {}).name || "").slice(0, 40) })).filter(a => /^https:\/\//.test(a.l)) }; }
+  throw new Error("unknown service");
+}
 // ---- official league feeds through the relay (Adeeb, 16 Nov: "mix of 2" - ESPN refuses servers, so NHL and MLB come from
 // the leagues themselves; NBA, NFL, soccer and cricket matches the phone asks ESPN for itself, only when the person turns it on)
 const ISO = d => d.toISOString().slice(0, 10);
