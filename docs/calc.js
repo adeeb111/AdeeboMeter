@@ -16,6 +16,8 @@
     return (v < 0 && +s !== 0 ? "-" : "") + s;
   }
   function rnd(d, k) { var f = Math.pow(10, k), x = +(Math.abs(d) * f).toPrecision(15), r = Math.round(x); return (d < 0 ? -1 : 1) * r / f; }   // half away from zero, like .NET
+  function Whole(v) { return Math.abs(v - Math.round(v)) < 1e-9; }
+  function Bare(t) { return /^\s*[0-9]+(?:[.,][0-9]+)?\s*$/.test(t || ""); }
   function blank(s) { return s == null || String(s).trim() === ""; }
   var U32 = 4294967296;
   function V4(t) { var m = /^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.exec(String(t || "").trim()); if (!m) return null; var v = 0; for (var i = 1; i <= 4; i++) { var o = +m[i]; if (o > 255) return null; v = v * 256 + o; } return v; }
@@ -43,37 +45,44 @@
     var list = [], words = t.split(/[ ,>\/+|]+/).filter(Boolean);
     for (var i = 0; i < words.length; i++) {
       var w = words[i]; if (w === "over" || w === "on" || w === "in") continue;
-      var m = /^x([0-9])$/.exec(w); if (m && list.length) { for (var k = 1; k < +m[1] && k < 8; k++) list.push(list[list.length - 1]); continue; }
+      var m = /^x([0-9]+)$/.exec(w); if (m && list.length) { if (+m[1] < 2 || +m[1] > 8) return { list: list, err: w }; for (var k = 1; k < +m[1]; k++) list.push(list[list.length - 1]); continue; }   // FRESH-042
       if (Alias[w]) w = Alias[w];
       var l = Known.filter(function (x) { return x.Key === w; })[0]; if (!l) return { list: list, err: w }; list.push(l);
     }
     return { list: list, err: null };
   }
-  function intText(t) { var s = String(t).trim().replace(/,/g, ""); return /^[0-9]+$/.test(s) ? parseInt(s, 10) : NaN; }
+  function intText(t) { var s = String(t).trim(); return /^([0-9]+|[0-9]{1,3}(,[0-9]{3})+)$/.test(s) ? parseInt(s.replace(/,/g, ""), 10) : NaN; }   // FRESH-043: "15,00" isn't 1500
   function sum(st, k) { return st.filter(function (x) { return x.Kind === k; }).reduce(function (a, x) { return a + x.Bytes; }, 0); }
   function Stack(layers, mtuText, payloadText) {
     var rows = [], p = parseStack(layers), st = p.list;
+    if (p.err != null && /^x[0-9]+$/.test(p.err)) { rows.push(R(2, "Layers", "\"" + p.err + "\" - repeat a layer x2 to x8, e.g. mpls x3", "")); return rows; }
     if (p.err != null) { rows.push(R(2, "Layers", "\"" + p.err + "\" isn't a layer I know - try: " + Known.map(function (k) { return k.Key; }).join(", ") + ", or a preset: " + Presets.map(function (x) { return x[0]; }).join(", "), "")); return rows; }
     var mtu = 1500; if (!blank(mtuText)) { mtu = intText(mtuText); if (isNaN(mtu) || mtu < 576 || mtu > 9216) { rows.push(R(2, "MTU", "type a link MTU between 576 and 9216 (1500 = normal Ethernet)", "")); return rows; } }
     var payload = -1; if (!blank(payloadText)) { payload = intText(payloadText); if (isNaN(payload)) { rows.push(R(2, "Payload", "type the data size in bytes, e.g. 1400", "")); return rows; } }
     var ips = st.filter(function (x) { return x.Kind === "i"; }).length; if (ips > 1) rows.push(R(1, "Layers", ips + " IP layers - both are counted inside the MTU. A tunnel's outer IP belongs to the tunnel layer (gre, ipsec, vxlan...), which already carries it.", "")); if (ips === 0) { rows.push(R(2, "Layers", "add an IP layer (ipv4 or ipv6) - the MTU is counted against it", "")); return rows; }
+    var tl = st.filter(function (x) { return x.Key === "tcp" || x.Key === "udp" || x.Key === "icmp"; }).map(function (x) { return x.Key; }), trans = tl.filter(function (x, i) { return tl.indexOf(x) === i; });   // FRESH-041
+    if (tl.length > 1) { rows.push(R(2, "Layers", "one transport per packet - pick tcp, udp or icmp, not " + (trans.length > 1 ? trans : [trans[0], trans[0]]).join(" and "), "")); return rows; }
+    if (st.some(function (x) { return x.Key === "quic"; }) && !st.some(function (x) { return x.Key === "udp"; })) { rows.push(R(2, "Layers", "QUIC rides on UDP - add udp under it, e.g. quic udp ipv4 ethernet", "")); return rows; }   // FRESH-067
     var pay = sum(st, "p"), ip = sum(st, "i"), tun = sum(st, "t"), shim = sum(st, "l"), frame = sum(st, "f");
     var ap = st.some(function (x) { return x.Approx && x.Kind !== "r"; }) ? "~" : "", innerMtu = mtu - shim - tun, maxData = innerMtu - ip - pay, eth = st.some(function (x) { return x.Key === "ethernet"; });
     rows.push(R(3, "Stack", st.map(function (x) { return x.Name; }).join(" > "), "Top is what the app sends; bottom is what goes on the wire."));
     st.forEach(function (x) { rows.push(R(3, "  " + x.Name, (x.Approx ? "~" : "") + x.Bytes + " bytes" + (x.Kind === "f" ? " (outside the MTU)" : x.Kind === "r" ? " per record, not per packet" : ""), x.Note)); });
+    if (st.some(function (x) { return x.Key === "ipv6"; }) && innerMtu < 1280) rows.push(R(2, "IPv6 minimum", (tun + shim > 0 ? "the inner MTU is " : "an MTU of ") + innerMtu + " - IPv6 needs every link to carry 1280 bytes, so IPv6 won't work here", "RFC 8200: links below 1280 must split and rejoin packets underneath IPv6."));   // FRESH-040
     if (maxData <= 0) { rows.push(R(2, "Fits?", "the headers alone are bigger than an MTU of " + mtu, "")); return rows; }
     var tcp = st.some(function (x) { return x.Key === "tcp"; });
     rows.push(R(0, tcp ? "Biggest segment (MSS)" : "Biggest data per packet", ap + I(maxData) + " bytes", tcp ? "What TCP should advertise so nothing splits: link MTU " + mtu + " - " + (shim + tun > 0 ? (shim + tun) + " tunnel/PPPoE - " : "") + ip + " IP - " + pay + " above." : ""));
-    if (tun + shim > 0) rows.push(R(1, "Set the inner MTU to", ap + I(innerMtu), "The tunnel (or PPPoE) eats " + ap + (tun + shim) + " bytes of the " + mtu + " - set the VPN adapter's MTU (or the router's MSS clamp) to this, or big packets split or vanish."));
+    if (tun + shim > 0) rows.push(R(1, "Set the inner MTU to", ap + I(innerMtu), "The tunnel (or PPPoE) eats " + ap + (tun + shim) + " bytes of the " + mtu + " - set the VPN adapter's MTU to this, or big packets split or vanish."));
+    if (tun + shim > 0) rows.push(R(3, "Router MSS clamp", ap + I(innerMtu - ip - 20), "For TCP through it: the inner MTU less " + ip + " IP and 20 TCP - a clamp set to the MTU is " + (ip + 20) + " bytes too big."));   // FRESH-068
     var wire = mtu + frame, full = maxData + pay + ip + tun + shim + frame, eff = 100 * maxData / Math.max(1, full + (eth ? 20 : 0));
     rows.push(R(3, "Frame on the wire", ap + I(wire) + " bytes" + (eth ? " (+20 preamble and gap)" : ""), ""));
     rows.push(R(3, "Efficiency", ap + F(eff, "0.0") + "% of the line carries your data at full size", "Small packets carry far less: a 100-byte game update is mostly headers."));
+    var rec = sum(st, "r"), pw = payload < 0 ? payload : payload + rec * Math.max(1, Math.floor((payload + 16383) / 16384)), recNote = pw > payload && payload >= 0 ? "TLS adds " + (pw - payload) + " bytes (record header and tag) before TCP splits it." : "";   // FRESH-044
     if (payload >= 0) {
-      if (payload <= maxData) rows.push(R(0, I(payload) + " bytes of data", "fits in one packet (" + ap + I(payload + pay + ip + tun + shim) + " of " + mtu + ")", ""));
+      if (pw <= maxData) rows.push(R(0, I(payload) + " bytes of data", "fits in one packet (" + ap + I(pw + pay + ip + tun + shim) + " of " + mtu + ")", recNote));
       else {
         var ii = st.filter(function (x) { return x.Kind === "i"; }), innerIp = ii[ii.length - 1], fragHdr = innerIp && innerIp.Key === "ipv6" ? 8 : 0, fragData = Math.floor((innerMtu - ip - fragHdr) / 8) * 8;
-        var n = tcp ? Math.ceil(payload / maxData) : Math.ceil((payload + pay) / Math.max(8, fragData));
-        if (tcp) rows.push(R(3, I(payload) + " bytes of data", "TCP sends it as " + n + " segments - normal", ""));
+        var n = tcp ? Math.ceil(pw / maxData) : Math.ceil((pw + pay) / Math.max(8, fragData));
+        if (tcp) rows.push(R(3, I(payload) + " bytes of data", "TCP sends it as " + n + " segments - normal", recNote));
         else rows.push(R(1, I(payload) + " bytes of data", "too big for one packet: IP splits it into " + n + " fragments, or drops it if Don't Fragment is set (IPv6 never splits on the way)", "Fragments get lost or blocked by firewalls more often - keep UDP data under " + maxData + "."));
       }
     }
@@ -84,7 +93,7 @@
   function Vlsm(block, sizes) {
     var rows = [], b = String(block || "").trim(), slash = b.indexOf("/"), ip, pre;
     if (slash < 0 || (ip = V4(b.slice(0, slash))) == null || !/^[0-9]+$/.test(b.slice(slash + 1)) || (pre = +b.slice(slash + 1)) > 30) { rows.push(R(2, "Network", "type an IPv4 block, e.g. 10.0.0.0/22", "")); return rows; }
-    var need = [], ws = String(sizes || "").split(/[, ;]+/).filter(Boolean);
+    var need = [], ws = String(sizes || "").split(/[, ;\n\r\t]+/).filter(Boolean);
     for (var i = 0; i < ws.length; i++) { var w = ws[i], n = /^[0-9]+$/.test(w) ? +w : NaN; if (isNaN(n) || n < 1 || n > 16777214) { rows.push(R(2, "Sizes", "\"" + w + "\" isn't a host count - type e.g. 200, 60, 12, 2", "")); return rows; } need.push(n); }
     if (!need.length) { rows.push(R(2, "Sizes", "type how many hosts each subnet needs, e.g. 200, 60, 12, 2", "")); return rows; }
     if (need.length > 64) { rows.push(R(2, "Sizes", "64 subnets at most", "")); return rows; }
@@ -106,7 +115,7 @@
 
   // ================================================================== bandwidth and transfer time
   function Parse2(t) {
-    var m = /^\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?|[0-9]+(?:[.,][0-9]+)?)\s*([a-zA-Z\/µ]*)\s*$/.exec(t || ""); if (!m) return { v: NaN, u: "" };
+    var m = /^\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?|[0-9]+(?:[.,][0-9]+)?)\s*([a-zA-Z\/µμ]*)\s*$/.exec(t || ""); if (!m) return { v: NaN, u: "" };
     var n = m[1], u = m[2]; if (/^[0-9]{1,3}\.[0-9]{3}$/.test(n)) return { v: NaN, u: u };
     n = /^[0-9]{1,3}(,[0-9]{3})+(\.[0-9]+)?$/.test(n) ? n.replace(/,/g, "") : n.replace(",", ".");
     var v = parseFloat(n); return { v: isFinite(v) ? v : NaN, u: u };
@@ -123,7 +132,7 @@
   }
   function Time(t) {
     if (blank(t)) return NaN; var p = Parse2(t), v = p.v; if (isNaN(v)) return v;
-    switch (p.u.toLowerCase()) { case "": case "s": case "sec": case "secs": case "second": case "seconds": return v; case "ms": return v / 1000; case "m": case "min": case "mins": case "minute": case "minutes": return v * 60; case "h": case "hr": case "hrs": case "hour": case "hours": return v * 3600; case "d": case "day": case "days": return v * 86400; default: return NaN; }
+    switch (p.u.toLowerCase()) { case "": case "s": case "sec": case "secs": case "second": case "seconds": return v; case "ms": return v / 1000; case "µs": case "μs": case "us": return v / 1e6; case "m": case "min": case "mins": case "minute": case "minutes": return v * 60; case "h": case "hr": case "hrs": case "hour": case "hours": return v * 3600; case "d": case "day": case "days": return v * 86400; default: return NaN; }
   }
   function Bits(b) { return b >= 1e9 ? F(b / 1e9, "0.##") + " Gbps" : b >= 1e6 ? F(b / 1e6, "0.##") + " Mbps" : b >= 1e3 ? F(b / 1e3, "0.##") + " kbps" : F(b, "0") + " bps"; }
   function ByteSize(b) { return b >= 1e12 ? F(b / 1e12, "0.##") + " TB" : b >= 1e9 ? F(b / 1e9, "0.##") + " GB" : b >= 1e6 ? F(b / 1e6, "0.##") + " MB" : b >= 1e3 ? F(b / 1e3, "0.##") + " kB" : F(b, "0") + " bytes"; }
@@ -141,12 +150,12 @@
     if (!isNaN(bytes) && !isNaN(bps) && bps > 0) {
       var t = bytes * 8 / bps; rows.push(R(0, "Time", Dur(t) + " at the full " + Bits(bps), ""));
       rows.push(R(3, "Realistic", Dur(t / 0.94) + " - TCP and IP headers take about 5-6%; Wi-Fi usually gets half to two thirds of its link rate", ""));
-      if (!isNaN(secs)) { var off = Math.abs(secs - t) > Math.max(1, t * 0.1); rows.push(R(off ? 1 : 3, "Your time", Dur(secs) + (off ? " doesn't fit the size and speed (" + Dur(t) + ") - the size and speed were used" : " fits the size and speed"), "")); }
+      if (!isNaN(secs)) { var off = Math.abs(secs - t) > t * 0.1 + 1e-9; rows.push(R(off ? 1 : 3, "Your time", Dur(secs) + (off ? " doesn't fit the size and speed (" + Dur(t) + ") - the size and speed were used" : " fits the size and speed"), "")); }
     } else if (!isNaN(bytes) && !isNaN(secs) && secs > 0) { bps = bytes * 8 / secs; rows.push(R(0, "Speed needed", Bits(bps) + "  (" + ByteRate(bps) + ")", "Plus about 6% for headers: " + Bits(bps / 0.94) + " on the line.")); }
     else if (!isNaN(bps) && !isNaN(secs)) rows.push(R(0, "Moves", ByteSize(bps * secs / 8) + " in " + Dur(secs), ""));
     if (!isNaN(bps) && bps > 0) {
       rows.push(R(3, "Same speed", Bits(bps) + " = " + ByteRate(bps) + " = " + ByteSize(bps / 8 * 3600) + " an hour", "Network speeds are in bits; file sizes in bytes (8 bits). Sizes here are decimal (1 MB = 1,000,000 bytes), like ISPs and Windows' network pages."));
-      rows.push(R(3, "Full-size packets", I(Math.floor(bps / 8 / 1538)) + " a second (1500-byte Ethernet)  ·  " + F(1538 * 8 / bps * 1e6, "0.##") + " µs each on the wire", ""));
+      rows.push(R(3, "Full-size packets", I(Math.floor(bps / 8 / 1538)) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", ""));
     }
     return rows;
   }
@@ -157,12 +166,14 @@
   function big(s, radix) { var v = BigInt(0), R2 = BigInt(radix); s = s.toLowerCase(); for (var i = 0; i < s.length; i++) { v = v * R2 + BigInt(parseInt(s[i], radix)); if (v > MAXU) return null; } return v; }
   function ParseNum(t) {
     if (t === "") return null; var ip = V4(t); if (ip != null) return { v: BigInt(ip), from: "IPv4 address" };
-    if (/^([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}$/.test(t) || /^[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}$/.test(t)) return { v: big(t.replace(/[^0-9a-fA-F]/g, ""), 16), from: "MAC address" };
+    if (/^[0-9a-fA-F]{2}([:-])[0-9a-fA-F]{2}(\1[0-9a-fA-F]{2}){4}$/.test(t) || /^[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}$/.test(t)) return { v: big(t.replace(/[^0-9a-fA-F]/g, ""), 16), from: "MAC address" };
     var s = t.replace(/ /g, ""), v;
     if (/^0x/i.test(s)) { v = /^[0-9a-f]+$/i.test(s.slice(2)) ? big(s.slice(2), 16) : null; return v == null ? null : { v: v, from: "hex" }; }
     if (/h$/i.test(s) && s.length > 1) { v = /^[0-9a-f]+$/i.test(s.slice(0, -1)) ? big(s.slice(0, -1), 16) : null; return v == null ? null : { v: v, from: "hex" }; }
-    if (/^0b/i.test(s) || /^[01]+[bB]$/.test(s)) { var bits = /^0b/i.test(s) ? s.slice(2) : s.slice(0, -1); if (!bits.length || bits.length > 64 || !/^[01]+$/.test(bits)) return null; return { v: big(bits, 2), from: "binary" }; }
-    var d = s.replace(/,/g, ""); if (/^[0-9]+$/.test(d)) { v = big(d, 10); return v == null ? null : { v: v, from: "decimal" }; }
+    if (/^0b/i.test(s) || /^[01]+[bB]$/.test(s)) { var pre = /^0b/i.test(s), bits = pre ? s.slice(2) : s.slice(0, -1); if (!bits.length || !/^[01]+$/.test(bits)) return null; bits = bits.replace(/^0+/, "") || "0"; if (bits.length > 64) return null;   // FRESH-048
+      return { v: big(bits, 2), from: pre ? "binary" : "binary (it ends in b - for hex, type 0x" + s + ")" }; }
+    var d = s.replace(/,/g, ""); if (/^([0-9]+|[0-9]{1,3}(,[0-9]{3})+)$/.test(s)) {   // FRESH-047
+      v = big(d, 10); return v == null ? null : { v: v, from: "decimal" }; }
     if (/^[0-9a-fA-F]+$/.test(s) && s.length <= 16) return { v: big(s, 16), from: "hex (it has letters)" };
     return null;
   }
@@ -177,7 +188,7 @@
       var u = Number(v); rows.push(R(3, "As an IPv4 address", U(u), ""));
       var ones = 0, contig = true; for (var j = 31; j >= 0; j--) { if (Math.floor(u / Math.pow(2, j)) % 2 === 1) { if (ones !== 31 - j) contig = false; ones++; } }
       if (contig && ones > 0 && p.from.indexOf("IPv4") === 0) rows.push(R(3, "As a mask", "/" + ones + "  ·  wildcard " + U(4294967295 - u), ""));
-      if (u <= 65535) rows.push(R(3, "As a port / VLAN / ID", u <= 4094 && u >= 1 ? "valid VLAN ID and port number" : "valid port number", ""));
+      if (u <= 65535) rows.push(R(3, "As a port / VLAN / ID", u === 0 ? "port 0 is reserved - to the OS it means \"pick any free port\"" : u <= 4094 ? "valid VLAN ID and port number" : "valid port number", ""));
       if (u <= 63) rows.push(R(3, "As DSCP", "DSCP " + u + "  ·  ToS byte 0x" + ("0" + (u * 4).toString(16).toUpperCase()).slice(-2) + Dscp(u), ""));
     }
     if ((v <= BigInt("0xFFFFFFFFFFFF") && v > BigInt(4294967295)) || p.from.indexOf("MAC") === 0) { var m = []; for (var k = 0; k < 6; k++) m.push(("0" + ((v >> BigInt(40 - k * 8)) & BigInt(255)).toString(16)).slice(-2)); rows.push(R(3, "As a MAC", m.join(":"), "")); }
@@ -197,18 +208,20 @@
   function Dotted(v) { return U(v); }
   function Wildcard(text) {
     var t = String(text || "").trim(); if (t === "") return Need("Mask", "type a mask (255.255.252.0), a prefix (/22) or a wildcard (0.0.3.255)");
-    var mask, prefix;
+    var mask, prefix, zero = false;
     if (/^\/?\d{1,2}$/.test(t)) { prefix = parseInt(t.replace(/^\//, ""), 10); if (prefix > 32) return Need("Mask", "a prefix is 0 to 32"); mask = maskOf(prefix); }
     else {
-      var v = V4(t); if (v == null) return Need("Mask", "type it like 255.255.252.0, /22 or 0.0.3.255");
+      var v = V4(t); if (v == null) return Need("Mask", "type it like 255.255.252.0, /22 or 0.0.3.255"); zero = v === 0;
       if (v < 2147483648 && v !== 0) v = 4294967295 - v;
       var inv = 4294967295 - v; if (((inv + 1) % U32 !== 0) && (inv & (inv + 1)) !== 0) return [R(1, "Not contiguous", t + " has gaps - fine in a Cisco ACL wildcard (it matches odd patterns), but it isn't a subnet mask", "Each 0 bit in a wildcard must match; each 1 bit is 'don't care'.")];
       mask = v; prefix = 0; for (var m2 = mask; m2 !== 0; m2 = (m2 * 2) % U32) prefix++;
     }
-    var wild = 4294967295 - mask, hosts = prefix >= 31 ? (prefix === 31 ? 2 : 1) : Math.pow(2, 32 - prefix) - 2;
-    return [R(0, "Mask", Dotted(mask), ""), R(0, "Prefix", "/" + prefix, ""), R(0, "Wildcard", Dotted(wild), "What an ACL or OSPF network line wants: the mask turned inside out."),
+    var wild = 4294967295 - mask, ex = (167772160 & mask) >>> 0, hosts = prefix >= 31 ? (prefix === 31 ? 2 : 1) : Math.pow(2, 32 - prefix) - 2;
+    var rows = [R(0, "Mask", Dotted(mask), ""), R(0, "Prefix", "/" + prefix, ""), R(0, "Wildcard", Dotted(wild), "What an ACL or OSPF network line wants: the mask turned inside out."),
       R(3, "Addresses", I(Math.pow(2, 32 - prefix)) + " in the block · " + I(hosts) + " usable" + (prefix === 31 ? " (point-to-point, RFC 3021)" : ""), ""),
-      R(3, "In an ACL", "permit ip 10.0.0.0 " + Dotted(wild) + " any  - matches 10.0.0.0/" + prefix, "Swap 10.0.0.0 for your block's first address.")];
+      R(3, "In an ACL", "permit ip " + Dotted(ex) + " " + Dotted(wild) + " any  - matches " + Dotted(ex) + "/" + prefix, "Swap " + Dotted(ex) + " for your block's first address.")];   // FRESH-002
+    if (zero) rows.unshift(R(1, "Read as", "the /0 mask - every address. As an ACL wildcard, 0.0.0.0 means one exact address (/32): type /32 for that", ""));   // FRESH-001
+    return rows;
   }
   // IPv6 as 16 bytes, written the usual short way (lowercase, the longest run of zero groups as ::)
   function V6(t) {
@@ -231,12 +244,13 @@
     return h.slice(0, best).join(":") + "::" + h.slice(best + bl).join(":");
   }
   function V6Split(prefixText, intoText) {
-    var m = /^([0-9a-fA-F:]+)\/(\d{1,3})$/.exec(String(prefixText || "").trim()), ip = m ? V6(m[1]) : null;
+    var m = /^([0-9a-fA-F:.]+)\/(\d{1,3})$/.exec(String(prefixText || "").trim()), ip = m ? V6(m[1]) : null;
     if (!m || !ip) return Need("Prefix", "type it like 2001:db8:abcd::/48");
     var p = +m[2]; if (p > 128) return Need("Prefix", "a prefix is 0 to 128");
     var it = String(intoText || "").trim(), q;
     if (it[0] === "/") { if (!/^[+-]?\d+$/.test(it.slice(1))) return Need("Split into", "type /56, /64 or a count like 256"); q = parseInt(it.slice(1), 10); }
-    else { var n = First(it); if (isNaN(n) || n < 2) q = p <= 56 ? 64 : Math.min(128, p + 8); else q = p + Math.ceil(Math.log(n) / Math.log(2) - 1e-9); }
+    else if (it !== "" && (isNaN(First(it)) || First(it) < 2)) return Need("Split into", "type /56, /64 or a count like 256");   // FRESH-003
+    else { var n = First(it); if (isNaN(n)) q = p <= 56 ? 64 : Math.min(128, p + 8); else q = p + Math.ceil(Math.log(n) / Math.log(2) - 1e-9); }
     if (q <= p || q > 128) return Need("Split into", "has to be longer than /" + p + " and at most /128");
     var extra = q - p, b = ip.slice(); for (var bit = p; bit < 128; bit++) b[bit >> 3] &= ~(0x80 >> (bit % 8)) & 255;
     var rows = [R(0, "Pieces", (extra >= 63 ? "2^" + extra : I(Math.pow(2, extra))) + " × /" + q, "")];
@@ -252,9 +266,10 @@
     if (isNaN(bps) || bps <= 0) return Need("Link speed", "type e.g. 1 Gbps or 500 Mbps"); if (isNaN(rtt) || rtt <= 0) return Need("Round trip", "type e.g. 80 ms");
     var bdp = bps * rtt / 8, rows = [R(0, "In flight", ByteSize(bdp) + " - the window TCP needs to fill " + Bits(bps) + " at " + Dur(rtt), "BDP = speed × round trip ÷ 8.")];
     var scale = 0; while (65535 * Math.pow(2, scale) < bdp && scale < 14) scale++;
-    rows.push(R(3, "Window scaling", scale === 0 ? "not needed - fits in 64 KB" : "shift " + scale + " (×" + Math.pow(2, scale) + ") - Windows and Linux do this on their own", ""));
+    if (bdp > 65535 * 16384) rows.push(R(1, "Window scaling", "even the largest shift (14, ×16384) caps one window at about 1.07 GB - less than the " + ByteSize(bdp) + " in flight, so one stream can't fill this link; use several", ""));   // FRESH-005
+    else rows.push(R(3, "Window scaling", scale === 0 ? "not needed - fits in 64 KB" : "shift " + scale + " (×" + Math.pow(2, scale) + ") - Windows and Linux do this on their own", ""));
     var win = Size(winText);
-    if (!isNaN(win) && win > 0) { var max = win * 8 / rtt; rows.push(R(max < bps * 0.9 ? 1 : 0, "With a " + ByteSize(win) + " window", "at most " + Bits(Math.min(max, bps)) + (max < bps * 0.9 ? " - the window, not the link, is the limit" : " - enough to fill the link"), "Throughput ≤ window ÷ round trip.")); }
+    if (!isNaN(win) && win > 0) { var max = win * 8 / rtt; rows.push(R(max < bps ? 1 : 0, "With a " + ByteSize(win) + " window", "at most " + Bits(Math.min(max, bps)) + (max < bps ? " - the window, not the link, is the limit" : " - enough to fill the link"), "Throughput ≤ window ÷ round trip.")); }
     rows.push(R(3, "One stream, 64 KB window", "at most " + Bits(65535 * 8 / rtt), "Why old apps and some VPNs crawl on long links."));
     return rows;
   }
@@ -263,12 +278,13 @@
     var tech = String(techText || "").trim().toLowerCase(), nr = tech.indexOf("nr") >= 0 || tech.indexOf("5g") >= 0;
     if (!nr && tech.indexOf("lte") < 0 && tech.indexOf("4g") < 0) return Need("Technology", "type LTE or NR (5G)");
     var bw = First(bwText); if (isNaN(bw) || bw <= 0) return Need("Bandwidth", "type e.g. 20 MHz");
-    var mm = String(mimoText || "").toLowerCase(), lm = /(\d)\s*x\s*(\d)/.exec(mm), layers = lm ? Math.min(+lm[1], +lm[2]) : 2;
+    var mm = String(mimoText || "").toLowerCase(), lm = /(\d)\s*[x×]\s*(\d)/.exec(mm), layers = lm ? Math.min(+lm[1], +lm[2]) : 2;
     var qm = mm.indexOf("1024") >= 0 ? 10 : mm.indexOf("256") >= 0 ? 8 : mm.indexOf("64") >= 0 ? 6 : mm.indexOf("16") >= 0 ? 4 : mm.indexOf("qpsk") >= 0 ? 2 : 8;
     if (layers < 1 || layers > 8) return Need("MIMO", "layers are 1 to 8, e.g. 4x4");
     var rows = [], mbps;
     if (nr) {
-      var scs = First(scsText); if (isNaN(scs)) scs = 30; var col = scs <= 15 ? 0 : scs <= 30 ? 1 : 2, mu = col, prbs = NrPrb[Math.trunc(bw)];
+      var scs = First(scsText); if (isNaN(scs)) scs = 30; if (scs !== 15 && scs !== 30 && scs !== 60) return Need("Subcarrier spacing", "FR1 uses 15, 30 or 60 kHz");   // FRESH-007
+      var col = scs === 15 ? 0 : scs === 30 ? 1 : 2, mu = col, prbs = Whole(bw) ? NrPrb[Math.round(bw)] : null;   // FRESH-009
       if (!prbs || prbs[col] === 0) return Need("Bandwidth", "NR FR1 at " + F(15 * Math.pow(2, col), "0") + " kHz takes " + Object.keys(NrPrb).map(Number).filter(function (k) { return NrPrb[k][col] > 0; }).join(", ") + " MHz");
       var ts = 1e-3 / (14 * Math.pow(2, mu)); mbps = 1e-6 * layers * qm * 1.0 * (948 / 1024) * prbs[col] * 12 / ts * (1 - 0.14);
       rows.push(R(0, "Peak (downlink)", F(mbps, "0") + " Mbps", "TS 38.306: layers × bits per symbol × 948/1024 × PRB × 12 ÷ symbol time × (1 − 14% overhead), one carrier."));
@@ -276,6 +292,7 @@
       rows.push(R(3, "Uplink (rough)", "about " + F(mbps / layers * Math.min(layers, 2) * 0.2, "0") + " Mbps - phones send on 1-2 layers, and TDD bands give most slots to the downlink", ""));
     } else {
       if (bw > 20) return Need("Bandwidth", "an LTE carrier is at most 20 MHz - add carriers with aggregation");
+      if (bw !== 1.4 && bw !== 3 && bw !== 5 && bw !== 10 && bw !== 15 && bw !== 20) return Need("Bandwidth", "an LTE carrier is 1.4, 3, 5, 10, 15 or 20 MHz");   // FRESH-008
       var rb = bw === 1.4 ? 6 : bw * 5; mbps = rb * 12 * 14000 * qm * layers * 0.75 / 1e6;
       rows.push(R(0, "Peak (downlink)", F(mbps, "0") + " Mbps", "Resource blocks × 12 subcarriers × 14 symbols a millisecond × bits per symbol × layers, less ~25% for control, reference signals and coding."));
       rows.push(R(3, "Carrier", F(bw, "0.#") + " MHz · " + F(rb, "0") + " resource blocks · " + layers + " layers · " + Math.pow(2, qm) + "QAM", ""));
@@ -287,7 +304,7 @@
     var gen = Math.trunc(First(genText)) || 0, g0 = String(genText || "").toLowerCase();
     if (g0.indexOf("ax") >= 0) gen = 6; else if (g0.indexOf("be") >= 0) gen = 7; else if (g0.indexOf("ac") >= 0) gen = 5; else if (/\bn\b/.test(g0)) gen = 4;
     if (gen < 4 || gen > 7) return Need("Generation", "type 4 (n), 5 (ac), 6 (ax) or 7 (be)");
-    var w = isNaN(First(widthText)) ? (gen >= 6 ? 80 : gen === 5 ? 80 : 40) : Math.trunc(First(widthText)), ss = isNaN(First(ssText)) ? 2 : Math.trunc(First(ssText));
+    var wf = First(widthText), sf = First(ssText), w = isNaN(wf) ? (gen >= 6 ? 80 : gen === 5 ? 80 : 40) : Whole(wf) ? Math.round(wf) : -1, ss = isNaN(sf) ? 2 : Whole(sf) ? Math.round(sf) : -1;   // FRESH-010/011
     var maxW = gen === 4 ? 40 : gen === 7 ? 320 : 160, maxSs = gen === 4 ? 4 : gen === 7 ? 16 : 8;
     if ((w !== 20 && w !== 40 && w !== 80 && w !== 160 && w !== 320) || w > maxW) return Need("Channel width", "Wi-Fi " + gen + " takes 20" + (maxW >= 40 ? ", 40" : "") + (maxW >= 80 ? ", 80" : "") + (maxW >= 160 ? ", 160" : "") + (maxW >= 320 ? ", 320" : "") + " MHz");
     if (ss < 1 || ss > maxSs) return Need("Streams", "1 to " + maxSs + " (laptops and phones have 2)");
@@ -302,22 +319,22 @@
   }
   function LinkBudget(txText, gainText, distText, sensText) {
     var tx = First(txText); if (isNaN(tx)) return Need("Transmit power", "type e.g. 20 dBm");
-    if (/\bm?W\b/i.test(txText || "") && !/dbm/i.test(txText)) tx = 10 * Math.log10(tx * (/\bmW\b/.test(txText) ? 1 : 1000));
+    if (/\bm?W\b/i.test(txText || "") && !/dbm/i.test(txText)) { if (tx <= 0) return Need("Transmit power", "has to be more than 0 W"); tx = 10 * Math.log10(tx * (/\bmw\b/i.test(txText) ? 1 : 1000)); }   // FRESH-012/013
     var gains = anyNums(gainText), gt = gains.length > 0 ? gains[0] : 0, gr = gains.length > 1 ? gains[1] : gt;
-    var dt = String(distText || "").toLowerCase(), dm = /([0-9.,]+)\s*(km|m|mi)\b/.exec(dt), fm = /([0-9.,]+)\s*(ghz|mhz)/.exec(dt);
+    var dt = String(distText || "").toLowerCase(), dm = /(-?[0-9.,]+)\s*(km|m|mi)\b/.exec(dt), fm = /(-?[0-9.,]+)\s*(ghz|mhz)/.exec(dt);   // FRESH-014
     if (!dm || !fm) return Need("Distance and frequency", "type e.g. 2 km at 5.8 GHz");
     var d = parseFloat(dm[1].replace(",", ".")) * (dm[2] === "km" ? 1 : dm[2] === "mi" ? 1.609 : 0.001), fmhz = parseFloat(fm[1].replace(",", ".")) * (fm[2] === "ghz" ? 1000 : 1);
     if (!(d > 0) || !(fmhz > 0)) return Need("Distance and frequency", "both have to be more than 0");
     var fspl = 20 * Math.log10(d) + 20 * Math.log10(fmhz) + 32.44, rx = tx + gt + gr - fspl;
-    var rows = [R(0, "Received", F(rx, "0.#") + " dBm", "Transmit + gains − free-space loss. Real links lose another 5-20 dB to walls, rain, trees and cables."), R(3, "Free-space loss", F(fspl, "0.#") + " dB over " + F(d, "0.###") + " km at " + F(fmhz, "0") + " MHz", "FSPL = 20·log10(km) + 20·log10(MHz) + 32.44")];
+    var rows = [R(0, "Received", F(rx, "0.#") + " dBm", "Transmit + gains − free-space loss. Real links lose another 5-20 dB to walls, rain, trees and cables."), R(3, "Free-space loss", F(fspl, "0.#") + " dB over " + F(d, "0.###") + " km at " + F(fmhz, "0") + " MHz", "FSPL = 20·log10(km) + 20·log10(MHz) + 32.44"),
+      R(3, "Antenna gains", F(gt, "0.#") + " + " + F(gr, "0.#") + " dBi" + (gains.length === 1 ? " - one value given, used at both ends" : gains.length === 0 ? " - none given" : ""), "")];   // FRESH-071
     var sens = First(sensText);
     if (!isNaN(sens)) { var mg = rx - sens; rows.push(R(mg < 10 ? (mg < 0 ? 2 : 1) : 0, "Margin", F(mg, "0.#") + " dB" + (mg < 0 ? " - won't link" : mg < 10 ? " - thin; fades will drop it" : mg < 20 ? " - OK" : " - comfortable"), "Aim for 15-20 dB on outdoor links.")); }
     rows.push(R(3, "Keep clear", F(8.657 * Math.sqrt(d / (fmhz / 1000)), "0.#") + " m around the line at the middle (first Fresnel zone) - 60% of it at least", ""));
     return rows;
   }
   function Raid(levelText, disksText, sizeText) {
-    var lv = String(levelText || "").toLowerCase().replace(/raid|\s/g, ""), fd = First(disksText), n = Math.trunc(fd), size = Size(sizeText);
-    if (isNaN(size)) { var v = First(sizeText); if (!isNaN(v)) size = v * 1e12; }
+    var lv = String(levelText || "").toLowerCase().replace(/raid|\s/g, ""), fd = First(disksText), n = Math.trunc(fd), size = Bare(sizeText) ? First(sizeText) * 1e12 : Size(sizeText);   // FRESH-015
     if (isNaN(fd) || n < 1) return Need("Disks", "type how many, e.g. 6");
     if (!/^\d+(\s*(disks?|drives?))?$/i.test(String(disksText || "").trim())) return Need("Disks", "a whole number of disks, e.g. 6 - \"" + String(disksText || "").trim() + "\" isn't one");
     if (isNaN(size) || size <= 0) return Need("Disk size", "type e.g. 4 TB");
@@ -342,17 +359,20 @@
     var bytes = Size(dataText), bps = Speed(linkText); if (isNaN(bytes) || bytes <= 0) return Need("Data", "type e.g. 2 TB"); if (isNaN(bps) || bps <= 0) return Need("Link", "type e.g. 1 Gbps");
     var eff = 0.7, full = bytes * 8 / (bps * eff), rows = [R(0, "Full copy", Dur(full) + " at about 70% of " + Bits(bps), "Disks, encryption, small files and the far end rarely let a copy run at the full link speed."), R(3, "At the full link speed", Dur(bytes * 8 / bps), "")];
     var ch = First(changeText);
-    if (!isNaN(ch) && ch > 0) { var daily = String(changeText || "").indexOf("%") >= 0 ? bytes * ch / 100 : Size(changeText); if (isNaN(daily)) daily = bytes * ch / 100; var t = daily * 8 / (bps * eff); rows.push(R(t > 8 * 3600 ? 1 : 0, "Each night", ByteSize(daily) + " changes · " + Dur(t) + (t > 8 * 3600 ? " - longer than a night; it won't finish before morning" : ""), "")); }
+    if (!isNaN(ch) && ch > 0) { var daily = String(changeText || "").indexOf("%") >= 0 || Bare(changeText) ? bytes * ch / 100 : Size(changeText); if (isNaN(daily)) return Need("Daily change", "type e.g. 3% or 60 GB"); var t = daily * 8 / (bps * eff); rows.push(R(t > 8 * 3600 ? 1 : 0, "Each night", ByteSize(daily) + " changes · " + Dur(t) + (t > 8 * 3600 ? " - longer than a night; it won't finish before morning" : ""), "")); }
     rows.push(R(3, "Restore", "plan on the full-copy time or longer - restores are usually slower than backups", ""));
     return rows;
   }
   function Ups(battText, loadText, effText) {
-    var b = String(battText || "").toLowerCase(), wh, whm = /([0-9.,]+)\s*wh/.exec(b), ahm = /([0-9.,]+)\s*ah/.exec(b), vm = /([0-9.,]+)\s*v\b/.exec(b), xm = /\b(\d{1,3})\s*[x×]/.exec(b);
+    var b = String(battText || "").toLowerCase(), wh, whm = /(-?[0-9.,]+)\s*(k?)wh/.exec(b), ahm = /(-?[0-9.,]+)\s*ah/.exec(b), vm = /(-?[0-9.,]+)\s*v\b/.exec(b), xm = /\b(\d{1,3})\s*[x×]/.exec(b);
     var v = function (m) { return parseFloat(m[1].replace(",", ".")); };
-    if (whm) wh = v(whm); else if (ahm && vm) wh = v(ahm) * v(vm) * (xm ? +xm[1] : 1);
+    if (whm) wh = v(whm) * (whm[2] === "k" ? 1000 : 1); else if (ahm && vm) wh = v(ahm) * v(vm) * (xm ? +xm[1] : 1);
     else return Need("Battery", "type the energy (216 Wh) or volts and amp-hours (2 x 12 V 9 Ah) - a VA rating alone doesn't say how long it lasts");
-    var load = First(loadText); if (isNaN(load) || load <= 0) return Need("Load", "type the watts, e.g. 300 W");
-    var eff = First(effText); eff = isNaN(eff) ? 0.85 : eff > 1 ? eff / 100 : eff;
+    if (wh <= 0) return Need("Battery", "has to be more than 0 Wh");
+    var load = First(loadText); if (/\bkw\b/i.test(loadText || "")) load *= 1000;   // FRESH-073
+    if (isNaN(load) || load <= 0) return Need("Load", "type the watts, e.g. 300 W");
+    var eff = First(effText); eff = isNaN(eff) ? 0.85 : String(effText || "").indexOf("%") >= 0 || eff > 1 ? eff / 100 : eff;   // FRESH-019
+    if (eff <= 0 || eff > 1) return Need("Efficiency", "0 to 100% - most inverters are 80-90%");   // FRESH-018
     var hours = wh * eff / load, real = hours * (load > wh ? 0.6 : 0.8);
     return [R(real < 5 / 60 ? 1 : 0, "Runtime", "about " + Dur(real * 3600) + " at " + F(load, "0") + " W", "Energy × inverter efficiency ÷ load, less ~20% (more at heavy loads) for battery chemistry and age."),
       R(3, "On paper", Dur(hours * 3600) + " from " + F(wh, "0") + " Wh at " + Pct(eff * 100) + " efficiency", ""), R(3, "Rule of thumb", "batteries lose a lot of runtime after 3-5 years - test it once a year", "")];
@@ -361,49 +381,60 @@
     var t = String(text || "").trim().toLowerCase(), up, n = First(t), Year = 365.25 * 86400;
     if (isNaN(n)) return Need("Uptime", "type e.g. 99.9% - or a downtime, e.g. 4 h a year");
     if (t.indexOf("%") >= 0 || (n > 90 && n < 100 && !/[a-z]/.test(t))) up = n / 100;
-    else { var secs = Time(t.replace(/\s*(a|per|\/)\s*(year|month|week|day).*$/, "").trim()); if (isNaN(secs)) return Need("Uptime", "type e.g. 99.9% or 4 h a year"); var per = t.indexOf("month") >= 0 ? Year / 12 : t.indexOf("week") >= 0 ? 7 * 86400 : t.indexOf("day") >= 0 ? 86400 : Year; up = 1 - secs / per; }
-    if (up <= 0 || up >= 1) return Need("Uptime", "has to be between 0 and 100%");
-    var down = 1 - up;
-    return [R(0, "Uptime", Pct(up * 100) + "  (" + F(-Math.log10(down), "0.#") + " nines)", ""), R(3, "Down a year", Dur(down * Year), ""), R(3, "Down a month", Dur(down * Year / 12), ""),
-      R(3, "Down a week", Dur(down * 7 * 86400), ""), R(3, "Down a day", Dur(down * 86400), ""), R(3, "Two in a row", "two " + Pct(up * 100) + " parts in series give " + Pct(up * up * 100) + " - each link in the chain counts", "")];
+    else { var secs = Time(t.replace(/\s*(a|per|\/)\s*(year|quarter|month|week|day).*$/, "").trim()); if (isNaN(secs)) return Need("Uptime", "type e.g. 99.9% or 4 h a year"); var per = t.indexOf("quarter") >= 0 ? Year / 4 : t.indexOf("month") >= 0 ? Year / 12 : t.indexOf("week") >= 0 ? 7 * 86400 : t.indexOf("day") >= 0 ? 86400 : Year; up = 1 - secs / per; }
+    if (up <= 0 || up > 1) return Need("Uptime", "has to be between 0 and 100%");
+    var down = 1 - up, D = function (s2) { return down === 0 ? "none" : Dur(s2); };   // FRESH-020
+    return [R(0, "Uptime", Pct(up * 100) + "  (" + (down === 0 ? "no downtime at all - nothing real promises this" : F(-Math.log10(down), "0.#") + " nines") + ")", ""), R(3, "Down a year", D(down * Year), ""), R(3, "Down a month", D(down * Year / 12), ""),
+      R(3, "Down a week", D(down * 7 * 86400), ""), R(3, "Down a day", D(down * 86400), ""), R(3, "Two in a row", "two " + Pct(up * 100) + " parts in series give " + Pct(up * up * 100) + " - each link in the chain counts", "")];
   }
   function Growth(nowText, growText, capText) {
-    var now = Size(nowText); if (isNaN(now)) { var v0 = First(nowText); if (!isNaN(v0)) now = v0 * 1e12; }
+    var now = Bare(nowText) ? First(nowText) * 1e12 : Size(nowText);   // FRESH-054
     if (isNaN(now) || now <= 0) return Need("Storage now", "type e.g. 10 TB");
-    var g = String(growText || "").toLowerCase(), gv = First(g); if (isNaN(gv) || gv <= 0) return Need("Growth", "type e.g. 3% a month or 2 TB a year");
+    var g = String(growText || "").toLowerCase(), gv = First(g); if (isNaN(gv) || gv < 0) return Need("Growth", "type e.g. 3% a month or 2 TB a year");
     var pct = g.indexOf("%") >= 0, perMonth = g.indexOf("year") >= 0 ? 1 / 12 : g.indexOf("week") >= 0 ? 52 / 12 : g.indexOf("day") >= 0 ? 30.4 : 1, step = Size(g.replace(/\s*(a|per|\/)\s*(year|month|week|day).*$/, ""));
     var after = function (mo) { return pct ? now * Math.pow(1 + gv / 100, mo * perMonth) : now + step * mo * perMonth; };
     if (!pct && isNaN(after(1))) return Need("Growth", "type e.g. 3% a month or 2 TB a year");
     var rows = [R(3, "In 12 months", ByteSize(after(12)), ""), R(3, "In 3 years", ByteSize(after(36)), "")];
-    var cap = Size(capText); if (isNaN(cap)) { var v1 = First(capText); if (!isNaN(v1)) cap = v1 * 1e12; }
+    var cap = Bare(capText) ? First(capText) * 1e12 : Size(capText);
     if (!isNaN(cap) && cap > 0) {
       if (cap <= now) rows.unshift(R(2, "Full", "already at or past " + ByteSize(cap), ""));
       else { var mo = 0; while (after(mo) < cap && mo < 1200) mo++; var warn = 0; while (after(warn) < cap * 0.8 && warn < 1200) warn++;
-        rows.unshift(R(mo <= 6 ? 2 : mo <= 18 ? 1 : 0, "Full in", mo >= 1200 ? "over 100 years" : (mo < 24 ? mo + " months" : F(mo / 12, "0.#") + " years") + " · 80% in " + (warn < 24 ? warn + " months" : F(warn / 12, "0.#") + " years"), "Order more at 80% - buying, shipping and migrating takes months.")); }
+        rows.unshift(R(mo <= 6 ? 2 : mo <= 18 ? 1 : 0, "Full in", mo >= 1200 ? (gv === 0 ? "never - it isn't growing" : "over 100 years") : (mo < 24 ? mo + " months" : F(mo / 12, "0.#") + " years") + " · 80% in " + (warn < 24 ? warn + " months" : F(warn / 12, "0.#") + " years"), "Order more at 80% - buying, shipping and migrating takes months.")); }
     }
     return rows;
   }
   function Stream(resText, codecText, upText) {
     var r = String(resText || "").toLowerCase(), m = /(\d{3,4})\s*p\s*(\d{2,3})?/.exec(r), h, fps;
     if (r.indexOf("4k") >= 0 || r.indexOf("2160") >= 0) h = 2160; else if (r.indexOf("1440") >= 0 || r.indexOf("2k") >= 0) h = 1440; else if (m) h = +m[1]; else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
-    var fm = /p\s*(\d{2,3})|(\d{2,3})\s*fps|4k\s*(\d{2,3})/.exec(r); fps = fm ? +(fm[1] || fm[2] || fm[3]) : 30;
-    if (h < 240 || h > 4320 || fps < 10 || fps > 240) return Need("Resolution", "type e.g. 1080p60");
-    var w = h * 16 / 9, c = String(codecText || "").toLowerCase(), codec = c.indexOf("av1") >= 0 ? 0.55 : c.indexOf("hevc") >= 0 || c.indexOf("265") >= 0 ? 0.65 : 1, cname = codec === 0.55 ? "AV1" : codec === 0.65 ? "HEVC" : "H.264";
+    var fm = /p\s*(\d{1,3})|(\d{1,3})\s*fps|4k\s*(\d{1,3})/.exec(r); fps = fm ? +(fm[1] || fm[2] || fm[3]) : 30;
+    if (h < 240 || h > 4320) return Need("Resolution", "type e.g. 1080p60");
+    if (fps < 10 || fps > 240) return Need("Frame rate", "10 to 240 fps - e.g. 1080p60");
+    var w = h * 16 / 9, c = String(codecText || "").toLowerCase(), codec = c.indexOf("av1") >= 0 ? 0.55 : c.indexOf("hevc") >= 0 || c.indexOf("265") >= 0 || c.indexOf("vp9") >= 0 ? 0.65 : 1, cname = codec === 0.55 ? "AV1" : c.indexOf("vp9") >= 0 ? "VP9" : codec === 0.65 ? "HEVC" : "H.264";
+    var odd = c.trim() !== "" && cname === "H.264" && c.indexOf("264") < 0 && c.indexOf("avc") < 0;   // FRESH-023
     var bpp = 0.055 * Math.pow(1080 / h, 0.25), video = w * h * fps * bpp * codec, total = video + 160e3;
     var rows = [R(0, "Bitrate", Bits(total) + " (" + cname + ", video " + Bits(video) + " + audio 160 kbps)", "Pixels × frames × about " + F(bpp, "0.###") + " bits each for H.264, less for HEVC and AV1. Fast games want more; talking heads need less."),
       R(3, "Upload you need", "at least " + Bits(total * 1.5) + " - 50% headroom so the stream doesn't drop when someone else uploads", ""),
       R(3, "Data", ByteSize(total / 8 * 3600) + " an hour · " + ByteSize(total / 8 * 3600 * 4) + " for a 4-hour stream or recording", "")];
+    if (odd) rows.splice(1, 0, R(1, "Codec", "\"" + String(codecText).trim() + "\" isn't one I know - shown as H.264 (AV1, HEVC and VP9 need less)", ""));
     var up = Speed(upText);
+    if (up === 0) rows.splice(1, 0, R(2, "Your upload", "none - the stream can't start", "Run the speed test for your real upload."));   // FRESH-074
     if (!isNaN(up) && up > 0) rows.splice(1, 0, R(up < total * 1.5 ? (up < total ? 2 : 1) : 0, "Your upload", Bits(up) + (up < total ? " - too slow; drop to " + (h > 720 ? "720p" : "a lower frame rate") : up < total * 1.5 ? " - just about; no headroom" : " - plenty"), "Run the speed test for your real upload."));
     return rows;
   }
   function DataUse(videoText, callText, gameText) {
-    var v = String(videoText || "").toLowerCase(), vh = First(v), ch = First(callText), gh = First(gameText);
+    var v = String(videoText || "").toLowerCase(), vh = Hours(v), ch = Hours(callText), gh = Hours(gameText);
     if (isNaN(vh) && isNaN(ch) && isNaN(gh)) return Need("Hours", "type hours a day, e.g. 3 h HD");
+    if ([vh, ch, gh].some(function (x) { return x < 0 || x > 24; })) return Need("Hours", "0 to 24 hours a day - e.g. 3 h HD or 30 min");   // FRESH-025
     var vRate = v.indexOf("4k") >= 0 || v.indexOf("uhd") >= 0 ? 7 : v.indexOf("sd") >= 0 ? 1 : 3, gb = [isNaN(vh) ? 0 : vh * vRate * 30.4, isNaN(ch) ? 0 : ch * 1 * 30.4, isNaN(gh) ? 0 : gh * 0.1 * 30.4], total = gb[0] + gb[1] + gb[2];
     return [R(0, "A month", F(total, "0") + " GB", "Video " + F(vRate, "0") + " GB an hour, video calls ~1 GB, online games ~0.1 GB (not counting game downloads and updates, often 50-150 GB each)."),
       R(3, "Video", F(gb[0], "0") + " GB", ""), R(3, "Calls", F(gb[1], "0") + " GB", ""), R(3, "Games", F(gb[2], "0") + " GB", ""),
       R(total > 1000 ? 1 : 3, "Plan", total > 1000 ? "over 1 TB - check your plan's cap" : "fits most capped plans above " + F(Math.ceil(total / 100) * 100, "0") + " GB", "")];
+  }
+  // hours a day from "2 h", "30 min", "4K 2 h" or a bare "3" - the 4 of 4K or the 1080 of 1080p is not a time (FRESH-024/075)
+  function Hours(t) {
+    t = String(t || "").toLowerCase(); var m = /(?<![0-9.,])(-?[0-9]+(?:[.,][0-9]+)?)\s*(hours?|hrs?|h|minutes?|mins?|m)\b/.exec(t);
+    if (m) { var x = parseFloat(m[1].replace(",", ".")); return m[2][0] === "m" ? x / 60 : x; }
+    return First(t.replace(/\b[0-9]+\s*k\b|\b[0-9]{3,4}\s*p[0-9]*\b/g, " "));
   }
   var Uses = { "4k": [25, 0.2], hd: [5, 0.1], sd: [3, 0.1], call: [4, 4], game: [3, 1], stream: [1, 8], work: [5, 2], download: [50, 1], browse: [2, 0.5] };
   function Plan(downText, upText, whoText) {
@@ -415,10 +446,11 @@
       var u = Object.prototype.hasOwnProperty.call(Uses, k) ? Uses[k] : null; if (!u) { unknown.push(p[2]); return; } needD += n * u[0]; needU += n * u[1]; what.push(n + " " + k); });
     if (!what.length) return Need("Busy at once", "use: 4k, hd, sd, call, game, stream, work, download, browse");
     var dM = down / 1e6, uM = isNaN(up) ? NaN : up / 1e6;
-    var rows = [R(dM >= needD * 1.3 ? 0 : dM >= needD ? 1 : 2, "Download", F(needD, "0") + " Mbps needed of your " + F(dM, "0") + (dM >= needD * 1.3 ? " - plenty" : dM >= needD ? " - tight; Wi-Fi usually gets less than the plan" : " - not enough at once"), "Plans are the most you'll get on a cable; Wi-Fi often delivers half to two thirds.")];
-    if (!isNaN(uM)) rows.push(R(uM >= needU * 1.3 ? 0 : uM >= needU ? 1 : 2, "Upload", F(needU, "0.#") + " Mbps needed of your " + F(uM, "0.#") + (uM >= needU ? "" : " - calls and streams will break up first"), ""));
+    var ok = unknown.length ? 1 : 0;   // FRESH-076
+    var rows = [R(dM >= needD * 1.3 ? ok : dM >= needD ? 1 : 2, "Download", F(needD, "0") + " Mbps needed of your " + F(dM, "0") + (dM >= needD * 1.3 ? " - plenty" : dM >= needD ? " - tight; Wi-Fi usually gets less than the plan" : " - not enough at once"), "Plans are the most you'll get on a cable; Wi-Fi often delivers half to two thirds.")];
+    if (!isNaN(uM)) rows.push(R(uM >= needU * 1.3 ? ok : uM >= needU ? 1 : 2, "Upload", F(needU, "0.#") + " Mbps needed of your " + F(uM, "0.#") + (uM >= needU ? "" : " - calls and streams will break up first"), ""));
     else rows.push(R(3, "Upload", F(needU, "0.#") + " Mbps needed - type your plan's upload to check it", ""));
-    rows.push(R(3, "Counted", what.join(", ") + (unknown.length ? "  ·  not known: " + unknown.join(", ") : ""), ""));
+    rows.push(R(unknown.length ? 1 : 3, "Counted", what.join(", ") + (unknown.length ? "  ·  not known, so not counted: " + unknown.join(", ") : ""), unknown.length ? "Known: " + Object.keys(Uses).join(", ") + "." : ""));
     return rows;
   }
   function BinSize(b) { return b >= 1099511627776 ? F(b / 1099511627776, "0.##") + " TiB" : b >= 1073741824 ? F(b / 1073741824, "0.##") + " GiB" : b >= 1048576 ? F(b / 1048576, "0.##") + " MiB" : b >= 1024 ? F(b / 1024, "0.##") + " KiB" : F(b, "0") + " bytes"; }
@@ -438,7 +470,7 @@
   function Tdm(lineText, slotsText) {
     var l = String(lineText || "").toLowerCase(), e1 = l.indexOf("e1") >= 0, t1 = l.indexOf("t1") >= 0 || l.indexOf("ds1") >= 0;
     if (!e1 && !t1) return Need("Line", "type E1 or T1");
-    var max = e1 ? 31 : 24, n = First(slotsText), ts = isNaN(n) ? (e1 ? 30 : 24) : Math.trunc(n);
+    var max = e1 ? 31 : 24, n = First(slotsText), ts = isNaN(n) ? (e1 ? 30 : 24) : Whole(n) ? Math.round(n) : -1;   // FRESH-027
     if (ts < 1 || ts > max) return Need("Timeslots", "1 to " + max + " on " + (e1 ? "an E1" : "a T1"));
     var rows = [R(0, "Bandwidth", I(ts * 64) + " kbps for " + ts + " timeslot" + (ts === 1 ? "" : "s"), "Each timeslot (DS0) is 8 bits × 8000 frames a second = 64 kbps."), R(3, "The line", e1 ? "2,048 kbps: 32 × 64k - slot 0 is framing, slot 16 usually signalling, 30 for voice" : "1,544 kbps: 24 × 64k + 8k framing bit", "")];
     if (t1) rows.push(R(3, "Robbed-bit", I(ts * 56) + " kbps if the line steals a bit for signalling (56k per slot)", ""));
@@ -447,11 +479,13 @@
   }
   function JitterBuf(pdvText, ptimeText, codecText) {
     var pd = anyNums(pdvText); if (!pd.length) return Need("Delay variation", "type e.g. 30 ms, or the measured range 20-70 ms");
-    var pdv = pd.length >= 2 ? Math.abs(pd[1] - pd[0]) : pd[0], pt = First(ptimeText); if (isNaN(pt) || pt <= 0) pt = 20;
+    if (pd.some(function (x) { return x < 0; })) return Need("Delay variation", "can't be negative - e.g. 30 ms, or 20-70 ms");   // FRESH-028
+    var pdv = pd.length >= 2 ? Math.abs(pd[1] - pd[0]) : pd[0], pt = First(ptimeText);
+    if (blank(ptimeText)) pt = 20; else if (isNaN(pt) || pt <= 0) return Need("Packet time", "more than 0 - usually 20 ms");   // FRESH-051
     var buf = Math.ceil(pdv * 1.5 / pt) * pt; if (buf < pt) buf = pt;
-    var c = String(codecText || "").toLowerCase(), cd = c.indexOf("729") >= 0 ? 25 : c.indexOf("opus") >= 0 ? 26.5 : 1, net = pd.length >= 2 ? Math.min(pd[0], pd[1]) : 40, m2e = cd + pt + net + buf;
+    var c = String(codecText || "").toLowerCase(), cd = c.indexOf("729") >= 0 ? 25 : c.indexOf("opus") >= 0 ? 26.5 : 1, known = c.trim() === "" || c.indexOf("729") >= 0 || c.indexOf("opus") >= 0 || c.indexOf("711") >= 0 || c.indexOf("pcm") >= 0, net = pd.length >= 2 ? Math.min(pd[0], pd[1]) : 40, m2e = cd + pt + net + buf;
     return [R(0, "Buffer", F(buf, "0") + " ms (" + F(buf / pt, "0") + " packets of " + F(pt, "0") + " ms)", "About 1.5 × the delay variation, rounded up to whole packets - big enough that late packets still play."),
-      R(m2e > 400 ? 2 : m2e > 150 ? 1 : 0, "Mouth to ear", "about " + F(m2e, "0") + " ms" + (m2e > 400 ? " - people will talk over each other" : m2e > 150 ? " - noticeable; ITU G.114 says keep under 150 ms" : " - fine"), "Codec + packet time + network delay" + (pd.length < 2 ? " (40 ms assumed)" : "") + " + buffer."),
+      R(m2e > 400 ? 2 : m2e > 150 ? 1 : 0, "Mouth to ear", "about " + F(m2e, "0") + " ms" + (m2e > 400 ? " - people will talk over each other" : m2e > 150 ? " - noticeable; ITU G.114 says keep under 150 ms" : " - fine"), "Codec + packet time + network delay" + (pd.length < 2 ? " (40 ms assumed)" : "") + " + buffer." + (known ? "" : " The delay of " + String(codecText).trim() + " isn't in my table - 1 ms assumed; most compressed codecs add 20-40 ms.")),   // FRESH-052
       R(3, "Too small", "packets that arrive later than the buffer are dropped - choppy audio even with 0% network loss", "")];
   }
 
@@ -467,15 +501,18 @@
   function FxConv(amountText, from, to, markupText) {
     var amt = P(amountText); if (isNaN(amt)) return Need("Amount", "type e.g. 1000");
     var cad = function (c) { c = String(c || "").trim().toUpperCase(); if (c === "CAD" || c === "") return 1; return rates.list[c] || NaN; }, a = cad(from), b = cad(to), n = Object.keys(rates.list).length;
-    if (isNaN(a) || isNaN(b)) return [R(1, "Rates", n === 0 ? "no Bank of Canada rates yet - open Live or Trading once while online" : "no rate for " + (isNaN(a) ? from : to), "")];
+    if (isNaN(a) || isNaN(b)) return [R(1, "Rates", n === 0 ? "no Bank of Canada rates on this phone yet - they load once a day while you're online" : "no rate for " + (isNaN(a) ? from : to), "")];
     var mid = amt * a / b, mk = P(markupText); if (isNaN(mk)) mk = 2.5;
+    if (mk < 0 || mk >= 100) return Need("Markup", "0 to under 100% - banks charge about 2-3%");   // FRESH-056
     return [R(0, "At the official rate", F(amt, "N2") + " " + from + " = " + F(mid, "N2") + " " + to, "Bank of Canada, " + dayStr(rates.day || new Date()) + " - indicative, nobody trades at exactly this."),
       R(1, "What a bank usually gives", F(mid * (1 - mk / 100), "N2") + " " + to + "  (" + F(mk, "0.##") + "% markup)", "The markup is the real fee - often 2-3% at a bank, under 1% at a currency broker."),
       R(3, "Rate", "1 " + from + " = " + F(a / b, "0.0000") + " " + to, "")];
   }
   function Pnl(buyText, sellText, sharesText, feesText) {
-    var buy = P(buyText), sell = P(sellText), n = P(sharesText); if (isNaN(buy) || isNaN(n) || n <= 0) return Need("Buy price and shares", "type e.g. 150 and 20");
-    var fs = Ps(feesText), comm = fs.length ? fs[0] : 0, fxm = /([0-9.]+)\s*%/.exec(feesText || ""), fx = fxm ? P(fxm[1]) / 100 : 0;
+    var buy = P(buyText), sell = P(sellText), n = P(sharesText); if (isNaN(buy) || isNaN(n) || n <= 0 || buy <= 0) return Need("Buy price and shares", "type e.g. 150 and 20 - both above 0");   // FRESH-077
+    var fxm = /(-?[0-9.]+)\s*%/.exec(feesText || ""), fx = fxm ? P(fxm[1]) / 100 : 0, fs = Ps(String(feesText || "").replace(/-?[0-9.]+\s*%/g, " ")), comm = fs.length ? fs[0] : 0;   // FRESH-029
+    if (fx < 0 || comm < 0) return Need("Fees", "can't be negative - e.g. 9.99 or 0.5%");
+    if (fx >= 1) return Need("Fees", "a percentage fee has to be under 100%");   // FRESH-030
     var cost = buy * n * (1 + fx) + comm, be = (buy * n * (1 + fx) + 2 * comm) / (n * (1 - fx));
     var rows = [R(3, "You pay", M(cost) + " (" + M(buy * n) + " + fees " + M(cost - buy * n) + ")", ""), R(0, "Break-even sell price", M(be) + "  (" + Pc((be / buy - 1) * 100) + " just to cover the fees)", Edu)];
     if (!isNaN(sell)) { var back = sell * n * (1 - fx) - comm, pl = back - cost; rows.unshift(R(pl >= 0 ? 0 : 2, pl >= 0 ? "Profit" : "Loss", M(pl) + "  (" + Pc(pl / cost * 100) + ")", "Selling at " + M(sell) + " brings " + M(back) + " after fees.")); }
@@ -485,13 +522,20 @@
     var acc = P(accText), risk = P(riskText), e = P(entryText), s = P(stopText);
     if (isNaN(acc) || isNaN(e) || isNaN(s) || e === s) return Need("Account, entry and stop", "type e.g. 20000, 1%, 50 and 47");
     if (isNaN(risk)) risk = 1;
+    if (acc <= 0) return Need("Account", "more than 0");   // FRESH-055
+    if (risk <= 0 || risk > 100) return Need("Risk", "more than 0 and at most 100% of the account");   // FRESH-031
+    if (e <= 0 || s < 0) return Need("Entry and stop", "prices above 0");   // FRESH-078
     var cash = acc * risk / 100, per = Math.abs(e - s), n = Math.floor(cash / per), pos = n * e;
     return [R(0, "Shares", F(n, "N0") + " - each loses " + M(per) + " if the stop is hit", "Risking " + M(cash) + " (" + F(risk, "0.##") + "% of " + M(acc) + "). " + Edu),
       R(pos > acc ? 1 : 3, "Position", M(pos) + " = " + F(pos / acc * 100, "0") + "% of the account" + (pos > acc ? " - more than you have (borrowed money)" : ""), "A stop isn't guaranteed: a price that jumps (gaps) can skip right past it.")];
   }
   function AvgCost(pricesText, sharesText) {
     var p = Ps(pricesText), n = Ps(sharesText); if (!p.length) return Need("Prices", "type the prices you bought at, e.g. 50, 45, 40");
-    if (!n.length) n = p.map(function () { return 1; }); var k = Math.min(p.length, n.length), tot = 0, sh = 0; for (var i = 0; i < k; i++) { tot += p[i] * n[i]; sh += n[i]; }
+    if (!n.length) n = p.map(function () { return 1; });
+    if (n.length !== p.length) return Need("Shares", p.length + " prices but " + n.length + " share counts - one count for each price");   // FRESH-032
+    if (p.some(function (z) { return z <= 0; })) return Need("Prices", "above 0");
+    if (n.some(function (z) { return z <= 0; })) return Need("Shares", "more than 0 each time - a sale isn't a buy");   // FRESH-079
+    var k = p.length, tot = 0, sh = 0; for (var i = 0; i < k; i++) { tot += p[i] * n[i]; sh += n[i]; }
     if (sh <= 0) return Need("Shares", "type how many each time");
     var pk = p.slice(0, k);
     return [R(0, "Average cost", M(tot / sh) + " a share", k + " buys, " + F(sh, "N0") + " shares, " + M(tot) + " in all. " + Edu), R(3, "Lowest and highest", M(Math.min.apply(null, pk)) + " - " + M(Math.max.apply(null, pk)), "")];
@@ -499,6 +543,8 @@
   function CompoundCalc(startText, monthlyText, rateText, yearsText) {
     var s = P(startText), m = P(monthlyText), r = P(rateText), y = P(yearsText);
     if (isNaN(s)) s = 0; if (isNaN(m)) m = 0; if (isNaN(r) || isNaN(y) || y < 1 || y > 60) return Need("Rate and years", "type e.g. 6% and 20 years");
+    if (!Whole(y)) return Need("Years", "whole years, 1 to 60");   // FRESH-033
+    if (r <= -100) return Need("Rate", "has to be more than -100% a year");   // FRESH-080
     var yi = Math.trunc(y), bal = s, rr = r / 100 / 12; for (var yy = 1; yy <= yi; yy++) for (var mm = 0; mm < 12; mm++) bal = bal * (1 + rr) + m;
     var put = s + m * 12 * yi;
     return [R(0, "After " + yi + " years", M(bal), "You put in " + M(put) + "; growth " + M(bal - put) + ". A steady " + F(r, "0.##") + "% a year is an assumption - real returns go up and down. " + Edu),
@@ -510,10 +556,12 @@
     return [R(3, "To lose it all again", Pc((1 / (1 + p / 100) - 1) * 100) + " undoes a " + Pc(p) + " rise", ""), R(3, "Same-size fall", "a " + Pc(p) + " rise then " + Pc(-p) + " leaves " + Pc(((1 + p / 100) * (1 - p / 100) - 1) * 100), "")];
   }
   function TradeLat(pingText, priceText, volText) {
-    var ping = P(pingText), price = P(priceText), vol = P(volText); if (isNaN(ping) || ping < 0) return Need("Round trip", "type your broker's ping, e.g. 40 ms");
+    var ping = Bare(pingText) ? P(pingText) : Time(pingText) * 1000, price = P(priceText), vol = P(volText);   // FRESH-081
+    if (isNaN(ping) || ping < 0) return Need("Round trip", "type your broker's ping, e.g. 40 ms");
     if (isNaN(price)) price = 100; if (isNaN(vol)) vol = 2;
-    var move = vol / 100 / Math.sqrt(23400) * Math.sqrt(Math.max(0.001, ping / 1000)) * price;
-    return [R(ping < 150 ? 0 : 1, "Typical move while your order travels", M(move) + " on " + M(price) + " (" + F(move / price * 100, "0.####") + "%)", "For anyone clicking by hand, " + F(ping, "0") + " ms is far below what matters - your own reaction takes 200 ms or more. Spikes and drops matter more than the average."),
+    if (price <= 0) return Need("Price", "above 0"); if (vol < 0) return Need("Volatility", "can't be negative - e.g. 2% a day");   // FRESH-058
+    var move = vol / 100 / Math.sqrt(23400) * Math.sqrt(ping / 1000) * price;   // FRESH-034
+    return [R(ping < 150 ? 0 : 1, "Typical move while your order travels", M(move) + " on " + M(price) + " (" + F(move / price * 100, "0.####") + "%)", (ping < 200 ? "For anyone clicking by hand, " + F(ping, "0") + " ms is far below what matters - your own reaction takes 200 ms or more." : F(ping, "N0") + " ms is as long as a person's reaction or longer - in a fast market that's noticeable.") + " Spikes and drops matter more than the average."),
       R(3, "In that time", "light could cross about " + F(ping * 100, "N0") + " km of fibre each way", "")];
   }
   var ComUnits = [["barrel", "v", 158.987], ["US gallon", "v", 3.78541], ["litre", "v", 1], ["m³", "v", 1000], ["troy oz", "m", 31.1035], ["gram", "m", 1], ["kg", "m", 1000], ["lb", "m", 453.592], ["tonne", "m", 1000000], ["short ton", "m", 907185], ["bushel", "m", 0], ["MMBtu", "e", 1055.06], ["GJ", "e", 1000], ["therm", "e", 105.506], ["kWh", "e", 3.6]];
@@ -521,8 +569,9 @@
   function bushel(crop) { return (BushelKg[crop] || BushelKg.wheat) * 1000; }
   function UnitOf(t, crop) { t = String(t || "").toLowerCase(); var s = ComUnits.slice().sort(function (a, b) { return b[0].length - a[0].length; }); for (var i = 0; i < s.length; i++) if (t.indexOf(s[i][0].toLowerCase()) >= 0) return { u: s[i], b: s[i][0] === "bushel" ? bushel(crop) : s[i][2] }; return null; }
   function ComConv(amountText, unitText, cropText) {
-    var amt = P(amountText), crop = String(cropText == null ? "wheat" : cropText).trim().toLowerCase(), x = UnitOf(unitText, crop);
+    var amt = P(amountText), crop = String(cropText == null ? "" : cropText).trim().toLowerCase() || "wheat", x = UnitOf(unitText, crop);
     if (isNaN(amt) || !x) return Need("Amount and unit", "e.g. 1 barrel, 1 troy oz, 100 bushel, 1 MMBtu");
+    if (x.u[1] === "m" && !Object.prototype.hasOwnProperty.call(BushelKg, crop)) return Need("Crop", "wheat, soybeans or corn - a bushel weighs different amounts of each");   // FRESH-035
     var u = x.u, rows = [];
     ComUnits.filter(function (z) { return z[1] === u[1] && z[0] !== u[0]; }).forEach(function (o) { var ob = o[0] === "bushel" ? bushel(crop) : o[2], v = amt * x.b / ob; rows.push(R(3, o[0] + (o[0] === "bushel" ? " of " + crop : ""), F(v, v >= 100 ? "N0" : v >= 1 ? "N2" : "0.####"), "")); });
     rows.unshift(R(0, F(amt, "N2") + " " + u[0] + (u[0] === "bushel" ? " of " + crop : ""), u[1] === "v" ? "volume" : u[1] === "m" ? "weight" : "energy", u[0] === "bushel" ? "A bushel is a volume: by weight wheat and soybeans are 60 lb, corn 56 lb." : u[0] === "troy oz" ? "Gold and silver are priced per troy ounce (31.1 g), not the everyday ounce (28.3 g)." : ""));
@@ -532,23 +581,31 @@
   function FuturesCalc(contractText, priceText, countText, moveText) {
     var c = Futures.filter(function (z) { return String(contractText || "").toLowerCase().indexOf(z[0].toLowerCase()) >= 0; })[0], price = P(priceText), n = P(countText), mv = P(moveText);
     if (!c || isNaN(price)) return Need("Contract and price", "e.g. WTI crude oil at 75 a barrel");
-    if (isNaN(n) || n < 1) n = 1; var size = c[1], tick = c[3];
+    if (blank(countText)) n = 1; else if (isNaN(n) || n < 1 || !Whole(n)) return Need("Contracts", "a whole number, 1 or more");   // FRESH-037/083
+    var size = c[1], tick = c[3];
     var rows = [R(0, "One contract controls", F(size, "N0") + " " + c[2] + "s = " + M(size * price) + (n > 1 ? "  ·  " + n + " contracts: " + M(size * price * n) : ""), "You put up only a margin (often 5-15%), so gains and losses run on the whole value. " + Edu),
-      R(3, "Smallest move (one tick)", M(tick) + " a " + c[2] + " = " + M(tick * size * n), ""), R(3, "A $1 move in price", M(size * n), "")];
+      R(3, "Smallest move (one tick)", (tick < 0.01 ? "$" + F(tick, "0.####") : M(tick)) + " a " + c[2] + " = " + M(tick * size * n), ""), R(3, "A $1 move in price", M(size * n), "")];
     if (!isNaN(mv)) rows.splice(1, 0, R(1, "A " + Pc(mv) + " move", M(size * price * n * mv / 100), ""));
     return rows;
   }
   function PerUnit(priceText, fromText, toText, curText) {
-    var price = P(priceText), f = UnitOf(fromText, "wheat"), t = UnitOf(toText, "wheat");
+    var both = (String(fromText || "") + " " + String(toText || "")).toLowerCase(), crop = both.indexOf("corn") >= 0 ? "corn" : both.indexOf("soy") >= 0 ? "soybeans" : "wheat";   // FRESH-084
+    var price = P(priceText), f = UnitOf(fromText, crop), t = UnitOf(toText, crop);
     if (isNaN(price) || !f || !t) return Need("Price and units", "e.g. 75 US$ a barrel, in litres");
     if (f.u[1] !== t.u[1]) return [R(2, "Units", f.u[0] + " and " + t.u[0] + " measure different things", "")];
-    var usd = price * t.b / f.b, cur = String(curText || "").trim().toUpperCase(), rows = [R(0, "In US$", F(usd, usd < 1 ? "0.0000" : "N2") + " a " + t.u[0], "")];
-    if (cur === "CAD") { var r = rates.list.USD; if (r) rows.unshift(R(0, "In CA$", F(usd * r, usd * r < 1 ? "0.0000" : "N2") + " a " + t.u[0], "at the Bank of Canada's US$ " + F(r, "0.0000") + " (" + dayStr(rates.day || new Date()) + "). The raw commodity only - taxes, refining and shipping come on top.")); else rows.push(R(1, "In CA$", "no Bank of Canada rate yet - open Live or Trading once while online", "")); }
+    var bu = f.u[0] === "bushel" || t.u[0] === "bushel", usd = price * t.b / f.b, cur = String(curText || "").trim().toUpperCase(), rows = [R(0, "In US$", F(usd, usd < 1 ? "0.0000" : "N2") + " a " + t.u[0] + (bu ? " (a bushel of " + crop + ")" : ""), bu ? "A bushel of " + crop + " weighs " + (crop === "corn" ? "56" : "60") + " lb - write \"bushel of corn\" or \"soybeans\" for the others." : "")];
+    if (cur !== "" && cur !== "USD" && cur !== "US$") {   // FRESH-057: any currency the Bank of Canada lists, not only CAD
+      var r = rates.list.USD, per = cur === "CAD" ? 1 : rates.list[cur] || NaN, lab = cur === "CAD" ? "In CA$" : "In " + cur;
+      if (r && !isNaN(per)) { var x2 = usd * r / per; rows.unshift(R(0, lab, F(x2, x2 < 1 ? "0.0000" : "N2") + " a " + t.u[0], "at the Bank of Canada's rates (" + dayStr(rates.day || new Date()) + "). The raw commodity only - taxes, refining and shipping come on top.")); }
+      else rows.push(R(1, lab, !r ? "no Bank of Canada rates on this phone yet - they load once a day while you're online" : "no Bank of Canada rate for " + cur, ""));
+    }
     return rows;
   }
   function TickRate(tickText, pingText, interpText) {
     var tick = P(tickText), ping = P(pingText), lerp = P(interpText); if (isNaN(tick) || tick <= 0 || isNaN(ping)) return Need("Tick rate and ping", "e.g. 64 and 40 ms");
-    if (isNaN(lerp)) lerp = 2; var tms = 1000 / tick, late = ping / 2 + lerp * tms;
+    if (isNaN(lerp)) lerp = 2;
+    if (ping < 0) return Need("Ping", "can't be negative"); if (lerp < 0) return Need("Interpolation", "0 or more ticks");   // FRESH-038/082
+    var tms = 1000 / tick, late = ping / 2 + lerp * tms;
     return [R(late < 100 ? 0 : late < 160 ? 1 : 2, "You see the game", F(late, "0") + " ms late = " + F(late / tms, "0.#") + " ticks behind", "Half your ping (the update travelling to you) + " + F(lerp, "0.#") + " ticks of smoothing (interpolation) the game adds on purpose."),
       R(3, "One tick", F(tms, "0.#") + " ms at " + F(tick, "0") + " Hz", "Lag compensation rewinds the server about your ping when you shoot - that's why you can be hit behind a wall.")];
   }
@@ -588,8 +645,9 @@
       rows.push(R(3, "Expanded", g.join(":"), "")); rows.push(R(3, "Compressed", V(b), "")); rows.push(R(3, "Addresses in it", prefix === 64 ? "2^64 (a standard LAN)" : "2^" + (bits - prefix), ""));
     }
     if (!blank(inside)) {
-      var q = ipParse(inside);
-      if (!q) rows.push(R(1, "Inside?", "\"" + String(inside).trim() + "\" isn't an IP address - type one like " + (ip.v4 ? "10.1.2.50" : "2001:db8::50"), ""));
+      var q = ipParse(inside), it2 = String(inside).trim();
+      if (/^[0-9.]+$/.test(it2) && !/^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$/.test(it2)) rows.push(R(1, "Inside?", "\"" + it2 + "\" - write it as four plain numbers, no leading zeros (Windows reads 010 as 8)", ""));   // FRESH-039
+      else if (!q) rows.push(R(1, "Inside?", "\"" + String(inside).trim() + "\" isn't an IP address - type one like " + (ip.v4 ? "10.1.2.50" : "2001:db8::50"), ""));
       else if (q.v4 !== ip.v4) rows.push(R(1, ipStr(q) + " inside?", "can't be - it's IPv" + (q.v4 ? "4" : "6") + " and this network is IPv" + (ip.v4 ? "4" : "6"), ""));
       else { var inq = eq(q.b.map(function (x, i) { return x & mask[i]; }), net); rows.push(R(inq ? 0 : 1, ipStr(q) + " inside?", inq ? "yes" : "no", "")); }
     }
@@ -603,14 +661,17 @@
     var gp = -1, gPart = g, gs = g.split(/\s+/).filter(Boolean), gsl = g.indexOf("/");
     if (gsl > 0) { gPart = g.slice(0, gsl); gp = /^[0-9]+$/.test(g.slice(gsl + 1)) ? +g.slice(gsl + 1) : -2; }
     else if (gs.length === 2) { gPart = gs[0]; var gm = ipParse(gs[1]); if (gm && gm.v4 === v4) { gp = MaskBits(gm.b); if (!eq(gm.b, maskBytes(gm.b.length, gp))) gp = -2; } else gp = -2; }
-    var gw = ipParse(gPart);
+    var zs = gPart.indexOf("%") > 0 ? gPart.slice(gPart.indexOf("%")) : "", gw = ipParse(gPart);   // FRESH-060
     if (!gw || gp === -2 || gp > bits) { rows.push(R(2, "Gateway", "\"" + g + "\" isn't an address (with an optional /prefix or mask)", "")); return rows; }
     if (gw.v4 !== v4) { rows.push(R(2, "Gateway", "an IPv" + (v4 ? "6" : "4") + " gateway for an IPv" + (v4 ? "4" : "6") + " address - each family needs its own", "")); return rows; }
     var gb = gw.b, inNet = eq(gb.map(function (x, i) { return x & mask[i]; }), net), gws = ipStr(gw);
+    if (v4 ? gb[0] >= 224 : gb[0] === 0xff) { rows.push(R(2, "Gateway", "Will not work: " + gws + " is a " + (v4 && gb[0] >= 240 ? "reserved or broadcast" : "multicast") + " address - a gateway has to be one router's own address", "")); return rows; }   // FRESH-062
+    if (v4 && prefix <= 30 && (eq(hb, net) || eq(hb, bc))) { rows.push(R(2, "Address", ipStr(ip) + " is the " + (eq(hb, net) ? "network" : "broadcast") + " address of " + V(net) + "/" + prefix + " - a host can't use it; give it one from the usable range first", "")); return rows; }   // FRESH-063
     if (eq(gb, hb)) { rows.push(R(2, "Gateway", "Will not work: the gateway is this host's own address - it would send to itself. Use the router's address.", "")); return rows; }
     if (!v4) {
-      if (gb[0] === 0xfe && (gb[1] & 0xc0) === 0x80) rows.push(R(0, "Gateway", gws + " - link-local, the normal IPv6 way (learned from router adverts, always on-link)", ""));
+      if (gb[0] === 0xfe && (gb[1] & 0xc0) === 0x80) rows.push(R(0, "Gateway", gws + zs + " - link-local, the normal IPv6 way (learned from router adverts, always on-link)", ""));
       else if (!inNet) rows.push(R(1, "Gateway", gws + " is outside " + V(net) + "/" + prefix + " - it only works if a route says it's on-link; routers usually give a link-local (fe80::) gateway", ""));
+      else if (gp >= 0 && gp !== prefix) rows.push(R(1, "Gateway", gws + " is inside the prefix, but it was written as /" + gp + " and the host's prefix is /" + prefix + " - a gateway is just an address; check which prefix is really on this link", ""));   // FRESH-059
       else rows.push(R(0, "Gateway", gws + " is inside the prefix", ""));
       return rows;
     }
@@ -621,11 +682,11 @@
       var fix;
       if (gp >= 0 && gp < prefix) { var gm2 = maskBytes(4, gp), gnet = gb.map(function (x, i) { return x & gm2[i]; }), holds = eq(hb.map(function (x, i) { return x & gm2[i]; }), gnet); fix = holds ? "Use /" + gp + " (" + V(gm2) + ") - the gateway's network " + V(gnet) + "/" + gp + " holds " + ipStr(ip) + " too." : "The gateway's own network " + V(gnet) + "/" + gp + " doesn't hold " + ipStr(ip) + " either - one of the two addresses is wrong."; }
       else { var cm = maskBytes(4, common); fix = common >= 1 ? "The smallest subnet holding both is /" + common + " (" + V(cm) + ") - if that's the real network, use that mask; otherwise the gateway address is wrong." : "No sensible subnet holds both - the gateway address is wrong."; }
-      rows.push(R(2, "Gateway", "Will not work: " + gws + " is outside " + netTxt + ". The host won't ARP for it, so nothing leaves this subnet - no ping beyond it, no internet. " + fix, "")); return rows;
+      rows.push(R(2, "Gateway", "Won't work as a normal gateway: " + gws + " is outside " + netTxt + ". A host only ARPs for a gateway inside its own subnet, so unless someone adds an on-link route for it, nothing leaves this subnet - no ping beyond it, no internet. " + fix, "")); return rows;
     }
     if (prefix <= 30 && eq(gb, net)) { rows.push(R(2, "Gateway", "Will not work: " + gws + " is the network address of " + netTxt + ", not a host", "")); return rows; }
     if (prefix <= 30 && eq(gb, bc)) { rows.push(R(2, "Gateway", "Will not work: " + gws + " is the broadcast address of " + netTxt + ", not a host", "")); return rows; }
-    if (gp >= 0 && gp !== prefix) { rows.push(R(1, "Gateway", gws + " is inside, but its mask is /" + gp + " and the host's is /" + prefix + " - the two disagree about who is on-link, so some traffic works one way only (one side ARPs, the other routes). Use the same mask on both.", "")); return rows; }
+    if (gp >= 0 && gp !== prefix) { rows.push(R(1, "Gateway", gws + " is inside, but its mask is /" + gp + " and the host's is /" + prefix + ". These two reach each other; the trouble is the addresses only one of them counts as local - one side ARPs for those, the other sends them to a router, so that traffic can work one way only. Use the same mask on both.", "")); return rows; }
     if (prefix === 31) { rows.push(R(0, "Gateway", gws + " - the other end of the /31 point-to-point link", "")); return rows; }
     var first = net.slice(); first[3]++; var last = bc.slice(); last[3]--;
     if (eq(gb, first) || eq(gb, last)) rows.push(R(0, "Gateway", gws + " is inside " + netTxt + " (the " + (eq(gb, first) ? "first" : "last") + " usable address - the usual choice)", ""));
