@@ -158,7 +158,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   if (c1) h += '<div class="card"><h2>THE LAST INTERNET CHECKS</h2>' + c1 + '<p class="cap">Each bar is one check. Red at the bottom = no answer at all.</p></div>';
   var c2 = chart(gws, "var(--green)", "router, per minute", 20, "ms", loss);
   if (c2) h += '<div class="card"><h2>YOUR ROUTER, MINUTE BY MINUTE</h2>' + c2 + '<p class="cap">Red bars are minutes with packet loss. A flat, low router line with trouble elsewhere means your home network is not the problem.</p></div>';
-  h += '<div class="card"><h2>WHAT TO DO</h2><ol>' + (worst >= 0 ? todo[worst] : ["Nothing right now - scan again when it acts up, so the result shows the problem"]).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ol></div>';
+  h += '<div class="card"><h2>WHAT TO DO</h2><ol>' + (worst >= 0 ? todo[worst] : ["Not enough was measured to say - run the check again on the PC, ideally while it acts up, then scan the new code"])   /* R2-03: no "nothing to do" when nothing could be judged */.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ol></div>';
   h += '<div class="card"><div class="btns"><button class="main" id="isp">Send to my internet provider</button><button id="share">Share</button><button id="pdf">Save as PDF</button><button id="copyall">Copy everything</button><button id="ai">Copy for AI</button></div></div>';
   h += '<div class="card" id="msgcard"><h2>THE MESSAGE (EDIT IT IF YOU LIKE)</h2><textarea id="msg"></textarea><div class="btns" style="margin-top:10px"><button id="copy">Copy message</button><button id="mail">Email it</button></div></div>';
   if (/Android/i.test(navigator.userAgent)) h += '<p class="note">Android: Share sends this to any app. From the PC, Send by Bluetooth or Quick Share drops a picture straight into Downloads.</p>';
@@ -168,8 +168,8 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   function copy() { copyText(ta.value, "Copied - paste it into the support chat"); }
   document.getElementById("copy").onclick = copy;
   document.getElementById("mail").onclick = function () { location.href = "mailto:?subject=" + encodeURIComponent("Internet problem - measured " + whenT) + "&body=" + encodeURIComponent(ta.value); };
-  document.getElementById("isp").onclick = function () { if (navigator.share) navigator.share({ title: "My internet problem", text: ta.value }).catch(function () {}); else copy(); };
-  document.getElementById("share").onclick = function () { if (navigator.share) navigator.share({ title: "AdeeboMeter result", text: title, url: location.href }).catch(function () {}); else copyText(location.href, "Link copied"); };
+  document.getElementById("isp").onclick = function () { if (navigator.share) navigator.share({ title: "My internet problem", text: ta.value }).catch(function (e) { if (!e || e.name !== "AbortError") copy(); }); else copy(); };   // R2-01: a failed share falls back to copying
+  document.getElementById("share").onclick = function () { if (navigator.share) navigator.share({ title: "AdeeboMeter result", text: title, url: location.href }).catch(function (e) { if (!e || e.name !== "AbortError") copyText(location.href, "Couldn't share - link copied instead"); }); else copyText(location.href, "Link copied"); };
   document.getElementById("pdf").onclick = function () { window.print(); };
   document.getElementById("ai").onclick = function () { var q = "My Windows PC has a network problem. AdeeboMeter measured this:\n\n" + msg().split("\n").slice(2, -2).join("\n") + "\n\nWhat should I check next, step by step? Assume I can only use this PC's Windows settings and my phone."; copyText(q, "Copied - paste it into ChatGPT, Claude or Gemini"); };
   document.getElementById("copyall").onclick = function () { copyText(msg(), "Copied - paste it anywhere"); };
@@ -180,6 +180,8 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     var f = h.split("!"), t = f[1] || "", when = utc(t);
     var title = D(f[2]), cap = D(f[3]), kind = f[4] || "", A = f[5] || "", B = f[6] || "", R = f[7] || "";
     var items = function (x) { return x ? x.split("~").map(function (i) { return i.split(","); }) : []; };
+    // R2-02: a link with nothing in it (cut short, or typed by hand) gets no Copy / Share / PDF of an empty result
+    if (!title && !R && !B) { app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">This link has no result in it</h1><p>It may have been cut short when it was copied. Scan the code on the PC again, or ask for a new link.</p></div>'; return; }
     var col = function (lv, back) { return lv == 2 ? "var(--red)" : lv == 1 ? "var(--amber)" : back ? "var(--green)" : "var(--blue)"; };
     var W = 600, svg = "";
     if (kind === "x") {
@@ -223,7 +225,10 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     }
     var rows = items(R), worst = rows.reduce(function (m, r) { return Math.max(m, +r[0] === 3 || +r[0] < 0 ? -1 : +r[0]); }, -1);
     var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-    var agoT2 = age(when), h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT2 ? " · " + agoT2 : "") + '</small></div>';
+    // the PC's own clock, when its time zone differs from this phone's: "PC 23:00, UTC+0" makes a wrongly set zone obvious
+    var pcOff = /o(-?\d{1,4})$/.exec(t), pcT = "";
+    if (pcOff && !isNaN(when.getTime())) { var po = +pcOff[1]; if (po !== -when.getTimezoneOffset()) { var pc = new Date(when.getTime() + po * 60000); pcT = " · PC " + ("0" + pc.getUTCHours()).slice(-2) + ":" + ("0" + pc.getUTCMinutes()).slice(-2) + " (UTC" + (po < 0 ? "-" : "+") + Math.floor(Math.abs(po) / 60) + (Math.abs(po) % 60 ? ":" + ("0" + Math.abs(po) % 60).slice(-2) : "") + ")"; } }
+    var agoT2 = age(when), h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT2 ? " · " + agoT2 : "") + esc(pcT) + '</small></div>';
     var tagT = cap ? cap.toUpperCase() : worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT";
     var lead = rows.filter(function (r) { return +r[0] >= 0 && +r[0] <= 2; }).sort(function (a, b) { return +b[0] - +a[0]; })[0];
     var nextT = lead && +lead[0] >= 1 && lead[3] ? D(lead[3]) : "";

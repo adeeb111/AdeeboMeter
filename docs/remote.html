@@ -41,7 +41,7 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
 </head>
 <body>
 <main id="app"><div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small id="left"></small></div><div class="card" id="st"><h1 style="font-size:20px;margin:0">Connecting...</h1></div></main>
-<nav class="tabs hide" id="tabs"><button data-v="live" class="on">Live</button><button data-v="game">Game</button><button data-v="trade">Trading</button><button data-v="tools">Checks</button></nav>
+<nav class="tabs hide" id="tabs"><button data-v="live" class="on">Live</button><button data-v="game">Game</button><button data-v="stream">Stream</button><button data-v="trade">Trading</button><button data-v="tools">Checks</button></nav>
 <div id="toast"></div>
 <script>
 (function () {
@@ -150,6 +150,13 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
         a += '<div class="card"><h2>SERVER PING</h2><div class="grid">' + num("Now", ms(g.now), lvOf(g.now, 60, 120)) + num("Average", ms(g.avg), lvOf(g.avg, 60, 120)) + num("Jitter", ms(g.jit), lvOf(g.jit, 10, 25)) + num("Loss", g.loss == null ? "–" : Math.round(g.loss * 10) / 10 + "<small> %</small>", lvOf(g.loss, 1, 3)) + '</div>' + spark(g.hist) + '<p style="font-size:13px;color:var(--muted);margin:8px 0 0">Last minute, one dot a second.</p></div>';
         a += '<div class="card"><h2>LAG RIGHT NOW?</h2><div class="tools"><button data-run="gamecompare">Compare game servers</button><button data-run="bloat">Lag under load</button></div></div>';
       }
+    } else if (view === "stream") {
+      var sm = L && L.stream;
+      if (!sm || sm.on !== "1") a += '<div class="card verdict l3"><h1>Nothing playing on the PC right now</h1><p style="color:var(--sub);margin:8px 0 0">When a stream plays - or you go live - its numbers show here.</p></div>';
+      else a += '<div class="card verdict l' + (sm.dips > 3 ? 2 : sm.dips > 0 ? 1 : 0) + '"><span class="tag">' + (sm.dips === 0 ? "SMOOTH SO FAR" : sm.dips + (sm.dips === 1 ? " DROP" : " DROPS")) + '</span><h1>' + esc(sm.what) + '</h1>' + (sm.last ? '<p style="color:var(--sub);margin:6px 0 0">Last drop ' + esc(sm.last) + '</p>' : '') + '</div>' +
+        '<div class="card"><h2>THE STREAM</h2><div class="grid">' + num("Coming in", mb(sm.down), 3) + num("Its server", ms(sm.far), lvOf(sm.far, 80, 200)) + num("Playing for", sm.mins == null ? "–" : Math.round(sm.mins) + "<small> min</small>", 3) + num("Router", ms(L.gw), lvOf(L.gw, 20, 80)) + '</div></div>';
+      a += '<div class="card"><h2>GOING LIVE</h2><div class="grid">' + num("Upload now", mb(L && L.up), 3) + num("Ping", ms(L && L.ping), lvOf(L && L.ping, 80, 200)) + num("Jitter", ms(L && L.jit), lvOf(L && L.jit, 20, 50)) + num("Loss", L && L.loss != null ? Math.round(L.loss * 10) / 10 + "<small> %</small>" : "–", lvOf(L && L.loss, 1, 3)) + '</div>' +
+        '<div class="tools" style="margin-top:10px"><button data-run="golive">Ready to stream?</button><button data-run="speedtest">Speed test</button></div><p style="font-size:13px;color:var(--muted);margin:8px 0 0">The check runs on the PC without opening anything over your stream.</p></div>';
     } else if (view === "trade") {
       var t = L && L.trade;
       if (!t) a += '<div class="card verdict l3"><h1>Trading isn\'t set up</h1><p style="color:var(--sub);margin:8px 0 0">Add your broker in Trading on the PC to see its delay here.</p></div>';
