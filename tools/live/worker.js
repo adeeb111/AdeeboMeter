@@ -79,52 +79,26 @@ const idxWeeks = () => cached("idxy", 12 * 3600, 14 * 86400, async () => series(
 const fxAll = () => cached("erapi", 12 * 3600, 3 * 86400, async () => { const d = await get("https://open.er-api.com/v6/latest/USD", 6 * 3600); if (d.result !== "success") throw new Error("er-api"); return { date: String(d.time_last_update_utc || "").slice(5, 16), usd: d.rates || {} }; });
 const xml = (x, n) => { const items = []; for (const m of x.matchAll(/<item>([\s\S]*?)<\/item>/g)) { const t = (m[1].match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1], l = (m[1].match(/<link>([^<]+)<\/link>/) || [])[1]; if (t && l && /^https:\/\/www\.bbc\.(co\.uk|com)\//.test(l.trim())) items.push({ t: t.trim().slice(0, 200), l: l.trim() }); if (items.length >= n) break; } return items; };
 const bbc = sp => cached("bbc:" + sp, 3 * 3600, 6 * 3600, async () => ({ items: xml(await get("https://feeds.bbci.co.uk/sport/" + sp + "/rss.xml", 900, "text"), 8) }));
-// leagues: ESPN's public score feed (no key, not documented - when it changes, the card says so and the rest still works)
+// leagues the page offers; NHL and MLB come through the relay from the leagues' own feeds, the rest from ESPN on the phone
 const LG = { nhl: ["hockey", "nhl"], nba: ["basketball", "nba"], nfl: ["football", "nfl"], mlb: ["baseball", "mlb"], epl: ["soccer", "eng.1"], ucl: ["soccer", "uefa.champions"], mls: ["soccer", "usa.1"] };
 const HEAD = { cri: "cricket", ten: "tennis", f1: "formula1" };
-const ESPN = "https://site.api.espn.com/apis/";
-const getE = (url, ttl) => fetch(url, { cf: { cacheTtl: ttl, cacheEverything: true }, headers: { "User-Agent": "Mozilla/5.0 (compatible; AdeeboMeter-Live; +https://adeebometer.com)", "Accept": "application/json" }, signal: AbortSignal.timeout(8000) })
-  .then(async r => { if (!r.ok) throw new Error(new URL(url).hostname + " answered " + r.status); const t = await r.text(); if (t.length > 3000000) throw new Error("too big"); return JSON.parse(t); });
-const ymd = d => d.toISOString().slice(0, 10).replace(/-/g, "");
-const side = c => c ? { ab: String((c.team || {}).abbreviation || "").slice(0, 6), n: String((c.team || {}).shortDisplayName || (c.team || {}).displayName || "").slice(0, 30), id: String((c.team || {}).id || ""), s: c.score != null && c.score !== "" ? String(typeof c.score === "object" ? c.score.displayValue || "" : c.score).slice(0, 12) : "", r: String(((c.records || [])[0] || {}).summary || "").slice(0, 12) } : null;
-const games = d => (d.events || []).slice(0, 20).map(e => { const c = (e.competitions || [])[0] || {}, cs = c.competitors || [], st = (e.status || c.status || {}), ty = st.type || {};
-  return { d: e.date, st: ty.state || "", det: String(ty.shortDetail || ty.detail || "").slice(0, 40), sum: String(st.summary || "").slice(0, 80), a: side(cs.find(x => x.homeAway === "away") || cs[1]), h: side(cs.find(x => x.homeAway === "home") || cs[0]) }; });
-const board = (k, q, ttl) => cached("sb:" + k + q, ttl, 6 * 3600, async () => ({ g: games(await getE(ESPN + "site/v2/sports/" + LG[k][0] + "/" + LG[k][1] + "/scoreboard" + q, ttl)) }));
-const table = k => cached("st:" + k, 12 * 3600, 2 * 86400, async () => {
-  const d = await getE(ESPN + "v2/sports/" + LG[k][0] + "/" + LG[k][1] + "/standings", 12 * 3600), groups = d.children && d.children.length ? d.children : d.standings ? [d] : [];
-  return { gr: groups.slice(0, 6).map(g => ({ n: String(g.abbreviation || g.name || "").slice(0, 30), rows: ((g.standings || {}).entries || []).map(e => { const m = {}; (e.stats || []).forEach(x => { m[x.name] = x.displayValue != null ? x.displayValue : x.summary; m["_" + x.name] = x.value; });
-    return { ab: String((e.team || {}).abbreviation || "").slice(0, 6), n: String((e.team || {}).shortDisplayName || "").slice(0, 30), id: String((e.team || {}).id || ""), gp: m.gamesPlayed || "", w: m.wins || "", l: m.losses || "", pts: m.points || "", pct: m.winPercent || "", seed: m._playoffSeed || m._rank || 0 }; })
-    .sort((a, b) => (a.seed || 99) - (b.seed || 99)).slice(0, 16) })) };
-});
-const espnNews = k => cached("nw:" + k, 3 * 3600, 6 * 3600, async () => ({ items: ((await getE(ESPN + "site/v2/sports/" + LG[k][0] + "/" + LG[k][1] + "/news", 3 * 3600)).articles || []).slice(0, 8).map(a => ({ t: String(a.headline || "").slice(0, 200), l: String(((a.links || {}).web || {}).href || "") })).filter(a => a.t && /^https:\/\//.test(a.l)) }));
-const cricket = () => cached("cri", 3 * 3600, 6 * 3600, async () => {
-  const d = await getE(ESPN + "site/v2/sports/cricket/scorepanel", 3 * 3600), now = Date.now(), out2 = [];
-  (d.scores || []).forEach(sc => { const lg = String(((sc.leagues || [])[0] || {}).name || "").slice(0, 60); games(sc).forEach(g => { const t = Date.parse(g.d); if (t && Math.abs(now - t) < 4 * 86400000 && out2.length < 12) out2.push(Object.assign({ lg }, g)); }); });
-  return { g: out2 };
-});
-// ---- stock movers (Adeeb, 16 Nov: option A) - Alpha Vantage's US top gainers / losers / most traded, once a day with the
-// relay's own free key (a Cloudflare secret, AV_KEY - set with "wrangler secret put AV_KEY"; never in this file)
-const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p: +x.price || null, c: parseFloat(x.change_percentage) || 0, v: +x.volume || 0 }))
-  .filter(x => x.t && x.p >= 1 && !/[^A-Z.]/.test(x.t) && !(x.t.length === 5 && /[WUR]$/.test(x.t))).slice(0, 5);   // under $1, warrants, units and rights are mostly noise
-const movers = (key, d) => { if (d.Information || d.Note || d["Error Message"]) throw new Error(String(d.Information || d.Note || d["Error Message"]).slice(0, 160)); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
-const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!env || !env.AV_KEY) throw new Error("nokey"); return movers(env.AV_KEY, await get("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), 12 * 3600)); });
-// a person's own key (Live > Your keys): it comes in a header, is used for this one call and dropped - never cached, logged or kept
-async function keyed(svc, key, u) {
-  const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000) };
-  const j2 = async (url, h) => { const r = await fetch(url, h ? { headers: Object.assign({}, nc.headers, h), signal: nc.signal } : nc); const t = await r.text(); let d; try { d = JSON.parse(t); } catch (e) { throw new Error("not JSON (" + r.status + ")"); } if (r.status === 401 || r.status === 403) throw new Error("the key was refused"); if (r.status === 429) throw new Error("the key's daily limit is used up"); if (!r.ok) throw new Error("answered " + r.status); return d; };
-  if (svc === "av") return movers(key, await j2("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(key)));
-  if (svc === "fd") { const d = await j2("https://api.football-data.org/v4/matches", { "X-Auth-Token": key });
-    return { g: (d.matches || []).slice(0, 40).map(m => ({ lg: String((m.competition || {}).name || "").slice(0, 40), d: m.utcDate, st: /IN_PLAY|PAUSED/.test(m.status) ? "in" : m.status === "FINISHED" ? "post" : "pre", det: m.status === "PAUSED" ? "Half-time" : m.minute ? m.minute + "'" : m.status === "IN_PLAY" ? "Live" : "",
-      a: { n: String((m.awayTeam || {}).shortName || (m.awayTeam || {}).name || "").slice(0, 30), ab: String((m.awayTeam || {}).tla || ""), id: "", s: (((m.score || {}).fullTime || {}).away ?? "") + "" },
-      h: { n: String((m.homeTeam || {}).shortName || (m.homeTeam || {}).name || "").slice(0, 30), ab: String((m.homeTeam || {}).tla || ""), id: "", s: (((m.score || {}).fullTime || {}).home ?? "") + "" } })) }; }
-  if (svc === "cd") { const d = await j2("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + encodeURIComponent(key)); if (d.status && d.status !== "success") throw new Error(String(d.reason || d.status).slice(0, 120));
-    return { hits: (d.info || {}).hitsToday || null, g: (d.data || []).slice(0, 25).map(m => { const sc = (m.score || []).map(x => (x.r ?? "") + "/" + (x.w ?? "") + " (" + (x.o ?? "") + ")"), tm = m.teams || [];
-      return { lg: String(m.matchType || "").toUpperCase().slice(0, 10) + (m.venue ? " · " + String(m.venue).slice(0, 40) : ""), d: m.dateTimeGMT ? m.dateTimeGMT + "Z" : m.date, st: m.matchEnded ? "post" : m.matchStarted ? "in" : "pre", det: "", sum: String(m.status || "").slice(0, 80),
-        a: { n: String(tm[1] || "").slice(0, 30), s: sc[1] || "" }, h: { n: String(tm[0] || "").slice(0, 30), s: sc[0] || "" } }; }) }; }
-  if (svc === "gn") { const q = (u.searchParams.get("q") || "").slice(0, 60), d = await j2("https://gnews.io/api/v4/" + (q ? "search?q=" + encodeURIComponent(q) + "&" : "top-headlines?category=sports&") + "lang=en&max=10&apikey=" + encodeURIComponent(key));
-    return { items: (d.articles || []).slice(0, 10).map(a => ({ t: String(a.title || "").slice(0, 200), l: String(a.url || ""), s: String((a.source || {}).name || "").slice(0, 40) })).filter(a => /^https:\/\//.test(a.l)) }; }
-  throw new Error("unknown service");
-}
+// ---- official league feeds through the relay (Adeeb, 16 Nov: "mix of 2" - ESPN refuses servers, so NHL and MLB come from
+// the leagues themselves; NBA, NFL, soccer and cricket matches the phone asks ESPN for itself, only when the person turns it on)
+const ISO = d => d.toISOString().slice(0, 10);
+const nhlT = t => t ? { ab: String(t.abbrev || ""), n: String(((t.commonName || t.name || {}).default) || t.abbrev || "").slice(0, 30), id: String(t.abbrev || ""), s: t.score != null ? String(t.score) : "" } : null;
+const nhlG = g => { const st = g.gameState || "", live = /LIVE|CRIT/.test(st), fin = /FINAL|OFF/.test(st);
+  return { d: g.startTimeUTC, st: live ? "in" : fin ? "post" : "pre", det: live ? "P" + ((g.periodDescriptor || {}).number || "") + " " + ((g.clock || {}).timeRemaining || "") : fin ? "Final" : "", sum: "", a: nhlT(g.awayTeam), h: nhlT(g.homeTeam) }; };
+const nhlDay = day => cached("nhl:" + day, day === "now" ? 3 * 3600 : 12 * 3600, 6 * 3600, async () => ({ g: ((await get("https://api-web.nhle.com/v1/score/" + day, 3 * 3600)).games || []).slice(0, 20).map(nhlG) }));
+const nhlNext = () => cached("nhl:wk", 12 * 3600, 86400, async () => { const d = await get("https://api-web.nhle.com/v1/schedule/now", 12 * 3600), g = []; (d.gameWeek || []).forEach(w => (w.games || []).forEach(x => g.push(nhlG(x)))); return { g: g.filter(x => x.st === "pre").slice(0, 20) }; });
+const nhlTable = () => cached("nhl:st", 12 * 3600, 2 * 86400, async () => { const d = await get("https://api-web.nhle.com/v1/standings/now", 12 * 3600), by = {};
+  (d.standings || []).forEach(t => { const c = String(t.conferenceName || "League"); (by[c] = by[c] || []).push({ ab: String((t.teamAbbrev || {}).default || ""), n: String((t.teamCommonName || t.teamName || {}).default || "").slice(0, 30), id: String((t.teamAbbrev || {}).default || ""), gp: String(t.gamesPlayed ?? ""), w: String(t.wins ?? ""), l: String(t.losses ?? ""), pts: String(t.points ?? ""), seed: +t.conferenceSequence || 99 }); });
+  return { gr: Object.keys(by).map(n => ({ n, rows: by[n].sort((a, b) => a.seed - b.seed).slice(0, 16) })) }; });
+const MLBDIV = { 200: "AL West", 201: "AL East", 202: "AL Central", 203: "NL West", 204: "NL East", 205: "NL Central" };
+const mlbT = t => ({ ab: String(((t || {}).team || {}).abbreviation || ""), n: String(((t || {}).team || {}).teamName || ((t || {}).team || {}).name || "").slice(0, 30), id: String(((t || {}).team || {}).id || ""), s: (t || {}).score != null ? String(t.score) : "" });
+const mlbG = g => { const a = (g.status || {}).abstractGameState; return { d: g.gameDate, st: a === "Live" ? "in" : a === "Final" ? "post" : "pre", det: a === "Final" ? "Final" : a === "Live" ? String((g.status || {}).detailedState || "Live").slice(0, 30) : "", sum: "", a: mlbT((g.teams || {}).away), h: mlbT((g.teams || {}).home) }; };
+const mlbSched = (q, ttl) => cached("mlb:" + q, ttl, 86400, async () => { const d = await get("https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=team&" + q, ttl), g = []; (d.dates || []).forEach(x => (x.games || []).forEach(y => g.push(mlbG(y)))); return { g: g.slice(0, 20) }; });
+const mlbTable = () => cached("mlb:st", 12 * 3600, 2 * 86400, async () => { const now = new Date(), yr = now.getUTCMonth() < 2 ? now.getUTCFullYear() - 1 : now.getUTCFullYear(), d = await get("https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&hydrate=team&season=" + yr, 12 * 3600);
+  return { season: yr, gr: (d.records || []).map(r => ({ n: MLBDIV[(r.division || {}).id] || "Division", rows: (r.teamRecords || []).map(t => ({ ab: String((t.team || {}).abbreviation || ""), n: String((t.team || {}).teamName || (t.team || {}).name || "").slice(0, 30), id: String((t.team || {}).id || ""), gp: String(t.gamesPlayed ?? ""), w: String(t.wins ?? ""), l: String(t.losses ?? ""), pts: "", seed: +t.divisionRank || 99 })).sort((a, b) => a.seed - b.seed) })) }; });
 const weather = (lat, lon) => cached("w" + lat + "," + lon, 1800, 3 * 3600, async () => {
   const d = await get("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon +
     "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=4", 1800);
@@ -195,12 +169,13 @@ export default {
       // one league: last night, today (or the week ahead when today is empty), a short table and its headlines
       case "/scores": {
         const k = (u.searchParams.get("lg") || "").toLowerCase();
-        if (HEAD[k]) { const [n, c] = await Promise.all([bbc(HEAD[k]), k === "cri" ? cricket() : Promise.resolve(null)]); return reply(req, { lg: k, news: out(n), cri: c ? out(c) : null }, 120); }
+        if (HEAD[k]) { const n = await bbc(HEAD[k]); return reply(req, { lg: k, news: out(n), espn: k === "cri" ? 1 : 0 }, 600); }
         if (!LG[k]) return reply(req, { error: "unknown league" }, 0);
         const now = new Date(), y = new Date(now.getTime() - 86400000);
-        const [today, yest, st, nw] = await Promise.all([board(k, "", 3 * 3600), board(k, "?dates=" + ymd(y), 12 * 3600), table(k), espnNews(k)]);
-        let next = null; if (!today.v.error && !(today.v.g || []).some(g => g.st !== "post")) next = await board(k, "?dates=" + ymd(new Date(now.getTime() + 86400000)) + "-" + ymd(new Date(now.getTime() + 8 * 86400000)), 12 * 3600);
-        return reply(req, { lg: k, at: Date.now(), today: out(today), yest: out(yest), next: next ? out(next) : null, table: out(st), news: out(nw) }, 90);
+        if (k === "nhl") { const [today, yest, st, nx] = await Promise.all([nhlDay("now"), nhlDay(ISO(y)), nhlTable(), nhlNext()]); return reply(req, { lg: k, at: Date.now(), src: "NHL", today: out(today), yest: out(yest), next: out(nx), table: out(st), news: null }, 600); }
+        if (k === "mlb") { const [today, yest, st, nx] = await Promise.all([mlbSched("date=" + ISO(now), 3 * 3600), mlbSched("date=" + ISO(y), 12 * 3600), mlbTable(), mlbSched("startDate=" + ISO(new Date(now.getTime() + 86400000)) + "&endDate=" + ISO(new Date(now.getTime() + 8 * 86400000)), 12 * 3600)]);
+          return reply(req, { lg: k, at: Date.now(), src: "MLB", today: out(today), yest: out(yest), next: out(nx), table: out(st), news: null }, 600); }
+        return reply(req, { lg: k, espn: 1 }, 3600);   // NBA, NFL, soccer: the phone asks ESPN itself, if the person turned that on
       }
       // stock movers: the relay's shared daily copy (or "nokey" when no AV_KEY is set - the page then offers "your own key")
       case "/movers": { const e = await avShared(env); return reply(req, out(e), 3600); }
