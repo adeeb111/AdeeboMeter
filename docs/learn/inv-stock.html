@@ -10,11 +10,11 @@
 <meta property="og:description" content="A slice of a company, a scoreboard, and a basket. A share is a small piece of one company. An index tracks a group of companies to show how a market is…">
 <meta property="og:type" content="article">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}}
-:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
 main{max-width:760px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "Stocks, indexes and ETFs", "description": "A slice of a company, a scoreboard, and a basket. A share is a small piece of one company. An index tracks a group of companies to show how a market is…", "url": "https://adeebometer.com/learn/inv-stock.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Trading and investing", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#investing">Trading and investing</a>
 <h1>Stocks, indexes and ETFs</h1>
 <p class="tag">A slice of a company, a scoreboard, and a basket.</p>
@@ -86,13 +86,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>A bank account with interest</button>
 <button>A government bond</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>This lesson is built into the AdeeboMeter app, next to the checks that test Stocks, indexes and ETFs on your own connection.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in Trading and investing</h2>
-<div class="grid"><a href="inv-move.html"><b>Why prices move</b><span>More buyers than sellers - for whatever reason.</span></a><a href="inv-data.html"><b>End-of-day, delayed and live prices</b><span>Know which clock your number is on.</span></a><a href="inv-fx.html"><b>Currencies and your money</b><span>A US stock in Canada is two bets: the stock and the dollar.</span></a><a href="inv-scams.html"><b>Spotting investment scams</b><span>&quot;Guaranteed&quot;, &quot;urgent&quot;, &quot;secret&quot; and &quot;send crypto&quot; - walk away.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Trading</h2>
+<div class="ui-rows"><a class="ui-row" href="inv-move.html" data-id="inv-move"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Why prices move</b><small>Trading</small></span><span data-ic="chev"></span></a><a class="ui-row" href="inv-data.html" data-id="inv-data"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>End-of-day, delayed and live prices</b><small>Trading</small></span><span data-ic="chev"></span></a><a class="ui-row" href="inv-fx.html" data-id="inv-fx"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Currencies and your money</b><small>Trading</small></span><span data-ic="chev"></span></a><a class="ui-row" href="inv-scams.html" data-id="inv-scams"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Spotting investment scams</b><small>Trading</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="stream-fault.html">← Whose fault is the buffering?</a><a href="inv-move.html">Why prices move →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -103,5 +101,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("inv-stock")<0)s.push("inv-stock");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","inv-stock")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

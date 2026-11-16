@@ -11,8 +11,8 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}}
-:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
 main{max-width:880px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
@@ -52,66 +52,66 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 @media (max-width:640px){.cards{grid-template-columns:1fr}h1{font-size:25px}.big{font-size:34px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="stylesheet" href="/ui.css">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
-<body>
+<body data-sec="live">
 <main>
-<nav class="top"><b><a href="./">AdeeboMeter</a></b><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a></nav>
-<h1>Live</h1>
-<p class="tag">Today at a glance - and what the AdeeboMeter app adds when it runs on your own PC.</p>
+<nav class="top"><b><a href="./" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a></nav>
+<header class="ui-head"><span class="ui-chip" style="--k:var(--c-live)" data-ic="live" data-sz="28"></span><div><h1>Live</h1><p>Markets, scores and weather at a glance.</p></div></header>
 <div style="display:flex;gap:10px;align-items:center;margin:-4px 0 14px;min-height:44px"><span id="amv-face"></span><p id="amv-say" style="font-weight:600;margin:0" aria-live="polite"></p></div>
-<div class="tabs" role="tablist">
-<button role="tab" data-t="all" aria-selected="true">Everything</button>
+<div class="tabs ui-seg" role="tablist">
+<button role="tab" data-t="all" aria-selected="true">All</button>
 <button role="tab" data-t="mkt" aria-selected="false">Markets</button>
-<button role="tab" data-t="sport" aria-selected="false">Sports</button>
+<button role="tab" data-t="sport" aria-selected="false">Scores</button>
 <button role="tab" data-t="wx" aria-selected="false">Weather</button>
-<button role="tab" data-t="net" aria-selected="false">Your connection</button>
+<button role="tab" data-t="net" aria-selected="false">Connection</button>
 </div>
 <div class="cards">
 
 <section class="card" data-k="net">
-<h2>Your browser → the internet</h2>
+<h2 data-ic="wifi">Your connection</h2>
 <p class="src">Measured right now, from this page to the nearest Cloudflare server</p>
 <div class="big" id="lat">…</div><p class="mut" id="latx" style="margin:2px 0 0"></p>
 <div class="row"><button class="btn" id="lagain">Test again</button></div>
-<p class="app">This is a <b>web request</b> from your browser, not a game ping - a browser can't ping game servers or your broker. <b>The app does:</b> real pings to the servers your games use, your broker's response time, and whose fault the lag is (Wi-Fi, provider or server). <a href="gaming.html">Gaming</a> · <a href="trading.html">Trading</a></p>
+<p class="app">This is a <b>web request</b> from your browser, not a game ping - a browser can't ping game servers or your broker. <b>The app does:</b> real pings to the servers your games use, your broker's response time, and whose fault the lag is (Wi-Fi, provider or server). Gaming · Trading</p>
 </section>
 
 <section class="card" data-k="mkt">
-<h2>Market hours</h2>
+<h2 data-ic="clock">Market hours</h2>
 <p class="src"><b>Regular weekday hours only</b> - holidays and early closes aren't shown here (the app knows them). Eastern time.</p>
 <div id="hours"></div>
 <p class="app"><b>The app adds:</b> holidays and early closes, a market-open check of your broker connection, and an alert if it gets slow while you trade.</p>
 </section>
 
 <section class="card" data-k="mkt">
-<h2>Canadian dollar</h2>
+<h2 data-ic="dollar">Canadian dollar</h2>
 <p class="src" id="fxsrc">Bank of Canada daily rates</p>
 <table id="fx"><tr><td class="mut">Loading…</td></tr></table>
 </section>
 
 <section class="card" data-k="mkt">
-<h2>Commodity prices - oil, gas and more</h2>
+<h2 data-ic="chart">Oil, gas and more</h2>
 <p class="src" id="ixsrc">Bank of Canada commodity price index, weekly</p>
 <table id="ix"><tr><td class="mut">Loading…</td></tr></table>
 <p class="app">Energy = oil, natural gas and coal. Live stock and oil prices need a paid licence, so this page shows the Bank of Canada's official index instead.</p>
 </section>
 
 <section class="card" data-k="sport">
-<h2>NHL today</h2>
+<h2 data-ic="trophy">NHL today</h2>
 <p class="src" id="nhlsrc">NHL scores</p>
 <div id="nhl" class="mut">Loading…</div>
 <p class="app"><b>The app adds:</b> football and cricket with your own free key, your team on the stream overlay, and whether your connection can take the stream.</p>
 </section>
 
 <section class="card" data-k="sport">
-<h2>Sports headlines</h2>
+<h2 data-ic="trophy">Sports headlines</h2>
 <p class="src">From BBC Sport - opens on their site</p>
 <ul class="news" id="news"><li class="mut">Loading…</li></ul>
 </section>
 
 <section class="card wide" data-k="wx">
-<h2>Weather <span id="place" class="mut" style="font-weight:400"></span></h2>
+<h2 data-ic="sun">Weather <span id="place" class="mut" style="font-weight:400"></span></h2>
 <p class="src">Open-Meteo forecast · your place is used for this answer only, never stored</p>
 <div id="wx" class="mut">Loading…</div>
 <div class="row"><input id="city" placeholder="Another city" aria-label="City"><button class="btn" id="find">Find</button><button class="btn" id="here">Use my location</button></div>
@@ -121,7 +121,6 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 
 </div>
 <a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
-<p class="mut" style="font-size:14px;margin-top:14px">With the app installed, open <b>Phone remote</b> on your PC and scan the code: your phone then shows your own PC's live numbers, game pings, broker timing and 100+ checks.</p>
 <div id="amv-pick-at" style="margin:18px 0 0"></div>
 <footer>Data: Bank of Canada (rates and commodity index), NHL, BBC Sport (headlines and links), Open-Meteo (weather, CC BY 4.0). Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
 </main>
@@ -204,5 +203,6 @@ lat();$("lagain").onclick=lat;
 </script>
 <script src="/voice.js"></script>
 <script>AMV.onchange(function(){var h=new Date().getHours(),k=h>=5&&h<11?"morning":h>=23||h<5?"late.night":"app.open",t=AMV.line(k)||AMV.line("app.open"),e=document.getElementById("amv-say");if(e)e.textContent=t;AMV.face(document.getElementById("amv-face"),window.amvLook)});AMV.face(document.getElementById("amv-face"));AMV.picker(document.getElementById("amv-pick-at"))</script>
+<script src="/ui.js"></script>
 </body>
 </html>

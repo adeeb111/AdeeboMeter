@@ -10,11 +10,11 @@
 <meta property="og:description" content="No handshake, no resending - speed first. Fire and forget: no confirmations, no resends - fast, for calls, games and">
 <meta property="og:type" content="article">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}}
-:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
 main{max-width:760px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
@@ -61,11 +61,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 @media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "UDP - fast and fire-and-forget", "description": "No handshake, no resending - speed first. Fire and forget: no confirmations, no resends - fast, for calls, games and", "url": "https://adeebometer.com/learn/udp.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "How the internet talks", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
 </head>
-<body>
+<body data-sec="learn">
 <main>
-<nav class="top"><b><a href="../">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>
 <a class="chip" href="./#protocol">How the internet talks</a>
 <h1>UDP - fast and fire-and-forget</h1>
 <p class="tag">No handshake, no resending - speed first.</p>
@@ -85,13 +85,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>UDP packets can&#x27;t be lost</button>
 <button>Routers block TCP</button>
 <p class="say" aria-live="polite"></p></div>
-<h2>See it on your own PC</h2>
-<p>In the AdeeboMeter app, Learn › UDP › <b>See it live</b> records these messages on your own network while you join a Teams call or play a video.</p>
-<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the network games</a>
-<h2>Also in How the internet talks</h2>
-<div class="grid"><a href="dns.html"><b>DNS</b><span>You type a name; DNS finds the number.</span></a><a href="dhcp.html"><b>DHCP</b><span>Four messages, and you&#x27;re on the network.</span></a><a href="arp.html"><b>ARP</b><span>IP addresses for the journey, hardware addresses for the next step.</span></a><a href="tcp.html"><b>TCP</b><span>Numbered, acknowledged, resent when lost.</span></a></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a><a class="cta ghost" href="../games.html">Play the games</a></p>
+<h2>More in Protocols</h2>
+<div class="ui-rows"><a class="ui-row" href="dns.html" data-id="dns"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DNS</b><small>Protocols</small></span><span data-ic="chev"></span></a><a class="ui-row" href="dhcp.html" data-id="dhcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DHCP</b><small>Protocols</small></span><span data-ic="chev"></span></a><a class="ui-row" href="arp.html" data-id="arp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>ARP</b><small>Protocols</small></span><span data-ic="chev"></span></a><a class="ui-row" href="tcp.html" data-id="tcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>TCP</b><small>Protocols</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="tcp.html">← TCP</a><a href="tls.html">TLS →</a></div>
-<footer>AdeeboMeter for Windows · free · no account, no cloud, no telemetry · these lessons are the same ones built into the app</footer>
+<footer>Free · no account · the same lessons as the Windows app</footer>
 </main>
 <script src="/voice.js"></script>
 <script>
@@ -102,5 +100,7 @@ bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute
 var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
 </script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("udp")<0)s.push("udp");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","udp")}catch(e){}</script>
+<script src="/ui.js"></script>
 </body>
 </html>

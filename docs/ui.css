@@ -1,0 +1,64 @@
+/* Shared look for Learn, Games, Live and Files (with ui.js). Flat: solid surfaces, 1-px lines, blue for actions and the open
+   section, soft section colours on icons only. Uses each page's own colour tokens (--page, --card, --line, --ink, --sub, --blue). */
+:root{--c-learn:#C2621F;--c-games:#A8459C;--c-live:#1F7DB8;--c-files:#6B4FD0;--ui-blue:#1F6FEB}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--ui-blue:#2F7BF6}}
+:root[data-theme="dark"]{--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--ui-blue:#2F7BF6}
+html,body{overscroll-behavior-y:none}
+body[data-sec]{touch-action:manipulation;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body[data-sec] main{padding-top:6px}
+nav.top{display:none!important}
+.ui-i{stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+/* top bar */
+.ui-appbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--page);border-bottom:1px solid var(--line)}
+.ui-back{width:42px;height:42px;display:grid;place-items:center;color:var(--ink);border-radius:12px;text-decoration:none}
+.ui-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--ink);text-decoration:none}
+.ui-links{display:none;margin-left:auto;gap:22px}.ui-links a{color:var(--sub);font-weight:600;text-decoration:none}.ui-links a[aria-current]{color:var(--ink)}
+.inapp .ui-appbar{display:none}
+/* page header: the section's icon, title, one short line */
+.ui-head{display:flex;gap:14px;align-items:center;margin:14px 0 18px}
+.ui-head h1{margin:0;font-size:30px;line-height:1.1;letter-spacing:-.01em}.ui-head p{margin:3px 0 0;color:var(--sub);font-size:15px}
+.ui-chip{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--k,var(--ui-blue)) 15%,transparent);color:var(--k,var(--ui-blue))}
+.ui-chip.sm{width:42px;height:42px;border-radius:12px}
+/* the one big card at the top */
+.ui-hero{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;background:var(--ui-blue);color:#fff;border-radius:20px;padding:18px;margin:0 0 16px;text-decoration:none;border:0;width:100%;font:inherit;text-align:left;cursor:pointer}
+.ui-hero .tag{color:#fff;justify-self:start;font-size:13px;font-weight:700;background:rgba(0,0,0,.22);border-radius:8px;padding:4px 10px;grid-column:1/-1}
+.ui-hero b{font-size:24px;line-height:1.15;margin-top:6px}.ui-hero small{display:block;opacity:.85;font-size:14px;grid-column:1}
+.ui-hero .go{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;grid-row:2/4;grid-column:2}
+.ui-hero .art{grid-row:2/5;grid-column:2;opacity:.9}
+.ui-prog{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;font-weight:700}.ui-prog i{flex:1;height:8px;border-radius:9px;background:rgba(255,255,255,.28);overflow:hidden}.ui-prog i b{display:block;height:100%;margin:0;background:#fff;border-radius:9px}
+.ui-play{grid-column:1;justify-self:start;display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--ui-blue);font-weight:800;font-size:17px;border-radius:12px;padding:10px 20px;margin-top:12px}
+/* search, pills, segments */
+.ui-search{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 14px;color:var(--sub);margin:0 0 12px}
+.ui-search input{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-size:16px;padding:13px 0;outline:none;min-width:0;margin:0}
+.ui-pills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -4px 16px;padding:2px 4px}.ui-pills::-webkit-scrollbar{display:none}
+.ui-pills button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;font-size:15px;border-radius:99px;padding:8px 16px;cursor:pointer}
+.ui-pills button.on{background:var(--ui-blue);border-color:var(--ui-blue);color:#fff}
+.ui-seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin:0 0 16px;overflow-x:auto;scrollbar-width:none}
+.ui-seg button{flex:1 0 auto;border:0;background:none;color:var(--sub);font:inherit;font-weight:700;font-size:15px;border-radius:10px;padding:10px 12px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;white-space:nowrap}
+.ui-seg button[aria-selected="true"],.ui-seg button.on{background:var(--ui-blue);color:#fff}
+/* rows: icon, title, short meta, arrow */
+.ui-h2{font-size:20px;margin:22px 2px 10px}
+.ui-rows{display:grid;gap:10px}
+.ui-row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;color:var(--ink);text-decoration:none;font:inherit;text-align:left;width:100%;cursor:pointer}
+.ui-row .t{flex:1;min-width:0}.ui-row .t b{display:block;font-size:17px;font-weight:700}.ui-row .t small{display:block;color:var(--sub);font-size:14px;margin-top:1px}
+.ui-row .ui-i:last-child{color:var(--sub)}
+.ui-row:active,.ui-hero:active{transform:scale(.985)}
+.ui-row .ok{color:var(--green)}
+/* the Learn / Games / Live / Files bar */
+.ui-sbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:space-around;gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--page);border-top:1px solid var(--line)}
+.ui-sbar a{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--sub);font-size:12px;font-weight:600;text-decoration:none;padding:7px 0;border-radius:14px}
+.ui-sbar a.on{background:var(--ui-blue);color:#fff}
+@media (min-width:768px){html:not(.inapp) .ui-sbar{display:none}html:not(.inapp) body[data-sec]{padding-bottom:0}.ui-links{display:flex}.ui-appbar{padding-left:22px;padding-right:22px}.ui-back{display:none}}
+@media (prefers-reduced-motion:reduce){.ui-row:active,.ui-hero:active{transform:none}}
+/* Live: an icon on each card, the short source line, and the long "the app adds" notes left out */
+body[data-sec] .card h2[data-ic]{display:flex;align-items:center;gap:10px}body[data-sec] .card h2[data-ic]>.ui-i{color:var(--c-live)}
+body[data-sec="live"] .card p.app{display:none}body[data-sec="live"] .card p.src{font-size:13px}
+body[data-sec="live"] .tabs.ui-seg button{flex:1 0 auto}
+/* Files: pickers as rows, buttons with an icon */
+body[data-sec="files"] label.pick.ui-row{display:flex;margin:0 0 12px;border:1px solid var(--line);text-align:left;color:var(--ink);font-weight:400;padding:12px 14px}body[data-sec="files"] label.pick input{position:absolute;opacity:0;width:1px;height:1px}
+body[data-sec] .btn[data-ic]{display:flex;align-items:center;justify-content:center;gap:8px}
+body[data-sec="files"] .card h2{margin-top:0}
+/* less writing: one-line sources, the companion picker lives in the app (More › Companion) */
+body[data-sec="live"] .card p.src{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[data-sec] #amv-pick-at{display:none}
+body[data-sec="files"] .btn{width:100%}
