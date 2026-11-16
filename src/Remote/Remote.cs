@@ -20,7 +20,7 @@ namespace AdeeboMeter
     //
     // The PC opens an outgoing connection only - it never listens (the self-test checks that).
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1001", Justification = "End() disposes the socket, timer and keys; a session is never reused")]
-    sealed class Remote
+    sealed partial class Remote
     {
         // the relay's address, set when it's deployed (tools/remote). Empty: the feature says it isn't set up.
         public static readonly string Relay = "wss://adeebometer-remote.orkoadeeb.workers.dev";
@@ -123,6 +123,7 @@ namespace AdeeboMeter
                     }
                 case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
                 case "stop": { var o = op; if (o != null && (c.S("rid") ?? "") == opRid) { o.Stop = true; Seal("{\"t\":\"note\",\"msg\":\"Stopping the check on the PC...\"}"); } return; }
+                case "fput": case "fok": case "fno": case "fdat": case "fack": case "fend": case "fcancel": case "text": Files(c); return;
                 case "bye": End("the phone ended the session"); return;
             }
         }
@@ -261,7 +262,7 @@ namespace AdeeboMeter
             try { if (ws.State == WebSocketState.Open) ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None).Wait(2000); } catch (AggregateException) { } catch (ObjectDisposedException) { } catch (InvalidOperationException) { }
             try { cts.Cancel(); } catch (ObjectDisposedException) { }
             try { ws.Dispose(); } catch (ObjectDisposedException) { }
-            tx = rx = null; if (mine != null) { mine.Dispose(); mine = null; }
+            FilesEnd(); tx = rx = null; if (mine != null) { mine.Dispose(); mine = null; }
             if (Now == this) Now = null;
             Note();
         }

@@ -237,6 +237,19 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is DllNotFoundException || e is EntryPointNotFoundException)) throw; Program.Log("zone mark: " + e.Message); }
         }
+        // a file that arrived from somewhere else (the phone): Windows' own "downloaded" mark, so it still warns before it runs
+        internal static void MarkFromInternet(string path)
+        {
+            try
+            {
+                using (var h = CreateFileW(path + ":Zone.Identifier", 0x40000000, 0, IntPtr.Zero, 2, 0x80, IntPtr.Zero))
+                {
+                    if (h.IsInvalid) return;
+                    using (var fs = new FileStream(h, FileAccess.Write)) { var b = Encoding.ASCII.GetBytes("[ZoneTransfer]\r\nZoneId=3\r\n"); fs.Write(b, 0, b.Length); }
+                }
+            }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is DllNotFoundException || e is EntryPointNotFoundException)) throw; Program.Log("zone mark: " + e.Message); }
+        }
         static string ZoneRead(string path)
         {
             using (var h = CreateFileW(path, 0x80000000 /* read */, 1, IntPtr.Zero, 3 /* open existing */, 0x80, IntPtr.Zero))
