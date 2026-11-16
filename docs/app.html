@@ -542,27 +542,33 @@ textarea.in{resize:vertical;min-height:120px}
   // a fetch that gives up (AM-CG-352)
   function tfetch(u, ms, nocors) { var c = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (c) c.abort(); }, ms || 8000), o = { cache: "no-store" }; if (c) o.signal = c.signal; if (nocors) { o.mode = "no-cors"; o.credentials = "omit"; o.referrerPolicy = "no-referrer"; } return fetch(u, o).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; }); }
   // one measurement at a time: a second caller waits for the same one (AM-CG-351); failed answers never count as samples (AM-CG-326/327)
-  function phoneCheck() {
-    if (phoneP) return phoneP; phoneBusy = true; draw();
-    phoneP = (async function () {
+  // a reply cut off by a network switch (Wi-Fi off, mobile on) can hang while it's being read - the request timer has already
+  // stopped by then - so every read has its own limit, the whole check has one too, and a fresh check (force) drops the old
+  // one: its late answer is ignored (Adeeb, 16 Nov: "Wi-Fi vs mobile data got stuck after switching")
+  var phoneGen = 0;
+  function lim(pr, ms) { return Promise.race([pr, new Promise(function (_, no) { setTimeout(function () { no(new Error("slow")); }, ms); })]); }
+  function phoneCheck(force) {
+    if (phoneP && force !== true) return phoneP; var gen = ++phoneGen; phoneBusy = true; draw();
+    var job = (async function () {
       var r = { at: Date.now(), t: [], org: "", v6: null, colo: "", dns: null, type: "", eff: "", tries: 0, fail: 0, me: false };
       try {
         var u = LIVE + "/me?" + Date.now(), res = await tfetch(u, 6000);
         if (res.ok && /json/i.test(res.headers.get("content-type") || "")) {
-          var x = await res.json(); r.me = true; r.org = String(x.org || "").slice(0, 80); r.v6 = x.v6 ? 1 : 0; r.colo = String(x.colo || "").slice(0, 8);
+          var x = await lim(res.json(), 4000); r.me = true; r.org = String(x.org || "").slice(0, 80); r.v6 = x.v6 ? 1 : 0; r.colo = String(x.colo || "").slice(0, 8);
           // only a real, fresh lookup is a DNS number; a reused connection shows 0 and is left out (AM-CG-354)
           var pe = performance.getEntriesByName(u)[0]; if (pe && pe.domainLookupStart > 0 && pe.domainLookupEnd - pe.domainLookupStart >= 1) r.dns = Math.round(pe.domainLookupEnd - pe.domainLookupStart);
         }
       } catch (e) {}
       for (var i = 0; i < 7; i++) {
         r.tries++; var s0 = performance.now();
-        try { var p = await tfetch(LIVE + "/ping?" + i + Date.now(), 5000); if (!p.ok) { r.fail++; continue; } await p.text(); if (i) r.t.push(performance.now() - s0); } catch (e) { r.fail++; }
+        try { var p = await tfetch(LIVE + "/ping?" + i + Date.now(), 5000); if (!p.ok) { r.fail++; continue; } await lim(p.text(), 4000); if (i) r.t.push(performance.now() - s0); } catch (e) { r.fail++; }
       }
       if (r.t.length < 2) r.err = 1;
       var c = navigator.connection; if (c) { r.type = c.type || ""; r.eff = c.effectiveType || ""; }
       var v = r.t.slice().sort(function (a, b) { return a - b; }); r.med = v.length ? v[Math.floor(v.length / 2)] : null; r.jit = v.length > 1 ? v[v.length - 1] - v[0] : null;
       return r;
-    })().then(function (r) { me = r; phoneBusy = false; phoneP = null; var l = r.err ? 2 : Math.max(0, worst(phoneRows(r))); addAct.med = r.err ? null : r.med; addAct("everyday", r.err ? "This phone couldn't reach the internet" : "This phone checked", r.err ? "" : Math.round(r.med) + " ms, spread " + Math.round(r.jit) + " ms" + (r.type === "wifi" ? " · Wi-Fi" : r.type === "cellular" ? " · mobile data" : ""), l); draw(); return r; });
+    })();
+    phoneP = lim(job, 30000).catch(function () { return { at: Date.now(), t: [], tries: 7, fail: 7, err: 1, org: "", v6: null, type: navigator.connection ? navigator.connection.type || "" : "" }; }).then(function (r) { if (gen !== phoneGen) return r; me = r; phoneBusy = false; phoneP = null; var l = r.err ? 2 : Math.max(0, worst(phoneRows(r))); addAct.med = r.err ? null : r.med; addAct("everyday", r.err ? "This phone couldn't reach the internet" : "This phone checked", r.err ? "" : Math.round(r.med) + " ms, spread " + Math.round(r.jit) + " ms" + (r.type === "wifi" ? " · Wi-Fi" : r.type === "cellular" ? " · mobile data" : ""), l); draw(); return r; });
     return phoneP;
   }
   function phoneRows(r) {
@@ -1222,7 +1228,7 @@ textarea.in{resize:vertical;min-height:120px}
   function better(x, y, nx, ny) { if (!x || !y) return ""; if (x.err && y.err) return "Neither reached the internet"; if (x.err || y.err) return (x.err ? ny : nx) + " works; " + (x.err ? nx : ny) + " doesn't"; var d = Math.round(x.med - y.med); return Math.abs(d) < 10 ? "About the same" : (d > 0 ? ny : nx) + " is " + Math.abs(d) + " ms quicker"; }
   TOOLV.compare = function () {
     var ty = navigator.connection && navigator.connection.type, a = '<p class="fine" style="margin:0 2px 12px">Check once on Wi-Fi, then turn Wi-Fi off and check on mobile data. Is it your Wi-Fi, or your provider?' + (ty ? " (This phone says it's on " + (ty === "wifi" ? "Wi-Fi" : ty === "cellular" ? "mobile data" : ty) + " now.)" : "") + '</p>' +
-      '<div class="btns"><button class="btn' + (CMP.a ? " ghost" : "") + '" data-cmp="a"' + (phoneBusy ? " disabled" : "") + '>' + ic("wifi", 18) + ' On Wi-Fi now</button><button class="btn' + (CMP.b || !CMP.a ? " ghost" : "") + '" data-cmp="b"' + (phoneBusy ? " disabled" : "") + '>' + ic("signal", 18) + ' On mobile now</button></div>';
+      '<div class="btns"><button class="btn' + (CMP.a ? " ghost" : "") + '" data-cmp="a"' + (phoneBusy ? " disabled" : "") + '>' + ic("wifi", 18) + ' On Wi-Fi now</button><button class="btn' + (CMP.b || !CMP.a ? " ghost" : "") + '" data-cmp="b"' + (phoneBusy ? " disabled" : "") + '>' + ic("signal", 18) + ' On mobile now</button></div>' + (phoneBusy ? '<p class="fine" style="margin:8px 2px 0">Measuring… a few seconds - up to 30 seconds right after switching networks.</p>' : '');
     if (CMP.a || CMP.b) a += '<div style="margin-top:14px">' + sideBySide(CMP.a, CMP.b, "WI-FI", "MOBILE") + '</div>' + (CMP.a && CMP.b ? '<div class="card vcard"><div class="vh">' + esc(better(CMP.a, CMP.b, "Wi-Fi", "Mobile data")) + '</div><p class="fine">' + (CMP.a.err || CMP.b.err ? "" : CMP.a.med > CMP.b.med + 30 ? "Your Wi-Fi (or the router) is the slow part - try Wi-Fi walk, or restart the router." : CMP.b.med > CMP.a.med + 30 ? "Your home line is quicker than mobile here - normal." : "Both are similar, so Wi-Fi isn't the problem.") + '</p></div>' : '');
     return hdr("Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?", "tools") + a;
   };
@@ -1839,8 +1845,8 @@ textarea.in{resize:vertical;min-height:120px}
       if (sp === "@report") { S.fromGuide = ""; oneTap(); return; } if (sp.indexOf("@calc:") === 0) { S.calc = sp.slice(6); S.tab = "calc"; draw(); window.scrollTo(0, 0); return; }
       if (sp.indexOf("@view:") === 0) { S.fromGuide = ""; S.view = sp.slice(6); wr("am-view", S.view); S.tab = "home"; draw(); window.scrollTo(0, 0); return; }
       if (sp === "phone" || sp === "walk") { go(sp); return; } S.tool = sp; S.tab = "tool"; draw(); window.scrollTo(0, 0); return; }
-    if (A("data-cmp")) { var which = A("data-cmp"); (phoneP || Promise.resolve()).then(phoneCheck).then(function (r) { CMP[which] = r; draw(); }); return; }
-    if (A("data-ba")) { var w2 = A("data-ba"); if (w2 === "reset") { BA = { before: null, after: null }; draw(); return; } (phoneP || Promise.resolve()).then(phoneCheck).then(function (r) { BA[w2] = r; draw(); }); return; }
+    if (A("data-cmp")) { var which = A("data-cmp"); CMP[which] = null; phoneCheck(true).then(function (r) { CMP[which] = r; draw(); }); return; }
+    if (A("data-ba")) { var w2 = A("data-ba"); if (w2 === "reset") { BA = { before: null, after: null }; draw(); return; } BA[w2] = null; phoneCheck(true).then(function (r) { BA[w2] = r; draw(); }); return; }
     if (A("data-wgo")) { W.on = true; W.pts = []; W.t0 = Date.now(); clearInterval(W.h); W.h = setInterval(watchTick, 2000); watchTick(); draw(); return; }
     if (A("data-wstop")) { watchStop(true); return; }
     if (A("data-wmin")) { W.mins = +A("data-wmin"); draw(); return; }

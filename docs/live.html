@@ -184,7 +184,7 @@ function wr(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 // a failed load is tried again once after a few seconds, then says so with a button (AM 16 Nov: "Not available" right after a redeploy)
 function jr(p){return j(p).catch(function(){return new Promise(function(r){setTimeout(r,2500)}).then(function(){return j(p)})})}
 function off2(fn){return"<span class='err'>Couldn't load this.</span> <button class='btn sm' data-retry='"+fn+"'>Try again</button>"}
-document.addEventListener("click",function(e){var es=e.target.closest&&e.target.closest("[data-espn]");if(es){wr("am-espn",es.getAttribute("data-espn")==="1"?"1":"");try{drawKeys()}catch(x){}scores();return}var b=e.target.closest&&e.target.closest("[data-retry]");if(b){var f=b.getAttribute("data-retry");if(f==="m")markets();else scores()}});
+document.addEventListener("click",function(e){var es=e.target.closest&&e.target.closest("[data-espn]");if(es){wr("am-espn",es.getAttribute("data-espn")==="1"?"1":"");SGEN++;if(!espnOn()){Object.keys(localStorage).forEach(function(k){if(k.indexOf("am-espnc-")===0)try{localStorage.removeItem(k)}catch(x){}});SC=null}try{drawKeys()}catch(x){}scores();return}var b=e.target.closest&&e.target.closest("[data-retry]");if(b){var f=b.getAttribute("data-retry");if(f==="m")markets();else scores()}});
 function spark(v,dn){v=(v||[]).filter(function(x){return x!=null&&isFinite(x)});if(v.length<3)return"";var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),r=mx-mn||1;
   return"<svg class='spark' viewBox='0 0 56 22' preserveAspectRatio='none' aria-hidden='true'><polyline fill='none' stroke='currentColor' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linecap='round' stroke-linejoin='round' points='"+v.map(function(x,i){return(i*56/(v.length-1)).toFixed(1)+","+(19-(x-mn)/r*16).toFixed(1)}).join(" ")+"'/></svg>"}
 function pc(a,b){if(!a||!b)return null;return(a-b)/b*100}
@@ -217,12 +217,13 @@ function drawM(){
     var at=function(v,k){return v.length>k?v[v.length-1-k]:null};
     var E=(ix.s.ENER||[]).filter(function(x){return x!=null}),el=E[E.length-1],hi=Math.max.apply(null,E),lo=Math.min.apply(null,E),posn=hi>lo?(el-lo)/(hi-lo)*100:50;
     $("oilsrc").textContent="Bank of Canada energy index (oil, gas, coal) · week of "+last;
-    $("oil").innerHTML=E.length>2?"<div class='big3'><div><small>Week</small>"+chip(pc(el,at(E,1)))+"</div><div><small>Month</small>"+chip(pc(el,at(E,4)))+"</div><div><small>Year</small>"+chip(pc(el,at(E,52)||E[0]))+"</div></div>"+
+    var D=(ix.days||[]).filter(function(_,i){return ix.s.ENER&&ix.s.ENER[i]!=null}),span=D.length>1?Math.round((Date.parse(D[D.length-1])-Date.parse(D[0]))/6048e5):0,full=span>=50,yb=full?at(E,52)||E[0]:null;
+    $("oil").innerHTML=E.length>2?"<div class='big3'><div><small>Week</small>"+chip(pc(el,at(E,1)))+"</div><div><small>Month</small>"+chip(E.length>4?pc(el,at(E,4)):null)+"</div><div><small>Year</small>"+chip(yb?pc(el,yb):null)+"</div></div>"+
       "<div class='yr'><span class='"+(pc(el,E[0])>=0?"up":"dn")+"'>"+spark(E)+"</span></div>"+
-      "<div class='rng'><span>52-week low "+lo.toFixed(0)+"</span><i><b style='left:"+posn.toFixed(0)+"%'></b></i><span>high "+hi.toFixed(0)+"</span></div><p class='mut' style='margin:6px 0 0;font-size:13px'>Now "+el.toFixed(1)+" - "+(posn>80?"near the top of its year":posn<20?"near the bottom of its year":"mid-range for the year")+". An index (1972 = 100), not a price per barrel.</p>":off2("m");
+      "<div class='rng'><span>"+(full?"52-week":span+"-week")+" low "+lo.toFixed(0)+"</span><i><b style='left:"+posn.toFixed(0)+"%'></b></i><span>high "+hi.toFixed(0)+"</span></div><p class='mut' style='margin:6px 0 0;font-size:13px'>Now "+el.toFixed(1)+" - "+(posn>80?"near the top":posn<20?"near the bottom":"mid-range")+" of "+(full?"its year":"the "+span+" weeks shown")+" ("+esc(D[0])+" to "+esc(D[D.length-1])+"). An index (1972 = 100), not a price per barrel.</p>":off2("m");
     $("ix").innerHTML=["MTLS","FOPR","AGRI","BCPI"].map(function(c){var v=(ix.s[c]||[]).filter(function(x){return x!=null}),l=v[v.length-1],d=pc(l,at(v,1)),y=pc(l,at(v,52)||v[0]);return"<div class='mrow'><div class='n'><b>"+IXN[c]+"</b><span>year "+(y==null?"–":(y>0?"+":"")+y.toFixed(1)+"%")+"</span></div><span class='"+(y>0?"up":y<0?"dn":"mut")+"'>"+spark(v.slice(-26))+"</span><div class='v'>"+(l?l.toFixed(1):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}else{$("ix").innerHTML=off2("m");$("oil").innerHTML=off2("m")}
   // the one-line summary: the first currency on your list against yours, energy, and whether the markets are open
-  var c1=(mine.filter(function(c){return c!==base})[0])||(base==="USD"?"EUR":"USD"),v1=rate(c1,base),w1=week(c1,base),e=ix.s&&ix.s.ENER,ed=e?pc(e[e.length-1],e[e.length-2]):null,ey=e&&e.length>40?pc(e[e.length-1],e[0]):null,o=openNow();
+  var c1=(mine.filter(function(c){return c!==base})[0])||(base==="USD"?"EUR":"USD"),v1=rate(c1,base),w1=week(c1,base),e=ix.s&&ix.s.ENER,ed=e?pc(e[e.length-1],e[e.length-2]):null,ey=e&&e.length>=50?pc(e[e.length-1],e[0]):null,o=openNow();
   $("msum").innerHTML=v1?"<div class='tagl'>TODAY IN ONE LINE</div><div class='bigl'>1 "+c1+" = "+fmt(v1)+" "+base+(w1?" <small>"+chip(pc(w1[w1.length-1],w1[0]))+" this week</small>":"")+"</div><p>"+(ed!=null?"Oil and gas "+(ed>=0?"up ":"down ")+Math.abs(ed).toFixed(1)+"% on the week"+(ey!=null?", "+(ey>=0?"up ":"down ")+Math.abs(ey).toFixed(0)+"% on the year":"")+" · ":"")+o+"</p>":off2("m");
   hours();
 }
@@ -247,7 +248,9 @@ $("lg").innerHTML=LGS.map(function(x){return"<option value='"+x[0]+"'>"+x[1]+(x[
 function team(){return rd("am-lv-team-"+lg,"")}
 function when(t){var d=new Date(t);return isNaN(d)?"":d.toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"})}
 function tm(x,me){var mine=!!(me&&x&&x.id&&x.id===me);return"<span"+(mine?" class='me'":"")+">"+(mine?"★ ":"")+esc(x?x.n||x.ab:"")+"</span>"}
-function gameRow(g,me){var live=g.st==="in",fin=g.st==="post";return"<div class='g2'><div class='tm'><div>"+tm(g.a,me)+"<b>"+(live||fin?esc(g.a&&g.a.s):"")+"</b></div><div>"+tm(g.h,me)+"<b>"+(live||fin?esc(g.h&&g.h.s):"")+"</b></div>"+(g.sum?"<small>"+esc(g.sum)+"</small>":"")+"</div><span class='when"+(live?" lv":"")+"'>"+(live?esc(g.det||"Live"):fin?"Final":esc(when(g.d)))+"</span></div>"}
+function sc(x){var v=x&&x.s;return v===0||(v!=null&&v!==""&&String(v)!=="undefined")?esc(v):"–"}
+function gameRow(g,me,asOf){var live=g.st==="in",fin=g.st==="post",old=live&&asOf&&Date.now()-asOf>15*6e4;
+  return"<div class='g2'><div class='tm'><div>"+tm(g.a,me)+"<b>"+(live||fin?sc(g.a):"")+"</b></div><div>"+tm(g.h,me)+"<b>"+(live||fin?sc(g.h):"")+"</b></div>"+(g.sum?"<small>"+esc(g.sum)+"</small>":"")+"</div><span class='when"+(live&&!old?" lv":"")+"'>"+(old?"In progress at "+new Date(asOf).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):live?esc(g.det||"Live"):fin?"Final":esc(when(g.d)))+"</span></div>"}
 function mineFirst(L,me){return me?L.slice().sort(function(a,b){var x=(a.a&&a.a.id===me)||(a.h&&a.h.id===me)?0:1,y=(b.a&&b.a.id===me)||(b.h&&b.h.id===me)?0:1;return x-y}):L}
 function drawS(){
   var d=SC,me=team(),hd=["cri","ten","f1"].indexOf(lg)>=0;
@@ -266,8 +269,8 @@ function drawS(){
     $("team").innerHTML="<option value=''>None</option>"+teams.map(function(t){return"<option value='"+esc(t.id)+"'>"+esc(t.n)+"</option>"}).join("");$("team").value=me;
     var td=(d.today&&d.today.g)||[],yd=((d.yest&&d.yest.g)||[]).filter(function(g){return g.st==="post"}),nx=(d.next&&d.next.g)||[],up=td.filter(function(g){return g.st!=="post"}),done=td.filter(function(g){return g.st==="post"});
     var showToday=up.length?up:nx;$("todays").textContent=up.length?"Times in your time zone":nx.length?"Nothing left today - the next week":"";
-    $("today").innerHTML=d.today&&d.today.error?off2("s"):showToday.length?mineFirst(showToday,me).slice(0,10).map(function(g){return gameRow(g,me)}).join(""):"<span class='mut'>No games scheduled.</span>";
-    var fin=done.concat(yd);$("yest").innerHTML=d.yest&&d.yest.error?off2("s"):fin.length?mineFirst(fin,me).slice(0,10).map(function(g){return gameRow(g,me)}).join(""):"<span class='mut'>No games yesterday.</span>";
+    $("today").innerHTML=d.today&&d.today.error?off2("s"):showToday.length?mineFirst(showToday,me).slice(0,10).map(function(g){return gameRow(g,me,d.today&&d.today.at)}).join(""):"<span class='mut'>No games scheduled.</span>";
+    var fin=done.concat(yd);$("yest").innerHTML=d.yest&&d.yest.error?off2("s"):fin.length?mineFirst(fin,me).slice(0,10).map(function(g){return gameRow(g,me,d.yest&&d.yest.at)}).join(""):"<span class='mut'>No games yesterday.</span>";
     var grp=T.filter(function(g){return g.rows.some(function(r){return r.id===me})})[0]||T[0];
     $("tables").textContent=grp?grp.n+(T.length>1?" · "+T.length+" groups":""):"";
     $("table").innerHTML=d.table&&d.table.error?off2("s"):grp?"<table><tr class='th'><td>#</td><td>Team</td><td>GP</td><td>"+(grp.rows[0]&&grp.rows[0].pts?"Pts":"W-L")+"</td></tr>"+grp.rows.slice(0,10).map(function(r,i){return"<tr"+(r.id===me?" class='me'":"")+"><td>"+(i+1)+"</td><td>"+esc(r.n)+"</td><td>"+esc(r.gp)+"</td><td>"+esc(r.pts||(r.w+"-"+r.l))+"</td></tr>"}).join("")+"</table>":"<span class='mut'>No table this time of year.</span>";
@@ -290,7 +293,8 @@ function etable(d){var G=d.children&&d.children.length?d.children:d.standings?[d
   return{ab:String((e.team||{}).abbreviation||""),n:String((e.team||{}).shortDisplayName||"").slice(0,30),id:String((e.team||{}).id||""),gp:m.gamesPlayed||"",w:m.wins||"",l:m.losses||"",pts:m.points||"",seed:m._playoffSeed||m._rank||99}}).sort(function(a,b){return a.seed-b.seed}).slice(0,16)}})}}
 function ymd(t){return new Date(t).toISOString().slice(0,10).replace(/-/g,"")}
 function ej(u){return fetch(EA+u,{cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"}).then(function(r){if(!r.ok)throw new Error("ESPN answered "+r.status);return r.json()})}
-function espnLoad(k,newsOnly){var ck="am-espnc-"+k+(newsOnly?"-n":"");try{var c=JSON.parse(rd(ck,"null"));if(c&&Date.now()-c.t<3*3600e3)return Promise.resolve(c.d)}catch(e){}
+function espnLive(d){return!!(d&&((d.today&&(d.today.g||[]).some(function(g){return g.st==="in"}))||(d.cri&&(d.cri.g||[]).some(function(g){return g.st==="in"}))))}
+function espnLoad(k,newsOnly){var ck="am-espnc-"+k+(newsOnly?"-n":"");try{var c=JSON.parse(rd(ck,"null"));if(c&&Date.now()-c.t<(espnLive(c.d)?10*6e4:3*3600e3))return Promise.resolve(c.d)}catch(e){}
   var P=EPATH[k],now=Date.now(),job;
   if(k==="cri")job=ej("site/v2/sports/cricket/scorepanel").then(function(d){var g=[];(d.scores||[]).forEach(function(sc){var lgn=String(((sc.leagues||[])[0]||{}).name||"").slice(0,60);egames(sc).forEach(function(x){var t=Date.parse(x.d);if(t&&Math.abs(now-t)<4*864e5&&g.length<12){x.lg=lgn;g.push(x)}})});return{cri:{at:now,g:g}}});
   else if(newsOnly)job=ej("site/v2/sports/"+P+"/news").then(function(n){return{news:{at:now,items:(n.articles||[]).slice(0,8).map(function(a){return{t:String(a.headline||"").slice(0,200),l:String(((a.links||{}).web||{}).href||"")}}).filter(function(a){return a.t&&/^https:\/\//.test(a.l)})}}});
@@ -298,48 +302,59 @@ function espnLoad(k,newsOnly){var ck="am-espnc-"+k+(newsOnly?"-n":"");try{var c=
     var o={lg:k,at:now,src:"ESPN",today:{at:now,g:egames(r[0])},yest:{at:now,g:egames(r[1])},table:Object.assign({at:now},etable(r[2])),news:{at:now,items:(r[3].articles||[]).slice(0,8).map(function(a){return{t:String(a.headline||"").slice(0,200),l:String(((a.links||{}).web||{}).href||"")}}).filter(function(a){return a.t&&/^https:\/\//.test(a.l)})},next:null};
     if(!o.today.g.some(function(g){return g.st!=="post"}))return ej("site/v2/sports/"+P+"/scoreboard?dates="+ymd(now+864e5)+"-"+ymd(now+8*864e5)).then(function(x){o.next={at:now,g:egames(x)};return o},function(){return o});return o});
   return job.then(function(d){wr(ck,JSON.stringify({t:Date.now(),d:d}));return d})}
-function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<span class='mut'>Loading…</span>"});var want=lg;jr("/scores?lg="+lg).then(function(d){if(want!==lg)return;
+var SGEN=0;function sgen(){return lg+"|"+espnOn()+"|"+SGEN}
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&SC&&Date.now()-(SC.at||(SC.today&&SC.today.at)||0)>30*6e4)scores()});
+function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<span class='mut'>Loading…</span>"});var want=sgen();jr("/scores?lg="+lg).then(function(d){if(want!==sgen())return;
     if(d.espn&&!espnOn()){d.off=1;return d}
     if(d.espn&&lg==="cri")return espnLoad("cri").then(function(e){d.cri=e.cri;return d},function(){return d});
     if(d.espn)return espnLoad(lg).then(function(e){return e},function(er){d.off=2;d.why=er&&er.message;return d});
     if(espnOn()&&EPATH[lg])return espnLoad(lg,1).then(function(e){d.news=e.news;return d},function(){return d});
-    return d}).then(function(d){if(!d||want!==lg)return;SC=d;drawS()}).catch(function(){if(want!==lg)return;SC=null;["today","yest","table"].forEach(function(i){$(i).innerHTML=off2("s")});$("news").innerHTML="<li>"+off2("s")+"</li>";$("ssum").innerHTML=off2("s")})}
+    return d}).then(function(d){if(!d||want!==sgen())return;SC=d;drawS()}).catch(function(){if(want!==sgen())return;SC=null;["today","yest","table"].forEach(function(i){$(i).innerHTML=off2("s")});$("news").innerHTML="<li>"+off2("s")+"</li>";$("ssum").innerHTML=off2("s")})}
 $("lg").onchange=function(){lg=this.value;wr("am-lv-lg",lg);SC=null;drawS();scores()};
 $("team").onchange=function(){wr("am-lv-team-"+lg,this.value);drawS()};
 // ---- your own keys (Adeeb, 16 Nov: "keep an option for people to add their key ... same for live scores and news")
 var KEYS=[["av","Alpha Vantage","stock movers, when the shared daily copy is used up","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (100 calls a day - stops at 90)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
 function key(k){return rd("am-key-"+k,"")}
-function kreq(svc,q){var k=key(svc);if(!k)return Promise.reject(new Error("no key"));return fetch(API+"/k?svc="+svc+(q||""),{cache:"no-store",headers:{"X-Key":k}}).then(function(r){return r.json()}).then(function(d){if(d.error)throw new Error(d.error);return d})}
+function kreq(svc,q,kk){var k=kk||key(svc);if(!k)return Promise.reject(new Error("no key"));return fetch(API+"/k?svc="+svc+(q||""),{cache:"no-store",headers:{"X-Key":k}}).then(function(r){return r.json()}).then(function(d){if(d.error)throw new Error(d.error);return d})}
 function drawKeys(){$("keyrows").innerHTML="<div class='krow'><div class='kh'><b>ESPN scores</b><span>no key</span></div><span class='mut' style='font-size:13px'>NBA, NFL, soccer, cricket matches, and headlines. This phone asks ESPN itself, so ESPN sees its address. NHL and MLB come from the leagues through our relay either way.</span><div class='kin'><button class='btn"+(espnOn()?"":" go")+"' data-espn='"+(espnOn()?"0":"1")+"'>"+(espnOn()?"Turn off":"Turn on")+"</button></div></div>"+KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div></div>"}).join("")}
 $("keyrows").addEventListener("click",function(e){var b=e.target.closest("[data-ksave],[data-kdel]");if(!b)return;var s=b.getAttribute("data-ksave"),d=b.getAttribute("data-kdel");
-  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}drawKeys();refreshKeyed();return}
+  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}SGEN++;drawKeys();refreshKeyed();return}
   var v=$("key-"+s).value.trim();if(!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>That doesn't look like a key - letters and numbers, 8 to 80 long.</span>";return}
-  wr("am-key-"+s,v);$("kst-"+s).innerHTML="<span class='mut'>Checking…</span>";kreq(s,s==="gn"?"&q=sport":"").then(function(){drawKeys();refreshKeyed()},function(er){$("kst-"+s).innerHTML="<span class='dn'>Saved, but the service said: "+esc(er.message)+"</span>"})});
+  $("kst-"+s).innerHTML="<span class='mut'>Checking…</span>";var had=!!key(s);
+  kreq(s,s==="gn"?"&q="+encodeURIComponent(GQ[lg]||"sport"):"",v).then(function(d){wr("am-key-"+s,v);SGEN++;drawKeys();
+    if(s==="av"){MV=d;MV.mine=1;drawMv()}else if(s==="gn"){GN={};GN[lg]=d;gnDraw()}else if(s===liveKind()){liveShow(s,d,sgen());liveArm(s)}},
+    function(er){$("kst-"+s).innerHTML="<span class='dn'>Not saved - the service said: "+esc(er.message)+"."+(had?" Your earlier key is kept.":"")+"</span>"})});
 drawKeys();
 // stock movers: the relay's shared daily copy, or your own key
 var MV=null,mvk="up";
-function drawMv(){if(!MV){return}if(MV.error){$("mv").innerHTML="<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> <a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>Add your own free key</a>";return}
-  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":"")+" · under $1 left out";
+function toKeys(){return"<a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>"}
+function drawMv(){if(!MV){return}
+  if(MV.error){$("mv").innerHTML=MV.mineErr?"<span class='err'>Your Alpha Vantage key didn't work ("+esc(MV.mineErr)+"), and the shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+" either.</span> "+toKeys()+"Replace your key</a>":"<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> "+toKeys()+"Add your own free key</a>";return}
+  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
   $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
-function movers(){var mine=!!key("av");(mine?kreq("av"):jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})).then(function(d){MV=d;MV.mine=mine;drawMv()},function(er){MV={error:1,why:er&&er.message};drawMv()})}
+function shared(){return jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})}
+function movers(){var g=SGEN;if(key("av"))kreq("av").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});
+  else shared().then(function(d){if(g!==SGEN)return;MV=d;drawMv()},function(er){if(g!==SGEN)return;MV={error:1,why:er&&er.message};drawMv()})}
 $("mvseg").addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;mvk=b.getAttribute("data-mv");[].forEach.call($("mvseg").children,function(x){x.classList.toggle("on",x===b)});drawMv()});
 // live scores and more headlines with your own key, while this page is open
 var LIVE={t:null};
 function liveKind(){return(lg==="epl"||lg==="ucl")&&key("fd")?"fd":lg==="cri"&&key("cd")?"cd":""}
 function cdHits(n){var k="am-cd-"+new Date().toDateString();if(n!=null)wr(k,String(n));return+rd(k,"0")}
-function liveTick(){var k=liveKind();clearTimeout(LIVE.t);if(!k){$("c-live").hidden=true;return}$("c-live").hidden=false;
+function liveShow(k,d,g){if(g!==sgen()||k!==liveKind())return;if(k==="cd")cdHits(d.hits||cdHits()+1);var want=lg==="epl"?/premier league/i:lg==="ucl"?/champions league/i:null,G=(d.g||[]).filter(function(x){return!want||want.test(x.lg)});
+  $("c-live").hidden=false;$("liveh").lastChild.textContent=k==="cd"?"Live cricket":"Live now";$("lives").textContent=(k==="cd"?"CricketData":"football-data.org")+" · your key · updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(k==="cd"?" · every 3 min":" · every minute");
+  $("live").innerHTML=G.length?G.map(function(x){return(k==="cd"?"<div class='lgname'>"+esc(x.lg)+"</div>":"")+gameRow(x,"",Date.now())}).join(""):"<span class='mut'>No matches today.</span>"}
+function liveArm(k){clearTimeout(LIVE.t);LIVE.t=setTimeout(function due(){if(document.hidden){LIVE.t=setTimeout(due,15000);return}liveTick()},k==="cd"?180000:60000)}
+function liveTick(){var k=liveKind(),g=sgen();clearTimeout(LIVE.t);if(!k){$("c-live").hidden=true;return}$("c-live").hidden=false;
   if(k==="cd"&&cdHits()>=90){$("live").innerHTML="<span class='mut'>Today's free CricketData calls are used up (90 of 100) - back tomorrow.</span>";return}
-  kreq(k).then(function(d){if(k==="cd")cdHits(d.hits||cdHits()+1);var want=lg==="epl"?/premier league/i:lg==="ucl"?/champions league/i:null,G=(d.g||[]).filter(function(g){return!want||want.test(g.lg)});
-    $("liveh").lastChild.textContent=k==="cd"?"Live cricket":"Live now";$("lives").textContent=(k==="cd"?"CricketData":"football-data.org")+" · your key · updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(k==="cd"?" · every 3 min":" · every minute");
-    $("live").innerHTML=G.length?G.map(function(g){return(k==="cd"?"<div class='lgname'>"+esc(g.lg)+"</div>":"")+gameRow(g,"")}).join(""):"<span class='mut'>No matches today.</span>"},
-    function(er){$("live").innerHTML="<span class='err'>"+esc(er.message)+"</span>"});
-  LIVE.t=setTimeout(function(){if(!document.hidden)liveTick();else LIVE.t=setTimeout(liveTick,15000)},k==="cd"?180000:60000)}
+  if(document.hidden){liveArm(k);return}
+  kreq(k).then(function(d){liveShow(k,d,g)},function(er){if(g===sgen()&&k===liveKind())$("live").innerHTML="<span class='err'>"+esc(er.message)+"</span>"});
+  liveArm(k)}
 var GQ={nhl:"NHL",nba:"NBA",nfl:"NFL",mlb:"MLB baseball",epl:"Premier League",ucl:"Champions League",mls:"MLS soccer",cri:"cricket",ten:"tennis",f1:"Formula 1"};
 // one GNews call per league per visit (the free key has 100 a day); drawn again from memory after that
 var GN={};
 function gnDraw(){var d=GN[lg];if(!d||!d.items||!d.items.length)return;$("newss").textContent="GNews · your key - opens on each site";
   $("news").innerHTML=d.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a>"+(i.s?" <span class='mut' style='font-size:13px'>· "+esc(i.s)+"</span>":"")+"</li>"}).join("")}
-function moreNews(force){if(!key("gn"))return;var want=lg;if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
+function moreNews(force){if(!key("gn"))return;var want=lg,g=sgen();if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){if(g!==sgen()){delete GN[want];return}GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
 function refreshKeyed(){GN={};movers();liveTick();moreNews(1)}
 var _drawS=drawS;drawS=function(){_drawS();if(SC&&key("gn"))moreNews()};
 drawM();markets();drawS();scores();movers();liveTick();
