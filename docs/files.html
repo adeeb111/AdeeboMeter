@@ -132,6 +132,6 @@ addEventListener("pagehide",function(){made=null});
 <script src="/voice.js"></script>
 <script>AMV.picker(document.getElementById("amv-pick-at"))</script>
 <script src="/ui.js"></script>
-<script>[].forEach.call(document.querySelectorAll("[data-fs]"),function(b){b.onclick=function(){var k=b.getAttribute("data-fs");[].forEach.call(document.querySelectorAll("[data-fs]"),function(x){x.setAttribute("aria-selected",x===b)});[].forEach.call(document.querySelectorAll("[data-fp]"),function(p){p.hidden=p.getAttribute("data-fp")!==k})}});if(/\.adeebo|open/.test(location.hash))document.querySelector('[data-fs="open"]').click();</script>
+<script>[].forEach.call(document.querySelectorAll("[data-fs]"),function(b){b.onclick=function(){var k=b.getAttribute("data-fs");[].forEach.call(document.querySelectorAll("[data-fs]"),function(x){x.setAttribute("aria-selected",x===b)});[].forEach.call(document.querySelectorAll("[data-fp]"),function(p){p.hidden=p.getAttribute("data-fp")!==k})}});if(/\.adeebo|open/.test(location.hash))document.querySelector('[data-fs="open"]').click();;(function(){function go(){var h=location.hash.slice(1),b=document.querySelector(h==="of"||h==="open"?"[data-fs=open]":h==="lock"?"[data-fs=lock]":"#none");if(b)b.click()}go();addEventListener("hashchange",go)})();</script>
 </body>
 </html>

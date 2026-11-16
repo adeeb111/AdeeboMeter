@@ -65,6 +65,37 @@ const news = () => cached("bbc", 600, 6 * 3600, async () => {
   return { items };
 });
 
+// ---- Live v2 (Adeeb, 16 Nov): markets and scores with your own picks. Each source is read at most once per cache window
+// and every visitor gets the same copy; the picks themselves stay on the phone (only the league or nothing is asked for).
+const BOCFX = ["USD", "EUR", "GBP", "JPY", "CNY", "INR", "CHF", "AUD", "MXN", "HKD", "NZD", "SGD", "KRW", "SEK", "NOK", "BRL", "ZAR", "SAR", "TRY", "TWD", "THB", "IDR", "MYR"];
+const series = (o, ids, pre, post) => { const rows = o.observations || []; const s = {}; ids.forEach(c => { s[c] = rows.map(r => +((r[pre + c + post] || {}).v) || null); }); return { days: rows.map(r => r.d), s }; };
+const bocWeek = () => cached("bocw", 1800, 4 * 86400, async () => series(await get("https://www.bankofcanada.ca/valet/observations/" + BOCFX.map(c => "FX" + c + "CAD").join(",") + "/json?recent=8", 1800), BOCFX, "FX", "CAD"));
+const idxWeeks = () => cached("idxw", 3600, 14 * 86400, async () => series(await get("https://www.bankofcanada.ca/valet/observations/" + IDX.map(c => "W." + c).join(",") + "/json?recent=8", 3600), IDX, "W.", ""));
+// every other currency (taka, rupee, dirham...): ExchangeRate-API's open daily table, per US dollar - credited on the page
+const fxAll = () => cached("erapi", 6 * 3600, 3 * 86400, async () => { const d = await get("https://open.er-api.com/v6/latest/USD", 6 * 3600); if (d.result !== "success") throw new Error("er-api"); return { date: String(d.time_last_update_utc || "").slice(5, 16), usd: d.rates || {} }; });
+const xml = (x, n) => { const items = []; for (const m of x.matchAll(/<item>([\s\S]*?)<\/item>/g)) { const t = (m[1].match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1], l = (m[1].match(/<link>([^<]+)<\/link>/) || [])[1]; if (t && l && /^https:\/\/www\.bbc\.(co\.uk|com)\//.test(l.trim())) items.push({ t: t.trim().slice(0, 200), l: l.trim() }); if (items.length >= n) break; } return items; };
+const bbc = sp => cached("bbc:" + sp, 900, 6 * 3600, async () => ({ items: xml(await get("https://feeds.bbci.co.uk/sport/" + sp + "/rss.xml", 900, "text"), 8) }));
+// leagues: ESPN's public score feed (no key, not documented - when it changes, the card says so and the rest still works)
+const LG = { nhl: ["hockey", "nhl"], nba: ["basketball", "nba"], nfl: ["football", "nfl"], mlb: ["baseball", "mlb"], epl: ["soccer", "eng.1"], ucl: ["soccer", "uefa.champions"], mls: ["soccer", "usa.1"] };
+const HEAD = { cri: "cricket", ten: "tennis", f1: "formula1" };
+const ESPN = "https://site.api.espn.com/apis/";
+const ymd = d => d.toISOString().slice(0, 10).replace(/-/g, "");
+const side = c => c ? { ab: String((c.team || {}).abbreviation || "").slice(0, 6), n: String((c.team || {}).shortDisplayName || (c.team || {}).displayName || "").slice(0, 30), id: String((c.team || {}).id || ""), s: c.score != null && c.score !== "" ? String(typeof c.score === "object" ? c.score.displayValue || "" : c.score).slice(0, 12) : "", r: String(((c.records || [])[0] || {}).summary || "").slice(0, 12) } : null;
+const games = d => (d.events || []).slice(0, 20).map(e => { const c = (e.competitions || [])[0] || {}, cs = c.competitors || [], st = (e.status || c.status || {}), ty = st.type || {};
+  return { d: e.date, st: ty.state || "", det: String(ty.shortDetail || ty.detail || "").slice(0, 40), sum: String(st.summary || "").slice(0, 80), a: side(cs.find(x => x.homeAway === "away") || cs[1]), h: side(cs.find(x => x.homeAway === "home") || cs[0]) }; });
+const board = (k, q, ttl) => cached("sb:" + k + q, ttl, 6 * 3600, async () => ({ g: games(await get(ESPN + "site/v2/sports/" + LG[k][0] + "/" + LG[k][1] + "/scoreboard" + q, ttl)) }));
+const table = k => cached("st:" + k, 3600, 2 * 86400, async () => {
+  const d = await get(ESPN + "v2/sports/" + LG[k][0] + "/" + LG[k][1] + "/standings", 3600), groups = d.children && d.children.length ? d.children : d.standings ? [d] : [];
+  return { gr: groups.slice(0, 6).map(g => ({ n: String(g.abbreviation || g.name || "").slice(0, 30), rows: ((g.standings || {}).entries || []).map(e => { const m = {}; (e.stats || []).forEach(x => { m[x.name] = x.displayValue != null ? x.displayValue : x.summary; m["_" + x.name] = x.value; });
+    return { ab: String((e.team || {}).abbreviation || "").slice(0, 6), n: String((e.team || {}).shortDisplayName || "").slice(0, 30), id: String((e.team || {}).id || ""), gp: m.gamesPlayed || "", w: m.wins || "", l: m.losses || "", pts: m.points || "", pct: m.winPercent || "", seed: m._playoffSeed || m._rank || 0 }; })
+    .sort((a, b) => (a.seed || 99) - (b.seed || 99)).slice(0, 16) })) };
+});
+const espnNews = k => cached("nw:" + k, 1800, 6 * 3600, async () => ({ items: ((await get(ESPN + "site/v2/sports/" + LG[k][0] + "/" + LG[k][1] + "/news", 1800)).articles || []).slice(0, 8).map(a => ({ t: String(a.headline || "").slice(0, 200), l: String(((a.links || {}).web || {}).href || "") })).filter(a => a.t && /^https:\/\//.test(a.l)) }));
+const cricket = () => cached("cri", 300, 6 * 3600, async () => {
+  const d = await get(ESPN + "site/v2/sports/cricket/scorepanel", 300), now = Date.now(), out2 = [];
+  (d.scores || []).forEach(sc => { const lg = String(((sc.leagues || [])[0] || {}).name || "").slice(0, 60); games(sc).forEach(g => { const t = Date.parse(g.d); if (t && Math.abs(now - t) < 4 * 86400000 && out2.length < 12) out2.push(Object.assign({ lg }, g)); }); });
+  return { g: out2 };
+});
 const weather = (lat, lon) => cached("w" + lat + "," + lon, 1800, 3 * 3600, async () => {
   const d = await get("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon +
     "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=4", 1800);
@@ -124,6 +155,21 @@ export default {
       case "/place": {
         const q = (u.searchParams.get("q") || "").trim().slice(0, 60);
         return reply(req, q.length < 2 ? { places: [] } : out(await places(q.toLowerCase())), 3600);
+      }
+      // Live v2: the day's currencies (a week of Bank of Canada days, plus a table of every currency) and commodities
+      case "/markets": {
+        const [w, a, ix] = await Promise.all([bocWeek(), fxAll(), idxWeeks()]);
+        return reply(req, { boc: out(w), all: out(a), idx: out(ix) }, 300);
+      }
+      // one league: last night, today (or the week ahead when today is empty), a short table and its headlines
+      case "/scores": {
+        const k = (u.searchParams.get("lg") || "").toLowerCase();
+        if (HEAD[k]) { const [n, c] = await Promise.all([bbc(HEAD[k]), k === "cri" ? cricket() : Promise.resolve(null)]); return reply(req, { lg: k, news: out(n), cri: c ? out(c) : null }, 120); }
+        if (!LG[k]) return reply(req, { error: "unknown league" }, 0);
+        const now = new Date(), y = new Date(now.getTime() - 86400000);
+        const [today, yest, st, nw] = await Promise.all([board(k, "", 90), board(k, "?dates=" + ymd(y), 3600), table(k), espnNews(k)]);
+        let next = null; if (!today.v.error && !(today.v.g || []).some(g => g.st !== "post")) next = await board(k, "?dates=" + ymd(new Date(now.getTime() + 86400000)) + "-" + ymd(new Date(now.getTime() + 8 * 86400000)), 3600);
+        return reply(req, { lg: k, today: out(today), yest: out(yest), next: next ? out(next) : null, table: out(st), news: out(nw) }, 90);
       }
       case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "", now: Date.now() }, 0);   // now: lets the phone check its clock (AM-CG-376)
       // the phone app's "this phone" card: who carries this connection and whether it came over IPv6 - for this answer only,

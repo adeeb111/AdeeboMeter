@@ -25,6 +25,10 @@
   function ic(n, s) { s = s || 24; return '<svg class="ui-i" viewBox="0 0 24 24" width="' + s + '" height="' + s + '" aria-hidden="true">' + (I[n] || '') + '</svg>'; }
   window.UI = { ic: ic };
   var html = document.documentElement, body = document.body, sec = body.getAttribute('data-sec') || '';
+  // the app's Look: Dark, Light, Neon, Midnight, Sunset or Mint (the desktop's palettes), or the phone's own light/dark
+  try { var th = localStorage.getItem('am-theme') || '', pal = ['neon', 'midnight', 'sunset', 'mint'].indexOf(th) >= 0 ? th : '';
+    if (pal) { html.setAttribute('data-pal', pal); html.setAttribute('data-theme', pal === 'mint' ? 'light' : 'dark'); }
+    else if (th === 'system' || th === '') { if (th === 'system') html.setAttribute('data-theme', matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } } catch (e) {}
   if (self !== top) html.classList.add('inapp');
   var S = [['learn', '/learn/', 'book', 'Learn'], ['games', '/games.html', 'game', 'Games'], ['live', '/live.html', 'live', 'Live'], ['files', '/files.html', 'folder', 'Files']];
   var lesson = sec === 'learn' && !/\/learn\/(index\.html)?$/.test(location.pathname);
