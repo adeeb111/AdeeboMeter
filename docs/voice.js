@@ -34,7 +34,8 @@
   function speaks(key) { var k = KIND[key] || "state"; return chat === "face" ? false : chat === "quiet" ? k === "problem" || k === "greet" : chat === "chatty" ? true : k !== "idle"; }
   // a greeting or a state line stays for 5 minutes (a line that changes every time you look is noise); reactions are fresh
   var STICK = { "app.open": 1, morning: 1, "late.night": 1, "all.good": 1, idle: 1, "market.open": 1, "trade.closed": 1, "storm.near": 1 };
-  function load() { return index().then(function () { return Promise.all(chain().map(function (id) { return packs[id] ? 0 : get("kb/voice/" + id + ".json").then(function (p) { packs[id] = p; }).catch(function () { packs[id] = {}; }); })); }); }
+  function load() { return index().then(function () { return Promise.all(chain().map(function (id) { return packs[id] ? 0 : get("kb/voice/" + id + ".json").then(function (p) { packs[id] = p; }).catch(function () {}); })); }); }   // a failed pack isn't kept as empty: it's tried again (AM-CG-381)
+  if (typeof addEventListener === "function") addEventListener("online", function () { load().then(fire, function () {}); });
   function fire() { sticky = {}; fns.forEach(function (f) { try { f(); } catch (e) {} }); }
   function save() { wr("am-voice", mine); wr("am-voice-chat", chat === "normal" ? "" : chat); wr("am-voice-addr", call === "neutral" ? "" : call); wr("am-voice-name", call === "name" ? name : ""); }
 
@@ -58,15 +59,16 @@
     // a line for this moment ("" when this kind of moment is quiet, or until the voice has loaded) - v fills {v}
     line: function (key, v) {
       if (!speaks(key)) return "";
-      if (STICK[key] && sticky[key] && Date.now() - sticky[key].at < 300000) return sticky[key].t;
+      // AM-CG-382: the same wording sticks for five minutes, but the numbers in it are always today's
+      function fill(t, ci) { var a = addr(ci); return cap(t.replace(/\{(addr|Addr|v)\}/g, function (m, g) { return g === "v" ? String(v) : g === "Addr" ? cap(a) : a; })); }
+      var st = STICK[key] && sticky[key]; if (st && Date.now() - st.at < 300000 && (v != null || st.t.indexOf("{v}") < 0)) return fill(st.t, st.c);
       var c = chain();
       for (var i = 0; i < c.length; i++) {
         var l = (packs[c[i]] || {})[key]; if (!l) continue;
         var ok = l.filter(function (t) { return v != null || t.indexOf("{v}") < 0; }); if (!ok.length) continue;
         var fresh = ok.filter(function (t) { return t !== last[key]; }), pool = fresh.length ? fresh : ok, t = pool[Math.floor(Math.random() * pool.length)]; last[key] = t;
-        var a = addr(c[i]), out = cap(t.replace(/\{(addr|Addr|v)\}/g, function (m, g) { return g === "v" ? String(v) : g === "Addr" ? cap(a) : a; }));
-        if (STICK[key]) sticky[key] = { at: Date.now(), t: out };
-        return out;
+        if (STICK[key]) sticky[key] = { at: Date.now(), t: t, c: c[i] };
+        return fill(t, c[i]);
       }
       return "";
     },

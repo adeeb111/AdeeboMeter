@@ -66,7 +66,8 @@ namespace AdeeboMeter
             string gw; lock (M.L) gw = M.Gateway;
             switch (id)
             {
-                case "ping": return i == 0 ? (gw != "" ? gw : "1.1.1.1") : i == 1 ? "50" : i == 2 ? "200" : "";
+                case "ping": return i == 0 ? (gw != "" ? "@gw" : "1.1.1.1") :   // AM-CG-365: "your router" is looked up when it runs
+                     i == 1 ? "50" : i == 2 ? "200" : "";
                 case "mtr": return i == 1 ? "1" : "";
                 case "dig": return i == 1 ? "A" : "";
                 case "tcpping": return i == 1 ? "20" : "";
@@ -84,7 +85,8 @@ namespace AdeeboMeter
             if (!RemoteOk(t)) { done(id, new List<string[]> { R4("2", "Not available", "this check runs on the PC only", "") }, null); return; }
             // the phone sends only the boxes it was shown (locked ones are left out), so map them back by position
             var a = new string[t.Inputs.Length]; int k = 0; for (int i = 0; i < a.Length; i++) a[i] = Locked(id, i) ? "" : k < input.Length ? (input[k++] ?? "").Trim() : "";
-            for (int i = 0; i < a.Length; i++) if (a[i] == "@broker") a[i] = Cfg.TradeHost;   // AM-CG-289: "your broker" without the phone knowing its address
+            string gwNow; lock (M.L) gwNow = M.Gateway;
+            for (int i = 0; i < a.Length; i++) { if (a[i] == "@broker") a[i] = Cfg.TradeHost; else if (a[i] == "@gw") a[i] = gwNow != "" ? gwNow : "1.1.1.1"; }   // AM-CG-289: "your broker" without the phone knowing its address
             if (id == "mtr" && a.Length > 1) { int m; a[1] = int.TryParse(a[1], out m) && m >= 1 && m <= 5 ? m.ToString(CultureInfo.InvariantCulture) : "1"; }   // at most 5 minutes from the phone
             Task.Factory.StartNew(() =>
             {

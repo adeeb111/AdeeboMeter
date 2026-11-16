@@ -50,6 +50,12 @@ namespace AdeeboMeter
                 l.Add(p); Save(l); return p;
             }
         }
+        // AM-CG-375: when a fourth is asked for, the question says which one it replaces
+        public static string Replacing()
+        {
+            var l = All(); if (l.Count < Max) return "";
+            var o = l[0]; return "\n\n" + L.T("This PC already remembers") + " " + Max.ToString(CultureInfo.InvariantCulture) + " " + L.T("phones. Saying yes forgets the oldest:") + " " + o.Name + " (" + o.Added.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ").";
+        }
         public static bool Remove(string id) { lock (k) { var l = All(); int n = l.RemoveAll(p => p.Id == id); if (n > 0) Save(l); return n > 0; } }
         public static void Clear() { lock (k) Store.Write("phones.txt", Enumerable.Empty<string[]>()); }
         public static int Count { get { return All().Count; } }

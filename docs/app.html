@@ -172,9 +172,14 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   var subtle = window.crypto && window.crypto.subtle, te = new TextEncoder(), td = new TextDecoder();
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  // copy with a fallback the person can select by hand (AM-CG-380)
+  function copyText(t) {
+    function show() { var d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:98;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:20px"; d.innerHTML = '<div class="card" style="max-width:440px;width:100%"><b>Copy this by hand</b><textarea class="in" rows="8" readonly style="margin-top:8px"></textarea><button class="btn">Done</button></div>'; d.querySelector("textarea").value = t; d.querySelector("button").onclick = function () { d.remove(); }; document.body.appendChild(d); var ta = d.querySelector("textarea"); ta.focus(); ta.select(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { toast("Copied"); }, show); else show();
+  }
   function toast(t) { var e = $("toast"); e.textContent = t; e.className = "on"; clearTimeout(toast.h); toast.h = setTimeout(function () { e.className = ""; }, 2400); }
   function rd(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-  function wr(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+  function wr(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); return localStorage.getItem(k) === (v || null); } catch (e) { return false; } }
   function b64u(b) { var s = ""; b = new Uint8Array(b); for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
   function unb64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; var r = atob(s), b = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) b[i] = r.charCodeAt(i); return b; }
   function cat2() { var n = 0, i; for (i = 0; i < arguments.length; i++) n += arguments[i].length; var o = new Uint8Array(n), p = 0; for (i = 0; i < arguments.length; i++) { o.set(arguments[i], p); p += arguments[i].length; } return o; }
@@ -206,7 +211,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   var hD = [], hU = [], hP = [], wake = null, back = "home";
   function wide() { return matchMedia("(min-width:768px)").matches; }
   function age() { return liveAt ? Math.round((Date.now() - liveAt) / 1000) : 0; }
-  function isLive() { return phase === "live" && age() <= 5; }
+  function isLive() { return phase === "live" && liveAt > 0 && age() <= 5; }   // AM-CG-342: no reading yet is not "live"
   function V(k, v) { return window.AMV ? AMV.line(k, v) : ""; }
 
   // ---------------------------------------------------------------- icons (one family of simple strokes)
@@ -233,30 +238,41 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   if (hash.length === 2 && /^[A-Za-z0-9_-]{22}$/.test(hash[0]) && /^[A-Za-z0-9_-]{43}$/.test(hash[1])) { room = hash[0]; secret = unb64u(hash[1]); }
   // a session: rm and sec are the code's (or, for a remembered PC, derived from its key). quiet = one of several rooms
   // being tried, so a room that isn't there doesn't show as a failure. Resolves true once paired.
+  // a fresh session never shows the last PC's data (AM-CG-356)
+  function resetSession() { live = null; liveAt = 0; cat = []; results = []; busy = ""; busyAt = 0; curRid = ""; sure = ""; open = ""; mkt = null; devs = null; devRid = ""; devAt = 0; report = null; hD = []; hU = []; hP = []; outF = null; inF = null; fromPc = ""; xmsg = ""; S.dev = -1; S.devKey = ""; }
   function start(rm, sec, quiet) {
-    return new Promise(async function (done) {
-      if (!subtle || !window.WebSocket) { phase = "ended"; why = "This browser can't do the encryption - open the link in Safari or Chrome."; draw(); done(false); return; }
-      phase = "connecting"; draw();
-      var auth = await hkdf(sec, te.encode("pair"), "adeebometer remote v1 auth", 32);
-      var kp = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
-      var pk = new Uint8Array(await subtle.exportKey("raw", kp.publicKey)), settled = false, sock;
+    return new Promise(function (done) {
+      var settled = false, sock = null, q = Promise.resolve();
       function fin(v) { if (!settled) { settled = true; done(v); } }
-      ws = sock = new WebSocket(RELAY.replace(/^http/, "ws") + "/room/" + rm + "?role=phone");
-      if (quiet) setTimeout(function () { if (!tx && !settled) { try { sock.close(); } catch (e) {} fin(false); } }, 8000);
-      sock.onopen = async function () {
-        if (!quiet) { phase = "asking"; draw(); }
-        var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-        sock.send(JSON.stringify({ t: "hi", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
-      };
+      (async function () {
+        if (!subtle || !window.WebSocket) { phase = "ended"; why = "This browser can't do the encryption - open the link in Safari or Chrome."; draw(); fin(false); return; }
+        if (ws) { var old = ws; ws = null; try { old.close(); } catch (e) {} }
+        resetSession(); tx = rx = null; phase = "connecting"; draw();
+        var auth = await hkdf(sec, te.encode("pair"), "adeebometer remote v1 auth", 32);
+        var kp = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
+        var pk = new Uint8Array(await subtle.exportKey("raw", kp.publicKey));
+        ws = sock = new WebSocket(RELAY.replace(/^http/, "ws") + "/room/" + rm + "?role=phone");
+        // bounded: a remembered room answers in seconds; a code waits for you to say yes on the PC (the code lasts 2 minutes)
+        setTimeout(function () { if (!tx && !settled) { if (!quiet) why = "Your PC didn't answer in time - make a new code on the PC and scan it again."; try { sock.close(); } catch (e) {} fin(false); } }, quiet ? 8000 : 150000);
+        sock.onopen = function () {
+          (async function () {
+            if (!quiet) { phase = "asking"; draw(); }
+            var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
+            sock.send(JSON.stringify({ t: "hi", v: PROTO, pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+          })().catch(function () { try { sock.close(); } catch (e) {} });
+        };
       sock.onclose = function () {
         if (!tx) { fin(false); if (quiet) return; }
         if (ws !== sock) return;
         var was = phase; phase = "ended"; why = was === "live" ? "The session ended - the PC closed it, 30 minutes passed, or the connection dropped." : was === "asking" ? "Not connected - the code may have expired (2 minutes), the PC said no, or another phone is connected." : "Couldn't reach the relay."; tx = rx = null; busy = ""; keepAwake(false); document.body.classList.remove("wg"); if (view === "widget") S.tab = "pc"; draw(); };
-      sock.onmessage = async function (ev) {
+        // one message at a time, in order: each waits for the one before it to be opened and handled
+        sock.onmessage = function (ev) { q = q.then(function () { return handle(ev); }).catch(function () { if (ws === sock) { why = "A message couldn't be read - the session was closed to be safe."; try { sock.close(); } catch (e) {} } }); };
+        async function handle(ev) {
         var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
         if (!tx) {
           if (m.t === "no") { why = "The PC said no."; sock.close(); return; }
           if (m.t !== "ok") return;
+          if (m.v && +m.v > PROTO) { why = "Your PC has a newer AdeeboMeter than this page. Close the app and open it again to update (it updates itself when it's online)."; if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (g) { if (g) g.update(); }); sock.close(); return; }
           var pcPk = unb64u(m.pk || "");
           if (pcPk.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("ok"), pk, pcPk)))) { why = "This isn't your PC - the answer wasn't signed with your key."; sock.close(); return; }
           var pcKey = await subtle.importKey("raw", pcPk, { name: "ECDH", namedCurve: "P-256" }, false, []);
@@ -267,7 +283,8 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
         if (plain === null) { why = "A message didn't check out - the session was closed to be safe."; sock.close(); return; }
         var c; try { c = JSON.parse(plain); } catch (e) { return; }
         got(c);
-      };
+      }
+      })().catch(function () { if (!settled) { phase = "ended"; why = "Couldn't start the secure session in this browser."; draw(); fin(false); } });
     });
   }
   function got(c) {
@@ -284,8 +301,9 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     }
     else if (c.t === "mkt") mkt = c;
     else if (c.t === "cat") { if (!cat.__part) cat = []; cat = cat.concat(c.tools || []); cat.__part = !c.last; if (view === "tools" || (view === "pc" && S.pcTab === "checks")) draw(); }
-    else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && busy && (!c.rid || c.rid === curRid)) { busy = ""; curRid = ""; if (report && report.state === "running" && c.rid === report.rid) { report.state = "done"; report.err = c.msg; } draw(); } if (c.t === "err" && c.rid && c.rid === devRid) { devRid = ""; draw(); } }
+    else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && report && report.state === "running" && c.rid && c.rid === report.rid) { report.state = "done"; report.err = c.msg; draw(); } if (c.t === "err" && busy && (!c.rid || c.rid === curRid)) { busy = ""; curRid = ""; draw(); } if (c.t === "err" && c.rid && c.rid === devRid) { devRid = ""; draw(); } }
     else if (c.t === "remembered") remembered(c);
+    else if (c.t === "forgot") forgot(c);
     else if (c.t === "rememberno") toast("Your PC said no - not remembered");
     else if (/^(fput|fok|fno|fack|fdat|fend|fdone|fcancel|text)$/.test(c.t)) xfer(c);
     else if (c.t === "bye") ws.close();
@@ -303,18 +321,20 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     var r = rid(); if (id !== "feltslow" && !quiet) { var T = toolOf(id); busy = T ? T.t : id; busyAt = Date.now(); curRid = r; }
     send({ t: "run", id: id, in: vals || [], rid: r }); return r;
   }
-  function loadDevs() { if (phase !== "live" || devRid) return; devRid = rid(); send({ t: "run", id: "inventory", in: [], rid: devRid }); draw(); }
+  // AM-CG-345: a request that couldn't be sent, or got no answer in 90 s, doesn't block Refresh
+  var devRidAt = 0;
+  function loadDevs() { if (phase !== "live" || (devRid && Date.now() - devRidAt < 90000)) return; var r = devRid = rid(); devRidAt = Date.now(); Promise.resolve(send({ t: "run", id: "inventory", in: [], rid: r })).then(function (ok) { if (!ok && devRid === r) { devRid = ""; toast("Couldn't ask your PC - try Refresh again"); draw(); } }); draw(); }
   // the PC's device list (Devices on this network) into cards: name, address, what it is, here or not, how quick, how we know
   function parseDevs(rows) {
     var out = [];
     rows.forEach(function (o) {
-      var val = String(o[2] || ""); if (!/^\d+\.\d+\.\d+\.\d+  ·  /.test(val)) return;
+      var val = String(o[2] || ""); if (!/^(\d+\.\d+\.\d+\.\d+|[0-9a-f]*:[0-9a-f:.]+(%\w+)?)  ·  /i.test(val)) return;   // IPv4 and IPv6 rows (AM-CG-340)
       var parts = val.split("  ·  "), adv = String(o[3] || ""), name = String(o[1] || ""), w = name.indexOf("★ ") === 0;
       var here = /here now/.test(val), m = /(\d+) ms/.exec(val), quiet = /doesn't answer ping/.test(val);
       var what = parts.length > 3 ? parts[1] : "", seen = (parts.filter(function (p) { return /here now|last seen/.test(p); })[0] || "");
       var via = (/Told us via ([^.]+)\./.exec(adv) || [])[1] || "", watch = (/★ Watched: ([^.]+(\.[^.]*%[^.]*)?)\./.exec(adv) || [])[1] || "", mac = (adv.match(/([0-9a-f]{2}:){5}[0-9a-f]{2}$/i) || [""])[0];
       var nm = w ? name.slice(2) : name;
-      out.push({ n: nm, ip: parts[0], what: what, here: here, ms: m ? +m[1] : null, quiet: quiet || (o[0] === "1"), w: w, via: via, watch: watch, mac: mac, seen: seen, lv: +o[0], k: kindOf(nm + " " + what) });
+      out.push({ n: nm, ip: parts[0], what: what, here: here, ms: m ? +m[1] : null, quiet: quiet || (o[0] === "1"), w: w, via: via, watch: watch, mac: mac, seen: seen, lv: +o[0], k: kindOf(nm + " " + what), key: (mac || parts[0]).toLowerCase() });
     });
     return out;
   }
@@ -329,6 +349,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   async function sendFile(f) {
     if (outF) return toast("One file at a time");
     if (f.size > 200 * 1048576) return toast("Up to 200 MB at a time");
+    if (!f.size) return toast("That file is empty - nothing to send");   // AM-CG-371
     var o = outF = { id: b64u(crypto.getRandomValues(new Uint8Array(9))), name: f.name, size: f.size, acked: -1, sent: 0 }; xmsg = "Waiting for you to accept on the PC..."; draw();
     await send({ t: "fput", id: o.id, name: f.name, size: f.size });
     if (!await until(function () { return o.ok || o.no || o.cancel; }, 120000) || !o.ok) { xmsg = o.no ? "Not sent: " + (o.why || "the PC said no") + "." : "The PC didn't answer."; outF = null; draw(); return; }
@@ -339,7 +360,10 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
       o.sent += part.length; if (n % 10 === 0) { xmsg = "Sending " + f.name + "... " + Math.round(100 * o.sent / f.size) + "%"; draw(); }
       await sleep(50);   // at most 20 pieces a second (the relay allows 40 for everything)
     }
-    await send({ t: "fend", id: o.id, n: n, size: f.size }); xmsg = "Sent - the PC is saving it..."; draw();
+    // AM-CG-332: say "saved" only when the PC says so; if it never does, say that
+    if (!await send({ t: "fend", id: o.id, n: n, size: f.size })) { xmsg = "Not finished - the connection dropped before the end."; outF = null; draw(); return; }
+    o.ended = 1; xmsg = "All sent - waiting for the PC to confirm it saved..."; draw();
+    if (!await until(function () { return outF !== o || o.cancel; }, 60000) && outF === o) { xmsg = "Sent, but the PC didn't confirm it saved the file - look in Downloads\\AdeeboMeter on the PC."; outF = null; draw(); }
   }
   function xfer(c) {
     if (c.t === "text") { fromPc = String(c.s || "").slice(0, 4000); if (view === "widget") return; draw(); return; }
@@ -348,26 +372,37 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
       else if (c.t === "fdone") { xmsg = c.msg || "Saved on the PC."; outF = null; draw(); }
       return;
     }
-    if (c.t === "fput") { if (inF) { send({ t: "fno", id: c.id, why: "one at a time" }); return; } inF = { id: c.id, name: String(c.name || "file").replace(/[\\/:*?"<>|]/g, "_").slice(0, 120), size: +c.size || 0, parts: [], next: 0, got: 0, asking: 1 }; draw(); return; }
+    if (c.t === "fput") {
+      if (inF) { send({ t: "fno", id: c.id, why: "one at a time" }); return; }
+      var sz = +c.size; if (!(sz > 0) || sz > 100 * 1048576 || sz !== Math.floor(sz)) { send({ t: "fno", id: c.id, why: sz > 0 ? "too big for the phone (up to 100 MB)" : "empty or unknown size" }); return; }   // AM-CG-331
+      inF = { id: c.id, name: String(c.name || "file").replace(/[\\/:*?"<>|]/g, "_").slice(0, 120), size: +c.size || 0, parts: [], next: 0, got: 0, asking: 1 }; draw(); return; }
     if (!inF || c.id !== inF.id) return;
     if (c.t === "fdat") {
+      // AM-CG-331: nothing before you accept, no piece bigger than a piece, never more than the size it announced
+      var d = String(c.d || "");
+      if (inF.asking || d.length > Math.ceil(PIECE / 3) * 4 + 4) { send({ t: "fcancel", id: inF.id }); inF = null; toast("Stopped a file that didn't follow the rules"); draw(); return; }
       if (+c.n !== inF.next) { send({ t: "fcancel", id: inF.id }); inF = null; toast("The file arrived out of order - try again"); draw(); return; }
-      var r = atob(c.d || ""), u = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) u[i] = r.charCodeAt(i);
+      var r; try { r = atob(d); } catch (e) { r = null; }
+      if (r == null || r.length > PIECE || inF.got + r.length > inF.size) { send({ t: "fcancel", id: inF.id }); inF = null; toast("Stopped a file that was bigger than it said"); draw(); return; }
+      var u = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) u[i] = r.charCodeAt(i);
       inF.parts.push(u); inF.got += u.length; inF.next++; if (inF.next % 8 === 0) send({ t: "fack", id: inF.id, n: inF.next - 1 });
       if (inF.next % 10 === 0) draw(); return;
     }
-    if (c.t === "fend") { if (+c.n !== inF.next || inF.got !== inF.size) { toast("The file arrived incomplete"); inF = null; draw(); return; } inF.blob = new Blob(inF.parts); inF.parts = null; draw(); return; }
+    if (c.t === "fend") { if (+c.n !== inF.next || inF.got !== inF.size) { toast("The file arrived incomplete"); inF = null; draw(); return; } inF.blob = new Blob(inF.parts); inF.parts = null; send({ t: "fgot", id: inF.id }); draw(); return; }   // tell the PC it arrived (AM-CG-369)
     if (c.t === "fcancel") { inF = null; toast("The PC stopped sending"); draw(); }
   }
   // saving on the phone: the share sheet where it can take files (iPhone: Save to Files / Photos), else a download
   function saveIn() {
     if (!inF || !inF.blob) return; var f = new File([inF.blob], inF.name, { type: inF.blob.type || "application/octet-stream" });
-    if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f] }).catch(function () {}); return; }
-    var a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = inF.name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f] }).catch(function (e) { if (!e || e.name !== "AbortError") { dl(f); } }); return; }   // AM-CG-337
+    dl(f);
+  }
+  function dl(f) {
+    var a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000); toast("Asked your browser to download it - check its downloads");
   }  function xferCards() {
     var h = "";
     if (inF && inF.asking) h += '<div class="card verdict l1"><span class="badge">FROM YOUR PC</span><h1 style="font-size:18px">' + esc(inF.name) + ' · ' + size(inF.size) + '</h1><div class="btns" style="margin-top:10px"><button class="btn" data-fin="1">Accept</button><button class="btn ghost" data-fin="0">No</button></div></div>';
-    else if (inF && !inF.blob) h += '<div class="card"><h2>Receiving from your PC</h2>' + esc(inF.name) + ' · ' + Math.round(100 * inF.got / Math.max(1, inF.size)) + '%</div>';
+    else if (inF && !inF.blob) h += '<div class="card"><h2>Receiving from your PC</h2>' + esc(inF.name) + ' · ' + Math.round(100 * inF.got / Math.max(1, inF.size)) + '%<button class="btn ghost" data-finstop="1" style="margin-top:10px">Stop</button></div>';   // AM-CG-373
     else if (inF && inF.blob) h += '<div class="card verdict l0"><span class="badge">ARRIVED</span><h1 style="font-size:18px">' + esc(inF.name) + ' · ' + size(inF.size) + '</h1><div class="btns" style="margin-top:10px"><button class="btn" data-fsave="1">Save</button><button class="btn ghost" data-fdrop="1">Close</button></div></div>';
     if (fromPc) { var url = /^https?:\/\/\S+$/.test(fromPc.trim()); h += '<div class="card"><h2>From your PC</h2><div style="overflow-wrap:anywhere;white-space:pre-wrap">' + esc(fromPc) + '</div><div class="btns" style="margin-top:10px"><button class="btn ghost" data-fcopy="1">Copy</button>' + (url ? '<button class="btn ghost" data-fopen="1">Open link</button>' : '<button class="btn ghost" data-fclose="1">Close</button>') + '</div></div>'; }
     return h;
@@ -375,11 +410,12 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
 
   // ---------------------------------------------------------------- Remember this PC, behind Face ID / fingerprint
   // The PC hands over its own key for this phone (P, sealed). It's kept here only locked by the phone's own biometric
-  // (a passkey; with the PRF extension the key is encrypted by a secret only Face ID / fingerprint can release - where a
-  // browser lacks PRF, the passkey is a gate in this page only, and Settings says so). To reconnect: unlock P, then try
+  // (a passkey with the PRF extension: the key is encrypted by a secret only Face ID / fingerprint can release. A browser
+  // without PRF can't do that, so it isn't offered there - the QR code stays the way in; AM-CG-328). To reconnect: unlock P, then try
   // the rooms only P can name for this 25-minute slot; the PC waits in one of them. Forget deletes it on both sides.
+  var PROTO = 2;   // matches Remote.Proto on the PC
   var REC = "am-pc";
-  function recLoad() { try { return JSON.parse(rd(REC) || "null"); } catch (e) { return null; } }
+  function recLoad() { try { var r = JSON.parse(rd(REC) || "null"); return r && r.prf === 1 && r.ct ? r : (r && wr(REC, ""), null); } catch (e) { return null; } }
   function bioOk() { return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create); }
   async function bioCreate(pcName) {
     var c = await navigator.credentials.create({ publicKey: { rp: { name: "AdeeboMeter", id: location.hostname }, user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "AdeeboMeter - " + pcName, displayName: "AdeeboMeter - " + pcName },
@@ -404,9 +440,12 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
         var salt = crypto.getRandomValues(new Uint8Array(32)), out = await bioGet(cr.id, salt);
         if (out) { var iv = crypto.getRandomValues(new Uint8Array(12)), wk = await wrapKey(out, salt); rec.prf = 1; rec.salt = b64u(salt); rec.iv = b64u(iv); rec.ct = b64u(new Uint8Array(await subtle.encrypt({ name: "AES-GCM", iv: iv }, wk, P))); }
       }
-      if (!rec.prf) { rec.prf = 0; rec.key = b64u(P); }
-      wr(REC, JSON.stringify(rec)); P.fill(0); toast("Remembered. Next time: tap your PC on Home"); draw();
-    } catch (e) { send({ t: "forget", id: c.id }); toast("Not remembered - Face ID / fingerprint was cancelled"); }
+      P.fill(0);
+      if (!rec.prf) { send({ t: "forget", id: c.id }); toast("Not remembered - this browser can't lock the key with Face ID / fingerprint. Use the QR code each time."); return; }
+      // AM-CG-330: only say "remembered" once it's really saved here; otherwise undo it on the PC
+      if (!wr(REC, JSON.stringify(rec))) { send({ t: "forget", id: c.id }); toast("Not remembered - this browser won't keep it (private browsing?)"); return; }
+      toast("Remembered. Next time: tap your PC on Home"); draw();
+    } catch (e) { P.fill(0); send({ t: "forget", id: c.id }); toast("Not remembered - Face ID / fingerprint was cancelled"); }
   }
   var reconnecting = false;
   async function reconnect() {
@@ -414,45 +453,77 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     reconnecting = true; why = ""; draw();
     try {
       var P;
-      if (rec.prf) { var out = await bioGet(unb64u(rec.cred), unb64u(rec.salt)); if (!out) throw 0; P = new Uint8Array(await subtle.decrypt({ name: "AES-GCM", iv: unb64u(rec.iv) }, await wrapKey(out, unb64u(rec.salt)), unb64u(rec.ct))); }
-      else { await bioGet(unb64u(rec.cred), null); P = unb64u(rec.key); }
-      var now = Date.now() / 1000, slot = Math.floor(now / 1500), list = [];
+      if (!rec.prf) { wr(REC, ""); phase = "ended"; why = "Pair again with the QR code - this phone kept the key without Face ID protection, so it was removed."; reconnecting = false; draw(); return; }
+      var out = await bioGet(unb64u(rec.cred), unb64u(rec.salt)); if (!out) throw 0; P = new Uint8Array(await subtle.decrypt({ name: "AES-GCM", iv: unb64u(rec.iv) }, await wrapKey(out, unb64u(rec.salt)), unb64u(rec.ct)));
+      // AM-CG-376: the rooms follow the clock, so check this phone's clock against the internet's first, and near a slot's
+      // edge also try the neighbouring slot (the PC's clock may be a little ahead or behind)
+      var now = Date.now() / 1000, off = 0;
+      try { var t0 = Date.now(), pr = await tfetch(LIVE + "/ping?c" + t0, 4000), pj = pr.ok ? await pr.json() : null; if (pj && pj.now) { off = (pj.now - (t0 + Date.now()) / 2) / 1000; if (Math.abs(off) > 20) now += off; } } catch (e) {}
+      var slot = Math.floor(now / 1500), list = [], into = now - slot * 1500;
       for (var k = 0; k < 5; k++) list.push([slot, k]);
-      if (now - slot * 1500 < 90) for (k = 0; k < 5; k++) list.push([slot - 1, k]);   // the PC may not have moved to the new room yet
+      if (into < 180) for (k = 0; k < 5; k++) list.push([slot - 1, k]);
+      if (into > 1500 - 180) for (k = 0; k < 5; k++) list.push([slot + 1, k]);
       for (var i = 0; i < list.length; i++) {
         var rm = b64u(await hmac(P, te.encode("room|" + list[i][0] + "|" + list[i][1]))).slice(0, 22);
         if (await start(rm, P, true)) { reconnecting = false; draw(); return; }
       }
-      phase = "ended"; why = "Your PC didn't answer - it may be off or asleep, or AdeeboMeter isn't running there.";
+      phase = "ended"; why = "Your PC didn't answer - it may be off or asleep, or AdeeboMeter isn't running there." + (Math.abs(off) > 120 ? " Also, this phone's clock is " + Math.round(Math.abs(off) / 60) + " minutes off - set it to automatic." : " If it's on, check that the PC's clock is set automatically.");
     } catch (e) { phase = phase === "live" ? phase : "ended"; why = "Face ID / fingerprint was cancelled."; }
     reconnecting = false; draw();
   }
-  function forgetPc() { var rec = recLoad(); if (!rec) return; if (phase === "live") send({ t: "forget", id: rec.id }); wr(REC, ""); toast("Forgotten on this phone" + (phase === "live" ? " and your PC" : " - forget it on the PC too (Phone remote > Forget my phones)")); draw(); }
+  // AM-CG-329: this phone forgets at once; the PC's side is reported only when that PC confirms it held this phone
+  var forgetAsk = null;
+  function forgetPc() {
+    var rec = recLoad(); if (!rec) return; wr(REC, "");
+    if (phase === "live") { forgetAsk = { id: rec.id, pc: rec.pc, t: setTimeout(function () { if (forgetAsk) { toast("Forgotten on this phone. " + forgetAsk.pc + " didn't confirm - on that PC: Phone remote > Forget my phones."); forgetAsk = null; } }, 8000) }; send({ t: "forget", id: rec.id }); toast("Forgotten on this phone - asking the PC..."); }
+    else toast("Forgotten on this phone only. On " + rec.pc + ": Phone remote > Forget my phones.");
+    draw();
+  }
+  function forgot(c) {
+    if (!forgetAsk || c.id !== forgetAsk.id) return; clearTimeout(forgetAsk.t);
+    toast(c.ok ? "Forgotten on this phone and on " + forgetAsk.pc + "." : "Forgotten on this phone. The PC you're connected to didn't have it - forget it on " + forgetAsk.pc + " (Phone remote > Forget my phones).");
+    forgetAsk = null;
+  }
 
   // ---------------------------------------------------------------- this phone's own checks (what a browser can measure)
   // carrier (from this connection's public address, looked up by our small worker and never kept), IPv6, delay and jitter
   // to the nearest Cloudflare site, the time to look up a name, and on Android whether it's Wi-Fi or mobile data
-  var phoneBusy = false;
-  async function phoneCheck() {
-    if (phoneBusy) return me; phoneBusy = true; draw();
-    var r = { at: Date.now(), t: [], org: "", v6: null, colo: "", dns: null, type: "", eff: "" };
-    try {
-      var u = LIVE + "/me?" + Date.now(), x = await (await fetch(u, { cache: "no-store" })).json(); r.org = x.org || ""; r.v6 = x.v6 ? 1 : 0; r.colo = x.colo || "";
-      var pe = performance.getEntriesByName(u)[0]; if (pe && pe.domainLookupEnd > 0) r.dns = Math.round(pe.domainLookupEnd - pe.domainLookupStart);
-      for (var i = 0; i < 7; i++) { var s0 = performance.now(); await fetch(LIVE + "/ping?" + i + Date.now(), { cache: "no-store" }); if (i) r.t.push(performance.now() - s0); }
-    } catch (e) { r.err = 1; }
-    var c = navigator.connection; if (c) { r.type = c.type || ""; r.eff = c.effectiveType || ""; }
-    var v = r.t.slice().sort(function (a, b) { return a - b; }); r.med = v.length ? v[Math.floor(v.length / 2)] : null; r.jit = v.length > 1 ? v[v.length - 1] - v[0] : null;
-    me = r; phoneBusy = false; draw(); return r;
+  var phoneBusy = false, phoneP = null;
+  // a fetch that gives up (AM-CG-352)
+  function tfetch(u, ms) { var c = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (c) c.abort(); }, ms || 8000); return fetch(u, c ? { cache: "no-store", signal: c.signal } : { cache: "no-store" }).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; }); }
+  // one measurement at a time: a second caller waits for the same one (AM-CG-351); failed answers never count as samples (AM-CG-326/327)
+  function phoneCheck() {
+    if (phoneP) return phoneP; phoneBusy = true; draw();
+    phoneP = (async function () {
+      var r = { at: Date.now(), t: [], org: "", v6: null, colo: "", dns: null, type: "", eff: "", tries: 0, fail: 0, me: false };
+      try {
+        var u = LIVE + "/me?" + Date.now(), res = await tfetch(u, 6000);
+        if (res.ok && /json/i.test(res.headers.get("content-type") || "")) {
+          var x = await res.json(); r.me = true; r.org = String(x.org || "").slice(0, 80); r.v6 = x.v6 ? 1 : 0; r.colo = String(x.colo || "").slice(0, 8);
+          // only a real, fresh lookup is a DNS number; a reused connection shows 0 and is left out (AM-CG-354)
+          var pe = performance.getEntriesByName(u)[0]; if (pe && pe.domainLookupStart > 0 && pe.domainLookupEnd - pe.domainLookupStart >= 1) r.dns = Math.round(pe.domainLookupEnd - pe.domainLookupStart);
+        }
+      } catch (e) {}
+      for (var i = 0; i < 7; i++) {
+        r.tries++; var s0 = performance.now();
+        try { var p = await tfetch(LIVE + "/ping?" + i + Date.now(), 5000); if (!p.ok) { r.fail++; continue; } await p.text(); if (i) r.t.push(performance.now() - s0); } catch (e) { r.fail++; }
+      }
+      if (r.t.length < 2) r.err = 1;
+      var c = navigator.connection; if (c) { r.type = c.type || ""; r.eff = c.effectiveType || ""; }
+      var v = r.t.slice().sort(function (a, b) { return a - b; }); r.med = v.length ? v[Math.floor(v.length / 2)] : null; r.jit = v.length > 1 ? v[v.length - 1] - v[0] : null;
+      return r;
+    })().then(function (r) { me = r; phoneBusy = false; phoneP = null; draw(); return r; });
+    return phoneP;
   }
   function phoneRows(r) {
     if (!r) return [];
-    if (r.err) return [["2", "Connection", "couldn't reach the test server", "No internet on this phone, or something blocks it."]];
+    if (r.err) return [["2", "Connection", "couldn't reach the test server", r.fail ? r.fail + " of " + r.tries + " tries failed - no internet on this phone, or something blocks it." : "No internet on this phone, or something blocks it."]];
     var rows = [], ty = r.type === "cellular" ? "Mobile data" : r.type === "wifi" ? "Wi-Fi" : "";
     rows.push([r.med == null ? "3" : r.med < 60 ? "0" : r.med < 150 ? "1" : "2", "Delay to the internet", r.med == null ? "–" : Math.round(r.med) + " ms to Cloudflare" + (r.colo ? " " + r.colo : ""), r.med >= 150 ? "Slow from here - move closer to the router, or try the other network." : ""]);
-    rows.push([r.jit == null ? "3" : r.jit < 30 ? "0" : r.jit < 80 ? "1" : "2", "Steadiness (jitter)", r.jit == null ? "–" : Math.round(r.jit) + " ms spread", r.jit >= 80 ? "Uneven - calls and games will stutter." : ""]);
-    if (r.dns != null) rows.push([r.dns < 80 ? "0" : r.dns < 200 ? "1" : "2", "Name lookup (DNS)", r.dns + " ms", r.dns >= 200 ? "Slow lookups make every new site slow." : ""]);
-    rows.push([r.v6 ? "0" : "3", "IPv6", r.v6 ? "working on this connection" : "not used here (IPv4 only)", ""]);
+    rows.push([r.jit == null ? "3" : r.jit < 30 ? "0" : r.jit < 80 ? "1" : "2", "Request-time spread", r.jit == null ? "–" : Math.round(r.jit) + " ms between fastest and slowest of " + r.t.length, r.jit >= 80 ? "Uneven web requests from this phone - it may feel jumpy. A browser can't measure call or game jitter." : ""]);
+    if (r.fail) rows.push(["1", "Missed samples", r.fail + " of " + r.tries + " requests failed", "The numbers above use the ones that worked."]);
+    if (r.dns != null) rows.push([r.dns < 80 ? "0" : r.dns < 200 ? "1" : "2", "Name lookup (DNS)", r.dns + " ms for one fresh lookup", r.dns >= 200 ? "Slow lookups make every new site slow." : ""]);
+    rows.push([r.v6 ? "0" : "3", "IPv6", r.v6 == null ? "not measured (the test server didn't answer)" : r.v6 ? "working on this connection" : "not used here (IPv4 only)", ""]);
     if (r.org) rows.push(["3", ty === "Mobile data" ? "Carrier" : "Provider", r.org, ty ? "On " + ty + (r.eff ? " · feels like " + r.eff.toUpperCase() : "") : ""]);
     else if (ty) rows.push(["3", "Connected over", ty, ""]);
     return rows;
@@ -463,14 +534,15 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     report = { at: Date.now(), state: "running", pc: null, phone: null };
     S.tab = "report"; draw();
     phoneCheck().then(function (r) { if (report) { report.phone = r; draw(); } });
-    if (phase === "live") report.rid = run("checkup", [], true); else report.state = "done";
+    if (phase === "live") { report.rid = run("checkup", [], true); report.sentAt = Date.now(); } else report.state = "done";
   }
   function reportText() {
     var L = [], r = report; L.push("AdeeboMeter report - " + new Date(r.at).toLocaleString());
     if (r.pc) { L.push("", "YOUR PC (" + (r.pc.title || "Full checkup") + ")"); (r.pc.rows || []).forEach(function (o) { if (+o[0] === -1) L.push("", String(o[1]).toUpperCase()); else if (o[1] || o[2]) L.push((+o[0] === 2 ? "✖ " : +o[0] === 1 ? "▲ " : +o[0] === 0 ? "✓ " : "· ") + o[1] + ": " + o[2] + (o[3] ? " - " + o[3] : "")); }); }
     if (r.phone) { L.push("", "THIS PHONE"); phoneRows(r.phone).forEach(function (o) { L.push((+o[0] === 2 ? "✖ " : +o[0] === 1 ? "▲ " : +o[0] === 0 ? "✓ " : "· ") + o[1] + ": " + o[2] + (o[3] ? " - " + o[3] : "")); }); }
     L.push("", "Made with AdeeboMeter - adeebometer.com");
-    return L.join("\n").replace(/\b(\d{1,3}\.){3}\d{1,3}\b/g, function (ip) { return /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(ip) ? ip : ip.replace(/\.\d+\.\d+$/, ".x.x"); });   // public addresses masked
+    return L.join("\n").replace(/\b(\d{1,3}\.){3}\d{1,3}\b/g, function (ip) { return /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(ip) ? ip : ip.replace(/\.\d+\.\d+$/, ".x.x"); })
+      .replace(/(^|[^0-9a-z:])((?:[0-9a-f]{1,4}:){2,7}(?::?[0-9a-f]{1,4})*|(?:[0-9a-f]{1,4}:){1,7}:|::(?:[0-9a-f]{1,4}:?){1,7})(%\w+)?(?![0-9a-z:])/gi, function (m, pre, ip) { var n = ip.split(":").length - 1, v6 = (ip.indexOf("::") >= 0 && /[0-9a-f]{3,4}|::[0-9a-f]/i.test(ip)) || (n >= 5 && !/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(ip)); return !v6 || /^(fe80|fc|fd|::1$)/i.test(ip) ? m : pre + ip.split(":").slice(0, 2).join(":") + ":x:x::"; });   // public addresses masked, IPv4 and IPv6 (AM-CG-338)
   }
 
   // ---------------------------------------------------------------- drawing helpers
@@ -497,7 +569,8 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     h.forEach(function (x, i) { if (x == null) { pen = false; return; } var X = (i * W / n).toFixed(1), Y = (H - x / mx * H).toFixed(1); if (x0 == null) x0 = X; x1 = X; d += (pen ? "L" : "M") + X + "," + Y; pen = true; });
     return '<svg viewBox="0 0 ' + W + ' ' + (H + 2) + '" preserveAspectRatio="none" style="width:100%;height:56px;display:block;margin-top:6px"><path d="' + d + 'L' + x1 + ',' + H + 'L' + x0 + ',' + H + 'Z" fill="' + c + '" opacity=".14"/><path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
   }
-  function band(ch) { var n = parseInt(ch, 10); if (/6\s*GHz/i.test(ch)) return "6 GHz"; if (/5\s*GHz/i.test(ch)) return "5 GHz"; if (/2\.4/i.test(ch)) return "2.4 GHz"; return isNaN(n) ? "" : n <= 14 ? "2.4 GHz" : n >= 32 && n <= 177 ? "5 GHz" : ""; }
+  // AM-CG-344: a bare channel number can be 6 GHz too (its channels are 1, 5, 9 ... 233), so say so unless the PC named the band
+  function band(ch) { var n = parseInt(ch, 10); if (/6\s*GHz/i.test(ch)) return "6 GHz"; if (/5\s*GHz/i.test(ch)) return "5 GHz"; if (/2\.4/i.test(ch)) return "2.4 GHz"; if (isNaN(n)) return ""; var six = n % 4 === 1 && n <= 233; return n <= 14 ? (six ? "2.4 or 6 GHz" : "2.4 GHz") : n >= 32 && n <= 177 ? (six ? "5 or 6 GHz" : "5 GHz") : six ? "6 GHz" : ""; }
   function tile(go, icn, col, t, s, href) { return '<button class="tile" ' + (href ? 'data-web="' + href + '" data-title="' + t + '"' : 'data-go="' + go + '"') + '><span class="ic ' + col + '">' + ic(icn, 30) + '</span><b>' + t + '</b><span>' + s + '</span></button>'; }
   // Learn, Games, Live and Lock files open inside the app (the PC stays connected; Back returns here)
   var webHome = "", webFrom = "more";
@@ -530,6 +603,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     if (rec && (phase === "none" || phase === "ended")) return '<button class="card hero" data-act="reconnect"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led ' + (reconnecting ? 'warn' : 'off') + '"></span>' + (reconnecting ? "Reconnecting..." : liveAt ? "Not live · last reading " + ago(age()) + " ago" : "Remembered") + '</span><b>' + esc(rec.pc) + '</b><span class="m">' + esc(why && !reconnecting ? why : "Tap to reconnect with Face ID or fingerprint") + '</span></div>' + ic("chev") + '</button>';
     if (phase === "none") return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led off"></span>No PC connected</span><b>Connect your PC</b><span class="m">Scan the code from AdeeboMeter on your PC</span></div>' + ic("chev") + '</button>';
     if (phase === "connecting" || phase === "asking") return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>' + (phase === "asking" ? "Waiting for you" : "Connecting...") + '</span><b>' + (phase === "asking" ? "Press Allow on your PC" : "Reaching your PC") + '</b><span class="m">Nothing is shared until you allow it</span></div></div>';
+    if (phase === "live" && !liveAt) return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Connected · waiting for the first reading</span><b>Your PC</b><span class="m">A few seconds.</span></div></div>';
     if (phase === "ended" || !isLive()) return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Not live' + (liveAt ? ' · last reading ' + ago(age()) + ' ago' : '') + '</span><b>' + (phase === "ended" ? "Session ended" : "No reading from your PC") + '</b><span class="m">' + esc(phase === "ended" ? "Scan the code on your PC again to reconnect" : "The PC may be asleep, or its internet dropped") + '</span></div>' + ic("chev") + '</button>';
     var L = live || {}, s = Math.max(0, Math.round(L.left || 0));
     return '<button class="card hero" data-go="pc"><span style="display:flex;align-items:center;gap:6px">' + ic("pc", 40) + '<span style="opacity:.8">⇄</span>' + ic("phone", 28) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led"></span>Connected · live</span><b>PC engine online</b><span class="m">🔒 encrypted · ' + Math.floor(s / 60) + ':' + ("0" + s % 60).slice(-2) + ' left</span></div>' + ic("chev") + '</button>';
@@ -559,7 +633,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   function devRow(d, i) { i = devs.indexOf(d); return '<button class="row' + (wide() && i === S.dev ? ' sel' : '') + '" data-dev="' + i + '"><span class="ic k-dev">' + ic(d.k, 22) + '</span><div class="tx"><b>' + (d.w ? '★ ' : '') + esc(d.n) + '</b><span>' + esc(d.what || (d.here ? "here now" : d.seen)) + (S.mode !== "everyday" ? ' · ' + esc(d.ip) : '') + '</span></div><span class="badge' + (!d.here ? ' off' : d.quiet ? ' warn' : '') + '">' + (!d.here ? 'away' : d.ms != null ? d.ms + ' ms' : 'quiet') + '</span></button>'; }
   function devOne(d, pane) {
     var a = pane ? '<header style="margin-top:0"><div class="t"><h1 style="font-size:26px">' + esc(d.n) + '</h1><p>' + esc(d.what || d.ip) + '</p></div></header>' : hdr(esc(d.n), esc(d.what || d.ip), "devices");
-    a += '<div class="card" style="display:flex;gap:14px;align-items:center"><span class="ic k-dev" style="width:56px;height:56px">' + ic(d.k, 32) + '</span><div style="flex:1"><span class="badge' + (!d.here ? ' off' : d.quiet ? ' warn' : '') + '">' + (!d.here ? 'Not here now' : d.quiet ? 'Not answering ping' : 'Here now · ' + d.ms + ' ms') + '</span><div style="color:var(--sub);font-size:14px;margin-top:6px">' + esc(d.seen) + '</div></div></div>';
+    a += '<div class="card" style="display:flex;gap:14px;align-items:center"><span class="ic k-dev" style="width:56px;height:56px">' + ic(d.k, 32) + '</span><div style="flex:1"><span class="badge' + (!d.here ? ' off' : d.quiet ? ' warn' : '') + '">' + (!d.here ? 'Not here now' : d.quiet ? 'Not answering ping' : 'Here now · ' + (d.ms != null ? d.ms + ' ms' : 'time not measured')) + '</span><div style="color:var(--sub);font-size:14px;margin-top:6px">' + esc(d.seen) + '</div></div></div>';
     a += '<h2>What we know</h2><div class="card"><p style="margin:0 0 8px">' + (d.via ? "It told us about itself over " + esc(d.via) + "." : d.k === "phone" ? "It hides behind a random hardware address - phones and laptops do this for privacy." : "It talked to your PC or router recently; it doesn't announce a name.") + (d.what ? " It's " + esc(d.what) + "." : "") + '</p><p style="margin:0;color:var(--sub);font-size:14px">Nothing was logged in to or changed - devices were only asked who they are.</p></div>';
     if (d.w) a += '<h2>Watched by your PC</h2><div class="card"><div style="color:var(--sub)">' + esc(d.watch || "watching") + '</div></div>';
     a += '<h2>Test it</h2><div class="card list">' + rowBtn('data-test="ping" data-ip="' + esc(d.ip) + '"', "", "", "Ping it now", where("pc"), null) + rowBtn('data-test="tcpping" data-ip="' + esc(d.ip) + '"', "", "", "Does it answer on a port?", where("pc"), null) + '</div>';
@@ -568,28 +642,32 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     return a;
   }
   function mapSvg() {
-    var list = devs.filter(function (d) { return d.k !== "router"; }).slice(0, 16), rt = devs.filter(function (d) { return d.k === "router"; })[0];
-    var W = 560, H = 560, cx = W / 2, cy = H / 2 + 10, R = 190, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="Map of your network">';
+    var gw = live && live.gwip || "", rt = gw ? devs.filter(function (d) { return d.ip === gw; })[0] : null;
+    var others = devs.filter(function (d) { return d !== rt; }), list = others.slice(0, 16);
+    var W = 560, H = 560, cx = W / 2, cy = H / 2 + 10, R = 190, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="group" aria-label="Map of your network: ' + devs.length + ' devices. The List shows the same devices.">';
     s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="var(--edge)" stroke-dasharray="4 8"/>';
     s += '<line x1="' + cx + '" y1="' + (cy - 46) + '" x2="' + cx + '" y2="20" stroke="var(--blue)" stroke-width="3" stroke-dasharray="6 6"/><text x="' + cx + '" y="16" text-anchor="middle" font-size="20" fill="var(--sub)">the internet</text>';
     list.forEach(function (d, i) {
       var a = -Math.PI / 2 + Math.PI / list.length + 2 * Math.PI * i / list.length, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * .92, col = !d.here ? "var(--mut)" : d.quiet ? "var(--amber)" : "var(--green)", k = devs.indexOf(d);
       s += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '" stroke="' + col + '" stroke-opacity=".45" stroke-width="2"' + (d.here ? '' : ' stroke-dasharray="3 6"') + '/>';
-      s += '<g data-dev="' + k + '" style="cursor:pointer"><circle cx="' + x + '" cy="' + y + '" r="32" fill="var(--bg2)" stroke="' + col + '" stroke-width="3"/><g transform="translate(' + (x - 12) + ' ' + (y - 12) + ')" stroke="var(--ink)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + I[d.k] + '</g>' + (d.w ? '<text x="' + (x + 20) + '" y="' + (y - 18) + '" font-size="16" fill="var(--amber)">★</text>' : '') + '<text x="' + x + '" y="' + (y + 54) + '" text-anchor="middle" font-size="20" fill="var(--ink)">' + esc(d.n.length > 16 ? d.n.slice(0, 15) + "…" : d.n) + '</text></g>';
+      s += '<g data-dev="' + k + '" style="cursor:pointer" tabindex="0" role="button" aria-label="' + esc(d.n + (d.here ? ", here now" : ", away")) + '"><circle cx="' + x + '" cy="' + y + '" r="32" fill="var(--bg2)" stroke="' + col + '" stroke-width="3"/><g transform="translate(' + (x - 12) + ' ' + (y - 12) + ')" stroke="var(--ink)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + I[d.k] + '</g>' + (d.w ? '<text x="' + (x + 20) + '" y="' + (y - 18) + '" font-size="16" fill="var(--amber)">★</text>' : '') + '<text x="' + x + '" y="' + (y + 54) + '" text-anchor="middle" font-size="20" fill="var(--ink)">' + esc(d.n.length > 16 ? d.n.slice(0, 15) + "…" : d.n) + '</text></g>';
     });
-    s += '<g ' + (rt ? 'data-dev="' + devs.indexOf(rt) + '" style="cursor:pointer"' : '') + '><circle cx="' + cx + '" cy="' + cy + '" r="44" fill="url(#rg)" stroke="var(--blue)" stroke-width="3"/><g transform="translate(' + (cx - 18) + ' ' + (cy - 20) + ') scale(1.5)" stroke="#fff" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + I.router + '</g><text x="' + cx + '" y="' + (cy + 70) + '" text-anchor="middle" font-size="20" font-weight="700" fill="var(--ink)">Your router</text></g>';
+    s += '<g ' + (rt ? 'data-dev="' + devs.indexOf(rt) + '" style="cursor:pointer" tabindex="0" role="button" aria-label="' + esc("Your router, " + rt.n) + '"' : 'aria-hidden="true"') + '><circle cx="' + cx + '" cy="' + cy + '" r="44" fill="url(#rg)" stroke="var(--blue)" stroke-width="3"/><g transform="translate(' + (cx - 18) + ' ' + (cy - 20) + ') scale(1.5)" stroke="#fff" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + I.router + '</g><text x="' + cx + '" y="' + (cy + 70) + '" text-anchor="middle" font-size="20" font-weight="700" fill="var(--ink)">' + (rt ? "Your router" : "Router (not identified)") + '</text></g>';
+    if (others.length > list.length) s += '<text x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="18" fill="var(--sub)">' + list.length + ' of ' + others.length + ' shown - the List has them all</text>';
     return s + '<defs><radialGradient id="rg"><stop offset="0" stop-color="#3B8BFF"/><stop offset="1" stop-color="#1F4FB0"/></radialGradient></defs></svg>';
   }
   VIEWS.devices = function () {
     if (phase !== "live" && !devs) return hdr("Devices", "Who's on your network") + needPc("Your PC finds the devices on your network - the TV, the printer, the doorbell - and how quick each one answers.");
     if (!devs) { if (phase === "live" && !devRid) loadDevs(); return hdr("Devices", "Who's on your network") + '<div class="card empty">' + ic("wifi", 48) + '<b>Asking your devices who they are...</b><p>About 3 seconds. Read-only - nothing is logged in to.</p></div>'; }
+    if (S.devKey) { S.dev = -1; for (var di = 0; di < devs.length; di++) if (devs[di].key === S.devKey) S.dev = di; if (S.dev < 0) S.devKey = ""; }
     var here = devs.filter(function (d) { return d.here; }).length, wn = devs.filter(function (d) { return d.w; }).length;
     var sub = here + " here now" + (wn ? " · " + wn + " watched" : "") + " · from your PC" + (devAt ? " · " + ago(Math.round((Date.now() - devAt) / 1000)) + " ago" : "");
     var top = hdr("Devices", sub) + '<div class="seg"><button data-dv="list" class="' + (S.devView === "list" ? "on" : "") + '">' + ic("list", 18) + ' List</button><button data-dv="map" class="' + (S.devView === "map" ? "on" : "") + '">' + ic("map", 18) + ' Map</button><button data-act="devs">' + ic("refresh", 18) + ' Refresh</button></div>';
     var q = S.q.toLowerCase(), shown = devs.filter(function (d) { return !q || (d.n + " " + d.what + " " + d.ip).toLowerCase().indexOf(q) >= 0; });
     var listHtml = S.devView === "map" ? '<div class="card">' + mapSvg() + '</div>' : '<input class="search" id="dq" placeholder="Find a device" value="' + esc(S.q) + '"><div class="card list">' + (shown.length ? shown.map(devRow).join("") : '<p style="color:var(--sub);margin:0">Nothing matches.</p>') + '</div>';
     var noteHtml = '<p class="note">Read-only: devices are asked who they are the way phones and TVs ask each other. No alerts - you look when you want to.</p>';
-    if (wide()) { if (S.dev < 0 || !devs[S.dev]) S.dev = 0; return top + '<div class="split"><div>' + listHtml + noteHtml + '</div><div class="pane">' + devOne(devs[S.dev], true) + '</div></div>'; }
+    if (!devs.length) return top + '<div class="card empty">' + ic("wifi", 48) + '<b>No devices found</b><p>Your PC didn\'t see any other device on this network. Try Refresh in a minute.</p></div>';
+    if (wide()) { if (S.dev < 0 || !devs[S.dev]) { S.dev = 0; S.devKey = devs[0].key; } return top + '<div class="split"><div>' + listHtml + noteHtml + '</div><div class="pane">' + devOne(devs[S.dev], true) + '</div></div>'; }
     if (S.dev >= 0 && devs[S.dev]) return devOne(devs[S.dev], false);
     return top + listHtml + noteHtml;
   };
@@ -604,9 +682,10 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   VIEWS.pc = function () {
     if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, open Phone remote from its tray icon, and scan the code with your camera.");
     var t = S.pcTab, L = live || {}, on = isLive();
-    var a = hdr("My PC", '<span class="pill"><span class="led' + (on ? '' : ' warn') + '"></span>' + (on ? "Connected · live" : phase === "ended" ? "Session ended" : "Not live · " + ago(age()) + " ago") + '</span>');
+    var a = hdr("My PC", '<span class="pill"><span class="led' + (on ? '' : ' warn') + '"></span>' + (on ? "Connected · live" : phase === "ended" ? "Session ended" : phase === "live" && !liveAt ? "Connected · waiting for the first reading" : "Not live · " + ago(age()) + " ago") + '</span>');
     a += '<div class="pcart"><svg viewBox="0 0 120 90" width="140" aria-hidden="true"><rect x="10" y="6" width="100" height="62" rx="7" fill="#0E2147" stroke="#CFE0FF" stroke-width="4"/><rect x="18" y="14" width="84" height="46" rx="3" fill="' + (on ? "#1F6FEB" : "#3A4A66") + '"/><path d="M18 50 Q50 30 102 40 L102 60 L18 60z" fill="#3B8BFF" opacity="' + (on ? ".6" : ".15") + '"/><rect x="46" y="70" width="28" height="8" fill="#CFE0FF"/><rect x="34" y="78" width="52" height="5" rx="2.5" fill="#CFE0FF"/></svg></div>';
     a += '<div class="acts"><button class="act main" data-act="checkup"' + (phase !== "live" || busy ? " disabled" : "") + '><i>' + ic("play", 24) + '</i>' + (busy ? "Running" : "Checkup") + '</button><button class="act" data-act="stop"' + (busy ? "" : " disabled") + '><i>' + ic("stop", 20) + '</i>Stop</button><button class="act" data-act="report"><i>' + ic("report", 22) + '</i>Report</button></div>';
+    if (phase === "live") a += '<button class="btn ghost" data-act="bye" style="margin:0 0 14px">' + ic("stop", 18) + ' End session</button>';
     if (busy) a += '<div class="card" style="display:flex;gap:10px;align-items:center"><span class="led warn"></span><div style="flex:1;font-weight:600">' + esc(V("busy", busy) || "Running " + busy + " on your PC...") + '</div></div>';
     a += '<div class="seg">' + [["overview", "Overview"], ["checks", "Checks"], ["results", "Results" + (results.length ? " · " + results.length : "")], ["files", "Files"]].map(function (k) { return '<button data-pct="' + k[0] + '" class="' + (t === k[0] ? 'on' : '') + '">' + k[1] + '</button>'; }).join("") + '</div>';
     if (t === "overview") {
@@ -630,13 +709,13 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
       var T = toolOf(open); if (!T) { open = ""; return checksHtml(); }
       var dv = drafts[open] || T.in.map(function (x) { return x[2] || ""; });
       return '<div class="card"><button class="btn ghost" data-back="1" style="width:auto;display:inline-block;padding:8px 14px;min-height:0;margin-bottom:10px">‹ All checks</button><h3 style="margin:0 0 2px">' + esc(T.t) + '</h3><p style="color:var(--sub);font-size:13px;margin:0 0 12px">' + esc(T.g) + ' · ' + where("pc") + '</p>' +
-        T.in.map(function (x, k) { return '<label class="k">' + esc(x[0]) + '</label><input class="in" data-k="' + k + '" value="' + esc(dv[k] === "@broker" ? "" : dv[k] || "") + '" placeholder="' + esc(dv[k] === "@broker" ? "your broker (from Trading on the PC)" : x[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">'; }).join("") +
+        T.in.map(function (x, k) { return '<label class="k" for="in' + k + '">' + esc(x[0]) + '</label><input class="in" id="in' + k + '" data-k="' + k + '" maxlength="200" value="' + esc(/^@(broker|gw)$/.test(dv[k]) ? "" : dv[k] || "") + '" placeholder="' + esc(dv[k] === "@gw" ? "your router" + (live && live.gwip ? " (" + live.gwip + ")" : "") : dv[k] === "@broker" ? "your broker (from Trading on the PC)" : x[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">'; }).join("") +
         (busy ? '<div class="btns"><button class="btn" disabled>Running...</button><button class="btn ghost" data-act="stop">Stop</button></div>' : '<button class="btn" data-goid="' + esc(open) + '">' + (sure === open ? "Tap again - it loads your PC for a while" : "Run on your PC") + '</button>' + (T.h && sure !== open ? '<p style="font-size:13px;color:var(--sub);margin:8px 2px 0">Heavy check: it uses your PC\'s network, disk or CPU for up to a few minutes.</p>' : '')) + '</div>';
     }
     if (!cat.length) return '<div class="card">Getting the list from your PC...</div>';
     var q = findQ.toLowerCase(), groups = [];
     cat.forEach(function (t) { if (q && (t.t + " " + t.g + " " + t.id).toLowerCase().indexOf(q) < 0) return; var g = groups.filter(function (x) { return x.g === t.g; })[0]; if (!g) groups.push(g = { g: t.g, l: [] }); g.l.push(t); });
-    return '<input class="search" id="find" placeholder="Find a check (ping, mtu, dns, wifi...)" value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false">' + groups.map(function (g) {
+    return '<input class="search" id="find" placeholder="Find a check (ping, mtu, dns, wifi...)" value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Find a check">' + (q && !groups.length ? '<div class="card empty"><b>No checks match "' + esc(findQ) + '"</b><p>Try a shorter word, like ping or dns.</p><button class="btn ghost" data-act="clearfind">Show all checks</button></div>' : '') + groups.map(function (g) {
       var on = q || openG[g.g]; return '<div class="card list" style="padding:4px 16px">' + rowBtn('data-grp="' + esc(g.g) + '"', "", "", esc(g.g), g.l.length + " checks", '<span class="chev">' + (on ? "▴" : "▾") + '</span>') + (on ? g.l.map(function (t) { return rowBtn('data-open="' + esc(t.id) + '"', "", "", esc(t.t), t.h ? "heavy · runs a while" : "", null); }).join("") : '') + '</div>';
     }).join("");
   }
@@ -660,7 +739,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   function keepAwake(on) {
     if (!on) { if (wake) { try { wake.release(); } catch (e) {} } wake = null; return; }
     if (!navigator.wakeLock || wake) return;
-    navigator.wakeLock.request("screen").then(function (w) { wake = w; w.addEventListener("release", function () { wake = null; }); }).catch(function () {});
+    navigator.wakeLock.request("screen").then(function (w) { if (view !== "widget") { try { w.release(); } catch (e) {} return; } wake = w; w.addEventListener("release", function () { wake = null; }); }).catch(function () {});
   }
   document.addEventListener("visibilitychange", function () { if (!document.hidden && view === "widget") keepAwake(true); });
 
@@ -682,7 +761,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   VIEWS.walk = function () {
     var a = hdr("Wi-Fi walk", "Room by room, from this phone", "home");
     a += '<div class="card"><p style="margin:0 0 10px">Stand in a room, name it, tap Test here. It measures delay and steadiness from this phone - what you feel - with no speed test.</p><input class="in" id="room" placeholder="Room name, e.g. Bedroom" maxlength="30"><button class="btn" data-act="room"' + (phoneBusy ? " disabled" : "") + '>' + (phoneBusy ? "Testing..." : "Test here") + '</button></div>';
-    if (rooms.length) a += '<div class="card list">' + rooms.map(function (r) { var lv = r.med == null ? 2 : r.med < 60 && r.jit < 40 ? 0 : r.med < 150 ? 1 : 2; return '<div class="row" style="cursor:default"><div class="tx"><b>' + esc(r.n) + '</b><span>' + (r.med == null ? "no connection" : Math.round(r.med) + " ms · spread " + Math.round(r.jit) + " ms") + '</span></div><span class="badge' + (lv === 2 ? ' bad' : lv === 1 ? ' warn' : '') + '">' + (lv === 0 ? "good" : lv === 1 ? "so-so" : "weak") + '</span></div>'; }).join("") + '</div>';
+    if (rooms.length) a += '<div class="card list">' + rooms.map(function (r) { var lv = r.med == null ? 3 : r.med < 60 && (r.jit == null || r.jit < 40) ? 0 : r.med < 150 ? 1 : 2; return '<div class="row" style="cursor:default"><div class="tx"><b>' + esc(r.n) + '</b><span>' + (r.med == null ? "no reading - the test server didn't answer" : Math.round(r.med) + " ms" + (r.jit != null ? " · spread " + Math.round(r.jit) + " ms" : "")) + '</span></div><span class="badge' + (lv === 3 ? ' off' : lv === 2 ? ' bad' : lv === 1 ? ' warn' : '') + '">' + (lv === 3 ? "unavailable" : lv === 0 ? "good" : lv === 1 ? "so-so" : "weak") + '</span></div>'; }).join("") + '</div>';
     return a + '<p class="note">' + where("phone") + ' Kept only while this page is open.</p>';
   };
   VIEWS.report = function () {
@@ -740,21 +819,24 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
     $("app").innerHTML = S.tab === "web" ? "" : f(); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab;
-    $("tabs").innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TABS.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '" aria-label="' + t[2] + '">' + ic(t[1], 24) + t[2] + '</button>'; }).join("");
+    var tb = $("tabs");
+    if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
+    else { tb.setAttribute("data-built", "1"); tb.innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TABS.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
   }
-  function go(t) { if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
-  function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); return e ? (e.value.trim() || (drafts[open] && drafts[open][k] === "@broker" ? "@broker" : "")) : ""; }); }
+  function go(t) { keepDraft(); if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
+  function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); var was = (drafts[open] || T.in.map(function (y) { return y[2] || ""; }))[k]; return e ? (e.value.trim() || (/^@(broker|gw)$/.test(was) ? was : "")) : ""; }); }
 
+  document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
     if (A("data-web")) { openWeb(A("data-web"), A("data-title") || ""); return; }
     if (A("data-go") != null && A("data-go") !== "") { var pt = A("data-pctab"); go(A("data-go")); if (pt) { S.pcTab = pt; draw(); } return; }
-    if (A("data-dev") != null) { S.dev = +A("data-dev"); if (S.tab !== "devices") S.tab = "devices"; draw(); if (!wide()) window.scrollTo(0, 0); return; }
+    if (A("data-dev") != null) { S.dev = +A("data-dev"); S.devKey = devs && devs[S.dev] ? devs[S.dev].key : ""; if (S.tab !== "devices") S.tab = "devices"; draw(); if (!wide()) window.scrollTo(0, 0); return; }
     if (A("data-pct")) { S.pcTab = A("data-pct"); if (S.tab !== "pc") S.tab = "pc"; draw(); return; }
     if (A("data-dv")) { S.devView = A("data-dv"); draw(); return; }
     if (A("data-mode")) { S.mode = A("data-mode"); wr("am-mode", S.mode === "everyday" ? "" : S.mode); draw(); return; }
@@ -771,6 +853,8 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     }
     var act = A("data-act");
     if (act === "report") { oneTap(); return; }
+    if (act === "clearfind") { findQ = ""; draw(); return; }
+    if (act === "bye") { if (confirm("End the session with your PC?")) { send({ t: "bye" }); setTimeout(function () { if (ws) try { ws.close(); } catch (e) {} }, 300); } return; }   // AM-CG-357
     if (act === "install") { if (bip) { var b = bip; bip = null; b.prompt(); b.userChoice.then(function (r) { if (r && r.outcome === "accepted") inst = true; draw(); }, function () { draw(); }); } return; }
     if (act === "noinst") { store("am-noinst", "1"); draw(); return; }
     if (act === "reconnect") { reconnect(); return; }
@@ -782,16 +866,17 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
     if (act === "widget") { back = S.tab; S.tab = "widget"; document.body.classList.add("wg"); keepAwake(true); draw(); return; }
     if (act === "unwidget") { S.tab = back === "widget" ? "pc" : back; document.body.classList.remove("wg", "stale"); keepAwake(false); draw(); return; }
     if (act === "phone") { me = null; S.tab = "phone"; phoneCheck(); draw(); return; }
-    if (act === "room") { var n = (($("room") || {}).value || "").trim() || "Room " + (rooms.length + 1); phoneCheck().then(function (r) { rooms.unshift({ n: n, med: r.err ? null : r.med, jit: r.jit || 0 }); rooms = rooms.slice(0, 12); draw(); }); return; }
-    if (act === "share") { var t = reportText(); if (navigator.share) navigator.share({ title: "AdeeboMeter report", text: t }).catch(function () {}); else if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast("Copied"); }); return; }
-    if (act === "copyrep") { if (navigator.clipboard) navigator.clipboard.writeText(reportText()).then(function () { toast("Copied"); }); return; }
+    if (act === "room") { var n = (($("room") || {}).value || "").trim() || "Room " + (rooms.length + 1); (phoneP || Promise.resolve()).then(phoneCheck).then(function (r) { rooms.unshift({ n: n, med: r.err ? null : r.med, jit: r.err ? null : r.jit }); rooms = rooms.slice(0, 12); draw(); }); return; }
+    if (act === "share") { var t = reportText(); if (navigator.share) navigator.share({ title: "AdeeboMeter report", text: t }).catch(function (e) { if (!e || e.name !== "AbortError") copyText(t); }); else copyText(t); return; }
+    if (act === "copyrep") { copyText(reportText()); return; }
     if (act === "paste") { if (!navigator.clipboard || !navigator.clipboard.readText) { toast("This browser can't read the clipboard - paste into the box instead"); return; } navigator.clipboard.readText().then(function (t) { t = (t || "").slice(0, 4000); if (!t.trim()) { toast("Your clipboard is empty"); return; } send({ t: "text", s: t }); }).catch(function () { toast("Clipboard not allowed - paste into the box instead"); }); return; }
     // the transfer buttons (same as before)
     var fin = A("data-fin"); if (fin != null && inF) { if (fin === "1") { inF.asking = 0; send({ t: "fok", id: inF.id }); } else { send({ t: "fno", id: inF.id, why: "not accepted on the phone" }); inF = null; } draw(); return; }
     if (A("data-fsave")) { saveIn(); return; }
     if (A("data-fdrop")) { inF = null; draw(); return; }
+    if (A("data-finstop")) { if (inF) { send({ t: "fcancel", id: inF.id }); inF = null; toast("Stopped"); draw(); } return; }
     if (A("data-fstop")) { if (outF) { outF.cancel = 1; send({ t: "fcancel", id: outF.id }); } return; }
-    if (A("data-fcopy")) { if (navigator.clipboard) navigator.clipboard.writeText(fromPc).then(function () { toast("Copied"); }); return; }
+    if (A("data-fcopy")) { copyText(fromPc); return; }
     if (A("data-fopen")) { var u = fromPc.trim(); if (/^https?:\/\/\S+$/.test(u)) window.open(u, "_blank", "noopener"); return; }
     if (A("data-fclose")) { fromPc = ""; draw(); return; }
     if (A("data-ftxt")) { var tv = ($("ftxt") || {}).value || txt; if (!tv.trim()) return; txt = ""; send({ t: "text", s: tv.slice(0, 4000) }); draw(); return; }
@@ -808,6 +893,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   });
   // the clock: stale readings show as not live, a check that never answers frees the buttons
   setInterval(function () {
+    if (report && report.state === "running" && report.sentAt && (phase !== "live" || Date.now() - report.sentAt > 420000)) { report.state = "done"; report.err = phase !== "live" ? "The session ended before your PC answered." : "Your PC didn't answer in 7 minutes."; draw(); }   // AM-CG-350
     if (busy && Date.now() - busyAt > 420000) { busy = ""; curRid = ""; toast("No answer from your PC - the check may still finish there"); draw(); }
     if (phase === "live" && liveAt && age() > 5 && (view === "home" || view === "widget" || view === "pc")) draw();
   }, 1000);
@@ -815,6 +901,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{displa
   if (window.AMV) AMV.onchange(function () { if (view === "home" || view === "companion") draw(); });
 
   draw();
+  if (!secret && hash[0] === "scan") S.tab = "pair";   // the home-screen shortcut "Connect to my PC" (AM-CG-377)
   if (secret) start(room, secret, false).catch(function () { phase = "ended"; why = "This browser blocked the encryption - try Safari or Chrome."; draw(); });
 })();
 </script>

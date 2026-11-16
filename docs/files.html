@@ -49,7 +49,7 @@ footer{margin-top:26px;color:var(--sub);font-size:13px}
 <section class="card" data-fp="lock">
 <h2>Lock a file</h2>
 <p class="hint">You get a code. Send the file and the code separately.</p>
-<label class="pick ui-row"><input type="file" id="lf"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="lfn">Choose a file</b><small>Up to 300 MB</small></span><span data-ic="chev"></span></label>
+<label class="pick ui-row"><input type="file" id="lf"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="lfn">Choose a file</b><small>Up to 100 MB on a phone</small></span><span data-ic="chev"></span></label>
 <button class="btn" id="lb" disabled data-ic="lock" data-sz="18">Lock file</button>
 <div id="lr" style="display:none"><div class="code" id="lc"></div><button class="btn ghost" id="lcopy">Copy code</button><button class="btn" id="lsave">Save the .adeebo file</button><p class="hint" style="margin-top:8px">The code isn't saved anywhere - write it down or send it before you leave this page.</p></div>
 <p class="say" id="ls" aria-live="polite"></p>
@@ -71,7 +71,7 @@ footer{margin-top:26px;color:var(--sub);font-size:13px}
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i)},S=window.crypto&&crypto.subtle,te=new TextEncoder(),td=new TextDecoder();
-var MAGIC=[65,68,69,69,66,79,1,1],ITER=600000,MAX=300*1024*1024,ALPH="23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+var MAGIC=[65,68,69,69,66,79,1,1],ITER=600000,MAX=(navigator.deviceMemory&&navigator.deviceMemory<=4)||/iPhone|iPad|Android/.test(navigator.userAgent)?100*1024*1024:300*1024*1024,MAXOPEN=MAX+4096,ALPH="23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 if(!S){$("os").textContent=$("ls").textContent="This browser can't do the encryption - use Safari or Chrome.";return}
 function clean(c){return String(c||"").toUpperCase().replace(/[\s-]/g,"")}
 async function keys(code,salt,iter){var base=await S.importKey("raw",te.encode(clean(code)),"PBKDF2",false,["deriveBits"]);
@@ -86,11 +86,11 @@ var of=null;
 $("of").onchange=function(){of=this.files[0]||null;$("ofn").textContent=of?of.name:"Choose the .adeebo file";$("ob").disabled=!of;say("os","")};
 $("oc").oninput=function(){var v=clean(this.value);if(v.length>24)v=v.slice(0,24);var g=v.match(/.{1,4}/g);this.value=g?g.join("-"):""};
 $("ob").onclick=async function(){
-  if(!of)return;if(of.size>MAX)return say("os","That file is over 300 MB - open it on your PC.",false);
+  if(!of)return;var file=of;if(file.size>MAXOPEN)return say("os","That file is too big to open on this device ("+Math.round(MAX/1048576)+" MB at most) - open it on your PC.",false);$("of").disabled=true;
   if(clean($("oc").value).length<8)return say("os","Type the code that came with the file.",false);
   $("ob").disabled=true;say("os","Checking…");
   try{
-    var b=new Uint8Array(await of.arrayBuffer());
+    var b=new Uint8Array(await file.arrayBuffer());
     if(b.length<44+16+32)throw"This isn't an AdeeboMeter file.";
     for(var i=0;i<8;i++)if(b[i]!==MAGIC[i])throw i<6?"This isn't an AdeeboMeter file.":i===7?"This kind of .adeebo file opens on a PC only (it's locked for a person's key, not a code).":"Made by a newer AdeeboMeter - open it on your PC.";
     var iter=(b[8]<<24|b[9]<<16|b[10]<<8|b[11])>>>0;if(iter<100000||iter>2000000)throw"The file is damaged.";
@@ -100,30 +100,32 @@ $("ob").onclick=async function(){
     var p=new Uint8Array(await S.decrypt({name:"AES-CBC",iv:b.slice(28,44)},k.enc,b.subarray(44,b.length-32)));
     var nl=p[0]<<8|p[1];if(2+nl>p.length)throw"The file is damaged.";
     var name=td.decode(p.subarray(2,2+nl)).replace(/[\\/:*?"<>|\x00-\x1f]/g,"_")||"opened-file";
-    save(new Blob([p.subarray(2+nl)]),name);say("os",(window.AMV&&AMV.line("decrypt.done")?AMV.line("decrypt.done")+" ":"")+"Opened: "+name+" - saved to your downloads.",true);
+    save(new Blob([p.subarray(2+nl)]),name);say("os",(window.AMV&&AMV.line("decrypt.done")?AMV.line("decrypt.done")+" ":"")+"Opened: "+name+" - your browser is downloading it.",true);
   }catch(e){say("os",typeof e==="string"?e:"Wrong code, or the file was changed on the way. Nothing was opened.",false)}
-  $("ob").disabled=false};
+  $("ob").disabled=false;$("of").disabled=false};
 
 // ---- lock
 var lf=null,made=null;
 $("lf").onchange=function(){lf=this.files[0]||null;$("lfn").textContent=lf?lf.name:"Choose a file to lock";$("lb").disabled=!lf;$("lr").style.display="none";say("ls","")};
 $("lb").onclick=async function(){
-  if(!lf)return;if(lf.size>MAX)return say("ls","That file is over 300 MB - lock it on your PC.",false);
+  if(!lf)return;var file=lf;if(file.size>MAX)return say("ls","That file is over "+Math.round(MAX/1048576)+" MB - lock it on your PC.",false);$("lf").disabled=true;   // AM-CG-378: this file, even if another is picked meanwhile
   $("lb").disabled=true;say("ls","Locking…");
   try{
     var code=newCode(),salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(16)),k=await keys(code,salt,ITER);
-    var nm=lf.name;while(te.encode(nm).length>255)nm=nm.slice(0,-1);var nb=te.encode(nm),data=new Uint8Array(await lf.arrayBuffer());
-    var plain=new Uint8Array(2+nb.length+data.length);plain[0]=nb.length>>8;plain[1]=nb.length&255;plain.set(nb,2);plain.set(data,2+nb.length);
-    var ct=new Uint8Array(await S.encrypt({name:"AES-CBC",iv:iv},k.enc,plain));
+    var nm=file.name;while(te.encode(nm).length>255)nm=nm.slice(0,-1);var nb=te.encode(nm),data=new Uint8Array(await file.arrayBuffer());
+    var plain=new Uint8Array(2+nb.length+data.length);plain[0]=nb.length>>8;plain[1]=nb.length&255;plain.set(nb,2);plain.set(data,2+nb.length);data=null;
+    var ct=new Uint8Array(await S.encrypt({name:"AES-CBC",iv:iv},k.enc,plain));plain=null;
     var head=new Uint8Array(44);head.set(MAGIC,0);head[8]=ITER>>>24;head[9]=ITER>>16&255;head[10]=ITER>>8&255;head[11]=ITER&255;head.set(salt,12);head.set(iv,28);
-    var body=new Uint8Array(44+ct.length);body.set(head,0);body.set(ct,44);
+    var body=new Uint8Array(44+ct.length);body.set(head,0);body.set(ct,44);ct=null;
     var tag=new Uint8Array(await S.sign("HMAC",k.mac,body));
-    made={blob:new Blob([body,tag],{type:"application/octet-stream"}),name:lf.name.replace(/\.[^.]*$/,"")+".adeebo",code:code};
+    made={blob:new Blob([body,tag],{type:"application/octet-stream"}),name:file.name.replace(/\.[^.]*$/,"")+".adeebo",code:code};
     $("lc").textContent=code;$("lr").style.display="block";say("ls",(window.AMV&&AMV.line("encrypt.done")?AMV.line("encrypt.done")+" ":"")+"Locked. Save the file, then send the code a different way.",true);
   }catch(e){say("ls","Couldn't lock it on this phone - try a smaller file.",false)}
-  $("lb").disabled=false};
+  $("lb").disabled=false;$("lf").disabled=false};
 $("lsave").onclick=function(){if(made)save(made.blob,made.name)};
-$("lcopy").onclick=function(){if(made&&navigator.clipboard)navigator.clipboard.writeText(made.code).then(function(){$("lcopy").textContent="Copied"})};
+// AM-CG-380: if the clipboard says no, the code is selected so it can be copied by hand
+function byHand(){var e=$("lc"),r=document.createRange();r.selectNodeContents(e);var s=getSelection();s.removeAllRanges();s.addRange(r);$("lcopy").textContent="Copy it by hand - it's selected"}
+$("lcopy").onclick=function(){if(!made)return;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(made.code).then(function(){$("lcopy").textContent="Copied"},byHand);else byHand()};
 addEventListener("pagehide",function(){made=null});
 })();
 </script>

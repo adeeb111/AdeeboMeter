@@ -115,7 +115,7 @@ namespace AdeeboMeter
                 mine = new ECDiffieHellmanCng(256); var myPk = RemoteCrypto.Raw(mine); phonePk = pk;
                 var z = RemoteCrypto.SharedHash(mine, pk);
                 tx = new RemoteCrypto.Lane(secret, z, 1); rx = new RemoteCrypto.Lane(secret, z, 2);
-                Send("{\"t\":\"ok\",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");
+                Send("{\"t\":\"ok\",\"v\":" + Proto.ToString(CultureInfo.InvariantCulture) + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");
                 mine.Dispose(); mine = null;   // the one-time private key goes as soon as the session keys exist
                 if (Known != null) Started = DateTime.UtcNow;   // a remembered phone gets its 30 minutes from now
                 St = State.Paired; Note(); SendLive(); try { var cat = Catalog != null ? Catalog() : null; if (cat != null) foreach (var part in cat) Seal(part); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote catalog: " + e.Message); } return;
@@ -131,7 +131,9 @@ namespace AdeeboMeter
                         string id = c.S("id") ?? "", rid = Clip(c.S("rid") ?? "", 16).Replace("\"", "").Replace("\\", "");
                         if (id != "feltslow" && (CanRun == null || !CanRun(id))) { Seal("{\"t\":\"err\",\"rid\":\"" + rid + "\",\"msg\":\"That check can't be started from the phone.\"}"); return; }
                         if (id == "feltslow") { if (FeltSlow != null) FeltSlow(); Seal("{\"t\":\"note\",\"msg\":\"Marked: felt slow. The answer is on the PC.\"}"); return; }
-                        var a = (c.A("in") ?? new List<string>()).Take(4).Select(x => Clip(x, 200)).ToArray();
+                        var inl = c.A("in") ?? new List<string>();
+                        if (inl.Count > 4 || inl.Any(x => (x ?? "").Length > 200)) { Seal("{\"t\":\"err\",\"rid\":\"" + rid + "\",\"msg\":\"A box is too long (200 characters at most) - nothing was run.\"}"); return; }   // AM-CG-364
+                        var a = inl.ToArray();
                         if (op != null) { Seal("{\"t\":\"err\",\"rid\":\"" + rid + "\",\"msg\":\"A check is still running on the PC - stop it first or wait for it.\"}"); return; }
                         var run = new Toolkit.Run { Deadline = DateTime.UtcNow.AddMinutes(6) }; op = run; opRid = rid;
                         if (RunTool != null) RunTool(id, a, run, (title, rows, hops) => { if (op == run) { op = null; opRid = ""; } SendResult(id, rid, title, rows, hops); });
@@ -140,7 +142,7 @@ namespace AdeeboMeter
                     }
                 case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
                 case "stop": { var o = op; if (o != null && (c.S("rid") ?? "") == opRid) { o.Stop = true; Seal("{\"t\":\"note\",\"msg\":\"Stopping the check on the PC...\"}"); } return; }
-                case "fput": case "fok": case "fno": case "fdat": case "fack": case "fend": case "fcancel": case "text": Files(c); return;
+                case "fput": case "fok": case "fno": case "fdat": case "fack": case "fend": case "fcancel": case "fgot": case "text": Files(c); return;
                 // "Remember this PC" from the phone: asked here (No by default); the phone gets its own key, sealed
                 case "remember":
                     if (Known != null) { Seal("{\"t\":\"note\",\"msg\":\"This phone is already remembered.\"}"); return; }
@@ -152,7 +154,7 @@ namespace AdeeboMeter
                         Seal("{\"t\":\"remembered\",\"id\":\"" + p.Id + "\",\"key\":\"" + RemoteCrypto.B64u(p.Key) + "\",\"pc\":\"" + J(Clip(Environment.MachineName, 40)) + "\"}");
                     });
                     return;
-                case "forget": { string id = Clip(c.S("id") ?? "", 24); bool gone = RemotePhones.Remove(id) || (Known != null && RemotePhones.Remove(Known.Id)); Seal("{\"t\":\"note\",\"msg\":\"" + (gone ? "This PC forgot your phone." : "Nothing to forget.") + "\"}"); return; }
+                case "forget": { string id = Clip(c.S("id") ?? "", 24); bool gone = id.Length > 0 && RemotePhones.Remove(id); Seal("{\"t\":\"forgot\",\"id\":\"" + J(id) + "\",\"ok\":" + (gone ? "true" : "false") + "}"); return; }   // AM-CG-329: only the phone it names, and say whether it was here
                 case "bye": End("the phone ended the session"); return;
             }
         }
@@ -175,6 +177,7 @@ namespace AdeeboMeter
             Str(sb, "head", s.Headline); Str(sb, "chip", s.Chip); Str(sb, "who", AdeeboMeter.Lines.Who());   // the PC's companion: the phone talks the same way unless told otherwise Num(sb, "left", Left.TotalSeconds);
             string wifi, ssid, ch, speed; int sig, rate; bool hw, blocked; lock (M.L) { wifi = M.AdapterKind; hw = M.HasWifi; ssid = M.Ssid; ch = M.WifiChannel; sig = M.WifiSignal; rate = M.RxRate; blocked = M.WifiBlocked; speed = M.LinkSpeed; }
             Str(sb, "link", wifi); Str(sb, "speed", speed); Num(sb, "disk", s.Disk);
+            string gwip; lock (M.L) gwip = M.Gateway ?? ""; Str(sb, "gwip", gwip);   // the map draws the real router (AM-CG-347)
             // the PC's Wi-Fi as Windows reports it (a phone's browser can't see any of this); empty when Windows hides it (location off)
             if (hw) { sb.Append(",\"wifi\":{"); Str(sb, "ssid", ssid, true); Num(sb, "sig", sig < 0 ? double.NaN : sig); Str(sb, "ch", ch); Num(sb, "rate", rate < 0 ? double.NaN : rate); sb.Append(",\"hidden\":").Append(blocked ? 1 : 0).Append('}'); }
             try { Game(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
@@ -238,24 +241,27 @@ namespace AdeeboMeter
             // AM-CG-284: a byte budget, not just a row count - sealed (AES padding + base64 + tag) it must stay well under the
             // relay's 64 KB per message, or the relay would end the session. Rows that don't fit are counted, never cut mid-way.
             const int Budget = 40 * 1024;
+            // AM-CG-366: the path (hops) is built first and its size reserved, so the whole message fits
+            var hb = new StringBuilder();
+            if (hops != null && hops.Count > 0)
+            {
+                hb.Append(",\"hops\":[");
+                for (int i = 0; i < Math.Min(30, hops.Count); i++) { var h = hops[i]; if (i > 0) hb.Append(','); hb.Append("[\"").Append(string.Join("\",\"", h.Select(x => J(Cut(x, 60))).ToArray())).Append("\"]"); }
+                hb.Append(']');
+            }
+            int room = Budget - Encoding.UTF8.GetByteCount(hb.ToString());
             var sb = new StringBuilder("{\"t\":\"result\""); Str(sb, "id", id); Str(sb, "rid", rid); Str(sb, "title", title); sb.Append(",\"rows\":[");
             bool first = true; int left = 0; var all = (rows ?? new List<string[]>()).Where(o => o != null && o.Length > 2 && o[0] != "-2" && !(o.Length > 4 && o[4] == "k")).ToList();
             for (int i = 0; i < all.Count; i++)
             {
                 var o = all[i];
-                string item = "[\"" + J(o[0]) + "\",\"" + J(Clip(FullView.ShareCell(o[1]), 80)) + "\",\"" + J(Clip(FullView.ShareCell(o[2]), 300)) + "\",\"" + J(o.Length > 3 ? Clip(FullView.ShareCell(o[3]), 300) : "") + "\"]";
-                if (i >= 200 || Encoding.UTF8.GetByteCount(sb.ToString()) + Encoding.UTF8.GetByteCount(item) + 200 > Budget) { left = all.Count - i; break; }
+                // AM-CG-362: a shortened value ends with "…" so it's never mistaken for the whole thing
+                string item = "[\"" + J(o[0]) + "\",\"" + J(Cut(FullView.ShareCell(o[1]), 80)) + "\",\"" + J(Cut(FullView.ShareCell(o[2]), 300)) + "\",\"" + J(o.Length > 3 ? Cut(FullView.ShareCell(o[3]), 300) : "") + "\"]";
+                if (i >= 200 || Encoding.UTF8.GetByteCount(sb.ToString()) + Encoding.UTF8.GetByteCount(item) + 300 > room) { left = all.Count - i; break; }
                 if (!first) sb.Append(','); first = false; sb.Append(item);
             }
-            if (left > 0) { if (!first) sb.Append(','); sb.Append("[\"3\",\"Left on the PC\",\"").Append(left).Append(" more rows - open the result on the PC\",\"\"]"); }
-            sb.Append(']');
-            if (hops != null && hops.Count > 0)
-            {
-                sb.Append(",\"hops\":[");
-                for (int i = 0; i < Math.Min(30, hops.Count); i++) { var h = hops[i]; if (i > 0) sb.Append(','); sb.Append("[\"").Append(string.Join("\",\"", h.Select(x => J(Clip(x, 60))).ToArray())).Append("\"]"); }
-                sb.Append(']');
-            }
-            sb.Append('}'); Seal(sb.ToString());
+            if (left > 0) { if (!first) sb.Append(','); sb.Append("[\"3\",\"More than fits\",\"").Append(left).Append(" more rows didn't fit on the phone\",\"To see every row, run this check on the PC itself.\"]"); }   // AM-CG-363: it wasn't kept on the PC
+            sb.Append(']').Append(hb).Append('}'); Seal(sb.ToString());
         }
 
         // a parsed message: its text fields and one list of strings, nothing else is read
@@ -267,7 +273,10 @@ namespace AdeeboMeter
             public List<string> A(string k) { object v; var l = d.TryGetValue(k, out v) ? v as List<object> : null; return l == null ? null : l.Select(x => x == null ? "" : Convert.ToString(x, CultureInfo.InvariantCulture)).ToList(); }
         }
         // ---------- plumbing
+        // the phone and PC message version: the phone page refuses a PC newer than it understands and asks to be reloaded (AM-CG-335)
+        public const int Proto = 2;
         static string Clip(string s, int n) { s = s ?? ""; return s.Length <= n ? s : s.Substring(0, n); }
+        static string Cut(string s, int n) { s = s ?? ""; return s.Length <= n ? s : s.Substring(0, n - 1).TrimEnd() + "\u2026"; }
         static string J(string s)
         {
             var b = new StringBuilder();
@@ -276,7 +285,8 @@ namespace AdeeboMeter
         }
         static void Num(StringBuilder sb, string k, double v) { sb.Append(",\"").Append(k).Append("\":").Append(double.IsNaN(v) || double.IsInfinity(v) ? "null" : Math.Round(v, 2).ToString(CultureInfo.InvariantCulture)); }
         static void Str(StringBuilder sb, string k, string v, bool firstInObj = false) { if (!firstInObj) sb.Append(','); sb.Append('"').Append(k).Append("\":\"").Append(J(v)).Append('"'); }
-        void Seal(string text) { var l = tx; if (l == null) return; string f; lock (sendLock) f = l.Seal(text); Send("{\"s\":\"" + f + "\"}"); }
+        // AM-CG-368: numbering and sending happen under one lock, so messages leave in the order they were numbered
+        void Seal(string text) { var l = tx; if (l == null) return; lock (sendLock) { string f = l.Seal(text); Send("{\"s\":\"" + f + "\"}"); } }
         void Send(string text)
         {
             if (ws.State != WebSocketState.Open) return;
@@ -289,6 +299,7 @@ namespace AdeeboMeter
         {
             if (St == State.Ended) return;
             if (St == State.Paired) Seal("{\"t\":\"bye\"}");
+            var o = op; if (o != null) o.Stop = true;   // AM-CG-367: a check started from the phone stops with the session
             St = State.Ended; Why = why ?? "";
             var t = tick; tick = null; if (t != null) t.Dispose();
             try { if (ws.State == WebSocketState.Open) ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None).Wait(2000); } catch (AggregateException) { } catch (ObjectDisposedException) { } catch (InvalidOperationException) { }

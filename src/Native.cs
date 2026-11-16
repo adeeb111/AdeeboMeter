@@ -151,7 +151,8 @@ namespace AdeeboMeter
         [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetWindowDisplayAffinity(IntPtr h, uint affinity);
         // a presentation, a full-screen game or video: the corner widget steps aside (states 2 busy, 3 D3D full screen, 4 presenting)
         public static bool Presenting() { try { int s; return SHQueryUserNotificationState(out s) == 0 && (s == 2 || s == 3 || s == 4); } catch (EntryPointNotFoundException) { return false; } }
-        [DllImport("shell32.dll")] public static extern int SHQueryUserNotificationState(out int state);   // 5 = OK to notify; else presenting / full screen / quiet
+        [DllImport("shell32.dll")] public static extern int SHQueryUserNotificationState(out int state);
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid id, uint flags, IntPtr token, out IntPtr path);   // 5 = OK to notify; else presenting / full screen / quiet
         // Windows says it's fine to pop a notification now (not presenting, not full screen, not in Focus quiet time)
         public static bool CanNotify() { try { int s; return SHQueryUserNotificationState(out s) != 0 || s == 5; } catch { return true; } }
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool QueryFullProcessImageName(IntPtr h, int flags, [Out] char[] name, ref int size);

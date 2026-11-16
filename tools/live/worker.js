@@ -103,7 +103,7 @@ export default {
         const q = (u.searchParams.get("q") || "").trim().slice(0, 60);
         return reply(req, q.length < 2 ? { places: [] } : out(await places(q.toLowerCase())), 3600);
       }
-      case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "" }, 0);
+      case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "", now: Date.now() }, 0);   // now: lets the phone check its clock (AM-CG-376)
       // the phone app's "this phone" card: who carries this connection and whether it came over IPv6 - for this answer only,
       // the address itself is never returned or kept
       case "/me": {
