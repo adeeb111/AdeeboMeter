@@ -181,7 +181,8 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     var title = D(f[2]), cap = D(f[3]), kind = f[4] || "", A = f[5] || "", B = f[6] || "", R = f[7] || "";
     var items = function (x) { return x ? x.split("~").map(function (i) { return i.split(","); }) : []; };
     // R2-02: a link with nothing in it (cut short, or typed by hand) gets no Copy / Share / PDF of an empty result
-    if (!title && !R && !B) { app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">This link has no result in it</h1><p>It may have been cut short when it was copied. Scan the code on the PC again, or ask for a new link.</p></div>'; return; }
+    if (!R && !B) {   // AM-CG-288: a title alone is no result
+     app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">This link has no result in it</h1><p>It may have been cut short when it was copied. Scan the code on the PC again, or ask for a new link.</p></div>'; return; }
     var col = function (lv, back) { return lv == 2 ? "var(--red)" : lv == 1 ? "var(--amber)" : back ? "var(--green)" : "var(--blue)"; };
     var W = 600, svg = "";
     if (kind === "x") {
@@ -223,7 +224,8 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
       });
       svg += "</svg>";
     }
-    var rows = items(R), worst = rows.reduce(function (m, r) { return Math.max(m, +r[0] === 3 || +r[0] < 0 ? -1 : +r[0]); }, -1);
+    // AM-CG-304: only 0-2 grade the result; a table warning line (7) counts as a warning, other table lines (6, 8) don't grade
+    var rows = items(R), worst = rows.reduce(function (m, r) { var l = +r[0]; l = l === 7 ? 1 : l; return l >= 0 && l <= 2 ? Math.max(m, l) : m; }, -1);
     var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     // the PC's own clock, when its time zone differs from this phone's: "PC 23:00, UTC+0" makes a wrongly set zone obvious
     var pcOff = /o(-?\d{1,4})$/.exec(t), pcT = "";
@@ -232,7 +234,9 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     var tagT = cap ? cap.toUpperCase() : worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT";
     var lead = rows.filter(function (r) { return +r[0] >= 0 && +r[0] <= 2; }).sort(function (a, b) { return +b[0] - +a[0]; })[0];
     var nextT = lead && +lead[0] >= 1 && lead[3] ? D(lead[3]) : "";
-    h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(tagT) + '</span><h1>' + esc(title) + '</h1>' + (lead ? '<p style="margin:8px 0 0;color:var(--sub)">' + esc(D(lead[1])) + ': ' + esc(D(lead[2])) + '</p>' : '') + (nextT ? '<p style="margin:8px 0 0;color:var(--ink)"><b>Next:</b> ' + esc(nextT) + '</p>' : '') + '</div>';
+    // AM-CG-301: when the code couldn't carry everything, the verdict says so right away (and whether a warning was left out)
+    var leftRow = rows.filter(function (r) { return +r[0] === 3 && D(r[1]) === "Left on the PC"; })[0], coverT = leftRow ? D(leftRow[2]) : "";
+    h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(tagT) + '</span><h1>' + esc(title) + '</h1>' + (lead ? '<p style="margin:8px 0 0;color:var(--sub)">' + esc(D(lead[1])) + ': ' + esc(D(lead[2])) + '</p>' : '') + (nextT ? '<p style="margin:8px 0 0;color:var(--ink)"><b>Next:</b> ' + esc(nextT) + '</p>' : '') + (coverT ? '<p style="margin:8px 0 0;font-size:13px;color:' + (/warning/.test(coverT) ? 'var(--amber)' : 'var(--muted)') + '">Not everything fit in the code: ' + esc(coverT) + '</p>' : '') + '</div>';
     if (!rows.length && !svg) h2 += '<div class="card"><h2>NO NUMBERS IN THIS LINK</h2><p style="margin:0;color:var(--sub)">The link only carried the tool\'s name, not its results. Open the result on the PC and scan its code again - newer versions of AdeeboMeter always fit the results in.</p></div>';
     if (svg) h2 += '<div class="card" id="pic">' + svg + '</div>';
     if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { if (+r[0] === -1) return '<h2 style="margin:16px 0 8px">' + esc(D(r[1]).toUpperCase()) + '</h2>'; var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div>' + (r[3] ? '<div class="w" style="font-size:13px;margin-top:4px">' + esc(D(r[3])) + '</div>' : '') + '</div>'; }).join("") + '</div>';

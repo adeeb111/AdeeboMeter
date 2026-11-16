@@ -28,11 +28,11 @@ svg{display:block;width:100%;height:auto}
 button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:13px 10px;cursor:pointer;background:var(--blue-s);color:var(--blue)}
 button.main{background:var(--blue);color:#fff}button:disabled{opacity:.5}
 .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
-.tabs button{flex:1;background:none;color:var(--muted);padding:10px 4px;font-size:14px}.tabs button.on{color:var(--blue)}
+.tabs button{flex:1;background:none;color:var(--muted);padding:10px 2px;font-size:13px;min-width:0}.tabs button.on{color:var(--blue)}
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tools button{text-align:left;font-size:14px;padding:12px}
 input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);margin:0 0 10px}
 .row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.row:first-child{border-top:0}
-.row i{width:10px;height:10px;border-radius:50%;background:var(--c,var(--muted));margin-top:7px;flex:none}.row b{display:block;font-size:14px}.row span{color:var(--sub);font-size:14px}.row em{display:block;color:var(--ink);font-style:normal;font-size:13px;margin-top:2px}
+.row div{min-width:0;overflow-wrap:anywhere}.row .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap}.row.l1 i{background:var(--amber)}.row i{width:10px;height:10px;border-radius:50%;background:var(--c,var(--muted));margin-top:7px;flex:none}.row b{display:block;font-size:14px}.row span{color:var(--sub);font-size:14px}.row em{display:block;color:var(--ink);font-style:normal;font-size:13px;margin-top:2px}
 .note{font-size:12px;color:var(--muted);text-align:center;margin:8px 0 16px}
 #toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
 #toast.on{opacity:1}
@@ -41,7 +41,7 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
 </head>
 <body>
 <main id="app"><div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small id="left"></small></div><div class="card" id="st"><h1 style="font-size:20px;margin:0">Connecting...</h1></div></main>
-<nav class="tabs hide" id="tabs"><button data-v="live" class="on">Live</button><button data-v="game">Game</button><button data-v="stream">Stream</button><button data-v="trade">Trading</button><button data-v="tools">Checks</button></nav>
+<nav class="tabs hide" id="tabs"><button data-v="live" class="on">Live</button><button data-v="game">Game</button><button data-v="stream">Stream</button><button data-v="trade">Trading</button><button data-v="tools">Checks</button><button data-v="learn">Learn</button></nav>
 <div id="toast"></div>
 <script>
 (function () {
@@ -81,7 +81,17 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
   if (h.length !== 2 || !/^[A-Za-z0-9_-]{22}$/.test(h[0]) || !/^[A-Za-z0-9_-]{43}$/.test(h[1])) { fail("Scan the code on your PC", "Open AdeeboMeter, right-click its tray icon and choose Phone remote. Then scan the code it shows."); return; }
   if (!subtle || !window.WebSocket) { fail("This browser can't do the encryption", "Open the link in Safari or Chrome."); return; }
   if (!RELAY) { fail("The phone relay isn't set up yet", "This build of AdeeboMeter doesn't have a relay address."); return; }
-  var room = h[0], secret = unb64u(h[1]), ws, tx, rx, view = "live", live = null, results = [], busy = "";
+  var room = h[0], secret = unb64u(h[1]), ws, tx, rx, view = "live", live = null, results = [], busy = "", cat = [], open = "", findQ = "", openG = {}, drafts = {}, mkt = null, learn = null, lesson = "", picked = {};
+  // Learn: the same lessons as the app, read from this website (nothing about you is sent, nothing is kept)
+  function loadLearn() { if (learn) return; learn = []; fetch("kb/learn1.json", { cache: "no-store", credentials: "omit" }).then(function (r) { return r.json(); }).then(function (j) { learn = j.topics || []; if (view === "learn") draw(); }).catch(function () { learn = null; toast("Couldn't load the lessons"); }); }
+  var KINDS = { basics: "The basics", protocol: "How the internet talks", provider: "Your provider", mobile: "Phones and mobile data", windows: "Windows", streaming: "Streaming", investing: "Investing", crypto: "Crypto", apps: "Apps" };
+  function toolOf(id) { if (id === "checkup") return { id: id, t: "Full checkup", g: "", h: 1, in: [] }; if (id === "feltslow") return { id: id, t: "It feels slow", g: "", in: [] }; return cat.filter(function (t) { return t.id === id; })[0] || null; }
+  // MTR and MTU come back with their path: one dot per hop, coloured like the PC's picture (AM-CG-297)
+  function hopsSvg(hp) {
+    if (!hp || !hp.length) return ""; var H = 16 + hp.length * 40, W = 600, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="margin-top:10px"><line x1="14" x2="14" y1="14" y2="' + (H - 14) + '" stroke="var(--line)" stroke-width="4"/>';
+    hp.forEach(function (h, i) { var y = 16 + i * 40, lv = +h[4], c = lv < 0 ? "var(--muted)" : lv === 2 ? "var(--red)" : lv === 1 ? "var(--amber)" : "var(--green)"; s += '<circle cx="14" cy="' + y + '" r="10" fill="var(--card)" stroke="' + c + '" stroke-width="3"/><text x="14" y="' + (y + 4) + '" font-size="10" text-anchor="middle" fill="var(--ink)">' + esc(h[0]) + '</text><text x="34" y="' + (y + 1) + '" font-size="14" fill="var(--ink)">' + esc(h[1]) + '</text><text x="34" y="' + (y + 17) + '" font-size="12" fill="var(--muted)">' + esc((h[2] ? h[2] + " ms" : "") + (h[2] && h[3] ? " · " : "") + h[3]) + '</text>'; });
+    return s + "</svg>";
+  }
 
   async function start() {
     var auth = await hkdf(secret, te.encode("pair"), "adeebometer remote v1 auth", 32);
@@ -111,6 +121,8 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
       var c; try { c = JSON.parse(plain); } catch (e) { return; }
       if (c.t === "live") { live = c; liveAt = Date.now(); if (view !== "tools") draw(); else left(); }
       else if (c.t === "result") { busy = ""; results.unshift(c); results = results.slice(0, 5); view = "tools"; tabsOn(); draw(); }
+      else if (c.t === "mkt") { mkt = c; if (view === "trade") draw(); }
+      else if (c.t === "cat") { if (!cat.__part) cat = []; cat = cat.concat(c.tools || []); cat.__part = !c.last; if (view === "tools") draw(); }
       else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && busy) { busy = ""; draw(); } }   // AM-CG-283: an error frees the buttons
       else if (c.t === "bye") ws.close();
     };
@@ -170,22 +182,63 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
         '<div class="card"><h2>THE STREAM</h2><div class="grid">' + num("Coming in", mb(sm.down), 3) + num("Its server", ms(sm.far), lvOf(sm.far, 80, 200)) + num("Playing for", sm.mins == null ? "–" : Math.round(sm.mins) + "<small> min</small>", 3) + num("Router", ms(L.gw), lvOf(L.gw, 20, 80)) + '</div></div>';
       a += '<div class="card"><h2>GOING LIVE</h2><div class="grid">' + num("Upload now", mb(L && L.up), 3) + num("Ping", ms(L && L.ping), lvOf(L && L.ping, 80, 200)) + num("Jitter", ms(L && L.jit), lvOf(L && L.jit, 20, 50)) + num("Loss", L && L.loss != null ? Math.round(L.loss * 10) / 10 + "<small> %</small>" : "–", lvOf(L && L.loss, 1, 3)) + '</div>' +
         '<div class="tools" style="margin-top:10px"><button data-run="golive">Ready to stream?</button><button data-run="speedtest">Speed test</button></div><p style="font-size:13px;color:var(--muted);margin:8px 0 0">The check runs on the PC without opening anything over your stream.</p></div>';
+    } else if (view === "learn") {
+      loadLearn();
+      if (!learn || !learn.length) a += '<div class="card"><h2>LEARN</h2>Getting the lessons...</div>';
+      else if (lesson) {
+        var t = learn.filter(function (x) { return x.id === lesson; })[0] || {}, chk = (t.check || "").split(" | ");
+        a += '<div class="card"><button data-lback="1" style="padding:6px 12px;font-size:13px;margin-bottom:10px">‹ All lessons</button><span class="tag">' + esc(KINDS[t.kind] || t.kind || "") + '</span><h1 style="font-size:21px;margin:6px 0">' + esc(t.title) + '</h1><p style="font-weight:700;margin:0 0 8px">' + esc(t.tag || "") + '</p><p style="margin:0 0 8px">' + esc(t.line || "") + '</p>' + (t.breaks ? '<p style="margin:0;color:var(--sub)"><b>When it breaks:</b> ' + esc(t.breaks) + '</p>' : '') + '</div>';
+        if (t.ladder) a += '<div class="card"><h2>HOW IT GOES</h2>' + t.ladder.split(" | ").map(function (m) { var k = m.indexOf(": "), who = k > 0 ? m.slice(0, k) : "", say = k > 0 ? m.slice(k + 2) : m; return '<div class="row"><i style="background:var(--blue)"></i><div><b>' + esc(who) + '</b><span>' + esc(say) + '</span></div></div>'; }).join("") + '</div>';
+        if (chk.length >= 3) {
+          var ans = picked[t.id], opts = chk.slice(1).map(function (o, k) { return [o, k === 0]; }); opts.sort(function (x, y) { return (x[0] < y[0]) ? -1 : 1; });
+          a += '<div class="card"><h2>CHECK YOURSELF</h2><p style="margin:0 0 10px;font-weight:700">' + esc(chk[0]) + '</p><div style="display:grid;gap:8px">' + opts.map(function (o) { var st = ans == null ? "" : o[1] ? "background:var(--green-s);color:var(--green)" : ans === o[0] ? "background:var(--red-s);color:var(--red)" : ""; return '<button data-ans="' + esc(o[0]) + '" style="text-align:left;' + st + '"' + (ans != null ? " disabled" : "") + '>' + esc(o[0]) + '</button>'; }).join("") + '</div>' + (ans != null ? '<p style="margin:10px 0 0">' + (ans === chk[1] ? "Right." : "Not quite - it's: " + esc(chk[1])) + '</p>' : '') + '</div>';
+        }
+        if (t["try"]) a += '<div class="card"><h2>TRY IT</h2>' + esc(t["try"]) + '<p style="color:var(--muted);font-size:13px;margin:8px 0 0">On the PC, Learn › this lesson › See it live records it happening.</p></div>';
+      } else {
+        var byK = {}; learn.forEach(function (t) { (byK[t.kind] = byK[t.kind] || []).push(t); });
+        a += '<div class="card"><h2>LEARN · ' + learn.length + ' SHORT LESSONS</h2>' + Object.keys(byK).map(function (k) { var on = openG["L" + k]; return '<button data-lgrp="' + esc(k) + '" style="display:flex;width:100%;justify-content:space-between;background:none;color:var(--ink);padding:12px 2px;border-top:1px solid var(--line);border-radius:0"><span>' + esc(KINDS[k] || k) + '</span><span style="color:var(--muted)">' + byK[k].length + (on ? " ▴" : " ▾") + '</span></button>' + (on ? '<div style="display:grid;gap:8px;margin:0 0 10px">' + byK[k].map(function (t) { return '<button data-lesson="' + esc(t.id) + '" style="text-align:left"><b style="display:block">' + esc(t.title) + '</b><span style="font-weight:400;font-size:13px;color:var(--sub)">' + esc(t.tag || "") + '</span></button>'; }).join("") + '</div>' : ''); }).join("") + '</div>';
+      }
     } else if (view === "trade") {
       var t = L && L.trade;
       if (!t) a += '<div class="card verdict l3"><h1>Trading isn\'t set up</h1><p style="color:var(--sub);margin:8px 0 0">Add your broker in Trading on the PC to see its delay here.</p></div>';
       else {
         a += '<div class="card verdict l' + (t.lv >= 0 && t.lv <= 2 ? t.lv : 3) + '"><span class="tag">' + esc(t.venue) + ' · ' + (t.open === "1" ? "OPEN" : "CLOSED") + '</span><h1>' + esc(t.head || "") + '</h1></div>';
         a += '<div class="card"><h2>THE WAY TO YOUR BROKER</h2><div class="grid">' + num("Router", ms(t.router), lvOf(t.router, 20, 80)) + num("Internet", ms(t.net), lvOf(t.net, 80, 200)) + num("Broker", ms(t.broker), lvOf(t.broker, 120, 300)) + '</div></div>';
-        a += '<div class="card"><h2>CHECK</h2><div class="tools"><button data-run="marketopen">Market open check</button><button data-run="httptime" data-ask="Broker website">Broker site timing</button></div></div>';
+        a += '<div class="card"><h2>CHECK</h2><div class="tools"><button data-run="marketopen">Market open check</button><button data-run="httptime" data-ask="1">Broker site timing</button></div></div>';
       }
+      // the day's markets, as the PC's Trading page has them
+      if (mkt && !mkt.off && ((mkt.rates || []).length || (mkt.idx || []).length)) {
+        a += '<div class="card"><h2>EXCHANGE RATES · CAD</h2><div class="grid">' + (mkt.rates || []).map(function (r) { var ch = r[3] ? (r[2] - r[3]) / r[3] * 100 : null; return '<div class="num l' + (ch == null ? 3 : ch > 0 ? 0 : ch < 0 ? 2 : 3) + '"><div class="k">' + esc(r[0]) + ' · ' + esc(r[1]) + '</div><div class="v">' + r[2] + '</div><div class="k">' + (ch == null ? "" : (ch > 0 ? "▲ " : ch < 0 ? "▼ " : "") + Math.abs(Math.round(ch * 100) / 100) + "%") + ' · ' + esc(r[4]) + '</div></div>'; }).join("") + '</div><p style="font-size:12px;color:var(--muted);margin:8px 0 0">Bank of Canada daily averages - indicative, not for trading. ▲ = the currency got dearer in CAD.</p></div>';
+        if ((mkt.idx || []).length) a += '<div class="card"><h2>COMMODITIES · WEEKLY INDEX</h2>' + mkt.idx.map(function (x) { var v = x[2] || [], n = v.length, ch = n > 1 && v[n - 2] ? (v[n - 1] - v[n - 2]) / v[n - 2] * 100 : null; return '<div class="row l' + (ch == null ? 3 : ch >= 0 ? 0 : 2) + '"><i></i><div><b>' + esc(x[0]) + '</b><span>' + (n ? v[n - 1] : "–") + (ch == null ? "" : " · " + (ch >= 0 ? "▲ " : "▼ ") + Math.abs(Math.round(ch * 10) / 10) + "% on the week") + ' · week of ' + esc(x[1]) + '</span></div></div>'; }).join("") + '</div>';
+      } else if (mkt && mkt.off) a += '<div class="card"><h2>MARKETS</h2>Exchange rates are off on the PC - turn them on in Trading to see them here.</div>';
     } else {
-      a += '<div class="card"><h2>RUN A CHECK ON THE PC</h2><input id="tgt" placeholder="Site or address (for checks that need one)" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="tools">' +
-        [["speedtest", "Speed test"], ["checkup", "Full checkup"], ["ping", "Ping"], ["tcpping", "TCP ping"], ["bloat", "Lag under load"], ["mtu", "MTU per hop"], ["mtr", "Loss per hop (1 min)"], ["route", "Which route"], ["port", "Is a port open"], ["http", "Website check"], ["httptime", "Website timing"], ["doh", "DNS check"], ["gateway", "Gateway"], ["ip46", "IPv4 vs IPv6"], ["clock", "Clock check"], ["teams", "Teams / calls"]]
-          .map(function (x) { return '<button data-run="' + x[0] + '"' + (busy ? " disabled" : "") + '>' + esc(x[1]) + '</button>'; }).join("") + '</div>' + (busy ? '<p style="margin:10px 0 0;color:var(--sub)">Running ' + esc(busy) + ' on the PC...</p>' : '') + '</div>';
+      // the PC's own tool list (catalog), grouped like the desktop Toolbox; each tool opens its own form (AM-CG-290..300)
+      if (open && !toolOf(open)) open = "";
+      if (open) {
+        var T = toolOf(open), dv = drafts[open] || T.in.map(function (x) { return x[2] || ""; });
+        a += '<div class="card"><button data-back="1" style="padding:6px 12px;font-size:13px;margin-bottom:10px">‹ All checks</button><h1 style="font-size:20px;margin:0 0 4px">' + esc(T.t) + '</h1><p style="color:var(--muted);font-size:13px;margin:0 0 12px">' + esc(T.g) + (T.h ? " · runs on the PC for a minute or more" : "") + '</p>' +
+          T.in.map(function (x, k) { return '<label style="display:block;font-size:13px;color:var(--sub);margin:0 0 4px">' + esc(x[0]) + '</label><input data-k="' + k + '" value="' + esc(dv[k] === "@broker" ? "" : dv[k] || "") + '" placeholder="' + esc(dv[k] === "@broker" ? "your broker (from Trading on the PC)" : x[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">'; }).join("") +
+          '<button class="main" data-go="' + esc(open) + '" style="width:100%"' + (busy ? " disabled" : "") + '>' + (busy ? "Running " + esc(busy) + " on the PC..." : "Run on the PC") + '</button></div>';
+      } else if (!cat.length) a += '<div class="card"><h2>CHECKS</h2>Getting the list from the PC...</div>';
+      else {
+        a += '<div class="card"><h2>RUN A CHECK ON THE PC · ' + cat.length + '</h2><input id="find" placeholder="Find a check (ping, mtu, dns, wifi...)" value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false">';
+        var q = findQ.toLowerCase(), groups = [];
+        cat.forEach(function (t) { if (q && (t.t + " " + t.g + " " + t.id).toLowerCase().indexOf(q) < 0) return; var gq = groups.filter(function (x) { return x.g === t.g; })[0]; if (!gq) groups.push(gq = { g: t.g, l: [] }); gq.l.push(t); });
+        groups.forEach(function (gq) {
+          var on = q || openG[gq.g];
+          a += '<button data-grp="' + esc(gq.g) + '" style="display:flex;width:100%;justify-content:space-between;background:none;color:var(--ink);padding:12px 2px;border-top:1px solid var(--line);border-radius:0"><span>' + esc(gq.g) + '</span><span style="color:var(--muted)">' + gq.l.length + (on ? " ▴" : " ▾") + '</span></button>';
+          if (on) a += '<div class="tools" style="margin:0 0 10px">' + gq.l.map(function (t) { return '<button data-open="' + esc(t.id) + '">' + esc(t.t) + '</button>'; }).join("") + '</div>';
+        });
+        a += '</div>';
+      }
       results.forEach(function (r) {
-        var worst = (r.rows || []).reduce(function (m, o) { var l = +o[0]; return l >= 0 && l <= 2 ? Math.max(m, l) : m; }, -1);
-        a += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + (worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT") + '</span><h1>' + esc(r.title) + '</h1><div style="margin-top:10px">' +
-          (r.rows || []).map(function (o) { var l = +o[0]; if (l === -1) return '<h2 style="margin:14px 0 4px">' + esc(String(o[1]).toUpperCase()) + '</h2>'; if (l > 3) return '<div class="row"><span style="font-family:ui-monospace,monospace;font-size:12px">' + esc(o[2]) + '</span></div>'; return '<div class="row l' + (l >= 0 && l <= 2 ? l : 3) + '"><i></i><div><b>' + esc(o[1]) + '</b><span>' + esc(o[2]) + '</span>' + (o[3] && l >= 1 && l <= 2 ? '<em>' + esc(o[3]) + '</em>' : '') + '</div></div>'; }).join("") + '</div></div>';
+        var rows = r.rows || [], worst = rows.reduce(function (m, o) { var l = +o[0]; l = l === 7 ? 1 : l; return l >= 0 && l <= 2 ? Math.max(m, l) : m; }, -1);
+        a += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + (worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT") + '</span><h1>' + esc(r.title) + '</h1>' + hopsSvg(r.hops) + '<div style="margin-top:10px">' +
+          rows.map(function (o) {
+            var l = +o[0]; if (l === -1) return '<h2 style="margin:14px 0 4px">' + esc(String(o[1]).toUpperCase()) + '</h2>';
+            if (l > 3) return '<div class="row' + (l === 7 ? ' l1' : '') + '"><i></i><div class="mono">' + (o[1] ? '<b>' + esc(o[1]) + '</b>' : '') + esc(o[2]) + (o[3] ? '<em>' + esc(o[3]) + '</em>' : '') + '</div></div>';
+            return '<div class="row l' + (l >= 0 && l <= 2 ? l : 3) + '"><i></i><div><b>' + esc(o[1]) + '</b><span>' + esc(o[2]) + '</span>' + (o[3] ? '<em' + (l >= 1 && l <= 2 ? '' : ' style="color:var(--muted)"') + '>' + esc(o[3]) + '</em>' : '') + '</div></div>';
+          }).join("") + '</div></div>';
       });
     }
     a += '<p class="note">🔒 Encrypted end to end with the code you scanned. Nothing is saved on this phone or on the relay. <button id="bye" style="padding:4px 10px;font-size:12px">End session</button></p>';
@@ -197,12 +250,28 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
     var b = e.target.closest("button"); if (!b) return;
     if (b.id === "bye") { send({ t: "bye" }); setTimeout(function () { ws.close(); }, 300); return; }
     var mu = b.getAttribute("data-mute"); if (mu) { send({ t: "mute", m: +mu }); return; }
+    var grp = b.getAttribute("data-grp"); if (grp) { openG[grp] = !openG[grp]; draw(); return; }
+    var lg = b.getAttribute("data-lgrp"); if (lg) { openG["L" + lg] = !openG["L" + lg]; draw(); return; }
+    var ls = b.getAttribute("data-lesson"); if (ls) { lesson = ls; draw(); window.scrollTo(0, 0); return; }
+    if (b.getAttribute("data-lback")) { lesson = ""; draw(); return; }
+    var an = b.getAttribute("data-ans"); if (an != null && lesson) { picked[lesson] = an; draw(); return; }
+    if (b.getAttribute("data-back")) { keepDraft(); open = ""; draw(); return; }
+    var op = b.getAttribute("data-open"); if (op) { open = op; draw(); return; }
+    var go = b.getAttribute("data-go"); if (go) { if (busy) return; keepDraft(); run(go, drafts[go] || []); return; }
     var id = b.getAttribute("data-run"); if (!id || busy) return;
-    var needs = ["ping", "tcpping", "mtu", "mtr", "route", "port", "http", "httptime", "doh"].indexOf(id) >= 0, tg = $("tgt") ? $("tgt").value.trim() : "";
-    if (needs && !tg) { if (view !== "tools") { view = "tools"; tabsOn(); draw(); } toast("Type a site or address first"); var i = $("tgt"); if (i) i.focus(); return; }
-    if (id !== "feltslow") { busy = b.textContent; busyAt = Date.now(); view = "tools"; tabsOn(); draw(); }
-    send({ t: "run", id: id, in: needs ? [tg] : [] });
+    var given = b.getAttribute("data-in"), T = toolOf(id);
+    if (given) { run(id, JSON.parse(given)); return; }
+    // a quick button for a check with boxes opens its form (with the PC's defaults); one without boxes just runs
+    if (T && T.in.length) { if (b.getAttribute("data-ask")) drafts[id] = T.in.map(function (x, k) { return k === 0 ? "@broker" : x[2] || ""; }); open = id; view = "tools"; tabsOn(); draw(); return; }
+    run(id, []);
   });
+  function run(id, vals) {
+    if (id !== "feltslow") { var T = toolOf(id); busy = T ? T.t : id; busyAt = Date.now(); view = "tools"; tabsOn(); draw(); }
+    send({ t: "run", id: id, in: vals });
+  }
+  // what you typed stays while you move around (in this page only - nothing is saved on the phone) (AM-CG-299)
+  function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); return e ? (e.value.trim() || (drafts[open] && drafts[open][k] === "@broker" ? "@broker" : "")) : ""; }); }
+  $("app").addEventListener("input", function (e) { if (e.target.id === "find") { findQ = e.target.value; var pos = e.target.selectionStart; draw(); var f = $("find"); if (f) { f.focus(); try { f.setSelectionRange(pos, pos); } catch (x) {} } } });
   start().catch(function () { fail("Couldn't start", "This browser blocked the encryption. Try Safari or Chrome."); });
 })();
 </script>
