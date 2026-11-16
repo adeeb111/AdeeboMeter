@@ -152,13 +152,21 @@ img.logo{width:34px;height:34px;flex:none;display:block}
 #web{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
 .wbar{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--edge)}.wbar b{font-size:19px}
 #wframe{flex:1;width:100%;border:0;background:var(--bg)}
-body.inweb #app{display:none}@media (max-width:767px){body.inweb nav.tabs{display:none}}
+body.inweb #app{display:none}@media (max-width:767px){body.inweb #web{bottom:calc(66px + env(safe-area-inset-bottom))}}
 @media (min-width:768px){#web{left:224px;bottom:0}}
 .pre{background:var(--well,rgba(127,127,127,.12));border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;margin:8px 0 0;overflow:auto;max-height:340px}
 .wk{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:150px;margin-top:14px}.wk>div{display:flex;flex-direction:column;align-items:center;min-width:0}.wk .bar{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}.wk i{display:block;width:70%;border-radius:6px 6px 2px 2px}.wk b{font-size:12px;margin-top:4px}.wk small{font-size:11px;color:var(--sub)}
 textarea.in{resize:vertical;min-height:120px}
 .pcrow2{display:flex;align-items:center;gap:12px;width:100%;border:1px dashed var(--edge);background:none;color:var(--ink);font:inherit;text-align:left;border-radius:16px;padding:12px 14px;margin:8px 0 14px;cursor:pointer}.pcrow2 .tx{flex:1}.pcrow2 b{display:block}.pcrow2 .tx span{color:var(--sub);font-size:13px}
 .tog.on{background:var(--blue)}#qrbox svg{width:100%;height:auto;border-radius:8px}
+/* themes (16 Nov): the desktop app's palettes - Neon, Midnight, Sunset, Mint - over Dark/Light; text on the accent by contrast */
+:root[data-pal="neon"]{--bg:#07080D;--bg2:#10121A;--card:#10121A;--card2:#161925;--edge:#262B3D;--edge2:#00E5FF;--ink:#EEF4FF;--sub:#9AA2BA;--mut:#4C536C;--blue:#00E5FF;--green:#5CFFB0;--amber:#FFE066;--red:#FF7A99;--well:#07080D;--onblue:#04121A}
+:root[data-pal="midnight"]{--bg:#08142B;--bg2:#0E1F3D;--card:#0E1F3D;--card2:#12264A;--edge:#22396A;--edge2:#3DE0C2;--ink:#E8F1FF;--sub:#9DB0CF;--mut:#4A6290;--blue:#3DE0C2;--green:#7EE8B0;--amber:#F5D06A;--red:#FF9A9A;--well:#08142B;--onblue:#061A1A}
+:root[data-pal="sunset"]{--bg:#1A1016;--bg2:#241720;--card:#241720;--card2:#2C1C27;--edge:#43303B;--edge2:#FF7A59;--ink:#FBEFF2;--sub:#C9AEBA;--mut:#6B4C5A;--blue:#FF7A59;--green:#86E5A6;--amber:#FFD36E;--red:#FF9C9C;--well:#1A1016;--onblue:#FFFFFF}
+:root[data-pal="mint"]{--bg:#EEF7F4;--bg2:#FFFFFF;--card:#FFFFFF;--card2:#F2FAF7;--edge:#CBE3DA;--edge2:#0E9C78;--ink:#14302A;--sub:#4F6A62;--mut:#9FBAB1;--blue:#0E9C78;--green:#116329;--amber:#7D4E00;--red:#B42318;--well:#EEF7F4;--onblue:#FFFFFF}
+:root[data-pal] body{background:var(--bg)}:root[data-pal] nav.tabs{background:var(--bg2)}
+:root[data-pal] .seg button.on,:root[data-pal] .act.main i,:root[data-pal] .btn:not(.ghost),:root[data-pal] nav.tabs button.on,:root[data-pal] .voices button.on,:root[data-pal] .mini button.on{color:var(--onblue,#fff)}
+.thg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}.thb{border:2px solid var(--edge);border-radius:14px;padding:8px;text-align:left;font:inherit;cursor:pointer}.thb.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}.thb b{display:block;font-size:14px;margin-top:6px}.thb i{display:block;border-radius:10px;padding:8px}.thb i u{display:block;height:6px;border-radius:3px;margin-bottom:5px}.thb i em{display:block;height:14px;width:45%;border-radius:7px;margin-top:7px}
 /* views (v4): the View chip and companion button, one result per view, game and service cards, quick buttons, activity, sheets */
 .vrow{display:flex;gap:8px;align-items:center;margin:0 0 12px}
 .vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:left}
@@ -622,7 +630,7 @@ textarea.in{resize:vertical;min-height:120px}
   function needPc(what) { return '<div class="card empty">' + ic("pc", 52) + '<b>' + (phase === "ended" ? "Your PC isn't connected" : "Connect your PC") + '</b><p>' + esc(what) + '</p><button class="btn" data-go="pair">How to connect</button></div>'; }
 
   $("wback").innerHTML = ic("back", 26); $("wback").onclick = webBack;
-  $("wframe").addEventListener("load", function () { try { var d = this.contentDocument; d.documentElement.setAttribute("data-theme", document.documentElement.getAttribute("data-theme")); d.documentElement.classList.add("inapp"); [].forEach.call(d.querySelectorAll('a[href]'), function (a) { var h = a.getAttribute("href"); if (/(^|\/)app(\.html)?([#?]|$)/.test(h) || h === "/" || h === "./" || h === "../") a.addEventListener("click", function (e) { e.preventDefault(); S.tab = webFrom === "web" ? "more" : webFrom; draw(); }); else if (/^https?:/.test(h) && a.host !== location.host) a.target = "_blank"; }); } catch (e) {} });
+  $("wframe").addEventListener("load", function () { try { var d = this.contentDocument; d.documentElement.setAttribute("data-theme", document.documentElement.getAttribute("data-theme")); var pl = document.documentElement.getAttribute("data-pal"); if (pl) d.documentElement.setAttribute("data-pal", pl); else d.documentElement.removeAttribute("data-pal"); d.documentElement.classList.add("inapp"); [].forEach.call(d.querySelectorAll('a[href]'), function (a) { var h = a.getAttribute("href"); if (/(^|\/)app(\.html)?([#?]|$)/.test(h) || h === "/" || h === "./" || h === "../") a.addEventListener("click", function (e) { e.preventDefault(); S.tab = webFrom === "web" ? "more" : webFrom; draw(); }); else if (/^https?:/.test(h) && a.host !== location.host) a.target = "_blank"; }); } catch (e) {} });
   setTimeout(function () { var sp = $("splash"); if (sp) { sp.className = "out"; setTimeout(function () { sp.remove(); }, 400); } }, 450);
 
   // ---------------------------------------------------------------- Install (the app is the website, kept on the phone)
@@ -766,8 +774,11 @@ textarea.in{resize:vertical;min-height:120px}
   function viewBody() { var v = S.view || "everyday"; return v === "gaming" ? verdictGaming() : v === "calls" ? verdictList("call") : v === "stream" ? verdictList("svc") : v === "trade" ? verdictTrade() : verdictEveryday() + (v === "fix" ? '<button class="btn ghost" data-go="tools">' + ic("tools", 18) + ' Every tool</button>' : ''); }
   function quick() {
     var on = phase === "live", q = function (go, icn, k, t, act) { return '<button ' + (act ? 'data-act="' + act + '"' : 'data-go="' + go + '"') + '><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; };
-    return '<div class="qa2"><div class="qh">ON THIS PHONE</div><div class="qa">' + q("", "report", "k-pc", "Report", "report") + q("walk", "walk", "k-walk", "Wi-Fi walk") + q("learn", "book", "k-learn", "Learn") + '<button data-web="/games.html" data-title="Games"><span class="ic qc k-games">' + ic("game", 18) + '</span>Games</button></div>' +
-      '<div class="qh">' + (on ? "YOUR PC" : 'WITH YOUR PC <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div></div>';
+    var w = function (url, icn, k, t) { return '<button data-web="' + url + '" data-title="' + t + '"><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; }, tl = function (id, icn, k, t) { return '<button data-tool="' + id + '"><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; };
+    var more = '<div class="qh">MORE</div><div class="qa">' + q("walk", "walk", "k-walk", "Wi-Fi walk") + w("/games.html", "game", "k-games", "Games") + (hasPc() ? w("/learn/", "book", "k-learn", "Learn") + w("/live.html", "chart", "k-live", "Live") : q("addpc", "pc", "k-pc", "Connect to PC") + q("tools", "tools", "k-tools", "All tools")) + '</div>';
+    if (!hasPc()) return '<div class="qa2"><div class="qh">ON THIS PHONE</div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "Report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' + more + '</div>';
+    return '<div class="qa2"><div class="qh">ON THIS PHONE</div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "Report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' +
+      '<div class="qh">' + (on ? "YOUR PC" : 'WITH YOUR PC <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div>' + more + '</div>';
   }
   function actList(n) {
     var L = DAY.d === today() ? DAY.act : [];
@@ -1759,7 +1770,8 @@ textarea.in{resize:vertical;min-height:120px}
     var M = { everyday: ["Everyday", "Plain answers and the next step."], advanced: ["Advanced", "Plus addresses, ping, router delay and loss."], engineer: ["Engineer", "Plus every check, raw rows and details."] };
     return hdr("Settings", "", S.tab === "settings" && S.from ? S.from : "more") +
       '<h2>How much to show</h2><div class="card"><div class="seg" style="box-shadow:none;margin:0;background:transparent;padding:0">' + Object.keys(M).map(function (m) { return '<button data-mode="' + m + '" class="' + (S.mode === m ? 'on' : '') + '">' + M[m][0] + '</button>'; }).join("") + '</div><p style="color:var(--sub);font-size:14px;margin:10px 2px 0">' + M[S.mode][1] + '</p></div>' +
-      '<h2>Look</h2><div class="card"><div class="sw"><div class="tx"><b>Theme</b></div><select data-sel="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">Same as phone</option></select></div><div class="sw"><div class="tx"><b>High contrast</b></div><button class="tog' + (S.hc ? ' on' : '') + '" data-tog="hc" aria-label="High contrast"></button></div></div>' +
+      '<h2>Look</h2><div class="card"><p class="fine" style="margin:0 0 6px">The same themes as AdeeboMeter on your PC. Kept on this phone.</p><div class="thg">' + LOOKS.map(function (l) { var on = S.theme === l[0] || (S.theme === "system" && l[0] === (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")); return '<button class="thb' + (on ? " on" : "") + '" data-look="' + l[0] + '" style="background:' + l[2] + '"><i style="background:' + l[3] + '"><u style="width:60%;background:' + l[4] + '"></u><u style="width:85%;background:' + l[5] + ';opacity:.6"></u><em style="background:' + l[6] + '"></em></i><b style="color:' + l[4] + '">' + l[1] + '</b></button>'; }).join("") + '</div>' +
+      '<div class="sw"><div class="tx"><b>Match my phone</b><span>Dark at night, Light by day</span></div><button class="tog' + (S.theme === "system" ? ' on' : '') + '" data-look="' + (S.theme === "system" ? "dark" : "system") + '" aria-label="Match my phone"></button></div><div class="sw"><div class="tx"><b>High contrast</b></div><button class="tog' + (S.hc ? ' on' : '') + '" data-tog="hc" aria-label="High contrast"></button></div></div>' +
       thisPc() +
       '<p class="note">These choices are kept in this browser only.</p>';
   };
@@ -1783,17 +1795,21 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.learn = function () { location.href = "/learn/"; return ""; };
 
   // ---------------------------------------------------------------- frame
+  var PALS = ["neon", "midnight", "sunset", "mint"];
+  // [id, name, background, card, text, sub text, accent] - the desktop's colours (src/Ui/Theme.cs)
+  var LOOKS = [["dark", "Dark", "#0B1426", "#121F38", "#E8EEF9", "#93A6C6", "#2F7BF6"], ["light", "Light", "#F3F6FB", "#FFFFFF", "#13223D", "#4A5C7A", "#1F6FEB"], ["neon", "Neon", "#07080D", "#10121A", "#EEF4FF", "#9AA2BA", "#00E5FF"],
+    ["midnight", "Midnight", "#08142B", "#0E1F3D", "#E8F1FF", "#9DB0CF", "#3DE0C2"], ["sunset", "Sunset", "#1A1016", "#241720", "#FBEFF2", "#C9AEBA", "#FF7A59"], ["mint", "Mint", "#EEF7F4", "#FFFFFF", "#14302A", "#4F6A62", "#0E9C78"]];
   var TABS = [["home", "home", "Home"], ["devices", "wifi", "Devices"], ["pc", "pc", "PC"], ["tools", "tools", "Tools"], ["more", "more", "More"]];
   var TABS0 = [["home", "home", "Home"], ["tools", "tools", "Tools"], ["@/learn/", "book", "Learn"], ["@/live.html", "chart", "Live"], ["more", "more", "More"]];   // no PC: every tab works on its own
   var TABOF = { tool: "tools", calc: "tools", addpc: "home", activity: "home", web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
   function draw() {
-    var th = S.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : S.theme;
-    document.documentElement.setAttribute("data-theme", th); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
+    var pal = PALS.indexOf(S.theme) >= 0 ? S.theme : "", th = pal ? (pal === "mint" ? "light" : "dark") : S.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : S.theme;
+    document.documentElement.setAttribute("data-theme", th); if (pal) document.documentElement.setAttribute("data-pal", pal); else document.documentElement.removeAttribute("data-pal"); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
     $("app").innerHTML = S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : ""); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join();
-    if (S.tab === "web" && !hasPc()) cur = "@" + webHome;
+    if (S.tab === "web") cur = !hasPc() && /\/learn/.test(webHome) ? "@/learn/" : !hasPc() && /\/live/.test(webHome) ? "@/live.html" : "home";
     var tb = $("tabs"); if (tb.getAttribute("data-built") !== tkey) tb.removeAttribute("data-built");
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
     else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
@@ -1808,7 +1824,7 @@ textarea.in{resize:vertical;min-height:120px}
 
   document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
     if (A("data-alsopc")) { alsoRun(A("data-alsopc")); return; }
@@ -1842,6 +1858,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (A("data-pct")) { S.pcTab = A("data-pct"); if (S.tab !== "pc") S.tab = "pc"; draw(); return; }
     if (A("data-dv")) { S.devView = A("data-dv"); draw(); return; }
     if (A("data-mode")) { S.mode = A("data-mode"); wr("am-mode", S.mode === "everyday" ? "" : S.mode); draw(); return; }
+    if (A("data-look")) { S.theme = A("data-look"); wr("am-theme", S.theme === "dark" ? "" : S.theme); draw(); return; }
     if (A("data-tog")) { var k = A("data-tog"); S[k] = !S[k]; if (k === "hc") wr("am-hc", S.hc ? "1" : ""); draw(); return; }
     if (A("data-grp")) { openG[A("data-grp")] = !openG[A("data-grp")]; draw(); return; }
     if (A("data-open")) { open = A("data-open"); S.tab = "pc"; S.pcTab = "checks"; draw(); window.scrollTo(0, 0); return; }

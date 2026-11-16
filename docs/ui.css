@@ -62,3 +62,13 @@ body[data-sec="files"] .card h2{margin-top:0}
 body[data-sec="live"] .card p.src{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body[data-sec] #amv-pick-at{display:none}
 body[data-sec="files"] .btn{width:100%}
+/* inside the phone app the app's own five tabs are at the bottom - this page's section bar would be a second one */
+.inapp .ui-sbar{display:none}.inapp body[data-sec]{padding-bottom:24px}
+/* themes: the desktop app's palettes (src/Ui/Theme.cs), the same colours; set by ui.js from the app's Look setting */
+:root[data-pal="neon"]{--page:#07080D;--card:#10121A;--line:#262B3D;--ink:#EEF4FF;--sub:#9AA2BA;--blue:#00E5FF;--ui-blue:#00E5FF;--tint:#0C2A33;--green:#5CFFB0;--amber:#FFE066;--red:#FF7A99;--onblue:#04121A;--c-learn:#FF9EF0;--c-games:#FF9EF0;--c-live:#00E5FF;--c-files:#00E5FF}
+:root[data-pal="midnight"]{--page:#08142B;--card:#0E1F3D;--line:#22396A;--ink:#E8F1FF;--sub:#9DB0CF;--blue:#3DE0C2;--ui-blue:#3DE0C2;--tint:#10355A;--green:#7EE8B0;--amber:#F5D06A;--red:#FF9A9A;--onblue:#061A1A;--c-learn:#FFC38A;--c-games:#FFC38A;--c-live:#3DE0C2;--c-files:#3DE0C2}
+:root[data-pal="sunset"]{--page:#1A1016;--card:#241720;--line:#43303B;--ink:#FBEFF2;--sub:#C9AEBA;--blue:#FF7A59;--ui-blue:#FF7A59;--tint:#3E2230;--green:#86E5A6;--amber:#FFD36E;--red:#FF9C9C;--onblue:#FFFFFF;--c-learn:#FFD27A;--c-games:#FFD27A;--c-live:#FF7A59;--c-files:#FF7A59}
+:root[data-pal="mint"]{--page:#EEF7F4;--card:#FFFFFF;--line:#CBE3DA;--ink:#14302A;--sub:#4F6A62;--blue:#0E9C78;--ui-blue:#0E9C78;--tint:#E0F5EE;--green:#116329;--amber:#7D4E00;--red:#B42318;--onblue:#FFFFFF;--c-learn:#9A4A00;--c-games:#9A4A00;--c-live:#0E9C78;--c-files:#0E9C78}
+:root[data-pal] body{background:var(--page)}
+:root[data-pal] .tabs button[aria-selected=true],:root[data-pal] .ui-seg button[aria-selected="true"],:root[data-pal] .ui-seg button.on,:root[data-pal] .ui-sbar a.on,:root[data-pal] .ui-hero,:root[data-pal] .ui-hero .tag,:root[data-pal] .cta,:root[data-pal] .btn.go,:root[data-pal] .chips button.on,:root[data-pal] .ui-pills button.on,:root[data-pal] .sum,:root[data-pal] .sum .btn,:root[data-pal] .sum .err{color:var(--onblue,#fff)}
+:root[data-pal] .sum small span{color:var(--onblue,#fff)!important}

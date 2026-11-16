@@ -49,6 +49,25 @@ input{font:inherit;color:var(--ink);background:var(--page);border:1px solid var(
 .cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:11px 20px;margin:18px 10px 0 0}
 .err{color:var(--sub);font-style:italic}
 footer{margin-top:36px;color:var(--sub);font-size:14px}
+.pickrow{display:flex;gap:10px;margin:0 0 12px}.dd{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:6px 10px}.dd small{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--sub);text-transform:uppercase}
+.dd select{font:inherit;font-weight:700;color:var(--ink);background:transparent;border:0;padding:2px 0;margin:0;width:100%;outline:none;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:calc(100% - 9px) 55%,calc(100% - 4px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:18px}
+.dd select option{color:#111}
+.sum{background:var(--blue);color:#fff;border-radius:14px;padding:12px 14px}.sum p{margin:2px 0 0;font-size:14px;opacity:.9}.sum .tagl{font-size:11px;font-weight:800;letter-spacing:.06em;opacity:.85}.sum .bigl{font-size:21px;font-weight:800;line-height:1.25;margin:2px 0}.sum small span{color:#fff!important;opacity:.9}.sum .err{color:#fff}.sum .btn{color:#fff;border-color:rgba(255,255,255,.5)}
+.mrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.mrow:last-child{border-bottom:0}.mrow .n{flex:1;min-width:0}.mrow .n b{display:block;font-weight:600}.mrow .n span{color:var(--sub);font-size:13px}.mrow .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;min-width:74px}.mrow .v div{font-size:13px;font-weight:700}
+.spark{width:56px;height:22px;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:5px 10px;cursor:pointer}.chips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.g2{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}.g2:last-child{border-bottom:0}.g2 .tm{flex:1;min-width:0}.g2 .tm div{display:flex;justify-content:space-between;gap:8px}.g2 .tm small{color:var(--sub);font-size:13px}.g2 .when{width:92px;text-align:right;color:var(--sub);font-size:13px}.g2 .when.lv{color:var(--red);font-weight:700}
+.me{font-weight:800;color:var(--blue)}tr.me td{color:var(--blue);font-weight:700}tr.th td{color:var(--sub);font-size:13px;font-weight:700}
+.lgname{font-size:12px;font-weight:800;color:var(--sub);letter-spacing:.04em;text-transform:uppercase;margin-top:8px}
+#table td:nth-child(2){text-align:left;padding-left:8px}#table td:first-child{width:28px}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.big3 div{background:var(--tint);border-radius:10px;padding:8px 4px;font-size:18px;font-weight:800}.big3 small{display:block;font-size:12px;color:var(--sub);font-weight:700}
+.yr .spark{width:100%;height:56px;margin:10px 0 4px}
+.rng{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}.rng i{flex:1;height:6px;border-radius:3px;background:var(--line);position:relative}.rng b{position:absolute;top:-4px;width:14px;height:14px;border-radius:50%;background:var(--blue);margin-left:-7px}
+.seg3{display:flex;gap:4px;background:var(--tint);border-radius:12px;padding:3px;margin:0 0 8px}.seg3 button{flex:1;font:inherit;font-weight:700;font-size:14px;border:0;background:none;color:var(--sub);border-radius:9px;padding:7px 0;cursor:pointer}.seg3 button.on{background:var(--blue);color:#fff}:root[data-pal] .seg3 button.on{color:var(--onblue,#fff)}
+.krow{border-top:1px solid var(--line);padding:10px 0}.krow:first-child{border-top:0}.krow .kh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.krow .kh b{font-weight:700}.krow .kh span{font-size:13px;color:var(--sub)}.krow .kin{display:flex;gap:6px;margin-top:6px}.krow .kin input{font-size:14px}.krow .kst{font-size:13px;margin-top:4px}
+.tk{font-weight:800;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
+.card.nolg,.dd.nolg{display:none!important}
+.btn.sm{padding:4px 12px;font-size:14px;margin-left:6px}
 @media (max-width:640px){.cards{grid-template-columns:1fr}h1{font-size:25px}.big{font-size:34px}}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -58,14 +77,14 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <body data-sec="live">
 <main>
 <nav class="top"><b><a href="./" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a></nav>
-<header class="ui-head"><span class="ui-chip" style="--k:var(--c-live)" data-ic="live" data-sz="28"></span><div><h1>Live</h1><p>Markets, scores and weather at a glance.</p></div></header>
+<header class="ui-head"><span class="ui-chip" style="--k:var(--c-live)" data-ic="live" data-sz="28"></span><div><h1>Live</h1><p>A day's summary - markets, scores, weather.</p></div></header>
 <div style="display:flex;gap:10px;align-items:center;margin:-4px 0 14px;min-height:44px"><span id="amv-face"></span><p id="amv-say" style="font-weight:600;margin:0" aria-live="polite"></p></div>
 <div class="tabs ui-seg" role="tablist">
 <button role="tab" data-t="all" aria-selected="true">All</button>
 <button role="tab" data-t="mkt" aria-selected="false">Markets</button>
 <button role="tab" data-t="sport" aria-selected="false">Scores</button>
 <button role="tab" data-t="wx" aria-selected="false">Weather</button>
-<button role="tab" data-t="net" aria-selected="false">Connection</button>
+<button role="tab" data-t="net" aria-selected="false">Net</button>
 </div>
 <div class="cards">
 
@@ -74,40 +93,63 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <p class="src">Measured right now, from this page to the nearest Cloudflare server</p>
 <div class="big" id="lat">…</div><p class="mut" id="latx" style="margin:2px 0 0"></p>
 <div class="row"><button class="btn" id="lagain">Test again</button></div>
-<p class="app">This is a <b>web request</b> from your browser, not a game ping - a browser can't ping game servers or your broker. <b>The app does:</b> real pings to the servers your games use, your broker's response time, and whose fault the lag is (Wi-Fi, provider or server). Gaming · Trading</p>
+<p class="app">This is a <b>web request</b> from your browser, not a game ping - a browser can't ping game servers or your broker. <b>The app does:</b> real pings to the servers your games use, your broker's response time, and whose fault the lag is (Wi-Fi, provider or server). <a href="gaming.html">Gaming</a> · <a href="trading.html">Trading</a></p>
+</section>
+
+<section class="card wide" data-k="mkt">
+<div class="pickrow"><label class="dd"><small>Prices in</small><select id="base" aria-label="Prices in"></select></label><label class="dd"><small>Show</small><select id="mshow" aria-label="Which currencies"><option value="mine">My list</option><option value="all">Every currency</option></select></label></div>
+<div class="sum" id="msum"><span class="mut">Loading…</span></div>
+</section>
+
+<section class="card" data-k="mkt">
+<h2 data-ic="chart">Stock movers</h2>
+<div class="pickrow"><label class="dd"><small>Exchange</small><select id="exch" aria-label="Exchange"><option value="us">US · NYSE and Nasdaq</option><option disabled>Toronto (TSX) - not yet</option><option disabled>London (LSE) - not yet</option><option disabled>India (NSE) - not yet</option><option disabled>Dhaka (DSE) - not yet</option></select></label></div>
+<div class="seg3" id="mvseg"><button class="on" data-mv="up">Best</button><button data-mv="dn">Worst</button><button data-mv="act">Most traded</button></div>
+<p class="src" id="mvsrc">End of day · Alpha Vantage</p>
+<div id="mv" class="mut">Loading…</div>
+</section>
+
+<section class="card" data-k="mkt">
+<h2 data-ic="dollar">Currencies</h2>
+<p class="src" id="fxsrc">Bank of Canada · ExchangeRate-API</p>
+<div id="fx" class="mut">Loading…</div>
+<div id="fxedit" hidden></div>
+<button class="btn" id="fxeditb" style="margin-top:10px">Edit my list</button>
+</section>
+
+<section class="card" data-k="mkt">
+<h2 data-ic="chart">Oil and gas</h2>
+<p class="src" id="oilsrc">Bank of Canada energy index (oil, gas, coal), weekly</p>
+<div id="oil" class="mut">Loading…</div>
+</section>
+
+<section class="card" data-k="mkt">
+<h2 data-ic="chart">Other commodities</h2>
+<p class="src" id="ixsrc">Bank of Canada commodity price index, weekly</p>
+<div id="ix" class="mut">Loading…</div>
 </section>
 
 <section class="card" data-k="mkt">
 <h2 data-ic="clock">Market hours</h2>
-<p class="src"><b>Regular weekday hours only</b> - holidays and early closes aren't shown here (the app knows them). Eastern time.</p>
+<p class="src">Regular hours only - holidays and early closes aren't shown</p>
 <div id="hours"></div>
-<p class="app"><b>The app adds:</b> holidays and early closes, a market-open check of your broker connection, and an alert if it gets slow while you trade.</p>
 </section>
 
-<section class="card" data-k="mkt">
-<h2 data-ic="dollar">Canadian dollar</h2>
-<p class="src" id="fxsrc">Bank of Canada daily rates</p>
-<table id="fx"><tr><td class="mut">Loading…</td></tr></table>
+<section class="card wide" data-k="sport">
+<div class="pickrow"><label class="dd"><small>League</small><select id="lg" aria-label="League"></select></label><label class="dd"><small>My team</small><select id="team" aria-label="My team"><option value="">None</option></select></label></div>
+<div class="sum" id="ssum"><span class="mut">Loading…</span></div>
 </section>
 
-<section class="card" data-k="mkt">
-<h2 data-ic="chart">Oil, gas and more</h2>
-<p class="src" id="ixsrc">Bank of Canada commodity price index, weekly</p>
-<table id="ix"><tr><td class="mut">Loading…</td></tr></table>
-<p class="app">Energy = oil, natural gas and coal. Live stock and oil prices need a paid licence, so this page shows the Bank of Canada's official index instead.</p>
-</section>
+<section class="card" data-k="sport" id="c-live" hidden><h2 data-ic="live" id="liveh">Live now</h2><p class="src" id="lives"></p><div id="live"></div></section>
+<section class="card" data-k="sport" id="c-today"><h2 data-ic="trophy" id="todayh">Today</h2><p class="src" id="todays"></p><div id="today" class="mut">Loading…</div></section>
+<section class="card" data-k="sport" id="c-yest"><h2 data-ic="trophy">Last night</h2><p class="src">Final scores</p><div id="yest" class="mut">Loading…</div></section>
+<section class="card" data-k="sport" id="c-table"><h2 data-ic="order">Standings</h2><p class="src" id="tables"></p><div id="table" class="mut">Loading…</div></section>
+<section class="card" data-k="sport"><h2 data-ic="file">Headlines</h2><p class="src" id="newss"></p><ul class="news" id="news"><li class="mut">Loading…</li></ul></section>
 
-<section class="card" data-k="sport">
-<h2 data-ic="trophy">NHL today</h2>
-<p class="src" id="nhlsrc">NHL scores</p>
-<div id="nhl" class="mut">Loading…</div>
-<p class="app"><b>The app adds:</b> football and cricket with your own free key, your team on the stream overlay, and whether your connection can take the stream.</p>
-</section>
-
-<section class="card" data-k="sport">
-<h2 data-ic="trophy">Sports headlines</h2>
-<p class="src">From BBC Sport - opens on their site</p>
-<ul class="news" id="news"><li class="mut">Loading…</li></ul>
+<section class="card wide" data-k="mkt sport" id="keys">
+<h2 data-ic="lock">Your own keys <span class="mut" style="font-weight:400">(optional)</span></h2>
+<p class="src" style="white-space:normal">Free keys from these services unlock more. Kept only on this phone; each goes, through our relay, to its own service for that one request - never stored or logged.</p>
+<div id="keyrows"></div>
 </section>
 
 <section class="card wide" data-k="wx">
@@ -122,7 +164,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </div>
 <a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
 <div id="amv-pick-at" style="margin:18px 0 0"></div>
-<footer>Data: Bank of Canada (rates and commodity index), NHL, BBC Sport (headlines and links), Open-Meteo (weather, CC BY 4.0). Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
+<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpha Vantage (US stock movers, end of day), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
 </main>
 <script>
 (function(){
@@ -130,50 +172,181 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 var API="https://adeebometer-live.orkoadeeb.workers.dev",$=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
 function j(p){return fetch(API+p,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()})}
-var FXN={USD:"US dollar",EUR:"Euro",GBP:"British pound",CNY:"Chinese yuan",JPY:"Japanese yen",INR:"Indian rupee",CHF:"Swiss franc",AUD:"Australian dollar",MXN:"Mexican peso",HKD:"Hong Kong dollar"};
-var IXN={ENER:"Energy (oil, gas, coal)",MTLS:"Metals and minerals",FOPR:"Forestry",AGRI:"Farm goods",BCPI:"All commodities"};
-function chg(v,p,dp){if(!v||!p)return"";var d=(v-p)/p*100;return"<span class='"+(d>0.005?"up":d<-0.005?"dn":"mut")+"'>"+(d>0?"+":"")+d.toFixed(dp||2)+"%</span>"}
 function off(){return"<span class='err'>Not available right now.</span>"}
-
 // tabs
 [].forEach.call(document.querySelectorAll(".tabs button"),function(b){b.onclick=function(){var t=b.getAttribute("data-t");
   [].forEach.call(document.querySelectorAll(".tabs button"),function(x){x.setAttribute("aria-selected",x===b)});
-  [].forEach.call(document.querySelectorAll(".card"),function(c){c.style.display=t==="all"||c.getAttribute("data-k")===t?"":"none"});
+  [].forEach.call(document.querySelectorAll(".card"),function(c){c.style.display=t==="all"||(" "+c.getAttribute("data-k")+" ").indexOf(" "+t+" ")>=0?"":"none"});
   try{history.replaceState(null,"",t==="all"?location.pathname:"#"+t)}catch(e){}}});
-var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
-
-// market hours, computed here (regular sessions; holidays are in the app)
-function etNow(){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Toronto",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),o={};p.forEach(function(x){o[x.type]=x.value});return{d:o.weekday,m:(+o.hour)*60+(+o.minute)}}
-function hours(){var n=etNow(),wk=["Sat","Sun"].indexOf(n.d)<0,open=wk&&n.m>=570&&n.m<960,h="";
-  [["Toronto (TSX)"],["New York (NYSE, Nasdaq)"]].forEach(function(x){var s;
-    if(open){var l=960-n.m;s="<span class='pill open'>Normally open</span> <span class='mut'>closes in "+(l>=60?Math.floor(l/60)+" h ":"")+(l%60)+" min</span>"}
-    else s="<span class='pill shut'>Normally closed</span> <span class='mut'>"+(wk&&n.m<570?"opens 9:30 today":"opens 9:30 next weekday")+"</span>";
-    h+="<div class='game'><span>"+x[0]+"</span><span>"+s+"</span></div>"});
-  var say=window.AMV?AMV.line(open?"market.open":"trade.closed"):"";if(say)h+="<p style='margin:8px 0 0;font-weight:600'>"+esc(say)+"</p>";
-  $("hours").innerHTML=h}
+// ---- Live v2 (Adeeb, 16 Nov): pick your currency and your league; a day's summary, not a ticker. Picks stay in this browser.
+function rd(k,d){try{var v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}}
+function wr(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+// a failed load is tried again once after a few seconds, then says so with a button (AM 16 Nov: "Not available" right after a redeploy)
+function jr(p){return j(p).catch(function(){return new Promise(function(r){setTimeout(r,2500)}).then(function(){return j(p)})})}
+function off2(fn){return"<span class='err'>Couldn't load this.</span> <button class='btn sm' data-retry='"+fn+"'>Try again</button>"}
+document.addEventListener("click",function(e){var es=e.target.closest&&e.target.closest("[data-espn]");if(es){wr("am-espn",es.getAttribute("data-espn")==="1"?"1":"");try{drawKeys()}catch(x){}scores();return}var b=e.target.closest&&e.target.closest("[data-retry]");if(b){var f=b.getAttribute("data-retry");if(f==="m")markets();else scores()}});
+function spark(v,dn){v=(v||[]).filter(function(x){return x!=null&&isFinite(x)});if(v.length<3)return"";var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),r=mx-mn||1;
+  return"<svg class='spark' viewBox='0 0 56 22' preserveAspectRatio='none' aria-hidden='true'><polyline fill='none' stroke='currentColor' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linecap='round' stroke-linejoin='round' points='"+v.map(function(x,i){return(i*56/(v.length-1)).toFixed(1)+","+(19-(x-mn)/r*16).toFixed(1)}).join(" ")+"'/></svg>"}
+function pc(a,b){if(!a||!b)return null;return(a-b)/b*100}
+function chip(d,dp){if(d==null)return"<span class='mut'>–</span>";return"<span class='"+(d>0.005?"up":d<-0.005?"dn":"mut")+"'>"+(d>0.005?"▲":d<-0.005?"▼":"")+Math.abs(d).toFixed(dp||1)+"%</span>"}
+// ---- markets
+var CUR={CAD:"Canadian dollar",USD:"US dollar",EUR:"Euro",GBP:"British pound",JPY:"Japanese yen",CNY:"Chinese yuan",INR:"Indian rupee",BDT:"Bangladeshi taka",PKR:"Pakistani rupee",LKR:"Sri Lankan rupee",NPR:"Nepalese rupee",AED:"UAE dirham",SAR:"Saudi riyal",QAR:"Qatari riyal",KWD:"Kuwaiti dinar",CHF:"Swiss franc",AUD:"Australian dollar",NZD:"New Zealand dollar",MXN:"Mexican peso",BRL:"Brazilian real",HKD:"Hong Kong dollar",SGD:"Singapore dollar",KRW:"South Korean won",SEK:"Swedish krona",NOK:"Norwegian krone",ZAR:"South African rand",TRY:"Turkish lira",TWD:"Taiwan dollar",THB:"Thai baht",IDR:"Indonesian rupiah",MYR:"Malaysian ringgit",PHP:"Philippine peso",VND:"Vietnamese dong",EGP:"Egyptian pound",NGN:"Nigerian naira",KES:"Kenyan shilling",PLN:"Polish zloty"};
+var MK=null,base=rd("am-lv-base","CAD"),mine=rd("am-lv-list","USD,EUR,GBP,INR").split(",").filter(Boolean),mshow=rd("am-lv-show","mine");
+function usdPer(c){var u=MK&&MK.all&&MK.all.usd;return u?u[c]:null}
+// the value of 1 unit of c, in base: today (ExchangeRate-API, every currency) and a week of Bank of Canada days when both are in it
+function rate(c,b){var uc=usdPer(c),ub=usdPer(b);return uc&&ub?ub/uc:null}
+function week(c,b){var s=MK&&MK.boc&&MK.boc.s;if(!s)return null;var one=function(x){return x==="CAD"?null:s[x]};var a=one(c),z=one(b),n=(a||z||[]).length;if(!n||(c!=="CAD"&&!a)||(b!=="CAD"&&!z))return null;
+  var out=[];for(var i=0;i<n;i++){var va=c==="CAD"?1:a[i],vb=b==="CAD"?1:z[i];out.push(va&&vb?va/vb:null)}return out}
+function fmt(v){return v>=100?v.toLocaleString(undefined,{maximumFractionDigits:2}):v>=1?v.toFixed(4):v.toPrecision(4)}
+function fxRows(){var list=mshow==="all"?Object.keys(CUR):mine;list=list.filter(function(c){return c!==base&&usdPer(c)});
+  if(!list.length)return"<span class='mut'>Nothing to show - add currencies with Edit my list.</span>";
+  return list.map(function(c){var v=rate(c,base),w=week(c,base),per=1;if(v&&v<0.05){per=100;v*=100}var d=w?pc(w[w.length-1],w[0]):null;
+    return"<div class='mrow'><div class='n'><b>"+esc(CUR[c]||c)+"</b><span>"+c+(per>1?" · "+per+" units":"")+"</span></div><span class='"+(d==null?"mut":d>0.005?"up":d<-0.005?"dn":"mut")+"'>"+spark(w)+"</span><div class='v'>"+(v?fmt(v):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}
+function fxEdit(){var h="<p class='src' style='margin:10px 0 6px'>Tap to add or remove - kept in this browser</p><div class='chips'>"+Object.keys(CUR).filter(function(c){return c!==base}).map(function(c){return"<button class='"+(mine.indexOf(c)>=0?"on":"")+"' data-cur='"+c+"'>"+c+"</button>"}).join("")+"</div>";$("fxedit").innerHTML=h}
+$("fxeditb").onclick=function(){var e=$("fxedit");e.hidden=!e.hidden;$("fxeditb").textContent=e.hidden?"Edit my list":"Done";if(!e.hidden)fxEdit()};
+$("fxedit").addEventListener("click",function(e){var b=e.target.closest("[data-cur]");if(!b)return;var c=b.getAttribute("data-cur"),k=mine.indexOf(c);if(k>=0)mine.splice(k,1);else mine.push(c);wr("am-lv-list",mine.join(","));fxEdit();drawM()});
+var IXN={ENER:"Oil, gas and coal",MTLS:"Metals and minerals",FOPR:"Forestry",AGRI:"Farm goods",BCPI:"All commodities"};
+function drawM(){
+  var s=$("base");if(!s.options.length){s.innerHTML=Object.keys(CUR).map(function(c){return"<option value='"+c+"'>"+c+" · "+esc(CUR[c])+"</option>"}).join("");s.value=base}
+  $("mshow").value=mshow;
+  if(!MK){return}
+  var b=MK.boc||{},a=MK.all||{},ix=MK.idx||{};
+  $("fxsrc").textContent="1 unit in "+base+(a.date?" · "+a.date:"")+" · week from the Bank of Canada";
+  $("fx").innerHTML=a.usd?fxRows():off2("m");
+  if(ix.s){var last=(ix.days||[]).slice(-1)[0];$("ixsrc").textContent="Bank of Canada commodity index · week of "+last+" · change on the week and the year";
+    var at=function(v,k){return v.length>k?v[v.length-1-k]:null};
+    var E=(ix.s.ENER||[]).filter(function(x){return x!=null}),el=E[E.length-1],hi=Math.max.apply(null,E),lo=Math.min.apply(null,E),posn=hi>lo?(el-lo)/(hi-lo)*100:50;
+    $("oilsrc").textContent="Bank of Canada energy index (oil, gas, coal) · week of "+last;
+    $("oil").innerHTML=E.length>2?"<div class='big3'><div><small>Week</small>"+chip(pc(el,at(E,1)))+"</div><div><small>Month</small>"+chip(pc(el,at(E,4)))+"</div><div><small>Year</small>"+chip(pc(el,at(E,52)||E[0]))+"</div></div>"+
+      "<div class='yr'><span class='"+(pc(el,E[0])>=0?"up":"dn")+"'>"+spark(E)+"</span></div>"+
+      "<div class='rng'><span>52-week low "+lo.toFixed(0)+"</span><i><b style='left:"+posn.toFixed(0)+"%'></b></i><span>high "+hi.toFixed(0)+"</span></div><p class='mut' style='margin:6px 0 0;font-size:13px'>Now "+el.toFixed(1)+" - "+(posn>80?"near the top of its year":posn<20?"near the bottom of its year":"mid-range for the year")+". An index (1972 = 100), not a price per barrel.</p>":off2("m");
+    $("ix").innerHTML=["MTLS","FOPR","AGRI","BCPI"].map(function(c){var v=(ix.s[c]||[]).filter(function(x){return x!=null}),l=v[v.length-1],d=pc(l,at(v,1)),y=pc(l,at(v,52)||v[0]);return"<div class='mrow'><div class='n'><b>"+IXN[c]+"</b><span>year "+(y==null?"–":(y>0?"+":"")+y.toFixed(1)+"%")+"</span></div><span class='"+(y>0?"up":y<0?"dn":"mut")+"'>"+spark(v.slice(-26))+"</span><div class='v'>"+(l?l.toFixed(1):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}else{$("ix").innerHTML=off2("m");$("oil").innerHTML=off2("m")}
+  // the one-line summary: the first currency on your list against yours, energy, and whether the markets are open
+  var c1=(mine.filter(function(c){return c!==base})[0])||(base==="USD"?"EUR":"USD"),v1=rate(c1,base),w1=week(c1,base),e=ix.s&&ix.s.ENER,ed=e?pc(e[e.length-1],e[e.length-2]):null,ey=e&&e.length>40?pc(e[e.length-1],e[0]):null,o=openNow();
+  $("msum").innerHTML=v1?"<div class='tagl'>TODAY IN ONE LINE</div><div class='bigl'>1 "+c1+" = "+fmt(v1)+" "+base+(w1?" <small>"+chip(pc(w1[w1.length-1],w1[0]))+" this week</small>":"")+"</div><p>"+(ed!=null?"Oil and gas "+(ed>=0?"up ":"down ")+Math.abs(ed).toFixed(1)+"% on the week"+(ey!=null?", "+(ey>=0?"up ":"down ")+Math.abs(ey).toFixed(0)+"% on the year":"")+" · ":"")+o+"</p>":off2("m");
+  hours();
+}
+function markets(){$("fx").innerHTML=$("ix").innerHTML=$("oil").innerHTML="<span class='mut'>Loading…</span>";jr("/markets").then(function(d){MK=d;drawM()}).catch(function(){MK=null;$("fx").innerHTML=$("ix").innerHTML=$("oil").innerHTML=$("msum").innerHTML=off2("m")})}
+$("base").onchange=function(){base=this.value;wr("am-lv-base",base);if(!$("fxedit").hidden)fxEdit();drawM()};
+$("mshow").onchange=function(){mshow=this.value;wr("am-lv-show",mshow);drawM()};
+// market hours: each exchange in its own time zone, regular sessions; the ones your currencies point at are added
+var EX=[["Toronto · New York","America/Toronto",[1,2,3,4,5],[[570,960]],"CAD,USD"],["London","Europe/London",[1,2,3,4,5],[[480,990]],"GBP"],["Frankfurt","Europe/Berlin",[1,2,3,4,5],[[540,1050]],"EUR,CHF"],["Tokyo","Asia/Tokyo",[1,2,3,4,5],[[540,690],[750,930]],"JPY"],["Hong Kong","Asia/Hong_Kong",[1,2,3,4,5],[[570,720],[780,960]],"HKD,CNY"],["Mumbai (NSE)","Asia/Kolkata",[1,2,3,4,5],[[555,930]],"INR"],["Dhaka (DSE)","Asia/Dhaka",[0,1,2,3,4],[[600,870]],"BDT"],["Karachi (PSX)","Asia/Karachi",[1,2,3,4,5],[[570,930]],"PKR"],["Sydney","Australia/Sydney",[1,2,3,4,5],[[600,960]],"AUD,NZD"]];
+function zn(tz){var p=new Intl.DateTimeFormat("en-US",{timeZone:tz,weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),o={};p.forEach(function(x){o[x.type]=x.value});return{d:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(o.weekday),m:(+o.hour)*60+(+o.minute)}}
+function hm2(m){return Math.floor(m/60)+" h "+(m%60)+" min"}
+function exState(x){var n=zn(x[1]),days=x[2],today=days.indexOf(n.d)>=0;if(today)for(var i=0;i<x[3].length;i++){var s=x[3][i];if(n.m>=s[0]&&n.m<s[1])return[1,"Open · "+hm2(s[1]-n.m)+" left"];if(n.m<s[0])return[0,"Closed · opens "+Math.floor(s[0]/60)+":"+("0"+s[0]%60).slice(-2)+" local"]}
+  for(var k=1;k<=7;k++){if(days.indexOf((n.d+k)%7)>=0)return[0,"Closed · opens "+(k===1?"tomorrow":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][(n.d+k)%7])]}return[0,"Closed"]}
+function openNow(){var st=exState(EX[0]);return"Toronto and New York "+(st[0]?"open, "+st[1].replace("Open · ","").replace(" left"," left"):"closed")}
+function hours(){var want=mine.concat([base]),h="";EX.forEach(function(x,i){if(i&&!x[4].split(",").some(function(c){return want.indexOf(c)>=0}))return;var st=exState(x);h+="<div class='game'><span>"+x[0]+"</span><span><span class='pill "+(st[0]?"open":"shut")+"'>"+esc(st[1])+"</span></span></div>"});
+  var say=window.AMV?AMV.line(exState(EX[0])[0]?"market.open":"trade.closed"):"";if(say)h+="<p style='margin:8px 0 0;font-weight:600'>"+esc(say)+"</p>";$("hours").innerHTML=h}
 if(window.AMV)AMV.onchange(hours);
-hours();setInterval(hours,30000);
+setInterval(hours,30000);
+// ---- scores
+var LGS=[["nhl","NHL","hockey"],["nba","NBA","basketball"],["nfl","NFL","football"],["mlb","MLB","baseball"],["epl","Premier League","soccer"],["ucl","Champions League","soccer"],["mls","MLS","soccer"],["cri","Cricket",""],["ten","Tennis",""],["f1","Formula 1",""]];
+var lg=rd("am-lv-lg","nhl"),SC=null;if(!LGS.some(function(x){return x[0]===lg}))lg="nhl";
+$("lg").innerHTML=LGS.map(function(x){return"<option value='"+x[0]+"'>"+x[1]+(x[2]?" · "+x[2]:"")+"</option>"}).join("");$("lg").value=lg;
+function team(){return rd("am-lv-team-"+lg,"")}
+function when(t){var d=new Date(t);return isNaN(d)?"":d.toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"})}
+function tm(x,me){var mine=!!(me&&x&&x.id&&x.id===me);return"<span"+(mine?" class='me'":"")+">"+(mine?"★ ":"")+esc(x?x.n||x.ab:"")+"</span>"}
+function gameRow(g,me){var live=g.st==="in",fin=g.st==="post";return"<div class='g2'><div class='tm'><div>"+tm(g.a,me)+"<b>"+(live||fin?esc(g.a&&g.a.s):"")+"</b></div><div>"+tm(g.h,me)+"<b>"+(live||fin?esc(g.h&&g.h.s):"")+"</b></div>"+(g.sum?"<small>"+esc(g.sum)+"</small>":"")+"</div><span class='when"+(live?" lv":"")+"'>"+(live?esc(g.det||"Live"):fin?"Final":esc(when(g.d)))+"</span></div>"}
+function mineFirst(L,me){return me?L.slice().sort(function(a,b){var x=(a.a&&a.a.id===me)||(a.h&&a.h.id===me)?0:1,y=(b.a&&b.a.id===me)||(b.h&&b.h.id===me)?0:1;return x-y}):L}
+function drawS(){
+  var d=SC,me=team(),hd=["cri","ten","f1"].indexOf(lg)>=0;
+  if(d&&d.off&&!hd){var nm0=(LGS.filter(function(x){return x[0]===lg})[0]||[])[1];$("team").parentNode.classList.add("nolg");["c-today","c-yest","c-table"].forEach(function(id){$(id).classList.add("nolg")});
+    $("ssum").innerHTML="<div class='tagl'>"+esc(nm0.toUpperCase())+"</div><div class='bigl'>"+(d.off===2?"ESPN didn't answer":"Scores come from ESPN")+"</div><p>"+(d.off===2?esc(d.why||"")+" - try again later.":"This phone would ask ESPN directly, so ESPN sees its address (as on espn.com). Kept on the phone, a few requests a day.")+"</p>"+(d.off===1?"<button class='btn' data-espn='1' style='margin-top:8px;background:#fff;color:#1F6FEB;border:0'>Turn on ESPN scores</button>":"");
+    $("news").innerHTML="<li class='mut'>Headlines come with ESPN scores.</li>";$("newss").textContent="";return}
+  ["c-today","c-yest","c-table"].forEach(function(id){$(id).classList.toggle("nolg",hd&&!(lg==="cri"&&id==="c-today"))});
+  $("team").parentNode.classList.toggle("nolg",hd);
+  if(!d){return}
+  var nm=(LGS.filter(function(x){return x[0]===lg})[0]||[])[1];
+  if(hd){$("team").parentNode.classList.add("nolg");
+    if(lg==="cri"){$("todayh").lastChild.textContent="Recent matches";var G=(d.cri&&d.cri.g)||[];$("todays").textContent="Last few days · ESPN";$("today").innerHTML=!espnOn()?"<span class='mut'>Recent matches come from ESPN.</span> <button class='btn sm' data-espn='1'>Turn on</button>":G.length?G.map(function(g){return"<div class='lgname'>"+esc(g.lg)+"</div>"+gameRow(g,"")}).join(""):"<span class='mut'>No matches in the free feed right now - see the headlines.</span>"}
+    $("ssum").innerHTML="<div class='tagl'>"+esc(nm.toUpperCase())+"</div><p>"+(lg==="cri"?"Recent results from ESPN's feed, and the day's cricket headlines.":"The day's headlines - full results on BBC Sport.")+"</p>"}
+  else{$("team").parentNode.classList.remove("nolg");$("todayh").lastChild.textContent="Today";
+    var T=d.table&&d.table.gr||[],teams=[];T.forEach(function(g){g.rows.forEach(function(r){if(r.id&&!teams.some(function(t){return t.id===r.id}))teams.push(r)})});teams.sort(function(a,b){return a.n<b.n?-1:1});
+    $("team").innerHTML="<option value=''>None</option>"+teams.map(function(t){return"<option value='"+esc(t.id)+"'>"+esc(t.n)+"</option>"}).join("");$("team").value=me;
+    var td=(d.today&&d.today.g)||[],yd=((d.yest&&d.yest.g)||[]).filter(function(g){return g.st==="post"}),nx=(d.next&&d.next.g)||[],up=td.filter(function(g){return g.st!=="post"}),done=td.filter(function(g){return g.st==="post"});
+    var showToday=up.length?up:nx;$("todays").textContent=up.length?"Times in your time zone":nx.length?"Nothing left today - the next week":"";
+    $("today").innerHTML=d.today&&d.today.error?off2("s"):showToday.length?mineFirst(showToday,me).slice(0,10).map(function(g){return gameRow(g,me)}).join(""):"<span class='mut'>No games scheduled.</span>";
+    var fin=done.concat(yd);$("yest").innerHTML=d.yest&&d.yest.error?off2("s"):fin.length?mineFirst(fin,me).slice(0,10).map(function(g){return gameRow(g,me)}).join(""):"<span class='mut'>No games yesterday.</span>";
+    var grp=T.filter(function(g){return g.rows.some(function(r){return r.id===me})})[0]||T[0];
+    $("tables").textContent=grp?grp.n+(T.length>1?" · "+T.length+" groups":""):"";
+    $("table").innerHTML=d.table&&d.table.error?off2("s"):grp?"<table><tr class='th'><td>#</td><td>Team</td><td>GP</td><td>"+(grp.rows[0]&&grp.rows[0].pts?"Pts":"W-L")+"</td></tr>"+grp.rows.slice(0,10).map(function(r,i){return"<tr"+(r.id===me?" class='me'":"")+"><td>"+(i+1)+"</td><td>"+esc(r.n)+"</td><td>"+esc(r.gp)+"</td><td>"+esc(r.pts||(r.w+"-"+r.l))+"</td></tr>"}).join("")+"</table>":"<span class='mut'>No table this time of year.</span>";
+    // your team's line on top
+    var my=me&&teams.filter(function(t){return t.id===me})[0],last=me&&fin.filter(function(g){return(g.a&&g.a.id===me)||(g.h&&g.h.id===me)})[0],nxt=me&&up.concat(nx).filter(function(g){return(g.a&&g.a.id===me)||(g.h&&g.h.id===me)})[0],pos=grp&&me?grp.rows.map(function(r){return r.id}).indexOf(me):-1;
+    if(my){var res="";if(last){var us=last.a.id===me?last.a:last.h,th=last.a.id===me?last.h:last.a,w=+us.s>+th.s;res=(w?"Won ":+us.s===+th.s?"Drew ":"Lost ")+esc(us.s)+"-"+esc(th.s)+" vs "+esc(th.n)}
+      $("ssum").innerHTML="<div class='tagl'>★ "+esc(my.n.toUpperCase())+" · "+esc(nm)+"</div><div class='bigl'>"+(res||"No result in the last day")+"</div><p>"+(nxt?"Next: "+esc(when(nxt.d))+" vs "+esc((nxt.a.id===me?nxt.h:nxt.a).n):"No game in the next week")+(pos>=0?" · "+(pos+1)+(["st","nd","rd"][pos]||"th")+" in "+esc(grp.n):"")+"</p>"}
+    else $("ssum").innerHTML="<div class='tagl'>"+esc(nm.toUpperCase())+"</div><div class='bigl'>"+(up.length?up.length+" game"+(up.length>1?"s":"")+" today":nx.length?"Next games in the coming week":"No games today")+"</div><p>"+(fin.length?fin.length+" final score"+(fin.length>1?"s":"")+" since yesterday · ":"")+"Pick your team to see it first.</p>"}
+  var n=d.news||{};if(!hd&&!n.items){n={items:null}}$("newss").textContent=(hd?"BBC Sport":"ESPN")+" - opens on their site";if(d.src&&d.src!=="ESPN")$("todays").textContent=($("todays").textContent||"")+" · from the "+d.src;if(!hd&&d.today&&d.today.at)$("todays").textContent=($("todays").textContent?$("todays").textContent+" · ":"")+"updated "+new Date(d.today.at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+  $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):!hd&&!espnOn()?"<li class='mut'>Headlines come from ESPN. <button class='btn sm' data-espn='1'>Turn on</button></li>":"<li>"+off2("s")+"</li>";
+}
+// ---- ESPN, asked by this phone itself (ESPN refuses our relay): only when the person turns it on - ESPN then sees this
+// phone's address, as on espn.com. Kept on the phone for 3 hours, so it's a few requests a day.
+var EPATH={nhl:"hockey/nhl",nba:"basketball/nba",nfl:"football/nfl",mlb:"baseball/mlb",epl:"soccer/eng.1",ucl:"soccer/uefa.champions",mls:"soccer/usa.1"},EA="https://site.api.espn.com/apis/";
+function espnOn(){return rd("am-espn","")==="1"}
+function eside(c){return c?{ab:String((c.team||{}).abbreviation||"").slice(0,6),n:String((c.team||{}).shortDisplayName||(c.team||{}).displayName||"").slice(0,30),id:String((c.team||{}).id||""),s:c.score!=null&&c.score!==""?String(typeof c.score==="object"?c.score.displayValue||"":c.score).slice(0,14):""}:null}
+function egames(d){return(d.events||[]).slice(0,20).map(function(e){var c=(e.competitions||[])[0]||{},cs=c.competitors||[],st=e.status||c.status||{},ty=st.type||{};
+  return{d:e.date,st:ty.state||"",det:String(ty.shortDetail||"").slice(0,40),sum:String(st.summary||"").slice(0,80),a:eside(cs.filter(function(x){return x.homeAway==="away"})[0]||cs[1]),h:eside(cs.filter(function(x){return x.homeAway==="home"})[0]||cs[0])}})}
+function etable(d){var G=d.children&&d.children.length?d.children:d.standings?[d]:[];return{gr:G.slice(0,6).map(function(g){return{n:String(g.abbreviation||g.name||"").slice(0,30),rows:((g.standings||{}).entries||[]).map(function(e){var m={};(e.stats||[]).forEach(function(x){m[x.name]=x.displayValue;m["_"+x.name]=x.value});
+  return{ab:String((e.team||{}).abbreviation||""),n:String((e.team||{}).shortDisplayName||"").slice(0,30),id:String((e.team||{}).id||""),gp:m.gamesPlayed||"",w:m.wins||"",l:m.losses||"",pts:m.points||"",seed:m._playoffSeed||m._rank||99}}).sort(function(a,b){return a.seed-b.seed}).slice(0,16)}})}}
+function ymd(t){return new Date(t).toISOString().slice(0,10).replace(/-/g,"")}
+function ej(u){return fetch(EA+u,{cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"}).then(function(r){if(!r.ok)throw new Error("ESPN answered "+r.status);return r.json()})}
+function espnLoad(k,newsOnly){var ck="am-espnc-"+k+(newsOnly?"-n":"");try{var c=JSON.parse(rd(ck,"null"));if(c&&Date.now()-c.t<3*3600e3)return Promise.resolve(c.d)}catch(e){}
+  var P=EPATH[k],now=Date.now(),job;
+  if(k==="cri")job=ej("site/v2/sports/cricket/scorepanel").then(function(d){var g=[];(d.scores||[]).forEach(function(sc){var lgn=String(((sc.leagues||[])[0]||{}).name||"").slice(0,60);egames(sc).forEach(function(x){var t=Date.parse(x.d);if(t&&Math.abs(now-t)<4*864e5&&g.length<12){x.lg=lgn;g.push(x)}})});return{cri:{at:now,g:g}}});
+  else if(newsOnly)job=ej("site/v2/sports/"+P+"/news").then(function(n){return{news:{at:now,items:(n.articles||[]).slice(0,8).map(function(a){return{t:String(a.headline||"").slice(0,200),l:String(((a.links||{}).web||{}).href||"")}}).filter(function(a){return a.t&&/^https:\/\//.test(a.l)})}}});
+  else job=Promise.all([ej("site/v2/sports/"+P+"/scoreboard"),ej("site/v2/sports/"+P+"/scoreboard?dates="+ymd(now-864e5)),ej("v2/sports/"+P+"/standings").catch(function(){return{}}),ej("site/v2/sports/"+P+"/news").catch(function(){return{}})]).then(function(r){
+    var o={lg:k,at:now,src:"ESPN",today:{at:now,g:egames(r[0])},yest:{at:now,g:egames(r[1])},table:Object.assign({at:now},etable(r[2])),news:{at:now,items:(r[3].articles||[]).slice(0,8).map(function(a){return{t:String(a.headline||"").slice(0,200),l:String(((a.links||{}).web||{}).href||"")}}).filter(function(a){return a.t&&/^https:\/\//.test(a.l)})},next:null};
+    if(!o.today.g.some(function(g){return g.st!=="post"}))return ej("site/v2/sports/"+P+"/scoreboard?dates="+ymd(now+864e5)+"-"+ymd(now+8*864e5)).then(function(x){o.next={at:now,g:egames(x)};return o},function(){return o});return o});
+  return job.then(function(d){wr(ck,JSON.stringify({t:Date.now(),d:d}));return d})}
+function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<span class='mut'>Loading…</span>"});var want=lg;jr("/scores?lg="+lg).then(function(d){if(want!==lg)return;
+    if(d.espn&&!espnOn()){d.off=1;return d}
+    if(d.espn&&lg==="cri")return espnLoad("cri").then(function(e){d.cri=e.cri;return d},function(){return d});
+    if(d.espn)return espnLoad(lg).then(function(e){return e},function(er){d.off=2;d.why=er&&er.message;return d});
+    if(espnOn()&&EPATH[lg])return espnLoad(lg,1).then(function(e){d.news=e.news;return d},function(){return d});
+    return d}).then(function(d){if(!d||want!==lg)return;SC=d;drawS()}).catch(function(){if(want!==lg)return;SC=null;["today","yest","table"].forEach(function(i){$(i).innerHTML=off2("s")});$("news").innerHTML="<li>"+off2("s")+"</li>";$("ssum").innerHTML=off2("s")})}
+$("lg").onchange=function(){lg=this.value;wr("am-lv-lg",lg);SC=null;drawS();scores()};
+$("team").onchange=function(){wr("am-lv-team-"+lg,this.value);drawS()};
+// ---- your own keys (Adeeb, 16 Nov: "keep an option for people to add their key ... same for live scores and news")
+var KEYS=[["av","Alpha Vantage","stock movers, when the shared daily copy is used up","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (100 calls a day - stops at 90)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
+function key(k){return rd("am-key-"+k,"")}
+function kreq(svc,q){var k=key(svc);if(!k)return Promise.reject(new Error("no key"));return fetch(API+"/k?svc="+svc+(q||""),{cache:"no-store",headers:{"X-Key":k}}).then(function(r){return r.json()}).then(function(d){if(d.error)throw new Error(d.error);return d})}
+function drawKeys(){$("keyrows").innerHTML="<div class='krow'><div class='kh'><b>ESPN scores</b><span>no key</span></div><span class='mut' style='font-size:13px'>NBA, NFL, soccer, cricket matches, and headlines. This phone asks ESPN itself, so ESPN sees its address. NHL and MLB come from the leagues through our relay either way.</span><div class='kin'><button class='btn"+(espnOn()?"":" go")+"' data-espn='"+(espnOn()?"0":"1")+"'>"+(espnOn()?"Turn off":"Turn on")+"</button></div></div>"+KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div></div>"}).join("")}
+$("keyrows").addEventListener("click",function(e){var b=e.target.closest("[data-ksave],[data-kdel]");if(!b)return;var s=b.getAttribute("data-ksave"),d=b.getAttribute("data-kdel");
+  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}drawKeys();refreshKeyed();return}
+  var v=$("key-"+s).value.trim();if(!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>That doesn't look like a key - letters and numbers, 8 to 80 long.</span>";return}
+  wr("am-key-"+s,v);$("kst-"+s).innerHTML="<span class='mut'>Checking…</span>";kreq(s,s==="gn"?"&q=sport":"").then(function(){drawKeys();refreshKeyed()},function(er){$("kst-"+s).innerHTML="<span class='dn'>Saved, but the service said: "+esc(er.message)+"</span>"})});
+drawKeys();
+// stock movers: the relay's shared daily copy, or your own key
+var MV=null,mvk="up";
+function drawMv(){if(!MV){return}if(MV.error){$("mv").innerHTML="<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> <a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>Add your own free key</a>";return}
+  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":"")+" · under $1 left out";
+  $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
+function movers(){var mine=!!key("av");(mine?kreq("av"):jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})).then(function(d){MV=d;MV.mine=mine;drawMv()},function(er){MV={error:1,why:er&&er.message};drawMv()})}
+$("mvseg").addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;mvk=b.getAttribute("data-mv");[].forEach.call($("mvseg").children,function(x){x.classList.toggle("on",x===b)});drawMv()});
+// live scores and more headlines with your own key, while this page is open
+var LIVE={t:null};
+function liveKind(){return(lg==="epl"||lg==="ucl")&&key("fd")?"fd":lg==="cri"&&key("cd")?"cd":""}
+function cdHits(n){var k="am-cd-"+new Date().toDateString();if(n!=null)wr(k,String(n));return+rd(k,"0")}
+function liveTick(){var k=liveKind();clearTimeout(LIVE.t);if(!k){$("c-live").hidden=true;return}$("c-live").hidden=false;
+  if(k==="cd"&&cdHits()>=90){$("live").innerHTML="<span class='mut'>Today's free CricketData calls are used up (90 of 100) - back tomorrow.</span>";return}
+  kreq(k).then(function(d){if(k==="cd")cdHits(d.hits||cdHits()+1);var want=lg==="epl"?/premier league/i:lg==="ucl"?/champions league/i:null,G=(d.g||[]).filter(function(g){return!want||want.test(g.lg)});
+    $("liveh").lastChild.textContent=k==="cd"?"Live cricket":"Live now";$("lives").textContent=(k==="cd"?"CricketData":"football-data.org")+" · your key · updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(k==="cd"?" · every 3 min":" · every minute");
+    $("live").innerHTML=G.length?G.map(function(g){return(k==="cd"?"<div class='lgname'>"+esc(g.lg)+"</div>":"")+gameRow(g,"")}).join(""):"<span class='mut'>No matches today.</span>"},
+    function(er){$("live").innerHTML="<span class='err'>"+esc(er.message)+"</span>"});
+  LIVE.t=setTimeout(function(){if(!document.hidden)liveTick();else LIVE.t=setTimeout(liveTick,15000)},k==="cd"?180000:60000)}
+var GQ={nhl:"NHL",nba:"NBA",nfl:"NFL",mlb:"MLB baseball",epl:"Premier League",ucl:"Champions League",mls:"MLS soccer",cri:"cricket",ten:"tennis",f1:"Formula 1"};
+// one GNews call per league per visit (the free key has 100 a day); drawn again from memory after that
+var GN={};
+function gnDraw(){var d=GN[lg];if(!d||!d.items||!d.items.length)return;$("newss").textContent="GNews · your key - opens on each site";
+  $("news").innerHTML=d.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a>"+(i.s?" <span class='mut' style='font-size:13px'>· "+esc(i.s)+"</span>":"")+"</li>"}).join("")}
+function moreNews(force){if(!key("gn"))return;var want=lg;if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
+function refreshKeyed(){GN={};movers();liveTick();moreNews(1)}
+var _drawS=drawS;drawS=function(){_drawS();if(SC&&key("gn"))moreNews()};
+drawM();markets();drawS();scores();movers();liveTick();
+$("lg").addEventListener("change",function(){liveTick()});
+var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
+// updated once a day on the relay - no live refresh here; the stamp says when
 
-// markets, scores, headlines
-function all(){j("/all").then(function(d){
-  var m=d.markets||{};
-  if(m.fx&&m.fx.items){$("fxsrc").textContent="Bank of Canada daily rates · "+m.fx.date+" · 1 unit in CAD";
-    $("fx").innerHTML=m.fx.items.filter(function(i){return i.v}).map(function(i){return"<tr><td>"+esc(FXN[i.c]||i.c)+"</td><td>"+i.v.toFixed(i.v<0.1?5:4)+"</td><td>"+chg(i.v,i.p)+"</td></tr>"}).join("")||"<tr><td>"+off()+"</td></tr>"}
-  else $("fx").innerHTML="<tr><td>"+off()+"</td></tr>";
-  if(m.idx&&m.idx.items){$("ixsrc").textContent="Bank of Canada commodity price index · week of "+m.idx.date+" · change vs the week before";
-    $("ix").innerHTML=m.idx.items.filter(function(i){return i.v}).map(function(i){return"<tr><td"+(i.c==="ENER"?" style='font-weight:600'":"")+">"+esc(IXN[i.c]||i.c)+"</td><td>"+i.v.toFixed(1)+"</td><td>"+chg(i.v,i.p,1)+"</td></tr>"}).join("")||"<tr><td>"+off()+"</td></tr>"}
-  else $("ix").innerHTML="<tr><td>"+off()+"</td></tr>";
-  var h=d.hockey||{};
-  var asof=function(t){return t?new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):""},old=!h.at||h.stale||Date.now()-h.at>300000;
-  if(h.games){$("nhlsrc").textContent="NHL scores · "+(h.date||"today")+" · as of "+asof(h.at)+" · this page refreshes every 2 minutes"+(old?" · not current":"");
-    $("nhl").innerHTML=h.games.length?h.games.map(function(g){var live=g.st==="LIVE"||g.st==="CRIT",fin=g.st==="FINAL"||g.st==="OFF",st;
-      if(live)st=old?"P"+(g.per||"")+" "+esc(g.clk||"")+" (at "+asof(h.at)+")":"<b class='up'>P"+(g.per||"")+" "+esc(g.clk||"")+"</b>";else if(fin)st="Final";else st=g.start?new Date(g.start).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
-      return"<div class='game'><span>"+esc(g.a)+" "+(g.as!=null&&(live||fin)?"<b>"+g.as+"</b>":"")+" @ "+esc(g.h)+" "+(g.hs!=null&&(live||fin)?"<b>"+g.hs+"</b>":"")+"</span><span>"+st+"</span></div>"}).join(""):"<span class='mut'>No games today.</span>"}
-  else $("nhl").innerHTML=off();
-  var n=d.news||{};
-  $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):"<li>"+off()+"</li>";
-}).catch(function(){["fx","ix"].forEach(function(i){$(i).innerHTML="<tr><td>"+off()+"</td></tr>"});$("nhl").innerHTML=off();$("news").innerHTML="<li>"+off()+"</li>"})}
-all();setInterval(function(){if(!document.hidden)all()},120000);
 
 // weather
 var WMO={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Freezing fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Showers",81:"Showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm, hail",99:"Thunderstorm, hail"};
