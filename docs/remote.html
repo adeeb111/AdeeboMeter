@@ -39,7 +39,7 @@ input{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-r
 .hide{display:none}
 /* widget mode: the phone as a meter next to your screen, like the PC's desktop widget */
 body.wg main{max-width:none;padding:calc(10px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom))}
-body.wg .tabs{display:none}
+body.wg .tabs,body.wg #amv-pick-at{display:none}
 .wgw{display:grid;gap:12px;min-height:calc(100vh - 30px);grid-template-rows:auto 1fr auto}
 .wgh{display:flex;align-items:center;gap:10px;font-size:15px}.wgh .dot{width:14px;height:14px;border-radius:50%;background:var(--c,var(--muted));box-shadow:0 0 0 5px var(--s,var(--grey-s))}
 .wgh b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wgh button{padding:8px 12px;font-size:13px}
@@ -55,6 +55,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
 </head>
 <body>
 <main id="app"><div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small id="left"></small></div><div class="card" id="st"><h1 style="font-size:20px;margin:0">Connecting...</h1></div></main>
+<div id="amv-pick-at" class="hide" style="text-align:center;padding:0 16px 96px;margin-top:-78px;position:relative"></div>
 <nav class="tabs hide" id="tabs"><button data-v="live" class="on">Live</button><button data-v="game">Game</button><button data-v="stream">Stream</button><button data-v="trade">Trading</button><button data-v="tools">Checks</button><button data-v="learn">Learn</button></nav>
 <div id="toast"></div>
 <script>
@@ -66,7 +67,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function toast(t) { var e = $("toast"); e.textContent = t; e.className = "on"; clearTimeout(toast.h); toast.h = setTimeout(function () { e.className = ""; }, 2200); }
-  function fail(head, more) { document.body.classList.remove("wg", "stale"); keepAwake(false); $("tabs").className = "tabs hide"; $("app").innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card verdict l3"><h1>' + esc(head) + '</h1><p style="color:var(--sub);margin:8px 0 0">' + esc(more || "") + '</p></div>'; }
+  function fail(head, more) { document.body.classList.remove("wg", "stale"); var pk = document.getElementById("amv-pick-at"); if (pk) pk.className = "hide"; keepAwake(false); $("tabs").className = "tabs hide"; $("app").innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card verdict l3"><h1>' + esc(head) + '</h1><p style="color:var(--sub);margin:8px 0 0">' + esc(more || "") + '</p></div>'; }
   function b64u(b) { var s = ""; b = new Uint8Array(b); for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
   function unb64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; var r = atob(s), b = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) b[i] = r.charCodeAt(i); return b; }
   function cat() { var n = 0, i; for (i = 0; i < arguments.length; i++) n += arguments[i].length; var o = new Uint8Array(n), p = 0; for (i = 0; i < arguments.length; i++) { o.set(arguments[i], p); p += arguments[i].length; } return o; }
@@ -129,12 +130,12 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
         var pcKey = await subtle.importKey("raw", pcPk, { name: "ECDH", namedCurve: "P-256" }, false, []);
         var z = new Uint8Array(await subtle.digest("SHA-256", await subtle.deriveBits({ name: "ECDH", public: pcKey }, kp.privateKey, 256)));
         tx = await lane(secret, z, 2); rx = await lane(secret, z, 1);
-        $("tabs").className = "tabs"; draw(); return;
+        $("tabs").className = "tabs"; var pk = $("amv-pick-at"); pk.className = ""; if (window.AMV) AMV.picker(pk); draw(); return;
       }
       var plain = m.s ? await rx.open(m.s) : null;
       if (plain === null) { fail("Session closed to be safe", "A message didn't check out."); ws.close(); return; }
       var c; try { c = JSON.parse(plain); } catch (e) { return; }
-      if (c.t === "live") { live = c; liveAt = Date.now(); [[hD, c.down], [hU, c.up], [hP, c.ping]].forEach(function (x) { x[0].push(x[1] == null ? null : x[1]); if (x[0].length > 120) x[0].shift(); });
+      if (c.t === "live") { live = c; liveAt = Date.now(); if (window.AMV && c.who) AMV.follow(c.who); [[hD, c.down], [hU, c.up], [hP, c.ping]].forEach(function (x) { x[0].push(x[1] == null ? null : x[1]); if (x[0].length > 120) x[0].shift(); });
         if (view === "live" || view === "game" || view === "stream" || view === "trade" || view === "widget") draw(); else left(); }
       else if (c.t === "result") { if (c.rid && c.rid === curRid) { busy = ""; curRid = ""; } else if (busy) c.late = 1; results.unshift(c); results = results.slice(0, 5); view = "tools"; tabsOn(); draw(); }
       else if (c.t === "mkt") { mkt = c; if (view === "trade") draw(); }
@@ -161,6 +162,8 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   function st(head, more) { $("app").innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small id="left"></small></div><div class="card verdict l3"><h1>' + esc(head) + '</h1><p style="color:var(--sub);margin:8px 0 0">' + esc(more) + '</p></div>'; }
 
   // ---- drawing
+  // the companion's words (the PC's voice unless picked here) - only the words around the numbers change
+  function V(k, v) { return window.AMV ? AMV.line(k, v) : ""; }
   function ms(v, u) { return v == null ? "–" : (Math.round(v * 10) / 10) + '<small> ' + (u || "ms") + '</small>'; }
   function mb(v) { return v == null ? "–" : (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10) + '<small> Mb/s</small>'; }
   function lvOf(v, ok, bad) { return v == null ? 3 : v >= bad ? 2 : v >= ok ? 1 : 0; }
@@ -207,7 +210,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     if (view === "widget") { drawWidget(); return; }
     var a = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small id="left"></small></div>', L = live;
     if (view === "live") {
-      if (!L) a += '<div class="card"><h2>LIVE</h2>Waiting for the first reading...</div>';
+      if (!L) a += '<div class="card"><h2>LIVE</h2>' + esc(V("idle") || "Waiting for the first reading...") + '</div>';
       else {
         a += '<div class="card verdict l' + (L.lv >= 0 && L.lv <= 2 ? L.lv : 3) + '"><span class="tag">' + esc(L.chip || "") + '</span><h1>' + esc(L.head || "") + '</h1></div>';
         a += '<div class="card"><h2>RIGHT NOW</h2><div class="grid">' + num("Download", mb(L.down), 3) + num("Upload", mb(L.up), 3) + num("Ping (internet)", ms(L.ping), lvOf(L.ping, 80, 200)) + num("Router", ms(L.gw), lvOf(L.gw, 20, 80)) +
@@ -221,7 +224,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
       if (!g) a += '<div class="card verdict l3"><h1>No game being watched</h1><p style="color:var(--sub);margin:8px 0 0">Pick your games in Gamer on the PC - their server pings show up here while you play.</p></div>';
       else {
         var glv = g.grade === "Competitive" ? 0 : g.grade === "Casual" ? 1 : g.grade === "Laggy" ? 2 : 3;
-        a += '<div class="card verdict l' + glv + '"><span class="tag">' + esc(g.grade) + '</span><h1>' + esc(g.name) + ' · ' + esc(g.srv) + '</h1><p style="color:var(--sub);margin:6px 0 0">' + (g.on === "1" ? "Playing now" : "Watching, not playing") + '</p></div>';
+        a += '<div class="card verdict l' + glv + '"><span class="tag">' + esc(g.grade) + '</span><h1>' + esc(g.name) + ' · ' + esc(g.srv) + '</h1><p style="color:var(--sub);margin:6px 0 0">' + (g.on === "1" ? "Playing now" : "Watching, not playing") + (glv <= 2 ? " · " + esc(V(glv === 0 ? "game.good" : "game.lag", g.now != null ? Math.round(g.now) + " ms" : null)) : "") + '</p></div>';
         a += '<div class="card"><h2>SERVER PING</h2><div class="grid">' + num("Now", ms(g.now), lvOf(g.now, 60, 120)) + num("Average", ms(g.avg), lvOf(g.avg, 60, 120)) + num("Jitter", ms(g.jit), lvOf(g.jit, 10, 25)) + num("Loss", g.loss == null ? "–" : Math.round(g.loss * 10) / 10 + "<small> %</small>", lvOf(g.loss, 1, 3)) + '</div>' + spark(g.hist) + '<p style="font-size:13px;color:var(--muted);margin:8px 0 0">Last minute, one dot a second.</p></div>';
         a += '<div class="card"><h2>LAG RIGHT NOW?</h2><div class="tools"><button data-run="gamecompare">Compare game servers</button><button data-run="bloat">Lag under load</button></div><button class="main" data-wg="1" style="width:100%;margin-top:10px">Game meter on this phone</button></div>';
       }
@@ -268,7 +271,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
         var T = toolOf(open), dv = drafts[open] || T.in.map(function (x) { return x[2] || ""; });
         a += '<div class="card"><button data-back="1" style="padding:6px 12px;font-size:13px;margin-bottom:10px">‹ All checks</button><h1 style="font-size:20px;margin:0 0 4px">' + esc(T.t) + '</h1><p style="color:var(--muted);font-size:13px;margin:0 0 12px">' + esc(T.g) + (T.h ? " · runs on the PC for a minute or more" : "") + '</p>' +
           T.in.map(function (x, k) { return '<label style="display:block;font-size:13px;color:var(--sub);margin:0 0 4px">' + esc(x[0]) + '</label><input data-k="' + k + '" value="' + esc(dv[k] === "@broker" ? "" : dv[k] || "") + '" placeholder="' + esc(dv[k] === "@broker" ? "your broker (from Trading on the PC)" : x[1] || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">'; }).join("") +
-          (busy ? '<div style="display:flex;gap:8px"><button class="main" disabled style="flex:1">Running ' + esc(busy) + ' on the PC...</button><button data-stop="1">Stop</button></div></div>'
+          (busy ? '<div style="display:flex;gap:8px"><button class="main" disabled style="flex:1">' + esc(V("busy", busy) || "Running " + busy + " on the PC...") + '</button><button data-stop="1">Stop</button></div></div>'
             : '<button class="main" data-go="' + esc(open) + '" style="width:100%">' + (sure === open ? "Tap again to run - it loads the PC for a while" : "Run on the PC") + '</button>' + (T.h && sure !== open ? '<p style="font-size:12px;color:var(--muted);margin:6px 0 0">Heavy check: it uses the PC\'s network, disk or CPU for up to a few minutes. You\'ll be asked once more.</p>' : '') + '</div>');
       } else if (!cat.length) a += '<div class="card"><h2>CHECKS</h2>Getting the list from the PC...</div>';
       else {
@@ -330,5 +333,6 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   start().catch(function () { fail("Couldn't start", "This browser blocked the encryption. Try Safari or Chrome."); });
 })();
 </script>
+<script src="/voice.js"></script>
 </body>
 </html>

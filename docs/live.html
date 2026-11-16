@@ -59,6 +59,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <nav class="top"><b><a href="./">AdeeboMeter</a></b><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a></nav>
 <h1>Live</h1>
 <p class="tag">Today at a glance - and what the AdeeboMeter app adds when it runs on your own PC.</p>
+<p id="amv-say" style="font-weight:600;margin:-4px 0 14px;min-height:1.5em" aria-live="polite"></p>
 <div class="tabs" role="tablist">
 <button role="tab" data-t="all" aria-selected="true">Everything</button>
 <button role="tab" data-t="mkt" aria-selected="false">Markets</button>
@@ -121,6 +122,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </div>
 <a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
 <p class="mut" style="font-size:14px;margin-top:14px">With the app installed, open <b>Phone remote</b> on your PC and scan the code: your phone then shows your own PC's live numbers, game pings, broker timing and 100+ checks.</p>
+<div id="amv-pick-at" style="margin:18px 0 0"></div>
 <footer>Data: Bank of Canada (rates and commodity index), NHL, BBC Sport (headlines and links), Open-Meteo (weather, CC BY 4.0). Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
 </main>
 <script>
@@ -198,5 +200,7 @@ function lat(){$("lat").textContent="…";$("latx").textContent="";var t=[],colo
 lat();$("lagain").onclick=lat;
 })();
 </script>
+<script src="/voice.js"></script>
+<script>AMV.onchange(function(){var h=new Date().getHours(),k=h>=5&&h<11?"morning":h>=23||h<5?"late.night":"app.open",t=AMV.line(k)||AMV.line("app.open"),e=document.getElementById("amv-say");if(e&&t)e.textContent=t});AMV.picker(document.getElementById("amv-pick-at"))</script>
 </body>
 </html>

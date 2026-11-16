@@ -142,7 +142,7 @@ namespace AdeeboMeter
             var s = M.Latest; var sb = new StringBuilder("{\"t\":\"live\"");
             Num(sb, "down", s.Down); Num(sb, "up", s.Up); Num(sb, "ping", s.Ping); Num(sb, "jit", s.Jitter); Num(sb, "loss", s.LossPct); Num(sb, "gw", s.GwMs); Num(sb, "dns", s.DnsMs);
             Num(sb, "cpu", s.Cpu); Num(sb, "mem", s.Mem); sb.Append(",\"lv\":").Append(s.Level);
-            Str(sb, "head", s.Headline); Str(sb, "chip", s.Chip); Num(sb, "left", Left.TotalSeconds);
+            Str(sb, "head", s.Headline); Str(sb, "chip", s.Chip); Str(sb, "who", AdeeboMeter.Lines.Who());   // the PC's companion: the phone talks the same way unless told otherwise Num(sb, "left", Left.TotalSeconds);
             string wifi; lock (M.L) wifi = M.AdapterKind; Str(sb, "link", wifi);
             try { Game(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
             try { Trade(sb); } catch (Exception e) { if (e is OutOfMemoryException) throw; }

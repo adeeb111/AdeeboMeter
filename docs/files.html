@@ -64,6 +64,7 @@ footer{margin-top:26px;color:var(--sub);font-size:13px}
 </section>
 
 <p class="hint">Up to 300 MB on a phone (the whole file is held in memory while it's locked or opened). Bigger files: use AdeeboMeter on your PC.</p>
+<div id="amv-pick-at" style="margin:18px 0 0"></div>
 <footer>AES-256 with a 24-character code (about 119 bits), checked before anything is shown: a wrong code or a changed file opens nothing. <a href="/app.html">Back to the app</a></footer>
 </main>
 <script>
@@ -99,7 +100,7 @@ $("ob").onclick=async function(){
     var p=new Uint8Array(await S.decrypt({name:"AES-CBC",iv:b.slice(28,44)},k.enc,b.subarray(44,b.length-32)));
     var nl=p[0]<<8|p[1];if(2+nl>p.length)throw"The file is damaged.";
     var name=td.decode(p.subarray(2,2+nl)).replace(/[\\/:*?"<>|\x00-\x1f]/g,"_")||"opened-file";
-    save(new Blob([p.subarray(2+nl)]),name);say("os","Opened: "+name+" - saved to your downloads.",true);
+    save(new Blob([p.subarray(2+nl)]),name);say("os",(window.AMV&&AMV.line("decrypt.done")?AMV.line("decrypt.done")+" ":"")+"Opened: "+name+" - saved to your downloads.",true);
   }catch(e){say("os",typeof e==="string"?e:"Wrong code, or the file was changed on the way. Nothing was opened.",false)}
   $("ob").disabled=false};
 
@@ -118,7 +119,7 @@ $("lb").onclick=async function(){
     var body=new Uint8Array(44+ct.length);body.set(head,0);body.set(ct,44);
     var tag=new Uint8Array(await S.sign("HMAC",k.mac,body));
     made={blob:new Blob([body,tag],{type:"application/octet-stream"}),name:lf.name.replace(/\.[^.]*$/,"")+".adeebo",code:code};
-    $("lc").textContent=code;$("lr").style.display="block";say("ls","Locked. Save the file, then send the code a different way.",true);
+    $("lc").textContent=code;$("lr").style.display="block";say("ls",(window.AMV&&AMV.line("encrypt.done")?AMV.line("encrypt.done")+" ":"")+"Locked. Save the file, then send the code a different way.",true);
   }catch(e){say("ls","Couldn't lock it on this phone - try a smaller file.",false)}
   $("lb").disabled=false};
 $("lsave").onclick=function(){if(made)save(made.blob,made.name)};
@@ -126,5 +127,7 @@ $("lcopy").onclick=function(){if(made&&navigator.clipboard)navigator.clipboard.w
 addEventListener("pagehide",function(){made=null});
 })();
 </script>
+<script src="/voice.js"></script>
+<script>AMV.picker(document.getElementById("amv-pick-at"))</script>
 </body>
 </html>

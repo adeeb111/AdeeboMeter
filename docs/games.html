@@ -67,6 +67,7 @@ footer{margin-top:40px;color:var(--sub);font-size:14px}
 <div class="time"><div id="tb"></div></div>
 <div id="stage"></div>
 </div>
+<div id="amv-pick-at" style="margin:18px 0 0"></div>
 <footer>The games use the same lessons as the AdeeboMeter app for Windows. Nothing you play is sent anywhere.</footer>
 </main>
 <script>
@@ -110,7 +111,7 @@ function answer(b){
 function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=best(G.g),nb=best(G.g,G.score);
   $("left").textContent="";$("tb").style.width="0";
   $("stage").innerHTML="<div class='end'><p class='sub'>Your score</p><p class='big'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
-    "<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='learn/'>Lessons</a></div>";
+    (window.AMV?"<p style='font-weight:600'>"+AMV.line(G.score>b&&G.score>0?"award":"points.earned",G.score)+"</p>":"")+"<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='learn/'>Lessons</a></div>";
   $("again").onclick=function(){start(G.g)};
   $("share").onclick=function(){var names={quiz:"the quick-fire network quiz",order:"Put it in order",subnet:"Subnet sprint",ports:"Port match"},t="I scored "+G.score+" in "+names[G.g]+" on AdeeboMeter - beat that: https://adeebometer.com/games.html";
     if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){$("share").textContent="Copied"})}}
@@ -151,5 +152,7 @@ showBest();
 var h=location.hash.slice(1);if(h&&document.querySelector("[data-g='"+h+"']"))document.querySelector("[data-g='"+h+"']").click();
 })();
 </script>
+<script src="/voice.js"></script>
+<script>AMV.picker(document.getElementById("amv-pick-at"))</script>
 </body>
 </html>
