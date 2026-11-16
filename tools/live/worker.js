@@ -157,13 +157,16 @@ export default {
         const ip = req.headers.get("CF-Connecting-IP") || "", p = Number(u.searchParams.get("p")), v6 = ip.includes(":") ? 1 : 0;
         if (!ip || !Number.isInteger(p) || p < 1 || p > 65535) return reply(req, { error: "bad port" }, 0);
         if (p === 25) return reply(req, { v6, open: false, why: "25" }, -1);
-        const t0 = Date.now(); let sock = null, open = false, why = "";
+        // never await close(): on a socket that never opened it may not settle, and the visitor would get no answer at all
+        const t0 = Date.now(); let sock = null, open = false, why = "", timer = null;
         try {
-          sock = connect({ hostname: ip, port: p });
-          await Promise.race([sock.opened, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 5000))]);
+          sock = connect({ hostname: ip.includes(":") ? "[" + ip + "]" : ip, port: p });
+          sock.closed.catch(() => {});
+          await Promise.race([sock.opened, new Promise((_, no) => { timer = setTimeout(() => no(new Error("timeout")), 5000); })]);
           open = true;
-        } catch (e) { const m = String(e && e.message || e); why = /timeout/i.test(m) ? "timeout" : /cloudflare|specified address|prohibited/i.test(m) ? "cf" : "refused"; }
-        const msTaken = Date.now() - t0; try { if (sock) await sock.close(); } catch (e) {}
+        } catch (e) { const m = String(e && e.message || e); why = /timeout/i.test(m) ? "timeout" : /cloudflare|specified address|prohibited|not allowed/i.test(m) ? "cf" : "refused"; }
+        finally { if (timer) clearTimeout(timer); }
+        const msTaken = Date.now() - t0; try { if (sock) sock.close().catch(() => {}); } catch (e) {}
         return reply(req, { v6, open, why, ms: open ? msTaken : null }, -1);
       }
       // "A website from outside" - status, redirects, timing and a few headers; never the page itself. Ports 80/443/8080/8443 only,
