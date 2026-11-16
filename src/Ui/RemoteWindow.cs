@@ -8,7 +8,7 @@ namespace AdeeboMeter
     // The small window for the phone remote: the QR to scan, what's happening, and End. Closing it ends the session.
     sealed class RemoteWindow : Form
     {
-        readonly Remote r; readonly Label status, head, xfer; readonly Button end, sendFile, sendText, copy, openLink, openFolder; readonly TextBox got; readonly CheckBox autoClip; string lastFile = ""; readonly Timer t = new Timer { Interval = 1000 };
+        readonly Remote r; readonly Label status, head, xfer; readonly Button end, forget, sendFile, sendText, copy, openLink, openFolder; readonly TextBox got; readonly CheckBox autoClip; string lastFile = ""; readonly Timer t = new Timer { Interval = 1000 };
         public RemoteWindow(Remote session)
         {
             r = session; Text = L.T("Phone remote"); FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = true; StartPosition = FormStartPosition.CenterScreen; BackColor = Color.White; ShowInTaskbar = true;
@@ -16,7 +16,7 @@ namespace AdeeboMeter
             head = new Label { AutoSize = true, MaximumSize = new Size(w, 0), Font = Draw.fBodyB, ForeColor = Color.FromArgb(17, 24, 39), Location = new Point(pad, pad), Text = L.T("Watch this PC from your phone") };
             Controls.Add(head);
             int y = head.Bottom + Sc(10);
-            var m = Qr.Encode(r.Link);
+            var m = r.Link != "" ? Qr.Encode(r.Link) : null;   // a remembered phone needs no code
             if (m != null)
             {
                 var pb = new PictureBox { Image = Qr.Picture(m, Math.Max(4, Sc(5))), SizeMode = PictureBoxSizeMode.AutoSize };
@@ -24,7 +24,8 @@ namespace AdeeboMeter
                 Disposed += delegate { pb.Image.Dispose(); };
             }
             var how = new Label { AutoSize = true, MaximumSize = new Size(w, 0), Font = Draw.fSmall, ForeColor = Color.FromArgb(75, 85, 99), Location = new Point(pad, y),
-                Text = L.T("Scan it with your phone's camera. You'll see live speed, ping, game and trading numbers, and can start a check while you play.") + "\n\n" +
+                Text = r.Known != null ? L.T("A remembered phone connected with its own key (Face ID or fingerprint on the phone). Close this window to end the session.") + "\n\n" + L.T("Encrypted end to end. The relay passes messages along and keeps nothing.")
+                     : L.T("Scan it with your phone's camera. You'll see live speed, ping, game and trading numbers, and can start a check while you play.") + "\n\n" +
                        L.T("Encrypted end to end: the key is only in this code. The relay passes messages along and keeps nothing. One phone, up to 30 minutes, only after you press Allow.") };
             Controls.Add(how); y = how.Bottom + Sc(12);
             status = new Label { AutoSize = true, MaximumSize = new Size(w, 0), Font = Draw.fBodyB, ForeColor = Color.FromArgb(37, 99, 235), Location = new Point(pad, y), Text = "" };
@@ -45,7 +46,15 @@ namespace AdeeboMeter
             r.FileSaved = p => Ui(() => { lastFile = p; openFolder.Visible = true; xfer.Text = L.T("From your phone, saved to Downloads\\AdeeboMeter:") + " " + System.IO.Path.GetFileName(p); Sync(); });
             r.SendState = msg => Ui(() => { xfer.Text = msg; Sync(); });
             end = new Button { Text = L.T("End session"), AutoSize = true, Location = new Point(pad, y) }; end.Click += delegate { Close(); };
-            Controls.Add(end);
+            // remembered phones: forgetting them here deletes their keys - they need a new code after that
+            int nPhones = 0; try { nPhones = RemotePhones.Count; } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            forget = new Button { Text = L.T("Forget my phones") + " (" + nPhones + ")", AutoSize = true, Visible = nPhones > 0 };
+            forget.Click += delegate
+            {
+                if (MessageBox.Show(this, L.T("Forget every remembered phone? They'll need a new code from this window to connect again."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                RemotePhones.Clear(); forget.Visible = false; if (r.Known != null) Close(); else Sync();
+            };
+            Controls.Add(end); Controls.Add(forget);
             ClientSize = new Size(w + pad * 2, end.Bottom + pad);
             t.Tick += delegate { Sync(); }; t.Start(); Sync();
             FormClosed += delegate { t.Stop(); t.Dispose(); r.End("you closed the remote window"); };
@@ -83,7 +92,7 @@ namespace AdeeboMeter
             xfer.Location = new Point(x0, yy); if (xfer.Text != "") yy = xfer.Bottom + Sc(6);
             if (got.Visible) { got.Location = new Point(x0, yy); yy = got.Bottom + Sc(6); copy.Location = new Point(x0, yy); openLink.Location = new Point(copy.Right + Sc(8), yy); yy = copy.Bottom + Sc(6); }
             if (openFolder.Visible) { openFolder.Location = new Point(x0, yy); yy = openFolder.Bottom + Sc(6); }
-            end.Top = yy + Sc(8); ClientSize = new Size(ClientSize.Width, end.Bottom + Sc(16));
+            end.Top = yy + Sc(8); forget.Location = new Point(end.Right + Sc(8), end.Top); ClientSize = new Size(ClientSize.Width, end.Bottom + Sc(16));
         }
     }
 }

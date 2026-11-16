@@ -193,35 +193,44 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   if (location.hash) history.replaceState(null, "", location.pathname);   // the secret leaves the address bar at once
   var room = "", secret = null;
   if (hash.length === 2 && /^[A-Za-z0-9_-]{22}$/.test(hash[0]) && /^[A-Za-z0-9_-]{43}$/.test(hash[1])) { room = hash[0]; secret = unb64u(hash[1]); }
-  async function start() {
-    if (!subtle || !window.WebSocket) { phase = "ended"; why = "This browser can't do the encryption - open the link in Safari or Chrome."; draw(); return; }
-    phase = "connecting"; draw();
-    var auth = await hkdf(secret, te.encode("pair"), "adeebometer remote v1 auth", 32);
-    var kp = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
-    var pk = new Uint8Array(await subtle.exportKey("raw", kp.publicKey));
-    ws = new WebSocket(RELAY.replace(/^http/, "ws") + "/room/" + room + "?role=phone");
-    ws.onopen = async function () {
-      phase = "asking"; draw();
-      var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-      ws.send(JSON.stringify({ t: "hi", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
-    };
-    ws.onclose = function () { var was = phase; phase = "ended"; why = was === "live" ? "The session ended - the PC closed it, 30 minutes passed, or the connection dropped." : was === "asking" ? "Not connected - the code may have expired (2 minutes), the PC said no, or another phone is connected." : "Couldn't reach the relay."; tx = rx = null; busy = ""; keepAwake(false); document.body.classList.remove("wg"); if (view === "widget") S.tab = "pc"; draw(); };
-    ws.onmessage = async function (ev) {
-      var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-      if (!tx) {
-        if (m.t === "no") { why = "The PC said no."; ws.close(); return; }
-        if (m.t !== "ok") return;
-        var pcPk = unb64u(m.pk || "");
-        if (pcPk.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("ok"), pk, pcPk)))) { why = "This isn't your PC - the answer wasn't signed with the code you scanned."; ws.close(); return; }
-        var pcKey = await subtle.importKey("raw", pcPk, { name: "ECDH", namedCurve: "P-256" }, false, []);
-        var z = new Uint8Array(await subtle.digest("SHA-256", await subtle.deriveBits({ name: "ECDH", public: pcKey }, kp.privateKey, 256)));
-        tx = await lane(secret, z, 2); rx = await lane(secret, z, 1); phase = "live"; draw(); return;
-      }
-      var plain = m.s ? await rx.open(m.s) : null;
-      if (plain === null) { why = "A message didn't check out - the session was closed to be safe."; ws.close(); return; }
-      var c; try { c = JSON.parse(plain); } catch (e) { return; }
-      got(c);
-    };
+  // a session: rm and sec are the code's (or, for a remembered PC, derived from its key). quiet = one of several rooms
+  // being tried, so a room that isn't there doesn't show as a failure. Resolves true once paired.
+  function start(rm, sec, quiet) {
+    return new Promise(async function (done) {
+      if (!subtle || !window.WebSocket) { phase = "ended"; why = "This browser can't do the encryption - open the link in Safari or Chrome."; draw(); done(false); return; }
+      phase = "connecting"; draw();
+      var auth = await hkdf(sec, te.encode("pair"), "adeebometer remote v1 auth", 32);
+      var kp = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
+      var pk = new Uint8Array(await subtle.exportKey("raw", kp.publicKey)), settled = false, sock;
+      function fin(v) { if (!settled) { settled = true; done(v); } }
+      ws = sock = new WebSocket(RELAY.replace(/^http/, "ws") + "/room/" + rm + "?role=phone");
+      if (quiet) setTimeout(function () { if (!tx && !settled) { try { sock.close(); } catch (e) {} fin(false); } }, 8000);
+      sock.onopen = async function () {
+        if (!quiet) { phase = "asking"; draw(); }
+        var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
+        sock.send(JSON.stringify({ t: "hi", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+      };
+      sock.onclose = function () {
+        if (!tx) { fin(false); if (quiet) return; }
+        if (ws !== sock) return;
+        var was = phase; phase = "ended"; why = was === "live" ? "The session ended - the PC closed it, 30 minutes passed, or the connection dropped." : was === "asking" ? "Not connected - the code may have expired (2 minutes), the PC said no, or another phone is connected." : "Couldn't reach the relay."; tx = rx = null; busy = ""; keepAwake(false); document.body.classList.remove("wg"); if (view === "widget") S.tab = "pc"; draw(); };
+      sock.onmessage = async function (ev) {
+        var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+        if (!tx) {
+          if (m.t === "no") { why = "The PC said no."; sock.close(); return; }
+          if (m.t !== "ok") return;
+          var pcPk = unb64u(m.pk || "");
+          if (pcPk.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("ok"), pk, pcPk)))) { why = "This isn't your PC - the answer wasn't signed with your key."; sock.close(); return; }
+          var pcKey = await subtle.importKey("raw", pcPk, { name: "ECDH", namedCurve: "P-256" }, false, []);
+          var z = new Uint8Array(await subtle.digest("SHA-256", await subtle.deriveBits({ name: "ECDH", public: pcKey }, kp.privateKey, 256)));
+          tx = await lane(sec, z, 2); rx = await lane(sec, z, 1); phase = "live"; draw(); fin(true); return;
+        }
+        var plain = m.s ? await rx.open(m.s) : null;
+        if (plain === null) { why = "A message didn't check out - the session was closed to be safe."; sock.close(); return; }
+        var c; try { c = JSON.parse(plain); } catch (e) { return; }
+        got(c);
+      };
+    });
   }
   function got(c) {
     if (c.t === "live") {
@@ -238,6 +247,8 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     else if (c.t === "mkt") mkt = c;
     else if (c.t === "cat") { if (!cat.__part) cat = []; cat = cat.concat(c.tools || []); cat.__part = !c.last; if (view === "tools" || (view === "pc" && S.pcTab === "checks")) draw(); }
     else if (c.t === "note" || c.t === "err") { toast(c.msg || ""); if (c.t === "err" && busy && (!c.rid || c.rid === curRid)) { busy = ""; curRid = ""; if (report && report.state === "running" && c.rid === report.rid) { report.state = "done"; report.err = c.msg; } draw(); } if (c.t === "err" && c.rid && c.rid === devRid) { devRid = ""; draw(); } }
+    else if (c.t === "remembered") remembered(c);
+    else if (c.t === "rememberno") toast("Your PC said no - not remembered");
     else if (/^(fput|fok|fno|fack|fdat|fend|fdone|fcancel|text)$/.test(c.t)) xfer(c);
     else if (c.t === "bye") ws.close();
   }
@@ -324,6 +335,62 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     return h;
   }
 
+  // ---------------------------------------------------------------- Remember this PC, behind Face ID / fingerprint
+  // The PC hands over its own key for this phone (P, sealed). It's kept here only locked by the phone's own biometric
+  // (a passkey; with the PRF extension the key is encrypted by a secret only Face ID / fingerprint can release - where a
+  // browser lacks PRF, the passkey is a gate in this page only, and Settings says so). To reconnect: unlock P, then try
+  // the rooms only P can name for this 25-minute slot; the PC waits in one of them. Forget deletes it on both sides.
+  var REC = "am-pc";
+  function recLoad() { try { return JSON.parse(rd(REC) || "null"); } catch (e) { return null; } }
+  function bioOk() { return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create); }
+  async function bioCreate(pcName) {
+    var c = await navigator.credentials.create({ publicKey: { rp: { name: "AdeeboMeter", id: location.hostname }, user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "AdeeboMeter - " + pcName, displayName: "AdeeboMeter - " + pcName },
+      challenge: crypto.getRandomValues(new Uint8Array(32)), pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" }, timeout: 60000, extensions: { prf: {} } } });
+    var x = c.getClientExtensionResults ? c.getClientExtensionResults() : {};
+    return { id: new Uint8Array(c.rawId), prf: !!(x.prf && x.prf.enabled) };
+  }
+  async function bioGet(credId, salt) {
+    var o = { publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: "public-key", id: credId }], userVerification: "required", timeout: 60000, rpId: location.hostname } };
+    if (salt) o.publicKey.extensions = { prf: { eval: { first: salt } } };
+    var a = await navigator.credentials.get(o), x = a.getClientExtensionResults ? a.getClientExtensionResults() : {};
+    return x.prf && x.prf.results && x.prf.results.first ? new Uint8Array(x.prf.results.first) : null;
+  }
+  async function wrapKey(prfOut, salt) { return subtle.importKey("raw", await hkdf(salt, prfOut, "adeebometer phone key wrap v1", 32), "AES-GCM", false, ["encrypt", "decrypt"]); }
+  async function remembered(c) {
+    var P = unb64u(c.key || ""); if (P.length !== 32) return;
+    if (!bioOk()) { send({ t: "forget", id: c.id }); toast("This browser has no Face ID / fingerprint support - not remembered"); return; }
+    try {
+      var cr = await bioCreate(c.pc || "my PC"), rec = { id: c.id, pc: c.pc || "My PC", cred: b64u(cr.id), at: Date.now() };
+      if (cr.prf) {
+        var salt = crypto.getRandomValues(new Uint8Array(32)), out = await bioGet(cr.id, salt);
+        if (out) { var iv = crypto.getRandomValues(new Uint8Array(12)), wk = await wrapKey(out, salt); rec.prf = 1; rec.salt = b64u(salt); rec.iv = b64u(iv); rec.ct = b64u(new Uint8Array(await subtle.encrypt({ name: "AES-GCM", iv: iv }, wk, P))); }
+      }
+      if (!rec.prf) { rec.prf = 0; rec.key = b64u(P); }
+      wr(REC, JSON.stringify(rec)); P.fill(0); toast("Remembered. Next time: tap your PC on Home"); draw();
+    } catch (e) { send({ t: "forget", id: c.id }); toast("Not remembered - Face ID / fingerprint was cancelled"); }
+  }
+  var reconnecting = false;
+  async function reconnect() {
+    var rec = recLoad(); if (!rec || reconnecting || phase === "live" || phase === "connecting") return;
+    reconnecting = true; why = ""; draw();
+    try {
+      var P;
+      if (rec.prf) { var out = await bioGet(unb64u(rec.cred), unb64u(rec.salt)); if (!out) throw 0; P = new Uint8Array(await subtle.decrypt({ name: "AES-GCM", iv: unb64u(rec.iv) }, await wrapKey(out, unb64u(rec.salt)), unb64u(rec.ct))); }
+      else { await bioGet(unb64u(rec.cred), null); P = unb64u(rec.key); }
+      var now = Date.now() / 1000, slot = Math.floor(now / 1500), list = [];
+      for (var k = 0; k < 5; k++) list.push([slot, k]);
+      if (now - slot * 1500 < 90) for (k = 0; k < 5; k++) list.push([slot - 1, k]);   // the PC may not have moved to the new room yet
+      for (var i = 0; i < list.length; i++) {
+        var rm = b64u(await hmac(P, te.encode("room|" + list[i][0] + "|" + list[i][1]))).slice(0, 22);
+        if (await start(rm, P, true)) { reconnecting = false; draw(); return; }
+      }
+      phase = "ended"; why = "Your PC didn't answer - it may be off or asleep, or AdeeboMeter isn't running there.";
+    } catch (e) { phase = phase === "live" ? phase : "ended"; why = "Face ID / fingerprint was cancelled."; }
+    reconnecting = false; draw();
+  }
+  function forgetPc() { var rec = recLoad(); if (!rec) return; if (phase === "live") send({ t: "forget", id: rec.id }); wr(REC, ""); toast("Forgotten on this phone" + (phase === "live" ? " and your PC" : " - forget it on the PC too (Phone remote > Forget my phones)")); draw(); }
+
   // ---------------------------------------------------------------- this phone's own checks (what a browser can measure)
   // carrier (from this connection's public address, looked up by our small worker and never kept), IPv6, delay and jitter
   // to the nearest Cloudflare site, the time to look up a name, and on Android whether it's Wi-Fi or mobile data
@@ -399,6 +466,8 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
 
   // ---------------------------------------------------------------- Home
   function hero() {
+    var rec = recLoad();
+    if (rec && (phase === "none" || phase === "ended")) return '<button class="card hero" data-act="reconnect"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led ' + (reconnecting ? 'warn' : 'off') + '"></span>' + (reconnecting ? "Reconnecting..." : liveAt ? "Not live · last reading " + ago(age()) + " ago" : "Remembered") + '</span><b>' + esc(rec.pc) + '</b><span class="m">' + esc(why && !reconnecting ? why : "Tap to reconnect with Face ID or fingerprint") + '</span></div>' + ic("chev") + '</button>';
     if (phase === "none") return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led off"></span>No PC connected</span><b>Connect your PC</b><span class="m">Scan the code from AdeeboMeter on your PC</span></div>' + ic("chev") + '</button>';
     if (phase === "connecting" || phase === "asking") return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>' + (phase === "asking" ? "Waiting for you" : "Connecting...") + '</span><b>' + (phase === "asking" ? "Press Allow on your PC" : "Reaching your PC") + '</b><span class="m">Nothing is shared until you allow it</span></div></div>';
     if (phase === "ended" || !isLive()) return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Not live' + (liveAt ? ' · last reading ' + ago(age()) + ' ago' : '') + '</span><b>' + (phase === "ended" ? "Session ended" : "No reading from your PC") + '</b><span class="m">' + esc(phase === "ended" ? "Scan the code on your PC again to reconnect" : "The PC may be asleep, or its internet dropped") + '</span></div>' + ic("chev") + '</button>';
@@ -579,9 +648,16 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     return hdr("Settings", "", S.tab === "settings" && S.from ? S.from : "more") +
       '<h2>How much to show</h2><div class="card"><div class="seg" style="box-shadow:none;margin:0;background:transparent;padding:0">' + Object.keys(M).map(function (m) { return '<button data-mode="' + m + '" class="' + (S.mode === m ? 'on' : '') + '">' + M[m][0] + '</button>'; }).join("") + '</div><p style="color:var(--sub);font-size:14px;margin:10px 2px 0">' + M[S.mode][1] + '</p></div>' +
       '<h2>Look</h2><div class="card"><div class="sw"><div class="tx"><b>Theme</b></div><select data-sel="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">Same as phone</option></select></div><div class="sw"><div class="tx"><b>High contrast</b></div><button class="tog' + (S.hc ? ' on' : '') + '" data-tog="hc" aria-label="High contrast"></button></div></div>' +
-      '<h2>This PC</h2><div class="card"><div class="sw"><div class="tx"><b>Remember this PC</b><span>Reconnect with one tap and Face ID or fingerprint - coming in the next update. Today: scan the code on your PC each time.</span></div><button class="tog" disabled style="opacity:.4" aria-label="Remember this PC (coming soon)"></button></div></div>' +
+      thisPc() +
       '<p class="note">These choices are kept in this browser only.</p>';
   };
+  function thisPc() {
+    var rec = recLoad(), a = '<h2>This PC</h2><div class="card">';
+    if (rec) a += '<div class="sw"><div class="tx"><b>Remembered: ' + esc(rec.pc) + '</b><span>' + (rec.prf ? "Its key is locked by Face ID / fingerprint on this phone." : "Face ID / fingerprint opens it in this app (this browser can't lock the key itself).") + ' Your PC lets it in without asking.</span></div></div><div class="btns" style="margin-top:6px">' + (phase === "live" ? '' : '<button class="btn" data-act="reconnect">Reconnect</button>') + '<button class="btn ghost" data-act="forget" style="color:var(--red)">Forget this PC</button></div>';
+    else if (phase === "live") a += '<div class="sw"><div class="tx"><b>Remember this PC</b><span>Next time, reconnect with Face ID or fingerprint instead of a new code - from anywhere, while AdeeboMeter runs on it. Your PC asks you first.</span></div><button class="tog" data-act="remember" aria-label="Remember this PC"></button></div>' + (bioOk() ? '' : '<p style="color:var(--amber);font-size:14px;margin:6px 0 0">This browser has no Face ID / fingerprint support.</p>');
+    else a += '<div class="sw"><div class="tx"><b>Remember this PC</b><span>Connect with the code first, then turn this on here.</span></div><button class="tog" disabled style="opacity:.4" aria-label="Remember this PC"></button></div>';
+    return a + '</div>';
+  }
   VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? "It follows your PC's voice unless you pick one here." : "") + '</p>'; };
   VIEWS.pair = function () {
     return hdr(phase === "ended" ? "Reconnect" : "Connect your PC", "", "home") + (why ? '<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)">' + esc(why) + '</div>' : '') +
@@ -634,6 +710,9 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
     }
     var act = A("data-act");
     if (act === "report") { oneTap(); return; }
+    if (act === "reconnect") { reconnect(); return; }
+    if (act === "forget") { if (confirm("Forget this PC on this phone" + (phase === "live" ? " and on the PC" : "") + "?")) forgetPc(); return; }
+    if (act === "remember") { if (!bioOk()) { toast("This browser has no Face ID / fingerprint support"); return; } send({ t: "remember" }); toast("Answer the question on your PC"); return; }
     if (act === "checkup") { if (sure !== "checkup") { sure = "checkup"; toast("Tap again to run the full checkup - about a minute"); return; } sure = ""; run("checkup", []); draw(); return; }
     if (act === "stop") { if (curRid) send({ t: "stop", rid: curRid }); return; }
     if (act === "devs") { devs = null; loadDevs(); return; }
@@ -673,7 +752,7 @@ body.stale .wgc .v,body.stale .wgc svg{opacity:.35}
   if (window.AMV) AMV.onchange(function () { if (view === "home" || view === "companion") draw(); });
 
   draw();
-  if (secret) start().catch(function () { phase = "ended"; why = "This browser blocked the encryption - try Safari or Chrome."; draw(); });
+  if (secret) start(room, secret, false).catch(function () { phase = "ended"; why = "This browser blocked the encryption - try Safari or Chrome."; draw(); });
 })();
 </script>
 </body>

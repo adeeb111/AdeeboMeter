@@ -11,7 +11,7 @@
 // and RELAY in docs/remote.html.
 
 const ROOM = /^[A-Za-z0-9_-]{22}$/;
-const MAX_MSG = 64 * 1024, MAX_RATE = 40, LIFE_MS = 30 * 60 * 1000, WAIT_MS = 2 * 60 * 1000;
+const MAX_MSG = 64 * 1024, MAX_RATE = 40, LIFE_MS = 30 * 60 * 1000, WAIT_MS = 2 * 60 * 1000, LONG_WAIT_MS = 25 * 60 * 1000;   // long: a remembered phone's room
 const ORIGINS = ["https://adeebometer.com", "https://www.adeebometer.com"];
 
 export default {
@@ -35,26 +35,27 @@ export class Room {
   constructor(state) { this.state = state; this.pc = null; this.phone = null; this.born = Date.now(); }
 
   async fetch(req) {
-    const role = new URL(req.url).searchParams.get("role");
-    if (Date.now() - this.born > LIFE_MS) return new Response("expired", { status: 410 });
+    const u = new URL(req.url), role = u.searchParams.get("role"), long = role === "pc" && u.searchParams.get("wait") === "long";
+    if (this.born && this.long && role === "phone" && !this.phone && Date.now() - this.born <= LONG_WAIT_MS) this.born = Date.now();   // its 30 minutes start now
+    if (Date.now() - this.born > (this.long && !this.phone ? LONG_WAIT_MS : LIFE_MS)) return new Response("expired", { status: 410 });
     if (role === "pc" ? this.pc : this.phone) return new Response("taken", { status: 409 });   // one PC, one phone
     if (role === "phone" && !this.pc) return new Response("no pc", { status: 404 });
     const [client, server] = Object.values(new WebSocketPair());
     server.accept();
     const me = { ws: server, n: 0, t: Date.now() };
-    this[role] = me;
+    this[role] = me; if (long) this.long = true;
     const other = () => (role === "pc" ? this.phone : this.pc);
     server.addEventListener("message", (ev) => {
       const now = Date.now();
       if (now - me.t > 1000) { me.t = now; me.n = 0; }
       const size = typeof ev.data === "string" ? ev.data.length : ev.data.byteLength;
-      if (++me.n > MAX_RATE || size > MAX_MSG || now - this.born > LIFE_MS) { this.end(); return; }
+      if (++me.n > MAX_RATE || size > MAX_MSG || (this.phone && now - this.born > LIFE_MS)) { this.end(); return; }
       const o = other(); if (o) try { o.ws.send(ev.data); } catch (e) { this.end(); }
     });
     const gone = () => this.end();
     server.addEventListener("close", gone); server.addEventListener("error", gone);
     // the room's clock: no phone within 2 minutes, or 30 minutes in all, and it closes
-    await this.state.storage.setAlarm(Date.now() + (role === "pc" ? WAIT_MS : LIFE_MS - (Date.now() - this.born)));
+    await this.state.storage.setAlarm(Date.now() + (role === "pc" ? (long ? LONG_WAIT_MS : WAIT_MS) : LIFE_MS - (Date.now() - this.born)));
     return new Response(null, { status: 101, webSocket: client });
   }
 

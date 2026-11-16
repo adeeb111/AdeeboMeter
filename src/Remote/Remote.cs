@@ -24,7 +24,7 @@ namespace AdeeboMeter
     {
         // the relay's address, set when it's deployed (tools/remote). Empty: the feature says it isn't set up.
         public static readonly string Relay = "wss://adeebometer-remote.orkoadeeb.workers.dev";
-        public const string Page = "https://adeebometer.com/remote#";
+        public const string Page = "https://adeebometer.com/app#";   // the phone app (remote.html forwards there for older codes)
         public const int Minutes = 30;
         public static volatile Remote Now;                       // the one session, or null
         public static DateTime MuteUntil = DateTime.MinValue;   // "mute alerts for an hour" from the phone
@@ -35,7 +35,7 @@ namespace AdeeboMeter
 
         public enum State { Connecting, Waiting, Asking, Paired, Ended }
         public volatile State St = State.Connecting; public volatile string Why = "";
-        public readonly string Room, Link; public readonly DateTime Started = DateTime.UtcNow; public string PhoneName = "";
+        public readonly string Room, Link; public DateTime Started = DateTime.UtcNow; public string PhoneName = "";
         readonly byte[] secret, auth; readonly ClientWebSocket ws = new ClientWebSocket(); readonly CancellationTokenSource cts = new CancellationTokenSource();
         readonly Monitor M; ECDiffieHellmanCng mine; RemoteCrypto.Lane tx, rx; byte[] phonePk; readonly object sendLock = new object();
         System.Threading.Timer tick;
@@ -50,6 +50,22 @@ namespace AdeeboMeter
             M = m; secret = RemoteCrypto.Random(32); auth = RemoteCrypto.AuthKey(secret);
             Room = RemoteCrypto.B64u(RemoteCrypto.Random(16)); Link = Page + Room + "." + RemoteCrypto.B64u(secret);
         }
+        // a remembered phone (RemoteKnown.cs): the room and the handshake keyed by that phone's own key; no QR, no question -
+        // you said yes when you remembered it. The PC waits up to 25 minutes, then a new room.
+        public readonly RemotePhones.P Known; public readonly long Slot; public readonly int Attempt;
+        Remote(Monitor m, RemotePhones.P p, long slot, int attempt)
+        {
+            M = m; Known = p; Slot = slot; Attempt = attempt; secret = p.Key; auth = RemoteCrypto.AuthKey(secret);
+            Room = RemotePhones.Room(p.Key, slot, attempt); Link = ""; PhoneName = p.Name;
+        }
+        public static Remote Standby(Monitor m, RemotePhones.P p, long slot, int attempt)
+        {
+            var r = new Remote(m, p, slot, attempt);
+            if (Relay == "") { r.St = State.Ended; r.Why = "The phone relay isn't set up yet."; return r; }
+            Task.Factory.StartNew(r.Run, TaskCreationOptions.LongRunning);
+            return r;
+        }
+        public Func<string, bool> AskRemember;
         public static Remote Start(Monitor m)
         {
             var old = Now; if (old != null) old.End("a new session started");
@@ -66,7 +82,7 @@ namespace AdeeboMeter
             try
             {
                 ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
-                ws.ConnectAsync(new Uri(Relay + "/room/" + Room + "?role=pc"), cts.Token).Wait(TimeSpan.FromSeconds(15));
+                ws.ConnectAsync(new Uri(Relay + "/room/" + Room + "?role=pc" + (Known != null ? "&wait=long" : "")), cts.Token).Wait(TimeSpan.FromSeconds(15));
                 if (ws.State != WebSocketState.Open) { End("couldn't reach the relay"); return; }
                 St = State.Waiting; Note();
                 tick = new System.Threading.Timer(_ => Tick(), null, 1000, 1000);
@@ -93,14 +109,15 @@ namespace AdeeboMeter
             {
                 byte[] pk, mac; try { pk = RemoteCrypto.Unb64u(j.S("pk")); mac = RemoteCrypto.Unb64u(j.S("mac")); } catch (FormatException) { return; }
                 if (pk.Length != 65 || !RemoteCrypto.Same(mac, RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("hi"), pk))) return;   // didn't scan this QR
-                St = State.Asking; PhoneName = Clip(j.S("dev"), 40); Note();
-                bool yes = Ask != null && Ask(PhoneName);
+                St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); Note();
+                bool yes = Known != null || (Ask != null && Ask(PhoneName));   // a remembered phone proved its key: you already said yes
                 if (!yes || St != State.Asking) { Send("{\"t\":\"no\"}"); End("you said no"); return; }
                 mine = new ECDiffieHellmanCng(256); var myPk = RemoteCrypto.Raw(mine); phonePk = pk;
                 var z = RemoteCrypto.SharedHash(mine, pk);
                 tx = new RemoteCrypto.Lane(secret, z, 1); rx = new RemoteCrypto.Lane(secret, z, 2);
                 Send("{\"t\":\"ok\",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");
                 mine.Dispose(); mine = null;   // the one-time private key goes as soon as the session keys exist
+                if (Known != null) Started = DateTime.UtcNow;   // a remembered phone gets its 30 minutes from now
                 St = State.Paired; Note(); SendLive(); try { var cat = Catalog != null ? Catalog() : null; if (cat != null) foreach (var part in cat) Seal(part); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote catalog: " + e.Message); } return;
             }
             if (St != State.Paired || rx == null) return;
@@ -124,6 +141,18 @@ namespace AdeeboMeter
                 case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
                 case "stop": { var o = op; if (o != null && (c.S("rid") ?? "") == opRid) { o.Stop = true; Seal("{\"t\":\"note\",\"msg\":\"Stopping the check on the PC...\"}"); } return; }
                 case "fput": case "fok": case "fno": case "fdat": case "fack": case "fend": case "fcancel": case "text": Files(c); return;
+                // "Remember this PC" from the phone: asked here (No by default); the phone gets its own key, sealed
+                case "remember":
+                    if (Known != null) { Seal("{\"t\":\"note\",\"msg\":\"This phone is already remembered.\"}"); return; }
+                    Task.Factory.StartNew(() =>
+                    {
+                        bool yes = AskRemember != null && AskRemember(PhoneName);
+                        if (!yes || St != State.Paired) { Seal("{\"t\":\"rememberno\"}"); return; }
+                        var p = RemotePhones.Add(PhoneName);
+                        Seal("{\"t\":\"remembered\",\"id\":\"" + p.Id + "\",\"key\":\"" + RemoteCrypto.B64u(p.Key) + "\",\"pc\":\"" + J(Clip(Environment.MachineName, 40)) + "\"}");
+                    });
+                    return;
+                case "forget": { string id = Clip(c.S("id") ?? "", 24); bool gone = RemotePhones.Remove(id) || (Known != null && RemotePhones.Remove(Known.Id)); Seal("{\"t\":\"note\",\"msg\":\"" + (gone ? "This PC forgot your phone." : "Nothing to forget.") + "\"}"); return; }
                 case "bye": End("the phone ended the session"); return;
             }
         }
@@ -132,7 +161,7 @@ namespace AdeeboMeter
         {
             if (St == State.Ended) return;
             if (DateTime.UtcNow - Started > TimeSpan.FromMinutes(Minutes)) { End("30 minutes are up"); return; }
-            if (St == State.Waiting && DateTime.UtcNow - Started > TimeSpan.FromMinutes(2)) { End("no phone joined within 2 minutes"); return; }
+            if (St == State.Waiting && DateTime.UtcNow - Started > TimeSpan.FromMinutes(Known != null ? 25 : 2)) { End(Known != null ? "a new room" : "no phone joined within 2 minutes"); return; }
             if (St == State.Paired) { SendLive(); if ((DateTime.UtcNow - mktAt).TotalMinutes >= 10) { mktAt = DateTime.UtcNow; SendMarkets(); } }
             Note();
         }
