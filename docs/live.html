@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live: markets, scores, weather and your connection | AdeeboMeter</title>
+<meta name="description" content="Today at a glance: Bank of Canada exchange rates and commodity index (oil and gas), market hours, NHL scores, sports headlines, weather and an honest test of your browser's connection - and what the AdeeboMeter app adds on your own PC.">
+<link rel="canonical" href="https://adeebometer.com/live.html">
+<meta property="og:title" content="Live | AdeeboMeter">
+<meta property="og:description" content="Markets, scores, weather and your connection - a taste of what AdeeboMeter watches on your PC.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#A9B3C1;--line:#2A3340;--page:#0F141B;--card:#161C25;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#16233A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:880px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
+a{color:var(--blue);overflow-wrap:anywhere}
+.top{display:flex;gap:14px;flex-wrap:wrap;font-size:15px;margin-bottom:14px}.top b{margin-right:auto}
+h1{font-size:28px;line-height:1.2;margin:0 0 4px}
+.tag{color:var(--sub);margin:0 0 12px}
+.tabs{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;background:var(--page);padding:8px 0;margin:0 0 6px;scrollbar-width:none}
+.tabs button{font:inherit;font-size:15px;font-weight:600;white-space:nowrap;color:var(--blue);background:var(--tint);border:0;border-radius:999px;padding:7px 14px;cursor:pointer;min-height:38px}
+.tabs button[aria-selected=true]{background:var(--blue);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.card.wide{grid-column:1/-1}
+.card h2{font-size:17px;margin:0 0 2px}
+.card .src{color:var(--sub);font-size:13px;margin:0 0 10px}
+.card .app{border-top:1px solid var(--line);margin:12px 0 0;padding-top:10px;font-size:14px;color:var(--sub)}
+.card .app b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td{padding:5px 0;border-bottom:1px solid var(--line)}td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.up{color:var(--green)}.dn{color:var(--red)}.mut{color:var(--sub)}
+.big{font-size:40px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.game{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.game:last-child{border-bottom:0}.game span:last-child{color:var(--sub);font-size:14px;text-align:right}
+ul.news{margin:0;padding:0;list-style:none}ul.news li{padding:6px 0;border-bottom:1px solid var(--line)}ul.news li:last-child{border-bottom:0}
+.days{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;text-align:center;font-size:14px}
+.days div{background:var(--page);border-radius:8px;padding:6px 2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+input{font:inherit;color:var(--ink);background:var(--page);border:1px solid var(--line);border-radius:10px;padding:8px 10px;flex:1;min-width:0}
+.btn{font:inherit;font-weight:600;color:var(--blue);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer}
+.btn.go{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pill{display:inline-block;font-size:13px;font-weight:600;border-radius:999px;padding:1px 9px;margin-left:6px}
+.open{background:rgba(45,164,78,.15);color:var(--green)}.shut{background:var(--tint);color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:11px 20px;margin:18px 10px 0 0}
+.err{color:var(--sub);font-style:italic}
+footer{margin-top:36px;color:var(--sub);font-size:14px}
+@media (max-width:640px){.cards{grid-template-columns:1fr}h1{font-size:25px}.big{font-size:34px}}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<main>
+<nav class="top"><b><a href="./">AdeeboMeter</a></b><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a></nav>
+<h1>Live</h1>
+<p class="tag">Today at a glance - and what the AdeeboMeter app adds when it runs on your own PC.</p>
+<div class="tabs" role="tablist">
+<button role="tab" data-t="all" aria-selected="true">Everything</button>
+<button role="tab" data-t="mkt" aria-selected="false">Markets</button>
+<button role="tab" data-t="sport" aria-selected="false">Sports</button>
+<button role="tab" data-t="wx" aria-selected="false">Weather</button>
+<button role="tab" data-t="net" aria-selected="false">Your connection</button>
+</div>
+<div class="cards">
+
+<section class="card" data-k="net">
+<h2>Your browser → the internet</h2>
+<p class="src">Measured right now, from this page to the nearest Cloudflare server</p>
+<div class="big" id="lat">…</div><p class="mut" id="latx" style="margin:2px 0 0"></p>
+<div class="row"><button class="btn" id="lagain">Test again</button></div>
+<p class="app">This is a <b>web request</b> from your browser, not a game ping - a browser can't ping game servers or your broker. <b>The app does:</b> real pings to the servers your games use, your broker's response time, and whose fault the lag is (Wi-Fi, provider or server). <a href="gaming.html">Gaming</a> · <a href="trading.html">Trading</a></p>
+</section>
+
+<section class="card" data-k="mkt">
+<h2>Market hours <span class="mut" style="font-weight:400;font-size:14px">(regular sessions)</span></h2>
+<p class="src">Toronto and New York, Eastern time</p>
+<div id="hours"></div>
+<p class="app"><b>The app adds:</b> holidays and early closes, a market-open check of your broker connection, and an alert if it gets slow while you trade.</p>
+</section>
+
+<section class="card" data-k="mkt">
+<h2>Canadian dollar</h2>
+<p class="src" id="fxsrc">Bank of Canada daily rates</p>
+<table id="fx"><tr><td class="mut">Loading…</td></tr></table>
+</section>
+
+<section class="card" data-k="mkt">
+<h2>Commodity prices - oil, gas and more</h2>
+<p class="src" id="ixsrc">Bank of Canada commodity price index, weekly</p>
+<table id="ix"><tr><td class="mut">Loading…</td></tr></table>
+<p class="app">Energy = oil, natural gas and coal. Live stock and oil prices need a paid licence, so this page shows the Bank of Canada's official index instead.</p>
+</section>
+
+<section class="card" data-k="sport">
+<h2>NHL today</h2>
+<p class="src" id="nhlsrc">NHL scores</p>
+<div id="nhl" class="mut">Loading…</div>
+<p class="app"><b>The app adds:</b> football and cricket with your own free key, your team on the stream overlay, and whether your connection can take the stream.</p>
+</section>
+
+<section class="card" data-k="sport">
+<h2>Sports headlines</h2>
+<p class="src">From BBC Sport - opens on their site</p>
+<ul class="news" id="news"><li class="mut">Loading…</li></ul>
+</section>
+
+<section class="card wide" data-k="wx">
+<h2>Weather <span id="place" class="mut" style="font-weight:400"></span></h2>
+<p class="src">Open-Meteo forecast · your place is used for this answer only, never stored</p>
+<div id="wx" class="mut">Loading…</div>
+<div class="row"><input id="city" placeholder="Another city" aria-label="City"><button class="btn" id="find">Find</button><button class="btn" id="here">Use my location</button></div>
+<div id="cities"></div>
+<p class="app"><b>Why it's here:</b> storms and heat take out connections - worth a look when your internet drops. The app shows the weather on its desktop widget.</p>
+</section>
+
+</div>
+<a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
+<p class="mut" style="font-size:14px;margin-top:14px">With the app installed, open <b>Phone remote</b> on your PC and scan the code: your phone then shows your own PC's live numbers, game pings, broker timing and 100+ checks.</p>
+<footer>Data: Bank of Canada (rates and commodity index), NHL, BBC Sport (headlines and links), Open-Meteo (weather, CC BY 4.0). Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var API="https://adeebometer-live.orkoadeeb.workers.dev",$=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+function j(p){return fetch(API+p,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+var FXN={USD:"US dollar",EUR:"Euro",GBP:"British pound",CNY:"Chinese yuan",JPY:"Japanese yen",INR:"Indian rupee",CHF:"Swiss franc",AUD:"Australian dollar",MXN:"Mexican peso",HKD:"Hong Kong dollar"};
+var IXN={ENER:"Energy (oil, gas, coal)",MTLS:"Metals and minerals",FOPR:"Forestry",AGRI:"Farm goods",BCPI:"All commodities"};
+function chg(v,p,dp){if(!v||!p)return"";var d=(v-p)/p*100;return"<span class='"+(d>0.005?"up":d<-0.005?"dn":"mut")+"'>"+(d>0?"+":"")+d.toFixed(dp||2)+"%</span>"}
+function off(){return"<span class='err'>Not available right now.</span>"}
+
+// tabs
+[].forEach.call(document.querySelectorAll(".tabs button"),function(b){b.onclick=function(){var t=b.getAttribute("data-t");
+  [].forEach.call(document.querySelectorAll(".tabs button"),function(x){x.setAttribute("aria-selected",x===b)});
+  [].forEach.call(document.querySelectorAll(".card"),function(c){c.style.display=t==="all"||c.getAttribute("data-k")===t?"":"none"});
+  try{history.replaceState(null,"",t==="all"?location.pathname:"#"+t)}catch(e){}}});
+var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
+
+// market hours, computed here (regular sessions; holidays are in the app)
+function etNow(){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Toronto",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),o={};p.forEach(function(x){o[x.type]=x.value});return{d:o.weekday,m:(+o.hour)*60+(+o.minute)}}
+function hours(){var n=etNow(),wk=["Sat","Sun"].indexOf(n.d)<0,open=wk&&n.m>=570&&n.m<960,h="";
+  [["Toronto (TSX)"],["New York (NYSE, Nasdaq)"]].forEach(function(x){var s;
+    if(open){var l=960-n.m;s="<span class='pill open'>Open</span> <span class='mut'>closes in "+(l>=60?Math.floor(l/60)+" h ":"")+(l%60)+" min</span>"}
+    else s="<span class='pill shut'>Closed</span> <span class='mut'>"+(wk&&n.m<570?"opens 9:30 today":"opens 9:30 next weekday")+"</span>";
+    h+="<div class='game'><span>"+x[0]+"</span><span>"+s+"</span></div>"});
+  $("hours").innerHTML=h}
+hours();setInterval(hours,30000);
+
+// markets, scores, headlines
+function all(){j("/all").then(function(d){
+  var m=d.markets||{};
+  if(m.fx&&m.fx.items){$("fxsrc").textContent="Bank of Canada daily rates · "+m.fx.date+" · 1 unit in CAD";
+    $("fx").innerHTML=m.fx.items.filter(function(i){return i.v}).map(function(i){return"<tr><td>"+esc(FXN[i.c]||i.c)+"</td><td>"+i.v.toFixed(i.v<0.1?5:4)+"</td><td>"+chg(i.v,i.p)+"</td></tr>"}).join("")||"<tr><td>"+off()+"</td></tr>"}
+  else $("fx").innerHTML="<tr><td>"+off()+"</td></tr>";
+  if(m.idx&&m.idx.items){$("ixsrc").textContent="Bank of Canada commodity price index · week of "+m.idx.date+" · change vs the week before";
+    $("ix").innerHTML=m.idx.items.filter(function(i){return i.v}).map(function(i){return"<tr><td"+(i.c==="ENER"?" style='font-weight:600'":"")+">"+esc(IXN[i.c]||i.c)+"</td><td>"+i.v.toFixed(1)+"</td><td>"+chg(i.v,i.p,1)+"</td></tr>"}).join("")||"<tr><td>"+off()+"</td></tr>"}
+  else $("ix").innerHTML="<tr><td>"+off()+"</td></tr>";
+  var h=d.hockey||{};
+  if(h.games){$("nhlsrc").textContent="NHL scores · "+(h.date||"today")+" · updates every minute";
+    $("nhl").innerHTML=h.games.length?h.games.map(function(g){var live=g.st==="LIVE"||g.st==="CRIT",fin=g.st==="FINAL"||g.st==="OFF",st;
+      if(live)st="<b class='up'>P"+(g.per||"")+" "+esc(g.clk||"")+"</b>";else if(fin)st="Final";else st=g.start?new Date(g.start).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
+      return"<div class='game'><span>"+esc(g.a)+" "+(g.as!=null&&(live||fin)?"<b>"+g.as+"</b>":"")+" @ "+esc(g.h)+" "+(g.hs!=null&&(live||fin)?"<b>"+g.hs+"</b>":"")+"</span><span>"+st+"</span></div>"}).join(""):"<span class='mut'>No games today.</span>"}
+  else $("nhl").innerHTML=off();
+  var n=d.news||{};
+  $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):"<li>"+off()+"</li>";
+}).catch(function(){["fx","ix"].forEach(function(i){$(i).innerHTML="<tr><td>"+off()+"</td></tr>"});$("nhl").innerHTML=off();$("news").innerHTML="<li>"+off()+"</li>"})}
+all();setInterval(function(){if(!document.hidden)all()},120000);
+
+// weather
+var WMO={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Freezing fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Showers",81:"Showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm, hail",99:"Thunderstorm, hail"};
+function wx(q){$("wx").innerHTML="Loading…";j("/weather"+(q||"")).then(function(d){if(d.error)throw 0;var c=d.cur||{},y=d.daily||{};
+  $("place").textContent=d.place?"· "+d.place:"";
+  var risk=[95,96,99].indexOf(c.weather_code)>=0?" <span class='pill' style='background:rgba(207,34,46,.12);color:var(--red)'>Storm - outages more likely</span>":"";
+  var h="<div class='big'>"+Math.round(c.temperature_2m)+"°C</div><p style='margin:2px 0 0'>"+esc(WMO[c.weather_code]||"")+risk+" <span class='mut'>· feels "+Math.round(c.apparent_temperature)+"° · wind "+Math.round(c.wind_speed_10m)+" km/h</span></p><div class='days'>";
+  (y.time||[]).forEach(function(t,i){h+="<div><b>"+(i?new Date(t+"T12:00").toLocaleDateString([],{weekday:"short"}):"Today")+"</b><br>"+Math.round(y.temperature_2m_max[i])+"° / "+Math.round(y.temperature_2m_min[i])+"°<br><span class='mut'>"+esc(WMO[y.weather_code[i]]||"")+(y.precipitation_probability_max&&y.precipitation_probability_max[i]>=30?" · "+y.precipitation_probability_max[i]+"%":"")+"</span></div>"});
+  $("wx").innerHTML=h+"</div>"}).catch(function(){$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
+wx("");
+function use(q){$("cities").innerHTML="";wx(q)}
+$("find").onclick=function(){var q=$("city").value.trim();if(q.length<2)return;j("/place?q="+encodeURIComponent(q)).then(function(d){
+  $("cities").innerHTML=(d.places||[]).length?d.places.map(function(p,i){return"<button class='btn' data-i='"+i+"' style='margin:8px 6px 0 0'>"+esc(p.n)+" <span class='mut'>"+esc(p.r)+"</span></button>"}).join(""):"<p class='mut'>No place found.</p>";
+  [].forEach.call($("cities").querySelectorAll("button"),function(b){var p=d.places[+b.getAttribute("data-i")];b.onclick=function(){use("?lat="+p.lat+"&lon="+p.lon+"&n="+encodeURIComponent(p.n))}})}).catch(function(){$("cities").innerHTML="<p class='mut'>Search isn't available right now.</p>"})};
+$("city").onkeydown=function(e){if(e.key==="Enter")$("find").click()};
+$("here").onclick=function(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(function(p){use("?lat="+p.coords.latitude.toFixed(1)+"&lon="+p.coords.longitude.toFixed(1)+"&n=Your+location")},function(){$("cities").innerHTML="<p class='mut'>Location wasn't shared - type a city instead.</p>"},{maximumAge:600000,timeout:10000})};
+
+// the honest connection card: time small requests to the nearest Cloudflare server (first one warms up the connection)
+function lat(){$("lat").textContent="…";$("latx").textContent="";var t=[],colo="";
+  function one(i){var s=performance.now();return fetch(API+"/ping?"+i,{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){colo=d.colo||colo;if(i)t.push(performance.now()-s)})}
+  var p=one(0);for(var i=1;i<=5;i++)(function(i){p=p.then(function(){return one(i)})})(i);
+  p.then(function(){t.sort(function(a,b){return a-b});var med=t[Math.floor(t.length/2)],jit=t[t.length-1]-t[0];
+    $("lat").textContent=Math.round(med)+" ms";$("latx").textContent="median of 5 web requests"+(colo?" to Cloudflare "+colo:"")+" · spread "+Math.round(jit)+" ms"+(med<40?" · quick":med<100?" · fine for browsing":" · slow - Wi-Fi or a busy line?")}).catch(function(){$("lat").textContent="—";$("latx").textContent="Couldn't reach the test server."})}
+lat();$("lagain").onclick=lat;
+})();
+</script>
+</body>
+</html>

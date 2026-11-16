@@ -1,0 +1,6 @@
+name = "adeebometer-live"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+preview_urls = false
+# no storage, no bindings: every answer is fetched from the public source and held in memory / Cloudflare's cache for a few minutes
