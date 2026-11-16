@@ -49,7 +49,7 @@ namespace AdeeboMeter
                     float y1 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("example " + visFail); else if (y1 <= 10) bad.Add(id + ": no picture with the example");
                     if (VisState() != "EXAMPLE") bad.Add(id + ": example not marked");
                     { string dio = DrawIo(), js = Json(), csv = Csv(); if (!dio.StartsWith("<mxfile", StringComparison.Ordinal) || !dio.EndsWith("</mxfile>", StringComparison.Ordinal) || !js.TrimStart().StartsWith("{", StringComparison.Ordinal) || !csv.StartsWith("level" + CsvSep, StringComparison.Ordinal)) bad.Add(id + ": export"); if (id == "dig" || id == "owners" || id == "dnsrace") { System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "export-" + id + ".json"), js); System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "export-" + id + ".drawio"), DrawIo()); } }
-                    { string pl = PhoneLink(); if (Qr.Encode(pl) == null) bad.Add(id + ": phone link too long for a QR code (" + pl.Length + ")"); else if (id == "dig") using (var qb = Qr.Picture(Qr.Encode(pl), 6)) { qb.Save(System.IO.Path.Combine(Program.DataDir, "qr-dig-test.png")); System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "qr-dig-test.txt"), pl); } }
+                    { string pl = PhoneLink(); if (Qr.Encode(pl) == null) bad.Add(id + ": phone link too long for a QR code (" + pl.Length + ")"); else if (pl.EndsWith("!!!!!", StringComparison.Ordinal) && ResRows().Count > 0) bad.Add(id + ": phone link lost every row"); else foreach (var pr in ResRows().Where(o => o[0] == "1" || o[0] == "2")) if (!pl.Contains(E(Cut(pr[1], 40)))) bad.Add(id + ": phone link dropped a warning: " + pr[1]); else if (id == "dig") using (var qb = Qr.Picture(Qr.Encode(pl), 6)) { qb.Save(System.IO.Path.Combine(Program.DataDir, "qr-dig-test.png")); System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "qr-dig-test.txt"), pl); } }
                 }
             if (HopsNowCount("mtr") < 3) bad.Add("mtr example: hops not read");
             // the front door: words people use find the right case; tool names alone don't
@@ -585,8 +585,9 @@ namespace AdeeboMeter
             var a = VisIn(); var hops = HopsNow(); bool idle = hops.Count == 0; string dest = a[0] != "" ? a[0] : L.T("the destination");
             if (idle) hops = new List<VHop> { new VHop { N = "1", Ip = L.T("Your router"), Val = L.T("at home") }, new VHop { N = "2", Ip = L.T("Your provider"), Val = L.T("their first router") }, new VHop { N = "…", Ip = L.T("The internet"), Val = L.T("a few more routers") }, new VHop { N = "", Ip = dest, Val = L.T("the far end"), Dest = true } };
             bool mtu = tbSel == "mtu";
-            var r = VisCard(g, x, y, w, 186 * S, mtu ? "THE PATH - BIGGEST PACKET THAT GETS TO EACH ROUTER" : "THE PATH - TIME AND LOSS AT EACH ROUTER", state);
-            float bx = r.X + 44 * S, bw = r.Width - 104 * S, cy = r.Y + 74 * S;
+            // the line sits low enough that labels above it clear the card's caption
+            var r = VisCard(g, x, y, w, 208 * S, mtu ? "THE PATH · LARGEST PACKET EACH ROUTER PASSES" : "THE PATH · TIME AND LOSS AT EACH ROUTER", state);
+            float bx = r.X + 44 * S, bw = r.Width - 104 * S, cy = r.Y + 96 * S;
             // too many routers for the width: keep the start and the end, fold the middle
             int fit = Math.Max(4, (int)(bw / (78 * S))); var show = hops.ToList();
             if (show.Count + 1 > fit) { int keepEnd = 2, keepStart = fit - 1 - keepEnd - 1; var mid = new VHop { N = "…", Ip = (show.Count - keepStart - keepEnd) + " " + L.T("more"), Val = "", Lv = -1 }; show = show.Take(keepStart).Concat(new[] { mid }).Concat(show.Skip(show.Count - keepEnd)).ToList(); }
@@ -621,7 +622,7 @@ namespace AdeeboMeter
                         g.DrawString(val, Draw.fSmall, sb, new RectangleF(cx - lw / 2, cy + 41 * S, lw, 16 * S), cf);
                     }
             }
-            string foot = mtu ? L.T("Every router has a biggest packet it passes. The smallest one on the path is the path's MTU - a drop shows where a tunnel or PPPoE eats room.") : L.T("Loss at a middle router that doesn't carry on to the end isn't real - that router just doesn't bother answering pings. Loss that carries on to the end is.");
+            string foot = mtu ? L.T("Each router passes packets up to a certain size. The smallest of those sizes is the path's MTU, and a drop between two routers shows where a tunnel or PPPoE takes up room.") : L.T("Loss at a middle router that doesn't carry on to the end isn't real - that router just doesn't bother answering pings. Loss that carries on to the end is.");
             using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(foot, Draw.fSmall, sb, new RectangleF(r.X + 18 * S, r.Bottom - 40 * S, r.Width - 36 * S, 36 * S));
             return r.Bottom + 14 * S;
         }

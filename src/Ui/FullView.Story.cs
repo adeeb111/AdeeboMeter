@@ -82,7 +82,7 @@ namespace AdeeboMeter
             string isp = M.Isp;
             var box = new[] {
                 new[] { storyApp ?? "Your app", storyApp != null ? mine.Count + " connection" + (mine.Count == 1 ? "" : "s") : "you asked for it", "3" },
-                new[] { conv != null ? conv.Proto.Split(' ')[0] + " :" + conv.LocalPort : "a socket", conv != null ? "to port " + conv.RemotePort : "port " + (storyPort > 0 ? storyPort : 443), "3" },
+                new[] { conv != null ? conv.Proto.Split(' ')[0] : "a socket", conv != null ? "port " + conv.LocalPort + " → " + conv.RemotePort : "port " + (storyPort > 0 ? storyPort : 443), "3" },
                 new[] { kind == "Wi-Fi" ? (ch != "" ? "channel " + ch : "radio") : (nic != null && nic.Speed > 0 ? (nic.Speed / 1e6).ToString("0", CultureInfo.CurrentCulture) + " Mb/s" : kind), kind == "Wi-Fi" ? (sig >= 0 ? sig + "% signal" : rx > 0 ? rx + " Mb/s link" : "signal hidden") : "to the switch", kind == "Wi-Fi" && sig >= 0 && sig < 40 ? "1" : "0" },
                 new[] { ms(gms), gw != "" ? gw : "router", double.IsNaN(gms) ? "2" : gms > 50 ? "2" : gms > 15 ? "1" : "0" },
                 new[] { double.IsNaN(nms) || double.IsNaN(gms) ? "-" : "+" + Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture) + " ms", vpn ? "VPN" : "router → internet gap", double.IsNaN(nms) ? "2" : nms - gms > 120 ? "1" : "0" },
@@ -106,8 +106,8 @@ namespace AdeeboMeter
                 int ii = i; Act(travelCanvas, br, delegate { storyBox = storyBox == ii ? -1 : ii; if (ii == 3 && routeTable == null) LoadRoutes(); if (ii == 0 && m365Rows == null) LoadApps(); travelCanvas.Invalidate(); });
             }
             y += bh + 8 * S + (per < 7 ? bh + 14 * S : 0);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(storyBox < 0 ? "Click a box to see what happens there." : "", Draw.fSmall, mb, x, y);
-            y += 18 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(storyBox < 0 ? L.T("Click any step to see what happens to your data there.") : "", Draw.fSmall, mb, x, y);
+            y += 28 * S;
             if (storyApp != null && storyIp != "")
             {
                 // AM-CG-260: the app's own connection and the separate test are two different things - both shown
@@ -163,11 +163,11 @@ namespace AdeeboMeter
             y += 22 * S;
             if (r == null || (!r.Done && !travelBusy))
             {
-                string lab = "Time each step to " + Draw.Trunc(storyTarget, 40) + "  >"; var ls = g.MeasureString(lab, Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
+                string lab = (storyApp != null ? L.T("Time each step to") + " " + storyApp + L.T("'s server") : L.T("Time each step to") + " " + Draw.Trunc(storyTarget, 40)) + "  >"; var ls = g.MeasureString(lab, Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                 Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                 Act(travelCanvas, lr, delegate { travelBox.Box.Text = storyTarget; FollowPacket(); travelBox.Box.Text = ""; });
                 y += 42 * S;
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent."), Draw.fSmall, mb, new RectangleF(x, y, w, 34 * S));
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("This runs the same check as Check a destination: it looks up the name, connects, secures the connection and waits for the first reply. Nothing else is sent."), Draw.fSmall, mb, new RectangleF(x, y, w, 34 * S));
                 return y + 34 * S;
             }
             if (travelBusy && !r.Done) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(travelStatus, Draw.fBody, mb, x, y); y += 26 * S; }

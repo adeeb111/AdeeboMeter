@@ -98,6 +98,7 @@ namespace AdeeboMeter
             miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
             var miCheckup = new ToolStripMenuItem("Run full checkup"); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
             var miSlow = new ToolStripMenuItem("It feels slow right now   Ctrl+Alt+S"); miSlow.Click += delegate { FeltSlow(); };
+            var miPhone = new ToolStripMenuItem("Phone remote..."); miPhone.Click += delegate { OpenRemote(); };
             try { slowKey = new HotKey(Keys.S, FeltSlow); if (!slowKey.Ok) Program.Log("Ctrl+Alt+S is taken by another app"); } catch (Exception e) { Program.Log("slow hotkey: " + e.Message); }   // taken = just the menu item
             var miTheme = new ToolStripMenuItem("Theme");
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
@@ -116,7 +117,7 @@ namespace AdeeboMeter
             var miExit = new ToolStripMenuItem("Exit AdeeboMeter"); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
             menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
+            menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miPhone); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
             menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
             menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
@@ -130,6 +131,7 @@ namespace AdeeboMeter
             {
                 int hour = DateTime.Now.Hour;
                 if (Cfg.Quiet && (hour >= 22 || hour < 7)) return;
+                if (DateTime.UtcNow < Remote.MuteUntil) return;   // muted from the phone
                 if (!Native.CanNotify()) return;
                 try { marshal.BeginInvoke((Action)delegate { if (quitting) return; balloonUrl = null; tray.ShowBalloonTip(8000, title, text, ToolTipIcon.Info); }); } catch { }
             };
@@ -275,6 +277,32 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("autostart: " + e.Message); }
         }
 
+        // ---------- phone remote: one session, its window, and the checks it may start
+        RemoteWindow remoteWin; FullView remoteRunner;
+        void OpenRemote()
+        {
+            if (quitting) return;
+            if (remoteWin != null && !remoteWin.IsDisposed && Remote.Now != null && Remote.Now.St != Remote.State.Ended) { remoteWin.Activate(); return; }
+            var r = Remote.Start(M);
+            r.Ask = phone => { bool yes = false; try { marshal.Invoke((Action)delegate { yes = MessageBox.Show(remoteWin, (phone != "" ? phone + " " : L.T("A phone ")) + L.T("wants to watch this PC and start checks for up to 30 minutes.") + "\n\n" + L.T("Allow it only if it's your phone and you just scanned the code."), "AdeeboMeter - " + L.T("Phone remote"), MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes; }); } catch (InvalidOperationException) { } return yes; };
+            r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (remoteWin != null && !remoteWin.IsDisposed) remoteWin.Sync(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
+            r.FeltSlow = () => FeltSlow();
+            r.RunTool = (id, a, done) =>
+            {
+                if (id == "checkup") { FullView.RemoteCheckup(M, done); return; }
+                try
+                {
+                    marshal.BeginInvoke((Action)delegate
+                    {
+                        // checks run in a view that's never shown, so a game in front isn't interrupted
+                        if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; }
+                        remoteRunner.RemoteRun(id, a, done);
+                    });
+                }
+                catch (InvalidOperationException) { }
+            };
+            remoteWin = new RemoteWindow(r); remoteWin.Show();
+        }
         void OpenFull()
         {
             if (quitting) return;

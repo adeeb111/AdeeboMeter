@@ -1,0 +1,12 @@
+name = "adeebometer-remote"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+# a room is a Durable Object held in memory only - no storage is written except the room's close-alarm time
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

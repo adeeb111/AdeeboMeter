@@ -114,7 +114,7 @@ namespace AdeeboMeter
                 }
             y = maxY + 4 * S;
             if (jStackTip != null) y = Lead(g, jStackTip, x, y, w, false);
-            else { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Click a stop to see what happens to the labels there. Sizes are the usual ones; Packet stack in the Toolbox works out any mix."), Draw.fSmall, mb, x, y); y += 22 * S; }
+            else { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Click a stop to see how the packet's labels change along the way. Sizes shown are typical; Packet stack in the Toolbox works out any combination."), Draw.fSmall, mb, x, y); y += 22 * S; }
             return y + 6 * S;
         }
         string jStackTip;
@@ -142,7 +142,7 @@ namespace AdeeboMeter
                 Theme.Fill(g, lr, 16 * S, jPinging || f.Remote == "" ? Theme.Soft : Theme.Blue); using (var wb = new SolidBrush(jPinging || f.Remote == "" ? Theme.Muted : Theme.OnBlue)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (32 * S - ls.Height) / 2);
                 if (!jPinging && f.Remote != "") Act(travelCanvas, lr, JMeasure);
                 y += 40 * S;
-                return Lead(g, f.Remote == "" ? "Capture first - the far end of a UDP conversation shows up in its packets." : "Latency is distance plus waiting in queues. Jitter is how much the waiting changes from one packet to the next. Ten pings to the same server split it up (one small packet a second).", x, y, w, true);
+                return Lead(g, f.Remote == "" ? "Capture first - the far end of a UDP conversation shows up in its packets." : "Latency is the distance travelled plus time spent waiting in queues. Jitter is how much that waiting changes from one packet to the next. Ten pings to the same server - one small packet a second - show how much of each you have.", x, y, w, true);
             }
             var v = jPing.Where(d => !double.IsNaN(d)).ToList();
             if (v.Count == 0) return Lead(g, "The server didn't answer pings - many game and call servers ignore them. Capture the conversation instead: its own packets show the rhythm and the stalls.", x, y, w, true);

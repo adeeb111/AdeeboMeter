@@ -8,7 +8,7 @@ using System.Text;
 
 namespace AdeeboMeter
 {
-    // A QR code made here, offline: byte mode, error correction L (about 7%), versions 1-20 (up to 858 bytes).
+    // A QR code made here, offline: byte mode, error correction L (about 7%), versions 1-30 (up to 1,732 bytes).
     // Written from the QR specification (ISO/IEC 18004) - no library, nothing sent: the picture holds the text and nothing else.
     static class Qr
     {
@@ -18,17 +18,23 @@ namespace AdeeboMeter
             new[] { 7, 1, 19, 0, 0 }, new[] { 10, 1, 34, 0, 0 }, new[] { 15, 1, 55, 0, 0 }, new[] { 20, 1, 80, 0, 0 }, new[] { 26, 1, 108, 0, 0 },
             new[] { 18, 2, 68, 0, 0 }, new[] { 20, 2, 78, 0, 0 }, new[] { 24, 2, 97, 0, 0 }, new[] { 30, 2, 116, 0, 0 }, new[] { 18, 2, 68, 2, 69 },
             new[] { 20, 4, 81, 0, 0 }, new[] { 24, 2, 92, 2, 93 }, new[] { 26, 4, 107, 0, 0 }, new[] { 30, 3, 115, 1, 116 }, new[] { 22, 5, 87, 1, 88 },
-            new[] { 24, 5, 98, 1, 99 }, new[] { 28, 1, 107, 5, 108 }, new[] { 30, 5, 120, 1, 121 }, new[] { 28, 3, 113, 4, 114 }, new[] { 28, 3, 107, 5, 108 } };
+            new[] { 24, 5, 98, 1, 99 }, new[] { 28, 1, 107, 5, 108 }, new[] { 30, 5, 120, 1, 121 }, new[] { 28, 3, 113, 4, 114 }, new[] { 28, 3, 107, 5, 108 },
+            new[] { 28, 4, 116, 4, 117 }, new[] { 28, 2, 111, 7, 112 }, new[] { 30, 4, 121, 5, 122 }, new[] { 30, 6, 117, 4, 118 }, new[] { 26, 8, 106, 4, 107 },
+            new[] { 28, 10, 114, 2, 115 }, new[] { 30, 8, 122, 4, 123 }, new[] { 30, 3, 117, 10, 118 }, new[] { 30, 7, 116, 7, 117 }, new[] { 30, 5, 115, 10, 116 } };
         static readonly int[][] Align = { null, Array.Empty<int>(), new[] { 6, 18 }, new[] { 6, 22 }, new[] { 6, 26 }, new[] { 6, 30 }, new[] { 6, 34 }, new[] { 6, 22, 38 }, new[] { 6, 24, 42 }, new[] { 6, 26, 46 }, new[] { 6, 28, 50 },
-            new[] { 6, 30, 54 }, new[] { 6, 32, 58 }, new[] { 6, 34, 62 }, new[] { 6, 26, 46, 66 }, new[] { 6, 26, 48, 70 }, new[] { 6, 26, 50, 74 }, new[] { 6, 30, 54, 78 }, new[] { 6, 30, 56, 82 }, new[] { 6, 30, 58, 86 }, new[] { 6, 34, 62, 90 } };
-        public const int MaxBytes = 858;   // version 20 at level L - still scans easily off a screen
+            new[] { 6, 30, 54 }, new[] { 6, 32, 58 }, new[] { 6, 34, 62 }, new[] { 6, 26, 46, 66 }, new[] { 6, 26, 48, 70 }, new[] { 6, 26, 50, 74 }, new[] { 6, 30, 54, 78 }, new[] { 6, 30, 56, 82 }, new[] { 6, 30, 58, 86 }, new[] { 6, 34, 62, 90 },
+            new[] { 6, 28, 50, 72, 94 }, new[] { 6, 26, 50, 74, 98 }, new[] { 6, 30, 54, 78, 102 }, new[] { 6, 28, 54, 80, 106 }, new[] { 6, 32, 58, 84, 110 },
+            new[] { 6, 30, 58, 86, 114 }, new[] { 6, 34, 62, 90, 118 }, new[] { 6, 26, 50, 74, 98, 122 }, new[] { 6, 30, 54, 78, 102, 126 }, new[] { 6, 26, 52, 78, 104, 130 } };
+        // version 30 at level L (137 x 137 modules): twice what version 20 held, and still scans off a screen when it's shown
+        // big enough (the window sizes it to fit). Beyond 30 phones start struggling to read it off a monitor.
+        public const int MaxBytes = 1732;
         static int DataBytes(int v) { var b = Blocks[v]; return b[1] * b[2] + b[3] * b[4]; }
 
         // the modules, true = dark; null when the text is too long
         public static bool[,] Encode(string text)
         {
             var data = Encoding.UTF8.GetBytes(text ?? "");
-            int ver = 0; for (int v = 1; v <= 20; v++) if ((v < 10 ? 12 : 20) + data.Length * 8 <= DataBytes(v) * 8) { ver = v; break; }
+            int ver = 0; for (int v = 1; v <= 30; v++) if ((v < 10 ? 12 : 20) + data.Length * 8 <= DataBytes(v) * 8) { ver = v; break; }
             if (ver == 0) return null;
             // the bit stream: mode 0100 (bytes), the count, the bytes, a terminator, then pad bytes
             var bits = new List<bool>(); Action<int, int> put = (val, n) => { for (int i = n - 1; i >= 0; i--) bits.Add(((val >> i) & 1) != 0); };

@@ -32,6 +32,17 @@ namespace AdeeboMeter
     [SuppressMessage("Performance", "CA1861", Justification = "one-shot self-test data")]
     static class SelfTest
     {
+        // the phone remote's ECDH against a WebCrypto vector - its own method so a missing CNG type (Wine) is caught as one
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        static void RemoteEcdhVector()
+        {
+            var priv = RemoteCrypto.Unb64u("WI52uFtWGuVTT912etBFaFm2mmlsTW1EeRYQ9Sv560sGnwH9W_GT9M0VzkTjh1Xm6j04shRHlN5PdCJsa92cdNK1Zj8B_EIWKHLrdeoPYkQwt9t-5kIc2RB64fUwy9vn");
+            var blob = new byte[8 + 96]; blob[0] = 0x45; blob[1] = 0x43; blob[2] = 0x4B; blob[3] = 0x32; blob[4] = 32; Buffer.BlockCopy(priv, 0, blob, 8, 96);
+            byte[] z;
+            using (var key = System.Security.Cryptography.CngKey.Import(blob, System.Security.Cryptography.CngKeyBlobFormat.EccPrivateBlob)) using (var me = new System.Security.Cryptography.ECDiffieHellmanCng(key))
+                z = RemoteCrypto.SharedHash(me, RemoteCrypto.Unb64u("BG-09qgHAX1x4uIdROM5baZkFc_XMNzVJrlELLKPGryTlMztVlJmg4eI80ik5YgSZvZB-jd1jfcwkZpwyz9tDkA"));
+            if (RemoteCrypto.B64u(z) != "dLo6VSnV2DaBhX1WfU81Ak_KkERsBGlIrRY8zIDTzJI") throw new InvalidOperationException("ECDH differs");
+        }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351", Justification = "checks RADIUS (RFC 2865) password hiding, which is defined with MD5")]
         static byte[] Md5(byte[] d) { using (var h = System.Security.Cryptography.MD5.Create()) return h.ComputeHash(d); }
         /* Is this ASCII word in the bytes - as single bytes, or as UTF-16 (each letter followed by a zero byte)? No copies made. */
@@ -272,6 +283,20 @@ namespace AdeeboMeter
             });
             T("version numbers agree", () => { if (!(Program.FileVersion + ".").StartsWith(Program.Version + ".", StringComparison.Ordinal) || Program.FileVersion.Split('.').Length != 4) throw new InvalidOperationException(Program.Version + " vs " + Program.FileVersion); });
             T("DLLs load only from System32", () => { if (!Program.DllSafety && !Program.IsWine) throw new InvalidOperationException("SetDefaultDllDirectories didn't take - DLL planting protection is off"); });
+            T("phone remote crypto matches the browser's", () =>
+            {
+                // vectors made with WebCrypto (what the phone page uses): the same keys, the same ECDH secret, a frame it sealed opens here
+                var secret = Enumerable.Range(1, 32).Select(i => (byte)i).ToArray();
+                if (RemoteCrypto.B64u(RemoteCrypto.AuthKey(secret)) != "kVa2aoyX2h1CWA30hJqbyYclFiPT18UuetqVLroHEhM") throw new InvalidOperationException("pairing key differs");
+                // the ECDH part needs Windows' CNG (Wine doesn't have it); the rest runs everywhere
+                var z = RemoteCrypto.Unb64u("dLo6VSnV2DaBhX1WfU81Ak_KkERsBGlIrRY8zIDTzJI");
+                try { RemoteEcdhVector(); } catch (TypeLoadException) { sb.AppendLine("      ECDH vector skipped: this system has no CNG (Wine)"); }
+                var lane = new RemoteCrypto.Lane(secret, z, 1); const string fr = "AAAAAAAAAAHIx8bFxMPCwcC_vr28u7q5HhaFBDnjOMAo4LDWK4DgqbwpaUmVUNdbx3P_dm87XXJ4JeujuUjZ2Cl9tr8x-2hiamubuNxZtgu67gmrfoekcw";
+                if (lane.Open(fr) != "{\"t\":\"live\",\"ping\":12.5}") throw new InvalidOperationException("frame didn't open");
+                if (lane.Open(fr) != null) throw new InvalidOperationException("a replayed frame opened");
+                var bad = new RemoteCrypto.Lane(secret, z, 1); var bb = RemoteCrypto.Unb64u(fr); bb[30] ^= 1; if (bad.Open(RemoteCrypto.B64u(bb)) != null) throw new InvalidOperationException("a changed frame opened");
+                var a1 = new RemoteCrypto.Lane(secret, z, 2); var b1 = new RemoteCrypto.Lane(secret, z, 2); if (b1.Open(a1.Seal("hello")) != "hello") throw new InvalidOperationException("round trip");
+            });
             T("never listens", () => { if (Tables.OwnListener()) throw new InvalidOperationException("AdeeboMeter owns a listening socket"); });
             T("destination input validation", () =>
             {
@@ -1496,7 +1521,7 @@ namespace AdeeboMeter
                 foreach (var k in new[] { "ports", "addr" }) { var q = LearnGames.NewQuick(k, 5); if (q.Q.Count != 10 || q.Q.Any(z => z.Length != 6 || !z.Skip(2).Contains(z[1]) || z.Skip(2).Distinct().Count() != 4)) throw new InvalidOperationException("quick-fire " + k); }
                 var rnd = new Random(1); for (int i = 0; i < 200; i++) { string a, cls; LearnGames.Addr(rnd, out a, out cls); IPAddress ip; if (!IPAddress.TryParse(a, out ip)) throw new InvalidOperationException("address " + a); if (cls.StartsWith("private", StringComparison.Ordinal) != (IspReport.Private(ip) && !a.StartsWith("100.", StringComparison.Ordinal) && !a.StartsWith("169.254.", StringComparison.Ordinal) && !a.StartsWith("127.", StringComparison.Ordinal))) throw new InvalidOperationException("address kind " + a + " " + cls); }
                 if (LearnGames.Keys().Any(k => !FullView.PtKeyKnown(k) || Points.Value(k) < 3)) throw new InvalidOperationException("game points not known");
-                if (Qr.Encode("hi").GetLength(0) != 21 || Qr.Encode(new string('A', 250)).GetLength(0) != 57 || Qr.Encode(new string('z', 300)).GetLength(0) != 61 || Qr.Encode(new string('z', 900)) != null) throw new InvalidOperationException("QR sizes");
+                if (Qr.Encode("hi").GetLength(0) != 21 || Qr.Encode(new string('A', 250)).GetLength(0) != 57 || Qr.Encode(new string('z', 300)).GetLength(0) != 61 || Qr.Encode(new string('z', 900)).GetLength(0) != 101 || Qr.Encode(new string('z', 1732)).GetLength(0) != 137 || Qr.Encode(new string('z', 1733)) != null) throw new InvalidOperationException("QR sizes");
                 var snap = OverTime.ReadSettings(); if (!snap.Keys.Any(k => k.StartsWith("adapter ", StringComparison.Ordinal) || k == "proxy")) throw new InvalidOperationException("settings snapshot read nothing");
                 sb.AppendLine("      " + LearnGames.Keys().Count() + " game scenarios, " + snap.Count + " network settings read");
             });

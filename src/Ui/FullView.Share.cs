@@ -58,13 +58,18 @@ namespace AdeeboMeter
         {
             var m = Qr.Encode(text); if (m == null) return;
             int px = Math.Max(4, (int)(6 * S)); var wa = Screen.FromControl(this).WorkingArea; int fit = (Math.Min(wa.Width, wa.Height) - Sc(140)) / (m.GetLength(0) + 8); if (fit >= 2 && fit < px) px = fit;   // a dense code on a small screen still fits
+            string what = tbSel != null ? ToolName() : L.T("your result");
             using (var bmp = Qr.Picture(m, px))
-            using (var f = new Form { Text = L.T("Scan with your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Color.White, ShowInTaskbar = false })
+            using (var f = new Form { Text = L.T("Open this result on your phone"), FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = Color.White, ShowInTaskbar = false })
             using (var pb = new PictureBox { Image = bmp, SizeMode = PictureBoxSizeMode.AutoSize, Location = new Point(Sc(16), Sc(16)) })
-            using (var note = new Label { Text = L.T("Point your phone's camera at it (on some Android phones: Google Lens), then tap the link - your result opens with charts."), AutoSize = true, ForeColor = Color.FromArgb(91, 102, 117), Font = Draw.fSmall, Location = new Point(Sc(16), Sc(24) + bmp.Height) })
+            using (var head = new Label { Text = L.T("Scan to see") + " " + what + " " + L.T("on your phone"), AutoSize = true, MaximumSize = new Size(Math.Max(bmp.Width, Sc(300)), 0), ForeColor = Color.FromArgb(17, 24, 39), Font = Draw.fBodyB, Location = new Point(Sc(16), Sc(26) + bmp.Height) })
+            using (var note = new Label { Text = "1.  " + L.T("Point your phone's camera at the code. On some Android phones, use Google Lens.") + "\n2.  " + L.T("Tap the link that appears. The result opens with its charts, ready to copy, share or save as a PDF.") + "\n\n" + L.T("The result travels inside the link itself. Nothing is uploaded, and adeebometer.com never receives it."), AutoSize = true, MaximumSize = new Size(Math.Max(bmp.Width, Sc(300)), 0), ForeColor = Color.FromArgb(75, 85, 99), Font = Draw.fSmall })
             {
-                f.Controls.Add(pb); f.Controls.Add(note);
-                f.ClientSize = new Size(bmp.Width + Sc(32), bmp.Height + Sc(60));
+                // the words wrap to the code's width and the window grows to fit them - nothing is cut off at the edge
+                f.Controls.Add(pb); f.Controls.Add(head); f.Controls.Add(note);
+                note.Location = new Point(Sc(16), head.Bottom + Sc(8));
+                f.ClientSize = new Size(Math.Max(bmp.Width, Sc(300)) + Sc(32), note.Bottom + Sc(18));
+                pb.Left = (f.ClientSize.Width - bmp.Width) / 2;
                 f.KeyPreview = true; f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape) f.Close(); };
                 f.ShowDialog(this);
             }

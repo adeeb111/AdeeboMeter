@@ -346,39 +346,61 @@ namespace AdeeboMeter
         static string E(string s) { return Uri.EscapeDataString(s ?? "").Replace("~", "%7E").Replace("%20", "+"); }
         static string Nm(double v) { return double.IsNaN(v) || double.IsInfinity(v) ? "" : Math.Round(v, v < 10 ? 1 : 0).ToString(CultureInfo.InvariantCulture); }
         static string More(int shown, int all) { return all > shown ? " (" + shown + " of " + all + ")" : ""; }
+        static int PhoneRank(string lv) { return lv == "2" ? 0 : lv == "1" ? 1 : lv == "0" ? 2 : lv == "3" ? 3 : 4; }
         internal string PhoneLink()
         {
             CapturePicture(); string cap = "", a = "", b = "";
             string when = DateTime.UtcNow.ToString("yyMMddHHmm", CultureInfo.InvariantCulture);   // UTC: the phone shows it in its own time zone
-            var rows = ShareRows().Where(o => o[0] != "-1" && o[0] != "-2").ToList();
+            // section headings travel too (the phone shows the same groups as the PC); "-2" rows are layout only
+            var rows = ShareRows().Where(o => o[0] != "-2").ToList();
             for (int detail = 1; detail >= -1; detail--)   // the details give way first, then the picture itself - never the rows
             {
                 switch (detail < 0 ? "" : PhoneKind)
                 {
-                    case "x": cap = PhoneX.Item1 + More(Math.Min(10, PhoneX.Item3.Count), PhoneX.Item3.Count); a = string.Join("~", PhoneX.Item2.Select(E).ToArray()); b = string.Join("~", PhoneX.Item3.Take(10).Select(s => s.From + "," + (s.All ? PhoneX.Item2.Length - 1 : s.To) + "," + s.Lv + "," + (s.Sealed ? 1 : 0) + "," + (s.All ? 1 : 0) + "," + Nm(s.Ms) + "," + E(Cut(s.Label, 60)) + "," + (detail == 1 ? E(Cut(s.Detail, 60)) : "")).ToArray()); break;
-                    case "r": cap = PhoneR.Item1 + More(Math.Min(8, PhoneR.Item2.Count), PhoneR.Item2.Count); a = ""; b = string.Join("~", PhoneR.Item2.Take(8).Select(l => E(Cut(l.Item1, 40)) + "," + Nm(l.Item2) + "," + Nm(l.Item3) + "," + l.Item4).ToArray()); break;
+                    case "x": cap = PhoneX.Item1 + More(Math.Min(20, PhoneX.Item3.Count), PhoneX.Item3.Count); a = string.Join("~", PhoneX.Item2.Select(E).ToArray()); b = string.Join("~", PhoneX.Item3.Take(20).Select(s => s.From + "," + (s.All ? PhoneX.Item2.Length - 1 : s.To) + "," + s.Lv + "," + (s.Sealed ? 1 : 0) + "," + (s.All ? 1 : 0) + "," + Nm(s.Ms) + "," + E(Cut(s.Label, 60)) + "," + (detail == 1 ? E(Cut(s.Detail, 60)) : "")).ToArray()); break;
+                    case "r": cap = PhoneR.Item1 + More(Math.Min(16, PhoneR.Item2.Count), PhoneR.Item2.Count); a = ""; b = string.Join("~", PhoneR.Item2.Take(16).Select(l => E(Cut(l.Item1, 40)) + "," + Nm(l.Item2) + "," + Nm(l.Item3) + "," + l.Item4).ToArray()); break;
                     case "p":
                         {   // a long path keeps its first hops and the last one (the destination), with the gap counted
-                            var hp = PhoneP.Item2; var keep = hp.Count <= 12 ? hp : hp.Take(11).Concat(new[] { hp[hp.Count - 1] }).ToList();
-                            cap = PhoneP.Item1 + More(keep.Count, hp.Count); a = ""; b = string.Join("~", keep.Select(h => E(h.Item1) + "," + E(Cut(h.Item2, 30)) + "," + Nm(h.Item3) + "," + (detail == 1 ? E(Cut(h.Item4, 30)) : "") + "," + h.Item5).ToArray()); break;
+                            var hp = PhoneP.Item2; var hk = hp.Count <= 30 ? hp : hp.Take(29).Concat(new[] { hp[hp.Count - 1] }).ToList();
+                            cap = PhoneP.Item1 + More(hk.Count, hp.Count); a = ""; b = string.Join("~", hk.Select(h => E(h.Item1) + "," + E(Cut(h.Item2, 30)) + "," + Nm(h.Item3) + "," + (detail == 1 ? E(Cut(h.Item4, 30)) : "") + "," + h.Item5).ToArray()); break;
                         }
-                    case "b": cap = PhoneB.Item1 + More(Math.Min(10, PhoneB.Item3.Count), PhoneB.Item3.Count); a = E(PhoneB.Item2); b = string.Join("~", PhoneB.Item3.Take(10).Select(z => E(Cut(z.Item1, 30)) + "," + Nm(z.Item2) + "," + (detail == 1 ? E(Cut(z.Item3, 30)) : "") + "," + z.Item4).ToArray()); break;
+                    case "b": cap = PhoneB.Item1 + More(Math.Min(20, PhoneB.Item3.Count), PhoneB.Item3.Count); a = E(PhoneB.Item2); b = string.Join("~", PhoneB.Item3.Take(20).Select(z => E(Cut(z.Item1, 30)) + "," + Nm(z.Item2) + "," + (detail == 1 ? E(Cut(z.Item3, 30)) : "") + "," + z.Item4).ToArray()); break;
                     default: cap = ""; a = ""; b = ""; break;
                 }
                 string kind = detail < 0 ? "" : PhoneKind;
                 string head = "https://adeebometer.com/r#2!" + when + "!" + E(Cut(ToolName(), 60)) + "!" + E(Cut(cap, 80)) + "!" + kind + "!" + a + "!" + b + "!";
                 if (Encoding.UTF8.GetByteCount(head) > Qr.MaxBytes - 40) continue;
                 // the rows fill what's left: one that doesn't fit is skipped (the next may), and the rest are counted
-                var sb = new StringBuilder(); int put = 0;
-                foreach (var o in rows)
+                // what someone needs to act on gets in first: problems and warnings with their advice, then the numbers that
+                // were fine, then notes and table lines. Kept rows are sent in the PC's own order, with their section headings.
+                int hb = Encoding.UTF8.GetByteCount(head), room = Qr.MaxBytes - 90;
+                var order = Enumerable.Range(0, rows.Count).Where(i => rows[i][0] != "-1").OrderBy(i => PhoneRank(rows[i][0])).ThenBy(i => i).ToList();
+                var keep = new Dictionary<int, string>(); int used = hb;
+                foreach (int i in order)
                 {
-                    string item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], 90)) + (detail == 1 && o.Length > 3 && o[3] != "" ? "," + E(Cut(o[3], 90)) : "");
-                    if (Encoding.UTF8.GetByteCount(head) + sb.Length + item.Length + 30 > Qr.MaxBytes) { item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], 40)); if (Encoding.UTF8.GetByteCount(head) + sb.Length + item.Length + 30 > Qr.MaxBytes) continue; }
-                    if (sb.Length > 0) sb.Append('~'); sb.Append(item); put++;
+                    var o = rows[i]; bool bad = o[0] == "1" || o[0] == "2";
+                    string adv = o.Length > 3 && o[3] != "" && (bad || detail == 1) ? "," + E(Cut(o[3], bad ? 140 : 90)) : "";
+                    string item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], bad ? 120 : 90)) + adv;
+                    if (used + item.Length + 1 > room) { item = o[0] + "," + E(Cut(o[1], 40)) + "," + E(Cut(o[2], 40)) + (bad && adv != "" ? "," + E(Cut(o[3], 60)) : ""); if (used + item.Length + 1 > room) continue; }
+                    keep[i] = item; used += item.Length + 1;
                 }
-                if (put < rows.Count) { if (sb.Length > 0) sb.Append('~'); sb.Append("3," + E(L.T("Not shown")) + "," + E((rows.Count - put) + " " + L.T("more rows - see them on the PC"))); }
-                string link = head + sb;
-                if (Encoding.UTF8.GetByteCount(link) <= Qr.MaxBytes) return link;
+                while (true)
+                {
+                    var parts = new List<string>(); string pendingHead = null;
+                    for (int i = 0; i < rows.Count; i++)
+                    {
+                        if (rows[i][0] == "-1") { pendingHead = "-1," + E(Cut(rows[i][1], 40)) + ","; continue; }
+                        string it; if (!keep.TryGetValue(i, out it)) continue;
+                        if (pendingHead != null) { parts.Add(pendingHead); pendingHead = null; }
+                        parts.Add(it);
+                    }
+                    int left = rows.Count(o => o[0] != "-1") - keep.Count;
+                    if (left > 0) parts.Add("3," + E(L.T("Left on the PC")) + "," + E(left + " " + (rows.Where((o, i) => o[0] != "-1" && !keep.ContainsKey(i)).Any(o => o[0] == "1" || o[0] == "2") ? L.T("more rows, including warnings - open the result on the PC") : L.T("detail rows that were fine or just notes"))));
+                    string link = head + string.Join("~", parts.ToArray());
+                    if (Encoding.UTF8.GetByteCount(link) <= Qr.MaxBytes) return link;
+                    if (keep.Count == 0) break;
+                    keep.Remove(order.Last(i => keep.ContainsKey(i)));   // the least important row still in comes out first
+                }
             }
             return "https://adeebometer.com/r#2!" + when + "!" + E(Cut(ToolName(), 60)) + "!!!!!";
         }
