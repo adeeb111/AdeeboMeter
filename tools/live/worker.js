@@ -15,11 +15,14 @@ const memo = new Map(), flying = new Map(), MAX = 400;   // isolate memory only:
 // drops expired entries and never grows past MAX (AM-CG-323).
 async function cached(key, ttl, maxStale, make) {
   const m = memo.get(key), now = Date.now();
-  if (m && now - m.at < ttl * 1000) return m;
+  if (m && m.failed && now - m.failed < 900000) return m.v && m.at && now - m.at < maxStale * 1000 ? Object.assign({ stale: 1 }, m) : { at: 0, v: m.fv };   // a failed source is asked again after 15 minutes, not on every visit (AM 16 Nov: Alpha Vantage's daily limit)
+  if (m && !m.failed && now - m.at < ttl * 1000) return m;
   if (flying.has(key)) return flying.get(key);
   const p = (async () => {
     try { const v = await make(); const e = { at: Date.now(), v }; put(key, e); return e; }
-    catch (e) { if (m && Date.now() - m.at < maxStale * 1000) return Object.assign({ stale: 1 }, m); return { at: 0, v: { error: "source unavailable", why: String(e && e.message || e).replace(/apikey=[^&\s]*/gi, "apikey=…").slice(0, 120) } }; }
+    catch (e) { const fv = { error: "source unavailable", why: String(e && e.message || e).replace(/apikey=[^&\s]*/gi, "apikey=…").slice(0, 120) };
+      put(key, Object.assign({}, m || { at: 0 }, { failed: Date.now(), fv }));
+      if (m && m.v && m.at && Date.now() - m.at < maxStale * 1000) return Object.assign({ stale: 1 }, m); return { at: 0, v: fv }; }
     finally { flying.delete(key); }
   })();
   flying.set(key, p); return p;
