@@ -79,10 +79,10 @@ PWA = '<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="t
 THEME = '<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>'
 FOOT = '<footer>Free · no account · the same lessons as the Windows app</footer>'
 
-def head(title, desc, url, extra=''):
+def head(title, desc, url, extra='', og_type='article'):
     return ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
             f'<title>{E(title)}</title>\n<meta name="description" content="{E(desc)}">\n<link rel="canonical" href="{url}">\n'
-            f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="article">\n'
+            f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="{og_type}">\n'
             f'<link rel="icon" href="../favicon.svg" type="image/svg+xml">\n{PWA}\n<style>\n{CSS}</style>\n{THEME}\n<link rel="stylesheet" href="/ui.css">\n{extra}</head>\n<body data-sec="learn">\n<main>\n')
 
 def top(): return ''
@@ -151,7 +151,15 @@ def index():
     desc = f'{len(topics)} short, free lessons on how networks, Wi-Fi, 5G, encryption, Windows, streaming and trading connections really work - each with a picture and a quick check.'
     ld = {'@context': 'https://schema.org', '@type': 'ItemList', 'name': 'AdeeboMeter Learn', 'itemListElement':
           [{'@type': 'ListItem', 'position': i + 1, 'url': f'{SITE}learn/{t["id"]}.html', 'name': t['title']} for i, t in enumerate(topics)]}
-    h = [head('Learn how your internet works | AdeeboMeter', desc, SITE + 'learn/', f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n'), top()]
+    preview = (
+        f'<meta property="og:url" content="{SITE}learn/">\n'
+        f'<meta property="og:image" content="{SITE}img/social/learn.jpg">\n'
+        '<meta property="og:image:width" content="1200">\n'
+        '<meta property="og:image:height" content="630">\n'
+        '<meta property="og:image:alt" content="Learn how your internet works">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
+    )
+    h = [head('Learn how your internet works | AdeeboMeter', desc, SITE + 'learn/', preview + f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n', og_type="website"), top()]
     h.append('<header class="ui-head"><span class="ui-chip" style="--k:var(--c-learn)" data-ic="book" data-sz="28"></span><div><h1>Learn</h1><p>Short lessons, a picture each.</p></div></header>\n')
     h.append(f'<a class="ui-hero" id="cont" href="{topics[0]["id"]}.html"><span class="tag" id="ctag">Start here</span><b id="ctit">{E(topics[0]["title"].split(" - ")[0])}</b><small id="cmeta">Lesson 1 of {len([x for x in topics if x.get("kind") == topics[0].get("kind")])} · {E(KSHORT.get(topics[0].get("kind"), ""))}</small><span class="go" data-ic="chev"></span><span class="ui-prog"><i><b id="cbar" style="width:0%"></b></i><span id="cpct">0%</span></span></a>\n')
     h.append('<label class="ui-search" data-ic="search"><input type="search" id="q" placeholder="Search lessons" aria-label="Search lessons"></label>\n')
