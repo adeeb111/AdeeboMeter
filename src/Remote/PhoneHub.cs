@@ -22,14 +22,15 @@ namespace AdeeboMeter
         public static void Fire() { List<Action> l; lock (k) l = watchers.ToList(); foreach (var a in l) try { a(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phone link: " + e.Message); } }
 
         // ---- a question from the phone
-        public sealed class Q { public string Kind = "", Phone = "", Text = ""; public bool Answer; public readonly ManualResetEvent Done = new ManualResetEvent(false); public DateTime At = DateTime.UtcNow; }
+        public sealed class Q { public string Kind = "", Phone = "", Text = "", Words = ""; public bool Answer; public readonly ManualResetEvent Done = new ManualResetEvent(false); public DateTime At = DateTime.UtcNow; }
         static Q pending;
         public static Q Pending { get { lock (k) return pending; } }
         public const int AskSeconds = 90;
         // called on the relay's thread - it waits for the answer on the page
-        public static bool Ask(string kind, string phone, string text)
+        public static bool Ask(string kind, string phone, string text) { return Ask(kind, phone, text, ""); }
+        public static bool Ask(string kind, string phone, string text, string words)
         {
-            var q = new Q { Kind = kind, Phone = phone ?? "", Text = text ?? "" };
+            var q = new Q { Kind = kind, Phone = phone ?? "", Text = text ?? "", Words = words ?? "" };
             lock (k) { if (pending != null) { pending.Answer = false; pending.Done.Set(); } pending = q; }
             Fire(); var s = Show; if (s != null) try { s(kind); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phone show: " + e.Message); }
             bool got = q.Done.WaitOne(TimeSpan.FromSeconds(AskSeconds));

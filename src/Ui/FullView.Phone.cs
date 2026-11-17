@@ -149,13 +149,29 @@ namespace AdeeboMeter
             {
                 string title = q.Kind == "file" ? L.T("Accept a file from the phone?") : q.Kind == "remember" ? L.T("Remember this phone?") : L.T("Allow this phone?");
                 string body = (q.Phone != "" ? q.Phone : L.T("A phone")) + " " + q.Text;
+                // matching words (RemoteWords.cs): allow only if your phone shows the same four
+                bool allow = q.Kind == "allow", hasW = allow && q.Words != "";
+                string wHint = hasW ? L.T("Check your phone shows the same words:") : allow ? L.T("This phone page can't show matching words (it's an older version). Allow it only if it's your phone and you just scanned the code.") : "";
+                string wAfter = hasW ? L.T("Different words, or no words on your phone? Press Don't allow - it isn't your phone.") : "";
+                var fW = Draw.fBig;
                 int left = Math.Max(0, PhoneHub.AskSeconds - (int)(DateTime.UtcNow - q.At).TotalSeconds);
                 float bh = Draw.Measure(body, Draw.fBody, (int)(w - 40 * S)).Height;
-                var card = new RectangleF(x, y, w, 20 * S + 28 * S + bh + 12 * S + 22 * S + 52 * S);
+                float wh = wHint == "" ? 0 : Draw.Measure(wHint, Draw.fBody, (int)(w - 40 * S)).Height + 10 * S;
+                if (hasW) wh += 62 * S + Draw.Measure(wAfter, Draw.fBody, (int)(w - 40 * S)).Height + 10 * S;
+                var card = new RectangleF(x, y, w, 20 * S + 28 * S + bh + 12 * S + wh + 22 * S + 52 * S);
                 Theme.Fill(g, card, 18 * S, Theme.LvSoft(1)); Theme.Stroke(g, card, 18 * S, Theme.Amber, 1.5f);
                 float cy = y + 18 * S;
                 using (var b = new SolidBrush(Theme.LvText(1))) g.DrawString(title, Draw.fHead, b, x + 20 * S, cy); cy += 30 * S;
                 cy = PhText(g, body, Draw.fBody, Theme.Ink, x + 20 * S, cy, w - 40 * S);
+                if (wHint != "") { cy += 10 * S; cy = PhText(g, wHint, Draw.fBody, hasW ? Theme.Ink : Theme.LvText(1), x + 20 * S, cy, w - 40 * S); }
+                if (hasW)
+                {
+                    var wb = new RectangleF(x + 20 * S, cy + 8 * S, w - 40 * S, 50 * S);
+                    Theme.Fill(g, wb, 12 * S, Theme.Soft); Theme.Stroke(g, wb, 12 * S, Theme.Line, 1f);
+                    using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(q.Words, fW, b, wb, sf);
+                    cy = wb.Bottom + 12 * S;
+                    cy = PhText(g, wAfter, Draw.fBody, Theme.Sub, x + 20 * S, cy, w - 40 * S);
+                }
                 using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("No answer in") + " " + left + " s " + L.T("means no."), Draw.fSmall, m, x + 20 * S, cy); cy += 26 * S;
                 var yes = PhBtn(g, x + 20 * S, cy, q.Kind == "file" ? L.T("Accept") : q.Kind == "remember" ? L.T("Remember it") : L.T("Allow"), 1, delegate { PhoneHub.Answer(true); });
                 PhBtn(g, yes.Right + 10 * S, cy, q.Kind == "file" ? L.T("Don't accept") : q.Kind == "remember" ? L.T("Not now") : L.T("Don't allow"), 0, delegate { PhoneHub.Answer(false); });

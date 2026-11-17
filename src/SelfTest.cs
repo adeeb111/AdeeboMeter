@@ -312,6 +312,9 @@ namespace AdeeboMeter
                 // the ECDH part needs Windows' CNG (Wine doesn't have it); the rest runs everywhere
                 var z = RemoteCrypto.Unb64u("dLo6VSnV2DaBhX1WfU81Ak_KkERsBGlIrRY8zIDTzJI");
                 try { RemoteEcdhVector(); } catch (TypeLoadException) { sb.AppendLine("      ECDH vector skipped: this system has no CNG (Wine)"); }
+                // the matching words: same recipe and list as the phone page (vector made with WebCrypto and Python)
+                if (RemoteWords.List.Length != 256 || RemoteWords.List.Distinct().Count() != 256) throw new InvalidOperationException("the word list isn't 256 different words");
+                if (RemoteWords.Of(Enumerable.Range(0, 32).Select(i => (byte)i).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(1, 64).Select(i => (byte)i)).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(100, 64).Select(i => (byte)i)).ToArray()) != "wagon · bucket · brook · quartz") throw new InvalidOperationException("matching words differ from the phone's");
                 var lane = new RemoteCrypto.Lane(secret, z, 1); const string fr = "AAAAAAAAAAHIx8bFxMPCwcC_vr28u7q5HhaFBDnjOMAo4LDWK4DgqbwpaUmVUNdbx3P_dm87XXJ4JeujuUjZ2Cl9tr8x-2hiamubuNxZtgu67gmrfoekcw";
                 if (lane.Open(fr) != "{\"t\":\"live\",\"ping\":12.5}") throw new InvalidOperationException("frame didn't open");
                 if (lane.Open(fr) != null) throw new InvalidOperationException("a replayed frame opened");

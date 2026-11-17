@@ -42,6 +42,7 @@ namespace AdeeboMeter
         System.Threading.Timer tick;
 
         // the PC side hooks: ask "Allow?" on the UI thread, run a check, note a change for the window and the widget
+        public volatile string Words = "";   // the matching words while a phone is asking; "" = it's an older phone page that can't show them
         public Func<string, bool> Ask; public Func<string, bool> CanRun; public Func<List<string>> Catalog; public Action<string, string[], Toolkit.Run, Action<string, List<string[]>, List<string[]>>> RunTool; public Action Changed; public Action FeltSlow;
         // AM-CG-319/320: one check at a time from the phone, tagged with the phone's request id, stoppable from the phone
         volatile Toolkit.Run op; volatile string opRid = "";
@@ -121,10 +122,17 @@ namespace AdeeboMeter
             {
                 byte[] pk, mac; try { pk = RemoteCrypto.Unb64u(j.S("pk")); mac = RemoteCrypto.Unb64u(j.S("mac")); } catch (FormatException) { return; }
                 if (pk.Length != 65 || !RemoteCrypto.Same(mac, RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("hi"), pk))) return;   // didn't scan this QR
+                var me = new ECDiffieHellmanCng(256); mine = me; var myPk = RemoteCrypto.Raw(me); phonePk = pk;
+                // a phone that can show the matching words gets this PC's key now, before the question (RemoteWords.cs)
+                Words = "";
+                if (Known == null && j.S("w") == "1")
+                {
+                    Words = RemoteWords.Of(secret, pk, myPk);
+                    Send("{\"t\":\"key\",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key"), pk, myPk)) + "\"}");
+                }
                 St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); Note();
                 bool yes = Known != null || (Ask != null && Ask(PhoneName));   // a remembered phone proved its key: you already said yes
-                if (!yes || St != State.Asking) { Send("{\"t\":\"no\"}"); End("you said no"); return; }
-                var me = new ECDiffieHellmanCng(256); mine = me; var myPk = RemoteCrypto.Raw(me); phonePk = pk;
+                if (!yes || St != State.Asking) { me.Dispose(); mine = null; Send("{\"t\":\"no\"}"); End("you said no"); return; }
                 var z = RemoteCrypto.SharedHash(me, pk);
                 tx = new RemoteCrypto.Lane(secret, z, 1); rx = new RemoteCrypto.Lane(secret, z, 2);
                 Send("{\"t\":\"ok\",\"v\":" + Proto.ToString(CultureInfo.InvariantCulture) + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");

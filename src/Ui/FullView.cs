@@ -697,7 +697,8 @@ namespace AdeeboMeter
             if (page == "security" && sub == "run") SecRun(null);
             // --view phone:qr shows a code; phone:ask shows the Allow question as a phone would raise it (screenshots of the page)
             if (page == "phone" && sub == "qr" && PhoneHub.Start != null) PhoneHub.Start();
-            if (page == "phone" && sub == "ask") System.Threading.Tasks.Task.Factory.StartNew(() => PhoneHub.Ask("allow", "Test phone", L.T("wants to watch this PC and start checks for up to 30 minutes. Allow it only if it's your phone and you just scanned the code.")));
+            if (page == "phone" && sub == "ask") System.Threading.Tasks.Task.Factory.StartNew(() => PhoneHub.Ask("allow", "Test phone", L.T("wants to watch this PC and start checks for up to 30 minutes."), "nectar · moon · drum · blade"));
+            if (page == "phone" && sub == "askold") { sub = "ask"; System.Threading.Tasks.Task.Factory.StartNew(() => PhoneHub.Ask("allow", "Test phone", L.T("wants to watch this PC and start checks for up to 30 minutes."), "")); }
             if (page == "settings" && sub != null) { if (sub.StartsWith("q=", StringComparison.Ordinal)) settingsSearch.Box.Text = sub.Substring(2); else { var hit = SetSections.FirstOrDefault(z => z.StartsWith(sub, StringComparison.OrdinalIgnoreCase)); if (hit != null) setSec = hit; } settingsCanvas.Invalidate(); }
             if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
             if (page == "toolbox" && sub != null) { EnsureToolbox(); bool ex = sub.EndsWith(":ex", StringComparison.Ordinal); if (ex) sub = sub.Substring(0, sub.Length - 3); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else { OpenTool(sub); if (ex) ShowExample(); } }   // toolbox:ping:ex opens its Example (screenshots)

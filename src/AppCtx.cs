@@ -298,7 +298,7 @@ namespace AdeeboMeter
         static string SizeText(long size) { return size >= 1048576 ? (size / 1048576.0).ToString("0.#", System.Globalization.CultureInfo.CurrentCulture) + " MB" : Math.Max(1, size / 1024) + " KB"; }
         void Wire(Remote r)
         {
-                r.Ask = phone => PhoneHub.Ask("allow", phone, L.T("wants to watch this PC and start checks for up to 30 minutes. Allow it only if it's your phone and you just scanned the code."));
+                r.Ask = phone => PhoneHub.Ask("allow", phone, L.T("wants to watch this PC and start checks for up to 30 minutes."), r.Words);
                 r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.Known != null) KnownChanged(r); if (r.St == Remote.State.Ended && PhoneHub.Pending != null && (Remote.Now == null || Remote.Now == r)) PhoneHub.Answer(false); PhoneHub.Fire(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
                 r.FeltSlow = () => FeltSlow();
                 // a file from the phone: asked on the page first, No by default

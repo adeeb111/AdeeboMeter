@@ -238,6 +238,9 @@ textarea.in{resize:vertical;min-height:120px}
 .voices button,.mini button{border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mini button{border-radius:10px;padding:9px 0}
 @media (min-width:768px){.sheet{left:auto;right:24px;bottom:24px;width:420px;border-radius:22px}}
+/* matching words */
+.pwords{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 10px}
+.pwords span{font-size:22px;font-weight:800;padding:12px 6px;border-radius:12px;background:var(--card2);border:1px solid var(--edge);letter-spacing:.2px}
 /* screen peek */
 .peekbox{overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#0A1324;cursor:zoom-in}
 .peekbox img{display:block;width:100%;height:auto}
@@ -338,6 +341,11 @@ textarea.in{resize:vertical;min-height:120px}
   // being tried, so a room that isn't there doesn't show as a failure. Resolves true once paired.
   // a fresh session never shows the last PC's data (AM-CG-356)
   function resetSession() { if (window.AMV) AMV.follow(null); live = null; liveAt = 0; cat = []; results = []; busy = ""; busyAt = 0; curRid = ""; sure = ""; open = ""; mkt = null; devs = null; devRid = ""; devAt = 0; report = null; hD = []; hU = []; hP = []; outF = null; inF = null; fromPc = ""; xmsg = ""; S.dev = -1; S.devKey = ""; }
+  // matching words (Adeeb, 17 Nov): before you press Allow, the PC and this phone each show 4 words from both one-time keys
+  // and the QR secret. Same words = your phone, nothing in the middle. Never sent - each side works them out. The list and
+  // the recipe match src/Remote/RemoteWords.cs - change both together.
+  var WORDS = "acorn amber anchor apple arrow atlas autumn bacon badge bagel ballad bamboo banjo barn basil beach beacon bear beaver bell berry bison blade blanket bloom boat bonfire boot bottle breeze brick bridge brook brush bucket bugle button cabin cactus cake camel camera candle canoe canyon carpet carrot castle cedar cello chalk cherry chess cider circle clock cloud clover coast cobalt cocoa comet compass copper coral cotton cougar crane crayon cricket crown crystal cup daisy delta desert diamond dolphin donkey dragon drum eagle echo elbow ember engine falcon feather fern ferry fiddle field fig flag flame flute forest fossil fox galaxy garden garlic gecko ginger glacier globe goat gold grape gravel guitar hammer harbor harp hazel helmet heron hill honey horse igloo island ivory jacket jaguar jasmine jelly jungle kayak kettle kite koala ladder lagoon lake lamp lantern lemon lily lime lion lizard llama lotus magnet mango maple marble meadow melon mint mirror moon moose mosaic moss museum nectar needle nest noodle oak oasis ocean olive onion orange orbit orchid otter owl paddle panda paper parrot peach peanut pearl pebble pepper piano pickle pigeon pillow pine planet plum pond popcorn potato prism puzzle quartz quill rabbit radar rainbow raven reef ribbon river robin rocket ruby saddle salmon sandal satin scarf shell silver sketch sled snow sofa spark spider spoon squash star stone storm sugar summit sunset swan tablet tango temple thunder tiger timber tomato topaz torch tower tulip tunnel turtle valley velvet violin volcano wagon walnut walrus water whale wheat willow window winter wolf yarn zebra zipper".split(" "), pcWords = "";
+  async function wordsOf(sec, phonePk, pcPk) { var h = new Uint8Array(await subtle.digest("SHA-256", cat2(te.encode("adeebometer words v1"), sec, phonePk, pcPk))); return [h[0], h[1], h[2], h[3]].map(function (i) { return WORDS[i]; }).join(" · "); }
   function start(rm, sec, quiet) {
     return new Promise(function (done) {
       var settled = false, sock = null, q = Promise.resolve();
@@ -345,7 +353,7 @@ textarea.in{resize:vertical;min-height:120px}
       (async function () {
         if (!subtle || !window.WebSocket) { phase = "ended"; why = "This browser can't do the encryption - open the link in Safari or Chrome."; draw(); fin(false); return; }
         if (ws) { var old = ws; ws = null; try { old.close(); } catch (e) {} }
-        resetSession(); tx = rx = null; phase = "connecting"; draw();
+        resetSession(); tx = rx = null; pcWords = ""; var keyPk = null; phase = "connecting"; draw();
         var auth = await hkdf(sec, te.encode("pair"), "adeebometer remote v1 auth", 32);
         var kp = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
         var pk = new Uint8Array(await subtle.exportKey("raw", kp.publicKey));
@@ -356,7 +364,7 @@ textarea.in{resize:vertical;min-height:120px}
           (async function () {
             if (!quiet) { phase = "asking"; draw(); }
             var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-            sock.send(JSON.stringify({ t: "hi", v: PROTO, pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
           })().catch(function () { try { sock.close(); } catch (e) {} });
         };
       sock.onclose = function () {
@@ -369,10 +377,17 @@ textarea.in{resize:vertical;min-height:120px}
         var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
         if (!tx) {
           if (m.t === "no") { why = "The PC said no."; sock.close(); return; }
+          if (m.t === "key" && !keyPk) {   // the PC's key early, so both can show the matching words before you press Allow
+            var kp2 = unb64u(m.pk || "");
+            if (kp2.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("key"), pk, kp2)))) { why = "This isn't your PC - its key wasn't signed with your code."; sock.close(); return; }
+            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2); draw(); return;
+          }
           if (m.t !== "ok") return;
           if (m.v && +m.v > PROTO) { why = "Your PC has a newer AdeeboMeter than this page. Close the app and open it again to update (it updates itself when it's online)."; if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (g) { if (g) g.update(); }); sock.close(); return; }
           var pcPk = unb64u(m.pk || "");
           if (pcPk.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("ok"), pk, pcPk)))) { why = "This isn't your PC - the answer wasn't signed with your key."; sock.close(); return; }
+          if (keyPk && !same(keyPk, pcPk)) { why = "The PC's key changed after the words were shown - the session was closed to be safe."; sock.close(); return; }
+          pcWords = "";
           var pcKey = await subtle.importKey("raw", pcPk, { name: "ECDH", namedCurve: "P-256" }, false, []);
           var z = new Uint8Array(await subtle.digest("SHA-256", await subtle.deriveBits({ name: "ECDH", public: pcKey }, kp.privateKey, 256)));
           tx = await lane(sec, z, 2); rx = await lane(sec, z, 1); phase = "live"; draw(); fin(true); return;
@@ -909,6 +924,8 @@ textarea.in{resize:vertical;min-height:120px}
     var rec = recLoad();
     if (rec && (phase === "none" || phase === "ended")) return '<button class="card hero" data-act="reconnect"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led ' + (reconnecting ? 'warn' : 'off') + '"></span>' + (reconnecting ? "Reconnecting..." : liveAt ? "Not live · last reading " + ago(age()) + " ago" : "Remembered") + '</span><b>' + esc(rec.pc) + '</b><span class="m">' + esc(why && !reconnecting ? why : "Tap to reconnect with Face ID or fingerprint") + '</span></div>' + ic("chev") + '</button>';
     if (phase === "none") return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led off"></span>No PC connected</span><b>Connect your PC</b><span class="m">Scan the code from AdeeboMeter on your PC</span></div>' + ic("chev") + '</button>';
+    if (phase === "asking" && pcWords) return '<div class="card hero" style="flex-direction:column;align-items:stretch;text-align:center"><span class="pill" style="align-self:center"><span class="led warn"></span>Waiting for you</span><b style="margin-top:8px">Your PC should show these words</b>' +
+      '<div class="pwords">' + pcWords.split(" · ").map(function (x) { return '<span>' + esc(x) + '</span>'; }).join("") + '</div><span class="m">Same words? Press Allow on your PC. Different words - press Don\'t allow there.</span></div>';
     if (phase === "connecting" || phase === "asking") return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>' + (phase === "asking" ? "Waiting for you" : "Connecting...") + '</span><b>' + (phase === "asking" ? "Press Allow on your PC" : "Reaching your PC") + '</b><span class="m">Nothing is shared until you allow it</span></div></div>';
     if (phase === "live" && !liveAt) return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Connected · waiting for the first reading</span><b>Your PC</b><span class="m">A few seconds.</span></div></div>';
     if (phase === "ended" || !isLive()) return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Not live' + (liveAt ? ' · last reading ' + ago(age()) + ' ago' : '') + '</span><b>' + (phase === "ended" ? "Session ended" : "No reading from your PC") + '</b><span class="m">' + esc(phase === "ended" ? "Scan the code on your PC again to reconnect" : "The PC may be asleep, or its internet dropped") + '</span></div>' + ic("chev") + '</button>';
