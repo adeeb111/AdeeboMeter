@@ -187,6 +187,25 @@ namespace AdeeboMeter
             // what came from the phone (this run only)
             var c2 = new RectangleF(x, y, w, 10); cy = PhHead(g, "FROM THE PHONE", ix, y + 18 * S);
             var got = PhoneHub.Inbox;
+            // a locked file and its code both came from the phone (Adeeb, 16 Nov: "yes do that"): open it in one click -
+            // Open an encrypted file, filled in and started. The code is only the phone's "XXXX-XXXX-...-XXXX" kind.
+            var lockedF = got.FirstOrDefault(z => z.File != "" && z.File.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(z.File));
+            var codeT = got.FirstOrDefault(z => z.File == "" && Regex.IsMatch(z.Text.Trim(), @"^[A-Z0-9]{4}(-[A-Z0-9]{4}){5}$"));
+            if (lockedF != null && codeT != null)
+            {
+                var oc = new RectangleF(ix, cy, iw, 64 * S); Theme.Fill(g, oc, 14 * S, Theme.LvSoft(0)); Theme.Stroke(g, oc, 14 * S, Theme.Green, 1.5f);
+                Kit.Icon(g, "key", new RectangleF(oc.X + 14 * S, oc.Y + 22 * S, 20 * S, 20 * S), Theme.LvText(0));
+                using (var b = new SolidBrush(Theme.LvText(0))) g.DrawString(L.T("A locked file and its code came from your phone"), Draw.fBodyB, b, oc.X + 44 * S, oc.Y + 10 * S);
+                using (var m = new SolidBrush(Theme.Sub)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                    g.DrawString(Path.GetFileName(lockedF.File), Draw.fSmall, m, new RectangleF(oc.X + 44 * S, oc.Y + 34 * S, oc.Width - 200 * S, 20 * S), nf);
+                string lf = lockedF.File, lc = codeT.Text.Trim();
+                PhBtn(g, oc.Right - 150 * S, oc.Y + 12 * S, L.T("Open it now"), 3, delegate
+                {
+                    tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("decrypt");
+                    if (tbBoxes.Count > 1 && tbBoxes[0] != null && tbBoxes[1] != null) { tbBoxes[0].Box.Text = lf; tbBoxes[1].Box.Text = lc; if (!tbBusy) StartTool(); }
+                });
+                cy += 74 * S;
+            }
             if (got.Count == 0) cy = PhText(g, L.T("Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\\AdeeboMeter after you accept them."), Draw.fBody, Theme.Sub, ix, cy, iw);
             foreach (var it in got.Take(5))
             {
