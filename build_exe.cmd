@@ -17,6 +17,10 @@ if not exist obj mkdir obj
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem knowledge\*.txt | ForEach-Object { $b=[IO.File]::ReadAllBytes($_.FullName); $o=[IO.File]::Create('obj\'+$_.BaseName+'.gz'); $z=New-Object IO.Compression.GZipStream($o,[IO.Compression.CompressionLevel]::Optimal); $z.Write($b,0,$b.Length); $z.Close(); $o.Close() }" || goto fail
 set "RES="
 for %%F in (knowledge\*.txt) do set "RES=!RES! /resource:obj\%%~nF.gz,AdeeboMeter.knowledge.%%~nF.gz"
+rem the fonts (assets\fonts, SIL Open Font License) ride compressed the same way - without them the app falls back to Segoe UI
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem assets\fonts\*.ttf | ForEach-Object { $b=[IO.File]::ReadAllBytes($_.FullName); $o=[IO.File]::Create('obj\'+$_.BaseName+'.ttf.gz'); $z=New-Object IO.Compression.GZipStream($o,[IO.Compression.CompressionLevel]::Optimal); $z.Write($b,0,$b.Length); $z.Close(); $o.Close() }"
+for %%F in (assets\fonts\*.ttf) do set "RES=!RES! /resource:obj\%%~nF.ttf.gz,AdeeboMeter.font.%%~nF.gz"
+for %%F in (assets\emoji\*.png) do set "RES=!RES! /resource:assets\emoji\%%~nF.png,AdeeboMeter.emoji.%%~nF.png"
 "%CSC%" /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /r:System.Security.dll /recurse:src\*.cs !RES! || goto fail
 rem fingerprint of YOUR build (the compiler stamps a fresh id into every build, so it differs from the releases).
 rem To check a downloaded release instead: gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter

@@ -265,24 +265,25 @@ namespace AdeeboMeter
         // the drawing kit is built around (PLAN 11.2). Loaded once from the exe into this process only (nothing installed);
         // body text stays on Windows' own font so names in any script (a Chinese Wi-Fi name...) still get Windows' fallback.
         static System.Drawing.Text.PrivateFontCollection inter;
-        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI";
+        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", SmallFam = "";
         public static FontStyle UiSemiStyle = FontStyle.Bold;
         static void LoadInter()
         {
             try
             {
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
-                foreach (var w in new[] { "Regular", "SemiBold", "Bold" })
-                    using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font.Inter-" + w + ".gz"))
+                // Inter for the writing; Nunito Bold for the small writing (Adeeb, 16 Nov: "rounder and thicker, easy to read")
+                foreach (var w in new[] { "Inter-Regular", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold" })
+                    using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
                     {
-                        if (rs == null) return;
+                        if (rs == null) { if (w.StartsWith("Inter", StringComparison.Ordinal)) return; continue; }
                         byte[] data; using (var gz = new System.IO.Compression.GZipStream(rs, System.IO.Compression.CompressionMode.Decompress)) using (var ms = new MemoryStream()) { gz.CopyTo(ms); data = ms.ToArray(); }
                         IntPtr mem = Marshal.AllocCoTaskMem(data.Length); Marshal.Copy(data, 0, mem, data.Length);   // kept for the life of the process: GDI+ and GDI read the font from it
                         pfc.AddMemoryFont(mem, data.Length);
                         uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
                     }
                 inter = pfc;
-                foreach (var f in pfc.Families) { if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
+                foreach (var f in pfc.Families) { if (f.Name == "Nunito") SmallFam = "Nunito"; if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
                 if (UiFam == "Inter" && UiSemi == "Segoe UI") { UiSemi = "Inter"; UiSemiStyle = FontStyle.Bold; }
             }
             catch (Exception e) { Program.Log("Inter font: " + e.Message); UiFam = UiSemi = "Segoe UI"; UiSemiStyle = FontStyle.Bold; }
@@ -310,10 +311,11 @@ namespace AdeeboMeter
             fBodyB = Ui(UiSemi, 12.5f * S, UiSemiStyle);
             // Adeeb, 14 Nov: "the small writing is not even sharp" - Inter has no hinting, so below 12 px it goes soft on Windows.
             // The small sizes use Windows' own text face (hinted for exactly these sizes); headings and body stay Inter.
-            fSmall = new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);   // 12 px: readable without a magnifier (was 11)
+            // Adeeb, 16 Nov (option D): the small writing is Nunito Bold - round, thick, easy to read; Windows' own face if it didn't load
+            fSmall = SmallFam != "" ? Ui(SmallFam, 13 * S, FontStyle.Bold) : new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals (was 9.5)
+            fTiny = SmallFam != "" ? Ui(SmallFam, 11.5f * S, FontStyle.Bold) : new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals
             fPill = new Font(semi, 11 * S, semiStyle, GraphicsUnit.Pixel);
             fBig = Ui(UiFam, 20 * S, FontStyle.Bold);
             fTitle = Ui(UiFam, 16 * S, FontStyle.Bold);

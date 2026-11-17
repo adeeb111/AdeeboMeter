@@ -1589,6 +1589,78 @@ textarea.in{resize:vertical;min-height:120px}
     return hdr("Hash a file", "Check a download is exactly what it should be", "tools") + a + '<p class="fine">Worked out on this phone; the file never leaves it. MD5: on your PC.</p>';
   };
 
+  // ---- Signal journey (Adeeb, 16 Nov): the phone's own field test screen, screen-recorded, read here by /journey.js.
+  // Nothing leaves the phone and nothing is kept: the numbers live in this page until it's closed.
+  var J = { os: /SM-|Samsung/i.test(navigator.userAgent) ? "samsung" : /Android/i.test(navigator.userAgent) ? "android" : "ios", st: "idle", gen: 0 };
+  var JCODE = { ios: "*3001#12345#*", samsung: "*#0011#", android: "*#*#4636#*#*" };
+  function jLoad() { return window.AMJ ? Promise.resolve() : new Promise(function (ok, no) { var s = document.createElement("script"); s.src = "/journey.js"; s.onload = ok; s.onerror = function () { no(new Error("load")); }; document.head.appendChild(s); }); }
+  async function jRead(files) {
+    var g = ++J.gen, stopped = function () { return g !== J.gen; }, L = Array.prototype.slice.call(files || []);
+    if (!L.length) return;
+    var vid = L.filter(function (f) { return /^video\//.test(f.type) || /\.(mov|mp4|m4v|webm)$/i.test(f.name); })[0];
+    J.st = "reading"; J.i = 0; J.n = 0; J.msg = "Getting the reader ready - about 10 MB the first time"; J.R = null; J.err = ""; draw();
+    try {
+      await jLoad(); await AMJ.ready(); if (stopped()) return;
+      var prog = function (i, n, m) { if (stopped()) return; J.i = i; J.n = n; J.msg = m; draw(); };
+      var got = vid ? await AMJ.readVideo(vid, prog, stopped) : await AMJ.readImages(L.filter(function (f) { return /^image\//.test(f.type); }), prog, stopped);
+      if (stopped()) return;
+      J.R = AMJ.analyze(got.frames, got.cut); J.vid = !!vid;
+      J.st = J.R.read ? "done" : "error";
+      if (!J.R.read) J.err = "No signal numbers found in " + (vid ? "that recording" : "those pictures") + ". Make sure the field test screen (" + (J.os === "ios" ? "Field Test › Dashboard" : "the service screen") + ") was showing.";
+    } catch (e) { if (stopped()) return; var em = String(e && e.message || e); J.st = "error"; J.err = /load|importScripts|fetch/i.test(em) ? "Couldn't load the reader - it needs the internet the first time." : "Couldn't read that: " + em; }
+    draw();
+  }
+  function jSteps() {
+    var ios = J.os === "ios", sam = J.os === "samsung", code = JCODE[J.os];
+    var step = function (n, t, s) { return '<div class="row" style="cursor:default;align-items:flex-start"><span class="ic k-tools" style="font-weight:800">' + n + '</span><div class="tx"><b>' + t + '</b><span>' + s + '</span></div></div>'; };
+    return '<div class="seg" role="tablist" style="margin-top:4px">' + [["ios", "iPhone"], ["samsung", "Samsung"], ["android", "Other Android"]].map(function (o) { return '<button role="tab" aria-selected="' + (J.os === o[0]) + '"' + (J.os === o[0] ? ' class="on"' : '') + ' data-jos="' + o[0] + '">' + o[1] + '</button>'; }).join("") + '</div>' +
+      '<div class="card list">' +
+      step(1, "Copy the code", '<span style="display:flex;gap:8px;align-items:center;margin-top:6px"><code style="flex:1;font-size:16px;padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">' + code + '</code><button class="btn ghost" style="width:auto;padding:0 14px;margin:0" data-act="jcode">Copy</button></span><span style="display:block;margin-top:6px">Phone › Keypad, paste it' + (ios ? " and press call. Field Test opens - stay on Dashboard." : sam ? " - Service mode opens by itself." : " - choose Phone information.") + ' No app may dial it for you.</span>') +
+      step(2, "Start screen recording", ios ? "Control Centre › the round record button. Then go back to Field Test." : "Quick Settings › Screen record. Then go back to the signal screen.") +
+      step(3, "Move - up to 30 seconds", "Walk to where it goes bad, or ride through it. Don't touch the screen.") +
+      step(4, "Stop it and pick it here", ios ? "Tap the red pill at the top, or the record button again." : "Tap the recording notification.") + '</div>';
+  }
+  TOOLV.journey = function () {
+    var a = hdr("Signal journey", "Your phone's own signal numbers, read off a screen recording", "tools");
+    if (J.st === "reading") {
+      var pc = J.n ? Math.round(J.i / J.n * 100) : 4;
+      return a + '<div class="card"><b>' + esc(J.msg || "Reading...") + '</b><div style="height:10px;border-radius:9px;background:var(--line);margin:12px 0;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:var(--blue);border-radius:9px"></i></div><p class="fine" style="margin:0 0 12px">On this phone - nothing is uploaded.</p><button class="btn ghost" data-act="jstop">Stop</button></div>';
+    }
+    if (J.st === "done" && J.R) return a + jResult(J.R);
+    return a + (J.st === "error" ? '<p style="color:var(--amber);font-weight:600;margin:0 2px 12px">' + esc(J.err) + '</p>' : '') +
+      '<p class="fine" style="margin:0 2px 10px">A web app isn\'t allowed to read your signal, but your phone shows it on its field test screen. Record that screen while you move, and this reads every number off the recording.</p>' + jSteps() +
+      '<label class="btn" style="margin-top:14px;cursor:pointer">' + ic("play", 20) + ' Read my recording<input type="file" id="jfile" accept="video/*,image/*" multiple style="position:absolute;opacity:0;width:1px;height:1px"></label>' +
+      '<p class="fine">Up to 30 seconds of video (one moment a second) or 30 screenshots. Read on this phone, then forgotten - your phone number and IMEI on that screen are skipped.</p>';
+  };
+  function jLv(g) { return g ? String(g[0]) : "3"; }
+  function jResult(R) {
+    var top = R.findings[0] || [3, "Read", ""], rows = [], F = AMJ.fmtT;
+    var hero = '<div class="card vcard verdict l' + top[0] + '">' + stamp(Date.now(), (R.carrier ? esc(R.carrier) + " · " : "") + (R.rat === "nr" ? "5G" : "LTE") + " · " + F(R.span) + " · " + R.read + " moments") + '<div class="vh">' + esc(top[1]) + '</div><div style="color:var(--sub);font-size:15px;line-height:1.45">' + esc(top[2]) + '</div></div>';
+    if (R.cut) hero += '<p class="fine" style="margin:6px 2px 0">' + (J.vid ? "The video is " + F(R.cut) + " long - the first 30 seconds were read." : "The first 30 of " + R.cut + " pictures were read.") + '</p>';
+    var chart = (R.rsrp.s.length > 1 || R.sinr.s.length > 1) ? '<div class="card" style="margin-top:12px"><b>Over the journey</b>' + AMJ.chart(R, 340) + '<div class="fine" style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 0"><span><span style="display:inline-block;width:14px;height:3px;background:var(--blue);vertical-align:middle"></span> Strength</span><span><span style="display:inline-block;width:14px;height:3px;background:#E89B2C;vertical-align:middle"></span> ' + (R.sinr.s.length ? "Quality (SINR)" : "Quality (RSRQ)") + '</span><span>┆ new cell</span><span style="color:var(--red)">● worst moment</span></div></div>' : '';
+    R.findings.slice(1).forEach(function (f) { rows.push([String(f[0]), f[1], "", f[2]]); });
+    rows.push(["-1", "The numbers"]);
+    var g = AMJ.gRSRP(R.rsrp.med); if (g) rows.push([jLv(g), "Strength (RSRP)", R.rsrp.med + " dBm - " + g[1], R.rsrp.min !== R.rsrp.max ? "from " + R.rsrp.min + " to " + R.rsrp.max + " dBm" : ""]);
+    g = AMJ.gRSRQ(R.rsrq.med); if (g) rows.push([jLv(g), "Quality (RSRQ)", R.rsrq.med + " dB - " + g[1], R.rsrq.min != null && R.rsrq.min < R.rsrq.med ? "worst " + R.rsrq.min + " dB" : ""]);
+    g = AMJ.gSINR(R.sinr.med); if (g) rows.push([jLv(g), "Clean signal (SINR)", R.sinr.med + " dB - " + g[1], R.sinr.ports.length > 1 ? R.sinr.ports.map(function (p, i) { return "antenna " + (i + 1) + ": " + p.med + " dB"; }).join(" · ") : ""]);
+    if (R.ant) rows.push([R.ant.gap >= 6 ? "1" : "0", "Two antennas", R.ant.gap >= 6 ? R.ant.gap + " dB apart - one is covered" : "balanced (" + R.ant.gap + " dB apart)", ""]);
+    if (R.rssi.med != null) rows.push(["3", "Total received (RSSI)", R.rssi.med + " dBm", ""]);
+    if (R.expect) rows.push([String(R.expect[0]), "What it's good for", R.expect[1], "From the quality seen most of the time"]);
+    if (R.worst) rows.push(["3", "Worst moment", "at " + F(R.worst.t) + (R.worst.pci != null ? " on cell " + R.worst.pci : ""), [R.worst.rsrp != null ? R.worst.rsrp + " dBm" : "", R.worst.rsrq != null ? "RSRQ " + R.worst.rsrq : "", R.worst.sinr != null ? "SINR " + R.worst.sinr : ""].filter(Boolean).join(" · ")]);
+    if (R.cells.length) { rows.push(["-1", "Cells you passed (" + R.changes.length + " change" + (R.changes.length === 1 ? "" : "s") + (R.pingpong ? ", " + R.pingpong + " straight back" : "") + ")"]);
+      R.cells.forEach(function (c) { var gg = AMJ.gSINR(c.sinr) || AMJ.gRSRP(c.rsrp); rows.push([jLv(gg), "Cell " + c.pci + (c.enb != null ? " · tower " + c.enb + ", side " + c.side : ""), F(c.t) + " on it", [c.rsrp != null ? c.rsrp + " dBm" : "", c.sinr != null ? "SINR " + c.sinr + " dB" : ""].filter(Boolean).join(" · ")]); }); }
+    rows.push(["-1", "Network"]);
+    if (R.carrier || R.net) rows.push(["3", "Carrier", (R.carrier || "") + (R.net && R.carrier && R.net.indexOf(R.carrier) < 0 ? " · on " + R.net : !R.carrier ? R.net : ""), R.plmn ? "PLMN " + R.plmn + (R.country ? " · " + R.country : "") : ""]);
+    if (R.techs.length) rows.push([R.techs.length > 1 ? "1" : "3", "Technology", R.techs.join(" → "), R.nr.n ? "5G seen in " + R.nr.n + " of " + R.nr.of + " moments" + (R.nr.med != null ? " · " + R.nr.med + " dBm" : "") : ""]);
+    if (R.tacs.length) rows.push(["3", "Tracking area", R.tacs.join(" → "), ""]);
+    var m = R.misc; if (m.band || m.bw || m.arfcn) rows.push(["3", "Channel", [m.band, m.bw ? m.bw + " MHz wide" : "", m.arfcn ? "ARFCN " + m.arfcn : ""].filter(Boolean).join(" · "), ""]);
+    if (m.cqi != null) rows.push([m.cqi >= 10 ? "0" : m.cqi >= 6 ? "1" : "2", "Channel quality (CQI)", m.cqi + " of 15", ""]);
+    if (m.tx != null) rows.push([m.tx >= 20 ? "1" : "3", "Phone's transmit power", m.tx + " dBm", m.tx >= 20 ? "working hard to be heard - the battery drains faster" : ""]);
+    return hero + chart + '<div class="card" style="margin-top:12px">' + rowsHtml(rows) + '</div>' +
+      '<div style="display:flex;gap:10px;margin-top:12px"><button class="btn ghost" data-act="jcopy" style="flex:1">Copy report</button>' + (navigator.share ? '<button class="btn" data-act="jshare" style="flex:1">Share</button>' : '') + '</div>' +
+      '<button class="btn ghost" data-act="jagain" style="margin-top:10px">Read another</button><p class="fine">Read on this phone and not kept - leave this page and it\'s gone.</p>';
+  }
+
   // ---- My week: kept on this phone only (Adeeb: "we're just passthru"), 7 days, from the checks run here
   // keys are calendar days written so they sort in order (2026-10-09 before 2026-10-10 - FRESH-085); a day is kept for
   // 7 calendar days, checked on every load and write, not "the last 7 days with checks" (FRESH-086/087); each write reads
@@ -1763,7 +1835,7 @@ textarea.in{resize:vertical;min-height:120px}
     var flat = []; rows.slice(0, 40).forEach(function (x) { flat.push(String(x[0]), String(x[1] || ""), String(x[2] || ""), String(x[3] || "")); });
     send({ t: "pres", rid: rid, head: head, r: flat });
   }
-  var PT = [["CHECK FROM THIS PHONE", [["phone", "speedo", "My connection", "Delay, steadiness, provider, IPv6"], ["speed", "chart", "Speed test", "Download, upload and lag under load"], ["isdown", "globe", "Is it down or just me?", "Time any website from here"], ["watch", "chart", "Watch my connection", "Catches dropouts over a few minutes"], ["compare", "signal", "Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?"], ["restart", "refresh", "Before and after", "Did restarting the router help?"], ["regions", "globe", "How far is the internet?", "Delay to the world's cloud regions"], ["walk", "walk", "Wi-Fi walk", "Find the best room"], ["@view", "game", "Game, call or stream check", "Pick a view on Home"], ["week", "chart", "My week", "Your checks over 7 days - on this phone only"]]],
+  var PT = [["CHECK FROM THIS PHONE", [["phone", "speedo", "My connection", "Delay, steadiness, provider, IPv6"], ["journey", "speedo", "Signal journey", "Record your field test screen - strength, quality, cells, antennas"], ["speed", "chart", "Speed test", "Download, upload and lag under load"], ["isdown", "globe", "Is it down or just me?", "Time any website from here"], ["watch", "chart", "Watch my connection", "Catches dropouts over a few minutes"], ["compare", "signal", "Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?"], ["restart", "refresh", "Before and after", "Did restarting the router help?"], ["regions", "globe", "How far is the internet?", "Delay to the world's cloud regions"], ["walk", "walk", "Wi-Fi walk", "Find the best room"], ["@view", "game", "Game, call or stream check", "Pick a view on Home"], ["week", "chart", "My week", "Your checks over 7 days - on this phone only"]]],
     ["SAFE AND PRIVATE", [["wifisafe", "lock", "Is this Wi-Fi safe?", "Hotel, cafe, airport"], ["vpnleak", "lock", "VPN leak check", "Does your real address slip out?"], ["stun", "router", "Calls, games and NAT", "Your public address, how strict your NAT is"], ["v6v4", "signal", "IPv6 vs IPv4", "Do you have IPv6, and is it faster?"]]],
     ["YOUR SERVER OR HOME SETUP", [["portcheck", "router", "Is my port open?", "Tested from the internet, at your own address"], ["site", "search", "A website from outside", "Status, redirects, timing from Cloudflare"], ["spamlist", "send", "Is my address on a spam list?", "The main email blocklists"]]],
     ["LOOK UP", [["dns", "search", "DNS lookup", "A, AAAA, MX, TXT and more - two resolvers"], ["fastdns", "chart", "Fastest DNS", "Cloudflare vs Google vs Quad9, from here"], ["email", "send", "Email setup check", "MX, SPF and DMARC for a domain"], ["status", "clock", "Is it down for everyone?", "The big services' status pages"], ["who", "router", "Who carries my connection?", "Provider, IPv6, nearest city"], ["rdap", "help", "Who owns this domain or IP?", "Registration, expiry, owner"], ["mac", "phone", "Who made this device?", "Maker from a hardware address"]]],
@@ -1878,7 +1950,7 @@ textarea.in{resize:vertical;min-height:120px}
 
   document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
     if (A("data-alsopc")) { alsoRun(A("data-alsopc")); return; }
@@ -1932,6 +2004,12 @@ textarea.in{resize:vertical;min-height:120px}
     if (act === "measure") { measure(A("data-k")); return; }
     if (act === "phone2") { phoneCheck(); return; }
     if (act === "roastshare") { roastShare(); return; }
+    if (A("data-jos")) { J.os = A("data-jos"); draw(); return; }
+    if (act === "jcode") { copyText(JCODE[J.os]); return; }
+    if (act === "jstop") { J.gen++; J.st = "idle"; draw(); return; }
+    if (act === "jagain") { J.gen++; J.st = "idle"; J.R = null; draw(); return; }
+    if (act === "jcopy") { if (J.R) copyText(AMJ.report(J.R)); return; }
+    if (act === "jshare") { if (J.R && navigator.share) navigator.share({ title: "Signal journey", text: AMJ.report(J.R) }).catch(function () {}); return; }
     if (act === "fxretry") { feedRates.failed = 0; feedRates(); draw(); return; }
     if (act === "wkclear") { WEEK = { d: {} }; try { localStorage.removeItem("am-week"); } catch (e) {} draw(); return; }
     if (act === "clearfind") { findQ = ""; draw(); return; }
@@ -1967,7 +2045,8 @@ textarea.in{resize:vertical;min-height:120px}
     if (e.target.id === "fpick" && e.target.files[0]) sendFile(e.target.files[0]);
   });
   var calcT = null;
-  document.addEventListener("change", function (e) { if (e.target && e.target.id === "hfile") { HASH.f = e.target.files && e.target.files[0] || null; tst("hash").res = null; if (HASH.f) runTool("hash"); else draw(); } });
+  document.addEventListener("change", function (e) { if (e.target && e.target.id === "jfile") { var fl = e.target.files; jRead(fl); return; }
+    if (e.target && e.target.id === "hfile") { HASH.f = e.target.files && e.target.files[0] || null; tst("hash").res = null; if (HASH.f) runTool("hash"); else draw(); } });
   document.addEventListener("keydown", function (e) { if (e.key !== "Enter" || (e.target && e.target.tagName === "TEXTAREA")) return; var tq = e.target.getAttribute && e.target.getAttribute("data-tq"); if (tq) { e.preventDefault(); tst(tq).q = e.target.value; e.target.blur(); runTool(tq); } });
   document.addEventListener("input", function (e) {
     var id = e.target.id;
