@@ -2,9 +2,28 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
-## 1.1.5 (unreleased)
+## 1.1.5 (2026-11-17)
 
 A Gamer Zone, a Report for my ISP, the packet journey, Labs, file encryption and keys, a network engineer pack, Examples on every tool, Adeebo Points, French (preview), the Microsoft Store and Windows on ARM - 158 tools in all, five Toolbox sections - plus the fixes from three outside reviews.
+
+### New: Your phone, in one place - and code signing
+- Code-signed: AdeeboMeter.exe is signed by "Open Source Developer MdAhasanul Adeeb Khan" (Certum) and timestamped.
+- Your phone page (sidebar and the link button on the top line): link with a QR code, Allow / Remember / Accept a file
+  answered on the page - never a pop-up - remembered phones, send a file, a link or the clipboard, and "Open it now" for
+  a locked file and its code sent from the phone.
+- Matching words: before you press Allow, the PC and the phone each show the same 4 words, worked out from both one-time
+  keys and the QR code's secret and never sent. Different words, or none on your phone: it isn't your phone.
+- Screen peek: the phone can ask for a still picture of any AdeeboMeter page, drawn out of sight on the PC (the window
+  you're looking at never moves). Only AdeeboMeter's pages, never the rest of the screen; nothing is saved.
+- The PC runs the phone's checks: 16 tools in "Run on your phone" (connection, speed, Wi-Fi safety, VPN leak, calls and
+  NAT, port from outside, website from outside, DNS, email setup and more), with "To my phone" under results.
+- Toolbox: Every tool - one index by question with Pinned (eight ready-made coloured buttons plus your own, up to 12),
+  each tool's runs and points, SNMP's views in one row, and search grouped by question. Hardware nerds has its own section.
+- Motion: the logo's needle sweeps when the window opens and breathes every 5 minutes; the buddy types its line (2 s at
+  most). All of it off when Windows' "Show animations" is off.
+- Phone app: in-app QR scanner (asks for the camera each time), Lock a file with Share and Send to PC, a status line like
+  the PC's, smoother pages (no flicker while linked).
+- Phone relay: rooms sleep while nobody's talking, and one address can open at most 6 rooms a minute.
 
 ### Fixed: QA round 2 (F001-F083)
 - Closing a full window now stops and frees its timers and pictures - repeated opens no longer pile up GDI/USER objects or memory.

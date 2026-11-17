@@ -944,7 +944,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <div class="grid g3" style="margin-top:1.2em">
       <div class="card"><h3>Update</h3><p>Run the new exe, choose <b>Update</b>. Your settings come along; the old version steps aside.</p></div>
       <div class="card"><h3>Remove</h3><p>Settings › Apps, or the tray menu. Everything goes — folder, settings, history.</p></div>
-      <div class="card"><h3>Or don't install</h3><p><i>Just run it from here</i> keeps it portable. Not code-signed: SmartScreen says <i>More info → Run anyway</i>.</p></div>
+      <div class="card"><h3>Or don't install</h3><p><i>Just run it from here</i> keeps it portable. Code-signed; while the certificate is new, SmartScreen may say <i>More info → Run anyway</i>.</p></div>
     </div>
   </div>
   <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>24</span></div>
@@ -980,7 +980,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <div class="step"><b>2</b><h3>Double-click, Install</h3><p>It goes in for you only — a Start menu entry, an entry in Settings › Apps, no admin rights.</p></div>
     <div class="step"><b>3</b><h3>Look at the corner</h3><p>It's already there, bottom-right. Click the tray icon or press Ctrl+Alt+A for the full story.</p></div>
   </div>
-  <p class="note">Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. Windows may say <i>“Windows protected your PC”</i> because AdeeboMeter isn't code-signed yet — choose <b>More info → Run anyway</b>. Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (<code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code>). To remove it: Settings › Apps › AdeeboMeter › Uninstall.</p>
+  <p class="note">Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. AdeeboMeter is code-signed by <i>Open Source Developer MdAhasanul Adeeb Khan</i>; while the certificate is new, Windows may still say <i>“Windows protected your PC”</i> — choose <b>More info → Run anyway</b>. Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (<code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code>). To remove it: Settings › Apps › AdeeboMeter › Uninstall.</p>
   </div>
 </section>
 
@@ -990,7 +990,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     <h2>Code signing and privacy.</h2>
   </div>
   <div class="wrap"><div class="steps">
-    <div class="step"><b>✓</b><h3>Code signing policy</h3><p>Releases aren't code-signed yet; we're applying for free open-source signing from <a href="https://signpath.org">SignPath Foundation</a>. Every release file is built by this project's GitHub Actions workflow from the public source — never on a personal PC — with every action pinned to an exact commit, and each release is approved by hand. Team roles (committer, reviewer, approver): <a href="https://github.com/adeeb111">adeeb111</a>, with multi-factor authentication.</p></div>
+    <div class="step"><b>✓</b><h3>Code signing policy</h3><p>From 1.1.5, releases are code-signed by <i>Open Source Developer MdAhasanul Adeeb Khan</i> with a Certum open-source certificate, timestamped so signatures outlive it. Every release file is built by this project's GitHub Actions workflow from the public source — never on a personal PC — with every action pinned to an exact commit; the author then signs that exe and nothing else, and the release lists the fingerprint of the exe exactly as GitHub built it (covered by build provenance) beside the signed one. Each release is approved by hand. Team roles (committer, reviewer, approver): <a href="https://github.com/adeeb111">adeeb111</a>, with multi-factor authentication.</p></div>
     <div class="step"><b>✓</b><h3>Privacy policy</h3><p>AdeeboMeter will not transfer any information to other networked systems unless you ask it to. It never listens, has no telemetry, no account and no updater. Checks and tools contact only what you typed or what they name on screen; <i>About</i> lists every packet your settings send.</p></div>
     <div class="step"><b>✓</b><h3>Online lookups</h3><p>Off by default. Switched on for 5 minutes to 3 hours, they send public IP addresses only — never private addresses or names you typed — to <a href="https://www.ripe.net/about-us/legal/ripe-ncc-privacy-statement/">RIPEstat</a> and <a href="https://www.peeringdb.com/aup">PeeringDB</a>, then turn themselves off. Everything else stays on your PC; uninstalling removes it.</p></div>
   </div></div>

@@ -44,7 +44,7 @@ AdeeboMeter is a small Windows companion for people who live on the network. A f
 **[adeebometer.com](https://adeebometer.com/)** — download, and the Theory of Everything as slides.
 
 1. Easiest: **[get it from the Microsoft Store](https://apps.microsoft.com/detail/9PFGXJPL9CLJ)** (signed, updates itself). Or download `AdeeboMeter-<version>-win64.zip` from [Releases](../../releases) and open it.
-2. Double-click **AdeeboMeter.exe** and choose **Install**. (SmartScreen: *More info → Run anyway* — the exe isn't code-signed yet.)
+2. Double-click **AdeeboMeter.exe** and choose **Install**. (It's code-signed by *Open Source Developer MdAhasanul Adeeb Khan*. While the certificate is new, SmartScreen may still say *More info → Run anyway*.)
 3. Look at the bottom-right corner of your screen.
 
 It installs just for you — `%LOCALAPPDATA%\Programs\AdeeboMeter\<version>`, a Start menu entry and an entry in
@@ -87,10 +87,11 @@ Releases are packaged by `release.ps1` and tagged `v<version>`; what changed is 
 
 ## Code signing policy
 
-Releases aren't code-signed yet; we're applying for free signing for open-source projects from [SignPath Foundation](https://signpath.org). Until then, and after:
+Releases from 1.1.5 on are code-signed by **Open Source Developer MdAhasanul Adeeb Khan** with a Certum open-source code signing certificate (the key is kept in Certum's cloud and unlocked from the author's phone for each signing).
 
-- Every release file is built by this repository's GitHub Actions workflow from the public source — nothing built on a personal PC is ever published. Every action in the workflow is pinned to an exact commit.
-- Each release carries SHA-256 fingerprints and GitHub build provenance.
+- Every release file is built by this repository's GitHub Actions workflow from the public source - nothing built on a personal PC is ever published. Every action in the workflow is pinned to an exact commit.
+- The author then signs that exe (and nothing else) and timestamps it, so the signature stays valid after the certificate ends.
+- Each release carries SHA-256 fingerprints of the signed files, and the fingerprint of the exe exactly as GitHub built it, which GitHub's build provenance covers (`gh attestation verify` on the unsigned exe; signing adds only the signature).
 - Each release is approved by hand.
 
 **Team roles:** committer, reviewer and approver — [adeeb111](https://github.com/adeeb111). Multi-factor authentication is on for GitHub.

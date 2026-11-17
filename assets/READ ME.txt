@@ -3,7 +3,8 @@ No cloud. No telemetry. Never listens. Every packet it sends is listed in About 
 
 Install (about ten seconds, no administrator rights)
   Double-click AdeeboMeter.exe and choose Install.
-  Windows may say "Windows protected your PC" - the app isn't code-signed yet. Choose More info > Run anyway.
+  AdeeboMeter is code-signed by "Open Source Developer MdAhasanul Adeeb Khan". While the certificate is new,
+  Windows may still say "Windows protected your PC" - choose More info > Run anyway.
   Download it only from https://github.com/adeeb111/AdeeboMeter/releases - fake copies of network tools are common.
   It installs just for you, adds itself to the Start menu and starts in the bottom-right corner of your screen.
 

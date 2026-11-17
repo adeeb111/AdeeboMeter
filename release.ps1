@@ -102,7 +102,7 @@ $notes = @"
 **Install in ten seconds:** open the zip → double-click **AdeeboMeter.exe** → **Install**. It installs just for you — no administrator rights — and starts in the bottom-right corner of your screen.
 **Update:** run the new exe and choose **Update**; your settings come along. **Remove:** Settings › Apps › AdeeboMeter.
 
-> Windows may show *"Windows protected your PC"* because AdeeboMeter isn't code-signed yet. Choose **More info → Run anyway**.
+> Code-signed by **Open Source Developer MdAhasanul Adeeb Khan** (Certum). While the certificate is new, Windows may still show *"Windows protected your PC"* - choose **More info → Run anyway**.
 
 **Requirements:** Windows 10 or 11 (64-bit), .NET Framework 4.8 (built into Windows). Optional: Wireshark for live capture and *Find my switch port*.
 
