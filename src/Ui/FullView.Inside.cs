@@ -190,7 +190,7 @@ namespace AdeeboMeter
                 if (s != null)
                 {
                     y = Title2(g, s.Name, x, y, w);
-                    var e = Explain.Find(Path.GetFileNameWithoutExtension(s.Exe));
+                    Explain.Entry e = null; try { e = Explain.Find(Path.GetFileNameWithoutExtension(s.Exe)); } catch (ArgumentException) { }   // an odd character in a Run value can't break the page
                     y = InfoCardOn(insideInfo, g, "WHY IT STARTS", new List<string[]> { new[] { "Added in", s.Where, "3" }, new[] { "Runs", s.Command, "3" }, TurnOff }, null, x, y, w);
                     if (e != null) y = ExplainPaint.Paint(g, e, x, y, w, false);
                 }

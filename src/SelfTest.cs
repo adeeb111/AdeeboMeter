@@ -59,7 +59,8 @@ namespace AdeeboMeter
             return false;
         }
         // --perf: how long each page takes to switch to, to paint, and what the 2-a-second timer costs - written to AdeeboMeter-perf.txt
-        static double Busy(Monitor M) { try { double c = M.Cpu.Last, m = M.Latest.Mem; return (!double.IsNaN(c) && c > 50) || (!double.IsNaN(m) && m > 85) ? 3 : 1; } catch (NullReferenceException) { return 1; } }
+        static double MemNow(Monitor M) { double m = M.Mem.Last; return double.IsNaN(m) && M.Latest != null ? M.Latest.Mem : m; }   // real-PC find: Latest.Mem can be empty while the series has it
+        static double Busy(Monitor M) { try { double c = M.Cpu.Last, m = MemNow(M); return (!double.IsNaN(c) && c > 50) || (!double.IsNaN(m) && m > 85) ? 3 : 1; } catch (NullReferenceException) { return 1; } }
         public static int Perf()
         {
             var sb = new StringBuilder();
@@ -200,6 +201,7 @@ namespace AdeeboMeter
                     // PC-064: a folder named x.exe.backup isn't the program; PC-037/038: A1 + A2 is one channel, nothing listed is unknown
                     string ex1 = Startup.ExeOf(@"C:\Apps\archive.exe.backup\launcher.exe --start"), ex2 = Startup.ExeOf(@"C:\Program Files\X\x.exe -s");
                     int ch1 = HwSpecs.ChannelsOf(new List<HwSpecs.Ram> { new HwSpecs.Ram { Slot = "ChannelA-DIMM1" }, new HwSpecs.Ram { Slot = "ChannelA-DIMM2" } }), ch0 = HwSpecs.ChannelsOf(new List<HwSpecs.Ram>());
+                    try { Startup.List(); } catch (ArgumentException ae) { throw new InvalidOperationException("startup list breaks on a command line: " + ae.Message); }   // real-PC find: a quoted Run command
                     if (ex1 != "launcher.exe" || ex2 != "x.exe" || ch1 != 1 || ch0 != 0) throw new InvalidOperationException("startup / channels: " + ex1 + " " + ex2 + " " + ch1 + " " + ch0);
                     string why; var nvme = new HwSpecs.Disk { Bus = "NVMe", Media = "SSD", LinkGen = 3, LinkWidth = 4 }; var hdd = new HwSpecs.Disk { Bus = "SATA", Media = "HDD", Rpm = 5400 };
                     if (Math.Abs(HwSpecs.DiskCeiling(nvme, out why) - 3546) > 5 || HwSpecs.DiskCeiling(hdd, out why) != 110 || HwSpecs.DiskCeiling(new HwSpecs.Disk { Bus = "SATA", Media = "SSD" }, out why) != 550) throw new InvalidOperationException("disk ceilings wrong");
@@ -1107,7 +1109,7 @@ namespace AdeeboMeter
                         // AM-CG-306: a PC that's already busy (CPU over 50 % or memory over 85 % before the test) gets 3x the room,
                         // and the run says so - the numbers still show, so an idle PC's rerun is the real verdict
                         double busy = Busy(M); double lim = (Program.IsWine ? 120 : 30) * busy;
-                        if (busy > 1) sb.AppendLine("      busy PC (CPU " + Math.Round(M.Cpu.Last) + "%, memory " + Math.Round(M.Latest.Mem) + "%): timing limits x3 - rerun on an idle PC for the real numbers");
+                        if (busy > 1) sb.AppendLine("      busy PC (CPU " + Math.Round(M.Cpu.Last) + "%, memory " + Math.Round(MemNow(M)) + "%): timing limits x3 - rerun on an idle PC for the real numbers");
                         string b0 = fv.QuestionCheck(), b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, (Program.IsWine ? 400 : 100) * busy), b3 = FullView.FreezeCheck(sb);
                         string all = string.Join("; ", new[] { b0, b1, b2, b3 }.Where(z => z != ""));
                         if (all != "") throw new InvalidOperationException(all);

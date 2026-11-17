@@ -178,7 +178,9 @@ namespace AdeeboMeter
             // PC-062: the switch for an entry lives in its own scope (HKCU or HKLM) and its own list - never another entry's
             foreach (var it in r)
             {
-                string file = Path.GetFileName(it.Command ?? "");
+                // only a Startup-folder entry is a file; a Run entry is a command line ("C:\...\x.exe" --tray), and its quotes
+                // make Path.GetFileName throw - which stopped the whole Inside Windows page loading on a real PC
+                string file = ""; if (it.Bucket == "StartupFolder") try { file = Path.GetFileName(it.Command ?? ""); } catch (ArgumentException) { }
                 try
                 {
                     using (var k = (it.User ? Registry.CurrentUser : Registry.LocalMachine).OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\" + it.Bucket))
