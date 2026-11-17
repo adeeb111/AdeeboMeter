@@ -128,9 +128,10 @@ $("lsave").onclick=function(){if(made)save(made.blob,made.name)};
 function asFile(){try{return new File([made.blob],made.name,{type:"application/octet-stream"})}catch(e){return null}}
 function canShare(){var f=made&&asFile();try{return !!(f&&navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
 function pcLive(){try{return window.parent!==window&&parent.AMPcLive&&parent.AMPcLive()}catch(e){return false}}
-function showSend(){$("lshare").hidden=!canShare();$("lpc").hidden=!pcLive()}
+function inApp(){try{return window.parent!==window&&!!parent.AMSendPC}catch(e){return false}}
+function showSend(){$("lshare").hidden=!canShare();$("lpc").hidden=!inApp();$("lpc").textContent=pcLive()?"Send the file to my PC":"Send the file to my PC (connect first)"}
 $("lshare").onclick=function(){var f=made&&asFile();if(!f)return;navigator.share({files:[f],title:made.name}).catch(function(){})};
-$("lpc").onclick=function(){if(!made||!pcLive())return;try{parent.AMSendPC(made.blob,made.name);$("lsent").hidden=false;$("lsent").textContent="Sending to your PC - accept it there. It lands in Downloads\\AdeeboMeter."}catch(e){$("lsent").hidden=false;$("lsent").textContent="Couldn't hand it to the app - save it and send it from PC › Files."}};
+$("lpc").onclick=function(){if(!made||!inApp())return;try{var r=parent.AMSendPC(made.blob,made.name);$("lsent").hidden=false;$("lsent").textContent=r==="sent"?"Sending to your PC - accept it there. It lands in Downloads\\AdeeboMeter.":"Connect your PC - the file goes as soon as it's linked."}catch(e){$("lsent").hidden=false;$("lsent").textContent="Couldn't hand it to the app - save it and send it from PC › Files."}};
 setInterval(function(){if(made)showSend()},2000);
 // AM-CG-380: if the clipboard says no, the code is selected so it can be copied by hand
 function byHand(){var e=$("lc"),r=document.createRange();r.selectNodeContents(e);var s=getSelection();s.removeAllRanges();s.addRange(r);$("lcopy").textContent="Copy it by hand - it's selected"}

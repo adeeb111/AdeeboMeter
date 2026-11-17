@@ -183,6 +183,7 @@ body.page #app>*{animation:amFade .22s ease-out backwards}
 #tabs button.on svg{animation:amPop .35s cubic-bezier(.3,1.6,.5,1)}
 @keyframes amPop{0%{transform:scale(.7)}100%{transform:none}}
 }
+p.foot{margin:22px 4px 6px;text-align:center;font-size:12px;color:var(--mut);line-height:1.6}
 #scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
 #web{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
 .wbar{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--edge)}.wbar b{font-size:19px}
@@ -442,7 +443,15 @@ textarea.in{resize:vertical;min-height:120px}
   function size(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
   // the Files page (in this app's frame) hands a locked file to the linked PC through the same sealed session
   window.AMPcLive = function () { return phase === "live" && !!tx; };
-  window.AMSendPC = function (blob, name) { if (phase !== "live") return false; var f; try { f = new File([blob], name, { type: "application/octet-stream" }); } catch (e) { f = blob; f.name = name; } sendFile(f); return true; };
+  // not linked yet (Adeeb, 16 Nov: "why does the PC option only come after I enable the PC?"): the file waits, Connect
+  // your PC opens, and it goes as soon as the PC is linked
+  var pendingPc = null;
+  window.AMSendPC = function (blob, name) {
+    var f; try { f = new File([blob], name, { type: "application/octet-stream" }); } catch (e) { f = blob; f.name = name; }
+    if (phase === "live" && tx) { sendFile(f); return "sent"; }
+    pendingPc = f; S.tab = "pair"; draw(); toast("Connect your PC - " + name + " goes as soon as it's linked"); return "waiting";
+  };
+  setInterval(function () { if (pendingPc && phase === "live" && tx && !outF) { var f = pendingPc; pendingPc = null; S.tab = "pc"; S.pcTab = "files"; draw(); sendFile(f); } }, 1000);
   async function sendFile(f) {
     if (outF) return toast("One file at a time");
     if (f.size > 200 * 1048576) return toast("Up to 200 MB at a time");
@@ -2070,6 +2079,11 @@ textarea.in{resize:vertical;min-height:120px}
   var TABOF = { tool: "tools", calc: "tools", addpc: "home", activity: "home", web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
   // a redraw changes only what changed (Adeeb, 16 Nov: "when my pc is connected phone screen flickers a lot" - every
   // live update from the PC used to rebuild the whole screen; now unchanged parts - pictures, the face, anything mid-animation - stay put)
+  // what AdeeboMeter says at the foot of every page - the phone's version of the PC's status line
+  function footHtml() {
+    var st = phase === "live" ? '<span class="led" style="display:inline-block;margin-right:6px"></span>Linked to your PC' : recLoad() ? "PC remembered, not linked now" : "No PC linked";
+    return '<p class="foot">' + st + ' · no account · no tracking · nothing kept online · runs on this phone</p>';
+  }
   var lastHtml = "", lastTab = null;
   function entrance(tabNow) {
     if (lastTab === null) { document.body.classList.add("intro"); setTimeout(function () { document.body.classList.remove("intro"); }, 1600); }
@@ -2104,7 +2118,7 @@ textarea.in{resize:vertical;min-height:120px}
     document.documentElement.setAttribute("data-theme", th); if (pal) document.documentElement.setAttribute("data-pal", pal); else document.documentElement.removeAttribute("data-pal"); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
-    entrance(S.tab); morph($("app"), S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : "")); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
+    entrance(S.tab); morph($("app"), S.tab === "web" ? "" : f() + footHtml() + (S.tab === "home" ? sheetHtml() : "")); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join();
     if (S.tab === "web") cur = !hasPc() && /\/learn/.test(webHome) ? "@/learn/" : !hasPc() && /\/live/.test(webHome) ? "@/live.html" : "home";
     var tb = $("tabs"); if (tb.getAttribute("data-built") !== tkey) tb.removeAttribute("data-built");
