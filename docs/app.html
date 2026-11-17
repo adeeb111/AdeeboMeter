@@ -1945,12 +1945,38 @@ textarea.in{resize:vertical;min-height:120px}
   var TABS = [["home", "home", "Home"], ["devices", "wifi", "Devices"], ["pc", "pc", "PC"], ["tools", "tools", "Tools"], ["more", "more", "More"]];
   var TABS0 = [["home", "home", "Home"], ["tools", "tools", "Tools"], ["@/learn/", "book", "Learn"], ["@/live.html", "chart", "Live data"], ["more", "more", "More"]];   // no PC: every tab works on its own
   var TABOF = { tool: "tools", calc: "tools", addpc: "home", activity: "home", web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
+  // a redraw changes only what changed (Adeeb, 16 Nov: "when my pc is connected phone screen flickers a lot" - every
+  // live update from the PC used to rebuild the whole screen; now unchanged parts - pictures, the face, anything mid-animation - stay put)
+  var lastHtml = "";
+  function morph(root, html) {
+    if (html === lastHtml && root.childNodes.length) return; lastHtml = html;
+    var t = document.createElement("div"); t.innerHTML = html; sync(root, t);
+  }
+  function sync(a, b) {
+    var an = a.childNodes, bn = b.childNodes, i;
+    for (i = 0; i < bn.length; i++) {
+      var x = an[i], y = bn[i];
+      if (!x) { a.appendChild(y.cloneNode(true)); continue; }
+      if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName || (x.nodeType === 1 && (x.getAttribute("data-say") !== y.getAttribute("data-say")))) { a.replaceChild(y.cloneNode(true), x); continue; }
+      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; continue; }
+      if (x.nodeType !== 1) continue;
+      if (x.outerHTML === y.outerHTML) continue;
+      if (x.hasAttribute("data-say")) { if (x.getAttribute("aria-label") !== y.getAttribute("aria-label")) a.replaceChild(y.cloneNode(true), x); continue; }   // the buddy's line types on its own clock
+      if (x.id === "pickhere") continue;   // filled by the view picker after each draw
+      var at, j;
+      for (j = x.attributes.length - 1; j >= 0; j--) { at = x.attributes[j].name; if (!y.hasAttribute(at)) x.removeAttribute(at); }
+      for (j = 0; j < y.attributes.length; j++) { at = y.attributes[j]; if (x.getAttribute(at.name) !== at.value) x.setAttribute(at.name, at.value); }
+      if (x.tagName === "INPUT" || x.tagName === "TEXTAREA" || x.tagName === "SELECT") { if (y.getAttribute("value") != null && document.activeElement !== x) x.value = y.getAttribute("value"); continue; }
+      sync(x, y);
+    }
+    while (an.length > bn.length) a.removeChild(a.lastChild);
+  }
   function draw() {
     var pal = PALS.indexOf(S.theme) >= 0 ? S.theme : "", th = pal ? (pal === "mint" ? "light" : "dark") : S.theme === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : S.theme;
     document.documentElement.setAttribute("data-theme", th); if (pal) document.documentElement.setAttribute("data-pal", pal); else document.documentElement.removeAttribute("data-pal"); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
-    $("app").innerHTML = S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : ""); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
+    morph($("app"), S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : "")); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join();
     if (S.tab === "web") cur = !hasPc() && /\/learn/.test(webHome) ? "@/learn/" : !hasPc() && /\/live/.test(webHome) ? "@/live.html" : "home";
     var tb = $("tabs"); if (tb.getAttribute("data-built") !== tkey) tb.removeAttribute("data-built");

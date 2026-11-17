@@ -42,7 +42,7 @@ namespace AdeeboMeter
             Disposed += delegate { phoneTick.Stop(); phoneTick.Dispose(); };
             return phonePage;
         }
-        void PhoneChanged() { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (phoneCanvas != null) phoneCanvas.Invalidate(); }
+        void PhoneChanged() { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (phoneCanvas != null) phoneCanvas.Invalidate(); if (sideNav != null && sideNav.Visible) sideNav.Invalidate(); }
         static bool PhoneOn() { var r = Remote.Now; return r != null && r.St == Remote.State.Paired; }
         void LinkClicked()
         {

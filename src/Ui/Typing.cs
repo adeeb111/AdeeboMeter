@@ -27,7 +27,7 @@ namespace AdeeboMeter
             if (el >= dur) return text;
             int n = Math.Max(0, Math.Min(text.Length, (int)Math.Ceiling(text.Length * el / dur)));
             if (c != null) { wake.Add(c); Tick(); }
-            return text.Substring(0, n) + "▏";
+            return text.Substring(0, n) + "|";
         }
         static void Tick()
         {

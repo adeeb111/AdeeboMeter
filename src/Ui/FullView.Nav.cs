@@ -139,7 +139,7 @@ namespace AdeeboMeter
             Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); sideNav.Acc.Add(Tuple.Create(L.T("Search anything"), Rectangle.Round(sr), (Action)OpenPalette)); y += 48 * S;
             // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
             // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
-            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S - 44 * S;   // 44: Settings always has its row at the bottom
+            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S - 44 * S - 40 * S;   // 44: Settings always has its row at the bottom; 40: Your phone above it
             bool compact = bar.Count * 46 * S + more.Count * 38 * S > room; float bigH = compact ? 36 : 44;
             int fitMore = more.Count; if (compact) { float left = room - bar.Count * 38 * S; fitMore = Math.Max(0, (int)(left / (38 * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
             Action<string, bool> row = (id, small) =>
@@ -163,10 +163,21 @@ namespace AdeeboMeter
             }
             // Settings at the bottom, always (AM-CG-102: it went missing when the list filled the sidebar); the live meter sits
             // under it when there's room - the gear at the top right is the other way in
-            float mh = 96 * S; bool meter = r.Height - 12 * S - mh - 46 * S > y + 8 * S;
+            float mh = 96 * S; bool meter = r.Height - 12 * S - mh - 46 * S - 40 * S > y + 8 * S;
             float my = r.Height - mh - 12 * S;
             {
-                var srr = new RectangleF(x, Math.Max(y, (meter ? my : r.Height - 4 * S) - 44 * S), w, 38 * S); bool ssel = tab == "settings";
+                var srr = new RectangleF(x, Math.Max(y + 40 * S, (meter ? my : r.Height - 4 * S) - 44 * S), w, 38 * S); bool ssel = tab == "settings";
+                // Your phone, the second way in (Adeeb, 16 Nov: "connect option should also be in the left bar") - its state on the right
+                {
+                    var prr = new RectangleF(x, srr.Y - 40 * S, w, 38 * S); bool psel = tab == "phone"; string plb; string pst = PhoneHub.StateOf(out plb);
+                    if (psel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, prr);
+                    Color pc = pst == "on" ? Theme.Green : pst == "ask" ? Theme.Amber : pst == "wait" ? Aqua : (psel ? (hc ? SystemColors.Highlight : Aqua) : sub);
+                    Kit.Icon(g, "link", new RectangleF(x + 14 * S, prr.Y + 10 * S, 18 * S, 18 * S), pc);
+                    using (var b = new SolidBrush(psel ? ink : sub)) g.DrawString(L.T("Your phone"), Draw.fBody, b, x + 42 * S, prr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
+                    if (plb != "") using (var b = new SolidBrush(pc)) using (var nf = new StringFormat { Alignment = StringAlignment.Far, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                        g.DrawString(plb, Draw.fSmall, b, new RectangleF(prr.X + 120 * S, prr.Y + (38 * S - Draw.fSmall.GetHeight(g)) / 2, prr.Width - 128 * S, 20 * S), nf);
+                    Act(sideNav, prr, LinkClicked); sideNav.Acc.Add(Tuple.Create(L.T("Your phone"), Rectangle.Round(prr), (Action)LinkClicked));
+                }
                 if (ssel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, srr);
                 Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);

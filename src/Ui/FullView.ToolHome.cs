@@ -45,7 +45,8 @@ namespace AdeeboMeter
         static string QAccent(string q) { string[] l; return q != null && QLook.TryGetValue(q, out l) ? l[0] : "toolbox"; }
         static string QIcon(string q) { string[] l; return q != null && QLook.TryGetValue(q, out l) ? l[1] : "tool"; }
         DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
-        static bool ByQuestion { get { return Cfg.TbView != "list"; } }
+        // both views now use the roomy layout (a tool across the whole width); Every tool only changes the home page (FullView.Index.cs)
+        static bool ByQuestion { get { return true; } }
 
         static string QuestionOf(Tool t) { var q = Questions.FirstOrDefault(z => z[2].Split('|').Contains(t.Group)); return q != null ? q[0] : ""; }
         List<Tool> ToolsOf(string q)
@@ -64,9 +65,12 @@ namespace AdeeboMeter
             toolboxPage.SuspendLayout();
             tbSplit.ColumnStyles[0].Width = q ? 0 : Sc(290); tbLeft.Visible = !q;
             foreach (var c in tbClassic) c.Visible = !q;
-            tbViewQ.Selected = q; tbViewL.Selected = !q;
+            tbViewQ.Selected = !EveryTool; tbViewL.Selected = EveryTool;
             tbSearch.Width = TbSearchW(q);
             toolboxPage.ResumeLayout(true);
+            // the bar with the search and the two views: laid out and painted again (it stayed blank when the Toolbox opened in Every tool)
+            if (tbSearch.Parent != null) { tbSearch.Parent.PerformLayout(); tbSearch.Parent.Invalidate(true); }
+            if (IsHandleCreated) BeginInvoke((Action)delegate { if (tbSearch != null && tbSearch.Parent != null && !tbSearch.IsDisposed) { foreach (Control c in tbSearch.Parent.Controls) c.Invalidate(true); tbSearch.Parent.Update(); } });
             if (q && tbHome) tbBar.Visible = false; if (tbAssist != null) tbAssist.Visible = false;
             tbHead.Visible = q && !tbHome;
             tbCanvas.Invalidate(); tbList.Invalidate();
@@ -75,12 +79,15 @@ namespace AdeeboMeter
         {
             if (tbBusy) return;
             Cfg.TbView = v; Cfg.Save(); ApplyTbView();
-            if (ByQuestion) ShowQuestions(""); else ShowSection(tbSection);
+            tbSearch.Box.Text = ""; ShowQuestions(EveryTool ? tbQ : "");
         }
         void ShowQuestions(string q)
         {
             if (tbBusy) { if (tbRun0 != null) tbRun0.Status = "still running - press Stop first"; tbCanvas.Invalidate(); return; }
-            tbQ = q; tbHome = true; tbBar.Visible = false; if (tbAssist != null) tbAssist.Visible = false; tbHead.Visible = false; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+            tbQ = q; tbHome = true; tbBar.Visible = false; if (tbAssist != null) tbAssist.Visible = false; tbHead.Visible = false; tbCanvas.AutoScrollPosition = Point.Empty;
+            // Every tool: Back from a tool lands on the same spot of the same question
+            if (EveryTool && idxBackQ != null && idxBackQ == q) { int by = idxBackY; idxBackQ = null; tbCanvas.Invalidate(); tbCanvas.Update(); tbCanvas.AutoScrollPosition = new Point(0, by); }
+            tbCanvas.Invalidate();
         }
         // the header above the boxes: back to all tools, the question, and the tool's name - big, then what it answers
         // a tool's header (PLAN 11.6): a big back button to its question in that question's colour, the icon and name,
