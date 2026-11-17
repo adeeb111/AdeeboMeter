@@ -11,8 +11,8 @@ preview_urls = false
 crons = ["30 21 * * 1-5", "30 23 * * 1-5"]
 
 # one small store with one entry ("movers"). Create it once with:  npx wrangler kv namespace create MOVERS
-# then put the id it prints below (the id isn't a secret).
+# (done 17 Nov - the id below; it isn't a secret)
 [[kv_namespaces]]
 binding = "MOVERS"
-id = "PUT-THE-ID-HERE"
+id = "1907e6ad2b8440a187005456c2a1ca5a"
 
