@@ -1928,7 +1928,7 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? "It follows your PC's voice unless you pick one here." : "") + '</p>'; };
   VIEWS.pair = function () {
     return hdr(phase === "ended" ? "Reconnect" : "Connect your PC", "", "home") + (why ? '<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)">' + esc(why) + '</div>' : '') +
-      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Right-click the AdeeboMeter tray icon › Phone remote</small></div><div><b>On this phone</b><br><small>Open your camera app and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
+      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Click the link button at the top of AdeeboMeter (or the tray icon › Your phone...)</small></div><div><b>On this phone</b><br><small>Open your camera app and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
       '<p class="note">This app never asks for your camera - your camera app reads the code. No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a>.</p>';
   };
   VIEWS.how = function () {
