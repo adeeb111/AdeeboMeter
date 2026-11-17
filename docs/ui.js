@@ -20,7 +20,10 @@
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', dollar: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
     trophy: '<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
-    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>'
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/>', down: '<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>',
+    share: '<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/>',
+    key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L20 3M16 7l3 3M14 9l2 2"/>', info: '<circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.5"/>'
   };
   function ic(n, s) { s = s || 24; return '<svg class="ui-i" viewBox="0 0 24 24" width="' + s + '" height="' + s + '" aria-hidden="true">' + (I[n] || '') + '</svg>'; }
   window.UI = { ic: ic };

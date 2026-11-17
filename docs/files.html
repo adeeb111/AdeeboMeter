@@ -13,6 +13,14 @@
      Keys: PBKDF2-HMAC-SHA256(code without spaces or dashes, upper case, salt, iterations) -> 64 bytes: AES key, then HMAC key.
      Everything happens in this browser: the file and the code never leave the phone. -->
 <style>
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}.facts span{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--sub)}.facts .ui-i{color:var(--blue)}
+.done{margin:14px 0 12px;border-radius:18px;padding:12px;background:rgba(63,185,80,.10);border:1.5px solid rgba(63,185,80,.55)}.done .dh{display:flex;align-items:center;gap:8px;font-weight:800;color:#3FB950;margin:0 0 10px}
+.done .dh .ui-i{background:#3FB950;color:#fff;border-radius:50%;padding:2px}.codebox{display:flex;align-items:center;gap:10px;border-radius:14px;padding:12px;border:1px solid rgba(63,185,80,.45);background:rgba(0,0,0,.12)}
+.codebox .ki{color:#3FB950;flex:none}.codebox .code{flex:1;margin:0;background:none;padding:0;text-align:center;font-size:clamp(17px,5vw,23px);letter-spacing:1px;line-height:1.35}.cpy{flex:none;background:none;border:0;color:var(--sub);padding:6px;border-radius:10px}.cpy:active{transform:scale(.92)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.act{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:700;font-size:15px;font-family:inherit;transition:transform .12s}.act:active{transform:scale(.96)}.act .ui-i{color:var(--blue)}
+.lnk{display:block;margin:10px auto 0;background:none;border:0;color:var(--blue);font-weight:600;font-size:15px;font-family:inherit;text-decoration:underline}
+.tip{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border-radius:14px;border-left:3px solid var(--blue);background:rgba(47,123,246,.08);color:var(--sub);font-size:14px;line-height:1.45}.tip .ui-i{flex:none;color:var(--blue)}
+@media (prefers-reduced-motion:no-preference){.done{animation:fdone .45s cubic-bezier(.2,.8,.2,1)}@keyframes fdone{0%{opacity:0;transform:translateY(10px) scale(.98)}100%{opacity:1;transform:none}}.done .dh .ui-i{animation:fpop .5s .15s cubic-bezier(.3,1.6,.5,1) backwards}@keyframes fpop{0%{transform:scale(0)}100%{transform:none}}}
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--tint:#EEF4FF}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--tint:#182844}}
 :root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--tint:#182844}
@@ -49,9 +57,16 @@ footer{margin-top:26px;color:var(--sub);font-size:13px}
 <section class="card" data-fp="lock">
 <h2>Lock a file</h2>
 <p class="hint">You get a code. Send the file and the code separately.</p>
-<label class="pick ui-row"><input type="file" id="lf"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="lfn">Choose a file</b><small>Up to 100 MB on a phone</small></span><span data-ic="chev"></span></label>
+<label class="pick ui-row"><input type="file" id="lf"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="lfn">Choose a file</b><small id="lfs">Up to 100 MB on a phone</small></span><span data-ic="chev"></span></label>
+<div class="facts"><span data-ic="lock" data-sz="15">AES-256</span><span data-ic="check" data-sz="15">Tamper seal</span><span data-ic="clock" data-sz="15">600,000 rounds</span><span data-ic="globe" data-sz="15">Never uploaded</span></div>
 <button class="btn" id="lb" disabled data-ic="lock" data-sz="18">Lock file</button>
-<div id="lr" style="display:none"><div class="code" id="lc"></div><button class="btn ghost" id="lcopy">Copy code</button><button class="btn" id="lsave">Save the .adeebo file</button><button class="btn ghost" id="lshare" hidden>Share or email the file...</button><button class="btn ghost" id="lpc" hidden>Send the file to my PC</button><p class="hint" id="lsent" hidden></p><p class="hint" style="margin-top:8px">Send the file and the code different ways - the file by email, the code by a call or text. The code isn't saved anywhere - write it down or send it before you leave this page.</p></div>
+<div id="lr" style="display:none">
+<div class="done"><div class="dh" data-ic="check" data-sz="18">File locked</div>
+<div class="codebox"><span class="ki" data-ic="key" data-sz="26"></span><div class="code" id="lc"></div><button class="cpy" id="lcopy2" aria-label="Copy the code" data-ic="copy" data-sz="20"></button></div></div>
+<div class="acts"><button class="act" id="lcopy" data-ic="copy"><span>Copy code</span></button><button class="act" id="lsave" data-ic="down"><span>Save .adeebo</span></button><button class="act" id="lshare" data-ic="share" hidden><span>Share file</span></button><button class="act" id="lpc" data-ic="monitor" hidden><span>Send to PC</span></button></div>
+<button class="lnk" id="lcodepc" hidden>Also send the code to my own PC</button>
+<p class="hint" id="lsent" hidden></p>
+<div class="tip" data-ic="info" data-sz="20"><span>Send the file and the code different ways - the file by email, the code by a call or text. The code isn't saved anywhere - write it down or send it before you leave this page.</span></div></div>
 <p class="say" id="ls" aria-live="polite"></p>
 </section>
 
@@ -106,7 +121,8 @@ $("ob").onclick=async function(){
 
 // ---- lock
 var lf=null,made=null;
-$("lf").onchange=function(){lf=this.files[0]||null;$("lfn").textContent=lf?lf.name:"Choose a file to lock";$("lb").disabled=!lf;$("lr").style.display="none";say("ls","")};
+function sz(n){return n>=1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round(n/1024))+" KB"}
+$("lf").onchange=function(){lf=this.files[0]||null;$("lfn").textContent=lf?lf.name:"Choose a file to lock";$("lfs").textContent=lf?((lf.name.split(".").pop()||"file").toUpperCase()+" · "+sz(lf.size)):"Up to 100 MB on a phone";$("lb").disabled=!lf;$("lr").style.display="none";say("ls","")};
 $("lb").onclick=async function(){
   if(!lf)return;var file=lf;if(file.size>MAX)return say("ls","That file is over "+Math.round(MAX/1048576)+" MB - lock it on your PC.",false);$("lf").disabled=true;   // AM-CG-378: this file, even if another is picked meanwhile
   $("lb").disabled=true;say("ls","Locking…");
@@ -129,13 +145,18 @@ function asFile(){try{return new File([made.blob],made.name,{type:"application/o
 function canShare(){var f=made&&asFile();try{return !!(f&&navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
 function pcLive(){try{return window.parent!==window&&parent.AMPcLive&&parent.AMPcLive()}catch(e){return false}}
 function inApp(){try{return window.parent!==window&&!!parent.AMSendPC}catch(e){return false}}
-function showSend(){$("lshare").hidden=!canShare();$("lpc").hidden=!inApp();$("lpc").textContent=pcLive()?"Send the file to my PC":"Send the file to my PC (connect first)"}
+function lab(id,t){var s=$(id).querySelector("span");if(s)s.textContent=t;else $(id).textContent=t}
+function showSend(){$("lshare").hidden=!canShare();$("lpc").hidden=!inApp();lab("lpc",pcLive()?"Send to PC":"Send to PC · connect");$("lcodepc").hidden=!pcLive()}
+// the code to YOUR OWN PC: over the same sealed link, into Your phone › From the phone on the PC (one tap to copy it there).
+// For anyone else the code goes another way - a call or a text - never with the file.
+$("lcodepc").onclick=function(){if(!made||!pcLive())return;try{parent.AMSendText(made.code);$("lsent").hidden=false;$("lsent").textContent="Code sent to your PC - it's under Your phone › From the phone, with Copy."}catch(e){}};
+$("lcopy2").onclick=function(){$("lcopy").click()};
 $("lshare").onclick=function(){var f=made&&asFile();if(!f)return;navigator.share({files:[f],title:made.name}).catch(function(){})};
 $("lpc").onclick=function(){if(!made||!inApp())return;try{var r=parent.AMSendPC(made.blob,made.name);$("lsent").hidden=false;$("lsent").textContent=r==="sent"?"Sending to your PC - accept it there. It lands in Downloads\\AdeeboMeter.":"Connect your PC - the file goes as soon as it's linked."}catch(e){$("lsent").hidden=false;$("lsent").textContent="Couldn't hand it to the app - save it and send it from PC › Files."}};
 setInterval(function(){if(made)showSend()},2000);
 // AM-CG-380: if the clipboard says no, the code is selected so it can be copied by hand
-function byHand(){var e=$("lc"),r=document.createRange();r.selectNodeContents(e);var s=getSelection();s.removeAllRanges();s.addRange(r);$("lcopy").textContent="Copy it by hand - it's selected"}
-$("lcopy").onclick=function(){if(!made)return;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(made.code).then(function(){$("lcopy").textContent="Copied"},byHand);else byHand()};
+function byHand(){var e=$("lc"),r=document.createRange();r.selectNodeContents(e);var s=getSelection();s.removeAllRanges();s.addRange(r);lab("lcopy","Selected - copy by hand")}
+$("lcopy").onclick=function(){if(!made)return;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(made.code).then(function(){lab("lcopy","Copied ✓")},byHand);else byHand()};
 addEventListener("pagehide",function(){made=null});
 })();
 </script>

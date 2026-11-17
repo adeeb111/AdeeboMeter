@@ -446,6 +446,7 @@ textarea.in{resize:vertical;min-height:120px}
   // not linked yet (Adeeb, 16 Nov: "why does the PC option only come after I enable the PC?"): the file waits, Connect
   // your PC opens, and it goes as soon as the PC is linked
   var pendingPc = null;
+  window.AMSendText = function (t) { if (phase !== "live" || !tx) return false; send({ t: "text", s: String(t).slice(0, 4000) }); return true; };
   window.AMSendPC = function (blob, name) {
     var f; try { f = new File([blob], name, { type: "application/octet-stream" }); } catch (e) { f = blob; f.name = name; }
     if (phase === "live" && tx) { sendFile(f); return "sent"; }
