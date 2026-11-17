@@ -93,6 +93,26 @@ const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p:
 const avWhy = m => /rate limit|requests per day|per minute|frequency|premium|thank you for using/i.test(m) ? "the daily limit is used up" : /invalid|apikey|api key/i.test(m) ? "the key was refused" : "no answer";
 const movers = (key, d) => { const m = d.Information || d.Note || d["Error Message"]; if (m) throw new Error(avWhy(String(m))); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
 const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!env || !env.AV_KEY) throw new Error("nokey"); return movers(env.AV_KEY, await get("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), 12 * 3600)); });
+// Once a day for everyone (17 Nov): with a MOVERS store (Cloudflare KV) the relay asks Alpha Vantage only from its
+// schedule - after the US close, and once more if that failed - and every visitor reads that one stored copy. Visitors
+// never trigger a call, so the free 25-a-day can't be used up by traffic. Without the store it works as before.
+async function moversDaily(env) {
+  if (!env.MOVERS || !env.AV_KEY) return;
+  const old = await env.MOVERS.get("movers", "json"), today = new Date().toISOString().slice(0, 10);
+  if (old && old.ok && old.on === today) return;   // the retry run: today's copy is already in
+  let rec;
+  try {
+    const r = await fetch("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(15000) });
+    rec = { ok: 1, on: today, at: Date.now(), v: movers(env.AV_KEY, await r.json()) };
+  } catch (e) { rec = Object.assign({}, old && old.ok ? old : {}, { tried: Date.now(), why: (m => /daily limit|refused/.test(m) ? m : "no answer from Alpha Vantage")(String(e && e.message || e)) }); }
+  await env.MOVERS.put("movers", JSON.stringify(rec));
+}
+async function moversShared(env) {
+  if (!env.MOVERS) return out(await avShared(env));
+  const rec = await env.MOVERS.get("movers", "json", { cacheTtl: 600 });
+  if (rec && rec.ok) return Object.assign({ at: rec.at, stale: Date.now() - rec.at > 4 * 86400000 ? 1 : 0 }, rec.v);
+  return { at: 0, stale: 0, error: "source unavailable", why: rec && rec.why ? rec.why : "not fetched yet - the first copy comes after today's US close" };
+}
 // a person's own key (Live > Your keys): it comes in a header, is used for this one call and dropped - never cached, logged or kept
 async function keyed(svc, key, u) {
   const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000) };
@@ -206,7 +226,7 @@ export default {
         return reply(req, { lg: k, espn: 1 }, 3600);   // NBA, NFL, soccer: the phone asks ESPN itself, if the person turned that on
       }
       // stock movers: the relay's shared daily copy (or "nokey" when no AV_KEY is set - the page then offers "your own key")
-      case "/movers": { const e = await avShared(env); return reply(req, out(e), 3600); }
+      case "/movers": return reply(req, await moversShared(env), 3600);
       // a person's own key: X-Key header, one call, nothing kept; only these four services
       case "/k": {
         const svc = u.searchParams.get("svc") || "", key = req.headers.get("X-Key") || "";
@@ -267,5 +287,7 @@ export default {
       }
       default: return new Response("AdeeboMeter Live - see https://adeebometer.com/live.html", { status: 404 });
     }
-  }
+  },
+  // the schedule in wrangler.toml: stock movers once a day (and one retry), stored for everyone
+  async scheduled(event, env, ctx) { ctx.waitUntil(moversDaily(env)); }
 };
