@@ -51,7 +51,7 @@ footer{margin-top:26px;color:var(--sub);font-size:13px}
 <p class="hint">You get a code. Send the file and the code separately.</p>
 <label class="pick ui-row"><input type="file" id="lf"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="lfn">Choose a file</b><small>Up to 100 MB on a phone</small></span><span data-ic="chev"></span></label>
 <button class="btn" id="lb" disabled data-ic="lock" data-sz="18">Lock file</button>
-<div id="lr" style="display:none"><div class="code" id="lc"></div><button class="btn ghost" id="lcopy">Copy code</button><button class="btn" id="lsave">Save the .adeebo file</button><p class="hint" style="margin-top:8px">The code isn't saved anywhere - write it down or send it before you leave this page.</p></div>
+<div id="lr" style="display:none"><div class="code" id="lc"></div><button class="btn ghost" id="lcopy">Copy code</button><button class="btn" id="lsave">Save the .adeebo file</button><button class="btn ghost" id="lshare" hidden>Share or email the file...</button><button class="btn ghost" id="lpc" hidden>Send the file to my PC</button><p class="hint" id="lsent" hidden></p><p class="hint" style="margin-top:8px">Send the file and the code different ways - the file by email, the code by a call or text. The code isn't saved anywhere - write it down or send it before you leave this page.</p></div>
 <p class="say" id="ls" aria-live="polite"></p>
 </section>
 
@@ -119,10 +119,19 @@ $("lb").onclick=async function(){
     var body=new Uint8Array(44+ct.length);body.set(head,0);body.set(ct,44);ct=null;
     var tag=new Uint8Array(await S.sign("HMAC",k.mac,body));
     made={blob:new Blob([body,tag],{type:"application/octet-stream"}),name:file.name.replace(/\.[^.]*$/,"")+".adeebo",code:code};
-    $("lc").textContent=code;$("lr").style.display="block";say("ls",(window.AMV&&AMV.line("encrypt.done")?AMV.line("encrypt.done")+" ":"")+"Locked. Save the file, then send the code a different way.",true);
+    $("lc").textContent=code;$("lr").style.display="block";showSend();say("ls",(window.AMV&&AMV.line("encrypt.done")?AMV.line("encrypt.done")+" ":"")+"Locked. Save the file, then send the code a different way.",true);
   }catch(e){say("ls","Couldn't lock it on this phone - try a smaller file.",false)}
   $("lb").disabled=false;$("lf").disabled=false};
 $("lsave").onclick=function(){if(made)save(made.blob,made.name)};
+// 16 Nov (Adeeb: "no send to pc or any send/email button"): the phone's share sheet (Mail, Messages, AirDrop...) - the file only,
+// never the code with it; and straight to the linked PC through the app's sealed session
+function asFile(){try{return new File([made.blob],made.name,{type:"application/octet-stream"})}catch(e){return null}}
+function canShare(){var f=made&&asFile();try{return !!(f&&navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
+function pcLive(){try{return window.parent!==window&&parent.AMPcLive&&parent.AMPcLive()}catch(e){return false}}
+function showSend(){$("lshare").hidden=!canShare();$("lpc").hidden=!pcLive()}
+$("lshare").onclick=function(){var f=made&&asFile();if(!f)return;navigator.share({files:[f],title:made.name}).catch(function(){})};
+$("lpc").onclick=function(){if(!made||!pcLive())return;try{parent.AMSendPC(made.blob,made.name);$("lsent").hidden=false;$("lsent").textContent="Sending to your PC - accept it there. It lands in Downloads\\AdeeboMeter."}catch(e){$("lsent").hidden=false;$("lsent").textContent="Couldn't hand it to the app - save it and send it from PC › Files."}};
+setInterval(function(){if(made)showSend()},2000);
 // AM-CG-380: if the clipboard says no, the code is selected so it can be copied by hand
 function byHand(){var e=$("lc"),r=document.createRange();r.selectNodeContents(e);var s=getSelection();s.removeAllRanges();s.addRange(r);$("lcopy").textContent="Copy it by hand - it's selected"}
 $("lcopy").onclick=function(){if(!made)return;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(made.code).then(function(){$("lcopy").textContent="Copied"},byHand);else byHand()};

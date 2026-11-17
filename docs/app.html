@@ -150,6 +150,7 @@ nav.tabs,.tile,.btn,.seg,.act,.row{-webkit-user-select:none;user-select:none;-we
 img.logo{width:34px;height:34px;flex:none;display:block}
 #splash{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}#splash b{font-size:24px;letter-spacing:-.01em}#splash.out{opacity:0;pointer-events:none}
 @keyframes caretb{50%{opacity:0}}.say2 .caret{font-style:normal;color:var(--blue);animation:caretb .6s steps(1) infinite}
+#scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
 #web{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
 .wbar{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--edge)}.wbar b{font-size:19px}
 #wframe{flex:1;width:100%;border:0;background:var(--bg)}
@@ -397,6 +398,9 @@ textarea.in{resize:vertical;min-height:120px}
   async function until(f, ms) { var t = Date.now(); while (!f() && Date.now() - t < ms) await sleep(100); return f(); }
   function b64(u8) { var s = "", i; for (i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(s); }
   function size(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+  // the Files page (in this app's frame) hands a locked file to the linked PC through the same sealed session
+  window.AMPcLive = function () { return phase === "live" && !!tx; };
+  window.AMSendPC = function (blob, name) { if (phase !== "live") return false; var f; try { f = new File([blob], name, { type: "application/octet-stream" }); } catch (e) { f = blob; f.name = name; } sendFile(f); return true; };
   async function sendFile(f) {
     if (outF) return toast("One file at a time");
     if (f.size > 200 * 1048576) return toast("Up to 200 MB at a time");
@@ -912,7 +916,7 @@ textarea.in{resize:vertical;min-height:120px}
     return '<div class="card"><h2 style="margin:0 0 10px"><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)">' + ic("wifi", 20) + esc(w.ssid) + '</span>' + where("pc") + '</h2><div class="stats">' + stat("signal", lv === 0 ? "c-green" : lv === 1 ? "c-amber" : "c-red", "Signal", sig == null ? "–" : pct(sig), lv) + stat("wifi", "c-blue", "Band", b || "–") + stat("chart", "c-purple", "Channel", esc(String(w.ch || "–").replace(/\s*\(.*$/, ""))) + '</div>' + (w.rate != null ? '<p style="margin:10px 2px 0;color:var(--sub);font-size:14px">Link rate ' + Math.round(w.rate) + ' Mb/s' + (lv === 2 ? ' · weak signal - closer to the router, or 5 GHz if it reaches' : '') + '</p>' : '') + '</div>';
   }
   VIEWS.pc = function () {
-    if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, open Phone remote from its tray icon, and scan the code with your camera.");
+    if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, click the link button at its top, and press Scan the code on your PC here.");
     var t = S.pcTab, L = live || {}, on = isLive();
     var a = hdr("My PC", '<span class="pill"><span class="led' + (on ? '' : ' warn') + '"></span>' + (on ? "Connected · live" : phase === "ended" ? "Session ended" : phase === "live" && !liveAt ? "Connected · waiting for the first reading" : "Not live · " + ago(age()) + " ago") + '</span>');
     a += '<div class="pcart"><svg viewBox="0 0 120 90" width="140" aria-hidden="true"><rect x="10" y="6" width="100" height="62" rx="7" fill="#0E2147" stroke="#CFE0FF" stroke-width="4"/><rect x="18" y="14" width="84" height="46" rx="3" fill="' + (on ? "#1F6FEB" : "#3A4A66") + '"/><path d="M18 50 Q50 30 102 40 L102 60 L18 60z" fill="#3B8BFF" opacity="' + (on ? ".6" : ".15") + '"/><rect x="46" y="70" width="28" height="8" fill="#CFE0FF"/><rect x="34" y="78" width="52" height="5" rx="2.5" fill="#CFE0FF"/></svg></div>';
@@ -1928,9 +1932,53 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? "It follows your PC's voice unless you pick one here." : "") + '</p>'; };
   VIEWS.pair = function () {
     return hdr(phase === "ended" ? "Reconnect" : "Connect your PC", "", "home") + (why ? '<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)">' + esc(why) + '</div>' : '') +
-      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Click the link button at the top of AdeeboMeter (or the tray icon › Your phone...)</small></div><div><b>On this phone</b><br><small>Open your camera app and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
-      '<p class="note">This app never asks for your camera - your camera app reads the code. No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a>.</p>';
+      // the app reads the code itself (Adeeb, 16 Nov): scanning with the Camera app opens the browser, which has none of this app's setup
+      '<button class="btn" data-act="scanqr" style="font-size:18px;padding:18px">' + ic("pc", 22) + ' Scan the code on your PC</button>' +
+      '<p class="note" style="margin-top:8px">Asks for your camera each time you scan - only to read the code. Nothing is recorded, sent or kept. Rather not? Point your phone\'s Camera app at the code instead - it then opens in the browser, which keeps its own separate setup.</p>' +
+      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Click the link button at the top of AdeeboMeter (or the tray icon › Your phone...)</small></div><div><b>On this phone</b><br><small>Press Scan the code on your PC, and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
+      '<p class="note">No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a>.</p>';
   };
+  // ---- the code reader: the camera, asked for each time; jsQR (vendor/jsqr, loaded on first use) reads the frames on the phone
+  var scanSt = null, scanT = 0;
+  function loadJs(src) { return new Promise(function (ok, no) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { no(new Error("couldn't load the code reader")); }; document.head.appendChild(s); }); }
+  function scanUi(msg, live) {
+    var o = $("scanov");
+    if (!o) { o = document.createElement("div"); o.id = "scanov"; o.innerHTML = '<div class="sc-in"><video id="scanv" playsinline muted autoplay></video><div class="sc-box"></div></div><p id="scanmsg"></p><button class="btn ghost" id="scanx">Cancel</button>'; document.body.appendChild(o); $("scanx").onclick = scanStop; }
+    o.hidden = false; $("scanmsg").textContent = msg; o.classList.toggle("live", !!live);
+  }
+  async function scanStart() {
+    scanUi("Opening the camera...", false);
+    try {
+      if (!window.jsQR) await loadJs("/vendor/jsqr/jsQR.js");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: "NoCamera" };
+      scanSt = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    } catch (e) {
+      var n = e && e.name;
+      scanUi(n === "NotAllowedError" || n === "SecurityError" ? "The camera wasn't allowed - that's fine. Point your phone's Camera app at the code on your PC instead; it opens in the browser." : n === "NoCamera" || n === "NotFoundError" || n === "NotSupportedError" ? "This browser can't use the camera here. Point your phone's Camera app at the code instead - it opens in the browser." : "Couldn't open the camera (" + String(e && e.message || n || e) + "). Point your phone's Camera app at the code instead - it opens in the browser.", false);
+      return;
+    }
+    var v = $("scanv"); v.srcObject = scanSt; try { await v.play(); } catch (e) {}
+    scanUi("Point it at the code on your PC", true);
+    var c = document.createElement("canvas"), x = c.getContext("2d", { willReadFrequently: true });
+    clearInterval(scanT);
+    scanT = setInterval(function () {
+      if (!scanSt || !v.videoWidth) return;
+      var k = Math.min(1, 720 / v.videoWidth); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+      x.drawImage(v, 0, 0, c.width, c.height);
+      var r = window.jsQR(x.getImageData(0, 0, c.width, c.height).data, c.width, c.height, { inversionAttempts: "attemptBoth" });
+      if (r && r.data) scanGot(r.data);
+    }, 180);
+  }
+  document.addEventListener("visibilitychange", function () { if (document.hidden && scanSt) scanStop(); });   // the camera never stays on behind the app
+  function scanStop() { clearInterval(scanT); scanT = 0; if (scanSt) { scanSt.getTracks().forEach(function (t) { t.stop(); }); scanSt = null; } var o = $("scanov"); if (o) { var v = $("scanv"); if (v) v.srcObject = null; o.hidden = true; } }
+  function scanGot(text) {
+    var h = String(text).split("#")[1] || "", p = h.split(".");
+    if (/adeebometer\.com\//i.test(text) && p.length === 2 && /^[A-Za-z0-9_-]{22}$/.test(p[0]) && /^[A-Za-z0-9_-]{43}$/.test(p[1])) {
+      scanStop(); if (navigator.vibrate) try { navigator.vibrate(40); } catch (e) {}
+      room = p[0]; secret = unb64u(p[1]); S.tab = "home"; draw();
+      start(room, secret, false).catch(function () { phase = "ended"; why = "This browser blocked the encryption - try Safari or Chrome."; draw(); });
+    } else scanUi("That's not an AdeeboMeter code - use the one on your PC's Your phone page.", true);
+  }
   VIEWS.how = function () {
     return hdr("How it works", "", "more") + '<div class="card"><dl class="kv"><dt>' + where("pc") + '</dt><dd style="font-family:inherit;font-size:14px">Real measurements: ping, trace, ports, devices, Wi-Fi, game and broker timing. Your PC does them.</dd><dt>' + where("phone") + '</dt><dd style="font-family:inherit;font-size:14px">What a browser can: delay to the web, steadiness, DNS, IPv6, your carrier. No signal bars, no ping.</dd><dt>' + where("off") + '</dt><dd style="font-family:inherit;font-size:14px">Learn, Games, .adeebo files.</dd></dl></div><div class="card" style="color:var(--sub);font-size:14px">Your PC only connects out - it never listens. Phone and PC talk end to end encrypted through a relay that keeps nothing. The phone can only start checks that read or measure; anything that changes the PC stays on the PC. No account, no alerts, no tracking.</div>';
   };
@@ -2046,6 +2094,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (act === "closesheet") { if (S.sheet === "view" && !S.view) { S.view = "everyday"; wr("am-view", "everyday"); } S.sheet = ""; draw(); return; }
     if (act === "measure") { measure(A("data-k")); return; }
     if (act === "phone2") { phoneCheck(); return; }
+    if (act === "scanqr") { scanStart(); return; }
     if (act === "roastshare") { roastShare(); return; }
     if (A("data-jos")) { J.os = A("data-jos"); draw(); return; }
     if (act === "jcode") { copyText(JCODE[J.os]); return; }
