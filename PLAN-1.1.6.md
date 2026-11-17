@@ -13,6 +13,12 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
   the scrollbar flipped and asked for another repaint. Now one height per paint.
 - [done, 03703a5, shipped in 1.1.5] Self-test "no leaks": a one-time handle bump fails only if 30 more opens grow it again.
 
+- [done, b7e03fb, live worker] Live page showed the Alpha Vantage key: the provider's rate-limit reply repeats the key and
+  was passed on. Now only fixed sentences leave the relay and errors are scrubbed of anything key-like. Key replaced 17 Nov.
+- To do: stock movers fetched once a day for everyone (today each Cloudflare location fetches its own copy and failures
+  retry every 15 min, so the free 25-a-day limit runs out). E.g. a scheduled worker run that stores one copy (KV or the
+  Cache API under one URL), with the page reading only that copy.
+
 ## 2. Website refresh (adeebometer.com)
 - New top of the page (mockup shown 17 Nov): navy look matching the phone app, two-colour AdeeboMeter name.
   - Headline (decided 17 Nov): "Find out why your internet or PC is slow." + "And much more." (gradient).
