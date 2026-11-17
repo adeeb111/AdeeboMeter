@@ -20,6 +20,7 @@ namespace AdeeboMeter
             xr -= dotsBtn.Width; dotsBtn.Location = new Point(xr, my(dotsBtn)); xr -= Sc(8);
             xr -= gearBtn.Width; gearBtn.Location = new Point(xr, my(gearBtn)); xr -= Sc(8);
             xr -= Sc(30) + Sc(12);   // the buddy's face, painted
+            if (linkBtn != null) { xr -= linkBtn.Width; linkBtn.Location = new Point(xr, my(linkBtn)); xr -= Sc(12); }   // Your phone (16 Nov)
             xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
             viewBtn.Location = new Point(xl, my(viewBtn)); xl = viewBtn.Right + Sc(20);

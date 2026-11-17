@@ -339,7 +339,7 @@ namespace AdeeboMeter
         const string SnmpIn = "Device - e.g. 10.0.0.1 or host:161|Community - or v3:user[:authpass[:privpass]]";
         string snmpDev = "", snmpCred = "";   // the device and credentials typed in one SNMP view carry to the next - this session only, never saved
         static bool IsSnmp(string id) { return id.StartsWith("snmp", StringComparison.Ordinal); }
-        DateTime tbCopied;
+        DateTime tbCopied, tbSentPhone;
         // a clickable result row: walk this object, or open the MIB folder
         static readonly char[] PipeSep = { '|' };
         // tools whose boxes take a URL, a file path or free text as it is
@@ -1146,6 +1146,14 @@ namespace AdeeboMeter
                     string sv = tbSaved > DateTime.Now.AddSeconds(-3) ? "Saved ✓" : "Save..."; var ss = g.MeasureString(sv, Draw.fSmall); var sr = new RectangleF(cxr - ss.Width - 16 * S, y - 2 * S, ss.Width, ss.Height);
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sv, Draw.fSmall, lb, sr.X, sr.Y);
                     Act(tbCanvas, sr, SaveResult);
+                    // while a phone is linked: the result goes to it as text (Your phone page, 16 Nov) - no QR to scan
+                    var rp = Remote.Now;
+                    if (rp != null && rp.St == Remote.State.Paired)
+                    {
+                        string pt = tbSentPhone > DateTime.Now.AddSeconds(-3) ? "Sent ✓" : "To my phone"; var ps = g.MeasureString(pt, Draw.fSmall); var pr = new RectangleF(sr.X - ps.Width - 16 * S, y - 2 * S, ps.Width, ps.Height);
+                        using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(pt, Draw.fSmall, lb, pr.X, pr.Y);
+                        Act(tbCanvas, pr, delegate { var rn = Remote.Now; if (rn != null && rn.St == Remote.State.Paired) { rn.SendText(ResultText()); tbSentPhone = DateTime.Now; } tbCanvas.Invalidate(); });
+                    }
                     using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(tbCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", Draw.fSmall, lb, cr.X, cr.Y);
                     Act(tbCanvas, cr, delegate { try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } tbCanvas.Invalidate(); });
                 }

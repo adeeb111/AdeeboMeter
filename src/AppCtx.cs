@@ -98,7 +98,9 @@ namespace AdeeboMeter
             miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
             var miCheckup = new ToolStripMenuItem("Run full checkup"); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
             var miSlow = new ToolStripMenuItem("It feels slow right now   Ctrl+Alt+S"); miSlow.Click += delegate { FeltSlow(); };
-            var miPhone = new ToolStripMenuItem("Phone remote..."); miPhone.Click += delegate { OpenRemote(); };
+            var miPhone = new ToolStripMenuItem("Your phone..."); miPhone.Click += delegate { OpenRemote(); };
+            PhoneHub.Start = delegate { try { marshal.BeginInvoke((Action)OpenRemote); } catch (InvalidOperationException) { } };
+            PhoneHub.Show = kind => { try { marshal.BeginInvoke((Action)ShowPhonePage); } catch (InvalidOperationException) { } };
             try { slowKey = new HotKey(Keys.S, FeltSlow); if (!slowKey.Ok) Program.Log("Ctrl+Alt+S is taken by another app"); } catch (Exception e) { Program.Log("slow hotkey: " + e.Message); }   // taken = just the menu item
             var miTheme = new ToolStripMenuItem("Theme");
             miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
@@ -277,24 +279,33 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("autostart: " + e.Message); }
         }
 
-        // ---------- phone remote: one session, its window, and the checks it may start
-        RemoteWindow remoteWin; FullView remoteRunner;
+        // ---------- phone remote: one session, shown on the "Your phone" page, and the checks it may start
+        // (Adeeb, 16 Nov: one place for the phone - the old small window and its Yes/No boxes are gone; the page asks instead)
+        FullView remoteRunner;
         static readonly string[] NotStarted = { "2", "Didn't start", "the PC is closing", "" };
         void OpenRemote()
         {
             if (quitting) return;
-            if (remoteWin != null && !remoteWin.IsDisposed && Remote.Now != null && Remote.Now.St != Remote.State.Ended) { remoteWin.Activate(); return; }
-            StopStandby();
-            var r = Remote.Start(M); Wire(r);
-            remoteWin = new RemoteWindow(r); remoteWin.Show();
+            var now = Remote.Now;
+            if (now == null || now.St == Remote.State.Ended)
+            {
+                StopStandby();
+                var r = Remote.Start(M); Wire(r);
+            }
+            ShowPhonePage();
         }
+        void ShowPhonePage() { if (quitting) return; OpenFull(); if (full != null && !full.IsDisposed) full.ShowPage("phone"); }
+        static string SizeText(long size) { return size >= 1048576 ? (size / 1048576.0).ToString("0.#", System.Globalization.CultureInfo.CurrentCulture) + " MB" : Math.Max(1, size / 1024) + " KB"; }
         void Wire(Remote r)
         {
-                r.Ask = phone => { bool yes = false; try { marshal.Invoke((Action)delegate { yes = MessageBox.Show(remoteWin, (phone != "" ? phone + " " : L.T("A phone ")) + L.T("wants to watch this PC and start checks for up to 30 minutes.") + "\n\n" + L.T("Allow it only if it's your phone and you just scanned the code."), "AdeeboMeter - " + L.T("Phone remote"), MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes; }); } catch (InvalidOperationException) { } return yes; };
-                r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.Known != null) KnownChanged(r); if (remoteWin != null && !remoteWin.IsDisposed) remoteWin.Sync(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
+                r.Ask = phone => PhoneHub.Ask("allow", phone, L.T("wants to watch this PC and start checks for up to 30 minutes. Allow it only if it's your phone and you just scanned the code."));
+                r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.Known != null) KnownChanged(r); if (r.St == Remote.State.Ended && PhoneHub.Pending != null && (Remote.Now == null || Remote.Now == r)) PhoneHub.Answer(false); PhoneHub.Fire(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
                 r.FeltSlow = () => FeltSlow();
-                // a file from the phone: asked here first, No by default
-                r.AskFile = (phone, name, size) => { bool yes = false; try { marshal.Invoke((Action)delegate { yes = MessageBox.Show(remoteWin, (phone != "" ? phone : L.T("Your phone")) + " " + L.T("wants to send a file:") + "\n\n" + name + "  (" + (size >= 1048576 ? (size / 1048576.0).ToString("0.#", System.Globalization.CultureInfo.CurrentCulture) + " MB" : Math.Max(1, size / 1024) + " KB") + ")\n\n" + L.T("It will be saved in Downloads\\AdeeboMeter. Accept it?"), "AdeeboMeter - " + L.T("Phone remote"), MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes; }); } catch (InvalidOperationException) { } return yes; };
+                // a file from the phone: asked on the page first, No by default
+                r.AskFile = (phone, name, size) => PhoneHub.Ask("file", phone, L.T("wants to send a file:") + " " + name + " (" + SizeText(size) + "). " + L.T("It will be saved in Downloads\\AdeeboMeter."));
+                r.GotText = s => { PhoneHub.Add(new PhoneHub.Got { Text = s ?? "" }); if (PhoneHub.AutoClip) try { marshal.BeginInvoke((Action)delegate { try { Clipboard.SetText(s); } catch (System.Runtime.InteropServices.ExternalException) { } }); } catch (InvalidOperationException) { } };
+                r.FileSaved = p => PhoneHub.Add(new PhoneHub.Got { File = p ?? "" });
+                r.SendState = msg => { PhoneHub.Xfer = msg ?? ""; PhoneHub.Fire(); };
                 // checks run in a view that's never shown, so a game in front isn't interrupted; it also decides what's allowed
                 Func<FullView> runner = () => { if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; } return remoteRunner; };
                 r.CanRun = id => { bool ok = false; try { marshal.Invoke((Action)delegate { ok = runner().RemoteAllowed(id); }); } catch (InvalidOperationException) { } return ok; };
@@ -304,7 +315,7 @@ namespace AdeeboMeter
                     if (id == "checkup") { FullView.RemoteCheckup(M, done); return; }
                     try { marshal.BeginInvoke((Action)delegate { runner().RemoteRun(id, a, run, done); }); } catch (InvalidOperationException) { done(id, new List<string[]> { (string[])NotStarted.Clone() }, null); }
                 };
-            r.AskRemember = phone => { bool yes = false; try { marshal.Invoke((Action)delegate { yes = MessageBox.Show(remoteWin, (phone != "" ? phone : L.T("Your phone")) + " " + L.T("asks to be remembered.") + "\n\n" + L.T("With Face ID or a fingerprint it can then reconnect to this PC without a new code - from anywhere, while AdeeboMeter runs here. The key is kept for your Windows account only.") + "\n\n" + L.T("You can forget it any time: Phone remote > Forget my phones.") + RemotePhones.Replacing() + "\n\n" + L.T("Remember it?"), "AdeeboMeter - " + L.T("Phone remote"), MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes; }); } catch (InvalidOperationException) { } return yes; };
+            r.AskRemember = phone => PhoneHub.Ask("remember", phone, L.T("asks to be remembered. With Face ID or a fingerprint it can then reconnect to this PC without a new code - from anywhere, while AdeeboMeter runs here. The key is kept for your Windows account only; remove it any time on this page.") + RemotePhones.Replacing());
         }
 
         // ---------- remembered phones: one waiting session per phone while no code session is open (RemoteKnown.cs)
@@ -329,15 +340,14 @@ namespace AdeeboMeter
             }
         }
         void StopStandby() { foreach (var s in standby.Values) if (s.St != Remote.State.Ended && s.St != Remote.State.Paired) s.End("a code session started"); standby.Clear(); }
-        // a remembered phone got in: it becomes the session, the others stop waiting, and its window opens so you can see it
+        // a remembered phone got in: it becomes the session and the others stop waiting
         void KnownChanged(Remote r)
         {
             if (r.St != Remote.State.Paired || Remote.Now == r) return;
             Remote.Now = r;
             foreach (var s in standby.Values) if (s != r && s.St != Remote.State.Ended) s.End("another phone connected");
-            if (remoteWin != null && !remoteWin.IsDisposed) remoteWin.Close();
-            remoteWin = new RemoteWindow(r); remoteWin.WindowState = FormWindowState.Minimized; remoteWin.Show();
-            try { tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). Phone remote shows it; close it to end."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
+            PhoneHub.Fire();   // the link button turns green with the phone's name; Your phone has End
+            try { tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). The link button at the top shows it; Your phone > End now stops it."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
         }
         void OpenFull()
         {
@@ -418,6 +428,7 @@ namespace AdeeboMeter
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go
             if (quitting) return;
             quitting = true; ui.Stop(); GamePing.Me.Stop(); M.Stop(); Usage.Save();
+            PhoneHub.Answer(false); var rn = Remote.Now; if (rn != null && rn.St != Remote.State.Ended) rn.End("AdeeboMeter closed"); StopStandby();
             try { SystemEvents.UserPreferenceChanged -= prefHandler; } catch { }
             if (hotkey != null) hotkey.Dispose(); if (slowKey != null) slowKey.Dispose();
             tray.Visible = false; tray.Dispose();

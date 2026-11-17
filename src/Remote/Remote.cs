@@ -37,7 +37,8 @@ namespace AdeeboMeter
         public volatile State St = State.Connecting; public volatile string Why = "";
         public readonly string Room, Link; public DateTime Started = DateTime.UtcNow; public string PhoneName = "";
         readonly byte[] secret, auth; readonly ClientWebSocket ws = new ClientWebSocket(); readonly CancellationTokenSource cts = new CancellationTokenSource();
-        readonly Monitor M; ECDiffieHellmanCng mine; RemoteCrypto.Lane tx, rx; byte[] phonePk; readonly object sendLock = new object();
+        readonly Monitor M; IDisposable mine;   // the one-time key (an ECDiffieHellmanCng) - held as IDisposable so the class loads where CNG is missing (Wine)
+        RemoteCrypto.Lane tx, rx; byte[] phonePk; readonly object sendLock = new object();
         System.Threading.Timer tick;
 
         // the PC side hooks: ask "Allow?" on the UI thread, run a check, note a change for the window and the widget
@@ -121,8 +122,8 @@ namespace AdeeboMeter
                 St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); Note();
                 bool yes = Known != null || (Ask != null && Ask(PhoneName));   // a remembered phone proved its key: you already said yes
                 if (!yes || St != State.Asking) { Send("{\"t\":\"no\"}"); End("you said no"); return; }
-                mine = new ECDiffieHellmanCng(256); var myPk = RemoteCrypto.Raw(mine); phonePk = pk;
-                var z = RemoteCrypto.SharedHash(mine, pk);
+                var me = new ECDiffieHellmanCng(256); mine = me; var myPk = RemoteCrypto.Raw(me); phonePk = pk;
+                var z = RemoteCrypto.SharedHash(me, pk);
                 tx = new RemoteCrypto.Lane(secret, z, 1); rx = new RemoteCrypto.Lane(secret, z, 2);
                 Send("{\"t\":\"ok\",\"v\":" + Proto.ToString(CultureInfo.InvariantCulture) + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");
                 mine.Dispose(); mine = null;   // the one-time private key goes as soon as the session keys exist

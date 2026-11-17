@@ -306,7 +306,7 @@ namespace AdeeboMeter
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
             left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage());
-            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
+            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildPhonePage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
             body.Controls.Add(left, 0, 0); body.Controls.Add(side, 1, 0);
@@ -447,7 +447,7 @@ namespace AdeeboMeter
         {
             connPage.Visible = tab == "conn"; destPage.Visible = tab == "dest"; healthPage.Visible = tab == "health"; livePage.Visible = tab == "live"; changesPage.Visible = tab == "changes";
             procPage.Visible = tab == "procs"; settingsPage.Visible = tab == "settings"; settingsBtn.Selected = tab == "settings"; gearBtn.Selected = tab == "settings"; dotsBtn.Selected = tab == "about" || tab == "points"; M.ProcsTab = tab == "procs";
-            aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about"; pointsPage.Visible = tab == "points"; if (tab == "points") pointsCanvas.Invalidate();
+            aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about"; pointsPage.Visible = tab == "points"; if (phonePage != null) { phonePage.Visible = tab == "phone"; if (tab == "phone") phoneCanvas.Invalidate(); } if (tab == "points") pointsCanvas.Invalidate();
             linkPage.Visible = tab == "link"; if (tab == "link") RefreshLink(true);
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
             // Review-1: coming back to What's wrong? opens at the verdict, not halfway down the last result
@@ -503,7 +503,7 @@ namespace AdeeboMeter
             { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Trading", "Trading" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
-            { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } } };
+            { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } }, { "phone", new[] { "Your phone", "Phone" } } };
         void BuildSubTabs(string sec)
         {
             subTabs.SuspendLayout();
@@ -683,6 +683,9 @@ namespace AdeeboMeter
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);
+            // --view phone:qr shows a code; phone:ask shows the Allow question as a phone would raise it (screenshots of the page)
+            if (page == "phone" && sub == "qr" && PhoneHub.Start != null) PhoneHub.Start();
+            if (page == "phone" && sub == "ask") System.Threading.Tasks.Task.Factory.StartNew(() => PhoneHub.Ask("allow", "Test phone", L.T("wants to watch this PC and start checks for up to 30 minutes. Allow it only if it's your phone and you just scanned the code.")));
             if (page == "settings" && sub != null) { if (sub.StartsWith("q=", StringComparison.Ordinal)) settingsSearch.Box.Text = sub.Substring(2); else { var hit = SetSections.FirstOrDefault(z => z.StartsWith(sub, StringComparison.OrdinalIgnoreCase)); if (hit != null) setSec = hit; } settingsCanvas.Invalidate(); }
             if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
             if (page == "toolbox" && sub != null) { EnsureToolbox(); bool ex = sub.EndsWith(":ex", StringComparison.Ordinal); if (ex) sub = sub.Substring(0, sub.Length - 3); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else { OpenTool(sub); if (ex) ShowExample(); } }   // toolbox:ping:ex opens its Example (screenshots)

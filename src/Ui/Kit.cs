@@ -240,6 +240,18 @@ namespace AdeeboMeter
                     case "report": g.DrawLines(p, new[] { new PointF(X(14), Y(3)), new PointF(X(6), Y(3)), new PointF(X(6), Y(21)), new PointF(X(18), Y(21)), new PointF(X(18), Y(7)), new PointF(X(14), Y(3)) }); g.DrawLine(p, X(9), Y(12), X(15), Y(12)); g.DrawLine(p, X(9), Y(16), X(15), Y(16)); break;
                     case "speed": g.DrawArc(p, X(3), Y(5), 18 * u, 18 * u, 180, 180); g.DrawLine(p, X(12), Y(14), X(17), Y(9)); break;
                     case "route": g.FillEllipse(b, X(4), Y(16), 4 * u, 4 * u); g.FillEllipse(b, X(16), Y(4), 4 * u, 4 * u); g.DrawLines(p, new[] { new PointF(X(6), Y(16)), new PointF(X(6), Y(11)), new PointF(X(18), Y(11)), new PointF(X(18), Y(8)) }); break;
+                    case "link":
+                        {
+                            // two chain links at 45 degrees - the phone link button (16 Nov)
+                            var st = g.Save(); g.TranslateTransform(X(12), Y(12)); g.RotateTransform(-45);
+                            foreach (float ox in new[] { -10.5f, -1.5f })
+                                using (var cp = new System.Drawing.Drawing2D.GraphicsPath())
+                                {
+                                    float cx0 = ox * u, cy0 = -3.5f * u, cw = 12 * u, chh = 7 * u, d = 7 * u;
+                                    cp.AddArc(cx0, cy0, d, d, 90, 180); cp.AddArc(cx0 + cw - d, cy0, d, d, 270, 180); cp.CloseFigure(); g.DrawPath(p, cp);
+                                }
+                            g.Restore(st); break;
+                        }
                     case "lock": g.DrawRectangle(p, X(5), Y(11), 14 * u, 10 * u); g.DrawArc(p, X(8), Y(4), 8 * u, 10 * u, 180, 180); break;
                     case "key": g.DrawEllipse(p, X(3), Y(9), 7 * u, 7 * u); g.DrawLine(p, X(10), Y(12.5f), X(21), Y(12.5f)); g.DrawLine(p, X(18), Y(12.5f), X(18), Y(16)); break;
                     case "devices": g.DrawRectangle(p, X(3), Y(5), 13 * u, 9 * u); g.DrawLine(p, X(7), Y(18), X(12), Y(18)); g.DrawRectangle(p, X(17), Y(9), 4 * u, 10 * u); break;
