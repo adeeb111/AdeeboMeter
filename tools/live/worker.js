@@ -13,6 +13,8 @@ const memo = new Map(), flying = new Map(), MAX = 400;   // isolate memory only:
 // every answer carries "at" (when the source was last read). A failed refresh serves the last copy only up to maxStale,
 // then the card says it's unavailable (AM-CG-308). Concurrent misses share one upstream call (AM-CG-322); the memo
 // drops expired entries and never grows past MAX (AM-CG-323).
+// anything that looks like a key or token never leaves the relay in a message
+const scrub = s => s.replace(/(api[_ -]?key|token|key)[=: ]+\S+/gi, "$1 …").replace(/\b[A-Za-z0-9_-]{12,}\b/g, "…");
 async function cached(key, ttl, maxStale, make) {
   const m = memo.get(key), now = Date.now();
   if (m && m.failed && now - m.failed < 900000) return m.v && m.at && now - m.at < maxStale * 1000 ? Object.assign({ stale: 1 }, m) : { at: 0, v: m.fv };   // a failed source is asked again after 15 minutes, not on every visit (AM 16 Nov: Alpha Vantage's daily limit)
@@ -20,7 +22,7 @@ async function cached(key, ttl, maxStale, make) {
   if (flying.has(key)) return flying.get(key);
   const p = (async () => {
     try { const v = await make(); const e = { at: Date.now(), v }; put(key, e); return e; }
-    catch (e) { const fv = { error: "source unavailable", why: String(e && e.message || e).replace(/apikey=[^&\s]*/gi, "apikey=…").slice(0, 120) };
+    catch (e) { const fv = { error: "source unavailable", why: scrub(String(e && e.message || e)).slice(0, 120) };
       put(key, Object.assign({}, m || { at: 0 }, { failed: Date.now(), fv }));
       if (m && m.v && m.at && Date.now() - m.at < maxStale * 1000) return Object.assign({ stale: 1 }, m); return { at: 0, v: fv }; }
     finally { flying.delete(key); }
@@ -86,7 +88,10 @@ const HEAD = { cri: "cricket", ten: "tennis", f1: "formula1" };
 // relay's own free key (a Cloudflare secret, AV_KEY - set with "wrangler secret put AV_KEY"; never in this file)
 const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p: +x.price || null, c: parseFloat(x.change_percentage) || 0, v: +x.volume || 0 }))
   .filter(x => x.t && x.p >= 1 && !/[^A-Z.]/.test(x.t) && !(x.t.length === 5 && /[WUR]$/.test(x.t))).slice(0, 5);   // under $1, warrants, units and rights are mostly noise
-const movers = (key, d) => { if (d.Information || d.Note || d["Error Message"]) throw new Error(String(d.Information || d.Note || d["Error Message"]).slice(0, 160)); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
+// Never pass the provider's own words on: Alpha Vantage's refusal repeats the API key (17 Nov - the key showed on the
+// public Live page). Only our fixed sentences reach a page.
+const avWhy = m => /rate limit|requests per day|per minute|frequency|premium|thank you for using/i.test(m) ? "the daily limit is used up" : /invalid|apikey|api key/i.test(m) ? "the key was refused" : "no answer";
+const movers = (key, d) => { const m = d.Information || d.Note || d["Error Message"]; if (m) throw new Error(avWhy(String(m))); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
 const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!env || !env.AV_KEY) throw new Error("nokey"); return movers(env.AV_KEY, await get("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), 12 * 3600)); });
 // a person's own key (Live > Your keys): it comes in a header, is used for this one call and dropped - never cached, logged or kept
 async function keyed(svc, key, u) {
@@ -206,7 +211,7 @@ export default {
       case "/k": {
         const svc = u.searchParams.get("svc") || "", key = req.headers.get("X-Key") || "";
         if (!["av", "fd", "cd", "gn"].includes(svc) || !/^[A-Za-z0-9_-]{8,80}$/.test(key)) return reply(req, { error: "bad request" }, 0);
-        try { return reply(req, await keyed(svc, key, u), -1); } catch (e) { return reply(req, { error: String(e && e.message || e).slice(0, 160) }, -1); }
+        try { return reply(req, await keyed(svc, key, u), -1); } catch (e) { return reply(req, { error: scrub(String(e && e.message || e)).slice(0, 160) }, -1); }
       }
       case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "", now: Date.now() }, 0);   // now: lets the phone check its clock (AM-CG-376)
       // the phone app's "this phone" card: who carries this connection and whether it came over IPv6 - for this answer only,
