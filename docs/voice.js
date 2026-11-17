@@ -50,7 +50,7 @@
       case "thinking": eyes = '<circle cx="25" cy="28" r="3.2" fill="#fff"/><circle cx="40" cy="26" r="3.2" fill="#fff"/>'; mouth = '<path d="M26 42h12" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>'; break;
       default: eyes = '<circle cx="25" cy="29" r="3.4" fill="#fff"/><circle cx="39" cy="29" r="3.4" fill="#fff"/>'; mouth = '<path d="M24 39q8 6 16 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/>';
     }
-    return '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" aria-hidden="true" style="flex:none;display:block"><rect x="2" y="2" width="60" height="60" rx="18" fill="#1F6FEB"/><path d="M10 52A26 26 0 0 1 14 20" stroke="#3FB950" stroke-width="4" fill="none" opacity=".55" stroke-linecap="round"/><path d="M50 20A26 26 0 0 1 54 52" stroke="#FF7B72" stroke-width="4" fill="none" opacity=".45" stroke-linecap="round"/>' + brow + eyes + mouth + extra + '</svg>';
+    return '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" aria-hidden="true" style="flex:none;display:block"><rect x="2" y="2" width="60" height="60" rx="18" fill="#1F6FEB"/><path d="M10 52A26 26 0 0 1 14 20" stroke="#3FB950" stroke-width="4" fill="none" opacity=".55" stroke-linecap="round"/><path d="M50 20A26 26 0 0 1 54 52" stroke="#FF7B72" stroke-width="4" fill="none" opacity=".45" stroke-linecap="round"/>' + brow + '<g class="eyes">' + eyes + '</g>' + mouth + extra + '</svg>';
   }
   function lookNow() { var h = new Date().getHours(); return h >= 22 || h < 5 ? "sleepy" : "calm"; }   // FRESH-099: sleepy from 22:00, like the app
 

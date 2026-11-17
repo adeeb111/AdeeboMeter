@@ -150,6 +150,39 @@ nav.tabs,.tile,.btn,.seg,.act,.row{-webkit-user-select:none;user-select:none;-we
 img.logo{width:34px;height:34px;flex:none;display:block}
 #splash{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}#splash b{font-size:24px;letter-spacing:-.01em}#splash.out{opacity:0;pointer-events:none}
 @keyframes caretb{50%{opacity:0}}.say2 .caret{font-style:normal;color:var(--blue);animation:caretb .6s steps(1) infinite}
+/* ---- motion (Adeeb, 16 Nov: "the phone should have the same animation as the PC - a web page can do even better").
+   All of it only when the phone allows motion; a redraw keeps elements, so nothing restarts on a live update. */
+.amlogo .ndl{transform-origin:32px 33.6px;transform:rotate(var(--r,36deg))}
+.amword .m{color:var(--blue)}
+@media (prefers-reduced-motion:no-preference){
+.amlogo .ndl{transition:transform 1s cubic-bezier(.3,1.5,.5,1);animation:amSweep 1.3s cubic-bezier(.3,.8,.3,1) backwards}
+@keyframes amSweep{0%{transform:rotate(-80deg)}45%{transform:rotate(78deg)}70%{transform:rotate(calc(var(--r,36deg) - 10deg))}85%{transform:rotate(calc(var(--r,36deg) + 4deg))}100%{transform:rotate(var(--r,36deg))}}
+.amlogo .arc{animation:amArc .9s backwards}.amlogo .a2{animation-delay:.12s}.amlogo .a3{animation-delay:.24s}
+@keyframes amArc{0%{opacity:.15}100%{opacity:1}}
+.amlogo.breathe .ndl{animation:amBreathe 1.2s ease-in-out}
+@keyframes amBreathe{0%,100%{transform:rotate(var(--r,36deg))}25%{transform:rotate(calc(var(--r,36deg) - 46deg))}55%{transform:rotate(calc(var(--r,36deg) + 12deg))}80%{transform:rotate(calc(var(--r,36deg) - 4deg))}}
+.amlogo.breathe .dot{animation:amPing .5s ease-out backwards}.amlogo.breathe .d2{animation-delay:.15s}.amlogo.breathe .d3{animation-delay:.3s}
+@keyframes amPing{0%{fill:#fff;r:2.3px}50%{fill:#fff;r:3.4px}100%{r:2.3px}}
+.amword.shine{background:linear-gradient(100deg,var(--ink) 0 42%,#7BE0B0 47%,#FCD34D 50%,#FF7A6B 53%,var(--ink) 58% 100%);background-size:320% 100%;background-position:-20% 0;-webkit-background-clip:text;background-clip:text}
+.amword.shine,.amword.shine .m{-webkit-text-fill-color:transparent;animation:amShine 1.4s .35s ease-in-out both}
+.amword.shine .m{background:linear-gradient(100deg,var(--blue) 0 42%,#7BE0B0 47%,#FCD34D 50%,#FF7A6B 53%,var(--blue) 58% 100%);background-size:320% 100%;-webkit-background-clip:text;background-clip:text}
+@keyframes amShine{0%{background-position:120% 0}100%{background-position:-20% 0}}
+body.intro #app>*{animation:amRise .5s cubic-bezier(.2,.8,.2,1) backwards}
+body.intro #app>*:nth-child(2){animation-delay:.05s}body.intro #app>*:nth-child(3){animation-delay:.1s}body.intro #app>*:nth-child(4){animation-delay:.15s}body.intro #app>*:nth-child(5){animation-delay:.2s}body.intro #app>*:nth-child(6){animation-delay:.25s}body.intro #app>*:nth-child(n+7){animation-delay:.3s}
+body.page #app>*{animation:amFade .22s ease-out backwards}
+@keyframes amRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
+@keyframes amFade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+.bump{animation:amBump .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes amBump{0%{opacity:.2;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.eyes{transform-box:fill-box;transform-origin:center;animation:amBlink 5.5s infinite}
+@keyframes amBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.led:not(.off):not(.warn){animation:amLed 2.4s ease-out infinite}
+@keyframes amLed{0%{box-shadow:0 0 0 0 rgba(63,185,80,.6)}70%{box-shadow:0 0 0 9px rgba(63,185,80,0)}100%{box-shadow:0 0 0 0 rgba(63,185,80,0)}}
+.btn,.row,.card[data-go],.card[data-act],#tabs button,.vchip,.gcard{transition:transform .12s ease,background-color .2s,box-shadow .2s}
+.btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active{transform:scale(.975)}
+#tabs button.on svg{animation:amPop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes amPop{0%{transform:scale(.7)}100%{transform:none}}
+}
 #scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
 #web{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10;display:flex;flex-direction:column;background:var(--bg)}#web[hidden]{display:none}
 .wbar{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--edge)}.wbar b{font-size:19px}
@@ -209,7 +242,7 @@ textarea.in{resize:vertical;min-height:120px}
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="/img/logo.svg" alt="" width="96" height="96"><b>AdeeboMeter</b></div>
+<div id="splash" aria-hidden="true"><svg class="amlogo" viewBox="0 0 64 64" width="96" height="96" style="--r:-42deg" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle cx="18.8" cy="42.6" r="2.3"/><circle cx="32" cy="42.6" r="2.3"/><circle cx="45.2" cy="42.6" r="2.3"/></g></svg><b class="amword">Adeebo<span class="m">Meter</span></b></div>
 <main id="app"></main>
 <div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back"></button><img class="logo" src="/img/logo.svg" alt="" width="30" height="30" style="width:30px;height:30px"><b>AdeeboMeter</b><span id="wtitle" hidden></span></div><div id="wload" class="mut" hidden style="padding:24px;text-align:center;color:var(--sub)"></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
 <nav class="tabs"><div class="in" id="tabs"></div></nav>
@@ -273,6 +306,15 @@ textarea.in{resize:vertical;min-height:120px}
   function ic(n, s) { return '<svg class="i" viewBox="0 0 24 24" style="width:' + (s || 24) + 'px;height:' + (s || 24) + 'px" aria-hidden="true">' + (I[n] || I.help) + '</svg>'; }
   function where(w) { return w === "pc" ? '<span class="where">' + ic("pc", 12) + ' ON YOUR PC</span>' : w === "off" ? '<span class="where off">OFFLINE</span>' : '<span class="where ph">' + ic("phone", 12) + ' ON THIS PHONE</span>'; }
   function hdr(title, sub, backTo) { return '<header>' + (backTo ? '<button class="ibtn back" data-go="' + backTo + '" aria-label="Back">' + ic("back", 26) + '</button>' : '') + '<div class="t"><h1>' + title + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (backTo ? '' : '<button class="ibtn" data-go="settings" aria-label="Settings">' + ic("gear", 22) + '</button>') + '</header>'; }
+  // ---- the logo, drawn inline so its needle can move: it sweeps when it first appears and rests where the connection is
+  // (green side fine, middle busy, red side a problem); every 5 minutes it breathes and the three dots ping (CSS above)
+  function lvNow() { var L = live || {}; if (isLive() && L.lv != null) return +L.lv; if (me && !me.err) return worst(phoneRows(me)); return me && me.err ? 2 : -1; }
+  function amLogo(px) {
+    var lv = lvNow(), r = lv === 0 ? -42 : lv === 1 ? 0 : lv === 2 ? 44 : 36;
+    return '<svg class="amlogo logo" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" style="--r:' + r + 'deg;width:' + px + 'px;height:' + px + 'px;flex:none" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle class="dot d1" cx="18.8" cy="42.6" r="2.3"/><circle class="dot d2" cx="32" cy="42.6" r="2.3"/><circle class="dot d3" cx="45.2" cy="42.6" r="2.3"/></g></svg>';
+  }
+  setInterval(function () { if (document.hidden) return; [].forEach.call(document.querySelectorAll(".amlogo"), function (l) { l.classList.remove("breathe"); void l.getBoundingClientRect(); l.classList.add("breathe"); setTimeout(function () { l.classList.remove("breathe"); }, 1400); }); }, 300000);
+  function bump(el) { if (!el || !el.classList) return; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); setTimeout(function () { el.classList.remove("bump"); }, 500); }
   function faceHtml(look) { var d = document.createElement("span"); if (window.AMV) AMV.face(d, look); return d.innerHTML; }
   function lvOf(v, ok, bad) { return v == null ? 3 : v >= bad ? 2 : v >= ok ? 1 : 0; }
   function ms(v) { return v == null ? "–" : Math.round(v) + '<small> ms</small>'; }
@@ -857,7 +899,7 @@ textarea.in{resize:vertical;min-height:120px}
   var VIEWS = {};
   VIEWS.activity = function () { return hdr("Activity today", "On this phone only - it starts fresh each day", "home") + actList(0); };
   VIEWS.home = function () {
-    var a = hdr("AdeeboMeter", "").replace('<div class="t">', wide() ? '<div class="t">' : '<img class="logo" src="/img/logo.svg" alt="" width="36" height="36" style="width:36px;height:36px"><div class="t">');
+    var a = hdr('<span class="amword shine">Adeebo<span class="m">Meter</span></span>', "").replace('<div class="t">', wide() ? '<div class="t">' : amLogo(36) + '<div class="t">');
     var pcCard = phase !== "none" || recLoad() ? hero() : "";
     if (wide()) return a + '<div class="two"><div>' + vrow() + say() + pcCard + viewBody() + '</div><div>' + quick() + actList(4) + (phase === "live" ? glance() : "") + installCard(true) + '</div></div>';
     if (!pcCard) pcCard = '<button class="pcrow2" data-go="' + (hasPc() ? "pair" : "addpc") + '" style="margin-top:0">' + ic("pc", 24) + '<span class="tx"><b>' + (hasPc() ? "Connect your PC" : "Add your Windows PC") + '</b><span>Scan the QR code on your PC</span></span>' + ic("chev", 18) + '</button>';
@@ -2028,7 +2070,12 @@ textarea.in{resize:vertical;min-height:120px}
   var TABOF = { tool: "tools", calc: "tools", addpc: "home", activity: "home", web: "more", settings: "more", companion: "more", how: "more", phone: "tools", walk: "home", report: "home", pair: "home", send: "pc", widget: "pc" };
   // a redraw changes only what changed (Adeeb, 16 Nov: "when my pc is connected phone screen flickers a lot" - every
   // live update from the PC used to rebuild the whole screen; now unchanged parts - pictures, the face, anything mid-animation - stay put)
-  var lastHtml = "";
+  var lastHtml = "", lastTab = null;
+  function entrance(tabNow) {
+    if (lastTab === null) { document.body.classList.add("intro"); setTimeout(function () { document.body.classList.remove("intro"); }, 1600); }
+    else if (tabNow !== lastTab) { document.body.classList.remove("page"); void document.body.offsetWidth; document.body.classList.add("page"); setTimeout(function () { document.body.classList.remove("page"); }, 400); }
+    lastTab = tabNow;
+  }
   function morph(root, html) {
     if (html === lastHtml && root.childNodes.length) return; lastHtml = html;
     var t = document.createElement("div"); t.innerHTML = html; sync(root, t);
@@ -2039,7 +2086,7 @@ textarea.in{resize:vertical;min-height:120px}
       var x = an[i], y = bn[i];
       if (!x) { a.appendChild(y.cloneNode(true)); continue; }
       if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName || (x.nodeType === 1 && (x.getAttribute("data-say") !== y.getAttribute("data-say")))) { a.replaceChild(y.cloneNode(true), x); continue; }
-      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; continue; }
+      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) { x.nodeValue = y.nodeValue; var pe = x.parentNode; if (pe && pe.closest && pe.closest(".big3 b, .st b, .gst")) bump(pe); } continue; }
       if (x.nodeType !== 1) continue;
       if (x.outerHTML === y.outerHTML) continue;
       if (x.hasAttribute("data-say")) { if (x.getAttribute("aria-label") !== y.getAttribute("aria-label")) a.replaceChild(y.cloneNode(true), x); continue; }   // the buddy's line types on its own clock
@@ -2057,12 +2104,12 @@ textarea.in{resize:vertical;min-height:120px}
     document.documentElement.setAttribute("data-theme", th); if (pal) document.documentElement.setAttribute("data-pal", pal); else document.documentElement.removeAttribute("data-pal"); document.documentElement.setAttribute("data-contrast", S.hc ? "high" : "");
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
-    morph($("app"), S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : "")); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
+    entrance(S.tab); morph($("app"), S.tab === "web" ? "" : f() + (S.tab === "home" ? sheetHtml() : "")); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
     var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join();
     if (S.tab === "web") cur = !hasPc() && /\/learn/.test(webHome) ? "@/learn/" : !hasPc() && /\/live/.test(webHome) ? "@/live.html" : "home";
     var tb = $("tabs"); if (tb.getAttribute("data-built") !== tkey) tb.removeAttribute("data-built");
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
-    else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand"><img class="logo" src="/img/logo.svg" alt="" width="34" height="34">AdeeboMeter</div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
+    else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand">' + amLogo(34) + '<span class="amword shine">Adeebo<span class="m">Meter</span></span></div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
