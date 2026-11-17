@@ -23,13 +23,15 @@ namespace AdeeboMeter
                 float cy = y + 16 * S;
                 using (var hb = new SolidBrush(r.Lv == 0 ? Theme.Ink : Theme.LvText(Math.Min(2, r.Lv)))) g.DrawString(L.T(r.Head), Draw.fName, hb, new RectangleF(x + 20 * S, cy, w - 40 * S, hh + 4)); cy += hh + 10 * S;
                 using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                    foreach (var p in r.Parts)
+                    // Review-2: a page this view hides (Trading in Gamer + Streamer) goes last, marked as earlier activity
+                    foreach (var p in r.Parts.OrderBy(z => z.Id != "net" && Cfg.Off(z.Id == "game" ? "gamer" : z.Id) ? 1 : 0))
                     {
+                        bool gone = p.Id != "net" && Cfg.Off(p.Id == "game" ? "gamer" : p.Id);
                         var look = WeekLook.FirstOrDefault(z => z[0] == p.Id) ?? WeekLook[0];
                         Kit.Icon(g, look[2], new RectangleF(x + 20 * S, cy + 4 * S, 16 * S, 16 * S), Kit.Accent(look[1]));
                         g.DrawString(L.T(p.Title), Draw.fBodyB, ink, x + 44 * S, cy + 2 * S);
                         Draw.LvDot(g, p.Lv, x + 150 * S, cy + 8 * S, 9 * S, 9 * S);
-                        g.DrawString(p.Line, Draw.fBody, sub, new RectangleF(x + 166 * S, cy + 2 * S, w - 186 * S, rh), nf);
+                        g.DrawString(gone ? L.T("Previous activity") + " · " + p.Line : p.Line, Draw.fBody, gone ? muted : sub, new RectangleF(x + 166 * S, cy + 2 * S, w - 186 * S, rh), nf);
                         string id = p.Id; if (id != "net") Act(overviewCanvas, new RectangleF(x + 16 * S, cy, w - 32 * S, rh), delegate { tab = id == "game" ? "gamer" : id; ShowTab(); });
                         cy += rh;
                     }

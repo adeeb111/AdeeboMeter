@@ -70,8 +70,9 @@ namespace AdeeboMeter
             string title = (ls.Wifi ? "YOUR WI-FI" : "YOUR CABLE") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  UPDATED " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
             float vh = Draw.Measure(ls.Verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
             var vb = new RectangleF(x, y, w, vh + 44 * S);
-            Theme.Fill(g, vb, 12 * S, Theme.LvSoft(ls.Level));
-            using (var b = new SolidBrush(Theme.LvText(ls.Level))) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(ls.Verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
+            int blv = ls.Level == 0 && ls.Advice && ls.Verdict.StartsWith("Driver update", StringComparison.Ordinal) ? 1 : ls.Level;   // advice leads: amber, never green
+            Theme.Fill(g, vb, 12 * S, Theme.LvSoft(blv));
+            using (var b = new SolidBrush(Theme.LvText(blv))) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(ls.Verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 16 * S;
             if (ls.Radio.Count + ls.Address.Count + ls.Traffic.Count == 0) return;   // nothing connected: the message says it all
             float cw = (w - 14 * S) / 2;

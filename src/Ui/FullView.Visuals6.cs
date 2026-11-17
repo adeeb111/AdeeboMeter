@@ -67,7 +67,7 @@ namespace AdeeboMeter
                         var gs = new List<Tuple<string, double, string, int>>();
                         foreach (var o in res)
                         {
-                            double pct = double.NaN; var m = Regex.Match(o[2], @"([0-9.]+)\s*of\s*([0-9.]+)\s*GB");
+                            double pct = double.NaN; var m = Regex.Match(o[2], @"([0-9.]+)\s*(?:GB\s*)?of\s*([0-9.]+)\s*GB");
                             if (m.Success) pct = 100 * double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) / double.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
                             else if (Regex.IsMatch(o[2], @"[0-9.]+%\s*(full|worn)")) pct = VNum(o[2], @"([0-9.]+)%");
                             else if (o[2].Contains("°C")) pct = VNum(o[2], @"([0-9.]+)\s*°C");
@@ -227,7 +227,15 @@ namespace AdeeboMeter
                 var t = gs[i]; float cx = r.X + 18 * S + cw * i + cw / 2, cy = r.Y + 130 * S, rad = Math.Min(70 * S, cw / 2 - 16 * S);
                 var box = new RectangleF(cx - rad, cy - rad, rad * 2, rad * 2);
                 using (var p = new Pen(Theme.Soft, 14 * S)) g.DrawArc(p, box, 180, 180);
-                if (!double.IsNaN(t.Item2)) { Color c = t.Item4 == 2 || t.Item2 >= 90 ? Theme.Red : t.Item4 == 1 || t.Item2 >= 75 ? Theme.Amber : Theme.Green; using (var p = new Pen(c, 14 * S)) g.DrawArc(p, box, 180, (float)(Math.Min(100, t.Item2) / 100 * 180)); VTextC(g, t.Item2.ToString("0", CultureInfo.CurrentCulture) + (t.Item3.Contains("°C") ? " °C" : "%"), Draw.fBodyB, Theme.Ink, cx, cy - 26 * S, rad * 2); }
+                // the colour is the check's own verdict when it has one (102% of rated speed is good, not "full")
+                Color c = t.Item4 == 2 ? Theme.Red : t.Item4 == 1 ? Theme.Amber : t.Item4 == 0 ? Theme.Green : t.Item2 >= 90 ? Theme.Red : t.Item2 >= 75 ? Theme.Amber : Theme.Green;
+                if (!double.IsNaN(t.Item2)) { using (var p = new Pen(c, 14 * S)) g.DrawArc(p, box, 180, (float)(Math.Min(100, t.Item2) / 100 * 180)); VTextC(g, t.Item2.ToString("0", CultureInfo.CurrentCulture) + (t.Item3.Contains("°C") ? " °C" : "%"), Draw.fBodyB, Theme.Ink, cx, cy - 26 * S, rad * 2); }
+                else if (t.Item4 >= 0)
+                {
+                    // no "how full" for pages/s or ms: the whole arc, faint, in the verdict's colour, and the number in the middle
+                    using (var p = new Pen(Color.FromArgb(110, c), 14 * S)) g.DrawArc(p, box, 180, 180);
+                    var lead = Regex.Match(t.Item3, @"^-?[0-9.,]+\s*(%|ms|pages/s|°C|GB|MB)?").Value.Trim(); VTextC(g, lead, Draw.fBodyB, Theme.Ink, cx, cy - 26 * S, rad * 2);
+                }
                 VTextC(g, t.Item1, Draw.fBodyB, Theme.Ink, cx, cy + 8 * S, cw - 10 * S); VTextC(g, Cut(t.Item3, 40), Draw.fTiny, Theme.Sub, cx, cy + 28 * S, cw - 10 * S);
             }
             g.SmoothingMode = sm; VFoot(g, r, foot); return r.Bottom + 14 * S;

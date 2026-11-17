@@ -17,6 +17,8 @@ namespace AdeeboMeter
         int detIdx; int detPick = -1;
         LearnGames.Quick quick; string quickMsg = "", quickEarn;
         static readonly StringFormat GameNoWrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
+        // Review-1: a description gets two lines before it's cut, on a word
+        static readonly StringFormat TwoLines = new StringFormat { FormatFlags = StringFormatFlags.LineLimit, Trimming = StringTrimming.EllipsisWord };
         System.Windows.Forms.Timer gameTimer;
         static readonly Random GameRnd = new Random();
 

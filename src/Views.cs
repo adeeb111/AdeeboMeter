@@ -13,15 +13,15 @@ namespace AdeeboMeter
     static class Views
     {
         public static readonly string[][] BuiltIn = {
-            new[] { "everyday", "Everyday", "Your PC and internet, the lightest checks, speeds in the corner" },
-            new[] { "gamer", "Gamer", "The Gamer Zone, your game servers watched, ping in the corner" },
-            new[] { "streamer", "Streamer", "Streaming quality and whose fault a dip was, what's playing in the corner" },
-            new[] { "trader", "Trader", "Your line to your broker, the day's numbers, its delay in the corner" },
-            new[] { "engineer", "Engineer", "Every page and tool, Details on, the engineer's corner card" },
-            new[] { "everything", "Everything", "Every page and every group - gaming, streaming and trading together" },
-            new[] { "play-watch", "Gamer + Streamer", "Your games and your streams" },
-            new[] { "play-trade", "Gamer + Trader", "Your games and your broker - or learning to trade" },
-            new[] { "watch-trade", "Streamer + Trader", "Your streams and your broker" } };
+            new[] { "everyday", "Everyday", "Your PC and internet with the lightest checks. Speed + status in the corner." },
+            new[] { "gamer", "Gamer", "The Gamer Zone and the games you add, watched. Their ping in the corner." },
+            new[] { "streamer", "Streamer", "Streaming quality and whose fault a dip was. Speed + status in the corner." },
+            new[] { "trader", "Trader", "Your line to your broker and its delay, on the Trading page. Speed + status in the corner." },
+            new[] { "engineer", "Engineer", "Tools first: Details on, the PC-to-internet strip, the engineer's card in the corner." },
+            new[] { "everything", "Everything", "Every page up front - gaming, streaming and trading too. The corner follows what you're doing." },
+            new[] { "play-watch", "Gamer + Streamer", "Your games and your streams. The corner follows what you're doing." },
+            new[] { "play-trade", "Gamer + Trader", "Your games and your broker - or learning to trade. The corner follows what you're doing." },
+            new[] { "watch-trade", "Streamer + Trader", "Your streams and your broker. Speed + status in the corner." } };
         // what makes a view: mode / hidden pages / preset / widget / details / calls / the pace (router, internet, Wi-Fi,
         // apps, game ping, game servers) - one line, '/' between
         public sealed class State

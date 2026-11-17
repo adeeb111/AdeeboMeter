@@ -49,13 +49,15 @@ namespace AdeeboMeter
             if (sec == "Widget") { int i = Array.IndexOf(WStyleIds, Cfg.WidgetStyle); return L.T(i >= 0 ? WStyle[i] : "Auto") + (Draw.SpeedStyle ? " · " + (Cfg.WUnits == "bytes" ? "MB/s" : "Mb/s") : ""); }
             if (sec == "Background checks") return L.T(Cfg.Preset == "penny" ? "Penny" : Cfg.Preset == "custom" ? "Your own mix" : Cfg.Preset == "gamer" ? "Gamer" : "Balanced") + " · ~" + Cfg.JobsPerMinute() + " " + L.T("checks a minute");
             if (sec == "Companion") return Voice.Serious ? L.T("Plain - no jokes") : L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T(Lines.PersonaName(Lines.Persona));
-            var l = items.Where(i => i.Sec == sec).Take(2).Select(i => { int c = i.Cur(); return c >= 0 && c < i.Opts.Length ? (sec == "General" || sec == "Navigation" ? "" : L.T(i.Label) + ": ") + L.T(i.Opts[c]) : ""; }).Where(t => t != "").ToList();   // "Alerts: On", not a bare "On"
+            // Review-1: "Sidebar · Off" read as the sidebar being off - the layout, then how many pages are hidden
+            if (sec == "Navigation") { int hid = items.Count(i => i.Sec == sec && i.Label.StartsWith("Show ", StringComparison.Ordinal) && i.Cur() == 1); return L.T("Layout") + ": " + L.T(Cfg.Layout == "sidebar" ? "Sidebar" : "Classic") + (hid > 0 ? " · " + hid + " " + L.T(hid == 1 ? "page hidden" : "pages hidden") : ""); }
+            var l = items.Where(i => i.Sec == sec).Take(2).Select(i => { int c = i.Cur(); return c >= 0 && c < i.Opts.Length ? (sec == "General" ? "" : L.T(i.Label) + ": ") + L.T(i.Opts[c]) : ""; }).Where(t => t != "").ToList();   // "Alerts: On", not a bare "On"
             return string.Join(" · ", l);
         }
         float PaintSettingsHome(Graphics g, float x, float y, float w, List<SetItem> items)
         {
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Settings"), Draw.fTitle, ink, x, y); y += 34 * S;
-            int cols = w > 900 * S ? 3 : w > 560 * S ? 2 : 1; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 92 * S; int k = 0;
+            int cols = w > 900 * S ? 3 : w > 560 * S ? 2 : 1; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 108 * S; int k = 0;   // Review-1: room for a two-line summary
             foreach (var sec in SetSections)
             {
                 var look = SetQLookOf(sec); var r = new RectangleF(x + (k % cols) * (cw + 12 * S), y + (k / cols) * (ch + 12 * S), cw, ch); k++;
@@ -67,7 +69,8 @@ namespace AdeeboMeter
                 using (var ink = new SolidBrush(Theme.Ink)) using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 {
                     g.DrawString(L.T(look[2]), Draw.fBodyB, ink, new RectangleF(r.X + 58 * S, r.Y + 20 * S, r.Width - 70 * S, 40 * S));
-                    g.DrawString(SecSummary(sec, items), Draw.fSmall, m, new RectangleF(r.X + 58 * S, r.Bottom - 26 * S, r.Width - 70 * S, 18 * S), sf);
+                    using (var two = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.LineLimit })
+                        g.DrawString(SecSummary(sec, items), Draw.fSmall, m, new RectangleF(r.X + 58 * S, r.Bottom - 44 * S, r.Width - 70 * S, 2 * Draw.fSmall.GetHeight(g) + 1), two);
                 }
             }
             return y + ((k + cols - 1) / cols) * (ch + 12 * S) + 10 * S;

@@ -44,13 +44,15 @@ namespace AdeeboMeter
             string s = SecOf(page); return s == "" ? "" : s;
         }
         string curMine = "";
+        // Review-1: a search left in the box kept covering Calculators and Reports - each destination opens clean
+        void ClearTbSearch() { if (tbSearch != null && tbSearch.Box.Text != "") tbSearch.Box.Text = ""; tbFilter = ""; }
         internal void OpenNav(string id)
         {
             if (tbBusy && tab == "toolbox" && (id == "calc" || id == "reports" || id == "toolbox")) { BusyNote(); return; }
             switch (id)
             {
-                case "calc": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ShowQuestions("calc"); break;
-                case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ShowQuestions("report"); break;
+                case "calc": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ClearTbSearch(); ShowQuestions("calc"); break;
+                case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ClearTbSearch(); ShowQuestions("report"); break;
                 default:
                     if (id.StartsWith("mine", StringComparison.Ordinal)) { curMine = id; tab = "mine"; ShowTab(); if (mineCanvas != null) mineCanvas.Invalidate(); break; }
                     var def = Secs.FirstOrDefault(x => x[0] == id); if (def == null) return;

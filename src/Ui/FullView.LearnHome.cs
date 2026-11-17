@@ -99,7 +99,7 @@ namespace AdeeboMeter
                 {
                     g.DrawString(full ? "✓" : done + "/" + all, Draw.fTiny, mb, ring, center);
                     g.DrawString(L.T(c[1]), Draw.fHead, ink, new RectangleF(r.X + 14 * S, r.Y + 60 * S, r.Width - 28 * S, 24 * S), GameNoWrap);
-                    g.DrawString(L.T(c[2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 86 * S, r.Width - 28 * S, 36 * S), GameNoWrap);
+                    g.DrawString(L.T(c[2]), Draw.fSmall, sub, new RectangleF(r.X + 14 * S, r.Y + 86 * S, r.Width - 28 * S, 2 * Draw.fSmall.GetHeight(g) + 1), TwoLines);
                 }
                 string id = c[0];
                 Act(learnInfo, r, delegate { if (id == "paths") { tab = "points"; ShowTab(); return; } learnGroup = id; learnInfo.AutoScrollPosition = Point.Empty; learnInfo.Invalidate(); });
@@ -129,7 +129,7 @@ namespace AdeeboMeter
             var card = LearnCards.FirstOrDefault(c => c[0] == learnGroup) ?? LearnCards[0];
             y = BackLink(g, "‹ " + L.T("All of Learn"), x, y, delegate { learnGroup = ""; });
             y = Title2(g, L.T(card[1]), x, y, w); y = Lead2(g, L.T(card[2]), x, y, w);
-            var items = LearnItems(card[0]); int cols = w > 700 * S ? 2 : 1; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 66 * S;
+            var items = LearnItems(card[0]); int cols = w > 700 * S ? 2 : 1; float cw = (w - (cols - 1) * 12 * S) / cols, ch = 80 * S;
             for (int i = 0; i < items.Count; i++)
             {
                 var it = items[i]; var r = new RectangleF(x + (i % cols) * (cw + 12 * S), y + (i / cols) * (ch + 10 * S), cw, ch);
@@ -143,7 +143,7 @@ namespace AdeeboMeter
                 using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
                 {
                     g.DrawString(L.T(it[1]), Draw.fBodyB, ink, new RectangleF(tx, r.Y + 12 * S, tw, 22 * S), GameNoWrap);
-                    g.DrawString(L.T(it[2]), Draw.fSmall, sub, new RectangleF(tx, r.Y + 36 * S, tw, 22 * S), GameNoWrap);
+                    g.DrawString(L.T(it[2]), Draw.fSmall, sub, new RectangleF(tx, r.Y + 34 * S, tw, 2 * Draw.fSmall.GetHeight(g) + 1), TwoLines);
                 }
                 string key = it[0]; Act(learnInfo, r, delegate { learnSel = key; learnPkts = null; learnErr = ""; learnInfo.AutoScrollPosition = Point.Empty; learnInfo.Invalidate(); });
             }

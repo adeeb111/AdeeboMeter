@@ -38,7 +38,8 @@ namespace AdeeboMeter
             tab = "guide"; ShowTab(); SyncNav(); StartGuide("full", false);
         }
         bool? checkupTick;
-        bool checkupSpeed { get { if (checkupTick == null) checkupTick = !CheckupMetered(); return checkupTick.Value; } set { checkupTick = value; } }
+        // Review-2: the checkup's speed test is opt-in on a metered line and on Penny (low-data views)
+        bool checkupSpeed { get { if (checkupTick == null) checkupTick = !CheckupMetered() && Cfg.Preset != "penny"; return checkupTick.Value; } set { checkupTick = value; } }
         bool CheckupMetered()
         {
             if (Cfg.CapGB > 0) return true;   // a monthly cap set in Alerts: don't spend it without asking

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace AdeeboMeter
@@ -11,17 +12,32 @@ namespace AdeeboMeter
     // What changed: when is my network bad (7 x 24), data usage, what's normal here, calls, suggestions, new devices.
     sealed partial class FullView
     {
-        Bitmap weekBmp; string weekKey = ""; int[,] weekLv; double[,] weekGw; DateTime weekAt = DateTime.MinValue; volatile bool weekBusy;
+        Bitmap weekBmp; string weekKey = ""; int[,] weekLv; double[,] weekGw; static string[,] weekWhy; DateTime weekAt = DateTime.MinValue; volatile bool weekBusy;
+        // a square's hover: the hour, and the worst thing logged in it - so a red hour says whether it was the PC or the line
+        static Explain.Entry HourEntry(string key)
+        {
+            var p = key.Split(':'); int d, h; string[,] wy = weekWhy;
+            if (p.Length < 3 || wy == null || !int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out d) || !int.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out h) || d < 0 || d > 6 || h < 0 || h > 23 || wy[d, h] == null) return Explain.Term("hist.WEEK");
+            var kt = wy[d, h].Split('\u0001'); string kind = kt[0], text = kt.Length > 1 ? kt[1] : "";
+            bool pc = Regex.IsMatch(kind + " " + text, "(?i)memory|processor|cpu|disk|pc\\b|this pc|frozen|\\bram\\b");
+            var day = DateTime.Today.AddDays(d - 6);
+            return new Explain.Entry
+            {
+                Friendly = day.ToString("ddd d MMM", CultureInfo.CurrentCulture) + ", " + new DateTime(2000, 1, 1, h, 0, 0).ToString("t", CultureInfo.CurrentCulture),
+                Cat = Explain.Other, Close = -1, Tag = pc ? L.T("The cause was this PC, not the internet.") : L.T("The worst thing logged in this hour:"),
+                What = text, How = "", Why = "", Without = L.T("Click the square to replay that hour.")
+            };
+        }
         float PaintInsights(Graphics g, float x, float y, float w)
         {
             // ---- the week at a glance (from history; rebuilt at most every 10 minutes, drawn once into an image)
             if (Cfg.History && !weekBusy && ((weekLv == null && (DateTime.UtcNow - weekAt).TotalMinutes > 1) || (DateTime.UtcNow - weekAt).TotalMinutes > 10))   // a failed read waits a minute, never a read per paint
             {
                 weekBusy = true;
-                Task.Factory.StartNew(() => { double[,] gw = null; int[,] lv = null; try { lv = History.Week(out gw); } catch (Exception e) { Program.Log("week: " + e.Message); } try { BeginInvoke((Action)delegate { weekLv = lv; weekGw = gw; weekAt = DateTime.UtcNow; weekBusy = false; weekKey = ""; changesCanvas.Invalidate(); }); } catch { weekBusy = false; } });
+                Task.Factory.StartNew(() => { double[,] gw = null; int[,] lv = null; string[,] wy = null; try { lv = History.Week(out gw, out wy); } catch (Exception e) { Program.Log("week: " + e.Message); } try { BeginInvoke((Action)delegate { weekLv = lv; weekGw = gw; weekWhy = wy; weekAt = DateTime.UtcNow; weekBusy = false; weekKey = ""; changesCanvas.Invalidate(); }); } catch { weekBusy = false; } });
             }
             float hh = 7 * 22 * S + 52 * S;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR"), Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHEN WERE THERE PROBLEMS?  ·  LAST 7 DAYS × 24 HOURS  ·  POINT AT A SQUARE FOR THE CAUSE"), Draw.fTiny, mb, x, y);
             Hint(changesCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "hist.WEEK");
             y += 20 * S;
             if (weekLv != null)
@@ -38,7 +54,7 @@ namespace AdeeboMeter
                 float lw = 70 * S, cw = (w - lw) / 24, rh = 22 * S;
                 for (int d = 0; d < 7; d++) for (int h = 0; h < 24; h++)
                 {
-                    var sq = new RectangleF(x + lw + h * cw, y + d * rh, cw, rh); Hint(changesCanvas, sq, "hist.WEEK");
+                    var sq = new RectangleF(x + lw + h * cw, y + d * rh, cw, rh); Hint(changesCanvas, sq, weekWhy != null && weekWhy[d, h] != null ? "hour:" + d + ":" + h : "hist.WEEK");
                     if (weekLv[d, h] < 0) continue;
                     var day = DateTime.Today.AddDays(d - 6); double at = (h + 0.5) / 24.0;
                     Act(changesCanvas, sq, delegate { replayDay = day; replayData = null; tab = "replay"; ShowTab(); ReplayAt(at); });   // click a square: replay that hour

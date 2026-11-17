@@ -18,6 +18,13 @@ namespace AdeeboMeter
         List<Conn> connSnap = new List<Conn>();
         string storyApp, storyTarget = "", storyIp = "", storyNote = ""; int storyPort, storyLocal, storyBox = -1;
 
+        // an IPv6 address keeps its two ends (2607:f8b0:…:200e) - the middle is what a box can lose; names are cut as before
+        static string ShortIp(string s, int max)
+        {
+            if (s == null || s.Length <= max) return s ?? "";
+            var p = s.Trim('[', ']').Split(':'); if (p.Length >= 4 && s.IndexOf('.') < 0) return p[0] + ":" + p[1] + ":…:" + p[p.Length - 1];
+            return Draw.Trunc(s, max);
+        }
         static readonly string[] BoxName = { "App", "Windows", "Wi-Fi", "Router", "Provider", "Internet", "Server" };
 
         // pick the app's main conversation: the remote it talks to most, preferring 443
@@ -87,7 +94,7 @@ namespace AdeeboMeter
                 new[] { ms(gms), gw != "" ? gw : "router", double.IsNaN(gms) ? "2" : gms > 50 ? "2" : gms > 15 ? "1" : "0" },
                 new[] { double.IsNaN(nms) || double.IsNaN(gms) ? "-" : "+" + Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture) + " ms", vpn ? "VPN" : "router → internet gap", double.IsNaN(nms) ? "2" : nms - gms > 120 ? "1" : "0" },
                 new[] { hops > 0 ? hops + " networks" : ms(nms), hops > 0 ? "on the way" : "to the internet", "3" },
-                new[] { Draw.Trunc(conv != null && conv.Host != "" ? conv.Host : storyTarget, 22), role != "" ? Draw.Trunc(role, 24) : storyIp != "" ? storyIp : "", r != null && r.Level >= 0 ? r.Level.ToString(CultureInfo.InvariantCulture) : "3" } };
+                new[] { ShortIp(conv != null && conv.Host != "" ? conv.Host : storyTarget, 22), role != "" ? Draw.Trunc(role, 24) : storyIp != "" ? ShortIp(storyIp, 24) : "", r != null && r.Level >= 0 ? r.Level.ToString(CultureInfo.InvariantCulture) : "3" } };
             // narrow window or large text: two rows of boxes (4 + 3) instead of seven squeezed ones
             int per = (w - 6 * 14 * S) / 7 < 96 * S ? 4 : 7;
             float bw = (w - (per - 1) * 14 * S) / per, bh = 84 * S;
@@ -104,6 +111,14 @@ namespace AdeeboMeter
                 }
                 if (i < 6 && (i + 1) % per != 0) using (var ap = new Pen(Theme.Rail, 2 * S)) { ap.CustomEndCap = Cap34; g.DrawLine(ap, br.Right + 2 * S, br.Y + bh / 2, br.Right + 12 * S, br.Y + bh / 2); }
                 int ii = i; Act(travelCanvas, br, delegate { storyBox = storyBox == ii ? -1 : ii; if (ii == 3 && routeTable == null) LoadRoutes(); if (ii == 0 && m365Rows == null) LoadApps(); travelCanvas.Invalidate(); });
+                // Review-1: the server's full address (an IPv6 one never fits) - Copy on the box once it's picked
+                string full = i == 6 ? (storyIp != "" ? storyIp : conv != null && conv.Host != "" ? conv.Host : storyTarget) : "";
+                if (on && full != "")
+                {
+                    string cp = L.T("Copy"); var cz = g.MeasureString(cp, Draw.fTiny); var cr = new RectangleF(br.Right - cz.Width - 14 * S, br.Y + 6 * S, cz.Width + 8 * S, 18 * S);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(cp, Draw.fTiny, lb, cr.X + 4 * S, cr.Y + 2 * S);
+                    Act(travelCanvas, cr, delegate { try { System.Windows.Forms.Clipboard.SetText(full); storyNote = L.T("Copied") + " " + full; } catch (System.Runtime.InteropServices.ExternalException) { } travelCanvas.Invalidate(); });
+                }
             }
             y += bh + 8 * S + (per < 7 ? bh + 14 * S : 0);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(storyBox < 0 ? L.T("Click any step to see what happens to your data there.") : "", Draw.fSmall, mb, x, y);

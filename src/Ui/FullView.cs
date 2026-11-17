@@ -279,6 +279,8 @@ namespace AdeeboMeter
             split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 52)); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
             procList = new DB { Name = "procList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             procList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintProcList(e.Graphics); }; Wire(procList);
+            // the pinned column header: a scroll moves the picture, so paint it all again or the header smears
+            procList.Scroll += delegate { procList.Invalidate(); }; procList.MouseWheel += delegate { procList.Invalidate(); };
             procInfo = new DB { Name = "procInfo", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             procInfo.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintProcInfo(e.Graphics); }; Wire(procInfo);
             split.Controls.Add(procList, 0, 0); split.Controls.Add(procInfo, 1, 0);
@@ -448,7 +450,9 @@ namespace AdeeboMeter
             aboutPage.Visible = tab == "about"; aboutBtn.Selected = tab == "about"; pointsPage.Visible = tab == "points"; if (tab == "points") pointsCanvas.Invalidate();
             linkPage.Visible = tab == "link"; if (tab == "link") RefreshLink(true);
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
-            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade";
+            // Review-1: coming back to What's wrong? opens at the verdict, not halfway down the last result
+            bool enterGuide = tab == "guide" && !guidePage.Visible;
+            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade";
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
             SyncPointsBtn(); WatchUse(tab);
@@ -874,6 +878,7 @@ namespace AdeeboMeter
         static Explain.Entry TipEntry(string key)
         {
             if (key.StartsWith("proc:", StringComparison.Ordinal)) return ProcEntry(key.Substring(5), null, null);
+            if (key.StartsWith("hour:", StringComparison.Ordinal)) return HourEntry(key);
             return Explain.Term(key);
         }
         static string CardKey(string title)

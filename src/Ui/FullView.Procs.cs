@@ -94,11 +94,12 @@ namespace AdeeboMeter
                 try { BeginInvoke((Action)delegate { if (procSel == name) { procFacts = f; procPathSel = path; procInfo.Invalidate(); } }); } catch { }
             });
         }
+        bool procByCpu;   // Review-1: the list says which way it's sorted - Memory (default) or CPU, a click on the header swaps
         void PaintProcList(Graphics g)
         {
             g.TranslateTransform(procList.AutoScrollPosition.X, procList.AutoScrollPosition.Y);
             Begin(procList);
-            float x = 14 * S, y = 4 * S, w = procList.ClientSize.Width - 22 * S, rh = 42 * S;
+            float x = 14 * S, y = 4 * S + 30 * S, w = procList.ClientSize.Width - 22 * S, rh = 42 * S;
             string q = procSearch.Box.Text.Trim();
             var items = procs.Where(a => a.Name != "Idle").Select(a => new { A = a, E = Explain.Find(a.Name) ?? Explain.Find(Monitor.RawOf(a.Name)), C = CatOf(a) })
                              .Where(i => q == "" || i.A.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (i.E != null && (i.E.Friendly.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || i.E.Tag.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
@@ -108,7 +109,7 @@ namespace AdeeboMeter
                 if (items.Count == 0) g.DrawString(procs.Count == 0 ? Voice.P("Reading the process list...", "Loading...") : "Nothing matches.", Draw.fBody, muted, x, y + 8 * S);
                 foreach (var cat in Explain.CatOrder)
                 {
-                    var rows = items.Where(i => i.C == cat).OrderByDescending(i => i.A.Mem).ToList();
+                    var rows = (procByCpu ? items.Where(i => i.C == cat).OrderByDescending(i => i.A.Cpu).ThenByDescending(i => i.A.Mem) : items.Where(i => i.C == cat).OrderByDescending(i => i.A.Mem)).ToList();
                     if (rows.Count == 0) continue;
                     y += 8 * S;
                     g.DrawString(cat.ToUpperInvariant() + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
@@ -132,6 +133,20 @@ namespace AdeeboMeter
                 }
             }
             var need = new Size(0, (int)(y + 20 * S)); SetNeed(procList, need);
+            // the column header stays at the top while the list scrolls under it
+            g.ResetTransform(); var sp = procList.AutoScrollPosition; float hh = 30 * S;
+            using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, 0, 0, procList.ClientSize.Width, hh);
+            using (var line = new Pen(Theme.Line2)) g.DrawLine(line, x, hh - 1, x + w, hh - 1);
+            using (var muted = new SolidBrush(Theme.Muted)) using (var on = new SolidBrush(Theme.Ink))
+            {
+                g.DrawString(L.T("APP"), Draw.fTiny, muted, x + 20 * S, 9 * S);
+                string mh = L.T("MEMORY") + (procByCpu ? "" : " ▼"), ch = L.T("CPU") + (procByCpu ? " ▼" : "");
+                var mz = g.MeasureString(mh, Draw.fTiny); var cz = g.MeasureString(ch, Draw.fTiny);
+                float mx = x + w - 64 * S - mz.Width, cx = x + w - cz.Width;
+                g.DrawString(mh, Draw.fTiny, procByCpu ? muted : on, mx, 9 * S); g.DrawString(ch, Draw.fTiny, procByCpu ? on : muted, cx, 9 * S);
+                Act(procList, new RectangleF(mx - 6 * S, -sp.Y, mz.Width + 12 * S, hh), delegate { procByCpu = false; procList.Invalidate(); });
+                Act(procList, new RectangleF(cx - 6 * S, -sp.Y, cz.Width + 12 * S, hh), delegate { procByCpu = true; procList.Invalidate(); });
+            }
         }
         void PaintProcInfo(Graphics g)
         {

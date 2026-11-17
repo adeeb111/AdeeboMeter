@@ -160,9 +160,11 @@ namespace AdeeboMeter
 
         // The 7 x 24 heatmap: for each of the last 7 days and each hour, the worst minute-level seen and the average router delay.
         // Returns [day 0..6 (0 = 6 days ago), hour] = level (-1 = no data); gw = average gateway ms.
-        public static int[,] Week(out double[,] gw)
+        public static int[,] Week(out double[,] gw) { string[,] why; return Week(out gw, out why); }
+        // why: the worst thing logged in each hour (Review-1: a red square could be the PC's memory, not the internet)
+        public static int[,] Week(out double[,] gw, out string[,] why)
         {
-            var lv = new int[7, 24]; gw = new double[7, 24];
+            var lv = new int[7, 24]; gw = new double[7, 24]; why = new string[7, 24]; var whyLv = new int[7, 24];
             for (int d = 0; d < 7; d++) for (int h = 0; h < 24; h++) { lv[d, h] = -1; gw[d, h] = double.NaN; }
             for (int d = 0; d < 7; d++)
             {
@@ -175,6 +177,7 @@ namespace AdeeboMeter
                     if (!double.IsNaN(r[5])) { sum[h] += r[5]; cnt[h]++; }
                 }
                 for (int h = 0; h < 24; h++) if (cnt[h] > 0) gw[d, h] = sum[h] / cnt[h];
+                foreach (var e in day.E) { int h = e.T.Hour; if (e.Lv >= 1 && (why[d, h] == null || e.Lv > whyLv[d, h])) { why[d, h] = (e.Kind ?? "") + "\u0001" + (e.Text ?? ""); whyLv[d, h] = e.Lv; } }
             }
             return lv;
         }

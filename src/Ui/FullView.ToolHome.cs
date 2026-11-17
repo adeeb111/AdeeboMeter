@@ -124,6 +124,13 @@ namespace AdeeboMeter
             }
         }
         // ---------- painting the by-question home, a question's page, and search results
+        // on a question page (Calculators, Reports...) the search looks inside it first; nothing there = every tool
+        List<Tool> ScopedMatches()
+        {
+            var found = Matches(); if (tbQ == "" || !ByQuestion) return found;
+            var mine = new HashSet<string>(ToolsOf(tbQ).Select(t => t.Id)); var inQ = found.Where(t => mine.Contains(t.Id)).ToList();
+            return inQ.Count > 0 ? inQ : found;
+        }
         void PaintQuestions(Graphics g, float x, float y, float w)
         {
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
@@ -162,7 +169,7 @@ namespace AdeeboMeter
                 int cols = w > 980 * S ? 3 : w > 600 * S ? 2 : 1; float gap = 16 * S;
                 if (tbFilter != "")
                 {
-                    var found = Matches();
+                    var found = ScopedMatches();
                     g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + (found.Count == 1 ? L.T(" tool matches") : L.T(" tools match")) + "  ·  " + L.T("Enter opens the first"), Draw.fHead, ink, x, y); y += 36 * S;
                     if (found.Count == 0) { string dym = DidYouMean(tbFilter); if (dym != null) { string tx = L.T("Did you mean") + "  " + dym + " ?"; var ts = g.MeasureString(tx, Draw.fBody); g.DrawString(tx, Draw.fBody, lb, x, y); string qq = dym; Act(tbCanvas, new RectangleF(x, y, ts.Width, ts.Height), delegate { tbSearch.Box.Text = qq; tbSearch.Box.SelectionStart = qq.Length; }); y += 30 * S; } }
                     int c2 = Math.Min(cols, 2); float rw = (w - gap * (c2 - 1)) / c2; int i = 0;

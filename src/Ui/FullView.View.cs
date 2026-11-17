@@ -35,13 +35,13 @@ namespace AdeeboMeter
                 Controls.Add(viewSheet);
                 Resize += delegate { if (viewSheet.Visible) viewSheet.Bounds = new Rectangle(0, header.Bottom, ClientSize.Width, Math.Max(Sc(200), ClientSize.Height - header.Bottom)); };
             }
-            switchingTo = null;
+            switchingTo = null; SetTipKey(null);   // Review-2: the View button's tooltip stayed over the Gamer card
             viewSheet.BackColor = Theme.Bg;
             viewSheet.Bounds = new Rectangle(0, header.Bottom, ClientSize.Width, Math.Max(Sc(200), ClientSize.Height - header.Bottom));
             viewSheet.AutoScrollPosition = Point.Empty; viewSheet.Visible = true; viewSheet.BringToFront(); viewSheet.Focus(); viewSheet.Invalidate();
             viewBtn.Selected = true;
         }
-        void HideViewSheet() { if (viewSheet != null) viewSheet.Visible = false; viewBtn.Selected = false; }
+        void HideViewSheet() { if (viewSheet != null) viewSheet.Visible = false; viewBtn.Selected = false; SetTipKey(null); }
 
         void PaintViewSheet(Graphics g)
         {
@@ -57,7 +57,7 @@ namespace AdeeboMeter
                 g.DrawString(cl, Draw.fBodyB, sub, cr.X, cr.Y); Act(viewSheet, cr, HideViewSheet);
                 y += 36 * S;
                 g.DrawString(L.T("One click changes the pages, how hard it watches and what sits in the corner. Each view keeps your own changes. Learn is in every view."), Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += 40 * S;
-                var all = Views.All(); int cols = w > 980 * S ? 3 : w > 640 * S ? 2 : 1; float gap = 14 * S, cw = (w - (cols - 1) * gap) / cols, ch = 172 * S;
+                var all = Views.All(); all = all.Where(v => !Views.IsBuiltIn(v[0])).Concat(all.Where(v => Views.IsBuiltIn(v[0]))).ToList(); int cols = w > 980 * S ? 3 : w > 640 * S ? 2 : 1; float gap = 14 * S, cw = (w - (cols - 1) * gap) / cols, ch = 250 * S;
                 for (int i = 0; i < all.Count; i++)
                 {
                     var v = all[i]; var r = new RectangleF(x + (i % cols) * (cw + gap), y + (i / cols) * (ch + gap), cw, ch);
@@ -109,14 +109,17 @@ namespace AdeeboMeter
             // the points: pages, pace, corner
             var stt = ViewStateOf(id); cy += 66 * S;
             var pts = ViewPoints(stt);
-            using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+            // Review-2: label above value, the value gets two lines before it's cut - no more "Pages: Home, Gam..."
+            float lh = Draw.fSmall.GetHeight(g);
+            using (var nf = new StringFormat { FormatFlags = StringFormatFlags.LineLimit, Trimming = StringTrimming.EllipsisWord })
                 for (int i = 0; i < pts.Length; i++)
                 {
-                    using (var db = new SolidBrush(Kit.Accent(i == 1 ? a2 : a1))) g.FillEllipse(db, cx + 2 * S, cy + 7 * S, 7 * S, 7 * S);
-                    using (var mb = new SolidBrush(Theme.Ink)) g.DrawString(pts[i][0], Draw.fSmall, mb, cx + 16 * S, cy);
-                    float lw = g.MeasureString(pts[i][0], Draw.fSmall).Width;
-                    using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(pts[i][1], Draw.fSmall, sb, new RectangleF(cx + 16 * S + lw, cy, r.Right - cx - 34 * S - lw, 20 * S), nf);
-                    cy += 24 * S;
+                    using (var db = new SolidBrush(Kit.Accent(i == 1 ? a2 : a1))) g.FillEllipse(db, cx + 2 * S, cy + 5 * S, 7 * S, 7 * S);
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(pts[i][0].TrimEnd(' ', ':').ToUpperInvariant(), Draw.fTiny, mb, cx + 16 * S, cy);
+                    cy += Draw.fTiny.GetHeight(g) + 1 * S;
+                    var vr = new RectangleF(cx + 16 * S, cy, r.Right - cx - 34 * S, 2 * lh + 1); float vh = Math.Min(vr.Height, g.MeasureString(pts[i][1], Draw.fSmall, (int)vr.Width).Height);
+                    using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(pts[i][1], Draw.fSmall, sb, vr, nf);
+                    cy += vh + 6 * S;
                 }
         }
         static Views.State ViewStateOf(string id)
@@ -127,12 +130,18 @@ namespace AdeeboMeter
         // "Pages: Home, Gamer Zone, Trading" · "Checks: Gamer pace" · "Corner: ping"
         static string[][] ViewPoints(Views.State s)
         {
-            var pages = new List<string> { L.T("Home") };
-            foreach (var p in new[] { new[] { "gamer", "Gamer Zone" }, new[] { "stream", "Streaming" }, new[] { "trade", "Trading" } }) if (!("," + s.Hidden + ",").Contains("," + p[0] + ",")) pages.Add(L.T(p[1]));
-            pages.Add(s.Mode == "pro" ? L.T("every tool") : L.T("Learn"));
+            // Review-2: the pages in the bar, as the sidebar shows them - not a guess from what's hidden
+            var pages = (s.Nav ?? "").Split(',').Where(p => p != "").Select(p => L.T(NavName(p))).ToList();
+            if (pages.Count == 0)   // a view that leaves the bar as it is: Home, its activity pages, Learn
+            {
+                pages.Add(L.T("Home"));
+                foreach (var p in new[] { new[] { "gamer", "Gamer Zone" }, new[] { "stream", "Streaming" }, new[] { "trade", "Trading" } }) if (!("," + s.Hidden + ",").Contains("," + p[0] + ",")) pages.Add(L.T(p[1]));
+                pages.Add(L.T("Learn"));
+            }
+            if (s.Mode == "pro") pages.Add(L.T("every tool"));
             string pace = s.Preset == "penny" ? L.T("Penny - the lightest touch") : s.Preset == "gamer" ? L.T("Gamer - game servers every ") + s.GameBg + " s" : s.Preset == "custom" ? L.T("your own mix") : L.T("Balanced - trouble seen in seconds");
-            string corner = s.Widget == "gamer" ? L.T("ping to your game") : s.Widget == "engineer" ? L.T("the engineer's card") : s.Widget == "speed" ? L.T("speeds") : s.Widget == "speedstatus" ? L.T("speeds and status") : s.Widget == "speedapps" ? L.T("speeds and busy apps") : s.Widget == "calls" ? L.T("call quality") : s.Widget == "everyday" ? L.T("the everyday card") : L.T("follows what you're doing");
-            return new[] { new[] { L.T("Pages: "), string.Join(", ", pages) }, new[] { L.T("Checks: "), pace + (s.Details ? " · Details on" : "") }, new[] { L.T("Corner: "), corner } };
+            string corner = s.Widget == "gamer" ? L.T("ping to your game") : s.Widget == "engineer" ? L.T("the engineer's card") : s.Widget == "speed" ? L.T("speeds") : s.Widget == "speedstatus" ? L.T("speed + status") : s.Widget == "speedapps" ? L.T("speeds and busy apps") : s.Widget == "calls" ? L.T("call quality") : s.Widget == "everyday" ? L.T("the everyday card") : L.T("game ping while a game you added is open, call quality in a call, else speed + status");
+            return new[] { new[] { L.T("Featured pages: "), string.Join(", ", pages) }, new[] { L.T("Background checks: "), pace + (s.Details ? " · Details on" : "") }, new[] { L.T("Corner widget: "), corner } };
         }
 
         // ---------- the switch: a short "switching" screen with a line from the buddy, then everything in one pass
@@ -140,7 +149,7 @@ namespace AdeeboMeter
         void RunSwitch(string id, bool reset)
         {
             if (switchingTo != null) return;   // one at a time
-            switchingTo = id; switchAt = DateTime.UtcNow;
+            switchingTo = id; switchAt = DateTime.UtcNow; SetTipKey(null);
             string name = Views.NameOf(id);
             try { switchLine = Lines.Steady("view.switch", name) ?? ""; } catch (Exception e) { if (e is OutOfMemoryException) throw; switchLine = ""; }
             viewSheet.AutoScrollPosition = Point.Empty; viewSheet.Invalidate(); viewSheet.Update();   // the "switching" screen shows before the work starts

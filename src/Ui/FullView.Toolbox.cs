@@ -727,7 +727,7 @@ namespace AdeeboMeter
             };
             tbSearch.Box.KeyDown += delegate(object s, KeyEventArgs e)
             {
-                if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; var first = Matches().FirstOrDefault(); if (first != null) { OpenTool(first.Id); if (tab != "toolbox") return; var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); } }
+                if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; var first = ScopedMatches().FirstOrDefault(); if (first != null) { OpenTool(first.Id); if (tab != "toolbox") return; var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); } }
                 else if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; }
                 else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; tbList.Focus(); MoveTool(tbVisible.IndexOf(tbSel) < 0 ? 0 : 1); }
             };
