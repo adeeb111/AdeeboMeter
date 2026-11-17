@@ -17,7 +17,7 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
   was passed on. Now only fixed sentences leave the relay and errors are scrubbed of anything key-like. Key replaced 17 Nov.
 - To do (agreed 17 Nov): stock movers. Even with the new key the shared copy says "daily limit used up" - most likely
   Alpha Vantage also counts by address, and Cloudflare's outgoing addresses are shared with other sites. In order:
-  1. one scheduled fetch a day at a fixed early time, stored once for everyone (KV), the page only reads that copy;
+  1. [built, 029ddd6 - Adeeb deploys] one scheduled fetch after the US close (+1 retry), stored once (KV), the page only reads that copy;
   2. if that still loses to the shared address: a different free source for US movers that doesn't limit by address;
   3. "Add your own free key" stays as the dependable route (the visitor's key is called from their own phone).
 
@@ -38,10 +38,10 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
 - 1.1.5 showed the steps: GitHub builds and attaches files on publish -> Adeeb signs the exe with tools/sign.ps1
   (SimplySign on his PC, phone code) -> win64 zip, SHA256SUMS and notes rebuilt around the signed exe -> files swapped
   on the release by hand (this assistant can't edit releases).
-- Make it one step for him: a `release.ps1 -Sign` (or tools/finish-release.ps1) that downloads the release files, signs,
+- [built, 029ddd6] One step for him: tools/finish-release.ps1 that downloads the release files, signs,
   rebuilds the zip/sums/notes and uploads with gh - so nothing is done by hand in the browser. Needs gh on his PC.
 - The release tag rule ("Protect v* tags") blocks deleting a tag: a broken release means a new version, not a re-tag.
-- SimplySign logs out after a while - sign.ps1 should say "log in to SimplySign again" for error 0x80090020 instead of
+- [built, 029ddd6] SimplySign logs out after a while - sign.ps1 now says "log in to SimplySign again" for error 0x80090020 instead of
   retrying three times.
 
 ## 4. Carried over (ideas waiting for a decision)
