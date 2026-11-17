@@ -15,8 +15,7 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
 
 ## 2. Website refresh (adeebometer.com)
 - New top of the page (mockup shown 17 Nov): navy look matching the phone app, two-colour AdeeboMeter name.
-  - Headline: "Find out why your internet or PC is slow." + "And much more." (gradient). Adeeb to pick this or
-    "And 150+ things more."
+  - Headline (decided 17 Nov): "Find out why your internet or PC is slow." + "And much more." (gradient).
   - Slogan pill above it: "Know what's wrong. Show anyone."
   - Example result with the full path (This PC > Router > DNS > Internet) and Save picture / Send to my ISP.
   - Phone + PC linked (QR and matching words), "Signed: Open Source Developer MdAhasanul Adeeb Khan" badge.
