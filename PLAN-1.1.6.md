@@ -11,6 +11,8 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
 ## 1. Fixes found after 1.1.5
 - [done, 306b9a6] Every tool blinked: the question rail and the tool list each set the page height on every paint, so
   the scrollbar flipped and asked for another repaint. Now one height per paint.
+- [done] Scrolling glides: each wheel notch slides over ~100 ms instead of jumping 60 px (every scrolling page; instant
+  when Windows' "Show animations" is off; stops if the page jumps elsewhere).
 - [done, 03703a5, shipped in 1.1.5] Self-test "no leaks": a one-time handle bump fails only if 30 more opens grow it again.
 
 - [done, b7e03fb, live worker] Live page showed the Alpha Vantage key: the provider's rate-limit reply repeats the key and

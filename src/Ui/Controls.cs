@@ -118,13 +118,32 @@ namespace AdeeboMeter
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
         // wheel: 60 px a notch, in proportion for a touchpad's small steps (Windows' default jumps whole screens on some pages)
+        // It glides (Adeeb, 17 Nov: "it's not smooth"): each notch sets a target and a 15 ms timer moves a third of the
+        // way there per step - about 100 ms a notch, quick notches add up. Instant when Windows' "Show animations" is off.
+        int glideTo = -1, glideAt = -1; System.Windows.Forms.Timer glide;
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             if (!AutoScroll || !VerticalScroll.Visible) { base.OnMouseWheel(e); return; }
-            int y = -AutoScrollPosition.Y - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S);
-            AutoScrollPosition = new Point(-AutoScrollPosition.X, Math.Max(0, y));
             var h = e as HandledMouseEventArgs; if (h != null) h.Handled = true;
+            int max = Math.Max(0, DisplayRectangle.Height - ClientSize.Height);
+            int from = glideTo >= 0 ? glideTo : -AutoScrollPosition.Y;
+            int y = Math.Max(0, Math.Min(max, from - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S)));
+            if (!Typing.On) { glideTo = -1; AutoScrollPosition = new Point(-AutoScrollPosition.X, y); return; }
+            glideTo = y;
+            if (glide == null) { glide = new System.Windows.Forms.Timer { Interval = 15 }; glide.Tick += delegate { GlideStep(); }; }
+            if (!glide.Enabled) { glideAt = -AutoScrollPosition.Y; glide.Start(); GlideStep(); }
         }
+        void GlideStep()
+        {
+            if (IsDisposed || glideTo < 0) { if (glide != null) glide.Stop(); return; }
+            int cur = -AutoScrollPosition.Y, d = glideTo - cur;
+            if (cur != glideAt) { glideTo = -1; glide.Stop(); return; }   // the page jumped elsewhere meanwhile (a click, a new page): stop
+            if (Math.Abs(d) <= 2) { AutoScrollPosition = new Point(-AutoScrollPosition.X, glideTo); glideTo = -1; glideAt = -1; glide.Stop(); return; }
+            int step = (int)Math.Round(d / 3.0); if (step == 0) step = Math.Sign(d);
+            AutoScrollPosition = new Point(-AutoScrollPosition.X, cur + step); glideAt = -AutoScrollPosition.Y;
+            if (glideAt == cur) { glideTo = -1; glide.Stop(); }   // the edge: nowhere further to go
+        }
+        protected override void Dispose(bool disposing) { if (disposing && glide != null) { glide.Stop(); glide.Dispose(); glide = null; } base.Dispose(disposing); }
         public void Announce(string name) { AccessibleName = name; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); AccessibilityNotifyClients(AccessibleEvents.Focus, -1); }
         // a paint slower than 40 ms is written to the log (at most once a minute per panel), so "it feels laggy" has numbers
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
