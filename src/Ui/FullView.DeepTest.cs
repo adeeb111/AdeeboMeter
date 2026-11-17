@@ -20,7 +20,7 @@ namespace AdeeboMeter
         sealed class Probe { public string Status = "OK"; public long Ms; public int Rows; public double MemMb; public int Handles, Gdi, Threads; }
 
         static readonly string[] Hostile = { "", " ", "x;rm -rf /", "$(calc)", "&calc&", "'\"<>|%n%s", new string('a', 5000), "999.999.999.999", "::::::", "-1", "http://", "a\u0000b", "😀.example", "../../windows/win.ini", "127.0.0.1:99999" };
-        // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (docs\LIVE-TESTS.md).
+        // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (LIVE-TESTS.md).
         // dc talks to the company's domain controllers; friend writes an encrypted file to Documents whose code nobody would see
         static readonly HashSet<string> ByHand = new HashSet<string> { "dc", "friend", "ldapcheck", "shares", "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certcmp", "radiuslab", "smtppath", "samplelab" };
 
