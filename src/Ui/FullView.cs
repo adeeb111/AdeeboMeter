@@ -691,6 +691,8 @@ namespace AdeeboMeter
         public void Debug(string page, string tipK, string destIn)
         {
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
+            // --view peek:toolbox writes what screen peek would send for that page to peek-test.jpg beside the exe
+            if (page == "peek" && sub != null) { var jb = PeekPage(sub); if (jb != null) File.WriteAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "peek-test.jpg"), jb); page = sub; }
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);
             // --view phone:qr shows a code; phone:ask shows the Allow question as a phone would raise it (screenshots of the page)

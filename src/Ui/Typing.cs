@@ -16,11 +16,12 @@ namespace AdeeboMeter
         static readonly Dictionary<string, KeyValuePair<string, DateTime>> seen = new Dictionary<string, KeyValuePair<string, DateTime>>(StringComparer.Ordinal);
         static readonly HashSet<Control> wake = new HashSet<Control>();
         static Timer t;
+        public static bool Hold;   // screen peek: draw every line whole, so a still picture never shows half a sentence
         public static bool On { get { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } } }
         // what to draw now for this slot's text (UI thread only)
         public static string Show(string slot, string text, Control c)
         {
-            if (string.IsNullOrEmpty(text) || !On) return text ?? "";
+            if (string.IsNullOrEmpty(text) || !On || Hold) return text ?? "";
             KeyValuePair<string, DateTime> p;
             if (!seen.TryGetValue(slot, out p) || p.Key != text) { p = new KeyValuePair<string, DateTime>(text, DateTime.UtcNow); seen[slot] = p; }
             double dur = Math.Min(MaxMs, text.Length * PerChar), el = (DateTime.UtcNow - p.Value).TotalMilliseconds;

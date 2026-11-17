@@ -76,6 +76,8 @@ namespace AdeeboMeter
             return r;
         }
         public Func<string, bool> AskRemember;
+        public Func<string, byte[]> Peek;   // screen peek: page -> JPEG (AppCtx draws it off-screen)
+        public static readonly HashSet<string> PeekPages = new HashSet<string> { "overview", "link", "procs", "health", "changes", "travel", "toolbox", "guide", "gamer", "stream", "trade", "dest", "security", "replay" };
         public static Remote Start(Monitor m)
         {
             var old = Now; if (old != null) old.End("a new session started");
@@ -148,6 +150,26 @@ namespace AdeeboMeter
                         var run = new Toolkit.Run { Deadline = DateTime.UtcNow.AddMinutes(6) }; op = run; opRid = rid;
                         if (RunTool != null) RunTool(id, a, run, (title, rows, hops) => { if (op == run) { op = null; opRid = ""; } SendResult(id, rid, title, rows, hops); });
                         else op = null;
+                        return;
+                    }
+                // screen peek (Adeeb, 16 Nov): one of AdeeboMeter's own pages, drawn off-screen on the PC, sent as a JPEG in pieces.
+                // Only AdeeboMeter's pages - never the desktop or other apps.
+                case "peek":
+                    {
+                        string rid = Clip(c.S("rid") ?? "", 16).Replace("\"", "").Replace("\\", ""), page = Clip(c.S("page") ?? "", 16);
+                        if (Peek == null || !PeekPages.Contains(page)) { Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"err\":\"That page can't be shown.\"}"); return; }
+                        Task.Factory.StartNew(() =>
+                        {
+                            byte[] jpg = null; try { jpg = Peek(page); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("peek: " + e.Message); }
+                            if (jpg == null || jpg.Length == 0) { Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"err\":\"The PC couldn't draw that page.\"}"); return; }
+                            const int P = 24000; int of = (jpg.Length + P - 1) / P;
+                            for (int n = 0; n < of && St == State.Paired; n++)
+                            {
+                                int len = Math.Min(P, jpg.Length - n * P);
+                                Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"n\":" + n.ToString(CultureInfo.InvariantCulture) + ",\"of\":" + of.ToString(CultureInfo.InvariantCulture) + ",\"d\":\"" + Convert.ToBase64String(jpg, n * P, len) + "\"}");
+                                Thread.Sleep(60);
+                            }
+                        });
                         return;
                     }
                 case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }

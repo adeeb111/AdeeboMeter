@@ -238,6 +238,11 @@ textarea.in{resize:vertical;min-height:120px}
 .voices button,.mini button{border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mini button{border-radius:10px;padding:9px 0}
 @media (min-width:768px){.sheet{left:auto;right:24px;bottom:24px;width:420px;border-radius:22px}}
+/* screen peek */
+.peekbox{overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#0A1324;cursor:zoom-in}
+.peekbox img{display:block;width:100%;height:auto}
+.peekbox.big{overflow:auto;max-height:70vh;cursor:zoom-out;-webkit-overflow-scrolling:touch}
+.peekbox.big img{width:auto;max-width:none}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
@@ -401,7 +406,33 @@ textarea.in{resize:vertical;min-height:120px}
     else if (c.t === "forgot") forgot(c);
     else if (c.t === "rememberno") toast("Your PC said no - not remembered");
     else if (/^(fput|fok|fno|fack|fdat|fend|fdone|fcancel|text)$/.test(c.t)) xfer(c);
+    else if (c.t === "peek") peekGot(c);
     else if (c.t === "bye") ws.close();
+  }
+  // ---- screen peek: a still picture of one AdeeboMeter page on the PC, drawn off-screen there (your PC's window never
+  // changes). It arrives in sealed pieces, is put together here and kept only in this page's memory - never saved.
+  var PEEKS = [["overview", "Overview"], ["link", "Link"], ["procs", "Apps"], ["health", "Health"], ["changes", "Changes"], ["travel", "Travel"], ["toolbox", "Toolbox"], ["guide", "Guide"], ["gamer", "Gamer"], ["stream", "Stream"], ["trade", "Trading"], ["security", "Security"]];
+  var peek = { pg: "overview", rid: "", parts: [], img: "", err: "", at: 0, big: false };
+  function peekAsk(pg) { if (phase !== "live") return; peek.pg = pg; peek.rid = rid(); peek.parts = []; peek.err = ""; send({ t: "peek", rid: peek.rid, page: pg }); draw(); }
+  function peekGot(c) {
+    if (!c.rid || c.rid !== peek.rid) return;
+    if (c.err) { peek.err = String(c.err); peek.rid = ""; draw(); return; }
+    var n = +c.n, of = +c.of; if (!(of > 0 && of <= 400 && n >= 0 && n < of) || typeof c.d !== "string") return;
+    peek.parts[n] = c.d; var have = 0; for (var i = 0; i < of; i++) if (peek.parts[i]) have++;
+    if (have < of) { if (n % 6 === 0) draw(); return; }
+    peek.img = "data:image/jpeg;base64," + peek.parts.join(""); peek.parts = []; peek.rid = ""; peek.at = Date.now(); peek.shown = peek.pg; draw();
+  }
+  function peekHtml() {
+    if (phase !== "live") return needPc("Screen peek shows your PC's AdeeboMeter pages while you're connected.");
+    var got = 0; peek.parts.forEach(function (x) { if (x) got++; });
+    var a = '<div class="card"><h2>See a page on your PC</h2><div class="mini" style="grid-template-columns:repeat(3,1fr)">' + PEEKS.map(function (p) { return '<button class="' + (peek.pg === p[0] ? 'on' : '') + '" data-peek="' + p[0] + '"' + (peek.rid ? ' disabled' : '') + '>' + p[1] + '</button>'; }).join("") + '</div>' +
+      '<p style="color:var(--sub);font-size:13px;margin:10px 2px 0">A still picture, drawn out of sight on your PC - the window there doesn\'t move. Only AdeeboMeter, never the rest of your screen.</p></div>';
+    if (peek.rid) a += '<div class="card" style="display:flex;gap:10px;align-items:center"><span class="led warn"></span><div style="flex:1;font-weight:600">Drawing ' + esc((PEEKS.filter(function (p) { return p[0] === peek.pg; })[0] || [0, peek.pg])[1]) + ' on your PC' + (got ? ' · ' + got + ' pieces' : '...') + '</div></div>';
+    if (peek.err) a += '<div class="card"><b>Couldn\'t show that page</b><p style="margin:6px 0 0;color:var(--sub)">' + esc(peek.err) + '</p></div>';
+    if (peek.img) a += '<div class="card" style="padding:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px"><b>' + esc((PEEKS.filter(function (p) { return p[0] === peek.shown; })[0] || [0, ""])[1]) + '</b><span style="color:var(--sub);font-size:13px">' + new Date(peek.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + '</span></div>' +
+      '<div class="peekbox' + (peek.big ? ' big' : '') + '" data-act="peekzoom"><img src="' + peek.img + '" alt="Your PC\'s AdeeboMeter ' + esc(peek.shown || "") + ' page"></div>' +
+      '<div class="btns" style="margin-top:10px"><button class="btn" data-peek="' + esc(peek.shown || peek.pg) + '"' + (peek.rid ? ' disabled' : '') + '>Refresh</button><button class="btn ghost" data-act="peekzoom">' + (peek.big ? 'Fit' : 'Zoom') + '</button></div></div>';
+    return a;
   }
   var sq = Promise.resolve();
   function send(o) { var p = sq.then(function () { return send1(o); }); sq = p.catch(function () {}); return p; }   // in order: each sealed message carries the next counter
@@ -975,7 +1006,7 @@ textarea.in{resize:vertical;min-height:120px}
     a += '<div class="acts"><button class="act main" data-act="checkup"' + (phase !== "live" || busy ? " disabled" : "") + '><i>' + ic("play", 24) + '</i>' + (busy ? "Running" : "Checkup") + '</button><button class="act" data-act="stop"' + (busy ? "" : " disabled") + '><i>' + ic("stop", 20) + '</i>Stop</button><button class="act" data-act="report"><i>' + ic("report", 22) + '</i>Report</button></div>';
     if (phase === "live") a += '<button class="btn ghost" data-act="bye" style="margin:0 0 14px">' + ic("stop", 18) + ' End session</button>';
     if (busy) a += '<div class="card" style="display:flex;gap:10px;align-items:center"><span class="led warn"></span><div style="flex:1;font-weight:600">' + esc(V("busy", busy) || "Running " + busy + " on your PC...") + '</div></div>';
-    a += '<div class="seg">' + [["overview", "Overview"], ["checks", "Checks"], ["results", "Results" + (results.length ? " · " + results.length : "")], ["files", "Files"]].map(function (k) { return '<button data-pct="' + k[0] + '" class="' + (t === k[0] ? 'on' : '') + '">' + k[1] + '</button>'; }).join("") + '</div>';
+    a += '<div class="seg">' + [["overview", "Overview"], ["checks", "Checks"], ["results", "Results" + (results.length ? " · " + results.length : "")], ["files", "Files"], ["peek", "Screen"]].map(function (k) { return '<button data-pct="' + k[0] + '" class="' + (t === k[0] ? 'on' : '') + '">' + k[1] + '</button>'; }).join("") + '</div>';
     if (t === "overview") {
       a += (wide() ? '<div class="two"><div>' : '') + '<div class="card"><h2 style="margin-bottom:12px"><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)">' + ic("pc", 20) + ' PC status</span><span class="badge' + (on ? '' : ' warn') + '">' + (on ? 'Online' : ago(age()) + ' ago') + '</span></h2>' +
         (L.head ? '<p style="margin:-4px 2px 12px;font-weight:600">' + esc(L.head) + '</p>' : '') +
@@ -988,6 +1019,7 @@ textarea.in{resize:vertical;min-height:120px}
       a += (wide() ? '</div><div>' : '') + '<div class="card list">' + rowBtn('data-pct="checks"', "search", "c-blue bg-blue", "Run a check on your PC", "Ping, trace, ports, DNS, devices…") + rowBtn('data-pct="results"', "list", "c-blue bg-blue", "Results", results.length ? results.length + " this session, problems first" : "Your checks will show here") + rowBtn('data-pct="files"', "send", "c-blue bg-blue", "Files, text and clipboard", "Phone ⇄ PC, encrypted") + rowBtn('data-act="widget"', "chart", "c-blue bg-blue", "Widget mode", "Stand the phone by your screen") + '</div>' + (L.trade ? '<div class="card"><h2 style="margin:0 0 6px">' + ic("chart", 18) + ' ' + esc(L.trade.venue) + ' · ' + (L.trade.open === "1" ? "open" : "closed") + '</h2><div style="color:var(--sub)">' + esc(L.trade.head || "") + '</div></div>' : '') + (wide() ? '</div></div>' : '');
     } else if (t === "checks") a += checksHtml();
     else if (t === "results") a += results.length ? results.map(resultCard).join("") : '<div class="card empty">' + ic("list", 44) + '<b>No results yet</b><p>Run a check and its answer shows here, problems first.</p><button class="btn" data-pct="checks">Run a check</button></div>';
+    else if (t === "peek") a += peekHtml();
     else a += filesHtml();
     return a;
   };
@@ -2136,7 +2168,7 @@ textarea.in{resize:vertical;min-height:120px}
 
   document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt]");
+    var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt],[data-peek]");
     if (!b || b.disabled) return;
     var A = function (k) { return b.getAttribute(k); };
     if (A("data-alsopc")) { alsoRun(A("data-alsopc")); return; }
@@ -2168,6 +2200,8 @@ textarea.in{resize:vertical;min-height:120px}
     if (A("data-web")) { openWeb(A("data-web"), A("data-title") || ""); return; }
     if (A("data-go") != null && A("data-go") !== "") { var pt = A("data-pctab"); go(A("data-go")); if (pt) { S.pcTab = pt; draw(); } return; }
     if (A("data-dev") != null) { S.dev = +A("data-dev"); S.devKey = devs && devs[S.dev] ? devs[S.dev].key : ""; if (S.tab !== "devices") S.tab = "devices"; draw(); if (!wide()) window.scrollTo(0, 0); return; }
+    if (A("data-peek")) { peekAsk(A("data-peek")); return; }
+    if (A("data-act") === "peekzoom") { peek.big = !peek.big; draw(); return; }
     if (A("data-pct")) { S.pcTab = A("data-pct"); if (S.tab !== "pc") S.tab = "pc"; draw(); return; }
     if (A("data-dv")) { S.devView = A("data-dv"); draw(); return; }
     if (A("data-mode")) { S.mode = A("data-mode"); wr("am-mode", S.mode === "everyday" ? "" : S.mode); draw(); return; }

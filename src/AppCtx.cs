@@ -308,6 +308,7 @@ namespace AdeeboMeter
                 r.SendState = msg => { PhoneHub.Xfer = msg ?? ""; PhoneHub.Fire(); };
                 // checks run in a view that's never shown, so a game in front isn't interrupted; it also decides what's allowed
                 Func<FullView> runner = () => { if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; } return remoteRunner; };
+                r.Peek = page => { byte[] b = null; try { marshal.Invoke((Action)delegate { b = runner().PeekPage(page); }); } catch (InvalidOperationException) { } return b; };
                 r.CanRun = id => { bool ok = false; try { marshal.Invoke((Action)delegate { ok = runner().RemoteAllowed(id); }); } catch (InvalidOperationException) { } return ok; };
                 r.Catalog = () => { List<string> c = null; try { marshal.Invoke((Action)delegate { c = runner().RemoteCatalog(); }); } catch (InvalidOperationException) { } return c; };
                 r.RunTool = (id, a, run, done) =>

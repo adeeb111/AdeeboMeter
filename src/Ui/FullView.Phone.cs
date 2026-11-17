@@ -24,6 +24,69 @@ namespace AdeeboMeter
         Bitmap phoneQr; string phoneQrFor = "";
         DateTime phoneCopied = DateTime.MinValue;
 
+        // ---- screen peek: draw one of AdeeboMeter's pages off-screen (this is the hidden copy of the window the phone uses, so the
+        // window you may be looking at never changes) and hand it over as a JPEG, at most 1200 px wide
+        internal byte[] PeekPage(string page)
+        {
+            if (!Remote.PeekPages.Contains(page)) return null;
+            if (WindowState != FormWindowState.Normal) WindowState = FormWindowState.Normal;
+            var want = new Size(Sc(1280), Sc(860)); if (Size != want) Size = want;
+            tab = page; ShowTab(); if (page == "toolbox") EnsureToolbox();
+            Typing.Hold = true;
+            try { return PeekShot(); } finally { Typing.Hold = false; }
+        }
+        byte[] PeekShot()
+        {
+            PerformLayout(); foreach (Control c in Descendants(this)) c.Invalidate();
+            using (var bmp = new Bitmap(Math.Max(200, ClientSize.Width), Math.Max(200, ClientSize.Height)))
+            {
+                using (var g = Graphics.FromImage(bmp)) { g.Clear(BackColor); PeekDraw(this, g, Point.Empty, new Rectangle(Point.Empty, bmp.Size)); }
+                Bitmap outB = bmp; Bitmap scaled = null;
+                if (bmp.Width > 1200) { scaled = new Bitmap(1200, bmp.Height * 1200 / bmp.Width); using (var g = Graphics.FromImage(scaled)) { g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; g.DrawImage(bmp, 0, 0, scaled.Width, scaled.Height); } outB = scaled; }
+                try
+                {
+                    var enc = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders().FirstOrDefault(e => e.MimeType == "image/jpeg");
+                    using (var ms = new MemoryStream())
+                    {
+                        if (enc != null) using (var ps = new System.Drawing.Imaging.EncoderParameters(1)) { ps.Param[0] = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 72L); outB.Save(ms, enc, ps); }
+                        else outB.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+                        return ms.ToArray();
+                    }
+                }
+                finally { if (scaled != null) scaled.Dispose(); }
+            }
+        }
+        // Our pages are painted by their own OnPaint, so peek paints each visible control into the picture itself (back to
+        // front, each clipped to its parent) - DrawToBitmap leaves them blank on some systems. Native boxes (text, lists)
+        // that draw nothing in OnPaint fall back to DrawToBitmap for just themselves.
+        void PeekDraw(Control c, Graphics g, Point at, Rectangle clip)
+        {
+            var r = new Rectangle(at, c.ClientSize); clip = Rectangle.Intersect(clip, r); if (clip.Width <= 0 || clip.Height <= 0) return;
+            var st = g.Save();
+            try
+            {
+                g.SetClip(clip); g.TranslateTransform(at.X, at.Y);
+                bool native = c is TextBoxBase || c is ListBox || c is ComboBox || c is WebBrowser || c is DataGridView || c is ListView || c is TreeView;
+                if (native)
+                {
+                    try { using (var b = new Bitmap(Math.Max(1, c.Width), Math.Max(1, c.Height))) { c.DrawToBitmap(b, new Rectangle(0, 0, b.Width, b.Height)); g.DrawImageUnscaled(b, 0, 0); } }
+                    catch (Exception e) { if (e is OutOfMemoryException) throw; }
+                }
+                else
+                {
+                    var lc = new Rectangle(clip.X - at.X, clip.Y - at.Y, clip.Width, clip.Height);
+                    using (var pe = new PaintEventArgs(g, lc)) { try { InvokePaintBackground(c, pe); InvokePaint(c, pe); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }
+                }
+            }
+            finally { g.Restore(st); }
+            if (c is TextBoxBase || c is ListBox || c is ComboBox || c is WebBrowser) return;
+            for (int i = c.Controls.Count - 1; i >= 0; i--)
+            {
+                var k = c.Controls[i]; if (!k.Visible || k.Width <= 0 || k.Height <= 0) continue;
+                var o = k.Location;
+                PeekDraw(k, g, new Point(at.X + o.X, at.Y + o.Y), clip);
+            }
+        }
         Panel BuildPhonePage()
         {
             phonePage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
