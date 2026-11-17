@@ -370,15 +370,59 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 .v3for{padding:30px 0}.v3for p{text-align:center;font-size:17px;margin:0 0 24px}
 @media (max-width:900px){.v3grid,.v3two{grid-template-columns:1fr;gap:26px}.v3hero{padding:34px 0 36px}.v3 h1{font-size:38px}.v3lead{font-size:18px}.v3ctas .v3btn{width:100%}
  .v3four{grid-template-columns:1fr 1fr}.v3three{grid-template-columns:1fr}.v3 h2{font-size:27px}.v3{padding:36px 0}.v3tile{padding:16px}.v3tile b{font-size:17px}.v3tile .d{font-size:13px}.v3eg h3{font-size:18px}.v3path .n i{width:44px;height:44px}.v3path:before,.v3path:after{top:21px}}
+/* v4 hero (1.1.6): the navy look of the phone app, the motto, the full path and "show anyone" */
+.v4hero{position:relative;overflow:hidden;background:var(--page)}
+.v4hero svg.i{stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.v4hero svg.i use[href="#v3-win"]{fill:currentColor;stroke:none}
+.v4hero:before{content:"";position:absolute;inset:-40% -10% auto;height:130%;pointer-events:none;background:radial-gradient(620px 400px at 74% 32%,color-mix(in srgb,var(--blue) 30%,transparent),transparent 70%),radial-gradient(520px 320px at 12% 8%,color-mix(in srgb,var(--green) 12%,transparent),transparent 70%)}
+.v4grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:64px 0 76px}
+.v4grid>div{min-width:0}
+.v4pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:99px;padding:6px 14px 6px 8px;font-size:14px;color:var(--sub);font-weight:600}
+.v4pill i{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:99px;background:var(--green-s);color:var(--green);font-style:normal;font-size:12px}
+.v4hero h1{font-size:clamp(40px,5.2vw,62px);line-height:1.04;letter-spacing:-.035em;margin:22px 0 18px;font-weight:850;color:var(--ink)}
+.v4hero h1 span{display:block;background:linear-gradient(90deg,var(--blue-d),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+.v4lead{font-size:19px;line-height:1.55;color:var(--sub);max-width:540px;margin:0 0 30px}
+.v4ctas{display:flex;gap:12px;flex-wrap:wrap}
+.v4btn{display:inline-flex;align-items:center;gap:10px;height:50px;padding:0 22px;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;background:var(--blue);color:#fff;border:1px solid transparent;box-shadow:0 12px 30px -12px color-mix(in srgb,var(--blue) 90%,transparent);transition:transform .15s ease,background .2s ease}
+.v4btn:hover{background:var(--blue-d);transform:translateY(-1px)}.v4btn .i{width:18px;height:18px}
+.v4btn.line{background:transparent;color:var(--ink);border-color:var(--line);box-shadow:none}.v4btn.line:hover{background:var(--soft)}
+.v4btn.sm{height:36px;padding:0 14px;border-radius:10px;font-size:13.5px;box-shadow:none}
+.v4trust{display:flex;gap:8px 18px;flex-wrap:wrap;list-style:none;padding:0;margin:26px 0 0;font-size:14px;color:var(--sub)}
+.v4trust li:before{content:"";display:inline-block;width:6px;height:6px;border-radius:99px;background:var(--green);margin-right:8px;vertical-align:2px}
+.v4stage{position:relative;height:520px}
+.v4card{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 80px -34px rgba(0,0,0,.55)}
+.v4res{left:0;top:10px;width:min(480px,100%);padding:24px;z-index:2}
+.v4tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--amber);background:var(--amber-s);border-radius:8px;padding:4px 9px}
+.v4res h3{margin:12px 0 4px;font-size:23px;letter-spacing:-.02em;color:var(--ink)}.v4res p{margin:0;color:var(--sub);font-size:14.5px}
+.v4path{display:flex;align-items:flex-start;margin:22px 0 18px}
+.v4path .n{display:grid;justify-items:center;gap:5px;width:78px;flex:none;font-size:13px;color:var(--ink)}
+.v4path i{width:44px;height:44px;border-radius:99px;display:grid;place-items:center;border:2px solid var(--green);background:var(--green-s);color:var(--green)}
+.v4path i .i{width:20px;height:20px}
+.v4path i.w{border-color:var(--amber);background:var(--amber-s);color:var(--amber);box-shadow:0 0 0 6px color-mix(in srgb,var(--amber) 14%,transparent)}
+.v4path i.o{border-color:var(--line);background:transparent;color:var(--muted)}
+.v4path small{font-size:11.5px;font-weight:700;color:var(--muted)}.v4path small.ok{color:var(--green)}.v4path small.wa{color:var(--amber)}
+.v4path .ln{flex:1;height:3px;margin-top:21px;background:var(--green);border-radius:9px}.v4path .ln.d{background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 11px)}
+.v4share{display:flex;gap:8px;border-top:1px solid var(--line);padding-top:16px;align-items:center}.v4share small{flex:1;color:var(--sub);font-size:13px}
+.v4phone{right:0;top:330px;width:200px;padding:16px 16px 18px;border-radius:32px;display:grid;justify-items:center;gap:6px;text-align:center;z-index:1}
+.v4phone .nt{width:74px;height:18px;border-radius:99px;background:var(--page);margin-bottom:2px}
+.v4phone b{font-size:14px;color:var(--ink)}.v4phone small{font-size:12px;color:var(--sub);line-height:1.4}
+.v4phone .qr{width:92px;height:92px;margin:8px 0;border-radius:12px;border:8px solid #fff;background:repeating-conic-gradient(#0A1428 0 25%,#fff 0 50%) 0 0/18px 18px}
+.v4phone em{font-style:normal;font-weight:800;font-size:12.5px;color:var(--ink)}
+.v4sig{left:28px;top:440px;display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:16px;z-index:3;font-size:13px}
+.v4sig .i{width:22px;height:22px;color:var(--green);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.v4sig b{display:block;font-size:13.5px;color:var(--ink)}.v4sig small{color:var(--sub)}
+.brand b{color:var(--blue-d)}
+@media (max-width:900px){.v4grid{grid-template-columns:1fr;gap:28px;padding:36px 0 44px}.v4stage{height:auto}.v4card{position:relative;left:auto;top:auto;width:auto}.v4phone{display:none}.v4sig{margin-top:12px;left:auto;top:auto}.v4ctas .v4btn{flex:1 1 220px;justify-content:center}.v4lead{font-size:17px}.v4path .n{width:62px}}
+@media (prefers-reduced-motion:reduce){.v4btn{transition:none}}
 </style>
-<script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>try{var t=localStorage.getItem('am-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}</script>
 <!-- Turnstile loads only when someone starts the feedback form (see below) - never on the page with the donation buttons until then -->
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body>
 
 <header class="top"><div class="wrap">
-  <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>AdeeboMeter</a>
+  <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg><span>Adeebo<b>Meter</b></span></a>
   <nav class="links">
     <a href="#how">How it works</a><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a><a href="files.html">Files</a><a href="/app.html">Open phone app ↗</a>
     <a class="donate-top" href="#donate" aria-label="Donate">&#9829;<span class="t"> Donate</span></a>
@@ -407,21 +451,34 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 <symbol id="v3-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
 <symbol id="v3-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
 </defs></svg>
-<section class="v3 v3hero"><div class="wrap">
+<section class="v4hero"><div class="wrap">
   <p id="update" class="upd" hidden></p>
-  <div class="v3grid">
-  <div>
-   <h1>Find out why your internet is slow.</h1>
-   <p class="v3lead">Check your connection step by step, see what changed, and know what to try next.</p>
-   <div class="v3ctas"><a class="v3btn" href="#install"><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg>Find the Windows app ↗</a><a class="v3btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg>Try the phone app ↗</a></div>
-   <p class="v3note">Troubleshoot from your Windows PC or phone.</p>
+  <div class="v4grid">
+  <div class="v4l">
+   <span class="v4pill"><i aria-hidden="true">✓</i>Know what's wrong. Show anyone.</span>
+   <h1>Find out why your internet or PC is slow. <span>And much more.</span></h1>
+   <p class="v4lead">Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 158 tools, free, and a picture you can send to anyone.</p>
+   <div class="v4ctas"><a class="v4btn" href="#install"><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg>Download for Windows</a><a class="v4btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg>Open the phone app ↗</a></div>
+   <ul class="v4trust"><li>Free</li><li>No admin rights</li><li>No cloud, no telemetry</li><li>Never listens</li><li>Signed by its author</li></ul>
   </div>
-  <div class="v3card v3eg" role="img" aria-label="Example result: DNS didn't respond. Gateway passed in 2 ms, DNS timed out, internet not checked. Next step: try the lookup again."><div class="lab">EXAMPLE RESULT</div><div class="in" aria-hidden="true">
-   <span class="v3tag warn">DNS issue</span>
-   <h3><svg class="i" viewBox="0 0 24 24"><use href="#v3-wifi"/></svg>DNS didn't respond</h3><p class="v3p">The gateway answered. The DNS request timed out.</p>
-   <div class="v3path"><div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-router"/></svg></i><b>Gateway</b><span class="v3tag ok">✓ Passed</span><small>2 ms</small></div><div class="n"><i class="w"><svg class="i" viewBox="0 0 24 24"><use href="#v3-dns"/></svg></i><b>DNS</b><span class="v3tag warn">! Timed out</span></div><div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-globe"/></svg></i><b>Internet</b><span class="v3tag off">— Not checked</span></div></div>
-   <div class="v3next"><div><small>Next step</small><b>Try the lookup again</b><small>If it keeps timing out, check which DNS server your device is using.</small></div><span class="v3btn sm">Check again</span></div>
-  </div></div>
+  <div class="v4stage">
+   <div class="v4card v4res" role="img" aria-label="Example result: your PC is fine, names aren't answering. This PC fine, router 2 ms, DNS timed out, internet not checked. Next: try the lookup again; Save picture or Send to my ISP.">
+    <div aria-hidden="true">
+    <span class="v4tag">DNS ISSUE</span>
+    <h3>Your PC is fine. Names aren't answering.</h3>
+    <p>The router answered in 2 ms. The DNS request timed out.</p>
+    <div class="v4path">
+     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg></i><b>This PC</b><small class="ok">✓ fine</small></div><span class="ln"></span>
+     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-router"/></svg></i><b>Router</b><small class="ok">✓ 2 ms</small></div><span class="ln"></span>
+     <div class="n"><i class="w"><svg class="i" viewBox="0 0 24 24"><use href="#v3-dns"/></svg></i><b>DNS</b><small class="wa">! timed out</small></div><span class="ln d"></span>
+     <div class="n"><i class="o"><svg class="i" viewBox="0 0 24 24"><use href="#v3-globe"/></svg></i><b>Internet</b><small>not checked</small></div>
+    </div>
+    <div class="v4share"><small>Next: try the lookup again</small><span class="v4btn sm line">Save picture</span><span class="v4btn sm">Send to my ISP</span></div>
+    </div>
+   </div>
+   <div class="v4card v4phone" aria-hidden="true"><span class="nt"></span><span class="qr"></span><em>river · tiger · lamp · orbit</em><small>Same words on both = your phone</small></div>
+   <div class="v4card v4sig"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b>Signed: Open Source Developer</b><small>MdAhasanul Adeeb Khan · Certum</small></div></div>
+  </div>
   </div>
 </div></section>
 
