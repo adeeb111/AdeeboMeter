@@ -74,7 +74,8 @@ namespace AdeeboMeter
                 var pg = playing == null ? null : games.FirstOrDefault(z => z.Id == playing);
                 string head = pg != null ? "Playing " + pg.Name + (Cfg.GameFast ? " · up to " + GamePing.MaxServers + " servers checked once a second" : " · checked every " + Math.Max(1, Cfg.GameBgSec) + " s (once a second is off in Settings)") : mon.Count == 0 ? "Your games" : "Your games · watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
                 g.DrawString(head, Draw.fTitle, ink, x, y); y += 32 * S;
-                string lead = mon.Count == 0 ? "Games on this PC are already here. Click one to start monitoring it - nothing is sent to a game company's servers until you do." : "Click another game to add it. Monitoring starts by itself whenever a game you added opens" + (Cfg.GameAuto ? "." : " (that's off in Settings).");
+                // Review-2: say what was found - "already here" read as detected when none were
+                string lead = mon.Count == 0 ? (inst.Count > 0 ? inst.Count + (inst.Count == 1 ? " game was" : " games were") + " found on this PC (marked \"Detected on this PC\"). Click one to start monitoring it - nothing is sent to a game company's servers until you do." : "No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.") : "Click another game to add it. Monitoring starts by itself whenever a game you added opens" + (Cfg.GameAuto ? "." : " (that's off in Settings).");
                 var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 10 * S;
                 if (gamerNote != "") { var nh = Draw.Measure(gamerNote, Draw.fSmall, (int)w).Height; g.DrawString(gamerNote, Draw.fSmall, blue, new RectangleF(x, y, w, nh + 4)); y += nh + 10 * S; }
 
@@ -107,7 +108,7 @@ namespace AdeeboMeter
                         if (best != null) now = GameStat.Avg(GamePing.Me.Stat(gm.Id, best).Recent(10));
                         state = (gm.Id == playing ? "Playing · " : "Monitoring · ") + (best != null && !double.IsNaN(now) ? Ms(now) + " ms " + best.Name : "starting...");
                     }
-                    else state = here ? "On this PC · click to monitor" : "Click to add";
+                    else state = here ? "Detected on this PC · click to monitor" : "Supported · click to add";
                     using (var sb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Muted)) g.DrawString(state, Draw.fSmall, sb, new RectangleF(r.X + 48 * S, r.Y + 34 * S, r.Width - 56 * S, 18 * S), nowrap);
                     var gm2 = gm; if (!gm.Soon) Act(gamerCanvas, r, delegate { ClickGame(gm2); });
                 }
