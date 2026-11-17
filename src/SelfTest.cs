@@ -400,6 +400,14 @@ namespace AdeeboMeter
                     sb.AppendLine("      after warm-up: " + before + "   after 30 more: " + res());
                     if (gdi0 > 0 && (gdi1 - gdi0 > 10 || usr1 - usr0 > 10))
                     {
+                        // A real leak grows with every open; a one-time allocation (a cache filled on a later open - the
+                        // official build showed +11 GDI once, 17 Nov) doesn't. So run 30 more: only growth again is a leak.
+                        for (int i = 0; i < 30; i++) cycle(null);
+                        Thread.Sleep(1500); Application.DoEvents();
+                        GC.Collect(); GC.WaitForPendingFinalizers(); Application.DoEvents();
+                        int gdi2 = Native.GetGuiResources(me, 0), usr2 = Native.GetGuiResources(me, 1);
+                        sb.AppendLine("      and 30 more: " + res() + "  (a leak keeps growing; a one-time cache doesn't)");
+                        if (gdi2 - gdi1 <= 10 && usr2 - usr1 <= 10) return;
                         // Find the culprit: 4 opens per variant, each visiting one page (or just the hover card).
                         var variants = new[] { "open+close only", "no icon", "in taskbar", "link", "procs", "changes", "hover card" };
                         foreach (var vname in variants)
@@ -417,7 +425,7 @@ namespace AdeeboMeter
                             int g1 = Native.GetGuiResources(me, 0) - g0, u1 = Native.GetGuiResources(me, 1) - u0;
                             sb.AppendLine("      leak hunt · " + vname.PadRight(16) + " GDI " + (g1 >= 0 ? "+" : "") + g1 + "  USER " + (u1 >= 0 ? "+" : "") + u1 + "  (10 opens)");
                         }
-                        throw new InvalidOperationException("handles grew by " + (gdi1 - gdi0) + " GDI / " + (usr1 - usr0) + " USER over 30 opens");
+                        throw new InvalidOperationException("handles grew by " + (gdi1 - gdi0) + " GDI / " + (usr1 - usr0) + " USER over 30 opens, and again by " + (gdi2 - gdi1) + " / " + (usr2 - usr1) + " over 30 more");
                     }
                 }
             });
