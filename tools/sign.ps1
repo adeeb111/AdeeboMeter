@@ -31,8 +31,10 @@ foreach ($f in $Files) {
     Write-Host "Signing $p ..."
     $ok = $false
     for ($try = 1; $try -le 3 -and -not $ok; $try++) {   # the time server is sometimes slow - try it up to 3 times
-        & $st.FullName sign /sha1 $Thumb /fd sha256 /tr $Tsa /td sha256 /d "AdeeboMeter" /du "https://adeebometer.com" $p
-        $ok = $LASTEXITCODE -eq 0
+        $o = & $st.FullName sign /sha1 $Thumb /fd sha256 /tr $Tsa /td sha256 /d "AdeeboMeter" /du "https://adeebometer.com" $p 2>&1
+        $ok = $LASTEXITCODE -eq 0; $o | ForEach-Object { Write-Host "  $_" }
+        # 0x80090020: the key in Certum's cloud can't be reached - SimplySign's session ended (it logs out after a while)
+        if (-not $ok -and ($o -join " ") -match "0x80090020") { Write-Host ""; Write-Host "SimplySign isn't connected any more. Right-click its icon by the clock > Disconnect > Connect, enter a fresh code from the phone app, then run this again."; exit 3 }
         if (-not $ok -and $try -lt 3) { Write-Host "  didn't work (try $try of 3) - trying again in 5 seconds"; Start-Sleep 5 }
     }
     if (-not $ok) { Write-Host "  NOT signed: $p"; $bad++; continue }

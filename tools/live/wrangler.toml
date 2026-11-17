@@ -3,4 +3,16 @@ main = "worker.js"
 compatibility_date = "2025-06-01"
 workers_dev = true
 preview_urls = false
-# no storage, no bindings: every answer is fetched from the public source and held in memory / Cloudflare's cache for a few minutes
+# Every answer is fetched from the public source and held in memory / Cloudflare's cache for a few minutes - except the
+# stock movers: fetched on the schedule below and stored once (KV) so visitors never use up the free daily limit.
+
+# 21:30 UTC on weekdays (after the US close) and a retry at 23:30 if that one failed
+[triggers]
+crons = ["30 21 * * 1-5", "30 23 * * 1-5"]
+
+# one small store with one entry ("movers"). Create it once with:  npx wrangler kv namespace create MOVERS
+# then put the id it prints below (the id isn't a secret).
+[[kv_namespaces]]
+binding = "MOVERS"
+id = "PUT-THE-ID-HERE"
+
