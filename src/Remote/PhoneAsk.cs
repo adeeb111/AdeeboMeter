@@ -20,14 +20,15 @@ namespace AdeeboMeter
         public sealed class Answer { public bool NoPhone, NoAnswer, Stopped; public string Head = ""; public List<string[]> Rows = new List<string[]>(); }
 
         // one question to the phone; waits up to 45 s (the phone may be measuring), stops with the check
-        public static Answer Ask(string k, string q, Toolkit.Run run)
+        public static Answer Ask(string k, string q, Toolkit.Run run) { return Ask(k, q, run, 45); }
+        public static Answer Ask(string k, string q, Toolkit.Run run, int secs)
         {
             var a = new Answer(); var s = Remote.Now;
             if (s == null || s.St != Remote.State.Paired) { a.NoPhone = true; return a; }
             var got = new ManualResetEventSlim(false); string head = null; List<string[]> rows = null;
             if (run != null) run.Status = "Asking your phone...";
             if (!s.AskPhone(k, q, (h, r) => { head = h; rows = r; got.Set(); })) { a.NoPhone = true; return a; }
-            var until = DateTime.UtcNow.AddSeconds(45);
+            var until = DateTime.UtcNow.AddSeconds(secs);
             while (!got.Wait(250))
             {
                 if (run != null && run.Stop) { a.Stopped = true; return a; }
@@ -39,7 +40,7 @@ namespace AdeeboMeter
         static List<string[]> Missing(Answer a)
         {
             if (a.Stopped) return new List<string[]> { R(3, "Stopped", "before your phone answered", "", "i") };
-            if (a.NoPhone) return new List<string[]> { R(1, "Your phone", "not connected", "Right-click AdeeboMeter in the tray > Phone remote..., scan the code with your phone (or open a remembered phone), then run this again. Keep AdeeboMeter open on the phone while it runs.", "i") };
+            if (a.NoPhone) return new List<string[]> { R(1, "Your phone", "not connected", "Click the link button at the top (or Your phone in the sidebar), scan the code from the phone app (or open a remembered phone), then run this again. Keep AdeeboMeter open on the phone while it runs.", "i") };
             return new List<string[]> { R(1, "Your phone", "didn't answer", "A phone's browser can't work in the background - keep AdeeboMeter open and the screen on while this runs, then try again.", "i") };
         }
 
@@ -115,6 +116,17 @@ namespace AdeeboMeter
             rows.Add(R(pcUp ? 0 : 2, "This PC", pcUp ? "reached it in " + Ms(ms) + (pcWhy != "" ? " (" + pcWhy + ")" : "") : "couldn't reach it" + (pcWhy != "" ? " (" + pcWhy + ")" : ""), "", "i"));
             rows.Add(R(phUp ? 0 : 2, "Your phone", a.Head, "", "i"));
             foreach (var r in a.Rows) rows.Add(R(int.Parse(r[0], CultureInfo.InvariantCulture), "Phone - " + r[1], r[2], r[3], "i"));
+            return rows;
+        }
+
+        // ---------- any of the phone's own tools, run on the phone (Adeeb, 16 Nov: "both should be vice versa ... within the limit").
+        // The phone reads the rows off its own result screen; a measuring tool (speed test) gets longer to answer.
+        public static List<string[]> Run(string kind, string q, Toolkit.Run run)
+        {
+            var a = Ask("run:" + kind, q ?? "", run, kind == "speed" ? 100 : kind == "regions" || kind == "fastdns" || kind == "stun" ? 60 : 45);
+            if (a.NoPhone || a.NoAnswer || a.Stopped) return Missing(a);
+            var rows = new List<string[]> { R(3, "On your phone", a.Head, "Run on the phone itself - its network, its view of the internet. Shown here, not saved.", "i") };
+            foreach (var r in a.Rows) { int lv; if (!int.TryParse(r[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) lv = 3; rows.Add(R(lv, r[1], r[2], r[3], "i")); }
             return rows;
         }
 

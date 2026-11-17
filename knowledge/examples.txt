@@ -1349,3 +1349,99 @@ in: example.com
 2|Wed|160 ms · 2 checks|a check found real trouble|i
 0|Sat|31 ms · 4 checks||i
 3|Best time|around 9 am|slowest around 8 pm|i
+
+# ---- the phone's own tools, run on the phone from the PC (16 Nov) - "On your phone" + the phone's own result rows
+== phconn
+3|On your phone|On Wi-Fi · Rogers|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Delay to the internet|21 ms||i
+0|Request-time spread|6 ms||i
+3|Connected over|Wi-Fi||i
+0|IPv6|yes||i
+
+== phspeed
+3|On your phone|Download 142 Mb/s · upload 18 Mb/s|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Download|142 Mb/s||i
+0|Upload|18 Mb/s||i
+1|Delay under load|96 ms|a little bufferbloat while busy|i
+
+== phregions
+3|On your phone|Toronto 14 ms · nearest|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Toronto|14 ms||i
+0|New York|28 ms||i
+1|London|94 ms||i
+2|Singapore|248 ms||i
+
+== phwifisafe
+3|On your phone|Looks safe enough|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Web pages|encrypted (HTTPS works)||i
+0|DNS|answers match a trusted resolver||i
+1|Network|shared - others on it can see you're here|use a VPN for banking on public Wi-Fi|i
+
+== phvpn
+3|On your phone|No leak seen|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Address the web sees|the VPN's (Toronto)||i
+0|DNS|through the VPN||i
+0|WebRTC|no real address shown||i
+
+== phstun
+3|On your phone|Calls and games work directly|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|NAT|keeps the same outside port||i
+3|Outside address|seen by two servers alike||i
+
+== phport
+in: 25565
+3|On your phone|Port 25565 isn't reachable|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+2|Port 25565|no answer from the internet|forward it on the router to the PC that runs the server|i
+
+== phsite
+in: example.com
+3|On your phone|Up · 200 OK in 180 ms|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Status|200 OK||i
+3|Redirects|none||i
+0|Certificate|valid for 64 more days||i
+
+== phspam
+3|On your phone|Listed on 0 of 5|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Spamhaus|not listed||i
+0|SpamCop|not listed||i
+
+== phdns
+in: github.com | MX
+3|On your phone|github.com · MX|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Cloudflare|1 aspmx.l.google.com||i
+0|Google|1 aspmx.l.google.com||i
+
+== phfastdns
+3|On your phone|Cloudflare is fastest here|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+3||Cloudflare 12 ms||i
+3||Google 19 ms||i
+3||Quad9 31 ms||i
+
+== phemail
+in: example.com
+3|On your phone|Mail setup looks right|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|MX|5 servers||i
+0|SPF|present||i
+0|DMARC|reject||i
+
+== phstatus
+in: discord
+3|On your phone|Discord: all systems operational|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+0|Status page|operational||i
+
+== phwho
+3|On your phone|Rogers Communications|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+3|Network|AS812 Rogers||i
+3|Where|Ottawa, Canada||i
+
+== phrdap
+in: example.com
+3|On your phone|example.com|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+3|Registered|1995-08-14||i
+3|Registrar|RESERVED-Internet Assigned Numbers Authority||i
+
+== phmac
+in: 3c:22:fb:12:34:56
+3|On your phone|Apple, Inc.|Run on the phone itself - its network, its view of the internet. Shown here, not saved.|i
+3|Maker|Apple, Inc.||i
+3|Address|3C:22:FB (globally unique)||i

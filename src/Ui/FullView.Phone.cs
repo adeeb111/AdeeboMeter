@@ -224,6 +224,20 @@ namespace AdeeboMeter
                 string tid = id; Act(phoneCanvas, rr, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(tid); });
                 cy += 52 * S;
             }
+            // the phone's own tools, run on the phone from here - two columns of short names
+            cy = PhHead(g, "RUN ON YOUR PHONE", ix, cy + 6 * S);
+            var ph = Tools2().Where(z => z.Id.StartsWith("ph", StringComparison.Ordinal) && z.Id != "phonevs" && z.Id != "phonedown" && z.Id != "phoneweek").ToList();
+            int pc2 = iw > 520 * S ? 2 : 1; float pw = (iw - (pc2 - 1) * 8 * S) / pc2;
+            for (int i = 0; i < ph.Count; i++)
+            {
+                var t = ph[i]; var rr = new RectangleF(ix + (i % pc2) * (pw + 8 * S), cy + (i / pc2) * 40 * S, pw, 34 * S); Theme.Fill(g, rr, 10 * S, Theme.Soft);
+                string nm = Regex.Replace(L.T(t.Title), @"^On my phone:\s*", ""); nm = char.ToUpperInvariant(nm[0]) + nm.Substring(1);
+                using (var b = new SolidBrush(on ? Theme.Ink : Theme.Muted)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                    g.DrawString(nm, Draw.fBody, b, new RectangleF(rr.X + 12 * S, rr.Y + 8 * S, rr.Width - 20 * S, 20 * S), nf);
+                string tid = t.Id; Act(phoneCanvas, rr, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(tid); });
+            }
+            cy += ((ph.Count + pc2 - 1) / pc2) * 40 * S + 6 * S;
+            cy = PhText(g, L.T("The phone runs these with its own network and shows a note when it does. A phone's browser stops in the background, so keep AdeeboMeter open on it. Not from here: anything needing someone at the phone - the camera, files, walking about, switching networks."), Draw.fSmall, Theme.Sub, ix, cy, iw);
             cy = PhText(g, L.T("Signal journey lives on the phone (Tools › Signal journey): record its field-test screen while you move. Copy the report there and Send to PC - it lands under From the phone."), Draw.fSmall, Theme.Sub, ix, cy + 2 * S, iw);
             c3.Height = cy + 10 * S - y; Theme.Stroke(g, c3, 18 * S, Theme.Line, 1);
             return c3.Bottom + 16 * S;
