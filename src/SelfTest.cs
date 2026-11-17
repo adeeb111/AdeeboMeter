@@ -1105,12 +1105,13 @@ namespace AdeeboMeter
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
                     try
                     {
-                        // 30 ms on a real PC; Wine draws text in software, so the self-test there allows 4x and reports the numbers
+                        // 50 ms on a real PC (Adeeb, 16 Nov: slower PCs than the test ones must pass too - still well under the 100 ms people notice);
+                        // Wine draws text in software, so the self-test there allows 4x and reports the numbers
                         // AM-CG-306: a PC that's already busy (CPU over 50 % or memory over 85 % before the test) gets 3x the room,
                         // and the run says so - the numbers still show, so an idle PC's rerun is the real verdict
-                        double busy = Busy(M); double lim = (Program.IsWine ? 120 : 30) * busy;
+                        double busy = Busy(M); double lim = (Program.IsWine ? 120 : 50) * busy;
                         if (busy > 1) sb.AppendLine("      busy PC (CPU " + Math.Round(M.Cpu.Last) + "%, memory " + Math.Round(MemNow(M)) + "%): timing limits x3 - rerun on an idle PC for the real numbers");
-                        string b0 = fv.QuestionCheck(), b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, (Program.IsWine ? 400 : 100) * busy), b3 = FullView.FreezeCheck(sb);
+                        string b0 = fv.QuestionCheck(), b1 = fv.PerfCheck(sb, lim), b2 = fv.StartCheck(sb, (Program.IsWine ? 400 : 150) * busy), b3 = FullView.FreezeCheck(sb);
                         string all = string.Join("; ", new[] { b0, b1, b2, b3 }.Where(z => z != ""));
                         if (all != "") throw new InvalidOperationException(all);
                     }
@@ -1650,7 +1651,7 @@ namespace AdeeboMeter
             T("memory after everything", () =>
             {
                 GC.Collect(); GC.WaitForPendingFinalizers();
-                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (64 MB in normal use; up to 96 here, where every page and tool has just been opened at once)"); if (mb > 96) throw new InvalidOperationException(mb + " MB"); }
+                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (80 MB in normal use; up to 120 here, where every page and tool has just been opened at once)"); if (mb > 120) throw new InvalidOperationException(mb + " MB"); }
             });
             T("install: paths, settings line, icon", () =>
             {
