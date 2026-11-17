@@ -13,12 +13,13 @@ namespace AdeeboMeter
     {
         string buddyFor; string buddyText = "";   // the rows (or run) the line was picked for: one pick per result, not per repaint
         // a mode's buddy line (Streaming, Trading): one steady line for the state it's in; quiet when the buddy is quiet
-        static float PaintModeLine(Graphics g, string key, string v, bool problem, float x, float y, float w)
+        float PaintModeLine(Graphics g, string key, string v, bool problem, float x, float y, float w)
         {
             if (!Lines.Speaks(problem ? "problem" : "state")) return y;
             bool money = key.StartsWith("trade.", StringComparison.Ordinal);
             string text = money && Lines.Faith != "off" ? Lines.SteadyAs(key, v, "plain") : Lines.Steady(key, v);
             if (text == "") return y;
+            text = Typing.Show(money ? "trade" : "stream", text, money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas);
             var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
@@ -46,6 +47,7 @@ namespace AdeeboMeter
                 text = buddyText;
             }
             if (text == "") return y;
+            text = Typing.Show("tool", text, tbCanvas);
             var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })

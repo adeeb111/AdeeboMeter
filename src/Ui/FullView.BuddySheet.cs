@@ -72,7 +72,7 @@ namespace AdeeboMeter
             using (var tri = new SolidBrush(Theme.Soft)) g.FillPolygon(tri, new[] { new PointF(bx, y + 22 * S), new PointF(bx - 8 * S, y + 29 * S), new PointF(bx, y + 36 * S) });
             string tag = plain ? L.T("PLAIN") : (L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T("talks like: ") + L.T(Lines.PersonaName(buddyHover != "" ? buddyHover : Lines.Persona))).ToUpperInvariant();
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(tag, Draw.fTiny, mb, bx + 14 * S, y + 9 * S);
-            using (var ib = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString("“" + line + "”", Draw.fBody, ib, new RectangleF(bx + 14 * S, y + 28 * S, bw - 24 * S, 24 * S), sf);
+            using (var ib = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.NoWrap }) { string ty = Typing.Show("sheet", line, buddySheet); g.DrawString("“" + ty + (ty == line ? "”" : ""), Draw.fBody, ib, new RectangleF(bx + 14 * S, y + 28 * S, bw - 24 * S, 24 * S), sf); }
             // Fun lines switch
             var fr = new RectangleF(x + w - 108 * S, y + 18 * S, 108 * S, 24 * S);
             using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Fun lines"), Draw.fSmall, sb, fr.X, fr.Y + 3 * S);

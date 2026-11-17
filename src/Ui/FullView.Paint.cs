@@ -53,11 +53,11 @@ namespace AdeeboMeter
                 float qx = x + hw;
                 if (stack)
                 {
-                    using (var qb = new SolidBrush(Theme.Sub)) g.DrawString(quip, Draw.fSmall, qb, new RectangleF(x, cy + 2 * S, room + lw, 20 * S), sf);
+                    using (var qb = new SolidBrush(Theme.Sub)) g.DrawString(Typing.Show("verdict", quip, on), Draw.fSmall, qb, new RectangleF(x, cy + 2 * S, room + lw, 20 * S), sf);
                 }
                 else if (quip != "")
                 {
-                    string q = "  ·  " + quip; float qw = Math.Min(qneed, room - hw);
+                    string q = "  ·  " + Typing.Show("verdict", quip, on); float qw = Math.Min(qneed, room - hw);
                     using (var qb = new SolidBrush(Theme.Sub)) g.DrawString(q, Draw.fBody, qb, new RectangleF(qx, cy - 10 * S, qw, 22 * S), sf);
                     qx += qw;
                 }
