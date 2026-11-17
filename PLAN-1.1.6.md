@@ -15,9 +15,11 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
 
 - [done, b7e03fb, live worker] Live page showed the Alpha Vantage key: the provider's rate-limit reply repeats the key and
   was passed on. Now only fixed sentences leave the relay and errors are scrubbed of anything key-like. Key replaced 17 Nov.
-- To do: stock movers fetched once a day for everyone (today each Cloudflare location fetches its own copy and failures
-  retry every 15 min, so the free 25-a-day limit runs out). E.g. a scheduled worker run that stores one copy (KV or the
-  Cache API under one URL), with the page reading only that copy.
+- To do (agreed 17 Nov): stock movers. Even with the new key the shared copy says "daily limit used up" - most likely
+  Alpha Vantage also counts by address, and Cloudflare's outgoing addresses are shared with other sites. In order:
+  1. one scheduled fetch a day at a fixed early time, stored once for everyone (KV), the page only reads that copy;
+  2. if that still loses to the shared address: a different free source for US movers that doesn't limit by address;
+  3. "Add your own free key" stays as the dependable route (the visitor's key is called from their own phone).
 
 ## 2. Website refresh (adeebometer.com)
 - New top of the page (mockup shown 17 Nov): navy look matching the phone app, two-colour AdeeboMeter name.
