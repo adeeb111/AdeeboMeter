@@ -129,7 +129,9 @@ namespace AdeeboMeter
         public static void Stroke(Graphics g, RectangleF r, float rad, Color c, float w) { using (var p = Round(r, rad)) using (var pen = new Pen(c, w)) g.DrawPath(pen, p); }
 
         // The AdeeboMeter mark: a gauge (green, amber, red) with its needle, over a three-stop path. Same drawing as docs/img/logo.svg.
-        public static void Logo(Graphics g, RectangleF r, bool arrows)
+        public static void Logo(Graphics g, RectangleF r, bool arrows) { Logo(g, r, arrows, float.NaN, null); }
+        // needle: degrees from straight up (- = green side, + = red side; NaN = the drawn 36); glow: 0..1 per dot (the ping)
+        public static void Logo(Graphics g, RectangleF r, bool arrows, float needle, float[] glow)
         {
             float k = r.Width / 64f; bool tiny = r.Width < 24;
             Func<float, float> X = delegate(float v) { return r.X + v * k; };
@@ -139,10 +141,16 @@ namespace AdeeboMeter
             var arc = new RectangleF(X(16), Y(17.6f), 32 * k, 32 * k);
             foreach (var seg in new[] { new { a = 184f, c = "#5EF2B0" }, new { a = 248f, c = "#FCD34D" }, new { a = 312f, c = "#FF7A6B" } })
                 using (var p = new Pen(C(seg.c), w)) { p.StartCap = LineCap.Round; p.EndCap = LineCap.Round; g.DrawArc(p, arc, seg.a, 44); }
-            using (var pn = new Pen(Color.White, (tiny ? 3f : 1.6f) * k)) { pn.StartCap = LineCap.Round; pn.EndCap = LineCap.Round; g.DrawLine(pn, X(32), Y(33.6f), X(40.5f), Y(21.9f)); }
+            float nx = 40.5f, ny = 21.9f;
+            if (!float.IsNaN(needle)) { double a = needle * Math.PI / 180; nx = 32f + (float)(14.46 * Math.Sin(a)); ny = 33.6f - (float)(14.46 * Math.Cos(a)); }
+            using (var pn = new Pen(Color.White, (tiny ? 3f : 1.6f) * k)) { pn.StartCap = LineCap.Round; pn.EndCap = LineCap.Round; g.DrawLine(pn, X(32), Y(33.6f), X(nx), Y(ny)); }
             using (var wb = new SolidBrush(Color.White)) { float h = tiny ? 3.4f : 2.6f; g.FillEllipse(wb, X(32 - h), Y(33.6f - h), 2 * h * k, 2 * h * k); }
             if (!tiny) using (var pl = new Pen(Color.White, 0.9f * k)) g.DrawLine(pl, X(18.8f), Y(42.6f), X(45.2f), Y(42.6f));
-            using (var db = new SolidBrush(C("#A8F5D4"))) { float d = tiny ? 3f : 2.3f; foreach (float cx in new[] { 18.8f, 32f, 45.2f }) g.FillEllipse(db, X(cx - d), Y(42.6f - d), 2 * d * k, 2 * d * k); }
+            using (var db = new SolidBrush(C("#A8F5D4"))) using (var hb = new SolidBrush(Color.White))
+            {
+                float d = tiny ? 3f : 2.3f; var xs = new[] { 18.8f, 32f, 45.2f };
+                for (int i = 0; i < 3; i++) { float gl = glow != null && i < glow.Length ? Math.Max(0, Math.Min(1, glow[i])) : 0, dd = d * (1 + 0.35f * gl); g.FillEllipse(gl > 0.5f ? hb : db, X(xs[i] - dd), Y(42.6f - dd), 2 * dd * k, 2 * dd * k); }
+            }
         }
         public static Icon MakeIcon(int size)
         {

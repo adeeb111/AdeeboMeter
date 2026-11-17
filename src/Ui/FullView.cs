@@ -147,6 +147,8 @@ namespace AdeeboMeter
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Sc(390)));
             bodyGrid = body; body.Resize += delegate { SizeSide(); };
             Resize += delegate { if (WindowState == FormWindowState.Minimized) learnSeen = ""; }; VisibleChanged += delegate { if (!Visible) learnSeen = ""; };
+            // the logo's needle sweeps each time the window opens (Motion board, 16 Nov)
+            VisibleChanged += delegate { if (Visible && IsHandleCreated) BeginInvoke((Action)delegate { LogoAnim(0); }); };
 
             var left = leftPane = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Margin = new Padding(0, 0, Sc(14), 0) };
             tabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(48), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(4), 0, 0), WrapContents = false };
@@ -547,9 +549,17 @@ namespace AdeeboMeter
         {
             UiActivity.Doing = "timer on " + tab; var tsw = Stopwatch.StartNew(); try { OnTimer2(); } finally { if (tsw.ElapsedMilliseconds > 60) Program.Log("slow tick: " + tab + " " + tsw.ElapsedMilliseconds + " ms"); }
         }
+        // after a reading lands: the needle rests where the connection is now; every 5 minutes it breathes once
+        int logoLv = -9;
+        void LogoTick()
+        {
+            if (header == null || snap == null) return;
+            if (snap.Level != logoLv) { logoLv = snap.Level; header.Invalidate(new Rectangle(0, 0, Sc(60), header.Height)); }
+            if (Visible && WindowState != FormWindowState.Minimized && (DateTime.UtcNow - logoBreath).TotalMinutes >= 5) { logoBreath = DateTime.UtcNow; LogoAnim(1); }
+        }
         void OnTimer2()
         {
-            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour + "|" + Mood.Quip(snap);   /* the mood line changes on its own (excuses, koans) */ if (hk != headKey) { headKey = hk; pathPanel.Invalidate(); header.Invalidate(); }
+            if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; LogoTick(); string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour + "|" + Mood.Quip(snap);   /* the mood line changes on its own (excuses, koans) */ if (hk != headKey) { headKey = hk; pathPanel.Invalidate(); header.Invalidate(); }
                 // the path strip and the side panel repaint only when what they print changed
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }

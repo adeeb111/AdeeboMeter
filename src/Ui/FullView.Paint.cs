@@ -29,12 +29,44 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         // ---------- painting
+        // ---- the logo's needle (16 Nov, Motion board): it sweeps when the window opens and settles where the connection is;
+        // every 5 minutes, right after a background check lands, it breathes and the three dots ping left to right.
+        // ~1.2 s at 60 frames, then nothing redraws. Off with Windows' "Show animations" off, and while a game is being played.
+        DateTime logoAt = DateTime.MinValue, logoBreath = DateTime.UtcNow; int logoKind; System.Windows.Forms.Timer logoTimer;
+        const double LogoMs = 1200;
+        float LogoRest() { int lv = snap != null ? snap.Level : 3; return lv == 0 ? -42f : lv == 1 ? 0f : lv == 2 ? 44f : 36f; }
+        void LogoAnim(int kind)
+        {
+            if (!Typing.On || GamePing.Me.Playing != null || header == null) return;
+            logoKind = kind; logoAt = DateTime.UtcNow;
+            if (logoTimer == null) { logoTimer = new System.Windows.Forms.Timer { Interval = 16 }; logoTimer.Tick += delegate { if (header != null && !header.IsDisposed) header.Invalidate(new Rectangle(0, 0, Sc(60), header.Height)); if ((DateTime.UtcNow - logoAt).TotalMilliseconds > LogoMs + 50) logoTimer.Stop(); }; Disposed += delegate { logoTimer.Dispose(); }; }
+            logoTimer.Start();
+        }
+        float LogoNeedle(out float[] glow)
+        {
+            glow = null; float rest = LogoRest(); double t = (DateTime.UtcNow - logoAt).TotalMilliseconds / LogoMs;
+            if (t < 0 || t >= 1) return rest;
+            // keyframes (time, angle) with a smooth step between them
+            float[][] k = logoKind == 0 ? new[] { new[] { 0f, -80f }, new[] { .35f, 78f }, new[] { .6f, rest - 10 }, new[] { .8f, rest + 4 }, new[] { 1f, rest } }
+                                        : new[] { new[] { 0f, rest }, new[] { .25f, rest - 46 }, new[] { .55f, rest + 12 }, new[] { .8f, rest - 4 }, new[] { 1f, rest } };
+            if (logoKind == 1) { glow = new float[3]; for (int i = 0; i < 3; i++) { double c = .25 + .15 * i, dd = Math.Abs(t - c); glow[i] = (float)Math.Max(0, 1 - dd / .12); } }
+            for (int i = 1; i < k.Length; i++) if (t <= k[i][0]) { double u = (t - k[i - 1][0]) / (k[i][0] - k[i - 1][0]); u = u * u * (3 - 2 * u); return (float)(k[i - 1][1] + (k[i][1] - k[i - 1][1]) * u); }
+            return rest;
+        }
         // the top line: logo and name, then the controls (PlaceTop); the buddy's face is painted in its slot by the gear
         void PaintHeader(Graphics g, Rectangle r)
         {
             float x = Sc(18), cy = r.Height / 2f; Begin(header);
-            Theme.Logo(g, new RectangleF(x, cy - 15 * S, 30 * S, 30 * S), true); x += 40 * S;
-            using (var b = new SolidBrush(Theme.Ink)) { var ts = g.MeasureString(L.T("AdeeboMeter"), Draw.fBig); g.DrawString(L.T("AdeeboMeter"), Draw.fBig, b, x, cy - ts.Height / 2); }
+            float[] glow; float needle = LogoNeedle(out glow);
+            Theme.Logo(g, new RectangleF(x, cy - 15 * S, 30 * S, 30 * S), true, needle, glow); x += 40 * S;
+            // the name in two colours (16 Nov): Adeebo in ink, Meter in the logo's blue
+            using (var b = new SolidBrush(Theme.Ink)) using (var mb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+            {
+                var ts = g.MeasureString("AdeeboMeter", Draw.fBig); var tf = StringFormat.GenericTypographic;
+                float aw = g.MeasureString("Adeebo", Draw.fBig, PointF.Empty, tf).Width;
+                float ty = cy - ts.Height / 2, tx = x + (ts.Width - g.MeasureString("AdeeboMeter", Draw.fBig, PointF.Empty, tf).Width) / 2;
+                g.DrawString("Adeebo", Draw.fBig, b, tx, ty, tf); g.DrawString("Meter", Draw.fBig, mb, tx + aw, ty, tf);
+            }
             PaintMood(g, gearBtn.Left - 8 * S, cy);
         }
         // the verdict, beside the path it explains: "Not connected to any network · ...   Investigate ›" - returns where it ends
