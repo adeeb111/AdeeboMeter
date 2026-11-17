@@ -47,7 +47,7 @@ namespace AdeeboMeter
         void PaintIndex(Graphics g, float x, float y, float w)
         {
             bool rail = w > 860 * S; float rw = rail ? 250 * S : 0, cx = x + (rail ? rw + 24 * S : 0), cw = w - (rail ? rw + 24 * S : 0);
-            float top = y + 6 * S;
+            float top = y + 6 * S; railEnd = 0;
             // ---- the questions: a rail, or a chip row on a narrow window
             var items = new List<string[]> { new[] { "", "★ " + L.T("Pinned"), (StarterPins.Length + MyPins().Count).ToString(CultureInfo.CurrentCulture) } };
             foreach (var qd in Questions) items.Add(new[] { qd[0], L.T(qd[1]), ToolsOf(qd[0]).Count(t => !SnmpView(t.Id) || t.Id == "snmp").ToString(CultureInfo.CurrentCulture) });
@@ -69,7 +69,7 @@ namespace AdeeboMeter
                         ry += 40 * S;
                     }
                     using (var p = new Pen(Theme.Line)) g.DrawLine(p, x + rw + 12 * S, top, x + rw + 12 * S, Math.Max(ry, top + 200 * S));
-                    Need(tbCanvas, ry + 20 * S);
+                    railEnd = ry + 20 * S;   // one height for the whole page (rail and list): two Need calls a paint flipped the scrollbar on every repaint - the blinking
                 }
                 else
                 {
@@ -95,7 +95,7 @@ namespace AdeeboMeter
                 }
                 else if (tbQ == "" || Questions.All(z => z[0] != tbQ))
                 {
-                    tbQ = ""; py = PaintPinned(g, cx, py, cw); Need(tbCanvas, py + 30 * S); return;
+                    tbQ = ""; py = PaintPinned(g, cx, py, cw); Need(tbCanvas, Math.Max(railEnd, py + 30 * S)); return;
                 }
                 else
                 {
@@ -117,9 +117,10 @@ namespace AdeeboMeter
                     py += 26 * S; using (var p = new Pen(Theme.Line)) g.DrawLine(p, cx, py, cx + cw, py);
                     foreach (var t in grp) py = IndexRow(g, t, cx, py, cw);
                 }
-                Need(tbCanvas, py + 30 * S);
+                Need(tbCanvas, Math.Max(railEnd, py + 30 * S));
             }
         }
+        float railEnd;
 
         // one tool: name + what it answers (two lines before a cut), its state, a pin, Open; a family shows its views
         float IndexRow(Graphics g, Tool t, float x, float y, float w)
