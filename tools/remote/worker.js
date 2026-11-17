@@ -6,8 +6,9 @@
 //    only things written are the room's close-alarm time and, on each socket, its role and a few timestamps.
 //  - A room holds exactly one PC and one phone. A second phone is refused. Rooms close after 30 minutes, after 2 minutes
 //    with no phone, or as soon as either side leaves.
-//  - Limits: 64 KB per message, 40 messages a second per side, room names must be 22 random characters, and at most
-//    30 new rooms a minute from one address.
+//  - Limits: 64 KB per message, 40 messages a second per side, room names must be 22 random characters. From one
+//    address, at most 6 rooms opened a minute (Adeeb, 17 Nov: "shouldn't open more than 5-6") and 20 tries to join
+//    one - a remembered phone looks through up to 10 rooms to find where its PC is waiting, so joining needs more.
 //
 // Hibernation (Adeeb, 17 Nov: "go with 3rd"): sockets are held by Cloudflare, not by this code, so a room with nobody
 // talking - a PC waiting for its remembered phone, a quiet session - sleeps and isn't billed for the time. It wakes for
@@ -23,14 +24,14 @@
 const ROOM = /^[A-Za-z0-9_-]{22}$/;
 const MAX_MSG = 64 * 1024, MAX_RATE = 40, LIFE_MS = 30 * 60 * 1000, WAIT_MS = 2 * 60 * 1000, LONG_WAIT_MS = 25 * 60 * 1000;   // long: a remembered phone's room
 const ORIGINS = ["https://adeebometer.com", "https://www.adeebometer.com"];
-const NEW_PER_MIN = 30;   // new rooms a minute from one address (best effort: counted per Cloudflare location, in memory)
+const PER_MIN = { pc: 6, phone: 20 };   // a minute from one address (best effort: counted per Cloudflare location, in memory)
 const recent = new Map();
 
-function tooMany(ip) {
-  const now = Date.now(), w = Math.floor(now / 60000);
-  const r = recent.get(ip);
-  if (!r || r.w !== w) { if (recent.size > 5000) recent.clear(); recent.set(ip, { w, n: 1 }); return false; }
-  return ++r.n > NEW_PER_MIN;
+function tooMany(ip, role) {
+  const w = Math.floor(Date.now() / 60000), k = role + "|" + ip;
+  const r = recent.get(k);
+  if (!r || r.w !== w) { if (recent.size > 5000) recent.clear(); recent.set(k, { w, n: 1 }); return false; }
+  return ++r.n > PER_MIN[role];
 }
 
 export default {
@@ -45,7 +46,7 @@ export default {
     const origin = req.headers.get("Origin");
     if (role === "phone" && !ORIGINS.includes(origin)) return new Response("forbidden", { status: 403 });
     if (role === "pc" && origin) return new Response("forbidden", { status: 403 });
-    if (tooMany(req.headers.get("CF-Connecting-IP") || "")) return new Response("slow down", { status: 429 });
+    if (tooMany(req.headers.get("CF-Connecting-IP") || "", role)) return new Response("slow down", { status: 429 });
     const id = env.ROOMS.idFromName(m[1]);
     return env.ROOMS.get(id).fetch(req);
   },
