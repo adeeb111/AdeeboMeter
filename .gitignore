@@ -25,3 +25,4 @@ AdeeboMeter.policy
 sample_*.png
 __pycache__/
 *.pyc
+lang-*-todo.txt
