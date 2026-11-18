@@ -36,7 +36,7 @@
 
   var stored = saved();
   var defaultChoice = pageLanguage === "bn" ? "bn" : "auto";
-  var choice = known(query) ? query : known(stored) ? stored : defaultChoice;
+  var choice = known(query) ? query : pageLanguage || (known(stored) ? stored : defaultChoice);
   if (known(query)) remember(query);
   var code = choice === "auto" ? preferred() : choice;
 
@@ -101,6 +101,13 @@
   function change(value) {
     if (!known(value)) return;
     remember(value);
+    if (location.pathname.indexOf("/bn/") === 0 && value !== "bn") {
+      var destination = new URL(location.href);
+      destination.pathname = destination.pathname.replace(/^\/bn\//, "/");
+      destination.searchParams.set("lang", value);
+      location.assign(destination.href);
+      return;
+    }
     var url = new URL(location.href);
     if (url.searchParams.has("lang")) {
       url.searchParams.delete("lang");

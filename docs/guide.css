@@ -107,3 +107,12 @@ main>nav:first-child{margin-bottom:1.2rem}
 .next-checks strong,.next-checks span{display:block}
 .next-checks span{color:var(--sub)}
 @media(max-width:620px){.next-checks{grid-template-columns:1fr}}
+
+/* Keep diagnostic steps and outcomes distinguishable in localized guides. */
+main>ol li{border-inline-start:3px solid #1f6feb;padding-inline-start:.6rem;margin-block:.6rem}
+main>ol li:nth-child(2){border-color:#8250df}
+main>ol li:nth-child(3){border-color:#2da44e}
+.next-checks li:nth-child(4n+1){border-inline-start:3px solid #1f6feb}
+.next-checks li:nth-child(4n+2){border-inline-start:3px solid #8250df}
+.next-checks li:nth-child(4n+3){border-inline-start:3px solid #2da44e}
+.next-checks li:nth-child(4n){border-inline-start:3px solid #bf8700}
