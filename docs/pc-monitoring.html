@@ -52,16 +52,26 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
 <main>
 <nav aria-label="Site"><a href="/">AdeeboMeter</a> · <a href="/blog/">Troubleshooting Blog</a></nav>
 <h1>Free PC monitoring software for Windows</h1>
-<aside class="summary" aria-labelledby="summary"><h2 id="summary">Quick answer</h2><p>Check CPU, memory, disk, and network while the slowdown is happening. A sustained change that lines up with the symptom gives you a better lead than a single high reading.</p></aside>
-<nav class="guide-toc" aria-label="On this page"><a href="#checks">Run the checks</a> <a href="#readings">Read the results</a> <a href="#details">Go deeper</a></nav>
-<figure class="signal"><div><strong>CPU</strong><span>Work</span><p>See which processes are taking processor time.</p></div><div><strong>Memory</strong><span>Capacity</span><p>Check whether available memory stays low as apps stall.</p></div><div><strong>Disk</strong><span>Activity</span><p>Compare busy storage with what your apps are doing.</p></div><div><strong>Network</strong><span>Traffic</span><p>Compare online symptoms with traffic and latency.</p></div><figcaption>Look for a change that begins and ends with the slowdown.</figcaption></figure>
+<figure class="guide-visual" aria-labelledby="quick-title">
+<div class="visual-copy"><h2 id="quick-title">Look for what stays busy.</h2><p>Compare CPU, memory, disk, and network activity while the slowdown happens.</p></div>
+<div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">💻</span><strong>PC check</strong></div><div class="plot-label"><span>PC activity</span><span>Example</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>Memory<i style="--h:64%"></i></span><span>Disk<i style="--h:94%"></i></span></div></div>
+<figcaption>Illustrative readings. Busy disk activity during a stall gives you a workload to investigate.</figcaption>
+</figure>
+
+
 <h2 id="checks">Run the checks</h2>
 <ol><li>Decide whether the whole PC feels slow or only an online task is affected.</li><li>While it happens, open AdeeboMeter or Windows Task Manager and inspect CPU, memory, disk, and network.</li><li>Identify the process or task that was active. Compare against the same PC when it is responsive.</li></ol>
-<h2 id="readings">What the results suggest</h2>
-<div class="guide-table" role="region" aria-label="Readings and next checks" tabindex="0"><table><thead><tr><th scope="col">What you see</th><th scope="col">What to check next</th></tr></thead><tbody><tr><th scope="row">CPU stays busy while the PC stalls</th><td>Check the processes using the most CPU. See whether the slowdown ends when the workload finishes.</td></tr><tr><th scope="row">Available memory stays low and disk activity rises</th><td>Close a large app after saving your work and repeat. Check whether the combination persists.</td></tr><tr><th scope="row">Disk stays busy during file operations</th><td>Check for a backup, update, or other storage work. Compare when it finishes.</td></tr><tr><th scope="row">Only online tasks stall while the PC is responsive</th><td>Check router and internet latency and compare using the Wi-Fi vs. ISP guide.</td></tr></tbody></table></div>
+<h2 id="readings">What to check next</h2>
+<ul class="next-checks">
+  <li><strong>CPU stays high</strong><span>Find the busiest process.</span></li>
+  <li><strong>Memory is low and disk is busy</strong><span>Save your work, close one large app, and retry.</span></li>
+  <li><strong>Disk stays busy</strong><span>Check for a backup or update.</span></li>
+  <li><strong>Only online tasks stall</strong><span>Check router and internet latency.</span></li>
+</ul>
 <aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>Your browser and file manager both hesitate during a large backup. Disk activity stays high during the stalls and settles when the backup ends. Try the same actions afterward. If the problem disappears, you have a workload to investigate and a repeatable comparison.</p></aside>
-<h2 id="details">Go deeper</h2>
+<details class="guide-detail"><summary>Why it works</summary>
 <p>High memory usage alone can reflect caching. Low available memory, stalls, and changes in disk activity together make memory pressure more worth investigating. Disk active time and transfer rate measure different things. Small requests can keep a disk busy without moving much data.</p><p>For a deeper look, use <a href="/learn/memory-pressure.html">the memory pressure lesson</a> and compare resource behavior over the same interval.</p>
+</details>
 <h2>Use AdeeboMeter on Windows</h2>
 <p>Keep the desktop widget visible while you work, then open the full view to inspect the busiest processes. With history enabled, use <strong>Time Machine</strong> to review the PC and network readings from the same minute. If only online tasks are affected, <a href="/wifi-or-isp.html">check the connection path</a>.</p>
 <figure><img src="/media/trailer-poster.jpg" width="1280" height="720" loading="lazy" alt="AdeeboMeter overview with live CPU, memory, disk, traffic and network readings."><figcaption>The full view from an AdeeboMeter app demo.</figcaption></figure>
