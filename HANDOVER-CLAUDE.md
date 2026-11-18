@@ -15,8 +15,9 @@ dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is th
   - `adeebometer-remote` (phone relay, `tools/remote`) - hibernation + 6 rooms/min per address. Deployed 17 Nov.
   - `adeebometer-live` (Live data, `tools/live`) - key leak fixed (provider text never passed on), stock movers fetched
     once a day on a schedule (21:30 UTC weekdays, retry 23:30) into KV `MOVERS` (id in wrangler.toml). Deployed 17 Nov.
-    **Unchecked:** whether the first scheduled fetch (17 Nov 21:30 UTC) stored movers or Alpha Vantage refused it (likely
-    because Cloudflare's outgoing addresses are shared). Check `/movers`; if refused -> PLAN-1.1.6 step 2 (another source).
+    **Checked 17 Nov 19:15 Toronto:** Alpha Vantage refused even the single scheduled call and its retry ("daily limit
+    used up") - Cloudflare's shared outgoing addresses. Next: PLAN-1.1.6 step 2, a different free source for US movers
+    (design it, show Adeeb first). The Live card meanwhile says "the daily limit is used up" - no key shown.
   - `adeebometer-relay` (website/app reports -> GitHub issues).
   - On his PC: `Documents\AdeboMeter\live-relay` (Live) and `...\remote-relay` (relay) - check `name =` in wrangler.toml
     before deploying; he once deployed into the wrong one.
@@ -72,7 +73,7 @@ dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is th
 ## Open questions waiting for Adeeb
 - Replace "Is it me or the network?" with the motto in the home page `og:title`/link preview and release-notes header?
 - Install `gh` on his PC for one-step signed releases?
-- Stock movers: result of the first scheduled fetch (see above).
+- Stock movers: which replacement source (step 2) - propose 2-3 options with their limits.
 - His company network blocks adeebometer.com as a newly registered domain (~30-90 days, or ask IT / categorisation sites).
 
 ## Handovers for people
