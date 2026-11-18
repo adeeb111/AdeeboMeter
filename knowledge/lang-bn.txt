@@ -22,7 +22,7 @@ Auto	স্বয়ংক্রিয়
 BGP and who owns the network	BGP ও নেটওয়ার্কের মালিক
 Back	পেছনে
 Back to corner	কোণায় ফিরে যান
-Background checks	ব্যাকগ্রাউন্ড চেক 
+Background checks	ব্যাকগ্রাউন্ড চেক
 Background jobs	ব্যাকগ্রাউন্ড জবস
 Balanced	ব্যালান্সড
 Battery	ব্যাটারি
@@ -40,9 +40,9 @@ Capture & advanced	ক্যাপচার ও অ্যাডভান্স�
 Certificate revocation checks	সার্টিফিকেট বাতিল চেক 
 Changes	পরিবর্তন
 Check	চেক করুন
-Check a destination	Check a ডেস্টিনেশন
+Check a destination	গন্তব্য পরীক্ষা করুন
 Checking...	চেক চলছে...
-Clock check	Clock চেক
+Clock check	ঘড়ি পরীক্ষা
 Close	বন্ধ
 Companion	বন্ধু
 Connected	কানেক্টেড
@@ -58,7 +58,7 @@ DNS hijack and VPN name rules	DNS হাইজ্যাক ও VPN নামে�
 DNS speed test	DNS গতি পরীক্ষা
 DSCP-marked ping	DSCP চিহ্নিত পিং
 Dark	Dark
-Day's numbers	দিনের সংখা 
+Day's numbers	দিনের সংখ্যা
 Delete all saved history now	সব সংরক্ষিত ইতিহাস মুছুন
 Delete all saved history?	সব সংরক্ষিত ইতিহাস মুছবেন?
 Details	বিস্তারিত
@@ -74,8 +74,8 @@ Exit	এক্সিট
 FINE-TUNE	ফাইন-টিউন
 Follow Windows	Windows অনুযায়ী
 Found a bug? Report it	ত্রুটি পেয়েছেন? জানান
-Fun lines	Fun লাইনস 
-Game ping in the background	ব্যাকগ্রাউন্ড  গেম পিং
+Fun lines	মজার লাইন
+Game ping in the background	ব্যাকগ্রাউন্ড গেম পিং
 Gamer	গেমার
 Gamer Zone	গেমিং জোন
 Games	গেম
@@ -153,7 +153,7 @@ Phone	ফোন
 Port test	পোর্ট পরীক্ষা
 Pre-call check	কলের আগের পরীক্ষা
 Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere.	প্রিভিউ: কিছু লেখা এখনও ইংরেজিতে। সব জায়গায় ভাষা বদলাতে AdeeboMeter আবার চালু করুন।
-Privacy & online lookups	গোপনীয়তা ও অনলাইন অনুসন্ধান
+Privacy & online lookups	প্রাইভেসি ও অনলাইন অনুসন্ধান
 Problem	সমস্যা
 Quiet hours	নীরব সময়
 REMOTE	দূরবর্তী
@@ -173,7 +173,7 @@ Search	খুঁজুন
 Search anything	যেকোনো কিছু খুঁজুন
 Search tools, pages, problems	টুল, পৃষ্ঠা বা সমস্যা খুঁজুন
 Security	নিরাপত্তা
-Servers watched in the background	পটভূমিতে নজরে রাখা সার্ভার
+Servers watched in the background	ব্যাকগ্রাউন্ডে নজরে রাখা সার্ভার
 Services that failed to start (7 days)	চালু হতে পারেনি এমন সার্ভিস (7 দিন)
 Settings	সেটিংস
 Shared folders on a PC or NAS (SMB)	পিসি বা NAS-এর শেয়ার করা ফোল্ডার (SMB)
@@ -242,6 +242,64 @@ Your broker	আপনার ব্রোকার
 Your cable	আপনার কেবল
 Your gateway and failover	আপনার গেটওয়ে ও ফেইলওভার
 Your phone	আপনার ফোন
-days of history are deleted for good - this can't be undone.	দিনের ইতিহাস চিরতরে মুছে যাবে। ফেরানো যাবে না।
+days of history are deleted for good - this can't be undone.	দিনের সংরক্ষিত ইতিহাস চিরতরে মুছে যাবে। আর ফেরানো যাবে না।
 dig - any DNS record	dig: যেকোনো DNS রেকর্ড
 iperf3 to your server	iperf3 — আপনার সার্ভারে
+A few seconds.	কয়েক সেকেন্ড লাগবে।
+MORE	আরও
+More	আরও
+Not now	এখন নয়
+Roast my network	আমার নেটওয়ার্ক নিয়ে একটু মজা
+This PC	এই পিসি
+and	ও
+CHECK YOURSELF	নিজে পরীক্ষা করুন
+Check again now	এখন আবার পরীক্ষা করুন
+Check for updates  >	আপডেট আছে কি না দেখুন  >
+Check your phone shows the same words:	ফোনেও একই শব্দগুলো দেখা যাচ্ছে কি না মিলিয়ে নিন:
+Connecting to the relay...	রিলেতে সংযোগ হচ্ছে...
+Connection	সংযোগ
+Copy link	লিঙ্ক কপি করুন
+Copy the explanation	ব্যাখ্যা কপি করুন
+Find it	খুঁজুন
+Find what's wrong	সমস্যার কারণ খুঁজুন
+Hide the example	উদাহরণ লুকান
+No answer in	এত সময়েও উত্তর আসেনি:
+No checks yet today.	আজ এখনও কোনো পরীক্ষা চালানো হয়নি।
+No dips in the last 30 days.	গত 30 দিনে সংযোগের মান কমেনি।
+No games today.	আজ কোনো গেম খেলা হয়নি।
+No history yet - it builds up while AdeeboMeter runs (History on).	এখনও কোনো ইতিহাস নেই। History চালু থাকলে AdeeboMeter চলার সময় তথ্য জমা হবে।
+Not sure what's wrong?	সমস্যাটা কী বুঝতে পারছেন না?
+Open an encrypted file	এনক্রিপ্ট করা ফাইল খুলুন
+Open it now	এখন খুলুন
+Open link	লিঙ্ক খুলুন
+Open on your phone	ফোনে খুলুন
+Open ›	খুলুন ›
+Ready to play? (pre-match checklist)	খেলার জন্য প্রস্তুত? (ম্যাচের আগের চেকলিস্ট)
+Ready to stream? (go-live check)	স্ট্রিমের জন্য প্রস্তুত? (লাইভে যাওয়ার আগের পরীক্ষা)
+Run full checkup	পুরো পরীক্ষা চালান
+Run it for real:	এবার আসল পরীক্ষা চালান:
+Run it to see how much the battery has worn.	ব্যাটারির ক্ষমতা কতটা কমেছে জানতে পরীক্ষা চালান।
+Run it to see your biggest folders as boxes.	সবচেয়ে বড় ফোল্ডারগুলো বাক্স আকারে দেখতে চালান।
+Run it while the game is open - each leg gets its own ping, jitter and loss.	গেম খোলা থাকতেই চালান। পথে প্রতিটি অংশের পিং, জিটার ও প্যাকেট লস আলাদা করে দেখাবে।
+Save a picture of this window	এই উইন্ডোর ছবি সেভ করুন
+Search anything...	যা চান খুঁজুন...
+Show in folder	ফোল্ডারে দেখুন
+Show me everything	সব দেখান
+Show the QR code	QR কোড দেখান
+Show the code?	কোড দেখাব?
+Start watching my stream	আমার স্ট্রিমের ওপর নজর রাখা শুরু করুন
+Stop monitoring	নজর রাখা বন্ধ করুন
+Stop watching	নজর রাখা বন্ধ করুন
+checking	পরীক্ষা চলছে
+checking...	পরীক্ষা চলছে...
+connected	সংযোগ আছে
+no answer	উত্তর নেই
+no answer to probes	পরীক্ষার অনুরোধে উত্তর নেই
+no drops	সংযোগ বিচ্ছিন্ন হয়নি
+no overlap	ওভারল্যাপ নেই
+no points	কোনো পয়েন্ট নেই
+no reply	সাড়া নেই
+no sign-in, no password	সাইন-ইন বা পাসওয়ার্ড লাগে না
+no slow moments	সংযোগ ধীর হয়নি
+no such name	এই নামে কিছু পাওয়া যায়নি
+not checked yet	এখনও পরীক্ষা করা হয়নি

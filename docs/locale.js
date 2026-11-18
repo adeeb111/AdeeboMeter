@@ -42,20 +42,32 @@
     return table && Object.prototype.hasOwnProperty.call(table, key) ? table[key] : key;
   }
 
+  function format(key, values) {
+    return t(key).replace(/\{(\w+)\}/g, function (token, name) {
+      return Object.prototype.hasOwnProperty.call(values, name) ? values[name] : token;
+    });
+  }
+
   function apply() {
     root.lang = tags[code] || code;
     root.dataset.locale = code;
+    document.querySelectorAll("[data-blog-link]").forEach(function (link) {
+      link.href = code === "bn" ? "/bn/blog/" : "/blog/";
+    });
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
       var key = node.dataset.i18n;
       node.textContent = t(key);
       node.lang = t(key) === key ? "en" : root.lang;
       node.dir = "auto";
     });
+    document.querySelectorAll("[data-i18n-title]").forEach(function (node) {
+      node.title = t(node.dataset.i18nTitle);
+    });
     document.querySelectorAll("[data-i18n-label]").forEach(function (node) {
       node.setAttribute("aria-label", t(node.dataset.i18nLabel));
     });
     document.querySelectorAll("[data-i18n-preview]").forEach(function (node) {
-      node.hidden = code === "en";
+      node.hidden = code === "en" || code === "bn";
     });
     document.querySelectorAll("[data-i18n-direction]").forEach(function (node) {
       node.dir = code === "ar" ? "rtl" : "ltr";
@@ -77,6 +89,7 @@
     if (url.searchParams.has("lang")) {
       url.searchParams.delete("lang");
       history.replaceState(history.state, "", url);
+      query = null;
     }
     choice = value;
     code = choice === "auto" ? preferred() : choice;
@@ -102,10 +115,18 @@
     apply();
   }
 
-  window.AdeeboMeterLocale = { t: t, code: function () { return code; }, mountPickers: mountPickers };
+  window.AdeeboMeterLocale = { t: t, format: format, code: function () { return code; }, mountPickers: mountPickers };
   document.addEventListener("DOMContentLoaded", function () {
     mountPickers();
     root.classList.add("locale-ready");
+  });
+
+  window.addEventListener("storage", function (event) {
+    if (event.key !== storageKey || known(query)) return;
+    choice = known(event.newValue) ? event.newValue : "auto";
+    code = choice === "auto" ? preferred() : choice;
+    apply();
+    document.dispatchEvent(new Event("adeebometerlanguagechange"));
   });
 
   window.addEventListener("languagechange", function () {
