@@ -61,10 +61,15 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
 
 <h2 id="checks">Run the checks</h2>
 <ol><li>Decide whether the whole PC feels slow or only an online task is affected.</li><li>While it happens, open AdeeboMeter or Windows Task Manager and inspect CPU, memory, disk, and network.</li><li>Identify the process or task that was active. Compare against the same PC when it is responsive.</li></ol>
-<h2 id="readings">What the results suggest</h2>
-<div class="guide-table" role="region" aria-label="Readings and next checks" tabindex="0"><table><thead><tr><th scope="col">What you see</th><th scope="col">What to check next</th></tr></thead><tbody><tr><th scope="row">CPU stays busy while the PC stalls</th><td>Check the processes using the most CPU. See whether the slowdown ends when the workload finishes.</td></tr><tr><th scope="row">Available memory stays low and disk activity rises</th><td>Close a large app after saving your work and repeat. Check whether the combination persists.</td></tr><tr><th scope="row">Disk stays busy during file operations</th><td>Check for a backup, update, or other storage work. Compare when it finishes.</td></tr><tr><th scope="row">Only online tasks stall while the PC is responsive</th><td>Check router and internet latency and compare using the Wi-Fi vs. ISP guide.</td></tr></tbody></table></div>
+<h2 id="readings">What to check next</h2>
+<ul class="next-checks">
+  <li><strong>CPU stays high</strong><span>Find the busiest process.</span></li>
+  <li><strong>Memory is low and disk is busy</strong><span>Save your work, close one large app, and retry.</span></li>
+  <li><strong>Disk stays busy</strong><span>Check for a backup or update.</span></li>
+  <li><strong>Only online tasks stall</strong><span>Check router and internet latency.</span></li>
+</ul>
 <aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>Your browser and file manager both hesitate during a large backup. Disk activity stays high during the stalls and settles when the backup ends. Try the same actions afterward. If the problem disappears, you have a workload to investigate and a repeatable comparison.</p></aside>
-<details class="guide-detail"><summary>Why this test works</summary>
+<details class="guide-detail"><summary>Why it works</summary>
 <p>High memory usage alone can reflect caching. Low available memory, stalls, and changes in disk activity together make memory pressure more worth investigating. Disk active time and transfer rate measure different things. Small requests can keep a disk busy without moving much data.</p><p>For a deeper look, use <a href="/learn/memory-pressure.html">the memory pressure lesson</a> and compare resource behavior over the same interval.</p>
 </details>
 <h2>Use AdeeboMeter on Windows</h2>

@@ -59,10 +59,15 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>App-generated example with simulated measurements and addresses. In a real report, start with the router and destination rows.</figcaption></figure>
 <h2 id="checks">Run the checks</h2>
 <ol><li>In Windows AdeeboMeter, open <strong>Toolbox</strong> and search for <strong>Report for my ISP</strong>.</li><li>Enter the hostname or IP for the affected service, or select a game you’ve added. Choose a 1-, 2-, or 5-minute run during the slowdown.</li><li>Repeat on Ethernet if possible. Save a good-period comparison. Review the report before attaching it to your support ticket or sending a screenshot.</li></ol>
-<h2 id="readings">What the results suggest</h2>
-<div class="guide-table" role="region" aria-label="Readings and next checks" tabindex="0"><table><thead><tr><th scope="col">What you see</th><th scope="col">What to check next</th></tr></thead><tbody><tr><th scope="row">One intermediate hop misses replies, destination is steady</th><td>The hop may limit responses to probes while still forwarding traffic. Check the destination result before drawing a conclusion.</td></tr><tr><th scope="row">Loss starts near home and continues to the destination</th><td>Compare Ethernet and Wi-Fi and check the router readings to narrow down the local link.</td></tr><tr><th scope="row">Router stays steady and loss persists at the destination</th><td>Repeat the test and share the comparison. Ask support to investigate that time window and path.</td></tr><tr><th scope="row">Only one destination is affected</th><td>Include the hostname and compare an unrelated service. Mention that difference to support.</td></tr></tbody></table></div>
+<h2 id="readings">What to check next</h2>
+<ul class="next-checks">
+  <li><strong>One hop misses replies</strong><span>Check whether loss reaches the destination.</span></li>
+  <li><strong>Loss starts near home</strong><span>Compare Wi-Fi and Ethernet.</span></li>
+  <li><strong>Router is steady, destination loses packets</strong><span>Repeat the test and share both results.</span></li>
+  <li><strong>One destination is affected</strong><span>Compare an unrelated service.</span></li>
+</ul>
 <aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>In the example report above, the wired PC and router are steady. Loss appears farther along and is also visible at the destination. Send that pattern with the time of the run and the service affected. A second run helps show whether the pattern recurs.</p></aside>
-<details class="guide-detail"><summary>Why this test works</summary>
+<details class="guide-detail"><summary>Why it works</summary>
 <p>Traceroute and packet loss reports are observations from one machine to one destination at a particular time. Routers can rate-limit the replies they send to probes. Paths and return routes can also vary, so a hop number is a lead for support to investigate.</p><p>See <a href="/learn/icmp.html">how ping and traceroute work</a> and <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft’s explanation of intermediate-hop response loss</a>.</p>
 </details>
 <h2>Use AdeeboMeter on Windows</h2>
