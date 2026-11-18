@@ -54,7 +54,18 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
 <h1>Why do video calls freeze when internet speed looks fine?</h1>
 <figure class="guide-visual" aria-labelledby="quick-title">
 <div class="visual-copy"><h2 id="quick-title">Try the same call on Ethernet.</h2><p>If it clears up, check Wi-Fi first. If it still freezes, check for a busy upload or a device under load.</p></div>
-<div class="scenario-art art-calls"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">🎥</span><strong>Call check</strong></div><div class="route call-route"><span>PC</span><b aria-hidden="true">→</b><span>Wi-Fi</span><b aria-hidden="true">→</b><span>Router</span><b aria-hidden="true">→</b><span>Call service</span></div><div class="art-note"><span><i></i> Wi-Fi: freezes</span><span><i></i> Ethernet: clear</span></div></div>
+<div class="scenario-art art-calls">
+  <div class="call-compare">
+    <div class="call-sample call-stalled">
+      <div class="call-window" aria-hidden="true"><span class="call-person"></span><span class="call-pause"></span></div>
+      <div class="call-readout"><strong>Wi-Fi</strong><span>Picture freezes</span></div>
+    </div>
+    <div class="call-sample call-clear">
+      <div class="call-window" aria-hidden="true"><span class="call-person"></span><span class="call-audio"><i></i><i></i><i></i><i></i></span></div>
+      <div class="call-readout"><strong>Ethernet</strong><span>Call stays clear</span></div>
+    </div>
+  </div>
+</div>
 <figcaption>Example: the same PC and call work over Ethernet. Start with the wireless link.</figcaption>
 </figure>
 <h2>Run the checks</h2>
@@ -63,6 +74,10 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
   <li>Pause a large upload you control. See if the call clears.</li>
   <li>Repeat on Ethernet with Wi-Fi off. Use the same PC and call service.</li>
 </ol>
+<figure class="call-path">
+<div class="route call-route"><span>PC</span><b aria-hidden="true">→</b><span>Wi-Fi</span><b aria-hidden="true">→</b><span>Router</span><b aria-hidden="true">→</b><span>Call service</span></div>
+<figcaption>Ethernet changes the PC-to-router link. Use the same PC and call service to keep the rest of the comparison consistent.</figcaption>
+</figure>
 <h2>What to check next</h2>
 <ul class="next-checks">
   <li><strong>Ethernet clears it</strong><span>Try Wi-Fi closer to the router.</span></li>
