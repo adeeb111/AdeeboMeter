@@ -1,0 +1,118 @@
+(function () {
+  "use strict";
+
+  var languages = {
+    en: "English", fr: "Français", es: "Español", ar: "العربية",
+    bn: "বাংলা", hi: "हिन्दी", zh: "简体中文"
+  };
+  var tags = { fr: "fr-CA", zh: "zh-Hans" };
+  var storageKey = "adeebometer-language";
+  var root = document.documentElement;
+  var query = new URLSearchParams(location.search).get("lang");
+  var messages = window.AdeeboMeterMessages;
+
+  function known(value) {
+    return value === "auto" || Object.prototype.hasOwnProperty.call(languages, value);
+  }
+
+  function saved() {
+    try { return localStorage.getItem(storageKey); } catch (_) { return null; }
+  }
+
+  function remember(value) {
+    try { localStorage.setItem(storageKey, value); } catch (_) {}
+  }
+
+  function preferred() {
+    var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+    for (var i = 0; i < list.length; i++) {
+      var code = (list[i] || "").toLowerCase().split("-")[0];
+      if (known(code) && code !== "auto") return code;
+    }
+    return "en";
+  }
+
+  var stored = saved();
+  var choice = known(query) ? query : known(stored) ? stored : "auto";
+  if (known(query)) remember(query);
+  var code = choice === "auto" ? preferred() : choice;
+
+  function t(key) {
+    var table = messages[code];
+    return table && Object.prototype.hasOwnProperty.call(table, key) ? table[key] : key;
+  }
+
+  function apply() {
+    root.lang = tags[code] || code;
+    root.dataset.locale = code;
+    document.querySelectorAll("[data-i18n]").forEach(function (node) {
+      var key = node.dataset.i18n;
+      node.textContent = t(key);
+      node.lang = t(key) === key ? "en" : root.lang;
+      node.dir = "auto";
+    });
+    document.querySelectorAll("[data-i18n-label]").forEach(function (node) {
+      node.setAttribute("aria-label", t(node.dataset.i18nLabel));
+    });
+    document.querySelectorAll("[data-i18n-preview]").forEach(function (node) {
+      node.hidden = code === "en";
+    });
+    document.querySelectorAll("[data-i18n-direction]").forEach(function (node) {
+      node.dir = code === "ar" ? "rtl" : "ltr";
+    });
+    document.querySelectorAll("[data-language-picker]").forEach(function (select) {
+      if (!select.options.length) return;
+      select.options[0].textContent = languages[preferred()] + " · " + t("Automatic");
+      select.setAttribute("aria-label", t("Language"));
+      select.title = t("Language");
+      select.value = choice;
+      select.hidden = false;
+    });
+  }
+
+  function change(value) {
+    if (!known(value)) return;
+    remember(value);
+    var url = new URL(location.href);
+    if (url.searchParams.has("lang")) {
+      url.searchParams.delete("lang");
+      history.replaceState(history.state, "", url);
+    }
+    choice = value;
+    code = choice === "auto" ? preferred() : choice;
+    apply();
+    document.dispatchEvent(new Event("adeebometerlanguagechange"));
+  }
+
+  root.lang = tags[code] || code;
+  var mounted = new WeakSet();
+  function mountPickers() {
+    document.querySelectorAll("[data-language-picker]").forEach(function (select) {
+      if (mounted.has(select)) return;
+      mounted.add(select);
+      select.add(new Option("Automatic", "auto"));
+      Object.keys(languages).forEach(function (id) {
+        var option = new Option(languages[id], id);
+        option.lang = tags[id] || id;
+        option.dir = id === "ar" ? "rtl" : "ltr";
+        select.add(option);
+      });
+      select.addEventListener("change", function () { change(select.value); });
+    });
+    apply();
+  }
+
+  window.AdeeboMeterLocale = { t: t, code: function () { return code; }, mountPickers: mountPickers };
+  document.addEventListener("DOMContentLoaded", function () {
+    mountPickers();
+    root.classList.add("locale-ready");
+  });
+
+  window.addEventListener("languagechange", function () {
+    if (choice === "auto" && preferred() !== code) {
+      code = preferred();
+      apply();
+      document.dispatchEvent(new Event("adeebometerlanguagechange"));
+    }
+  });
+}());
