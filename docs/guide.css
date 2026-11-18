@@ -107,3 +107,33 @@ main>nav:first-child{margin-bottom:1.2rem}
 .next-checks strong,.next-checks span{display:block}
 .next-checks span{color:var(--sub)}
 @media(max-width:620px){.next-checks{grid-template-columns:1fr}}
+
+.art-calls{--layer:#226eae}
+.call-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+.call-sample{min-width:0}
+.call-window{position:relative;min-height:68px;display:grid;place-items:end center;overflow:hidden;border-radius:5px 5px 0 0;background:#dbeaf8;border:1px solid #a8bfd6;border-bottom:0}
+.call-person{position:relative;width:55px;height:27px;border-radius:22px 22px 0 0;background:#365377}
+.call-person::before{content:"";position:absolute;width:24px;height:24px;left:50%;top:-26px;transform:translateX(-50%);border-radius:50%;background:#a65d45}
+.call-stalled .call-window{background:#f7e8d9;border-color:#d4b192}
+.call-stalled .call-person{opacity:.65}
+.call-pause,.call-audio{position:absolute;display:flex;align-items:center;justify-content:center;gap:3px;right:6px;bottom:6px;width:25px;height:23px;border-radius:4px;color:#fff;background:#794611}
+.call-pause::before,.call-pause::after{content:"";width:3px;height:9px;background:currentColor}
+.call-audio{background:#126753}
+.call-audio i{width:2px;height:5px;background:currentColor}
+.call-audio i:nth-child(2){height:11px}.call-audio i:nth-child(3){height:8px}
+.call-readout{display:grid;gap:.1rem;padding:.35rem .45rem;border:1px solid var(--line);border-radius:0 0 5px 5px;line-height:1.2;overflow-wrap:anywhere}
+.call-readout span{color:var(--sub)}
+.call-route span{min-width:0;padding:.4rem .22rem}
+.call-route span:nth-child(3){border-color:#d58718}
+.call-path{margin:1.2rem 0}
+.call-path .route span{font-weight:650}
+.call-path figcaption{margin-top:.4rem}
+
+.call-observe{--check-color:#2672c9;--check-tint:rgba(38,114,201,.08)}
+.call-upload{--check-color:#b36a19;--check-tint:rgba(179,106,25,.09)}
+.call-ethernet{--check-color:#16816e;--check-tint:rgba(22,129,110,.08)}
+.call-device{--check-color:#7750b5;--check-tint:rgba(119,80,181,.08)}
+.call-steps{padding-inline-start:1.55rem}
+.call-steps li,.call-results li{border-inline-start:3px solid var(--check-color);background:var(--check-tint)}
+.call-steps li{padding:.45rem .6rem;margin:.45rem 0;border-radius:4px}
+.call-steps li::marker{font-weight:700}
