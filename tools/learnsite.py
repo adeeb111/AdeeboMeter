@@ -132,6 +132,10 @@ def lesson(t, prev, nxt, same):
     h.append(f'<div class="card one"><p>{E(t.get("line"))}</p></div>\n')
     if t.get('ladder'): h.append(f'<h2>How the conversation goes</h2>\n{ladder(t["ladder"])}\n')
     if t.get('breaks'): h.append(f'<h2>When it goes wrong</h2>\n<div class="card warn"><p>{E(t["breaks"])}</p></div>\n')
+    if t['id'] == 'wifi':
+        h.append('<p>If the connection keeps dropping, compare Wi-Fi with Ethernet and <a href="../isp-report.html">save a connection report for your internet provider</a>.</p>\n')
+    if t['id'] == 'icmp':
+        h.append('<p>To capture ping and traceroute results together, <a href="../isp-report.html">create a packet loss report for your internet provider</a>.</p>\n')
     if t.get('more'): h.append(f'<h2>Going deeper</h2>\n<p>{E(t["more"])}</p>\n')
     q = [x.strip() for x in t.get('check', '').split(' | ')]
     if len(q) >= 3:
