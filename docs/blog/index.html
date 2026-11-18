@@ -47,15 +47,17 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="stylesheet" href="/guide.css">
 </head>
 <body>
-<main>
-<nav aria-label="Site"><a href="/">AdeeboMeter</a> · <a href="/learn/">Learn</a></nav>
-<h1>Troubleshooting Blog</h1>
-<p>Pick what’s happening. Each guide shows what to measure, how to read the results, and what to try next.</p>
+<main class="troubleshooting">
+<nav class="guide-home" aria-label="Site"><a href="/"><img src="/favicon.svg" width="26" height="26" alt="">AdeeboMeter</a><a href="/learn/">Learn</a></nav>
+<header class="story-hero">
+  <div><p class="story-kicker">Troubleshooting Blog</p><h1>What slowed down?</h1><p>Pick what you’re seeing. Run one check. Know where to look next.</p></div>
+  <div class="hero-route" aria-hidden="true"><span>PC</span><span>Wi-Fi</span><span>Router</span><span>Internet</span></div>
+</header>
 <div class="guide-cards">
-<section><span>Connection</span><h2><a href="/wifi-or-isp.html">Wi-Fi or internet provider?</a></h2><p>Compare devices and run the same check over Ethernet.</p><p><strong>Start here:</strong> One room, device, or every connection?</p></section>
-<section><span>Connection</span><h2><a href="/internet-speed-monitor.html">Internet slows down at certain times</a></h2><p>Compare download, upload, and latency over the same period.</p><p><strong>Start here:</strong> Does delay rise when a transfer starts?</p></section>
-<section><span>Support</span><h2><a href="/isp-report.html">Packet loss you need to show support</a></h2><p>Read a sample report and collect a useful before-and-during comparison.</p><p><strong>Start here:</strong> Does the loss reach the destination?</p></section>
-<section><span>Windows</span><h2><a href="/pc-monitoring.html">PC or apps feel slow</a></h2><p>Compare CPU, memory, disk, and network activity with the slowdown.</p><p><strong>Start here:</strong> Is the whole PC slow or only online tasks?</p></section>
+<a class="scenario-card" href="/wifi-or-isp.html"><div aria-hidden="true"><div class="scenario-art art-wifi"><div class="route"><span>PC</span><b>→</b><span>Router</span><b>→</b><span>Internet</span></div><div class="art-note"><span><i></i> Wi-Fi</span><span><i></i> Ethernet</span></div></div></div><div class="scenario-copy"><h2>Is it my Wi-Fi or my ISP?</h2><p>Try the same task over Wi-Fi and Ethernet.</p><span aria-hidden="true">↗</span></div></a>
+<a class="scenario-card" href="/internet-speed-monitor.html"><div aria-hidden="true"><div class="scenario-art art-speed"><div class="plot-label"><span>Connection delay</span><span>Example</span></div><span class="plot-bars" aria-hidden="true"><i style="--h:18%"></i><i style="--h:20%"></i><i style="--h:17%"></i><i style="--h:21%"></i><i style="--h:24%"></i><i style="--h:42%"></i><i style="--h:72%"></i><i style="--h:89%"></i><i style="--h:83%"></i><i style="--h:86%"></i><i style="--h:48%"></i><i style="--h:25%"></i><i style="--h:20%"></i><i style="--h:19%"></i></span><div class="plot-axis"><span>Idle</span><span>Upload starts</span><span>Upload paused</span></div></div></div><div class="scenario-copy"><h2>Why does my internet slow down?</h2><p>See what happens to delay when traffic rises.</p><span aria-hidden="true">↗</span></div></a>
+<a class="scenario-card" href="/pc-monitoring.html"><div aria-hidden="true"><div class="scenario-art art-pc"><div class="plot-label"><span>PC activity</span><span>Example</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>Memory<i style="--h:64%"></i></span><span>Disk<i style="--h:94%"></i></span></div></div></div><div class="scenario-copy"><h2>Why is my PC slow?</h2><p>Spot what stays busy while your PC stalls.</p><span aria-hidden="true">↗</span></div></a>
+<a class="scenario-card" href="/isp-report.html"><div aria-hidden="true"><div class="scenario-art art-isp"><div class="plot-label"><span>Packet loss</span><span>Example</span></div><div class="hopline"><span><i></i>Router</span><span><i></i>Later hop</span><span><i></i>Destination</span></div></div></div><div class="scenario-copy"><h2>What can I show my ISP?</h2><p>Turn recurring packet loss into a report.</p><span aria-hidden="true">↗</span></div></a>
 </div>
 </main>
 </body>
