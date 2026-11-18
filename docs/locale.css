@@ -102,3 +102,10 @@ html[lang="bn"] #app header h1 {
 html[lang="bn"] #app .row .tx {
   line-height: 1.45;
 }
+
+/* Give the translated desktop navigation enough room for the Download button. */
+@media (min-width: 1201px) {
+  .top .wrap { gap: clamp(1rem, 1.8vw, 1.75rem); }
+  .top .links { column-gap: clamp(.55rem, .85vw, .85rem); }
+  .top .site-language [data-language-picker] { width: 7.25rem; max-width: 100%; }
+}
