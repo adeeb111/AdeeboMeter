@@ -1271,3 +1271,5 @@ The app and the port it uses	L'appli et le port qu'elle utilise
 Your Wi-Fi or cable, the router and your provider	Votre Wi-Fi ou câble, le routeur et votre fournisseur
 How many networks it crosses and who answers at the end	Combien de réseaux il traverse et qui répond au bout
 Know what's wrong. Show anyone.	Sachez ce qui ne va pas. Montrez-le à qui vous voulez.
+
+Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere.	Aperçu : certains textes sont encore en anglais. Redémarrez AdeeboMeter pour appliquer la langue partout.
