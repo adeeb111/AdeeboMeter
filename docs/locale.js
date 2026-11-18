@@ -9,7 +9,9 @@
   var storageKey = "adeebometer-language";
   var root = document.documentElement;
   var query = new URLSearchParams(location.search).get("lang");
-  var messages = window.AdeeboMeterMessages;
+  var messages = window.AdeeboMeterMessages || {};
+  var languageRoute = root.dataset.languageRoute;
+  var pageLanguage = languageRoute ? root.lang : null;
 
   function known(value) {
     return value === "auto" || Object.prototype.hasOwnProperty.call(languages, value);
@@ -33,7 +35,8 @@
   }
 
   var stored = saved();
-  var choice = known(query) ? query : known(stored) ? stored : "auto";
+  var defaultChoice = pageLanguage === "bn" ? "bn" : "auto";
+  var choice = known(query) ? query : known(stored) ? stored : defaultChoice;
   if (known(query)) remember(query);
   var code = choice === "auto" ? preferred() : choice;
 
@@ -48,8 +51,21 @@
     });
   }
 
+  function followLanguageRoute() {
+    if (!languageRoute || !/^https?:$/.test(location.protocol)) return false;
+    var nextLanguage = code === "bn" ? "bn" : "en";
+    if (nextLanguage === pageLanguage) return false;
+    var url = new URL(location.href);
+    url.pathname = (nextLanguage === "bn" ? "/bn" : "") + languageRoute;
+    location.replace(url.href);
+    return true;
+  }
+
+  if (followLanguageRoute()) return;
+
   function apply() {
-    root.lang = tags[code] || code;
+    if (followLanguageRoute()) return;
+    root.lang = pageLanguage || tags[code] || code;
     root.dataset.locale = code;
     document.querySelectorAll("[data-blog-link]").forEach(function (link) {
       link.href = code === "bn" ? "/bn/blog/" : "/blog/";
@@ -97,7 +113,7 @@
     document.dispatchEvent(new Event("adeebometerlanguagechange"));
   }
 
-  root.lang = tags[code] || code;
+  root.lang = pageLanguage || tags[code] || code;
   var mounted = new WeakSet();
   function mountPickers() {
     document.querySelectorAll("[data-language-picker]").forEach(function (select) {
@@ -123,7 +139,7 @@
 
   window.addEventListener("storage", function (event) {
     if (event.key !== storageKey || known(query)) return;
-    choice = known(event.newValue) ? event.newValue : "auto";
+    choice = known(event.newValue) ? event.newValue : defaultChoice;
     code = choice === "auto" ? preferred() : choice;
     apply();
     document.dispatchEvent(new Event("adeebometerlanguagechange"));
