@@ -1,0 +1,247 @@
+# AdeeboMeter - es translation preview. Missing lines stay in English.
++ Add server	+ Añadir servidor
++ Add your own game	+ Añadir tu juego
+1 day	1 día
+14 days	14 días
+3 days	3 días
+30 days	30 días
+60 days	60 días
+7 days	7 días
+90 days	90 días
+A website or app won't open	Un sitio web o una app no abre
+About	Acerca de
+Accuracy	Precisión
+Address me as	Llámame
+AdeeboMeter itself	Sobre AdeeboMeter
+Alerts	Alertas
+All	Todos
+An app freezes	Una app se congela
+Announcements (mDNS, SSDP, LLMNR, NetBIOS)	Anuncios (mDNS, SSDP, LLMNR, NetBIOS)
+App and connection watch	Vigilancia de apps y conexiones
+Auto	Auto
+BGP and who owns the network	BGP y quién es el dueño de la red
+Back	Atrás
+Back to corner	Volver a la esquina
+Background checks	Pruebas en segundo plano
+Background jobs	Tareas en segundo plano
+Balanced	Balanced
+Battery	Batería
+Better	Mejor
+Bigger	Más grande
+Broker alerts	Alertas del bróker
+Buddy	Compañero
+Buddy face	Cara del compañero
+Buddy's hat	Gorro del compañero
+By question	Por pregunta
+Cable	Cable
+Calls	Llamadas
+Cancel	Cancelar
+Capture & advanced	Captura y opciones avanzadas
+Certificate revocation checks	Comprobación de revocación de certificados
+Changes	Cambios
+Check	Comprobar
+Check a destination	Comprobar un destino
+Checking...	Comprobando...
+Clock check	Comprobación del reloj
+Close	Cerrar
+Companion	Compañero
+Connected	Conectado
+Connections	Conexiones
+Copied	Copiado
+Copy	Copiar
+Corner widget size	Tamaño del widget
+Crashes and hangs	Cierres inesperados y bloqueos
+Credits	Créditos
+Crypto, around the clock	Cripto las 24 horas
+DNS AND WEB	DNS Y WEB
+DNS hijack and VPN name rules	Secuestro de DNS y reglas de nombres de VPN
+DNS speed test	Prueba de velocidad DNS
+DSCP-marked ping	Ping con marca DSCP
+Dark	Dark
+Day's numbers	Cifras del día
+Delete all saved history now	Borrar todo el historial guardado ahora
+Delete all saved history?	¿Borrar todo el historial guardado?
+Details	Detalles
+Disk	Disco
+Donate	Donar
+Done	Listo
+Download	Descarga
+Encrypted DNS (DoH / DoT)	DNS cifrado (DoH / DoT)
+Evening summary in the widget	Resumen nocturno en el widget
+Every second while a game is open	Cada segundo durante el juego
+Every tool	Todas las herramientas
+Exit	Salir
+FINE-TUNE	AJUSTE FINO
+Follow Windows	Según Windows
+Found a bug? Report it	¿Encontraste un error? Repórtalo
+Fun lines	Frases divertidas
+Game ping in the background	Ping del juego en segundo plano
+Gamer	Gamer
+Gamer Zone	Zona Gamer
+Games	Juegos
+Gaming	Juegos
+General	General
+Graphics per app	Gráficos por app
+HTTP and TLS inspector	Inspector HTTP y TLS
+HTTP timing, repeated	Tiempos de HTTP, repetidos
+Health	Salud
+Health check	Comprobación de salud
+History	Historial
+History & data	Historial y datos
+Home	Inicio
+Hosts file	Archivo hosts
+Hover wait on the folded chip	Espera al pasar el cursor sobre el widget plegado
+How chatty	Cuánto habla
+How it behaves	Comportamiento
+How it travels	Cómo viaja
+How visible	Visibilidad
+IPv6 ping and trace	Ping y ruta IPv6
+IPv6 routers on this network	Routers IPv6 de esta red
+IPv6 vs IPv4	IPv6 frente a IPv4
+Inside Windows	Dentro de Windows
+Internet	Internet
+Internet and DNS check	Prueba de Internet y DNS
+Jitter	Jitter
+Keep game history for	Guardar historial de juego por
+Keep history for	Guardar historial por
+Know what's wrong. Show anyone.	Detecta el problema. Muéstralo.
+LAB	LABORATORIO
+Language	Idioma
+Latency under load (bufferbloat)	Latencia bajo carga (bufferbloat)
+Layout	Diseño
+Learn	Aprender
+Light	Light
+Live	En vivo
+Live capture	Captura en vivo
+Live capture stops after	La captura en vivo se detiene tras
+Loading...	Cargando...
+MTR - loss per hop over time	MTR: pérdida por salto en el tiempo
+MTU over UDP (QUIC / DNS)	MTU por UDP (QUIC / DNS)
+MTU per hop	MTU por salto
+Mail server (SMTP / IMAP / POP)	Servidor de correo (SMTP / IMAP / POP)
+Memory	Memoria
+Memory, disk, heat	Memoria, disco y calor
+Midnight	Midnight
+Mini graph	Minigráfico
+Mint	Mint
+Monthly data cap	Límite mensual de datos
+Mood	Ánimo
+NTP - ask a time server	NTP: consultar un servidor de hora
+Names for IP addresses	Nombres de direcciones IP
+Navigation	Navegación
+Neon	Neon
+Network	Red
+Network story	Historia de la red
+Never	Nunca
+Next	Siguiente
+No	No
+No place yet.	Sin ubicación.
+None	Ninguno
+Normal	Normal
+Notice streams	Detectar transmisiones
+OK	Aceptar
+Off	No
+Offline	Sin conexión
+On	Sí
+Open	Abrir
+Open AdeeboMeter	Abrir AdeeboMeter
+Overlapping networks (home vs VPN)	Redes superpuestas (casa y VPN)
+PATH	RUTA
+PROTOCOLS	PROTOCOLOS
+Pause	Pausar
+Phone	Teléfono
+Port test	Prueba de puerto
+Pre-call check	Prueba antes de llamar
+Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere.	Vista previa: queda texto en inglés. Reinicia AdeeboMeter para aplicar el idioma en toda la app.
+Privacy & online lookups	Privacidad y consultas en línea
+Problem	Problema
+Quiet hours	Horas de silencio
+REMOTE	REMOTO
+Ready	Listo
+Remove	Quitar
+Replay	Reproducir
+Reports	Informes
+Router	Router
+Router ping	Ping al router
+Routing protocols on my segment	Protocolos de enrutamiento en mi segmento
+Run	Ejecutar
+Running	En curso
+SPEED	VELOCIDAD
+SSH banner	Banner SSH
+Save	Guardar
+Search	Buscar
+Search anything	Buscar lo que sea
+Search tools, pages, problems	Buscar herramientas, páginas o fallos
+Security	Seguridad
+Servers watched in the background	Servidores vigilados en segundo plano
+Services that failed to start (7 days)	Servicios que no se iniciaron (7 días)
+Settings	Ajustes
+Shared folders on a PC or NAS (SMB)	Carpetas compartidas en un PC o NAS (SMB)
+Show	Mostrar
+Show game ping on the widget	Mostrar el ping del juego en el widget
+Show widget	Mostrar widget
+Sign-in page check	Prueba de página de acceso
+Slow leaks	Fugas lentas
+Small	Pequeño
+Sniff records for	Capturar tráfico durante
+Speed	Velocidad
+Speed in	Unidad de velocidad
+Speed test	Prueba de velocidad
+Sports	Deportes
+Start	Iniciar
+Start live capture	Iniciar captura en vivo
+Start when a game opens	Iniciar al abrir un juego
+Start with Windows	Iniciar con Windows
+Stop	Detener
+Story	Historia
+Streaming	Streaming
+Streaming & trading	Streaming y trading
+Sunset	Sunset
+Sustained ping	Ping continuo
+Switch them off by themselves after	Desactivarlas tras
+TCP ping	Ping TCP
+Temperature in	Temperatura en
+The way back (return path)	Ruta de vuelta
+Theme	Tema
+Time machine	Máquina del tiempo
+Today	Hoy
+Today's total	Total de hoy
+Toolbox	Herramientas
+Topics	Temas
+Trading	Trading
+Try again	Volver a intentar
+Unknown	Desconocido
+Upload	Subida
+VPN map	Mapa de VPN
+View	Vista
+WEB	WEB
+WHY DOES IT FAIL?	¿POR QUÉ FALLA?
+Watch and suggest	Vigilar y sugerir
+Weather	Tiempo
+Weather for	Tiempo en
+Weather in the widget	Tiempo en el widget
+What can AdeeboMeter see here?	¿Qué puede ver AdeeboMeter aquí?
+What changed	Qué cambió
+What changed (7 days)	Qué cambió (7 días)
+What should I call you?	¿Cómo te llamo?
+What's running	Qué se está ejecutando
+What's wrong?	¿Qué falla?
+Where did my space go?	¿Dónde quedó mi espacio?
+Which proxy does this URL use?	¿Qué proxy usa esta URL?
+Which route does this take?	¿Qué ruta sigue?
+Who carries my traffic (BGP)	Quién transporta mi tráfico (BGP)
+Wi-Fi watch	Vigilancia de Wi-Fi
+Widget	Widget
+Widget style	Estilo del widget
+Words of comfort	Palabras de ánimo
+YOUR NETWORK	TU RED
+Yes	Sí
+Your Wi-Fi	Tu Wi-Fi
+Your Wi-Fi / cable	Tu Wi-Fi / cable
+Your broker	Tu bróker
+Your cable	Tu cable
+Your gateway and failover	Tu puerta de enlace y su respaldo
+Your phone	Tu teléfono
+days of history are deleted for good - this can't be undone.	días de historial se borrarán para siempre. No se puede deshacer.
+dig - any DNS record	dig: cualquier registro DNS
+iperf3 to your server	iperf3 hacia tu servidor

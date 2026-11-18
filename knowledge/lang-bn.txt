@@ -1,0 +1,247 @@
+# AdeeboMeter - bn translation preview. Missing lines stay in English.
++ Add server	+ সার্ভার যোগ করুন
++ Add your own game	+ নিজের গেম যোগ করুন
+1 day	1 দিন
+14 days	14 দিন
+3 days	3 দিন
+30 days	30 দিন
+60 days	60 দিন
+7 days	7 দিন
+90 days	90 দিন
+A website or app won't open	ওয়েবসাইট বা অ্যাপ খুলছে না
+About	সম্পর্কে
+Accuracy	নির্ভুলতা
+Address me as	আমাকে ডাকুন
+AdeeboMeter itself	AdeeboMeter সম্পর্কে
+Alerts	সতর্কতা
+All	সব
+An app freezes	অ্যাপ আটকে যায়
+Announcements (mDNS, SSDP, LLMNR, NetBIOS)	ঘোষণা (mDNS, SSDP, LLMNR, NetBIOS)
+App and connection watch	অ্যাপ ও সংযোগ নজরদারি
+Auto	স্বয়ংক্রিয়
+BGP and who owns the network	BGP ও নেটওয়ার্কের মালিক
+Back	পেছনে
+Back to corner	কোণায় ফিরে যান
+Background checks	ব্যাকগ্রাউন্ড চেক 
+Background jobs	ব্যাকগ্রাউন্ড জবস
+Balanced	ব্যালান্সড
+Battery	ব্যাটারি
+Better	আরও ভালো
+Bigger	আরও বড়
+Broker alerts	ব্রোকার সতর্কতা
+Buddy	বাডি
+Buddy face	বাডি মুখ
+Buddy's hat	বাডি টুপি
+By question	প্রশ্ন অনুযায়ী
+Cable	কেবল
+Calls	কল
+Cancel	বাতিল
+Capture & advanced	ক্যাপচার ও অ্যাডভান্সড
+Certificate revocation checks	সার্টিফিকেট বাতিল চেক 
+Changes	পরিবর্তন
+Check	চেক করুন
+Check a destination	Check a ডেস্টিনেশন
+Checking...	চেক চলছে...
+Clock check	Clock চেক
+Close	বন্ধ
+Companion	বন্ধু
+Connected	কানেক্টেড
+Connections	কানেকশনস
+Copied	কপি হয়েছে
+Copy	কপি
+Corner widget size	কোণার উইজেটের সাইজ
+Crashes and hangs	ক্র্যাশ ও আটকে যাওয়া
+Credits	কৃতজ্ঞতা
+Crypto, around the clock	ক্রিপ্টো, সারাক্ষণ
+DNS AND WEB	DNS ও ওয়েব
+DNS hijack and VPN name rules	DNS হাইজ্যাক ও VPN নামের নিয়ম
+DNS speed test	DNS গতি পরীক্ষা
+DSCP-marked ping	DSCP চিহ্নিত পিং
+Dark	Dark
+Day's numbers	দিনের সংখা 
+Delete all saved history now	সব সংরক্ষিত ইতিহাস মুছুন
+Delete all saved history?	সব সংরক্ষিত ইতিহাস মুছবেন?
+Details	বিস্তারিত
+Disk	ডিস্ক
+Donate	দান করুন
+Done	সম্পন্ন
+Download	ডাউনলোড
+Encrypted DNS (DoH / DoT)	এনক্রিপ্ট করা DNS (DoH / DoT)
+Evening summary in the widget	উইজেটে সন্ধ্যার সামারি 
+Every second while a game is open	গেম খোলা থাকলে প্রতি সেকেন্ডে
+Every tool	সব টুল
+Exit	এক্সিট 
+FINE-TUNE	ফাইন-টিউন
+Follow Windows	Windows অনুযায়ী
+Found a bug? Report it	ত্রুটি পেয়েছেন? জানান
+Fun lines	Fun লাইনস 
+Game ping in the background	ব্যাকগ্রাউন্ড  গেম পিং
+Gamer	গেমার
+Gamer Zone	গেমিং জোন
+Games	গেম
+Gaming	গেমিং
+General	সাধারণ
+Graphics per app	অ্যাপভিত্তিক গ্রাফিক্স
+HTTP and TLS inspector	HTTP ও TLS ইন্সপেক্টর 
+HTTP timing, repeated	HTTP টাইমিং, বারবার
+Health	স্বাস্থ্য
+Health check	স্বাস্থ্য পরীক্ষা
+History	ইতিহাস
+History & data	ইতিহাস ও ডেটা
+Home	হোম
+Hosts file	hosts ফাইল
+Hover wait on the folded chip	ভাঁজ করা চিপের ওপর কার্সর রাখার সময়
+How chatty	কতটা কথা বলে
+How it behaves	আচরণ
+How it travels	ডেটা কীভাবে যায়
+How visible	দৃশ্যমানতা
+IPv6 ping and trace	IPv6 পিং ও ট্রেস
+IPv6 routers on this network	এই নেটওয়ার্কের IPv6 রাউটার
+IPv6 vs IPv4	IPv6 বনাম IPv4
+Inside Windows	Windows-এর ভেতরে
+Internet	ইন্টারনেট
+Internet and DNS check	ইন্টারনেট ও DNS পরীক্ষা
+Jitter	জিটার
+Keep game history for	গেমের ইতিহাস রাখা হবে
+Keep history for	ইতিহাস রাখা হবে
+Know what's wrong. Show anyone.	সমস্যা বুঝুন। অন্যকে দেখান।
+LAB	ল্যাব
+Language	ভাষা
+Latency under load (bufferbloat)	লোডের সময় বিলম্ব (bufferbloat)
+Layout	লেআউট
+Learn	শিখুন
+Light	Light
+Live	লাইভ
+Live capture	লাইভ ক্যাপচার
+Live capture stops after	লাইভ ক্যাপচার চলবে
+Loading...	লোড হচ্ছে...
+MTR - loss per hop over time	MTR — সময়ের সঙ্গে প্রতি হপে প্যাকেট লস
+MTU over UDP (QUIC / DNS)	UDP-তে MTU (QUIC / DNS)
+MTU per hop	প্রতি হপে MTU
+Mail server (SMTP / IMAP / POP)	মেইল সার্ভার (SMTP / IMAP / POP)
+Memory	মেমরি
+Memory, disk, heat	মেমরি, ডিস্ক ও তাপ
+Midnight	Midnight
+Mini graph	ছোট গ্রাফ
+Mint	Mint
+Monthly data cap	মাসিক ডেটা সীমা
+Mood	মেজাজ
+NTP - ask a time server	NTP: সময় সার্ভারকে জিজ্ঞেস করুন
+Names for IP addresses	IP ঠিকানার নাম
+Navigation	নেভিগেশন
+Neon	Neon
+Network	নেটওয়ার্ক
+Network story	নেটওয়ার্কের গল্প
+Never	কখনো নয়
+Next	পরবর্তী
+No	না
+No place yet.	এখনও কোনো জায়গা ঠিক করা হয়নি।
+None	কোনোটিই নয়
+Normal	স্বাভাবিক
+Notice streams	স্ট্রিম শনাক্ত করুন
+OK	ঠিক আছে
+Off	বন্ধ
+Offline	অফলাইন
+On	চালু
+Open	খুলুন
+Open AdeeboMeter	AdeeboMeter খুলুন
+Overlapping networks (home vs VPN)	ওভারল্যাপিং নেটওয়ার্ক (বাড়ি বনাম VPN)
+PATH	পথ
+PROTOCOLS	প্রোটোকল
+Pause	বিরতি
+Phone	ফোন
+Port test	পোর্ট পরীক্ষা
+Pre-call check	কলের আগের পরীক্ষা
+Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere.	প্রিভিউ: কিছু লেখা এখনও ইংরেজিতে। সব জায়গায় ভাষা বদলাতে AdeeboMeter আবার চালু করুন।
+Privacy & online lookups	গোপনীয়তা ও অনলাইন অনুসন্ধান
+Problem	সমস্যা
+Quiet hours	নীরব সময়
+REMOTE	দূরবর্তী
+Ready	প্রস্তুত
+Remove	সরান
+Replay	আবার চালান
+Reports	রিপোর্ট
+Router	রাউটার
+Router ping	রাউটার পিং
+Routing protocols on my segment	আমার সেগমেন্টে রাউটিং প্রোটোকল
+Run	চালান
+Running	চলছে
+SPEED	গতি
+SSH banner	SSH ব্যানার
+Save	সংরক্ষণ করুন
+Search	খুঁজুন
+Search anything	যেকোনো কিছু খুঁজুন
+Search tools, pages, problems	টুল, পৃষ্ঠা বা সমস্যা খুঁজুন
+Security	নিরাপত্তা
+Servers watched in the background	পটভূমিতে নজরে রাখা সার্ভার
+Services that failed to start (7 days)	চালু হতে পারেনি এমন সার্ভিস (7 দিন)
+Settings	সেটিংস
+Shared folders on a PC or NAS (SMB)	পিসি বা NAS-এর শেয়ার করা ফোল্ডার (SMB)
+Show	দেখান
+Show game ping on the widget	উইজেটে গেমের পিং দেখান
+Show widget	উইজেট দেখান
+Sign-in page check	সাইন-ইন পৃষ্ঠা পরীক্ষা
+Slow leaks	ধীর লিক
+Small	ছোট
+Sniff records for	স্নিফ রেকর্ড চলবে
+Speed	গতি
+Speed in	গতির একক
+Speed test	গতি পরীক্ষা
+Sports	খেলাধুলা
+Start	শুরু
+Start live capture	লাইভ ক্যাপচার শুরু করুন
+Start when a game opens	গেম খুললে শুরু করুন
+Start with Windows	Windows-এর সঙ্গে চালু করুন
+Stop	থামান
+Story	গল্প
+Streaming	স্ট্রিমিং
+Streaming & trading	স্ট্রিমিং ও ট্রেডিং
+Sunset	Sunset
+Sustained ping	একটানা পিং
+Switch them off by themselves after	এই সময় পর নিজে থেকে বন্ধ হবে
+TCP ping	TCP পিং
+Temperature in	তাপমাত্রার একক
+The way back (return path)	ফেরার পথ
+Theme	থিম
+Time machine	টাইম মেশিন
+Today	আজ
+Today's total	আজকের মোট
+Toolbox	টুলবক্স
+Topics	বিষয়
+Trading	ট্রেডিং
+Try again	আবার চেষ্টা করুন
+Unknown	অজানা
+Upload	আপলোড
+VPN map	VPN মানচিত্র
+View	ভিউ
+WEB	ওয়েব
+WHY DOES IT FAIL?	কেন কাজ করছে না?
+Watch and suggest	নজর রাখুন ও পরামর্শ দিন
+Weather	আবহাওয়া
+Weather for	আবহাওয়ার স্থান
+Weather in the widget	উইজেটে আবহাওয়া
+What can AdeeboMeter see here?	AdeeboMeter এখানে কী দেখতে পারে?
+What changed	কী বদলেছে
+What changed (7 days)	কী বদলেছে (7 দিন)
+What should I call you?	আপনাকে কী বলে ডাকব?
+What's running	কী চলছে
+What's wrong?	কী সমস্যা?
+Where did my space go?	স্টোরেজের জায়গা কোথায় গেল?
+Which proxy does this URL use?	এই URL কোন প্রক্সি ব্যবহার করে?
+Which route does this take?	কোন পথ দিয়ে যায়?
+Who carries my traffic (BGP)	কে আমার ট্র্যাফিক বহন করে (BGP)
+Wi-Fi watch	Wi-Fi নজরদারি
+Widget	উইজেট
+Widget style	উইজেটের ধরন
+Words of comfort	সান্ত্বনার কথা
+YOUR NETWORK	আপনার নেটওয়ার্ক
+Yes	হ্যাঁ
+Your Wi-Fi	আপনার Wi-Fi
+Your Wi-Fi / cable	আপনার Wi-Fi / কেবল
+Your broker	আপনার ব্রোকার
+Your cable	আপনার কেবল
+Your gateway and failover	আপনার গেটওয়ে ও ফেইলওভার
+Your phone	আপনার ফোন
+days of history are deleted for good - this can't be undone.	দিনের ইতিহাস চিরতরে মুছে যাবে। ফেরানো যাবে না।
+dig - any DNS record	dig: যেকোনো DNS রেকর্ড
+iperf3 to your server	iperf3 — আপনার সার্ভারে

@@ -258,11 +258,15 @@ textarea.in{resize:vertical;min-height:120px}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="stylesheet" href="/locale.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
 </head>
 <body>
 <div id="splash" aria-hidden="true"><svg class="amlogo" viewBox="0 0 64 64" width="96" height="96" style="--r:-42deg" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle cx="18.8" cy="42.6" r="2.3"/><circle cx="32" cy="42.6" r="2.3"/><circle cx="45.2" cy="42.6" r="2.3"/></g></svg><b class="amword">Adeebo<span class="m">Meter</span></b></div>
+<div class="phone-locale phone-locale-bar"><p class="locale-preview" data-i18n-preview data-i18n="Some content is still in English." hidden>Some content is still in English.</p><select data-language-picker aria-label="Language" hidden></select></div>
 <main id="app"></main>
-<div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back"></button><img class="logo" src="/img/logo.svg" alt="" width="30" height="30" style="width:30px;height:30px"><b>AdeeboMeter</b><span id="wtitle" hidden></span></div><div id="wload" class="mut" hidden style="padding:24px;text-align:center;color:var(--sub)"></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
+<div id="web" hidden><div class="wbar"><button class="ibtn back" id="wback" aria-label="Back" data-i18n-label="Back"></button><img class="logo" src="/img/logo.svg" alt="" width="30" height="30" style="width:30px;height:30px"><b>AdeeboMeter</b><span id="wtitle" hidden></span><span class="phone-locale"><select data-language-picker aria-label="Language" hidden></select></span></div><div id="wload" class="mut" hidden style="padding:24px;text-align:center;color:var(--sub)"></div><iframe id="wframe" title="AdeeboMeter page"></iframe></div>
 <nav class="tabs"><div class="in" id="tabs"></div></nav>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="/voice.js"></script><script src="/calc.js" defer></script><script src="/qr.js" defer></script>
@@ -323,7 +327,12 @@ textarea.in{resize:vertical;min-height:120px}
     tv: '<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/>', printer: '<path d="M6 9V2h12v7"/><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M6 14h12v8H6z"/>', phone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>', router: '<rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 17h.01M10 17h.01M12 13V8M8 6a6 6 0 018 0"/>', bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V16h8v-1.3A7 7 0 0012 2z"/>', spk: '<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M12 6h.01"/>', help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>', report: '<path d="M9 2h6l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M9 13l2 2 4-4"/>', clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>', signal: '<path d="M4 20v-3M9 20v-7M14 20v-11M19 20V4"/>', share: '<path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/>', download: '<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>', headset: '<path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>', clock: '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', bang: '<path d="M12 6v8M12 18h.01"/>', cdown: '<path d="M6 9l6 6 6-6"/>' };
   function ic(n, s) { return '<svg class="i" viewBox="0 0 24 24" style="width:' + (s || 24) + 'px;height:' + (s || 24) + 'px" aria-hidden="true">' + (I[n] || I.help) + '</svg>'; }
   function where(w) { return w === "pc" ? '<span class="where">' + ic("pc", 12) + ' ON YOUR PC</span>' : w === "off" ? '<span class="where off">OFFLINE</span>' : '<span class="where ph">' + ic("phone", 12) + ' ON THIS PHONE</span>'; }
-  function hdr(title, sub, backTo) { return '<header>' + (backTo ? '<button class="ibtn back" data-go="' + backTo + '" aria-label="Back">' + ic("back", 26) + '</button>' : '') + '<div class="t"><h1>' + title + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (backTo ? '' : '<button class="ibtn" data-go="settings" aria-label="Settings">' + ic("gear", 22) + '</button>') + '</header>'; }
+  function tr(label) { return window.AdeeboMeterLocale ? AdeeboMeterLocale.t(label) : label; }
+  function heading(label) {
+    var translated = tr(label);
+    return label === translated ? label : esc(translated);
+  }
+  function hdr(title, sub, backTo) { return '<header>' + (backTo ? '<button class="ibtn back" data-go="' + backTo + '" aria-label="' + esc(tr("Back")) + '">' + ic("back", 26) + '</button>' : '') + '<div class="t"><h1 dir="auto">' + heading(title) + '</h1>' + (sub ? '<p dir="auto">' + heading(sub) + '</p>' : '') + '</div>' + (backTo ? '' : '<button class="ibtn" data-go="settings" aria-label="' + esc(tr("Settings")) + '">' + ic("gear", 22) + '</button>') + '</header>'; }
   // ---- the logo, drawn inline so its needle can move: it sweeps when it first appears and rests where the connection is
   // (green side fine, middle busy, red side a problem); every 5 minutes it breathes and the three dots ping (CSS above)
   function lvNow() { var L = live || {}; if (isLive() && L.lv != null) return +L.lv; if (me && !me.err) return worst(phoneRows(me)); return me && me.err ? 2 : -1; }
@@ -739,13 +748,13 @@ textarea.in{resize:vertical;min-height:120px}
   }
   // AM-CG-344: a bare channel number can be 6 GHz too (its channels are 1, 5, 9 ... 233), so say so unless the PC named the band
   function band(ch) { var n = parseInt(ch, 10); if (/6\s*GHz/i.test(ch)) return "6 GHz"; if (/5\s*GHz/i.test(ch)) return "5 GHz"; if (/2\.4/i.test(ch)) return "2.4 GHz"; if (isNaN(n)) return ""; var six = n % 4 === 1 && n <= 233; return n <= 14 ? (six ? "2.4 or 6 GHz" : "2.4 GHz") : n >= 32 && n <= 177 ? (six ? "5 or 6 GHz" : "5 GHz") : six ? "6 GHz" : ""; }
-  function tile(go, icn, col, t, s, href) { return '<button class="tile" ' + (href ? 'data-web="' + href + '" data-title="' + t + '"' : 'data-go="' + go + '"') + '><span class="ic ' + col + '">' + ic(icn, 30) + '</span><b>' + t + '</b><span>' + s + '</span></button>'; }
+  function tile(go, icn, col, t, s, href) { return '<button class="tile" ' + (href ? 'data-web="' + href + '" data-title="' + t + '"' : 'data-go="' + go + '"') + '><span class="ic ' + col + '">' + ic(icn, 30) + '</span><b dir="auto">' + esc(tr(t)) + '</b><span dir="auto">' + esc(tr(s)) + '</span></button>'; }
   // Learn, Games, Live and Lock files open inside the app (the PC stays connected; Back returns here)
   var webHome = "", webFrom = "more";
   function openWeb(url, title) { if (S.tab !== "web") webFrom = S.tab; webHome = url; $("wtitle").textContent = title; var f = $("wframe"); if (f.getAttribute("src") !== url) { var wl = $("wload"); wl.textContent = /learn/.test(url) ? "Loading lessons…" : /live/.test(url) ? "Loading live data…" : "Loading…"; wl.hidden = false; f.setAttribute("src", url); } S.tab = "web"; draw(); }
   function webBack() { var f = $("wframe"), p = ""; try { p = f.contentWindow.location.pathname; } catch (e) {} if (/^\/learn\/(?!index\.html$).+/.test(p)) { f.setAttribute("src", "/learn/"); return; } S.tab = webFrom === "web" ? "more" : webFrom; draw(); }
   function rowBtn(attr, icn, col, t, s, right) { return '<button class="row" ' + attr + '>' + (icn ? '<span class="ic ' + col + '">' + ic(icn, 22) + '</span>' : '') + '<div class="tx"><b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') + '</div>' + (right == null ? '<span class="chev">' + ic("chev", 20) + '</span>' : right) + '</button>'; }
-  function needPc(what) { return '<div class="card empty">' + ic("pc", 52) + '<b>' + (phase === "ended" ? "Your PC isn't connected" : "Connect your PC") + '</b><p>' + esc(what) + '</p><button class="btn" data-go="pair">How to connect</button></div>'; }
+  function needPc(what) { return '<div class="card empty">' + ic("pc", 52) + '<b>' + esc(tr(phase === "ended" ? "Your PC isn't connected" : "Connect your PC")) + '</b><p>' + esc(what) + '</p><button class="btn" data-go="pair">How to connect</button></div>'; }
 
   $("wback").innerHTML = ic("back", 26); $("wback").onclick = webBack;
   $("wframe").addEventListener("load", function () { $("wload").hidden = true; });
@@ -912,7 +921,7 @@ textarea.in{resize:vertical;min-height:120px}
   function sheetHtml() {
     if (!S.sheet) return "";
     var h = '<div class="dim" data-act="closesheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>';
-    if (S.sheet === "view") h += '<h3>What do you use the internet for?</h3><p class="fine" style="margin:0 0 6px">Home shows what fits. Change it any time.</p>' + VIEWDEF.map(function (v) { var on = (S.view || "everyday") === v[0]; return '<button class="vopt" data-setview="' + v[0] + '"><span class="ic">' + ic(v[1], 20) + '</span><span class="tx"><b>' + v[2] + '</b><span>' + v[3] + '</span></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
+    if (S.sheet === "view") h += '<div class="phone-locale"><select data-language-picker aria-label="Language" hidden></select></div><h3 dir="auto">' + esc(tr("What do you use the internet for?")) + '</h3><p dir="auto" class="fine" style="margin:0 0 6px">' + esc(tr("Home shows what fits. Change it any time.")) + '</p>' + VIEWDEF.map(function (v) { var on = (S.view || "everyday") === v[0]; return '<button class="vopt" data-setview="' + v[0] + '"><span class="ic">' + ic(v[1], 20) + '</span><span class="tx"><b dir="auto">' + esc(tr(v[2])) + '</b><span dir="auto">' + esc(tr(v[3])) + '</span></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
     else if (S.sheet === "comp") {
       var st = window.AMV && AMV.state ? AMV.state() : { mine: null, chat: "normal" };
       if (!vlist && window.AMV && AMV.voices) AMV.voices().then(function (j) { vlist = j; if (S.sheet === "comp") draw(); });
@@ -969,7 +978,7 @@ textarea.in{resize:vertical;min-height:120px}
     var a = hdr('<span class="amword shine">Adeebo<span class="m">Meter</span></span>', "").replace('<div class="t">', wide() ? '<div class="t">' : amLogo(36) + '<div class="t">');
     var pcCard = phase !== "none" || recLoad() ? hero() : "";
     if (wide()) return a + '<div class="two"><div>' + vrow() + say() + pcCard + viewBody() + '</div><div>' + quick() + actList(4) + (phase === "live" ? glance() : "") + installCard(true) + '</div></div>';
-    if (!pcCard) pcCard = '<button class="pcrow2" data-go="' + (hasPc() ? "pair" : "addpc") + '" style="margin-top:0">' + ic("pc", 24) + '<span class="tx"><b>' + (hasPc() ? "Connect your PC" : "Add your Windows PC") + '</b><span>Scan the QR code on your PC</span></span>' + ic("chev", 18) + '</button>';
+    if (!pcCard) pcCard = '<button class="pcrow2" data-go="' + (hasPc() ? "pair" : "addpc") + '" style="margin-top:0">' + ic("pc", 24) + '<span class="tx"><b>' + esc(tr(hasPc() ? "Connect your PC" : "Add your Windows PC")) + '</b><span dir="auto">' + esc(tr("Scan the QR code on your PC")) + '</span></span>' + ic("chev", 18) + '</button>';
     return a + vrow() + say() + pcCard + viewBody() + quick() + actList(3) + (phase === "live" ? glance() : "") + installCard(true);
   };
 
@@ -2007,7 +2016,7 @@ textarea.in{resize:vertical;min-height:120px}
   var TICON = { speedo: "signal", globe: "wifi" };
   function toolMatch(q, t) { return !q || (t[2] + " " + t[3] + " " + t[0]).toLowerCase().indexOf(q) >= 0; }
   VIEWS.tools = function () {
-    var q = findQ.toLowerCase().trim(), on = phase === "live", a = hdr("Tools", on ? "Your PC and this phone" : "All from this phone - no PC needed") + '<input class="search" id="find" placeholder="Find a tool - dns, subnet, down, qr..." value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Find a tool">';
+    var q = findQ.toLowerCase().trim(), on = phase === "live", a = hdr("Tools", on ? "Your PC and this phone" : "All from this phone - no PC needed") + '<input class="search" id="find" placeholder="' + esc(tr("Find a tool")) + '" value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="' + esc(tr("Find a tool")) + '">';
     if (on && !q) a += '<h2>Your PC</h2><div class="card list">' + JOURNEYS.slice(0, 4).map(function (j) { return rowBtn('data-jr="' + j[2] + '"', "help", "k-pc", j[0], j[1]); }).join("") + rowBtn('data-pct="checks" data-go="pc"', "search", "k-pc", "All PC checks", "Ping, trace, ports, Wi-Fi, MTU... (100+)") + '</div>';
     if (!q) a += '<h2>Fix it</h2><div class="card list">' + GUIDES.map(function (g) { return rowBtn('data-guide="' + g[0] + '"', "help", "k-tools", esc(g[1]), esc(g[2])); }).join("") + '</div>';
     var any = false;
@@ -2178,15 +2187,17 @@ textarea.in{resize:vertical;min-height:120px}
     view = S.tab === "widget" ? "widget" : S.tab;
     var f = VIEWS[S.tab] || VIEWS.home, keep = document.activeElement && document.activeElement.id, pos = keep && document.activeElement.selectionStart;
     entrance(S.tab); morph($("app"), S.tab === "web" ? "" : f() + footHtml() + (S.tab === "home" ? sheetHtml() : "")); $("web").hidden = S.tab !== "web"; document.body.classList.toggle("inweb", S.tab === "web");
-    var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join();
+    var cur = TABOF[S.tab] || S.tab, TB = hasPc() ? TABS : TABS0, tkey = TB.map(function (t) { return t[0]; }).join() + (window.AdeeboMeterLocale ? window.AdeeboMeterLocale.code() : "en");
     if (S.tab === "web") cur = !hasPc() && /\/learn/.test(webHome) ? "@/learn/" : !hasPc() && /\/live/.test(webHome) ? "@/live.html" : "home";
     var tb = $("tabs"); if (tb.getAttribute("data-built") !== tkey) tb.removeAttribute("data-built");
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
-    else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand">' + amLogo(34) + '<span class="amword shine">Adeebo<span class="m">Meter</span></span></div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + t[2] + '</button>'; }).join(""); }
+    else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand">' + amLogo(34) + '<span class="amword shine">Adeebo<span class="m">Meter</span></span></div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + '<span dir="auto">' + esc(tr(t[2])) + '</span>' + '</button>'; }).join(""); }
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
+    if (S.sheet === "view" && window.AdeeboMeterLocale) window.AdeeboMeterLocale.mountPickers();
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
   }
+  document.addEventListener("adeebometerlanguagechange", function () { keepDraft(); draw(); });
   function go(t) { keepDraft(); if (t && t[0] === "@") { openWeb(t.slice(1), t.indexOf("live") >= 0 ? "Live" : "Learn"); return; }
     if (t === "tools" && S.fromGuide && S.tab !== "tools") { S.tab = "tool"; S.tool = "guide"; S.guide = S.fromGuide; S.fromGuide = ""; draw(); window.scrollTo(0, 0); return; }
     if (!hasPc() && (t === "devices" || t === "pc" || t === "send")) { S.from2 = S.tab === "web" ? "home" : S.tab; t = "addpc"; } if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }

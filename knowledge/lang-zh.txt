@@ -1,0 +1,247 @@
+# AdeeboMeter - zh translation preview. Missing lines stay in English.
++ Add server	+ 添加服务器
++ Add your own game	+ 添加自己的游戏
+1 day	1 天
+14 days	14 天
+3 days	3 天
+30 days	30 天
+60 days	60 天
+7 days	7 天
+90 days	90 天
+A website or app won't open	网站或应用打不开
+About	关于
+Accuracy	准确度
+Address me as	叫我
+AdeeboMeter itself	AdeeboMeter 本身
+Alerts	提醒
+All	全部
+An app freezes	应用卡住了
+Announcements (mDNS, SSDP, LLMNR, NetBIOS)	广播通告 (mDNS, SSDP, LLMNR, NetBIOS)
+App and connection watch	监控应用和连接
+Auto	自动
+BGP and who owns the network	BGP 与网络归属
+Back	返回
+Back to corner	返回角落
+Background checks	后台检查
+Background jobs	后台任务
+Balanced	Balanced
+Battery	电池
+Better	更好
+Bigger	更大
+Broker alerts	券商提醒
+Buddy	小伙伴
+Buddy face	小伙伴的脸
+Buddy's hat	小伙伴的帽子
+By question	按问题
+Cable	网线
+Calls	通话
+Cancel	取消
+Capture & advanced	捕获与高级选项
+Certificate revocation checks	证书吊销检查
+Changes	变化
+Check	检查
+Check a destination	检查目标
+Checking...	检查中…
+Clock check	时钟检查
+Close	关闭
+Companion	助手
+Connected	已连接
+Connections	连接
+Copied	已复制
+Copy	复制
+Corner widget size	角落小组件大小
+Crashes and hangs	崩溃与卡死
+Credits	鸣谢
+Crypto, around the clock	加密货币，全天候
+DNS AND WEB	DNS 与网站
+DNS hijack and VPN name rules	DNS 劫持与 VPN 名称规则
+DNS speed test	DNS 速度测试
+DSCP-marked ping	DSCP 标记的 ping
+Dark	Dark
+Day's numbers	今日数据
+Delete all saved history now	立即删除全部历史记录
+Delete all saved history?	删除全部历史记录吗？
+Details	详情
+Disk	磁盘
+Donate	捐赠
+Done	完成
+Download	下载
+Encrypted DNS (DoH / DoT)	加密 DNS (DoH / DoT)
+Evening summary in the widget	小组件中的晚间摘要
+Every second while a game is open	游戏进行时，每秒一次
+Every tool	所有工具
+Exit	退出
+FINE-TUNE	微调
+Follow Windows	跟随 Windows
+Found a bug? Report it	发现 Bug？请反馈
+Fun lines	趣味台词
+Game ping in the background	后台游戏 ping
+Gamer	Gamer
+Gamer Zone	游戏专区
+Games	游戏
+Gaming	游戏
+General	常规
+Graphics per app	各应用的显卡占用
+HTTP and TLS inspector	HTTP 与 TLS 检查器
+HTTP timing, repeated	HTTP 计时（多次）
+Health	健康
+Health check	健康检查
+History	历史记录
+History & data	历史与数据
+Home	主页
+Hosts file	hosts 文件
+Hover wait on the folded chip	折叠小组件悬停等待
+How chatty	话痨程度
+How it behaves	行为方式
+How it travels	传输方式
+How visible	可见程度
+IPv6 ping and trace	IPv6 ping 与路由追踪
+IPv6 routers on this network	此网络上的 IPv6 路由器
+IPv6 vs IPv4	IPv6 与 IPv4 对比
+Inside Windows	Windows 内部
+Internet	互联网
+Internet and DNS check	互联网与 DNS 检查
+Jitter	抖动
+Keep game history for	保留游戏历史
+Keep history for	保留历史
+Know what's wrong. Show anyone.	找出问题，分享结果。
+LAB	实验室
+Language	语言
+Latency under load (bufferbloat)	高负载下的延迟（bufferbloat）
+Layout	布局
+Learn	学习
+Light	Light
+Live	实时
+Live capture	实时捕获
+Live capture stops after	实时捕获在…后停止
+Loading...	加载中…
+MTR - loss per hop over time	MTR - 各跳丢包随时间变化
+MTU over UDP (QUIC / DNS)	UDP 上的 MTU (QUIC / DNS)
+MTU per hop	每跳 MTU
+Mail server (SMTP / IMAP / POP)	邮件服务器 (SMTP / IMAP / POP)
+Memory	内存
+Memory, disk, heat	内存、磁盘、温度
+Midnight	Midnight
+Mini graph	迷你图表
+Mint	Mint
+Monthly data cap	每月流量上限
+Mood	心情
+NTP - ask a time server	NTP - 询问时间服务器
+Names for IP addresses	IP 地址的名称
+Navigation	导航
+Neon	Neon
+Network	网络
+Network story	网络故事
+Never	从不
+Next	下一步
+No	否
+No place yet.	尚未设置地点。
+None	无
+Normal	正常
+Notice streams	发现直播
+OK	确定
+Off	关闭
+Offline	离线
+On	开启
+Open	打开
+Open AdeeboMeter	打开 AdeeboMeter
+Overlapping networks (home vs VPN)	重叠的网络（家庭与 VPN）
+PATH	路径
+PROTOCOLS	协议
+Pause	暂停
+Phone	手机
+Port test	端口测试
+Pre-call check	通话前检查
+Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere.	预览版：部分内容仍为英文。请重启 AdeeboMeter 以在整个应用中应用此语言。
+Privacy & online lookups	隐私与在线查询
+Problem	问题
+Quiet hours	勿扰时段
+REMOTE	远程
+Ready	就绪
+Remove	删除
+Replay	重播
+Reports	报告
+Router	路由器
+Router ping	路由器 ping
+Routing protocols on my segment	我所在网段的路由协议
+Run	运行
+Running	运行中
+SPEED	速度
+SSH banner	SSH 横幅
+Save	保存
+Search	搜索
+Search anything	搜索任何内容
+Search tools, pages, problems	搜索工具、页面或问题
+Security	安全
+Servers watched in the background	后台监控的服务器
+Services that failed to start (7 days)	未能启动的服务（7 天）
+Settings	设置
+Shared folders on a PC or NAS (SMB)	电脑或 NAS 上的共享文件夹 (SMB)
+Show	显示
+Show game ping on the widget	在小组件上显示游戏 ping
+Show widget	显示小组件
+Sign-in page check	登录页面检查
+Slow leaks	缓慢泄漏
+Small	小
+Sniff records for	抓包时长
+Speed	速度
+Speed in	速度单位
+Speed test	网速测试
+Sports	体育
+Start	开始
+Start live capture	开始实时捕获
+Start when a game opens	游戏启动时开始
+Start with Windows	随 Windows 启动
+Stop	停止
+Story	故事
+Streaming	直播
+Streaming & trading	直播与交易
+Sunset	Sunset
+Sustained ping	持续 ping
+Switch them off by themselves after	在…后自动关闭
+TCP ping	TCP ping
+Temperature in	温度单位
+The way back (return path)	回程（返回路径）
+Theme	主题
+Time machine	时光机
+Today	今天
+Today's total	今日总计
+Toolbox	工具箱
+Topics	话题
+Trading	交易
+Try again	重试
+Unknown	未知
+Upload	上传
+VPN map	VPN 地图
+View	视图
+WEB	网页
+WHY DOES IT FAIL?	为什么会失败？
+Watch and suggest	监控并建议
+Weather	天气
+Weather for	以下地点的天气
+Weather in the widget	小组件中的天气
+What can AdeeboMeter see here?	AdeeboMeter 在这里能看到什么？
+What changed	有什么变化
+What changed (7 days)	有什么变化（7 天）
+What should I call you?	我该怎么称呼你？
+What's running	正在运行的程序
+What's wrong?	出了什么问题？
+Where did my space go?	我的空间去哪儿了？
+Which proxy does this URL use?	这个网址用的是哪个代理？
+Which route does this take?	走的是哪条路由？
+Who carries my traffic (BGP)	谁在传输我的流量 (BGP)
+Wi-Fi watch	Wi-Fi 监控
+Widget	小组件
+Widget style	小组件样式
+Words of comfort	安慰的话
+YOUR NETWORK	你的网络
+Yes	是
+Your Wi-Fi	你的 Wi-Fi
+Your Wi-Fi / cable	你的 Wi-Fi / 网线
+Your broker	你的券商
+Your cable	你的网线
+Your gateway and failover	你的网关与故障转移
+Your phone	你的手机
+days of history are deleted for good - this can't be undone.	天的历史记录将被永久删除，无法撤销。
+dig - any DNS record	dig - 任意 DNS 记录
+iperf3 to your server	iperf3 到你的服务器
