@@ -51,3 +51,13 @@ These additional URLs require deployment verification and search-engine submissi
 All 98 Bengali pages passed browser checks for Bengali language, Bengali titles, self-canonicals, a single Bengali language annotation and valid internal Bengali links. The homepage, blog, four guide types and a Learn lesson were also checked at 390 px and 1120 px without horizontal overflow. The Bengali speed guide was visually reviewed. Service-worker syntax and staged whitespace checks passed.
 
 The video-call guide has a Bengali URL and self language annotation. Its English counterpart is available in the earlier English working branch and is absent from the main branch used for this PR, so reciprocal annotations can be added when that English page is deployed.
+
+## Visitor analytics prepared November 18, 2026
+
+Cloudflare Web Analytics is configured for adeebometer.com in the owner's existing Cloudflare account. The public collection token is stored in docs/analytics.js. The shared locale script loads it on public pages, and standalone public pages receive a direct loader through tools/web-analytics.py. tools/learnsite.py reapplies that loader during generation.
+
+Measures page views, visits, referring sites and page performance. Both English and Bengali pages are covered. The loader skips non-production hostnames, Do Not Track, Global Privacy Control and the companion app, files, live, remote, sharing and games routes.
+
+The website privacy page describes Cloudflare measurement. Browser checks intercepted the provider script to verify one load per eligible page without sending test visits. Runtime checks verified DNT/GPC and companion route exclusions.
+
+Collection begins after PR merge and deployment. Use Cloudflare Web Analytics for visitor metrics and Search Console/Bing for search impressions, clicks and queries. Record the deployment date with the first reported totals.

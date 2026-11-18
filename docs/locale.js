@@ -160,3 +160,13 @@
     }
   });
 }());
+
+// Public-page visitor analytics. The loader checks the hostname, privacy signals
+// and companion-tool exclusions before contacting the analytics provider.
+(function () {
+  if (!document.querySelector('link[rel="canonical"]')) return;
+  var analytics = document.createElement("script");
+  analytics.src = "/analytics.js";
+  analytics.async = true;
+  document.head.appendChild(analytics);
+}());
