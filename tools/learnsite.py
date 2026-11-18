@@ -136,6 +136,10 @@ def lesson(t, prev, nxt, same):
         h.append('<p>If the connection keeps dropping, compare Wi-Fi with Ethernet and <a href="../isp-report.html">save a connection report for your internet provider</a>.</p>\n')
     if t['id'] == 'icmp':
         h.append('<p>To capture ping and traceroute results together, <a href="../isp-report.html">create a packet loss report for your internet provider</a>.</p>\n')
+    if t['id'] == 'speed-vs-delay':
+        h.append('<p>To see how both change while you work, <a href="../internet-speed-monitor.html">monitor internet speed on Windows</a>.</p>\n')
+    if t['id'] == 'memory-pressure':
+        h.append('<p>Compare memory use with CPU and disk activity using <a href="../pc-monitoring.html">AdeeboMeter’s Windows PC monitor</a>.</p>\n')
     if t.get('more'): h.append(f'<h2>Going deeper</h2>\n<p>{E(t["more"])}</p>\n')
     q = [x.strip() for x in t.get('check', '').split(' | ')]
     if len(q) >= 3:
