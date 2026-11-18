@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="bn" data-language-route="/learn/nsa.html">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>5G NSA ও SA: রাউটারে 5G দেখালেও 4G-এর মতো কাজ করে কেন | শিখুন | আদীবওমিটার</title>
+<meta name="description" content="Non-standalone 4G কোর ব্যবহার করে। Standalone পুরো পথেই 5G।">
+<link rel="canonical" href="https://adeebometer.com/bn/learn/nsa.html">
+<meta property="og:title" content="5G NSA ও SA: রাউটারে 5G দেখালেও 4G-এর মতো কাজ করে কেন | শিখুন | আদীবওমিটার">
+<meta property="og:description" content="Non-standalone 4G কোর ব্যবহার করে। Standalone পুরো পথেই 5G।">
+<meta property="og:type" content="article">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
+a{color:var(--blue);overflow-wrap:anywhere}
+.top{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;margin-bottom:18px}
+.top b{margin-right:auto}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
+h2{font-size:18px;margin:28px 0 8px}
+.tag{font-size:18px;color:var(--sub);margin:0 0 18px}
+.chip{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);background:var(--tint);border-radius:999px;padding:2px 10px;text-decoration:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 10px}
+.card p{margin:0}
+.one{border-left:4px solid var(--green)}
+.warn{border-left:4px solid var(--amber)}
+.ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
+.lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.msg{padding:6px 0}
+.msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
+.msg.r p{text-align:right}
+.arrow{height:10px;position:relative}
+.arrow:before{content:"";position:absolute;left:0;right:8px;top:4px;border-top:2px solid var(--blue)}
+.arrow:after{content:"";position:absolute;right:0;top:0;border:5px solid transparent;border-left:9px solid var(--blue);border-right:0}
+.msg.r .arrow:before{left:8px;right:0}
+.msg.r .arrow:after{right:auto;left:0;border-left:0;border-right:9px solid var(--blue)}
+.msg.all .arrow:before{border-top-style:dashed}
+.quiz button{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:8px 0;cursor:pointer;min-height:44px}
+.quiz button.ok{border-color:var(--green);box-shadow:inset 4px 0 0 var(--green)}
+.quiz button.no{border-color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.quiz .say{font-weight:600;min-height:1.6em;margin:6px 0 0}
+.pn{display:flex;justify-content:space-between;gap:12px;margin-top:28px;font-size:15px}
+.pn a{max-width:48%}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:11px 20px;margin:6px 10px 0 0}
+.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+footer{margin-top:40px;color:var(--sub);font-size:14px}
+input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.grid a{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.grid a b{display:block;color:var(--blue);font-size:15px;line-height:1.3}
+.grid a span{display:block;color:var(--sub);font-size:14px;margin-top:3px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+.chips a{white-space:nowrap}
+@media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "5G NSA vs SA, and why your router says 5G but behaves like 4G", "description": "Non-standalone borrows the 4G core; standalone is 5G all the way. NSA adds 5G radio to a 4G anchor cell: the phone signals over 4G and gets extra speed on…", "url": "https://adeebometer.com/learn/nsa.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "Mobile, LTE and 5G", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/nsa.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/nsa.html">
+</head>
+<body data-sec="learn">
+<main>
+<a class="chip" href="/bn/learn/#mobile">মোবাইল, LTE ও 5G</a>
+<h1>5G NSA ও SA: রাউটারে 5G দেখালেও 4G-এর মতো কাজ করে কেন</h1>
+<p class="tag">Non-standalone 4G কোর ব্যবহার করে। Standalone পুরো পথেই 5G।</p>
+<div class="card one"><p>NSA একটি 4G অ্যাঙ্কর সেলের সঙ্গে 5G রেডিও যোগ করে। ফোন 4G-তে সিগন্যালিং করে আর 5G থেকে বাড়তি গতি পায়। কোর তখনও 4G। SA-তে কোরসহ পুরো পথ 5G।</p></div>
+<h2>কীভাবে বার্তা আদান-প্রদান হয়</h2>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>ফোন</span><span>4G অ্যাঙ্কর সেল</span></div><ol aria-label="ফোন ও 4G অ্যাঙ্কর সেলের মধ্যে বার্তার ক্রম">
+<li class="msg"><p><span class="sr">ফোন থেকে 4G অ্যাঙ্কর সেলে: </span>attach (4G-এর মতো)</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>4G অ্যাঙ্কর → 5G সেল: এই ফোনের জন্য 5G সংযোগ যোগ করুন (EN-DC)।</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>5G সেল → ফোন: বাড়তি ডেটা বহনের ক্ষমতা</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg"><p>ফোন → 4G কোর: সব সিগন্যালিং এখানেই থাকে।</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>4G কোর → ইন্টারনেট: আপনার ডেটা</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
+<h2>সমস্যা হলে কী হয়</h2>
+<div class="card warn"><p>ডিভাইস শুধু SA সমর্থন করে অথচ এলাকায় শুধু NSA আছে, বা উল্টোটা হলে, ফোন 4G-তে ফিরে যায়। সংযোগ চলে, তবে গতি কম হতে পারে।</p></div>
+<h2>আরও বিস্তারিত</h2>
+<p>NSA (option 3x) নতুন কোর ছাড়াই শুরুর 5G-তে বাড়তি গতি দিয়েছিল। 5G কোর লাগে এমন ফিচার শুধু SA-তে পাওয়া যায়, যেমন network slicing, কম বিলম্বের user plane, RedCap ডিভাইস আর নতুনভাবে সেশন পরিচালনা। NSA-তে 4G অ্যাঙ্কর হারালে 5G সংযোগও যায়। তাই ডেটা আটকে থাকার সময় “5G” আইকন আসা-যাওয়া করতে পারে। রাউটার সাধারণত কোন ধরনের সংযোগে আছে তা দেখায়। EN-DC মানে NSA। NSA-এর বিলম্ব ভালো 4G-এর মতো। SA-তে কাছাকাছি UPF থাকলে তা কম হতে পারে।</p>
+<h2>ঝটপট যাচাই</h2>
+<div class="quiz" data-id="nsa"><p>5G non-standalone (NSA)-এ কোন কোর ব্যবহার হয়?</p>
+<button data-ok>4G কোর (EPC)</button>
+<button>5G কোর</button>
+<button>কোনো কোর লাগে না</button>
+<button>Wi-Fi রাউটার</button>
+<p class="say" aria-live="polite"></p></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a><a class="cta ghost" href="/games.html">গেম খেলুন</a></p>
+<h2>মোবাইল নেটওয়ার্ক নিয়ে আরও পাঠ</h2>
+<div class="ui-rows"><a class="ui-row" href="/bn/learn/mobile.html" data-id="mobile"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>সহজ কথায় মোবাইল নেটওয়ার্ক</b><small>মোবাইল</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/bn/learn/ran.html" data-id="ran"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>eNodeB ও gNodeB</b><small>মোবাইল</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/bn/learn/epc.html" data-id="epc"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>4G কোর: MME, SGW, PGW ও HSS</b><small>মোবাইল</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/bn/learn/5gc.html" data-id="5gc"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="signal"></span><span class="t"><b>5G কোর: AMF, SMF, UPF ও অন্য অংশ</b><small>মোবাইল</small></span><span data-ic="chev"></span></a></div>
+<div class="pn"><a href="/bn/learn/bearer.html">← APN, DNN, বেয়ারার ও PDU সেশন</a><a href="/bn/learn/boot-chain.html">পাওয়ার বোতাম থেকে ডেস্কটপ: Windows কীভাবে চালু হয় →</a></div>
+<footer>বিনামূল্যে · অ্যাকাউন্ট লাগে না · Windows অ্যাপেও একই পাঠ</footer>
+</main>
+<script src="/voice.js"></script>
+<script>
+(function(){var q=document.querySelector('.quiz');if(!q)return;var bs=[].slice.call(q.querySelectorAll('button')),say=q.querySelector('.say'),done=false;
+for(var i=bs.length-1;i&gt;0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
+bs.forEach(function(b){q.insertBefore(b,say)});
+bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
+var V=window.AMV,locale=window.AdeeboMeterLocale;
+function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&amp;&amp;V.line(line))||key}
+if(ok){done=true;say.textContent=feedback('Right.','quiz.right');try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=feedback('Not that one - try again.','quiz.wrong')}})})();
+</script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("nsa")<0)s.push("nsa");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","nsa")}catch(e){}</script>
+<script src="/ui.js"></script>
+</body>
+</html>
