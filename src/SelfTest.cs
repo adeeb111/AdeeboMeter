@@ -659,13 +659,13 @@ namespace AdeeboMeter
                 /* searched in the raw bytes, as ASCII and as UTF-16: turning the 3 MB exe into text made ten copies of up to 12 MB,
                    and Windows' .NET kept that memory - the "memory after everything" check then failed at 104-115 MB */
                 foreach (bool wide in new[] { false, true }) if (InBytes(exe, word, wide, true)) throw new InvalidOperationException("found in the exe (" + (wide ? "utf-16" : "ascii") + ")");
-                foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("found in " + pack);
+                foreach (var pack in new[] { "terms", "learn", "processes", "examples" }.Concat(L.Languages.Skip(1).Select(l => "lang-" + l[0]))) if (Knowledge.RawText(pack).IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) throw new InvalidOperationException("found in " + pack);
                 // its products too (the operating system and router families), built at run time for the same reason
                 Func<string, string, string> j = (x, y) => x + y;   // joined at run time - "a" + "b" would be folded into one literal
                 foreach (var w in new[] { j("S", "R OS"), j("S", "R-OS"), j("Ti", "MOS"), j("Alca", "tel") })
                 {
                     foreach (bool wide in new[] { false, true }) if (InBytes(exe, w, wide, false)) throw new InvalidOperationException("product name in the exe: " + w);
-                    foreach (var pack in new[] { "terms", "learn", "processes", "examples", "lang-fr" }) if (Knowledge.RawText(pack).IndexOf(w, StringComparison.Ordinal) >= 0) throw new InvalidOperationException("product name in " + pack + ": " + w);
+                    foreach (var pack in new[] { "terms", "learn", "processes", "examples" }.Concat(L.Languages.Skip(1).Select(l => "lang-" + l[0]))) if (Knowledge.RawText(pack).IndexOf(w, StringComparison.Ordinal) >= 0) throw new InvalidOperationException("product name in " + pack + ": " + w);
                 }
             });
             T("review fixes: URLs as targets, one device only for Traffic Lab, iperf3 UDP block size", () =>
@@ -1458,7 +1458,7 @@ namespace AdeeboMeter
                 if (EngPack.CertVerdict(a, b)[1] != "Different issuer" || EngPack.CertVerdict(a, a)[1] != "Same certificate") throw new InvalidOperationException("cert verdict");
                 if (EngPack.ParseCert(EngPack.CertLine(new EngPack.CertSnap { Host = "x.example.com", Name = "n", T = DateTime.Now, Trust = "t", Chain = a.Chain })) == null) throw new InvalidOperationException("cert line");
             });
-            T("languages: French table is well-formed and English stays the fallback", () =>
+            T("languages: embedded previews load and English stays the fallback", () =>
             {
                 var fr = L.Parse(Knowledge.RawText("lang-fr"));
                 if (fr.Count < 250) throw new InvalidOperationException("French table has only " + fr.Count + " lines");
@@ -1469,7 +1469,24 @@ namespace AdeeboMeter
                     var nums = System.Text.RegularExpressions.Regex.Matches(kv.Key, @"\d+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value);
                     foreach (var n in nums) if (kv.Value.IndexOf(n, StringComparison.Ordinal) < 0) throw new InvalidOperationException("number " + n + " lost in: " + kv.Value);
                 }
+                var expected = new Dictionary<string, string> {
+                    { "es", "Ajustes" }, { "ar", "الإعدادات" }, { "bn", "সেটিংস" }, { "hi", "सेटिंग्स" }, { "zh", "设置" }
+                };
                 string old = L.Code;
+                try
+                {
+                    foreach (var lang in expected)
+                    {
+                        L.Use(lang.Key);
+                        if (L.T("Settings") != lang.Value || L.Count == 0 || L.IsRtl != (lang.Key == "ar"))
+                            throw new InvalidOperationException("language lookup: " + lang.Key);
+                        if (L.T("not in the table at all") != "not in the table at all")
+                            throw new InvalidOperationException("fallback: " + lang.Key);
+                    }
+                    if (!L.RunsRtl(expected["ar"]) || L.RunsRtl("IPv6"))
+                        throw new InvalidOperationException("Arabic text direction");
+                }
+                finally { L.Use(old); }
                 try { L.Use("fr"); if (L.T("Settings") != "Paramètres" || L.T("not in the table at all") != "not in the table at all") throw new InvalidOperationException("lookup"); L.Use("xx"); if (L.Code != "en" || L.T("Settings") != "Settings") throw new InvalidOperationException("unknown language must fall back to English"); }
                 finally { L.Use(old); }
             });
