@@ -133,6 +133,7 @@ def lesson(t, prev, nxt, same):
     if t.get('ladder'): h.append(f'<h2>How the conversation goes</h2>\n{ladder(t["ladder"])}\n')
     if t.get('breaks'): h.append(f'<h2>When it goes wrong</h2>\n<div class="card warn"><p>{E(t["breaks"])}</p></div>\n')
     if t['id'] == 'wifi':
+        h.append('<p>If you are unsure where the slowdown starts, <a href="../wifi-or-isp.html">check whether the problem is your Wi-Fi or your internet provider</a>.</p>\n')
         h.append('<p>If the connection keeps dropping, compare Wi-Fi with Ethernet and <a href="../isp-report.html">save a connection report for your internet provider</a>.</p>\n')
     if t['id'] == 'icmp':
         h.append('<p>To capture ping and traceroute results together, <a href="../isp-report.html">create a packet loss report for your internet provider</a>.</p>\n')
