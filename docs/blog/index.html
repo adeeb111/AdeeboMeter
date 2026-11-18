@@ -44,28 +44,19 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 @media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
 figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
 </style>
+<link rel="stylesheet" href="/guide.css">
 </head>
 <body>
 <main>
 <nav aria-label="Site"><a href="/">AdeeboMeter</a> · <a href="/learn/">Learn</a></nav>
 <h1>Troubleshooting Blog</h1>
-<p>Pick the problem you’re seeing and start with the checks you can run now.</p>
-
-<section aria-labelledby="connection-guides">
-<h2 id="connection-guides">Slow or unreliable internet</h2>
-<ul>
-  <li><a href="/wifi-or-isp.html">Is it your Wi-Fi or your internet provider?</a> Compare devices and try the same check on Ethernet.</li>
-  <li><a href="/internet-speed-monitor.html">Monitor internet speed on Windows</a> Watch download and upload rates and review when a slowdown started.</li>
-  <li><a href="/isp-report.html">Show your ISP where packet loss starts</a> Collect a report with the measurements support needs.</li>
-</ul>
-</section>
-
-<section aria-labelledby="pc-guides">
-<h2 id="pc-guides">A slow Windows PC</h2>
-<ul>
-  <li><a href="/pc-monitoring.html">Monitor CPU, memory, disk and network activity</a> Compare resource usage when an app slows down.</li>
-</ul>
-</section>
+<p>Pick what’s happening. Each guide shows what to measure, how to read the results, and what to try next.</p>
+<div class="guide-cards">
+<section><span>Connection</span><h2><a href="/wifi-or-isp.html">Wi-Fi or internet provider?</a></h2><p>Compare devices and run the same check over Ethernet.</p><p><strong>Start here:</strong> One room, device, or every connection?</p></section>
+<section><span>Connection</span><h2><a href="/internet-speed-monitor.html">Internet slows down at certain times</a></h2><p>Compare download, upload, and latency over the same period.</p><p><strong>Start here:</strong> Does delay rise when a transfer starts?</p></section>
+<section><span>Support</span><h2><a href="/isp-report.html">Packet loss you need to show support</a></h2><p>Read a sample report and collect a useful before-and-during comparison.</p><p><strong>Start here:</strong> Does the loss reach the destination?</p></section>
+<section><span>Windows</span><h2><a href="/pc-monitoring.html">PC or apps feel slow</a></h2><p>Compare CPU, memory, disk, and network activity with the slowdown.</p><p><strong>Start here:</strong> Is the whole PC slow or only online tasks?</p></section>
+</div>
 </main>
 </body>
 </html>
