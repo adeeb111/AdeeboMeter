@@ -128,3 +128,12 @@ main>nav:first-child{margin-bottom:1.2rem}
 .call-path{margin:1.2rem 0}
 .call-path .route span{font-weight:650}
 .call-path figcaption{margin-top:.4rem}
+
+.call-observe{--check-color:#2672c9;--check-tint:rgba(38,114,201,.08)}
+.call-upload{--check-color:#b36a19;--check-tint:rgba(179,106,25,.09)}
+.call-ethernet{--check-color:#16816e;--check-tint:rgba(22,129,110,.08)}
+.call-device{--check-color:#7750b5;--check-tint:rgba(119,80,181,.08)}
+.call-steps{padding-inline-start:1.55rem}
+.call-steps li,.call-results li{border-inline-start:3px solid var(--check-color);background:var(--check-tint)}
+.call-steps li{padding:.45rem .6rem;margin:.45rem 0;border-radius:4px}
+.call-steps li::marker{font-weight:700}

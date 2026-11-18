@@ -69,21 +69,21 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
 <figcaption>Example: the same PC and call work over Ethernet. Start with the wireless link.</figcaption>
 </figure>
 <h2>Run the checks</h2>
-<ol>
-  <li>Note when the freeze happens and whether the audio cuts out too.</li>
-  <li>Pause a large upload you control. See if the call clears.</li>
-  <li>Repeat on Ethernet with Wi-Fi off. Use the same PC and call service.</li>
+<ol class="call-steps">
+  <li class="call-observe"><strong>Note the freeze.</strong> Write down the time and whether audio cuts out too.</li>
+  <li class="call-upload"><strong>Pause a large upload.</strong> If you control it, pause it and see if the call clears.</li>
+  <li class="call-ethernet"><strong>Try Ethernet.</strong> Turn off Wi-Fi and repeat on the same PC and call service.</li>
 </ol>
 <figure class="call-path">
 <div class="route call-route"><span>PC</span><b aria-hidden="true">→</b><span>Wi-Fi</span><b aria-hidden="true">→</b><span>Router</span><b aria-hidden="true">→</b><span>Call service</span></div>
 <figcaption>Ethernet changes the PC-to-router link. Use the same PC and call service to keep the rest of the comparison consistent.</figcaption>
 </figure>
 <h2>What to check next</h2>
-<ul class="next-checks">
-  <li><strong>Ethernet clears it</strong><span>Try Wi-Fi closer to the router.</span></li>
-  <li><strong>Pausing an upload helps</strong><span>Check whether latency rises during uploads.</span></li>
-  <li><strong>Only this PC struggles</strong><span>Check CPU usage and try with the camera off.</span></li>
-  <li><strong>Only one call service struggles</strong><span>Compare another service on the same connection.</span></li>
+<ul class="next-checks call-results">
+  <li class="call-ethernet"><strong>Ethernet clears it</strong><span>Try Wi-Fi closer to the router.</span></li>
+  <li class="call-upload"><strong>Pausing an upload helps</strong><span>Check whether latency rises during uploads.</span></li>
+  <li class="call-device"><strong>Only this PC struggles</strong><span>Check CPU usage and try with the camera off.</span></li>
+  <li class="call-observe"><strong>Only one call service struggles</strong><span>Compare another service on the same connection.</span></li>
 </ul>
 <details class="guide-detail"><summary>Why it works</summary>
 <ul>
