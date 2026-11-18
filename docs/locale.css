@@ -44,3 +44,61 @@ body:not(.wg) .phone-locale-bar + #app { padding-top: .25rem; }
 @media (max-width: 380px) {
   .top .links .pill.dl { display: none; }
 }
+
+/* Keep translated labels in flow so longer copy cannot cover another card. */
+.top .wrap {
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
+  min-height: 56px;
+  height: auto;
+  padding-block: .4rem;
+}
+.top .brand { flex: none; }
+.top .links {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .45rem clamp(.6rem, 1.2vw, 1.15rem);
+}
+.site-language [data-language-picker] { max-width: min(9rem, 31vw); }
+.v4stage {
+  height: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .75fr);
+  align-items: start;
+  gap: 12px;
+}
+.v4stage .v4card {
+  position: relative;
+  inset: auto;
+  min-width: 0;
+  width: auto;
+  margin: 0;
+}
+.v4stage .v4res { grid-column: 1 / -1; }
+.v4stage .v4sig { grid-area: 2 / 1; }
+.v4stage .v4phone { grid-area: 2 / 2; }
+.v4stage .v4phone em { overflow-wrap: anywhere; }
+.v4share { flex-wrap: wrap; }
+.v4share small { flex: 1 0 100%; }
+.v4share .v4btn { white-space: normal; text-align: center; }
+.v4path .n { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .v4stage { grid-template-columns: minmax(0, 1fr); }
+  .v4stage .v4sig { grid-area: auto; }
+}
+@media (max-width: 480px) {
+  .top .wrap { gap: .6rem; }
+  .top .links { justify-content: center; }
+  .v4stage .v4res { padding: 16px; }
+}
+
+html[lang="bn"] .v4hero h1 {
+  line-height: 1.17;
+  letter-spacing: normal;
+}
+html[lang="bn"] #app header h1 {
+  line-height: 1.24;
+  letter-spacing: normal;
+}
+html[lang="bn"] #app .row .tx {
+  line-height: 1.45;
+}
