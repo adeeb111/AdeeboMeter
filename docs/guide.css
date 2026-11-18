@@ -73,3 +73,11 @@ main>nav:first-child{margin-bottom:1.2rem}
 .guide-detail{margin:1.1rem 0;border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem}
 .guide-detail summary{cursor:pointer;font-weight:650}
 @media(max-width:620px){.story-hero,.guide-visual{grid-template-columns:1fr;gap:1rem}.guide-cards{grid-template-columns:1fr}.hero-route{max-width:360px}}
+
+.scenario-art{min-height:164px;gap:.65rem;border-top:3px solid #75b7ff}
+.art-speed{border-color:#77e7cd}.art-pc{border-color:#b8aeff}.art-isp{border-color:#ffc282}
+.scenario-label{display:flex;align-items:center;gap:.55rem;color:#f3f7ff;font-size:.9rem;line-height:1.15}
+.scenario-emoji{display:grid;place-items:center;width:2.05rem;height:2.05rem;border:1px solid #ffffff38;border-radius:9px;background:#ffffff12;font-family:"Segoe UI Emoji","Apple Color Emoji",sans-serif;font-size:1.02rem!important}
+.hopline small{display:block;color:#d4bce1;font-size:.7rem}
+.guide-visual .scenario-art{min-height:150px}
+.scenario-card:focus-visible{outline:2px solid var(--blue)}
