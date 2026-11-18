@@ -1,0 +1,247 @@
+# AdeeboMeter - ar translation preview. Missing lines stay in English.
++ Add server	+ إضافة خادم
++ Add your own game	+ أضف لعبتك
+1 day	1 يوم
+14 days	14 يومًا
+3 days	3 أيام
+30 days	30 يومًا
+60 days	60 يومًا
+7 days	7 أيام
+90 days	90 يومًا
+A website or app won't open	موقع أو تطبيق لا يفتح
+About	حول التطبيق
+Accuracy	الدقة
+Address me as	نادني باسم
+AdeeboMeter itself	عن AdeeboMeter
+Alerts	التنبيهات
+All	الكل
+An app freezes	تطبيق يتجمّد
+Announcements (mDNS, SSDP, LLMNR, NetBIOS)	إعلانات (mDNS, SSDP, LLMNR, NetBIOS)
+App and connection watch	مراقبة التطبيقات والاتصالات
+Auto	تلقائي
+BGP and who owns the network	BGP ومالك الشبكة
+Back	رجوع
+Back to corner	العودة إلى الزاوية
+Background checks	فحوصات في الخلفية
+Background jobs	مهام في الخلفية
+Balanced	Balanced
+Battery	البطارية
+Better	أفضل
+Bigger	أكبر
+Broker alerts	تنبيهات الوسيط
+Buddy	الرفيق
+Buddy face	وجه الرفيق
+Buddy's hat	قبعة الرفيق
+By question	حسب السؤال
+Cable	كابل
+Calls	المكالمات
+Cancel	إلغاء
+Capture & advanced	الالتقاط وخيارات متقدّمة
+Certificate revocation checks	التحقق من إلغاء الشهادات
+Changes	التغييرات
+Check	افحص
+Check a destination	افحص وجهة
+Checking...	جارٍ الفحص...
+Clock check	فحص الساعة
+Close	إغلاق
+Companion	المرافق
+Connected	متصل
+Connections	الاتصالات
+Copied	تم النسخ
+Copy	نسخ
+Corner widget size	حجم ويدجت الزاوية
+Crashes and hangs	الأعطال والتجمّد
+Credits	الشكر والتقدير
+Crypto, around the clock	العملات الرقمية على مدار الساعة
+DNS AND WEB	DNS والويب
+DNS hijack and VPN name rules	اختطاف DNS وقواعد الأسماء في VPN
+DNS speed test	اختبار سرعة DNS
+DSCP-marked ping	اختبار ping بعلامة DSCP
+Dark	Dark
+Day's numbers	أرقام اليوم
+Delete all saved history now	احذف كل السجل المحفوظ
+Delete all saved history?	هل تريد حذف كل السجل المحفوظ؟
+Details	التفاصيل
+Disk	القرص
+Donate	تبرّع
+Done	تم
+Download	التنزيل
+Encrypted DNS (DoH / DoT)	DNS مشفّر (DoH / DoT)
+Evening summary in the widget	ملخص المساء في الويدجت
+Every second while a game is open	كل ثانية أثناء فتح اللعبة
+Every tool	كل الأدوات
+Exit	خروج
+FINE-TUNE	ضبط دقيق
+Follow Windows	حسب Windows
+Found a bug? Report it	وجدت خللًا؟ أبلغ عنه
+Fun lines	عبارات مرحة
+Game ping in the background	اختبار ping للعبة في الخلفية
+Gamer	Gamer
+Gamer Zone	منطقة الألعاب
+Games	الألعاب
+Gaming	الألعاب
+General	عام
+Graphics per app	استخدام الرسوميات لكل تطبيق
+HTTP and TLS inspector	فاحص HTTP وTLS
+HTTP timing, repeated	قياس وقت HTTP بشكل متكرر
+Health	حالة الجهاز
+Health check	فحص الجهاز
+History	السجل
+History & data	السجل والبيانات
+Home	الرئيسية
+Hosts file	ملف hosts
+Hover wait on the folded chip	مهلة التحويم فوق الشريط المطوي
+How chatty	مقدار الحديث
+How it behaves	طريقة العمل
+How it travels	كيف تنتقل البيانات
+How visible	الوضوح
+IPv6 ping and trace	اختبار ping وتتبع المسار عبر IPv6
+IPv6 routers on this network	موجّهات IPv6 في هذه الشبكة
+IPv6 vs IPv4	مقارنة IPv6 وIPv4
+Inside Windows	داخل Windows
+Internet	الإنترنت
+Internet and DNS check	فحص الإنترنت وDNS
+Jitter	تذبذب التأخير
+Keep game history for	مدة حفظ سجل الألعاب
+Keep history for	مدة حفظ السجل
+Know what's wrong. Show anyone.	اعرف المشكلة واعرضها لغيرك.
+LAB	المختبر
+Language	اللغة
+Latency under load (bufferbloat)	زمن الاستجابة تحت الحمل (bufferbloat)
+Layout	التخطيط
+Learn	تعلّم
+Light	Light
+Live	مباشر
+Live capture	التقاط مباشر
+Live capture stops after	يتوقف الالتقاط المباشر بعد
+Loading...	جارٍ التحميل...
+MTR - loss per hop over time	MTR - الفقد لكل قفزة بمرور الوقت
+MTU over UDP (QUIC / DNS)	MTU عبر UDP (QUIC / DNS)
+MTU per hop	MTU لكل قفزة
+Mail server (SMTP / IMAP / POP)	خادم البريد (SMTP / IMAP / POP)
+Memory	الذاكرة
+Memory, disk, heat	الذاكرة والقرص والحرارة
+Midnight	Midnight
+Mini graph	رسم صغير
+Mint	Mint
+Monthly data cap	حد البيانات الشهري
+Mood	المزاج
+NTP - ask a time server	NTP - اسأل خادم الوقت
+Names for IP addresses	أسماء عناوين IP
+Navigation	التنقّل
+Neon	Neon
+Network	الشبكة
+Network story	قصة الشبكة
+Never	أبدًا
+Next	التالي
+No	لا
+No place yet.	لم يُحدّد مكان بعد.
+None	لا شيء
+Normal	عادي
+Notice streams	اكتشاف البث
+OK	موافق
+Off	إيقاف
+Offline	غير متصل
+On	تشغيل
+Open	فتح
+Open AdeeboMeter	فتح AdeeboMeter
+Overlapping networks (home vs VPN)	شبكات متداخلة (المنزل وVPN)
+PATH	المسار
+PROTOCOLS	البروتوكولات
+Pause	إيقاف مؤقت
+Phone	الهاتف
+Port test	اختبار المنفذ
+Pre-call check	فحص قبل المكالمة
+Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere.	معاينة: بعض النصوص ما زالت بالإنجليزية. أعد تشغيل AdeeboMeter لتطبيق اللغة في كل مكان.
+Privacy & online lookups	الخصوصية والاستعلامات عبر الإنترنت
+Problem	مشكلة
+Quiet hours	ساعات الهدوء
+REMOTE	عن بُعد
+Ready	جاهز
+Remove	إزالة
+Replay	إعادة العرض
+Reports	التقارير
+Router	الراوتر
+Router ping	اختبار ping للموجّه
+Routing protocols on my segment	بروتوكولات التوجيه في مقطع شبكتي
+Run	تشغيل
+Running	قيد التشغيل
+SPEED	السرعة
+SSH banner	رسالة ترحيب SSH
+Save	حفظ
+Search	بحث
+Search anything	ابحث عن أي شيء
+Search tools, pages, problems	ابحث عن أدوات أو صفحات أو مشكلات
+Security	الأمان
+Servers watched in the background	خوادم تُراقب في الخلفية
+Services that failed to start (7 days)	خدمات تعذّر تشغيلها (7 أيام)
+Settings	الإعدادات
+Shared folders on a PC or NAS (SMB)	مجلدات مشتركة على حاسوب أو NAS (SMB)
+Show	إظهار
+Show game ping on the widget	اعرض ping اللعبة في الويدجت
+Show widget	إظهار الويدجت
+Sign-in page check	فحص صفحة تسجيل الدخول
+Slow leaks	تسرّب بطيء للموارد
+Small	صغير
+Sniff records for	مدة تسجيل حركة الشبكة
+Speed	السرعة
+Speed in	وحدة السرعة
+Speed test	اختبار السرعة
+Sports	الرياضة
+Start	بدء
+Start live capture	ابدأ الالتقاط المباشر
+Start when a game opens	ابدأ عند فتح لعبة
+Start with Windows	التشغيل مع Windows
+Stop	إيقاف
+Story	القصة
+Streaming	البث
+Streaming & trading	البث والتداول
+Sunset	Sunset
+Sustained ping	اختبار ping مستمر
+Switch them off by themselves after	أوقفها تلقائيًا بعد
+TCP ping	اختبار ping عبر TCP
+Temperature in	وحدة الحرارة
+The way back (return path)	مسار العودة
+Theme	المظهر
+Time machine	آلة الزمن
+Today	اليوم
+Today's total	إجمالي اليوم
+Toolbox	الأدوات
+Topics	المواضيع
+Trading	التداول
+Try again	حاول مجددًا
+Unknown	غير معروف
+Upload	الرفع
+VPN map	خريطة VPN
+View	العرض
+WEB	الويب
+WHY DOES IT FAIL?	لماذا يفشل؟
+Watch and suggest	راقب واقترح
+Weather	الطقس
+Weather for	الطقس في
+Weather in the widget	الطقس في الويدجت
+What can AdeeboMeter see here?	ماذا يستطيع AdeeboMeter رؤيته هنا؟
+What changed	ما الذي تغيّر
+What changed (7 days)	ما الذي تغيّر (7 أيام)
+What should I call you?	بماذا أناديك؟
+What's running	ما الذي يعمل الآن
+What's wrong?	ما المشكلة؟
+Where did my space go?	أين ذهبت مساحة التخزين؟
+Which proxy does this URL use?	أي وكيل يستخدم هذا العنوان؟
+Which route does this take?	أي مسار يسلك؟
+Who carries my traffic (BGP)	من ينقل بياناتي؟ (BGP)
+Wi-Fi watch	مراقبة Wi-Fi
+Widget	الويدجت
+Widget style	نمط الويدجت
+Words of comfort	كلمات مواساة
+YOUR NETWORK	شبكتك
+Yes	نعم
+Your Wi-Fi	شبكة Wi-Fi الخاصة بك
+Your Wi-Fi / cable	اتصال Wi-Fi أو الكابل
+Your broker	وسيطك
+Your cable	اتصالك السلكي
+Your gateway and failover	بوابتك والاتصال البديل
+Your phone	هاتفك
+days of history are deleted for good - this can't be undone.	أيام من السجل ستُحذف نهائيًا. لا يمكن التراجع.
+dig - any DNS record	dig - أي سجل DNS
+iperf3 to your server	اختبار iperf3 مع خادمك
