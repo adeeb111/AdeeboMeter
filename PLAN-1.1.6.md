@@ -20,7 +20,7 @@ phone and website save nothing (passthrough) · no alerts or pop-ups · motto: "
 - To do (agreed 17 Nov): stock movers. Even with the new key the shared copy says "daily limit used up" - most likely
   Alpha Vantage also counts by address, and Cloudflare's outgoing addresses are shared with other sites. In order:
   1. [built, 029ddd6 - Adeeb deploys] one scheduled fetch after the US close (+1 retry), stored once (KV), the page only reads that copy;
-  2. if that still loses to the shared address: a different free source for US movers that doesn't limit by address;
+  2. [needed - 17 Nov the scheduled call and its retry were refused too] a different free source for US movers that doesn't limit by address;
   3. "Add your own free key" stays as the dependable route (the visitor's key is called from their own phone).
 
 ## 2. Website refresh (adeebometer.com)
