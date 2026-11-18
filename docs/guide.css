@@ -107,3 +107,7 @@ main>nav:first-child{margin-bottom:1.2rem}
 .next-checks strong,.next-checks span{display:block}
 .next-checks span{color:var(--sub)}
 @media(max-width:620px){.next-checks{grid-template-columns:1fr}}
+
+.art-calls{--layer:#226eae}
+.call-route span{min-width:0;padding:.4rem .22rem}
+.call-route span:nth-child(3){border-color:#d58718}
