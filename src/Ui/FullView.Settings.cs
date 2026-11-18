@@ -100,7 +100,7 @@ namespace AdeeboMeter
             };
             // General
             { var vs = Views.All(); add("General", "View", TagPc, () => { var cur = vs.FirstOrDefault(v => v[0] == Cfg.View); return (cur != null ? AdeeboMeter.L.T(cur[2]) + ". " : "") + "Each view keeps your own changes - switch any time from the View button at the top. Learn is in every view."; }, vs.Select(v => v[1]).ToArray(), () => vs.FindIndex(v => v[0] == Cfg.View), i => SwitchView(vs[i][0]), null, "view mode simple pro engineer gamer streamer trader everyday advanced beginner tabs"); }
-            add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. More languages come as their translations are finished. A change takes full effect after a restart." : "Français - aperçu : les réglages, les menus et les messages courants sont traduits ; les noms des outils aussi ; les résultats détaillés et une partie de l'aide restent en anglais pour l'instant. Redémarrez AdeeboMeter pour tout changer.", AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français langue english");
+            add("General", "Language", TagPc, () => Cfg.Lang == "en" ? "English. A change takes full effect after a restart." : AdeeboMeter.L.T("Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere."), AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => { Cfg.Lang = AdeeboMeter.L.Languages[i][0]; Cfg.Save(); AdeeboMeter.L.Use(Cfg.Lang); Invalidate(true); }, null, "language french français español spanish arabic العربية bengali বাংলা hindi हिन्दी chinese 简体中文");
             add("General", "Theme", TagPc, () => { int th = Cfg.GetTheme(); return th == 2 ? "Neon: near-black with electric cyan - accents glow softly." : th == 3 ? "Midnight: deep navy with aqua - calm for long nights." : th == 4 ? "Sunset: warm plum with coral." : th == 5 ? "Mint: light and fresh, soft green." : th == 1 ? "Dark: always dark, whatever Windows uses." : th == 0 ? "Light: always light, whatever Windows uses." : "Follow Windows switches light and dark with your Windows setting."; }, SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : Math.Min(SetS18.Length - 1, th + 1); }, i => Cfg.SetTheme(i - 1), null, "dark light colour color theme neon midnight sunset mint");
             // Weather (Adeeb, 14 Nov): off until turned on; the place is typed, never located (Weather.cs)
             add("Weather", "Weather", TagOnline, WeatherHelp, SetOnOff, () => Cfg.WeatherOn && Weather.Current != null ? 0 : 1, i => SetWeather(i == 0), null, "weather forecast rain snow hot cold temperature city");
@@ -244,7 +244,7 @@ namespace AdeeboMeter
                     string last = null;
                     foreach (var it in hits)
                     {
-                        if (it.Sec != last) { y = SetHead(g, it.Sec.ToUpperInvariant(), x, y, w); last = it.Sec; }
+                        if (it.Sec != last) { y = SetHead(g, L.T(it.Sec).ToUpperInvariant(), x, y, w); last = it.Sec; }
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     }
                 }
@@ -329,36 +329,61 @@ namespace AdeeboMeter
             bool wrap = ow > w * 0.6f;
             if (wrap && ow > w) { float k = (w - 2 * S) / (ow - 2 * S); for (int i = 0; i < widths.Length; i++) widths[i] *= k; ow = w; }
             float tw = wrap ? w : w - ow - 24 * S;
+            bool rtl = L.IsRtl;
+            float tx = !rtl || wrap ? x : x + w - tw;
             float hh = Draw.Measure(help, Draw.fSmall, (int)tw).Height;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(label, Draw.fBodyB, ink, x, y);
+                if (rtl)
+                {
+                    using (var sf = TextAtRight(label))
+                        g.DrawString(label, Draw.fBodyB, ink, new RectangleF(tx, y, tw, 20 * S), sf);
+                }
+                else g.DrawString(label, Draw.fBodyB, ink, tx, y);
                 if (!string.IsNullOrEmpty(tag))
                 {
                     float lw = g.MeasureString(label, Draw.fBodyB).Width, tgw = g.MeasureString(L.T(tag), Draw.fTiny).Width + 12 * S;
                     if (lw + tgw + 16 * S < tw)
                     {
                         Color tc = tag == TagNet || tag == TagGame ? Theme.Amber : tag == TagLan ? Theme.Blue : tag == TagOnline ? Theme.Orange : tag == TagWin ? Theme.Grey : Theme.Green;
-                        var tr = new RectangleF(x + lw + 10 * S, y + 2 * S, tgw, 17 * S);
+                        var tr = new RectangleF(rtl ? tx + tw - lw - tgw - 10 * S : tx + lw + 10 * S, y + 2 * S, tgw, 17 * S);
                         Theme.Fill(g, tr, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 36, tc));
                         using (var tbr = new SolidBrush(Theme.Dark ? Theme.Ink : tc)) using (var csf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T(tag), Draw.fTiny, tbr, tr, csf);
                     }
                 }
-                g.DrawString(help, Draw.fSmall, muted, new RectangleF(x, y + 20 * S, tw, hh + 4));
+                var hr = new RectangleF(tx, y + 20 * S, tw, hh + 4);
+                if (rtl)
+                {
+                    using (var sf = TextAtRight(help))
+                        g.DrawString(help, Draw.fSmall, muted, hr, sf);
+                }
+                else g.DrawString(help, Draw.fSmall, muted, hr);
             }
-            var seg = wrap ? new RectangleF(x, y + 26 * S + hh + 6 * S, ow, 30 * S) : new RectangleF(x + w - ow, y + 4 * S, ow, 30 * S);
+            float segX = (wrap ? rtl : !rtl) ? x + w - ow : x;
+            var seg = new RectangleF(segX, wrap ? y + 32 * S + hh : y + 4 * S, ow, 30 * S);
             Theme.Fill(g, seg, 15 * S, Theme.Soft); Theme.Stroke(g, seg, 15 * S, Theme.Line, 1);
-            float sx = seg.X + 1 * S;
+            float sx = rtl ? seg.Right - S : seg.X + S;
             using (var center = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 for (int i = 0; i < opts.Length; i++)
                 {
+                    if (rtl) sx -= widths[i];
                     var r = new RectangleF(sx, seg.Y + 2 * S, widths[i], seg.Height - 4 * S);
+                    center.FormatFlags = L.RunsRtl(opts[i]) ? StringFormatFlags.DirectionRightToLeft : 0;
                     if (i == cur) Theme.Fill(g, r, 13 * S, Theme.Blue);
                     using (var b = new SolidBrush(i == cur ? Theme.OnBlue : Theme.Sub)) g.DrawString(opts[i], Draw.fSmall, b, r, center);
                     int idx = i; Act(settingsCanvas, r, delegate { set(idx); settingsCanvas.Invalidate(); });
-                    sx += widths[i];
+                    if (!rtl) sx += widths[i];
                 }
             return wrap ? seg.Bottom + 12 * S : y + Math.Max(44 * S, 26 * S + hh) + 10 * S;
+        }
+
+        static StringFormat TextAtRight(string text)
+        {
+            bool rtl = L.RunsRtl(text);
+            return new StringFormat {
+                Alignment = rtl ? StringAlignment.Near : StringAlignment.Far,
+                FormatFlags = rtl ? StringFormatFlags.DirectionRightToLeft : 0
+            };
         }
 
         // ---------- About: the whole story, told simply
