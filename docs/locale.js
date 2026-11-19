@@ -96,7 +96,7 @@
       node.setAttribute("aria-label", t(node.dataset.i18nLabel));
     });
     document.querySelectorAll("[data-i18n-preview]").forEach(function (node) {
-      node.hidden = code === "en" || code === "bn" || code === "fr" || code === "ar";
+      node.hidden = code === "en" || code === "bn" || code === "fr" || code === "ar" || code === "es";
     });
     document.querySelectorAll("[data-i18n-direction]").forEach(function (node) {
       node.dir = code === "ar" ? "rtl" : "ltr";
