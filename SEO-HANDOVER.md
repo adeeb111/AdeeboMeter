@@ -61,3 +61,17 @@ Measures page views, visits, referring sites and page performance. Both English 
 The website privacy page describes Cloudflare measurement. Browser checks intercepted the provider script to verify one load per eligible page without sending test visits. Runtime checks verified DNT/GPC and companion route exclusions.
 
 Collection begins after PR merge and deployment. Use Cloudflare Web Analytics for visitor metrics and Search Console/Bing for search impressions, clicks and queries. Record the deployment date with the first reported totals.
+
+## French SEO expansion prepared November 18, 2026
+
+Prepared 101 static French pages under /fr/ using the approved French Canada website dictionary. Coverage includes the full homepage, troubleshooting blog, Wi-Fi, speed and PC monitoring, ISP reports, gaming, streaming, trading, privacy, all 90 Learn lessons and their index.
+
+Each page has a French title and description, a self-canonical, matching English/Bengali/French language annotations where equivalents exist, crawlable links and analytics coverage. French and French Canada language annotations share the same French URL. The old query-only French homepage sitemap entry is replaced by /fr/. Existing ?lang=fr links route to the corresponding static French page and retain anchors.
+
+French search snippets, eight connecting phrases, two short labels and the new website analytics privacy paragraphs were drafted during SEO work. The substantive product and lesson copy comes from the approved translation.
+
+The French build reuses tools/bengali-seo.py through tools/french-seo.py. The normal tools/learnsite.py build regenerates both languages and restores analytics before calculating the offline cache version.
+
+All 101 pages passed browser checks for document language, canonicals, French language links, internal links and representative desktop/mobile layouts. The mobile speed guide was visually reviewed. French generation was byte-stable across repeated bilingual generation. Final indexing submissions await merge and production verification.
+
+French route checks passed for direct French visits with a saved Bengali preference, switching to English and back, old ?lang=fr links, anchors and localized Learn header navigation. Added a visible English link on French articles and lessons.

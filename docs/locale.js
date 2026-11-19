@@ -12,6 +12,8 @@
   var messages = window.AdeeboMeterMessages || {};
   var languageRoute = root.dataset.languageRoute;
   var pageLanguage = languageRoute ? root.lang : null;
+  var pageCode = pageLanguage ? pageLanguage.split("-")[0] : "en";
+  var routeLanguages = (root.dataset.languageVariants || "en bn").split(" ");
 
   function known(value) {
     return value === "auto" || Object.prototype.hasOwnProperty.call(languages, value);
@@ -35,9 +37,10 @@
   }
 
   var stored = saved();
-  var defaultChoice = pageLanguage === "bn" ? "bn" : "auto";
-  var choice = known(query) ? query : known(stored) ? stored : (pageLanguage || defaultChoice);
+  var defaultChoice = pageCode === "bn" || pageCode === "fr" ? pageCode : "auto";
+  var choice = known(query) ? query : pageCode !== "en" ? pageCode : known(stored) ? stored : defaultChoice;
   if (known(query)) remember(query);
+  else if (pageCode !== "en") remember(pageCode);
   var code = choice === "auto" ? preferred() : choice;
 
   function t(key) {
@@ -53,10 +56,10 @@
 
   function followLanguageRoute() {
     if (!languageRoute || !/^https?:$/.test(location.protocol)) return false;
-    var nextLanguage = code === "bn" ? "bn" : "en";
-    if (nextLanguage === pageLanguage) return false;
+    var nextLanguage = routeLanguages.indexOf(code) >= 0 ? code : "en";
+    if (nextLanguage === pageCode) return false;
     var url = new URL(location.href);
-    url.pathname = (nextLanguage === "bn" ? "/bn" : "") + languageRoute;
+    url.pathname = (nextLanguage === "en" ? "" : "/" + nextLanguage) + languageRoute;
     location.replace(url.href);
     return true;
   }
@@ -65,10 +68,10 @@
 
   function apply() {
     if (followLanguageRoute()) return;
-    root.lang = pageLanguage === "bn" ? "bn" : tags[code] || code;
+    root.lang = pageCode === "bn" || pageCode === "fr" ? pageLanguage : tags[code] || code;
     root.dataset.locale = code;
     document.querySelectorAll("[data-blog-link]").forEach(function (link) {
-      link.href = code === "bn" ? "/bn/blog/" : "/blog/";
+      link.href = code === "bn" || code === "fr" ? "/" + code + "/blog/" : "/blog/";
     });
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
       var key = node.dataset.i18n;
@@ -120,7 +123,7 @@
     document.dispatchEvent(new Event("adeebometerlanguagechange"));
   }
 
-  root.lang = pageLanguage === "bn" ? "bn" : tags[code] || code;
+  root.lang = pageCode === "bn" || pageCode === "fr" ? pageLanguage : tags[code] || code;
   var mounted = new WeakSet();
   function mountPickers() {
     document.querySelectorAll("[data-language-picker]").forEach(function (select) {
