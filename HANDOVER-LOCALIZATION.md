@@ -110,10 +110,12 @@ Added 274 exact-source entries for Learn, including investment education, certif
 
 ## French completion pass
 
-French (Canada) has 3599 web/mobile entries and 2794 Windows entries. Includes every Bengali catalog key, current troubleshooting guides, mobile details and Windows settings/help fragments. Existing French entries retained. The proof list is AdeeboMeter-French-translation-list.txt.
+French (Canada) has 3599 web/mobile entries and 2793 Windows entries. Includes every Bengali catalog key, current troubleshooting guides, mobile details and Windows settings/help fragments. Existing French entries retained. The proof list is AdeeboMeter-French-translation-list.txt.
 
 Hindi removed from language lists, web catalog, Windows resource and language test expectations. Stored Hindi settings fall back to English. Compiled French resources and fallback verified by reflection.
 
 Browser checks passed at 320, 390, 1280, 1440 and 1536 px, including blog, Tools, a Learn quiz, Live Data, switching and offline loading. Feature cards stack on narrow phones; French secondary navigation links hide at intermediate desktop widths.
 
 Windows release build passed with the existing warnings in FullView.Labs.cs and Qr.cs. Native Windows visual review and native-speaker proof review remain. Companion personality lines and provider-supplied content retain their English sources. Owner approved publication on November 18, 2026. French translation and Hindi removal pushed together, preserving the concurrent Bengali SEO rollout.
+
+French deployment confirmed live November 18, 2026: 3599 web entries, Hindi absent. Removed the French catalog's test-only fallback sentinel after CI identified it; user-facing translations are unchanged. Pages deployment succeeded; Windows CI rerun tracked separately.
