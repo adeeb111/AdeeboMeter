@@ -2221,7 +2221,6 @@ nobody yet - a CA signs it	personne encore; une autorité doit signer
 none today	aucun aujourd’hui
 not changed since it was locked - sender not proven	intact depuis le verrouillage; expéditeur non confirmé
 not checked yet	pas encore vérifié
-not in the table at all	absent de la table
 now	maintenant
 now the PC knows its outside address	le PC connaît maintenant son adresse externe
 of 10	sur 10
