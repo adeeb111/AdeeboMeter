@@ -56,6 +56,15 @@
 
   function followLanguageRoute() {
     if (!languageRoute || !/^https?:$/.test(location.protocol)) return false;
+    // Keep the complete homepage for every language; localized SEO landings
+    // remain crawlable but visitors use the shared, fully styled homepage.
+    if (languageRoute === "/") {
+      if (location.pathname === "/" || location.pathname === "/index.html") return false;
+      var home = new URL("/", location.origin);
+      home.searchParams.set("lang", code);
+      location.replace(home.href);
+      return true;
+    }
     var nextLanguage = routeLanguages.indexOf(code) >= 0 ? code : "en";
     if (nextLanguage === pageCode) return false;
     var url = new URL(location.href);
