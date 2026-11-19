@@ -12,8 +12,8 @@ namespace AdeeboMeter
     static class L
     {
         public static readonly string[][] Languages = {
-            new[] { "en", "English" }, new[] { "fr", "Français (aperçu)" },
-            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }, new[] { "hi", "हिन्दी" }, new[] { "zh", "简体中文" }
+            new[] { "en", "English" }, new[] { "fr", "Français (Canada)" },
+            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }, new[] { "zh", "简体中文" }
         };
         public static bool IsRtl { get { return Code == "ar"; } }
 

@@ -107,3 +107,13 @@ Added 274 exact-source entries for Learn, including investment education, certif
 
 - The screenshot review found that mobile redraws skipped catalog entries on unmarked UI. Added exact copy lookup to the detached tree before it is merged and replaced comparisons that serialized HTML with direct DOM equality checks. Added 127 Bengali entries for the six troubleshooting cards, guide steps, and Signal Journey findings, measurements and share report. Browser checks cover 320 px and 390 px layouts and verify that filtering keeps the search input focused. Verify paired-PC output with a real Windows connection during the walkthrough.
 - Applied Bengali proofreader edits to web/mobile and Windows catalogs. Checked the Hall of Fame copy across its bold labels, kept punctuation that joins UI fragments, and preserved the day count prepended by the Windows history dialog.
+
+## French completion pass
+
+French (Canada) has 3599 web/mobile entries and 2794 Windows entries. Includes every Bengali catalog key, current troubleshooting guides, mobile details and Windows settings/help fragments. Existing French entries retained. The proof list is AdeeboMeter-French-translation-list.txt.
+
+Hindi removed from language lists, web catalog, Windows resource and language test expectations. Stored Hindi settings fall back to English. Compiled French resources and fallback verified by reflection.
+
+Browser checks passed at 320, 390, 1280, 1440 and 1536 px, including blog, Tools, a Learn quiz, Live Data, switching and offline loading. Feature cards stack on narrow phones; French secondary navigation links hide at intermediate desktop widths.
+
+Windows release build passed with the existing warnings in FullView.Labs.cs and Qr.cs. Native Windows visual review and native-speaker proof review remain. Companion personality lines and provider-supplied content retain their English sources. Owner approved publication on November 18, 2026. French translation and Hindi removal pushed together, preserving the concurrent Bengali SEO rollout.

@@ -103,6 +103,26 @@ html[lang="bn"] #app .row .tx {
   line-height: 1.45;
 }
 
+.v3four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v3tile { min-width: 0; }
+.v3tile .v3top { min-width: 0; }
+.v3tile .v3top b { min-width: 0; overflow-wrap: anywhere; }
+.v3two > * { min-width: 0; }
+.v3btn { white-space: normal; text-align: center; overflow-wrap: anywhere; }
+.v3act .r > * { min-width: 0; }
+@media (max-width: 900px) {
+  .v3four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .v3four { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1201px) and (max-width: 1599px) {
+  html[lang="fr-CA"] .top .links [data-nav-secondary][href="/app.html"] { display: none; }
+}
+@media (min-width: 1201px) and (max-width: 1399px) {
+  html[lang="fr-CA"] .top .links [data-nav-secondary][href="#how"] { display: none; }
+}
+
 /* Give the translated desktop navigation enough room for the Download button. */
 @media (min-width: 1201px) {
   .top .wrap { gap: clamp(1rem, 1.8vw, 1.75rem); }

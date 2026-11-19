@@ -3,7 +3,7 @@
 
   var languages = {
     en: "English", fr: "Français", es: "Español", ar: "العربية",
-    bn: "বাংলা", hi: "हिन्दी", zh: "简体中文"
+    bn: "বাংলা", zh: "简体中文"
   };
   var tags = { fr: "fr-CA", zh: "zh-Hans" };
   var storageKey = "adeebometer-language";
@@ -36,7 +36,7 @@
 
   var stored = saved();
   var defaultChoice = pageLanguage === "bn" ? "bn" : "auto";
-  var choice = known(query) ? query : pageLanguage || (known(stored) ? stored : defaultChoice);
+  var choice = known(query) ? query : known(stored) ? stored : (pageLanguage || defaultChoice);
   if (known(query)) remember(query);
   var code = choice === "auto" ? preferred() : choice;
 
@@ -65,7 +65,7 @@
 
   function apply() {
     if (followLanguageRoute()) return;
-    root.lang = pageLanguage || tags[code] || code;
+    root.lang = pageLanguage === "bn" ? "bn" : tags[code] || code;
     root.dataset.locale = code;
     document.querySelectorAll("[data-blog-link]").forEach(function (link) {
       link.href = code === "bn" ? "/bn/blog/" : "/blog/";
@@ -83,7 +83,7 @@
       node.setAttribute("aria-label", t(node.dataset.i18nLabel));
     });
     document.querySelectorAll("[data-i18n-preview]").forEach(function (node) {
-      node.hidden = code === "en" || code === "bn";
+      node.hidden = code === "en" || code === "bn" || code === "fr";
     });
     document.querySelectorAll("[data-i18n-direction]").forEach(function (node) {
       node.dir = code === "ar" ? "rtl" : "ltr";
@@ -120,7 +120,7 @@
     document.dispatchEvent(new Event("adeebometerlanguagechange"));
   }
 
-  root.lang = pageLanguage || tags[code] || code;
+  root.lang = pageLanguage === "bn" ? "bn" : tags[code] || code;
   var mounted = new WeakSet();
   function mountPickers() {
     document.querySelectorAll("[data-language-picker]").forEach(function (select) {
@@ -170,3 +170,4 @@
   analytics.async = true;
   document.head.appendChild(analytics);
 }());
+

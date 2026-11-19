@@ -1301,7 +1301,7 @@ textarea.in{resize:vertical;min-height:120px}
         (up ? '<div class="big3"><div><small>Delay</small><b>' + ms(r.t.med) + '</b></div><div><small>Delay variation</small><b>' + ms(r.t.jit) + '</b></div><div><small>Missed</small><b>' + r.t.fail + '</b></div></div>' : '') + '</div>';
       var cfA = addrs.map(function (x) { return x.data; }).sort().join(","), ggA = ans(r.gg, "A").map(function (x) { return x.data; }).sort().join(",");
       a += rowsCard([[r.cf ? (addrs.length ? "0" : "2") : "1", "Name lookup", !r.cf ? "Cloudflare's DNS didn't answer" : addrs.length ? (addrs.length === 1 ? tr("1 address") : trFormat("{count} addresses", { count: addrs.length })) + (r.gg ? (cfA === ggA ? " · " + tr("Cloudflare and Google agree") : " · " + tr("Cloudflare and Google differ (normal for big sites)")) : "") : "no IPv4 address", ""],
-        [ans(r.v6, "AAAA").length ? "0" : "3", "IPv6", ans(r.v6, "AAAA").length ? "has an IPv6 address" : "IPv4 only", ""], [up ? "0" : "2", "Secure connection", up ? "opened fine" : "didn't open", ""]].concat(r.out ? [(function () { var v = siteV(r.out); return [lvS(v[0]), "From outside (Cloudflare" + (r.out.colo ? " " + r.out.colo : "") + ")", v[1] + (v[0] === 0 && !up ? " - so it's down just for you" : v[0] === 2 && !up ? " - down for everyone" : ""), !up && v[0] === 0 ? "Try the other network (Wi-Fi or mobile data), restart the router, or check a blocker/VPN on this phone." : ""]; })()] : [])) +
+        [ans(r.v6, "AAAA").length ? "0" : "3", "IPv6", ans(r.v6, "AAAA").length ? "has an IPv6 address" : "IPv4 only", ""], [up ? "0" : "2", "Secure connection", up ? "opened fine" : "didn't open", ""]].concat(r.out ? [(function () { var v = siteV(r.out); return [lvS(v[0]), tr("From outside (Cloudflare") + (r.out.colo ? " " + r.out.colo : "") + ")", v[1] + (v[0] === 0 && !up ? " - so it's down just for you" : v[0] === 2 && !up ? " - down for everyone" : ""), !up && v[0] === 0 ? tr("Try the other network (Wi-Fi or mobile data), restart the router, or check a blocker/VPN on this phone.") : ""]; })()] : [])) +
         '<div class="btns" style="margin-top:12px"><button class="btn ghost" data-tool="dns" data-tq2="' + esc(r.h) + '">' + ic("search", 18) + ' DNS details</button><button class="btn ghost" data-go="phone">' + ic("phone", 18) + ' My connection</button></div>';
     }
     return hdr("Is it down or just me?", "Times any website from this phone", "tools") + a;
@@ -1409,7 +1409,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (W.pts.length) {
       var w = 320, h = 90, mx = Math.max(100, s.max || 0), n = Math.max(W.pts.length, 2), d = "", bars = "";
       W.pts.forEach(function (p, i) { var x = Math.round(i * (w - 4) / (n - 1)) + 2; if (p[1] === undefined) bars += '<rect x="' + (x - 2) + '" y="0" width="4" height="' + h + '" fill="var(--sub)" opacity=".35"/>'; else if (p[1] == null) bars += '<rect x="' + (x - 2) + '" y="0" width="4" height="' + h + '" fill="var(--red)" opacity=".7"/>'; else d += (d ? "L" : "M") + x + " " + Math.round(h - 4 - (h - 8) * p[1] / mx); });
-      a += '<div class="card vcard" style="margin-top:14px">' + stamp(W.t0, s.n + " CHECKS") + '<div class="vh">' + (s.drops ? s.drops + " dropout" + (s.drops > 1 ? "s" : "") + " · longest " + s.gap + " s" : s.max > 300 ? "No dropouts, some spikes" : "Steady, no dropouts") + '</div><svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;margin-top:8px" role="img" aria-label="Delay over time">' + bars + '<path d="' + d + '" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/></svg>' +
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(W.t0, s.n + " CHECKS") + '<div class="vh">' + (s.drops ? s.drops + " dropout" + (s.drops > 1 ? "s" : "") + " · longest " + s.gap + " s" : s.max > 300 ? tr("No dropouts, some spikes") : tr("Steady, no dropouts")) + '</div><svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;margin-top:8px" role="img" aria-label="Delay over time">' + bars + '<path d="' + d + '" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/></svg>' +
         '<div class="big3"><div><small>Median</small><b>' + ms(s.med) + '</b></div><div><small>Worst</small><b>' + ms(s.max) + '</b></div><div><small>Dropouts</small><b>' + s.drops + '</b></div></div><p class="fine">Red is a check that got no answer in 3 seconds; grey is time the phone paused this page, so nothing was measured' + (s.holes ? " (" + s.holeS + " s here)" : "") + '. Keep this page open while it runs.</p></div>';
     }
     return hdr("Watch my connection", "A check every 2 seconds - catches dropouts", "tools") + a;
@@ -1421,19 +1421,19 @@ textarea.in{resize:vertical;min-height:120px}
     var dl = function (r) { return r.err ? "no answer" : Math.round(r.med) + " ms"; }, jt = function (r) { return r.err ? "–" : Math.round(r.jit) + " ms"; };
     return '<div class="card list"><div class="row" style="cursor:default"><div class="tx"></div><span class="tag2" style="min-width:84px;text-align:right">' + nx + '</span><span class="tag2" style="min-width:84px;text-align:right">' + ny + '</span></div>' + row("Delay", dl) + row("Spread", jt) + row("Provider", function (r) { return esc((r.org || "–").split(" ")[0]); }) + row("IPv6", function (r) { return r.v6 == null ? "–" : r.v6 ? "yes" : "no"; }) + '</div>';
   }
-  function better(x, y, nx, ny) { if (!x || !y) return ""; if (x.err && y.err) return "Neither reached the internet"; if (x.err || y.err) return (x.err ? ny : nx) + " works; " + (x.err ? nx : ny) + " doesn't"; var d = Math.round(x.med - y.med); return Math.abs(d) < 10 ? "About the same" : (d > 0 ? ny : nx) + " is " + Math.abs(d) + " ms quicker"; }
+  function better(x, y, nx, ny) { if (!x || !y) return ""; if (x.err && y.err) return tr("Neither reached the internet"); if (x.err || y.err) return (x.err ? ny : nx) + " works; " + (x.err ? nx : ny) + " doesn't"; var d = Math.round(x.med - y.med); return Math.abs(d) < 10 ? "About the same" : (d > 0 ? ny : nx) + " is " + Math.abs(d) + " ms quicker"; }
   TOOLV.compare = function () {
     var ty = navigator.connection && navigator.connection.type, a = '<p class="fine" style="margin:0 2px 12px">Check once on Wi-Fi, then turn Wi-Fi off and check on mobile data. Is it your Wi-Fi, or your provider?' + (ty ? " (This phone says it's on " + (ty === "wifi" ? "Wi-Fi" : ty === "cellular" ? "mobile data" : ty) + " now.)" : "") + '</p>' +
       '<div class="btns"><button class="btn' + (CMP.a ? " ghost" : "") + '" data-cmp="a"' + (phoneBusy ? " disabled" : "") + '>' + ic("wifi", 18) + ' On Wi-Fi now</button><button class="btn' + (CMP.b || !CMP.a ? " ghost" : "") + '" data-cmp="b"' + (phoneBusy ? " disabled" : "") + '>' + ic("signal", 18) + ' On mobile now</button></div>' + (phoneBusy ? '<p class="fine" style="margin:8px 2px 0">Measuring… a few seconds - up to 30 seconds right after switching networks.</p>' : '');
-    if (CMP.a || CMP.b) a += '<div style="margin-top:14px">' + sideBySide(CMP.a, CMP.b, "WI-FI", "MOBILE") + '</div>' + (CMP.a && CMP.b ? '<div class="card vcard"><div class="vh">' + esc(better(CMP.a, CMP.b, "Wi-Fi", "Mobile data")) + '</div><p class="fine">' + (CMP.a.err || CMP.b.err ? "" : CMP.a.med > CMP.b.med + 30 ? "Your Wi-Fi (or the router) is the slow part - try Wi-Fi walk, or restart the router." : CMP.b.med > CMP.a.med + 30 ? "Your home line is quicker than mobile here - normal." : "Both are similar, so Wi-Fi isn't the problem.") + '</p></div>' : '');
+    if (CMP.a || CMP.b) a += '<div style="margin-top:14px">' + sideBySide(CMP.a, CMP.b, "WI-FI", "MOBILE") + '</div>' + (CMP.a && CMP.b ? '<div class="card vcard"><div class="vh">' + esc(better(CMP.a, CMP.b, "Wi-Fi", "Mobile data")) + '</div><p class="fine">' + (CMP.a.err || CMP.b.err ? "" : CMP.a.med > CMP.b.med + 30 ? tr("Your Wi-Fi (or the router) is the slow part - try Wi-Fi walk, or restart the router.") : CMP.b.med > CMP.a.med + 30 ? tr("Your home line is quicker than mobile here - normal.") : tr("Both are similar, so Wi-Fi isn't the problem.")) + '</p></div>' : '');
     return hdr("Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?", "tools") + a;
   };
   TOOLV.restart = function () {
     var a = '<div class="card list">' +
-      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : "Before you touch anything") + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : tr("Before you touch anything")) + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
       '<div class="row" style="cursor:default"><span class="vdot sm off">2</span><div class="tx"><b>Restart the router</b><span>Unplug it, count to 30, plug it back in. Wait until its lights settle (about 2 minutes) and the phone is back on Wi-Fi.</span></div></div>' +
-      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : "After the restart") + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
-    if (BA.before && BA.after) a += sideBySide(BA.before, BA.after, "BEFORE", "AFTER") + '<div class="card vcard"><div class="vh">' + esc(better(BA.before, BA.after, "Before", "After")) + '</div><p class="fine">' + (!BA.after.err && !BA.before.err && BA.before.med > BA.after.med + 30 ? "The restart helped. If it keeps coming back, the router may be overheating or need a firmware update - or ask your provider." : "No real change - the router wasn't the problem. Try Wi-Fi vs mobile data next.") + '</p><button class="btn ghost" data-ba="reset">Start over</button></div>';
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : tr("After the restart")) + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
+    if (BA.before && BA.after) a += sideBySide(BA.before, BA.after, "BEFORE", "AFTER") + '<div class="card vcard"><div class="vh">' + esc(better(BA.before, BA.after, "Before", "After")) + '</div><p class="fine">' + (!BA.after.err && !BA.before.err && BA.before.med > BA.after.med + 30 ? tr("The restart helped. If it keeps coming back, the router may be overheating or need a firmware update - or ask your provider.") : tr("No real change - the router wasn't the problem. Try Wi-Fi vs mobile data next.")) + '</p><button class="btn ghost" data-ba="reset">Start over</button></div>';
     return hdr("Before and after", "Did restarting the router help?", "tools") + a;
   };
   // ---- fix-it guides: start from the problem; each step is a check this phone can run, or one thing to try
@@ -1490,15 +1490,15 @@ textarea.in{resize:vertical;min-height:120px}
     return { none: g.none, any: g.c.length > 0, v4: v4[0] ? v4[0].ip : "", v6: v6[0] ? v6[0].ip : "", ports: v4.map(function (c) { return c.port; }).filter(function (x, i, a) { return a.indexOf(x) === i; }), nMap: nMap, sym: nMap > 1, sure: nMap > 1 || nWho >= 2, noAnswer: !sr.length && host.length > 0, at: g.at };
   }
   RUN2.stun = async function (st) { st.res = stunSum(await stunGather()); var r = st.res;
-    addAct("everyday", "Calls and games: " + (r.none ? "not testable here" : r.noAnswer ? "no STUN answer" : r.sym ? "strict NAT" : r.v4 || r.v6 ? (r.sure ? "easy-going NAT" : "NAT type unclear") : "no answer"), r.v4 || r.v6 || "", r.none || r.noAnswer || !r.sure ? 3 : r.sym ? 1 : 0); };
+    addAct("everyday", "Calls and games: " + (r.none ? tr("not testable here") : r.noAnswer ? "no STUN answer" : r.sym ? "strict NAT" : r.v4 || r.v6 ? (r.sure ? "easy-going NAT" : tr("NAT type unclear")) : "no answer"), r.v4 || r.v6 || "", r.none || r.noAnswer || !r.sure ? 3 : r.sym ? 1 : 0); };
   TOOLV.stun = function () {
     var st = tst("stun"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Asks two public STUN servers (Google, Cloudflare) how they see this phone - the same first step a video call or game chat takes.</p>' + errBox("stun") + btn("stun", "Check calls and games");
     if (r) {
-      var h = r.none ? "This browser can't run the test" : r.noAnswer || (!r.v4 && !r.v6) ? "No STUN server answered" : r.sym ? "Strict NAT - direct calls often fail" : r.sure ? "Easy-going NAT - direct calls should work" : "Your public address - NAT type unclear";
-      var sub = r.none ? "It has no WebRTC. Try Chrome or Safari." : r.noAnswer || (!r.v4 && !r.v6) ? "That can mean this network blocks the UDP that calls prefer, the STUN servers were unreachable, or this browser hides the answer. Apps then fall back to relays - they still work, with more delay. Try again, or on the other network." : !r.sure && !r.sym ? "Only one STUN server's answer could be read, so whether your NAT is strict can't be told. The address below is still right." : r.sym ? "Each server saw a different port. Peer-to-peer (game chat, some calls, file sharing) usually needs a relay; consoles call this Strict or NAT type 3." : r.v4 || r.v6 ? "Both servers saw the same address and port, so other devices can usually reach you directly. Consoles would say Open or Moderate - a browser can't tell those two apart." : "Check the connection and try again.";
+      var h = r.none ? tr("This browser can't run the test") : r.noAnswer || (!r.v4 && !r.v6) ? tr("No STUN server answered") : r.sym ? tr("Strict NAT - direct calls often fail") : r.sure ? tr("Easy-going NAT - direct calls should work") : tr("Your public address - NAT type unclear");
+      var sub = r.none ? tr("It has no WebRTC. Try Chrome or Safari.") : r.noAnswer || (!r.v4 && !r.v6) ? tr("That can mean this network blocks the UDP that calls prefer, the STUN servers were unreachable, or this browser hides the answer. Apps then fall back to relays - they still work, with more delay. Try again, or on the other network.") : !r.sure && !r.sym ? tr("Only one STUN server's answer could be read, so whether your NAT is strict can't be told. The address below is still right.") : r.sym ? tr("Each server saw a different port. Peer-to-peer (game chat, some calls, file sharing) usually needs a relay; consoles call this Strict or NAT type 3.") : r.v4 || r.v6 ? tr("Both servers saw the same address and port, so other devices can usually reach you directly. Consoles would say Open or Moderate - a browser can't tell those two apart.") : tr("Check the connection and try again.");
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "STUN") + '<div class="vh">' + h + '</div><div style="color:var(--sub);font-size:14px">' + sub + '</div></div>';
-      if (r.v4 || r.v6) a += rowsCard([["3", "Address calls see (IPv4)", r.v4 ? r.v4 + (r.ports.length ? " · port " + r.ports.join(", ") : "") : "none", "Your public address on this network. On mobile data it's usually shared with other customers (carrier NAT)."],
-        [r.v6 ? "0" : "3", "IPv6", r.v6 ? r.v6 : "not used for calls here", r.v6 ? "With IPv6 there's normally no NAT at all - the easiest path for calls." : ""], [r.sym ? "1" : r.sure ? "0" : "3", "Mapping", r.nMap > 1 ? "changes per server (symmetric)" : r.sure ? "stays the same (endpoint-independent)" : "unclear - one server's answer", ""]]) +
+      if (r.v4 || r.v6) a += rowsCard([["3", tr("Address calls see (IPv4)"), r.v4 ? r.v4 + (r.ports.length ? " · port " + r.ports.join(", ") : "") : "none", tr("Your public address on this network. On mobile data it's usually shared with other customers (carrier NAT).")],
+        [r.v6 ? "0" : "3", "IPv6", r.v6 ? r.v6 : tr("not used for calls here"), r.v6 ? tr("With IPv6 there's normally no NAT at all - the easiest path for calls.") : ""], [r.sym ? "1" : r.sure ? "0" : "3", "Mapping", r.nMap > 1 ? tr("changes per server (symmetric)") : r.sure ? tr("stays the same (endpoint-independent)") : tr("unclear - one server's answer"), ""]]) +
         '<div class="btns" style="margin-top:12px"><button class="btn ghost" data-tool="spamlist"' + (r.v4 ? ' data-tq2="' + esc(r.v4) + '"' : '') + '>' + ic("send", 18) + ' Spam lists</button><button class="btn ghost" data-tool="portcheck">' + ic("router", 18) + ' Is a port open?</button></div>';
     }
     return hdr("Calls, games and NAT", "Your public address and how strict your NAT is", "tools") + a;
@@ -1517,21 +1517,21 @@ textarea.in{resize:vertical;min-height:120px}
   };
   function leakVerdict(o) {
     var same = o.cmp.filter(function (c) { return c.same || c.near; }), comparable = o.cmp.filter(function (c) { return c.fam; }), diff = comparable.filter(function (c) { return !c.same && !c.near; });
-    if (o.g.none) return [3, "can't test in this browser", "It has no WebRTC, so calls can't leak an address here either."];
-    if (!o.g.v4 && !o.g.v6) return [3, "couldn't measure", "No STUN server answered, so there was nothing to compare. It may be blocked here, or the servers were unreachable - try again, or on another network."];
-    if (diff.length) return [2, "calls see a different address", "Websites see one address, but calls (WebRTC) reveal " + diff[0].ip + (o.diffName ? " (" + o.diffName + (o.diffCc ? ", " + o.diffCc : "") + ")" : "") + ". If you are using a VPN, that's a leak: turn on the VPN's WebRTC protection, or use its app instead of a browser extension."];
+    if (o.g.none) return [3, tr("can't test in this browser"), tr("It has no WebRTC, so calls can't leak an address here either.")];
+    if (!o.g.v4 && !o.g.v6) return [3, tr("couldn't measure"), tr("No STUN server answered, so there was nothing to compare. It may be blocked here, or the servers were unreachable - try again, or on another network.")];
+    if (diff.length) return [2, tr("calls see a different address"), "Websites see one address, but calls (WebRTC) reveal " + diff[0].ip + (o.diffName ? " (" + o.diffName + (o.diffCc ? ", " + o.diffCc : "") + ")" : "") + tr(". If you are using a VPN, that's a leak: turn on the VPN's WebRTC protection, or use its app instead of a browser extension.")];
     var exact = o.cmp.filter(function (c) { return c.same; });
-    if (exact.length) return [0, "same address everywhere", "Calls and websites see the same " + (exact[0].ip.indexOf(":") >= 0 ? "IPv6" : "IPv4") + " address. If a VPN is on, it covers calls too."];
-    if (same.length) return [1, "a nearby address", "Calls see " + same[0].ip + " - not the address websites see, but in the same network block. Usually the same provider (or VPN) handing out a neighbouring address; if your VPN should hide you, check that this block is the VPN's."];
-    if (!comparable.length) return [1, "couldn't compare", "Calls used " + (o.g.v6 ? "IPv6" : "IPv4") + " but websites came over the other one, so the two can't be compared. Try again on another network."];
-    return [1, "couldn't compare", "Our small server didn't answer. Try again in a moment."];
+    if (exact.length) return [0, tr("same address everywhere"), "Calls and websites see the same " + (exact[0].ip.indexOf(":") >= 0 ? "IPv6" : "IPv4") + " address. If a VPN is on, it covers calls too."];
+    if (same.length) return [1, tr("a nearby address"), "Calls see " + same[0].ip + " - not the address websites see, but in the same network block. Usually the same provider (or VPN) handing out a neighbouring address; if your VPN should hide you, check that this block is the VPN's."];
+    if (!comparable.length) return [1, tr("couldn't compare"), "Calls used " + (o.g.v6 ? "IPv6" : "IPv4") + " but websites came over the other one, so the two can't be compared. Try again on another network."];
+    return [1, tr("couldn't compare"), tr("Our small server didn't answer. Try again in a moment.")];
   }
   TOOLV.vpnleak = function () {
     var st = tst("vpnleak"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Turn your VPN on first. This compares the address websites see with the one a video call reveals.</p>' + errBox("vpnleak") + btn("vpnleak", "Check for a leak");
     if (r) { var v = leakVerdict(r);
-      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at) + '<div class="vh">' + (v[0] === 0 ? "No leak found" : v[0] === 2 ? "Possible leak" : v[1] === "couldn't measure" ? "Couldn't measure" : "Not sure") + '</div><div style="color:var(--sub);font-size:14px">' + esc(v[2]) + '</div></div>' +
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at) + '<div class="vh">' + (v[0] === 0 ? "No leak found" : v[0] === 2 ? "Possible leak" : v[1] === tr("couldn't measure") ? tr("Couldn't measure") : "Not sure") + '</div><div style="color:var(--sub);font-size:14px">' + esc(v[2]) + '</div></div>' +
         rowsCard([["3", "Websites see", r.web ? (r.web.org || "a provider") + " · over " + (r.web.v6 ? "IPv6" : "IPv4") : "–", ""], ["3", "Calls see", [r.g.v4, r.g.v6].filter(Boolean).join(" · ") || "nothing", ""],
-          ["3", "Name lookups (DNS)", "a browser can't tell which DNS server answers", "A DNS leak check needs the PC (VPN and company proxy)."]]); }
+          ["3", tr("Name lookups (DNS)"), tr("a browser can't tell which DNS server answers"), tr("A DNS leak check needs the PC (VPN and company proxy).")]]); }
     return hdr("VPN leak check", "Does your real address slip out?", "tools") + a;
   };
 
@@ -1545,8 +1545,8 @@ textarea.in{resize:vertical;min-height:120px}
     var st = tst("v6v4"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Times the same site (Google) over IPv4 only, then IPv6 only.</p>' + errBox("v6v4") + btn("v6v4", "Compare them");
     if (r) {
       var has6 = r.v6.n > 0, has4 = r.v4.n > 0, d = has6 && has4 ? r.v6.med - r.v4.med : 0;
-      var h = !has4 && !has6 ? "Neither answered" : !has6 ? "No IPv6 on this connection" : !has4 ? "Reached the IPv6 test site, not the IPv4 one" : Math.abs(d) < 10 ? "IPv6 works - about the same speed" : d < 0 ? "IPv6 works - and it's faster" : "IPv6 works - but it's slower here";
-      var sub = !has4 && has6 ? "The IPv4-only test site didn't answer from here. That can be an IPv6-only network or just that site - try again." : !has6 ? "Everything still works over IPv4. IPv6 helps calls and games (no NAT), so it's worth asking your provider or turning it on in the router." : d >= 10 ? "Phones pick the faster one automatically (Happy Eyeballs), so you won't feel it. If it's slower everywhere, the provider's IPv6 path is longer." : "Phones and browsers use IPv6 first when it's there.";
+      var h = !has4 && !has6 ? "Neither answered" : !has6 ? "No IPv6 on this connection" : !has4 ? tr("Reached the IPv6 test site, not the IPv4 one") : Math.abs(d) < 10 ? "IPv6 works - about the same speed" : d < 0 ? "IPv6 works - and it's faster" : "IPv6 works - but it's slower here";
+      var sub = !has4 && has6 ? tr("The IPv4-only test site didn't answer from here. That can be an IPv6-only network or just that site - try again.") : !has6 ? tr("Everything still works over IPv4. IPv6 helps calls and games (no NAT), so it's worth asking your provider or turning it on in the router.") : d >= 10 ? tr("Phones pick the faster one automatically (Happy Eyeballs), so you won't feel it. If it's slower everywhere, the provider's IPv6 path is longer.") : tr("Phones and browsers use IPv6 first when it's there.");
       var mx = Math.max(r.v4.med || 0, r.v6.med || 0, 1);
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "4 TRIES EACH") + '<div class="vh">' + h + '</div><div style="color:var(--sub);font-size:14px">' + sub + '</div><div class="bars">' +
         [["IPv4", r.v4], ["IPv6", r.v6]].map(function (x) { return '<div><span>' + x[0] + '</span><i style="--w:' + (x[1].med == null ? 4 : Math.round(100 * x[1].med / (mx * 1.15))) + '%;--c:var(' + (x[1].med == null ? "--red" : "--blue") + ')"></i><b>' + (x[1].med == null ? "–" : x[1].med) + '</b></div>'; }).join("") + '</div></div>';
@@ -1594,7 +1594,7 @@ textarea.in{resize:vertical;min-height:120px}
     var st = tst("portcheck"), r = st.res, a = qbox("portcheck", "A port number - 25565", "numeric") + '<div class="mini" style="grid-template-columns:repeat(4,1fr);margin:0 0 12px">' + PCHIPS.map(function (p) { return '<button data-pchip="' + p[0] + '">' + p[0] + '<small style="display:block;font-size:10px;color:var(--sub)">' + p[1] + '</small></button>'; }).join("") + '</div>' + errBox("portcheck") + btn("portcheck", "Test from the internet");
     if (r) { var j = r.j, cell = navigator.connection && navigator.connection.type === "cellular";
       var h = j.why === "25" ? "Port 25 can't be tested" : j.open ? trFormat("Port {port} is open to the internet", { port: r.p }) : j.why === "cf" ? "Can't test from behind Cloudflare" : trFormat("Port {port} isn't reachable", { port: r.p });
-      var sub = j.why === "25" ? "Mail port 25 is blocked for the tester itself (and by most home providers)." : j.open ? (RISKY[r.p] ? "This port shouldn't be open to everyone - attackers scan for it all day. Close the forward, or put it behind a VPN." : "Anyone on the internet can connect to it. Good if you meant to share something (a game server, Plex); otherwise close the forward in your router.") :
+      var sub = j.why === "25" ? "Mail port 25 is blocked for the tester itself (and by most home providers)." : j.open ? (RISKY[r.p] ? tr("This port shouldn't be open to everyone - attackers scan for it all day. Close the forward, or put it behind a VPN.") : tr("Anyone on the internet can connect to it. Good if you meant to share something (a game server, Plex); otherwise close the forward in your router.")) :
         j.why === "cf" ? "You're on Cloudflare WARP or a similar service. Turn it off and test again." : cell ? "On mobile data this is normal: carriers share one address between many customers (carrier NAT), so nothing can be opened. Test on your home Wi-Fi." : trFormat("Nothing answered on TCP {port}. Check: the device is on and the app is running, the router forwards {port} to that device, and its firewall allows it. If the router's WAN address starts with 100.64-100.127, your provider uses carrier NAT - ask for a public address.", { port: r.p });
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "TCP · FROM CLOUDFLARE") + '<div class="vh">' + esc(h) + '</div><div style="color:var(--sub);font-size:14px">' + esc(sub) + '</div>' + (j.open && j.ms != null ? '<div class="big3"><div><small>Answered in</small><b>' + ms(j.ms) + '</b></div><div><small>Address</small><b>' + (j.v6 ? "IPv6" : "IPv4") + '</b></div><div><small>Protocol</small><b>TCP</b></div></div>' : '') + '</div>' +
         '<p class="fine">Only your own address can be tested - the address this phone is using right now. UDP ports (WireGuard, many games) can\'t be tested this way.</p>'; }
@@ -1612,7 +1612,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (last.err) return [2, "not reachable", last.err];
     var s = last.s; return s >= 200 && s < 300 ? [0, "up", ""] : s >= 300 && s < 400 ? (L.length >= 6 && last.loc ? [1, "too many redirects (6 followed)", ""] : !last.loc ? [1, trFormat("redirects without saying where ({status})", { status: s }), ""] : s === 304 ? [0, "up (not modified)", ""] : [1, trFormat("stopped at a redirect ({status})", { status: s }), ""]) : s === 401 || s === 403 ? [1, trFormat("answers, but blocks visitors ({status})", { status: s }), ""] : s === 404 ? [1, "answers, but that page isn't there (404)", ""] : s === 429 ? [1, "answers, but says slow down (429)", ""] : s >= 500 ? [2, trFormat("its server is failing ({status})", { status: s }), ""] : [1, trFormat("answers with {status}", { status: s }), ""];
   }
-  var SC = { 200: "OK", 204: "OK, empty", 301: "moved for good", 302: "moved for now", 303: "see other", 307: "moved for now", 308: "moved for good", 400: "bad request", 401: "sign-in needed", 403: "refused", 404: "not found", 429: "too many requests", 500: "server error", 502: "bad gateway", 503: "unavailable", 504: "gateway timeout", 520: "Cloudflare: unknown error", 521: "Cloudflare: web server down", 522: "Cloudflare: connection timed out", 523: "Cloudflare: origin unreachable", 525: "Cloudflare: TLS handshake failed", 526: "Cloudflare: invalid certificate" };
+  var SC = { 200: "OK", 204: "OK, empty", 301: "moved for good", 302: "moved for now", 303: "see other", 307: "moved for now", 308: "moved for good", 400: "bad request", 401: "sign-in needed", 403: "refused", 404: "not found", 429: "too many requests", 500: "server error", 502: "bad gateway", 503: "unavailable", 504: "gateway timeout", 520: tr("Cloudflare: unknown error"), 521: tr("Cloudflare: web server down"), 522: tr("Cloudflare: connection timed out"), 523: tr("Cloudflare: origin unreachable"), 525: tr("Cloudflare: TLS handshake failed"), 526: tr("Cloudflare: invalid certificate") };
   TOOLV.site = function () {
     var st = tst("site"), r = st.res, a = qbox("site", "A website - example.com or http://example.com/page") + errBox("site") + btn("site", "Check from outside");
     if (r) { var j = r.j, v = siteV(j), L = j.hops || [], last = L[L.length - 1] || {}, tot = L.reduce(function (s, x) { return s + (x.ms || 0); }, 0), first = L[0] || {};
@@ -1635,12 +1635,12 @@ textarea.in{resize:vertical;min-height:120px}
   function blHit(j) { return ans(j, "A").some(function (x) { var m = /^127\.0\.0\.(\d+)$/.exec(x.data); return m && +m[1] >= 2 && +m[1] <= 9; }); }
   RUN2.spamlist = async function (st) {
     var ip = String(st.q || "").trim();
-    if (!ip) { var g = stunSum(await stunGather()); ip = g.v4; st.q = ip; if (!ip) throw fail("Couldn't find this phone's public IPv4 address - type one."); }
+    if (!ip) { var g = stunSum(await stunGather()); ip = g.v4; st.q = ip; if (!ip) throw fail(tr("Couldn't find this phone's public IPv4 address - type one.")); }
     if (!v4ok(ip)) throw fail(ip.indexOf(":") >= 0 ? "These lists check IPv4 addresses only." : "Type an IPv4 address, like 203.0.113.7");
     var rev = ip.split(".").reverse().join(".");
     var rows = await Promise.all(BL.map(function (b) { return Promise.all([doh("gg", "2.0.0.127." + b[1], "A").catch(function () { return null; }), doh("gg", rev + "." + b[1], "A").catch(function () { return null; })]).then(function (x) { return { n: b[0], z: b[1], ctl: blHit(x[0]), hit: x[1] ? blHit(x[1]) : null }; }); }));
     st.res = { at: Date.now(), ip: ip, rows: rows }; var hits = rows.filter(function (x) { return x.ctl && x.hit; }).length, usable = rows.filter(function (x) { return x.ctl && x.hit != null; }).length;
-    addAct("everyday", !usable ? ip + ": no spam list could be checked" : ip + (hits ? " is on " + hits + " spam list" + (hits > 1 ? "s" : "") : " isn't on the " + usable + " spam lists checked"), "", !usable ? 3 : hits ? 2 : 0);
+    addAct("everyday", !usable ? ip + tr(": no spam list could be checked") : ip + (hits ? " is on " + hits + " spam list" + (hits > 1 ? "s" : "") : " isn't on the " + usable + " spam lists checked"), "", !usable ? 3 : hits ? 2 : 0);
   };
   TOOLV.spamlist = function () {
     var st = tst("spamlist"), r = st.res, a = qbox("spamlist", "An IPv4 address - leave empty for this phone's", "decimal") + errBox("spamlist") + btn("spamlist", "Check the lists");
@@ -1661,8 +1661,8 @@ textarea.in{resize:vertical;min-height:120px}
   function hexOf(b, s, e) { var h = []; for (var i = s; i < e; i++) h.push(("0" + b[i].toString(16)).slice(-2)); return h.join(":"); }
   var OIDN = { "2.5.4.3": "CN", "2.5.4.10": "O", "2.5.4.11": "OU", "2.5.4.6": "C", "2.5.4.7": "L", "2.5.4.8": "ST", "2.5.4.5": "serialNumber", "1.2.840.113549.1.9.1": "email", "2.5.4.97": "orgId",
     "1.2.840.113549.1.1.1": "RSA", "1.2.840.10045.2.1": "EC", "1.3.101.112": "Ed25519", "1.3.101.113": "Ed448", "1.2.840.113549.1.1.10": "RSA-PSS",
-    "1.2.840.113549.1.1.11": "SHA-256 with RSA", "1.2.840.113549.1.1.12": "SHA-384 with RSA", "1.2.840.113549.1.1.13": "SHA-512 with RSA", "1.2.840.113549.1.1.5": "SHA-1 with RSA (weak)", "1.2.840.113549.1.1.4": "MD5 with RSA (broken)",
-    "1.2.840.10045.4.3.2": "ECDSA with SHA-256", "1.2.840.10045.4.3.3": "ECDSA with SHA-384", "1.2.840.10045.4.3.4": "ECDSA with SHA-512", "1.2.840.10045.3.1.7": "P-256", "1.3.132.0.34": "P-384", "1.3.132.0.35": "P-521",
+    "1.2.840.113549.1.1.11": tr("SHA-256 with RSA"), "1.2.840.113549.1.1.12": tr("SHA-384 with RSA"), "1.2.840.113549.1.1.13": tr("SHA-512 with RSA"), "1.2.840.113549.1.1.5": tr("SHA-1 with RSA (weak)"), "1.2.840.113549.1.1.4": tr("MD5 with RSA (broken)"),
+    "1.2.840.10045.4.3.2": tr("ECDSA with SHA-256"), "1.2.840.10045.4.3.3": tr("ECDSA with SHA-384"), "1.2.840.10045.4.3.4": tr("ECDSA with SHA-512"), "1.2.840.10045.3.1.7": "P-256", "1.3.132.0.34": "P-384", "1.3.132.0.35": "P-521",
     "1.3.6.1.5.5.7.3.1": "server", "1.3.6.1.5.5.7.3.2": "client", "1.3.6.1.5.5.7.3.3": "code signing", "1.3.6.1.5.5.7.3.4": "email", "1.3.6.1.5.5.7.3.8": "time stamping", "1.3.6.1.5.5.7.3.9": "OCSP signing" };
   function a1name(b, n) { return a1k(b, n).map(function (set) { return a1k(b, set).map(function (atv) { var k = a1k(b, atv); return (OIDN[a1oid(b, k[0])] || a1oid(b, k[0])) + "=" + a1str(b, k[1]); }).join("+"); }).join(", "); }
   function a1key(b, spki) {
@@ -1677,7 +1677,7 @@ textarea.in{resize:vertical;min-height:120px}
         if (oid === "2.5.29.17") o.san = a1k(b, inner).map(function (g) { return g.t === 0x82 ? a1str(b, g) : g.t === 0x87 ? (g.e - g.s === 4 ? Array.prototype.join.call(b.subarray(g.s, g.e), ".") : "IPv6 " + hexOf(b, g.s, g.e)) : g.t === 0x81 ? "email " + a1str(b, g) : g.t === 0x86 ? a1str(b, g) : ""; }).filter(Boolean);
         else if (oid === "2.5.29.19") { var bc = a1k(b, inner); o.ca = bc.length && bc[0].t === 1 && b[bc[0].s] !== 0; }
         else if (oid === "2.5.29.37") o.eku = a1k(b, inner).map(function (e) { return OIDN[a1oid(b, e)] || a1oid(b, e); });
-        else if (oid === "2.5.29.15") { var ku = b[inner.s + 1] || 0, KU = ["digital signature", "non-repudiation", "key encipherment", "data encipherment", "key agreement", "certificate signing", "CRL signing"]; o.ku = KU.filter(function (_, i) { return ku & (0x80 >> i); }); }
+        else if (oid === "2.5.29.15") { var ku = b[inner.s + 1] || 0, KU = [tr("digital signature"), "non-repudiation", tr("key encipherment"), tr("data encipherment"), "key agreement", tr("certificate signing"), "CRL signing"]; o.ku = KU.filter(function (_, i) { return ku & (0x80 >> i); }); }
       } catch (e) {} if (crit) o.crit = (o.crit || 0) + 1; }); return o;
   }
   function parseCert(b) {
@@ -1702,12 +1702,12 @@ textarea.in{resize:vertical;min-height:120px}
       if (!o) return { kind: "pem", label: pem[1], len: der.length };
       if (crypto && crypto.subtle) { var h = new Uint8Array(await crypto.subtle.digest("SHA-256", der)); o.fp = hexOf(h, 0, h.length).toUpperCase(); } return o; }
     if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/.test(txt)) { var p = txt.split("."), jh = null, jp = null; try { jh = jwtPart(p[0]); jp = jwtPart(p[1]); } catch (e) {}
-      if (jh || jp) { if (!jh || typeof jh !== "object" || Array.isArray(jh) || !jp || typeof jp !== "object" || Array.isArray(jp)) throw fail("That looks like a JWT, but its header or claims aren't a JSON object - it's damaged or not a JWT."); return { kind: "jwt", h: jh, p: jp, signed: !!p[2] }; } }
+      if (jh || jp) { if (!jh || typeof jh !== "object" || Array.isArray(jh) || !jp || typeof jp !== "object" || Array.isArray(jp)) throw fail(tr("That looks like a JWT, but its header or claims aren't a JSON object - it's damaged or not a JWT.")); return { kind: "jwt", h: jh, p: jp, signed: !!p[2] }; } }
     if (/^[A-Za-z0-9+\/=_\s-]+$/.test(txt)) { var u; try { u = b64bytes(txt); } catch (e) { throw fail("That isn't valid Base64."); }
       if (u[0] === 0x30) { try { return parseCert(u); } catch (e) {} try { return parseCsr(u); } catch (e) {} }
       var text = ""; try { text = new TextDecoder("utf-8", { fatal: true }).decode(u); } catch (e) {}
       return /^[\x09\x0a\x0d\x20-\x7e -￿]*$/.test(text) && text ? { kind: "b64", text: text, len: u.length } : { kind: "bin", hex: hexOf(u, 0, Math.min(u.length, 48)), len: u.length }; }
-    throw fail("Not something I recognise - paste a certificate, a CSR, a JWT or Base64");
+    throw fail(tr("Not something I recognise - paste a certificate, a CSR, a JWT or Base64"));
   }
   RUN2.decode = async function (st) { st.full = false; st.res = await decodeAny(st.q); st.res.at = Date.now(); };
   function dt(d) { return d ? d.toISOString().slice(0, 16).replace("T", " ") + " UTC" : "–"; }
@@ -1716,7 +1716,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (o.kind === "cert") { var days = o.na ? Math.floor((o.na - now) / 864e5) : null, self = o.issuer === o.subject;
       rows.push([days == null ? "3" : days < 0 ? "2" : days < 30 ? "1" : "0", "Valid until", dt(o.na) + (days == null ? "" : days < 0 ? " - expired " + (-days) + " days ago" : " - " + days + " days left"), o.nb && o.nb > now ? "Not valid yet - starts " + dt(o.nb) : ""]);
       rows.push(["3", "Issued to", o.subject || "–", ""], [self ? "1" : "3", "Issued by", self ? "itself (self-signed)" : o.issuer, self ? "Browsers won't trust it unless it's installed on purpose." : ""]); }
-    else rows.push(["3", "Asks for", o.subject || "(no name - names in SAN)", "A certificate request: send it to the CA. The private key stays where it was made."]);
+    else rows.push(["3", "Asks for", o.subject || tr("(no name - names in SAN)"), tr("A certificate request: send it to the CA. The private key stays where it was made.")]);
     if (o.ext.san) rows.push(["3", "Names (SAN)", o.ext.san.slice(0, 12).join(", ") + (o.ext.san.length > 12 ? " +" + (o.ext.san.length - 12) + " more" : ""), ""]);
     rows.push([/weak|broken/.test(o.sig) || /RSA (512|768|1024)-bit/.test(o.key) ? "2" : "0", "Key", o.key || "–", ""], [/weak|broken/.test(o.sig) ? "2" : "3", "Signature", o.sig || "–", ""]);
     if (o.ext.ca != null) rows.push(["3", "Can sign other certificates", o.ext.ca ? "yes - a CA" : "no", ""]);
@@ -1734,7 +1734,7 @@ textarea.in{resize:vertical;min-height:120px}
           '<pre class="pre">' + esc(JSON.stringify(r.h, null, 2)) + '</pre><pre class="pre">' + esc(JSON.stringify(r.p, function (k, v) { var d = t(v); return d && /^(exp|iat|nbf|auth_time)$/.test(k) ? v + "  (" + dt(d) + ")" : v; }, 2)) + '</pre></div>'; }
       else if (r.kind === "b64") a += '<div class="card" style="margin-top:14px">' + stamp(r.at, trFormat("BASE64 · {count} BYTES", { count: r.len })) + '<pre class="pre">' + esc(st.full ? r.text : r.text.slice(0, 4000)) + (r.text.length > 4000 && !st.full ? "\n…" : "") + '</pre>' + (r.text.length > 4000 ? '<p class="fine">' + esc(trFormat(st.full ? "All {count} characters." : "The first 4,000 of {count} characters.", { count: r.text.length.toLocaleString() })) + ' <button class="lnk" data-dfull="1">' + (st.full ? "Show less" : "Show all") + '</button></p>' : '') + '</div>';
       else if (r.kind === "bin") a += '<div class="card" style="margin-top:14px">' + stamp(r.at, trFormat("BASE64 · {count} BYTES OF BINARY", { count: r.len })) + '<pre class="pre">' + esc(r.hex) + (r.len > 48 ? " …" : "") + '</pre></div>';
-      else a += rowsCard([["3", r.label, r.len + " bytes", "Recognised, but only certificates and requests are decoded here. Keys: never paste a private key anywhere."]]);
+      else a += rowsCard([["3", r.label, r.len + " bytes", tr("Recognised, but only certificates and requests are decoded here. Keys: never paste a private key anywhere.")]]);
     }
     return hdr("Decode", "Certificate, CSR, JWT or Base64 - on this phone", "tools") + a + '<p class="fine">Decoded on this phone; nothing is sent. Never paste a private key into any website.</p>';
   };
@@ -1744,7 +1744,7 @@ textarea.in{resize:vertical;min-height:120px}
   RUN2.hash = async function (st) {
     if (!(crypto && crypto.subtle)) throw fail("This browser can't hash.");
     var data, name;
-    if (HASH.f) { if (HASH.f.size > 1.5e9) throw fail("That file is too big to hash in a browser (over 1.5 GB) - use your PC."); data = await HASH.f.arrayBuffer(); name = HASH.f.name + " · " + fmtB(HASH.f.size); }
+    if (HASH.f) { if (HASH.f.size > 1.5e9) throw fail(tr("That file is too big to hash in a browser (over 1.5 GB) - use your PC.")); data = await HASH.f.arrayBuffer(); name = HASH.f.name + " · " + fmtB(HASH.f.size); }
     else if (st.txt) { data = new TextEncoder().encode(st.txt); name = "the text typed"; } else throw fail("Pick a file (or type some text) first");
     var out = {}; for (var al of ["SHA-256", "SHA-1", "SHA-512"]) { var h = new Uint8Array(await crypto.subtle.digest(al, data)); out[al] = Array.prototype.map.call(h, function (x) { return ("0" + x.toString(16)).slice(-2); }).join(""); }
     st.res = { at: Date.now(), name: name, h: out };
@@ -1755,7 +1755,7 @@ textarea.in{resize:vertical;min-height:120px}
     var a = '<div class="card"><label class="k" for="hfile">A file on this phone</label><input type="file" id="hfile" class="in" style="padding:10px">' + (HASH.f ? '<p class="fine" style="margin:6px 0 0">Chosen: <b>' + esc(HASH.f.name) + '</b> · ' + fmtB(HASH.f.size) + '</p>' : '') + '<label class="k" for="htxt">…or some text</label><input class="in" id="htxt" data-hq="txt" value="' + esc(st.txt || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">' +
       '<label class="k" for="hwant">The hash it should have (optional)</label><input class="in" id="hwant" data-hq="want" value="' + esc(st.want || "") + '" placeholder="Paste from the download page" autocapitalize="off" autocorrect="off" spellcheck="false"></div>' + errBox("hash") + btn("hash", "Work it out");
     if (r) { var match = want ? Object.keys(r.h).filter(function (k) { return r.h[k] === want; })[0] : null;
-      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, esc(r.name)) + (want ? '<div class="vh">' + (match ? "✓ Matches (" + match + ")" : "✕ Doesn't match") + '</div><div style="color:var(--sub);font-size:14px">' + (match ? "The file is exactly what the publisher made." : "The file changed, is incomplete, or the hash is for another version or algorithm. Don't open it - download it again from the official page.") + '</div>' : '') +
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, esc(r.name)) + (want ? '<div class="vh">' + (match ? "✓ Matches (" + match + ")" : "✕ Doesn't match") + '</div><div style="color:var(--sub);font-size:14px">' + (match ? "The file is exactly what the publisher made." : tr("The file changed, is incomplete, or the hash is for another version or algorithm. Don't open it - download it again from the official page.")) + '</div>' : '') +
         Object.keys(r.h).map(function (k) { return '<div class="k" style="margin-top:10px">' + k + (k === "SHA-1" ? " (old, only for matching)" : "") + '</div><div class="pre" style="word-break:break-all' + (r.h[k] === want ? ";outline:2px solid var(--green)" : "") + '">' + r.h[k] + '</div>'; }).join("") + '</div>'; }
     return hdr("Hash a file", "Check a download is exactly what it should be", "tools") + a + '<p class="fine">Worked out on this phone; the file never leaves it. MD5: on your PC.</p>';
   };
@@ -1769,7 +1769,7 @@ textarea.in{resize:vertical;min-height:120px}
     var g = ++J.gen, stopped = function () { return g !== J.gen; }, L = Array.prototype.slice.call(files || []);
     if (!L.length) return;
     var vid = L.filter(function (f) { return /^video\//.test(f.type) || /\.(mov|mp4|m4v|webm)$/i.test(f.name); })[0];
-    J.st = "reading"; J.i = 0; J.n = 0; J.msg = "Getting the reader ready - about 10 MB the first time"; J.R = null; J.err = ""; draw();
+    J.st = "reading"; J.i = 0; J.n = 0; J.msg = tr("Getting the reader ready - about 10 MB the first time"); J.R = null; J.err = ""; draw();
     try {
       await jLoad(); await AMJ.ready(); if (stopped()) return;
       var prog = function (i, n, m) { if (stopped()) return; J.i = i; J.n = n; J.msg = m; draw(); };
@@ -1777,8 +1777,8 @@ textarea.in{resize:vertical;min-height:120px}
       if (stopped()) return;
       J.R = AMJ.analyze(got.frames, got.cut); J.vid = !!vid;
       J.st = J.R.read ? "done" : "error";
-      if (!J.R.read) J.err = "No signal numbers found in " + (vid ? "that recording" : "those pictures") + ". Make sure the field test screen (" + (J.os === "ios" ? "Field Test › Dashboard" : "the service screen") + ") was showing.";
-    } catch (e) { if (stopped()) return; var em = String(e && e.message || e); J.st = "error"; J.err = /load|importScripts|fetch/i.test(em) ? "Couldn't load the reader - it needs the internet the first time." : "Couldn't read that: " + em; }
+      if (!J.R.read) J.err = "No signal numbers found in " + (vid ? "that recording" : "those pictures") + tr(". Make sure the field test screen (") + (J.os === "ios" ? tr("Field Test › Dashboard") : tr("the service screen")) + ") was showing.";
+    } catch (e) { if (stopped()) return; var em = String(e && e.message || e); J.st = "error"; J.err = /load|importScripts|fetch/i.test(em) ? tr("Couldn't load the reader - it needs the internet the first time.") : "Couldn't read that: " + em; }
     draw();
   }
   function jSteps() {
@@ -2025,12 +2025,12 @@ textarea.in{resize:vertical;min-height:120px}
     if (!rid || ASKN >= 2) return;
     if (k.indexOf("run:") === 0) return answerRun(k.slice(4), q, rid);
     if (["check", "isdown", "week"].indexOf(k) < 0) return; ASKN++;
-    toast(k === "isdown" ? "Your PC asked this phone to try " + (hostOf(q) || "a website") : k === "week" ? "Your PC asked for this phone's week" : "Your PC asked this phone to check its connection");
+    toast(k === "isdown" ? "Your PC asked this phone to try " + (hostOf(q) || "a website") : k === "week" ? tr("Your PC asked for this phone's week") : tr("Your PC asked this phone to check its connection"));
     try {
       if (k === "check") { var r = await phoneCheck(); rows = phoneRows(r); head = (r.type === "cellular" ? "On mobile data" : r.type === "wifi" ? "On Wi-Fi" : "This phone") + (r.org ? " · " + r.org : ""); }
       else if (k === "isdown") { var h = hostOf(q); if (!h) { head = "Not a website name"; } else { var st = tst("isdown"); st.q = h; await runTool("isdown"); var x = st.res;
         if (!x || x.h !== h) head = "Couldn't check from this phone"; else { var up = x.t.n > 0; head = (up ? "Up from this phone" : "Not reachable from this phone") + (up ? " (" + x.t.med + " ms)" : "");
-          var ty = navigator.connection && navigator.connection.type; rows = [[up ? (x.t.fail ? "1" : "0") : "2", "Reached it", x.t.n + " of " + (x.t.n + x.t.fail) + " tries", ""], [x.cf && ans(x.cf, "A").length ? "0" : "2", "Name lookup", x.cf && x.cf.Status === 3 ? "no such name" : ans(x.cf, "A").length + " address(es)", ""], ["3", "Phone connected over", ty === "cellular" ? "mobile data" : ty === "wifi" ? "Wi-Fi" : "unknown (iPhone doesn't say)", ""]]; } } }
+          var ty = navigator.connection && navigator.connection.type; rows = [[up ? (x.t.fail ? "1" : "0") : "2", "Reached it", x.t.n + " of " + (x.t.n + x.t.fail) + " tries", ""], [x.cf && ans(x.cf, "A").length ? "0" : "2", "Name lookup", x.cf && x.cf.Status === 3 ? "no such name" : ans(x.cf, "A").length + " address(es)", ""], ["3", tr("Phone connected over"), ty === "cellular" ? "mobile data" : ty === "wifi" ? "Wi-Fi" : tr("unknown (iPhone doesn't say)"), ""]]; } } }
       else if (k === "week") { var w = weekSum(); head = w.n ? w.n + " checks in 7 days" + (w.med != null ? " · typical " + w.med + " ms" : "") : "No checks on the phone this week";
         rows = w.days.filter(function (d) { return d.n; }).map(function (d) { return [d.bad ? "2" : d.med == null ? "3" : d.med < 60 ? "0" : d.med < 150 ? "1" : "2", d.dn, (d.med == null ? "no timing" : d.med + " ms") + " · " + d.n + " check" + (d.n > 1 ? "s" : ""), d.bad ? "a check found real trouble" : ""]; });
         if (w.best) rows.push(["3", "Best time", "around " + hh(w.best[0]), w.worst && w.worst[1] - w.best[1] >= 15 ? "slowest around " + hh(w.worst[0]) : ""]); }
@@ -2049,7 +2049,7 @@ textarea.in{resize:vertical;min-height:120px}
   function toolMatch(q, t) { return !q || (t[2] + " " + t[3] + " " + t[0] + " " + tr(t[2]) + " " + tr(t[3])).toLowerCase().indexOf(q) >= 0; }
   VIEWS.tools = function () {
     var q = findQ.toLowerCase().trim(), on = phase === "live", a = hdr("Tools", on ? "Your PC and this phone" : "All from this phone - no PC needed") + '<input class="search" id="find" placeholder="' + esc(tr("Find a tool")) + '" value="' + esc(findQ) + '" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="' + esc(tr("Find a tool")) + '">';
-    if (on && !q) a += '<h2>Your PC</h2><div class="card list">' + JOURNEYS.slice(0, 4).map(function (j) { return rowBtn('data-jr="' + j[2] + '"', "help", "k-pc", j[0], j[1]); }).join("") + rowBtn('data-pct="checks" data-go="pc"', "search", "k-pc", "All PC checks", "Ping, trace, ports, Wi-Fi, MTU... (100+)") + '</div>';
+    if (on && !q) a += '<h2>Your PC</h2><div class="card list">' + JOURNEYS.slice(0, 4).map(function (j) { return rowBtn('data-jr="' + j[2] + '"', "help", "k-pc", j[0], j[1]); }).join("") + rowBtn('data-pct="checks" data-go="pc"', "search", "k-pc", "All PC checks", tr("Ping, trace, ports, Wi-Fi, MTU... (100+)")) + '</div>';
     if (!q) a += '<h2><span data-i18n="Fix it">Fix it</span></h2><div class="card list">' + GUIDES.map(function (g) { return rowBtn('data-guide="' + g[0] + '"', "help", "k-tools", esc(g[1]), esc(g[2])); }).join("") + '</div>';
     var any = false;
     PT.forEach(function (sec) { var L = sec[1].filter(function (t) { return toolMatch(q, t); }); if (!L.length) return; any = true; a += '<h2>' + esc(tr(sec[0])) + '</h2><div class="card list">' + L.map(function (t) { return rowBtn('data-tool="' + t[0] + '"', TICON[t[1]] || t[1], sec[0] === "MAKE" || sec[0] === "DECODE AND CHECK" ? "k-files" : sec[0] === "LOOK UP" || sec[0] === "YOUR SERVER OR HOME SETUP" ? "k-tools" : sec[0] === "SAFE AND PRIVATE" ? "k-walk" : "k-dev", esc(tr(t[2])), esc(tr(t[3]))); }).join("") + '</div>'; });
@@ -2082,7 +2082,7 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.report = function () {
     var r = report, a = hdr("One-tap report", r ? new Date(r.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "", "home");
     if (!r) return a;
-    if (r.state === "running") a += '<div class="card" style="display:flex;gap:12px;align-items:center">' + faceHtml("thinking") + '<div><b>Checking...</b><div style="color:var(--sub);font-size:14px">' + (phase === "live" ? "Your PC runs its full checkup (about a minute) while this phone measures its own connection." : "This phone measures its own connection.") + '</div></div></div>';
+    if (r.state === "running") a += '<div class="card" style="display:flex;gap:12px;align-items:center">' + faceHtml("thinking") + '<div><b>Checking...</b><div style="color:var(--sub);font-size:14px">' + (phase === "live" ? tr("Your PC runs its full checkup (about a minute) while this phone measures its own connection.") : tr("This phone measures its own connection.")) + '</div></div></div>';
     if (r.pc) { a += resultCard(r.pc); }
     else if (phase !== "live" && r.state === "done") a += '<div class="card" style="color:var(--sub)">Your PC isn\'t connected, so this report is from the phone only.</div>';
     if (r.err) a += '<div class="card" style="color:var(--sub)">Your PC: ' + esc(r.err) + '</div>';
@@ -2108,12 +2108,12 @@ textarea.in{resize:vertical;min-height:120px}
   };
   function thisPc() {
     var rec = recLoad(), a = '<h2><span data-i18n="This PC">This PC</span></h2><div class="card">';
-    if (rec) a += '<div class="sw"><div class="tx"><b>Remembered: ' + esc(rec.pc) + '</b><span>' + (rec.prf ? "Its key is locked by Face ID / fingerprint on this phone." : "Face ID / fingerprint opens it in this app (this browser can't lock the key itself).") + ' Your PC lets it in without asking.</span></div></div><div class="btns" style="margin-top:6px">' + (phase === "live" ? '' : '<button class="btn" data-act="reconnect"><span data-i18n="Reconnect">Reconnect</span></button>') + '<button class="btn ghost" data-act="forget" style="color:var(--red)"><span data-i18n="Forget this PC">Forget this PC</span></button></div>';
+    if (rec) a += '<div class="sw"><div class="tx"><b>Remembered: ' + esc(rec.pc) + '</b><span>' + (rec.prf ? tr("Its key is locked by Face ID / fingerprint on this phone.") : tr("Face ID / fingerprint opens it in this app (this browser can't lock the key itself).")) + ' Your PC lets it in without asking.</span></div></div><div class="btns" style="margin-top:6px">' + (phase === "live" ? '' : '<button class="btn" data-act="reconnect"><span data-i18n="Reconnect">Reconnect</span></button>') + '<button class="btn ghost" data-act="forget" style="color:var(--red)"><span data-i18n="Forget this PC">Forget this PC</span></button></div>';
     else if (phase === "live") a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">Remember this PC</span></b><span>Next time, reconnect with Face ID or fingerprint instead of a new code - from anywhere, while AdeeboMeter runs on it. Your PC asks you first.</span></div><button class="tog" data-act="remember" aria-label="Remember this PC"></button></div>' + (bioOk() ? '' : '<p style="color:var(--amber);font-size:14px;margin:6px 0 0">This browser has no Face ID / fingerprint support.</p>');
     else a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">Remember this PC</span></b><span><span data-i18n="Connect with the code first, then turn this on here.">Connect with the code first, then turn this on here.</span></span></div><button class="tog" disabled style="opacity:.4" aria-label="Remember this PC"></button></div>';
     return a + '</div>';
   }
-  VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? "It follows your PC's voice unless you pick one here." : "") + '</p>'; };
+  VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? tr("It follows your PC's voice unless you pick one here.") : "") + '</p>'; };
   VIEWS.pair = function () {
     return hdr(phase === "ended" ? "Reconnect" : "Connect your PC", "", "home") + (why ? '<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)">' + esc(why) + '</div>' : '') +
       // the app reads the code itself (Adeeb, 16 Nov): scanning with the Camera app opens the browser, which has none of this app's setup
@@ -2124,25 +2124,25 @@ textarea.in{resize:vertical;min-height:120px}
   };
   // ---- the code reader: the camera, asked for each time; jsQR (vendor/jsqr, loaded on first use) reads the frames on the phone
   var scanSt = null, scanT = 0;
-  function loadJs(src) { return new Promise(function (ok, no) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { no(new Error("couldn't load the code reader")); }; document.head.appendChild(s); }); }
+  function loadJs(src) { return new Promise(function (ok, no) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { no(new Error(tr("couldn't load the code reader"))); }; document.head.appendChild(s); }); }
   function scanUi(msg, live) {
     var o = $("scanov");
     if (!o) { o = document.createElement("div"); o.id = "scanov"; o.innerHTML = '<div class="sc-in"><video id="scanv" playsinline muted autoplay></video><div class="sc-box"></div></div><p id="scanmsg"></p><button class="btn ghost" id="scanx">Cancel</button>'; document.body.appendChild(o); $("scanx").onclick = scanStop; }
     o.hidden = false; $("scanmsg").textContent = msg; o.classList.toggle("live", !!live);
   }
   async function scanStart() {
-    scanUi("Opening the camera...", false);
+    scanUi(tr("Opening the camera..."), false);
     try {
       if (!window.jsQR) await loadJs("/vendor/jsqr/jsQR.js");
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: "NoCamera" };
       scanSt = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
     } catch (e) {
       var n = e && e.name;
-      scanUi(n === "NotAllowedError" || n === "SecurityError" ? "The camera wasn't allowed - that's fine. Point your phone's Camera app at the code on your PC instead; it opens in the browser." : n === "NoCamera" || n === "NotFoundError" || n === "NotSupportedError" ? "This browser can't use the camera here. Point your phone's Camera app at the code instead - it opens in the browser." : "Couldn't open the camera (" + String(e && e.message || n || e) + "). Point your phone's Camera app at the code instead - it opens in the browser.", false);
+      scanUi(n === "NotAllowedError" || n === "SecurityError" ? tr("The camera wasn't allowed - that's fine. Point your phone's Camera app at the code on your PC instead; it opens in the browser.") : n === "NoCamera" || n === "NotFoundError" || n === "NotSupportedError" ? tr("This browser can't use the camera here. Point your phone's Camera app at the code instead - it opens in the browser.") : tr("Couldn't open the camera (") + String(e && e.message || n || e) + tr("). Point your phone's Camera app at the code instead - it opens in the browser."), false);
       return;
     }
     var v = $("scanv"); v.srcObject = scanSt; try { await v.play(); } catch (e) {}
-    scanUi("Point it at the code on your PC", true);
+    scanUi(tr("Point it at the code on your PC"), true);
     var c = document.createElement("canvas"), x = c.getContext("2d", { willReadFrequently: true });
     clearInterval(scanT);
     scanT = setInterval(function () {
@@ -2160,8 +2160,8 @@ textarea.in{resize:vertical;min-height:120px}
     if (/adeebometer\.com\//i.test(text) && p.length === 2 && /^[A-Za-z0-9_-]{22}$/.test(p[0]) && /^[A-Za-z0-9_-]{43}$/.test(p[1])) {
       scanStop(); if (navigator.vibrate) try { navigator.vibrate(40); } catch (e) {}
       room = p[0]; secret = unb64u(p[1]); S.tab = "home"; draw();
-      start(room, secret, false).catch(function () { phase = "ended"; why = "This browser blocked the encryption - try Safari or Chrome."; draw(); });
-    } else scanUi("That's not an AdeeboMeter code - use the one on your PC's Your phone page.", true);
+      start(room, secret, false).catch(function () { phase = "ended"; why = tr("This browser blocked the encryption - try Safari or Chrome."); draw(); });
+    } else scanUi(tr("That's not an AdeeboMeter code - use the one on your PC's Your phone page."), true);
   }
   VIEWS.how = function () {
     return hdr("How it works", "", "more") + '<div class="card"><dl class="kv"><dt>' + where("pc") + '</dt><dd style="font-family:inherit;font-size:14px">Real measurements: ping, trace, ports, devices, Wi-Fi, game and broker timing. Your PC does them.</dd><dt>' + where("phone") + '</dt><dd style="font-family:inherit;font-size:14px">What a browser can: delay to the web, steadiness, DNS, IPv6, your carrier. No signal bars, no ping.</dd><dt>' + where("off") + '</dt><dd style="font-family:inherit;font-size:14px">Learn, Games, .adeebo files.</dd></dl></div><div class="card" style="color:var(--sub);font-size:14px">Your PC only connects out - it never listens. Phone and PC talk end to end encrypted through a relay that keeps nothing. The phone can only start checks that read or measure; anything that changes the PC stays on the PC. No account, no alerts, no tracking.</div>';

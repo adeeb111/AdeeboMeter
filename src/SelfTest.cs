@@ -1470,7 +1470,7 @@ namespace AdeeboMeter
                     foreach (var n in nums) if (kv.Value.IndexOf(n, StringComparison.Ordinal) < 0) throw new InvalidOperationException("number " + n + " lost in: " + kv.Value);
                 }
                 var expected = new Dictionary<string, string> {
-                    { "es", "Ajustes" }, { "ar", "الإعدادات" }, { "bn", "সেটিংস" }, { "hi", "सेटिंग्स" }, { "zh", "设置" }
+                    { "es", "Ajustes" }, { "ar", "الإعدادات" }, { "bn", "সেটিংস" }, { "zh", "设置" }
                 };
                 string old = L.Code;
                 try
