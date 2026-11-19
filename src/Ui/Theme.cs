@@ -301,12 +301,18 @@ namespace AdeeboMeter
             if (inter != null) foreach (var f in inter.Families) if (f.Name == name) return f;
             return new FontFamily(name);
         }
-        static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl ? new Font("Segoe UI", px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
+        static string bengaliFontFamily;
+        static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
+        static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
         // Inter/Nunito do not contain Arabic glyphs. Use Windows' Arabic-capable
         // UI face after loading the saved language, before creating controls.
         public static void UseArabicFonts()
         {
-            if (!L.IsRtl) return;
+            UseLanguageFonts();
+        }
+        public static void UseLanguageFonts()
+        {
+            if (!L.IsRtl && L.Code != "bn") return;
             fName = ArabicFont(fName); fHead = ArabicFont(fHead);
             fBody = ArabicFont(fBody); fBodyB = ArabicFont(fBodyB);
             fSmall = ArabicFont(fSmall); fTiny = ArabicFont(fTiny);
@@ -318,7 +324,7 @@ namespace AdeeboMeter
         static Font ArabicFont(Font old)
         {
             if (old == null) return old;
-            var font = new Font("Segoe UI", old.Size, old.Style, GraphicsUnit.Pixel);
+            var font = new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, old.Size, old.Style, GraphicsUnit.Pixel);
             old.Dispose(); return font;
         }
         public static void Init(float s)

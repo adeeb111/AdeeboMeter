@@ -61,7 +61,7 @@ namespace AdeeboMeter
             try { string old = Path.Combine(Program.WriteDir, OldName + ".settings"); if (!File.Exists(settingsPath) && File.Exists(old)) File.Copy(old, settingsPath); } catch (Exception e) { Program.Log("settings migrate: " + e.Message); }
             Cfg.ApplyPreset("balanced");
             LoadSettings(); ApplyAutoStart();
-            Draw.UseArabicFonts();
+            Draw.UseLanguageFonts();
             if (!Cfg.SidebarTried) Cfg.Layout = "sidebar";   // 1.1.5: the sidebar is the default look; whoever chose a layout keeps theirs (Classic is in ⋯ and Settings)
             Cfg.Save = SaveSettings; Cfg.SetTheme = SetTheme; Cfg.GetTheme = () => Program.ForceTheme;
             Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
