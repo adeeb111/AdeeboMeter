@@ -14,7 +14,7 @@ EXCLUDED = {"app.html", "files.html", "live.html", "remote.html", "r.html", "gam
 def install():
     count = 0
     for page in DOCS.rglob("*.html"):
-        if page.name in EXCLUDED or page.parts[-2] == "fr":
+        if page.name in EXCLUDED:
             continue
         content = page.read_text(encoding="utf-8-sig")
         original = content

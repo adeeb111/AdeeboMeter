@@ -33,11 +33,14 @@
     if (pal) { html.setAttribute('data-pal', pal); html.setAttribute('data-theme', pal === 'mint' ? 'light' : 'dark'); }
     else if (th === 'system' || th === '') { if (th === 'system') html.setAttribute('data-theme', matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } } catch (e) {}
   if (self !== top) html.classList.add('inapp');
-  var S = [['learn', '/learn/', 'book', 'Learn'], ['games', '/games.html', 'game', 'Games'], ['live', '/live.html', 'live', 'Live'], ['files', '/files.html', 'folder', 'Files']];
+  var localizedPath = /^\/(fr|bn)\//.exec(location.pathname);
+  var languagePrefix = localizedPath ? "/" + localizedPath[1] : "";
+  var learnPath = languagePrefix + "/learn/";
+  var S = [['learn', learnPath, 'book', 'Learn'], ['games', '/games.html', 'game', 'Games'], ['live', '/live.html', 'live', 'Live'], ['files', '/files.html', 'folder', 'Files']];
   var lesson = sec === 'learn' && !/\/learn\/(index\.html)?$/.test(location.pathname);
   var bar = document.createElement('header'); bar.className = 'ui-appbar';
-  bar.innerHTML = '<a class="ui-back" href="' + (lesson ? '/learn/' : '/app.html') + '" aria-label="' + (lesson ? 'Back to Learn' : 'Back to the app') + '">' + ic('back', 26) + '</a>' +
-    '<a class="ui-brand" href="/"><img src="/img/logo.svg" width="30" height="30" alt="">AdeeboMeter</a>' +
+  bar.innerHTML = '<a class="ui-back" href="' + (lesson ? learnPath : '/app.html') + '" aria-label="' + (lesson ? 'Back to Learn' : 'Back to the app') + '">' + ic('back', 26) + '</a>' +
+    '<a class="ui-brand" href="' + languagePrefix + '/"><img src="/img/logo.svg" width="30" height="30" alt="">AdeeboMeter</a>' +
     '<nav class="ui-links">' + S.map(function (s) { return '<a href="' + s[1] + '"' + (s[0] === sec ? ' aria-current="page"' : '') + '>' + s[3] + '</a>'; }).join('') + '<a href="/app.html">Phone app</a></nav>';
   body.insertBefore(bar, body.firstChild);
   var nav = document.createElement('nav'); nav.className = 'ui-sbar'; nav.setAttribute('aria-label', 'Sections');
