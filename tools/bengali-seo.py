@@ -14,7 +14,7 @@ DOCS = ROOT / "docs"
 SITE = "https://adeebometer.com/"
 raw = (DOCS / "locale-messages.js").read_text(encoding="utf-8-sig")
 LANGUAGE = globals().get("LANGUAGE", "bn")
-LANG_TAG = "fr-CA" if LANGUAGE == "fr" else "bn"
+LANG_TAG = {"fr": "fr-CA", "bn": "bn", "es": "es"}[LANGUAGE]
 messages = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])[LANGUAGE]
 bengali_links = {
     "To capture ping and traceroute results together,": "পিং ও ট্রেসরাউটের ফল একসঙ্গে সংগ্রহ করতে",
@@ -46,14 +46,17 @@ messages.update(bengali_links if LANGUAGE == "bn" else {
     "monitor internet speed on Windows": "surveillez le débit Internet sous Windows",
     "If the connection keeps dropping, compare Wi-Fi with Ethernet and": "Si la connexion coupe souvent, comparez le Wi-Fi et Ethernet, puis",
     "save a connection report for your internet provider": "enregistrez un rapport pour votre fournisseur Internet",
-})
+} if LANGUAGE == "fr" else {})
+if LANGUAGE == "es":
+    spanish = json.loads((ROOT / "tools/spanish-seo.json").read_text(encoding="utf-8"))
+    messages.update(spanish["messages"])
 french_sources = [DOCS / name for name in (
     "index.html", "blog/index.html", "wifi-or-isp.html", "internet-speed-monitor.html",
     "pc-monitoring.html", "isp-report.html", "privacy.html", "gaming.html",
     "streaming.html", "trading.html",
 )] + sorted((DOCS / "learn").glob("*.html"))
 files = sorted((DOCS / "learn").glob("*.html"))
-if LANGUAGE == "fr":
+if LANGUAGE in ("fr", "es"):
     files = french_sources
 localized = {"/" + p.relative_to(DOCS).as_posix() for p in files}
 localized.update(route[:-10] for route in list(localized) if route.endswith("index.html"))
@@ -69,12 +72,12 @@ def translate(text):
             prefix, title, suffix = match.groups()
             translated_title = messages.get(title, title)
             if suffix == " | Learn | AdeeboMeter":
-                suffix = " | " + messages.get("Learn", "শিখুন") + " | " + ("AdeeboMeter" if LANGUAGE == "fr" else "আদীবওমিটার")
+                suffix = " | " + messages.get("Learn", "শিখুন") + " | " + ("AdeeboMeter" if LANGUAGE != "bn" else "আদীবওমিটার")
             translated = (prefix or "") + translated_title + (suffix or "")
     return text.replace(key, translated or key, 1) if key else text
 
 def language_links(url):
-    english = re.sub(r"/(?:bn|fr)/", "/", url, count=1)
+    english = re.sub(r"/(?:bn|fr|es)/", "/", url, count=1)
     relative = english.removeprefix(SITE)
     file = relative + "index.html" if relative.endswith("/") or not relative else relative
     links = [("en", english)]
@@ -82,6 +85,8 @@ def language_links(url):
         links.append(("bn", SITE + "bn/" + relative))
     if DOCS / file in french_sources:
         links.extend([("fr", SITE + "fr/" + relative), ("fr-CA", SITE + "fr/" + relative)])
+    if DOCS / file in french_sources:
+        links.append(("es", SITE + "es/" + relative))
     if not relative:
         links.append(("x-default", SITE))
     return "".join(f'<link rel="alternate" hreflang="{code}" href="{href}">\n'
@@ -132,7 +137,7 @@ class LocalizedPage(HTMLParser):
         if tag == "meta" and data.get("property") == "og:url":
             data["content"] = self.source_url.replace(SITE, SITE + LANGUAGE + "/")
         if tag == "meta" and data.get("property") == "og:locale":
-            data["content"] = "fr_CA" if LANGUAGE == "fr" else "bn_BD"
+            data["content"] = {"fr": "fr_CA", "bn": "bn_BD", "es": "es_ES"}[LANGUAGE]
         rendered = "".join(" " + key + ('="' + html.escape(value, quote=True) + '"' if value is not None else "")
                            for key, value in data.items())
         self.output.append("<" + tag + rendered + ">")
@@ -168,7 +173,7 @@ for source in files:
     parser = LocalizedPage(url)
     # Decode character references before text translation without altering markup.
     content = source.read_text(encoding="utf-8-sig")
-    content = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|x-default)"[^>]*>\s*', "", content)
+    content = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|x-default)"[^>]*>\s*', "", content)
     content = re.sub(r">([^<]+)<", lambda m: ">" + html.escape(html.unescape(m[1]), quote=False) + "<", content)
     # Parser assembles split entities into text by using normal conversion.
     parser.convert_charrefs = True
@@ -176,11 +181,11 @@ for source in files:
     rendered = "".join(parser.output)
     title = re.search(r"<title>(.*?)</title>", rendered, re.S)[1]
     paragraphs = re.findall(r"<p[^>]*>(.*?)</p>", rendered, re.S)
-    paragraph = next((re.sub("<[^>]+>", "", p) for p in paragraphs if (LANGUAGE == "fr" or re.search("[অ-হ]", p))), "")
+    paragraph = next((re.sub("<[^>]+>", "", p) for p in paragraphs if (LANGUAGE != "bn" or re.search("[অ-হ]", p))), "")
     description = html.escape(html.unescape(paragraph or title).strip()[:170], quote=True)
     rendered = re.sub(r'(<meta (?:name="description"|property="og:description") content=")([^"]*)',
-                      lambda m: m[1] + (html.escape(translate(html.unescape(m[2])), quote=True) if LANGUAGE == "fr" and translate(html.unescape(m[2])) != html.unescape(m[2]) else description), rendered)
-    if LANGUAGE == "fr":
+                      lambda m: m[1] + (html.escape(translate(html.unescape(m[2])), quote=True) if LANGUAGE != "bn" and translate(html.unescape(m[2])) != html.unescape(m[2]) else description), rendered)
+    if LANGUAGE in ("fr", "es"):
         descriptions = {
             "index.html": "Trouvez pourquoi votre Internet ou votre PC ralentit. Vérifiez le Wi-Fi, le routeur et le DNS. Gratuit, sans publicité ni droits d’administrateur.",
             "blog/index.html": "Guides visuels pour diagnostiquer un Internet lent, les coupures Wi-Fi, les pertes de paquets et un PC Windows qui ralentit.",
@@ -193,41 +198,49 @@ for source in files:
             "streaming.html": "Netflix, YouTube ou IPTV se met en mémoire tampon? Repérez les ralentissements du PC, du Wi-Fi, du fournisseur et du serveur de diffusion.",
             "trading.html": "Surveillez votre connexion au courtier avec AdeeboMeter pour Windows et repérez les ralentissements pendant les heures de marché.",
         }
+        if LANGUAGE == "es":
+            descriptions = spanish["descriptions"]
         if relative in descriptions:
             description = html.escape(descriptions[relative], quote=True)
             rendered = re.sub(r'(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*',
                               lambda m: m[1] + description, rendered)
         if relative == "index.html":
-            title = "AdeeboMeter — dépannage réseau gratuit pour Windows"
+            title = "AdeeboMeter — dépannage réseau gratuit pour Windows" if LANGUAGE == "fr" else "AdeeboMeter — monitor de red gratuito para Windows"
             rendered = re.sub(r"<title>.*?</title>", "<title>" + title + "</title>", rendered)
             rendered = re.sub(r'(<meta property="og:title" content=")[^"]*', lambda m: m[1] + title, rendered)
         localized_url = url.replace(SITE, SITE + LANGUAGE + "/")
         meta_description = re.search(r'<meta name="description" content="([^"]*)"', rendered)
         def localized_schema(match):
             data = json.loads(match[1])
-            if data.get("@type") == "SoftwareApplication":
+            if data.get("@type") == "SoftwareApplication" or (LANGUAGE == "es" and data.get("@type") in ("WebSite", "LearningResource")):
                 data["url"] = localized_url
                 data["inLanguage"] = LANG_TAG
                 if meta_description:
                     data["description"] = html.unescape(meta_description[1])
+                if LANGUAGE == "es" and data.get("@type") == "LearningResource":
+                    data["name"] = translate(data["name"])
+                    data["about"] = translate(data.get("about", ""))
+                    if isinstance(data.get("isPartOf"), dict):
+                        data["isPartOf"]["url"] = SITE + "es/"
             return '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "</script>"
         rendered = re.sub(r'<script type="application/ld\+json">(.*?)</script>',
                           localized_schema, rendered, flags=re.S)
-        rendered = rendered.replace("</head>", '<meta property="og:locale" content="fr_CA">\n</head>')
+        if 'property="og:locale"' not in rendered:
+            rendered = rendered.replace("</head>", '<meta property="og:locale" content="' + ("fr_CA" if LANGUAGE == "fr" else "es_ES") + '">\n</head>')
         if relative == "index.html":
             rendered = re.sub(r'(<ul class="v4trust">.*?)(</ul>)',
-                              r"\1<li>Sans publicité</li>\2", rendered, flags=re.S)
+                              r"\1<li>" + ("Sans publicité" if LANGUAGE == "fr" else "Sin anuncios") + r"</li>\2", rendered, flags=re.S)
         if 'data-language-picker' not in rendered:
             english_link = f'<a href="{url}?lang=en" lang="en">English</a>'
             if "<nav" in rendered:
                 rendered = rendered.replace("</nav>", " · " + english_link + "</nav>", 1)
             else:
-                rendered = re.sub(r"(<main[^>]*>)", lambda m: m[1] + '<nav class="language-links" aria-label="Langue">' + english_link + "</nav>", rendered, count=1)
+                rendered = re.sub(r"(<main[^>]*>)", lambda m: m[1] + '<nav class="language-links" aria-label="' + ("Langue" if LANGUAGE == "fr" else "Idioma") + '">' + english_link + "</nav>", rendered, count=1)
     target = DOCS / LANGUAGE / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(rendered.rstrip() + "\n", encoding="utf-8", newline="\n")
     english = source.read_text(encoding="utf-8-sig")
-    english = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|x-default)"[^>]*>\s*', "", english)
+    english = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|x-default)"[^>]*>\s*', "", english)
     variants = route_languages(url)
     def route_attributes(match):
         attrs = re.sub(r' data-language-(?:route|variants)="[^"]*"', "", match[1])
@@ -235,18 +248,20 @@ for source in files:
     english = re.sub(r"<html([^>]*)>", route_attributes, english, count=1)
     english = english.replace("</head>", language_links(url.replace(SITE, SITE + LANGUAGE + "/")) + "</head>")
     source.write_text(english, encoding="utf-8", newline="\n")
-    bengali = DOCS / "bn" / relative
-    if LANGUAGE == "fr" and bengali.exists():
+    for other_language in ("bn", "fr", "es"):
+        bengali = DOCS / other_language / relative
+        if other_language == LANGUAGE or not bengali.exists():
+            continue
         existing = bengali.read_text(encoding="utf-8-sig")
-        existing = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|x-default)"[^>]*>\s*', "", existing)
+        existing = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|x-default)"[^>]*>\s*', "", existing)
         existing = re.sub(r"<html([^>]*)>", route_attributes, existing, count=1)
         existing = existing.replace("</head>", language_links(url) + "</head>")
         bengali.write_text(existing, encoding="utf-8", newline="\n")
 
 sitemap = DOCS / "sitemap.xml"
 xml = sitemap.read_text(encoding="utf-8")
-if LANGUAGE == "fr":
-    xml = re.sub(r"^.*<loc>https://adeebometer.com/\?lang=fr</loc>.*\n?", "", xml, flags=re.M)
+if LANGUAGE in ("fr", "es"):
+    xml = re.sub(rf"^.*<loc>https://adeebometer.com/\?lang={LANGUAGE}</loc>.*\n?", "", xml, flags=re.M)
 for source in files:
     relative = source.relative_to(DOCS).as_posix()
     route = LANGUAGE + "/" + (relative[:-10] if relative.endswith("index.html") else relative)

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es" data-language-route="/internet-speed-monitor.html" data-language-variants="en bn fr es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medidor de velocidad de internet gratis para Windows | AdeeboMeter</title>
+<meta name="description" content="Supervisa la velocidad de subida y bajada y la latencia en Windows. Detecta qué cambia cuando tu conexión a Internet se vuelve lenta.">
+<link rel="canonical" href="https://adeebometer.com/es/internet-speed-monitor.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter">
+<meta property="og:url" content="https://adeebometer.com/es/internet-speed-monitor.html">
+<meta property="og:title" content="Medidor de velocidad de internet gratis para Windows | AdeeboMeter">
+<meta property="og:description" content="Supervisa la velocidad de subida y bajada y la latencia en Windows. Detecta qué cambia cuando tu conexión a Internet se vuelve lenta.">
+<meta property="og:image" content="https://adeebometer.com/media/trailer-poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="Vista general de AdeeboMeter para Windows con lecturas del PC y la red">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+</style>
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/internet-speed-monitor.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/internet-speed-monitor.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/internet-speed-monitor.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/internet-speed-monitor.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/internet-speed-monitor.html">
+<meta property="og:locale" content="es_ES">
+</head>
+<body>
+<main>
+<nav aria-label="Sitio"><a href="/es/">AdeeboMeter</a> · <a href="/es/blog/">Blog de diagnóstico</a> · <a href="/bn/internet-speed-monitor.html" lang="bn">বাংলা</a> · <a href="https://adeebometer.com/internet-speed-monitor.html?lang=en" lang="en">English</a></nav>
+<h1>Medidor de velocidad de internet gratis para Windows</h1>
+<figure class="guide-visual" aria-labelledby="quick-title">
+<div class="visual-copy"><h2 id="quick-title">Mira qué cambia al mismo tiempo.</h2><p>Si una llamada se corta, compara subida, bajada y latencia del mismo momento.</p></div>
+<div class="scenario-art art-speed"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">⏱️</span><strong>Prueba de latencia</strong></div><div class="plot-label"><span>Retraso de conexión</span><span>Ilustración</span></div><span class="plot-bars" aria-hidden="true"><i style="--h:18%"></i><i style="--h:20%"></i><i style="--h:17%"></i><i style="--h:21%"></i><i style="--h:24%"></i><i style="--h:42%"></i><i style="--h:72%"></i><i style="--h:89%"></i><i style="--h:83%"></i><i style="--h:86%"></i><i style="--h:48%"></i><i style="--h:25%"></i><i style="--h:20%"></i><i style="--h:19%"></i></span><div class="plot-axis"><span>En reposo</span><span>Empieza la subida</span><span>Subida pausada</span></div></div>
+<figcaption>Patrón ilustrativo: el retraso sube durante una carga y vuelve al valor inicial al pausarla.</figcaption>
+</figure>
+
+
+<h2 id="checks">Ejecuta las pruebas</h2>
+<ol><li>Mira las velocidades antes de empezar para conocer el estado en reposo.</li><li>Repite el fallo, anota la hora y revisa subida y bajada junto a latencia del router e internet.</li><li>Si puedes hacerlo sin problemas, pausa otras transferencias grandes y repite. Compara las pruebas.</li></ol>
+<h2 id="readings">Qué revisar después</h2>
+<ul class="next-checks">
+  <li><strong>0 Mb/s en reposo</strong><span>Normal. Inicia la tarea que quieres medir.</span></li>
+  <li><strong>El retraso sube al subir datos</strong><span>Pausa la subida y repite.</span></li>
+  <li><strong>El retraso sube con poco tráfico</strong><span>Compara latencia del router e internet.</span></li>
+  <li><strong>Solo una descarga va lenta</strong><span>Prueba otro destino.</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">Ejemplo práctico</h2><p>Una llamada falla siempre que sube una copia grande. Anota la hora, pausa la copia y repite. Si el retraso vuelve a lo normal y el patrón se repite, tienes una pista mejor que la velocidad sola.</p></aside>
+<details class="guide-detail"><summary>Por qué funciona</summary>
+<ul><li><strong>Velocidad actual:</strong> tráfico que se mueve ahora (Mb/s).</li><li><strong>Velocidad:</strong> capacidad hacia un servidor de prueba (Mb/s).</li><li><strong>Uso de datos:</strong> tráfico acumulado (MB o GB).</li></ul><p>La latencia puede crecer si el tráfico espera en una cola. Por eso una llamada se retrasa aunque sigan pasando muchos datos. Mira <a href="/es/learn/speed-vs-delay.html">velocidad frente a retraso</a> para entender cómo funciona.</p>
+</details>
+<h2>Usa AdeeboMeter en Windows</h2>
+<p>Abre AdeeboMeter para ver tráfico y conexión juntos. Usa <strong>Máquina del tiempo</strong> para revisar el periodo si había historial activo. Si varios servicios fallan, usa <a href="/es/wifi-or-isp.html">las pruebas Wi-Fi frente a proveedor</a> para acotar la ruta.</p>
+
+<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtén AdeeboMeter para Windows</a></p>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Qué guardar</h2><p>Anota hora, transferencia y si cambió la latencia del router o internet. Elige la próxima prueba según esos datos.</p></aside>
+</main>
+</body>
+</html>
