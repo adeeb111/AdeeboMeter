@@ -260,7 +260,7 @@ namespace AdeeboMeter
             using (var p = new Pen(Theme.Muted, 1.5f * S)) using (var sb = new SolidBrush(Theme.Sub)) using (var c = new StringFormat { Alignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap })
             {
                 g.DrawLines(p, new[] { new PointF(mtuStart + 2 * S, ly), new PointF(mtuStart + 2 * S, ly + 6 * S), new PointF(bx + bw - 2 * S, ly + 6 * S), new PointF(bx + bw - 2 * S, ly) });
-                g.DrawString("fits in the link MTU: " + mtu.ToString("N0", CultureInfo.CurrentCulture) + " bytes", Draw.fSmall, sb, new RectangleF(mtuStart, ly + 9 * S, bx + bw - mtuStart, 18 * S), c);
+                g.DrawString(AdeeboMeter.L.T("fits in the link MTU: ") + mtu.ToString("N0", CultureInfo.CurrentCulture) + " bytes", Draw.fSmall, sb, new RectangleF(mtuStart, ly + 9 * S, bx + bw - mtuStart, 18 * S), c);
                 if (mtuStart > bx + 4 * S)
                 {
                     g.DrawLines(p, new[] { new PointF(bx + 2 * S, ly), new PointF(bx + 2 * S, ly + 6 * S), new PointF(mtuStart - 4 * S, ly + 6 * S), new PointF(mtuStart - 4 * S, ly) });

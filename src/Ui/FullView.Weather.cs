@@ -18,7 +18,7 @@ namespace AdeeboMeter
         // returns the picked place, or null (cancelled, nothing found, offline)
         Weather.Place PickPlace()
         {
-            using (var f = new Form { Text = "AdeeboMeter - " + L.T("Weather for"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(420), Sc(330)) })
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter - ") + L.T("Weather for"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(420), Sc(330)) })
             {
                 var lb = new Label { Text = L.T("A city, or a country - e.g. Ottawa, Dhaka, or Ottawa, Illinois"), Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(Sc(16), Sc(14)), AutoSize = true };
                 var tb = new TextBox { Font = Draw.fInput, MaxLength = 60, Location = new Point(Sc(16), Sc(42)), Width = Sc(290) };

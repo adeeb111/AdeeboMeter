@@ -121,7 +121,7 @@ namespace AdeeboMeter
         // a one-line question box: the text, or null when cancelled. 1-24 characters, no | = ;
         string Ask(string title, string start)
         {
-            using (var f = new Form { Text = "AdeeboMeter", FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(360), Sc(130)) })
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(360), Sc(130)) })
             {
                 var lb = new Label { Text = title, Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(Sc(16), Sc(14)), AutoSize = true };
                 var tb = new TextBox { Text = start ?? "", Font = Draw.fInput, MaxLength = 24, Location = new Point(Sc(16), Sc(44)), Width = Sc(328) };

@@ -58,8 +58,8 @@ namespace AdeeboMeter
         {
             var f = JFlowFromStory();
             y += 10 * S; float top = y;
-            y = Head(g, "PACKET JOURNEY" + (f != null ? "  ·  " + (f.App != "" ? f.App.ToUpperInvariant() + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : "UDP PORT " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
-            if (f == null) return Lead(g, "Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything).", x, y, w, true);
+            y = Head(g, AdeeboMeter.L.T("PACKET JOURNEY") + (f != null ? "  ·  " + (f.App != "" ? f.App.ToUpperInvariant() + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : "UDP PORT " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
+            if (f == null) return Lead(g, AdeeboMeter.L.T("Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything)."), x, y, w, true);
             if (jHeld != null) using (var hb = new SolidBrush(Theme.LvText(1))) { string ht = L.T("Still recording the conversation above. You picked") + " " + jHeld + " - " + L.T("stop the recording to follow it."); float hh = Draw.Measure(ht, Draw.fSmall, (int)w).Height; g.DrawString(ht, Draw.fSmall, hb, new RectangleF(x, y, w, hh + 2)); y += hh + 8 * S; }
             if (jScrollTo) { jScrollTo = false; int want = (int)top - Sc(20); BeginInvoke((Action)delegate { travelCanvas.AutoScrollPosition = new Point(0, Math.Max(0, want)); }); }
             y = PaintJStack(g, x, y, w, f);
@@ -133,7 +133,7 @@ namespace AdeeboMeter
         // ---------- 2. where the time goes: latency split by leg, and what jitter is
         float PaintJTime(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            y = Head(g, "WHERE THE TIME GOES", x, y, w, "travel.JTIME");
+            y = Head(g, AdeeboMeter.L.T("WHERE THE TIME GOES"), x, y, w, "travel.JTIME");
             double gwMin = MinOf(M.GwPing), netMin = MinOf(M.NetPing); string kind; lock (M.L) kind = M.AdapterKind;
             if (jPing == null)
             {
@@ -145,7 +145,7 @@ namespace AdeeboMeter
                 return Lead(g, f.Remote == "" ? "Capture first - the far end of a UDP conversation shows up in its packets." : "Latency is the distance travelled plus time spent waiting in queues. Jitter is how much that waiting changes from one packet to the next. Ten pings to the same server - one small packet a second - show how much of each you have.", x, y, w, true);
             }
             var v = jPing.Where(d => !double.IsNaN(d)).ToList();
-            if (v.Count == 0) return Lead(g, "The server didn't answer pings - many game and call servers ignore them. Capture the conversation instead: its own packets show the rhythm and the stalls.", x, y, w, true);
+            if (v.Count == 0) return Lead(g, AdeeboMeter.L.T("The server didn't answer pings - many game and call servers ignore them. Capture the conversation instead: its own packets show the rhythm and the stalls."), x, y, w, true);
             double tMin = v.Min(), tAvg = v.Average(); double jit = 0; for (int i = 1; i < v.Count; i++) jit += Math.Abs(v[i] - v[i - 1]); jit = v.Count > 1 ? jit / (v.Count - 1) : 0;
             double a = double.IsNaN(gwMin) ? 0 : Math.Min(gwMin, tMin), b = double.IsNaN(netMin) ? 0 : Math.Max(0, Math.Min(netMin, tMin) - a), c = Math.Max(0, tMin - a - b), q = Math.Max(0, tAvg - tMin);
             var parts = new[] { Tuple.Create(kind == "Wi-Fi" ? "Your Wi-Fi to the router" : "Your cable to the router", a, LayerCol[4], "The first hop. Wi-Fi adds a few ms and is where most home jitter starts."),
@@ -189,9 +189,9 @@ namespace AdeeboMeter
         // ---------- 3. the real packets: capture, play along the path, translate, explain
         float PaintJCapture(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            y = Head(g, "THE REAL PACKETS", x, y, w, "travel.JREAL");
+            y = Head(g, AdeeboMeter.L.T("THE REAL PACKETS"), x, y, w, "travel.JREAL");
             bool rec = jSess != null && !jSess.Done, can = LiveCapture.Available && !Policy.NoCapture;
-            if (jNoIface && !rec) { y = Lead(g, "No network adapter is up right now - connect, then capture again.", x, y, w, true); }
+            if (jNoIface && !rec) { y = Lead(g, AdeeboMeter.L.T("No network adapter is up right now - connect, then capture again."), x, y, w, true); }
             if (!can && (jSess == null || jSess.Snapshot().Count == 0)) return Lead(g, Policy.NoCapture ? "Capturing packets is turned off by your IT team (AdeeboMeter.policy). The stack and the timing above still work." : "Recording the real packets needs Wireshark (with Npcap). The stack and the timing above work without it.", x, y, w, true);
             // controls: mode, capture / stop
             float cx = x;
@@ -209,7 +209,7 @@ namespace AdeeboMeter
             if (can) Act(travelCanvas, lr, delegate { if (jSess != null && !jSess.Done) jSess.Stop(); else JCapture(); });
             y += 44 * S;
             var recs = jSess != null ? jSess.Snapshot() : new List<Journey.Rec>();
-            if (jSess == null) return Lead(g, "Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first.", x, y, w, true);
+            if (jSess == null) return Lead(g, AdeeboMeter.L.T("Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first."), x, y, w, true);
             string status = rec ? "Recording... " + recs.Count + " packets" + (jSess.Before > 0 ? " (" + jSess.Before + " from just before you clicked)" : "") + " · stops by itself at " + jSess.Cap.ToString("N0", CultureInfo.CurrentCulture) + " packets or " + jSess.Secs + " s"
                           : jSess.Error != "" ? jSess.Error : recs.Count + " packets recorded" + (jSess.Before > 0 ? ", " + jSess.Before + " of them from the rewind buffer" : "") + " · nothing runs now";
             y = Lead(g, status, x, y, w, jSess.Error == "");
@@ -331,7 +331,7 @@ namespace AdeeboMeter
                 var br = new RectangleF(px - bw / 2, py, bw, bh);
                 using (var b = new SolidBrush(c)) g.FillRectangle(b, br);
                 if (r.DupAck) using (var p = new Pen(Theme.Amber, 2 * S)) g.DrawRectangle(p, br.X, br.Y, br.Width, br.Height);
-                if (r.Resend) using (var wb = new SolidBrush(Color.White)) g.DrawString("again", Draw.fTiny, wb, br.X + 1, br.Y + 1);
+                if (r.Resend) using (var wb = new SolidBrush(Color.White)) g.DrawString(AdeeboMeter.L.T("again"), Draw.fTiny, wb, br.X + 1, br.Y + 1);
             }
             // stalls just before the play head: a red mark where the reply should have been
             var stall = recs.LastOrDefault(r => r.GapBefore > 0 && r.T <= jPlay && jPlay - r.T < 0.6);
@@ -341,7 +341,7 @@ namespace AdeeboMeter
         // the running translation: one plain line per packet, newest last
         float PaintJTranslate(Graphics g, float x, float y, float w, List<Journey.Rec> recs, bool rec)
         {
-            y = Head(g, "IN PLAIN WORDS" + (rec ? "  ·  LIVE" : ""), x, y, w, "travel.JSAY");
+            y = Head(g, AdeeboMeter.L.T("IN PLAIN WORDS") + (rec ? "  ·  LIVE" : ""), x, y, w, "travel.JSAY");
             int upto = recs.FindLastIndex(r => r.T <= jPlay + 1e-6); if (upto < 0) upto = rec ? recs.Count - 1 : Math.Min(recs.Count - 1, 9);
             var shown = recs.Skip(Math.Max(0, upto - 9)).Take(Math.Min(10, upto + 1)).ToList();
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -365,9 +365,9 @@ namespace AdeeboMeter
                 Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(L.T("Explain this capture"), Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                 Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); if (rs.Count > 0) EarnPts("journey.explain", true, true); /* Adeebo Points: the first capture explained */ travelCanvas.Invalidate(); });
                 y += 42 * S;
-                return Lead(g, "Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.", x, y, w, true);
+                return Lead(g, AdeeboMeter.L.T("Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show."), x, y, w, true);
             }
-            y = Head(g, "WHAT THESE PACKETS SHOW", x, y, w, "travel.JEXPLAIN");
+            y = Head(g, AdeeboMeter.L.T("WHAT THESE PACKETS SHOW"), x, y, w, "travel.JEXPLAIN");
             foreach (var n in jNotes)
             {
                 float th = Draw.Measure(n.Text, Draw.fBody, (int)(w - 40 * S)).Height; var card = new RectangleF(x, y, w, th + 40 * S);

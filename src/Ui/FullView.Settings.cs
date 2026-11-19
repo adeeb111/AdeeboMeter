@@ -550,6 +550,7 @@ namespace AdeeboMeter
         }
         static float Para(Graphics g, string t, float x, float y, float w, Brush b, Font f)
         {
+            t = AdeeboMeter.L.T(t);
             var h = Draw.Measure(t, f, (int)w).Height; g.DrawString(t, f, b, new RectangleF(x, y, w, h + 4)); return y + h + 12 * Draw.S;
         }
         static float AboutHead(Graphics g, string num, string title, float x, float y, float w)

@@ -31,7 +31,7 @@
     var nodes = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (node) {
         var parent = node.parentElement;
-        return !parent || parent.closest("script, style, svg, code, pre, textarea, [contenteditable], [data-i18n]")
+        return !parent || parent.closest("script, style, code, pre, textarea, [contenteditable], [data-i18n]")
           ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
       }
     });

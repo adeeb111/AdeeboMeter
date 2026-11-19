@@ -11,6 +11,31 @@
   cursor: pointer;
 }
 [data-language-picker]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+/* Arabic uses the same components with a logical reading direction. Keep
+   addresses, code and measurement diagrams in their original technical order. */
+html[lang="ar"] { direction: rtl; }
+html[lang="ar"] body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
+html[lang="ar"] :is(h1,h2,h3,h4,b,strong) { letter-spacing: normal; }
+html[lang="ar"] :is(p,li,.fine,.tx) { line-height: 1.65; }
+html[lang="ar"] :is(.brand,.amword,code,pre,.v4path,.v4phone em,input[type="url"],input[type="email"],input[type="number"]) { direction: ltr; unicode-bidi: isolate; }
+html[lang="ar"] :is(.hero,.tile,.row,.pcrow2,.thb,.vchip,.gcard) { text-align: start; }
+html[lang="ar"] :is(input,textarea) { text-align: start; }
+html[lang="ar"] .vchip small { margin-right: 0; margin-inline-end: auto; }
+html[lang="ar"] .tl { padding-left: 0; padding-inline-start: 18px; }
+html[lang="ar"] .tl::before { left: auto; right: 5px; }
+html[lang="ar"] .tl > div::before { left: auto; right: -17px; }
+html[lang="ar"] .v4hero h1 { line-height: 1.35; }
+html[lang="ar"] .top .links { min-width: 0; }
+html[lang="ar"] :is(button,.pill,.v4btn) { overflow-wrap: anywhere; }
+html[lang="ar"] :is(.back,[data-go],[data-guide]) > svg:last-child { transform: scaleX(-1); }
+html[lang="ar"] .row > .chev > svg { transform: scaleX(-1); }
+@media (min-width: 768px) {
+  html[lang="ar"] #app { padding-inline: calc(256px + env(safe-area-inset-right)) 32px; }
+  html[lang="ar"] nav.tabs { left: auto; right: 0; border-right: 0; border-left: 1px solid var(--edge); }
+  html[lang="ar"] #web { left: 0; right: 224px; }
+  html[lang="ar"] #toast { left: calc(50% - 112px); }
+  html[lang="ar"] .phone-locale-bar { padding-inline: 256px 32px; }
+}
 [data-language-picker][hidden], [data-i18n-preview][hidden], .locale-ready [data-language-fallback] { display: none; }
 .locale-preview { font-size: .8rem; color: var(--sub); margin: .5rem 0; }
 .phone-locale { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }

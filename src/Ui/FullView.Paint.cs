@@ -65,7 +65,7 @@ namespace AdeeboMeter
                 var ts = g.MeasureString("AdeeboMeter", Draw.fBig); var tf = StringFormat.GenericTypographic;
                 float aw = g.MeasureString("Adeebo", Draw.fBig, PointF.Empty, tf).Width;
                 float ty = cy - ts.Height / 2, tx = x + (ts.Width - g.MeasureString("AdeeboMeter", Draw.fBig, PointF.Empty, tf).Width) / 2;
-                g.DrawString("Adeebo", Draw.fBig, b, tx, ty, tf); g.DrawString("Meter", Draw.fBig, mb, tx + aw, ty, tf);
+                g.DrawString(AdeeboMeter.L.T("Adeebo"), Draw.fBig, b, tx, ty, tf); g.DrawString(AdeeboMeter.L.T("Meter"), Draw.fBig, mb, tx + aw, ty, tf);
             }
             PaintMood(g, gearBtn.Left - 8 * S, cy);
         }
@@ -343,14 +343,14 @@ namespace AdeeboMeter
             var list = Outages.Last(M, 7);
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
-                g.DrawString("INTERNET OUTAGES · LAST 7 DAYS" + (Cfg.History ? "" : " · HISTORY IS OFF, SO ONLY THE LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 20 * S;
+                g.DrawString(AdeeboMeter.L.T("INTERNET OUTAGES · LAST 7 DAYS") + (Cfg.History ? "" : " · HISTORY IS OFF, SO ONLY THE LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 20 * S;
                 if (list.Count == 0) { g.DrawString(Cfg.NetSec == 0 ? "The internet check is off in Settings, so outages can't be noticed." : "None - the internet answered every time AdeeboMeter checked.", Draw.fBody, muted, x, y); y += 26 * S; }
                 foreach (var o in list.Take(8))
                 {
                     using (var b = new SolidBrush(o.Ongoing ? Theme.Red : Theme.Amber)) g.FillEllipse(b, x + 2 * S, y + 6 * S, 9 * S, 9 * S);
                     g.DrawString(Outages.Text(o), Draw.fBody, ink, x + 20 * S, y); y += 24 * S;
                 }
-                if (list.Count > 8) { g.DrawString("and " + (list.Count - 8) + " more", Draw.fSmall, muted, x + 20 * S, y); y += 22 * S; }
+                if (list.Count > 8) { g.DrawString(AdeeboMeter.L.T("and ") + (list.Count - 8) + " more", Draw.fSmall, muted, x + 20 * S, y); y += 22 * S; }
             }
             return y + 12 * S;
         }

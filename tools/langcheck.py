@@ -14,11 +14,13 @@ want = set()
 for d, _, fs in os.walk(os.path.join(root, 'src')):
     for f in fs:
         if not f.endswith('.cs'): continue
+        if f == 'SelfTest.cs': continue  # sentinel strings exercise fallback; they are not UI
         t = open(os.path.join(d, f), encoding='utf-8').read()
         for m in re.finditer(r'L\.T\("((?:[^"\\]|\\.)*)"\)', t): want.add(m.group(1).replace('\\"', '"').replace('\\\\', '\\'))
         if f == 'FullView.Toolbox.cs':
             for m in re.finditer(r'T\("[a-z0-9]+", "([A-Z0-9 &/,\'-]+)", "((?:[^"\\]|\\.)*)"', t): want.add(m.group(1)); want.add(m.group(2))
 want.discard('')
+want = {s for s in want if any(c.isalpha() for c in s)}  # bullets and numeric-only strings have no language
 path = os.path.join(root, 'knowledge', 'lang-%s.txt' % code)
 have = {}
 if os.path.exists(path):

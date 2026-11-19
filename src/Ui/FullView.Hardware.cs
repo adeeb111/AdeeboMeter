@@ -419,7 +419,7 @@ namespace AdeeboMeter
         }
         int KeyTest(List<string> missing)
         {
-            using (var f = new KeyForm { Text = "AdeeboMeter - keyboard test (press Esc twice to finish)", StartPosition = FormStartPosition.CenterParent, ClientSize = new Size((int)(900 * S), (int)(360 * S)), BackColor = Theme.Bg })
+            using (var f = new KeyForm { Text = AdeeboMeter.L.T("AdeeboMeter - keyboard test (press Esc twice to finish)"), StartPosition = FormStartPosition.CenterParent, ClientSize = new Size((int)(900 * S), (int)(360 * S)), BackColor = Theme.Bg })
             {
                 f.Paint += delegate(object s, PaintEventArgs e)
                 {

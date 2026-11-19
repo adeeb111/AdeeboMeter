@@ -301,7 +301,26 @@ namespace AdeeboMeter
             if (inter != null) foreach (var f in inter.Families) if (f.Name == name) return f;
             return new FontFamily(name);
         }
-        static Font Ui(string fam, float px, FontStyle st) { return new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
+        static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl ? new Font("Segoe UI", px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
+        // Inter/Nunito do not contain Arabic glyphs. Use Windows' Arabic-capable
+        // UI face after loading the saved language, before creating controls.
+        public static void UseArabicFonts()
+        {
+            if (!L.IsRtl) return;
+            fName = ArabicFont(fName); fHead = ArabicFont(fHead);
+            fBody = ArabicFont(fBody); fBodyB = ArabicFont(fBodyB);
+            fSmall = ArabicFont(fSmall); fTiny = ArabicFont(fTiny);
+            fPill = ArabicFont(fPill); fBig = ArabicFont(fBig);
+            fTitle = ArabicFont(fTitle); fHero = ArabicFont(fHero);
+            fValue = ArabicFont(fValue); fCardNum = ArabicFont(fCardNum);
+            fBtn = ArabicFont(fBtn); fInput = ArabicFont(fInput);
+        }
+        static Font ArabicFont(Font old)
+        {
+            if (old == null) return old;
+            var font = new Font("Segoe UI", old.Size, old.Style, GraphicsUnit.Pixel);
+            old.Dispose(); return font;
+        }
         public static void Init(float s)
         {
             if (fName != null) return;
@@ -712,7 +731,7 @@ namespace AdeeboMeter
                 using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2));
                 y += headH;
                 if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH)); y += quipH; }   // the mood's line and the season's - personality, after the facts
-                if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString("Why: " + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
+                if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
                 y += 10 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 52 * S);
                 g.DrawString(L.T("IS IT ME OR THE NETWORK?"), fTiny, muted, pad, y);
@@ -727,7 +746,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
                         g.DrawString(L.T("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
-                        g.DrawString("up " + Fmt(s.Up, "0.0", " Mb/s") + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
+                        g.DrawString(AdeeboMeter.L.T("up ") + Fmt(s.Up, "0.0", " Mb/s") + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;
                 }
@@ -749,7 +768,7 @@ namespace AdeeboMeter
                 var du = Usage.TodayDU();
                 using (var tb = new SolidBrush(Theme.Muted))
                 {
-                    g.DrawString("today ↓ " + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
+                    g.DrawString(AdeeboMeter.L.T("today ↓ ") + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
                     string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
                     if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
                 }

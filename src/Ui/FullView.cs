@@ -77,7 +77,7 @@ namespace AdeeboMeter
                 if (since.TotalSeconds >= 2 && Visible0) FreezeCard.Show(lastBounds, (int)since.TotalSeconds, UiActivity.Doing);   // the card on its own thread: you see it even while this window is stuck
                 if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; FreezeCard.Hide(); Visible0 = Visible && WindowState != FormWindowState.Minimized; if (Visible0) lastBounds = Bounds; }); } catch (Exception) { pinged = false; } }   /* the window may be closing: an exception here would end the whole process (a timer thread) */
             }, null, 1000, 1000);
-            Text = "AdeeboMeter - " + Program.Tagline; Icon = icon; BackColor = Theme.Bg; Font = Draw.fBody;
+            Text = AdeeboMeter.L.T("AdeeboMeter - ") + Program.Tagline; Icon = icon; BackColor = Theme.Bg; Font = Draw.fBody;
             // Start at the size of the screen it opens on, so it fits even if maximizing is refused.
             var wa = Screen.FromPoint(Cursor.Position).WorkingArea;
             StartPosition = FormStartPosition.Manual; Bounds = wa; MinimumSize = new Size(Math.Min(Sc(980), wa.Width), Math.Min(Sc(640), wa.Height));
@@ -124,7 +124,7 @@ namespace AdeeboMeter
                 float vend = PaintVerdict(e.Graphics, pathPanel, Sc(20), Sc(18), pathPanel.Width * 0.62f);
                 if (!string.IsNullOrEmpty(snap.Hint) && vend < pathPanel.Width * 0.62f + 1)
                     using (var hintBrush = new SolidBrush(Theme.LvText(1))) using (var sf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                        e.Graphics.DrawString("Why: " + snap.Hint, Draw.fBodyB, hintBrush, new RectangleF(pathPanel.Width * 0.62f + Sc(16), Sc(9), pathPanel.Width * 0.38f - Sc(36) - (onlineChip.Visible ? onlineChip.Width + Sc(12) : 0), Sc(20)), sf);
+                        e.Graphics.DrawString(AdeeboMeter.L.T("Why: ") + snap.Hint, Draw.fBodyB, hintBrush, new RectangleF(pathPanel.Width * 0.62f + Sc(16), Sc(9), pathPanel.Width * 0.38f - Sc(36) - (onlineChip.Visible ? onlineChip.Width + Sc(12) : 0), Sc(20)), sf);
                 var pr = new RectangleF(Sc(20), Sc(36), pathPanel.Width - Sc(40), Sc(86));
                 Draw.PathStrip(e.Graphics, snap, pr, true);
                 float slot = pr.Width / 5;
@@ -232,7 +232,7 @@ namespace AdeeboMeter
             }
             // the PC checks (they used to sit in the Toolbox): one click each, the result shows here
             var hb2 = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Card, Padding = new Padding(Sc(14), 0, Sc(8), Sc(8)), WrapContents = true };
-            hb2.Controls.Add(new Label { Text = "LOOK DEEPER", AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(0, Sc(10), Sc(6), 0) });
+            hb2.Controls.Add(new Label { Text = AdeeboMeter.L.T("LOOK DEEPER"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(0, Sc(10), Sc(6), 0) });
             foreach (var t in new[] { new[] { "pressure", "Memory, disk, heat" }, new[] { "disk", "Disk" }, new[] { "space", "Where did my space go?" }, new[] { "bg", "Background jobs" }, new[] { "crash", "Crashes and hangs" }, new[] { "leaks", "Slow leaks" }, new[] { "gpu", "Graphics per app" }, new[] { "changed", "What changed (7 days)" }, new[] { "battery", "Battery" } })
             {
                 var tb = new PillButton(t[1], PillButton.K.Chip) { Tag = "tb:" + t[0], Margin = new Padding(0, Sc(3), Sc(8), Sc(4)) };
@@ -464,7 +464,7 @@ namespace AdeeboMeter
             if (tab == "changes") changesSeen = DateTime.Now;
             if (tab == "procs") RefreshProcs();
             SetTipKey(null); ThemeScrollbars(leftPane ?? (Control)this);
-            if (tab != "live" && live.Running) { live.Stop(); liveBtn.Text = "Start live capture"; liveView = null; }
+            if (tab != "live" && live.Running) { live.Stop(); liveBtn.Text = AdeeboMeter.L.T("Start live capture"); liveView = null; }
             SyncNav(); if (minePage != null) minePage.Visible = tab == "mine";
             foreach (Control c in subTabs.Controls) ((PillButton)c).Selected = (string)c.Tag == tab;
             if (tab == "dest") destBox.Box.Focus();
@@ -585,14 +585,14 @@ namespace AdeeboMeter
                 liveView = live.Snapshot(delegate(int port) { string a; return map.TryGetValue(port, out a) ? a : null; }, oneWay);
                 liveCanvas.Invalidate();
             }
-            else if (!live.Running && liveBtn.Text != L.T("Start live capture")) { liveBtn.Text = "Start live capture"; liveCanvas.Invalidate(); }
+            else if (!live.Running && liveBtn.Text != L.T("Start live capture")) { liveBtn.Text = AdeeboMeter.L.T("Start live capture"); liveCanvas.Invalidate(); }
         }
 
         void ToggleLive()
         {
-            if (live.Running) { live.Stop(); liveBtn.Text = "Start live capture"; liveCanvas.Invalidate(); return; }
+            if (live.Running) { live.Stop(); liveBtn.Text = AdeeboMeter.L.T("Start live capture"); liveCanvas.Invalidate(); return; }
             string iface; lock (M.L) iface = M.IfaceId;
-            if (live.Start(iface)) { liveBtn.Text = "Stop live capture"; liveView = null; }
+            if (live.Start(iface)) { liveBtn.Text = AdeeboMeter.L.T("Stop live capture"); liveView = null; }
             liveCanvas.Invalidate();
         }
 
@@ -1005,7 +1005,7 @@ namespace AdeeboMeter
             {
                 List<string[]> res = null;
                 try { res = HealthCheck.Run(M); } catch (Exception e) { Program.Log("health: " + e); }
-                try { if (!IsDisposed) BeginInvoke((Action)delegate { health = res ?? new List<string[]>(); healthAt = DateTime.Now; healthRunning = false; healthBtn.Enabled = true; healthBtn.Text = "Run again"; healthCanvas.Invalidate(); }); } catch { }
+                try { if (!IsDisposed) BeginInvoke((Action)delegate { health = res ?? new List<string[]>(); healthAt = DateTime.Now; healthRunning = false; healthBtn.Enabled = true; healthBtn.Text = AdeeboMeter.L.T("Run again"); healthCanvas.Invalidate(); }); } catch { }
             }, TaskCreationOptions.LongRunning);
         }
 

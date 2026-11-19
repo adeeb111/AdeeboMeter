@@ -40,7 +40,7 @@ namespace AdeeboMeter
         // one check (id) or all of them (null); results land as they come, the page repaints after each
         void SecRun(string only)
         {
-            if (secBusy) return; secBusy = true; secStop = false; secRun.Text = "Stop";
+            if (secBusy) return; secBusy = true; secStop = false; secRun.Text = AdeeboMeter.L.T("Stop");
             var sites = SecSites(); var list = Security.All.Where(c => only == null || c.Id == only).ToList();
             if (only == null) { lock (secRes) secRes.Clear(); Program.Log("security checkup started"); }
             secCanvas.Invalidate();
@@ -53,7 +53,7 @@ namespace AdeeboMeter
                     var r = Security.RunOne(c, M, sites); lock (secRes) secRes[c.Id] = r;
                 }
                 secNow = ""; secAt = DateTime.Now;
-                try { BeginInvoke((Action)delegate { secBusy = false; secRun.Text = "Run security checkup"; secCanvas.Invalidate(); }); } catch (InvalidOperationException) { secBusy = false; }
+                try { BeginInvoke((Action)delegate { secBusy = false; secRun.Text = AdeeboMeter.L.T("Run security checkup"); secCanvas.Invalidate(); }); } catch (InvalidOperationException) { secBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
         static int SecLevel(List<string[]> r) { var l = r.Select(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList(); return l.Contains(2) ? 2 : l.Contains(1) ? 1 : l.Contains(0) ? 0 : 3; }

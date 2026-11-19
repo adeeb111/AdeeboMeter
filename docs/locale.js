@@ -77,6 +77,7 @@
 
   function apply() {
     if (followLanguageRoute()) return;
+    root.dir = code === "ar" ? "rtl" : "ltr";
     root.lang = pageCode === "bn" || pageCode === "fr" ? pageLanguage : tags[code] || code;
     root.dataset.locale = code;
     document.querySelectorAll("[data-blog-link]").forEach(function (link) {
@@ -95,7 +96,7 @@
       node.setAttribute("aria-label", t(node.dataset.i18nLabel));
     });
     document.querySelectorAll("[data-i18n-preview]").forEach(function (node) {
-      node.hidden = code === "en" || code === "bn" || code === "fr";
+      node.hidden = code === "en" || code === "bn" || code === "fr" || code === "ar";
     });
     document.querySelectorAll("[data-i18n-direction]").forEach(function (node) {
       node.dir = code === "ar" ? "rtl" : "ltr";
