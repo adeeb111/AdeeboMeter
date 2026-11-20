@@ -750,6 +750,11 @@ namespace AdeeboMeter
                 else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; tbList.Focus(); MoveTool(tbVisible.IndexOf(tbSel) < 0 ? 0 : 1); }
             };
             topBar.Controls.Add(tbSearch);
+            // A guided sequence opens one existing tool at a time; it never runs checks automatically.
+            var recipes = new PillButton("Guided diagnosis...", PillButton.K.Chip)
+                { Margin = new Padding(Sc(8), Sc(3), Sc(8), 0) };
+            recipes.Click += delegate { ShowDiagnosticRecipes(); };
+            topBar.Controls.Add(recipes);
             // by question, or the classic all-at-once list - remembered
             tbViewQ = new PillButton("By question", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewQ.Click += delegate { SetTbView("q"); };
             tbViewL = new PillButton("Every tool", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), 0, 0) }; tbViewL.Click += delegate { SetTbView("list"); };
