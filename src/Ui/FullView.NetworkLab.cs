@@ -206,6 +206,7 @@ namespace AdeeboMeter
             actions.Controls.Add(LabButton("Previous", delegate { labStep = Math.Max(0, labStep - 1); LabSave(); redraw(); }));
             actions.Controls.Add(LabButton("Next packet step", delegate { labStep = Math.Min(12, labStep + 1); LabSave(); redraw(); }));
             actions.Controls.Add(LabButton("Restart", delegate { labStep = 0; LabSave(); redraw(); }));
+            p.Controls.Add(LabButton("Open topology editor (separate window)", delegate { using (var editor = new NetworkLabEditor()) editor.ShowDialog(this); }));
             p.Controls.Add(scene); p.Controls.Add(actions); p.Controls.Add(trace); redraw(); return page;
         }
         static string LabSandboxTrace(string scenario, int step)
