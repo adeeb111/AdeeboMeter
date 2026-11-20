@@ -52,6 +52,14 @@ namespace AdeeboMeter
                 string dl = DateTime.Now.ToString("dddd, d MMMM yyyy", CultureInfo.CurrentCulture) + "  ·  " + L.T("scores: NHL, football-data.org, CricketData  ·  headlines: BBC Sport");
                 var ds = g.MeasureString(dl, Draw.fSmall); g.DrawString(dl, Draw.fSmall, muted, x + (w - ds.Width) / 2, y); y += ds.Height + 6 * S;
                 using (var p = new Pen(Theme.Ink, 2 * S)) g.DrawLine(p, x, y, x + w, y); using (var p = new Pen(Theme.Ink, 1)) g.DrawLine(p, x, y + 4 * S, x + w, y + 4 * S); y += 16 * S;
+                // Editorial briefings: native WinForms view, sharing this page's existing theme and data.
+                string briefLabel = L.T("Open briefings: Sports | Markets | Weather...");
+                var briefSize = g.MeasureString(briefLabel, Draw.fSmall);
+                var briefRect = new RectangleF(x, y, Math.Min(w, briefSize.Width + 18 * S), 28 * S);
+                Kit.Box(g, briefRect, 6 * S);
+                g.DrawString(briefLabel, Draw.fSmall, ink, briefRect.X + 9 * S, briefRect.Y + 5 * S);
+                Act(sportsCanvas, briefRect, ShowEditorialBriefings);
+                y += 40 * S;
                 if (!Cfg.Sports || Policy.NoOnline)
                 {
                     var cr = new RectangleF(x, y, w, 96 * S); Kit.Box(g, cr, 14 * S);
