@@ -17,6 +17,7 @@ namespace AdeeboMeter
         readonly ComboBox kind;
         readonly Label status;
         Node dragged;
+        Node selected;
         int linkStart = -1;
         int serial = 1;
         readonly string path;
@@ -36,21 +37,22 @@ namespace AdeeboMeter
                     Position = new Point(100 + nodes.Count % 5 * 135, 95 + nodes.Count / 5 * 95) });
                 surface.Invalidate(); });
             AddButton(bar, "Link nodes", delegate { linkStart = -2; status.Text = "Click the first node, then the second."; });
-            AddButton(bar, "Delete selected", delegate { if (dragged == null) return;
-                int idx = nodes.IndexOf(dragged); if (idx < 0) return;
+            AddButton(bar, "Delete selected", delegate { if (selected == null) return;
+                int idx = nodes.IndexOf(selected); if (idx < 0) return;
                 nodes.RemoveAt(idx); links.RemoveAll(l => l.Item1 == idx || l.Item2 == idx);
                 for (int i = 0; i < links.Count; i++) { var l = links[i];
                     links[i] = Tuple.Create(l.Item1 > idx ? l.Item1 - 1 : l.Item1,
                         l.Item2 > idx ? l.Item2 - 1 : l.Item2); }
-                dragged = null; surface.Invalidate(); });
+                dragged = null; selected = null; surface.Invalidate(); });
             AddButton(bar, "Save lab", Save);
             AddButton(bar, "Load lab", Load);
-            AddButton(bar, "Reset", delegate { nodes.Clear(); links.Clear(); dragged = null; surface.Invalidate(); });
+            AddButton(bar, "Reset", delegate { nodes.Clear(); links.Clear(); dragged = null; selected = null; surface.Invalidate(); });
             surface = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(246, 248, 251) };
             surface.Paint += PaintGraph;
             surface.MouseDown += delegate(object s, MouseEventArgs e)
             {
                 dragged = nodes.LastOrDefault(n => Hit(n, e.Location));
+                selected = dragged;
                 if (linkStart != -1)
                 {
                     int idx = dragged == null ? -1 : nodes.IndexOf(dragged);
@@ -127,7 +129,7 @@ namespace AdeeboMeter
                 }
                 if (ll.Any(l => l.Item1 < 0 || l.Item2 < 0 || l.Item1 >= nn.Count || l.Item2 >= nn.Count))
                     throw new InvalidDataException("Invalid link reference.");
-                nodes.Clear(); nodes.AddRange(nn); links.Clear(); links.AddRange(ll);
+                nodes.Clear(); nodes.AddRange(nn); links.Clear(); links.AddRange(ll); selected = null;
                 serial = nodes.Count + 1; surface.Invalidate(); status.Text = "Lab loaded.";
             }
             catch (Exception e) { status.Text = "Load failed: " + e.Message; }
