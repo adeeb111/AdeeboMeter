@@ -214,6 +214,14 @@ namespace AdeeboMeter
                 btn("Wi-Fi vs cable...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null && tbBoxes.Count > 0) tbBoxes[0].Box.Text = rg.Id; });
                 btn("Report for my ISP...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); if (rg != null && tbBoxes.Count > 1) { tbBoxes[0].Box.Text = rg.Id; tbBoxes[1].Box.Text = "2"; } });
                 y += 44 * S;
+                // Dedicated second row avoids adding to the already crowded session toolbar.
+                bx = x;
+                if (ss != null)
+                {
+                    btn("Session replay + incident story...", false, delegate { GamerReview(false); });
+                    btn("Lag or FPS? / evidence...", false, delegate { GamerReview(true); });
+                    y += 44 * S;
+                }
                 if (ss == null) return y + 6 * S;
 
                 var rows = ss.All(); var gv = rows.Select(r => r.Game).ToArray();
