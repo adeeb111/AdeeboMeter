@@ -16,6 +16,9 @@ namespace AdeeboMeter
         Panel securityPage; DB secCanvas; RoundBox secSite; PillButton secRun;
         readonly Dictionary<string, List<string[]>> secRes = new Dictionary<string, List<string[]>>();
         volatile bool secBusy; volatile string secNow = ""; DateTime secAt; volatile bool secStop; DateTime secCopied;
+        Dictionary<string, int> secPrevious = new Dictionary<string, int>();
+        DateTime secPreviousAt;
+        bool secHasPrevious;
         static readonly string[][] SecGroups = { new[] { "pc", "THIS PC" }, new[] { "net", "YOUR NETWORK" }, new[] { "sites", "YOUR SITES" } };
 
         Panel BuildSecurityPage()
@@ -42,7 +45,20 @@ namespace AdeeboMeter
         {
             if (secBusy) return; secBusy = true; secStop = false; secRun.Text = AdeeboMeter.L.T("Stop");
             var sites = SecSites(); var list = Security.All.Where(c => only == null || c.Id == only).ToList();
-            if (only == null) { lock (secRes) secRes.Clear(); Program.Log("security checkup started"); }
+            if (only == null)
+            {
+                lock (secRes)
+                {
+                    if (secRes.Count > 0)
+                    {
+                        secPrevious = secRes.ToDictionary(k => k.Key, v => SecLevel(v.Value));
+                        secPreviousAt = secAt;
+                        secHasPrevious = true;
+                    }
+                    secRes.Clear();
+                }
+                Program.Log("security checkup started");
+            }
             secCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {
@@ -87,6 +103,32 @@ namespace AdeeboMeter
                     g.DrawString(ct, Draw.fSmall, link, cr.X, cr.Y); Act(secCanvas, cr, delegate { try { Clipboard.SetText(SecurityText()); secCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } secCanvas.Invalidate(); });
                 }
                 var sh = Draw.Measure(sub, Draw.fSmall, (int)w).Height; g.DrawString(sub, Draw.fSmall, muted, new RectangleF(x, y, w, sh + 4)); y += sh + 12 * S;
+                // Compare only completed full checkups. A partial rerun is not a baseline.
+                if (secHasPrevious && !secBusy && res.Count > 0)
+                {
+                    var changes = res.Where(k => secPrevious.ContainsKey(k.Key) &&
+                        secPrevious[k.Key] != SecLevel(k.Value)).ToList();
+                    string title = "CHANGED SINCE " + secPreviousAt.ToString("ddd HH:mm", CultureInfo.CurrentCulture);
+                    g.DrawString(title, Draw.fTiny, muted, x, y); y += 21 * S;
+                    if (changes.Count == 0)
+                    {
+                        g.DrawString("No changed outcomes among comparable checks.", Draw.fSmall, ink, x, y);
+                        y += 26 * S;
+                    }
+                    foreach (var change in changes.Take(12))
+                    {
+                        int before = secPrevious[change.Key], after = SecLevel(change.Value);
+                        var check = Security.All.FirstOrDefault(c => c.Id == change.Key);
+                        string label = check != null ? check.Title : change.Key;
+                        string direction = after == 2 || (after == 1 && before != 2) ? "Needs attention" :
+                            before == 2 || before == 1 ? "Improved" : "Outcome changed";
+                        string msg = direction + " · " + label + " (" + before + " -> " + after + ")";
+                        g.DrawString(Draw.Trunc(msg, 110), Draw.fSmall, ink, x + 8 * S, y);
+                        y += 23 * S;
+                    }
+                    if (changes.Count > 12) { g.DrawString("Additional changes not shown.", Draw.fSmall, muted, x, y); y += 23 * S; }
+                    y += 12 * S;
+                }
                 if (res.Count > 0)
                 {
                     float bx = x; string[] lab = { "good", "worth a look", "risky", "info / can't tell" };
