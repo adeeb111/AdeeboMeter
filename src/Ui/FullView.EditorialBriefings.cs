@@ -2,6 +2,7 @@
 // No new background services, online requests, or dependencies.
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -15,12 +16,12 @@ namespace AdeeboMeter
             {
                 f.Text = "AdeeboMeter - Editorial Briefings";
                 f.StartPosition = FormStartPosition.CenterParent;
-                f.Size = new Size(Sc(930), Sc(700));
+                f.Size = new Size(Sc(1040), Sc(760));
                 f.MinimumSize = new Size(Sc(600), Sc(460));
                 f.BackColor = Theme.Card;
                 f.ForeColor = Theme.Ink;
                 f.Font = Draw.fBody;
-                var tabs = new TabControl { Dock = DockStyle.Fill, Font = Draw.fBody };
+                var tabs = new TabControl { Dock = DockStyle.Fill, Font = Draw.fBody, Padding = new Point(Sc(16), Sc(8)) };
                 tabs.TabPages.Add(BuildBriefTab("SPORTS", "The Matchday Edition", BuildSportsBrief));
                 tabs.TabPages.Add(BuildBriefTab("MARKETS", "The Daily Financial Edition", BuildMarketsBrief));
                 tabs.TabPages.Add(BuildBriefTab("WEATHER", "The Daily Conditions Edition", BuildWeatherBrief));
@@ -50,15 +51,58 @@ namespace AdeeboMeter
             return page;
         }
 
+        // All drawing is native GDI+. No WebView, HTML renderer or embedded browser.
+        sealed class EditorialCard : Control
+        {
+            public string Heading;
+            public string Copy;
+            public Color Ink;
+            public Color Sub;
+            public Color Border;
+            public Color Paper;
+            public float Scale;
+            public EditorialCard(string heading, string copy, Color ink, Color sub, Color border, Color paper, float scale)
+            {
+                Heading = heading; Copy = copy; Ink = ink; Sub = sub; Border = border; Paper = paper; Scale = scale;
+                SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint |
+                         ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+                Height = (int)(148 * scale);
+                Margin = new Padding(0, (int)(5 * scale), 0, (int)(12 * scale));
+            }
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+                var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+                var r = new Rectangle(1, 1, Math.Max(1, Width - 3), Math.Max(1, Height - 3));
+                using (var bg = new SolidBrush(Paper)) g.FillRectangle(bg, r);
+                using (var pen = new Pen(Border)) g.DrawRectangle(pen, r);
+                using (var accent = new SolidBrush(Color.FromArgb(161, 62, 49)))
+                    g.FillRectangle(accent, r.Left, r.Top, Math.Max(2, (int)(4 * Scale)), r.Height);
+                int pad = (int)(19 * Scale), left = r.Left + pad, top = r.Top + (int)(14 * Scale);
+                int width = Math.Max(10, r.Width - pad * 2);
+                using (var headline = new Font("Georgia", 18 * Scale, FontStyle.Bold, GraphicsUnit.Pixel))
+                using (var body = new Font("Segoe UI", 14 * Scale, FontStyle.Regular, GraphicsUnit.Pixel))
+                using (var inkBrush = new SolidBrush(Ink))
+                using (var subBrush = new SolidBrush(Sub))
+                using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord })
+                {
+                    g.DrawString(Heading, headline, inkBrush, new RectangleF(left, top, width, 32 * Scale), sf);
+                    using (var pen = new Pen(Border)) g.DrawLine(pen, left, top + 35 * Scale, left + width, top + 35 * Scale);
+                    g.DrawString(Copy, body, subBrush,
+                        new RectangleF(left, top + 44 * Scale, width, Math.Max(10, Height - (int)(64 * Scale))), sf);
+                }
+            }
+        }
+
         void BriefText(FlowLayoutPanel p, string text, bool heading)
         {
             var l = new Label
             {
                 Text = text, AutoSize = false, Width = Sc(780),
-                Height = heading ? Sc(56) : Sc(44),
-                Font = new Font("Georgia", heading ? 25 : 13, heading ? FontStyle.Bold : FontStyle.Regular),
+                Height = heading ? Sc(76) : Sc(36),
+                Font = new Font("Georgia", heading ? 31 : 12, heading ? FontStyle.Bold : FontStyle.Italic),
                 ForeColor = Theme.Ink,
-                TextAlign = heading ? ContentAlignment.MiddleCenter : ContentAlignment.MiddleLeft,
+                TextAlign = heading ? ContentAlignment.MiddleCenter : ContentAlignment.MiddleCenter,
                 Margin = new Padding(0, Sc(3), 0, Sc(4))
             };
             p.Controls.Add(l);
@@ -66,19 +110,22 @@ namespace AdeeboMeter
 
         void BriefRule(FlowLayoutPanel p)
         {
-            p.Controls.Add(new Panel { Width = Sc(780), Height = Sc(2), BackColor = Theme.Line, Margin = new Padding(0, Sc(6), 0, Sc(12)) });
+            var rule = new Panel { Width = Sc(780), Height = Sc(7), Margin = new Padding(0, Sc(6), 0, Sc(15)) };
+            rule.Paint += delegate(object sender, PaintEventArgs e)
+            {
+                using (var pen = new Pen(Theme.Ink, Math.Max(1, Sc(2))))
+                {
+                    e.Graphics.DrawLine(pen, 0, 1, rule.Width, 1);
+                    e.Graphics.DrawLine(pen, 0, rule.Height - 2, rule.Width, rule.Height - 2);
+                }
+            };
+            p.Controls.Add(rule);
         }
 
         void BriefParagraph(FlowLayoutPanel p, string title, string body)
         {
-            BriefText(p, title, false);
-            var l = new Label
-            {
-                Text = body, Width = Sc(780), Height = Sc(70),
-                ForeColor = Theme.Sub, Font = Draw.fBody,
-                Margin = new Padding(0, 0, 0, Sc(10))
-            };
-            p.Controls.Add(l);
+            p.Controls.Add(new EditorialCard(title, body, Theme.Ink, Theme.Sub, Theme.Line,
+                Theme.Card, S) { Width = Sc(780) });
         }
 
         void BuildSportsBrief(FlowLayoutPanel p)
