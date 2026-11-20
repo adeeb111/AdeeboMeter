@@ -198,7 +198,7 @@ namespace AdeeboMeter
                 };
                 if (open)
                 {
-                    btn("Mark lag", true, delegate { gp.Session.Mark(); gamerNote = "Marked - the 30 seconds around it are in the match summary."; gamerCanvas.Invalidate(); });
+                    btn("Mark lag + evidence", true, delegate { gp.Session.Mark(); gamerNote = "Lag marked. Evidence shows available measurements; FPS is not measured."; gamerCanvas.Invalidate(); GamerReview(true); });
                     btn("Stop session", false, delegate { gp.EndSession(); gamerCanvas.Invalidate(); });
                 }
                 else if (target != null) btn("Start session · " + target.Name, true, delegate { gp.StartSession(target, true); gamerNote = "Session started - press Mark lag whenever it feels wrong."; gamerCanvas.Invalidate(); });
