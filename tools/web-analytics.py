@@ -30,3 +30,6 @@ def install():
 
 if __name__ == "__main__":
     install()
+    # Run after locale generation and before learnsite.py calculates the cache hash.
+    import runpy
+    runpy.run_path(str(ROOT / "tools/published-tutorials.py"), run_name="__main__")
