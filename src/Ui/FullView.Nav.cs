@@ -97,6 +97,8 @@ namespace AdeeboMeter
                 it.Click += delegate { OpenNav(nid); }; it.Padding = new Padding(0, Sc(3), 0, Sc(3)); m.Items.Add(it);
             }
             m.Items.Add(new ToolStripSeparator());
+            var lab = new ToolStripMenuItem("Network Lab (Time Machine, X-Ray, Sandbox, Witness)");
+            lab.Click += delegate { OpenNetworkLab(); }; m.Items.Add(lab);
             var set = new ToolStripMenuItem(L.T("Arrange tabs..."), NavBitmap("settings", Theme.Muted)); set.Click += delegate { OpenSettingsAt("Navigation"); }; m.Items.Add(set);
             m.Closed += delegate { BeginInvoke((Action)m.Dispose); };
             m.Show(at, p);
