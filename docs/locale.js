@@ -37,7 +37,7 @@
   }
 
   var stored = saved();
-  var defaultChoice = pageCode === "bn" || pageCode === "fr" ? pageCode : "auto";
+  var defaultChoice = pageCode === "bn" || pageCode === "fr" || pageCode === "es" ? pageCode : "auto";
   var choice = known(query) ? query : pageCode !== "en" ? pageCode : known(stored) ? stored : defaultChoice;
   if (known(query)) remember(query);
   else if (pageCode !== "en") remember(pageCode);
@@ -56,15 +56,6 @@
 
   function followLanguageRoute() {
     if (!languageRoute || !/^https?:$/.test(location.protocol)) return false;
-    // Keep the complete homepage for every language; localized SEO landings
-    // remain crawlable but visitors use the shared, fully styled homepage.
-    if (languageRoute === "/") {
-      if (location.pathname === "/" || location.pathname === "/index.html") return false;
-      var home = new URL("/", location.origin);
-      home.searchParams.set("lang", code);
-      location.replace(home.href);
-      return true;
-    }
     var nextLanguage = routeLanguages.indexOf(code) >= 0 ? code : "en";
     if (nextLanguage === pageCode) return false;
     var url = new URL(location.href);
@@ -78,10 +69,10 @@
   function apply() {
     if (followLanguageRoute()) return;
     root.dir = code === "ar" ? "rtl" : "ltr";
-    root.lang = pageCode === "bn" || pageCode === "fr" ? pageLanguage : tags[code] || code;
+    root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" ? pageLanguage : tags[code] || code;
     root.dataset.locale = code;
     document.querySelectorAll("[data-blog-link]").forEach(function (link) {
-      link.href = code === "bn" || code === "fr" ? "/" + code + "/blog/" : "/blog/";
+      link.href = code === "bn" || code === "fr" || code === "es" ? "/" + code + "/blog/" : "/blog/";
     });
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
       var key = node.dataset.i18n;
@@ -133,7 +124,7 @@
     document.dispatchEvent(new Event("adeebometerlanguagechange"));
   }
 
-  root.lang = pageCode === "bn" || pageCode === "fr" ? pageLanguage : tags[code] || code;
+  root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" ? pageLanguage : tags[code] || code;
   var mounted = new WeakSet();
   function mountPickers() {
     document.querySelectorAll("[data-language-picker]").forEach(function (select) {

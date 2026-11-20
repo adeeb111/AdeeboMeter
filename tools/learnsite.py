@@ -208,6 +208,7 @@ print(len(topics), 'lesson pages + index; sitemap', len(keep) + len(new), 'urls'
 import runpy
 runpy.run_path(os.path.join(root, 'tools/bengali-seo.py'))
 runpy.run_path(os.path.join(root, 'tools/french-seo.py'))
+runpy.run_path(os.path.join(root, 'tools/spanish-seo.py'))
 
 # ---- the companion's voices for the website and the phone: the app's own line files (knowledge/lines-*.txt) as small
 # JSON packs, one per voice, plus the list. Only the words change with a voice - numbers and facts stay as they are.
@@ -245,6 +246,9 @@ runpy.run_path(os.path.join(root, 'tools/web-analytics.py'), run_name='__main__'
 core.append('analytics.js')
 extra += sorted('fr/' + os.path.relpath(os.path.join(base, file), os.path.join(root, 'docs/fr')).replace(os.sep, '/')
                 for base, _, names in os.walk(os.path.join(root, 'docs/fr'))
+                for file in names if file.endswith('.html'))
+extra += sorted('es/' + os.path.relpath(os.path.join(base, file), os.path.join(root, 'docs/es')).replace(os.sep, '/')
+                for base, _, names in os.walk(os.path.join(root, 'docs/es'))
                 for file in names if file.endswith('.html'))
 extra = list(dict.fromkeys(x for x in extra if x not in core))
 ver = hashlib.sha256(b''.join(open(os.path.join(root, 'docs', x), 'rb').read() for x in core + extra)).hexdigest()[:12]

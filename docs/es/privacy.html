@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es" data-language-route="/privacy.html" data-language-variants="en fr es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de privacidad de AdeeboMeter</title>
+<meta name="description" content="Descubre cómo AdeeboMeter protege los datos de la aplicación para Windows y cómo el sitio mide visitas con Cloudflare Web Analytics.">
+<link rel="canonical" href="https://adeebometer.com/es/privacy.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Local typography and styles. Website analytics is described below. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/privacy.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/privacy.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/privacy.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/privacy.html">
+<meta property="og:locale" content="es_ES">
+</head>
+<body>
+<main><nav class="language-links" aria-label="Idioma"><a href="https://adeebometer.com/privacy.html?lang=en" lang="en">English</a></nav>
+<p><a href="/es/">← AdeeboMeter</a></p>
+<h1>Política de privacidad</h1>
+<p class="date">Aplicación y sitio web de AdeeboMeter · actualizado el 18 de noviembre de 2026</p>
+
+<div class="short"><p><b>La aplicación para Windows</b> no recopila información sobre ti. No hay cuentas, telemetría, analítica ni servidor. Los datos permanecen en tu PC y la aplicación nunca acepta conexiones entrantes.</p></div>
+
+<h2>Qué recopila AdeeboMeter</h2>
+<p>Nada. La app no tiene servidor al que enviar datos. El desarrollador no recibe información de ti, tu PC, red o uso.</p>
+
+<h2>Qué queda en tu PC</h2>
+<ul>
+  <li><b>Ajustes</b> (<code>AdeeboMeter.settings</code>) y un pequeño <b>registro</b> para solucionar problemas de la propia app.</li>
+  <li><b>Historial</b> de velocidad y estado de la red de los últimos días para reproducir un minuto problemático. Queda en AppData, o en datos junto al programa si es portátil. Borra días antiguos automáticamente.</li>
+  <li><b>Disputa entre vecinos</b> (solo con Historial activo): cada hora, redes Wi-Fi que ya lista Windows, con nombres, BSSID, canales y señal. Guarda 7 días en <code>air.txt</code>. Desactivar Historial lo borra en una hora. Son datos que las redes anuncian a cualquiera cercano, no información de sus dispositivos.</li>
+  <li><b>Adeebo Points</b> (<code>points.txt</code>): funciones probadas y cuándo. Nada más.</li>
+  <li><b>Estado guardado de ajustes de red</b> (<code>netsnap.txt</code>, solo al pulsar Guardar): direcciones de adaptadores, routers, DNS, proxy y huella de hosts, para comparar cambios después.</li>
+  <li><b>Revisiones</b> (la carpeta <code>reports</code> ): revisión semestral que guardas y, con 6 meses de historial, la que escribe antes de borrar los días antiguos. Omite nombres, Wi-Fi y direcciones. Queda hasta que la borres.</li>
+  <li><b>Registros de streaming y bróker</b> (en Historial, 90 días): nombre del servicio deducido de sus servidores, nunca pestañas o títulos, horario y caídas. Para el bróker, momentos lentos de cada día bursátil. Nunca ve la cuenta ni qué miras dentro del servicio.</li>
+  <li><b>Tiempo</b> (<code>weather.txt</code>, solo al activar el tiempo): pronóstico horario del lugar elegido, último día y próximos, unos 2 KB. Sin historial. Se borra al quitarlo o desactivar el tiempo.</li>
+  <li><b>Las cifras del día</b> (<code>fx.txt</code>, <code>bcpi.txt</code>): últimos tipos e índice de materias primas del Bank of Canada para abrir Mercado sin consultar otra vez.</li>
+  <li><b>Despertares</b> (en Historial): segundos que tardan router y DNS en responder tras despertar.</li>
+  <li><b>Capturas</b> y <b>resultados guardados</b>, solo los que eliges crear o guardar.</li>
+</ul>
+<p>Contraseñas y secretos de herramientas (comunidad SNMP, secreto RADIUS o clave de certificado) se usan una vez, sin guardar, registrar ni copiar.</p>
+<p>Las capturas en vivo se borran al detenerse, al siguiente inicio y al cerrar sesión en Windows.</p>
+<p>Desinstalar elimina los datos salvo lista y copias de claves de cifrado, para poder abrir archivos tras reinstalar. Borra <code>%LOCALAPPDATA%\AdeeboMeter</code> y <code>Documents\AdeeboMeter</code> para quitarlas también. Tus archivos guardados quedan donde los pusiste.</p>
+
+<h2>Qué envía y cuándo</h2>
+<p>Nada lleva información sobre ti. Cada elemento aparece en vivo en Acerca de › Qué sale de tu PC. Puedes desactivar cada tarea de segundo plano en Ajustes.</p>
+<p><b>En segundo plano mientras funciona:</b></p>
+<ul>
+  <li><b>Ping al router:</b> un ping pequeño a tu router cada pocos segundos, solo en tu red local.</li>
+  <li><b>Internet y DNS:</b> Un ping a <code>1.1.1.1</code> (o <code>8.8.8.8</code>) cada 15 segundos en Equilibrado, cada 5 minutos en Mínimo consumo, y una consulta DNS como máximo por minuto. Si bloquean ping, mide una conexión al puerto 443 y la cierra al instante. Desactivarlo impide tráfico de internet en segundo plano.</li>
+  <li><b>Nombre del proveedor:</b> una vez por red, trazado corto de 6 saltos hacia <code>1.1.1.1</code> y búsqueda inversa de nombre para identificar el proveedor.</li>
+  <li><b>Página de acceso:</b> solo si falla una prueba, una consulta a la página que usa Windows (<code>msftconnecttest.com</code>).</li>
+  <li><b>Destino fijado:</b> un ping cada 30 segundos al destino fijado, solo si lo activas.</li>
+  <li><b>Zona de juegos:</b> nada hasta pulsar un juego. Después, pings o conexiones medidas a sus regiones. La lista Valve de <code>api.steampowered.com</code> solo se obtiene al añadir un juego Valve o pulsar Actualizar.</li>
+
+  <li><b>Streaming:</b> solo durante reproducción, una conexión medida sin datos al servidor cada 10 segundos (30 en Mínimo consumo). Distingue sus caídas de las tuyas y deja de probar tras seis fallos. Se desactiva en Ajustes › ¿Haces streaming u operas en bolsa?</li>
+  <li><b>Bróker:</b> nada hasta elegir bróker. Después, conexión medida sin datos ni acceso a la cuenta al ritmo del perfil, solo en horario de mercado o todo el día para cripto si lo eliges.</li>
+  <li><b>Tiempo</b> (desactivado por defecto): escribes un lugar y su nombre se envía una vez a <code>geocoding-api.open-meteo.com</code> para encontrarlo. Después solo van sus coordenadas a <code>api.open-meteo.com</code> cada 2 días aproximadamente o cada 6 horas en Mejor. Nunca usa la ubicación del PC. Open-Meteo es gratis y sin cuenta; datos CC BY 4.0.</li>
+  <li><b>Datos del Bank of Canada:</b> solo con Mercado abierto o resumen de tarde activo y si debe haber datos nuevos: una consulta diaria de divisas y semanal de materias primas a <code>bankofcanada.ca</code>. No se envía nada sobre ti.</li>
+</ul>
+<p><b>Solo al iniciarlas tú:</b></p>
+<ul>
+  <li><b>Herramientas:</b> cada prueba contacta solo el destino elegido o escrito, o el indicado en pantalla, como <code>msftconnecttest.com</code> para la prueba del reloj).</li>
+  <li><b>Velocidad:</b> unos 8 segundos de descarga y subida al servidor elegido, el Cloudflare más cercano <code>speed.cloudflare.com</code> por defecto, o un archivo de prueba Vultr u OVHcloud en una ciudad, con límite de MB.</li>
+  <li><b>Informe para mi proveedor:</b> pings y trazados a destinos elegidos; tu IP pública, una consulta a <code>www.cloudflare.com/cdn-cgi/trace</code>), solo si escribes yes.</li>
+  <li><b>Consultas en línea</b> (desactivadas por defecto, se desactivan al terminar el tiempo elegido): IP públicas del recorrido a RIPEstat (<code>stat.ripe.net</code>) y PeeringDB por HTTPS. Seguridad también hace una pregunta al DNS cifrado Cloudflare (<code>cloudflare-dns.com</code>) y una negociación TLS con <code>www.microsoft.com</code>. Fugas VPN en Herramientas, al ejecutarla, pregunta al STUN de Cloudflare (<code>stun.cloudflare.com</code>, UDP 3478) qué dirección ve, por ruta normal y directamente por Wi-Fi o cable. DNS cifrado DoH / DoT consulta al servidor elegido solo al ejecutarlo.</li>
+  <li><b>Enlaces que pulsas</b> (GitHub, Donar) abren el navegador. La app no envía nada.</li>
+  <li><b>Informar de un fallo, enviar opinión o tarjeta:</b> solo al pulsar <b>Enviar</b> en su cuadro y tras ver qué se envía. Va al relé de AdeeboMeter, un Cloudflare Worker que lo entrega a Adeeb sin cuenta. Un informe puede añadir versión de app y Windows, página y últimas líneas de registro, quitando nombres, PC, rutas y direcciones. El relé elimina de nuevo correos e IP. Usa tu dirección solo para limitar envíos a cinco por hora, guardándola como hash irreversible un día. Sin conexión espera en tu PC hasta el próximo inicio en línea. Se desactiva si TI bloquea las consultas.</li>
+  <li><b>Informes de fallos:</b> tras un fallo ofrece abrir una incidencia GitHub con detalles. Solo se envía si eliges publicarla; puedes leerla y editarla antes.</li>
+</ul>
+<p>AdeeboMeter no escucha: no abre puertos ni ejecuta servidor. Solo recibe respuestas a sus solicitudes.</p>
+
+<h2>Microsoft Store</h2>
+<p>Si instalas AdeeboMeter desde Microsoft Store, Microsoft gestiona descarga, actualizaciones y datos de compra según <a href="https://privacy.microsoft.com/privacystatement">la declaración de privacidad de Microsoft</a>. El desarrollador solo ve totales anónimos habituales, como instalaciones.</p>
+
+<h2>Este sitio web</h2>
+<p>Las páginas públicas usan Cloudflare Web Analytics para medir páginas vistas, visitas, sitios de referencia y rendimiento. Estos datos nos ayudan a saber qué guías encuentran las personas y a mejorar el sitio. Cloudflare Web Analytics no usa cookies de analítica ni huellas digitales del navegador. El número de visitas es una estimación basada en solicitudes de páginas y referencias.</p>
+<p>El script de analítica se carga desde <code>static.cloudflareinsights.com</code> y envía mediciones a Cloudflare. Cloudflare recibe la solicitud de red como proveedor del servicio. Consulta <a href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/">la documentación de Cloudflare sobre la recopilación de datos</a>. El sitio respeta Do Not Track y Global Privacy Control y no carga la analítica cuando cualquiera de estas señales está activada.</p>
+<p>El sitio también usa otros dos servicios externos: la página de inicio consulta <code>api.github.com</code> para saber la última versión y los formularios cargan Cloudflare Turnstile (<code>challenges.cloudflare.com</code>), comprobación gratuita de que envía una persona, sin puzles ni cookies de seguimiento. Esos sitios ven tu IP como cualquier web visitada. Los mensajes pasan por el relé descrito arriba.</p>
+
+<h2>Menores</h2>
+<p>AdeeboMeter no recopila información personal de nadie, tampoco de menores.</p>
+
+<h2>Cambios y contacto</h2>
+<p>Si cambia la política se publica aquí con fecha nueva. El código es público en <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>para que cualquiera compruebe su funcionamiento. Para preguntas, abre una incidencia en <a href="https://github.com/adeeb111/AdeeboMeter/issues">github.com/adeeb111/AdeeboMeter/issues</a>.</p>
+
+<footer>AdeeboMeter por Adeeb Khan · Licencia MIT</footer>
+</main>
+</body>
+</html>

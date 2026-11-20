@@ -75,3 +75,17 @@ The French build reuses tools/bengali-seo.py through tools/french-seo.py. The no
 All 101 pages passed browser checks for document language, canonicals, French language links, internal links and representative desktop/mobile layouts. The mobile speed guide was visually reviewed. French generation was byte-stable across repeated bilingual generation. Final indexing submissions await merge and production verification.
 
 French route checks passed for direct French visits with a saved Bengali preference, switching to English and back, old ?lang=fr links, anchors and localized Learn header navigation. Added a visible English link on French articles and lessons.
+
+## Spanish SEO and redirect audit — November 19, 2026
+
+Adds 101 static Spanish pages under /es/ from the approved Spanish website catalog: homepage, Blog, Wi-Fi, internet speed monitoring, PC monitoring, ISP reporting, gaming, streaming, trading, privacy, Learn index and all 90 lessons. New SEO descriptions, image labels and analytics privacy connecting text are in tools/spanish-seo.json for translation review. The product and substantive lesson copy reuse the approved catalog.
+
+The normal tools/learnsite.py build now invokes tools/spanish-seo.py and updates Spanish offline assets. Equivalent English, Bengali, French and Spanish pages get reciprocal hreflang links, self canonicals and language-route metadata. Spanish software/site structured data uses the localized URL and language. The full homepage is generated from the current English source with the same styling and Spanish translations.
+
+Restores stable /bn/, /fr/ and /es/ homepage routes instead of redirecting them to /?lang=…. Direct localized URLs retain their language; English and Automatic remain available through the picker. Explicit query language choices and anchors remain supported.
+
+Google's Page with redirect report listed http://adeebometer.com/, http://www.adeebometer.com/ and https://www.adeebometer.com/. All three were verified to return HTTP 301 directly to https://adeebometer.com/. These are intentional domain/HTTPS consolidation redirects, so no Validate Fix action or removal of redirects is appropriate.
+
+Deployment, production verification and Google/Bing submissions must follow merge. Local generation and checks do not establish live deployment, indexing or rankings. Spanish submissions are pending until the URLs are public.
+
+Validation: all 101 Spanish pages passed browser language/title/description/canonical/internal-link checks. Equivalent pages passed reciprocal Spanish hreflang checks; sitemap contains 407 unique URLs. Representative Spanish, Bengali and French pages passed mobile/desktop checks at 390px and 1120px without horizontal overflow or unexpected localized-home redirects. Explicit query switching, anchors, Spanish browser auto-selection and direct Spanish visits with a saved Bengali choice passed. All 90 Spanish lesson schemas declare Spanish and localized URLs. JavaScript syntax and whitespace checks passed. The Spanish speed guide was visually reviewed.
