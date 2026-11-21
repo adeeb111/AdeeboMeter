@@ -58,6 +58,8 @@ french_sources = [DOCS / name for name in (
 files = sorted((DOCS / "learn").glob("*.html"))
 if LANGUAGE in ("fr", "es"):
     files = french_sources
+else:
+    files = files + [DOCS / "index.html"]   # 21 Nov: the Bangla home page is the real home page too, like French and Spanish - not a separate page
 localized = {"/" + p.relative_to(DOCS).as_posix() for p in files}
 localized.update(route[:-10] for route in list(localized) if route.endswith("index.html"))
 localized.update({"/learn/", "/", "/blog/", "/wifi-or-isp.html",
@@ -189,7 +191,7 @@ for source in files:
     description = html.escape(html.unescape(paragraph or title).strip()[:170], quote=True)
     rendered = re.sub(r'(<meta (?:name="description"|property="og:description") content=")([^"]*)',
                       lambda m: m[1] + (html.escape(translate(html.unescape(m[2])), quote=True) if LANGUAGE != "bn" and translate(html.unescape(m[2])) != html.unescape(m[2]) else description), rendered)
-    if LANGUAGE in ("fr", "es"):
+    if LANGUAGE in ("fr", "es") or relative == "index.html":
         descriptions = {
             "index.html": "Trouvez pourquoi votre Internet ou votre PC ralentit. Vérifiez le Wi-Fi, le routeur et le DNS. Gratuit, sans publicité ni droits d’administrateur.",
             "blog/index.html": "Guides visuels pour diagnostiquer un Internet lent, les coupures Wi-Fi, les pertes de paquets et un PC Windows qui ralentit.",
@@ -204,12 +206,14 @@ for source in files:
         }
         if LANGUAGE == "es":
             descriptions = spanish["descriptions"]
+        if LANGUAGE == "bn":
+            descriptions = {"index.html": "আপনার ইন্টারনেট বা পিসি কেন ধীর, তা জানুন। Windows-এ পিসি, Wi-Fi, রাউটার ও ইন্টারনেট সংযোগ পরীক্ষা করুন। অ্যাডমিন অধিকার লাগে না।"}
         if relative in descriptions:
             description = html.escape(descriptions[relative], quote=True)
             rendered = re.sub(r'(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*',
                               lambda m: m[1] + description, rendered)
         if relative == "index.html":
-            title = "AdeeboMeter — dépannage réseau gratuit pour Windows" if LANGUAGE == "fr" else "AdeeboMeter — monitor de red gratuito para Windows"
+            title = {"fr": "AdeeboMeter — dépannage réseau gratuit pour Windows", "es": "AdeeboMeter — monitor de red gratuito para Windows", "bn": "আদীবওমিটার (AdeeboMeter) — Windows-এ ধীর ইন্টারনেট ও পিসি পরীক্ষা"}[LANGUAGE]
             rendered = re.sub(r"<title>.*?</title>", "<title>" + title + "</title>", rendered)
             rendered = re.sub(r'(<meta property="og:title" content=")[^"]*', lambda m: m[1] + title, rendered)
         localized_url = url.replace(SITE, SITE + LANGUAGE + "/")
@@ -230,10 +234,10 @@ for source in files:
         rendered = re.sub(r'<script type="application/ld\+json">(.*?)</script>',
                           localized_schema, rendered, flags=re.S)
         if 'property="og:locale"' not in rendered:
-            rendered = rendered.replace("</head>", '<meta property="og:locale" content="' + ("fr_CA" if LANGUAGE == "fr" else "es_ES") + '">\n</head>')
+            rendered = rendered.replace("</head>", '<meta property="og:locale" content="' + {"fr": "fr_CA", "es": "es_ES", "bn": "bn_BD"}[LANGUAGE] + '">\n</head>')
         if relative == "index.html":
             rendered = re.sub(r'(<ul class="v4trust">.*?)(</ul>)',
-                              r"\1<li>" + ("Sans publicité" if LANGUAGE == "fr" else "Sin anuncios") + r"</li>\2", rendered, flags=re.S)
+                              r"\1<li>" + {"fr": "Sans publicité", "es": "Sin anuncios", "bn": "বিজ্ঞাপন নেই"}[LANGUAGE] + r"</li>\2", rendered, flags=re.S)
         if 'data-language-picker' not in rendered:
             english_link = f'<a href="{url}?lang=en" lang="en">English</a>'
             if "<nav" in rendered:

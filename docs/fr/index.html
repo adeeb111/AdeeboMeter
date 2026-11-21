@@ -413,6 +413,50 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 .brand b{color:var(--blue-d)}
 @media (max-width:900px){.v4grid{grid-template-columns:1fr;gap:28px;padding:36px 0 44px}.v4stage{height:auto}.v4card{position:relative;left:auto;top:auto;width:auto}.v4phone{display:none}.v4sig{margin-top:12px;left:auto;top:auto}.v4ctas .v4btn{flex:1 1 220px;justify-content:center}.v4lead{font-size:17px}.v4path .n{width:62px}}
 @media (prefers-reduced-motion:reduce){.v4btn{transition:none}}
+/* 1.1.6: What's new + languages */
+.v5new{padding:60px 0 20px}
+.v5tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--green);background:var(--green-s);border-radius:8px;padding:5px 10px}
+.v5head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.v5head h2{font-size:42px;line-height:1.08;letter-spacing:-.03em;margin:16px 0 10px;font-weight:850;color:var(--ink);text-align:left}
+.v5head p{margin:0;color:var(--sub);font-size:18px;line-height:1.5;max-width:620px}
+.v5head a{font-weight:600;font-size:15px}
+.v5grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:32px}
+.v5t{--k:var(--blue);display:flex;flex-direction:column;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;color:var(--ink);text-decoration:none;transition:transform .15s,border-color .15s}
+a.v5t:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--k) 55%,var(--line))}
+.v5t .k{color:color-mix(in srgb,var(--k) 80%,var(--ink));font-weight:800;font-size:13px;letter-spacing:.06em}
+.v5t h3{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.v5t p{margin:0;color:var(--sub);font-size:15px;line-height:1.5}
+.v5t .ft{margin-top:auto}
+.v5t small{font-size:12.5px;color:var(--muted)}
+.v5big{grid-column:span 2;flex-direction:row;flex-wrap:wrap;gap:28px;padding:26px}
+.v5big>div{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.v5big h3{font-size:28px}.v5big p{font-size:15.5px;line-height:1.55}
+.v5more{color:var(--blue-d);font-weight:700;font-size:14.5px}
+.v5box{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:16px;gap:10px!important;font-size:13.5px}
+.v5row{display:flex;align-items:center;gap:10px}.v5row b{flex:1}.v5row .m{color:var(--muted)}
+.v5g{font-weight:800;border-radius:6px;padding:2px 8px;background:var(--green-s);color:var(--green)}.v5g.c{background:var(--amber-s);color:var(--amber)}
+.v5bars{display:flex;align-items:flex-end;gap:3px;height:44px;margin-top:4px}.v5bars i{flex:1;background:var(--blue);border-radius:2px}.v5bars i.s{background:var(--amber)}
+.v5warn{color:var(--amber);font-size:12.5px;font-weight:600}
+.v5words{display:flex;gap:8px;flex-wrap:wrap}.v5words span{background:var(--blue-s);color:var(--blue-d);font-weight:800;font-size:13px;border-radius:8px;padding:6px 10px}
+.v5path{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700}.v5path span{border:2px solid var(--green);color:var(--green);border-radius:99px;padding:4px 8px}.v5path i{flex:1;height:3px;background:var(--green)}.v5path .w{border-color:var(--amber);color:var(--amber)}.v5path i.w{background:var(--amber)}
+.v5heat{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px}.v5heat i{height:12px;border-radius:2px;background:var(--green-s)}.v5heat i.a{background:color-mix(in srgb,var(--amber) 45%,var(--card))}.v5heat i.b{background:var(--amber)}.v5heat i.r{background:var(--red)}
+.v5meter{display:flex;flex-direction:column;gap:8px;font-size:12.5px}.v5meter div{display:flex;align-items:center;gap:10px}.v5meter span{width:62px;color:var(--sub)}.v5meter em{flex:1;height:8px;background:var(--line);border-radius:9px;overflow:hidden}.v5meter em b{display:block;height:8px;border-radius:9px;background:var(--green)}.v5meter em b.o{background:var(--amber)}.v5meter u{width:34px;text-align:right;text-decoration:none}
+.v5lab{width:100%;height:60px}
+.v5pts div{display:flex;justify-content:space-between;font-size:12.5px;color:var(--sub);margin-bottom:6px}.v5pts div b{color:var(--ink)}.v5pts em{display:block;height:10px;background:var(--line);border-radius:9px}.v5pts em b{display:block;width:68%;height:10px;border-radius:9px;background:var(--amber)}
+.v5chips{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:700}.v5chips span{border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.v5lang{padding:28px 0 56px;border-bottom:1px solid var(--line)}
+.v5lcard{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:32px;display:flex;gap:32px;flex-wrap:wrap;align-items:center}
+.v5lcard>div:first-child{flex:1 1 300px;min-width:0}
+.v5lcard h2{font-size:34px;line-height:1.1;letter-spacing:-.025em;margin:12px 0 10px;font-weight:850;color:var(--ink);text-align:left}
+.v5lcard p{margin:0 0 14px;color:var(--sub);font-size:16px;line-height:1.55}.v5lcard p.n{color:var(--muted);font-size:13.5px;margin:0}
+.v5ltiles{flex:1.4 1 460px;min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.v5l{border-radius:16px;padding:14px 11px;min-height:148px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;text-decoration:none;background:linear-gradient(140deg,var(--a),var(--b));transition:transform .15s}
+a.v5l:hover{transform:translateY(-2px);color:#fff}
+.v5l b{font-size:17px;line-height:1.25}.v5l b[lang=bn]{font-family:"Nirmala UI","Noto Sans Bengali",sans-serif}.v5l b[lang=ar]{font-family:"Segoe UI","Noto Sans Arabic",sans-serif}
+.v5l span{font-size:13px;font-weight:700}.v5l small{display:block;font-size:12px;opacity:.95;margin-top:2px}
+@media (max-width:900px){.v5grid{grid-template-columns:1fr}.v5big{grid-column:auto}.v5head h2{font-size:31px}.v5head p{font-size:16px}.v5new{padding:40px 0 12px}
+ .v5lcard{padding:22px}.v5lcard h2{font-size:28px}.v5ltiles{display:flex;overflow-x:auto;padding-bottom:6px}.v5l{flex:0 0 132px;min-height:130px}}
+@media (prefers-reduced-motion:reduce){.v5t,.v5l{transition:none}}
 </style>
 <script>try{var t=localStorage.getItem('am-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}</script>
 <!-- Turnstile loads only when someone starts the feedback form (see below) - never on the page with the donation buttons until then -->
@@ -435,7 +479,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <a class="brand" href="#"><svg viewbox="0 0 64 64" aria-hidden="true"><use href="#mark"></use></svg><span>Adeebo<b>Meter</b></span></a>
   <nav class="links">
     <div class="site-language"><img src="/img/canada.svg" width="24" height="12" alt="Canada"><select data-language-picker aria-label="Langue" hidden></select><a data-language-fallback href="/fr/" lang="fr-CA" hreflang="fr-CA">Français</a><a data-language-fallback href="/bn/" lang="bn" hreflang="bn">বাংলা · আদীবওমিটার</a></div>
-    <a data-nav-secondary data-i18n="How it works" href="#how">Fonctionnement</a><a data-nav-secondary data-i18n="Learn" href="/fr/learn/">Apprendre</a><a data-nav-secondary data-blog-link data-i18n="Blog" href="/fr/blog/">Blogue</a><a data-nav-secondary data-i18n="Games" href="/games.html">Jeux</a><a data-nav-secondary data-i18n="Live" href="/live.html">En direct</a><a data-nav-secondary data-i18n="Files" href="/files.html">Fichiers</a><a data-nav-secondary data-i18n="Open phone app ↗" href="/app.html">Ouvrir l’appli mobile ↗</a>
+    <a data-nav-secondary data-i18n="What&#x27;s new" href="#new">Nouveautés</a><a data-nav-secondary data-i18n="How it works" href="#how">Fonctionnement</a><a data-nav-secondary data-i18n="Learn" href="/fr/learn/">Apprendre</a><a data-nav-secondary data-blog-link data-i18n="Blog" href="/fr/blog/">Blogue</a><a data-nav-secondary data-i18n="Games" href="/games.html">Jeux</a><a data-nav-secondary data-i18n="Live" href="/live.html">En direct</a><a data-nav-secondary data-i18n="Files" href="/files.html">Fichiers</a><a data-nav-secondary data-i18n="Open phone app ↗" href="/app.html">Ouvrir l’appli mobile ↗</a>
     <a class="donate-top" href="#donate" aria-label="Faire un don" data-i18n-label="Donate">♥<span class="t"> <span data-i18n="Donate">Faire un don</span></span></a>
     <button class="theme" type="button" aria-label="Changer le thème jour / nuit"><span class="knob"><svg class="sun" viewbox="0 0 24 24" fill="none" stroke="#BF8700" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg><svg class="moon" viewbox="0 0 24 24" fill="#9CC2FF"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"></path></svg></span></button>
     <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><span data-i18n="Download">Télécharger</span></a>
@@ -468,7 +512,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="v4l" data-i18n-direction>
    <span class="v4pill"><i aria-hidden="true">✓</i><span data-i18n="Know what&#x27;s wrong. Show anyone.">Repérez le problème et montrez-le.</span></span>
    <h1><span data-i18n="Find out why your internet or PC is slow.">Découvrez pourquoi votre Internet ou votre PC est lent.</span> <span class="hero-accent" data-i18n="And much more.">Et bien plus.</span></h1>
-   <p class="v4lead"><span data-i18n="Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 158 tools, free, and a picture you can send to anyone.">Une phrase vous indique la source : PC, Wi-Fi, routeur, fournisseur ou Internet. 158 outils gratuits pour vos jeux, vos diffusions, vos appels et plus, avec une image à partager.</span></p>
+   <p class="v4lead"><span data-i18n="Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 232 tools, free, and a picture you can send to anyone.">Une phrase vous indique la source : PC, Wi-Fi, routeur, fournisseur ou Internet. 232 outils gratuits pour vos jeux, vos diffusions, vos appels et plus, avec une image à partager.</span></p>
    <div class="v4ctas"><a class="v4btn" href="#install"><svg class="i" viewbox="0 0 24 24"><use href="#v3-win"></use></svg><span data-i18n="Download for Windows">Télécharger pour Windows</span></a><a class="v4btn line" href="/app.html"><svg class="i" viewbox="0 0 24 24"><use href="#v3-phone"></use></svg><span data-i18n="Open the phone app ↗">Ouvrir l’appli mobile ↗</span></a></div>
    <ul class="v4trust"><li data-i18n="Free">Gratuit</li><li data-i18n="No admin rights">Aucun droit d’administration</li><li data-i18n="No cloud, no telemetry">Ni nuage ni télémétrie</li><li data-i18n="Never listens">Aucun port à l’écoute</li><li data-i18n="Signed by its author">Signé par son auteur</li><li>Sans publicité</li></ul>
    <p class="locale-preview" data-i18n-preview data-i18n="Some content is still in English." hidden>Une partie du contenu est encore en anglais.</p>
@@ -493,6 +537,95 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   </div>
   </div>
 </div></section>
+
+<section class="v5new" id="new"><div class="wrap">
+ <div class="v5head">
+  <div>
+   <span class="v5tag" data-i18n="NEW IN 1.1.5 AND 1.1.6">NEW IN 1.1.5 AND 1.1.6</span>
+   <h2 data-i18n="More than a network meter now.">More than a network meter now.</h2>
+   <p data-i18n="Games, your phone, your provider, your hardware - each one gets its own answer, in plain words.">Games, your phone, your provider, your hardware - each one gets its own answer, in plain words.</p>
+  </div>
+  <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md" rel="noopener" data-i18n="Everything that changed ›">Everything that changed ›</a>
+ </div>
+ <div class="v5grid">
+  <a class="v5t v5big" href="/fr/gaming.html" style="--k:var(--purple)">
+   <div>
+    <span class="k" data-i18n="GAMER ZONE">GAMER ZONE</span>
+    <h3 data-i18n="Whose lag is it?">D’où vient le délai?</h3>
+    <p data-i18n="Finds your Steam, Epic and Riot games, pings their servers and blames every spike on your Wi-Fi, your provider or the game&#x27;s side. Nothing goes to a game company until you click a game.">Finds your Steam, Epic and Riot games, pings their servers and blames every spike on your Wi-Fi, your provider or the game's side. Nothing goes to a game company until you click a game.</p>
+    <span class="v5more" data-i18n="See the Gamer Zone ›">See the Gamer Zone ›</span>
+   </div>
+   <div class="v5box" role="img" aria-label="Example: three game servers with their ping and grade, and a spike blamed on Wi-Fi">
+    <div class="v5row m" aria-hidden="true"><b class="m" data-i18n="Example · servers">Example · servers</b><span data-i18n="ping · worst · grade">ping · worst · grade</span></div>
+    <div class="v5row" aria-hidden="true"><b>US East</b><span>31 ms</span><span class="m">44</span><span class="v5g">A</span></div>
+    <div class="v5row" aria-hidden="true"><b>US Central</b><span>48 ms</span><span class="m">71</span><span class="v5g">B</span></div>
+    <div class="v5row" aria-hidden="true"><b>US West</b><span>82 ms</span><span class="m">190</span><span class="v5g c">C</span></div>
+    <div class="v5bars" aria-hidden="true"><i style="height:30%"></i><i style="height:34%"></i><i style="height:28%"></i><i style="height:32%"></i><i class="s" style="height:95%"></i><i class="s" style="height:80%"></i><i style="height:31%"></i><i style="height:29%"></i><i style="height:33%"></i><i style="height:30%"></i><i style="height:27%"></i><i style="height:32%"></i></div>
+    <div class="v5warn" aria-hidden="true" data-i18n="Spike at 21:14 - your Wi-Fi (signal fell to 38%)">Spike at 21:14 - your Wi-Fi (signal fell to 38%)</div>
+   </div>
+  </a>
+  <a class="v5t" href="/app.html" style="--k:var(--blue)">
+   <span class="k" data-i18n="YOUR PHONE">YOUR PHONE</span>
+   <h3 data-i18n="Your PC, in your pocket">Your PC, in your pocket</h3>
+   <p data-i18n="Link with a QR code. Both screens show the same four words - if they differ, it isn&#x27;t your phone. Send files, run 16 checks, peek at any AdeeboMeter page.">Link with a QR code. Both screens show the same four words - if they differ, it isn't your phone. Send files, run 16 checks, peek at any AdeeboMeter page.</p>
+   <div class="v5words ft" aria-hidden="true"><span>river</span><span>tiger</span><span>lamp</span><span>orbit</span></div>
+  </a>
+  <div class="v5t" style="--k:var(--green)">
+   <span class="k" data-i18n="PACKET JOURNEY">PACKET JOURNEY</span>
+   <h3 data-i18n="Follow one conversation, stop by stop">Follow one conversation, stop by stop</h3>
+   <p data-i18n="Press Journey on any connection - a game, a call, a download - and see where the time goes. Explain this capture says what happened, with no AI and nothing sent.">Press Journey on any connection - a game, a call, a download - and see where the time goes. Explain this capture says what happened, with no AI and nothing sent.</p>
+   <div class="v5path ft" aria-hidden="true"><span>PC</span><i></i><span data-i18n="Router">Routeur</span><i class="w"></i><span class="w" data-i18n="Provider">Fournisseur</span><i></i><span data-i18n="Server">Serveur</span></div>
+  </div>
+  <a class="v5t" href="/fr/isp-report.html" style="--k:var(--amber)">
+   <span class="k" data-i18n="REPORT FOR MY ISP">REPORT FOR MY ISP</span>
+   <h3 data-i18n="Proof your provider can&#x27;t brush off">Proof your provider can't brush off</h3>
+   <p data-i18n="The path hop by hop, loss only where it starts, a week of bad hours, what&#x27;s already ruled out and a message ready to paste. Private addresses and your Wi-Fi name are left out.">The path hop by hop, loss only where it starts, a week of bad hours, what's already ruled out and a message ready to paste. Private addresses and your Wi-Fi name are left out.</p>
+   <div class="ft" aria-hidden="true"><div class="v5heat"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i><i class="b"></i><i class="r"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="b"></i><i class="r"></i><i class="r"></i><i class="b"></i></div></div>
+   <small data-i18n="Example: evenings, every day this week">Example: evenings, every day this week</small>
+  </a>
+  <div class="v5t" style="--k:#F0883E">
+   <span class="k" data-i18n="HARDWARE NERDS">HARDWARE NERDS</span>
+   <h3 data-i18n="Every part against its own ceiling">Every part against its own ceiling</h3>
+   <p data-i18n="Reads each part&#x27;s specs, works out what it should do, measures what it does - and tells you the gap, and why the PC is struggling.">Reads each part's specs, works out what it should do, measures what it does - and tells you the gap, and why the PC is struggling.</p>
+   <div class="v5meter ft" aria-hidden="true"><div><span data-i18n="Disk">Disque</span><em><b class="o" style="width:38%"></b></em><u>38%</u></div><div><span data-i18n="Memory">Mémoire</span><em><b style="width:91%"></b></em><u>91%</u></div><div><span>Wi-Fi</span><em><b style="width:64%"></b></em><u>64%</u></div></div>
+  </div>
+  <a class="v5t" href="/fr/learn/" style="--k:#39C5CF">
+   <span class="k" data-i18n="LABS">LABS</span>
+   <h3 data-i18n="Play with the network, safely">Play with the network, safely</h3>
+   <p data-i18n="TCP Reno and CUBIC side by side, bufferbloat, CGNAT, MTU black holes, QoS queues, subnetting practice. Click the graph to drop a packet and watch what happens.">TCP Reno and CUBIC side by side, bufferbloat, CGNAT, MTU black holes, QoS queues, subnetting practice. Click the graph to drop a packet and watch what happens.</p>
+   <svg class="v5lab ft" viewbox="0 0 300 60" aria-hidden="true"><path d="M0 55 L60 15 L64 35 L120 8 L124 32 L190 4 L194 30 L260 6 L264 33 L300 20" fill="none" stroke="#39C5CF" stroke-width="2.5"></path><path d="M0 55 C40 30 55 22 64 35 C90 20 110 16 124 32 C150 18 175 12 194 30 C220 16 245 12 264 33" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-dasharray="5 4"></path></svg>
+   <small data-i18n="Reno (solid) and CUBIC (dashed) after a loss">Reno (solid) and CUBIC (dashed) after a loss</small>
+  </a>
+  <a class="v5t" href="/hall-of-fame.html" style="--k:var(--amber)">
+   <span class="k" data-i18n="ADEEBO POINTS">ADEEBO POINTS</span>
+   <h3 data-i18n="Learn by doing, and keep score">Learn by doing, and keep score</h3>
+   <p data-i18n="Every tool, lesson and game you try earns points - from Beginner up to Packet whisperer, and the Adeebo Award at 500. Points only count for things you really did.">Every tool, lesson and game you try earns points - from Beginner up to Packet whisperer, and the Adeebo Award at 500. Points only count for things you really did.</p>
+   <div class="v5pts ft" aria-hidden="true"><div><b data-i18n="Example: Network detective · 340">Example: Network detective · 340</b><span data-i18n="Award at 500">Award at 500</span></div><em><b></b></em></div>
+  </a>
+  <div class="v5t" style="--k:var(--sub)">
+   <span class="k" data-i18n="WINDOWS ON ARM">WINDOWS ON ARM</span>
+   <h3 data-i18n="Native on ARM laptops">Native on ARM laptops</h3>
+   <p data-i18n="The same app runs natively on ARM64 Windows - Snapdragon laptops included. Also in the Microsoft Store, and as a portable copy for a USB stick.">The same app runs natively on ARM64 Windows - Snapdragon laptops included. Also in the Microsoft Store, and as a portable copy for a USB stick.</p>
+   <div class="v5chips ft"><span>x64</span><span>ARM64</span><span>Microsoft Store</span><span data-i18n="Portable">Portable</span></div>
+  </div>
+ </div>
+</div></section>
+
+<section class="v5lang" id="languages"><div class="wrap"><div class="v5lcard">
+ <div>
+  <span class="v5tag" style="color:#E8559A;background:color-mix(in srgb,#E8559A 14%,var(--card))" data-i18n="LANGUAGES · NEW PICKER IN 1.1.6">LANGUAGES · NEW PICKER IN 1.1.6</span>
+  <h2 data-i18n="Speaks your language.">Speaks your language.</h2>
+  <p data-i18n="The globe button beside VIEW opens a card with every language - &quot;Welcome&quot; in its own script and a preview of real app words. Pick one and it switches at once; Restart finishes the rest.">The globe button beside VIEW opens a card with every language - "Welcome" in its own script and a preview of real app words. Pick one and it switches at once; Restart finishes the rest.</p>
+  <p class="n" data-i18n="The percentage is how much of the app is translated today. The rest stays in English until it is.">The percentage is how much of the app is translated today. The rest stays in English until it is.</p>
+ </div>
+ <div class="v5ltiles">
+  <a class="v5l" href="/fr/" hreflang="en" style="--a:#1F6FEB;--b:#0E8F7B"><b lang="en">Welcome</b><span>English<small data-i18n="The original">The original</small></span></a>
+  <a class="v5l" href="/fr/" hreflang="fr-CA" style="--a:#4F46E5;--b:#8B3FD9"><b lang="fr">Bienvenue</b><span lang="fr">Français<small data-cov="fr">78%</small></span></a>
+  <a class="v5l" href="/es/" hreflang="es" style="--a:#B45309;--b:#C2272D"><b lang="es">Bienvenido</b><span lang="es">Español<small data-cov="es">83%</small></span></a>
+  <div class="v5l" style="--a:#047857;--b:#0F766E"><b lang="ar" dir="rtl">أهلاً وسهلاً</b><span lang="ar">العربية<small data-cov="ar">83%</small></span></div>
+  <a class="v5l" href="/bn/" hreflang="bn" style="--a:#BE123C;--b:#15803D"><b lang="bn">স্বাগতম</b><span lang="bn">বাংলা<small data-cov="bn">83%</small></span></a>
+ </div>
+</div></div></section>
 
 <section class="watch" id="watch"><div class="wrap">
   <h2 data-i18n="See it in half a minute">Découvrez-le en une demi-minute</h2>
@@ -710,9 +843,9 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       <div class="card r"><h3 data-i18n="Security">Sécurité</h3><p>Un bilan : 42 vérifications de sécurité du PC, du réseau et des sites. Lecture seule; vous corrigez.</p></div>
       <div class="card"><h3 data-i18n="Network story">Récit réseau</h3><p>Suivez une application du PC au serveur et mesurez chaque étape.</p></div>
       <div class="card"><h3 data-i18n="Time machine">Retour arrière</h3><p>Revoyez chaque minute, la semaine en carte thermique, les données, les appels et les nouveaux appareils.</p></div>
-      <div class="card"><h3 data-i18n="Learn">Apprendre</h3><p>59 sujets, deux lignes et une image chacun, des couches réseau à svchost.</p></div>
-      <div class="card b"><h3 data-i18n="Toolbox">Boîte à outils</h3><p>Plus de 100 outils en cinq sections : réseau, appareils, laboratoire de trafic, ingénieur et Windows. Cherchez par question ou dans la liste; chaque outil propose un exemple.</p></div>
-      <div class="card g" style="display:none"><h3>Survolez le curseur ?</h3><p>332 termes et 72 programmes expliqués. Ctrl+K trouve ce qu’il vous faut.</p></div>
+      <div class="card"><h3 data-i18n="Learn">Apprendre</h3><p>90 sujets, deux lignes et une image chacun, des couches réseau à svchost.</p></div>
+      <div class="card b"><h3 data-i18n="Toolbox">Boîte à outils</h3><p>232 outils en six sections : réseau, appareils, laboratoire de trafic, ingénieur, matériel et Windows. Cherchez par question ou dans la liste; chaque outil propose un exemple.</p></div>
+      <div class="card g" style="display:none"><h3>Survolez le curseur ?</h3><p>300+ terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
     </div>
   </div>
   <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>08</span></div>
@@ -965,7 +1098,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <h2><code style="font-size:.8em">AdeeboMeter.exe --selftest</code></h2>
   <div class="body" style="flex-direction:row;gap:2em;align-items:center">
     <div style="flex:1">
-      <p class="lead">71 vérifications sur votre PC, résultats écrits dans <code>AdeeboMeter-selftest.txt</code>:</p>
+      <p class="lead">86 checks on your own PC, written to <code>AdeeboMeter-selftest.txt</code>:</p>
       <ul class="clean" style="margin-top:.8em"><li>Compteurs, tables de sockets et lecture DNS fonctionnels</li><li><b>Aucun port à l’écoute</b></li><li>Destinations invalides refusées</li><li>La vue ingénieur s’ouvre en moins de 2 secondes</li><li><b>Aucune fuite de handles</b> sur 30 cycles d’ouverture et de fermeture</li><li>Chaque libellé est expliqué</li><li>Analyseurs validés sur des exemples connus : Wi-Fi, LLDP/CDP, journal d’événements, RTP, DNS, SNMP, clés v3 et MIB</li><li>Mémoire sous la limite de 80 Mo</li><li><code>--deeptest</code>: entrées malveillantes dans chaque outil, répétitions pour repérer les fuites et interface sous charge</li></ul>
     </div>
     <div class="hide-m" style="flex:.9;background:#151B26;border-radius:1em;padding:1.2em 1.4em;font-size:.82em;line-height:1.7;color:#C9D3E1">
