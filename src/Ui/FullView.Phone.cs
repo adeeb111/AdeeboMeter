@@ -66,7 +66,8 @@ namespace AdeeboMeter
             try
             {
                 g.SetClip(clip); g.TranslateTransform(at.X, at.Y);
-                bool native = c is TextBoxBase || c is ListBox || c is ComboBox || c is WebBrowser || c is DataGridView || c is ListView || c is TreeView;
+                bool native = c is TextBoxBase || c is ListBox || c is ComboBox || c is WebBrowser || c is DataGridView || c is ListView || c is TreeView
+                    || c is Label || c is ButtonBase;   // labels and buttons draw text with GDI (TextRenderer), which ignores the offset: in the phone picture they landed top-left (screenshots 21 Nov)
                 if (native)
                 {
                     try { using (var b = new Bitmap(Math.Max(1, c.Width), Math.Max(1, c.Height))) { c.DrawToBitmap(b, new Rectangle(0, 0, b.Width, b.Height)); g.DrawImageUnscaled(b, 0, 0); } }
