@@ -157,6 +157,18 @@ namespace AdeeboMeter
             return y;
         }
 
+        // the NOW line's numbers, checked twice a second: only the line itself is redrawn when they move
+        string nowKey = "";
+        void NowTick()
+        {
+            Control c = tab == "gamer" ? (Control)gamerCanvas : tab == "stream" ? (Control)streamCanvas : tab == "trade" ? (Control)tradeCanvas : null;
+            if (c == null) return;
+            int sig; lock (M.L) sig = M.WifiSignal;
+            Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
+            string k = tab + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + sig + "|" + r(M.Cpu.Avg(3));
+            if (k == nowKey) return; bool same = nowKey.StartsWith(tab + "|", StringComparison.Ordinal); nowKey = k;
+            if (same) RedrawSpots(c, "now");   // a page not painted yet has no spot: it draws the line when it paints
+        }
         // ---------- the NOW line on Gamer, Streaming and Markets: your end of the path in one row, Home one click away
         float NowLine(Graphics g, Control c, float x, float y, float w)
         {
@@ -170,6 +182,7 @@ namespace AdeeboMeter
             else items.Add(new object[] { "switch", L.T("Cable"), 0 });
             items.Add(new object[] { "pc", L.T("PC busy") + " " + (double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "%"), double.IsNaN(cpu) ? 3 : cpu > 90 ? 2 : cpu > 75 ? 1 : 0 });
             var bar = new RectangleF(x, y, w, 40 * S); Theme.Fill(g, bar, 12 * S, Theme.Soft);
+            LiveSpot(c, "now", bar);   // kept live on its own by NowTick, the page around it isn't redrawn
             float cx = x + 12 * S;
             using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("NOW"), Draw.fTiny, mb, cx, y + 13 * S); cx += g.MeasureString(L.T("NOW"), Draw.fTiny).Width + 10 * S; }
             string hm = L.T("Home") + "  ›"; var hs = g.MeasureString(hm, Draw.fBodyB); var hr = new RectangleF(bar.Right - hs.Width - 16 * S, y, hs.Width + 8 * S, 40 * S);

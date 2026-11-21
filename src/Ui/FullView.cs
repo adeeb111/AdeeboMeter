@@ -547,6 +547,7 @@ namespace AdeeboMeter
         }
 
         string headKey = "", pathKey = "", sideKey = "", footKey = "";
+        string gamerVer = "";
         void OnTimer()
         {
             UiActivity.Doing = "timer on " + tab; var tsw = Stopwatch.StartNew(); try { OnTimer2(); } finally { if (tsw.ElapsedMilliseconds > 60) Program.Log("slow tick: " + tab + " " + tsw.ElapsedMilliseconds + " ms"); }
@@ -573,7 +574,7 @@ namespace AdeeboMeter
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }
                 string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(HistKey)) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
-                if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
+                if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
@@ -581,7 +582,7 @@ namespace AdeeboMeter
             if ((destRunning || pinRunning) && footTick % 2 == 0) destCanvas.Invalidate();   // bug-hunt ML-145: once a second is enough for a running check (its results repaint as they land)
             if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = rr == null ? "" : rr.Status + "|" + rr.Count + "|" + (footTick / 4);   /* and every 2 s anyway: tables like MTR's hops fill in without a status change */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
             StreamTick(); SportsTick(); TradeTick(); OutlookTick();
-            if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gk = System.Threading.Interlocked.Read(ref GamePing.Ver) + "|" + GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerCanvas.Invalidate(); } }   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
+            if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gv = System.Threading.Interlocked.Read(ref GamePing.Ver).ToString(CultureInfo.InvariantCulture); string gk = GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerVer = gv; gamerCanvas.Invalidate(); } else if (gv != gamerVer) { gamerVer = gv; if (!RedrawSpots(gamerCanvas, "gm.live")) gamerCanvas.Invalidate(); } }   /* a new sample only: just the cards and the map */   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); }
@@ -839,6 +840,25 @@ namespace AdeeboMeter
         {
             List<KeyValuePair<RectangleF, string>> h; if (hints.TryGetValue(c, out h)) h.Clear(); else hints[c] = new List<KeyValuePair<RectangleF, string>>();
             List<KeyValuePair<RectangleF, Action>> a; if (acts.TryGetValue(c, out a)) a.Clear(); else acts[c] = new List<KeyValuePair<RectangleF, Action>>();
+        }
+        // Live spots (21 Nov, "narrow the redraw everywhere"): a painter marks where a live number is drawn; when only that
+        // number changed, only that spot is redrawn instead of the whole page. Rects are stored like Act's (client coords at
+        // paint time); any scroll repaints the whole page anyway and records them again.
+        readonly Dictionary<Control, Dictionary<string, RectangleF>> liveSpots = new Dictionary<Control, Dictionary<string, RectangleF>>();
+        void LiveSpot(Control c, string id, RectangleF r)
+        {
+            var sp = ScrollOf(c); r.Offset(sp.X, sp.Y);
+            Dictionary<string, RectangleF> d; if (!liveSpots.TryGetValue(c, out d)) liveSpots[c] = d = new Dictionary<string, RectangleF>(StringComparer.Ordinal);
+            d[id] = r;
+        }
+        // redraw just these spots; false when one isn't known yet (the caller then redraws the page)
+        bool RedrawSpots(Control c, params string[] ids)
+        {
+            Dictionary<string, RectangleF> d; if (c == null || !liveSpots.TryGetValue(c, out d)) return false;
+            var rs = new List<Rectangle>();
+            foreach (var id in ids) { RectangleF r; if (!d.TryGetValue(id, out r)) return false; if (r.Width > 0 && r.Height > 0) rs.Add(Rectangle.Inflate(Rectangle.Round(r), 3, 3)); }
+            foreach (var r in rs) c.Invalidate(r);
+            return true;
         }
         static Point ScrollOf(Control c) { var sc = c as ScrollableControl; return sc != null && sc.AutoScroll ? sc.AutoScrollPosition : Point.Empty; }
         void Hint(Control c, RectangleF r, string key)

@@ -82,11 +82,16 @@ namespace AdeeboMeter
         }
         volatile bool speedFinding;
         // repaint only when something on the page would look different (not every second)
+        string ovFast = "";
         void OverviewTick()
         {
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
-            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
-            if (k != ovKey) { ovKey = k; overviewCanvas.Invalidate(); }
+            int sig; lock (M.L) sig = M.WifiSignal;
+            // what moves every second (the four numbers, the path) redraws only its own spots; anything else redraws the page
+            string fast = r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + Draw.Pair(M.Down.Last, M.Up.Last) + "|" + sig;
+            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            if (k != ovKey) { ovKey = k; ovFast = fast; overviewCanvas.Invalidate(); }
+            else if (fast != ovFast) { ovFast = fast; if (!RedrawSpots(overviewCanvas, "ov.now", "ov.path")) overviewCanvas.Invalidate(); }
         }
 
         Panel BuildOverviewPage()
@@ -229,7 +234,7 @@ namespace AdeeboMeter
                 float ph = 58 * S;   // the path as big icons (FullView.Gateway.cs)
                 var vr = new RectangleF(x, y, w, hh + 30 * S + wh + ph);
                 Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));
-                PathStrip(g, x + 20 * S, y + 22 * S + hh + wh, w - 40 * S);
+                PathStrip(g, x + 20 * S, y + 22 * S + hh + wh, w - 40 * S); LiveSpot(overviewCanvas, "ov.path", new RectangleF(x + 10 * S, y + 18 * S + hh + wh, w - 20 * S, ph));
                 using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
                 if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh)); Hint(overviewCanvas, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh), "ov.WEATHER"); }
                 y += vr.Height + 18 * S;
@@ -278,6 +283,7 @@ namespace AdeeboMeter
                     Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
                     Hint(overviewCanvas, tr, t[4]);
                 }
+                LiveSpot(overviewCanvas, "ov.now", new RectangleF(x, y, w, ((tiles.Length + cols - 1) / cols) * (th + 12 * S)));   // the four live numbers: redrawn alone (OverviewTick)
                 y += ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 8 * S;
                 string netLine = (kind == "Wi-Fi" ? "On Wi-Fi" + (ssid != "" ? " \"" + ssid + "\"" : " (name hidden - location is off)") + (sig >= 0 ? " · signal " + sig + "%" : "") : "On " + kind) + (speed != "" ? " · link " + speed : "") + (vpn ? " · VPN on" : "");
                 g.DrawString(netLine, Draw.fBody, sub, x, y); y += 24 * S;
