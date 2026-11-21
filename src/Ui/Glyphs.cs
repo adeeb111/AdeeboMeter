@@ -66,6 +66,18 @@ namespace AdeeboMeter
         static readonly Dictionary<string, GraphicsPath> cache = new Dictionary<string, GraphicsPath>(StringComparer.Ordinal);
         public static bool Has(string key) { return key != null && D.ContainsKey(key); }
         public static IEnumerable<string> Keys { get { return D.Keys; } }
+        // self-test (PC pass 1, F2: an icon can parse to nothing and show an empty square): every icon draws something,
+        // and the compact arc-flag form reads the same as the written-out one
+        internal static string Check()
+        {
+            var bad = new List<string>();
+            foreach (var kv in D)
+                try { using (var gp = Parse(kv.Value)) { var b = gp.GetBounds(); if (gp.PointCount < 2 || (b.Width < 1 && b.Height < 1)) bad.Add(kv.Key + " draws nothing"); } }
+                catch (Exception e) { bad.Add(kv.Key + ": " + e.Message); }
+            using (var a1 = Parse("M2 4a3 3 0 013 3")) using (var a2 = Parse("M2 4a3 3 0 0 1 3 3"))
+                if (a1.PointCount != a2.PointCount || a1.GetBounds() != a2.GetBounds()) bad.Add("compact arc flags read differently");
+            return string.Join("; ", bad);
+        }
 
         // the icon in rect r (square), drawn in colour c; weight is the stroke on the 24 grid (1.6 looks like the lab)
         public static void Draw(Graphics g, string key, RectangleF r, Color c, float weight = 1.6f)
@@ -159,13 +171,15 @@ namespace AdeeboMeter
         }
         static List<object> Tokens(string d)
         {
-            var o = new List<object>(); int i = 0;
+            var o = new List<object>(); int i = 0; char cmd = ' '; int n = 0;   // n: numbers since the command letter
             while (i < d.Length)
             {
                 char c = d[i];
-                if (char.IsLetter(c) && c != 'e' && c != 'E') { o.Add(c); i++; continue; }
+                if (char.IsLetter(c) && c != 'e' && c != 'E') { o.Add(c); cmd = c; n = 0; i++; continue; }
                 if (c == ',' || char.IsWhiteSpace(c)) { i++; continue; }
-                int st = i; if (c == '-' || c == '+') i++;
+                // an arc's two flags are single digits and may be written run together ("a1 1 0 013 3"): read one character each
+                if ((cmd == 'A' || cmd == 'a') && (n % 7 == 3 || n % 7 == 4) && (c == '0' || c == '1')) { o.Add((float)(c - '0')); n++; i++; continue; }
+                n++; int st = i; if (c == '-' || c == '+') i++;
                 bool dot = false, exp = false;
                 while (i < d.Length)
                 {
