@@ -202,6 +202,9 @@ namespace AdeeboMeter
         }
 
         // ---------- Link aggregation (IEEE8023-LAG-MIB / LACP): is every member in its bundle, and to the same partner?
+        // bug-hunt H-5: BITS travel as an OCTET STRING (RFC 2578 7.1.4) - the state is the first byte. Some agents send a BER
+        // BIT STRING (type 0x03) instead, whose first byte is the unused-bits count: then the state is the second.
+        public static byte StateByte(Snmp.Vb s) { return s.Type == 0x03 && s.Raw.Length > 1 ? s.Raw[1] : s.Raw[0]; }
         public static string LacpState(byte b)
         {
             var f = new List<string>();
@@ -236,7 +239,7 @@ namespace AdeeboMeter
             var list = att.Keys.Select(i =>
             {
                 long at = L(att, i), se = L(sel, i); var s = V(act, i); string ps = V(psys, i) != null ? Snmp.Text(V(psys, i), "", null) : "n/a";
-                string st = s != null && s.Raw.Length > 0 ? LacpState(s.Raw[0]) : "n/a";
+                string st = s != null && s.Raw.Length > 0 ? LacpState(StateByte(s)) : "n/a";
                 return new { i, Lag = at > 0 ? ifn(I(at)) : se > 0 ? ifn(I(se)) : "-", Agg = at > 0 ? I(at) : se > 0 ? I(se) : "", Attached = at > 0, St = st, Ps = ps };
             }).ToList();
             // a member whose partner differs from the rest of its bundle is cabled to the wrong box

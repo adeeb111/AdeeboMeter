@@ -127,8 +127,9 @@ namespace AdeeboMeter
                 Words = "";
                 if (Known == null && j.S("w") == "1")
                 {
-                    Words = RemoteWords.Of(secret, pk, myPk);
-                    Send("{\"t\":\"key\",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key"), pk, myPk)) + "\"}");
+                    int wv = j.S("w2") == "1" ? 2 : 1;   // bug-hunt H-1: six words when the phone page knows them
+                    Words = RemoteWords.Of(secret, pk, myPk, wv);
+                    Send("{\"t\":\"key\",\"wv\":" + wv + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key"), pk, myPk)) + "\"}");
                 }
                 St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); Note();
                 bool yes = Known != null || (Ask != null && Ask(PhoneName));   // a remembered phone proved its key: you already said yes

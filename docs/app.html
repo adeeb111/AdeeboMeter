@@ -372,7 +372,7 @@ textarea.in{resize:vertical;min-height:120px}
   // and the QR secret. Same words = your phone, nothing in the middle. Never sent - each side works them out. The list and
   // the recipe match src/Remote/RemoteWords.cs - change both together.
   var WORDS = "acorn amber anchor apple arrow atlas autumn bacon badge bagel ballad bamboo banjo barn basil beach beacon bear beaver bell berry bison blade blanket bloom boat bonfire boot bottle breeze brick bridge brook brush bucket bugle button cabin cactus cake camel camera candle canoe canyon carpet carrot castle cedar cello chalk cherry chess cider circle clock cloud clover coast cobalt cocoa comet compass copper coral cotton cougar crane crayon cricket crown crystal cup daisy delta desert diamond dolphin donkey dragon drum eagle echo elbow ember engine falcon feather fern ferry fiddle field fig flag flame flute forest fossil fox galaxy garden garlic gecko ginger glacier globe goat gold grape gravel guitar hammer harbor harp hazel helmet heron hill honey horse igloo island ivory jacket jaguar jasmine jelly jungle kayak kettle kite koala ladder lagoon lake lamp lantern lemon lily lime lion lizard llama lotus magnet mango maple marble meadow melon mint mirror moon moose mosaic moss museum nectar needle nest noodle oak oasis ocean olive onion orange orbit orchid otter owl paddle panda paper parrot peach peanut pearl pebble pepper piano pickle pigeon pillow pine planet plum pond popcorn potato prism puzzle quartz quill rabbit radar rainbow raven reef ribbon river robin rocket ruby saddle salmon sandal satin scarf shell silver sketch sled snow sofa spark spider spoon squash star stone storm sugar summit sunset swan tablet tango temple thunder tiger timber tomato topaz torch tower tulip tunnel turtle valley velvet violin volcano wagon walnut walrus water whale wheat willow window winter wolf yarn zebra zipper".split(" "), pcWords = "";
-  async function wordsOf(sec, phonePk, pcPk) { var h = new Uint8Array(await subtle.digest("SHA-256", cat2(te.encode("adeebometer words v1"), sec, phonePk, pcPk))); return [h[0], h[1], h[2], h[3]].map(function (i) { return WORDS[i]; }).join(" · "); }
+  async function wordsOf(sec, phonePk, pcPk, v) { var h = new Uint8Array(await subtle.digest("SHA-256", cat2(te.encode(v >= 2 ? "adeebometer words v2" : "adeebometer words v1"), sec, phonePk, pcPk))); return Array.prototype.slice.call(h, 0, v >= 2 ? 6 : 4).map(function (i) { return WORDS[i]; }).join(" · "); }   // v2: six words (48 bits) - a 1.1.6 PC says so in its key message; a 1.1.5 PC stays on four
   function start(rm, sec, quiet) {
     return new Promise(function (done) {
       var settled = false, sock = null, q = Promise.resolve();
@@ -391,7 +391,7 @@ textarea.in{resize:vertical;min-height:120px}
           (async function () {
             if (!quiet) { phase = "asking"; draw(); }
             var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", w2: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
           })().catch(function () { try { sock.close(); } catch (e) {} });
         };
       sock.onclose = function () {
@@ -407,7 +407,7 @@ textarea.in{resize:vertical;min-height:120px}
           if (m.t === "key" && !keyPk) {   // the PC's key early, so both can show the matching words before you press Allow
             var kp2 = unb64u(m.pk || "");
             if (kp2.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("key"), pk, kp2)))) { why = "This isn't your PC - its key wasn't signed with your code."; sock.close(); return; }
-            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2); draw(); return;
+            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2, m.wv === 2 ? 2 : 1); draw(); return;
           }
           if (m.t !== "ok") return;
           if (m.v && +m.v > PROTO) { why = "Your PC has a newer AdeeboMeter than this page. Close the app and open it again to update (it updates itself when it's online)."; if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (g) { if (g) g.update(); }); sock.close(); return; }

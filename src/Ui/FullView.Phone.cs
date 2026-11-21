@@ -151,8 +151,8 @@ namespace AdeeboMeter
                 string body = (q.Phone != "" ? q.Phone : L.T("A phone")) + " " + q.Text;
                 // matching words (RemoteWords.cs): allow only if your phone shows the same four
                 bool allow = q.Kind == "allow", hasW = allow && q.Words != "";
-                string wHint = hasW ? L.T("Check your phone shows the same words:") : allow ? L.T("This phone page can't show matching words (it's an older version). Allow it only if it's your phone and you just scanned the code.") : "";
-                string wAfter = hasW ? L.T("Different words, or no words on your phone? Press Don't allow - it isn't your phone.") : "";
+                string wHint = hasW ? L.T("Look at the phone in your own hand: does it show the same words?") : allow ? L.T("This phone page can't show matching words (it's an older version). Allow it only if it's your phone and you just scanned the code.") : "";
+                string wAfter = hasW ? L.T("Different words, no words on your phone, or you didn't just scan the code? Press Don't allow - it isn't your phone.") : "";
                 var fW = Draw.fBig;
                 int left = Math.Max(0, PhoneHub.AskSeconds - (int)(DateTime.UtcNow - q.At).TotalSeconds);
                 float bh = Draw.Measure(body, Draw.fBody, (int)(w - 40 * S)).Height;

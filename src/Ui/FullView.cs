@@ -588,12 +588,28 @@ namespace AdeeboMeter
             else if (!live.Running && liveBtn.Text != L.T("Start live capture")) { liveBtn.Text = AdeeboMeter.L.T("Start live capture"); liveCanvas.Invalidate(); }
         }
 
+        // bug-hunt H-3: stopping tshark/dumpcap can wait several seconds (process tree, kills, joins) - never on the window's
+        // thread. The button is disabled and says what's happening until the background step lands.
         void ToggleLive()
         {
-            if (live.Running) { live.Stop(); liveBtn.Text = AdeeboMeter.L.T("Start live capture"); liveCanvas.Invalidate(); return; }
-            string iface; lock (M.L) iface = M.IfaceId;
-            if (live.Start(iface)) { liveBtn.Text = AdeeboMeter.L.T("Stop live capture"); liveView = null; }
-            liveCanvas.Invalidate();
+            if (!liveBtn.Enabled) return;
+            bool stopping = live.Running; string iface; lock (M.L) iface = M.IfaceId;
+            liveBtn.Enabled = false; liveBtn.Text = AdeeboMeter.L.T(stopping ? "Stopping..." : "Starting...");
+            new System.Threading.Thread(() =>
+            {
+                bool started = false;
+                try { if (stopping) live.Stop(); else started = live.Start(iface); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("live toggle: " + e.GetType().Name); }
+                try
+                {
+                    if (!IsDisposed) BeginInvoke((Action)delegate
+                    {
+                        liveBtn.Enabled = true; liveBtn.Text = AdeeboMeter.L.T(live.Running ? "Stop live capture" : "Start live capture");
+                        if (started) liveView = null; liveCanvas.Invalidate();
+                    });
+                }
+                catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; }
+            }) { IsBackground = true, Name = "live-toggle" }.Start();
         }
 
         // Light / dark: recolour every control; the painted parts read the theme on their next paint.
