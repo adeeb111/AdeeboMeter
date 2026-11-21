@@ -144,14 +144,19 @@ top bar: [VIEW My setup v] [(globe) বাংলা v] [Restart]     <- Restart 
    30 more opens before failing.
 5. Microsoft Store: package is the `AdeeboMeter-store` artifact of the release run; Adeeb submits it.
 
-## Open questions waiting for Adeeb
-- Restart button: only after a language switch (as built), or always in the top bar? (He asked for "a restart button in
-  the top"; built as switch-only because otherwise it does nothing - he hasn't answered.)
-- Website refresh for 1.1.5/1.1.6 features (section C) - needs a design he approves.
-- Next after this: the queued features (section E) or the translation backlog (section B)?
+## Adeeb's decisions (21 Nov, 10:43) - the next session starts here
+1. **Restart button: only after a language switch** - as built. Done; nothing to change.
+2. **Website design: yes.** Make a design for the website refresh (docs/index.html and the feature pages) that shows the
+   1.1.5 and 1.1.6 features - Gamer Zone, Adeebo Points, packet journey, Your phone, the languages and the new language
+   picker, Labs, Report for my ISP, ARM, Hardware nerds. Show mockups first and wait for his go; nothing goes live
+   without his say-so (publishing = copying only the changed docs/ files to main).
+3. **Next work: the queued features (section E)**, before the translation backlog. Order to propose to him:
+   Network Lab Suite (PR #29, design first) -> Finance Learn lessons (education only, never advice) -> US stock movers
+   source (show 2-3 options with their limits first) -> FMP key check (he types the key) -> app.html with 1.1.6.
+
+## Still open questions
 - Replace "Is it me or the network?" with the motto in the home page `og:title`/link preview and release-notes header?
 - Install `gh` on his PC for one-step signed releases?
-- Stock movers: which replacement source - propose 2-3 options with their limits.
 
 ## Handovers for people
 `HANDOVER-SEO.md`, `HANDOVER-TRANSLATOR.md`, `HANDOVER-UIUX.md`, `HANDOVER-TESTERS-1.1.5.md` - keep them in step when
