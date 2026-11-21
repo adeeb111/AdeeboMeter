@@ -135,7 +135,7 @@ namespace AdeeboMeter
             if (pages.Count == 0)   // a view that leaves the bar as it is: Home, its activity pages, Learn
             {
                 pages.Add(L.T("Home"));
-                foreach (var p in new[] { new[] { "gamer", "Gamer Zone" }, new[] { "stream", "Streaming" }, new[] { "trade", "Trading" } }) if (!("," + s.Hidden + ",").Contains("," + p[0] + ",")) pages.Add(L.T(p[1]));
+                foreach (var p in new[] { new[] { "gamer", "Gamer Zone" }, new[] { "stream", "Streaming" }, new[] { "trade", "Markets" } }) if (!("," + s.Hidden + ",").Contains("," + p[0] + ",")) pages.Add(L.T(p[1]));
                 pages.Add(L.T("Learn"));
             }
             if (s.Mode == "pro") pages.Add(L.T("every tool"));

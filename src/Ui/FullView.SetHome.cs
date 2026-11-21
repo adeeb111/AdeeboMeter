@@ -118,7 +118,7 @@ namespace AdeeboMeter
             new[] { "calls", "Work calls", "Teams, Zoom, Meet - notices a call and watches closer", "dest" },
             new[] { "game", "Gaming", "Your game servers' ping and whose lag it is", "gamer" },
             new[] { "stream", "Streaming", "Netflix, YouTube, IPTV - why it buffered", "stream" },
-            new[] { "trade", "Trading", "Your line to your broker, the day's numbers", "trade" },
+            new[] { "trade", "Markets", "Currencies, commodities, world markets, your broker line", "trade" },
             new[] { "fix", "Troubleshooting", "Every tool: ping, trace, DNS, Wi-Fi, certificates", "toolbox" },
             new[] { "check", "Just checking", "Is it me or the network? - the light version", "home" } };
         // what the first answer does: the sections that fit, calls on if chosen, every tool for troubleshooters

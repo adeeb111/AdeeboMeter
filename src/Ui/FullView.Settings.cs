@@ -121,7 +121,7 @@ namespace AdeeboMeter
             add("Navigation", "Layout", TagPc, () => Cfg.Layout == "sidebar" ? AdeeboMeter.L.T("Sidebar: the sections down the left, with search and a live meter. Fold it to icons with the arrow.") : AdeeboMeter.L.T("Classic: tabs along the top, the health panel on the right."), SetLayoutOpts, () => Cfg.Layout == "sidebar" ? 1 : 0, i => SetLayout(i == 1 ? "sidebar" : "classic"), null, "layout sidebar classic tabs menu left top");
             foreach (var hs in Cfg.Hideable)
             {
-                string sec = hs, nm = sec == "stream" ? "Streaming" : sec == "trade" ? "Trading" : "Gamer";
+                string sec = hs, nm = sec == "stream" ? "Streaming" : sec == "trade" ? "Markets" : "Gamer";
                 add("Navigation", "Show " + nm, TagPc, () => Cfg.Off(sec) ? AdeeboMeter.L.T("Off: hidden everywhere, and its background checks are stopped.") : AdeeboMeter.L.T("On: in the bar or under More - move it in the list below."), SetS10, () => Cfg.Off(sec) ? 1 : 0, i => { Cfg.SetOff(sec, i == 1); Cfg.Save(); if (i == 1 && tab != null && SecOf(tab) == sec) { tab = "overview"; ShowTab(); } ApplyLayout(); settingsCanvas.Invalidate(); }, null, "hide turn off section " + nm.ToLowerInvariant());
             }
             // Widget

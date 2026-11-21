@@ -477,7 +477,7 @@ namespace AdeeboMeter
             new[] { "toolbox", "Toolbox", "toolbox" },
             new[] { "gamer", "Gamer", "gamer" },
             new[] { "stream", "Streaming", "stream", "sports" },
-            new[] { "trade", "Trading", "trade" },
+            new[] { "trade", "Markets", "trade" },
             new[] { "time", "Time machine", "replay", "changes" },
             new[] { "learn", "Learn", "learn", "windows" },
             new[] { "story", "Network story", "travel" },
@@ -502,7 +502,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
             { "overview", new[] { "Today", "Today" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
-            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Trading", "Trading" } }, { "security", new[] { "Security", "Security" } },
+            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } }, { "phone", new[] { "Your phone", "Phone" } } };
@@ -702,6 +702,8 @@ namespace AdeeboMeter
             if (page == "settings" && sub != null) { if (sub.StartsWith("q=", StringComparison.Ordinal)) settingsSearch.Box.Text = sub.Substring(2); else { var hit = SetSections.FirstOrDefault(z => z.StartsWith(sub, StringComparison.OrdinalIgnoreCase)); if (hit != null) setSec = hit; } settingsCanvas.Invalidate(); }
             if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
             if (page == "toolbox" && sub != null) { EnsureToolbox(); bool ex = sub.EndsWith(":ex", StringComparison.Ordinal); if (ex) sub = sub.Substring(0, sub.Length - 3); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else { OpenTool(sub); if (ex) ShowExample(); } }   // toolbox:ping:ex opens its Example (screenshots)
+            if (page == "trade" && sub != null && MkTabs.Any(t => t[0] == sub)) mkTab = sub;   // trade:fx opens Markets › Currencies (links and screenshots)
+            if (page == "sports" && sub != null) spTab = sub;
             if (destIn == "demo-story" && page == "dest")
             {
                 // screenshot aid: a typical home route, with made-up router names

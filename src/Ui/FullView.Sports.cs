@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // tab next door is where a stutter during the match gets its verdict (your Wi-Fi, your provider or the stream).
     sealed partial class FullView
     {
-        Panel sportsPage; DB sportsCanvas; long sportsVer = -1; int sportsMin = -1;
+        Panel sportsPage; DB sportsCanvas; long sportsVer = -1; int sportsMin = -1; string spTab = "";
         static Font serifHead, serifLead, serifBody, serifSmall;
         static void SerifFonts()
         {

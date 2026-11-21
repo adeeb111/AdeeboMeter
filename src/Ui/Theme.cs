@@ -281,7 +281,7 @@ namespace AdeeboMeter
             {
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
                 // Inter for the writing; Nunito Bold for the small writing (Adeeb, 16 Nov: "rounder and thicker, easy to read")
-                foreach (var w in new[] { "Inter-Regular", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold" })
+                foreach (var w in new[] { "Inter-Regular", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold", "PlayfairDisplay-Bold", "PlayfairDisplay-Black" })   // Playfair (OFL): the Sports and Markets newspaper mastheads (1.1.6)
                     using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
                     {
                         if (rs == null) { if (w.StartsWith("Inter", StringComparison.Ordinal)) return; continue; }
@@ -296,6 +296,18 @@ namespace AdeeboMeter
             }
             catch (Exception e) { Program.Log("Inter font: " + e.Message); UiFam = UiSemi = "Segoe UI"; UiSemiStyle = FontStyle.Bold; }
         }
+        // the newspaper serif: Playfair Display from the exe, Georgia when it couldn't load (and for scripts it lacks)
+        public static Font Serif(float px, bool black)
+        {
+            if (inter != null && !L.IsRtl && L.Code != "bn" && L.Code != "zh")
+                foreach (var f in inter.Families)
+                {
+                    if (black && f.Name == "Playfair Display Black") return new Font(f, px, FontStyle.Regular, GraphicsUnit.Pixel);
+                    if (!black && f.Name == "Playfair Display") return new Font(f, px, FontStyle.Bold, GraphicsUnit.Pixel);
+                }
+            return new Font(L.IsRtl ? "Segoe UI" : L.Code == "bn" ? BengaliFontFamily : "Georgia", px, FontStyle.Bold, GraphicsUnit.Pixel);
+        }
+        public static FontFamily UiFamilyName() { return UiFamily(UiFam); }
         static FontFamily UiFamily(string name)
         {
             if (inter != null) foreach (var f in inter.Families) if (f.Name == name) return f;

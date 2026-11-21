@@ -46,45 +46,20 @@ namespace AdeeboMeter
         }
         static string BrokerName(string host) { var b = Brokers.FirstOrDefault(z => z[1] == host); return b != null ? b[0] : host; }
 
-        void PaintTrade(Graphics g)
+        // Markets › Line Check, under the verdict: the live line to the broker (pick one first), today's market note and
+        // the past trading days - the 1.1.5 Trading page's own parts, unchanged
+        float PaintLineDetail(Graphics g, float x, float y, float w)
         {
-            g.TranslateTransform(tradeCanvas.AutoScrollPosition.X, tradeCanvas.AutoScrollPosition.Y);
-            Begin(tradeCanvas);
-            float x = 18 * S, y = 16 * S, w = tradeCanvas.ClientSize.Width - 36 * S;
-            bool active = Cfg.TradeMode != "casual";
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(L.T("Trading"), Draw.fTitle, ink, x, y);
-                // Active trader | Casual investor
-                float sx = x + w; string[] modes = { "casual", "active" }; string[] names = { "Casual investor", "Active trader" };
-                for (int i = 0; i < 2; i++)
-                {
-                    string t = L.T(names[i]); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(sx - ts.Width - 28 * S, y - 2 * S, ts.Width + 28 * S, 32 * S); sx = r.X - 6 * S;
-                    bool on = (modes[i] == "active") == active;
-                    Theme.Fill(g, r, 16 * S, on ? Kit.Accent("trade") : Theme.Soft); using (var b = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBodyB, b, r.X + 14 * S, r.Y + (32 * S - ts.Height) / 2);
-                    string m = modes[i]; Act(tradeCanvas, r, delegate { Cfg.TradeMode = m; Cfg.Save(); tradeCanvas.Invalidate(); });
-                }
-                y += 32 * S;
-                string lead = active ? Voice.P("Live: your line to your broker, second by second while the market is open. Below: the day's numbers.", "Live broker connection in market hours; end-of-day numbers below.") : Voice.P("The day's numbers after the close, plus how your connection to your broker held up.", "End-of-day numbers and your broker connection's record.");
-                g.DrawString(lead + " " + L.T("Not advice - just the numbers."), Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += 36 * S;
-                // AM-CG-113: switching to Casual doesn't silently keep a watch going - it says so, with its pace and the alerts
-                if (!active && Cfg.TradeLive && Cfg.TradeHost != "")
-                {
-                    string bw = L.T("Still watching your broker in the background") + " - " + L.T("every") + " " + Trading.Sec + " s " + (Cfg.TradeCrypto ? L.T("around the clock (crypto)") : L.T("while the market is open")) + " · " + L.T("alerts") + " " + (Cfg.TradeAlert ? L.T("on") : L.T("off")) + ".  " + L.T("Stop watching") + " ›";
-                    var bs = g.MeasureString(bw, Draw.fSmall, (int)w); using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(bw, Draw.fSmall, lb, new RectangleF(x, y, w, bs.Height + 2));
-                    Act(tradeCanvas, new RectangleF(x, y, w, bs.Height), delegate { Cfg.TradeLive = false; Trading.Stop(); Cfg.Save(); tradeCanvas.Invalidate(); }); y += bs.Height + 10 * S;
-                }
                 if (Cfg.TradeLive && Cfg.TradeHost != "")
                 {
                     int tlv; Trading.Headline(out tlv); bool openNow = Trading.MarketOpen(Trading.EasternNow()) || Cfg.TradeCrypto;
                     if (!openNow || tlv == 0 || tlv == 2) y = PaintModeLine(g, !openNow ? "trade.closed" : tlv == 2 ? "trade.slow" : "trade.ok", null, tlv == 2, x, y, w);   // AM-CG-106: starting, stale or unknown says nothing, never "ok"
                 }
-                if (active) y = PaintBrokerLive(g, x, y, w, true);
+                y = PaintBrokerLive(g, x, y, w, true);
                 string hol = Markets.TodayNote(Trading.EasternNow());
                 if (hol != "") { var hr = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, hr, 12 * S, Theme.LvSoft(1)); using (var hb = new SolidBrush(Theme.LvText(1))) g.DrawString(hol, Draw.fBodyB, hb, hr.X + 14 * S, hr.Y + 8 * S); y = hr.Bottom + 14 * S; }
-                y = PaintFx(g, x, y, w);
-                y = PaintCommodities(g, x, y, w);
-                if (!active) y = PaintBrokerLive(g, x, y, w, false);
                 var past = WatchKit.Recent("trade").Take(10).ToList();
                 if (past.Count > 0)
                 {
@@ -102,9 +77,8 @@ namespace AdeeboMeter
                     }
                     y += 22 * S;
                 }
-                g.DrawString(L.T("Stock lists and market movers arrive once their free data sources are confirmed."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
-            Need(tradeCanvas, y);
+            return y;
         }
 
         float PaintBrokerLive(Graphics g, float x, float y, float w, bool big)
