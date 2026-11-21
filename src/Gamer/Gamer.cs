@@ -58,7 +58,7 @@ namespace AdeeboMeter
                 new Game { Id = "overwatch", Name = "Overwatch 2", Color = "#E3A008", Exes = new[] { "Overwatch" }, SteamIds = new[] { 2357570 }, Servers = world(), Note = "Blizzard's own data centres - regions are estimates." },
                 new Game { Id = "cod", Name = "Call of Duty", Color = "#4B5563", Exes = new[] { "cod" }, SteamIds = new[] { 1938090 }, Servers = world() },
                 new Game { Id = "gtaonline", Name = "GTA Online", Color = "#2DA44E", Exes = new[] { "GTA5", "GTA5_Enhanced" }, SteamIds = new[] { 271590, 3240220 }, Servers = world(), Note = "Mostly player-hosted sessions: this shows your path to the region, not to other players." },
-                new Game { Id = "gta6", Name = "GTA VI", Color = "#DB2777", Soon = true, Note = "Coming when it launches on PC." },
+                new Game { Id = "gta6", Name = "GTA VI", Color = "#DB2777", Soon = true, Note = "Out on PS5 and Xbox since 19 Nov 2026 - no PC version announced yet." },
                 new Game { Id = "roblox", Name = "Roblox", Color = "#64748B", Exes = new[] { "RobloxPlayerBeta" }, Servers = world(), Note = "Roblox's own data centres - regions are estimates." },
                 new Game { Id = "marvelrivals", Name = "Marvel Rivals", Color = "#9333EA", Exes = new[] { "Marvel-Win64-Shipping" }, SteamIds = new[] { 2767030 }, Servers = world() },
                 new Game { Id = "minecraft", Name = "Minecraft server", Color = "#3FB950", Exes = new[] { "javaw", "Minecraft.Windows" }, Note = "Add your server's address in Edit." } };

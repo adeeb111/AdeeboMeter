@@ -114,8 +114,15 @@ namespace AdeeboMeter
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
                 string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB of 80 MB budget" + (live.Running && liveView != null ? "    + tshark " + liveView.TsharkMB + " MB (live capture on)" : "");
                 using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Ink)) g.DrawString(st, Draw.fMono, b, x, y);
-                string right = Program.Version + " · no cloud · no telemetry · never listens · hover the ? cursor to learn · Esc = back to the corner";
-                var rs = g.MeasureString(right, Draw.fSmall); g.DrawString(right, Draw.fSmall, muted, r.Width - rs.Width - 20 * S, y);
+                // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 80 MB budget is overlapping"):
+                // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
+                float left = x + g.MeasureString(st, Draw.fMono).Width + 24 * S;
+                foreach (var right in new[] { Program.Version + " · no cloud · no telemetry · never listens · hover the ? cursor to learn · Esc = back to the corner",
+                                              Program.Version + " · no cloud · no telemetry · never listens", Program.Version + " · no cloud · no telemetry", Program.Version })
+                {
+                    var rs = g.MeasureString(right, Draw.fSmall); float rx = r.Width - rs.Width - 20 * S;
+                    if (rx >= left) { g.DrawString(right, Draw.fSmall, muted, rx, y); break; }
+                }
             }
         }
 

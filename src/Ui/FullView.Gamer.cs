@@ -102,7 +102,7 @@ namespace AdeeboMeter
                     using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
                     using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
                     string state;
-                    if (gm.Soon) state = "Coming when it launches on PC";
+                    if (gm.Soon) state = "On PS5 and Xbox - PC version not announced yet";
                     else if (on)
                     {
                         var best = GamePing.Me.Best(gm); double now = double.NaN;
