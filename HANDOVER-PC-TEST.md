@@ -113,3 +113,18 @@ Relay ── shared movers from Alpaca once a day (counted by key, not by addres
 Learn ── 8 new money lessons · big icons on Toolbox, Learn, Security
 Website ── three new tiles for today's work · Phone ── Time machine, Check a site, Learn in "See a page on your PC"
 ```
+
+## 8. Added after pass 1 (21 Nov evening) - check these too
+
+21. Fonts: writing is Inter Medium 13 px, small capitals Inter SemiBold, darker greys, 20 px card corners. Look for
+    text that now crowds, clips or wraps badly anywhere (tight tiles, pills, the sidebar, tool tables).
+22. Narrower redraws (no flicker, no stale numbers): Home's four tiles + path, Gamer cards + ping map, Streaming's
+    NOW STREAMING card, Markets › Line Check broker card, the NOW lines, a running tool (MTR/MTU hop tables, charts).
+23. Freeze card: hold the minimize button for 5+ s - no violet card; sleep the PC and wake it - no card, and none stuck.
+24. Fun line: with the internet unplugged, the header's line must not keep retyping.
+25. Footer: narrow the window - the right-hand line shortens instead of overlapping "MB of 80 MB budget".
+26. Time machine: Pin this minute / unpin / compare with now; the "Opened from" bar goes away when you leave.
+27. Network story: "+N more" apps, ITS CONNECTIONS chips follow one connection.
+28. Network Lab: drag nodes and draw ink fast - smooth, nothing downloaded.
+29. GTA VI tile reads "On PS5 and Xbox - PC version not announced yet".
+30. Phone: See a page on your PC shows big icon tiles (Home, Network story, Streaming, Markets...).
