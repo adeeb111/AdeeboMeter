@@ -782,7 +782,7 @@ your own mix	আপনার নিজস্ব সেটিং
 plus about	সঙ্গে প্রায়
 game pings a minute for the games you watch (one a second per server while you play)	নজরদারিতে রাখা গেমের জন্য প্রতি মিনিটে গেম পিং (খেলার সময় সার্ভারপ্রতি সেকেন্ডে একটি)
 on top of the widget's once-a-second read of Windows' own counters.	সঙ্গে উইজেট প্রতি সেকেন্ডে Windows-এর নিজস্ব কাউন্টার পড়ে।
-The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	উইজেট সবসময়ই হালকা। ভারী কাজ—সরাসরি ক্যাপচার, পুরো সংযোগ তালিকা, পথ পরীক্ষা—শুধু এই উইন্ডো খোলা থাকলে চলে। এখানে ঠিক করবেন ব্যাকগ্রাউন্ডে কতটা নজরদারি হবে: প্রতি মিনিটে পরীক্ষা ও বেছে রাখা গেমের পিং।
+The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	উইজেট সবসময়ই হালকা। ভারী কাজ—সরাসরি ক্যাপচার, পুরো সংযোগ তালিকা, পথ পরীক্ষা—শুধু এই উইন্ডো খোলা থাকলে চলে। এখানে ঠিক করবেন ব্যাকগ্রাউন্ডে কতটা নজরদারি হবে: প্রতি মিনিটে পরীক্ষা ও বেছে রাখা গেমের পিং।
 The DNS server is down	DNS সার্ভার চলছে না
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	অন্য DNS সার্ভার ব্যবহার করুন, যেমন 1.1.1.1, অথবা এখানকার DNS সার্ভার হিসেবে কাজ করা রাউটারটি রিস্টার্ট করুন
 Addresses work. Names don't.	IP ঠিকানা কাজ করে, নাম কাজ করে না।
@@ -1569,7 +1569,7 @@ KEYS	চাবি
 Keep this	এটি রাখুন
 Kerberos: sign me in	Kerberos: আমাকে সাইন-ইন করান
 Keyboard test - press every key	কিবোর্ড পরীক্ষা—প্রতিটি কী চাপুন
-Keys: Ctrl+Shift+S save · C copy · Q phone	কী: Ctrl+Shift+S সেভ · C কপি · Q ফোন
+Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	কী: Ctrl+Shift+S সেভ · Ctrl+Shift+C কপি · Ctrl+Shift+Q ফোন
 LAB	ল্যাব
 LAST 10 MINUTES	গত 10 মিনিট
 LDAP ping - are you there, which site am I in?	LDAP পিং—আছেন? আমি কোন সাইটে?
@@ -1983,7 +1983,7 @@ after the server thought about it	সার্ভারের কাজ শে�
 alerts	সতর্কতা
 all of it took	সব মিলিয়ে সময় লেগেছে
 allowed	অনুমতি আছে
-amber: dips of 10% or so - normal weather	হলুদ: প্রায় 10% গতি কমা—স্বাভাবিক ওঠানামা
+amber: small dips (3-7%) - normal weather	হলুদ: ছোট পতন (3-7%)—স্বাভাবিক ওঠানামা
 an address! (it shouldn't have one)	একটি ঠিকানা! (এর থাকার কথা নয়)
 an answer	একটি উত্তর
 and the hand-off after it - loss starts there and carries on to the destination.	আর তার পরের নেটওয়ার্কে হস্তান্তর—লস সেখান থেকে শুরু হয়ে গন্তব্য পর্যন্ত থাকে।
@@ -4197,3 +4197,4 @@ THE REAL PACKETS  ·  	আসল প্যাকেট ·
 PACKET 	প্যাকেট 
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	এটির জন্য Wireshark (Npcap-সহ) লাগে। নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে।
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে জানায় কী আছে: আধুনিক না পুরোনো প্রোটোকল, IPv4 না IPv6 ও Windows-এর ব্যাকগ্রাউন্ডে স্থানীয় নেটওয়ার্কে পাঠানো বার্তা। কিছু রেখে দেয় না।
+earlier report(s) waiting to send when you're online	অনলাইন হলে পাঠানোর অপেক্ষায় পুরোনো রিপোর্ট

@@ -25,7 +25,7 @@ namespace AdeeboMeter
         internal static readonly object k = new object();
         internal static List<Game> Games = new List<Game>(); internal static List<Story> Stories = new List<Story>();
         internal static readonly Dictionary<string, string> Note = new Dictionary<string, string>();   // sport -> why nothing shows ("no key", "limit reached", an error)
-        internal static DateTime FetchedAt = DateTime.MinValue; static volatile bool busy; static int keyGen;
+        internal static DateTime FetchedAt = DateTime.MinValue; static int busy; static int keyGen;   // bug-hunt L-67: taken with one atomic step
         internal static readonly Dictionary<string, DateTime> FeedAt = new Dictionary<string, DateTime>();   // AM-CG-278: when each feed last came in
         internal static long Ver;
         public static readonly string[] Kinds = { "football", "cricket", "hockey" };
@@ -33,8 +33,12 @@ namespace AdeeboMeter
 
         // ---------- the person's own keys, encrypted for this Windows user
         static string KeyFile { get { return Path.Combine(Program.DataDir, "sportkeys.dat"); } }
+        // bug-hunt L-68: a saved key that can't be read (damaged, or from another Windows user) says so - it isn't "no key"
+        internal static readonly HashSet<string> KeyBad = new HashSet<string>();
+        static string NoKey(string sport) { lock (KeyBad) return KeyBad.Contains(sport) ? "Your saved key couldn't be read (the file is damaged or from another Windows account) - type it again." : "nokey"; }
         internal static string Key(string sport)
         {
+            lock (KeyBad) KeyBad.Remove(sport);
             try
             {
                 if (!File.Exists(KeyFile)) return "";
@@ -44,7 +48,7 @@ namespace AdeeboMeter
                     return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(l.Substring(i + 1)), null, DataProtectionScope.CurrentUser));
                 }
             }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("sport key: " + e.GetType().Name); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("sport key: " + e.GetType().Name); lock (KeyBad) KeyBad.Add(sport); }
             return "";
         }
         // AM-CG-280: says whether the key was saved; a fetch already running with the old key throws its answer away
@@ -103,8 +107,7 @@ namespace AdeeboMeter
         public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= 5; } }
         public static void Fetch(Action done)
         {
-            if (busy || !Cfg.Sports || Policy.NoOnline || !Due) return;
-            busy = true;
+            if (!Cfg.Sports || Policy.NoOnline || !Due || Interlocked.CompareExchange(ref busy, 1, 0) != 0) return;
             new Thread(() =>
             {
                 int gen; lock (k) gen = keyGen;
@@ -124,8 +127,8 @@ namespace AdeeboMeter
                 try
                 {
                     sport("hockey", Hockey);
-                    if (Key("football") == "") publish("football", new List<Game>(), null, "nokey"); else sport("football", () => Football(Key("football")));
-                    if (Key("cricket") == "") publish("cricket", new List<Game>(), null, "nokey");
+                    if (Key("football") == "") publish("football", new List<Game>(), null, NoKey("football")); else sport("football", () => Football(Key("football")));
+                    if (Key("cricket") == "") publish("cricket", new List<Game>(), null, NoKey("cricket"));
                     else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
                     else sport("cricket", () => Cricket(Key("cricket")));
                     foreach (var f in new[] { Tuple.Create("top", "https://feeds.bbci.co.uk/sport/rss.xml"), Tuple.Create("football", "https://feeds.bbci.co.uk/sport/football/rss.xml"), Tuple.Create("cricket", "https://feeds.bbci.co.uk/sport/cricket/rss.xml") })
@@ -136,7 +139,7 @@ namespace AdeeboMeter
                     }
                     lock (k) if (gen == keyGen) FetchedAt = DateTime.UtcNow;
                 }
-                finally { busy = false; MarketData.Done(done); }   // bug-hunt M-3
+                finally { Interlocked.Exchange(ref busy, 0); MarketData.Done(done); }   // bug-hunt M-3
             }) { IsBackground = true, Name = "sports" }.Start();
         }
         static string Why(Exception e) { return e is WebException ? "couldn't reach it (" + ((WebException)e).Status + ")" : "its answer couldn't be read"; }
@@ -177,7 +180,7 @@ namespace AdeeboMeter
                 var x = new Game { Sport = "football", League = Sv(D(V(m, "competition")), "name"), Home = Or(Sv(h, "shortName"), Sv(h, "name")), Away = Or(Sv(a, "shortName"), Sv(a, "name")), HomeAlso = Sv(h, "name") + " " + Sv(h, "tla"), AwayAlso = Sv(a, "name") + " " + Sv(a, "tla"), HomeScore = Sv(ft, "home"), AwayScore = Sv(ft, "away"), StartUtc = Utc(Sv(m, "utcDate")) };
                 x.State = st == "IN_PLAY" || st == "PAUSED" || st == "LIVE" ? "live" : st == "FINISHED" || st == "AWARDED" ? "done" : st == "POSTPONED" || st == "CANCELLED" || st == "SUSPENDED" ? "off" : "soon";
                 x.Detail = st == "PAUSED" ? "half time" : st == "AWARDED" ? "awarded" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : "";
-                if (x.Home != "") r.Add(x);
+                if (x.Home != "" && x.Away != "") r.Add(x);   // bug-hunt L-83: a match needs both sides
             }
             return r;
         }
@@ -221,9 +224,9 @@ namespace AdeeboMeter
         internal static List<Story> Rss(string xml, string sport)
         {
             var r = new List<Story>();
-            foreach (Match it in Regex.Matches(xml ?? "", @"<item\b[^>]*>(.*?)</item>", RegexOptions.Singleline | RegexOptions.IgnoreCase))
+            foreach (Match it in Regex.Matches(xml ?? "", @"<item\b[^>]*>((?:<!\[CDATA\[.*?\]\]>|.)*?)</item>", RegexOptions.Singleline | RegexOptions.IgnoreCase))
             {
-                Func<string, string> tag = t => { var m = Regex.Match(it.Groups[1].Value, "<" + t + @"\b[^>]*>(.*?)</" + t + ">", RegexOptions.Singleline | RegexOptions.IgnoreCase); return m.Success ? Clean(m.Groups[1].Value) : ""; };
+                Func<string, string> tag = t => { var m = Regex.Match(it.Groups[1].Value, "<" + t + @"\b[^>]*>((?:<!\[CDATA\[.*?\]\]>|.)*?)</" + t + ">"   /* bug-hunt L-69: a closing tag inside CDATA is text, not the end */, RegexOptions.Singleline | RegexOptions.IgnoreCase); return m.Success ? Clean(m.Groups[1].Value) : ""; };
                 var s = new Story { Sport = sport, Title = tag("title"), Summary = tag("description"), Link = tag("link") };
                 DateTime w; if (DateTime.TryParse(tag("pubDate"), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out w)) s.When = w;
                 if (s.Title != "" && (s.Link.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || s.Link.StartsWith("http://", StringComparison.OrdinalIgnoreCase))) r.Add(s);

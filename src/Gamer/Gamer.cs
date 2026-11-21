@@ -125,7 +125,7 @@ namespace AdeeboMeter
             {
                 try
                 {
-                    var keep = File.Exists(FilePath) ? File.ReadLines(FilePath).Take(500).Where(l => { var f = l.Split('|'); return f.Length > 1 && !string.Equals(f[1], g.Id, StringComparison.OrdinalIgnoreCase); }).ToList() : new List<string>();
+                    var keep = File.Exists(FilePath) ? File.ReadLines(FilePath).Take(500).Where(l => Keep(l, g.Id)).ToList() : new List<string>();
                     keep.Add("game|" + g.Id + "|" + Clean(g.Name, 40) + "|" + string.Join(";", g.Exes.Select(x => Clean(x, 60))));
                     foreach (var s in g.Servers.Take(12)) keep.Add("server|" + g.Id + "|" + Clean(s.Name, 30) + "|" + Clean(s.Where, 40) + "|" + Clean(s.Host, 253) + "|" + s.Port.ToString(CultureInfo.InvariantCulture) + "|" + s.Kind);
                     string tmp = FilePath + ".tmp"; File.WriteAllLines(tmp, keep);
@@ -135,11 +135,13 @@ namespace AdeeboMeter
                 all = null;
             }
         }
+        // bug-hunt L-84: only that game's lines go - a line this version can't read (a comment, a newer kind) is kept as it is
+        static bool Keep(string l, string id) { var f = l.Split('|'); return f.Length > 1 ? !string.Equals(f[1], id, StringComparison.OrdinalIgnoreCase) : l.Trim() != ""; }
         public static void Reset(string id)
         {
             lock (k)
             {
-                try { if (File.Exists(FilePath)) File.WriteAllLines(FilePath, File.ReadLines(FilePath).Take(500).Where(l => { var f = l.Split('|'); return f.Length > 1 && !string.Equals(f[1], id, StringComparison.OrdinalIgnoreCase); }).ToList()); }
+                try { if (File.Exists(FilePath)) { var keep = File.ReadLines(FilePath).Take(500).Where(l => Keep(l, id)).ToList(); string tmp = FilePath + ".tmp"; File.WriteAllLines(tmp, keep); Program.ReplaceFile(tmp, FilePath); } }
                 catch (Exception e) { Program.Log("games reset: " + e.Message); }
                 all = null;
             }
@@ -202,7 +204,7 @@ namespace AdeeboMeter
             {
                 string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "EpicGamesLauncher", "Data", "Manifests");
                 if (!Directory.Exists(d)) return r;
-                foreach (var f in Directory.EnumerateFiles(d, "*.item").Take(500))
+                foreach (var f in Directory.EnumerateFiles(d, "*.item").Take(3000))   // bug-hunt L-86: room for a big library; still a cap on a folder anyone can fill
                     foreach (Match m in Regex.Matches(ReadSmall(f, 512 * 1024), "\"AppName\"\\s*:\\s*\"([A-Za-z0-9_.-]{1,80})\"")) r.Add(m.Groups[1].Value);
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
@@ -228,9 +230,20 @@ namespace AdeeboMeter
             {
                 var names = new HashSet<string>(Process.GetProcesses().Select(p => { try { using (p) return p.ProcessName; } catch (InvalidOperationException) { return ""; } }), StringComparer.OrdinalIgnoreCase);
                 // javaw is any Java program (Eclipse, a server...): it counts as Minecraft only when it runs from Minecraft's own Java
-                return games.FirstOrDefault(g => monitored.Contains(g.Id) && g.Exes.Any(x => names.Contains(x) && (!string.Equals(x, "javaw", StringComparison.OrdinalIgnoreCase) || JavaIsMinecraft())));
+                var on = games.Where(g => monitored.Contains(g.Id) && g.Exes.Any(x => names.Contains(x) && (!string.Equals(x, "javaw", StringComparison.OrdinalIgnoreCase) || JavaIsMinecraft()))).ToList();
+                if (on.Count < 2) return on.FirstOrDefault();
+                // bug-hunt L-85: two monitored games open - the one in front is the one being played
+                string front = Front(); var inFront = front == "" ? null : on.FirstOrDefault(g => g.Exes.Any(x => string.Equals(x, front, StringComparison.OrdinalIgnoreCase)));
+                return inFront ?? on[0];
             }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; return null; }
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        static string Front()
+        {
+            try { uint pid; var h = GetForegroundWindow(); if (h == IntPtr.Zero || GetWindowThreadProcessId(h, out pid) == 0) return ""; using (var p = Process.GetProcessById((int)pid)) return p.ProcessName; }
+            catch (Exception e) { if (!(e is ArgumentException || e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; return ""; }
         }
         static bool JavaIsMinecraft()
         {
@@ -281,11 +294,12 @@ namespace AdeeboMeter
                 using (var resp = (HttpWebResponse)req.GetResponse()) using (var s = resp.GetResponseStream()) using (var rd = new StreamReader(s, Encoding.UTF8))
                 {
                     var buf = new char[2 * 1024 * 1024]; int n = 0, got; while (n < buf.Length && (got = rd.Read(buf, n, buf.Length - n)) > 0) n += got;
+                    if (n == buf.Length && rd.Read() >= 0) return "Valve's list was bigger than expected - kept the old one.";   // bug-hunt L-87: never a cut-off copy
                     body = new string(buf, 0, n);
                 }
                 var list = Parse(body);
                 if (list.Count == 0) return "Valve's list came back without any servers - kept the old one.";
-                File.WriteAllText(FilePath, body); Games.Reload();
+                SafeFile.WriteText(FilePath, body); Games.Reload();
                 return "Got " + list.Count + " Valve regions.";
             }
             catch (Exception e) { if (!(e is WebException || e is IOException || e is UnauthorizedAccessException)) throw; return "Couldn't reach Valve: " + e.Message; }
@@ -376,7 +390,7 @@ namespace AdeeboMeter
             }
         }
 
-        // which servers to probe now, and how often (seconds): the game being played - all its servers (up to 8), every second;
+        // which servers to probe now, and how often (seconds): the game being played - all its servers (up to MaxServers: 8, or 16 on the Gamer preset), every second;
         // otherwise each monitored game's best region, up to Cfg.GameBgServers, every Cfg.GameBgSec
         public List<Tuple<string, GameServer, int>> Plan(List<Game> games, HashSet<string> monitored, string playing)
         {

@@ -198,7 +198,7 @@ namespace AdeeboMeter
                             AdapterDesc1 d; if (a.GetDesc1(out d) != 0) continue;
                             var g = new Gpu { Name = (d.Description ?? "").Trim(), DedicatedMb = d.DedicatedVideoMemory.ToUInt64() / 1048576.0, SharedMb = d.SharedSystemMemory.ToUInt64() / 1048576.0, Software = (d.Flags & 2) != 0 || d.VendorId == 0x1414, Vendor = (int)d.VendorId, Luid = ((long)d.LuidHigh << 32) | d.LuidLow };
                             // PC-040: small own memory alone doesn't make a card built in - Intel's are, and AMD / Qualcomm ones named as the processor's graphics
-                            g.Integrated = !g.Software && g.DedicatedMb < 1024 && (g.Vendor == 0x8086 && !Regex.IsMatch(g.Name, @"\bArc\b.*A\d{3}", RegexOptions.IgnoreCase) || g.Vendor == 0x5143 || Regex.IsMatch(g.Name, @"Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Radeon \d{3}M\b", RegexOptions.IgnoreCase));
+                            g.Integrated = !g.Software && g.DedicatedMb < 4096 && (   /* bug-hunt L-279: a laptop's BIOS can set aside 2-3 GB for the built-in GPU - the name decides; real cards have 4 GB or more */g.Vendor == 0x8086 && !Regex.IsMatch(g.Name, @"\bArc\b.*A\d{3}", RegexOptions.IgnoreCase) || g.Vendor == 0x5143 || Regex.IsMatch(g.Name, @"Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Radeon \d{3}M\b", RegexOptions.IgnoreCase));
                             if (!r.Any(x => x.Luid == g.Luid)) r.Add(g);
                         }
                         finally { Marshal.ReleaseComObject(a); }

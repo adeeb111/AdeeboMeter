@@ -24,6 +24,7 @@ namespace AdeeboMeter
             {
                 DateTime t; if (last.TryGetValue(kind, out t) && (DateTime.UtcNow - t).TotalMinutes < cooldownMin) return;
                 last[kind] = DateTime.UtcNow;
+                if (last.Count > 200) foreach (var old in last.Where(kv => (DateTime.UtcNow - kv.Value).TotalDays > 1).Select(kv => kv.Key).ToList()) last.Remove(old);   // bug-hunt L-55: a day-old cooldown is over anyway
             }
             try { Show("AdeeboMeter", text); } catch { }
         }
@@ -209,7 +210,7 @@ namespace AdeeboMeter
         static Dictionary<string, HashSet<string>> known; static readonly object k = new object();
         public static readonly List<string[]> Joined = new List<string[]>();   // { when, network, ip, mac, note }
         public static DateTime QuietUntil = DateTime.MinValue;   // after a ping sweep: learn what it found, without "new device" alerts
-        static Dictionary<string, DateTime> netSince; static readonly Dictionary<string, DateTime> lastPop = new Dictionary<string, DateTime>();
+        static Dictionary<string, DateTime> netSince;
         // Every new device is listed (What changed) and in Devices on this network - never announced.
         public static void Check(Monitor m)
         {
@@ -219,8 +220,6 @@ namespace AdeeboMeter
             List<Arp.Entry> table; try { table = Arp.Table(); } catch { return; }
             string gw; bool vpn; lock (m.L) { gw = m.Gateway; vpn = m.VpnUp; }
             try { Picks.SeeDevices(key, table, gw); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory: " + e.Message); }
-            bool company = vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
-            var announce = new List<Arp.Entry>();
             lock (k)
             {
                 if (known == null) { known = new Dictionary<string, HashSet<string>>(); foreach (var r in Store.Read("devices.txt")) { HashSet<string> s; if (!known.TryGetValue(r[0], out s)) known[r[0]] = s = new HashSet<string>(); s.Add(r[1]); } }
@@ -241,7 +240,6 @@ namespace AdeeboMeter
                     if (quiet) note += " · learning this network (no alert)";
                     lock (Joined) { Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note }); if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1); }
                     m.Events.Add(3, "lan", "New on " + label + ": " + e.Ip + " (" + note + ")");
-                    if (!rnd && !quiet) announce.Add(e);
                 }
                 if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
                 // at most 40 networks (the ones met longest ago go) and 1,000 addresses each (private, random addresses go first)
@@ -261,12 +259,12 @@ namespace AdeeboMeter
         public static volatile string Host = ""; static DateTime last = DateTime.MinValue; static volatile bool busy;
         public static void Tick()
         {
-            string pin; try { pin = Cfg.Pins.FirstOrDefault(); } catch (InvalidOperationException) { return; } catch (ArgumentOutOfRangeException) { return; }   // the list belongs to the UI thread: read once, never Count then [0]
+            string pin; lock (Cfg.Pins) pin = Cfg.Pins.FirstOrDefault();   // bug-hunt L-52: under the lock the list's comment asks for
             if (!Cfg.PinWatch || pin == null) { Host = ""; return; }
             if ((Clock.Mono - last).TotalSeconds < 30 || busy) return;
             last = Clock.Mono; busy = true; string h; int port; bool tls; string err;
             if (!DestCheck.Parse(pin, out h, out port, out tls, out err)) { busy = false; return; }
-            if (h != Host) { Host = h; }
+            if (h != Host) { Host = h; Ms.Clear(); }   // bug-hunt L-53: a new destination starts a new day's line
             Task.Factory.StartNew(() => { try { Ms.Add(Monitor.PingMs(h)); } finally { busy = false; } });
         }
     }
@@ -286,7 +284,7 @@ namespace AdeeboMeter
             if (s == null) return "";
             string user = Environment.UserName, home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             if (!string.IsNullOrEmpty(home)) s = s.Replace(home, "%USERPROFILE%");
-            if (!string.IsNullOrEmpty(user) && user.Length > 2) s = s.Replace(user, "<user>");
+            if (!string.IsNullOrEmpty(user) && user.Length > 2) s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z0-9])" + System.Text.RegularExpressions.Regex.Escape(user) + @"(?![A-Za-z0-9])", "<user>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);   // bug-hunt L-54: the name as a word, not inside others
             // any other folder (D:\Clients\..., a share, OneDrive): only the file's own name is kept
             // (folder names with spaces too: everything up to the last backslash on the line, stopping only at a quote or a colon)
             s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z])([A-Za-z]:\\|\\\\|%USERPROFILE%\\)[^""'<>|:*?\r\n]*\\", "<folder>\\");

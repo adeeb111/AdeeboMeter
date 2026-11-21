@@ -34,21 +34,26 @@ namespace AdeeboMeter
             try { map = Parse(Knowledge.RawText("lang-" + Code)); }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.IO.IOException || e is ArgumentException)) throw; Program.Log("language " + Code + ": " + e.Message); Code = "en"; }
         }
+        public static List<string> LastDupes = new List<string>();
         public static Dictionary<string, string> Parse(string text)
         {
-            var d = new Dictionary<string, string>(StringComparer.Ordinal);
+            // bug-hunt L-315/316: an empty translation is kept (T() still falls back to English, and the self-test can see it), and
+            // an English line given twice is noted - the first translation stays
+            var d = new Dictionary<string, string>(StringComparer.Ordinal); var dup = new List<string>();
             foreach (var raw in (text ?? "").Split('\n'))
             {
                 string line = raw.TrimEnd('\r'); if (line.Length == 0 || line[0] == '#') continue;
-                int tab = line.IndexOf('\t'); if (tab <= 0 || tab == line.Length - 1) continue;
-                d[line.Substring(0, tab)] = line.Substring(tab + 1);
+                int tab = line.IndexOf('\t'); if (tab <= 0) continue;
+                string k = line.Substring(0, tab); if (d.ContainsKey(k)) { dup.Add(k); continue; }
+                d[k] = line.Substring(tab + 1);
             }
+            LastDupes = dup;
             return d;
         }
         public static string T(string en)
         {
             var m = map; if (m == null || string.IsNullOrEmpty(en)) return en;
-            string v; return m.TryGetValue(en, out v) ? v : en;
+            string v; return m.TryGetValue(en, out v) && v.Trim().Length > 0 ? v : en;
         }
         public static int Count { get { var m = map; return m == null ? 0 : m.Count; } }
     }

@@ -140,6 +140,8 @@ namespace AdeeboMeter
         public sealed class Quiz { public string Question = "", Answer = ""; public string[] Options; }
         public static Quiz Subnet(int seed)
         {
+            // bug-hunt L-313: prefixes 20-30, so the /31 answer below (2 hosts, RFC 3021) isn't asked today - it stays right for when
+            // the range grows; not widened now because a seed must keep giving the same quiz
             var rnd = new Random(seed); int pre = 20 + rnd.Next(11); byte a = (byte)(new[] { 10, 172, 192 }[rnd.Next(3)]);
             var ip = new byte[] { a, (byte)(a == 172 ? 16 + rnd.Next(16) : a == 192 ? 168 : rnd.Next(256)), (byte)rnd.Next(256), (byte)(1 + rnd.Next(254)) };
             uint v = (uint)(ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3]), m = 0xFFFFFFFFu << (32 - pre), net = v & m, bc = net | ~m;
@@ -163,10 +165,12 @@ namespace AdeeboMeter
             int port = tcpRecs.GroupBy(x => x.LPort).OrderByDescending(gr => gr.Sum(x => (long)x.PayLen)).First().Key;
             recs = tcpRecs.Where(x => x.LPort == port).ToList();
             long inB = recs.Where(r => !r.Out).Sum(r => (long)r.PayLen), outB = recs.Where(r => r.Out).Sum(r => (long)r.PayLen); bool down = inB >= outB;
-            uint hiSeq = 0, hiAck = 0; bool seqSet = false, ackSet = false; double t0 = recs[0].T, binEnd = t0 + rttS, best = 0;
+            uint hiSeq = 0, hiAck = 0; bool seqSet = false, ackSet = false, any = false; double t0 = recs[0].T, binEnd = t0 + rttS, best = 0;
             foreach (var r in recs.Where(x => x.Proto == 6))
             {
-                while (r.T > binEnd) { res.Add(best / Mss); best = 0; binEnd += rttS; if (res.Count > 2000) return res; }
+                // bug-hunt L-314: a round trip with no packets at all is "nothing measured" (NaN, a gap in the line), not a window of 0
+                while (r.T > binEnd) { res.Add(any ? best / Mss : double.NaN); best = 0; any = false; binEnd += rttS; if (res.Count > 2000) return res; }
+                any = true;
                 if (r.Out != down && r.PayLen > 0) { uint end = r.Seq + (uint)r.PayLen; if (!seqSet || (int)(end - hiSeq) > 0) { hiSeq = end; seqSet = true; } }
                 if (r.Out == down && (r.Flags & 0x10) != 0) { if (!ackSet || (int)(r.Ack - hiAck) > 0) { hiAck = r.Ack; ackSet = true; } }
                 if (seqSet && ackSet) { int fl = (int)(hiSeq - hiAck); if (fl > 0) best = Math.Max(best, fl); }

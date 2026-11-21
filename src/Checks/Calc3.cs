@@ -22,6 +22,8 @@ namespace AdeeboMeter
         public static List<string[]> FxConv(string amountText, string from, string to, string markupText)
         {
             double amt = P(amountText); if (double.IsNaN(amt)) return Need("Amount", "type e.g. 1000");
+            if (amt < 0) return Need("Amount", "can't be negative - e.g. 1000");   // bug-hunt L-131
+            from = Cur(from); to = Cur(to);   // bug-hunt L-132: "US$" and "CA$" as well as USD and CAD
             Trading.LoadFx(); List<Trading.Rate> rates; lock (Trading.Rates) rates = Trading.Rates.ToList();
             Func<string, double> cad = c => { c = (c ?? "").Trim().ToUpperInvariant(); if (c == "CAD" || c == "") return 1; var r = rates.FirstOrDefault(x => x.Code == c); return r == null ? double.NaN : r.Cad; };
             double a = cad(from), b = cad(to);
@@ -34,6 +36,11 @@ namespace AdeeboMeter
                 R(1, "What a bank usually gives", (mid * (1 - mk / 100)).ToString("N2", CultureInfo.CurrentCulture) + " " + to + "  (" + mk.ToString("0.##", CultureInfo.CurrentCulture) + "% markup)", "The markup is the real fee - often 2-3% at a bank, under 1% at a currency broker.", "i"),
                 R(3, "Rate", "1 " + from + " = " + (a / b).ToString("0.0000", CultureInfo.CurrentCulture) + " " + to, "", "i") };
         }
+        static string Cur(string c)
+        {
+            c = (c ?? "").Trim().ToUpperInvariant().Replace(" ", "");
+            return c == "US$" || c == "$US" || c == "USD$" ? "USD" : c == "CA$" || c == "C$" || c == "CAD$" || c == "$CA" ? "CAD" : c == "A$" || c == "AU$" ? "AUD" : c == "€" ? "EUR" : c == "£" ? "GBP" : c == "¥" ? "JPY" : c;
+        }
         // ---------- profit, loss and break-even with fees
         public static List<string[]> Pnl(string buyText, string sellText, string sharesText, string feesText)
         {
@@ -42,6 +49,8 @@ namespace AdeeboMeter
             var fs = Ps(Regex.Replace(feesText ?? "", @"-?[0-9.]+\s*%", " ")); double comm = fs.Count > 0 ? fs[0] : 0;   // FRESH-029: "2%" is a percentage, not also $2
             if (fx < 0 || comm < 0) return Need("Fees", "can't be negative - e.g. 9.99 or 0.5%");
             if (fx >= 1) return Need("Fees", "a percentage fee has to be under 100%");   // FRESH-030
+            if (fs.Count > 1) return Need("Fees", "one flat fee and/or one percentage - e.g. 9.99, 0.5%, or 9.99 + 0.5%");   // bug-hunt L-134: a second number isn't ignored
+            if (!double.IsNaN(sell) && sell <= 0) return Need("Sell price", "above 0 - or leave it empty for the break-even only");   // bug-hunt L-133
             double cost = buy * n * (1 + fx) + comm, be = (buy * n * (1 + fx) + 2 * comm) / (n * (1 - fx));
             var rows = new List<string[]> { R(3, "You pay", M(cost) + " (" + M(buy * n) + " + fees " + M(cost - buy * n) + ")", "", "i"), R(0, "Break-even sell price", M(be) + "  (" + Pc((be / buy - 1) * 100) + " just to cover the fees)", Edu, "i") };
             if (!double.IsNaN(sell)) { double back = sell * n * (1 - fx) - comm, pl = back - cost; rows.Insert(0, R(pl >= 0 ? 0 : 2, pl >= 0 ? "Profit" : "Loss", M(pl) + "  (" + Pc(pl / cost * 100) + ")", "Selling at " + M(sell) + " brings " + M(back) + " after fees.", "i")); }
@@ -89,7 +98,9 @@ namespace AdeeboMeter
             if (double.IsNaN(s)) s = 0; if (double.IsNaN(m)) m = 0; if (double.IsNaN(r) || double.IsNaN(y) || y < 1 || y > 60) return Need("Rate and years", "type e.g. 6% and 20 years");
             if (!Whole(y)) return Need("Years", "whole years, 1 to 60");   // FRESH-033
             if (r <= -100) return Need("Rate", "has to be more than -100% a year");   // FRESH-080
+            if (s < 0 || m < 0) return Need("Start and monthly", "can't be negative - e.g. 1000 and 200");   // bug-hunt L-135
             var v = Compound(s, m, r, (int)y); double put = s + m * 12 * (int)y, end = v[v.Length - 1];
+            if (double.IsInfinity(end) || double.IsNaN(end) || end > 1e15) return Need("Rate", "at " + r.ToString("0.##", CultureInfo.CurrentCulture) + "% a year the result is too big to show - try a realistic rate (stocks have averaged under 10%)");   // bug-hunt L-136
             return new List<string[]> { R(0, "After " + (int)y + " years", M(end), "You put in " + M(put) + "; growth " + M(end - put) + ". A steady " + r.ToString("0.##", CultureInfo.CurrentCulture) + "% a year is an assumption - real returns go up and down. " + Edu, "i"),
                 R(3, "Doubles about every", r > 0 ? (72 / r).ToString("0.#", CultureInfo.CurrentCulture) + " years (rule of 72)" : "-", "", "i") };
         }
@@ -108,7 +119,7 @@ namespace AdeeboMeter
             if (double.IsNaN(price)) price = 100; if (double.IsNaN(vol)) vol = 2;
             if (price <= 0) return Need("Price", "above 0"); if (vol < 0) return Need("Volatility", "can't be negative - e.g. 2% a day");   // FRESH-058
             double perSec = vol / 100 / Math.Sqrt(23400), move = perSec * Math.Sqrt(ping / 1000) * price;   // FRESH-034: no floor - 0 ms moves nothing   // a typical (one standard deviation) move, 6.5 trading hours
-            return new List<string[]> { R(ping < 150 ? 0 : 1, "Typical move while your order travels", M(move) + " on " + M(price) + " (" + (move / price * 100).ToString("0.####", CultureInfo.CurrentCulture) + "%)", (ping < 200 ? "For anyone clicking by hand, " + ping.ToString("0", CultureInfo.CurrentCulture) + " ms is far below what matters - your own reaction takes 200 ms or more." : ping.ToString("N0", CultureInfo.CurrentCulture) + " ms is as long as a person's reaction or longer - in a fast market that's noticeable.") + " Spikes and drops matter more than the average.", "i"),
+            return new List<string[]> { R(ping < 200 ? 0 : 1, "Typical move while your order travels", M(move) + " on " + M(price) + " (" + (move / price * 100).ToString("0.####", CultureInfo.CurrentCulture) + "%)", (ping < 200 ? "For anyone clicking by hand, " + ping.ToString("0", CultureInfo.CurrentCulture) + " ms is far below what matters - your own reaction takes 200 ms or more." : ping.ToString("N0", CultureInfo.CurrentCulture) + " ms is as long as a person's reaction or longer - in a fast market that's noticeable.") + " Spikes and drops matter more than the average.", "i"),
                 R(3, "In that time", "light could cross about " + (ping * 100).ToString("N0", CultureInfo.CurrentCulture) + " km of fibre each way", "", "i") };
         }
         // ---------- commodity units
@@ -157,6 +168,7 @@ namespace AdeeboMeter
             string ct = (contractText ?? "").Trim();
             var c = Futures.FirstOrDefault(z => ct.IndexOf(z[0], StringComparison.OrdinalIgnoreCase) >= 0) ?? FuturesAlias(ct); double price = P(priceText), n = P(countText), mv = P(moveText);
             if (c == null || double.IsNaN(price)) return Need("Contract and price", "e.g. WTI crude oil at 75 a barrel");
+            if (price <= 0) return Need("Price", "above 0 - e.g. 75 a barrel");   // bug-hunt L-138
             if (string.IsNullOrWhiteSpace(countText)) n = 1; else if (double.IsNaN(n) || n < 1 || !Whole(n)) return Need("Contracts", "a whole number, 1 or more");   // FRESH-037/083
             double size = double.Parse(c[1], CultureInfo.InvariantCulture), tick = double.Parse(c[3], CultureInfo.InvariantCulture);
             var rows = new List<string[]> {
@@ -172,8 +184,9 @@ namespace AdeeboMeter
             string both = ((fromText ?? "") + " " + (toText ?? "")).ToLowerInvariant(), crop = both.Contains("corn") ? "corn" : both.Contains("soy") ? "soybeans" : "wheat";   // FRESH-084
             double price = P(priceText), fb, tb; var f = UnitOf(fromText, out fb, crop); var t = UnitOf(toText, out tb, crop);
             if (double.IsNaN(price) || f == null || t == null) return Need("Price and units", "e.g. 75 US$ a barrel, in litres");
+            if (price < 0) return Need("Price", "can't be negative");   // bug-hunt L-139
             if (f[1] != t[1]) return new List<string[]> { R(2, "Units", f[0] + " and " + t[0] + " measure different things", "", "u") };
-            double usd = price * tb / fb; string cur = (curText ?? "").Trim().ToUpperInvariant();
+            double usd = price * tb / fb; string cur = Cur(curText);
             bool bu = f[0] == "bushel" || t[0] == "bushel";
             var rows = new List<string[]> { R(0, "In US$", usd.ToString(usd < 1 ? "0.0000" : "N2", CultureInfo.CurrentCulture) + " a " + t[0] + (bu ? " (a bushel of " + crop + ")" : ""), bu ? "A bushel of " + crop + " weighs " + (crop == "corn" ? "56" : "60") + " lb - write \"bushel of corn\" or \"soybeans\" for the others." : "", "i") };
             if (cur != "" && cur != "USD" && cur != "US$")   // FRESH-057: any currency the Bank of Canada lists, not only CAD
@@ -188,7 +201,7 @@ namespace AdeeboMeter
         // ---------- how many updates behind you play
         public static List<string[]> TickRate(string tickText, string pingText, string interpText)
         {
-            double tick = P(tickText), ping = P(pingText), lerp = P(interpText); if (double.IsNaN(tick) || tick <= 0 || double.IsNaN(ping)) return Need("Tick rate and ping", "e.g. 64 and 40 ms");
+            double tick = P(tickText), ping = Bare(pingText) ? P(pingText) : Time(pingText) * 1000, lerp = P(interpText);   /* bug-hunt L-140: "0.04 s" is 40 ms */ if (double.IsNaN(tick) || tick <= 0 || double.IsNaN(ping)) return Need("Tick rate and ping", "e.g. 64 and 40 ms");
             if (double.IsNaN(lerp)) lerp = 2;
             if (ping < 0) return Need("Ping", "can't be negative"); if (lerp < 0) return Need("Interpolation", "0 or more ticks");   // FRESH-038/082
             double tms = 1000 / tick, late = ping / 2 + lerp * tms;

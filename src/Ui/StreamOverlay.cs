@@ -100,13 +100,14 @@ namespace AdeeboMeter
                 // your router on the same scale, thin and grey: flat while the game line jumps = not your home network
                 // both lines are placed by time (newest at the right edge, one router sample every GwSecNow s) - never squeezed
                 int rstep = Math.Max(1, M.GwSecNow); var rv = M.GwPing.Values(Math.Max(2, 60 / rstep));
-                if (rv.Length > 1 && (Clock.Mono - M.GwAt).TotalSeconds < 60)
+                bool routerOn = rv.Length > 1 && (Clock.Mono - M.GwAt).TotalSeconds < 60;
+                if (routerOn)
                     using (var rp = new Pen(Color.FromArgb(150, 200, 210, 220), 1.2f) { DashStyle = DashStyle.Dash })
                     {
                         PointF? lr = null; int roff = 60 - rv.Length * rstep;
                         for (int i = 0; i < rv.Length; i++) { if (double.IsNaN(rv[i])) { lr = null; continue; } var pt = new PointF(gr.X + (roff + (i + 1) * rstep - 1) * dx, gr.Bottom - (float)(Math.Min(rv[i], max) / max) * gr.Height); if (lr != null) g.DrawLine(rp, lr.Value, pt); lr = pt; }
                     }
-                using (var lf = new SolidBrush(Color.FromArgb(170, 200, 210, 220))) g.DrawString(AdeeboMeter.L.T("- - router"), f1, lf, gr.Right - 64, gr.Y - 12);
+                if (routerOn) using (var lf = new SolidBrush(Color.FromArgb(170, 200, 210, 220))) g.DrawString(AdeeboMeter.L.T("- - router"), f1, lf, gr.Right - 64, gr.Y - 12);   // bug-hunt L-108: only with its line
                 using (var pen = new Pen(Color.FromArgb(120, 170, 255), 2f)) using (var red = new SolidBrush(Color.FromArgb(240, 80, 80)))
                 {
                     PointF? last = null; int off = 60 - v.Length * step;

@@ -89,7 +89,7 @@ export default {
       headers: { "Authorization": "Bearer " + env.GITHUB_TOKEN, "Accept": "application/vnd.github+json", "User-Agent": "adeebometer-relay", "X-GitHub-Api-Version": "2022-11-28" },
       body: JSON.stringify({ title, body, labels: [KINDS[kind], "from-" + from] })
     }); } catch (e) { return out(503, { ok: false, why: "couldn't reach GitHub just now - it will try again" }); }
-    if (!gh.ok) return out(502, { ok: false, why: "couldn't file it just now - it will try again" });
+    if (!gh.ok) return out(502, { ok: false, why: "couldn't file it just now - please send it again in a few minutes" });
     const made = await gh.json();
     return out(200, { ok: true, number: made.number });
   }

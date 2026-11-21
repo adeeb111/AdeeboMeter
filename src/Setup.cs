@@ -103,7 +103,7 @@ namespace AdeeboMeter
             var lines = File.Exists(file) ? File.ReadAllLines(file).ToList() : new List<string>();
             int i = lines.FindIndex(l => l.StartsWith(key + "=", StringComparison.Ordinal));
             if (i >= 0) lines[i] = key + "=" + value; else lines.Insert(0, key + "=" + value);
-            File.WriteAllLines(file, lines);
+            SafeFile.WriteText(file, string.Join("\r\n", lines) + "\r\n");   // bug-hunt L-308: temp file, then replace
         }
 
         // Ask running copies to leave; anything that doesn't answer (older versions) is stopped.
@@ -171,7 +171,10 @@ namespace AdeeboMeter
                 }
                 catch { }
                 if (from == null && Directory.Exists(Base))
-                    from = Directory.GetDirectories(Base).Select(d => Path.Combine(d, "AdeeboMeter.settings")).Where(File.Exists).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
+                    // bug-hunt L-309: the settings of the newest VERSION folder (by its exe's version), not whichever file was touched last
+                    from = Directory.GetDirectories(Base).Where(d => File.Exists(Path.Combine(d, "AdeeboMeter.settings")))
+                        .OrderByDescending(d => { var exe0 = Path.Combine(d, "AdeeboMeter.exe"); Version pv; string v0 = File.Exists(exe0) ? FileVersionInfo.GetVersionInfo(exe0).ProductVersion ?? "" : ""; return Version.TryParse(Regex.Match(v0, @"^\d+(\.\d+){1,3}").Value, out pv) ? pv : new Version(0, 0); })
+                        .ThenByDescending(d => File.GetLastWriteTimeUtc(Path.Combine(d, "AdeeboMeter.settings"))).Select(d => Path.Combine(d, "AdeeboMeter.settings")).FirstOrDefault();
                 if (from != null) File.Copy(from, settings, false);
             }
             SetLine(settings, "autostart", autoStart ? "1" : "0");
@@ -225,7 +228,9 @@ namespace AdeeboMeter
             try { if (File.Exists(Shortcut)) File.Delete(Shortcut); } catch { }
             try { Registry.CurrentUser.DeleteSubKeyTree(UninstallKey); } catch { }
             try { using (var k = Registry.CurrentUser.OpenSubKey(@"Software\Classes\.adeebo")) if (k != null && (k.GetValue("") as string) == "AdeeboMeter.locked") { k.Close(); Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\.adeebo"); } Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\AdeeboMeter.locked", false); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
-            step("Removing your history and captures (your encryption keys stay)...", 0.75f);
+            // bug-hunt L-310: the step says so when unsent reports are among what goes
+            int unsent = Relay.Waiting;
+            step("Removing your history and captures" + (unsent > 0 ? " and " + unsent + " unsent report" + (unsent == 1 ? "" : "s") : "") + " (your encryption keys stay)...", 0.75f);
             // Everything goes except what opens files sent to you: the P-384 key list, saved recipients and key backups. The keys
             // themselves live in Windows' key store, which an uninstall doesn't touch - deleting the list would leave every
             // .adeebo addressed to you unopenable after a reinstall. They're small; delete the folder by hand to wipe them.
@@ -258,6 +263,12 @@ namespace AdeeboMeter
         // --remove-folder <pid>: wait for the uninstaller to exit, then delete the install folder (only ever Base).
         public static int RemoveFolder(string pid)
         {
+            // bug-hunt L-311: only right after an uninstall - the helper runs from a copy outside the install folder, and the
+            // uninstall has already taken AdeeboMeter out of Settings > Apps. Anything else (a stray shortcut, a script) deletes nothing.
+            string me = Path.GetFullPath(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            bool fromInside = me.StartsWith(Path.GetFullPath(Base).TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+            bool stillListed; try { using (var k = Registry.CurrentUser.OpenSubKey(UninstallKey)) stillListed = k != null; } catch (Exception e) { if (e is OutOfMemoryException) throw; stillListed = true; }
+            if (fromInside || stillListed) { Program.Log("remove-folder refused: not after an uninstall"); return 2; }
             int id;
             if (int.TryParse(pid, NumberStyles.Integer, CultureInfo.InvariantCulture, out id))
                 try { using (var p = Process.GetProcessById(id)) p.WaitForExit(600000); } catch { }
@@ -265,6 +276,7 @@ namespace AdeeboMeter
             {
                 try { Directory.Delete(Base, true); } catch { Thread.Sleep(500); }
             }
+            if (Directory.Exists(Base)) { Program.Log("remove-folder: " + Base + " couldn't be deleted (a file is still open)"); return 1; }   // said, not "done"
             return 0;
         }
     }
@@ -472,7 +484,7 @@ namespace AdeeboMeter
             if (key != "main") return;
             if (st == St.Offer)
             {
-                if (Same || Newer) { StartExe(instExe); Close(); return; }
+                if (Same || Newer) { string why = StartExe(instExe); if (why == null) { Close(); return; } st = St.Error; err = why; Invalidate(); return; }
                 Run(false);
             }
             else if (st == St.AskRemove) Run(true);
@@ -498,7 +510,7 @@ namespace AdeeboMeter
                     {
                         if (fail != null) { st = St.Error; err = fail; }
                         else if (remove) st = St.Removed;
-                        else { st = St.Done; StartExe(exe); }
+                        else { st = St.Done; string why = StartExe(exe); if (why != null) { st = St.Error; err = "Installed, but it didn't start - " + why + ". Start it from the Start menu."; } }
                         Invalidate();
                     });
                 }
@@ -506,11 +518,12 @@ namespace AdeeboMeter
             });
         }
 
-        static void StartExe(string exe)
+        // bug-hunt L-312: says whether it started - the window shows why when it didn't, instead of just closing
+        static string StartExe(string exe)
         {
-            if (exe == null || !File.Exists(exe)) return;
-            try { using (Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) })) { } }
-            catch (Exception e) { Program.Log("start installed: " + e.Message); }
+            if (exe == null || !File.Exists(exe)) return "the installed copy wasn't found" + (exe != null ? " (" + exe + ")" : "");
+            try { using (Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) })) { } return null; }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("start installed: " + e.Message); return "Windows wouldn't start it: " + e.Message; }
         }
     }
 }

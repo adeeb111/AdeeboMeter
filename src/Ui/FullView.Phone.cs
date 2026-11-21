@@ -223,6 +223,7 @@ namespace AdeeboMeter
             // remembered phones
             List<RemotePhones.P> ph; try { ph = RemotePhones.All(); } catch (Exception e) { if (e is OutOfMemoryException) throw; ph = new List<RemotePhones.P>(); }
             var rc = new RectangleF(x, y, w, 10); float ry = PhHead(g, "REMEMBERED PHONES", x + 22 * S, y + 18 * S);
+            if (RemotePhones.Unreadable > 0) ry = PhText(g, RemotePhones.Unreadable + " " + L.T("remembered phone(s) couldn't be read (the list was damaged, or this is another Windows account) - remember them again from the phone."), Draw.fBody, Theme.LvText(1), x + 22 * S, ry, w - 44 * S);
             if (ph.Count == 0) ry = PhText(g, L.T("None yet. Once linked, a phone can ask to be remembered (Face ID or a fingerprint) and come back without a code."), Draw.fBody, Theme.Sub, x + 22 * S, ry, w - 44 * S);
             foreach (var p in ph)
             {
@@ -347,7 +348,7 @@ namespace AdeeboMeter
             for (int i = 0; i < ph.Count; i++)
             {
                 var t = ph[i]; var rr = new RectangleF(ix + (i % pc2) * (pw + 8 * S), cy + (i / pc2) * 40 * S, pw, 34 * S); Theme.Fill(g, rr, 10 * S, Theme.Soft);
-                string nm = Regex.Replace(L.T(t.Title), @"^On my phone:\s*", ""); nm = char.ToUpperInvariant(nm[0]) + nm.Substring(1);
+                string nm = Regex.Replace(L.T(t.Title), @"^On my phone:\s*", ""); if (nm.Length > 0) nm = char.ToUpperInvariant(nm[0]) + nm.Substring(1);   /* L-229 */
                 using (var b = new SolidBrush(on ? Theme.Ink : Theme.Muted)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                     g.DrawString(nm, Draw.fBody, b, new RectangleF(rr.X + 12 * S, rr.Y + 8 * S, rr.Width - 20 * S, 20 * S), nf);
                 string tid = t.Id; Act(phoneCanvas, rr, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(tid); });

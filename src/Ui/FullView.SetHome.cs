@@ -51,7 +51,7 @@ namespace AdeeboMeter
             if (sec == "Companion") return Voice.Serious ? L.T("Plain - no jokes") : L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T(Lines.PersonaName(Lines.Persona));
             // Review-1: "Sidebar · Off" read as the sidebar being off - the layout, then how many pages are hidden
             if (sec == "Navigation") { int hid = items.Count(i => i.Sec == sec && i.Label.StartsWith("Show ", StringComparison.Ordinal) && i.Cur() == 1); return L.T("Layout") + ": " + L.T(Cfg.Layout == "sidebar" ? "Sidebar" : "Classic") + (hid > 0 ? " · " + hid + " " + L.T(hid == 1 ? "page hidden" : "pages hidden") : ""); }
-            var l = items.Where(i => i.Sec == sec).Take(2).Select(i => { int c = i.Cur(); return c >= 0 && c < i.Opts.Length ? (sec == "General" ? "" : L.T(i.Label) + ": ") + L.T(i.Opts[c]) : ""; }).Where(t => t != "").ToList();   // "Alerts: On", not a bare "On"
+            var l = items.Where(i => i.Sec == sec).Take(2).Select(i => { int c = i.Cur(); return c >= 0 && c < i.Opts.Length ? L.T(i.Label) + ": " + L.T(i.Opts[c]) : ""; }).Where(t => t != "").ToList();   // "Alerts: On", not a bare "On" - General too (bug-hunt L-334: "View: Everyday · Language: English")
             return string.Join(" · ", l);
         }
         float PaintSettingsHome(Graphics g, float x, float y, float w, List<SetItem> items)

@@ -54,7 +54,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(s.Cpu) && s.Cpu > 70) { warn++; var top = s.TopCpu.FirstOrDefault(); rows.Add(R(1, "CPU", Math.Round(s.Cpu) + "% busy" + (top != null ? " - most: " + top.Name : ""), "", "m")); }
             foreach (var u in GamerTools.Updaters)
             {
-                Process[] ps; try { ps = Process.GetProcessesByName(u[0]); } catch (InvalidOperationException) { continue; }
+                Process[] ps; try { ps = Process.GetProcessesByName(u[0]); } catch (InvalidOperationException) { continue; } catch (System.ComponentModel.Win32Exception) { continue; }
                 foreach (var p in ps) p.Dispose(); if (ps.Length == 0 || u[1] == "") continue;
                 warn++; rows.Add(R(1, "Background", u[1], "Pause it - it can start a big transfer any second.", "w"));
             }
@@ -144,7 +144,8 @@ namespace AdeeboMeter
                 var k = Knock(host, 1935, 5, run); bool bad = k.Ms.Count == 0, slow = k.Avg > 80 || k.Lost > 0; if (bad || slow) warn++;
                 rows.Add(R(bad ? 2 : slow ? 1 : 0, name + " ingest", bad ? "no answer on RTMP 1935" : Ms(k.Avg) + " · jitter " + Ms(k.Jit) + (k.Lost > 0 ? " · " + k.Lost + " of 5 lost" : ""), bad ? "Blocked or down - try another ingest server in OBS (Settings > Stream > Server)." : "", "m"));
             }
-            rows.Insert(0, R(warn == 0 ? 0 : 1, "Go-live check", warn == 0 ? "ready - go live" : warn + " thing" + (warn == 1 ? "" : "s") + " to fix first", "AdeeboMeter only checks - it never changes OBS or closes anything.", "i"));
+            int worstLv = rows.Where(r => r.Length > 0 && r[0] == "2").Any() ? 2 : 1;   // bug-hunt L-206: red when something is red (an upload below the bitrate), not always amber
+            rows.Insert(0, R(warn == 0 ? 0 : worstLv, "Go-live check", warn == 0 ? "ready - go live" : warn + " thing" + (warn == 1 ? "" : "s") + " to fix first", "AdeeboMeter only checks - it never changes OBS or closes anything.", "i"));
             return rows;
         }
     }

@@ -73,7 +73,10 @@ namespace AdeeboMeter
                     if (!File.Exists(LogFile)) return; string cut = DateTime.Now.AddDays(-35).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                     string first; using (var rd = new StreamReader(LogFile)) first = rd.ReadLine() ?? "";
                     if (string.CompareOrdinal(first, cut) >= 0 && new FileInfo(LogFile).Length < 2000000) return;
-                    WriteWhole(LogFile, string.Join("\n", File.ReadAllLines(LogFile).Where(l => string.CompareOrdinal(l, cut) >= 0).ToArray()) + "\n");
+                    // bug-hunt L-269: over 2 MB, the oldest lines go until it's 1.5 MB - so the next pass finds it small and leaves it alone
+                    var keep = File.ReadAllLines(LogFile).Where(l => string.CompareOrdinal(l, cut) >= 0).ToList(); long size = keep.Sum(l => (long)l.Length + 1); int drop = 0;
+                    while (size > 1500000 && drop < keep.Count) { size -= keep[drop].Length + 1; drop++; }
+                    WriteWhole(LogFile, string.Join("\n", keep.Skip(drop).ToArray()) + "\n");
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
@@ -182,7 +185,7 @@ namespace AdeeboMeter
                     double renDrop = rTot > 0 ? 100 * rLag / rTot : double.NaN; bool rd = renDrop >= 1; if (rd) warn++;
                     rows.Add(R(double.IsNaN(renDrop) ? 3 : rd ? 1 : 0, "Lagged (rendering)", double.IsNaN(renDrop) ? "-" : renDrop.ToString("0.0", CultureInfo.InvariantCulture) + "% of frames" + (!double.IsNaN(fps) ? " · " + Math.Round(fps) + " fps" : ""), rd ? "The GPU is busy (often the game): cap the game's frame rate, or lower OBS's canvas." : "", "m"));
                     rows.Add(R(!double.IsNaN(cpu) && cpu > 80 ? 1 : 3, "OBS's CPU", double.IsNaN(cpu) ? "-" : Math.Round(cpu) + "%", "", "m"));
-                    rows.Add(R(3, "Your network right then", "upload " + SpeedTest.Mbps(s.Up) + " Mbps · router " + (double.IsNaN(s.GwMs) ? "-" : Math.Round(s.GwMs) + " ms") + " · internet " + Math.Round(s.Ping) + " ms", "", "m"));
+                    rows.Add(R(3, "Your network right then", "upload " + SpeedTest.Mbps(s.Up) + " Mbps · router " + (double.IsNaN(s.GwMs) ? "-" : Math.Round(s.GwMs) + " ms") + " · internet " + (double.IsNaN(s.Ping) ? "-" : Math.Round(s.Ping) + " ms")   /* L-270 */, "", "m"));
                     bool known = !double.IsNaN(netDrop) || !double.IsNaN(encDrop) || !double.IsNaN(renDrop);
                     rows.Insert(0, R(!known ? 3 : warn == 0 ? 0 : 1, "OBS link", !known ? "connected, but no frame counts yet - start streaming or recording, then run it again" : warn == 0 ? "connected - no drops worth worrying about" : warn + " thing" + (warn == 1 ? "" : "s") + " dropping frames - each has its cause below", "Only asks OBS; never starts, stops or changes anything.", "i"));
                 }

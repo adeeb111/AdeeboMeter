@@ -18,7 +18,7 @@ namespace AdeeboMeter
     static class Relay
     {
         public const string Url = "https://adeebometer-relay.orkoadeeb.workers.dev/send";   // tools/relay/worker.js on Cloudflare
-        public static bool Ready { get { return Url != "" && !Policy.NoOnline; } }
+        public static bool Ready { get { return !Policy.NoOnline; } }   // bug-hunt L-294: Url is a constant - only the policy decides
         public sealed class Result { public bool Ok, Queued; public int Number; public string Why = ""; }
 
         // one JSON object, built by hand (no library): kind bug / feedback / hof
@@ -73,7 +73,8 @@ namespace AdeeboMeter
         internal static Result Parse(string body)
         {
             var r = new Result(); body = body ?? "";
-            r.Ok = body.Contains("\"ok\":true");
+            // bug-hunt L-292: the "ok" field itself, read as JSON - never the words "ok":true anywhere in the text
+            object okv; var d = AdeeboMeter.Json.Parse(body) as Dictionary<string, object>; r.Ok = d != null && d.TryGetValue("ok", out okv) && okv is bool && (bool)okv;
             var n = System.Text.RegularExpressions.Regex.Match(body, "\"number\"\\s*:\\s*(\\d{1,9})"); if (n.Success) r.Number = int.Parse(n.Groups[1].Value, CultureInfo.InvariantCulture);
             var w = System.Text.RegularExpressions.Regex.Match(body, "\"why\"\\s*:\\s*\"([^\"]{0,200})\""); if (w.Success) r.Why = w.Groups[1].Value;
             return r;
@@ -91,7 +92,7 @@ namespace AdeeboMeter
                 Directory.CreateDirectory(Box);
                 var old = new DirectoryInfo(Box).GetFiles("*.json").OrderBy(f => f.LastWriteTimeUtc).ToList();
                 while (old.Count >= 3) { old[0].Delete(); old.RemoveAt(0); }
-                File.WriteAllText(Path.Combine(Box, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture) + ".json"), json);
+                SafeFile.WriteText(Path.Combine(Box, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture) + ".json"), json);   // bug-hunt L-293: never a half-written report
                 return true;
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return false; }

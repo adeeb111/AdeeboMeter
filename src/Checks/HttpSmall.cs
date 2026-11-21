@@ -19,6 +19,8 @@ namespace AdeeboMeter
             var deadline = DateTime.UtcNow.AddSeconds(20);
             using (var r = q.GetResponse()) using (var s = r.GetResponseStream())
             {
+                // bug-hunt L-39: an answer from another site (or over plain http) after a redirect isn't the one asked for
+                if (!string.Equals(r.ResponseUri.Host, q.RequestUri.Host, StringComparison.OrdinalIgnoreCase) || (q.RequestUri.Scheme == "https" && r.ResponseUri.Scheme != "https")) throw new InvalidDataException("the site sent this to " + r.ResponseUri.Host + " instead");
                 var buf = new byte[maxKb * 1024]; int got = 0, n;
                 while (got < buf.Length && (n = s.Read(buf, got, buf.Length - got)) > 0) { got += n; if (DateTime.UtcNow > deadline) throw new InvalidDataException("answer too slow"); }
                 if (got == buf.Length && s.ReadByte() >= 0) throw new InvalidDataException("answer too large");

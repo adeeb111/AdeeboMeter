@@ -32,10 +32,13 @@ namespace AdeeboMeter
         // Colour tokens. Light and dark follow Windows' own "app mode" setting and switch live.
         public static bool Dark;
         public static Color Ink, Muted, Sub, Line, Line2, Track, Soft, Card, Bg, Rail, UpText, BlueSoft, BlueDark, RowNew, RowGone, RowSel, RowHot, Grey;
+        // declared before the colours below: static fields start in the order they're written, and C() needs this one
+        static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Color> parsed = new System.Collections.Concurrent.ConcurrentDictionary<string, Color>(StringComparer.Ordinal);
         public static Color Blue = C("#1F6FEB"), BlueHot = C("#1A5FCC"); public static readonly Color Orange = C("#E36209"), Green = C("#2DA44E"), Amber = C("#BF8700"), Red = C("#CF222E");
         static readonly Color[] lvText = new Color[4], lvSoft = new Color[4];
         static Theme() { Apply(false); }
-        public static Color C(string h) { return ColorTranslator.FromHtml(h); }
+        // bug-hunt L-261: each hex is parsed once - paints call this often
+        public static Color C(string h) { if (h == null) return ColorTranslator.FromHtml(h); return parsed.GetOrAdd(h, x => ColorTranslator.FromHtml(x)); }
         public static bool SystemDark()
         {
             try
@@ -371,7 +374,7 @@ namespace AdeeboMeter
             measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)
-        static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>();
+        static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>(); static readonly Queue<string> measuredOrder = new Queue<string>();
         public static SizeF Measure(string t, Font f, int width)
         {
             t = t ?? ""; string key = f.Name + "|" + f.Size.ToString("R", CultureInfo.InvariantCulture) + "|" + (int)f.Style + "|" + width.ToString(CultureInfo.InvariantCulture) + "|" + t;   // the font's own name, size and style (its hash ignores the family)
@@ -379,8 +382,9 @@ namespace AdeeboMeter
             {
                 SizeF sz; if (measured.TryGetValue(key, out sz)) return sz;
                 sz = width > 0 ? measureG.MeasureString(t, f, width) : measureG.MeasureString(t, f);
-                if (measured.Count > 3000) measured.Clear();
-                measured[key] = sz; return sz;
+                // bug-hunt L-262: the oldest thousand go when it's full - the rest of the page's text stays measured
+                if (measured.Count >= 3000) for (int i = 0; i < 1000 && measuredOrder.Count > 0; i++) measured.Remove(measuredOrder.Dequeue());
+                measured[key] = sz; measuredOrder.Enqueue(key); return sz;
             }
         }
         // the corner widget can be drawn a little bigger (tray menu > Bigger widget): same layout, scaled when drawn, so text stays sharp
@@ -612,7 +616,7 @@ namespace AdeeboMeter
             string head = last != null ? "Spike " + Math.Round(last.Ms) + " ms: " + last.Blame + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? " is steady." : grade == "Casual" ? " is playable." : grade == "Laggy" ? " is laggy." : "...");
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(head, fHead, (int)inner).Height;
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 30 * S + pad);
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 12 * S + pad);   // bug-hunt L-147: the path strip is 12 high
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -678,7 +682,7 @@ namespace AdeeboMeter
             Color gc = lv == 0 ? Theme.Green : lv == 1 ? Theme.Amber : lv == 2 ? Theme.Red : Theme.Grey;
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(head, fHead, (int)inner).Height;
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 30 * S + pad);
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 12 * S + pad);   // L-147
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {

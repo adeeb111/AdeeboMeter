@@ -59,12 +59,13 @@ namespace AdeeboMeter
         }
         static bool OnPublicList(X509Certificate2 root)
         {
+            bool readAny = false;   // bug-hunt L-266: a store that can't be read doesn't count as "not there"
             foreach (var loc in new[] { StoreLocation.LocalMachine, StoreLocation.CurrentUser })
                 try
                 {
                     using (var st = new X509Store(StoreName.AuthRoot, loc))
                     {
-                        st.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                        st.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly); readAny = true;
                         // AuthRoot isn't only Microsoft's list: Group Policy's "Third-Party Root CAs" land there too - so the same
                         // thumbprint test as for any other root
                         if (st.Certificates.Cast<X509Certificate2>().Any(c => c.Thumbprint == root.Thumbprint)) return IsWellKnown(root) || InWindowsList(root);
@@ -78,12 +79,14 @@ namespace AdeeboMeter
                 {
                     using (var st = new X509Store(StoreName.Root, loc))
                     {
-                        st.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                        st.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly); readAny = true;
                         var mine = st.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => c.Thumbprint == root.Thumbprint);
                         if (mine != null) return IsWellKnown(root) || InWindowsList(root);
                     }
                 }
                 catch { }
+            // no store could be read at all: the built-in list decides, never a blind "public"
+            if (!readAny) return IsWellKnown(root) || InWindowsList(root);
             return true;
         }
         // the public roots, by SHA-1 thumbprint (Mozilla's root list, the August 2026 ca-certificates release). Only a thumbprint

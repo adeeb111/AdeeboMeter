@@ -102,7 +102,7 @@ namespace AdeeboMeter
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             var top = (s.TopCpu ?? new List<AppStat>()).Where(a => a != null && a.Name != "AdeeboMeter").Take(3).ToList();
             float headH = status ? Measure(s.Headline, fSmall, (int)inner).Height + 6 * S : 0;
-            string wtx = WeatherCardText(); float h = pad + 24 * S + headH + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (wtx != null ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 22 * S + pad;
+            string wtx = WeatherCardText(); float h = pad + 24 * S + headH + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (wtx != null ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 16 * S + pad;   // bug-hunt L-147: 4 of space and the 12-high path strip
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))

@@ -29,6 +29,7 @@ namespace AdeeboMeter
             return "run|" + s.Game + "|" + Clean(s.Name) + "|" + s.T.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture) + "|" +
                 string.Join(";", s.Rows.Select(r => Clean(r.Server).Replace("=", "-").Replace(";", ",") + "=" + string.Join("/", new[] { r.Avg, r.P95, r.Jit, r.Loss }.Select(x => double.IsNaN(x) ? "" : x.ToString("0.#", CultureInfo.InvariantCulture)))));
         }
+        static string RowsOf(Saved s) { var l = Line(s); return l.Substring(l.LastIndexOf('|') + 1); }
         public static Saved ParseLine(string l)
         {
             var p = (l ?? "").Trim().Split('|'); if (p.Length != 5 || p[0] != "run" || !Regex.IsMatch(p[1], "^[a-z0-9-]{1,40}$")) return null;
@@ -43,8 +44,8 @@ namespace AdeeboMeter
             return s.Rows.Count == 0 ? null : s;
         }
         static string Clean(string s) { s = new string((s ?? "").Where(c => !char.IsControl(c) && c != '|').ToArray()).Trim(); return s.Length > 40 ? s.Substring(0, 40) : s; }
-        static List<Saved> Load() { try { return File.Exists(FilePath) ? File.ReadAllLines(FilePath).Take(200).Select(ParseLine).Where(x => x != null).ToList() : new List<Saved>(); } catch (IOException) { return new List<Saved>(); } }
-        static void Store(List<Saved> all) { try { File.WriteAllLines(FilePath, all.Select(Line)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("game compare: " + e.Message); } }
+        static List<Saved> Load() { try { return File.Exists(FilePath) ? File.ReadLines(FilePath).Take(200)   /* L-91: never more than 200 lines read */.Select(ParseLine).Where(x => x != null).ToList() : new List<Saved>(); } catch (IOException) { return new List<Saved>(); } }
+        static void Store(List<Saved> all) { try { SafeFile.WriteText(FilePath, string.Join("\r\n", all.Select(Line)) + "\r\n"); }   /* L-92: temp file, then replace */ catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("game compare: " + e.Message); } }
 
         // input: game | a name for this run - or paste a run copied from another PC | "clear" to start over
         public static List<string[]> Run(Monitor m, string gameIn, string name, string clear, Toolkit.Run run)
@@ -60,12 +61,14 @@ namespace AdeeboMeter
             if (pasted != null)
             {
                 if (pasted.Game != game.Id) { rows.Add(R(2, "Pasted run", "it's for " + pasted.Game + ", not " + game.Id, "", "u")); return rows; }
-                pasted.Name = Clean(pasted.Name + " (other PC)"); all.Add(pasted);
+                // bug-hunt L-93: the same run pasted again isn't added twice
+                if (all.Any(z => z.Game == pasted.Game && z.T == pasted.T && RowsOf(z) == RowsOf(pasted))) { rows.Add(R(3, "Pasted run", "already here - not added again", "", "u")); }
+                else { pasted.Name = Clean(pasted.Name + " (other PC)"); all.Add(pasted); }
             }
             else
             {
                 if (!Games.Monitored().Contains(game.Id)) { rows.Add(R(2, game.Name, "click it in the Gamer Zone first - that's your OK to contact its servers", "", "u")); return rows; }
-                if (nm == "") nm = m.AdapterKind == "Wi-Fi" ? "Wi-Fi" : "Cable";
+                if (nm == "") { string ak; lock (m.L) ak = m.AdapterKind; nm = ak == "Wi-Fi" ? "Wi-Fi" : ak == "LAN" ? "Cable" : ak == "" ? "Run" : ak; }   // bug-hunt L-94: "Cable" only for a cable
                 var distinct = game.Servers.GroupBy(z => z.Name).Select(gr => gr.First()).ToList();
                 if (distinct.Count == 0) { rows.Add(R(2, game.Name, "no servers to compare - add one in the Gamer Zone first", "", "u")); return rows; }
                 if (distinct.Count > 8) rows.Add(R(3, "Regions left out", string.Join(", ", distinct.Skip(8).Select(z => z.Name)), "Eight regions fit in one 30-second run - these weren't measured.", "i"));

@@ -59,7 +59,7 @@ namespace AdeeboMeter
             foreach (char ch in s ?? "") { if (ch == '"' || ch == '\\') b.Append('\\').Append(ch); else if (ch < 0x20) b.Append(' '); else b.Append(ch); }
             return b.ToString();
         }
-        static string GroupTitle(string g) { return g.Length > 1 ? g.Substring(0, 1) + g.Substring(1).ToLowerInvariant() : g; }
+        static string GroupTitle(string g) { g = g ?? ""; return g.Length > 1   /* L-230 */ ? g.Substring(0, 1) + g.Substring(1).ToLowerInvariant() : g; }
         // the same starting values the desktop fills in
         string RemoteDefault(string id, int i)
         {
@@ -137,7 +137,7 @@ namespace AdeeboMeter
                     Investigate.Run("full", m, r, () => { });
                     rows.Add(R4(r.Lv < 0 ? "3" : r.Lv.ToString(CultureInfo.InvariantCulture), "Verdict", r.Finding, r.Next.FirstOrDefault() ?? ""));
                     rows.Add(R4("-1", "What was checked", "", ""));
-                    lock (r.Observed) foreach (var o in r.Observed.Take(60)) rows.Add(R4(o.Length > 1 ? o[1] : "3", o.Length > 2 ? o[2] : "", o.Length > 3 ? o[3] : "", ""));
+                    lock (r.Observed) foreach (var o in r.Observed.Take(60)) rows.Add(R4(o.Length > 1 ? o[1] : "3", o.Length > 2 ? o[2] : "", o.Length > 3 ? Reach.HideSecrets(o[3]) : "", ""));   /* L-21: these rows carry no "k" marker, so anything named like a secret is hidden here */
                     if (r.Next.Count > 1) { rows.Add(R4("-1", "Next steps", "", "")); foreach (var n in r.Next.Take(6)) rows.Add(R4("3", "Next", n, "")); }
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; rows.Add(R4("2", "Didn't finish", e.Message, "")); }

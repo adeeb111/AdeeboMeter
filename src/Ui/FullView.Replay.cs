@@ -17,7 +17,7 @@ namespace AdeeboMeter
         int rewindIdx = -1; RectangleF replayTrack; bool replayDrag, replayLoading; double pendingAt = -1; double[] replayMed = new double[History.Cols];
         // a little celebration when the cursor crosses a new device or a Wi-Fi hop: a burst of dots from the LAN dot, about a
         // second long; the timer runs only while there are dots to move
-        readonly List<float[]> sparks = new List<float[]>(); System.Windows.Forms.Timer sparkT; int sparkIdx = -1; string sparkLabel = ""; PointF sparkAt; DateTime sparkUntil;
+        readonly List<float[]> sparks = new List<float[]>(); System.Windows.Forms.Timer sparkT; Rectangle sparkLast = Rectangle.Empty; int sparkIdx = -1; string sparkLabel = ""; PointF sparkAt; DateTime sparkUntil;
         static readonly Color[] SparkCol = { Color.FromArgb(255, 196, 60), Color.FromArgb(70, 200, 120), Color.FromArgb(90, 160, 230), Color.FromArgb(230, 90, 160) };
         void Spark(PointF at, string label)
         {
@@ -31,7 +31,13 @@ namespace AdeeboMeter
             foreach (var p in sparks) { p[0] += p[2]; p[1] += p[3]; p[3] += 0.35f * S; p[4] -= 0.035f; }
             sparks.RemoveAll(p => p[4] <= 0);
             if (sparks.Count == 0 && Clock.Mono > sparkUntil) sparkT.Stop();
-            if (replayCanvas.Visible) replayCanvas.Invalidate();
+            if (!replayCanvas.Visible) return;
+            // bug-hunt L-264: only the patch the sparks and their label cover (where they were, and where they are now) - not the page
+            float lw = Math.Max(320 * S, Draw.Measure(sparkLabel ?? "", Draw.fBodyB, 0).Width + 40 * S);
+            var box = new RectangleF(sparkAt.X - lw / 2, sparkAt.Y - 60 * S, lw, 90 * S);
+            foreach (var p in sparks) box = RectangleF.Union(box, new RectangleF(p[0] - 6 * S, p[1] - 6 * S, 12 * S, 12 * S));
+            var now = Rectangle.Ceiling(box); now.Offset(replayCanvas.AutoScrollPosition);
+            replayCanvas.Invalidate(sparkLast.IsEmpty ? now : Rectangle.Union(sparkLast, now)); sparkLast = sparks.Count == 0 && Clock.Mono > sparkUntil ? Rectangle.Empty : now;
         }
         void PaintSparks(Graphics g)
         {

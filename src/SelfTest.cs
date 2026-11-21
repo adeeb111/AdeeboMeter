@@ -992,7 +992,7 @@ namespace AdeeboMeter
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
-                    try { string bad = fv.ExampleCheck(); if (bad != "") throw new InvalidOperationException(bad); }
+                    try { string bad = fv.ExampleCheck(); if (bad == "" && Examples.Problems.Count > 0) bad = "examples.txt: " + string.Join("; ", Examples.Problems.Take(3)); if (bad != "") throw new InvalidOperationException(bad); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
@@ -1462,6 +1462,7 @@ namespace AdeeboMeter
             {
                 var fr = L.Parse(Knowledge.RawText("lang-fr"));
                 if (fr.Count < 250) throw new InvalidOperationException("French table has only " + fr.Count + " lines");
+                if (L.LastDupes.Count > 0) throw new InvalidOperationException("French table names a line twice: " + string.Join(" | ", L.LastDupes.Take(3)));
                 foreach (var kv in fr)
                 {
                     if (kv.Value.Trim().Length == 0) throw new InvalidOperationException("empty translation: " + kv.Key);

@@ -49,7 +49,7 @@ namespace AdeeboMeter
             {
                 if (comfort != null) return comfort;
                 comfort = new List<string[]>();
-                foreach (var l0 in Knowledge.RawText("comfort").Split('\n')) { var l = l0.Trim(); if (l == "" || l[0] == '#') continue; var p = l.Split('|'); if (p.Length == 3) comfort.Add(new[] { p[0].Trim(), p[1].Trim(), p[2].Trim() }); }
+                foreach (var l0 in Knowledge.RawText("comfort").Split('\n')) { var l = l0.Trim(); if (l == "" || l[0] == '#') continue; var p = l.Split('|'); if (p.Length != 3) { Program.Log("comfort: a line without exactly 3 parts was skipped (" + (l.Length > 40 ? l.Substring(0, 40) : l) + ")"); continue; } comfort.Add(new[] { p[0].Trim(), p[1].Trim(), p[2].Trim() }); }
                 return comfort;
             }
         }
@@ -245,7 +245,7 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (mineRead) return mine; mineRead = true;
-                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8)); }
+                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8)); else if (f.Exists) Program.Log("lines: " + MinePath + " is over 1 MB - your own lines are switched off until it's smaller (Import keeps 600)"); }   // bug-hunt L-318
                 catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { }
                 return mine;
             }
@@ -307,6 +307,8 @@ namespace AdeeboMeter
                 var all = new List<string>(); if (append && System.IO.File.Exists(MinePath)) all.AddRange(System.IO.File.ReadAllLines(MinePath, System.Text.Encoding.UTF8).Where(l => l.Trim() != "" && !l.StartsWith("#", StringComparison.Ordinal)));
                 all.AddRange(lines); all = all.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
                 LastDropped = Math.Max(0, all.Count - 600); if (LastDropped > 0) all = all.Skip(LastDropped).ToList();
+                // bug-hunt L-319: once new lines are saved, the cleared ones can't come back - their undo copy goes too
+                try { if (System.IO.File.Exists(MinePath + ".undo")) System.IO.File.Delete(MinePath + ".undo"); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { }
                 FullView.WriteSafe(MinePath, "# My AdeeboMeter lines: key|text. {addr} = how I like to be called, {v} = the measured value.\n" + string.Join("\n", all) + "\n", false);
                 lock (k) { mineRead = false; mine = null; }
                 return true;

@@ -76,8 +76,13 @@ namespace AdeeboMeter
                     { var lossy = rows.FirstOrDefault(o => o.Length > 2 && o[0] != "0" && Regex.IsMatch(o[1], @"^\s*(hop\s*)?\d+", RegexOptions.IgnoreCase) && o[2].Contains("%") && !o[2].StartsWith("0%", StringComparison.Ordinal));
                       if (worst >= 1 && lossy != null) { var m = Regex.Match(lossy[1], @"\d+"); v = m.Success ? m.Value : null; return "mtr.lossy"; }
                       return worst == 0 ? "mtr.clean" : null; }
-                case "mtu": case "udpmtu": { if (worst == 0) return null; var m = rows.Select(o => o.Length > 2 ? Regex.Match(o[2], @"\b(\d{3,4})\b") : Match.Empty).FirstOrDefault(z => z.Success); v = m != null ? m.Groups[1].Value : null; return "mtu.small"; }
-                case "speedtest": { var d = row("Download"); if (d != null) v = Regex.Match(d[2], @"[0-9.,]+\s*[MG]bps").Value; if (v == "") v = null; return worst >= 1 ? "speed.bloat" : "speed.great"; }
+                case "mtu": case "udpmtu":
+                    {   // bug-hunt L-148: the number from the row that IS the MTU (biggest packet / MTU), never the first number anywhere
+                        if (worst == 0) return null;
+                        var mr = rows.FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], "biggest|MTU|largest", RegexOptions.IgnoreCase) && Regex.IsMatch(o[2], @"\b\d{3,4}\s*bytes\b"));
+                        var m = mr != null ? Regex.Match(mr[2], @"\b(\d{3,4})\s*bytes\b") : Match.Empty; v = m.Success ? m.Groups[1].Value : null; return "mtu.small";
+                    }
+                case "speedtest": { var d = row("Download"); if (d != null) v = Regex.Match(d[2], @"[0-9.,]+\s*[kMG]bps").Value;   /* L-149: kbps too */ if (v == "") v = null; return worst >= 1 ? "speed.bloat" : "speed.great"; }
                 case "bloat": return worst >= 1 ? "speed.bloat" : null;
                 case "http": case "certlive": case "https": case "chain":
                     { var ex = rows.FirstOrDefault(o => o.Length > 2 && o[0] == "2" && o[2].IndexOf("expired", StringComparison.OrdinalIgnoreCase) >= 0);
@@ -192,7 +197,9 @@ namespace AdeeboMeter
         readonly Dictionary<string, Bitmap> wpics = new Dictionary<string, Bitmap>(StringComparer.Ordinal); DateTime wpicsAt; string wpicsKey = "";
         Bitmap WPic(string style, bool card)
         {
-            string key = previewExample + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious;   // AM-CG-200
+            // bug-hunt L-146: "example" or live is decided now, not by the last picture drawn - live numbers replace the example at once
+            var snapNow = snap; bool exampleNow = snapNow == null || double.IsNaN(snapNow.Down) || snapNow.DownHist == null || snapNow.DownHist.Length < 5;
+            string key = exampleNow + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious;   // AM-CG-200
             if (key != wpicsKey || (DateTime.Now - wpicsAt).TotalSeconds > 10) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); wpicsKey = key; wpicsAt = DateTime.Now; }
             Bitmap bm; string k = style + (card ? "|c" : "|s");
             if (!wpics.TryGetValue(k, out bm)) { try { bm = Draw.Preview(PreviewSnap(), style, card); } catch (Exception e) { Program.Log("widget preview " + style + ": " + e.Message); bm = null; } wpics[k] = bm; }

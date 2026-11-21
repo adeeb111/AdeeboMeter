@@ -15,17 +15,17 @@ namespace AdeeboMeter
     {
         public const int Days = 7;
         static string File { get { return Store.PathOf("air.txt"); } }
-        static readonly object k = new object(); static DateTime lastHour = DateTime.MinValue;
+        static readonly object k = new object(); static DateTime lastHour = DateTime.MinValue, lastTry = DateTime.MinValue;
         public sealed class Row { public DateTime T; public string Bssid = "", Ssid = "", Band = "", Sec = ""; public int Channel, Width, Rssi; public bool Mine, Same; }   // Mine = the access point this PC was connected to; Same = another one with your network's name (mesh, extender)
 
         public static void Record(Monitor m)
         {
             if (!Cfg.History) { Clear(); return; }   // History off: nothing is kept - an old log goes within the hour (the next hourly tick)
-            var hour = DateTime.Now.Date.AddHours(DateTime.Now.Hour); if (hour == lastHour) return;
+            var hour = DateTime.Now.Date.AddHours(DateTime.Now.Hour); if (hour == lastHour || (Clock.Mono - lastTry).TotalMinutes < 5) return;
             bool wifi; string myB, mySsid; lock (m.L) { wifi = m.HasWifi && m.AdapterKind == "Wi-Fi"; myB = (m.Bssid ?? "").Replace('-', ':'); mySsid = m.Ssid ?? ""; }
             if (!wifi) return;
             string err; var bss = WlanApi.List(false, out err); if (bss.Count == 0) return;   // location off, or nothing heard: write nothing
-            lastHour = hour;
+            lastTry = Clock.Mono;   // bug-hunt L-113: the hour counts as done only once it's written; a failed write tries again in 5 minutes
             var lines = bss.Where(b => b.Channel > 0).OrderByDescending(b => b.Rssi).Take(40).Select(b => string.Join("\t", hour.ToString("yyyy-MM-ddTHH", CultureInfo.InvariantCulture), b.Bssid, (b.Ssid ?? "").Replace('\t', ' '), b.Band, b.Channel.ToString(CultureInfo.InvariantCulture), b.Width.ToString(CultureInfo.InvariantCulture), b.Rssi.ToString(CultureInfo.InvariantCulture), b.Sec, string.Equals(b.Bssid, myB, StringComparison.OrdinalIgnoreCase) ? "1" : mySsid != "" && b.Ssid == mySsid ? "2" : "0")).ToList();
             lock (k)
             {
@@ -33,7 +33,7 @@ namespace AdeeboMeter
                 {
                     var keep = new List<string>(); var cut = DateTime.Now.Date.AddDays(-(Days - 1));
                     if (System.IO.File.Exists(File)) foreach (var l in System.IO.File.ReadAllLines(File).Take(20000)) { var r = Parse(l); if (r != null && r.T >= cut && r.T < hour) keep.Add(l); }
-                    keep.AddRange(lines); string tmp = File + ".tmp"; System.IO.File.WriteAllLines(tmp, keep); Program.ReplaceFile(tmp, File);
+                    keep.AddRange(lines); string tmp = File + ".tmp"; System.IO.File.WriteAllLines(tmp, keep); Program.ReplaceFile(tmp, File); lastHour = hour;
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("air log: " + e.Message); }
             }
@@ -57,13 +57,20 @@ namespace AdeeboMeter
         public static bool Overlap(int a, int wa, int b, int wb, string band)
         {
             if (a <= 0 || b <= 0) return false;
-            if (band.StartsWith("2.4", StringComparison.Ordinal)) return Math.Abs(a - b) < 5;
+            // bug-hunt L-112: on 2.4 GHz a 20 MHz network covers its channel +-2; a 40 MHz one adds 4 more on the side its second half
+            // must be on (up from 1-4, down from 10-13; either way from 5-9, where it can't be told)
+            if (band.StartsWith("2.4", StringComparison.Ordinal)) { int p0, p1, q0, q1; Span24(a, wa, out p0, out p1); Span24(b, wb, out q0, out q1); return p0 <= q1 && q0 <= p1; }
             int a0, a1, b0, b1; Block(a, wa, band, out a0, out a1); Block(b, wb, band, out b0, out b1);
             return a0 <= b1 && b0 <= a1;
         }
+        static void Span24(int ch, int width, out int lo, out int hi)
+        {
+            lo = ch - 2; hi = ch + 2; if (width < 40) return;
+            if (ch <= 4) hi += 4; else if (ch >= 10) lo -= 4; else { lo -= 4; hi += 4; }
+        }
         static void Block(int ch, int width, string band, out int lo, out int hi)
         {
-            int span = width >= 160 ? 32 : width >= 80 ? 16 : width >= 40 ? 8 : 4;   // in channel numbers (one 20 MHz channel = 4)
+            int span = width >= 320 ? 64 : width >= 160 ? 32 : width >= 80 ? 16 : width >= 40 ? 8 : 4;   /* L-277: Wi-Fi 7's 320 MHz */   // in channel numbers (one 20 MHz channel = 4)
             int anchor = band.StartsWith("6", StringComparison.Ordinal) ? 1 : ch >= 149 ? 149 : 36;
             if (ch < anchor) { lo = hi = ch; return; }
             lo = anchor + (ch - anchor) / span * span; hi = lo + span - 4;
@@ -91,7 +98,7 @@ namespace AdeeboMeter
                 foreach (var d in hourly.GroupBy(r => r.T.Date))
                 {
                     var top = d.GroupBy(r => r.Channel).OrderByDescending(c => c.Count()).First();
-                    n.ChByDay[d.Key] = top.Key; n.WidthByDay[d.Key] = top.Max(r => r.Width); n.RssiByDay[d.Key] = d.Average(r => (double)r.Rssi);
+                    n.ChByDay[d.Key] = top.Key; n.WidthByDay[d.Key] = top.GroupBy(r => r.Width).OrderByDescending(c => c.Count()).ThenByDescending(c => c.Key).First().Key;   /* bug-hunt L-109: the width it used most, not the widest moment */ n.RssiByDay[d.Key] = d.Average(r => (double)r.Rssi);
                 }
                 // moved onto your channel: elsewhere earlier, on the channel you're on now since
                 var byDay = n.ChByDay.OrderBy(kv => kv.Key).ToList();
@@ -102,14 +109,16 @@ namespace AdeeboMeter
                 }
                 w.Nets.Add(n);
             }
+            // bug-hunt L-110: the list shows the 15 strongest, but crowding and the quiet channel count every network heard
+            var everyone = w.Nets.ToList();
             w.Nets = w.Nets.OrderByDescending(n => n.Mine).ThenByDescending(n => n.Rssi).Take(15).ToList();
-            var me = w.Nets.FirstOrDefault(n => n.Mine);
+            var me = everyone.FirstOrDefault(n => n.Mine);
             // each day against the channel YOU were on that day
             foreach (var d in w.DaysSeen)
             {
                 int myCh; if (!w.MyChByDay.TryGetValue(d, out myCh)) continue;
                 int myW; if (me == null || !me.WidthByDay.TryGetValue(d, out myW)) myW = w.MyWidth;
-                var onMine = w.Nets.Where(n => n.ChByDay.ContainsKey(d) && (n.Mine || Overlap(n.ChByDay[d], n.WidthByDay[d], myCh, myW, w.MyBand))).ToList();
+                var onMine = everyone.Where(n => n.ChByDay.ContainsKey(d) && (n.Mine || Overlap(n.ChByDay[d], n.WidthByDay[d], myCh, myW, w.MyBand))).ToList();
                 var best = onMine.Where(n => n.Mine || !n.Same).OrderByDescending(n => n.RssiByDay[d]).FirstOrDefault(); if (best != null) w.Winner[d] = best.Mine ? "you" : best.Name;
                 w.Crowding[d] = onMine.Where(n => !n.Mine && !n.Same).Sum(n => Math.Pow(Pct((int)n.RssiByDay[d]) / 100, 2)) * 100;
             }
@@ -118,12 +127,17 @@ namespace AdeeboMeter
             // 5 GHz: 149+ and the radar (DFS) channels only when they're already in use around here - proof they're allowed (as Least crowded does)
             if (w.MyBand.StartsWith("5", StringComparison.Ordinal))
             {
-                var seen = new HashSet<int>(w.Nets.Select(n => n.Channel)); seen.Add(w.MyChannel);
+                var seen = new HashSet<int>(everyone.Select(n => n.Channel)); seen.Add(w.MyChannel);
                 cand = cand.Where(c => c <= 48 || (c >= 149 ? seen.Any(z => z >= 149) : seen.Any(z => z >= 52 && z <= 144))).ToArray();
             }
-            if (cand.Length > 0) w.Quiet = cand.OrderBy(c => w.Nets.Where(n => !n.Mine && !n.Same && Overlap(n.Channel, n.Width, c, w.MyWidth, w.MyBand)).Sum(n => Math.Pow(Pct((int)n.Rssi) / 100, 2))).ThenBy(c => c == w.MyChannel ? 0 : 1).First();
+            // bug-hunt L-111: where the neighbours are now counts most (one that moved away is gone), and where they were through
+            // the week counts too, a quarter as much - a neighbour that hops onto a channel some days makes it less quiet
+            Func<int, double> now = c => everyone.Where(n => !n.Mine && !n.Same && Overlap(n.Channel, n.Width, c, w.MyWidth, w.MyBand)).Sum(n => Math.Pow(Pct((int)n.Rssi) / 100, 2));
+            Func<int, double> week = c => w.DaysSeen.Count == 0 ? 0 : w.DaysSeen.Average(d => everyone.Where(n => !n.Mine && !n.Same && n.ChByDay.ContainsKey(d) && Overlap(n.ChByDay[d], n.WidthByDay[d], c, w.MyWidth, w.MyBand)).Sum(n => Math.Pow(Pct((int)n.RssiByDay[d]) / 100, 2)));
+            Func<int, double> load = c => now(c) + 0.25 * week(c);
+            if (cand.Length > 0) w.Quiet = cand.OrderBy(load).ThenBy(c => c == w.MyChannel ? 0 : 1).First();
             int won = w.Winner.Count(kv => kv.Value == "you"), days = w.Winner.Count;
-            var sharingNow = w.Nets.Where(n => !n.Mine && !n.Same && Overlap(n.Channel, n.Width, w.MyChannel, w.MyWidth, w.MyBand)).ToList(); int sharing = sharingNow.Count;
+            var sharingNow = everyone.Where(n => !n.Mine && !n.Same && Overlap(n.Channel, n.Width, w.MyChannel, w.MyWidth, w.MyBand)).ToList(); int sharing = sharingNow.Count;
             var mover = w.Nets.FirstOrDefault(n => n.Moved != "");
             bool quietIsMine = w.Quiet > 0 && Overlap(w.Quiet, w.MyWidth, w.MyChannel, w.MyWidth, w.MyBand);
             string chName = "channel " + w.MyChannel + (w.MyWidth >= 40 && !w.MyBand.StartsWith("2.4", StringComparison.Ordinal) ? " (" + w.MyWidth + " MHz)" : "");

@@ -209,7 +209,7 @@ footer a{color:inherit}
   <h3>Questions</h3>
   <details><summary>Does AdeeboMeter send my points anywhere?</summary><p>No. AdeeboMeter never sends anything about your points. It only saves a picture, and you decide whether to share it.</p></details>
   <details><summary>What goes on this page?</summary><p>Your name - and a link to your GitHub, LinkedIn, X, Instagram or Bluesky profile if you gave a handle. Nothing else is shown. The points, date and claim code are kept in the list behind the page (hall-of-fame.json) so a card can be checked again; nothing else about you is kept.</p></details>
-  <details><summary>Can I be taken off?</summary><p>Yes. Open an issue or send an email and you'll be removed.</p></details>
+  <details><summary>Can I be taken off?</summary><p>Yes. Open an issue on <a href="https://github.com/adeeb111/AdeeboMeter/issues">GitHub</a><span id="rm-mail"> or send an email</span> and you'll be removed.</p></details>
   <details><summary>My code doesn't match.</summary><p>Type the name, points and date exactly as they are on the card, or paste the text AdeeboMeter copied. If you've earned more points since, make the card again and send the new one.</p></details>
   <details><summary>I'm under 500 - where am I?</summary><p>Press the Adeebo button in AdeeboMeter. The bar shows how far you are from the next rank, and each learning path shows what's left.</p></details>
 </div></section>
@@ -238,7 +238,7 @@ footer a{color:inherit}
   var MAIL = 'HALL-OF-FAME-EMAIL';
   var m = document.getElementById('mail');
   if (MAIL.indexOf('@') > 0) m.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Adeebo Award - Hall of Fame');
-  else m.style.display = 'none';
+  else { m.style.display = 'none'; var rm = document.getElementById('rm-mail'); if (rm) rm.style.display = 'none'; }   // bug-hunt L-115: no address, no promise of one
 
   var SITES = {
     github: { name: 'GitHub', url: 'https://github.com/', rx: /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/ },

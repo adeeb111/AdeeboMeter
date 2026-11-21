@@ -86,7 +86,7 @@ namespace AdeeboMeter
                 foreach (string k in r.Headers.AllKeys.Take(80)) rows.Add(R(3, k, string.Equals(k, "Set-Cookie", StringComparison.OrdinalIgnoreCase) ? "(" + (r.Headers[k] ?? "").Length + " characters)" : Draw.Trunc(r.Headers[k], 300), string.Equals(k, "Set-Cookie", StringComparison.OrdinalIgnoreCase) ? "Cookie values are never shown or copied - they can be a signed-in session." : "", "m"));
                 var bytes = buf.ToArray(); if (bytes.Length == 0) return rows;
                 bool text = bytes.Take(2000).All(x => x == 9 || x == 10 || x == 13 || x >= 32);
-                rows.Add(R(4, "Body", text ? Draw.Trunc(Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 3000)), 3000) : string.Join(" ", bytes.Take(96).Select(x => x.ToString("x2", CultureInfo.InvariantCulture))) + " …", "", "m"));
+                rows.Add(R(4, "Body", text ? Draw.Trunc(HideSecrets(Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 3000))), 3000) : string.Join(" ", bytes.Take(96).Select(x => x.ToString("x2", CultureInfo.InvariantCulture))) + " …", "", "m"));
             }
             return rows;
         }
@@ -117,9 +117,18 @@ namespace AdeeboMeter
             rows.Add(bad ? R(2, a + ":" + port, "answered, but not with an address", "", "m") : R(2, a + ":" + port, "no answer to 3 tries", "UDP to that port is blocked here, or it isn't a STUN server.", "m"));
             return rows;
         }
+        // L-19: a value named like a secret (token, key, password, session...) is hidden before it reaches the results
+        internal static string HideSecrets(string s)
+        {
+            const string names = @"(?:access_?token|refresh_?token|id_?token|token|secret|client_?secret|api_?key|apikey|password|passwd|pwd|session(?:_?id)?|auth(?:orization)?|bearer|private_?key|signature|sig)";
+            s = Regex.Replace(s, "(\"" + names + "\"\\s*:\\s*)\"[^\"]*\"", "$1\"(hidden)\"", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, "\\b(" + names + ")=([^&\\s\"<]+)", "$1=(hidden)", RegexOptions.IgnoreCase);
+            return Regex.Replace(s, @"\b(Bearer\s+)[A-Za-z0-9._~+/=-]{8,}", "$1(hidden)");
+        }
         public static IPEndPoint ParseStun(byte[] r, byte[] tid)
         {
             if (r == null || r.Length < 20 || r[0] != 1 || r[1] != 1) return null;
+            if (r[4] != 0x21 || r[5] != 0x12 || r[6] != 0xA4 || r[7] != 0x42) return null;   /* L-18: the magic cookie, as the other STUN parsers check */
             for (int k = 0; k < 12; k++) if (r[8 + k] != tid[k]) return null;
             int p = 20, end = Math.Min(r.Length, 20 + (r[2] << 8 | r[3])); IPEndPoint plain = null;
             while (p + 4 <= end)
@@ -196,7 +205,8 @@ namespace AdeeboMeter
             string rev = a.AddressFamily == AddressFamily.InterNetwork ? string.Join(".", a.GetAddressBytes().Reverse()) + ".in-addr.arpa" : string.Join(".", a.GetAddressBytes().Reverse().SelectMany(x => new[] { (x & 15).ToString("x", CultureInfo.InvariantCulture), (x >> 4).ToString("x", CultureInfo.InvariantCulture) })) + ".ip6.arpa";
             var ll = Ask(a, 5355, DnsQ(rev, 12, 0x4242), 1000); string ln = ll != null && ll.Length >= 2 && ll[0] == 0x42 && ll[1] == 0x42 ? FirstPtr(ll) : null;   // only the answer to our own question (ID 0x4242)
             if (ln != null) { any = true; rows.Add(R(0, "LLMNR name", ln, "Windows answers this on home and work networks unless LLMNR is turned off by policy.", "m")); }
-            var md = Ask(a, 5353, DnsQ(rev, 12, 0), 1000); string mn = md != null ? FirstPtr(md) : null;
+            var mq = DnsQ(rev, 12, 0); mq[mq.Length - 2] |= 0x80;   /* L-20: the QU bit asks the device to answer us directly, not to the multicast group we aren't in */
+            var md = Ask(a, 5353, mq, 1000); string mn = md != null ? FirstPtr(md) : null;
             if (mn != null) { any = true; rows.Add(R(0, "mDNS (Bonjour) name", mn, "Apple devices, printers, smart TVs and Linux usually answer this.", "m")); }
             try { var hn = Native.PtrName(a.ToString()); if (hn != "") { any = true; rows.Add(R(3, "DNS name (PTR)", hn, "From your DNS server, which may know it from DHCP.", "m")); } } catch (SocketException) { } catch (ArgumentException) { }
             if (!any) rows.Add(R(1, a.ToString(), "no name from NetBIOS, LLMNR, mDNS or DNS", "It may block these on its firewall, be off, or not have a name. SNMP or its web page may tell you more.", "m"));

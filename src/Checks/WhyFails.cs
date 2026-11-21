@@ -79,8 +79,8 @@ namespace AdeeboMeter
                 if (lines.Count == 0) rows.Add(R(0, "Hosts file", "empty - every name goes to DNS", "", "w"));
                 // every line is checked for your site (an ad-block hosts file has thousands); only the first 40 others are listed
                 Func<string, bool> pins = l => name != "" && l.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Skip(1).Any(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase));
-                var show = lines.Where(pins).Take(10).Concat(lines.Where(l => !pins(l)).Take(40)).ToList();
-                if (lines.Count > show.Count) rows.Add(R(3, "Hosts file", lines.Count.ToString(CultureInfo.CurrentCulture) + " entries - every one checked" + (name != "" ? " for " + name : "") + ", the first 40 listed", "", "w"));
+                var pinned = lines.Where(pins).ToList(); var show = pinned.Take(40).Concat(lines.Where(l => !pins(l)).Take(40)).ToList();   // bug-hunt L-202: up to 40 lines for your site too, as the row says
+                if (lines.Count > show.Count) rows.Add(R(3, "Hosts file", lines.Count.ToString(CultureInfo.CurrentCulture) + " entries - every one checked" + (name != "" ? " for " + name + (pinned.Count > 0 ? " (" + pinned.Count + " for it)" : "") : "") + ", the first 40 of each kind listed", "", "w"));
                 foreach (var l in show)
                 {
                     bool hit = pins(l);
@@ -237,7 +237,7 @@ namespace AdeeboMeter
             // the time zone: a PC set to UTC with its clock moved by hand to look right shows local time, but every time it
             // stamps (logs, links, phone pages, certificates) is hours off
             var tz = TimeZoneInfo.Local; var tzOff = tz.GetUtcOffset(DateTime.Now); bool utcZone = tzOff == TimeSpan.Zero && (tz.Id.IndexOf("UTC", StringComparison.OrdinalIgnoreCase) >= 0 || tz.Id.IndexOf("Coordinated", StringComparison.OrdinalIgnoreCase) >= 0);
-            rows.Add(R(utcZone ? 1 : 3, "Time zone", tz.DisplayName + " · UTC" + (tzOff < TimeSpan.Zero ? "-" : "+") + tzOff.ToString(@"h\:mm", CultureInfo.InvariantCulture), utcZone ? "Set to UTC itself - is that right? If you aren't in a UTC country, pick your zone in Settings > Time & language > Date & time (or turn on 'Set time zone automatically'). Times this PC sends - to phone pages, logs and sign-ins - are off by the difference." : "", "w"));
+            rows.Add(R(utcZone ? 1 : 3, "Time zone", tz.DisplayName + " · UTC" + (tzOff < TimeSpan.Zero ? "-" : "+") + tzOff.Duration().ToString(@"h\:mm", CultureInfo.InvariantCulture)   /* L-194: the sign once */, utcZone ? "Set to UTC itself - is that right? If you aren't in a UTC country, pick your zone in Settings > Time & language > Date & time (or turn on 'Set time zone automatically'). Times this PC sends - to phone pages, logs and sign-ins - are off by the difference." : "", "w"));
             rows.AddRange(WindowsTime());
             return rows;
         }

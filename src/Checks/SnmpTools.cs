@@ -116,7 +116,7 @@ namespace AdeeboMeter
             var now = new IfSnap { At = DateTime.Now, Up = upt };
             foreach (var r in list) { now.P[r.i] = new[] { r.e1, r.e2, r.cr, r.d1, r.d2 }; now.Oper[r.i] = r.o; now.Name[r.i] = r.Name; var dv = V(disc, r.i); if (dv != null) now.Disc[r.i] = Snmp.Text(dv, "", null); }
             IfSnap old; string key = ep.ToString();
-            lock (snapLock) { ifSnaps.TryGetValue(key, out old); if (old == null && ifSnaps.Count >= 20) ifSnaps.Clear(); ifSnaps[key] = now; }
+            lock (snapLock) { ifSnaps.TryGetValue(key, out old); if (old == null && ifSnaps.Count >= 20) ifSnaps.Remove(ifSnaps.OrderBy(z => z.Value.At).First().Key);   /* L-37: the oldest goes, not all 20 */ ifSnaps[key] = now; }
             if (old != null) Changes(rows, old, now);
             Missing(rows);
             Func<ulong, string> sps = v => v == 0 ? "-" : v >= 1000000000UL ? (v / 1000000000UL) + "G" : (v / 1000000UL) + "M";

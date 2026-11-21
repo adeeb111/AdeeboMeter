@@ -26,19 +26,21 @@ namespace AdeeboMeter
 
         public static Dictionary<string, Ex> Parse(string text)
         {
-            var d = new Dictionary<string, Ex>(StringComparer.Ordinal); Ex cur = null;
+            var d = new Dictionary<string, Ex>(StringComparer.Ordinal); Ex cur = null; var problems = new List<string>();
             foreach (var raw in (text ?? "").Split('\n'))
             {
                 string l = raw.TrimEnd('\r');
                 if (l.Trim() == "" || l.StartsWith("#", StringComparison.Ordinal)) continue;
-                if (l.StartsWith("== ", StringComparison.Ordinal)) { cur = new Ex { Id = l.Substring(3).Trim() }; d[cur.Id] = cur; continue; }
+                if (l.StartsWith("== ", StringComparison.Ordinal)) { cur = new Ex { Id = l.Substring(3).Trim() }; if (d.ContainsKey(cur.Id)) problems.Add("\"" + cur.Id + "\" is named twice"); d[cur.Id] = cur; continue; }
                 if (cur == null) continue;
                 if (l.StartsWith("in: ", StringComparison.Ordinal)) { cur.In = l.Substring(4).Split('|').Select(s => s.Trim()).ToArray(); continue; }
-                var p = l.Split('|'); if (p.Length < 3) continue;
+                var p = l.Split('|'); if (p.Length < 3) { problems.Add(cur.Id + ": a row with fewer than 3 parts (" + (l.Length > 40 ? l.Substring(0, 40) : l) + ")"); continue; }
                 cur.Rows.Add(new[] { p[0].Trim(), p[1].Trim(), p[2].Trim(), p.Length > 3 ? p[3].Trim() : "", p.Length > 4 ? p[4].Trim() : "" });
             }
+            Problems = problems;   // bug-hunt L-300: what didn't parse is kept for the self-test to report, never just lost
             return d;
         }
+        public static List<string> Problems = new List<string>();
 
         // the rows shown: a banner first (with "Fill the boxes" when there are inputs), then the made-up result
         public static List<string[]> Rows(Ex e, bool canFill)

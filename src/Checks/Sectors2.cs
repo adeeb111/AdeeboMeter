@@ -32,7 +32,7 @@ namespace AdeeboMeter
             foreach (var t in MxNs) { if (run.Stop) return rows; var d = Toolkit.Dig(host, t, "", m).Where(r => r.Length > 2 && r[1] == t).Select(r => r[2].Split(DotS, StringSplitOptions.None)[0]).OrderBy(x => x, StringComparer.Ordinal).ToArray(); if (d.Length > 0) now["DNS " + t] = string.Join(" ", d); }
             run.Status = "Open ports..."; var open = new List<int>();
             foreach (var p in Watched.Concat(Watched.Contains(port) ? Enumerable.Empty<int>() : new[] { port })) { if (run.Stop) return rows; using (var c = Toolkit.Open(host, p, 2000)) if (c != null) open.Add(p); }
-            now["Open ports"] = open.Count == 0 ? "(none of " + Watched.Length + ")" : string.Join(" ", open.Select(p => p.ToString(CultureInfo.InvariantCulture)).ToArray());
+            now["Open ports"] = open.Count == 0 ? "(none of " + (Watched.Length + (Watched.Contains(port) ? 0 : 1)) + ")"   /* L-203: the ports really tried */ : string.Join(" ", open.Select(p => p.ToString(CultureInfo.InvariantCulture)).ToArray());
             // bug-hunt ML-103: the certificate on the port you named too (8443, 993, 636...), not only 443
             int certPort = open.Contains(port) && port != 22 && port != 25 && port != 80 && port != 53 ? port : open.Contains(443) ? 443 : -1;
             if (certPort > 0) { run.Status = "Certificate..."; string iss, exp, fp; DateTime na0; Cert(host, certPort, out iss, out exp, out fp, out na0); if (iss != "") { now["Certificate issuer"] = iss; now["Certificate expires"] = exp; now["Certificate fingerprint"] = fp; } }
@@ -59,7 +59,7 @@ namespace AdeeboMeter
             foreach (var kv in now) rows.Add(R(3, kv.Key, kv.Value, "", "m"));
             // earlier changes, as a timeline (newest first)
             var past = new List<string[]>();
-            for (int i = hist.Count - 2; i >= 1 && past.Count < 8; i--)
+            for (int i = hist.Count - (outage ? 1 : 2); i >= 1 && past.Count < 8; i--)   // bug-hunt L-204: an outage run wasn't added, so the newest pair starts one later
                 foreach (var k in hist[i].Value.Keys.Union(hist[i - 1].Value.Keys)) { string a, b; hist[i - 1].Value.TryGetValue(k, out a); hist[i].Value.TryGetValue(k, out b); if ((a ?? "") != (b ?? "")) past.Add(R(3, hist[i].Key.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), k + ": " + (a ?? "(none)") + " → " + (b ?? "(gone)"), "", "m")); }
             if (past.Count > 0) { rows.Add(R(-1, "EARLIER CHANGES", hist.Count + " checks kept", "", "m")); rows.AddRange(past); }
             return rows;

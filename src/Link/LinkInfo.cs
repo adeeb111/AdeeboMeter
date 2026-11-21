@@ -253,8 +253,9 @@ namespace AdeeboMeter
                     if (rc != 0) { err = rc == 5 ? "Windows needs location access for Wi-Fi details" : "Wi-Fi list unavailable (" + rc + ")"; continue; }
                     try
                     {
-                        int cnt = Marshal.ReadInt32(bl, 4);
-                        for (int j = 0; j < cnt && j < 400; j++) res.Add(ParseEntry(bl + 8 + j * 360));   // WLAN_BSS_ENTRY is 360 bytes
+                        int total = Marshal.ReadInt32(bl, 0), cnt = Marshal.ReadInt32(bl, 4);   // dwTotalSize, dwNumberOfItems
+                        // bug-hunt L-275: only entries (and their IEs) inside the buffer Windows says it filled
+                        for (int j = 0; j < cnt && j < 400 && 8 + (j + 1) * 360 <= total; j++) res.Add(ParseEntry(bl + 8 + j * 360, total - (8 + j * 360)));   // WLAN_BSS_ENTRY is 360 bytes
                     }
                     finally { WlanFreeMemory(bl); }
                 }
@@ -263,15 +264,15 @@ namespace AdeeboMeter
             finally { if (ifl != IntPtr.Zero) WlanFreeMemory(ifl); if (h != IntPtr.Zero && WlanCloseHandle(h, IntPtr.Zero) != 0) Program.Log("Wi-Fi handle close failed"); }
             return res;
         }
-        static Bss ParseEntry(IntPtr e)
+        static Bss ParseEntry(IntPtr e, int remain)
         {
             var b = new Bss();
-            int sl = Math.Min(32, Marshal.ReadInt32(e, 0)); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Program.Plain(Encoding.UTF8.GetString(sb));
+            int sl = Math.Max(0, Math.Min(32, Marshal.ReadInt32(e, 0))); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Program.Plain(Encoding.UTF8.GetString(sb));
             var mac = new byte[6]; Marshal.Copy(e + 40, mac, 0, 6); b.Bssid = string.Join(":", mac.Select(x => x.ToString("x2", CultureInfo.InvariantCulture)));
             b.Rssi = Marshal.ReadInt32(e, 56);
             b.FreqMHz = Marshal.ReadInt32(e, 92) / 1000;
             int ieOff = Marshal.ReadInt32(e, 352), ieSize = Marshal.ReadInt32(e, 356);
-            byte[] ies = new byte[Math.Max(0, Math.Min(ieSize, 4096))];
+            byte[] ies = ieOff < 360 || ieOff > remain ? new byte[0] : new byte[Math.Max(0, Math.Min(Math.Min(ieSize, 4096), remain - ieOff))];
             if (ies.Length > 0) Marshal.Copy(e + ieOff, ies, 0, ies.Length);
             FromFreq(b); ReadIes(ies, b);
             if (b.Sec == "") b.Sec = (Marshal.ReadInt16(e, 88) & 0x0010) != 0 ? "WEP" : "Open";   // no RSN / WPA element: the privacy bit says WEP or nothing
@@ -349,7 +350,8 @@ namespace AdeeboMeter
                 else if (id == 255 && len >= 7 && ies[p] == 36)   // HE Operation
                 {
                     int prm = ies[p + 1] | (ies[p + 2] << 8) | (ies[p + 3] << 16);
-                    int q = p + 1 + 3 + 1 + 2;                        // params, BSS colour, basic HE-MCS
+                    int q = p + 1 + 3 + 1 + 2;                        // params, BSS colour, basic HE-MCS (bug-hunt L-276: 2 octets at every width in
+                                                                      // HE Operation - only HE Capabilities' MCS set grows with 160 MHz; EHT Operation's basic set is 4 fixed)
                     if ((prm & (1 << 14)) != 0) q += 3;               // VHT operation info present
                     if ((prm & (1 << 15)) != 0) q += 1;               // co-hosted BSS
                     if ((prm & (1 << 17)) != 0 && q + 2 <= p + len)   // 6 GHz operation info
@@ -559,7 +561,11 @@ namespace AdeeboMeter
             var best = blocks.FirstOrDefault(b => Regex.IsMatch(b, @":\s*(\d{1,3}\s*%|%\s*\d{1,3})", RegexOptions.Multiline)) ?? blocks.FirstOrDefault(b => b.Split('\n').Any(l => { int c = l.IndexOf(':'); return c > 0 && Monitor.NormState(l.Substring(c + 1)) == "connected"; }));
             return best ?? text;
         }
-        public static bool Blocked(string text) { return text != null && text.IndexOf("location", StringComparison.OrdinalIgnoreCase) >= 0 && text.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0; }
+        // bug-hunt L-274: netsh's "location permission" message in the languages AdeeboMeter speaks and a few more (the native signal,
+        // m.WifiBlocked, stays the main one - this is the fallback)
+        static readonly Regex LocWord = new Regex("location|localisation|emplacement|ubicaci[oó]n|standort|posizione|localiza[cç][aã]o|locatie|lokalizacj|расположени|местоположени|位置|위치|konum|الموقع|লোকেশন|অবস্থান", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        static readonly Regex PermWord = new Regex("permission|autorisation|permiso|berechtigung|autorizzazione|permiss[aã]o|toestemming|uprawnie|разрешени|权限|許可|権限|권한|izin|إذن|অনুমতি", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        public static bool Blocked(string text) { return text != null && LocWord.IsMatch(text) && PermWord.IsMatch(text); }
         public static string BandOf(int ch, string band)
         {
             if (!string.IsNullOrEmpty(band)) return band;
@@ -655,7 +661,7 @@ namespace AdeeboMeter
                 s.Radio.Add(new[] { "Signal", sig >= 0 ? sig + "%  ·  " + rssi : "-", sig < 0 ? "0" : sig < 40 ? "2" : sig < 60 ? "1" : "0" });
                 s.Radio.Add(new[] { "Receive rate", F("Receive rate (Mbps)") == "-" ? "-" : F("Receive rate (Mbps)") + " Mb/s" });
                 s.Radio.Add(new[] { "Transmit rate", F("Transmit rate (Mbps)") == "-" ? "-" : F("Transmit rate (Mbps)") + " Mb/s" });
-                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Authentication") == "Open" ? "2" : "0" });
+                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication") == "-" || F("Authentication") == "" ? "3" : F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Cipher").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Authentication") == "Open" ? "2" : "0" });   /* L-284: unreadable is unknown, not green */
                 if (sig >= 0 && sig < 40) { lv = 2; notes.Add(Voice.P("Your Wi-Fi signal is weak (" + sig + "%). Walls are winning - move closer to the access point or plug in a cable.", "Weak Wi-Fi signal (" + sig + "%).")); }
                 else if (sig >= 0 && sig < 60) { lv = Math.Max(lv, 1); notes.Add("Signal is so-so (" + sig + "%). Fine for browsing; calls may stutter."); }
 

@@ -75,6 +75,7 @@ namespace AdeeboMeter
                     {
                         string ip = u.Address.ToString();
                         if (ip.StartsWith("169.254.", StringComparison.Ordinal)) rows.Add(R(2, "Address", ip + " - made up by Windows", "No DHCP server answered: the router didn't give an address. Restart the router, or check the cable / Wi-Fi password.", "w"));
+                        else if (u.PrefixOrigin == PrefixOrigin.Dhcp && (u.DhcpLeaseLifetime >= uint.MaxValue - 1 || u.DhcpLeaseLifetime >= 0xFFFFFFFFL || u.DhcpLeaseLifetime > 365L * 86400 * 10)) rows.Add(R(0, "DHCP lease", ip + " · never runs out (an infinite lease)", "", "w"));   // bug-hunt L-214: not "1193046 h left"
                         else if (u.PrefixOrigin == PrefixOrigin.Dhcp) { var left = TimeSpan.FromSeconds(u.DhcpLeaseLifetime); rows.Add(R(left.TotalMinutes < 10 ? 1 : 0, "DHCP lease", ip + " · " + (left.TotalHours >= 1 ? left.TotalHours.ToString("0", CultureInfo.CurrentCulture) + " h" : left.TotalMinutes.ToString("0", CultureInfo.CurrentCulture) + " min") + " left", "", "w")); }
                     }
                 }

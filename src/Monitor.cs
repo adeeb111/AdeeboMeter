@@ -29,7 +29,8 @@ namespace AdeeboMeter
     // ================================================================== Monitor: all reading happens here, off the UI thread
     sealed class Monitor : IDisposable
     {
-        public void Dispose() { Stop(); }   // the sampler/probe threads release their own counters and event as they exit
+        // the sampler/probe threads release their own counters as they exit; the two wait handles go once both have (bug-hunt L-42)
+        public void Dispose() { Stop(); if (samplerT == null && probeT == null) { wake.Dispose(); stopping.Dispose(); } try { PcHealth.Release(); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }   // bug-hunt L-278: the health counters go at exit too
         public readonly object L = new object();
         public Ring Cpu = new Ring(120), Mem = new Ring(120), Commit = new Ring(120), Disk = new Ring(120);
         public Ring Down = new Ring(120), Up = new Ring(120);
@@ -546,8 +547,9 @@ namespace AdeeboMeter
                     if (first != null)
                     {
                         answered = true;   // a public router answered: its name (or none) is the answer for this network
-                        string name = ""; var t = Task.Factory.StartNew(() => { try { return Native.PtrName(first); } catch { return ""; } });
-                        if (t.Wait(3000)) name = t.Result;
+                        // bug-hunt L-75: Windows' name lookup can't be cancelled - so a hung one is never joined by a second
+                        string name = ""; var prev = ptrTask;
+                        if (prev == null || prev.IsCompleted) { var t = Task.Factory.StartNew(() => { try { return Native.PtrName(first); } catch { return ""; } }); ptrTask = t; if (t.Wait(3000)) name = t.Result; }
                         string owner = name != first ? DestCheck.OwnerOf(name) : null;
                         if (owner != null && owner != "cloudflare.com" && owner != "Cloudflare") { Isp = owner; Mood.Isp = owner; Program.Log("provider: " + owner); }
                     }
@@ -558,6 +560,7 @@ namespace AdeeboMeter
                 ispBusy = false;
             });
         }
+        static volatile Task<string> ptrTask;
         void WatchGatewayMac()
         {
             string gw, key; lock (L) { gw = Gateway; key = IfaceId + "|" + Gateway + "|" + Ssid; }
@@ -582,11 +585,11 @@ namespace AdeeboMeter
         // After a drop, ask Windows' own log why (a few seconds later, so the event is written).
         void ExplainWifiDrop()
         {
-            ThreadPool.QueueUserWorkItem(delegate
+            // bug-hunt L-74: a timer waits the 4 s, not a pool thread asleep
+            Task.Delay(4000).ContinueWith(_ =>
             {
-                Thread.Sleep(4000);
-                string err; var rows = EvLog.WifiDrops(0.05, out err);
-                if (rows.Count > 0) Events.Add(1, "wifi", "Why: " + rows[0][1]);
+                try { string err; var rows = EvLog.WifiDrops(0.05, out err); if (rows.Count > 0) Events.Add(1, "wifi", "Why: " + rows[0][1]); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wifi drop why: " + e.Message); }
             });
         }
         void WifiEvents(string state, string bssid, string ch, int sig, int rate)

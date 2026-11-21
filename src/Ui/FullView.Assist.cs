@@ -40,7 +40,9 @@ namespace AdeeboMeter
             var parts = ChoiceSplit.Split(cue).Select(p => p.Trim().Trim('.', '(', ')', '"')).Where(p => p != "").ToList();
             if (!eg && !cue.Contains("://") && parts.Count >= 2 && parts.Count <= 6 && parts.All(p => Regex.IsMatch(p, @"^[a-z0-9+_-]{1,12}$")) && Regex.IsMatch(cue, @",|/|\bor\b"))
             {
-                string orig = (input ?? "").Substring((input ?? "").Length - cue.Length);   // keep the hint's own capitals (A, AAAA)
+                // keep the hint's own capitals (A, AAAA) - cut from the original at its own " - " (bug-hunt L-364: lower-casing can change
+                // the length, "İ" becomes two characters, so the lower-cased length isn't used to cut the original)
+                string inp = input ?? ""; int od = inp.IndexOf(" - ", StringComparison.Ordinal); string orig = od > 0 ? inp.Substring(od + 3) : inp;
                 var op = ChoiceSplit.Split(orig).Select(p => p.Trim().Trim('.', '(', ')', '"')).Where(p => p != "").ToList();
                 return op.Count == parts.Count ? op : parts;
             }

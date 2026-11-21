@@ -23,8 +23,8 @@ fault it is and what to do. When you want more, one click opens everything behin
 1. **Get it** from the Microsoft Store (easiest, signed, updates itself) or the website's download button.
 2. **Open it.** A copy started from a new folder offers *Install*, *Just run it from here* or *Update*. No administrator
    rights are ever needed.
-3. **Answer three quick questions** (what you mostly do online, how much to watch, how chatty the buddy should be). They
-   pick a starting **view** - you can change everything later.
+3. **Answer four quick questions** (what you mostly use the PC for, how the corner widget should look, how much to watch,
+   how the buddy should talk). They pick a starting **view** - you can change everything later. *Skip* is always there.
 4. The widget appears bottom-right. That's it - it now watches by itself.
 
 ---
@@ -60,11 +60,15 @@ fault it is and what to do. When you want more, one click opens everything behin
  ┌ logo ─ [VIEW ▾] ─ [ Search… Ctrl K ] ─ ☀/☾ ─ (•‿•) ─ ⚙ ─ ⋯ ─ [Back to corner] ┐
  │ ● PC ● LAN ● Internet      the verdict, in one sentence, and the buddy's line  │
  ├────────────────────────────────────────────────────────────────────────────────┤
- │ Home · Streaming · Trading · Gamer · Toolbox · Time machine · Learn · More      │
+ │ Home · Outlook · Streaming · Markets · Toolbox · Time machine · Learn · More ▾  │
  │                                                                                │
  │                        the page                              │  side panel     │
  └────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+The bar shows the sections you keep there (these are the default, as a side bar or a tab row). *More ▾* is not a section -
+it's the menu with the rest: **Gamer**, **Network story**, **Security**, **Check a destination**, **Calculators** and
+**Reports**. Search and Home's *Where everything lives* reach them too.
 
 | Control | What it does |
 |---|---|
@@ -192,8 +196,9 @@ trade latency), **commodities** (units, futures contracts, price per unit) and *
   crypto, streaming and **Money & investing** (bull and bear markets, recession, inflation, compound growth, emergency fund,
   budgeting, fees). Each has one *check yourself* question.
 - **Labs** - play with TCP, bufferbloat, Wi-Fi airtime, NAT, MTU black holes and more.
-- **Games** - escape room, catch the thief, packet detective, the packet dungeon, survive the outage, quick-fire rounds,
-  and *Ten years of money*.
+- **Games** - escape room, catch the thief, packet detective, the packet dungeon, survive the outage, *Break the Adeebo Award* (a heist),
+  quick-fire rounds, the streaming and money rounds (*Buffer race*, *Whose fault?*, *4K or not?*, *Spot the scam*) and
+  *Ten years of money*.
 - **Inside Windows** - what each Windows service and background program does.
 
 Learning earns **Adeebo Points** (⋯ > Adeebo Points) - rank up, unlock buddy hats, and claim an Adeebo Award for the Hall

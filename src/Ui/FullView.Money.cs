@@ -34,7 +34,7 @@ namespace AdeeboMeter
                                 bool bear = (i == 7 || i == 16), corr = !bear && v[i] < v[i - 1];
                                 using (var p = new Pen(bear ? Theme.Red : corr ? Theme.Amber : Theme.Green, 3 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawLine(p, X(i - 1), Y(v[i - 1]), X(i), Y(v[i]));
                             }
-                            VText(g, pic == "dip" ? L.T("amber: dips of 10% or so - normal weather") : L.T("green: bull years"), Draw.fSmall, pic == "dip" ? Theme.LvText(1) : Theme.LvText(0), r.X + 18 * S, r.Bottom - 30 * S);
+                            VText(g, pic == "dip" ? L.T("amber: small dips (3-7%) - normal weather") : L.T("green: bull years"), Draw.fSmall, pic == "dip" ? Theme.LvText(1) : Theme.LvText(0), r.X + 18 * S, r.Bottom - 30 * S);
                             VText(g, L.T("red: bear markets (-20% or more)"), Draw.fSmall, Theme.LvText(2), r.X + 280 * S, r.Bottom - 30 * S);
                             break;
                         }

@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // well-known names and ranges as of this version and says "role unknown" rather than guessing.
     static class M365
     {
-        public const string AsOf = "as of AdeeboMeter 1.1";
+        public const string AsOf = "as of November 2026";   // bug-hunt L-306: when the ranges below were taken from Microsoft's list - not a version number that goes stale
         // Teams media relays (Transport Relays) - Microsoft's published, long-stable ranges
         static readonly string[] MediaRanges = { "52.112.0.0/14", "52.122.0.0/15", "52.120.0.0/14" };
         static readonly string[][] Hosts =
@@ -40,7 +40,8 @@ namespace AdeeboMeter
             }
             IPAddress a;
             if (IPAddress.TryParse(ip ?? "", out a) && MediaRanges.Any(r => InRange(a, r))) return port == 443 ? "Teams media relay (over TCP 443)" : "Teams media relay";
-            if (host.EndsWith(".microsoft.com", StringComparison.Ordinal) || host.EndsWith(".office.com", StringComparison.Ordinal) || host.EndsWith(".msedge.net", StringComparison.Ordinal) || host.EndsWith(".azureedge.net", StringComparison.Ordinal)) return "Microsoft, role unknown";
+            // bug-hunt L-304: any Microsoft-owned name (the bare domain too) that no role matched is still Microsoft's
+            if (ms || host.EndsWith(".msedge.net", StringComparison.Ordinal) || host.EndsWith(".azureedge.net", StringComparison.Ordinal) || host == "msedge.net" || host == "azureedge.net") return "Microsoft, role unknown";
             return "";
         }
         public static bool InRange(IPAddress a, string cidr)
@@ -90,7 +91,7 @@ namespace AdeeboMeter
                 {
                     // walk up: a WebView2 helper belongs to whichever app started its tree
                     ProcTree.P cur = p; int guard = 0;
-                    while (cur != null && guard++ < 6) { if (d.TryGetValue(cur.Parent, out pf) && pf != Families[6][0]) { d[p.Pid] = pf + " (WebView2)"; break; } ProcTree.P up; cur = by.TryGetValue(cur.Parent, out up) ? up : null; }
+                    while (cur != null && guard++ < 16) {   /* L-307: deep launcher chains too; the walk still ends (16 at most, and a loop can't repeat) */ if (d.TryGetValue(cur.Parent, out pf) && pf != Families[6][0]) { d[p.Pid] = pf + " (WebView2)"; break; } ProcTree.P up; cur = by.TryGetValue(cur.Parent, out up) ? up : null; }
                 }
             }
             return d;
@@ -112,7 +113,8 @@ namespace AdeeboMeter
             var o = apps.FirstOrDefault(a => a.Name == "Outlook");
             if (o == null) { r.Add(NotRunning); return r; }
             r.Add(new[] { o.Cpu > 25 ? "1" : "0", "Outlook itself", o.Cpu.ToString("0", CultureInfo.CurrentCulture) + "% CPU · " + (o.Mem / 1048576) + " MB", o.Cpu > 25 ? "Busy on your PC: indexing, a big mailbox, or an add-in. File → Options → Add-ins → disable the ones you don't use." : "" });
-            long ost = 0; try { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Outlook"); if (Directory.Exists(d)) ost = Directory.GetFiles(d, "*.ost").Sum(f => new FileInfo(f).Length); } catch { }
+            long ost = 0; try { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Outlook"); if (Directory.Exists(d)) ost = Directory.GetFiles(d, "*.ost").Sum(f => new FileInfo(f).Length); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; ost = -1; }   /* L-305: "couldn't measure" isn't "none" */
+            if (ost < 0) r.Add(new[] { "3", "Mailbox kept on this PC (cached mode)", "couldn't measure it - Outlook's folder couldn't be read", "" });
             if (ost > 0) r.Add(new[] { ost > 25L << 30 ? "1" : "0", "Mailbox kept on this PC (cached mode)", (ost / 1073741824.0).ToString("0.0", CultureInfo.CurrentCulture) + " GB", ost > 25L << 30 ? "A very large local mailbox slows search and start-up. Keep fewer months offline: File → Account settings → your account → 'Download email for the past'." : "" });
             int mail = conns.Count(c => c.App == "Outlook" && c.Role.StartsWith("Mail", StringComparison.Ordinal));
             r.Add(new[] { mail > 0 ? "0" : "1", "Connected to Exchange Online", mail > 0 ? mail + " connections" : "none right now", mail > 0 ? "" : "Outlook isn't talking to the mail server - check the status bar for 'Disconnected' / 'Needs password'." });

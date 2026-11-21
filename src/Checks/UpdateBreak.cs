@@ -35,7 +35,7 @@ namespace AdeeboMeter
                 // a driver that installed (status 0x0) for a device that can matter to the connection - not a USB stick,
                 // a phone, a printer or a mouse being plugged in
                 string text = Regex.Replace(e.Text ?? "", @"\s+", " ");
-                if (!Regex.IsMatch(text, @"status:?\s*0x0\b", RegexOptions.IgnoreCase) && text.IndexOf("0x0.", StringComparison.Ordinal) < 0) continue;
+                if (!Regex.IsMatch(text, @"status:?\s*0x0+\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(text, @"\b0x0+\.")) continue;   /* L-267: 0x00000000 too */
                 if (Regex.IsMatch(text, @"\b(USBSTOR|WPDBUSENUM|SWD\\WPDBUSENUM|HID|STORAGE|SCSI|USBPRINT|MONITOR|DISPLAY|BTHLEDEVICE|BTHENUM)\\", RegexOptions.IgnoreCase)) continue;
                 l.Add(new Change { T = e.T, What = "driver: " + Draw.Trunc(text, 90), Kind = "driver" });
             }

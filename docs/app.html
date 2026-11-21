@@ -2300,7 +2300,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (A("data-pct")) { S.pcTab = A("data-pct"); if (S.tab !== "pc") S.tab = "pc"; draw(); return; }
     if (A("data-dv")) { S.devView = A("data-dv"); draw(); return; }
     if (A("data-mode")) { S.mode = A("data-mode"); wr("am-mode", S.mode === "everyday" ? "" : S.mode); draw(); return; }
-    if (A("data-look")) { S.theme = A("data-look"); wr("am-theme", S.theme === "dark" ? "" : S.theme); draw(); return; }
+    if (A("data-look")) { S.theme = A("data-look"); wr("am-theme", S.theme); draw(); return; }
     if (A("data-tog")) { var k = A("data-tog"); S[k] = !S[k]; if (k === "hc") wr("am-hc", S.hc ? "1" : ""); draw(); return; }
     if (A("data-grp")) { openG[A("data-grp")] = !openG[A("data-grp")]; draw(); return; }
     if (A("data-open")) { open = A("data-open"); S.tab = "pc"; S.pcTab = "checks"; draw(); window.scrollTo(0, 0); return; }
@@ -2357,7 +2357,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (A("data-ftxt")) { var tv = ($("ftxt") || {}).value || txt; if (!tv.trim()) return; txt = ""; send({ t: "text", s: tv.slice(0, 4000) }); draw(); return; }
   });
   document.addEventListener("change", function (e) {
-    var k = e.target.getAttribute && e.target.getAttribute("data-sel"); if (k) { S[k] = e.target.value; if (k === "theme") wr("am-theme", S.theme === "dark" ? "" : S.theme); draw(); return; }
+    var k = e.target.getAttribute && e.target.getAttribute("data-sel"); if (k) { S[k] = e.target.value; if (k === "theme") wr("am-theme", S.theme); draw(); return; }
     if (e.target.id === "fpick" && e.target.files[0]) sendFile(e.target.files[0]);
   });
   var calcT = null;

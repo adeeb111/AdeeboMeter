@@ -61,7 +61,12 @@ namespace AdeeboMeter
             if (walkRename != null)
             {
                 string to = walkRoom.Box.Text.Trim(); var sp0 = spots.FirstOrDefault(z => z.Room == walkRename);
-                if (to != "" && sp0 != null) { spots.RemoveAll(z => z.Room == to && z != sp0); sp0.Room = to; SaveSpots(); walkStatus.Text = AdeeboMeter.L.T("Renamed ") + walkRename + " to " + to + "."; }
+                // bug-hunt L-172/173: a name another room has is refused (it would delete that room's measurement); an empty name or a
+                // spot that's gone says so - nothing happens silently
+                if (sp0 == null) walkStatus.Text = AdeeboMeter.L.T("That spot was removed - nothing to rename.");
+                else if (to == "") { walkStatus.Text = AdeeboMeter.L.T("Type the new name first."); return; }
+                else if (to != walkRename && spots.Any(z => z.Room == to && z != sp0)) { walkStatus.Text = "\"" + to + "\" " + AdeeboMeter.L.T("is already a room - pick another name, or remove that one first."); return; }
+                else { sp0.Room = to; SaveSpots(); walkStatus.Text = AdeeboMeter.L.T("Renamed ") + walkRename + " to " + to + "."; }
                 EndRename(); walkRoom.Box.Text = ""; linkCanvas.Invalidate(); return;
             }
             string room = walkRoom.Box.Text.Trim(); if (room == "") room = "Spot " + (spots.Count + 1);

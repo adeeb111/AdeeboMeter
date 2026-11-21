@@ -781,7 +781,7 @@ your own mix	vos réglages
 plus about	plus environ
 game pings a minute for the games you watch (one a second per server while you play)	pings de jeu par minute pour vos jeux suivis (un par seconde et par serveur pendant que vous jouez)
 on top of the widget's once-a-second read of Windows' own counters.	en plus de la lecture des compteurs de Windows par le widget, une fois par seconde.
-The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	Le widget reste toujours léger. Le travail de fond (capture en direct, liste complète des connexions, chemins) ne tourne que fenêtre ouverte. Ces réglages décident de la surveillance en arrière-plan - vérifications par minute, plus les pings de jeu dès que vous suivez un jeu.
+The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	Le widget reste toujours léger. Le travail de fond (capture en direct, liste complète des connexions, chemins) ne tourne que fenêtre ouverte. Ces réglages décident de la surveillance en arrière-plan - vérifications par minute, plus les pings de jeu dès que vous suivez un jeu.
 # Learn games (escape room, catch the thief, packet detective, quick-fire)
 The DNS server is down	Le serveur DNS est en panne
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	Utilisez un autre serveur DNS (1.1.1.1, par exemple) - ou redémarrez le routeur, qui est le serveur DNS ici
@@ -1577,7 +1577,7 @@ KEYS	CLÉS
 Keep this	Garder ceci
 Kerberos: sign me in	Kerberos : me connecter
 Keyboard test - press every key	Test du clavier : appuyez sur chaque touche
-Keys: Ctrl+Shift+S save · C copy · Q phone	Ctrl+Shift+S : enregistrer · C : copier · Q : téléphone
+Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	Ctrl+Shift+S : enregistrer · Ctrl+Shift+C : copier · Ctrl+Shift+Q : téléphone
 LAB	LABO
 LAST 10 MINUTES	10 DERNIÈRES MINUTES
 LDAP ping - are you there, which site am I in?	Ping LDAP : répondez-vous, dans quel site suis-je?
@@ -1991,7 +1991,7 @@ after the server thought about it	après traitement par le serveur
 alerts	alertes
 all of it took	durée totale :
 allowed	autorisé
-amber: dips of 10% or so - normal weather	orange : baisses d’environ 10%, courantes
+amber: small dips (3-7%) - normal weather	orange : petites baisses (3-7%), courantes
 an address! (it shouldn't have one)	une adresse inattendue!
 an answer	une réponse
 and the hand-off after it - loss starts there and carries on to the destination.	et le transfert suivant; les pertes commencent ici et continuent jusqu’à destination.
@@ -2803,3 +2803,12 @@ Nothing changed.	Aucun changement.
  settings.	 paramètres.
  Some captions switch language at the next start.	 Certains libellés changent au prochain démarrage.
 Couldn't read it: 	Lecture impossible : 
+replay	relecture
+Hardware nerds	Mordus du matériel
+The PC	Le PC
+Weather	Météo
+Every tool	Tous les outils
+Copy my week	Copier ma semaine
+the first	les
+shown	premiers affichés
+earlier report(s) waiting to send when you're online	rapports en attente de connexion

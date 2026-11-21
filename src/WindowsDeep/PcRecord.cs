@@ -188,7 +188,7 @@ namespace AdeeboMeter
             foreach (var e in Earlier().AsEnumerable().Reverse().Skip(c.Pts.Count >= 3 ? 1 : 0).Take(8))
             {
                 DateTime t; DateTime.TryParse(e[0], CultureInfo.InvariantCulture, DateTimeStyles.None, out t); int lv; if (!int.TryParse(e[2], out lv)) lv = 0;
-                rows.Add(R(Math.Min(lv, e[1] == "unknown" || e[1] == "notpc" ? 3 : 1), "Earlier: " + t.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), WhoText(e[1]), "", "m"));
+                rows.Add(R(e[1] == "unknown" || e[1] == "notpc" ? 3 : Math.Max(0, Math.Min(lv, 2)), "Earlier: " + t.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), WhoText(e[1]), "", "m"));
             }
             return rows;
         }

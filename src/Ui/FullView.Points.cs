@@ -352,7 +352,7 @@ namespace AdeeboMeter
                             using (var dot = new SolidBrush(has ? Theme.Green : Theme.Line)) g.FillEllipse(dot, x, y + 10 * S, 10 * S, 10 * S);
                             g.DrawString(it.Title, Draw.fBodyB, ink, new RectangleF(x + 18 * S, y + 5 * S, tagX - x - 26 * S, 22 * S), nowrap);
                             g.DrawString(it.Tag, Draw.fSmall, sub, new RectangleF(tagX, y + 7 * S, ptsX - tagX - 10 * S, 22 * S), nowrap);
-                            string pts = it.Value == 0 ? L.T("no points") : (has ? "✓ " : "") + "+" + it.Value + (it.Replay ? (rep ? "  ·  replay ✓" : "  ·  replay +" + Points.ReplayPts) : "");
+                            string pts = it.Value == 0 ? L.T("no points") : (has ? "✓ " : "") + "+" + it.Value + (it.Replay ? (rep ? "  ·  " + L.T("replay") + " ✓" : "  ·  " + L.T("replay") + " +" + Points.ReplayPts) : "")   /* L-167 */;
                             g.DrawString(pts, Draw.fSmall, it.Value == 0 ? muted : has ? green : ink, ptsX, y + 7 * S);
                             g.DrawString(L.T("Go") + " ›", Draw.fBodyB, blue, x + w - 34 * S, y + 5 * S);
                             var go = it.Go; Act(pointsCanvas, rr, delegate { go(); });

@@ -67,14 +67,19 @@ namespace AdeeboMeter
             foreach (var t in Tools2().Where(x => x.Do != null && x.Inputs.Length > 0 && !ByHand.Contains(x.Id)))
             {
                 if (late()) { sb.AppendLine("      (time cap reached - rest skipped)"); break; }
-                var worst = new Probe(); long total = 0; int tries = 0; double mem = 0; int hd = 0, gd = 0;
+                var worst = new Probe(); long total = 0; int tries = 0; double mem = 0; int hd = 0, gd = 0; var seenKinds = new HashSet<string>();
                 for (int box = 0; box < t.Inputs.Length; box++)
                     foreach (var h in Hostile)
                     {
                         var a = new string[4]; for (int i = 0; i < 4; i++) a[i] = i == box ? h : i == 0 ? "127.0.0.1" : "";   // other boxes: loopback, so nothing leaves the PC
                         if (box == 0 && TargetTools.Contains(t.Id) && h.Length > 0 && h.Trim().Length == 0) continue;
                         var p = RunOne(t, a, 3000); total += p.Ms; tries++; mem += p.MemMb; hd += p.Handles; gd += p.Gdi;
-                        if (p.Status != "OK" && p.Status != "SLOW (stopped at the limit)" && worst.Status == "OK") { worst = p; worst.Status += "  [box " + (box + 1) + " = " + Draw.Trunc(h.Replace("\u0000", "\\0"), 30) + "]"; }
+                        if (p.Status != "OK" && p.Status != "SLOW (stopped at the limit)")
+                        {   // bug-hunt L-363: the first failure is the headline; every other kind of failure is listed after it
+                            string tag = "  [box " + (box + 1) + " = " + Draw.Trunc(h.Replace("\u0000", "\\0"), 30) + "]"; string kind = p.Status.Split(':')[0];
+                            if (worst.Status == "OK") { worst = p; worst.Status += tag; seenKinds.Add(kind); }
+                            else if (seenKinds.Add(kind) && seenKinds.Count <= 4) worst.Status += "  ·  also " + Draw.Trunc(p.Status, 40) + tag;
+                        }
                     }
                 worst.Ms = total; worst.Rows = tries; worst.MemMb = mem; worst.Handles = hd; worst.Gdi = gd; rec(t.Id + " × " + tries + " inputs", worst);
             }

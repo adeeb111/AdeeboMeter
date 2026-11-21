@@ -12,7 +12,10 @@ namespace AdeeboMeter
     // protected by Windows for this user (DPAPI) and on the phone behind Face ID / fingerprint. With it, the phone can
     // reconnect without a new code: the PC waits in a room only P can name (a new one every 25 minutes), and the
     // handshake is the usual one keyed by P instead of the QR secret - fresh one-time keys each session.
-    // Forget on either side ends it: the PC deletes P, and without P the phone can't find or open the room.
+    // Forget on either side ends it. Forgotten on the PC: P is deleted here and the PC never waits in its rooms again, so the
+    // phone (which still has its copy of P) finds no PC and its tries go nowhere until it's forgotten there too (bug-hunt
+    // L-257 - the phone's copy can't be revoked from here; it just has nothing left to open). Forgotten on the phone: no P,
+    // so it can't even name the room.
     static class RemotePhones
     {
         public sealed class P { public string Id = "", Name = ""; public byte[] Key; public DateTime Added; }
@@ -20,26 +23,32 @@ namespace AdeeboMeter
         static readonly byte[] Entropy = Encoding.ASCII.GetBytes("adeebometer remembered phone v1");
         static readonly object k = new object();
 
+        public static volatile int Unreadable;
         public static List<P> All()
         {
-            var l = new List<P>();
+            var l = new List<P>(); int bad = 0;
             lock (k)
                 foreach (var r in Store.Read("phones.txt"))
                 {
-                    if (r.Length < 4) continue;
+                    if (r.Length < 4) { bad++; continue; }
                     try
                     {
                         var key = ProtectedData.Unprotect(Convert.FromBase64String(r[2]), Entropy, DataProtectionScope.CurrentUser);
                         DateTime a; DateTime.TryParse(r[3], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out a);
                         if (key.Length == 32) l.Add(new P { Id = r[0], Name = r[1], Key = key, Added = a });
                     }
-                    catch (Exception e) { if (!(e is CryptographicException || e is FormatException)) throw; Program.Log("phones: a key couldn't be opened"); }
+                    catch (Exception e) { if (!(e is CryptographicException || e is FormatException)) throw; Program.Log("phones: a key couldn't be opened"); bad++; }
                 }
+            Unreadable = bad;   // bug-hunt L-239: the phone page says so - a phone isn't forgotten without a word
             return l;
         }
         static void Save(List<P> l)
         {
             Store.Write("phones.txt", l.Select(p => new[] { p.Id, p.Name, Convert.ToBase64String(ProtectedData.Protect(p.Key, Entropy, DataProtectionScope.CurrentUser)), p.Added.ToString("o", CultureInfo.InvariantCulture) }));
+        }
+        public static void Rename(string id, string name)
+        {
+            lock (k) { var l = All(); var p = l.FirstOrDefault(z => z.Id == id); if (p == null || string.IsNullOrEmpty(name) || p.Name == name) return; p.Name = name; Save(l); }
         }
         public static P Add(string name)
         {

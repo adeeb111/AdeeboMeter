@@ -279,7 +279,8 @@ namespace AdeeboMeter
             split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 52)); split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
             procList = new DB { Name = "procList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             procList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintProcList(e.Graphics); }; Wire(procList);
-            // the pinned column header: a scroll moves the picture, so paint it all again or the header smears
+            // the pinned column header: a scroll moves the picture, so paint it all again or the header smears. Both events on purpose
+            // (bug-hunt L-260): a wheel doesn't always raise Scroll here; two Invalidates before a paint merge into one paint
             procList.Scroll += delegate { procList.Invalidate(); }; procList.MouseWheel += delegate { procList.Invalidate(); };
             procInfo = new DB { Name = "procInfo", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
             procInfo.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintProcInfo(e.Graphics); }; Wire(procInfo);

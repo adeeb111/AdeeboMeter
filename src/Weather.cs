@@ -215,7 +215,7 @@ namespace AdeeboMeter
             {
                 var lines = new List<string>(); lock (k) { lines.Add("place=" + forPlace); lines.Add("fetched=" + fetchedUtc.ToString("o", CultureInfo.InvariantCulture));
                     foreach (var h in hours) lines.Add(h.Utc.ToString("yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture) + "|" + N(h.Temp) + "|" + N(h.Feels) + "|" + (h.Code < 0 ? "" : h.Code.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Pop < 0 ? "" : h.Pop.ToString(CultureInfo.InvariantCulture))); }
-                File.WriteAllLines(File0, lines);
+                SafeFile.WriteText(File0, string.Join("\r\n", lines) + "\r\n");   // bug-hunt L-320: temp file, then replace
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
         }

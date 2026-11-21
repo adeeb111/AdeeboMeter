@@ -102,7 +102,7 @@ namespace AdeeboMeter
             History.Minute(t, new[] { worst, cpuN > 0 ? cpu / cpuN : double.NaN, memN > 0 ? mem / memN : double.NaN, downN > 0 ? down / downN : double.NaN, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, upN > 0 ? up / upN : double.NaN,   /* AM-CG-266: not measured stays empty, never a 0 */ gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
-            if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));
+            if (t.Minute % 10 == 0) Task.Factory.StartNew(() => { try { Devices.Check(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("devices: " + e.Message); } });   // bug-hunt L-321: like AirLog below
             if (t.Minute == 5) Task.Factory.StartNew(() => { try { AirLog.Record(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("air: " + e.Message); } });   // neighbour wars: once an hour
             if (t.Minute == 20 && Cfg.History && (Cfg.Preset != "penny" || t.Hour == 12)) UpdateBreak.Background();   // what Windows Update changed: once an hour, in the background
         }
@@ -116,7 +116,7 @@ namespace AdeeboMeter
         {
             var r = new List<string[]>();
             try { var f = PathOf(name); if (File.Exists(f)) { var q = new Queue<string>(); foreach (var l in File.ReadLines(f)) { q.Enqueue(l); if (q.Count > 20000) q.Dequeue(); } foreach (var l in q) { var p = l.Split('\t'); if (p.Length > 1) r.Add(p); } } /* the NEWEST 20,000 rows: the file grows oldest-first */ }
-            catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("store " + name + ": " + e.Message); }   /* L-322 */
             return r;
         }
         public static void Write(string name, IEnumerable<string[]> rows)
@@ -127,7 +127,7 @@ namespace AdeeboMeter
                 File.WriteAllLines(tmp, rows.Select(r => string.Join("\t", r.Select(x => (x ?? "").Replace('\t', ' ').Replace('\n', ' ')))));
                 Program.ReplaceFile(tmp, f);
             }
-            catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("store " + name + ": " + e.Message); }   /* L-322 */
         }
         public static double D(string s) { double v; return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0; }
         public static string S(double v) { return v.ToString("0.###", CultureInfo.InvariantCulture); }

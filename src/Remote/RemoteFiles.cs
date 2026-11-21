@@ -17,8 +17,9 @@ namespace AdeeboMeter
     //   sender: fdat {id, n, d (base64, ≤ 30 KB)} × N, at most 20 a second and 24 ahead of the last fack  →  fend {id, n, size}
     //   receiver: fack {id, n} every 8 pieces; either side: fcancel {id}
     //
-    // Every piece is sealed with its own counter and MAC (RemoteCrypto), so a changed, missing, replayed or reordered piece
-    // ends the session - the size and the piece count are checked at the end as well. A file from the phone lands in
+    // Every piece is sealed with its own counter and MAC (RemoteCrypto), so a changed or replayed piece ends the session (its
+    // seal fails); a piece out of order or missing drops just that file (Drop), the session goes on - the size and the piece
+    // count are checked at the end as well (bug-hunt L-224). A file from the phone lands in
     // AdeeboMeter's own folder as a .part until it's complete, then moves to Downloads\AdeeboMeter with its name and Windows'
     // "downloaded" mark; the receiver confirms with fgot {id}. The relay only ever sees sealed pieces.
     sealed partial class Remote
@@ -45,11 +46,14 @@ namespace AdeeboMeter
         // crash or a killed app is deleted the first time a transfer starts in this run
         static string Staging { get { return Path.Combine(Program.DataDir, "incoming"); } }
         static int swept;
-        static void Sweep()
+        internal static void Sweep()   // bug-hunt L-40: also run once at start, so a crashed transfer's leftover doesn't wait for the next one
         {
             if (Interlocked.Exchange(ref swept, 1) != 0) return;
-            try { if (Directory.Exists(Staging)) foreach (var f in Directory.GetFiles(Staging, "*.part")) try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
-            catch (IOException) { } catch (UnauthorizedAccessException) { }
+            // bug-hunt L-255: what couldn't be deleted is logged (it's tried again next start)
+            int left = 0;
+            try { if (Directory.Exists(Staging)) foreach (var f in Directory.GetFiles(Staging, "*.part")) try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch (IOException) { left++; } catch (UnauthorizedAccessException) { left++; } }
+            catch (IOException e) { Program.Log("phone files: couldn't tidy the incoming folder - " + e.Message); } catch (UnauthorizedAccessException e) { Program.Log("phone files: couldn't tidy the incoming folder - " + e.Message); }
+            if (left > 0) Program.Log("phone files: " + left + " unfinished file(s) couldn't be deleted - tried again next start");
         }
 
         void Files(Msg c)
@@ -69,7 +73,7 @@ namespace AdeeboMeter
                         lock (fk)
                         {
                             if (ins.ContainsKey(id) || asking.Contains(id)) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"already sending that one\"}"); return; }
-                            if (ins.Count + asking.Count >= 2) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"one at a time\"}"); return; }
+                            if (ins.Count + asking.Count >= 2) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"two at a time at most - wait for one to finish\"}"); return; }
                             asking.Add(id);
                         }
                         // ask on the PC (No is the default); the answer may take a while, so not on the receive thread
@@ -175,6 +179,8 @@ namespace AdeeboMeter
                 try
                 {
                     var fi = new FileInfo(path); if (!fi.Exists) { say(L.T("That file isn't there any more.")); return; }
+                    // bug-hunt L-252 (by design): 100 MB to the phone, 200 MB from it - the phone's page holds an incoming file in its
+                    // memory until it's saved, the PC writes to disk piece by piece
                     if (fi.Length == 0 || fi.Length > 100L * 1024 * 1024) { say(L.T("Phones take files up to 100 MB from here.")); return; }
                     lock (fk) { if (outs.Count > 0) { say(L.T("One file at a time - wait for the last one.")); return; } outs[o.Id] = o; }
                     Seal("{\"t\":\"fput\",\"id\":\"" + o.Id + "\",\"name\":\"" + J(fi.Name) + "\",\"size\":" + fi.Length.ToString(CultureInfo.InvariantCulture) + "}");

@@ -152,7 +152,7 @@ namespace AdeeboMeter
             // the lines: processor %, disk busy %, ping (own scale)
             Func<string, List<double>> ser = name => { var m = Regex.Match(tl, name + @"\s+([-\dx ]+)"); return m.Success ? m.Groups[1].Value.Trim().Split(' ').Select(t => t == "x" ? -1 : t == "-" ? double.NaN : double.Parse(t, CultureInfo.InvariantCulture)).ToList() : new List<double>(); };
             var cpu = ser("CPU"); var disk = ser("Disk"); var mem = ser("Memory"); var ping = ser("Ping");
-            if (cpu.Count < 2) { cpu = new List<double> { 10, 12, 30, 20, 15, 12 }; disk = new List<double> { 5, 8, 10, 6, 5, 4 }; ping = new List<double> { 14, 15, 14, 16, 15, 14 }; }
+            if (cpu.Count < 2) { cpu = new List<double> { 10, 12, 30, 20, 15, 12 }; disk = new List<double> { 5, 8, 10, 6, 5, 4 }; mem = new List<double> { 52, 53, 58, 57, 55, 54 }; /* L-282: all four lines */ ping = new List<double> { 14, 15, 14, 16, 15, 14 }; }
             var gr = new RectangleF(r.X + 50 * S, r.Y + 100 * S, r.Width - 110 * S, 150 * S);
             using (var p = new Pen(Theme.Line, 1 * S)) { g.DrawRectangle(p, gr.X, gr.Y, gr.Width, gr.Height); g.DrawLine(p, gr.X, gr.Y + gr.Height * 0.1f, gr.Right, gr.Y + gr.Height * 0.1f); }
             VText(g, "100%", Draw.fTiny, Theme.Sub, r.X + 14 * S, gr.Y - 6 * S); VText(g, "0", Draw.fTiny, Theme.Sub, r.X + 30 * S, gr.Bottom - 10 * S);
@@ -245,7 +245,7 @@ namespace AdeeboMeter
                 if (o[1] == "Memory") cur = Rep(cards, cur, o[2], null, null); else if (o[1] == "In use now") cur = Rep(cards, cur, null, o[2], null); else if (o[1] == "Link") cur = Rep(cards, cur, null, null, o[2]); else if (o[1].StartsWith("  ", StringComparison.Ordinal)) cur.Item5.Add(o[1].Trim() + " " + P(o[2], 0));
             }
             if (cards.Count == 0) cards.Add(Tuple.Create("GRAPHICS CARD: (run it to see)", "8 GB of its own", "", "PCIe 4.0 x8 now · up to PCIe 4.0 x16", new List<string>()));
-            var r = VisCard(g, x, y, w, 70 * S + cards.Count * 120 * S + 30 * S, "GRAPHICS: OWN MEMORY, BORROWED MEMORY, AND THE ROAD TO THE PROCESSOR", st);
+            var r = VisCard(g, x, y, w, 70 * S + Math.Min(3, cards.Count) * 120 * S + 30 * S, "GRAPHICS: OWN MEMORY, BORROWED MEMORY, AND THE ROAD TO THE PROCESSOR", st);
             float yy = r.Y + 44 * S;
             foreach (var c in cards.Take(3))
             {
@@ -279,15 +279,16 @@ namespace AdeeboMeter
             string cpu = RV("Processor"); double cores = HN(cpu, @"(\d+)\s*cores"), threads = HN(cpu, @"(\d+)\s*threads"), rated = HN(cpu, @"rated\s*([\d.]+)\s*GHz"), perf = HN(RV("Speed under full load"), @"([\d.]+)%"), ghz = HN(RV("Speed under full load"), @"≈\s*([\d.]+)\s*GHz");
             if (double.IsNaN(cores)) { cores = 8; threads = 16; } if (double.IsNaN(threads)) threads = cores;
             var r = VisCard(g, x, y, w, 290 * S, "THE PROCESSOR: " + cores + " CORES (WORKERS), " + threads + " THREADS, AND ITS REAL SPEED", st);
-            int nt = (int)Math.Min(64, threads), per = threads > cores ? 2 : 1, cols = (int)Math.Min(16, cores); float cs = Math.Min(30 * S, (r.Width * 0.5f) / cols - 6 * S);
+            int nt = (int)Math.Min(64, threads), htCores = (int)Math.Max(0, Math.Min(cores, threads - cores)), cols = (int)Math.Min(16, cores); float cs = Math.Min(30 * S, (r.Width * 0.5f) / cols - 6 * S);
             double load = tbBusy && tbSel == "cpuheld" ? 100 : M.Cpu.Last; bool anim = WindowsAnimates(); var rnd = new Random(anim ? (int)(AnimT * 3) : 1);
             for (int c = 0; c < (int)cores && c < 32; c++)
             {
                 float cx = r.X + 18 * S + (c % cols) * (cs + 6 * S), cy = r.Y + 48 * S + (c / cols) * (cs + 10 * S);
                 Theme.Fill(g, new RectangleF(cx, cy, cs, cs), 4 * S, Theme.Soft);
+                int per = c < htCores ? 2 : 1;   // bug-hunt L-280: a hybrid CPU (6 two-thread cores + 8 one-thread ones) drawn as it is
                 for (int t = 0; t < per; t++) { bool on = rnd.NextDouble() * 100 < (double.IsNaN(load) ? 20 : load); Theme.Fill(g, new RectangleF(cx + 3 * S + t * (cs - 6 * S) / per, cy + 3 * S, (cs - 6 * S) / per - 2 * S, cs - 6 * S), 2 * S, on ? Theme.Green : Theme.Line); }
             }
-            VText(g, L.T("each square is a core; its halves are its two threads - lit = working now"), Draw.fTiny, Theme.Sub, r.X + 18 * S, r.Y + 48 * S + ((int)Math.Ceiling(Math.Min(32, cores) / cols)) * (cs + 10 * S));
+            VText(g, htCores > 0 && htCores < cores ? L.T("each square is a core; split ones run two threads, whole ones one - lit = working now") : htCores == 0 ? L.T("each square is a core with one thread - lit = working now") : L.T("each square is a core; its halves are its two threads - lit = working now"), Draw.fTiny, Theme.Sub, r.X + 18 * S, r.Y + 48 * S + ((int)Math.Ceiling(Math.Min(32, cores) / cols)) * (cs + 10 * S));
             // the speed gauge: 100% = the rated clock; above = boost, below = held back
             float gx = r.X + r.Width * 0.62f, gy = r.Y + 150 * S, rad = Math.Min(90 * S, r.Width * 0.16f);
             var box = new RectangleF(gx - rad, gy - rad, rad * 2, rad * 2);

@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace AdeeboMeter
@@ -19,8 +20,10 @@ namespace AdeeboMeter
         internal static readonly int[] Zooms = { 80, 90, 100, 110, 125, 150, 175 };
         void ZoomBy(int dir)
         {
-            int i = Array.IndexOf(Zooms, Cfg.Zoom); if (i < 0) i = Array.IndexOf(Zooms, 100);
-            ZoomTo(Zooms[Math.Max(0, Math.Min(Zooms.Length - 1, i + dir))]);
+            // bug-hunt L-178: a size between the steps (120 from an imported file) moves to the next step in that direction, not to 100
+            int z = Cfg.Zoom, i = Array.IndexOf(Zooms, z);
+            if (i >= 0) ZoomTo(Zooms[Math.Max(0, Math.Min(Zooms.Length - 1, i + dir))]);
+            else ZoomTo(dir > 0 ? Zooms.Where(s => s > z).DefaultIfEmpty(Zooms.Last()).First() : Zooms.Where(s => s < z).DefaultIfEmpty(Zooms[0]).Last());
         }
         void ZoomTo(int z)
         {
@@ -39,7 +42,7 @@ namespace AdeeboMeter
             Action<string, string, Action> add = (t, k, a) => { pageItems.Add(new[] { t, k }); pageActs.Add(a); };
             add(L.T("Zoom in"), "Ctrl +", () => ZoomBy(1));
             add(L.T("Zoom out"), "Ctrl -", () => ZoomBy(-1));
-            add(L.T("Actual size") + "  (" + Cfg.Zoom + "%)", "Ctrl 0", () => ZoomTo(100));
+            add(L.T("Actual size") + (Cfg.Zoom != 100 ? "  (" + L.T("now") + " " + Cfg.Zoom + "%)" : ""), "Ctrl 0", () => ZoomTo(100));   // bug-hunt L-177: "now 125%" - the size you're at, not what this item gives
             add("-", "", null);
             add(L.T("Search"), "Ctrl K", OpenPalette);
             add(L.T("Check again now"), "", () => { if (M != null) M.Nudge(); RefreshConns(true); Invalidate(true); });

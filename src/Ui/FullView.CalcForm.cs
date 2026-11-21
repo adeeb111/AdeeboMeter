@@ -153,7 +153,7 @@ namespace AdeeboMeter
             foreach (Control c in calcHost.Controls.Cast<Control>().ToList()) { calcHost.Controls.Remove(c); c.Dispose(); }
             calcNow = SpecOf(id); calcTouched = false;
             if (calcNow == null) { calcHost.Visible = false; calcHost.ResumeLayout(); return; }
-            calcHost.MaximumSize = new Size(Math.Max(Sc(500), tbBar.ClientSize.Width - Sc(260)), 0);
+            calcHost.MaximumSize = new Size(Math.Max(Sc(200), Math.Min(Math.Max(Sc(500), tbBar.ClientSize.Width - Sc(260)), tbBar.ClientSize.Width - Sc(16))), 0);   // bug-hunt L-335: never wider than the bar itself
             foreach (var f in calcNow.F) calcHost.Controls.Add(FieldUi(f));
             calcHost.Visible = true; calcHost.ResumeLayout(true);
             foreach (var rb in tbPool) rb.Visible = false;

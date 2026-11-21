@@ -115,8 +115,8 @@ namespace AdeeboMeter
                 if (hits.Count == 0) { rows.Add(R(1, mac, "not in this switch's MAC table (" + all.Count + " entries)", "Switches forget a MAC after about 5 minutes of silence - ping the device, then run this again. Or it's behind another switch.", "m")); return rows; }
                 foreach (var h in hits)
                 {
-                    int n; if (!perPort.TryGetValue(h.Port, out n)) n = 1;
-                    rows.Add(R(n > 3 ? 1 : 0, mac, "on " + portName(h.Port) + (h.Vlan != "" ? " · VLAN " + h.Vlan : ""), n > 3 ? "That port carries " + n + " MACs - it's an uplink to another switch or access point. Run this on that switch to get the real port." : "The only device (or one of a few) on that port - this is where it's plugged in.", "m"));
+                    int n; bool counted = perPort.TryGetValue(h.Port, out n); if (!counted) n = 1;   // bug-hunt L-273: found by a direct lookup, the port's count is unknown
+                    rows.Add(R(n > 3 ? 1 : 0, mac, "on " + portName(h.Port) + (h.Vlan != "" ? " · VLAN " + h.Vlan : ""), n > 3 ? "That port carries " + n + " MACs - it's an uplink to another switch or access point. Run this on that switch to get the real port." : counted ? "The only device (or one of a few) on that port - this is where it's plugged in." : "Found by asking for it directly (it wasn't in the part of the table read), so how many devices share that port isn't known.", "m"));
                 }
                 return rows;
             }

@@ -11,7 +11,7 @@ namespace AdeeboMeter
 {
     // ================================================================== Toolbox › Every tool (Adeeb + GPT, 16 Nov - replaces "All tools (list)")
     // The same questions as By question, as an index: the questions down the left (a chip row on a narrow window), every tool
-    // ONCE on the right - its name, what it answers (never cut), when it last ran or the points it still gives, a pin, Open.
+    // ONCE on the right - its name, what it answers (two lines at most, then "…" - bug-hunt L-150), when it last ran or the points it still gives, a pin, Open.
     // A family is one row (SNMP: "15 views ▾"). Pinned first: ready-made big coloured buttons, then your own pins.
     //
     //   [ search ]                                       By question | Every tool
@@ -33,12 +33,13 @@ namespace AdeeboMeter
         void OpenFromIndex(string id) { idxBackQ = tbQ; idxBackY = -tbCanvas.AutoScrollPosition.Y; tbSearch.Box.Text = ""; OpenTool(id); }
 
         // "SWITCHES & ROUTERS (SNMP)" -> "Switches & routers (SNMP)"
-        static readonly string[] KeepCaps = { "SNMP", "DNS", "TLS", "HTTPS", "HTTP", "PC", "VPN", "IT", "TDM", "ISP", "IP", "LAN", "Wi-Fi", "IPv6", "TCP", "UDP" };
+        static readonly string[] KeepCaps = { "SNMP", "DNS", "TLS", "HTTPS", "HTTP", "PC", "VPN", "TDM", "ISP", "IP", "LAN", "Wi-Fi", "IPv6", "TCP", "UDP" };
         static string GroupName(string g)
         {
             if (string.IsNullOrEmpty(g)) return "";
             string s = g.ToLowerInvariant(); s = char.ToUpperInvariant(s[0]) + s.Substring(1);
             foreach (var k in KeepCaps) s = Regex.Replace(s, @"\b" + Regex.Escape(k.ToLowerInvariant()) + @"\b", k);
+            s = Regex.Replace(s, @"\bit maths\b", "IT maths");   // bug-hunt L-141: "IT" only where it means IT - "Is it reachable?" stays a word
             return s;
         }
         static string Answers(Tool t) { var te = Explain.Term("tb." + t.Id); return te != null && !string.IsNullOrEmpty(te.Tag) ? te.Tag : ""; }
@@ -49,7 +50,7 @@ namespace AdeeboMeter
             bool rail = w > 860 * S; float rw = rail ? 250 * S : 0, cx = x + (rail ? rw + 24 * S : 0), cw = w - (rail ? rw + 24 * S : 0);
             float top = y + 6 * S; railEnd = 0;
             // ---- the questions: a rail, or a chip row on a narrow window
-            var items = new List<string[]> { new[] { "", "★ " + L.T("Pinned"), (StarterPins.Length + MyPins().Count).ToString(CultureInfo.CurrentCulture) } };
+            var items = new List<string[]> { new[] { "", "★ " + L.T("Pinned"), StarterPins.Union(MyPins()).Count().ToString(CultureInfo.CurrentCulture) } };   // bug-hunt L-152: a starter you also pinned counts once
             foreach (var qd in Questions) items.Add(new[] { qd[0], L.T(qd[1]), ToolsOf(qd[0]).Count(t => !SnmpView(t.Id) || t.Id == "snmp").ToString(CultureInfo.CurrentCulture) });
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -89,8 +90,9 @@ namespace AdeeboMeter
                 List<Tool> rows; string title, count;
                 if (tbFilter != "")
                 {
-                    rows = Matches().Where(t => !SnmpView(t.Id) || t.Id == "snmp" || tbFilter.IndexOf("snmp", StringComparison.OrdinalIgnoreCase) >= 0).Take(80).ToList();
-                    title = rows.Count == 0 ? L.T("Nothing matches") + " “" + tbFilter + "”" : rows.Count + " " + L.T(rows.Count == 1 ? "tool matches" : "tools match") + " “" + tbFilter + "”";
+                    var allHits = Matches().Where(t => !SnmpView(t.Id) || t.Id == "snmp" || tbFilter.IndexOf("snmp", StringComparison.OrdinalIgnoreCase) >= 0).ToList(); rows = allHits.Take(80).ToList();
+                    // bug-hunt L-142: the real count, and "the first 80 shown" when there are more
+                    title = rows.Count == 0 ? L.T("Nothing matches") + " “" + tbFilter + "”" : allHits.Count + " " + L.T(allHits.Count == 1 ? "tool matches" : "tools match") + " “" + tbFilter + "”" + (allHits.Count > rows.Count ? " · " + L.T("the first") + " " + rows.Count + " " + L.T("shown") : "");
                     count = rows.Count == 0 ? L.T("try a shorter word, like dns or wifi") : L.T("Enter opens the first");
                 }
                 else if (tbQ == "" || Questions.All(z => z[0] != tbQ))
@@ -177,17 +179,25 @@ namespace AdeeboMeter
             var sp = tbCanvas.AutoScrollPosition; m.Show(tbCanvas, new Point((int)at.X + sp.X, (int)at.Bottom + sp.Y));
         }
         // the pins as a row of small chips above a question's tools (GPT's "Pinned tools")
+        void More(Graphics g, int n, float px, float y, float right)
+        {
+            if (n <= 0) return; string tx = "+" + n.ToString(CultureInfo.CurrentCulture); var sz = g.MeasureString(tx, Draw.fBodyB);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(tx, Draw.fBodyB, mb, Math.Min(px, right - sz.Width), y + 8 * S);
+        }
         float PinRow(Graphics g, float x, float y, float w)
         {
             var pins = MyPins().Select(id => Tools2().FirstOrDefault(t => t.Id == id)).Where(t => t != null).ToList();
             if (pins.Count == 0) return y;
             using (var sub = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Pinned"), Draw.fBody, sub, x, y + 6 * S);
             float px = x + g.MeasureString(L.T("Pinned"), Draw.fBody).Width + 10 * S;
+            int shown = 0;
             foreach (var t in pins)
             {
+                if (px + 60 * S > x + w) break;
                 var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); if (r.Right > x + w) break;
-                string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S;
+                string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; shown++;
             }
+            More(g, pins.Count - shown, px, y, x + w);   // bug-hunt L-151: what didn't fit is counted, not dropped
             return y + 46 * S;
         }
         // Pinned: the ready-made big coloured buttons, then yours (remove with ✕), then how to add more
@@ -234,7 +244,9 @@ namespace AdeeboMeter
                 if (recent.Count > 0)
                 {
                     g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y); y += 22 * S; float px = x;
-                    foreach (var t in recent) { var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); if (r.Right > x + w) break; string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; }
+                    int shownR = 0;
+                    foreach (var t in recent) { if (px + 60 * S > x + w) break; var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); if (r.Right > x + w) break; shownR++; string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; }
+                    More(g, recent.Count - shownR, px, y, x + w);
                     y += 46 * S;
                 }
             }

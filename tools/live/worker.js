@@ -1,6 +1,7 @@
 // AdeeboMeter Live - the website's showcase data (adeebometer.com/live.html).
 // A pass-through cache: each public source is fetched at most once every few minutes and every visitor gets the same copy.
-// Nothing is stored or logged; visitors' addresses never reach the sources. Sources and credit are shown on the page.
+// Nothing about visitors is stored or logged (rate limits are counted in memory only); the one thing kept is the day's stock
+// movers (the MOVERS store, bug-hunt L-254). Visitors' addresses never reach the sources. Sources and credit are on the page.
 import { connect } from "cloudflare:sockets";
 const ORIGINS = ["https://adeebometer.com", "https://www.adeebometer.com"];
 const FX = ["USD", "EUR", "GBP", "CNY", "JPY", "INR", "CHF", "AUD", "MXN", "HKD"];
@@ -41,7 +42,9 @@ function put(key, e) {
   memo.delete(key); memo.set(key, e);
 }
 async function get(url, ttl, type) {
-  const r = await fetch(url, { cf: { cacheTtl: ttl, cacheEverything: true }, headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(8000) });
+  // bug-hunt L-228: a URL that carries a key is never put in Cloudflare's cache (the answer is memoised in memory instead)
+  const keyed = /[?&](apikey|api_key|token|key)=/i.test(url);
+  const r = await fetch(url, { cf: keyed ? { cacheTtl: 0, cacheEverything: false } : { cacheTtl: ttl, cacheEverything: true }, headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error(new URL(url).hostname + " answered " + r.status);
   // bug-hunt ML-22: the 2 MB cap holds while reading, not after the whole body is in memory
   if (+(r.headers.get("Content-Length") || 0) > 2000000) { try { await r.body.cancel(); } catch (e) {} throw new Error("too big"); }
@@ -52,9 +55,11 @@ async function get(url, ttl, type) {
 }
 const out = e => Object.assign({ at: e.at, stale: e.stale ? 1 : 0 }, e.v);
 
+// bug-hunt L-243: a real 0 stays 0 - only a missing or unreadable value is null
+const num = v => { if (v == null || v === "") return null; const n = +v; return Number.isFinite(n) ? n : null; };
 const pick = (o, ids, pre, post) => {
   const rows = o.observations || [], last = rows[rows.length - 1] || {}, prev = rows[rows.length - 2] || {};
-  return { date: last.d || "", items: ids.map(c => ({ c, v: +(last[pre + c + post] || {}).v || null, p: +(prev[pre + c + post] || {}).v || null })) };
+  return { date: last.d || "", items: ids.map(c => ({ c, v: num((last[pre + c + post] || {}).v), p: num((prev[pre + c + post] || {}).v) })) };
 };
 // rates and the commodity index are fetched and kept separately: one source down never hides the other (AM-CG-309)
 const fxRates = () => cached("fx", 900, 4 * 86400, async () => pick(await get("https://www.bankofcanada.ca/valet/observations/" + FX.map(c => "FX" + c + "CAD").join(",") + "/json?recent=2", 900), FX, "FX", "CAD"));
@@ -83,7 +88,7 @@ const news = () => cached("bbc", 600, 6 * 3600, async () => {
 // ---- Live v2 (Adeeb, 16 Nov): markets and scores with your own picks. Each source is read at most once per cache window
 // and every visitor gets the same copy; the picks themselves stay on the phone (only the league or nothing is asked for).
 const BOCFX = ["USD", "EUR", "GBP", "JPY", "CNY", "INR", "CHF", "AUD", "MXN", "HKD", "NZD", "SGD", "KRW", "SEK", "NOK", "BRL", "ZAR", "SAR", "TRY", "TWD", "THB", "IDR", "MYR"];
-const series = (o, ids, pre, post, n) => { const rows = (o.observations || []).filter(r => ids.some(c => r[pre + c + post] && r[pre + c + post].v != null)).sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0).slice(-(n || 8)); const s = {}; ids.forEach(c => { s[c] = rows.map(r => +((r[pre + c + post] || {}).v) || null); }); return { days: rows.map(r => r.d), s }; };
+const series = (o, ids, pre, post, n) => { const rows = (o.observations || []).filter(r => ids.some(c => r[pre + c + post] && r[pre + c + post].v != null)).sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0).slice(-(n || 8)); const s = {}; ids.forEach(c => { s[c] = rows.map(r => num((r[pre + c + post] || {}).v)); }); return { days: rows.map(r => r.d), s }; };
 const bocWeek = () => cached("bocw", 3 * 3600, 4 * 86400, async () => series(await get("https://www.bankofcanada.ca/valet/observations/" + BOCFX.map(c => "FX" + c + "CAD").join(",") + "/json?recent=8", 3 * 3600), BOCFX, "FX", "CAD"));
 // a year of weeks: week, month and year changes and the 52-week range for oil and gas
 const idxWeeks = () => cached("idxy", 12 * 3600, 14 * 86400, async () => series(await get("https://www.bankofcanada.ca/valet/observations/" + IDX.map(c => "W." + c).join(",") + "/json?recent=53", 12 * 3600), IDX, "W.", "", 53));
@@ -97,7 +102,7 @@ const HEAD = { cri: "cricket", ten: "tennis", f1: "formula1" };
 // ---- stock movers (Adeeb, 16 Nov: option A) - Alpha Vantage's US top gainers / losers / most traded, once a day with the
 // relay's own free key (a Cloudflare secret, AV_KEY - set with "wrangler secret put AV_KEY"; never in this file)
 const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p: +x.price || null, c: parseFloat(x.change_percentage) || 0, v: +x.volume || 0 }))
-  .filter(x => x.t && x.p >= 1 && !/[^A-Z.]/.test(x.t) && !(x.t.length === 5 && /[WUR]$/.test(x.t))).slice(0, 5);   // under $1, warrants, units and rights are mostly noise
+  .filter(x => x.t && x.p >= 1 && !/[^A-Z.]/.test(x.t) && !(x.t.length === 5 && /[WUR]$/.test(x.t) && x.p < 15)).slice(0, 5);   // under $1, warrants, units and rights are mostly noise - bug-hunt L-238: those trade low; a 5-letter W/U/R ticker at $15+ is a real company
 // Never pass the provider's own words on: Alpha Vantage's refusal repeats the API key (17 Nov - the key showed on the
 // public Live page). Only our fixed sentences reach a page.
 const avWhy = m => /rate limit|requests per day|per minute|frequency|premium|thank you for using/i.test(m) ? "the daily limit is used up" : /invalid|apikey|api key/i.test(m) ? "the key was refused" : "no answer";
@@ -108,20 +113,21 @@ const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!en
 // never trigger a call, so the free 25-a-day can't be used up by traffic. Without the store it works as before.
 async function moversDaily(env) {
   if (!env.MOVERS || !env.AV_KEY) return;
-  const old = await env.MOVERS.get("movers", "json"), today = new Date().toISOString().slice(0, 10);
+  let old; try { old = await env.MOVERS.get("movers", "json"); } catch (e) { console.log("movers: the store can't be read - " + (e && e.message)); return; }   // bug-hunt L-253: said, not a silent end
+  const today = new Date().toISOString().slice(0, 10);
   if (old && old.ok && old.on === today) return;   // the retry run: today's copy is already in
   let rec;
   try {
     const r = await fetch("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(15000) });
     rec = { ok: 1, on: today, at: Date.now(), v: movers(env.AV_KEY, await r.json()) };
   } catch (e) { rec = Object.assign({}, old && old.ok ? old : { ok: 0 }, { tried: Date.now(), why: (m => /daily limit|refused/.test(m) ? m : "no answer from Alpha Vantage")(String(e && e.message || e)) }); }
-  await env.MOVERS.put("movers", JSON.stringify(rec));
+  try { await env.MOVERS.put("movers", JSON.stringify(rec)); } catch (e) { console.log("movers: the store can't be written - " + (e && e.message)); }
 }
 async function moversShared(env) {
   if (!env.MOVERS) return out(await avShared(env));
   let rec; try { rec = await env.MOVERS.get("movers", "json", { cacheTtl: 600 }); } catch (e) { return { at: 0, stale: 0, error: "source unavailable", why: "the stored copy can't be read just now" }; }   // bug-hunt ML-122
   // bug-hunt ML-129: a copy from a failed later try still has its data - shown, and why the newer try failed is said too
-  if (rec && rec.ok) return Object.assign({ at: rec.at, stale: Date.now() - rec.at > 4 * 86400000 ? 1 : 0 }, rec.why ? { why: rec.why } : {}, rec.v);
+  if (rec && rec.ok) return Object.assign({ at: rec.at, stale: Date.now() - rec.at > 5 * 86400000 ? 1 : 0 }   /* bug-hunt L-236: Thursday's close to Tuesday's (Good Friday + a weekend + a Monday holiday) is 5 days, and still the latest */, rec.why ? { why: rec.why } : {}, rec.v);
   return { at: 0, stale: 0, error: "source unavailable", why: rec && rec.why ? rec.why : "not fetched yet - the first copy comes after today's US close" };
 }
 // a person's own key (Live > Your keys): it comes to us in a header, is used for this one call and dropped - never cached,
@@ -149,7 +155,7 @@ const ISO = d => d.toISOString().slice(0, 10);
 const nhlT = t => t ? { ab: String(t.abbrev || ""), n: String(((t.commonName || t.name || {}).default) || t.abbrev || "").slice(0, 30), id: String(t.abbrev || ""), s: t.score != null ? String(t.score) : "" } : null;
 const nhlG = g => { const st = g.gameState || "", live = /LIVE|CRIT/.test(st), fin = /FINAL|OFF/.test(st);
   return { d: g.startTimeUTC, st: live ? "in" : fin ? "post" : "pre", det: live ? "P" + ((g.periodDescriptor || {}).number || "") + " " + ((g.clock || {}).timeRemaining || "") : fin ? "Final" : "", sum: "", a: nhlT(g.awayTeam), h: nhlT(g.homeTeam) }; };
-const nhlDay = day => cached("nhl:" + day, day === "now" ? 3 * 3600 : 12 * 3600, 6 * 3600, async () => ({ g: ((await get("https://api-web.nhle.com/v1/score/" + day, 3 * 3600)).games || []).slice(0, 20).map(nhlG) }));
+const nhlDay = day => cached("nhl:" + (day === "now" ? "now:" + new Date().toISOString().slice(0, 10) : day),   /* bug-hunt L-244: "now" is today's - yesterday's copy is never served after midnight */ day === "now" ? 3 * 3600 : 12 * 3600, 6 * 3600, async () => ({ g: ((await get("https://api-web.nhle.com/v1/score/" + day, 3 * 3600)).games || []).slice(0, 20).map(nhlG) }));
 const nhlNext = () => cached("nhl:wk", 12 * 3600, 86400, async () => { const d = await get("https://api-web.nhle.com/v1/schedule/now", 12 * 3600), g = []; (d.gameWeek || []).forEach(w => (w.games || []).forEach(x => g.push(nhlG(x)))); return { g: g.filter(x => x.st === "pre").slice(0, 20) }; });
 const nhlTable = () => cached("nhl:st", 12 * 3600, 2 * 86400, async () => { const d = await get("https://api-web.nhle.com/v1/standings/now", 12 * 3600), by = {};
   (d.standings || []).forEach(t => { const c = String(t.conferenceName || "League"); (by[c] = by[c] || []).push({ ab: String((t.teamAbbrev || {}).default || ""), n: String((t.teamCommonName || t.teamName || {}).default || "").slice(0, 30), id: String((t.teamAbbrev || {}).default || ""), gp: String(t.gamesPlayed ?? ""), w: String(t.wins ?? ""), l: String(t.losses ?? ""), pts: String(t.points ?? ""), seed: +t.conferenceSequence || 99 }); });
@@ -158,7 +164,7 @@ const MLBDIV = { 200: "AL West", 201: "AL East", 202: "AL Central", 203: "NL Wes
 const mlbT = t => ({ ab: String(((t || {}).team || {}).abbreviation || ""), n: String(((t || {}).team || {}).teamName || ((t || {}).team || {}).name || "").slice(0, 30), id: String(((t || {}).team || {}).id || ""), s: (t || {}).score != null ? String(t.score) : "" });
 const mlbG = g => { const a = (g.status || {}).abstractGameState; return { d: g.gameDate, st: a === "Live" ? "in" : a === "Final" ? "post" : "pre", det: a === "Final" ? "Final" : a === "Live" ? String((g.status || {}).detailedState || "Live").slice(0, 30) : "", sum: "", a: mlbT((g.teams || {}).away), h: mlbT((g.teams || {}).home) }; };
 const mlbSched = (q, ttl) => cached("mlb:" + q, ttl, 86400, async () => { const d = await get("https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=team&" + q, ttl), g = []; (d.dates || []).forEach(x => (x.games || []).forEach(y => g.push(mlbG(y)))); return { g: g.slice(0, 20) }; });
-const mlbTable = () => cached("mlb:st", 12 * 3600, 2 * 86400, async () => { const now = new Date(), yr = now.getUTCMonth() < 2 ? now.getUTCFullYear() - 1 : now.getUTCFullYear(), d = await get("https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&hydrate=team&season=" + yr, 12 * 3600);
+const mlbTable = () => cached("mlb:st", 12 * 3600, 2 * 86400, async () => { const now = new Date(), yr = now.getUTCMonth() < 3 ? now.getUTCFullYear() - 1 : now.getUTCFullYear()   /* bug-hunt L-245: the season opens at the end of March - until April, last season's table */, d = await get("https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&hydrate=team&season=" + yr, 12 * 3600);
   return { season: yr, gr: (d.records || []).map(r => ({ n: MLBDIV[(r.division || {}).id] || "Division", rows: (r.teamRecords || []).map(t => ({ ab: String((t.team || {}).abbreviation || ""), n: String((t.team || {}).teamName || (t.team || {}).name || "").slice(0, 30), id: String((t.team || {}).id || ""), gp: String(t.gamesPlayed ?? ""), w: String(t.wins ?? ""), l: String(t.losses ?? ""), pts: "", seed: +t.divisionRank || 99 })).sort((a, b) => a.seed - b.seed) })) }; });
 const weather = (lat, lon) => cached("w" + lat + "," + lon, 1800, 3 * 3600, async () => {
   const d = await get("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon +
@@ -171,7 +177,8 @@ const places = q => cached("g" + q, 86400, 86400, async () => {
 });
 
 // the same network: the first 3 bytes of an IPv4 address, or the first 48 bits of IPv6
-function net(a) { if (!a.includes(":")) return a.split(".").slice(0, 3).join("."); const [h, t = ""] = a.split("::"), L = h ? h.split(":") : [], R2 = t ? t.split(":") : [], all = L.concat(Array(Math.max(0, 8 - L.length - R2.length)).fill("0"), R2); return all.slice(0, 3).map(x => parseInt(x || "0", 16)).join(":"); }
+function net(a) { const v4m = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(a); if (v4m) a = v4m[1];   /* L-27: an IPv4-mapped address compares as the IPv4 it is */
+  if (!a.includes(":")) return a.split(".").slice(0, 3).join("."); const [h, t = ""] = a.split("::"), L = h ? h.split(":") : [], R2 = t ? t.split(":") : [], all = L.concat(Array(Math.max(0, 8 - L.length - R2.length)).fill("0"), R2); return all.slice(0, 3).map(x => parseInt(x || "0", 16)).join(":"); }
 const PRIV = /^(localhost|.*\.local|.*\.internal|.*\.localhost|10\.\d+\.\d+\.\d+|127\.\d+\.\d+\.\d+|169\.254\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+|0\.\d+\.\d+\.\d+|\[.*\])$/i;   // bug-hunt ML-21: CGNAT 100.64/10 too
 // bug-hunt ML-21: a public name can point at a private address - ask DNS (over HTTPS) first and refuse those
 async function privateName(host) {

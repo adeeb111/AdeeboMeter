@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace AdeeboMeter
 {
@@ -18,15 +19,17 @@ namespace AdeeboMeter
         static readonly string[] Order = { "pc", "wifi", "home", "provider", "far", "unsure" };
         static Dictionary<string, int> NewTally() { var d = new Dictionary<string, int>(StringComparer.Ordinal); foreach (var o in Order) d[o] = 0; return d; }
 
-        static Report cache; static DateTime cacheAt = DateTime.MinValue; static volatile bool busy; static readonly object k = new object();
+        static Report cache; static DateTime cacheAt = DateTime.MinValue; static int busy; static readonly object k = new object();
         // the last 7 days: the reading happens on a worker thread (a week of game files can take a moment), never in a paint;
         // the screen gets the last result straight away and "ready" when a fresher one is in. Refreshed every 10 minutes.
         public static Report Last7(Monitor m, Action ready)
         {
             Report c; lock (k) c = cache;
-            if ((DateTime.UtcNow - cacheAt).TotalMinutes >= 10 && !busy)
+            DateTime at; lock (k) at = cacheAt;
+            // bug-hunt L-70: one atomic step takes the job; L-71: a failed refresh tries again in a minute, not ten
+            if ((DateTime.UtcNow - at).TotalMinutes >= 10 && Interlocked.CompareExchange(ref busy, 1, 0) == 0)
             {
-                busy = true; cacheAt = DateTime.UtcNow;
+                lock (k) cacheAt = DateTime.UtcNow;
                 System.Threading.ThreadPool.QueueUserWorkItem(delegate
                 {
                     try
@@ -42,8 +45,8 @@ namespace AdeeboMeter
                         lock (k) cache = r;
                         if (ready != null) ready();
                     }
-                    catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("weekly: " + e.Message); }
-                    finally { busy = false; }
+                    catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("weekly: " + e.Message); lock (k) cacheAt = DateTime.UtcNow.AddMinutes(-9); }
+                    finally { Interlocked.Exchange(ref busy, 0); }
                 });
             }
             return c;

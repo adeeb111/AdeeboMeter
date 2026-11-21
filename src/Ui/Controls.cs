@@ -392,16 +392,19 @@ namespace AdeeboMeter
 
         public void Merge(List<Conn> fresh)
         {
-            var now = DateTime.Now; var seen = new HashSet<string>();
+            // bug-hunt L-263: the view is filtered and sorted again only when something that decides the order or the rows changed;
+            // otherwise the same rows are just repainted (their times and the fading of closed ones move on)
+            var now = DateTime.Now; var seen = new HashSet<string>(); bool changed = !loaded;
             foreach (var c in fresh)
             {
                 seen.Add(c.Key); Row r;
-                if (rows.TryGetValue(c.Key, out r)) { r.C = c; r.Gone = DateTime.MinValue; }
-                else rows[c.Key] = new Row { C = c, First = now, Initial = !loaded };
+                if (rows.TryGetValue(c.Key, out r)) { if (r.C.State != c.State || r.C.Host != c.Host || r.C.Proc != c.Proc || r.Gone != DateTime.MinValue) changed = true; r.C = c; r.Gone = DateTime.MinValue; }
+                else { rows[c.Key] = new Row { C = c, First = now, Initial = !loaded }; changed = true; }
             }
-            foreach (var r in rows.Values) if (!seen.Contains(r.C.Key) && r.Gone == DateTime.MinValue) r.Gone = now;
-            foreach (var k in rows.Where(kv => kv.Value.Gone != DateTime.MinValue && (now - kv.Value.Gone).TotalSeconds > 3).Select(kv => kv.Key).ToList()) rows.Remove(k);
-            loaded = true; Rebuild();
+            foreach (var r in rows.Values) if (!seen.Contains(r.C.Key) && r.Gone == DateTime.MinValue) { r.Gone = now; changed = true; }
+            foreach (var k in rows.Where(kv => kv.Value.Gone != DateTime.MinValue && (now - kv.Value.Gone).TotalSeconds > 3).Select(kv => kv.Key).ToList()) { rows.Remove(k); changed = true; }
+            loaded = true;
+            if (changed) Rebuild(); else { Invalidate(); if (Changed != null) Changed(); }
         }
         public void Rebuild()
         {

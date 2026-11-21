@@ -94,7 +94,8 @@ namespace AdeeboMeter
         }
 
         // ---------- before you queue: what could spoil the match right now. Suggestions only - nothing is closed for you.
-        internal static readonly string[][] Updaters = { new[] { "TiWorker", "Windows Update is installing" }, new[] { "MoUsoCoreWorker", "Windows Update is working" }, new[] { "OneDrive", "OneDrive is running (it syncs in the background)" }, new[] { "steamwebhelper", "" }, new[] { "EpicGamesLauncher", "Epic Games Launcher is open (it downloads updates)" }, new[] { "Battle.net", "Battle.net is open (it downloads updates)" }, new[] { "Dropbox", "Dropbox is running" }, new[] { "GoogleDriveFS", "Google Drive is syncing" }, new[] { "qbittorrent", "a torrent program is open" }, new[] { "utorrent", "a torrent program is open" } };
+        // bug-hunt L-89: Steam's helper isn't listed - it runs whenever Steam does (games included), so it would warn every time
+        internal static readonly string[][] Updaters = { new[] { "TiWorker", "Windows Update is installing" }, new[] { "MoUsoCoreWorker", "Windows Update is working" }, new[] { "OneDrive", "OneDrive is running (it syncs in the background)" }, new[] { "EpicGamesLauncher", "Epic Games Launcher is open (it downloads updates)" }, new[] { "Battle.net", "Battle.net is open (it downloads updates)" }, new[] { "Dropbox", "Dropbox is running" }, new[] { "GoogleDriveFS", "Google Drive is syncing" }, new[] { "qbittorrent", "a torrent program is open" }, new[] { "utorrent", "a torrent program is open" } };
         public static List<string[]> PreMatch(Monitor m, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var s = m.Latest; int warn = 0;
@@ -110,7 +111,7 @@ namespace AdeeboMeter
             run.Status = "Looking for updaters and sync apps...";
             foreach (var u in Updaters)
             {
-                Process[] ps; try { ps = Process.GetProcessesByName(u[0]); } catch (InvalidOperationException) { continue; }
+                Process[] ps; try { ps = Process.GetProcessesByName(u[0]); } catch (InvalidOperationException) { continue; } catch (System.ComponentModel.Win32Exception) { continue; }   /* L-90 */
                 foreach (var p in ps) p.Dispose(); if (ps.Length == 0 || u[1] == "") continue;
                 warn++; rows.Add(R(1, "Background", u[1], "Pause it before you play - it can start a download any second.", "w"));
             }

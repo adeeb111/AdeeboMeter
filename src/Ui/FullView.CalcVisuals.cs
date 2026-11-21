@@ -159,7 +159,7 @@ namespace AdeeboMeter
                     cx += sw;
                 }
                 if (need > cap) { var over = new RectangleF(pipe.Right, y0 - 2 * S, cx - pipe.Right, ph + 4 * S); using (var hb = new HatchBrush(HatchStyle.WideUpwardDiagonal, Theme.Red, Color.Transparent)) g.FillRectangle(hb, over); }
-                int lv = need > cap ? 2 : need * 1.3 > cap ? 1 : 0;
+                int lv = need > cap ? 2 : need * 1.5 > cap ? 1 : 0;   // bug-hunt L-341: "plenty" only with a third spare, as the foot says
                 VText(g, need.ToString("0.#", CultureInfo.CurrentCulture) + " " + L.T("of") + " " + cap.ToString("0", CultureInfo.CurrentCulture) + " Mb/s" + (lv == 2 ? " - " + L.T("too much at once") : lv == 1 ? " - " + L.T("tight") : " - " + L.T("plenty of room")), Draw.fSmall, Theme.LvText(lv), bx, y0 + ph + 4 * S);
                 y0 += 70 * S;
             }
@@ -194,7 +194,9 @@ namespace AdeeboMeter
             var pipe = new RectangleF(x0, cy - 12 * S, len, 24 * S); Theme.Fill(g, pipe, 12 * S, Theme.Soft);
             // packets for the window's share of each trip, then a gap while the sender waits for acknowledgements
             var old = g.Clip; g.SetClip(pipe); float cyc = len, ph = Wrap((float)(AnimT * 80 * S), cyc);
-            using (var bb = new SolidBrush(fill < 1 ? Theme.Amber : Theme.Blue)) for (float k = 0; k < cyc * (float)fill; k += 14 * S) { float px = x0 + Wrap(ph + k, cyc); g.FillRectangle(bb, px, cy - 7 * S, 10 * S, 14 * S); }
+            // bug-hunt L-340: no window typed - the packets are grey ("how full is unknown"), never a full blue train that implies it fills
+            bool winKnown = !double.IsNaN(win);
+            using (var bb = new SolidBrush(!winKnown ? Theme.Muted : fill < 1 ? Theme.Amber : Theme.Blue)) for (float k = 0; k < cyc * (float)(winKnown ? fill : 0.5); k += 14 * S) { float px = x0 + Wrap(ph + k, cyc); g.FillRectangle(bb, px, cy - 7 * S, 10 * S, 14 * S); }
             g.Clip = old;
             VTextC(g, double.IsNaN(bdpKB) ? L.T("type a speed and a round trip") : L.T("The pipe holds") + " " + (bdpKB >= 1024 ? (bdpKB / 1024).ToString("0.#", CultureInfo.CurrentCulture) + " MB" : bdpKB.ToString("0", CultureInfo.CurrentCulture) + " KB") + (fill < 1 ? " - " + L.T("your window fills only") + " " + (fill * 100).ToString("0", CultureInfo.CurrentCulture) + "% " + L.T("of it: the gaps are the sender waiting") : ""), Draw.fBodyB, fill < 1 ? Theme.LvText(1) : Theme.Ink, (x0 + x1) / 2, cy + 20 * S, len);
             VFoot(g, r, "TCP may only have one window of data unacknowledged. A window smaller than the pipe caps one connection at window ÷ round trip, however fast the line.");
@@ -343,18 +345,18 @@ namespace AdeeboMeter
         // ---------- VLSM: the block as one bar, cut into the subnets, biggest first
         float VisVlsm(Graphics g, float x, float y, float w, string st)
         {
-            var sp = VSpec(); var pre = System.Text.RegularExpressions.Regex.Match(sp.F[0].Text ?? "", @"/(\d+)"); int bp = pre.Success ? int.Parse(pre.Groups[1].Value, CultureInfo.InvariantCulture) : 24; if (bp > 30) bp = 30;
+            var sp = VSpec(); var pre = System.Text.RegularExpressions.Regex.Match(sp.F[0].Text ?? "", @"/(\d+)"); int bp = pre.Success ? int.Parse(pre.Groups[1].Value, CultureInfo.InvariantCulture) : 24; if (bp > 32) bp = 32;   /* L-337: a /31 is drawn as a /31 */
             double total = Math.Pow(2, 32 - bp); var need = sp.F[1].Items.Select(z => NV(new CF { Text = z })).Where(z => !double.IsNaN(z) && z > 0).OrderByDescending(z => z).ToList();
             var r = VisCard(g, x, y, w, 150 * S, "THE BLOCK /" + bp + " (" + total.ToString("N0", CultureInfo.CurrentCulture) + " ADDRESSES), CUT BIGGEST FIRST", st);
             float bx = r.X + 18 * S, bw = r.Width - 36 * S, by = r.Y + 56 * S; Theme.Fill(g, new RectangleF(bx, by, bw, 34 * S), 6 * S, Theme.Soft);
-            double at = 0; int k = 0;
+            double at = 0; int k = 0, noFit = 0;
             foreach (var n in need)
             {
-                int p = 32; while (p > 0 && Math.Pow(2, 32 - p) - (p <= 30 ? 2 : 0) < n) p--; double size = Math.Pow(2, 32 - p); if (at + size > total) break;
+                int p = 32; while (p > 0 && Math.Pow(2, 32 - p) - (p <= 30 ? 2 : 0) < n) p--; double size = Math.Pow(2, 32 - p); if (at + size > total) { noFit++; continue; }   // bug-hunt L-337: counted below, not just dropped
                 float sx = bx + (float)(bw * at / total), sw = (float)(bw * size / total); Theme.Fill(g, new RectangleF(sx + 1 * S, by, Math.Max(2, sw - 2 * S), 34 * S), 4 * S, Lane[k % Lane.Length]);
                 if (sw > 34 * S) VTextC(g, "/" + p, Draw.fSmall, Color.White, sx + sw / 2, by + 9 * S, sw); at += size; k++;
             }
-            VText(g, (total - at).ToString("N0", CultureInfo.CurrentCulture) + " " + L.T("addresses left over"), Draw.fSmall, Theme.Sub, bx, by + 42 * S);
+            VText(g, (total - at).ToString("N0", CultureInfo.CurrentCulture) + " " + L.T("addresses left over") + (noFit > 0 ? "  ·  " + noFit + " " + L.T(noFit == 1 ? "subnet doesn't fit" : "subnets don't fit") : ""), Draw.fSmall, noFit > 0 ? Theme.LvText(2) : Theme.Sub, bx, by + 42 * S);
             VFoot(g, r, "");
             return r.Bottom + 14 * S;
         }
@@ -403,7 +405,8 @@ namespace AdeeboMeter
             float bx = r.X + 18 * S, bw = r.Width - 36 * S, by = r.Y + 56 * S, pw = bw / drawn;
             for (int i = 0; i < drawn; i++) Theme.Fill(g, new RectangleF(bx + i * pw + 0.5f, by, Math.Max(1, pw - 1.5f), 34 * S), 3 * S, Lane[i % 2 == 0 ? 0 : 2]);
             VText(g, parts > drawn ? L.T("showing") + " " + drawn + " " + L.T("of them") : "", Draw.fSmall, Theme.Sub, bx, by + 42 * S);
-            VFoot(g, r, "Each extra bit of prefix doubles the pieces and halves their size. A /64 is the size of one LAN - never split it further.");
+            // bug-hunt L-338: past /64 the picture says so, as the tool does
+            VFoot(g, r, np > 64 ? "Smaller than /64: SLAAC and most home devices need a whole /64 per LAN - pieces this small only suit point-to-point links (/127) or loopbacks (/128)." : "Each extra bit of prefix doubles the pieces and halves their size. A /64 is the size of one LAN - never split it further.");
             return r.Bottom + 14 * S;
         }
 
@@ -417,7 +420,7 @@ namespace AdeeboMeter
             {
                 double up = NV(sp.F[2]), br = NV(new CF { Text = Big("Bitrate") }); Theme.Fill(g, new RectangleF(bx, by, bw, 30 * S), 8 * S, Theme.Soft);
                 double scale = Math.Max(double.IsNaN(up) ? 0 : up, double.IsNaN(br) ? 0 : br * 1.3) * 1.05; if (scale <= 0) scale = 10;
-                if (!double.IsNaN(br)) { var seg = new RectangleF(bx, by + 4 * S, (float)(bw * br / scale), 22 * S); Theme.Fill(g, seg, 5 * S, Theme.Blue); VText(g, Big("Bitrate"), Draw.fSmall, Color.White, bx + 6 * S, by + 7 * S); }
+                if (!double.IsNaN(br)) { var seg = new RectangleF(bx, by + 4 * S, (float)(bw * br / scale), 22 * S); Theme.Fill(g, seg, 5 * S, Theme.Blue); string bt = Big("Bitrate"); var bsz = g.MeasureString(bt, Draw.fSmall); if (bsz.Width + 12 * S <= seg.Width) VText(g, bt, Draw.fSmall, Color.White, bx + 6 * S, by + 7 * S); else VText(g, bt, Draw.fSmall, Theme.Ink, seg.Right + 6 * S, by + 7 * S); }   /* L-342: outside the bar when it doesn't fit inside */
                 if (!double.IsNaN(up)) { float ux = bx + (float)(bw * up / scale); using (var p = new Pen(Theme.Ink, 2 * S)) g.DrawLine(p, ux, by - 6 * S, ux, by + 36 * S); VText(g, L.T("your upload") + " " + up.ToString("0", CultureInfo.CurrentCulture) + " Mb/s", Draw.fSmall, Theme.Ink, Math.Max(bx, ux - 120 * S), by + 40 * S); }
             }
             else
@@ -451,9 +454,10 @@ namespace AdeeboMeter
             var r = VisCard(g, x, y, w, 150 * S, "WHAT YOU GET - AND WHAT THE BANK KEEPS", st);
             float bx = r.X + 150 * S, bw = r.Width - 300 * S, by = r.Y + 52 * S;
             VText(g, L.T("Official rate"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 2 * S); Theme.Fill(g, new RectangleF(bx, by, bw, 22 * S), 6 * S, Theme.Blue);
+            mk = Math.Max(0, Math.Min(100, mk));   // bug-hunt L-336: the tool refuses outside 0-100 - the picture never draws a bar backwards
             float kw = (float)(bw * (1 - mk / 100));
             VText(g, L.T("At a bank"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 36 * S); Theme.Fill(g, new RectangleF(bx, by + 34 * S, kw, 22 * S), 6 * S, Theme.Green); Theme.Fill(g, new RectangleF(bx + kw, by + 34 * S, bw - kw, 22 * S), 3 * S, Theme.Red);
-            VText(g, mk.ToString("0.##", CultureInfo.CurrentCulture) + "% " + L.T("kept"), Draw.fSmall, Theme.LvText(2), bx + bw + 8 * S, by + 37 * S);
+            using (var kf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) using (var kb = new SolidBrush(Theme.LvText(2))) g.DrawString(mk.ToString("0.##", CultureInfo.CurrentCulture) + "% " + L.T("kept"), Draw.fSmall, kb, new RectangleF(bx + bw + 8 * S, by + 37 * S, r.Right - (bx + bw + 8 * S) - 8 * S, 20 * S), kf);
             VText(g, Big("At the official rate"), Draw.fSmall, Theme.Sub, bx, by + 64 * S);
             return r.Bottom + 14 * S;
         }
@@ -483,9 +487,11 @@ namespace AdeeboMeter
         // ---------- average cost: each buy as a bar, the average as a line
         float VisAvg(Graphics g, float x, float y, float w, string st)
         {
-            var sp = VSpec(); var p = sp.F[0].Items.Select(z => NV(new CF { Text = z })).ToList(); var n = sp.F[1].Items.Select(z => NV(new CF { Text = z })).ToList(); int k = Math.Min(p.Count, n.Count);
+            var sp = VSpec(); var p0 = sp.F[0].Items.Select(z => NV(new CF { Text = z })).ToList(); var n0 = sp.F[1].Items.Select(z => NV(new CF { Text = z })).ToList(); int k0 = Math.Min(p0.Count, n0.Count);
+            // bug-hunt L-343: an empty price box drops that buy, not the whole picture
+            var keep = Enumerable.Range(0, k0).Where(i => !double.IsNaN(p0[i])).ToList(); var p = keep.Select(i => p0[i]).ToList(); var n = keep.Select(i => n0[i]).ToList(); int k = keep.Count;
             var r = VisCard(g, x, y, w, 190 * S, "EACH BUY, AND WHERE YOUR AVERAGE LANDS", st);
-            if (k == 0 || p.Take(k).Any(double.IsNaN)) return r.Bottom + 14 * S;
+            if (k == 0) return r.Bottom + 14 * S;
             double max = p.Take(k).Max() * 1.15, tot = 0, sh = 0; for (int i = 0; i < k; i++) if (!double.IsNaN(n[i])) { tot += p[i] * n[i]; sh += n[i]; }
             float bx = r.X + 40 * S, top = r.Y + 48 * S, h = 110 * S, bwid = Math.Min(70 * S, (r.Width - 80 * S) / k - 12 * S);
             for (int i = 0; i < k; i++) { float bh = (float)(p[i] / max) * h, cx = bx + i * (bwid + 12 * S); Theme.Fill(g, new RectangleF(cx, top + h - bh, bwid, bh), 5 * S, Lane[0]); VTextC(g, "$" + p[i].ToString("0.##", CultureInfo.CurrentCulture) + " × " + n[i].ToString("0", CultureInfo.CurrentCulture), Draw.fTiny, Theme.Sub, cx + bwid / 2, top + h + 4 * S, bwid + 12 * S); }
@@ -552,6 +558,9 @@ namespace AdeeboMeter
             else { head = (sp.F[0].Text ?? "") + " " + Opt(sp.F[1]); var first = VisRows().Skip(1).FirstOrDefault(); sub = first == null ? "" : first[2] + " " + first[1]; cells = 60; }
             var r = VisCard(g, x, y, w, 196 * S, tbSel == "futures" ? "WHAT ONE CONTRACT HOLDS - EACH SQUARE IS 1%" : "ONE UNIT, MEASURED ANOTHER WAY", st);
             float bx = r.X + 18 * S, by = r.Y + 50 * S, cs = 9 * S; int perRow = (int)Math.Max(10, Math.Min(40, (r.Width * 0.55f) / (cs + 2 * S)));
+            // bug-hunt L-339: on a narrow card the squares get smaller so all of them stay above the foot
+            float availH = r.Height - 50 * S - 46 * S; int rowsN = (Math.Min(cells, 160) + perRow - 1) / perRow;
+            if (rowsN * (cs + 2 * S) > availH) { cs = Math.Max(3 * S, availH / rowsN - 2 * S); perRow = (int)Math.Max(10, Math.Min(60, (r.Width * 0.55f) / (cs + 2 * S))); }
             for (int i = 0; i < Math.Min(cells, 160); i++) Theme.Fill(g, new RectangleF(bx + (i % perRow) * (cs + 2 * S), by + (i / perRow) * (cs + 2 * S), cs, cs), 2 * S, Color.FromArgb(i == 0 ? 255 : 150, c));
             float tx = bx + perRow * (cs + 2 * S) + 24 * S;
             VText(g, head, Draw.fBodyB, Theme.Ink, tx, by); using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(sub, Draw.fBody, sb, new RectangleF(tx, by + 26 * S, r.Right - tx - 18 * S, 60 * S));

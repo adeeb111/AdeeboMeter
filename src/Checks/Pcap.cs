@@ -11,7 +11,7 @@ namespace AdeeboMeter
     // ================================================================== A small capture-file reader (no Wireshark needed)
     // Reads .pcap and .pcapng files - Ethernet (with VLAN tags), raw IP and Linux "cooked" captures - and splits each packet
     // into IPv4 / IPv6, UDP and ICMP / ICMPv6. Enough for the DHCP, Router Advertisement and ICMP replays. Files are only read;
-    // anything malformed is skipped, never trusted: every length is checked against what's really there. 64 MB / 200k packets max.
+    // anything malformed is skipped, never trusted: every length is checked against what's really there. 64 MB / 50k packets max (bug-hunt L-271).
     static class Pcap
     {
         public sealed class Pkt

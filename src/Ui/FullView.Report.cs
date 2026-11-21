@@ -59,9 +59,10 @@ namespace AdeeboMeter
                 // AM-CG-216: reports kept while offline can be read and removed before they go
                 if (Relay.Waiting > 0)
                 {
-                    var wl = new LinkLabel { Text = Relay.Waiting + " " + L.T("earlier report(s) waiting to send when you're online - Read · Delete"), AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.Blue };
-                    string tx = wl.Text; int ri = tx.LastIndexOf(L.T("Read"), StringComparison.Ordinal), di = tx.LastIndexOf(L.T("Delete"), StringComparison.Ordinal);
-                    wl.Links.Clear(); if (ri >= 0) wl.Links.Add(ri, L.T("Read").Length, "read"); if (di >= 0) wl.Links.Add(di, L.T("Delete").Length, "del");
+                    // bug-hunt L-330: built from its parts, so the two links sit exactly on the words whatever the language
+                    string lead = Relay.Waiting + " " + L.T("earlier report(s) waiting to send when you're online") + " - ", rd = L.T("Read"), dl = L.T("Delete");
+                    var wl = new LinkLabel { Text = lead + rd + " · " + dl, AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.Blue };
+                    wl.Links.Clear(); wl.Links.Add(lead.Length, rd.Length, "read"); wl.Links.Add(lead.Length + rd.Length + 3, dl.Length, "del");
                     wl.LinkClicked += delegate(object s2, LinkLabelLinkClickedEventArgs e2)
                     {
                         if ((string)e2.Link.LinkData == "read") MessageBox.Show(f, Relay.WaitingText(), L.T("Waiting to send"), MessageBoxButtons.OK, MessageBoxIcon.Information);

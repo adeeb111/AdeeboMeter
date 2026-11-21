@@ -75,7 +75,9 @@ namespace AdeeboMeter
             };
             using (var pal = new Palette(items, hits, vocab, PinToMine))
             {
-                pal.StartPosition = FormStartPosition.Manual; pal.Location = new Point(Left + (Width - pal.Width) / 2, Top + Sc(90));
+                pal.StartPosition = FormStartPosition.Manual;
+                var wa = Screen.FromControl(this).WorkingArea;   // bug-hunt L-157: kept on the screen, whatever the window's position
+                pal.Location = new Point(Math.Max(wa.Left, Math.Min(Left + (Width - pal.Width) / 2, wa.Right - pal.Width)), Math.Max(wa.Top, Math.Min(Top + Sc(90), wa.Bottom - pal.Height)));
                 pal.ShowDialog(this);
                 if (pal.Chosen != null) pal.Chosen();
             }
@@ -85,7 +87,8 @@ namespace AdeeboMeter
         // one word against the vocabulary: the closest word one letter away (two for long words), or null
         internal static string Fix(string w, HashSet<string> vocab)
         {
-            if (w.Length < 4 || vocab.Contains(w) || w.All(char.IsDigit) || w.Contains('.')) return null;
+            // bug-hunt L-158: three letters too ("dsn" -> "dns", one letter away at most); a word with a dot is a site or an address, never "fixed"
+            if (w.Length < 3 || vocab.Contains(w) || w.All(char.IsDigit) || w.Contains('.')) return null;
             string best = null; int bd = w.Length >= 7 ? 3 : 2;
             foreach (var v in vocab)
             {
@@ -239,8 +242,9 @@ namespace AdeeboMeter
             foreach (var grp in FullView.SearchGroups)
             {
                 var gl = hits.Where(h => h.Group == grp).ToList(); if (gl.Count == 0) continue;
-                rows.Add(new PalItem { Header = true, Title = L.T(grp) + "  ·  " + gl.Count, Acc = "" });
-                rows.AddRange(gl.Take(grp == "Tools" ? 8 : 5));
+                int cap = grp == "Tools" ? 8 : 5;   // bug-hunt L-156: "5 of 12" when more matched than are shown
+                rows.Add(new PalItem { Header = true, Title = L.T(grp) + "  ·  " + (gl.Count > cap ? cap + " " + L.T("of") + " " + gl.Count : gl.Count.ToString(CultureInfo.CurrentCulture)), Acc = "" });
+                rows.AddRange(gl.Take(cap));
             }
             if (rows.Count == 0)
             {

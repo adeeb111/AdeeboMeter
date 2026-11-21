@@ -30,7 +30,7 @@ namespace AdeeboMeter
         readonly HashSet<string> cleanRuns = new HashSet<string>();
         string EarnFirst(string key) { return Points.Me.Tried(key) && !cleanRuns.Contains(key) ? "" : EarnPts(key, true, true); }
         void Revealed(string key) { if (cleanRuns.Contains(key) || Points.Me.Has(key)) return; if (!Points.Me.Tried(key)) cleanRuns.Add(key); Points.Me.MarkTried(key); }
-        void NewRun(string key) { cleanRuns.Remove(key); }
+        void NewRun(string key) { cleanRuns.Remove(key); gameAway = DateTime.MinValue; }   // bug-hunt L-174: a fresh run's clock starts clean - time away from an earlier one isn't added
         long quickAway;
         void GameTick(bool on)
         {
@@ -355,14 +355,16 @@ namespace AdeeboMeter
                 using (var tb = new SolidBrush(i == dunRoom ? Theme.OnBlue : Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(i < dunRoom ? "✓" : (i + 1).ToString(CultureInfo.InvariantCulture), Draw.fBodyB, tb, r, c);
             }
             float hx = x + LearnGames.Dungeon.Length * (sq + 8 * S) + 10 * S;   // hearts: full ones red, lost ones grey (one glyph - the outline heart is missing from some fonts)
+            float hy = y, below = 0;
+            if (hx + LearnGames.DungeonHearts * (30 * S) > x + w) { hx = x; hy = y + sq + 6 * S; below = 22 * S + 6 * S; }   // bug-hunt L-107: no room beside the rooms - the hearts go under them
             for (int i = 0; i < LearnGames.DungeonHearts; i++)
                 using (var hb = new SolidBrush(i < dunHearts ? Theme.Red : Theme.Track))
                 {
-                    float hs = 22 * S, h0 = hx + i * (hs + 8 * S), v0 = y + (sq - hs) / 2;   // drawn, not a font glyph: the same size on every PC
+                    float hs = 22 * S, h0 = hx + i * (hs + 8 * S), v0 = below > 0 ? hy : y + (sq - hs) / 2;   // drawn, not a font glyph: the same size on every PC
                     g.FillEllipse(hb, h0, v0, hs * 0.55f, hs * 0.55f); g.FillEllipse(hb, h0 + hs * 0.45f, v0, hs * 0.55f, hs * 0.55f);
                     g.FillPolygon(hb, new[] { new PointF(h0 + hs * 0.02f, v0 + hs * 0.36f), new PointF(h0 + hs * 0.98f, v0 + hs * 0.36f), new PointF(h0 + hs / 2, v0 + hs * 0.95f) });
                 }
-            y += sq + 16 * S;
+            y += sq + 16 * S + below;
             if (dunRoom >= LearnGames.Dungeon.Length)
             {
                 if (dunEarn == null) dunEarn = EarnFirst("game.dungeon");
@@ -421,8 +423,10 @@ namespace AdeeboMeter
             {
                 var q = quick.Q[quick.At];
                 y = Say(g, q[0], 1, x, y, w);
+                // bug-hunt L-175/176: the answer moves straight on to the next question, so the options aren't coloured - the line under
+                // them says how the LAST one went, labelled as such
                 y = Options(g, q.Skip(2).ToArray(), x, y, w, o => 0, o => { bool ok = o == q[1]; if (!LearnGames.Answer(quick, ok)) { learnInfo.Invalidate(); return; } if (!ok) Revealed("game.quick." + id); quickMsg = ok ? L.T("Right") : L.T("No") + " - " + L.T(q[1]); learnInfo.Invalidate(); });
-                if (quickMsg != "") using (var b = new SolidBrush(quickMsg == L.T("Right") ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(quickMsg, Draw.fSmall, b, x, y);
+                if (quickMsg != "") using (var b = new SolidBrush(quickMsg == L.T("Right") ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(L.T("Last one:") + " " + quickMsg, Draw.fSmall, b, x, y);
                 y += 26 * S;
             }
             else

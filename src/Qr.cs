@@ -9,6 +9,8 @@ using System.Text;
 namespace AdeeboMeter
 {
     // A QR code made here, offline: byte mode, error correction L (about 7%), versions 1-30 (up to 1,732 bytes).
+    // L on purpose (bug-hunt L-226): it's read off a lit screen, not a worn sticker - damage isn't the risk, size is, and L keeps
+    // the code smallest (biggest modules) for the same text, which is what a phone camera across a desk needs.
     // Written from the QR specification (ISO/IEC 18004) - no library, nothing sent: the picture holds the text and nothing else.
     static class Qr
     {

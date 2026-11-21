@@ -426,7 +426,9 @@ namespace AdeeboMeter
             {
                 int worst = r.Lv.Max(x => x == 3 ? 0 : x);
                 string ttfbTxt = r.Lv[5] == 0 && r.Val[5] != null && r.Val[5].Contains("·") ? " - " + r.Val[5].Split('·').Last().Trim() + " to first byte" : "";
-                Finish(r, worst >= 1 ? 1 : 0, Voice.P(host + " is happy to see you" + ttfbTxt + ". If it feels slow, it isn't the network.", host + " is reachable" + ttfbTxt + "."));
+                // bug-hunt L-207: an amber step on the way gets a plain verdict that says so - never "it isn't the network"
+                if (worst >= 1) Finish(r, 1, host + " is reachable" + ttfbTxt + ", but a step on the way is slow or odd - see the amber line above.");
+                else Finish(r, 0, Voice.P(host + " is happy to see you" + ttfbTxt + ". If it feels slow, it isn't the network.", host + " is reachable" + ttfbTxt + "."));
             }
             changed();
         }

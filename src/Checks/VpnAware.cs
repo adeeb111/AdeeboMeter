@@ -25,6 +25,10 @@ namespace AdeeboMeter
             { "zsatunnel", new[] { "Zscaler Client Connector", "zero trust (cloud proxy)" } }, { "zsatray", new[] { "Zscaler Client Connector", "zero trust (cloud proxy)" } },
             { "stagentsvc", new[] { "Netskope Client", "zero trust (cloud proxy)" } }, { "stagentui", new[] { "Netskope Client", "zero trust (cloud proxy)" } },
             { "forticlient", new[] { "FortiClient (Fortinet)", "VPN" } }, { "fortitray", new[] { "FortiClient (Fortinet)", "VPN" } }, { "fortisslvpndaemon", new[] { "FortiClient (Fortinet)", "VPN" } },
+            // bug-hunt L-287: more enterprise clients (a wrong name only means no product name - the tunnel is still found by its adapter)
+            { "swgvc", new[] { "SonicWall Global VPN Client", "VPN" } }, { "neservice", new[] { "SonicWall NetExtender", "VPN" } },
+            { "scvpn", new[] { "Sophos Connect", "VPN" } }, { "scgui", new[] { "Sophos Connect", "VPN" } },
+            { "nsload", new[] { "Citrix Secure Access", "VPN" } }, { "nsepa", new[] { "Citrix Secure Access", "VPN" } },
             { "pulsesecureservice", new[] { "Ivanti Secure Access (Pulse)", "VPN" } }, { "pulse", new[] { "Ivanti Secure Access (Pulse)", "VPN" } },
             { "tracsrvwrapper", new[] { "Check Point VPN", "VPN" } }, { "trgui", new[] { "Check Point VPN", "VPN" } },
             { "warp-svc", new[] { "Cloudflare WARP / Zero Trust", "zero trust (cloud proxy)" } },
@@ -69,7 +73,7 @@ namespace AdeeboMeter
                         i.Pac = Convert.ToString(k.GetValue("AutoConfigURL", ""), CultureInfo.InvariantCulture);
                     }
             }
-            catch (System.Security.SecurityException) { }
+            catch (Exception e) { if (!(e is System.Security.SecurityException || e is System.IO.IOException || e is UnauthorizedAccessException)) throw; }   // bug-hunt L-286: an unreadable key is "couldn't read", never the end of the check
             return i;
         }
         static double Ms(IPAddress ip)
@@ -109,8 +113,8 @@ namespace AdeeboMeter
         // where the time goes: router → tunnel → internet
         public static string Verdict(double gw, double far, double net, bool full)
         {
-            if (double.IsNaN(far)) return "";
-            double tunnel = Math.Max(0, far - (double.IsNaN(gw) ? 0 : gw));
+            if (double.IsNaN(far) || double.IsNaN(gw)) return "";   // bug-hunt L-268: without the router's time the LAN can't be taken out - say nothing rather than blame the tunnel
+            double tunnel = Math.Max(0, far - gw);
             if (tunnel >= 40 && (double.IsNaN(net) || tunnel >= net * 0.5)) return "Your VPN is the slow part: " + Math.Round(tunnel) + " ms just to reach its far side" + (full ? " - and with a full tunnel every site pays it." : ".") + " Try a nearer VPN gateway if your client offers a choice, or ask IT about split tunnelling for internet sites.";
             if (tunnel < 20) return "The tunnel itself is quick (" + Math.Round(tunnel) + " ms) - if things are slow, the delay is past the VPN, at the company's internet exit or the site.";
             return "The tunnel adds about " + Math.Round(tunnel) + " ms - noticeable on calls, not the main problem.";

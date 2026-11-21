@@ -1,6 +1,6 @@
 # AdeeboMeter 1.1.5 - plan
 
-Status (12 Nov 2026): built on branch dev-1.1.5 and reviewed (three outside reviews, findings fixed); not released - Adeeb releases it. Designed 11 Nov 2026. Mockups: the "AdeeboMeter Gamer Zone" design canvas (6 artboards).
+Status: released 17 Nov 2026 (built on branch dev-1.1.5, three outside reviews, findings fixed). Designed 11 Nov 2026. Mockups: the "AdeeboMeter Gamer Zone" design canvas (6 artboards).
 One release, everything together (Adeeb's rule). Nothing is built, tested, committed or published until he says go.
 
 ## Rules every item keeps
@@ -27,9 +27,10 @@ what each feature documents · SNMP read-only · secrets never kept · C# 5 / .N
   Fortnite, League of Legends, Apex Legends, GTA Online, Call of Duty, Overwatch 2, Rocket League, Dota 2, Roblox,
   Marvel Rivals, Minecraft (your server). GTA VI greyed "coming when it launches on PC" (no PC date announced, Nov 2026).
 ### The tab
-- One card per monitored game; per server: ping now / average / worst / p95, jitter, loss, spike count, sparkline,
-  grade Competitive / Casual / Laggy, and HOW it was measured (ICMP / TCP port / captured).
-- Best region for you = the last 7 days (stability per evening), not the current ping. Per-day squares per region.
+- One card per monitored game; per server: ping now / average / p95, jitter, loss, sparkline, grade Competitive / Casual /
+  Laggy, and HOW it was measured (ICMP / TCP port / captured). (As built: no "worst" column and no per-server spike count -
+  spikes are listed under the cards.)
+- Best region for you = the last 7 days (stability per evening), not the current ping. (As built: no per-day squares.)
 - Why did it spike? Each spike matched against router delay and Wi-Fi signal at the same second -> "your Wi-Fi" /
   "your provider" / "past your provider (game server side)".
 - This match: start/stop with the game's .exe; loss, spikes, how many were Wi-Fi, a tip; Copy / Save / Report for my ISP.

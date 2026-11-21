@@ -629,9 +629,10 @@ namespace AdeeboMeter
             {
                 Add(p);
                 var t = p.StandardOutput.ReadToEndAsync();
-                p.StandardError.ReadToEndAsync();
+                var et = p.StandardError.ReadToEndAsync(); et.ContinueWith(x => { var ignored = x.Exception; }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);   // bug-hunt L-72: drained and observed
                 if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } return ""; }
-                return t.Wait(1000) ? t.Result : "";
+                p.WaitForExit();   // the redirected streams reach their end
+                return t.Wait(10000) ? t.Result : "";   // L-72: a long output gets time to finish, not 1 s
             }
         }
     }

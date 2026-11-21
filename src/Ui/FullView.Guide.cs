@@ -33,7 +33,7 @@ namespace AdeeboMeter
         // Full checkup (1.1.5): from Home or the widget's menu; the report opens on What's wrong? like the other checks
         internal void StartCheckup()
         {
-            if (guideBusy) { tab = "guide"; ShowTab(); SyncNav(); return; }
+            if (guideBusy) { guideNote = L.T("A check is already running - its report opens here when it's done."); tab = "guide"; ShowTab(); SyncNav(); if (guideCanvas != null) guideCanvas.Invalidate(); return; }   // bug-hunt L-327: said, not silent
             Investigate.CheckupSpeed = checkupSpeed;
             tab = "guide"; ShowTab(); SyncNav(); StartGuide("full", false);
         }
@@ -59,7 +59,7 @@ namespace AdeeboMeter
                 g.DrawString(running ? L.T("Running") + ": " + r.Status : L.T("This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first."), Draw.fSmall, m, new RectangleF(tx, cr.Y + 38 * S, Math.Max(40 * S, cr.Width - (tx - cr.X) - bw - 262 * S), 18 * S), sf);
             }
             // the speed-test tick (off on a capped or mobile connection) and the button
-            var tk = new RectangleF(cr.Right - bw - 230 * S, cr.Y + 26 * S, 220 * S, 22 * S);
+            var tk = new RectangleF(cr.Right - bw - 230 * S, cr.Y + 26 * S, 214 * S, 22 * S);   // bug-hunt L-326: ends before the button starts
             var box = new RectangleF(tk.X, tk.Y + 3 * S, 16 * S, 16 * S); Theme.Fill(g, box, 4 * S, checkupSpeed ? Kit.Accent("home") : Theme.Card); Theme.Stroke(g, box, 4 * S, checkupSpeed ? Kit.Accent("home") : Theme.Line, 1);
             if (checkupSpeed) Kit.Icon(g, "check", new RectangleF(box.X + 2 * S, box.Y + 2 * S, 12 * S, 12 * S), Color.White);
             using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Include a speed test (100-300 MB)"), Draw.fSmall, sb2, box.Right + 6 * S, tk.Y + 2 * S);
@@ -82,11 +82,11 @@ namespace AdeeboMeter
             Task.Factory.StartNew(() =>
             {
                 Investigate.Run(id, M, r, delegate { try { BeginInvoke((Action)guideCanvas.Invalidate); } catch { } });
-                try { BeginInvoke((Action)delegate { guideBusy = false; guideCanvas.Invalidate(); }); } catch { guideBusy = false; }
+                try { BeginInvoke((Action)delegate { guideBusy = false; guideNote = ""; guideCanvas.Invalidate(); }); } catch { guideBusy = false; }
             }, TaskCreationOptions.LongRunning);
         }
 
-        DateTime guideCopied; string guideNote = "";
+        DateTime guideCopied; string guideNote = ""; volatile bool reportBusy;
         // what someone helping you needs: the problem, what was found, what was seen, what to try - internal addresses removed on copy
         static string GuideText(GuideRun r)
         {
@@ -136,6 +136,7 @@ namespace AdeeboMeter
                     var bk = Kit.Back(g, "All problems", x, y, "home", false);
                     Act(guideCanvas, bk, delegate { if (!guideBusy) { guideRun = null; guideCase = null; guideCanvas.Invalidate(); } });
                     y += bk.Height + 14 * S;
+                    if ((guideBusy || reportBusy) && guideNote != "") { using (var gb = new SolidBrush(Theme.LvText(1))) g.DrawString(guideNote, Draw.fBodyB, gb, x, y); y += 30 * S; }   // L-327: the "already running" note shows here too
                     if (CaseShowing) y = PaintCaseHead(g, x, y, w);   // a case: what, when, from where, how sure, the minutes around it (FullView.Case.cs)
                     g.DrawString(r.Title.ToUpperInvariant() + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input.ToUpperInvariant() : "") + "  ·  " + (r.Done ? "DONE " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : "WORKING...")), Draw.fTiny, muted, x, y);
                     y += 26 * S;
@@ -200,7 +201,19 @@ namespace AdeeboMeter
                                 if (ar.Right > x + w && lx > x) { lx = x; y += 44 * S; ar = new RectangleF(lx, y, ar.Width, ar.Height); }
                                 Theme.Fill(g, ar, 17 * S, a == "It's fixed" ? Theme.BlueSoft : Theme.Soft);
                                 g.DrawString(L.T(a), Draw.fBodyB, lb, lx + 14 * S, y + (34 * S - asz.Height) / 2);
-                                if (a.StartsWith("Make a report", StringComparison.Ordinal) || a.StartsWith("Report saved", StringComparison.Ordinal)) { var cc = guideCase; Act(guideCanvas, ar, delegate { if (a.StartsWith("Report saved", StringComparison.Ordinal) && reportFile != "") { RowAction("show:" + reportFile); return; } try { Cursor = Cursors.WaitCursor; reportFile = MakeReport(cc); reportAt = DateTime.Now; guideNote = ""; } catch (Exception re) { if (re is OutOfMemoryException) throw; Program.Log("report: " + re); reportFile = ""; } finally { Cursor = Cursors.Default; } if (reportFile != "") RowAction("show:" + reportFile); guideCanvas.Invalidate(); }); }
+                                if (a.StartsWith("Make a report", StringComparison.Ordinal) || a.StartsWith("Report saved", StringComparison.Ordinal)) { var cc = guideCase; Act(guideCanvas, ar, delegate
+                                {
+                                    if (a.StartsWith("Report saved", StringComparison.Ordinal) && reportFile != "") { RowAction("show:" + reportFile); return; }
+                                    if (reportBusy) return;
+                                    // bug-hunt L-328: printed to PDF on a thread of its own (printing wants STA) - the window never waits on it
+                                    reportBusy = true; Cursor = Cursors.AppStarting; guideNote = L.T("Making the report...");
+                                    var th = new System.Threading.Thread(() =>
+                                    {
+                                        string made = ""; try { made = MakeReport(cc); } catch (Exception re) { if (re is OutOfMemoryException) throw; Program.Log("report: " + re); }
+                                        try { BeginInvoke((Action)delegate { reportBusy = false; Cursor = Cursors.Default; reportFile = made; reportAt = DateTime.Now; guideNote = ""; if (reportFile != "") RowAction("show:" + reportFile); guideCanvas.Invalidate(); }); } catch (InvalidOperationException) { reportBusy = false; }
+                                    }) { IsBackground = true, Name = "report" };
+                                    th.SetApartmentState(System.Threading.ApartmentState.STA); th.Start(); guideCanvas.Invalidate();
+                                }); }
                                 else if (a == "Learn why") { string tp = guideCase.Topic; Act(guideCanvas, ar, delegate { GoTopic(tp); }); }
                                 else if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = "Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."; guideRun = null; guideCanvas.Invalidate(); });
                                 else if (a.StartsWith("Still", StringComparison.Ordinal)) Act(guideCanvas, ar, delegate { if (!guideBusy) StartGuide(r2.Id, false); });

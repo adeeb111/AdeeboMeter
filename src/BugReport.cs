@@ -54,14 +54,18 @@ namespace AdeeboMeter
         static readonly HashSet<string> NotHost = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "exe", "dll", "cs", "txt", "json", "log", "png", "settings", "md", "xml", "config", "ini", "tmp", "pdf", "csv", "drawio", "zip" };
         static readonly HashSet<string> OkHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "adeebometer.com", "www.adeebometer.com", "github.com", "api.github.com", "open-meteo.com", "api.open-meteo.com", "feeds.bbci.co.uk", "api-web.nhle.com", "www.bankofcanada.ca" };
         // take out what could point to a person: their user and PC names, the profile path, addresses of any kind
+        static bool VersionBefore(string s, int at) { int from = Math.Max(0, at - 14); string before = s.Substring(from, at - from); return Regex.IsMatch(before, @"(\bv|version|AdeeboMeter|Windows|build|CLR|\.NET)\s*$", RegexOptions.IgnoreCase); }
         public static string Scrub(string s) { return Scrub(s, Environment.UserName, Environment.MachineName); }
         public static string Scrub(string s, string user, string pc)
         {
             s = userPath.Replace(s ?? "", "$1<user>");
             if (!string.IsNullOrEmpty(user) && user.Length >= 2) s = Regex.Replace(s, Regex.Escape(user), "<user>", RegexOptions.IgnoreCase);
             if (!string.IsNullOrEmpty(pc) && pc.Length >= 2) s = Regex.Replace(s, Regex.Escape(pc), "<pc>", RegexOptions.IgnoreCase);
+            // bug-hunt L-291: a one-letter name is taken out where it's named as one (user X, PC X, \\X\\) - not every lone letter
+            if (!string.IsNullOrEmpty(user) && user.Length == 1) s = Regex.Replace(s, @"(?<=\b(?:user|username|account|signed in as)[ :=]+)" + Regex.Escape(user) + @"\b", "<user>", RegexOptions.IgnoreCase);
+            if (!string.IsNullOrEmpty(pc) && pc.Length == 1) s = Regex.Replace(s, @"(?<=\b(?:pc|computer|machine|host)[ :=]+)" + Regex.Escape(pc) + @"\b|(?<=\\\\)" + Regex.Escape(pc) + @"(?=\\)", "<pc>", RegexOptions.IgnoreCase);
             s = email.Replace(s, "<email>"); s = mac.Replace(s, "<mac>"); s = unc.Replace(s, "<path>"); s = anyPath.Replace(s, m => m.Value.StartsWith("<", StringComparison.Ordinal) ? m.Value : "<path>");
-            s = ipv6.Replace(s, "<ipv6>"); s = ipv6short.Replace(s, m => m.Value.Contains("::") && m.Value.Length > 2 ? "<ipv6>" : m.Value); s = ipv4.Replace(s, "<ip>");
+            s = ipv6.Replace(s, "<ipv6>"); s = ipv6short.Replace(s, m => m.Value.Contains("::") && m.Value.Length > 2 ? "<ipv6>" : m.Value); s = ipv4.Replace(s, m => VersionBefore(s, m.Index) ? m.Value : "<ip>");   // bug-hunt L-290: "version 1.1.5.0" stays a version
             s = host.Replace(s, m => NotHost.Contains(m.Groups[1].Value) || OkHosts.Contains(m.Value) || CodeName(m.Value) ? m.Value : "<host>");   // "System.IO" stays, "nas.home.lan" goes
             return s;
         }

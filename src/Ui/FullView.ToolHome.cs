@@ -10,8 +10,8 @@ namespace AdeeboMeter
 {
     // ================================================================== Toolbox, by question (the default view since 1.1.5)
     // One big search, your recent tools, and a card per question you'd ask - "Can I reach it?", "Why is it slow?" - with its
-    // three most useful tools in plain words. A tool opens across the whole width. "All tools (list)" brings back the classic
-    // view (sections, quick row, the side list) for people who like everything at once; the choice is remembered.
+    // three most useful tools in plain words. A tool opens across the whole width. "Every tool" (FullView.Index.cs) lists them all,
+    // each once; the choice is remembered. (bug-hunt L-153: the classic "All tools (list)" view is gone.)
     sealed partial class FullView
     {
         // id, question, the groups (from TbLayout) it covers, its three featured tools
@@ -177,7 +177,7 @@ namespace AdeeboMeter
                 if (tbFilter != "")
                 {
                     var found = ScopedMatches();
-                    g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + (found.Count == 1 ? L.T(" tool matches") : L.T(" tools match")) + "  ·  " + L.T("Enter opens the first"), Draw.fHead, ink, x, y); y += 36 * S;
+                    g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + (found.Count == 1 ? L.T(" tool matches") : L.T(" tools match")) + (found.Count > 60 ? "  ·  " + L.T("the first") + " 60 " + L.T("shown") : "") + "  ·  " + L.T("Enter opens the first"), Draw.fHead, ink, x, y);   /* L-143 */ y += 36 * S;
                     if (found.Count == 0) { string dym = DidYouMean(tbFilter); if (dym != null) { string tx = L.T("Did you mean") + "  " + dym + " ?"; var ts = g.MeasureString(tx, Draw.fBody); g.DrawString(tx, Draw.fBody, lb, x, y); string qq = dym; Act(tbCanvas, new RectangleF(x, y, ts.Width, ts.Height), delegate { tbSearch.Box.Text = qq; tbSearch.Box.SelectionStart = qq.Length; }); y += 30 * S; } }
                     int c2 = Math.Min(cols, 2); float rw = (w - gap * (c2 - 1)) / c2; int i = 0;
                     foreach (var t in found.Take(60)) { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); toolRow(t, new RectangleF(x + (i % c2) * (rw + gap), y + (i / c2) * 66 * S, rw, 58 * S), qn != null ? L.T(qn[1]) : SectionName(SectionOf(t))); i++; }

@@ -186,6 +186,8 @@ IPAddress[] found;
                 if (ip == null && found.Length > 0) { res.Error = srv.Host + " has only IPv6 addresses - this speed test runs over IPv4; pick another server"; return res; }
                 if (ip == null) { res.Error = "couldn't find " + srv.Host + " - the server's name doesn't resolve, or DNS / the internet is down"; return res; }
                 // a server from speedservers.txt whose name points into this PC or the LAN (127.0.0.1.nip.io, localtest.me): never
+                // bug-hunt L-56: the same rule both ways - every IPv4 address the name gives must be on the internet (the test runs over IPv4)
+                var badV4 = found.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork && !Reachable(a)); if (badV4 != null) ip = badV4;
                 if (!Reachable(ip)) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }
                 if (run != null) run.Status = "Ping to " + srv.Label + "...";
                 res.Idle = Ping(ip, 10, () => run != null && run.Stop);
@@ -204,7 +206,8 @@ IPAddress[] found;
                     Uri upU; IPAddress[] upIps = null;
                     if (Uri.TryCreate(srv.Up, UriKind.Absolute, out upU)) { try { upIps = Dns.GetHostAddresses(upU.DnsSafeHost); } catch (SocketException) { upIps = null; } catch (ArgumentException) { upIps = null; } }
                     // bug-hunt ML-99: an upload host that fails the check skips the upload - the good download still counts
-                    if (upIps == null || upIps.Length == 0 || upIps.Any(a => !Reachable(a))) res.UpWhy = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped";
+                    var up4 = upIps == null ? new IPAddress[0] : upIps.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToArray();
+                    if (up4.Length == 0 || up4.Any(a => !Reachable(a))) res.UpWhy = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped";
                     else
                     {
                         if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";

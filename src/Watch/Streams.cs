@@ -183,8 +183,10 @@ namespace AdeeboMeter
             if (l.MinuteN > 0) Point(l);
             l.S.End = at > l.S.Start ? at : l.S.End;
             l.S.AvgDown = l.NDown > 0 ? l.SumDown / l.NDown : double.NaN;   // the whole session (AM-CG-146)
-            if (l.S.Length.TotalMinutes >= 2) WatchKit.Save(l.S);   // a two-minute clip isn't worth a record
-            Moments.StreamEnded(l.S.What, l.S.Length.TotalMinutes, l.S.Dips.Count);
+            // bug-hunt L-61: called from inside lock k (a new service, a long stall, expiry), the record is written off this thread -
+            // the window reading the stream's state never waits on the disk. At exit (no lock held) it's written right here.
+            Action write = () => { if (l.S.Length.TotalMinutes >= 2) WatchKit.Save(l.S); /* a two-minute clip isn't worth a record */ Moments.StreamEnded(l.S.What, l.S.Length.TotalMinutes, l.S.Dips.Count); };
+            if (System.Threading.Monitor.IsEntered(k)) System.Threading.Tasks.Task.Factory.StartNew(write); else write();
         }
         public static void SetManual(string what) { lock (k) { Manual = (what ?? "").Trim(); if (Manual.Length > 60) Manual = Manual.Substring(0, 60); Ver++; } }
 

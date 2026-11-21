@@ -214,7 +214,7 @@
   AMJ.report = function (R) {
     var L = [message("AdeeboMeter - signal journey"), (R.carrier || "") + (R.net ? " · " + R.net : "") + " · " + (R.rat === "nr" ? "5G" : "LTE") + " · " + fmtT(R.span) + " · " + message("{count} moments", {count:R.read})];
     R.findings.forEach(function (f) { L.push("- " + message(f[1]) + ": " + AMJ.findingText(f)); });
-    L.push(message("Strength (RSRP): {median} dBm ({min} to {max})", {median:R.rsrp.med,min:R.rsrp.min,max:R.rsrp.max}));
+    if (R.rsrp.med != null) L.push(message("Strength (RSRP): {median} dBm ({min} to {max})", {median:R.rsrp.med,min:R.rsrp.min,max:R.rsrp.max}));   // bug-hunt L-360: no "null dBm" when the recording had no strength
     if (R.rsrq.med != null) L.push(message("Quality (RSRQ): {value} dB", {value:R.rsrq.med}));
     if (R.sinr.med != null) L.push("SINR: " + R.sinr.ports.map(function (p, i) { return message("antenna {index}: {value} dB", {index:i+1,value:p.med}); }).join(", "));
     L.push(message("Cells: {cells} · {changes}", {cells:R.cells.map(function (c) { return c.pci + (c.enb != null ? message(" - tower {tower}, side {side}", {tower:c.enb,side:c.side}) : "") + " (" + fmtT(c.t) + ")"; }).join(", "), changes:message("{count} changes", {count:R.changes.length})}));

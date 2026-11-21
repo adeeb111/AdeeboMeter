@@ -60,7 +60,7 @@ namespace AdeeboMeter
             url = Toolkit.OneSlash(url);   // "https:/x" is https://x, never the host "https"
             var rows = new List<string[]>(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url.Trim();
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "URL", "not a web address", "", "u")); return rows; }
-            int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5);
+            int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5); string firstStatus = "";
             for (int i = 0; i < n && !run.Stop; i++)
             {
                 if (DateTime.UtcNow > allBy) { rows.Add(R(1, "Stopped", "after 5 minutes - " + i + " of " + n + " requests done", "", "m")); break; }   // one deadline for the whole run
@@ -73,7 +73,7 @@ namespace AdeeboMeter
                     foreach (var a in addrs.OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).Take(4))
                     {
                         var c = new TcpClient(a.AddressFamily);
-                        try { if (c.ConnectAsync(a, u.Port).Wait(addrs.Length > 1 ? 3000 : 5000)) { conn = c; break; } } catch (AggregateException ae) { connErr = (ae.InnerException ?? ae).Message; }
+                        try { if (c.ConnectAsync(a, u.Port).Wait(addrs.Length > 1 ? 3000 : 5000)) { conn = c; break; } } catch (AggregateException ae) { connErr = (ae.InnerException ?? ae).Message; } catch (SocketException se) { connErr = se.Message; }   /* L-16: a synchronous throw closes the socket too */
                         c.Close();
                     }
                     if (conn == null) throw new TimeoutException(connErr);
@@ -92,7 +92,8 @@ namespace AdeeboMeter
                     all.Add(t); run.Add(t[4]);
                 }
                 catch (Exception e) { run.Add(double.NaN); rows.Add(R(2, "Request " + (i + 1), Draw.Trunc(e.Message, 90), "", "m")); }
-                if (i == 0 && status != "") rows.Add(R(status.Contains(" 2") || status.Contains(" 3") ? 0 : 1, "Answer", status, "", "m"));
+                if (status != "" && (i == 0 || status != firstStatus)) rows.Add(R(status.Contains(" 2") || status.Contains(" 3") ? 0 : 1, i == 0 ? "Answer" : "Answer (request " + (i + 1) + ")", status, i == 0 ? "" : "This one answered differently from the first.", "m"));   // bug-hunt L-218: a later different answer is shown too
+                if (i == 0) firstStatus = status;
             }
             if (all.Count > 0)
             {
@@ -175,7 +176,7 @@ namespace AdeeboMeter
                     double offset = ((t2 - t1).TotalMilliseconds + (t3 - t4).TotalMilliseconds) / 2, delay = (t4 - t1).TotalMilliseconds - (t3 - t2).TotalMilliseconds;
                     string refid = stratum <= 1 ? Encoding.ASCII.GetString(r, 12, 4).TrimEnd('\0') : new IPAddress(new[] { r[12], r[13], r[14], r[15] }).ToString();
                     if (delay < 0 || delay > 10000 || t3 < t2) { rows.Add(R(2, h, "answered with timestamps that don't add up (delay " + Ms(delay) + ")", "This server's time can't be used.", "m")); return rows; }
-                    rows.Add(R(stratum == 0 || stratum > 15 ? 2 : 0, h, "answers · stratum " + stratum + (stratum == 1 ? " (has its own clock: " + refid + ")" : " (gets time from " + refid + ")") + " · round trip " + Ms(delay), stratum == 0 ? "Stratum 0 here means 'kiss of death' - the server refuses to serve you." : "", "m"));
+                    rows.Add(R(stratum > 15 ? 2 : 0, h, "answers · stratum " + stratum + (stratum == 1 ? " (has its own clock: " + refid + ")" : " (gets time from " + refid + ")") + " · round trip " + Ms(delay), stratum > 15 ? "Stratum 16 means the server has no working time source of its own." : "", "m"));   /* L-14: stratum 0 is handled above as the kiss of death */
                     rows.Add(R(Math.Abs(offset) > 5000 ? 2 : Math.Abs(offset) > 500 ? 1 : 0, "Your clock vs this server (an estimate from one server)", (offset >= 0 ? "behind by " : "ahead by ") + Span(Math.Abs(offset)), Math.Abs(offset) > 500 ? "Settings > Time > Sync now. More than 5 minutes breaks sign-in and certificates." : "", "m"));
                 }
             }
@@ -238,11 +239,12 @@ namespace AdeeboMeter
                         if (starttls && !implicitTls)
                         {
                             wr.WriteLine("STARTTLS"); string ok = rd.Next() ?? "";
+                            if (!ok.StartsWith("220", StringComparison.Ordinal)) rows.Add(R(2, "STARTTLS", "offered, but refused when asked: " + Draw.Trunc(ok, 80), "The server says it can encrypt, then won't - mail to it would go unencrypted or bounce.", "m"));   // bug-hunt L-219
                             if (ok.StartsWith("220", StringComparison.Ordinal)) { var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); var w2 = new StreamWriter(ssl, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true }; w2.WriteLine("QUIT"); }
                         }
                         else wr.WriteLine("QUIT");
                     }
-                    else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = rd.Next() ?? ""; rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
+                    else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = ""; for (int li = 0; li < 12; li++) { string x = rd.Next(); if (x == null || x.StartsWith("a1 ", StringComparison.Ordinal)) break; l += (l == "" ? "" : " ") + x.Replace("* CAPABILITY ", ""); }   /* L-13: every line up to the tagged answer */ rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
                     else { wr.WriteLine("CAPA"); var caps = new List<string>(); string l; while ((l = rd.Next()) != null && l != "." && caps.Count < 20) caps.Add(l); rows.Add(R(3, "Offers", string.Join(" · ", caps.Skip(1)), "", "m")); wr.WriteLine("QUIT"); }
                     if (cert != null) using (var cc = cert) { cert = null; double days = (cc.NotAfter - DateTime.Now).TotalDays; rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cc.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + cc.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m")); }
                 }
@@ -290,7 +292,7 @@ namespace AdeeboMeter
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
             string comm = string.IsNullOrWhiteSpace(community) ? "public" : community.Trim();
             var pdu = new List<byte>(); foreach (var o in SysOids) pdu.AddRange(Tlv(0x30, Oid(o[0]).Concat(new byte[] { 5, 0 }).ToArray()));
-            var reqId = new byte[] { 2, 2, 0x12, 0x34 };
+            var rid = new byte[2]; using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider()) rng.GetBytes(rid); var reqId = new byte[] { 2, 2, (byte)(rid[0] & 0x7F | 0x01), rid[1] };   /* L-12: a fresh request number each time */
             var getReq = Tlv(0xA0, reqId.Concat(new byte[] { 2, 1, 0, 2, 1, 0 }).Concat(Tlv(0x30, pdu.ToArray())).ToArray());
             var msg = Tlv(0x30, new byte[] { 2, 1, 1 }.Concat(Tlv(4, Encoding.ASCII.GetBytes(comm))).Concat(getReq).ToArray());
             try
@@ -490,21 +492,22 @@ namespace AdeeboMeter
             using (var u = new UdpClient(a.AddressFamily))
             {
                 u.Client.ReceiveTimeout = 1000; u.Connect(a, p);
+                var wall0 = DateTime.UtcNow; var mono = Stopwatch.StartNew();   /* L-15: times from a steady clock anchored once, so a clock change mid-run can't skew them */
                 for (int i = 0; i < n && !run.Stop; i++)
                 {
                     var pkt = new byte[41]; pkt[0] = (byte)(i >> 24); pkt[1] = (byte)(i >> 16); pkt[2] = (byte)(i >> 8); pkt[3] = (byte)i;
-                    var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate (RFC 4656): S bit 0 = this PC can't promise its clock is synced to UTC; scale 0, multiplier 1 (a multiplier of 0 isn't allowed)
+                    var t1 = wall0 + mono.Elapsed; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate (RFC 4656): S bit 0 = this PC can't promise its clock is synced to UTC; scale 0, multiplier 1 (a multiplier of 0 isn't allowed)
                     u.Send(pkt, pkt.Length); sentN++; var sw = Stopwatch.StartNew();
                     try
                     {
                         while (sw.ElapsedMilliseconds < 1000)
                         {
-                            var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
+                            var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = wall0 + mono.Elapsed;
                             if (r.Length < 40) continue;
                             int sseq = r[24] << 24 | r[25] << 16 | r[26] << 8 | r[27]; if (sseq != i) continue;
                             bool echoed = true; for (int k = 0; k < 8 && 28 + k < r.Length; k++) if (r[28 + k] != pkt[4 + k]) echoed = false;
                             if (!echoed) continue;   // a late duplicate of an earlier packet
-                            int rseq = r[0] << 24 | r[1] << 16 | r[2] << 8 | r[3];
+                            long rseq = (uint)(r[0] << 24 | r[1] << 16 | r[2] << 8 | r[3]);   /* L-15: unsigned, so it doesn't go negative past 2^31 */
                             var t3 = ReadNtp(r, 4); var t2 = ReadNtp(r, 16);
                             res.Add(new double[] { i, 0, (t2 - t1).TotalMilliseconds, (t4 - t3).TotalMilliseconds, ((t4 - t1) - (t3 - t2)).TotalMilliseconds, rseq });
                             run.Add(((t4 - t1) - (t3 - t2)).TotalMilliseconds); break;
@@ -519,7 +522,7 @@ namespace AdeeboMeter
             if (res.Count == 0) { rows.Add(R(2, a + ":" + p, "no reflected packets", "Is a TWAMP-light reflector running there on UDP " + p + ", and does its prefix list include this PC's address?", "m")); return rows; }
             // loss per direction: the reflector numbers what it reflected, so a gap there means lost on the way out
             int sent = sentN, got = res.Count, lostOut = 0, lostBack = 0;
-            for (int i = 1; i < res.Count; i++) { int ds = (int)(res[i][0] - res[i - 1][0]), dr = (int)(res[i][5] - res[i - 1][5]); if (ds > 1) { int miss = ds - 1, reflected = Math.Max(0, dr - 1); lostBack += Math.Min(miss, reflected); lostOut += miss - Math.Min(miss, reflected); } }
+            for (int i = 1; i < res.Count; i++) { int ds = (int)(res[i][0] - res[i - 1][0]); long drl = (long)(res[i][5] - res[i - 1][5]); if (drl < 0) drl += 4294967296L; int dr = (int)Math.Min(drl, int.MaxValue); if (ds > 1) { int miss = ds - 1, reflected = Math.Max(0, dr - 1); lostBack += Math.Min(miss, reflected); lostOut += miss - Math.Min(miss, reflected); } }
             var rtt = res.Select(x => x[4]).OrderBy(x => x).ToList();
             Func<int, double> ipdv = k => { double s = 0; for (int i = 1; i < res.Count; i++) s += Math.Abs(res[i][k] - res[i - 1][k]); return res.Count > 1 ? s / (res.Count - 1) : 0; };
             int unknown = sent - got - lostOut - lostBack;

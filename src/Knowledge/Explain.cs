@@ -73,7 +73,7 @@ namespace AdeeboMeter
             string pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string roam = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), temp = Path.GetTempPath();
             Func<string, bool> under = delegate(string root) { return root != "" && path.StartsWith(root.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase); };
-            if (under(temp) || (win != "" && under(Path.Combine(win, "Temp"))) || path.IndexOf("\\Temp\\", StringComparison.OrdinalIgnoreCase) >= 0) return "temp";   // C:\Windows\Temp is a temp folder, not "ships with Windows"
+            if (under(temp) || (win != "" && under(Path.Combine(win, "Temp"))) || System.Text.RegularExpressions.Regex.IsMatch(path, @"^[A-Za-z]:\\(Temp|Tmp)\\|\\AppData\\Local\\Temp\\", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return "temp";   // bug-hunt L-120: a real temp folder, not any folder called Temp (a game's own data\Temp)   // C:\Windows\Temp is a temp folder, not "ships with Windows"
             if (under(win)) return "windows";
             if (under(pf) || under(pf86)) return "programfiles";
             if (under(local) || under(roam) || under(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))) return "user";

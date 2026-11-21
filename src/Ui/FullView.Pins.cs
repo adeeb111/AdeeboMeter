@@ -43,8 +43,8 @@ namespace AdeeboMeter
             if (i >= 0) lock (Cfg.Pins) Cfg.Pins.RemoveAt(i);
             else
             {
-                string h; int pt; bool tl; string err;
-                if (Cfg.Pins.Count >= 5 || !DestCheck.Parse(t, out h, out pt, out tl, out err)) { SyncPinBtn(); return; }
+                string h; int pt; bool tl; string err = "";
+                if (Cfg.Pins.Count >= 5 || !DestCheck.Parse(t, out h, out pt, out tl, out err)) { SyncPinBtn(); if (Cfg.Pins.Count < 5) pinBtn.Text = "Can't pin: " + Draw.Trunc(string.IsNullOrEmpty(err) ? "not a site or address" : err, 34); return; }   // bug-hunt L-331: says why
                 lock (Cfg.Pins) Cfg.Pins.Add(t);
             }
             Cfg.Save(); BuildPinBar(); SyncPinBtn();

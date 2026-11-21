@@ -128,6 +128,7 @@ namespace AdeeboMeter
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             int n = Count(count, 10), size = 32, ttl = 128, gap = 1000, dscp = -1; bool df = false, cmp = false; string o = (opts ?? "").ToLowerInvariant(), bad = "";
             // Windows ping's own words work too: -l size, -f don't fragment, -i TTL, -n count is the Count box
+            var nOpt = Regex.Match(o, @"(?:^|\s)-n\s*([0-9]+)"); if (nOpt.Success) { n = Count(nOpt.Groups[1].Value, 10); o = o.Remove(nOpt.Index, nOpt.Length); }   // bug-hunt L-198: -n is the Count box, as the comment says
             o = Regex.Replace(o, @"(^|\s)-l\s*", "$1size "); o = Regex.Replace(o, @"(^|\s)-i\s*", "$1ttl "); o = Regex.Replace(o, @"(^|\s)-f\b", "$1df");
             const string optRx = @"(size|ttl|every|gap)\s*=?\s*([0-9]+)|\b(df)\b|\bdscp\s*=?\s*([a-z]{2}[0-9]{0,2}|[0-9]{1,4})\b|\b(compare)\b";
             string left = Regex.Replace(o, optRx, " ").Trim(); if (left != "") bad = "not understood: " + Draw.Trunc(left, 40) + " - nothing was sent";

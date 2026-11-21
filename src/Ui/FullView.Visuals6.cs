@@ -51,7 +51,7 @@ namespace AdeeboMeter
                         {
                             case "rushhour": foreach (var o in res.Where(o => Regex.IsMatch(o[1], "day$"))) bars.Add(Tuple.Create(o[1], RowMs(o[2]), P(o[2], 0), Lv(o))); mark = RowMs(RV("Usual")); unit = "ms"; cap = "THE SLOWEST HOUR OF EACH DAY"; foot = "The line is your usual delay. " + Or(res.Where(o => Lv(o) == 1 && o.Length > 3).Select(o => o[3]).FirstOrDefault(), "Rush hour is when everyone is streaming."); break;
                             case "besttime": foreach (var o in res.Where(o => RowMs(o[2]) > 0 && o[1] != "Server")) bars.Add(Tuple.Create(o[1], RowMs(o[2]), P(o[2], 1), Lv(o))); unit = "ms"; cap = "WHEN " + Or(P(RV("Server"), 0), "THE SERVER").ToUpperInvariant() + " PLAYS BEST"; foot = Or(res.Where(o => o[1] == "Evenings" && o.Length > 3).Select(o => o[3]).FirstOrDefault(), "Short bars = the best hours to play."); break;
-                            case "sixmonths": foreach (var o in res.Where(o => Regex.IsMatch(o[2], @"% smooth"))) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)%"), P(o[2], 1) + " · " + P(o[2], 3), Lv(o))); unit = "%"; cap = "SIX MONTHS, MONTH BY MONTH - " + Or(P(RV("Smooth"), 0), "").ToUpperInvariant(); foot = Or(RV("Outages"), "") + (RV("Saved") != "" ? " · " + RV("Saved") : ""); break;
+                            case "sixmonths": foreach (var o in res.Where(o => Regex.IsMatch(o[2], @"% smooth"))) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)%"), P(o[2], 1) + " · " + P(o[2], 3), Lv(o))); unit = "%"; cap = "SIX MONTHS, MONTH BY MONTH";   /* L-354: no dangling " - " (there's no "Smooth" row) */ foot = Or(RV("Outages"), "") + (RV("Saved") != "" ? " · " + RV("Saved") : ""); break;
                             case "wakeup": foreach (var o in res.Where(o => Regex.IsMatch(o[1], @"^\w{3} \d"))) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)\s*s on average"), P(o[2], 0) + " · " + P(o[2], 2), Lv(o))); unit = "s"; cap = "BACK ONLINE AFTER WAKING - " + Or(P(RV("Back online"), 0), "").ToUpperInvariant(); foot = Or(RRow("Back online") != null && RRow("Back online").Length > 3 ? RRow("Back online")[3] : "", "Slow wake-ups are usually Wi-Fi power saving or a long DHCP renew."); break;
                             case "dltime": foreach (var o in res) bars.Add(Tuple.Create(o[1], VNum(o[2], @"([0-9.]+)\s*min"), Regex.Match(o[2], @"[0-9.]+\s*Mbps").Value, Lv(o))); unit = "min"; cap = L.T("HOW LONG") + " " + Or(VisIn()[0], "IT").ToUpperInvariant() + " " + L.T("TAKES"); foot = "From your own speed tests and what your downloads really got - not the plan's number."; break;
                             case "leaks": foreach (var o in res.Where(o => o.Length > 2 && o[2].StartsWith("+", StringComparison.Ordinal))) { var m = Regex.Match(o[2], @"^\+([0-9.,]+)\s*(MB|GB)"); double grew = m.Success ? double.Parse(m.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture) * (m.Groups[2].Value == "GB" ? 1024 : 1) : double.NaN; bars.Add(Tuple.Create(o[1], grew, Cut(o[2], 60), Lv(o))); } unit = "MB more";   /* bug-hunt ML-223: PcHealth.Leaks names rows by program, "+1.2 GB in 2.0 h" */ cap = "WHAT KEEPS GROWING"; foot = Or(res.Where(o => o.Length > 3).Select(o => o[3]).FirstOrDefault(), "Memory that only goes up, never down, is a leak - a restart gives it back."); break;
@@ -92,7 +92,7 @@ namespace AdeeboMeter
                         {
                             if ((tbSel == "marketopen" && o[1] == "Market-open check") || (tbSel == "obs" && o[1] == "OBS link")) continue;
                             if (o[0] == "-1" || (o[2] == "" && string.Equals(o[1], o[1].ToUpperInvariant(), StringComparison.Ordinal))) { grp = o[1]; continue; }
-                            if (tbSel == "month" && o[1] == "Compared with September") { t.Add(new[] { o[1], o[2], o[0], L.T("AGAINST LAST MONTH") }); continue; }
+                            if (tbSel == "month" && o[1].StartsWith("Compared with ", StringComparison.Ordinal))   /* L-355: whatever the previous month is */ { t.Add(new[] { o[1], o[2], o[0], L.T("AGAINST LAST MONTH") }); continue; }
                             t.Add(new[] { o[1], P(o[2], 0) + (P(o[2], 1) != "" ? " · " + P(o[2], 1) : ""), o[0], tbSel == "drivers" || tbSel == "bluetooth" ? grp : "" });
                         }
                         cap = tbSel == "obs" ? Or(RV("OBS link"), "OBS LINK") : tbSel == "marketopen" ? Or(RV("Market-open check"), "MARKET-OPEN CHECK") : tbSel == "month" ? Or(VisRows().Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "YOUR MONTH") : tbSel == "svcfail" ? "SERVICES THAT FAILED TO START" : tbSel == "events" || tbSel == "winev" ? "WHAT WINDOWS WROTE DOWN" : tbSel == "drivers" ? "DEVICES, DRIVERS AND USB" : tbSel == "bluetooth" ? "BLUETOOTH" : Or(P(RV("Ready to play"), 0), "READY TO PLAY?").ToUpperInvariant();
@@ -184,8 +184,9 @@ namespace AdeeboMeter
         // things in the order they happened, on one line: red = it broke, amber = the likeliest cause; a cursor walks it
         static float Timeline(Graphics g, float x, float y, float w, string st, string cap, List<string[]> ev, string foot)
         {
-            if (ev.Count == 0) ev = new List<string[]> { new[] { "18:14", L.T("a change"), "1" }, new[] { "18:40", L.T("it broke"), "2" }, new[] { "18:47", L.T("back"), "0" } };
-            ev = ev.Take(7).ToList(); var r = VisCard(g, x, y, w, 90 * S + ev.Count * 34 * S + 44 * S, cap, st);
+            if (ev.Count == 0) { ev = new List<string[]> { new[] { "18:14", L.T("a change"), "1" }, new[] { "18:40", L.T("it broke"), "2" }, new[] { "18:47", L.T("back"), "0" } }; cap += "  ·  " + L.T("EXAMPLE - NO DATED EVENTS IN THIS RESULT"); }   // bug-hunt L-358
+            int moreE = ev.Count - 7; ev = ev.Take(7).ToList(); if (moreE > 0) cap += "  ·  +" + moreE + " " + L.T("more");   // bug-hunt L-353
+            var r = VisCard(g, x, y, w, 90 * S + ev.Count * 34 * S + 44 * S, cap, st);
             float lx = r.X + 110 * S, top = r.Y + 48 * S; var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
             using (var p = new Pen(Theme.Line, 3 * S)) g.DrawLine(p, lx, top, lx, top + (ev.Count - 1) * 34 * S + 8 * S);
             float cur = WindowsAnimates() ? Wrap((float)AnimT * 0.6f, ev.Count + 1f) : ev.Count;
@@ -205,7 +206,7 @@ namespace AdeeboMeter
         static float Bars(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, double, string, int>> bars, string unit, double mark, string foot)
         {
             PhoneB = Tuple.Create(cap, unit, bars.ToList()); PhoneKind = "b";
-            bars = bars.Where(b => !double.IsNaN(b.Item2)).Take(10).ToList();
+            bars = bars.Where(b => !double.IsNaN(b.Item2)).ToList(); int moreB = bars.Count - 10; bars = bars.Take(10).ToList(); if (moreB > 0) cap += "  ·  +" + moreB + " " + L.T("more");   // bug-hunt L-353
             if (bars.Count == 0) bars = new List<Tuple<string, double, string, int>> { Tuple.Create(L.T("(run it to see)"), 0.0, "", -1) };
             var r = VisCard(g, x, y, w, 56 * S + bars.Count * 34 * S + 50 * S, cap, st);
             float nx = r.X + 18 * S, bx = r.X + 180 * S, bw = r.Width - 180 * S - 230 * S, by = r.Y + 46 * S; double max = Math.Max(bars.Max(b => b.Item2), double.IsNaN(mark) ? 0 : mark) * 1.08; if (max <= 0) max = 1;
@@ -226,7 +227,8 @@ namespace AdeeboMeter
         static float Gauges(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, double, string, int>> gs, string foot)
         {
             if (gs.Count == 0) gs = new List<Tuple<string, double, string, int>> { Tuple.Create(L.T("Memory"), double.NaN, "", -1), Tuple.Create(L.T("Disk"), double.NaN, "", -1), Tuple.Create(L.T("Heat"), double.NaN, "", -1) };
-            gs = gs.Take(4).ToList(); var r = VisCard(g, x, y, w, 230 * S, cap, st); float cw = (r.Width - 36 * S) / gs.Count;
+            int gmax = w > 640 * S ? 6 : 4, moreG = gs.Count - gmax; gs = gs.Take(gmax).ToList(); if (moreG > 0) cap += "  ·  +" + moreG + " " + L.T("more");   // bug-hunt L-357/L-353: all six pressures on a wide window
+            var r = VisCard(g, x, y, w, 230 * S, cap, st); float cw = (r.Width - 36 * S) / gs.Count;
             var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
             for (int i = 0; i < gs.Count; i++)
             {
@@ -343,7 +345,7 @@ namespace AdeeboMeter
             var res = Res(); string la, lb, cap; var rows = new List<string[]>();   // what, left, right, level
             switch (tbSel)
             {
-                case "certconv": la = "PEM (text)"; lb = "DER (binary)"; cap = "THE SAME CERTIFICATE, TWO WAYS OF WRITING IT"; rows.Add(new[] { L.T("file"), System.IO.Path.GetFileName(Or(VisIn()[0], "server.crt")), Or(Regex.Match(RV("Converted"), @"^\S+").Value, "server.der"), "0" }); rows.Add(new[] { L.T("looks like"), "-----BEGIN CERTIFICATE-----", "30 82 01 E8 30 82 …", "-1" }); rows.Add(new[] { L.T("inside"), L.T("the same certificate"), L.T("the same certificate"), "0" }); break;
+                case "certconv": la = "PEM (text)"; lb = "DER (binary)"; cap = "THE SAME CERTIFICATE, TWO WAYS OF WRITING IT"; rows.Add(new[] { L.T("file"), System.IO.Path.GetFileName(Or(VisIn()[0], "server.crt")), Or(System.IO.Path.GetFileName(Or(Res().Where(o => o.Length > 2 && o[1].EndsWith(" written", StringComparison.Ordinal)).Select(o => o[2]).FirstOrDefault(), "").Trim()), "server.der")   /* L-356: CertTools names the row "PEM (text) written" / "DER (binary) written" */, "0" }); rows.Add(new[] { L.T("looks like"), "-----BEGIN CERTIFICATE-----", "30 82 01 E8 30 82 …", "-1" }); rows.Add(new[] { L.T("inside"), L.T("the same certificate"), L.T("the same certificate"), "0" }); break;
                 case "certcmp":
                     {
                         // bug-hunt ML-228: EngPack.CertCompare - the run's name row (trust), the chain ("Site certificate" / "Intermediate" / "Root" = "CN · from issuer"),
@@ -384,7 +386,8 @@ namespace AdeeboMeter
                     break;
             }
             if (rows.Count == 0) rows.Add(new[] { L.T("(run it to compare)"), "", "", "-1" });
-            rows = rows.Take(7).ToList(); var r = VisCard(g, x, y, w, 80 * S + rows.Count * 34 * S + 44 * S, cap, st);
+            int moreR = rows.Count - 7; rows = rows.Take(7).ToList(); if (moreR > 0) cap += "  ·  +" + moreR + " " + L.T("more");   // L-353
+            var r = VisCard(g, x, y, w, 80 * S + rows.Count * 34 * S + 44 * S, cap, st);
             float kx = r.X + 18 * S, ax = r.X + 160 * S, cw = (r.Right - ax - 30 * S) / 2, ty = r.Y + 44 * S;
             Theme.Fill(g, new RectangleF(ax, ty, cw - 8 * S, 24 * S), 6 * S, Theme.Soft); Theme.Fill(g, new RectangleF(ax + cw, ty, cw - 8 * S, 24 * S), 6 * S, Theme.Soft);
             VText(g, Cut(la, 30), Draw.fBodyB, Theme.Ink, ax + 8 * S, ty + 3 * S); VText(g, Cut(lb, 30), Draw.fBodyB, Theme.Ink, ax + cw + 8 * S, ty + 3 * S); ty += 34 * S;

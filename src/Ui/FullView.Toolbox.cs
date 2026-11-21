@@ -307,7 +307,7 @@ namespace AdeeboMeter
             new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "NETWORK MATHS", "net" }, { "WIRELESS MATHS", "net" }, { "SERVERS & IT MATHS", "net" }, { "STREAMING & HOME MATHS", "net" }, { "VOICE & TDM MATHS", "net" }, { "MONEY & MARKETS MATHS", "net" }, { "COMMODITY MATHS", "net" }, { "GAMING MATHS", "net" },
-            { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
+            { "THIS PC AND YOUR PHONE", "net" } /* bug-hunt L-220: on purpose - they compare the two connections */, { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "hw", "Hardware nerds", "Every part of this PC against its own ceiling - disk, memory, graphics, processor, the link - how each one works, and what made it feel slow." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
@@ -413,6 +413,13 @@ namespace AdeeboMeter
             return rows;
         }
         // a code or passphrase made for you: shown on screen once - never in Copy, Save, or the result kept for this session
+        // bug-hunt L-103: a box is found by what it asks (its hint), never by its position - and an empty slot is skipped
+        void Prefill(string id, string hintStart, string value)
+        {
+            var t = Tools2().FirstOrDefault(z => z.Id == id); if (t == null) return;
+            int i = Array.FindIndex(t.Inputs, h => h.StartsWith(hintStart, StringComparison.OrdinalIgnoreCase));
+            if (i >= 0 && i < tbBoxes.Count && tbBoxes[i] != null) tbBoxes[i].Box.Text = value;
+        }
         static bool IsSecretRow(string[] r) { return r.Length > 4 && r[4] == "k"; }
         static readonly char[] Colon = { ':' };
         void RowAction(string act)
@@ -1049,7 +1056,7 @@ namespace AdeeboMeter
                 else
                 {
                     // this section only; SNMP is one row (its views are tabs on the right); recent tools live on the section's home page
-                    foreach (var grp in Tools2().Where(t => SectionOf(t) == tbSection && (!SnmpView(t.Id) || t.Id == "snmp")).GroupBy(t => t.Group))
+                    foreach (var grp in SectionGroups(tbSection))
                     {
                         bool open = tbOpen.Contains(grp.Key); var hr = new RectangleF(0, y, tbList.ClientSize.Width, 30 * S);
                         float cx = x + 1 * S, cy = y + 15 * S;   // a drawn chevron - not every font has the arrow characters
@@ -1063,6 +1070,14 @@ namespace AdeeboMeter
                 }
             }
             Need(tbList, y + 10 * S);
+        }
+        // bug-hunt L-259: a section's groups are worked out once (the tool list never changes while the app runs), not every paint
+        readonly Dictionary<string, List<IGrouping<string, Tool>>> secGroups = new Dictionary<string, List<IGrouping<string, Tool>>>();
+        List<IGrouping<string, Tool>> SectionGroups(string sec)
+        {
+            List<IGrouping<string, Tool>> l;
+            if (!secGroups.TryGetValue(sec, out l)) secGroups[sec] = l = Tools2().Where(t => SectionOf(t) == sec && (!SnmpView(t.Id) || t.Id == "snmp")).GroupBy(t => t.Group).ToList();
+            return l;
         }
         // a section's home page: what it's for, your recent tools, and a card per group with its first tools
         void PaintHome(Graphics g, float x, float y, float w)

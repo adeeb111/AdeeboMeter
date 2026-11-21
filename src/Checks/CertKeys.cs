@@ -91,7 +91,7 @@ namespace AdeeboMeter
         // into Windows' store: the key is kept by Windows for this user, marked exportable only so you can back it up
         static X509Certificate2 Persist(X509Certificate2 withKey, string name)
         {
-            var pw = Convert.ToBase64String(Guid.NewGuid().ToByteArray());   // only for the hand-over to Windows, then gone
+            var pwb = new byte[18]; using (var rng = new RNGCryptoServiceProvider()) rng.GetBytes(pwb); var pw = Convert.ToBase64String(pwb); Array.Clear(pwb, 0, pwb.Length);   /* L-3: a real random password */   // only for the hand-over to Windows, then gone
             var pfx = withKey.Export(X509ContentType.Pfx, pw);
             var stored = new X509Certificate2(pfx, pw, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
             Array.Clear(pfx, 0, pfx.Length);
@@ -430,7 +430,7 @@ namespace AdeeboMeter
                     }
                 }
                 catch (CryptographicException e) { Program.Log("key delete (private key): " + e.Message); }
-                Program.Log("key deleted: " + NameOf(c)); return true;
+                Program.Log("key deleted: " + NameOf(c)); c.Reset(); return true;   /* L-9 */
             }
         }
     }

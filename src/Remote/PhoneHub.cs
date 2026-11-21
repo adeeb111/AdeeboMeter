@@ -44,7 +44,7 @@ namespace AdeeboMeter
         public sealed class Got { public DateTime T = DateTime.Now; public string Text = "", File = ""; }
         static readonly List<Got> inbox = new List<Got>();
         public static List<Got> Inbox { get { lock (k) return inbox.ToList(); } }
-        public static void Add(Got g) { lock (k) { inbox.Insert(0, g); if (inbox.Count > 6) inbox.RemoveAt(inbox.Count - 1); } Fire(); }
+        public static void Add(Got g) { lock (k) { inbox.Insert(0, g); if (inbox.Count > 5) inbox.RemoveAt(inbox.Count - 1);   /* bug-hunt L-237: holds what the page shows */ } Fire(); }
         public static volatile string Xfer = "";   // "Sending report.pdf - 40%"
         public static volatile bool AutoClip;      // text from the phone onto this PC's clipboard - off unless ticked, this run only
 

@@ -28,6 +28,9 @@ namespace AdeeboMeter
             // the localized keys, kept on this object only - it already holds the passwords and lives for one walk, so nothing is kept longer.
             // RFC 3414's 1 MB stretch then runs once per device, not once per message.
             byte[] kEid, kAuth, kPriv;
+            /* L-10: the localized keys are wiped when the walk is done with them (or, at the latest, when the object is collected) */
+            public void Clear() { if (kAuth != null) Array.Clear(kAuth, 0, kAuth.Length); if (kPriv != null) Array.Clear(kPriv, 0, kPriv.Length); kAuth = kPriv = null; kEid = null; }
+            ~Cred() { Clear(); }
             internal byte[] Key(bool priv, byte[] eid)
             {
                 if (kEid == null || !kEid.SequenceEqual(eid)) { kEid = (byte[])eid.Clone(); kAuth = null; kPriv = null; }
@@ -73,8 +76,9 @@ namespace AdeeboMeter
         public static byte[] OidBytes(string s)
         {
             var p = s.Trim('.').Split('.').Select(x => long.Parse(x, CultureInfo.InvariantCulture)).ToArray(); if (p.Length < 2) throw new FormatException("an OID needs at least two numbers");
-            var b = new List<byte> { (byte)(p[0] * 40 + p[1]) };
-            for (int i = 2; i < p.Length; i++) { var st = new List<byte>(); long v = p[i]; st.Add((byte)(v & 0x7F)); v >>= 7; while (v > 0) { st.Add((byte)(0x80 | (v & 0x7F))); v >>= 7; } st.Reverse(); b.AddRange(st); }
+            if (p[0] > 2 || p[0] < 0 || (p[0] < 2 && p[1] > 39) || p.Any(x => x < 0)) throw new FormatException("this OID's first two numbers can't be encoded");
+            var b = new List<byte>();   /* L-11: the first two arcs together are base-128 like the rest, so 2.40 and up encode right */
+            for (int i = 1; i < p.Length; i++) { long v0 = i == 1 ? p[0] * 40 + p[1] : p[i]; var st0 = new List<byte>(); st0.Add((byte)(v0 & 0x7F)); v0 >>= 7; while (v0 > 0) { st0.Add((byte)(0x80 | (v0 & 0x7F))); v0 >>= 7; } st0.Reverse(); b.AddRange(st0); }
             return Tlv(6, b.ToArray());
         }
         public static bool ValidOid(string s) { return Regex.IsMatch((s ?? "").Trim('.'), @"^[0-2](\.\d{1,9}){1,127}$"); }
@@ -437,7 +441,9 @@ namespace AdeeboMeter
                         // text: printable ASCII, or valid UTF-8 ("café", "Büro") - checked strictly, so a 6-byte name with an accent
                         // isn't taken for a MAC address and a MAC isn't taken for text
                         string txt = Utf8Text(r);
-                        if (r.Length == 6 && txt == null) return string.Join(":", r.Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
+                        // bug-hunt L-272: in an address column six bytes are a MAC even when they happen to be printable ("ABCDEF")
+                        bool macCol = name != null && Regex.IsMatch(name, "PhysAddress|MacAddress|BridgeAddress|\\bMAC\\b|Addr(ess)?$", RegexOptions.IgnoreCase);
+                        if (r.Length == 6 && (txt == null || macCol)) return string.Join(":", r.Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
                         if (txt != null) return Regex.Replace(txt, @"\s+", " ").Trim();
                         return "0x" + string.Concat(r.Take(32).Select(b => b.ToString("x2", CultureInfo.InvariantCulture))) + (r.Length > 32 ? "…" : "");
                     }

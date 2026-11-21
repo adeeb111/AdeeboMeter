@@ -104,7 +104,7 @@ namespace AdeeboMeter
             var b = BuiltIn.FirstOrDefault(z => z[0] == id); if (b != null) return L.T(b[1]);
             lock (k) { string[] v; return kept.TryGetValue(id, out v) ? v[0] : id; }
         }
-        // the views to offer: the ready-made five, then yours
+        // the views to offer: the ready-made ones (Builtin), then yours
         public static List<string[]> All()
         {
             var l = BuiltIn.Select(b => new[] { b[0], b[1], b[2] }).ToList();

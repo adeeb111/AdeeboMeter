@@ -49,6 +49,7 @@ namespace AdeeboMeter
             string ss = SelectiveSuspend();
             if (ss.StartsWith("on", StringComparison.Ordinal)) { rows.Add(R(1, "USB power saving", ss + " - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings › USB selective suspend › Disabled (you change it; AdeeboMeter doesn't).", "w")); warn++; if (next == "") next = "Turn off USB selective suspend and see if it stops."; }
             else if (ss == "off") rows.Add(R(0, "USB power saving", "off - Windows won't put USB devices to sleep", "", "w"));
+            else rows.Add(R(3, "USB power saving", "couldn't read it (powercfg didn't answer)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings shows it.", "w"));   // bug-hunt L-215: said, not left out
             PowerStatus ps; if (GetSystemPowerStatus(out ps) && ps.SystemStatus == 1) { rows.Add(R(1, "Battery saver", "on - it cuts power to some devices", "Plug the laptop in, or turn battery saver off, and try again.", "w")); warn++; }
             // 4. a USB network adapter or a phone's tethering: is the link actually up?
             foreach (var d in mine.Where(d => d.Present && string.Equals(d.Class, "Net", StringComparison.OrdinalIgnoreCase)).Take(4))
@@ -142,7 +143,9 @@ namespace AdeeboMeter
             else if (lvPc == 1) { verdict = "This PC is too busy - the network is fine"; next = "Close what's using the CPU (Monitor shows it) and lower the game's settings."; }
             else if (lvLoad == 1) { verdict = "An upload is running - the legs look fine right now"; next = "Pause the backup or sync while you play."; }
             else { verdict = "The network looks fine - likely the PC or the game itself (frame rate)"; next = "Turn on the game's own frame-rate counter: if it drops when it lags, it's the PC, not the connection."; }
-            int vlv = verdict.StartsWith("Nothing was measured", StringComparison.Ordinal) ? 3 : verdict.StartsWith("The network looks fine", StringComparison.Ordinal) ? 0 : 1;
+            // bug-hunt L-213: red when the leg it blames is red, amber otherwise
+            int blamed = verdict.StartsWith("Your Wi-Fi", StringComparison.Ordinal) || verdict.StartsWith("Your home", StringComparison.Ordinal) ? lvHome : verdict.StartsWith("Your provider", StringComparison.Ordinal) ? lvIsp : verdict.StartsWith("The game server", StringComparison.Ordinal) ? lvSrv : 1;
+            int vlv = verdict.StartsWith("Nothing was measured", StringComparison.Ordinal) ? 3 : verdict.StartsWith("The network looks fine", StringComparison.Ordinal) ? 0 : blamed == 2 ? 2 : 1;
             rows.Insert(0, R(vlv, "Verdict", verdict, "Next: " + next + " For the full picture, Capture this conversation in the packet journey shows the game's own packets - stalls, bursts and gaps.", "i"));
             rows.Add(R(3, "Honest limits", "AdeeboMeter measures the network with its own probes; it can't read the game's in-game ping or frame rate.", "", "i"));
             return rows;

@@ -303,8 +303,7 @@ in: 192.0.2.40
 
 == arpwho
 in: 192.0.2.40
-0|Answered|192.168.1.40 is at 00:11:32:ab:cd:ef · 1 ms||m
-3|Maker|Example Storage Inc.||i
+0|192.0.2.40|is at 00:11:32:ab:cd:ef (1 ms)|If this answer came back in 0 ms, Windows already had it cached.|m
 
 == wol
 in: 02:00:5E:12:34:56|

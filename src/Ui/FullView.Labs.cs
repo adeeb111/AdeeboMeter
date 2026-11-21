@@ -257,8 +257,13 @@ namespace AdeeboMeter
             line(main, algo == "reno" ? Theme.C("#0E8A9E") : Theme.C("#8250DF"));
             if (real != null && real.Count > 1)
             {
-                var pts = real.Take(rounds).Select((v, i) => new PointF(X(i), Y(v))).ToArray();
-                using (var p = new Pen(Theme.Green, 2f * S)) g.DrawLines(p, pts);
+                // a gap where the capture had no packets (bug-hunt L-314): the line stops and starts again
+                using (var p = new Pen(Theme.Green, 2f * S))
+                {
+                    var seg = new List<PointF>(); int i = 0;
+                    foreach (var v in real.Take(rounds)) { if (double.IsNaN(v)) { if (seg.Count > 1) g.DrawLines(p, seg.ToArray()); seg.Clear(); } else seg.Add(new PointF(X(i), Y(v))); i++; }
+                    if (seg.Count > 1) g.DrawLines(p, seg.ToArray());
+                }
             }
             // a click adds a loss at that round trip
             var hitR = plot; Act(h, hitR, delegate { var pt = h.PointToClient(Cursor.Position); var sc = h is ScrollableControl ? ((ScrollableControl)h).AutoScrollPosition : Point.Empty; int r = (int)Math.Round((pt.X - sc.X - plot.X) / plot.Width * (rounds - 1)); if (r >= 0 && r < rounds) { if (!tcpEvents.Remove(r)) tcpEvents[r] = LS("tcp.click", "soft"); } LabRefresh(); });

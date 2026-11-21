@@ -114,10 +114,10 @@ namespace AdeeboMeter
                 // same text within 2 minutes: once - timed on the clock that never jumps (a DST or clock change must not hide events for an hour)
                 if (list.Count > 0 && list[list.Count - 1].Text == text && (mono - list[list.Count - 1].Mono).TotalSeconds < 120) return;
                 list.Add(new Ev { T = now, Lv = lv, Kind = kind, Text = text, Mono = mono });
-                History.Event(lv, kind, text);
                 var cut = mono.AddHours(-2); list.RemoveAll(e => e.Mono < cut);
                 if (list.Count > 300) list.RemoveRange(0, list.Count - 300);
             }
+            History.Event(lv, kind, text);   // bug-hunt L-73: the file is written after the list's lock is let go
             var ev = new Ev { T = DateTime.Now, Lv = lv, Kind = kind, Text = text };
             try { Alerts.OnEvent(ev); Calls.OnEvent(ev); } catch { }
         }

@@ -274,7 +274,9 @@ namespace AdeeboMeter
         static string Oid(byte[] b, Der d)
         {
             if (d.Len < 1) return ""; var sb = new StringBuilder(); int f = b[d.Start]; sb.Append(f / 40 >= 2 ? 2 : f / 40).Append('.').Append(f / 40 >= 2 ? f - 80 : f % 40); long v = 0;
-            for (int i = d.Start + 1; i < d.End; i++) { v = (v << 7) + (b[i] & 0x7F); if ((b[i] & 0x80) == 0) { sb.Append('.').Append(v.ToString(CultureInfo.InvariantCulture)); v = 0; } }
+            bool open = false;   /* L-6: an arc too big for 63 bits, or cut off at the end, marks the OID as damaged */
+            for (int i = d.Start + 1; i < d.End; i++) { if (v > (long.MaxValue >> 7)) return sb.Append(".? (damaged)").ToString(); v = (v << 7) + (b[i] & 0x7F); open = (b[i] & 0x80) != 0; if (!open) { sb.Append('.').Append(v.ToString(CultureInfo.InvariantCulture)); v = 0; } }
+            if (open) sb.Append(".? (cut off)");
             return sb.ToString();
         }
         static readonly Dictionary<string, string> Algs = new Dictionary<string, string> {

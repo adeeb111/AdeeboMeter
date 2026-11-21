@@ -10,12 +10,20 @@ if (-not (Test-Path $Exe)) { throw "$Exe not found - run release.ps1 first" }
 
 $m = [regex]::Match((Get-Content -Raw "src\Program.cs"), 'public const string Version = "([^"]+)"')
 if (-not $m.Success) { throw "Version not found in src\Program.cs" }
-$parts = $m.Groups[1].Value.Split('.'); while ($parts.Count -lt 3) { $parts += "0" }
-$ver = ($parts[0..2] -join ".") + ".0"          # the Store wants four numbers and the last one 0
+# bug-hunt L-248: a "-beta" (or any suffix) can't be a Store version - stop rather than guess
+if ($m.Groups[1].Value -notmatch '^\d+(\.\d+){0,3}$') { throw "Version '$($m.Groups[1].Value)' isn't plain numbers - the Store takes only a released version (no -beta)" }
+$parts = @($m.Groups[1].Value.Split('.')); while ($parts.Count -lt 3) { $parts += "0" }
+# bug-hunt L-227: the Store wants four numbers and the last one 0 - a real 4th number would be lost, so it stops
+if ($parts.Count -ge 4 -and $parts[3] -ne "0") { throw "Version $($m.Groups[1].Value) has a 4th number - the Store's last number must be 0; use x.y.z" }
+$ver = ($parts[0..2] -join ".") + ".0"
+# bug-hunt L-247: the exe must be the one built from this source (its product version says which)
+$exeVer = (Get-Item $Exe).VersionInfo.ProductVersion
+if ($exeVer -and $exeVer -ne $m.Groups[1].Value) { throw "$Exe says version $exeVer, but src\Program.cs says $($m.Groups[1].Value) - build it again (release.ps1) first" }
 Write-Host "Store package $ver"
 
 $kits = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
-$tool = Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue | Where-Object FullName -like "*\x64\*" | Sort-Object FullName -Descending | Select-Object -First 1
+$tool = Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue | Where-Object FullName -like "*\x64\*" |
+  Sort-Object @{ Expression = { $v = [regex]::Match($_.FullName, '\\(\d+\.\d+\.\d+\.\d+)\\').Groups[1].Value; if ($v) { [version]$v } else { [version]'0.0' } } } -Descending | Select-Object -First 1   # by version, as sign.ps1 (L-164)
 if (-not $tool) { throw "makeappx.exe not found - install the Windows SDK" }
 $bin = Split-Path $tool.FullName
 

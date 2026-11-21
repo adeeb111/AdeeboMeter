@@ -28,7 +28,7 @@ namespace AdeeboMeter
         }
         public static string ReadText(string path, int cap = Cap)
         {
-            var fi = new FileInfo(path); if (fi.Exists && fi.Length > cap) throw new IOException(fi.Name + " is over " + (cap >> 10) + " KB - not a key or certificate file");
+            var fi = new FileInfo(path); if (fi.Exists && fi.Length > cap) throw new IOException(fi.Name + " is over " + (cap >> 10) + " KB - far too big to be the file expected");
             return File.ReadAllText(path);
         }
     }

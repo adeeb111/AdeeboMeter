@@ -93,7 +93,9 @@ namespace AdeeboMeter
             {
                 string nm = SafeName(name); if (nm.Length > 60) nm = nm.Substring(0, 60); if (nm == "") nm = "restored key";
                 var key = new Key { Name = nm, KeyName = kn, Pub = Convert.ToBase64String(k.Export(CngKeyBlobFormat.EccPublicBlob)), Made = DateTime.Now };
-                var l = All(); l.Add(key); Save(l); return key;
+                var l = All(); l.Add(key);
+                try { Save(l); } catch { try { k.Delete(); } catch (CryptographicException) { } throw; }   /* L-4: no key left behind without its entry */
+                return key;
             }
         }
         public static bool Delete(Key key)
@@ -219,6 +221,12 @@ namespace AdeeboMeter
         {
             // a real key backup is under 1 KB: anything much bigger isn't one (and must not be decrypted into memory to find out)
             try { if (input.CanSeek && input.Length > 64 * 1024) throw new CryptographicException("this isn't a key backup (it's far too big)"); } catch (NotSupportedException) { }
+            if (!input.CanSeek)
+            {   /* L-5: a stream that can't say its length is read up to the cap first */
+                var capped = new MemoryStream(); var cb = new byte[8192]; int got;
+                while ((got = input.Read(cb, 0, cb.Length)) > 0) { capped.Write(cb, 0, got); if (capped.Length > 64 * 1024) throw new CryptographicException("this isn't a key backup (it's far too big)"); }
+                capped.Position = 0; input = capped;
+            }
             var o = new MemoryStream(); byte[] body = null, priv = null;
             try
             {

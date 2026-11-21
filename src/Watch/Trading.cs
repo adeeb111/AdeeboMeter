@@ -41,7 +41,14 @@ namespace AdeeboMeter
         public static DateTime EasternNow()
         {
             try { if (eastern == null) eastern = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); return TimeZoneInfo.ConvertTime(DateTime.Now, eastern); }
-            catch (Exception e) { if (!(e is TimeZoneNotFoundException || e is InvalidTimeZoneException)) throw; return DateTime.UtcNow.AddHours(-5); }
+            catch (Exception e) { if (!(e is TimeZoneNotFoundException || e is InvalidTimeZoneException)) throw; return UsEastern(DateTime.UtcNow); }
+        }
+        // bug-hunt L-59: no time-zone data - the US rule by hand: daylight time from 2 am on the second Sunday of March to 2 am on the first Sunday of November
+        static DateTime UsEastern(DateTime utc)
+        {
+            Func<int, int, int, DateTime> nthSun = (y, mo, n) => { var d = new DateTime(y, mo, 1); while (d.DayOfWeek != DayOfWeek.Sunday) d = d.AddDays(1); return d.AddDays(7 * (n - 1)); };
+            var std = utc.AddHours(-5); var start = nthSun(std.Year, 3, 2).AddHours(2); var end = nthSun(std.Year, 11, 1).AddHours(1);   // end: 2 am daylight is 1 am standard
+            return std >= start && std < end ? utc.AddHours(-4) : std;
         }
         // open if either the US (NYSE/Nasdaq) or the Toronto exchange is: a Canadian broker trades both
         public static bool MarketOpen(DateTime et) { return Cfg.TradeVenue == "us" ? Markets.Open(et, "us") : Cfg.TradeVenue == "ca" ? Markets.Open(et, "ca") : Markets.Open(et, "us") || Markets.Open(et, "ca"); }
@@ -61,6 +68,7 @@ namespace AdeeboMeter
             try
             {
                 lock (k) { if (Day == null || Day.Start.Date != DateTime.Today || Day.Far != Cfg.TradeHost) { Close(); Day = new WatchKit.Session { Mode = "trade", What = Cfg.TradeHost, Via = "", Far = Cfg.TradeHost, Start = DateTime.Now, End = DateTime.Now }; } Ver++; }
+                Flush();
                 while (Watching && !stopAll)
                 {
                     var t0 = DateTime.UtcNow; Step(m);
@@ -68,7 +76,7 @@ namespace AdeeboMeter
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("broker watch: " + e.Message); }
-            finally { lock (k) { Close(); Ver++; } running = false; }
+            finally { lock (k) { Close(); Ver++; } Flush(); running = false; }
         }
         static void Step(Monitor m)
         {
@@ -77,9 +85,11 @@ namespace AdeeboMeter
             {
                 resolvedFor = host; resolvedAt = DateTime.UtcNow; IPAddress ip;
                 if (IPAddress.TryParse(hn, out ip)) hostIp = ip;
-                else try { hostIp = Dns.GetHostAddresses(hn).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? Dns.GetHostAddresses(hn).FirstOrDefault(); }
+                else try { var all = Dns.GetHostAddresses(hn); hostIp = all.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? all.FirstOrDefault(); }   /* L-57: asked once */
                     catch (Exception e) { if (!(e is System.Net.Sockets.SocketException || e is ArgumentException)) throw; hostIp = null; Status = "Can't find " + hn + " - check the name in Trading."; }
             }
+            // bug-hunt L-58: the same rule as the speed test - a broker name that points into this PC or the LAN isn't knocked on
+            if (hostIp != null && !SpeedTest.Reachable(hostIp)) { Status = hn + " points to a private address (" + hostIp + ") - check the broker's name in Trading."; hostIp = null; }
             var s = new WatchKit.Sample { T = DateTime.Now, NoProbe = hostIp == null };
             if (hostIp != null) { s.Far = GamePing.TcpMs(hostIp, port, 1500); s.FarLost = double.IsNaN(s.Far); if (!s.FarLost) Status = ""; }
             lock (m.L)
@@ -108,16 +118,19 @@ namespace AdeeboMeter
                 if (!double.IsNaN(s.Far)) { sessionFar.Add(s.Far); if (sessionFar.Count > 4000) sessionFar.RemoveRange(0, 1000); }
                 Day.End = s.T; Day.FarNormal = Streams.Median(sessionFar); Ver++;
             }
+            Flush();
         }
         static void Close()
         {
             if (Day == null) return;
             var d = maker.Close(FarName); if (d != null) Day.Dips.Add(d);
-            if (Day.Length.TotalMinutes >= 5) WatchKit.Save(Day);
+            if (Day.Length.TotalMinutes >= 5) lock (unsaved) unsaved.Add(Day);   // bug-hunt L-62: written by Flush, after lock k is let go
             Moments.BrokerDay(Day.Length.TotalHours, Day.Dips.Count, Streams.Median(Samples.Where(x => !double.IsNaN(x.Far)).Select(x => x.Far).ToList()));
             Day = null; Samples.Clear(); sessionFar.Clear();
         }
         static readonly List<double> sessionFar = new List<double>();
+        static readonly List<WatchKit.Session> unsaved = new List<WatchKit.Session>();
+        static void Flush() { WatchKit.Session[] l; lock (unsaved) { l = unsaved.ToArray(); unsaved.Clear(); } foreach (var s in l) WatchKit.Save(s); }
         // the verdict line at the top of the panel
         public static string Headline(out int lv)
         {
@@ -199,7 +212,7 @@ namespace AdeeboMeter
             }) { IsBackground = true, Name = "fx" }.Start();
         }
         static string Get(string url) { return HttpSmall.Get(url, 200); }   // AM-CG-127: capped while reading
-        static void Keep(string file, string body) { try { File.WriteAllText(file, body); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
+        static void Keep(string file, string body) { try { SafeFile.WriteText(file, body); }   /* L-60: temp file, then replace */ catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
 
         // ---------- the evening line (opt-in): for an hour and a half after work the folded widget shows the day's close
         // instead of "All quiet", then goes back by itself. Weekdays only; nothing shows until there are numbers.

@@ -54,7 +54,9 @@ def script(c):
         return 2
     if 0x370 <= o <= 0x3FF or 0x1F00 <= o <= 0x1FFF:
         return 3
-    return 0
+    if 0x2B0 <= o <= 0x2FF:
+        return 0   # modifier letters (the okina) belong to no alphabet
+    return 4 if c.isalpha() else 0   # any other alphabet is its own (L-302), as HallOfFame.Script
 
 
 def mixed_script(name):
@@ -175,8 +177,15 @@ def main():
     # a GitHub link must be the account that sent it: a card is made to be shared, so anyone can type its code
     if site == "github" and handle.lower() != author.lower():
         site, handle = "", ""
-    with open(JSON, encoding="utf-8") as f:
-        data = json.load(f)
+    # bug-hunt L-114: a damaged list is reported plainly, never a traceback
+    try:
+        with open(JSON, encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict) or not isinstance(data.get("entries", []), list):
+            raise ValueError("not the expected shape")
+    except (OSError, ValueError) as e:
+        out("error", "hall-of-fame.json couldn't be read (%s) - fix the file, then run this again." % type(e).__name__)
+        return 3
     entries = data.setdefault("entries", [])
     mine = next((e for e in entries if e.get("code") == claim), None)
     if mine is not None:

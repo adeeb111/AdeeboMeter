@@ -175,12 +175,17 @@ namespace AdeeboMeter
         {
             try
             {
+                // bug-hunt L-95: two profiles can share a name ("Home", "Home 2" renamed back) - the one connected most recently is this one
+                int best = -1; long bestWhen = -1;
                 using (var k = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles"))
                     if (k != null) foreach (var s in k.GetSubKeyNames()) using (var p = k.OpenSubKey(s))
                             {
                                 if (p == null || !string.Equals(Convert.ToString(p.GetValue("ProfileName", ""), CultureInfo.InvariantCulture), name, StringComparison.Ordinal)) continue;
-                                int c = Convert.ToInt32(p.GetValue("Category", -1), CultureInfo.InvariantCulture); return c == 0 ? "Public" : c == 1 ? "Private" : c == 2 ? "Domain" : "";
+                                var b = p.GetValue("DateLastConnected") as byte[]; long when = 0;   // a SYSTEMTIME: year, month, weekday, day, hour, minute, second
+                                if (b != null && b.Length >= 14) foreach (int at in new[] { 0, 2, 6, 8, 10, 12 }) when = when * 10000 + (b[at] | b[at + 1] << 8);
+                                if (when > bestWhen) { bestWhen = when; best = Convert.ToInt32(p.GetValue("Category", -1), CultureInfo.InvariantCulture); }
                             }
+                if (bestWhen >= 0) return best == 0 ? "Public" : best == 1 ? "Private" : best == 2 ? "Domain" : "";
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("network profile: " + e.Message); }
             return "";
@@ -247,7 +252,12 @@ namespace AdeeboMeter
                 foreach (var e in table.Where(x => x.Dynamic && x.Mac != ""))
                 {
                     var i = inv.FirstOrDefault(x => x.Net == net && x.Mac == e.Mac);
-                    if (i == null) { if (inv.Count(x => x.Net == net) >= 500) continue; inv.Add(i = new Inv { Net = net, Mac = e.Mac, First = now }); }
+                    if (i == null)
+                    {
+                        // bug-hunt L-96: a full network list makes room - the device not seen for longest goes (never a watched one)
+                        if (inv.Count(x => x.Net == net) >= 500) { var old = inv.Where(x => x.Net == net && !x.Watch).OrderBy(x => x.Last).FirstOrDefault(); if (old == null) continue; inv.Remove(old); }
+                        inv.Add(i = new Inv { Net = net, Mac = e.Mac, First = now });
+                    }
                     i.Last = now; i.Ip = e.Ip;
                 }
                 SaveInv();
@@ -267,9 +277,9 @@ namespace AdeeboMeter
             {
                 if (l != "")
                 {
-                    var mm = Regex.Match(l, @"^([0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}|\d+\.\d+\.\d+\.\d+)\s*=\s*(.{0,40})$");
-                    if (!mm.Success) { rows.Add(R(2, "Label", "type it as  aa:bb:cc:dd:ee:ff = Living room TV  or  192.168.1.20 = Printer  (empty after = removes the label)", "", "u")); return rows; }
-                    string key = mm.Groups[1].Value.ToLowerInvariant().Replace('-', ':'); var it = inv.FirstOrDefault(x => x.Net == net && (string.Equals(x.Mac.Replace('-', ':'), key, StringComparison.OrdinalIgnoreCase) || x.Ip == key));
+                    var mm = Regex.Match(l, @"^([0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}|\d+\.\d+\.\d+\.\d+|[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7})\s*=\s*(.{0,40})$");   // bug-hunt L-197: an IPv6 address too
+                    if (!mm.Success) { rows.Add(R(2, "Label", "type it as  aa:bb:cc:dd:ee:ff = Living room TV  or  192.168.1.20 = Printer  or  fe80::1 = Router  (empty after = removes the label)", "", "u")); return rows; }
+                    string key = mm.Groups[1].Value.ToLowerInvariant().Replace('-', ':'); var it = inv.FirstOrDefault(x => x.Net == net && (string.Equals(x.Mac.Replace('-', ':'), key, StringComparison.OrdinalIgnoreCase) || string.Equals(x.Ip, key, StringComparison.OrdinalIgnoreCase)));
                     if (it == null) { rows.Add(R(2, "Label", key + " isn't in the list for this network", "", "u")); return rows; }
                     it.Label = Program.Plain(mm.Groups[3].Value.Trim()); SaveInv(); if (it.Watch) DevWatch.Set(it.Mac, it.Ip, it.Label, true);
                     rows.Add(R(0, "Label", it.Label == "" ? "removed from " + key : key + " is now \"" + it.Label + "\"", "", "i"));
@@ -288,11 +298,15 @@ namespace AdeeboMeter
             var here = new HashSet<string>(now.Where(e => e.Dynamic).Select(e => e.Mac));
             var hereIps = now.Where(e => e.Dynamic).Select(e => e.Ip).Distinct().ToList();
             run.Status = "Asking the devices who they are...";
-            Dictionary<string, DevId.Info> ids = new Dictionary<string, DevId.Info>(); Dictionary<string, string> dns = new Dictionary<string, string>(); var ping = new Dictionary<string, double>(); var pl = new object();
-            var tid = System.Threading.Tasks.Task.Factory.StartNew(() => { try { ids = DevId.Identify(() => run.Stop); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("devid: " + e.Message); } });
-            var tdn = System.Threading.Tasks.Task.Factory.StartNew(() => { if (Cfg.IpNames) dns = DevId.Names(hereIps); });
-            var tpg = System.Threading.Tasks.Task.Factory.StartNew(() => System.Threading.Tasks.Parallel.ForEach(hereIps.Take(64), new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 16 }, ip => { double v = Monitor.PingMs(ip); lock (pl) ping[ip] = v; }));
+            // bug-hunt L-98: the tasks fill their own variables; only what finished within the 8 s is used, so a late answer can't change the list mid-draw
+            Dictionary<string, DevId.Info> idsT = null; Dictionary<string, string> dnsT = null; var pingT = new Dictionary<string, double>(); var pl = new object();
+            var tid = System.Threading.Tasks.Task.Factory.StartNew(() => { try { idsT = DevId.Identify(() => run.Stop); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("devid: " + e.Message); } });
+            var tdn = System.Threading.Tasks.Task.Factory.StartNew(() => { if (Cfg.IpNames) dnsT = DevId.Names(hereIps); });
+            var tpg = System.Threading.Tasks.Task.Factory.StartNew(() => System.Threading.Tasks.Parallel.ForEach(hereIps.Take(64), new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 16 }, ip => { double v = Monitor.PingMs(ip); lock (pl) pingT[ip] = v; }));
             System.Threading.Tasks.Task.WaitAll(new[] { tid, tdn, tpg }, 8000);
+            var ids = tid.IsCompleted && idsT != null ? idsT : new Dictionary<string, DevId.Info>(); var dns = tdn.IsCompleted && dnsT != null ? dnsT : new Dictionary<string, string>();
+            Dictionary<string, double> ping; lock (pl) ping = new Dictionary<string, double>(pingT);   // a copy - a late ping can't change it mid-draw
+            if (hereIps.Count > 64) rows.Add(R(3, "Pinged", "the first 64 of " + hereIps.Count + " devices here now", "A ping each for the rest would flood a big network - the others show as seen, without a time.", "i"));   // bug-hunt L-97
             lock (ik)
             {
                 var mine = inv.Where(x => x.Net == net).OrderByDescending(x => x.Watch).ThenByDescending(x => here.Contains(x.Mac)).ThenByDescending(x => x.Last).ToList();

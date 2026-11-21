@@ -69,18 +69,25 @@ namespace AdeeboMeter
                         string n = Path.GetFileName(f); DateTime d;
                         if (n.Length < 10 || !DateTime.TryParseExact(n.Substring(0, 10), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d)) continue;
                         if (d < cut) { File.Delete(f); continue; }
+                        if (n.EndsWith(".packing", StringComparison.OrdinalIgnoreCase)) { File.Delete(f); continue; }   // left by a tidy that couldn't finish deleting it - already in the .gz
                         if (d < DateTime.Today && n.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                         {
                             // a day already compressed can still get a late .csv (clock or time-zone change): add to it, never replace it
-                            string gz = f + ".gz", tmp = gz + ".tmp";
-                            using (var dst = File.Create(tmp))
-                            using (var z = new GZipStream(dst, CompressionLevel.Optimal))
+                            // bug-hunt L-46: the .csv is renamed aside first, so if its delete fails the day isn't read twice
+                            string gz = f + ".gz", tmp = gz + ".tmp", packing = f + ".packing";
+                            File.Move(f, packing); bool merged = false;
+                            try
                             {
-                                if (File.Exists(gz)) using (var old = File.OpenRead(gz)) using (var oz = new GZipStream(old, CompressionMode.Decompress)) oz.CopyTo(z);
-                                using (var src = File.OpenRead(f)) src.CopyTo(z);
+                                using (var dst = File.Create(tmp))
+                                using (var z = new GZipStream(dst, CompressionLevel.Optimal))
+                                {
+                                    if (File.Exists(gz)) using (var old = File.OpenRead(gz)) using (var oz = new GZipStream(old, CompressionMode.Decompress)) CopyCapped(oz, z, 64L << 20);   // bug-hunt L-265: a day is a few MB - a bigger one isn't ours
+                                    using (var src = File.OpenRead(packing)) src.CopyTo(z);
+                                }
+                                Program.ReplaceFile(tmp, gz); merged = true;
+                                File.Delete(packing);
                             }
-                            Program.ReplaceFile(tmp, gz);
-                            File.Delete(f);
+                            finally { if (!merged && File.Exists(packing) && !File.Exists(f)) File.Move(packing, f); }   // not merged: the day goes back as it was
                         }
                     }
                     // one damaged day never stops the others: it's left as it is (its temp file removed), the rest go on
@@ -106,13 +113,27 @@ namespace AdeeboMeter
         }
 
         // the compressed part of a day first, then any plain lines written after it - both, never one hiding the other
+        static void CopyCapped(Stream from, Stream to, long cap)
+        {
+            var b = new byte[81920]; long n = 0; int got;
+            while ((got = from.Read(b, 0, b.Length)) > 0) { n += got; if (n > cap) throw new InvalidDataException("the saved day is far too big to be one of ours - left as it is"); to.Write(b, 0, got); }
+        }
+        static string CapLine(TextReader r)
+        {
+            var sb = new StringBuilder(); int c; bool any = false;
+            while ((c = r.Read()) >= 0) { any = true; if (c == '\n') break; if (c != '\r' && sb.Length < 4096) sb.Append((char)c); }
+            return any ? sb.ToString() : null;
+        }
         static List<string> Lines(string file, int max)
         {
             var list = new List<string>();
             if (File.Exists(file + ".gz"))
                 using (var s = File.OpenRead(file + ".gz")) using (var z = new GZipStream(s, CompressionMode.Decompress)) using (var r = new StreamReader(z))
-                { string l; while ((l = r.ReadLine()) != null && list.Count < max) list.Add(l); }
-            if (File.Exists(file)) list.AddRange(File.ReadLines(file).Take(Math.Max(0, max - list.Count)));
+                {
+                    // bug-hunt L-47: a damaged .gz gives what it can and the plain lines still load; L-45: each line is capped at 4 KB
+                    try { string l; while ((l = CapLine(r)) != null && list.Count < max) list.Add(l); } catch (InvalidDataException e) { Program.Log("history: damaged " + Path.GetFileName(file) + ".gz - " + e.Message); }
+                }
+            if (File.Exists(file)) using (var r = new StreamReader(file)) { string l; while ((l = CapLine(r)) != null && list.Count < max) list.Add(l); }
             return list;
         }
 

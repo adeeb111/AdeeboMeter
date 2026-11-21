@@ -97,7 +97,7 @@ namespace AdeeboMeter
         // DNS: "." NS with an EDNS OPT record carrying a padding option that makes the datagram exactly size bytes
         public static byte[] DnsPad(int size)
         {
-            int id0; lock (Rnd) id0 = Rnd.Next(65536); var id = (ushort)id0;
+            var idb = new byte[2]; using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider()) rng.GetBytes(idb); var id = (ushort)(idb[0] << 8 | idb[1]);   /* L-17: an unguessable query id */
             var head = new List<byte> { (byte)(id >> 8), (byte)id, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 1 };   // RD, 1 question, 1 additional; "." NS IN
             var opt = new List<byte> { 0, 0, 41, 0x10, 0x00, 0, 0, 0, 0 };   // root, OPT, UDP size 4096, no flags
             int pad = Math.Max(0, size - head.Count - opt.Count - 2 - 4);

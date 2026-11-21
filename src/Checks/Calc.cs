@@ -58,7 +58,7 @@ namespace AdeeboMeter
         // parses "tcp ipv4 wireguard pppoe ethernet" (top to bottom; "mpls x2" repeats); error = the word it didn't know
         public static List<Layer> Parse(string text, out string error)
         {
-            error = null; string t = (text ?? "").Trim().ToLowerInvariant();
+            error = null; string t = System.Text.RegularExpressions.Regex.Replace((text ?? "").Trim().ToLowerInvariant(), @"\s+", " ");   // bug-hunt L-100: "office  vpn" is "office vpn"
             foreach (var p in Presets) if (t == p[0]) t = p[1];
             if (t == "") t = "tcp ipv4 ethernet";
             var list = new List<Layer>(); var words = t.Split(new[] { ' ', ',', '>', '/', '+', '|' }, StringSplitOptions.RemoveEmptyEntries);
@@ -98,7 +98,7 @@ namespace AdeeboMeter
             bool tcp = st.Any(x => x.Key == "tcp");
             rows.Add(R(0, tcp ? "Biggest segment (MSS)" : "Biggest data per packet", ap + I(maxData) + " bytes", tcp ? "What TCP should advertise so nothing splits: link MTU " + mtu + " - " + (shim + tun > 0 ? (shim + tun) + " tunnel/PPPoE - " : "") + ip + " IP - " + pay + " above." : "", "i"));
             if (tun + shim > 0) rows.Add(R(1, "Set the inner MTU to", ap + I(innerMtu), "The tunnel (or PPPoE) eats " + ap + (tun + shim) + " bytes of the " + mtu + " - set the VPN adapter's MTU to this, or big packets split or vanish.", "i"));
-            if (tun + shim > 0) rows.Add(R(3, "Router MSS clamp", ap + I(innerMtu - ip - 20), "For TCP through it: the inner MTU less " + ip + " IP and 20 TCP - a clamp set to the MTU is " + (ip + 20) + " bytes too big.", "i"));   // FRESH-068
+            if (tun + shim > 0 && tcp) rows.Add(R(3, "Router MSS clamp",   /* bug-hunt L-99: only when TCP is in the stack */ ap + I(innerMtu - ip - 20), "For TCP through it: the inner MTU less " + ip + " IP and 20 TCP - a clamp set to the MTU is " + (ip + 20) + " bytes too big.", "i"));   // FRESH-068
             int wire = mtu + frame;
             int full = maxData + pay + ip + tun + shim + frame; double eff = 100.0 * maxData / Math.Max(1, full + (st.Any(x => x.Key == "ethernet") ? 20 : 0));
             rows.Add(R(3, "Frame on the wire", ap + I(wire) + " bytes" + (st.Any(x => x.Key == "ethernet") ? " (+20 preamble and gap)" : ""), "", "i"));
@@ -191,7 +191,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(bps) && bps > 0)
             {
                 rows.Add(R(3, "Same speed", Bits(bps) + " = " + ByteRate(bps) + " = " + ByteSize(bps / 8 * 3600) + " an hour", "Network speeds are in bits; file sizes in bytes (8 bits). Sizes here are decimal (1 MB = 1,000,000 bytes), like ISPs and Windows' network pages.", "i"));
-                rows.Add(R(3, "Full-size packets", I((long)(bps / 8 / 1538)) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", "", "i"));
+                double pps = bps / 8 / 1538; rows.Add(R(3, "Full-size packets", (pps >= 10 ? I((long)pps) : F(pps, "0.###")) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", "", "i"));
             }
             return rows;
         }
@@ -241,7 +241,7 @@ namespace AdeeboMeter
             {
                 uint u = (uint)v; rows.Add(R(3, "As an IPv4 address", U(u), "", "i"));
                 int ones = 0; bool contiguous = true; for (int i = 31; i >= 0; i--) { if ((u >> i & 1) == 1) { if (ones != 31 - i) contiguous = false; ones++; } }
-                if (contiguous && ones > 0 && from.StartsWith("IPv4", StringComparison.Ordinal)) rows.Add(R(3, "As a mask", "/" + ones + "  ·  wildcard " + U(~u), "", "i"));
+                if (contiguous && ones > 0 && (from.StartsWith("IPv4", StringComparison.Ordinal) || (u & 0xFF000000u) == 0xFF000000u)) rows.Add(R(3, "As a mask",   /* L-212: any value shaped like a mask (0xFFFFFF00, 4294967040), not only one typed dotted */ "/" + ones + "  ·  wildcard " + U(~u), "", "i"));
                 if (v <= 65535) rows.Add(R(3, "As a port / VLAN / ID", v == 0 ? "port 0 is reserved - to the OS it means \"pick any free port\"" : v <= 4094 ? "valid VLAN ID and port number" : "valid port number", "", "i"));
                 if (v <= 63) rows.Add(R(3, "As DSCP", "DSCP " + v + "  ·  ToS byte 0x" + (v << 2).ToString("X2", CultureInfo.InvariantCulture) + Dscp((int)v), "", "i"));
             }

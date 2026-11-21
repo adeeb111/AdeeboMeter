@@ -280,7 +280,7 @@ namespace AdeeboMeter
                 add(32, Encoding.ASCII.GetBytes("AdeeboMeter")); add(61, new byte[] { 0, 0, 0, 5 });   // NAS-Identifier, NAS-Port-Type Virtual
                 var pkt = new byte[20 + attrs.Count]; pkt[0] = 1; pkt[1] = id; pkt[2] = (byte)(pkt.Length >> 8); pkt[3] = (byte)pkt.Length; Array.Copy(auth, 0, pkt, 4, 16); attrs.CopyTo(pkt, 20);
                 using (var hm = new HMACMD5(sec)) { var mac = hm.ComputeHash(pkt); Array.Copy(mac, 0, pkt, 22, 16); }
-                attrs.Clear();
+                for (int i = 0; i < attrs.Count; i++) attrs[i] = 0; attrs.Clear();   /* L-38: zeroed first - Clear alone leaves the bytes in the list's array */
                 Program.Log("radius lab: Access-Request to " + a + ":" + port);
                 using (var u = new UdpClient(a.AddressFamily))
                 {
@@ -290,9 +290,9 @@ namespace AdeeboMeter
                 }
             }
             catch (SocketException e) { error = e.SocketErrorCode == SocketError.TimedOut ? "no answer in 4 s" : e.SocketErrorCode == SocketError.ConnectionReset ? "refused - nothing listens on UDP " + port : e.Message; }
-            catch { Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); throw; }   // any other failure: the secret still goes
+            catch { Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); Array.Clear(auth, 0, auth.Length); throw; }   // any other failure: the secret still goes
             bool hasMa = false, signed = reply != null && Protocols.ReplyOk(reply, id, auth, sec, out hasMa);
-            Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length);
+            Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); Array.Clear(auth, 0, auth.Length);
             string code; var attrRows = new List<string[]>();
             if (srcIp != "") rows.Add(R(3, "Sent from", srcIp + " (the address Windows picked for this route)", "The server must list this address as a client (NAS) with this shared secret - on a VPN or a PC with two networks it may not be the one you expect.", "w"));
             if (reply == null) { code = "Timeout"; rows.Add(R(2, h + ":" + port, error, "Silence usually means: this PC isn't a client (NAS) on the server, the shared secret is wrong (many servers drop those silently), or UDP " + port + " is blocked on the way.", "m")); }
@@ -314,7 +314,8 @@ namespace AdeeboMeter
             {
                 var p = prev.Split('|'); if (p.Length < 6) continue;
                 rows.Add(R(-1, (prev == prevSame ? "BEFORE / AFTER · " : "THE OTHER SERVER · ") + p[1], "earlier run " + When(p[2]), "", "m"));
-                rows.Add(R(p[3] == code ? 0 : 1, "Answer", p[3] + " (" + p[4] + " ms)  >  " + code + " (" + ms + " ms)", p[3] != code ? "The answer changed - a policy, the account or the server changed in between." : "", "m"));
+                Func<string, string> took = t => t.StartsWith("-", StringComparison.Ordinal) || t == "" ? "no answer" : t + " ms";   // bug-hunt L-217: a timeout has no time
+                rows.Add(R(p[3] == code ? 0 : 1, "Answer", p[3] + " (" + took(p[4]) + ")  >  " + code + " (" + took(ms.ToString(CultureInfo.InvariantCulture)) + ")", p[3] != code ? "The answer changed - a policy, the account or the server changed in between." : "", "m"));
                 var before = p[5] == "" ? Array.Empty<string>() : p[5].Split(';'); var after = attrRows.Select(r => Clean(r[1], 40) + "=" + Clean(r[2], 60)).ToArray();
                 var gone = before.Except(after).ToList(); var added = after.Except(before).ToList();
                 if (gone.Count + added.Count > 0) rows.Add(R(1, "Attributes changed", (gone.Count > 0 ? "no longer: " + string.Join(", ", gone) : "") + (gone.Count > 0 && added.Count > 0 ? " · " : "") + (added.Count > 0 ? "new: " + string.Join(", ", added) : ""), "", "m"));
@@ -358,6 +359,7 @@ namespace AdeeboMeter
             var mx = msg == null ? new List<string[]>() : msg.Rrs.Where(r => r.Type == "MX" && r.Section == 1).Select(r => r.Data.Split(' ')).Where(x => x.Length == 2).OrderBy(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList();
             if (mx.Count == 0) { rows.Add(R(2, "MX", msg == null ? "no answer from " + dns : "no MX records - mail to " + d + " goes to the domain itself, or nowhere", "", "m")); return rows; }
             rows.Add(R(0, "MX", string.Join(" · ", mx.Take(5).Select(x => x[1].TrimEnd('.') + " (" + x[0] + ")")), "Senders try the lowest number first.", "m"));
+            if (mx.Count > 2) rows.Add(R(3, "Tested", "the first 2 of " + mx.Count + " mail servers (the lowest numbers - the ones senders try first)", "", "m"));   // bug-hunt L-216
             foreach (var x in mx.Take(2))
             {
                 if (run.Stop) break;

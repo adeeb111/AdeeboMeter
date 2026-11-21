@@ -78,7 +78,7 @@ namespace AdeeboMeter
         // ---------- 1. the label stack at each stop
         float PaintJStack(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            string kind; bool vpn; int mtu; lock (M.L) { kind = M.AdapterKind; vpn = M.VpnUp; mtu = M.PrimaryMtu; }
+            string kind; bool vpn; lock (M.L) { kind = M.AdapterKind; vpn = M.VpnUp; }   /* L-121 */
             bool v6 = f.Remote.Contains(":"); string l4 = f.Udp ? "udp" : "tcp", ip = v6 ? "ipv6" : "ipv4";
             string top = f.RemotePort == 443 && !f.Udp ? "tls " : f.RemotePort == 443 && f.Udp ? "quic " : f.RemotePort == 53 ? "dns " : "";
             string link = kind == "Wi-Fi" ? "wifi" : "ethernet";

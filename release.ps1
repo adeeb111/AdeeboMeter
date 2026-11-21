@@ -74,7 +74,9 @@ $t = (Get-Content -Raw "assets\READ ME.txt").Replace("__VERSION__", $ver) -repla
 Copy-Item "LICENSE" (Join-Path $stage "LICENSE.txt")
 Copy-Item "docs\AdeeboMeter-Theory-of-Everything.pdf" (Join-Path $stage "AdeeboMeter - Theory of Everything.pdf")
 $exeSum = Sha (Join-Path $stage "AdeeboMeter.exe")
-[IO.File]::WriteAllText((Join-Path $stage "SHA256SUMS"), "$exeSum  AdeeboMeter.exe`n")   # LF, like dist\SHA256SUMS: sha256sum -c works on Linux, Git Bash and WSL
+# bug-hunt L-166: every file in the folder, not only the exe
+$inner = Get-ChildItem $stage -File | Where-Object { $_.Name -ne "SHA256SUMS" } | Sort-Object Name | ForEach-Object { "$(Sha $_.FullName)  $($_.Name)" }
+[IO.File]::WriteAllText((Join-Path $stage "SHA256SUMS"), (($inner -join "`n") + "`n"))   # LF, like dist\SHA256SUMS: sha256sum -c works on Linux, Git Bash and WSL
 
 $win = Join-Path $dist "AdeeboMeter-$ver-win64.zip"
 Compress-Archive -Path $stage -DestinationPath $win -CompressionLevel Optimal

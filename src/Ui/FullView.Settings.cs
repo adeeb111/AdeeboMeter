@@ -77,7 +77,7 @@ namespace AdeeboMeter
         const string TagGame = "BACKGROUND · GAME SERVERS", TagPc = "ON THIS PC", TagLan = "BACKGROUND · YOUR NETWORK", TagNet = "BACKGROUND · INTERNET", TagOnline = "ONLINE LOOKUP", TagWin = "ONLY WHILE THIS WINDOW IS OPEN";
         string setSec = "";   // "" = the question cards (Adeeb, 14 Nov): General first, then the widget, then the rest
         RoundBox settingsSearch;
-        static string Every(int sec) { return sec <= 0 ? "off" : sec >= 60 ? "every " + sec / 60 + " min" : "every " + sec + " s"; }
+        static string Every(int sec) { return sec <= 0 ? "off" : sec >= 60 && sec % 60 == 0 ? "every " + sec / 60 + " min" : sec >= 60 ? "every " + (sec / 60.0).ToString("0.#", CultureInfo.CurrentCulture) + " min" : "every " + sec + " s"; }   // bug-hunt L-159: 90 s is 1.5 min
         internal static string SendingNow()
         {
             var l = new List<string>();
@@ -90,7 +90,15 @@ namespace AdeeboMeter
             if (Online.On) l.Add(AdeeboMeter.L.T("online lookups (") + Math.Ceiling(Online.Left.TotalMinutes) + AdeeboMeter.L.T(" min left)"));
             return l.Count == 0 ? AdeeboMeter.L.T("Right now this PC sends nothing in the background.") : AdeeboMeter.L.T("Right now this PC sends: ") + string.Join(" · ", l) + ".";
         }
+        // bug-hunt L-155: built once and reused by every paint - rebuilt when the language or the screens change, or after 30 s
+        List<SetItem> setCache; string setCacheKey = ""; DateTime setCacheAt;
         List<SetItem> SetItems()
+        {
+            string key = Cfg.Lang + "|" + Screen.AllScreens.Length;
+            if (setCache == null || key != setCacheKey || (DateTime.UtcNow - setCacheAt).TotalSeconds > 30) { setCache = BuildSetItems(); setCacheKey = key; setCacheAt = DateTime.UtcNow; }
+            return setCache;
+        }
+        List<SetItem> BuildSetItems()
         {
             var L = new List<SetItem>();
             Action<string, string, string, Func<string>, string[], Func<int>, Action<int>, Func<bool>, string> add = (sec, label, tag, help, opts, cur, set, show, keys) =>
@@ -258,7 +266,7 @@ namespace AdeeboMeter
                     if (setSec == "Widget") y = PaintWidgetPicker(g, x, y, w);
                     if (setSec == "Background checks")
                     {
-                        string lead = L.T("The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.");
+                        string lead = L.T("The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.");
                         var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 14 * S;
                         string[][] presets = { new[] { "penny", "Penny", AdeeboMeter.L.T("The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min (every 10 s while this window is open), no call watching.") }, SetS0, SetSG };
                         int cols = w > 640 * S ? 3 : 2; float pw = (w - (cols - 1) * 12 * S) / cols, ph = 96 * S;
@@ -342,13 +350,15 @@ namespace AdeeboMeter
                 else g.DrawString(label, Draw.fBodyB, ink, tx, y);
                 if (!string.IsNullOrEmpty(tag))
                 {
-                    float lw = g.MeasureString(label, Draw.fBodyB).Width, tgw = g.MeasureString(L.T(tag), Draw.fTiny).Width + 12 * S;
+                    float lw = g.MeasureString(label, Draw.fBodyB).Width; string tgt = L.T(tag); float tgw = g.MeasureString(tgt, Draw.fTiny).Width + 12 * S;
+                    // bug-hunt L-160: no room for the word - its first letter in the same colour, never nothing
+                    if (lw + tgw + 16 * S >= tw && tgt.Length > 0) { tgt = tgt.Substring(0, 1); tgw = g.MeasureString(tgt, Draw.fTiny).Width + 10 * S; }
                     if (lw + tgw + 16 * S < tw)
                     {
                         Color tc = tag == TagNet || tag == TagGame ? Theme.Amber : tag == TagLan ? Theme.Blue : tag == TagOnline ? Theme.Orange : tag == TagWin ? Theme.Grey : Theme.Green;
                         var tr = new RectangleF(rtl ? tx + tw - lw - tgw - 10 * S : tx + lw + 10 * S, y + 2 * S, tgw, 17 * S);
                         Theme.Fill(g, tr, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 36, tc));
-                        using (var tbr = new SolidBrush(Theme.Dark ? Theme.Ink : tc)) using (var csf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T(tag), Draw.fTiny, tbr, tr, csf);
+                        using (var tbr = new SolidBrush(Theme.Dark ? Theme.Ink : tc)) using (var csf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(tgt, Draw.fTiny, tbr, tr, csf);
                     }
                 }
                 var hr = new RectangleF(tx, y + 20 * S, tw, hh + 4);
@@ -651,7 +661,7 @@ namespace AdeeboMeter
                     var kv = new List<KeyValuePair<string, string>>();
                     foreach (var line in File.ReadLines(d.FileName).Take(400))
                     {
-                        if (line.Length > 2000) continue;
+                        if (line.Length > 2000) { settingsNote = AdeeboMeter.L.T("That isn't an AdeeboMeter settings file - nothing changed."); settingsCanvas.Invalidate(); return; }   // bug-hunt L-161: as the comment says - not one
                         int eq = line.IndexOf('='); if (eq <= 0) continue;
                         string k = line.Substring(0, eq), v = line.Substring(eq + 1);
                         if (Cfg.Known.Contains(k)) kv.Add(new KeyValuePair<string, string>(k, v));
@@ -670,9 +680,10 @@ namespace AdeeboMeter
                         if (ob != null) { if (x.Value == "1") asks.Add(new[] { x.Key, ob[1] + AdeeboMeter.L.T(" (contacts a server on its own)") }); }
                         else if (x.Key == "tradehost") asks.Add(new[] { x.Key, AdeeboMeter.L.T("watch a different broker address: ") + (x.Value.Length > 60 ? x.Value.Substring(0, 60) + "..." : x.Value) });
                         else if (x.Key == "history2") asks.Add(new[] { x.Key, x.Value == "1" ? "keep a history of your connection" : "stop keeping history" });
-                        else if (x.Key == "histdays") asks.Add(new[] { x.Key, "keep history for " + x.Value + " days" });
+                        else if (x.Key == "histdays") { int hd; if (int.TryParse(x.Value, NumberStyles.None, CultureInfo.InvariantCulture, out hd) && Cfg.HistDayChoices.Contains(hd)) asks.Add(new[] { x.Key, "keep history for " + hd + " days" }); }   // bug-hunt L-162: only a real choice is shown (a bad one is ignored when loaded)
                         else if (x.Key == "wplace") asks.Add(new[] { x.Key, "change the weather place" });
                     }
+                    kv.RemoveAll(x => x.Key == "histdays" && !asks.Any(o => o[0] == "histdays"));   // L-162: a value that isn't a choice never lands either
                     if (asks.Count > 0)
                     {
                         var ans = MessageBox.Show(this, L.T("This file would also:") + "\n\n- " + string.Join("\n- ", asks.Select(o => L.T(o[1])).ToArray()) + "\n\n" + L.T("Yes: apply these too.  No: load the rest of the file without them.  Cancel: change nothing."), "AdeeboMeter", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);

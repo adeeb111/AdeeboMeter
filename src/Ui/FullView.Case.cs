@@ -26,7 +26,7 @@ namespace AdeeboMeter
         // ---------- opening a case (every door ends here)
         internal void OpenCase(string symptom, string source, string context, DateTime? from, DateTime? to)
         {
-            if (guideBusy) { tab = "guide"; ShowTab(); SyncNav(); return; }
+            if (guideBusy) { guideNote = L.T("A check is already running - its report opens here when it's done."); tab = "guide"; ShowTab(); SyncNav(); if (guideCanvas != null) guideCanvas.Invalidate(); return; }   // bug-hunt L-327
             var c = Cases.New(symptom, source, context, from, to);
             tab = "guide"; ShowTab(); SyncNav();
             if (c.Flow == "site" && context != "" && guideBox != null) guideBox.Box.Text = context;
@@ -83,7 +83,9 @@ namespace AdeeboMeter
             var c = guideCase; var r = guideRun; int sure = Cases.Sure(r);
             var card = new RectangleF(x, y, w, 132 * S); Kit.Card(g, card, "home", false);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("CASE") + "  ·  " + L.T("from") + " " + L.T(Cases.SourceName(c.Source)) + "  ·  " + c.From.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + c.To.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x + 18 * S, y + 12 * S);
-            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(c.Title, Draw.fHead, ib, x + 18 * S, y + 30 * S);
+            // bug-hunt L-329: the title stops before the "how sure" dots, with "…" if it's longer
+            float titleRoom = w - 36 * S - (sure > 0 ? g.MeasureString(L.T(Cases.SureWords(sure)), Draw.fSmall).Width + 4 * 14 * S + 12 * S : 0);
+            using (var ib = new SolidBrush(Theme.Ink)) using (var tf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(c.Title, Draw.fHead, ib, new RectangleF(x + 18 * S, y + 30 * S, Math.Max(60 * S, titleRoom), 26 * S), tf);
             if (sure > 0)
             {
                 string sw = L.T(Cases.SureWords(sure)); var ss = g.MeasureString(sw, Draw.fSmall); float dx = x + w - ss.Width - 18 * S - 4 * 14 * S;

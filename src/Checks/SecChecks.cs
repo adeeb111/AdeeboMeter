@@ -187,8 +187,10 @@ namespace AdeeboMeter
         static List<string[]> NameServices(Monitor m, List<string> s)
         {
             bool llmnr = RegInt(LM, @"SOFTWARE\Policies\Microsoft\Windows NT\DNSClient", "EnableMulticast", 1) != 0, mdns = RegInt(LM, @"SYSTEM\CurrentControlSet\Services\Dnscache\Parameters", "EnableMDNS", 1) != 0;
-            NetworkInterface nic; lock (m.L) nic = m.Primary; bool nb = true; int nbO = 0;
-            if (nic != null) { nbO = RegInt(LM, @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_" + nic.Id, "NetbiosOptions", 0); nb = nbO != 2; }   // 0: the DHCP server decides
+            // bug-hunt L-31: every connected adapter, not just the main one - NetBIOS on any of them answers
+            bool nb = false; int nbO = 2; NetworkInterface[] nics; try { nics = NetworkInterface.GetAllNetworkInterfaces(); } catch (NetworkInformationException) { nics = new NetworkInterface[0]; }
+            foreach (var nic in nics.Where(x => x.OperationalStatus == OperationalStatus.Up && x.NetworkInterfaceType != NetworkInterfaceType.Loopback && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel))
+            { int o = RegInt(LM, @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_" + nic.Id, "NetbiosOptions", 0); if (o != 2) { nb = true; if (nbO != 1) nbO = o; } }   // 0: the DHCP server decides
             var on = new List<string>(); if (llmnr) on.Add("LLMNR"); if (nb) on.Add(nbO == 0 ? "NetBIOS (as the DHCP server says - usually on)" : "NetBIOS"); if (mdns) on.Add("mDNS");
             return One(on.Count == 0 ? 0 : 3, "Name broadcasts", on.Count == 0 ? "LLMNR, NetBIOS and mDNS all off" : string.Join(", ", on) + " on · this PC answers to \"" + Environment.MachineName + "\" on the local network", on.Count == 0 ? "" : "Handy at home; on public Wi-Fi an attacker can answer these name questions falsely and catch sign-in attempts. Companies often turn LLMNR and NetBIOS off by policy.", "ncpa.cpl");
         }
@@ -213,24 +215,26 @@ namespace AdeeboMeter
         static List<string[]> Roots(Monitor m, List<string> s)
         {
             var mine = new List<X509Certificate2>(); var lm = new HashSet<string>(); var lmHits = new List<string>();
-            try
+            try   // bug-hunt L-29: the user-store certificates are let go however this ends
             {
-                using (var st = new X509Store(StoreName.Root, StoreLocation.LocalMachine)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) { lm.Add(c.Thumbprint); if (Interceptors.Any(n => c.Subject.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0)) lmHits.Add(c.GetNameInfo(X509NameType.SimpleName, false)); c.Dispose(); } }
-                using (var st = new X509Store(StoreName.Root, StoreLocation.CurrentUser)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) mine.Add(c); }
+                try
+                {
+                    using (var st = new X509Store(StoreName.Root, StoreLocation.LocalMachine)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) { lm.Add(c.Thumbprint); if (Interceptors.Any(n => c.Subject.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0)) lmHits.Add(c.GetNameInfo(X509NameType.SimpleName, false)); c.Dispose(); } }
+                    using (var st = new X509Store(StoreName.Root, StoreLocation.CurrentUser)) { st.Open(OpenFlags.ReadOnly); foreach (var c in st.Certificates) mine.Add(c); }
+                }
+                catch (System.Security.Cryptography.CryptographicException) { return One(3, "Trusted root certificates", "couldn't read the stores", "", "certmgr.msc"); }
+                var extra = mine.Where(c => !lm.Contains(c.Thumbprint)).ToList();
+                var hits = extra.Where(c => Interceptors.Any(n => c.Subject.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
+                // a traffic-reading root in the machine store is there for every user (an antivirus, a company proxy, or something worse)
+                if (extra.Count == 0 && lmHits.Count > 0)
+                {
+                    return One(Lab.Company(m) ? 3 : 1, "Trusted root certificates", "for everyone on this PC: " + string.Join("; ", lmHits.Distinct().Take(5)), "It belongs to a tool that can read your encrypted web traffic (an antivirus web shield, a company proxy or a debugging tool). Expected if your company or your antivirus put it there; otherwise remove it in certlm.msc.", "certlm.msc");
+                }
+                var res = extra.Count == 0 ? One(0, "Trusted root certificates", "no extra roots, and none from tools that read encrypted traffic", "", "certmgr.msc")
+                    : One(hits.Count > 0 ? 1 : 3, "Trusted root certificates", extra.Count + " added just for you: " + string.Join("; ", extra.Take(5).Select(c => c.GetNameInfo(X509NameType.SimpleName, false))), hits.Count > 0 ? "One belongs to a tool that reads your encrypted web traffic (a debugging proxy or an antivirus's web shield). Fine if you installed it on purpose; otherwise remove it in certmgr." : "Added roots let whoever owns them make certificates your PC trusts. Remove any you don't recognise.", "certmgr.msc");
+                return res;
             }
-            catch (System.Security.Cryptography.CryptographicException) { return One(3, "Trusted root certificates", "couldn't read the stores", "", "certmgr.msc"); }
-            var extra = mine.Where(c => !lm.Contains(c.Thumbprint)).ToList();
-            var hits = extra.Where(c => Interceptors.Any(n => c.Subject.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
-            // a traffic-reading root in the machine store is there for every user (an antivirus, a company proxy, or something worse)
-            if (extra.Count == 0 && lmHits.Count > 0)
-            {
-                foreach (var c in mine) c.Dispose();
-                return One(Lab.Company(m) ? 3 : 1, "Trusted root certificates", "for everyone on this PC: " + string.Join("; ", lmHits.Distinct().Take(5)), "It belongs to a tool that can read your encrypted web traffic (an antivirus web shield, a company proxy or a debugging tool). Expected if your company or your antivirus put it there; otherwise remove it in certlm.msc.", "certlm.msc");
-            }
-            var res = extra.Count == 0 ? One(0, "Trusted root certificates", "no extra roots, and none from tools that read encrypted traffic", "", "certmgr.msc")
-                : One(hits.Count > 0 ? 1 : 3, "Trusted root certificates", extra.Count + " added just for you: " + string.Join("; ", extra.Take(5).Select(c => c.GetNameInfo(X509NameType.SimpleName, false))), hits.Count > 0 ? "One belongs to a tool that reads your encrypted web traffic (a debugging proxy or an antivirus's web shield). Fine if you installed it on purpose; otherwise remove it in certmgr." : "Added roots let whoever owns them make certificates your PC trusts. Remove any you don't recognise.", "certmgr.msc");
-            foreach (var c in mine) c.Dispose();
-            return res;
+            finally { foreach (var c in mine) c.Dispose(); }
         }
         static readonly string[] BigSites = { "microsoft.com", "windowsupdate.com", "office.com", "office365.com", "live.com", "google.com", "googleapis.com", "apple.com", "amazon.com", "paypal.com", "facebook.com", "github.com", "bank" };
         static List<string[]> Hosts(Monitor m, List<string> s)
@@ -242,7 +246,7 @@ namespace AdeeboMeter
             {
                 var t = Regex.Replace(l, "#.*", "").Trim(); if (t == "") continue; var p = t.Split((char[])null, StringSplitOptions.RemoveEmptyEntries); if (p.Length < 2) continue;
                 bool sink = p[0] == "0.0.0.0" || p[0].StartsWith("127.", StringComparison.Ordinal) || p[0] == "::1" || p[0] == "::";
-                foreach (var h in p.Skip(1)) { if (sink) blocked++; else if (BigSites.Any(b => h.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0)) redirect.Add(h + " -> " + p[0]); }
+                foreach (var h in p.Skip(1)) { if (sink) blocked++; else if (BigSites.Any(b => b == "bank" ? Regex.IsMatch(h, @"(^|\.)bank", RegexOptions.IgnoreCase) : h.Equals(b, StringComparison.OrdinalIgnoreCase) || h.EndsWith("." + b, StringComparison.OrdinalIgnoreCase))) redirect.Add(h + " -> " + p[0]); }
             }
             if (redirect.Count > 0) return One(2, "Hosts file", "sends " + string.Join(", ", redirect.Take(5)) + " elsewhere", "Malware does this to fake sign-in pages or block updates. Unless you added it for testing, remove those lines (Notepad as administrator).", null);
             return One(0, "Hosts file", blocked > 0 ? blocked + " names blocked (pointed at nothing), nothing big redirected" : "clean", blocked > 0 ? "Blocking lists (ad blockers) do this - fine if you added it." : "", null);
@@ -301,7 +305,8 @@ namespace AdeeboMeter
             var bad = new List<string>(); int n = 0;
             foreach (var l in o.Split('\n'))
             {
-                var c = Regex.Matches(l, "\"([^\"]*)\"").Cast<Match>().Select(x => x.Groups[1].Value).ToList(); if (c.Count < 9 || c[1] == "TaskName") continue; n++;
+                var c = Regex.Matches(l, "\"((?:[^\"]|\"\")*)\"").Cast<Match>().Select(x => x.Groups[1].Value.Replace("\"\"", "\"")).ToList(); if (c.Count < 9 || c[1] == "TaskName") continue; n++;   /* L-34: "" inside a field is one quote */
+                if (c.Count > 11 && Regex.IsMatch(c[11], "^(Disabled|Deaktiviert|Désactivé|Desactivado|Disabilitato|Desabilitado|Uitgeschakeld|Wyłączone|Отключено|無効|已禁用|사용 안 함)", RegexOptions.IgnoreCase)) continue;   /* L-34: a disabled task doesn't run */
                 string run = Environment.ExpandEnvironmentVariables(c[8]).ToLowerInvariant();   // %TEMP%\x.exe is still Temp
                 if (Regex.IsMatch(run, @"\\(temp|downloads)\\|\\appdata\\roaming\\[^\\]+\.exe|\\users\\public\\") && !bad.Contains(c[1])) bad.Add(c[1]);
             }
@@ -339,13 +344,15 @@ namespace AdeeboMeter
             bool admin; using (var id = WindowsIdentity.GetCurrent()) admin = t == 3 || t == 2 || new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
             return One(admin ? (Company(m) ? 3 : 1) : 0, "Everyday account", admin ? "you sign in as an administrator" : "a standard account", admin ? "Malware you run by mistake gets admin rights after one click on Yes. A standard account for every day, and admin only when needed, is safer." : "", "netplwiz.exe");
         }
+        // bug-hunt L-33: 90 seconds is "1.5 min", not "1 min"; under a minute stays in seconds
+        static string Idle(int sec) { return sec < 60 ? sec + " s" : sec % 60 == 0 ? sec / 60 + " min" : (sec / 60.0).ToString("0.#", CultureInfo.CurrentCulture) + " min"; }
         static List<string[]> ScreenLock(Monitor m, List<string> s)
         {
             int pol = RegInt(LM, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "InactivityTimeoutSecs", 0);
             int act = Convert.ToInt32(Convert.ToString(Reg(CU, @"Control Panel\Desktop", "ScreenSaveActive"), CultureInfo.InvariantCulture) == "1" ? 1 : 0), sec = Convert.ToString(Reg(CU, @"Control Panel\Desktop", "ScreenSaverIsSecure"), CultureInfo.InvariantCulture) == "1" ? 1 : 0;
             int to; if (!int.TryParse(Convert.ToString(Reg(CU, @"Control Panel\Desktop", "ScreenSaveTimeOut"), CultureInfo.InvariantCulture), out to)) to = 0;
-            if (pol > 0) return One(pol <= 900 ? 0 : 1, "Screen lock", "locks after " + pol / 60 + " min idle (company policy)", "", "ms-settings:lockscreen");
-            if (act == 1 && sec == 1 && to > 0) return One(to <= 900 ? 0 : 1, "Screen lock", "locks after " + to / 60 + " min idle", to > 900 ? "15 minutes or less is the usual advice." : "", "ms-settings:lockscreen");
+            if (pol > 0) return One(pol <= 900 ? 0 : 1, "Screen lock", "locks after " + Idle(pol) + " idle (company policy)", "", "ms-settings:lockscreen");
+            if (act == 1 && sec == 1 && to > 0) return One(to <= 900 ? 0 : 1, "Screen lock", "locks after " + Idle(to) + " idle", to > 900 ? "15 minutes or less is the usual advice." : "", "ms-settings:lockscreen");
             return One(3, "Screen lock", "no idle lock set here", "Windows may still lock on sleep (Settings › Accounts › Sign-in options › \"If you've been away\"). Win+L locks it when you walk away.", "ms-settings:signinoptions");
         }
         static List<string[]> OpenWifi(Monitor m, List<string> s)
@@ -371,8 +378,8 @@ namespace AdeeboMeter
             // the label in any language Windows writes it in (LinkInfo knows the translations); the connected adapter's block only
             string v; var f = o == null ? null : LinkInfo.Fields(LinkInfo.ActiveBlock(o));
             if (f == null || !f.TryGetValue("Authentication", out v) || v.Trim() == "") return One(3, "This Wi-Fi's security", "not on Wi-Fi, or Windows doesn't show it", "", null);
-            bool open = Regex.IsMatch(v, "^(Open|None|Ouvert|Ouvrir|Offen|Abierta|Abierto|Aperto|Aberto|Aberta|Open systeem|Otwarte|Открыт|オープン|开放|開放|개방|Açık|مفتوح)", RegexOptions.IgnoreCase), wep = v.IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0, wpa3 = v.IndexOf("WPA3", StringComparison.OrdinalIgnoreCase) >= 0;
-            return One(open || wep ? 2 : wpa3 ? 0 : (v.IndexOf("WPA2", StringComparison.OrdinalIgnoreCase) >= 0 ? 0 : 1), "This Wi-Fi's security", v, open ? "An open network: anyone nearby can see unencrypted traffic. Websites with https are still private; use a VPN for the rest." : wep ? "WEP can be broken in minutes - change the router to WPA2 or WPA3." : wpa3 ? "" : v.IndexOf("WPA2", StringComparison.OrdinalIgnoreCase) >= 0 ? "Good. WPA3 is better if your router and devices support it." : "Old WPA (TKIP) is weak - use WPA2 or WPA3.", "ms-settings:network-wifi");
+            bool open = Regex.IsMatch(v, "^(Open|None|Ouvert|Ouvrir|Offen|Abierta|Abierto|Aperto|Aberto|Aberta|Open systeem|Otwarte|Открыт|オープン|开放|開放|개방|Açık|مفتوح)", RegexOptions.IgnoreCase), wep = v.IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || (f.ContainsKey("Cipher") && f["Cipher"].IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0), wpa3 = v.IndexOf("WPA3", StringComparison.OrdinalIgnoreCase) >= 0;
+            return One(open || wep ? 2 : wpa3 ? 0 : (v.IndexOf("WPA2", StringComparison.OrdinalIgnoreCase) >= 0 ? 0 : 1), "This Wi-Fi's security", v, wep ? "WEP can be broken in minutes - change the router to WPA2 or WPA3." : open ? "An open network: anyone nearby can see unencrypted traffic. Websites with https are still private; use a VPN for the rest." : wpa3 ? "" : v.IndexOf("WPA2", StringComparison.OrdinalIgnoreCase) >= 0 ? "Good. WPA3 is better if your router and devices support it." : "Old WPA (TKIP) is weak - use WPA2 or WPA3.", "ms-settings:network-wifi");
         }
         static List<string[]> DnsHijack(Monitor m, List<string> s)
         {
@@ -508,7 +515,7 @@ namespace AdeeboMeter
         public static string HostOf(string site)
         {
             string t = Toolkit.OneSlash(site); if (t == "") return null; if (!t.Contains("://")) t = "https://" + t;
-            Uri u; return Uri.TryCreate(t, UriKind.Absolute, out u) && Regex.IsMatch(u.Host, @"^[a-z0-9.-]+\.[a-z]{2,}$", RegexOptions.IgnoreCase) ? u.Host.ToLowerInvariant() : null;
+            Uri u; return Uri.TryCreate(t, UriKind.Absolute, out u) && Regex.IsMatch(u.Host, @"^(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))*\.[a-z]{2,}$", RegexOptions.IgnoreCase)   /* L-35: no leading dot or hyphen, no empty labels */ ? u.Host.ToLowerInvariant() : null;
         }
         static List<string[]> PerSite(List<string> sites, string title, Func<string, string[]> f)
         {
@@ -551,10 +558,10 @@ namespace AdeeboMeter
         {
             return PerSite(sites, "Old TLS", h =>
             {
-                string e1, e2; var a = SiteCert(h, SslProtocols.Tls, out e1); var b = a == null ? SiteCert(h, (SslProtocols)768, out e2) : null;
+                string e1, e2; var a = SiteCert(h, SslProtocols.Tls, out e1); var b = SiteCert(h, (SslProtocols)768, out e2);   /* L-36: both versions are tried, so both are named */
                 bool old = a != null || b != null; if (a != null) a.Dispose(); if (b != null) b.Dispose();
                 if (!old) { string e3; var c12 = SiteCert(h, SslProtocols.Tls12, out e3); if (c12 == null) return R(3, "Old TLS · " + h, "couldn't check - the site didn't answer over TLS at all (" + Draw.Trunc(e3, 50) + ")", "", null); c12.Dispose(); }   // unreachable isn't "refused"
-                return R(old ? 1 : 0, "Old TLS · " + h, old ? "TLS " + (a != null ? "1.0" : "1.1") + " still accepted" : "TLS 1.0 / 1.1 refused (or turned off on this PC)", old ? "Browsers dropped TLS 1.0 and 1.1 in 2020; servers should too." : "", null);
+                return R(old ? 1 : 0, "Old TLS · " + h, old ? "TLS " + (a != null && b != null ? "1.0 and 1.1" : a != null ? "1.0" : "1.1") + " still accepted" : "TLS 1.0 / 1.1 refused (or turned off on this PC)", old ? "Browsers dropped TLS 1.0 and 1.1 in 2020; servers should too." : "", null);
             });
         }
         static List<string[]> Headers(Monitor m, List<string> sites)
@@ -587,7 +594,7 @@ namespace AdeeboMeter
                 string d = h.StartsWith("www.", StringComparison.Ordinal) ? h.Substring(4) : h;
                 bool noAnswer = false;
                 Func<string, List<string>> txt = n => { var r = Toolkit.Query(srv, n, 16, true); if (r == null) { noAnswer = true; return new List<string>(); } return r.Rrs.Where(x => x.Section == 1 && x.Type == "TXT").Select(x => x.Data).ToList(); };
-                var spf = txt(d).FirstOrDefault(x => x.IndexOf("v=spf1", StringComparison.OrdinalIgnoreCase) >= 0); var dm = txt("_dmarc." + d).FirstOrDefault(x => x.IndexOf("v=DMARC1", StringComparison.OrdinalIgnoreCase) >= 0);
+                var spf = txt(d).FirstOrDefault(x => x.IndexOf("v=spf1", StringComparison.OrdinalIgnoreCase) >= 0); if (spf != null) spf = spf.ToLowerInvariant();   /* L-195: mechanisms aren't case-sensitive ("-ALL") */ var dm = txt("_dmarc." + d).FirstOrDefault(x => x.IndexOf("v=DMARC1", StringComparison.OrdinalIgnoreCase) >= 0);
                 string pol = dm != null ? Regex.Match(dm, @"(?:^|;)\s*p\s*=\s*(\w+)", RegexOptions.IgnoreCase).Groups[1].Value.ToLowerInvariant() : "";   // p=, never the sp= / np= in front of it
                 bool spfDmNo = noAnswer; noAnswer = false;   // only SPF and DMARC must answer: a slow DKIM selector just means "not found"
                 string dk = Selectors.FirstOrDefault(sel => txt(sel + "._domainkey." + d).Any(x => Regex.IsMatch(x, @"(?:^|;)\s*p\s*=\s*[A-Za-z0-9+/]")));   // an empty p= is a revoked key (RFC 6376)

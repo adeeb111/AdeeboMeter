@@ -163,7 +163,8 @@ namespace AdeeboMeter
                 rows.Add(new[] { "Windows' own pick", pick > 0 && nic.TryGetValue(pick, out ni) ? ni.Name + (Monitor.IsVpn(ni) ? " (VPN)" : "") : "-", "3" });
                 y = InfoCardOn(travelCanvas, g, "WHICH ROUTE WINS FOR " + ask, rows, "travel.WINS", x, y, w);
             }
-            y = Head(g, AdeeboMeter.L.T("ACTIVE ROUTES (IPv4)  ·  ") + routeTable.Count, x, y, w, "travel.ROUTES");
+            int shownRoutes = routeTable.Count(r => r.Dest >> 28 != 14 && r.Dest != 0xFFFFFFFF);   // bug-hunt L-362: "the first 60" when there are more
+            y = Head(g, AdeeboMeter.L.T("ACTIVE ROUTES (IPv4)  ·  ") + routeTable.Count + (shownRoutes > 60 ? "  ·  " + AdeeboMeter.L.T("the first") + " 60 " + AdeeboMeter.L.T("shown") : ""), x, y, w, "travel.ROUTES");
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             {
                 foreach (var r in routeTable.Where(r => r.Dest >> 28 != 14 && r.Dest != 0xFFFFFFFF).OrderBy(r => r.Prefix).ThenBy(r => r.Metric).Take(60))
@@ -192,7 +193,7 @@ namespace AdeeboMeter
                     }
                     var dhcp = ip.DhcpServerAddresses.Select(a => a.ToString()).ToList();
                     if (dhcp.Count > 0) rows.Add(new[] { "DHCP server", string.Join(", ", dhcp), "3" });
-                    rows.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.Select(a => a.ToString()).Take(4)), "3" });
+                    rows.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.Select(a => a.ToString()).Take(4)) + (ip.DnsAddresses.Count > 4 ? " +" + (ip.DnsAddresses.Count - 4) + " " + AdeeboMeter.L.T("more") : ""), "3" });   /* L-362 */
                     if (ip.DnsSuffix != "") rows.Add(new[] { "DNS suffix", ip.DnsSuffix + " - short names like 'printer' are tried as 'printer." + ip.DnsSuffix + "'", "3" });
                 }
                 catch (Exception e) { rows.Add(new[] { "Addresses", e.Message, "1" }); }

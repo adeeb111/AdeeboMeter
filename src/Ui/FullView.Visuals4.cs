@@ -171,7 +171,7 @@ namespace AdeeboMeter
                 case "syslog": case "trap": case "netflow":
                     {
                         string sent = RV("Sent"), h = HostOf(Tg("192.0.2.20")); string port = id == "syslog" ? "UDP 514" : id == "trap" ? "UDP 162" : "UDP 2055";
-                        var m = Regex.Match(sent, @":(\d+)"); if (m.Success) port = "UDP " + m.Groups[1].Value;
+                        string tp = PortOf(Tg(""), ""); if (tp != "") port = "UDP " + tp;   // bug-hunt L-348: the collector's port is the one you typed (host:port) - the record's own ports are inside the message
                         string what = id == "syslog" ? "<" + L.T("priority") + "> " + Or(VisIn().Length > 1 ? VisIn()[1] : "", "AdeeboMeter test") : id == "trap" ? L.T("SNMP test trap") : L.T("NetFlow test record");
                         who = new[] { L.T("This PC"), h };
                         s.Add(X(0, 1, Cut(what, 40), port + " · " + Cut(Or(sent, L.T("one packet, one way")), 60), double.NaN));
@@ -257,7 +257,7 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- speed and quality, measured
                 case "twamp":
                     {
-                        string rt = RV("Round trip"), ow = RV("One way"); double o1 = VNum(ow, @"out\s*([0-9.]+)"), b1 = VNum(ow, @"back\s*([0-9.]+)");
+                        string rt = RV("Round trip"), ow = Or(RV("One-way"), RV("One way"));   /* L-347: the row is "One-way delay" */ double o1 = VNum(ow, @"out\s*([0-9.]+)"), b1 = VNum(ow, @"back\s*([0-9.]+)");
                         who = new[] { L.T("This PC (sender)"), L.T("reflector") + " " + HostOf(Tg("192.0.2.7")) };
                         s.Add(X(0, 1, L.T("test packet, stamped T1"), "UDP 862 · TWAMP-light", o1));
                         s.Add(X(1, 1, L.T("received T2, sent back T3"), L.T("the reflector stamps both - its own delay is taken out"), double.NaN));
@@ -308,7 +308,7 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- the proxy and the VPN: which way
                 case "proxy":
                     {
-                        string goes = RV("This URL goes"), set = RV("Windows proxy"), why = RV("Why"); string u = HostOf(Tg("www.example.com"));
+                        string goes = RV("This URL goes"), set = Or(RV("Fixed proxy"), RV("PAC file")), why = RV("Why");   /* L-349: WhyFails.Proxy's own row names */ string u = HostOf(Tg("www.example.com"));
                         bool direct = goes.StartsWith("DIRECT", StringComparison.OrdinalIgnoreCase) || (!ran); var pm = Regex.Match(goes + " " + why, @"([\w.-]+:\d{2,5})"); string px = pm.Success ? pm.Groups[1].Value : "proxy:8080";
                         string pac = Regex.Match(set, @"https?://[^\s)]+").Value;
                         who = direct ? new[] { L.T("This PC"), L.T("proxy script (PAC)"), u } : new[] { L.T("This PC"), L.T("proxy script (PAC)"), px, u };
@@ -316,7 +316,7 @@ namespace AdeeboMeter
                         s.Add(X(1, 0, direct ? "DIRECT" : "PROXY " + px, Cut(Or(why, ""), 70), double.NaN));
                         if (direct) s.Add(Lk(X(0, 2, L.T("straight to the site"), "TCP 443 · TLS", double.NaN)));
                         else { s.Add(X(0, 2, "CONNECT " + u + ":443", "", double.NaN)); s.Add(X(2, 3, L.T("the proxy connects for you"), "", double.NaN)); s.Add(X(2, 0, "200 Connection established", L.T("407 here = the proxy wants a sign-in"), double.NaN)); s.Add(Lk(X(0, 3, L.T("TLS straight through"), L.T("the proxy sees the name, not the page"), double.NaN))); }
-                        cap = "WHICH WAY " + u.ToUpperInvariant() + " GOES"; foot = Or(set, "No proxy set - everything goes direct.");
+                        cap = "WHICH WAY " + u.ToUpperInvariant() + " GOES"; foot = set != "" ? set : goes.IndexOf("proxy", StringComparison.OrdinalIgnoreCase) >= 0 ? goes : "No proxy set - everything goes direct.";
                     }
                     break;
                 case "vpnleak":
@@ -450,7 +450,7 @@ namespace AdeeboMeter
                         var r = res.FirstOrDefault(o => o[1].StartsWith("Access-", StringComparison.OrdinalIgnoreCase)); string from = RV("Sent from"), attr = RV("Attributes");
                         string t = Tg("labtest@192.0.2.30"), user = t.Contains("@") ? t.Split('@')[0] : "labtest"; who = new[] { L.T("This PC") + (from != "" ? " " + from.Split(' ')[0] : ""), HostOf(t) };
                         s.Add(X(0, 1, "Access-Request: " + user, L.T("UDP 1812 · password hidden with the shared secret"), double.NaN));
-                        s.Add(Rd(X(1, 0, r != null ? r[1] : "Access-Accept / Reject", Cut(r != null ? r[2] : L.T("silence = wrong secret or not a known client"), 60), RowMs(r != null ? r[2] : "")), Lv(r)));
+                        s.Add(Rd(X(1, 0, r != null ? r[1] : "Access-Accept / Reject", Cut(r != null ? r[2] : L.T("silence = wrong secret or not a known client"), 60), r != null ? (double.IsNaN(RowMs(r[1])) ? RowMs(r[2]) : RowMs(r[1])) : double.NaN), Lv(r)));   /* L-350: the time is in the row's name ("Access-Accept in 45 ms") */
                         if (attr != "") s.Add(X(1, 0, L.T("attributes"), Cut(attr, 70), double.NaN));
                         cap = "A TEST SIGN-IN AGAINST RADIUS"; foot = from != "" ? Cut(from, 110) : "Silence = wrong shared secret or firewall. Reject = the server works, the account or policy doesn't.";
                     }
@@ -520,7 +520,7 @@ namespace AdeeboMeter
                         }
                         else
                         {
-                            s.Add(X(0, 1, "GetRequest - " + L.T(q[1]), q[0] + " · UDP 161 · " + (v3 ? "SNMPv3" : L.T("community") + " " + (com == "" ? "public" : new string('•', Math.Min(8, com.Length)))), double.NaN));
+                            s.Add(X(0, 1, "GetRequest - " + L.T(q[1]), q[0] + " · UDP 161 · " + (v3 ? "SNMPv3" : L.T("community") + " " + (com == "" ? "public" : "••••••" /* L-351: always six - the length isn't shown */)), double.NaN));
                             if (id == "snmptraffic") s.Add(X(0, 1, L.T("the same, 5 s later"), L.T("the difference is the speed"), double.NaN));
                             if (vals.Count == 0) s.Add(X(1, 0, "Response", L.T("the values, one per object"), double.NaN));
                             foreach (var o in vals) s.Add(Rd(X(1, 0, Cut(o[1] + ": " + o[2], 54), o.Length > 3 ? Cut(o[3], 60) : "", double.NaN), Lv(o)));

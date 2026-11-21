@@ -147,12 +147,13 @@ namespace AdeeboMeter
             };
             Relay.Flush();   // reports written while offline go now
             Task.Factory.StartNew(() => History.Tidy());
+            Task.Factory.StartNew(() => { Remote.Sweep(); OverTime.SweepFriend(); });
             // A crash last time left a note next to the exe: offer to report it (the report box, with the note; you see it before sending).
             try
             {
                 if (File.Exists(Crash.FilePath))
                 {
-                    string note = File.ReadAllText(Crash.FilePath); File.Delete(Crash.FilePath + ".seen"); File.Move(Crash.FilePath, Crash.FilePath + ".seen");
+                    string note; using (var cr = new StreamReader(Crash.FilePath)) { var cb = new char[6000]; int cn = cr.ReadBlock(cb, 0, cb.Length); note = new string(cb, 0, cn); }   /* L-48: only what's shown is read */ File.Delete(Crash.FilePath + ".seen"); File.Move(Crash.FilePath, Crash.FilePath + ".seen");
                     var once = new System.Windows.Forms.Timer { Interval = 4000 };
                     once.Tick += delegate { once.Stop(); once.Dispose(); crashNote = note.Length > 6000 ? note.Substring(0, 6000) : note; tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it - you'll see exactly what is sent before anything goes. No account needed.", ToolTipIcon.Warning); };
                     once.Start();
@@ -232,7 +233,7 @@ namespace AdeeboMeter
             try
             {
                 if (!first)
-                    foreach (var line in File.ReadAllLines(settingsPath))
+                    foreach (var line in SafeFile.ReadText(settingsPath).Split('\n').Select(x => x.TrimEnd('\r')))   // bug-hunt L-48: capped at 1 MB - a bigger one is treated as damaged
                     {
                         int eq = line.IndexOf('='); if (eq <= 0) continue; parsed++;
                         var kv = new[] { line.Substring(0, eq), line.Substring(eq + 1) };
@@ -307,6 +308,13 @@ namespace AdeeboMeter
         }
         void ShowPhonePage() { if (quitting) return; OpenFull(); if (full != null && !full.IsDisposed) full.ShowPage("phone"); }
         static string SizeText(long size) { return size >= 1048576 ? (size / 1048576.0).ToString("0.#", System.Globalization.CultureInfo.CurrentCulture) + " MB" : Math.Max(1, size / 1024) + " KB"; }
+        T OnUi<T>(Func<T> f, int ms)
+        {
+            T v = default(T); var done = new ManualResetEventSlim(false);
+            try { marshal.BeginInvoke((Action)delegate { try { v = f(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote ui: " + e.Message); } finally { done.Set(); } }); }
+            catch (InvalidOperationException) { return v; }
+            return done.Wait(ms) ? v : default(T);
+        }
         void Wire(Remote r)
         {
                 r.Ask = phone => PhoneHub.Ask("allow", phone, L.T("wants to watch this PC and start checks for up to 30 minutes."), r.Words);
@@ -319,9 +327,10 @@ namespace AdeeboMeter
                 r.SendState = msg => { PhoneHub.Xfer = msg ?? ""; PhoneHub.Fire(); };
                 // checks run in a view that's never shown, so a game in front isn't interrupted; it also decides what's allowed
                 Func<FullView> runner = () => { if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; } return remoteRunner; };
-                r.Peek = page => { byte[] b = null; try { marshal.Invoke((Action)delegate { b = runner().PeekPage(page); }); } catch (InvalidOperationException) { } return b; };
-                r.CanRun = id => { bool ok = false; try { marshal.Invoke((Action)delegate { ok = runner().RemoteAllowed(id); }); } catch (InvalidOperationException) { } return ok; };
-                r.Catalog = () => { List<string> c = null; try { marshal.Invoke((Action)delegate { c = runner().RemoteCatalog(); }); } catch (InvalidOperationException) { } return c; };
+                // bug-hunt L-50: asked of the window thread without blocking on it - a busy or closing window answers "nothing" after 10 s
+                r.Peek = page => OnUi(() => runner().PeekPage(page), 10000);
+                r.CanRun = id => OnUi(() => runner().RemoteAllowed(id), 10000);
+                r.Catalog = () => OnUi(() => runner().RemoteCatalog(), 10000);
                 r.RunTool = (id, a, run, done) =>
                 {
                     if (id == "checkup") { FullView.RemoteCheckup(M, done); return; }
@@ -332,6 +341,8 @@ namespace AdeeboMeter
 
         // ---------- remembered phones: one waiting session per phone while no code session is open (RemoteKnown.cs)
         readonly Dictionary<string, Remote> standby = new Dictionary<string, Remote>(); DateTime standbyAt = DateTime.MinValue;
+        // bug-hunt L-234 (by design): one waiting room per remembered phone (3 at most) - each phone can only find its own room,
+        // and a sleeping room costs nothing at the relay (hibernation); the switch on the phone page turns them all off
         void StandbyTick()
         {
             if (quitting || Remote.Relay == "" || (DateTime.UtcNow - standbyAt).TotalSeconds < 15) return;
@@ -484,9 +495,10 @@ namespace AdeeboMeter
             {
                 uiTick++;
                 if ((uiTick & 15) == 0) { Weather.Tick(); Sectors.WatchTick(); }   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
-                if (WidgetScreen() == null) { hovered = false; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
+                var wscr = WidgetScreen();   // bug-hunt L-49: asked once per tick - a screen unplugged between two calls can't null the second
+                if (wscr == null) { hovered = false; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
-                bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
+                bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == wscr.DeviceName && Form.ActiveForm == full;
                 if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; widget.ClaimTop(); }   // every 30 s: claim the top layer back - no redraw
                 if ((uiTick & 7) == 0) presenting = Native.Presenting();   // checked twice a second at most
                 if (!widgetOn || viewUp || presenting || locked) { hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
@@ -549,7 +561,8 @@ namespace AdeeboMeter
         }
         void RenderAt(Snap s, bool compact)
         {
-            var wa = WidgetScreen().WorkingArea; int m = (int)(10 * Draw.S);
+            var ws0 = WidgetScreen(); if (ws0 == null) return;   // L-49
+            var wa = ws0.WorkingArea; int m = (int)(10 * Draw.S);
             using (var bmp = compact ? Draw.Chip(s, dwell) : Draw.Card(s, hits))
             {
                 if (compact) hits.Clear();

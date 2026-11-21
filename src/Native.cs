@@ -101,7 +101,14 @@ namespace AdeeboMeter
         [DllImport("dnsapi.dll")] public static extern void DnsRecordListFree(IntPtr list, int freeType);
         // The DNS name of an address: one PTR question and nothing else (Dns.GetHostEntry also looks the answer up again, a
         // second query About doesn't list). "" when there's no name. Blocks for at most what the resolver allows.
+        // bug-hunt L-297: Windows' DnsQuery has no timeout of its own - the caller waits 5 s at most (the lookup itself ends when
+        // the DNS client gives up, on its own pool thread)
         public static string PtrName(string ip)
+        {
+            var t = System.Threading.Tasks.Task.Factory.StartNew(() => PtrNameNow(ip));
+            try { return t.Wait(5000) ? t.Result : ""; } catch (AggregateException ae) { throw ae.InnerException ?? ae; }
+        }
+        static string PtrNameNow(string ip)
         {
             System.Net.IPAddress a; if (!System.Net.IPAddress.TryParse(ip ?? "", out a)) return "";
             var b = a.GetAddressBytes(); string q;
@@ -154,7 +161,7 @@ namespace AdeeboMeter
         [DllImport("shell32.dll")] public static extern int SHQueryUserNotificationState(out int state);
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid id, uint flags, IntPtr token, out IntPtr path);   // 5 = OK to notify; else presenting / full screen / quiet
         // Windows says it's fine to pop a notification now (not presenting, not full screen, not in Focus quiet time)
-        public static bool CanNotify() { try { int s; return SHQueryUserNotificationState(out s) != 0 || s == 5; } catch { return true; } }
+        public static bool CanNotify() { try { int s; return SHQueryUserNotificationState(out s) != 0 || s == 5; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } }   /* L-296 */
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool QueryFullProcessImageName(IntPtr h, int flags, [Out] char[] name, ref int size);
         [DllImport("kernel32.dll")] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool CloseHandle(IntPtr h);
         // Full path of a process's exe without admin (PROCESS_QUERY_LIMITED_INFORMATION); "" when Windows says no.

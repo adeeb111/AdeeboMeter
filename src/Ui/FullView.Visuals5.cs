@@ -325,7 +325,8 @@ namespace AdeeboMeter
         static float HopRoad(Graphics g, float x, float y, float w, string st, string cap, List<Tuple<string, string, double, string, int>> hops, string foot)
         {
             PhoneP = Tuple.Create(cap, hops.ToList()); PhoneKind = "p";
-            hops = hops.Take(10).ToList(); bool hasMs = hops.Any(h => !double.IsNaN(h.Item3)); var r = VisCard(g, x, y, w, (hasMs ? 250 : 190) * S, cap, st);
+            int moreH = hops.Count - 10; hops = hops.Take(10).ToList(); if (moreH > 0) cap += "  ·  +" + moreH + " " + L.T("more hops");   // bug-hunt L-353: what's left out is counted
+            bool hasMs = hops.Any(h => !double.IsNaN(h.Item3)); var r = VisCard(g, x, y, w, (hasMs ? 250 : 190) * S, cap, st);
             float x0 = r.X + 50 * S, x1 = r.Right - 50 * S, cy = r.Y + (hasMs ? 120 : 64) * S, step = (x1 - x0) / Math.Max(1, hops.Count - 1);
             double max = hasMs ? hops.Where(h => !double.IsNaN(h.Item3)).Max(h => h.Item3) : 1; if (max <= 0) max = 1;
             var owners = hops.Select(h => h.Item4).Distinct().ToList(); Color[] band = { Theme.Blue, VPurple, Theme.Orange, Theme.Green, VSlate, Theme.Amber };
@@ -373,7 +374,8 @@ namespace AdeeboMeter
         static float Stairs(Graphics g, float x, float y, float w, string st, string cap, List<string[]> steps, string foot)
         {
             if (steps.Count == 0) steps = new List<string[]> { new[] { "0", L.T("1. Link"), "" }, new[] { "0", L.T("2. Sign-in"), "" }, new[] { "0", L.T("3. Address"), "" }, new[] { "0", L.T("4. Router"), "" } };
-            steps = steps.Take(6).ToList(); var r = VisCard(g, x, y, w, 70 * S + steps.Count * 40 * S + 44 * S, cap, st);
+            int moreS = steps.Count - 6; steps = steps.Take(6).ToList(); if (moreS > 0) cap += "  ·  +" + moreS + " " + L.T("more");   // L-353
+            var r = VisCard(g, x, y, w, 70 * S + steps.Count * 40 * S + 44 * S, cap, st);
             int stop = steps.FindIndex(o => Lv(o) == 2); float sx = r.X + 24 * S, sw = (r.Width - 48 * S) * 0.32f, top = r.Y + 44 * S, n = steps.Count;
             bool live = WindowsAnimates(); float climb = live ? Wrap((float)AnimT * 0.8f, n + 1.5f) : n;
             int at = (int)Math.Min(climb, stop < 0 ? n - 1 : stop);
@@ -392,7 +394,8 @@ namespace AdeeboMeter
         static float Tiles(Graphics g, float x, float y, float w, string st, string cap, List<string[]> tiles, string foot)
         {
             if (tiles.Count == 0) tiles.Add(new[] { L.T("(run it to see them)"), "", "-1", "" });
-            tiles = tiles.Take(18).ToList(); var groups = tiles.Select(t => t[3]).Distinct().ToList(); int cols = 3; float tw = (w - 36 * S - (cols - 1) * 10 * S) / cols;
+            int moreT = tiles.Count - 18; tiles = tiles.Take(18).ToList(); if (moreT > 0) cap += "  ·  +" + moreT + " " + L.T("more");   // L-353
+            var groups = tiles.Select(t => t[3]).Distinct().ToList(); int cols = 3; float tw = (w - 36 * S - (cols - 1) * 10 * S) / cols;
             int rowsN = groups.Sum(gr => (tiles.Count(t => t[3] == gr) + cols - 1) / cols); float h = 48 * S + rowsN * 62 * S + groups.Count(z => z != "") * 22 * S + 44 * S;
             var r = VisCard(g, x, y, w, h, cap, st); float ty = r.Y + 42 * S;
             foreach (var gr in groups)
@@ -425,7 +428,7 @@ namespace AdeeboMeter
             Kit.Icon(g, "lock", new RectangleF(card.Right - 30 * S, card.Y + 6 * S, 18 * S, 18 * S), Color.White);
             float ly = card.Y + 38 * S; Action<string, string> line = (k, v) => { if (v == "") return; VText(g, k, Draw.fTiny, Theme.Sub, card.X + 14 * S, ly + 2 * S); using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(v, Draw.fSmall, b, new RectangleF(card.X + 90 * S, ly, card.Width - 100 * S, 18 * S), sf); ly += 21 * S; };
             line(L.T("for"), subj); line(L.T("names"), san); line(L.T("vouched by"), iss != "" ? iss : csr ? L.T("nobody yet - a CA signs it") : ""); line(L.T("key"), key);
-            line(pfx ? L.T("inside") : L.T("status"), pfx ? Or(P(RV("PFX"), 1), "") + (RV("Chain inside") != "" ? " · " + RV("Chain inside") : "") : match ? RV("Match") : csr ? Or(RV("Signed with"), P(RV("CSR"), 2)) : "");
+            line(pfx ? L.T("inside") : L.T("status"), pfx ? (Res().Where(o => o.Length > 2 && Regex.IsMatch(o[2], @"\d+ certificates?\b")).Select(o => o[2]).FirstOrDefault() ?? "") /* L-352: CertTools.Pfx names that row by the file */ : match ? RV("Match") : csr ? Or(RV("Signed with"), P(RV("CSR"), 2)) : "");
             // the dates as a bar, today marked
             var dm = Regex.Matches(valid, @"(\d{4}-\d{2}-\d{2})"); DateTime d0, d1; float bx = card.Right + 24 * S, bw = r.Right - bx - 24 * S, by = card.Y + 40 * S;
             if (dm.Count >= 2 && DateTime.TryParse(dm[0].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out d0) && DateTime.TryParse(dm[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out d1) && d1 > d0)
@@ -449,9 +452,9 @@ namespace AdeeboMeter
         // what changed since a snapshot: before → after, a row each
         float Diff(Graphics g, float x, float y, float w, string st)
         {
-            var ch = Res().Where(o => o[2].Contains("→")).Take(6).ToList(); string head = RV("Since the snapshot");
+            var chAll = Res().Where(o => o[2].Contains("→")).ToList(); var ch = chAll.Take(6).ToList(); int moreC = chAll.Count - ch.Count;   /* L-353: counted in the heading below */ string head = RV("Since the snapshot");
             if (ch.Count == 0) ch.Add(new[] { "3", L.T("(no snapshot yet)"), L.T("save one")  + " → " + L.T("compare later") });
-            var r = VisCard(g, x, y, w, 56 * S + ch.Count * 44 * S + 44 * S, "WHAT CHANGED SINCE THE SNAPSHOT", st); float ry = r.Y + 44 * S, cw = (r.Width - 36 * S - 40 * S) / 2;
+            var r = VisCard(g, x, y, w, 56 * S + ch.Count * 44 * S + 44 * S, "WHAT CHANGED SINCE THE SNAPSHOT" + (moreC > 0 ? "  ·  +" + moreC + " " + L.T("more") : ""), st); float ry = r.Y + 44 * S, cw = (r.Width - 36 * S - 40 * S) / 2;
             foreach (var o in ch)
             {
                 var parts = o[2].Split(Arrow, StringSplitOptions.None); int lv = Lv(o);

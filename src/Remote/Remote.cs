@@ -87,7 +87,7 @@ namespace AdeeboMeter
         public static readonly HashSet<string> PeekPages = new HashSet<string> { "overview", "link", "procs", "health", "changes", "travel", "toolbox", "guide", "gamer", "stream", "trade", "dest", "security", "replay" };
         public static Remote Start(Monitor m)
         {
-            var old = Now; if (old != null) old.End("a new session started");
+            var old = Now; if (old != null) Task.Factory.StartNew(() => old.End("a new session started"));   // bug-hunt L-232: its goodbye (up to 2 s) never holds the window
             var r = new Remote(m); Now = r;
             if (Relay == "") { r.St = State.Ended; r.Why = "The phone relay isn't set up yet."; return r; }
             Task.Factory.StartNew(r.Run, TaskCreationOptions.LongRunning);
@@ -110,22 +110,29 @@ namespace AdeeboMeter
                 var buf = new byte[70 * 1024];
                 while (St != State.Ended && ws.State == WebSocketState.Open)
                 {
-                    var sb = new StringBuilder(); WebSocketReceiveResult res;
+                    var sb = new StringBuilder(); WebSocketReceiveResult res; var dec = Encoding.UTF8.GetDecoder(); var cb = new char[buf.Length];   /* L-1: one decoder per message, so a character split across frames survives */
                     do
                     {
                         var t = ws.ReceiveAsync(new ArraySegment<byte>(buf), cts.Token); t.Wait(cts.Token); res = t.Result;
                         if (res.MessageType == WebSocketMessageType.Close) { End("the phone or the relay closed the session"); return; }
-                        sb.Append(Encoding.UTF8.GetString(buf, 0, res.Count)); if (sb.Length > 66 * 1024) { End("a message was too big"); return; }
+                        int nc = dec.GetChars(buf, 0, res.Count, cb, 0, res.EndOfMessage); sb.Append(cb, 0, nc); if (sb.Length > 66 * 1024) { End("a message was too big"); return; }
                     } while (!res.EndOfMessage);
                     Got(sb.ToString());
                 }
             }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; if (St != State.Ended) End("connection lost"); Program.Log("remote: " + e.Message); }
+            catch (Exception e)
+            {
+                if (e is OutOfMemoryException) throw;
+                bool ours = St == State.Ended;   // bug-hunt L-222: our own End() cancelling the read isn't worth a log line
+                // bug-hunt L-233: Windows without the encryption the link needs (CNG) says so, not "connection lost"
+                bool noCng = e is PlatformNotSupportedException || e is System.Security.Cryptography.CryptographicException || (e is AggregateException && ((AggregateException)e).InnerException is PlatformNotSupportedException);
+                if (!ours) { End(noCng ? "this Windows can't do the encryption the phone link needs (CNG is missing or turned off)" : "connection lost"); Program.Log("remote: " + e.Message); }
+            }
         }
 
         void Got(string msg)
         {
-            var j = Msg.Of(msg); if (j == null) return;
+            var j = Msg.Of(msg); if (j == null) { if (St == State.Paired) Program.Log("remote: a message that isn't JSON - ignored, like an unsealed one"); return; }   // bug-hunt L-258: logged, as ML-24's unsealed ones are
             if (St == State.Waiting && j.S("t") == "hi")
             {
                 byte[] pk, mac; try { pk = RemoteCrypto.Unb64u(j.S("pk")); mac = RemoteCrypto.Unb64u(j.S("mac")); } catch (FormatException) { return; }
@@ -133,13 +140,17 @@ namespace AdeeboMeter
                 var me = new ECDiffieHellmanCng(256); mine = me; var myPk = RemoteCrypto.Raw(me); phonePk = pk;
                 // a phone that can show the matching words gets this PC's key now, before the question (RemoteWords.cs)
                 Words = "";
+                // bug-hunt L-41: a new phone must show the matching words - a page too old to do that is turned away, not let in on Allow alone
+                if (Known == null && j.S("w") != "1") { me.Dispose(); mine = null; Send("{\"t\":\"no\"}"); End("the phone's page is out of date - reload it on the phone and scan again"); return; }
                 if (Known == null && j.S("w") == "1")
                 {
                     int wv = j.S("w2") == "1" ? 2 : 1;   // bug-hunt H-1: six words when the phone page knows them
                     Words = RemoteWords.Of(secret, pk, myPk, wv);
                     Send("{\"t\":\"key\",\"wv\":" + wv + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key"), pk, myPk)) + "\"}");
                 }
-                St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); Note();
+                St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); else { string dv = Clip(j.S("dev") ?? "", 40).Trim(); if (dv != "" && dv != PhoneName) { PhoneName = dv; RemotePhones.Rename(Known.Id, dv); } }   /* L-240: a remembered phone's new name is kept */ Note();
+                // bug-hunt L-235 (by design): what the phone sends while the question is open waits behind it and runs only after Allow -
+                // the same phone, the same yes; a No ends the session and none of it runs
                 bool yes = Known != null || (Ask != null && Ask(PhoneName));   // a remembered phone proved its key: you already said yes
                 if (!yes || St != State.Asking) { me.Dispose(); mine = null; Send("{\"t\":\"no\"}"); End("you said no"); return; }
                 var z = RemoteCrypto.SharedHash(me, pk);
@@ -200,7 +211,7 @@ namespace AdeeboMeter
                         });
                         return;
                     }
-                case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
+                case "mute": { int m; if (!int.TryParse(c.S("m"), out m)) m = 0; m = Math.Max(0, Math.Min(240, m));   /* bug-hunt L-221: the phone is told what was really set */ MuteUntil = DateTime.UtcNow.AddMinutes(Math.Max(0, Math.Min(240, m))); Seal("{\"t\":\"note\",\"msg\":\"" + (m > 0 ? "Alerts muted for " + m + " minutes." : "Alerts back on.") + "\"}"); return; }
                 case "stop": { var o = op; if (o != null && (c.S("rid") ?? "") == opRid) { o.Stop = true; Seal("{\"t\":\"note\",\"msg\":\"Stopping the check on the PC...\"}"); } return; }
                 case "fput": case "fok": case "fno": case "fdat": case "fack": case "fend": case "fcancel": case "fgot": case "text": Files(c); return;
                 // "Remember this PC" from the phone: asked here (No by default); the phone gets its own key, sealed
@@ -229,7 +240,13 @@ namespace AdeeboMeter
             }
         }
 
+        int ticking;   // bug-hunt L-231: a slow tick (a big send) is never overlapped by the next one
         void Tick()
+        {
+            if (Interlocked.CompareExchange(ref ticking, 1, 0) != 0) return;
+            try { TickOnce(); } finally { Interlocked.Exchange(ref ticking, 0); }
+        }
+        void TickOnce()
         {
             if (St == State.Ended) return;
             if (DateTime.UtcNow - Started > TimeSpan.FromMinutes(Minutes)) { End("30 minutes are up"); return; }
@@ -330,7 +347,7 @@ namespace AdeeboMeter
                 if (i >= 200 || Encoding.UTF8.GetByteCount(sb.ToString()) + Encoding.UTF8.GetByteCount(item) + 300 > room) { left = all.Count - i; break; }
                 if (!first) sb.Append(','); first = false; sb.Append(item);
             }
-            if (left > 0) { if (!first) sb.Append(','); sb.Append("[\"3\",\"More than fits\",\"").Append(left).Append(" more rows didn't fit on the phone\",\"To see every row, run this check on the PC itself.\"]"); }   // AM-CG-363: it wasn't kept on the PC
+            if (left > 0) { if (!first) sb.Append(','); sb.Append("[\"3\",\"More than fits\",\"").Append(first ? "None of the " + left + " rows fit on the phone" : left + " more rows didn't fit on the phone").Append("\",\"To see every row, run this check on the PC itself.\"]"); }   // AM-CG-363: it wasn't kept on the PC
             sb.Append(']').Append(hb).Append('}'); Seal(sb.ToString());
         }
 

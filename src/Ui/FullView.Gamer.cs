@@ -167,7 +167,8 @@ namespace AdeeboMeter
                             {
                                 gm.Servers.RemoveAll(z => z.Name == "My match");
                                 gm.Servers.Insert(0, new GameServer { Name = "My match", Where = "found " + DateTime.Now.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), Host = ip, Port = -1, Kind = "exact" });
-                                if (gm.Servers.Count > 12) gm.Servers.RemoveAt(gm.Servers.Count - 1);
+                                // bug-hunt L-101: room for "My match" is made by dropping an estimate, never an exact or Valve server
+                                if (gm.Servers.Count > 12) { int drop = gm.Servers.FindLastIndex(z => z.Kind == "estimate"); gm.Servers.RemoveAt(drop > 0 ? drop : gm.Servers.Count - 1); }
                                 Games.SaveGame(gm); Games.Reload();
                             }
                             gamerNote = "Busiest connection: " + ip + " - most likely the match server (in a peer-to-peer game it can be another player). " + (have == null ? "Added as \"My match\" and watched from now on." : "It's already in the list (" + have.Name + ").");
@@ -214,8 +215,8 @@ namespace AdeeboMeter
                 btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
                 var rg = ss != null ? games.FirstOrDefault(z => z.Id == ss.GameId) : target;
                 btn("Lag graph for streaming", false, delegate { StreamOverlay.Toggle(M); });
-                btn("Wi-Fi vs cable...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null && tbBoxes.Count > 0) tbBoxes[0].Box.Text = rg.Id; });
-                btn("Report for my ISP...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); if (rg != null && tbBoxes.Count > 1) { tbBoxes[0].Box.Text = rg.Id; tbBoxes[1].Box.Text = "2"; } });
+                btn("Wi-Fi vs cable...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null) Prefill("gamecompare", "Game", rg.Id); });
+                btn("Report for my ISP...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); if (rg != null) { Prefill("ispreport", "A game", rg.Id); Prefill("ispreport", "How long", "2"); } });
                 y += 44 * S;
                 if (ss == null) return y + 6 * S;
 
@@ -312,8 +313,8 @@ namespace AdeeboMeter
                     g.DrawString(AdeeboMeter.L.T("avg ") + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
                     // bug-hunt ML-79: a column that would run into the grade pill is left out on a narrow card
                     float pillAt = x + w - pad - 110 * S;
-                    if (c3 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
-                    if (c4 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);
+                    if (c3 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, new RectangleF(c3 + 70 * S, cy + 8 * S, pillAt - (c3 + 70 * S), 16 * S), nowrap);   /* L-102: clipped to the card */
+                    if (c4 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, new RectangleF(c4 + 70 * S, cy + 8 * S, pillAt - (c4 + 70 * S), 16 * S), nowrap);
                     // sparkline of the last minute
                     var sr = new RectangleF(c5 + 80 * S, cy + 4 * S, x + w - pad - 110 * S - (c5 + 80 * S), 24 * S);   // no room: no sparkline (never a forced width)
                     var okv = v.Where(z => !double.IsNaN(z)).ToArray();

@@ -57,7 +57,7 @@ namespace AdeeboMeter
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
             link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
-            if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · C copy · Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
+            if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
             {
                 var ns = g.MeasureString(barNote, Draw.fSmall); if (lx + ns.Width > x + w) { lx = x + 4 * S; y += 26 * S; }
@@ -164,7 +164,7 @@ namespace AdeeboMeter
             {
                 case "x":
                     {
-                        var act = PhoneX.Item2; var st = PhoneX.Item3; double gap = 200, top = y0 + 20, rowH = 70, bottom = top + 50 + st.Count * rowH;
+                        var act = PhoneX.Item2; var st = PhoneX.Item3; double gap = Math.Min(200, act.Length > 1 ? (1020.0 - 160) / (act.Length - 1) : 200),   /* L-333: all actors fit the 1100-wide page */ top = y0 + 20, rowH = 70, bottom = top + 50 + st.Count * rowH;
                         box(PhoneX.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
                         for (int i = 0; i < act.Length; i++) { box(act[i], "rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF1F5;strokeColor=#E3E8EF;fontStyle=1;", 40 + i * gap, top, 160, 36); line("", "endArrow=none;dashed=1;html=1;strokeColor=#B4BDC9;", 120 + i * gap, top + 36, 120 + i * gap, bottom); }
                         for (int i = 0; i < st.Count; i++)
@@ -184,12 +184,12 @@ namespace AdeeboMeter
                         box(PhoneP.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
                         for (int i = 0; i < hops.Count; i++)
                         {
-                            var h = hops[i]; double x = 40 + i * 150;
+                            var h = hops[i]; double x = 40 + (i % 7) * 150, yR = y0 + (i / 7) * 190;   // bug-hunt L-333: 7 hops a row, then the next row - never past the page
                             int me = id; if (i > 0) sb.Append("<mxCell id=\"c" + (id++) + "\" style=\"endArrow=block;html=1;strokeWidth=3;strokeColor=#B4BDC9;\" edge=\"1\" parent=\"1\" source=\"c" + prevHop + "\" target=\"c" + (me + 1) + "\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>");
-                            prevHop = id; box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, y0 + 35, 50, 50);
-                            box(h.Item2 + (double.IsNaN(h.Item3) ? "" : "\n" + Nm(h.Item3) + " ms") + "\n" + h.Item4, "rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=" + pal[owners.IndexOf(h.Item4) % pal.Length] + ";strokeColor=none;", x - 20, y0 + 95, 130, 70);
+                            prevHop = id; box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, yR + 35, 50, 50);
+                            box(h.Item2 + (double.IsNaN(h.Item3) ? "" : "\n" + Nm(h.Item3) + " ms") + "\n" + h.Item4, "rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=" + pal[owners.IndexOf(h.Item4) % pal.Length] + ";strokeColor=none;", x - 20, yR + 95, 130, 70);
                         }
-                        y0 += 190;
+                        y0 += Math.Max(1, (hops.Count + 6) / 7) * 190;
                     }
                     break;
                 case "r": case "b":

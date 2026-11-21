@@ -51,7 +51,7 @@ namespace AdeeboMeter
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) { if (!Lines.Speaks("problem")) return ""; return Lines.Who() == Lines.Mood ? Excuse((DateTime.Now - downSince).TotalMinutes, isp) : Lines.Steady("isp.down", null); }   // AM-CG-188
             // 1.1.5: the words come from the lines files (Lines) - the persona if one talks, else the mood
             string key, v = null, kind = "state";
-            bool knownCalm = s.Path != null && s.Path.Length > 2 && s.Path[0] >= 0 && s.Path[0] <= 2 && s.Path.Skip(2).Any(p => p >= 0 && p <= 2);   // AM-CG-169
+            bool knownCalm = s.Path != null && s.Path.Length > 2 && s.Path[0] >= 0 && s.Path[0] <= 2 && s.Path.Skip(2).Any(p => p >= 0 && p <= 2) && s.Path[1] != 1 && s.Path[1] != 2;   // AM-CG-169; bug-hunt L-298: a busy or broken Wi-Fi / LAN leg isn't calm
             string comfort = s.Level == 0 && !s.Call && knownCalm && Lines.Speaks("idle") ? Lines.Comfort() : "";
             if (comfort != "" && (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) || (DateTime.Now.Minute < 5 && Lines.Speaks("idle")))) return comfort;   // calm moments only: the greeting, and the first minutes of a quiet hour
             if (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) && s.Level == 0 && knownCalm) { key = DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 5 ? "late.night" : DateTime.Now.Hour < 11 ? "morning" : "app.open"; kind = "greet"; }
@@ -62,7 +62,7 @@ namespace AdeeboMeter
                 if (at == 0) { key = "pc.busy"; if (!double.IsNaN(s.Cpu)) v = s.Cpu.ToString("0", CultureInfo.CurrentCulture) + "%"; }
                 else if (at == 1) key = s.PathMain != null && s.PathMain.Length > 1 && (s.PathMain[1] ?? "").IndexOf("not connected", StringComparison.OrdinalIgnoreCase) >= 0 || s.Headline.IndexOf("not connected to any network", StringComparison.OrdinalIgnoreCase) >= 0 ? "net.none" : lv >= 2 ? "gw.down" : "wifi.drops";
                 else if (at == 3) { key = "dns.slow"; if (s.DnsMs > 0) v = s.DnsMs.ToString("0", CultureInfo.CurrentCulture) + " ms"; }
-                else key = lv >= 2 ? "isp.down" : "inet.slow";
+                else key = at == 4 ? "inet.slow" : lv >= 2 ? "isp.down" : "inet.slow";   // bug-hunt L-299: the far end (the site's side) is never the provider's fault in words
             }
             if (!Lines.Speaks(kind)) return "";
             return Lines.Steady(key, v);

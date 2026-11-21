@@ -782,7 +782,7 @@ your own mix	tu combinación
 plus about	más unos
 game pings a minute for the games you watch (one a second per server while you play)	pings por minuto para los juegos supervisados (uno por segundo por servidor al jugar)
 on top of the widget's once-a-second read of Windows' own counters.	además de la lectura de los contadores de Windows que hace el widget cada segundo.
-The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	El widget siempre consume muy poco. Lo más intenso (captura en vivo, lista completa de conexiones y pruebas de ruta) solo funciona con esta ventana abierta. Aquí decides las comprobaciones por minuto en segundo plano, más los pings cuando supervisas un juego.
+The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	El widget siempre consume muy poco. Lo más intenso (captura en vivo, lista completa de conexiones y pruebas de ruta) solo funciona con esta ventana abierta. Aquí decides las comprobaciones por minuto en segundo plano, más los pings cuando supervisas un juego.
 The DNS server is down	El servidor DNS no responde
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	Usa otro DNS (por ejemplo, 1.1.1.1) o reinicia el router, que aquí sirve de DNS
 Addresses work. Names don't.	Las direcciones funcionan. Los nombres no.
@@ -1569,7 +1569,7 @@ KEYS	CLAVES
 Keep this	Conservar
 Kerberos: sign me in	Kerberos: iniciar sesión
 Keyboard test - press every key	Prueba de teclado: pulsa cada tecla
-Keys: Ctrl+Shift+S save · C copy · Q phone	Teclas: Ctrl+Shift+S guardar · C copiar · Q teléfono
+Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	Teclas: Ctrl+Shift+S guardar · Ctrl+Shift+C copiar · Ctrl+Shift+Q teléfono
 LAB	LABORATORIO
 LAST 10 MINUTES	ÚLTIMOS 10 MINUTOS
 LDAP ping - are you there, which site am I in?	Ping LDAP: ¿estás ahí? ¿En qué sitio estoy?
@@ -1983,7 +1983,7 @@ after the server thought about it	tras procesarlo el servidor
 alerts	Alertas
 all of it took	todo tardó
 allowed	permitido
-amber: dips of 10% or so - normal weather	ámbar: caídas de alrededor del 10%, variaciones normales
+amber: small dips (3-7%) - normal weather	ámbar: caídas pequeñas (3-7%), variaciones normales
 an address! (it shouldn't have one)	¡una dirección! (no debería tenerla)
 an answer	una respuesta
 and the hand-off after it - loss starts there and carries on to the destination.	y la conexión siguiente: la pérdida empieza allí y continúa hasta el destino.
@@ -4197,3 +4197,4 @@ THE REAL PACKETS  ·  	LOS PAQUETES REALES ·
 PACKET 	PAQUETE 
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	Necesita Wireshark con Npcap: lee el tráfico de tu propio PC durante 10 segundos.
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	Lee 10 segundos del tráfico de tu PC y explica su composición: protocolos modernos o antiguos, IPv4 o IPv6 y mensajes de Windows en segundo plano por tu red. No guarda nada.
+earlier report(s) waiting to send when you're online	informes anteriores pendientes para cuando tengas conexión

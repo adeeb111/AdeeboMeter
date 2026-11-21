@@ -782,7 +782,7 @@ your own mix	خليطك الخاص
 plus about	إضافة إلى نحو
 game pings a minute for the games you watch (one a second per server while you play)	اللعبة تعطي دقيقة للاعبات التي تشاهدها (واحدة في الثانية لكل خادم أثناء اللعب)
 on top of the widget's once-a-second read of Windows' own counters.	على رأس الوسائط القراءة مرة في الثانية من العدادات الخاصة Windows.
-The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	الوسائط دائماً تطبيق بنس المواد العميقة (التقاط الحي، قائمة الاتصال الكاملة، فحص المسار) تعمل فقط بينما هذه النافذة مفتوحة. هذه تحدد كم من المشاهدة يحدث في الخلفية - تحقق دقيقة، بالإضافة إلى اللعبة pings مرة واحدة تشاهد لعبة.
+The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	الوسائط دائماً تطبيق بنس المواد العميقة (التقاط الحي، قائمة الاتصال الكاملة، فحص المسار) تعمل فقط بينما هذه النافذة مفتوحة. هذه تحدد كم من المشاهدة يحدث في الخلفية - تحقق دقيقة، بالإضافة إلى اللعبة pings مرة واحدة تشاهد لعبة.
 The DNS server is down	خادم DNS لا يعمل
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	استخدم خادم DNS آخر، مثل 1.1.1.1، أو أعد تشغيل الراوتر الذي يعمل هنا خادمًا لـ DNS
 Addresses work. Names don't.	تناول العمل. الأسماء لا تفعل.
@@ -1569,7 +1569,7 @@ KEYS	المفاتيح
 Keep this	احتفظ بهذا
 Kerberos: sign me in	(كيربيروس) ، أوقعني
 Keyboard test - press every key	اختبار لوحة المفاتيح - اضغط على كل مفتاح
-Keys: Ctrl+Shift+S save · C copy · Q phone	المفاتيح: Ctrl+Shift+S حفظ · نسخة C · هاتف Q
+Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	المفاتيح: Ctrl+Shift+S حفظ · Ctrl+Shift+C نسخ · Ctrl+Shift+Q الهاتف
 LAB	المختبر
 LAST 10 MINUTES	آخر 10 دقائق
 LDAP ping - are you there, which site am I in?	هل أنت هناك، في أي موقع أنا؟
@@ -1983,7 +1983,7 @@ after the server thought about it	بعد أن يفكر الخادم في الأ�
 alerts	تنبيهات
 all of it took	كل هذا استغرق
 allowed	مسموح بها
-amber: dips of 10% or so - normal weather	الألمبري: غطاء من 10% أو ما شابه - الطقس الطبيعي
+amber: small dips (3-7%) - normal weather	الكهرماني: انخفاضات صغيرة (3-7%) - تقلبات طبيعية
 an address! (it shouldn't have one)	عنوان! (لا ينبغي أن يكون لها واحدة)
 an answer	إجابة
 and the hand-off after it - loss starts there and carries on to the destination.	وبالنسبة إلى المُسَلِمين، فإن الخسارة تبدأ من هنا وتستمر إلى وجهتها.
@@ -4197,3 +4197,4 @@ THE REAL PACKETS  ·  	الحزم الفعلية  ·
 PACKET 	الحزمة 
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	يتطلّب هذا Wireshark مع Npcap — يلتقط بيانات اتصال جهازك نفسه لمدة 10 ثوانٍ.
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	يلتقط بيانات اتصال جهازك نفسه لمدة 10 ثوانٍ، ويبيّن مكوّناتها: بروتوكولات حديثة أو قديمة، وIPv4 أو IPv6، والرسائل التي يرسلها Windows في الخلفية إلى شبكتك المحلية. لا يحتفظ بشيء.
+earlier report(s) waiting to send when you're online	تقارير سابقة تنتظر الإرسال عندما تكون على الإنترنت

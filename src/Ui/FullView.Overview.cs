@@ -344,7 +344,7 @@ namespace AdeeboMeter
                         var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
                         Theme.Fill(g, br, 16 * S, Theme.Card); Kit.Frame(g, br);
                         g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
-                        g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, 18 * S));
+                        using (var ef = new StringFormat { Trimming = StringTrimming.EllipsisWord }) g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, Math.Max(18 * S, br.Height - 36 * S)), ef);   // bug-hunt L-171: the card's own height (French runs longer), "…" if still too long
                         string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
                     }
                     y = card.Bottom + 14 * S;
@@ -380,7 +380,7 @@ namespace AdeeboMeter
                     Act(overviewCanvas, ur, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("winupdate"); }); y += 44 * S;
                 }
                 // needs attention
-                var att = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).Take(4).ToList();
+                var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
                 g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (att.Count == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -392,6 +392,12 @@ namespace AdeeboMeter
                         var er = new RectangleF(x, y, w, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
                         y += 26 * S; g.DrawLine(line, x, y, x + w, y);
                     }
+                if (attAll.Count > att.Count)   // bug-hunt L-169: the rest are counted, one click away
+                {
+                    string more = L.T("and") + " " + (attAll.Count - att.Count) + " " + L.T("more in What changed");
+                    using (var lb = new SolidBrush(Theme.Blue)) g.DrawString(more, Draw.fSmall, lb, x, y + 6 * S);
+                    var mr2 = new RectangleF(x, y + 2 * S, g.MeasureString(more, Draw.fSmall).Width, 22 * S); Act(overviewCanvas, mr2, delegate { tab = "changes"; ShowTab(); }); y += 26 * S;
+                }
                 y += 14 * S;
 
                 // your week, everything together (only once there's a record)
@@ -412,14 +418,19 @@ namespace AdeeboMeter
                     new[] { "dest", "Check a destination", "Name, route, door, lock and answer for any site or app." },
                     new[] { "story", "Network story", "Your traffic layer by layer, routing, Teams & Office, real packets." },
                     new[] { "time", "Time machine", "Replay any minute, what changed, the week, usage, calls." },
-                    new[] { "learn", "Learn", "Protocols, Teams and Office, inside Windows, every term." } };
+                    new[] { "learn", "Learn", "Protocols, Teams and Office, inside Windows, every term." },
+                    // bug-hunt L-170: every section, as the heading says
+                    new[] { "security", "Security", "This PC's locks, your network and the sites you use, checked in plain words." },
+                    new[] { "gamer", "Gamer", "Your games' servers live, lag spikes and whose fault they are." },
+                    new[] { "stream", "Streaming", "Is the stream ready - and why it stalled, when it did." },
+                    new[] { "trade", "Markets", "Your broker's connection and the day's numbers - education only." } };
                 int mc = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float mw = (w - (mc - 1) * 10 * S) / mc, mh = 92 * S;
                 for (int i = 0; i < map.Length; i++)
                 {
                     var m = map[i]; var mr = new RectangleF(x + (i % mc) * (mw + 10 * S), y + (i / mc) * (mh + 10 * S), mw, mh);
                     Theme.Fill(g, mr, 12 * S, Theme.Soft);
-                    g.DrawString(m[1], Draw.fBodyB, ink, mr.X + 14 * S, mr.Y + 12 * S);
-                    g.DrawString(m[2], Draw.fSmall, sub, new RectangleF(mr.X + 14 * S, mr.Y + 34 * S, mr.Width - 24 * S, mr.Height - 38 * S));
+                    g.DrawString(L.T(m[1]), Draw.fBodyB, ink, mr.X + 14 * S, mr.Y + 12 * S);
+                    g.DrawString(L.T(m[2]), Draw.fSmall, sub, new RectangleF(mr.X + 14 * S, mr.Y + 34 * S, mr.Width - 24 * S, mr.Height - 38 * S));
                     string id = m[0]; Act(overviewCanvas, mr, delegate { OpenNav(id); });
                 }
                 y += ((map.Length + mc - 1) / mc) * (mh + 10 * S) + 10 * S;

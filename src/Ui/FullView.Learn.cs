@@ -61,8 +61,8 @@ namespace AdeeboMeter
                 }
                 if (q != "" || learnFilter == "terms")
                 {
-                    var terms = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).Take(learnFilter == "terms" ? 400 : 30).ToList();
-                    if (terms.Count > 0) { g.DrawString(L.T("TERMS USED IN ADEEBOMETER"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
+                    var termsAll = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).ToList(); var terms = termsAll.Take(learnFilter == "terms" ? 400 : 30).ToList();   /* L-359: the heading says when more matched */
+                    if (terms.Count > 0) { g.DrawString(L.T("TERMS USED IN ADEEBOMETER") + (termsAll.Count > terms.Count ? "  ·  " + terms.Count + " " + L.T("of") + " " + termsAll.Count + " - " + L.T("type more to narrow it") : ""), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
                 }
             }
             Need(learnList, y);

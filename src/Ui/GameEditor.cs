@@ -151,7 +151,12 @@ namespace AdeeboMeter
                 var names = Process.GetProcesses().Select(p => { try { using (p) return p.MainWindowHandle != IntPtr.Zero ? p.ProcessName : ""; } catch (InvalidOperationException) { return ""; } catch (System.ComponentModel.Win32Exception) { return ""; } })
                     .Where(z => z != "" && !string.Equals(z, "AdeeboMeter", StringComparison.OrdinalIgnoreCase))
                     .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(z => z, StringComparer.OrdinalIgnoreCase).Take(40).ToList();
-                foreach (var n in names) { string pn = n; menu.Items.Add(pn, null, delegate { exe.Box.Text = pn; }); }
+                foreach (var n in names) { string pn = n; menu.Items.Add(pn, null, delegate
+                {   // bug-hunt L-118: added to the programs already listed (a game can have a launcher and the game itself), not instead of them
+                    var have = exe.Box.Text.Split(';').Select(z => z.Trim()).Where(z => z != "").ToList();
+                    if (!have.Any(z => string.Equals(z, pn, StringComparison.OrdinalIgnoreCase))) have.Add(pn);
+                    exe.Box.Text = string.Join("; ", have.Take(4));
+                }); }
                 if (names.Count == 0) menu.Items.Add("(no programs with a window)").Enabled = false;
             }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; }
@@ -190,9 +195,16 @@ namespace AdeeboMeter
                         got.Add(new GameServer { Name = f[2].Trim(), Where = f[3].Trim(), Host = host, Port = port, Kind = f[6].Trim() == "valve" ? "valve" : f[6].Trim() == "estimate" ? "estimate" : "exact" });
                     }
                     if (got.Count == 0) { err.Text = AdeeboMeter.L.T("No valid servers in that file."); return; }
-                    foreach (var l in lines.ToList()) { list.Controls.Remove(l.Row); l.Row.Dispose(); }
-                    lines.Clear(); foreach (var s in got.Take(12)) AddLine(s);
-                    err.Text = skipped > 0 ? skipped + " line(s) skipped - not a valid host name, IP or port." : "";
+                    // bug-hunt L-117: added after the servers already here (the same address and port once), up to 12 in all - never a silent replace
+                    foreach (var l in lines.Where(z => z.Host.Box.Text.Trim() == "" && z.Name.Box.Text.Trim() == "").ToList()) { list.Controls.Remove(l.Row); l.Row.Dispose(); lines.Remove(l); }
+                    int added = 0, dup = 0, full = 0;
+                    foreach (var s in got)
+                    {
+                        if (lines.Any(z => string.Equals(z.Host.Box.Text.Trim(), s.Host, StringComparison.OrdinalIgnoreCase))) { dup++; continue; }
+                        if (lines.Count >= 12) { full++; continue; }
+                        AddLine(s); added++;
+                    }
+                    err.Text = added + " added" + (dup > 0 ? " · " + dup + " already here" : "") + (full > 0 ? " · " + full + " didn't fit (12 at most)" : "") + (skipped > 0 ? " · " + skipped + " line(s) skipped - not a valid host name, IP or port" : "");
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; err.Text = AdeeboMeter.L.T("Couldn't read it: ") + e.Message; }
             }
