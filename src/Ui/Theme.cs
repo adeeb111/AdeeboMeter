@@ -80,7 +80,7 @@ namespace AdeeboMeter
             Dark = dark; AppliedContrast = SystemInformation.HighContrast; AppliedSig = ContrastSig();
             if (!dark)
             {
-                Ink = C("#1B2330"); Muted = C("#5B6B7C"); Sub = C("#3D4B5A"); Line = C("#D6DEE8"); Line2 = C("#EEF2F6"); Track = C("#E6ECF3"); Soft = C("#F4F7FB");
+                Ink = C("#1B2330"); Muted = C("#4A5867"); Sub = C("#334150"); Line = C("#D6DEE8"); Line2 = C("#EEF2F6"); Track = C("#E6ECF3"); Soft = C("#F4F7FB");
                 Card = C("#FFFFFF"); Bg = C("#F2F5F9"); Rail = C("#C5CED8"); UpText = C("#9A4A00"); BlueSoft = C("#EEF4FF"); BlueDark = C("#0B4FB3");
                 RowNew = C("#E6F7EC"); RowGone = C("#FFEFEF"); RowSel = C("#E8F0FE"); RowHot = C("#F7FAFF"); Grey = C("#AEB8C2");
                 lvText[0] = C("#116329"); lvText[1] = C("#7D4E00"); lvText[2] = C("#B42318");
@@ -276,7 +276,7 @@ namespace AdeeboMeter
         // the drawing kit is built around (PLAN 11.2). Loaded once from the exe into this process only (nothing installed);
         // body text stays on Windows' own font so names in any script (a Chinese Wi-Fi name...) still get Windows' fallback.
         static System.Drawing.Text.PrivateFontCollection inter;
-        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", SmallFam = "";
+        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", SmallFam = "", UiMedium = "";
         public static FontStyle UiSemiStyle = FontStyle.Bold;
         static void LoadInter()
         {
@@ -284,7 +284,7 @@ namespace AdeeboMeter
             {
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
                 // Inter for the writing; Nunito Bold for the small writing (Adeeb, 16 Nov: "rounder and thicker, easy to read")
-                foreach (var w in new[] { "Inter-Regular", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold", "PlayfairDisplay-Bold", "PlayfairDisplay-Black" })   // Playfair (OFL): the Sports and Markets newspaper mastheads (1.1.6)
+                foreach (var w in new[] { "Inter-Regular", "Inter-Medium", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold", "PlayfairDisplay-Bold", "PlayfairDisplay-Black" })   // Playfair (OFL): the Sports and Markets newspaper mastheads (1.1.6)
                     using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
                     {
                         if (rs == null) { if (w.StartsWith("Inter", StringComparison.Ordinal)) return; continue; }
@@ -294,7 +294,7 @@ namespace AdeeboMeter
                         uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
                     }
                 inter = pfc;
-                foreach (var f in pfc.Families) { if (f.Name == "Nunito") SmallFam = "Nunito"; if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
+                foreach (var f in pfc.Families) { if (f.Name == "Nunito") SmallFam = "Nunito"; if (f.Name == "Inter Medium") UiMedium = f.Name; if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
                 if (UiFam == "Inter" && UiSemi == "Segoe UI") { UiSemi = "Inter"; UiSemiStyle = FontStyle.Bold; }
             }
             catch (Exception e) { Program.Log("Inter font: " + e.Message); UiFam = UiSemi = "Segoe UI"; UiSemiStyle = FontStyle.Bold; }
@@ -355,15 +355,15 @@ namespace AdeeboMeter
             fName = Ui(UiFam, 12.5f * S, FontStyle.Bold);
             fHead = Ui(UiSemi, 13.5f * S, UiSemiStyle);
             // 1.1.5: the writing is Inter too - one modern typeface from headline to footnote (Segoe UI only if Inter failed to load)
-            fBody = Ui(UiFam, 12.5f * S, FontStyle.Regular);
+            fBody = Ui(UiMedium != "" ? UiMedium : UiFam, 13f * S, FontStyle.Regular);   // 21 Nov (Adeeb): medium, not deep bold - the writing in Inter Medium, in step with the headings
             fBodyB = Ui(UiSemi, 12.5f * S, UiSemiStyle);
             // Adeeb, 14 Nov: "the small writing is not even sharp" - Inter has no hinting, so below 12 px it goes soft on Windows.
             // The small sizes use Windows' own text face (hinted for exactly these sizes); headings and body stay Inter.
             // Adeeb, 16 Nov (option D): the small writing is Nunito Bold - round, thick, easy to read; Windows' own face if it didn't load
-            fSmall = SmallFam != "" ? Ui(SmallFam, 13 * S, FontStyle.Bold) : new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            fSmall = UiMedium != "" ? Ui(UiMedium, 13f * S, FontStyle.Regular) : SmallFam != "" ? Ui(SmallFam, 13 * S, FontStyle.Bold) : new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);   // 21 Nov: small writing Inter Medium too (one family; Nunito only if Medium failed)
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = SmallFam != "" ? Ui(SmallFam, 11.5f * S, FontStyle.Bold) : new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals
+            fTiny = UiMedium != "" ? Ui(UiSemi, 11.5f * S, UiSemiStyle) : SmallFam != "" ? Ui(SmallFam, 11.5f * S, FontStyle.Bold) : new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals
             fPill = new Font(semi, 11 * S, semiStyle, GraphicsUnit.Pixel);
             fBig = Ui(UiFam, 20 * S, FontStyle.Bold);
             fTitle = Ui(UiFam, 16 * S, FontStyle.Bold);

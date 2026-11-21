@@ -123,9 +123,9 @@ namespace AdeeboMeter
         }
 
         // a raised card: theme card colour, soft shadow, hairline edge, rounded
-        public static void Box(Graphics g, RectangleF r) { Box(g, r, 16 * S); }
+        public static void Box(Graphics g, RectangleF r) { Box(g, r, 20 * S); }
         public static void Box(Graphics g, RectangleF r, float rad) { if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }
-        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, 16 * S); }
+        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, 20 * S); }
         public static void Frame(Graphics g, RectangleF r, float rad)
         {
             if (Off(g, r)) return;
