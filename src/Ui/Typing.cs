@@ -15,6 +15,8 @@ namespace AdeeboMeter
         const double PerChar = 28, MaxMs = 2000;
         static readonly Dictionary<string, KeyValuePair<string, DateTime>> seen = new Dictionary<string, KeyValuePair<string, DateTime>>(StringComparer.Ordinal);
         static readonly HashSet<Control> wake = new HashSet<Control>();
+        static readonly Dictionary<string, DateTime> changed = new Dictionary<string, DateTime>(StringComparer.Ordinal);
+        const double Calm = 15;   // seconds a slot must stay unchanged before its next new line types again
         static Timer t;
         public static bool Hold;   // screen peek: draw every line whole, so a still picture never shows half a sentence
         public static bool On { get { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } } }
@@ -23,8 +25,16 @@ namespace AdeeboMeter
         {
             if (string.IsNullOrEmpty(text) || !On || Hold) return text ?? "";
             KeyValuePair<string, DateTime> p;
-            if (!seen.TryGetValue(slot, out p) || p.Key != text) { p = new KeyValuePair<string, DateTime>(text, DateTime.UtcNow); seen[slot] = p; }
-            double dur = Math.Min(MaxMs, text.Length * PerChar), el = (DateTime.UtcNow - p.Value).TotalMilliseconds;
+            if (!seen.TryGetValue(slot, out p) || p.Key != text)
+            {
+                // a line that changes again soon after the last change (a live number, trouble that keeps updating) is shown
+                // whole: typing it again each time looked like it never stopped (Adeeb, 21 Nov). Only a line that stood still
+                // for a while types itself out.
+                DateTime prev; bool busy = changed.TryGetValue(slot, out prev) && (DateTime.UtcNow - prev).TotalSeconds < Calm;
+                changed[slot] = DateTime.UtcNow;
+                p = new KeyValuePair<string, DateTime>(text, busy ? DateTime.MinValue : DateTime.UtcNow); seen[slot] = p;
+            }
+            double dur = Math.Min(MaxMs, text.Length * PerChar), el = p.Value == DateTime.MinValue ? double.MaxValue : (DateTime.UtcNow - p.Value).TotalMilliseconds;
             if (el >= dur) return text;
             int n = Math.Max(0, Math.Min(text.Length, (int)Math.Ceiling(text.Length * el / dur)));
             if (c != null) { wake.Add(c); Tick(); }

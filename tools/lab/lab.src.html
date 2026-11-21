@@ -220,7 +220,10 @@ function wave(x1, y1, x2, y2){ const dx = x2 - x1, dy = y2 - y1, len = Math.hypo
     d += " Q" + (x1 + dx * m + px * a).toFixed(1) + " " + (y1 + dy * m + py * a).toFixed(1) + " " + (x1 + dx * t).toFixed(1) + " " + (y1 + dy * t).toFixed(1); } return d; }
 const node = id => doc.nodes.find(n => n.id === id);
 function nodeColor(n, C){ return n.st === "bad" ? C.red : n.st === "warn" ? C.amber : n.st === "typ" ? C.mute : n.st === "you" ? C.purple : C.ink; }
-function draw(){
+// dragging fires pointermove 100+ times a second: draw at most once per screen frame (the TopoDraw lesson, 21 Nov)
+let drawQ = 0;
+function drawSoon(){ if (drawQ) return; drawQ = requestAnimationFrame(() => { drawQ = 0; draw(); }); }
+function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
   const C = COL(), svg = $("#svg"); svg.textContent = "";
   const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g);
   doc.areas.forEach(a => { const s = sel && sel.t === "area" && sel.id === a.id;
@@ -304,12 +307,12 @@ stage.addEventListener("pointerdown", e => {
   sel = null; drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; draw();
 });
 stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
-  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; draw(); }
-  else if (drag.move) { const snap = v => e.shiftKey ? v : Math.round(v / 10) * 10; drag.move.x = snap(drag.ox + p.x - drag.sx); drag.move.y = snap(drag.oy + p.y - drag.sy); drag.moved = true; draw(); }
-  else if (drag.resize) { drag.resize.w = Math.max(60, Math.round(drag.w + p.x - drag.sx)); drag.resize.h = Math.max(50, Math.round(drag.h + p.y - drag.sy)); draw(); }
-  else if (drag.ink) { drag.ink.p.push(Math.round(p.x), Math.round(p.y)); if (drag.ink.p.length > 4000) drag.ink.p.length = 4000; draw(); }
+  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; drawSoon(); }
+  else if (drag.move) { const snap = v => e.shiftKey ? v : Math.round(v / 10) * 10; drag.move.x = snap(drag.ox + p.x - drag.sx); drag.move.y = snap(drag.oy + p.y - drag.sy); drag.moved = true; drawSoon(); }
+  else if (drag.resize) { drag.resize.w = Math.max(60, Math.round(drag.w + p.x - drag.sx)); drag.resize.h = Math.max(50, Math.round(drag.h + p.y - drag.sy)); drawSoon(); }
+  else if (drag.ink) { drag.ink.p.push(Math.round(p.x), Math.round(p.y)); if (drag.ink.p.length > 4000) drag.ink.p.length = 4000; drawSoon(); }
   else if (drag.area) { if (!drag.a) { undo.push(JSON.stringify(doc)); redo = []; drag.a = {id: uid("a"), x: 0, y: 0, w: 0, h: 0, t: "Area"}; doc.areas.push(drag.a); }
-    Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); draw(); } });
+    Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); drawSoon(); } });
 stage.addEventListener("pointerup", () => { if (!drag) return;
   if (drag.move && !drag.moved) undo.pop();
   if (drag.area && drag.a) { if (drag.a.w < 30 || drag.a.h < 30) { doc.areas.pop(); undo.pop(); } else { sel = {t: "area", id: drag.a.id}; editAt(drag.a, "t"); } }
