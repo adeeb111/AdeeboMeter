@@ -29,10 +29,24 @@ namespace AdeeboMeter
             if (double.IsNaN(mbps) || mbps < 0) return "-";
             bool bytes = Cfg.WUnits == "bytes"; double v = bytes ? mbps / 8 : mbps; string u;
             if (v < 1) { v *= 1000; u = bytes ? "kB/s" : "kb/s"; } else if (v >= 1000) { v /= 1000; u = bytes ? "GB/s" : "Gb/s"; } else u = bytes ? "MB/s" : "Mb/s";
-            string n = v.ToString(v < 10 ? "0.0" : "0", CultureInfo.CurrentCulture);
+            string n = v == 0 ? "0" : v.ToString(v < 10 ? "0.0" : "0", CultureInfo.CurrentCulture);   // a quiet line reads "0 kb/s", not "0.0"
             return unit ? n + " " + u : n;
         }
+        // down and up together: one unit when they share it ("↓ 850  ↑ 120 kb/s"), each its own when they don't
+        public static string Pair(double down, double up)
+        {
+            string ud = Unit(Num(down)), uu = Unit(Num(up));
+            return ud == uu ? "↓ " + Rate(down, false) + "  ↑ " + Rate(up, false) + " " + ud : "↓ " + Rate(down, true) + "  ↑ " + Rate(up, true);
+        }
         static string Unit(double mbps) { var r = Rate(mbps, true); int sp = r.IndexOf(' '); return sp > 0 ? r.Substring(sp + 1) : ""; }
+        // 21 Nov (Adeeb): the strip's two clocks - the speeds may change every 2 s, the rest (status words, the graph,
+        // the weather) every 5 s; a change of level (amber / red) still shows at once (AppCtx)
+        public static string ChipSpeedKey(Snap s) { return SpeedStyle ? SpeedText(s) : ""; }
+        public static string ChipOtherKey(Snap s)
+        {
+            if (!SpeedStyle) return s.Chip + WeatherKeyPart();
+            return (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark30(Cfg.WDir == "up" ? s.UpHist : s.DownHist) : "") + WeatherKeyPart();
+        }
         // what the folded strip shows: it's redrawn only when this changes
         public static string ChipKey(Snap s)
         {

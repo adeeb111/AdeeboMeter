@@ -944,13 +944,13 @@ namespace AdeeboMeter
             s.Details["disk"] = new Detail { Title = "Disk", Note = "A busy disk often explains slow app launches.",
                 Lines = new List<string[]> { new[] { "Active time", Draw.Fmt(s.Disk, "0", "%") }, new[] { "Read / write", Draw.Fmt(readMB, "0.0", "") + " / " + Draw.Fmt(writeMB, "0.0", " MB/s") }, new[] { "C:", cfree } } };
             s.Details["net"] = new Detail { Title = "Traffic", Note = "Who's talking to whom: click the tray icon.",
-                Lines = new List<string[]> { new[] { "Adapter", Draw.Trunc(adapter, 24) }, new[] { "Link speed", speed == "" ? "-" : speed }, new[] { "Down / up now", Draw.Fmt(s.Down, "0.0", "") + " / " + Draw.Fmt(s.Up, "0.0", " Mb/s") }, new[] { "Since start", Draw.MemStr((long)downTot) + " down" } } };
+                Lines = new List<string[]> { new[] { "Adapter", Draw.Trunc(adapter, 24) }, new[] { "Link speed", speed == "" ? "-" : speed }, new[] { "Down / up now", Draw.Pair(s.Down, s.Up) }, new[] { "Since start", Draw.MemStr((long)downTot) + " down" } } };
             var pd = new Detail { Title = "Is it me or the network?", Note = "Gateway fast but internet slow = past your PC and " + (hasWifi ? "Wi-Fi" : "LAN") + ". Gateway slow = Wi-Fi or cable." };
             for (int i = 0; i < 5; i++) pd.Lines.Add(new[] { s.PathLabel[i], s.PathMain[i], path[i].ToString(CultureInfo.CurrentCulture) });
             pd.TopTitle = "WHAT CHANGED"; foreach (var e in s.Recent) pd.Top.Add(new[] { e.Text, e.T.ToString("HH:mm", CultureInfo.CurrentCulture) });
             s.Details["path"] = pd;
             s.Details["call"] = new Detail { Title = "Meeting mode", Note = "On only while Teams has call media sockets open (UDP 50000-50059).",
-                Lines = new List<string[]> { new[] { "Upload", Draw.Fmt(s.Up, "0.0", " Mb/s") }, new[] { "Jitter", Draw.Fmt(jit, "0", " ms") }, new[] { "Loss", Draw.Fmt(loss, "0", "%") } } };
+                Lines = new List<string[]> { new[] { "Upload", Draw.Rate(s.Up, true) }, new[] { "Jitter", Draw.Fmt(jit, "0", " ms") }, new[] { "Loss", Draw.Fmt(loss, "0", "%") } } };
             AddAllHealth(s);
             return s;
         }

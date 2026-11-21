@@ -41,7 +41,7 @@ namespace AdeeboMeter
         bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
-        string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
+        string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = "", lastSpeed = "", lastOther = ""; int lastLevel = -1; DateTime speedAt = DateTime.MinValue, otherAt = DateTime.MinValue;   // the strip's two clocks (2 s / 5 s)
         ToolStripMenuItem miWidget, miAuto, miSerious, miBig;
         readonly string settingsPath;
         EventWaitHandle openEvt, ackEvt, quitEvt;
@@ -552,7 +552,9 @@ namespace AdeeboMeter
                 // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
                 // and unhovered only when its level or headline changes (or every 10 s for the numbers)
                 bool cardDue = !compact && (hovered || s.Level != lastLevel || s.Headline != lastHead || (Clock.Mono - lastCard).TotalSeconds >= 10);
-                if (state != drawnKey || (fresh && (cardDue || (compact && (Draw.ChipKey(s) != lastChip || s.Level != lastLevel)))))
+                // the folded strip: speeds at most every 2 s, everything else at most every 5 s, a new level at once (Adeeb, 21 Nov)
+                bool chipDue = compact && (s.Level != lastLevel || (Draw.ChipSpeedKey(s) != lastSpeed && (Clock.Mono - speedAt).TotalSeconds >= 2) || (Draw.ChipOtherKey(s) != lastOther && (Clock.Mono - otherAt).TotalSeconds >= 5));
+                if (state != drawnKey || (fresh && (cardDue || chipDue)))
                 {
                     Draw.CardHovered = hovered; Render(s, compact); if (compact) foldedAt = widget.Placed; drawnKey = state; drawnVersion = M.Version; if (!compact) { lastCard = Clock.Mono; lastHead = s.Headline; }
                 }
@@ -575,6 +577,9 @@ namespace AdeeboMeter
                 widget.Present(bmp, hovered ? (byte)255 : FADE, Math.Max(wa.Left, wa.Right - m - bmp.Width), Math.Max(wa.Top, wa.Bottom - m - bmp.Height));   // AM-CG-201: inside the work area
             }
             lastChip = Draw.ChipKey(s); lastLevel = s.Level;
+            string sk = Draw.ChipSpeedKey(s), ok = Draw.ChipOtherKey(s);
+            if (sk != lastSpeed) { lastSpeed = sk; speedAt = Clock.Mono; }
+            if (ok != lastOther) { lastOther = ok; otherAt = Clock.Mono; }
             Detail d;
             if (!compact && hovered && hoverKey != "" && s.Details.TryGetValue(hoverKey, out d))
                 using (var db = Draw.DetailCard(d)) detailWin.Present(db, 255, Math.Max(wa.Left, widget.Placed.X - db.Width - (int)(8 * Draw.S)), Math.Max(wa.Top, wa.Bottom - m - db.Height));   /* on this screen, never above its top */

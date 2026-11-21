@@ -1346,6 +1346,7 @@ namespace AdeeboMeter
                     Cfg.WidgetStyle = "speed"; Cfg.WUnits = "bits"; string k1 = Draw.ChipKey(sn); sn.Headline = "something else"; if (Draw.ChipKey(sn) != k1) bad.Add("the speed strip redraws for words it doesn't show");
                     sn.Down = 12.44; if (Draw.ChipKey(sn) != k1) bad.Add("the strip redraws for a digit it doesn't show"); sn.Down = 13.9; if (Draw.ChipKey(sn) == k1) bad.Add("the strip didn't change with its number");
                     if (Draw.Rate(0.85, true) != (0.85 * 1000).ToString("0", CultureInfo.CurrentCulture) + " kb/s" || Draw.Rate(940, true) != "940 Mb/s") bad.Add("rates in bits: " + Draw.Rate(0.85, true));
+                    if (Draw.Rate(0, true) != "0 kb/s" || Draw.Pair(0.85, 0.12) != "↓ " + (850).ToString("0", CultureInfo.CurrentCulture) + "  ↑ " + (120).ToString("0", CultureInfo.CurrentCulture) + " kb/s" || !Draw.Pair(12, 0.5).Contains("Mb/s") || !Draw.Pair(12, 0.5).Contains("kb/s")) bad.Add("quiet line / pair: " + Draw.Rate(0, true) + " · " + Draw.Pair(0.85, 0.12));   // 21 Nov: never "0.0 Mb/s" for a quiet line
                     Cfg.WUnits = "bytes"; if (Draw.Rate(100, true) != (12.5).ToString("0", CultureInfo.CurrentCulture) + " MB/s") bad.Add("rates in bytes: " + Draw.Rate(100, true));
                 }
                 finally { Cfg.WUnits = u0; Cfg.WidgetStyle = w0; }

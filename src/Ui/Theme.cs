@@ -644,7 +644,7 @@ namespace AdeeboMeter
                 double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;
                 Theme.Spark(g, v, sr, gc, cap * 1.15, false);
                 y += 30 * S;
-                string row = "jitter " + Fmt(jit, "0.0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s");
+                string row = "jitter " + Fmt(jit, "0.0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   " + Pair(s.Down, s.Up);
                 g.DrawString(row, fSmall, muted, pad, y); y += 20 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 30 * S);
                 g.DrawString(t.Item2.Where + " · " + (t.Item2.Kind == "estimate" ? "region estimate" : t.Item2.Kind == "valve" ? "Valve server" : "exact"), fTiny, muted, pad, y); y += 14 * S;
@@ -663,7 +663,7 @@ namespace AdeeboMeter
             string head = s.Call ? (lv == 0 ? "Your connection looks fine for calls (an estimate from the line - your call app's own numbers can differ)." : lv == 1 ? "Your connection may make calls break up now and then." : lv == 2 ? "Your connection will likely make calls choppy." : partial && !double.IsNaN(ping) ? "Not enough measured yet to judge calls (jitter or loss still missing)." : "Measuring your connection...") : "No call right now - this is how the line looks for one.";
             string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? "through the VPN · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
             return MetricCard(s, hits, "CALL", head, lv, double.IsNaN(jit) ? "-" : Math.Round(jit).ToString(CultureInfo.InvariantCulture), "ms jitter", grade,
-                s.NetHist, new[] { "delay " + Fmt(ping, "0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↑" + Fmt(s.Up, "0.0", " Mb/s"), vpnLine });
+                s.NetHist, new[] { "delay " + Fmt(ping, "0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↑ " + Rate(s.Up, true), vpnLine });
         }
         // Engineer: the raw numbers - router and internet delay, DNS, TCP retransmits / resets, throughput
         public static Bitmap EngineerCard(Snap s, Dictionary<string, RectangleF> hits)
@@ -768,7 +768,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
                         g.DrawString(L.T("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
-                        g.DrawString(AdeeboMeter.L.T("up ") + Fmt(s.Up, "0.0", " Mb/s") + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
+                        g.DrawString(AdeeboMeter.L.T("up ") + Rate(s.Up, true) + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;
                 }
@@ -777,8 +777,8 @@ namespace AdeeboMeter
                 Bar(g, "disk", "Disk", s.Disk, Fmt(s.Disk, "0", "%"), 60, 90, pad, ref y, inner, hits);
                 y += 6 * S;
                 hits["net"] = new RectangleF(pad - 4 * S, y - 3 * S, inner + 8 * S, 56 * S);
-                using (var b = new SolidBrush(Theme.Blue)) g.DrawString("↓ " + Fmt(s.Down, "0.0", " Mb/s"), fMono, b, pad, y);
-                string up = "↑ " + Fmt(s.Up, "0.0", " Mb/s"); var us = Measure(up, fMono, 0);
+                using (var b = new SolidBrush(Theme.Blue)) g.DrawString("↓ " + Rate(s.Down, true), fMono, b, pad, y);
+                string up = "↑ " + Rate(s.Up, true); var us = Measure(up, fMono, 0);
                 using (var b = new SolidBrush(Theme.UpText)) g.DrawString(up, fMono, b, W - pad - us.Width, y);
                 y += 17 * S;
                 var gr = new RectangleF(pad, y, inner, 34 * S);

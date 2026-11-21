@@ -150,7 +150,7 @@ namespace AdeeboMeter
                 float yb = yy; Draw.Bar(g, "", "CPU", snap.Cpu, Draw.Fmt(snap.Cpu, "0", "%"), 60, 88, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "CPU");
                 yb = yy; Draw.Bar(g, "", "Memory", snap.Mem, snap.MemText, 80, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Memory");
                 yb = yy; Draw.Bar(g, "", "Disk", snap.Disk, snap.DiskText, 60, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Disk");
-                yb = yy; double dn = snap.Down; Draw.Bar(g, "", "Download", double.IsNaN(dn) ? double.NaN : Math.Min(100, dn), Draw.Fmt(dn, "0.0", " Mb/s"), 200, 200, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Download");
+                yb = yy; double dn = snap.Down; Draw.Bar(g, "", "Download", double.IsNaN(dn) ? double.NaN : Math.Min(100, dn), Draw.Rate(dn, true), 200, 200, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Download");
                 y += h2 + 14 * S;
                 int fit = (int)((r.Height - y - 16 * S - 18 * S - 8 * S) / (20 * S));   // fewer rows on short / high-DPI screens instead of clipping
                 int n = Math.Max(0, Math.Min(Math.Min(6, fit), Math.Max(snap.TopMem.Count, snap.TopCpu.Count)));
