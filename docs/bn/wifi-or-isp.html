@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>সমস্যা আপনার Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে? | আদীবওমিটার (AdeeboMeter)</title>
-<meta name="description" content="Wi-Fi ও Ethernet তুলনা করুন এবং রাউটার পরীক্ষা করে বুঝুন সংযোগ ধীর হওয়ার কারণ বাড়িতে, নাকি নেটওয়ার্কের আরও দূরে।">
+<meta name="description" content="একই কাজ Ethernet-এ ঠিকমতো চলে, কিন্তু Wi-Fi-তে আটকে যায়? তাহলে আগে Wi-Fi কভারেজ দেখুন।">
 <link rel="canonical" href="https://adeebometer.com/bn/wifi-or-isp.html">
 <meta property="og:title" content="সমস্যা আপনার Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে? | আদীবওমিটার (AdeeboMeter)">
-<meta property="og:description" content="Wi-Fi ও Ethernet তুলনা করুন এবং রাউটার পরীক্ষা করে বুঝুন সংযোগ ধীর হওয়ার কারণ বাড়িতে, নাকি নেটওয়ার্কের আরও দূরে।">
+<meta property="og:description" content="একই কাজ Ethernet-এ ঠিকমতো চলে, কিন্তু Wi-Fi-তে আটকে যায়? তাহলে আগে Wi-Fi কভারেজ দেখুন।">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://adeebometer.com/bn/wifi-or-isp.html">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <meta property="og:image:width" content="2200">
 <meta property="og:image:height" content="1240">
-<meta property="og:image:alt" content="পিসি, Wi-Fi, রাউটার ও ইন্টারনেটের পরীক্ষার ফল দেখাচ্ছে AdeeboMeter">
+<meta property="og:image:alt" content="AdeeboMeter showing PC, Wi-Fi, router and internet readings">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
 /* Like the app and the main page: nothing loaded from anywhere else. */
@@ -45,8 +45,9 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
 </style>
 <link rel="stylesheet" href="/guide.css">
-<style>html[lang="bn"] h1,html[lang="bn"] h2{line-height:1.35;letter-spacing:normal}</style>
+<script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/wifi-or-isp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/wifi-or-isp.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/wifi-or-isp.html">
@@ -55,7 +56,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 </head>
 <body>
 <main>
-<nav aria-label="সাইট"><a href="/">আদীবওমিটার (AdeeboMeter)</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a></nav>
+<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a></nav>
 <h1>সমস্যা আপনার Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে?</h1>
 <figure class="guide-visual" aria-labelledby="quick-title">
 <div class="visual-copy"><h2 id="quick-title">আগে Ethernet দিয়ে দেখুন</h2><p>একই কাজ Ethernet-এ ঠিকমতো চলে, কিন্তু Wi-Fi-তে আটকে যায়? তাহলে আগে Wi-Fi কভারেজ দেখুন।</p></div>
@@ -75,12 +76,12 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 </ul>
 <aside class="example" aria-labelledby="example"><h2 id="example">বাস্তব উদাহরণ</h2><p>সন্ধ্যায় ওপরতলায় ভিডিও কল আটকে যাচ্ছে। একই ল্যাপটপে Ethernet দিয়ে কল ঠিকমতো চলে। Wi-Fi ব্যবহার করেও রাউটারের কাছে গেলে কলের মান ভালো হয়। এ ক্ষেত্রে আগে Wi-Fi কভারেজ দেখুন। Ethernet-এ এবং অন্য ডিভাইসেও কল আটকে গেলে রাউটার ও তার বাইরের সংযোগ পরীক্ষা করুন।</p></aside>
 <details class="guide-detail"><summary>এই পরীক্ষা কাজে দেয় কেন</summary>
-<p>কমান্ড প্রম্পটে <code>ipconfig</code> চালিয়ে সক্রিয় নেটওয়ার্ক অ্যাডাপ্টারের <strong>Default Gateway</strong> ঠিকানা খুঁজুন। সংযোগ ভালো থাকতে ওই ঠিকানায় পিং করুন, ধীর হলে আবার করুন। ইন্টারনেটে এমন একটি ঠিকানায়ও পিং করুন, যেটি সাধারণত সাড়া দেয়। সম্ভব হলে তুলনাটি আবার করুন। রাউটার পিংয়ের উত্তরকে কম গুরুত্ব দিতে পারে। তাই Ethernet-এ কী হয়েছে আর সমস্যায় পড়া সেবাটি কেমন চলছে, সেগুলোও বিবেচনা করুন।</p><p>রাউটার নিয়মিত সাড়া দিলেও একাধিক ডিভাইসে রাউটারের বাইরে সমস্যা হলে, সাপোর্ট টিম কোথা থেকে দেখা শুরু করবে তা বুঝতে পারে। সমস্যাটি মডেমে, সেবাদাতার সংযোগে, নাকি নেটওয়ার্কের আরও দূরে, তা জানতে আরও পরীক্ষা লাগতে পারে।</p>
+<p>চালান <code>ipconfig</code> চালিয়ে সক্রিয় নেটওয়ার্ক অ্যাডাপ্টারের <strong>Default Gateway</strong> ঠিকানা খুঁজুন। সংযোগ ভালো থাকতে ওই ঠিকানায় পিং করুন, ধীর হলে আবার করুন। ইন্টারনেটে এমন একটি ঠিকানায়ও পিং করুন, যেটি সাধারণত সাড়া দেয়। সম্ভব হলে তুলনাটি আবার করুন। রাউটার পিংয়ের উত্তরকে কম গুরুত্ব দিতে পারে। তাই Ethernet-এ কী হয়েছে আর সমস্যায় পড়া সেবাটি কেমন চলছে, সেগুলোও বিবেচনা করুন।</p><p>রাউটার নিয়মিত সাড়া দিলেও একাধিক ডিভাইসে রাউটারের বাইরে সমস্যা হলে, সাপোর্ট টিম কোথা থেকে দেখা শুরু করবে তা বুঝতে পারে। সমস্যাটি মডেমে, সেবাদাতার সংযোগে, নাকি নেটওয়ার্কের আরও দূরে, তা জানতে আরও পরীক্ষা লাগতে পারে।</p>
 </details>
 <h2>Windows-এ AdeeboMeter ব্যবহার করুন</h2>
-<p>অ্যাপে <strong>Investigate → The internet is slow</strong> খুলুন। একই সময়ে পিসি, Wi-Fi, রাউটার, DNS ও ইন্টারনেটের পরীক্ষার ফল দেখুন। সমস্যা বারবার হলে, <a href="/bn/internet-speed-monitor.html">সময়ের সঙ্গে ইন্টারনেটের গতি মেপে রাখুন</a> এবং <a href="/isp-report.html">সেবাদাতার জন্য রিপোর্ট তৈরি করুন</a>.</p>
+<p>খুলুন <strong>Investigate → The internet is slow</strong>খুলুন। একই সময়ে পিসি, Wi-Fi, রাউটার, DNS ও ইন্টারনেটের পরীক্ষার ফল দেখুন। সমস্যা বারবার হলে, <a href="/bn/internet-speed-monitor.html">সময়ের সঙ্গে ইন্টারনেটের গতি মেপে রাখুন</a> ও <a href="/bn/isp-report.html">সেবাদাতার জন্য রিপোর্ট তৈরি করুন</a>.</p>
 
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter ডাউনলোড করুন</a></p>
+<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a></p>
 <aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">কোন তথ্য রাখবেন</h2><p>সংযোগ ভালো থাকা অবস্থার একটি তুলনা আর ধীর থাকা অবস্থার একটি তুলনা রাখুন। সংযোগের ধরন ও কোন সেবায় সমস্যা হয়েছে তা লিখে রাখুন, যাতে পরে একই পরীক্ষা আবার করতে পারেন।</p></aside>
 </main>
 </body>

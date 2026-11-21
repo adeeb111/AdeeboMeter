@@ -56,10 +56,7 @@ french_sources = [DOCS / name for name in (
     "streaming.html", "trading.html",
 )] + sorted((DOCS / "learn").glob("*.html"))
 files = sorted((DOCS / "learn").glob("*.html"))
-if LANGUAGE in ("fr", "es"):
-    files = french_sources
-else:
-    files = files + [DOCS / "index.html"]   # 21 Nov: the Bangla home page is the real home page too, like French and Spanish - not a separate page
+files = french_sources   # 21 Nov: every language gets the same pages, made from the English ones (Bangla had its own hand-made home page and guides)
 localized = {"/" + p.relative_to(DOCS).as_posix() for p in files}
 localized.update(route[:-10] for route in list(localized) if route.endswith("index.html"))
 localized.update({"/learn/", "/", "/blog/", "/wifi-or-isp.html",
@@ -278,3 +275,8 @@ for source in files:
         xml = xml.replace("</urlset>", "  <url><loc>" + url + "</loc></url>\n</urlset>")
 sitemap.write_text(xml, encoding="utf-8", newline="\n")
 print(f"Generated {len(files)} {LANG_TAG} pages.")
+
+# The DNS lesson's video box is written per language by published-tutorials.py; rebuilding the lesson above from the
+# English page put it back in English (21 Nov) - so add the translated box again, now that this language's pages exist.
+runpy_tutorials = __import__("runpy").run_path(str(Path(__file__).with_name("published-tutorials.py")))
+runpy_tutorials["install"]()

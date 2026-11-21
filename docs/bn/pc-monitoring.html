@@ -4,16 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Windows পিসি ধীর? CPU, মেমরি ও ডিস্ক দেখুন | আদীবওমিটার (AdeeboMeter)</title>
-<meta name="description" content="পিসি আটকে গেলে CPU, মেমরি, ডিস্ক ও নেটওয়ার্কের কাজকর্ম তুলনা করুন। আদীবওমিটার দিয়ে ব্যস্ত প্রসেস খুঁজুন।">
+<meta name="description" content="সমস্যার সময় CPU, মেমরি, ডিস্ক ও নেটওয়ার্ক একসঙ্গে দেখুন।">
 <link rel="canonical" href="https://adeebometer.com/bn/pc-monitoring.html">
-<meta property="og:title" content="Windows পিসি ধীর? CPU, মেমরি ও ডিস্ক দেখুন | আদীবওমিটার">
-<meta property="og:description" content="পিসি আটকে গেলে CPU, মেমরি, ডিস্ক ও নেটওয়ার্কের কাজকর্ম তুলনা করুন। আদীবওমিটার দিয়ে ব্যস্ত প্রসেস খুঁজুন।">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter">
 <meta property="og:url" content="https://adeebometer.com/bn/pc-monitoring.html">
-<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
-<meta property="og:image:width" content="2200">
-<meta property="og:image:height" content="1240">
-<meta property="og:image:alt" content="পিসি, Wi-Fi, রাউটার ও ইন্টারনেটের পরীক্ষার ফল দেখাচ্ছে AdeeboMeter">
+<meta property="og:title" content="Windows পিসি ধীর? CPU, মেমরি ও ডিস্ক দেখুন | আদীবওমিটার (AdeeboMeter)">
+<meta property="og:description" content="সমস্যার সময় CPU, মেমরি, ডিস্ক ও নেটওয়ার্ক একসঙ্গে দেখুন।">
+<meta property="og:image" content="https://adeebometer.com/media/trailer-poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="AdeeboMeter&#x27;s Windows overview with PC and network readings">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
 /* Like the app and the main page: nothing loaded from anywhere else. */
@@ -42,15 +44,47 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 .more{display:inline-block;margin-top:24px}
 .others{margin-top:40px;color:var(--sub)}
 @media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
-figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
 </style>
 <link rel="stylesheet" href="/guide.css">
-<style>html[lang="bn"] h1,html[lang="bn"] h2{line-height:1.35;letter-spacing:normal}</style>
+<script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/pc-monitoring.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/pc-monitoring.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/pc-monitoring.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/pc-monitoring.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/pc-monitoring.html">
 </head>
-<body><main><nav aria-label="সাইট"><a href="/bn/">আদীবওমিটার (AdeeboMeter)</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a> · <a href="/pc-monitoring.html" lang="en">English</a></nav><h1>Windows পিসি ধীর? CPU, মেমরি ও ডিস্ক দেখুন</h1><figure class="guide-visual"><div class="visual-copy"><h2>কোন অংশ ব্যস্ত থাকছে দেখুন।</h2><p>সমস্যার সময় CPU, মেমরি, ডিস্ক ও নেটওয়ার্ক একসঙ্গে দেখুন।</p></div><div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">💻</span><strong>পিসি পরীক্ষা</strong></div><div class="plot-label"><span>পিসির কাজকর্ম</span><span>উদাহরণ</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>মেমরি<i style="--h:64%"></i></span><span>ডিস্ক<i style="--h:94%"></i></span></div></div><figcaption>বোঝানোর জন্য উদাহরণ। আপনার সংযোগ বা পিসির আসল ফল নয়।</figcaption></figure><h2>পরীক্ষা চালান</h2><ol><li>পুরো পিসি ধীর, নাকি শুধু অনলাইনের কাজ, বুঝে নিন।</li><li>সমস্যার সময় আদীবওমিটার বা Task Manager খুলুন।</li><li>ব্যস্ত প্রসেসটি খুঁজে পিসি স্বাভাবিক থাকার সময়ের সঙ্গে তুলনা করুন।</li></ol><h2>এরপর কী দেখবেন</h2><ul class="next-checks"><li><strong>CPU ব্যস্ত থাকছে</strong><span>সবচেয়ে ব্যস্ত প্রসেস দেখুন।</span></li><li><strong>মেমরি কম, ডিস্ক ব্যস্ত</strong><span>কাজ সেভ করে একটি বড় অ্যাপ বন্ধ করে আবার দেখুন।</span></li><li><strong>ডিস্ক ব্যস্ত থাকছে</strong><span>ব্যাকআপ বা আপডেট চলছে কি না দেখুন।</span></li><li><strong>শুধু অনলাইনে আটকে যায়</strong><span>রাউটার ও ইন্টারনেটের বিলম্ব দেখুন।</span></li></ul><aside class="example"><h2>একটি উদাহরণ</h2><p>ব্যাকআপ চলার সময় ব্রাউজার ও ফাইল ম্যানেজার আটকে যাচ্ছে। একই সময়ে ডিস্ক ব্যস্ত। ব্যাকআপ শেষ হলে আবার একই কাজ করে তুলনা করুন।</p></aside><details class="guide-detail"><summary>কেন কাজ করে</summary><p>বেশি মেমরি ব্যবহার ক্যাশের কারণেও হতে পারে। খালি মেমরি কমা, পিসি আটকে যাওয়া ও ডিস্কের কাজ বাড়া একসঙ্গে দেখুন। ডিস্ক ব্যস্ত থাকা আর অনেক ডেটা যাওয়া আলাদা মাপ।</p><p><a href="/bn/learn/memory-pressure.html">আরও জানুন</a></p></details><h2>Windows-এ আদীবওমিটার ব্যবহার করুন</h2><p>সমস্যার সময় পিসি ও নেটওয়ার্কের ফল একসঙ্গে দেখুন। হিস্ট্রি চালু থাকলে Time Machine দিয়ে আগের সময়ের ফল দেখুন।</p><p><a href="/bn/wifi-or-isp.html">Wi-Fi ও Ethernet তুলনা করুন</a></p><p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য বিনামূল্যে ডাউনলোড</a></p><aside class="summary"><h2>যা লিখে রাখবেন</h2><p>কাজ, সময়, ব্যস্ত অংশ ও কখন সমস্যা কমেছে লিখে রাখুন।</p></aside></main></body></html>
+<body>
+<main>
+<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a> · <a href="/bn/pc-monitoring.html" lang="bn">বাংলা</a></nav>
+<h1>Windows পিসি ধীর? CPU, মেমরি ও ডিস্ক দেখুন</h1>
+<figure class="guide-visual" aria-labelledby="quick-title">
+<div class="visual-copy"><h2 id="quick-title">কোন অংশ ব্যস্ত থাকছে দেখুন।</h2><p>সমস্যার সময় CPU, মেমরি, ডিস্ক ও নেটওয়ার্ক একসঙ্গে দেখুন।</p></div>
+<div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">💻</span><strong>পিসি পরীক্ষা</strong></div><div class="plot-label"><span>পিসির কাজকর্ম</span><span>উদাহরণ</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>মেমরি<i style="--h:64%"></i></span><span>ডিস্ক<i style="--h:94%"></i></span></div></div>
+<figcaption>বোঝানোর জন্য উদাহরণ। আটকে যাওয়ার সময় ডিস্ক ব্যস্ত থাকলে কোন কাজটা দায়ী, তা খোঁজার সূত্র মেলে।</figcaption>
+</figure>
+
+
+<h2 id="checks">যেভাবে পরীক্ষা করবেন</h2>
+<ol><li>পুরো পিসি ধীর, নাকি শুধু অনলাইনের কাজ, বুঝে নিন।</li><li>সমস্যার সময় আদীবওমিটার বা Task Manager খুলুন।</li><li>ব্যস্ত প্রসেসটি খুঁজে পিসি স্বাভাবিক থাকার সময়ের সঙ্গে তুলনা করুন।</li></ol>
+<h2 id="readings">এরপর কী দেখবেন</h2>
+<ul class="next-checks">
+  <li><strong>CPU ব্যস্ত থাকছে</strong><span>সবচেয়ে ব্যস্ত প্রসেস দেখুন।</span></li>
+  <li><strong>মেমরি কম, ডিস্ক ব্যস্ত</strong><span>কাজ সেভ করে একটি বড় অ্যাপ বন্ধ করে আবার দেখুন।</span></li>
+  <li><strong>ডিস্ক ব্যস্ত থাকছে</strong><span>ব্যাকআপ বা আপডেট চলছে কি না দেখুন।</span></li>
+  <li><strong>শুধু অনলাইনে আটকে যায়</strong><span>রাউটার ও ইন্টারনেটের বিলম্ব দেখুন।</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">বাস্তব উদাহরণ</h2><p>ব্যাকআপ চলার সময় ব্রাউজার ও ফাইল ম্যানেজার আটকে যাচ্ছে। একই সময়ে ডিস্ক ব্যস্ত। ব্যাকআপ শেষ হলে আবার একই কাজ করে তুলনা করুন।</p></aside>
+<details class="guide-detail"><summary>এই পরীক্ষা কাজে দেয় কেন</summary>
+<p>বেশি মেমরি ব্যবহার ক্যাশের কারণেও হতে পারে। খালি মেমরি কমা, পিসি আটকে যাওয়া ও ডিস্কের কাজ বাড়া একসঙ্গে দেখুন। ডিস্ক ব্যস্ত থাকা আর অনেক ডেটা যাওয়া আলাদা মাপ।</p><p>আরও গভীরে জানতে <a href="/bn/learn/memory-pressure.html">মেমরির চাপ নিয়ে পাঠটি পড়ুন</a> এবং একই সময়ে পিসির প্রতিটি অংশ কেমন চলছিল, তুলনা করুন।</p>
+</details>
+<h2>Windows-এ AdeeboMeter ব্যবহার করুন</h2>
+<p>কাজের সময় ডেস্কটপ উইজেটটি চোখের সামনে রাখুন, তারপর পূর্ণ ভিউ খুলে সবচেয়ে ব্যস্ত প্রসেসগুলো দেখুন। হিস্ট্রি চালু থাকলে <strong>Time Machine</strong> দিয়ে একই মিনিটের পিসি ও নেটওয়ার্কের ফল দেখুন। শুধু অনলাইনের কাজে সমস্যা হলে <a href="/bn/wifi-or-isp.html">সংযোগের পথ পরীক্ষা করুন</a>.</p>
+<figure><img src="/media/trailer-poster.jpg" width="1280" height="720" loading="lazy" alt="AdeeboMeter overview with live CPU, memory, disk, traffic and network readings."><figcaption>আদীবওমিটার অ্যাপের ডেমো থেকে পূর্ণ ভিউ।</figcaption></figure>
+<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a></p>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">কোন তথ্য রাখবেন</h2><p>কাজ, সময়, ব্যস্ত অংশ ও কখন সমস্যা কমেছে লিখে রাখুন।</p></aside>
+</main>
+</body>
+</html>
