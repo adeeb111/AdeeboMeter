@@ -453,7 +453,9 @@ textarea.in{resize:vertical;min-height:120px}
   }
   // ---- screen peek: a still picture of one AdeeboMeter page on the PC, drawn off-screen there (your PC's window never
   // changes). It arrives in sealed pieces, is put together here and kept only in this page's memory - never saved.
-  var PEEKS = [["overview", "Overview"], ["link", "Link"], ["procs", "Apps"], ["health", "Health"], ["changes", "Changes"], ["travel", "Travel"], ["toolbox", "Toolbox"], ["guide", "Guide"], ["gamer", "Gamer"], ["stream", "Stream"], ["trade", "Trading"], ["security", "Security"], ["replay", "Time machine"], ["dest", "Check a site"], ["learn", "Learn"]];   // 21 Nov: the PC already allowed Time machine and Check; Learn added on both sides
+  // 21 Nov: a big icon on each, like the PC's pages
+  var PEEKI = { overview: "home", link: "wifi", procs: "list", health: "cpu", changes: "report", travel: "map", toolbox: "tools", guide: "book", gamer: "game", stream: "play", trade: "chart", security: "lock", replay: "clock", dest: "search", learn: "bulb" };
+  var PEEKS = [["overview", "Home"], ["link", "Link"], ["procs", "Apps"], ["health", "Health"], ["changes", "Changes"], ["travel", "Network story"], ["toolbox", "Toolbox"], ["guide", "Guide"], ["gamer", "Gamer"], ["stream", "Streaming"], ["trade", "Markets"], ["security", "Security"], ["replay", "Time machine"], ["dest", "Check a site"], ["learn", "Learn"]];   // 21 Nov: the PC already allowed Time machine and Check; Learn added on both sides
   var peek = { pg: "overview", rid: "", parts: [], img: "", err: "", at: 0, big: false };
   function peekAsk(pg) { if (phase !== "live") return; peek.pg = pg; peek.rid = rid(); peek.parts = []; peek.err = ""; send({ t: "peek", rid: peek.rid, page: pg }); draw(); }
   function peekGot(c) {
@@ -467,7 +469,7 @@ textarea.in{resize:vertical;min-height:120px}
   function peekHtml() {
     if (phase !== "live") return needPc("Screen peek shows your PC's AdeeboMeter pages while you're connected.");
     var got = 0; peek.parts.forEach(function (x) { if (x) got++; });
-    var a = '<div class="card"><h2>See a page on your PC</h2><div class="mini" style="grid-template-columns:repeat(3,1fr)">' + PEEKS.map(function (p) { return '<button class="' + (peek.pg === p[0] ? 'on' : '') + '" data-peek="' + p[0] + '"' + (peek.rid ? ' disabled' : '') + '>' + p[1] + '</button>'; }).join("") + '</div>' +
+    var a = '<div class="card"><h2>See a page on your PC</h2><div class="mini" style="grid-template-columns:repeat(3,1fr)">' + PEEKS.map(function (p) { return '<button class="' + (peek.pg === p[0] ? 'on' : '') + '" data-peek="' + p[0] + '"' + (peek.rid ? ' disabled' : '') + ' style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px">' + ic(PEEKI[p[0]] || "pc", 26) + '<span>' + p[1] + '</span></button>'; }).join("") + '</div>' +
       '<p style="color:var(--sub);font-size:13px;margin:10px 2px 0">A still picture, drawn out of sight on your PC - the window there doesn\'t move. Only AdeeboMeter, never the rest of your screen.</p></div>';
     if (peek.rid) a += '<div class="card" style="display:flex;gap:10px;align-items:center"><span class="led warn"></span><div style="flex:1;font-weight:600">Drawing ' + esc((PEEKS.filter(function (p) { return p[0] === peek.pg; })[0] || [0, peek.pg])[1]) + ' on your PC' + (got ? ' · ' + got + ' pieces' : '...') + '</div></div>';
     if (peek.err) a += '<div class="card"><b>Couldn\'t show that page</b><p style="margin:6px 0 0;color:var(--sub)">' + esc(peek.err) + '</p></div>';
