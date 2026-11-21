@@ -1,6 +1,6 @@
 # AdeeboMeter - handover to the next Claude chat
 
-Written 21 Nov 2026, Toronto, after the 637-finding bug hunt. Read this whole file first, then `PLAN-1.1.6.md`.
+Written 21 Nov 2026, Toronto (updated 10:40): after the 637-finding bug hunt, the 55 carry-overs and the new language picker. Read this whole file first, then `PLAN-1.1.6.md`.
 Owner: Adeeb Khan (adeeb111). Repo: github.com/adeeb111/AdeeboMeter. Website: adeebometer.com.
 
 ## Where things stand
@@ -16,6 +16,12 @@ Bug hunt (report: 5 High, 31 Medium, 236 Medium-Low, 365 Low = 637), all on dev-
  ML-214..236               ─► 82c2230
  L-1..365                  ─► c730785
  self-test 86/86 under Wine after each batch
+```
+Since the handover commit (31ef361), all on dev-1.1.6, all pushed, self-test 86/86 after each:
+```
+ 979f416  55 carry-overs: 44 fixed, 6 already fixed, 5 left/pushed back (section C)
+ 440897b  language button beside VIEW + language card + Restart; Chinese not offered
+ 790f656  after a real-Windows run on Adeeb's PC: short "Restart" label, tile patterns cached
 ```
 - A dozen findings were answered with a comment instead of a code change (by design or already fixed): L-2, L-24, L-44,
   L-76, L-119, L-210, L-226, L-234, L-235, L-249/250/251/254 (code had moved on), L-252, L-256, L-260, L-276, L-313, L-324.
@@ -38,24 +44,43 @@ Bug hunt (report: 5 High, 31 Medium, 236 Medium-Low, 365 Low = 637), all on dev-
 
 ### B. Release-time drift (deferred on purpose - do at the version bump, not before)
 - M-8 tool count (232 in code; README/CHANGELOG/site say 158), M-9 six Toolbox sections (docs say five), ML-76 90 Learn
-  topics (docs say 59), ML-88 HOW-TO-USE section 10 ("190 tools in four sections"), self-test count (86; README,
-  THEORY-OF-EVERYTHING and docs/index.html say 71).
-- French: M-11 (tool titles), ML-86 (About page), ML-87 (palette "Investigate"), and in all 493 app strings untranslated
-  (`python3 tools/langcheck.py fr` writes lang-fr-todo.txt - don't commit that file).
-- docs/kb/r1.json misses 8 of the 1.1.5 tools (diskspeed, gpucheck, laptop, pcwhy, screentest, soundtest, srvchange, uptime) -
-  add their terms/examples, then `python3 tools/phrasebook.py`.
+  topics (docs say 59), ML-88 HOW-TO-USE section 10 ("190 tools in four sections"). (Self-test count is fixed: docs say 86.)
+- Translations still to do (of 2,414 texts): French ~507, Spanish / Arabic / Bangla ~406 each. French M-11 (tool titles),
+  ML-86 (About page), ML-87 (palette "Investigate"). `python3 tools/langcheck.py <code>` lists them in lang-<code>-todo.txt
+  (don't commit that file) AND now rewrites the `#coverage NN` line in the table - run it for each language after adding
+  translations, or the picker shows an old percentage.
+- (docs/kb/r1.json is done - the 8 tools are in it.)
 
 ### C. Carry-overs from earlier review rounds - worked through (commit after 31ef361)
 All 55 were gone through. 44 fixed in code or docs, 6 were already fixed by earlier commits (checked at HEAD), 5 left on purpose:
-- Left for Adeeb (product/design): **website** (`docs/index.html` names none of the 1.1.5 features - Gamer Zone, Points, packet journey, Your phone, French, Labs, Report for my ISP, ARM; needs a design pass he approves) and the **Points cap** (about 875 earnable vs the 600 cap - raise the cap, or count Learn topics differently).
+- Left for Adeeb (product/design): **website** (`docs/index.html` names none of the 1.1.5 features - Gamer Zone, Points, packet journey, Your phone, French, Labs, Report for my ISP, ARM; needs a design pass he approves).
+- **Points cap: no change needed** - the report was stale. `Points.Max` is already 1,200 (raised 15 Nov); about 1,020 is earnable; the example check fails the self-test if a release ever goes past it. Adeeb said "raise the cap, new features later" - it is already raised; raise it again only when that check fails.
 - Pushed back: **Engineer preset** (merged into Balanced by design, no longer offered; the self-test pins it), **certcmp ungated** (one TLS handshake, the same traffic as the ungated certlive/port/httpreq - gating only it would be inconsistent), **Setup per-monitor DPI** (the process is system-DPI-aware, so primary-monitor DPI is correct there; real per-monitor DPI is an app-wide switch that needs a real-Windows test).
 - Already fixed before this pass: History in Portable mode (History.Dir uses DataDir), timers disposed (ReleaseExtras / FormClosed), Gamer preset differs from Balanced (Wi-Fi 10 s, 5 game regions every 10 s), "printer" opens the SNMP printer view, Lab gate (radius in SenderGate, SecondDhcp checks Policy.NoLab and company networks), r1.json has the 8 tools, Inspection reads Windows' own root list for new public CAs.
 - Need a real Windows run: IPv6 UDP receives, CertKeys.Live timeout, Hotel Stop, speed-test abort, EvLog big events, DHCP infinite lease, game-ping Stop wake.
 
-### D. Queued work (agreed earlier, after the bug hunt)
+### D. Language picker (21 Nov) - built, tested on Adeeb's PC
+```
+top bar: [VIEW My setup v] [(globe) বাংলা v] [Restart]     <- Restart only while the language differs from the start one
+           click -> card: one tile per language ("Welcome" in its script, own colours + pattern, % translated),
+                    preview strip of real app words for the tile under the mouse / keyboard focus, arrows/Enter/Esc
+           pick  -> switches at once (PickLanguage, also used by Settings) -> Restart: --restart copy waits for the
+                    mutex, old copy quits via Local\AdeeboMeter.quit, new one opens the big window
+```
+- Code: `src/Ui/FullView.Lang.cs` (LangButton, card, LangFont: Nirmala UI for Bangla, Segoe UI for Arabic - Inter has
+  neither), `L.In` / `L.Coverage` in `src/Lang.cs`, `--restart` in Program.cs + AppCtx.cs, `--view lang[:bn]` for screenshots.
+- Chinese (lang-zh.txt, 4%) is not offered; the file stays. A saved "zh" opens in English.
+- Tested on his PC (computer use, test copy in `Documents\AdeboMeter\test-1.1.6-lang` with run-test.bat /
+  back-to-installed.bat, portable so its data stays there): picker, Bangla/Arabic text, keyboard preview, pick, Restart
+  (reopened in 1 s, fully Bangla) all worked. **Not confirmed:** the preview on mouse hover (computer-use mouse moves
+  didn't reach the app; arrow keys showed the same preview). Adeeb to try with his own mouse.
+- Wine can't draw Bangla/Arabic (no fonts) - screenshots from the container show boxes; that's Wine, not the app.
+
+### E. Queued work (agreed earlier, after the bug hunt)
 - Network Lab Suite (PR #29, four features) - design first.
 - Finance Learn lessons (numbers and education only, never advice).
-- Real-Windows test pass (the code-reading-only fixes above, plus the carry-overs once fixed).
+- Real-Windows test pass: the code-reading-only fixes (L-200, L-287, L-289, L-267, L-214) and the carry-overs that need
+  Windows (section C). His PC can be used through computer use when he's away - he said so on 21 Nov.
 - FMP key verification (Adeeb types the key himself).
 - `docs/app.html` goes live with 1.1.6 (it now writes Dark as "dark" so Learn/Games/Live/Files pages follow it - L-361).
 - PLAN-1.1.6.md items: a different free source for US stock movers (design + show options first), website refresh.
@@ -66,6 +91,10 @@ All 55 were gone through. 44 fixed in code or docs, 6 were already fixed by earl
 - Settings import refuses a file with a line over 2,000 characters; an invalid "keep history" value is ignored (L-161/162).
 - Remembered phones that can't be read are reported on the phone page instead of vanishing (L-239).
 - Moments' "once a day" survives a restart (moments-seen.txt beside the settings) (L-122).
+- Language button next to VIEW, the language card, and a Restart button after a switch; Chinese no longer offered.
+- A standard .p7m is now made up to 12 MB (was 25) and opened up to 20 MB (was 50) - memory budget; .adeebo has no limit change.
+- Speed calculator: all-capital units (MBPS, GBPS) read as bits; speeds over 1 Pbps refused.
+- Gamer card lists servers past the cap as "not watched"; DNS race "new" time = made-up names only.
 
 ## Adeeb's standing rules (follow exactly)
 - **Commits as Adeeb Khan** (plain `git commit`, his git config), **no Claude co-author line**. A stop hook keeps asking
@@ -116,7 +145,10 @@ All 55 were gone through. 44 fixed in code or docs, 6 were already fixed by earl
 5. Microsoft Store: package is the `AdeeboMeter-store` artifact of the release run; Adeeb submits it.
 
 ## Open questions waiting for Adeeb
-- Fix the carry-overs (section C) next, or the queued features (section D) first?
+- Restart button: only after a language switch (as built), or always in the top bar? (He asked for "a restart button in
+  the top"; built as switch-only because otherwise it does nothing - he hasn't answered.)
+- Website refresh for 1.1.5/1.1.6 features (section C) - needs a design he approves.
+- Next after this: the queued features (section E) or the translation backlog (section B)?
 - Replace "Is it me or the network?" with the motto in the home page `og:title`/link preview and release-notes header?
 - Install `gh` on his PC for one-step signed releases?
 - Stock movers: which replacement source - propose 2-3 options with their limits.
