@@ -37,6 +37,7 @@ namespace AdeeboMeter
             ShowPage("travel"); jScrollTo = true; travelCanvas.Invalidate();
         }
         bool jScrollTo; string jHeld;
+        string jLabNote;   // what went wrong opening the Network Lab, shown beside its link
         void JReset() { if (jSess != null && !jSess.Done) jSess.Stop(); /* a new story never orphans a running capture */ jSess = null; jNotes = null; jKind = ""; jPlay = 0; jPlaying = false; jPing = null; JTimer(false); }
 
         // the conversation the story is showing becomes the journey's, unless one was picked from Connections
@@ -171,6 +172,15 @@ namespace AdeeboMeter
                 y = Lead(g, verdict, x, y + 4 * S, w, false);
             }
             var again = new RectangleF(x, y - 4 * S, 140 * S, 20 * S); using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Measure again"), Draw.fSmall, lb, again.X, again.Y); Act(travelCanvas, again, delegate { jPing = null; JMeasure(); });
+            // 1.1.6: the same path drawn in the Network Lab - measured stops white, the provider's unseen equipment grey; Break it from there
+            if (!JLocal(f))
+            {
+                string lt = L.T("Show my path in the Lab  ›"); var lsz = g.MeasureString(lt, Draw.fSmall); var lab = new RectangleF(x + 150 * S, y - 4 * S, lsz.Width + 4, 20 * S);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(lt, Draw.fSmall, lb, lab.X, lab.Y);
+                double best = tMin, gwB = gwMin, netB = netMin; string remote = f.Remote, app = f.App;
+                Act(travelCanvas, lab, delegate { jLabNote = LabLink.Open(LabLink.PathJson(M, remote, app == "" ? "Server" : app + " server", best, gwB, netB), false); travelCanvas.Invalidate(); });
+                if (jLabNote != null) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(jLabNote, Draw.fSmall, mb, lab.Right + 12 * S, lab.Y);
+            }
             return y + 18 * S;
         }
         static double MinOf(Ring r) { var v = r.Values(30).Where(d => !double.IsNaN(d)).ToList(); return v.Count == 0 ? double.NaN : v.Min(); }

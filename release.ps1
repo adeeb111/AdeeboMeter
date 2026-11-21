@@ -47,6 +47,7 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.font.$($k.BaseName).gz"
     }
+    $res += "/resource:$((Resolve-Path docs\lab.html).Path),AdeeboMeter.lab.html"   # the Network Lab page (LabLink.cs)
     # the emoji faces (assets\emoji, Twemoji, CC-BY 4.0 - assets\emoji\CREDIT.txt): small PNGs, already compressed
     foreach ($k in Get-ChildItem assets\emoji\*.png) { $res += "/resource:$($k.FullName),AdeeboMeter.emoji.$($k.BaseName).png" }
     # the Hall of Fame key (the Adeebo Award's claim code): from the HOF_KEY secret on GitHub's build, or secrets\hof.key
