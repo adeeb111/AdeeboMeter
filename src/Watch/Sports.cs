@@ -85,6 +85,12 @@ namespace AdeeboMeter
                 return rxList;
             }
         }
+        // one followed team in one game (My Teams' rows)
+        internal static bool TeamIn(string team, Game g)
+        {
+            var rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(team) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            return rx.IsMatch(g.Home) || rx.IsMatch(g.Away) || rx.IsMatch(g.HomeAlso) || rx.IsMatch(g.AwayAlso);
+        }
         internal static Game LiveMine() { lock (k) return Games.FirstOrDefault(g => g.State == "live" && Mine(g)); }
         internal static int LiveMineCount() { lock (k) return Games.Count(g => g.State == "live" && Mine(g)); }
 

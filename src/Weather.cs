@@ -40,6 +40,9 @@ namespace AdeeboMeter
             return n == "" ? "" : Line(new Place { Lat = la, Lon = lo, Name = n });
         }
         public static string Line(Place p) { return p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + ";" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture) + ";" + p.Name.Replace(";", ",").Replace("=", " ").Replace("|", " "); }
+        public static string PlaceName() { var p = Current; return p == null ? "" : p.Name.Split(',')[0].Trim(); }
+        // the forecast hour nearest a moment (a kick-off), within 90 minutes - or null
+        public static Hour HourAt(DateTime utc) { return Ahead(DateTime.UtcNow, 96).Where(h => Math.Abs((h.Utc - utc).TotalMinutes) <= 90).OrderBy(h => Math.Abs((h.Utc - utc).TotalMinutes)).FirstOrDefault(); }
         public static Place Current
         {
             get

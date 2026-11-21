@@ -35,23 +35,17 @@ namespace AdeeboMeter
         {
             bool streamingMine = tab == "stream" && Streams.Active && Sports.Teams().Count > 0;
             if ((tab == "sports" || streamingMine) && Cfg.Sports && Sports.Due) Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (sportsCanvas != null) sportsCanvas.Invalidate(); if (streamCanvas != null) streamCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
+            SpReminder();
             if (tab != "sports" || sportsCanvas == null) return;
-            long v = System.Threading.Interlocked.Read(ref Sports.Ver); if (v != sportsVer || DateTime.Now.Minute != sportsMin) { sportsVer = v; sportsMin = DateTime.Now.Minute; sportsCanvas.Invalidate(); }
+            long v = System.Threading.Interlocked.Read(ref Sports.Ver) * 1000003 + System.Threading.Interlocked.Read(ref LineHours.Ver); if (v != sportsVer || DateTime.Now.Minute != sportsMin || StreamCheck.Running) { sportsVer = v; sportsMin = DateTime.Now.Minute; sportsCanvas.Invalidate(); }   // a running stream test repaints each tick (its progress)
         }
 
-        void PaintSports(Graphics g)
+        // Sports › Headlines: the 1.1.5 newspaper page's body (the lead story, then one column per sport: scores and headlines)
+        float PaintSportsHeadlines(Graphics g, float x, float y, float w)
         {
-            g.TranslateTransform(sportsCanvas.AutoScrollPosition.X, sportsCanvas.AutoScrollPosition.Y);
-            Begin(sportsCanvas); SerifFonts();
-            float x = 26 * S, y = 20 * S, w = sportsCanvas.ClientSize.Width - 52 * S;
-            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
+            SerifFonts();
+            using (var ink = new SolidBrush(Paper.Ink)) using (var sub = new SolidBrush(Paper.Ink)) using (var muted = new SolidBrush(Paper.Muted))
             {
-                // the masthead
-                string mast = L.T("THE SPORTS PAGE"); var ms = g.MeasureString(mast, serifHead);
-                g.DrawString(mast, serifHead, ink, x + (w - ms.Width) / 2, y); y += ms.Height + 2 * S;
-                string dl = DateTime.Now.ToString("dddd, d MMMM yyyy", CultureInfo.CurrentCulture) + "  ·  " + L.T("scores: NHL, football-data.org, CricketData  ·  headlines: BBC Sport");
-                var ds = g.MeasureString(dl, Draw.fSmall); g.DrawString(dl, Draw.fSmall, muted, x + (w - ds.Width) / 2, y); y += ds.Height + 6 * S;
-                using (var p = new Pen(Theme.Ink, 2 * S)) g.DrawLine(p, x, y, x + w, y); using (var p = new Pen(Theme.Ink, 1)) g.DrawLine(p, x, y + 4 * S, x + w, y + 4 * S); y += 16 * S;
                 if (!Cfg.Sports || Policy.NoOnline)
                 {
                     var cr = new RectangleF(x, y, w, 96 * S); Kit.Box(g, cr, 14 * S);
@@ -63,11 +57,11 @@ namespace AdeeboMeter
                         Theme.Fill(g, br, 10 * S, Kit.Accent("stream")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(bt, Draw.fBtn, wb, br.X + 12 * S, br.Y + (32 * S - bs.Height) / 2);
                         Act(sportsCanvas, br, delegate { Cfg.Sports = true; Cfg.Save(); sportsCanvas.Invalidate(); });
                     }
-                    Need(sportsCanvas, cr.Bottom + 30 * S); return;
+                    return cr.Bottom + 30 * S;
                 }
                 List<Sports.Game> games; List<Sports.Story> stories; Dictionary<string, string> notes; DateTime at;
                 lock (Sports.k) { games = Sports.Games.ToList(); stories = Sports.Stories.ToList(); notes = new Dictionary<string, string>(Sports.Note); at = Sports.FetchedAt; }
-                if (at == DateTime.MinValue) { g.DrawString(L.T("Fetching today's scores and headlines..."), Draw.fBody, sub, x, y); Need(sportsCanvas, y + 60 * S); return; }
+                if (at == DateTime.MinValue) { g.DrawString(L.T("Fetching today's scores and headlines..."), Draw.fBody, sub, x, y); return y + 60 * S; }
                 // your teams, first
                 var mine = games.Where(Sports.Mine).OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ToList();
                 if (mine.Count > 0)
@@ -150,7 +144,7 @@ namespace AdeeboMeter
                 using (var lb = new SolidBrush(Kit.Ink("stream"))) g.DrawString(kb, Draw.fSmall, lb, kr.X, kr.Y); Act(sportsCanvas, kr, delegate { var mm = new ContextMenuStrip { Font = Draw.fBody }; mm.Items.Add(L.T("Football key (football-data.org)..."), null, delegate { AskSportKey("football"); }); mm.Items.Add(L.T("Cricket key (cricketdata.org)..."), null, delegate { AskSportKey("cricket"); }); mm.Items.Add(L.T("Turn Sports off"), null, delegate { Cfg.Sports = false; Cfg.Save(); sportsCanvas.Invalidate(); }); mm.Closed += delegate { BeginInvoke((Action)mm.Dispose); }; mm.Show(Cursor.Position); });
                 y += 30 * S;
             }
-            Need(sportsCanvas, y + 20 * S);
+            return y + 20 * S;
         }
         static Action OpenLink(string url) { return delegate { if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) Crash.OpenUrl(url); }; }
         // the key: typed by the person, masked, kept encrypted (Sports.SetKey); empty = remove it

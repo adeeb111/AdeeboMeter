@@ -94,11 +94,18 @@ namespace AdeeboMeter
         // smooth: the slow moments (the 20th percentile) still carry 1.2x what the quality needs; "may drop": the typical speed
         // carries it but the slow moments don't; otherwise it would buffer
         public static int Plays(Variant v, double typical, double low) { double need = v.Bw / 1e6; return low >= need * 1.2 ? 0 : typical >= need ? 1 : 2; }
+        // the score follows the verdict: anything that plays smoothly is 60+, and the top quality playing is 100; nothing
+        // playing scales 0-50 by how close the lowest quality came. Dips and a slow server take a little off.
         public static int Score(List<Variant> ladder, double typical, double low, double serverMs, bool dip)
         {
             if (double.IsNaN(typical)) return -1;
-            double topNeed = ladder.Count > 0 ? ladder[0].Bw / 1e6 * 1.2 : 5;   // no ladder: 5 Mb/s (HD) as the yardstick
-            double s = 100 * Math.Min(1, (double.IsNaN(low) ? typical : low) / topNeed);
+            double lo = double.IsNaN(low) ? typical : low, s;
+            if (ladder.Count == 0) s = 100 * Math.Min(1, lo / 6.0);   // no ladder: 5 Mb/s HD (x1.2) as the yardstick
+            else
+            {
+                int best = ladder.FindIndex(v => Plays(v, typical, low) == 0);
+                s = best < 0 ? 50 * Math.Min(1, lo / (ladder[ladder.Count - 1].Bw / 1e6 * 1.2)) : 60 + 40.0 * (ladder.Count - 1 - best) / Math.Max(1, ladder.Count - 1);
+            }
             if (dip) s -= 8; if (!double.IsNaN(serverMs) && serverMs > 400) s -= 6;
             return (int)Math.Max(0, Math.Min(100, Math.Round(s)));
         }

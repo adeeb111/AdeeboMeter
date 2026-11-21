@@ -193,6 +193,17 @@ namespace AdeeboMeter
             using (var p = new Pen(Color.White, Math.Max(1.6f, r.Width / 8)) { StartCap = LineCap.Round, EndCap = LineCap.Round })
                 g.DrawLines(p, new[] { new PointF(r.X + r.Width * 0.27f, r.Y + r.Height * 0.52f), new PointF(r.X + r.Width * 0.44f, r.Y + r.Height * 0.68f), new PointF(r.X + r.Width * 0.74f, r.Y + r.Height * 0.36f) });
         }
+        // a verdict mark: 0 tick (green), 1 "!" (amber), 2 cross (red) - drawn, the fonts lack the symbols
+        public static void Mark(Graphics g, RectangleF r, int kind)
+        {
+            using (var b = new SolidBrush(kind == 0 ? Green : kind == 1 ? Amber : Down)) g.FillEllipse(b, r);
+            using (var p = new Pen(Color.White, Math.Max(1.6f, r.Width / 8)) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+            {
+                if (kind == 0) g.DrawLines(p, new[] { new PointF(r.X + r.Width * 0.27f, r.Y + r.Height * 0.52f), new PointF(r.X + r.Width * 0.44f, r.Y + r.Height * 0.68f), new PointF(r.X + r.Width * 0.74f, r.Y + r.Height * 0.36f) });
+                else if (kind == 1) { g.DrawLine(p, r.X + r.Width / 2, r.Y + r.Height * 0.25f, r.X + r.Width / 2, r.Y + r.Height * 0.55f); g.DrawLine(p, r.X + r.Width / 2, r.Y + r.Height * 0.74f, r.X + r.Width / 2, r.Y + r.Height * 0.76f); }
+                else { g.DrawLine(p, r.X + r.Width * 0.32f, r.Y + r.Height * 0.32f, r.X + r.Width * 0.68f, r.Y + r.Height * 0.68f); g.DrawLine(p, r.X + r.Width * 0.68f, r.Y + r.Height * 0.32f, r.X + r.Width * 0.32f, r.Y + r.Height * 0.68f); }
+            }
+        }
         // a score ring: 0-100, green / amber / red by the score, the number in the middle
         public static void Ring(Graphics g, RectangleF r, int score)
         {
@@ -220,6 +231,24 @@ namespace AdeeboMeter
         {
             string t = double.IsNaN(pct) ? "-" : (pct > 0.005 ? "▲ " : pct < -0.005 ? "▼ " : "● ") + Math.Abs(pct).ToString(fmt ?? "0.00", CultureInfo.CurrentCulture) + "%";
             var s = g.MeasureString(t, f); using (var b = new SolidBrush(double.IsNaN(pct) ? Muted : pct > 0.005 ? Up : pct < -0.005 ? Down : Muted)) g.DrawString(t, f, b, rightX - s.Width, y);
+        }
+
+        // a flat weather glyph from the forecast's code (no emoji on the newspaper pages): sun, cloud, rain, snow, storm, fog
+        public static void WeatherGlyph(Graphics g, int code, RectangleF r)
+        {
+            float u = r.Width / 64f; bool sun = code == 0 || code == 1 || code == 2, cloud = code != 0, rain = (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95, snow = (code >= 71 && code <= 77) || code == 85 || code == 86;
+            if (sun) using (var b = new SolidBrush(C("#F5B82E"))) g.FillEllipse(b, r.X + (cloud ? 8 : 14) * u, r.Y + (cloud ? 6 : 12) * u, (cloud ? 26 : 36) * u, (cloud ? 26 : 36) * u);
+            if (cloud && code != 0 && code != 1)
+                using (var b = new SolidBrush(Dark ? C("#9AA7B4") : C("#DCE5F0"))) using (var p = new Pen(C("#8C98A8"), 1.2f * u))
+                using (var gp = new GraphicsPath())
+                {
+                    gp.AddEllipse(r.X + 12 * u, r.Y + 20 * u, 22 * u, 20 * u); gp.AddEllipse(r.X + 24 * u, r.Y + 12 * u, 26 * u, 26 * u); gp.AddEllipse(r.X + 40 * u, r.Y + 22 * u, 18 * u, 18 * u); gp.AddRectangle(new RectangleF(r.X + 22 * u, r.Y + 28 * u, 28 * u, 12 * u));
+                    g.FillPath(b, gp);
+                }
+            if (rain) using (var p = new Pen(C("#1F6FEB"), 3 * u) { StartCap = LineCap.Round, EndCap = LineCap.Round }) foreach (var dx in new[] { 20f, 32f, 44f }) g.DrawLine(p, r.X + dx * u, r.Y + 46 * u, r.X + (dx - 4) * u, r.Y + 56 * u);
+            if (snow) using (var b = new SolidBrush(C("#9CC2FF"))) foreach (var dx in new[] { 18f, 30f, 42f }) g.FillEllipse(b, r.X + dx * u, r.Y + 48 * u, 6 * u, 6 * u);
+            if (code >= 95) using (var b = new SolidBrush(C("#F2CC60"))) g.FillPolygon(b, new[] { new PointF(r.X + 34 * u, r.Y + 40 * u), new PointF(r.X + 26 * u, r.Y + 54 * u), new PointF(r.X + 33 * u, r.Y + 54 * u), new PointF(r.X + 28 * u, r.Y + 64 * u), new PointF(r.X + 42 * u, r.Y + 48 * u), new PointF(r.X + 35 * u, r.Y + 48 * u) });
+            if (code == 45 || code == 48) using (var p = new Pen(C("#AEB8C2"), 3 * u)) foreach (var dy in new[] { 46f, 52f, 58f }) g.DrawLine(p, r.X + 14 * u, r.Y + dy * u, r.X + 52 * u, r.Y + dy * u);
         }
 
         // ---------- the check strip under every tab: STREAM CHECK / LINE CHECK, the verdict, the main tip, a button, Details
