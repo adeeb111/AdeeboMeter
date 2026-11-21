@@ -206,7 +206,9 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("file type: " + e.Message); }
 
             step("Tidying up older versions...", 0.9f);
-            foreach (var d in Directory.GetDirectories(Base))
+            // carry-over (100-bug:178): only AdeeboMeter's own version folders (a version number for a name, with AdeeboMeter.exe or
+            // nothing in it) - any other folder someone put under the install folder is left alone
+            foreach (var d in Directory.GetDirectories(Base).Where(x => System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(x), @"^\d+(\.\d+){1,3}$") && (File.Exists(Path.Combine(x, "AdeeboMeter.exe")) || !Directory.EnumerateFileSystemEntries(x).Any())))
                 if (!string.Equals(Path.GetFullPath(d).TrimEnd('\\'), Path.GetFullPath(dst).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
                     try { Directory.Delete(d, true); } catch (Exception e) { Program.Log("old version left: " + d + " (" + e.Message + ")"); }
             Program.Log("installed " + Program.Version + " to " + dst);

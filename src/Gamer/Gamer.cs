@@ -112,8 +112,8 @@ namespace AdeeboMeter
                 else if (f[0] == "server" && f.Length >= 7)
                 {
                     string id = Clean(f[1], 40).ToLowerInvariant(); var g = all.FirstOrDefault(x => x.Id == id); if (g == null) continue;
-                    if (edited.Add(id)) g.Servers = new List<GameServer>();
                     string host = Clean(f[4], 253); int port; if (!ValidHost(host) || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out port) || port < -1 || port > 65535) continue;
+                    if (edited.Add(id)) g.Servers = new List<GameServer>();   // carry-over (100-bug #3): the built-in list is replaced only by a line that's valid - a bad one alone leaves it as it was
                     if (g.Servers.Count < 12) g.Servers.Add(new GameServer { Name = Clean(f[2], 30), Where = Clean(f[3], 40), Host = host, Port = port, Kind = f[6] == "exact" ? "exact" : f[6] == "valve" ? "valve" : "estimate" });
                 }
             }
@@ -373,13 +373,14 @@ namespace AdeeboMeter
             Session = null;
         }
         Thread th; volatile bool stop; Monitor mon;
+        readonly ManualResetEvent wake = new ManualResetEvent(false);   // carry-over: Stop wakes the loop out of its 5 s idle sleep, so Join(3000) never times out
         public double RouterAvg() { var m = mon; return m == null || Cfg.GwSec == 0 ? double.NaN : m.GwPing.Avg(60 / Math.Max(1, Cfg.GwSec)); }
         public static long Ver;   // goes up with every new sample: the Gamer page repaints only when something changed
         public static int MaxPerSecond { get { return MaxServers + 2; } }   // every playing server each second, plus room for the background ones
         public static int MaxServers { get { return Cfg.GameBgServers >= 5 ? 16 : 8; } }   // set by the Gamer preset (5 regions watched) - tweaking another row keeps it   // the Gamer preset watches twice as many
 
-        public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
-        public void Stop() { stop = true; var t = th; th = null; if (t != null) t.Join(3000); }
+        public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; wake.Reset(); th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
+        public void Stop() { stop = true; wake.Set(); var t = th; th = null; if (t != null) t.Join(3000); }
         public GameStat Stat(string game, GameServer s)
         {
             lock (k)
@@ -456,10 +457,10 @@ namespace AdeeboMeter
             {
                 try
                 {
-                    Thread.Sleep(idle ? 5000 : 1000);
+                    if (wake.WaitOne(idle ? 5000 : 1000)) break;
                     var mon2 = Cfg.Off("gamer") ? new HashSet<string>() : Games.Monitored();   // Gamer switched off in Settings: no game pings at all
                     idle = mon2.Count == 0;
-                    if (idle) { Playing = null; continue; }   // nothing clicked yet: nothing is sent, and the loop wakes only every 5 s
+                    if (idle) { Playing = null; var os = Session; if (os != null && os.Open) EndSession(); continue; }   /* carry-over: un-monitoring every game ends a session in progress */   // nothing clicked yet: nothing is sent, and the loop wakes only every 5 s
                     var games = Games.All;
                     if ((Clock.Mono - lastRun).TotalSeconds >= 5)
                     {
@@ -509,7 +510,7 @@ namespace AdeeboMeter
         void ProbeOne(string game, GameServer s)
         {
             var st = Stat(game, s);
-            var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null) st.Used = used;
+            var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null && !double.IsNaN(v)) st.Used = used;   /* carry-over: the method that answered, not the one last tried */
             if ((DateTime.Now - began).TotalSeconds > 4) { st.Add(double.NaN); System.Threading.Interlocked.Increment(ref Ver); return; }   // it outran the second it belonged to (a stuck lookup): filed as no answer, so the series keeps its place and the miss shows (bug-hunt ML-45)
             var prev = st.Window(60, 900); double med = GameStat.Pct(prev, 0.5);
             st.Add(v); System.Threading.Interlocked.Increment(ref Ver);
@@ -606,7 +607,7 @@ namespace AdeeboMeter
                     var ar = sock.BeginConnect(ip, port, null, null);
                     using (var wh = ar.AsyncWaitHandle)   // its handle closed every time - hours of TCP probes left one per probe to the finalizer
                     {
-                        if (!wh.WaitOne(timeoutMs)) return double.NaN;
+                        if (!wh.WaitOne(timeoutMs)) { sock.Close(); try { sock.EndConnect(ar); } catch (SocketException) { } catch (ObjectDisposedException) { } return double.NaN; }   // carry-over (8502674): the attempt is ended, not left pending
                         sock.EndConnect(ar);
                         return sw.Elapsed.TotalMilliseconds;
                     }
@@ -695,10 +696,15 @@ namespace AdeeboMeter
         // per server over the last 7 days: { avg ms, loss %, jitter, evenings with trouble (of days with data), days with data }
         // The screen gets the last result straight away (any age up to 30 min); the game-ping thread refreshes it every 10
         // minutes (Warm), so the 7 days of files are read there - never while the Gamer Zone or the overlay paints.
+        static readonly HashSet<string> loading = new HashSet<string>();
         public static Dictionary<string, double[]> Week(string game)
         {
-            lock (k) { Tuple<DateTime, Dictionary<string, double[]>> c; if (weekCache.TryGetValue(game, out c) && (DateTime.UtcNow - c.Item1).TotalMinutes < 30) return c.Item2; }
-            return Load(game);
+            // carry-over (round-2 L93): never file reads here - the Gamer card paints with this. A missing or old summary is
+            // read on a pool thread (once at a time per game); until then the last one (or none) is shown
+            Tuple<DateTime, Dictionary<string, double[]>> c; bool have, fresh, start;
+            lock (k) { have = weekCache.TryGetValue(game, out c); fresh = have && (DateTime.UtcNow - c.Item1).TotalMinutes < 30; start = !fresh && loading.Add(game); }
+            if (start) ThreadPool.QueueUserWorkItem(delegate { try { Load(game); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("game week: " + e.Message); } finally { lock (k) loading.Remove(game); } });
+            return have ? c.Item2 : new Dictionary<string, double[]>();
         }
         public static void Warm(IEnumerable<string> games)
         {
@@ -714,9 +720,10 @@ namespace AdeeboMeter
                 foreach (var grp in rows.GroupBy(x => x.Server))
                 {
                     var days = grp.GroupBy(x => x.T.Date).ToList();
-                    double lim = 2 * Math.Max(1, grp.Average(y => double.IsNaN(y.Avg) ? 0 : y.Avg));
+                    double avg = GameStat.Avg(grp.Select(x => x.Avg).ToArray());   // carry-over (100-bug #22): the same average the screen shows - no-reply minutes are left out, not counted as 0 ms
+                    double lim = 2 * Math.Max(1, double.IsNaN(avg) ? 0 : avg);
                     int bad = days.Count(d => d.Where(x => x.T.Hour >= 18 && x.T.Hour <= 23).Any(x => x.Loss >= 1 || x.P95 > lim));
-                    w[grp.Key] = new[] { GameStat.Avg(grp.Select(x => x.Avg).ToArray()), GameStat.Avg(grp.Select(x => x.Loss).ToArray()), GameStat.Avg(grp.Select(x => x.Jit).ToArray()), bad, days.Count };
+                    w[grp.Key] = new[] { avg, GameStat.Avg(grp.Select(x => x.Loss).ToArray()), GameStat.Avg(grp.Select(x => x.Jit).ToArray()), bad, days.Count };
                 }
                 lock (k) { if (weekCache.Count > 50) weekCache.Clear(); weekCache[game] = Tuple.Create(DateTime.UtcNow, w); } return w;
             }

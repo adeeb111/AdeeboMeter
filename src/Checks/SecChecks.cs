@@ -459,7 +459,7 @@ namespace AdeeboMeter
                 {
                     var q = Encoding.ASCII.GetBytes("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\nST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n\r\n");
                     u.Send(q, q.Length, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900)); u.Client.ReceiveTimeout = 500; var until = DateTime.UtcNow.AddSeconds(2);
-                    while (DateTime.UtcNow < until && !on) { try { var ep = new IPEndPoint(IPAddress.Any, 0); u.Receive(ref ep); if (ep.Address.Equals(gw)) on = true; } catch (SocketException) { } }
+                    while (DateTime.UtcNow < until && !on) { try { var ep = Toolkit.AnyEp(u); u.Receive(ref ep); if (ep.Address.Equals(gw)) on = true; } catch (SocketException) { } }
                 }
             }
             catch (SocketException) { return One(3, "Router UPnP", "couldn't ask", "", null); }

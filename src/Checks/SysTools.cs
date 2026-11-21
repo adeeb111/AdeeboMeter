@@ -80,7 +80,7 @@ namespace AdeeboMeter
                         else
                         {
                             Func<string, string> str = n => { var v = k.GetValue(n); var a2 = v as string[]; return a2 != null ? string.Join(" ", a2) : (v ?? "").ToString().Trim(); };
-                            Func<string, DateTime> time = n => { var v = k.GetValue(n); long t; return v != null && long.TryParse(v.ToString(), out t) && t > 0 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(t).ToLocalTime() : DateTime.MinValue; };
+                            Func<string, DateTime> time = n => { var v = k.GetValue(n); long t = 0; bool okT = v is int ? (t = (uint)(int)v) >= 0 : v != null && long.TryParse(v.ToString(), out t); return okT && t > 0 && t < 0xFFFFFFFFL ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(t).ToLocalTime() : DateTime.MinValue; };
                             DateTime got = time("LeaseObtainedTime"), t1 = time("T1"), t2 = time("T2"), end = time("LeaseTerminatesTime"), now = DateTime.Now;
                             string ip = str("DhcpIPAddress");
                             rows.Add(R(ip == "" || ip.StartsWith("169.254", StringComparison.Ordinal) ? 2 : 0, "Address", ip == "" ? "none from DHCP" : ip + " / " + str("DhcpSubnetMask"), ip.StartsWith("169.254", StringComparison.Ordinal) ? "169.254 means no DHCP server answered - Windows made up an address. Nothing past this PC will work." : "", "w"));
@@ -88,7 +88,7 @@ namespace AdeeboMeter
                             if (got > DateTime.MinValue) rows.Add(R(3, "Obtained", got.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " (" + Ago(now - got) + " ago)", "", "w"));
                             if (t1 > DateTime.MinValue) rows.Add(R(3, "Renews (T1)", t1.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (t1 > now ? " (in " + Ago(t1 - now) + ")" : " (due - renewing)"), "Halfway through the lease Windows asks the same server to extend it.", "w"));
                             if (t2 > DateTime.MinValue) rows.Add(R(3, "Rebinds (T2)", t2.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture), "If renewing failed, Windows asks any DHCP server.", "w"));
-                            object rawEnd = k.GetValue("LeaseTerminatesTime"); long rawE; bool infinite = rawEnd != null && long.TryParse(rawEnd.ToString(), out rawE) && rawE == 0xFFFFFFFFL;   // RFC 2132: all ones = an infinite lease
+                            object rawEnd = k.GetValue("LeaseTerminatesTime"); long rawE; bool infinite = rawEnd != null && long.TryParse(rawEnd.ToString(), out rawE) && (rawE == 0xFFFFFFFFL || rawE == -1);   /* carry-over (round-2 ML35): a REG_DWORD arrives as a signed int, so all ones reads -1 */   // RFC 2132: all ones = an infinite lease
                             if (infinite) rows.Add(R(0, "Expires", "never (an infinite lease)", "", "w"));
                             else if (end > DateTime.MinValue) rows.Add(R(end < now ? 2 : (end - now).TotalMinutes < 10 ? 1 : 0, "Expires", end.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (end > now ? " (in " + Ago(end - now) + ")" : " (expired)"), got > DateTime.MinValue && (end - got).TotalMinutes < 60 ? "A short lease (under an hour) - common on guest Wi-Fi; renewals happen often." : "", "w"));
                             string gw = str("DhcpDefaultGateway"), dns = str("DhcpNameServer"), dom = str("DhcpDomain");

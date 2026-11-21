@@ -172,7 +172,7 @@ namespace AdeeboMeter
                             sw.Restart(); u.Send(req, req.Length, new IPEndPoint(r, 3478)); var until = DateTime.UtcNow.AddMilliseconds(1500);
                             while (got == null && DateTime.UtcNow < until)
                             {
-                                var from = new IPEndPoint(IPAddress.Any, 0); var resp = u.Receive(ref from);
+                                var from = Toolkit.AnyEp(u); var resp = u.Receive(ref from);
                                 if (from.Address.Equals(r) && from.Port == 3478) got = Mapped(resp, tid);
                             }
                         }

@@ -47,7 +47,7 @@ namespace AdeeboMeter
                         var until = DateTime.UtcNow.AddMilliseconds(700);
                         while (DateTime.UtcNow < until)
                         {
-                            try { var ep = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref ep); if (p == 443 ? IsVn(r) : IsDns(r, pkt)) return 1; }
+                            try { var ep = Toolkit.AnyEp(u); var r = u.Receive(ref ep); if (p == 443 ? IsVn(r) : IsDns(r, pkt)) return 1; }
                             catch (SocketException e) { if (e.SocketErrorCode == SocketError.TimedOut) break; if (e.SocketErrorCode == SocketError.ConnectionReset) return 2; throw; }   /* "port unreachable": the packet arrived (nothing listens) - the size got through */
                         }
                     }

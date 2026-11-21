@@ -286,7 +286,7 @@ namespace AdeeboMeter
                 {
                     u.Client.ReceiveTimeout = 4000; u.Connect(a, port); var lep = u.Client.LocalEndPoint as IPEndPoint; if (lep != null) srcIp = lep.Address.ToString();
                     var sw = System.Diagnostics.Stopwatch.StartNew(); u.Send(pkt, pkt.Length); Array.Clear(pkt, 0, pkt.Length);
-                    var from = new IPEndPoint(IPAddress.Any, 0); reply = u.Receive(ref from); ms = sw.ElapsedMilliseconds;
+                    var from = Toolkit.AnyEp(u); reply = u.Receive(ref from); ms = sw.ElapsedMilliseconds;
                 }
             }
             catch (SocketException e) { error = e.SocketErrorCode == SocketError.TimedOut ? "no answer in 4 s" : e.SocketErrorCode == SocketError.ConnectionReset ? "refused - nothing listens on UDP " + port : e.Message; }

@@ -52,9 +52,16 @@ namespace AdeeboMeter
         static X509Certificate2 Find(string nameOrThumb)
         {
             string q = (nameOrThumb ?? "").Trim();
-            return Mine().FirstOrDefault(c => string.Equals(c.Thumbprint, q, StringComparison.OrdinalIgnoreCase) || string.Equals(NameOf(c), q, StringComparison.OrdinalIgnoreCase));
+            return Pick(c => string.Equals(c.Thumbprint, q, StringComparison.OrdinalIgnoreCase) || string.Equals(NameOf(c), q, StringComparison.OrdinalIgnoreCase));
         }
-        public static X509Certificate2 MyEncryptionCert() { return Mine().FirstOrDefault(c => Purpose(c) == "encrypt"); }
+        public static X509Certificate2 MyEncryptionCert() { return Pick(c => Purpose(c) == "encrypt"); }
+        // carry-over (100-bug #165): the first match is handed back; every other certificate read from the store is disposed, not left to the finalizer
+        static X509Certificate2 Pick(Func<X509Certificate2, bool> match)
+        {
+            var all = Mine(); var hit = all.FirstOrDefault(match);
+            foreach (var c in all) if (!ReferenceEquals(c, hit)) c.Dispose();
+            return hit;
+        }
         static string Purpose(X509Certificate2 c)
         {
             var eku = c.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault();
@@ -127,7 +134,7 @@ namespace AdeeboMeter
             foreach (var c in l)
             {
                 string p = Purpose(c); double days = (c.NotAfter - DateTime.Now).TotalDays;
-                rows.Add(R(-1, NameOf(c).ToUpperInvariant(), (p == "server" ? "server certificate" : p == "client" ? "client certificate (mTLS)" : "for files encrypted to you") + " · RSA " + c.PublicKey.Key.KeySize + " · " + (c.Subject == c.Issuer ? "self-signed" : "from " + c.GetNameInfo(X509NameType.SimpleName, true)) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 30 ? " (soon)" : ""), "", "w"));
+                rows.Add(R(-1, NameOf(c).ToUpperInvariant(), (p == "server" ? "server certificate" : p == "client" ? "client certificate (mTLS)" : "for files encrypted to you") + " · RSA " + c.PublicKey.Key.KeySize + " · " + (c.Subject == c.Issuer ? "self-signed" : "from " + c.GetNameInfo(X509NameType.SimpleName, true)) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 0 ? " (EXPIRED)" : days < 30 ? " (soon)" : ""), "", "w"));
                 rows.Add(new[] { "3", "Copy public key", "a .cer someone needs to encrypt a file for you - copied, and saved in AdeeboMeter's certs folder", "", "w", "key:pub:" + c.Thumbprint });
                 rows.Add(new[] { "3", "Back up private key", "a password-protected .pfx for a new PC, with a strong recovery passphrase shown once", "", "w", "key:backup:" + c.Thumbprint });
                 rows.Add(new[] { "3", "Delete", "remove it from Windows - asks first", "", "w", "key:del:" + c.Thumbprint });
@@ -167,6 +174,7 @@ namespace AdeeboMeter
                 if (key == null) { key = Create(kn, "lab", sans, 30); made = true; }
                 using (var rsa = key.GetRSAPrivateKey())
                 {
+                    if (rsa == null) { rows.Add(R(2, "Key", "\"" + kn + "\" isn't an RSA key - a request is made from an RSA key in My keys", "", "")); return rows; }   // carry-over (100-bug #172)
                     var req = new CertificateRequest(Dn(cn), rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1); Decorate(req, "lab", sans);
                     string pem = Pem("CERTIFICATE REQUEST", req.CreateSigningRequest());
                     string file = Path.Combine(OutDir, Safe(kn, 40).Replace(' ', '-') + ".csr"); SafeFile.WriteText(file, pem);
@@ -233,7 +241,8 @@ namespace AdeeboMeter
                 {
                     try
                     {
-                        using (var rsa = key.GetRSAPrivateKey()) using (var both = cert.CopyWithPrivateKey(rsa)) using (var stored = Persist(both, NameOf(key) + " (" + cert.GetNameInfo(X509NameType.SimpleName, true) + ")"))
+                        using (var rsa = key.GetRSAPrivateKey()) using (var both = rsa == null ? null : cert.CopyWithPrivateKey(rsa)) using (var stored = both == null ? null : Persist(both, NameOf(key) + " (" + cert.GetNameInfo(X509NameType.SimpleName, true) + ")"))
+                            if (stored == null) rows.Add(R(2, "Put together", "the matching key isn't an RSA key Windows can hand over - nothing was changed", "", "m")); else   // carry-over (100-bug #172)
                             rows.Add(R(0, "Put together", "the CA's certificate and your key are now one entry in My keys: " + NameOf(stored), "Use Back up private key on it to get a .pfx for the server.", "m"));
                     }
                     catch (CryptographicException e) { rows.Add(R(2, "Put together", e.Message, "", "m")); }
@@ -258,7 +267,12 @@ namespace AdeeboMeter
                 {
                     if (tc == null) { rows.Add(R(2, h + ":" + port, "couldn't connect in 6 s", "", "m")); return rows; }
                     using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) => { errs = e; if (ch != null) foreach (var el in ch.ChainElements) sent.Add(new X509Certificate2(el.Certificate)); else if (c != null) sent.Add(new X509Certificate2(c)); return e == SslPolicyErrors.None; }))
-                    { var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h)); if (!hs.Wait(8000)) hsErr = "the TLS handshake didn't finish in 8 s"; }
+                    {
+                        var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(h));
+                        // carry-over (8502674 review): on a timeout close the socket and let the handshake end before reading what it collected -
+                        // otherwise the callback can still be adding certificates while they're read and disposed below
+                        if (!hs.Wait(8000)) { hsErr = "the TLS handshake didn't finish in 8 s"; try { tc.Close(); } catch (Exception) { } try { hs.Wait(3000); } catch (AggregateException) { } }
+                    }
                 }
             }
             catch (Exception e) { if (!(e is SocketException || e is IOException || e is AggregateException || e is System.Security.Authentication.AuthenticationException)) throw; var ie = e is AggregateException && e.InnerException != null ? e.InnerException : e; hsErr = "the TLS handshake failed: " + Draw.Trunc(ie.Message, 90); }
@@ -269,6 +283,7 @@ namespace AdeeboMeter
                 rows.Add(R(same ? 0 : 2, "The server presents", same ? "exactly this certificate" : "a DIFFERENT certificate: " + sent[0].GetNameInfo(X509NameType.SimpleName, false) + " · from " + sent[0].GetNameInfo(X509NameType.SimpleName, true) + " · expires " + sent[0].NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture),
                     same ? "" : SameKey(sent[0], want) ? "Same key, different certificate - an older or newer copy is still loaded (restart the service, or check which certificate the binding uses)." : "Not even the same key - the new certificate isn't bound to this port yet, or another server answers on this name.", "m"));
                 for (int i = 1; i < sent.Count; i++) rows.Add(R(sent[i].NotAfter < DateTime.Now ? 2 : 3, i == sent.Count - 1 && sent[i].Subject == sent[i].Issuer ? "Root" : "Intermediate", sent[i].GetNameInfo(X509NameType.SimpleName, false) + " · expires " + sent[i].NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (sent[i].NotAfter < DateTime.Now ? " · EXPIRED" : ""), "", "m"));
+                if (hsErr != "" && errs == SslPolicyErrors.None) rows.Add(R(1, "Handshake", hsErr, "The certificate came back, but the connection didn't finish setting up - the server may want a TLS version or cipher Windows won't offer.", ""));   // carry-over: the handshake's own result
                 rows.Add(R(errs == SslPolicyErrors.None ? 0 : 1, "Windows trusts it", errs == SslPolicyErrors.None ? "yes" : "no - " + errs, errs.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors) ? "A missing or expired intermediate is the usual reason: install the CA's full chain on the server." : "", "m"));
                 foreach (var c in sent) c.Dispose();
             }
@@ -334,8 +349,9 @@ namespace AdeeboMeter
                 rows.Add(new[] { "3", "Throw it away", "keep the key " + pn + " already had", "", "", "recip:drop:" + pn });
             }
             rows.Add(R(-1, "SAVED RECIPIENTS", files.Count == 0 ? "none yet" : files.Count.ToString(CultureInfo.InvariantCulture), "", ""));
-            foreach (var f in files.Where(x => x.EndsWith(".adeebokey", StringComparison.OrdinalIgnoreCase))) { string nm; var pb = EcKeys.ReadPublic(SafeFile.ReadText(f), out nm); if (pb != null) rows.Add(R(3, Path.GetFileNameWithoutExtension(f), "EC P-384 · .adeebo files · fingerprint " + EcKeys.Fingerprint(pb), "", "")); }
-            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "")); } catch (CryptographicException) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a certificate this PC can read - skipped", "", "")); } catch (FormatException) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a certificate this PC can read - skipped", "", "")); } catch (IOException) { } }
+            foreach (var f in files.Where(x => x.EndsWith(".adeebokey", StringComparison.OrdinalIgnoreCase))) { string nm; byte[] pb; try { pb = EcKeys.ReadPublic(SafeFile.ReadText(f), out nm); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is FormatException)) throw; rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "couldn't be read - " + e.Message, "", "")); continue; }   /* carry-over (round-2): one bad file is shown, never the whole list lost */
+                if (pb != null) rows.Add(R(3, Path.GetFileNameWithoutExtension(f), "EC P-384 · .adeebo files · fingerprint " + EcKeys.Fingerprint(pb), "", "")); else rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a key this PC can read - skipped", "", "")); }
+            foreach (var f in files.Where(x => x.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))) { try { using (var c = Load(f)) rows.Add(R(c.NotAfter < DateTime.Now ? 1 : 3, Path.GetFileNameWithoutExtension(f), c.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + c.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "")); } catch (CryptographicException) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a certificate this PC can read - skipped", "", "")); } catch (FormatException) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "isn't a certificate this PC can read - skipped", "", "")); } catch (IOException e) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "couldn't be read - " + e.Message, "", "")); } catch (UnauthorizedAccessException e) { rows.Add(R(1, Path.GetFileNameWithoutExtension(f), "couldn't be read - " + e.Message, "", "")); } }
             return rows;
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5350", Justification = "SHA-256 fingerprint for display")]

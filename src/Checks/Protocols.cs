@@ -85,8 +85,9 @@ namespace AdeeboMeter
                         var req = Encoding.ASCII.GetBytes("GET " + u.PathAndQuery + " HTTP/1.1\r\nHost: " + (u.HostNameType == UriHostNameType.IPv6 ? "[" + u.IdnHost.Trim('[', ']') + "]" : u.IdnHost) + (u.IsDefaultPort ? "" : ":" + u.Port.ToString(CultureInfo.InvariantCulture)) + "\r\nUser-Agent: AdeeboMeter/" + Program.Version + "\r\nAccept: */*\r\nConnection: close\r\n\r\n");
                         st.Write(req, 0, req.Length);
                         var buf = new byte[16384]; int r = st.Read(buf, 0, buf.Length); t[3] = sw.Elapsed.TotalMilliseconds;
-                        status = r > 12 ? Encoding.ASCII.GetString(buf, 0, Math.Min(r, 40)).Split('\r')[0] : "";
-                        long total = r; var dlBy = DateTime.UtcNow.AddSeconds(30); while (r > 0 && total < 4 << 20 && DateTime.UtcNow < dlBy && !run.Stop) { r = st.Read(buf, 0, buf.Length); total += r; }   // 4 MB or 30 s, whichever first
+                        long total = r; int head = r;   // carry-over (round-2 L122): the status line can come in pieces - keep reading until its end
+                        while (r > 0 && head < 64 && Array.IndexOf(buf, (byte)'\n', 0, head) < 0) { r = st.Read(buf, head, buf.Length - head); head += r; total += r; }
+                        status = head > 12 ? Encoding.ASCII.GetString(buf, 0, Math.Min(head, 40)).Split('\r')[0] : ""; var dlBy = DateTime.UtcNow.AddSeconds(30); while (r > 0 && total < 4 << 20 && DateTime.UtcNow < dlBy && !run.Stop) { r = st.Read(buf, 0, buf.Length); total += r; }   // 4 MB or 30 s, whichever first
                         t[4] = sw.Elapsed.TotalMilliseconds; st.Dispose();
                     }
                     all.Add(t); run.Add(t[4]);
@@ -163,7 +164,7 @@ namespace AdeeboMeter
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p);   // connected: replies from anyone else are dropped by Windows
                     var q = new byte[48]; q[0] = 0x23;   // LI 0, version 4, client
                     var t1 = DateTime.UtcNow; WriteNtp(q, 40, t1); u.Send(q, 48);
-                    var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
+                    var from = Toolkit.AnyEp(u); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
                     if (r.Length < 48) throw new InvalidOperationException("short answer");
                     bool same = true; for (int i = 0; i < 8; i++) if (r[24 + i] != q[40 + i]) same = false;
                     if (!same || (r[0] & 7) != 4) throw new InvalidOperationException("the answer isn't a reply to this question");
@@ -300,7 +301,7 @@ namespace AdeeboMeter
                 using (var u = new UdpClient(a.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(msg, msg.Length);
-                    var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
+                    var from = Toolkit.AnyEp(u); var r = u.Receive(ref from);
                     string why = SnmpCheck(r, reqId[2], reqId[3], Encoding.ASCII.GetBytes(comm));
                     if (why != "") { rows.Add(R(2, h, "answered, but " + why, "", "m")); return rows; }
                     var vals = new List<string>(); ParseVarbinds(r, vals);
@@ -424,7 +425,7 @@ namespace AdeeboMeter
                 using (var u = new UdpClient(a.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(pkt, pkt.Length);
-                    var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
+                    var from = Toolkit.AnyEp(u); var r = u.Receive(ref from);
                     if (r.Length < 20) { Array.Clear(sec, 0, sec.Length); rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
                     bool ma, good = ReplyOk(r, pkt[1], auth, sec, out ma); Array.Clear(sec, 0, sec.Length);
                     if (good && !ma) rows.Add(R(1, "Message-Authenticator", "the reply doesn't carry one", "Not hardened against BlastRADIUS (CVE-2024-3596): turn on require_message_authenticator / limit_proxy_state on the server, or update it.", "m"));
@@ -502,7 +503,7 @@ namespace AdeeboMeter
                     {
                         while (sw.ElapsedMilliseconds < 1000)
                         {
-                            var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = wall0 + mono.Elapsed;
+                            var from = Toolkit.AnyEp(u); var r = u.Receive(ref from); var t4 = wall0 + mono.Elapsed;
                             if (r.Length < 40) continue;
                             int sseq = r[24] << 24 | r[25] << 16 | r[26] << 8 | r[27]; if (sseq != i) continue;
                             bool echoed = true; for (int k = 0; k < 8 && 28 + k < r.Length; k++) if (r[28 + k] != pkt[4 + k]) echoed = false;
@@ -549,7 +550,7 @@ namespace AdeeboMeter
                 double rt = double.NaN; var r = Icmp.Echo(ma.Address, 32, 64, false, 1500, false); if (r.Status == Icmp.Ok) rt = r.Rtt;
                 rows.Add(R(3, "Ping your own public address", double.IsNaN(rt) ? "no answer (many routers ignore ping on their outside)" : Ms(rt) + " - answered by your router itself", "", "m"));
                 var probe = Encoding.ASCII.GetBytes("adeebometer-hairpin"); bool back = false;
-                try { a.Send(probe, probe.Length, mb); var from = new IPEndPoint(IPAddress.Any, 0); var got = b.Receive(ref from); back = got.SequenceEqual(probe); } catch (SocketException) { }
+                try { a.Send(probe, probe.Length, mb); var from = Toolkit.AnyEp(b); var got = b.Receive(ref from); back = got.SequenceEqual(probe); } catch (SocketException) { }
                 rows.Add(R(back ? 0 : 1, "Hairpin (NAT loopback)", back ? "works - a packet sent to your own public address came back in" : "doesn't loop back", back ? "Devices at home can reach each other (a camera, a NAS, a game server) using the public address or a dynamic-DNS name." : "Using your public address or dynamic-DNS name from inside your home won't work - use the local address at home, or turn on 'NAT loopback' / 'NAT reflection' in the router.", "m"));
                 int inner = ((IPEndPoint)a.Client.LocalEndPoint).Port;
                 rows.Add(R(3, "Port kept?", inner + " inside → " + ma.Port + " outside" + (inner == ma.Port ? " (kept)" : " (changed by the router)"), "", "m"));
@@ -563,7 +564,7 @@ namespace AdeeboMeter
             for (int t = 0; t < 3; t++)
                 try
                 {
-                    u.Send(req, req.Length, new IPEndPoint(relay, 3478)); var from = new IPEndPoint(IPAddress.Any, 0); var m = u.Receive(ref from);
+                    u.Send(req, req.Length, new IPEndPoint(relay, 3478)); var from = Toolkit.AnyEp(u); var m = u.Receive(ref from);
                     if (!from.Address.Equals(relay) || m.Length < 20 || m[0] != 1 || m[1] != 1) continue;   // a Binding Success from the server we asked
                     bool mine = m[4] == 0x21 && m[5] == 0x12 && m[6] == 0xA4 && m[7] == 0x42; for (int k = 0; k < 12; k++) if (m[8 + k] != tid[k]) mine = false;
                     if (!mine || 20 + (m[2] << 8 | m[3]) > m.Length) continue;

@@ -254,10 +254,12 @@ IPAddress[] found;
             long bytes = 0, counted = 0; var sw = System.Diagnostics.Stopwatch.StartNew(); long cap = (download ? MaxDownMB : MaxUpMB) * 1000000L;
             Func<bool> done = () => sw.Elapsed.TotalSeconds >= Seconds || Interlocked.Read(ref bytes) >= cap || (run != null && run.Stop);
             int streams = download ? 4 : 3; var th = new List<Thread>(); int fails = 0; string seenColo = "";
+            var live = new HttpWebRequest[streams];   // carry-over (round-2 L52): each stream's request in flight, so the end of the test can abort a stalled one
             // .NET allows 2 connections per server by default - the other streams would just queue
             try { var sp = ServicePointManager.FindServicePoint(new Uri(url)); if (sp.ConnectionLimit < streams + 1) sp.ConnectionLimit = streams + 1; } catch (UriFormatException) { }
             for (int i = 0; i < streams; i++)
             {
+                int slot = i;
                 var t = new Thread(() =>
                 {
                     var buf = new byte[64 * 1024]; var payload = download ? null : new byte[4 * 1024 * 1024];
@@ -265,7 +267,7 @@ IPAddress[] found;
                     {
                         try
                         {
-                            var req = Req(url);
+                            var req = Req(url); lock (live) live[slot] = req; if (done()) break;
                             if (!download)
                             {
                                 req.Method = "POST"; req.ContentType = "application/octet-stream"; req.ContentLength = payload.Length; req.AllowWriteStreamBuffering = false;
@@ -293,7 +295,9 @@ IPAddress[] found;
             while (!done()) { double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v); Thread.Sleep(250); }
             double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1);   // the measured window ends here, not after waiting for the threads
             long c = Interlocked.Read(ref counted);
-            foreach (var t in th) t.Join(3000); foreach (var t in th) t.Join(9000);   /* a stream stuck in a read (8 s timeout) ends before the next test may start */ total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
+            foreach (var t in th) t.Join(3000);
+            lock (live) foreach (var rq in live) if (rq != null) try { rq.Abort(); } catch (Exception) { }   // a stream stalled in a read ends now, not 8+ s later
+            foreach (var t in th) t.Join(9000);   /* a stream stuck in a read (8 s timeout) ends before the next test may start */ total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
             return c <= 0 ? double.NaN : c * 8 / 1e6 / secs;
         }
     }

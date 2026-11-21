@@ -286,7 +286,7 @@ namespace AdeeboMeter
                 // X.224 connection request with an RDP negotiation request: TLS + CredSSP (NLA) offered
                 var req = new byte[] { 3, 0, 0, 19, 14, 0xE0, 0, 0, 0, 0, 0, 1, 0, 8, 0, 3, 0, 0, 0 };
                 var s = c.GetStream(); s.ReadTimeout = 3000; var b = new byte[64]; int n = 0;
-                try { s.Write(req, 0, req.Length); n = s.Read(b, 0, b.Length); } catch (IOException) { }
+                try { s.Write(req, 0, req.Length); int g; while (n < 19 && (g = s.Read(b, n, b.Length - n)) > 0) n += g; } catch (IOException) { }   /* carry-over (100-bug #235): the 19-byte answer can arrive in pieces */
                 if (n >= 19 && b[0] == 3 && b[5] == 0xD0)
                 {
                     int type = b[11], proto = b[15] | b[16] << 8;

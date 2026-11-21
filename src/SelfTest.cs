@@ -450,7 +450,7 @@ namespace AdeeboMeter
                 if (Lab.DhcpText(121, new byte[] { 24, 10, 1, 2, 192, 168, 1, 1 }) != "10.1.2.0/24 via 192.168.1.1" || Lab.DhcpText(6, new byte[] { 1, 1, 1, 1, 9, 9, 9, 9 }) != "1.1.1.1, 9.9.9.9") bad.Add("dhcp options");
                 var jw = CertTools.Decode("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4IiwiZXhwIjoxNjAwMDAwMDAwfQ.c2ln"); if (!jw.Any(r => r[1] == "Expires" && r[2].Contains("EXPIRED"))) bad.Add("jwt");
                 if (Lab.TrapPacket("public", 100, 7, "t")[0] != 0x30 || Lab.FlowPacket(System.Net.IPAddress.Loopback, System.Net.IPAddress.Loopback, 5000, 1).Length != 72) bad.Add("trap / flow");
-                if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
+                if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || Reach.SafeHost("sw-01:22") || !Reach.SafeHost("[2001:db8::1]") || !Reach.SafeHost("2001:db8::1") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
             T("Security: 42 checks, end-of-support dates and site names read right", () =>
@@ -1375,7 +1375,7 @@ namespace AdeeboMeter
             T("wave 4: UDP MTU packets, neighbour filter, speed grade, mode setting", () =>
             {
                 foreach (int n in new[] { 100, 572, 1200, 1472 }) { var d = UdpMtu.DnsPad(n); if (d.Length != n) throw new InvalidOperationException("DNS pad " + n + " -> " + d.Length); if (!UdpMtu.IsDns(new byte[] { d[0], d[1], 0x81, 0x80, 0, 1, 0, 0, 0, 0, 0, 0 }, d)) throw new InvalidOperationException("DNS reply match"); }
-                var q = UdpMtu.Quic(1172); if (q.Length != 1172 || (q[0] & 0xC0) != 0xC0 || q[5] != 8) throw new InvalidOperationException("QUIC probe");
+                var q = UdpMtu.Quic(1200); if (q.Length != 1200 || (q[0] & 0xC0) != 0xC0 || q[5] != 8) throw new InvalidOperationException("QUIC probe");
                 if (!UdpMtu.IsVn(new byte[] { 0x80, 0, 0, 0, 0, 8, 1, 2 }) || UdpMtu.IsVn(q)) throw new InvalidOperationException("version negotiation check");
                 if (!Reach.SameNet("192.168.1.20", "192.168.1.5") || Reach.SameNet("192.168.1.255", "192.168.1.5") || Reach.SameNet("192.168.2.20", "192.168.1.5") || Reach.SameNet("192.168.1.5", "192.168.1.5")) throw new InvalidOperationException("same network");
                 if (SpeedTest.Pick("auto").Id != "cloudflare" || SpeedTest.Pick("vultr toronto").Id != "vultr-tor-ca" || SpeedTest.Pick("ovh-ca") == null || SpeedTest.Pick("ovh montreal").Id != "ovh-ca" || SpeedTest.Pick("nowhere at all") != null) throw new InvalidOperationException("speed server pick");

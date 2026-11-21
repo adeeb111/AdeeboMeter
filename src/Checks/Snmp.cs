@@ -123,7 +123,7 @@ namespace AdeeboMeter
                 {
                     int left = (int)(until - DateTime.UtcNow).TotalMilliseconds; if (left <= 0) return null;
                     u.Client.ReceiveTimeout = left;
-                    try { var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); if (accept == null || accept(r)) return r; }
+                    try { var from = Toolkit.AnyEp(u); var r = u.Receive(ref from); if (accept == null || accept(r)) return r; }
                     catch (SocketException se) { if (se.SocketErrorCode == SocketError.ConnectionReset) refused = true; return null; }
                 }
             }

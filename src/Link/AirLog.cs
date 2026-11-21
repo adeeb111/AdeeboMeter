@@ -26,7 +26,7 @@ namespace AdeeboMeter
             if (!wifi) return;
             string err; var bss = WlanApi.List(false, out err); if (bss.Count == 0) return;   // location off, or nothing heard: write nothing
             lastTry = Clock.Mono;   // bug-hunt L-113: the hour counts as done only once it's written; a failed write tries again in 5 minutes
-            var lines = bss.Where(b => b.Channel > 0).OrderByDescending(b => b.Rssi).Take(40).Select(b => string.Join("\t", hour.ToString("yyyy-MM-ddTHH", CultureInfo.InvariantCulture), b.Bssid, (b.Ssid ?? "").Replace('\t', ' '), b.Band, b.Channel.ToString(CultureInfo.InvariantCulture), b.Width.ToString(CultureInfo.InvariantCulture), b.Rssi.ToString(CultureInfo.InvariantCulture), b.Sec, string.Equals(b.Bssid, myB, StringComparison.OrdinalIgnoreCase) ? "1" : mySsid != "" && b.Ssid == mySsid ? "2" : "0")).ToList();
+            var lines = bss.Where(b => b.Channel > 0).OrderByDescending(b => b.Rssi).Take(40).Select(b => string.Join("\t", hour.ToString("yyyy-MM-ddTHH", CultureInfo.InvariantCulture), b.Bssid, (b.Ssid ?? "").Replace('\t', ' '), b.Band, b.Channel.ToString(CultureInfo.InvariantCulture), b.Width.ToString(CultureInfo.InvariantCulture), b.Rssi.ToString(CultureInfo.InvariantCulture), b.Sec, string.Equals(b.Bssid, myB, StringComparison.OrdinalIgnoreCase) ? "1" : WifiAdvisor.SameNet(myB, mySsid, b.Bssid, b.Ssid) ? "2" : "0")).ToList();
             lock (k)
             {
                 try

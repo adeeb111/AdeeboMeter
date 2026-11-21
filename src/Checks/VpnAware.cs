@@ -44,7 +44,7 @@ namespace AdeeboMeter
         {
             var i = new Info();
             var running = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var p in Process.GetProcesses()) { try { running.Add(p.ProcessName); } catch (InvalidOperationException) { } finally { p.Dispose(); } }
+            foreach (var p in Process.GetProcesses()) { try { running.Add(p.ProcessName); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } finally   /* carry-over: one protected process can't stop the VPN check */ { p.Dispose(); } }
             foreach (var kv in Clients) if (running.Contains(kv.Key) && !i.Products.Contains(kv.Value[0])) { i.Products.Add(kv.Value[0]); if (i.Kind == "" || kv.Value[1].StartsWith("zero", StringComparison.Ordinal)) i.Kind = kv.Value[1]; }
             i.Zero = i.Kind.StartsWith("zero", StringComparison.Ordinal);
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces())

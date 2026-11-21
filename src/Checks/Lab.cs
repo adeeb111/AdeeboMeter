@@ -215,7 +215,7 @@ namespace AdeeboMeter
                     var until = DateTime.UtcNow.AddMilliseconds(i == n - 1 ? 1000 : MinGapMs);
                     while (DateTime.UtcNow < until && !run.Stop)
                     {
-                        try { var ep = new IPEndPoint(IPAddress.Any, 0); var b = u.Receive(ref ep); if (answers.Count < 20) answers.Add(I(b.Length) + " B: " + Show(b, 200)); }
+                        try { var ep = Toolkit.AnyEp(u); var b = u.Receive(ref ep); if (answers.Count < 20) answers.Add(I(b.Length) + " B: " + Show(b, 200)); }
                         catch (SocketException e) { if (e.SocketErrorCode == SocketError.ConnectionReset) { refused++; break; } }
                     }
                     // the gap always holds: a "port unreachable" reply ends the listening early, never the wait (10 a second at most)

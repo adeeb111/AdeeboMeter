@@ -21,6 +21,8 @@ namespace AdeeboMeter
     // nearest cloud, ping sweep, Wake-on-LAN, subnet calculator. All on press, all outbound, nothing listens.
     static class Toolkit
     {
+        // carry-over (200-bug High #1): an endpoint of the socket's own family for Receive - an IPv4 Any on an IPv6 socket is wrong
+        internal static IPEndPoint AnyEp(UdpClient u) { return new IPEndPoint(u.Client.AddressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any, 0); }
         // A TCP client that can reach IPv6-only hosts too (dual mode: IPv4 still works through mapped addresses).
         // Where the PC has no IPv6 at all, a plain IPv4 one.
         public static TcpClient Tcp()
@@ -526,7 +528,7 @@ namespace AdeeboMeter
                 using (var u = new UdpClient(server.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(server, 53); u.Send(q.ToArray(), q.Count);   // connected: only the server we asked can answer
-                    var from = new IPEndPoint(IPAddress.Any, 0); resp = u.Receive(ref from);
+                    var from = Toolkit.AnyEp(u); resp = u.Receive(ref from);
                     if (resp.Length < 12 || resp[0] != id[0] || resp[1] != id[1]) return null;
                 }
                 if ((resp[2] & 2) != 0)   // truncated: ask again over TCP

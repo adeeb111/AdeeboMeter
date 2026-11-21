@@ -42,7 +42,11 @@ namespace AdeeboMeter
         static string Render(IntPtr e)
         {
             int used, props; var buf = new char[16384];
-            return EvtRender(IntPtr.Zero, e, 1 /*EvtRenderEventXml*/, buf.Length * 2, buf, out used, out props) ? new string(buf, 0, Math.Max(0, used / 2 - 1)) : "";
+            if (EvtRender(IntPtr.Zero, e, 1 /*EvtRenderEventXml*/, buf.Length * 2, buf, out used, out props)) return new string(buf, 0, Math.Max(0, used / 2 - 1));
+            // carry-over (100-bug line 209): a bigger event says how much room it needs - try once more with that (1 MB at most)
+            if (Marshal.GetLastWin32Error() != 122 /*ERROR_INSUFFICIENT_BUFFER*/ || used <= 0 || used > 2 * 1024 * 1024) return "";
+            buf = new char[used / 2 + 1];
+            return EvtRender(IntPtr.Zero, e, 1, buf.Length * 2, buf, out used, out props) ? new string(buf, 0, Math.Max(0, used / 2 - 1)) : "";
         }
         static string Format(IntPtr pub, IntPtr e)
         {
@@ -71,6 +75,7 @@ namespace AdeeboMeter
                     try
                     {
                         string xml = Render(evs[0]);
+                        if (xml == "") continue;   // carry-over: an event that couldn't be read is left out - never a made-up year-1 event with Id 0
                         var ev = new Ev { Xml = xml };
                         var idm = Regex.Match(xml, @"<EventID[^>]*>(\d+)</EventID>"); if (idm.Success) ev.Id = int.Parse(idm.Groups[1].Value, CultureInfo.InvariantCulture);
                         var lvm = Regex.Match(xml, @"<Level>(\d+)</Level>"); if (lvm.Success) ev.Level = int.Parse(lvm.Groups[1].Value, CultureInfo.InvariantCulture);
@@ -320,7 +325,7 @@ namespace AdeeboMeter
                 cand = cand.Concat(extra).Distinct().ToArray();
             }
             if (cand.Length == 0) return null;
-            Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, c, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
+            Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, a.Width, c, 20, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
             int best = cand.OrderBy(c => load(c)).ThenBy(c => c == mine ? 0 : 1).First();
             // bug-hunt ML-154: a channel outside the usual list (165, 13, a high 6 GHz one) that's no busier than the best stays put
             if (mine > 0 && best != mine && load(mine) <= load(best) + 1e-9) best = mine;
@@ -601,6 +606,7 @@ namespace AdeeboMeter
             if (list.Count > 300) list = list.OrderByDescending(a => a.Signal).Take(300).ToList();
             return list;
         }
+        public static bool Overlaps(int a, int wa, int b, int wb, string band) { return AirLog.Overlap(a, wa <= 0 ? 20 : wa, b, wb <= 0 ? 20 : wb, band); }
         public static bool Overlaps(int a, int b, string band)
         {
             if (a <= 0 || b <= 0) return false;
@@ -668,16 +674,17 @@ namespace AdeeboMeter
                 s.Aps = ParseNetworks(nets);
                 if (ch > 0)
                 {
-                    var same = s.Aps.Where(a => !string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase) && a.Band == band && Overlaps(a.Channel, ch, band)).ToList();
+                    // Windows' Native Wifi API first: channel widths (the overlap below needs them), roaming helpers, exact dBm
+                    string werr; var bss = WlanApi.List(true, out werr);
+                    foreach (var a in s.Aps) { var m2 = bss.FirstOrDefault(x => string.Equals(x.Bssid, a.Bssid, StringComparison.OrdinalIgnoreCase)); if (m2 != null) { a.Rssi = m2.Rssi; a.Width = m2.Width; a.Sec = m2.Sec; } }
+                    var me = bss.FirstOrDefault(x => string.Equals(x.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
+                    int myW = me != null ? me.Width : 20;   // carry-over (100-bug #26): a wide neighbour covers more than its own channel number
+                    var same = s.Aps.Where(a => !string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase) && a.Band == band && Overlaps(a.Channel, a.Width, ch, myW, band)).ToList();
                     var mine = s.Aps.FirstOrDefault(a => string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
                     int strong = same.Count(a => a.Signal >= 50);
                     s.Radio.Add(new[] { "Sharing your channel", same.Count == 0 ? "nobody - clean air" : same.Count + " other access point" + (same.Count > 1 ? "s" : "") + (strong > 0 ? " (" + strong + " strong)" : ""), strong >= 3 ? "2" : same.Count >= 3 ? "1" : "0" });
                     if (mine != null && mine.Util >= 0) s.Radio.Add(new[] { "Air time used", mine.Util + "% of the channel" + (mine.Stations >= 0 ? " · " + mine.Stations + " devices on this AP" : ""), mine.Util >= 70 ? "2" : mine.Util >= 45 ? "1" : "0" });
                     if (strong >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your channel is a crowded room: " + same.Count + " neighbours share it. Everyone takes turns, so everyone is slower.", same.Count + " access points share your channel.")); }
-                    // Windows' Native Wifi API: channel width, roaming helpers, exact dBm
-                    string werr; var bss = WlanApi.List(true, out werr);
-                    foreach (var a in s.Aps) { var m2 = bss.FirstOrDefault(x => string.Equals(x.Bssid, a.Bssid, StringComparison.OrdinalIgnoreCase)); if (m2 != null) { a.Rssi = m2.Rssi; a.Width = m2.Width; a.Sec = m2.Sec; } }
-                    var me = bss.FirstOrDefault(x => string.Equals(x.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
                     if (me != null)
                     {
                         s.Radio.Insert(4, new[] { "Channel width", me.Width + " MHz" + (me.Width >= 80 ? " - a wide, fast lane" : me.Width == 40 ? "" : " - narrow, so slower but sturdier"), "0" });

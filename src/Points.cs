@@ -58,7 +58,7 @@ namespace AdeeboMeter
             try
             {
                 if (!File.Exists(file)) return;
-                foreach (var line in File.ReadAllLines(file))
+                foreach (var line in File.ReadLines(file).Take(5000).Select(l => l.Length > 400 ? l.Substring(0, 400) : l))   // carry-over: bounded - a few hundred entries is a full file; a huge or damaged one can't eat memory
                 {
                     var p = line.Split('|'); if (p.Length < 2 || p[0].Trim() == "") continue;
                     long a, b; var e = new Entry();

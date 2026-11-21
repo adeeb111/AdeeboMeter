@@ -125,22 +125,39 @@ namespace AdeeboMeter
         static string Pc0(double v) { return double.IsNaN(v) ? "-" : v.ToString("0.#", CultureInfo.CurrentCulture); }
 
         // ---------- the best time to play: the Gamer Zone's history by weekday and hour
+        // running sums for BestTime: the average of each column with no-reply (NaN) minutes left out, as GameStat.Avg does
+        sealed class Acc
+        {
+            public int N; double sa, sp, sl; int na, np, nl;
+            public void Add(GameHistory.Row r) { N++; if (!double.IsNaN(r.Avg)) { sa += r.Avg; na++; } if (!double.IsNaN(r.P95)) { sp += r.P95; np++; } if (!double.IsNaN(r.Loss)) { sl += r.Loss; nl++; } }
+            public double Avg { get { return na == 0 ? double.NaN : sa / na; } }
+            public double P95 { get { return np == 0 ? double.NaN : sp / np; } }
+            public double Loss { get { return nl == 0 ? double.NaN : sl / nl; } }
+        }
         public static List<string[]> BestTime(string which)
         {
             var rows = new List<string[]>(); string err; var g = Pick(which, out err);
             if (g == null) { rows.Add(R(2, "Game", err, "", "u")); return rows; }
             if (!Cfg.History) { rows.Add(R(1, "History", "off", "Turn on History in Settings - the Gamer Zone then keeps a line a minute for each server.", "u")); return rows; }
-            var all = new List<GameHistory.Row>(); for (int i = 0; i < Cfg.GameDays; i++) all.AddRange(GameHistory.Read(DateTime.Today.AddDays(-i), g.Id));
-            if (all.Count < 60) { rows.Add(R(1, "Not enough yet", all.Count + " minutes recorded for " + g.Name, "Leave the Gamer Zone watching it for a few days (background game ping in Settings).", "u")); return rows; }
-            var server = all.GroupBy(x => x.Server).Where(x => !double.IsNaN(GameStat.Avg(x.Select(y => y.Avg).ToArray()))).OrderBy(x => GameStat.Avg(x.Select(y => y.Avg).ToArray())).FirstOrDefault();
+            // carry-over (8502674): one day's rows at a time, summed into small buckets - never every row of every day in one list
+            var perServer = new Dictionary<string, Acc>(); var perSlot = new Dictionary<string, Dictionary<int, Acc>>(); int total = 0;
+            for (int i = 0; i < Cfg.GameDays; i++)
+                foreach (var x in GameHistory.Read(DateTime.Today.AddDays(-i), g.Id))
+                {
+                    total++; Acc a; if (!perServer.TryGetValue(x.Server, out a)) perServer[x.Server] = a = new Acc(); a.Add(x);
+                    Dictionary<int, Acc> sl; if (!perSlot.TryGetValue(x.Server, out sl)) perSlot[x.Server] = sl = new Dictionary<int, Acc>();
+                    int key = (int)x.T.DayOfWeek * 24 + x.T.Hour; if (!sl.TryGetValue(key, out a)) sl[key] = a = new Acc(); a.Add(x);
+                }
+            if (total < 60) { rows.Add(R(1, "Not enough yet", total + " minutes recorded for " + g.Name, "Leave the Gamer Zone watching it for a few days (background game ping in Settings).", "u")); return rows; }
+            var server = perServer.Where(x => !double.IsNaN(x.Value.Avg)).OrderBy(x => x.Value.Avg).Select(x => x.Key).FirstOrDefault();
             if (server == null) { rows.Add(R(1, "No answers", "none of " + g.Name + "'s servers answered in the recorded days", "", "m")); return rows; }
-            var slots = server.GroupBy(x => new { D = (int)x.T.DayOfWeek, H = x.T.Hour }).Where(x => x.Count() >= 30)   /* bug-hunt ML-52: half an hour of minutes, at least, before an hour can be "the best time" */
-                .Select(x => new { x.Key.D, x.Key.H, Avg = GameStat.Avg(x.Select(y => y.Avg).ToArray()), P95 = GameStat.Avg(x.Select(y => y.P95).ToArray()), Loss = GameStat.Avg(x.Select(y => y.Loss).ToArray()) })
+            var slots = perSlot[server].Where(x => x.Value.N >= 30)   /* bug-hunt ML-52: half an hour of minutes, at least, before an hour can be "the best time" */
+                .Select(x => new { D = x.Key / 24, H = x.Key % 24, Avg = x.Value.Avg, P95 = x.Value.P95, Loss = x.Value.Loss })
                 .Select(x => new { x.D, x.H, x.Avg, x.Loss, Score = x.P95 + 20 * (double.IsNaN(x.Loss) ? 0 : x.Loss) }).Where(x => !double.IsNaN(x.Score)).ToList();
             if (slots.Count < 3) { rows.Add(R(1, "Not enough yet", "need a few different hours recorded", "", "u")); return rows; }
             var c = CultureInfo.CurrentCulture; var dn = c.DateTimeFormat.DayNames;
             Func<int, string> hr = h => h.ToString("00", c) + ":00";
-            rows.Add(R(3, "Server", server.Key + " · " + Ms(GameStat.Avg(server.Select(y => y.Avg).ToArray())) + " on average", g.Name + "'s best server over " + Cfg.GameDays + " days.", "m"));
+            rows.Add(R(3, "Server", server + " · " + Ms(perServer[server].Avg) + " on average", g.Name + "'s best server over " + Cfg.GameDays + " days.", "m"));
             rows.Add(R(-1, "BEST HOURS", "", "", "m"));
             foreach (var x in slots.OrderBy(x => x.Score).Take(3)) rows.Add(R(0, dn[x.D] + " " + hr(x.H), Ms(x.Avg) + (x.Loss > 0 ? " · loss " + Pc(x.Loss) : ""), "", "m"));
             rows.Add(R(-1, "WORST HOURS", "", "", "m"));
@@ -195,8 +212,9 @@ namespace AdeeboMeter
             string err; var g = Pick(which, out err); var srv = g != null ? Best(g) : null; var sip = srv != null ? Resolve(srv) : null;
             string gw; lock (m.L) gw = m.Gateway;
             var con = new List<double>(); var gws = new List<double>(); var nets = new List<double>(); var gms = new List<double>();
+            var whole = Stopwatch.StartNew();   // carry-over (8502674): the check ends on the clock - slow game probes can't stretch 30 s into 40
             using (var p = new Ping())
-                for (int i = 0; i < secs && !run.Stop; i++)
+                for (int i = 0; i < secs && !run.Stop && whole.ElapsedMilliseconds < secs * 1000L; i++)
                 {
                     var sw = Stopwatch.StartNew(); run.Status = "Second " + (i + 1) + " of " + secs + "...";
                     try { var r = p.Send(ip, 900); con.Add(r.Status == IPStatus.Success ? r.RoundtripTime : double.NaN); } catch (PingException) { con.Add(double.NaN); }
@@ -206,7 +224,7 @@ namespace AdeeboMeter
                     int wait = 1000 - (int)sw.ElapsedMilliseconds; if (wait > 0) Thread.Sleep(wait);
                 }
             var ca = con.ToArray(); double cAvg = GameStat.Avg(ca), cLoss = GameStat.Loss(ca), cJit = GameStat.Jitter(ca);
-            rows.Add(R(-1, "THE FOUR LEGS", secs + " seconds", "", "m"));
+            rows.Add(R(-1, "THE FOUR LEGS", con.Count + " seconds", "", "m"));
             bool conBad = double.IsNaN(cAvg) || cLoss >= 5 || cAvg > 20 || cJit > 10;
             rows.Add(R(double.IsNaN(cAvg) ? 2 : conBad ? 1 : 0, "PC → console", double.IsNaN(cAvg) ? "no answer" : Ms(cAvg) + " · jitter " + Ms(cJit) + " · loss " + Pc(cLoss), double.IsNaN(cAvg) ? "Consoles often ignore ping when asleep; wake it, or check the address." : "Your home network to the console - includes the console's Wi-Fi.", "m"));
             double ga = GameStat.Avg(gws.ToArray()), na = GameStat.Avg(nets.ToArray()), sa = GameStat.Avg(gms.ToArray());
@@ -219,6 +237,7 @@ namespace AdeeboMeter
             else if (conBad && !double.IsNaN(ga) && ga < 10) { lv = 2; v = "the console's own link: the router answers this PC quickly, the console doesn't - move it closer, use 5 GHz, or a cable"; }
             else if (!double.IsNaN(ga) && ga > 20) { lv = 1; v = "your home network is slow for everyone right now - something is downloading, or the router is busy"; }
             else if (!double.IsNaN(na) && na > 80) { lv = 1; v = "your internet connection is slow right now - a provider problem if it lasts"; }
+            else if (double.IsNaN(ga) || double.IsNaN(na)) { lv = 3; v = "the console's link looks fine; " + (double.IsNaN(ga) ? "your router" : "the internet") + " wasn't timed in this window, so that part is unknown - try again in a minute"; }   // carry-over: never "fine" for a leg that wasn't measured
             else { lv = 0; v = "home, router and internet look fine - lag now would be the game server or the console itself"; }
             rows.Insert(0, R(lv, "Console verdict", v, "", "i"));
             return rows;

@@ -2812,3 +2812,5 @@ Copy my week	Copier ma semaine
 the first	les
 shown	premiers affichés
 earlier report(s) waiting to send when you're online	rapports en attente de connexion
+not watched - only the best	non surveillé - seuls les
+servers are checked	meilleurs serveurs sont mesurés

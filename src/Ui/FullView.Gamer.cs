@@ -262,8 +262,10 @@ namespace AdeeboMeter
         {
             var week = GameHistory.Week(gm.Id); var best = GamePing.Me.Best(gm);
             float top = y, pad = 14 * S, rowH = 34 * S;
-            var rows = GamePing.Me.Ranked(gm, null).Take(GamePing.MaxServers).ToList();   // the best region first - never cut off the card
-            float h = pad + 30 * S + 22 * S + rows.Count * rowH + 40 * S;
+            var ranked = GamePing.Me.Ranked(gm, null).ToList();
+            var rows = ranked.Take(GamePing.MaxServers).ToList();   // the best region first - never cut off the card
+            var unwatched = ranked.Skip(GamePing.MaxServers).ToList();   // carry-over (round-2 ML82): servers past the cap are listed as not watched, never just missing
+            float h = pad + 30 * S + 22 * S + rows.Count * rowH + unwatched.Count * 20 * S + 40 * S;
             var card = new RectangleF(x, y, w, h);
             var gcol = Hex(gm.Color);
             Kit.Box(g, card); if (playing) Theme.Stroke(g, card, 16 * S, gcol, 2);
@@ -329,6 +331,7 @@ namespace AdeeboMeter
                     using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : GradeColor(grade))) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(grade, Draw.fSmall, gb, gr, c);
                     cy += rowH;
                 }
+                foreach (var s in unwatched) { g.DrawString(s.Name + " · " + L.T("not watched - only the best") + " " + GamePing.MaxServers + " " + L.T("servers are checked"), Draw.fSmall, muted, new RectangleF(cx, cy + 2 * S, cw, 16 * S), nowrap); cy += 20 * S; }
                 if (!string.IsNullOrEmpty(gm.Note)) g.DrawString(gm.Note, Draw.fSmall, muted, new RectangleF(cx, cy + 8 * S, cw, 18 * S), nowrap);
             }
             return top + h + 14 * S;

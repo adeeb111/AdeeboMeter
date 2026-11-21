@@ -159,7 +159,13 @@ namespace AdeeboMeter
                 using (var tc = new TcpClient())
                     if (tc.ConnectAsync("www.microsoft.com", 443).Wait(5000))
                         using (var ssl = new System.Net.Security.SslStream(tc.GetStream(), false, (s, c, ch2, e2) => { seen = c; errs = e2; return e2 == System.Net.Security.SslPolicyErrors.None; }))
-                            try { tc.ReceiveTimeout = 8000; tc.SendTimeout = 8000; ssl.AuthenticateAsClient("www.microsoft.com"); } catch (System.Security.Authentication.AuthenticationException) { } catch (System.IO.IOException) { }   /* a middlebox that accepts and then stalls: 8 s, not forever */
+                        {
+                            tc.ReceiveTimeout = 8000; tc.SendTimeout = 8000;   /* a middlebox that accepts and then stalls: 8 s, not forever */
+                            // carry-over (round-2 ML41): the handshake runs aside and Stop closes the socket under it - Stop works mid-check
+                            var hs = System.Threading.Tasks.Task.Factory.StartNew(() => { try { ssl.AuthenticateAsClient("www.microsoft.com"); } catch (System.Security.Authentication.AuthenticationException) { } catch (System.IO.IOException) { } catch (ObjectDisposedException) { } });
+                            var until = DateTime.UtcNow.AddSeconds(9); while (!hs.Wait(200) && !run.Stop && DateTime.UtcNow < until) { }
+                            if (!hs.IsCompleted) { tc.Close(); hs.Wait(2000); }
+                        }
                 if (seen == null) add(3, "HTTPS", "couldn't check - no answer from microsoft.com", "");
                 else if (errs != System.Net.Security.SslPolicyErrors.None) add(2, "HTTPS", "the certificate this network shows for microsoft.com isn't trusted - something on the way is pretending to be the site", "Don't sign in to anything here; use your phone's hotspot.");
                 else { string by; using (var sc = new System.Security.Cryptography.X509Certificates.X509Certificate2(seen)) by = Inspection.InspectedBy(sc); if (by != "") add(2, "HTTPS", "someone on this network opens your HTTPS (certificate from " + Draw.Trunc(by, 40) + ")", "Fine on your company's network; on a hotel or cafe network, stop and use your phone instead."); else add(0, "HTTPS", "not opened on the way - certificates come straight from the sites", ""); }
@@ -205,12 +211,13 @@ namespace AdeeboMeter
             foreach (var s in servers)
             {
                 if (run.Stop) break; run.Status = "Asking " + s.Item1 + "...";
-                var cached = new List<double>(); var fresh = new List<double>(); int fail = 0;
+                var cached = new List<double>(); var fresh = new List<double>(); var first = new List<double>(); int fail = 0;   // carry-over (round-2 ML51): new = the made-up names only - a popular name's first ask is usually cached already
                 for (int round = 0; round < 3; round++) foreach (var n in names)
                     {
-                        if (run.Stop || (fail >= 3 && cached.Count + fresh.Count == 0)) break;   // blocked here: three silences and it's out of the race, not another minute of waiting
-                        var q = Toolkit.Query(s.Item2, n, 1, true); if (q == null) fail++; else (round == 0 ? fresh : cached).Add(q.Ms);
+                        if (run.Stop || (fail >= 3 && cached.Count + first.Count == 0)) break;   // blocked here: three silences and it's out of the race, not another minute of waiting
+                        var q = Toolkit.Query(s.Item2, n, 1, true); if (q == null) fail++; else (round == 0 ? first : cached).Add(q.Ms);
                     }
+                if (cached.Count == 0) cached.AddRange(first);
                 if (cached.Count + fresh.Count == 0) { res.Add(Tuple.Create(s.Item1, double.NaN, double.NaN, fail)); continue; }
                 // a name nobody asked before: how fast it goes out and finds the answer itself
                 for (int i = 0; i < 3 && !run.Stop; i++) { var q = Toolkit.Query(s.Item2, "r" + Guid.NewGuid().ToString("N").Substring(0, 10) + ".example.com", 1, true); if (q == null) fail++; else fresh.Add(q.Ms); }
@@ -224,7 +231,7 @@ namespace AdeeboMeter
             bool mineBest = mine != null && (mine == best || (!double.IsNaN(score(mine)) && score(mine) - score(best) < 5));
             rows.Add(R(mineBest ? 0 : 1, "Winner", best.Item1 + " - " + (double.IsNaN(best.Item2) ? "-" : best.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms for a name it knows, " + (double.IsNaN(best.Item3) ? "-" : best.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms for a new one", mineBest ? "Yours is as fast as any - nothing to change." : "Yours is slower here. Speed isn't everything: your provider's DNS may steer you to closer servers, and a company PC must keep its own DNS.", "m"));
             foreach (var r in res) rows.Add(R(r.Item4 > 3 ? 1 : 3, r.Item1, double.IsNaN(r.Item2) && double.IsNaN(r.Item3) ? "no answer" : (double.IsNaN(r.Item2) ? "-" : r.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms known · " + (double.IsNaN(r.Item3) ? "-" : r.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms new" + (r.Item4 > 0 ? " · " + r.Item4 + " unanswered" : ""), "", "m"));
-            rows.Add(R(3, "How", "each server was asked for 6 popular names three times and for 3 made-up names. Known = the 2nd and 3rd asks (its cached answer); new = the first ask of each name plus the made-up ones (it had to go and find out). Typical (middle) times shown.", "", "i"));
+            rows.Add(R(3, "How", "each server was asked for 6 popular names three times and for 3 made-up names. Known = the 2nd and 3rd asks (its cached answer); new = the made-up names, which no server can have cached (it had to go and find out). Typical (middle) times shown.", "", "i"));
             return rows;
         }
 

@@ -34,7 +34,7 @@ namespace AdeeboMeter
                 st.Phase = recovering ? "fast recovery" : cwnd < ss ? "slow start" : "congestion avoidance";
                 // what goes wrong this round: your click, the buffer overflowing, or a random loss
                 string loss; p.Events.TryGetValue(r, out loss); loss = loss ?? "";
-                if (loss == "" && cwnd > Math.Max(cap, 2)) loss = "soft";   // the window never goes below 2: a link whose BDP is under 2 packets just queues them
+                if (loss == "" && cwnd > Math.Max(cap, 2)) loss = "soft";   // the window isn't cut below 2 by the pipe: a link whose BDP is under 2 packets just queues them (only a timeout drops it to 1)
                 if (loss == "" && p.LossPct > 0 && rnd.NextDouble() < 1 - Math.Pow(1 - p.LossPct / 100, Math.Min(cwnd, 5000))) loss = "soft";
                 st.Loss = loss; res.Add(st);
                 recovering = false;
@@ -103,7 +103,7 @@ namespace AdeeboMeter
             o.LatePct = 100.0 * extraDelays.Count(d => d > bufferMs) / extraDelays.Count;
             o.MouthToEarMs = baseMs + bufferMs + 20;   // + 20 ms for the codec on both ends
             // a late packet is a gap the codec papers over (packet loss concealment): it hurts about half as much as a lost one
-            o.Mos = LiveCapture.Mos(baseMs + bufferMs, 0, lossPct + o.LatePct * 0.5);
+            o.Mos = LiveCapture.Mos(o.MouthToEarMs - 10, 0, lossPct + o.LatePct * 0.5);   // carry-over (100-bug:160): scored on the same mouth-to-ear delay the lab shows (Mos adds its own 10 ms)
             return o;
         }
 

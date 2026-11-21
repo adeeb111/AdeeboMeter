@@ -47,7 +47,7 @@ namespace AdeeboMeter
         static string SecSummary(string sec, List<SetItem> items)
         {
             if (sec == "Widget") { int i = Array.IndexOf(WStyleIds, Cfg.WidgetStyle); return L.T(i >= 0 ? WStyle[i] : "Auto") + (Draw.SpeedStyle ? " · " + (Cfg.WUnits == "bytes" ? "MB/s" : "Mb/s") : ""); }
-            if (sec == "Background checks") return L.T(Cfg.Preset == "penny" ? "Penny" : Cfg.Preset == "custom" ? "Your own mix" : Cfg.Preset == "gamer" ? "Gamer" : "Balanced") + " · ~" + Cfg.JobsPerMinute() + " " + L.T("checks a minute");
+            if (sec == "Background checks") return L.T(Cfg.Preset == "penny" ? "Penny" : Cfg.Preset == "custom" ? "Your own mix" : Cfg.Preset == "gamer" ? "Gamer" : "Balanced") + " · ~" + (Cfg.JobsPerMinute() + Cfg.GameJobsPerMinute()) + " " + L.T("checks a minute");   /* carry-over: the game pings count too, as the Settings page says */
             if (sec == "Companion") return Voice.Serious ? L.T("Plain - no jokes") : L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T(Lines.PersonaName(Lines.Persona));
             // Review-1: "Sidebar · Off" read as the sidebar being off - the layout, then how many pages are hidden
             if (sec == "Navigation") { int hid = items.Count(i => i.Sec == sec && i.Label.StartsWith("Show ", StringComparison.Ordinal) && i.Cur() == 1); return L.T("Layout") + ": " + L.T(Cfg.Layout == "sidebar" ? "Sidebar" : "Classic") + (hid > 0 ? " · " + hid + " " + L.T(hid == 1 ? "page hidden" : "pages hidden") : ""); }

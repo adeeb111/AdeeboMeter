@@ -45,62 +45,12 @@ Bug hunt (report: 5 High, 31 Medium, 236 Medium-Low, 365 Low = 637), all on dev-
 - docs/kb/r1.json misses 8 of the 1.1.5 tools (diskspeed, gpucheck, laptop, pcwhy, screentest, soundtest, srvchange, uptime) -
   add their terms/examples, then `python3 tools/phrasebook.py`.
 
-### C. Carry-overs from earlier review rounds (still open, not part of the 637 - next coding job if Adeeb says go)
-- 200-bug High #1 — every IPv6 UDP receive throws (`Protocols.cs`, `EngPack.cs:287`, `Reach.cs`, `Snmp.cs:122`, `Toolkit.cs:529`, `UdpMtu.cs:50`, `Lab.cs:217`).
-- Round-2 High #1 — QUIC gate probe is still 1172 bytes, below RFC 9000's 1200-byte floor (`UdpMtu.cs:58,63`); the self-test still pins `UdpMtu.Quic(1172)` (`SelfTest.cs:1375-1377`).
-- 100-bug #26 — `LinkInfo.Overlaps` ignores channel width (`LinkInfo.cs:593-597`): 2.4 GHz is `|a-b| < 5`, anything else is `a == b`; an 80/160 MHz neighbour on ch 40 also covers 36-48, but `LeastCrowded`, AirLog crowding and "sharing your channel" treat them as non-overlapping. (T3 M1 was this same finding; removed from the count.)
-- 100-bug #19 — WifiAdvisor band/roaming advice matches APs by SSID only (`WifiAdvisor.cs:103,109`): the "switch to 5 GHz" and sticky-client checks never check BSSID/OUI.
-- 100-bug #20 — AirLog counts any AP with my SSID as mine (`AirLog.cs:29`): a neighbour (or evil twin) broadcasting my SSID is folded into "my network", excluded from crowding and winner math.
-- 100-bug #141 — `.p7m` OOM escape: caps tightened in 1.1.6 (peak now ~100–150 MB instead of ~600 MB) but still above the 80 MB budget, and `OutOfMemoryException` still escapes the catches.
-- 8502674 review — `CertKeys.Live` race (no `tc.Close()` + wait, `CertKeys.cs:254-262`); `Live()` ignores TLS handshake result.
-- 100-bug #167 — `MyKeys` "(soon)" label includes expired keys (`days < 30`).
-- 100-bug #165 — `Find()` / `MyEncryptionCert()` never dispose non-matching certs.
-- 100-bug #172 — `Csr()` / `Match()` `GetRSAPrivateKey()` null uncaught.
-- Round-2 — recipients listing on a bad `.cer`: the `.adeebokey` loop still has no try around `File.ReadAllText`; the `.cer` loop now catches `IOException` silently, so the recipient vanishes instead of the whole view failing (partial fix, weaker symptom).
-- 100-bug #237 — `Reach` `ssh-keygen -F` double brackets for bracketed IPv6 hosts; `SafeHost` accepts an embedded port.
-- 100-bug #235 — RDP and DoT single-read; round-2 L122 — Ssh/HttpTiming single-read.
-- Round-2 L52 — speed-test threads outlive the test: still open in narrowed form (`SpeedTest.cs:288` now joins in two passes, but a stream stalling ~12 s+ can still be running when the joins expire).
-- History bypassing Portable mode — still open.
-- `jTimer`/`labTimer`/`gameTimer` never disposed — still open.
-- 100-bug #3 — a malformed `server` line in games.txt wipes a game's built-in servers (`ApplyFile` clears before validation).
-- 100-bug #22 — "Evenings with trouble" computed with a different average than the one displayed (no-reply minutes count as 0 ms in the threshold, filtered in the display).
-- GameStat.Used records the method attempted, not the method that answered.
-- TcpMs skips `EndConnect` on timeout (8502674 residual).
-- GamePing.Stop doesn't wake the loop, so `Join(3000)` can time out when idle (5 s sleep).
-- Un-monitoring all games mid-session leaves the session open forever.
-- Round-2 ML41 (Hotel): TLS timeout half fixed; Stop still cannot interrupt the check.
-- Round-2 ML51: DnsRace "new" time still mixes round-0 first asks with the made-up names; the How row still says "(it had to go and find out)".
-- 8502674 M9: Engineer preset still falls through to Balanced (no engineer branch in `ApplyPreset`). (T2 notes the self-test now pins `bal == eng` as "by design" — the preset still has no engineer branch.)
-- 8502674 BestTime still loads every game-history row for up to `GameDays` days into one list.
-- 8502674 ConsoleCheck: nominal 30 s check can still run noticeably longer; verdict still says "look fine" when the router was never measured.
-- `Points.Load()` still reads the whole file unbounded (`File.ReadAllLines`).
-- Bandwidth `I((long)(bps / 8 / 1538))` still overflows long at ~15-digit Gbps speeds.
-- Speed units still case-sensitive (`MBPS`/`GBPS` rejected).
-- 100-bug #21: packet journey rewind ("Before") packets are never re-filtered to the discovered remote.
-- Round-2 ML79 remainder: the FromRouter flag is fixed, but `Translate` still labels the PC's own ICMP as "Server:".
-- Round-2 ML80 remainder: `Local()` now adds a "can't tell" note for downloads, but still doesn't measure inbound-data → outbound-ACK gaps.
-- Round-2 ML82 remainder: the survey now covers all servers, but the card still hides servers past MaxServers (no "not watched" rows).
-- Gamer preset byte-identical to Balanced — STILL OPEN.
-- Website documenting none of the 1.1.5 features (0 mentions of Gamer Zone, Adeebo Points, packet journey, Your phone, French, Labs, Report for my ISP, ARM in `docs/index.html`) — still open after the 2026-11-17 site refresh. The same theme in a different file: 8 1.1.5 tools (diskspeed, gpucheck, laptop, pcwhy, screentest, soundtest, srvchange, uptime) are also missing from `docs/kb/r1.json`.
-- Privacy page omits the outage log (Points is now disclosed).
-- "printer" search opening the ping sweep (High, still open).
-- Lab-gate bypasses (still open).
-- Points cap gap widened: earnable total now ~875 vs the 600 cap (was ~751 at `8502674`; Learn topics grew 59 → 90).
-- `learn.txt` header kinds remainder (round-2 L9): header lists 7 kinds, the file now uses 9 (streaming, investing missing).
-- Self-test count drifted again (200-bug #132): `SelfTest.cs` now has **86** `T("` registrations, while README.md:86, docs/THEORY-OF-EVERYTHING.md:281 and docs/index.html:956 still say **71 checks**.
-- The `SecSummary` "Background checks" "~N checks a minute" uses `JobsPerMinute()` (which omits GamePing).
-- Round-2 ML35 (SysTools DHCP infinite lease): fix attempt never fires — a REG_DWORD arrives as an `int` (-1), so an infinite lease now shows NO "Expires" row at all (old symptom was "Expires 7 Feb 2106"). The same root cause at a different site is counted as T3 ML4 (`FullView.Travel.cs:148` shows "lease 1193046.5 h"); the SysTools one stays a carry-over.
-- `certcmp` still ungated.
-- ISP report page router chip = first answering hop (100-bug item at `IspReport.cs:95`).
-- Inspection false "HTTPS inspected" for a brand-new public root (same behaviour as round-2 ML88, stale Mozilla snapshot). The opposite direction — store-read failures failing open — is counted as T1 L1.
-- GameHistory `Best()`/`Week()` file IO on the UI paint thread (round-2 L93, `FullView.Gamer.cs:258` calls `GameHistory.Week()` during paint).
-- `Outages.Last` dedup can never match (round-2 ML2 — History times are second-precision, `Recent` times full-precision). The *cost* of the same loop is counted as ML-137; the correctness bug is not re-counted.
-- 100-bug line 209 — an event whose XML exceeds 16 KB renders as a bogus year-1 event (`LinkInfo.cs:42-45`, `EvLog.Render`): fixed `char[16384]` buffer, returns `""` on failure instead of retrying bigger; the event is added with Id 0 and T = year 1 ("Mon 00:00").
-- 100-bug VpnAware item — `VpnAware.Detect` aborts the whole report if one protected process cannot be read (`VpnAware.cs:43`): only `InvalidOperationException` is caught around `ProcessName`; a `Win32Exception` aborts the VPN check. (The registry-read catch gap at the same file is counted as T1 L21.)
-- 100-bug:160 — LabSim jitter-lab MOS is computed from `baseMs + bufferMs` while `MouthToEarMs` adds +20 (`LabSim.cs:98-99`).
-- 8502674 review — TCP lab "window never goes below 2" (`FullView.Labs.cs:286` vs `LabSim.cs:45`, `cwnd = 1` on hard loss; the self-test at `SelfTest.cs:968` now pins `cwnd = 1` after hard loss).
-- 100-bug:178 — install deletes every subdirectory: old-version cleanup wipes any non-version folder under the install root (`Setup.cs:189-192` in the old numbering).
-- Per-monitor DPI in the Setup window — `Setup.cs` uses `Graphics.FromHwnd(IntPtr.Zero)` (primary monitor); part of the already-reported per-monitor DPI item.
+### C. Carry-overs from earlier review rounds - worked through (commit after 31ef361)
+All 55 were gone through. 44 fixed in code or docs, 6 were already fixed by earlier commits (checked at HEAD), 5 left on purpose:
+- Left for Adeeb (product/design): **website** (`docs/index.html` names none of the 1.1.5 features - Gamer Zone, Points, packet journey, Your phone, French, Labs, Report for my ISP, ARM; needs a design pass he approves) and the **Points cap** (about 875 earnable vs the 600 cap - raise the cap, or count Learn topics differently).
+- Pushed back: **Engineer preset** (merged into Balanced by design, no longer offered; the self-test pins it), **certcmp ungated** (one TLS handshake, the same traffic as the ungated certlive/port/httpreq - gating only it would be inconsistent), **Setup per-monitor DPI** (the process is system-DPI-aware, so primary-monitor DPI is correct there; real per-monitor DPI is an app-wide switch that needs a real-Windows test).
+- Already fixed before this pass: History in Portable mode (History.Dir uses DataDir), timers disposed (ReleaseExtras / FormClosed), Gamer preset differs from Balanced (Wi-Fi 10 s, 5 game regions every 10 s), "printer" opens the SNMP printer view, Lab gate (radius in SenderGate, SecondDhcp checks Policy.NoLab and company networks), r1.json has the 8 tools, Inspection reads Windows' own root list for new public CAs.
+- Need a real Windows run: IPv6 UDP receives, CertKeys.Live timeout, Hotel Stop, speed-test abort, EvLog big events, DHCP infinite lease, game-ping Stop wake.
 
 ### D. Queued work (agreed earlier, after the bug hunt)
 - Network Lab Suite (PR #29, four features) - design first.

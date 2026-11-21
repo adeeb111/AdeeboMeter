@@ -86,7 +86,7 @@ namespace AdeeboMeter
             {
                 if (band.StartsWith("2.4", StringComparison.Ordinal))
                 {
-                    Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase) && LinkInfo.Overlaps(a.Channel, c, band)).Sum(a => Math.Max(5, a.Signal));
+                    Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase) && LinkInfo.Overlaps(a.Channel, a.Width, c, 20, band)).Sum(a => Math.Max(5, a.Signal));
                     var best = Ch24.OrderBy(load).First();
                     if (best != my && load(best) < load(my) * 0.5) x.Advice.Add(new[] { "1", "Your router is on 2.4 GHz channel " + my + ", which you share with busy neighbours. Channel " + best + " is much quieter - change it in your router's Wi-Fi settings (only 1, 6 or 11 avoid overlap)." });
                 }
@@ -94,20 +94,20 @@ namespace AdeeboMeter
                 {
                     // the same candidates as Least crowded channel: 36-48 everywhere, upper and radar channels only when they're in use around here
                     var lc = WlanApi.LeastCrowded(aps, band, my, s.MyBssid);
-                    Func<int, double> load = c => aps.Where(a => a.Band == band && LinkInfo.Overlaps(a.Channel, c, band) && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase)).Sum(a => Math.Max(5, a.Signal));   // bug-hunt M-18: neighbours on overlapping channels count too, as on 2.4 GHz
+                    Func<int, double> load = c => aps.Where(a => a.Band == band && LinkInfo.Overlaps(a.Channel, a.Width, c, 20, band) && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase)).Sum(a => Math.Max(5, a.Signal));   // bug-hunt M-18: neighbours on overlapping channels count too, as on 2.4 GHz
                     var best = lc != null ? lc[0] : 36;
                     if (best != my && load(my) > 60 && load(best) < load(my) * 0.4) x.Advice.Add(new[] { "1", "Neighbours crowd 5 GHz channel " + my + ". Channel " + best + " is " + (load(best) == 0 ? "empty" : "much quieter") + " here - set it in your router." });
                 }
                 // the same network on a better band
                 if (band.StartsWith("2.4", StringComparison.Ordinal))
                 {
-                    var five = aps.Where(a => a.Ssid == ssid && a.Band != "" && !a.Band.StartsWith("2.4", StringComparison.Ordinal) && a.Signal >= 40).OrderByDescending(a => a.Signal).FirstOrDefault();
+                    var five = aps.Where(a => SameNet(s.MyBssid, ssid, a.Bssid, a.Ssid) && a.Band != "" && !a.Band.StartsWith("2.4", StringComparison.Ordinal) && a.Signal >= 40).OrderByDescending(a => a.Signal).FirstOrDefault();
                     if (five != null) x.Advice.Add(new[] { "1", "You're on 2.4 GHz, but \"" + ssid + "\" is also on " + five.Band + " here at " + five.Signal + "% - faster and less crowded. Forget and rejoin the network, or give the 5 GHz band its own name in the router." });
                 }
                 // sticky client: clinging to a far access point while a much stronger one of the same network is near
                 if (sig >= 0 && sig < 45)
                 {
-                    var near = aps.Where(a => a.Ssid == ssid && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase) && a.Signal >= sig + 25).OrderByDescending(a => a.Signal).FirstOrDefault();
+                    var near = aps.Where(a => SameNet(s.MyBssid, ssid, a.Bssid, a.Ssid) && !string.Equals(a.Bssid, s.MyBssid, StringComparison.OrdinalIgnoreCase) && a.Signal >= sig + 25).OrderByDescending(a => a.Signal).FirstOrDefault();
                     if (near != null) x.Advice.Add(new[] { "1", "Your PC clings to a far access point (" + sig + "%) while another one of \"" + ssid + "\" is at " + near.Signal + "% nearby. Turning Wi-Fi off and on makes it pick the closer one; in the adapter's Advanced settings, a higher \"Roaming aggressiveness\" makes it switch by itself." });
                 }
                 // look-alike networks: same name, different maker and not a randomised address - an "evil twin" sign (or a neighbour's
@@ -124,6 +124,14 @@ namespace AdeeboMeter
             }
             if (x.Advice.Count == 0) x.Advice.Add(new[] { "0", Voice.P("Nothing to tweak - your Wi-Fi is set up well.", "No changes suggested.") });
             return x;
+        }
+        // carry-over (100-bug #19/#20): another access point is "yours" only when it carries your name AND your maker's prefix
+        // (or your own address is randomised, so the prefix says nothing) - a neighbour or an evil twin with your name is not
+        internal static bool SameNet(string myBssid, string mySsid, string bssid, string ssid)
+        {
+            if (string.IsNullOrEmpty(mySsid) || ssid != mySsid) return false;
+            string mo = Oui((myBssid ?? "").Replace('-', ':')), o = Oui((bssid ?? "").Replace('-', ':'));
+            return mo == "" || Arp.Randomised(myBssid) || mo == o;
         }
         static string Oui(string bssid) { return string.IsNullOrEmpty(bssid) || bssid.Length < 8 ? "" : bssid.Substring(0, 8).ToLowerInvariant(); }
     }

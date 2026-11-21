@@ -26,7 +26,10 @@ namespace AdeeboMeter
         static string Pages(Visual v, Func<string, string> X)
         {
             var sb = new StringBuilder(); var hops = v.Main.Hops.Where(h => h.Sent > 0).ToList();
-            var router = hops.FirstOrDefault(h => h.Lost < h.Sent); var end = hops.LastOrDefault(h => h.Lost < h.Sent);
+            // carry-over (100-bug): the router chip is the router - the gateway's own hop, or else an answering hop before the provider's first one; never just the first hop that answered
+            var router = v.GwIdx >= 0 && v.GwIdx < v.Main.Hops.Count && v.Main.Hops[v.GwIdx].Sent > 0 ? v.Main.Hops[v.GwIdx]
+                : v.Main.Hops.Take(v.FirstIsp >= 0 ? v.FirstIsp : 0).FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
+            var end = hops.LastOrDefault(h => h.Lost < h.Sent);
             var isp = v.FirstIsp >= 0 && v.FirstIsp < v.Main.Hops.Count ? v.Main.Hops[v.FirstIsp] : null; var from = v.Start >= 0 ? v.Main.Hops[v.Start] : null;
             int lvl = from != null ? 2 : 0;
 

@@ -106,7 +106,7 @@ namespace AdeeboMeter
                 for (int t = 0; t < 3; t++)
                 {
                     var sw = Stopwatch.StartNew(); u.Send(req, req.Length); byte[] r;
-                    try { var ep = new IPEndPoint(IPAddress.Any, 0); r = u.Receive(ref ep); } catch (SocketException) { continue; }
+                    try { var ep = Toolkit.AnyEp(u); r = u.Receive(ref ep); } catch (SocketException) { continue; }
                     IPEndPoint mapped = ParseStun(r, tid);
                     if (mapped == null) { bad = true; continue; }   // a stray or malformed datagram: the other tries still count
                     rows.Add(R(0, "The internet sees you as", mapped.ToString(), "From " + a + ":" + port + " in " + sw.ElapsedMilliseconds + " ms.", "m"));
@@ -175,7 +175,7 @@ namespace AdeeboMeter
             using (var u = new UdpClient(a.AddressFamily))
             {
                 u.Client.ReceiveTimeout = ms;
-                try { u.Send(q, q.Length, new IPEndPoint(a, port)); var ep = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref ep); return ep.Address.Equals(a) ? r : null; } catch (SocketException) { return null; }
+                try { u.Send(q, q.Length, new IPEndPoint(a, port)); var ep = Toolkit.AnyEp(u); var r = u.Receive(ref ep); return ep.Address.Equals(a) ? r : null; } catch (SocketException) { return null; }
             }
         }
         public static List<string[]> NameOf(string ipIn)
@@ -223,17 +223,26 @@ namespace AdeeboMeter
         }
 
         // ---------- Remote access: the commands for Windows' own OpenSSH, curl and PowerShell, filled in - click one to copy it
-        public static bool SafeHost(string h) { return Regex.IsMatch(h ?? "", @"^[A-Za-z0-9]([A-Za-z0-9._:-]{0,252})$|^\[[0-9A-Fa-f:.]+\]$"); }
+        // carry-over (100-bug #237): a name, an IPv4 address or an IPv6 address (bare or in brackets) - a colon only as part of an IPv6
+        // address, so "host:22" (an embedded port) is refused; the port has its own box
+        public static bool SafeHost(string h)
+        {
+            h = h ?? ""; IPAddress ip;
+            if (h.IndexOf(':') < 0) return Regex.IsMatch(h, @"^[A-Za-z0-9][A-Za-z0-9._-]{0,252}$");
+            string b = h.StartsWith("[", StringComparison.Ordinal) && h.EndsWith("]", StringComparison.Ordinal) ? h.Substring(1, h.Length - 2) : h;
+            return Regex.IsMatch(b, @"^[0-9A-Fa-f:.]+$") && IPAddress.TryParse(b, out ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6;
+        }
         public static bool SafeUser(string u) { return Regex.IsMatch(u ?? "", @"^[A-Za-z0-9][A-Za-z0-9._\\@-]{0,63}$"); }
         static string[] Cmd(string name, string cmd, string why) { return new[] { "3", name, cmd, why, "", "copy:" + cmd }; }
         public static List<string[]> Remote(string host, string user, string port)
         {
             var rows = new List<string[]>(); string h = (host ?? "").Trim(), u = (user ?? "").Trim(), ps = (port ?? "").Trim(); int p = 22;
-            if (h == "") h = "HOST"; else if (!SafeHost(h)) { rows.Add(R(2, "Host", "letters, digits, dots, dashes and colons only", "", "u")); return rows; }
+            if (h == "") h = "HOST"; else if (!SafeHost(h)) { rows.Add(R(2, "Host", "a name or an IP address - letters, digits, dots and dashes (colons only in an IPv6 address; the port has its own box)", "", "u")); return rows; }
             if (u != "" && !SafeUser(u)) { rows.Add(R(2, "User", "letters, digits and . _ - \\ @ only", "", "u")); return rows; }
             if (ps != "" && (!int.TryParse(ps, out p) || p < 1 || p > 65535)) { rows.Add(R(2, "Port", "1-65535", "", "u")); return rows; }
             string sys = Environment.GetFolderPath(Environment.SpecialFolder.System); bool ssh = File.Exists(Path.Combine(sys, "OpenSSH", "ssh.exe")), curl = File.Exists(Path.Combine(sys, "curl.exe"));
-            string at = (u != "" ? u + "@" : "") + h, pf = p != 22 ? " -p " + p : "", pc = p != 22 ? " -P " + p : "";
+            h = h.Trim('[', ']'); string hu = h.IndexOf(':') >= 0 ? "[" + h + "]" : h;   // bare for ssh and ssh-keygen (which add their own brackets), bracketed in URLs and scp
+            string at = (u != "" ? u + "@" : "") + h, atc = (u != "" ? u + "@" : "") + hu, pf = p != 22 ? " -p " + p : "", pc = p != 22 ? " -P " + p : "";
             rows.Add(new[] { ssh ? "0" : "1", "Windows OpenSSH", ssh ? "installed" : "not installed", ssh ? "Click a command to copy it, then paste it into PowerShell. Passwords are typed there, never here - AdeeboMeter doesn't keep or see them. Click this line to open PowerShell." : "Settings › System › Optional features › OpenSSH Client (may need IT on a company PC).", "w", "ps:" });
             rows.Add(R(4, "Connect", "", "", "m"));
             rows.Add(Cmd("Log in", "ssh" + pf + " " + at, "The first time, check the fingerprint it shows against the one below."));
@@ -241,8 +250,8 @@ namespace AdeeboMeter
             rows.Add(Cmd("Run one command", "ssh" + pf + " " + at + " \"show version\"", "Runs it and comes back - handy to copy output."));
             rows.Add(Cmd("Tunnel a web page", "ssh" + pf + " -L 8443:127.0.0.1:443 " + at, "Then open https://localhost:8443 - the device's web page through SSH."));
             rows.Add(R(4, "Copy files", "", "", "m"));
-            rows.Add(Cmd("Upload", "scp" + pc + " .\\file.txt " + at + ":/tmp/", "Copies a file from this PC to the device."));
-            rows.Add(Cmd("Download", "scp" + pc + " " + at + ":/tmp/file.txt .\\", "Copies a file from the device to this PC's current folder."));
+            rows.Add(Cmd("Upload", "scp" + pc + " .\\file.txt " + atc + ":/tmp/", "Copies a file from this PC to the device."));
+            rows.Add(Cmd("Download", "scp" + pc + " " + atc + ":/tmp/file.txt .\\", "Copies a file from the device to this PC's current folder."));
             rows.Add(Cmd("Browse (SFTP)", "sftp" + pc + " " + at, "ls, cd, get, put - like a file manager in text."));
             rows.Add(R(4, "Keys and fingerprints", "", "", "m"));
             rows.Add(Cmd("Its host key", "ssh-keyscan" + pf + " " + h, "What the device presents - compare with what its console shows."));
@@ -251,8 +260,8 @@ namespace AdeeboMeter
             rows.Add(Cmd("Make my own key", "ssh-keygen -t ed25519", "Then put the .pub file on the device to log in without a password."));
             rows.Add(R(4, "Is it there?", "", "", "m"));
             rows.Add(Cmd("Port open?", "Test-NetConnection " + h.Trim('[', ']') + " -Port " + p, "PowerShell's own port test."));
-            if (curl) rows.Add(Cmd("Web page headers", "curl.exe -vkI https://" + h + "/", "-k skips the certificate check - for devices with self-signed certificates only."));
-            if (curl) rows.Add(Cmd("Banner (telnet-style)", "curl.exe -v telnet://" + h + ":" + p, "What the port says when you connect - Ctrl+C to leave."));
+            if (curl) rows.Add(Cmd("Web page headers", "curl.exe -vkI https://" + hu + "/", "-k skips the certificate check - for devices with self-signed certificates only."));
+            if (curl) rows.Add(Cmd("Banner (telnet-style)", "curl.exe -v telnet://" + hu + ":" + p, "What the port says when you connect - Ctrl+C to leave."));
             return rows;
         }
     }
