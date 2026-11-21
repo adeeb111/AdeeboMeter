@@ -23,11 +23,15 @@ namespace AdeeboMeter
             return streamPage;
         }
         // repaint only when something moved (a sample, a dip, a session start/end) and once a minute for the times
+        string streamVer = "";
         void StreamTick()
         {
             if (tab != "stream" || streamCanvas == null) return;
-            string k = System.Threading.Interlocked.Read(ref Streams.Ver) + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + DateTime.Now.Minute + "|" + SpeedTest.Busy + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
-            if (k != streamKey) { streamKey = k; streamCanvas.Invalidate(); }
+            // a new sample only moves the NOW STREAMING card; a stream starting or ending, a new dip or anything else redraws the page
+            var nw = Streams.Now; string ver = System.Threading.Interlocked.Read(ref Streams.Ver).ToString(CultureInfo.InvariantCulture);
+            string k = (nw == null || nw.S == null ? "-" : nw.S.Start.Ticks + ":" + nw.S.Dips.Count) + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + DateTime.Now.Minute + "|" + SpeedTest.Busy + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            if (k != streamKey) { streamKey = k; streamVer = ver; streamCanvas.Invalidate(); }
+            else if (ver != streamVer) { streamVer = ver; if (nw == null || !RedrawSpots(streamCanvas, "st.now")) streamCanvas.Invalidate(); }
         }
         static string Dur(TimeSpan t) { return t.TotalHours >= 1 ? ((int)t.TotalHours).ToString(CultureInfo.InvariantCulture) + " h " + t.Minutes.ToString("00", CultureInfo.InvariantCulture) + " min" : Math.Max(1, (int)t.TotalMinutes).ToString(CultureInfo.InvariantCulture) + " min"; }
         static string TallyText(WatchKit.Session s)
@@ -92,7 +96,7 @@ namespace AdeeboMeter
                     else y = PaintModeLine(g, ns != null ? "stream.on" : "stream.none", ns != null ? ns.What : null, false, x, y, w);
                 }
                 if (stream4k) y = PaintStream4K(g, x, y, w);
-                y = PaintStreamNow(g, x, y, w);
+                float sy0 = y; y = PaintStreamNow(g, x, y, w); LiveSpot(streamCanvas, "st.now", new RectangleF(x - 4 * S, sy0, w + 8 * S, y - sy0));   // a new sample redraws only this card (StreamTick)
                 // the records
                 if (all.Count > 0)
                 {

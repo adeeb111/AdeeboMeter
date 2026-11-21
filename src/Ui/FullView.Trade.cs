@@ -22,11 +22,17 @@ namespace AdeeboMeter
             tradePage.Controls.Add(tradeCanvas);
             return tradePage;
         }
+        string tradeVer = "";
         void TradeTick()
         {
             if (tab != "trade" || tradeCanvas == null) return;
-            string k = System.Threading.Interlocked.Read(ref Trading.Ver) + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + System.Threading.Interlocked.Read(ref MarketData.Ver) + "|" + DateTime.Now.Minute + "|" + Cfg.TradeLive + "|" + StreamCheck.Running;
-            if (k != tradeKey) { tradeKey = k; tradeCanvas.Invalidate(); }
+            // a new broker sample only moves the live broker card (Line Check); the verdict level, a new dip, new rates or
+            // index numbers, the minute or anything else redraws the page
+            int tlv; Trading.Headline(out tlv); var day = Trading.Day;
+            string ver = System.Threading.Interlocked.Read(ref Trading.Ver).ToString(CultureInfo.InvariantCulture);
+            string k = tlv + "|" + (day == null ? "-" : day.Start.Ticks + ":" + day.Dips.Count) + "|" + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Trading.Rates) + "|" + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Trading.Indexes) + "|" + Trading.FxNote + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + System.Threading.Interlocked.Read(ref MarketData.Ver) + "|" + DateTime.Now.Minute + "|" + Cfg.TradeLive + "|" + StreamCheck.Running + "|" + mkTab;
+            if (k != tradeKey) { tradeKey = k; tradeVer = ver; tradeCanvas.Invalidate(); }
+            else if (ver != tradeVer) { tradeVer = ver; if (mkTab == "line" && !RedrawSpots(tradeCanvas, "tr.live")) tradeCanvas.Invalidate(); }   // other tabs show no per-sample numbers (the NOW line keeps itself live)
         }
         // a few brokers' public web addresses to start from; the user can type any other
         static readonly string[][] Brokers = {
@@ -57,7 +63,7 @@ namespace AdeeboMeter
                     int tlv; Trading.Headline(out tlv); bool openNow = Trading.MarketOpen(Trading.EasternNow()) || Cfg.TradeCrypto;
                     if (!openNow || tlv == 0 || tlv == 2) y = PaintModeLine(g, !openNow ? "trade.closed" : tlv == 2 ? "trade.slow" : "trade.ok", null, tlv == 2, x, y, w);   // AM-CG-106: starting, stale or unknown says nothing, never "ok"
                 }
-                y = PaintBrokerLive(g, x, y, w, true);
+                float by0 = y; y = PaintBrokerLive(g, x, y, w, true); LiveSpot(tradeCanvas, "tr.live", new RectangleF(x - 4 * S, by0, w + 8 * S, y - by0));   // a new broker sample redraws only this card (TradeTick)
                 string hol = Markets.TodayNote(Trading.EasternNow());
                 if (hol != "") { var hr = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, hr, 12 * S, Theme.LvSoft(1)); using (var hb = new SolidBrush(Theme.LvText(1))) g.DrawString(hol, Draw.fBodyB, hb, hr.X + 14 * S, hr.Y + 8 * S); y = hr.Bottom + 14 * S; }
                 var past = WatchKit.Recent("trade").Take(10).ToList();

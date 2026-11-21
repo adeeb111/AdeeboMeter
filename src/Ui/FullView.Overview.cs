@@ -283,7 +283,7 @@ namespace AdeeboMeter
                     Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
                     Hint(overviewCanvas, tr, t[4]);
                 }
-                LiveSpot(overviewCanvas, "ov.now", new RectangleF(x, y, w, ((tiles.Length + cols - 1) / cols) * (th + 12 * S)));   // the four live numbers: redrawn alone (OverviewTick)
+                LiveSpot(overviewCanvas, "ov.now", new RectangleF(x, y, w, ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 32 * S));   /* + the Wi-Fi line under them (its signal % moves too) */   // the four live numbers: redrawn alone (OverviewTick)
                 y += ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 8 * S;
                 string netLine = (kind == "Wi-Fi" ? "On Wi-Fi" + (ssid != "" ? " \"" + ssid + "\"" : " (name hidden - location is off)") + (sig >= 0 ? " · signal " + sig + "%" : "") : "On " + kind) + (speed != "" ? " · link " + speed : "") + (vpn ? " · VPN on" : "");
                 g.DrawString(netLine, Draw.fBody, sub, x, y); y += 24 * S;
