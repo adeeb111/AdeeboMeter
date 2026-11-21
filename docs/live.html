@@ -116,7 +116,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <div class="pickrow"><label class="dd"><small>Exchange</small><select id="exch" aria-label="Exchange"><option value="us">US · NYSE and Nasdaq</option><option disabled>Toronto (TSX) - not yet</option><option disabled>London (LSE) - not yet</option><option disabled>India (NSE) - not yet</option><option disabled>Dhaka (DSE) - not yet</option></select></label></div>
 <div class="seg3" id="mvseg"><button class="on" data-mv="up">Best</button><button data-mv="dn">Worst</button><button data-mv="act">Most traded</button></div>
 <p class="src" id="mvsrc">End of day</p>
-<div id="mvevery" class="pickrow"></div>
+<div id="mvevery"></div>
 <div id="mv" class="mut">Loading…</div>
 </section>
 
@@ -332,7 +332,7 @@ var EVERY={
   cd:{d:"3",o:[["10","Every 10 minutes",600000],["3","Every 3 minutes",180000],["1","Every minute",60000]],n:"Free: 100 calls a day - every 3 minutes lasts about 4 hours of play. It stops at 90% of whatever your plan allows."},
   gn:{d:"visit",o:[["visit","Once per visit",0],["30","Every 30 minutes",1800000],["10","Every 10 minutes",600000]],n:"Free: 100 calls a day, one per league per visit; more often needs GNews's paid plan."}};
 function every(svc){var e=EVERY[svc],v=rd("am-every-"+svc,e.d);return e.o.filter(function(x){return x[0]===v})[0]||e.o.filter(function(x){return x[0]===e.d})[0]}
-function everyRow(svc){var e=EVERY[svc];if(!e||!key(svc))return"";return"<div class='kin'><label class='dd'><small>Update</small><select data-every='"+svc+"'>"+e.o.map(function(x){return"<option value='"+x[0]+"'"+(every(svc)[0]===x[0]?" selected":"")+">"+x[1]+"</option>"}).join("")+"</select></label></div><span class='mut' style='font-size:12px'>"+e.n+"</span>"}
+function everyRow(svc){var e=EVERY[svc];if(!e||!key(svc))return"";return"<div class='kin'><label class='dd' style='flex:0 0 auto;min-width:200px'><small>Update</small><select data-every='"+svc+"'>"+e.o.map(function(x){return"<option value='"+x[0]+"'"+(every(svc)[0]===x[0]?" selected":"")+">"+x[1]+"</option>"}).join("")+"</select></label></div><div class='mut' style='font-size:12px;margin:4px 0 8px'>"+e.n+"</div>"}
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.getAttribute)return;var svc=t.getAttribute("data-every");if(!svc)return;wr("am-every-"+svc,t.value);
   document.querySelectorAll("select[data-every='"+svc+"']").forEach(function(o){o.value=t.value});
   if(svc==="ap"||svc==="av"){mvArm();movers()}else if(svc==="gn"){gnArm();moreNews(1)}else liveTick()});
