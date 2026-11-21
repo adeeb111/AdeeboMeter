@@ -1,5 +1,5 @@
 # AdeeboMeter - French (Canada). English text, a TAB, the French. Missing lines stay in English.
-#coverage 78
+#coverage 77
 + Add server	+ Ajouter un serveur
 + Add your own game	+ Ajouter votre jeu
 1 day	1 jour
