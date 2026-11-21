@@ -288,13 +288,16 @@ namespace AdeeboMeter
             bool ran = Res().Any(o => o.Length > 1 && o[1] == "Overlap"), clash = RV("Overlap") != "" && !RV("Overlap").StartsWith("none", StringComparison.Ordinal);
             bool exO = home == "" && !ran; if (exO) { home = "10.0.0.0/24"; vpns = new List<string> { "10.0.0.0/8" }; }   // the example, before a run
             var r = VisCard(g, x, y, w, 170 * S, "YOUR HOME RANGE AND THE VPN'S RANGES" + (exO ? "  ·  " + L.T("EXAMPLE - RUN IT FOR YOURS") : ""), st);   // L-345
-            uint hip; int hp; V4Mask(home, out hip, out hp); float bx = r.X + 140 * S, bw = r.Width - 170 * S, by = r.Y + 56 * S;
+            uint hip; int hp;
+            // 21 Nov: no IPv4 home range to draw (a run with IPv6 only, or rows in another shape) - say so; an unread range
+            // used to become the whole address space and a box millions of pixels wide (GDI+ "Overflow error" on Windows)
+            if (!V4Mask(home, out hip, out hp) || hp < 0) { VText(g, L.T("No IPv4 home range to compare on this PC's adapters."), Draw.fBody, Theme.Muted, r.X + 18 * S, r.Y + 60 * S); return r.Bottom + 14 * S; } float bx = r.X + 140 * S, bw = r.Width - 170 * S, by = r.Y + 56 * S;
             var vp = vpns.Select(z => { uint ip; int p; return V4Mask(z, out ip, out p) && p >= 0 ? new { S = z, Net = ip & (p == 0 ? 0 : 0xFFFFFFFFu << (32 - p)), Size = Math.Pow(2, 32 - p) } : null; }).Where(z => z != null).ToList();
             double lo = vp.Count > 0 ? vp.Min(z => (double)z.Net) : hip, hi = vp.Count > 0 ? vp.Max(z => z.Net + z.Size) : hip + 256; if (hi <= lo) hi = lo + 256;
             Func<double, float> X = v => bx + (float)((v - lo) / (hi - lo)) * bw;
-            VText(g, L.T("VPN"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 2 * S); foreach (var v in vp) { Theme.Fill(g, new RectangleF(X(v.Net), by, Math.Max(4 * S, X(v.Net + v.Size) - X(v.Net)), 22 * S), 5 * S, VPurple); VText(g, v.S, Draw.fTiny, Color.White, X(v.Net) + 6 * S, by + 4 * S); }
+            VText(g, L.T("VPN"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 2 * S); foreach (var v in vp) { Theme.Fill(g, new RectangleF(X(v.Net), by, Math.Min(bw, Math.Max(4 * S, X(v.Net + v.Size) - X(v.Net))), 22 * S), 5 * S, VPurple); VText(g, v.S, Draw.fTiny, Color.White, X(v.Net) + 6 * S, by + 4 * S); }
             uint hn = hip & (hp <= 0 ? 0 : 0xFFFFFFFFu << (32 - hp)); double hs = Math.Pow(2, 32 - Math.Max(0, hp)); bool inside = ran ? clash : vp.Any(v => hn < v.Net + v.Size && v.Net < hn + hs);   // after a run the engine's verdict; ranges overlap when either starts inside the other
-            VText(g, L.T("Home"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 42 * S); float hx = X(hn); Theme.Fill(g, new RectangleF(Math.Max(bx, Math.Min(bx + bw - 8 * S, hx)), by + 40 * S, Math.Max(8 * S, X(hn + hs) - hx), 22 * S), 5 * S, inside ? Theme.Red : Theme.Green);
+            VText(g, L.T("Home"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 42 * S); float hx = X(hn); Theme.Fill(g, new RectangleF(Math.Max(bx, Math.Min(bx + bw - 8 * S, hx)), by + 40 * S, Math.Min(bw, Math.Max(8 * S, X(hn + hs) - hx)), 22 * S), 5 * S, inside ? Theme.Red : Theme.Green);
             VText(g, home + (inside ? "  -  " + L.T("inside the VPN's range: those addresses go home instead") : "  -  " + L.T("no overlap")), Draw.fSmall, inside ? Theme.LvText(2) : Theme.LvText(0), bx, by + 68 * S);
             VFoot(g, r, "Change your router's range (e.g. to 192.168.77.0/24) and the clash goes away.");
             return r.Bottom + 14 * S;

@@ -100,8 +100,9 @@ in: smtp.example.com:587
 
 == overlap
 1|Overlap|your home network 10.0.0.0/24 is inside the VPN's 10.0.0.0/8|While the VPN is on, company addresses 10.0.0.x go to your home network instead. Ask IT for a narrower route, or change the home network to e.g. 192.168.50.0/24.|w
-3|Home network|10.0.0.0/24 on Wi-Fi||w
-3|VPN routes|10.0.0.0/8, 172.16.0.0/12||w
+3|Wi-Fi|10.0.0.0/24||w
+3|Example VPN (VPN)|10.0.0.0/8||w
+3|Example VPN (VPN)|172.16.0.0/12||w
 
 == vpn
 1|VPN|Example Secure Client · full tunnel - everything goes through the company||w
