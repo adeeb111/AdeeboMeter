@@ -16,7 +16,7 @@ namespace AdeeboMeter
         {
             { "board", "M3 4h18v6H3zM3 14h18v6H3zM7 7h.01M7 17h.01M11 7h7M11 17h4" },
             { "bolt", "M13 2L4 14h7l-1 8 9-12h-7z" },
-            { "book", "M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z" },
+            { "book", "M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2zM22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z" },   /* arc flags written out: the path reader does not split "013" into 0 1 3 - the Learn tile drew blank (PC test 21 Nov) */
             { "building", "M4 21V3.5h11V21M15 8.5h5V21M2.5 21h19M7 7h1M11 7h1M7 10.5h1M11 10.5h1M7 14h1M11 14h1M17.5 12h.5M17.5 15.5h.5M8.5 21v-3.5h2V21" },
             { "cabinet", "M6 2.5h12a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1zM5 8.5h14M5 14.5h14M9 5.5h3M9 11.5h3M9 17.5h3M16 11v1" },
             { "calc", "M6 3h12v18H6zM9 7h6M9 11h.01M12 11h.01M15 11h.01M9 15h.01M12 15h.01M15 15h.01" },
