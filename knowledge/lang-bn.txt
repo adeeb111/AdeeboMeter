@@ -4219,3 +4219,4 @@ Language: 	ভাষা:
 Couldn't restart - close AdeeboMeter from the tray icon and open it again	রিস্টার্ট করা গেল না - ট্রে আইকন থেকে AdeeboMeter বন্ধ করে আবার খুলুন
 not watched - only the best	নজরে নেই - শুধু সেরা
 servers are checked	টি সার্ভার মাপা হয়
+Restart	রিস্টার্ট

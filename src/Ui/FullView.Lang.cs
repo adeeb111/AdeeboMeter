@@ -17,7 +17,8 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         LangButton langBtn; PillButton restartBtn; DB langSheet; LangFilter langFilter; string langHover, langDebug; int langKey = -1;
-        static string runLang;   // the language this run started in: a different one now = a restart finishes the switch
+        static string runLang;
+        static readonly Dictionary<string, Bitmap> langArt = new Dictionary<string, Bitmap>();   // the tile patterns, drawn once   // the language this run started in: a different one now = a restart finishes the switch
 
         // per language: greeting, English name, two colours, the pattern on its tile
         static readonly Dictionary<string, string[]> LangLook = new Dictionary<string, string[]>
@@ -50,7 +51,7 @@ namespace AdeeboMeter
             if (runLang == null) runLang = L.Code;
             langBtn = new LangButton(); SyncLangBtn();
             langBtn.Click += delegate { LangMenu(); };
-            restartBtn = new PillButton("Restart to finish", PillButton.K.Chip) { Visible = false, Accent = "mine" };
+            restartBtn = new PillButton("Restart", PillButton.K.Chip)   /* short: a long label pushed the search box out of the top bar (seen on Adeeb's PC) */ { Visible = false, Accent = "mine" };
             restartBtn.Click += delegate { RestartApp(); };
             header.Controls.Add(langBtn); header.Controls.Add(restartBtn);
             langBtn.Resize += delegate { PlaceTop(); }; restartBtn.Resize += delegate { PlaceTop(); };
@@ -61,7 +62,7 @@ namespace AdeeboMeter
         {
             if (restartBtn == null) return;
             bool need = runLang != null && L.Code != runLang;
-            restartBtn.Text = "Restart to finish";
+            restartBtn.Text = "Restart";
             if (restartBtn.Visible != need) { restartBtn.Visible = need; PlaceTop(); }
         }
         // called by both pickers (the top button and Settings)
@@ -228,7 +229,17 @@ namespace AdeeboMeter
             using (var clip = Theme.Round(r, 16 * S))
             {
                 var st = g.Save(); g.SetClip(clip);
-                PaintLangArt(g, look[4], new RectangleF(r.Right - 150 * S, r.Y - 34 * S, 160 * S, 124 * S), Color.FromArgb(hot || cur ? 170 : 120, a), Color.FromArgb(hot || cur ? 170 : 120, b));
+                // the pattern is drawn once into a picture and reused (the first open took 400 ms on a real PC)
+                var ab = new RectangleF(r.Right - 150 * S, r.Y - 34 * S, 160 * S, 124 * S);
+                string key = code + "|" + (hot || cur) + "|" + (int)ab.Width + "|" + (int)ab.Height;
+                Bitmap art; if (!langArt.TryGetValue(key, out art))
+                {
+                    art = new Bitmap(Math.Max(1, (int)Math.Ceiling(ab.Width)), Math.Max(1, (int)Math.Ceiling(ab.Height)), System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+                    using (var ag = Graphics.FromImage(art)) { ag.SmoothingMode = SmoothingMode.AntiAlias; PaintLangArt(ag, look[4], new RectangleF(0, 0, ab.Width, ab.Height), Color.FromArgb(hot || cur ? 170 : 120, a), Color.FromArgb(hot || cur ? 170 : 120, b)); }
+                    if (langArt.Count > 40) { foreach (var o in langArt.Values) o.Dispose(); langArt.Clear(); }
+                    langArt[key] = art;
+                }
+                g.DrawImage(art, ab.X, ab.Y, ab.Width, ab.Height);
                 g.Restore(st);
             }
             if (cur) using (var path = Theme.Round(new RectangleF(r.X + 1, r.Y + 1, r.Width - 2, r.Height - 2), 15 * S)) using (var lg = new LinearGradientBrush(r, Hex("#7C4DFF", 255), Hex("#EC4899", 255), 45f)) using (var pen = new Pen(lg, 2.5f * S)) g.DrawPath(pen, path);

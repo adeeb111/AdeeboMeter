@@ -4219,3 +4219,4 @@ Language: 	اللغة:
 Couldn't restart - close AdeeboMeter from the tray icon and open it again	تعذّرت إعادة التشغيل - أغلق AdeeboMeter من أيقونة شريط المهام ثم افتحه من جديد
 not watched - only the best	غير مراقَب - تُقاس فقط أفضل
 servers are checked	خوادم
+Restart	إعادة التشغيل

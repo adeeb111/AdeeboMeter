@@ -2833,3 +2833,4 @@ translated	traduit
 Partly translated	Traduit en partie
 Language: 	Langue : 
 Couldn't restart - close AdeeboMeter from the tray icon and open it again	Redémarrage impossible - fermez AdeeboMeter depuis l'icône de la barre des tâches et rouvrez-le
+Restart	Redémarrer

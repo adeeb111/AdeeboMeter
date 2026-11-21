@@ -4219,3 +4219,4 @@ Language: 	Idioma:
 Couldn't restart - close AdeeboMeter from the tray icon and open it again	No se pudo reiniciar: cierra AdeeboMeter desde el icono de la bandeja y ábrelo de nuevo
 not watched - only the best	sin vigilar - solo los
 servers are checked	mejores servidores se miden
+Restart	Reiniciar
