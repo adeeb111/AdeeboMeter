@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Network Lab · AdeeboMeter</title>
+<meta name="description" content="Draw your network, see the path a packet takes from your PC to a game, broker or stream, then break one thing and watch where it fails. Free, nothing is sent.">
+<style>
+:root{--page:#0B1426;--bar:#0E1A30;--card:#121F38;--line:#22355A;--ink:#E6EAF0;--sub:#93A6C6;--mute:#7D90B0;--blue:#2F7BF6;--blue-s:#1E3E78;--red:#F26464;--amber:#F2B23C;--green:#3FB950;--purple:#C9A7FF;--dot:#1A2B4A}
+:root[data-theme="light"]{--page:#F7F9FC;--bar:#FFFFFF;--card:#FFFFFF;--line:#DDE3EC;--ink:#1B2330;--sub:#4A5568;--mute:#6B7685;--blue:#1F6FEB;--blue-s:#E8F0FE;--red:#CF222E;--amber:#B07A00;--green:#2DA44E;--purple:#8250DF;--dot:#D5DDE8}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:14px/1.45 "Segoe UI",Inter,system-ui,-apple-system,sans-serif;overflow:hidden}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+#top{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bar);border-bottom:1px solid var(--line)}
+#top .brand{display:flex;align-items:center;gap:8px;font-weight:800;text-decoration:none;color:var(--ink);white-space:nowrap}#top .brand b{color:var(--blue)}
+#name{border:1px solid transparent;background:none;border-radius:8px;padding:5px 8px;font-weight:700;font-size:15px;width:200px;min-width:80px}
+#name:hover,#name:focus{border-color:var(--line);outline:none;background:var(--card)}
+#saved{color:var(--mute);font-size:12px;white-space:nowrap}
+.sp{flex:1}
+.b{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:transparent;white-space:nowrap}
+.b:hover{background:var(--card)}.b.p{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.b.i{width:38px;padding:0;display:inline-grid;place-items:center}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{white-space:nowrap;height:30px;padding:0 14px;border:0;border-radius:9px;background:none;color:var(--sub);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff}
+.menu{position:relative}.menu>div{position:absolute;right:0;top:42px;min-width:210px;background:var(--bar);border:1px solid var(--line);border-radius:12px;padding:6px;z-index:20;box-shadow:0 14px 40px -14px rgba(0,0,0,.5)}
+.menu>div button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px}.menu>div button:hover{background:var(--card)}
+.menu>div small{display:block;color:var(--mute);padding:6px 10px 2px;font-size:11.5px;font-weight:700;letter-spacing:.04em}
+#wrap{position:absolute;top:56px;left:0;right:0;bottom:0;display:flex}
+#tools{width:84px;background:var(--bar);border-right:1px solid var(--line);overflow-y:auto;padding:8px 6px;display:grid;grid-template-columns:1fr;gap:4px;align-content:start}
+#tools button{height:50px;border:1px solid transparent;border-radius:12px;background:none;color:var(--sub);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10.5px}
+#tools button svg{width:20px;height:20px}
+#tools button[aria-pressed="true"]{background:var(--blue-s);border-color:var(--blue);color:var(--ink)}
+#tools hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+#stage{flex:1;position:relative;min-width:0;background-color:var(--page);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:20px 20px;touch-action:none}
+#svg{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
+#side{width:300px;background:var(--bar);border-left:1px solid var(--line);padding:14px;overflow-y:auto;display:none;flex-direction:column;gap:10px}
+body.break #side{display:flex}body.break #tools{display:none}
+#side h2{margin:0;font-size:15px}#side p{margin:0;color:var(--sub);font-size:13px}
+#side label{font-size:12px;color:var(--mute);display:block;margin-bottom:3px}
+#side select{width:100%;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:0 8px}
+.fault{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:1px}
+.fault b{font-size:14px}.fault span{font-size:12px;color:var(--sub)}.fault[aria-pressed="true"]{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,var(--card))}
+.fault i{font-style:normal;color:var(--green);font-size:11.5px;font-weight:700}
+#play{position:absolute;left:16px;right:16px;bottom:14px;display:none;gap:10px;align-items:center;background:var(--bar);border:1px solid var(--line);border-radius:16px;padding:8px 12px}
+body.break #play{display:flex}
+#play .bar{flex:1;height:8px;border-radius:9px;background:var(--line);overflow:hidden}#play .bar i{display:block;height:8px;background:var(--red);width:0}
+#say{position:absolute;left:16px;top:14px;max-width:520px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:none;font-size:13.5px}
+#say.show{display:block}#say b{display:block}#say.bad{border-color:var(--red)}#say em{display:block;font-style:normal;color:var(--green);margin-top:4px}
+#hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--bar);border:1px solid var(--line);border-radius:10px;padding:6px 12px;color:var(--sub);font-size:12.5px;white-space:nowrap;pointer-events:none}
+body.break #hint{display:none}
+#edit{position:absolute;display:none;z-index:30}#edit input{height:32px;border-radius:8px;border:1px solid var(--blue);background:var(--card);padding:0 8px;width:190px}
+#zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:4px}
+body.break #zoom{top:auto;bottom:80px}
+@media (max-width:760px){
+ #top{gap:6px;overflow-x:auto}#name{width:120px}#saved,.brand span{display:none}
+ #wrap{flex-direction:column-reverse}#tools{width:auto;height:64px;border-right:0;border-top:1px solid var(--line);display:flex;overflow-x:auto;padding:6px}
+ #tools button{flex:0 0 58px;height:50px}#tools hr{display:none}
+ #side{width:auto;max-height:42%;border-left:0;border-top:1px solid var(--line)}
+ body.break #wrap{flex-direction:column}#say{right:16px;max-width:none}#hint{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header id="top">
+ <a class="brand" href="/" title="AdeeboMeter"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#1155E0"/><path d="M6 15a6 6 0 0 1 12 0" fill="none" stroke="#5EF2B0" stroke-width="2.2" stroke-linecap="round"/><path d="M12 15l3-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span>Network <b>Lab</b></span></a>
+ <input id="name" aria-label="Drawing name" value="My network">
+ <span id="saved"></span>
+ <div class="sp"></div>
+ <button class="b i" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg></button>
+ <button class="b i" id="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
+ <div class="seg" role="group" aria-label="Mode"><button id="mDraw" aria-pressed="true">Draw</button><button id="mBreak" aria-pressed="false">Break it</button></div>
+ <div class="menu"><button class="b" id="exBtn" aria-haspopup="true" aria-expanded="false">Examples</button><div id="exMenu" hidden></div></div>
+ <div class="menu"><button class="b p" id="fileBtn" aria-haspopup="true" aria-expanded="false">File</button><div id="fileMenu" hidden>
+  <button data-f="new">New drawing</button><button data-f="open">Open a lab file…</button><button data-f="save">Save as lab file (.json)</button>
+  <small>EXPORT</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
+ <button class="b i" id="theme" title="Light / dark" aria-label="Light or dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+ <input type="file" id="openFile" accept=".json,application/json" hidden>
+</header>
+<div id="wrap">
+ <nav id="tools" aria-label="Tools"></nav>
+ <div id="stage">
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Network drawing"></svg>
+  <div id="say" role="status" aria-live="polite"></div>
+  <div id="zoom"><button class="b i" id="zIn" aria-label="Zoom in">+</button><button class="b i" id="zOut" aria-label="Zoom out">−</button><button class="b i" id="zFit" aria-label="Fit to screen" title="Fit">⤢</button></div>
+  <div id="hint"></div>
+  <div id="play"><button class="b p" id="pPlay" aria-label="Play">Play</button><button class="b" id="pBack">Step back</button><button class="b" id="pStep">Step</button><div class="bar"><i id="pBar"></i></div><span id="pNum" style="color:var(--sub);font-size:13px;min-width:44px;text-align:right"></span></div>
+  <div id="edit"><input id="editIn" aria-label="Text"></div>
+ </div>
+ <aside id="side" aria-label="Break one thing">
+  <h2>Break one thing</h2>
+  <p>Pick where the packet starts and where it goes, pick a fault, then press Play. Nothing is sent - it all happens on this drawing.</p>
+  <div><label for="from">From</label><select id="from"></select></div>
+  <div><label for="to">To</label><select id="to"></select></div>
+  <div id="faults" style="display:flex;flex-direction:column;gap:8px"></div>
+  <p id="pts" style="margin-top:auto;border-top:1px solid var(--line);padding-top:10px">First time you watch a fault to the end: <b style="color:var(--amber)">+2 Adeebo Points</b> in the app.</p>
+ </aside>
+</div>
+<script>
+"use strict";
+(function () {
+/* icon shapes on a 24 x 24 grid (from the TopoDraw set) */
+const G = __GLYPHS__;
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const KEY = "adeebometer-lab:current", SOLVED = "adeebometer-lab:solved";
+const store = {get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }};
+const TOOLS = [["select", "Select", "M4 3l14 8-6 1.5L9 19z"], null,
+  ["router", "Router", "R"], ["switch", "Switch"], ["cpe", "Home router"], ["wifi", "Wi-Fi AP"], ["pc", "PC"], ["laptop", "Laptop"], ["phone", "Phone"],
+  ["server", "Server"], ["firewall", "Firewall"], ["loadbal", "Load bal."], ["internet", "Internet"], ["cloud", "Cloud"], ["tower", "4G/5G tower"],
+  ["ont", "Fibre box"], ["olt", "OLT"], ["splitter", "Splitter"], ["house", "House"], ["users", "Users"], null,
+  ["l:cable", "Cable", "M3 12h18"], ["l:wifi", "Wi-Fi link", "M3 12q2.25-5 4.5 0t4.5 0 4.5 0 4.5 0"], ["l:cell", "4G / 5G", "M3 12q2.25-5 4.5 0t4.5 0 4.5 0 4.5 0"], ["l:fibre", "Fibre", "M3 12h4M10 12h4M17 12h4"], null,
+  ["text", "Text", "M5 5h14M12 5v14M9 19h6"], ["area", "Area", "M4 4h4M12 4h4M20 4v4M20 12v4M4 12v4M4 20h4M12 20h4M20 20h-1"], ["pen", "Pen", "M4 20l4-1L19 8l-3-3L5 16z"], null,
+  ["delete", "Delete", "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"]];
+const LINKS = {cable: "Cable", wifi: "Wi-Fi", cell: "4G / 5G", fibre: "Fibre", bad: "Cable", fan: "Copy"};
+let doc, tool = "select", sel = null, view = {x: 0, y: 0, z: 1}, mode = "draw", undo = [], redo = [], linkFrom = null;
+const COL = () => { const c = getComputedStyle(document.documentElement); const v = n => c.getPropertyValue(n).trim();
+  return {ink: v("--ink"), sub: v("--sub"), mute: v("--mute"), red: v("--red"), amber: v("--amber"), purple: v("--purple"), green: v("--green"), card: v("--card"), page: v("--page"), line: v("--line"),
+          wifi: "#4FA3FF", cell: "#F0883E", cable: "#8FA6C9", fibre: "#7D90B0", fan: "#A371F7", blue: v("--blue")}; };
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const clean = s => String(s == null ? "" : s).replace(/[\u0000-\u001f]/g, "").slice(0, 80);
+const blank = () => ({v: 1, name: "My network", nodes: [], links: [], areas: [], texts: [], ink: []});
+
+/* ---------- the examples: one path per kind of person (provider equipment = the usual setup, never measured) */
+const FIBRE = (x0, y) => [
+  {id: "ont", k: "ont", name: "Fibre box (ONT)", sub: "light to electric", st: "typ", x: x0, y: y},
+  {id: "spl", k: "splitter", name: "Splitter", sub: "1 fibre, ~32 homes", st: "typ", x: x0 + 120, y: y - 100},
+  {id: "olt", k: "olt", name: "OLT", sub: "street / exchange", st: "typ", x: x0 + 240, y: y},
+  {id: "agg", k: "switch", name: "Aggregation switch", sub: "thousands of homes", st: "typ", x: x0 + 360, y: y - 100},
+  {id: "bng", k: "router", name: "Sign-in router", sub: "BNG · gives your IP", st: "typ", x: x0 + 470, y: y}];
+const FL = [["ont", "spl", "fibre", "fibre"], ["spl", "olt", "fibre"], ["olt", "agg", "fibre"], ["agg", "bng", "fibre"]];
+const A = (x, y, w, h, t) => ({id: uid("a"), x, y, w, h, t});
+const EX = {
+ gamer: {name: "Gamer - Wi-Fi to game server", areas: [A(30, 60, 330, 330, "Your home"), A(390, 60, 640, 420, "Your provider - usual fibre setup, not measured"), A(1180, 60, 230, 330, "Game company")],
+  nodes: [{id: "pc", k: "laptop", name: "Laptop", sub: "Wi-Fi", x: 100, y: 250}, {id: "cpe", k: "cpe", name: "Your router", sub: "192.168.1.1", x: 290, y: 250}, ...FIBRE(450, 250),
+   {id: "core", k: "router", name: "Provider core", sub: "first hop that answers", x: 920, y: 400}, {id: "net", k: "internet", name: "Internet", sub: "other networks", st: "typ", x: 1100, y: 300},
+   {id: "edge", k: "router", name: "Game edge", sub: "game network", x: 1250, y: 300}, {id: "srv", k: "server", name: "Game server", sub: "US East", x: 1310, y: 150}],
+  links: [["pc", "cpe", "wifi", "Wi-Fi"], ["cpe", "ont", "cable", "cable"], ...FL, ["bng", "core", "fibre"], ["core", "net"], ["net", "edge"], ["edge", "srv"]]},
+ cell: {name: "On 4G / 5G - laptop with a SIM", areas: [A(30, 60, 260, 330, "You"), A(320, 60, 700, 420, "Mobile provider - usual 4G / 5G setup, not measured"), A(1180, 60, 230, 330, "Game company")],
+  nodes: [{id: "pc", k: "laptop", name: "Laptop", sub: "SIM · 5G", x: 130, y: 250}, {id: "tw", k: "tower", name: "Cell tower", sub: "gNB / eNodeB", st: "typ", x: 440, y: 250},
+   {id: "bh", k: "switch", name: "Backhaul", sub: "fibre or microwave", st: "typ", x: 590, y: 150}, {id: "upf", k: "server", name: "Mobile core", sub: "UPF / P-GW", st: "typ", x: 740, y: 250},
+   {id: "core", k: "router", name: "Provider edge", sub: "first hop that answers", x: 900, y: 390}, {id: "net", k: "internet", name: "Internet", st: "typ", x: 1100, y: 300},
+   {id: "srv", k: "server", name: "Game server", sub: "US East", x: 1290, y: 220}],
+  links: [["pc", "tw", "cell", "5G radio"], ["tw", "bh", "fibre"], ["bh", "upf", "fibre"], ["upf", "core", "fibre", "GTP tunnel"], ["core", "net"], ["net", "srv"]]},
+ trader: {name: "Trader - PC to the exchange", areas: [A(30, 60, 330, 330, "Your home"), A(390, 60, 640, 420, "Your provider - usual fibre setup, not measured"), A(1150, 40, 270, 460, "Broker")],
+  nodes: [{id: "pc", k: "pc", name: "Your PC", sub: "cable", x: 100, y: 250}, {id: "cpe", k: "cpe", name: "Your router", x: 290, y: 250}, ...FIBRE(450, 250),
+   {id: "core", k: "router", name: "Provider core", x: 920, y: 400}, {id: "net", k: "internet", name: "Internet", st: "typ", x: 1080, y: 300},
+   {id: "gw", k: "router", name: "Broker gateway", sub: "the address you trade with", x: 1260, y: 120}, {id: "ord", k: "server", name: "Order router", sub: "inside the broker", st: "typ", x: 1260, y: 270},
+   {id: "ex", k: "building", name: "Exchange", sub: "matching engine", st: "typ", x: 1300, y: 420}],
+  links: [["pc", "cpe", "cable", "cable"], ["cpe", "ont", "cable"], ...FL, ["bng", "core", "fibre"], ["core", "net"], ["net", "gw"], ["gw", "ord", "fibre"], ["ord", "ex", "fibre"]]},
+ streamer: {name: "Streamer - going live", areas: [A(30, 60, 330, 330, "Your home"), A(390, 60, 640, 420, "Your provider - usual fibre setup, not measured"), A(1060, 30, 360, 480, "Streaming platform")],
+  nodes: [{id: "pc", k: "pc", name: "Your PC", sub: "OBS", x: 100, y: 250}, {id: "cpe", k: "cpe", name: "Your router", x: 290, y: 250}, ...FIBRE(450, 250),
+   {id: "core", k: "router", name: "Provider core", x: 920, y: 400}, {id: "ing", k: "server", name: "Ingest", sub: "nearest city", x: 1130, y: 150},
+   {id: "tx", k: "server", name: "Transcoder", sub: "1080p · 720p · 480p", st: "typ", x: 1130, y: 330}, {id: "cdn", k: "cloud", name: "CDN", sub: "copies near viewers", st: "typ", x: 1260, y: 250},
+   {id: "v1", k: "phone", name: "Viewer", st: "typ", x: 1370, y: 110}, {id: "v2", k: "laptop", name: "Viewer", st: "typ", x: 1370, y: 250}, {id: "v3", k: "users", name: "Viewers", sub: "one copy each", st: "typ", x: 1370, y: 400}],
+  links: [["pc", "cpe", "cable", "cable"], ["cpe", "ont", "cable", "upload"], ...FL, ["bng", "core", "fibre"], ["core", "ing"], ["ing", "tx", "fibre"], ["tx", "cdn", "fibre"], ["cdn", "v1", "fan"], ["cdn", "v2", "fan"], ["cdn", "v3", "fan"]]},
+ iptv: {name: "IPTV viewer - multicast", areas: [A(30, 60, 330, 330, "Your home"), A(390, 40, 800, 460, "Your provider - usual fibre IPTV setup, not measured")],
+  nodes: [{id: "pc", k: "pc", name: "TV / set-top box", sub: "Wi-Fi", x: 100, y: 250}, {id: "cpe", k: "cpe", name: "Your router", sub: "joins the channel", x: 290, y: 250}, ...FIBRE(450, 250),
+   {id: "h1", k: "house", name: "Neighbour", sub: "same channel", st: "typ", x: 570, y: 420}, {id: "h2", k: "house", name: "Neighbour", sub: "same channel", st: "typ", x: 690, y: 420},
+   {id: "mc", k: "router", name: "Multicast router", sub: "one stream, many homes", st: "typ", x: 1080, y: 150}, {id: "he", k: "rack", name: "TV head-end", sub: "the channel source", st: "typ", x: 1080, y: 380}],
+  links: [["pc", "cpe", "wifi", "Wi-Fi"], ["cpe", "ont", "cable", "IGMP join"], ...FL, ["spl", "h1", "fan"], ["spl", "h2", "fan"], ["bng", "mc", "fibre"], ["mc", "he", "fibre", "multicast group"]]},
+ server: {name: "Server owner - outside in", areas: [A(30, 60, 250, 420, "Outside"), A(640, 40, 770, 460, "Your data centre")],
+  nodes: [{id: "pc", k: "laptop", name: "This PC", sub: "checking from outside", x: 140, y: 150}, {id: "us", k: "users", name: "Your users", st: "typ", x: 140, y: 380},
+   {id: "net", k: "internet", name: "Internet", x: 440, y: 260}, {id: "edge", k: "router", name: "Data centre edge", x: 760, y: 260},
+   {id: "fw", k: "firewall", name: "Firewall", sub: "yours", x: 940, y: 150}, {id: "lb", k: "loadbal", name: "Load balancer", sub: "yours", x: 1100, y: 260},
+   {id: "w1", k: "server", name: "Web 1", sub: ":443", x: 1300, y: 150}, {id: "w2", k: "server", name: "Web 2", sub: ":443", x: 1300, y: 380}],
+  links: [["pc", "net"], ["us", "net", "fibre"], ["net", "edge"], ["edge", "fw"], ["fw", "lb"], ["lb", "w1"], ["lb", "w2"]]}};
+const EXNAMES = [["gamer", "Gamer"], ["cell", "On 4G / 5G"], ["trader", "Trader"], ["streamer", "Streamer"], ["iptv", "IPTV viewer"], ["server", "Server owner"]];
+function fromExample(k){
+  const e = EX[k], d = blank();
+  d.name = e.name; d.nodes = e.nodes.map(n => Object.assign({sub: "", st: ""}, n));
+  d.links = e.links.map(l => ({id: uid("l"), a: l[0], b: l[1], kind: l[2] || "cable", label: l[3] || ""}));
+  d.areas = e.areas.map(a => Object.assign({}, a)); return d;
+}
+
+/* ---------- loading: the app hands a measured path over in the address (#path=...), nothing else is read */
+function valid(d){
+  if (!d || typeof d !== "object" || !Array.isArray(d.nodes)) return null;
+  const o = blank(); o.name = clean(d.name) || "My network"; o.measured = !!d.measured;
+  const ids = new Set();
+  d.nodes.slice(0, 300).forEach(n => { if (!n || ids.has(String(n.id))) return; const id = clean(n.id) || uid("n"); ids.add(id);
+    o.nodes.push({id, k: G[n.k] || n.k === "router" ? n.k : "pc", name: clean(n.name), sub: clean(n.sub), ms: clean(n.ms), st: /^(typ|bad|warn|you)$/.test(n.st) ? n.st : "",
+                  x: +n.x || 0, y: +n.y || 0}); });
+  (d.links || []).slice(0, 600).forEach(l => { if (l && ids.has(String(l.a)) && ids.has(String(l.b))) o.links.push({id: clean(l.id) || uid("l"), a: String(l.a), b: String(l.b),
+    kind: LINKS[l.kind] ? l.kind : "cable", label: clean(l.label)}); });
+  (d.areas || []).slice(0, 60).forEach(a => { if (a) o.areas.push({id: clean(a.id) || uid("a"), x: +a.x || 0, y: +a.y || 0, w: Math.max(40, +a.w || 0), h: Math.max(40, +a.h || 0), t: clean(a.t)}); });
+  (d.texts || []).slice(0, 200).forEach(t => { if (t) o.texts.push({id: clean(t.id) || uid("t"), x: +t.x || 0, y: +t.y || 0, t: clean(t.t)}); });
+  (d.ink || []).slice(0, 200).forEach(s => { if (s && Array.isArray(s.p)) o.ink.push({id: clean(s.id) || uid("i"), p: s.p.slice(0, 2000).map(Number).filter(isFinite)}); });
+  return o;
+}
+function start(){
+  const h = location.hash.match(/^#path=([A-Za-z0-9_\-]+)$/);
+  if (h) { try { const j = JSON.parse(decodeURIComponent(escape(atob(h[1].replace(/-/g, "+").replace(/_/g, "/"))))); const d = valid(j);
+           if (d) { d.measured = true; return d; } } catch (e) { /* a broken link opens the last drawing */ } }
+  try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d) return d; } catch (e) {}
+  return fromExample("gamer");
+}
+
+/* ---------- drawing */
+function el(tag, at, kids){ const e = document.createElementNS(NS, tag); for (const k in at) if (at[k] != null) e.setAttribute(k, at[k]); (kids || []).forEach(c => c && e.appendChild(c)); return e; }
+function txt(x, y, s, at){ const t = el("text", Object.assign({x, y, "text-anchor": "middle"}, at)); t.textContent = s; return t; }
+function wave(x1, y1, x2, y2){ const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, px = -dy / len, py = dx / len, n = Math.max(4, Math.round(len / 18));
+  let d = "M" + x1 + " " + y1; for (let i = 1; i <= n; i++) { const t = i / n, a = (i % 2 ? 1 : -1) * 6, m = t - .5 / n;
+    d += " Q" + (x1 + dx * m + px * a).toFixed(1) + " " + (y1 + dy * m + py * a).toFixed(1) + " " + (x1 + dx * t).toFixed(1) + " " + (y1 + dy * t).toFixed(1); } return d; }
+const node = id => doc.nodes.find(n => n.id === id);
+function nodeColor(n, C){ return n.st === "bad" ? C.red : n.st === "warn" ? C.amber : n.st === "typ" ? C.mute : n.st === "you" ? C.purple : C.ink; }
+function draw(){
+  const C = COL(), svg = $("#svg"); svg.textContent = "";
+  const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g);
+  doc.areas.forEach(a => { const s = sel && sel.t === "area" && sel.id === a.id;
+    g.appendChild(el("g", {"data-t": "area", "data-id": a.id}, [el("rect", {x: a.x, y: a.y, width: a.w, height: a.h, rx: 14, fill: "transparent", stroke: s ? C.blue : C.mute, "stroke-width": s ? 2 : 1.4, "stroke-dasharray": "6 5"}),
+      txt(a.x + 12, a.y + 20, a.t, {"text-anchor": "start", fill: C.sub, "font-size": 12.5, "font-weight": 600}),
+      s ? el("rect", {x: a.x + a.w - 9, y: a.y + a.h - 9, width: 14, height: 14, rx: 3, fill: C.blue, "data-t": "resize", "data-id": a.id, style: "cursor:nwse-resize"}) : null])); });
+  doc.ink.forEach(s => { const p = s.p; if (p.length < 4) return; let d = "M" + p[0] + " " + p[1]; for (let i = 2; i < p.length; i += 2) d += " L" + p[i] + " " + p[i + 1];
+    g.appendChild(el("path", {d, fill: "none", stroke: sel && sel.id === s.id ? C.blue : C.purple, "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round", "data-t": "ink", "data-id": s.id})); });
+  doc.links.forEach(l => { const a = node(l.a), b = node(l.b); if (!a || !b) return; const k = l.kind;
+    const col = k === "wifi" ? C.wifi : k === "cell" ? C.cell : k === "bad" ? C.red : k === "fibre" ? C.fibre : k === "fan" ? C.fan : C.cable;
+    const d = k === "wifi" || k === "cell" ? wave(a.x, a.y, b.x, b.y) : `M${a.x} ${a.y} L${b.x} ${b.y}`, s = sel && sel.t === "link" && sel.id === l.id;
+    g.appendChild(el("path", {d, fill: "none", stroke: "transparent", "stroke-width": 14, "data-t": "link", "data-id": l.id}));
+    g.appendChild(el("path", {d, fill: "none", stroke: s ? C.blue : col, "stroke-width": s ? 3.5 : k === "bad" ? 3 : 2, "stroke-dasharray": k === "fibre" ? "6 5" : k === "fan" ? "2 5" : null, "stroke-linecap": "round", "pointer-events": "none"}));
+    if (l.label) g.appendChild(txt((a.x + b.x) / 2, (a.y + b.y) / 2 + 4, l.label, {fill: k === "bad" ? C.red : C.sub, "font-size": 11, "font-weight": 600, stroke: C.page, "stroke-width": 4, "paint-order": "stroke", "pointer-events": "none"})); });
+  doc.nodes.forEach(n => { const c = nodeColor(n, C), s = sel && sel.t === "node" && sel.id === n.id, dash = n.st === "typ" || n.st === "you" ? "2 2" : null;
+    const kids = [];
+    if (n.k === "router") { const w = Math.max(104, Math.min(170, 8 * Math.max(n.name.length, (n.sub || "").length * .8) + 22));
+      kids.push(el("rect", {x: n.x - w / 2, y: n.y - 20, width: w, height: n.sub ? 40 : 30, rx: 10, fill: C.card, stroke: s ? C.blue : c, "stroke-width": s ? 2.5 : 1.5, "stroke-dasharray": dash}));
+      kids.push(txt(n.x, n.y - 3, n.name, {fill: c, "font-size": 12.5, "font-weight": 700}));
+      if (n.sub) kids.push(txt(n.x, n.y + 12, n.sub, {fill: C.sub, "font-size": 10.5}));
+    } else {
+      kids.push(el("rect", {x: n.x - 26, y: n.y - 30, width: 52, height: 50, rx: 12, fill: s ? "rgba(47,123,246,.14)" : C.page, stroke: s ? C.blue : "none"}));
+      kids.push(el("path", {d: G[n.k] || G.pc, transform: `translate(${n.x - 20} ${n.y - 25}) scale(1.6667)`, fill: "none", stroke: c, "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": dash}));
+      kids.push(txt(n.x, n.y + 34, n.name, {fill: C.ink, "font-size": 12.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"}));
+      if (n.sub) kids.push(txt(n.x, n.y + 48, n.sub, {fill: C.sub, "font-size": 10.5, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"}));
+    }
+    if (n.ms) { const y = n.k === "router" ? n.y + 36 : n.y + (n.sub ? 62 : 50), bad = n.st === "bad" || n.st === "warn";
+      kids.push(txt(n.x, y, n.ms, {fill: n.st === "bad" ? C.red : n.st === "warn" ? C.amber : C.sub, "font-size": 11.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"})); }
+    if (linkFrom === n.id) kids.push(el("circle", {cx: n.x, cy: n.y, r: 34, fill: "none", stroke: C.blue, "stroke-width": 2, "stroke-dasharray": "4 4"}));
+    g.appendChild(el("g", {"data-t": "node", "data-id": n.id, style: "cursor:pointer"}, kids)); });
+  doc.texts.forEach(t => { const s = sel && sel.id === t.id;
+    g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": 14, "data-t": "text", "data-id": t.id, style: "cursor:move"})); });
+  if (pk.dot) g.appendChild(pk.dot(C));
+  $("#undo").disabled = !undo.length; $("#redo").disabled = !redo.length;
+}
+
+/* ---------- changes: every change is one undo step and is saved in this browser */
+let saveT = 0;
+function change(fn){ undo.push(JSON.stringify(doc)); if (undo.length > 100) undo.shift(); redo = []; fn(); persist(); draw(); if (mode === "break") fillPick(); }
+function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { $("#saved").textContent = store.set(KEY, JSON.stringify(doc)) ? "Saved in this browser" : "Not saved (browser storage off)"; }, 300); }
+function back(from, to){ if (!from.length) return; to.push(JSON.stringify(doc)); doc = JSON.parse(from.pop()); sel = null; $("#name").value = doc.name; persist(); draw(); if (mode === "break") fillPick(); }
+$("#undo").onclick = () => back(undo, redo); $("#redo").onclick = () => back(redo, undo);
+$("#name").onchange = () => change(() => { doc.name = clean($("#name").value) || "My network"; });
+
+/* ---------- tools */
+function buildTools(){
+  const t = $("#tools"); t.textContent = "";
+  TOOLS.forEach(x => { if (!x) { t.appendChild(document.createElement("hr")); return; }
+    const b = document.createElement("button"); b.setAttribute("aria-pressed", tool === x[0]); b.title = x[1];
+    const d = x[2] && x[2].length > 2 ? x[2] : G[x[0]], s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true");
+    if (x[0] === "router") s.appendChild(el("rect", {x: 3, y: 7, width: 18, height: 10, rx: 3, fill: "none", stroke: "currentColor", "stroke-width": 1.7}));
+    else s.appendChild(el("path", {d: d || "", fill: "none", stroke: x[0] === "l:wifi" ? "#4FA3FF" : x[0] === "l:cell" ? "#F0883E" : "currentColor", "stroke-width": 1.7, "stroke-linecap": "round", "stroke-linejoin": "round"}));
+    b.appendChild(s); b.appendChild(document.createTextNode(x[1]));
+    b.onclick = () => { tool = x[0]; linkFrom = null; buildTools(); hint(); draw(); }; t.appendChild(b); });
+}
+function hint(){ const h = {select: "Drag to move · double-click to rename · drag empty space to pan · Delete removes", text: "Click where the text goes", area: "Drag to draw an area",
+  pen: "Drag to draw", delete: "Click anything to remove it"}[tool] || (tool.startsWith("l:") ? (linkFrom ? "Now click the second box" : "Click the first box, then the second") : "Click to place it - double-click to rename");
+  $("#hint").textContent = h; }
+
+/* ---------- pointer: place, link, move, pan, draw */
+const stage = $("#stage");
+function pt(e){ const r = stage.getBoundingClientRect(); return {x: (e.clientX - r.left - view.x) / view.z, y: (e.clientY - r.top - view.y) / view.z}; }
+function hit(e){ let t = e.target; while (t && t !== stage) { if (t.getAttribute && t.getAttribute("data-t")) return {t: t.getAttribute("data-t"), id: t.getAttribute("data-id")}; t = t.parentNode; } return null; }
+let drag = null;
+stage.addEventListener("pointerdown", e => {
+  if (e.button > 0 || e.target.closest("#zoom,#play,#say,#edit")) return;
+  hideEdit(); const p = pt(e), h = hit(e); stage.setPointerCapture(e.pointerId);
+  if (mode === "break") { drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; return; }
+  if (tool === "delete") { if (h && h.t !== "resize") change(() => remove(h)); return; }
+  if (tool.startsWith("l:")) { if (h && h.t === "node") { if (!linkFrom) { linkFrom = h.id; draw(); } else if (linkFrom !== h.id) { const a = linkFrom; linkFrom = null;
+      change(() => doc.links.push({id: uid("l"), a, b: h.id, kind: tool.slice(2), label: ""})); } } hint(); return; }
+  if (tool === "text") { const t = {id: uid("t"), x: p.x, y: p.y, t: "Text"}; change(() => doc.texts.push(t)); sel = {t: "text", id: t.id}; editAt(t, "t"); return; }
+  if (tool === "area") { drag = {area: true, x0: p.x, y0: p.y, a: null}; return; }
+  if (tool === "pen") { undo.push(JSON.stringify(doc)); redo = []; const s = {id: uid("i"), p: [Math.round(p.x), Math.round(p.y)]}; doc.ink.push(s); drag = {ink: s}; return; }
+  if (tool !== "select" && (!h || h.t === "area")) { const n = {id: uid("n"), k: tool, name: (TOOLS.find(x => x && x[0] === tool) || [0, "Device"])[1], sub: "", st: doc.measured ? "you" : "", x: Math.round(p.x / 10) * 10, y: Math.round(p.y / 10) * 10};
+    change(() => doc.nodes.push(n)); sel = {t: "node", id: n.id}; draw(); return; }
+  if (h && h.t === "resize") { const a = doc.areas.find(x => x.id === h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {resize: a, sx: p.x, sy: p.y, w: a.w, h: a.h}; return; }
+  if (h && (h.t === "node" || h.t === "text" || h.t === "area")) { sel = h; const o = h.t === "node" ? node(h.id) : h.t === "text" ? doc.texts.find(x => x.id === h.id) : doc.areas.find(x => x.id === h.id);
+    undo.push(JSON.stringify(doc)); redo = []; drag = {move: o, sx: p.x, sy: p.y, ox: o.x, oy: o.y, moved: false}; draw(); return; }
+  if (h) { sel = h; draw(); return; }
+  sel = null; drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; draw();
+});
+stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
+  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; draw(); }
+  else if (drag.move) { const snap = v => e.shiftKey ? v : Math.round(v / 10) * 10; drag.move.x = snap(drag.ox + p.x - drag.sx); drag.move.y = snap(drag.oy + p.y - drag.sy); drag.moved = true; draw(); }
+  else if (drag.resize) { drag.resize.w = Math.max(60, Math.round(drag.w + p.x - drag.sx)); drag.resize.h = Math.max(50, Math.round(drag.h + p.y - drag.sy)); draw(); }
+  else if (drag.ink) { drag.ink.p.push(Math.round(p.x), Math.round(p.y)); if (drag.ink.p.length > 4000) drag.ink.p.length = 4000; draw(); }
+  else if (drag.area) { if (!drag.a) { undo.push(JSON.stringify(doc)); redo = []; drag.a = {id: uid("a"), x: 0, y: 0, w: 0, h: 0, t: "Area"}; doc.areas.push(drag.a); }
+    Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); draw(); } });
+stage.addEventListener("pointerup", () => { if (!drag) return;
+  if (drag.move && !drag.moved) undo.pop();
+  if (drag.area && drag.a) { if (drag.a.w < 30 || drag.a.h < 30) { doc.areas.pop(); undo.pop(); } else { sel = {t: "area", id: drag.a.id}; editAt(drag.a, "t"); } }
+  if (drag.ink && drag.ink.p.length < 6) { doc.ink.pop(); undo.pop(); }
+  if (!drag.pan) { persist(); draw(); } drag = null; });
+stage.addEventListener("dblclick", e => { if (mode !== "draw") return; const h = hit(e); if (!h) return;
+  if (h.t === "node") editAt(node(h.id), "name"); else if (h.t === "text") editAt(doc.texts.find(x => x.id === h.id), "t");
+  else if (h.t === "area") editAt(doc.areas.find(x => x.id === h.id), "t"); else if (h.t === "link") editAt(doc.links.find(x => x.id === h.id), "label"); });
+stage.addEventListener("wheel", e => { e.preventDefault(); const r = stage.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, z = Math.min(3, Math.max(.25, view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+  view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }, {passive: false});
+function zoomBy(f){ const r = stage.getBoundingClientRect(), mx = r.width / 2, my = r.height / 2, z = Math.min(3, Math.max(.25, view.z * f)); view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }
+$("#zIn").onclick = () => zoomBy(1.2); $("#zOut").onclick = () => zoomBy(1 / 1.2); $("#zFit").onclick = () => fit();
+function bounds(){ let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+  doc.nodes.forEach(n => { add(n.x - 70, n.y - 40); add(n.x + 70, n.y + 70); }); doc.areas.forEach(a => { add(a.x, a.y); add(a.x + a.w, a.y + a.h); }); doc.texts.forEach(t => { add(t.x, t.y - 16); add(t.x + 8 * t.t.length, t.y + 4); });
+  doc.ink.forEach(s => { for (let i = 0; i < s.p.length; i += 2) add(s.p[i], s.p[i + 1]); });
+  return isFinite(x0) ? {x: x0 - 20, y: y0 - 20, w: x1 - x0 + 40, h: y1 - y0 + 40} : {x: 0, y: 0, w: 800, h: 500}; }
+function fit(){ const r = stage.getBoundingClientRect(), b = bounds(), pad = mode === "break" ? 70 : 20; const z = Math.min(2, Math.max(.25, Math.min(r.width / b.w, (r.height - pad) / b.h)));
+  view.z = z; view.x = (r.width - b.w * z) / 2 - b.x * z; view.y = (r.height - pad - b.h * z) / 2 - b.y * z + 6; draw(); }
+function remove(h){ if (h.t === "node") { doc.nodes = doc.nodes.filter(n => n.id !== h.id); doc.links = doc.links.filter(l => l.a !== h.id && l.b !== h.id); }
+  const k = {link: "links", text: "texts", area: "areas", ink: "ink"}[h.t]; if (k) doc[k] = doc[k].filter(x => x.id !== h.id); sel = null; }
+
+/* ---------- in-place text editing (no pop-ups) */
+let editing = null;
+function editAt(obj, field){ const r = stage.getBoundingClientRect(), box = $("#edit"), inp = $("#editIn");
+  const x = obj.a ? (node(obj.a).x + node(obj.b).x) / 2 : obj.w ? obj.x + 10 : obj.x, y = obj.a ? (node(obj.a).y + node(obj.b).y) / 2 : obj.w ? obj.y + 4 : obj.x === undefined ? 0 : obj.y + (field === "name" ? 24 : -18);
+  box.style.left = Math.max(4, Math.min(r.width - 200, x * view.z + view.x - (field === "t" && !obj.w ? 4 : 95))) + "px"; box.style.top = (y * view.z + view.y) + "px"; box.style.display = "block";
+  inp.value = obj[field] || ""; editing = {obj, field}; setTimeout(() => { inp.focus(); inp.select(); }, 0); }
+function hideEdit(commit){ if (!editing) return; const {obj, field} = editing, v = clean($("#editIn").value); editing = null; $("#edit").style.display = "none";
+  if (commit !== false && v !== (obj[field] || "")) change(() => { obj[field] = v; if (field === "t" && !v && !obj.w) doc.texts = doc.texts.filter(t => t !== obj); }); }
+$("#editIn").addEventListener("keydown", e => { if (e.key === "Enter") hideEdit(); if (e.key === "Escape") hideEdit(false); });
+$("#editIn").addEventListener("blur", () => hideEdit());
+document.addEventListener("keydown", e => { if (e.target.closest && e.target.closest("input,select")) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); back(e.shiftKey ? redo : undo, e.shiftKey ? undo : redo); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); back(redo, undo); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); persist(); }
+  else if ((e.key === "Delete" || e.key === "Backspace") && sel && mode === "draw") { e.preventDefault(); const h = sel; change(() => remove(h)); }
+  else if (e.key === "Escape") { linkFrom = null; sel = null; draw(); }
+  else if (mode === "break" && e.key === " ") { e.preventDefault(); toggle(); } });
+
+/* ---------- menus */
+function menu(btn, box){ btn.onclick = e => { e.stopPropagation(); const open = box.hidden; document.querySelectorAll(".menu>div").forEach(m => m.hidden = true);
+  document.querySelectorAll(".menu>button").forEach(b => b.setAttribute("aria-expanded", "false")); box.hidden = !open; btn.setAttribute("aria-expanded", String(open)); }; }
+document.addEventListener("click", () => { document.querySelectorAll(".menu>div").forEach(m => m.hidden = true); });
+menu($("#exBtn"), $("#exMenu")); menu($("#fileBtn"), $("#fileMenu"));
+EXNAMES.forEach(([k, n]) => { const b = document.createElement("button"); b.textContent = n; b.onclick = () => { change(() => { doc = fromExample(k); }); $("#name").value = doc.name; fit(); if (mode === "break") fillPick(); }; $("#exMenu").appendChild(b); });
+function download(name, blob){ const a = document.createElement("a"), u = URL.createObjectURL(blob); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
+const fname = ext => (doc.name || "network").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) + ext;
+function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y, z: view.z}, s0 = sel; sel = null; view = {x: -b.x, y: -b.y, z: 1}; draw();
+  const s = $("#svg").cloneNode(true); view = keep; sel = s0; draw();
+  s.setAttribute("width", Math.ceil(b.w)); s.setAttribute("height", Math.ceil(b.h)); s.setAttribute("viewBox", `0 0 ${Math.ceil(b.w)} ${Math.ceil(b.h)}`);
+  s.insertBefore(el("rect", {width: "100%", height: "100%", fill: C.page}), s.firstChild);
+  s.setAttribute("font-family", "Segoe UI, Inter, Arial, sans-serif"); return {t: new XMLSerializer().serializeToString(s), w: Math.ceil(b.w), h: Math.ceil(b.h)}; }
+$("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute("data-f"); if (!f) return;
+  if (f === "new") { change(() => { doc = blank(); }); $("#name").value = doc.name; fit(); }
+  else if (f === "open") $("#openFile").click();
+  else if (f === "save") download(fname(".json"), new Blob([JSON.stringify(doc, null, 1)], {type: "application/json"}));
+  else if (f === "svg") download(fname(".svg"), new Blob([svgText().t], {type: "image/svg+xml"}));
+  else if (f === "png") { const s = svgText(), img = new Image(), u = URL.createObjectURL(new Blob([s.t], {type: "image/svg+xml"}));
+    img.onload = () => { const c = document.createElement("canvas"), k = 2; c.width = s.w * k; c.height = s.h * k; const x = c.getContext("2d"); x.scale(k, k); x.drawImage(img, 0, 0);
+      URL.revokeObjectURL(u); c.toBlob(b => b && download(fname(".png"), b)); }; img.src = u; } });
+$("#openFile").onchange = () => { const f = $("#openFile").files[0]; if (!f || f.size > 2e6) return; f.text().then(t => { let d = null; try { d = valid(JSON.parse(t)); } catch (e) {}
+  if (d) { change(() => { doc = d; }); $("#name").value = doc.name; fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
+$("#theme").onclick = () => { const r = document.documentElement, l = r.getAttribute("data-theme") !== "light"; r.setAttribute("data-theme", l ? "light" : "dark"); store.set("am-theme", l ? "light" : "dark"); draw(); };
+
+/* ---------- Break it: one fault, the packet walks the path and stops where it fails */
+const FAULTS = [
+ {id: "dns", n: "DNS times out", d: "names stop answering"}, {id: "loss", n: "Packet loss", d: "a link drops some packets"}, {id: "gateway", n: "Wrong gateway", d: "the PC points at the wrong box"},
+ {id: "mtu", n: "MTU black hole", d: "big packets vanish"}, {id: "loop", n: "Routing loop", d: "TTL runs out"}, {id: "wifi", n: "Busy Wi-Fi", d: "airtime and retries"}];
+let fault = "mtu", pk = {steps: [], i: 0, timer: 0, dot: null}, pick = {from: null, to: null};
+const isRouter = n => n.k === "router" || n.k === "cpe" || n.k === "olt" || n.k === "switch" || n.k === "firewall" || n.k === "loadbal";
+const isEnd = n => /^(pc|laptop|phone)$/.test(n.k);
+function path(a, b){ if (!a || !b) return null; const prev = {[a]: null}, q = [a];
+  while (q.length) { const c = q.shift(); if (c === b) break; doc.links.forEach(l => { const o = l.a === c ? l.b : l.b === c ? l.a : null; if (o && !(o in prev)) { prev[o] = {n: c, l}; q.push(o); } }); }
+  if (!(b in prev)) return null; const ns = [], ls = []; for (let c = b; c; c = prev[c] && prev[c].n) { ns.unshift(node(c)); if (prev[c]) ls.unshift(prev[c].l); } return {ns, ls}; }
+function fillPick(){ const f = $("#from"), t = $("#to"); [f, t].forEach(s => s.textContent = "");
+  doc.nodes.forEach(n => { [f, t].forEach(s => { const o = document.createElement("option"); o.value = n.id; o.textContent = n.name + (n.sub ? " · " + n.sub : ""); s.appendChild(o); }); });
+  if (!node(pick.from)) { const n = doc.nodes.find(isEnd) || doc.nodes[0]; pick.from = n && n.id; }
+  if (!node(pick.to) || pick.to === pick.from) { const ends = doc.nodes.filter(n => /^(server|building|rack|cloud)$/.test(n.k) && n.id !== pick.from); const n = ends[0] || doc.nodes[doc.nodes.length - 1]; pick.to = n && n.id; }
+  f.value = pick.from || ""; t.value = pick.to || ""; plan(); }
+$("#from").onchange = () => { pick.from = $("#from").value; plan(); }; $("#to").onchange = () => { pick.to = $("#to").value; plan(); };
+function solved(){ try { return JSON.parse(store.get(SOLVED) || "[]"); } catch (e) { return []; } }
+function buildFaults(){ const box = $("#faults"), done = solved(); box.textContent = "";
+  FAULTS.forEach(f => { const b = document.createElement("button"); b.className = "fault"; b.setAttribute("aria-pressed", String(f.id === fault));
+    b.innerHTML = "<b></b><span></span>"; b.firstChild.textContent = f.n; b.children[1].textContent = f.d;
+    if (done.includes(f.id)) { const i = document.createElement("i"); i.textContent = "✓ watched"; b.appendChild(i); }
+    b.onclick = () => { fault = f.id; buildFaults(); plan(); }; box.appendChild(b); }); }
+/* each step: the packet goes from one stop to the next (at = [from index, to index]), or stops (x) with what it means */
+function plan(){ stop(); const p = path(pick.from, pick.to); pk = {steps: [], i: 0, timer: 0, dot: null, p};
+  if (!p || p.ns.length < 2) { say("No path between these two - join them with a link in Draw.", "", true); draw(); num(); return; }
+  const N = p.ns, L = p.ls, last = N.length - 1, idx = pred => { const i = N.findIndex((n, j) => j > 0 && pred(n, j)); return i < 0 ? Math.min(2, last) : i; };
+  const home = Math.max(1, N.findIndex((n, j) => j > 0 && (n.k === "cpe" || n.k === "router")));
+  const go = (a, b, t, o) => pk.steps.push(Object.assign({a, b, t}, o || {}));
+  const walk = (from, to, t, o) => { for (let i = from; i < to; i++) go(i, i + 1, i === from ? t : "", o); };
+  const nm = i => N[i].name || "the next box";
+  if (fault === "gateway") { go(0, 0, `${nm(0)} sends to its gateway 192.168.0.1 - but ${nm(1)} is 192.168.1.1.`); go(0, .45, "Nobody answers the ARP question “who has 192.168.0.1?”");
+    go(.45, .45, "", {x: true, why: "The packet never leaves the PC: the gateway in its settings doesn’t exist on this network.", fix: "Fix: set the gateway back to automatic (DHCP), or to your router’s address."}); }
+  else if (fault === "dns") { const r = Math.min(last, idx(n => n.st === "typ" || (n.k === "router" && n.id !== N[home].id)));
+    walk(0, r, `${nm(0)} asks for the server’s address by name (DNS, UDP port 53).`); go(r, r, `The question reaches ${nm(r)} - and waits.`, {}); go(r, r, "", {x: true, why: "No answer within 2 seconds, three times. Without an address the game never starts - yet every box on the path is fine.", fix: "Fix: try another DNS server (Settings › DNS in AdeeboMeter compares them), or restart the router."}); }
+  else if (fault === "loss") { const li = Math.min(last - 1, Math.max(0, L.findIndex(l => l.kind === "fibre" || l.kind === "bad")));
+    for (let k = 1; k <= 4; k++) { const drop = k === 2 || k === 4; walk(0, drop ? li : last, k === 1 ? `Packet 1 of 4 leaves ${nm(0)}.` : `Packet ${k} of 4.`, {}); if (drop) { go(li, li + .5, ""); go(li + .5, li + .5, "", {x: true, soft: true, why: `Packet ${k} was lost on the link after ${nm(li)}. TCP sends it again 200 ms later - in a game or call it’s just gone.`}); } }
+    pk.steps[pk.steps.length - 1].fix = "2 of 4 lost on one link. Fix: AdeeboMeter’s Report for my ISP shows the hop where loss starts and carries on - send that to your provider."; }
+  else if (fault === "mtu") { const ri = N.findIndex((n, j) => j > home && n.k === "router"), li = ri > 0 && ri < last ? ri : Math.min(last - 1, Math.max(1, home));
+    walk(0, last, "Small packets (the handshake) go through fine.", {small: true}); go(last, last, "Connected. Now a full-size packet: 1,500 bytes, “don’t fragment” set.");
+    walk(0, li, "", {}); go(li, li + .5, `The next link out of ${nm(li)} only takes 1,492 bytes (PPPoE / tunnel overhead).`); go(li + .5, li + .5, "", {x: true, why: `${nm(li)} drops it and sends “packet too big” back - but a firewall on the way blocks that reply. The PC keeps waiting: pages half-load, downloads hang.`, fix: "Fix: lower the MTU on your PC or router to 1,492 (AdeeboMeter’s MTU-per-hop tool finds the right number)."}); }
+  else if (fault === "loop") { const rs = N.map((n, i) => isRouter(n) && i > home ? i : -1).filter(i => i > 0); const a = rs[0] || Math.max(1, last - 2), b = Math.min(last, a + 1);
+    walk(0, a, `The packet leaves with TTL 64 - each router takes 1 off.`); let ttl = 64 - a;
+    for (let k = 0; k < 4; k++) { go(a, b, k === 0 ? `${nm(a)} sends it to ${nm(b)}, which sends it straight back - each thinks the other is the way.` : "", {}); go(b, a, `TTL ${ttl -= 2}…`); }
+    go(a, a, "", {x: true, why: "It bounces until TTL reaches 0 (here after 64 hops), then the router drops it and sends “time exceeded”. Traceroute shows the same two routers repeating.", fix: "Not your side: it’s a routing mistake in that network. Send the traceroute to whoever runs it."}); }
+  else if (fault === "wifi") { const wi = L.findIndex(l => l.kind === "wifi" || l.kind === "cell");
+    if (wi < 0) { say("There’s no Wi-Fi or 4G / 5G link on this path.", "Draw one (Wi-Fi link tool), or pick another fault.", true); draw(); num(); return; }
+    walk(0, wi, "", {}); go(wi, wi + .5, `${N[wi].name} waits for the air to be free - ${3} other devices are talking.`); go(wi + .5, wi, "No ack - the radio tries again at a slower rate.");
+    go(wi, wi + 1, "Third try gets through: 2 ms became 38 ms."); walk(wi + 1, last, "", {});
+    go(last, last, "", {x: true, soft: true, why: "Nothing was lost on the wire - the time went on waiting and retrying over the air. That’s jitter in games and calls.", fix: "Fix: move closer, use 5 GHz / a clear channel (AdeeboMeter’s Wi-Fi page picks one), or use a cable for games."}); }
+  draw(); num(); say(FAULTS.find(f => f.id === fault).n, "Press Play, or Step to go one move at a time.", false);
+}
+function posAt(v){ if (!pk.p) return {x: 0, y: 0}; const N = pk.p.ns, i = Math.floor(v), f = v - i, a = N[Math.min(i, N.length - 1)], b = N[Math.min(i + 1, N.length - 1)]; return {x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f}; }
+function say(b, t, bad, fix){ const s = $("#say"); s.className = "show" + (bad ? " bad" : ""); s.textContent = ""; const x = document.createElement("b"); x.textContent = b; s.appendChild(x);
+  if (t) s.appendChild(document.createTextNode(t)); if (fix) { const e = document.createElement("em"); e.textContent = fix; s.appendChild(e); } }
+function num(){ $("#pNum").textContent = pk.steps.length ? pk.i + " / " + pk.steps.length : ""; $("#pBar").style.width = pk.steps.length ? (100 * pk.i / pk.steps.length) + "%" : "0"; }
+function show(i, anim){ pk.i = i; num(); const s = pk.steps[i - 1];
+  if (!s) { pk.dot = null; draw(); return; }
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, t0 = performance.now(), dur = anim && !reduce && s.a !== s.b ? 520 : 0;
+  const mine = pk, tok = pk.tok = (pk.tok || 0) + 1;
+  const frame = now => { if (pk !== mine || pk.tok !== tok) return; const k = dur ? Math.min(1, (now - t0) / dur) : 1, v = s.a + (s.b - s.a) * k, p = posAt(v);
+    pk.dot = C => s.x ? el("g", {}, [el("circle", {cx: p.x, cy: p.y, r: 14, fill: s.soft ? C.amber : C.red, opacity: .25}), el("path", {d: `M${p.x - 7} ${p.y - 7}L${p.x + 7} ${p.y + 7}M${p.x + 7} ${p.y - 7}L${p.x - 7} ${p.y + 7}`, stroke: s.soft ? C.amber : C.red, "stroke-width": 3, "stroke-linecap": "round"})])
+      : el("circle", {cx: p.x, cy: p.y, r: s.small ? 6 : 9, fill: C.blue, stroke: C.page, "stroke-width": 3});
+    draw(); if (k < 1) requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+  if (s.x) { say(s.why, "", !s.soft, s.fix); if (i === pk.steps.length) { const d = solved(); if (!d.includes(fault)) { d.push(fault); store.set(SOLVED, JSON.stringify(d)); buildFaults(); } } }
+  else if (s.t) say(s.t, "", false); }
+function stop(){ clearInterval(pk.timer); pk.timer = 0; $("#pPlay").textContent = "Play"; }
+function toggle(){ if (pk.timer) { stop(); return; } if (pk.i >= pk.steps.length) show(0); $("#pPlay").textContent = "Pause";
+  const tick = () => { if (pk.i >= pk.steps.length) { stop(); return; } show(pk.i + 1, true); }; tick(); pk.timer = setInterval(tick, 1100); }
+$("#pPlay").onclick = toggle; $("#pStep").onclick = () => { stop(); if (pk.i < pk.steps.length) show(pk.i + 1, true); }; $("#pBack").onclick = () => { stop(); if (pk.i > 0) show(pk.i - 1, false); };
+function setMode(m){ mode = m; document.body.classList.toggle("break", m === "break"); $("#mDraw").setAttribute("aria-pressed", String(m === "draw")); $("#mBreak").setAttribute("aria-pressed", String(m === "break"));
+  sel = null; linkFrom = null; hideEdit(); stop(); pk = {steps: [], i: 0, timer: 0, dot: null}; $("#say").className = "";
+  if (m === "break") { buildFaults(); fillPick(); } setTimeout(fit, 0); draw(); }
+$("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break");
+
+/* ---------- go */
+try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+doc = start(); $("#name").value = doc.name; buildTools(); hint();
+if (doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
+setTimeout(fit, 0); addEventListener("resize", () => fit());
+if (/[?&]mode=break/.test(location.search)) setMode("break");
+})();
+</script>
+</body>
+</html>
