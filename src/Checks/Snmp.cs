@@ -341,9 +341,14 @@ namespace AdeeboMeter
             using (HashAlgorithm h = alg == "md5" ? (HashAlgorithm)MD5.Create() : alg == "sha256" ? (HashAlgorithm)SHA256.Create() : SHA1.Create())
             {
                 var pw = Encoding.UTF8.GetBytes(password); if (pw.Length == 0) throw new ArgumentException("empty password");
-                var buf = new byte[1048576]; for (int i = 0; i < buf.Length; i++) buf[i] = pw[i % pw.Length];
-                var ku = h.ComputeHash(buf);
-                return h.ComputeHash(Cat(ku, engineId, ku));
+                var buf = new byte[1048576]; byte[] ku = null, mid = null;
+                try
+                {
+                    for (int i = 0; i < buf.Length; i++) buf[i] = pw[i % pw.Length];
+                    ku = h.ComputeHash(buf); mid = Cat(ku, engineId, ku);
+                    return h.ComputeHash(mid);
+                }
+                finally { Array.Clear(buf, 0, buf.Length); Array.Clear(pw, 0, pw.Length); if (ku != null) Array.Clear(ku, 0, ku.Length); if (mid != null) Array.Clear(mid, 0, mid.Length); }   // bug-hunt ML-11: no copies of the password left behind
             }
         }
         [SuppressMessage("Security", "CA5350", Justification = "SNMPv3 USM: HMAC-SHA-96 (RFC 3414)")]

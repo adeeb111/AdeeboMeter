@@ -115,10 +115,10 @@ namespace AdeeboMeter
                 // makers are known and the same, and not on a big managed network (3+ of your maker's APs: batches differ there)
                 string myOui = Oui(s.MyBssid);
                 int mine = aps.Count(a => a.Ssid == ssid && Oui(a.Bssid) == myOui);
-                if (myOui != "" && ssid != "-" && !Arp.Randomised(s.MyBssid) && mine < 3)
+                if (myOui != "" && ssid != "-" && !Arp.Randomised(s.MyBssid))   /* bug-hunt ML-151: big networks too - a different maker's access point with your name is still worth a look */
                     foreach (var a in aps.Where(a => a.Ssid == ssid && Oui(a.Bssid) != "" && Oui(a.Bssid) != myOui && !Arp.Randomised(a.Bssid)))
                     {
-                        string v1 = Toolkit.Vendor(s.MyBssid), v2 = Toolkit.Vendor(a.Bssid); if (v1 != "" && v1 == v2) continue;
+                        string v1 = Toolkit.Vendor(s.MyBssid), v2 = Toolkit.Vendor(a.Bssid); if (v1 != "" && v1 == v2) continue; if ((v1 == "" || v2 == "") && mine >= 3) continue;   // a big network with makers we can't name: not enough to say
                         x.Twins.Add(new[] { a.Ssid, a.Bssid, "Same name as your network, but different hardware (" + a.Signal + "%" + (v2 != "" ? ", " + v2.Trim('(', ')') : "") + "). Usually another access point bought separately or a neighbour's router with the same name - but it could be a fake one. If it shows a sign-in page you didn't expect, don't sign in." });
                     }
             }

@@ -61,8 +61,10 @@ namespace AdeeboMeter
             public Lane(byte[] secret, byte[] zHash, byte dir)
             {
                 var k = Hkdf(secret, zHash, "adeebometer remote v1 " + (dir == 1 ? "pc>phone" : "phone>pc"), 64);
-                enc = k.Take(32).ToArray(); mac = k.Skip(32).ToArray(); this.dir = dir;
+                enc = k.Take(32).ToArray(); mac = k.Skip(32).ToArray(); this.dir = dir; Array.Clear(k, 0, k.Length);
             }
+            // bug-hunt ML-29: the session's keys don't outlive it
+            public void Wipe() { lock (this) { Array.Clear(enc, 0, enc.Length); Array.Clear(mac, 0, mac.Length); } }
             static byte[] Be(long v) { var b = new byte[8]; for (int i = 7; i >= 0; i--) { b[i] = (byte)v; v >>= 8; } return b; }
             // seq(8) | iv(16) | ciphertext | tag(32), base64url
             public string Seal(string text)

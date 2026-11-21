@@ -43,7 +43,7 @@ namespace AdeeboMeter
         bool CheckupMetered()
         {
             if (Cfg.CapGB > 0) return true;   // a monthly cap set in Alerts: don't spend it without asking
-            try { System.Net.NetworkInformation.NetworkInterface p; lock (M.L) p = M.Primary; return p != null && (p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wwanpp || p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wwanpp2 || p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Ppp); }
+            try { System.Net.NetworkInformation.NetworkInterface p; lock (M.L) p = M.Primary; return p != null && (p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wwanpp || p.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wwanpp2); }   // bug-hunt ML-172: PPPoE (fibre, DSL) is a home line, not a metered one - only mobile broadband counts
             catch (InvalidOperationException) { return false; }
         }
         float PaintCheckupCard(Graphics g, float x, float y, float w)

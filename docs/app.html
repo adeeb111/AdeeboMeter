@@ -640,9 +640,9 @@ textarea.in{resize:vertical;min-height:120px}
       var now = Date.now() / 1000, off = 0;
       try { var t0 = Date.now(), pr = await tfetch(LIVE + "/ping?c" + t0, 4000), pj = pr.ok ? await pr.json() : null; if (pj && pj.now) { off = (pj.now - (t0 + Date.now()) / 2) / 1000; if (Math.abs(off) > 20) now += off; } } catch (e) {}
       var slot = Math.floor(now / 1500), list = [], into = now - slot * 1500;
-      for (var k = 0; k < 5; k++) list.push([slot, k]);
-      if (into < 180) for (k = 0; k < 5; k++) list.push([slot - 1, k]);
-      if (into > 1500 - 180) for (k = 0; k < 5; k++) list.push([slot + 1, k]);
+      for (var k = 0; k < 12; k++) list.push([slot, k]);   // bug-hunt ML-112: the PC tries up to 12 rooms a slot
+      if (into < 180) for (k = 0; k < 12; k++) list.push([slot - 1, k]);
+      if (into > 1500 - 180) for (k = 0; k < 12; k++) list.push([slot + 1, k]);
       for (var i = 0; i < list.length; i++) {
         var rm = b64u(await hmac(P, te.encode("room|" + list[i][0] + "|" + list[i][1]))).slice(0, 22);
         if (await start(rm, P, true)) { reconnecting = false; draw(); return; }
@@ -2018,7 +2018,8 @@ textarea.in{resize:vertical;min-height:120px}
       else { var was = S.tool; S.tool = k; var got = screenRows(TOOLV[k]()); S.tool = was; head = got.head || (P ? P[2] : k); got.rows.slice(0, 40).forEach(function (x) { flat.push(String(x[0]), String(x[1] || ""), String(x[2] || ""), String(x[3] || "")); }); }
     } catch (e) { head = "The check didn't finish on the phone"; }
     finally { ASKN--; }
-    send({ t: "pres", rid: rid, head: head, r: flat });
+    var upv = k === "isdown" && tst(k).res && tst(k).res.t ? (tst(k).res.t.n > 0 ? "1" : "0") : "";   // bug-hunt ML-119: the verdict itself, not only its sentence
+    send({ t: "pres", rid: rid, head: head, r: flat, up: upv });
   }
   async function answerAsk(c) {
     var k = String(c.k || ""), q = String(c.q || "").slice(0, 200), rid = String(c.rid || "").slice(0, 16), head = "", rows = [];

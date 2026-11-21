@@ -211,12 +211,14 @@ namespace AdeeboMeter
                 for (int i = 0; i < 3 && !run.Stop; i++) { var q = Toolkit.Query(s.Item2, "r" + Guid.NewGuid().ToString("N").Substring(0, 10) + ".example.com", 1, true); if (q == null) fail++; else fresh.Add(q.Ms); }
                 res.Add(Tuple.Create(s.Item1, cached.Count > 0 ? Journey.Median(cached) : double.NaN, fresh.Count > 0 ? Journey.Median(fresh) : double.NaN, fail));
             }
-            var ok = res.Where(r => !double.IsNaN(r.Item2)).OrderBy(r => r.Item2 + r.Item3 * 0.3).ToList();
+            // bug-hunt ML-93: a server that only answered first asks (nothing cached yet) still answered
+            Func<Tuple<string, double, double, int>, double> score = r => (double.IsNaN(r.Item2) ? r.Item3 : r.Item2) + (double.IsNaN(r.Item3) ? 0 : r.Item3 * 0.3);
+            var ok = res.Where(r => !double.IsNaN(r.Item2) || !double.IsNaN(r.Item3)).OrderBy(score).ToList();
             if (ok.Count == 0) { rows.Add(R(2, "DNS race", "no server answered - DNS is blocked or the network is down", "", "m")); return rows; }
             var mine = res.FirstOrDefault(r => r.Item1.StartsWith("Yours", StringComparison.Ordinal)); var best = ok[0];
-            bool mineBest = mine != null && (mine == best || (!double.IsNaN(mine.Item2) && mine.Item2 - best.Item2 < 5));
-            rows.Add(R(mineBest ? 0 : 1, "Winner", best.Item1 + " - " + best.Item2.ToString("0", CultureInfo.CurrentCulture) + " ms for a name it knows, " + (double.IsNaN(best.Item3) ? "-" : best.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms for a new one", mineBest ? "Yours is as fast as any - nothing to change." : "Yours is slower here. Speed isn't everything: your provider's DNS may steer you to closer servers, and a company PC must keep its own DNS.", "m"));
-            foreach (var r in res) rows.Add(R(r.Item4 > 3 ? 1 : 3, r.Item1, double.IsNaN(r.Item2) ? "no answer" : r.Item2.ToString("0", CultureInfo.CurrentCulture) + " ms known · " + (double.IsNaN(r.Item3) ? "-" : r.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms new" + (r.Item4 > 0 ? " · " + r.Item4 + " unanswered" : ""), "", "m"));
+            bool mineBest = mine != null && (mine == best || (!double.IsNaN(score(mine)) && score(mine) - score(best) < 5));
+            rows.Add(R(mineBest ? 0 : 1, "Winner", best.Item1 + " - " + (double.IsNaN(best.Item2) ? "-" : best.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms for a name it knows, " + (double.IsNaN(best.Item3) ? "-" : best.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms for a new one", mineBest ? "Yours is as fast as any - nothing to change." : "Yours is slower here. Speed isn't everything: your provider's DNS may steer you to closer servers, and a company PC must keep its own DNS.", "m"));
+            foreach (var r in res) rows.Add(R(r.Item4 > 3 ? 1 : 3, r.Item1, double.IsNaN(r.Item2) && double.IsNaN(r.Item3) ? "no answer" : (double.IsNaN(r.Item2) ? "-" : r.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms known · " + (double.IsNaN(r.Item3) ? "-" : r.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms new" + (r.Item4 > 0 ? " · " + r.Item4 + " unanswered" : ""), "", "m"));
             rows.Add(R(3, "How", "each server was asked for 6 popular names three times and for 3 made-up names. Known = the 2nd and 3rd asks (its cached answer); new = the first ask of each name plus the made-up ones (it had to go and find out). Typical (middle) times shown.", "", "i"));
             return rows;
         }
@@ -350,8 +352,8 @@ namespace AdeeboMeter
         public static string Weather(Monitor m)
         {
             double net = m.NetPing.Avg(10); var v = m.NetPing.Values(30).Where(x => !double.IsNaN(x)).ToList(); double jit = v.Count > 2 ? v.Zip(v.Skip(1), (a, b) => Math.Abs(a - b)).Average() : double.NaN;
-            var today = Outages.Last(m, 1).Where(o => o.From.Date == DateTime.Today).ToList(); var now = today.FirstOrDefault(o => o.Ongoing);
-            if (now != null) return "Stormy: the internet has been out since " + now.From.ToString("HH:mm", CultureInfo.CurrentCulture) + ".";
+            var recent = Outages.Last(m, 2).ToList(); var today = recent.Where(o => o.From.Date == DateTime.Today).ToList(); var now = recent.FirstOrDefault(o => o.Ongoing);   // bug-hunt ML-55: an outage that began before midnight is still an outage
+            if (now != null) return "Stormy: the internet has been out since " + now.From.ToString(now.From.Date == DateTime.Today ? "HH:mm" : "ddd HH:mm", CultureInfo.CurrentCulture) + ".";
             if (double.IsNaN(net)) return "";
             string drops = today.Count == 0 ? "no drops today" : today.Count + (today.Count == 1 ? " drop" : " drops") + " today (last at " + today[0].From.ToString("HH:mm", CultureInfo.CurrentCulture) + ")";
             string word = today.Count >= 3 || net > 150 || jit > 40 ? "Stormy" : today.Count > 0 || net > 60 || jit > 15 ? "Choppy" : "Calm";

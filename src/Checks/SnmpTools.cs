@@ -34,7 +34,7 @@ namespace AdeeboMeter
             if (h.StartsWith("[", StringComparison.Ordinal) && rb > 0) { int p; if (!int.TryParse(h.Substring(rb + 2), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(1, rb - 1); }   // [2001:db8::1]:161
             else if (c > 0 && h.IndexOf(':') == c) { int p; if (!int.TryParse(h.Substring(c + 1), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(0, c); }
             if (h == "") { err = "type the device's address"; return false; }
-            IPAddress a; if (!IPAddress.TryParse(h.Trim('[', ']'), out a)) { try { a = Dns.GetHostAddresses(h).FirstOrDefault(); } catch { a = null; } }
+            IPAddress a; if (!IPAddress.TryParse(h.Trim('[', ']'), out a)) { try { a = Dns.GetHostAddresses(h).OrderBy(x => x.AddressFamily == global::System.Net.Sockets.AddressFamily.InterNetwork ? 0 : 1).FirstOrDefault(); } catch (global::System.Net.Sockets.SocketException) { a = null; } catch (ArgumentException) { a = null; }   /* bug-hunt ML-28: SNMP agents answer on IPv4 far more often; UDP has no handshake to try the next with */ }
             if (a == null) { err = "couldn't find " + h; return false; }
             ep = new IPEndPoint(a, port); return true;
         }

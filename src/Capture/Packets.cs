@@ -125,7 +125,7 @@ namespace AdeeboMeter
                 using (var ssl = new SslStream(c.GetStream(), false, delegate(object o, System.Security.Cryptography.X509Certificates.X509Certificate cert, System.Security.Cryptography.X509Certificates.X509Chain ch, SslPolicyErrors e) { return e == SslPolicyErrors.None; }))   // only the handshake; no data is sent
                 {
                     var t = Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, SslProtocols.Tls12 | (SslProtocols)12288, false));
-                    try { t.Wait(5000); } catch { }
+                    try { if (!t.Wait(5000)) { c.Close(); try { t.Wait(1000); } catch (AggregateException) { } } } catch (AggregateException) { }   // bug-hunt ML-12: a stuck handshake: close the socket first, so the handshake ends before the stream is disposed
                 }
             }
         }

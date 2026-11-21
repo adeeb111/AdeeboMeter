@@ -114,7 +114,7 @@ namespace AdeeboMeter
                 w.Crowding[d] = onMine.Where(n => !n.Mine && !n.Same).Sum(n => Math.Pow(Pct((int)n.RssiByDay[d]) / 100, 2)) * 100;
             }
             // the quietest channel all week, among the usual ones for the band - judged at your own width
-            int[] cand = w.MyBand.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : w.MyBand.StartsWith("5", StringComparison.Ordinal) ? (w.MyWidth >= 80 ? new[] { 36, 52, 100, 116, 149 } : w.MyWidth >= 40 ? new[] { 36, 44, 52, 60, 100, 108, 149, 157 } : new[] { 36, 40, 44, 48, 149, 153, 157, 161 }) : Array.Empty<int>();
+            int[] cand = w.MyBand.StartsWith("2.4", StringComparison.Ordinal) ? new[] { 1, 6, 11 } : w.MyBand.StartsWith("5", StringComparison.Ordinal) ? (w.MyWidth >= 80 ? new[] { 36, 52, 100, 116, 149 } : w.MyWidth >= 40 ? new[] { 36, 44, 52, 60, 100, 108, 149, 157 } : new[] { 36, 40, 44, 48, 149, 153, 157, 161 }) : w.MyBand.StartsWith("6", StringComparison.Ordinal) ? new[] { 5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229 } : Array.Empty<int>();   // bug-hunt ML-69: 6 GHz's preferred scanning channels (PSC)
             // 5 GHz: 149+ and the radar (DFS) channels only when they're already in use around here - proof they're allowed (as Least crowded does)
             if (w.MyBand.StartsWith("5", StringComparison.Ordinal))
             {

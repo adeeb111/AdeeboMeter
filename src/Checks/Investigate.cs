@@ -23,6 +23,8 @@ namespace AdeeboMeter
             lock (Observed) Observed.Add(new[] { ev, lv.ToString(CultureInfo.InvariantCulture), what, val ?? "", DateTime.Now.ToString("HH:mm:ss", CultureInfo.CurrentCulture) });
         }
         public List<string[]> ObservedCopy() { lock (Observed) return Observed.ToList(); }
+        // a row judged again once more is known (bug-hunt ML-94: a quiet router turns out fine when the internet works through it)
+        public void Relevel(string whatStarts, int lv) { lock (Observed) foreach (var o in Observed) if (o[2].StartsWith(whatStarts, StringComparison.Ordinal)) o[1] = lv.ToString(CultureInfo.InvariantCulture); }
         public void Conclude(int lv, string finding) { Lv = lv; Finding = finding; }
     }
 
@@ -265,7 +267,7 @@ namespace AdeeboMeter
             r.Obs("w", bad != null ? int.Parse(bad[0], CultureInfo.InvariantCulture) : 0, "Overlapping networks", bad != null ? bad[2] : "none");
             var rules = WhyFails.DnsRules(); var hij = rules.First(); r.Obs(hij[4], int.Parse(hij[0], CultureInfo.InvariantCulture), "DNS for made-up names", hij[2]);
             int nrpt = rules.Count(x => x[1] == "Name rule"); r.Obs("w", 3, "VPN name rules", nrpt > 0 ? nrpt + " rule(s) send company names to the VPN's DNS" : "none");
-            string verdict = ""; int lv = 0;
+            string verdict = ""; int lv = 0; bool mtuHole = false;
             if (target != "")
             {
                 var px = WhyFails.Proxy(target).FirstOrDefault(); if (px != null) r.Obs("w", 3, "Proxy for " + target, px[2]);
@@ -281,13 +283,15 @@ namespace AdeeboMeter
                 {
                     r.Status = "Checking the packet size on the way..."; changed();
                     var hops = PathTools.Trace(dst, 20, () => false); var lastH = hops.LastOrDefault(h => h.Ip != "");
-                    if (lastH != null) { PathTools.MtuAt(dst, lastH, 1500); r.Obs("m", lastH.Mtu > 0 && lastH.Mtu < 1400 ? 1 : lastH.BlackHole ? 2 : lastH.Mtu <= 0 ? 3 : 0, "Biggest packet that gets there", lastH.Mtu > 0 ? lastH.Mtu + " bytes - " + lastH.MtuNote : lastH.MtuNote); if (lastH.BlackHole) { verdict = "Big packets vanish on the way to " + target + " (an MTU black hole at " + lastH.Mtu + " bytes): small requests work, anything bigger hangs - pages half-load, file shares stall. The VPN or a firewall needs to lower the size (MSS clamping) - tell IT this number."; lv = 2; } }
+                    // bug-hunt ML-98: without the VPN up this is the direct path - a size problem there isn't the VPN's, so it's said so and never red here
+                    if (lastH != null) { PathTools.MtuAt(dst, lastH, 1500); mtuHole = vpn && lastH.BlackHole; r.Obs("m", lastH.Mtu > 0 && lastH.Mtu < 1400 ? 1 : lastH.BlackHole ? (vpn ? 2 : 1) : lastH.Mtu <= 0 ? 3 : 0, vpn ? "Biggest packet that gets there" : "Biggest packet that gets there (direct, not through the VPN)", lastH.Mtu > 0 ? lastH.Mtu + " bytes - " + lastH.MtuNote : lastH.MtuNote); if (lastH.BlackHole) { verdict = "Big packets vanish on the way to " + target + " (an MTU black hole at " + lastH.Mtu + " bytes): small requests work, anything bigger hangs - pages half-load, file shares stall. The VPN or a firewall needs to lower the size (MSS clamping) - tell IT this number."; lv = 2; } }
                 }
             }
             if (verdict == "" && bad != null && bad[0] == "2") { verdict = bad[2] + " - addresses in that range can only be reached on one of them, so company servers there look 'down' from home. Change the home router's network (e.g. to 192.168.77.x)."; lv = 2; }
             // a level-1 overlap (the VPN's routes cover the home network) is on screen too - never "looks fine" next to it
             if (verdict == "" && bad != null && bad[0] == "1") { verdict = bad[2] + " - while the VPN is up, devices on your home network in that range (printers, a NAS) may not be reachable, and company servers there may not be either."; lv = 1; }
             if (verdict == "" && hij[0] == "2" && nrpt == 0 && vpn) { verdict = "Your DNS answers names that don't exist and the VPN sets no name rules, so company names may land on the provider's page instead of the company server."; lv = 1; }
+            if (verdict == "" && mtuHole) { verdict = "Full-size packets to " + target + " vanish on the way through the VPN (an MTU black hole) - small requests work, big ones hang. IT can lower the VPN's MTU or clamp TCP MSS."; lv = 2; }
             if (verdict == "" && !vpn && target != "") { verdict = "You're not on the VPN right now, so this tested the direct path to " + target + " - not the VPN path where the problem is. Connect the VPN and run this again."; lv = 3; }
             if (verdict == "") { verdict = target == "" ? "Nothing obvious on this PC. Type the server or site that fails in the box and run this again - it then tests the door, the proxy and the packet size to it." : "The path to " + target + " looks fine from here: the door opens and full packets get through. The difference is likely in the server's own rules (who it accepts) or your account."; lv = 0; }
             r.Conclude(lv, verdict);

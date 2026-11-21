@@ -83,6 +83,7 @@ namespace AdeeboMeter
         public static Series Minutes(DateTime from, DateTime to)
         {
             var s = new Series(); if (!Cfg.History || to <= from) return s;
+            if ((to - from).TotalDays > 2) from = to.AddDays(-2);   // bug-hunt ML-166: the chart shows the minutes around the case - two days of files at most, never a month
             for (var d = from.Date; d <= to.Date; d = d.AddDays(1))
             {
                 History.Day day; try { day = History.Load(d); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("case history: " + e.Message); continue; }

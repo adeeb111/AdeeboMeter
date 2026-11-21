@@ -180,6 +180,7 @@ namespace AdeeboMeter
             });
             gamerCanvas.Invalidate();
         }
+        GameSession sessFor; int sessVer = -1; List<GameSession.Sec> sessRows = new List<GameSession.Sec>(); double[] sessGv = new double[0];
         float PaintSession(Graphics g, List<Game> games, float x, float y, float w)
         {
             var gp = GamePing.Me; var ss = gp.Session ?? gp.LastSession; bool open = gp.Session != null && gp.Session.Open;
@@ -191,7 +192,9 @@ namespace AdeeboMeter
                 float bx = x;
                 Func<string, bool, Action, float> btn = (t, primary, a) =>
                 { t = L.T(t);
-                    var sz = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
+                    var sz = g.MeasureString(t, Draw.fBodyB);
+                    if (bx > x && bx + sz.Width + 28 * S > x + w) { bx = x; y += 44 * S; }   // bug-hunt ML-80: a narrow window wraps the buttons onto another line
+                    var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
                     Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Kit.Frame(g, r);
                     using (var tb = new SolidBrush(primary ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
                     Act(gamerCanvas, r, a); bx += r.Width + 10 * S; return r.Width;
@@ -216,7 +219,8 @@ namespace AdeeboMeter
                 y += 44 * S;
                 if (ss == null) return y + 6 * S;
 
-                var rows = ss.All(); var gv = rows.Select(r => r.Game).ToArray();
+                if (!ReferenceEquals(ss, sessFor) || ss.Ver != sessVer) { sessFor = ss; sessVer = ss.Ver; sessRows = ss.All(); sessGv = sessRows.Select(r => r.Game).ToArray(); }   // bug-hunt ML-136: copied once a second at most, not on every paint
+                var rows = sessRows; var gv = sessGv;
                 DateTime end = ss.Open ? DateTime.Now : ss.End;
                 List<Spike> sp; lock (gp.Spikes) sp = gp.Spikes.Where(z => z.Game == ss.GameId && z.T >= ss.Start && z.T <= end).ToList();
                 y = SetHead(g, (open ? "THIS MATCH · " : "LAST MATCH · ") + ss.GameName.ToUpperInvariant() + " · " + ss.Server.ToUpperInvariant() + " · " + ss.Start.ToString("HH:mm", CultureInfo.CurrentCulture) + " - " + (open ? "NOW" : end.ToString("HH:mm", CultureInfo.CurrentCulture)), x, y, w);
@@ -306,10 +310,12 @@ namespace AdeeboMeter
                     double ageS = st.LastAt == DateTime.MinValue ? 0 : (DateTime.Now - st.LastAt).TotalSeconds;   // a slow-paced server: say how old "now" is
                     using (var pb = new SolidBrush(GradeColor(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
                     g.DrawString(AdeeboMeter.L.T("avg ") + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
-                    g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
-                    g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);
+                    // bug-hunt ML-79: a column that would run into the grade pill is left out on a narrow card
+                    float pillAt = x + w - pad - 110 * S;
+                    if (c3 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
+                    if (c4 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);
                     // sparkline of the last minute
-                    var sr = new RectangleF(c5 + 80 * S, cy + 4 * S, Math.Max(40 * S, x + w - pad - 110 * S - (c5 + 80 * S)), 24 * S);
+                    var sr = new RectangleF(c5 + 80 * S, cy + 4 * S, x + w - pad - 110 * S - (c5 + 80 * S), 24 * S);   // no room: no sparkline (never a forced width)
                     var okv = v.Where(z => !double.IsNaN(z)).ToArray();
                     if (okv.Length > 1 && sr.Width > 40 * S)
                     {
@@ -335,7 +341,8 @@ namespace AdeeboMeter
             var busy = new Dictionary<int, long>(); var lv = live.Running ? liveView : null;
             if (lv != null) foreach (var cv in lv.Top) if (cv.LocalPort > 0) { long b; busy.TryGetValue(cv.LocalPort, out b); busy[cv.LocalPort] = b + cv.Bytes; }
             Func<Conn, long> bytes = c => { long b; return busy.TryGetValue(c.LocalPort, out b) ? b : 0; };
-            var c1 = all.Where(mine).OrderBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(bytes).ThenByDescending(c => c.LocalPort).FirstOrDefault();
+            // bug-hunt ML-68: when live capture counted the traffic, the busiest conversation wins whatever its kind; UDP first only when nothing was counted
+            var c1 = all.Where(mine).OrderByDescending(bytes).ThenBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(c => c.LocalPort).FirstOrDefault();
             if (c1 == null) { gamerNote = pg.Name + " has no network conversation open right now - join a match first."; gamerCanvas.Invalidate(); return; }
             OpenJourney(c1);
         }

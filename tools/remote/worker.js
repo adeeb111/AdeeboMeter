@@ -30,7 +30,11 @@ const recent = new Map();
 function tooMany(ip, role) {
   const w = Math.floor(Date.now() / 60000), k = role + "|" + ip;
   const r = recent.get(k);
-  if (!r || r.w !== w) { if (recent.size > 5000) recent.clear(); recent.set(k, { w, n: 1 }); return false; }
+  // bug-hunt ML-20: a full table drops last minute's counts (and then the oldest), never everyone's current count at once
+  if (!r || r.w !== w) {
+    if (recent.size > 5000) { for (const [key, x] of recent) if (x.w !== w) recent.delete(key); let over = recent.size - 4000; for (const key of recent.keys()) { if (over-- <= 0) break; recent.delete(key); } }
+    recent.set(k, { w, n: 1 }); return false;
+  }
   return ++r.n > PER_MIN[role];
 }
 
@@ -46,7 +50,10 @@ export default {
     const origin = req.headers.get("Origin");
     if (role === "phone" && !ORIGINS.includes(origin)) return new Response("forbidden", { status: 403 });
     if (role === "pc" && origin) return new Response("forbidden", { status: 403 });
-    if (tooMany(req.headers.get("CF-Connecting-IP") || "", role)) return new Response("slow down", { status: 429 });
+    // bug-hunt ML-126: Cloudflare's rate-limit binding counts across all its machines; the in-memory count stays as the fallback
+    const cip = req.headers.get("CF-Connecting-IP") || "";
+    if (env.LIMITER) { try { const { success } = await env.LIMITER.limit({ key: role + "|" + cip }); if (!success) return new Response("slow down", { status: 429 }); } catch (e) {} }
+    if (tooMany(cip, role)) return new Response("slow down", { status: 429 });
     const id = env.ROOMS.idFromName(m[1]);
     return env.ROOMS.get(id).fetch(req);
   },
@@ -71,7 +78,7 @@ export class Room {
     if (role === "phone") {
       const r = this.info(pc);
       if (now - r.born > (r.long ? LONG_WAIT_MS : WAIT_MS)) return new Response("expired", { status: 410 });
-      if (r.long) { r.born = now; pc.serializeAttachment(r); }   // a remembered phone: its 30 minutes start now
+      r.born = now; pc.serializeAttachment(r);   // the 30 minutes start when the phone joins - for a code too (bug-hunt ML-110)
       alarm = r.born + LIFE_MS;
     } else alarm = now + (long ? LONG_WAIT_MS : WAIT_MS);
     const [client, server] = Object.values(new WebSocketPair());

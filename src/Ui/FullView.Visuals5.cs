@@ -26,29 +26,34 @@ namespace AdeeboMeter
         // ================================================================== wave 3's exchanges, from the whole result
         float DeepExchange(Graphics g, float x, float y, float w, string st)
         {
-            var s = new List<XStep>(); string cap = "", foot = ""; string[] who; var res = Res();
+            var s = new List<XStep>(); string cap = "", foot = ""; string[] who; var res = Res(); bool ran = res.Count > 0;
             switch (tbSel)
             {
                 case "dig":
                     {
                         var a = VisIn(); string name = Or(a[0], "example.com"), type = Or(a.Length > 1 ? a[1] : "", "A").ToUpperInvariant(); if (type == "TRACE") type = "A";
-                        string asked = RV("Asked"), srv = a.Length > 2 && a[2] != "" ? a[2] : Or(P(asked, 0), L.T("Your DNS server")); if (srv.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) srv = "DoH " + srv.Substring(8).Split('/')[0];
-                        bool signed = asked.Contains("DNSSEC"); var answers = res.Where(o => Regex.IsMatch(o[1], @"^(A|AAAA|CNAME|MX|TXT|NS|SOA|PTR|SRV|CAA|DS|DNSKEY|HTTPS)$")).ToList();
-                        var trace = res.Where(o => Regex.IsMatch(o[1], @"^(\.|root|[a-z0-9-]+\.)$", RegexOptions.IgnoreCase) || o[1].StartsWith("Step", StringComparison.OrdinalIgnoreCase)).ToList();
+                        // bug-hunt ML-203/204: Toolkit.Dig's rows - "Status" = "NOERROR from <server> in N ms · DNSSEC validated (AD)", answers named
+                        // "A  name" (type, two spaces, name), and a TRACE's "step N" rows ("<server> (N ms) says: ask the servers for <zone>")
+                        string asked = RV("Status"), srvSaid = Regex.Match(asked, @" from (\S+) in ").Groups[1].Value, srv = a.Length > 2 && a[2] != "" ? a[2] : Or(srvSaid, L.T("Your DNS server")); if (srv.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) srv = "DoH " + srv.Substring(8).Split('/')[0];
+                        bool signed = asked.Contains("DNSSEC validated"); var answers = res.Where(o => o.Length > 2 && Regex.IsMatch(o[1], @"^(A|AAAA|CNAME|MX|TXT|NS|SOA|PTR|SRV|CAA|DS|DNSKEY|HTTPS|SVCB|TLSA|SSHFP)  ")).ToList();
+                        var trace = res.Where(o => o.Length > 2 && o[1].StartsWith("step ", StringComparison.Ordinal)).ToList();
+                        Func<string, double> msOf = v => VNum(v, @"(?:in |\()(\d+) ms");
                         string zone = name.Contains(".") ? name.Substring(name.LastIndexOf('.')) : ".com";
                         who = new[] { L.T("This PC"), Cut(srv, 22), L.T("root and") + " " + zone, Cut(name, 18) + L.T("'s servers") };
                         s.Add(X(0, 1, type + " " + L.T("for") + " " + name + "?", "DNS · UDP 53" + (signed ? " · DO (DNSSEC wanted)" : ""), double.NaN));
-                        if (trace.Count > 0) foreach (var o in trace.Take(4)) { s.Add(X(1, 2, L.T("ask") + " " + o[1], "", double.NaN)); s.Add(X(2, 1, Cut(o[2], 46), L.T("a referral, not the answer"), RowMs(o[2]))); }
+                        if (trace.Count > 0) foreach (var o in trace.Take(4)) { s.Add(X(1, 2, o[1] + ": " + L.T("ask") + " " + Cut(Regex.Replace(o[2], @"\s*\(.*$", ""), 30), "", double.NaN)); s.Add(Rd(X(2, 1, Cut(Regex.Replace(o[2], @"^[^:]*:\s*", ""), 46), o[2].Contains("says: ask") ? L.T("a referral, not the answer") : L.T("the answer"), msOf(o[2])), Lv(o))); }
                         else { s.Add(X(1, 2, L.T("who knows") + " " + name + "?", L.T("only if not remembered: the root, then") + " " + zone, double.NaN)); s.Add(X(2, 1, L.T("ask its own servers"), L.T("a referral"), double.NaN)); s.Add(X(1, 3, type + " " + name + "?", "", double.NaN)); }
-                        if (answers.Count == 0) s.Add(Rd(X(1, 0, res.Count > 0 ? Cut(res[0][2], 44) : L.T("the answer"), L.T("with how long to keep it (TTL)"), RowMs(asked)), res.Count > 0 ? Lv(res[0]) : -1));
-                        foreach (var o in answers.Take(5)) { var z = X(1, 0, o[1] + "  " + Cut(P(o[2], 0), 40), Or(P(o[2], 1), "") + (signed ? " · " + L.T("signature checks out") : ""), s.Count == 1 + (trace.Count > 0 ? trace.Count * 2 : 3) ? RowMs(asked) : double.NaN); z.Sealed = signed; s.Add(Rd(z, Lv(o))); }
-                        cap = L.T("WHO ASKS WHOM -") + " " + name.ToUpperInvariant(); foot = (asked != "" ? L.T("Asked") + " " + asked + ". " : "") + L.T("A server that remembers the answer skips the middle steps - repeat lookups take 1-2 ms.");
+                        if (answers.Count == 0 && trace.Count == 0) { var st0 = RRow("Status"); var an0 = RRow("Answer"); var show = an0 ?? st0 ?? res.FirstOrDefault(); s.Add(Rd(X(1, 0, show != null ? Cut(show[2], 44) : L.T("the answer"), L.T("with how long to keep it (TTL)"), msOf(asked)), show != null ? Lv(show) : -1)); }
+                        foreach (var o in answers.Take(5)) { var z = X(1, 0, o[1] + "  " + Cut(P(o[2], 0), 40), Or(P(o[2], 1), "") + (signed ? " · " + L.T("signature checks out") : ""), s.Count == 1 + (trace.Count > 0 ? trace.Count * 2 : 3) ? msOf(asked) : double.NaN); z.Sealed = signed; s.Add(Rd(z, Lv(o))); }
+                        cap = L.T("WHO ASKS WHOM -") + " " + name.ToUpperInvariant(); foot = (asked != "" ? Cut(asked, 80) + ". " : "") + L.T("A server that remembers the answer skips the middle steps - repeat lookups take 1-2 ms.");
                     }
                     break;
                 case "doh":
                     {
-                        string enc = RV("Encrypted DNS"), br = RV("Browser"); bool on = Regex.IsMatch(enc, @"uses|on\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(enc, @"\bnot\b|\boff\b", RegexOptions.IgnoreCase);
-                        string srv = Or(Regex.Match(enc, @"\bto\s+([\w.:-]+)").Groups[1].Value, L.T("DNS server")); string how = Regex.IsMatch(enc, "TLS|DoT", RegexOptions.IgnoreCase) ? "DNS over TLS · TCP 853" : "DNS over HTTPS · TCP 443";
+                        // bug-hunt M-29: Protocols.EncryptedDns names its rows "DNS over HTTPS · host" / "DNS over TLS · ip:853", value "works - ..."
+                        var tries = Res().Where(o => o.Length > 2 && o[1].StartsWith("DNS over", StringComparison.Ordinal)).ToList(); var ok = tries.FirstOrDefault(o => o[2].StartsWith("works", StringComparison.Ordinal));
+                        bool on = ok != null; string br = "", enc = tries.Count == 0 ? "" : string.Join(" · ", tries.Select(o => o[1].Split('·')[0].Trim().Replace("DNS over ", "") + " " + (o[2].StartsWith("works", StringComparison.Ordinal) ? L.T("works") : L.T("blocked"))));
+                        string srv = ok != null ? ok[1].Substring(ok[1].IndexOf('·') + 1).Trim() : L.T("DNS server"); string how = ok != null && ok[1].Contains("TLS") ? "DNS over TLS · TCP 853" : "DNS over HTTPS · TCP 443";
                         who = new[] { L.T("This PC"), L.T("Wi-Fi, provider - on the way"), srv };
                         if (on) { s.Add(Lk(X(0, 2, L.T("(sealed question)"), how, double.NaN))); s.Add(Lk(X(2, 0, L.T("(sealed answer)"), L.T("nobody on the way can read or change it"), double.NaN))); }
                         else { s.Add(Rd(X(0, 2, L.T("where is example.com?"), L.T("plain DNS · UDP 53 - readable on the way"), double.NaN), 1)); s.Add(Rd(X(2, 0, L.T("its address"), L.T("readable - and changeable - on the way"), double.NaN), 1)); }
@@ -58,40 +63,47 @@ namespace AdeeboMeter
                     break;
                 case "dhcp":
                     {
-                        string lease = RV("IPv4 lease"), v6 = RV("IPv6"), gw = RV("Gateway"), dns = RV("DNS"); string ip = Or(P(lease, 0), "192.168.1.20"), srv = Or(Regex.Match(RV("DHCP server") + " " + lease, @"from\s+([\d.]+)|^([\d.]+)").Value.Replace("from ", "").Trim(), L.T("DHCP server (your router)"));
+                        // bug-hunt ML-207: SysTools.Dhcp's rows - "Address" (ip / mask), "DHCP server", "Router (option 3)", "DNS (option 6)", "Obtained", "Expires" (or "never")
+                        string addr = RV("Address"), ip = Or(Regex.Match(addr, @"^[\d.]+").Value, "192.168.1.20"), srv = Or(RV("DHCP server"), L.T("DHCP server (your router)")), gw = RV("Router (option 3)"), dns = RV("DNS (option 6)"), exp = RV("Expires"), got = RV("Obtained");
+                        bool stat = RV("IPv4").StartsWith("set by hand", StringComparison.Ordinal), self = ip.StartsWith("169.254", StringComparison.Ordinal);
                         who = new[] { L.T("This PC"), srv };
+                        if (stat) { s.Add(X(0, 0, L.T("(no DHCP - the address is set by hand)"), "", double.NaN)); cap = L.T("THIS PC'S ADDRESS IS FIXED"); foot = "A fixed address never asks a DHCP server - nothing to renew."; break; }
                         s.Add(Bc(0, 1, L.T("Discover: can anyone give me an address?"), L.T("broadcast to everyone · UDP 68 → 67")));
+                        if (self) { s.Add(Rd(X(1, 0, L.T("(no Offer)"), L.T("no DHCP server answered - Windows made up a 169.254 address"), double.NaN), 2)); cap = L.T("NO ADDRESS FROM DHCP"); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }
                         s.Add(X(1, 0, L.T("Offer") + ": " + ip, Cut(Or((gw != "" ? L.T("gateway") + " " + gw + " · " : "") + (dns != "" ? "DNS " + dns : ""), L.T("with a mask, a gateway and DNS servers")), 70), double.NaN));
                         s.Add(X(0, 1, L.T("Request: yes please,") + " " + ip, L.T("still broadcast - other servers learn it's taken"), double.NaN));
-                        s.Add(Rd(X(1, 0, L.T("Ack: it's yours"), Or(P(lease, 1), L.T("for a lease time - renewed at half time")), double.NaN), RLv("IPv4 lease")));
-                        if (v6 != "") { s.Add(Bc(0, 1, L.T("IPv6: Router Solicitation"), "ICMPv6 133")); s.Add(Rd(X(1, 0, P(v6, 0), Cut(P(v6, 1), 60), double.NaN), RLv("IPv6"))); }
+                        s.Add(Rd(X(1, 0, L.T("Ack: it's yours"), Cut(Or((got != "" ? L.T("since") + " " + got : "") + (exp != "" ? " · " + L.T("until") + " " + exp : ""), L.T("for a lease time - renewed at half time")), 70), double.NaN), RLv("Expires")));
                         cap = L.T("HOW THIS PC GOT") + " " + ip; foot = "Halfway through the lease the PC quietly asks to keep it. No answer by the end, and it falls back to a 169.254 address - no internet.";
                     }
                     break;
                 case "ntp":
                     {
-                        string ans = RV("Time server"), clock = RV("Your clock"); string srv = Or(VisIn()[0], "time.windows.com"); string strat = Regex.Match(ans, @"stratum\s*\d+").Value;
+                        // bug-hunt ML-206: Protocols.Ntp names its answer row by the server ("answers · stratum N (gets time from X) · round trip N ms") and "Your clock vs this server"
+                        string srv = Or(VisIn()[0], "time.windows.com"); var arow = res.FirstOrDefault(o => o.Length > 2 && o[1] != "Server" && o[1] != "Name" && !o[1].StartsWith("Your clock", StringComparison.Ordinal));
+                        string ans = arow != null ? arow[2] : "", clock = RV("Your clock"); string strat = Regex.Match(ans, @"stratum\s*\d+").Value;
                         who = new[] { L.T("This PC"), Cut(srv, 24), L.T("its own clock source") };
                         s.Add(X(0, 1, L.T("what time is it? (sent at T1)"), "NTP · UDP 123", double.NaN));
                         s.Add(X(1, 2, L.T("it follows a better clock"), Or(strat, "stratum") + " = " + L.T("steps from an atomic clock"), double.NaN));
-                        s.Add(Rd(X(1, 0, L.T("got it at T2, answered at T3"), Cut(Or(ans, ""), 60), RowMs(ans)), RLv("Time server")));
+                        s.Add(Rd(X(1, 0, arow != null && arow[0] == "2" ? L.T("(no usable answer)") : L.T("got it at T2, answered at T3"), Cut(Or(ans, ""), 60), VNum(ans, @"round trip ([0-9.]+)")), arow != null ? Lv(arow) : -1));
                         s.Add(Rd(X(0, 0, Cut(Or(clock, L.T("arrived at T4 - offset worked out")), 44), L.T("offset = ((T2-T1) + (T3-T4)) / 2 - the trip cancels out"), double.NaN), RLv("Your clock")));
                         cap = L.T("ASKING") + " " + srv.ToUpperInvariant() + " " + L.T("THE TIME"); foot = "Sign-ins, certificates and logs break when the clock is more than a few minutes off - Kerberos allows 5.";
                     }
                     break;
                 case "radius": case "tacacs":
                     {
-                        bool rad = tbSel == "radius"; var row = RRow(rad ? "RADIUS" : "TACACS+"); string v = row != null ? row[2] : ""; string srv = Or(Regex.Match(v, @"^[\w.:-]+").Value, Or(VisIn()[0], rad ? "192.0.2.30" : "192.0.2.31"));
-                        bool none = Regex.IsMatch(v, "no answer|timed out|refused", RegexOptions.IgnoreCase); who = new[] { L.T("This PC"), srv };
+                        // bug-hunt M-31: Protocols.Radius / Tacacs name the result row "host:port (N ms)" / "ip:port"; "Server" / "Shared secret" rows ask for input
+                        bool rad = tbSel == "radius"; var row = Res().FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], @"^\S+:\d+")); string v = row != null ? row[2] + (Regex.Match(row[1], @"\(\d+ ms\)").Value) : "";
+                        string port = row != null ? Regex.Match(row[1], @":(\d+)").Groups[1].Value : ""; string srv = row != null ? Regex.Replace(row[1], @"\s*\(.*$", "") : Or(VisIn()[0], rad ? "192.0.2.30" : "192.0.2.31");
+                        bool none = row == null || Regex.IsMatch(v, "^no |not a RADIUS reply", RegexOptions.IgnoreCase); who = new[] { L.T("This PC"), srv };
                         if (rad)
                         {
-                            s.Add(X(0, 1, L.T("Access-Request: a test name"), L.T("UDP 1812 · signed with the shared secret"), double.NaN));
+                            s.Add(X(0, 1, L.T("Access-Request: a test name"), "UDP " + Or(port, "1812") + " · " + L.T("signed with the shared secret"), double.NaN));
                             string got = Regex.Match(v, @"Access-(Accept|Reject|Challenge)").Value;
                             s.Add(Rd(X(1, 0, none ? L.T("(silence)") : Or(got, L.T("an answer")), none ? L.T("wrong shared secret, not a known client, or a firewall") : L.T("any answer means it's alive - a Reject for a made-up name is right"), RowMs(v)), none ? 2 : Lv(row)));
                         }
                         else
                         {
-                            s.Add(X(0, 1, L.T("hello (SYN)"), "TCP " + Or(Regex.Match(v, @":(\d+)").Groups[1].Value, "49"), double.NaN));
+                            s.Add(X(0, 1, L.T("hello (SYN)"), "TCP " + Or(port, "49"), double.NaN));
                             s.Add(Rd(X(1, 0, none ? L.T("(no answer)") : L.T("hello back (SYN-ACK)"), Cut(Or(v, L.T("it accepts connections - the server is there")), 60), RowMs(v)), none ? 2 : Lv(row)));
                             if (!none) s.Add(X(0, 1, L.T("(no sign-in sent)"), L.T("AdeeboMeter stops here - no password"), double.NaN));
                         }
@@ -101,17 +113,23 @@ namespace AdeeboMeter
                     break;
                 case "dupip": case "arpwho":
                     {
-                        bool clash = tbSel == "dupip"; string me = Or(RV("Your address now"), Or(VisIn()[0], "192.0.2.37")); var ans = RRow("Answered"); string maker = RV("Maker");
+                        // bug-hunt ML-208/209: OverTime.DuplicateIp says "Address conflicts" = "none in 30 days" (level 0) when there's none; Lab.Arp names its row by the
+                        // address, "is at <MAC> (N ms)" or "no ARP answer"
+                        bool clash = tbSel == "dupip"; string me = Or(RV("Your address now"), Or(VisIn()[0], "192.0.2.37")); string maker = RV("Maker");
+                        var ans = res.FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], @"^\d+\.\d+\.\d+\.\d+$")); bool noArp = ans != null && ans[2].StartsWith("no ARP", StringComparison.Ordinal);
+                        bool none = clash && ran && RLv("Address conflicts") < 1;
                         var events = res.Where(o => Regex.IsMatch(o[1], @"^\d{1,2} \w{3}") && Regex.IsMatch(o[2], @"([0-9A-Fa-f]{2}[-:]){5}")).Take(3).ToList();
-                        who = new[] { L.T("This PC"), clash ? L.T("another device") : (ans != null ? Regex.Match(ans[2], @"^[\d.]+").Value : me), L.T("everyone else") };
-                        s.Add(Bc(0, 2, L.T("who has") + " " + (clash ? me : Or(ans != null ? Regex.Match(ans[2], @"^[\d.]+").Value : "", me)) + "?", L.T("ARP · broadcast to every device here")));
-                        if (clash)
+                        who = new[] { L.T("This PC"), clash ? L.T("another device") : (ans != null ? ans[1] : me), L.T("everyone else") };
+                        s.Add(Bc(0, 2, L.T("who has") + " " + (clash ? me : Or(ans != null ? ans[1] : "", me)) + "?", L.T("ARP · broadcast to every device here")));
+                        if (none) s.Add(X(0, 0, L.T("nobody else answered for it"), Cut(RV("Address conflicts"), 60), double.NaN));
+                        else if (clash)
                         {
                             if (events.Count == 0) events.Add(new[] { "2", L.T("one day"), "00-00-5E-00-53-12" });
                             foreach (var e in events) { s.Add(Rd(X(1, 0, L.T("me!") + " " + Regex.Match(e[2], @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value, e[1] + " - " + L.T("another device answers for YOUR address"), double.NaN), 2)); }
                             s.Add(Rd(X(0, 1, L.T("conflict - Windows warns and may stop using it"), Cut(Or(RV("Address conflicts"), ""), 60), double.NaN), RLv("Address conflicts")));
                         }
-                        else s.Add(Rd(X(1, 0, L.T("me - at") + " " + Or(Regex.Match(ans != null ? ans[2] : "", @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value, "00:11:32:ab:cd:ef"), Or(maker, "ARP reply"), RowMs(ans != null ? ans[2] : "")), Lv(ans)));
+                        else if (noArp) s.Add(Rd(X(1, 0, L.T("(no answer)"), ans.Length > 3 ? Cut(ans[3], 60) : "", double.NaN), 2));
+                        else s.Add(Rd(X(1, 0, L.T("me - at") + " " + Or(Regex.Match(ans != null ? ans[2] : "", @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value, "00:11:32:ab:cd:ef"), Or(maker, "ARP reply"), ans != null ? VNum(ans[2], @"\((\d+) ms\)") : double.NaN), Lv(ans)));
                         cap = clash ? L.T("TWO DEVICES, ONE ADDRESS") + " (" + me + ")" : L.T("ASKING THE NETWORK WHO HAS AN ADDRESS");
                         foot = clash ? "Give the other device an address outside the router's DHCP range, or a reservation." : "ARP turns an IP address into a MAC address - only on your own network; beyond the router it's the router's job.";
                     }
@@ -137,44 +155,53 @@ namespace AdeeboMeter
         // ================================================================== wave 5
         float Wave5(Graphics g, float x, float y, float w, string st)
         {
-            var res = Res(); var s = new List<XStep>(); string[] who; string cap, foot;
+            var res = Res(); bool ran = res.Count > 0; var s = new List<XStep>(); string[] who; string cap, foot;
             switch (tbSel)
             {
                 // ---------------------------------------------------------------- roads: hop by hop
                 case "owners": case "gpn":
                     {
                         var hops = new List<Tuple<string, string, double, string, int>>();   // hop label, address, ms, owner (band), level
-                        foreach (var o in res.Where(o => o[1].StartsWith("Hop ", StringComparison.Ordinal)))
+                        // bug-hunt M-30: the owners tool (Online.PathOwners) names its rows "hop N" with "ip · ASnnn Name · N ms  ← handover" as the value
+                        if (tbSel == "owners")
+                            foreach (var o in res.Where(o => o[1].StartsWith("hop ", StringComparison.Ordinal)))
+                            {
+                                string[] bits = Regex.Split(Regex.Replace(o[2], @"\s+(←|·\s+at\s).*$", ""), " · ");
+                                hops.Add(Tuple.Create(o[1].Substring(4), bits[0], bits.Length > 2 ? RowMs(bits[2]) : double.NaN, bits.Length > 1 ? bits[1] : L.T("not looked up"), o[0] == "4" ? 1 : Lv(o)));
+                            }
+                        else foreach (var o in res.Where(o => o[1].StartsWith("Hop ", StringComparison.Ordinal)))
                         {
                             string addr = P(o[1], 1), num = P(o[1], 0).Replace("Hop ", "");
                             if (tbSel == "owners") hops.Add(Tuple.Create(num, addr, double.NaN, Regex.Replace(o[2], @"\s*\(.*\)$", ""), Lv(o)));
                             else hops.Add(Tuple.Create(num, addr, RowMs(o[2]), Or(o.Length > 3 ? Regex.Replace(o[3], @"\s*-.*$", "") : "", "the internet"), Lv(o)));
                         }
                         if (hops.Count == 0) hops = new List<Tuple<string, string, double, string, int>> { Tuple.Create("1", "192.168.1.1", 2.0, "your router", -1), Tuple.Create("2", "198.51.100.1", 8.0, "your provider", -1), Tuple.Create("5", "198.51.100.22", 11.0, "the internet (transit)", -1), Tuple.Create("8", "203.0.113.10", 21.0, "the server", -1) };
-                        string why = tbSel == "owners" ? RV("Who to call") : RV("Would a GPN"); var gr = RRow("Would a GPN");
+                        string why = tbSel == "owners" ? RV("Delay by network") : RV("Would a GPN"); var gr = RRow("Would a GPN");
                         return HopRoad(g, x, y, w, st, tbSel == "owners" ? "WHO CARRIES YOUR TRAFFIC, STRETCH BY STRETCH" : Or(res.Where(o => o[0] == "-1").Select(o => o[1]).FirstOrDefault(), "THE WAY TO THE GAME, HOP BY HOP"), hops,
                             tbSel == "owners" ? Or(why, "Each colour is one network (AS). Problems are usually where one hands over to the next.") : (gr != null && gr.Length > 3 ? gr[3] : "The red hop is where the delay starts and carries on - a GPN takes another road around it."));
                     }
                 case "ret":
                     {
-                        string o1 = RV("Out"), b1 = RV("Back"), diff = RV("Different"); int ho = (int)VNum(o1, @"(\d+)\s*hops"), hb = (int)VNum(b1, @"(\d+)\s*hops");
-                        return TwoWays(g, x, y, w, st, ho > 0 ? ho : 9, hb > 0 ? hb : 11, Or(P(o1, 1), L.T("leaves through your provider")), Or(P(b1, 1), L.T("comes back another way")), RLv("Different") >= 1,
-                            Or(diff, "The reply often takes another road back. A normal trace only shows the way out - a slow way back hides from it."));
+                        // bug-hunt ML-210: Toolkit.ReturnPath's rows are "hop N" = "ip · out N hops, back ~M", and "Reading the reply TTLs" (level 1 = a different road)
+                        var last = res.LastOrDefault(o => o.Length > 2 && o[1].StartsWith("hop ", StringComparison.Ordinal) && o[2].Contains(" · out ")); var rd = RRow("Reading the reply TTLs");
+                        int ho = last != null ? (int)VNum(last[2], @"out (\d+) hops") : 9, hb = last != null ? (int)VNum(last[2], @"back ~(\d+)") : 11; if (hb <= 0) hb = ho;
+                        bool differ = ran ? rd != null && Lv(rd) >= 1 : true;
+                        return TwoWays(g, x, y, w, st, ho > 0 ? ho : 9, hb > 0 ? hb : 11, last != null ? Cut(P(last[2], 0), 30) : L.T("leaves through your provider"), differ ? L.T("comes back another way") : L.T("comes back the same way"), differ,
+                            Or(rd != null ? rd[2] : "", "The reply often takes another road back. A normal trace only shows the way out - a slow way back hides from it."));
                     }
 
                 // ---------------------------------------------------------------- lanes that race
                 case "cloud": case "dnscmp": case "vpn": case "console":
                     {
                         var lanes = new List<Tuple<string, double, double, int>>(); string c2, f2;
-                        if (tbSel == "cloud") { foreach (var o in res) lanes.Add(Tuple.Create(P(o[2], 0), RowMs(o[2]), double.NaN, Lv(o))); c2 = "CLOUD REGIONS, RACING FROM HERE"; f2 = "The nearest region answers first - pick it for games, calls and remote desktops."; }
-                        else if (tbSel == "dnscmp") { foreach (var o in res.Where(o => RowMs(o[2]) > 0)) lanes.Add(Tuple.Create(o[1] + "  →  " + P(o[2], 0), RowMs(o[2]), double.NaN, Lv(o))); c2 = "TWO DNS SERVERS, THE SAME QUESTION"; f2 = Or(RV("Same answer") != "" ? L.T("Same answer:") + " " + RV("Same answer") : RV("Different"), "Different answers aren't always wrong - big sites answer with the server nearest to whoever asks."); }
+                        if (tbSel == "cloud") { foreach (var o in res.Where(o => o.Length > 2 && (Regex.IsMatch(o[2], @"^\d+ ms") || o[2] == "couldn't connect"))) lanes.Add(Tuple.Create(o[1], VNum(o[2], @"^(\d+) ms"), double.NaN, Lv(o)));   /* bug-hunt ML-211: the region's name on its lane */ c2 = "CLOUD REGIONS, RACING FROM HERE"; f2 = "The nearest region answers first - pick it for games, calls and remote desktops."; }
+                        else if (tbSel == "dnscmp") { foreach (var o in res.Where(o => o.Length > 2 && Regex.IsMatch(o[2], @"\((\d+) ms\)$"))) lanes.Add(Tuple.Create(o[1] + "  →  " + Cut(P(o[2], 0), 30), VNum(o[2], @"\((\d+) ms\)$"), double.NaN, Lv(o)));   /* bug-hunt ML-212 */ c2 = "TWO DNS SERVERS, THE SAME QUESTION"; var vr = res.FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[2], "same answer|partly the same|DIFFERENT answers")); f2 = Or(vr != null ? vr[1] + ": " + vr[2] : "", "Different answers aren't always wrong - big sites answer with the server nearest to whoever asks."); }
                         else if (tbSel == "vpn")
                         {
-                            string ins = RV("Inside"); double with = RowMs(ins), without = VNum(ins, @"\(([0-9.]+)\s*ms\s*without");
-                            if (!double.IsNaN(without)) lanes.Add(Tuple.Create(L.T("without the VPN"), without, double.NaN, -1));
-                            if (!double.IsNaN(with)) lanes.Add(Tuple.Create(L.T("through the VPN"), with, double.NaN, RLv("VPN")));
-                            c2 = Or(P(RV("VPN"), 1), "THE VPN").ToUpperInvariant(); f2 = Or(RV("What it means"), "The difference is what the VPN costs every packet.");
-                            if (RV("Company proxy") != "") f2 = L.T("Web goes via") + " " + RV("Company proxy").Split(' ')[0] + ". " + f2;
+                            // bug-hunt ML-213: VpnAware.Run's legs - "Your router", "The VPN's far side", "The whole trip to the internet" (each "N ms")
+                            foreach (var leg in new[] { "Your router", "The VPN's far side", "The whole trip to the internet" }) { var o = RRow(leg); if (o != null) lanes.Add(Tuple.Create(L.T(leg), VNum(o[2], @"^(\d+) ms"), double.NaN, Lv(o))); }
+                            c2 = Or(Regex.Replace(RV("Client running"), @"\s*·.*$", ""), "THE VPN").ToUpperInvariant(); f2 = Or(RV("What it means"), "The difference is what the VPN costs every packet.");
+                            if (RV("Proxy") != "") f2 = L.T("Web goes via") + " " + RV("Proxy").Split(' ')[0] + ". " + f2;
                         }
                         else { foreach (var o in res.Where(o => RowMs(o[2]) > 0 && o[0] != "-1")) lanes.Add(Tuple.Create(o[1], RowMs(o[2]), VNum(o[2], @"jitter\s*([0-9.]+)"), Lv(o))); c2 = "THE FOUR LEGS TO THE GAME"; f2 = Or(RV("Console verdict"), "Blue: the ping. Purple: the jitter (how much it wobbles)."); }
                         return RaceCard(g, x, y, w, st, c2, lanes, f2);

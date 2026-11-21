@@ -33,7 +33,7 @@ namespace AdeeboMeter
             public string Host { get { Uri u; return Uri.TryCreate(Down, UriKind.Absolute, out u) ? u.Host : ""; } }
             public string Label { get { return Provider + (Where != "" ? " · " + Where : ""); } }
         }
-        public sealed class Result { public DateTime T; public string Server = "", Where = ""; public double Down = double.NaN, Up = double.NaN, Idle = double.NaN, LoadDown = double.NaN, LoadUp = double.NaN, MB; public bool NoUpload; public string Grade = "", Error = ""; }
+        public sealed class Result { public DateTime T; public string Server = "", Where = ""; public double Down = double.NaN, Up = double.NaN, Idle = double.NaN, LoadDown = double.NaN, LoadUp = double.NaN, MB; public bool NoUpload; public string UpWhy = ""; public string Grade = "", Error = ""; }
         public static Result Last;   // shown on the home page until the app closes (and kept in the day's events)
         public static volatile bool Busy;
 
@@ -120,7 +120,7 @@ namespace AdeeboMeter
             if (res.Error != "") { rows.Add(R(2, "Speed test", res.Error, (res.Error.StartsWith("stopped during the upload", StringComparison.Ordinal) ? "" : "Nothing else was sent. ") + "Try another server - type list to see them, check to see which answer from here. A company network may block it.", "m")); return rows; }
             rows.Add(R(3, "Server", res.Server + (res.Where != "" ? " · " + res.Where : ""), "", "m"));
             rows.Add(R(0, "Download", Mbps(res.Down) + " Mbps", "", "m"));
-            rows.Add(R(res.NoUpload ? 3 : double.IsNaN(res.Up) ? 1 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : (double.IsNaN(res.Up) ? "didn't take the upload (" + (srv.Up.Length > 0 ? new Uri(srv.Up).Host : "") + ")" : Mbps(res.Up) + " Mbps"), "", "m"));
+            rows.Add(R(res.NoUpload ? 3 : double.IsNaN(res.Up) ? 1 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : (double.IsNaN(res.Up) ? (res.UpWhy != "" ? res.UpWhy : "didn't take the upload (" + (srv.Up.Length > 0 ? new Uri(srv.Up).Host : "") + ")") : Mbps(res.Up) + " Mbps"), "", "m"));
             rows.Add(R(3, "Ping when idle", double.IsNaN(res.Idle) ? "-" : Math.Round(res.Idle) + " ms", "", "m"));
             rows.Add(R(3, "Ping while downloading", double.IsNaN(res.LoadDown) ? "-" : Math.Round(res.LoadDown) + " ms", "", "m"));
             if (!res.NoUpload) rows.Add(R(3, "Ping while uploading", double.IsNaN(res.LoadUp) ? "-" : Math.Round(res.LoadUp) + " ms", "", "m"));
@@ -175,7 +175,7 @@ namespace AdeeboMeter
         {
             var res = new Result { T = DateTime.Now, Server = srv.Label };
             if (Policy.NoSpeed) { res.Error = "turned off by your IT team (AdeeboMeter.policy)"; return res; }
-            if (Busy) { res.Error = "a speed test is already running"; return res; }
+            if (System.Threading.Interlocked.CompareExchange(ref busyN, 1, 0) != 0) { res.Error = "a speed test is already running"; return res; }   // bug-hunt ML-36: check and set in one step
             Busy = true;
             try
             {
@@ -203,11 +203,15 @@ IPAddress[] found;
                     // the upload host may be another name: it gets the same check before a single byte goes to it
                     Uri upU; IPAddress[] upIps = null;
                     if (Uri.TryCreate(srv.Up, UriKind.Absolute, out upU)) { try { upIps = Dns.GetHostAddresses(upU.DnsSafeHost); } catch (SocketException) { upIps = null; } catch (ArgumentException) { upIps = null; } }
-                    if (upIps == null || upIps.Length == 0 || upIps.Any(a => !Reachable(a))) { res.Error = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped"; res.MB = down / 1e6; return res; }
-                    if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
-                    var pu = new List<double>(); string c2 = "";
-                    res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
-                    if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved (about " + Math.Round(up / 1e6).ToString(CultureInfo.CurrentCulture) + " MB had been sent)"; return res; }
+                    // bug-hunt ML-99: an upload host that fails the check skips the upload - the good download still counts
+                    if (upIps == null || upIps.Length == 0 || upIps.Any(a => !Reachable(a))) res.UpWhy = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped";
+                    else
+                    {
+                        if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
+                        var pu = new List<double>(); string c2 = "";
+                        res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
+                        if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved (about " + Math.Round(up / 1e6).ToString(CultureInfo.CurrentCulture) + " MB had been sent)"; return res; }
+                    }
                 }
                 else res.NoUpload = true;
                 res.MB = (down + up) / 1e6;
@@ -218,8 +222,9 @@ IPAddress[] found;
                 Program.Log("speed test " + srv.Id + " " + Mbps(res.Down) + "/" + Mbps(res.Up) + " Mbps, " + Math.Round(res.MB) + " MB");
                 return res;
             }
-            finally { Busy = false; }
+            finally { Busy = false; System.Threading.Interlocked.Exchange(ref busyN, 0); }
         }
+        static int busyN;
         // a few Cloudflare data-centre codes people would recognise; others show the code alone
         static string Colo(string c)
         {

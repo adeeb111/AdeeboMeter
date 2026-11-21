@@ -71,7 +71,8 @@ namespace AdeeboMeter
                 if (distinct.Count > 8) rows.Add(R(3, "Regions left out", string.Join(", ", distinct.Skip(8).Select(z => z.Name)), "Eight regions fit in one 30-second run - these weren't measured.", "i"));
                 var servers = distinct.Take(8).ToList(); /* two servers with the same (cut) name: measured once, never a crash */ var s = new Saved { Game = game.Id, Name = Clean(nm), T = DateTime.Now };
                 var samples = servers.ToDictionary(z => z.Name, z => new List<double>());
-                for (int i = 0; i < Samples && !run.Stop; i++)
+                var whole = System.Diagnostics.Stopwatch.StartNew();
+                for (int i = 0; i < Samples && !run.Stop && whole.Elapsed.TotalSeconds < 45; i++)   // bug-hunt ML-53: slow servers can't stretch the 30-second run past 45 s
                 {
                     var t0 = DateTime.UtcNow; run.Status = "Probe " + (i + 1) + " of " + Samples + " to " + servers.Count + " servers (" + nm + ")...";
                     foreach (var sv in servers) { string used; samples[sv.Name].Add(GamePing.Probe(sv, out used)); }
@@ -108,6 +109,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(la) && !double.IsNaN(lb) && Math.Abs(la - lb) >= 0.5) bits.Add((la < lb ? a.Name : b.Name) + " loses fewer packets (" + Math.Min(la, lb).ToString("0.#", CultureInfo.InvariantCulture) + "% vs " + Math.Max(la, lb).ToString("0.#", CultureInfo.InvariantCulture) + "%)");
             if (!double.IsNaN(ja) && !double.IsNaN(jb) && Math.Abs(ja - jb) >= 3) bits.Add((ja < jb ? a.Name : b.Name) + " is steadier (jitter " + F(Math.Min(ja, jb)) + " vs " + F(Math.Max(ja, jb)) + " ms)");
             if (!double.IsNaN(aa) && !double.IsNaN(ab) && Math.Abs(aa - ab) >= 3) bits.Add((aa < ab ? a.Name : b.Name) + " is " + F(Math.Abs(aa - ab)) + " ms quicker on average");
+            if (double.IsNaN(aa) && double.IsNaN(ab) && double.IsNaN(la) && double.IsNaN(lb)) return "Neither run got an answer from these servers - nothing to compare.";   // bug-hunt ML-54
             return (bits.Count == 0 ? "No real difference between " + a.Name + " and " + b.Name + " in these runs." : string.Join("; ", bits) + ".") + (sameSet ? "" : " (Compared on the " + both.Count + " servers both runs measured.)");
         }
     }

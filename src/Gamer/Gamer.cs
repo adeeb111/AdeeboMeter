@@ -263,6 +263,7 @@ namespace AdeeboMeter
             {
                 int from = starts[i].Index, to = i + 1 < starts.Count ? starts[i + 1].Index : json.Length;
                 string seg = json.Substring(from, Math.Min(to - from, 6000)), code = starts[i].Groups[1].Value.ToUpperInvariant();
+                if (code == "POPS") continue;   // bug-hunt ML-44: the container of the regions, not a region
                 var d = Regex.Match(seg, "\"desc\"\\s*:\\s*\"([^\"]{1,60})\""); var ip4 = Regex.Match(seg, "\"ipv4\"\\s*:\\s*\"([0-9.]{7,15})\"");
                 IPAddress ip; if (!d.Success || !ip4.Success || !IPAddress.TryParse(ip4.Groups[1].Value, out ip) || ip.AddressFamily != AddressFamily.InterNetwork) continue;
                 string desc = d.Groups[1].Value; int p = desc.IndexOf('('); string where = p > 0 ? desc.Substring(0, p).Trim() : desc;
@@ -400,7 +401,15 @@ namespace AdeeboMeter
         }
         // the servers in the order worth probing: the session's server, the best region, then the lowest recent average (never list order -
         // a Valve list of 30 relays, or a best region that's 9th in the list, would otherwise never be probed every second)
-        public List<GameServer> Ranked(Game g, string first)
+        // bug-hunt ML-141: worked out at most once every 2 seconds per game (the probe loop and every card's paint ask)
+        readonly Dictionary<string, Tuple<DateTime, object>> rankMemo = new Dictionary<string, Tuple<DateTime, object>>();
+        T Memo<T>(string key, Func<T> make) where T : class
+        {
+            lock (rankMemo) { Tuple<DateTime, object> c; if (rankMemo.TryGetValue(key, out c) && (Clock.Mono - c.Item1).TotalSeconds < 2) return (T)c.Item2; }
+            var v = make(); lock (rankMemo) { if (rankMemo.Count > 200) rankMemo.Clear(); rankMemo[key] = Tuple.Create(Clock.Mono, (object)v); } return v;
+        }
+        public List<GameServer> Ranked(Game g, string first) { return new List<GameServer>(Memo("r|" + g.Id + "|" + g.Servers.Count + "|" + (first ?? ""), () => RankedNow(g, first))); }
+        List<GameServer> RankedNow(Game g, string first)
         {
             var best = Best(g);
             return g.Servers.OrderBy(s => s.Name == first ? 0 : best != null && s.Name == best.Name ? 1 : 2)
@@ -411,7 +420,8 @@ namespace AdeeboMeter
         readonly Dictionary<string, int> pace = new Dictionary<string, int>(); readonly object paceLock = new object();
         public static int SurveySec { get { return Cfg.GameBgSec >= 60 ? 1800 : 300; } }   // Penny (game ping every 60 s) surveys every 30 min   // Penny surveys each region every 30 min
         // the best region: lowest 7-day average with little loss, from history; before there's history, the lowest recent average
-        public GameServer Best(Game g)
+        public GameServer Best(Game g) { var b = Memo("b|" + g.Id + "|" + g.Servers.Count, () => new[] { BestNow(g) }); return b[0]; }
+        GameServer BestNow(Game g)
         {
             var week = GameHistory.Week(g.Id);
             GameServer best = null; double score = double.MaxValue;
@@ -486,11 +496,12 @@ namespace AdeeboMeter
         {
             var st = Stat(game, s);
             var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null) st.Used = used;
-            if ((DateTime.Now - began).TotalSeconds > 4) return;   // it outran the second it belonged to (a stuck lookup): filed late, it would shift the series
+            if ((DateTime.Now - began).TotalSeconds > 4) { st.Add(double.NaN); System.Threading.Interlocked.Increment(ref Ver); return; }   // it outran the second it belonged to (a stuck lookup): filed as no answer, so the series keeps its place and the miss shows (bug-hunt ML-45)
             var prev = st.Window(60, 900); double med = GameStat.Pct(prev, 0.5);
             st.Add(v); System.Threading.Interlocked.Increment(ref Ver);
             // a spike: double the usual and 30 ms more - who to blame is read from the home and internet checks at the same moment
-            if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= 20 && v > med * 2 && v > med + 30)
+            int need = Math.Min(20, Math.Max(8, (int)(900 * 0.8 / Math.Max(1, PaceOf(game, s.Name)))));   // bug-hunt ML-48: a server checked once a minute has 15 samples in 15 minutes, not 20
+            if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= need && v > med * 2 && v > med + 30)
             {
                 // the home and internet samples count only if they're from around now (the view closed, they can be a minute old)
                 var nowM = Clock.Mono; bool gwFresh = mon != null && (nowM - mon.GwAt).TotalSeconds <= 10, netFresh = mon != null && (nowM - mon.NetAt).TotalSeconds <= 10;
@@ -711,9 +722,19 @@ namespace AdeeboMeter
         public readonly List<Sec> Rows = new List<Sec>(); public readonly List<DateTime> Marks = new List<DateTime>();
         public bool Open { get { return End == DateTime.MaxValue; } }
         readonly object k = new object();
-        public void Add(Sec s) { lock (k) { Rows.Add(s); if (Rows.Count > 4 * 3600) Rows.RemoveAt(0); } }
+        // bug-hunt ML-46: a session past 4 hours keeps its beginning - the older half is thinned to every other row instead
+        public void Add(Sec s)
+        {
+            lock (k)
+            {
+                Rows.Add(s); ver++; if (Rows.Count <= 4 * 3600) return;
+                int half = Rows.Count / 2; var older = new List<Sec>(half / 2 + 1); for (int i = 0; i < half; i += 2) older.Add(Rows[i]);
+                Rows.RemoveRange(0, half); Rows.InsertRange(0, older);
+            }
+        }
         public List<Sec> Around(DateTime t, int secs) { lock (k) return Rows.Where(r => Math.Abs((r.T - t).TotalSeconds) <= secs).ToList(); }
         public List<Sec> All() { lock (k) return Rows.ToList(); }
+        int ver; public int Ver { get { lock (k) return ver; } }   // bug-hunt ML-136: a page copies the rows only when this moves
         public void Mark() { lock (k) if (Marks.Count < 1000) Marks.Add(DateTime.Now); }   // only times: a long session keeps them all
         // match path recording: each router on the way, timed every 15 s (one ping each) while the match runs
         List<string> hops = new List<string>(); readonly List<double[]> hopMs = new List<double[]>();

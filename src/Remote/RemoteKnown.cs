@@ -61,7 +61,28 @@ namespace AdeeboMeter
         public static int Count { get { return All().Count; } }
 
         // the room for this phone, this 25-minute slot, attempt k (a used or timed-out room can't be reused)
-        public static long Slot { get { return (long)Math.Floor((DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds / SlotSeconds); } }
+        // bug-hunt ML-14: the phone corrects its clock against the internet's before picking a room, so the PC does too -
+        // a PC clock minutes off would otherwise wait in a room the phone never looks in. Checked once an hour, off the UI thread.
+        public static long Slot { get { CheckClock(); return (long)Math.Floor(((DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds + clockOff) / SlotSeconds); } }
+        static double clockOff; static DateTime clockAt = DateTime.MinValue; static volatile bool clockBusy;
+        static void CheckClock()
+        {
+            if (clockBusy || (DateTime.UtcNow - clockAt).TotalMinutes < 60) return;
+            clockBusy = true; clockAt = DateTime.UtcNow;
+            new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    double t0 = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                    string j = HttpSmall.Get("https://adeebometer-live.orkoadeeb.workers.dev/ping?pc" + DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture), 4) ?? "";
+                    double t1 = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                    var m = System.Text.RegularExpressions.Regex.Match(j, @"""now""\s*:\s*(\d{12,14})");
+                    if (m.Success && t1 - t0 < 5000) { double off = (double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) - (t0 + t1) / 2) / 1000; clockOff = Math.Abs(off) > 20 && Math.Abs(off) < 86400 ? off : 0; }
+                }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; clockAt = DateTime.UtcNow.AddMinutes(-50); }   // offline: try again in 10 minutes
+                finally { clockBusy = false; }
+            }) { IsBackground = true, Name = "phone-clock" }.Start();
+        }
         public static string Room(byte[] key, long slot, int attempt)
         {
             return RemoteCrypto.B64u(RemoteCrypto.Hmac(key, Encoding.ASCII.GetBytes("room|" + slot.ToString(CultureInfo.InvariantCulture) + "|" + attempt.ToString(CultureInfo.InvariantCulture)))).Substring(0, 22);

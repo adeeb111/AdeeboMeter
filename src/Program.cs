@@ -118,7 +118,7 @@ namespace AdeeboMeter
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "Know what's wrong. Show anyone.";
         public static int ForceTheme = -1;
-        public static string StartView, StartTip, StartDest;   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
+        public static string StartView, StartTip, StartDest, StartFile;   // StartFile: a locked .adeebo file to open (bug-hunt ML-127)   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes
 
         [STAThread]
@@ -152,6 +152,10 @@ namespace AdeeboMeter
             int vi = Array.FindIndex(args, a => string.Equals(a, "--view", StringComparison.OrdinalIgnoreCase)); if (vi >= 0 && vi + 1 < args.Length) StartView = args[vi + 1];
             int tpi = Array.FindIndex(args, a => string.Equals(a, "--tip", StringComparison.OrdinalIgnoreCase)); if (tpi >= 0 && tpi + 1 < args.Length) StartTip = args[tpi + 1];
             int dsi = Array.FindIndex(args, a => string.Equals(a, "--dest", StringComparison.OrdinalIgnoreCase)); if (dsi >= 0 && dsi + 1 < args.Length) StartDest = args[dsi + 1];
+            // a double-clicked .adeebo file ("--open <file>", or the bare path the Store's file association passes)
+            int opi = Array.FindIndex(args, a => string.Equals(a, "--open", StringComparison.OrdinalIgnoreCase));
+            string of = opi >= 0 && opi + 1 < args.Length ? args[opi + 1] : args.FirstOrDefault(a => a.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase));
+            if (of != null && of.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(of)) StartFile = Path.GetFullPath(of);
             int ci = Array.FindIndex(args, a => string.Equals(a, "--check", StringComparison.OrdinalIgnoreCase));
             if (ci >= 0 && ci + 1 < args.Length) return SelfTest.CheckOnce(args[ci + 1]);
             int pi = Array.FindIndex(args, a => string.Equals(a, "--parse-test", StringComparison.OrdinalIgnoreCase));
@@ -192,6 +196,7 @@ namespace AdeeboMeter
             }
             if (!created)
             {
+                if (StartFile != null) try { File.WriteAllText(Path.Combine(DataDir, "open-file.txt"), StartFile); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }   // the running copy picks it up when asked to open
                 if (Single.AskRunningToOpen()) return 0;
                 var r = MessageBox.Show("AdeeboMeter is already running but isn't answering.\n\nClose the stuck one and start fresh?",
                     "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -217,7 +222,7 @@ namespace AdeeboMeter
             if (!File.Exists(dst)) { File.Move(tmp, dst); return; }
             try { File.Replace(tmp, dst, null); return; }
             catch (IOException) { } catch (PlatformNotSupportedException) { }
-            string bak = dst + ".bak"; if (File.Exists(bak)) File.Delete(bak);
+            string bak = dst + ".bak"; if (File.Exists(bak)) { try { File.Delete(bak); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; bak = dst + "." + Guid.NewGuid().ToString("N").Substring(0, 6) + ".bak"; } }   // bug-hunt ML-37: a locked old .bak doesn't stop the save
             File.Move(dst, bak);   // if this fails, nothing moved: the old file stays and the error goes up
             try { File.Move(tmp, dst); }
             catch (Exception) { try { if (!File.Exists(dst)) File.Move(bak, dst); } catch (IOException) { } catch (UnauthorizedAccessException) { } throw; }
@@ -319,7 +324,7 @@ namespace AdeeboMeter
         static readonly char[] CommaOnly = { ',' };
         public static void SetOff(string sec, bool off) { var l = HiddenSecs.Split(CommaOnly, StringSplitOptions.RemoveEmptyEntries).Where(z => z != sec && Hideable.Contains(z)).ToList(); if (off) l.Add(sec); HiddenSecs = string.Join(",", l); }
         // Trading: the live broker panel is opt-in (a check every 2 s in market hours); end-of-day currencies on by default
-        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx, TradeEvening, Sports; public static volatile string TradeVenue = "both", SportTeams = "", FxList = MarketData.DefaultFx, Paper = "cream", StreamLinks = ""; public static volatile bool KickoffRemind, LineAlertOpen, CasualFriday, CasualMoves; /* 1.1.6: the markets page's currencies; the Sports/Markets paper (cream, theme, white); reminders off until ticked */ public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
+        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx, TradeEvening, Sports; public static volatile string TradeVenue = "both", SportTeams = "", FxList = MarketData.DefaultFx, Paper = "cream", StreamLinks = ""; public static volatile bool KickoffRemind, LineAlertOpen, CasualFriday, CasualMoves, PhoneStandby = true; /* 1.1.6: the markets page's currencies; the Sports/Markets paper (cream, theme, white); reminders off until ticked */ public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
         public static volatile int DevAlerts;   // new-device pop-ups: 0 off (default - they're still listed), 1 home networks only
         public static volatile int HistoryDays = 3, CapGB, OnlineMin = 30;   // OnlineMin: online lookups switch themselves off after this
         public static volatile int LiveMin = 15, SniffSec = 30;
@@ -378,7 +383,7 @@ namespace AdeeboMeter
         {
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "streams2=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx2=" + (TradeFx ? 1 : 0); yield return "tradevenue=" + TradeVenue; yield return "sports=" + (Sports ? 1 : 0); yield return "sportteams=" + (SportTeams ?? "").Replace("\n", " "); yield return "tradeeve=" + (TradeEvening ? 1 : 0); yield return "fxlist=" + FxList; yield return "paper=" + Paper; yield return "kickremind=" + (KickoffRemind ? 1 : 0); yield return "linealert=" + (LineAlertOpen ? 1 : 0); yield return "casualfri=" + (CasualFriday ? 1 : 0); yield return "casualmoves=" + (CasualMoves ? 1 : 0); yield return "view=" + View; yield return "corner=" + Corner; yield return "weather=" + (WeatherOn ? 1 : 0); yield return "wplace=" + WeatherPlace; yield return "wacc=" + WeatherAcc; yield return "wtempf=" + (WeatherF ? 1 : 0); yield return "wweather=" + (WWeather ? 1 : 0); yield return "zoom=" + Zoom.ToString(CultureInfo.InvariantCulture); yield return "views=" + Views.Line(); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
+            yield return "streams2=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx2=" + (TradeFx ? 1 : 0); yield return "tradevenue=" + TradeVenue; yield return "sports=" + (Sports ? 1 : 0); yield return "sportteams=" + (SportTeams ?? "").Replace("\n", " "); yield return "tradeeve=" + (TradeEvening ? 1 : 0); yield return "fxlist=" + FxList; yield return "paper=" + Paper; yield return "kickremind=" + (KickoffRemind ? 1 : 0); yield return "phonestandby=" + (PhoneStandby ? 1 : 0); yield return "linealert=" + (LineAlertOpen ? 1 : 0); yield return "casualfri=" + (CasualFriday ? 1 : 0); yield return "casualmoves=" + (CasualMoves ? 1 : 0); yield return "view=" + View; yield return "corner=" + Corner; yield return "weather=" + (WeatherOn ? 1 : 0); yield return "wplace=" + WeatherPlace; yield return "wacc=" + WeatherAcc; yield return "wtempf=" + (WeatherF ? 1 : 0); yield return "wweather=" + (WWeather ? 1 : 0); yield return "zoom=" + Zoom.ToString(CultureInfo.InvariantCulture); yield return "views=" + Views.Line(); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
             yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
@@ -389,7 +394,7 @@ namespace AdeeboMeter
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme", "fxlist", "paper", "kickremind", "linealert", "casualfri", "casualmoves" };   // 1.1.6: Markets and Sports
+        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme", "fxlist", "paper", "kickremind", "phonestandby", "linealert", "casualfri", "casualmoves" };   // 1.1.6: Markets and Sports
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
         public static readonly string[] NavIds = { "home", "outlook", "stream", "trade", "toolbox", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports" };
         public static string NavClean(string v)
@@ -437,6 +442,7 @@ namespace AdeeboMeter
                 case "fxlist": FxList = v; break;
                 case "paper": Paper = v == "white" || v == "theme" ? v : "cream"; break;
                 case "kickremind": KickoffRemind = v == "1"; break;
+                case "phonestandby": PhoneStandby = v != "0"; break;
                 case "linealert": LineAlertOpen = v == "1"; break;
                 case "casualfri": CasualFriday = v == "1"; break;
                 case "casualmoves": CasualMoves = v == "1"; break;

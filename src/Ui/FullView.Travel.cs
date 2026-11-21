@@ -106,7 +106,7 @@ namespace AdeeboMeter
                 bx += pw;
             }
             y += bh + 10 * S;
-            string t = "Your link carries packets of up to " + mtu + " bytes (the MTU). Headers take " + (mtu - payload) + " of them, so each packet holds " + payload + " bytes of your data. " +
+            string t = "Your link carries packets of up to " + mtu + " bytes (the MTU). Inside it the IP, TCP and TLS headers take " + (mtu - payload) + ", so each packet holds " + payload + " bytes of your data; Ethernet's 14 wrap around it on the wire, outside the MTU. " +   /* bug-hunt ML-170: the text now adds up like the bar */
                        (mtu == 1492 ? "1492 means PPPoE (DSL / some fibre): the provider's tunnel takes 8 bytes. " : "") +
                        (vpn ? "Through your VPN the usable size drops to " + (vpnMtu > 0 ? vpnMtu.ToString(CultureInfo.CurrentCulture) : "about 1400") + ": IPsec adds ~60 bytes, SSL VPNs ~80. " : "") +
                        "Tunnels add more: GRE 24, VXLAN 50. If something on the way drops big packets without saying so (a path-MTU \"black hole\"), small pages load but big downloads hang - Check a destination tests for that.";
@@ -186,7 +186,7 @@ namespace AdeeboMeter
                     foreach (var u in ip.UnicastAddresses)
                     {
                         bool v6 = u.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6;
-                        string how = !v6 ? (u.PrefixOrigin == PrefixOrigin.Dhcp ? "from your router by DHCP" + (u.DhcpLeaseLifetime > 0 ? " · lease " + TimeSpan.FromSeconds(u.DhcpLeaseLifetime).TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : "") : u.PrefixOrigin == PrefixOrigin.Manual ? "set by hand" : u.PrefixOrigin.ToString())
+                        string how = !v6 ? (u.PrefixOrigin == PrefixOrigin.Dhcp ? "from your router by DHCP" + (u.DhcpLeaseLifetime >= uint.MaxValue - 1 ? " · lease never expires" : u.DhcpLeaseLifetime > 0 ? " · lease " + TimeSpan.FromSeconds(u.DhcpLeaseLifetime).TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : "")   /* bug-hunt ML-171: 0xFFFFFFFF is "infinite" */ : u.PrefixOrigin == PrefixOrigin.Manual ? "set by hand" : u.PrefixOrigin.ToString())
                                           : u.Address.IsIPv6LinkLocal ? "link-local - every IPv6 adapter has one, only for this network" : u.SuffixOrigin == SuffixOrigin.Random ? "temporary (private) - changes daily so websites can't track this PC" : u.PrefixOrigin == PrefixOrigin.RouterAdvertisement ? "built from your router's advertisement (SLAAC)" : u.PrefixOrigin == PrefixOrigin.Dhcp ? "from DHCPv6" : u.PrefixOrigin.ToString();
                         rows.Add(new[] { v6 ? "IPv6" : "IPv4", u.Address + "  ·  " + how, "3" });
                     }

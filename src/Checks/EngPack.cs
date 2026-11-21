@@ -54,7 +54,7 @@ namespace AdeeboMeter
                     {
                         errs = e;
                         if (ch != null) foreach (var el in ch.ChainElements) { var x = el.Certificate; snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), snap.Chain.Count == 0 ? Sans(x) : "" }); }
-                        if (snap.Chain.Count == 0 && c != null) { var x = new X509Certificate2(c); snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Sans(x) }); }
+                        if (snap.Chain.Count == 0 && c != null) using (var x = new X509Certificate2(c)) {   /* bug-hunt ML-31: let go once read */ snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Sans(x) }); }
                         return e == SslPolicyErrors.None;   // an untrusted certificate is still recorded above - then the handshake stops
                     }))
                     {
@@ -194,7 +194,8 @@ namespace AdeeboMeter
             // 4. router
             if (stopAt == "")
             {
-                double g = m.GwPing.Avg(3);
+                double g = m.GwPing.Avg(3); bool gRan = m.GwPing.Values(3).Length > 0 && Cfg.GwSec > 0;   // bug-hunt ML-108: a check that hasn't run yet isn't a failure
+                if (!gRan) rows.Add(R(3, "4. Router", "not checked yet", "", "m")); else
                 rows.Add(R(double.IsNaN(g) ? 1 : 0, "4. Router", double.IsNaN(g) ? "doesn't answer ping (some routers never do)" : Math.Round(g) + " ms", "", "m"));
             }
             // 5. DNS
@@ -207,9 +208,10 @@ namespace AdeeboMeter
             // 6. internet
             if (stopAt == "")
             {
-                double n = m.NetPing.Avg(3); bool tcp; lock (m.L) tcp = m.NetViaTcp;
+                double n = m.NetPing.Avg(3); bool tcp; lock (m.L) tcp = m.NetViaTcp; bool nRan = m.NetPing.Values(3).Length > 0 && Cfg.NetSec > 0;
+                if (!nRan) rows.Add(R(3, "6. Internet", Cfg.NetSec > 0 ? "not checked yet - give it a minute" : "not checked - the internet check is off in Settings", "", "m")); else
                 rows.Add(R(double.IsNaN(n) ? 2 : 0, "6. Internet", double.IsNaN(n) ? "no answer from the internet check" : Math.Round(n) + " ms" + (tcp ? " (TCP - ping is blocked here)" : ""), double.IsNaN(n) ? "A company network may only allow the internet through a proxy - see VPN and company proxy." : "", "m"));
-                if (double.IsNaN(n)) stopAt = "the way out to the internet";
+                if (nRan && double.IsNaN(n)) stopAt = "the way out to the internet";
             }
             rows.Insert(0, R(stopAt == "" ? 0 : 2, "Verdict", stopAt == "" ? "This PC joined the network and reaches the internet - every step checks out." : "It stops at " + stopAt + ". The steps after it can't work until that one does.", "", "i"));
             return rows;

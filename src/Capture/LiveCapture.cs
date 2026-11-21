@@ -307,7 +307,15 @@ namespace AdeeboMeter
             {
                 v.Pkts = pkts; v.Bytes = bytes; v.Pps = (pkts - prevPkts) / dt; prevPkts = pkts;
                 foreach (var c in convs.Values) { c.Rate = (c.Bytes - c.Prev) * 8 / dt / 1e6 * 0.6 + c.Rate * 0.4; c.Prev = c.Bytes; string h; if (c.Host == "" && names.TryGetValue(c.Remote, out h)) c.Host = h; }
-                v.Top = convs.Values.Where(c => (now - c.Last).TotalSeconds < 30).OrderByDescending(c => c.Rate).ThenByDescending(c => c.Bytes).Take(12)
+                // bug-hunt ML-132: the 12 busiest kept in one pass (no sort of up to 3,000 conversations every second)
+                var top = new List<Conv>(13);
+                foreach (var c in convs.Values)
+                {
+                    if ((now - c.Last).TotalSeconds >= 30) continue;
+                    int at = top.Count; while (at > 0 && (top[at - 1].Rate < c.Rate || (top[at - 1].Rate == c.Rate && top[at - 1].Bytes < c.Bytes))) at--;
+                    if (at < 12) { top.Insert(at, c); if (top.Count > 12) top.RemoveAt(12); }
+                }
+                v.Top = top
                     .Select(c => new Conv { Key = c.Key, Local = c.Local, Remote = c.Remote, LocalPort = c.LocalPort, RemotePort = c.RemotePort, Proto = c.Proto, L4 = c.L4, Host = c.Host != "" ? c.Host : c.Remote, Bytes = c.Bytes, Pkts = c.Pkts, Retx = c.Retx, Rate = c.Rate }).ToList();
                 double total = Math.Max(1, pkts);
                 foreach (var kv in phs.OrderBy(x => x.Key, StringComparer.Ordinal))
@@ -352,6 +360,7 @@ namespace AdeeboMeter
             foreach (var c in v.Top) { string a = appByLocalPort != null ? appByLocalPort(c.LocalPort) : null; c.Proto = (a ?? "?") + " · " + (c.Proto != "" ? c.Proto : c.L4); }
             try { if (ts != null && !ts.HasExited) { ts.Refresh(); v.TsharkMB = ts.PrivateMemorySize64 / 1048576; if (v.TsharkMB > 300) { Error = "tshark grew past 300 MB - restarted it."; string i = iface; Restart(i.Substring(i.IndexOf('{'))); } } } catch { }
             v.State = running ? "capturing " + ((int)Elapsed.TotalMinutes) + ":" + Elapsed.Seconds.ToString("00", CultureInfo.CurrentCulture) + " of " + MaxMinutes + ":00" : "stopped";
+            long drop = Dropped; if (drop > 0) v.State += " · " + drop.ToString("N0", CultureInfo.CurrentCulture) + " packet line" + (drop == 1 ? "" : "s") + " from tshark couldn't be read (left out of the counts)";   // bug-hunt ML-135
             return v;
         }
 

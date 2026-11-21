@@ -120,7 +120,7 @@ namespace AdeeboMeter
                         // 16 KB and 8 s at most: an intercepting proxy can't feed it a huge or endless page
                         var ms = new MemoryStream(); var bb = new byte[4096]; int got;
                         while (ms.Length < 16384 && sw.ElapsedMilliseconds < 8000 && (got = rs.Read(bb, 0, bb.Length)) > 0) ms.Write(bb, 0, got);
-                        var j = Encoding.UTF8.GetString(ms.ToArray()); bool ok = j.Contains("\"Status\":0") || j.Contains("\"Status\": 0"); rows.Add(R(ok ? 0 : 1, "DNS over HTTPS · " + new Uri(doh).Host, ok ? "works - " + sw.ElapsedMilliseconds + " ms" : "answered, but not with a name", "", "m")); }
+                        var j = Encoding.UTF8.GetString(ms.ToArray()); bool ok = System.Text.RegularExpressions.Regex.IsMatch(j, @"^\s*\{\s*""Status""\s*:\s*0\s*,") && j.Contains("\"Answer\"");   /* bug-hunt ML-10: a JSON DNS answer, status 0 first, with answers */ rows.Add(R(ok ? 0 : 1, "DNS over HTTPS · " + new Uri(doh).Host, ok ? "works - " + sw.ElapsedMilliseconds + " ms" : "answered, but not with a name", "", "m")); }
                 }
                 catch (Exception e) { rows.Add(R(1, "DNS over HTTPS · " + new Uri(doh).Host, "blocked or failed (" + Draw.Trunc(e.Message, 50) + ")", "Company networks often block encrypted DNS so their filters keep working.", "m")); }
             }
@@ -135,8 +135,14 @@ namespace AdeeboMeter
                         ssl.ReadTimeout = 4000; Tls(ssl, "cloudflare-dns.com", tc, 6000);
                         var q = new List<byte> { 0xAB, 0xCD, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 7 }; q.AddRange(Encoding.ASCII.GetBytes("example")); q.Add(3); q.AddRange(Encoding.ASCII.GetBytes("com")); q.AddRange(new byte[] { 0, 0, 1, 0, 1 });
                         var msg = new[] { (byte)(q.Count >> 8), (byte)q.Count }.Concat(q).ToArray(); ssl.Write(msg, 0, msg.Length);
-                        var lb = new byte[2]; int got = ssl.Read(lb, 0, 2);
-                        rows.Add(R(got == 2 ? 0 : 1, "DNS over TLS · 1.1.1.1:853", got == 2 ? "works - " + s2.ElapsedMilliseconds + " ms" : "connected, no answer", "", "m"));
+                        // bug-hunt ML-10: the whole answer - our ID back, marked as a reply, no error, at least one answer
+                        var lb = new byte[2]; int got = 0, g0; while (got < 2 && (g0 = ssl.Read(lb, got, 2 - got)) > 0) got += g0;
+                        if (got == 2)
+                        {
+                            int len = lb[0] << 8 | lb[1]; var ans = new byte[Math.Min(len, 4096)]; int have = 0; while (have < ans.Length && (g0 = ssl.Read(ans, have, ans.Length - have)) > 0) have += g0;
+                            if (!(have >= 12 && have == ans.Length && ans[0] == 0xAB && ans[1] == 0xCD && (ans[2] & 0x80) != 0 && (ans[3] & 0x0F) == 0 && (ans[6] << 8 | ans[7]) > 0)) got = 0;
+                        }
+                        rows.Add(R(got == 2 ? 0 : 1, "DNS over TLS · 1.1.1.1:853", got == 2 ? "works - " + s2.ElapsedMilliseconds + " ms" : "connected, no proper DNS answer", "", "m"));
                     }
                 }
             }
@@ -258,12 +264,22 @@ namespace AdeeboMeter
                     var st = tc.GetStream(); st.ReadTimeout = 5000; var buf = new byte[256]; int n = 0, got;
                     n = st.Read(buf, 0, buf.Length); st.ReadTimeout = 2000;
                     try { while (n > 0 && n < buf.Length && Array.IndexOf(buf, (byte)'\n', 0, n) < 0 && (got = st.Read(buf, n, buf.Length - n)) > 0) n += got; } catch (IOException) { }   // the rest of a banner that came in pieces   // the banner may arrive in pieces
-                    string b = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\r', '\n')[0];
+                    string b = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\r', '\n')[0]; string old = SshAge(b);
                     rows.Add(R(b.StartsWith("SSH-", StringComparison.Ordinal) ? 0 : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", b.StartsWith("SSH-", StringComparison.Ordinal) ? b : "connected, but it isn't SSH: " + Draw.Trunc(b, 80), b.StartsWith("SSH-1", StringComparison.Ordinal) ? "SSH version 1 is broken and should be off." : "", "m"));
+                    if (old != null) rows.Add(R(1, "Version", old, "Distributions often patch without changing the number (the banner then carries their own tag, e.g. 'Ubuntu-3ubuntu13.4') - check the server's package updates before worrying.", "m"));
                 }
             }
             catch (Exception e) { rows.Add(R(2, h + ":" + p, Draw.Trunc(e.Message, 90), "", "m")); }
             return rows;
+        }
+        // bug-hunt ML-9: what the banner's own version number says - only OpenSSH, whose public advisories map cleanly to versions
+        static string SshAge(string banner)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(banner ?? "", @"OpenSSH_(\d+)\.(\d+)"); if (!m.Success) return null;
+            int v = int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) * 100 + int.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+            if (v >= 805 && v < 908) return "OpenSSH " + m.Groups[1].Value + "." + m.Groups[2].Value + " - in the range of the 2024 'regreSSHion' flaw (CVE-2024-6387, fixed in 9.8)";
+            if (v < 704) return "OpenSSH " + m.Groups[1].Value + "." + m.Groups[2].Value + " - many years old, with several published flaws since";
+            return null;
         }
 
         // ---------- SNMP v2c GET (system group)
@@ -495,7 +511,7 @@ namespace AdeeboMeter
                         }
                     }
                     catch (SocketException) { run.Add(double.NaN); }
-                    if (res.Count == 0 || res.Last()[0] != i) { if (run.Copy().Count <= i) run.Add(double.NaN); }
+                    if (res.Count == 0 || res.Last()[0] != i) { if (run.Count <= i) run.Add(double.NaN); }
                     run.Status = (i + 1) + " / " + n + " packets to " + a + ":" + p;
                     int wait = 100 - (int)sw.ElapsedMilliseconds; if (wait > 0) Thread.Sleep(wait);
                 }

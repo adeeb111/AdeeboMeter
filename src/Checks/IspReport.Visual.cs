@@ -39,7 +39,9 @@ namespace AdeeboMeter
             if (router != null) chip(L.T("Home router"), N1(Avg(router)) + " ms", L.T("loss") + " " + N1(Loss(router)) + "%", Loss(router) < 1 ? 0 : 1);
             if (isp != null) chip(L.T("Provider's first hop"), N1(Avg(isp)) + " ms", L.T("loss") + " " + N1(Loss(isp)) + "%" + (from != null && isp.N >= from.N ? " · " + L.T("carries on") : ""), from != null && isp.N >= from.N ? 2 : 0);
             if (from != null) chip(L.T("Loss starts"), L.T("hop") + " " + from.N, v.Nm(from.Ip), 2);
-            if (end != null) chip(L.T("Destination"), N1(Avg(end)) + " ms", L.T("loss") + " " + N1(from != null ? Loss(end) : 0) + "%", from != null ? 2 : 0);
+            // bug-hunt ML-96/97: the destination's own loss, always - and named for what it is when the destination itself never answered
+            bool endSilent = end != null && hops.Count > 0 && !ReferenceEquals(hops[hops.Count - 1], end);
+            if (end != null) chip(endSilent ? L.T("Last hop that answers") : L.T("Destination"), N1(Avg(end)) + " ms", L.T("loss") + " " + N1(Loss(end)) + "%", from != null ? 2 : Loss(end) >= 1 ? 1 : 0);
             sb.Append("</div>");
             if (v.Ruled.Count > 0) { sb.Append("<div class=\"cap\">ALREADY RULED OUT</div><ul style=\"margin:6px 0 0;padding-left:0;list-style:none\">"); foreach (var r in v.Ruled) sb.Append("<li><span class=\"ok\">✓</span> " + X(r) + "</li>"); sb.Append("</ul>"); }
             sb.Append("</div>");
@@ -206,7 +208,7 @@ namespace AdeeboMeter
             foreach (var z in ends)
             {
                 sb.Append("<text x=\"0\" y=\"" + (y + 16) + "\" font-weight=\"700\">" + X(Cut(z.r.Label, 36)) + "</text>");
-                if (z.e != null) { double a = Avg(z.e), l = z.real ? Loss(z.e) : 0; sb.Append("<rect x=\"300\" y=\"" + (y + 4) + "\" width=\"" + N0(Math.Max(3, 380 * Math.Min(1, a / max))) + "\" height=\"16\" rx=\"4\" fill=\"" + (z.real ? "#CF222E" : "#1F6FEB") + "\"/><text x=\"690\" y=\"" + (y + 16) + "\">" + N1(a) + " ms · " + L.T("loss") + " " + N1(l) + "%</text>"); }
+                if (z.e != null) { double a = Avg(z.e), l = Loss(z.e);   /* bug-hunt ML-96: the loss measured, never a 0 */ sb.Append("<rect x=\"300\" y=\"" + (y + 4) + "\" width=\"" + N0(Math.Max(3, 380 * Math.Min(1, a / max))) + "\" height=\"16\" rx=\"4\" fill=\"" + (z.real ? "#CF222E" : "#1F6FEB") + "\"/><text x=\"690\" y=\"" + (y + 16) + "\">" + N1(a) + " ms · " + L.T("loss") + " " + N1(l) + "%</text>"); }
                 else sb.Append("<text x=\"300\" y=\"" + (y + 16) + "\" fill=\"#6B7685\">" + L.T("doesn't answer ping") + "</text>");
                 y += 46;
             }

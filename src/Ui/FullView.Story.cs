@@ -16,7 +16,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         List<Conn> connSnap = new List<Conn>();
-        string storyApp, storyTarget = "", storyIp = "", storyNote = ""; int storyPort, storyLocal, storyBox = -1;
+        string storyApp, storyTarget = "", storyIp = "", storyNote = ""; int storyPort, storyLocal, storyBox = -1; bool storyUdp;   // storyUdp: kept from the connection, so a closed one still knows (bug-hunt ML-75)
 
         // an IPv6 address keeps its two ends (2607:f8b0:…:200e) - the middle is what a box can lose; names are cut as before
         static string ShortIp(string s, int max)
@@ -34,7 +34,7 @@ namespace AdeeboMeter
             var c = connSnap.Where(x => x.Proc == app && x.State == "ESTABLISHED" && Watch.IsPublic(x.RemoteIp))
                             .GroupBy(x => x.RemoteIp + ":" + x.RemotePort).OrderByDescending(gr => gr.Count() + (gr.First().RemotePort == 443 ? 100 : 0)).Select(gr => gr.First()).FirstOrDefault();
             if (c == null) return;
-            storyIp = c.RemoteIp; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyNote = "";
+            storyIp = c.RemoteIp; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyNote = ""; storyUdp = (c.Proto ?? "").StartsWith("UDP", StringComparison.Ordinal);
             string h = c.Host != "" ? c.Host : c.RemoteIp.Contains(":") ? "[" + c.RemoteIp + "]" : c.RemoteIp;   // AM-CG-261: an IPv6 address with a port is written [addr]:port
             storyTarget = h + (c.RemotePort != 443 ? ":" + c.RemotePort : "");
             travelBox.Box.Text = ""; travelDest = null; realPkts = null; realDecode = null; realErr = "";
@@ -43,7 +43,7 @@ namespace AdeeboMeter
         void StorySite()
         {
             string t = travelBox.Box.Text.Trim(); if (t == "") return;
-            storyApp = null; storyTarget = t; storyIp = ""; storyPort = 0; storyLocal = 0; storyNote = ""; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
+            storyApp = null; storyTarget = t; storyIp = ""; storyPort = 0; storyLocal = 0; storyUdp = false; storyNote = ""; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
             // a plain IPv4 address: the route card answers it straight away (the routing table is local - nothing is sent for it)
             System.Net.IPAddress typed; if (System.Net.IPAddress.TryParse(t, out typed) && typed.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && t.Count(ch => ch == '.') == 3) storyIp = typed.ToString();
             else if (typed != null && typed.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) storyNote = "An IPv6 address: the route card covers IPv4 only - the trace still runs.";

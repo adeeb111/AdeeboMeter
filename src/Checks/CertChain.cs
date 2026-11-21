@@ -99,6 +99,7 @@ namespace AdeeboMeter
                 // what today's apps refuse: an RSA key under 2048 bits, a SHA-1 or MD5 signature (a root's own signature doesn't count)
                 var l0 = chain[i]; bool selfRoot = SelfSigned(l0.Cert);
                 try { using (var rsa = l0.Cert.GetRSAPublicKey()) if (rsa != null && rsa.KeySize < 2048) l0.Bad.Add("weak key: RSA " + rsa.KeySize + " bits (apps want 2048 or more)"); } catch (CryptographicException) { }
+                string weak = WeakKey(l0.Cert); if (weak != null) l0.Bad.Add(weak);   // bug-hunt ML-6: EC and DSA too
                 string sig = l0.Cert.SignatureAlgorithm != null ? l0.Cert.SignatureAlgorithm.Value : "";
                 if (!selfRoot && (sig == "1.2.840.113549.1.1.5" || sig == "1.2.840.10045.4.1" || sig == "1.2.840.113549.1.1.4" || sig == "1.3.14.3.2.29")) l0.Bad.Add("weak signature: " + (sig == "1.2.840.113549.1.1.4" ? "MD5" : "SHA-1") + " (apps refuse it)");
             }
@@ -108,6 +109,9 @@ namespace AdeeboMeter
                 else if (now < l.Cert.NotBefore) l.Bad.Add("not valid until " + l.Cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " - or this PC's clock is behind");
                 else if ((l.Cert.NotAfter - now).TotalDays < 30) l.Warn = true;
             }
+            // bug-hunt ML-5: every store certificate not kept in the chain is let go now, not left to the finalizer
+            var keep = new HashSet<X509Certificate2>(chain.Select(l => l.Cert));
+            foreach (var c in ca.Concat(roots)) if (!keep.Contains(c)) c.Dispose();
             return chain;
         }
 
@@ -117,7 +121,8 @@ namespace AdeeboMeter
             bool missing, trusted; string missingName;
             var chain = Walk(leaf, given, out missing, out trusted, out missingName);
             // the missing one is the root when the last certificate we have is itself a CA: servers aren't meant to send roots
-            bool rootMissing = missing && chain.Count > 1 && IsCa(chain[chain.Count - 1].Cert);
+            // bug-hunt ML-7: ...and its issuer is named like a root - a CA whose own issuer is another intermediate is a missing middle, with the server to blame
+            bool rootMissing = missing && chain.Count > 1 && IsCa(chain[chain.Count - 1].Cert) && System.Text.RegularExpressions.Regex.IsMatch(Cn(missingName) ?? "", @"\broot\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             bool stopped = !missing && !trusted && !SelfSigned(chain[chain.Count - 1].Cert);   // the walk hit its 9-certificate limit
             if (fromServer)
             {
@@ -141,6 +146,25 @@ namespace AdeeboMeter
             }
             int plv = chain.Any(l => l.Bad.Count > 0) || (missing && !rootMissing) ? 2 : rootMissing || stopped || !trusted || chain.Any(l => l.Warn) ? 1 : 0;
             rows.Insert(at, R(plv, "In plain words", stopped ? "The chain is longer than 9 certificates, so it wasn't followed to the end - that alone is a problem worth fixing." : rootMissing && chain.All(l => l.Bad.Count == 0) ? "Every certificate here holds, but the root at the top (" + Draw.Trunc(Cn(missingName), 40) + ") isn't on this PC yet. A public root arrives by itself the first time Windows needs it; a private one has to be installed." : Plain(chain, missing, trusted, fromServer), "", "i"));
+        }
+        // EC under 256 bits (P-192, P-224) and DSA (no app accepts it now) - RSA is checked above with its key size
+        static string WeakKey(X509Certificate2 c)
+        {
+            string alg = c.PublicKey.Oid != null ? c.PublicKey.Oid.Value : "";
+            if (alg == "1.2.840.10040.4.1") return "weak key: DSA (apps no longer accept it)";
+            if (alg == "1.2.840.10045.2.1")
+            {
+                string curve = ""; try { var p = c.PublicKey.EncodedParameters.RawData; if (p.Length > 2 && p[0] == 6) curve = Oid2(p); } catch (CryptographicException) { }
+                if (curve == "1.2.840.10045.3.1.1" || curve == "1.3.132.0.33") return "weak key: EC " + (curve == "1.3.132.0.33" ? "P-224" : "P-192") + " (apps want P-256 or more)";
+            }
+            return null;
+        }
+        // a DER OBJECT IDENTIFIER (06 len bytes...) to its dotted form
+        static string Oid2(byte[] d)
+        {
+            int len = d[1], i = 2; if (len + 2 > d.Length) return ""; var sb = new System.Text.StringBuilder(); sb.Append(d[i] / 40).Append('.').Append(d[i] % 40); i++;
+            long v = 0; for (; i < 2 + len; i++) { v = (v << 7) | (uint)(d[i] & 0x7F); if ((d[i] & 0x80) == 0) { sb.Append('.').Append(v); v = 0; } }
+            return sb.ToString();
         }
         static string Cn(string dn) { var m = System.Text.RegularExpressions.Regex.Match(dn ?? "", @"CN=([^,]+)"); return m.Success ? m.Groups[1].Value : dn; }
         static string Plain(List<Link> chain, bool missing, bool trusted, bool fromServer)
@@ -328,7 +352,8 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string host; int port;
             string t = Toolkit.OneSlash(target); var um = System.Text.RegularExpressions.Regex.Match(t, @"^https?://([^/?#]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase); if (um.Success) t = um.Groups[1].Value;
             if (!Lab.Split(t, 443, out host, out port)) { rows.Add(R(2, "Site", "type a site - e.g. example.com or vpn.example.com:8443", "", "u")); return rows; }
-            IPAddress ip; if (!IPAddress.TryParse(host, out ip)) { try { var all = Dns.GetHostAddresses(host); ip = all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? all.FirstOrDefault(); } catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; } }
+            // bug-hunt ML-8: every address the name has, taken in turn - the one that answers is the one checked
+            IPAddress ip; IPAddress[] all = null; if (!IPAddress.TryParse(host, out ip)) { try { all = Dns.GetHostAddresses(host); ip = all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? all.FirstOrDefault(); } catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; } }
             if (ip == null) { rows.Add(R(2, host, "the name doesn't resolve", "Check the spelling, or DNS (Toolbox › DNS).", "m")); return rows; }
             string sni = host;
             if (sni.Any(ch => ch > 127)) { try { sni = new System.Globalization.IdnMapping().GetAscii(sni); } catch (ArgumentException) { } }   // bücher.de goes out as xn--bcher-kva.de, never "b?cher"
@@ -336,8 +361,9 @@ namespace AdeeboMeter
             // 1. Windows' own handshake - what every app on this PC gets: version, cipher, full validation, the name
             run.Status = "TLS handshake with " + host + "...";
             SslPolicyErrors errs = SslPolicyErrors.None; X509Certificate2 cert = null; string proto = "", hsErr = ""; string[][] parts = null; double ms = double.NaN;
-            using (var tc = Toolkit.Open(ip, port, 5000))
+            using (var tc = all != null && all.Length > 1 ? Toolkit.Open(all, port, 8000) : Toolkit.Open(ip, port, 5000))
             {
+                if (tc != null) { var ep = tc.Client.RemoteEndPoint as IPEndPoint; if (ep != null) ip = ep.Address.IsIPv4MappedToIPv6 ? ep.Address.MapToIPv4() : ep.Address; }
                 if (tc == null) { rows.Add(R(2, host + ":" + port, "no answer on port " + port, "Nothing listens there, or a firewall drops it. Check a destination tells which.", "m")); return rows; }
                 using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) => { errs = e; if (c != null && cert == null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))   // full validation: an untrusted certificate stops the handshake (it's still read for the report)
                 {
@@ -378,7 +404,7 @@ namespace AdeeboMeter
 
             // the connection
             rows.Add(R(-1, "THE CONNECTION", "", "", "m"));
-            rows.Add(R(proto == "" ? 2 : 0, "TLS version", proto == "" && cert != null && h12.Version != 0 ? VersionName(h12.Version) + " - the handshake stopped at the certificate" : proto != "" ? proto + (h12.Version == 0x0303 && proto != "TLS 1.2" ? " (TLS 1.2 works too)" : "") + (double.IsNaN(ms) ? "" : " · handshake " + ms.ToString("0", CultureInfo.CurrentCulture) + " ms") : legacy ? VersionName(old.Version) + " only" : "no handshake", proto != "" ? "" : legacy ? "TLS 1.0 and 1.1 are switched off in current Windows and browsers - the server needs updating." : "", "m"));
+            rows.Add(R(proto == "" ? 2 : 0, "TLS version", proto == "" && cert != null && h12.Version != 0 ? VersionName(h12.Version) + (h12.Version == 0x0303 ? " at least (this hello offered no newer - the server may also speak TLS 1.3)" : "") + " - the handshake stopped at the certificate"   /* bug-hunt ML-91 */ : proto != "" ? proto + (h12.Version == 0x0303 && proto != "TLS 1.2" ? " (TLS 1.2 works too)" : "") + (double.IsNaN(ms) ? "" : " · handshake " + ms.ToString("0", CultureInfo.CurrentCulture) + " ms") : legacy ? VersionName(old.Version) + " only" : "no handshake", proto != "" ? "" : legacy ? "TLS 1.0 and 1.1 are switched off in current Windows and browsers - the server needs updating." : "", "m"));
             string sname = ""; bool known = h12.Suite >= 0 && Suites.TryGetValue(h12.Suite, out sname); if (!known) sname = h12.Suite >= 0 ? "0x" + h12.Suite.ToString("X4", CultureInfo.InvariantCulture) : "";
             bool via12 = proto == "TLS 1.2" || (proto == "" && h12.Version == 0x0303);   // TLS 1.2 - or the handshake stopped at the certificate: the hello still says which suite
             var shown = via12 && known ? Parts(sname) : parts;

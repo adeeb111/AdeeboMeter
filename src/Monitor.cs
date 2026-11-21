@@ -64,7 +64,7 @@ namespace AdeeboMeter
         string pAdapter, pGw, pDns, pIp, pState, pBssid = "", pCh = ""; bool pVpn; int pRate = -1, pSig = -1;
         DateTime lastRoam = DateTime.MinValue, lastSigDrop = DateTime.MinValue, netDownSince, lastConnT = Clock.Mono, netDownMono;
         public bool NetQuiet { get { return netDown >= 3; } }
-        int netDown, prevLevel = -1; DateTime redFrom = DateTime.MinValue; bool gwFlag, prevCall; double gwBase = double.NaN; string hint = "";
+        int netDown, prevLevel = -1; DateTime redFrom = DateTime.MinValue; bool gwFlag, prevCall; double gwBase = double.NaN; string hint = "", gwBaseFor = "";
         HashSet<string> prevKeys; readonly Dictionary<string, DateTime> synFirst = new Dictionary<string, DateTime>();
         readonly Dictionary<string, DateTime> suppress = new Dictionary<string, DateTime>();
         volatile bool netChanged;
@@ -88,8 +88,15 @@ namespace AdeeboMeter
 
         public void Start()
         {
-            if (samplerT != null) return;   // already running: never subscribe twice
-            stop = false; stopping.Reset();
+            // bug-hunt ML-34: a Stop() that timed out leaves its loops finishing - wait for them, never run two pairs at once
+            if (samplerT != null || probeT != null)
+            {
+                if (!stop) return;   // already running: never subscribe twice
+                foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(3000);
+                if ((samplerT != null && samplerT.IsAlive) || (probeT != null && probeT.IsAlive)) { Program.Log("monitor: the last loops haven't finished - not starting twice"); return; }
+                samplerT = null; probeT = null;
+            }
+            stop = false; stopping.Reset(); Trading.Resume();
             Events.Add(3, "app", "AdeeboMeter started");
             addrHandler = delegate { netChanged = true; wake.Set(); };
             availHandler = delegate(object o, NetworkAvailabilityEventArgs e) { Events.Add(e.IsAvailable ? 0 : 2, "net", e.IsAvailable ? "Network is back" : Voice.P("Every network connection just dropped.", "All network connections dropped.")); netChanged = true; wake.Set(); };
@@ -103,8 +110,11 @@ namespace AdeeboMeter
             stop = true; wake.Set(); stopping.Set();
             Trading.Stop(); try { Streams.End(DateTime.Now); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("streams end: " + e.Message); }   // a stream playing at exit still gets its record
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
-            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(1500);   // both finish their tick (the stop event wakes them; quitting never waits long) and release their counters
-            samplerT = null; probeT = null;   // so Start() can run again
+            // both finish their tick (the stop event wakes them) and release their counters - one shared 1.2 s at most, so
+            // quitting never holds the window for long (bug-hunt ML-35: two Joins of 1.5 s each could take 3 s)
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(Math.Max(0, 1200 - (int)sw.ElapsedMilliseconds));
+            if (samplerT != null && !samplerT.IsAlive) samplerT = null; if (probeT != null && !probeT.IsAlive) probeT = null;   // still running: Start() waits for them
         }
         void Once(string key, int seconds, int lv, string kind, string text)
         {
@@ -671,9 +681,10 @@ namespace AdeeboMeter
         }
 
         // Names for remote IPs, read from Windows' own DNS cache - no network traffic.
-        public void RefreshIpNames()
+        public void RefreshIpNames() { lock (nameLook) RefreshIpNames0(); }   // the Streams page and the engineer view can both ask: one at a time
+        void RefreshIpNames0()
         {
-            var map = new Dictionary<string, string>();
+            var map = new Dictionary<string, string>(); var seen = new HashSet<string>(); int fresh = 0;
             IntPtr table;
             try
             {
@@ -684,16 +695,24 @@ namespace AdeeboMeter
                     IntPtr next = Marshal.ReadIntPtr(e, 0), pName = Marshal.ReadIntPtr(e, P);
                     int type = Marshal.ReadInt16(e, 2 * P) & 0xFFFF;
                     string name = pName != IntPtr.Zero ? Marshal.PtrToStringUni(pName) : null;
-                    if (name != null && (type == 1 || type == 28) && count++ < 3000) LookupCached(name, (short)type, map);
+                    if (name != null && (type == 1 || type == 28) && count++ < 3000)
+                    {
+                        // bug-hunt M-17: a name looked up in the last 5 minutes reuses its answer; at most 200 new lookups a refresh
+                        string nk = type + "|" + name; seen.Add(nk); Tuple<DateTime, Dictionary<string, string>> c;
+                        if (nameLook.TryGetValue(nk, out c) && (Clock.Mono - c.Item1).TotalMinutes < 5) { foreach (var kv in c.Item2) map[kv.Key] = kv.Value; }
+                        else if (fresh < 200) { fresh++; var one = new Dictionary<string, string>(); LookupCached(name, (short)type, one); nameLook[nk] = Tuple.Create(Clock.Mono, one); foreach (var kv in one) map[kv.Key] = kv.Value; }
+                        else if (c != null) foreach (var kv in c.Item2) map[kv.Key] = kv.Value;
+                    }
                     if (pName != IntPtr.Zero) Native.DnsFree(pName, 0);
                     Native.DnsFree(e, 0);
                     e = next;
                 }
             }
             catch (Exception ex) { Program.Log("dns cache: " + ex.Message); }
+            foreach (var gone in nameLook.Keys.Where(z => !seen.Contains(z)).ToList()) nameLook.Remove(gone);   // names that left Windows' cache
             // Some Windows builds hand back an empty table from that API. Then read the same cache the way Windows' own
             // ipconfig /displaydns shows it - still offline, only while the engineer view is open, at most every 30 s.
-            if (map.Count == 0 && !dnsCacheLocked && (Clock.Mono - lastDisplayDns).TotalSeconds >= (emptyDisplayDns >= 2 ? 300 : 30))   /* two empty answers in a row: every 5 min */
+            if (map.Count == 0 && !dnsCacheLocked && (Clock.Mono - lastDisplayDns).TotalSeconds >= (emptyDisplayDns >= 2 ? 300 : 120))   /* every 2 min; two empty answers in a row: every 5 min (bug-hunt M-17) */
             {
                 lastDisplayDns = Clock.Mono;
                 try
@@ -708,6 +727,7 @@ namespace AdeeboMeter
             if (map.Count == 0) { lock (L) if (IpNames.Count > 0) return; }   // keep the last good names rather than blanking them
             lock (L) IpNames = map;
         }
+        readonly Dictionary<string, Tuple<DateTime, Dictionary<string, string>>> nameLook = new Dictionary<string, Tuple<DateTime, Dictionary<string, string>>>();   // guarded by locking itself
         DateTime lastDisplayDns = DateTime.MinValue; int emptyDisplayDns; public volatile bool dnsCacheLocked;
         static readonly char[] IpChars = { '.', ':' };
         // Each block starts with the queried name over a dashed line; any record line whose value is an IP maps that IP to the name.
@@ -829,6 +849,9 @@ namespace AdeeboMeter
             // gateway latency jumps (against its own calm baseline)
             if (!double.IsNaN(gw))
             {
+                // bug-hunt ML-43: another network (another router, another Wi-Fi) starts its own baseline
+                string gwNow; lock (L) gwNow = Gateway + "|" + Ssid;
+                if (gwNow != gwBaseFor) { gwBaseFor = gwNow; gwBase = double.NaN; gwFlag = false; }
                 if (double.IsNaN(gwBase)) gwBase = gw;
                 if (!gwFlag && gw > Math.Max(30, gwBase * 3)) { gwFlag = true; Events.Add(1, "gw", "Gateway latency jumped to " + gw.ToString("0", CultureInfo.CurrentCulture) + " ms (normally " + gwBase.ToString("0", CultureInfo.CurrentCulture) + " ms)"); }
                 else if (gwFlag && gw < Math.Max(15, gwBase * 2)) { gwFlag = false; Events.Add(0, "gw", "Gateway latency back to " + gw.ToString("0", CultureInfo.CurrentCulture) + " ms"); }
@@ -999,6 +1022,8 @@ namespace AdeeboMeter
             var list = new List<Conn>();
             Func<int, string> nm = delegate(int pid) { string s; return names.TryGetValue(pid, out s) ? s : (pid == 4 ? "System" : pid == 0 ? "Windows (no owner)" : "pid " + pid); };
             IntPtr b = Get(true, 2);   // v4 row: state, laddr, lport, raddr, rport, pid
+            // bug-hunt ML-133: a table Windows wouldn't hand over is an error, said as one - not an empty, "nothing connected" list
+            if (b == IntPtr.Zero) throw new InvalidOperationException("Windows didn't hand over its connection table just now");
             if (b != IntPtr.Zero)
                 try
                 {

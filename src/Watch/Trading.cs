@@ -25,6 +25,8 @@ namespace AdeeboMeter
         static Thread thread; static volatile bool running; static volatile bool stopAll; static readonly ManualResetEvent wake = new ManualResetEvent(false);
         // AM-CG-121: Stop and app exit wake the watch at once, so it saves the day's recording instead of being cut off mid-sleep
         public static void Stop() { stopAll = true; wake.Set(); }
+        // bug-hunt ML-42: only the Monitor starting again lifts a Stop - a probe tick racing the quit can't restart the watch
+        public static void Resume() { stopAll = false; }
         public static bool Stopping { get { return stopAll; } }
         static IPAddress hostIp; static DateTime resolvedAt = DateTime.MinValue; static string resolvedFor = "";
         public static string Status = "";
@@ -50,8 +52,8 @@ namespace AdeeboMeter
         public static void Ensure(Monitor m)
         {
             if (m != null) viewOpen = m.ViewOpen;
-            if (running || !Watching || m == null) return;
-            running = true; stopAll = false; wake.Reset();
+            if (running || stopAll || !Watching || m == null) return;
+            running = true; wake.Reset();
             thread = new Thread(() => Loop(m)) { IsBackground = true, Name = "broker watch", Priority = ThreadPriority.BelowNormal }; thread.Start();
         }
         static void Loop(Monitor m)

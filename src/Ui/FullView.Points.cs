@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // and a Go that takes you straight there (a tool opens with its Example). The Adeebo button in the header opens it.
     sealed partial class FullView
     {
-        Panel pointsPage; DB pointsCanvas; RoundBox pointsSearch; PillButton pointsBtn; DateTime pointsFlashUntil; string pointsFlash = "";
+        Panel pointsPage; DB pointsCanvas; RoundBox pointsSearch; DateTime pointsFlashUntil; string pointsFlash = "";
         string learnSeen = ""; DateTime learnAt; bool learnTimed;
 
         sealed class PtItem { public string Key = "", Title = "", Tag = "", Group = ""; public bool Replay; public int Value; public Action Go; }
@@ -206,11 +206,8 @@ namespace AdeeboMeter
         }
         void SyncPointsBtn()
         {
-            if (pointsBtn == null) return;
-            bool show = Cfg.Points; if (pointsBtn.Visible != show) pointsBtn.Visible = show;
-            string t = DateTime.Now < pointsFlashUntil ? pointsFlash : "Adeebo · " + Points.Me.Total.ToString(CultureInfo.CurrentCulture);
-            if (pointsBtn.Text != L.T(t)) pointsBtn.Text = t;
-            pointsBtn.Selected = tab == "points";
+            // bug-hunt ML-77: the Adeebo page opens from the ⋯ menu; the old header button was made but never placed, so it's gone
+            if (dotsBtn == null) return;
             bool dot = DateTime.Now < pointsFlashUntil; if (dotsBtn.Dot != dot) { dotsBtn.Dot = dot; dotsBtn.Invalidate(); }   // points just earned: a gold dot on the ⋯ button
         }
         // "first use" means doing something there - a click or a key on the page - not just opening the tab
@@ -248,7 +245,7 @@ namespace AdeeboMeter
 
         // the badge wall (PLAN 11.5): one badge per group - in colour once every item in it is done, a ring for how far along, grey before
         static readonly Dictionary<string, string> BadgeIcons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-            { "Network", "route" }, { "Devices", "devices" }, { "Traffic Lab", "traffic" }, { "Security", "lock" }, { "The PC", "cpu" }, { "Windows", "windows" }, { "Learn", "learn" },
+            { "Network", "route" }, { "Devices", "devices" }, { "Traffic Lab", "traffic" }, { "Engineer", "tool" }, { "Hardware nerds", "cpu" }, { "The PC", "cpu" },   /* bug-hunt ML-89: every Toolbox section has its own; the old "Security" group is gone */ { "Windows", "windows" }, { "Learn", "learn" },
             { "Games", "game" }, { "Challenges", "star" }, { "Check yourself", "check" }, { "Learning paths", "go" }, { "Pages", "home" } };
         float PaintBadges(Graphics g, float x, float y, float w)
         {

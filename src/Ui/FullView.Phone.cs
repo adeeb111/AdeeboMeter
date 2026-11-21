@@ -233,8 +233,24 @@ namespace AdeeboMeter
                 string id = p.Id; Act(phoneCanvas, rr, delegate { RemotePhones.Remove(id); var now = Remote.Now; if (now != null && now.Known != null && now.Known.Id == id) now.End("forgotten"); PhoneHub.Fire(); });
                 ry += 48 * S;
             }
+            // bug-hunt ML-111: the remembered phones' waiting room is your choice - off, nothing goes to the relay until you make a code
+            if (ph.Count > 0)
+            {
+                string sw = (Cfg.PhoneStandby ? L.T("On") : L.T("Off")) + " · " + L.T("Let remembered phones reconnect while AdeeboMeter runs");
+                var sr = new RectangleF(x + 22 * S, ry + 4 * S, w - 44 * S, 22 * S);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sw, Draw.fBodyB, lb, sr);
+                Act(phoneCanvas, sr, delegate { Cfg.PhoneStandby = !Cfg.PhoneStandby; Cfg.Save(); PhoneHub.Fire(); });
+                ry += 32 * S;
+            }
             rc.Height = ry + 14 * S - y; Theme.Stroke(g, rc, 18 * S, Theme.Line, 1);
             return rc.Bottom + 16 * S;
+        }
+        // a locked .adeebo file to open: Open an encrypted file, with the file filled in - the code is yours to type (bug-hunt ML-127)
+        internal void OpenLocked(string path)
+        {
+            tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("decrypt");
+            if (tbBoxes.Count > 0 && tbBoxes[0] != null) { tbBoxes[0].Box.Text = path; if (tbBoxes.Count > 1 && tbBoxes[1] != null) tbBoxes[1].Box.Focus(); }
+            if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal; Activate();
         }
         // a card's frame and a coloured left edge (drawn after its content, so it never covers it)
         void PhCard(Graphics g, RectangleF r, Color edge)
@@ -269,7 +285,9 @@ namespace AdeeboMeter
             // a locked file and its code both came from the phone (Adeeb, 16 Nov: "yes do that"): open it in one click -
             // Open an encrypted file, filled in and started. The code is only the phone's "XXXX-XXXX-...-XXXX" kind.
             var lockedF = got.FirstOrDefault(z => z.File != "" && z.File.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(z.File));
-            var codeT = got.FirstOrDefault(z => z.File == "" && Regex.IsMatch(z.Text.Trim(), @"^[A-Z0-9]{4}(-[A-Z0-9]{4}){5}$"));
+            // bug-hunt ML-117/118: the code read the way Open an encrypted file reads it (any case, spaces or dashes), and the one sent
+            // nearest in time to that file - within 10 minutes - so a file and a code from two different sends aren't paired
+            var codeT = lockedF == null ? null : got.Where(z => z.File == "" && Regex.IsMatch(FileCrypt.Clean(z.Text), "^[A-Z0-9]{24}$") && Math.Abs((z.T - lockedF.T).TotalMinutes) <= 10).OrderBy(z => Math.Abs((z.T - lockedF.T).TotalSeconds)).FirstOrDefault();
             if (lockedF != null && codeT != null)
             {
                 var oc = new RectangleF(ix, cy, iw, 64 * S); Theme.Fill(g, oc, 14 * S, Theme.LvSoft(0)); Theme.Stroke(g, oc, 14 * S, Theme.Green, 1.5f);

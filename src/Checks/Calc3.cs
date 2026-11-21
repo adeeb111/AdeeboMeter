@@ -12,7 +12,8 @@ namespace AdeeboMeter
     static partial class Calc
     {
         static double P(string t) { var m = Regex.Match((t ?? "").Replace(",", ""), @"-?[0-9]+(?:\.[0-9]+)?"); double v; return m.Success && double.TryParse(m.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }
-        static List<double> Ps(string t) { return Regex.Matches((t ?? "").Replace(", ", " "), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => double.Parse(m.Value, CultureInfo.InvariantCulture)).ToList(); }
+        // bug-hunt ML-65: "1,000" is one thousand (a comma between a digit and exactly three more), "50, 45" two prices
+        static List<double> Ps(string t) { return Regex.Matches(Regex.Replace((t ?? "").Replace(", ", " "), @"(?<=\d),(?=\d{3}(?!\d))", ""), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => double.Parse(m.Value, CultureInfo.InvariantCulture)).ToList(); }
         static string M(double v) { return (v < 0 ? "-$" : "$") + Math.Abs(v).ToString(Math.Abs(v) >= 1000 ? "N0" : "N2", CultureInfo.CurrentCulture); }
         static string Pc(double v) { return (v > 0 ? "+" : "") + v.ToString("0.##", CultureInfo.CurrentCulture) + "%"; }
         const string Edu = "The numbers only - not advice.";
@@ -55,7 +56,9 @@ namespace AdeeboMeter
             if (acc <= 0) return Need("Account", "more than 0");   // FRESH-055
             if (risk <= 0 || risk > 100) return Need("Risk", "more than 0 and at most 100% of the account");   // FRESH-031
             if (e <= 0 || s < 0) return Need("Entry and stop", "prices above 0");   // FRESH-078
-            double cash = acc * risk / 100, per = Math.Abs(e - s); int n = (int)Math.Floor(cash / per); double pos = n * e;
+            double cash = acc * risk / 100, per = Math.Abs(e - s);
+            if (cash / per > 1e9) return Need("Entry and stop", "further apart - that's over a billion shares");   // bug-hunt ML-64: no overflow into a negative count
+            long n = (long)Math.Floor(cash / per); double pos = n * e;
             var rows = new List<string[]> { R(0, "Shares", n.ToString("N0", CultureInfo.CurrentCulture) + " - each loses " + M(per) + " if the stop is hit", "Risking " + M(cash) + " (" + risk.ToString("0.##", CultureInfo.CurrentCulture) + "% of " + M(acc) + "). " + Edu, "i"),
                 R(pos > acc ? 1 : 3, "Position", M(pos) + " = " + (pos / acc * 100).ToString("0", CultureInfo.CurrentCulture) + "% of the account" + (pos > acc ? " - more than you have (borrowed money)" : ""), "A stop isn't guaranteed: a price that jumps (gaps) can skip right past it.", "i") };
             return rows;
@@ -117,6 +120,10 @@ namespace AdeeboMeter
         static string[] UnitOf(string t, out double baseUnits, string crop)
         {
             t = (t ?? "").ToLowerInvariant(); baseUnits = double.NaN;
+            // bug-hunt ML-66: the everyday names too (a commodity ounce is the troy ounce)
+            t = Regex.Replace(t, @"\bmetric tons?\b", "tonne"); t = Regex.Replace(t, @"\btons?\b", "short ton"); t = Regex.Replace(t, @"\b(liters?|litres)\b", "litre");
+            t = Regex.Replace(t, @"\b(gal|gallons?)\b", "us gallon"); t = Regex.Replace(t, @"(?<!troy )\b(oz|ounces?)\b", "troy oz"); t = Regex.Replace(t, @"\bm3\b|\bcubic met(er|re)s?\b", "m³");
+            t = Regex.Replace(t, @"\b(bbls?|barrels)\b", "barrel"); t = Regex.Replace(t, @"\b(lbs|pounds?)\b", "lb"); t = Regex.Replace(t, @"\b(grams|g)\b", "gram"); t = Regex.Replace(t, @"\bbushels\b", "bushel");
             foreach (var u in ComUnits.OrderByDescending(z => z[0].Length)) if (t.IndexOf(u[0], StringComparison.OrdinalIgnoreCase) >= 0) { baseUnits = u[0] == "bushel" ? BushelKg[BushelKg.ContainsKey(crop) ? crop : "wheat"] * 1000 : double.Parse(u[2], CultureInfo.InvariantCulture); return u; }
             return null;
         }
@@ -124,9 +131,9 @@ namespace AdeeboMeter
         {
             double amt = P(amountText); string crop = (cropText ?? "").Trim().ToLowerInvariant(); if (crop == "") crop = "wheat"; double b; var u = UnitOf(unitText, out b, crop);
             if (double.IsNaN(amt) || u == null) return Need("Amount and unit", "e.g. 1 barrel, 1 troy oz, 100 bushel, 1 MMBtu");
-            if (u[1] == "m" && !BushelKg.ContainsKey(crop)) return Need("Crop", "wheat, soybeans or corn - a bushel weighs different amounts of each");   // FRESH-035
+            if (u[0] == "bushel" && !BushelKg.ContainsKey(crop)) return Need("Crop", "wheat, soybeans or corn - a bushel weighs different amounts of each");   // FRESH-035
             var rows = new List<string[]>();
-            foreach (var o in ComUnits.Where(z => z[1] == u[1] && z[0] != u[0]))
+            foreach (var o in ComUnits.Where(z => z[1] == u[1] && z[0] != u[0] && (z[0] != "bushel" || BushelKg.ContainsKey(crop))))   // bug-hunt ML-67: an unknown crop only drops the bushel line
             {
                 double ob = o[0] == "bushel" ? BushelKg[BushelKg.ContainsKey(crop) ? crop : "wheat"] * 1000 : double.Parse(o[2], CultureInfo.InvariantCulture);
                 double v = amt * b / ob; rows.Add(R(3, o[0] + (o[0] == "bushel" ? " of " + crop : ""), v.ToString(v >= 100 ? "N0" : v >= 1 ? "N2" : "0.####", CultureInfo.CurrentCulture), "", "i"));
@@ -138,9 +145,17 @@ namespace AdeeboMeter
         public static readonly string[][] Futures = {   // name, size, unit, tick
             new[] { "WTI crude oil", "1000", "barrel", "0.01" }, new[] { "Natural gas", "10000", "MMBtu", "0.001" }, new[] { "Gold", "100", "troy oz", "0.10" }, new[] { "Silver", "5000", "troy oz", "0.005" },
             new[] { "Copper", "25000", "lb", "0.0005" }, new[] { "Corn", "5000", "bushel", "0.0025" }, new[] { "Wheat", "5000", "bushel", "0.0025" }, new[] { "Soybeans", "5000", "bushel", "0.0025" } };
+        static string[] FuturesAlias(string t)
+        {
+            var al = new[] { new[] { @"\b(wti|crude|oil|cl)\b", "WTI crude oil" }, new[] { @"\b(gas|natgas|ng)\b", "Natural gas" }, new[] { @"\b(gold|gc)\b", "Gold" }, new[] { @"\b(silver|si)\b", "Silver" },
+                new[] { @"\b(copper|hg)\b", "Copper" }, new[] { @"\b(corn|zc)\b", "Corn" }, new[] { @"\b(wheat|zw)\b", "Wheat" }, new[] { @"\b(soy|soybean|soybeans|zs)\b", "Soybeans" } };
+            var hit = al.FirstOrDefault(a => Regex.IsMatch(t, a[0], RegexOptions.IgnoreCase)); return hit == null ? null : Futures.First(z => z[0] == hit[1]);
+        }
         public static List<string[]> FuturesCalc(string contractText, string priceText, string countText, string moveText)
         {
-            var c = Futures.FirstOrDefault(z => (contractText ?? "").IndexOf(z[0], StringComparison.OrdinalIgnoreCase) >= 0); double price = P(priceText), n = P(countText), mv = P(moveText);
+            // bug-hunt ML-101: the everyday names and symbols too - "crude", "oil", "WTI", "CL", "gas", "NG", "GC"...
+            string ct = (contractText ?? "").Trim();
+            var c = Futures.FirstOrDefault(z => ct.IndexOf(z[0], StringComparison.OrdinalIgnoreCase) >= 0) ?? FuturesAlias(ct); double price = P(priceText), n = P(countText), mv = P(moveText);
             if (c == null || double.IsNaN(price)) return Need("Contract and price", "e.g. WTI crude oil at 75 a barrel");
             if (string.IsNullOrWhiteSpace(countText)) n = 1; else if (double.IsNaN(n) || n < 1 || !Whole(n)) return Need("Contracts", "a whole number, 1 or more");   // FRESH-037/083
             double size = double.Parse(c[1], CultureInfo.InvariantCulture), tick = double.Parse(c[3], CultureInfo.InvariantCulture);

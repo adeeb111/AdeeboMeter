@@ -8,6 +8,12 @@ const IDX = ["ENER", "MTLS", "FOPR", "AGRI", "BCPI"];
 // services with a public Statuspage status feed (name, host)
 const STATUS = [["Zoom", "status.zoom.us"], ["Discord", "discordstatus.com"], ["GitHub", "www.githubstatus.com"], ["Cloudflare", "www.cloudflarestatus.com"], ["Reddit", "www.redditstatus.com"], ["OpenAI (ChatGPT)", "status.openai.com"],
   ["Dropbox", "status.dropbox.com"], ["Epic Games (Fortnite)", "status.epicgames.com"], ["Atlassian (Jira, Trello)", "status.atlassian.com"], ["Twilio", "status.twilio.com"], ["Vercel", "www.vercel-status.com"], ["Notion", "status.notion.so"]];
+const siteSeen = new Map();   // ip -> {w: minute, n} for /site (bug-hunt M-14)
+function siteBusy(ip, kind, max) {   // bug-hunt M-14 / ML-123: /site, /k, /mac and /port each have a per-minute budget per address
+  const k = (kind || "site") + "|" + ip, w = Math.floor(Date.now() / 60000), r = siteSeen.get(k);
+  if (!r || r.w !== w) { if (siteSeen.size > 5000) for (const [kk, x] of siteSeen) if (x.w !== w) siteSeen.delete(kk); siteSeen.set(k, { w, n: 1 }); return false; }
+  return ++r.n > (max || 10);
+}
 const memo = new Map(), flying = new Map(), MAX = 400;   // isolate memory only: key -> {t, v}; at most MAX entries
 
 // every answer carries "at" (when the source was last read). A failed refresh serves the last copy only up to maxStale,
@@ -37,7 +43,11 @@ function put(key, e) {
 async function get(url, ttl, type) {
   const r = await fetch(url, { cf: { cacheTtl: ttl, cacheEverything: true }, headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error(new URL(url).hostname + " answered " + r.status);
-  const t = await r.text(); if (t.length > 2000000) throw new Error("too big");
+  // bug-hunt ML-22: the 2 MB cap holds while reading, not after the whole body is in memory
+  if (+(r.headers.get("Content-Length") || 0) > 2000000) { try { await r.body.cancel(); } catch (e) {} throw new Error("too big"); }
+  let t = ""; const rd = r.body.getReader(), dec = new TextDecoder(); let n = 0;
+  for (;;) { const { done, value } = await rd.read(); if (done) break; n += value.length; if (n > 2000000) { try { await rd.cancel(); } catch (e) {} throw new Error("too big"); } t += dec.decode(value, { stream: true }); }
+  t += dec.decode();
   return type === "text" ? t : JSON.parse(t);
 }
 const out = e => Object.assign({ at: e.at, stale: e.stale ? 1 : 0 }, e.v);
@@ -104,19 +114,22 @@ async function moversDaily(env) {
   try {
     const r = await fetch("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(15000) });
     rec = { ok: 1, on: today, at: Date.now(), v: movers(env.AV_KEY, await r.json()) };
-  } catch (e) { rec = Object.assign({}, old && old.ok ? old : {}, { tried: Date.now(), why: (m => /daily limit|refused/.test(m) ? m : "no answer from Alpha Vantage")(String(e && e.message || e)) }); }
+  } catch (e) { rec = Object.assign({}, old && old.ok ? old : { ok: 0 }, { tried: Date.now(), why: (m => /daily limit|refused/.test(m) ? m : "no answer from Alpha Vantage")(String(e && e.message || e)) }); }
   await env.MOVERS.put("movers", JSON.stringify(rec));
 }
 async function moversShared(env) {
   if (!env.MOVERS) return out(await avShared(env));
-  const rec = await env.MOVERS.get("movers", "json", { cacheTtl: 600 });
-  if (rec && rec.ok) return Object.assign({ at: rec.at, stale: Date.now() - rec.at > 4 * 86400000 ? 1 : 0 }, rec.v);
+  let rec; try { rec = await env.MOVERS.get("movers", "json", { cacheTtl: 600 }); } catch (e) { return { at: 0, stale: 0, error: "source unavailable", why: "the stored copy can't be read just now" }; }   // bug-hunt ML-122
+  // bug-hunt ML-129: a copy from a failed later try still has its data - shown, and why the newer try failed is said too
+  if (rec && rec.ok) return Object.assign({ at: rec.at, stale: Date.now() - rec.at > 4 * 86400000 ? 1 : 0 }, rec.why ? { why: rec.why } : {}, rec.v);
   return { at: 0, stale: 0, error: "source unavailable", why: rec && rec.why ? rec.why : "not fetched yet - the first copy comes after today's US close" };
 }
-// a person's own key (Live > Your keys): it comes in a header, is used for this one call and dropped - never cached, logged or kept
+// a person's own key (Live > Your keys): it comes to us in a header, is used for this one call and dropped - never cached,
+// logged or kept here. Alpha Vantage and CricketData only take a key in their own address (?apikey=), so it goes to them
+// that way - over HTTPS, with Cloudflare's cache off for that request (bug-hunt ML-130)
 async function keyed(svc, key, u) {
-  const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000) };
-  const j2 = async (url, h) => { const r = await fetch(url, h ? { headers: Object.assign({}, nc.headers, h), signal: nc.signal } : nc); const t = await r.text(); let d; try { d = JSON.parse(t); } catch (e) { throw new Error("not JSON (" + r.status + ")"); } if (r.status === 401 || r.status === 403) throw new Error("the key was refused"); if (r.status === 429) throw new Error("the key's daily limit is used up"); if (!r.ok) throw new Error("answered " + r.status); return d; };
+  const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000), cf: { cacheTtl: -1 } };
+  const j2 = async (url, h) => { const r = await fetch(url, h ? { headers: Object.assign({}, nc.headers, h), signal: nc.signal, cf: nc.cf } : nc); const t = await r.text(); let d; try { d = JSON.parse(t); } catch (e) { throw new Error("not JSON (" + r.status + ")"); } if (r.status === 401 || r.status === 403) throw new Error("the key was refused"); if (r.status === 429) throw new Error("the key's daily limit is used up"); if (!r.ok) throw new Error("answered " + r.status); return d; };
   if (svc === "av") return movers(key, await j2("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(key)));
   if (svc === "fd") { const d = await j2("https://api.football-data.org/v4/matches", { "X-Auth-Token": key });
     return { g: (d.matches || []).slice(0, 40).map(m => ({ lg: String((m.competition || {}).name || "").slice(0, 40), d: m.utcDate, st: /IN_PLAY|PAUSED/.test(m.status) ? "in" : m.status === "FINISHED" ? "post" : "pre", det: m.status === "PAUSED" ? "Half-time" : m.minute ? m.minute + "'" : m.status === "IN_PLAY" ? "Live" : "",
@@ -159,12 +172,20 @@ const places = q => cached("g" + q, 86400, 86400, async () => {
 
 // the same network: the first 3 bytes of an IPv4 address, or the first 48 bits of IPv6
 function net(a) { if (!a.includes(":")) return a.split(".").slice(0, 3).join("."); const [h, t = ""] = a.split("::"), L = h ? h.split(":") : [], R2 = t ? t.split(":") : [], all = L.concat(Array(Math.max(0, 8 - L.length - R2.length)).fill("0"), R2); return all.slice(0, 3).map(x => parseInt(x || "0", 16)).join(":"); }
-const PRIV = /^(localhost|.*\.local|.*\.internal|10\.\d+\.\d+\.\d+|127\.\d+\.\d+\.\d+|169\.254\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|0\.\d+\.\d+\.\d+|\[.*\])$/i;
+const PRIV = /^(localhost|.*\.local|.*\.internal|.*\.localhost|10\.\d+\.\d+\.\d+|127\.\d+\.\d+\.\d+|169\.254\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+|0\.\d+\.\d+\.\d+|\[.*\])$/i;   // bug-hunt ML-21: CGNAT 100.64/10 too
+// bug-hunt ML-21: a public name can point at a private address - ask DNS (over HTTPS) first and refuse those
+async function privateName(host) {
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return false;
+  try {
+    const r = await fetch("https://cloudflare-dns.com/dns-query?type=A&name=" + encodeURIComponent(host), { headers: { Accept: "application/dns-json" }, signal: AbortSignal.timeout(4000) });
+    const j = r.ok ? await r.json() : null; return !!(j && (j.Answer || []).some(a => a.type === 1 && PRIV.test(String(a.data))));
+  } catch (e) { return false; }   // DNS failing here means the fetch fails too
+}
 async function siteHops(start) {
   const hops = []; let cur = start;
   for (let i = 0; i < 6; i++) {
     const port = cur.port || (cur.protocol === "http:" ? "80" : "443");
-    if (!/^https?:$/.test(cur.protocol) || PRIV.test(cur.hostname) || !["80", "443", "8080", "8443"].includes(port)) { hops.push({ u: cur.href.slice(0, 200), err: "not checked (only public web addresses)" }); break; }
+    if (!/^https?:$/.test(cur.protocol) || PRIV.test(cur.hostname) || !["80", "443", "8080", "8443"].includes(port) || await privateName(cur.hostname)) { hops.push({ u: cur.href.slice(0, 200), err: "not checked (only public web addresses)" }); break; }
     const t0 = Date.now(); let r;
     try { r = await fetch(cur.href, { redirect: "manual", headers: { "User-Agent": "AdeeboMeter-Check (+https://adeebometer.com)" }, signal: AbortSignal.timeout(8000) }); }
     catch (e) { const m = String(e && e.message || e); hops.push({ u: cur.href.slice(0, 200), err: /timeout|abort/i.test(m) ? "no answer in 8 s" : /certificate|ssl|tls/i.test(m) ? "secure connection failed (certificate)" : /dns|resolve|not found/i.test(m) ? "the name doesn't exist" : "couldn't connect" }); break; }
@@ -229,6 +250,7 @@ export default {
       case "/movers": return reply(req, await moversShared(env), 3600);
       // a person's own key: X-Key header, one call, nothing kept; only these four services
       case "/k": {
+        if (siteBusy(req.headers.get("CF-Connecting-IP") || "?", "k", 20)) return reply(req, { error: "a lot of requests from you just now - try again in a minute" }, 0);
         const svc = u.searchParams.get("svc") || "", key = req.headers.get("X-Key") || "";
         if (!["av", "fd", "cd", "gn"].includes(svc) || !/^[A-Za-z0-9_-]{8,80}$/.test(key)) return reply(req, { error: "bad request" }, 0);
         try { return reply(req, await keyed(svc, key, u), -1); } catch (e) { return reply(req, { error: scrub(String(e && e.message || e)).slice(0, 160) }, -1); }
@@ -244,6 +266,7 @@ export default {
       }
       // "Who made this device?" - only the maker part of a hardware address (first 3 bytes) is looked up; cached a day
       case "/mac": {
+        if (siteBusy(req.headers.get("CF-Connecting-IP") || "?", "mac", 30)) return reply(req, { error: "a lot of requests from you just now - try again in a minute" }, 0);
         const p = (u.searchParams.get("p") || "").toUpperCase();
         if (!/^[0-9A-F]{6}$/.test(p)) return reply(req, { error: "bad prefix" }, 0);
         const e = await cached("mac:" + p, 86400, 86400 * 7, async () => {
@@ -264,6 +287,7 @@ export default {
       case "/port": {
         const ip = req.headers.get("CF-Connecting-IP") || "", p = Number(u.searchParams.get("p")), v6 = ip.includes(":") ? 1 : 0;
         if (!ip || !Number.isInteger(p) || p < 1 || p > 65535) return reply(req, { error: "bad port" }, 0);
+        if (siteBusy(ip, "port", 10)) return reply(req, { error: "a lot of port checks from you just now - try again in a minute" }, 0);   // only ever your own address, and never a sweep
         if (p === 25) return reply(req, { v6, open: false, why: "25" }, -1);
         // never await close(): on a socket that never opened it may not settle, and the visitor would get no answer at all
         const t0 = Date.now(); let sock = null, open = false, why = "", timer = null;
@@ -282,6 +306,10 @@ export default {
       case "/site": {
         let t = (u.searchParams.get("u") || "").trim().slice(0, 300); if (!/^https?:\/\//i.test(t)) t = "https://" + t;
         let start; try { start = new URL(t); } catch (e) { return reply(req, { error: "bad address" }, 0); }
+        // bug-hunt M-14: 10 checks a minute from one address (best effort: per Cloudflare location, in memory), and the
+        // cache keyed without the query string, so ?x=1, ?x=2... can't be used to send many requests at a site
+        if (siteBusy(req.headers.get("CF-Connecting-IP") || "?")) return reply(req, { error: "a lot of checks from you just now - try again in a minute" }, 0);
+        start.search = ""; start.hash = "";
         const e = await cached("site:" + start.href, 30, 30, () => siteHops(start));
         return reply(req, Object.assign({ colo: (req.cf && req.cf.colo) || "" }, e.v.error ? { hops: [{ u: start.href.slice(0, 200), err: "couldn't check" }] } : e.v), 0);
       }

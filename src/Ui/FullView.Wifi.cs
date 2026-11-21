@@ -18,8 +18,32 @@ namespace AdeeboMeter
         sealed class Spot { public string Room; public double Avg, Jitter, Loss; public long Speed; public int Signal; }
         readonly List<Spot> spots = new List<Spot>(); FlowLayoutPanel walkBar; RoundBox walkRoom; PillButton walkRec; Label walkStatus; volatile bool walking; string walkRename;   // set while a room is being renamed
 
+        // bug-hunt ML-84: the rooms you recorded are kept (walk.txt), so a walk survives closing the window
+        bool spotsLoaded;
+        void LoadSpots()
+        {
+            if (spotsLoaded) return; spotsLoaded = true;
+            try
+            {
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                foreach (var r in Store.Read("walk.txt").Where(r => r.Length >= 6).Take(30))
+                {
+                    Func<string, double> d = s => { double v; return double.TryParse(s, System.Globalization.NumberStyles.Float, ic, out v) ? v : double.NaN; };
+                    long sp; int sg; long.TryParse(r[4], System.Globalization.NumberStyles.Integer, ic, out sp); if (!int.TryParse(r[5], System.Globalization.NumberStyles.Integer, ic, out sg)) sg = -1;
+                    spots.Add(new Spot { Room = r[0], Avg = d(r[1]), Jitter = d(r[2]), Loss = d(r[3]), Speed = sp, Signal = sg });
+                }
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("walk: " + e.Message); }
+        }
+        void SaveSpots()
+        {
+            var ic = System.Globalization.CultureInfo.InvariantCulture;
+            try { Store.Write("walk.txt", spots.Select(s => new[] { s.Room, s.Avg.ToString("R", ic), s.Jitter.ToString("R", ic), s.Loss.ToString("R", ic), s.Speed.ToString(ic), s.Signal.ToString(ic) }).ToList()); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("walk save: " + e.Message); }
+        }
         void BuildWalkBar()
         {
+            LoadSpots();
             walkBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(64)), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), Sc(8), Sc(6)), WrapContents = true, Visible = false };
             walkRoom = new RoundBox(Sc(300), Draw.fBody, "Room name - e.g. Kitchen");
             walkRec = new PillButton("Record this spot (10 s)", PillButton.K.Primary); walkRec.Click += delegate { RecordSpot(); };
@@ -37,7 +61,7 @@ namespace AdeeboMeter
             if (walkRename != null)
             {
                 string to = walkRoom.Box.Text.Trim(); var sp0 = spots.FirstOrDefault(z => z.Room == walkRename);
-                if (to != "" && sp0 != null) { spots.RemoveAll(z => z.Room == to && z != sp0); sp0.Room = to; walkStatus.Text = AdeeboMeter.L.T("Renamed ") + walkRename + " to " + to + "."; }
+                if (to != "" && sp0 != null) { spots.RemoveAll(z => z.Room == to && z != sp0); sp0.Room = to; SaveSpots(); walkStatus.Text = AdeeboMeter.L.T("Renamed ") + walkRename + " to " + to + "."; }
                 EndRename(); walkRoom.Box.Text = ""; linkCanvas.Invalidate(); return;
             }
             string room = walkRoom.Box.Text.Trim(); if (room == "") room = "Spot " + (spots.Count + 1);
@@ -58,7 +82,7 @@ namespace AdeeboMeter
                 long speed = 0; try { if (nic != null) speed = nic.Speed; } catch { }
                 int sig; lock (M.L) sig = M.WifiSignal;
                 var sp = new Spot { Room = room, Avg = ok.Count > 0 ? ok.Average() : double.NaN, Jitter = ok.Count > 2 ? ok.Zip(ok.Skip(1), (a, b) => Math.Abs(a - b)).Average() : double.NaN, Loss = 100.0 * (ms.Count - ok.Count) / ms.Count, Speed = speed, Signal = sig };
-                try { BeginInvoke((Action)delegate { walking = false; walkRec.Enabled = true; spots.RemoveAll(s => s.Room == sp.Room); spots.Add(sp); walkRoom.Box.Text = ""; walkStatus.Text = AdeeboMeter.L.T("Recorded ") + sp.Room + ". Walk to the next room."; linkCanvas.Invalidate(); }); } catch { walking = false; }
+                try { BeginInvoke((Action)delegate { walking = false; walkRec.Enabled = true; spots.RemoveAll(s => s.Room == sp.Room); spots.Add(sp); SaveSpots(); walkRoom.Box.Text = ""; walkStatus.Text = AdeeboMeter.L.T("Recorded ") + sp.Room + ". Walk to the next room."; linkCanvas.Invalidate(); }); } catch { walking = false; }
             });
         }
         static int SpotScore(Spot s)
@@ -97,6 +121,7 @@ namespace AdeeboMeter
             y += hcard.Height + 16 * S;
             if (ex.Twins.Count > 0) y = TextCard(g, "LOOK-ALIKE NETWORKS NEARBY", ex.Twins.Select(t => new[] { t[0] + "  ·  " + t[1], t[2], "1" }).ToList(), "link.TWINS", x, y, w);
             // walk test
+            LoadSpots();
             var wr = new RectangleF(x, y, w, (spots.Count == 0 ? 74 : 92 + spots.Count * 30) * S);
             Kit.Box(g, wr);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
@@ -129,7 +154,7 @@ namespace AdeeboMeter
                     Act(linkCanvas, rr, delegate { walkRename = spot.Room; walkBar.Visible = true; walkRoom.Box.Text = spot.Room; walkRoom.Box.Focus(); walkRoom.Box.SelectAll(); walkRec.Text = AdeeboMeter.L.T("Save the new name"); walkStatus.Text = AdeeboMeter.L.T("Type the new name for ") + spot.Room + ", then Save."; linkCanvas.Invalidate(); });
                     var dr = new RectangleF(ax + rn.Width + 14 * S, sy + 4 * S, g.MeasureString("Remove", Draw.fSmall).Width, 20 * S);
                     using (var red = new SolidBrush(Theme.LvText(2))) g.DrawString(L.T("Remove"), Draw.fSmall, red, dr.X, sy + 5 * S);
-                    Act(linkCanvas, dr, delegate { spots.Remove(spot); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = AdeeboMeter.L.T("Removed ") + spot.Room + "."; linkCanvas.Invalidate(); });
+                    Act(linkCanvas, dr, delegate { spots.Remove(spot); SaveSpots(); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = AdeeboMeter.L.T("Removed ") + spot.Room + "."; linkCanvas.Invalidate(); });
                     sy += 30 * S;
                 }
                 if (spots.Count >= 2)

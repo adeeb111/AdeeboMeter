@@ -39,6 +39,7 @@ namespace AdeeboMeter
                 R(0, "Mask", Dotted(mask), "", "i"), R(0, "Prefix", "/" + prefix, "", "i"), R(0, "Wildcard", Dotted(wild), "What an ACL or OSPF network line wants: the mask turned inside out.", "i"),
                 R(3, "Addresses", I(1L << (32 - prefix)) + " in the block · " + I(hosts) + " usable" + (prefix == 31 ? " (point-to-point, RFC 3021)" : ""), "", "i"),
                 R(3, "In an ACL", "permit ip " + Dotted(ex) + " " + Dotted(wild) + " any  - matches " + Dotted(ex) + "/" + prefix, "Swap " + Dotted(ex) + " for your block's first address.", "i") };
+            if (!zero && Regex.IsMatch(t, @"^255\.255\.255\.255$")) rows.Insert(0, R(1, "Read as", "the /32 mask - one address. As an ACL wildcard, 255.255.255.255 means every address (/0): type /0 for that", "", "i"));   // bug-hunt ML-105
             if (zero) rows.Insert(0, R(1, "Read as", "the /0 mask - every address. As an ACL wildcard, 0.0.0.0 means one exact address (/32): type /32 for that", "", "i"));   // FRESH-001
             return rows;
         }
@@ -136,7 +137,7 @@ namespace AdeeboMeter
         public static List<string[]> WifiRate(string genText, string widthText, string ssText)
         {
             int gen = (int)First(genText); string g0 = (genText ?? "").ToLowerInvariant();
-            if (g0.Contains("ax")) gen = 6; else if (g0.Contains("be")) gen = 7; else if (g0.Contains("ac")) gen = 5; else if (Regex.IsMatch(g0, @"\bn\b")) gen = 4;
+            if (g0.Contains("ax")) gen = 6; else if (g0.Contains("be")) gen = 7; else if (g0.Contains("ac")) gen = 5; else if (Regex.IsMatch(g0, @"(\b|11)n\b")) gen = 4;   // bug-hunt ML-60: "802.11n" too
             if (gen < 4 || gen > 7) return Need("Generation", "type 4 (n), 5 (ac), 6 (ax) or 7 (be)");
             double wf = First(widthText), sf = First(ssText);   // FRESH-010/011: 80.9 MHz or 2.9 streams aren't settings
             int w = double.IsNaN(wf) ? (gen >= 6 ? 80 : gen == 5 ? 80 : 40) : Whole(wf) ? (int)wf : -1;
@@ -159,10 +160,10 @@ namespace AdeeboMeter
         public static List<string[]> LinkBudget(string txText, string gainText, string distText, string sensText)
         {
             double tx = First(txText); if (double.IsNaN(tx)) return Need("Transmit power", "type e.g. 20 dBm");
-            if (Regex.IsMatch(txText ?? "", @"\bm?W\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(txText, "dbm", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(txText ?? "", @"(?<![a-z])m?W\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(txText, "dbm", RegexOptions.IgnoreCase))   // bug-hunt ML-61: "100mW" and "1W" with no space
             {
                 if (tx <= 0) return Need("Transmit power", "has to be more than 0 W");   // FRESH-013
-                tx = 10 * Math.Log10(tx * (Regex.IsMatch(txText, @"\bmw\b", RegexOptions.IgnoreCase) ? 1 : 1000));   // FRESH-012: 100 mw is milliwatts
+                tx = 10 * Math.Log10(tx * (Regex.IsMatch(txText, @"(?<![a-z])mw\b", RegexOptions.IgnoreCase) ? 1 : 1000));   // FRESH-012: 100 mw is milliwatts
             }
             var gains = Nums(gainText); double gt = gains.Length > 0 ? gains[0] : 0, gr = gains.Length > 1 ? gains[1] : gt;
             string dt = (distText ?? "").ToLowerInvariant(); var dm = Regex.Match(dt, @"(-?[0-9.,]+)\s*(km|m|mi)\b"); var fm = Regex.Match(dt, @"(-?[0-9.,]+)\s*(ghz|mhz)");   // FRESH-014: keep the minus, so -1 km is refused
@@ -218,7 +219,8 @@ namespace AdeeboMeter
             double ch = First(changeText);
             if (!double.IsNaN(ch) && ch > 0)
             {
-                double daily = (changeText ?? "").Contains("%") || Bare(changeText) ? bytes * ch / 100 : Size(changeText);
+                if (Bare(changeText)) return Need("Daily change", "say which: " + changeText.Trim() + "% or " + changeText.Trim() + " GB");   // bug-hunt ML-63: a bare number could be either
+                double daily = (changeText ?? "").Contains("%") ? bytes * ch / 100 : Size(changeText);
                 if (double.IsNaN(daily)) return Need("Daily change", "type e.g. 3% or 60 GB");   // FRESH-016
                 double t = daily * 8 / (bps * eff);
                 rows.Add(R(t > 8 * 3600 ? 1 : 0, "Each night", ByteSize(daily) + " changes · " + Dur(t) + (t > 8 * 3600 ? " - longer than a night; it won't finish before morning" : ""), "", "i"));
@@ -238,7 +240,7 @@ namespace AdeeboMeter
             else if (ahm.Success && vm.Success) wh = v(ahm) * v(vm) * (xm.Success ? int.Parse(xm.Groups[1].Value, CultureInfo.InvariantCulture) : 1);
             else return Need("Battery", "type the energy (216 Wh) or volts and amp-hours (2 x 12 V 9 Ah) - a VA rating alone doesn't say how long it lasts");
             if (wh <= 0) return Need("Battery", "has to be more than 0 Wh");
-            double load = First(loadText); if (Regex.IsMatch(loadText ?? "", @"\bkw\b", RegexOptions.IgnoreCase)) load *= 1000;   // FRESH-073
+            double load = First(loadText); if (Regex.IsMatch(loadText ?? "", @"(?<![a-z])kw\b", RegexOptions.IgnoreCase)) load *= 1000;   // FRESH-073; bug-hunt ML-100: "1.5kW" with no space too
             if (double.IsNaN(load) || load <= 0) return Need("Load", "type the watts, e.g. 300 W");
             double eff = First(effText); eff = double.IsNaN(eff) ? 0.85 : (effText ?? "").Contains("%") || eff > 1 ? eff / 100 : eff;   // FRESH-019: 1% is 1%
             if (eff <= 0 || eff > 1) return Need("Efficiency", "0 to 100% - most inverters are 80-90%");   // FRESH-018
@@ -255,7 +257,7 @@ namespace AdeeboMeter
             string t = (text ?? "").Trim().ToLowerInvariant(); double up;
             double n = First(t); if (double.IsNaN(n)) return Need("Uptime", "type e.g. 99.9% - or a downtime, e.g. 4 h a year");
             const double Year = 365.25 * 86400;
-            if (t.Contains("%") || (n > 90 && n < 100 && !Regex.IsMatch(t, "[a-z]"))) up = n / 100;
+            if (t.Contains("%") || (n > 0 && n <= 100 && !Regex.IsMatch(t, "[a-z]"))) up = n / 100;   // bug-hunt ML-62: a bare number is a percentage (a downtime needs its unit: 4 h)
             else
             {
                 double secs = Time(Regex.Replace(t, @"\s*(a|per|/)\s*(year|quarter|month|week|day).*$", "").Trim()); if (double.IsNaN(secs)) return Need("Uptime", "type e.g. 99.9% or 4 h a year");

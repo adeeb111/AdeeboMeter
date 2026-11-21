@@ -29,7 +29,7 @@ namespace AdeeboMeter
 
         sealed class In { public string Id = "", Name = "", Tmp = "", Dir = ""; public long Size, Got; public int Next; public FileStream Fs; }
         sealed class Out { public string Id = ""; public volatile int Acked = -1; public volatile bool Ok, No, Cancel, Got; public readonly ManualResetEventSlim Ev = new ManualResetEventSlim(false); }
-        readonly Dictionary<string, In> ins = new Dictionary<string, In>(); readonly Dictionary<string, Out> outs = new Dictionary<string, Out>(); readonly object fk = new object();
+        readonly Dictionary<string, In> ins = new Dictionary<string, In>(); readonly Dictionary<string, Out> outs = new Dictionary<string, Out>(); readonly object fk = new object(); readonly HashSet<string> asking = new HashSet<string>();
 
         // AM-CG-372: Windows' own Downloads folder, wherever it was moved to; the old guess only if Windows doesn't say
         public static string DropDir { get { return Path.Combine(Downloads(), "AdeeboMeter"); } }
@@ -64,10 +64,19 @@ namespace AdeeboMeter
                         long size; long.TryParse(c.S("size"), NumberStyles.Integer, CultureInfo.InvariantCulture, out size);
                         string name = SafeName(c.S("name"));
                         if (id == "" || size <= 0 || size > MaxFile) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"" + (size > MaxFile ? "over 200 MB" : "empty") + "\"}"); return; }
-                        lock (fk) if (ins.Count >= 2) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"one at a time\"}"); return; }
+                        // bug-hunt ML-115/116: a transfer's place is held from the moment it's asked - a second fput with the same id, or a
+                        // third while two are being asked about, is refused before any question appears
+                        lock (fk)
+                        {
+                            if (ins.ContainsKey(id) || asking.Contains(id)) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"already sending that one\"}"); return; }
+                            if (ins.Count + asking.Count >= 2) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"one at a time\"}"); return; }
+                            asking.Add(id);
+                        }
                         // ask on the PC (No is the default); the answer may take a while, so not on the receive thread
                         Task.Factory.StartNew(() =>
                         {
+                          try
+                          {
                             bool yes = AskFile != null && AskFile(PhoneName, name, size);
                             if (!yes || St != State.Paired) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"not accepted on the PC\"}"); return; }
                             try
@@ -80,6 +89,8 @@ namespace AdeeboMeter
                                 Seal("{\"t\":\"fok\",\"id\":\"" + J(id) + "\"}");
                             }
                             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote file: " + e.Message); Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"couldn't save on the PC\"}"); }
+                          }
+                          finally { lock (fk) asking.Remove(id); }
                         });
                         return;
                     }
@@ -90,6 +101,7 @@ namespace AdeeboMeter
                         byte[] d; try { d = Convert.FromBase64String(c.S("d") ?? ""); } catch (FormatException) { Drop(f, "a piece was damaged"); return; }
                         if (n != f.Next || d.Length == 0 || d.Length > Piece || f.Got + d.Length > f.Size) { Drop(f, "pieces arrived out of order"); return; }
                         try { f.Fs.Write(d, 0, d.Length); } catch (IOException e) { Drop(f, "the disk refused it: " + e.Message); return; }
+                        catch (ObjectDisposedException) { return; }   // bug-hunt ML-15: the transfer was dropped meanwhile - only it ends, not the session
                         f.Got += d.Length; f.Next++;
                         if (f.Next % 8 == 0) Seal("{\"t\":\"fack\",\"id\":\"" + J(id) + "\",\"n\":" + (f.Next - 1).ToString(CultureInfo.InvariantCulture) + "}");
                         return;

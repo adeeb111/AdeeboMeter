@@ -38,7 +38,8 @@ namespace AdeeboMeter
             lock (k)
             {
                 var c = card; if (c == null) return; card = null;
-                try { c.BeginInvoke((Action)delegate { c.Close(); }); } catch (InvalidOperationException) { }
+                c.CloseAsap = true;   // bug-hunt ML-169: asked to go before its window exists - it closes itself the moment it's shown
+                try { if (c.IsHandleCreated) c.BeginInvoke((Action)delegate { c.Close(); }); } catch (InvalidOperationException) { }
             }
         }
         public static bool Visible { get { lock (k) return card != null; } }
@@ -46,6 +47,8 @@ namespace AdeeboMeter
         sealed class CardForm : Form
         {
             string text; readonly Font f = new Font("Segoe UI", 10f), fb = new Font("Segoe UI", 8f, FontStyle.Bold);
+            public volatile bool CloseAsap;
+            protected override void OnShown(EventArgs e) { base.OnShown(e); if (CloseAsap) Close(); }
             readonly System.Windows.Forms.Timer dot = new System.Windows.Forms.Timer { Interval = 400 }; int phase;
             public CardForm(string t, Rectangle over)
             {

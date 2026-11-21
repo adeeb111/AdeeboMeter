@@ -928,7 +928,15 @@ namespace AdeeboMeter
         // search: every word must appear in the tool's name, its group or its explanation
         // search: every word must match somewhere; the results are ranked - the tool's own name first, then the everyday word's tools, then explanations
         List<Tool> Matches() { return Matches(tbFilter); }
+        // bug-hunt M-15: scored once per query (and tool list / language), not on every paint or keystroke repaint
+        string matchKey; List<Tool> matchHit; List<Tool> matchList;
         List<Tool> Matches(string query)
+        {
+            var list = Tools2(); string key = (query ?? "") + "|" + Cfg.Lang;
+            if (key == matchKey && ReferenceEquals(list, matchList)) return new List<Tool>(matchHit);
+            var hit = MatchesScored(query); matchKey = key; matchList = list; matchHit = hit; return new List<Tool>(hit);
+        }
+        List<Tool> MatchesScored(string query)
         {
             var words = (query ?? "").ToLowerInvariant().Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Select(w => w.Trim(SearchTrim)).Where(w => w != "").ToArray();
             var all = Tools2(); if (words.Length == 0) return all;
@@ -963,12 +971,19 @@ namespace AdeeboMeter
         string DidYouMean(string q)
         {
             q = (q ?? "").Trim().ToLowerInvariant(); if (q.Length < 3 || q.Contains(" ")) return null;
-            var words = new List<string>(Synonyms.Keys);
-            foreach (var t in Tools2()) { words.Add(t.Id); words.AddRange((t.Title + " " + L.T(t.Title)).ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
+            // bug-hunt ML-144: the word list built once per language, and the answer kept per query - not redone on every paint
+            string lk = Cfg.Lang + "|" + q; if (lk == dymKey) return dymHit;
+            if (dymWords == null || dymLang != Cfg.Lang)
+            {
+                var wl = new List<string>(Synonyms.Keys);
+                foreach (var t in Tools2()) { wl.Add(t.Id); wl.AddRange((t.Title + " " + L.T(t.Title)).ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
+                dymWords = wl.Select(w => w.ToLowerInvariant()).Distinct().ToArray(); dymLang = Cfg.Lang;
+            }
             string best = null; int bd = q.Length <= 4 ? 1 : 2;
-            foreach (var w in words.Distinct()) { int d = Edit(q, w.ToLowerInvariant(), bd); if (d <= bd && (best == null || d < bd)) { best = w.ToLowerInvariant(); bd = d; } }
-            return best;
+            foreach (var w in dymWords) { int d = Edit(q, w.ToLowerInvariant(), bd); if (d <= bd && (best == null || d < bd)) { best = w.ToLowerInvariant(); bd = d; } }
+            dymKey = lk; dymHit = best; return best;
         }
+        string[] dymWords; string dymLang, dymKey, dymHit;
         // edit distance, giving up past "max"
         static int Edit(string a, string b, int max)
         {

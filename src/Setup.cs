@@ -32,6 +32,7 @@ namespace AdeeboMeter
     // like any app), your settings carried over. No administrator rights, no shell, no extra files.
     static class Setup
     {
+        [System.Runtime.InteropServices.DllImport("shell32.dll")] static extern void SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);
         [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)] static extern bool DeleteFileW(string path);
         public static string Base { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "AdeeboMeter"); } }
         public const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\AdeeboMeter";
@@ -85,8 +86,13 @@ namespace AdeeboMeter
                         if (loc != null && Under(loc, Base) && File.Exists(Path.Combine(loc, "AdeeboMeter.exe"))) { version = v; exe = Path.Combine(loc, "AdeeboMeter.exe"); return; }
                     }
                 if (Directory.Exists(Base))
-                    foreach (var d in Directory.GetDirectories(Base).OrderByDescending(Directory.GetLastWriteTimeUtc))
-                        if (File.Exists(Path.Combine(d, "AdeeboMeter.exe"))) { version = Path.GetFileName(d); exe = Path.Combine(d, "AdeeboMeter.exe"); return; }
+                    // bug-hunt ML-167: the version the exe itself carries, and the newest by that version - not a folder's name or date
+                {
+                    var best = Directory.GetDirectories(Base).Where(f => File.Exists(Path.Combine(f, "AdeeboMeter.exe")))
+                        .Select(f => new { Dir = f, V = FileVersionInfo.GetVersionInfo(Path.Combine(f, "AdeeboMeter.exe")).ProductVersion ?? "" })
+                        .Where(x => x.V != "").OrderByDescending(x => { Version pv; return Version.TryParse(Regex.Match(x.V, @"^\d+(\.\d+){1,3}").Value, out pv) ? pv : new Version(0, 0); }).FirstOrDefault();
+                    if (best != null) { version = best.V; exe = Path.Combine(best.Dir, "AdeeboMeter.exe"); return; }
+                }
             }
             catch (Exception e) { Program.Log("installed: " + e.Message); }
         }
@@ -187,6 +193,14 @@ namespace AdeeboMeter
             }
             if (!autoStart)
                 try { using (var k = Registry.CurrentUser.OpenSubKey(RunKey, true)) if (k != null && k.GetValue("AdeeboMeter") != null) k.DeleteValue("AdeeboMeter"); } catch { }
+            // bug-hunt ML-127: a locked .adeebo file opens in AdeeboMeter with a double-click (your account only, no admin)
+            try
+            {
+                using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Classes\.adeebo")) k.SetValue("", "AdeeboMeter.locked");
+                using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Classes\AdeeboMeter.locked")) { k.SetValue("", "AdeeboMeter locked file"); using (var i = k.CreateSubKey("DefaultIcon")) i.SetValue("", exe + ",0"); using (var c = k.CreateSubKey(@"shell\open\command")) c.SetValue("", "\"" + exe + "\" --open \"%1\""); }
+                SHChangeNotify(0x08000000, 0, IntPtr.Zero, IntPtr.Zero);   // SHCNE_ASSOCCHANGED: Explorer picks it up now
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("file type: " + e.Message); }
 
             step("Tidying up older versions...", 0.9f);
             foreach (var d in Directory.GetDirectories(Base))
@@ -210,6 +224,7 @@ namespace AdeeboMeter
             catch { }
             try { if (File.Exists(Shortcut)) File.Delete(Shortcut); } catch { }
             try { Registry.CurrentUser.DeleteSubKeyTree(UninstallKey); } catch { }
+            try { using (var k = Registry.CurrentUser.OpenSubKey(@"Software\Classes\.adeebo")) if (k != null && (k.GetValue("") as string) == "AdeeboMeter.locked") { k.Close(); Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\.adeebo"); } Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\AdeeboMeter.locked", false); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
             step("Removing your history and captures (your encryption keys stay)...", 0.75f);
             // Everything goes except what opens files sent to you: the P-384 key list, saved recipients and key backups. The keys
             // themselves live in Windows' key store, which an uninstall doesn't touch - deleting the list would leave every

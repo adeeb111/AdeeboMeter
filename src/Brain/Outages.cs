@@ -22,7 +22,9 @@ namespace AdeeboMeter
                 KeyValuePair<DateTime, List<O>> c; if (cache.TryGetValue(days, out c) && (DateTime.UtcNow - c.Key).TotalSeconds < 60) return c.Value;
                 var evs = new List<Timeline.Ev>();
                 if (Cfg.History) foreach (var d in History.Days().Where(d => d >= DateTime.Today.AddDays(-(days - 1)))) evs.AddRange(History.EventsOf(d));
-                if (m != null) foreach (var e in m.Events.Recent(300)) if (!evs.Any(x => x.T == e.T && x.Text == e.Text)) evs.Add(e);
+                // bug-hunt ML-137: one set lookup per event (it was a scan of every event per event)
+                var seen = new HashSet<string>(evs.Select(x => x.T.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + x.Text));
+                if (m != null) foreach (var e in m.Events.Recent(300)) if (seen.Add(e.T.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + e.Text)) evs.Add(e);
                 var res = Pair(evs.Where(e => e.Kind == "inet").OrderBy(e => e.T).ToList(), DateTime.Now, m != null && m.NetQuiet); cache[days] = new KeyValuePair<DateTime, List<O>>(DateTime.UtcNow, res);
                 return res;
             }

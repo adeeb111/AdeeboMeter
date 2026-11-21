@@ -103,7 +103,7 @@ namespace AdeeboMeter
             var r = VisCard(g, x, y, w, 196 * S, "ONE FRAME EVERY 125 µs - 8,000 A SECOND", st);
             float x0 = r.X + 18 * S, len = r.Width - 36 * S, cw = Math.Max(14 * S, Math.Min(28 * S, (len - 20 * S) / (slots + (e1 ? 0 : 1)))), fw = cw * (slots + (e1 ? 0 : 1)) + 10 * S, ty = r.Y + 60 * S;
             // which slots are yours: from 1 up, skipping framing (0) and signalling (16) on E1
-            var mine = new HashSet<int>(); for (int s = 1; mine.Count < n && s < slots; s++) { if (e1 && s == 16 && n <= 30) continue; mine.Add(s); }
+            var mine = new HashSet<int>(); for (int s = e1 ? 1 : 0; mine.Count < n && s < slots; s++) { if (e1 && s == 16 && n <= 30) continue; mine.Add(s); }   // bug-hunt ML-177: T1 has no framing slot - its 24 channels are 0-23 (the F bit sits in front)
             var old = g.Clip; g.SetClip(new RectangleF(x0, ty - 4 * S, len, 50 * S));
             float off = (float)(AnimT * 40 * S) % fw;
             using (var wb = new SolidBrush(Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
@@ -232,7 +232,8 @@ namespace AdeeboMeter
         float VisJitter(Graphics g, float x, float y, float w, string st)
         {
             var sp = VSpec(); double lo = NV(sp.F[0]), hi = NV(sp.F[1]), pt = NV(new CF { Text = Opt(sp.F[2]) }); if (double.IsNaN(lo)) lo = 0; if (double.IsNaN(hi)) hi = lo + 30; if (double.IsNaN(pt)) pt = 20;
-            double buf = hi - lo + pt;
+            // bug-hunt ML-179: the buffer the result gives (1.5 x the variation, whole packets) - its own "Buffer" row when there is one
+            double buf = Math.Max(pt, Math.Ceiling((hi - lo) * 1.5 / pt) * pt); var bm = System.Text.RegularExpressions.Regex.Match(Big("Buffer"), @"^([0-9]+)"); double bv; if (bm.Success && double.TryParse(bm.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out bv)) buf = bv;
             var r = VisCard(g, x, y, w, 210 * S, "SENT EVENLY, ARRIVING UNEVENLY, PLAYED EVENLY", st);
             float x0 = r.X + 120 * S, x1 = r.Right - 20 * S, len = x1 - x0; double pxPerMs = len / 600.0, t = AnimT * 1000 % 600;
             string[] rows = { "sent", "arrives", "played" }; float[] ys = { r.Y + 56 * S, r.Y + 96 * S, r.Y + 136 * S };
@@ -264,7 +265,8 @@ namespace AdeeboMeter
                 for (int row = 0; row < 4; row++)
                 {
                     string kind = "d";
-                    if (lvl == "1" || lvl == "10") kind = dk % 2 == 1 ? "m" : "d";
+                    if (lvl == "1") kind = dk == 0 ? "d" : "m";   // bug-hunt ML-180: RAID 1 over 3+ disks is one copy and the rest mirrors
+                    else if (lvl == "10") kind = dk % 2 == 1 ? "m" : "d";
                     else if (lvl == "5") kind = dk == (n - 1 - row % n + n) % n ? "p" : "d";
                     else if (lvl == "6") kind = dk == (n - 1 - row % n + n) % n || dk == (n - 2 - row % n + 2 * n) % n ? "p" : "d";
                     Color c = kind == "p" ? Theme.Amber : kind == "m" ? VPurple : Theme.Blue;
@@ -299,7 +301,9 @@ namespace AdeeboMeter
         // ---------- SLA: one year as a bar, the downtime slice in red
         float VisSla(Graphics g, float x, float y, float w, string st)
         {
-            double up = NV(new CF { Text = (VisIn()[0] ?? "").Replace("%", "") }); var dy = Big("Down a year");
+            // bug-hunt ML-178: the uptime the result worked out (a downtime typed in, "4 h a year", is turned into one there)
+            double up = double.NaN; var um = System.Text.RegularExpressions.Regex.Match(Big("Uptime"), @"^([0-9]+(?:[.,][0-9]+)?)%"); if (um.Success) double.TryParse(um.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out up);
+            if (double.IsNaN(up)) up = NV(new CF { Text = (VisIn()[0] ?? "").Replace("%", "") }); var dy = Big("Down a year");
             var r = VisCard(g, x, y, w, 150 * S, "ONE YEAR - HOW MUCH OF IT MAY BE DOWN", st);
             float bx = r.X + 18 * S, bw = r.Width - 36 * S, by = r.Y + 56 * S; Theme.Fill(g, new RectangleF(bx, by, bw, 28 * S), 8 * S, Theme.LvSoft(0));
             if (!double.IsNaN(up) && up < 100) { float dw = Math.Max(3 * S, (float)(bw * (100 - up) / 100)); Theme.Fill(g, new RectangleF(bx + bw - dw, by, dw, 28 * S), 3 * S, Theme.Red); }
@@ -363,6 +367,8 @@ namespace AdeeboMeter
             if (v.StartsWith("/", StringComparison.Ordinal) && int.TryParse(v.Substring(1), out n0)) { for (int i = 0; i < 32; i++) bits.Add(i < n0 ? 1 : 0); }
             else if (System.Net.IPAddress.TryParse(v, out ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) foreach (var b in ip.GetAddressBytes()) for (int i = 7; i >= 0; i--) bits.Add((b >> i) & 1);
             else if (TryNum(v, out n) && n >= 0) { int len = n < 256 ? 8 : n < 65536 ? 16 : 32; for (int i = len - 1; i >= 0; i--) bits.Add((int)((n >> i) & 1)); }
+            // bug-hunt ML-181: a wildcard typed in (0.0.3.255 - first bit 0, not all zero) goes on the wildcard row, its mask above it
+            if (mask && bits.Count == 32 && bits[0] == 0 && bits.Contains(1)) for (int i = 0; i < 32; i++) bits[i] = 1 - bits[i];
             var r = VisCard(g, x, y, w, mask ? 190 * S : 150 * S, mask ? "THE MASK AND ITS WILDCARD - ONE IS THE OTHER FLIPPED" : "THE SAME NUMBER, AS BITS", st);
             if (bits.Count == 0) { VText(g, L.T("Type a number, an IPv4 address or a mask."), Draw.fBody, Theme.Muted, r.X + 18 * S, r.Y + 60 * S); return r.Bottom + 14 * S; }
             float bx = r.X + 18 * S, gap = 6 * S, cell = Math.Min(30 * S, (r.Width - 36 * S - (bits.Count / 8 - 1) * gap) / bits.Count);

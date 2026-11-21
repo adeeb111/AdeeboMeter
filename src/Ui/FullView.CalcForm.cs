@@ -132,7 +132,7 @@ namespace AdeeboMeter
                         case 'n':
                             if (v == "") { f.Text = ""; break; }
                             if (nth < nums.Count) f.Text = nums[nth].Replace(',', '.'); if (f.Glue == "-") f.Text = f.Text.TrimStart('-');   // "20-70": the dash is a range, not a minus
-                            for (int u = 0; u < f.Units.Length; u++) if (v.IndexOf(f.Units[u], StringComparison.OrdinalIgnoreCase) >= 0) { f.Unit = u; break; }
+                            { int bu = -1, bl = 0; for (int u = 0; u < f.Units.Length; u++) if (f.Units[u].Length > bl && Regex.IsMatch(v, @"(?<![A-Za-z])" + Regex.Escape(f.Units[u]) + @"(?![A-Za-z])", RegexOptions.IgnoreCase)) { bu = u; bl = f.Units[u].Length; } if (bu >= 0) f.Unit = bu; }   // bug-hunt ML-175: the whole unit ("5 mi" is miles, not metres)
                             nth++; break;
                     }
                 }

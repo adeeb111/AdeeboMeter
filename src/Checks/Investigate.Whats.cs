@@ -130,6 +130,7 @@ namespace AdeeboMeter
                 r.Next.Add(wifi ? "Move closer, or turn Wi-Fi off and on." : "Check the cable and the router's lights."); r.Next.Add("Restart the router if nothing else on this network works either.");
                 r.GoTab = "guide:drops"; r.GoLabel = "Run I keep disconnecting"; around(); return;
             }
+            if (gwSilent && !(double.IsNaN(net) && double.IsNaN(netTcp))) r.Relevel("3. Your router", 3);   // bug-hunt ML-94: the internet answers through it - not amber
             if (gwSilent) r.Obs("i", 3, "Your router is quiet", "it ignores ping and TCP from this PC, but traffic passes through it - that's a setting on the router, not a fault");
             if (double.IsNaN(net) && double.IsNaN(netTcp))
             {

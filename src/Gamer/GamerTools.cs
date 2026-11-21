@@ -47,8 +47,8 @@ namespace AdeeboMeter
             if (g == null) { rows.Add(R(2, "Game", err, "", "u")); return rows; }
             var srv = Best(g); if (srv == null) { rows.Add(R(2, "Server", g.Name + " has no servers to check", "", "u")); return rows; }
             List<Spike> spikes; lock (GamePing.Me.Spikes) spikes = GamePing.Me.Spikes.Where(z => z.Game == g.Id).ToList();
-            int home = spikes.Count(z => z.Blame.StartsWith("your Wi-Fi", StringComparison.Ordinal) || z.Blame.StartsWith("your home", StringComparison.Ordinal)), isp = spikes.Count(z => z.Blame == "your provider"), far = spikes.Count - home - isp;
-            if (spikes.Count > 0) rows.Add(R(3, "Spikes this run", spikes.Count + " · " + home + " at home · " + isp + " at your provider · " + far + " past it", "From the Gamer Zone's own pings while AdeeboMeter ran.", "m"));
+            int home = spikes.Count(z => z.Blame.StartsWith("your Wi-Fi", StringComparison.Ordinal) || z.Blame.StartsWith("your home", StringComparison.Ordinal)), isp = spikes.Count(z => z.Blame == "your provider"), unk = spikes.Count(z => z.Blame.StartsWith("not known", StringComparison.Ordinal)), far = spikes.Count - home - isp - unk;   // bug-hunt ML-50
+            if (spikes.Count > 0) rows.Add(R(3, "Spikes this run", spikes.Count + " · " + home + " at home · " + isp + " at your provider · " + far + " past it" + (unk > 0 ? " · " + unk + " not known" : ""), "From the Gamer Zone's own pings while AdeeboMeter ran.", "m"));
             var ip = Resolve(srv); if (ip == null) { rows.Add(R(2, "Server", "couldn't find " + srv.Name, "", "m")); return rows; }
             run.Status = "Tracing the way to " + srv.Name + "...";
             var hops = PathTools.Trace(ip, 20, () => run.Stop).Where(h => h.Ip != "").ToList();
@@ -56,7 +56,7 @@ namespace AdeeboMeter
             // five pings per hop: where does the delay or the loss start, and does it carry on to the end?
             var stats = new List<Tuple<PathTools.Hop, double, double>>();
             using (var p = new Ping())
-                foreach (var h in hops.Take(16))
+                foreach (var h in hops.Take(20))   // bug-hunt ML-49: every traced hop (the trace stops at 20), so the server's own leg is timed too
                 {
                     if (run.Stop) break; run.Status = "Timing hop " + h.N + " of " + hops.Count + "...";
                     var v = new List<double>(); IPAddress hip; if (!IPAddress.TryParse(h.Ip, out hip)) continue;
@@ -103,7 +103,7 @@ namespace AdeeboMeter
             else rows.Add(R(0, "Connection", kind == "LAN" ? "cable - the best there is" : kind, "", "w"));
             double gw = m.GwPing.Avg(10), net = m.NetPing.Avg(10);
             bool gwSlow = !double.IsNaN(gw) && gw > 15; if (gwSlow) warn++;
-            rows.Add(R(gwSlow ? 1 : 0, "Router right now", Ms(gw), gwSlow ? "Slow for a home network - something on it is busy, or the Wi-Fi is." : "", "m"));
+            rows.Add(R(double.IsNaN(gw) ? 3 : gwSlow ? 1 : 0, "Router right now", Ms(gw), double.IsNaN(gw) ? "Not measured yet (or the router doesn't answer pings) - give it a minute." : gwSlow ? "Slow for a home network - something on it is busy, or the Wi-Fi is." : "", "m"));   /* bug-hunt ML-51: never green for "-" */
             rows.Add(R(double.IsNaN(net) ? 1 : net > 80 ? 1 : 3, "Internet right now", Ms(net), double.IsNaN(net) ? "Not measured yet (or no answer) - give it a minute." : net > 80 ? "Slow right now - expect lag." : "", "m"));
             bool busyNet = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5; if (busyNet) warn++;
             rows.Add(R(busyNet ? 1 : 0, "This PC's traffic", Pc0(s.Down) + " down · " + Pc0(s.Up) + " up (Mbps)", busyNet ? "Something is downloading or uploading - an upload hurts game ping most." : "Quiet.", "w"));
@@ -133,7 +133,7 @@ namespace AdeeboMeter
             if (all.Count < 60) { rows.Add(R(1, "Not enough yet", all.Count + " minutes recorded for " + g.Name, "Leave the Gamer Zone watching it for a few days (background game ping in Settings).", "u")); return rows; }
             var server = all.GroupBy(x => x.Server).Where(x => !double.IsNaN(GameStat.Avg(x.Select(y => y.Avg).ToArray()))).OrderBy(x => GameStat.Avg(x.Select(y => y.Avg).ToArray())).FirstOrDefault();
             if (server == null) { rows.Add(R(1, "No answers", "none of " + g.Name + "'s servers answered in the recorded days", "", "m")); return rows; }
-            var slots = server.GroupBy(x => new { D = (int)x.T.DayOfWeek, H = x.T.Hour }).Where(x => x.Count() >= 5)
+            var slots = server.GroupBy(x => new { D = (int)x.T.DayOfWeek, H = x.T.Hour }).Where(x => x.Count() >= 30)   /* bug-hunt ML-52: half an hour of minutes, at least, before an hour can be "the best time" */
                 .Select(x => new { x.Key.D, x.Key.H, Avg = GameStat.Avg(x.Select(y => y.Avg).ToArray()), P95 = GameStat.Avg(x.Select(y => y.P95).ToArray()), Loss = GameStat.Avg(x.Select(y => y.Loss).ToArray()) })
                 .Select(x => new { x.D, x.H, x.Avg, x.Loss, Score = x.P95 + 20 * (double.IsNaN(x.Loss) ? 0 : x.Loss) }).Where(x => !double.IsNaN(x.Score)).ToList();
             if (slots.Count < 3) { rows.Add(R(1, "Not enough yet", "need a few different hours recorded", "", "u")); return rows; }

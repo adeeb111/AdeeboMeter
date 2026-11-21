@@ -994,7 +994,7 @@ HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the
 She sends Ada's real card again, to get Ada listed twice.	Ada-র নাম দুবার তোলার জন্য সে একই আসল কার্ড আবার পাঠায়।
 One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing.	প্রতি কার্ড ও নামে একটি এন্ট্রি: যাচাই জানাবে «হল অব ফেমে আগে থেকেই আছেন», নতুন কিছু যোগ হবে না।
 She sends a card that claims 2,000 points.	সে 2,000 পয়েন্ট দাবি করা কার্ড পাঠায়।
-There are only about 900 points to earn in all. An impossible total is turned away before the code is even checked.	মোটে প্রায় 900 পয়েন্ট পাওয়া সম্ভব। অসম্ভব মোট দেখলেই কোড যাচাইয়ের আগেই ফিরিয়ে দেওয়া হয়।
+There are only about 1,000 points to earn in all. An impossible total is turned away before the code is even checked.	মোটে প্রায় 1000 পয়েন্ট পাওয়া সম্ভব। অসম্ভব মোট দেখলেই কোড যাচাইয়ের আগেই ফিরিয়ে দেওয়া হয়।
 She types <script>alert(1)</script> as her name, hoping the website runs it.	ওয়েবসাইট কোড চালাবে ভেবে সে নাম হিসেবে <script>alert(1)</script> লেখে।
 Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code.	আগেই নাম থেকে অক্ষর, সংখ্যা ও অনুমোদিত চিহ্ন ছাড়া সব বাদ দেওয়া হয়। পাতা প্রতিটি ঘর সাধারণ লেখা হিসেবে দেখায়, কখনো কোড হিসেবে নয়।
 She edits the points file on her own PC to 500, then makes a card the normal way.	সে নিজের পিসির পয়েন্ট ফাইল বদলে 500 করে, তারপর স্বাভাবিকভাবে কার্ড বানায়।

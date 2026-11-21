@@ -24,7 +24,7 @@ namespace AdeeboMeter
         public static List<string[]> Usb(string which)
         {
             var rows = new List<string[]>(); string q = (which ?? "").Trim(), err;
-            var all = DevInfo.List("USB", false, out err).Concat(DevInfo.List("USBSTOR", false, out err)).Concat(DevInfo.List("HID", false, out err).Where(d => d.Present && d.Problem != 0))
+            var all = DevInfo.List("USB", false, out err).Concat(DevInfo.List("USBSTOR", false, out err)).Concat(DevInfo.List("HID", false, out err).Where(d => (d.Present && d.Problem != 0) || (d.Removed != DateTime.MinValue && (DateTime.Now - d.Removed).TotalHours < 24)))   /* bug-hunt ML-57: a mouse or keyboard that dropped today counts too */
                              .Where(d => d.Name != "" && d.Name.IndexOf("Root Hub", StringComparison.OrdinalIgnoreCase) < 0 && d.Name.IndexOf("Host Controller", StringComparison.OrdinalIgnoreCase) < 0)
                              .GroupBy(d => d.Id).Select(gr => gr.First()).ToList();
             if (all.Count == 0) { rows.Add(R(2, "USB devices", err != "" ? err : "Windows lists no USB devices", "", "u")); return rows; }
@@ -63,7 +63,7 @@ namespace AdeeboMeter
             // the verdict, and what we can't see
             var present = mine.Where(d => d.Present).ToList();
             rows.Insert(0, R(bad > 0 ? 2 : warn > 0 ? 1 : 0, "Verdict",
-                bad > 0 ? "Found the likely reason - " + (next != "" ? next : "see below") : warn > 0 ? "Nothing broken, but " + (next != "" ? next.Substring(0, 1).ToLowerInvariant() + next.Substring(1) : "see the notes below") : q != "" && present.Count == 0 ? "Windows remembers it, but it isn't plugged in right now - plug it in, then run this again" : "Windows sees " + (q != "" ? "it" : "every USB device") + " working - if it still misbehaves, the problem is inside the device or its app",
+                bad > 0 ? "Found the likely reason - " + (next != "" ? next : "see below") : warn > 0 ? "Nothing broken, but " + (next != "" ? next.Substring(0, 1).ToLowerInvariant() + next.Substring(1) : "see the notes below") : q != "" && present.Count == 0 ? "Windows remembers it, but it isn't plugged in right now - plug it in, then run this again" : present.Count == 0 ? "No USB device is plugged in right now - plug one in, then run this again" : "Windows sees " + (q != "" ? "it" : "every USB device") + " working - if it still misbehaves, the problem is inside the device or its app",
                 "Read from Windows' Plug and Play list - nothing is changed. AdeeboMeter can't test the device's own hardware.", "w"));
             if (bad == 0 && warn == 0 && present.Count > 0) foreach (var d in present.Take(12)) rows.Add(R(0, Draw.Trunc(d.Name, 50), "working" + (d.DriverVer != "" ? " · driver " + d.DriverVer : "") + " · plugged in since " + DevInfo.When(d.Arrived), "", "w"));
             return rows;
@@ -122,7 +122,7 @@ namespace AdeeboMeter
             int lvIsp = net.Length == 0 ? 3 : double.IsNaN(nA) ? 2 : (ispA > (gwUnknown ? 80 : 60) || ispJ > 20 || nLost >= 3) ? 2 : (ispA > (gwUnknown ? 45 : 30) || ispJ > 10 || nLost == 2) ? 1 : 0;
             int lvSrv = srv.Length == 0 || double.IsNaN(sA) ? 3 : (sA > 120 || sJ > 25 || (sL > 3 && sLost >= 3)) ? 2 : (sA > 70 || sJ > 12 || (sL > 1 && sLost >= 2)) ? 1 : 0;
             rows.Add(R(lvHome, kind == "Wi-Fi" ? "This PC → router (Wi-Fi)" : "This PC → router (cable)", gwUnknown ? (gw.Length == 0 ? "not measured - the router check is off in Settings" : "your router doesn't answer pings, so this leg can't be measured on its own") + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : "") : ms(gA) + " · jitter " + ms(gJ) + " · lost " + gLost + " of " + gw.Length + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : ""), "Should be under 5 ms on a cable and under 10 ms on good Wi-Fi.", "i"));
-            rows.Add(R(lvIsp, gwUnknown ? "This PC → your provider → internet" : "Router → your provider → internet", net.Length == 0 ? "not measured - the internet check is off" : (gwUnknown ? "" : "+") + ms(ispA) + " · jitter " + ms(nJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
+            rows.Add(R(lvIsp, gwUnknown ? "This PC → your provider → internet" : "Router → your provider → internet", net.Length == 0 ? "not measured - the internet check is off" : (gwUnknown ? "" : "+") + ms(ispA) + " · jitter " + ms(ispJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
             rows.Add(R(lvSrv, "→ the game's server" + (srvName != "" ? " (" + srvName + ")" : ""), srv.Length == 0 ? "not measured yet - add the game in the Gamer Zone and start it" : ms(sA) + " · jitter " + ms(sJ) + " · lost " + sLost + " of " + srv.Length, "Distance to the server sets the floor; the Gamer Zone compares regions.", "i"));
             // what else is going on
             double up = m.Up.Avg(10), down = m.Down.Avg(10), cpu = m.Cpu.Avg(10), mem = m.Mem.Avg(10);

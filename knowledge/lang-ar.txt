@@ -994,7 +994,7 @@ HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the
 She sends Ada's real card again, to get Ada listed twice.	أرسل بطاقة (آدا) الحقيقية مرة أخرى، لتحصل على قائمة (آدا).
 One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing.	إدخال واحد لكل بطاقة وكل اسم: الاختبار يجيب "في قاعة المشاهير" ولا يضيف أي شيء.
 She sends a card that claims 2,000 points.	إنها ترسل بطاقة تصريحات تسجل نقاط 2,000
-There are only about 900 points to earn in all. An impossible total is turned away before the code is even checked.	هناك فقط حوالي نقطة 900 لتحصل على كل. يتم رفض إجمالي مستحيل قبل أن يتم التحقق من الرمز
+There are only about 1,000 points to earn in all. An impossible total is turned away before the code is even checked.	هناك فقط حوالي نقطة 1000 لتحصل على كل. يتم رفض إجمالي مستحيل قبل أن يتم التحقق من الرمز
 She types <script>alert(1)</script> as her name, hoping the website runs it.	إنها تكتب <script>alert(1)</script> باسمها، على أمل أن يدير الموقع.
 Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code.	يتم تنظيف الأسماء إلى الحروف والأرقام وبعض العلامات قبل أي شيء آخر، وترتيب الصفحة كل حقل كنص بسيط - أبدا كرمز.
 She edits the points file on her own PC to 500, then makes a card the normal way.	تقوم بتحرير ملف النقاط على جهاز الكمبيوتر الخاص بها إلى 500، ثم تصنع بطاقة بالطريقة العادية.

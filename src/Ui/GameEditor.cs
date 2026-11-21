@@ -103,6 +103,7 @@ namespace AdeeboMeter
             if (problem == null && nm == "") problem = "Give the game a name.";
             var exes = exe.Box.Text.Split(';', ',').Select(ExeName).Where(z => z.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(4).ToArray();
             if (problem != null) { err.Text = problem; return; }
+            if (!isNew && Games.All.Any(x => x.Id != g.Id && string.Equals(x.Name, nm, StringComparison.OrdinalIgnoreCase))) { err.Text = AdeeboMeter.L.T("You already have a game called ") + nm + " - pick another name, or edit that one."; return; }   // bug-hunt ML-71: a rename can't take another game's name
             if (isNew)
             {
                 if (Games.All.Any(x => string.Equals(x.Name, nm, StringComparison.OrdinalIgnoreCase))) { err.Text = AdeeboMeter.L.T("You already have a game called ") + nm + " - pick another name, or edit that one."; return; }
@@ -182,6 +183,7 @@ namespace AdeeboMeter
                     {
                         var f = raw.Split('|');
                         if (f[0] == "game" && f.Length >= 4 && name.Box.Text.Trim() == "") name.Box.Text = f[2].Trim();
+                        if (f[0] == "game" && f.Length >= 4 && exe.Box.Text.Trim() == "") exe.Box.Text = string.Join("; ", f[3].Split(';').Select(ExeName).Where(z => z.Length > 0).Take(4));   // bug-hunt ML-72: the programs come along too
                         if (f[0] != "server" || f.Length < 7) continue;
                         int port; string host = f[4].Trim();
                         if (!Games.ValidHost(host) || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out port) || port < -1 || port > 65535) { skipped++; continue; }

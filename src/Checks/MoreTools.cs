@@ -134,8 +134,10 @@ namespace AdeeboMeter
             if (b4 == null && b6 == null) { rows.Add(R(2, where, "no answer", "Blocked here (company networks often allow only their own DNS), or the server is down.", "m")); return rows; }
             bool same = A.SequenceEqual(B), overlap = A.Intersect(B).Any();
             rows.Add(R(same ? 0 : overlap ? 3 : 1, name, same ? "the same answer from both" : overlap ? "partly the same" : "DIFFERENT answers", same ? "" : "Normal for big services (each DNS gets the nearest servers) and for company names only your DNS knows. Suspicious if a well-known site points somewhere odd.", "m"));
-            rows.Add(R(3, "Your DNS (" + mine + ")", A.Count == 0 ? "no address" : string.Join(" · ", A.Take(12)), "", "m"));
-            rows.Add(R(3, where, B.Count == 0 ? "no address" : string.Join(" · ", B.Take(12)), "", "m"));
+            // bug-hunt ML-212: how long each took, so the race can be drawn
+            Func<Toolkit.Msg, Toolkit.Msg, string> took = (p, q) => { var t = new[] { p, q }.Where(z => z != null).Select(z => z.Ms).ToList(); return t.Count == 0 ? "" : " (" + t.Max() + " ms)"; };
+            rows.Add(R(3, "Your DNS (" + mine + ")", (A.Count == 0 ? "no address" : string.Join(" · ", A.Take(12))) + took(a4, a6), "", "m"));
+            rows.Add(R(3, where, (B.Count == 0 ? "no address" : string.Join(" · ", B.Take(12))) + took(b4, b6), "", "m"));
             return rows;
         }
 
@@ -215,12 +217,13 @@ namespace AdeeboMeter
                 if (run.Stop) break; run.Status = h + "...";
                 IPAddress[] a; try { a = Dns.GetHostAddresses(h); } catch (SocketException) { rows.Add(R(2, h, "name doesn't resolve", "", "m")); continue; } catch (ArgumentException) { rows.Add(R(2, h, "not a name", "", "m")); continue; }
                 if (a.Length == 0) { rows.Add(R(2, h, "the name has no addresses", "", "m")); continue; }
-                double ms; string st = Knock(a[0], 443, out ms);
+                double ms = double.NaN; string st = "closed"; var a0 = a[0];   // bug-hunt ML-33: every address of the site, until one answers
+                foreach (var ai in a.OrderBy(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 0 : 1).Take(4)) { st = Knock(ai, 443, out ms); a0 = ai; if (st == "open") break; }
                 if (st != "open") { rows.Add(R(2, h, "HTTPS port " + st, "", "m")); continue; }
                 X509Days(h, out ms);
                 int days = double.IsNaN(ms) ? -1 : (int)ms;
                 bool expired = !double.IsNaN(ms) && ms < 0;
-                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a[0] + (expired ? " · certificate EXPIRED " + (-days) + " days ago" : !double.IsNaN(ms) ? " · certificate " + days + " days left" : " · certificate not read"), expired ? "Visitors get a security warning - renew it." : "", "m"));
+                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a0 + (expired ? " · certificate EXPIRED " + (-days) + " days ago" : !double.IsNaN(ms) ? " · certificate " + days + " days left" : " · certificate not read"), expired ? "Visitors get a security warning - renew it." : "", "m"));
             }
             return rows;
         }

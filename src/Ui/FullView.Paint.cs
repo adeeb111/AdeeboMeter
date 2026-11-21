@@ -255,13 +255,15 @@ namespace AdeeboMeter
             {
                 int per = Math.Max(1, (int)(w / (300 * S))); float cw = (w - (per - 1) * 12 * S) / per, inner = cw - 28 * S;
                 // each row: name and value on one line when they fit, otherwise the value gets its own (wrapping) line - nothing is cut
-                Func<string[], float> rowH = row =>
+                var rowHs = new Dictionary<string[], float>();   // bug-hunt ML-138: each row measured once per paint, not twice
+                Func<string[], float> rowH0 = row =>
                 {
                     string rn = row[0], rv = row.Length > 1 ? row[1] : "";
                     float nw = g.MeasureString(rn, Draw.fBody).Width, vw = g.MeasureString(rv, Draw.fMonoS).Width;
                     if (nw + vw + 12 * S <= inner) return 19 * S;
                     return Draw.Measure(rn, Draw.fBody, (int)inner).Height + Draw.Measure(rv, Draw.fMonoS, (int)inner).Height + 6 * S;
                 };
+                Func<string[], float> rowH = row => { float hh; if (!rowHs.TryGetValue(row, out hh)) { hh = rowH0(row); rowHs[row] = hh; } return hh; };
                 for (int i = 0; i < cards.Count; i += per)
                 {
                     float rowsH = 0;

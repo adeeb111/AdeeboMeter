@@ -83,6 +83,7 @@ namespace AdeeboMeter
         }
         public Func<string, bool> AskRemember;
         public Func<string, byte[]> Peek;   // screen peek: page -> JPEG (AppCtx draws it off-screen)
+        int peekBusy; DateTime peekAt = DateTime.MinValue;   // bug-hunt ML-16
         public static readonly HashSet<string> PeekPages = new HashSet<string> { "overview", "link", "procs", "health", "changes", "travel", "toolbox", "guide", "gamer", "stream", "trade", "dest", "security", "replay" };
         public static Remote Start(Monitor m)
         {
@@ -93,7 +94,9 @@ namespace AdeeboMeter
             return r;
         }
         public bool Active { get { return St == State.Paired; } }
-        public TimeSpan Left { get { var l = Started.AddMinutes(Minutes) - DateTime.UtcNow; return l < TimeSpan.Zero ? TimeSpan.Zero : l; } }
+        // bug-hunt ML-109/110/128: before pairing, the room's own wait (2 minutes for a code, 25 for a remembered phone - the relay
+        // closes it then); once paired, the session's 30 minutes, counted from pairing (the relay counts the same)
+        public TimeSpan Left { get { bool waiting = St == State.Connecting || St == State.Waiting; var l = (waiting ? Started.AddMinutes(Known != null ? 25 : 2) : Started.AddMinutes(Minutes)) - DateTime.UtcNow; return l < TimeSpan.Zero ? TimeSpan.Zero : l; } }
 
         void Run()
         {
@@ -143,11 +146,14 @@ namespace AdeeboMeter
                 tx = new RemoteCrypto.Lane(secret, z, 1); rx = new RemoteCrypto.Lane(secret, z, 2);
                 Send("{\"t\":\"ok\",\"v\":" + Proto.ToString(CultureInfo.InvariantCulture) + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("ok"), pk, myPk)) + "\"}");
                 mine.Dispose(); mine = null;   // the one-time private key goes as soon as the session keys exist
-                if (Known != null) Started = DateTime.UtcNow;   // a remembered phone gets its 30 minutes from now
+                Started = DateTime.UtcNow;   // the 30 minutes run from pairing (bug-hunt ML-110 - the relay starts its clock at the same moment)
                 St = State.Paired; Note(); SendLive(); try { var cat = Catalog != null ? Catalog() : null; if (cat != null) foreach (var part in cat) Seal(part); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote catalog: " + e.Message); } return;
             }
             if (St != State.Paired || rx == null) return;
-            string plain = j.S("s") != null ? rx.Open(j.S("s")) : null;
+            // bug-hunt ML-24: an unsealed message (a phone page that reloaded and says hello again) is ignored, not fatal -
+            // only a sealed one that fails to open means someone is tampering, and that still closes the session
+            if (j.S("s") == null) { Program.Log("remote: unsealed '" + Clip(j.S("t") ?? "", 12) + "' after pairing - ignored"); return; }
+            string plain = rx.Open(j.S("s"));
             if (plain == null) { End("a message didn't check out - the session was closed to be safe"); return; }
             var c = Msg.Of(plain); if (c == null) return;
             switch (c.S("t"))
@@ -172,9 +178,15 @@ namespace AdeeboMeter
                     {
                         string rid = Clip(c.S("rid") ?? "", 16).Replace("\"", "").Replace("\\", ""), page = Clip(c.S("page") ?? "", 16);
                         if (Peek == null || !PeekPages.Contains(page)) { Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"err\":\"That page can't be shown.\"}"); return; }
+                        // bug-hunt ML-16: one picture at a time, at most one every 2 seconds, and never over 2 MB
+                        if ((DateTime.UtcNow - peekAt).TotalSeconds < 2 || Interlocked.CompareExchange(ref peekBusy, 1, 0) != 0) { Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"err\":\"Still sending the last picture - try again in a moment.\"}"); return; }
+                        peekAt = DateTime.UtcNow;
                         Task.Factory.StartNew(() =>
                         {
+                          try
+                          {
                             byte[] jpg = null; try { jpg = Peek(page); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("peek: " + e.Message); }
+                            if (jpg != null && jpg.Length > 2 * 1024 * 1024) jpg = null;
                             if (jpg == null || jpg.Length == 0) { Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"err\":\"The PC couldn't draw that page.\"}"); return; }
                             const int P = 24000; int of = (jpg.Length + P - 1) / P;
                             for (int n = 0; n < of && St == State.Paired; n++)
@@ -183,6 +195,8 @@ namespace AdeeboMeter
                                 Seal("{\"t\":\"peek\",\"rid\":\"" + rid + "\",\"n\":" + n.ToString(CultureInfo.InvariantCulture) + ",\"of\":" + of.ToString(CultureInfo.InvariantCulture) + ",\"d\":\"" + Convert.ToBase64String(jpg, n * P, len) + "\"}");
                                 Thread.Sleep(60);
                             }
+                          }
+                          finally { Interlocked.Exchange(ref peekBusy, 0); }
                         });
                         return;
                     }
@@ -207,6 +221,7 @@ namespace AdeeboMeter
                         Action<string, List<string[]>> d; if (!asks.TryRemove(c.S("rid") ?? "", out d)) return;
                         var f = c.A("r") ?? new List<string>(); var rows = new List<string[]>();
                         for (int i = 0; i + 3 < f.Count && rows.Count < 40; i += 4) { string lv = f[i] == "0" || f[i] == "1" || f[i] == "2" ? f[i] : "3"; rows.Add(new[] { lv, Clip(f[i + 1], 80), Clip(f[i + 2], 300), Clip(f[i + 3], 300), "i" }); }
+                        string up = c.S("up"); if (up == "1" || up == "0") rows.Insert(0, new[] { "3", "\u0001up", up, "", "i" });   // bug-hunt ML-119
                         try { d(Clip(c.S("head") ?? "", 160), rows); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote ask: " + e.Message); }
                         return;
                     }
@@ -229,7 +244,7 @@ namespace AdeeboMeter
             var s = M.Latest; var sb = new StringBuilder("{\"t\":\"live\"");
             Num(sb, "down", s.Down); Num(sb, "up", s.Up); Num(sb, "ping", s.Ping); Num(sb, "jit", s.Jitter); Num(sb, "loss", s.LossPct); Num(sb, "gw", s.GwMs); Num(sb, "dns", s.DnsMs);
             Num(sb, "cpu", s.Cpu); Num(sb, "mem", s.Mem); sb.Append(",\"lv\":").Append(s.Level);
-            Str(sb, "head", s.Headline); Str(sb, "chip", s.Chip); Str(sb, "who", AdeeboMeter.Lines.Who());   // the PC's companion: the phone talks the same way unless told otherwise Num(sb, "left", Left.TotalSeconds);
+            Str(sb, "head", s.Headline); Str(sb, "chip", s.Chip); Str(sb, "who", AdeeboMeter.Lines.Who());   /* the PC's companion: the phone talks the same way unless told otherwise */ Num(sb, "left", Left.TotalSeconds);
             string wifi, ssid, ch, speed; int sig, rate; bool hw, blocked; lock (M.L) { wifi = M.AdapterKind; hw = M.HasWifi; ssid = M.Ssid; ch = M.WifiChannel; sig = M.WifiSignal; rate = M.RxRate; blocked = M.WifiBlocked; speed = M.LinkSpeed; }
             Str(sb, "link", wifi); Str(sb, "speed", speed); Num(sb, "disk", s.Disk);
             string gwip; lock (M.L) gwip = M.Gateway ?? ""; Str(sb, "gwip", gwip);   // the map draws the real router (AM-CG-347)
@@ -346,7 +361,11 @@ namespace AdeeboMeter
         {
             if (ws.State != WebSocketState.Open) return;
             var b = Encoding.UTF8.GetBytes(text);
-            lock (sendLock) try { ws.SendAsync(new ArraySegment<byte>(b), WebSocketMessageType.Text, true, cts.Token).Wait(TimeSpan.FromSeconds(10)); } catch (AggregateException) { } catch (ObjectDisposedException) { } catch (InvalidOperationException) { }
+            // bug-hunt ML-114: a message that can't go out in 10 s ends the session plainly - a silently dropped one breaks the
+            // sealed sequence and the phone would close it anyway, with no reason given
+            bool stuck = false;
+            lock (sendLock) try { stuck = !ws.SendAsync(new ArraySegment<byte>(b), WebSocketMessageType.Text, true, cts.Token).Wait(TimeSpan.FromSeconds(10)); } catch (AggregateException) { stuck = true; } catch (ObjectDisposedException) { } catch (InvalidOperationException) { stuck = true; }
+            if (stuck && St != State.Ended) Task.Factory.StartNew(() => End("the relay stopped taking messages (a slow or lost connection)"));
         }
         void Note() { var c = Changed; if (c != null) try { c(); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }
 
@@ -361,7 +380,7 @@ namespace AdeeboMeter
             try { cts.Cancel(); } catch (ObjectDisposedException) { }
             try { ws.Dispose(); } catch (ObjectDisposedException) { }
             foreach (var key in asks.Keys.ToList()) { Action<string, List<string[]>> d; if (asks.TryRemove(key, out d)) try { d(null, null); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }
-            FilesEnd(); tx = rx = null; if (mine != null) { mine.Dispose(); mine = null; }
+            FilesEnd(); var t0 = tx; var r0 = rx; tx = rx = null; if (t0 != null) t0.Wipe(); if (r0 != null) r0.Wipe(); if (mine != null) { mine.Dispose(); mine = null; }
             if (Now == this) Now = null;
             Note();
         }

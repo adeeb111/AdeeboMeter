@@ -281,24 +281,27 @@ namespace AdeeboMeter
         static string Rsn(byte[] ies, int p, int len)
         {
             int end = p + len, q = p + 2 + 4; if (q + 2 > end) return "WPA2";
-            int pc = ies[q] | ies[q + 1] << 8; q += 2 + 4 * pc; if (q + 2 > end) return "WPA2";
+            // bug-hunt ML-150: the pairwise ciphers - TKIP alone is the old, broken one even under the WPA2 name
+            int pc = ies[q] | ies[q + 1] << 8; bool tkipOnly = pc > 0;
+            for (int i = 0; i < pc && q + 2 + 4 * i + 4 <= end; i++) { int o = q + 2 + 4 * i; if (!(ies[o] == 0x00 && ies[o + 1] == 0x0F && ies[o + 2] == 0xAC && ies[o + 3] == 2)) tkipOnly = false; }
+            q += 2 + 4 * pc; if (q + 2 > end) return tkipOnly ? "WPA2 (TKIP)" : "WPA2";
             int ac = ies[q] | ies[q + 1] << 8; q += 2; bool sae = false, psk = false, ent = false, owe = false, ent3 = false, sha256only = false, ent1 = false;
             for (int i = 0; i < ac && q + 4 <= end; i++, q += 4)
             {
                 if (ies[q] != 0x00 || ies[q + 1] != 0x0F || ies[q + 2] != 0xAC) continue; int t = ies[q + 3];
                 if (t == 8 || t == 9 || t == 24 || t == 25) sae = true;
-                else if (t == 2 || t == 4 || t == 6) psk = true;
+                else if (t == 2 || t == 4 || t == 6 || t == 19 || t == 20) psk = true;   // 19/20: PSK with SHA-384 (bug-hunt ML-149)
                 else if (t == 12 || t == 13) ent3 = true;
                 else if (t == 5) { ent = true; sha256only = true; }
-                else if (t == 1 || t == 3 || t == 11 || t == 14 || t == 15) { ent = true; ent1 = true; }   // 14/15: FILS - a fast 802.1X sign-in
+                else if (t == 1 || t == 3 || t == 11 || t == 14 || t == 15 || t == 16 || t == 17) { ent = true; ent1 = true; }   // 14-17: FILS (16/17 with fast roaming) - a fast 802.1X sign-in (bug-hunt ML-149)
                 else if (t == 18) owe = true;
             }
             // RSN capabilities after the AKM list: bit 6 = management frame protection required. 802.1X-SHA256 alone with it
             // required is WPA3-Enterprise ("only" mode)
             bool mfpr = q + 2 <= end && (ies[q] & 0x40) != 0;
-            if (ent3 || (sha256only && !ent1 && mfpr)) return "WPA3-Enterprise"; if (ent) return "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return "WPA2";
+            if (ent3 || (sha256only && !ent1 && mfpr)) return "WPA3-Enterprise"; if (ent) return tkipOnly ? "WPA2-Enterprise (TKIP)" : "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return tkipOnly ? "WPA2 (TKIP)" : "WPA2";
         }
-        public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)"; }
+        public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)" || (sec ?? "").EndsWith("(TKIP)", StringComparison.Ordinal); }
         // the least crowded channel in a band: each neighbour weighs by its signal (squared - a strong one hurts far more),
         // counted on every channel it overlaps
         static readonly int[] Upper5 = { 149, 153, 157, 161 }, Dfs5 = { 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144 };
@@ -318,6 +321,8 @@ namespace AdeeboMeter
             if (cand.Length == 0) return null;
             Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, c, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
             int best = cand.OrderBy(c => load(c)).ThenBy(c => c == mine ? 0 : 1).First();
+            // bug-hunt ML-154: a channel outside the usual list (165, 13, a high 6 GHz one) that's no busier than the best stays put
+            if (mine > 0 && best != mine && load(mine) <= load(best) + 1e-9) best = mine;
             return new[] { best, (int)Math.Round(load(best) * 100), (int)Math.Round(load(mine) * 100) };
         }
         public static void FromFreq(Bss b)
@@ -334,7 +339,7 @@ namespace AdeeboMeter
             for (int i = 0; i + 2 <= ies.Length; )
             {
                 int id = ies[i], len = ies[i + 1], p = i + 2; if (p + len > ies.Length) break;
-                if (id == 61 && len >= 2 && (ies[p + 1] & 0x04) != 0) b.Width = Math.Max(b.Width, 40);
+                if (id == 61 && len >= 2 && (ies[p + 1] & 0x04) != 0 && (ies[p + 1] & 0x03) != 0) b.Width = Math.Max(b.Width, 40);   // HT Operation: byte 1 bit 2 = STA channel width, bits 0-1 = where the second 20 MHz sits (0 = none) - bug-hunt ML-148 checked against the spec
                 else if (id == 192 && len >= 3)
                 {
                     int w = ies[p], c0 = ies[p + 1], c1 = ies[p + 2];

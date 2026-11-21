@@ -18,7 +18,7 @@ namespace AdeeboMeter
     // Every part gets a ceiling worked out from its specs - the measured number is then judged against its own ceiling, not a guess.
     static class HwSpecs
     {
-        internal sealed class Disk { public string Name = "", Bus = "", Media = "", Letters = ""; public double Gb; public int Rpm = -1, Health = 5, LinkGen, LinkWidth, MaxGen, MaxWidth; public bool System; }
+        internal sealed class Disk { public string Name = "", Bus = "", Media = "", Letters = "", DeviceId = ""; public double Gb; public int Rpm = -1, Health = 5, LinkGen, LinkWidth, MaxGen, MaxWidth; public bool System; }
         internal sealed class Gpu { public string Name = ""; public double DedicatedMb, SharedMb; public bool Integrated, Software; public long Luid; public int LinkGen, LinkWidth, MaxGen, MaxWidth, Vendor; }
         internal sealed class Ram { public double Gb; public int Mts, RatedMts, Type; public string Slot = ""; }
         internal sealed class Specs
@@ -55,7 +55,10 @@ namespace AdeeboMeter
             Wmi(@"\\.\root\cimv2", "SELECT Capacity, Speed, ConfiguredClockSpeed, SMBIOSMemoryType, DeviceLocator, BankLabel, FormFactor FROM Win32_PhysicalMemory", o =>
             {
                 var r = new Ram { Gb = D(o["Capacity"]) / 1073741824.0, RatedMts = (int)D(o["Speed"]), Mts = (int)D(o["ConfiguredClockSpeed"]), Type = (int)D(o["SMBIOSMemoryType"]), Slot = (S(o["BankLabel"]) + " " + S(o["DeviceLocator"])).Trim() };
-                if (r.Mts <= 0) r.Mts = r.RatedMts; if (D(o["FormFactor"]) == 0 || D(o["FormFactor"]) == 13) s.Soldered |= D(o["FormFactor"]) == 13 || Regex.IsMatch(r.Slot, "onboard|soldered", RegexOptions.IgnoreCase);
+                if (r.Mts <= 0) r.Mts = r.RatedMts; 
+                // bug-hunt ML-163: soldered is chips on the board (CIM form factor 14 SMD, 21 BGA, 22 FPBGA), LPDDR (never a stick), or a slot
+                // named onboard / soldered - 13 is SRIMM, an old removable module
+                int ff = (int)D(o["FormFactor"]); s.Soldered |= ff == 14 || ff == 21 || ff == 22 || r.Type == 27 || r.Type == 28 || r.Type == 29 || r.Type == 30 || r.Type == 35 || Regex.IsMatch(r.Slot, "onboard|soldered|on board", RegexOptions.IgnoreCase);
                 s.Rams.Add(r);
             });
             s.RamSticks = s.Rams.Count; s.RamGb = s.Rams.Sum(r => r.Gb);
@@ -69,7 +72,7 @@ namespace AdeeboMeter
             Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DiskNumber, DriveLetter FROM MSFT_Partition", o => { var dl = S(o["DriveLetter"]).Trim('\0', ' '); if (dl == "") return; string sn; if (!serialOf.TryGetValue(S(o["DiskNumber"]), out sn) || serialCount[sn] != 1) return; string old; letters.TryGetValue(sn, out old); letters[sn] = (old ?? "") + dl + ":"; if (string.Equals(dl, SystemLetter(), StringComparison.OrdinalIgnoreCase)) sysDisk.Add(sn); });
             Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DeviceId, SerialNumber, FriendlyName, BusType, MediaType, SpindleSpeed, Size, HealthStatus FROM MSFT_PhysicalDisk", o =>
             {
-                var d = new Disk { Name = S(o["FriendlyName"]).Trim(), Bus = BusName((int)D(o["BusType"])), Gb = D(o["Size"]) / 1e9, Health = (int)D(o["HealthStatus"] ?? 5) };
+                var d = new Disk { DeviceId = S(o["DeviceId"]), Name = S(o["FriendlyName"]).Trim(), Bus = BusName((int)D(o["BusType"])), Gb = D(o["Size"]) / 1e9, Health = (int)D(o["HealthStatus"] ?? 5) };
                 int mt = (int)D(o["MediaType"]); uint rpm = (uint)D(o["SpindleSpeed"]); d.Media = mt == 4 ? "SSD" : mt == 3 ? "HDD" : mt == 5 ? "SCM" : "";
                 if (rpm > 0 && rpm < 30000) { d.Rpm = (int)rpm; d.Media = "HDD"; } else if (rpm == 0 && d.Media == "") d.Media = "SSD";
                 if (d.Bus == "NVMe") d.Media = "SSD";
@@ -123,12 +126,12 @@ namespace AdeeboMeter
         internal static int ChannelsOf(List<Ram> rams)
         {
             if (rams.Count == 0) return 0;
-            var found = rams.Select(r => Regex.Match(r.Slot, @"(?:Channel\s*|CH\s*|DIMM\s*|\b)([A-D])\d?\b", RegexOptions.IgnoreCase)).Where(m => m.Success).Select(m => m.Groups[1].Value.ToUpperInvariant()).ToList();
+            var found = rams.Select(r => Regex.Match(r.Slot, @"(?:Channel\s*|CH\s*|DIMM\s*|\b)([A-H])\d?\b", RegexOptions.IgnoreCase)).Where(m => m.Success).Select(m => m.Groups[1].Value.ToUpperInvariant()).ToList();
             int ch = found.Distinct().Count();
             bool lp = rams.Any(r => r.Type == 27 || r.Type == 28 || r.Type == 29 || r.Type == 30 || r.Type == 35);
             if (lp) return rams.Count >= 2 ? 2 : 1;   // soldered LPDDR is wide even when Windows lists it as many small chips
-            if (found.Count == rams.Count) return Math.Min(ch, 4);   // PC-037: every stick names its channel - A1 and A2 are one channel
-            return ch >= 2 ? Math.Min(ch, 4) : Math.Min(rams.Count, 2);
+            if (found.Count == rams.Count) return Math.Min(ch, 8);   // PC-037: every stick names its channel - A1 and A2 are one channel; bug-hunt ML-155: workstations have 6 or 8 (A-H)
+            return ch >= 2 ? Math.Min(ch, 8) : Math.Min(rams.Count, 2);
         }
         internal static string ChText(Specs s) { return s.Channels <= 0 ? "channels not reported" : s.Channels + " channel" + (s.Channels > 1 ? "s" : ""); }
 
@@ -144,11 +147,12 @@ namespace AdeeboMeter
                 if (!double.IsNaN(l)) { why = "PCIe " + d.LinkGen + ".0 x" + d.LinkWidth + " link ≈ " + Fmt(l * 0.9) + " MB/s usable"; return l * 0.9; }
                 why = "NVMe (link not readable) - assuming PCIe 3.0 x4 ≈ 3,500 MB/s"; return 3500;
             }
+            // bug-hunt ML-156: on USB the port sets the ceiling, and Windows doesn't say USB 2 (≈40 MB/s) or USB 3 (≈400) - so none is claimed
+            if (d.Bus == "USB") { why = "USB disk - up to ≈ 40 MB/s on a USB 2 port, ≈ 400 MB/s on USB 3" + (d.Media == "HDD" || d.Rpm > 0 ? " (a spinning disk ≈ 110 at most)" : "") + "; Windows doesn't say which port"; return double.NaN; }
             if (d.Media == "HDD" || d.Rpm > 0) { int r = d.Rpm > 0 ? d.Rpm : 5400; double c = r >= 10000 ? 220 : r >= 7200 ? 160 : 110; why = "hard disk" + (d.Rpm > 0 ? " at " + d.Rpm + " rpm" : "") + " ≈ " + Fmt(c) + " MB/s at best (outer edge)"; return c; }
             if (d.Bus == "SATA" || d.Bus == "ATA" || d.Bus == "RAID") { why = "SATA III link (600 MB/s) ≈ 550 MB/s usable"; return 550; }
             if (d.Bus == "MMC" || d.Bus == "SD") { why = "eMMC / SD storage ≈ 250 MB/s at best"; return 250; }
             if (d.Bus == "UFS") { why = "UFS storage ≈ 1,000 MB/s"; return 1000; }
-            if (d.Bus == "USB") { why = "USB disk ≈ 400 MB/s at best (USB 3) - far less on USB 2"; return 400; }
             why = "kind not reported - judged as a SATA SSD (550 MB/s)"; return 550;
         }
         internal static double RamCeilingGBs(Specs s) { int mts = s.Rams.Count > 0 ? s.Rams.Max(r => r.Mts) : 0; return mts <= 0 || s.Channels <= 0 ? double.NaN : mts * 8.0 * s.Channels / 1000; }
@@ -215,6 +219,13 @@ namespace AdeeboMeter
         [DllImport("setupapi.dll", CharSet = CharSet.Unicode)] [return: MarshalAs(UnmanagedType.Bool)] static extern bool SetupDiGetDevicePropertyW(IntPtr set, ref DevInfo d, ref DevPropKey key, out uint type, byte[] buf, int size, out int need, int flags);
         static readonly Guid PciProps = new Guid("3ab22e31-8264-4b4e-9af5-a8d2d8e33e62"), DevProps = new Guid("a45c254e-df1c-4efd-8020-67d146a850e0");
         static int Prop(IntPtr set, ref DevInfo d, Guid g, uint pid) { var key = new DevPropKey(g, pid); var b = new byte[8]; uint t; int need; return SetupDiGetDevicePropertyW(set, ref d, ref key, out t, b, b.Length, out need, 0) ? BitConverter.ToInt32(b, 0) : -1; }
+        static int HwVendor(IntPtr set, ref DevInfo d)
+        {
+            var key = new DevPropKey(DevProps, 3); var b = new byte[2048]; uint t; int need;   // DEVPKEY_Device_HardwareIds: "PCI\VEN_10DE&DEV_2684&..."
+            if (!SetupDiGetDevicePropertyW(set, ref d, ref key, out t, b, b.Length, out need, 0)) return -1;
+            var m = System.Text.RegularExpressions.Regex.Match(System.Text.Encoding.Unicode.GetString(b, 0, Math.Min(need, b.Length)), @"VEN_([0-9A-Fa-f]{4})");
+            return m.Success ? int.Parse(m.Groups[1].Value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture) : -1;
+        }
         static List<Tuple<int, int, int[], string, int>> PciLinks()
         {
             var r = new List<Tuple<int, int, int[], string, int>>();
@@ -229,7 +240,8 @@ namespace AdeeboMeter
                     int bc = Prop(set, ref d, PciProps, 3), sc = Prop(set, ref d, PciProps, 4); if (!(bc == 1 && sc == 8) && bc != 3) continue;
                     int cs = Prop(set, ref d, PciProps, 9), cw = Prop(set, ref d, PciProps, 10), ms = Prop(set, ref d, PciProps, 11), mw = Prop(set, ref d, PciProps, 12);
                     if (cs <= 0 || cw <= 0) continue;
-                    int ven = Prop(set, ref d, PciProps, 1);
+                    // bug-hunt M-21: PCI property 1 is the device *type* (endpoint, bridge...), not the maker - read VEN_xxxx from its hardware ID
+                    int ven = HwVendor(set, ref d);
                     r.Add(Tuple.Create(bc, sc, new[] { cs, cw, Math.Max(cs, ms), Math.Max(cw, mw) }, "", ven & 0xFFFF));
                 }
             }
@@ -239,26 +251,31 @@ namespace AdeeboMeter
         }
 
         // ---------- startup apps, the power plan, restart time
+        // bug-hunt M-20: the same places Inside.Startup reads - both Run keys (64- and 32-bit) and both Startup folders -
+        // each with its own StartupApproved list, so an item switched off in Task Manager isn't counted
         internal static List<string> StartupApps()
         {
             var r = new List<string>();
-            Action<RegistryKey, string> read = (root, p) =>
+            Action<RegistryKey, string, string> read = (root, p, approved) =>
             {
                 try
                 {
-                    using (var kk = root.OpenSubKey(p)) if (kk != null) foreach (var n in kk.GetValueNames()) { if (n != "" && !Disabled(root, n)) r.Add(n); }
+                    using (var kk = root.OpenSubKey(p)) if (kk != null) foreach (var n in kk.GetValueNames()) { if (n != "" && !Disabled(root, approved, n)) r.Add(n); }
                 }
                 catch (System.Security.SecurityException) { } catch (UnauthorizedAccessException) { } catch (IOException) { }
             };
-            read(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Run"); read(Registry.LocalMachine, @"Software\Microsoft\Windows\CurrentVersion\Run");
-            try { foreach (var f in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Startup))) if (!f.EndsWith(".ini", StringComparison.OrdinalIgnoreCase)) r.Add(Path.GetFileNameWithoutExtension(f)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            read(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Run", "Run"); read(Registry.LocalMachine, @"Software\Microsoft\Windows\CurrentVersion\Run", "Run");
+            read(Registry.LocalMachine, @"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run", "Run32");
+            foreach (var where in new[] { Tuple.Create(Environment.SpecialFolder.Startup, Registry.CurrentUser), Tuple.Create(Environment.SpecialFolder.CommonStartup, Registry.LocalMachine) })
+                try { foreach (var f in Directory.GetFiles(Environment.GetFolderPath(where.Item1))) if (!f.EndsWith(".ini", StringComparison.OrdinalIgnoreCase) && !Disabled(where.Item2, "StartupFolder", Path.GetFileName(f))) r.Add(Path.GetFileNameWithoutExtension(f)); }
+                catch (IOException) { } catch (UnauthorizedAccessException) { } catch (ArgumentException) { }
             return r.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
         // Task Manager's "Disabled": the first byte of StartupApproved is odd
-        static bool Disabled(RegistryKey root, string name)
+        static bool Disabled(RegistryKey root, string list, string name)
         {
-            try { using (var kk = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run")) { var b = kk == null ? null : kk.GetValue(name) as byte[]; return b != null && b.Length > 0 && (b[0] & 1) == 1; } }
-            catch (System.Security.SecurityException) { return false; }
+            try { using (var kk = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\" + list)) { var b = kk == null ? null : kk.GetValue(name) as byte[]; return b != null && b.Length > 0 && (b[0] & 1) == 1; } }
+            catch (System.Security.SecurityException) { return false; } catch (UnauthorizedAccessException) { return false; } catch (IOException) { return false; }
         }
         [DllImport("powrprof.dll")] static extern uint PowerGetActiveScheme(IntPtr root, out IntPtr guid);
         [DllImport("powrprof.dll")] static extern uint PowerReadFriendlyName(IntPtr root, IntPtr scheme, IntPtr sub, IntPtr setting, byte[] buf, ref uint size);
@@ -290,12 +307,17 @@ namespace AdeeboMeter
             design = de; full = fu; cycles = cy;
         }
         // admin only: wear, hours used, temperature, read errors (MSFT_StorageReliabilityCounter); null when Windows says no
-        internal static double[] Wear()
+        internal static double[] Wear() { return Wear(null); }
+        // bug-hunt ML-159: the counters of the disk asked for (by its DeviceId), not whichever WMI lists first
+        internal static double[] Wear(string deviceId)
         {
-            double[] r = null;
+            double[] r = null, first = null;
             Wmi(@"\\.\root\Microsoft\Windows\Storage", "SELECT DeviceId, Wear, PowerOnHours, Temperature, ReadErrorsUncorrected FROM MSFT_StorageReliabilityCounter", o =>
-            { if (r == null) r = new[] { D(o["Wear"]), D(o["PowerOnHours"]), D(o["Temperature"]), D(o["ReadErrorsUncorrected"]) }; });
-            return r;
+            {
+                var v = new[] { D(o["Wear"]), D(o["PowerOnHours"]), D(o["Temperature"]), D(o["ReadErrorsUncorrected"]) }; if (first == null) first = v;
+                if (r == null && !string.IsNullOrEmpty(deviceId) && S(o["DeviceId"]) == deviceId) r = v;
+            });
+            return string.IsNullOrEmpty(deviceId) ? first : r;
         }
     }
 }

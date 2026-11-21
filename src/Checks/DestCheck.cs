@@ -322,6 +322,7 @@ namespace AdeeboMeter
                     r.AddCard("TLS", new List<string[]> { new[] { "Error", Draw.Trunc(tErr, 40), "2" }, new[] { "Offered by AdeeboMeter", Tls13Client() ? "TLS 1.2, 1.3" : "TLS 1.2" } });
                     try { ssl.Dispose(); } catch { } stream = Stream.Null;
                 }
+                if (cert != null) cert.Dispose();   // bug-hunt ML-13: read for the cards above, then let go
             }
             else step(4, 3, "not TLS");
 

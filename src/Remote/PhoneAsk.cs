@@ -17,7 +17,7 @@ namespace AdeeboMeter
     static class PhoneAsk
     {
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
-        public sealed class Answer { public bool NoPhone, NoAnswer, Stopped; public string Head = ""; public List<string[]> Rows = new List<string[]>(); }
+        public sealed class Answer { public bool NoPhone, NoAnswer, Stopped; public string Head = "", Up = ""; public List<string[]> Rows = new List<string[]>(); }
 
         // one question to the phone; waits up to 45 s (the phone may be measuring), stops with the check
         public static Answer Ask(string k, string q, Toolkit.Run run) { return Ask(k, q, run, 45); }
@@ -35,7 +35,10 @@ namespace AdeeboMeter
                 if (DateTime.UtcNow > until || s.St != Remote.State.Paired) { s.ForgetAsk(rid); a.NoAnswer = true; return a; }
             }
             if (rows == null) { a.NoAnswer = true; return a; }
-            a.Head = head ?? ""; a.Rows = rows; return a;
+            a.Head = head ?? ""; a.Rows = rows;
+            // bug-hunt ML-119: the phone's own yes/no (its "up" field), never read back out of the sentence it shows
+            var upRow = rows == null ? null : rows.FirstOrDefault(r => r[1] == "\u0001up"); if (upRow != null) { a.Up = upRow[2]; rows.Remove(upRow); }
+            return a;
         }
         static List<string[]> Missing(Answer a)
         {
@@ -109,7 +112,7 @@ namespace AdeeboMeter
             }
             var a = Ask("isdown", h, run);
             if (a.NoPhone || a.NoAnswer || a.Stopped) { rows.AddRange(Missing(a)); rows.Add(R(pcUp ? 0 : 2, "This PC", pcUp ? "reached " + h + " in " + Ms(ms) : "couldn't reach " + h + (pcWhy != "" ? " (" + pcWhy + ")" : ""), "", "i")); return rows; }
-            bool phUp = a.Head.StartsWith("Up", StringComparison.OrdinalIgnoreCase);
+            bool phUp = a.Up != "" ? a.Up == "1" : a.Head.StartsWith("Up", StringComparison.OrdinalIgnoreCase);   // an older phone page: its headline
             string v = pcUp && phUp ? "Up from both" : !pcUp && !phUp ? "Down from both" : pcUp ? "Only your phone can't reach it" : "Only this PC can't reach it";
             string adv = pcUp && phUp ? "If it still won't work, it's the app, the page or your account - not the network." : !pcUp && !phUp ? "Likely down for everyone, or blocked on this network (if the phone is on the same Wi-Fi). Try the phone on mobile data." : pcUp ? "It's the phone - its connection, or a blocker/VPN app." : "It's this PC: a proxy, VPN, firewall, the hosts file or its DNS. Try Hosts file and Which proxy does this URL use?";
             rows.Add(R(pcUp && phUp ? 0 : 2, "Verdict", v, adv, "i"));

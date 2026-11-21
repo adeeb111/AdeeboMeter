@@ -92,8 +92,6 @@ namespace AdeeboMeter
             settingsBtn.Click += delegate { tab = tab == "settings" ? lastPage : "settings"; ShowTab(); };
             aboutBtn = new PillButton("About", PillButton.K.Chip);
             aboutBtn.Click += delegate { tab = tab == "about" ? lastPage : "about"; ShowTab(); };
-            pointsBtn = new PillButton("Adeebo", PillButton.K.Chip) { Visible = Cfg.Points };
-            pointsBtn.Click += delegate { tab = tab == "points" ? lastPage : "points"; ShowTab(); };
             backBtn = new PillButton("Back to corner", PillButton.K.Primary);
             backBtn.Click += delegate { Close(); };
             viewBtn = new ViewButton(); SyncViewBtn();
@@ -557,20 +555,27 @@ namespace AdeeboMeter
             if (snap.Level != logoLv) { logoLv = snap.Level; header.Invalidate(new Rectangle(0, 0, Sc(60), header.Height)); }
             if (Visible && WindowState != FormWindowState.Minimized && (DateTime.UtcNow - logoBreath).TotalMinutes >= 5) { logoBreath = DateTime.UtcNow; LogoAnim(1); }
         }
+        // a health row's history in a few numbers - one pass for its low and high (bug-hunt ML-147: it was two scans per row)
+        static string HistKey(double[] h)
+        {
+            if (h.Length == 0) return "";
+            double mx = double.NaN, mn = double.NaN; foreach (var z in h) { if (double.IsNaN(z)) continue; if (double.IsNaN(mx) || z > mx) mx = z; if (double.IsNaN(mn) || z < mn) mn = z; }
+            var ic = CultureInfo.InvariantCulture; return h.Length + ":" + h[0].ToString("0.#", ic) + ":" + h[h.Length - 1].ToString("0.#", ic) + ":" + (double.IsNaN(mx) ? 0 : mx).ToString("0.#", ic) + ":" + (double.IsNaN(mn) ? 0 : mn).ToString("0.#", ic);
+        }
         void OnTimer2()
         {
             if (M.Version != lastVersion) { lastVersion = M.Version; snap = M.Latest; LogoTick(); string hk = snap.Level + "|" + snap.Headline + "|" + snap.Flow + "|" + DateTime.Now.Hour + "|" + Mood.Quip(snap);   /* the mood line changes on its own (excuses, koans) */ if (hk != headKey) { headKey = hk; pathPanel.Invalidate(); header.Invalidate(); }
                 // the path strip and the side panel repaint only when what they print changed
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }
-                string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(h => h.Length > 0 ? h.Length + ":" + h[0].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h[h.Length - 1].ToString("0.#", CultureInfo.InvariantCulture) + ":" + h.Where(z => !double.IsNaN(z)).DefaultIfEmpty(0).Max().ToString("0.#", CultureInfo.InvariantCulture) + ":" + h.Where(z => !double.IsNaN(z)).DefaultIfEmpty(0).Min().ToString("0.#", CultureInfo.InvariantCulture) : "")) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
+                string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(HistKey)) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
                 if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
-            if (destRunning || pinRunning) destCanvas.Invalidate();
-            if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = rr == null ? "" : rr.Status + "|" + rr.Copy().Count + "|" + (footTick / 4);   /* and every 2 s anyway: tables like MTR's hops fill in without a status change */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
+            if ((destRunning || pinRunning) && footTick % 2 == 0) destCanvas.Invalidate();   // bug-hunt ML-145: once a second is enough for a running check (its results repaint as they land)
+            if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = rr == null ? "" : rr.Status + "|" + rr.Count + "|" + (footTick / 4);   /* and every 2 s anyway: tables like MTR's hops fill in without a status change */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
             StreamTick(); SportsTick(); TradeTick(); OutlookTick();
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gk = System.Threading.Interlocked.Read(ref GamePing.Ver) + "|" + GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerCanvas.Invalidate(); } }   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
@@ -646,7 +651,7 @@ namespace AdeeboMeter
             {
                 List<Conn> l = null;
                 try { if (names && Cfg.IpNames) M.RefreshIpNames(); l = M.Connections(true); } catch (Exception e) { Program.Log("conns: " + e.Message); }
-                try { if (!IsDisposed) BeginInvoke((Action)delegate { refreshing = false; if (l != null && !IsDisposed) { list.Merge(l); connSnap = l; if (tab == "travel" && storyTarget == "") { string tvk = l.Count + "|" + string.Join(",", l.Select(z => z.Key + z.State + z.Host).OrderBy(z => z, StringComparer.Ordinal)).GetHashCode(); if (tvk != travelKey) { travelKey = tvk; travelCanvas.Invalidate(); } } } }); else refreshing = false; } catch { refreshing = false; }
+                try { if (!IsDisposed) BeginInvoke((Action)delegate { refreshing = false; if (l != null && !IsDisposed) { list.Merge(l); connSnap = l; if (tab == "travel" && storyTarget == "") { int hs = 0; foreach (var z in l) hs = unchecked(hs + (z.Key + z.State + z.Host).GetHashCode()); string tvk = l.Count + "|" + hs;   /* bug-hunt ML-139: an order-free sum - no join or sort of every connection */ if (tvk != travelKey) { travelKey = tvk; travelCanvas.Invalidate(); } } } }); else refreshing = false; } catch { refreshing = false; }
             });
         }
 
@@ -736,7 +741,7 @@ namespace AdeeboMeter
             if (page == "travel" && destIn == "demo-journey")
             {
                 // screenshot aid: a made-up game conversation on the packet journey, explained
-                storyApp = "VALORANT-Win64-Shipping"; storyIp = "203.0.113.40"; storyPort = 7086; storyTarget = "203.0.113.40:7086";
+                storyApp = "VALORANT-Win64-Shipping"; storyIp = "203.0.113.40"; storyPort = 7086; storyUdp = true; storyTarget = "203.0.113.40:7086";
                 jFlow = new Journey.Flow { Remote = storyIp, RemotePort = 7086, LocalPort = 61000, Udp = true, App = storyApp };
                 jSess = new Journey.Session(jFlow, Journey.Sample()); jKind = "realtime"; jPlay = 1.62; jPing = new[] { 31.0, 33, 30, 41, 32, 30, 55, 31, 30, 34 };
                 jNotes = Journey.Explain(jFlow, jSess.Snapshot(), jKind, true); jScrollTo = true; travelCanvas.Invalidate();
@@ -945,6 +950,7 @@ namespace AdeeboMeter
             };
         }
 
+        DateTime chgBadgeAt = DateTime.MinValue, chgBadgeSeen = DateTime.MinValue; string chgBadgeText = ""; int chgBadgeLv = -1;
         void PageBadge(string t, out string text, out int lv)
         {
             text = ""; lv = -1;
@@ -952,8 +958,14 @@ namespace AdeeboMeter
             else if (t == "procs") { int n; lock (M.L) n = M.Apps.Count; text = n > 0 ? n.ToString(CultureInfo.CurrentCulture) : ""; }
             else if (t == "changes")
             {
-                var fresh = M.Events.Recent(300).Where(e => e.T > changesSeen && e.Kind != "verdict").ToList();
-                text = fresh.Count > 0 ? fresh.Count + " new" : ""; lv = fresh.Count == 0 ? -1 : fresh.Max(e => e.Lv) >= 2 ? 2 : fresh.Max(e => e.Lv) == 1 ? 1 : 4;
+                // bug-hunt ML-140: worked out once every 2 seconds (and in one pass), not on every badge refresh
+                if ((DateTime.UtcNow - chgBadgeAt).TotalSeconds >= 2 || chgBadgeSeen != changesSeen)
+                {
+                    chgBadgeAt = DateTime.UtcNow; chgBadgeSeen = changesSeen; int cnt = 0, mx = -1;
+                    foreach (var e in M.Events.Recent(300)) if (e.T > changesSeen && e.Kind != "verdict") { cnt++; if (e.Lv > mx) mx = e.Lv; }
+                    chgBadgeText = cnt > 0 ? cnt + " new" : ""; chgBadgeLv = cnt == 0 ? -1 : mx >= 2 ? 2 : mx == 1 ? 1 : 4;
+                }
+                text = chgBadgeText; lv = chgBadgeLv;
             }
             else if (t == "live") { text = live.Running ? "REC" : ""; lv = 2; }
             else if (t == "link") { var ls = linkSnap; text = ls != null && ls.Level > 0 ? "!" : ""; lv = ls != null ? ls.Level : -1; }

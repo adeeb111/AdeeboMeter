@@ -68,6 +68,18 @@ namespace AdeeboMeter
         {
             using (var s = SHA256.Create()) { var h = s.ComputeHash(pub); var b = string.Join("", h.Take(15).Select(x => x.ToString("X2", CultureInfo.InvariantCulture))); return string.Join("-", Enumerable.Range(0, 6).Select(i => b.Substring(i * 5, 5))); }
         }
+        // y² = x³ - 3x + b (mod p) for P-384 (FIPS 186-4 D.1.2.4), x and y below p - the blob is "ECK3", 48, then X and Y big-endian
+        static readonly System.Numerics.BigInteger P384 = Big("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff"),
+            B384 = Big("b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef");
+        static System.Numerics.BigInteger Big(string hex) { return System.Numerics.BigInteger.Parse("0" + hex, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture); }
+        static System.Numerics.BigInteger Unsigned(byte[] b, int at) { var le = new byte[49]; for (int i = 0; i < 48; i++) le[i] = b[at + 47 - i]; return new System.Numerics.BigInteger(le); }
+        internal static bool OnP384(byte[] blob)
+        {
+            if (blob == null || blob.Length != 104) return false;
+            var x = Unsigned(blob, 8); var y = Unsigned(blob, 56); if (x >= P384 || y >= P384 || (x.IsZero && y.IsZero)) return false;
+            var right = ((System.Numerics.BigInteger.ModPow(x, 3, P384) - 3 * x + B384) % P384 + P384) % P384;
+            return System.Numerics.BigInteger.ModPow(y, 2, P384) == right;
+        }
         static byte[] KeyId(byte[] pub) { using (var s = SHA256.Create()) return s.ComputeHash(pub).Take(8).ToArray(); }
 
         // a new P-384 key, kept by Windows for this user; exportable only so you can back it up
@@ -153,6 +165,7 @@ namespace AdeeboMeter
                 var ephPub = take(el); var wrapped = take(64);
                 // a one-time key must be a P-384 ECDH public key ("ECK3", 48-byte X and Y) - anything else is a damaged or crafted file
                 if (ephPub[0] != 0x45 || ephPub[1] != 0x43 || ephPub[2] != 0x4B || ephPub[3] != 0x33 || ephPub[4] != 48 || ephPub[5] != 0 || ephPub[6] != 0 || ephPub[7] != 0) throw new CryptographicException("damaged header");
+                if (!OnP384(ephPub)) throw new CryptographicException("damaged header");   // bug-hunt ML-17: a point that isn't on the curve is a crafted file (invalid-curve attack)
                 if (fileKey != null) continue;
                 // AM-CG-237: every entry for this key is tried - a stale entry whose Windows key is gone doesn't hide a restored copy
                 var k = mine.FirstOrDefault(m => KeyId(Convert.FromBase64String(m.Pub)).SequenceEqual(id) && CngKey.Exists(m.KeyName)); if (k == null) continue;

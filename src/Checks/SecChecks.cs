@@ -268,15 +268,15 @@ namespace AdeeboMeter
                 catch (System.Security.SecurityException) { }
             foreach (var d in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })
                 try { if (Directory.Exists(d)) foreach (var f in Directory.GetFiles(d).Where(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase))) items.Add(Tuple.Create(Path.GetFileName(f), f)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
-            var unsigned = new List<string>();
+            var unsigned = new List<string>(); int winOwn = 0;
             foreach (var it in items)
             {
                 string exe = StartExe(it.Item2); if (exe == null) continue;
                 if (string.Equals(Path.GetFileName(exe), "AdeeboMeter.exe", StringComparison.OrdinalIgnoreCase)) continue;   /* this app: unsigned, and you chose to start it */
-                string win = Environment.GetFolderPath(Environment.SpecialFolder.Windows); if (win != "" && exe.StartsWith(win.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase)) continue;   /* Windows' own (catalog-signed, which this check can't read) */
+                string win = Environment.GetFolderPath(Environment.SpecialFolder.Windows); if (win != "" && exe.StartsWith(win.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase)) { winOwn++; continue; }   /* Windows' own (catalog-signed, which this check can't read) */
                 try { using (X509Certificate.CreateFromSignedFile(exe)) { } } catch (System.Security.Cryptography.CryptographicException) { unsigned.Add(it.Item1 + " (" + Path.GetFileName(exe) + ")"); }
             }
-            return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", items.Count + " start automatically" + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · all .exe programs signed"), unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
+            return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", items.Count + " start automatically" + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · the .exe programs outside the Windows folder are signed" + (winOwn > 0 ? " (" + winOwn + " in the Windows folder weren't checked - Windows signs those in a way this check can't read)" : ""))   /* bug-hunt ML-106 */, unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
         }
         // the program a Run / Startup entry starts: "quoted path", C:\Program Files\app.exe unquoted (the longest
         // path ending in .exe that exists), or a bare name Windows finds on the PATH. null when it isn't an .exe here.
@@ -529,12 +529,12 @@ namespace AdeeboMeter
                     using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new X509Certificate2(cert); return true; }))
                     {
                         var t = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto, false));
-                        if (!t.Wait(8000)) { c.Close(); try { t.Wait(1000); } catch (AggregateException) { } err = "no TLS answer"; return null; }   // close first: the stuck handshake ends before the stream is disposed
+                        if (!t.Wait(8000)) { c.Close(); try { t.Wait(1000); } catch (AggregateException) { } err = "no TLS answer"; if (got != null) got.Dispose(); return null; }   /* bug-hunt ML-32 */   // close first: the stuck handshake ends before the stream is disposed
                     }
                 }
             }
-            catch (AggregateException e) { err = e.InnerException != null ? e.InnerException.Message : e.Message; return null; }
-            catch (SocketException e) { err = e.Message; return null; }
+            catch (AggregateException e) { err = e.InnerException != null ? e.InnerException.Message : e.Message; if (got != null) got.Dispose(); return null; }
+            catch (SocketException e) { err = e.Message; if (got != null) got.Dispose(); return null; }
             return got;
         }
         static List<string[]> CertExpiry(Monitor m, List<string> sites)

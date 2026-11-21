@@ -232,7 +232,9 @@ namespace AdeeboMeter
             var found = new Dictionary<int, HashSet<string>>();
             foreach (var f in lines)
             {
-                string all = string.Join(" ", f.Skip(4)).ToLowerInvariant(); if (all.Trim() == "") continue;
+                // bug-hunt M-12: only what a device says about itself - answers (dns.resp.name), NetBIOS names, server banners.
+                // A question (dns.qry.name, field 4) is a phone looking for a Chromecast, not a Chromecast.
+                string all = string.Join(" ", f.Skip(5)).ToLowerInvariant(); if (all.Trim() == "") continue;
                 string who = f.Length > 2 && f[2] != "" ? f[2] : f.Length > 3 ? f[3] : "";
                 for (int i = 0; i < ThingKinds.Length; i++) if (all.Contains(ThingKinds[i][0])) { HashSet<string> h; if (!found.TryGetValue(i, out h)) { h = new HashSet<string>(); found[i] = h; } if (who != "" && h.Count < 4) h.Add(who); }
             }

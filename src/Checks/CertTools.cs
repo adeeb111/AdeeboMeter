@@ -54,11 +54,11 @@ namespace AdeeboMeter
         {
             var now = DateTime.Now; double left = (c.NotAfter - now).TotalDays; int days = (int)Math.Floor(left);
             bool expired = now > c.NotAfter, early = now < c.NotBefore;
-            rows.Add(R(expired || (!early && days < 30) ? 2 : early ? 3 : 0, label, c.GetNameInfo(X509NameType.SimpleName, false) + " - " + Verdict(c), "", "m"));
+            rows.Add(R(expired || early || days < 30 ? 2 : 0, label,   /* bug-hunt ML-92: not valid yet is refused today, like expired */ c.GetNameInfo(X509NameType.SimpleName, false) + " - " + Verdict(c), "", "m"));
             rows.Add(R(3, "Subject", c.Subject, "Who it is for.", "m"));
             bool self = c.Subject == c.Issuer;
             rows.Add(R(3, "Issued by", c.Issuer + (self ? " (itself - self-signed)" : ""), self ? "Who vouches for it - here, nobody but itself: apps trust it only if it's added to their trust list (normal for devices and private CAs)." : "Who vouches for it.", "m"));
-            rows.Add(R(expired ? 2 : early ? 3 : days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + Math.Max(1, -days) + " days ago" : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
+            rows.Add(R(expired || early || days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + Math.Max(1, -days) + " days ago" : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
                 early ? "Its start date is still ahead - or this PC's clock is behind." : "Outside these dates every app refuses it.", "m"));
             string ka = KeyName(c); int bits = KeyBits(c);
             rows.Add(R(ka == "RSA" && bits > 0 && bits < 2048 ? 1 : 3, "Key", ka + (bits > 0 ? (ka == "ECDSA" ? " P-" + bits : " " + bits) : ""), ka == "RSA" && bits > 0 && bits < 2048 ? "Under 2048 bits is weak; most systems refuse it now." : "The public half of the key pair - the server proves it holds the private half.", "m"));
@@ -221,7 +221,7 @@ namespace AdeeboMeter
                 bool toPem = !t.Contains("-----BEGIN"); string src = input.Trim().Trim('"'), dir = Path.GetDirectoryName(src), stem = Path.GetFileNameWithoutExtension(src), ext = toPem ? ".pem" : ".der";
                 string outp = Path.Combine(dir, stem + ext); for (int i = 1; File.Exists(outp) && i < 100; i++) outp = Path.Combine(dir, stem + "-" + i + ext);
                 var bytes = toPem ? Encoding.ASCII.GetBytes("-----BEGIN CERTIFICATE-----\r\n" + Regex.Replace(Convert.ToBase64String(c.RawData), ".{64}", "$0\r\n").TrimEnd() + "\r\n-----END CERTIFICATE-----\r\n") : c.RawData;
-                try { using (var f = new FileStream(outp, FileMode.CreateNew, FileAccess.Write)) f.Write(bytes, 0, bytes.Length); }
+                try { SafeFile.WriteNew(outp, bytes); }   // bug-hunt ML-2
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Couldn't write", Draw.Trunc(e.Message, 90), "", "m")); return rows; }
                 rows.Add(new[] { "0", toPem ? "PEM (text) written" : "DER (binary) written", outp, (certs.Count > 1 ? "Only the first of " + certs.Count + " certificates. " : "") + "PEM is the text form (-----BEGIN CERTIFICATE-----), DER the binary one - same certificate. Click to show it in its folder.", "m", "show:" + outp });
             }

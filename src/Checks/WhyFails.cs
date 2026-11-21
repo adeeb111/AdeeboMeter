@@ -61,7 +61,7 @@ namespace AdeeboMeter
             {
                 var pi = new WinHttpProxyInfo();
                 if (WinHttpGetDefaultProxyConfiguration(ref pi))
-                    try { whText = pi.AccessType == 3 && pi.Proxy != IntPtr.Zero ? Marshal.PtrToStringUni(pi.Proxy) : "direct"; }
+                    try { whText = pi.AccessType == 3 && pi.Proxy != IntPtr.Zero ? Marshal.PtrToStringUni(pi.Proxy) : pi.AccessType == 4 ? "automatic (WPAD / setup script)" : pi.AccessType == 0 ? "Windows' default (from the registry)" : "direct"; }   /* bug-hunt ML-27: 1 no proxy, 3 named, 4 automatic, 0 default */
                     finally { if (pi.Proxy != IntPtr.Zero && GlobalFree(pi.Proxy) != IntPtr.Zero) Program.Log("winhttp free"); if (pi.Bypass != IntPtr.Zero && GlobalFree(pi.Bypass) != IntPtr.Zero) Program.Log("winhttp free"); }
             }
             catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; }
@@ -75,7 +75,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc", "hosts");
             try
             {
-                var lines = File.ReadAllLines(f).Select(l => { int c = l.IndexOf('#'); return (c >= 0 ? l.Substring(0, c) : l).Trim(); }).Where(l => l != "").ToList();
+                var lines = File.ReadLines(f).Take(500000).Select(   /* bug-hunt ML-26: an ad-block hosts file is big, but never more than this */l => { int c = l.IndexOf('#'); return (c >= 0 ? l.Substring(0, c) : l).Trim(); }).Where(l => l != "").ToList();
                 if (lines.Count == 0) rows.Add(R(0, "Hosts file", "empty - every name goes to DNS", "", "w"));
                 // every line is checked for your site (an ad-block hosts file has thousands); only the first 40 others are listed
                 Func<string, bool> pins = l => name != "" && l.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Skip(1).Any(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase));
@@ -129,7 +129,10 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h; int p; bool t; string e;
             if (!DestCheck.Parse(target, out h, out p, out t, out e)) { rows.Add(R(2, "Input", e, "Type host:port, e.g. mail.example.com:587", "u")); return rows; }
-            IPAddress a; try { a = Dns.GetHostAddresses(h).First(); } catch (Exception ex) { rows.Add(R(2, "Name", h + ": " + ex.Message, "", "m")); return rows; }
+            // bug-hunt ML-25: IPv4 first (the address most apps end up on), and the next address when the first doesn't answer
+            IPAddress[] alla; try { alla = Dns.GetHostAddresses(h).OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).Take(3).ToArray(); if (alla.Length == 0) throw new SocketException(11001); } catch (Exception ex) { if (!(ex is SocketException || ex is ArgumentException)) throw; rows.Add(R(2, "Name", h + ": " + ex.Message, "", "m")); return rows; }
+            IPAddress a = alla[0];
+            for (int k = 0; k < alla.Length - 1; k++) { using (var probe = Toolkit.Open(alla[k], p, 1500)) if (probe != null) break; a = alla[k + 1]; }
             var sw = Stopwatch.StartNew(); string res; int lv;
             try
             {

@@ -41,7 +41,7 @@ namespace AdeeboMeter
             return Open(all, port, ms);
         }
         public static TcpClient Open(IPAddress ip, int port, int ms) { return Open(new[] { ip }, port, ms); }
-        static TcpClient Open(IPAddress[] all, int port, int ms)
+        public static TcpClient Open(IPAddress[] all, int port, int ms)
         {
             var v6 = all.Where(a => a.AddressFamily == AddressFamily.InterNetworkV6).ToList(); var v4 = all.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToList();
             var order = new List<IPAddress>(); for (int i = 0; i < Math.Max(v6.Count, v4.Count); i++) { if (i < v6.Count) order.Add(v6[i]); if (i < v4.Count) order.Add(v4[i]); }
@@ -108,7 +108,7 @@ namespace AdeeboMeter
             return withPort && u.Port > 0 ? h + ":" + u.Port.ToString(CultureInfo.InvariantCulture) : h;
         }
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
-        public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public DateTime Deadline; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } }
+        public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public DateTime Deadline; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } public int Count { get { lock (Series) return Series.Count; } } }   /* Count: bug-hunt ML-145, no copy just to count */
 
         // ================================================================== iperf3 client
         const int Cookie = 37;

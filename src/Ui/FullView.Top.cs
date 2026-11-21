@@ -27,7 +27,7 @@ namespace AdeeboMeter
             int room = xr - xl;
             bool show = Cfg.Layout != "sidebar" && room >= Sc(40);   // the sidebar has its own search at the top
             if (headSearch.Visible != show) headSearch.Visible = show;
-            int sw = room >= Sc(220) ? Math.Min(Sc(300), room) : Sc(36);
+            int sw = room >= Sc(140) ? Math.Min(Sc(300), room) : Sc(36);   // bug-hunt ML-78: a usable box down to 140 px; only narrower than that the icon alone
             headSearch.Size = new Size(sw, Sc(36)); headSearch.Location = new Point(xr - sw, (header.Height - headSearch.Height) / 2);
             header.Invalidate();
         }

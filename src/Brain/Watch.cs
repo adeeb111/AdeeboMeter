@@ -184,9 +184,12 @@ namespace AdeeboMeter
             if (busySec == 60 && (DateTime.UtcNow - upWarned).TotalMinutes > 30)
             {
                 upWarned = DateTime.UtcNow;
-                List<AppStat> apps; lock (m.L) apps = m.Apps.OrderByDescending(a => a.Cpu).Take(3).ToList();
-                string who = string.Join(", ", apps.Select(a => a.Name));
-                Add(1, "Upload", "upload|" + DateTime.Now.ToString("yyyyMMddHH", CultureInfo.InvariantCulture), "your PC has been uploading more than 5 Mb/s for a minute. Busiest programs right now: " + who + ". Backups and OneDrive do this; if you didn't expect it, check them.", "Live capture (with Wireshark) shows exactly which program is uploading and where to.");
+                // bug-hunt ML-41: the programs holding the most connections to the internet - busy CPU isn't uploading
+                string who;
+                try { who = string.Join(", ", m.Connections(false).Where(c => c.State == "ESTABLISHED" && IsPublic(c.RemoteIp) && !string.IsNullOrEmpty(c.Proc)).GroupBy(c => c.Proc, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Take(3).Select(g => g.Key)); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; who = ""; }
+                if (who == "") who = "(couldn't tell)";
+                Add(1, "Upload", "upload|" + DateTime.Now.ToString("yyyyMMddHH", CultureInfo.InvariantCulture), "your PC has been uploading more than 5 Mb/s for a minute. Programs connected to the internet right now: " + who + ". Backups and OneDrive do this; if you didn't expect it, check them.", "Live capture (with Wireshark) shows exactly which program is uploading and where to.");
             }
         }
         public static bool IsPublic(string ip)
@@ -210,6 +213,8 @@ namespace AdeeboMeter
         // Every new device is listed (What changed) and in Devices on this network - never announced.
         public static void Check(Monitor m)
         {
+            // bug-hunt ML-83: the device lists are history too - History off deletes them (like air.txt), and they never grow without end
+            if (!Cfg.History) { lock (k) { known = null; netSince = null; try { foreach (var f in new[] { "devices.txt", "device-nets.txt" }) if (System.IO.File.Exists(Store.PathOf(f))) System.IO.File.Delete(Store.PathOf(f)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory clear: " + e.Message); } } return; }
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
             List<Arp.Entry> table; try { table = Arp.Table(); } catch { return; }
             string gw; bool vpn; lock (m.L) { gw = m.Gateway; vpn = m.VpnUp; }
@@ -239,6 +244,10 @@ namespace AdeeboMeter
                     if (!rnd && !quiet) announce.Add(e);
                 }
                 if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
+                // at most 40 networks (the ones met longest ago go) and 1,000 addresses each (private, random addresses go first)
+                foreach (var old in netSince.OrderByDescending(kv => kv.Value).Skip(40).Select(kv => kv.Key).Where(z => z != key).ToList()) { netSince.Remove(old); known.Remove(old); changed = true; }
+                if (set.Count > 1000) { set.RemoveWhere(Arp.Randomised); if (set.Count > 1000) set.Clear(); changed = true; }
+                if (changed) Store.Write("device-nets.txt", netSince.Select(kv => new[] { kv.Key, kv.Value.ToString("o", CultureInfo.InvariantCulture) }).ToList());
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
             }
             // no pop-up for a new device, ever (16 Nov): on a busy network it would be a storm - they are listed in What changed

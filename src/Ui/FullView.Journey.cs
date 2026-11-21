@@ -32,7 +32,7 @@ namespace AdeeboMeter
             bool udp = c.Proto.StartsWith("UDP", StringComparison.Ordinal);
             jFlow = new Journey.Flow { Remote = c.RemoteIp ?? "", RemotePort = c.RemotePort, LocalPort = c.LocalPort, Udp = udp, App = c.Proc ?? "" };
             JReset();
-            storyApp = c.Proc; storyIp = c.RemoteIp ?? ""; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyBox = -1; realPkts = null; realDecode = null; realErr = "";
+            storyApp = c.Proc; storyIp = c.RemoteIp ?? ""; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyUdp = (c.Proto ?? "").StartsWith("UDP", StringComparison.Ordinal); storyBox = -1; realPkts = null; realDecode = null; realErr = "";
             storyTarget = storyIp != "" ? (c.Host != "" && c.Host != c.RemoteIp ? c.Host : c.RemoteIp) + (c.RemotePort != 443 ? ":" + c.RemotePort : "") : (c.Proc ?? "app") + " (UDP " + c.LocalPort + ")";
             ShowPage("travel"); jScrollTo = true; travelCanvas.Invalidate();
         }
@@ -50,7 +50,7 @@ namespace AdeeboMeter
             if (jFlow != null && jSess != null && !jSess.Done && jSess.F == jFlow) { jHeld = storyTarget; return jFlow; }
             if (storyIp == "") return null;
             var conv = connSnap.FirstOrDefault(c => c.RemoteIp == storyIp && c.RemotePort == storyPort && (storyApp == null || c.Proc == storyApp) && (storyLocal == 0 || c.LocalPort == storyLocal));
-            jFlow = new Journey.Flow { Remote = storyIp, RemotePort = storyPort, LocalPort = conv != null ? conv.LocalPort : 0, Udp = conv != null && conv.Proto.StartsWith("UDP", StringComparison.Ordinal), App = storyApp ?? "" };
+            jFlow = new Journey.Flow { Remote = storyIp, RemotePort = storyPort, LocalPort = conv != null ? conv.LocalPort : 0, Udp = conv != null ? conv.Proto.StartsWith("UDP", StringComparison.Ordinal) : storyUdp, App = storyApp ?? "" };
             JReset(); return jFlow;
         }
 

@@ -185,9 +185,15 @@ namespace AdeeboMeter
         // AM-CG-277: the feed comes in pages - a second page is read when there is one (one more call), never more than two
         internal static List<Game> Cricket(string key)
         {
-            Hit(); int total; var r = CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key), null, null), out total);
-            if (total > r.Count && r.Count > 0 && HitsToday() < 89) { Hit(); int t2; r.AddRange(CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=" + r.Count + "&apikey=" + Uri.EscapeDataString(key), null, null), out t2)); }
+            int total; var r = CricketFrom(CricGet("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key)), out total);
+            if (total > r.Count && r.Count > 0 && HitsToday() < 89) { int t2; r.AddRange(CricketFrom(CricGet("https://api.cricapi.com/v1/currentMatches?offset=" + r.Count + "&apikey=" + Uri.EscapeDataString(key)), out t2)); }
             return r;
+        }
+        // bug-hunt ML-40: a call counts against the day only when it reached CricketData - no connection, no count
+        static string CricGet(string url)
+        {
+            try { var s = Get(url, null, null); Hit(); return s; }
+            catch (System.Net.WebException e) { if (e.Response != null) Hit(); throw; }
         }
         internal static List<Game> CricketFrom(string json) { int total; return CricketFrom(json, out total); }
         static List<Game> CricketFrom(string json, out int total)

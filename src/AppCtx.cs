@@ -194,7 +194,7 @@ namespace AdeeboMeter
                         {
                             int w = WaitHandle.WaitAny(both, 30000);   // woken by either event; the timeout only re-checks quitting (a background thread ends with the app anyway)
                             if (quitting) break;
-                            if (w == 0) marshal.BeginInvoke((Action)delegate { ackEvt.Set(); OpenFull(); });
+                            if (w == 0) marshal.BeginInvoke((Action)delegate { ackEvt.Set(); OpenFull(); OpenHandedFile(); });
                             else if (w == 1) { Program.Log("asked to quit (update or removal)"); marshal.BeginInvoke((Action)Quit); }
                         }
                         catch { }
@@ -210,6 +210,12 @@ namespace AdeeboMeter
                 once.Tick += delegate { once.Stop(); once.Dispose(); OpenFull(); if (full != null) full.Debug(Program.StartView, Program.StartTip, Program.StartDest); };
                 once.Start();
             }
+            else if (Program.StartFile != null)
+            {
+                var once = new System.Windows.Forms.Timer { Interval = 1200 };
+                once.Tick += delegate { once.Stop(); once.Dispose(); OpenFull(); if (full != null && !full.IsDisposed) full.OpenLocked(Program.StartFile); };
+                once.Start();
+            }
 
             // Safety net: AdeeboMeter must never listen on a port. If it ever does, it leaves.
             Task.Factory.StartNew(() =>
@@ -222,13 +228,13 @@ namespace AdeeboMeter
         // ---------- settings (written atomically: temp file + replace)
         void LoadSettings()
         {
-            bool first = !File.Exists(settingsPath); int keys = 0;   // keys: lines other than the installer's own "autostart"
+            bool first = !File.Exists(settingsPath); int keys = 0, parsed = 0; bool unreadable = false;   // keys: lines other than the installer's own "autostart"
             try
             {
                 if (!first)
                     foreach (var line in File.ReadAllLines(settingsPath))
                     {
-                        int eq = line.IndexOf('='); if (eq <= 0) continue;
+                        int eq = line.IndexOf('='); if (eq <= 0) continue; parsed++;
                         var kv = new[] { line.Substring(0, eq), line.Substring(eq + 1) };
                         if (kv[0] != "autostart") keys++;
                         if (kv[0] == "autostart") autoStart = kv[1] == "1";
@@ -238,7 +244,11 @@ namespace AdeeboMeter
                         else Cfg.Read(kv[0], kv[1]);
                     }
             }
-            catch { }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; unreadable = true; Program.Log("settings unreadable: " + e.GetType().Name); }
+            // bug-hunt ML-134: a damaged settings file is kept aside (AdeeboMeter.settings.damaged) and said in the log, never
+            // silently overwritten with defaults as if this were a first start
+            try { if (!first && (unreadable || (parsed == 0 && new FileInfo(settingsPath).Length > 0))) { File.Copy(settingsPath, settingsPath + ".damaged", true); Program.Log("settings file damaged - kept a copy as " + Path.GetFileName(settingsPath) + ".damaged, starting from defaults"); } }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
             if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
             // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") is kept; a named preset sets the game timings too.
@@ -326,6 +336,7 @@ namespace AdeeboMeter
         {
             if (quitting || Remote.Relay == "" || (DateTime.UtcNow - standbyAt).TotalSeconds < 15) return;
             standbyAt = DateTime.UtcNow;
+            if (!Cfg.PhoneStandby) { if (standby.Count > 0) StopStandby(); return; }   // bug-hunt ML-111: your switch on the Phone page
             var now = Remote.Now; if (now != null && now.St != Remote.State.Ended && now.Known == null) { StopStandby(); return; }   // a code session is open
             if (now != null && now.Known != null && now.St == Remote.State.Paired) return;                                       // a remembered phone is connected
             List<RemotePhones.P> phones; try { phones = RemotePhones.All(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phones: " + e.Message); return; }
@@ -337,7 +348,7 @@ namespace AdeeboMeter
                 if (s != null && s.St != Remote.State.Ended && s.Slot == slot) continue;
                 int next = s != null && s.Slot == slot ? s.Attempt + 1 : 0;      // a room that closed (used, or timed out) can't be reused
                 if (s != null && s.St != Remote.State.Ended) s.End("a new room");
-                if (next > 4) continue;                                       // wait for the next slot
+                if (next > 11) continue;                                      // wait for the next slot (bug-hunt ML-112: 12 tries a slot, one every 15 s at most - 3 minutes of room changes, not 75 s)
                 var r = Remote.Standby(M, p, slot, next); Wire(r); standby[p.Id] = r;
             }
         }
@@ -346,10 +357,19 @@ namespace AdeeboMeter
         void KnownChanged(Remote r)
         {
             if (r.St != Remote.State.Paired || Remote.Now == r) return;
+            // bug-hunt ML-113: one live session at a time - a code session that's open (linking or linked) keeps the place
+            var cur = Remote.Now; if (cur != null && cur.Known == null && cur.St != Remote.State.Ended) { r.End("another phone is linked with a code"); return; }
             Remote.Now = r;
             foreach (var s in standby.Values) if (s != r && s.St != Remote.State.Ended) s.End("another phone connected");
             PhoneHub.Fire();   // the link button turns green with the phone's name; Your phone has End
             try { tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). The link button at the top shows it; Your phone > End now stops it."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
+        }
+        // a locked file double-clicked while AdeeboMeter already ran: the new copy left its path here and asked us to open
+        void OpenHandedFile()
+        {
+            string f = Path.Combine(Program.DataDir, "open-file.txt"), path = null;
+            try { if (File.Exists(f)) { path = File.ReadAllText(f).Trim(); File.Delete(f); } } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            if (path != null && path.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(path) && full != null && !full.IsDisposed) full.OpenLocked(path);
         }
         void OpenFull()
         {
@@ -403,7 +423,8 @@ namespace AdeeboMeter
         void OnSessionEnding(object s, Microsoft.Win32.SessionEndingEventArgs e)
         {
             Action stop = delegate { try { if (full != null && !full.IsDisposed) full.StopCaptures(); } catch (Exception ex) { Program.Log("session end: " + ex.Message); } };
-            try { if (marshal.InvokeRequired) marshal.Invoke(stop); else stop(); } catch (InvalidOperationException ex) { Program.Log("session end: " + ex.Message); }
+            // bug-hunt ML-38: at most 3 s for the UI thread - a blocked one doesn't stop the cleanup below
+            try { if (marshal.InvokeRequired) { var ar = marshal.BeginInvoke(stop); if (!ar.AsyncWaitHandle.WaitOne(3000)) Program.Log("session end: the window didn't answer - cleaning up without it"); } else stop(); } catch (InvalidOperationException ex) { Program.Log("session end: " + ex.Message); }
             Program.CleanCaptures();
             try { Usage.Save(); } catch (Exception ex) { if (ex is OutOfMemoryException) throw; Program.Log("session end: usage " + ex.Message); }   // Windows ends us after this: keep the last minutes of data used
         }
@@ -473,7 +494,7 @@ namespace AdeeboMeter
                 var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
                 if (ui.Interval != want) ui.Interval = want;
-                if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 400 : 2000) && !hovered)   // AM-CG-214   // AM-CG-192: re-judged when folded again, not by the open card's size
+                if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 800 : 2000) && !hovered)   // AM-CG-214; bug-hunt ML-146: the window walk every 0.8 s near the corner, not 0.4   // AM-CG-192: re-judged when folded again, not by the open card's size
                 {
                     lastCover = Clock.Mono;
                     bool c = WindowOver(Zone());

@@ -162,7 +162,7 @@ namespace AdeeboMeter
                         double x; try { x = CounterSample.Calculate(d1[i2.InstanceName].Sample, i2.Sample); } catch (InvalidOperationException) { continue; }
                         long l = luid(i2.InstanceName); if (l < 0) continue; double o; busy.TryGetValue(l, out o); busy[l] = Math.Min(100, o + x);
                         var pm = Regex.Match(i2.InstanceName, @"pid_(\d+)_"); int pid; if (x < 1 || !pm.Success || !int.TryParse(pm.Groups[1].Value, out pid)) continue;
-                        string nm; if (!names.TryGetValue(pid, out nm)) { nm = "pid " + pid; try { using (var p = Process.GetProcessById(pid)) nm = p.ProcessName; } catch (ArgumentException) { } catch (InvalidOperationException) { } names[pid] = nm; }
+                        string nm; if (!names.TryGetValue(pid, out nm)) { nm = "pid " + pid; try { using (var p = Process.GetProcessById(pid)) nm = p.ProcessName; } catch (ArgumentException) { } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }   /* bug-hunt ML-160: an elevated process keeps its pid as the name */ names[pid] = nm; }
                         Dictionary<string, double> a; if (!apps.TryGetValue(l, out a)) apps[l] = a = new Dictionary<string, double>(); double ao; a.TryGetValue(nm, out ao); a[nm] = ao + x;
                     }
                 var ded = new Dictionary<long, double>(); var sh = new Dictionary<long, double>();
@@ -217,7 +217,7 @@ namespace AdeeboMeter
             rows.Add(R(3, "Internet (last speed test)", double.IsNaN(plan) ? "no speed test yet this session - Toolbox > Speed test" : F(plan) + " Mbps = " + F(plan / 8) + " MB/s", "", double.IsNaN(plan) ? "u" : "m"));
             if (!double.IsNaN(s.NicMbps)) rows.Add(R(!double.IsNaN(plan) && s.NicMbps < plan * 1.1 ? 2 : s.NicMbps <= 100 && s.NicKind == "Cable" ? 1 : 0, "This PC's link", s.NicKind + " · " + F(s.NicMbps) + " Mbps" + (s.Nic != "" ? " (" + Cutl(s.Nic, 40) + ")" : ""),
                 s.NicKind == "Cable" && s.NicMbps <= 100 ? "A cable link at 100 Mbps: a damaged cable (one of 4 pairs broken), an old cable, or a 100 Mbps port. Most PCs and routers do 1,000." : !double.IsNaN(plan) && s.NicMbps < plan * 1.1 ? "Your link can't carry your plan - it's the cap, not your ISP." : "", "w"));
-            if (rate > 0) rows.Add(R(!double.IsNaN(plan) && rate < plan * 1.4 ? 1 : 0, "Wi-Fi link rate", rate + " Mbps (real throughput is about 60% of this)", !double.IsNaN(plan) && rate < plan * 1.4 ? "Wi-Fi delivers about 60% of its link rate, so this Wi-Fi can't reach your plan - closer to the router, 5 GHz, or a cable." : "", "w"));
+            if (rate > 0) rows.Add(R(!double.IsNaN(plan) && rate * 0.6 < plan * 1.1 ? 1 : 0, "Wi-Fi link rate",   /* bug-hunt ML-164: judged by the verdict's own 60% rule */ rate + " Mbps (real throughput is about 60% of this)", !double.IsNaN(plan) && rate * 0.6 < plan * 1.1 ? "Wi-Fi delivers about 60% of its link rate, so this Wi-Fi can't reach your plan - closer to the router, 5 GHz, or a cable." : "", "w"));
             if (Regex.IsMatch(s.Nic, @"USB 2|USB2", RegexOptions.IgnoreCase)) rows.Add(R(1, "USB adapter", "a USB 2 network adapter tops out near 300 Mbps", "Plug it into a blue USB 3 port, or use a USB 3 adapter.", "w"));
             // the disk can be the slowest part of a download: 1 Gbps internet = 125 MB/s. No speed test yet: no disk work either (PC-030)
             if (double.IsNaN(plan)) { rows.Insert(0, R(3, "Verdict", "Run a speed test first (Toolbox > Speed test); then this compares your plan with every part on the way to your files.", "", "u")); rows.Add(R(3, "How the link works", Explain("net", s), "", "i")); return rows; }
@@ -401,6 +401,10 @@ namespace AdeeboMeter
             // the narrowest pipe, from what's measured or specified
             string neck = sd != null && sd.Media == "HDD" && sd.System ? "the spinning hard disk Windows runs from" : s.Channels == 1 && s.Gpus.Any(g => g.Integrated) && !s.Gpus.Any(g => !g.Integrated && !g.Software) ? "single-channel memory shared with the built-in graphics"
                 : !double.IsNaN(dwr) && !double.IsNaN(dc) && dwr < dc * 0.3 ? "the disk's write speed (" + F(dwr) + " of " + F(dc) + " MB/s)" : s.RamGb < 8 ? "the amount of memory (" + Gb(s.RamGb) + ")" : !double.IsNaN(perf) && perf < 70 ? "the processor held back to " + F(perf) + "%" : "";
+            // bug-hunt ML-152: the network is a pipe too - a slow link to the router, or a slow internet in the last speed test
+            var st0 = SpeedTest.Last;
+            if (neck == "" && s.NicMbps > 0 && s.NicMbps < 100) neck = "the network link (" + F(s.NicMbps) + " Mbps to your router)";
+            else if (neck == "" && st0 != null && !double.IsNaN(st0.Down) && st0.Down < 25) neck = "your internet connection (" + F(st0.Down) + " Mb/s in the last speed test)";
             rows.Insert(0, R(neck == "" ? 0 : 1, "Narrowest pipe", neck == "" ? "nothing stands out - the parts are balanced" + (double.IsNaN(dr) ? " (run Disk speed and CPU held back? for measured numbers)" : "") : neck, "", "i"));
             return rows;
         }
@@ -427,8 +431,8 @@ namespace AdeeboMeter
                 if (h < 80) bad.Add("battery at " + F(h) + "% of new");
             }
             sec("DISK"); take(DiskSpeed("", true, run), "Disk speed");
-            var wear = HwSpecs.Wear();
-            if (wear != null) rows.Add(R(wear[0] > 50 || wear[3] > 0 ? 2 : wear[0] > 20 ? 1 : 0, "Disk wear", F(wear[0]) + "% worn · " + F(wear[1]) + " hours used" + (wear[2] > 0 ? " · " + F(wear[2]) + " °C" : "") + (wear[3] > 0 ? " · " + F(wear[3]) + " read errors" : "") + (wear[0] > 0 && wear[1] > 0 ? " · at this pace ≈ " + F((100 - wear[0]) / wear[0] * wear[1] / 2000) + " more years (2,000 h a year)" : ""), "", "w"));
+            var wsd = HwSpecs.SystemDisk(HwSpecs.Get()); var wear = HwSpecs.Wear(wsd != null && wsd.DeviceId != "" ? wsd.DeviceId : null);
+            if (wear != null) rows.Add(R(wear[0] > 50 || wear[3] > 0 ? 2 : wear[0] > 20 ? 1 : 0, "Disk wear" + (wsd != null && wsd.DeviceId != "" ? " (" + wsd.Name + ", Windows' disk)" : ""), F(wear[0]) + "% worn · " + F(wear[1]) + " hours used" + (wear[2] > 0 ? " · " + F(wear[2]) + " °C" : "") + (wear[3] > 0 ? " · " + F(wear[3]) + " read errors" : "") + (wear[0] > 0 && wear[1] > 0 ? " · at this pace ≈ " + F((100 - wear[0]) / wear[0] * wear[1] / 2000) + " more years (2,000 h a year)" : ""), "", "w"));
             else rows.Add(R(3, "Disk wear", "needs admin - right-click AdeeboMeter > Run as administrator to see wear %, hours used and temperature", "", "u"));
             sec("MEMORY, GRAPHICS, PROCESSOR"); take(Ram(run), "Memory"); take(Gpu(), "Graphics"); take(Cpu(run), "Processor");
             sec("HIDDEN TROUBLE");
@@ -444,7 +448,9 @@ namespace AdeeboMeter
         internal static List<string[]> Seller(string said, HwSpecs.Specs s)
         {
             var r = new List<string[]>(); said = said ?? "";
-            var ram = Regex.Match(said, @"(\d{1,3})\s*GB?\s*(?:RAM|DDR|memory|ram)?\b(?!\s*(?:SSD|HDD|NVMe|storage|disk))", RegexOptions.IgnoreCase);
+            // bug-hunt ML-157: memory needs its word (16GB RAM, 16 GB DDR4) - or a bare size small enough to only be memory (8GB, 16GB, up to 64)
+            var ram = Regex.Match(said, @"(\d{1,3})\s*GB?\s*(?:RAM|DDR\d?|LPDDR\d?x?|memory)\b", RegexOptions.IgnoreCase);
+            if (!ram.Success) { var bare = Regex.Match(said, @"\b(\d{1,2})\s*GB\b(?!\s*(?:SSD|HDD|NVMe|M\.2|storage|disk|drive|hard|flash|eMMC))", RegexOptions.IgnoreCase); if (bare.Success && int.Parse(bare.Groups[1].Value, CultureInfo.InvariantCulture) <= 64) ram = bare; }
             var disk = Regex.Match(said, @"(\d(?:\.\d)?\s*TB|\d{3,4}\s*GB?)\s*(?:SSD|HDD|NVMe|storage|disk)", RegexOptions.IgnoreCase);
             var cpu = Regex.Match(said, @"\b(i[3579]|ryzen\s*[3579]|core\s*ultra\s*[3579]|celeron|pentium|m[1-4])\b", RegexOptions.IgnoreCase);
             var gpu = Regex.Match(said, @"\b(rtx|gtx|rx)\s*\d{3,4}\w*", RegexOptions.IgnoreCase);
@@ -452,8 +458,10 @@ namespace AdeeboMeter
             if (disk.Success)
             {
                 string t = disk.Groups[1].Value.ToUpperInvariant().Replace(" ", ""); double want = t.EndsWith("TB", StringComparison.Ordinal) ? double.Parse(t.Replace("TB", ""), CultureInfo.InvariantCulture) * 1000 : double.Parse(Regex.Replace(t, "[^0-9]", ""), CultureInfo.InvariantCulture);
-                double have = s.Disks.Where(d => d.Bus != "USB").Select(d => d.Gb).DefaultIfEmpty(0).Max(); bool ok = have >= want * 0.9 && have <= want * 1.15;
-                bool ssdSaid = Regex.IsMatch(disk.Value, "SSD|NVMe", RegexOptions.IgnoreCase); var sd = HwSpecs.SystemDisk(s); bool hdd = sd != null && sd.Media == "HDD";
+                // bug-hunt ML-158: the disk that matches the size is the one checked for SSD too (a big data HDD beside a 512 GB system SSD is fine)
+                var cands = s.Disks.Where(d => d.Bus != "USB").ToList(); var md = cands.Where(d => d.Gb >= want * 0.9 && d.Gb <= want * 1.15).OrderBy(d => Math.Abs(d.Gb - want)).FirstOrDefault();
+                double have = md != null ? md.Gb : cands.Select(d => d.Gb).DefaultIfEmpty(0).Max(); bool ok = md != null;
+                bool ssdSaid = Regex.IsMatch(disk.Value, "SSD|NVMe", RegexOptions.IgnoreCase); var sd = md ?? HwSpecs.SystemDisk(s); bool hdd = sd != null && sd.Media == "HDD";
                 r.Add(R(ok && !(ssdSaid && hdd) ? 0 : 2, "Seller said: " + disk.Value.Trim(), (ok ? "size matches (" + F(have) + " GB)" : "this PC's disk is " + F(have) + " GB") + (ssdSaid && hdd ? " - but it's a spinning hard disk, not an SSD" : ""), "", "w"));
             }
             if (cpu.Success) { string w = cpu.Groups[1].Value.Replace(" ", "").ToLowerInvariant(); bool ok = s.Cpu.Replace(" ", "").IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0; r.Add(R(ok ? 0 : 2, "Seller said: " + cpu.Value, ok ? "matches (" + s.Cpu + ")" : "this PC has " + s.Cpu, "", "w")); }

@@ -154,7 +154,7 @@ namespace AdeeboMeter
         // ================================================================== bufferbloat: small packets stuck behind big ones
         float VisQueue(Graphics g, float x, float y, float w, string st)
         {
-            double idle = RowMs(Big("Idle")), down = RowMs(Big("Download busy")), up = RowMs(Big("Upload busy")); if (double.IsNaN(idle)) { idle = 12; down = 40; up = 150; }
+            double idle = RowMs(Big("Idle")), down = RowMs(Big("During download")), up = RowMs(Big("During upload"));   /* bug-hunt M-27: Toolkit.Loaded's own row names */ if (double.IsNaN(idle)) { idle = 12; down = 40; up = 150; }
             var r = VisCard(g, x, y, w, 250 * S, "YOUR PING, QUIET AND WHILE THE LINE IS FULL", st);
             var rows = new[] { new object[] { L.T("Quiet"), idle, 0 }, new object[] { L.T("Downloading"), down, 1 }, new object[] { L.T("Uploading"), up, 2 } };
             float lx = r.X + 140 * S, lw = r.Width - 280 * S, ly = r.Y + 50 * S; bool live = WindowsAnimates();
@@ -233,7 +233,7 @@ namespace AdeeboMeter
             HotelDefault = { "Wi-Fi lock", "Sign-in page", "DNS", "Windows treats it as", "Other devices seen", "VPN" };
         float VisFork(Graphics g, float x, float y, float w, string st)
         {
-            string goes = Big("Goes out"), why = Big("Why this way"); string dst = VisIn()[0] != "" ? VisIn()[0] : "198.51.100.40"; bool vpn = Regex.IsMatch(goes, "vpn|tunnel|wireguard|tap|tun", RegexOptions.IgnoreCase);
+            string goes = Res().Where(o => o.Length > 2 && o[2].StartsWith("leaves through", StringComparison.Ordinal)).Select(o => o[2]).FirstOrDefault() ?? "", why = RV("Because of");   /* bug-hunt M-25: the engine's own rows (RoutingTools.RouteFor) */ string dst = VisIn()[0] != "" ? VisIn()[0] : "198.51.100.40"; bool vpn = Regex.IsMatch(goes, "vpn|tunnel|wireguard|tap|tun", RegexOptions.IgnoreCase);
             var r = VisCard(g, x, y, w, 230 * S, "WHICH WAY A PACKET TO " + dst + " GOES", st);
             float sx = r.X + 60 * S, fx = r.X + r.Width * 0.38f, ex = r.Right - 80 * S, cy = r.Y + 110 * S, upY = cy - 50 * S, dnY = cy + 50 * S;
             VNode(g, sx, cy, 20 * S, "devices", Theme.Blue, true);
@@ -278,15 +278,19 @@ namespace AdeeboMeter
         // ================================================================== overlapping networks: two ranges, one clash
         float VisOverlap(Graphics g, float x, float y, float w, string st)
         {
-            string home = Big("Home network").Split(' ')[0], vpnR = Big("VPN routes"); var vpns = vpnR.Split(',').Select(z => z.Trim().Split(' ')[0]).Where(z => z.Contains("/")).ToList();
-            if (home == "") { home = "10.0.0.0/24"; vpns = new List<string> { "10.0.0.0/8" }; }
+            // bug-hunt M-26: PathTools.Overlap names its rows by adapter ("Ethernet", "Ethernet (VPN)") with the range as the value
+            var nets = Res().Where(o => o.Length > 2 && o[1] != "Overlap" && o[2].Contains("/") && !o[2].Contains(" ")).ToList();
+            string home = nets.Where(o => !o[1].EndsWith("(VPN)", StringComparison.Ordinal)).Select(o => o[2]).FirstOrDefault() ?? "";
+            var vpns = nets.Where(o => o[1].EndsWith("(VPN)", StringComparison.Ordinal)).Select(o => o[2]).ToList();
+            bool ran = Res().Any(o => o.Length > 1 && o[1] == "Overlap"), clash = RV("Overlap") != "" && !RV("Overlap").StartsWith("none", StringComparison.Ordinal);
+            if (home == "" && !ran) { home = "10.0.0.0/24"; vpns = new List<string> { "10.0.0.0/8" }; }   // the example, before a run
             var r = VisCard(g, x, y, w, 170 * S, "YOUR HOME RANGE AND THE VPN'S RANGES", st);
             uint hip; int hp; V4Mask(home, out hip, out hp); float bx = r.X + 140 * S, bw = r.Width - 170 * S, by = r.Y + 56 * S;
             var vp = vpns.Select(z => { uint ip; int p; return V4Mask(z, out ip, out p) && p >= 0 ? new { S = z, Net = ip & (p == 0 ? 0 : 0xFFFFFFFFu << (32 - p)), Size = Math.Pow(2, 32 - p) } : null; }).Where(z => z != null).ToList();
             double lo = vp.Count > 0 ? vp.Min(z => (double)z.Net) : hip, hi = vp.Count > 0 ? vp.Max(z => z.Net + z.Size) : hip + 256; if (hi <= lo) hi = lo + 256;
             Func<double, float> X = v => bx + (float)((v - lo) / (hi - lo)) * bw;
             VText(g, L.T("VPN"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 2 * S); foreach (var v in vp) { Theme.Fill(g, new RectangleF(X(v.Net), by, Math.Max(4 * S, X(v.Net + v.Size) - X(v.Net)), 22 * S), 5 * S, VPurple); VText(g, v.S, Draw.fTiny, Color.White, X(v.Net) + 6 * S, by + 4 * S); }
-            uint hn = hip & (hp <= 0 ? 0 : 0xFFFFFFFFu << (32 - hp)); double hs = Math.Pow(2, 32 - Math.Max(0, hp)); bool inside = vp.Any(v => hn >= v.Net && hn < v.Net + v.Size);
+            uint hn = hip & (hp <= 0 ? 0 : 0xFFFFFFFFu << (32 - hp)); double hs = Math.Pow(2, 32 - Math.Max(0, hp)); bool inside = ran ? clash : vp.Any(v => hn < v.Net + v.Size && v.Net < hn + hs);   // after a run the engine's verdict; ranges overlap when either starts inside the other
             VText(g, L.T("Home"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 42 * S); float hx = X(hn); Theme.Fill(g, new RectangleF(Math.Max(bx, Math.Min(bx + bw - 8 * S, hx)), by + 40 * S, Math.Max(8 * S, X(hn + hs) - hx), 22 * S), 5 * S, inside ? Theme.Red : Theme.Green);
             VText(g, home + (inside ? "  -  " + L.T("inside the VPN's range: those addresses go home instead") : "  -  " + L.T("no overlap")), Draw.fSmall, inside ? Theme.LvText(2) : Theme.LvText(0), bx, by + 68 * S);
             VFoot(g, r, "Change your router's range (e.g. to 192.168.77.0/24) and the clash goes away.");
@@ -295,8 +299,9 @@ namespace AdeeboMeter
         // ================================================================== where did my space go: a treemap
         float VisSpace(Graphics g, float x, float y, float w, string st)
         {
-            var items = VisRows().Skip(1).Select(o => new { N = o[1], V = VNum(o[2], @"([0-9.]+)\s*GB") }).Where(z => !double.IsNaN(z.V) && z.V > 0).OrderByDescending(z => z.V).Take(8).ToList();
-            var disk = VisRows().FirstOrDefault(); double used = disk == null ? double.NaN : VNum(disk[2], @"([0-9.]+)\s*GB");
+            // bug-hunt ML-182: every row is a folder (PcHealth.Space has no disk row first) - the biggest one included
+            var items = VisRows().Select(o => new { N = o[1], V = VNum(o[2], @"([0-9.]+)\s*GB") }).Where(z => !double.IsNaN(z.V) && z.V > 0).OrderByDescending(z => z.V).Take(8).ToList();
+            double used = double.NaN;
             var r = VisCard(g, x, y, w, 220 * S, "WHERE THE SPACE WENT - BIGGER BOX, BIGGER FOLDER", st);
             if (items.Count == 0) { VText(g, L.T("Run it to see your biggest folders as boxes."), Draw.fBody, Theme.Muted, r.X + 18 * S, r.Y + 60 * S); return r.Bottom + 14 * S; }
             double tot = Math.Max(items.Sum(z => z.V), double.IsNaN(used) ? 0 : used); var area = new RectangleF(r.X + 18 * S, r.Y + 44 * S, r.Width - 36 * S, 160 * S);

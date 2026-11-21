@@ -94,6 +94,9 @@ namespace AdeeboMeter
             string ev = (every ?? "").Trim().ToLowerInvariant(); int mins;
             var rows = new List<string[]>();
             if (ev == "off" || ev == "stop") { if (SetWatch(0, "")) rows.Add(R(0, "Watching", "stopped - no more background checks", "", "i")); else rows.Add(R(2, "Watching", "couldn't stop it - the watch file can't be changed, so checks carry on", "Check that AdeeboMeter's data folder isn't read-only, then try Off again.", "i")); return rows; }
+            // bug-hunt ML-104: a schedule with nothing to watch isn't saved
+            bool nothing = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).Length == 0; if (nothing) lock (Cfg.Pins) nothing = Cfg.Pins.Count == 0;
+            if (ev != "" && ev != "off" && ev != "stop" && nothing) { rows.Add(R(1, "Watching", "nothing to watch - type hosts and ports first, then the minutes", "", "u")); return rows; }
             if (ev != "") { if (int.TryParse(ev, NumberStyles.None, CultureInfo.InvariantCulture, out mins) && mins >= 1) { if (!SetWatch(Math.Min(1440, mins), list ?? "")) rows.Add(R(2, "Watching", "couldn't save the schedule - the data folder can't be written", "", "i")); } else rows.Add(R(1, "Watching", "didn't understand \"" + every + "\" - type minutes (1-1440) or off; watching is unchanged", "", "u")); } var items = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).ToList();
             if (items.Count == 0) { string[] pins; lock (Cfg.Pins) pins = Cfg.Pins.ToArray(); items = pins.Select(Security.HostOf).Where(x => x != null).Distinct().ToList(); }
             if (items.Count == 0) { rows.Add(R(3, "Service board", "type hosts and ports, e.g. nas.local:445, mail.example.com:587, 192.0.2.10:22", "Or pin sites in Investigate › Check a destination - they show here.", "u")); return rows; }
@@ -119,7 +122,10 @@ namespace AdeeboMeter
         public static List<string[]> GoLive(Monitor m, string bitrate, string service, Toolkit.Run run)
         {
             var rows = new List<string[]>(); int warn = 0; var ic = CultureInfo.InvariantCulture;
-            double kbps; if (!double.TryParse((bitrate ?? "").Trim().Replace("kbps", "").Trim(), NumberStyles.Float, ic, out kbps) || double.IsNaN(kbps) || double.IsInfinity(kbps) || kbps <= 0 || kbps > 500000) kbps = 6000;   // R2-06: "NaN" and "Infinity" parse as numbers - not a bitrate
+            // bug-hunt ML-102: empty means the usual 6000; anything else that isn't a bitrate is said, not swapped silently
+            string bt = (bitrate ?? "").Trim(); double kbps;
+            if (bt == "") kbps = 6000;
+            else if (!double.TryParse(System.Text.RegularExpressions.Regex.Replace(bt, @"\s*(kbps|kb/s|kbit/s|k)$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase), NumberStyles.Float, ic, out kbps) || double.IsNaN(kbps) || double.IsInfinity(kbps) || kbps <= 0 || kbps > 500000) { rows.Add(R(2, "Bitrate", "type the stream's bitrate in kbps, e.g. 6000", "", "u")); return rows; }   // R2-06: "NaN" and "Infinity" parse as numbers - not a bitrate
             string sv = (service ?? "").Trim().ToLowerInvariant(); var ing = Ingest.FirstOrDefault(z => sv == "" ? z[0] == "twitch" : z[0] == sv || string.Equals(z[1], sv, StringComparison.OrdinalIgnoreCase));
             string host = ing != null ? ing[2] : sv, name = ing != null ? ing[1] : sv;
             rows.AddRange(Pc(m, ref warn));

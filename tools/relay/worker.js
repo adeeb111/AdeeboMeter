@@ -40,12 +40,16 @@ export default {
     // whatever it calls itself; only a request with no browser origin is treated as the app (and gets the app's limits)
     const browser = origin !== "", from = browser ? "site" : "app";
     if (!kind) return out(400, { ok: false, why: "unknown kind" });
+    // bug-hunt ML-19: the app can't prove a person is there, so a request without an Origin must at least look like the app -
+    // and its counts rely on the atomic LIMITER binding (the KV counts below are best effort: two requests at once can both pass)
+    if (!browser && !/^AdeeboMeter\/\d/.test(req.headers.get("User-Agent") || "")) return out(403, { ok: false, why: "send it from AdeeboMeter or adeebometer.com" });
     if (browser && !ORIGINS.includes(origin)) return out(403, { ok: false, why: "not from adeebometer.com" });
 
     // the website proves a person is there (Turnstile); the app can't, so it leans on the counts below
     if (from === "site") {
       const f = new FormData(); f.append("secret", env.TURNSTILE_SECRET); f.append("response", String(m.turnstile || "")); f.append("remoteip", req.headers.get("CF-Connecting-IP") || "");
-      const t = await (await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: f })).json();
+      // bug-hunt ML-121: a Turnstile outage is a plain 503 with a reason, not an unhandled 500
+      let t; try { t = await (await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: f, signal: AbortSignal.timeout(8000) })).json(); } catch (e) { return out(503, { ok: false, why: "the robot check isn't answering - try again in a minute" }); }
       if (!t.success) return out(403, { ok: false, why: "the check didn't pass - try again" });
     }
     // at most 5 an hour and 20 a day from one address (the address itself is only hashed, never kept)
@@ -60,6 +64,8 @@ export default {
     const clean = s => String(s || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
       .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "<email>")
       .replace(/\b\d{1,3}(\.\d{1,3}){3}\b/g, "<ip>")
+      .replace(/\b[0-9A-Fa-f]{2}([:-])[0-9A-Fa-f]{2}(\1[0-9A-Fa-f]{2}){4}\b/g, "<mac>")          // bug-hunt ML-30: 00:1a:2b:3c:4d:5e / 00-1A-2B-...
+      .replace(/\b[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\b/g, "<mac>")                  // and Cisco's 001a.2b3c.4d5e
       .replace(/(?<![\w:])(?:[0-9A-Fa-f]{1,4}:){0,7}:(?:[0-9A-Fa-f]{1,4}:?){0,7}(?:%[\w.-]+)?(?![\w:])/g, x => x.includes("::") && x.length > 2 ? "<ipv6>" : x)   // AM-CG-215: compressed / scoped IPv6
       .replace(/\b([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/g, "<ipv6>")
       .replace(/\\\\[\w.$-]+(?:\\[^\s"'<>|]*)?/g, "<path>")                     // \\server\share\...
@@ -78,11 +84,11 @@ export default {
       if (!title) title = (kind === "bug" ? "Bug: " : "Feedback: ") + body.split("\n")[0].slice(0, 80);
       body = body + "\n\n---\nSent from " + (from === "app" ? "the app" + (version ? " " + version : "") : "adeebometer.com/report") + " through the relay - not checked by a person yet.";
     }
-    const gh = await fetch("https://api.github.com/repos/" + REPO + "/issues", {
-      method: "POST",
+    let gh; try { gh = await fetch("https://api.github.com/repos/" + REPO + "/issues", {
+      method: "POST", signal: AbortSignal.timeout(10000),
       headers: { "Authorization": "Bearer " + env.GITHUB_TOKEN, "Accept": "application/vnd.github+json", "User-Agent": "adeebometer-relay", "X-GitHub-Api-Version": "2022-11-28" },
       body: JSON.stringify({ title, body, labels: [KINDS[kind], "from-" + from] })
-    });
+    }); } catch (e) { return out(503, { ok: false, why: "couldn't reach GitHub just now - it will try again" }); }
     if (!gh.ok) return out(502, { ok: false, why: "couldn't file it just now - it will try again" });
     const made = await gh.json();
     return out(200, { ok: true, number: made.number });

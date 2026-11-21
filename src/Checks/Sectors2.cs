@@ -33,7 +33,9 @@ namespace AdeeboMeter
             run.Status = "Open ports..."; var open = new List<int>();
             foreach (var p in Watched.Concat(Watched.Contains(port) ? Enumerable.Empty<int>() : new[] { port })) { if (run.Stop) return rows; using (var c = Toolkit.Open(host, p, 2000)) if (c != null) open.Add(p); }
             now["Open ports"] = open.Count == 0 ? "(none of " + Watched.Length + ")" : string.Join(" ", open.Select(p => p.ToString(CultureInfo.InvariantCulture)).ToArray());
-            if (open.Contains(443)) { run.Status = "Certificate..."; string iss, exp, fp; Cert(host, out iss, out exp, out fp); if (iss != "") { now["Certificate issuer"] = iss; now["Certificate expires"] = exp; now["Certificate fingerprint"] = fp; } }
+            // bug-hunt ML-103: the certificate on the port you named too (8443, 993, 636...), not only 443
+            int certPort = open.Contains(port) && port != 22 && port != 25 && port != 80 && port != 53 ? port : open.Contains(443) ? 443 : -1;
+            if (certPort > 0) { run.Status = "Certificate..."; string iss, exp, fp; DateTime na0; Cert(host, certPort, out iss, out exp, out fp, out na0); if (iss != "") { now["Certificate issuer"] = iss; now["Certificate expires"] = exp; now["Certificate fingerprint"] = fp; } }
             if (open.Contains(22)) now["SSH banner"] = Banner(host, 22);
             if (open.Contains(25)) now["SMTP banner"] = Banner(host, 25);
 

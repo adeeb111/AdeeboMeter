@@ -58,7 +58,10 @@ namespace AdeeboMeter
         List<Conn> procConns; volatile bool procConnBusy;
         void LoadProcConns(string name)
         {
-            if (procConnBusy) return; procConnBusy = true;
+            if (procConnBusy) return;
+            // bug-hunt ML-143: the connection list the page already read in the last 10 seconds is used, not a fresh read of every table
+            var snap = connSnap; if (snap != null && (DateTime.UtcNow - lastConns).TotalSeconds < 10) { procConns = snap.Where(c => c.Proc == name).ToList(); procInfo.Invalidate(); return; }
+            procConnBusy = true;
             Task.Factory.StartNew(() =>
             {
                 List<Conn> l = null; try { l = M.Connections(true).Where(c => c.Proc == name).ToList(); } catch (Exception e) { Program.Log("app connections: " + e.Message); }
@@ -94,6 +97,8 @@ namespace AdeeboMeter
                 try { BeginInvoke((Action)delegate { if (procSel == name) { procFacts = f; procPathSel = path; procInfo.Invalidate(); } }); } catch { }
             });
         }
+        sealed class ProcRow { public AppStat A; public Explain.Entry E; public string C; }
+        List<AppStat> procRowsFor; string procRowsKey = ""; int procRowsCount; readonly Dictionary<string, List<ProcRow>> procRowsByCat = new Dictionary<string, List<ProcRow>>();
         bool procByCpu;   // Review-1: the list says which way it's sorted - Memory (default) or CPU, a click on the header swaps
         void PaintProcList(Graphics g)
         {
@@ -101,15 +106,19 @@ namespace AdeeboMeter
             Begin(procList);
             float x = 14 * S, y = 4 * S + 30 * S, w = procList.ClientSize.Width - 22 * S, rh = 42 * S;
             string q = procSearch.Box.Text.Trim();
-            var items = procs.Where(a => a.Name != "Idle").Select(a => new { A = a, E = Explain.Find(a.Name) ?? Explain.Find(Monitor.RawOf(a.Name)), C = CatOf(a) })
+            // bug-hunt ML-142: filtered and sorted only when the list, the search or the order changes - not on every paint
+            string pk = q + "|" + procByCpu; if (!ReferenceEquals(procRowsFor, procs) || pk != procRowsKey) { procRowsFor = procs; procRowsKey = pk; procRowsByCat.Clear();
+            var items = procs.Where(a => a.Name != "Idle").Select(a => new ProcRow { A = a, E = Explain.Find(a.Name) ?? Explain.Find(Monitor.RawOf(a.Name)), C = CatOf(a) })
                              .Where(i => q == "" || i.A.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (i.E != null && (i.E.Friendly.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || i.E.Tag.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
+            procRowsCount = items.Count;
+            foreach (var grp in items.GroupBy(i => i.C)) procRowsByCat[grp.Key] = (procByCpu ? grp.OrderByDescending(i => i.A.Cpu).ThenByDescending(i => i.A.Mem) : grp.OrderByDescending(i => i.A.Mem)).ToList(); }
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (items.Count == 0) g.DrawString(procs.Count == 0 ? Voice.P("Reading the process list...", "Loading...") : "Nothing matches.", Draw.fBody, muted, x, y + 8 * S);
+                if (procRowsCount == 0) g.DrawString(procs.Count == 0 ? Voice.P("Reading the process list...", "Loading...") : "Nothing matches.", Draw.fBody, muted, x, y + 8 * S);
                 foreach (var cat in Explain.CatOrder)
                 {
-                    var rows = (procByCpu ? items.Where(i => i.C == cat).OrderByDescending(i => i.A.Cpu).ThenByDescending(i => i.A.Mem) : items.Where(i => i.C == cat).OrderByDescending(i => i.A.Mem)).ToList();
+                    List<ProcRow> rows; if (!procRowsByCat.TryGetValue(cat, out rows)) rows = new List<ProcRow>();
                     if (rows.Count == 0) continue;
                     y += 8 * S;
                     g.DrawString(cat.ToUpperInvariant() + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;

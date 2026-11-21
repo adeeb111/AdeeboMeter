@@ -237,7 +237,7 @@ namespace AdeeboMeter
                 if (idx > 0 && inb.Skip(idx).Count(x => Math.Abs(x.Ttl - first) >= 2) >= 5) findings.Add(N(1, "The route changed during the capture", "Replies started arriving with a different hop count (TTL " + first + " → " + inb[idx].Ttl + ") - the internet moved this conversation to another road mid-way. A short spike or a few lost packets around " + At(inb[idx].T) + " are normal when that happens.", inb[idx].T));
             }
             // per kind
-            if (kind == "realtime" || (kind == "unknown" && f.Udp)) RealTime(findings, inb, outb, dur, wifi);
+            if (kind == "realtime" || (f.Udp && (kind == "unknown" || kind == "local"))) RealTime(findings, inb, outb, dur, wifi);   // bug-hunt ML-74: a UDP flow on the home network has a rhythm too
             if (!f.Udp) TcpRules(findings, data, inb, outb, dur, kind);
             if (kind == "dns") Dns(findings, data);
             if (kind == "vpn") Vpn(findings, data);
@@ -299,7 +299,8 @@ namespace AdeeboMeter
             int synTries = tcp.Count(x => x.Out && (x.Flags & 0x12) == 0x02);
             if (syn != null && synack == null) n.Add(N(2, "The server never answered", "This PC asked to connect " + synTries + " time(s) and got no reply - a firewall dropping it, the server down, or the wrong port.", syn.T));
             else if (synTries > 1) n.Add(N(1, "The first try to connect was lost", "The connection request went " + synTries + " times before the server answered - each retry waits 1-3 s, which is the delay you saw.", syn.T));
-            double rtt = syn != null && synack != null ? synack.T - syn.T : double.NaN;
+            var lastSyn = synack == null ? null : tcp.LastOrDefault(x => x.Out && (x.Flags & 0x12) == 0x02 && x.T <= synack.T);   // bug-hunt ML-73: timed from the try that was answered, not a lost first one
+            double rtt = lastSyn != null && synack != null ? synack.T - lastSyn.T : double.NaN;
             if (!double.IsNaN(rtt)) n.Add(N(rtt > 0.15 ? 1 : 3, "Round trip to the server", Ms(rtt) + " (from the connection handshake)" + (rtt > 0.15 ? " - far away or a slow path; every request waits at least this long." : "."), synack.T));
             int resIn = inb.Count(x => x.Resend), resOut = outb.Count(x => x.Resend), dupIn = inb.Count(x => x.DupAck), dupOut = outb.Count(x => x.DupAck);
             int dataIn = inb.Count(x => x.PayLen > 0 && !x.Keepalive), dataOut = outb.Count(x => x.PayLen > 0 && !x.Keepalive);

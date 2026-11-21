@@ -62,8 +62,11 @@ namespace AdeeboMeter
             if (!string.IsNullOrEmpty(pc) && pc.Length >= 2) s = Regex.Replace(s, Regex.Escape(pc), "<pc>", RegexOptions.IgnoreCase);
             s = email.Replace(s, "<email>"); s = mac.Replace(s, "<mac>"); s = unc.Replace(s, "<path>"); s = anyPath.Replace(s, m => m.Value.StartsWith("<", StringComparison.Ordinal) ? m.Value : "<path>");
             s = ipv6.Replace(s, "<ipv6>"); s = ipv6short.Replace(s, m => m.Value.Contains("::") && m.Value.Length > 2 ? "<ipv6>" : m.Value); s = ipv4.Replace(s, "<ip>");
-            s = host.Replace(s, m => NotHost.Contains(m.Groups[1].Value) || OkHosts.Contains(m.Value) || char.IsUpper(m.Value[0]) && !m.Value.Contains("-") && m.Value.Split('.').Length == 2 && char.IsUpper(m.Value.Split('.')[1][0]) ? m.Value : "<host>");   // "System.IO" stays, "nas.home.lan" goes
+            s = host.Replace(s, m => NotHost.Contains(m.Groups[1].Value) || OkHosts.Contains(m.Value) || CodeName(m.Value) ? m.Value : "<host>");   // "System.IO" stays, "nas.home.lan" goes
             return s;
         }
+        // bug-hunt ML-165: only code names stay (System.IO, Microsoft.Win32, AdeeboMeter.Remote) - "Jane.Smith" or "Office.Laptop" go
+        static readonly HashSet<string> CodeRoots = new HashSet<string>(StringComparer.Ordinal) { "System", "Microsoft", "AdeeboMeter", "Windows", "Interop", "Mono" };
+        static bool CodeName(string v) { var p = v.Split('.'); return p.Length >= 2 && !v.Contains("-") && CodeRoots.Contains(p[0]) && p.All(z => z.Length > 0 && char.IsUpper(z[0])); }
     }
 }

@@ -72,6 +72,7 @@ gh release download $tag -R adeeb111/AdeeboMeter -D $chk -p "AdeeboMeter.exe" -p
 $bad = 0
 foreach ($l in Get-Content (Join-Path $chk "SHA256SUMS")) { $h, $n = $l -split "  ", 2; if ($n) { $ok = (Sha (Join-Path $chk $n)) -eq $h; Write-Host ("  " + $(if ($ok) { "OK  " } else { "BAD " }) + $n); if (-not $ok) { $bad++ } } }
 $sig = Get-AuthenticodeSignature (Join-Path $chk "AdeeboMeter.exe")
-Write-Host "  signature: $($sig.Status) - $($sig.SignerCertificate.Subject.Split(',')[0])"
+$who = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject.Split(',')[0] } else { "no signer" }   # bug-hunt ML-90: an unsigned or broken file has no certificate to name
+Write-Host "  signature: $($sig.Status) - $who"
 if ($bad -or $sig.Status -ne "Valid") { throw "something doesn't match - look before announcing the release" }
 Write-Host "Done: $tag is signed. GitHub built $built, signed $signed."

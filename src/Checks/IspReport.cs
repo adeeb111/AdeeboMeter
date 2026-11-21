@@ -65,6 +65,7 @@ namespace AdeeboMeter
             }
             // this report measures IPv4 (the hop probes are IPv4 ICMP): an IPv6 address, or a name with only IPv6 ones, says so
             if (routes.Count > 0 && routes[0].Ip == null && routes[0].V6Only) { rows.Add(R(3, "Target", routes[0].Host + " has only IPv6 addresses - this report measures the IPv4 path only", "", "u")); return rows; }
+            foreach (var r in routes.Skip(1).Where(r => r.Ip == null && r.V6Only)) rows.Add(R(3, r.Label, r.Host + " has only IPv6 addresses - left out (this report measures the IPv4 path)", "", "m"));   // bug-hunt ML-107: said, not silently dropped
             routes.RemoveAll(r => r.Ip == null);
             if (routes.Count == 0) { rows.Add(R(2, "Target", "the name doesn't resolve - check the spelling, or DNS is down (try What's wrong?)", "", "m")); return rows; }
 
@@ -113,7 +114,9 @@ namespace AdeeboMeter
             // each part of the path
             rows.Add(R(-1, "EACH PART OF THE PATH", main.Label + " · " + main.Hops.Sum(h => h.Sent) + " probes", "", "m"));
             if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), "", "m"));
-            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), "Provider, first hop (" + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
+            // bug-hunt ML-95: with a VPN on, a private first hop is the tunnel's far end, not the provider
+            IPAddress fa; bool viaTunnel = firstIsp >= 0 && vpnOn && IPAddress.TryParse(main.Hops[firstIsp].Ip, out fa) && Private(fa);
+            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), (viaTunnel ? "First hop through the VPN tunnel (" : "Provider, first hop (") + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
             if (start >= 0) { var h = main.Hops[start]; rows.Add(R(2, "Where loss starts (hop " + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
             if (end != null) rows.Add(R(Shown(Loss(end), start >= 0 && end.N >= main.Hops[start].N), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
 
