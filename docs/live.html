@@ -115,7 +115,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <h2 data-ic="chart">Stock movers</h2>
 <div class="pickrow"><label class="dd"><small>Exchange</small><select id="exch" aria-label="Exchange"><option value="us">US · NYSE and Nasdaq</option><option disabled>Toronto (TSX) - not yet</option><option disabled>London (LSE) - not yet</option><option disabled>India (NSE) - not yet</option><option disabled>Dhaka (DSE) - not yet</option></select></label></div>
 <div class="seg3" id="mvseg"><button class="on" data-mv="up">Best</button><button data-mv="dn">Worst</button><button data-mv="act">Most traded</button></div>
-<p class="src" id="mvsrc">End of day · Alpha Vantage</p>
+<p class="src" id="mvsrc">End of day</p>
 <div id="mv" class="mut">Loading…</div>
 </section>
 
@@ -174,7 +174,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </div>
 <a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
 <div id="amv-pick-at" style="margin:18px 0 0"></div>
-<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpha Vantage (US stock movers, end of day), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
+<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpaca (US stock movers, the shared daily copy), Alpha Vantage (US stock movers with your own key), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
 </main>
 <script>
 (function(){
@@ -340,7 +340,7 @@ var MV=null,mvk="up";
 function toKeys(){return"<a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>"}
 function drawMv(){if(!MV){return}
   if(MV.error){$("mv").innerHTML=MV.mineErr?"<span class='err'>Your Alpha Vantage key didn't work ("+esc(MV.mineErr)+"), and the shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+" either.</span> "+toKeys()+"Replace your key</a>":"<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> "+toKeys()+"Add your own free key</a>";return}
-  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
+  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · "+(MV.src||"Alpha Vantage")+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
   $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
 function shared(){return jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})}
 function movers(){var g=SGEN;if(key("av"))kreq("av").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});

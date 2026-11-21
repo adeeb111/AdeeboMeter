@@ -108,23 +108,50 @@ const mv = l => (l || []).map(x => ({ t: String(x.ticker || "").slice(0, 10), p:
 const avWhy = m => /rate limit|requests per day|per minute|frequency|premium|thank you for using/i.test(m) ? "the daily limit is used up" : /invalid|apikey|api key/i.test(m) ? "the key was refused" : "no answer";
 const movers = (key, d) => { const m = d.Information || d.Note || d["Error Message"]; if (m) throw new Error(avWhy(String(m))); return { day: String(d.last_updated || "").slice(0, 16), up: mv(d.top_gainers), dn: mv(d.top_losers), act: mv(d.most_actively_traded) }; };
 const avShared = env => cached("av", 12 * 3600, 3 * 86400, async () => { if (!env || !env.AV_KEY) throw new Error("nokey"); return movers(env.AV_KEY, await get("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), 12 * 3600)); });
+// ---- Alpaca (Adeeb, 21 Nov): the shared daily copy now comes from Alpaca's free market-data screener. Alpaca counts by
+// account key, not by the address a call comes from, so Cloudflare's shared outgoing addresses can't use our allowance up
+// the way they did with Alpha Vantage (17 Nov: the scheduled call and its retry were both refused). Two Cloudflare
+// secrets, typed by Adeeb: "wrangler secret put ALPACA_KEY_ID" and "wrangler secret put ALPACA_SECRET" - never in this file.
+// Three calls a day: gainers and losers, the most traded, and those few symbols' prices. Visitors never call Alpaca.
+const ALP = "https://data.alpaca.markets";
+const apWhy = st => st === 401 || st === 403 ? "the key was refused" : st === 429 ? "the limit is used up" : "no answer";
+async function apGet(env, path) {
+  const r = await fetch(ALP + path, { headers: { "APCA-API-KEY-ID": env.ALPACA_KEY_ID, "APCA-API-SECRET-KEY": env.ALPACA_SECRET, "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(15000), cf: { cacheTtl: -1 } });
+  if (!r.ok) throw new Error(apWhy(r.status));   // only our own sentence - never the provider's words
+  try { return await r.json(); } catch (e) { throw new Error("no answer"); }
+}
+const apMv = l => mv((l || []).map(x => ({ ticker: x.symbol, price: x.price, change_percentage: String(x.percent_change), volume: 0 })));
+async function alpacaMovers(env) {
+  const m = await apGet(env, "/v1beta1/screener/stocks/movers?top=25");
+  const a = await apGet(env, "/v1beta1/screener/stocks/most-actives?by=volume&top=25");
+  const act = (a.most_actives || []).map(x => ({ t: String(x.symbol || "").slice(0, 10), v: +x.volume || 0 })).filter(x => x.t && !/[^A-Z.]/.test(x.t)).slice(0, 12);
+  let px = {}; if (act.length) { try { px = await apGet(env, "/v2/stocks/snapshots?feed=iex&symbols=" + encodeURIComponent(act.map(x => x.t).join(","))); } catch (e) { px = {}; } }
+  const actL = act.map(x => { const s = px[x.t] || {}, d = s.dailyBar || {}, pd = s.prevDailyBar || {}, p = +d.c || +((s.latestTrade || {}).p) || null;
+    return { ticker: x.t, price: p, change_percentage: p && +pd.c ? String((p / pd.c - 1) * 100) : "0", volume: x.v }; });
+  return { day: String(m.last_updated || "").slice(0, 16).replace("T", " "), src: "Alpaca", up: apMv(m.gainers), dn: apMv(m.losers), act: mv(actL) };
+}
+const hasAlpaca = env => !!(env && env.ALPACA_KEY_ID && env.ALPACA_SECRET);
+const apShared = env => cached("alp", 12 * 3600, 3 * 86400, async () => alpacaMovers(env));
 // Once a day for everyone (17 Nov): with a MOVERS store (Cloudflare KV) the relay asks Alpha Vantage only from its
 // schedule - after the US close, and once more if that failed - and every visitor reads that one stored copy. Visitors
 // never trigger a call, so the free 25-a-day can't be used up by traffic. Without the store it works as before.
 async function moversDaily(env) {
-  if (!env.MOVERS || !env.AV_KEY) return;
+  if (!env.MOVERS || (!hasAlpaca(env) && !env.AV_KEY)) return;
   let old; try { old = await env.MOVERS.get("movers", "json"); } catch (e) { console.log("movers: the store can't be read - " + (e && e.message)); return; }   // bug-hunt L-253: said, not a silent end
   const today = new Date().toISOString().slice(0, 10);
   if (old && old.ok && old.on === today) return;   // the retry run: today's copy is already in
   let rec;
   try {
-    const r = await fetch("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(15000) });
-    rec = { ok: 1, on: today, at: Date.now(), v: movers(env.AV_KEY, await r.json()) };
-  } catch (e) { rec = Object.assign({}, old && old.ok ? old : { ok: 0 }, { tried: Date.now(), why: (m => /daily limit|refused/.test(m) ? m : "no answer from Alpha Vantage")(String(e && e.message || e)) }); }
+    if (hasAlpaca(env)) rec = { ok: 1, on: today, at: Date.now(), v: await alpacaMovers(env) };
+    else {
+      const r = await fetch("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(env.AV_KEY), { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(15000) });
+      rec = { ok: 1, on: today, at: Date.now(), v: movers(env.AV_KEY, await r.json()) };
+    }
+  } catch (e) { const who = hasAlpaca(env) ? "Alpaca" : "Alpha Vantage"; rec = Object.assign({}, old && old.ok ? old : { ok: 0 }, { tried: Date.now(), why: (m => /daily limit|limit is used up|refused/.test(m) ? m : "no answer from " + who)(String(e && e.message || e)) }); }
   try { await env.MOVERS.put("movers", JSON.stringify(rec)); } catch (e) { console.log("movers: the store can't be written - " + (e && e.message)); }
 }
 async function moversShared(env) {
-  if (!env.MOVERS) return out(await avShared(env));
+  if (!env.MOVERS) return out(await (hasAlpaca(env) ? apShared(env) : avShared(env)));
   let rec; try { rec = await env.MOVERS.get("movers", "json", { cacheTtl: 600 }); } catch (e) { return { at: 0, stale: 0, error: "source unavailable", why: "the stored copy can't be read just now" }; }   // bug-hunt ML-122
   // bug-hunt ML-129: a copy from a failed later try still has its data - shown, and why the newer try failed is said too
   if (rec && rec.ok) return Object.assign({ at: rec.at, stale: Date.now() - rec.at > 5 * 86400000 ? 1 : 0 }   /* bug-hunt L-236: Thursday's close to Tuesday's (Good Friday + a weekend + a Monday holiday) is 5 days, and still the latest */, rec.why ? { why: rec.why } : {}, rec.v);
