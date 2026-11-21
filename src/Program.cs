@@ -489,7 +489,7 @@ namespace AdeeboMeter
                 case "gwidget": GameWidget = v != "0"; break;
                 case "points": Points = v == "1"; break;
                 case "speedsrv": SpeedServer = System.Text.RegularExpressions.Regex.IsMatch(v ?? "", "^[a-z0-9-]{1,40}$") ? v : "auto"; break;
-                case "tbview": TbView = v == "list" ? "list" : "q"; break;
+                case "tbview": TbView = v == "list" ? "list" : v == "topic" ? "topic" : "q"; break;
                 case "tbpins": TbPins = string.Join(",", (v ?? "").Split(',').Select(s => s.Trim()).Where(s => System.Text.RegularExpressions.Regex.IsMatch(s, "^[a-z0-9]{1,24}$")).Distinct().Take(12)); break;
                 case "nav": Nav = NavClean(v); break;
                 case "layout": Layout = v == "sidebar" ? "sidebar" : "classic"; break;

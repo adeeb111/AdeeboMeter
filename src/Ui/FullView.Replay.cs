@@ -128,6 +128,23 @@ namespace AdeeboMeter
             Begin(replayCanvas);
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {
+                // opened at a minute from somewhere else (FullView.Gateway.cs OpenTimeAt): say from where, and a way back
+                if (replayFrom != "")
+                {
+                    var br = new RectangleF(x, y, w, 36 * S); Theme.Fill(g, br, 10 * S, Theme.BlueSoft);
+                    Glyphs.Draw(g, "clock", new RectangleF(x + 10 * S, y + 7 * S, 22 * S, 22 * S), Theme.Dark ? Theme.Ink : Theme.BlueDark, 1.7f);
+                    string bk = "‹ " + L.T("Back"), xx = "×"; var bs = g.MeasureString(bk, Draw.fBodyB); var xs = g.MeasureString(xx, Draw.fBodyB);
+                    var xr = new RectangleF(br.Right - xs.Width - 18 * S, y, xs.Width + 14 * S, 36 * S); var bkr = new RectangleF(xr.X - bs.Width - 22 * S, y, bs.Width + 16 * S, 36 * S);
+                    using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+                    {
+                        g.DrawString(L.T("Opened from") + " " + replayFrom, Draw.fBody, tb, new RectangleF(x + 40 * S, y + 9 * S, bkr.X - x - 48 * S, 20 * S), nw);
+                        g.DrawString(bk, Draw.fBodyB, tb, bkr.X + 8 * S, y + (36 * S - bs.Height) / 2); g.DrawString(xx, Draw.fBodyB, tb, xr.X + 7 * S, y + (36 * S - xs.Height) / 2);
+                    }
+                    string back = replayBack;
+                    Act(replayCanvas, bkr, delegate { replayFrom = ""; if (back != "" && back != "replay") { tab = back; ShowTab(); SyncNav(); } else replayCanvas.Invalidate(); });
+                    Act(replayCanvas, xr, delegate { replayFrom = ""; replayCanvas.Invalidate(); });
+                    y += 44 * S;
+                }
                 // day chips
                 if (histDays == null || (DateTime.UtcNow - histDaysAt).TotalSeconds > 30) { histDays = History.Days(); histDaysAt = DateTime.UtcNow; }
                 var days = histDays.ToList(); if (replayDay != null && !days.Contains(replayDay.Value)) days.Insert(0, replayDay.Value);

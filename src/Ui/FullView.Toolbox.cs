@@ -759,8 +759,9 @@ namespace AdeeboMeter
             topBar.Controls.Add(tbSearch);
             // by question, or the classic all-at-once list - remembered
             tbViewQ = new PillButton("By question", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewQ.Click += delegate { SetTbView("q"); };
+            tbViewT = new PillButton("By topic", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), Sc(4), 0) }; tbViewT.Click += delegate { SetTbView("topic"); };   // 1.1.6: SNMP, DNS, DHCP...
             tbViewL = new PillButton("Every tool", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), 0, 0) }; tbViewL.Click += delegate { SetTbView("list"); };
-            topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewL); topBar.SetFlowBreak(tbViewL, true);
+            topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewT); topBar.Controls.Add(tbViewL); topBar.SetFlowBreak(tbViewL, true);
             // one click to the tools people reach for most - from any section
             var quick = new Label { Text = L.T("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
             foreach (var q in QuickTools)
@@ -1146,7 +1147,7 @@ namespace AdeeboMeter
             float x = 14 * S, y = 8 * S, w = tbCanvas.ClientSize.Width - 28 * S; var run = tbRun0;
             if (tbHome)
             {
-                if (EveryTool) PaintIndex(g, x + 6 * S, y, w - 12 * S); else PaintQuestions(g, x + 6 * S, y, w - 12 * S); return;
+                if (EveryTool) PaintIndex(g, x + 6 * S, y, w - 12 * S); else if (ByTopic && tbFilter == "") PaintTopics(g, x + 6 * S, y, w - 12 * S); else PaintQuestions(g, x + 6 * S, y, w - 12 * S); return;
             }
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {

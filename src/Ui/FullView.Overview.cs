@@ -226,8 +226,10 @@ namespace AdeeboMeter
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
                 string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
                 float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)(w - 40 * S)).Height + 4 * S : 0;
-                var vr = new RectangleF(x, y, w, hh + 30 * S + wh);
+                float ph = 58 * S;   // the path as big icons (FullView.Gateway.cs)
+                var vr = new RectangleF(x, y, w, hh + 30 * S + wh + ph);
                 Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));
+                PathStrip(g, x + 20 * S, y + 22 * S + hh + wh, w - 40 * S);
                 using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
                 if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh)); Hint(overviewCanvas, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh), "ov.WEATHER"); }
                 y += vr.Height + 18 * S;
@@ -262,7 +264,7 @@ namespace AdeeboMeter
                     new[] { "Your router", ms(gw), "m", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
                     new[] { "The internet", ms(net), "m", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
                     new[] { "Name lookups", double.IsNaN(dns) ? "not yet" : ms(dns), double.IsNaN(dns) ? "u" : "m", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
-                    new[] { "Your traffic", (double.IsNaN(down) ? "-" : down.ToString("0.0", CultureInfo.CurrentCulture)) + " / " + (double.IsNaN(up) ? "-" : up.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s", "w", "3", "ov.TRAFFIC" } };
+                    new[] { "Your traffic", Draw.Pair(down, up), "w", "3", "ov.TRAFFIC" } };
                 int cols = w > 760 * S ? 4 : 2; float tw = (w - (cols - 1) * 12 * S) / cols, th = 92 * S;
                 for (int i = 0; i < tiles.Length; i++)
                 {
@@ -270,6 +272,7 @@ namespace AdeeboMeter
                     Kit.Box(g, tr);
                     int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
                     Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
+                    Glyphs.Tile(g, new[] { "cpe", "internet", "dns", "chart" }[i], new RectangleF(tr.Right - 54 * S, tr.Y + 12 * S, 42 * S, 42 * S), lv == 1 || lv == 2 ? Theme.LvText(lv) : Kit.Accent("home"), 10 * S);
                     g.DrawString(t[0].ToUpperInvariant(), Draw.fTiny, muted, tr.X + 30 * S, tr.Y + 14 * S);
                     using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t[1], Draw.fName, vb, tr.X + 14 * S, tr.Y + 34 * S);
                     Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
@@ -382,14 +385,23 @@ namespace AdeeboMeter
                 // needs attention
                 var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
                 g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
-                if (att.Count == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
+                int watching; y = PaintWatch(g, x, y, w, out watching);   // a board host down 3 checks in a row, a certificate inside 30 days
+                if (att.Count == 0 && watching == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in att)
                     {
                         g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
                         Draw.LvDot(g, e.Lv, x + 52 * S, y + 7 * S, 10 * S, 10 * S);
-                        g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S, 20 * S), nowrap);
-                        var er = new RectangleF(x, y, w, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
+                        float tmw = Cfg.History ? 150 * S : 0;   // "See 14:05 ›" on every event: the Time machine at that minute
+                        g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S - tmw, 20 * S), nowrap);
+                        if (Cfg.History)
+                        {
+                            var ev = e; string tl = L.T("See") + " " + e.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " ›"; var tsz = g.MeasureString(tl, Draw.fSmall);
+                            var tlr = new RectangleF(x + w - tsz.Width, y + 4 * S, tsz.Width, 20 * S);
+                            using (var bl = new SolidBrush(Theme.Blue)) g.DrawString(tl, Draw.fSmall, bl, tlr.X, tlr.Y);
+                            Act(overviewCanvas, tlr, delegate { OpenTimeAt(ev.T, L.T("Home") + " - " + ev.Text); });
+                        }
+                        var er = new RectangleF(x, y, w - tmw, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
                         y += 26 * S; g.DrawLine(line, x, y, x + w, y);
                     }
                 if (attAll.Count > att.Count)   // bug-hunt L-169: the rest are counted, one click away
@@ -411,29 +423,8 @@ namespace AdeeboMeter
                 if (lastCall != "") { float lh = Draw.Measure(lastCall, Draw.fBody, (int)w).Height; g.DrawString(lastCall, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S; }
                 y += 14 * S;
 
-                // where things live
-                g.DrawString(L.T("WHERE EVERYTHING LIVES"), Draw.fTiny, muted, x, y); y += 24 * S;
-                var map = new[] {
-                    new[] { "toolbox", "Toolbox", "Every tool by question, the calculators and search." },
-                    new[] { "dest", "Check a destination", "Name, route, door, lock and answer for any site or app." },
-                    new[] { "story", "Network story", "Your traffic layer by layer, routing, Teams & Office, real packets." },
-                    new[] { "time", "Time machine", "Replay any minute, what changed, the week, usage, calls." },
-                    new[] { "learn", "Learn", "Protocols, Teams and Office, inside Windows, every term." },
-                    // bug-hunt L-170: every section, as the heading says
-                    new[] { "security", "Security", "This PC's locks, your network and the sites you use, checked in plain words." },
-                    new[] { "gamer", "Gamer", "Your games' servers live, lag spikes and whose fault they are." },
-                    new[] { "stream", "Streaming", "Is the stream ready - and why it stalled, when it did." },
-                    new[] { "trade", "Markets", "Your broker's connection and the day's numbers - education only." } };
-                int mc = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float mw = (w - (mc - 1) * 10 * S) / mc, mh = 92 * S;
-                for (int i = 0; i < map.Length; i++)
-                {
-                    var m = map[i]; var mr = new RectangleF(x + (i % mc) * (mw + 10 * S), y + (i / mc) * (mh + 10 * S), mw, mh);
-                    Theme.Fill(g, mr, 12 * S, Theme.Soft);
-                    g.DrawString(L.T(m[1]), Draw.fBodyB, ink, mr.X + 14 * S, mr.Y + 12 * S);
-                    g.DrawString(L.T(m[2]), Draw.fSmall, sub, new RectangleF(mr.X + 14 * S, mr.Y + 34 * S, mr.Width - 24 * S, mr.Height - 38 * S));
-                    string id = m[0]; Act(overviewCanvas, mr, delegate { OpenNav(id); });
-                }
-                y += ((map.Length + mc - 1) / mc) * (mh + 10 * S) + 10 * S;
+                // where things live: big-icon tiles with a live line (FullView.Gateway.cs)
+                y = PaintGateway(g, x, y, w);
                 g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));

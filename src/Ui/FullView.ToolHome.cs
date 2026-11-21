@@ -44,7 +44,7 @@ namespace AdeeboMeter
         };
         static string QAccent(string q) { string[] l; return q != null && QLook.TryGetValue(q, out l) ? l[0] : "toolbox"; }
         static string QIcon(string q) { string[] l; return q != null && QLook.TryGetValue(q, out l) ? l[1] : "tool"; }
-        DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
+        DB tbHead; PillButton tbViewQ, tbViewT, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
         // both views now use the roomy layout (a tool across the whole width); Every tool only changes the home page (FullView.Index.cs)
         static bool ByQuestion { get { return true; } }
 
@@ -65,7 +65,7 @@ namespace AdeeboMeter
             toolboxPage.SuspendLayout();
             tbSplit.ColumnStyles[0].Width = q ? 0 : Sc(290); tbLeft.Visible = !q;
             foreach (var c in tbClassic) c.Visible = !q;
-            tbViewQ.Selected = !EveryTool; tbViewL.Selected = EveryTool;
+            tbViewQ.Selected = !EveryTool && !ByTopic; tbViewT.Selected = ByTopic; tbViewL.Selected = EveryTool;
             tbSearch.Width = TbSearchW(q);
             toolboxPage.ResumeLayout(true);
             // the bar with the search and the two views: laid out and painted again (it stayed blank when the Toolbox opened in Every tool)

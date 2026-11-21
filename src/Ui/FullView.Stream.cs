@@ -42,6 +42,7 @@ namespace AdeeboMeter
             g.TranslateTransform(streamCanvas.AutoScrollPosition.X, streamCanvas.AutoScrollPosition.Y);
             Begin(streamCanvas);
             float x = 18 * S, y = 16 * S, w = streamCanvas.ClientSize.Width - 36 * S;
+            y = NowLine(g, streamCanvas, x, y, w);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
             var all = WatchKit.Recent("stream");
             if (streamSel != "")
             {
@@ -318,6 +319,12 @@ namespace AdeeboMeter
                         {
                             var d = s.Dips[i]; float rh = Math.Max(36 * S, Draw.Measure(d.Evidence, Draw.fBody, (int)(w - 420 * S)).Height + 16 * S);
                             g.DrawString(d.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fBodyB, ink, x + 18 * S, y + 9 * S);
+                            if (Cfg.History)   // the dip's minute in the Time machine (FullView.Gateway.cs)
+                            {
+                                var dt = d.T; string what = s.What; var tr0 = new RectangleF(x + w - 150 * S, y + 9 * S, 64 * S, 20 * S);
+                                using (var bl = new SolidBrush(Theme.Blue)) g.DrawString(L.T("Replay") + " ›", Draw.fSmall, bl, tr0.X, tr0.Y + 2 * S);
+                                Act(streamCanvas, tr0, delegate { OpenTimeAt(dt, L.T("Streaming") + " - " + what + " " + L.T("dip")); });
+                            }
                             using (var bb = new SolidBrush(Theme.LvText(d.Blame == "provider" ? 2 : 1))) g.DrawString(WatchKit.BlameName(d.Blame, farName), Draw.fBodyB, bb, x + 80 * S, y + 9 * S);
                             g.DrawString(d.Evidence, Draw.fBody, sub, new RectangleF(x + 270 * S, y + 9 * S, w - 420 * S, rh));
                             g.DrawString(d.Secs + " s", Draw.fSmall, muted, x + w - 80 * S, y + 11 * S);

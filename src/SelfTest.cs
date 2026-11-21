@@ -1053,7 +1053,7 @@ namespace AdeeboMeter
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
-                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); }
+                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); string tc = fv.TopicCheck(); if (tc != "") throw new InvalidOperationException("toolbox topics: " + tc); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });

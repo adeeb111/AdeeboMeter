@@ -38,6 +38,60 @@ namespace AdeeboMeter
             try { if (minutes <= 0) { if (File.Exists(WatchFile)) { File.SetAttributes(WatchFile, FileAttributes.Normal); File.Delete(WatchFile); } return !File.Exists(WatchFile); } WriteWhole(WatchFile, minutes.ToString(CultureInfo.InvariantCulture) + "\n" + (list ?? "").Replace("\n", " ") + "\n"); return true; }
             catch (IOException e) { Program.Log("watch: " + e.Message); return false; } catch (UnauthorizedAccessException e) { Program.Log("watch: " + e.Message); return false; }
         }
+        // ---------- 1.1.6 Home's watch warnings: read from what the board and the calendar already wrote - Home never checks
+        static readonly Dictionary<string, DateTime> seenCerts = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        static string CertFile { get { return Path.Combine(Program.DataDir, "cert-dates.txt"); } }
+        // the calendar's last answer per site (host [tab] expiry, UTC), kept so Home can count the days without a handshake
+        static void SaveCerts()
+        {
+            lock (wk)
+            {
+                try
+                {
+                    foreach (var line in File.Exists(CertFile) ? File.ReadAllLines(CertFile).Take(500) : new string[0]) { var p = line.Split('\t'); DateTime d; if (p.Length == 2 && !seenCerts.ContainsKey(p[0]) && DateTime.TryParse(p[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out d)) seenCerts[p[0]] = d; }
+                    SafeFile.WriteText(CertFile, string.Join("\n", seenCerts.Take(500).Select(kv => kv.Key + "\t" + kv.Value.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture))));
+                }
+                catch (IOException) { } catch (UnauthorizedAccessException) { }
+            }
+        }
+        // sites whose certificate expires within `days` (or already has): host, expiry, when the calendar last looked
+        public static List<Tuple<string, DateTime>> CertsDue(int days, out DateTime checkedAt)
+        {
+            var o = new List<Tuple<string, DateTime>>(); checkedAt = DateTime.MinValue;
+            try
+            {
+                if (!File.Exists(CertFile)) return o; checkedAt = File.GetLastWriteTime(CertFile);
+                foreach (var line in File.ReadAllLines(CertFile).Take(500)) { var p = line.Split('\t'); DateTime d; if (p.Length == 2 && DateTime.TryParse(p[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out d) && (d.ToLocalTime() - DateTime.Now).TotalDays <= days) o.Add(Tuple.Create(p[0], d.ToLocalTime())); }
+            }
+            catch (IOException) { } catch (UnauthorizedAccessException) { }
+            return o.OrderBy(z => z.Item2).ToList();
+        }
+        // hosts the board found down at least `run` checks in a row, the newest check last: target, down since, how many
+        static string downKey = ""; static List<Tuple<string, DateTime, int>> downCache = new List<Tuple<string, DateTime, int>>();
+        public static List<Tuple<string, DateTime, int>> DownNow(int run)
+        {
+            try
+            {
+                var fi = new FileInfo(LogFile); if (!fi.Exists) return new List<Tuple<string, DateTime, int>>();
+                string key = fi.Length + "|" + fi.LastWriteTimeUtc.Ticks + "|" + run; lock (wk) if (key == downKey) return downCache;
+                string[] lines; using (var fs = new FileStream(LogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { if (fs.Length > 400000) fs.Seek(-400000, SeekOrigin.End); using (var sr = new StreamReader(fs)) lines = sr.ReadToEnd().Split('\n'); }
+                var last = new Dictionary<string, List<Tuple<DateTime, bool>>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var l in lines)
+                {
+                    var p = l.TrimEnd('\r').Split('\t'); DateTime t; if (p.Length < 3 || !DateTime.TryParseExact(p[0], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) continue;
+                    List<Tuple<DateTime, bool>> v; if (!last.TryGetValue(p[1], out v)) last[p[1]] = v = new List<Tuple<DateTime, bool>>(); v.Add(Tuple.Create(t, p[2] == "down"));
+                }
+                var o = new List<Tuple<string, DateTime, int>>();
+                foreach (var kv in last)
+                {
+                    int n = 0; DateTime since = DateTime.MinValue;
+                    for (int i = kv.Value.Count - 1; i >= 0 && kv.Value[i].Item2; i--) { n++; since = kv.Value[i].Item1; }
+                    if (n >= run && (DateTime.Now - kv.Value[kv.Value.Count - 1].Item1).TotalDays < 2) o.Add(Tuple.Create(kv.Key, since, n));   // two days old: a host nobody watches any more
+                }
+                lock (wk) { downKey = key; downCache = o.OrderBy(z => z.Item2).ToList(); return downCache; }
+            }
+            catch (IOException) { return new List<Tuple<string, DateTime, int>>(); } catch (UnauthorizedAccessException) { return new List<Tuple<string, DateTime, int>>(); }
+        }
         static void Log(string target, Knocks k) { Log(target, k, true); }
         static void Log(string target, Knocks k, bool auto)
         {
@@ -135,7 +189,9 @@ namespace AdeeboMeter
                 if (na == DateTime.MinValue) { rows.Add(R(3, h, "no certificate read (no TLS on port " + hp + ")", "", "m")); continue; }
                 var left = na - DateTime.Now; int days = left.Ticks < 0 ? -(int)Math.Ceiling(-left.TotalDays) : (int)Math.Floor(left.TotalDays);   // expired an hour ago = expired, not "0 days left"
                 got.Add(Tuple.Create(h, left.Ticks < 0 && days == 0 ? -1 : days, iss));
+                lock (wk) seenCerts[h] = na;
             }
+            SaveCerts();
             foreach (var g in got.OrderBy(z => z.Item2))
                 rows.Insert(rows.Count - rows.Count(r => r[2].StartsWith("no certificate", StringComparison.Ordinal)), R(g.Item2 < 0 ? 2 : g.Item2 < 14 ? 2 : g.Item2 < 30 ? 1 : 0, g.Item1, (g.Item2 < 0 ? "expired" + (g.Item2 <= -2 ? " " + (-g.Item2) + " days ago" : "") : g.Item2 == 0 ? "expires today" : "expires in " + g.Item2 + " days") + " · " + g.Item3, g.Item2 < 30 && g.Item2 >= 0 ? "Renew it now - automatic renewals usually run 30 days ahead; if this one didn't, check why." : "", "m"));
             return rows;

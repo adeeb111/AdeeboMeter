@@ -65,6 +65,7 @@ namespace AdeeboMeter
             g.TranslateTransform(gamerCanvas.AutoScrollPosition.X, gamerCanvas.AutoScrollPosition.Y);
             Begin(gamerCanvas);
             float x = 18 * S, y = 16 * S, w = gamerCanvas.ClientSize.Width - 36 * S;
+            y = NowLine(g, gamerCanvas, x, y, w);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
             var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games);
             string playing = GamePing.Me.Playing;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
@@ -137,7 +138,15 @@ namespace AdeeboMeter
                         string gname = games.Where(z => z.Id == s.Game).Select(z => z.Name).FirstOrDefault() ?? s.Game;
                         string t = s.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + "   " + gname + " " + s.Server + " " + Ms(s.Normal) + " -> " + Ms(s.Ms) + " ms   ·   " + s.Blame;
                         using (var d = new SolidBrush(s.Blame.StartsWith("past", StringComparison.Ordinal) ? Theme.Red : Theme.Amber)) g.FillEllipse(d, x + 2 * S, y + 6 * S, 8 * S, 8 * S);
-                        g.DrawString(t, Draw.fBody, ink, new RectangleF(x + 18 * S, y, w - 18 * S, 22 * S), nowrap); y += 24 * S;
+                        float tmw = Cfg.History ? 110 * S : 0;   // "See 21:04 ›": the Time machine at that minute (FullView.Gateway.cs)
+                        g.DrawString(t, Draw.fBody, ink, new RectangleF(x + 18 * S, y, w - 18 * S - tmw, 22 * S), nowrap);
+                        if (Cfg.History)
+                        {
+                            var sk = s; string tl = L.T("See") + " " + s.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " ›"; var tsz = g.MeasureString(tl, Draw.fSmall);
+                            var tlr = new RectangleF(x + w - tsz.Width, y + 2 * S, tsz.Width, 20 * S); g.DrawString(tl, Draw.fSmall, blue, tlr.X, tlr.Y);
+                            Act(gamerCanvas, tlr, delegate { OpenTimeAt(sk.T, L.T("Gamer") + " - " + gname + " " + L.T("spike")); });
+                        }
+                        y += 24 * S;
                     }
                 }
                 y += 8 * S;

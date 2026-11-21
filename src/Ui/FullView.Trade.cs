@@ -169,6 +169,7 @@ namespace AdeeboMeter
                 {
                     string one = day == null ? L.T("No checks yet today.") : day.Dips.Count == 0 ? L.T("Fine all session so far.") : L.T("Slow moments today: ") + day.Dips.Count + " · " + L.T("last at ") + day.Dips.Last().T.ToString("HH:mm", CultureInfo.CurrentCulture) + " - " + day.Dips.Last().Evidence;
                     g.DrawString(one, Draw.fBody, sub, new RectangleF(cx2, cy2, w - 44 * S, 40 * S));
+                    if (day != null && day.Dips.Count > 0 && Cfg.History) { var lt = day.Dips.Last().T; Act(tradeCanvas, new RectangleF(cx2, cy2, w - 44 * S, 40 * S), delegate { OpenTimeAt(lt, L.T("Markets") + " - " + L.T("slow moment")); }); }   // the last slow moment in the Time machine
                 }
                 // switches: alerts, crypto 24/7, stop
                 float bx = cx2, by = c2.Bottom - 44 * S;
