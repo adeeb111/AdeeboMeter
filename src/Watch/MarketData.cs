@@ -288,6 +288,9 @@ namespace AdeeboMeter
         public static Dictionary<string, Quote> Quotes = new Dictionary<string, Quote>(); public static string QuoteNote = "";
         static volatile bool qBusy; static DateTime qTried = DateTime.MinValue;
         public static bool HasQuoteKey() { return Sports.Key("fmp") != ""; }
+        // 21 Nov (Adeeb): your own key, your own speed - every hour, 15 minutes (the free plan's pace), 5 minutes or every minute (paid)
+        public static int EveryMin { get { int m; return int.TryParse(Cfg.FmpEvery, out m) && m >= 1 ? m : 15; } }
+        public static bool FreePace { get { return EveryMin >= 15; } }
         static string CallsFile { get { return Path.Combine(Program.DataDir, "mk-calls.txt"); } }
         static int CallsToday()
         {
@@ -298,7 +301,7 @@ namespace AdeeboMeter
         static void Call() { try { File.WriteAllText(CallsFile, DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " " + (CallsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
         public static void FetchQuotes(bool futures, Action done)
         {
-            if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried).TotalMinutes < 15) return;
+            if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried).TotalMinutes < EveryMin) return;
             string key = Sports.Key("fmp"); if (key == "") return;
             qBusy = true; qTried = DateTime.UtcNow;
             var list = futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList();
@@ -309,7 +312,7 @@ namespace AdeeboMeter
                 {
                     foreach (var sym in list)
                     {
-                        if (CallsToday() >= 230) { lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; break; }
+                        if (FreePace && CallsToday() >= 230) {   /* the free plan: 250 a day; every 5 or every minute means a paid plan, which has no daily cap */ lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; break; }
                         Call();
                         string body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64);
                         var q = ParseFmp(body, sym); if (q == null) continue;

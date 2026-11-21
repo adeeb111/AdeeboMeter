@@ -344,7 +344,7 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,outlook,stream,trade,toolbox,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile string Nav = "home,outlook,stream,trade,toolbox,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both", FmpEvery = "15";   // the speed widget: Mb/s or MB/s; both directions, download or upload
         public static volatile bool WGraph = true, WTotal = true, SetupDone = true;   // SetupDone: false only on a fresh install until the 3 questions are answered or skipped   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string TbPins = "";   // your own Toolbox pins (Every tool), tool ids, up to 12
@@ -392,6 +392,7 @@ namespace AdeeboMeter
             yield return "wscreen=" + WidgetScreen;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
             yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "tbpins=" + TbPins; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
+            yield return "fmpevery=" + FmpEvery;   // 21 Nov: how often your FMP key is asked (60, 15, 5 or 1 minutes; 5 and 1 need a paid plan)
             yield return "nav=" + Nav; yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "faithlast=" + AdeeboMeter.Lines.LastFaith; yield return "bface=" + BuddyFace; yield return "wunits=" + WUnits; yield return "wdir=" + WDir; yield return "wgraph=" + (WGraph ? 1 : 0); yield return "wtotal=" + (WTotal ? 1 : 0); yield return "setupdone=" + (SetupDone ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
             string[] pins; lock (Pins) pins = Pins.ToArray();
@@ -503,6 +504,7 @@ namespace AdeeboMeter
                 case "addr": if (Array.IndexOf(AdeeboMeter.Lines.Addrs, v) >= 0) AdeeboMeter.Lines.Addr = v; break;
                 case "addrname": AdeeboMeter.Lines.Name = new string(v.Where(c => !char.IsControl(c) && c != '\u202E' && c != '\u202D').Take(24).ToArray()).Trim(); break;
                 case "chatty": if (Array.IndexOf(AdeeboMeter.Lines.Chatty, v) >= 0) AdeeboMeter.Lines.Chat = v; break;
+                case "fmpevery": FmpEvery = v == "60" || v == "5" || v == "1" ? v : "15"; break;
                 case "wunits": WUnits = v == "bytes" ? "bytes" : "bits"; break;
                 case "wdir": WDir = v == "down" || v == "up" ? v : "both"; break;
                 case "wgraph": WGraph = v != "0"; break;

@@ -84,7 +84,7 @@ namespace AdeeboMeter
         public Func<string, bool> AskRemember;
         public Func<string, byte[]> Peek;   // screen peek: page -> JPEG (AppCtx draws it off-screen)
         int peekBusy; DateTime peekAt = DateTime.MinValue;   // bug-hunt ML-16
-        public static readonly HashSet<string> PeekPages = new HashSet<string> { "overview", "link", "procs", "health", "changes", "travel", "toolbox", "guide", "gamer", "stream", "trade", "dest", "security", "replay" };
+        public static readonly HashSet<string> PeekPages = new HashSet<string> { "overview", "link", "procs", "health", "changes", "travel", "toolbox", "guide", "gamer", "stream", "trade", "dest", "security", "replay", "learn" };
         public static Remote Start(Monitor m)
         {
             var old = Now; if (old != null) Task.Factory.StartNew(() => old.End("a new session started"));   // bug-hunt L-232: its goodbye (up to 2 s) never holds the window

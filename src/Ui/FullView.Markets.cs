@@ -389,7 +389,18 @@ namespace AdeeboMeter
             }
             y = bottom + 10 * S;
             string qn; lock (MarketData.k) qn = MarketData.QuoteNote;
-            MkText(g, qn != "" ? L.T(qn) : L.T("From your Financial Modeling Prep key · delayed while markets are open · refreshed every 15 minutes at most"), Paper.Small, qn != "" ? Paper.Amber : Paper.Muted, x, y); y += 26 * S;
+            MkText(g, qn != "" ? L.T(qn) : L.T("From your Financial Modeling Prep key · delayed while markets are open"), Paper.Small, qn != "" ? Paper.Amber : Paper.Muted, x, y); y += 26 * S;
+            if (MarketData.HasQuoteKey())   // how often: your key, your choice (5 and 1 minute need FMP's paid plan)
+            {
+                float px = x; MkText(g, L.T("Update:"), Paper.Small, Paper.Muted, px, y + 4 * S); px += 64 * S;
+                foreach (var o in new[] { new[] { "60", "every hour" }, new[] { "15", "every 15 min (free)" }, new[] { "5", "every 5 min (paid)" }, new[] { "1", "every minute (paid)" } })
+                {
+                    bool on = Cfg.FmpEvery == o[0]; var ob = MkButton(g, L.T(o[1]), px, y, on); string v = o[0];
+                    Act(tradeCanvas, ob, delegate { Cfg.FmpEvery = v; Cfg.Save(); tradeCanvas.Invalidate(); }); px = ob.Right + 8 * S;
+                    if (px > x + w - 150 * S && o[0] != "1") { px = x + 64 * S; y += ob.Height + 6 * S; }
+                }
+                y += 44 * S;
+            }
             // how they're linked: each market's index and its currency against the Canadian dollar
             var lr = new RectangleF(x, y, w, 60 * S + 6 * 30 * S); Paper.Desk(g, lr);
             float ly = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "How They're Linked", L.T("a rise abroad can grow or shrink once it's turned into Canadian dollars")) + 4 * S;
