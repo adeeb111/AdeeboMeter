@@ -1,0 +1,41 @@
+# Screenshots for review (21 Nov): push any commit to the branch "shots-run" and this renders the main pages on a real
+# Windows machine with the same peek renderer the phone uses, then commits the pictures to the branch "shots".
+# No secrets, no release, nothing uploaded anywhere else.
+name: shots
+on:
+  push:
+    branches: [shots-run]
+permissions:
+  contents: write
+jobs:
+  shots:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+      - name: Build (release.ps1)
+        shell: pwsh
+        run: ./release.ps1
+      - name: Render pages
+        shell: pwsh
+        run: |
+          New-Item -ItemType File AdeeboMeter.portable -Force | Out-Null
+          New-Item -ItemType Directory shots -Force | Out-Null
+          # the first page waits 3 minutes so history, events and the Time machine have something to show
+          $pages = @(@('overview',180), @('toolbox',25), @('replay',25), @('gamer',25), @('stream',25), @('trade',25), @('security',25), @('learn',25), @('travel',40))
+          foreach ($p in $pages) {
+            $name = $p[0]; $wait = $p[1]
+            Remove-Item peek-test.jpg -ErrorAction SilentlyContinue
+            $proc = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList "--view","peek:$name","--view-after","$wait" -PassThru
+            $t = 0; while (-not (Test-Path peek-test.jpg) -and $t -lt ($wait + 60)) { Start-Sleep 2; $t += 2 }
+            Start-Sleep 2; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue; Start-Sleep 2
+            if (Test-Path peek-test.jpg) { Move-Item peek-test.jpg "shots/$name.jpg" -Force } else { "no picture for $name" | Add-Content shots/missing.txt }
+          }
+          Get-ChildItem shots
+      - name: Commit to the branch "shots"
+        shell: pwsh
+        run: |
+          git config user.name "shots-bot"; git config user.email "shots-bot@users.noreply.github.com"
+          git checkout --orphan shots-out
+          git rm -r -q --cached . ; git add shots ; git commit -q -m "screenshots of $env:GITHUB_SHA"
+          git push -f origin shots-out:shots

@@ -213,7 +213,7 @@ namespace AdeeboMeter
             }
             else if (Program.StartView != null)
             {
-                var once = new System.Windows.Forms.Timer { Interval = 1500 };
+                var once = new System.Windows.Forms.Timer { Interval = Program.StartViewMs };
                 once.Tick += delegate { once.Stop(); once.Dispose(); OpenFull(); if (full != null) full.Debug(Program.StartView, Program.StartTip, Program.StartDest); };
                 once.Start();
             }

@@ -61,11 +61,16 @@ namespace AdeeboMeter
             try
             {
                 if (!File.Exists(CertFile)) return o; checkedAt = File.GetLastWriteTime(CertFile);
+                // Home paints this every second: the file is read again only when it changed (PC-pass review, 21 Nov)
+                lock (certCacheLock) if (certCache != null && certCacheAt == checkedAt && certCacheDays == days && certCacheDay == DateTime.Today) return new List<Tuple<string, DateTime>>(certCache);
                 foreach (var line in File.ReadAllLines(CertFile).Take(500)) { var p = line.Split('\t'); DateTime d; if (p.Length == 2 && DateTime.TryParse(p[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out d) && (d.ToLocalTime() - DateTime.Now).TotalDays <= days) o.Add(Tuple.Create(p[0], d.ToLocalTime())); }
             }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
-            return o.OrderBy(z => z.Item2).ToList();
+            o = o.OrderBy(z => z.Item2).ToList();
+            lock (certCacheLock) { certCache = new List<Tuple<string, DateTime>>(o); certCacheAt = checkedAt; certCacheDays = days; certCacheDay = DateTime.Today; }
+            return o;
         }
+        static readonly object certCacheLock = new object(); static List<Tuple<string, DateTime>> certCache; static DateTime certCacheAt, certCacheDay; static int certCacheDays;
         // hosts the board found down at least `run` checks in a row, the newest check last: target, down since, how many
         static string downKey = ""; static List<Tuple<string, DateTime, int>> downCache = new List<Tuple<string, DateTime, int>>();
         public static List<Tuple<string, DateTime, int>> DownNow(int run)
