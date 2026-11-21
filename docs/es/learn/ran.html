@@ -106,11 +106,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <script src="/voice.js"></script>
 <script>
 (function(){var q=document.querySelector('.quiz');if(!q)return;var bs=[].slice.call(q.querySelectorAll('button')),say=q.querySelector('.say'),done=false;
-for(var i=bs.length-1;i&gt;0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
+for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
 bs.forEach(function(b){q.insertBefore(b,say)});
 bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
 var V=window.AMV,locale=window.AdeeboMeterLocale;
-function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&amp;&amp;V.line(line))||key}
+function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&&V.line(line))||key}
 if(ok){done=true;say.textContent=feedback('Right.','quiz.right');try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
 else say.textContent=feedback('Not that one - try again.','quiz.wrong')}})})();
 </script>

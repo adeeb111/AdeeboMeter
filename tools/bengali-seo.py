@@ -174,7 +174,11 @@ for source in files:
     # Decode character references before text translation without altering markup.
     content = source.read_text(encoding="utf-8-sig")
     content = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|x-default)"[^>]*>\s*', "", content)
-    content = re.sub(r">([^<]+)<", lambda m: ">" + html.escape(html.unescape(m[1]), quote=False) + "<", content)
+    # Only text between tags - never the code inside <script> or <style>: escaping it there turned "a > b" into
+    # "a &gt; b" and broke every inline script on the translated pages (21 Nov).
+    # (look ahead for the "<" rather than taking it, or a <script> right after text is never seen as one)
+    content = re.sub(r"(<(script|style)\b[^>]*>.*?</\2>)|>([^<]+)(?=<)",
+                     lambda m: m[1] if m[1] else ">" + html.escape(html.unescape(m[3]), quote=False), content, flags=re.S | re.I)
     # Parser assembles split entities into text by using normal conversion.
     parser.convert_charrefs = True
     parser.feed(content)
