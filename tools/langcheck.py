@@ -46,7 +46,7 @@ lines.insert(at, '#coverage %d' % pct)
 open(path, 'w', encoding='utf-8', newline='\n').write('\n'.join(lines))
 print('coverage line: %d%%' % pct)
 # the website's language tiles show the same number: <small data-cov="fr">78%</small> on every home page that has them
-for page in ('index.html', 'fr/index.html', 'es/index.html', 'bn/index.html'):
+for page in ('index.html', 'fr/index.html', 'es/index.html', 'bn/index.html', 'ar/index.html'):
     p = os.path.join(root, 'docs', page)
     if not os.path.exists(p): continue
     t = open(p, encoding='utf-8').read()

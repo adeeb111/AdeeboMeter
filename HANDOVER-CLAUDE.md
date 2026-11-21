@@ -107,8 +107,8 @@ top bar: [VIEW My setup v] [(globe) বাংলা v] [Restart]     <- Restart 
 - **Push back** when something's wrong or there's a better way. Short, plain explanations; he's a network engineer, not
   a crypto person.
 - **Never:** commit `secrets/hof.key` or `HALL-OF-FAME-SETUP.txt`, print the key, handle his passwords/tokens/API keys
-  (he types them himself, e.g. `wrangler secret put`), repeat his phone number (it's in old screenshots), copy Topogram
-  code, use alerts/pop-ups in the product, mention his employer anywhere, add tracking.
+  (he types them himself, e.g. `wrangler secret put`), repeat his phone number (it's in old screenshots), bring anything that names his employer or its products into
+  AdeeboMeter (21 Nov: copying Topogram's code and ideas is allowed now - both are his projects - but no employer/product names), use alerts/pop-ups in the product, mention his employer anywhere, add tracking.
 - Phone/web save nothing ("we're just passthru"). Timeouts on long work.
 
 ## How to work (cloud container)

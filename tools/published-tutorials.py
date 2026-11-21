@@ -12,6 +12,7 @@ COPY = {
     "en": ("Watch the DNS tutorial", "Follow the query, resolver and reply, then run a real Windows check.", "English audio · 3-minute tutorial", "Watch on YouTube", "Watch on Facebook"),
     "bn": ("DNS-এর ভিডিও নির্দেশনা দেখুন", "DNS প্রশ্ন, রিজলভার ও উত্তর কীভাবে কাজ করে দেখুন, তারপর Windows-এ পরীক্ষা করুন।", "ইংরেজি অডিও · প্রায় ৩ মিনিট", "YouTube-এ দেখুন", "Facebook-এ দেখুন"),
     "fr": ("Regardez le tutoriel DNS", "Suivez la requête, le résolveur et la réponse, puis faites une vérification sous Windows.", "Audio en anglais · tutoriel de 3 minutes", "Regarder sur YouTube", "Regarder sur Facebook"),
+    "ar": ("شاهد شرح DNS", "تابع الطلب والمحلّل والرد، ثم أجرِ فحصًا حقيقيًا على Windows.", "الصوت بالإنجليزية · شرح مدته 3 دقائق", "شاهد على YouTube", "شاهد على Facebook"),
     "es": ("Mira el tutorial de DNS", "Sigue la consulta, el resolvedor y la respuesta, y después haz una comprobación real en Windows.", "Audio en inglés · tutorial de 3 minutos", "Ver en YouTube", "Ver en Facebook"),
 }
 

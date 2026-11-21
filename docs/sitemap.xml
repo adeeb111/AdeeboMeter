@@ -43,6 +43,16 @@
   <url><loc>https://adeebometer.com/bn/gaming.html</loc></url>
   <url><loc>https://adeebometer.com/bn/streaming.html</loc></url>
   <url><loc>https://adeebometer.com/bn/trading.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/</loc></url>
+  <url><loc>https://adeebometer.com/ar/blog/</loc></url>
+  <url><loc>https://adeebometer.com/ar/wifi-or-isp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/internet-speed-monitor.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/pc-monitoring.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/isp-report.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/privacy.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/gaming.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/streaming.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/trading.html</loc></url>
   <url><loc>https://adeebometer.com/app.html</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://adeebometer.com/files.html</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://adeebometer.com/learn/</loc><lastmod>2026-11-21</lastmod></url>
@@ -411,4 +421,95 @@
   <url><loc>https://adeebometer.com/es/learn/wifi.html</loc></url>
   <url><loc>https://adeebometer.com/es/learn/wininit.html</loc></url>
   <url><loc>https://adeebometer.com/es/learn/winlogon.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/5gc.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/802.1x.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/aes.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/apps-internet.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/arp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/attach.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/background-chatter.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/bearer.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/bgp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/boot-chain.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/cdn.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/certificate.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/chain-of-trust.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/clock.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/csrss.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/dhcp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/diffie-hellman.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/dns.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/dscp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/dwm.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/epc.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/explorer.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/hash.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/http.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/icmp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/igp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-budget.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-bullbear.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-compound.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-connection.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-data.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-dip.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-diversify.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-emergency.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-fees.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-fx.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-inflation.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-move.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-recession.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-scams.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-stock.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/inv-work.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/ipv6.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/l3vpn.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/livesport.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/lsass.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/memory-compression.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/memory-pressure.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/mobile.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/mpls.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/msedgewebview2.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/msmpeng.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/mtu-path.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/mtu.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/multicast.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/nat.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/nsa.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/onedrive.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/open-website.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/osi.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/outlook-flow.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/ports.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/public-key.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/push.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/quic.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/ran.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/return-path.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/revocation.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/runtimebroker.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/searchhost.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/services.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/signature.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/speed-vs-delay.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/stream-4k.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/stream-adaptive.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/stream-cdn.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/stream-fault.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/stream-how.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/stream-iptv.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/streaming-vs-calls.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/svchost.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/system.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/tcp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/teams-call.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/tls.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/udp.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/wam.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/wifi.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/wininit.html</loc></url>
+  <url><loc>https://adeebometer.com/ar/learn/winlogon.html</loc></url>
 </urlset>

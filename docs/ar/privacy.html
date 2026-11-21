@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" data-language-route="/privacy.html" data-language-variants="en bn fr es ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سياسة خصوصية AdeeboMeter</title>
+<meta name="description" content="← AdeeboMeter">
+<link rel="canonical" href="https://adeebometer.com/ar/privacy.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Local typography and styles. Website analytics is described below. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/privacy.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/privacy.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/privacy.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/privacy.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/privacy.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/privacy.html">
+<meta property="og:locale" content="ar_AR">
+</head>
+<body>
+<main><nav class="language-links" aria-label="اللغة"><a href="https://adeebometer.com/privacy.html?lang=en" lang="en">English</a></nav>
+<p><a href="/ar/">← AdeeboMeter</a></p>
+<h1>سياسة الخصوصية</h1>
+<p class="date">تطبيق AdeeboMeter وموقعه · آخر تحديث في 18 نوفمبر 2026</p>
+
+<div class="short"><p><b>تطبيق Windows</b> لا يجمع أي معلومات عنك. لا توجد حسابات أو بيانات تتبّع أو تحليلات أو خادم. تبقى كل المعلومات التي يعرفها على جهازك، ولا يقبل اتصالات واردة من أي مكان.</p></div>
+
+<h2>ما يجمعه AdeeboMeter</h2>
+<p>لا شيء لا يوجد في التطبيق خادم لإرسال البيانات إليه، ولا يتلقى المطور أي معلومات عنك أو عن جهاز الكمبيوتر الخاص بك أو شبكتك أو كيفية استخدام التطبيق.</p>
+
+<h2>ما يبقى على جهاز الكمبيوتر الخاص بك</h2>
+<ul>
+  <li><b>الإعدادات</b> (<code>AdeeboMeter.settings</code>) و قليل <b>سجل</b> لإصلاح الأخطاء في التطبيق نفسه.</li>
+  <li><b>السجل</b> من سرعة شبكتكم وصحتها في الأيام الأخيرة، حتى تتمكنوا من إعادة تشغيل دقيقة خاطئة. يتم حفظها في مجلد AppData (نسخة تحمل علامة محمولة تحتفظ بها في مجلد بيانات بجوار البرنامج بدلا من ذلك) و يتم إزالة الأيام القديمة تلقائيا.</li>
+  <li><b>تحدّي الجيران</b> (فقط بينما التاريخ يعمل): مرة واحدة في الساعة، شبكات Wi-Fi Windows بالفعل قائمة - أسمائهم وعناوين (BSSIDs) ، القنوات والإشارة - احتفظت 7 أيام في <code>air.txt</code>. . إيقاف التاريخ يزيلها خلال ساعة هذه أسماء وعناوين تنشر كل شبكة Wi-Fi إلى أي شخص قريب؛ لا شيء عن الأجهزة عليها.</li>
+  <li><b>Adeebo Points</b> (<code>points.txt</code>): ما هي الميزات التي جربتها ومتى. لا شيء آخر</li>
+  <li><b>صور إعدادات الشبكة</b> (<code>netsnap.txt</code>، فقط عند الضغط على حفظ): عناوين المجهازات التكيفية والمركبات والخوادم DNS، وكيل، وبصمة أصابع ملف المضيف - لإظهار ما تغير في وقت لاحق.</li>
+  <li><b>المراجعات</b> (الـ <code>reports</code> الملف: مراجعة ستة أشهر تقوم بتخزينها - وعندما يتم حفظ التاريخ لمدة شهر 6، فإن AdeeboMeter يكتبها قبل أن تنسحب أقدم الأيام. الأسماء، اسم و عنوان Wi-Fi تم تجاهلها إنهم يبقون حتى تقوم بحذفهم</li>
+  <li><b>سجلات التدفق والوسيط</b> (في السجل، لمدة 90 يومًا): لكل بث يُحفظ اسم الخدمة، المستنتج من أسماء خوادمها دون علامات تبويبك أو عناوين ما تشاهده، مع وقت التشغيل والانخفاضات. ولمراقبة الوسيط تُحفظ لحظات البطء في كل يوم تداول. لا يُطّلع مطلقًا على حسابك أو ما تشاهده داخل الخدمة.</li>
+  <li><b>الطقس</b> (<code>weather.txt</code>، فقط إذا قمت بتشغيل الطقس): التوقعات الساعاتية للمكان الذي اخترته - اليوم الأخير والآخرين القادمين، حول 2 KB. لا تاريخ إزالة (أو إيقاف الطقس) يزيلها.</li>
+  <li><b>أرقام اليوم</b> (<code>fx.txt</code>, <code>bcpi.txt</code>): أسعار الصرف الأخيرة ومؤشر السلع من بنك كندا، لذلك يتم فتح صفحة التداول دون سؤال مرة أخرى.</li>
+  <li><b>Outage log</b> (in History): when your internet went quiet and when it came back, so the Outages list and the Report for my ISP can show them. Times only - nothing about what you were doing. It goes with History: turning History off stops it, and old days roll off with the rest.</li>
+  <li><b>الاستيقاظ</b> (في التاريخ): كم ثانية بعد استيقاظ جهاز التوجيه و DNS أجاب.</li>
+  <li><b>Devices on your networks</b> (<code>devices.txt</code>, <code>device-nets.txt</code>, only while History is on): the hardware addresses already seen on each network and when the network was first met, so a new device can be listed. At most 40 networks; turning History off deletes both.</li>
+  <li><b>Walk test</b> (<code>walk.txt</code>): the room names you typed and what each spot measured. Remove a room on the page to delete it.</li>
+  <li><b>Programs seen</b> (<code>seen-apps.txt</code>): the names of programs that use the network and when each was first seen, so a newcomer can be pointed out.</li>
+  <li><b>Remembered phones</b> (<code>phones.txt</code>, only if you said yes to "Remember this phone"): each phone's name and its own key, locked to your Windows account. Forget my phones empties it.</li>
+  <li><b>Your games</b> (<code>games.txt</code>, <code>valve-servers.txt</code>): the games and servers you added in the Gamer Zone, and Valve's public server list when you refresh it - and, while History is on, a line a minute for each server you watch.</li>
+  <li><b>الصيد</b> و <b>النتائج المحفوظة</b>، ولكن فقط تلك التي تختار أن تجعل أو حفظ.</li>
+</ul>
+<p>يتم استخدام كلمات المرور والسرات التي تقوم بتكديدها في أداة (على سبيل المثال مجتمع SNMP أو سرية RADIUS او كلمة مرور شهادة) لهذا الإجراء واحد ولا يتم حفظها أبداً أو تسجيلها أو نسخها.</p>
+<p>يتم حذف التقاط الحي عند توقف التقاط، عند البدء التالي وعندما تسجيل الخروج من Windows.</p>
+<p>إزالة تثبيت AdeeboMeter يزيل، باستثناء قائمة مفتاح التشفير الخاص بك والنسخ الاحتياطية المفتاح (حيث لا تزال الملفات المرسلة إليك مفتوحة بعد إعادة تثبيتها؛ حذف <code>%LOCALAPPDATA%\AdeeboMeter</code> و <code>Documents\AdeeboMeter</code> (لإزالتهم أيضاً) الملفات المحفوظة الخاصة بك تبقى حيث وضعتها.</p>
+
+<h2>ما يرسله، ومتى</h2>
+<p>لا شيء من هذا يحمل معلومات عنك يتم إدراج كل عنصر مباشرة في التطبيق تحت "ما يترك جهاز الكمبيوتر الخاص بك" ، ويمكن إيقاف كل عنصر خلفية في الإعدادات.</p>
+<p><b>في الخلفية (أثناء تشغيل التطبيق):</b></p>
+<ul>
+  <li><b>جهاز التوجيه:</b> إرسال إشارة صغيرة إلى جهازك التوجيه كل بضع ثوان إنه يبقى على شبكتك المحلية</li>
+  <li><b>التحقق من الإنترنت و DNS:</b> واحد من الصفحة <code>1.1.1.1</code> (أو <code>8.8.8.8</code>) كل ثانية 15 على متوازن (كل دقيقة 5 في بيني) ، ومشاهدة اسم واحد على الأكثر مرة في الدقيقة. على الشبكات التي تحجب النقاش، اتصال زمني إلى منفذ 443 من نفس العنوان بدلاً من ذلك، مغلق في وقت واحد. أضعها على التوقف و لا شيء يذهب إلى الإنترنت في الخلفية</li>
+  <li><b>اسم المورد:</b> مرة واحدة في الشبكة، تتبع قصيرة (6 هبط) نحو <code>1.1.1.1</code> وبحث عن اسم عكس، للكشف عن اسم مقدمك.</li>
+  <li><b>التحقق من صفحة تسجيل الدخول</b> فقط عندما تفشل التحقق، يتم طلب واحد إلى صفحة الاختبار التي تستخدمها Windows نفسها (<code>msftconnecttest.com</code>).</li>
+  <li><b>ساعة المقصود:</b> واحد من كل ثانية 30 إلى وجهة قمت بتثبيتها، فقط إذا قمت بتشغيلها.</li>
+  <li><b>قسم الألعاب:</b> لا شيء حتى تضغط على لعبة ثم الجهاز يضع (أو يحدد الوقت) لقطاع اللعبة؛ قائمة الخادم الصمام من <code>api.steampowered.com</code> فقط عندما تضيف لعبة Valve أو اضغط على Refresh.</li>
+
+  <li><b>التدفق:</b> أثناء تشغيل البث فقط، يُقاس زمن اتصال بخادم البث نفسه دون إرسال محتوى كل 10 ثوانٍ، أو 30 في وضع Penny، لتمييز بطئه من بطء اتصالك. يتوقّف بعد ست محاولات إن لم يستجب أبدًا. يمكن تعطيله من الإعدادات › «هل تستخدم البث أو التداول؟».</li>
+  <li><b>ساعة الوسيط:</b> لا شيء حتى تختار وسيطك ثمّ اتصال زمني (لا بيانات، لا تسجيل دخول) إلى عنوانها العام في سرعة تعيينك مسبقًا، فقط أثناء فتح السوق (أو على مدار الساعة، إذا اخترت ذلك بالنسبة لـ"الوسائط الرقمية".</li>
+  <li><b>الطقس</b> (تطفئ حتى تشغيله): تقوم بتصفية مكان؛ اسمها يذهب مرة واحدة إلى <code>geocoding-api.open-meteo.com</code> لإيجاده ثم فقط إحداثياتها تذهب إلى <code>api.open-meteo.com</code> - نحو مرة كل 2 يوم، أو كل 6 ساعات في وضع «أفضل». لا يُستخدم موقع جهازك مطلقًا. Open-Meteo مجاني ولا يحتاج إلى حساب؛ والبيانات بترخيص CC BY 4.0.</li>
+  <li><b>رقم بنك كندا:</b> فقط عندما تكون صفحة التداول مفتوحة (أو خلاصة المساء على) ويجب أن تكون أرقام جديدة خارج: طلب واحد لسعر الصرف اليوم، وأحدى الأسابيع تقريبا، لمؤشر السلع، إلى <code>bankofcanada.ca</code>. لم يتم إرسال أي شيء عنك</li>
+</ul>
+<p><b>فقط عندما تبدأها:</b></p>
+<ul>
+  <li><b>الأدوات:</b> يصل اختبارك فقط إلى الهدف الذي قمت بتصفيته أو اختياره (أو إلى الهدف الذى يسميه على الشاشة، مثل <code>msftconnecttest.com</code> لتحقق الساعة).</li>
+  <li><b>اختبار السرعة:</b> حوالي 8 ثواني من تحميل وتحميل إلى الخادم الذي اخترته (Cloudflare أقرب <code>speed.cloudflare.com</code> بطبيعة الحال، أو ملف اختبار Vultr أو OVHcloud في مدينة) ، مع غطاء في MB.</li>
+  <li><b>تقرير ل ISP الخاص بي:</b> التسجيلات والتعقب إلى الوجهات التي تختارها؛ عنوانك الشخصي العام (طلب واحد <code>www.cloudflare.com/cdn-cgi/trace</code>) فقط إذا كتبت نعم.</li>
+  <li><b>الاستعلامات عبر الإنترنت</b> (توقف عن التشغيل بشكل افتراضي، وتطفئ نفسها بعد الوقت الذي تختاره): العناوين IP العامة للمسار تذهب إلى RIPEstat (<code>stat.ripe.net</code>) و PeeringDB على HTTPS؛ ثم يطلب التحقق من الأمن أيضاً تشفير DNS (<code>cloudflare-dns.com</code>) سؤال واحد وفتح صلة واحدة TLS <code>www.microsoft.com</code>. . اختبار تسرب VPN (قنابل الأدوات، عندما تضغط عليها) يطلب من خادم STUN Cloudflare (<code>stun.cloudflare.com</code>(UDP 3478) التي يرى عنوانها، مرة واحدة عبر الطريق العادي ومرة واحدة عبر Wi-Fi أو الكابل مباشرة. أداة تشفير DNS (DoH / DoT) تسأل الخادم الذي تختاره عند تشغيله.</li>
+  <li><b>الروابط التي تنقر عليها</b> (GitHub, Donate) مفتوح في متصفحك؛ التطبيق نفسه لا يرسل أي شيء.</li>
+  <li><b>أبلغ عن حشرة، أرسل ردود الفعل، أرسل بطاقة قاعة المشاهير الخاصة بك:</b> فقط عندما تضغط <b>أرسل</b> في المربع المخصّص، بعد معاينة ما سيُرسل بدقة. يُرسل إلى وسيط AdeeboMeter، وهو Cloudflare Worker صغير يحفظه لـ Adeeb دون حساب. قد يتضمّن تقرير الخلل إصدار التطبيق وWindows والصفحة المفتوحة وآخر أسطر السجل، بعد إزالة الأسماء واسم الجهاز والمسارات والعناوين. ويزيل الوسيط عناوين البريد وIP مجدّدًا. يُستخدم عنوان اتصالك لحساب عدد الإرسالات فقط، بحد خمس مرات في الساعة، ويُحفظ كبصمة أحادية الاتجاه ليوم واحد. دون إنترنت ينتظر التقرير على جهازك، ثم يُرسل عند التشغيل التالي للتطبيق مع اتصال. تُعطّل الميزة إذا عطّل فريق تقنية المعلومات الاستعلامات عبر الإنترنت.</li>
+  <li><b>تقارير الحوادث:</b> إذا كان التطبيق يتعطل، فإن البدء التالي يقدم فتح صفحة قضية GitHub في متصفحك مع تفاصيل ملؤها. لا شيء يتم إرساله إلا إذا اخترت إرساله، ويمكنك قراءته وتحريره أولاً.</li>
+</ul>
+<p>AdeeboMeter لا يستمع أبدا: فإنه لا يفتح أي منفذ ولا يعمل أي خادم، ويستقبل فقط الرد على الطلبات التي قدمتها.</p>
+
+<h2>Microsoft Store</h2>
+<p>إذا تم تقديم AdeeboMeter في Microsoft Store و قمت بتثبيت AdeeboMeter من Microsoft Store ، تقوم Microsoft بإدارة التنزيل والتحديثات وأي بيانات الشراء تحت <a href="https://privacy.microsoft.com/privacystatement">بيان خصوصية مايكروسوفت</a>. . يرى المطور فقط الإجماليات المجهولة التي تقدمها مايكروسوفت لكل ناشر، مثل عدد التثبيتات.</p>
+
+<h2>هذا الموقع</h2>
+<p>تستخدم الصفحات العامة للموقع Cloudflare Web Analytics لقياس مشاهدات الصفحات والزيارات والمواقع المُحيلة وأداء الصفحات. تساعدنا هذه الأرقام الإجمالية على معرفة الأدلة التي يجدها الزوّار وتحسين الموقع. لا تستخدم Cloudflare Web Analytics ملفات تعريف ارتباط للتحليلات أو بصمة المتصفّح. عدد الزيارات تقدير يعتمد على طلبات الصفحات والإحالات.</p>
+<p>يُحمّل برنامج التحليلات من <code>static.cloudflareinsights.com</code> ويرسل القياسات إلى Cloudflare. تتلقّى Cloudflare طلب الشبكة بصفتها مزوّد الخدمة. اقرأ <a href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/">وثائق Cloudflare الخاصة بجمع البيانات</a>. يحترم الموقع إشارتَي Do Not Track وGlobal Privacy Control، ولا يشغّل التحليلات عند تفعيل أيٍّ منهما.</p>
+<p>The website also uses these other external services: the home page asks <code>api.github.com</code> for the latest version number and shows the Microsoft Store badge from <code>get.microsoft.com</code>; the feedback and Hall of Fame forms load Cloudflare Turnstile (<code>challenges.cloudflare.com</code>) - a free check that a person, not a robot, is sending, with no puzzle and no tracking cookies; the Live page and the phone app ask AdeeboMeter's own Live service (<code>adeebometer-live.orkoadeeb.workers.dev</code>) for weather, scores and site checks; and the phone app's checks, when you run them, contact the sites they test (for example Google, Cloudflare, Microsoft and Apple test pages, the streaming and call services you pick, public DNS resolvers, <code>rdap.org</code> for who owns an address, and Cloudflare's speed test). Those sites see your IP address the way any website you visit does. A message you send goes through AdeeboMeter's relay, as described above.</p>
+
+<h2>الأطفال</h2>
+<p>لا يجمع AdeeboMeter معلومات شخصية من أي شخص، بما في ذلك الأطفال.</p>
+
+<h2>التغييرات والاتصال</h2>
+<p>إذا تغيرت هذه السياسة، سيتم نشر النسخة الجديدة على هذه الصفحة مع تاريخ جديد. الرمز المصدر عام <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>، حتى يمكن لأي شخص التحقق من ما يفعله التطبيق. للأسئلة، افتح عدد على <a href="https://github.com/adeeb111/AdeeboMeter/issues">github.com/adeeb111/AdeeboMeter/issues</a>.</p>
+
+<footer>AdeeboMeter من قبل Adeeb Khan · رخصة MIT</footer>
+</main>
+</body>
+</html>
