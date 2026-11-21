@@ -36,7 +36,7 @@ namespace AdeeboMeter
         readonly FlowLayoutPanel tabs, chips; readonly PillButton idle, checkBtn, healthBtn;
         readonly System.Windows.Forms.Timer timer;
         Snap snap; int lastVersion = -1;
-        System.Threading.Timer watchdog; volatile bool Visible0; Rectangle lastBounds; DateTime lastPong = DateTime.UtcNow; volatile bool pinged, frozenLogged; string frozeDoing = "";
+        System.Threading.Timer watchdog; volatile bool Visible0; Rectangle lastBounds; DateTime lastPong = DateTime.UtcNow, lastWatch = DateTime.UtcNow; volatile bool pinged, frozenLogged; string frozeDoing = "";
         Panel leftPane; string tab = "overview", lastPage = "overview", curSec;
         readonly FlowLayoutPanel subTabs; readonly Dictionary<string, List<Control>> subBtns = new Dictionary<string, List<Control>>(); readonly Dictionary<string, string> lastIn = new Dictionary<string, string>();
         readonly string dumpcap, wireshark; readonly bool npcap;
@@ -72,7 +72,13 @@ namespace AdeeboMeter
             watchdog = new System.Threading.Timer(delegate
             {
                 if (!IsHandleCreated || IsDisposed || Disposing) return;
-                var since = DateTime.UtcNow - lastPong;
+                // 21 Nov (Adeeb: "messages keep popping" holding minimize; the card stuck after sleep) - two things look like a
+                // freeze and aren't: the PC waking up (this timer itself ran late: the clock jumped by the sleep), and a mouse
+                // button held on the window's frame (Windows keeps the window in its own loop until you let go)
+                var now = DateTime.UtcNow; bool woke = (now - lastWatch).TotalSeconds > 5; lastWatch = now;
+                bool held = (Native.GetAsyncKeyState(0x01) & 0x8000) != 0 || (Native.GetAsyncKeyState(0x02) & 0x8000) != 0;
+                if (woke || held) { lastPong = now; FreezeCard.Hide(); return; }
+                var since = now - lastPong;
                 if (since.TotalSeconds >= 2 && !frozenLogged) { frozenLogged = true; frozeDoing = UiActivity.Doing; Program.Log("window froze (" + since.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s so far) while " + frozeDoing); }
                 if (since.TotalSeconds >= 2 && Visible0) FreezeCard.Show(lastBounds, (int)since.TotalSeconds, UiActivity.Doing);   // the card on its own thread: you see it even while this window is stuck
                 if (!pinged) { pinged = true; try { BeginInvoke((Action)delegate { pinged = false; if (frozenLogged) { frozenLogged = false; Program.Log("window answered again after " + (DateTime.UtcNow - lastPong).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s (" + frozeDoing + ")"); } lastPong = DateTime.UtcNow; FreezeCard.Hide(); Visible0 = Visible && WindowState != FormWindowState.Minimized; if (Visible0) lastBounds = Bounds; }); } catch (Exception) { pinged = false; } }   /* the window may be closing: an exception here would end the whole process (a timer thread) */

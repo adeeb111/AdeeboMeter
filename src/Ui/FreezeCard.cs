@@ -11,6 +11,7 @@ namespace AdeeboMeter
     static class FreezeCard
     {
         static Thread thread; static CardForm card; static readonly object k = new object();
+        static bool wanted;   // 21 Nov: a Hide that lands before the card's window exists still closes it (after sleep the card stayed up)
         public static volatile int Shown;   // how many times it appeared (the self-test reads it)
 
         // called from the watchdog thread every second while the window is frozen
@@ -21,14 +22,15 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (card != null) { var c = card; try { c.BeginInvoke((Action)delegate { c.Set(line); }); } catch (InvalidOperationException) { } return; }
-                Shown++;
+                if (wanted) return;   // already on its way
+                Shown++; wanted = true;
                 var t = new Thread(() =>
                 {
                     var f = new CardForm(line, over);
-                    lock (k) card = f;
+                    lock (k) { if (!wanted) f.CloseAsap = true; else card = f; }
                     try { Application.Run(f); }
                     catch (Exception e) { Program.Log("freeze card: " + e.Message); }
-                    finally { lock (k) { if (card == f) card = null; } f.Dispose(); }
+                    finally { lock (k) { if (card == f) { card = null; wanted = false; } } f.Dispose(); }
                 }) { IsBackground = true, Name = "freeze card" };
                 t.SetApartmentState(ApartmentState.STA); thread = t; t.Start();
             }
@@ -37,6 +39,7 @@ namespace AdeeboMeter
         {
             lock (k)
             {
+                wanted = false;
                 var c = card; if (c == null) return; card = null;
                 c.CloseAsap = true;   // bug-hunt ML-169: asked to go before its window exists - it closes itself the moment it's shown
                 try { if (c.IsHandleCreated) c.BeginInvoke((Action)delegate { c.Close(); }); } catch (InvalidOperationException) { }
