@@ -1,5 +1,6 @@
 // AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
+using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -14,14 +15,16 @@ namespace AdeeboMeter
     {
         const double PerChar = 28, MaxMs = 2000;
         static readonly Dictionary<string, KeyValuePair<string, DateTime>> seen = new Dictionary<string, KeyValuePair<string, DateTime>>(StringComparer.Ordinal);
-        static readonly HashSet<Control> wake = new HashSet<Control>();
+        static readonly Dictionary<Control, Rectangle> wake = new Dictionary<Control, Rectangle>();   // the control, and the part of it the typing is in (Empty: the whole control)
         static readonly Dictionary<string, DateTime> changed = new Dictionary<string, DateTime>(StringComparer.Ordinal);
         const double Calm = 15;   // seconds a slot must stay unchanged before its next new line types again
         static Timer t;
         public static bool Hold;   // screen peek: draw every line whole, so a still picture never shows half a sentence
         public static bool On { get { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } } }
         // what to draw now for this slot's text (UI thread only)
-        public static string Show(string slot, string text, Control c)
+        public static string Show(string slot, string text, Control c) { return Show(slot, text, c, RectangleF.Empty); }
+        // area: where on c the line is drawn (client coordinates) - only that part is redrawn while it types (21 Nov: tool page flicker)
+        public static string Show(string slot, string text, Control c, RectangleF area)
         {
             if (string.IsNullOrEmpty(text) || !On || Hold) return text ?? "";
             KeyValuePair<string, DateTime> p;
@@ -37,7 +40,7 @@ namespace AdeeboMeter
             double dur = Math.Min(MaxMs, text.Length * PerChar), el = p.Value == DateTime.MinValue ? double.MaxValue : (DateTime.UtcNow - p.Value).TotalMilliseconds;
             if (el >= dur) return text;
             int n = Math.Max(0, Math.Min(text.Length, (int)Math.Ceiling(text.Length * el / dur)));
-            if (c != null) { wake.Add(c); Tick(); }
+            if (c != null) { Rectangle was; var r = Rectangle.Round(area); wake[c] = wake.TryGetValue(c, out was) ? (was == Rectangle.Empty || r == Rectangle.Empty ? Rectangle.Empty : Rectangle.Union(was, r)) : r; Tick(); }
             return text.Substring(0, n) + "|";
         }
         static void Tick()
@@ -47,7 +50,7 @@ namespace AdeeboMeter
             t.Tick += delegate
             {
                 var l = wake.ToList(); wake.Clear();
-                foreach (var c in l) if (!c.IsDisposed && c.Visible) c.Invalidate();
+                foreach (var kv in l) if (!kv.Key.IsDisposed && kv.Key.Visible) { if (kv.Value == Rectangle.Empty) kv.Key.Invalidate(); else kv.Key.Invalidate(Rectangle.Inflate(kv.Value, 4, 4)); }
                 if (wake.Count == 0 && l.Count == 0) { t.Stop(); t.Dispose(); t = null; }
             };
             t.Start();

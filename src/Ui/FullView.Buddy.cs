@@ -19,8 +19,8 @@ namespace AdeeboMeter
             bool money = key.StartsWith("trade.", StringComparison.Ordinal);
             string text = money && Lines.Faith != "off" ? Lines.SteadyAs(key, v, "plain") : Lines.Steady(key, v);
             if (text == "") return y;
-            text = Typing.Show(money ? "trade" : "stream", text, money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas);
-            var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            var tc = money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas; var r = new RectangleF(x, y, w, 34 * S);
+            text = Typing.Show(money ? "trade" : "stream", text, tc, OnScreen(tc, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);
@@ -47,8 +47,8 @@ namespace AdeeboMeter
                 text = buddyText;
             }
             if (text == "") return y;
-            text = Typing.Show("tool", text, tbCanvas);
-            var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            var r = new RectangleF(x, y, w, 34 * S);
+            text = Typing.Show("tool", text, tbCanvas, OnScreen(tbCanvas, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);

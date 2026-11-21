@@ -580,7 +580,7 @@ namespace AdeeboMeter
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if ((destRunning || pinRunning) && footTick % 2 == 0) destCanvas.Invalidate();   // bug-hunt ML-145: once a second is enough for a running check (its results repaint as they land)
-            if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = rr == null ? "" : rr.Status + "|" + rr.Count + "|" + (footTick / 4);   /* and every 2 s anyway: tables like MTR's hops fill in without a status change */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
+            if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = (rr == null ? "" : rr.Status + "|" + rr.Count) + "|" + HopsPrint(mtrHops) + "|" + HopsPrint(mtuHops);   /* 21 Nov: no more "every 2 s anyway" (the page flickered) - MTR's and MTU's hop tables are part of the key instead */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
             StreamTick(); SportsTick(); TradeTick(); OutlookTick();
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gv = System.Threading.Interlocked.Read(ref GamePing.Ver).ToString(CultureInfo.InvariantCulture); string gk = GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerVer = gv; gamerCanvas.Invalidate(); } else if (gv != gamerVer) { gamerVer = gv; if (!RedrawSpots(gamerCanvas, "gm.live")) gamerCanvas.Invalidate(); } }   /* a new sample only: just the cards and the map */   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
@@ -859,6 +859,16 @@ namespace AdeeboMeter
             foreach (var id in ids) { RectangleF r; if (!d.TryGetValue(id, out r)) return false; if (r.Width > 0 && r.Height > 0) rs.Add(Rectangle.Inflate(Rectangle.Round(r), 3, 3)); }
             foreach (var r in rs) c.Invalidate(r);
             return true;
+        }
+        // a painted rectangle on a scrolling canvas, in the canvas's own (client) coordinates
+        static RectangleF OnScreen(Control c, RectangleF r) { var sp = ScrollOf(c); r.Offset(sp.X, sp.Y); return r; }
+        // what a hop table shows, as one short string: the page redraws when a hop's numbers move, not on a clock
+        static string HopsPrint(List<PathTools.Hop> l)
+        {
+            if (l == null) return ""; int h = 17;
+            try { foreach (var x in l.ToArray()) unchecked { h = h * 31 + x.N; h = h * 31 + (x.Ip ?? "").GetHashCode(); h = h * 31 + (int)x.Rtt; h = h * 31 + x.Sent; h = h * 31 + x.Lost; h = h * 31 + x.Mtu; h = h * 31 + (x.Reached ? 1 : 0); } }
+            catch (ArgumentException) { return "busy"; }   // the tool thread was adding a hop just then: try again next tick
+            return l.Count + ":" + h;
         }
         static Point ScrollOf(Control c) { var sc = c as ScrollableControl; return sc != null && sc.AutoScroll ? sc.AutoScrollPosition : Point.Empty; }
         void Hint(Control c, RectangleF r, string key)
