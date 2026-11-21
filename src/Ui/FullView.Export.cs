@@ -74,7 +74,9 @@ namespace AdeeboMeter
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
             link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone);
-            if (!VisEx() && tbRows != null && (tbSel == "golive" || tbSel == "board") && LabRow() != null) link("route", "Show my path", ToolPath);   // 1.1.6: the Network Lab if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
+            if (!VisEx() && tbRows != null && (tbSel == "golive" || tbSel == "board") && LabRow() != null) link("route", "Show my path", ToolPath);
+            if (!VisEx() && Cfg.History && tbRows != null && tbRows.Any(r => r.Length > 0 && r[0] == "2"))   // a red result: that minute in the Time machine (FullView.Gateway.cs)
+            { DateTime at = tbAt; string tt = tbTitle; link("time", L.T("See") + " " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " " + L.T("in the Time machine"), delegate { OpenTimeAt(at, L.T("Toolbox") + " - " + tt); }); }   // 1.1.6: the Network Lab if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
             if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
             {

@@ -241,9 +241,9 @@ namespace AdeeboMeter
                     float ch = 62 * S + feat.Count * 50 * S + 34 * S; var r = new RectangleF(x + col * (cw + gap), rowY, cw, ch);
                     string acc = QAccent(qd[0]);
                     Kit.Card(g, r, acc, false);
-                    using (var rb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(rb, r.X + 14 * S, r.Y + 16 * S, 32 * S, 32 * S);
-                    Kit.Icon(g, QIcon(qd[0]), new RectangleF(r.X + 22 * S, r.Y + 24 * S, 16 * S, 16 * S), Kit.Accent(acc));
-                    g.DrawString(L.T(qd[1]), Draw.fHead, ink, new RectangleF(r.X + 54 * S, r.Y + 21 * S, r.Width - 130 * S, 26 * S), nowrap);
+                    bool big = BigIcon(g, "q:" + qd[0], new RectangleF(r.X + 12 * S, r.Y + 10 * S, 44 * S, 44 * S), Kit.Accent(acc));   // 1.1.6: big icons (FullView.Gateway.cs)
+                    if (!big) { using (var rb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(rb, r.X + 14 * S, r.Y + 16 * S, 32 * S, 32 * S); Kit.Icon(g, QIcon(qd[0]), new RectangleF(r.X + 22 * S, r.Y + 24 * S, 16 * S, 16 * S), Kit.Accent(acc)); }
+                    g.DrawString(L.T(qd[1]), Draw.fHead, ink, new RectangleF(r.X + (big ? 66 : 54) * S, r.Y + 21 * S, r.Width - (big ? 142 : 130) * S, 26 * S), nowrap);
                     string cnt = all.Count.ToString(CultureInfo.CurrentCulture); var cs = g.MeasureString(cnt, Draw.fTiny);
                     var cr = new RectangleF(r.Right - 16 * S - cs.Width - 12 * S, r.Y + 22 * S, cs.Width + 12 * S, 20 * S);
                     Theme.Fill(g, cr, 10 * S, Kit.Soft(acc)); using (var cb = new SolidBrush(Kit.Ink(acc))) g.DrawString(cnt, Draw.fTiny, cb, cr.X + 6 * S, cr.Y + 3 * S);

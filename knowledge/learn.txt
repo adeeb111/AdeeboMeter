@@ -905,3 +905,83 @@ line: A fee is taken every year from the whole amount, so it compounds against y
 breaks: Fees hide in names like MER and management expense - look for the percentage.
 pic: fees
 try: Run Compound growth at 6% and at 4% to see it.
+
+== inv-order
+title: Market and limit orders
+kind: investing
+tag: "Buy now at any price" or "buy only at my price".
+check: A limit order to buy at $10.00 will... | Only fill at $10.00 or lower | Fill straight away at whatever the price is | Fill at exactly $10.00 tomorrow | Cancel itself if the price rises a cent
+line: A market order fills straight away at the best price on offer, whatever it is. A limit order names your price: it fills only at that price or better, and may not fill at all.
+breaks: In a fast or thin market a market order can fill well away from the last price you saw - the gap is called slippage.
+ladder: You > Broker: buy 10, limit $10.00 | Broker > Exchange: bid $10.00 x 10 | Exchange > Broker: filled at $9.99 | Broker > You: 10 shares at $9.99
+try: In Toolbox › Work it out, Average cost shows what a few fills at different prices add up to.
+
+== inv-spread
+title: Bid, ask and the spread
+kind: investing
+tag: Two prices at once: what buyers pay and what sellers take.
+check: The bid is $20.00 and the ask is $20.10. If you buy and sell straight away you... | Lose about 10 cents a share | Make 10 cents a share | Break even exactly | Pay nothing at all
+line: The bid is the best price someone will pay right now; the ask is the lowest price someone will sell at. The gap between them is the spread - a cost you pay every time you trade, on top of any commission.
+breaks: Small, rarely traded companies and odd hours have wide spreads; a "cheap" trade there can cost more than the fee.
+ladder: Buyers > Exchange: best bid $20.00 | Sellers > Exchange: best ask $20.10 | You > Exchange: buy at market | Exchange > You: filled at $20.10
+try: Look at the bid and ask in your broker's app before and after the market opens.
+
+== inv-hours
+title: Market hours and gaps
+kind: investing
+tag: The exchange closes; the news doesn't.
+check: Why can a share open far from yesterday's close? | News arrived while the exchange was closed | The exchange resets prices every morning | Brokers pick a new price overnight | It can't - it always opens at the close
+line: The main US and Canadian exchanges trade from 9:30 to 16:00 Eastern on weekdays. Some brokers offer early and late sessions with fewer traders. News overnight - results, a court ruling, another market - can make the next open jump: a gap.
+breaks: Early and late sessions are thin: wider spreads and bigger jumps. Crypto trades all day, every day, which is why it can move while you sleep.
+ladder: Exchange > Everyone: 16:00 close, $50 | Company > Everyone: 20:00 results disappoint | Exchange > Everyone: 09:30 first trade $44 - a gap down
+try: Look at the time stamps on Markets: is the number from today's session or yesterday's close?
+
+== inv-dividend
+title: Dividends
+kind: investing
+tag: Part of the profit, paid out to the owners.
+check: On the day a share goes "ex-dividend", its price usually... | Drops by roughly the dividend | Rises by the dividend | Doubles | Stops trading
+line: Some companies pay part of their profit to shareholders, often every quarter. The yield is the yearly dividend divided by the price: $2 a year on a $50 share is a 4% yield.
+breaks: A very high yield can be a warning, not a bargain: it often means the price has fallen because the market expects the dividend to be cut.
+ladder: Company > Shareholders: $0.50 a share this quarter | Exchange > Everyone: ex-dividend date - buy after it, no dividend | Company > You: $0.50 x your shares
+try: Work out a yield: yearly dividend ÷ price × 100.
+
+== inv-pe
+title: Earnings and the P/E ratio
+kind: investing
+tag: How many years of today's profit the price pays for.
+check: A share costs $30 and the company earned $2 a share last year. Its P/E is... | 15 | 60 | 32 | 2
+line: Earnings per share is the profit divided by the number of shares. The price-to-earnings ratio (P/E) is the price divided by that: a P/E of 15 means you pay $15 for each $1 of yearly profit. A high P/E usually means people expect growth.
+breaks: A low P/E isn't automatically cheap - profits may be about to fall. Compare companies in the same business, not a bank with a software firm.
+ladder: Company > Everyone: earned $2.00 a share | Market > Everyone: price $30 | You > You: 30 ÷ 2 = P/E 15
+try: Divide a price by its earnings per share - the whole calculation is one division.
+
+== inv-bonds
+title: Interest rates and bonds
+kind: investing
+tag: Lending money for a fixed return - and why rates move prices.
+check: When interest rates rise, the price of an existing bond usually... | Falls | Rises | Stays exactly the same | Doubles
+line: A bond is a loan to a government or company that pays fixed interest and returns the amount at the end. When new bonds pay more, older ones paying less are worth less - so bond prices fall when rates rise, and rise when rates fall.
+breaks: Central-bank rate decisions move bonds, mortgages, savings rates and shares on the same day - a "rate day" can be a busy day on Markets.
+ladder: You > Government: lend $1,000 for 5 years | Government > You: 3% a year | Rates > Everyone: new bonds now pay 5% | Market > You: your 3% bond is worth less today
+try: Compare Compound growth at 3% and at 5% to see why the newer bond is worth more.
+
+== inv-volatility
+title: Volatility - how much it swings
+kind: investing
+tag: Two investments can end in the same place by very different roads.
+check: Higher volatility means... | Bigger and more frequent swings up and down | Guaranteed higher returns | The investment can't lose money | Lower fees
+line: Volatility is how much a price swings. A savings account barely moves; a broad index swings some; a single small company or a cryptocurrency can move 10% or more in a day. Bigger possible gains come with bigger possible falls.
+breaks: The order of the swings matters when you need the money: a big fall just before you sell hurts more than the same fall years earlier.
+ladder: Savings > You: +0.01% today | Index > You: -1.2% today | Small company > You: +14% today | Crypto > You: -9% overnight
+try: Play "Bull or bear?" and notice how often the line changes direction.
+
+== inv-crypto
+title: Crypto basics
+kind: investing
+tag: Digital tokens, traded all day, with real risk.
+check: If you lose the private key to a crypto wallet you control, the coins are usually... | Gone for good | Refunded by the bank | Reset by the exchange | Recovered by your internet provider
+line: A cryptocurrency is a digital token recorded on a shared ledger (a blockchain). It trades 24 hours a day, every day, and its price can swing far more than shares. Whoever holds the private key controls the coins.
+breaks: There's usually no bank or deposit insurance behind a crypto wallet: a lost key, a hacked exchange or a scam transfer normally can't be undone. Anyone promising guaranteed crypto returns is running a scam.
+ladder: You > Exchange: buy 0.01 coin | Exchange > Ledger: move 0.01 to the exchange's wallet for you | You > Wallet: withdraw to your own key | Ledger > Everyone: recorded, can't be reversed
+try: Read "Spotting investment scams" in this section.

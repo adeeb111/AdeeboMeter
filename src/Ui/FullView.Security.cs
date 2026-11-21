@@ -101,7 +101,9 @@ namespace AdeeboMeter
                 }
                 foreach (var grp in SecGroups)
                 {
-                    g.DrawString(grp[1], Draw.fTiny, muted, x, y + 4 * S); y += 24 * S;
+                    // 1.1.6: each group under a big icon (FullView.Gateway.cs)
+                    Glyphs.Tile(g, grp[0] == "pc" ? "pc" : grp[0] == "net" ? "cpe" : "lock", new RectangleF(x, y, 40 * S, 40 * S), Kit.Accent("security"), 10 * S);
+                    g.DrawString(grp[1], Draw.fTiny, muted, x + 52 * S, y + 13 * S); y += 50 * S;
                     // problems first once checked; the plan order before
                     var checks = Security.All.Where(c => c.Group == grp[0]).OrderBy(c => { List<string[]> r; if (!res.TryGetValue(c.Id, out r)) return 9; int l = SecLevel(r); return l == 2 ? 0 : l == 1 ? 1 : l == 3 ? 2 : 3; }).ToList();
                     // status tiles (PLAN 11.5): every check that's fine, informational or not run yet is one small tile;

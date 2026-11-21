@@ -26,7 +26,7 @@ namespace AdeeboMeter
             new[] { "windows", "Inside Windows", "What all those processes and services are for." },
             new[] { "apps", "Teams and office apps", "What a call or a sync really does on the network." },
             new[] { "streaming", "Streaming", "How video reaches you, why it buffers, and whose fault it is - with three games." },
-            new[] { "investing", "Money & investing", "Bull and bear markets, recessions, inflation, compound growth, emergency funds, budgets and scams - learning, never advice. Seven games." },
+            new[] { "investing", "Money & investing", "Bull and bear markets, orders and spreads, dividends, bonds, crypto, inflation, compound growth, budgets and scams - learning, never advice. Seven games." },
             new[] { "labs", "Labs", "Play with how networks behave, with your own numbers." },
             new[] { "games", "Games", "An escape room, catch the thief, packet detective, quick-fire rounds." },
             new[] { "check", "Check yourself", "One question per topic - right first time earns." },
@@ -88,8 +88,11 @@ namespace AdeeboMeter
                 // an icon card with a progress ring (PLAN 11.5)
                 string acc = c[0] == "games" ? "gamer" : c[0] == "labs" ? "toolbox" : "learn", icon; if (!LearnIcons.TryGetValue(c[0], out icon)) icon = "learn";
                 Kit.Card(g, r, acc, false);
-                using (var cb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(cb, r.X + 14 * S, r.Y + 16 * S, 34 * S, 34 * S);
-                Kit.Icon(g, icon, new RectangleF(r.X + 22 * S, r.Y + 24 * S, 18 * S, 18 * S), Kit.Accent(acc));
+                if (!BigIcon(g, "l:" + c[0], new RectangleF(r.X + 12 * S, r.Y + 10 * S, 44 * S, 44 * S), Kit.Accent(acc)))   // 1.1.6: big icons (FullView.Gateway.cs)
+                {
+                    using (var cb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(cb, r.X + 14 * S, r.Y + 16 * S, 34 * S, 34 * S);
+                    Kit.Icon(g, icon, new RectangleF(r.X + 22 * S, r.Y + 24 * S, 18 * S, 18 * S), Kit.Accent(acc));
+                }
                 var ring = new RectangleF(r.Right - 52 * S, r.Y + 14 * S, 38 * S, 38 * S);
                 using (var tp = new Pen(Theme.Track, 4 * S)) g.DrawEllipse(tp, ring);
                 if (all > 0 && done > 0) using (var ap = new Pen(done >= all ? Theme.Green : Kit.Accent(acc), 4 * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round }) g.DrawArc(ap, ring, -90, 360f * done / all);

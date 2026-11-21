@@ -186,5 +186,18 @@ namespace AdeeboMeter
             Act(c, hr, delegate { tab = "overview"; ShowTab(); SyncNav(); });
             return y + 52 * S;
         }
+
+        // ---------- the big icon for a Toolbox question or a Learn card (falls back to the small line icon)
+        static readonly Dictionary<string, string> BigGlyph = new Dictionary<string, string>(StringComparer.Ordinal) {
+            { "q:reach", "internet" }, { "q:slow", "bolt" }, { "q:path", "route" }, { "q:lan", "switch" }, { "q:join", "wifi" }, { "q:keys", "key" },
+            { "q:cert", "cert" }, { "q:hw", "pc" }, { "q:win", "win" }, { "q:lab", "pkt" }, { "q:calc", "calc" }, { "q:report", "book" }, { "q:pc", "pc" }, { "q:game", "game" }, { "q:time", "clock" }, { "q:fun", "star" },
+            { "l:basics", "star" }, { "l:protocol", "pkt" }, { "l:provider", "olt" }, { "l:mobile", "tower" }, { "l:crypto", "encrypt" }, { "l:windows", "win" },
+            { "l:apps", "laptop" }, { "l:streaming", "play" }, { "l:investing", "chart" }, { "l:labs", "lab" }, { "l:games", "game" }, { "l:check", "shield" }, { "l:paths", "route" } };
+        // true when it drew the big tile; false: the caller draws its old small icon
+        static bool BigIcon(Graphics g, string key, RectangleF r, Color c)
+        {
+            string gk; if (!BigGlyph.TryGetValue(key, out gk) || !Glyphs.Has(gk)) return false;
+            Glyphs.Tile(g, gk, r, c, r.Width * 0.26f); return true;
+        }
     }
 }
