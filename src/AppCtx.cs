@@ -205,7 +205,13 @@ namespace AdeeboMeter
             }
             catch (Exception e) { Program.Log("single: " + e.Message); }
 
-            if (Program.StartView != null)
+            if (Program.Restarted && Program.StartView == null)
+            {
+                var again = new System.Windows.Forms.Timer { Interval = 800 };
+                again.Tick += delegate { again.Stop(); again.Dispose(); OpenFull(); };
+                again.Start();
+            }
+            else if (Program.StartView != null)
             {
                 var once = new System.Windows.Forms.Timer { Interval = 1500 };
                 once.Tick += delegate { once.Stop(); once.Dispose(); OpenFull(); if (full != null) full.Debug(Program.StartView, Program.StartTip, Program.StartDest); };

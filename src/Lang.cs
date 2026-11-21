@@ -13,7 +13,7 @@ namespace AdeeboMeter
     {
         public static readonly string[][] Languages = {
             new[] { "en", "English" }, new[] { "fr", "Français (Canada)" },
-            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }, new[] { "zh", "简体中文" }
+            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }   // Chinese (lang-zh.txt, 4% done) is kept in the repo but not offered until it is translated - a saved "zh" opens in English
         };
         public static bool IsRtl { get { return Code == "ar"; } }
 
@@ -54,6 +54,34 @@ namespace AdeeboMeter
         {
             var m = map; if (m == null || string.IsNullOrEmpty(en)) return en;
             string v; return m.TryGetValue(en, out v) && v.Trim().Length > 0 ? v : en;
+        }
+        // another language's word, for the picker's preview (that table read once, kept)
+        static readonly Dictionary<string, Dictionary<string, string>> others = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+        static Dictionary<string, string> Table(string code)
+        {
+            if (code == "en" || !Languages.Any(l => l[0] == code)) return null;
+            lock (others)
+            {
+                Dictionary<string, string> d; if (others.TryGetValue(code, out d)) return d;
+                try { d = Parse(Knowledge.RawText("lang-" + code)); } catch (Exception e) { if (!(e is InvalidOperationException || e is System.IO.IOException || e is ArgumentException)) throw; d = new Dictionary<string, string>(); }
+                others[code] = d; return d;
+            }
+        }
+        public static string In(string code, string en) { var m = Table(code); string v; return m != null && en != null && m.TryGetValue(en, out v) && v.Trim().Length > 0 ? v : en; }
+        // how much of the app is translated - the "#coverage NN" line tools/langcheck.py keeps in the table; -1 when it isn't there
+        public static int Coverage(string code)
+        {
+            if (code == "en") return 100;
+            try
+            {
+                foreach (var line in (Knowledge.RawText("lang-" + code) ?? "").Split('\n'))
+                {
+                    if (!line.StartsWith("#coverage ", StringComparison.Ordinal)) { if (line.Length > 0 && line[0] != '#') break; continue; }
+                    int p; return int.TryParse(line.Substring(10).Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out p) ? Math.Max(0, Math.Min(100, p)) : -1;
+                }
+            }
+            catch (Exception e) { if (!(e is InvalidOperationException || e is System.IO.IOException || e is ArgumentException)) throw; }
+            return -1;
         }
         public static int Count { get { var m = map; return m == null ? 0 : m.Count; } }
     }

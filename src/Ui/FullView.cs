@@ -111,6 +111,7 @@ namespace AdeeboMeter
             dotsBtn = new IconButton("more", "More: Details, layout, points, About"); dotsBtn.Click += delegate { TopMenu(); };
             headSearch = new SearchPill(); headSearch.Click += delegate { OpenPalette(); };
             header.Controls.Add(themeSw); header.Controls.Add(viewBtn); header.Controls.Add(headSearch); header.Controls.Add(gearBtn); header.Controls.Add(dotsBtn); header.Controls.Add(backBtn);
+            MakeLangButton();   // the language button beside VIEW, and Restart when a switch needs one (21 Nov)
             EventHandler place = delegate { PlaceTop(); };
             header.Resize += place; viewBtn.Resize += place; backBtn.Resize += place;
             pathPanel = new DB { Name = "pathPanel", Dock = DockStyle.Top, Height = Sc(128), BackColor = Theme.Card };
@@ -330,6 +331,7 @@ namespace AdeeboMeter
                 if (e.Control && (e.KeyCode == Keys.D0 || e.KeyCode == Keys.NumPad0)) { e.SuppressKeyPress = true; ZoomTo(100); return; }
                 if (e.KeyCode == Keys.Escape)
                 {
+                    if (langSheet != null && langSheet.Visible) { e.SuppressKeyPress = true; HideLangSheet(); return; }
                     if (topMenu != null && topMenu.Visible) { e.SuppressKeyPress = true; HideTopMenu(); return; }
                     if (buddySheet != null && buddySheet.Visible) { e.SuppressKeyPress = true; HideBuddySheet(); return; }
                     if (pageMenu != null && pageMenu.Visible) { e.SuppressKeyPress = true; HidePageMenu(); return; }
@@ -715,6 +717,8 @@ namespace AdeeboMeter
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
             // --view peek:toolbox writes what screen peek would send for that page to peek-test.jpg beside the exe
             if (page == "peek" && sub != null) { var jb = PeekPage(sub); if (jb != null) File.WriteAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "peek-test.jpg"), jb); page = sub; }
+            // --view lang[:bn] opens the language card (with that tile under the mouse) - for screenshots
+            if (page == "lang") { LangMenu(); if (sub != null) { langDebug = sub; langSheet.Invalidate(); } return; }
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);
             // --view phone:qr shows a code; phone:ask shows the Allow question as a phone would raise it (screenshots of the page)

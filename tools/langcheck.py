@@ -35,3 +35,13 @@ with open(out, 'w', encoding='utf-8', newline='\n') as o:
     for w in todo: o.write(w + '\t\n')
 print('%s: %d texts in the app, %d translated, %d to do -> %s' % (code, len(want), len(want) - len(todo), len(todo), os.path.relpath(out, root)))
 if unused: print('%d lines in lang-%s.txt are reached through variables (not as L.T("...") literals) - keep them' % (len(unused), code))
+# the language picker shows how much is done: keep a "#coverage NN" line in the table (the app reads it; a # line is never a translation)
+done = sum(1 for w in want if have.get(w, '').strip())
+pct = int(100 * done / max(1, len(want)))
+lines = open(path, encoding='utf-8').read().split('\n') if os.path.exists(path) else []
+lines = [l for l in lines if not l.startswith('#coverage ')]
+at = 0
+while at < len(lines) and lines[at].startswith('#'): at += 1
+lines.insert(at, '#coverage %d' % pct)
+open(path, 'w', encoding='utf-8', newline='\n').write('\n'.join(lines))
+print('coverage line: %d%%' % pct)

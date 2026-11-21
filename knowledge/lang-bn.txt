@@ -1,5 +1,6 @@
 # AdeeboMeter — Bengali Windows catalog. English TAB Bengali.
 # Product names, technical identifiers, units and keys intentionally retain their spelling.
+#coverage 83
 + Add server	+ সার্ভার যোগ করুন
 + Add your own game	+ নিজের গেম যোগ করুন
 1 day	1 দিন
@@ -4198,3 +4199,23 @@ PACKET 	প্যাকেট
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	এটির জন্য Wireshark (Npcap-সহ) লাগে। নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে।
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে জানায় কী আছে: আধুনিক না পুরোনো প্রোটোকল, IPv4 না IPv6 ও Windows-এর ব্যাকগ্রাউন্ডে স্থানীয় নেটওয়ার্কে পাঠানো বার্তা। কিছু রেখে দেয় না।
 earlier report(s) waiting to send when you're online	অনলাইন হলে পাঠানোর অপেক্ষায় পুরোনো রিপোর্ট
+Restart to finish	শেষ করতে রিস্টার্ট করুন
+Pick your language	আপনার ভাষা বেছে নিন
+AdeeboMeter switches right away. A restart finishes the last few screens.	AdeeboMeter সঙ্গে সঙ্গে বদলে যায়। রিস্টার্ট করলে বাকি কয়েকটি স্ক্রিনও বদলাবে।
+PREVIEW OF	প্রিভিউ:
+POINT AT A LANGUAGE TO PREVIEW IT	প্রিভিউ দেখতে একটি ভাষার ওপর মাউস রাখুন
+Nothing changes until you click a card.	কোনো কার্ডে ক্লিক না করা পর্যন্ত কিছুই বদলাবে না।
+Arrow keys move, Enter picks, Esc closes	তীর চিহ্নে সরান, Enter-এ বাছুন, Esc-এ বন্ধ করুন
+Arabic reads right to left - the whole window turns around.	আরবি ডান থেকে বাঁয়ে পড়া হয় - পুরো উইন্ডো উল্টে যায়।
+The original	মূল ভাষা
+French (Canada)	ফরাসি (কানাডা)
+Spanish	স্প্যানিশ
+Arabic	আরবি
+Bangla	বাংলা
+Complete	সম্পূর্ণ
+translated	অনূদিত
+Partly translated	আংশিক অনূদিত
+Language: 	ভাষা: 
+Couldn't restart - close AdeeboMeter from the tray icon and open it again	রিস্টার্ট করা গেল না - ট্রে আইকন থেকে AdeeboMeter বন্ধ করে আবার খুলুন
+not watched - only the best	নজরে নেই - শুধু সেরা
+servers are checked	টি সার্ভার মাপা হয়

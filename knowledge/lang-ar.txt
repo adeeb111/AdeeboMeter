@@ -1,5 +1,6 @@
 # AdeeboMeter — Arabic review catalog. UTF-8, English TAB Arabic.
 # Local machine draft plus reviewed UI overrides. Native Arabic proof review is required.
+#coverage 83
 + Add server	+ إضافة خادم
 + Add your own game	+ أضف لعبتك
 1 day	1 يوم
@@ -4198,3 +4199,23 @@ PACKET 	الحزمة
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	يتطلّب هذا Wireshark مع Npcap — يلتقط بيانات اتصال جهازك نفسه لمدة 10 ثوانٍ.
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	يلتقط بيانات اتصال جهازك نفسه لمدة 10 ثوانٍ، ويبيّن مكوّناتها: بروتوكولات حديثة أو قديمة، وIPv4 أو IPv6، والرسائل التي يرسلها Windows في الخلفية إلى شبكتك المحلية. لا يحتفظ بشيء.
 earlier report(s) waiting to send when you're online	تقارير سابقة تنتظر الإرسال عندما تكون على الإنترنت
+Restart to finish	أعد التشغيل للإكمال
+Pick your language	اختر لغتك
+AdeeboMeter switches right away. A restart finishes the last few screens.	يتغيّر AdeeboMeter فورًا. إعادة التشغيل تُكمل الشاشات الأخيرة.
+PREVIEW OF	معاينة:
+POINT AT A LANGUAGE TO PREVIEW IT	أشر إلى لغة لمعاينتها
+Nothing changes until you click a card.	لا يتغيّر شيء حتى تنقر على بطاقة.
+Arrow keys move, Enter picks, Esc closes	الأسهم للتنقل، Enter للاختيار، Esc للإغلاق
+Arabic reads right to left - the whole window turns around.	العربية تُقرأ من اليمين إلى اليسار - تنقلب النافذة كلها.
+The original	الأصل
+French (Canada)	الفرنسية (كندا)
+Spanish	الإسبانية
+Arabic	العربية
+Bangla	البنغالية
+Complete	مكتمل
+translated	مترجم
+Partly translated	مترجم جزئيًا
+Language: 	اللغة: 
+Couldn't restart - close AdeeboMeter from the tray icon and open it again	تعذّرت إعادة التشغيل - أغلق AdeeboMeter من أيقونة شريط المهام ثم افتحه من جديد
+not watched - only the best	غير مراقَب - تُقاس فقط أفضل
+servers are checked	خوادم

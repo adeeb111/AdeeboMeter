@@ -1,5 +1,6 @@
 # AdeeboMeter — Spanish Windows catalog. English TAB Spanish.
 # Names, protocols, units, commands and keys may retain their spelling.
+#coverage 83
 + Add server	+ Añadir servidor
 + Add your own game	+ Añadir tu juego
 1 day	1 día
@@ -4198,3 +4199,23 @@ PACKET 	PAQUETE
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	Necesita Wireshark con Npcap: lee el tráfico de tu propio PC durante 10 segundos.
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	Lee 10 segundos del tráfico de tu PC y explica su composición: protocolos modernos o antiguos, IPv4 o IPv6 y mensajes de Windows en segundo plano por tu red. No guarda nada.
 earlier report(s) waiting to send when you're online	informes anteriores pendientes para cuando tengas conexión
+Restart to finish	Reiniciar para terminar
+Pick your language	Elige tu idioma
+AdeeboMeter switches right away. A restart finishes the last few screens.	AdeeboMeter cambia al instante. Un reinicio termina las últimas pantallas.
+PREVIEW OF	VISTA PREVIA:
+POINT AT A LANGUAGE TO PREVIEW IT	SEÑALA UN IDIOMA PARA VERLO
+Nothing changes until you click a card.	Nada cambia hasta que haces clic en una tarjeta.
+Arrow keys move, Enter picks, Esc closes	Flechas para moverte, Intro para elegir, Esc para cerrar
+Arabic reads right to left - the whole window turns around.	El árabe se lee de derecha a izquierda: toda la ventana se invierte.
+The original	El original
+French (Canada)	Francés (Canadá)
+Spanish	Español
+Arabic	Árabe
+Bangla	Bengalí
+Complete	Completo
+translated	traducido
+Partly translated	Traducido en parte
+Language: 	Idioma: 
+Couldn't restart - close AdeeboMeter from the tray icon and open it again	No se pudo reiniciar: cierra AdeeboMeter desde el icono de la bandeja y ábrelo de nuevo
+not watched - only the best	sin vigilar - solo los
+servers are checked	mejores servidores se miden

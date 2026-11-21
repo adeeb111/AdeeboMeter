@@ -1,4 +1,5 @@
 # AdeeboMeter - French (Canada). English text, a TAB, the French. Missing lines stay in English.
+#coverage 78
 + Add server	+ Ajouter un serveur
 + Add your own game	+ Ajouter votre jeu
 1 day	1 jour
@@ -2814,3 +2815,21 @@ shown	premiers affichés
 earlier report(s) waiting to send when you're online	rapports en attente de connexion
 not watched - only the best	non surveillé - seuls les
 servers are checked	meilleurs serveurs sont mesurés
+Restart to finish	Redémarrer pour terminer
+Pick your language	Choisissez votre langue
+AdeeboMeter switches right away. A restart finishes the last few screens.	AdeeboMeter change tout de suite. Un redémarrage termine les derniers écrans.
+PREVIEW OF	APERÇU :
+POINT AT A LANGUAGE TO PREVIEW IT	POINTEZ UNE LANGUE POUR UN APERÇU
+Nothing changes until you click a card.	Rien ne change avant que vous cliquiez sur une carte.
+Arrow keys move, Enter picks, Esc closes	Flèches pour bouger, Entrée pour choisir, Échap pour fermer
+Arabic reads right to left - the whole window turns around.	L'arabe se lit de droite à gauche - toute la fenêtre s'inverse.
+The original	L'original
+French (Canada)	Français (Canada)
+Spanish	Espagnol
+Arabic	Arabe
+Bangla	Bengali
+Complete	Complet
+translated	traduit
+Partly translated	Traduit en partie
+Language: 	Langue : 
+Couldn't restart - close AdeeboMeter from the tray icon and open it again	Redémarrage impossible - fermez AdeeboMeter depuis l'icône de la barre des tâches et rouvrez-le

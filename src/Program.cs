@@ -118,6 +118,7 @@ namespace AdeeboMeter
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "Know what's wrong. Show anyone.";
         public static int ForceTheme = -1;
+        public static bool Restarted;   // started by the Restart button: open the big window again once running
         public static string StartView, StartTip, StartDest, StartFile;   // StartFile: a locked .adeebo file to open (bug-hunt ML-127)   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes
 
@@ -184,6 +185,9 @@ namespace AdeeboMeter
 
             bool created;
             var mtx = new Mutex(true, "Local\\AdeeboMeter.single", out created);
+            // the Restart button: this copy was started by the running one, which is closing - wait for it to let go (20 s at most)
+            Restarted = args.Any(a => string.Equals(a, "--restart", StringComparison.OrdinalIgnoreCase));
+            if (!created && Restarted) { try { created = mtx.WaitOne(20000); } catch (AbandonedMutexException) { created = true; } }
             if (!created)
             {
                 // an OLDER copy is running and this one is newer (a fresh download, maybe renamed "AdeeboMeter (1).exe"):

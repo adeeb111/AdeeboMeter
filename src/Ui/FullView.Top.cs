@@ -24,6 +24,8 @@ namespace AdeeboMeter
             xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
             viewBtn.Location = new Point(xl, my(viewBtn)); xl = viewBtn.Right + Sc(20);
+            if (langBtn != null) { langBtn.Location = new Point(xl - Sc(10), my(langBtn)); xl = langBtn.Right + Sc(20); }   // the language, right beside the view
+            if (restartBtn != null && restartBtn.Visible) { restartBtn.Location = new Point(xl - Sc(10), my(restartBtn)); xl = restartBtn.Right + Sc(20); }
             int room = xr - xl;
             bool show = Cfg.Layout != "sidebar" && room >= Sc(40);   // the sidebar has its own search at the top
             if (headSearch.Visible != show) headSearch.Visible = show;
