@@ -8,6 +8,13 @@
 <link rel="canonical" href="https://adeebometer.com/live.html">
 <meta property="og:title" content="Live | AdeeboMeter">
 <meta property="og:description" content="Markets, scores, weather and your connection - a taste of what AdeeboMeter watches on your PC.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adeebometer.com/live.html">
+<meta property="og:image" content="https://adeebometer.com/img/social/live.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Live at a glance">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
@@ -73,6 +80,9 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
 </head>
 <body data-sec="live">
 <main>
@@ -207,24 +217,24 @@ $("fxeditb").onclick=function(){var e=$("fxedit");e.hidden=!e.hidden;$("fxeditb"
 $("fxedit").addEventListener("click",function(e){var b=e.target.closest("[data-cur]");if(!b)return;var c=b.getAttribute("data-cur"),k=mine.indexOf(c);if(k>=0)mine.splice(k,1);else mine.push(c);wr("am-lv-list",mine.join(","));fxEdit();drawM()});
 var IXN={ENER:"Oil, gas and coal",MTLS:"Metals and minerals",FOPR:"Forestry",AGRI:"Farm goods",BCPI:"All commodities"};
 function drawM(){
-  var s=$("base");if(!s.options.length){s.innerHTML=Object.keys(CUR).map(function(c){return"<option value='"+c+"'>"+c+" · "+esc(CUR[c])+"</option>"}).join("");s.value=base}
+  var s=$("base");if(!s.options.length||s.dataset.lang!==liveLocale()){s.dataset.lang=liveLocale();s.innerHTML=Object.keys(CUR).map(function(c){return"<option value='"+c+"'>"+c+" · "+esc(liveText(CUR[c]))+"</option>"}).join("");s.value=base}
   $("mshow").value=mshow;
   if(!MK){return}
   var b=MK.boc||{},a=MK.all||{},ix=MK.idx||{};
-  $("fxsrc").textContent="1 unit in "+base+(a.date?" · "+a.date:"")+" · week from the Bank of Canada";
+  $("fxsrc").textContent=liveText("1 unit in {currency}{date} · week from the Bank of Canada",{currency:base,date:a.date?" · "+a.date:""});
   $("fx").innerHTML=a.usd?fxRows():off2("m");
-  if(ix.s){var last=(ix.days||[]).slice(-1)[0];$("ixsrc").textContent="Bank of Canada commodity index · week of "+last+" · change on the week and the year";
+  if(ix.s){var last=(ix.days||[]).slice(-1)[0];$("ixsrc").textContent=liveText("Bank of Canada commodity index · week of {date} · change on the week and the year",{date:last});
     var at=function(v,k){return v.length>k?v[v.length-1-k]:null};
     var E=(ix.s.ENER||[]).filter(function(x){return x!=null}),el=E[E.length-1],hi=Math.max.apply(null,E),lo=Math.min.apply(null,E),posn=hi>lo?(el-lo)/(hi-lo)*100:50;
-    $("oilsrc").textContent="Bank of Canada energy index (oil, gas, coal) · week of "+last;
+    $("oilsrc").textContent=liveText("Bank of Canada energy index (oil, gas, coal) · week of {date}",{date:last});
     var D=(ix.days||[]).filter(function(_,i){return ix.s.ENER&&ix.s.ENER[i]!=null}),span=D.length>1?Math.round((Date.parse(D[D.length-1])-Date.parse(D[0]))/6048e5):0,full=span>=50,yb=full?at(E,52)||E[0]:null;
     $("oil").innerHTML=E.length>2?"<div class='big3'><div><small>Week</small>"+chip(pc(el,at(E,1)))+"</div><div><small>Month</small>"+chip(E.length>4?pc(el,at(E,4)):null)+"</div><div><small>Year</small>"+chip(yb?pc(el,yb):null)+"</div></div>"+
       "<div class='yr'><span class='"+(pc(el,E[0])>=0?"up":"dn")+"'>"+spark(E)+"</span></div>"+
-      "<div class='rng'><span>"+(full?"52-week":span+"-week")+" low "+lo.toFixed(0)+"</span><i><b style='left:"+posn.toFixed(0)+"%'></b></i><span>high "+hi.toFixed(0)+"</span></div><p class='mut' style='margin:6px 0 0;font-size:13px'>Now "+el.toFixed(1)+" - "+(posn>80?"near the top":posn<20?"near the bottom":"mid-range")+" of "+(full?"its year":"the "+span+" weeks shown")+" ("+esc(D[0])+" to "+esc(D[D.length-1])+"). An index (1972 = 100), not a price per barrel.</p>":off2("m");
-    $("ix").innerHTML=["MTLS","FOPR","AGRI","BCPI"].map(function(c){var v=(ix.s[c]||[]).filter(function(x){return x!=null}),l=v[v.length-1],d=pc(l,at(v,1)),y=pc(l,at(v,52)||v[0]);return"<div class='mrow'><div class='n'><b>"+IXN[c]+"</b><span>year "+(y==null?"–":(y>0?"+":"")+y.toFixed(1)+"%")+"</span></div><span class='"+(y>0?"up":y<0?"dn":"mut")+"'>"+spark(v.slice(-26))+"</span><div class='v'>"+(l?l.toFixed(1):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}else{$("ix").innerHTML=off2("m");$("oil").innerHTML=off2("m")}
+      "<div class='rng'><span>"+esc(liveText("{period}-week low {value}",{period:full?52:span,value:lo.toFixed(0)}))+"</span><i><b style='left:"+posn.toFixed(0)+"%'></b></i><span>"+esc(liveText("high {value}",{value:hi.toFixed(0)}))+"</span></div><p class='mut' style='margin:6px 0 0;font-size:13px'>"+esc(liveText("Now {value} - {position} of {period} ({start} to {end}). An index (1972 = 100), not a price per barrel.",{value:el.toFixed(1),position:liveText(posn>80?"near the top":posn<20?"near the bottom":"mid-range"),period:full?liveText("its year"):liveText("the {count} weeks shown",{count:span}),start:D[0],end:D[D.length-1]}))+"</p>":off2("m");
+    $("ix").innerHTML=["MTLS","FOPR","AGRI","BCPI"].map(function(c){var v=(ix.s[c]||[]).filter(function(x){return x!=null}),l=v[v.length-1],d=pc(l,at(v,1)),y=pc(l,at(v,52)||v[0]);return"<div class='mrow'><div class='n'><b>"+esc(liveText(IXN[c]))+"</b><span>"+esc(liveText("year {value}",{value:y==null?"–":(y>0?"+":"")+y.toFixed(1)+"%"}))+"</span></div><span class='"+(y>0?"up":y<0?"dn":"mut")+"'>"+spark(v.slice(-26))+"</span><div class='v'>"+(l?l.toFixed(1):"–")+"<div>"+chip(d)+"</div></div></div>"}).join("")}else{$("ix").innerHTML=off2("m");$("oil").innerHTML=off2("m")}
   // the one-line summary: the first currency on your list against yours, energy, and whether the markets are open
   var c1=(mine.filter(function(c){return c!==base})[0])||(base==="USD"?"EUR":"USD"),v1=rate(c1,base),w1=week(c1,base),e=ix.s&&ix.s.ENER,ed=e?pc(e[e.length-1],e[e.length-2]):null,ey=e&&e.length>=50?pc(e[e.length-1],e[0]):null,o=openNow();
-  $("msum").innerHTML=v1?"<div class='tagl'>TODAY IN ONE LINE</div><div class='bigl'>1 "+c1+" = "+fmt(v1)+" "+base+(w1?" <small>"+chip(pc(w1[w1.length-1],w1[0]))+" this week</small>":"")+"</div><p>"+(ed!=null?"Oil and gas "+(ed>=0?"up ":"down ")+Math.abs(ed).toFixed(1)+"% on the week"+(ey!=null?", "+(ey>=0?"up ":"down ")+Math.abs(ey).toFixed(0)+"% on the year":"")+" · ":"")+o+"</p>":off2("m");
+  $("msum").innerHTML=v1?"<div class='tagl'>TODAY IN ONE LINE</div><div class='bigl'>1 "+c1+" = "+fmt(v1)+" "+base+(w1?" <small>"+chip(pc(w1[w1.length-1],w1[0]))+" "+esc(liveText("this week"))+"</small>":"")+"</div><p>"+(ed!=null?esc(liveText(ed>=0?"Oil and gas up {value}% on the week":"Oil and gas down {value}% on the week",{value:Math.abs(ed).toFixed(1)}))+(ey!=null?", "+esc(liveText(ey>=0?"up {value}% on the year":"down {value}% on the year",{value:Math.abs(ey).toFixed(0)})):"")+" · ":"")+o+"</p>":off2("m");
   hours();
 }
 function markets(){$("fx").innerHTML=$("ix").innerHTML=$("oil").innerHTML="<span class='mut'>Loading…</span>";jr("/markets").then(function(d){MK=d;drawM()}).catch(function(){MK=null;$("fx").innerHTML=$("ix").innerHTML=$("oil").innerHTML=$("msum").innerHTML=off2("m")})}
@@ -233,11 +243,11 @@ $("mshow").onchange=function(){mshow=this.value;wr("am-lv-show",mshow);drawM()};
 // market hours: each exchange in its own time zone, regular sessions; the ones your currencies point at are added
 var EX=[["Toronto · New York","America/Toronto",[1,2,3,4,5],[[570,960]],"CAD,USD"],["London","Europe/London",[1,2,3,4,5],[[480,990]],"GBP"],["Frankfurt","Europe/Berlin",[1,2,3,4,5],[[540,1050]],"EUR,CHF"],["Tokyo","Asia/Tokyo",[1,2,3,4,5],[[540,690],[750,930]],"JPY"],["Hong Kong","Asia/Hong_Kong",[1,2,3,4,5],[[570,720],[780,960]],"HKD,CNY"],["Mumbai (NSE)","Asia/Kolkata",[1,2,3,4,5],[[555,930]],"INR"],["Dhaka (DSE)","Asia/Dhaka",[0,1,2,3,4],[[600,870]],"BDT"],["Karachi (PSX)","Asia/Karachi",[1,2,3,4,5],[[570,930]],"PKR"],["Sydney","Australia/Sydney",[1,2,3,4,5],[[600,960]],"AUD,NZD"]];
 function zn(tz){var p=new Intl.DateTimeFormat("en-US",{timeZone:tz,weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),o={};p.forEach(function(x){o[x.type]=x.value});return{d:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(o.weekday),m:(+o.hour)*60+(+o.minute)}}
-function hm2(m){return Math.floor(m/60)+" h "+(m%60)+" min"}
-function exState(x){var n=zn(x[1]),days=x[2],today=days.indexOf(n.d)>=0;if(today)for(var i=0;i<x[3].length;i++){var s=x[3][i];if(n.m>=s[0]&&n.m<s[1])return[1,"Open · "+hm2(s[1]-n.m)+" left"];if(n.m<s[0])return[0,"Closed · opens "+Math.floor(s[0]/60)+":"+("0"+s[0]%60).slice(-2)+" local"]}
-  for(var k=1;k<=7;k++){if(days.indexOf((n.d+k)%7)>=0)return[0,"Closed · opens "+(k===1?"tomorrow":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][(n.d+k)%7])]}return[0,"Closed"]}
-function openNow(){var st=exState(EX[0]);return"Toronto and New York "+(st[0]?"open, "+st[1].replace("Open · ","").replace(" left"," left"):"closed")}
-function hours(){var want=mine.concat([base]),h="";EX.forEach(function(x,i){if(i&&!x[4].split(",").some(function(c){return want.indexOf(c)>=0}))return;var st=exState(x);h+="<div class='game'><span>"+x[0]+"</span><span><span class='pill "+(st[0]?"open":"shut")+"'>"+esc(st[1])+"</span></span></div>"});
+function hm2(m){return liveText("{hours} h {minutes} min",{hours:Math.floor(m/60),minutes:m%60})}
+function exState(x){var n=zn(x[1]),days=x[2],today=days.indexOf(n.d)>=0;if(today)for(var i=0;i<x[3].length;i++){var s=x[3][i];if(n.m>=s[0]&&n.m<s[1])return[1,hm2(s[1]-n.m)];if(n.m<s[0])return[0,liveText("Closed · opens {time} local",{time:Math.floor(s[0]/60)+":"+("0"+s[0]%60).slice(-2)})]}
+  for(var k=1;k<=7;k++){if(days.indexOf((n.d+k)%7)>=0)return[0,liveText("Closed · opens {day}",{day:liveText(k===1?"tomorrow":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][(n.d+k)%7])})]}return[0,"Closed"]}
+function openNow(){var st=exState(EX[0]);return st[0]?liveText("Toronto and New York open, {time} left",{time:st[1]}):liveText("Toronto and New York closed")}
+function hours(){var want=mine.concat([base]),h="";EX.forEach(function(x,i){if(i&&!x[4].split(",").some(function(c){return want.indexOf(c)>=0}))return;var st=exState(x);h+="<div class='game'><span>"+esc(liveText(x[0]))+"</span><span><span class='pill "+(st[0]?"open":"shut")+"'>"+esc(st[0]?liveText("Open · {time} left",{time:st[1]}):st[1])+"</span></span></div>"});
   var say=window.AMV?AMV.line(exState(EX[0])[0]?"market.open":"trade.closed"):"";if(say)h+="<p style='margin:8px 0 0;font-weight:600'>"+esc(say)+"</p>";$("hours").innerHTML=h}
 if(window.AMV)AMV.onchange(hours);
 setInterval(hours,30000);
@@ -250,7 +260,7 @@ function when(t){var d=new Date(t);return isNaN(d)?"":d.toLocaleString([],{weekd
 function tm(x,me){var mine=!!(me&&x&&x.id&&x.id===me);return"<span"+(mine?" class='me'":"")+">"+(mine?"★ ":"")+esc(x?x.n||x.ab:"")+"</span>"}
 function sc(x){var v=x&&x.s;return v===0||(v!=null&&v!==""&&String(v)!=="undefined")?esc(v):"–"}
 function gameRow(g,me,asOf){var live=g.st==="in",fin=g.st==="post",old=live&&asOf&&Date.now()-asOf>15*6e4;
-  return"<div class='g2'><div class='tm'><div>"+tm(g.a,me)+"<b>"+(live||fin?sc(g.a):"")+"</b></div><div>"+tm(g.h,me)+"<b>"+(live||fin?sc(g.h):"")+"</b></div>"+(g.sum?"<small>"+esc(g.sum)+"</small>":"")+"</div><span class='when"+(live&&!old?" lv":"")+"'>"+(old?"In progress at "+new Date(asOf).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):live?esc(g.det||"Live"):fin?"Final":esc(when(g.d)))+"</span></div>"}
+  return"<div class='g2'><div class='tm'><div>"+tm(g.a,me)+"<b>"+(live||fin?sc(g.a):"")+"</b></div><div>"+tm(g.h,me)+"<b>"+(live||fin?sc(g.h):"")+"</b></div>"+(g.sum?"<small>"+esc(g.sum)+"</small>":"")+"</div><span class='when"+(live&&!old?" lv":"")+"'>"+(old?esc(liveText("In progress at {time}",{time:new Date(asOf).toLocaleTimeString(liveLocale(),{hour:"numeric",minute:"2-digit"})})):live?esc(g.det||"Live"):fin?"Final":esc(when(g.d)))+"</span></div>"}
 function mineFirst(L,me){return me?L.slice().sort(function(a,b){var x=(a.a&&a.a.id===me)||(a.h&&a.h.id===me)?0:1,y=(b.a&&b.a.id===me)||(b.h&&b.h.id===me)?0:1;return x-y}):L}
 function drawS(){
   var d=SC,me=team(),hd=["cri","ten","f1"].indexOf(lg)>=0;
@@ -272,14 +282,14 @@ function drawS(){
     $("today").innerHTML=d.today&&d.today.error?off2("s"):showToday.length?mineFirst(showToday,me).slice(0,10).map(function(g){return gameRow(g,me,d.today&&d.today.at)}).join(""):"<span class='mut'>No games scheduled.</span>";
     var fin=done.concat(yd);$("yest").innerHTML=d.yest&&d.yest.error?off2("s"):fin.length?mineFirst(fin,me).slice(0,10).map(function(g){return gameRow(g,me,d.yest&&d.yest.at)}).join(""):"<span class='mut'>No games yesterday.</span>";
     var grp=T.filter(function(g){return g.rows.some(function(r){return r.id===me})})[0]||T[0];
-    $("tables").textContent=grp?grp.n+(T.length>1?" · "+T.length+" groups":""):"";
+    $("tables").textContent=grp?grp.n+(T.length>1?" · "+liveText("{count} groups",{count:T.length}):""):"";
     $("table").innerHTML=d.table&&d.table.error?off2("s"):grp?"<table><tr class='th'><td>#</td><td>Team</td><td>GP</td><td>"+(grp.rows[0]&&grp.rows[0].pts?"Pts":"W-L")+"</td></tr>"+grp.rows.slice(0,10).map(function(r,i){return"<tr"+(r.id===me?" class='me'":"")+"><td>"+(i+1)+"</td><td>"+esc(r.n)+"</td><td>"+esc(r.gp)+"</td><td>"+esc(r.pts||(r.w+"-"+r.l))+"</td></tr>"}).join("")+"</table>":"<span class='mut'>No table this time of year.</span>";
     // your team's line on top
     var my=me&&teams.filter(function(t){return t.id===me})[0],last=me&&fin.filter(function(g){return(g.a&&g.a.id===me)||(g.h&&g.h.id===me)})[0],nxt=me&&up.concat(nx).filter(function(g){return(g.a&&g.a.id===me)||(g.h&&g.h.id===me)})[0],pos=grp&&me?grp.rows.map(function(r){return r.id}).indexOf(me):-1;
-    if(my){var res="";if(last){var us=last.a.id===me?last.a:last.h,th=last.a.id===me?last.h:last.a,w=+us.s>+th.s;res=(w?"Won ":+us.s===+th.s?"Drew ":"Lost ")+esc(us.s)+"-"+esc(th.s)+" vs "+esc(th.n)}
-      $("ssum").innerHTML="<div class='tagl'>★ "+esc(my.n.toUpperCase())+" · "+esc(nm)+"</div><div class='bigl'>"+(res||"No result in the last day")+"</div><p>"+(nxt?"Next: "+esc(when(nxt.d))+" vs "+esc((nxt.a.id===me?nxt.h:nxt.a).n):"No game in the next week")+(pos>=0?" · "+(pos+1)+(["st","nd","rd"][pos]||"th")+" in "+esc(grp.n):"")+"</p>"}
-    else $("ssum").innerHTML="<div class='tagl'>"+esc(nm.toUpperCase())+"</div><div class='bigl'>"+(up.length?up.length+" game"+(up.length>1?"s":"")+" today":nx.length?"Next games in the coming week":"No games today")+"</div><p>"+(fin.length?fin.length+" final score"+(fin.length>1?"s":"")+" since yesterday · ":"")+"Pick your team to see it first.</p>"}
-  var n=d.news||{};if(!hd&&!n.items){n={items:null}}$("newss").textContent=(hd?"BBC Sport":"ESPN")+" - opens on their site";if(d.src&&d.src!=="ESPN")$("todays").textContent=($("todays").textContent||"")+" · from the "+d.src;if(!hd&&d.today&&d.today.at)$("todays").textContent=($("todays").textContent?$("todays").textContent+" · ":"")+"updated "+new Date(d.today.at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+    if(my){var res="";if(last){var us=last.a.id===me?last.a:last.h,th=last.a.id===me?last.h:last.a,w=+us.s>+th.s;res=esc(liveText(w?"Won {score} vs {team}":+us.s===+th.s?"Drew {score} vs {team}":"Lost {score} vs {team}",{score:us.s+"-"+th.s,team:th.n}))}
+      $("ssum").innerHTML="<div class='tagl'>★ "+esc(my.n.toUpperCase())+" · "+esc(nm)+"</div><div class='bigl'>"+(res||"No result in the last day")+"</div><p>"+(nxt?esc(liveText("Next: {time} vs {team}",{time:when(nxt.d),team:(nxt.a.id===me?nxt.h:nxt.a).n})):"No game in the next week")+(pos>=0?" · "+esc(liveText("{place} in {group}",{place:liveLocale()==="en"?(pos+1)+(["st","nd","rd"][pos]||"th"):pos+1,group:grp.n})):"")+"</p>"}
+    else $("ssum").innerHTML="<div class='tagl'>"+esc(nm.toUpperCase())+"</div><div class='bigl'>"+(up.length?esc(up.length===1?liveText("1 game today"):liveText("{count} games today",{count:up.length})):nx.length?"Next games in the coming week":"No games today")+"</div><p>"+(fin.length?esc(fin.length===1?liveText("1 final score since yesterday ·"):liveText("{count} final scores since yesterday ·",{count:fin.length}))+" ":"")+"Pick your team to see it first.</p>"}
+  var n=d.news||{};if(!hd&&!n.items){n={items:null}}$("newss").textContent=liveText("{source} - opens on their site",{source:hd?"BBC Sport":"ESPN"});if(d.src&&d.src!=="ESPN")$("todays").textContent=($("todays").textContent||"")+" · from the "+d.src;if(!hd&&d.today&&d.today.at)$("todays").textContent=($("todays").textContent?$("todays").textContent+" · ":"")+liveText("updated {time}",{time:new Date(d.today.at).toLocaleTimeString(liveLocale(),{hour:"numeric",minute:"2-digit"})});
   $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):!hd&&!espnOn()?"<li class='mut'>Headlines come from ESPN. <button class='btn sm' data-espn='1'>Turn on</button></li>":"<li>"+off2("s")+"</li>";
 }
 // ---- ESPN, asked by this phone itself (ESPN refuses our relay): only when the person turns it on - ESPN then sees this
@@ -366,13 +376,16 @@ var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']
 // weather
 var WMO={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Freezing fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Showers",81:"Showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm, hail",99:"Thunderstorm, hail"};
 var wxGen=0,findGen=0;
-function wx(q){var me=++wxGen;$("wx").innerHTML="Loading…";j("/weather"+(q||"")).then(function(d){if(me!==wxGen)return;if(d.error)throw 0;var c=d.cur||{},y=d.daily||{};
+var weatherData = null;
+function drawWeather(d){var c=d.cur||{},y=d.daily||{};
   $("place").textContent=d.place?"· "+d.place:"";
   var storm=[95,96,99].indexOf(c.weather_code)>=0;if(window.AMV){window.amvLook=storm?"worried":undefined;AMV.face(document.getElementById("amv-face"),window.amvLook);if(storm){var sl=AMV.line("storm.near");if(sl)document.getElementById("amv-say").textContent=sl}}var risk=storm?" <span class='pill' style='background:rgba(207,34,46,.12);color:var(--red)'>Storm - outages more likely</span>":"";
-  var h="<div class='big'>"+Math.round(c.temperature_2m)+"°C</div><p style='margin:2px 0 0'>"+esc(WMO[c.weather_code]||"")+risk+" <span class='mut'>· feels "+Math.round(c.apparent_temperature)+"° · wind "+Math.round(c.wind_speed_10m)+" km/h</span></p><div class='days'>";
-  (y.time||[]).forEach(function(t,i){h+="<div><b>"+(i?new Date(t+"T12:00").toLocaleDateString([],{weekday:"short"}):"Today")+"</b><br>"+Math.round(y.temperature_2m_max[i])+"° / "+Math.round(y.temperature_2m_min[i])+"°<br><span class='mut'>"+esc(WMO[y.weather_code[i]]||"")+(y.precipitation_probability_max&&y.precipitation_probability_max[i]>=30?" · "+y.precipitation_probability_max[i]+"%":"")+"</span></div>"});
-  $("wx").innerHTML=h+"</div>"}).catch(function(){if(me!==wxGen)return;$("place").textContent="";$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
+  var h="<div class='big'>"+Math.round(c.temperature_2m)+"°C</div><p style='margin:2px 0 0'>"+esc(liveText(WMO[c.weather_code]||""))+risk+" <span class='mut'>"+esc(liveText("· feels {temp}° · wind {wind} km/h",{temp:Math.round(c.apparent_temperature),wind:Math.round(c.wind_speed_10m)}))+"</span></p><div class='days'>";
+  (y.time||[]).forEach(function(t,i){h+="<div><b>"+(i?new Date(t+"T12:00").toLocaleDateString(liveLocale(),{weekday:"short"}):"Today")+"</b><br>"+Math.round(y.temperature_2m_max[i])+"° / "+Math.round(y.temperature_2m_min[i])+"°<br><span class='mut'>"+esc(liveText(WMO[y.weather_code[i]]||""))+(y.precipitation_probability_max&&y.precipitation_probability_max[i]>=30?" · "+y.precipitation_probability_max[i]+"%":"")+"</span></div>"});
+  $("wx").innerHTML=h+"</div>"}
+function wx(q){var me=++wxGen;weatherData=null;$("wx").innerHTML="Loading…";j("/weather"+(q||"")).then(function(d){if(me!==wxGen)return;if(d.error)throw 0;weatherData=d;drawWeather(d)}).catch(function(){if(me!==wxGen)return;$("place").textContent="";$("wx").innerHTML=off()+" <span class='mut'>Try a city below.</span>"})}
 wx("");
+document.addEventListener("adeebometerlanguagechange",function(){drawM();drawS();if(!MK)hours();if(weatherData)drawWeather(weatherData)});
 var pickGen=0;function use(q){pickGen++;$("cities").innerHTML="";wx(q)}
 $("find").onclick=function(){var q=$("city").value.trim();if(q.length<2)return;var me=++findGen;j("/place?q="+encodeURIComponent(q)).then(function(d){if(me!==findGen)return;
   $("cities").innerHTML=(d.places||[]).length?d.places.map(function(p,i){return"<button class='btn' data-i='"+i+"' style='margin:8px 6px 0 0'>"+esc(p.n)+" <span class='mut'>"+esc(p.r)+"</span></button>"}).join(""):"<p class='mut'>No place found.</p>";
@@ -382,13 +395,22 @@ $("here").onclick=function(){if(!navigator.geolocation)return;var g=++pickGen;na
 
 // the honest connection card: time small requests to the nearest Cloudflare server (first one warms up the connection)
 var latGen=0;
+function liveLocale() {
+  var locale = window.AdeeboMeterLocale;
+  return locale ? document.documentElement.lang : undefined;
+}
+function liveText(key, values) {
+  var locale = window.AdeeboMeterLocale;
+  if (locale) return values ? locale.format(key, values) : locale.t(key);
+  return values ? key.replace(/\{(\w+)\}/g, function (_, name) { return values[name]; }) : key;
+}
 function lat(){var me=++latGen;$("lagain").disabled=true;$("lat").textContent="…";$("latx").textContent="";var t=[],colo="",bad=0;
   // AM-CG-383/384: only answers that came back OK count; one run at a time, and an older run never overwrites a newer one
   function one(i){var s=performance.now();return fetch(API+"/ping?"+i+"-"+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){colo=d.colo||colo;if(i)t.push(performance.now()-s)}).catch(function(){bad++})}
   var p=one(0);for(var i=1;i<=5;i++)(function(i){p=p.then(function(){return one(i)})})(i);
-  p.then(function(){if(me!==latGen)return;$("lagain").disabled=false;if(t.length<3){$("lat").textContent="—";$("latx").textContent="Couldn't reach the test server"+(t.length?" (only "+t.length+" of 5 answers)":"")+".";return}
+  p.then(function(){if(me!==latGen)return;$("lagain").disabled=false;if(t.length<3){$("lat").textContent="—";$("latx").textContent=liveText("Couldn't reach the test server{detail}.", {detail:t.length?liveText(" (only {count} of 5 answers)", {count:t.length}):""});return}
     t.sort(function(a,b){return a-b});var med=t[Math.floor(t.length/2)],jit=t[t.length-1]-t[0];
-    $("lat").textContent=Math.round(med)+" ms";$("latx").textContent="median of "+t.length+" web requests"+(bad?" ("+bad+" failed)":"")+(colo?" to Cloudflare "+colo:"")+" · spread "+Math.round(jit)+" ms"+(med<40?" · quick":med<100?" · fine for browsing":" · slow - Wi-Fi or a busy line?")})}
+    $("lat").textContent=Math.round(med)+" ms";$("latx").textContent=liveText("median of {count} web requests",{count:t.length})+(bad?liveText(" ({count} failed)",{count:bad}):"")+(colo?liveText(" to Cloudflare {place}",{place:colo}):"")+liveText(" · spread {ms} ms",{ms:Math.round(jit)})+liveText(med<40?" · quick":med<100?" · fine for browsing":" · slow - Wi-Fi or a busy line?")})}
 lat();$("lagain").onclick=lat;
 })();
 </script>

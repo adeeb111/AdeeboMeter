@@ -156,7 +156,7 @@ namespace AdeeboMeter
         // the key: typed by the person, masked, kept encrypted (Sports.SetKey); empty = remove it
         void AskSportKey(string sport)
         {
-            using (var f = new Form { Text = "AdeeboMeter - " + L.T(Sports.Name(sport)) + " " + L.T("key"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(150)), BackColor = Theme.Card, Font = Draw.fBody })
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter - ") + L.T(Sports.Name(sport)) + " " + L.T("key"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(150)), BackColor = Theme.Card, Font = Draw.fBody })
             {
                 var lb = new Label { Text = L.T("Paste your free key from ") + (sport == "cricket" ? "cricketdata.org" : "football-data.org") + L.T(". It stays on this PC, encrypted. Leave empty to remove it."), Location = new Point(Sc(14), Sc(12)), Size = new Size(Sc(430), Sc(44)), ForeColor = Theme.Sub };
                 var tb = new TextBox { Location = new Point(Sc(14), Sc(62)), Width = Sc(430), UseSystemPasswordChar = true };
@@ -168,7 +168,7 @@ namespace AdeeboMeter
         }
         void AskTeams()
         {
-            using (var f = new Form { Text = "AdeeboMeter - " + L.T("teams you follow"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(150)), BackColor = Theme.Card, Font = Draw.fBody })
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter - ") + L.T("teams you follow"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(150)), BackColor = Theme.Card, Font = Draw.fBody })
             {
                 var lb = new Label { Text = L.T("Names or short codes, separated by commas - e.g. TOR, MTL, Arsenal, India"), Location = new Point(Sc(14), Sc(12)), Size = new Size(Sc(430), Sc(44)), ForeColor = Theme.Sub };
                 var tb = new TextBox { Location = new Point(Sc(14), Sc(62)), Width = Sc(430), Text = Cfg.SportTeams ?? "" };

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is it your Wi-Fi or your internet provider? | AdeeboMeter</title>
+<meta name="description" content="Compare Wi-Fi and Ethernet, check your router, and work out whether a slow connection starts at home or farther upstream.">
+<link rel="canonical" href="https://adeebometer.com/wifi-or-isp.html">
+<meta property="og:title" content="Is it your Wi-Fi or your internet provider? | AdeeboMeter">
+<meta property="og:description" content="Compare Wi-Fi and Ethernet, check your router, and work out whether a slow connection starts at home or farther upstream.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adeebometer.com/wifi-or-isp.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta property="og:image:width" content="2200">
+<meta property="og:image:height" content="1240">
+<meta property="og:image:alt" content="AdeeboMeter showing PC, Wi-Fi, router and internet readings">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+</style>
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/wifi-or-isp.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/wifi-or-isp.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/wifi-or-isp.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/wifi-or-isp.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/wifi-or-isp.html">
+</head>
+<body>
+<main>
+<nav aria-label="Site"><a href="/">AdeeboMeter</a> · <a href="/blog/">Troubleshooting Blog</a></nav>
+<h1>Is it your Wi-Fi or your internet provider?</h1>
+<figure class="guide-visual" aria-labelledby="quick-title">
+<div class="visual-copy"><h2 id="quick-title">Try Ethernet first.</h2><p>If the same task works on Ethernet but stumbles on Wi-Fi, start with wireless coverage.</p></div>
+<div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📶</span><strong>Wi-Fi check</strong></div><div class="route"><span>PC</span><b>→</b><span>Router</span><b>→</b><span>Internet</span></div><div class="art-note"><span><i></i> Wi-Fi · stalls</span><span><i></i> Ethernet · smooth</span></div></div>
+<figcaption>Test from the PC outward to narrow down the problem.</figcaption>
+</figure>
+
+
+<h2 id="checks">Run the checks</h2>
+<ol><li>Write down the time and reproduce the issue with the same site, call, or download.</li><li>Try the same task on a second device connected to the same Wi-Fi. On a phone, make sure it is using Wi-Fi during the comparison.</li><li>Connect the PC directly to your router by Ethernet, turn off Wi-Fi on that PC, then repeat the same task while the slowdown is happening.</li></ol>
+<h2 id="readings">What to check next</h2>
+<ul class="next-checks">
+  <li><strong>Ethernet works</strong><span>Check Wi-Fi coverage.</span></li>
+  <li><strong>One device struggles</strong><span>Check downloads and VPN on that device.</span></li>
+  <li><strong>Both connections struggle</strong><span>Check the router and ISP outage status.</span></li>
+  <li><strong>One site struggles</strong><span>Try another service.</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>An evening video call freezes upstairs. The same laptop runs the call smoothly on Ethernet, and the call also improves when the laptop moves closer to the router on Wi-Fi. Start with wireless coverage. If the call also freezes on Ethernet and another device, check the router and the wider connection instead.</p></aside>
+<details class="guide-detail"><summary>Why it works</summary>
+<p>Run <code>ipconfig</code> and find <strong>Default Gateway</strong> under the active adapter. Ping that address during a good period and again during a slowdown. Compare with an internet destination that normally answers ping. Repeat the comparison when possible. A router can de-prioritize ping replies, so weigh the replies alongside the Ethernet comparison and what the affected service is doing.</p><p>Steady replies from your router with trouble beyond it on multiple devices gives support a more useful starting point. The test can still leave the modem, provider, and farther network path in contention.</p>
+</details>
+<h2>Use AdeeboMeter on Windows</h2>
+<p>Open <strong>Investigate → The internet is slow</strong>. Check the PC, Wi-Fi, router, DNS, and internet results from the same period. For recurring trouble, <a href="/internet-speed-monitor.html">monitor internet speed over time</a> and <a href="/isp-report.html">make a report for your provider</a>.</p>
+
+<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a></p>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>Keep one comparison from a good period and one from the slowdown. Record the connection type and affected services so you can repeat the test.</p></aside>
+</main>
+</body>
+</html>

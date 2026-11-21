@@ -177,13 +177,14 @@ namespace AdeeboMeter
             if (Off(g, r)) return;
             Card(g, r, null, hot);
             if (hot) Theme.Stroke(g, r, 16 * S, Accent(accent), 1.5f * S);
-            float d = Math.Min(38 * S, r.Height - 20 * S), cx = r.X + 14 * S, cy = r.Y + (r.Height - d) / 2;
+            float d = Math.Min(38 * S, r.Height - 20 * S), cx = L.IsRtl ? r.Right - 14 * S - d : r.X + 14 * S, cy = r.Y + (r.Height - d) / 2;
             Color ring = level >= 0 && level <= 2 ? Theme.LvSoft(level) : Soft(accent), ic = level >= 0 && level <= 2 ? Theme.Lv(level) : Accent(accent);
             using (var b = new SolidBrush(ring)) g.FillEllipse(b, cx, cy, d, d);
             Icon(g, icon, new RectangleF(cx + d * 0.24f, cy + d * 0.24f, d * 0.52f, d * 0.52f), ic);
-            float tx = cx + d + 12 * S, tw = r.Right - tx - 10 * S;
+            float tx = L.IsRtl ? r.X + 10 * S : cx + d + 12 * S, tw = r.Width - d - 36 * S;
             using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
+                if (L.IsRtl) sf.FormatFlags |= StringFormatFlags.DirectionRightToLeft;
                 bool two = !string.IsNullOrEmpty(hint);
                 float th = Draw.fHead.GetHeight(g), hh = Draw.fSmall.GetHeight(g), top = r.Y + (r.Height - (two ? th + hh + 2 * S : th)) / 2;
                 g.DrawString(L.T(title), Draw.fHead, b, new RectangleF(tx, top, tw, th + 2), sf);
@@ -205,6 +206,17 @@ namespace AdeeboMeter
         // ---------- a section header: coloured bar, icon, title, a short hint
         public static float Header(Graphics g, float x, float y, float w, string icon, string title, string hint, string accent)
         {
+            if (L.IsRtl)
+            {
+                using (var bar = new SolidBrush(Accent(accent))) g.FillRectangle(bar, x + w - 3 * S, y + 2 * S, 3 * S, 34 * S);
+                Icon(g, icon, new RectangleF(x + w - 36 * S, y + 7 * S, 24 * S, 24 * S), Accent(accent));
+                using (var sf = new StringFormat { FormatFlags = StringFormatFlags.DirectionRightToLeft, Trimming = StringTrimming.EllipsisCharacter })
+                {
+                    using (var b = new SolidBrush(Theme.Ink)) g.DrawString(L.T(title), Draw.fTitle, b, new RectangleF(x, y, w - 44 * S, 24 * S), sf);
+                    if (!string.IsNullOrEmpty(hint)) using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T(hint), Draw.fSmall, m, new RectangleF(x, y + 24 * S, w - 45 * S, 22 * S), sf);
+                }
+                return y + 50 * S;
+            }
             using (var b = new SolidBrush(Accent(accent))) g.FillRectangle(b, x, y + 2 * S, 3 * S, 34 * S);
             Icon(g, icon, new RectangleF(x + 12 * S, y + 7 * S, 24 * S, 24 * S), Accent(accent));
             using (var b = new SolidBrush(Theme.Ink)) g.DrawString(L.T(title), Draw.fTitle, b, x + 44 * S, y);

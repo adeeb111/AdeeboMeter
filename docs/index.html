@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-language-route="/" data-language-variants="en bn fr es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,10 +18,10 @@
 <meta property="og:image:alt" content="AdeeboMeter on a Windows desktop">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 100+ engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3, a Traffic Lab) and a 42-check security checkup.","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.5","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeebometer.com/","screenshot":"https://adeebometer.com/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter","installUrl":"https://apps.microsoft.com/detail/9PFGXJPL9CLJ","sameAs":["https://apps.microsoft.com/detail/9PFGXJPL9CLJ","https://github.com/adeeb111/AdeeboMeter"]}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","alternateName":"আদীবওমিটার","description":"Free, local-first network monitor and troubleshooter for Windows 10 and 11 that needs no administrator rights: tells you whether your PC, Wi-Fi, router, ISP, DNS or the internet is the problem, with 100+ engineer tools (MTR, MTU, iperf3, bufferbloat, dig, TLS, SNMP v2c/v3, a Traffic Lab) and a 42-check security checkup.","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.5","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeebometer.com/","screenshot":"https://adeebometer.com/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter","installUrl":"https://apps.microsoft.com/detail/9PFGXJPL9CLJ","sameAs":["https://apps.microsoft.com/detail/9PFGXJPL9CLJ","https://github.com/adeeb111/AdeeboMeter"]}
 </script>
 <style>
-/* No fonts, trackers or analytics from anywhere else. One exception: the newest version number is asked from api.github.com (see privacy.html). */
+/* Local fonts and styles. External services, including website analytics, are listed in privacy.html. */
 :root{
   --blue:#1F6FEB; --blue-d:#1A5FCC; --blue-s:#E8F0FE; --green:#2DA44E; --green-s:#E6F4EA; --amber:#BF8700; --amber-s:#FFF4D6;
   --red:#CF222E; --red-s:#FDE7E9; --purple:#8250DF; --purple-s:#F1EAFE;
@@ -50,6 +50,7 @@ a{color:inherit}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;font-size:17px}
 .brand svg{width:26px;height:26px}
+.brand img{display:block;flex:none;width:24px;height:12px;border-radius:2px}
 .links{display:flex;align-items:center;gap:22px;font-size:14px}
 .links a{text-decoration:none;color:var(--sub);transition:opacity .2s ease,color .2s ease}.links a:not(.pill):hover{opacity:.5}.brand{transition:opacity .2s ease}.brand:hover{opacity:.7}
 .pill{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff!important;text-decoration:none;font-weight:600;border-radius:99px;padding:7px 16px;font-size:14px}
@@ -380,7 +381,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 .v4pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:99px;padding:6px 14px 6px 8px;font-size:14px;color:var(--sub);font-weight:600}
 .v4pill i{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:99px;background:var(--green-s);color:var(--green);font-style:normal;font-size:12px}
 .v4hero h1{font-size:clamp(40px,5.2vw,62px);line-height:1.04;letter-spacing:-.035em;margin:22px 0 18px;font-weight:850;color:var(--ink)}
-.v4hero h1 span{display:block;background:linear-gradient(90deg,var(--blue-d),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+.v4hero h1 .hero-accent{display:block;background:linear-gradient(90deg,var(--blue-d),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
 .v4lead{font-size:19px;line-height:1.55;color:var(--sub);max-width:540px;margin:0 0 30px}
 .v4ctas{display:flex;gap:12px;flex-wrap:wrap}
 .v4btn{display:inline-flex;align-items:center;gap:10px;height:50px;padding:0 22px;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;background:var(--blue);color:#fff;border:1px solid transparent;box-shadow:0 12px 30px -12px color-mix(in srgb,var(--blue) 90%,transparent);transition:transform .15s ease,background .2s ease}
@@ -417,17 +418,28 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </style>
 <script>try{var t=localStorage.getItem('am-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}</script>
 <!-- Turnstile loads only when someone starts the feedback form (see below) - never on the page with the donation buttons until then -->
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="stylesheet" href="/locale.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AdeeboMeter","alternateName":"আদীবওমিটার","url":"https://adeebometer.com/"}</script><!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/">
 </head>
 <body>
 
 <header class="top"><div class="wrap">
   <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg><span>Adeebo<b>Meter</b></span></a>
   <nav class="links">
-    <a href="#how">How it works</a><a href="learn/">Learn</a><a href="games.html">Games</a><a href="live.html">Live</a><a href="files.html">Files</a><a href="/app.html">Open phone app ↗</a>
-    <a class="donate-top" href="#donate" aria-label="Donate">&#9829;<span class="t"> Donate</span></a>
+    <div class="site-language"><img src="/img/canada.svg" width="24" height="12" alt="Canada"><select data-language-picker aria-label="Language" hidden></select><a data-language-fallback href="/fr/" lang="fr-CA" hreflang="fr-CA">Français</a><a data-language-fallback href="/bn/" lang="bn" hreflang="bn">বাংলা · আদীবওমিটার</a></div>
+    <a data-nav-secondary data-i18n="How it works" href="#how">How it works</a><a data-nav-secondary data-i18n="Learn" href="learn/">Learn</a><a data-nav-secondary data-blog-link data-i18n="Blog" href="/blog/">Blog</a><a data-nav-secondary data-i18n="Games" href="games.html">Games</a><a data-nav-secondary data-i18n="Live" href="live.html">Live</a><a data-nav-secondary data-i18n="Files" href="files.html">Files</a><a data-nav-secondary data-i18n="Open phone app ↗" href="/app.html">Open phone app ↗</a>
+    <a class="donate-top" href="#donate" aria-label="Donate" data-i18n-label="Donate">&#9829;<span class="t"> <span data-i18n="Donate">Donate</span></span></a>
     <button class="theme" type="button" aria-label="Switch day / night"><span class="knob"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="#BF8700" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" fill="#9CC2FF"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></span></button>
-    <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download</a>
+    <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><span data-i18n="Download">Download</span></a>
   </nav>
 </div></header>
 
@@ -454,92 +466,93 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 <section class="v4hero"><div class="wrap">
   <p id="update" class="upd" hidden></p>
   <div class="v4grid">
-  <div class="v4l">
-   <span class="v4pill"><i aria-hidden="true">✓</i>Know what's wrong. Show anyone.</span>
-   <h1>Find out why your internet or PC is slow. <span>And much more.</span></h1>
-   <p class="v4lead">Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 158 tools, free, and a picture you can send to anyone.</p>
-   <div class="v4ctas"><a class="v4btn" href="#install"><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg>Download for Windows</a><a class="v4btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg>Open the phone app ↗</a></div>
-   <ul class="v4trust"><li>Free</li><li>No admin rights</li><li>No cloud, no telemetry</li><li>Never listens</li><li>Signed by its author</li></ul>
+  <div class="v4l" data-i18n-direction>
+   <span class="v4pill"><i aria-hidden="true">✓</i><span data-i18n="Know what's wrong. Show anyone.">Know what's wrong. Show anyone.</span></span>
+   <h1><span data-i18n="Find out why your internet or PC is slow.">Find out why your internet or PC is slow.</span> <span class="hero-accent" data-i18n="And much more.">And much more.</span></h1>
+   <p class="v4lead"><span data-i18n="Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 158 tools, free, and a picture you can send to anyone.">Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 158 tools, free, and a picture you can send to anyone.</span></p>
+   <div class="v4ctas"><a class="v4btn" href="#install"><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg><span data-i18n="Download for Windows">Download for Windows</span></a><a class="v4btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg><span data-i18n="Open the phone app ↗">Open the phone app ↗</span></a></div>
+   <ul class="v4trust"><li data-i18n="Free">Free</li><li data-i18n="No admin rights">No admin rights</li><li data-i18n="No cloud, no telemetry">No cloud, no telemetry</li><li data-i18n="Never listens">Never listens</li><li data-i18n="Signed by its author">Signed by its author</li></ul>
+   <p class="locale-preview" data-i18n-preview data-i18n="Some content is still in English." hidden>Some content is still in English.</p>
   </div>
   <div class="v4stage">
    <div class="v4card v4res" role="img" aria-label="Example result: your PC is fine, names aren't answering. This PC fine, router 2 ms, DNS timed out, internet not checked. Next: try the lookup again; Save picture or Send to my ISP.">
     <div aria-hidden="true">
-    <span class="v4tag">DNS ISSUE</span>
-    <h3>Your PC is fine. Names aren't answering.</h3>
-    <p>The router answered in 2 ms. The DNS request timed out.</p>
+    <span class="v4tag" data-i18n="DNS ISSUE">DNS ISSUE</span>
+    <h3 data-i18n="Your PC is fine. Names aren&#x27;t answering.">Your PC is fine. Names aren't answering.</h3>
+    <p data-i18n="The router answered in 2 ms. The DNS request timed out.">The router answered in 2 ms. The DNS request timed out.</p>
     <div class="v4path">
-     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg></i><b>This PC</b><small class="ok">✓ fine</small></div><span class="ln"></span>
-     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-router"/></svg></i><b>Router</b><small class="ok">✓ 2 ms</small></div><span class="ln"></span>
-     <div class="n"><i class="w"><svg class="i" viewBox="0 0 24 24"><use href="#v3-dns"/></svg></i><b>DNS</b><small class="wa">! timed out</small></div><span class="ln d"></span>
-     <div class="n"><i class="o"><svg class="i" viewBox="0 0 24 24"><use href="#v3-globe"/></svg></i><b>Internet</b><small>not checked</small></div>
+     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg></i><b><span data-i18n="This PC">This PC</span></b><small class="ok"><span data-i18n="✓ fine">✓ fine</span></small></div><span class="ln"></span>
+     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-router"/></svg></i><b><span data-i18n="Router">Router</span></b><small class="ok">✓ 2 ms</small></div><span class="ln"></span>
+     <div class="n"><i class="w"><svg class="i" viewBox="0 0 24 24"><use href="#v3-dns"/></svg></i><b>DNS</b><small class="wa"><span data-i18n="! timed out">! timed out</span></small></div><span class="ln d"></span>
+     <div class="n"><i class="o"><svg class="i" viewBox="0 0 24 24"><use href="#v3-globe"/></svg></i><b><span data-i18n="Internet">Internet</span></b><small><span data-i18n="not checked">not checked</span></small></div>
     </div>
-    <div class="v4share"><small>Next: try the lookup again</small><span class="v4btn sm line">Save picture</span><span class="v4btn sm">Send to my ISP</span></div>
+    <div class="v4share"><small><span data-i18n="Next: try the lookup again">Next: try the lookup again</span></small><span class="v4btn sm line"><span data-i18n="Save picture">Save picture</span></span><span class="v4btn sm"><span data-i18n="Send to my ISP">Send to my ISP</span></span></div>
     </div>
    </div>
-   <div class="v4card v4phone" aria-hidden="true"><span class="nt"></span><span class="qr"></span><em>river · tiger · lamp · orbit</em><small>Same words on both = your phone</small></div>
-   <div class="v4card v4sig"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b>Signed: Open Source Developer</b><small>MdAhasanul Adeeb Khan · Certum</small></div></div>
+   <div class="v4card v4phone" aria-hidden="true"><span class="nt"></span><span class="qr"></span><em lang="en">river · tiger · lamp · orbit</em><small><span data-i18n="Same words on both = your phone">Same words on both = your phone</span></small></div>
+   <div class="v4card v4sig"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b><span data-i18n="Signed: Open Source Developer">Signed: Open Source Developer</span></b><small>MdAhasanul Adeeb Khan · Certum</small></div></div>
   </div>
   </div>
 </div></section>
 
 <section class="watch" id="watch"><div class="wrap">
-  <h2>See it in 30 seconds</h2>
-  <p class="sub">Recorded on a real Windows laptop. Both videos play from this site, so nothing loads from YouTube unless you click through.</p>
+  <h2 data-i18n="See it in 30 seconds">See it in 30 seconds</h2>
+  <p class="sub"><span data-i18n="Recorded on a real Windows laptop. Both videos play from this site, so nothing loads from YouTube unless you click through.">Recorded on a real Windows laptop. Both videos play from this site, so nothing loads from YouTube unless you click through.</span></p>
   <div class="vids">
     <figure><video src="media/AdeeboMeter-trailer.mp4" poster="media/trailer-poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="AdeeboMeter in 30 seconds"></video>
-      <figcaption><b>AdeeboMeter in 30 seconds</b> · no sound · <a href="https://www.youtube.com/watch?v=Toe-VHd6vBM" rel="noopener">Watch on YouTube ›</a></figcaption></figure>
+      <figcaption><b><span data-i18n="AdeeboMeter in 30 seconds">AdeeboMeter in 30 seconds</span></b> · <span data-i18n="no sound">no sound</span> · <a href="https://www.youtube.com/watch?v=Toe-VHd6vBM" rel="noopener"><span data-i18n="Watch on YouTube ›">Watch on YouTube ›</span></a></figcaption></figure>
     <figure><video src="media/AdeeboMeter-tour.mp4" poster="media/tour-poster.jpg" playsinline controls preload="none" aria-label="The full tour, with voice-over"></video>
-      <figcaption><b>The full tour</b> · 1 min 23 s · with sound: monitoring, What's wrong?, 100+ tools, the Traffic Lab, the time machine and the security checkup · <a href="https://www.youtube.com/watch?v=KLuasFOYszs" rel="noopener">Watch on YouTube ›</a></figcaption></figure>
+      <figcaption><b><span data-i18n="The full tour">The full tour</span></b> · 1 min 23 s · with sound: monitoring, What's wrong?, 100+ tools, the Traffic Lab, the time machine and the security checkup · <a href="https://www.youtube.com/watch?v=KLuasFOYszs" rel="noopener"><span data-i18n="Watch on YouTube ›">Watch on YouTube ›</span></a></figcaption></figure>
   </div>
 </div></section>
 
 <section class="v3"><div class="wrap">
-  <h2>Try it in your browser</h2>
-  <p class="v3sub">Learn something, play a round, or open a tool.</p>
-  <div class="v3four"><a class="v3card v3tile" href="learn/"><span class="v3top"><span class="v3chip" style="--k:var(--c-learn)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-book"/></svg></span><b>Learn ↗</b></span><span class="d">Short lessons on Wi-Fi, DNS, routing and more.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="games.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-games)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-game"/></svg></span><b>Games ↗</b></span><span class="d">Practise networking with quick quizzes and challenges.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="live.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-live)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-live"/></svg></span><b>Live ↗</b></span><span class="d">Check markets, scores, and weather.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="files.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-files)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-folder"/></svg></span><b>Files ↗</b></span><span class="d">Lock files and open .adeebo files.</span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a></div>
+  <h2 data-i18n="Try it in your browser">Try it in your browser</h2>
+  <p class="v3sub"><span data-i18n="Learn something, play a round, or open a tool.">Learn something, play a round, or open a tool.</span></p>
+  <div class="v3four"><a class="v3card v3tile" href="learn/"><span class="v3top"><span class="v3chip" style="--k:var(--c-learn)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-book"/></svg></span><b><span data-i18n="Learn ↗">Learn ↗</span></b></span><span class="d"><span data-i18n="Short lessons on Wi-Fi, DNS, routing and more.">Short lessons on Wi-Fi, DNS, routing and more.</span></span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="games.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-games)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-game"/></svg></span><b><span data-i18n="Games ↗">Games ↗</span></b></span><span class="d"><span data-i18n="Practise networking with quick quizzes and challenges.">Practise networking with quick quizzes and challenges.</span></span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="live.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-live)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-live"/></svg></span><b><span data-i18n="Live ↗">Live ↗</span></b></span><span class="d"><span data-i18n="Check markets, scores, and weather.">Check markets, scores, and weather.</span></span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a><a class="v3card v3tile" href="files.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-files)"><svg class="i" viewBox="0 0 24 24"><use href="#v3-folder"/></svg></span><b><span data-i18n="Files ↗">Files ↗</span></b></span><span class="d"><span data-i18n="Lock files and open .adeebo files.">Lock files and open .adeebo files.</span></span><span class="go"><svg class="i" viewBox="0 0 24 24"><use href="#v3-arrow"/></svg></span></a></div>
 </div></section>
 
 <section class="v3" id="how"><div class="wrap">
-  <h2>How it works</h2>
-  <p class="v3sub">Three steps, no account.</p>
+  <h2 data-i18n="How it works">How it works</h2>
+  <p class="v3sub"><span data-i18n="Three steps, no account.">Three steps, no account.</span></p>
   <div class="v3three">
-   <div class="v3card v3step"><span class="num">1</span><b>Install on Windows</b><p>Free from the Microsoft Store. It watches quietly in a corner of your screen.</p></div>
-   <div class="v3card v3step"><span class="num">2</span><b>Ask it why</b><p>One checkup tests Wi-Fi, router, provider, DNS and websites - and names the slow step.</p></div>
-   <div class="v3card v3step"><span class="num">3</span><b>Check from your phone</b><p>Scan a code once. After that, Face ID reconnects you from anywhere.</p></div>
+   <div class="v3card v3step"><span class="num">1</span><b><span data-i18n="Install on Windows">Install on Windows</span></b><p><span data-i18n="Free from the Microsoft Store. It watches quietly in a corner of your screen.">Free from the Microsoft Store. It watches quietly in a corner of your screen.</span></p></div>
+   <div class="v3card v3step"><span class="num">2</span><b><span data-i18n="Ask it why">Ask it why</span></b><p><span data-i18n="One checkup tests Wi-Fi, router, provider, DNS and websites - and names the slow step.">One checkup tests Wi-Fi, router, provider, DNS and websites - and names the slow step.</span></p></div>
+   <div class="v3card v3step"><span class="num">3</span><b><span data-i18n="Check from your phone">Check from your phone</span></b><p><span data-i18n="Scan a code once. After that, Face ID reconnects you from anywhere.">Scan a code once. After that, Face ID reconnects you from anywhere.</span></p></div>
   </div>
-  <p class="v3more"><a href="#theory">The whole story, slide by slide ›</a> · <a href="#watch">Watch the videos ›</a></p>
+  <p class="v3more"><a href="#theory"><span data-i18n="The whole story, slide by slide ›">The whole story, slide by slide ›</span></a> · <a href="#watch"><span data-i18n="Watch the videos ›">Watch the videos ›</span></a></p>
 </div></section>
 
 <section class="v3" id="phone"><div class="wrap"><div class="v3two">
-  <div><h2>Your PC, from your phone</h2><p class="v3sub">Pair your PC to check its status and review what happened, even when you're away from your desk.</p>
+  <div><h2 data-i18n="Your PC, from your phone">Your PC, from your phone</h2><p class="v3sub" data-i18n="Pair your PC to check its status and review what happened, even when you&#x27;re away from your desk.">Pair your PC to check its status and review what happened, even when you're away from your desk.</p>
    <div class="v3ctas"><a class="v3btn line" href="/app.html"><svg class="i" viewBox="0 0 24 24"><use href="#v3-phone"/></svg>Explore the phone app ↗</a></div>
-   <p class="v3note">No app store needed: open it, then use <b>Add to Home Screen</b> (iPhone) or <b>Install app</b> (Android) to keep it.</p></div>
-  <div class="v3card v3act"><div class="lab">EXAMPLE ACTIVITY</div>
-   <div class="r"><span class="d ok">✓</span><b>Connection check complete</b><span>10:24</span></div>
-   <div class="r"><span class="d warn">!</span><b>Office PC went quiet</b><span>10:18</span></div>
+   <p class="v3note"><span data-i18n="No app store needed: open it, then use">No app store needed: open it, then use</span> <b data-i18n="Add to Home Screen">Add to Home Screen</b> <span data-i18n="(iPhone) or">(iPhone) or</span> <b data-i18n="Install app">Install app</b> <span data-i18n="(Android) to keep it.">(Android) to keep it.</span></p></div>
+  <div class="v3card v3act"><div class="lab"><span data-i18n="EXAMPLE ACTIVITY">EXAMPLE ACTIVITY</span></div>
+   <div class="r"><span class="d ok">✓</span><b><span data-i18n="Connection check complete">Connection check complete</span></b><span>10:24</span></div>
+   <div class="r"><span class="d warn">!</span><b><span data-i18n="Office PC went quiet">Office PC went quiet</span></b><span>10:18</span></div>
   </div>
 </div></div></section>
 
-<section class="v3 v3for" aria-label="Made for what you do"><div class="wrap"><p>Made for what you do online: <a href="streaming.html">Streaming</a> · <a href="trading.html">Trading</a> · <a href="gaming.html">Gaming</a></p><div id="amv-today" style="display:none;max-width:520px;margin:0 auto 30px;align-items:center;gap:12px;border:1px solid rgba(127,127,127,.25);border-radius:16px;padding:12px 16px"><span id="amv-face"></span><div><small style="opacity:.7"><span id="amv-tk">Today's companion</span>: <b id="amv-tn"></b></small><div id="amv-tl" style="font-weight:600"></div></div></div><script src="/voice.js"></script><script>AMV.today().then(function(t){document.getElementById("amv-tn").textContent=t[1];if(t[2])document.getElementById("amv-tk").textContent="Your companion";AMV.ready.then(function(){var l=AMV.line("app.open");if(!l)return;document.getElementById("amv-tl").textContent=l;AMV.face(document.getElementById("amv-face"),"happy");document.getElementById("amv-today").style.display="flex"})}).catch(function(){})</script></div></section>
+<section class="v3 v3for" aria-label="Made for what you do"><div class="wrap"><p><span data-i18n="Made for what you do online:">Made for what you do online:</span> <a href="streaming.html"><span data-i18n="Streaming">Streaming</span></a> · <a href="trading.html"><span data-i18n="Trading">Trading</span></a> · <a href="gaming.html"><span data-i18n="Gaming">Gaming</span></a> · <a href="isp-report.html"><span data-i18n="ISP reports">ISP reports</span></a></p><div id="amv-today" style="display:none;max-width:520px;margin:0 auto 30px;align-items:center;gap:12px;border:1px solid rgba(127,127,127,.25);border-radius:16px;padding:12px 16px"><span id="amv-face"></span><div><small style="opacity:.7"><span id="amv-tk"><span data-i18n="Today&#x27;s companion">Today's companion</span></span>: <b id="amv-tn"></b></small><div id="amv-tl" style="font-weight:600"></div></div></div><script src="/voice.js"></script><script>AMV.today().then(function(t){document.getElementById("amv-tn").textContent=t[1];if(t[2])document.getElementById("amv-tk").textContent="Your companion";AMV.ready.then(function(){var l=AMV.line("app.open");if(!l)return;document.getElementById("amv-tl").textContent=l;AMV.face(document.getElementById("amv-face"),"happy");document.getElementById("amv-today").style.display="flex"})}).catch(function(){})</script></div></section>
 
 <section id="theory">
   <div class="sh wrap">
     <div class="k">The Theory of Everything</div>
-    <h2>Every part, in plain words.</h2>
-    <p>Swipe through it, use the arrow keys, or take it with you.</p>
+    <h2 data-i18n="Every part, in plain words.">Every part, in plain words.</h2>
+    <p><span data-i18n="Swipe through it, use the arrow keys, or take it with you.">Swipe through it, use the arrow keys, or take it with you.</span></p>
     <div class="cta">
       <a class="btn ghost" href="AdeeboMeter-Theory-of-Everything.pdf" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download PDF</a>
     </div>
   </div>
   <div class="deckbox">
-    <button class="arrow prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="arrow prev" aria-label="Previous slide" data-i18n-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="stage" tabindex="0" aria-roledescription="carousel" aria-label="The Theory of Everything slides">
 <div class="frame"><section class="slide hero"><div class="in">
   <div class="kicker">The Theory of Everything · version 1.1.5</div>
   <div class="body" style="flex-direction:row;align-items:center;gap:4em">
     <div style="flex:1">
       <h2 class="h1">AdeeboMeter</h2>
-      <p class="quote" style="margin:.6em 0 .5em;color:var(--blue)">Is it me or the network?</p>
+      <p class="quote" style="margin:.6em 0 .5em;color:var(--blue)"><span data-i18n="Is it me or the network?">Is it me or the network?</span></p>
       <p class="lead">A small, quiet Windows companion. One glance tells you whether your PC, your Wi-Fi, your provider, DNS or the internet is the problem — and what to do about it.</p>
       <p style="margin-top:1.4em;font-weight:600;color:var(--ink)">No cloud. No telemetry. Never listens.<br><span style="font-weight:400;color:var(--sub)">Every packet it sends is listed — and you can switch each one off.</span></p>
     </div>
@@ -550,8 +563,8 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
         <div class="v">Your provider is slow right now — it's not you.</div>
         <div class="row"><span>CPU</span><span>7%</span></div><div class="bar"><i style="width:7%;background:#2DA44E"></i></div>
         <div class="row"><span>Memory</span><span>58%</span></div><div class="bar"><i style="width:58%;background:#1F6FEB"></i></div>
-        <div class="row"><span>Router</span><span>3 ms</span></div><div class="bar"><i style="width:10%;background:#2DA44E"></i></div>
-        <div class="row"><span>Internet</span><span>184 ms</span></div><div class="bar"><i style="width:72%;background:#E3A008"></i></div>
+        <div class="row"><span><span data-i18n="Router">Router</span></span><span>3 ms</span></div><div class="bar"><i style="width:10%;background:#2DA44E"></i></div>
+        <div class="row"><span><span data-i18n="Internet">Internet</span></span><span>184 ms</span></div><div class="bar"><i style="width:72%;background:#E3A008"></i></div>
       </div>
       <p style="font-size:.8em;color:var(--muted);margin-top:.8em;text-align:center">The corner widget — faded, never takes a click</p>
     </div>
@@ -560,7 +573,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The idea in one breath</div>
-  <h2>Stop guessing. Get one sentence.</h2>
+  <h2><span data-i18n="Stop guessing. Get one sentence.">Stop guessing. Get one sentence.</span></h2>
   <div class="body">
     <div class="grid g4" style="align-items:stretch">
       <div class="card"><h3>Task Manager</h3><p>Is something eating my CPU?</p></div>
@@ -578,17 +591,17 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">It lives in two places</div>
-  <h2>A glance, or the whole story.</h2>
+  <h2><span data-i18n="A glance, or the whole story.">A glance, or the whole story.</span></h2>
   <div class="body">
     <div class="grid g2" style="gap:2em">
       <div class="card" style="padding:1.6em">
         <span class="tag t-g">Always on · penny-light</span>
-        <h3 style="font-size:1.5em;margin:.5em 0">The corner widget</h3>
+        <h3 style="font-size:1.5em;margin:.5em 0" data-i18n="The corner widget">The corner widget</h3>
         <ul class="clean"><li>Faded to 30% (up to 100%), small or bigger; brightens when you hover</li><li>Click-through — whatever is underneath keeps working</li><li>Folds into a tiny chip when a window covers the corner</li><li>CPU, memory, disk, network and a verdict in one sentence</li></ul>
       </div>
       <div class="card b" style="padding:1.6em">
         <span class="tag t-b">On demand · tray icon or Ctrl+Alt+A</span>
-        <h3 style="font-size:1.5em;margin:.5em 0">The engineer view</h3>
+        <h3 style="font-size:1.5em;margin:.5em 0" data-i18n="The engineer view">The engineer view</h3>
         <ul class="clean"><li><b>Overview</b> · <b>Monitor</b> · <b>Investigate</b></li><li><b>Network story</b> · <b>Time machine</b> · <b>Learn</b></li><li>Hover any <b>?</b> cursor for a plain-English explanation</li><li>Esc, minimise or X = back to the corner — memory given back</li></ul>
       </div>
     </div>
@@ -597,12 +610,12 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Design</div>
-  <h2>Five promises the whole design follows</h2>
+  <h2><span data-i18n="Five promises the whole design follows">Five promises the whole design follows</span></h2>
   <div class="body">
     <div class="grid g5">
       <div class="card g"><div class="ic" style="background:var(--green)">¢</div><h3>A penny app</h3><p>A few dozen tiny jobs a minute. Anything heavy runs only while you look at it, and stops by itself.</p></div>
-      <div class="card b"><div class="ic" style="background:var(--blue)">◎</div><h3>Never listens</h3><p>No server, account or update check. It checks at every start that it opens no listening port.</p></div>
-      <div class="card a"><div class="ic" style="background:var(--amber)">✓</div><h3>No admin rights</h3><p>Only what Windows shows a normal user. If Windows says no, that part simply doesn't show.</p></div>
+      <div class="card b"><div class="ic" style="background:var(--blue)">◎</div><h3 data-i18n="Never listens">Never listens</h3><p>No server, account or update check. It checks at every start that it opens no listening port.</p></div>
+      <div class="card a"><div class="ic" style="background:var(--amber)">✓</div><h3 data-i18n="No admin rights">No admin rights</h3><p>Only what Windows shows a normal user. If Windows says no, that part simply doesn't show.</p></div>
       <div class="card p"><div class="ic" style="background:var(--purple)">{}</div><h3>Readable source</h3><p>Plain C#, built by the compiler already inside Windows. Nothing to install, nothing hidden.</p></div>
       <div class="card"><div class="ic" style="background:var(--ink)">☺</div><h3>A companion</h3><p>Every message has a friendly and a plain version. The fix always comes right after the joke.</p></div>
     </div>
@@ -611,7 +624,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The big picture</div>
-  <h2>One heart, two faces.</h2>
+  <h2><span data-i18n="One heart, two faces.">One heart, two faces.</span></h2>
   <div class="body">
     <svg viewBox="0 0 1100 420" style="width:100%;height:auto" role="img" aria-label="Windows feeds the Monitor, which produces a snapshot every second for the widget and the engineer view">
       <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A96A8"/></marker></defs>
@@ -640,13 +653,13 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The life of AdeeboMeter</div>
-  <h2>From start to exit, nothing left behind.</h2>
+  <h2><span data-i18n="From start to exit, nothing left behind.">From start to exit, nothing left behind.</span></h2>
   <div class="body">
     <div class="grid g5">
-      <div class="card"><span class="num">1</span><h3>Start</h3><p>One copy only. Loads settings. Refuses to run if it is listening on any port.</p></div>
-      <div class="card"><span class="num">2</span><h3>Run</h3><p>The Monitor's two threads start. Tray icon and corner widget appear.</p></div>
+      <div class="card"><span class="num">1</span><h3 data-i18n="Start">Start</h3><p>One copy only. Loads settings. Refuses to run if it is listening on any port.</p></div>
+      <div class="card"><span class="num">2</span><h3 data-i18n="Run">Run</h3><p>The Monitor's two threads start. Tray icon and corner widget appear.</p></div>
       <div class="card"><span class="num">3</span><h3>Open</h3><p>Tray click or Ctrl+Alt+A. The Monitor speeds up while you look.</p></div>
-      <div class="card"><span class="num">4</span><h3>Back</h3><p>Esc, minimise, X or <i>Back to corner</i>. The view closes and gives its memory back.</p></div>
+      <div class="card"><span class="num">4</span><h3 data-i18n="Back">Back</h3><p>Esc, minimise, X or <i>Back to corner</i>. The view closes and gives its memory back.</p></div>
       <div class="card"><span class="num">5</span><h3>Exit</h3><p>Tray → Exit. Helper tools die with the app (a Windows job object); temporary captures are deleted.</p></div>
     </div>
   </div>
@@ -654,7 +667,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The heart · Monitor</div>
-  <h2>Two threads do all the watching.</h2>
+  <h2><span data-i18n="Two threads do all the watching.">Two threads do all the watching.</span></h2>
   <div class="body">
     <div class="grid g2" style="gap:1.6em">
       <div class="card b" style="padding:1.4em">
@@ -671,14 +684,14 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">How the verdict is found</div>
-  <h2>The first dot that isn't green is where trouble starts.</h2>
+  <h2><span data-i18n="The first dot that isn&#x27;t green is where trouble starts.">The first dot that isn't green is where trouble starts.</span></h2>
   <div class="body">
     <div class="path">
       <div class="stop"><div class="c" style="background:var(--green)">PC</div><b>Your PC</b><span>CPU, memory, disk</span></div>
       <div class="stop"><div class="c" style="background:var(--green)">LAN</div><b>Wi-Fi / LAN</b><span>router ping, signal</span></div>
       <div class="stop"><div class="c" style="background:var(--amber)">ISP</div><b>ISP / VPN</b><span>first public hop</span></div>
       <div class="stop"><div class="c" style="background:#C4CCD8">DNS</div><b>DNS</b><span>a real lookup</span></div>
-      <div class="stop"><div class="c" style="background:#C4CCD8">NET</div><b>Internet</b><span>1.1.1.1 / 8.8.8.8</span></div>
+      <div class="stop"><div class="c" style="background:#C4CCD8">NET</div><b><span data-i18n="Internet">Internet</span></b><span>1.1.1.1 / 8.8.8.8</span></div>
     </div>
     <div class="grid g2" style="margin-top:1.4em">
       <div class="card a"><h3>Everything after it is a victim, not a cause</h3><p>If your provider is slow, DNS and the internet look slow too. AdeeboMeter blames the first broken link, not the last one.</p></div>
@@ -689,17 +702,17 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Engineer view · tour</div>
-  <h2>Eight places. Everything you'd dig out of a dozen tools.</h2>
+  <h2><span data-i18n="Eight places. Everything you&#x27;d dig out of a dozen tools.">Eight places. Everything you'd dig out of a dozen tools.</span></h2>
   <div class="body">
     <div class="grid g4">
       <div class="card b"><h3>Overview</h3><p>The verdict, router, internet, DNS and traffic right now, what needs attention, today.</p></div>
       <div class="card"><h3>Monitor</h3><p>Connections (<b>Sniff</b> into Wireshark), your Wi-Fi or cable, what's running, live capture.</p></div>
       <div class="card"><h3>Investigate</h3><p>What's wrong? finds the broken layer; or pick the problem. Check a destination, health check.</p></div>
-      <div class="card r"><h3>Security</h3><p>One checkup: 42 defensive checks of this PC, your network and your sites. Reads only; you fix.</p></div>
-      <div class="card"><h3>Network story</h3><p>Follow an app from your PC to the server, box by box, and time each step.</p></div>
-      <div class="card"><h3>Time machine</h3><p>Replay any minute, the week as a heatmap, data usage, calls, new devices.</p></div>
-      <div class="card"><h3>Learn</h3><p>59 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
-      <div class="card b"><h3>Toolbox</h3><p>100+ tools in five sections — Network, Devices, Traffic Lab, Engineer, Windows — by question or as one list, each with an Example to look at first. Type to find one.</p></div>
+      <div class="card r"><h3 data-i18n="Security">Security</h3><p>One checkup: 42 defensive checks of this PC, your network and your sites. Reads only; you fix.</p></div>
+      <div class="card"><h3 data-i18n="Network story">Network story</h3><p>Follow an app from your PC to the server, box by box, and time each step.</p></div>
+      <div class="card"><h3 data-i18n="Time machine">Time machine</h3><p>Replay any minute, the week as a heatmap, data usage, calls, new devices.</p></div>
+      <div class="card"><h3 data-i18n="Learn">Learn</h3><p>59 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
+      <div class="card b"><h3 data-i18n="Toolbox">Toolbox</h3><p>100+ tools in five sections — Network, Devices, Traffic Lab, Engineer, Windows — by question or as one list, each with an Example to look at first. Type to find one.</p></div>
       <div class="card g" style="display:none"><h3>Hover the ? cursor</h3><p>332 terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
     </div>
   </div>
@@ -707,7 +720,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Investigate</div>
-  <h2>Start from the problem, not the protocol.</h2>
+  <h2><span data-i18n="Start from the problem, not the protocol.">Start from the problem, not the protocol.</span></h2>
   <div class="body">
     <div class="grid g2" style="gap:1.6em">
       <div class="card b" style="padding:1.4em">
@@ -726,7 +739,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Security</div>
-  <h2>One checkup. 42 checks. You decide what to fix.</h2>
+  <h2><span data-i18n="One checkup. 42 checks. You decide what to fix.">One checkup. 42 checks. You decide what to fix.</span></h2>
   <div class="body">
     <div class="grid g3">
       <div class="card b"><h3>This PC (27)</h3><p>Antivirus, firewall, BitLocker, Secure Boot, UAC, updates, supported Windows, SMBv1, RDP and NLA, open ports, added root certificates, hosts file, proxy, unsigned startup, risky scheduled tasks, Credential Guard, memory integrity, screen lock, open Wi-Fi.</p></div>
@@ -741,7 +754,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Toolbox</div>
-  <h2>100+ tools. Type what you need.</h2>
+  <h2><span data-i18n="100+ tools. Type what you need.">100+ tools. Type what you need.</span></h2>
   <div class="body">
     <div class="grid g4">
       <div class="card b"><h3>Path &amp; routing</h3><p>MTU per hop, MTR, the way back, which route, your gateway (VRRP / HSRP), routing protocols on your segment, IPv6.</p></div>
@@ -758,7 +771,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">SNMP</div>
-  <h2>Ask a switch or router - in plain words.</h2>
+  <h2><span data-i18n="Ask a switch or router - in plain words.">Ask a switch or router - in plain words.</span></h2>
   <div class="body">
     <div class="grid g3">
       <div class="card b"><h3>Views that answer questions</h3><p>Snapshot · interfaces with problems first and what changed since your last run · traffic · CPU · LLDP · sensors · find a MAC · VLANs · PoE · LAG · printer · UPS.</p></div>
@@ -773,7 +786,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Network story · Learn</div>
-  <h2>Follow one app from your PC to the server.</h2>
+  <h2><span data-i18n="Follow one app from your PC to the server.">Follow one app from your PC to the server.</span></h2>
   <div class="body">
     <div class="card" style="padding:1.2em 1.4em;font-size:1.05em;text-align:center;letter-spacing:.01em"><b>Teams</b> → Windows <span style="color:var(--muted)">(socket)</span> → Wi-Fi → Router → Provider → Internet → <b>Microsoft</b></div>
     <div class="grid g3" style="margin-top:1.2em">
@@ -786,14 +799,14 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Your Wi-Fi · your cable</div>
-  <h2>What your radio and your cable are really doing.</h2>
+  <h2><span data-i18n="What your radio and your cable are really doing.">What your radio and your cable are really doing.</span></h2>
   <div class="body" style="flex-direction:row;gap:2em;align-items:center">
     <div style="flex:1.1">
       <div class="grid g2">
         <div class="card b"><h3>Radio</h3><p>Exact access point, 2.4 / 5 / 6 GHz, channel, <b>width</b> (20–160 MHz), Wi-Fi generation, signal in % and dBm, <b>roaming help</b> (802.11k/v/r) — read from the access point's own beacons.</p></div>
         <div class="card a"><h3>Who else is on the air</h3><p>How many access points share or overlap your channel, and how busy the air is.</p></div>
         <div class="card"><h3>Windows' diary</h3><p>Every Wi-Fi drop in 24 h with the reason Windows recorded; DHCP trouble.</p></div>
-        <div class="card g"><h3>Cable</h3><p>Negotiated speed (100 Mb/s = bad-cable sign) and <b>Find my switch port</b>: switch, port, VLAN from LLDP/CDP. Nothing is sent.</p></div>
+        <div class="card g"><h3 data-i18n="Cable">Cable</h3><p>Negotiated speed (100 Mb/s = bad-cable sign) and <b>Find my switch port</b>: switch, port, VLAN from LLDP/CDP. Nothing is sent.</p></div>
       </div>
     </div>
     <div class="hide-m card" style="flex:.9;background:#fff">
@@ -816,7 +829,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">What's running</div>
-  <h2>Every program, with a story — not just a name.</h2>
+  <h2><span data-i18n="Every program, with a story — not just a name.">Every program, with a story — not just a name.</span></h2>
   <div class="body">
     <div class="grid g2" style="gap:2em;align-items:center">
       <div>
@@ -836,7 +849,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Check a destination</div>
-  <h2>Eight steps, from the name to the last hop.</h2>
+  <h2><span data-i18n="Eight steps, from the name to the last hop.">Eight steps, from the name to the last hop.</span></h2>
   <div class="body">
     <div class="grid g4">
       <div class="card"><span class="num">1</span><h3>DNS</h3><p>Real lookups, cache skipped. A second opinion from 1.1.1.1 catches filters.</p></div>
@@ -854,7 +867,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">The path story</div>
-  <h2>Who carries your traffic — and what's in the way.</h2>
+  <h2><span data-i18n="Who carries your traffic — and what&#x27;s in the way.">Who carries your traffic — and what's in the way.</span></h2>
   <div class="body">
     <svg viewBox="0 0 1100 120" style="width:100%;height:auto" aria-label="Example path: your PC, your network, Rogers, NTT, Wikipedia">
       <g font-size="16" text-anchor="middle">
@@ -878,7 +891,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Live capture · Time machine</div>
-  <h2>Deep when you ask. Silent when you don't.</h2>
+  <h2><span data-i18n="Deep when you ask. Silent when you don&#x27;t.">Deep when you ask. Silent when you don't.</span></h2>
   <div class="body">
     <div class="grid g2" style="gap:1.6em">
       <div class="card b" style="padding:1.4em">
@@ -888,7 +901,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
       </div>
       <div class="card g" style="padding:1.4em">
         <span class="tag t-g">History stays on this PC · 3 days by default (1–90)</span>
-        <h3 style="font-size:1.35em;margin:.5em 0">Time machine</h3>
+        <h3 style="font-size:1.35em;margin:.5em 0" data-i18n="Time machine">Time machine</h3>
         <ul class="clean"><li><b>Replay:</b> drag to any minute — the dots, the numbers, what changed around then</li><li><b>The week:</b> 7 × 24 squares; click one to replay that hour</li><li>Data usage per network, "slower than usual", after-call summaries, new devices</li><li>One line a minute, older days compressed, oldest deleted every night</li></ul>
       </div>
     </div>
@@ -896,8 +909,8 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>18</span></div>
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
-  <div class="kicker">Privacy</div>
-  <h2>What leaves your PC — and what never does.</h2>
+  <div class="kicker"><span data-i18n="Privacy">Privacy</span></div>
+  <h2><span data-i18n="What leaves your PC — and what never does.">What leaves your PC — and what never does.</span></h2>
   <div class="body">
     <table>
       <tr><th>What</th><th>When</th><th>Where to</th></tr>
@@ -917,7 +930,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Security</div>
-  <h2>Hardened by design, proven by checks.</h2>
+  <h2><span data-i18n="Hardened by design, proven by checks.">Hardened by design, proven by checks.</span></h2>
   <div class="body">
     <div class="grid g3">
       <div class="card"><h3>No shell, ever</h3><p>Windows tools by full System32 path, fixed arguments, a timeout, inside a job object that dies with the app.</p></div>
@@ -932,7 +945,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Staying light</div>
-  <h2>A penny in the background.</h2>
+  <h2><span data-i18n="A penny in the background.">A penny in the background.</span></h2>
   <div class="body">
     <div class="grid g4" style="text-align:center">
       <div class="card g"><div class="big" style="color:var(--green)">~0.5%</div><p style="margin-top:.5em">of one CPU core with only the widget</p></div>
@@ -974,7 +987,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Honest limits</div>
-  <h2>What Windows doesn't let us do without admin or the cloud.</h2>
+  <h2><span data-i18n="What Windows doesn&#x27;t let us do without admin or the cloud.">What Windows doesn't let us do without admin or the cloud.</span></h2>
   <div class="body">
     <div class="grid g4">
       <div class="card"><h3>AS numbers / BGP data</h3><p>Need an internet service — only through the opt-in, timed online lookups. Otherwise router names tell the story.</p></div>
@@ -991,16 +1004,16 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">Get it</div>
-  <h2>One file. It installs itself.</h2>
+  <h2><span data-i18n="One file. It installs itself.">One file. It installs itself.</span></h2>
   <div class="body">
     <div class="grid g3">
-      <div class="card b"><span class="num">1</span><h3>Download</h3><p>The zip from this website. Open it.</p></div>
+      <div class="card b"><span class="num">1</span><h3 data-i18n="Download">Download</h3><p>The zip from this website. Open it.</p></div>
       <div class="card g"><span class="num">2</span><h3>Double-click AdeeboMeter.exe</h3><p>Choose <b>Install</b>. It goes in just for you — a Start menu entry, an entry in Settings › Apps, no admin rights.</p></div>
       <div class="card"><span class="num">3</span><h3>Look at the corner</h3><p>It's already running, bottom-right. Tray icon or Ctrl+Alt+A for the full story.</p></div>
     </div>
     <div class="grid g3" style="margin-top:1.2em">
       <div class="card"><h3>Update</h3><p>Run the new exe, choose <b>Update</b>. Your settings come along; the old version steps aside.</p></div>
-      <div class="card"><h3>Remove</h3><p>Settings › Apps, or the tray menu. Everything goes — folder, settings, history.</p></div>
+      <div class="card"><h3 data-i18n="Remove">Remove</h3><p>Settings › Apps, or the tray menu. Everything goes — folder, settings, history.</p></div>
       <div class="card"><h3>Or don't install</h3><p><i>Just run it from here</i> keeps it portable. Code-signed; while the certificate is new, SmartScreen may say <i>More info → Run anyway</i>.</p></div>
     </div>
   </div>
@@ -1009,7 +1022,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 <div class="frame"><section class="slide end"><div class="in">
   <div class="kicker">AdeeboMeter</div>
   <div class="body">
-    <h2 class="h1" style="color:#fff">Is it me or the network?</h2>
+    <h2 class="h1" style="color:#fff"><span data-i18n="Is it me or the network?">Is it me or the network?</span></h2>
     <p class="lead" style="margin-top:.8em;font-size:1.5em">Now you know — in one glance.</p>
     <p style="margin-top:2em;font-size:1.15em">No cloud. No telemetry. Never listens.<br>Every packet it sends is listed — and you can switch each one off.</p>
     <p style="margin-top:2em" class="mono">adeebometer.com</p>
@@ -1017,7 +1030,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
   <div class="foot" style="color:#BFD4FF"><span>Created by <b style="color:#fff">Adeeb Khan</b></span><span>24</span></div>
 </div></section></div>
     </div>
-    <button class="arrow next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    <button class="arrow next" aria-label="Next slide" data-i18n-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
     <div class="deckbar">
       <span class="counter">1 / 26</span>
       <div class="progress"><i></i></div>
@@ -1028,88 +1041,88 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 
 <section id="install">
   <div class="sh wrap">
-    <div class="k">Install</div>
-    <h2>Ten seconds. No wizard.</h2>
-    <p>One file that installs itself — just for you.</p>
+    <div class="k" data-i18n="Install">Install</div>
+    <h2 data-i18n="Ten seconds. No wizard.">Ten seconds. No wizard.</h2>
+    <p data-i18n="One file that installs itself — just for you.">One file that installs itself — just for you.</p>
   </div>
   <div class="wrap"><div class="steps">
-    <div class="step"><b>1</b><h3>Download</h3><p>Get the zip and open it. Inside: AdeeboMeter.exe and the Theory of Everything.</p></div>
-    <div class="step"><b>2</b><h3>Double-click, Install</h3><p>It goes in for you only — a Start menu entry, an entry in Settings › Apps, no admin rights.</p></div>
-    <div class="step"><b>3</b><h3>Look at the corner</h3><p>It's already there, bottom-right. Click the tray icon or press Ctrl+Alt+A for the full story.</p></div>
+    <div class="step"><b>1</b><h3 data-i18n="Download">Download</h3><p data-i18n="Get the zip and open it. Inside: AdeeboMeter.exe and the Theory of Everything.">Get the zip and open it. Inside: AdeeboMeter.exe and the Theory of Everything.</p></div>
+    <div class="step"><b>2</b><h3 data-i18n="Double-click, Install">Double-click, Install</h3><p data-i18n="It goes in for you only — a Start menu entry, an entry in Settings › Apps, no admin rights.">It goes in for you only — a Start menu entry, an entry in Settings › Apps, no admin rights.</p></div>
+    <div class="step"><b>3</b><h3 data-i18n="Look at the corner">Look at the corner</h3><p data-i18n="It&#x27;s already there, bottom-right. Click the tray icon or press Ctrl+Alt+A for the full story.">It's already there, bottom-right. Click the tray icon or press Ctrl+Alt+A for the full story.</p></div>
   </div>
-  <p class="note">Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. AdeeboMeter is code-signed by <i>Open Source Developer MdAhasanul Adeeb Khan</i>; while the certificate is new, Windows may still say <i>“Windows protected your PC”</i> — choose <b>More info → Run anyway</b>. Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (<code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code>). To remove it: Settings › Apps › AdeeboMeter › Uninstall.</p>
+  <p class="note"><span data-i18n="Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. AdeeboMeter is code-signed by">Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. AdeeboMeter is code-signed by</span> <i>Open Source Developer MdAhasanul Adeeb Khan</i><span data-i18n="; while the certificate is new, Windows may still say">; while the certificate is new, Windows may still say</span> <i>“Windows protected your PC”</i> <span data-i18n="— choose">— choose</span> <b>More info → Run anyway</b><span data-i18n=". Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (">. Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (</span><code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code><span data-i18n="). To remove it: Settings › Apps › AdeeboMeter › Uninstall.">). To remove it: Settings › Apps › AdeeboMeter › Uninstall.</span></p>
   </div>
 </section>
 
 <section id="policy">
   <div class="sh wrap">
-    <div class="k">Policies</div>
-    <h2>Code signing and privacy.</h2>
+    <div class="k" data-i18n="Policies">Policies</div>
+    <h2 data-i18n="Code signing and privacy.">Code signing and privacy.</h2>
   </div>
   <div class="wrap"><div class="steps">
-    <div class="step"><b>✓</b><h3>Code signing policy</h3><p>From 1.1.5, releases are code-signed by <i>Open Source Developer MdAhasanul Adeeb Khan</i> with a Certum open-source certificate, timestamped so signatures outlive it. Every release file is built by this project's GitHub Actions workflow from the public source — never on a personal PC — with every action pinned to an exact commit; the author then signs that exe and nothing else, and the release lists the fingerprint of the exe exactly as GitHub built it (covered by build provenance) beside the signed one. Each release is approved by hand. Team roles (committer, reviewer, approver): <a href="https://github.com/adeeb111">adeeb111</a>, with multi-factor authentication.</p></div>
-    <div class="step"><b>✓</b><h3>Privacy policy</h3><p>AdeeboMeter will not transfer any information to other networked systems unless you ask it to. It never listens, has no telemetry, no account and no updater. Checks and tools contact only what you typed or what they name on screen; <i>About</i> lists every packet your settings send.</p></div>
-    <div class="step"><b>✓</b><h3>Online lookups</h3><p>Off by default. Switched on for 5 minutes to 3 hours, they send public IP addresses only — never private addresses or names you typed — to <a href="https://www.ripe.net/about-us/legal/ripe-ncc-privacy-statement/">RIPEstat</a> and <a href="https://www.peeringdb.com/aup">PeeringDB</a>, then turn themselves off. Everything else stays on your PC; uninstalling removes it.</p></div>
+    <div class="step"><b>✓</b><h3 data-i18n="Code signing policy">Code signing policy</h3><p><span data-i18n="From 1.1.5, releases are code-signed by">From 1.1.5, releases are code-signed by</span> <i>Open Source Developer MdAhasanul Adeeb Khan</i> <span data-i18n="with a Certum open-source certificate, timestamped so signatures outlive it. Every release file is built by this project&#x27;s GitHub Actions workflow from the public source — never on a personal PC — with every action pinned to an exact commit; the author then signs that exe and nothing else, and the release lists the fingerprint of the exe exactly as GitHub built it (covered by build provenance) beside the signed one. Each release is approved by hand. Team roles (committer, reviewer, approver):">with a Certum open-source certificate, timestamped so signatures outlive it. Every release file is built by this project's GitHub Actions workflow from the public source — never on a personal PC — with every action pinned to an exact commit; the author then signs that exe and nothing else, and the release lists the fingerprint of the exe exactly as GitHub built it (covered by build provenance) beside the signed one. Each release is approved by hand. Team roles (committer, reviewer, approver):</span> <a href="https://github.com/adeeb111">adeeb111</a><span data-i18n=", with multi-factor authentication.">, with multi-factor authentication.</span></p></div>
+    <div class="step"><b>✓</b><h3 data-i18n="Privacy policy">Privacy policy</h3><p><span data-i18n="AdeeboMeter will not transfer any information to other networked systems unless you ask it to. It never listens, has no telemetry, no account and no updater. Checks and tools contact only what you typed or what they name on screen;">AdeeboMeter will not transfer any information to other networked systems unless you ask it to. It never listens, has no telemetry, no account and no updater. Checks and tools contact only what you typed or what they name on screen;</span> <i>About</i> <span data-i18n="lists every packet your settings send.">lists every packet your settings send.</span></p></div>
+    <div class="step"><b>✓</b><h3 data-i18n="Online lookups">Online lookups</h3><p><span data-i18n="Off by default. Switched on for 5 minutes to 3 hours, they send public IP addresses only — never private addresses or names you typed — to">Off by default. Switched on for 5 minutes to 3 hours, they send public IP addresses only — never private addresses or names you typed — to</span> <a href="https://www.ripe.net/about-us/legal/ripe-ncc-privacy-statement/">RIPEstat</a> <span data-i18n="and">and</span> <a href="https://www.peeringdb.com/aup">PeeringDB</a><span data-i18n=", then turn themselves off. Everything else stays on your PC; uninstalling removes it.">, then turn themselves off. Everything else stays on your PC; uninstalling removes it.</span></p></div>
   </div></div>
 </section>
 
 <section id="feedback">
   <div class="sh wrap">
-    <div class="k">Suggestion box</div>
-    <h2>Make it better.</h2>
-    <p>An idea, something that broke, a question — every message is read.</p>
+    <div class="k"><span data-i18n="Suggestion box">Suggestion box</span></div>
+    <h2><span data-i18n="Make it better.">Make it better.</span></h2>
+    <p><span data-i18n="An idea, something that broke, a question — every message is read.">An idea, something that broke, a question — every message is read.</span></p>
   </div>
   <div class="wrap">
     <form class="box" data-kind="idea" onsubmit="return false">
-      <div class="seg" role="group" aria-label="What is it?">
-        <button type="button" data-k="idea" aria-pressed="true">Idea</button>
-        <button type="button" data-k="problem" aria-pressed="false">Problem</button>
-        <button type="button" data-k="question" aria-pressed="false">Question</button>
+      <div class="seg" role="group" aria-label="What is it?" data-i18n-label="What is it?">
+        <button type="button" data-k="idea" aria-pressed="true"><span data-i18n="Idea">Idea</span></button>
+        <button type="button" data-k="problem" aria-pressed="false"><span data-i18n="Problem">Problem</span></button>
+        <button type="button" data-k="question" aria-pressed="false"><span data-i18n="Question">Question</span></button>
       </div>
-      <label class="fld"><span>In a few words</span><input id="fb-title" maxlength="120" placeholder="Show the Wi-Fi channel in the corner widget"></label>
-      <label class="fld"><span id="fb-body-label">Tell us more</span><textarea id="fb-body" maxlength="4000" placeholder="What would you like it to do, and why would it help?"></textarea></label>
-      <label class="fld only-problem"><span>Your Windows and AdeeboMeter version (optional)</span><input id="fb-env" maxlength="120" placeholder="Windows 11 23H2 · AdeeboMeter 1.1"></label>
+      <label class="fld"><span><span data-i18n="In a few words">In a few words</span></span><input id="fb-title" maxlength="120" placeholder="Show the Wi-Fi channel in the corner widget"></label>
+      <label class="fld"><span id="fb-body-label"><span data-i18n="Tell us more">Tell us more</span></span><textarea id="fb-body" maxlength="4000" placeholder="What would you like it to do, and why would it help?"></textarea></label>
+      <label class="fld only-problem"><span><span data-i18n="Your Windows and AdeeboMeter version (optional)">Your Windows and AdeeboMeter version (optional)</span></span><input id="fb-env" maxlength="120" placeholder="Windows 11 23H2 · AdeeboMeter 1.1"></label>
       <div class="send">
         <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="fbHuman" data-size="flexible"></div>
-        <p class="fine" id="fb-note">Goes straight to Adeeb — no account needed. Nothing is sent until you press Send.</p>
-        <button class="btn primary" id="fb-send" type="button" disabled>Send →</button>
+        <p class="fine" id="fb-note"><span data-i18n="Goes straight to Adeeb — no account needed. Nothing is sent until you press Send.">Goes straight to Adeeb — no account needed. Nothing is sent until you press Send.</span></p>
+        <button class="btn primary" id="fb-send" type="button" disabled><span data-i18n="Send →">Send →</span></button>
       </div>
     </form>
     <div class="community">
-      <a href="https://github.com/adeeb111/AdeeboMeter/discussions">Browse ideas &amp; questions</a>
-      <a href="https://github.com/adeeb111/AdeeboMeter/issues">Known problems</a>
+      <a href="https://github.com/adeeb111/AdeeboMeter/discussions"><span data-i18n="Browse ideas &amp; questions">Browse ideas &amp; questions</span></a>
+      <a href="https://github.com/adeeb111/AdeeboMeter/issues"><span data-i18n="Known problems">Known problems</span></a>
     </div>
   </div>
 </section>
 
 <section class="final"><div class="wrap">
-  <h2>Now you know.</h2>
-  <p>In one glance.</p>
+  <h2><span data-i18n="Now you know.">Now you know.</span></h2>
+  <p><span data-i18n="In one glance.">In one glance.</span></p>
   <div class="cta">
     <a class="btn primary dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
-    <a class="store" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ?mode=direct" rel="noopener" aria-label="Get it from Microsoft Store"><img src="https://get.microsoft.com/images/en-us%20dark.svg" width="180" height="65" alt="Get it from Microsoft Store"></a>
+    <a class="store" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ?mode=direct" rel="noopener" aria-label="Get it from Microsoft Store" data-i18n-label="Get it from Microsoft Store"><img src="https://get.microsoft.com/images/en-us%20dark.svg" width="180" height="65" alt="Get it from Microsoft Store"></a>
   </div>
-  <p class="meta"><span class="ver">Version 1.1.5</span> · <a href="https://github.com/adeeb111/AdeeboMeter/releases">all releases</a></p>
+  <p class="meta"><span class="ver"><span data-i18n="Version 1.1.5">Version 1.1.5</span></span> · <a href="https://github.com/adeeb111/AdeeboMeter/releases"><span data-i18n="all releases">all releases</span></a></p>
 </div></section>
 
 <section class="donate" id="donate"><div class="wrap">
   <div class="donate-box">
-    <p><b><span style="color:#D1245B">&#9829;</span> Donate</b> to cover the cost to keep this app free and running.</p>
+    <p><b><span style="color:#D1245B">&#9829;</span> Donate</b> <span data-i18n="to cover the cost to keep this app free and running.">to cover the cost to keep this app free and running.</span></p>
     <div class="amts">
       <a href="https://paypal.me/adeeb1111/5CAD" target="_blank" rel="noopener">$5</a>
       <a href="https://paypal.me/adeeb1111/10CAD" target="_blank" rel="noopener">$10</a>
       <a href="https://paypal.me/adeeb1111/20CAD" target="_blank" rel="noopener">$20</a>
       <a href="https://paypal.me/adeeb1111/50CAD" target="_blank" rel="noopener">$50</a>
-      <a class="other" href="https://paypal.me/adeeb1111" target="_blank" rel="noopener">Other amount</a>
+      <a class="other" href="https://paypal.me/adeeb1111" target="_blank" rel="noopener"><span data-i18n="Other amount">Other amount</span></a>
     </div>
-    <small>Through PayPal, in Canadian dollars. AdeeboMeter stays free either way.</small>
+    <small><span data-i18n="Through PayPal, in Canadian dollars. AdeeboMeter stays free either way.">Through PayPal, in Canadian dollars. AdeeboMeter stays free either way.</span></small>
   </div>
 </div></section>
 </main>
 
 <footer><div class="wrap">
-  <span>Created by Adeeb Khan · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/LICENSE">MIT License</a></span>
-  <span><a href="#donate">Donate</a> · <a href="hall-of-fame.html">Hall of Fame</a> · <a href="privacy.html">Privacy</a> · <a href="https://github.com/adeeb111/AdeeboMeter">Source</a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md">What's new</a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/docs/THEORY-OF-EVERYTHING.md">Theory of Everything (text)</a></span>
+  <span>Created by Adeeb Khan · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/LICENSE"><span data-i18n="MIT License">MIT License</span></a></span>
+  <span><a href="#donate">Donate</a> · <a href="hall-of-fame.html"><span data-i18n="Hall of Fame">Hall of Fame</span></a> · <a href="privacy.html"><span data-i18n="Privacy">Privacy</span></a> · <a href="https://github.com/adeeb111/AdeeboMeter"><span data-i18n="Source">Source</span></a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md"><span data-i18n="What&#x27;s new">What's new</span></a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/docs/THEORY-OF-EVERYTHING.md"><span data-i18n="Theory of Everything (text)">Theory of Everything (text)</span></a></span>
 </div></footer>
 
 <script>
@@ -1161,11 +1174,21 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     idea: ['Show the Wi-Fi channel in the corner widget', 'What would you like it to do, and why would it help?', 'Tell us more'],
     problem: ['The widget disappears after sleep', 'What happened? What did you expect? Steps to make it happen again help a lot.', 'What happened'],
     question: ['What does "retransmits" mean?', 'Ask anything - how it works, what a number means, whether it fits your setup.', 'Your question'] };
+  function feedbackText(key) {
+    return window.AdeeboMeterLocale ? window.AdeeboMeterLocale.t(key) : key;
+  }
+  function updateFeedbackHints() {
+    title.placeholder = feedbackText(hints[kind][0]);
+    body.placeholder = feedbackText(hints[kind][1]);
+    document.getElementById('fb-body-label').textContent = feedbackText(hints[kind][2]);
+  }
+  document.addEventListener('DOMContentLoaded', updateFeedbackHints);
+  document.addEventListener('adeebometerlanguagechange', updateFeedbackHints);
   box.querySelectorAll('.seg button').forEach(function (b) {
     b.addEventListener('click', function () {
       kind = b.getAttribute('data-k'); box.setAttribute('data-kind', kind);
       box.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-      title.placeholder = hints[kind][0]; body.placeholder = hints[kind][1]; document.getElementById('fb-body-label').textContent = hints[kind][2];
+      updateFeedbackHints();
     });
   });
   function ready() { send.disabled = !(title.value.trim() && body.value.trim() && human); }
@@ -1179,15 +1202,15 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
     var t = title.value.trim().slice(0, 100), b = body.value.trim().slice(0, 4000);
     if (kind === 'problem') b += '\n\nWindows / AdeeboMeter version: ' + (env.value.trim() || '(not given)');
     else if (kind === 'question') t = 'Question: ' + t;
-    send.disabled = true; note.textContent = 'Sending…';
+    send.disabled = true; note.textContent = feedbackText('Sending…');
     fetch(RELAY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind === 'problem' ? 'bug' : 'feedback', from: 'site', title: t, body: b, turnstile: human }) })
       .then(function (r) { return r.json().catch(function () { return { ok: false, why: 'no answer' }; }); })
       .then(function (j) {
-        if (j.ok) { note.textContent = 'Sent — thank you! Adeeb reads every one.'; title.value = ''; body.value = ''; env.value = ''; }
-        else { note.textContent = 'Couldn’t send: ' + (j.why || 'try again in a minute') + '.'; send.disabled = false; }
+        if (j.ok) { note.textContent = feedbackText('Sent — thank you! Adeeb reads every one.'); title.value = ''; body.value = ''; env.value = ''; }
+        else { note.textContent = feedbackText('Couldn’t send: ') + (j.why || feedbackText('try again in a minute')) + '.'; send.disabled = false; }
         human = ''; try { turnstile.reset(); } catch (e) {}
       })
-      .catch(function () { note.textContent = 'Couldn’t reach the server — check your connection and try again.'; send.disabled = false; });
+      .catch(function () { note.textContent = feedbackText('Couldn’t reach the server — check your connection and try again.'); send.disabled = false; });
   });
 
   // the download button always points at the newest release (falls back to the link built into the page)
@@ -1225,3 +1248,4 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 </script>
 </body>
 </html>
+

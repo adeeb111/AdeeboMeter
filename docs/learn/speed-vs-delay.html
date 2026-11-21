@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-language-route="/learn/speed-vs-delay.html" data-language-variants="en bn fr es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -63,6 +63,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "Speed isn't one number", "description": "Bandwidth, delay, jitter and loss - four different things that all feel like \"slow\". Bandwidth is how much; delay is how long; jitter is how uneven; loss is…", "url": "https://adeebometer.com/learn/speed-vs-delay.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "The basics", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/speed-vs-delay.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/speed-vs-delay.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/speed-vs-delay.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/speed-vs-delay.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/speed-vs-delay.html">
 </head>
 <body data-sec="learn">
 <main>
@@ -78,6 +83,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </ol></div>
 <h2>When it goes wrong</h2>
 <div class="card warn"><p>Speed tests show bandwidth, but calls and browsing suffer from delay, jitter and loss.</p></div>
+<p>To see how both change while you work, <a href="../internet-speed-monitor.html">monitor internet speed on Windows</a>.</p>
 <h2>Quick check</h2>
 <div class="quiz" data-id="speed-vs-delay"><p>Which can feel &#x27;slow&#x27; even on a fast plan?</p>
 <button data-ok>High delay, jitter or loss</button>
@@ -97,8 +103,10 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
 bs.forEach(function(b){q.insertBefore(b,say)});
 bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
-var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
-else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
+var V=window.AMV,locale=window.AdeeboMeterLocale;
+function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&&V.line(line))||key}
+if(ok){done=true;say.textContent=feedback('Right.','quiz.right');try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=feedback('Not that one - try again.','quiz.wrong')}})})();
 </script>
 <script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("speed-vs-delay")<0)s.push("speed-vs-delay");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","speed-vs-delay")}catch(e){}</script>
 <script src="/ui.js"></script>

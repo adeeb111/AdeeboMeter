@@ -26,24 +26,24 @@ namespace AdeeboMeter
             walkRoom.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; RecordSpot(); } };
             var done = new PillButton("Finish walk test", PillButton.K.Chip) { Margin = new Padding(Sc(8), Sc(3), 0, 0) };
             done.Click += delegate { EndRename(); walkBar.Visible = false; linkCanvas.Invalidate(); };
-            walkStatus = new Label { AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0), Text = "Walk to a room, type its name, press Record. Nothing else runs meanwhile." };
+            walkStatus = new Label { AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0), Text = AdeeboMeter.L.T("Walk to a room, type its name, press Record. Nothing else runs meanwhile.") };
             walkBar.Controls.Add(walkRoom); walkBar.Controls.Add(walkRec); walkBar.Controls.Add(done); walkBar.Controls.Add(walkStatus);
             linkPage.Controls.Add(walkBar);
         }
-        void EndRename() { walkRename = null; walkRec.Text = "Record this spot (10 s)"; }
+        void EndRename() { walkRename = null; walkRec.Text = AdeeboMeter.L.T("Record this spot (10 s)"); }
         void RecordSpot()
         {
             if (walking) return;
             if (walkRename != null)
             {
                 string to = walkRoom.Box.Text.Trim(); var sp0 = spots.FirstOrDefault(z => z.Room == walkRename);
-                if (to != "" && sp0 != null) { spots.RemoveAll(z => z.Room == to && z != sp0); sp0.Room = to; walkStatus.Text = "Renamed " + walkRename + " to " + to + "."; }
+                if (to != "" && sp0 != null) { spots.RemoveAll(z => z.Room == to && z != sp0); sp0.Room = to; walkStatus.Text = AdeeboMeter.L.T("Renamed ") + walkRename + " to " + to + "."; }
                 EndRename(); walkRoom.Box.Text = ""; linkCanvas.Invalidate(); return;
             }
             string room = walkRoom.Box.Text.Trim(); if (room == "") room = "Spot " + (spots.Count + 1);
             string gw; NetworkInterface nic; lock (M.L) { gw = M.Gateway; nic = M.Primary; }
-            if (gw == "") { walkStatus.Text = "No router to measure - are you connected?"; return; }
-            walking = true; walkRec.Enabled = false; walkStatus.Text = "Measuring " + room + "... stay still for 10 seconds.";
+            if (gw == "") { walkStatus.Text = AdeeboMeter.L.T("No router to measure - are you connected?"); return; }
+            walking = true; walkRec.Enabled = false; walkStatus.Text = AdeeboMeter.L.T("Measuring ") + room + "... stay still for 10 seconds.";
             Task.Factory.StartNew(() =>
             {
                 var ms = new List<double>();
@@ -58,7 +58,7 @@ namespace AdeeboMeter
                 long speed = 0; try { if (nic != null) speed = nic.Speed; } catch { }
                 int sig; lock (M.L) sig = M.WifiSignal;
                 var sp = new Spot { Room = room, Avg = ok.Count > 0 ? ok.Average() : double.NaN, Jitter = ok.Count > 2 ? ok.Zip(ok.Skip(1), (a, b) => Math.Abs(a - b)).Average() : double.NaN, Loss = 100.0 * (ms.Count - ok.Count) / ms.Count, Speed = speed, Signal = sig };
-                try { BeginInvoke((Action)delegate { walking = false; walkRec.Enabled = true; spots.RemoveAll(s => s.Room == sp.Room); spots.Add(sp); walkRoom.Box.Text = ""; walkStatus.Text = "Recorded " + sp.Room + ". Walk to the next room."; linkCanvas.Invalidate(); }); } catch { walking = false; }
+                try { BeginInvoke((Action)delegate { walking = false; walkRec.Enabled = true; spots.RemoveAll(s => s.Room == sp.Room); spots.Add(sp); walkRoom.Box.Text = ""; walkStatus.Text = AdeeboMeter.L.T("Recorded ") + sp.Room + ". Walk to the next room."; linkCanvas.Invalidate(); }); } catch { walking = false; }
             });
         }
         static int SpotScore(Spot s)
@@ -126,10 +126,10 @@ namespace AdeeboMeter
                     var spot = sp; float ax = x + w - actW + 10 * S;
                     var rn = g.MeasureString("Rename", Draw.fSmall); var rr = new RectangleF(ax, sy + 4 * S, rn.Width, 20 * S);
                     g.DrawString(L.T("Rename"), Draw.fSmall, link, ax, sy + 5 * S);
-                    Act(linkCanvas, rr, delegate { walkRename = spot.Room; walkBar.Visible = true; walkRoom.Box.Text = spot.Room; walkRoom.Box.Focus(); walkRoom.Box.SelectAll(); walkRec.Text = "Save the new name"; walkStatus.Text = "Type the new name for " + spot.Room + ", then Save."; linkCanvas.Invalidate(); });
+                    Act(linkCanvas, rr, delegate { walkRename = spot.Room; walkBar.Visible = true; walkRoom.Box.Text = spot.Room; walkRoom.Box.Focus(); walkRoom.Box.SelectAll(); walkRec.Text = AdeeboMeter.L.T("Save the new name"); walkStatus.Text = AdeeboMeter.L.T("Type the new name for ") + spot.Room + ", then Save."; linkCanvas.Invalidate(); });
                     var dr = new RectangleF(ax + rn.Width + 14 * S, sy + 4 * S, g.MeasureString("Remove", Draw.fSmall).Width, 20 * S);
                     using (var red = new SolidBrush(Theme.LvText(2))) g.DrawString(L.T("Remove"), Draw.fSmall, red, dr.X, sy + 5 * S);
-                    Act(linkCanvas, dr, delegate { spots.Remove(spot); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = "Removed " + spot.Room + "."; linkCanvas.Invalidate(); });
+                    Act(linkCanvas, dr, delegate { spots.Remove(spot); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = AdeeboMeter.L.T("Removed ") + spot.Room + "."; linkCanvas.Invalidate(); });
                     sy += 30 * S;
                 }
                 if (spots.Count >= 2)

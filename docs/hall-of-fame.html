@@ -85,6 +85,9 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);f
 footer a{color:inherit}
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -188,11 +191,11 @@ footer a{color:inherit}
     <li><b>Make your card.</b> On the Adeebo page, press <b>Make my award card</b> and type your name the way you want it shown. AdeeboMeter saves the picture to your Pictures folder and copies its text (name, points, date and claim code) so you can paste it.</li>
     <li><b>Share it anywhere you like</b> - LinkedIn, X, a group chat. It's your picture.</li>
     <li><b>Send it.</b> Easiest: press <b>Send it to the Hall of Fame</b> in AdeeboMeter, right under your card. Or fill in the four lines here - no account needed. The check runs straight away; if the code matches, you're on this page within a couple of minutes.
-      <form id="hof" class="hof-form" onsubmit="return false" style="display:grid;gap:8px;max-width:520px;margin-top:12px">
+      <form id="hof" class="hof-form" onsubmit="return false" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-width:520px;margin-top:12px">
         <input id="h-name" maxlength="40" placeholder="Name on the card" required>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="h-points" maxlength="6" inputmode="numeric" placeholder="Points (e.g. 512)"><input id="h-date" maxlength="10" placeholder="Date (2026-11-12)"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><input id="h-points" maxlength="6" inputmode="numeric" placeholder="Points (e.g. 512)"><input id="h-date" maxlength="10" placeholder="Date (2026-11-12)"></div>
         <input id="h-code" maxlength="30" placeholder="Claim code (ADB-XXXX-XXXX-XXXX-XXXX)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id="h-where"><option value="">Show a profile link? (optional)</option><option>linkedin</option><option>x</option><option>instagram</option><option>bluesky</option><option>github</option></select><input id="h-handle" maxlength="40" placeholder="Your handle there (optional)"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><select id="h-where"><option value="">Show a profile link? (optional)</option><option>linkedin</option><option>x</option><option>instagram</option><option>bluesky</option><option>github</option></select><input id="h-handle" maxlength="40" placeholder="Your handle there (optional)"></div>
         <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="hofHuman"></div>
         <div class="cta" style="justify-content:flex-start"><button class="pill" id="h-send" type="button" disabled>Send my card</button> <a class="pill ghost" id="mail" href="#join">Or email it</a></div>
         <p class="sub" id="h-note" style="margin:0">Only your name (and a handle, if you add one) goes on this page.</p>

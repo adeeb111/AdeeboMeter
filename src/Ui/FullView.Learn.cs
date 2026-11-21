@@ -24,7 +24,7 @@ namespace AdeeboMeter
             learnSearch.Box.TextChanged += delegate { if (learnSearch.Box.Text.Trim() != "") { if (learnFilter != "all") { learnFilter = "all"; SyncLearnView(); } if (Cfg.LearnView != "all") SetLearnView("all"); } learnList.AutoScrollPosition = Point.Empty; learnList.Invalidate(); };   // searching shows everything
             AddLearnViewButtons(bar);
             bar.Controls.Add(learnSearch);
-            learnTip = new Label { Text = "Tip: press Ctrl+K anywhere to jump straight to a tab, a program, a term or a protocol.", AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(4), Sc(10), 0, 0) };
+            learnTip = new Label { Text = AdeeboMeter.L.T("Tip: press Ctrl+K anywhere to jump straight to a tab, a program, a term or a protocol."), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(4), Sc(10), 0, 0) };
             bar.Controls.Add(learnTip);
             AddLearnChips(bar);
             var split = learnSplit = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Theme.Card };
@@ -69,6 +69,7 @@ namespace AdeeboMeter
         }
         float LearnRow(Graphics g, string key, string title, string sub, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap)
         {
+            title = L.T(title);
             var rr = new RectangleF(0, y, learnList.ClientSize.Width, 30 * S);
             if (key == learnSel) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
             g.DrawString(title, Draw.fBody, ink, new RectangleF(x, y + 6 * S, w, 18 * S), nowrap);
@@ -88,7 +89,7 @@ namespace AdeeboMeter
                 y = BackLink(g, "‹ " + (card != null ? L.T(card[1]) : L.T("All of Learn")), x, y, delegate { learnSel = ""; });
             }
             if (learnSel.StartsWith("game:", StringComparison.Ordinal)) { y = PaintGame(g, learnSel.Substring(5), x, y, w); Need(learnInfo, y + 20 * S); return; }
-            if (learnSel == "") { y = Title2(g, "Learn", x, y, w); y = Lead2(g, "Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words.", x, y, w); Need(learnInfo, y); return; }
+            if (learnSel == "") { y = Title2(g, AdeeboMeter.L.T("Learn"), x, y, w); y = Lead2(g, AdeeboMeter.L.T("Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words."), x, y, w); Need(learnInfo, y); return; }
             if (learnSel.StartsWith("lab:", StringComparison.Ordinal)) { y = PaintLab(learnInfo, g, learnSel.Substring(4), x, y, w); Need(learnInfo, y + 20 * S); return; }
                         if (learnSel.StartsWith("term:", StringComparison.Ordinal))
             {
@@ -110,12 +111,12 @@ namespace AdeeboMeter
                 if (LiveCapture.Available && !learnBusy) Act(learnInfo, go, delegate { LearnLive(topic); });
                 else if (mine && learnPhase != "decoding") Act(learnInfo, go, delegate { learnStop = true; learnInfo.Invalidate(); });
                 y += 32 * S;
-                if (LiveCapture.Available && !mine) y = Lead2(g, "Records this lesson's traffic (" + topic["live"] + ") on your active adapter for 10 s: packet headers only, up to 5 MB, deleted as soon as it's decoded.", x, y, w);
-                if (topic["try"] != "") y = Lead2(g, "While it records: " + topic["try"], x, y, w);
+                if (LiveCapture.Available && !mine) y = Lead2(g, AdeeboMeter.L.T("Records this lesson's traffic (") + topic["live"] + ") on your active adapter for 10 s: packet headers only, up to 5 MB, deleted as soon as it's decoded.", x, y, w);
+                if (topic["try"] != "") y = Lead2(g, AdeeboMeter.L.T("While it records: ") + topic["try"], x, y, w);
                 if (learnErr != "" && learnPktsFor == topic.Id) y = Lead2(g, learnErr, x, y, w);
                 if (learnPkts != null && learnPktsFor == topic.Id)
                 {
-                    if (learnPkts.Count == 0) y = Lead2(g, "Nothing of that kind happened in those 10 seconds. " + (topic["try"] != "" ? "Try it while you " + topic["try"].TrimEnd('.').ToLowerInvariant() + "." : ""), x, y, w);
+                    if (learnPkts.Count == 0) y = Lead2(g, AdeeboMeter.L.T("Nothing of that kind happened in those 10 seconds. ") + (topic["try"] != "" ? "Try it while you " + topic["try"].TrimEnd('.').ToLowerInvariant() + "." : ""), x, y, w);
                     else y = InfoCardOn(learnInfo, g, "WHAT YOUR PC JUST DID  ·  " + learnPkts.Count + " PACKETS", learnPkts.Take(30).Select(p => new[] { p.T.ToString("0.00", CultureInfo.InvariantCulture) + " s  " + p.Proto, Draw.Trunc(p.Src, 22) + " → " + Draw.Trunc(p.Dst, 22) + "   " + p.Info, "3" }).ToList(), null, x, y, w);
                 }
             }

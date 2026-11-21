@@ -263,7 +263,7 @@ namespace AdeeboMeter
             if (heistIdx == 0 && heistPick < 0)
             {
                 y = Lead2(g, L.T("How a card's claim code is made - and checked:"), x, y, w);
-                y = DrawKnowledgeLadder(g, learnInfo, L.T("AdeeboMeter > AdeeboMeter: name + points + date, mixed with a secret key (HMAC-SHA256)") + " | " + L.T("AdeeboMeter > You: your card + its code") + " | " + L.T("You > Hall of Fame: the card") + " | " + L.T("Hall of Fame > Hall of Fame: same mix, same key - same code? You're in"), x, y, w);
+                y = DrawKnowledgeLadder(g, learnInfo, "AdeeboMeter > AdeeboMeter: name + points + date, mixed with a secret key (HMAC-SHA256)" + " | " + "AdeeboMeter > You: your card + its code" + " | " + "You > Hall of Fame: the card" + " | " + "Hall of Fame > Hall of Fame: same mix, same key - same code? You're in", x, y, w);
             }
             if (heistIdx >= LearnGames.Heist.Length)
             {
@@ -321,7 +321,7 @@ namespace AdeeboMeter
             Draw.PathStrip(g, snap, new RectangleF(x, y + 6 * S, w - (Cfg.Buddy ? 70 * S : 0), 60 * S), false);
             if (Cfg.Buddy) Draw.Buddy(g, new RectangleF(x + w - 52 * S, y, 46 * S, 46 * S), snap, false);
             y += 66 * S;
-            y = Lead2(g, "• " + L.T(o[1]) + "\n• " + L.T(o[2]), x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("• ") + L.T(o[1]) + "\n• " + L.T(o[2]), x, y, w);
             y = Options(g, outOpts, x, y, w, z => outPick < 0 ? 0 : z == o[3] ? 1 : outPick < 4 && outOpts[outPick] == z ? 2 : 3,
                 outPick >= 0 ? (Action<string>)null : z => { if ((DateTime.UtcNow - outStart).TotalSeconds >= LearnGames.OutageSecs) { outPick = 99; Revealed("game.outage"); learnInfo.Invalidate(); return; }   /* the clock ran out between two ticks: too late */
                     outPick = Array.IndexOf(outOpts, z); Revealed("game.outage"); if (z == o[3]) { outRight++; outScore += 100 + 10 * Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds); } learnInfo.Invalidate(); });

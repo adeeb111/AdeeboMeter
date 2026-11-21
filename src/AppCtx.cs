@@ -61,6 +61,7 @@ namespace AdeeboMeter
             try { string old = Path.Combine(Program.WriteDir, OldName + ".settings"); if (!File.Exists(settingsPath) && File.Exists(old)) File.Copy(old, settingsPath); } catch (Exception e) { Program.Log("settings migrate: " + e.Message); }
             Cfg.ApplyPreset("balanced");
             LoadSettings(); ApplyAutoStart();
+            Draw.UseLanguageFonts();
             if (!Cfg.SidebarTried) Cfg.Layout = "sidebar";   // 1.1.5: the sidebar is the default look; whoever chose a layout keeps theirs (Classic is in ⋯ and Settings)
             Cfg.Save = SaveSettings; Cfg.SetTheme = SetTheme; Cfg.GetTheme = () => Program.ForceTheme;
             Cfg.SetAutoStart = delegate(bool on) { if (Program.Packaged) { StoreStartup.Open(); return; } autoStart = on; ApplyAutoStart(); SaveSettings(); }; Cfg.GetAutoStart = () => Program.Packaged ? StoreStartup.On : autoStart;
@@ -69,26 +70,26 @@ namespace AdeeboMeter
             Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
             M.Start(); GamePing.Me.Start(M);   /* the Gamer Zone sends nothing until a game is clicked */
 
-            var menu = new ContextMenuStrip();
-            var miFull = new ToolStripMenuItem("Open engineer view"); miFull.Font = new Font(miFull.Font, FontStyle.Bold); miFull.Click += delegate { OpenFull(); };
-            var miSettings = new ToolStripMenuItem("Settings..."); miSettings.Click += delegate { OpenFull(); if (full != null) full.ShowPage("settings"); };
-            miWidget = new ToolStripMenuItem("Hide widget (keep tray icon)"); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
-            miBig = new ToolStripMenuItem("Bigger widget"); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
-            miSerious = new ToolStripMenuItem("Serious mode (no jokes)"); miSerious.Click += delegate { Voice.Serious = !Voice.Serious; SaveSettings(); drawnKey = ""; };
-            var miScreen = new ToolStripMenuItem("Widget on screen");
+            var menu = new ContextMenuStrip { RightToLeft = L.IsRtl ? RightToLeft.Yes : RightToLeft.No };
+            var miFull = new ToolStripMenuItem(L.T("Open engineer view")); miFull.Font = new Font(miFull.Font, FontStyle.Bold); miFull.Click += delegate { OpenFull(); };
+            var miSettings = new ToolStripMenuItem(L.T("Settings...")); miSettings.Click += delegate { OpenFull(); if (full != null) full.ShowPage("settings"); };
+            miWidget = new ToolStripMenuItem(L.T("Hide widget (keep tray icon)")); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
+            miBig = new ToolStripMenuItem(L.T("Bigger widget")); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
+            miSerious = new ToolStripMenuItem(L.T("Serious mode (no jokes)")); miSerious.Click += delegate { Voice.Serious = !Voice.Serious; SaveSettings(); drawnKey = ""; };
+            var miScreen = new ToolStripMenuItem(L.T("Widget on screen"));
             miScreen.DropDownOpening += delegate
             {
                 miScreen.DropDownItems.Clear(); int n = 0;
                 foreach (var sc2 in Screen.AllScreens)
                 {
                     n++; string dn = sc2.DeviceName;
-                    var it = new ToolStripMenuItem((sc2.Primary ? "Main screen" : "Screen " + n) + "  (" + sc2.Bounds.Width + " x " + sc2.Bounds.Height + ")") { Checked = WidgetScreen().DeviceName == dn };
+                    var it = new ToolStripMenuItem((sc2.Primary ? L.T("Main screen") : L.T("Screen ") + n) + "  (" + sc2.Bounds.Width + " x " + sc2.Bounds.Height + ")") { Checked = WidgetScreen().DeviceName == dn };
                     it.Click += delegate { Cfg.WidgetScreen = Screen.AllScreens.Any(z => z.DeviceName == dn && z.Primary) ? "" : dn; SaveSettings(); drawnKey = ""; lastCover = DateTime.MinValue; };
                     miScreen.DropDownItems.Add(it);
                 }
             };
             miScreen.DropDownItems.Add("...");
-            var miStyle = new ToolStripMenuItem("Widget style");   // the same eight as Settings > Widget, with pictures there
+            var miStyle = new ToolStripMenuItem(L.T("Widget style"));   // the same eight as Settings > Widget, with pictures there
             foreach (var st in new[] { new[] { "speed", "Speed only" }, new[] { "speedstatus", "Speed + status" }, new[] { "speedapps", "Speed + apps" }, null, new[] { "everyday", "Everyday" }, new[] { "gamer", "Gamer" }, new[] { "calls", "Calls" }, new[] { "engineer", "Engineer" }, new[] { "auto", "Auto" } })
             {
                 if (st == null) { miStyle.DropDownItems.Add(new ToolStripSeparator()); continue; }
@@ -96,32 +97,32 @@ namespace AdeeboMeter
                 miStyle.DropDownItems.Add(it);
             }
             miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
-            var miCheckup = new ToolStripMenuItem("Run full checkup"); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
-            var miSlow = new ToolStripMenuItem("It feels slow right now   Ctrl+Alt+S"); miSlow.Click += delegate { FeltSlow(); };
-            var miPhone = new ToolStripMenuItem("Your phone..."); miPhone.Click += delegate { OpenRemote(); };
+            var miCheckup = new ToolStripMenuItem(L.T("Run full checkup")); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
+            var miSlow = new ToolStripMenuItem(L.T("It feels slow right now   Ctrl+Alt+S")); miSlow.Click += delegate { FeltSlow(); };
+            var miPhone = new ToolStripMenuItem(L.T("Your phone...")); miPhone.Click += delegate { OpenRemote(); };
             PhoneHub.Start = delegate { try { marshal.BeginInvoke((Action)OpenRemote); } catch (InvalidOperationException) { } };
             PhoneHub.Show = kind => { try { marshal.BeginInvoke((Action)ShowPhonePage); } catch (InvalidOperationException) { } };
             try { slowKey = new HotKey(Keys.S, FeltSlow); if (!slowKey.Ok) Program.Log("Ctrl+Alt+S is taken by another app"); } catch (Exception e) { Program.Log("slow hotkey: " + e.Message); }   // taken = just the menu item
-            var miTheme = new ToolStripMenuItem("Theme");
-            miThemeAuto = new ToolStripMenuItem("Follow Windows"); miThemeLight = new ToolStripMenuItem("Light"); miThemeDark = new ToolStripMenuItem("Dark");
+            var miTheme = new ToolStripMenuItem(L.T("Theme"));
+            miThemeAuto = new ToolStripMenuItem(L.T("Follow Windows")); miThemeLight = new ToolStripMenuItem(L.T("Light")); miThemeDark = new ToolStripMenuItem(L.T("Dark"));
             miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
             miTheme.DropDownItems.Add(miThemeAuto); miTheme.DropDownItems.Add(miThemeLight); miTheme.DropDownItems.Add(miThemeDark);
             miTheme.DropDownItems.Add(new ToolStripSeparator());
             for (int pi = 0; pi < Theme.Palettes.Length; pi++)
             {
-                int th = pi + 2; string nm = Theme.Palettes[pi]; var it = new ToolStripMenuItem(char.ToUpperInvariant(nm[0]) + nm.Substring(1)) { Tag = th }; it.Click += delegate { SetTheme(th); };
+                int th = pi + 2; string nm = Theme.Palettes[pi]; var it = new ToolStripMenuItem(L.T(char.ToUpperInvariant(nm[0]) + nm.Substring(1))) { Tag = th }; it.Click += delegate { SetTheme(th); };
                 miTheme.DropDownItems.Add(it);
             }
             miTheme.DropDownOpening += delegate { foreach (ToolStripItem ti in miTheme.DropDownItems) { var mi = ti as ToolStripMenuItem; if (mi != null && mi.Tag is int) mi.Checked = Program.ForceTheme == (int)mi.Tag; } };   // AM-CG-202
-            miAuto = new ToolStripMenuItem("Start with Windows"); miAuto.Click += delegate { Cfg.SetAutoStart(!Cfg.GetAutoStart()); };
-            var miRemove = new ToolStripMenuItem("Uninstall AdeeboMeter...");
+            miAuto = new ToolStripMenuItem(L.T("Start with Windows")); miAuto.Click += delegate { Cfg.SetAutoStart(!Cfg.GetAutoStart()); };
+            var miRemove = new ToolStripMenuItem(L.T("Uninstall AdeeboMeter..."));
             miRemove.Click += delegate { try { using (Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--uninstall") { UseShellExecute = false })) { } } catch (Exception e) { Program.Log("uninstall: " + e.Message); } };
-            var miExit = new ToolStripMenuItem("Exit AdeeboMeter"); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
-            menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + Program.Tagline) { ForeColor = Theme.Muted });
+            var miExit = new ToolStripMenuItem(L.T("Exit AdeeboMeter")); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
+            menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + L.T(Program.Tagline)) { ForeColor = Theme.Muted });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miPhone); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
             menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
-            menu.Opening += delegate { miWidget.Text = widgetOn ? "Hide widget (keep tray icon)" : "Show widget"; miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
+            menu.Opening += delegate { miWidget.Text = widgetOn ? L.T("Hide widget (keep tray icon)") : L.T("Show widget"); miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
                 miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
 
             tray.Icon = Theme.MakeIcon(Math.Max(16, (int)(16 * sc)));

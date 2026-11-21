@@ -170,7 +170,7 @@ namespace AdeeboMeter
             var chans = inBand.Select(a => a.Channel).Concat(new[] { ls.MyChannel }).Distinct().OrderBy(c => c).ToList();
             float ch = 170 * S; var card = new RectangleF(x, y, w, ch + 70 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("WHO ELSE IS ON THE AIR  ·  " + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.L.T("WHO ELSE IS ON THE AIR  ·  ") + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.CHANNEL MAP");
             float plotX = x + 20 * S, plotW = w - 40 * S, base0 = y + 34 * S + ch - 30 * S, colW = Math.Min(64 * S, plotW / Math.Max(1, chans.Count));
             using (var axis = new Pen(Theme.Line)) g.DrawLine(axis, plotX, base0, plotX + plotW, base0);
@@ -250,8 +250,8 @@ namespace AdeeboMeter
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
             Hint(linkCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "link.WARS"); y += 22 * S;
             var wr = wars;
-            if (!Cfg.History) return Lead(g, "Turn on History in Settings and AdeeboMeter writes down who is on your air once an hour (the list Windows already has - no extra scanning), kept 7 days on this PC.", x, y, w, true);
-            if (wr == null || wr.Nets.Count == 0 || wr.MyChannel <= 0) return Lead(g, "Nothing recorded yet - the first reading comes within the hour (Windows' location permission for desktop apps is needed to see neighbours).", x, y, w, true);
+            if (!Cfg.History) return Lead(g, AdeeboMeter.L.T("Turn on History in Settings and AdeeboMeter writes down who is on your air once an hour (the list Windows already has - no extra scanning), kept 7 days on this PC."), x, y, w, true);
+            if (wr == null || wr.Nets.Count == 0 || wr.MyChannel <= 0) return Lead(g, AdeeboMeter.L.T("Nothing recorded yet - the first reading comes within the hour (Windows' location permission for desktop apps is needed to see neighbours)."), x, y, w, true);
             var days = wr.DaysSeen.Skip(Math.Max(0, wr.DaysSeen.Count - 7)).ToList();
             float nameW = Math.Min(240 * S, w * 0.3f), infoW = Math.Min(230 * S, w * 0.28f), dayW = Math.Max(30 * S, (w - nameW - infoW) / Math.Max(1, days.Count));
             using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var amb = new SolidBrush(Theme.LvText(1))) using (var c = new StringFormat { Alignment = StringAlignment.Center })

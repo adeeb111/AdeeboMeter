@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-language-route="/learn/udp.html" data-language-variants="en bn fr es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -63,6 +63,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "UDP - fast and fire-and-forget", "description": "No handshake, no resending - speed first. Fire and forget: no confirmations, no resends - fast, for calls, games and", "url": "https://adeebometer.com/learn/udp.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "How the internet talks", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/udp.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/udp.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/udp.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/udp.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/udp.html">
 </head>
 <body data-sec="learn">
 <main>
@@ -97,8 +102,10 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
 bs.forEach(function(b){q.insertBefore(b,say)});
 bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
-var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
-else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
+var V=window.AMV,locale=window.AdeeboMeterLocale;
+function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&&V.line(line))||key}
+if(ok){done=true;say.textContent=feedback('Right.','quiz.right');try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=feedback('Not that one - try again.','quiz.wrong')}})})();
 </script>
 <script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("udp")<0)s.push("udp");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","udp")}catch(e){}</script>
 <script src="/ui.js"></script>

@@ -102,7 +102,7 @@ namespace AdeeboMeter
         void LabFull(string id)
         {
             if (labWin != null && !labWin.IsDisposed) { labWin.Activate(); return; }
-            var f = new Form { Text = "AdeeboMeter · " + Labs.First(l => l[0] == id)[1], WindowState = FormWindowState.Maximized, BackColor = Theme.Card, KeyPreview = true, Icon = Icon, ShowInTaskbar = true };
+            var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter · ") + Labs.First(l => l[0] == id)[1], WindowState = FormWindowState.Maximized, BackColor = Theme.Card, KeyPreview = true, Icon = Icon, ShowInTaskbar = true };
             var db = new DB { Name = "labCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             db.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); e.Graphics.TranslateTransform(db.AutoScrollPosition.X, db.AutoScrollPosition.Y); Begin(db); float yy = PaintLab(db, e.Graphics, id, 28 * S, 20 * S, db.ClientSize.Width - 56 * S); Need(db, yy + 20 * S); };
             Wire(db); f.Controls.Add(db); labHost = db; labWin = f;
@@ -299,7 +299,7 @@ namespace AdeeboMeter
             y += 60 * S;
             double rtt = LV("m.rtt", 40), loss = LV("m.loss", 1), mb = LabSim.MathisMbps(rtt, loss);
             y = Big(g, "At most " + N0(mb) + " Mbps per download", mb < 25 ? 2 : mb < 100 ? 1 : 0, x, y, w);
-            y = Lead2(g, "One TCP connection can't go faster than about MSS ÷ round trip × 1.22 ÷ √loss, however fast your plan is - every loss halves its window and it climbs back one packet per round trip. Farther servers suffer more, which is why the same loss hurts a far download more than a near one.", x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("One TCP connection can't go faster than about MSS ÷ round trip × 1.22 ÷ √loss, however fast your plan is - every loss halves its window and it climbs back one packet per round trip. Farther servers suffer more, which is why the same loss hurts a far download more than a near one."), x, y, w);
             // the curve: max speed against loss, for this round trip
             var plot = new RectangleF(x + 46 * S, y, w - 56 * S, 200 * S); double[] ls = { 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10 };
             double top = LabSim.MathisMbps(rtt, 0.001); Func<double, float> Y = v => plot.Bottom - (float)(Math.Log10(Math.Max(0.1, v)) + 1) / (float)(Math.Log10(top) + 1) * plot.Height;
@@ -357,7 +357,7 @@ namespace AdeeboMeter
             y = plot.Bottom + 28 * S;
             int lv = o.Mos >= 4 ? 0 : o.Mos >= 3.6 ? 1 : 2;
             y = Big(g, "Call score " + o.Mos.ToString("0.0", CultureInfo.CurrentCulture) + " / 4.5  ·  " + o.LatePct.ToString("0.#", CultureInfo.CurrentCulture) + "% too late  ·  " + N0(o.MouthToEarMs) + " ms mouth to ear", lv, x, y, w);
-            y = Lead2(g, "Packets of a call leave every 20 ms but arrive unevenly. The jitter buffer holds them a little so they play smoothly: a packet later than the buffer is thrown away (a gap in the sound); a bigger buffer catches more of them but delays the whole conversation (people start talking over each other above about 250 ms). Teams and Zoom size it themselves - jitter is what forces them to choose.", x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("Packets of a call leave every 20 ms but arrive unevenly. The jitter buffer holds them a little so they play smoothly: a packet later than the buffer is thrown away (a gap in the sound); a bigger buffer catches more of them but delays the whole conversation (people start talking over each other above about 250 ms). Teams and Zoom size it themselves - jitter is what forces them to choose."), x, y, w);
             return y;
         }
 
@@ -388,7 +388,7 @@ namespace AdeeboMeter
                 }
             if (LV("a.nb", 0) > 0) y = Lead2(g, (int)LV("a.nb", 0) + " busy neighbour" + (LV("a.nb", 0) > 1 ? "s" : "") + " on the same channel take their turns too - everyone above gets less.", x, y, w);
             y = Lead2(g, LS("a.fair", "turns") == "turns" && LV("a.slow", 1) > 0 ? "Wi-Fi is one shared radio: devices take turns. With equal turns, the slow device's turn lasts 100 times longer, so it eats most of the air and the fast laptops crawl. Move it closer, put it on 2.4 GHz alone, or turn on airtime fairness if the router has it." : "With airtime fairness, each device gets an equal share of time, not of turns - the slow one stays slow, but stops dragging everyone else down.", x, y, w);
-            if (neighbours > 0) y = Lead2(g, "On your Wi-Fi right now: " + neighbours + " other strong access point" + (neighbours > 1 ? "s" : "") + " on channel " + ch + " (set as the starting value above).", x, y, w);
+            if (neighbours > 0) y = Lead2(g, AdeeboMeter.L.T("On your Wi-Fi right now: ") + neighbours + " other strong access point" + (neighbours > 1 ? "s" : "") + " on channel " + ch + " (set as the starting value above).", x, y, w);
             return y;
         }
 
@@ -405,7 +405,7 @@ namespace AdeeboMeter
                 new[] { "1", "3", "Where is " + name + "?", "" }, new[] { "3", "1", "Ask " + zone + "'s own servers", "" },
                 new[] { "1", "4", "Where is " + name + "?", "" }, new[] { "4", "1", "Here: the address (and how long to remember it)", "" }, new[] { "1", "0", "The address - remembered for next time", "" } };
             y = DrawLadder(g, h, actors, steps, x, y, w);
-            y = Lead2(g, "Your DNS server does the walking and keeps the answer for as long as the site allows (its TTL), so the second person to ask gets it at once - that's why a site you just visited answers in 1 ms and a new one in 50.", x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("Your DNS server does the walking and keeps the answer for as long as the site allows (its TTL), so the second person to ask gets it at once - that's why a site you just visited answers in 1 ms and a new one in 50."), x, y, w);
             Button(h, g, labBusy ? "Asking..." : "Do it for real for " + name + "  ›", true, labBusy ? (Action)null : delegate
             {
                 labBusy = true; labDns = null; LabRefresh(); string n = name;
@@ -430,7 +430,7 @@ namespace AdeeboMeter
                 new[] { "1", "0", "the router looks it up: 40001 = " + (me != "" ? me : "192.168.1.20") + ":" + lp, "" },
                 new[] { "2", "1", "a packet nobody asked for → no entry in the table → dropped", "" } };
             y = DrawLadder(g, h, actors, steps, x, y, w);
-            y = Lead2(g, "Your devices share one public address. The router remembers every conversation that started inside, so replies find their way back - and anything that starts outside has nowhere to go. That's why hosting a game or reaching your PC from outside needs port forwarding (or UPnP), and why it fails completely behind CGNAT, where your provider adds a second NAT you don't control.", x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("Your devices share one public address. The router remembers every conversation that started inside, so replies find their way back - and anything that starts outside has nowhere to go. That's why hosting a game or reaching your PC from outside needs port forwarding (or UPnP), and why it fails completely behind CGNAT, where your provider adds a second NAT you don't control."), x, y, w);
             if (conns.Count > 0) y = InfoCardOn(h, g, "YOUR CONVERSATIONS THE ROUTER IS REMEMBERING RIGHT NOW (A FEW)", conns.Select(c => new[] { (c.Proc ?? "") + " :" + c.LocalPort, "→ " + (c.Host != "" ? c.Host : c.RemoteIp) + ":" + c.RemotePort, "3" }).ToList(), null, x, y, w);
             Button(h, g, labBusy ? "Tracing..." : "Check for CGNAT or double NAT (one short trace)  ›", true, labBusy ? (Action)null : delegate
             {
@@ -485,7 +485,7 @@ namespace AdeeboMeter
             float blk = (float)(size / 1500) * 30 * S; using (var b = new SolidBrush(lv == 2 ? Theme.Red : lv == 1 ? Theme.Amber : Theme.Blue)) g.FillRectangle(b, x + (fits ? pw * 0.85f : pw * 0.3f), py + (34 * S - blk) / 2, 30 * S, blk);
             y = py + 70 * S;
             y = Big(g, verdict, lv, x, y, w);
-            y = Lead2(g, "Fix for a black hole: lower the MTU of the VPN adapter (or the router's MSS clamp) to " + (narrow) + " - the Packet stack calculator in the Toolbox works out the exact number for any mix of tunnels." + (myMtu > 0 ? " Your active adapter's MTU is " + myMtu + "." : ""), x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("Fix for a black hole: lower the MTU of the VPN adapter (or the router's MSS clamp) to ") + (narrow) + " - the Packet stack calculator in the Toolbox works out the exact number for any mix of tunnels." + (myMtu > 0 ? " Your active adapter's MTU is " + myMtu + "." : ""), x, y, w);
             Button(h, g, "Find the real MTU of my path  ›", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("mtu"); }, x, y);
             return y + 44 * S;
         }
@@ -493,14 +493,14 @@ namespace AdeeboMeter
         // ================================================================== which route wins
         float LabRoute(Control h, Graphics g, float x, float y, float w)
         {
-            if (routeTable == null) { LoadRoutes(); return Lead2(g, "Reading your route table...", x, y, w); }
+            if (routeTable == null) { LoadRoutes(); return Lead2(g, AdeeboMeter.L.T("Reading your route table..."), x, y, w); }
             string gw; lock (M.L) gw = M.Gateway; string target = LS("r.dst", "8.8.8.8");
             var opts = new List<string[]> { new[] { "8.8.8.8", "8.8.8.8 (internet)" }, new[] { gw != "" ? gw : "192.168.1.1", "your router" }, new[] { "10.20.30.40", "10.20.30.40" }, new[] { "172.16.5.5", "172.16.5.5" }, new[] { "224.0.0.251", "224.0.0.251 (multicast)" } };
             if (storyIp != "" && IPAddress.Parse(storyIp).AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) opts.Add(new[] { storyIp, "the Network story's server" });
             Choice(h, g, "r.dst", "Where to", opts.ToArray(), "8.8.8.8", x, y); y += 60 * S;
             IPAddress ip; if (!IPAddress.TryParse(target, out ip)) return y;
             List<Routes.R> matched; var best = Routes.Best(routeTable, ip, out matched);
-            y = Lead2(g, "Every route that covers " + target + " is a candidate; the most specific one (the longest prefix) wins, and only a tie goes to the lowest metric. A VPN takes over by adding routes more specific than yours - or two /1 routes that beat your /0 default.", x, y, w);
+            y = Lead2(g, AdeeboMeter.L.T("Every route that covers ") + target + " is a candidate; the most specific one (the longest prefix) wins, and only a tie goes to the lowest metric. A VPN takes over by adding routes more specific than yours - or two /1 routes that beat your /0 default.", x, y, w);
             var rows = routeTable.OrderBy(r => best == r ? 0 : matched != null && matched.Contains(r) ? 1 : 2).ThenByDescending(r => r.Prefix).ThenBy(r => r.Metric).Take(40).Select(r => { bool m = matched != null && matched.Contains(r), win = best == r; return new[] { Routes.Ip(r.Dest) + "/" + r.Prefix, (win ? "WINS  " : m ? "covers it  " : "") + "via " + (r.OnLink ? "on-link" : r.Gateway) + " · " + r.Iface + " · metric " + r.Metric + (r.Vpn ? " · VPN" : ""), win ? "0" : m ? "1" : "3" }; }).ToList();
             return InfoCardOn(h, g, "YOUR ROUTE TABLE  ·  " + (best != null ? target + " LEAVES VIA " + (best.OnLink ? "THE LOCAL LINK" : best.Gateway) : "NO ROUTE FOR " + target), rows, null, x, y, w);
         }
@@ -526,7 +526,7 @@ namespace AdeeboMeter
             using (var sub = new SolidBrush(Theme.Sub)) for (int i = 0; i < b2.Length; i++) { using (var br = new SolidBrush(cols[i])) g.FillRectangle(br, x, y + 4 * S, 10 * S, 10 * S); g.DrawString(names[i] + "  " + b2[i].ToString("0", CultureInfo.CurrentCulture) + " ms", Draw.fBody, sub, x + 16 * S, y); y += 22 * S; }
             y += 6 * S;
             y = Big(g, "Feels like about " + tot.ToString("0", CultureInfo.CurrentCulture) + " ms from your click to seeing the result (ping " + N0(LV("g.ping", 30)) + ")", tot > 150 ? 2 : tot > 90 ? 1 : 0, x, y, w);
-            return Lead2(g, "The ping is only part of it. The server works in ticks (64 a second = every 15.6 ms), your game shows the world a couple of ticks in the past to keep movement smooth, then your PC draws it and the screen shows it." + (double.IsNaN(real) ? "" : " Your game's server answers in about " + real.ToString("0", CultureInfo.CurrentCulture) + " ms right now (the Gamer Zone's probe), set as the starting ping."), x, y, w);
+            return Lead2(g, AdeeboMeter.L.T("The ping is only part of it. The server works in ticks (64 a second = every 15.6 ms), your game shows the world a couple of ticks in the past to keep movement smooth, then your PC draws it and the screen shows it.") + (double.IsNaN(real) ? "" : " Your game's server answers in about " + real.ToString("0", CultureInfo.CurrentCulture) + " ms right now (the Gamer Zone's probe), set as the starting ping."), x, y, w);
         }
 
         // ================================================================== QoS queues
@@ -548,7 +548,7 @@ namespace AdeeboMeter
                 y += 30 * S;
             }
             y += 6 * S;
-            return Lead2(g, "How long one voice packet waits behind " + burst + " full-size packets on a " + N0(link) + " Mbps upload. Teams marks its audio EF (DSCP 46) when an admin turns QoS on, and Zoom marks its own way - but a mark only helps where a router honours it: company networks often do, most home routers and the internet ignore it. At home, a smart queue (see Bufferbloat) gets most of the benefit without any marks.", x, y, w);
+            return Lead2(g, AdeeboMeter.L.T("How long one voice packet waits behind ") + burst + " full-size packets on a " + N0(link) + " Mbps upload. Teams marks its audio EF (DSCP 46) when an admin turns QoS on, and Zoom marks its own way - but a mark only helps where a router honours it: company networks often do, most home routers and the internet ignore it. At home, a smart queue (see Bufferbloat) gets most of the benefit without any marks.", x, y, w);
         }
 
         // ================================================================== subnetting practice

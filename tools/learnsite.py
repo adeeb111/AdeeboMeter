@@ -79,11 +79,11 @@ PWA = '<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="t
 THEME = '<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>'
 FOOT = '<footer>Free · no account · the same lessons as the Windows app</footer>'
 
-def head(title, desc, url, extra=''):
+def head(title, desc, url, extra='', og_type='article'):
     return ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
             f'<title>{E(title)}</title>\n<meta name="description" content="{E(desc)}">\n<link rel="canonical" href="{url}">\n'
-            f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="article">\n'
-            f'<link rel="icon" href="../favicon.svg" type="image/svg+xml">\n{PWA}\n<style>\n{CSS}</style>\n{THEME}\n<link rel="stylesheet" href="/ui.css">\n{extra}</head>\n<body data-sec="learn">\n<main>\n')
+            f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="{og_type}">\n'
+            f'<link rel="icon" href="../favicon.svg" type="image/svg+xml">\n{PWA}\n<style>\n{CSS}</style>\n{THEME}\n<link rel="stylesheet" href="/ui.css">\n{extra}<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script></head>\n<body data-sec="learn">\n<main>\n')
 
 def top(): return ''
 def top_old(): return '<nav class="top"><b><a href="../" class="brandl"><img src="/img/logo.svg" alt="" width="22" height="22">AdeeboMeter</a></b><a href="./">Learn</a><a href="../games.html">Games</a><a href="../live.html">Live</a></nav>\n'
@@ -113,8 +113,10 @@ QUIZ_JS = """<script>
 for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
 bs.forEach(function(b){q.insertBefore(b,say)});
 bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
-var V=window.AMV;if(ok){done=true;say.textContent=(V&&V.line('quiz.right'))||'Right.';try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
-else say.textContent=(V&&V.line('quiz.wrong'))||'Not that one - try again.'}})})();
+var V=window.AMV,locale=window.AdeeboMeterLocale;
+function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&&V.line(line))||key}
+if(ok){done=true;say.textContent=feedback('Right.','quiz.right');try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=feedback('Not that one - try again.','quiz.wrong')}})})();
 </script>
 """
 
@@ -132,6 +134,15 @@ def lesson(t, prev, nxt, same):
     h.append(f'<div class="card one"><p>{E(t.get("line"))}</p></div>\n')
     if t.get('ladder'): h.append(f'<h2>How the conversation goes</h2>\n{ladder(t["ladder"])}\n')
     if t.get('breaks'): h.append(f'<h2>When it goes wrong</h2>\n<div class="card warn"><p>{E(t["breaks"])}</p></div>\n')
+    if t['id'] == 'wifi':
+        h.append('<p>If you are unsure where the slowdown starts, <a href="../wifi-or-isp.html">check whether the problem is your Wi-Fi or your internet provider</a>.</p>\n')
+        h.append('<p>If the connection keeps dropping, compare Wi-Fi with Ethernet and <a href="../isp-report.html">save a connection report for your internet provider</a>.</p>\n')
+    if t['id'] == 'icmp':
+        h.append('<p>To capture ping and traceroute results together, <a href="../isp-report.html">create a packet loss report for your internet provider</a>.</p>\n')
+    if t['id'] == 'speed-vs-delay':
+        h.append('<p>To see how both change while you work, <a href="../internet-speed-monitor.html">monitor internet speed on Windows</a>.</p>\n')
+    if t['id'] == 'memory-pressure':
+        h.append('<p>Compare memory use with CPU and disk activity using <a href="../pc-monitoring.html">AdeeboMeter’s Windows PC monitor</a>.</p>\n')
     if t.get('more'): h.append(f'<h2>Going deeper</h2>\n<p>{E(t["more"])}</p>\n')
     q = [x.strip() for x in t.get('check', '').split(' | ')]
     if len(q) >= 3:
@@ -151,7 +162,15 @@ def index():
     desc = f'{len(topics)} short, free lessons on how networks, Wi-Fi, 5G, encryption, Windows, streaming and trading connections really work - each with a picture and a quick check.'
     ld = {'@context': 'https://schema.org', '@type': 'ItemList', 'name': 'AdeeboMeter Learn', 'itemListElement':
           [{'@type': 'ListItem', 'position': i + 1, 'url': f'{SITE}learn/{t["id"]}.html', 'name': t['title']} for i, t in enumerate(topics)]}
-    h = [head('Learn how your internet works | AdeeboMeter', desc, SITE + 'learn/', f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n'), top()]
+    preview = (
+        f'<meta property="og:url" content="{SITE}learn/">\n'
+        f'<meta property="og:image" content="{SITE}img/social/learn.jpg">\n'
+        '<meta property="og:image:width" content="1200">\n'
+        '<meta property="og:image:height" content="630">\n'
+        '<meta property="og:image:alt" content="Learn how your internet works">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
+    )
+    h = [head('Learn how your internet works | AdeeboMeter', desc, SITE + 'learn/', preview + f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n', og_type="website"), top()]
     h.append('<header class="ui-head"><span class="ui-chip" style="--k:var(--c-learn)" data-ic="book" data-sz="28"></span><div><h1>Learn</h1><p>Short lessons, a picture each.</p></div></header>\n')
     h.append(f'<a class="ui-hero" id="cont" href="{topics[0]["id"]}.html"><span class="tag" id="ctag">Start here</span><b id="ctit">{E(topics[0]["title"].split(" - ")[0])}</b><small id="cmeta">Lesson 1 of {len([x for x in topics if x.get("kind") == topics[0].get("kind")])} · {E(KSHORT.get(topics[0].get("kind"), ""))}</small><span class="go" data-ic="chev"></span><span class="ui-prog"><i><b id="cbar" style="width:0%"></b></i><span id="cpct">0%</span></span></a>\n')
     h.append('<label class="ui-search" data-ic="search"><input type="search" id="q" placeholder="Search lessons" aria-label="Search lessons"></label>\n')
@@ -185,6 +204,11 @@ new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{today}</lastmod></url>' for p in [
 with open(sm, 'w', encoding='utf-8', newline='\n') as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(keep + new) + '\n</urlset>\n')
 print(len(topics), 'lesson pages + index; sitemap', len(keep) + len(new), 'urls')
+# Keep Bengali static copies and language annotations in sync with generated lessons.
+import runpy
+runpy.run_path(os.path.join(root, 'tools/bengali-seo.py'))
+runpy.run_path(os.path.join(root, 'tools/french-seo.py'))
+runpy.run_path(os.path.join(root, 'tools/spanish-seo.py'))
 
 # ---- the companion's voices for the website and the phone: the app's own line files (knowledge/lines-*.txt) as small
 # JSON packs, one per voice, plus the list. Only the words change with a voice - numbers and facts stay as they are.
@@ -214,9 +238,19 @@ for page in ['index.html', 'games.html', 'live.html', 'app.html', 'r.html', 'fil
     h = re.sub(r'<!--pwa-->.*?<!--/pwa-->\n?', '', h, flags=re.S)
     h = h.replace('</head>', PWA + '\n</head>', 1)
     with open(f, 'w', encoding='utf-8', newline='\n') as o: o.write(h)
-core = ['app.html', 'ui.css', 'ui.js', 'calc.js', 'journey.js', 'qr.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
+core = ['locale-surfaces.js', 'locale.js', 'locale-messages.js', 'locale.css', 'img/canada.svg', 'fr/index.html', 'app.html', 'ui.css', 'ui.js', 'calc.js', 'journey.js', 'qr.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
         'favicon.svg', 'manifest.webmanifest', 'img/app/icon-192.png', 'img/app/apple-touch-icon.png']
-extra = [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
+extra = ['bn/index.html', 'bn/blog/index.html', 'bn/wifi-or-isp.html', 'bn/internet-speed-monitor.html', 'bn/pc-monitoring.html', 'bn/isp-report.html', 'bn/video-calls-freeze.html', 'guide.css'] + ['bn/learn/index.html'] + [f'bn/learn/{t["id"]}.html' for t in topics] + [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
+# Restore the public-page analytics loader after lesson generation.
+runpy.run_path(os.path.join(root, 'tools/web-analytics.py'), run_name='__main__')
+core.append('analytics.js')
+extra += sorted('fr/' + os.path.relpath(os.path.join(base, file), os.path.join(root, 'docs/fr')).replace(os.sep, '/')
+                for base, _, names in os.walk(os.path.join(root, 'docs/fr'))
+                for file in names if file.endswith('.html'))
+extra += sorted('es/' + os.path.relpath(os.path.join(base, file), os.path.join(root, 'docs/es')).replace(os.sep, '/')
+                for base, _, names in os.walk(os.path.join(root, 'docs/es'))
+                for file in names if file.endswith('.html'))
+extra = list(dict.fromkeys(x for x in extra if x not in core))
 ver = hashlib.sha256(b''.join(open(os.path.join(root, 'docs', x), 'rb').read() for x in core + extra)).hexdigest()[:12]
 sw = """// AdeeboMeter phone app - offline copy of the site's own pages (generated by tools/learnsite.py; don't edit by hand).
 // Keeps only our public pages and lessons. Never touches other sites (Live data, the remote relay) and holds nothing about the person.

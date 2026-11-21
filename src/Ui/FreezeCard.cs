@@ -63,7 +63,7 @@ namespace AdeeboMeter
                 var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
                 using (var p = new Pen(Color.FromArgb(124, 92, 214), 2)) g.DrawRectangle(p, 1, 1, Width - 3, Height - 3);
                 using (var b = new SolidBrush(Color.FromArgb(124, 92, 214))) for (int i = 0; i < 3; i++) { int d = i == phase ? 9 : 6; g.FillEllipse(b, 18 + i * 13 - d / 2f, Height / 2f - d / 2f, d, d); }
-                using (var m = new SolidBrush(Color.FromArgb(124, 92, 214))) g.DrawString("ADEEBOMETER", fb, m, 62, 10);
+                using (var m = new SolidBrush(Color.FromArgb(124, 92, 214))) g.DrawString(AdeeboMeter.L.T("ADEEBOMETER"), fb, m, 62, 10);
                 using (var b = new SolidBrush(Theme.Dark ? Color.FromArgb(230, 235, 240) : Color.FromArgb(30, 38, 50))) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     g.DrawString(text, f, b, new RectangleF(62, 28, Width - 74, 24), sf);
             }

@@ -217,7 +217,7 @@ namespace AdeeboMeter
                     y = InfoCardOn(insideInfo, g, "WHAT IT'S DOING RIGHT NOW  ·  MEASURED " + insideNowAt.ToString("HH:mm:ss", CultureInfo.CurrentCulture), new List<string[]> {
                         new[] { "CPU", now[0], "3" }, new[] { "Memory", now[1], "3" }, new[] { "Disk", now[2], "3" }, new[] { "Network", now[3], "3" }, new[] { "Threads", now[5], "3" }, new[] { "Window", now[4] == "" ? "none (works in the background)" : now[4], "3" } }, null, x, y, w);
                 else if (now != null) y = Lead2(g, now.Length == 1 && now[0].StartsWith("unavailable", StringComparison.Ordinal) ? "Still running, but Windows wouldn't give its numbers (" + now[0].Substring(13) + ")." : "It has exited.", x, y, w);
-                else y = Lead2(g, "Measuring for one second...", x, y, w);
+                else y = Lead2(g, AdeeboMeter.L.T("Measuring for one second..."), x, y, w);
                 var again = new RectangleF(x, y - 4 * S, 140 * S, 20 * S);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Measure again  ↻"), Draw.fBodyB, lb, again.X, again.Y);
                 Act(insideInfo, again, MeasureNow); y += 26 * S;
@@ -230,8 +230,8 @@ namespace AdeeboMeter
             if (dive != null) y = PaintTopic(g, insideInfo, dive, x, y + 8 * S, w);
             Need(insideInfo, y);
         }
-        static float Lead2(Graphics g, string t, float x, float y, float w) { var h = Draw.Measure(t, Draw.fBody, (int)w).Height; using (var b = new SolidBrush(Theme.Sub)) g.DrawString(t, Draw.fBody, b, new RectangleF(x, y, w, h + 4)); return y + h + 12 * S; }
-        static float Title2(Graphics g, string t, float x, float y, float w) { using (var b = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fTitle, b, new RectangleF(x, y, w, 30 * S)); return y + 36 * S; }
+        static float Lead2(Graphics g, string t, float x, float y, float w) { t = L.T(t); var h = Draw.Measure(t, Draw.fBody, (int)w).Height; using (var b = new SolidBrush(Theme.Sub)) using (var sf = new StringFormat { FormatFlags = L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0 }) g.DrawString(t, Draw.fBody, b, new RectangleF(x, y, w, h + 4), sf); return y + h + 12 * S; }
+        static float Title2(Graphics g, string t, float x, float y, float w) { t = L.T(t); using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { FormatFlags = L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0 }) g.DrawString(t, Draw.fTitle, b, new RectangleF(x, y, w, 30 * S), sf); return y + 36 * S; }
         // when the content height changes, Windows may move the scroll position in the middle of a paint - the half that was
         // already drawn is then at the old position (rows appear twice). Repaint the whole thing once more when that happens.
         // the page's height for scrolling, with a margin: once the scrollbar is there it stays while the page is nearly as tall
@@ -258,7 +258,7 @@ namespace AdeeboMeter
         {
             if (t == null) return y;
             y = Title2(g, t["title"], x, y, w);
-            if (t["tag"] != "") using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { var h = Draw.Measure(t["tag"], Draw.fHead, (int)w).Height; g.DrawString(t["tag"], Draw.fHead, b, new RectangleF(x, y, w, h + 4)); y += h + 10 * S; }
+            if (t["tag"] != "") using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { string tag = L.T(t["tag"]); var h = Draw.Measure(tag, Draw.fHead, (int)w).Height; using (var sf = new StringFormat { FormatFlags = L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0 }) g.DrawString(tag, Draw.fHead, b, new RectangleF(x, y, w, h + 4), sf); y += h + 10 * S; }
             // two lines and a picture - people who want the textbook will read it elsewhere
             if (t["line"] != "" && !SaysSame(t["tag"], t["line"])) y = Lead2(g, t["line"], x, y, w);
             if (t["ladder"] != "") { y += 6 * S; y = DrawKnowledgeLadder(g, host, t["ladder"], x, y, w); }
@@ -270,7 +270,7 @@ namespace AdeeboMeter
             }
             if (t["breaks"] != "")
             {
-                y += 8 * S; string bt = "If it goes wrong:  " + t["breaks"]; float bh = Draw.Measure(bt, Draw.fBody, (int)(w - 28 * S)).Height;
+                y += 8 * S; string bt = L.T("If it goes wrong:") + "  " + L.T(t["breaks"]); float bh = Draw.Measure(bt, Draw.fBody, (int)(w - 28 * S)).Height;
                 var br = new RectangleF(x, y, w, bh + 20 * S); Theme.Fill(g, br, 10 * S, Theme.LvSoft(1));
                 using (var bb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.LvText(1))) g.DrawString(bt, Draw.fBody, bb, new RectangleF(x + 14 * S, y + 10 * S, w - 28 * S, bh + 4));
                 y += br.Height + 10 * S;

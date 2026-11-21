@@ -31,7 +31,7 @@ namespace AdeeboMeter
         }
         StreamOverlay(Monitor m)
         {
-            M = m; FormBorderStyle = FormBorderStyle.None; TopMost = true; ShowInTaskbar = true; Text = "AdeeboMeter - lag graph";
+            M = m; FormBorderStyle = FormBorderStyle.None; TopMost = true; ShowInTaskbar = true; Text = AdeeboMeter.L.T("AdeeboMeter - lag graph");
             StartPosition = FormStartPosition.Manual; Size = new Size(Sc(320), Sc(110));
             var wa = Screen.PrimaryScreen.WorkingArea; Location = new Point(wa.Left + Sc(24), wa.Top + Sc(24));
             // back where it was left - if that spot is still on a screen (a monitor unplugged since: the primary's corner)
@@ -106,7 +106,7 @@ namespace AdeeboMeter
                         PointF? lr = null; int roff = 60 - rv.Length * rstep;
                         for (int i = 0; i < rv.Length; i++) { if (double.IsNaN(rv[i])) { lr = null; continue; } var pt = new PointF(gr.X + (roff + (i + 1) * rstep - 1) * dx, gr.Bottom - (float)(Math.Min(rv[i], max) / max) * gr.Height); if (lr != null) g.DrawLine(rp, lr.Value, pt); lr = pt; }
                     }
-                using (var lf = new SolidBrush(Color.FromArgb(170, 200, 210, 220))) g.DrawString("- - router", f1, lf, gr.Right - 64, gr.Y - 12);
+                using (var lf = new SolidBrush(Color.FromArgb(170, 200, 210, 220))) g.DrawString(AdeeboMeter.L.T("- - router"), f1, lf, gr.Right - 64, gr.Y - 12);
                 using (var pen = new Pen(Color.FromArgb(120, 170, 255), 2f)) using (var red = new SolidBrush(Color.FromArgb(240, 80, 80)))
                 {
                     PointF? last = null; int off = 60 - v.Length * step;

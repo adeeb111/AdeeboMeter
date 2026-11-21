@@ -505,11 +505,11 @@ namespace AdeeboMeter
                 string hp = act.Substring(7), sni = ""; int bar = hp.IndexOf('|'); if (bar >= 0) { sni = hp.Substring(bar + 1); hp = hp.Substring(0, bar); }
                 int c = hp.LastIndexOf(':'), port; if (c < 0 || !int.TryParse(hp.Substring(c + 1), out port)) return;
                 string host = hp.Substring(0, c); var rows0 = tbRows; string sel = tbSel; if (rows0 == null) return;
-                tbBusy = UiActivity.ToolRunning = true; var run = new Toolkit.Run { Status = "Asking the certificate authority..." }; tbRun0 = run; tbRun.Text = "Stop"; tbCanvas.Invalidate();
+                tbBusy = UiActivity.ToolRunning = true; var run = new Toolkit.Run { Status = "Asking the certificate authority..." }; tbRun0 = run; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.Invalidate();
                 Task.Factory.StartNew(() =>
                 {
                     List<string[]> got; try { got = Toolkit.Revocation(host, port, sni); } catch (Exception e) { got = Bad(e.Message); }
-                    try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = "Run"; if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
+                    try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
                 }, TaskCreationOptions.LongRunning);
             }
             else if (act.StartsWith("fix:", StringComparison.Ordinal)) SecFix(act.Substring(4));
@@ -775,7 +775,7 @@ namespace AdeeboMeter
                 tbBar.Controls.Add(rb);
             }
             // a sweep on a company network needs a deliberate tick - not a typed word
-            tbSweepOk = new CheckBox { Text = "This is my own network, or I'm allowed to scan it", AutoSize = true, Visible = false, FlatStyle = FlatStyle.Flat, Font = Draw.fBody, ForeColor = Theme.Ink, BackColor = Theme.Card, Margin = new Padding(0, Sc(24), Sc(14), 0), UseMnemonic = false };
+            tbSweepOk = new CheckBox { Text = AdeeboMeter.L.T("This is my own network, or I'm allowed to scan it"), AutoSize = true, Visible = false, FlatStyle = FlatStyle.Flat, Font = Draw.fBody, ForeColor = Theme.Ink, BackColor = Theme.Card, Margin = new Padding(0, Sc(24), Sc(14), 0), UseMnemonic = false };
             tbBar.Controls.Add(tbSweepOk);
             tbRun.Margin = new Padding(0, Sc(18), 0, 0);
             tbBar.Controls.Add(tbRun);
@@ -822,22 +822,22 @@ namespace AdeeboMeter
             }
             if (tbTarget == "" && destBox.Box.Text.Trim() != "") tbTarget = destBox.Box.Text.Trim();
             tbOpen.Add(t.Group);
-            if (t.Id == "iperf" && tbBoxes.Count > 2) { tbBoxes[1].Box.Text = "both"; tbBoxes[2].Box.Text = "10"; }
+            if (t.Id == "iperf" && tbBoxes.Count > 2) { tbBoxes[1].Box.Text = AdeeboMeter.L.T("both"); tbBoxes[2].Box.Text = "10"; }
             tbSweepOk.Visible = t.Id == "sweep" || LabGate.Contains(t.Id) || SenderGate.Contains(t.Id); tbSweepOk.Checked = false; tbSweepOk.Text = t.Id == "sweep" ? "This is my own network, or I'm allowed to scan it" : "This is my own network, or I'm allowed to send test traffic to it";
             if (t.Id == "ping" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw != "" ? gw : "1.1.1.1"; tbBoxes[1].Box.Text = "50"; tbBoxes[2].Box.Text = "200"; }   // 10 seconds; type more for longer
             if (t.Id == "mtr" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "1";
             if (t.Id == "dig" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "A";
             if (t.Id == "tcpping" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "20";
-            if (t.Id == "dscp" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw; tbBoxes[1].Box.Text = "EF"; tbBoxes[2].Box.Text = "20"; }
+            if (t.Id == "dscp" && tbBoxes.Count > 2) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw; tbBoxes[1].Box.Text = AdeeboMeter.L.T("EF"); tbBoxes[2].Box.Text = "20"; }
             if ((t.Id == "iperf" || t.Id == "bloat") && tbBoxes.Count > 0 && tbIperfSrv != "") tbBoxes[0].Box.Text = tbIperfSrv;
             if (t.Id == "httptime" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "5";
             if (t.Id == "twamp" && tbBoxes.Count > 1) tbBoxes[1].Box.Text = "100";
-            if (t.Id == "ntp" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "time.windows.com";
+            if (t.Id == "ntp" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = AdeeboMeter.L.T("time.windows.com");
             if ((t.Id == "snmp" || t.Id == "ssh" || t.Id == "syslog") && tbBoxes.Count > 0) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = gw; }
             if ((t.Id == "rlisten" || t.Id == "discover") && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "60";
             if (IsSnmp(t.Id) && tbBoxes.Count > 1) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = snmpDev != "" ? snmpDev : gw; tbBoxes[1].Box.Text = snmpCred; }
             if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
-            tbRun.Text = "Run"; tbRun.Accent = QAccent(QuestionOf(t)); tbEx.Visible = Examples.Get(t.Id) != null;
+            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = QAccent(QuestionOf(t)); tbEx.Visible = Examples.Get(t.Id) != null;
             tbBar.ResumeLayout();
             EnsureAnim();   // the picture timer: does nothing unless this tool's picture moves
             if (IsCalc(t.Id)) { var keep = tbShown; BuildCalcForm(t.Id); if (keep != null && calcNow != null) { FillSpec(calcNow, keep); BuildCalcFormKeep(t.Id); WriteBoxes(); CalcNow(); } EnsureAnim(); }   // calculators: a form, live (FullView.CalcForm.cs)
@@ -876,7 +876,7 @@ namespace AdeeboMeter
             for (int i = 0; i < t.Inputs.Length && i < shown.Length; i++) if (SecretInput(t.Inputs[i])) shown[i] = "";
             if (t.Id == "httpreq" && shown.Length > 0) shown[0] = Reach.NoUser(shown[0] ?? "");   // a user:password@ in the URL isn't kept
             if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
-            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = "Stop"; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {
                 List<string[]> res;
@@ -887,7 +887,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
-                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = "Run"; tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
+                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
             }, TaskCreationOptions.LongRunning);
         }
 
@@ -895,18 +895,18 @@ namespace AdeeboMeter
         void StartMtu(string target)
         {
             tbShown = new[] { target, "", "", "" };
-            if (mtuBusy) return; mtuBusy = true; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = "Stop"; tbRows = null; mtuHops = null; var run = new Toolkit.Run(); tbRun0 = run; run.Status = "Tracing to " + target + "..."; tbCanvas.Invalidate();
+            if (mtuBusy) return; mtuBusy = true; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbRows = null; mtuHops = null; var run = new Toolkit.Run(); tbRun0 = run; run.Status = "Tracing to " + target + "..."; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {
                 var dst = Icmp.Resolve4(target); List<PathTools.Hop> hops = null;
                 if (dst != null) hops = PathTools.Trace(dst, 30, () => run.Stop);
-                try { BeginInvoke((Action)delegate { tbAt = DateTime.Now; mtuDst = dst; mtuHops = hops; mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = "Run"; if (dst == null) tbRows = Bad("couldn't find " + target + " (IPv4)"); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
+                try { BeginInvoke((Action)delegate { tbAt = DateTime.Now; mtuDst = dst; mtuHops = hops; mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (dst == null) tbRows = Bad("couldn't find " + target + " (IPv4)"); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
             }, TaskCreationOptions.LongRunning);
         }
         void MeasureHops(List<PathTools.Hop> which)
         {
             if (mtuBusy || mtuHops == null || mtuDst == null || which.Count == 0) return;
-            mtuBusy = true; var run = new Toolkit.Run(); tbRun0 = run; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = "Stop"; tbCanvas.Invalidate();
+            mtuBusy = true; var run = new Toolkit.Run(); tbRun0 = run; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.Invalidate();
             var hops = mtuHops; var dst = mtuDst;
             Task.Factory.StartNew(() =>
             {
@@ -920,7 +920,7 @@ namespace AdeeboMeter
                     try { BeginInvoke((Action)tbCanvas.Invalidate); } catch { }
                 }
                 bool measured = !run.Stop && hops.Any(x => x.Mtu > 0);
-                try { BeginInvoke((Action)delegate { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = "Run"; Earn("mtu", measured); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
+                try { BeginInvoke((Action)delegate { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); Earn("mtu", measured); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
             }, TaskCreationOptions.LongRunning);
         }
 
@@ -1332,7 +1332,7 @@ namespace AdeeboMeter
                     if (double.IsNaN(s[i])) { g.FillRectangle(lost, bx + i * bw, y + 16 * S, Math.Max(1, bw - 1), ph); continue; }
                     float bh = (float)(s[i] / max) * ph; g.FillRectangle(bb, bx + i * bw, base0 - bh, Math.Max(1, bw - (bw > 4 ? 1 : 0)), bh);
                 }
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString("max " + max.ToString(max > 10 ? "0" : "0.#", CultureInfo.CurrentCulture) + " " + unit + (unit == "ms" ? "  ·  red = no answer" : "  ·  one bar per second"), Draw.fTiny, mb, x + 10 * S, y + 4 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.L.T("max ") + max.ToString(max > 10 ? "0" : "0.#", CultureInfo.CurrentCulture) + " " + unit + (unit == "ms" ? "  ·  red = no answer" : "  ·  one bar per second"), Draw.fTiny, mb, x + 10 * S, y + 4 * S);
             return y + h + 14 * S;
         }
     }

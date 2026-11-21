@@ -46,7 +46,7 @@ namespace AdeeboMeter
                 menu.Items.Add(sub);
             }
             menu.Items.Add(new ToolStripSeparator());
-            var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); if (tbBusy) { BusyNote(); return; } OpenTool("speedtest"); if (tbSel == "speedtest" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "list"; };   // never into a running tool's boxes menu.Items.Add(more);
+            var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); if (tbBusy) { BusyNote(); return; } OpenTool("speedtest"); if (tbSel == "speedtest" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = AdeeboMeter.L.T("list"); };   // never into a running tool's boxes menu.Items.Add(more);
             menu.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)menu.Dispose); else menu.Dispose(); } catch (InvalidOperationException) { menu.Dispose(); } };
             menu.Show(overviewCanvas, at);
         }

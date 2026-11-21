@@ -170,19 +170,19 @@
     R.worst = worst;
     // what it means: one headline, then every finding that applies
     var F = [], P2 = R.rsrp.med, Q = R.rsrq.med, S = R.sinr.med;
-    if (P2 != null && P2 < -110) F.push([2, "Weak coverage", "Strength sat around " + P2 + " dBm - far from the tower or deep indoors. Near a window or outside it gets better; at home, Wi-Fi calling helps."]);
-    else if (P2 != null && P2 >= -100 && ((Q != null && Q <= -13) || (S != null && S < 3))) F.push([2, "Good bars, poor quality", "Strength is fine (" + P2 + " dBm) but " + (Q != null && Q <= -13 ? "quality was " + Q + " dB - a busy cell sharing its air with many people" : "the signal was noisy (SINR " + S + " dB) - interference from nearby cells") + ". Distance isn't the problem, so moving a little rarely helps; another time of day often does."]);
-    else if (P2 != null && P2 < -100) F.push([1, "Getting weak", "Strength around " + P2 + " dBm: still working, but the first to slow down when the cell gets busy."]);
+    if (P2 != null && P2 < -110) F.push([2, "Weak coverage", function () { return message("Strength sat around {strength} dBm - far from the tower or deep indoors. Near a window or outside it gets better; at home, Wi-Fi calling helps.", { strength: P2 }); }]);
+    else if (P2 != null && P2 >= -100 && ((Q != null && Q <= -13) || (S != null && S < 3))) F.push([2, "Good bars, poor quality", function () { return message("Strength is fine ({strength} dBm) but {detail}. Distance isn't the problem, so moving a little rarely helps; another time of day often does.", { strength: P2, detail: Q != null && Q <= -13 ? message("quality was {value} dB - a busy cell sharing its air with many people", {value: Q}) : message("the signal was noisy (SINR {value} dB) - interference from nearby cells", {value: S}) }); }]);
+    else if (P2 != null && P2 < -100) F.push([1, "Getting weak", function () { return message("Strength around {strength} dBm: still working, but the first to slow down when the cell gets busy.", { strength: P2 }); }]);
     // a busy stretch: quality down for a while even when the middle of the journey looks fine
     var bad = rsrq.filter(function (p) { return p.v <= -13; }), runs = 0;
     rsrq.forEach(function (p, i) { if (p.v <= -13 && (i === 0 || rsrq[i - 1].v > -13)) runs++; });
     var step = R.span / Math.max(1, ok.length - 1) || 1;
-    if (bad.length >= 3 && bad.length / Math.max(1, rsrq.length) >= 0.15 && !(F[0] && F[0][1] === "Good bars, poor quality")) F.push([1, runs > 1 ? "Busy stretches" : "A busy stretch", "Quality fell to " + Math.min.apply(null, vals(bad)) + " dB for about " + fmtT(Math.round(bad.length * step)) + (runs > 1 ? " in " + runs + " stretches, the first at " : ", from ") + fmtT(bad[0].t) + " - a crowded cell; pages and video slow down there."]);
-    if (R.ant && R.ant.gap >= 6) F.push([1, "One antenna blocked", "The two antennas differ by " + R.ant.gap + " dB - one is covered (your hand, a thick case, or the way the phone faces). Hold it differently or try landscape; the phone gets up to twice the speed with both."]);
-    if (ch.length && R.span > 0 && ch.length / (R.span / 60) > 4) F.push([pp ? 2 : 1, pp ? "Flipping between two cells" : "Lots of cell changes", ch.length + " changes in " + fmtT(R.span) + (pp ? ", " + pp + " of them straight back again" : "") + " - you're on the edge between towers. Calls drop and video stalls here; it's the place, not the phone."]);
-    if (R.nr.n && R.nr.n < R.nr.of) F.push([1, "5G came and went", "5G was there in " + R.nr.n + " of " + R.nr.of + " moments. Each switch is a short pause; if it bothers you, LTE only (Settings › Mobile Data › Voice & Data) is steadier here."]);
-    if (tacs.length > 1) F.push([3, "Crossed an area border", "The tracking area changed (" + tacs.join(" → ") + ") - the network re-registers you; a second or two of nothing is normal."]);
-    if (!F.filter(function (z) { return z[0] >= 1; }).length && P2 != null) F.unshift([0, "Solid all the way", "Strength " + P2 + " dBm" + (S != null ? ", quality " + S + " dB" : "") + (ch.length ? ", " + ch.length + " smooth cell change" + (ch.length > 1 ? "s" : "") : "") + " - this route is fine for calls, video and games."]);
+    if (bad.length >= 3 && bad.length / Math.max(1, rsrq.length) >= 0.15 && !(F[0] && F[0][1] === "Good bars, poor quality")) F.push([1, runs > 1 ? "Busy stretches" : "A busy stretch", function () { return message("Quality fell to {quality} dB for about {duration}{start} - a crowded cell; pages and video slow down there.", { quality: Math.min.apply(null, vals(bad)), duration: fmtT(Math.round(bad.length * step)), start: runs > 1 ? message(" in {count} stretches, the first at {time}", {count: runs, time: fmtT(bad[0].t)}) : message(", from {time}", {time: fmtT(bad[0].t)}) }); }]);
+    if (R.ant && R.ant.gap >= 6) F.push([1, "One antenna blocked", function () { return message("The two antennas differ by {gap} dB - one is covered (your hand, a thick case, or the way the phone faces). Hold it differently or try landscape; the phone gets up to twice the speed with both.", { gap: R.ant.gap }); }]);
+    if (ch.length && R.span > 0 && ch.length / (R.span / 60) > 4) F.push([pp ? 2 : 1, pp ? "Flipping between two cells" : "Lots of cell changes", function () { return message("{count} changes in {duration}{returns} - you're on the edge between towers. Calls drop and video stalls here; it's the place, not the phone.", { count: ch.length, duration: fmtT(R.span), returns: pp ? message(", {count} of them straight back again", {count: pp}) : "" }); }]);
+    if (R.nr.n && R.nr.n < R.nr.of) F.push([1, "5G came and went", function () { return message("5G was there in {count} of {total} moments. Each switch is a short pause; if it bothers you, LTE only (Settings › Mobile Data › Voice & Data) is steadier here.", { count: R.nr.n, total: R.nr.of }); }]);
+    if (tacs.length > 1) F.push([3, "Crossed an area border", function () { return message("The tracking area changed ({areas}) - the network re-registers you; a second or two of nothing is normal.", { areas: tacs.join(" → ") }); }]);
+    if (!F.filter(function (z) { return z[0] >= 1; }).length && P2 != null) F.unshift([0, "Solid all the way", function () { return message("Strength {strength} dBm{detail} - this route is fine for calls, video and games.", { strength: P2, detail: (S != null ? message(", quality {value} dB", {value:S}) : "") + (ch.length ? message(ch.length === 1 ? ", 1 smooth cell change" : ", {count} smooth cell changes", {count:ch.length}) : "") }); }]);
     var rank = function (lv) { return lv === 3 ? -1 : lv; };   // problems first, plain notes last
     R.findings = F.sort(function (a, b) { return rank(b[0]) - rank(a[0]); });
     // what you can expect from the quality seen most of the time
@@ -203,13 +203,21 @@
   };
 
   // ---------- the text to share (no phone number, no IMEI - they were never read in)
+  function message(key, values) {
+    var locale = window.AdeeboMeterLocale;
+    if (locale) return values ? locale.format(key, values) : locale.t(key);
+    return values ? key.replace(/\{(\w+)\}/g, function (_, name) { return values[name]; }) : key;
+  }
+  AMJ.findingText = function (finding) {
+    return typeof finding[2] === "function" ? finding[2]() : finding[2];
+  };
   AMJ.report = function (R) {
-    var L = ["AdeeboMeter - signal journey", (R.carrier || "") + (R.net ? " · " + R.net : "") + " · " + (R.rat === "nr" ? "5G" : "LTE") + " · " + fmtT(R.span) + " · " + R.read + " moments"];
-    R.findings.forEach(function (f) { L.push("- " + f[1] + ": " + f[2]); });
-    L.push("Strength (RSRP): " + R.rsrp.med + " dBm (" + R.rsrp.min + " to " + R.rsrp.max + ")");
-    if (R.rsrq.med != null) L.push("Quality (RSRQ): " + R.rsrq.med + " dB");
-    if (R.sinr.med != null) L.push("SINR: " + R.sinr.ports.map(function (p, i) { return "antenna " + (i + 1) + ": " + p.med + " dB"; }).join(", "));
-    L.push("Cells: " + R.cells.map(function (c) { return c.pci + (c.enb != null ? " - tower " + c.enb + ", side " + c.side : "") + " (" + fmtT(c.t) + ")"; }).join(", ") + " · " + R.changes.length + " changes");
+    var L = [message("AdeeboMeter - signal journey"), (R.carrier || "") + (R.net ? " · " + R.net : "") + " · " + (R.rat === "nr" ? "5G" : "LTE") + " · " + fmtT(R.span) + " · " + message("{count} moments", {count:R.read})];
+    R.findings.forEach(function (f) { L.push("- " + message(f[1]) + ": " + AMJ.findingText(f)); });
+    L.push(message("Strength (RSRP): {median} dBm ({min} to {max})", {median:R.rsrp.med,min:R.rsrp.min,max:R.rsrp.max}));
+    if (R.rsrq.med != null) L.push(message("Quality (RSRQ): {value} dB", {value:R.rsrq.med}));
+    if (R.sinr.med != null) L.push("SINR: " + R.sinr.ports.map(function (p, i) { return message("antenna {index}: {value} dB", {index:i+1,value:p.med}); }).join(", "));
+    L.push(message("Cells: {cells} · {changes}", {cells:R.cells.map(function (c) { return c.pci + (c.enb != null ? message(" - tower {tower}, side {side}", {tower:c.enb,side:c.side}) : "") + " (" + fmtT(c.t) + ")"; }).join(", "), changes:message("{count} changes", {count:R.changes.length})}));
     return L.join("\n");
   };
 })();

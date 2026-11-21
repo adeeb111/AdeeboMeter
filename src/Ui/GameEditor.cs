@@ -37,7 +37,7 @@ namespace AdeeboMeter
             pick.Click += delegate { PickRunning(pick); };
             top.Controls.Add(name); top.Controls.Add(exe); top.Controls.Add(pick);
 
-            var head = new Label { Dock = DockStyle.Top, Height = Sc(26), Text = "SERVERS  ·  name  ·  location  ·  host name or IP  ·  how to measure", Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, TextAlign = ContentAlignment.BottomLeft };
+            var head = new Label { Dock = DockStyle.Top, Height = Sc(26), Text = AdeeboMeter.L.T("SERVERS  ·  name  ·  location  ·  host name or IP  ·  how to measure"), Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, TextAlign = ContentAlignment.BottomLeft };
             list = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, BackColor = Theme.Card };
             err = new Label { Dock = DockStyle.Bottom, Height = Sc(40), ForeColor = Theme.LvText(2), BackColor = Theme.Card, Font = Draw.fSmall, Text = "" };
 
@@ -50,7 +50,7 @@ namespace AdeeboMeter
             var cancel = new PillButton("Cancel", PillButton.K.Chip); cancel.Click += delegate { Close(); };
             var save = new PillButton("Save", PillButton.K.Primary); save.Click += delegate { Save(); };
             foreach (var b in new Control[] { add, test, imp, expo, reset, cancel, save }) { b.Margin = new Padding(0, 0, Sc(8), 0); bottom.Controls.Add(b); }
-            var note = new Label { Dock = DockStyle.Bottom, Height = Sc(36), Font = Draw.fSmall, ForeColor = Theme.Muted, BackColor = Theme.Card, Text = "Auto tries a ping first and times a TCP connection when the server ignores ping. Host names are looked up fresh each time, so they follow a game's IP changes. At most 12 servers per game; " + GamePing.MaxServers + " are watched at once." };
+            var note = new Label { Dock = DockStyle.Bottom, Height = Sc(36), Font = Draw.fSmall, ForeColor = Theme.Muted, BackColor = Theme.Card, Text = AdeeboMeter.L.T("Auto tries a ping first and times a TCP connection when the server ignores ping. Host names are looked up fresh each time, so they follow a game's IP changes. At most 12 servers per game; ") + GamePing.MaxServers + " are watched at once." };
 
             Controls.Add(list); Controls.Add(head); Controls.Add(top); Controls.Add(err); Controls.Add(note); Controls.Add(bottom);
             foreach (var s in game.Servers.Take(12)) AddLine(s);
@@ -103,7 +103,7 @@ namespace AdeeboMeter
             if (problem != null) { err.Text = problem; return; }
             if (isNew)
             {
-                if (Games.All.Any(x => string.Equals(x.Name, nm, StringComparison.OrdinalIgnoreCase))) { err.Text = "You already have a game called " + nm + " - pick another name, or edit that one."; return; }
+                if (Games.All.Any(x => string.Equals(x.Name, nm, StringComparison.OrdinalIgnoreCase))) { err.Text = AdeeboMeter.L.T("You already have a game called ") + nm + " - pick another name, or edit that one."; return; }
                 string id = new string(nm.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray()); if (id.Length == 0) id = "game"; if (id.Length > 30) id = id.Substring(0, 30);
                 // two names that reduce to the same id ("CS 2" and "CS-2") get their own: my-cs2, my-cs2-2 ... never one replacing the other
                 string baseId = "my-" + id, tryId = baseId; for (int n = 2; Games.All.Any(x => x.Id == tryId); n++) tryId = baseId + "-" + n;
@@ -164,7 +164,7 @@ namespace AdeeboMeter
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 var l = new List<string> { "# AdeeboMeter game list - Gamer Zone > Edit > Import", "game|x|" + name.Box.Text.Trim().Replace("|", " ") + "|" + exe.Box.Text.Replace("|", " ").Replace(",", ";") };
                 l.AddRange(servers.Select(s => "server|x|" + s.Name.Replace("|", " ") + "|" + (s.Where ?? "").Replace("|", " ") + "|" + s.Host + "|" + s.Port.ToString(CultureInfo.InvariantCulture) + "|" + s.Kind));
-                try { File.WriteAllLines(d.FileName, l); err.Text = ""; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; err.Text = "Couldn't save: " + e.Message; }
+                try { File.WriteAllLines(d.FileName, l); err.Text = ""; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; err.Text = AdeeboMeter.L.T("Couldn't save: ") + e.Message; }
             }
         }
         void Import()
@@ -174,7 +174,7 @@ namespace AdeeboMeter
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 try
                 {
-                    if (new FileInfo(d.FileName).Length > 64 * 1024) { err.Text = "That file is too big for a game list."; return; }
+                    if (new FileInfo(d.FileName).Length > 64 * 1024) { err.Text = AdeeboMeter.L.T("That file is too big for a game list."); return; }
                     var got = new List<GameServer>(); int skipped = 0;
                     foreach (var raw in File.ReadLines(d.FileName).Take(200))
                     {
@@ -185,12 +185,12 @@ namespace AdeeboMeter
                         if (!Games.ValidHost(host) || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out port) || port < -1 || port > 65535) { skipped++; continue; }
                         got.Add(new GameServer { Name = f[2].Trim(), Where = f[3].Trim(), Host = host, Port = port, Kind = f[6].Trim() == "valve" ? "valve" : f[6].Trim() == "estimate" ? "estimate" : "exact" });
                     }
-                    if (got.Count == 0) { err.Text = "No valid servers in that file."; return; }
+                    if (got.Count == 0) { err.Text = AdeeboMeter.L.T("No valid servers in that file."); return; }
                     foreach (var l in lines.ToList()) { list.Controls.Remove(l.Row); l.Row.Dispose(); }
                     lines.Clear(); foreach (var s in got.Take(12)) AddLine(s);
                     err.Text = skipped > 0 ? skipped + " line(s) skipped - not a valid host name, IP or port." : "";
                 }
-                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; err.Text = "Couldn't read it: " + e.Message; }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; err.Text = AdeeboMeter.L.T("Couldn't read it: ") + e.Message; }
             }
         }
     }

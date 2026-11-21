@@ -7,10 +7,11 @@ For whoever translates AdeeboMeter. Written 17 Nov 2026 (app 1.1.5). The owner i
 |---|---|---|
 | **Windows app** - menus, settings, buttons, messages, tool names, most short results | **Yes** | `knowledge/lang-<code>.txt` |
 | The buddy's personality lines (26 personas), Learn lessons, help texts, tool explanations | Not yet - English only | `knowledge/lines-*.txt`, `learn.txt`, `terms.txt` |
-| Phone app and website (adeebometer.com) | Not yet - English only, no language system | `docs/` |
+| Phone app and website (adeebometer.com) | Navigation and selected screens | `docs/locale-messages.js` |
 
-Start with the Windows app. French (Canada) is the first language and is a **preview**: about **494 of 1,722** texts are
-done. Other languages use the same file format.
+The Windows app includes French (Canada), Spanish (`es`), Arabic (`ar`), Bengali (`bn`), Hindi (`hi`), and Simplified Chinese (`zh`) as previews.
+The five reviewed tables have 246 entries each, including main navigation, Settings labels, and common Toolbox names.
+The remaining strings fall back to English. Run the checker for the current coverage of each language.
 
 ## How it works (no coding needed)
 - Each language is **one text file**: `knowledge/lang-fr.txt`. One line per text: **the English, a TAB, the translation.**
@@ -57,6 +58,11 @@ shows that isn't in `lang-fr.txt` yet, each followed by a TAB and nothing. Fill 
 Send the finished file as `lang-<code>.txt` (two-letter code: es, de, bn, ar...). The developer adds one line to
 `src/Lang.cs` so it appears in Settings. Right-to-left languages (Arabic, Urdu) need layout work first - ask before
 starting one.
+
+## Arabic preview checks
+Settings rows lay out choices from right to left in Arabic. The rest of the app still uses the original pane layout.
+On Windows, check Arabic letter shaping, mixed labels with Wi-Fi and DNS, and button clipping at 100% and 125% display scale.
+Also check that Bengali and Hindi vowels and conjuncts display correctly in the app fonts.
 
 ## Later (not yet)
 When the buddy lines, Learn lessons and the phone app/website become translatable, they'll come with their own notes. The

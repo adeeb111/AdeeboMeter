@@ -11,7 +11,20 @@ namespace AdeeboMeter
     // it only leaves English where it isn't translated yet. English is the source; nothing is ever fetched from the internet.
     static class L
     {
-        public static readonly string[][] Languages = { new[] { "en", "English" }, new[] { "fr", "Français (aperçu)" } };
+        public static readonly string[][] Languages = {
+            new[] { "en", "English" }, new[] { "fr", "Français (Canada)" },
+            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }, new[] { "zh", "简体中文" }
+        };
+        public static bool IsRtl { get { return Code == "ar"; } }
+
+        // The first strong letter sets the base direction for a mixed-script label.
+        // English fallback and protocol-first text keep their left-to-right order.
+        public static bool RunsRtl(string text)
+        {
+            foreach (char c in text ?? "")
+                if (char.IsLetter(c)) return (c >= '\u0600' && c <= '\u08ff');
+            return false;
+        }
         static Dictionary<string, string> map;   // null = English
         public static string Code = "en";
         public static void Use(string code)

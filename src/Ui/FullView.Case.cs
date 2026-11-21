@@ -248,7 +248,7 @@ namespace AdeeboMeter
         {
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; float y = PTop;
             foreach (var b in page) { b.Draw(g, y); y += b.H; }
-            using (var f = RFont(10, FontStyle.Regular)) using (var sb = new SolidBrush(RSub)) g.DrawString("AdeeboMeter · " + (no + 1) + " / " + of, f, sb, PW - 150, PH - 30);
+            using (var f = RFont(10, FontStyle.Regular)) using (var sb = new SolidBrush(RSub)) g.DrawString(AdeeboMeter.L.T("AdeeboMeter · ") + (no + 1) + " / " + of, f, sb, PW - 150, PH - 30);
         }
         // the PDF (Microsoft Print to PDF, built into Windows 10 and 11 - no admin, nothing installed), else one HTML file
         internal string MakeReport(Cases.Case c)

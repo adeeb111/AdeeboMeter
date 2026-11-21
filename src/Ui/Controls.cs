@@ -226,7 +226,7 @@ namespace AdeeboMeter
                 if (sel) Theme.Fill(g, new RectangleF(10 * S, Height - 4 * S, Width - 20 * S, 3 * S), 1.5f * S, ac);
             }
             int bw = BadgeW;
-            using (var tb = new SolidBrush(fg)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, HotkeyPrefix = System.Drawing.Text.HotkeyPrefix.None, FormatFlags = StringFormatFlags.NoWrap })
+            using (var tb = new SolidBrush(fg)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, HotkeyPrefix = System.Drawing.Text.HotkeyPrefix.None, FormatFlags = StringFormatFlags.NoWrap | (L.RunsRtl(Text) ? StringFormatFlags.DirectionRightToLeft : 0) })
                 g.DrawString(Text, Font, tb, new RectangleF(0, Kind == K.Tab ? -1 * S : 0, Width - bw, Height), sf);
             if (bw > 0)
             {

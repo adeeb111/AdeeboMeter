@@ -53,7 +53,7 @@ namespace AdeeboMeter
             items.First(i => i.Key == "page.replay").Go(); if (tab != "replay") bad.Add("Go on Time machine");
             items.First(i => i.Key == "lab.mtu").Go(); if (tab != "learn" || learnSel != "lab:mtu") bad.Add("Go on a lab challenge");
             items.First(i => i.Key == "check.dns").Go(); if (tab != "learn" || learnSel != "topic:dns") bad.Add("Go on a check question");
-            pointsSearch.Box.Text = "mtr"; if (!PtFiltered().Any(i => i.Key == "mtr")) bad.Add("search for mtr"); pointsSearch.Box.Text = "";
+            pointsSearch.Box.Text = AdeeboMeter.L.T("mtr"); if (!PtFiltered().Any(i => i.Key == "mtr")) bad.Add("search for mtr"); pointsSearch.Box.Text = "";
             var day = ExampleDay.Make(); if (day.M.Count != 1440 || day.M.Any(r => r.Length != History.Cols) || day.E.Count == 0) bad.Add("example day is malformed");
             return string.Join("; ", bad.Take(8));
         }
@@ -101,9 +101,9 @@ namespace AdeeboMeter
                 d.Net.Add("Wi-Fi Example-Home"); d.Pc.Add(PcRow);
             }
             Func<int, int, DateTime> at = (h, mi) => forDay.Date.AddHours(h).AddMinutes(mi);
-            d.E.Add(new Timeline.Ev { T = at(14, 10), Lv = 1, Kind = "wifi", Text = "Wi-Fi signal fell to 28% (it came back at 14:14)" });
-            d.E.Add(new Timeline.Ev { T = at(19, 0), Lv = 2, Kind = "net", Text = "Internet slow: 70-130 ms and 2-6% loss past your router - your home network was fine" });
-            d.E.Add(new Timeline.Ev { T = at(19, 25), Lv = 0, Kind = "net", Text = "Internet back to normal (16 ms)" });
+            d.E.Add(new Timeline.Ev { T = at(14, 10), Lv = 1, Kind = "wifi", Text = AdeeboMeter.L.T("Wi-Fi signal fell to 28% (it came back at 14:14)") });
+            d.E.Add(new Timeline.Ev { T = at(19, 0), Lv = 2, Kind = "net", Text = AdeeboMeter.L.T("Internet slow: 70-130 ms and 2-6% loss past your router - your home network was fine") });
+            d.E.Add(new Timeline.Ev { T = at(19, 25), Lv = 0, Kind = "net", Text = AdeeboMeter.L.T("Internet back to normal (16 ms)") });
             return d;
         }
     }

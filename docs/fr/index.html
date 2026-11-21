@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="fr-CA" data-language-route="/" data-language-variants="en bn fr es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdeeboMeter — dépannage réseau gratuit pour Windows</title>
+<meta name="description" content="Trouvez pourquoi votre Internet ou votre PC ralentit. Vérifiez le Wi-Fi, le routeur et le DNS. Gratuit, sans publicité ni droits d’administrateur.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://adeebometer.com/fr/">
+<meta name="author" content="Adeeb Khan">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter">
+<meta property="og:url" content="https://adeebometer.com/fr/">
+<meta property="og:title" content="AdeeboMeter — dépannage réseau gratuit pour Windows">
+<meta property="og:description" content="Trouvez pourquoi votre Internet ou votre PC ralentit. Vérifiez le Wi-Fi, le routeur et le DNS. Gratuit, sans publicité ni droits d’administrateur.">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta property="og:image:alt" content="AdeeboMeter on a Windows desktop">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AdeeboMeter","alternateName":"আদীবওমিটার","description":"Trouvez pourquoi votre Internet ou votre PC ralentit. Vérifiez le Wi-Fi, le routeur et le DNS. Gratuit, sans publicité ni droits d’administrateur.","applicationCategory":"UtilitiesApplication","applicationSubCategory":"Network troubleshooting","operatingSystem":"Windows 10, Windows 11","softwareVersion":"1.1.5","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/adeeb111/AdeeboMeter/releases/latest","url":"https://adeebometer.com/fr/","screenshot":"https://adeebometer.com/img/screenshot.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Adeeb Khan"},"codeRepository":"https://github.com/adeeb111/AdeeboMeter","installUrl":"https://apps.microsoft.com/detail/9PFGXJPL9CLJ","sameAs":["https://apps.microsoft.com/detail/9PFGXJPL9CLJ","https://github.com/adeeb111/AdeeboMeter"],"inLanguage":"fr-CA"}</script>
+<style>
+/* Local fonts and styles. External services, including website analytics, are listed in privacy.html. */
+:root{
+  --blue:#1F6FEB; --blue-d:#1A5FCC; --blue-s:#E8F0FE; --green:#2DA44E; --green-s:#E6F4EA; --amber:#BF8700; --amber-s:#FFF4D6;
+  --red:#CF222E; --red-s:#FDE7E9; --purple:#8250DF; --purple-s:#F1EAFE;
+  --ink:#1B2330; --sub:#4A5568; --muted:#6B7685; --line:#E3E8EF; --card:#FFFFFF; --page:#FBFCFE; --soft:#F6F8FB;
+  --nav:rgba(251,252,254,.82); --glass:rgba(255,255,255,.92); --wall1:#D6E4FF; --wall2:#DFF3E6; --wall3:#E9F0FA; --wall4:#F5F8FC; --tbar:rgba(255,255,255,.74);
+}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --blue:#2F6FDB; --blue-d:#3B7BE6; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --amber:#D29922; --amber-s:#2E2410;
+  --red:#F85149; --red-s:#341819; --purple:#A371F7; --purple-s:#241B3A;
+  --ink:#E6EDF3; --sub:#B4BFCB; --muted:#8B97A5; --line:#26303B; --card:#121820; --page:#0A0E13; --soft:#171E27;
+  --nav:rgba(10,14,19,.78); --glass:rgba(23,30,39,.92); --wall1:#13213A; --wall2:#11261B; --wall3:#0E141C; --wall4:#0B1016; --tbar:rgba(20,26,34,.78);}}
+:root[data-theme="dark"]{
+  --blue:#2F6FDB; --blue-d:#3B7BE6; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --amber:#D29922; --amber-s:#2E2410;
+  --red:#F85149; --red-s:#341819; --purple:#A371F7; --purple-s:#241B3A;
+  --ink:#E6EDF3; --sub:#B4BFCB; --muted:#8B97A5; --line:#26303B; --card:#121820; --page:#0A0E13; --soft:#171E27;
+  --nav:rgba(10,14,19,.78); --glass:rgba(23,30,39,.92); --wall1:#13213A; --wall2:#11261B; --wall3:#0E141C; --wall4:#0B1016; --tbar:rgba(20,26,34,.78);}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--page);scroll-behavior:smooth}
+body{background:var(--page);color:var(--ink);font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+
+/* nav */
+.top{position:sticky;top:0;z-index:20;background:var(--nav);-webkit-backdrop-filter:saturate(1.8) blur(14px);backdrop-filter:saturate(1.8) blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;font-size:17px}
+.brand svg{width:26px;height:26px}
+.brand img{display:block;flex:none;width:24px;height:12px;border-radius:2px}
+.links{display:flex;align-items:center;gap:22px;font-size:14px}
+.links a{text-decoration:none;color:var(--sub);transition:opacity .2s ease,color .2s ease}.links a:not(.pill):hover{opacity:.5}.brand{transition:opacity .2s ease}.brand:hover{opacity:.7}
+.pill{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff!important;text-decoration:none;font-weight:600;border-radius:99px;padding:7px 16px;font-size:14px}
+.pill:hover{background:var(--blue-d)}
+.links a.donate-top{color:#D1245B;font-weight:600;white-space:nowrap}
+:root[data-theme="dark"] .links a.donate-top{color:#F06292}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .links a.donate-top{color:#F06292}}
+footer a{text-decoration:underline}
+.stage:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+@media (max-width:400px){.brand{font-size:15px;gap:6px}.brand svg{width:22px;height:22px}.pill{padding:6px 10px;font-size:13px}.links{gap:6px}.links a.donate-top{margin-left:0}.theme{transform:scale(.85);margin:0 -4px}.top .wrap{padding-left:12px;padding-right:12px}}
+p a,li a{overflow-wrap:anywhere}
+.brand,.pill{white-space:nowrap}
+@media (max-width:400px){.seg{display:flex;flex-wrap:wrap;max-width:100%}.seg button{padding:8px 10px;font-size:14px}}
+.donate{padding:8px 0 36px}.donate-box{max-width:620px;margin:0 auto;text-align:center;border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.donate-box p{margin:0 0 12px;font-size:15px}.donate-box small{display:block;margin-top:10px;color:var(--muted);font-size:12.5px}
+.amts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.amts a{display:inline-block;min-width:56px;padding:6px 14px;border:1px solid var(--line);border-radius:99px;text-decoration:none;color:inherit;font-weight:600;font-size:14px;transition:border-color .2s ease,background .2s ease}
+.amts a:hover{border-color:#D1245B;background:rgba(209,36,91,.08)}.amts a.other{font-weight:500}
+
+/* day / night */
+.theme{width:52px;height:28px;border-radius:99px;border:1px solid var(--line);background:var(--soft);position:relative;cursor:pointer;padding:0;flex:0 0 auto;transition:background .25s}
+.theme .knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.25);display:grid;place-items:center;transition:transform .25s ease}
+.theme svg{width:14px;height:14px}.theme .moon{display:none}
+:root[data-theme="dark"] .theme .knob{transform:translateX(24px)}:root[data-theme="dark"] .theme .sun{display:none}:root[data-theme="dark"] .theme .moon{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme .knob{transform:translateX(24px)}:root:not([data-theme="light"]) .theme .sun{display:none}:root:not([data-theme="light"]) .theme .moon{display:block}}
+.theme:hover{opacity:.8}
+/* update banner (from "Check for updates" in the app) */
+.upd{max-width:560px;margin:0 auto 24px;padding:12px 18px;border-radius:14px;font-weight:600;font-size:15px}
+.upd.ok{background:var(--green-s);color:var(--green)}.upd.new{background:var(--blue-s);color:var(--blue)}
+/* hero */
+.lhero{text-align:center;padding:84px 0 40px}
+.lhero .logo{width:96px;height:96px;filter:drop-shadow(0 14px 28px rgba(31,111,235,.28))}
+.lhero .kind{margin:22px 0 0;font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--sub,#5B6575)}
+.lhero h1{font-size:clamp(42px,7.4vw,88px);line-height:1.02;letter-spacing:-.035em;font-weight:700;margin:28px 0 18px}
+.lhero h1 span{background:linear-gradient(90deg,#2DA44E,#1F6FEB 45%,#8250DF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lhero .sub{font-size:clamp(18px,2.1vw,23px);line-height:1.45;color:var(--sub);max-width:720px;margin:0 auto}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+.btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:17px;border-radius:14px;padding:15px 26px;transition:transform .15s ease,background .15s ease}
+.cta .store{display:inline-flex;align-items:center}.cta .store img{display:block;height:52px;width:auto}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--blue);color:#fff;box-shadow:0 10px 24px rgba(31,111,235,.28)}.btn.primary:hover{background:var(--blue-d)}
+.btn.ghost{color:var(--blue);background:var(--blue-s)}.btn.ghost:hover{filter:brightness(.96)}
+.btn svg{width:20px;height:20px}
+.meta{margin-top:16px;font-size:13.5px;color:var(--muted)}
+
+/* desktop scene - everything in cqw so the picture scales as one */
+.scene{margin:56px auto 0;max-width:1100px;aspect-ratio:16/9;border-radius:24px;position:relative;overflow:hidden;container-type:inline-size;text-align:left;
+  background:radial-gradient(70cqw 30cqw at 15% 0%,var(--wall1) 0%,transparent 60%),radial-gradient(60cqw 35cqw at 100% 100%,var(--wall2) 0%,transparent 55%),linear-gradient(160deg,var(--wall3),var(--wall4));
+  box-shadow:0 1px 2px rgba(27,35,48,.06),0 30px 80px rgba(27,35,48,.14);border:1px solid var(--line)}
+.ev{position:absolute;left:3cqw;top:2.6cqw;width:69cqw;height:44.5cqw;background:#0E1319;border-radius:1cqw;overflow:hidden;box-shadow:0 2cqw 5cqw rgba(14,19,25,.35);font-size:.82cqw;color:#E6EDF3;border:1px solid #222B35}
+.ev .tb{height:2.2em;display:flex;align-items:center;gap:.6em;padding:0 1em;background:#161D26;color:#C2CCD6;font-size:.95em}
+.ev .tb svg{width:1.3em;height:1.3em}.ev .tb .wc{margin-left:auto;display:flex;gap:2.2em;color:#9AA7B4}
+.ev .hd{display:flex;align-items:center;gap:1.2em;padding:1.2em 1.6em;background:#161D26;border-bottom:1px solid #222B35}
+.ev .hd svg{width:3.4em;height:3.4em}
+.ev .nm b{display:block;font-size:2.1em;letter-spacing:-.02em}.ev .nm span{color:#9AA7B4;font-size:1.05em}
+.ev .ok{background:#12301C;color:#7EE2A8;font-weight:700;font-size:.9em;padding:.25em .6em;border-radius:.4em}
+.ev .say{font-weight:600;font-size:1.35em;flex:1}
+.ev .hb{display:flex;gap:.7em;align-items:center}.ev .hb span{border:1px solid #2E3A46;border-radius:.7em;padding:.55em 1.1em;color:#C2CCD6;font-size:1.1em}
+.ev .hb .tg{width:3.6em;height:1.9em;border-radius:1em;background:#2A3542;position:relative;padding:0;border:none}.ev .hb .tg::after{content:"";position:absolute;right:.25em;top:.25em;width:1.4em;height:1.4em;border-radius:50%;background:#0E1319;box-shadow:inset -.35em -.1em 0 #E6EDF3}
+.ev .hb .bk{background:#1F6FEB;border-color:#1F6FEB;color:#fff;font-weight:600}
+.ev .ps{padding:1em 1.6em 1.2em;background:#161D26}
+.ev .ps .t{font-size:.85em;font-weight:700;letter-spacing:.06em;color:#9AA7B4}
+.ev .line{display:flex;justify-content:space-between;position:relative;margin-top:.8em}
+.ev .line::before{content:"";position:absolute;left:8%;right:8%;top:.85em;height:2px;background:#2E3A46}
+.ev .st{width:20%;text-align:center;position:relative}
+.ev .st i{display:block;width:1.7em;height:1.7em;border-radius:50%;background:#2DA44E;margin:0 auto .4em;box-shadow:0 0 0 .35em rgba(45,164,78,.25)}
+.ev .st b{display:block;font-size:1.15em}.ev .st span{display:block;color:#C2CCD6;font-size:1em;margin-top:.15em}.ev .st small{display:block;color:#9AA7B4;font-size:.85em;margin-top:.1em}
+.ev .bd{display:flex;gap:1em;padding:1em}
+.ev .lp{flex:1;background:#161D26;border-radius:.8em;overflow:hidden}
+.ev .tabs{display:flex;gap:1.6em;padding:.9em 1.4em 0;border-bottom:1px solid #222B35;font-size:1.1em;color:#C2CCD6;white-space:nowrap}
+.ev .tabs span{padding-bottom:.7em}.ev .tabs .on{color:#58A6FF;border-bottom:2px solid #58A6FF}
+.ev .tabs em{font-style:normal;background:#222B35;border-radius:1em;padding:.05em .55em;font-size:.8em;margin-left:.3em}
+.ev .chips{display:flex;gap:.5em;padding:.8em 1.2em;align-items:center}
+.ev .chips .f{flex:0 0 auto;white-space:nowrap;border:1px solid #2E3A46;border-radius:.6em;padding:.5em .8em;color:#6E7C8A}
+.ev .chips span{border:1px solid #2E3A46;border-radius:1em;padding:.35em .9em;color:#C2CCD6}.ev .chips .on{border-color:#1F6FEB;color:#9CC2FF;background:#13284A}
+.ev table{width:100%;border-collapse:collapse;font-size:1em}
+.ev th{font-size:.8em;color:#9AA7B4;text-align:left;font-weight:700;padding:.4em 1.2em;letter-spacing:.04em}
+.ev td{padding:.55em 1.2em;border-top:1px solid #1E2731;white-space:nowrap}
+.ev td .a{display:inline-grid;place-items:center;width:1.9em;height:1.9em;border-radius:.4em;color:#fff;font-weight:700;margin-right:.6em;vertical-align:middle;font-size:.85em}
+.ev td small{display:block;color:#9AA7B4;font-size:.82em;margin-left:2.6em}
+.ev td code{font-family:"Cascadia Mono",Consolas,monospace;color:#C2CCD6}
+.ev .es{font-family:"Cascadia Mono",Consolas,monospace;font-size:.85em;color:#7EE2A8;background:#12301C;padding:.15em .45em;border-radius:.3em}
+.ev .sn{background:#1F6FEB;color:#fff;border-radius:.4em;padding:.3em .9em;font-size:.9em}
+.ev .rp{width:31%;display:flex;flex-direction:column;gap:1em}
+.ev .cd{background:#161D26;border-radius:.8em;padding:1em 1.2em}
+.ev .cd .t{font-size:.8em;font-weight:700;color:#9AA7B4;letter-spacing:.05em;margin-bottom:.6em}
+.ev .kv{display:flex;align-items:center;gap:.6em;margin:.45em 0;font-size:1em}
+.ev .kv span{flex:1;color:#C2CCD6}.ev .kv code{font-family:"Cascadia Mono",Consolas,monospace;width:5.4em;text-align:right;white-space:nowrap}
+.ev .kv svg{width:6em;height:1.4em}
+.ev .bar{flex:1.4;height:.45em;background:#2A3542;border-radius:1em;overflow:hidden}.ev .bar i{display:block;height:100%;background:#2DA44E;border-radius:1em}
+.taskbar{position:absolute;left:0;right:0;bottom:0;height:4.4cqw;background:var(--tbar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:center;align-items:center;gap:1cqw}
+.taskbar i{width:2.3cqw;height:2.3cqw;border-radius:.5cqw;background:var(--line);display:block}.taskbar i.me{background:none}
+.taskbar i.me svg{width:100%;height:100%;display:block}
+.dwidget{position:absolute;right:1.6cqw;bottom:6cqw;width:25cqw;background:#151B26;color:#E8EDF5;border-radius:1.2cqw;padding:1.4cqw 1.6cqw;box-shadow:0 1.6cqw 4cqw rgba(0,0,0,.3);font-size:1.15cqw;transform-origin:100% 100%;animation:fold 9s ease-in-out infinite}
+.dwidget .h{display:flex;justify-content:space-between;align-items:center;font-size:.8em;color:#9AA7BA;letter-spacing:.12em}
+.ddots{display:flex;gap:.4em}.ddots i{width:.75em;height:.75em;border-radius:50%;display:block}
+.dwidget .v{font-weight:600;font-size:1.12em;margin:.6em 0 .9em;color:#fff;line-height:1.3}
+.dwidget .row{display:flex;justify-content:space-between;font-size:.88em;color:#9AA7BA;margin:.55em 0 .25em}
+.dwidget .bar{height:.38em;background:#2A3344;border-radius:9px;overflow:hidden}.dwidget .bar i{display:block;height:100%;border-radius:9px}
+.chip{position:absolute;right:.9cqw;bottom:.75cqw;height:2.9cqw;display:flex;align-items:center;gap:.6cqw;padding:0 1.1cqw 0 .5cqw;border-radius:2cqw;background:rgba(170,182,198,.55);color:#fff;font-size:1.15cqw;font-weight:500;animation:chip 9s ease-in-out infinite}
+.chip svg{width:2cqw;height:2cqw}.chip i{width:.8cqw;height:.8cqw;border-radius:50%;background:#7EE2A8;display:block}
+.callout{position:absolute;right:28.5cqw;bottom:5.4cqw;font-size:1.3cqw;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:.7cqw 1.3cqw;box-shadow:0 .6cqw 1.6cqw rgba(27,35,48,.1);white-space:nowrap}
+.callout b{font-weight:500}.callout .c2{display:none}
+.scene .callout .c1{animation:c1 9s infinite}.scene .callout .c2{display:inline;position:absolute;left:1.3cqw;top:.7cqw;animation:c2 9s infinite}
+@keyframes fold{0%,45%{opacity:1;transform:none}55%,92%{opacity:0;transform:scale(.25) translate(4cqw,10cqw)}100%{opacity:1;transform:none}}
+@keyframes chip{0%,48%{opacity:.25}56%,90%{opacity:1;box-shadow:0 0 0 .4cqw rgba(31,111,235,.25)}100%{opacity:.25}}
+@keyframes c1{0%,45%{opacity:1}52%,92%{opacity:0}100%{opacity:1}}
+@keyframes c2{0%,48%{opacity:0}56%,90%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.dwidget,.chip,.scene .callout .c1,.scene .callout .c2{animation:none}.scene .callout .c2{display:none}}
+
+/* promise */
+.promise{text-align:center;padding:110px 0 30px}
+.watch{text-align:center;padding:90px 0 10px}
+.watch h2{font-size:clamp(30px,4.4vw,52px);letter-spacing:-.03em;margin:0 0 12px}
+.watch .sub{color:var(--sub);max-width:640px;margin:0 auto 34px;font-size:17px}
+.watch .vids{display:grid;grid-template-columns:1fr 1fr;gap:28px;text-align:left}
+.watch figure{margin:0}
+.watch video{width:100%;aspect-ratio:16/9;display:block;border-radius:14px;background:#0C1424;box-shadow:0 18px 44px rgba(16,24,40,.22)}
+.watch figcaption{margin-top:12px;font-size:15px;line-height:1.45;color:var(--sub)}
+.watch figcaption b{color:var(--ink)}
+@media (max-width:820px){ .watch .vids{grid-template-columns:1fr} }
+.promise h2{font-size:clamp(32px,5vw,58px);letter-spacing:-.03em;line-height:1.05}
+.promise p{font-size:clamp(17px,2vw,21px);color:var(--sub);margin-top:16px}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:60px 0 20px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px 28px;box-shadow:0 1px 2px rgba(27,35,48,.04)}
+.tile .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:18px}
+.tile .ic svg{width:22px;height:22px}
+.tile h3{font-size:22px;letter-spacing:-.015em;margin-bottom:8px}
+.tile p{color:var(--sub);line-height:1.5;font-size:15.5px}
+
+/* section heads */
+.sh{text-align:center;padding:110px 0 34px}
+.sh .k{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.sh h2{font-size:clamp(32px,4.6vw,54px);letter-spacing:-.03em;line-height:1.05;margin:12px 0 14px}
+.sh p{font-size:18px;color:var(--sub);max-width:640px;margin:0 auto;line-height:1.5}
+.sh .cta{margin-top:24px}
+.sh .btn{font-size:15px;padding:11px 20px;border-radius:12px}
+
+/* slides carousel */
+.deckbox{position:relative;max-width:min(1160px,calc((100vh - 140px)*16/9 + 48px));margin:0 auto;padding:0 24px}
+.stage{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:22px;outline:none}
+.stage::-webkit-scrollbar{display:none}
+.frame{flex:0 0 100%;scroll-snap-align:center;display:flex;justify-content:center;align-items:flex-start;padding:2px}
+.stage{align-items:flex-start;transition:height .25s ease}
+.frame .slide{width:100%}
+.arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--glass);box-shadow:0 6px 18px rgba(27,35,48,.12);cursor:pointer;display:grid;place-items:center;z-index:3;color:var(--ink)}
+.arrow:hover{background:var(--card)}.arrow:disabled{opacity:.3;cursor:default}
+.arrow svg{width:20px;height:20px}
+.arrow.prev{left:0}.arrow.next{right:0}
+.deckbar{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:20px;color:var(--muted);font-size:14px}
+.progress{width:min(360px,50vw);height:4px;border-radius:9px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--blue);border-radius:9px;transition:width .25s ease}
+.counter{font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
+.iconbtn{background:none;border:none;color:var(--sub);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;padding:6px 8px;border-radius:8px}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}.iconbtn svg{width:16px;height:16px}
+.stage:fullscreen{background:#0B0F14;align-items:center;border-radius:0}
+.stage:fullscreen .frame{align-items:center;height:100vh}
+.stage:fullscreen .frame .slide{width:min(100%,calc(100vh*16/9));border-radius:0}
+
+/* suggestion box */
+.box{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:32px;box-shadow:0 1px 2px rgba(27,35,48,.04),0 18px 50px rgba(27,35,48,.07)}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:22px}
+.seg button{border:none;background:none;font:inherit;font-size:15px;font-weight:600;color:var(--sub);padding:9px 18px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(27,35,48,.12)}
+.fld{display:block;margin-bottom:16px}
+.fld span{display:block;font-size:13px;font-weight:600;color:var(--sub);margin-bottom:6px}
+.fld input,.fld textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--page);border:1px solid var(--line);border-radius:12px;padding:12px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
+.fld textarea{min-height:140px;resize:vertical;line-height:1.5}
+.fld input:focus,.fld textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(31,111,235,.14);background:var(--card)}
+.only-problem{display:none}.box[data-kind="problem"] .only-problem{display:block}
+.send{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:8px}
+.send .btn{border:none;cursor:pointer;font-family:inherit}
+.send .btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+.fine{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:420px}
+.community{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:22px;font-size:15px}
+.community a{color:var(--blue);text-decoration:none;font-weight:600}.community a:hover{text-decoration:underline}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px}
+.step b{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:15px;margin-bottom:16px}
+.step h3{font-size:20px;margin-bottom:6px;letter-spacing:-.01em}.step p{color:var(--sub);line-height:1.5;font-size:15.5px}
+.note{margin:22px auto 0;max-width:760px;text-align:center;color:var(--muted);font-size:14.5px;line-height:1.55}
+.final{text-align:center;padding:110px 0 90px}
+.final h2{font-size:clamp(34px,5vw,60px);letter-spacing:-.03em}
+.final p{color:var(--sub);font-size:19px;margin-top:12px}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:13.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
+
+/* the slides themselves */
+.slide code,.slide .mono{font-family:"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace}
+.slide{--blue:#1F6FEB; --blue-d:#1A5FCC; --blue-s:#E8F0FE; --green:#2DA44E; --green-s:#E6F4EA; --amber:#BF8700; --amber-s:#FFF4D6;  --red:#CF222E; --red-s:#FDE7E9; --purple:#8250DF; --purple-s:#F1EAFE;  --ink:#1B2330; --sub:#4A5568; --muted:#6B7685; --line:#E3E8EF; --card:#FFFFFF; --page:#FBFCFE; --soft:#F6F8FB;color:var(--ink);position:relative;background:var(--card);border-radius:22px;box-shadow:0 1px 2px rgba(27,35,48,.06),0 8px 28px rgba(27,35,48,.08);
+  aspect-ratio:16/9;container-type:inline-size;overflow:hidden}
+.slide .in{position:absolute;inset:0;padding:4.2cqw 5cqw 3.6cqw;font-size:1.32cqw;display:flex;flex-direction:column}
+.slide .kicker{font-size:.82em;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.slide h1,.slide .h1{font-size:4.2em;line-height:1.02;letter-spacing:-.025em;font-weight:700}
+.slide h2{font-size:2.45em;line-height:1.1;letter-spacing:-.02em;font-weight:700;margin:.25em 0 .2em}
+.slide h3{font-size:1.12em;font-weight:700;margin-bottom:.3em}
+.slide p,.slide li{line-height:1.45;color:var(--sub)}
+.slide .lead{font-size:1.25em;color:var(--sub);max-width:46em}
+.slide .foot{position:absolute;left:5cqw;right:5cqw;bottom:1.9cqw;display:flex;justify-content:space-between;font-size:.72em;color:var(--muted)}
+.slide .foot b{color:var(--ink);font-weight:600}
+.slide .body{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.slide .grid{display:grid;gap:1.1em}
+.slide .g2{grid-template-columns:1fr 1fr}
+.slide .g3{grid-template-columns:repeat(3,1fr)}
+.slide .g4{grid-template-columns:repeat(4,1fr)}
+.slide .g5{grid-template-columns:repeat(5,1fr)}
+.slide .card{background:var(--soft);border:1px solid var(--line);border-radius:1em;padding:1em 1.1em}
+.slide .card p{font-size:.95em}
+.slide .card.b{background:var(--blue-s);border-color:#CFE0FC}
+.slide .card.g{background:var(--green-s);border-color:#CDE9D5}
+.slide .card.a{background:var(--amber-s);border-color:#F3E2AE}
+.slide .card.r{background:var(--red-s);border-color:#F6CDD1}
+.slide .card.p{background:var(--purple-s);border-color:#E2D5FB}
+.slide .num{display:inline-grid;place-items:center;width:1.9em;height:1.9em;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:.85em;margin-bottom:.5em}
+.slide .ic{width:2.4em;height:2.4em;border-radius:.7em;display:grid;place-items:center;margin-bottom:.6em;color:#fff;font-weight:700}
+.slide .tag{display:inline-block;padding:.15em .6em;border-radius:99em;font-size:.78em;font-weight:600}
+.slide .t-b{background:var(--blue-s);color:var(--blue)}
+.slide .t-g{background:var(--green-s);color:#1A7F37}
+.slide .t-a{background:var(--amber-s);color:#7D5A00}
+.slide .t-r{background:var(--red-s);color:var(--red)}
+.slide .t-p{background:var(--purple-s);color:var(--purple)}
+.slide table{width:100%;border-collapse:separate;border-spacing:0;font-size:.95em}
+.slide th{text-align:left;font-size:.78em;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:.5em .8em;border-bottom:1px solid var(--line)}
+.slide td{padding:.62em .8em;border-bottom:1px solid var(--line);color:var(--sub);vertical-align:top}
+.slide td:first-child{color:var(--ink);font-weight:600}
+.slide .big{font-size:3.2em;font-weight:700;letter-spacing:-.03em;line-height:1}
+.slide ul.clean{list-style:none}
+.slide ul.clean li{padding-left:1.2em;position:relative;margin:.28em 0}
+.slide ul.clean li::before{content:"";position:absolute;left:0;top:.6em;width:.5em;height:.5em;border-radius:50%;background:var(--blue)}
+.slide .quote{font-size:1.5em;font-weight:600;color:var(--ink);line-height:1.3}
+.slide .widget{background:#151B26;color:#E8EDF5;border-radius:1em;padding:1em 1.15em;box-shadow:0 10px 30px rgba(0,0,0,.25);width:19em}
+.slide .widget .v{font-weight:600;font-size:1.02em;margin:.35em 0 .7em;color:#fff}
+.slide .widget .row{display:flex;justify-content:space-between;font-size:.8em;color:#9AA7BA;margin:.32em 0}
+.slide .widget .bar{height:.32em;background:#2A3344;border-radius:1em;margin-top:.2em;overflow:hidden}
+.slide .widget .bar i{display:block;height:100%;border-radius:1em}
+.slide .dots{display:flex;align-items:center;gap:.35em}
+.slide .dot{width:.75em;height:.75em;border-radius:50%}
+.slide .path{display:flex;align-items:center;justify-content:space-between;position:relative;margin:1.4em 0 .6em}
+.slide .path::before{content:"";position:absolute;left:4%;right:4%;top:2.1em;height:.3em;background:var(--line);border-radius:1em}
+.slide .stop{position:relative;text-align:center;width:18%}
+.slide .stop .c{width:4.2em;height:4.2em;border-radius:50%;margin:0 auto .6em;display:grid;place-items:center;font-weight:700;color:#fff;font-size:.95em;border:.35em solid #fff;box-shadow:0 0 0 1px var(--line)}
+.slide .stop b{display:block;color:var(--ink)}
+.slide .stop span{font-size:.85em;color:var(--muted)}
+.slide svg text{font-family:inherit}
+.slide.hero{background:linear-gradient(135deg,#F3F7FF 0%,#FFFFFF 55%,#F2FAF4 100%)}
+.slide.end{background:linear-gradient(135deg,#1F6FEB 0%,#1B4FB8 100%);color:#fff}
+.slide.end p,.slide.end .lead{color:#DCE7FF}
+.slide.end .kicker{color:#BFD4FF}
+
+@media (max-width:860px){
+  .links a:not(.pill):not(.donate-top){display:none}
+  .links a.donate-top .t{display:none}
+  .links a.donate-top{margin-left:8px;font-size:18px}
+  .tiles,.steps{grid-template-columns:1fr}
+  .arrow{display:none}
+  .deckbox{padding:0 16px}
+  .slide{aspect-ratio:auto}
+  .slide .in{position:relative;inset:auto;padding:22px 18px 46px;font-size:14px}
+  .slide h1,.slide .h1{font-size:2.5em}.slide h2{font-size:1.65em}
+  .slide .g2,.slide .g3,.slide .g4,.slide .g5{grid-template-columns:1fr}
+  .slide .foot{left:18px;right:18px;bottom:14px}
+  .slide .path{flex-wrap:wrap;gap:12px}.slide .path::before{display:none}.slide .stop{width:30%}
+  .slide .hide-m{display:none}
+  .slide .widget{width:100%}
+  .slide table{font-size:.85em}
+  .slide .body{flex-direction:column!important}
+}
+@media (max-width:520px){ .wrap{padding:0 16px} .lhero{padding-top:56px} }
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{background:#fff}
+  body>*:not(main),main>*:not(#theory){display:none!important}
+  #theory>*:not(.deckbox){display:none!important}
+  .deckbox{padding:0;max-width:none}
+  .deckbox>*:not(.stage){display:none!important}
+  .stage{display:block;overflow:visible;border-radius:0}
+  .frame{display:block;padding:0}
+  .frame .slide{width:1280px;height:720px;aspect-ratio:auto;border-radius:0;box-shadow:none;break-after:page;page-break-after:always}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* v3 flat home (approved Nov 2026): flat surfaces, 1-px lines, blue actions, soft section tints on icon chips only */
+:root{--c-learn:#C2621F;--c-games:#A8459C;--c-live:#1F7DB8;--c-files:#6B4FD0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#2F7BF6;--blue-d:#4A8CFF;--blue-s:#1E3E78;--green:#22C47A;--green-s:#123D2E;--amber:#F2B23C;--amber-s:#3D3014;--red:#F26464;--line:#22355A;--card:#121F38;--page:#0B1426;--soft:#182844;--sub:#93A6C6;--muted:#647A9E;--nav:rgba(11,20,38,.92);--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB}}
+:root[data-theme="dark"]{--blue:#2F7BF6;--blue-d:#4A8CFF;--blue-s:#1E3E78;--green:#22C47A;--green-s:#123D2E;--amber:#F2B23C;--amber-s:#3D3014;--red:#F26464;--line:#22355A;--card:#121F38;--page:#0B1426;--soft:#182844;--sub:#93A6C6;--muted:#647A9E;--nav:rgba(11,20,38,.92);--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB}
+.v3{padding:52px 0;border-bottom:1px solid var(--line)}
+.v3 svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.v3 h1{font-size:60px;line-height:1.03;letter-spacing:-.03em;margin:0 0 18px;font-weight:800;color:var(--ink)}
+.v3 h2{font-size:36px;letter-spacing:-.02em;margin:0 0 6px;line-height:1.1;text-align:left}
+.v3hero{padding:60px 0 54px}.v3grid{display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center}
+.v3lead{font-size:21px;color:var(--sub);margin:0 0 30px;max-width:560px}.v3sub{color:var(--sub);margin:0 0 26px;font-size:18px}.v3note{color:var(--sub);margin:16px 0 0;font-size:15px}
+.v3ctas{display:flex;gap:12px;flex-wrap:wrap}
+.v3btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:16px;border-radius:12px;padding:13px 20px;background:var(--blue);color:#fff!important;text-decoration:none;white-space:nowrap;border:0}
+.v3btn:hover{background:var(--blue-d)}.v3btn.line{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink)!important}.v3btn.line:hover{box-shadow:inset 0 0 0 1.5px var(--blue)}.v3btn.sm{padding:10px 16px;font-size:15px}
+.v3card{background:var(--card);border:1px solid var(--line);border-radius:18px;color:var(--ink);text-decoration:none}
+.v3eg{padding:6px}.v3eg .lab,.v3act .lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);padding:10px 14px 8px}
+.v3eg .in{background:var(--page);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.v3eg h3{display:flex;align-items:center;gap:10px;margin:8px 0 4px;font-size:22px}.v3p{color:var(--sub);margin:0 0 18px;font-size:15px}
+.v3path{display:grid;grid-template-columns:1fr 1fr 1fr;position:relative;text-align:center;margin-bottom:18px}
+.v3path:before{content:"";position:absolute;left:16.6%;right:50%;top:26px;border-top:3px solid var(--green)}.v3path:after{content:"";position:absolute;left:50%;right:16.6%;top:26px;border-top:3px dashed var(--line)}
+.v3path .n{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.v3path .n i{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1.5px solid var(--line);color:var(--ink)}.v3path .n i.w{border-color:var(--amber)}
+.v3path .n b{font-size:16px}.v3path .n small{color:var(--sub);font-size:13px}
+.v3tag{display:inline-block;font-size:12px;font-weight:700;border-radius:7px;padding:3px 9px}.v3tag.ok{background:var(--green-s);color:var(--green)}.v3tag.warn{background:var(--amber-s);color:var(--amber)}.v3tag.off{background:var(--soft);color:var(--sub)}
+.v3next{display:flex;align-items:center;gap:14px;border-top:1px solid var(--line);padding-top:14px}.v3next div{flex:1}.v3next small{color:var(--sub);display:block;font-size:14px}.v3next b{font-size:18px}
+.v3four{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.v3three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.v3tile{display:flex;flex-direction:column;gap:10px;padding:20px;position:relative}.v3tile:hover{border-color:var(--blue)}
+.v3tile .v3top{display:flex;align-items:center;gap:12px}.v3tile b{font-size:20px}.v3tile .d{color:var(--sub);font-size:15px;padding-right:26px}.v3tile .go{position:absolute;right:18px;bottom:18px;color:var(--sub)}
+.v3chip{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);flex:none}
+.v3step{padding:22px}.v3step .num{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;margin-bottom:12px}.v3step b{font-size:19px;display:block;margin-bottom:4px}.v3step p{margin:0;color:var(--sub);font-size:15px}
+.v3more{margin:20px 0 0;color:var(--sub)}
+.v3two{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;align-items:center}
+.v3act{padding:6px 18px 10px}.v3act .lab{padding:10px 0 4px}.v3act .r{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.v3act .r:nth-child(2){border-top:0}.v3act .r b{flex:1;font-weight:600}.v3act .r>span:last-child{color:var(--sub)}
+.v3act .d{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}.v3act .d.ok{background:var(--green)}.v3act .d.warn{background:var(--amber);color:#1a1100}
+.v3for{padding:30px 0}.v3for p{text-align:center;font-size:17px;margin:0 0 24px}
+@media (max-width:900px){.v3grid,.v3two{grid-template-columns:1fr;gap:26px}.v3hero{padding:34px 0 36px}.v3 h1{font-size:38px}.v3lead{font-size:18px}.v3ctas .v3btn{width:100%}
+ .v3four{grid-template-columns:1fr 1fr}.v3three{grid-template-columns:1fr}.v3 h2{font-size:27px}.v3{padding:36px 0}.v3tile{padding:16px}.v3tile b{font-size:17px}.v3tile .d{font-size:13px}.v3eg h3{font-size:18px}.v3path .n i{width:44px;height:44px}.v3path:before,.v3path:after{top:21px}}
+/* v4 hero (1.1.6): the navy look of the phone app, the motto, the full path and "show anyone" */
+.v4hero{position:relative;overflow:hidden;background:var(--page)}
+.v4hero svg.i{stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.v4hero svg.i use[href="#v3-win"]{fill:currentColor;stroke:none}
+.v4hero:before{content:"";position:absolute;inset:-40% -10% auto;height:130%;pointer-events:none;background:radial-gradient(620px 400px at 74% 32%,color-mix(in srgb,var(--blue) 30%,transparent),transparent 70%),radial-gradient(520px 320px at 12% 8%,color-mix(in srgb,var(--green) 12%,transparent),transparent 70%)}
+.v4grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:64px 0 76px}
+.v4grid>div{min-width:0}
+.v4pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:99px;padding:6px 14px 6px 8px;font-size:14px;color:var(--sub);font-weight:600}
+.v4pill i{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:99px;background:var(--green-s);color:var(--green);font-style:normal;font-size:12px}
+.v4hero h1{font-size:clamp(40px,5.2vw,62px);line-height:1.04;letter-spacing:-.035em;margin:22px 0 18px;font-weight:850;color:var(--ink)}
+.v4hero h1 .hero-accent{display:block;background:linear-gradient(90deg,var(--blue-d),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+.v4lead{font-size:19px;line-height:1.55;color:var(--sub);max-width:540px;margin:0 0 30px}
+.v4ctas{display:flex;gap:12px;flex-wrap:wrap}
+.v4btn{display:inline-flex;align-items:center;gap:10px;height:50px;padding:0 22px;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;background:var(--blue);color:#fff;border:1px solid transparent;box-shadow:0 12px 30px -12px color-mix(in srgb,var(--blue) 90%,transparent);transition:transform .15s ease,background .2s ease}
+.v4btn:hover{background:var(--blue-d);transform:translateY(-1px)}.v4btn .i{width:18px;height:18px}
+.v4btn.line{background:transparent;color:var(--ink);border-color:var(--line);box-shadow:none}.v4btn.line:hover{background:var(--soft)}
+.v4btn.sm{height:36px;padding:0 14px;border-radius:10px;font-size:13.5px;box-shadow:none}
+.v4trust{display:flex;gap:8px 18px;flex-wrap:wrap;list-style:none;padding:0;margin:26px 0 0;font-size:14px;color:var(--sub)}
+.v4trust li:before{content:"";display:inline-block;width:6px;height:6px;border-radius:99px;background:var(--green);margin-right:8px;vertical-align:2px}
+.v4stage{position:relative;height:520px}
+.v4card{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 80px -34px rgba(0,0,0,.55)}
+.v4res{left:0;top:10px;width:min(480px,100%);padding:24px;z-index:2}
+.v4tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--amber);background:var(--amber-s);border-radius:8px;padding:4px 9px}
+.v4res h3{margin:12px 0 4px;font-size:23px;letter-spacing:-.02em;color:var(--ink)}.v4res p{margin:0;color:var(--sub);font-size:14.5px}
+.v4path{display:flex;align-items:flex-start;margin:22px 0 18px}
+.v4path .n{display:grid;justify-items:center;gap:5px;width:78px;flex:none;font-size:13px;color:var(--ink)}
+.v4path i{width:44px;height:44px;border-radius:99px;display:grid;place-items:center;border:2px solid var(--green);background:var(--green-s);color:var(--green)}
+.v4path i .i{width:20px;height:20px}
+.v4path i.w{border-color:var(--amber);background:var(--amber-s);color:var(--amber);box-shadow:0 0 0 6px color-mix(in srgb,var(--amber) 14%,transparent)}
+.v4path i.o{border-color:var(--line);background:transparent;color:var(--muted)}
+.v4path small{font-size:11.5px;font-weight:700;color:var(--muted)}.v4path small.ok{color:var(--green)}.v4path small.wa{color:var(--amber)}
+.v4path .ln{flex:1;height:3px;margin-top:21px;background:var(--green);border-radius:9px}.v4path .ln.d{background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 11px)}
+.v4share{display:flex;gap:8px;border-top:1px solid var(--line);padding-top:16px;align-items:center}.v4share small{flex:1;color:var(--sub);font-size:13px}
+.v4phone{right:0;top:330px;width:200px;padding:16px 16px 18px;border-radius:32px;display:grid;justify-items:center;gap:6px;text-align:center;z-index:1}
+.v4phone .nt{width:74px;height:18px;border-radius:99px;background:var(--page);margin-bottom:2px}
+.v4phone b{font-size:14px;color:var(--ink)}.v4phone small{font-size:12px;color:var(--sub);line-height:1.4}
+.v4phone .qr{width:92px;height:92px;margin:8px 0;border-radius:12px;border:8px solid #fff;background:repeating-conic-gradient(#0A1428 0 25%,#fff 0 50%) 0 0/18px 18px}
+.v4phone em{font-style:normal;font-weight:800;font-size:12.5px;color:var(--ink)}
+.v4sig{left:28px;top:440px;display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:16px;z-index:3;font-size:13px}
+.v4sig .i{width:22px;height:22px;color:var(--green);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.v4sig b{display:block;font-size:13.5px;color:var(--ink)}.v4sig small{color:var(--sub)}
+.brand b{color:var(--blue-d)}
+@media (max-width:900px){.v4grid{grid-template-columns:1fr;gap:28px;padding:36px 0 44px}.v4stage{height:auto}.v4card{position:relative;left:auto;top:auto;width:auto}.v4phone{display:none}.v4sig{margin-top:12px;left:auto;top:auto}.v4ctas .v4btn{flex:1 1 220px;justify-content:center}.v4lead{font-size:17px}.v4path .n{width:62px}}
+@media (prefers-reduced-motion:reduce){.v4btn{transition:none}}
+</style>
+<script>try{var t=localStorage.getItem('am-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}</script>
+<!-- Turnstile loads only when someone starts the feedback form (see below) - never on the page with the donation buttons until then -->
+<link rel="stylesheet" href="/locale.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AdeeboMeter","alternateName":"আদীবওমিটার","url":"https://adeebometer.com/"}</script><!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<meta property="og:locale" content="fr_CA">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/">
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <a class="brand" href="#"><svg viewbox="0 0 64 64" aria-hidden="true"><use href="#mark"></use></svg><span>Adeebo<b>Meter</b></span></a>
+  <nav class="links">
+    <div class="site-language"><img src="/img/canada.svg" width="24" height="12" alt="Canada"><select data-language-picker aria-label="Langue" hidden></select><a data-language-fallback href="/fr/" lang="fr-CA" hreflang="fr-CA">Français</a><a data-language-fallback href="/bn/" lang="bn" hreflang="bn">বাংলা · আদীবওমিটার</a></div>
+    <a data-nav-secondary data-i18n="How it works" href="#how">Fonctionnement</a><a data-nav-secondary data-i18n="Learn" href="/fr/learn/">Apprendre</a><a data-nav-secondary data-blog-link data-i18n="Blog" href="/fr/blog/">Blogue</a><a data-nav-secondary data-i18n="Games" href="/games.html">Jeux</a><a data-nav-secondary data-i18n="Live" href="/live.html">En direct</a><a data-nav-secondary data-i18n="Files" href="/files.html">Fichiers</a><a data-nav-secondary data-i18n="Open phone app ↗" href="/app.html">Ouvrir l’appli mobile ↗</a>
+    <a class="donate-top" href="#donate" aria-label="Faire un don" data-i18n-label="Donate">♥<span class="t"> <span data-i18n="Donate">Faire un don</span></span></a>
+    <button class="theme" type="button" aria-label="Changer le thème jour / nuit"><span class="knob"><svg class="sun" viewbox="0 0 24 24" fill="none" stroke="#BF8700" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg><svg class="moon" viewbox="0 0 24 24" fill="#9CC2FF"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"></path></svg></span></button>
+    <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><span data-i18n="Download">Télécharger</span></a>
+  </nav>
+</div></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewbox="0 0 64 64">
+    <rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"></rect><g fill="none" stroke-width="5" stroke-linecap="round"><path d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"></path><path d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"></path><path d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"></path></g><line x1="32" y1="33.6" x2="40.52" y2="21.87" stroke="#fff" stroke-width="1.6" stroke-linecap="round"></line><circle cx="32" cy="33.6" r="2.6" fill="#fff"></circle><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width="0.9"></line><g fill="#A8F5D4"><circle cx="18.8" cy="42.6" r="2.3"></circle><circle cx="32" cy="42.6" r="2.3"></circle><circle cx="45.2" cy="42.6" r="2.3"></circle></g>
+  </symbol>
+</svg>
+
+<main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="v3-win" viewbox="0 0 24 24"><path d="M3 5.5l8-1.1v7.1H3zM12 4.2L21 3v8.5h-9zM3 12.5h8v7.1l-8-1.1zM12 12.5h9V21l-9-1.2z" fill="currentColor" stroke="none"></path></symbol>
+<symbol id="v3-phone" viewbox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"></rect><path d="M11 18h2"></path></symbol>
+<symbol id="v3-wifi" viewbox="0 0 24 24"><path d="M2 9a15 15 0 0120 0"></path><path d="M5.5 12.5a10 10 0 0113 0"></path><path d="M9 16a5 5 0 016 0"></path><circle cx="12" cy="19.5" r="1"></circle></symbol>
+<symbol id="v3-router" viewbox="0 0 24 24"><rect x="3" y="13" width="18" height="7" rx="2"></rect><path d="M7 17h.01M11 17h.01M12 13V8"></path></symbol>
+<symbol id="v3-dns" viewbox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"></rect><rect x="3" y="13" width="18" height="7" rx="1.5"></rect><path d="M7 7.5h.01M7 16.5h.01"></path></symbol>
+<symbol id="v3-globe" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9.5"></circle><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19"></path></symbol>
+<symbol id="v3-book" viewbox="0 0 24 24"><path d="M2 4h7a3 3 0 013 3v13a2 2 0 00-2-2H2z"></path><path d="M22 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"></path></symbol>
+<symbol id="v3-game" viewbox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"></rect><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"></path></symbol>
+<symbol id="v3-live" viewbox="0 0 24 24"><circle cx="12" cy="12" r="2"></circle><path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"></path></symbol>
+<symbol id="v3-folder" viewbox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></symbol>
+<symbol id="v3-arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
+</defs></svg>
+<section class="v4hero"><div class="wrap">
+  <p id="update" class="upd" hidden></p>
+  <div class="v4grid">
+  <div class="v4l" data-i18n-direction>
+   <span class="v4pill"><i aria-hidden="true">✓</i><span data-i18n="Know what&#x27;s wrong. Show anyone.">Repérez le problème et montrez-le.</span></span>
+   <h1><span data-i18n="Find out why your internet or PC is slow.">Découvrez pourquoi votre Internet ou votre PC est lent.</span> <span class="hero-accent" data-i18n="And much more.">Et bien plus.</span></h1>
+   <p class="v4lead"><span data-i18n="Your PC, Wi-Fi, router, provider or the internet - one sentence tells you which. Games, streams, calls, trading and your phone too: 158 tools, free, and a picture you can send to anyone.">Une phrase vous indique la source : PC, Wi-Fi, routeur, fournisseur ou Internet. 158 outils gratuits pour vos jeux, vos diffusions, vos appels et plus, avec une image à partager.</span></p>
+   <div class="v4ctas"><a class="v4btn" href="#install"><svg class="i" viewbox="0 0 24 24"><use href="#v3-win"></use></svg><span data-i18n="Download for Windows">Télécharger pour Windows</span></a><a class="v4btn line" href="/app.html"><svg class="i" viewbox="0 0 24 24"><use href="#v3-phone"></use></svg><span data-i18n="Open the phone app ↗">Ouvrir l’appli mobile ↗</span></a></div>
+   <ul class="v4trust"><li data-i18n="Free">Gratuit</li><li data-i18n="No admin rights">Aucun droit d’administration</li><li data-i18n="No cloud, no telemetry">Ni nuage ni télémétrie</li><li data-i18n="Never listens">Aucun port à l’écoute</li><li data-i18n="Signed by its author">Signé par son auteur</li><li>Sans publicité</li></ul>
+   <p class="locale-preview" data-i18n-preview data-i18n="Some content is still in English." hidden>Une partie du contenu est encore en anglais.</p>
+  </div>
+  <div class="v4stage">
+   <div class="v4card v4res" role="img" aria-label="Exemple : PC correct, routeur 2 ms, délai DNS dépassé, Internet non vérifié. Relancez la recherche DNS, enregistrez l’image ou envoyez-la au fournisseur.">
+    <div aria-hidden="true">
+    <span class="v4tag" data-i18n="DNS ISSUE">PROBLÈME DNS</span>
+    <h3 data-i18n="Your PC is fine. Names aren&#x27;t answering.">Votre PC va bien. Les noms ne répondent pas.</h3>
+    <p data-i18n="The router answered in 2 ms. The DNS request timed out.">Le routeur a répondu en 2 ms. La requête DNS a expiré.</p>
+    <div class="v4path">
+     <div class="n"><i><svg class="i" viewbox="0 0 24 24"><use href="#v3-win"></use></svg></i><b><span data-i18n="This PC">Ce PC</span></b><small class="ok"><span data-i18n="✓ fine">✓ tout va bien</span></small></div><span class="ln"></span>
+     <div class="n"><i><svg class="i" viewbox="0 0 24 24"><use href="#v3-router"></use></svg></i><b><span data-i18n="Router">Routeur</span></b><small class="ok">✓ 2 ms</small></div><span class="ln"></span>
+     <div class="n"><i class="w"><svg class="i" viewbox="0 0 24 24"><use href="#v3-dns"></use></svg></i><b>DNS</b><small class="wa"><span data-i18n="! timed out">! délai dépassé</span></small></div><span class="ln d"></span>
+     <div class="n"><i class="o"><svg class="i" viewbox="0 0 24 24"><use href="#v3-globe"></use></svg></i><b><span data-i18n="Internet">Internet</span></b><small><span data-i18n="not checked">non vérifié</span></small></div>
+    </div>
+    <div class="v4share"><small><span data-i18n="Next: try the lookup again">Ensuite : relancez la recherche DNS</span></small><span class="v4btn sm line"><span data-i18n="Save picture">Enregistrer l’image</span></span><span class="v4btn sm"><span data-i18n="Send to my ISP">Envoyer à mon fournisseur</span></span></div>
+    </div>
+   </div>
+   <div class="v4card v4phone" aria-hidden="true"><span class="nt"></span><span class="qr"></span><em lang="en">river · tiger · lamp · orbit</em><small><span data-i18n="Same words on both = your phone">Mêmes mots des deux côtés = votre téléphone</span></small></div>
+   <div class="v4card v4sig"><svg class="i" viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg><div><b><span data-i18n="Signed: Open Source Developer">Signé : développeur de logiciels libres</span></b><small>MdAhasanul Adeeb Khan · Certum</small></div></div>
+  </div>
+  </div>
+</div></section>
+
+<section class="watch" id="watch"><div class="wrap">
+  <h2 data-i18n="See it in 30 seconds">Découvrez-le en 30 secondes</h2>
+  <p class="sub"><span data-i18n="Recorded on a real Windows laptop. Both videos play from this site, so nothing loads from YouTube unless you click through.">Enregistré sur un vrai portable Windows. Les deux vidéos proviennent de ce site. YouTube se charge seulement si vous cliquez sur son lien.</span></p>
+  <div class="vids">
+    <figure><video src="/media/AdeeboMeter-trailer.mp4" poster="media/trailer-poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="AdeeboMeter en 30 secondes"></video>
+      <figcaption><b><span data-i18n="AdeeboMeter in 30 seconds">AdeeboMeter en 30 secondes</span></b> · <span data-i18n="no sound">sans son</span> · <a href="https://www.youtube.com/watch?v=Toe-VHd6vBM" rel="noopener"><span data-i18n="Watch on YouTube ›">Voir sur YouTube ›</span></a></figcaption></figure>
+    <figure><video src="/media/AdeeboMeter-tour.mp4" poster="media/tour-poster.jpg" playsinline controls preload="none" aria-label="Visite complète avec narration"></video>
+      <figcaption><b><span data-i18n="The full tour">La visite complète</span></b> · 1 min 23 s · avec son : surveillance, diagnostic, plus de 100 outils, laboratoire de trafic, historique et bilan de sécurité · <a href="https://www.youtube.com/watch?v=KLuasFOYszs" rel="noopener"><span data-i18n="Watch on YouTube ›">Voir sur YouTube ›</span></a></figcaption></figure>
+  </div>
+</div></section>
+
+<section class="v3"><div class="wrap">
+  <h2 data-i18n="Try it in your browser">Essayez-le dans votre navigateur</h2>
+  <p class="v3sub"><span data-i18n="Learn something, play a round, or open a tool.">Apprenez, jouez une partie ou ouvrez un outil.</span></p>
+  <div class="v3four"><a class="v3card v3tile" href="/fr/learn/"><span class="v3top"><span class="v3chip" style="--k:var(--c-learn)"><svg class="i" viewbox="0 0 24 24"><use href="#v3-book"></use></svg></span><b><span data-i18n="Learn ↗">Apprendre ↗</span></b></span><span class="d"><span data-i18n="Short lessons on Wi-Fi, DNS, routing and more.">De courtes leçons sur le Wi-Fi, DNS, le routage et plus.</span></span><span class="go"><svg class="i" viewbox="0 0 24 24"><use href="#v3-arrow"></use></svg></span></a><a class="v3card v3tile" href="/games.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-games)"><svg class="i" viewbox="0 0 24 24"><use href="#v3-game"></use></svg></span><b><span data-i18n="Games ↗">Jeux ↗</span></b></span><span class="d"><span data-i18n="Practise networking with quick quizzes and challenges.">Pratiquez le réseautage avec des quiz et défis rapides.</span></span><span class="go"><svg class="i" viewbox="0 0 24 24"><use href="#v3-arrow"></use></svg></span></a><a class="v3card v3tile" href="/live.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-live)"><svg class="i" viewbox="0 0 24 24"><use href="#v3-live"></use></svg></span><b><span data-i18n="Live ↗">En direct ↗</span></b></span><span class="d"><span data-i18n="Check markets, scores, and weather.">Consultez les marchés, les résultats sportifs et la météo.</span></span><span class="go"><svg class="i" viewbox="0 0 24 24"><use href="#v3-arrow"></use></svg></span></a><a class="v3card v3tile" href="/files.html"><span class="v3top"><span class="v3chip" style="--k:var(--c-files)"><svg class="i" viewbox="0 0 24 24"><use href="#v3-folder"></use></svg></span><b><span data-i18n="Files ↗">Fichiers ↗</span></b></span><span class="d"><span data-i18n="Lock files and open .adeebo files.">Verrouillez des fichiers et ouvrez des fichiers .adeebo.</span></span><span class="go"><svg class="i" viewbox="0 0 24 24"><use href="#v3-arrow"></use></svg></span></a></div>
+</div></section>
+
+<section class="v3" id="how"><div class="wrap">
+  <h2 data-i18n="How it works">Fonctionnement</h2>
+  <p class="v3sub"><span data-i18n="Three steps, no account.">Trois étapes, sans compte.</span></p>
+  <div class="v3three">
+   <div class="v3card v3step"><span class="num">1</span><b><span data-i18n="Install on Windows">Installer sur Windows</span></b><p><span data-i18n="Free from the Microsoft Store. It watches quietly in a corner of your screen.">Gratuit dans le Microsoft Store. Il surveille discrètement votre PC dans un coin de l’écran.</span></p></div>
+   <div class="v3card v3step"><span class="num">2</span><b><span data-i18n="Ask it why">Demandez pourquoi</span></b><p><span data-i18n="One checkup tests Wi-Fi, router, provider, DNS and websites - and names the slow step.">Un seul bilan vérifie le Wi-Fi, le routeur, le fournisseur, DNS et les sites Web, puis indique l’étape lente.</span></p></div>
+   <div class="v3card v3step"><span class="num">3</span><b><span data-i18n="Check from your phone">Vérifiez depuis votre téléphone</span></b><p><span data-i18n="Scan a code once. After that, Face ID reconnects you from anywhere.">Balayez un code une fois. Ensuite, Face ID vous reconnecte de partout.</span></p></div>
+  </div>
+  <p class="v3more"><a href="#theory"><span data-i18n="The whole story, slide by slide ›">Toute l’explication, diapositive par diapositive ›</span></a> · <a href="#watch"><span data-i18n="Watch the videos ›">Voir les vidéos ›</span></a></p>
+</div></section>
+
+<section class="v3" id="phone"><div class="wrap"><div class="v3two">
+  <div><h2 data-i18n="Your PC, from your phone">Votre PC, depuis votre téléphone</h2><p class="v3sub" data-i18n="Pair your PC to check its status and review what happened, even when you&#x27;re away from your desk.">Associez votre PC pour voir son état et les événements passés, même loin de votre bureau.</p>
+   <div class="v3ctas"><a class="v3btn line" href="/app.html"><svg class="i" viewbox="0 0 24 24"><use href="#v3-phone"></use></svg>Découvrir l’application téléphone ↗</a></div>
+   <p class="v3note"><span data-i18n="No app store needed: open it, then use">Aucune boutique requise : ouvrez-la, puis choisissez</span> <b data-i18n="Add to Home Screen">Ajouter à l’écran d’accueil</b> <span data-i18n="(iPhone) or">(iPhone) ou</span> <b data-i18n="Install app">Installer l’application</b> <span data-i18n="(Android) to keep it.">(Android) pour la conserver.</span></p></div>
+  <div class="v3card v3act"><div class="lab"><span data-i18n="EXAMPLE ACTIVITY">EXEMPLE D’ACTIVITÉ</span></div>
+   <div class="r"><span class="d ok">✓</span><b><span data-i18n="Connection check complete">Vérification de connexion terminée</span></b><span>10:24</span></div>
+   <div class="r"><span class="d warn">!</span><b><span data-i18n="Office PC went quiet">Le PC du bureau ne répond plus</span></b><span>10:18</span></div>
+  </div>
+</div></div></section>
+
+<section class="v3 v3for" aria-label="Pour vos activités"><div class="wrap"><p><span data-i18n="Made for what you do online:">Pour vos activités en ligne :</span> <a href="/fr/streaming.html"><span data-i18n="Streaming">Diffusion en continu</span></a> · <a href="/fr/trading.html"><span data-i18n="Trading">Négociation</span></a> · <a href="/fr/gaming.html"><span data-i18n="Gaming">Jeux vidéo</span></a> · <a href="/fr/isp-report.html"><span data-i18n="ISP reports">Rapports au fournisseur</span></a></p><div id="amv-today" style="display:none;max-width:520px;margin:0 auto 30px;align-items:center;gap:12px;border:1px solid rgba(127,127,127,.25);border-radius:16px;padding:12px 16px"><span id="amv-face"></span><div><small style="opacity:.7"><span id="amv-tk"><span data-i18n="Today&#x27;s companion">Le compagnon du jour</span></span>: <b id="amv-tn"></b></small><div id="amv-tl" style="font-weight:600"></div></div></div><script src="/voice.js"></script><script>AMV.today().then(function(t){document.getElementById("amv-tn").textContent=t[1];if(t[2])document.getElementById("amv-tk").textContent="Your companion";AMV.ready.then(function(){var l=AMV.line("app.open");if(!l)return;document.getElementById("amv-tl").textContent=l;AMV.face(document.getElementById("amv-face"),"happy");document.getElementById("amv-today").style.display="flex"})}).catch(function(){})</script></div></section>
+
+<section id="theory">
+  <div class="sh wrap">
+    <div class="k">Theory of Everything</div>
+    <h2 data-i18n="Every part, in plain words.">Chaque partie, en mots simples.</h2>
+    <p><span data-i18n="Swipe through it, use the arrow keys, or take it with you.">Balayez les diapositives, utilisez les flèches ou emportez-les.</span></p>
+    <div class="cta">
+      <a class="btn ghost" href="/AdeeboMeter-Theory-of-Everything.pdf" download><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 20h14"></path></svg>Télécharger le PDF</a>
+    </div>
+  </div>
+  <div class="deckbox">
+    <button class="arrow prev" aria-label="Diapositive précédente" data-i18n-label="Previous slide"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <div class="stage" tabindex="0" aria-roledescription="carousel" aria-label="Diapositives Theory of Everything">
+<div class="frame"><section class="slide hero"><div class="in">
+  <div class="kicker">Theory of Everything · version 1.1.5</div>
+  <div class="body" style="flex-direction:row;align-items:center;gap:4em">
+    <div style="flex:1">
+      <h2 class="h1">AdeeboMeter</h2>
+      <p class="quote" style="margin:.6em 0 .5em;color:var(--blue)"><span data-i18n="Is it me or the network?">C’est mon appareil ou le réseau?</span></p>
+      <p class="lead">Un petit compagnon Windows discret. Un coup d’œil indique si le problème vient du PC, du Wi-Fi, du fournisseur, de DNS ou d’Internet, et quoi faire.</p>
+      <p style="margin-top:1.4em;font-weight:600;color:var(--ink)">Aucun service infonuagique, aucune télémétrie, aucun port en écoute.<br><span style="font-weight:400;color:var(--sub)">Chaque paquet envoyé est indiqué et peut être désactivé.</span></p>
+    </div>
+    <div class="hide-m">
+      <div class="widget" style="font-size:1.25em">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.75em;color:#9AA7BA;letter-spacing:.1em">ADEEBOMETER</span>
+          <span class="dots"><i class="dot" style="background:#2DA44E"></i><i class="dot" style="background:#2DA44E"></i><i class="dot" style="background:#E3A008"></i><i class="dot" style="background:#4B5563"></i><i class="dot" style="background:#4B5563"></i></span></div>
+        <div class="v">Votre fournisseur est lent en ce moment. Votre PC va bien.</div>
+        <div class="row"><span>CPU</span><span>7%</span></div><div class="bar"><i style="width:7%;background:#2DA44E"></i></div>
+        <div class="row"><span>Mémoire</span><span>58%</span></div><div class="bar"><i style="width:58%;background:#1F6FEB"></i></div>
+        <div class="row"><span><span data-i18n="Router">Routeur</span></span><span>3 ms</span></div><div class="bar"><i style="width:10%;background:#2DA44E"></i></div>
+        <div class="row"><span><span data-i18n="Internet">Internet</span></span><span>184 ms</span></div><div class="bar"><i style="width:72%;background:#E3A008"></i></div>
+      </div>
+      <p style="font-size:.8em;color:var(--muted);margin-top:.8em;text-align:center">Le widget de coin, discret et sans intercepter les clics</p>
+    </div>
+  </div>
+  <div class="foot"><span>Créé par <b>Adeeb Khan</b></span><span>01</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">L’idée en quelques mots</div>
+  <h2><span data-i18n="Stop guessing. Get one sentence.">Fini les suppositions. Une phrase suffit.</span></h2>
+  <div class="body">
+    <div class="grid g4" style="align-items:stretch">
+      <div class="card"><h3>Gestionnaire des tâches</h3><p>Quelque chose accapare mon processeur?</p></div>
+      <div class="card"><h3>Invite de commandes</h3><p><code>ipconfig</code>, <code>netsh wlan</code>… que veulent dire ces chiffres?</p></div>
+      <div class="card"><h3>ping · tracert</h3><p>Certains sauts ne répondent pas. Est-ce grave?</p></div>
+      <div class="card r"><h3>Supposition</h3><p>« C’est sûrement le Wi-Fi. » Redémarrer le routeur et espérer.</p></div>
+    </div>
+    <div style="text-align:center;margin:1.6em 0;font-size:2em;color:var(--muted)">↓</div>
+    <div class="card b" style="text-align:center;padding:1.4em">
+      <p class="quote">« Le signal Wi-Fi est tombé à 38% quand les appels ont commencé à couper. Rapprochez-vous du point d’accès. »</p>
+      <p style="margin-top:.6em">AdeeboMeter fait ces vérifications discrètement chaque seconde, puis propose la solution.</p>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>01</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Deux façons de l’utiliser</div>
+  <h2><span data-i18n="A glance, or the whole story.">Un coup d’œil ou tous les détails.</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:2em">
+      <div class="card" style="padding:1.6em">
+        <span class="tag t-g">Toujours actif · très léger</span>
+        <h3 style="font-size:1.5em;margin:.5em 0" data-i18n="The corner widget">Le widget de coin</h3>
+        <ul class="clean"><li>Atténué à 30%, réglable jusqu’à 100%. Taille ajustable et affichage plus net au survol.</li><li>Les clics passent à la fenêtre située dessous</li><li>Se replie en petite barre si une fenêtre couvre le coin</li><li>CPU, mémoire, disque, réseau et bilan en une phrase</li></ul>
+      </div>
+      <div class="card b" style="padding:1.6em">
+        <span class="tag t-b">À la demande · icône de notification ou Ctrl+Alt+A</span>
+        <h3 style="font-size:1.5em;margin:.5em 0" data-i18n="The engineer view">La vue ingénieur</h3>
+        <ul class="clean"><li><b>Aperçu</b> · <b>Surveiller</b> · <b>Enquêter</b></li><li><b>Récit réseau</b> · <b>Retour arrière</b> · <b>Apprendre</b></li><li>Survolez un <b>?</b> pour une explication en mots simples</li><li>Esc, réduire ou X : retour au coin et mémoire libérée</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>02</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Conception</div>
+  <h2><span data-i18n="Five promises the whole design follows">Cinq engagements qui guident la conception</span></h2>
+  <div class="body">
+    <div class="grid g5">
+      <div class="card g"><div class="ic" style="background:var(--green)">¢</div><h3>Une application légère</h3><p>Quelques dizaines de petites tâches par minute. Les tâches lourdes fonctionnent seulement pendant leur consultation et s’arrêtent d’elles-mêmes.</p></div>
+      <div class="card b"><div class="ic" style="background:var(--blue)">◎</div><h3 data-i18n="Never listens">Aucun port à l’écoute</h3><p>Aucun serveur, compte ni recherche de mises à jour. À chaque démarrage, l’application vérifie qu’aucun port n’est en écoute.</p></div>
+      <div class="card a"><div class="ic" style="background:var(--amber)">✓</div><h3 data-i18n="No admin rights">Aucun droit d’administration</h3><p>Seules les données accessibles à un utilisateur Windows normal. Ce que Windows refuse reste indisponible.</p></div>
+      <div class="card p"><div class="ic" style="background:var(--purple)">{}</div><h3>Code source lisible</h3><p>Du C# lisible, compilé avec le compilateur inclus dans Windows. Rien d’autre à installer.</p></div>
+      <div class="card"><div class="ic" style="background:var(--ink)">☺</div><h3>Un compagnon</h3><p>Chaque message existe en version amicale et directe. La solution suit toujours la blague.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>03</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Vue d’ensemble</div>
+  <h2><span data-i18n="One heart, two faces.">Un moteur, deux interfaces.</span></h2>
+  <div class="body">
+    <svg viewbox="0 0 1100 420" style="width:100%;height:auto" role="img" aria-label="Windows feeds the Monitor, which produces a snapshot every second for the widget and the engineer view">
+      <defs><marker id="ar" markerwidth="10" markerheight="10" refx="8" refy="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A96A8"></path></marker></defs>
+      <rect x="150" y="10" width="800" height="86" rx="18" fill="#F6F8FB" stroke="#E3E8EF"></rect>
+      <text x="550" y="44" text-anchor="middle" font-size="20" font-weight="700" fill="#1B2330">Windows</text>
+      <text x="550" y="72" text-anchor="middle" font-size="15" fill="#4A5568">CPU · memory · disk counters · adapters · TCP/UDP tables · Wi-Fi API · event log · DNS · ping · ARP</text>
+      <line x1="550" y1="98" x2="550" y2="146" stroke="#8A96A8" stroke-width="2.5" marker-end="url(#ar)"></line>
+      <text x="565" y="128" font-size="14" fill="#6B7685">read only</text>
+      <rect x="310" y="150" width="480" height="110" rx="18" fill="#E8F0FE" stroke="#CFE0FC"></rect>
+      <text x="550" y="182" text-anchor="middle" font-size="20" font-weight="700" fill="#1F6FEB">Monitor — the only thing that always runs</text>
+      <rect x="335" y="198" width="205" height="46" rx="10" fill="#fff" stroke="#CFE0FC"></rect><text x="437" y="226" text-anchor="middle" font-size="15" fill="#1B2330">Sampler · every 1 s</text>
+      <rect x="560" y="198" width="205" height="46" rx="10" fill="#fff" stroke="#CFE0FC"></rect><text x="662" y="226" text-anchor="middle" font-size="15" fill="#1B2330">Probe · every 2–10 s</text>
+      <line x1="470" y1="262" x2="250" y2="320" stroke="#8A96A8" stroke-width="2.5" marker-end="url(#ar)"></line>
+      <line x1="630" y1="262" x2="850" y2="320" stroke="#8A96A8" stroke-width="2.5" marker-end="url(#ar)"></line>
+      <text x="550" y="300" text-anchor="middle" font-size="14" fill="#6B7685">a fresh "Snap" every second</text>
+      <rect x="60" y="324" width="380" height="84" rx="18" fill="#E6F4EA" stroke="#CDE9D5"></rect>
+      <text x="250" y="358" text-anchor="middle" font-size="18" font-weight="700" fill="#1A7F37">Corner widget</text>
+      <text x="250" y="384" text-anchor="middle" font-size="14" fill="#4A5568">paints the Snap as an image, faded, click-through</text>
+      <rect x="660" y="324" width="380" height="84" rx="18" fill="#F1EAFE" stroke="#E2D5FB"></rect>
+      <text x="850" y="358" text-anchor="middle" font-size="18" font-weight="700" fill="#8250DF">Engineer view</text>
+      <text x="850" y="384" text-anchor="middle" font-size="14" fill="#4A5568">built when opened, destroyed when you leave</text>
+    </svg>
+    <p style="text-align:center;margin-top:.8em">L’écran lit seulement des instantanés terminés. Son affichage ne ralentit jamais le moniteur.</p>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>04</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Le cycle d’AdeeboMeter</div>
+  <h2><span data-i18n="From start to exit, nothing left behind.">Du démarrage à la fermeture, tout est nettoyé.</span></h2>
+  <div class="body">
+    <div class="grid g5">
+      <div class="card"><span class="num">1</span><h3 data-i18n="Start">Commencer</h3><p>Une seule instance. Charge les paramètres et refuse de démarrer si un port est en écoute.</p></div>
+      <div class="card"><span class="num">2</span><h3 data-i18n="Run">Lancer</h3><p>Les deux fils d’exécution du moniteur démarrent. L’icône de notification et le widget apparaissent.</p></div>
+      <div class="card"><span class="num">3</span><h3>Ouvrir</h3><p>Cliquez sur l’icône ou utilisez Ctrl+Alt+A. Le moniteur accélère pendant la consultation.</p></div>
+      <div class="card"><span class="num">4</span><h3 data-i18n="Back">Retour</h3><p>Esc, réduire, X ou <i>Retour au coin</i>. La vue se ferme et libère sa mémoire.</p></div>
+      <div class="card"><span class="num">5</span><h3>Quitter</h3><p>Notification → Quitter. Les outils auxiliaires se ferment avec l’application et les captures temporaires sont supprimées.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>05</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Le moteur · moniteur</div>
+  <h2><span data-i18n="Two threads do all the watching.">Deux fils d’exécution assurent la surveillance.</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:1.6em">
+      <div class="card b" style="padding:1.4em">
+        <h3 style="font-size:1.35em">Échantillonnage chaque seconde</h3>
+        <ul class="clean"><li>CPU, mémoire, disque et octets réseau</li><li>État TCP/IP : retransmissions, réinitialisations, échecs, destinations inaccessibles et pertes UDP</li><li>Toutes les 10 s, il <b>évalue</b>: Correct / Occupé / Agir, avec une phrase</li><li>Facultatif : une ligne dans le fichier d’historique du jour, conservé 7 jours</li></ul>
+      </div>
+      <div class="card g" style="padding:1.4em">
+        <h3 style="font-size:1.35em">Sonde toutes les 2 à 10 secondes</h3>
+        <ul class="clean"><li>Ping du routeur, vérification Internet et DNS sans cache</li><li>Adaptateurs, VPN, DNS, MTU : chaque changement devient un événement</li><li>Surveillance de l’usurpation de passerelle : l’adresse MAC du routeur doit rester stable</li><li>Signal Wi-Fi, itinérance, coupures et causes indiquées par Windows</li><li>Applications et connexions; rythme accéléré pour les appels Teams</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>06</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Comment le bilan est établi</div>
+  <h2><span data-i18n="The first dot that isn&#x27;t green is where trouble starts.">Le premier point qui n’est pas vert indique le début du problème.</span></h2>
+  <div class="body">
+    <div class="path">
+      <div class="stop"><div class="c" style="background:var(--green)">PC</div><b>Votre PC</b><span>CPU, mémoire, disque</span></div>
+      <div class="stop"><div class="c" style="background:var(--green)">LAN</div><b>Wi-Fi / LAN</b><span>ping du routeur, signal</span></div>
+      <div class="stop"><div class="c" style="background:var(--amber)">ISP</div><b>ISP / VPN</b><span>premier saut public</span></div>
+      <div class="stop"><div class="c" style="background:#C4CCD8">DNS</div><b>DNS</b><span>une vraie recherche</span></div>
+      <div class="stop"><div class="c" style="background:#C4CCD8">RÉSEAU</div><b><span data-i18n="Internet">Internet</span></b><span>1.1.1.1 / 8.8.8.8</span></div>
+    </div>
+    <div class="grid g2" style="margin-top:1.4em">
+      <div class="card a"><h3>Les étapes suivantes subissent le problème</h3><p>Si le fournisseur est lent, DNS et Internet paraissent lents aussi. AdeeboMeter repère le premier maillon défaillant.</p></div>
+      <div class="card"><h3>Les indices de cause correspondent au moment <i>où</i> les événements ont eu lieu</h3><p>« Les retransmissions TCP (12/s) ont commencé quand le signal Wi-Fi est descendu à 40%. » Cliquez sur un point pour comprendre.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>07</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Vue ingénieur · visite</div>
+  <h2><span data-i18n="Eight places. Everything you&#x27;d dig out of a dozen tools.">Huit sections pour réunir une douzaine d’outils.</span></h2>
+  <div class="body">
+    <div class="grid g4">
+      <div class="card b"><h3>Aperçu</h3><p>Bilan, routeur, Internet, DNS, trafic et éléments à surveiller aujourd’hui.</p></div>
+      <div class="card"><h3>Surveiller</h3><p>Connexions (<b>Sniff</b> dans Wireshark), Wi-Fi ou câble, programmes actifs et capture en direct.</p></div>
+      <div class="card"><h3>Enquêter</h3><p>Le diagnostic repère la couche défaillante. Vous pouvez aussi choisir un problème, une destination ou un bilan du PC.</p></div>
+      <div class="card r"><h3 data-i18n="Security">Sécurité</h3><p>Un bilan : 42 vérifications de sécurité du PC, du réseau et des sites. Lecture seule; vous corrigez.</p></div>
+      <div class="card"><h3 data-i18n="Network story">Récit réseau</h3><p>Suivez une application du PC au serveur et mesurez chaque étape.</p></div>
+      <div class="card"><h3 data-i18n="Time machine">Retour arrière</h3><p>Revoyez chaque minute, la semaine en carte thermique, les données, les appels et les nouveaux appareils.</p></div>
+      <div class="card"><h3 data-i18n="Learn">Apprendre</h3><p>59 sujets, deux lignes et une image chacun, des couches réseau à svchost.</p></div>
+      <div class="card b"><h3 data-i18n="Toolbox">Boîte à outils</h3><p>Plus de 100 outils en cinq sections : réseau, appareils, laboratoire de trafic, ingénieur et Windows. Cherchez par question ou dans la liste; chaque outil propose un exemple.</p></div>
+      <div class="card g" style="display:none"><h3>Survolez le curseur ?</h3><p>332 termes et 72 programmes expliqués. Ctrl+K trouve ce qu’il vous faut.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>08</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Enquêter</div>
+  <h2><span data-i18n="Start from the problem, not the protocol.">Commencez par le problème.</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:1.6em">
+      <div class="card b" style="padding:1.4em">
+        <h3 style="font-size:1.35em;margin:0 0 .5em">Le diagnostic et six questions courantes</h3>
+        <ul class="clean"><li><b>Quel est le problème?</b> — vérifie chaque couche et s’arrête au premier problème</li><li>Internet est lent</li><li>Un site ou une appli ne s'ouvre pas</li><li>Les appels figent ou la voix devient robotique</li><li>Je me déconnecte sans arrêt</li><li>Ça fonctionne à la maison, mais pas sur VPN ou au travail</li><li>Mon PC est lent</li></ul>
+        <p style="margin-top:.8em">Chaque diagnostic utilise les vérifications existantes et présente quatre parties : <b>Constat · Observations · Points non établis · Prochain test</b>. Quand l’en-tête devient orange ou rouge, <b>Diagnostiquer ›</b> ouvre la vérification appropriée.</p>
+      </div>
+      <div class="card g" style="padding:1.4em">
+        <h3 style="font-size:1.35em;margin:0 0 .5em">Chaque fait indique sa source</h3>
+        <ul class="clean"><li><span class="tag t-g">mesuré</span> AdeeboMeter a mesuré le temps</li><li><span class="tag t-b">fourni par Windows</span> Windows l’a indiqué</li><li><span class="tag">vu dans les paquets</span> Wireshark l’a décodé</li><li><span class="tag">déduit</span> une conclusion tirée des autres données</li><li><span class="tag">indisponible</span> ce PC ne permet pas de le voir</li></ul>
+        <p style="margin-top:.8em"><b>Détails</b> (en haut à droite) ajoute les valeurs brutes et l’heure précise des relevés.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>09</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Sécurité</div>
+  <h2><span data-i18n="One checkup. 42 checks. You decide what to fix.">Un bilan, 42 vérifications. Vous décidez quoi corriger.</span></h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card b"><h3>Ce PC (27)</h3><p>Antivirus, pare-feu, BitLocker, Secure Boot, UAC, mises à jour, Windows pris en charge, SMBv1, RDP et NLA, ports ouverts, certificats racines ajoutés, fichier hosts, proxy, démarrage non signé, tâches à risque, Credential Guard, intégrité mémoire, verrouillage d’écran, Wi-Fi ouvert.</p></div>
+      <div class="card"><h3>Votre réseau (11)</h3><p>Sécurité Wi-Fi, réponses DNS modifiées, HTTPS déchiffré en chemin, indices d’usurpation ARP, second serveur DHCP, UPnP, administration en HTTP, Telnet / FTP, fuite DNS sur VPN, nouveaux appareils.</p></div>
+      <div class="card"><h3>Vos sites (4)</h3><p>Expiration des certificats, anciennes versions TLS acceptées, en-têtes de sécurité, SPF / DKIM / DMARC.</p></div>
+      <div class="card r"><h3>Les problèmes en premier</h3><p>À risque · à vérifier · correct · information. Cliquez pour relancer un test ou copiez la fiche pour un billet.</p></div>
+      <div class="card"><h3>Vous décidez de chaque correction</h3><p>« Ouvrir le paramètre » mène à Windows ou au routeur. AdeeboMeter ne change aucun réglage.</p></div>
+      <div class="card g"><h3>Vérifications de protection</h3><p>Lit les paramètres sans droits d’administrateur, sans essayer de mots de passe ni chercher vos données dans des fuites. Aucune analyse au-delà du routeur.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>10</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Boîte à outils</div>
+  <h2><span data-i18n="100+ tools. Type what you need.">Plus de 100 outils. Tapez ce qu’il vous faut.</span></h2>
+  <div class="body">
+    <div class="grid g4">
+      <div class="card b"><h3>Chemin et routage</h3><p>MTU par saut, MTR, trajet retour, route utilisée, passerelle (VRRP / HSRP), protocoles du segment, IPv6.</p></div>
+      <div class="card"><h3>La destination répond-elle?</h3><p>Ports, toutes les IP d’un nom, requêtes HTTP, STUN, RDP, LDAP / AD, courriel STARTTLS, RADIUS, TACACS+.</p></div>
+      <div class="card b"><h3>Traffic Lab</h3><p>Trafic de test : taille ICMP, DF, TTL, charges UDP et TCP, ARP, options DHCP, trap, NetFlow, iperf3. Quantité limitée, une destination.</p></div>
+      <div class="card"><h3>Noms et heure</h3><p>dig (HTTPS, DNSSEC, TLSA, DoH), délégation depuis la racine, DNS chiffré, fichier hosts, NTP.</p></div>
+      <div class="card"><h3>Appareils réseau</h3><p>SNMP v2c / v3, noms, dossiers partagés, commandes ssh / scp à copier, balayage ping.</p></div>
+      <div class="card"><h3>Windows</h3><p>802.1X, contrôleurs de domaine, stratégies de groupe, certificats, PFX, CSR, empreintes, règles pare-feu et services en échec.</p></div>
+      <div class="card"><h3>Le PC, dans État</h3><p>Mémoire, disque, chaleur, fenêtres figées, fuites, plantages et batterie. Le nettoyage rapide indique quoi examiner; vous agissez.</p></div>
+      <div class="card g"><h3>Toujours client</h3><p>Fonctionne à votre demande, sans port en écoute, connexion à un compte ni paquet de routage envoyé.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>11</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">SNMP</div>
+  <h2><span data-i18n="Ask a switch or router - in plain words.">Interrogez un commutateur ou un routeur, en mots simples.</span></h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card b"><h3>Des vues qui répondent à vos questions</h3><p>Instantané, interfaces en difficulté, changements depuis le dernier test, trafic, CPU, LLDP, capteurs, recherche MAC, VLAN, PoE, LAG, imprimante, UPS.</p></div>
+      <div class="card"><h3>Parcourir les données</h3><p>Tout OID ou nom MIB, jusqu’à 2,000 valeurs à rythme limité, regroupées par index avec les colonnes utiles en premier.</p></div>
+      <div class="card"><h3>Vos propres MIB</h3><p>Placez les fichiers .mib du fabricant dans un dossier. Le lecteur indexe noms, tableaux et descriptions une fois, sans exécuter leur contenu.</p></div>
+      <div class="card"><h3>Chercher, puis parcourir</h3><p>Tapez <i>température</i>, <i>optique</i> ou <i>ventilateur</i> pour trouver les objets et leurs descriptions. Un clic parcourt le tableau.</p></div>
+      <div class="card"><h3>v2c et v3</h3><p>Sans authentification, avec MD5 / SHA-1 / SHA-256, ou confidentialité AES-128. Clés MD5 et SHA-1 vérifiées avec les vecteurs RFC 3414; SHA-256 avec un calcul indépendant. Données masquées et limitées à la session.</p></div>
+      <div class="card g"><h3>Toujours en lecture seule</h3><p>GET et GETBULK seulement. Aucune valeur modifiée ni écoute de traps. Une valeur inaccessible s’affiche n/a, jamais 0.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>12</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Parcours réseau · Apprendre</div>
+  <h2><span data-i18n="Follow one app from your PC to the server.">Suivez une application du PC au serveur.</span></h2>
+  <div class="body">
+    <div class="card" style="padding:1.2em 1.4em;font-size:1.05em;text-align:center;letter-spacing:.01em"><b>Teams</b> → Windows <span style="color:var(--muted)">(socket)</span> → Wi-Fi → routeur → fournisseur → Internet → <b>Microsoft</b></div>
+    <div class="grid g3" style="margin-top:1.2em">
+      <div class="card"><h3>Prêt à l’ouverture</h3><p>L’application la plus active est choisie automatiquement. Cliquez sur une case pour comprendre.</p></div>
+      <div class="card"><h3>Où passe le temps</h3><p>Nom, connexion, chiffrement, premier octet dans une barre; vrais paquets avec Wireshark.</p></div>
+      <div class="card"><h3>Apprendre d’un coup d’œil</h3><p>Deux lignes, une image et une explication en cas de problème. Les détails théoriques se lisent ailleurs.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>13</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Votre Wi-Fi et votre câble</div>
+  <h2><span data-i18n="What your radio and your cable are really doing.">Ce que font vraiment votre connexion radio et votre câble.</span></h2>
+  <div class="body" style="flex-direction:row;gap:2em;align-items:center">
+    <div style="flex:1.1">
+      <div class="grid g2">
+        <div class="card b"><h3>Radio</h3><p>Point d’accès exact, 2.4 / 5 / 6 GHz, canal, <b>largeur</b> (20–160 MHz), génération Wi-Fi, signal en % et dBm, <b>aide à l’itinérance</b> (802.11k/v/r), lus dans les balises du point d’accès.</p></div>
+        <div class="card a"><h3>Qui utilise les ondes</h3><p>Le nombre de points d’accès sur votre canal ou les canaux voisins, et l’occupation des ondes.</p></div>
+        <div class="card"><h3>Le journal de Windows</h3><p>Chaque coupure Wi-Fi sur 24 h, avec la cause indiquée par Windows, et les problèmes DHCP.</p></div>
+        <div class="card g"><h3 data-i18n="Cable">Câble</h3><p>Vitesse négociée (100 Mb/s peut indiquer un mauvais câble) et <b>Trouver mon port de commutateur</b>: commutateur, port et VLAN obtenus par LLDP/CDP, sans envoi.</p></div>
+      </div>
+    </div>
+    <div class="hide-m card" style="flex:.9;background:#fff">
+      <div style="font-size:.75em;font-weight:700;letter-spacing:.1em;color:var(--muted)">AUTRES UTILISATEURS DES ONDES · 5 GHZ</div>
+      <svg viewbox="0 0 420 200" style="width:100%;height:auto;margin-top:.6em" aria-label="Channel map example">
+        <line x1="10" y1="170" x2="410" y2="170" stroke="#E3E8EF" stroke-width="2"></line>
+        <g font-size="13" text-anchor="middle" fill="#4A5568">
+          <rect x="30" y="80" width="36" height="90" rx="6" fill="#C4CCD8"></rect><text x="48" y="190">36</text><text x="48" y="72">3</text>
+          <rect x="95" y="40" width="36" height="130" rx="6" fill="#1F6FEB"></rect><text x="113" y="190" fill="#1F6FEB" font-weight="700">44</text><text x="113" y="32">2</text>
+          <rect x="160" y="70" width="36" height="100" rx="6" fill="#BF8700"></rect><text x="178" y="190">48</text><text x="178" y="62">4</text>
+          <rect x="225" y="120" width="36" height="50" rx="6" fill="#C4CCD8"></rect><text x="243" y="190">100</text><text x="243" y="112">1</text>
+          <rect x="290" y="100" width="36" height="70" rx="6" fill="#C4CCD8"></rect><text x="308" y="190">149</text><text x="308" y="92">2</text>
+          <rect x="355" y="130" width="36" height="40" rx="6" fill="#C4CCD8"></rect><text x="373" y="190">157</text><text x="373" y="122">1</text>
+        </g>
+      </svg>
+      <p style="font-size:.8em;margin-top:.4em"><span class="tag t-b">votre canal</span> <span class="tag t-a">chevauche votre canal</span> <span class="tag" style="background:#EEF1F5;color:#4A5568">autres</span> — barre : signal le plus fort; nombre : points d’accès</p>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>14</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Ce qui tourne</div>
+  <h2><span data-i18n="Every program, with a story — not just a name.">Chaque programme expliqué.</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:2em;align-items:center">
+      <div>
+        <p class="lead" style="margin-bottom:1em">Cliquez sur un programme pour obtenir cinq réponses :</p>
+        <ul class="clean" style="font-size:1.1em"><li><b>Ce qu’il fait</b></li><li><b>Fonctionnement</b></li><li><b>Pourquoi il est utile</b></li><li><b>Ce qui arrive sans lui</b></li><li><b>Puis-je le fermer?</b></li></ul>
+        <p style="margin-top:1em">Pour les programmes absents du guide, description, éditeur et dossier viennent du fichier. AdeeboMeter <b>explique leur rôle sans les fermer.</b></p>
+      </div>
+      <div class="grid" style="gap:.7em">
+        <div class="card g" style="display:flex;justify-content:space-between;align-items:center"><span><b style="color:var(--ink)">Spotify</b> · votre application</span><span class="tag t-g">peut être fermé</span></div>
+        <div class="card a" style="display:flex;justify-content:space-between;align-items:center"><span><b style="color:var(--ink)">OneDrive</b> · synchronise vos fichiers</span><span class="tag t-a">à laisser ouvert</span></div>
+        <div class="card r" style="display:flex;justify-content:space-between;align-items:center"><span><b style="color:var(--ink)">svchost</b> · services Windows</span><span class="tag t-r">nécessaire à Windows</span></div>
+        <div class="card p" style="display:flex;justify-content:space-between;align-items:center"><span><b style="color:var(--ink)">Client VPN</b> · outil de l’organisation</span><span class="tag t-p">géré par le service TI</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>15</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Vérifier une destination</div>
+  <h2><span data-i18n="Eight steps, from the name to the last hop.">Huit étapes, du nom au dernier saut.</span></h2>
+  <div class="body">
+    <div class="grid g4">
+      <div class="card"><span class="num">1</span><h3>DNS</h3><p>Recherches réelles, sans cache. Une deuxième réponse de 1.1.1.1 aide à repérer les filtres.</p></div>
+      <div class="card"><span class="num">2</span><h3>Route</h3><p>L’adaptateur que Windows utiliserait, trouvé sans envoyer de données.</p></div>
+      <div class="card"><span class="num">3</span><h3>Ping</h3><p>Quatre pings pour mesurer délai et pertes.</p></div>
+      <div class="card"><span class="num">4</span><h3>TCP</h3><p>Mesure du temps de négociation TCP en trois étapes vers votre port.</p></div>
+      <div class="card"><span class="num">5</span><h3>TLS</h3><p>TLS 1.2 / 1.3 seulement, validé par Windows. Si la connexion n’est pas fiable, rien ne part.</p></div>
+      <div class="card"><span class="num">6</span><h3>HTTP</h3><p>Une requête HEAD : état et délai avant le premier octet.</p></div>
+      <div class="card"><span class="num">7</span><h3>MTU du chemin</h3><p>Des pings sans fragmentation trouvent la taille maximale des paquets.</p></div>
+      <div class="card"><span class="num">8</span><h3>Chemin</h3><p>Trace de type MTR : 3 passages par saut, tous les sauts en parallèle.</p></div>
+    </div>
+    <p style="margin-top:1em;text-align:center">Si une vérification échoue, le <b>test de page de connexion</b> repère les portails d’hôtel ou d’aéroport. Épinglez jusqu’à 5 destinations, puis <b>Tout exécuter</b>.</p>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>16</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Le parcours réseau</div>
+  <h2><span data-i18n="Who carries your traffic — and what&#x27;s in the way.">Qui transporte votre trafic et ce qui le bloque.</span></h2>
+  <div class="body">
+    <svg viewbox="0 0 1100 120" style="width:100%;height:auto" aria-label="Example path: your PC, your network, Rogers, NTT, Wikipedia">
+      <g font-size="16" text-anchor="middle">
+        <rect x="0" y="30" width="170" height="60" rx="14" fill="#E6F4EA"></rect><text x="85" y="66" fill="#1A7F37" font-weight="700">Votre PC</text>
+        <rect x="230" y="30" width="170" height="60" rx="14" fill="#E6F4EA"></rect><text x="315" y="58" fill="#1A7F37" font-weight="700">Your network</text><text x="315" y="78" fill="#4A5568" font-size="13">192.168.x · NAT</text>
+        <rect x="460" y="30" width="170" height="60" rx="14" fill="#E8F0FE"></rect><text x="545" y="58" fill="#1F6FEB" font-weight="700">Rogers</text><text x="545" y="78" fill="#4A5568" font-size="13">Toronto?</text>
+        <rect x="690" y="30" width="170" height="60" rx="14" fill="#F1EAFE"></rect><text x="775" y="66" fill="#8250DF" font-weight="700">NTT</text>
+        <rect x="920" y="30" width="170" height="60" rx="14" fill="#FFF4D6"></rect><text x="1005" y="66" fill="#7D5A00" font-weight="700">Wikipedia</text>
+        <g stroke="#8A96A8" stroke-width="2.5"><line x1="172" y1="60" x2="228" y2="60"></line><line x1="402" y1="60" x2="458" y2="60"></line><line x1="632" y1="60" x2="688" y2="60"></line><line x1="862" y1="60" x2="918" y2="60"></line></g>
+        <text x="660" y="18" fill="#6B7685" font-size="13">networks hand over here (BGP decides)</text>
+      </g>
+    </svg>
+    <div class="grid g4" style="margin-top:1em">
+      <div class="card"><h3>NAT</h3><p>Double NAT et NAT opérateur (100.64.x.x) repérés à partir des adresses des sauts.</p></div>
+      <div class="card"><h3>Tunnels</h3><p>Selon la taille des paquets : 1492 indique PPPoE; plus petit peut indiquer VPN, LTE ou satellite.</p></div>
+      <div class="card"><h3>Pare-feu</h3><p>Un refus très rapide peut venir d’un équipement intermédiaire. Si le ping répond mais pas le port, le trafic peut être filtré.</p></div>
+      <div class="card"><h3>Et plus</h3><p>Sauts répartis, changements de route, hausses de délai, tunnels cachés et retour; les recherches en ligne indiquent aussi le réseau de chaque saut.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>17</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Capture en direct · historique</div>
+  <h2><span data-i18n="Deep when you ask. Silent when you don&#x27;t.">Détaillé à votre demande. Discret le reste du temps.</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:1.6em">
+      <div class="card b" style="padding:1.4em">
+        <span class="tag t-b">À votre demande · arrêt après 15 min</span>
+        <h3 style="font-size:1.35em;margin:.5em 0">Capture en direct (moteur Wireshark)</h3>
+        <ul class="clean"><li>Composition du trafic et principales conversations identifiées</li><li>Alertes expertes Wireshark et octets par application</li><li><b>Qualité des appels :</b> pertes RTP, gigue (RFC 3550), score MOS (modèle E de l’ITU-T); l’audio reste chiffré</li><li><b>DHCP non autorisé :</b> deux serveurs répondent sur le même réseau</li></ul>
+      </div>
+      <div class="card g" style="padding:1.4em">
+        <span class="tag t-g">Historique sur ce PC · 3 jours par défaut (1–90)</span>
+        <h3 style="font-size:1.35em;margin:.5em 0" data-i18n="Time machine">Retour arrière</h3>
+        <ul class="clean"><li><b>Revoir :</b> glissez jusqu’à une minute pour voir les points, les mesures et les changements</li><li><b>La semaine :</b> 7 × 24 cases; cliquez pour revoir une heure</li><li>Données par réseau, ralentissements inhabituels, résumés d’appels et nouveaux appareils</li><li>Une ligne par minute, anciens jours compressés, plus vieux supprimés chaque nuit</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>18</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker"><span data-i18n="Privacy">Confidentialité</span></div>
+  <h2><span data-i18n="What leaves your PC — and what never does.">Les données qui quittent votre PC et celles qui y restent.</span></h2>
+  <div class="body">
+    <table>
+      <tr><th>Quoi</th><th>Quand</th><th>Destination</th></tr>
+      <tr><td>Ping du routeur</td><td>toutes les 2–10 s (Paramètres)</td><td>votre routeur</td></tr>
+      <tr><td>Vérification Internet et DNS</td><td>toutes les 15–60 s, ou désactivée</td><td>1.1.1.1 / 8.8.8.8 et votre serveur DNS</td></tr>
+      <tr><td>Nom du fournisseur</td><td>une fois par réseau</td><td>trace de 6 sauts vers 1.1.1.1 et recherche DNS inverse</td></tr>
+      <tr><td>Vérifications que vous lancez</td><td>quand vous lancez Vérifier, Diagnostiquer ou Mesurer chaque étape</td><td>vers la destination demandée, plus une question DNS à 1.1.1.1</td></tr>
+      <tr><td>Vitesse DNS et surveillance épinglée</td><td>à votre demande; surveillance toutes les 30 s</td><td>1.1.1.1, 8.8.8.8, 9.9.9.9 et la destination épinglée</td></tr>
+      <tr><td>Vérification de page de connexion</td><td>seulement après un échec, désactivable</td><td>msftconnecttest.com, la page utilisée par Windows</td></tr>
+      <tr><td>Boîte à outils</td><td>seulement quand vous lancez l’outil</td><td>l’adresse saisie ou affichée par l’outil</td></tr>
+      <tr><td>Recherches en ligne</td><td>sur activation, pour 5 min–3 h, puis arrêt automatique</td><td>IP publiques seulement → RIPEstat, PeeringDB</td></tr>
+      <tr><td>Détails Wi-Fi et capture en direct</td><td>—</td><td>rien ne sort; données demandées à Windows localement</td></tr>
+    </table>
+    <div class="card r" style="margin-top:1.2em;text-align:center"><b style="color:var(--red)">Jamais :</b> service infonuagique · compte · télémétrie · programme de mise à jour · publicités · rapports de plantage envoyés · ports en écoute</div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>19</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Sécurité</div>
+  <h2><span data-i18n="Hardened by design, proven by checks.">Conçu pour la sécurité, validé par des vérifications.</span></h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><h3>Aucun interpréteur de commandes</h3><p>Outils Windows lancés par leur chemin System32 complet, avec arguments fixes, délai limite et objet de travail fermé avec l’application.</p></div>
+      <div class="card"><h3>Entrées validées</h3><p>Destinations validées avant chaque exécution. Captures limitées au dossier d’AdeeboMeter.</p></div>
+      <div class="card"><h3>TLS correctement validé</h3><p>TLS 1.2 / 1.3 seulement. Windows valide les certificats; rien n’est transmis sur une connexion non fiable.</p></div>
+      <div class="card"><h3>DLL de System32 seulement</h3><p>Pour tout le processus : une DLL déposée près de l’EXE dans Téléchargements n’est jamais chargée.</p></div>
+      <div class="card"><h3>Moins de points d’attaque</h3><p>Aucun programme de mise à jour, sérialiseur binaire, analyseur XML ni secret dans le code. Les secrets RADIUS, communautés SNMP et mots de passe v3 sont masqués et ne sont pas conservés.</p></div>
+      <div class="card b"><h3>Compilation vérifiable</h3><p>Compilé par GitHub à partir du code source, actions liées à des commits précis. Compilation en lecture seule, signature de provenance séparée, empreintes SHA-256 et 0 problème d’analyse.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>20</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Rester léger</div>
+  <h2><span data-i18n="A penny in the background.">Très léger en arrière-plan.</span></h2>
+  <div class="body">
+    <div class="grid g4" style="text-align:center">
+      <div class="card g"><div class="big" style="color:var(--green)">~0.5%</div><p style="margin-top:.5em">d’un cœur de processeur avec le widget seulement</p></div>
+      <div class="card b"><div class="big" style="color:var(--blue)">2–3%</div><p style="margin-top:.5em">avec la vue ingénieur ouverte; zéro dès sa fermeture</p></div>
+      <div class="card"><div class="big">80 MB</div><p style="margin-top:.5em">de mémoire prévue, affichée en direct au bas de l’écran</p></div>
+      <div class="card a"><div class="big" style="color:var(--amber)">8·67·~100</div><p style="margin-top:.5em">vérifications par minute : Penny · Balanced · Gamer (avec pings des serveurs de jeu)</p></div>
+    </div>
+    <div class="grid g3" style="margin-top:1.2em">
+      <div class="card"><h3>Mémoire stable</h3><p>Tampons fixes et listes limitées : 300 événements, 3,000 conversations, 7 jours.</p></div>
+      <div class="card"><h3>Affichage mis à jour au besoin</h3><p>Le widget vérifie la souris 20 fois/s près du coin, 4 fois/s ailleurs et 2 fois/s quand il est caché.</p></div>
+      <div class="card"><h3>Aucune fuite</h3><p>Fenêtres, minuteries, images bitmap et outils auxiliaires sont libérés à la fermeture, puis vérifiés par l’autotest.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>21</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Des vérifications concrètes</div>
+  <h2><code style="font-size:.8em">AdeeboMeter.exe --selftest</code></h2>
+  <div class="body" style="flex-direction:row;gap:2em;align-items:center">
+    <div style="flex:1">
+      <p class="lead">71 vérifications sur votre PC, résultats écrits dans <code>AdeeboMeter-selftest.txt</code>:</p>
+      <ul class="clean" style="margin-top:.8em"><li>Compteurs, tables de sockets et lecture DNS fonctionnels</li><li><b>Aucun port à l’écoute</b></li><li>Destinations invalides refusées</li><li>La vue ingénieur s’ouvre en moins de 2 secondes</li><li><b>Aucune fuite de handles</b> sur 30 cycles d’ouverture et de fermeture</li><li>Chaque libellé est expliqué</li><li>Analyseurs validés sur des exemples connus : Wi-Fi, LLDP/CDP, journal d’événements, RTP, DNS, SNMP, clés v3 et MIB</li><li>Mémoire sous la limite de 80 Mo</li><li><code>--deeptest</code>: entrées malveillantes dans chaque outil, répétitions pour repérer les fuites et interface sous charge</li></ul>
+    </div>
+    <div class="hide-m" style="flex:.9;background:#151B26;border-radius:1em;padding:1.2em 1.4em;font-size:.82em;line-height:1.7;color:#C9D3E1">
+      <div class="mono" style="color:#8A96A8">Autotest AdeeboMeter 1.1.5</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  aucun port en écoute</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  tables de sockets</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  validation des destinations</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  vue ingénieur ouverte en moins de 1 s</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  30 ouvertures et fermetures sans fuite</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  éléments d’information Wi-Fi</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  analyseur LLDP / CDP</div>
+      <div class="mono"><span style="color:#3FB950">RÉUSSI</span>  qualité d’appel RTP</div>
+      <div class="mono" style="color:#8A96A8">…</div>
+      <div class="mono" style="color:#3FB950;font-weight:700">TOUT A RÉUSSI</div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>22</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Les limites</div>
+  <h2><span data-i18n="What Windows doesn&#x27;t let us do without admin or the cloud.">Les limites de Windows sans droits d’administrateur ni service infonuagique.</span></h2>
+  <div class="body">
+    <div class="grid g4">
+      <div class="card"><h3>Numéros AS et données BGP</h3><p>Exige un service Internet, accessible seulement par les recherches en ligne activées pour une durée limitée. Sinon, les noms des routeurs donnent des indices.</p></div>
+      <div class="card"><h3>Traceroute TCP / UDP</h3><p>Exige des sockets bruts et les droits d’administrateur. Les traces utilisent ICMP.</p></div>
+      <div class="card"><h3>RTT par connexion</h3><p>L’activation exige les droits d’administrateur. Le trafic par application vient donc de la capture en direct.</p></div>
+      <div class="card"><h3>Cache DNS</h3><p>Réservé aux administrateurs sur certaines versions de Windows; les noms viennent alors de la capture.</p></div>
+      <div class="card"><h3>Tests de débit</h3><p>Seulement vers votre propre serveur (iperf3, bufferbloat, TWAMP-light). AdeeboMeter n’ouvre aucun port en écoute.</p></div>
+      <div class="card"><h3>Dans un tunnel ou chez le fournisseur</h3><p>Seulement déduit des mesures, impossible à voir directement.</p></div>
+      <div class="card"><h3>Marquage DSCP</h3><p>Windows efface généralement le marquage demandé, sauf si une politique QoS l’autorise. Une capture permet de le confirmer.</p></div>
+      <div class="card"><h3>Écrans de mises à l’échelle différentes</h3><p>Entre écrans à 100% et 200%, Windows redimensionne la fenêtre; l’image peut être un peu moins nette.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>23</span></div>
+</div></section></div>
+<div class="frame"><section class="slide"><div class="in">
+  <div class="kicker">Télécharger</div>
+  <h2><span data-i18n="One file. It installs itself.">Un fichier qui s’installe tout seul.</span></h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card b"><span class="num">1</span><h3 data-i18n="Download">Télécharger</h3><p>Ouvrez le ZIP téléchargé sur ce site.</p></div>
+      <div class="card g"><span class="num">2</span><h3>Double-cliquez sur AdeeboMeter.exe</h3><p>Choisissez <b>Installer</b>. Installation pour votre compte seulement : menu Démarrer et Paramètres › Applications, sans droits d’administrateur.</p></div>
+      <div class="card"><span class="num">3</span><h3>Regardez dans le coin</h3><p>Il fonctionne déjà en bas à droite. Cliquez sur l’icône ou appuyez sur Ctrl+Alt+A.</p></div>
+    </div>
+    <div class="grid g3" style="margin-top:1.2em">
+      <div class="card"><h3>Mettre à jour</h3><p>Lancez le nouvel EXE et choisissez <b>Mettre à jour</b>. Vos paramètres sont conservés et l’ancienne version est remplacée.</p></div>
+      <div class="card"><h3 data-i18n="Remove">Retirer</h3><p>Paramètres › Applications ou menu de notification. Dossier, paramètres et historique sont supprimés.</p></div>
+      <div class="card"><h3>Ou utilisez-le sans installation</h3><p><i>Exécuter depuis ce dossier</i> le garde portable. Le code est signé; comme le certificat est nouveau, SmartScreen peut afficher <i>More info → Run anyway</i>.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>AdeeboMeter</b> · Theory of Everything</span><span>24</span></div>
+</div></section></div>
+<div class="frame"><section class="slide end"><div class="in">
+  <div class="kicker">AdeeboMeter</div>
+  <div class="body">
+    <h2 class="h1" style="color:#fff"><span data-i18n="Is it me or the network?">C’est mon appareil ou le réseau?</span></h2>
+    <p class="lead" style="margin-top:.8em;font-size:1.5em">Vous savez maintenant, d’un coup d’œil.</p>
+    <p style="margin-top:2em;font-size:1.15em">Aucun service infonuagique, aucune télémétrie, aucun port en écoute.<br>Chaque paquet envoyé est indiqué et peut être désactivé.</p>
+    <p style="margin-top:2em" class="mono">adeebometer.com</p>
+  </div>
+  <div class="foot" style="color:#BFD4FF"><span>Créé par <b style="color:#fff">Adeeb Khan</b></span><span>24</span></div>
+</div></section></div>
+    </div>
+    <button class="arrow next" aria-label="Diapositive suivante" data-i18n-label="Next slide"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></button>
+    <div class="deckbar">
+      <span class="counter">1 / 26</span>
+      <div class="progress"><i></i></div>
+      <button class="iconbtn full"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>Plein écran</button>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="sh wrap">
+    <div class="k" data-i18n="Install">Installer</div>
+    <h2 data-i18n="Ten seconds. No wizard.">Dix secondes. C’est installé.</h2>
+    <p data-i18n="One file that installs itself — just for you.">Un fichier qui s’installe pour votre compte.</p>
+  </div>
+  <div class="wrap"><div class="steps">
+    <div class="step"><b>1</b><h3 data-i18n="Download">Télécharger</h3><p data-i18n="Get the zip and open it. Inside: AdeeboMeter.exe and the Theory of Everything.">Téléchargez le ZIP et ouvrez-le. Il contient AdeeboMeter.exe et le document Theory of Everything.</p></div>
+    <div class="step"><b>2</b><h3 data-i18n="Double-click, Install">Double-cliquez, puis installez</h3><p data-i18n="It goes in for you only — a Start menu entry, an entry in Settings › Apps, no admin rights.">L’installation se fait pour votre compte seulement : menu Démarrer et Paramètres › Applications, sans droits d’administrateur.</p></div>
+    <div class="step"><b>3</b><h3 data-i18n="Look at the corner">Regardez dans le coin</h3><p data-i18n="It&#x27;s already there, bottom-right. Click the tray icon or press Ctrl+Alt+A for the full story.">Il est déjà là, en bas à droite. Cliquez sur l’icône de notification ou appuyez sur Ctrl+Alt+A pour tout voir.</p></div>
+  </div>
+  <p class="note"><span data-i18n="Download it only from this site — fake copies of network tools are a favourite trick of malicious ads. AdeeboMeter is code-signed by">Téléchargez-le seulement sur ce site. Les publicités malveillantes proposent souvent de faux outils réseau. Le code d’AdeeboMeter est signé par</span> <i>Open Source Developer MdAhasanul Adeeb Khan</i><span data-i18n="; while the certificate is new, Windows may still say">; comme le certificat est nouveau, Windows peut encore afficher</span> <i>“Windows protected your PC”</i> <span data-i18n="— choose">— choisissez</span> <b>More info → Run anyway</b><span data-i18n=". Every release is built by GitHub from the public source, with its SHA256 fingerprint and build provenance (">. Chaque version est compilée par GitHub à partir du code source public, avec son empreinte SHA256 et sa preuve de provenance (</span><code>gh attestation verify AdeeboMeter.exe -R adeeb111/AdeeboMeter</code><span data-i18n="). To remove it: Settings › Apps › AdeeboMeter › Uninstall.">). Pour le désinstaller : Paramètres › Applications › AdeeboMeter › Désinstaller.</span></p>
+  </div>
+</section>
+
+<section id="policy">
+  <div class="sh wrap">
+    <div class="k" data-i18n="Policies">Politiques</div>
+    <h2 data-i18n="Code signing and privacy.">Signature du code et confidentialité.</h2>
+  </div>
+  <div class="wrap"><div class="steps">
+    <div class="step"><b>✓</b><h3 data-i18n="Code signing policy">Politique de signature du code</h3><p><span data-i18n="From 1.1.5, releases are code-signed by">Depuis la version 1.1.5, le code est signé par</span> <i>Open Source Developer MdAhasanul Adeeb Khan</i> <span data-i18n="with a Certum open-source certificate, timestamped so signatures outlive it. Every release file is built by this project&#x27;s GitHub Actions workflow from the public source — never on a personal PC — with every action pinned to an exact commit; the author then signs that exe and nothing else, and the release lists the fingerprint of the exe exactly as GitHub built it (covered by build provenance) beside the signed one. Each release is approved by hand. Team roles (committer, reviewer, approver):">avec un certificat libre Certum. L’horodatage permet de valider les signatures après son expiration. Chaque fichier de version est compilé par le processus GitHub Actions du projet à partir du code public, avec chaque action liée à un commit précis. L’auteur signe ensuite le fichier EXE produit. La version fournit son empreinte avant signature, couverte par la preuve de provenance, et après signature. Chaque version est approuvée manuellement. Rôles de commit, de révision et d’approbation :</span> <a href="https://github.com/adeeb111">adeeb111</a><span data-i18n=", with multi-factor authentication.">, avec authentification multifacteur.</span></p></div>
+    <div class="step"><b>✓</b><h3 data-i18n="Privacy policy">Politique de confidentialité</h3><p><span data-i18n="AdeeboMeter will not transfer any information to other networked systems unless you ask it to. It never listens, has no telemetry, no account and no updater. Checks and tools contact only what you typed or what they name on screen;">AdeeboMeter envoie des données à d’autres systèmes réseau seulement à votre demande. Aucun port en écoute, aucune télémétrie, aucun compte ni programme de mise à jour. Les vérifications et outils contactent seulement l’adresse saisie ou affichée;</span> <i>À propos</i> <span data-i18n="lists every packet your settings send.">indique chaque paquet envoyé selon vos paramètres.</span></p></div>
+    <div class="step"><b>✓</b><h3 data-i18n="Online lookups">Recherches en ligne</h3><p><span data-i18n="Off by default. Switched on for 5 minutes to 3 hours, they send public IP addresses only — never private addresses or names you typed — to">Désactivées au départ. Activées pour 5 minutes à 3 heures, elles transmettent seulement les adresses IP publiques aux services suivants :</span> <a href="https://www.ripe.net/about-us/legal/ripe-ncc-privacy-statement/">RIPEstat</a> <span data-i18n="and">et</span> <a href="https://www.peeringdb.com/aup">PeeringDB</a><span data-i18n=", then turn themselves off. Everything else stays on your PC; uninstalling removes it.">, puis s’arrêtent automatiquement. Le reste demeure sur votre PC et est supprimé à la désinstallation.</span></p></div>
+  </div></div>
+</section>
+
+<section id="feedback">
+  <div class="sh wrap">
+    <div class="k"><span data-i18n="Suggestion box">Boîte à suggestions</span></div>
+    <h2><span data-i18n="Make it better.">Aidez-nous à l’améliorer.</span></h2>
+    <p><span data-i18n="An idea, something that broke, a question — every message is read.">Une idée, un problème, une question : chaque message est lu.</span></p>
+  </div>
+  <div class="wrap">
+    <form class="box" data-kind="idea" onsubmit="return false">
+      <div class="seg" role="group" aria-label="De quoi s’agit-il?" data-i18n-label="What is it?">
+        <button type="button" data-k="idea" aria-pressed="true"><span data-i18n="Idea">Idée</span></button>
+        <button type="button" data-k="problem" aria-pressed="false"><span data-i18n="Problem">Problème</span></button>
+        <button type="button" data-k="question" aria-pressed="false"><span data-i18n="Question">Question</span></button>
+      </div>
+      <label class="fld"><span><span data-i18n="In a few words">En quelques mots</span></span><input id="fb-title" maxlength="120" placeholder="Afficher le canal Wi-Fi dans le widget"></label>
+      <label class="fld"><span id="fb-body-label"><span data-i18n="Tell us more">Dites-nous-en plus</span></span><textarea id="fb-body" maxlength="4000" placeholder="Que voulez-vous ajouter et à quoi cela servirait-il?"></textarea></label>
+      <label class="fld only-problem"><span><span data-i18n="Your Windows and AdeeboMeter version (optional)">Versions de Windows et d’AdeeboMeter (facultatif)</span></span><input id="fb-env" maxlength="120" placeholder="Windows 11 23H2 · AdeeboMeter 1.1"></label>
+      <div class="send">
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="fbHuman" data-size="flexible"></div>
+        <p class="fine" id="fb-note"><span data-i18n="Goes straight to Adeeb — no account needed. Nothing is sent until you press Send.">Envoyé directement à Adeeb, sans compte. Rien ne part avant que vous appuyiez sur Envoyer.</span></p>
+        <button class="btn primary" id="fb-send" type="button" disabled><span data-i18n="Send →">Envoyer →</span></button>
+      </div>
+    </form>
+    <div class="community">
+      <a href="https://github.com/adeeb111/AdeeboMeter/discussions"><span data-i18n="Browse ideas &amp; questions">Voir les idées et questions</span></a>
+      <a href="https://github.com/adeeb111/AdeeboMeter/issues"><span data-i18n="Known problems">Problèmes connus</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="final"><div class="wrap">
+  <h2><span data-i18n="Now you know.">Vous savez maintenant.</span></h2>
+  <p><span data-i18n="In one glance.">D’un coup d’œil.</span></p>
+  <div class="cta">
+    <a class="btn primary dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 20h14"></path></svg>Télécharger pour Windows</a>
+    <a class="store" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ?mode=direct" rel="noopener" aria-label="Obtenir dans le Microsoft Store" data-i18n-label="Get it from Microsoft Store"><img src="https://get.microsoft.com/images/en-us%20dark.svg" width="180" height="65" alt="Obtenir dans le Microsoft Store"></a>
+  </div>
+  <p class="meta"><span class="ver"><span data-i18n="Version 1.1.5">Version 1.1.5</span></span> · <a href="https://github.com/adeeb111/AdeeboMeter/releases"><span data-i18n="all releases">toutes les versions</span></a></p>
+</div></section>
+
+<section class="donate" id="donate"><div class="wrap">
+  <div class="donate-box">
+    <p><b><span style="color:#D1245B">♥</span> Faire un don</b> <span data-i18n="to cover the cost to keep this app free and running.">pour aider à garder l’application gratuite et en service.</span></p>
+    <div class="amts">
+      <a href="https://paypal.me/adeeb1111/5CAD" target="_blank" rel="noopener">$5</a>
+      <a href="https://paypal.me/adeeb1111/10CAD" target="_blank" rel="noopener">$10</a>
+      <a href="https://paypal.me/adeeb1111/20CAD" target="_blank" rel="noopener">$20</a>
+      <a href="https://paypal.me/adeeb1111/50CAD" target="_blank" rel="noopener">$50</a>
+      <a class="other" href="https://paypal.me/adeeb1111" target="_blank" rel="noopener"><span data-i18n="Other amount">Autre montant</span></a>
+    </div>
+    <small><span data-i18n="Through PayPal, in Canadian dollars. AdeeboMeter stays free either way.">Par PayPal, en dollars canadiens. AdeeboMeter reste gratuit dans tous les cas.</span></small>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <span>Créé par Adeeb Khan · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/LICENSE"><span data-i18n="MIT License">Licence MIT</span></a></span>
+  <span><a href="#donate">Faire un don</a> · <a href="/hall-of-fame.html"><span data-i18n="Hall of Fame">Tableau d’honneur</span></a> · <a href="/fr/privacy.html"><span data-i18n="Privacy">Confidentialité</span></a> · <a href="https://github.com/adeeb111/AdeeboMeter"><span data-i18n="Source">Code source</span></a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md"><span data-i18n="What&#x27;s new">Nouveautés</span></a> · <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/docs/THEORY-OF-EVERYTHING.md"><span data-i18n="Theory of Everything (text)">Theory of Everything (texte)</span></a></span>
+</div></footer>
+
+<script>
+(function () {
+  // carousel: arrows, keys, swipe (native scroll-snap), counter, full screen
+  var stage = document.querySelector('.stage'), frames = stage.querySelectorAll('.frame'), n = frames.length;
+  var prev = document.querySelector('.arrow.prev'), next = document.querySelector('.arrow.next');
+  var counter = document.querySelector('.counter'), bar = document.querySelector('.progress i');
+  function cur() { return Math.round(stage.scrollLeft / Math.max(1, stage.clientWidth)); }
+  function go(i) { i = Math.max(0, Math.min(n - 1, i)); stage.scrollTo({ left: i * stage.clientWidth, behavior: 'smooth' }); }
+  // phones: the stage is as tall as the slide on screen, not the tallest one
+  function fit() { if (innerWidth > 860 || document.fullscreenElement) { stage.style.height = ''; return; } var f = stage.children[cur()]; if (f) stage.style.height = (f.scrollHeight + 4) + 'px'; }
+  // slide footers numbered from the real order
+  document.querySelectorAll('.stage .frame').forEach(function (f, k) { var ft = f.querySelector('.foot span:last-child'); if (ft && /^\d+$/.test(ft.textContent.trim())) ft.textContent = (k + 1 < 10 ? '0' : '') + (k + 1); });
+  function upd() { fit(); var i = cur(); counter.textContent = (i + 1) + ' / ' + n; bar.style.width = ((i + 1) / n * 100) + '%'; prev.disabled = i === 0; next.disabled = i === n - 1; }
+  prev.addEventListener('click', function () { go(cur() - 1); });
+  next.addEventListener('click', function () { go(cur() + 1); });
+  var t; stage.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(upd, 60); }, { passive: true });
+  document.addEventListener('keydown', function (e) {
+    // only when the deck has focus (or is full screen): PageUp / PageDown and the arrows keep scrolling the page otherwise
+    if (!document.fullscreenElement && !stage.contains(document.activeElement)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { go(cur() + 1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { go(cur() - 1); e.preventDefault(); }
+  });
+  document.querySelector('.full').addEventListener('click', function () {
+    var i = cur();
+    if (stage.requestFullscreen) stage.requestFullscreen().then(function () { setTimeout(function () { stage.scrollLeft = i * stage.clientWidth; upd(); }, 80); }).catch(function () {});
+  });
+  document.addEventListener('fullscreenchange', function () { var i = cur(); setTimeout(function () { stage.scrollLeft = i * stage.clientWidth; }, 80); });
+  addEventListener('resize', function () { var i = cur(); stage.scrollLeft = i * stage.clientWidth; });
+  upd();
+
+  (function () { var d = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.querySelector('.theme').setAttribute('aria-pressed', d === 'dark' ? 'true' : 'false'); })();
+  // the trailer doesn't play by itself for people who asked for less motion or less data
+  var tr = document.querySelector('video[autoplay]');
+  if (tr && (matchMedia('(prefers-reduced-motion: reduce)').matches || (navigator.connection && navigator.connection.saveData))) { tr.removeAttribute('autoplay'); tr.pause(); tr.preload = 'none'; }
+  // day / night: follows Windows / the phone until you choose; your choice is remembered in this browser only
+  document.querySelector('.theme').addEventListener('click', function () {
+    var r = document.documentElement, cur = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var nx = cur === 'dark' ? 'light' : 'dark'; r.setAttribute('data-theme', nx); this.setAttribute('aria-pressed', nx === 'dark' ? 'true' : 'false');
+    try { localStorage.setItem('am-theme', nx); } catch (e) {}
+  });
+
+  // suggestion box: sent to AdeeboMeter's relay (a small Cloudflare Worker that files it for Adeeb) - no account needed.
+  // A free Cloudflare Turnstile check shows the relay a person is here; only the box's own words are sent.
+  var box = document.querySelector('.box'), kind = 'idea', RELAY = 'https://adeebometer-relay.orkoadeeb.workers.dev/send', human = '';
+  var title = document.getElementById('fb-title'), body = document.getElementById('fb-body'), env = document.getElementById('fb-env'), send = document.getElementById('fb-send'), note = document.getElementById('fb-note');
+  var hints = {
+    idea: ['Show the Wi-Fi channel in the corner widget', 'What would you like it to do, and why would it help?', 'Tell us more'],
+    problem: ['The widget disappears after sleep', 'What happened? What did you expect? Steps to make it happen again help a lot.', 'What happened'],
+    question: ['What does "retransmits" mean?', 'Ask anything - how it works, what a number means, whether it fits your setup.', 'Your question'] };
+  function feedbackText(key) {
+    return window.AdeeboMeterLocale ? window.AdeeboMeterLocale.t(key) : key;
+  }
+  function updateFeedbackHints() {
+    title.placeholder = feedbackText(hints[kind][0]);
+    body.placeholder = feedbackText(hints[kind][1]);
+    document.getElementById('fb-body-label').textContent = feedbackText(hints[kind][2]);
+  }
+  document.addEventListener('DOMContentLoaded', updateFeedbackHints);
+  document.addEventListener('adeebometerlanguagechange', updateFeedbackHints);
+  box.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      kind = b.getAttribute('data-k'); box.setAttribute('data-kind', kind);
+      box.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      updateFeedbackHints();
+    });
+  });
+  function ready() { send.disabled = !(title.value.trim() && body.value.trim() && human); }
+  window.fbHuman = function (t) { human = t; ready(); };
+  title.addEventListener('input', ready); body.addEventListener('input', ready);
+  // Cloudflare's check script comes in only when the form is used: a visitor who just reads the page (or donates) never loads it
+  var tsLoaded = false;
+  function loadTurnstile() { if (tsLoaded) return; tsLoaded = true; var sc = document.createElement('script'); sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'; sc.async = true; sc.defer = true; document.head.appendChild(sc); }
+  [title, body, env].forEach(function (el) { if (el) { el.addEventListener('focus', loadTurnstile, { once: true }); el.addEventListener('input', loadTurnstile, { once: true }); } });
+  send.addEventListener('click', function () {
+    var t = title.value.trim().slice(0, 100), b = body.value.trim().slice(0, 4000);
+    if (kind === 'problem') b += '\n\nWindows / AdeeboMeter version: ' + (env.value.trim() || '(not given)');
+    else if (kind === 'question') t = 'Question: ' + t;
+    send.disabled = true; note.textContent = feedbackText('Sending…');
+    fetch(RELAY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind === 'problem' ? 'bug' : 'feedback', from: 'site', title: t, body: b, turnstile: human }) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false, why: 'no answer' }; }); })
+      .then(function (j) {
+        if (j.ok) { note.textContent = feedbackText('Sent — thank you! Adeeb reads every one.'); title.value = ''; body.value = ''; env.value = ''; }
+        else { note.textContent = feedbackText('Couldn’t send: ') + (j.why || feedbackText('try again in a minute')) + '.'; send.disabled = false; }
+        human = ''; try { turnstile.reset(); } catch (e) {}
+      })
+      .catch(function () { note.textContent = feedbackText('Couldn’t reach the server — check your connection and try again.'); send.disabled = false; });
+  });
+
+  // the download button always points at the newest release (falls back to the link built into the page)
+  try {
+    fetch('https://api.github.com/repos/adeeb111/AdeeboMeter/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rel) {
+        if (!rel || !rel.assets) { cantCheck(); return; }
+        var a = rel.assets.filter(function (x) { return /-win64\.zip$/.test(x.name); })[0];
+        if (!a) return;
+        document.querySelectorAll('a.dl').forEach(function (el) { el.href = a.browser_download_url; });
+        var v = (rel.tag_name || '').replace(/^v/, '');
+        if (v) document.querySelectorAll('.ver').forEach(function (el) { el.textContent = 'Version ' + v; });
+        // "Check for updates" from inside the app opens this page with ?v=<your version>
+        var mine = (new URLSearchParams(location.search)).get('v');
+        if (mine && !/^\d{1,3}(\.\d{1,4}){1,3}$/.test(mine)) mine = null;   // only a version number is ever shown back
+        if (mine && v) {
+          var newer = v.split('.').map(Number).some(function (n, i, a) { var m = mine.split('.').map(Number); for (var j = 0; j < Math.max(a.length, m.length); j++) { var x = a[j] || 0, y = m[j] || 0; if (x !== y) return x > y; } return false; });
+          var b = document.getElementById('update');
+          var ahead = mine.split('.').map(Number).some(function (x, i, m) { var a = v.split('.').map(Number); for (var j = 0; j < Math.max(a.length, m.length); j++) { var p = m[j] || 0, q = a[j] || 0; if (p !== q) return p > q; } return false; });
+          b.textContent = newer ? 'AdeeboMeter ' + v + ' is out - you have ' + mine + '. Download it below and choose Update.' : ahead ? 'You\u2019re ahead - ' + mine + ' is newer than the latest release (' + v + ').' : 'You\u2019re up to date - ' + mine + ' is the latest version.';
+          b.className = 'upd ' + (newer ? 'new' : 'ok'); b.hidden = false;
+          if (location.hash === '#update') window.scrollTo(0, 0);
+        }
+      }).catch(function () { cantCheck(); });
+  } catch (e) { cantCheck(); }
+  // GitHub didn't answer (rate limit, blocker, company proxy): an app user who pressed Check for updates still gets an answer
+  function cantCheck() {
+    var mine = (new URLSearchParams(location.search)).get('v'); if (!mine || !/^\d{1,3}(\.\d{1,4}){1,3}$/.test(mine)) return;
+    var b = document.getElementById('update'); if (!b || !b.hidden) return;
+    b.innerHTML = 'Couldn\u2019t check for a newer version right now - try again in a few minutes, or download the newest from the button above (you have ' + mine + ').';
+    b.className = 'upd ok'; b.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

@@ -212,7 +212,7 @@ namespace AdeeboMeter
                 int lvAll = double.IsNaN(V(1)) ? 3 : (int)V(1);
                 double cpu = V(2), mem = V(3), down = V(4), gw = V(5), net = V(6), wifi = V(7), up = V(8), gwMax = V(9), netMax = V(10), loss = V(11), rx = V(12), mbD = V(13), mbU = V(14);
                 string netName = replayIdx < data.Net.Count ? data.Net[replayIdx] : "";
-                g.DrawString("AT " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " ON " + at.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant() + (netName != "" && Cfg.Details ? "  ·  ROUTER " + Draw.Trunc(netName, 24).ToUpperInvariant() : ""), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(AdeeboMeter.L.T("AT ") + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " ON " + at.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant() + (netName != "" && Cfg.Details ? "  ·  ROUTER " + Draw.Trunc(netName, 24).ToUpperInvariant() : ""), Draw.fTiny, muted, x, y); y += 22 * S;
                 // no sample in that minute (Penny checks the internet every 5 min; a check switched off; a router that ignores ping) is
                 // "not measured" - grey, never a red outage
                 Func<double, string> ms = v => double.IsNaN(v) ? "not measured" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";

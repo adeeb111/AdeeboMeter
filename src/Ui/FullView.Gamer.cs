@@ -305,9 +305,9 @@ namespace AdeeboMeter
                     g.DrawString(how, Draw.fSmall, muted, new RectangleF(cx, cy + 17 * S, 220 * S, 16 * S), nowrap);
                     double ageS = st.LastAt == DateTime.MinValue ? 0 : (DateTime.Now - st.LastAt).TotalSeconds;   // a slow-paced server: say how old "now" is
                     using (var pb = new SolidBrush(GradeColor(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
-                    g.DrawString("avg " + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
-                    g.DrawString("jitter " + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
-                    g.DrawString("loss " + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);
+                    g.DrawString(AdeeboMeter.L.T("avg ") + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
+                    g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
+                    g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);
                     // sparkline of the last minute
                     var sr = new RectangleF(c5 + 80 * S, cy + 4 * S, Math.Max(40 * S, x + w - pad - 110 * S - (c5 + 80 * S)), 24 * S);
                     var okv = v.Where(z => !double.IsNaN(z)).ToArray();

@@ -75,12 +75,14 @@ namespace AdeeboMeter
         }
         static float Lead(Graphics g, string t, float x, float y, float w, bool muted)
         {
+            t = L.T(t);
             var h = Draw.Measure(t, Draw.fBody, (int)w).Height;
             using (var b = new SolidBrush(muted ? Theme.Muted : Theme.Sub)) g.DrawString(t, Draw.fBody, b, new RectangleF(x, y, w, h + 4));
             return y + h + 10 * S;
         }
         float Head(Graphics g, string t, float x, float y, float w, string key)
         {
+            t = L.T(t);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(t, Draw.fTiny, mb, x, y);
             if (key != null) Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), key);
             return y + 22 * S;
@@ -91,7 +93,7 @@ namespace AdeeboMeter
         static readonly Color[] LayerCol = { Theme.C("#8250DF"), Theme.C("#1F6FEB"), Theme.C("#0E8A9E"), Theme.C("#2DA44E"), Theme.C("#BF8700"), Theme.C("#CF222E"), Theme.C("#57606A") };
         float PaintAnatomy(Graphics g, float x, float y, float w, int mtu, bool vpn, int vpnMtu)
         {
-            y = Head(g, "PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK", x, y, w, "travel.ANATOMY");
+            y = Head(g, AdeeboMeter.L.T("PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK"), x, y, w, "travel.ANATOMY");
             int payload = Math.Max(0, mtu - 20 - 20 - 5);
             var parts = new List<Tuple<string, int, Color>> { Tuple.Create("Ethernet 14", 14, LayerCol[4]), Tuple.Create("IP 20", 20, LayerCol[3]), Tuple.Create("TCP 20", 20, LayerCol[2]), Tuple.Create("TLS 5", 5, LayerCol[1]), Tuple.Create("your data " + payload, payload, LayerCol[0]) };
             float total = parts.Sum(p => p.Item2), bx = x, bh = 30 * S, min = 54 * S;
@@ -114,6 +116,8 @@ namespace AdeeboMeter
         // actors across the top; steps = { fromIndex, toIndex, label, time }
         static float DrawLadder(Graphics g, Control host, string[] actors, List<string[]> steps, float x, float y, float w)
         {
+            actors = actors.Select(a => L.T(a)).ToArray();
+            steps = steps.Select(st => new[] { st[0], st[1], L.T(st[2]), st[3] }).ToList();
             float colW = w / actors.Length, rowH = 30 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center })
                 for (int i = 0; i < actors.Length; i++) g.DrawString(Draw.Trunc(actors[i], 26), Draw.fBodyB, ink, new RectangleF(x + i * colW, y, colW, 20 * S), c);
@@ -147,8 +151,8 @@ namespace AdeeboMeter
         // ---------- routing table, explained
         float PaintRoutes(Graphics g, float x, float y, float w)
         {
-            if (routeTable == null) { LoadRoutes(); return Lead(g, "Reading the routing table...", x, y, w, true); }
-            y = Lead(g, "Every packet that leaves your PC is matched against this table. The most specific match wins (the longest prefix - a /24 beats a /0); if two are equally specific, the lowest metric wins. Type an address in the box above and press Enter on this page to see which route it takes.", x, y + 4 * S, w, false);
+            if (routeTable == null) { LoadRoutes(); return Lead(g, AdeeboMeter.L.T("Reading the routing table..."), x, y, w, true); }
+            y = Lead(g, AdeeboMeter.L.T("Every packet that leaves your PC is matched against this table. The most specific match wins (the longest prefix - a /24 beats a /0); if two are equally specific, the lowest metric wins. Type an address in the box above and press Enter on this page to see which route it takes."), x, y + 4 * S, w, false);
             IPAddress ask;
             if (IPAddress.TryParse(storyIp, out ask) && ask.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
             {
@@ -159,7 +163,7 @@ namespace AdeeboMeter
                 rows.Add(new[] { "Windows' own pick", pick > 0 && nic.TryGetValue(pick, out ni) ? ni.Name + (Monitor.IsVpn(ni) ? " (VPN)" : "") : "-", "3" });
                 y = InfoCardOn(travelCanvas, g, "WHICH ROUTE WINS FOR " + ask, rows, "travel.WINS", x, y, w);
             }
-            y = Head(g, "ACTIVE ROUTES (IPv4)  ·  " + routeTable.Count, x, y, w, "travel.ROUTES");
+            y = Head(g, AdeeboMeter.L.T("ACTIVE ROUTES (IPv4)  ·  ") + routeTable.Count, x, y, w, "travel.ROUTES");
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             {
                 foreach (var r in routeTable.Where(r => r.Dest >> 28 != 14 && r.Dest != 0xFFFFFFFF).OrderBy(r => r.Prefix).ThenBy(r => r.Metric).Take(60))
@@ -201,7 +205,7 @@ namespace AdeeboMeter
         float PaintApps(Graphics g, float x, float y, float w)
         {
             if (m365Rows == null) { LoadApps(); return Lead(g, (DateTime.UtcNow - appsFailedAt).TotalSeconds < 60 ? "Couldn't read the running apps just now (Windows' process list didn't answer) - trying again in a minute." : "Looking at Teams and Office...", x, y + 4 * S, w, true); }
-            y = Lead(g, "Which program does what, and what each one sends where - live from this PC. Roles come from server names and Microsoft's published Teams ranges (" + M365.AsOf + "); anything else from Microsoft shows as \"role unknown\" rather than a guess.", x, y + 4 * S, w, false);
+            y = Lead(g, AdeeboMeter.L.T("Which program does what, and what each one sends where - live from this PC. Roles come from server names and Microsoft's published Teams ranges (") + M365.AsOf + "); anything else from Microsoft shows as \"role unknown\" rather than a guess.", x, y + 4 * S, w, false);
             var famCount = m365Fam == null ? new List<string[]>() : m365Fam.Values.GroupBy(v => v).Select(gr => new[] { gr.Key, gr.Count() + (gr.Count() == 1 ? " process" : " processes"), "3" }).ToList();
             if (famCount.Count == 0) famCount.Add(NoFamilies);
             y = InfoCardOn(travelCanvas, g, "THE PROCESS FAMILIES", famCount, "travel.FAMILIES", x, y, w);
@@ -210,10 +214,10 @@ namespace AdeeboMeter
             y = InfoCardOn(travelCanvas, g, "WHAT THEY'RE TALKING TO  ·  BY ROLE", roles, "travel.ROLES", x, y, w);
             y = InfoCardOn(travelCanvas, g, "TEAMS CALLS: UDP OR TCP?", new List<string[]> { new[] { "Right now", m365Fallback, m365Fallback.StartsWith("Teams seems", StringComparison.Ordinal) ? "1" : "3" } }, "travel.FALLBACK", x, y, w);
             var call = Knowledge.Topic("teams-call");
-            if (call != null && call["ladder"] != "") { y = Head(g, "HOW A TEAMS CALL CONNECTS", x, y, w, "travel.CALLFLOW"); y = DrawKnowledgeLadder(g, travelCanvas, call["ladder"], x, y, w); }
+            if (call != null && call["ladder"] != "") { y = Head(g, AdeeboMeter.L.T("HOW A TEAMS CALL CONNECTS"), x, y, w, "travel.CALLFLOW"); y = DrawKnowledgeLadder(g, travelCanvas, call["ladder"], x, y, w); }
             if (outlookRows != null) y = InfoCardOn(travelCanvas, g, "WHY IS OUTLOOK SLOW?  ·  THE USUAL SUSPECTS, CHECKED", outlookRows.Select(r => new[] { r[1], r[2] + (r[3] != "" ? " - " + r[3] : ""), r[0] }).ToList(), "travel.OUTLOOK", x, y, w);
             var o = Knowledge.Topic("outlook-flow");
-            if (o != null && o["ladder"] != "") { y = Head(g, "HOW OUTLOOK GETS YOUR MAIL", x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
+            if (o != null && o["ladder"] != "") { y = Head(g, AdeeboMeter.L.T("HOW OUTLOOK GETS YOUR MAIL"), x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
             var refresh = new RectangleF(x, y, 120 * S, 22 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Refresh  ↻"), Draw.fBodyB, lb, refresh.X, refresh.Y);
             Act(travelCanvas, refresh, delegate { m365Rows = null; travelCanvas.Invalidate(); });
@@ -237,9 +241,9 @@ namespace AdeeboMeter
         // ---------- real packets (Wireshark): the actual handshake, and any packet explained
         float PaintReal(Graphics g, float x, float y, float w)
         {
-            if (!LiveCapture.Available) return Lead(g, "Real packets need Wireshark (with Npcap). Everything else on this tab works without it.", x, y + 6 * S, w, true);
+            if (!LiveCapture.Available) return Lead(g, AdeeboMeter.L.T("Real packets need Wireshark (with Npcap). Everything else on this tab works without it."), x, y + 6 * S, w, true);
             string host = storyTarget != "" ? storyTarget : "github.com";
-            y = Lead(g, "Records 6 seconds of your PC's traffic to " + host + " while AdeeboMeter opens one connection to it (handshake only - no data is sent), then shows the real packets as a ladder. Click any packet to see every layer explained. The recording is deleted when AdeeboMeter exits.", x, y + 4 * S, w, false);
+            y = Lead(g, AdeeboMeter.L.T("Records 6 seconds of your PC's traffic to ") + host + " while AdeeboMeter opens one connection to it (handshake only - no data is sent), then shows the real packets as a ladder. Click any packet to see every layer explained. The recording is deleted when AdeeboMeter exits.", x, y + 4 * S, w, false);
             var go = new RectangleF(x, y, 360 * S, 24 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(travelBusy ? travelStatus : "Capture the real handshake with " + host + "  →", Draw.fBodyB, lb, go.X, go.Y);
             if (!travelBusy) Act(travelCanvas, go, delegate { CaptureReal(host); });
@@ -247,7 +251,7 @@ namespace AdeeboMeter
             if (realErr != "") y = Lead(g, realErr, x, y, w, true);
             if (realPkts == null) return y;
             var shown = realPkts.Take(40).ToList();
-            y = Head(g, "THE REAL PACKETS  ·  " + realPkts.Count + " RECORDED  ·  CLICK ONE TO EXPLAIN IT", x, y, w, "travel.REAL");
+            y = Head(g, AdeeboMeter.L.T("THE REAL PACKETS  ·  ") + realPkts.Count + " RECORDED  ·  CLICK ONE TO EXPLAIN IT", x, y, w, "travel.REAL");
             float colA = x + 90 * S, colB = x + w - 90 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -269,7 +273,7 @@ namespace AdeeboMeter
             }
             if (realDecode != null)
             {
-                y += 14 * S; y = Head(g, "PACKET " + realSel + ", EVERY LAYER  ·  WIRESHARK'S DECODE WITH WHAT IT MEANS", x, y, w, "travel.DECODE");
+                y += 14 * S; y = Head(g, AdeeboMeter.L.T("PACKET ") + realSel + ", EVERY LAYER  ·  WIRESHARK'S DECODE WITH WHAT IT MEANS", x, y, w, "travel.DECODE");
                 foreach (var layer in realDecode)
                 {
                     string story = Packets.LayerStory(layer.Key);
@@ -313,8 +317,8 @@ namespace AdeeboMeter
         // ---------- what my PC is saying: protocols, background chatter, call priority
         float PaintChat(Graphics g, float x, float y, float w)
         {
-            if (!LiveCapture.Available) return Lead(g, "This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.", x, y + 6 * S, w, true);
-            y = Lead(g, "Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.", x, y + 4 * S, w, false);
+            if (!LiveCapture.Available) return Lead(g, AdeeboMeter.L.T("This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds."), x, y + 6 * S, w, true);
+            y = Lead(g, AdeeboMeter.L.T("Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept."), x, y + 4 * S, w, false);
             var go = new RectangleF(x, y, 300 * S, 24 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(travelBusy ? travelStatus : "Listen for 10 seconds  →", Draw.fBodyB, lb, go.X, go.Y);
             if (!travelBusy) Act(travelCanvas, go, delegate

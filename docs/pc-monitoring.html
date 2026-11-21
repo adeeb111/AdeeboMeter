@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" data-language-route="/pc-monitoring.html" data-language-variants="en bn fr es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free PC monitoring software for Windows | AdeeboMeter</title>
+<meta name="description" content="Monitor CPU, memory, disk activity and network traffic in a Windows desktop widget. Use AdeeboMeter’s local history to review slowdowns.">
+<link rel="canonical" href="https://adeebometer.com/pc-monitoring.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter">
+<meta property="og:url" content="https://adeebometer.com/pc-monitoring.html">
+<meta property="og:title" content="Free PC monitoring software for Windows | AdeeboMeter">
+<meta property="og:description" content="Monitor CPU, memory, disk activity and network traffic in a Windows desktop widget. Use AdeeboMeter’s local history to review slowdowns.">
+<meta property="og:image" content="https://adeebometer.com/media/trailer-poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="AdeeboMeter's Windows overview with PC and network readings">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+</style>
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/pc-monitoring.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/pc-monitoring.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/pc-monitoring.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/pc-monitoring.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/pc-monitoring.html">
+</head>
+<body>
+<main>
+<nav aria-label="Site"><a href="/">AdeeboMeter</a> · <a href="/blog/">Troubleshooting Blog</a> · <a href="/bn/pc-monitoring.html" lang="bn">বাংলা</a></nav>
+<h1>Free PC monitoring software for Windows</h1>
+<figure class="guide-visual" aria-labelledby="quick-title">
+<div class="visual-copy"><h2 id="quick-title">Look for what stays busy.</h2><p>Compare CPU, memory, disk, and network activity while the slowdown happens.</p></div>
+<div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">💻</span><strong>PC check</strong></div><div class="plot-label"><span>PC activity</span><span>Example</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>Memory<i style="--h:64%"></i></span><span>Disk<i style="--h:94%"></i></span></div></div>
+<figcaption>Illustrative readings. Busy disk activity during a stall gives you a workload to investigate.</figcaption>
+</figure>
+
+
+<h2 id="checks">Run the checks</h2>
+<ol><li>Decide whether the whole PC feels slow or only an online task is affected.</li><li>While it happens, open AdeeboMeter or Windows Task Manager and inspect CPU, memory, disk, and network.</li><li>Identify the process or task that was active. Compare against the same PC when it is responsive.</li></ol>
+<h2 id="readings">What to check next</h2>
+<ul class="next-checks">
+  <li><strong>CPU stays high</strong><span>Find the busiest process.</span></li>
+  <li><strong>Memory is low and disk is busy</strong><span>Save your work, close one large app, and retry.</span></li>
+  <li><strong>Disk stays busy</strong><span>Check for a backup or update.</span></li>
+  <li><strong>Only online tasks stall</strong><span>Check router and internet latency.</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>Your browser and file manager both hesitate during a large backup. Disk activity stays high during the stalls and settles when the backup ends. Try the same actions afterward. If the problem disappears, you have a workload to investigate and a repeatable comparison.</p></aside>
+<details class="guide-detail"><summary>Why it works</summary>
+<p>High memory usage alone can reflect caching. Low available memory, stalls, and changes in disk activity together make memory pressure more worth investigating. Disk active time and transfer rate measure different things. Small requests can keep a disk busy without moving much data.</p><p>For a deeper look, use <a href="/learn/memory-pressure.html">the memory pressure lesson</a> and compare resource behavior over the same interval.</p>
+</details>
+<h2>Use AdeeboMeter on Windows</h2>
+<p>Keep the desktop widget visible while you work, then open the full view to inspect the busiest processes. With history enabled, use <strong>Time Machine</strong> to review the PC and network readings from the same minute. If only online tasks are affected, <a href="/wifi-or-isp.html">check the connection path</a>.</p>
+<figure><img src="/media/trailer-poster.jpg" width="1280" height="720" loading="lazy" alt="AdeeboMeter overview with live CPU, memory, disk, traffic and network readings."><figcaption>The full view from an AdeeboMeter app demo.</figcaption></figure>
+<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a></p>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>Record the affected task, timestamp, resource that stayed busy, and what changed when the problem eased.</p></aside>
+</main>
+</body>
+</html>
+
