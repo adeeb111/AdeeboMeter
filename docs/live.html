@@ -116,6 +116,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <div class="pickrow"><label class="dd"><small>Exchange</small><select id="exch" aria-label="Exchange"><option value="us">US · NYSE and Nasdaq</option><option disabled>Toronto (TSX) - not yet</option><option disabled>London (LSE) - not yet</option><option disabled>India (NSE) - not yet</option><option disabled>Dhaka (DSE) - not yet</option></select></label></div>
 <div class="seg3" id="mvseg"><button class="on" data-mv="up">Best</button><button data-mv="dn">Worst</button><button data-mv="act">Most traded</button></div>
 <p class="src" id="mvsrc">End of day</p>
+<div id="mvevery" class="pickrow"></div>
 <div id="mv" class="mut">Loading…</div>
 </section>
 
@@ -323,27 +324,37 @@ function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<
 $("lg").onchange=function(){lg=this.value;wr("am-lv-lg",lg);SC=null;drawS();scores()};
 $("team").onchange=function(){wr("am-lv-team-"+lg,this.value);drawS()};
 // ---- your own keys (Adeeb, 16 Nov: "keep an option for people to add their key ... same for live scores and news")
-var KEYS=[["av","Alpha Vantage","stock movers, when the shared daily copy is used up","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (100 calls a day - stops at 90)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
+var KEYS=[["ap","Alpaca","stock movers from your own account: paste the key ID, a colon, then the secret (ID:SECRET). Free accounts work; you choose how often below","https://app.alpaca.markets/signup"],["av","Alpha Vantage","stock movers, when the shared daily copy is used up (free: 25 calls a day)","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (100 calls a day - stops at 90)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
 function key(k){return rd("am-key-"+k,"")}
 function kreq(svc,q,kk){var k=kk||key(svc);if(!k)return Promise.reject(new Error("no key"));return fetch(API+"/k?svc="+svc+(q||""),{cache:"no-store",headers:{"X-Key":k}}).then(function(r){return r.json()}).then(function(d){if(d.error)throw new Error(d.error);return d})}
-function drawKeys(){$("keyrows").innerHTML="<div class='krow'><div class='kh'><b>ESPN scores</b><span>no key</span></div><span class='mut' style='font-size:13px'>NBA, NFL, soccer, cricket matches, and headlines. This phone asks ESPN itself, so ESPN sees its address. NHL and MLB come from the leagues through our relay either way.</span><div class='kin'><button class='btn"+(espnOn()?"":" go")+"' data-espn='"+(espnOn()?"0":"1")+"'>"+(espnOn()?"Turn off":"Turn on")+"</button></div></div>"+KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div></div>"}).join("")}
+function drawKeys(){$("keyrows").innerHTML="<div class='krow'><div class='kh'><b>ESPN scores</b><span>no key</span></div><span class='mut' style='font-size:13px'>NBA, NFL, soccer, cricket matches, and headlines. This phone asks ESPN itself, so ESPN sees its address. NHL and MLB come from the leagues through our relay either way.</span><div class='kin'><button class='btn"+(espnOn()?"":" go")+"' data-espn='"+(espnOn()?"0":"1")+"'>"+(espnOn()?"Turn off":"Turn on")+"</button></div></div>"+KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":k[0]==="ap"?"KEY ID:SECRET":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div></div>"}).join("")}
 $("keyrows").addEventListener("click",function(e){var b=e.target.closest("[data-ksave],[data-kdel]");if(!b)return;var s=b.getAttribute("data-ksave"),d=b.getAttribute("data-kdel");
-  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}SGEN++;drawKeys();refreshKeyed();return}
-  var v=$("key-"+s).value.trim();if(!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>That doesn't look like a key - letters and numbers, 8 to 80 long.</span>";return}
+  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}SGEN++;drawKeys();refreshKeyed();mvArm();return}
+  var v=$("key-"+s).value.trim();if(s==="ap")v=v.replace(/\s*[:\s]\s*/,":");
+  if(s==="ap"?!/^[A-Za-z0-9]{8,40}:[A-Za-z0-9]{8,80}$/.test(v):!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>"+(s==="ap"?"That doesn't look like an Alpaca key - the key ID, a colon, then the secret.":"That doesn't look like a key - letters and numbers, 8 to 80 long.")+"</span>";return}
   $("kst-"+s).innerHTML="<span class='mut'>Checking…</span>";var had=!!key(s);
   kreq(s,s==="gn"?"&q="+encodeURIComponent(GQ[lg]||"sport"):"",v).then(function(d){wr("am-key-"+s,v);SGEN++;drawKeys();
-    if(s==="av"){MV=d;MV.mine=1;drawMv()}else if(s==="gn"){GN={};GN[lg]=d;gnDraw()}else if(s===liveKind()){liveShow(s,d,sgen());liveArm(s)}},
+    if(s==="av"||s==="ap"){movers();mvArm()}else if(s==="gn"){GN={};GN[lg]=d;gnDraw()}else if(s===liveKind()){liveShow(s,d,sgen());liveArm(s)}},
     function(er){$("kst-"+s).innerHTML="<span class='dn'>Not saved - the service said: "+esc(er.message)+"."+(had?" Your earlier key is kept.":"")+"</span>"})});
 drawKeys();
 // stock movers: the relay's shared daily copy, or your own key
 var MV=null,mvk="up";
 function toKeys(){return"<a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>"}
 function drawMv(){if(!MV){return}
-  if(MV.error){$("mv").innerHTML=MV.mineErr?"<span class='err'>Your Alpha Vantage key didn't work ("+esc(MV.mineErr)+"), and the shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+" either.</span> "+toKeys()+"Replace your key</a>":"<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> "+toKeys()+"Add your own free key</a>";return}
-  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · "+(MV.src||"Alpha Vantage")+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
+  if(MV.error){$("mv").innerHTML=MV.mineErr?"<span class='err'>Your "+(key("ap")?"Alpaca":"Alpha Vantage")+" key didn't work ("+esc(MV.mineErr)+"), and the shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+" either.</span> "+toKeys()+"Replace your key</a>":"<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> "+toKeys()+"Add your own free key</a>";return}
+  var L=MV[mvk]||[];$("mvsrc").textContent=(MV.mine&&mvEvery()[2]?"Updated "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · as of "+(MV.day||""):"End of day "+(MV.day||""))+" · "+(MV.src||"Alpha Vantage")+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
   $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
 function shared(){return jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})}
-function movers(){var g=SGEN;if(key("av"))kreq("av").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});
+// how often, with your own key (Adeeb, 21 Nov: "if they have paid subscription they can do every minute")
+var MVE=[["day","Once a day",0],["15","Every 15 minutes",900000],["1","Every minute",60000]],mvT=0;
+function mvEvery(){var v=rd("am-mv-every","day");return MVE.filter(function(x){return x[0]===v})[0]||MVE[0]}
+function mvMine(){return key("ap")?"ap":key("av")?"av":""}
+function mvArm(){if(mvT){clearInterval(mvT);mvT=0}var e=mvEvery();if(e[2]&&mvMine())mvT=setInterval(function(){if(!document.hidden)movers()},e[2]);drawEvery()}
+function drawEvery(){var el=$("mvevery");if(!el)return;var m=mvMine();if(!m){el.innerHTML="";return}
+  el.innerHTML="<label class='dd'><small>Update</small><select id='mvsel'>"+MVE.map(function(x){return"<option value='"+x[0]+"'"+(mvEvery()[0]===x[0]?" selected":"")+">"+x[1]+"</option>"}).join("")+"</select></label> <span class='mut' style='font-size:13px'>"+(m==="av"?"Alpha Vantage's free key allows 25 calls a day - every minute needs their paid plan.":"With your Alpaca key, counted on your account. How fresh the numbers are depends on your Alpaca data plan.")+"</span>";
+  $("mvsel").onchange=function(){wr("am-mv-every",this.value);mvArm();movers()}}
+function movers(){var g=SGEN;if(key("ap")){kreq("ap").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});return}
+  if(key("av"))kreq("av").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});
   else shared().then(function(d){if(g!==SGEN)return;MV=d;drawMv()},function(er){if(g!==SGEN)return;MV={error:1,why:er&&er.message};drawMv()})}
 $("mvseg").addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;mvk=b.getAttribute("data-mv");[].forEach.call($("mvseg").children,function(x){x.classList.toggle("on",x===b)});drawMv()});
 // live scores and more headlines with your own key, while this page is open
@@ -367,7 +378,7 @@ function gnDraw(){var d=GN[lg];if(!d||!d.items||!d.items.length)return;$("newss"
 function moreNews(force){if(!key("gn"))return;var want=lg,g=sgen();if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){if(g!==sgen()){delete GN[want];return}GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
 function refreshKeyed(){GN={};movers();liveTick();moreNews(1)}
 var _drawS=drawS;drawS=function(){_drawS();if(SC&&key("gn"))moreNews()};
-drawM();markets();drawS();scores();movers();liveTick();
+drawM();markets();drawS();scores();movers();mvArm();liveTick();
 $("lg").addEventListener("change",function(){liveTick()});
 var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
 // updated once a day on the relay - no live refresh here; the stamp says when

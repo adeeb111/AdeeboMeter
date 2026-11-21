@@ -163,6 +163,7 @@ async function moversShared(env) {
 async function keyed(svc, key, u) {
   const nc = { headers: { "User-Agent": "AdeeboMeter-Live (+https://adeebometer.com)" }, signal: AbortSignal.timeout(9000), cf: { cacheTtl: -1 } };
   const j2 = async (url, h) => { const r = await fetch(url, h ? { headers: Object.assign({}, nc.headers, h), signal: nc.signal, cf: nc.cf } : nc); const t = await r.text(); let d; try { d = JSON.parse(t); } catch (e) { throw new Error("not JSON (" + r.status + ")"); } if (r.status === 401 || r.status === 403) throw new Error("the key was refused"); if (r.status === 429) throw new Error("the key's daily limit is used up"); if (!r.ok) throw new Error("answered " + r.status); return d; };
+  if (svc === "ap") { const i = key.indexOf(":"); const d = await alpacaMovers({ ALPACA_KEY_ID: key.slice(0, i), ALPACA_SECRET: key.slice(i + 1) }); d.src = "Alpaca"; return d; }   // ID:SECRET, one refresh, nothing kept
   if (svc === "av") return movers(key, await j2("https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=" + encodeURIComponent(key)));
   if (svc === "fd") { const d = await j2("https://api.football-data.org/v4/matches", { "X-Auth-Token": key });
     return { g: (d.matches || []).slice(0, 40).map(m => ({ lg: String((m.competition || {}).name || "").slice(0, 40), d: m.utcDate, st: /IN_PLAY|PAUSED/.test(m.status) ? "in" : m.status === "FINISHED" ? "post" : "pre", det: m.status === "PAUSED" ? "Half-time" : m.minute ? m.minute + "'" : m.status === "IN_PLAY" ? "Live" : "",
@@ -282,11 +283,11 @@ export default {
       }
       // stock movers: the relay's shared daily copy (or "nokey" when no AV_KEY is set - the page then offers "your own key")
       case "/movers": return reply(req, await moversShared(env), 3600);
-      // a person's own key: X-Key header, one call, nothing kept; only these four services
+      // a person's own key: X-Key header, one call, nothing kept; only these five services
       case "/k": {
         if (siteBusy(req.headers.get("CF-Connecting-IP") || "?", "k", 20)) return reply(req, { error: "a lot of requests from you just now - try again in a minute" }, 0);
         const svc = u.searchParams.get("svc") || "", key = req.headers.get("X-Key") || "";
-        if (!["av", "fd", "cd", "gn"].includes(svc) || !/^[A-Za-z0-9_-]{8,80}$/.test(key)) return reply(req, { error: "bad request" }, 0);
+        if (!["ap", "av", "fd", "cd", "gn"].includes(svc) || !(svc === "ap" ? /^[A-Za-z0-9]{8,40}:[A-Za-z0-9]{8,80}$/ : /^[A-Za-z0-9_-]{8,80}$/).test(key)) return reply(req, { error: "bad request" }, 0);
         try { return reply(req, await keyed(svc, key, u), -1); } catch (e) { return reply(req, { error: scrub(String(e && e.message || e)).slice(0, 160) }, -1); }
       }
       case "/ping": return reply(req, { colo: (req.cf && req.cf.colo) || "", now: Date.now() }, 0);   // now: lets the phone check its clock (AM-CG-376)
