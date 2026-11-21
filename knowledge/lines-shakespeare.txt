@@ -90,3 +90,17 @@ game.streak|{v} in a row - a triumph!
 game.timeup|Time hath run its course.
 market.open|The market's doors stand open.
 storm.near|A tempest nears - thy connection may falter.
+stream.on|{v} doth play, and plays it fair.
+stream.on|The players play, and none do stumble.
+stream.dip|The stream hath faltered. {v}
+stream.dip|A hitch upon the stage. {v}
+stream.none|No players tread the boards tonight.
+stream.none|The stage is bare. No stream.
+trade.ok|Thy broker's line runs swift and true.
+trade.ok|The broker answers fair and fast.
+trade.slow|The broker tarries. Stay thy hand.
+trade.slow|Slow runs the road to thy broker. {v}
+trade.closed|The market's shut till half past nine.
+trade.closed|The market sleeps. Rest thee till morn.
+view.switch|To the {v} view, anon!
+view.switch|Behold, the {v} view.

@@ -90,3 +90,17 @@ game.streak|{v} in a row - green build.
 game.timeup|Timeout exceeded.
 market.open|Markets online. Status 200.
 storm.near|Storm nearby - expect dropped connections.
+stream.on|stream.status = PLAYING ({v}). No exceptions.
+stream.on|{v} running. Buffer healthy, no warnings.
+stream.dip|Warning: stream dipped. {v}
+stream.dip|Frame drop logged. {v}
+stream.none|stream == null. Idle loop.
+stream.none|No stream process found. Waiting for play().
+trade.ok|ping(broker) returns fast. All tests green.
+trade.ok|Broker latency within spec.
+trade.slow|Broker latency regression. Hold the order.
+trade.slow|Broker timing out-of-range. {v}
+trade.closed|market.isOpen() == false. Sleep until 9:30.
+trade.closed|Market closed. Cron job resumes at 9:30.
+view.switch|Loading view: {v}.
+view.switch|Context switch to {v}. Settings restored.

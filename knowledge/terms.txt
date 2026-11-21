@@ -3658,3 +3658,413 @@ what: At 64 Hz one tick is 15.6 ms; games add 2 ticks of interpolation on purpos
 how: Pure arithmetic, nothing sent.
 why: How late you see the game: half your ping plus the game's smoothing.
 without: Offline.
+
+== tb.phonevs
+friendly: This PC vs my phone
+cat: term
+close: -1
+tag: The same checks from this PC and from your linked phone, side by side.
+what: Asks your linked phone (Your phone page) to time the same sites and the internet that this PC times, then lays the two results next to each other.
+how: Asks your linked phone (Your phone page) to time the same sites and the internet that this PC times, then lays the two results next to each other.
+why: If only the PC is slow, look at this PC or its Wi-Fi; if both are slow on the same Wi-Fi, it's the network or the provider; if the phone on mobile data is fine, it's your line.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phonedown
+friendly: Is it down - from this PC and my phone
+cat: term
+close: -1
+tag: One website, tried from this PC and from your phone at once.
+what: This PC fetches the site, and your linked phone does the same from its own connection; the verdict says whether it's down for both or only one.
+how: This PC fetches the site, and your linked phone does the same from its own connection; the verdict says whether it's down for both or only one.
+why: Down from both: the site, or the whole network. Down only here: this PC, its browser settings or a block on its path.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phoneweek
+friendly: My phone's week
+cat: term
+close: -1
+tag: What your phone saw on its own checks over the last days.
+what: Reads the results your linked phone kept and sends over - nothing new is measured.
+how: Reads the results your linked phone kept and sends over - nothing new is measured.
+why: A pattern on the phone too (evenings slow, the same drops) points away from this PC.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phconn
+friendly: On my phone: its connection
+cat: term
+close: -1
+tag: The phone's own connection: Wi-Fi or mobile data, its delay and who carries it.
+what: Your linked phone checks its own connection and sends the result to this page.
+how: Your linked phone checks its own connection and sends the result to this page.
+why: Compare it with this PC: different answers on the same Wi-Fi point at one device.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phspeed
+friendly: On my phone: speed test
+cat: term
+close: -1
+tag: A speed test run on your phone, shown here.
+what: Your linked phone downloads and uploads test data from Cloudflare and reports the speeds.
+how: Your linked phone downloads and uploads test data from Cloudflare and reports the speeds.
+why: The phone's number next to this PC's shows whether the PC or the line is the limit.
+without: Needs a phone linked; uses the phone's data allowance on mobile data.
+
+== tb.phregions
+friendly: On my phone: how far is the internet?
+cat: term
+close: -1
+tag: How long the phone takes to reach big services around the world.
+what: Your linked phone times connections to well-known services and reports each delay.
+how: Your linked phone times connections to well-known services and reports each delay.
+why: Big jumps from the phone too mean the network or provider, not this PC.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phwifisafe
+friendly: On my phone: is its Wi-Fi safe?
+cat: term
+close: -1
+tag: Whether the network the phone is on looks safe: sign-in pages, interception, open Wi-Fi.
+what: Your linked phone runs its own checks on the network it's joined to and reports them.
+how: Your linked phone runs its own checks on the network it's joined to and reports them.
+why: A café or hotel network that rewrites pages or certificates isn't safe for sign-ins.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phvpn
+friendly: On my phone: VPN leak check
+cat: term
+close: -1
+tag: Whether the phone's VPN keeps everything inside it.
+what: Your linked phone compares the address the internet sees with and around its VPN and reports any leak.
+how: Your linked phone compares the address the internet sees with and around its VPN and reports any leak.
+why: A leak means sites see your real address even with the VPN on.
+without: Needs a phone linked, with its VPN on.
+
+== tb.phstun
+friendly: On my phone: calls, games and NAT
+cat: term
+close: -1
+tag: What kind of NAT the phone sits behind - and so how well calls and games can connect.
+what: Your linked phone asks public STUN servers which address and port they see, and works out the NAT type.
+how: Your linked phone asks public STUN servers which address and port they see, and works out the NAT type.
+why: Symmetric NAT (common on mobile data) pushes calls and games through relays: more delay.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phport
+friendly: On my phone: is a port open at its address?
+cat: term
+close: -1
+tag: Whether a port on the phone's public address answers from the internet.
+what: AdeeboMeter's Live service knocks on that port at the address the phone shows the internet.
+how: AdeeboMeter's Live service knocks on that port at the address the phone shows the internet.
+why: Useful when you host a game server or camera: closed means the router doesn't forward it.
+without: Needs a phone linked; only ever the phone's own address.
+
+== tb.phsite
+friendly: On my phone: a website from outside
+cat: term
+close: -1
+tag: A website checked from outside your network, via the phone.
+what: AdeeboMeter's Live service fetches the site and reports the answer and its redirects.
+how: AdeeboMeter's Live service fetches the site and reports the answer and its redirects.
+why: If it works from outside but not at home, the problem is on your side of the internet.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phspam
+friendly: On my phone: is its address on a spam list?
+cat: term
+close: -1
+tag: Whether the phone's public address is on common spam block lists.
+what: Your linked phone asks public block lists about its own address and reports the hits.
+how: Your linked phone asks public block lists about its own address and reports the hits.
+why: A listed address can make mail bounce or sites ask for extra checks - often a shared mobile or provider address.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phdns
+friendly: On my phone: DNS lookup
+cat: term
+close: -1
+tag: A DNS lookup done from the phone.
+what: Your linked phone looks the name up over DNS-over-HTTPS and returns the records.
+how: Your linked phone looks the name up over DNS-over-HTTPS and returns the records.
+why: Different answers from this PC and the phone point at this PC's DNS settings or a filter.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phfastdns
+friendly: On my phone: fastest DNS
+cat: term
+close: -1
+tag: Which public DNS answers the phone fastest.
+what: Your linked phone times the same lookups against a few public resolvers.
+how: Your linked phone times the same lookups against a few public resolvers.
+why: Pick the fastest for the phone - the PC's own result can differ.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phemail
+friendly: On my phone: email setup check
+cat: term
+close: -1
+tag: Whether a domain's mail settings look right: MX, SPF, DMARC.
+what: Your linked phone looks up the domain's mail records and reports what's there and what's missing.
+how: Your linked phone looks up the domain's mail records and reports what's there and what's missing.
+why: Missing SPF or DMARC is why mail from a domain lands in spam.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phstatus
+friendly: On my phone: is it down for everyone?
+cat: term
+close: -1
+tag: Whether a service has a known outage right now.
+what: Your linked phone checks the service's public status page and reports it.
+how: Your linked phone checks the service's public status page and reports it.
+why: A reported outage means waiting, not fixing anything at home.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phwho
+friendly: On my phone: who carries its connection?
+cat: term
+close: -1
+tag: Which network (provider) carries the phone's traffic.
+what: Your linked phone asks AdeeboMeter's Live service which network its address belongs to.
+how: Your linked phone asks AdeeboMeter's Live service which network its address belongs to.
+why: Two devices with different carriers can behave differently on the same site.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phrdap
+friendly: On my phone: who owns a domain or IP?
+cat: term
+close: -1
+tag: Who registered a domain or address, from the public registry.
+what: Your linked phone asks the RDAP registry (rdap.org) and returns the owner, dates and registrar.
+how: Your linked phone asks the RDAP registry (rdap.org) and returns the owner, dates and registrar.
+why: Useful to tell a real company site from a look-alike.
+without: Needs a phone linked on the Your phone page.
+
+== tb.phmac
+friendly: On my phone: who made a device?
+cat: term
+close: -1
+tag: The maker of a device from its hardware (MAC) address.
+what: Your linked phone looks up the first half of the address in the public maker list.
+how: Your linked phone looks up the first half of the address in the public maker list.
+why: Names the mystery device on your network - a random (private) address has no maker.
+without: Needs a phone linked on the Your phone page.
+
+== tb.srvchange
+friendly: What changed on my server?
+cat: term
+close: -1
+tag: A server's DNS, open ports and certificate, compared with the last time you checked.
+what: Looks up the server's addresses and mail and name records, knocks on a few common ports and reads its certificate, then compares with the earlier runs kept on this PC.
+how: Looks up the server's addresses and mail and name records, knocks on a few common ports and reads its certificate, then compares with the earlier runs kept on this PC.
+why: When something broke overnight, the line that changed is usually the cause.
+without: Uses the network; the history stays on this PC.
+
+== tb.board
+friendly: Service board - my hosts and ports
+cat: term
+close: -1
+tag: Your own hosts and ports, up or down right now.
+what: Opens a TCP connection to each host and port you list (or your pinned sites), times it and closes it - nothing else is sent.
+how: Opens a TCP connection to each host and port you list (or your pinned sites), times it and closes it - nothing else is sent.
+why: A quick morning check of the things you look after; set minutes to keep watching in the background.
+without: Uses the network; only the hosts you list.
+
+== tb.uptime
+friendly: Uptime report
+cat: term
+close: -1
+tag: How much of the time the internet was there, over the last days.
+what: Reads AdeeboMeter's own History - nothing new is measured.
+how: Reads AdeeboMeter's own History - nothing new is measured.
+why: A number to show your provider, with the outages listed by time.
+without: Needs History on.
+
+== tb.certcal
+friendly: Certificate calendar
+cat: term
+close: -1
+tag: When the certificates on your sites run out.
+what: Reads each site's certificate over TLS and sorts them by days left.
+how: Reads each site's certificate over TLS and sorts them by days left.
+why: Catch the one that didn't renew before visitors see a warning.
+without: Uses the network; only the sites you list.
+
+== tb.tradetape
+friendly: Trading session tape
+cat: term
+close: -1
+tag: A trading day's recording: the line to your broker, minute by minute.
+what: Reads the session AdeeboMeter kept while the broker watch ran - nothing new is measured.
+how: Reads the session AdeeboMeter kept while the broker watch ran - nothing new is measured.
+why: Match a bad fill or a frozen chart with what the line was doing at that minute.
+without: Needs the broker watch on during the session.
+
+== tb.marketopen
+friendly: Market-open check (GO / HOLD)
+cat: term
+close: -1
+tag: Is the line to your broker ready before the open?
+what: Times the connection to your broker, checks this PC's load and the internet, and gives one word: GO or HOLD.
+how: Times the connection to your broker, checks this PC's load and the internet, and gives one word: GO or HOLD.
+why: HOLD before the open means fix the line first - not mid-trade.
+without: Uses the network; only your broker's address.
+
+== tb.afterstream
+friendly: After-stream report
+cat: term
+close: -1
+tag: A stream's recording: when it dipped and why.
+what: Reads the stream session AdeeboMeter kept - nothing new is measured.
+how: Reads the stream session AdeeboMeter kept - nothing new is measured.
+why: Each dip next to what the line and this PC were doing then.
+without: Needs the stream watch on during the stream.
+
+== tb.obs
+friendly: OBS link - why frames drop
+cat: term
+close: -1
+tag: Asks OBS on this PC why it drops frames.
+what: Connects to OBS's own WebSocket on this PC and reads its stream statistics - the password is used once and never saved.
+how: Connects to OBS's own WebSocket on this PC and reads its stream statistics - the password is used once and never saved.
+why: Dropped frames are the network; skipped or lagged frames are this PC.
+without: Only talks to OBS on this PC.
+
+== tb.golive
+friendly: Ready to stream? (go-live check)
+cat: term
+close: -1
+tag: Can your line carry your stream's bitrate right now?
+what: Checks this PC's load, the upload and the path to the streaming service's ingest server against the bitrate you plan.
+how: Checks this PC's load, the upload and the path to the streaming service's ingest server against the bitrate you plan.
+why: Go live only when the upload has room to spare - about 1.5 times the bitrate.
+without: Uses the network; only the ingest server.
+
+== tb.pcwhy
+friendly: Why is this PC struggling? (step by step)
+cat: term
+close: -1
+tag: Walks through processor, memory, disk and heat in order, and names the first that's at its limit.
+what: Reads Windows' own counters and the parts' specifications - nothing is changed.
+how: Reads Windows' own counters and the parts' specifications - nothing is changed.
+why: The first part at its limit is the one to fix first.
+without: Offline.
+
+== tb.hwmap
+friendly: How this PC works - every part, live
+cat: term
+close: -1
+tag: Every part of this PC, its ceiling and how busy it is now.
+what: Reads the specifications Windows reports (processor, memory, disks, graphics, network) and the live counters.
+how: Reads the specifications Windows reports (processor, memory, disks, graphics, network) and the live counters.
+why: The narrowest pipe in the picture is what limits the whole PC.
+without: Offline.
+
+== tb.feltslow
+friendly: It felt slow - this PC, the internet or the app?
+cat: term
+close: -1
+tag: Looks back at the last minutes when it felt slow.
+what: Reads what AdeeboMeter recorded of this PC, the network and the apps around that moment.
+how: Reads what AdeeboMeter recorded of this PC, the network and the apps around that moment.
+why: Tells you whether to look at the PC, the line or the app.
+without: Offline.
+
+== tb.diskspeed
+friendly: Disk speed vs its ceiling
+cat: term
+close: -1
+tag: How fast the disk reads and writes, against what it could do.
+what: Writes a temporary test file, reads it back and deletes it, then compares with the disk's own ceiling.
+how: Writes a temporary test file, reads it back and deletes it, then compares with the disk's own ceiling.
+why: Far below the ceiling: the disk is busy, worn or on the wrong link.
+without: Offline; writes a temporary file that's removed.
+
+== tb.ramcheck
+friendly: Memory: sticks, channels, speed
+cat: term
+close: -1
+tag: The memory sticks, how they're wired and how fast they run.
+what: Reads the memory details Windows reports and how full memory is now.
+how: Reads the memory details Windows reports and how full memory is now.
+why: One stick runs single-channel - a second matching stick can make graphics and games much faster.
+without: Offline.
+
+== tb.gpucheck
+friendly: Graphics: own vs borrowed memory, link, apps
+cat: term
+close: -1
+tag: The graphics card's own memory, what it borrows, its link and who uses it.
+what: Reads DirectX's adapter list and Windows' GPU counters.
+how: Reads DirectX's adapter list and Windows' GPU counters.
+why: Video memory full means stutter; a narrow link means the card sits in the wrong slot.
+without: Offline.
+
+== tb.cpuheld
+friendly: Processor: is it held back?
+cat: term
+close: -1
+tag: Whether the processor runs at its full speed or is slowed down.
+what: Reads Windows' processor speed counter and the power plan.
+how: Reads Windows' processor speed counter and the power plan.
+why: Held back: heat, the battery saver or a power plan.
+without: Offline.
+
+== tb.netcap
+friendly: My internet vs this PC's link and disk
+cat: term
+close: -1
+tag: Whether this PC can keep up with your internet plan.
+what: Compares the last speed test with this PC's link (cable or Wi-Fi) and the disk's write speed.
+how: Compares the last speed test with this PC's link (cable or Wi-Fi) and the disk's write speed.
+why: If the link or disk is slower than the plan, the cap is here, not at your provider.
+without: Offline; uses the last speed test.
+
+== tb.hidden
+friendly: Slow PC, fine internet - the hidden reasons
+cat: term
+close: -1
+tag: The usual hidden reasons a PC feels slow: weeks without a restart, start-up apps, browser tabs, updates.
+what: Reads Windows' own information about each - nothing is changed.
+how: Reads Windows' own information about each - nothing is changed.
+why: Each line says what to change, and where in Windows.
+without: Offline.
+
+== tb.laptop
+friendly: Used laptop check (before you buy)
+cat: term
+close: -1
+tag: A buyer's check: battery wear, disk health, memory, processor and what the seller said.
+what: Reads Windows' own reports on the parts and compares them with the seller's listing if you type it.
+how: Reads Windows' own reports on the parts and compares them with the seller's listing if you type it.
+why: Battery under 70% or a worn disk changes the price.
+without: Offline.
+
+== tb.screentest
+friendly: Screen test - dead pixels and bleed
+cat: term
+close: -1
+tag: Full-screen colours to spot dead pixels and backlight bleed.
+what: Fills the screen with plain colours one at a time - press a key to step through.
+how: Fills the screen with plain colours one at a time - press a key to step through.
+why: Look for dots that stay one colour and light leaking at the edges.
+without: Offline.
+
+== tb.keytest
+friendly: Keyboard test - press every key
+cat: term
+close: -1
+tag: Press every key and see which ones register.
+what: Lights each key as Windows receives it.
+how: Lights each key as Windows receives it.
+why: A key that never lights is broken or stuck.
+without: Offline.
+
+== tb.soundtest
+friendly: Speakers, microphone and camera
+cat: term
+close: -1
+tag: Plays a test sound and shows the microphone and camera working.
+what: Uses Windows' own sound and camera - nothing is recorded or kept.
+how: Uses Windows' own sound and camera - nothing is recorded or kept.
+why: No sound or no picture: check the device and Windows' privacy settings.
+without: Offline; nothing is recorded.

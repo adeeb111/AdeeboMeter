@@ -221,8 +221,8 @@ namespace AdeeboMeter
                         var tiles = new List<string[]>();   // title, detail, level, group
                         if (tbSel == "manyports") foreach (var o in res.Skip(1)) tiles.Add(new[] { o[1], o[2], Lv(o).ToString(CultureInfo.InvariantCulture), "" });
                         else if (tbSel == "mysites") foreach (var o in res) tiles.Add(new[] { o[1], o[2], Lv(o).ToString(CultureInfo.InvariantCulture), "" });
-                        else if (tbSel == "listen") foreach (var o in res.Where(o => o[1].Contains(":"))) { bool all = o[1].StartsWith("0.0.0.0", StringComparison.Ordinal) || o[1].StartsWith("[::]", StringComparison.Ordinal); tiles.Add(new[] { o[1], o[2], all ? "1" : "-1", all ? L.T("open to the network") : L.T("this PC only") }); }
-                        else if (tbSel == "shares") foreach (var o in res.Where(o => o[1].StartsWith("\\\\", StringComparison.Ordinal))) tiles.Add(new[] { o[1], o[2], o[1].EndsWith("$", StringComparison.Ordinal) ? "-1" : "0", "" });
+                        else if (tbSel == "listen") foreach (var o in res.Where(o => o.Length > 2 && o[2].StartsWith("TCP ", StringComparison.Ordinal))) { bool all = o[2].Contains("every network"); tiles.Add(new[] { o[1], o[2], all ? "1" : "-1", all ? L.T("open to the network") : L.T("one address only") }); }   /* bug-hunt ML-214: SysTools.Listening names rows by program, "TCP 445, 139 · every network" */
+                        else if (tbSel == "shares") foreach (var o in res.SkipWhile(o => !o[1].StartsWith("\\\\", StringComparison.Ordinal)).Skip(1).Where(o => o.Length > 2 && o[1] != "Shown")) tiles.Add(new[] { o[1], o[2], o[1].EndsWith("$", StringComparison.Ordinal) ? "-1" : "0", "" });   /* bug-hunt ML-215: one tile per share (the rows after the \\host summary) */
                         else foreach (var o in res.Where(o => o[1] == "Computer" || o[1] == "User")) foreach (var p in o[2].Split(Dot, StringSplitOptions.RemoveEmptyEntries)) tiles.Add(new[] { p.Trim(), "", "-1", o[1] == "Computer" ? L.T("for the computer (at start-up)") : L.T("for you (at sign-in)") });
                         string tc = tbSel == "manyports" ? Or(P(RV("Mail ports") + RV(res.Count > 0 ? res[0][1] : "x"), 0), "PORTS, ONE BY ONE") : tbSel == "mysites" ? "YOUR SITES, RIGHT NOW" : tbSel == "listen" ? "THE DOORS OPEN ON THIS PC" : tbSel == "shares" ? "SHARED FOLDERS ON " + Or(VisIn()[0], "THE DEVICE") : "GROUP POLICIES THAT APPLIED - " + Or(RV("Policies applied"), "");
                         string tf = tbSel == "listen" ? "Orange doors answer anyone on the network (firewall permitting); grey ones only this PC. A door you don't recognise: look up the program." : tbSel == "shares" ? "Folders ending in $ are hidden admin shares. You see the names even without access - opening them needs permission." : tbSel == "gpo" ? "Computer policies apply at start-up, user policies at sign-in - gpupdate /force applies both now." : tbSel == "manyports" ? Or(res.Where(o => Lv(o) == 2 && o.Length > 3).Select(o => o[3]).FirstOrDefault(), "Green answers, red is blocked somewhere on the way.") : "Red: doesn't answer from here - check the reason beside it.";
@@ -238,8 +238,9 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- exchanges
                 case "rlisten":
                     {
-                        var heard = res.Skip(1).Take(4).ToList(); who = new[] { L.T("This PC (listening)"), L.T("your segment") }.Concat(heard.Select(o => Or(Regex.Match(o[2], @"from\s+([\d.]+)|master\s+([\d.]+)").Value.Replace("from ", "").Replace("master ", ""), o[1]))).Distinct().Take(4).ToArray();
-                        if (heard.Count == 0) { who = new[] { L.T("This PC (listening)"), L.T("your segment"), "192.168.1.1" }; heard.Add(OspfDefault); }
+                        var heard = res.Where(o => o.Length > 2 && o[2].Contains(" packets from ")).Take(4).ToList();   /* bug-hunt ML-221: every protocol row (there's no header row to skip) */ who = new[] { L.T("This PC (listening)"), L.T("your segment") }.Concat(heard.Select(o => Or(Regex.Match(o[2], @"from\s+([\d.]+)|master\s+([\d.]+)").Value.Replace("from ", "").Replace("master ", ""), o[1]))).Distinct().Take(4).ToArray();
+                        if (heard.Count == 0 && !ran) { who = new[] { L.T("This PC (listening)"), L.T("your segment"), "192.168.1.1" }; heard.Add(OspfDefault); }
+                        if (heard.Count == 0 && ran) { s.Add(Rd(X(1, 0, L.T("(nothing heard)"), Cut(Or(RV("Heard nothing"), res.Count > 0 ? res[0][2] : ""), 60), double.NaN), 3)); }
                         foreach (var o in heard) { string src = Regex.Match(o[2], @"from\s+([\d.]+)|master\s+([\d.]+)").Value.Replace("from ", "").Replace("master ", ""); int f = Math.Max(2, Array.IndexOf(who, src)); if (f >= who.Length) f = who.Length - 1; s.Add(Rd(X(f, 1, o[1], Cut(o[2], 60), double.NaN), Lv(o) < 0 && o.Length > 3 && o[3] != "" ? 1 : Lv(o))); s.Add(X(1, 0, L.T("heard here"), o.Length > 3 ? Cut(o[3], 60) : L.T("multicast reaches every device on the segment"), double.NaN)); }
                         cap = Or(RV("Heard in"), "ROUTING PROTOCOLS ON THIS SEGMENT").ToUpperInvariant(); foot = "Listening only - nothing is sent. OSPF, RIP or VRRP visible to a PC means anything plugged in here could join in.";
                     }
@@ -258,10 +259,11 @@ namespace AdeeboMeter
                     break;
                 case "dnsrules":
                     {
-                        string hj = RV("DNS hijack"), nr = RV("VPN name rules"); bool hijack = RLv("DNS hijack") == 2;
-                        var rm = Regex.Match(nr, @"^(\S+)\s+goes to\s+([\w.:]+)"); who = rm.Success ? new[] { L.T("This PC"), L.T("your DNS server"), L.T("VPN DNS") + " " + rm.Groups[2].Value } : new[] { L.T("This PC"), L.T("your DNS server") };
+                        // bug-hunt ML-217: WhyFails.DnsRules' rows - "Made-up name" (level 2 = hijacked, "x → addresses") and "Name rule" = "corp.example.com → 10.0.0.53"
+                        string hj = RV("Made-up name"), nr = RV("Name rule"); bool hijack = RLv("Made-up name") == 2;
+                        var rm = Regex.Match(nr, @"^([^,→]+?)(?:,[^→]*)?\s*→\s*([\w.:]+)"); who = rm.Success ? new[] { L.T("This PC"), L.T("your DNS server"), L.T("VPN DNS") + " " + rm.Groups[2].Value } : new[] { L.T("This PC"), L.T("your DNS server") };
                         s.Add(X(0, 1, L.T("where is") + " no-such-name-7f3a.example?", L.T("a made-up name, on purpose"), double.NaN));
-                        s.Add(Rd(X(1, 0, hijack ? L.T("an address! (it shouldn't have one)") : L.T("no such name"), Cut(Or(hj, L.T("empty - as it should be")), 60), double.NaN), hijack ? 2 : RLv("DNS hijack")));
+                        s.Add(Rd(X(1, 0, hijack ? L.T("an address! (it shouldn't have one)") : L.T("no such name"), Cut(Or(hj, L.T("empty - as it should be")), 60), double.NaN), hijack ? 2 : RLv("Made-up name")));
                         if (rm.Success) { s.Add(X(0, 2, L.T("where is") + " " + rm.Groups[1].Value.Replace("*.", "intranet.") + "?", L.T("matches a VPN name rule"), double.NaN)); s.Add(X(2, 0, L.T("the company's own answer"), L.T("Name Resolution Policy"), double.NaN)); }
                         cap = "WHO ANSWERS YOUR NAMES"; foot = "A server that answers made-up names is redirecting you (ads, a captive portal, a filter). VPN rules send company names to company DNS.";
                     }
@@ -278,31 +280,38 @@ namespace AdeeboMeter
                     break;
                 case "dc":
                     {
-                        string dom = RV("Your domain"), via = RV("Signed in through"); string dname = Or(Regex.Match(dom, @"\(([^)]+)\)").Groups[1].Value, "example.net"), dc = Or(P(via, 0), "dc01." + dname);
-                        who = new[] { L.T("This PC"), L.T("DNS"), dc + (P(via, 1) != "" ? " · " + P(via, 1) : "") };
-                        s.Add(X(0, 1, "_ldap._tcp." + Or(Regex.Replace(P(via, 2), "^site ", ""), "Default-First-Site") + "._sites.dc._msdcs." + dname + "?", L.T("DCs in my site first"), double.NaN));
-                        s.Add(Rd(X(1, 0, dc, Or(P(via, 2), ""), double.NaN), RLv("Signed in through")));
-                        s.Add(X(0, 2, L.T("LDAP ping - are you there, which site am I in?"), "UDP 389", double.NaN)); s.Add(X(2, 0, L.T("yes -") + " " + Or(P(via, 2), L.T("your site")), "", double.NaN));
-                        s.Add(Lk(X(0, 2, L.T("Kerberos: sign me in"), "TCP/UDP 88", double.NaN))); s.Add(Lk(X(2, 0, L.T("a ticket"), L.T("good for 10 h"), double.NaN)));
-                        cap = "HOW THIS PC FINDS ITS DOMAIN CONTROLLER - " + Or(dom, "").ToUpperInvariant(); foot = "A DC in another site works but is slower; a PC that can't find one signs in with cached credentials only.";
+                        // bug-hunt ML-218: SysTools.DomainControllers' rows - "Domain", "Windows found" = "dc01.corp.x (10.0.0.5) · site HQ", "DNS record for domain controllers"
+                        string dom = RV("Domain"), found = RV("Windows found"), srvRec = RV("DNS record for domain controllers"); bool none = dom.StartsWith("this PC isn't joined", StringComparison.Ordinal);
+                        string dname = none || dom == "" ? "example.net" : dom, dc = Or(Regex.Match(found, @"^[\w.-]+").Value, "dc01." + dname), site = Regex.Match(found, @"site ([^\s·]+)").Groups[1].Value;
+                        who = new[] { L.T("This PC"), L.T("DNS"), dc };
+                        if (none) { s.Add(X(0, 0, L.T("(not joined to a domain)"), Cut(dom, 60), double.NaN)); cap = "NO DOMAIN TO FIND"; foot = "Home and cloud-only PCs have no domain controller."; break; }
+                        s.Add(X(0, 1, "_ldap._tcp." + (site != "" ? site + "._sites." : "") + "dc._msdcs." + dname + "?", L.T("DCs in my site first"), double.NaN));
+                        s.Add(Rd(X(1, 0, Cut(Or(srvRec, dc), 50), "", double.NaN), RLv("DNS record for domain controllers")));
+                        s.Add(X(0, 2, L.T("LDAP ping - are you there, which site am I in?"), "UDP 389", double.NaN));
+                        s.Add(Rd(X(2, 0, found.StartsWith("no domain", StringComparison.Ordinal) ? L.T("(no answer)") : L.T("yes -") + " " + Or(site, L.T("your site")), Cut(found, 60), double.NaN), RLv("Windows found")));
+                        cap = "HOW THIS PC FINDS ITS DOMAIN CONTROLLER - " + dname.ToUpperInvariant(); foot = "A DC in another site works but is slower; a PC that can't find one signs in with cached credentials only.";
                     }
                     break;
                 case "fw":
                     {
-                        string app = Or(VisIn()[0], "the app"); var main = res.FirstOrDefault(); string blk = RV("Blocked"); who = new[] { L.T("the network"), L.T("Windows Firewall"), app };
+                        // bug-hunt ML-219: SysTools.Firewall's rules are rows named by the rule, valued "BLOCK in · TCP ..." / "allow in · ..." ("(off) " first when disabled)
+                        string app = Or(VisIn()[0], "the app"); who = new[] { L.T("the network"), L.T("Windows Firewall"), app };
+                        var rules = res.Where(o => o.Length > 2 && Regex.IsMatch(o[2], @"^(\(off\) )?(BLOCK|allow) (in|out)")).ToList();
+                        var inBlock = rules.FirstOrDefault(o => o[2].StartsWith("BLOCK in", StringComparison.Ordinal)); var inAllow = rules.FirstOrDefault(o => o[2].StartsWith("allow in", StringComparison.Ordinal));
                         s.Add(X(0, 1, L.T("a connection in"), L.T("for") + " " + app, double.NaN));
-                        s.Add(Rd(X(1, 2, main != null && Lv(main) == 2 ? L.T("blocked") : L.T("allowed"), Cut(main != null ? main[2] : L.T("a rule matches"), 70), double.NaN), main != null ? Lv(main) : -1));
-                        if (blk != "" && !blk.StartsWith("none", StringComparison.OrdinalIgnoreCase)) s.Add(Rd(X(1, 0, L.T("blocked"), Cut(blk, 70), double.NaN), 2));
+                        if (inBlock != null) s.Add(Rd(X(1, 0, L.T("blocked"), Cut(inBlock[1] + " · " + inBlock[2], 70), double.NaN), 1));
+                        else if (inAllow != null) s.Add(X(1, 2, L.T("allowed"), Cut(inAllow[1] + " · " + inAllow[2], 70), double.NaN));
+                        else s.Add(Rd(X(1, 0, ran ? L.T("blocked (no rule allows it)") : L.T("allowed"), ran ? L.T("Windows' default: incoming blocked") : L.T("a rule matches"), double.NaN), ran ? 1 : -1));
                         s.Add(X(2, 0, L.T("its answers go out"), L.T("outgoing is allowed unless a rule says no"), double.NaN));
                         cap = "WINDOWS FIREWALL AND " + app.ToUpperInvariant(); foot = "Rules are per network type: Private, Domain, Public. An app allowed on Private is still blocked on café Wi-Fi (Public).";
                     }
                     break;
                 default:   // hosts
                     {
-                        string name = Or(VisIn()[0], "example.com"), hf = RV("Hosts file"); var ents = res.Where(o => Regex.IsMatch(o[1], @"^[\d.:a-f]+$")).ToList(); var hit = ents.FirstOrDefault(o => o[2].Split(' ').Contains(name));
+                        string name = Or(VisIn()[0], "example.com"), hf = RV("Hosts file"); var ents = res.Where(o => o.Length > 2 && (o[1] == "Entry" || o[1] == "Pins your site")).ToList(); var hit = ents.FirstOrDefault(o => o[1] == "Pins your site");   /* bug-hunt ML-220: WhyFails.Hosts' rows are "Entry" and "Pins your site", the line as the value */
                         who = new[] { L.T("This PC"), L.T("hosts file"), L.T("DNS cache"), L.T("DNS server") };
                         s.Add(X(0, 1, L.T("anything for") + " " + name + "?", Cut(Or(hf, ""), 60), double.NaN));
-                        if (hit != null) s.Add(Rd(X(1, 0, L.T("yes:") + " " + hit[1], L.T("DNS is never asked - this line wins"), double.NaN), 1));
+                        if (hit != null) s.Add(Rd(X(1, 0, L.T("yes:") + " " + Cut(hit[2], 40), L.T("DNS is never asked - this line wins"), double.NaN), 2));
                         else { s.Add(X(1, 0, L.T("nothing"), L.T("entries:") + " " + Cut(string.Join(", ", ents.Select(o => o[2]).ToArray()), 50), double.NaN)); s.Add(X(0, 2, L.T("remembered?"), "", double.NaN)); s.Add(X(0, 3, L.T("where is") + " " + name + "?", "UDP 53", double.NaN)); s.Add(X(3, 0, L.T("its address"), "", double.NaN)); }
                         cap = "WHERE WINDOWS LOOKS FIRST"; foot = "The hosts file beats DNS. Malware and old test setups leave lines here that quietly send a site somewhere else.";
                     }
@@ -406,7 +415,9 @@ namespace AdeeboMeter
         // a certificate (or a request, a PFX, a key match) as an ID card: who, who vouches, the dates as a bar with today on it
         float CertCard(Graphics g, float x, float y, float w, string st)
         {
-            var res = Res(); string subj = Or(RV("Subject"), Or(P(RV("CSR"), 0), Or(P(RV("Certificate"), 0), "CN=www.example.com"))), iss = RV("Issued by"), valid = Or(RV("Valid"), RV("Certificate")), key = Or(RV("Key"), P(RV("CSR"), 1)), san = Or(RV("Names"), "");
+            // bug-hunt ML-216: a CSR's rows are "Asks for" (the subject), "Key", "Names (SAN)", "Signed with" - read them, never the example subject after a run
+            var res = Res(); bool ran = res.Count > 0;
+            string subj = Or(RV("Subject"), Or(RV("Asks for"), Or(P(RV("CSR"), 0), Or(P(RV("Certificate"), 0), ran ? "" : "CN=www.example.com")))), iss = RV("Issued by"), valid = Or(RV("Valid"), RV("Certificate")), key = Or(RV("Key"), P(RV("CSR"), 1)), san = Or(RV("Names"), "");
             bool csr = tbSel == "csr", match = tbSel == "certmatch", pfx = tbSel == "pfx";
             var r = VisCard(g, x, y, w, 250 * S, csr ? "THE REQUEST - WHAT YOU'RE ASKING A CA TO SIGN" : match ? "DOES THIS CERTIFICATE BELONG TO YOUR KEY?" : pfx ? "INSIDE THE PFX" : "THE CERTIFICATE AS AN ID CARD", st);
             var card = new RectangleF(r.X + 18 * S, r.Y + 40 * S, r.Width * 0.55f, 150 * S); Theme.Fill(g, card, 12 * S, Theme.Soft); Theme.Fill(g, new RectangleF(card.X, card.Y, card.Width, 30 * S), 12 * S, csr ? VSlate : VPurple);
@@ -414,7 +425,7 @@ namespace AdeeboMeter
             Kit.Icon(g, "lock", new RectangleF(card.Right - 30 * S, card.Y + 6 * S, 18 * S, 18 * S), Color.White);
             float ly = card.Y + 38 * S; Action<string, string> line = (k, v) => { if (v == "") return; VText(g, k, Draw.fTiny, Theme.Sub, card.X + 14 * S, ly + 2 * S); using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(v, Draw.fSmall, b, new RectangleF(card.X + 90 * S, ly, card.Width - 100 * S, 18 * S), sf); ly += 21 * S; };
             line(L.T("for"), subj); line(L.T("names"), san); line(L.T("vouched by"), iss != "" ? iss : csr ? L.T("nobody yet - a CA signs it") : ""); line(L.T("key"), key);
-            line(pfx ? L.T("inside") : L.T("status"), pfx ? Or(P(RV("PFX"), 1), "") + (RV("Chain inside") != "" ? " · " + RV("Chain inside") : "") : match ? RV("Match") : csr ? P(RV("CSR"), 2) : "");
+            line(pfx ? L.T("inside") : L.T("status"), pfx ? Or(P(RV("PFX"), 1), "") + (RV("Chain inside") != "" ? " · " + RV("Chain inside") : "") : match ? RV("Match") : csr ? Or(RV("Signed with"), P(RV("CSR"), 2)) : "");
             // the dates as a bar, today marked
             var dm = Regex.Matches(valid, @"(\d{4}-\d{2}-\d{2})"); DateTime d0, d1; float bx = card.Right + 24 * S, bw = r.Right - bx - 24 * S, by = card.Y + 40 * S;
             if (dm.Count >= 2 && DateTime.TryParse(dm[0].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out d0) && DateTime.TryParse(dm[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out d1) && d1 > d0)

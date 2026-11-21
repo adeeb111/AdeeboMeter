@@ -90,3 +90,17 @@ game.streak|{v} in a row - line running smooth.
 game.timeup|Shift's over.
 market.open|The exchange floor is running.
 storm.near|Storm nearby - power and lines may trip.
+stream.on|{v} runs on the line, steady as a flywheel.
+stream.on|The stream's belt runs smooth.
+stream.dip|A jolt on the stream belt. {v}
+stream.dip|The stream line slipped a gear. {v}
+stream.none|No stream on the line.
+stream.none|Stream belt idle.
+trade.ok|The broker pipe runs at full pressure.
+trade.ok|Broker line: gauges in the green.
+trade.slow|Pressure's low to the broker. Hold the lever.
+trade.slow|Broker pipe running slow. {v}
+trade.closed|Market shift ended. Back on at 9:30.
+trade.closed|The trading floor is shut till 9:30.
+view.switch|Switching the works to {v}.
+view.switch|{v} view on the floor.

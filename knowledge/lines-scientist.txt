@@ -90,3 +90,17 @@ game.streak|{v} in a row - statistically impressive.
 game.timeup|Time's up. Experiment ended.
 market.open|Markets open. Collecting data.
 storm.near|Storm nearby: expect interference.
+stream.on|Observation: {v} plays without loss.
+stream.on|Stream stable. Results reproducible.
+stream.dip|Anomaly recorded on the stream. {v}
+stream.dip|Transient dip observed. {v}
+stream.none|No stream to observe.
+stream.none|Stream sample size: zero.
+trade.ok|Broker latency: within the control range.
+trade.ok|Line to the broker, measured: fast.
+trade.slow|Broker latency elevated. Delay the order.
+trade.slow|Broker readings out of range. {v}
+trade.closed|Market closed. Observation resumes at 9:30.
+trade.closed|No market data until 9:30.
+view.switch|Switching the instrument to {v}.
+view.switch|{v} view. New variables, same method.

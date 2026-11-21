@@ -90,3 +90,17 @@ game.streak|{v} in a row - all systems nominal.
 game.timeup|Clock's at zero.
 market.open|Markets are go.
 storm.near|Weather advisory: storm nearby, link may drop.
+stream.on|Flight, {v} is nominal.
+stream.on|Stream telemetry looks good.
+stream.dip|Stream anomaly logged. {v}
+stream.dip|We had a stream dropout. {v}
+stream.none|No stream on the board.
+stream.none|Stream channel quiet. Standing by.
+trade.ok|Broker link is go.
+trade.ok|Broker link steady. Go for trading.
+trade.slow|Broker link degraded. Hold.
+trade.slow|Broker latency high. {v}
+trade.closed|Market window closed. Next window 9:30.
+trade.closed|Trading is no-go until 9:30.
+view.switch|Switching consoles to {v}.
+view.switch|{v} view, copy that.

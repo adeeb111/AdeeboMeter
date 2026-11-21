@@ -34,7 +34,7 @@ namespace AdeeboMeter
             var c = connSnap.Where(x => x.Proc == app && x.State == "ESTABLISHED" && Watch.IsPublic(x.RemoteIp))
                             .GroupBy(x => x.RemoteIp + ":" + x.RemotePort).OrderByDescending(gr => gr.Count() + (gr.First().RemotePort == 443 ? 100 : 0)).Select(gr => gr.First()).FirstOrDefault();
             if (c == null) return;
-            storyIp = c.RemoteIp; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyNote = ""; storyUdp = (c.Proto ?? "").StartsWith("UDP", StringComparison.Ordinal);
+            storyIp = c.RemoteIp; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyNote = c.RemoteIp.Contains(":") ? "The app talks over IPv6: the route card covers IPv4 only - the trace still runs." : ""; /* bug-hunt ML-234 */ storyUdp = (c.Proto ?? "").StartsWith("UDP", StringComparison.Ordinal);
             string h = c.Host != "" ? c.Host : c.RemoteIp.Contains(":") ? "[" + c.RemoteIp + "]" : c.RemoteIp;   // AM-CG-261: an IPv6 address with a port is written [addr]:port
             storyTarget = h + (c.RemotePort != 443 ? ":" + c.RemotePort : "");
             travelBox.Box.Text = ""; travelDest = null; realPkts = null; realDecode = null; realErr = "";

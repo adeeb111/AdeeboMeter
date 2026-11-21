@@ -90,3 +90,17 @@ game.streak|{v} in a row, a little string of pearls.
 game.timeup|The clock has closed its eyes.
 market.open|The markets wake and start to hum.
 storm.near|A storm leans close; the signal may tremble.
+stream.on|{v} flows like a quiet river.
+stream.on|The stream runs smooth beneath the evening sky.
+stream.dip|A ripple broke the stream. {v}
+stream.dip|The song paused for a breath. {v}
+stream.none|No stream tonight. The wires rest.
+stream.none|Silence on the stream.
+trade.ok|The broker answers swift as morning light.
+trade.ok|A steady line to your broker.
+trade.slow|The broker lingers. Wait a breath.
+trade.slow|A slow tide to the broker. {v}
+trade.closed|The market sleeps until 9:30.
+trade.closed|Closed is the market; the night is long.
+view.switch|We turn the page to {v}.
+view.switch|The {v} view unfolds.

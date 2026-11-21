@@ -90,14 +90,16 @@ namespace AdeeboMeter
                     { "ret", new[] { "github.com", "", "" } }, { "ping6", new[] { "www.google.com", "", "" } }, { "ntp", new[] { "time.windows.com", "", "" } } }) inputs[kv.Key] = kv.Value;
             // no-input tools that still reach out (the internet, game servers, the VPN, Windows' connectivity test): skipped with --local
             var netNoInput = new HashSet<string> { "dnsrules", "teams", "clock", "cloud", "doh", "hairpin", "ipv6score", "hotel", "tonight", "prematch", "vpn", "dupip", "vpnleak", "speedtest", "rushhour" };
+            var noInput = new List<string>();   // bug-hunt ML-232: tools with boxes but no test input here are said, not silently left out
             foreach (var t in Tools2().Where(x => x.Do != null && !ByHand.Contains(x.Id) && !LabGate.Contains(x.Id) && !SenderGate.Contains(x.Id)))   /* senders: hostile input only (to loopback), never a real run */
             {
                 if (late()) { sb.AppendLine("      (time cap reached - rest skipped)"); break; }
                 string[] a;
                 if (t.Inputs.Length == 0) { if (netNoInput.Contains(t.Id) && !net) continue; a = new string[3]; }
-                else if (!inputs.TryGetValue(t.Id, out a)) continue;
+                else if (!inputs.TryGetValue(t.Id, out a)) { noInput.Add(t.Id); continue; }
                 rec(t.Id, RunOne(t, a, t.Id == "space" || t.Id == "gpo" || t.Id == "battery" || t.Id == "cloud" ? 45000 : 25000));
             }
+            if (noInput.Count > 0) sb.AppendLine("      not run for real (they need typed input; section 1 runs each with hostile input): " + noInput.Count + " - " + string.Join(", ", noInput));
 
             // 3. the same quick tools 15 times each - memory, handles and threads must come back down
             head("3. Repeat (leaks)");
