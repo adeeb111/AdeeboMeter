@@ -1,6 +1,6 @@
 # AdeeboMeter - handover to the next Claude chat
 
-Written 21 Nov 2026, Toronto (updated 10:40): after the 637-finding bug hunt, the 55 carry-overs and the new language picker. Read this whole file first, then `PLAN-1.1.6.md`.
+Written 21 Nov 2026, Toronto (updated 10:40): after the 637-finding bug hunt, the 55 carry-overs and the new language picker. Read this whole file first, then `PLAN-1.1.6.md`. **Next steps: "Adeeb's decisions" near the end.**
 Owner: Adeeb Khan (adeeb111). Repo: github.com/adeeb111/AdeeboMeter. Website: adeebometer.com.
 
 ## Where things stand
