@@ -307,7 +307,7 @@ namespace AdeeboMeter
             aboutPage.Controls.Add(aboutCanvas);
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
-            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage());
+            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage()); left.Controls.Add(BuildOutlookPage());
             left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildPhonePage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
@@ -454,7 +454,7 @@ namespace AdeeboMeter
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
             // Review-1: coming back to What's wrong? opens at the verdict, not halfway down the last result
             bool enterGuide = tab == "guide" && !guidePage.Visible;
-            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade";
+            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook";
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
             SyncPointsBtn(); WatchUse(tab);
@@ -502,7 +502,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
             { "overview", new[] { "Today", "Today" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
-            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "security", new[] { "Security", "Security" } },
+            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } }, { "phone", new[] { "Your phone", "Phone" } } };
@@ -571,7 +571,7 @@ namespace AdeeboMeter
             if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if (destRunning || pinRunning) destCanvas.Invalidate();
             if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = rr == null ? "" : rr.Status + "|" + rr.Copy().Count + "|" + (footTick / 4);   /* and every 2 s anyway: tables like MTR's hops fill in without a status change */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
-            StreamTick(); SportsTick(); TradeTick();
+            StreamTick(); SportsTick(); TradeTick(); OutlookTick();
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gk = System.Threading.Interlocked.Read(ref GamePing.Ver) + "|" + GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerCanvas.Invalidate(); } }   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();

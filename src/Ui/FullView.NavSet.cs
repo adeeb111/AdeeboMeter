@@ -10,7 +10,7 @@ namespace AdeeboMeter
 {
     partial class FullView
     {
-        const string NavDefault = "home,toolbox,gamer,time,learn";
+        const string NavDefault = "home,outlook,toolbox,gamer,time,learn";
 
         float PaintNavSettings(Graphics g, float x, float y, float w)
         {

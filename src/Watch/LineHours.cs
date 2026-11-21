@@ -14,6 +14,7 @@ namespace AdeeboMeter
     {
         static readonly object k = new object();
         public sealed class Slot { public DateTime Day; public double Ms = double.NaN, Loss = double.NaN; public int Minutes; }
+        public static int Drops7 = -1;   // internet drops in the last 7 days (from History's events), -1 until read
         static double[] byHour; static int daysUsed; static DateTime hourAt = DateTime.MinValue; static volatile bool busyH;
         static readonly Dictionary<string, Tuple<DateTime, List<Slot>>> slots = new Dictionary<string, Tuple<DateTime, List<Slot>>>(); static readonly HashSet<string> busyS = new HashSet<string>();
         public static long Ver;
@@ -29,17 +30,17 @@ namespace AdeeboMeter
                     busyH = true;
                     new Thread(() =>
                     {
-                        var per = Enumerable.Range(0, 24).Select(i => new List<double>()).ToArray(); int used = 0;
+                        var per = Enumerable.Range(0, 24).Select(i => new List<double>()).ToArray(); int used = 0, drops = 0;
                         try
                         {
                             for (int d = 1; d <= 7; d++)
                             {
-                                var day = History.Load(DateTime.Today.AddDays(-d)); if (day.M.Count < 60) continue; used++;
+                                var day = History.Load(DateTime.Today.AddDays(-d)); drops += day.E.Count(e => e.Kind == "inet" && e.Text.StartsWith("Internet back", StringComparison.Ordinal)); if (day.M.Count < 60) continue; used++;
                                 foreach (var row in day.M) { double net = row[6]; if (!double.IsNaN(net) && net > 0 && net < 5000) per[Math.Min(23, (int)(row[0] / 3600))].Add(net); }
                             }
                         }
                         catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("line hours: " + e.GetType().Name); }
-                        finally { lock (k) { byHour = per.Select(l => l.Count >= 10 ? Median(l) : double.NaN).ToArray(); daysUsed = used; hourAt = DateTime.UtcNow; busyH = false; Ver++; } }
+                        finally { lock (k) { byHour = per.Select(l => l.Count >= 10 ? Median(l) : double.NaN).ToArray(); daysUsed = used; Drops7 = drops; hourAt = DateTime.UtcNow; busyH = false; Ver++; } }
                     }) { IsBackground = true, Name = "line-hours" }.Start();
                 }
                 days = daysUsed; return byHour;

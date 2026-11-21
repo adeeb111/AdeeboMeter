@@ -19,7 +19,7 @@ namespace AdeeboMeter
         // id -> name, icon, the colour (Kit.Accents) and where it opens
         static readonly Dictionary<string, string[]> NavInfo = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            { "home", new[] { "Home", "home", "home" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
+            { "home", new[] { "Home", "home", "home" } }, { "outlook", new[] { "Outlook", "outlook", "outlook" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
             { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
             { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
