@@ -137,7 +137,7 @@ namespace AdeeboMeter
 
         // ---------- currencies, end of day: the Bank of Canada's daily rates (official, free, no key)
         // One fetch a day, after the Bank publishes (about 16:30 Eastern), only while the Trading page is open.
-        public static readonly string[] Fx = { "USD", "EUR", "GBP", "CNY", "JPY", "INR", "CHF", "AUD", "MXN", "HKD" };
+        public static string[] Fx { get { return MarketData.MyFx().ToArray(); } }   // 1.1.6: the person's own list (Markets › Currencies › Add)
         public sealed class Rate { public string Code; public DateTime Day; public double Cad, Prev = double.NaN; }
         public static List<Rate> Rates = new List<Rate>(); public static string FxNote = ""; static volatile bool fxBusy; static bool fxLoaded; static DateTime fxTried = DateTime.MinValue;
         static string FxFile { get { return Path.Combine(Program.DataDir, "fx.txt"); } }
@@ -156,7 +156,7 @@ namespace AdeeboMeter
             {
                 var et = EasternNow(); var want = et.TimeOfDay >= new TimeSpan(16, 45, 0) ? et.Date : et.Date.AddDays(-1);
                 while (want.DayOfWeek == DayOfWeek.Saturday || want.DayOfWeek == DayOfWeek.Sunday) want = want.AddDays(-1);
-                return Rates.Count == 0 || Rates.Min(r => r.Day) < want;   // AM-CG-111: one stale currency makes the set stale - a fresh one can't hide it
+                return Rates.Count == 0 || Rates.Min(r => r.Day) < want || Fx.Any(c => !Rates.Any(r => r.Code == c));   // a newly added currency is "stale" until fetched   // AM-CG-111: one stale currency makes the set stale - a fresh one can't hide it
             }
         }
         // the day's numbers, both from the Bank of Canada in one short visit: the rates when they're stale, and the weekly
@@ -193,7 +193,7 @@ namespace AdeeboMeter
                         }
                         catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("commodities: " + e.Message); }
                 }
-                finally { fxBusy = false; if (done != null) done(); }
+                finally { fxBusy = false; MarketData.Done(done); }   // bug-hunt M-4: a closing window can't crash the app from here
             }) { IsBackground = true, Name = "fx" }.Start();
         }
         static string Get(string url) { return HttpSmall.Get(url, 200); }   // AM-CG-127: capped while reading

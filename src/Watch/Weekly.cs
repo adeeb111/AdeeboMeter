@@ -32,7 +32,7 @@ namespace AdeeboMeter
                     try
                     {
                         var to = DateTime.Now; var from = DateTime.Today.AddDays(-6);
-                        var all = WatchKit.Recent(null);
+                        var all = WatchKit.RecentNow(null);
                         var streams = all.Where(s => s.Mode == "stream" && s.Start >= from).ToList();
                         var trades = all.Where(s => s.Mode == "trade" && s.Start >= from).ToList();
                         var games = new List<GameHistory.Row>();
@@ -120,7 +120,7 @@ namespace AdeeboMeter
         public static List<Evidence> ProviderMoments(int days)
         {
             var from = DateTime.Today.AddDays(-(days - 1)); var l = new List<Evidence>();
-            foreach (var s in WatchKit.Recent(null).Where(z => z.Start >= from))
+            foreach (var s in WatchKit.RecentNow(null).Where(z => z.Start >= from))
                 foreach (var d in s.Dips.Where(z => z.Blame == "provider"))
                     l.Add(new Evidence { T = d.T, What = (s.Mode == "trade" ? "Trading (" + s.Far + ")" : "Streaming " + s.What), Text = d.Secs + " s · " + d.Evidence });
             // games: rough minutes (loss 2% or more, or a 95th-percentile ping over 150 ms) with the router fine, by game and hour

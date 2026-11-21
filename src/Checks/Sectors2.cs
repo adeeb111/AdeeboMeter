@@ -92,7 +92,7 @@ namespace AdeeboMeter
             WatchKit.Session live = null;
             if (mode == "trade") lock (Trading.k) live = Trading.Day == null ? null : Trading.Day.Copy();
             else lock (Streams.k) { var n = Streams.Now; if (n != null) live = n.S.Copy(); }
-            var all = WatchKit.Recent(mode).OrderBy(s => s.Start).ToList(); if (live != null && !all.Contains(live)) all.Add(live);
+            var all = WatchKit.RecentNow(mode).OrderBy(s => s.Start).ToList(); if (live != null && !all.Contains(live)) all.Add(live);
             string w = (which ?? "").Trim().ToLowerInvariant(); DateTime d;
             if (w == "" || w == "last") return all.LastOrDefault();
             if (w == "today") return all.LastOrDefault(s => s.Start.Date == DateTime.Today);
@@ -115,7 +115,7 @@ namespace AdeeboMeter
             var far = s.Line.Where(p => p.Length > 2 && p[2] >= 0).Select(p => (double)p[2]).ToList(); var down = s.Line.Where(p => p.Length > 1 && p[1] >= 0).Select(p => (double)p[1]).ToList();
             var tally = s.Tally(); int dips = s.Dips.Count;
             string farN = trade ? "your broker" : s.Far;   // AM-CG-123: a shared result names no broker address
-            var sameDay = WatchKit.Recent(mode).Where(o => o.Start.Date == s.Start.Date && Math.Abs((o.Start - s.Start).TotalSeconds) > 1).OrderBy(o => o.Start).ToList();
+            var sameDay = WatchKit.RecentNow(mode).Where(o => o.Start.Date == s.Start.Date && Math.Abs((o.Start - s.Start).TotalSeconds) > 1).OrderBy(o => o.Start).ToList();
             if (sameDay.Count > 0) rows.Add(R(3, "Other sessions that day", string.Join(", ", sameDay.Select(o => o.Start.ToString("HH:mm", CultureInfo.CurrentCulture) + "-" + o.End.ToString("HH:mm", CultureInfo.CurrentCulture)).ToArray()), "Type a start time (like " + sameDay[0].Start.ToString("HH:mm", CultureInfo.CurrentCulture) + ") to see one of them.", "m"));
             // AM-CG-115: a session with no readings at all isn't a clean one
             if (far.Count == 0 && down.Count == 0) { rows.Add(R(3, trade ? "Session" : "Stream", s.Start.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " · no readings were recorded, so it can't be judged", "", "m")); return rows; }

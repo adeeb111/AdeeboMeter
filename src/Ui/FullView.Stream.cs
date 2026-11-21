@@ -26,7 +26,7 @@ namespace AdeeboMeter
         void StreamTick()
         {
             if (tab != "stream" || streamCanvas == null) return;
-            string k = System.Threading.Interlocked.Read(ref Streams.Ver) + "|" + DateTime.Now.Minute + "|" + SpeedTest.Busy + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            string k = System.Threading.Interlocked.Read(ref Streams.Ver) + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + DateTime.Now.Minute + "|" + SpeedTest.Busy + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != streamKey) { streamKey = k; streamCanvas.Invalidate(); }
         }
         static string Dur(TimeSpan t) { return t.TotalHours >= 1 ? ((int)t.TotalHours).ToString(CultureInfo.InvariantCulture) + " h " + t.Minutes.ToString("00", CultureInfo.InvariantCulture) + " min" : Math.Max(1, (int)t.TotalMinutes).ToString(CultureInfo.InvariantCulture) + " min"; }

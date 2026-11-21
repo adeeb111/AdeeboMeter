@@ -21,7 +21,7 @@ namespace AdeeboMeter
     // (never in the Quiet corner, during a call or a problem), and as one line in the widget if you want it.
     static class Weather
     {
-        public sealed class Hour { public DateTime Utc; public double Temp = double.NaN, Feels = double.NaN; public int Code = -1, Pop = -1; }
+        public sealed class Hour { public DateTime Utc; public double Temp = double.NaN, Feels = double.NaN, Wind = double.NaN; public int Code = -1, Pop = -1, Hum = -1, WindFrom = -1; }   // 1.1.6: humidity %, wind km/h and where it comes from (degrees)
         public sealed class Place { public string Name = ""; public double Lat, Lon; }
         static readonly char[] Semi = { ';' };
         static readonly object k = new object();
@@ -97,7 +97,7 @@ namespace AdeeboMeter
         public static string ForecastUrl(Place p)
         {
             return "https://api.open-meteo.com/v1/forecast?latitude=" + p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + "&longitude=" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture)
-                + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability&forecast_days=3&timezone=auto&timeformat=unixtime";
+                + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,relative_humidity_2m,wind_speed_10m,wind_direction_10m&forecast_days=3&timezone=auto&timeformat=unixtime";
         }
         static double[] Nums(string json, string key)
         {
@@ -117,7 +117,7 @@ namespace AdeeboMeter
             PlaceOffset = om.Success ? (int)off : int.MinValue;
             var tm = Regex.Match(json, "\"time\"\\s*:\\s*\\[([^\\]]*)\\]"); if (!tm.Success) return list;
             var raw = tm.Groups[1].Value.Split(',').Select(z => z.Trim().Trim('"')).Where(z => z != "").ToList();
-            double[] t = Nums(json, "temperature_2m"), f = Nums(json, "apparent_temperature"), c = Nums(json, "weather_code"), p = Nums(json, "precipitation_probability");
+            double[] t = Nums(json, "temperature_2m"), f = Nums(json, "apparent_temperature"), c = Nums(json, "weather_code"), p = Nums(json, "precipitation_probability"), hu = Nums(json, "relative_humidity_2m"), ws = Nums(json, "wind_speed_10m"), wd = Nums(json, "wind_direction_10m");
             for (int i = 0; i < raw.Count; i++)
             {
                 DateTime utc; long unix;
@@ -128,6 +128,9 @@ namespace AdeeboMeter
                 if (f != null && i < f.Length && Finite(f[i]) && f[i] > -100 && f[i] < 70) h.Feels = f[i];
                 if (c != null && i < c.Length && Finite(c[i]) && c[i] == Math.Floor(c[i]) && KnownCodes.Contains((int)c[i])) h.Code = (int)c[i];
                 if (p != null && i < p.Length && Finite(p[i]) && p[i] >= 0 && p[i] <= 100) h.Pop = (int)p[i];
+                if (hu != null && i < hu.Length && Finite(hu[i]) && hu[i] >= 0 && hu[i] <= 100) h.Hum = (int)Math.Round(hu[i]);
+                if (ws != null && i < ws.Length && Finite(ws[i]) && ws[i] >= 0 && ws[i] < 500) h.Wind = ws[i];
+                if (wd != null && i < wd.Length && Finite(wd[i]) && wd[i] >= 0 && wd[i] <= 360) h.WindFrom = (int)Math.Round(wd[i]) % 360;
                 list.Add(h);
             }
             return list;

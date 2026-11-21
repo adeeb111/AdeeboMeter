@@ -70,12 +70,20 @@ namespace AdeeboMeter
         {
             // AM-CG-275: whole words only ("TOR" doesn't match "Toronto FC"'s neighbours, "In" never matches "India"), against the
             // short code and the full name the feed gives
-            foreach (var t in Teams())
-            {
-                var rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(t) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            foreach (var rx in TeamRx())
                 if (rx.IsMatch(g.Home) || rx.IsMatch(g.Away) || rx.IsMatch(g.HomeAlso) || rx.IsMatch(g.AwayAlso)) return true;
-            }
             return false;
+        }
+        // bug-hunt M-16: built once per team list, not once per team per game per paint
+        static string rxFor; static List<Regex> rxList = new List<Regex>(); static readonly object rxLock = new object();
+        static List<Regex> TeamRx()
+        {
+            string now = Cfg.SportTeams ?? "";
+            lock (rxLock)
+            {
+                if (now != rxFor) { rxList = Teams().Select(t => new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(t) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)).ToList(); rxFor = now; }
+                return rxList;
+            }
         }
         internal static Game LiveMine() { lock (k) return Games.FirstOrDefault(g => g.State == "live" && Mine(g)); }
         internal static int LiveMineCount() { lock (k) return Games.Count(g => g.State == "live" && Mine(g)); }
@@ -122,7 +130,7 @@ namespace AdeeboMeter
                     }
                     lock (k) if (gen == keyGen) FetchedAt = DateTime.UtcNow;
                 }
-                finally { busy = false; if (done != null) done(); }
+                finally { busy = false; MarketData.Done(done); }   // bug-hunt M-3
             }) { IsBackground = true, Name = "sports" }.Start();
         }
         static string Why(Exception e) { return e is WebException ? "couldn't reach it (" + ((WebException)e).Status + ")" : "its answer couldn't be read"; }

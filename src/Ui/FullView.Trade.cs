@@ -25,7 +25,7 @@ namespace AdeeboMeter
         void TradeTick()
         {
             if (tab != "trade" || tradeCanvas == null) return;
-            string k = System.Threading.Interlocked.Read(ref Trading.Ver) + "|" + DateTime.Now.Minute + "|" + Cfg.TradeLive;
+            string k = System.Threading.Interlocked.Read(ref Trading.Ver) + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + System.Threading.Interlocked.Read(ref MarketData.Ver) + "|" + DateTime.Now.Minute + "|" + Cfg.TradeLive + "|" + StreamCheck.Running;
             if (k != tradeKey) { tradeKey = k; tradeCanvas.Invalidate(); }
         }
         // a few brokers' public web addresses to start from; the user can type any other

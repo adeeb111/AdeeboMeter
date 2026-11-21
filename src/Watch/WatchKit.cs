@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace AdeeboMeter
 {
@@ -150,30 +151,42 @@ namespace AdeeboMeter
         {
             if (!Cfg.History) return;
             lock (k)
-                try { Directory.CreateDirectory(History.Dir); File.AppendAllText(FileOf(s.Start), Encode(s) + "\n"); cache = null; Tidy(); }
+                try { Directory.CreateDirectory(History.Dir); File.AppendAllText(FileOf(s.Start), Encode(s) + "\n"); cacheAt = DateTime.MinValue; Tidy(); }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch store: " + e.Message); }
         }
-        static List<Session> cache; static DateTime cacheAt;
-        public static void Drop() { lock (k) cache = null; }
-        // the last 90 days, newest first (cached for a minute: the page asks on every paint)
+        static List<Session> cache; static DateTime cacheAt; static volatile bool reading; public static long CacheVer;
+        public static void Drop() { lock (k) cacheAt = DateTime.MinValue; }   // stale, but the old list stays to show until the new one is read
+        // the last 90 days, newest first. Bug-hunt H-4: the pages ask on every paint, so the files (up to 4 x 5,000 lines) are
+        // read on a background thread when the minute-old copy is stale - a paint only ever gets the copy it already has.
+        // Until the first read lands that copy is empty; CacheVer moves when a new one is ready (the pages repaint on it).
         public static List<Session> Recent(string mode)
         {
             lock (k)
             {
-                if (cache == null || (DateTime.UtcNow - cacheAt).TotalSeconds > 60)
+                if ((cache == null || (DateTime.UtcNow - cacheAt).TotalSeconds > 60) && !reading)
                 {
-                    var l = new List<Session>(); var from = DateTime.Now.AddDays(-90);
-                    try
+                    reading = true;
+                    new Thread(() =>
                     {
-                        if (Directory.Exists(History.Dir))
-                            foreach (var f in Directory.GetFiles(History.Dir, "watch-*.log").OrderByDescending(x => x, StringComparer.Ordinal).Take(4))
-                                foreach (var line in File.ReadLines(f).Take(5000)) { var s = Decode(line); if (s != null && s.Start >= from) l.Add(s); }
-                    }
-                    catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch read: " + e.Message); }
-                    cache = l.OrderByDescending(s => s.Start).ToList(); cacheAt = DateTime.UtcNow;
+                        var l = new List<Session>(); var from = DateTime.Now.AddDays(-90);
+                        try
+                        {
+                            if (Directory.Exists(History.Dir))
+                                foreach (var f in Directory.GetFiles(History.Dir, "watch-*.log").OrderByDescending(x => x, StringComparer.Ordinal).Take(4))
+                                    foreach (var line in File.ReadLines(f).Take(5000)) { var s = Decode(line); if (s != null && s.Start >= from) l.Add(s); }
+                        }
+                        catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch read: " + e.Message); }
+                        finally { lock (k) { cache = l.OrderByDescending(s => s.Start).ToList(); cacheAt = DateTime.UtcNow; CacheVer++; reading = false; } }
+                    }) { IsBackground = true, Name = "watch-read" }.Start();
                 }
-                return cache.Where(s => mode == null || s.Mode == mode).ToList();
+                return cache == null ? new List<Session>() : cache.Where(s => mode == null || s.Mode == mode).ToList();
             }
+        }
+        // for callers that need the records now and aren't on the window's thread (reports, the self-test)
+        public static List<Session> RecentNow(string mode)
+        {
+            Recent(mode); for (int i = 0; i < 100 && reading; i++) Thread.Sleep(50);
+            return Recent(mode);
         }
         static DateTime tidied;
         static void Tidy()
