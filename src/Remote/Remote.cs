@@ -48,13 +48,18 @@ namespace AdeeboMeter
         volatile Toolkit.Run op; volatile string opRid = "";
         // the other way round (PhoneAsk.cs): questions this PC sent the phone, by request id, until it answers or the session ends
         readonly System.Collections.Concurrent.ConcurrentDictionary<string, Action<string, List<string[]>>> asks = new System.Collections.Concurrent.ConcurrentDictionary<string, Action<string, List<string[]>>>();
-        public bool AskPhone(string k, string q, Action<string, List<string[]>> done)
+        public bool AskPhone(string k, string q, Action<string, List<string[]>> done) { string id; return AskPhone(k, q, done, out id); }
+        public bool AskPhone(string k, string q, Action<string, List<string[]>> done, out string id)
         {
+            id = null;
             if (St != State.Paired || tx == null || asks.Count >= 4) return false;
-            string id = RemoteCrypto.B64u(RemoteCrypto.Random(6)); asks[id] = done;
+            id = RemoteCrypto.B64u(RemoteCrypto.Random(6)); asks[id] = done;
             Seal("{\"t\":\"ask\",\"rid\":\"" + id + "\",\"k\":\"" + J(Clip(k, 16)) + "\",\"q\":\"" + J(Clip(q, 200)) + "\"}");
             return true;
         }
+
+        // bug-hunt M-13: a question the phone never answered (asleep, out of coverage) gives its slot back
+        public void ForgetAsk(string id) { Action<string, List<string[]>> gone; if (id != null) asks.TryRemove(id, out gone); }
 
         Remote(Monitor m)
         {

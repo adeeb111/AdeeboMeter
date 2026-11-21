@@ -72,7 +72,8 @@ namespace AdeeboMeter
             {
                 double prev = stats.Take(i).Select(s => s.Item2).Where(x => !double.IsNaN(x)).DefaultIfEmpty(double.NaN).Max(), cur = stats[i].Item2;
                 var later = stats.Skip(i + 1).Where(s => !double.IsNaN(s.Item2)).ToList(); bool carries = (later.Count > 0 || stats[i].Item1.Reached) && later.All(s => s.Item2 >= cur - 10);   // "carries on" needs an answer after it
-                bool lossCarries = stats[i].Item3 >= 20 && stats.Skip(i).All(s => s.Item3 >= 20);
+                // bug-hunt M-5: a hop that never answers isn't "where loss starts" - it has to answer sometimes, and so must one after it
+                bool lossCarries = stats[i].Item3 >= 20 && !double.IsNaN(cur) && stats.Skip(i).All(s => s.Item3 >= 20) && (stats.Skip(i + 1).Any(s => !double.IsNaN(s.Item2)) || stats[i].Item1.Reached);
                 if ((!double.IsNaN(prev) && !double.IsNaN(cur) && cur > prev + 30 && carries) || lossCarries) { jump = i; break; }
             }
             rows.Add(R(-1, "THE WAY TO " + srv.Name.ToUpperInvariant() + (srv.Kind == "estimate" ? " (A REGION ESTIMATE)" : ""), stats.Count + " hops", "", "m"));

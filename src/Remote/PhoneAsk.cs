@@ -27,12 +27,12 @@ namespace AdeeboMeter
             if (s == null || s.St != Remote.State.Paired) { a.NoPhone = true; return a; }
             var got = new ManualResetEventSlim(false); string head = null; List<string[]> rows = null;
             if (run != null) run.Status = "Asking your phone...";
-            if (!s.AskPhone(k, q, (h, r) => { head = h; rows = r; got.Set(); })) { a.NoPhone = true; return a; }
+            string rid; if (!s.AskPhone(k, q, (h, r) => { head = h; rows = r; got.Set(); }, out rid)) { a.NoPhone = true; return a; }
             var until = DateTime.UtcNow.AddSeconds(secs);
             while (!got.Wait(250))
             {
-                if (run != null && run.Stop) { a.Stopped = true; return a; }
-                if (DateTime.UtcNow > until || s.St != Remote.State.Paired) { a.NoAnswer = true; return a; }
+                if (run != null && run.Stop) { s.ForgetAsk(rid); a.Stopped = true; return a; }
+                if (DateTime.UtcNow > until || s.St != Remote.State.Paired) { s.ForgetAsk(rid); a.NoAnswer = true; return a; }
             }
             if (rows == null) { a.NoAnswer = true; return a; }
             a.Head = head ?? ""; a.Rows = rows; return a;

@@ -359,9 +359,9 @@ namespace AdeeboMeter
         {
             long ms = days * 86400000L;
             var q = new[] {
-                Tuple.Create("disk", "disk errors", "*[System[(Provider[@Name='disk'] or Provider[@Name='Ntfs']) and (EventID=7 or EventID=11 or EventID=51 or EventID=55 or EventID=153) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
+                Tuple.Create("disk", "disk errors", "*[System[(Provider[@Name='disk'] or Provider[@Name='Ntfs']) and (EventID=7 or EventID=11 or EventID=55 or EventID=153) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
                 Tuple.Create("reset", "disk controller resets", "*[System[(Provider[@Name='stornvme'] or Provider[@Name='storahci'] or Provider[@Name='iaStorAC'] or Provider[@Name='iaStorA']) and (EventID=129 or EventID=11) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
-                Tuple.Create("whea", "hardware errors (WHEA)", "*[System[Provider[@Name='Microsoft-Windows-WHEA-Logger'] and (Level=1 or Level=2 or Level=3) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
+                Tuple.Create("whea", "hardware errors (WHEA)", "*[System[Provider[@Name='Microsoft-Windows-WHEA-Logger'] and (Level=1 or Level=2) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
                 Tuple.Create("power", "sudden power-offs", "*[System[Provider[@Name='Microsoft-Windows-Kernel-Power'] and EventID=41 and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]") };
             var r = new List<Tuple<string, string, int>>();
             foreach (var x in q)

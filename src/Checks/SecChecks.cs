@@ -563,15 +563,15 @@ namespace AdeeboMeter
             {
                 try
                 {
-                    var q = (HttpWebRequest)WebRequest.Create("https://" + h + "/"); q.Timeout = 10000; q.Method = "GET"; q.UserAgent = "AdeeboMeter/" + Program.Version;
+                    var q = (HttpWebRequest)WebRequest.Create("https://" + h + "/"); q.Timeout = 10000; q.Method = "GET"; q.UserAgent = "AdeeboMeter/" + Program.Version; q.AllowAutoRedirect = false;   // bug-hunt M-1: this site's own answer, never the one it redirects to
                     HttpWebResponse r; try { r = (HttpWebResponse)q.GetResponse(); } catch (WebException e) { r = e.Response as HttpWebResponse; if (r == null) return R(3, "Security headers · " + h, "couldn't load https://" + h, "", null); }
                     using (r)
                     {
-                        var miss = new List<string>(); var hd = r.Headers;
+                        var miss = new List<string>(); var hd = r.Headers; int sc = (int)r.StatusCode; string moved = sc >= 300 && sc < 400 && hd["Location"] != null ? " (" + h + " answers with a redirect - these are its own headers, not the next site's)" : "";
                         if (hd["Strict-Transport-Security"] == null) miss.Add("HSTS"); if (hd["Content-Security-Policy"] == null) miss.Add("CSP");
                         if (hd["X-Content-Type-Options"] == null) miss.Add("X-Content-Type-Options"); if (hd["X-Frame-Options"] == null && (hd["Content-Security-Policy"] ?? "").IndexOf("frame-ancestors", StringComparison.OrdinalIgnoreCase) < 0) miss.Add("framing protection");
                         if (hd["Referrer-Policy"] == null) miss.Add("Referrer-Policy");
-                        return R(miss.Count == 0 ? 0 : miss.Contains("HSTS") || miss.Count >= 3 ? 1 : 3, "Security headers · " + h, miss.Count == 0 ? "all five common ones present" : "missing: " + string.Join(", ", miss), miss.Count == 0 ? "" : "These tell browsers to refuse downgrades, script injection and framing. Your web host or CMS can add them.", null);
+                        return R(miss.Count == 0 ? 0 : miss.Contains("HSTS") || miss.Count >= 3 ? 1 : 3, "Security headers · " + h, (miss.Count == 0 ? "all five common ones present" : "missing: " + string.Join(", ", miss)) + moved, miss.Count == 0 ? "" : "These tell browsers to refuse downgrades, script injection and framing. Your web host or CMS can add them.", null);
                     }
                 }
                 catch (NotSupportedException) { return R(3, "Security headers · " + h, "couldn't check", "", null); }

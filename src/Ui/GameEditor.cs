@@ -72,7 +72,7 @@ namespace AdeeboMeter
             l.Result = new Label { Location = new Point(Sc(828), Sc(14)), AutoSize = true, Font = Draw.fSmall, ForeColor = Theme.Muted, BackColor = Theme.Card };
             l.Remove = new PillButton("✕", PillButton.K.Chip) { Location = new Point(Sc(884), Sc(6)), AccessibleName = "Remove this server" };
             l.Remove.Click += delegate { lines.Remove(l); list.Controls.Remove(row); row.Dispose(); };
-            l.Host.Tag = s.Kind;
+            l.Host.Tag = s.Kind + "|" + s.Host;   // the kind, and the host it was loaded with (bug-hunt M-6)
             row.Controls.AddRange(new Control[] { l.Name, l.Where, l.Host, l.How, l.Port, l.Result, l.Remove });
             lines.Add(l); list.Controls.Add(row);
         }
@@ -88,7 +88,9 @@ namespace AdeeboMeter
                 if (!Games.ValidHost(host)) { problem = "Line " + n + ": \"" + (host.Length > 40 ? host.Substring(0, 40) + "..." : host) + "\" isn't a host name or IP - letters, digits, dots and dashes only."; return null; }
                 int port = l.How.SelectedIndex == 1 ? -1 : 0;
                 if (l.How.SelectedIndex == 2 && (!int.TryParse(l.Port.Box.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out port) || port < 1 || port > 65535)) { problem = "Line " + n + ": the TCP port must be 1 - 65535."; return null; }
-                string kind = l.Host.Tag as string; if (kind != "valve" && kind != "estimate") kind = "exact";
+                // bug-hunt M-6: a Valve or estimated server whose address you changed is your own server now ("exact") - kept on reload
+                string tag = l.Host.Tag as string ?? ""; int bar = tag.IndexOf('|'); string kind = bar >= 0 ? tag.Substring(0, bar) : tag, was = bar >= 0 ? tag.Substring(bar + 1) : "";
+                if ((kind != "valve" && kind != "estimate") || !string.Equals(was, host, StringComparison.OrdinalIgnoreCase)) kind = "exact";
                 r.Add(new GameServer { Name = nm == "" ? host : nm, Where = l.Where.Box.Text.Trim(), Host = host, Port = port, Kind = kind });
             }
             if (r.Select(z => z.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != r.Count) { problem = "Two servers have the same name - give each one its own."; return null; }

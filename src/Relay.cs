@@ -44,7 +44,7 @@ namespace AdeeboMeter
                 Result r;
                 try { r = Post(json); }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; r = new Result { Why = e.Message }; }
-                if (!r.Ok && r.Why == "offline") { r.Queued = Keep(BugReport.Scrub(json)); if (!r.Queued) r.Why = "couldn't keep it to send later"; }   // cleaned before it touches the disk
+                if (!r.Ok && (r.Why == "offline" || Retryable(r.Why))) { r.Queued = Keep(BugReport.Scrub(json)); if (!r.Queued) r.Why = "couldn't keep it to send later"; }   // cleaned before it touches the disk
                 if (done != null) done(r);
             }) { IsBackground = true, Name = "relay" }.Start();
         }
@@ -97,6 +97,8 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return false; }
         }
         // at start (once online): send what waited; a week-old report is dropped
+        // a 5xx or 429 from the relay is a busy moment, not a refusal: the report waits in the outbox instead of being dropped
+        static bool Retryable(string why) { int c; return why != null && why.StartsWith("the relay said ", StringComparison.Ordinal) && int.TryParse(why.Substring(15).Trim(), out c) && (c >= 500 || c == 429); }
         public static void Flush()
         {
             if (!Ready) return;
@@ -109,7 +111,7 @@ namespace AdeeboMeter
                     {
                         if ((DateTime.UtcNow - f.LastWriteTimeUtc).TotalDays > 7) { f.Delete(); continue; }
                         var r = Post(File.ReadAllText(f.FullName));
-                        if (r.Why == "offline") return;   // still no internet: next time
+                        if (r.Why == "offline" || Retryable(r.Why)) return;   // still no internet, or the relay busy for a moment (bug-hunt M-24): next time
                         f.Delete();                          // sent, or refused for good (a refusal won't change by retrying)
                         Program.Log("outbox: " + (r.Ok ? "sent #" + r.Number : "dropped (" + r.Why + ")"));
                     }

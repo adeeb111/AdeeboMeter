@@ -51,7 +51,8 @@ namespace AdeeboMeter
                     int inst; if (CM_Locate_DevNodeW(out inst, id, 1 /*phantom: devices not plugged in too*/) != 0) continue;
                     var d = new Dev { Id = id };
                     int st, pr; int s2 = CM_Get_DevNode_Status(out st, out pr, inst, 0);
-                    d.Present = s2 == 0; if (s2 == 0 && (st & 0x400) != 0) d.Problem = pr;   // DN_HAS_PROBLEM
+                    if (s2 == 0 && (st & 0x400) != 0) d.Problem = pr;   // DN_HAS_PROBLEM
+                    d.Present = s2 == 0 && d.Problem != 45;   // bug-hunt M-19: code 45 = remembered but not plugged in right now
                     d.Name = Str(inst, Name); if (d.Name == "") d.Name = Str(inst, Desc);
                     d.Class = Str(inst, Class); d.DriverVer = Str(inst, DrvVer); d.Provider = Str(inst, DrvProv);
                     d.DriverDate = Time(inst, DrvDate, true); d.Arrived = Time(inst, Arrived); d.Removed = Time(inst, Removed);
