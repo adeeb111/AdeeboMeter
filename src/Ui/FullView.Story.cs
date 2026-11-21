@@ -16,6 +16,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         List<Conn> connSnap = new List<Conn>();
+        bool storyAllApps;   // the app chips: the busiest seven, or every app with an internet connection
         string storyApp, storyTarget = "", storyIp = "", storyNote = ""; int storyPort, storyLocal, storyBox = -1; bool storyUdp;   // storyUdp: kept from the connection, so a closed one still knows (bug-hunt ML-75)
 
         // an IPv6 address keeps its two ends (2607:f8b0:…:200e) - the middle is what a box can lose; names are cut as before
@@ -34,6 +35,12 @@ namespace AdeeboMeter
             var c = connSnap.Where(x => x.Proc == app && x.State == "ESTABLISHED" && Watch.IsPublic(x.RemoteIp))
                             .GroupBy(x => x.RemoteIp + ":" + x.RemotePort).OrderByDescending(gr => gr.Count() + (gr.First().RemotePort == 443 ? 100 : 0)).Select(gr => gr.First()).FirstOrDefault();
             if (c == null) return;
+            StoryFollow(c);
+        }
+        // follow one exact connection of the picked app (1.1.7 idea from PR #29's X-Ray, done in the story itself)
+        void StoryFollow(Conn c)
+        {
+            storyBox = -1;
             storyIp = c.RemoteIp; storyPort = c.RemotePort; storyLocal = c.LocalPort; storyNote = c.RemoteIp.Contains(":") ? "The app talks over IPv6: the route card covers IPv4 only - the trace still runs." : ""; /* bug-hunt ML-234 */ storyUdp = (c.Proto ?? "").StartsWith("UDP", StringComparison.Ordinal);
             string h = c.Host != "" ? c.Host : c.RemoteIp.Contains(":") ? "[" + c.RemoteIp + "]" : c.RemoteIp;   // AM-CG-261: an IPv6 address with a port is written [addr]:port
             storyTarget = h + (c.RemotePort != 443 ? ":" + c.RemotePort : "");
@@ -54,7 +61,9 @@ namespace AdeeboMeter
         float PaintStory(Graphics g, float x, float y, float w)
         {
             // apps using the internet right now
-            var apps = connSnap.Where(c => c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) && c.Proc != "" && c.Proc.IndexOf('(') < 0).GroupBy(c => c.Proc).OrderByDescending(gr => gr.Count()).Take(7).Select(gr => gr.Key).ToList();
+            var apps = connSnap.Where(c => c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) && c.Proc != "" && c.Proc.IndexOf('(') < 0).GroupBy(c => c.Proc).OrderByDescending(gr => gr.Count()).Select(gr => gr.Key).ToList();
+            int moreApps = storyAllApps ? 0 : Math.Max(0, apps.Count - 7); if (!storyAllApps) apps = apps.Take(7).ToList();
+            if (storyApp != null && !apps.Contains(storyApp) && connSnap.Any(c => c.Proc == storyApp)) apps.Add(storyApp);   // the one you picked stays visible
             if (storyApp == null && storyTarget == "" && apps.Count > 0) StoryPick(apps[0]);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("FOLLOW"), Draw.fTiny, mb, x, y + 8 * S);
             float cx = x + 60 * S;
@@ -66,6 +75,14 @@ namespace AdeeboMeter
                 using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(an, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
                 string aa = a; Act(travelCanvas, cr, delegate { StoryPick(aa); }); cx += cr.Width + 8 * S;
             }
+            if (moreApps > 0 || storyAllApps)   // every app, not only the busiest seven
+            {
+                string mt = storyAllApps ? L.T("Fewer") : "+" + moreApps + " " + L.T("more"); var ms0 = g.MeasureString(mt, Draw.fBody);
+                if (cx > x + 60 * S && cx + ms0.Width + 22 * S > x + w) { cx = x + 60 * S; y += 36 * S; }
+                var mr = new RectangleF(cx, y, ms0.Width + 22 * S, 28 * S); Theme.Stroke(g, mr, 14 * S, Theme.Line, 1);
+                using (var tb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(mt, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ms0.Height) / 2);
+                Act(travelCanvas, mr, delegate { storyAllApps = !storyAllApps; travelCanvas.Invalidate(); }); cx += mr.Width + 8 * S;
+            }
             if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("No app has an open TCP connection to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 4 * S);
             y += 36 * S;
             // AM-CG-259: what this picker can see, and where the rest is
@@ -74,6 +91,28 @@ namespace AdeeboMeter
             Act(travelCanvas, new RectangleF(x, y, Math.Min(ss.Width, w), ss.Height), delegate { ShowPage("conn"); });
             y += 24 * S;
             if (storyNote != "") using (var nb = new SolidBrush(Theme.Sub)) { g.DrawString(L.T(storyNote), Draw.fSmall, nb, x, y); y += 20 * S; }
+            // the picked app's connections: each one can be the story (chips, the followed one highlighted)
+            if (storyApp != null)
+            {
+                var its = connSnap.Where(c => c.Proc == storyApp && c.RemoteIp != "" && Watch.IsPublic(c.RemoteIp)).GroupBy(c => c.RemoteIp + "|" + c.RemotePort)
+                    .Select(gr => gr.First()).OrderByDescending(c => c.State == "ESTABLISHED").ThenBy(c => c.Host == "" ? c.RemoteIp : c.Host).ToList();
+                if (its.Count > 1)
+                {
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("ITS CONNECTIONS") + " (" + its.Count + ")", Draw.fTiny, mb, x, y + 8 * S);
+                    float kx = x + 150 * S; int shown = 0;
+                    foreach (var c in its)
+                    {
+                        if (shown == 12) { using (var mb = new SolidBrush(Theme.Sub)) g.DrawString("+" + (its.Count - 12) + " " + L.T("in Connections"), Draw.fSmall, mb, kx, y + 6 * S); break; }
+                        string ct = Draw.Trunc(c.Host != "" ? c.Host : c.RemoteIp, 30) + (c.RemotePort != 443 ? ":" + c.RemotePort : "") + (c.State == "ESTABLISHED" || c.State == "" ? "" : " · " + c.State.ToLowerInvariant());
+                        var cs = g.MeasureString(ct, Draw.fSmall); if (kx > x + 150 * S && kx + cs.Width + 18 * S > x + w) { kx = x + 150 * S; y += 30 * S; }
+                        var kr = new RectangleF(kx, y + 2 * S, cs.Width + 18 * S, 24 * S); bool on = c.RemoteIp == storyIp && c.RemotePort == storyPort;
+                        Theme.Fill(g, kr, 12 * S, on ? Theme.BlueSoft : Theme.Soft);
+                        using (var tb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Ink)) g.DrawString(ct, Draw.fSmall, tb, kx + 9 * S, y + 2 * S + (24 * S - cs.Height) / 2);
+                        var cc = c; Act(travelCanvas, kr, delegate { StoryFollow(cc); }); kx += kr.Width + 6 * S; shown++;
+                    }
+                    y += 36 * S;
+                }
+            }
             if (storyTarget == "") return Kit.Empty(g, x, y, Math.Min(w, 760 * S), "story", "home", "Follow one connection, box by box", "Pick an app above, or type a site, and I'll walk its traffic from this PC out to the far end - seven boxes, each one clickable.", StoryPoints);
 
             // the seven boxes

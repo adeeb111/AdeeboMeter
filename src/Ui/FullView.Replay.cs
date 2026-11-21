@@ -279,6 +279,7 @@ namespace AdeeboMeter
                 var pr = new RectangleF(x, y, w, plh + 24 * S); Theme.Fill(g, pr, 12 * S, Theme.LvSoft(lvAll));
                 using (var pb = new SolidBrush(lvAll == 0 || lvAll == 3 ? Theme.Ink : Theme.LvText(lvAll))) g.DrawString(plain, Draw.fName, pb, new RectangleF(x + 18 * S, y + 12 * S, w - 36 * S, plh + 6));
                 y += pr.Height + 16 * S;
+                if (replayIdx >= 0 && replayIdx < data.M.Count) y = PaintTmPins(g, x, y, w, at, data.M[replayIdx], netName);   // pin this minute, compare a pin with now (FullView.TimePins.cs)
 
                 // the numbers, each with where it came from; compared with the rest of that day
                 g.DrawString(L.T("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE"), Draw.fTiny, muted, x, y); y += 22 * S;

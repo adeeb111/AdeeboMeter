@@ -1053,7 +1053,7 @@ namespace AdeeboMeter
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
-                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); string gc = Glyphs.Check(); if (gc != "") throw new InvalidOperationException("icons: " + gc); string tc = fv.TopicCheck(); if (tc != "") throw new InvalidOperationException("toolbox topics: " + tc); }
+                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); string gc = Glyphs.Check(); if (gc != "") throw new InvalidOperationException("icons: " + gc); if (FullView.TmWorse(10, 40, 10, true) != "w" || FullView.TmWorse(80, 40, 10, false) != "w" || FullView.TmWorse(40, 20, 10, true) != "b" || FullView.TmWorse(10, 15, 10, true) != "" || FullView.TmWorse(double.NaN, 5, 1, true) != "") throw new InvalidOperationException("pinned-moment compare marks worse/better wrongly"); string tc = fv.TopicCheck(); if (tc != "") throw new InvalidOperationException("toolbox topics: " + tc); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
