@@ -43,7 +43,7 @@ namespace AdeeboMeter
             if (tbRows != null) bad.Add("filling the boxes left the example showing");
             // the points dashboard: every tool, Learn topic and page is there, and Go lands on it
             var items = PtAll(); int nTools = Tools2().Count, nLearn = Knowledge.Learn().Count;
-            int want = nTools + nLearn * 2 /* read + its check question */ + PtPages.Length + (Labs.Length - 1) + 2 /* subnetting streaks */ + 1 /* journey */ + Paths.Length + LearnGames.Keys().Count() /* games */;
+            int want = nTools + nLearn * 2 /* read + its check question */ + PtPages.Length + (Labs.Length - 1) + 2 /* subnetting streaks */ + 1 /* journey */ + Paths.Length + LearnGames.Keys().Count() /* games */ + LabLink.Faults.Length /* Network Lab: Break it */;
             if (items.Count != want) bad.Add("dashboard has " + items.Count + " rows, want " + want);
             int earnable = items.Sum(i => i.Value) + Points.Replay.Count * Points.ReplayPts; if (earnable > Points.Max) bad.Add("everything earnable is " + earnable + " points - above Points.Max (" + Points.Max + "): raise it, and hof_verify.py with it");
             if (items.Select(i => i.Key).Distinct().Count() != items.Count) bad.Add("dashboard keys repeat");
