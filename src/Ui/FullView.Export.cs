@@ -44,6 +44,23 @@ namespace AdeeboMeter
         // a short note beside the links after a save or a copy
         string barNote = ""; DateTime barAt;
         void Toast(string t) { barNote = t; barAt = DateTime.Now; tbCanvas.Invalidate(); }
+        // 1.1.6: the far end a tool measured, for the Network Lab - the go-live check's ingest server, or the service board's
+        // worst host:port (a down one first). null when the result has none.
+        string[] LabRow()
+        {
+            var rows = tbRows; if (rows == null) return null;
+            if (tbSel == "golive") return rows.FirstOrDefault(r => r.Length > 2 && r[1].EndsWith(" ingest", StringComparison.Ordinal));
+            if (tbSel == "board") return rows.Where(r => r.Length > 2 && r[1].Contains(":") && r[2] != "not a host name or address").OrderByDescending(r => r[0]).FirstOrDefault();
+            return null;
+        }
+        void ToolPath()
+        {
+            var r = LabRow(); if (r == null) return;
+            var mm = System.Text.RegularExpressions.Regex.Match(r[2], @"([0-9]+(?:[.,][0-9]+)?)\s*ms"); double ms;
+            if (!mm.Success || !double.TryParse(mm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out ms)) ms = double.NaN;
+            bool live = tbSel == "golive"; string name = live ? r[1].Replace(" ingest", "") + " ingest" : "Your server", host = live ? "" : r[1];
+            OpenLab(LabLink.PathJson(M, live ? "stream" : "server", host, name, ms, MinOf(M.GwPing), MinOf(M.NetPing)), false);
+        }
         // the link bar under a picture
         float PaintPictureBar(Graphics g, float x, float y, float w)
         {
@@ -56,7 +73,8 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
-            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
+            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone);
+            if (!VisEx() && tbRows != null && (tbSel == "golive" || tbSel == "board") && LabRow() != null) link("route", "Show my path", ToolPath);   // 1.1.6: the Network Lab if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
             if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
             {

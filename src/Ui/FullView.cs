@@ -416,6 +416,7 @@ namespace AdeeboMeter
         void ShowTab()
         {
             UiActivity.Doing = "switching to " + tab; if (tab != "about") bugPage = tab;
+            if (tab == "points" || tab == "learn") System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { LabLink.Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.Message); } });   // Network Lab faults watched since (a folder check when nothing changed)
             SetTipKey(null);   // the old page's help card goes with it
             learnSeen = "";    // AM-CG-254: reading time restarts when you come back - time away isn't reading
             if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open

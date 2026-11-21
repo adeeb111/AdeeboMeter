@@ -69,6 +69,8 @@ body.break #zoom{top:auto;bottom:80px}
  <input id="name" aria-label="Drawing name" value="My network">
  <span id="saved"></span>
  <div class="sp"></div>
+ <label id="accessBox" hidden style="display:flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;white-space:nowrap">Provider
+  <select id="access" class="b" style="padding:0 8px" title="How your provider reaches your home - redraws the grey, not-measured part"><option value="fibre">Fibre</option><option value="cable">Cable (coax)</option><option value="dsl">DSL (phone line)</option></select></label>
  <button class="b i" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg></button>
  <button class="b i" id="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
  <div class="seg" role="group" aria-label="Mode"><button id="mDraw" aria-pressed="true">Draw</button><button id="mBreak" aria-pressed="false">Break it</button></div>
@@ -102,7 +104,7 @@ body.break #zoom{top:auto;bottom:80px}
 "use strict";
 (function () {
 /* icon shapes on a 24 x 24 grid (from the TopoDraw set) */
-const G = {"pc":"M4.5 4h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 14.5v-9A1.5 1.5 0 0 1 4.5 4zM9 20h6M12 16v4","laptop":"M5 5h14a1 1 0 0 1 1 1v9H4V6a1 1 0 0 1 1-1zM2 18h20l-1.5 2h-17z","phone":"M8 2.5h8a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5zM11 18.5h2","wifi":"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 15.8a5 5 0 0 1 6.8 0M13.2 19a1.2 1.2 0 1 1-2.4 0a1.2 1.2 0 1 1 2.4 0","cpe":"M3 13h18v6H3zM6.5 16h.01M10 16h.01M17 16h1.5M8 13l-2-6M16 13l2-6","ont":"M4 9h16v8H4zM7 13h.01M10 13h.01M14 12.5h3v1h-3M8 9V6.5M16 9V6M7 20.5h10","olt":"M3 4h18v6H3zM3 14h18v6H3zM6 7h.01M9 7h.01M6 17h.01M9 17h.01M13 6.5h5M13 16.5h5M12 10v4","splitter":"M2.5 12h7M9.5 12l11-6.5M9.5 12h11M9.5 12l11 6.5M9.5 9.5v5","switch":"M2.5 9h19v6h-19zM6 12h.01M9 12h.01M12 12h.01M15 12h.01M8 3l-3 2 3 2M5 5h7M16 17l3 2-3 2M19 19h-7","server":"M4.5 3.5h15a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1zM4.5 13.5h15a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1zM7 7h.01M7 17h.01M11 7h6M11 17h6","internet":"M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5 7.5h14M5 16.5h14","cloud":"M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.2 4.7 4.7 0 0 0 7 18.5z","tower":"M12 9v12M8.5 21L12 9l3.5 12M9.6 17h4.8M13.4 7.5a1.4 1.4 0 1 1-2.8 0a1.4 1.4 0 1 1 2.8 0M8.2 4.2a5.5 5.5 0 0 0 0 6.6M15.8 4.2a5.5 5.5 0 0 1 0 6.6M5.6 2.2a9 9 0 0 0 0 10.6M18.4 2.2a9 9 0 0 1 0 10.6","database":"M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3","firewall":"M3 5.5h18v14H3zM3 10.2h18M3 14.8h18M8 5.5v4.7M14 5.5v4.7M11 10.2v4.6M17 10.2v4.6M6 10.2v4.6M8 14.8v4.7M14 14.8v4.7","loadbal":"M12 3v5M12 8L5 13M12 8l7 5M12 8v5M3 13h4v4H3zM10 13h4v4h-4zM17 13h4v4h-4z","users":"M12.5 7.5a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.3a3.2 3.2 0 0 1 0 6.2M18 14.3c2.2.6 3.5 2.6 3.5 5.7","house":"M3 11l9-7.5 9 7.5M5.5 9v11.5h13V9M10 20.5v-5h4v5","building":"M4 21V3.5h11V21M15 8.5h5V21M2.5 21h19M7 7h1M11 7h1M7 10.5h1M11 10.5h1M7 14h1M11 14h1M17.5 12h.5M17.5 15.5h.5M8.5 21v-3.5h2V21","rack":"M5 2.5h14v19H5zM7.5 6h9M7.5 9h9M7.5 12h9M7.5 15h9M7.5 18h9M15 6h.01M15 9h.01M15 12h.01","camera":"M3 8.5l12-4 2.5 6-12 4zM17.5 10.5l3-1M9 13l1.5 4h-6M4.5 17v4","iot":"M14 12a2 2 0 1 1-4 0a2 2 0 1 1 4 0M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8","lock":"M6 10.5h12v10H6zM8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5M12 14.5v2.5"};
+const G = {"pc":"M4.5 4h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 14.5v-9A1.5 1.5 0 0 1 4.5 4zM9 20h6M12 16v4","laptop":"M5 5h14a1 1 0 0 1 1 1v9H4V6a1 1 0 0 1 1-1zM2 18h20l-1.5 2h-17z","phone":"M8 2.5h8a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5zM11 18.5h2","wifi":"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 15.8a5 5 0 0 1 6.8 0M13.2 19a1.2 1.2 0 1 1-2.4 0a1.2 1.2 0 1 1 2.4 0","cpe":"M3 13h18v6H3zM6.5 16h.01M10 16h.01M17 16h1.5M8 13l-2-6M16 13l2-6","ont":"M4 9h16v8H4zM7 13h.01M10 13h.01M14 12.5h3v1h-3M8 9V6.5M16 9V6M7 20.5h10","olt":"M3 4h18v6H3zM3 14h18v6H3zM6 7h.01M9 7h.01M6 17h.01M9 17h.01M13 6.5h5M13 16.5h5M12 10v4","splitter":"M2.5 12h7M9.5 12l11-6.5M9.5 12h11M9.5 12l11 6.5M9.5 9.5v5","switch":"M2.5 9h19v6h-19zM6 12h.01M9 12h.01M12 12h.01M15 12h.01M8 3l-3 2 3 2M5 5h7M16 17l3 2-3 2M19 19h-7","server":"M4.5 3.5h15a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1zM4.5 13.5h15a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1zM7 7h.01M7 17h.01M11 7h6M11 17h6","internet":"M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5 7.5h14M5 16.5h14","cloud":"M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.2 4.7 4.7 0 0 0 7 18.5z","tower":"M12 9v12M8.5 21L12 9l3.5 12M9.6 17h4.8M13.4 7.5a1.4 1.4 0 1 1-2.8 0a1.4 1.4 0 1 1 2.8 0M8.2 4.2a5.5 5.5 0 0 0 0 6.6M15.8 4.2a5.5 5.5 0 0 1 0 6.6M5.6 2.2a9 9 0 0 0 0 10.6M18.4 2.2a9 9 0 0 1 0 10.6","database":"M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3","firewall":"M3 5.5h18v14H3zM3 10.2h18M3 14.8h18M8 5.5v4.7M14 5.5v4.7M11 10.2v4.6M17 10.2v4.6M6 10.2v4.6M8 14.8v4.7M14 14.8v4.7","loadbal":"M12 3v5M12 8L5 13M12 8l7 5M12 8v5M3 13h4v4H3zM10 13h4v4h-4zM17 13h4v4h-4z","users":"M12.5 7.5a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.3a3.2 3.2 0 0 1 0 6.2M18 14.3c2.2.6 3.5 2.6 3.5 5.7","house":"M3 11l9-7.5 9 7.5M5.5 9v11.5h13V9M10 20.5v-5h4v5","building":"M4 21V3.5h11V21M15 8.5h5V21M2.5 21h19M7 7h1M11 7h1M7 10.5h1M11 10.5h1M7 14h1M11 14h1M17.5 12h.5M17.5 15.5h.5M8.5 21v-3.5h2V21","rack":"M5 2.5h14v19H5zM7.5 6h9M7.5 9h9M7.5 12h9M7.5 15h9M7.5 18h9M15 6h.01M15 9h.01M15 12h.01","camera":"M3 8.5l12-4 2.5 6-12 4zM17.5 10.5l3-1M9 13l1.5 4h-6M4.5 17v4","iot":"M14 12a2 2 0 1 1-4 0a2 2 0 1 1 4 0M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8","lock":"M6 10.5h12v10H6zM8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5M12 14.5v2.5","cabinet":"M6 2.5h12a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1zM5 8.5h14M5 14.5h14M9 5.5h3M9 11.5h3M9 17.5h3M16 11v1","roadside":"M7 3h10a1 1 0 0 1 1 1v9H6V4a1 1 0 0 1 1-1zM6 7.5h12M10 10h4M8 13v4.5M16 13v4.5M1.5 19h21M3 22h3M10.5 22h3M18 22h3"};
 const $ = s => document.querySelector(s);
 const NS = "http://www.w3.org/2000/svg";
 const KEY = "adeebometer-lab:current", SOLVED = "adeebometer-lab:solved";
@@ -167,6 +169,16 @@ const EX = {
    {id: "fw", k: "firewall", name: "Firewall", sub: "yours", x: 940, y: 150}, {id: "lb", k: "loadbal", name: "Load balancer", sub: "yours", x: 1100, y: 260},
    {id: "w1", k: "server", name: "Web 1", sub: ":443", x: 1300, y: 150}, {id: "w2", k: "server", name: "Web 2", sub: ":443", x: 1300, y: 380}],
   links: [["pc", "net"], ["us", "net", "fibre"], ["net", "edge"], ["edge", "fw"], ["fw", "lb"], ["lb", "w1"], ["lb", "w2"]]}};
+/* how the provider reaches the home: the same five stops (ids ont, spl, olt, agg, bng) drawn as fibre, cable or DSL */
+const ACCESS = {
+ fibre: [["ont", "Fibre box (ONT)", "light to electric"], ["splitter", "Splitter", "1 fibre, ~32 homes"], ["olt", "OLT", "street / exchange"], ["switch", "Aggregation switch", "thousands of homes"], ["router", "Sign-in router", "BNG · gives your IP"], "fibre"],
+ cable: [["ont", "Cable modem", "TV cable to Ethernet"], ["roadside", "Coax node", "street box, ~200 homes share it"], ["rack", "CMTS", "cable head-end"], ["switch", "Aggregation switch", "thousands of homes"], ["router", "Sign-in router", "gives your IP"], "coax"],
+ dsl: [["ont", "DSL modem", "phone line to Ethernet"], ["cabinet", "Street cabinet", "DSLAM · copper pairs"], ["building", "Exchange", "the telephone exchange"], ["switch", "Aggregation switch", "thousands of homes"], ["router", "Sign-in router", "BNG · gives your IP"], "copper"]};
+const CHAIN = ["ont", "spl", "olt", "agg", "bng"];
+const hasChain = d => CHAIN.every(id => d.nodes.some(n => n.id === id && n.st === "typ"));
+function applyAccess(d, kind){ const a = ACCESS[kind] || ACCESS.fibre; if (!hasChain(d)) return;
+  CHAIN.forEach((id, i) => { const n = d.nodes.find(x => x.id === id); n.k = a[i][0]; n.name = a[i][1]; n.sub = a[i][2]; });
+  const l = d.links.find(x => (x.a === "ont" && x.b === "spl") || (x.a === "spl" && x.b === "ont")); if (l) l.label = a[5]; d.access = kind; }
 const EXNAMES = [["gamer", "Gamer"], ["cell", "On 4G / 5G"], ["trader", "Trader"], ["streamer", "Streamer"], ["iptv", "IPTV viewer"], ["server", "Server owner"]];
 function fromExample(k){
   const e = EX[k], d = blank();
@@ -178,7 +190,7 @@ function fromExample(k){
 /* ---------- loading: the app hands a measured path over in the address (#path=...), nothing else is read */
 function valid(d){
   if (!d || typeof d !== "object" || !Array.isArray(d.nodes)) return null;
-  const o = blank(); o.name = clean(d.name) || "My network"; o.measured = !!d.measured;
+  const o = blank(); o.name = clean(d.name) || "My network"; o.measured = !!d.measured; o.access = ACCESS[d.access] ? d.access : "";
   const ids = new Set();
   d.nodes.slice(0, 300).forEach(n => { if (!n || ids.has(String(n.id))) return; const id = clean(n.id) || uid("n"); ids.add(id);
     o.nodes.push({id, k: G[n.k] || n.k === "router" ? n.k : "pc", name: clean(n.name), sub: clean(n.sub), ms: clean(n.ms), st: /^(typ|bad|warn|you)$/.test(n.st) ? n.st : "",
@@ -197,6 +209,8 @@ function start(){
   try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d) return d; } catch (e) {}
   return fromExample("gamer");
 }
+function accessUi(){ const box = $("#accessBox"), on = hasChain(doc); box.hidden = !on; box.style.display = on ? "flex" : "none"; if (on) $("#access").value = doc.access || "fibre"; }
+$("#access").onchange = () => { const k = $("#access").value; store.set("adeebometer-lab:access", k); change(() => applyAccess(doc, k)); };
 
 /* ---------- drawing */
 function el(tag, at, kids){ const e = document.createElementNS(NS, tag); for (const k in at) if (at[k] != null) e.setAttribute(k, at[k]); (kids || []).forEach(c => c && e.appendChild(c)); return e; }
@@ -247,7 +261,7 @@ function draw(){
 let saveT = 0;
 function change(fn){ undo.push(JSON.stringify(doc)); if (undo.length > 100) undo.shift(); redo = []; fn(); persist(); draw(); if (mode === "break") fillPick(); }
 function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { $("#saved").textContent = store.set(KEY, JSON.stringify(doc)) ? "Saved in this browser" : "Not saved (browser storage off)"; }, 300); }
-function back(from, to){ if (!from.length) return; to.push(JSON.stringify(doc)); doc = JSON.parse(from.pop()); sel = null; $("#name").value = doc.name; persist(); draw(); if (mode === "break") fillPick(); }
+function back(from, to){ if (!from.length) return; to.push(JSON.stringify(doc)); doc = JSON.parse(from.pop()); sel = null; $("#name").value = doc.name; accessUi(); persist(); draw(); if (mode === "break") fillPick(); }
 $("#undo").onclick = () => back(undo, redo); $("#redo").onclick = () => back(redo, undo);
 $("#name").onchange = () => change(() => { doc.name = clean($("#name").value) || "My network"; });
 
@@ -340,7 +354,7 @@ function menu(btn, box){ btn.onclick = e => { e.stopPropagation(); const open = 
   document.querySelectorAll(".menu>button").forEach(b => b.setAttribute("aria-expanded", "false")); box.hidden = !open; btn.setAttribute("aria-expanded", String(open)); }; }
 document.addEventListener("click", () => { document.querySelectorAll(".menu>div").forEach(m => m.hidden = true); });
 menu($("#exBtn"), $("#exMenu")); menu($("#fileBtn"), $("#fileMenu"));
-EXNAMES.forEach(([k, n]) => { const b = document.createElement("button"); b.textContent = n; b.onclick = () => { change(() => { doc = fromExample(k); }); $("#name").value = doc.name; fit(); if (mode === "break") fillPick(); }; $("#exMenu").appendChild(b); });
+EXNAMES.forEach(([k, n]) => { const b = document.createElement("button"); b.textContent = n; b.onclick = () => { change(() => { doc = fromExample(k); applyAccess(doc, store.get("adeebometer-lab:access") || "fibre"); }); $("#name").value = doc.name; accessUi(); fit(); if (mode === "break") fillPick(); }; $("#exMenu").appendChild(b); });
 function download(name, blob){ const a = document.createElement("a"), u = URL.createObjectURL(blob); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
 const fname = ext => (doc.name || "network").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) + ext;
 function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y, z: view.z}, s0 = sel; sel = null; view = {x: -b.x, y: -b.y, z: 1}; draw();
@@ -349,7 +363,7 @@ function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y,
   s.insertBefore(el("rect", {width: "100%", height: "100%", fill: C.page}), s.firstChild);
   s.setAttribute("font-family", "Segoe UI, Inter, Arial, sans-serif"); return {t: new XMLSerializer().serializeToString(s), w: Math.ceil(b.w), h: Math.ceil(b.h)}; }
 $("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute("data-f"); if (!f) return;
-  if (f === "new") { change(() => { doc = blank(); }); $("#name").value = doc.name; fit(); }
+  if (f === "new") { change(() => { doc = blank(); }); $("#name").value = doc.name; accessUi(); fit(); }
   else if (f === "open") $("#openFile").click();
   else if (f === "save") download(fname(".json"), new Blob([JSON.stringify(doc, null, 1)], {type: "application/json"}));
   else if (f === "svg") download(fname(".svg"), new Blob([svgText().t], {type: "image/svg+xml"}));
@@ -357,7 +371,7 @@ $("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute(
     img.onload = () => { const c = document.createElement("canvas"), k = 2; c.width = s.w * k; c.height = s.h * k; const x = c.getContext("2d"); x.scale(k, k); x.drawImage(img, 0, 0);
       URL.revokeObjectURL(u); c.toBlob(b => b && download(fname(".png"), b)); }; img.src = u; } });
 $("#openFile").onchange = () => { const f = $("#openFile").files[0]; if (!f || f.size > 2e6) return; f.text().then(t => { let d = null; try { d = valid(JSON.parse(t)); } catch (e) {}
-  if (d) { change(() => { doc = d; }); $("#name").value = doc.name; fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
+  if (d) { change(() => { doc = d; }); $("#name").value = doc.name; accessUi(); fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
 $("#theme").onclick = () => { const r = document.documentElement, l = r.getAttribute("data-theme") !== "light"; r.setAttribute("data-theme", l ? "light" : "dark"); store.set("am-theme", l ? "light" : "dark"); draw(); };
 
 /* ---------- Break it: one fault, the packet walks the path and stops where it fails */
@@ -437,7 +451,8 @@ $("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMod
 
 /* ---------- go */
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
-doc = start(); $("#name").value = doc.name; buildTools(); hint();
+doc = start(); if (doc.measured && !doc.access) applyAccess(doc, store.get("adeebometer-lab:access") || "fibre");
+$("#name").value = doc.name; buildTools(); hint(); accessUi();
 if (doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
 setTimeout(fit, 0); addEventListener("resize", () => fit());
 if (/[?&]mode=break/.test(location.search)) setMode("break");

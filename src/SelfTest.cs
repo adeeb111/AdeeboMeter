@@ -1057,6 +1057,33 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("network lab: the page is in the exe, the path hand-over, Edge's localStorage read back, faults earn once", () =>
+            {
+                var bad = new List<string>();
+                using (var rs = typeof(LabLink).Assembly.GetManifestResourceStream("AdeeboMeter.lab.html")) if (rs == null || rs.Length < 20000) bad.Add("lab.html not packed into the exe");
+                var sn = BrowserStore.Snappy(new byte[] { 9, 0x08, (byte)'a', (byte)'b', (byte)'c', 0x09, 3 }); if (System.Text.Encoding.ASCII.GetString(sn) != "abcabcabc") bad.Add("snappy: " + System.Text.Encoding.ASCII.GetString(sn));
+                string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "am-labtest-" + Guid.NewGuid().ToString("N")), ldb = System.IO.Path.Combine(dir, "Default", "Local Storage", "leveldb");
+                try
+                {
+                    System.IO.Directory.CreateDirectory(ldb);
+                    var key = new List<byte>(System.Text.Encoding.ASCII.GetBytes("_file://")); key.Add(0); key.Add(1); key.AddRange(System.Text.Encoding.ASCII.GetBytes("adeebometer-lab:solved"));
+                    var val = new List<byte> { 1 }; val.AddRange(System.Text.Encoding.ASCII.GetBytes("[\"mtu\",\"bogus\"]"));
+                    var log = new List<byte>(BrowserStore.TestLog(7, key.ToArray(), val.ToArray()));
+                    var damaged = BrowserStore.TestLog(9, key.ToArray(), System.Text.Encoding.ASCII.GetBytes("\u0001[\"dns\"]")); damaged[damaged.Length - 2] ^= 0x55; log.AddRange(damaged);   // a half-written record: never read
+                    System.IO.File.WriteAllBytes(System.IO.Path.Combine(ldb, "000003.log"), log.ToArray());
+                    string got; var ls = BrowserStore.LocalStorage(dir, "adeebometer-lab:");
+                    if (!ls.TryGetValue("adeebometer-lab:solved", out got) || got != "[\"mtu\",\"bogus\"]") bad.Add("localStorage read back: " + (got ?? "nothing"));
+                    if (BrowserStore.Stamp(dir) == "") bad.Add("no folder fingerprint");
+                }
+                finally { try { System.IO.Directory.Delete(dir, true); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { } }
+                if (!Points.Known("nlab.mtu") || Points.Known("nlab.bogus") || Points.Value("nlab.mtu") != 2) bad.Add("nlab points keys");
+                foreach (var who in new[] { "game", "view", "trade", "stream", "server" })
+                {
+                    string j = LabLink.PathJson(M, who, "203.0.113.9", "Test \"quoted\" server", 31, 2, 18);
+                    if (!j.StartsWith("{\"name\":", StringComparison.Ordinal) || !j.Contains("\"measured\":true") || !j.EndsWith("]}", StringComparison.Ordinal) || !j.Contains("31 ms") || j.Contains("Test \"quoted")) bad.Add("path json (" + who + ")");
+                }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("UI 1.1.5 wave 3: search finds tools, forgives typos, groups; tool chips make sense", () =>
             {
                 var vocab = new HashSet<string>(StringComparer.Ordinal) { "wifi", "dns", "traceroute", "certificate", "port" };

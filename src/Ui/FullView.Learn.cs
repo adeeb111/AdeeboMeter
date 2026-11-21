@@ -90,6 +90,7 @@ namespace AdeeboMeter
             }
             if (learnSel.StartsWith("game:", StringComparison.Ordinal)) { y = PaintGame(g, learnSel.Substring(5), x, y, w); Need(learnInfo, y + 20 * S); return; }
             if (learnSel == "") { y = Title2(g, AdeeboMeter.L.T("Learn"), x, y, w); y = Lead2(g, AdeeboMeter.L.T("Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words."), x, y, w); Need(learnInfo, y); return; }
+            if (learnSel == "lab:netlab") { y = PaintNetLab(g, x, y, w); Need(learnInfo, y + 20 * S); return; }   // 1.1.6: the Network Lab card
             if (learnSel.StartsWith("lab:", StringComparison.Ordinal)) { y = PaintLab(learnInfo, g, learnSel.Substring(4), x, y, w); Need(learnInfo, y + 20 * S); return; }
                         if (learnSel.StartsWith("term:", StringComparison.Ordinal))
             {

@@ -213,6 +213,11 @@ namespace AdeeboMeter
                     if (pg != null) btn("See the packet journey", false, delegate { GameJourney(pg); });
                 }
                 btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
+                // 1.1.6: the way to the game's best server in the Network Lab - your measured stops white, the provider's grey
+                if (target != null) { var tg = target; btn("Show my path", false, delegate {
+                    var sv = gp.Best(tg) ?? (tg.Servers.Count > 0 ? tg.Servers[0] : null); if (sv == null) return;
+                    var v = gp.Stat(tg.Id, sv).Recent(30).Where(d => !double.IsNaN(d)).ToList();
+                    OpenLab(LabLink.PathJson(M, "game", sv.Host, tg.Name + " · " + sv.Name, v.Count > 0 ? v.Average() : double.NaN, MinOf(M.GwPing), MinOf(M.NetPing)), false); }); }
                 var rg = ss != null ? games.FirstOrDefault(z => z.Id == ss.GameId) : target;
                 btn("Lag graph for streaming", false, delegate { StreamOverlay.Toggle(M); });
                 btn("Wi-Fi vs cable...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null) Prefill("gamecompare", "Game", rg.Id); });

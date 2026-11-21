@@ -172,12 +172,19 @@ namespace AdeeboMeter
                 }
                 // switches: alerts, crypto 24/7, stop
                 float bx = cx2, by = c2.Bottom - 44 * S;
-                foreach (var sw in new[] { new[] { "alert", Cfg.TradeAlert ? "Alerts on" : "Alerts off" }, new[] { "crypto", Cfg.TradeCrypto ? "Crypto 24/7: on" : "Crypto 24/7: off" }, new[] { "change", "Change broker" }, new[] { "stop", "Stop watching" } })
+                foreach (var sw in new[] { new[] { "alert", Cfg.TradeAlert ? "Alerts on" : "Alerts off" }, new[] { "crypto", Cfg.TradeCrypto ? "Crypto 24/7: on" : "Crypto 24/7: off" }, new[] { "change", "Change broker" }, new[] { "path", "Show my path" }, new[] { "stop", "Stop watching" } })
                 {
-                    if (!big && sw[0] != "change" && sw[0] != "stop") continue;
+                    if (!big && sw[0] != "change" && sw[0] != "stop" && sw[0] != "path") continue;
                     var ts = g.MeasureString(L.T(sw[1]), Draw.fSmall); var r = new RectangleF(bx, by, ts.Width + 22 * S, 28 * S); Theme.Fill(g, r, 14 * S, Theme.Soft);
                     g.DrawString(L.T(sw[1]), Draw.fSmall, ink, r.X + 11 * S, r.Y + (28 * S - ts.Height) / 2); bx = r.Right + 8 * S;
                     string id = sw[0];
+                    if (id == "path")   // 1.1.6: this PC to the broker and on to the exchange, in the Network Lab
+                    {
+                        var farV = samples.Where(z => !double.IsNaN(z.Far)).Select(z => z.Far).ToList(); double farMs = farV.Count > 0 ? farV.Min() : double.NaN; string host = Cfg.TradeHost;
+                        string bname = (Brokers.FirstOrDefault(b => b[1] == host) ?? new[] { "Broker" })[0] + " gateway";
+                        Act(tradeCanvas, r, delegate { OpenLab(LabLink.PathJson(M, "trade", host, bname, farMs, MinOf(M.GwPing), MinOf(M.NetPing)), false); });
+                        continue;
+                    }
                     Act(tradeCanvas, r, delegate
                     {
                         if (id == "alert") Cfg.TradeAlert = !Cfg.TradeAlert; else if (id == "crypto") Cfg.TradeCrypto = !Cfg.TradeCrypto; else if (id == "change") Cfg.TradeLive = false; else { Cfg.TradeLive = false; Cfg.TradeHost = ""; }

@@ -35,8 +35,16 @@ namespace AdeeboMeter
         static bool Laptop() { try { return System.Windows.Forms.SystemInformation.PowerStatus.BatteryChargeStatus != System.Windows.Forms.BatteryChargeStatus.NoSystemBattery; } catch (Exception) { return false; } }
         static string Ms(double v) { return double.IsNaN(v) ? "" : v.ToString(v < 10 ? "0.#" : "0", CultureInfo.InvariantCulture) + " ms"; }
 
-        // the path from this PC to a server: router and internet from the monitor's own pings, the server from 10 pings
-        public static string PathJson(Monitor m, string server, string serverName, double serverMs, double gwMs, double netMs)
+        // Break it's faults - the page's ids; watching one to the end earns nlab.<id> once (read back from the lab's profile)
+        public static readonly string[][] Faults = { new[] { "dns", "DNS times out" }, new[] { "loss", "Packet loss" }, new[] { "gateway", "Wrong gateway" },
+                                                     new[] { "mtu", "MTU black hole" }, new[] { "loop", "Routing loop" }, new[] { "wifi", "Busy Wi-Fi" } };
+        public static bool KnownFault(string key) { return key.StartsWith("nlab.", StringComparison.Ordinal) && Faults.Any(f => "nlab." + f[0] == key); }
+
+        // the path from this PC to a server: router and internet from the monitor's own pings, the far end from its own check.
+        // who: "game", "view" (watching a stream: the far end is the service's CDN server), "trade" (the far end is the broker's gateway; the exchange behind it), "stream" (the far end is the
+        // ingest server; the platform copies it to viewers - not multicast) or "server" (your own server, seen from outside)
+        public static string PathJson(Monitor m, string server, string serverName, double serverMs, double gwMs, double netMs) { return PathJson(m, "game", server, serverName, serverMs, gwMs, netMs); }
+        public static string PathJson(Monitor m, string who, string server, string serverName, double serverMs, double gwMs, double netMs)
         {
             string link = LinkKind(m), gw, ssid; int sig; lock (m.L) { gw = m.Gateway ?? ""; ssid = m.Ssid ?? ""; sig = m.WifiSignal; }
             var s = new List<Stop>(); var w = new List<Wire>();
@@ -61,18 +69,47 @@ namespace AdeeboMeter
                 w.Add(new Wire { A = "gw", B = "ont", Kind = "cable" });
                 for (int i = 1; i < chain.Length; i++) w.Add(new Wire { A = chain[i - 1][0], B = chain[i][0], Kind = "fibre", Label = i == 1 ? "fibre" : "" });
             }
-            string last = link == "cell" ? "gw" : "bng";
+            string last = link == "cell" ? "gw" : "bng", far = string.IsNullOrEmpty(serverName) ? "Server" : serverName;
             s.Add(new Stop { Id = "net", Kind = "internet", Name = "Internet", Sub = "", Ms = Ms(netMs), X = 1060, Y = 300 });
-            s.Add(new Stop { Id = "srv", Kind = "server", Name = string.IsNullOrEmpty(serverName) ? "Server" : serverName, Sub = server ?? "", Ms = Ms(serverMs), X = 1260, Y = 220 });
-            w.Add(new Wire { A = last, B = "net", Kind = link == "cell" ? "cable" : "fibre" }); w.Add(new Wire { A = "net", B = "srv", Kind = "cable" });
-            var areas = link == "cell"
-                ? new[] { Area(30, 60, 200, 330, "You"), Area(260, 60, 680, 420, "Mobile provider - usual 4G / 5G setup, not measured") }
-                : new[] { Area(30, 60, 330, 330, "Your home"), Area(390, 60, 640, 420, "Your provider - usual fibre setup, not measured") };
+            w.Add(new Wire { A = last, B = "net", Kind = link == "cell" ? "cable" : "fibre" });
+            var areas = new List<string> { link == "cell" ? Area(30, 60, 200, 330, "You") : Area(30, 60, 330, 330, "Your home"),
+                                           link == "cell" ? Area(260, 60, 680, 420, "Mobile provider - usual 4G / 5G setup, not measured") : Area(390, 60, 640, 420, "Your provider - usual setup, not measured") };
+            if (who == "trade")
+            {
+                s.Add(new Stop { Id = "srv", Kind = "router", Name = far, Sub = server ?? "", Ms = Ms(serverMs), X = 1260, Y = 120 });
+                s.Add(new Stop { Id = "ord", Kind = "server", Name = "Order router", Sub = "inside the broker", St = "typ", X = 1260, Y = 280 });
+                s.Add(new Stop { Id = "ex", Kind = "building", Name = "Exchange", Sub = "matching engine", St = "typ", X = 1300, Y = 430 });
+                w.Add(new Wire { A = "net", B = "srv" }); w.Add(new Wire { A = "srv", B = "ord", Kind = "fibre" }); w.Add(new Wire { A = "ord", B = "ex", Kind = "fibre" });
+                areas.Add(Area(1150, 40, 270, 460, "Broker"));
+            }
+            else if (who == "stream")
+            {
+                s.Add(new Stop { Id = "srv", Kind = "server", Name = far, Sub = server ?? "", Ms = Ms(serverMs), X = 1180, Y = 150 });
+                s.Add(new Stop { Id = "tx", Kind = "server", Name = "Transcoder", Sub = "each quality", St = "typ", X = 1180, Y = 330 });
+                s.Add(new Stop { Id = "cdn", Kind = "cloud", Name = "CDN", Sub = "copies near viewers", St = "typ", X = 1310, Y = 250 });
+                s.Add(new Stop { Id = "view", Kind = "users", Name = "Viewers", Sub = "one copy each - not multicast", St = "typ", X = 1430, Y = 250 });
+                w.Add(new Wire { A = "net", B = "srv" }); w.Add(new Wire { A = "srv", B = "tx", Kind = "fibre" }); w.Add(new Wire { A = "tx", B = "cdn", Kind = "fibre" }); w.Add(new Wire { A = "cdn", B = "view", Kind = "fan" });
+                areas.Add(Area(1100, 40, 400, 460, "Streaming platform"));
+            }
+            else if (who == "server")
+            {
+                s.Add(new Stop { Id = "edge", Kind = "router", Name = "Data centre edge", Sub = "not measured", St = "typ", X = 1200, Y = 300 });
+                s.Add(new Stop { Id = "srv", Kind = "server", Name = far, Sub = server ?? "", Ms = Ms(serverMs), St = double.IsNaN(serverMs) ? "bad" : "", X = 1360, Y = 220 });
+                s.Add(new Stop { Id = "us", Kind = "users", Name = "Your users", Sub = "everyone else", St = "typ", X = 1060, Y = 470 });
+                w.Add(new Wire { A = "net", B = "edge" }); w.Add(new Wire { A = "edge", B = "srv", Kind = double.IsNaN(serverMs) ? "bad" : "cable" }); w.Add(new Wire { A = "us", B = "net", Kind = "fibre" });
+                areas.Add(Area(1130, 60, 320, 330, "Your data centre - add your firewall and load balancer"));
+            }
+            else
+            {
+                s.Add(new Stop { Id = "srv", Kind = "server", Name = far, Sub = server ?? "", Ms = Ms(serverMs), X = 1260, Y = 220 });
+                w.Add(new Wire { A = "net", B = "srv", Kind = "cable" });
+                areas.Add(Area(1180, 60, 230, 330, who == "game" ? "Game company" : who == "view" ? "Streaming service (CDN)" : "Far end"));
+            }
             var sb = new StringBuilder("{\"name\":").Append(Str("Path to " + (string.IsNullOrEmpty(serverName) ? server : serverName))).Append(",\"measured\":true,\"nodes\":[");
             sb.Append(string.Join(",", s.Select(n => "{\"id\":" + Str(n.Id) + ",\"k\":" + Str(n.Kind) + ",\"name\":" + Str(n.Name) + ",\"sub\":" + Str(n.Sub) + ",\"ms\":" + Str(n.Ms) +
                 ",\"st\":" + Str(n.St) + ",\"x\":" + n.X.ToString(CultureInfo.InvariantCulture) + ",\"y\":" + n.Y.ToString(CultureInfo.InvariantCulture) + "}")));
             sb.Append("],\"links\":[").Append(string.Join(",", w.Select(l => "{\"a\":" + Str(l.A) + ",\"b\":" + Str(l.B) + ",\"kind\":" + Str(l.Kind) + ",\"label\":" + Str(l.Label) + "}")));
-            sb.Append("],\"areas\":[").Append(string.Join(",", areas)).Append("]}");
+            sb.Append("],\"areas\":[").Append(string.Join(",", areas.ToArray())).Append("]}");
             return sb.ToString();
         }
         static string Area(int x, int y, int w, int h, string t) { return "{\"x\":" + x + ",\"y\":" + y + ",\"w\":" + w + ",\"h\":" + h + ",\"t\":" + Str(t) + "}"; }
@@ -114,6 +151,22 @@ namespace AdeeboMeter
             }
             return null;
         }
+        public static string Profile { get { return Path.Combine(Program.DataDir, "lab", "edge-profile"); } }
+        static string lastStamp = ""; static readonly object pickLock = new object();
+        // the faults watched to the end, read from the lab window's own storage: each earns its points once (Points keeps
+        // the record, so reading again never pays twice). Cheap when nothing changed: a folder fingerprint first.
+        public static int Pickup()
+        {
+            lock (pickLock)
+            {
+                string st = BrowserStore.Stamp(Profile); if (st == "" || st == lastStamp) return 0; lastStamp = st;
+                string v; if (!BrowserStore.LocalStorage(Profile, "adeebometer-lab:").TryGetValue("adeebometer-lab:solved", out v)) return 0;
+                int got = 0;
+                foreach (System.Text.RegularExpressions.Match x in System.Text.RegularExpressions.Regex.Matches(v ?? "", "\"([a-z]{2,12})\""))
+                    if (KnownFault("nlab." + x.Groups[1].Value)) got += Points.Me.Award("nlab." + x.Groups[1].Value, true, Cfg.Points, DateTime.UtcNow);
+                return got;
+            }
+        }
         // json: a path to start from (or null for the lab as it was); returns what went wrong, or null
         public static string Open(string json, bool breakIt)
         {
@@ -121,13 +174,14 @@ namespace AdeeboMeter
             string url = new Uri(page).AbsoluteUri + (breakIt ? "?mode=break" : "");
             if (json != null) url += "#path=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
             if (url.Length > 30000) return "This path is too big to hand over.";
-            string edge = Edge(), profile = Path.Combine(Program.DataDir, "lab", "edge-profile");
+            string edge = Edge(), profile = Profile;
             try
             {
                 if (edge != null)
                 {
                     var psi = new ProcessStartInfo(edge, "--app=\"" + url + "\" --user-data-dir=\"" + profile + "\" --no-first-run --no-default-browser-check --disable-sync") { UseShellExecute = false };
-                    using (Process.Start(psi)) { }
+                    var p = Process.Start(psi);
+                    if (p != null) { p.EnableRaisingEvents = true; p.Exited += delegate { try { System.Threading.Thread.Sleep(800); Pickup(); } finally { p.Dispose(); } }; }   // Edge writes its storage out as the window closes
                     return null;
                 }
                 using (Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })) { }   // no Edge: the default browser, without the path (a file link loses the #)
