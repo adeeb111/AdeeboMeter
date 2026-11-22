@@ -310,7 +310,7 @@ namespace AdeeboMeter
             aboutPage.Controls.Add(aboutCanvas);
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
-            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage()); left.Controls.Add(BuildOutlookPage());
+            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage()); left.Controls.Add(BuildOutlookPage()); left.Controls.Add(BuildShellPage());
             left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildPhonePage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
@@ -357,6 +357,7 @@ namespace AdeeboMeter
                     e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { CopyFailed(ce); }   // Ctrl+C copies the result, like the link
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
+                else if (e.KeyCode == Keys.Oemtilde && e.Control) { e.SuppressKeyPress = true; OpenNav("shell"); }   // Ctrl+` : AdeeboShell from anywhere
                 else if (e.KeyCode == Keys.OemQuestion && !e.Shift && !e.Control && !e.Alt && ActiveTextBox() == null) { e.SuppressKeyPress = true; OpenPalette(); }   // "/" = search anything
                 else if (e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7) { var bar = NavBar(); int k = e.KeyCode - Keys.D1; if (k < bar.Count) { e.SuppressKeyPress = true; OpenNav(bar[k]); } }
                 else if (e.KeyCode == Keys.F1)
@@ -465,7 +466,7 @@ namespace AdeeboMeter
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
             // Review-1: coming back to What's wrong? opens at the verdict, not halfway down the last result
             bool enterGuide = tab == "guide" && !guidePage.Visible;
-            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook";
+            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook"; shellPage.Visible = tab == "shell";
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
             SyncPointsBtn(); WatchUse(tab);
@@ -488,6 +489,7 @@ namespace AdeeboMeter
             new[] { "toolbox", "Toolbox", "toolbox" },
             new[] { "gamer", "Gamer", "gamer" },
             new[] { "outlook", "Outlook", "outlook" },
+            new[] { "shell", "AdeeboShell", "shell" },
             new[] { "stream", "Streaming", "stream" },
             new[] { "sports", "Sports", "sports" },
             new[] { "trade", "Markets", "trade" },
