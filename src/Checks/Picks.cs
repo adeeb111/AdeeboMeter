@@ -355,7 +355,7 @@ namespace AdeeboMeter
                 {
                     string maker = Toolkit.Vendor(d.Mac).Trim('(', ')'); bool now2 = here.Contains(d.Mac); DevId.Info id; ids.TryGetValue(d.Ip, out id); string rd; dns.TryGetValue(d.Ip, out rd);
                     if (id != null && id.Maker != "") maker = id.Maker;
-                    string name = d.Label != "" ? d.Label : id != null && id.Name != "" ? id.Name : d.Ip == gw ? "Your router" : !string.IsNullOrEmpty(rd) ? rd : maker != "" && !maker.StartsWith("random", StringComparison.Ordinal) ? maker + " device" : d.Ip;
+                    string name = d.Label != "" ? d.Label : id != null && id.Name != "" ? id.Name : d.Ip == gw ? "Your router" : !string.IsNullOrEmpty(rd) ? rd : maker != "" && !maker.StartsWith("random", StringComparison.Ordinal) ? maker + " device" : Arp.Randomised(d.Mac) ? "Private address" : "Unknown device";   // the tool run, 22 Nov: "10.0.0.180: 10.0.0.180"
                     double ms = double.NaN; bool pinged = now2 && ping.TryGetValue(d.Ip, out ms);
                     var w = d.Watch ? DevWatch.Get(d.Mac) : null;
                     string what = string.Join(" · ", new[] { id != null ? id.Kind : "", id != null ? id.Model : "", maker != name && maker != "" ? maker : "" }.Where(z => z != "").Distinct());

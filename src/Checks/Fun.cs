@@ -25,7 +25,7 @@ namespace AdeeboMeter
         static string Hm(DateTime t) { return t.ToString("HH:mm", CultureInfo.CurrentCulture); }
         static string Len(double min) { return min < 1 ? "under a minute" : min < 90 ? (int)Math.Round(min) + " min" : (min / 60).ToString("0.#", CultureInfo.CurrentCulture) + " h"; }
         static string Ssid(Monitor m) { lock (m.L) return m.Ssid ?? ""; }
-        static string Clean(string t, string ssid) { return GameSession.Redact(t ?? "", ssid); }   // the Wi-Fi name and addresses never go into a file meant for sharing
+        static string Clean(string t, string ssid) { return GameSession.Redact(t ?? "", ssid).TrimEnd().TrimEnd('.'); }   // the tool run, 22 Nov: the callers add their own full stop ("the most.. In total")   // the Wi-Fi name and addresses never go into a file meant for sharing
 
         static string Dir() { string d = Path.Combine(Program.DataDir, "reports"); Directory.CreateDirectory(d); return d; }
         static string Write(string name, string text)

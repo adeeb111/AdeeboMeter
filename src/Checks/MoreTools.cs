@@ -50,10 +50,7 @@ namespace AdeeboMeter
             }
             catch (IOException) { } catch (ArgumentException) { }
             // startup programs
-            int su = 0;
-            foreach (var h in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
-                try { using (var b = RegistryKey.OpenBaseKey(h, RegistryView.Registry64)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) su += k.ValueCount; } catch (Exception rex) { if (!(rex is System.Security.SecurityException || rex is IOException || rex is UnauthorizedAccessException)) throw; }   /* one unreadable key must not stop the rest */
-            try { su += Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Startup)).Count(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            int su = HwSpecs.StartupApps().Count;   // the tool run, 22 Nov: the same count as the Security checkup and Hardware (switched-off ones left out)
             rows.Add(Rf(su > 15 ? 1 : 3, "Programs that start with Windows", su + " start by themselves", su > 15 ? "Each one slows start-up a little. Turn off the ones you don't need at once (Startup apps shows their impact)." : "", "ms-settings:startupapps"));
             // frozen or memory-hungry programs
             run.Status = "Looking at running programs...";

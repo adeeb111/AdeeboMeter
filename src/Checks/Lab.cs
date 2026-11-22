@@ -334,7 +334,8 @@ namespace AdeeboMeter
                     var b = arr + i * sz; IntPtr data = Marshal.ReadIntPtr(b, IntPtr.Size == 8 ? 16 : 12); int n = Marshal.ReadInt32(b, IntPtr.Size == 8 ? 24 : 16);
                     if (data == IntPtr.Zero || n <= 0 || n > 1500) continue;
                     var d = new byte[n]; Marshal.Copy(data, d, 0, n);
-                    rows.Add(R(3, DhcpName[DhcpWant[i]] + " (" + DhcpWant[i] + ")", Draw.Trunc(DhcpText(DhcpWant[i], d), 300), "", "m"));
+                    string txt = (DhcpText(DhcpWant[i], d) ?? "").Trim().Trim('\0').Trim(); if (txt == "") continue;   // the tool run, 22 Nov: a blank option 15 printed "Domain name (15):" and nothing
+                    rows.Add(R(3, DhcpName[DhcpWant[i]] + " (" + DhcpWant[i] + ")", Draw.Trunc(txt, 300), "", "m"));
                 }
             }
             finally { Marshal.FreeHGlobal(arr); if (buf != IntPtr.Zero) Marshal.FreeHGlobal(buf); if (inited) try { Native.DhcpCApiCleanup(); } catch (EntryPointNotFoundException) { } }
