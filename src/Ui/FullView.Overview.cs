@@ -99,6 +99,7 @@ namespace AdeeboMeter
             overviewPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             overviewCanvas = new DB { Name = "overviewCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             overviewCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintOverview(e.Graphics); }; Wire(overviewCanvas);
+            overviewCanvas.MouseMove += delegate(object s, MouseEventArgs e) { SymMouse(e.Location); }; overviewCanvas.MouseLeave += delegate { SymMouse(new Point(-9999, -9999)); };
             overviewPage.Controls.Add(overviewCanvas);
             return overviewPage;
         }
@@ -211,6 +212,7 @@ namespace AdeeboMeter
         }
         void PaintOverview1(Graphics g)
         {
+            symRect = null;   // set again where the tiles are drawn; a page without them gets no hover
             g.TranslateTransform(overviewCanvas.AutoScrollPosition.X, overviewCanvas.AutoScrollPosition.Y);
             float x = 18 * S, y = 16 * S, w = overviewCanvas.ClientSize.Width - 36 * S;
             Begin(overviewCanvas);
@@ -329,7 +331,7 @@ namespace AdeeboMeter
                 {
                     float cx0 = x + 20 * S, cw = w - 40 * S, cy = y + 20 * S;
                     var card = new RectangleF(x, y, w, 0);
-                    int sc = Math.Max(1, Math.Min(3, (int)(cw / (240 * S)))); int sr = (Symptoms.Length + sc - 1) / sc; float sbh = 58 * S, sbw = (cw - (sc - 1) * 10 * S) / sc;
+                    int sc = Math.Max(1, Math.Min(3, (int)(cw / (240 * S)))); int sr = (Symptoms.Length + sc - 1) / sc; float sbh = 68 * S, sbw = (cw - (sc - 1) * 10 * S) / sc;
                     card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
                     Theme.Fill(g, card, 16 * S, Theme.Card); Kit.Frame(g, card);
                     // the big button, right
@@ -359,9 +361,8 @@ namespace AdeeboMeter
                     for (int i = 0; i < Symptoms.Length; i++)
                     {
                         var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
-                        Theme.Fill(g, br, 16 * S, Theme.Card); Kit.Frame(g, br);
-                        g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
-                        using (var ef = new StringFormat { Trimming = StringTrimming.EllipsisWord }) g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, Math.Max(18 * S, br.Height - 36 * S)), ef);   // bug-hunt L-171: the card's own height (French runs longer), "…" if still too long
+                        if (symRect == null || symRect.Length != Symptoms.Length) symRect = new RectangleF[Symptoms.Length];
+                        symRect[i] = br; DrawSymptom(g, i, br, i < symHot.Length ? symHot[i] : 0);
                         string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
                     }
                     y = card.Bottom + 14 * S;
