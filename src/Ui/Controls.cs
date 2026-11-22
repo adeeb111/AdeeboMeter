@@ -131,18 +131,23 @@ namespace AdeeboMeter
             int from = glideTo >= 0 ? glideTo : -AutoScrollPosition.Y;
             int y = Math.Max(0, Math.Min(max, from - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S)));
             if (!Typing.On) { glideTo = -1; AutoScrollPosition = new Point(-AutoScrollPosition.X, y); return; }
-            glideTo = y;
+            // time-based (Adeeb, 22 Nov: "laggy" on long pages): the position follows the clock, so a page that takes 30-40 ms
+            // to draw moves in fewer, bigger steps and still arrives in ~130 ms - it never falls behind one paint per step
+            glideFrom = -AutoScrollPosition.Y; glideTo = y; glideClock = System.Diagnostics.Stopwatch.StartNew();
             if (glide == null) { glide = new System.Windows.Forms.Timer { Interval = 15 }; glide.Tick += delegate { GlideStep(); }; }
-            if (!glide.Enabled) { glideAt = -AutoScrollPosition.Y; glide.Start(); GlideStep(); }
+            if (!glide.Enabled) { glideAt = glideFrom; glide.Start(); GlideStep(); }
         }
+        int glideFrom; System.Diagnostics.Stopwatch glideClock;
         void GlideStep()
         {
             if (IsDisposed || glideTo < 0) { if (glide != null) glide.Stop(); return; }
             int cur = -AutoScrollPosition.Y, d = glideTo - cur;
             if (cur != glideAt) { glideTo = -1; glide.Stop(); return; }   // the page jumped elsewhere meanwhile (a click, a new page): stop
-            if (Math.Abs(d) <= 2) { AutoScrollPosition = new Point(-AutoScrollPosition.X, glideTo); glideTo = -1; glideAt = -1; glide.Stop(); return; }
-            int step = (int)Math.Round(d / 3.0); if (step == 0) step = Math.Sign(d);
-            AutoScrollPosition = new Point(-AutoScrollPosition.X, cur + step); glideAt = -AutoScrollPosition.Y;
+            double t = glideClock == null ? 1 : Math.Min(1.0, glideClock.Elapsed.TotalMilliseconds / 130.0);
+            if (t >= 1 || Math.Abs(d) <= 2) { AutoScrollPosition = new Point(-AutoScrollPosition.X, glideTo); glideTo = -1; glideAt = -1; glide.Stop(); return; }
+            double ease = 1 - Math.Pow(1 - t, 3);   // quick start, soft landing
+            int next = glideFrom + (int)Math.Round((glideTo - glideFrom) * ease); if (next == cur) return;   // nothing to move yet: no paint
+            AutoScrollPosition = new Point(-AutoScrollPosition.X, next); glideAt = -AutoScrollPosition.Y;
             if (glideAt == cur) { glideTo = -1; glide.Stop(); }   // the edge: nowhere further to go
         }
         protected override void Dispose(bool disposing) { if (disposing && glide != null) { glide.Stop(); glide.Dispose(); glide = null; } base.Dispose(disposing); }
