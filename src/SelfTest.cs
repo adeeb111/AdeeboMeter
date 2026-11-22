@@ -1244,6 +1244,35 @@ namespace AdeeboMeter
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
+            T("buddy lines in Spanish, Arabic and Bengali: each file passes the tone rules, every persona speaks the language, nothing is blank", () =>
+            {
+                var bad = new List<string>(); string was = L.Code, pp = Lines.Persona; bool ps = Voice.Serious; int n = 0;
+                try
+                {
+                    Voice.Serious = false;
+                    foreach (var code in new[] { "es", "ar", "bn" })
+                    {
+                        foreach (var id in Lines.Moods.Concat(Lines.Personas.Select(p => p[0])))
+                        {
+                            string raw = Knowledge.RawText("lines-" + id + "-" + code); if (raw == "") { bad.Add(id + "-" + code + ": no file"); continue; }
+                            bad.AddRange(Lines.Check(id + "-" + code, raw)); n += Lines.Parse(raw).Values.Sum(l => l.Count);
+                        }
+                        L.Use(code); if (L.Code != code) { bad.Add(code + ": language didn't load"); continue; }
+                        foreach (var p in Lines.Personas.Select(z => z[0]))
+                        {
+                            Lines.Persona = p;
+                            foreach (var key in new[] { "app.open", "all.good", "wifi.drops", "stream.on", "trade.closed", "view.switch" })
+                            {
+                                string t = Lines.Line(key, "42"); if (t == "" || t.Contains("{")) { bad.Add(code + "/" + p + "/" + key + ": '" + t + "'"); continue; }
+                                if (code != "es" && !t.Any(c => code == "ar" ? c >= '\u0600' && c <= '\u06ff' : c >= '\u0980' && c <= '\u09ff')) bad.Add(code + "/" + p + "/" + key + ": English - '" + t + "'");
+                            }
+                        }
+                    }
+                }
+                finally { L.Use(was); Lines.Persona = pp; Voice.Serious = ps; }
+                if (n < 3 * 2500) bad.Add("only " + n + " translated lines");
+                if (bad.Count > 0) throw new InvalidOperationException(bad.Count + ": " + string.Join(" · ", bad.Take(8)));
+            });
             T("buddy lines: every built-in line passes the tone rules, every persona falls back, nothing is blank", () =>
             {
                 var bad = new List<string>(); int n = 0;

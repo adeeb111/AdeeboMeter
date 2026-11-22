@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Dark Ages persona (silly, never grim). key|text.
+app.open|¡Escuchad! La guardia de la red comienza, {addr}.
+app.open|Las puertas del castillo se abren. Vigilo los cables del reino.
+all.good|Todo bien en el reino. De lo más sospechoso.
+all.good|Los aldeanos no reportan problemas. PC, Wi-Fi e internet bien.
+all.good|Sin problemas. El bufón de la corte se aburre.
+pc.busy|Tu PC carga demasiado. CPU al {v}. Demasiadas misiones.
+pc.busy|La PC trabaja como un buey. La red no tiene culpa.
+pc.busy|Aligera el carro de tu PC. Cierra algo.
+wifi.drops|El Wi-Fi se escapó {v} veces. Como una cabra.
+wifi.drops|{v} caídas. Acerca el router al salón.
+net.none|Sin red. Volvimos a las palomas mensajeras.
+net.none|Sin conexión. Trae el cable, buen {addr}.
+inet.slow|Tu castillo está bien. El camino de afuera es lodo.
+inet.slow|La demora está tras tu router, en el pantano del proveedor.
+inet.slow|Tu fortaleza es veloz. El carro del proveedor es lento.
+busy|Los monjes copian... {v}
+busy|Consultando los pergaminos.
+busy|El mensajero cabalga.
+idle|Silencio en la aldea. Demasiado silencio.
+idle|Nada se mueve, salvo una gallina solitaria.
+idle|Sigo de guardia desde la torre.
+search.empty|¿Qué te aflige, {addr}?
+search.empty|Cuenta tu problema al escriba.
+freeze|El puente levadizo pesa ({v}). Un momento.
+freeze|Los escribas se ponen al día ({v}).
+speedrunner|¡Paciencia! El último mensajero aún cabalga.
+speedrunner|Paciencia, {addr}. Una misión a la vez.
+back.again|¡Has vuelto! {v} noticias te esperan.
+back.again|Bienvenido de vuelta al castillo.
+dns.slow|El pregonero es lento: DNS a {v}.
+dns.slow|Los nombres tardan {v}. El pregonero perdió la voz.
+speed.great|{v} de bajada. Más rápido que cualquier caballo.
+speed.great|Descarga {v}. ¿Brujería? No, buena fibra.
+speed.bloat|Rápido, pero con mercado lleno se frena {v}.
+speed.bloat|Camino veloz, lleno en día de mercado: {v} extra.
+game.lag|El lag es tu Wi-Fi, no el castillo enemigo.
+game.lag|El servidor se mantiene. Tu Wi-Fi tiembla.
+game.good|Ping {v}. ¡Al torneo!
+game.good|Un corcel firme. Cabalga.
+vpn.on|Viajando de incógnito. VPN activa.
+vpn.on|Tu tráfico lleva capucha.
+vpn.slow|El pasaje secreto suma {v}.
+vpn.slow|Desvío VPN: {v}.
+portal|El posadero exige tu nombre. Inicia sesión primero.
+portal|Wi-Fi de taberna. Paga el peaje iniciando sesión.
+gw.down|El router no responde. Apágalo y enciéndelo.
+gw.down|Ni una palabra del router de la puerta.
+isp.down|Tu castillo se mantiene. Los caminos del reino están cerrados.
+isp.down|El puente del proveedor está caído.
+mtu.small|El carro es ancho para la puerta. MTU {v}.
+mtu.small|Paquetes grandes atorados en la puerta. MTU {v}.
+port.open|La puerta {v} está abierta.
+port.open|{v} bajó el puente levadizo.
+port.closed|La puerta {v} está cerrada.
+port.closed|{v} mantiene el puente arriba.
+cert.ok|El sello real es auténtico.
+cert.ok|Un candado verdadero, por palabra del rey.
+cert.expired|Su sello real venció el {v}.
+cert.expired|Vencido desde {v}. El escriba olvidó.
+sec.ok|Las murallas resisten. Revisión aprobada.
+sec.ok|Sin huecos en la muralla del castillo.
+sec.issue|{v} huecos en la muralla. Repáralos.
+sec.issue|La revisión halló {v} puertas débiles.
+mtr.lossy|Los mensajeros se pierden en el salto {v}.
+mtr.lossy|La pérdida empieza en el salto {v}. Bandidos, seguro.
+mtr.clean|Cada mensajero llegó.
+mtr.clean|Sin pérdidas en el camino del rey.
+devices.found|{v} almas en tu red.
+devices.found|Conté {v} dispositivos en el salón.
+encrypt.done|Sellado con cera. Solo ellos pueden leerlo.
+encrypt.done|El pergamino está bloqueado.
+decrypt.done|Pergamino abierto. Sello intacto.
+decrypt.done|Desbloqueado, intacto.
+points.earned|+{v} monedas de oro.
+points.earned|+{v} puntos. Un título se acerca.
+award|¡500 puntos! Quedas armado caballero: el Premio Adeebo.
+award|¡El Premio Adeebo! Fanfarria, por favor.
+late.night|Las velas arden bajas. Sigo vigilando.
+late.night|Medianoche en el castillo.
+morning|El gallo canta. Una noche tranquila.
+morning|Buenos días. El reino durmió en paz.
+update.suspect|Los problemas empezaron tras la actualización del {v}. Qué fastidio.
+update.suspect|Desde la actualización {v}, travesuras.
+call.on|Estás en consejo. Vigilo la llamada.
+call.on|Hay una llamada en curso. El heraldo escucha.
+quiz.right|Correcto, buen señor.
+quiz.wrong|Mal, por mi fe. Inténtalo de nuevo.
+game.streak|{v} seguidas: una hazaña para las crónicas.
+game.timeup|La vela se consumió.
+market.open|La plaza del mercado abre.
+storm.near|Una gran tormenta llega a la tierra.

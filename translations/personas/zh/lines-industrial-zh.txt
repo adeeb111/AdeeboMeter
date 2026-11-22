@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Industrial persona (steam, gears, factory floor). key|text.
+app.open|锅炉已点火，网络车间开始运转，{addr}。
+app.open|班次开始了，仪表已检查，管道有人看着。
+all.good|所有机器运转顺畅。
+all.good|每块仪表都在绿区，电脑、Wi-Fi、互联网都好。
+all.good|车间嗡嗡作响，一切正常。
+pc.busy|电脑这台发动机超负荷了，CPU 占用 {v}。
+pc.busy|电脑里的压力太高了，网络管道没问题。
+pc.busy|织机开太多了，关掉一台吧。
+wifi.drops|Wi-Fi 的传动带今天打滑了 {v} 次。
+wifi.drops|断线 {v} 次，信号管道在漏。
+net.none|车间断线了，接上网线吧。
+net.none|断网了，电报机停了。
+inet.slow|你的工厂没问题，工厂外的铁路太慢了。
+inet.slow|家里车间很快，运营商的线路很迟缓。
+inet.slow|堵点在路由器之外。
+busy|齿轮正在转动……{v}
+busy|正在加压烧水。
+busy|机器正在运转。
+idle|平稳的嗡嗡声，没什么要汇报的。
+idle|车间里很安静。
+idle|仪表很稳。
+search.empty|哪台机器需要检查？
+search.empty|说出坏掉的零件，{addr}。
+freeze|正在加压（{v}），等一下。
+freeze|齿轮正在赶上进度（{v}）。
+speedrunner|一次只扳一个手柄，上一项工作还没跑完。
+speedrunner|操作台上轻一点。
+back.again|回到车间了，发生了 {v} 件事。
+back.again|欢迎回来，这是班次报告。
+dns.slow|查号员太慢了，DNS 要花 {v}。
+dns.slow|查询要花 {v}，账本落灰了。
+speed.great|下载 {v}，全速前进。
+speed.great|下载 {v}，快车专线。
+speed.bloat|速度很快，但负载一大管道就堵 {v}。
+speed.bloat|线路一满，压力就倒灌 {v}。
+game.lag|卡顿是 Wi-Fi 传动带的问题，不是服务器。
+game.lag|服务器运转正常，是你的 Wi-Fi 在打滑。
+game.good|Ping {v}，机器就绪。
+game.good|输出很稳，去玩吧。
+vpn.on|流量走密封管道，VPN 已开启。
+vpn.on|VPN 已连接，线路已密封。
+vpn.slow|密封管道要多花 {v}。
+vpn.slow|VPN 要多 {v} 延迟。
+portal|这家作坊想先在门口登记你的名字，先登录吧。
+portal|看门人的 Wi-Fi，先登录。
+gw.down|路由器熄火了，重启发动机吧。
+gw.down|路由器没有信号，看看它的指示灯。
+isp.down|你的车间没问题，供货线路断了。
+isp.down|运营商的线路断了，不是你的机器问题。
+mtu.small|箱子太大，进不了溜槽，MTU 是 {v}。
+mtu.small|路径 MTU 是 {v}，管道太窄。
+port.open|{v} 号阀门开着。
+port.open|{v} 回应了。
+port.closed|{v} 号阀门关着。
+port.closed|{v} 没有回应。
+cert.ok|已认证，印章是真的。
+cert.ok|小锁通过了检查。
+cert.expired|他们的证书在 {v} 过期了。
+cert.expired|自从 {v} 就过期了，检查逾期了。
+sec.ok|安全检查通过。
+sec.ok|车间里没有隐患。
+sec.issue|发现了 {v} 处安全问题。
+sec.issue|检查发现了 {v} 项。
+mtr.lossy|从第 {v} 跳开始，线路在漏。
+mtr.lossy|数据包在第 {v} 跳洒出来了。
+mtr.clean|整条线路都没有漏。
+mtr.clean|管道从头到尾都很干净。
+devices.found|你的网络上有 {v} 台机器。
+devices.found|数出了 {v} 台设备。
+encrypt.done|已封进保险箱。
+encrypt.done|已加密。
+decrypt.done|保险箱打开了，里面的东西完好。
+decrypt.done|已解锁，完好无损。
+points.earned|账本上多了 {v} 分。
+points.earned|+{v}，这是高效的一班。
+award|500 分，工头奖章：Adeebo 奖。
+award|Adeebo 奖，干得漂亮。
+late.night|夜班，车间还在运转。
+late.night|深夜还在车间里。
+morning|早上开工的汽笛响了，夜里很安静。
+morning|新班次开始，夜里什么都没坏。
+update.suspect|自从 {v} 更新之后，运转就不顺了。
+update.suspect|{v} 的更新里混进了一根扳手。
+call.on|正在通话，保持线路畅通。
+call.on|通话进行中，正在看线路。
+quiz.right|答对了，质检通过。
+quiz.wrong|不合格，返工后重新提交。
+game.streak|连续 {v} 次，生产线运转顺畅。
+game.timeup|班次结束了。
+market.open|交易所大厅开始运转了。
+storm.near|附近有暴风雨，电源和线路可能跳闸。

@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Coder persona. key|text.
+app.open|进程已启动，正在循环监听网络。
+app.open|你好，世界，正在监听 {addr} 的网络。
+all.good|全部测试通过。
+all.good|构建全绿，电脑、Wi-Fi、互联网都正常。
+all.good|没有错误，没有警告。
+pc.busy|CPU 占用 {v}，有东西陷入死循环了。
+pc.busy|瓶颈在电脑，不在网络。
+pc.busy|进程太多了，结束一个再重跑。
+wifi.drops|Wi-Fi 今天抛出了 {v} 次断开异常。
+wifi.drops|断线 {v} 次，未处理的信号问题。
+net.none|没网络，404：找不到互联网。
+net.none|已断网，连接后重试。
+inet.slow|本地很快，延迟在上游，路由器之外。
+inet.slow|不是你的代码问题，是运营商太慢。
+inet.slow|延迟从你的网络之外开始。
+busy|运行中……{v}
+busy|正在编译结果。
+busy|执行中。
+idle|空闲循环，没什么新消息。
+idle|没有新的提交。
+idle|等待事件。
+search.empty|我们在调试什么？
+search.empty|用 grep 搜一下：“slow”“dns”“wifi”。
+freeze|正在垃圾回收（{v}）。
+freeze|正在赶上进度（{v}），异步进行中。
+speedrunner|请求已排队，上一个还在运行。
+speedrunner|已限速，一次一个。
+back.again|欢迎回来，有 {v} 条新日志。
+back.again|回来了，这是更新日志。
+dns.slow|DNS 解析耗时 {v}，上游太慢。
+dns.slow|查询要 {v}，缓存全没命中。
+speed.great|下载 {v}，把整个仓库都克隆下来吧。
+speed.great|下载 {v}，管道很快。
+speed.bloat|吞吐正常，负载下延迟增加 {v}。
+speed.bloat|缓冲膨胀：忙时多 {v}。
+game.lag|卡顿来源：Wi-Fi，不是服务器。
+game.lag|服务器响应很快，Wi-Fi 不稳定。
+game.good|Ping {v}，可以发布了。
+game.good|连接稳定。
+vpn.on|VPN 隧道已建立。
+vpn.on|正在通过 VPN 路由。
+vpn.slow|VPN 开销：{v}。
+vpn.slow|隧道增加了 {v}。
+portal|HTTP 重定向到登录页，先登录。
+portal|强制门户页面，先认证再继续。
+gw.down|网关超时，重启路由器。
+gw.down|路由器没有响应。
+isp.down|本地正常，上游断了。
+isp.down|运营商没有任何返回。
+mtu.small|超过 {v} 字节的包会被丢弃。
+mtu.small|MTU 是 {v}，分片有问题。
+port.open|{v}：连接已接受。
+port.open|{v} 正在监听。
+port.closed|{v}：连接被拒绝或超时。
+port.closed|{v} 没有在监听。
+cert.ok|证书有效，证书链正常。
+cert.ok|TLS 握手干净。
+cert.expired|证书在 {v} 过期了，有人忘了续期任务。
+cert.expired|自从 {v} 就过期了。
+sec.ok|安全检查：通过。
+sec.ok|没有发现问题。
+sec.issue|有 {v} 条安全警告。
+sec.issue|检查返回了 {v} 项。
+mtr.lossy|从第 {v} 跳开始丢包。
+mtr.lossy|丢包从第 {v} 跳开始。
+mtr.clean|丢包率 0%，路径干净。
+mtr.clean|所有跳都没有丢包。
+devices.found|有 {v} 台主机在线。
+devices.found|找到了 {v} 台设备。
+encrypt.done|已加密，只有接收方的密钥能打开。
+encrypt.done|完成，密文已就绪。
+decrypt.done|已解密，哈希值匹配。
+decrypt.done|已打开，完整性正常。
+points.earned|+{v} 分。
+points.earned|+{v}，马上要升级了。
+award|500 分，成就：Adeebo 奖。
+award|Adeebo 奖已合并。
+late.night|深夜会话，还在运行。
+late.night|夜间构建，正在监听。
+morning|早上好，夜间运行很干净。
+morning|早上好，夜间没有错误。
+update.suspect|在 {v} 更新之后出现回归问题。
+update.suspect|在 {v} 更新之后坏了，二分法就指向这里。
+call.on|检测到通话，正在监听抖动。
+call.on|正在通话，监听中。
+quiz.right|测试通过，答对了。
+quiz.wrong|断言失败，再试一次。
+game.streak|连续 {v} 次，绿色构建。
+game.timeup|已超过超时时间。
+market.open|市场在线，状态码 200。
+storm.near|附近有暴风雨，连接可能中断。

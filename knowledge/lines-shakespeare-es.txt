@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Shakespeare persona (our own lines in the style; no quotations). key|text.
+app.open|Dios os guarde, {addr}. Velo por vuestra red.
+app.open|Comienza la vigilia. Vuestros paquetes quedan a mi cuidado.
+all.good|Todo en orden, {addr}. Buen tiempo en cada cable.
+all.good|Vuestro PC, vuestro Wi-Fi, vuestro internet: todo sano.
+all.good|Ningún mal se agita esta noche.
+pc.busy|Vuestro PC trabaja con gran fatiga. CPU al {v}.
+pc.busy|La culpa es de vuestro PC, no de la red.
+pc.busy|Demasiadas tareas cargan vuestra máquina. Soltad una.
+wifi.drops|Vuestro Wi-Fi huyó {v} veces hoy.
+wifi.drops|{v} caídas. Acercaos a vuestro router, buen {addr}.
+net.none|Sin red, ¡ay! Quedáis aislado.
+net.none|Sin conexión. Buscad el cable o el Wi-Fi.
+inet.slow|Vuestro router es veloz. La lentitud mora más allá.
+inet.slow|Vuestra casa está sana. Vuestro proveedor se demora.
+inet.slow|El retraso nace tras vuestro router.
+busy|Trabajo... {v}
+busy|Paciencia. La labor prosigue.
+busy|Presto, presto.
+idle|Horas tranquilas. Sigo en vela.
+idle|Nada nuevo que contar.
+idle|Todo descansa.
+search.empty|Hablad, {addr}. ¿Qué os aflige?
+search.empty|Nombrad vuestra queja.
+freeze|Un momento ({v}). Pesada es la carga.
+freeze|Quedaos un rato ({v}). Me pongo al día.
+speedrunner|¡Quedo, quedo! Aún estoy en lo último.
+speedrunner|Una labor a la vez, buen {addr}.
+back.again|Habéis vuelto. {v} cosas acaecieron.
+back.again|Bienvenido de nuevo. He aquí el relato.
+dns.slow|Los nombres llegan lentos: DNS al {v}.
+dns.slow|Las consultas se demoran {v}. Servidor perezoso.
+speed.great|{v} de descarga. Veloz como el pensamiento.
+speed.great|Descarga {v}. Noble velocidad.
+speed.bloat|Veloz, mas con carga tropieza {v}.
+speed.bloat|Veloz a solas, lento en compañía. {v} de retraso.
+game.lag|El lag nace de vuestro Wi-Fi, no del servidor.
+game.lag|El servidor no tiene culpa. Vuestro Wi-Fi flaquea.
+game.good|Ping {v}. Id adelante.
+game.good|Una línea estable. La fortuna os sonríe.
+vpn.on|Vuestro tráfico va enmascarado. VPN activa.
+vpn.on|De disfraz viajáis.
+vpn.slow|El disfraz cuesta {v}.
+vpn.slow|La VPN añade {v} a vuestro viaje.
+portal|Este Wi-Fi pide vuestro nombre a la puerta.
+portal|Registraos, antes de pasar.
+gw.down|Vuestro router no habla. Reiniciadlo.
+gw.down|Ni una palabra del router.
+isp.down|Vuestra casa se mantiene. Internet ha caído.
+isp.down|Vuestro proveedor quedó a oscuras.
+mtu.small|Los paquetes grandes no pasan. MTU {v}.
+mtu.small|Estrecho es el camino: {v}.
+port.open|{v} responde.
+port.open|La puerta {v} está abierta.
+port.closed|{v} no responde.
+port.closed|La puerta {v} está cerrada.
+cert.ok|El sello es verdadero. Certificado válido.
+cert.ok|Un candado honesto.
+cert.expired|Su sello caducó el {v}.
+cert.expired|Caducado desde {v}. Descuido suyo.
+sec.ok|Vuestros muros son fuertes. Revisión superada.
+sec.ok|Ni una brecha en vuestras defensas.
+sec.issue|{v} flaquezas halladas. Remediadlas.
+sec.issue|La revisión revela {v} faltas.
+mtr.lossy|En el salto {v}, vuestros paquetes se pierden.
+mtr.lossy|La pérdida comienza en el salto {v}.
+mtr.clean|Sin pérdidas en todo el camino.
+mtr.clean|Cada salto es fiel.
+devices.found|{v} dispositivos moran en vuestra red.
+devices.found|Cuento {v}.
+encrypt.done|Sellado. Nadie sino vuestro amigo podrá leerlo.
+encrypt.done|Cerrado con llave.
+decrypt.done|Abierto. Ninguna mano lo tocó.
+decrypt.done|Sin sellar, sin alterar.
+points.earned|+{v} puntos. Bien hecho.
+points.earned|+{v}. Vuestro saber crece.
+award|¡Quinientos puntos! El Premio Adeebo es vuestro.
+award|Honor a vos: el Premio Adeebo.
+late.night|La hora se hace tardía. Sigo en vela.
+late.night|Noche. Descansad; yo velo.
+morning|Buenos días. La noche pasó tranquila.
+morning|Amanece, y nada anda mal.
+update.suspect|Desde la actualización del {v}, mala fortuna.
+update.suspect|El mal llegó con la actualización {v}.
+call.on|Estáis en consejo. Vigilo la llamada.
+call.on|Prosigue una llamada. Escucho por si hay faltas.
+quiz.right|¡Bien dicho, buen {addr}!
+quiz.wrong|¡Ay! No es así.
+game.streak|{v} seguidas: ¡un triunfo!
+game.timeup|El tiempo cumplió su curso.
+market.open|Las puertas del mercado están abiertas.
+storm.near|Se acerca una tempestad: vuestra conexión podría flaquear.

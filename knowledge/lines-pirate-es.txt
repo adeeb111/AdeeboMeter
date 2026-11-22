@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Pirate persona. key|text.
+app.open|¡Saludos, {addr}! El vigía está en el mástil.
+app.open|¡Leven anclas! Vigilo los mares de tu red.
+all.good|Mares en calma, {addr}. Nada en el horizonte.
+all.good|Buen viento. Barco, velas y aparejos en orden.
+all.good|Todo en orden.
+pc.busy|Tu PC se hunde bajo la carga. CPU al {v}.
+pc.busy|La bodega está demasiado llena. Cierra algo, camarada.
+pc.busy|El PC es el lento, no los mares.
+wifi.drops|Tu Wi-Fi cayó por la borda {v} veces hoy.
+wifi.drops|{v} caídas de Wi-Fi. Acércate al router.
+net.none|Naufragio. Ni red a la vista.
+net.none|Sin tierra, sin red. Conéctate, {addr}.
+inet.slow|Tu puerto está bien. Mar gruesa tras el router.
+inet.slow|El puerto de casa es rápido. Las aguas del proveedor van lentas.
+inet.slow|El retraso empieza en el mar, no en casa.
+busy|¡Izando las velas... {v}
+busy|Trazando el rumbo.
+busy|Fregando los paquetes.
+idle|Aguas tranquilas. Sigo de guardia.
+idle|Nada en el horizonte.
+idle|El vigía informa: todo en calma.
+search.empty|¿Cuál es el problema, {addr}?
+search.empty|Nombra tu problema, camarada.
+freeze|Carga pesada ({v}). Aguanta firme.
+freeze|Cazando el viento ({v}).
+speedrunner|¡Argh! Todavía con el último.
+speedrunner|Una vela a la vez, camarada.
+back.again|¡De vuelta a bordo! Pasaron {v} cosas en el mar.
+back.again|Bienvenido de nuevo, {addr}. Aquí está el registro.
+dns.slow|El mapa se lee lento. DNS al {v}.
+dns.slow|Las consultas tardan {v}. El cartógrafo dormita.
+speed.great|{v} de descarga. ¡A toda vela!
+speed.great|Descarga {v}. El barco más rápido de la flota.
+speed.bloat|Barco rápido, pero se retrasa {v} en tormenta de descargas.
+speed.bloat|Veloz, hasta que la bodega se llena. {v} de retraso extra.
+game.lag|El lag es tu Wi-Fi, no el barco enemigo.
+game.lag|El servidor está firme. Tu Wi-Fi va picado.
+game.good|Ping {v}. ¡Iza los colores!
+game.good|Vientos estables. Ve a saquear.
+vpn.on|Navegando con bandera falsa. VPN activada.
+vpn.on|Ruta oculta lista. VPN conectada.
+vpn.slow|La ruta secreta cuesta {v}.
+vpn.slow|La VPN suma {v}. Un rodeo largo por el cabo.
+portal|Este puerto pide papeles. Identifícate primero.
+portal|El Wi-Fi del puerto exige identificarse.
+gw.down|El router se quedó en silencio. Reinícialo, camarada.
+gw.down|Ni una palabra del router. Revisa sus faroles.
+isp.down|Tu barco está sano. El océano del proveedor está vacío.
+isp.down|En casa bien, internet perdido en el mar.
+mtu.small|Barriles demasiado grandes para la escotilla. MTU {v}.
+mtu.small|Los paquetes grandes no caben. MTU {v}.
+port.open|¡El puerto {v} está abierto!
+port.open|{v} respondió a la llamada.
+port.closed|{v} está cerrado a cal y canto.
+port.closed|Sin respuesta de {v}.
+cert.ok|El sello es auténtico. Certificado válido.
+cert.ok|El candado es verdadero.
+cert.expired|Su sello venció el {v}.
+cert.expired|Papeles vencidos desde {v}. Culpa suya.
+sec.ok|Sin fugas en el casco. Revisión superada.
+sec.ok|El barco es seguro.
+sec.issue|{v} fugas en el casco. Tápalas.
+sec.issue|La revisión encontró {v} cosas que reparar.
+mtr.lossy|Carga perdida desde el salto {v}.
+mtr.lossy|Los paquetes caen por la borda en el salto {v}.
+mtr.clean|Ni un barril perdido. Ruta limpia.
+mtr.clean|Cada salto navegó limpio.
+devices.found|{v} barcos en tus aguas.
+devices.found|Avisté {v} dispositivos.
+encrypt.done|Guardado en el cofre. Solo ellos tienen la llave.
+encrypt.done|Tesoro bajo llave.
+decrypt.done|Cofre abierto. Nada robado.
+decrypt.done|Abierto, intacto.
+points.earned|+{v} doblones.
+points.earned|+{v} puntos de tesoro.
+award|¡500 doblones! El Premio Adeebo es tuyo.
+award|Honores de capitán: el Premio Adeebo.
+late.night|Guardia nocturna, {addr}. Estoy en cubierta.
+late.night|Marea tardía. Sigo vigilando.
+morning|Buenos días, {addr}. Noche tranquila en el mar.
+morning|Amanecer. Sin tormentas anoche.
+update.suspect|El problema empezó tras la actualización del {v}.
+update.suspect|Mar gruesa desde la actualización {v}.
+call.on|Parlamento en curso. Vigilo la llamada.
+call.on|En una llamada. El vigía observa.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} navega suave, camarada. Mares en calma.
+stream.on|El programa fluye como buen viento.
+stream.dip|Agua brava en el stream. {v}
+stream.dip|Un chubasco golpeó el stream. {v}
+stream.none|Ningún programa en el horizonte.
+stream.none|Sin stream a la vista, capitán.
+trade.ok|La línea al bróker está en orden.
+trade.ok|Buen viento hacia tu bróker.
+trade.slow|Tormenta en la línea del bróker. Aguanta firme.
+trade.slow|La línea del bróker está picada. {v}
+trade.closed|El mercado está en puerto. Vuelve a las 9:30.
+trade.closed|Mercado cerrado. El puerto duerme.
+view.switch|¡Izando los colores de {v}, camarada!
+view.switch|¡Todos a cubierta, navegamos con {v} ahora!
+quiz.right|¡Sí, eso es correcto!
+quiz.wrong|No, camarada, inténtalo de nuevo.
+game.streak|¡{v} seguidas! Eres una leyenda de los mares.
+game.timeup|El reloj de arena está vacío.
+market.open|Los mercados están abiertos, cuida tus doblones.
+storm.near|Se acerca un chubasco, el aparejo puede temblar.

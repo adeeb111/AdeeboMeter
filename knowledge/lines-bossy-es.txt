@@ -1,0 +1,99 @@
+# AdeeboMeter buddy lines - Bossy. Short orders, aimed at the gear. key|text.
+app.open|Bien. Yo mando en la red ahora.
+app.open|De servicio. Nadie pierde un paquete en mi guardia.
+app.open|Vigilancia iniciada. Red, compórtate.
+all.good|Todo en orden. Como debe ser.
+all.good|Todo funciona según lo previsto.
+all.good|Sin problemas. Que siga así, router.
+pc.busy|PC al {v}. Cierra la app pesada. Ahora.
+pc.busy|Tu PC es el cuello de botella. Libera memoria.
+pc.busy|Demasiado en marcha. Cierra una cosa y sigue.
+wifi.drops|{v} caídas de Wi-Fi. Acércate o usa cable.
+wifi.drops|El Wi-Fi se cayó {v} veces. Revisa el canal, hoy.
+wifi.drops|Tu Wi-Fi no deja de fallar. Arregla la señal primero.
+net.none|Sin red. Conecta el cable.
+net.none|Sin conexión. Enciende el Wi-Fi y elige una red.
+net.none|Sin conexión. Arregla eso primero.
+inet.slow|El router está bien. Llama a tu proveedor.
+inet.slow|El retraso está tras tu router. Esto es de tu proveedor.
+inet.slow|La red de casa pasa. El proveedor falla.
+busy|Trabajando. Espera. {v}
+busy|En curso. No toques el cable.
+busy|Midiendo. En espera.
+idle|Tranquilo. Mantente alerta de todos modos.
+idle|Nada que informar. La vigilancia continúa.
+idle|Estable. Como se ordenó.
+search.empty|Expón el problema.
+search.empty|Escribe la herramienta o el problema. Vamos.
+search.empty|¿Qué hay que revisar?
+freeze|Poniéndome al día ({v}). Espera.
+freeze|Ocupado {v}. Los clics esperan su turno.
+freeze|Trabajo pesado. En espera ({v}).
+speedrunner|Una orden a la vez. Todavía con la última.
+speedrunner|Clics en cola. El trabajo anterior termina primero.
+speedrunner|Cola respetada. El último primero.
+back.again|De vuelta. Informe: {v} cambios.
+back.again|Bienvenido de nuevo. Informe abajo.
+back.again|De vuelta en guardia. Nada pasó.
+dns.slow|DNS al {v}. Cambia a un servidor más rápido.
+dns.slow|Las consultas tardan {v}. Ejecuta la carrera de DNS.
+speed.great|{v} de descarga. Aceptable. Muy aceptable.
+speed.great|Descarga {v}. Según lo previsto.
+speed.bloat|El retraso salta {v} con carga. Activa la cola inteligente.
+speed.bloat|Rápido, pero saturado. Arregla la cola del router.
+game.lag|El lag es tu Wi-Fi. Usa cable.
+game.lag|El servidor está bien. Arregla tu Wi-Fi antes de la próxima partida.
+game.good|Ping {v}. Autorizado para jugar.
+game.good|Conexión aprobada. Juega.
+vpn.on|VPN activada. Anotado.
+vpn.on|VPN conectada. La vigilo.
+vpn.slow|La VPN suma {v}. Elige un servidor más cercano.
+vpn.slow|La VPN cuesta {v}. Usa túnel dividido si está permitido.
+portal|Inicia sesión en la página de Wi-Fi primero.
+portal|Portal cautivo. Ábrelo, inicia sesión, sigue.
+gw.down|El router no responde. Reinícialo.
+gw.down|Sin respuesta del router. Apágalo y enciéndelo de nuevo.
+isp.down|Router bien, internet caído. Llama a tu proveedor.
+isp.down|Caída del proveedor. Tu equipo no tiene la culpa.
+mtu.small|MTU de ruta {v}. Baja la MTU o arregla el túnel.
+mtu.small|Paquetes grandes descartados. MTU {v}. Ajústala.
+port.open|{v} abierto. Confirmado.
+port.open|{v} responde.
+port.closed|{v} cerrado. Revisa el cortafuegos.
+port.closed|{v} rechazado. Revisa que el servicio esté en marcha.
+cert.ok|Certificado válido. Aprobado.
+cert.ok|Candado aprobado.
+cert.expired|Venció el {v}. Avisa a su administrador.
+cert.expired|Certificado vencido {v}. Renuévalo.
+sec.ok|Revisión superada. Mantenlo cerrado.
+sec.ok|Seguro. Como se exige.
+sec.issue|{v} puntos. Arregla primero los rojos.
+sec.issue|La revisión marca {v}. Empieza por arriba.
+mtr.lossy|Pérdida desde el salto {v}. Envía el informe a tu proveedor.
+mtr.lossy|El salto {v} pierde paquetes. Escálalo.
+mtr.clean|Ruta limpia. Desestimado.
+mtr.clean|Sin pérdida. Ruta aprobada.
+devices.found|{v} dispositivos. Conoce cada uno.
+devices.found|Encontré {v}. Etiqueta a los desconocidos.
+encrypt.done|Cifrado. Envíalo.
+encrypt.done|Bloqueado. Adelante.
+decrypt.done|Abierto. Intacto.
+decrypt.done|Descifrado y verificado.
+points.earned|+{v}. Bien. Siguiente.
+points.earned|+{v} puntos. Sigue así.
+award|500 puntos. Premio Adeebo concedido.
+award|Premio ganado. Descansa.
+late.night|Tarde. La vigilancia continúa.
+late.night|Guardia nocturna activa.
+morning|Buenos días. La noche fue limpia.
+morning|Buenos días. Todo en orden.
+update.suspect|Se rompió tras la actualización del {v}. Revierte.
+update.suspect|La actualización del {v} es la sospechosa. Revísala.
+call.on|Llamada activa. Nadie inicie una descarga.
+call.on|En una llamada. Vigilo la calidad.
+quiz.right|Correcto. Siguiente.
+quiz.wrong|Incorrecto. Léelo de nuevo.
+game.streak|{v} seguidas. Sigue así.
+game.timeup|Se acabó el tiempo. Más rápido la próxima ronda.
+market.open|Los mercados están abiertos. Revisa tu conexión al bróker.
+storm.near|Tormenta cerca. Guarda tu trabajo.

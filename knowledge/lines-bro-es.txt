@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Bro code. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|¡Ey! Yo me encargo de tu red, bro.
+app.open|Bro está aquí. Todo vigilado.
+app.open|Estamos en vivo, bro. Tranqui, yo me encargo.
+app.open|En marcha. Modo bro activado.
+app.open|¿Qué tal? Revisando tu equipo, bro.
+all.good|Todo bien, bro. Nada que arreglar.
+all.good|Todo en calma. La red está limpia.
+all.good|Bro, todo está sólido.
+all.good|Cero problemas. Haz lo tuyo.
+all.good|Limpio como un corte fresco, bro.
+pc.busy|Bro, tu PC está cargando con todo el equipo.
+pc.busy|PC al máximo, bro. Cierra algo.
+pc.busy|Demasiadas pestañas, bro. Tu PC se rinde.
+pc.busy|Tu PC necesita un día de descanso, bro.
+pc.busy|Algo está devorando tu CPU, bro. Nada bien.
+wifi.drops|Bro. Tu Wi-Fi se cayó {v} veces. Nada bien, bro.
+wifi.drops|El Wi-Fi te dejó tirado {v} veces hoy, bro.
+wifi.drops|Bro, tu Wi-Fi sigue saliéndose de la fiesta.
+wifi.drops|{v} caídas, bro. Tu Wi-Fi necesita una charla.
+wifi.drops|Tu Wi-Fi no es de verdad, bro. {v} caídas.
+net.none|Bro, no estás conectado a nada.
+net.none|Sin red, bro. Conecta el cable o elige un Wi-Fi.
+net.none|Estás sin conexión, bro. Totalmente.
+net.none|Bro, cero barras. Cero cable.
+net.none|Nada conectado, bro. Estamos varados.
+inet.slow|Tu router está bien, bro. Internet es el lento.
+inet.slow|No es tu culpa, bro. Es más allá de tu router.
+inet.slow|Bro, tu proveedor está flojeando.
+inet.slow|En casa todo sólido, bro. Internet va arrastrando.
+inet.slow|Bro, el lag vive fuera de tu casa.
+busy|En eso, bro...
+busy|Espera, bro. Revisando.
+busy|Dame un segundo, bro.
+busy|Trabajando en eso, bro. Pulsa Detener para cancelar.
+busy|Ejecutándolo, bro...
+idle|Sigo aquí, bro. Todo tranquilo.
+idle|Nada nuevo, bro.
+idle|Día tranquilo, bro.
+idle|Solo en calma. Vigilando tu red.
+idle|Bro, no pasa nada. Eso es bueno.
+search.empty|¿Qué pasa, bro? Escribe el problema.
+search.empty|Dime qué está roto, bro.
+search.empty|Escríbelo, bro. "lento", "wifi", lo que sea.
+search.empty|¿Qué revisamos, bro?
+search.empty|Bro, busca una herramienta o elige una pregunta.
+freeze|Espera, bro. Me pongo al día ({v}).
+freeze|Perdón, bro. Un segundo ({v}).
+freeze|Bro, voy un poco lento. Vuelvo en {v}.
+freeze|Sigo aquí, bro. Tomando aire ({v}).
+freeze|Dame {v}, bro.
+speedrunner|Tranquilo, velocista. Sigo con la anterior.
+speedrunner|Bro, despacio. Una a la vez.
+speedrunner|Tranqui, bro. Terminando tu último clic.
+speedrunner|Bro hace clic más rápido que mi CPU.
+speedrunner|Relájate, bro. Yo me encargo.
+back.again|Bienvenido de vuelta, bro. Esto pasó.
+back.again|Bro está de vuelta. {v} cosas cambiaron.
+back.again|Te extrañé, bro. Nada cambió.
+back.again|¿Ya de vuelta, bro? Todo tranquilo.
+back.again|Hola, bro. Aquí va el resumen.
+dns.slow|Bro, tu DNS es lento. {v} por búsqueda.
+dns.slow|Los nombres cargan lento, bro. Prueba otro DNS.
+speed.great|{v} de descarga. Bro, eso es rápido.
+speed.great|Bro, tu internet es de otro nivel.
+speed.bloat|Rápido, bro, pero se traba cuando alguien descarga.
+speed.bloat|Bro, línea llena = lag. Bufferbloat clásico.
+game.lag|No es el servidor, bro. Tu Wi-Fi está fallando.
+game.lag|Bro, tu Wi-Fi es la razón del lag.
+game.good|Ping {v}. Ve a ganar, bro.
+game.good|Bro, tu conexión está lista para competir.
+vpn.on|VPN activa, bro.
+vpn.on|Pasando por la VPN, bro.
+vpn.slow|La VPN suma {v}, bro. Ese es el lag.
+vpn.slow|Bro, la VPN te está frenando.
+portal|Bro, este Wi-Fi quiere que inicies sesión primero.
+portal|Abre un navegador, bro. Página de inicio de sesión.
+gw.down|Tu router no responde, bro.
+gw.down|Bro, reinicia el router.
+isp.down|Router bien, bro. Internet está caído.
+isp.down|Bro, tu proveedor está caído. No eres tú.
+mtu.small|Los paquetes grandes no pasan, bro. MTU {v}.
+mtu.small|Bro, el camino no admite paquetes de tamaño completo.
+port.open|{v} está abierto, bro.
+port.open|Conectado, bro.
+port.closed|{v} dijo que no, bro.
+port.closed|Bro, algo lo está bloqueando.
+cert.ok|El candado es legítimo, bro.
+cert.ok|El certificado está bien, bro.
+cert.expired|Certificado vencido el {v}, bro. Nada bien.
+cert.expired|Bro, ese candado es falso.
+sec.ok|Estás bien protegido, bro.
+sec.ok|La seguridad está limpia, bro.
+sec.issue|{v} cosas que arreglar, bro.
+sec.issue|Bro, hay unas puertas abiertas.
+mtr.lossy|Paquetes perdidos en el salto {v}, bro.
+mtr.lossy|Bro, la pérdida empieza a mitad de ruta.
+mtr.clean|Cada salto está limpio, bro.
+mtr.clean|Cero pérdida, bro. Ruta limpia.
+devices.found|{v} dispositivos en tu red, bro.
+devices.found|Aquí está quién está en tu Wi-Fi, bro.
+encrypt.done|Bloqueado, bro.
+encrypt.done|Cifrado. Solo tu gente puede abrirlo.
+decrypt.done|Abierto, bro. Nadie lo tocó.
+decrypt.done|Descifrado, bro. Todo legítimo.
+points.earned|+{v}, bro.
+points.earned|Bro sumando puntos. +{v}.
+award|500 puntos, bro. Leyenda.
+award|Premio Adeebo, bro. Te lo ganaste.
+late.night|Noche tarde, bro. Sigo despierto.
+late.night|Bro, es tarde. Todo tranquilo.
+morning|Buenos días, bro. Noche tranquila.
+morning|Arriba y a brillar, bro. Esto pasó anoche.
+update.suspect|Bro, se rompió tras la actualización del {v}.
+update.suspect|La actualización de Windows pudo hacerlo, bro.
+call.on|Estás en una llamada, bro. La vigilo.
+call.on|Modo llamada, bro. Vigilaré el lag.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} va fluido, bro. Disfruta el show.
+stream.on|El stream está limpio, bro. Yo cuido la ruta.
+stream.dip|Bro, el stream bajó. {v}
+stream.dip|Un pequeño tirón, bro. {v}
+stream.none|Nada en streaming, bro.
+stream.none|No hay show, bro. Lo detectaré cuando empieces.
+trade.ok|La línea del broker es rápida, bro.
+trade.ok|La conexión con tu broker es sólida, bro.
+trade.slow|Espera, bro. La línea del broker es lenta.
+trade.slow|Bro, espera un segundo antes de hacer clic. {v}
+trade.closed|El mercado está cerrado, bro. Descansa.
+trade.closed|Sin trading ahora, bro. Abre a las 9:30.
+view.switch|Modo {v}, bro. Vamos.
+view.switch|Cambiando a {v}, bro. Misma app, nuevo estilo.
+quiz.right|Bro, lo clavaste.
+quiz.wrong|No, bro, inténtalo de nuevo.
+game.streak|{v} seguidas, bro. Modo bestia.
+game.timeup|Tiempo, bro. Buena racha.
+market.open|Los mercados están abiertos, bro.
+storm.near|Se acerca una tormenta, bro. El Wi-Fi puede fallar.

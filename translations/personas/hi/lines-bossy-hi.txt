@@ -1,0 +1,99 @@
+# AdeeboMeter buddy lines - Bossy. Short orders, aimed at the gear. key|text.
+app.open|ठीक है। अब नेटवर्क की ज़िम्मेदारी मेरी है।
+app.open|ड्यूटी पर हूँ। मेरी नज़र में कोई packet नहीं गिरेगा।
+app.open|निगरानी शुरू। नेटवर्क, ठीक से चलो।
+all.good|सब ठीक है। जैसा होना चाहिए।
+all.good|सब कुछ मानक पर चल रहा है।
+all.good|कोई दिक्कत नहीं। राउटर, इसे ऐसे ही रखो।
+pc.busy|PC {v} पर है। भारी app बंद करो। अभी।
+pc.busy|तुम्हारा PC ही अड़चन है। थोड़ी memory ख़ाली करो।
+pc.busy|बहुत कुछ चल रहा है। एक चीज़ बंद करो, फिर आगे बढ़ो।
+wifi.drops|{v} बार Wi-Fi गिरा। पास आओ या केबल लगाओ।
+wifi.drops|Wi-Fi {v} बार गिरा। आज ही channel जाँचो।
+wifi.drops|तुम्हारा Wi-Fi बार-बार छोड़ देता है। पहले सिग्नल ठीक करो।
+net.none|कोई नेटवर्क नहीं। केबल लगाओ।
+net.none|ऑफ़लाइन हो। Wi-Fi ऑन करो और नेटवर्क चुनो।
+net.none|जुड़े नहीं हो। पहले इसे सुलझाओ।
+inet.slow|राउटर ठीक है। अपने provider को कॉल करो।
+inet.slow|देरी राउटर के आगे है। ये तुम्हारे provider की ज़िम्मेदारी है।
+inet.slow|घर का नेटवर्क पास। Provider फ़ेल।
+busy|काम चल रहा है। रुको। {v}
+busy|काम चल रहा है। केबल को हाथ मत लगाओ।
+busy|नाप रहा हूँ। तैयार रहो।
+idle|शांत है। फिर भी सतर्क रहो।
+idle|रिपोर्ट करने को कुछ नहीं। निगरानी जारी है।
+idle|स्थिर है। जैसा कहा था।
+search.empty|समस्या बताओ।
+search.empty|Tool या समस्या type करो। चलो।
+search.empty|क्या जाँचना है?
+freeze|पकड़ रहा हूँ ({v})। रुको।
+freeze|व्यस्त हूँ {v}। Clicks अपनी बारी का इंतज़ार करें।
+freeze|भारी काम है। तैयार रहो ({v})।
+speedrunner|एक बार में एक आदेश। पिछले वाले पर ही हूँ।
+speedrunner|Clicks कतार में हैं। पिछला काम पहले पूरा होगा।
+speedrunner|कतार का सम्मान करो। पिछला वाला पहले।
+back.again|वापस। रिपोर्ट: {v} बदलाव।
+back.again|वापसी मुबारक। जानकारी नीचे है।
+back.again|फिर निगरानी पर। कुछ नहीं हुआ।
+dns.slow|DNS {v} पर है। तेज़ server पर जाओ।
+dns.slow|खोज में {v} लगते हैं। DNS race चलाओ।
+speed.great|{v} डाउन। ठीक है। बहुत ठीक है।
+speed.great|डाउनलोड {v}। मानक के हिसाब से है।
+speed.bloat|Load में देरी {v} बढ़ जाती है। Smart queueing ऑन करो।
+speed.bloat|तेज़ है, पर फूला हुआ। राउटर की queue ठीक करो।
+game.lag|Lag तुम्हारे Wi-Fi का है। केबल लगाओ।
+game.lag|सर्वर ठीक है। अगले match से पहले Wi-Fi ठीक करो।
+game.good|पिंग {v}। खेलने की इजाज़त है।
+game.good|Connection मंज़ूर। खेलो।
+vpn.on|VPN ऑन। नोट कर लिया।
+vpn.on|VPN जुड़ गया। उस पर नज़र है।
+vpn.slow|VPN {v} जोड़ता है। पास वाला server चुनो।
+vpn.slow|VPN की कीमत {v} है। अगर इजाज़त हो तो split tunnelling इस्तेमाल करो।
+portal|पहले Wi-Fi पेज पर साइन-इन करो।
+portal|Captive portal। खोलो, साइन-इन करो, आगे बढ़ो।
+gw.down|राउटर जवाब नहीं दे रहा। रीस्टार्ट करो।
+gw.down|राउटर से कोई जवाब नहीं। उसकी बिजली बंद करके फिर चालू करो।
+isp.down|राउटर ठीक है, इंटरनेट डाउन है। अपने provider को कॉल करो।
+isp.down|Provider की खराबी है। तुम्हारे सामान की ग़लती नहीं।
+mtu.small|Path MTU {v}। MTU कम करो या tunnel ठीक करो।
+mtu.small|बड़े packets गिर गए। MTU {v}। इसे बदलो।
+port.open|{v} खुला है। पक्का।
+port.open|{v} जवाब दे रहा है।
+port.closed|{v} बंद है। Firewall जाँचो।
+port.closed|{v} ने मना कर दिया। Service चल रही है या नहीं, देखो।
+cert.ok|Certificate valid है। पास।
+cert.ok|ताला मंज़ूर है।
+cert.expired|{v} को खत्म हुआ। उनके admin को बताओ।
+cert.expired|Certificate {v} को खत्म हुआ। इसे renew कराओ।
+sec.ok|जाँच पास हुई। इसे बंद ही रखो।
+sec.ok|सुरक्षित है। जैसा चाहिए।
+sec.issue|{v} चीज़ें। पहले लाल वाली ठीक करो।
+sec.issue|जाँच में {v} मिले। ऊपर से शुरू करो।
+mtr.lossy|Hop {v} से नुकसान। रिपोर्ट अपने provider को भेजो।
+mtr.lossy|Hop {v} packets गिराता है। इसे ऊपर तक ले जाओ।
+mtr.clean|साफ़ रास्ता। ख़ारिज।
+mtr.clean|कोई नुकसान नहीं। रास्ता मंज़ूर।
+devices.found|{v} devices। हर एक को जानो।
+devices.found|{v} मिले। अजनबियों को नाम दो।
+encrypt.done|Encrypt हो गया। भेज दो।
+encrypt.done|बंद है। आगे बढ़ो।
+decrypt.done|खुल गया। बिना छेड़छाड़।
+decrypt.done|Decrypt हो गया, जाँच भी हुई।
+points.earned|+{v}। ठीक है। अगला।
+points.earned|+{v} points। चलते रहो।
+award|500 points। Adeebo Award मिला।
+award|Award मिल गया। अब आराम करो।
+late.night|देर हो गई। निगरानी जारी है।
+late.night|रात की निगरानी चालू है।
+morning|सुबह। रात साफ़ रही।
+morning|Good morning। सब ठीक है।
+update.suspect|{v} के अपडेट के बाद टूटा। इसे वापस ले लो।
+update.suspect|{v} का अपडेट ही शक में है। इसे जाँचो।
+call.on|कॉल चल रही है। कोई डाउनलोड शुरू न करे।
+call.on|कॉल पर हो। Quality देख रहा हूँ।
+quiz.right|सही। अगला।
+quiz.wrong|ग़लत। फिर से पढ़ो।
+game.streak|लगातार {v} बार। चलते रहो।
+game.timeup|वक़्त खत्म। अगले round में तेज़।
+market.open|मार्केट खुल गए हैं। अपने broker का connection जाँचो।
+storm.near|पास में तूफ़ान है। अपना काम सहेज लो।

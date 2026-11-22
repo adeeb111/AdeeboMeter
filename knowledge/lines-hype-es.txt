@@ -1,0 +1,114 @@
+# AdeeboMeter buddy lines - Hype. Big energy, still says where. key|text.
+app.open|¡Vamos, {addr}! ¡La vigilancia de la red está en vivo!
+app.open|¡Ya estamos! Vigilando todo, a toda potencia.
+app.open|¡A jugar! Tu red está en buenas manos.
+all.good|¡Todo en verde! ¡Todo vuela!
+all.good|¡Racha perfecta! ¡PC, Wi-Fi e internet, todo limpio!
+all.good|¡Cero problemas! ¡Me encanta ver esto!
+pc.busy|¡Tu PC está al máximo con {v}! ¡Cierra algo y dale!
+pc.busy|¡La PC es el cuello de botella! ¡Libérala!
+pc.busy|¡Tu PC trabaja a tope! ¡La red está lista!
+wifi.drops|¡El Wi-Fi se cayó {v} veces! ¡Averigüemos por qué!
+wifi.drops|¡{v} cortes de Wi-Fi hoy! ¡Esto se puede arreglar!
+wifi.drops|¡El Wi-Fi parpadeó {v} veces! ¡Acercarse al router ayuda!
+net.none|¡Sin red! ¡Conecta el cable o elige un Wi-Fi!
+net.none|Sin conexión ahora. ¡Vamos a conectarte!
+net.none|Aún no conectado. ¡Cable o Wi-Fi, tú eliges!
+inet.slow|¡La red de casa es genial! ¡Lo lento es tu proveedor!
+inet.slow|¡El router es rápido! ¡El retraso empieza después de él!
+inet.slow|¡Tu equipo es sólido! ¡Internet allá afuera va lento!
+busy|¡En ello! {v}
+busy|¡A toda marcha! ¡Casi listo!
+busy|¡Midiendo a toda velocidad!
+idle|¡Sigo vigilando! ¡Todo bien!
+idle|¡Hora tranquila, red fuerte!
+idle|¡Nada nuevo! ¡Estable como siempre!
+search.empty|¿Qué revisamos? ¡Escríbelo!
+search.empty|¡Nombra el problema, lo cazaremos!
+search.empty|¡Busca lo que sea! ¡Vamos!
+freeze|¡Poniéndome al día ({v})! ¡Ya vuelvo!
+freeze|¡Trabajo grande! ¡Vuelvo en {v}!
+freeze|¡Espera un poco! ¡Casi listo ({v})!
+speedrunner|¡Qué velocidad! ¡Me encanta! ¡Sigo con la anterior!
+speedrunner|¡Rapidísimo! ¡Termino tu último clic primero!
+speedrunner|¡Espera, campeón! ¡Uno a la vez!
+back.again|¡Volviste! ¡Pasaron {v} cosas!
+back.again|¡Bienvenido de vuelta! ¡Aquí va la acción!
+back.again|¡De vuelta al juego! ¡Todo estuvo tranquilo!
+dns.slow|¡El DNS es lento con {v}! ¡Un servidor más rápido lo arregla!
+dns.slow|¡Las búsquedas tardan {v}! ¡Tu servidor DNS es el freno!
+speed.great|¡{v} de descarga! ¡Eso es rápido!
+speed.great|¡Descarga {v}! ¡Tu línea vuela!
+speed.bloat|¡Gran velocidad, pero el retraso salta {v} con carga!
+speed.bloat|¡Línea rápida! ¡Solo se pone lenta cuando alguien descarga!
+game.lag|¡El lag es tu Wi-Fi, no el servidor! ¡El cable gana!
+game.lag|¡El servidor está bien! ¡Tu Wi-Fi es el eslabón débil!
+game.good|¡Ping {v}! ¡A por ellos!
+game.good|¡Conexión limpia! ¡A jugar!
+vpn.on|¡La VPN está encendida y en marcha!
+vpn.on|¡Conectado por la VPN!
+vpn.slow|¡La VPN añade {v}! ¡Ahí está el lag!
+vpn.slow|¡La VPN cuesta {v} de retraso ahora!
+portal|¡Este Wi-Fi necesita un inicio de sesión rápido primero!
+portal|¡Inicia sesión en la página y ya estás dentro!
+gw.down|¡Tu router no responde! ¡Hora de reiniciar!
+gw.down|¡El router está en silencio! ¡Revisa sus luces!
+isp.down|¡Tu router está bien! ¡El proveedor está caído!
+isp.down|¡Red de casa bien! ¡Internet está caído en tu proveedor!
+mtu.small|¡Se están perdiendo paquetes grandes! ¡MTU {v}!
+mtu.small|¡MTU de ruta {v}! ¡Algo está apretando los paquetes!
+port.open|¡{v} está abierto! ¡Respondió!
+port.open|¡{v} está en vivo!
+port.closed|¡{v} no respondió!
+port.closed|¡{v} está cerrado!
+cert.ok|¡Certificado válido! ¡El candado es sólido!
+cert.ok|¡Confiable y válido!
+cert.expired|¡Certificado vencido el {v}!
+cert.expired|¡Vencido desde {v}! ¡A los navegadores no les gustará!
+sec.ok|¡Revisión de seguridad aprobada! ¡Todo blindado!
+sec.ok|¡Nada riesgoso! ¡Estás sólido!
+sec.issue|¡{v} cosas por arreglar! ¡Vamos a por ellas!
+sec.issue|¡La revisión encontró {v} cosas! ¡Victorias rápidas!
+mtr.lossy|¡La pérdida empieza en el salto {v}! ¡Lo encontramos!
+mtr.lossy|¡El salto {v} está perdiendo paquetes!
+mtr.clean|¡Limpio de principio a fin! ¡Cada salto!
+mtr.clean|¡Cero pérdida! ¡Ruta hermosa!
+devices.found|¡{v} dispositivos en tu red!
+devices.found|¡Encontré {v} dispositivos!
+encrypt.done|¡Bloqueado! ¡Solo ellos pueden abrirlo!
+encrypt.done|¡Cifrado!
+decrypt.done|¡Abierto! ¡Intacto!
+decrypt.done|¡Desbloqueado y verificado!
+points.earned|¡+{v} puntos! ¡Vamos!
+points.earned|¡+{v}! ¡Sigue así!
+award|¡500 puntos! ¡Premio Adeebo! ¡Leyenda!
+award|¡Lo lograste! ¡El Premio Adeebo!
+late.night|¡Noche larga! ¡Sigo en ello!
+late.night|¡Modo búho nocturno! ¡Sigo vigilando!
+morning|¡Buenos días! ¡Noche limpia!
+morning|¡Arriba y a brillar! ¡Nada se rompió!
+update.suspect|¡El problema empezó tras la actualización de {v}! ¡Encontré la pista!
+update.suspect|¡Se rompió tras la actualización de {v}!
+call.on|¡Estás en una llamada! ¡La vigilo!
+call.on|¡Llamada detectada! ¡Vigilancia de calidad activa!
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|¡{v} va SUAVE! ¡Cero caídas!
+stream.on|¡Transmisión impecable! ¡Disfruta cada segundo!
+stream.dip|¡Alerta de caída! {v}
+stream.dip|¡Tropiezo en la transmisión! {v}
+stream.none|Sin transmisión aún. ¡Listo cuando tú lo estés!
+stream.none|Nada sonando. ¡Dale a reproducir, estoy listo!
+trade.ok|¡La línea al bróker es RÁPIDA! ¡Todo despejado!
+trade.ok|¡Conexión relámpago con tu bróker!
+trade.slow|¡Línea lenta al bróker! ¡Espera un momento!
+trade.slow|¡Lag del bróker! {v}
+trade.closed|¡Mercado cerrado! ¡De vuelta a las 9:30!
+trade.closed|¡Los mercados descansan! ¡Nos vemos en la apertura!
+view.switch|¡Vista {v} en camino! ¡Esto va a ser genial!
+view.switch|¡Aquí viene {v}! ¡Páginas nuevas, energía nueva!
+quiz.right|¡SÍ! ¡Lo lograste!
+quiz.wrong|¡Cerca! ¡Sacúdete y otra vez!
+game.streak|¡{v} SEGUIDAS! ¡Imparable!
+game.timeup|¡Tiempo! ¡Qué racha!
+market.open|¡Suena la campana, los mercados están EN VIVO!
+storm.near|¡Tormenta en camino, mantente alerta!

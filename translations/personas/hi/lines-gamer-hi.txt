@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Gamer persona. key|text.
+app.open|Player one तैयार। नेटवर्क watch लोड हो गई।
+app.open|GG, हम live हैं। तुम्हारा connection देख रहा हूँ, {addr}।
+all.good|सब green है। Zero lag, full send।
+all.good|Lobby साफ़ है। PC, Wi-Fi और internet सब ठीक।
+all.good|कोई debuff नहीं। तुम तैयार हो।
+pc.busy|तुम्हारा PC {v} पर है। Frame drop आने वाले हैं।
+pc.busy|PC ही bottleneck है, सर्वर नहीं। एक tab बंद करो।
+pc.busy|तुम्हारा rig overload है। नेटवर्क ठीक है।
+wifi.drops|Wi-Fi {v} बार disconnect हुआ। ये तो rage quit है।
+wifi.drops|आज {v} बार Wi-Fi गिरा। Ranked के लिए cable ले लो।
+net.none|कोई connection नहीं। तुम offline खेल रहे हो।
+net.none|सबसे disconnect हो गए। Cable लगाओ, {addr}।
+inet.slow|तुम्हारा राउटर ठीक है। Lag provider से शुरू होता है।
+inet.slow|घर का setup साफ़ है। Lag ISP का है।
+inet.slow|राउटर के आगे high ping है। तुम्हारी ग़लती नहीं।
+busy|Loading... {v}
+busy|Check चल रही है। Alt-F4 मत दबाना।
+busy|Results buffer हो रहे हैं...
+idle|AFK check: अब भी देख रहा हूँ।
+idle|कुछ नया नहीं। Lobby शांत है।
+idle|Idle हूँ, पर नेटवर्क अब भी radar पर है।
+search.empty|हम क्या debug कर रहे हैं, {addr}?
+search.empty|Type करो: "lag", "ping", "wifi"।
+freeze|Loading screen ({v})। रुको ज़रा।
+freeze|पकड़ रहा हूँ ({v})। कोई input lag नहीं, promise।
+speedrunner|Speedrunner मिला। पिछले वाले पर ही हूँ।
+speedrunner|Button mashing नहीं। एक बार में एक।
+back.again|Respawn हो गया। {v} बातें हुईं।
+back.again|वापसी मुबारक, {addr}। ये रहा recap।
+dns.slow|DNS {v} पर। Server lookup धीमा है।
+dns.slow|Name lookup {v} पर अटकता है। DNS server बदलो।
+speed.great|{v} डाउन। पूरी game library डाउनलोड कर लो।
+speed.great|डाउनलोड {v}। Patch day से कोई दिक्कत नहीं।
+speed.bloat|तेज़ है, पर कोई डाउनलोड करे तो ping {v} बढ़ जाता है।
+speed.bloat|Bufferbloat: load में {v} ज़्यादा। यही तुम्हारा lag spike है।
+game.lag|Lag तुम्हारे Wi-Fi से शुरू। Ranked के लिए cable लगाओ।
+game.lag|सर्वर ठीक है। तुम्हारा Wi-Fi match हरा रहा है।
+game.good|पिंग {v}। जाओ, carry करो।
+game.good|Connection साफ़ है। आज नेटवर्क अपना काम कर रहा है।
+vpn.on|VPN ऑन। अपना ping देखो।
+vpn.on|VPN से जुड़े हो।
+vpn.slow|VPN {v} जोड़ता है। Match के लिए बंद कर दो।
+vpn.slow|VPN ही तुम्हारा {v} extra ping है।
+portal|Wi-Fi पहले साइन-इन माँगता है। Tutorial level है।
+portal|Captive portal। Log in करो, फिर queue में लगो।
+gw.down|राउटर जवाब नहीं दे रहा। रीस्टार्ट करो।
+gw.down|तुम्हारा राउटर AFK हो गया।
+isp.down|राउटर ठीक है। इंटरनेट provider पर डाउन है।
+isp.down|सर्वर डाउन? नहीं — तुम्हारा provider है।
+mtu.small|बड़े packets गिर गए। MTU {v}।
+mtu.small|Path MTU {v}। कुछ packets नहीं समाते।
+port.open|{v} खुला है। Connection काम कर रहा है।
+port.open|{v} ने जवाब दिया।
+port.closed|{v} बंद है। NAT ने मना कर दिया।
+port.closed|{v} ने जवाब नहीं दिया।
+cert.ok|Certificate valid है। Legit site है।
+cert.ok|ताला ठीक है।
+cert.expired|Certificate {v} को expire हुआ। Sketchy है।
+cert.expired|{v} से expire है। उनकी तरफ़, तुम्हारी नहीं।
+sec.ok|Security check: पास। Full armour।
+sec.ok|कोई कमज़ोर जगह नहीं मिली।
+sec.issue|{v} security items। उन्हें patch कर दो।
+sec.issue|जाँच में {v} चीज़ें मिलीं। Boss fight से पहले ठीक करो।
+mtr.lossy|Hop {v} से packet loss। Lag वहीं spawn होता है।
+mtr.lossy|Hop {v} packets गिरा रहा है।
+mtr.clean|हर hop पर zero loss। साफ़ रास्ता।
+mtr.clean|कोई loss नहीं। Flawless route।
+devices.found|नेटवर्क पर {v} devices हैं।
+devices.found|Lobby में {v} players मिले।
+encrypt.done|Encrypt हो गया। Loot सुरक्षित है।
+encrypt.done|Lock हो गया।
+decrypt.done|खुल गया। बिना छुए।
+decrypt.done|Unlock हो गया। कोई छेड़छाड़ नहीं।
+points.earned|+{v} XP।
+points.earned|+{v} points। Level up पास है।
+award|500 points। Achievement unlock: Adeebo Award।
+award|Adeebo Award unlock हो गया। GG।
+late.night|Late-night session। मैं अब भी देख रहा हूँ।
+late.night|एक और game? मैं ping देखूँगा।
+morning|सुबह। सर्वर रात भर टिके रहे।
+morning|Good morning। रात में कोई lag नहीं।
+update.suspect|{v} के अपडेट के बाद टूट गया। Patch ने nerf कर दिया।
+update.suspect|{v} अपडेट के बाद हालात और बिगड़ गए।
+call.on|Voice chat मिला। Quality देख रहा हूँ।
+call.on|कॉल पर हो। Jitter देख रहा हूँ।
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} full frames पर चल रहा है। कोई lag spike नहीं।
+stream.on|Stream smooth है। अभी तक zero stutter।
+stream.dip|Stream पर lag spike। {v}
+stream.dip|Frame drop मिला। {v}
+stream.none|Queue में कोई stream नहीं।
+stream.none|Stream lobby ख़ाली है। शुरू करने के लिए play दबाओ।
+trade.ok|Broker ping low है। तुम तैयार हो।
+trade.ok|Broker तक low ping। साफ़ connection।
+trade.slow|Broker तक high ping। अभी click मत करो।
+trade.slow|Broker lag spike। {v}
+trade.closed|Market server 9:30 तक offline है।
+trade.closed|मार्केट बंद है। 9:30 पर respawn।
+view.switch|{v} loadout load हो रहा है। Menus respawn हो रहे हैं।
+view.switch|{v} build पर जा रहा हूँ। एक second में GG।
+quiz.right|GG, बिल्कुल सही।
+quiz.wrong|Shot चूक गया। Respawn करके फिर कोशिश करो।
+game.streak|{v}-streak! Carry कर रहे हो।
+game.timeup|Time up — round खत्म।
+market.open|Markets live हैं। नया match शुरू।
+storm.near|तूफ़ान आ रहा है — lag spike हो सकते हैं।

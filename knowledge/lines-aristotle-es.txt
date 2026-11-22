@@ -1,0 +1,57 @@
+# AdeeboMeter buddy lines - Aristotelian persona, in the spirit of Aristotle (our own lines; no quotations). key|text.
+app.open|Saludos, {addr}. Observemos, razonemos y actuemos.
+app.open|Toda red busca algún bien. Veamos si la tuya lo alcanza.
+all.good|Todo funciona como debe. Esa es su excelencia.
+all.good|Nada en exceso, nada en falta. Un buen equilibrio.
+pc.busy|El PC está en {v}. Demasiado trabajo, como demasiado poco, arruina el resultado.
+pc.busy|La causa es el propio PC, no la red.
+wifi.drops|El Wi-Fi se fue {v} veces. La distancia es la causa probable; acércate.
+net.none|Sin red. Primero la primera causa: el cable o el Wi-Fi.
+inet.slow|Tu router responde rápido; por tanto, el retraso está más allá.
+busy|Indagando... {v}
+idle|Nada nuevo. La observación continúa.
+search.empty|Formula la pregunta y hallaremos la herramienta que la responda.
+freeze|Un momento ({v}). La ventana se está poniendo al día.
+speedrunner|Una indagación a la vez; la última aún no termina.
+back.again|Bienvenido de vuelta. Esto es lo que cambió, y por qué.
+dns.slow|Los nombres tardan ({v}). La falta está en la pregunta, no en la línea.
+speed.great|{v} de descarga. Suficiente para su fin.
+speed.bloat|Rápido, pero el retraso sube {v} bajo carga: un exceso de cola.
+game.lag|El lag empieza en tu Wi-Fi; el servidor no es la causa.
+game.good|Estable en {v}. El buen juego sigue a las buenas condiciones.
+vpn.on|VPN conectada.
+vpn.slow|La VPN añade {v}. Un trueque: velocidad por privacidad.
+portal|Este Wi-Fi exige primero una página de inicio de sesión.
+gw.down|Tu router no responde. Ese es el primer enlace a examinar.
+isp.down|Tu router funciona; internet más allá no. El proveedor es la causa.
+mtu.small|Los paquetes grandes se pierden en {v}. El justo medio es el límite de la ruta.
+port.open|{v} responde.
+port.closed|{v} rechazó o guardó silencio.
+cert.ok|El certificado es válido y de confianza.
+cert.expired|El certificado venció el {v}.
+sec.ok|La revisión pasó.
+sec.issue|{v} elementos necesitan atención.
+mtr.lossy|La pérdida empieza en el salto {v} y continúa: la causa está ahí.
+mtr.clean|Sin pérdida en ningún salto.
+devices.found|{v} dispositivos habitan tu red.
+encrypt.done|Cifrado.
+decrypt.done|Abierto, y sin alterar.
+points.earned|+{v} puntos. El hábito hace al experto.
+award|500 puntos: el Premio Adeebo. La excelencia es un hábito.
+late.night|Es tarde. El descanso sirve a la razón que trabaja mañana.
+morning|Buenos días. La noche pasó sin falta.
+update.suspect|Las cosas empeoraron tras la actualización del {v}. Examina primero el cambio más reciente.
+call.on|Una llamada. Vigilo su calidad.
+stream.on|{v} se reproduce sin problemas.
+stream.dip|El stream flaqueó. {v}
+stream.none|Nada se transmite.
+trade.ok|Tu línea al broker es rápida y estable.
+trade.slow|El broker responde despacio. Delibera antes de actuar.
+trade.closed|El mercado está cerrado hasta las 9:30.
+view.switch|Cambiando a {v}.
+quiz.right|Correcto: el saber bien sostenido.
+quiz.wrong|No es así. La excelencia es un hábito; inténtalo de nuevo.
+game.streak|{v} seguidas: la virtud por la práctica.
+game.timeup|El tiempo se ha cumplido.
+market.open|El ágora abre para el comercio.
+storm.near|Se acerca una tormenta; el sabio se prepara.

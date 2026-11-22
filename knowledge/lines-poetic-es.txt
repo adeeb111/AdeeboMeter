@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Poetic persona. key|text.
+app.open|Los cables susurran quedos. Estoy aquí para velar.
+app.open|Comienza una vigilia serena sobre tu red.
+all.good|Aguas quietas, cielo despejado. Todo bien.
+all.good|Tu PC, tu Wi-Fi, tu internet: en armonía.
+all.good|Nada turba hoy la corriente.
+pc.busy|Tu PC carga demasiado. CPU al {v}.
+pc.busy|La lentitud vive en el PC, no en el aire.
+pc.busy|Deja respirar a tu PC. Cierra una ventana.
+wifi.drops|El Wi-Fi se apagó {v} veces hoy, como la luz del atardecer.
+wifi.drops|{v} caídas. La señal se adelgaza con la distancia.
+net.none|Silencio. Ninguna red te alcanza.
+net.none|Sin conexión. El hilo está cortado.
+inet.slow|En casa hay calma. La lentitud está tras el router.
+inet.slow|Cerca es veloz, lejos es lento. Del lado del proveedor.
+inet.slow|Tras tu puerta, el camino se alarga.
+busy|Escuchando... {v}
+busy|Recogiendo lo que dicen los cables.
+busy|Paciencia. La respuesta llega.
+idle|Una hora tranquila.
+idle|Quietud. Sigo velando.
+idle|Nada nuevo bajo el cielo.
+search.empty|¿Qué buscas?
+search.empty|Nombra lo que te preocupa.
+freeze|Un respiro ({v}). Nos ponemos al día.
+freeze|Momento lento ({v}). Ya casi.
+speedrunner|Con calma. Una cosa a la vez.
+speedrunner|El último pensamiento sigue sin terminar.
+back.again|Regresas. {v} cosas pasaron.
+back.again|Bienvenido de nuevo. La pequeña historia del día.
+dns.slow|Los nombres llegan lentos, {v}.
+dns.slow|Las consultas se demoran en {v}.
+speed.great|{v} de descarga. Como el viento.
+speed.great|Descarga {v}. Veloz y ligera.
+speed.bloat|Veloz en calma, lento entre multitudes. {v}.
+speed.bloat|Cuando la línea se llena, el retraso crece {v}.
+game.lag|El lag nace de tu Wi-Fi, no del servidor.
+game.lag|El servidor está firme. El Wi-Fi tiembla.
+game.good|Ping {v}. Juega bien.
+game.good|Una línea estable.
+vpn.on|Tus palabras viajan por un camino oculto. VPN activa.
+vpn.on|Por el túnel ahora.
+vpn.slow|El camino oculto añade {v}.
+vpn.slow|El camino de la VPN cuesta {v}.
+portal|Este Wi-Fi pide tu nombre primero.
+portal|Una puerta antes del camino abierto. Inicia sesión.
+gw.down|Tu router guarda silencio. Despiértalo.
+gw.down|Sin respuesta del router.
+isp.down|La casa está entera. El mundo exterior, a oscuras.
+isp.down|La luz del proveedor está apagada.
+mtu.small|Los paquetes grandes no pueden pasar. MTU {v}.
+mtu.small|Un camino estrecho: {v}.
+port.open|{v} está abierto.
+port.open|{v} responde.
+port.closed|{v} sigue cerrado.
+port.closed|Sin respuesta de {v}.
+cert.ok|El sello se mantiene firme.
+cert.ok|Un candado honesto.
+cert.expired|Su sello caducó el {v}.
+cert.expired|Caducado desde {v}.
+sec.ok|Tus muros están firmes.
+sec.ok|Sin grietas.
+sec.issue|{v} grietas pequeñas por reparar.
+sec.issue|La revisión anota {v} cosas.
+mtr.lossy|En el salto {v}, los paquetes se escapan.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.clean|Cada paso llega.
+mtr.clean|Sin pérdidas en el camino.
+devices.found|{v} dispositivos comparten tu aire.
+devices.found|Cuento {v}.
+encrypt.done|Sellado. Para un solo lector.
+encrypt.done|Guardado bajo llave.
+decrypt.done|Abierto, sin cambios.
+decrypt.done|Sin sellar y entero.
+points.earned|+{v} puntos.
+points.earned|+{v}. Creces.
+award|500 puntos. El Premio Adeebo, ganado.
+award|Un hito: el Premio Adeebo.
+late.night|Noche. Sigo en vigilia.
+late.night|Horas tardías, cables en silencio.
+morning|Mañana. La noche fue amable.
+morning|Amanece, y todo está bien.
+update.suspect|Tras la actualización del {v}, las cosas cambiaron.
+update.suspect|Desde la actualización de {v}, una sombra.
+call.on|Viajan las voces. Vigilo la llamada.
+call.on|Hay una llamada. Escucho por si hay problemas.
+quiz.right|Sí: como una llave que encaja en la cerradura.
+quiz.wrong|Esta no; la respuesta espera un poco más allá.
+game.streak|{v} seguidas, una pequeña sarta de perlas.
+game.timeup|El reloj cerró los ojos.
+market.open|Los mercados despiertan y empiezan a zumbar.
+storm.near|Se acerca una tormenta; la señal podría temblar.

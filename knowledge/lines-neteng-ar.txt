@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Network engineer. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|بدأ الرصد. مجسات البوابة وDNS والإنترنت تعمل.
+app.open|الوكيل يعمل. أول عينات خلال ثانيتين.
+app.open|الاستطلاع: البوابة كل ثانيتين، الإنترنت كل 15 ثانية.
+app.open|بدأ جمع خط الأساس.
+app.open|المجسات جاهزة. لا استماع. صادر فقط.
+all.good|كل المسارات خضراء. لا إجراء مطلوبا.
+all.good|RTT طبيعي، فقدان 0%، لا تذبذب.
+all.good|الطبقات L1-L7 خضراء.
+all.good|لا شذوذ في البوابة أو DNS أو الإنترنت.
+all.good|حالة مستقرة. لا شيء لاستكشافه.
+pc.busy|المعالج {v}. المضيف هو عنق الزجاجة، لا المسار.
+pc.busy|المضيف مشبع. توقع تأخيرا من جهة التطبيق.
+pc.busy|ضغط الذاكرة مرتفع. الترحيل محتمل.
+pc.busy|تنافس على الموارد المحلية. خفف الحمل.
+pc.busy|معالج مرتفع. أرقام الشبكة قد تنحرف.
+wifi.drops|تذبذب WLAN بمقدار x{v}. افحص RSSI والتجوال.
+wifi.drops|{v} انفصالات اليوم. افحص رموز السبب.
+wifi.drops|تذبذب الرابط x{v}. غالبا RF أو إلغاء مصادقة AP.
+wifi.drops|{v} انقطاعات واي فاي. افحص القناة المشتركة وعتبة التجوال.
+wifi.drops|رابط WLAN متوقف x{v}. راجع سجل الأحداث.
+net.none|لا IP ولا بوابة. الرابط متوقف.
+net.none|كل الواجهات متوقفة.
+net.none|لا مسار افتراضي. المجسات موقوفة.
+net.none|الطبقة L1 متوقفة في كل المحولات.
+net.none|لا إشارة حاملة.
+inet.slow|RTT البوابة منخفض، وRTT الإنترنت {v}. التأخير بعد CPE.
+inet.slow|تأخير مضاف قبل البوابة من جهة المزود.
+inet.slow|الشبكة المحلية نظيفة. تأخير المنبع مرتفع.
+inet.slow|الفرق بين البوابة والإنترنت: {v}. جهة المزود.
+inet.slow|مشكلة في المنبع. شغّل MTR لإيجاد القفزة.
+busy|أستطلع... {v}
+busy|أجمع العينات...
+busy|يعمل. الإيقاف متاح.
+busy|أقيس...
+busy|الاختبار جار...
+idle|لا تغييرات في الحالة.
+idle|مستقر. خط الأساس ثابت.
+idle|لا أحداث في الساعة الأخيرة.
+idle|الاستطلاع مستمر. لا جديد.
+idle|هادئ.
+search.empty|ابحث: mtu أو dns أو arp أو mtr أو snmp...
+search.empty|اسم أداة أو عرض.
+search.empty|استعلم عن أداة.
+search.empty|أي طبقة؟
+search.empty|اكتب بروتوكولا أو عرضا.
+freeze|خيط الواجهة محظور {v}. يتعافى.
+freeze|توقف الواجهة {v}. العمل مستمر.
+freeze|العرض متأخر {v}.
+freeze|الخيط الرئيسي مشغول {v}.
+freeze|الواجهة تلحق ({v}).
+speedrunner|المهمة السابقة ما زالت تعمل.
+speedrunner|القائمة ممتلئة. واحدة في كل مرة.
+speedrunner|تجاوزت معدل الطلبات. أنتظر الأخيرة.
+speedrunner|الاختبار الأخير لم يكتمل.
+speedrunner|مشغول. أعد المحاولة بعد التشغيل الحالي.
+back.again|{v} أحداث منذ آخر عرض.
+back.again|لا أحداث منذ آخر عرض.
+back.again|الفرق منذ آخر عرض: انظر التغييرات.
+back.again|إليك السجل أثناء غيابك.
+back.again|أهلا بعودتك. ملخص الأحداث جاهز.
+dns.slow|DNS هو {v}. جرّب محللا آخر.
+dns.slow|تأخير المحلل مرتفع.
+speed.great|تحميل {v}، وRTT منخفض.
+speed.great|الإنتاجية جيدة. لا فقدان.
+speed.bloat|تأخير التحميل +{v}. Bufferbloat. فعّل SQM إن استطعت.
+speed.bloat|تأخير الاصطفاف تحت الحمل.
+game.lag|قفزات RTT اللعبة ترتبط بانخفاض RSSI. RF محلي.
+game.lag|الاهتزاز مصدره WLAN.
+game.good|RTT اللعبة {v}، اهتزاز منخفض، فقدان 0%.
+game.good|المسار إلى سيرفر اللعبة نظيف.
+vpn.on|النفق يعمل.
+vpn.on|المسار الافتراضي عبر النفق.
+vpn.slow|عبء النفق +{v}.
+vpn.slow|تأخير أضافه رأس VPN.
+portal|HTTP 302 إلى بوابة. المصادقة مطلوبة.
+portal|رُصدت بوابة أسيرة.
+gw.down|البوابة غير قابلة للوصول. مشكلة ARP أو L2.
+gw.down|لا ICMP من البوابة.
+isp.down|البوابة تعمل، والمنبع غير قابل للوصول.
+isp.down|WAN متوقف بعد CPE.
+mtu.small|MTU المسار {v}. افحص ثقبا أسود في PMTUD.
+mtu.small|حزم DF تُسقط فوق {v}.
+port.open|TCP {v} مفتوح، والمصافحة خلال {v}.
+port.open|استُلم SYN-ACK.
+port.closed|TCP {v}: RST أو مهلة.
+port.closed|لا SYN-ACK. مُرشَّح أو مغلق.
+cert.ok|السلسلة صالحة، وجذر موثوق.
+cert.ok|سلسلة TLS سليمة.
+cert.expired|الورقة انتهت في {v}.
+cert.expired|السلسلة غير صالحة: منتهية.
+sec.ok|فحوصات التحصين ناجحة.
+sec.ok|لا نتائج.
+sec.issue|{v} نتائج.
+sec.issue|وُجدت فجوات تحصين.
+mtr.lossy|الفقد يبدأ عند القفزة {v} ويستمر حتى الوجهة.
+mtr.lossy|فقدان توجيه وسط المسار.
+mtr.clean|فقدان 0% في كل القفزات.
+mtr.clean|المسار نظيف من الطرف إلى الطرف.
+devices.found|{v} إدخالات ARP.
+devices.found|جدول الجيران محمّل.
+encrypt.done|مشفّر (AES-256).
+encrypt.done|الحمولة مختومة.
+decrypt.done|فُك التشفير، والسلامة مؤكدة.
+decrypt.done|MAC سليم.
+points.earned|+{v}.
+points.earned|النقاط +{v}.
+award|500 نقطة. جائزة Adeebo.
+award|بلغت عتبة الجائزة.
+late.night|خارج الذروة. المسار هادئ.
+late.night|متأخر. كل المجسات طبيعية.
+morning|خلال الليل: لا أحداث.
+morning|ملخص الليل جاهز.
+update.suspect|تراجع بعد التحديث في {v}.
+update.suspect|التغيير يرتبط بتحديث Windows.
+call.on|رُصدت تدفقات RTP. أراقب الاهتزاز والفقدان.
+call.on|مكالمة جارية. مراقبة QoS مفعّلة.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v}: مسار نظيف، لا فقدان، وزمن CDN طبيعي.
+stream.on|البث سليم. البوابة والمزود والطرف ضمن خط الأساس.
+stream.dip|تدهور البث. {v}
+stream.dip|سُجل الانخفاض بدليل. {v}
+stream.none|لا تدفقات فيديو مرصودة.
+stream.none|لا جلسات بث. الكاشف خامل.
+trade.ok|RTT الوسيط طبيعي، لا فقدان في المسار.
+trade.ok|اتصال TCP بالوسيط ضمن خط الأساس.
+trade.slow|RTT الوسيط فوق 100 ms. أوقف الأوامر.
+trade.slow|مسار الوسيط متدهور. {v}
+trade.closed|خارج ساعات السوق. مجس الوسيط متوقف.
+trade.closed|السوق مغلق. المجس خامل حتى 09:30 ET.
+view.switch|أطبق ملف {v}. دُفع الإعداد، ولا إعادة تشغيل لازمة.
+view.switch|أحمّل قالب {v}. أثبّت التغييرات.
+quiz.right|ACK. صحيح.
+quiz.wrong|NACK. أعد الإرسال وحاول مجددا.
+game.streak|{v} على التوالي - فقدان حزم صفر.
+game.timeup|مهلة. TTL منته.
+market.open|السوق مفتوح - راقب RTT الوسيط.
+storm.near|خلية عاصفة قريبة - توقع تذبذبا.

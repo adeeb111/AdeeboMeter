@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Gen-Z persona. Light slang, never forced. key|text.
+app.open|Hola {addr}, ya estoy en eso. Vigilando la red.
+app.open|Volvimos con todo. Vigilando tu red.
+all.good|Todo en verde. Las vibras están impecables.
+all.good|Sin problemas. Tu setup es discretamente élite.
+all.good|Todo funciona. Una W rara.
+pc.busy|Tu PC está frita. CPU al {v}.
+pc.busy|Es la PC, no el Wi-Fi. Cierra diez pestañas.
+pc.busy|La PC carga demasiado. Dale un respiro.
+wifi.drops|El Wi-Fi te ghosteó {v} veces hoy.
+wifi.drops|{v} caídas. El router está súper inestable.
+net.none|Sin red. Conecta el cable o busca un Wi-Fi.
+net.none|Sin conexión. Cero vibras.
+inet.slow|Tu router está bien. El proveedor es el problema, en serio.
+inet.slow|La red de casa va top. Internet, no tanto.
+inet.slow|No es tu culpa. Lo lento está tras tu router.
+busy|Cocinando... {v}
+busy|Ya voy, dame un segundo.
+busy|Cargando, un segundo.
+idle|Sigo aquí. Tranquilo todo.
+idle|Nada nuevo. Era de calma.
+idle|Todo quieto por aquí.
+search.empty|¿Cuál es el problema, {addr}?
+search.empty|Escríbelo como un mensaje: "wifi lento".
+freeze|Un segundo ({v}). Me pongo al día.
+freeze|Yo también con lag ({v}). Ya vuelvo.
+speedrunner|¿Speedrun? Aún voy por la anterior.
+speedrunner|Tranqui, aún termino eso.
+back.again|¡Volviste! Pasaron {v} cosas.
+back.again|Bienvenido de vuelta. Aquí va el chisme.
+dns.slow|El DNS va lento, {v}. Ahí está la demora.
+dns.slow|Las consultas tardan {v}. Servidor DNS mediocre.
+speed.great|{v} de bajada. La velocidad está brutal.
+speed.great|Descarga {v}. Sinceramente élite.
+speed.bloat|Rápido, pero con lag de {v} si alguien descarga. Nada ideal.
+speed.bloat|Rápido hasta que se satura. Ahí +{v}.
+game.lag|El lag es tu Wi-Fi, no el servidor. Usa cable.
+game.lag|El servidor está bien. El Wi-Fi está fallando.
+game.good|Ping {v}. Estás más que listo.
+game.good|Conexión limpia. A romperla.
+vpn.on|VPN activa. Modo incógnito.
+vpn.on|Pasando por una VPN.
+vpn.slow|La VPN suma {v}. Ese es el lag.
+vpn.slow|El impuesto VPN es {v}.
+portal|Este Wi-Fi quiere que inicies sesión primero.
+portal|Página de inicio primero. Cosas de Wi-Fi de hotel.
+gw.down|El router no responde. Reinícialo.
+gw.down|Tu router se desconectó.
+isp.down|El router está bien. El proveedor está caído. Una L para ellos.
+isp.down|Internet se cayó en tu proveedor, no en ti.
+mtu.small|Los paquetes grandes no caben. MTU {v}.
+mtu.small|MTU {v}. Paquetes demasiado grandes para la ruta.
+port.open|{v} está abierto.
+port.open|{v} respondió. Me encanta.
+port.closed|{v} te dejó en visto.
+port.closed|{v} está cerrado.
+cert.ok|El certificado es legítimo.
+cert.ok|El candado está bien.
+cert.expired|Su certificado venció el {v}. Mala imagen.
+cert.expired|Vencido desde {v}. Culpa de ellos.
+sec.ok|Revisión de seguridad aprobada. Todo bajo control.
+sec.ok|Nada sospechoso.
+sec.issue|{v} cosas por arreglar. Victorias rápidas.
+sec.issue|La revisión halló {v} puntos. Bastante fácil.
+mtr.lossy|Se pierden paquetes en el salto {v}.
+mtr.lossy|Pérdida desde el salto {v}. Ahí falla todo.
+mtr.clean|Cero pérdidas. Limpio.
+mtr.clean|Cada salto pasó la prueba de vibras.
+devices.found|{v} dispositivos en tu red.
+devices.found|Hallé {v} dispositivos. Mucho movimiento.
+encrypt.done|Cifrado. Privado.
+encrypt.done|Bloqueado.
+decrypt.done|Abierto. Nadie lo tocó.
+decrypt.done|Desbloqueado. Todo bien.
+points.earned|+{v} puntos. Una W.
+points.earned|+{v}. Sigue así.
+award|500 puntos. Premio Adeebo. Icónico.
+award|Tienes el Premio Adeebo. Energía de protagonista.
+late.night|Es tarde. Sigo despierto.
+late.night|Noche larga. Vigilando.
+morning|Buenos días. Noche tranquila.
+morning|Buenos días. Cero drama anoche.
+update.suspect|Se rompió tras la actualización del {v}. Clásico.
+update.suspect|Esa actualización del {v} hizo algo.
+call.on|En llamada. Me quedo callado.
+call.on|Llamada detectada. Vigilando.
+quiz.right|Lo rompiste, sin dejar nada.
+quiz.wrong|No, eso no es, amigo.
+game.streak|¿{v} seguidas? Protagonista total.
+game.timeup|Se acabó el tiempo, modo speedrun.
+market.open|Los mercados abrieron, discretamente.
+storm.near|Se acerca la tormenta, el Wi-Fi puede fallar.

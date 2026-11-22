@@ -1,0 +1,99 @@
+# AdeeboMeter buddy lines - Bossy. Short orders, aimed at the gear. key|text.
+app.open|好，网络现在归我管了。
+app.open|值班开始，谁也别想在我眼皮底下丢包。
+app.open|监测开始，网络，给我老实点。
+all.good|一切正常，本该如此。
+all.good|一切按标准运行。
+all.good|没有问题，路由器，保持住。
+pc.busy|电脑已到 {v}，关掉耗资源的应用，立刻。
+pc.busy|你的电脑是瓶颈，释放点内存。
+pc.busy|开得太多了，先关一个，再继续。
+wifi.drops|Wi-Fi 掉了 {v} 次，靠近点，或者插网线。
+wifi.drops|Wi-Fi 掉了 {v} 次，今天就检查信道。
+wifi.drops|你的 Wi-Fi 老掉线，先修好信号。
+net.none|没有网络，插上网线。
+net.none|离线了，打开 Wi-Fi，选个网络。
+net.none|没连上，先解决这个。
+inet.slow|路由器没问题，打电话给运营商。
+inet.slow|延迟在路由器之外，这事归运营商管。
+inet.slow|家里网络通过，运营商不及格。
+busy|处理中，等着，{v}。
+busy|进行中，别碰网线。
+busy|测量中，待命。
+idle|安静，不过保持警惕。
+idle|无事汇报，继续值班。
+idle|稳定，按命令执行。
+search.empty|说出问题。
+search.empty|输入工具名或者问题，开始。
+search.empty|要检查什么？
+freeze|赶进度中（{v}），等着。
+freeze|忙着呢（{v}），点击排队等。
+freeze|重活，待命（{v}）。
+speedrunner|一次一个命令，上一个还没完。
+speedrunner|点击已排队，先做完上一个。
+speedrunner|按顺序来，上一个优先。
+back.again|回来了，报告：{v} 处变化。
+back.again|欢迎回来，简报在下面。
+back.again|回来值班了，什么都没发生。
+dns.slow|DNS 要 {v}，换个更快的服务器。
+dns.slow|查一次要 {v}，跑一趟 DNS 竞速。
+speed.great|下载 {v}，合格，非常合格。
+speed.great|下载 {v}，达到标准。
+speed.bloat|负载下延迟跳 {v}，打开智能排队。
+speed.bloat|快是快，可太臃肿，修好路由器队列。
+game.lag|卡顿是你的 Wi-Fi，插网线。
+game.lag|服务器没问题，下一局前先修好 Wi-Fi。
+game.good|Ping {v}，批准开始游戏。
+game.good|连接通过，可以玩了。
+vpn.on|VPN 已开，记下了。
+vpn.on|VPN 已连接，盯着呢。
+vpn.slow|VPN 多了 {v}，换个近一点的服务器。
+vpn.slow|VPN 花了 {v}，允许的话用分流。
+portal|先在 Wi-Fi 页面登录。
+portal|强制门户，打开它，登录，继续。
+gw.down|路由器没回应，重启它。
+gw.down|路由器没回话，断电重启。
+isp.down|路由器没问题，网断了，打电话给运营商。
+isp.down|运营商故障，你的设备没问题。
+mtu.small|路径 MTU {v}，调低 MTU，或者修好隧道。
+mtu.small|大包被丢了，MTU {v}，调一下。
+port.open|{v} 开着，确认。
+port.open|{v} 有回应。
+port.closed|{v} 关着，检查防火墙。
+port.closed|{v} 拒绝了，检查服务是不是在运行。
+cert.ok|证书有效，通过。
+cert.ok|锁已批准。
+cert.expired|在 {v} 过期了，告诉他们的管理员。
+cert.expired|证书在 {v} 过期了，续上它。
+sec.ok|检查通过，继续保持锁定。
+sec.ok|安全，符合要求。
+sec.issue|{v} 项，先修红色的。
+sec.issue|检查标出 {v} 处，从上面开始。
+mtr.lossy|第 {v} 跳起丢包，把报告发给运营商。
+mtr.lossy|第 {v} 跳丢包，升级处理。
+mtr.clean|路径干净，解散。
+mtr.clean|零丢包，路径通过。
+devices.found|{v} 台设备，每一台都要认清。
+devices.found|找到 {v} 台，把陌生设备标出来。
+encrypt.done|已加密，发送吧。
+encrypt.done|锁好了，继续。
+decrypt.done|打开了，没被改过。
+decrypt.done|已解密并验证。
+points.earned|+{v} 分，不错，下一个。
+points.earned|+{v} 分，继续。
+award|500 分，Adeebo 奖已授予。
+award|奖已拿到，稍息。
+late.night|夜深了，继续值班。
+late.night|夜间值班进行中。
+morning|早上好，夜里很干净。
+morning|早上好，一切正常。
+update.suspect|{v} 更新后坏了，回滚它。
+update.suspect|{v} 的更新是嫌疑人，查它。
+call.on|通话中，谁也不许开始下载。
+call.on|通话中，盯着质量。
+quiz.right|正确，下一个。
+quiz.wrong|错了，再读一遍。
+game.streak|连对 {v} 次，继续。
+game.timeup|时间到，下一轮快一点。
+market.open|市场开盘了，检查券商连接。
+storm.near|附近有风暴，保存好工作。

@@ -1,0 +1,114 @@
+# AdeeboMeter buddy lines - Roast. Roasts the gear, never the person. key|text.
+app.open|Encendido otra vez. Bien, router, te vigilo.
+app.open|Encendido. Veamos qué estropea hoy tu router.
+app.open|Estoy despierto. Tu Wi-Fi más vale que se porte bien.
+all.good|Todo funciona. Sospechoso, pero lo permito.
+all.good|Todo en verde. Disfrútalo mientras el router coopera.
+all.good|Sin problemas. Tu equipo tiene un raro buen día.
+pc.busy|Tu PC jadea. La red es inocente aquí.
+pc.busy|CPU al {v}. Tu PC lo intenta. Lo intenta lento.
+pc.busy|No es internet. Tu PC es el cuello de botella.
+wifi.drops|Tu Wi-Fi se rindió {v} veces hoy. Problemas de compromiso.
+wifi.drops|{v} cortes de Wi-Fi. Ese router necesita una charla motivadora.
+wifi.drops|El Wi-Fi se fue {v} veces. Señal con fuerza de fideo mojado.
+net.none|Sin red. Estrategia audaz, adaptador, para una app de internet.
+net.none|Sin conexión. El cable o el Wi-Fi se tomaron un descanso.
+net.none|Sin conexión. Tu adaptador está de descanso.
+inet.slow|Tu router es rápido. Tu proveedor, menos.
+inet.slow|Red de casa bien. Tu proveedor arrastra los pies.
+inet.slow|Lo lento vive después de tu router. Problema del proveedor.
+busy|Trabajando en ello... {v}
+busy|Espera, haciendo el trabajo pesado.
+busy|Midiendo. A diferencia de tu router, yo termino las cosas.
+idle|Nada roto. Dale tiempo a tu router.
+idle|Silencio. Demasiado silencio para este Wi-Fi.
+idle|Sigo vigilando. Sigo sin impresionarme.
+search.empty|Vamos, dime qué se rompió.
+search.empty|Escribe el problema. He visto routers peores.
+search.empty|¿Qué falla esta vez?
+freeze|Poniéndome al día ({v}). Hasta yo necesito un respiro.
+freeze|Ocupado por {v}. Los clics están en cola, tranquilo.
+freeze|Trabajo pesado. Vuelvo en {v}.
+speedrunner|Tranquilo, velocista. Sigo con la anterior.
+speedrunner|Hacer clic más rápido no acelera tu router.
+speedrunner|Una cosa a la vez. No soy tu router.
+back.again|De vuelta. Pasaron {v} cosas. El router se mantuvo ocupado.
+back.again|Bienvenido de vuelta. Tu Wi-Fi andaba en cosas.
+back.again|Volviste. El router se portó bien. Casi.
+dns.slow|El DNS tarda {v}. Tu servidor de nombres está dormido.
+dns.slow|Búsquedas en {v}. Ese servidor DNS necesita café.
+speed.great|{v} de descarga. Vale, eso sí es rápido.
+speed.great|Descarga {v}. Tu proveedor se ganó su dinero hoy.
+speed.bloat|Rápido, pero la línea se atasca {v} con carga.
+speed.bloat|Gran velocidad, pésimos modales: el retraso salta {v} con carga.
+game.lag|El lag es tu Wi-Fi, no el servidor. Perdón, Wi-Fi.
+game.lag|El servidor está bien. Tu Wi-Fi es el que falla.
+game.good|Ping {v}. La red ya no tiene excusas.
+game.good|Conexión limpia. La red hoy hace su parte.
+vpn.on|VPN encendida. Tu tráfico toma la ruta larga.
+vpn.on|VPN conectada. Veamos cuánto lo ralentiza.
+vpn.slow|La VPN añade {v}. Es el intermediario lento.
+vpn.slow|Impuesto de VPN: {v} de retraso extra.
+portal|Este Wi-Fi quiere que inicies sesión. Típico de hotel.
+portal|Página de inicio de sesión primero. Wi-Fi de cafetería, como siempre.
+gw.down|Tu router dejó de responder. Típico.
+gw.down|El router nos ignora. Revisa sus luces.
+isp.down|Tu router funciona. Tu proveedor se tomó el día libre.
+isp.down|Internet caído después de tu router. Momento proveedor.
+mtu.small|Los paquetes grandes no caben. MTU {v}. Alguien encogió el tubo.
+mtu.small|MTU de ruta {v}. Algo en el camino es tacaño.
+port.open|{v} está abierto. Al menos algo responde.
+port.open|{v} respondió. Qué educado.
+port.closed|{v} nos ignoró. Qué grosero.
+port.closed|{v} está cerrado. O tímido.
+cert.ok|Certificado válido. Alguien hizo su trabajo.
+cert.ok|El candado está bien. Competencia rara.
+cert.expired|Certificado vencido el {v}. Alguien olvidó el calendario.
+cert.expired|Vencido desde {v}. Su administrador tiene una semana difícil.
+sec.ok|Revisión limpia. Tu PC se porta sorprendentemente bien.
+sec.ok|Sin ajustes riesgosos. Bien y aburrido.
+sec.issue|{v} cosas en la revisión. Tu PC tiene algo que explicar.
+sec.issue|La revisión encontró {v} cosas. Windows dejó las puertas abiertas.
+mtr.lossy|Los paquetes desaparecen en el salto {v}. Ese router flojea.
+mtr.lossy|Pérdida desde el salto {v}. Quien maneja ese salto flojea.
+mtr.clean|Limpio de principio a fin. Sorprendentemente bien hecho.
+mtr.clean|Sin pérdida en ningún lado. ¿Quiénes son estos routers?
+devices.found|{v} dispositivos en tu red. Vecindario ocupado.
+devices.found|Encontré {v} dispositivos. La mitad serán focos inteligentes.
+encrypt.done|Bien bloqueado. Más que cualquier contraseña de fábrica.
+encrypt.done|Cifrado. Nadie espía.
+decrypt.done|Abierto. Nadie lo alteró.
+decrypt.done|Desbloqueado e intacto.
+points.earned|+{v} puntos. Bien hecho.
+points.earned|+{v}. Tu router no puede decir lo mismo.
+award|500 puntos. Vale, eres bueno en esto.
+award|Premio Adeebo. Tu router debería tomar notas.
+late.night|¿Aún despierto? Tu router tampoco duerme.
+late.night|Noche larga. El Wi-Fi también está cansado.
+morning|Buenos días. El router sobrevivió la noche.
+morning|Buenos días. Nada roto. Todavía.
+update.suspect|Todo empeoró tras la actualización de {v}. Gracias, Windows.
+update.suspect|Roto desde la actualización de {v}. Windows ataca de nuevo.
+call.on|En una llamada. Esperemos que el Wi-Fi se porte bien.
+call.on|Llamada detectada. Wi-Fi, no nos avergüences.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} va fluido. Impactante, con tu Wi-Fi.
+stream.on|La transmisión está bien. Disfrútala mientras dure.
+stream.dip|Tu transmisión bajó. {v}
+stream.dip|Otra caída. {v} No es mi culpa.
+stream.none|Nada en transmisión. ¿Sales a tomar aire?
+stream.none|Sin transmisión. Hasta tu router está aburrido.
+trade.ok|La línea al bróker es rápida. El resto depende de ti.
+trade.ok|La conexión está bien. Tus elecciones, no mi problema.
+trade.slow|Línea lenta al bróker. No hagas clic en pánico.
+trade.slow|Lag del bróker. {v} No me culpes.
+trade.closed|El mercado está cerrado. Tu billetera lo agradece.
+trade.closed|Cerrado. Ve a hacer otra cosa.
+view.switch|{v}, ¿eh? Elección audaz. Veamos.
+view.switch|Cambiando a {v}. Intenta seguir el ritmo.
+quiz.right|Correcto. Impactante, lo sé.
+quiz.wrong|Incorrecto. Elección audaz, {addr}.
+game.streak|{v} seguidas. ¿Quién eres?
+game.timeup|Se acabó el tiempo. El reloj ganó, otra vez.
+market.open|Mercados abiertos. Intenta no culpar al Wi-Fi.
+storm.near|Tormenta en camino. Tu router está a punto de opinar.

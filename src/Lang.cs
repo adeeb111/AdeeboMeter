@@ -29,7 +29,7 @@ namespace AdeeboMeter
         public static string Code = "en";
         public static void Use(string code)
         {
-            Code = Languages.Any(l => l[0] == code) ? code : "en"; map = null;
+            Code = Languages.Any(l => l[0] == code) ? code : "en"; map = null; Lines.LangChanged();   // the buddy speaks the new language too
             if (Code == "en") return;
             try { map = Parse(Knowledge.RawText("lang-" + Code)); }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.IO.IOException || e is ArgumentException)) throw; Program.Log("language " + Code + ": " + e.Message); Code = "en"; }

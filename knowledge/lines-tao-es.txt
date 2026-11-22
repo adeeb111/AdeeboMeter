@@ -1,0 +1,57 @@
+# AdeeboMeter buddy lines - Taoist persona, in the spirit of the Tao Te Ching (our own lines; no quotations). key|text.
+app.open|Bienvenido, {addr}. Vigilo en silencio, como el agua quieta.
+app.open|La red fluye. Yo solo observo.
+all.good|Todo fluye libre. Nada que empujar, nada que tirar.
+all.good|Cables tranquilos. Déjalos estar.
+pc.busy|El PC se esfuerza en {v}. Aligera su carga y fluirá de nuevo.
+pc.busy|Demasiado sostenido a la vez. Suelta algo.
+wifi.drops|El Wi-Fi se alejó {v} veces. Acércate, como el agua que busca su nivel.
+net.none|Sin red. El camino está roto; empieza donde se rompe: el cable o el Wi-Fi.
+inet.slow|Tu hogar está despejado. La lentitud vive más abajo en el río.
+busy|Fluyendo... {v}
+idle|Quietud. Nada que informar.
+search.empty|Pregunta con sencillez y la respuesta vendrá sencilla.
+freeze|Un respiro ({v}). La ventana seguirá.
+speedrunner|La última tarea no ha terminado. Espera, y lo estará.
+back.again|Regresas. Esto es lo que cambió mientras estabas fuera.
+dns.slow|Los nombres llegan despacio ({v}). Un pequeño bloqueo en el río.
+speed.great|{v} de descarga. El río es ancho.
+speed.bloat|Rápido, pero el retraso sube {v} cuando el río está lleno.
+game.lag|El lag empieza en tu Wi-Fi, cerca de casa.
+game.good|Estable en {v}. Juega sin esfuerzo.
+vpn.on|VPN conectada.
+vpn.slow|La VPN añade {v}. El camino más largo.
+portal|Este Wi-Fi pide primero iniciar sesión. Una pequeña puerta en el camino.
+gw.down|Tu router está en silencio. Empieza en la fuente.
+isp.down|Tu router responde; el mundo más allá no. El proveedor guarda el bloqueo.
+mtu.small|Se pierden paquetes grandes en {v}. Los pequeños pasan con facilidad.
+port.open|{v} está abierto.
+port.closed|{v} está cerrado.
+cert.ok|El certificado es sólido.
+cert.expired|El certificado terminó el {v}. Todo vuelve a su raíz.
+sec.ok|Todo está guardado.
+sec.issue|{v} cosas piden cuidado.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.clean|El camino está despejado de extremo a extremo.
+devices.found|{v} dispositivos comparten tu río.
+encrypt.done|Sellado.
+decrypt.done|Abierto, sin cambios.
+points.earned|+{v} puntos, reunidos sin esforzarse.
+award|500 puntos: el Premio Adeebo.
+late.night|Es tarde. Descansa, como el río descansa de noche.
+morning|Mañana. La noche fue tranquila.
+update.suspect|Las cosas cambiaron tras la actualización del {v}. Mira allí.
+call.on|Una llamada. Vigilo su flujo.
+stream.on|{v} fluye sin problemas.
+stream.dip|El río titubeó. {v}
+stream.none|Nada fluye ahora.
+trade.ok|Tu línea al broker es tranquila y estable.
+trade.slow|El broker es lento. Espera: la mente quieta actúa en el momento justo.
+trade.closed|El mercado descansa hasta las 9:30.
+view.switch|Cambiando a {v}.
+quiz.right|Así es.
+quiz.wrong|No es por aquí. Fluye e inténtalo de nuevo.
+game.streak|{v} seguidas: como el agua que halla su camino.
+game.timeup|El tiempo ha pasado, como pasa.
+market.open|Los mercados se abren, como un río tras la presa.
+storm.near|Viene la tormenta; dobla como el junco.

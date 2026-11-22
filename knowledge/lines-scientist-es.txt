@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Scientist persona. key|text.
+app.open|Experimento en marcha. Observo tu red.
+app.open|Recogida de datos iniciada. Hipótesis: todo está bien.
+all.good|Resultados: normales. Hipótesis confirmada.
+all.good|Todas las variables en rango normal.
+all.good|PC, Wi-Fi e internet: sin anomalías.
+pc.busy|CPU al {v}. El PC es el factor limitante.
+pc.busy|Prueba de control: la red está bien. El PC no.
+pc.busy|Reduce la carga. Cierra un proceso y vuelve a medir.
+wifi.drops|Observadas {v} desconexiones Wi-Fi hoy.
+wifi.drops|{v} caídas. Se correlaciona con la intensidad de señal.
+net.none|Sin red. Cero datos.
+net.none|Sin conexión. Se necesita conexión para continuar.
+inet.slow|Enlace local rápido. El retraso nace tras el router.
+inet.slow|Variable aislada: el proveedor es lento.
+inet.slow|La lentitud es externa a tu red doméstica.
+busy|Midiendo... {v}
+busy|Recogiendo muestras.
+busy|Realizando ensayos.
+idle|Sin cambios significativos.
+idle|Base estable.
+idle|Observando. Nada que informar.
+search.empty|¿Cuál es la pregunta de investigación?
+search.empty|Describe el síntoma.
+freeze|Procesando datos ({v}).
+freeze|Análisis en curso ({v}).
+speedrunner|Una variable a la vez, por favor.
+speedrunner|El ensayo anterior sigue en marcha.
+back.again|Has vuelto. {v} eventos registrados.
+back.again|Bienvenido de nuevo. Resultados abajo.
+dns.slow|Tiempo de consulta DNS: {v}. Por encima de lo normal.
+dns.slow|Resolución de nombres lenta: {v}.
+speed.great|{v} de descarga. Resultado excelente.
+speed.great|Descarga {v}. Estadísticamente impresionante.
+speed.bloat|Bajo carga, la latencia aumenta {v}. Bufferbloat.
+speed.bloat|Rápido en reposo, lento con carga: {v} de diferencia.
+game.lag|Origen del lag identificado: tu Wi-Fi.
+game.lag|Servidor estable. Varianza alta del Wi-Fi.
+game.good|Ping {v}. Varianza baja.
+game.good|Conexión estable. Adelante.
+vpn.on|VPN activa. Nueva variable introducida.
+vpn.on|Tráfico encapsulado.
+vpn.slow|La VPN añade {v} de latencia.
+vpn.slow|Sobrecarga de encapsulación: {v}.
+portal|Portal cautivo detectado. Inicia sesión primero.
+portal|Se requiere autenticación.
+gw.down|Router sin respuesta. Reinicia y vuelve a probar.
+gw.down|Sin respuesta de la puerta de enlace.
+isp.down|Red local correcta. Proveedor inalcanzable.
+isp.down|Fallo localizado en el proveedor.
+mtu.small|MTU de ruta medida en {v}.
+mtu.small|Los paquetes de más de {v} bytes se descartan.
+port.open|{v} responde.
+port.open|{v} está abierto.
+port.closed|{v}: sin respuesta.
+port.closed|{v} está cerrado.
+cert.ok|Certificado válido. Cadena verificada.
+cert.ok|Confianza verificada.
+cert.expired|Certificado caducado {v}.
+cert.expired|Caducado desde {v}.
+sec.ok|Sin vulnerabilidades observadas.
+sec.ok|Revisión superada.
+sec.issue|{v} hallazgos requieren atención.
+sec.issue|La revisión registró {v} elementos.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.lossy|Pérdida de paquetes detectada desde el salto {v}.
+mtr.clean|Cero pérdidas. Datos limpios.
+mtr.clean|Sin pérdidas observadas.
+devices.found|Tamaño de muestra: {v} dispositivos.
+devices.found|{v} dispositivos detectados.
+encrypt.done|Cifrado. Integridad protegida.
+encrypt.done|Sellado.
+decrypt.done|Descifrado. Integridad verificada.
+decrypt.done|Sin cambios. Verificado.
+points.earned|+{v} puntos.
+points.earned|+{v}. Curva de aprendizaje en ascenso.
+award|500 puntos. Revisado por pares: el Premio Adeebo.
+award|Premio Adeebo concedido.
+late.night|Recogida de datos nocturna.
+late.night|Las observaciones continúan de noche.
+morning|Buenos días. Datos nocturnos: tranquilos.
+morning|Mañana. Sin anomalías durante la noche.
+update.suspect|Cambio observado tras la actualización del {v}.
+update.suspect|Fuerte correlación con la actualización {v}.
+call.on|Llamada detectada. Midiendo calidad.
+call.on|Llamada de voz en curso. Muestreando el jitter.
+quiz.right|Hipótesis confirmada.
+quiz.wrong|Resultado rechazado. Revisa y repite.
+game.streak|{v} seguidas: estadísticamente impresionante.
+game.timeup|Se acabó el tiempo. Experimento terminado.
+market.open|Mercados abiertos. Recogiendo datos.
+storm.near|Tormenta cercana: espera interferencias.

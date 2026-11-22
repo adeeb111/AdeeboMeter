@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Noir detective persona. key|text.
+app.open|Otra noche en la ciudad. Vigilo tu red.
+app.open|Expediente abierto, {addr}. Cada paquete es un testigo.
+all.good|Calles tranquilas esta noche. Sin problemas.
+all.good|Todos limpios. PC, Wi-Fi, internet.
+all.good|Nada que informar. Así me gusta.
+pc.busy|Tu PC suda al {v}. Sabe algo.
+pc.busy|El PC es el cuello de botella. La red tiene coartada.
+pc.busy|Demasiados trabajos en un escritorio. CPU al {v}.
+wifi.drops|El Wi-Fi se largó {v} veces hoy.
+wifi.drops|{v} caídas. La señal está nerviosa.
+net.none|Sin red. El rastro se enfrió.
+net.none|Sin conexión. Nadie habla.
+inet.slow|Tu router está limpio. El problema está más allá.
+inet.slow|En casa hay coartada. El proveedor es el sospechoso.
+inet.slow|El retraso empieza fuera de tu puerta, {addr}.
+busy|Siguiendo una pista... {v}
+busy|Preguntando por ahí.
+busy|Trabajando en el caso.
+idle|Noche tranquila. Sigo vigilando.
+idle|Nada nuevo. La ciudad duerme.
+idle|Sin llamadas. Sin problemas.
+search.empty|¿Cuál es el caso, {addr}?
+search.empty|Dime qué salió mal.
+freeze|Dame un minuto ({v}). Los archivos pesan.
+freeze|Poniéndome al día con el papeleo ({v}).
+speedrunner|Tranquilo, amigo. Un caso a la vez.
+speedrunner|Sigo con la última pista.
+back.again|Volviste. Pasaron {v} cosas mientras no estabas.
+back.again|Bienvenido de nuevo. Aquí está el expediente.
+dns.slow|La guía telefónica va lenta. DNS al {v}.
+dns.slow|Los nombres tardan {v} en responder. Alguien se demora.
+speed.great|{v} de descarga. Rápido, limpio, sin preguntas.
+speed.great|Descarga {v}. Un operador fino.
+speed.bloat|Rápido, pero se ahoga {v} cuando la calle se llena.
+speed.bloat|La velocidad está bien. Bajo presión, falla. {v}.
+game.lag|El lag es tu Wi-Fi. El servidor es inocente.
+game.lag|El servidor está limpio. Fue el Wi-Fi.
+game.good|Ping {v}. Huida limpia.
+game.good|Línea estable. Nada raro.
+vpn.on|VPN activada. De incógnito.
+vpn.on|El tráfico lleva disfraz ahora.
+vpn.slow|El disfraz cuesta {v} de retraso.
+vpn.slow|La VPN suma {v}. Un rodeo largo.
+portal|Este local pide identificarse en la puerta.
+portal|Portal cautivo. Muestra tus papeles primero.
+gw.down|El router se quedó en silencio. Reinícialo.
+gw.down|El router no habla. Revisa sus luces.
+isp.down|Tu router está limpio. El proveedor se apagó.
+isp.down|En casa todo bien. Internet se fue de la ciudad.
+mtu.small|Los paquetes grandes no pasan la puerta. MTU {v}.
+mtu.small|MTU de ruta {v}. Alguien aprieta los paquetes.
+port.open|{v} abrió la puerta.
+port.open|{v} está abierto. Hay alguien en casa.
+port.closed|{v} no se abre.
+port.closed|Nadie en casa en {v}.
+cert.ok|Los papeles están en regla. Certificado válido.
+cert.ok|El candado es legítimo.
+cert.expired|Sus papeles vencieron el {v}.
+cert.expired|Vencido desde {v}. Trabajo descuidado, de su lado.
+sec.ok|Historial limpio. Revisión superada.
+sec.ok|Sin puntos débiles en este lugar.
+sec.issue|{v} cabos sueltos en la revisión.
+sec.issue|Encontré {v} cosas que no cuadran.
+mtr.lossy|Los paquetes desaparecen en el salto {v}. Sigue el rastro.
+mtr.lossy|La pérdida empieza en el salto {v}. Ahí lleva el rastro.
+mtr.clean|Cada salto limpio. Caso cerrado.
+mtr.clean|Sin pérdida. Nada que ver aquí.
+devices.found|{v} rostros en tu red.
+devices.found|Conté {v} dispositivos en la sala.
+encrypt.done|Sellado. Solo lo abre la persona indicada.
+encrypt.done|Bien cerrado.
+decrypt.done|Abierto. Nadie tocó la evidencia.
+decrypt.done|Sobre abierto. El sello estaba intacto.
+points.earned|+{v} puntos. Buen trabajo, detective.
+points.earned|+{v}. El jefe se dio cuenta.
+award|500 puntos. El Premio Adeebo. Caso del año.
+award|Premio Adeebo ganado. Lo resolviste.
+late.night|Tarde. La ciudad está quieta. Sigo aquí.
+late.night|Turno de medianoche. Vigilando las calles.
+morning|Buenos días. Noche tranquila en la ronda.
+morning|Salió el sol. Nada se rompió anoche.
+update.suspect|Empezó tras la actualización del {v}. Principal sospechoso.
+update.suspect|Problemas desde la actualización {v}. Qué coincidencia.
+call.on|Estás en una llamada. Seguiré vigilando.
+call.on|Llamada en curso. Atento a problemas.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} se ve limpio. Demasiado limpio. Estoy mirando.
+stream.on|El stream va fluido esta noche. Por ahora.
+stream.dip|El stream tropezó. {v}
+stream.dip|Un bajón en la oscuridad. {v}
+stream.none|Sin stream. La ciudad está quieta.
+stream.none|Nada en reproducción. Solo yo y la lluvia.
+trade.ok|El bróker responde rápido. Sin problemas aún.
+trade.ok|La línea al bróker se mantiene firme.
+trade.slow|El bróker se puso lento. Espera.
+trade.slow|Alguien frenó la línea del bróker. {v}
+trade.closed|El mercado está cerrado. Los tratos duermen.
+trade.closed|Cerrado por la noche. Abre a las 9:30.
+view.switch|La vista {v}. La ciudad se ve distinta desde aquí.
+view.switch|Cambiando a {v}. Nuevo caso, mismas calles.
+quiz.right|Justo en el blanco.
+quiz.wrong|Pista falsa, amigo. Vuelve a los archivos.
+game.streak|{v} seguidas. Eres bueno en esto.
+game.timeup|Se acabó el tiempo. Siempre se acaba.
+market.open|El mercado abrió. La ciudad despierta.
+storm.near|Se acerca la tormenta. Las líneas podrían callar.

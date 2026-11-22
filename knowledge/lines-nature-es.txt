@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Nature documentary persona. Whispered narration. key|text.
+app.open|Aquí, en su hábitat natural, la red despierta.
+app.open|Nos unimos a la red al amanecer. Todo en calma.
+all.good|La red descansa en paz. Una vista rara.
+all.good|Cada criatura prospera. PC, Wi-Fi, internet.
+all.good|Armonía en todo el ecosistema.
+pc.busy|El PC lucha bajo una carga pesada. CPU al {v}.
+pc.busy|Abrumado, el PC se ralentiza. La red está ilesa.
+pc.busy|El PC debe aligerar peso para sobrevivir. Cierra una app.
+wifi.drops|El Wi-Fi huyó {v} veces hoy. Criatura esquiva.
+wifi.drops|{v} caídas. La señal se debilita lejos del router.
+net.none|Sin red. El hábitat guarda silencio.
+net.none|Aislado de la manada. Reconecta para volver.
+inet.slow|La red de casa está sana. El peligro acecha tras el router.
+inet.slow|La lentitud vive en territorio del proveedor.
+inet.slow|Aquí, tras el router, los paquetes se ralentizan.
+busy|Observando con atención... {v}
+busy|Esperamos, pacientes.
+busy|La medición continúa.
+idle|Quietud. La red duerme.
+idle|Nada se mueve.
+idle|Una hora tranquila en la naturaleza.
+search.empty|¿Qué observaremos hoy?
+search.empty|Nombra la criatura que buscas.
+freeze|Hacemos una pausa ({v}) mientras el sistema se pone al día.
+freeze|Un momento de quietud ({v}).
+speedrunner|Paciencia. La última observación continúa.
+speedrunner|Con calma. Una a la vez.
+back.again|Regresas. {v} eventos ocurrieron.
+back.again|Bienvenido de nuevo. Esto es lo que vimos.
+dns.slow|La consulta de nombres va lenta: {v}.
+dns.slow|DNS, lento como un perezoso: {v}.
+speed.great|{v} de descarga. Veloz como un halcón.
+speed.great|Descarga {v}. Velocidad notable.
+speed.bloat|Rápido, pero flaquea {v} cuando la manada está ocupada.
+speed.bloat|Bajo presión, el retraso crece {v}.
+game.lag|El lag viene del Wi-Fi, no del servidor lejano.
+game.lag|El servidor se mantiene firme. El Wi-Fi vacila.
+game.good|Ping {v}. La cacería puede empezar.
+game.good|Una conexión estable. Condiciones ideales.
+vpn.on|El tráfico se oculta en un túnel. VPN activa.
+vpn.on|Camuflado. VPN conectada.
+vpn.slow|El túnel añade {v} al viaje.
+vpn.slow|Desvío VPN: {v}.
+portal|Esta fuente exige iniciar sesión.
+portal|Antes de beber, el viajero debe iniciar sesión.
+gw.down|El router quedó en silencio. Reinícialo.
+gw.down|Sin respuesta del router.
+isp.down|La casa está a salvo. El mundo exterior, inalcanzable.
+isp.down|El territorio del proveedor quedó a oscuras.
+mtu.small|Los paquetes grandes no pueden pasar. MTU {v}.
+mtu.small|El camino se estrecha hasta {v}.
+port.open|{v} está abierto. Contacto establecido.
+port.open|{v} responde.
+port.closed|{v} sigue oculto.
+port.closed|Sin señales de vida en {v}.
+cert.ok|Marcas auténticas. Certificado válido.
+cert.ok|El candado es auténtico.
+cert.expired|Sus marcas se apagaron: el certificado caducó el {v}.
+cert.expired|Caducado desde {v}.
+sec.ok|Sin depredadores. Revisión superada.
+sec.ok|La guarida está segura.
+sec.issue|{v} puntos débiles observados.
+sec.issue|La revisión muestra {v} elementos.
+mtr.lossy|Se pierden paquetes en el salto {v}.
+mtr.lossy|Desde el salto {v}, la manada se dispersa.
+mtr.clean|La migración terminó. Sin pérdidas.
+mtr.clean|Cada salto se cruzó sin peligro.
+devices.found|{v} dispositivos comparten este hábitat.
+devices.found|Contamos {v} dispositivos.
+encrypt.done|Bien oculto. Cifrado.
+encrypt.done|El archivo está protegido.
+decrypt.done|Abierto, sin alterar nada.
+decrypt.done|Desbloqueado. Nada cambió.
+points.earned|+{v} puntos. Una rara muestra de habilidad.
+points.earned|+{v}. Crecimiento observado.
+award|500 puntos. Un logro magnífico: el Premio Adeebo.
+award|El Premio Adeebo. Verdaderamente notable.
+late.night|Cae la noche. El observador sigue aquí.
+late.night|Horas nocturnas. Seguimos observando.
+morning|Amanece. Una noche tranquila.
+morning|El alba. Nada perturbó la red.
+update.suspect|Tras la actualización del {v}, el comportamiento cambió.
+update.suspect|Desde la actualización {v}, el sistema tiene dificultades.
+call.on|Comienza una llamada. Observamos en silencio.
+call.on|Viajan las voces. Observamos la llamada.
+quiz.right|Y ahí: una respuesta correcta, en su hábitat natural.
+quiz.wrong|Un fallo. Hasta el guepardo falla a veces.
+game.streak|{v} seguidas: una racha rara en la naturaleza.
+game.timeup|Termina la temporada.
+market.open|Los mercados despiertan, como una manada al alba.
+storm.near|Se acerca una tormenta a la colonia.

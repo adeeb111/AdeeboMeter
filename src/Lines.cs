@@ -126,11 +126,11 @@ namespace AdeeboMeter
         public static string Line(string key, string v, string who)
         {
             string own = OwnFor(key, v != null, who); if (own != null) return Fill(own, v, who);
-            foreach (var id in Chain(who))
+            foreach (var src in Sources(who))
             {
-                var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
+                var p = src.Value; List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
                 var ok = l.Where(t => v != null || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct().ToList(); if (ok.Count == 0) continue;
-                return Fill(Pick(key, ok), v, id);
+                return Fill(Pick(key, ok), v, src.Key);
             }
             return "";
         }
@@ -160,14 +160,37 @@ namespace AdeeboMeter
         static string RawLine(string key, bool haveV, string who)
         {
             string own = OwnFor(key, haveV, who); if (own != null) return own;
-            foreach (var id in Chain(who))
+            foreach (var src in Sources(who))
             {
-                var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
+                var p = src.Value; List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
                 var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct().ToList(); if (ok.Count == 0) continue;
                 return Pick(key, ok);
             }
             return "";
         }
+        // where a line comes from: in a language other than English, that language's packs down the whole chain first (a
+        // persona without a line for this key gives the mood's line in the same language, not English mid-sentence), then
+        // the English packs (a key nobody translated yet)
+        static IEnumerable<KeyValuePair<string, Dictionary<string, List<string>>>> Sources(string who)
+        {
+            string code = L.Code;
+            if (code != "en") foreach (var id in Chain(who)) yield return new KeyValuePair<string, Dictionary<string, List<string>>>(id, Tr(id, code));
+            foreach (var id in Chain(who)) yield return new KeyValuePair<string, Dictionary<string, List<string>>>(id, Pack(id));
+        }
+        // a persona or mood in another language: knowledge\lines-<id>-<code>.txt (1.1.6: es, ar, bn)
+        static readonly Dictionary<string, Dictionary<string, List<string>>> trPacks = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.Ordinal);
+        static Dictionary<string, List<string>> Tr(string id, string code)
+        {
+            string key = id + "-" + code;
+            lock (k)
+            {
+                Dictionary<string, List<string>> p; if (trPacks.TryGetValue(key, out p)) return p;
+                string raw = Knowledge.RawText("lines-" + key); p = raw == "" ? null : Parse(raw);
+                if (trPacks.Count >= 8) trPacks.Clear();   // the persona, the mood, Chill and Plain in one language
+                trPacks[key] = p; return p;
+            }
+        }
+        public static void LangChanged() { lock (k) { trPacks.Clear(); sticky.Clear(); } }
         static IEnumerable<string> Chain(string who)
         {
             var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -185,6 +208,19 @@ namespace AdeeboMeter
         public static string AddrFor(string who)
         {
             if (Addr == "name" && !string.IsNullOrWhiteSpace(Name)) return Name.Trim();
+            string en = AddrEn(who); Dictionary<string, string> w; string t;
+            return L.Code != "en" && AddrWords.TryGetValue(L.Code, out w) && w.TryGetValue(en, out t) ? t : en;
+        }
+        // the words the personas call you by, in each language with persona lines (drafts - a native speaker checks them)
+        static readonly Dictionary<string, Dictionary<string, string>> AddrWords = new Dictionary<string, Dictionary<string, string>> {
+            { "es", new Dictionary<string, string> { { "my lord", "mi señor" }, { "my lady", "mi señora" }, { "bro", "bro" }, { "sis", "hermana" }, { "captain", "capitán" }, { "sir", "señor" }, { "ma'am", "señora" },
+                     { "bestie", "bestie" }, { "friend", "amigo" }, { "matey", "grumete" }, { "player", "jugador" }, { "pal", "compañero" }, { "pilot", "piloto" }, { "flight", "director de vuelo" }, { "boss", "jefe" } } },
+            { "ar", new Dictionary<string, string> { { "my lord", "مولاي" }, { "my lady", "سيدتي" }, { "bro", "صاحبي" }, { "sis", "أختي" }, { "captain", "قبطان" }, { "sir", "سيدي" }, { "ma'am", "سيدتي" },
+                     { "bestie", "صديقي" }, { "friend", "صديقي" }, { "matey", "رفيقي" }, { "player", "لاعب" }, { "pal", "صاحبي" }, { "pilot", "كابتن" }, { "flight", "مدير الرحلة" }, { "boss", "ريّس" } } },
+            { "bn", new Dictionary<string, string> { { "my lord", "প্রভু" }, { "my lady", "মহোদয়া" }, { "bro", "ব্রো" }, { "sis", "আপু" }, { "captain", "ক্যাপ্টেন" }, { "sir", "স্যার" }, { "ma'am", "ম্যাডাম" },
+                     { "bestie", "দোস্ত" }, { "friend", "বন্ধু" }, { "matey", "সাথী" }, { "player", "প্লেয়ার" }, { "pal", "দোস্ত" }, { "pilot", "পাইলট" }, { "flight", "ফ্লাইট" }, { "boss", "বস" } } } };
+        static string AddrEn(string who)
+        {
             bool epic = who == "epic-fantasy" || who == "shakespeare" || who == "dark-ages";
             switch (Addr)
             {

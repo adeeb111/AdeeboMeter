@@ -1,0 +1,57 @@
+# AdeeboMeter buddy lines - Stoic persona, in the spirit of Marcus Aurelius (our own lines; no quotations). key|text.
+app.open|早上好，{addr}，让我们管好力所能及的事：这张网络。
+app.open|我守着，来的事，我们平静面对。
+all.good|一切井然，享受它，但不要执着。
+all.good|无事可修，当下这一刻已足够。
+pc.busy|电脑在 {v} 的重压下劳作，少要求它一点，它会服侍得更好。
+pc.busy|任务太多，选必要的那一件。
+wifi.drops|Wi-Fi 离开了 {v} 次，靠近一点，其余的不必烦恼。
+net.none|没有网络，烦躁于事无补，检查网线或 Wi-Fi。
+inet.slow|你这边没有问题，延迟在路由器之外，不必由你承担。
+busy|稳稳地处理中……{v}
+idle|安静，这是知足的好时光。
+search.empty|什么在困扰你？直说无妨。
+freeze|稍停（{v}），耐心不花一分钱。
+speedrunner|一次只做一件事，把这一件做好。
+back.again|欢迎回来，事情就是这些，平静地看待吧。
+dns.slow|查名字很慢（{v}），小事一件，能修的我们修。
+speed.great|下载 {v}，好好用它。
+speed.bloat|速度快，可满载时延迟多 {v}，连网线也要节制。
+game.lag|卡顿始于你的 Wi-Fi，那部分由你来修。
+game.good|稳定在 {v}，心无杂念地玩吧。
+vpn.on|VPN 已连接。
+vpn.slow|VPN 多了 {v}，每个选择都有代价。
+portal|这个 Wi-Fi 要先登录，小小一道门，走过去就是。
+gw.down|路由器没有回应，从那儿开始查。
+isp.down|你的路由器正常，运营商不正常，记下时间，平静地打给他们。
+mtu.small|大包在 {v} 处落下，路能载多少，就发多少。
+port.open|{v} 有回应。
+port.closed|{v} 关着，或是沉默。
+cert.ok|证书没有问题。
+cert.expired|证书在 {v} 到期了，万物皆有其时。
+sec.ok|检查通过了，仍要保持警惕。
+sec.issue|有 {v} 件事需要注意，一件一件来。
+mtr.lossy|丢包从第 {v} 跳开始。
+mtr.clean|整条路径没有丢包。
+devices.found|有 {v} 台设备共享你的网络。
+encrypt.done|封好了，属于你的仍属于你。
+decrypt.done|打开了，原样未动。
+points.earned|+{v} 分，令人愉快，但这不是目的。
+award|500 分：Adeebo 奖，轻轻松松地戴着它。
+late.night|夜深了，休息也是一种责任。
+morning|早上好，夜里很安静，开始今天的工作吧。
+update.suspect|{v} 更新后情况变糟了，先从那儿查起。
+call.on|一通电话，我盯着它的质量。
+stream.on|{v} 播得很顺，我盯着这条路。
+stream.dip|直播卡了一下，{v}。
+stream.none|现在没有直播。
+trade.ok|你到券商的线路很稳，头脑冷静地做决定。
+trade.slow|券商现在有点慢，等一等，匆忙不是智慧。
+trade.closed|市场睡到 9:30，你也可以睡了。
+view.switch|切换到 {v}。
+quiz.right|正确，想得很清楚。
+quiz.wrong|错了，也是一课，重新开始。
+game.streak|连对 {v} 次，保持谦逊。
+game.timeup|时间到了，它从来不属于我们。
+market.open|市场开盘了，行动，不要反应。
+storm.near|风暴正在靠近，准备好，然后平静下来。
