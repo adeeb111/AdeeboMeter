@@ -98,7 +98,7 @@ namespace AdeeboMeter
     // ================================================================== watch and suggest (never blocks - that needs admin)
     static class Watch
     {
-        public sealed class Sug {
+        public sealed class Sug { public DateTime T; public string App = "", Path = "", Why = "", How = ""; public int Lv; }
         public static readonly List<Sug> List = new List<Sug>();
         static Dictionary<string, DateTime> seen; static HashSet<string> night; static DateTime learnStart; static readonly object k = new object(); static DateTime saved = DateTime.MinValue;
         static void Load()
