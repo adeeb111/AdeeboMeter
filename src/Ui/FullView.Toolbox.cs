@@ -595,7 +595,7 @@ namespace AdeeboMeter
                 {
                     if (o[0] == "6" || o[0] == "7" || o[0] == "8") { sb.AppendLine((o[0] == "7" ? "! " : "  ") + ShareCell(o[2])); continue; }   // table lines, as they are
                     string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     ";
-                    sb.AppendLine(lv + ShareCell(o[1]) + ": " + ShareCell(o[2]));
+                    sb.AppendLine(lv + (o[1] == "" ? "" : ShareCell(o[1]) + ": ") + ShareCell(o[2]));
                     if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + ShareCell(o[3]));
                 }
             return sb.ToString();

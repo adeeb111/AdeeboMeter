@@ -106,13 +106,14 @@ namespace AdeeboMeter
             {
                 if (run.Stop) break; string host; int port; if (!Split(it, 443, out host, out port)) { rows.Add(R(2, it, "not a host name or address", "", "u")); continue; }
                 n++; run.Status = host + ":" + port + "...";
-                var k = Knock(host, port, 5, run); if (run.Stop) break;   // stopped mid-way: not a result, not logged as down
+                var k = Knock(host, port, 5, run); if (run.Stop) { n--; break; }   // stopped mid-way: not a result, not logged as down, not counted (the tool run, 22 Nov: "0 of 3")
                 Log(host + ":" + port, k, false);
                 if (k.Ms.Count == 0) { rows.Add(R(2, host + ":" + port, "down - no answer to 5 tries", "", "m")); continue; }
                 up++; int lv = k.Lost > 0 || k.Avg > 200 ? 1 : 0;
                 rows.Add(R(lv, host + ":" + port, Ms(k.Avg) + " · min " + Ms(k.Min) + " · max " + Ms(k.Max) + (k.Lost > 0 ? " · " + k.Lost + " of 5 lost" : ""), "", "m"));
             }
-            rows.Insert(0, R(n == 0 ? 2 : up == n ? 0 : up == 0 ? 2 : 1, "Up right now", n == 0 ? "nothing checked - no valid host:port" : up + " of " + n, "TCP handshakes only - connect, time it, close.", "m"));
+            bool stopped = run.Stop;
+            rows.Insert(0, R(stopped && n == 0 ? 3 : n == 0 ? 2 : up == n ? 0 : up == 0 ? 2 : 1, "Up right now", stopped ? (n == 0 ? "stopped before any answer" : up + " of the " + n + " checked before you stopped") : n == 0 ? "nothing checked - no valid host:port" : up + " of " + n, "TCP handshakes only - connect, time it, close.", "m"));
             int wm; string wl; Watch(out wm, out wl); rows.Add(R(3, "Watching", wm > 0 ? "every " + wm + " min while AdeeboMeter runs - see Uptime report" : "off - type a number of minutes in the second box to keep watching", "", "i"));
             return rows;
         }

@@ -119,11 +119,12 @@ namespace AdeeboMeter
                 var e = x.Item2; string kind = Kind(e); int lv = kind == "failed" ? 2 : kind == "succeeded" ? 0 : 3;
                 rows.Add(R(lv, e.T.ToString("ddd HH:mm:ss", CultureInfo.CurrentCulture), x.Item1 + " · " + kind + (Reason(e.Text) != "" ? " · " + Draw.Trunc(Reason(e.Text), 110) : ""), kind == "failed" ? Hint(e.Text) : "", "w"));
             }
-            var last = all.Last(); string lk = Kind(last.Item2);
+            var last = all.LastOrDefault(x => Kind(x.Item2) != "disconnected") ?? all.Last(); string lk = Kind(last.Item2);   // a disconnect isn't a sign-in result: judge the sign-in before it
             string verdict = lk == "failed" ? "The last sign-in failed: " + (Hint(last.Item2.Text) != "" ? Hint(last.Item2.Text) : Draw.Trunc(Reason(last.Item2.Text), 140))
                 : lk == "succeeded" ? "The last 802.1X sign-in worked. If there's still no network, the next step is DHCP - run \"Why didn't this PC join the network?\"."
+                : lk == "disconnected" ? "Only disconnects in the last 2 days - no sign-in to judge. Connect to the network, then run this again."
                 : "The last event was the start of a sign-in with no result after it - the sign-in server (RADIUS) may not be answering the switch / access point.";
-            rows.Insert(0, R(lk == "failed" ? 2 : lk == "succeeded" ? 0 : 1, "Where it stopped", verdict, "", "w"));
+            rows.Insert(0, R(lk == "failed" ? 2 : lk == "succeeded" ? 0 : lk == "disconnected" ? 3 : 1, "Where it stopped", verdict, "", "w"));
             string cat = lk == "succeeded" ? "dhcp" : Category(last.Item2.Text);
             rows.Insert(1, R(3, "Points to", cat == "profile" ? "profile selection - the PC picked the wrong (or no) network profile" : cat == "cert" ? "certificate validation" : cat == "reject" ? "the sign-in server refusing (policy, account or password)" : cat == "timeout" ? "the sign-in server not answering" : cat == "dhcp" ? "after sign-in: getting an address (DHCP)" : "not clear from the event text", "", "i"));
             if (cat == "cert") rows.Insert(2, Next("check the certificate: inspect the file, or compare what the server sends", "tool:certfile"));
@@ -131,12 +132,12 @@ namespace AdeeboMeter
             else if (cat == "reject" || cat == "timeout") rows.Insert(2, Next("test the RADIUS server directly with a test account", "tool:radiuslab"));
             return rows;
         }
-        static string Kind(EvLog.Ev e)
+        internal static string Kind(EvLog.Ev e)
         {
             string t = (e.Text ?? "").ToLowerInvariant();
+            if (e.Id == 8003 || e.Id == 15503 && t.Contains("disconnect")) return "disconnected";   // the tool run, 22 Nov: "has successfully disconnected" read as a sign-in that worked
             if (e.Id == 8002 || e.Id == 12013 || e.Id == 15502 || e.Id == 11006 || t.Contains("failed") || t.Contains("failure")) return "failed";
             if (e.Id == 8001 || e.Id == 12012 || e.Id == 15501 || t.Contains("succeeded") || t.Contains("successfully")) return "succeeded";
-            if (e.Id == 8003) return "disconnected";
             return "started";
         }
         static string[] Next(string text, string act) { return new[] { "3", "Next", text, "", "", act }; }

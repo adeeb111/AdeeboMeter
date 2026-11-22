@@ -35,7 +35,7 @@ namespace AdeeboMeter
         string ToolText()
         {
             var sb = new System.Text.StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · " + toolTitle + " · " + toolAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            var rows = toolRows; if (rows != null) foreach (var r in rows) if (r.Length > 2) sb.AppendLine(r[1] + ": " + r[2] + (r.Length > 3 && r[3] != "" ? "  - " + r[3] : ""));
+            var rows = toolRows; if (rows != null) foreach (var r in rows) if (r.Length > 2) sb.AppendLine((r[1] == "" ? "" : r[1] + ": ") + r[2] + (r.Length > 3 && r[3] != "" ? "  - " + r[3] : ""));
             return sb.ToString();
         }
         // a copy or save that didn't happen is said, not just logged (Remote Desktop or another app can hold the clipboard)

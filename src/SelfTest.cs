@@ -478,6 +478,13 @@ namespace AdeeboMeter
                 Job.Run(Job.Sys("hostname.exe"), "", 10000, out to);
                 if (to) throw new InvalidOperationException("hostname.exe reported as timed out");
             });
+            T("tool run 22 Nov: a disconnect isn't a sign-in that worked, a null MX says so", () =>
+            {
+                var ev = new EvLog.Ev { Id = 8003, Text = "WLAN AutoConfig service has successfully disconnected from a wireless network." };
+                if (EngPack.Kind(ev) != "disconnected") throw new InvalidOperationException("8003 read as " + EngPack.Kind(ev));
+                if (EngPack.Kind(new EvLog.Ev { Id = 8001, Text = "WLAN AutoConfig service has successfully connected to a wireless network." }) != "succeeded") throw new InvalidOperationException("8001");
+                if (!Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "0 ." }) || !Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "0 " }) || Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "10 mx.example.com" })) throw new InvalidOperationException("null MX");
+            });
             T("AdeeboLab See my LAN: 50 devices drawn, the rest one +N more box, no loose links", () =>
             {
                 // AdeeboLab's See my LAN: 70 devices draw as 50 plus one "+19 more" box, every link joins two drawn stops

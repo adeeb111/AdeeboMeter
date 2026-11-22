@@ -451,6 +451,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, int> Types = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "A", 1 }, { "NS", 2 }, { "CNAME", 5 }, { "SOA", 6 }, { "PTR", 12 }, { "MX", 15 }, { "TXT", 16 }, { "AAAA", 28 }, { "SRV", 33 }, { "CAA", 257 }, { "DS", 43 }, { "SSHFP", 44 }, { "DNSKEY", 48 }, { "TLSA", 52 }, { "SVCB", 64 }, { "HTTPS", 65 } };
         public sealed class Rr { public string Name = "", Type = "", Data = ""; public int Ttl; public int Section; }
         public sealed class Msg { public int Rcode; public bool Aa, Ad, Tc; public List<Rr> Rrs = new List<Rr>(); public string From = ""; public long Ms; }
+        internal static bool NullMx(Rr r) { if (r.Type != "MX") return false; var p = (r.Data ?? "").Trim().Split(' '); return p.Length >= 1 && p[0] == "0" && (p.Length == 1 || p[1].Trim('.') == ""); }
         public static List<string[]> Dig(string name, string type, string server, Monitor m)
         {
             var rows = new List<string[]>(); name = (name ?? "").Trim().TrimEnd('.'); type = string.IsNullOrWhiteSpace(type) ? "A" : type.Trim().ToUpperInvariant();
@@ -489,7 +490,7 @@ namespace AdeeboMeter
             }
             object srv2 = srvName;
             rows.Add(R(msg.Rcode == 0 ? 0 : msg.Rcode == 3 ? 1 : 2, "Status", (msg.Rcode == 0 ? "NOERROR" : msg.Rcode == 3 ? "NXDOMAIN - the name doesn't exist" : msg.Rcode == 2 ? "SERVFAIL - the server couldn't get an answer" : "error " + msg.Rcode) + " from " + srv2 + " in " + msg.Ms + " ms" + (msg.Aa ? " · authoritative" : "") + (msg.Ad ? " · DNSSEC validated (AD)" : ""), msg.Rcode == 2 ? "Often a DNSSEC failure or the domain's own servers being down." : "", "m"));
-            foreach (var r in msg.Rrs.Where(x => x.Section == 1)) rows.Add(R(3, r.Type + "  " + r.Name, r.Data + "   (TTL " + r.Ttl + " s)", "", "m"));
+            foreach (var r in msg.Rrs.Where(x => x.Section == 1)) rows.Add(R(3, r.Type + "  " + r.Name, (NullMx(r) ? "0 .   - a \"null MX\": this domain accepts no mail (RFC 7505)" : r.Data) + "   (TTL " + r.Ttl + " s)", "", "m"));   // the tool run, 22 Nov: a null MX printed as "0 " with nothing after it
             if (!msg.Rrs.Any(x => x.Section == 1) && msg.Rcode == 0) rows.Add(R(1, "Answer", "no " + type + " records for this name", "", "m"));
             foreach (var r in msg.Rrs.Where(x => x.Section == 2).Take(4)) rows.Add(R(3, "authority  " + r.Type, r.Name + " → " + r.Data, "", "m"));
             return rows;

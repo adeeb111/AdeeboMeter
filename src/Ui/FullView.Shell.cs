@@ -342,7 +342,7 @@ namespace AdeeboMeter
                         }
                         ShRows(res);
                         var sb = new StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · " + L.T(t.Title) + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-                        foreach (var o in res.Where(x => !IsSecretRow(x))) { string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     "; sb.AppendLine(lv + ShareCell(o[1]) + ": " + ShareCell(o[2])); if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + ShareCell(o[3])); }
+                        foreach (var o in res.Where(x => !IsSecretRow(x))) { string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     "; sb.AppendLine(lv + (o[1] == "" ? "" : ShareCell(o[1]) + ": ") + ShareCell(o[2])); if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + ShareCell(o[3])); }
                         shLast = sb.ToString();
                         WL((run.Stop ? "stopped" : "done") + " in " + sw.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s", ShDim);
                         if ((LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep") && !yes) WL("(it sends test traffic: add --yes if this is your network)", ShAmber);

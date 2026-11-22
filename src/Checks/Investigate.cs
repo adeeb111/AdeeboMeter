@@ -211,13 +211,16 @@ namespace AdeeboMeter
             rows.Add(new[] { roams.Count > 10 || pingPong > 3 ? "1" : "0", "Last 24 hours", roams.Count + (roams.Count == 1 ? " roam" : " roams") + " · " + drops + (drops == 1 ? " drop" : " drops") + (pingPong > 0 ? " · " + pingPong + " back-and-forth within 2 min" : ""),
                 pingPong > 3 ? "Back-and-forth roams mean two access points look equally strong here. Moving the laptop, or asking IT to lower one AP's power or raise the roaming threshold, usually fixes it." : roams.Count > 10 ? "Many roams - normal while walking around an office, not while sitting still." : "", "w" });
             rows.Add(RoamsHead.ToArray());
-            Timeline.Ev prev = null;
+            // newest first (the tool run, 22 Nov: oldest-first buried the drop you came for), with the day when it wasn't today
+            Timeline.Ev prev = null; var lines = new List<string[]>();
             foreach (var e in evs.Skip(Math.Max(0, evs.Count - 120)))
             {
                 bool isRoam = e.Text.Contains("access point"), pp = isRoam && prev != null && back(prev, e);
                 if (isRoam) prev = e;
-                rows.Add(new[] { e.Lv == 2 || pp ? "7" : "6", "", e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + "  " + e.Text + (pp ? "   <- back again within 2 min" : ""), "", "" });
+                string when = (e.T.Date == DateTime.Today ? "" : e.T.Date == DateTime.Today.AddDays(-1) ? L.T("Yesterday") + " " : e.T.ToString("d MMM", CultureInfo.CurrentCulture) + " ") + e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+                lines.Add(new[] { e.Lv == 2 || pp ? "7" : "6", "", when + "  " + e.Text + (pp ? "   <- back again within 2 min" : ""), "", "" });
             }
+            lines.Reverse(); rows.AddRange(lines);
             return rows;
         }
 

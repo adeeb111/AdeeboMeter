@@ -79,7 +79,7 @@ namespace AdeeboMeter
                         if (k == null) rows.Add(R(1, "IPv4 lease", "Windows has no lease details for this adapter", "", "w"));
                         else
                         {
-                            Func<string, string> str = n => { var v = k.GetValue(n); var a2 = v as string[]; return a2 != null ? string.Join(" ", a2) : (v ?? "").ToString().Trim(); };
+                            Func<string, string> str = n => { var v = k.GetValue(n); var a2 = v as string[]; return (a2 != null ? string.Join(" ", a2.Select(z => (z ?? "").Trim().Trim('\0').Trim()).Where(z => z != "")) : (v ?? "").ToString()).Trim().Trim('\0').Trim(); };   // the tool run, 22 Nov: a blank domain is stored as "\0" - no empty row
                             Func<string, DateTime> time = n => { var v = k.GetValue(n); long t = 0; bool okT = v is int ? (t = (uint)(int)v) >= 0 : v != null && long.TryParse(v.ToString(), out t); return okT && t > 0 && t < 0xFFFFFFFFL ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(t).ToLocalTime() : DateTime.MinValue; };
                             DateTime got = time("LeaseObtainedTime"), t1 = time("T1"), t2 = time("T2"), end = time("LeaseTerminatesTime"), now = DateTime.Now;
                             string ip = str("DhcpIPAddress");
@@ -333,7 +333,9 @@ namespace AdeeboMeter
             rows.Add(R(type == "NoSync" ? 2 : 0, "How", how == "" ? "unknown" : how, "", "w"));
             // "The following error occurred: The service has not been started. (0x80070426)" is an error, not a source
             bool w32err = src.IndexOf("0x8007", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (w32err) { rows.Add(R(2, "Current source", Draw.Trunc(src.Replace("\r", " ").Replace("\n", " "), 140), src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) >= 0 ? "The Windows Time service isn't running, so the clock isn't being synced. It starts on its own on most PCs; on others it's started by the domain." : "", "w")); src = ""; }
+            bool denied = src.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0 && src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) < 0;
+            if (w32err && denied) { rows.Add(R(3, "Current source", "Windows shows this to an administrator only - the type above and the server below come from the settings", "", "w")); src = ""; }   // the tool run, 22 Nov: not a fault, so not red
+            if (w32err && src != "") { rows.Add(R(2, "Current source", Draw.Trunc(src.Replace("\r", " ").Replace("\n", " "), 140), src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) >= 0 ? "The Windows Time service isn't running, so the clock isn't being synced. It starts on its own on most PCs; on others it's started by the domain." : "", "w")); src = ""; }
             if (src != "") rows.Add(R(src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("Free-running", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 0, "Current source", src, src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 ? "It runs on its own clock - no server has set it recently. Settings > Time > Sync now." : src.IndexOf("access is denied", StringComparison.OrdinalIgnoreCase) >= 0 ? "" : "", "w"));
             if (server != "") rows.Add(R(3, "Configured server", Regex.Replace(server, @",0x[0-9a-fA-F]+", ""), "", "w"));
             rows.Add(R(3, "Check it", "Use the NTP tool on the same server to see how far off this PC is.", "", "i"));
