@@ -453,6 +453,17 @@ namespace AdeeboMeter
                 if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || Reach.SafeHost("sw-01:22") || !Reach.SafeHost("[2001:db8::1]") || !Reach.SafeHost("2001:db8::1") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
+            T("AdeeboLab See my LAN: 50 devices drawn, the rest one +N more box, no loose links", () =>
+            {
+                // AdeeboLab's See my LAN: 70 devices draw as 50 plus one "+19 more" box, every link joins two drawn stops
+                var devs = Enumerable.Range(0, 70).Select(i => new Picks.LanDev { Ip = "192.168.1." + (i + 1), Mac = "00:11:22:33:44:" + i.ToString("x2"), Router = i == 0, Here = i % 3 != 0, Maker = i % 2 == 0 ? "Apple" : "Espressif", Name = "dev" + i }).ToList();
+                string lj = LabViews.LanDoc(devs, "192.168.1.1", "Test", DateTime.Now, LabViews.TestPc(), "wifi");
+                int nodes = System.Text.RegularExpressions.Regex.Matches(lj, "\\{\"id\":\"d\\d+\"").Count;
+                if (nodes != LabViews.LanMax || !lj.Contains("\"+19 more\"")) throw new InvalidOperationException("lab lan: " + nodes + " devices drawn");
+                var ids = new HashSet<string>(System.Text.RegularExpressions.Regex.Matches(lj, "\\{\"id\":\"([a-z0-9]+)\"").Cast<System.Text.RegularExpressions.Match>().Select(x => x.Groups[1].Value));
+                foreach (System.Text.RegularExpressions.Match x in System.Text.RegularExpressions.Regex.Matches(lj, "\"a\":\"([a-z0-9]+)\",\"b\":\"([a-z0-9]+)\""))
+                    if (!ids.Contains(x.Groups[1].Value) || !ids.Contains(x.Groups[2].Value)) throw new InvalidOperationException("lab lan: a link to nowhere " + x.Value);
+            });
             T("copied results name each box whole (\"How many (10-2000)\" not \"How many (10\")", () =>
             {
                 if (FullView.BoxLabel("How many (10-2000)") != "How many (10-2000)") throw new InvalidOperationException(FullView.BoxLabel("How many (10-2000)"));

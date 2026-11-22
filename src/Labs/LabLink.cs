@@ -122,7 +122,10 @@ namespace AdeeboMeter
         }
 
         // ---------- the page: written from the exe next to the data folder, then opened in Edge's app window
-        public static string PagePath()
+        public static string PagePath() { return PagePath(null); }
+        // views: AdeeboLab's ready-made drawings (LabViews.All) written into the page itself - the page reads no files and
+        // no network (its policy forbids both), and the address has a size limit
+        public static string PagePath(string views)
         {
             string dir = Path.Combine(Program.DataDir, "lab"), file = Path.Combine(dir, "lab.html");
             try
@@ -132,6 +135,12 @@ namespace AdeeboMeter
                 {
                     if (rs == null) return null;
                     using (var ms = new MemoryStream()) { rs.CopyTo(ms); page = ms.ToArray(); }
+                }
+                if (!string.IsNullOrEmpty(views))
+                {
+                    string html = Encoding.UTF8.GetString(page), mark = "/*AM_VIEWS*/null";
+                    int at = html.IndexOf(mark, StringComparison.Ordinal);
+                    if (at >= 0) page = Encoding.UTF8.GetBytes(html.Substring(0, at) + views.Replace("<", "\\u003c").Replace("\u2028", "\\u2028").Replace("\u2029", "\\u2029") + html.Substring(at + mark.Length));
                 }
                 Directory.CreateDirectory(dir);
                 if (!File.Exists(file) || new FileInfo(file).Length != page.Length || !File.ReadAllBytes(file).SequenceEqual(page)) SafeFile.WriteBytes(file, page);
@@ -168,10 +177,13 @@ namespace AdeeboMeter
             }
         }
         // json: a path to start from (or null for the lab as it was); returns what went wrong, or null
-        public static string Open(string json, bool breakIt)
+        public static string Open(string json, bool breakIt) { return Open(json, breakIt, null, null); }
+        // views: LabViews.All (the start page's own drawings); view: open straight into one of them ("lan", "path" ...)
+        public static string Open(string json, bool breakIt, string views, string view)
         {
-            string page = PagePath(); if (page == null) return "The lab page couldn't be written to the data folder.";
-            string url = new Uri(page).AbsoluteUri + (breakIt ? "?mode=break" : "");
+            string page = PagePath(views); if (page == null) return "The lab page couldn't be written to the data folder.";
+            var q = new List<string>(); if (breakIt) q.Add("mode=break"); if (!string.IsNullOrEmpty(view) && System.Text.RegularExpressions.Regex.IsMatch(view, "^[a-z]{2,8}$")) q.Add("view=" + view);
+            string url = new Uri(page).AbsoluteUri + (q.Count > 0 ? "?" + string.Join("&", q) : "");
             if (json != null) url += "#path=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
             if (url.Length > 30000) return "This path is too big to hand over.";
             string edge = Edge(), profile = Profile;

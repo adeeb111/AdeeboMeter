@@ -12,9 +12,32 @@ namespace AdeeboMeter
         string labNote;   // what went wrong opening the lab (no Edge, the data folder not writable) - shown on the page, never a pop-up
 
         // json: a measured path (LabLink.PathJson), or null for the lab as it was left
-        void OpenLab(string json, bool breakIt)
+        // json null: the lab's start page, with its ready-made drawings (See my LAN, Path, Wi-Fi, Phone vs PC, VPN split) made
+        // off the UI thread from what the app already knows; view: open straight into one of them
+        void OpenLab(string json, bool breakIt) { OpenLab(json, breakIt, null, false); }
+        volatile bool alabBusy;
+        void OpenLab(string json, bool breakIt, string view, bool ask)
         {
-            labNote = LabLink.Open(json, breakIt);
+            if (json != null) { LabDone(LabLink.Open(json, breakIt)); return; }
+            if (alabBusy) return; alabBusy = true;
+            if (ask) Toast(L.T("Asking the devices on your network who they are (about 8 s)..."));
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                string note;
+                try
+                {
+                    string views = LabViews.All(M);
+                    if (ask && view == "lan") { var lan = LabViews.Lan(M, true); views = views.Substring(0, views.Length - 1) + ",\"lan\":" + lan + "}"; }
+                    note = LabLink.Open(null, breakIt, views, view);
+                }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab views: " + e.Message); note = LabLink.Open(null, breakIt); }
+                finally { alabBusy = false; }
+                try { BeginInvoke((Action)(() => LabDone(note))); } catch (InvalidOperationException) { }
+            }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
+        }
+        void LabDone(string note)
+        {
+            labNote = note;
             if (labNote != null) Toast(labNote);
             if (learnInfo != null) learnInfo.Invalidate();
         }

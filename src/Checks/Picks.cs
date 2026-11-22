@@ -270,6 +270,36 @@ namespace AdeeboMeter
                 SaveInv();
             }
         }
+        // ---------- AdeeboLab's See my LAN: the same list, as data. identify = ask the devices and ping them now (about 8 s);
+        // otherwise names and times come from the last time Devices on this network ran (lastAt), and nothing is sent.
+        public sealed class LanDev { public string Ip = "", Mac = "", Name = "", Maker = "", Kind = "", Model = "", Label = "", Via = ""; public bool Here, Watch, Router, Random; public double Ms = double.NaN; public DateTime First, Last; }
+        static Dictionary<string, DevId.Info> lastIds = new Dictionary<string, DevId.Info>(); static Dictionary<string, string> lastDns = new Dictionary<string, string>();
+        static Dictionary<string, double> lastPing = new Dictionary<string, double>(); static DateTime lastAt = DateTime.MinValue;
+        public static DateTime LanAskedAt { get { lock (ik) return lastAt; } }
+        public static List<LanDev> LanDevices(Monitor m, bool identify, Func<bool> stop)
+        {
+            var res = new List<LanDev>(); string net = Brain.NetKey, gw; lock (m.L) gw = m.Gateway;
+            if (net == "" || net == "offline") return res;
+            if (identify) { var run = new Toolkit.Run(); Inventory(m, "", "", run); }   // fills the cache (and the kept list) the usual way
+            List<Arp.Entry> now; try { now = Arp.Table(); } catch (Exception e) { if (e is OutOfMemoryException) throw; now = new List<Arp.Entry>(); }
+            if (!identify) SeeDevices(net, now, gw);
+            var here = new HashSet<string>(now.Where(e => e.Dynamic).Select(e => e.Mac));
+            lock (ik)
+            {
+                foreach (var d in inv.Where(x => x.Net == net).OrderByDescending(x => x.Ip == gw).ThenByDescending(x => x.Watch).ThenByDescending(x => here.Contains(x.Mac)).ThenByDescending(x => x.Last))
+                {
+                    DevId.Info id; lastIds.TryGetValue(d.Ip, out id); string rd; lastDns.TryGetValue(d.Ip, out rd); double ms;
+                    var o = new LanDev { Ip = d.Ip, Mac = d.Mac, Label = d.Label, Here = here.Contains(d.Mac), Watch = d.Watch, Router = d.Ip == gw, First = d.First, Last = d.Last, Random = Arp.Randomised(d.Mac) };
+                    o.Maker = Toolkit.Vendor(d.Mac).Trim('(', ')'); if (o.Maker.StartsWith("random", StringComparison.Ordinal)) o.Maker = "";
+                    if (id != null) { if (id.Maker != "") o.Maker = id.Maker; o.Kind = id.Kind; o.Model = id.Model; o.Via = id.Via; }
+                    o.Name = d.Label != "" ? d.Label : id != null && id.Name != "" ? id.Name : o.Router ? "Your router" : !string.IsNullOrEmpty(rd) ? rd : o.Maker != "" ? o.Maker + " device" : o.Random ? "Private address" : "Unknown device";
+                    if (o.Here && lastPing.TryGetValue(d.Ip, out ms)) o.Ms = ms;
+                    res.Add(o);
+                }
+            }
+            return res;
+        }
+
         // Devices on this network: kept over time (ARP), named the way devices name themselves (DevId), pinged once when you
         // look, and the ones you watch pinged every minute (DevWatch). No alerts - a device going quiet is shown, never announced.
         public static List<string[]> Inventory(Monitor m, string label) { return Inventory(m, label, "", new Toolkit.Run()); }
@@ -313,6 +343,7 @@ namespace AdeeboMeter
             System.Threading.Tasks.Task.WaitAll(new[] { tid, tdn, tpg }, 8000);
             var ids = tid.IsCompleted && idsT != null ? idsT : new Dictionary<string, DevId.Info>(); var dns = tdn.IsCompleted && dnsT != null ? dnsT : new Dictionary<string, string>();
             Dictionary<string, double> ping; lock (pl) ping = new Dictionary<string, double>(pingT);   // a copy - a late ping can't change it mid-draw
+            lock (ik) { lastIds = ids; lastDns = dns; lastPing = ping; lastAt = DateTime.Now; }   // AdeeboLab's See my LAN draws from these without asking again
             if (hereIps.Count > 64) rows.Add(R(3, "Pinged", "the first 64 of " + hereIps.Count + " devices here now", "A ping each for the rest would flood a big network - the others show as seen, without a time.", "i"));   // bug-hunt L-97
             lock (ik)
             {

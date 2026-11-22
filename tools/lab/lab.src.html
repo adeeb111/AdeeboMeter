@@ -56,6 +56,23 @@ body.break #hint{display:none}
 #edit{position:absolute;display:none;z-index:30}#edit input{height:32px;border-radius:8px;border:1px solid var(--blue);background:var(--card);padding:0 8px;width:190px}
 #zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:4px}
 body.break #zoom{top:auto;bottom:80px}
+#home{position:absolute;top:56px;left:0;right:0;bottom:0;background:var(--page);overflow-y:auto;z-index:15;display:none;padding:26px clamp(16px,4vw,48px) 40px}
+body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
+#home h1{margin:0;font-size:26px}#home h1 b{color:var(--blue)}#home .lead{color:var(--sub);margin:4px 0 22px;max-width:720px}
+#home h2{font-size:12px;letter-spacing:.08em;color:var(--mute);margin:26px 0 10px;font-weight:800}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.tile{position:relative;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px;min-height:150px;display:flex;flex-direction:column;gap:6px;transition:transform .12s,border-color .12s,box-shadow .12s}
+.tile:hover:not([aria-disabled="true"]),.tile:focus-visible{transform:translateY(-2px);border-color:var(--blue);box-shadow:0 10px 26px -14px rgba(0,0,0,.55);outline:none}
+.tile b{font-size:14.5px}.tile span{font-size:12px;color:var(--sub)}
+.tile .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:4px}
+.tile .ic svg{width:26px;height:26px}
+.tile.big .ic{width:64px;height:64px;border-radius:18px;font-size:44px;font-weight:300;line-height:1;background:var(--blue);color:#fff}
+.tile[aria-disabled="true"]{opacity:.55;cursor:default}
+.tile .th{height:84px;border-radius:10px;background:var(--page);border:1px solid var(--line);margin-bottom:4px;overflow:hidden}
+.tile .th svg{width:100%;height:100%;display:block}
+.tile .x{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;border:0;background:var(--bar);color:var(--sub);display:none;place-items:center}
+.tile:hover .x{display:grid}.tile .x:hover{color:var(--red)}
+#say{cursor:pointer}
 @media (max-width:760px){
  #top{gap:6px;overflow-x:auto}#name{width:120px}#saved,.brand span{display:none}
  #wrap{flex-direction:column-reverse}#tools{width:auto;height:64px;border-right:0;border-top:1px solid var(--line);display:flex;overflow-x:auto;padding:6px}
@@ -68,6 +85,7 @@ body.break #zoom{top:auto;bottom:80px}
 <body>
 <header id="top">
  <a class="brand" href="/" title="AdeeboMeter"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#1155E0"/><path d="M6 15a6 6 0 0 1 12 0" fill="none" stroke="#5EF2B0" stroke-width="2.2" stroke-linecap="round"/><path d="M12 15l3-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span>Adeebo<b>Lab</b></span></a>
+ <button class="b i" id="homeBtn" title="AdeeboLab start page" aria-label="Start page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M17.5 14v7M14 17.5h7"/></svg></button>
  <input id="name" aria-label="Drawing name" value="My network">
  <span id="saved"></span>
  <div class="sp"></div>
@@ -102,6 +120,14 @@ body.break #zoom{top:auto;bottom:80px}
   <p id="pts" style="margin-top:auto;border-top:1px solid var(--line);padding-top:10px">First time you watch a fault to the end: <b style="color:var(--amber)">+2 Adeebo Points</b> in the app.</p>
  </aside>
 </div>
+<section id="home" aria-label="AdeeboLab start page">
+ <h1>Adeebo<b>Lab</b></h1>
+ <p class="lead">Draw a network, or let AdeeboMeter draw yours - then break one thing and watch where the packet stops. Everything stays on this PC.</p>
+ <h2>START</h2><div class="tiles" id="hStart"></div>
+ <h2>YOUR NETWORK, AS ADEEBOMETER SEES IT</h2><div class="tiles" id="hViews"></div>
+ <h2 id="hMineH">YOUR DIAGRAMS</h2><div class="tiles" id="hMine"></div>
+ <h2>EXAMPLES</h2><div class="tiles" id="hEx"></div>
+</section>
 <script>
 "use strict";
 (function () {
@@ -109,12 +135,14 @@ body.break #zoom{top:auto;bottom:80px}
 const G = __GLYPHS__;
 const $ = s => document.querySelector(s);
 const NS = "http://www.w3.org/2000/svg";
-const KEY = "adeebometer-lab:current", SOLVED = "adeebometer-lab:solved";
+const KEY = "adeebometer-lab:current", SOLVED = "adeebometer-lab:solved", FILES = "adeebometer-lab:files";
+/* ready-made drawings: AdeeboMeter writes them into its own copy of this page when it opens the lab (never fetched) */
+const AMV = /*AM_VIEWS*/null;
 const store = {get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }};
 const TOOLS = [["select", "Select", "M4 3l14 8-6 1.5L9 19z"], null,
   ["router", "Router", "R"], ["switch", "Switch"], ["cpe", "Home router"], ["wifi", "Wi-Fi AP"], ["pc", "PC"], ["laptop", "Laptop"], ["phone", "Phone"],
   ["server", "Server"], ["firewall", "Firewall"], ["loadbal", "Load bal."], ["internet", "Internet"], ["cloud", "Cloud"], ["tower", "4G/5G tower"],
-  ["ont", "Fibre box"], ["olt", "OLT"], ["splitter", "Splitter"], ["house", "House"], ["users", "Users"], null,
+  ["ont", "Fibre box"], ["olt", "OLT"], ["splitter", "Splitter"], ["house", "House"], ["users", "Users"], ["tv", "TV"], ["printer", "Printer"], ["iot", "Smart home"], ["camera", "Camera"], null,
   ["l:cable", "Cable", "M3 12h18"], ["l:wifi", "Wi-Fi link", "M3 12q2.25-5 4.5 0t4.5 0 4.5 0 4.5 0"], ["l:cell", "4G / 5G", "M3 12q2.25-5 4.5 0t4.5 0 4.5 0 4.5 0"], ["l:fibre", "Fibre", "M3 12h4M10 12h4M17 12h4"], null,
   ["text", "Text", "M5 5h14M12 5v14M9 19h6"], ["area", "Area", "M4 4h4M12 4h4M20 4v4M20 12v4M4 12v4M4 20h4M12 20h4M20 20h-1"], ["pen", "Pen", "M4 20l4-1L19 8l-3-3L5 16z"], null,
   ["delete", "Delete", "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"]];
@@ -192,11 +220,11 @@ function fromExample(k){
 /* ---------- loading: the app hands a measured path over in the address (#path=...), nothing else is read */
 function valid(d){
   if (!d || typeof d !== "object" || !Array.isArray(d.nodes)) return null;
-  const o = blank(); o.name = clean(d.name) || "My network"; o.measured = !!d.measured; o.access = ACCESS[d.access] ? d.access : "";
+  const o = blank(); o.name = clean(d.name) || "My network"; o.measured = !!d.measured; o.note = String(d.note || "").replace(/[\u0000-\u001f]/g, " ").slice(0, 600); if (typeof d.fid === "string" && /^f[a-z0-9]{4,20}$/.test(d.fid)) o.fid = d.fid; o.access = ACCESS[d.access] ? d.access : "";
   const ids = new Set();
   d.nodes.slice(0, 300).forEach(n => { if (!n || ids.has(String(n.id))) return; const id = clean(n.id) || uid("n"); ids.add(id);
     o.nodes.push({id, k: G[n.k] || n.k === "router" ? n.k : "pc", name: clean(n.name), sub: clean(n.sub), ms: clean(n.ms), st: /^(typ|bad|warn|you)$/.test(n.st) ? n.st : "",
-                  x: +n.x || 0, y: +n.y || 0}); });
+                  info: String(n.info || "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").slice(0, 400), x: +n.x || 0, y: +n.y || 0}); });
   (d.links || []).slice(0, 600).forEach(l => { if (l && ids.has(String(l.a)) && ids.has(String(l.b))) o.links.push({id: clean(l.id) || uid("l"), a: String(l.a), b: String(l.b),
     kind: LINKS[l.kind] ? l.kind : "cable", label: clean(l.label)}); });
   (d.areas || []).slice(0, 60).forEach(a => { if (a) o.areas.push({id: clean(a.id) || uid("a"), x: +a.x || 0, y: +a.y || 0, w: Math.max(40, +a.w || 0), h: Math.max(40, +a.h || 0), t: clean(a.t)}); });
@@ -255,6 +283,7 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
     if (n.ms) { const y = n.k === "router" ? n.y + 36 : n.y + (n.sub ? 62 : 50), bad = n.st === "bad" || n.st === "warn";
       kids.push(txt(n.x, y, n.ms, {fill: n.st === "bad" ? C.red : n.st === "warn" ? C.amber : C.sub, "font-size": 11.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"})); }
     if (linkFrom === n.id) kids.push(el("circle", {cx: n.x, cy: n.y, r: 34, fill: "none", stroke: C.blue, "stroke-width": 2, "stroke-dasharray": "4 4"}));
+    if (n.info) { const t = el("title"); t.textContent = n.info; kids.unshift(t); }
     g.appendChild(el("g", {"data-t": "node", "data-id": n.id, style: "cursor:pointer"}, kids)); });
   doc.texts.forEach(t => { const s = sel && sel.id === t.id;
     g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": 14, "data-t": "text", "data-id": t.id, style: "cursor:move"})); });
@@ -265,7 +294,12 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
 /* ---------- changes: every change is one undo step and is saved in this browser */
 let saveT = 0;
 function change(fn){ undo.push(JSON.stringify(doc)); if (undo.length > 100) undo.shift(); redo = []; fn(); persist(); draw(); if (mode === "break") fillPick(); }
-function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { $("#saved").textContent = store.set(KEY, JSON.stringify(doc)) ? "Saved in this browser" : "Not saved (browser storage off)"; }, 300); }
+function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { if (!doc.fid) doc.fid = uid("f").slice(0, 21); const ok = store.set(KEY, JSON.stringify(doc)) && keep(doc);
+  $("#saved").textContent = ok ? "Saved in this browser" : "Not saved (browser storage off)"; }, 300); }
+/* ---------- your diagrams: every drawing you change is kept here (this browser only), newest first */
+function files(){ try { const l = JSON.parse(store.get(FILES) || "[]"); return Array.isArray(l) ? l.filter(f => f && f.id && f.doc) : []; } catch (e) { return []; } }
+function keep(d){ const l = files().filter(f => f.id !== d.fid); l.unshift({id: d.fid, name: d.name, t: Date.now(), doc: d}); return store.set(FILES, JSON.stringify(l.slice(0, 40))); }
+function forget(id){ store.set(FILES, JSON.stringify(files().filter(f => f.id !== id))); }
 function back(from, to){ if (!from.length) return; to.push(JSON.stringify(doc)); doc = JSON.parse(from.pop()); sel = null; $("#name").value = doc.name; accessUi(); persist(); draw(); if (mode === "break") fillPick(); }
 $("#undo").onclick = () => back(undo, redo); $("#redo").onclick = () => back(redo, undo);
 $("#name").onchange = () => change(() => { doc.name = clean($("#name").value) || "My network"; });
@@ -368,7 +402,7 @@ function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y,
   s.insertBefore(el("rect", {width: "100%", height: "100%", fill: C.page}), s.firstChild);
   s.setAttribute("font-family", "Segoe UI, Inter, Arial, sans-serif"); return {t: new XMLSerializer().serializeToString(s), w: Math.ceil(b.w), h: Math.ceil(b.h)}; }
 $("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute("data-f"); if (!f) return;
-  if (f === "new") { change(() => { doc = blank(); }); $("#name").value = doc.name; accessUi(); fit(); }
+  if (f === "new") { openDoc(blank()); }
   else if (f === "open") $("#openFile").click();
   else if (f === "save") download(fname(".json"), new Blob([JSON.stringify(doc, null, 1)], {type: "application/json"}));
   else if (f === "svg") download(fname(".svg"), new Blob([svgText().t], {type: "image/svg+xml"}));
@@ -376,7 +410,7 @@ $("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute(
     img.onload = () => { const c = document.createElement("canvas"), k = 2; c.width = s.w * k; c.height = s.h * k; const x = c.getContext("2d"); x.scale(k, k); x.drawImage(img, 0, 0);
       URL.revokeObjectURL(u); c.toBlob(b => b && download(fname(".png"), b)); }; img.src = u; } });
 $("#openFile").onchange = () => { const f = $("#openFile").files[0]; if (!f || f.size > 2e6) return; f.text().then(t => { let d = null; try { d = valid(JSON.parse(t)); } catch (e) {}
-  if (d) { change(() => { doc = d; }); $("#name").value = doc.name; accessUi(); fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
+  if (d) { document.body.classList.remove("home"); change(() => { doc = d; }); $("#name").value = doc.name; accessUi(); fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
 $("#theme").onclick = () => { const r = document.documentElement, l = r.getAttribute("data-theme") !== "light"; r.setAttribute("data-theme", l ? "light" : "dark"); store.set("am-theme", l ? "light" : "dark"); draw(); };
 
 /* ---------- Break it: one fault, the packet walks the path and stops where it fails */
@@ -433,6 +467,7 @@ function plan(){ stop(); const p = path(pick.from, pick.to); pk = {steps: [], i:
 function posAt(v){ if (!pk.p) return {x: 0, y: 0}; const N = pk.p.ns, i = Math.floor(v), f = v - i, a = N[Math.min(i, N.length - 1)], b = N[Math.min(i + 1, N.length - 1)]; return {x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f}; }
 function say(b, t, bad, fix){ const s = $("#say"); s.className = "show" + (bad ? " bad" : ""); s.textContent = ""; const x = document.createElement("b"); x.textContent = b; s.appendChild(x);
   if (t) s.appendChild(document.createTextNode(t)); if (fix) { const e = document.createElement("em"); e.textContent = fix; s.appendChild(e); } }
+$("#say").onclick = () => { $("#say").className = ""; };
 function num(){ $("#pNum").textContent = pk.steps.length ? pk.i + " / " + pk.steps.length : ""; $("#pBar").style.width = pk.steps.length ? (100 * pk.i / pk.steps.length) + "%" : "0"; }
 function show(i, anim){ pk.i = i; num(); const s = pk.steps[i - 1];
   if (!s) { pk.dot = null; draw(); return; }
@@ -454,13 +489,60 @@ function setMode(m){ mode = m; document.body.classList.toggle("break", m === "br
   if (m === "break") { buildFaults(); fillPick(); } setTimeout(fit, 0); draw(); }
 $("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break");
 
+/* ---------- the start page: new, open, AdeeboMeter's own drawings of your network, your diagrams, examples */
+function openDoc(d, title){ document.body.classList.remove("home"); if (mode === "break") setMode("draw");
+  sel = null; linkFrom = null; undo = []; redo = []; doc = d; $("#name").value = doc.name; accessUi(); buildTools(); hint(); $("#say").className = ""; draw(); setTimeout(fit, 0);
+  if (title && doc.note) say(title, " " + doc.note, false); $("#saved").textContent = doc.fid ? "Saved in this browser" : ""; }
+function showHome(){ if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
+$("#homeBtn").onclick = showHome;
+const VIEWS = [["lan", "See my LAN", "cpe", "Every device on your network - address, MAC and maker (up to 50 drawn)"],
+  ["path", "Path to anywhere", "internet", "Your last trace or MTR, hop by hop, red where loss is real"],
+  ["wifi", "Wi-Fi around you", "wifi", "The networks this PC hears, by channel - who shares your air"],
+  ["phone", "Phone vs this PC", "phone", "How your phone gets out on Wi-Fi and on 4G / 5G, next to this PC"],
+  ["vpn", "VPN split", "lock", "What goes through the tunnel and what goes straight out"]];
+function icon(k, col){ const s = el("svg", {viewBox: "0 0 24 24", "aria-hidden": "true"}); s.appendChild(el("path", {d: G[k] || G.pc, fill: "none", stroke: col || "currentColor", "stroke-width": 1.7, "stroke-linecap": "round", "stroke-linejoin": "round"})); return s; }
+function thumb(d){ const C = COL(), ns = d.nodes || []; const s = el("svg", {"aria-hidden": "true", preserveAspectRatio: "xMidYMid meet"});
+  if (!ns.length) { s.setAttribute("viewBox", "0 0 160 84"); s.appendChild(txt(80, 47, "empty", {fill: C.mute, "font-size": 11})); return s; }
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; ns.forEach(n => { x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x); y1 = Math.max(y1, n.y); });
+  const pad = 40, w = Math.max(200, x1 - x0 + 2 * pad), h = Math.max(110, y1 - y0 + 2 * pad); s.setAttribute("viewBox", `${x0 - pad - (w - (x1 - x0 + 2 * pad)) / 2} ${y0 - pad - (h - (y1 - y0 + 2 * pad)) / 2} ${w} ${h}`);
+  const byId = {}; ns.forEach(n => byId[n.id] = n); const r = Math.max(6, w / 70);
+  (d.links || []).forEach(l => { const a = byId[l.a], b = byId[l.b]; if (a && b) s.appendChild(el("line", {x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: l.kind === "bad" ? C.red : l.kind === "wifi" ? C.wifi : l.kind === "cell" ? C.cell : C.line, "stroke-width": r / 2.5})); });
+  ns.forEach(n => s.appendChild(el("circle", {cx: n.x, cy: n.y, r, fill: nodeColor(n, C), opacity: n.st === "typ" ? .5 : 1}))); return s; }
+function ago(t){ const m = (Date.now() - t) / 60000; return m < 2 ? "just now" : m < 60 ? Math.round(m) + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; }
+function tile(box, o){ const b = document.createElement("button"); b.className = "tile" + (o.big ? " big" : ""); if (o.off) b.setAttribute("aria-disabled", "true");
+  if (o.thumb) { const th = document.createElement("div"); th.className = "th"; th.appendChild(o.thumb); b.appendChild(th); }
+  else { const ic = document.createElement("div"); ic.className = "ic"; if (o.big) ic.textContent = "+"; else { ic.style.background = "color-mix(in srgb," + (o.col || "var(--blue)") + " 16%,transparent)"; ic.appendChild(icon(o.icon, o.col)); } b.appendChild(ic); }
+  const t = document.createElement("b"); t.textContent = o.title; b.appendChild(t); const sp = document.createElement("span"); sp.textContent = o.sub; b.appendChild(sp);
+  if (o.del) { const x = document.createElement("span"); x.className = "x"; x.title = "Delete this diagram"; x.textContent = "×"; x.setAttribute("role", "button");
+    x.onclick = e => { e.stopPropagation(); if (confirmDel === o.id) { forget(o.id); confirmDel = null; renderHome(); } else { confirmDel = o.id; x.textContent = "Sure?"; x.style.width = "auto"; x.style.padding = "0 8px"; x.style.display = "grid"; } }; b.appendChild(x); }
+  b.onclick = () => { if (!o.off) o.go(); }; box.appendChild(b); }
+let confirmDel = null;
+function renderHome(){ const C = COL();
+  const st = $("#hStart"); st.textContent = "";
+  tile(st, {big: true, title: "New diagram", sub: "An empty page - pick devices on the left and click to place them", go: () => openDoc(blank())});
+  tile(st, {icon: "database", col: C.purple, title: "Open a file", sub: "A lab file (.json) you saved before", go: () => $("#openFile").click()});
+  const vw = $("#hViews"); vw.textContent = "";
+  VIEWS.forEach(([k, n, ic, sub]) => { const d = AMV && AMV[k];
+    tile(vw, {icon: ic, col: k === "lan" ? C.green : k === "path" ? C.blue : k === "wifi" ? C.wifi : k === "phone" ? C.cell : C.purple, title: n, off: !d,
+      sub: !AMV ? "Open AdeeboLab from AdeeboMeter to draw yours" : !d ? (k === "path" ? "Run a trace or MTR in AdeeboMeter first (mtr 1.1.1.1 in AdeeboShell)" : "Not available on this PC") : sub,
+      go: () => openView(k)}); });
+  const mine = files(), mb = $("#hMine"); mb.textContent = ""; $("#hMineH").hidden = mb.hidden = !mine.length;
+  mine.forEach(f => tile(mb, {thumb: thumb(f.doc), title: f.name || "My network", sub: "edited " + ago(f.t), del: true, id: f.id, go: () => { const d = valid(f.doc); if (d) { d.fid = f.id; openDoc(d); } }}));
+  const ex = $("#hEx"); ex.textContent = "";
+  EXNAMES.forEach(([k, n]) => tile(ex, {thumb: thumb(fromExample(k)), title: n, sub: EX[k].name, go: () => { const d = fromExample(k); applyAccess(d, store.get("adeebometer-lab:access") || "fibre"); openDoc(d); }})); }
+function openView(k){ const d = valid(AMV && AMV[k]); if (!d) return; d.measured = true; const v = VIEWS.find(x => x[0] === k); openDoc(d, (v ? v[1] : "Your network") + (AMV.at ? " · " + AMV.at : "") + "."); }
+
 /* ---------- go */
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+if (!files().length) try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d && d.nodes.length) { d.fid = uid("f").slice(0, 21); keep(d); } } catch (e) {}   /* the one drawing kept before 1.1.6 becomes your first diagram */
+const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);
 doc = start(); if (doc.measured && !doc.access) applyAccess(doc, store.get("adeebometer-lab:access") || "fibre");
 $("#name").value = doc.name; buildTools(); hint(); accessUi();
-if (doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
+if (qPath && doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
 setTimeout(fit, 0); addEventListener("resize", () => fit());
-if (/[?&]mode=break/.test(location.search)) setMode("break");
+if (qBreak) setMode("break");
+else if (qView && AMV && AMV[qView]) openView(qView);
+else if (!qPath) showHome();
 })();
 </script>
 </body>

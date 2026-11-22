@@ -92,7 +92,7 @@ namespace AdeeboMeter
             if (e.KeyCode == Keys.Tab) { e.SuppressKeyPress = true; ShComplete(); return; }
             if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; shIn.Clear(); }
         }
-        static readonly string[] ShCmds = { "help", "tools", "man", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit" };
+        static readonly string[] ShCmds = { "help", "tools", "man", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab" };
         IEnumerable<string> ShWords() { return ShCmds.Concat(Tools2().Select(t => t.Id)); }
         IEnumerable<string> ShPages() { return Secs.Select(z => z[0]).Concat(tabNames.Keys).Concat(new[] { "calc", "reports", "lab", "settings", "about" }).Distinct(); }
         void ShComplete()
@@ -135,6 +135,7 @@ namespace AdeeboMeter
                     case "man": if (args.Count == 0) WL("usage: man <tool>", ShAmber); else ShMan(args[0]); break;
                     case "open": case "cd": case "go": if (args.Count == 0) ShPagesList(); else ShOpen(args[0]); break;
                     case "pages": ShPagesList(); break;
+                    case "lab": ShLab(args); break;
                     case "status": ShStatus(); break;
                     case "debug": ShDebug(); break;
                     case "log": ShLog(args.Count > 0 ? args[0] : "20"); break;
@@ -160,6 +161,16 @@ namespace AdeeboMeter
             finally { ShHold(false); }
             ShEnd();
         }
+        // AdeeboLab from the shell: the start page, or straight into one of its drawings (lan --ask asks the devices again)
+        void ShLab(List<string> args)
+        {
+            bool ask = args.Remove("--ask"); string v = args.Count > 0 ? args[0].ToLowerInvariant() : "";
+            var views = new[] { "lan", "path", "wifi", "phone", "vpn" };
+            if (v != "" && !views.Contains(v)) { WL("lab: no view \"" + v + "\" - try " + string.Join(", ", views), ShRed); return; }
+            if (v == "path" && LabViews.Path(M) == null) { WL("lab path: run a trace or MTR first (e.g.  mtr 1.1.1.1 1), then  lab path", ShAmber); return; }
+            WL(v == "" ? "Opening AdeeboLab..." : "Opening AdeeboLab: " + v + (ask ? " (asking the devices, about 8 s)" : "") + "...", ShDim);
+            OpenLab(null, false, v == "" ? null : v, ask);
+        }
         void ShHelp()
         {
             WL("COMMANDS", ShBlue);
@@ -170,6 +181,7 @@ namespace AdeeboMeter
                 new[] { "man <tool>", "what a tool does, what you type, how long, what it sends" },
                 new[] { "open <page>", "go to a page: open markets, open sports, open calc (cd works too)" },
                 new[] { "pages", "every page you can open" },
+                new[] { "lab [view]", "AdeeboLab: lab (start page), lab lan [--ask], lab path, lab wifi, lab phone, lab vpn" },
                 new[] { "status", "the NOW line: router, internet, names, this PC, the verdict" },
                 new[] { "debug", "the raw values the pages tidy away: addresses, adapter, MACs, data folder" },
                 new[] { "log [n]", "the last n lines of AdeeboMeter's own log (default 20)" },
