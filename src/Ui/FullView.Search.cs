@@ -74,15 +74,16 @@ namespace AdeeboMeter
                 else { var fm = FixMatch(q); if (fm != null) { string fg = fm[1]; l.Insert(0, new PalItem { Group = L.T("Investigate"), Title = L.T("Sounds like") + " " + L.T(fm[2]), Sub = L.T("I'll check") + " " + L.T(fm[3]), Icon = "question", Acc = "home", Pin = "", Words = q, Go = delegate { FixGo(fg); } }); } }   // the words Home's old describe box knew ("laptop is hot", "disk is full")
                 return l;
             };
-            using (var pal = new Palette(items, hits, vocab, PinToMine))
-            {
-                pal.StartPosition = FormStartPosition.Manual;
-                var wa = Screen.FromControl(this).WorkingArea;   // bug-hunt L-157: kept on the screen, whatever the window's position
-                pal.Location = new Point(Math.Max(wa.Left, Math.Min(Left + (Width - pal.Width) / 2, wa.Right - pal.Width)), Math.Max(wa.Top, Math.Min(Top + Sc(90), wa.Bottom - pal.Height)));
-                pal.ShowDialog(this);
-                if (pal.Chosen != null) pal.Chosen();
-            }
+            if (openPal != null && !openPal.IsDisposed) { openPal.Activate(); return; }
+            // not modal (Adeeb, 22 Nov: "search doesn't close unless I click on it"): a click anywhere else in the window closes it
+            var pal = new Palette(items, hits, vocab, PinToMine); openPal = pal;
+            pal.StartPosition = FormStartPosition.Manual;
+            var wa = Screen.FromControl(this).WorkingArea;   // bug-hunt L-157: kept on the screen, whatever the window's position
+            pal.Location = new Point(Math.Max(wa.Left, Math.Min(Left + (Width - pal.Width) / 2, wa.Right - pal.Width)), Math.Max(wa.Top, Math.Min(Top + Sc(90), wa.Bottom - pal.Height)));
+            pal.FormClosed += delegate { openPal = null; var go = pal.Chosen; BeginInvoke((Action)delegate { pal.Dispose(); if (go != null && !IsDisposed) go(); }); };
+            pal.Show(this);
         }
+        Palette openPal;
         internal void CheckSite(string site) { tab = "dest"; ShowTab(); SyncNav(); destBox.Box.Text = site; StartDest(); }
 
         // one word against the vocabulary: the closest word one letter away (two for long words), or null

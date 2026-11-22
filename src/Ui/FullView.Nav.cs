@@ -23,7 +23,7 @@ namespace AdeeboMeter
             { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "sports", new[] { "Sports", "star", "sports" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
             { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
-            { "calc", new[] { "Calculators", "calc", "calc" } }, { "reports", new[] { "Reports", "report", "reports" } }
+            { "calc", new[] { "Calculators", "calc", "calc" } }, { "lab", new[] { "Network Lab", "route", "learn" } }, { "reports", new[] { "Reports", "report", "reports" } }
         };
         static string NavName(string id) { string[] i; if (NavInfo.TryGetValue(id, out i)) return i[0]; var t = MyTab(id); return t != null ? t.Name : id; }
         static string NavIcon(string id) { string[] i; return NavInfo.TryGetValue(id, out i) ? i[1] : "star"; }
@@ -53,6 +53,7 @@ namespace AdeeboMeter
             {
                 // 22 Nov (Adeeb: "why did Calculators open the Toolbox?"): their own page - the tiles of that one section, under its
                 // own title, without the Toolbox's chips; the Toolbox's own view setting is left as it was
+                case "lab": OpenLab(null, false); return;   // the Network Lab opens in your browser (22 Nov: it had no place in the bar)
                 case "calc": case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); navOwn = id == "calc" ? "calc" : "report"; if (!EveryTool) { Cfg.TbView = "list"; ApplyTbView(); } ClearTbSearch(); ShowQuestions(navOwn); break;
                 default:
                     if (id.StartsWith("mine", StringComparison.Ordinal)) { curMine = id; tab = "mine"; ShowTab(); if (mineCanvas != null) mineCanvas.Invalidate(); break; }
