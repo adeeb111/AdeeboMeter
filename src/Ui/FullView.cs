@@ -77,7 +77,7 @@ namespace AdeeboMeter
                 // button held on the window's frame (Windows keeps the window in its own loop until you let go)
                 var now = DateTime.UtcNow; bool woke = (now - lastWatch).TotalSeconds > 5; lastWatch = now;
                 bool held = (Native.GetAsyncKeyState(0x01) & 0x8000) != 0 || (Native.GetAsyncKeyState(0x02) & 0x8000) != 0;
-                if (woke || held) { lastPong = now; FreezeCard.Hide(); return; }
+                if (woke || held) { lastPong = now; FreezeCard.Hide(); if (woke) BuddyReact.Set("asleep", 20); return; }   /* just woke up: a sleepy face for a moment */
                 var since = now - lastPong;
                 if (since.TotalSeconds >= 2 && !frozenLogged) { frozenLogged = true; frozeDoing = UiActivity.Doing; Program.Log("window froze (" + since.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s so far) while " + frozeDoing); }
                 if (since.TotalSeconds >= 2 && Visible0) FreezeCard.Show(lastBounds, (int)since.TotalSeconds, UiActivity.Doing);   // the card on its own thread: you see it even while this window is stuck

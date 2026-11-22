@@ -1119,7 +1119,7 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.widget = function () {
     var L = live || {}, lv = L.lv >= 0 && L.lv <= 2 ? L.lv : 3, g = L.game, s = Math.max(0, Math.round(L.left || 0)), stale = !isLive();
     document.body.classList.toggle("stale", stale);
-    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale || lv === 2 ? "worried" : lv === 1 ? "thinking" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:0;padding:8px 14px">Done</button></div><div class="wgm">';
+    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale ? "speechless" : lv === 2 ? "sad" : lv === 1 ? "worried" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:0;padding:8px 14px">Done</button></div><div class="wgm">';
     a += '<div class="wgc"><div class="k">↓ Download</div><div class="v">' + bigv(L.down, "Mb/s") + '</div>' + area(hD, "var(--blue)") + '</div><div class="wgc"><div class="k">↑ Upload</div><div class="v">' + bigv(L.up, "Mb/s") + '</div>' + area(hU, "var(--purple)") + '</div>';
     if (g) a += '<div class="wgc full"><div class="k">🎮 ' + esc(g.name) + ' · ' + esc(g.srv) + ' · ' + esc(g.grade) + '</div><div class="v">' + bigv(g.now, "ms") + '</div>' + area(g.hist || [], "var(--green)") + '</div>';
     else a += '<div class="wgc full"><div class="k">Ping' + (L.gw != null ? ' · router ' + Math.round(L.gw) + ' ms' : '') + (L.loss ? ' · ' + Math.round(L.loss * 10) / 10 + '% lost' : '') + '</div><div class="v" style="color:' + (lvOf(L.ping, 80, 200) === 0 ? "var(--green)" : lvOf(L.ping, 80, 200) === 1 ? "var(--amber)" : "var(--red)") + '">' + bigv(L.ping, "ms") + '</div>' + area(hP, "var(--cyan)") + '</div>';
@@ -2085,11 +2085,11 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.report = function () {
     var r = report, a = hdr("One-tap report", r ? new Date(r.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "", "home");
     if (!r) return a;
-    if (r.state === "running") a += '<div class="card" style="display:flex;gap:12px;align-items:center">' + faceHtml("thinking") + '<div><b>Checking...</b><div style="color:var(--sub);font-size:14px">' + (phase === "live" ? tr("Your PC runs its full checkup (about a minute) while this phone measures its own connection.") : tr("This phone measures its own connection.")) + '</div></div></div>';
+    if (r.state === "running") a += '<div class="card" style="display:flex;gap:12px;align-items:center">' + faceHtml("nervous") + '<div><b>Checking...</b><div style="color:var(--sub);font-size:14px">' + (phase === "live" ? tr("Your PC runs its full checkup (about a minute) while this phone measures its own connection.") : tr("This phone measures its own connection.")) + '</div></div></div>';
     if (r.pc) { a += resultCard(r.pc); }
     else if (phase !== "live" && r.state === "done") a += '<div class="card" style="color:var(--sub)">Your PC isn\'t connected, so this report is from the phone only.</div>';
     if (r.err) a += '<div class="card" style="color:var(--sub)">Your PC: ' + esc(r.err) + '</div>';
-    if (r.phone) a += '<div class="card verdict l' + Math.max(0, worst(phoneRows(r.phone))) + '"><span class="badge">' + where("phone") + '</span><h3>This phone</h3>' + rowsHtml(phoneRows(r.phone, true)) + '</div>';
+    if (r.phone) a += '<div class="card verdict l' + Math.max(0, worst(phoneRows(r.phone))) + '"><span class="badge">' + where("phone") + '</span><h3 style="display:flex;gap:10px;align-items:center">' + (r.state === "done" ? faceHtml([ "happy", "worried", "tears" ][Math.max(0, Math.min(2, worst(phoneRows(r.phone))))]) : "") + 'This phone</h3>' + rowsHtml(phoneRows(r.phone, true)) + '</div>';
     if (r.state === "done" && r.phone) a += '<div class="btns"><button class="btn" data-act="share">' + ic("share", 18) + ' Share</button><button class="btn ghost" data-act="copyrep">Copy</button></div><p class="note">Shared as text, with public addresses masked. A PDF report is in the PC app (Investigate › ISP report).</p>';
     return a;
   };

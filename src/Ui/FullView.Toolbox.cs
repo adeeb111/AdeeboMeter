@@ -516,7 +516,7 @@ namespace AdeeboMeter
                 Task.Factory.StartNew(() =>
                 {
                     List<string[]> got; try { got = Toolkit.Revocation(host, port, sni); } catch (Exception e) { got = Bad(e.Message); }
-                    try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
+                    try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
                 }, TaskCreationOptions.LongRunning);
             }
             else if (act.StartsWith("fix:", StringComparison.Ordinal)) SecFix(act.Substring(4));
@@ -884,7 +884,7 @@ namespace AdeeboMeter
             for (int i = 0; i < t.Inputs.Length && i < shown.Length; i++) if (SecretInput(t.Inputs[i])) shown[i] = "";
             if (t.Id == "httpreq" && shown.Length > 0) shown[0] = Reach.NoUser(shown[0] ?? "");   // a user:password@ in the URL isn't kept
             if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
-            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; BuddyReact.Set("sweaty", 3600);   /* the face is nervous while a tool runs */ tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             {
                 List<string[]> res;
@@ -895,7 +895,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
-                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
+                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); BuddyReact.ToolDone(res, run.Stop); if (tbAward != "") BuddyReact.Set("sparkle", 6); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
             }, TaskCreationOptions.LongRunning);
         }
 

@@ -406,6 +406,12 @@ namespace AdeeboMeter
         // on the folded chip while all is quiet. Drawn with a few lines - no pictures, nothing loaded.
         public static string BuddyMood(Snap s)
         {
+            // a reaction first (a tool run, an outage starting or ending...) - never on a replayed minute
+            string re = s != null && !(s.Chip ?? "").StartsWith("⏪", StringComparison.Ordinal) ? BuddyReact.Now(s.Level) : null;
+            return re ?? BaseMood(s);
+        }
+        public static string BaseMood(Snap s)
+        {
             int worst = -1, lv = 0; for (int i = 0; i < 5 && i < s.Path.Length; i++) if (s.Path[i] >= 1 && s.Path[i] <= 2 && s.Path[i] > lv) { lv = s.Path[i]; worst = i; }
             if (lv == 0) return "smug"; if (lv == 1) return worst == 0 ? "sweaty" : "worried";
             return worst == 0 ? "sweaty" : worst == 1 ? "dizzy" : "betrayed";
@@ -498,11 +504,12 @@ namespace AdeeboMeter
         // forFile: a picture that gets saved or shared - never the surprise face or the hour mark (they're on-screen moments)
         public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep, bool forFile)
         {
-            string m = asleep ? "asleep" : BuddyMood(s);
-            string hm = asleep || forFile ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
-            string face = !forFile && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
-            if (!forFile) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment (12 s) or the weather (2.5 min) wakes the folded chip too
-            if (face == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
+            string re = asleep || forFile || s == null || (s.Chip ?? "").StartsWith("⏪", StringComparison.Ordinal) ? null : BuddyReact.Now(s.Level);
+            string m = asleep ? "asleep" : re ?? BaseMood(s);
+            string hm = asleep || forFile || re != null ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
+            string face = !forFile && re == null && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
+            if (!forFile && re == null) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment (12 s) or the weather (2.5 min) wakes the folded chip too
+            if (face == null && re == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a reaction is always the drawn round face   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
             var em = face != null ? Emoji(face) : null;
             if (em != null)
             {
@@ -512,10 +519,13 @@ namespace AdeeboMeter
                 return;
             }
             if (m == "smile") m = "smug";
-            Color body = m == "betrayed" || m == "dizzy" ? Theme.LvSoft(2) : m == "worried" || m == "sweaty" ? Theme.LvSoft(1) : Theme.LvSoft(0);
+            // the colour says how things are: red family for trouble, amber for a worry, grey for no answer / asleep, green otherwise
+            bool redF = m == "betrayed" || m == "dizzy" || m == "tears" || m == "shout" || m == "angry" || m == "frustrated" || m == "gloom" || m == "sad";
+            bool ambF = m == "worried" || m == "sweaty"; bool greyF = m == "speechless";
+            Color body = redF ? Theme.LvSoft(2) : ambF ? Theme.LvSoft(1) : greyF ? Theme.Soft : Theme.LvSoft(0);
             Color ink = Theme.Dark ? Color.FromArgb(230, 235, 240) : Color.FromArgb(40, 48, 60);
             using (var b = new SolidBrush(body)) g.FillEllipse(b, r);
-            using (var p = new Pen(m == "betrayed" || m == "dizzy" ? Theme.Red : m == "worried" || m == "sweaty" ? Theme.Amber : Theme.Green, Math.Max(1f, r.Width / 16))) g.DrawEllipse(p, r);
+            using (var p = new Pen(redF ? Theme.Red : ambF ? Theme.Amber : greyF ? Theme.Muted : Theme.Green, Math.Max(1f, r.Width / 16))) g.DrawEllipse(p, r);
             float u = r.Width / 20f, cx = r.X + r.Width / 2, ey = r.Y + 8 * u, ex = 4 * u;
             using (var p = new Pen(ink, Math.Max(1f, 1.4f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
             using (var b = new SolidBrush(ink))
@@ -547,6 +557,47 @@ namespace AdeeboMeter
                         foreach (var dx in new[] { -ex, ex }) { g.DrawLine(p, cx + dx - 1.5f * u, ey - 1.5f * u, cx + dx + 1.5f * u, ey + 1.5f * u); g.DrawLine(p, cx + dx - 1.5f * u, ey + 1.5f * u, cx + dx + 1.5f * u, ey - 1.5f * u); }
                         g.DrawEllipse(p, cx - 1.5f * u, r.Y + 12.5f * u, 3 * u, 3 * u);
                         break;
+                    // ---- 21 Nov: the reactions (BuddyReact) - still the round face, small marks around it
+                    case "happy":
+                    case "sparkle":
+                    case "love":
+                    case "blush":
+                        g.DrawArc(p, cx - ex - 1.6f * u, ey - 0.6f * u, 3.2f * u, 2.6f * u, 200, 140); g.DrawArc(p, cx + ex - 1.6f * u, ey - 0.6f * u, 3.2f * u, 2.6f * u, 200, 140);   // ^ ^
+                        g.DrawArc(p, cx - 4 * u, r.Y + 9.5f * u, 8 * u, 5.5f * u, 20, 140);   // a wide smile
+                        if (m == "blush") using (var cb = new SolidBrush(Color.FromArgb(120, 236, 112, 150))) { g.FillEllipse(cb, cx - ex - 2.6f * u, ey + 2 * u, 3 * u, 1.8f * u); g.FillEllipse(cb, cx + ex - 0.4f * u, ey + 2 * u, 3 * u, 1.8f * u); }
+                        if (m == "sparkle") Star(g, r.Right - 2.5f * u, r.Y + 2.5f * u, 2.6f * u, Color.FromArgb(239, 159, 39));
+                        if (m == "love") Heart(g, r.Right - 3 * u, r.Y + 1.5f * u, 3.2f * u, Color.FromArgb(212, 83, 126));
+                        break;
+                    case "sad":
+                    case "tears":
+                        g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
+                        g.DrawArc(p, cx - 3 * u, r.Y + 13.5f * u, 6 * u, 4 * u, 200, 140);   // a frown
+                        if (m == "tears") using (var tp = new Pen(Color.FromArgb(90, 160, 230), Math.Max(1f, 1.2f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+                            { g.DrawLine(tp, cx - ex, ey + 2.2f * u, cx - ex, ey + 6.5f * u); g.DrawLine(tp, cx + ex, ey + 2.2f * u, cx + ex, ey + 6.5f * u); }
+                        break;
+                    case "gloom":
+                        g.DrawLine(p, cx - ex - 1.6f * u, ey + 0.5f * u, cx - ex + 1.6f * u, ey + 0.5f * u); g.DrawLine(p, cx + ex - 1.6f * u, ey + 0.5f * u, cx + ex + 1.6f * u, ey + 0.5f * u);   // heavy lids
+                        g.DrawLine(p, cx - 2.5f * u, r.Y + 14 * u, cx + 2.5f * u, r.Y + 14 * u);
+                        using (var gp = new Pen(Color.FromArgb(127, 119, 221), Math.Max(1f, 0.9f * u)) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash })
+                            for (int i = 0; i < 3; i++) g.DrawLine(gp, cx - 3 * u + i * 3 * u, r.Y - 3.5f * u, cx - 3 * u + i * 3 * u, r.Y + 0.5f * u);   // the cloud of gloom
+                        break;
+                    case "angry":
+                    case "shout":
+                        g.DrawLine(p, cx - ex - 2 * u, ey - 3.6f * u, cx - ex + 1.6f * u, ey - 2.4f * u); g.DrawLine(p, cx + ex + 2 * u, ey - 3.6f * u, cx + ex - 1.6f * u, ey - 2.4f * u);   // brows down
+                        g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
+                        if (m == "shout") g.FillEllipse(b, cx - 2.2f * u, r.Y + 12 * u, 4.4f * u, 4 * u); else g.DrawLine(p, cx - 3 * u, r.Y + 14 * u, cx + 3 * u, r.Y + 14 * u);
+                        using (var ap = new Pen(Color.FromArgb(226, 75, 74), Math.Max(1f, 1.1f * u)))   // the anger mark
+                        { float ax = r.Right - 3 * u, ay = r.Y + 2 * u; g.DrawArc(ap, ax - 2 * u, ay - 2 * u, 2 * u, 2 * u, 0, 90); g.DrawArc(ap, ax, ay - 2 * u, 2 * u, 2 * u, 90, 90); g.DrawArc(ap, ax - 2 * u, ay, 2 * u, 2 * u, 270, 90); g.DrawArc(ap, ax, ay, 2 * u, 2 * u, 180, 90); }
+                        break;
+                    case "frustrated":
+                        foreach (var dx in new[] { -ex, ex }) { float sx = dx < 0 ? 1 : -1; g.DrawLine(p, cx + dx - 1.4f * u * sx, ey - 1.4f * u, cx + dx + 1.4f * u * sx, ey); g.DrawLine(p, cx + dx + 1.4f * u * sx, ey, cx + dx - 1.4f * u * sx, ey + 1.4f * u); }   // > <
+                        g.DrawLines(p, new[] { new PointF(cx - 3.5f * u, r.Y + 14 * u), new PointF(cx - 1.75f * u, r.Y + 13 * u), new PointF(cx, r.Y + 14 * u), new PointF(cx + 1.75f * u, r.Y + 13 * u), new PointF(cx + 3.5f * u, r.Y + 14 * u) });
+                        break;
+                    case "speechless":
+                        g.FillEllipse(b, cx - ex - 0.9f * u, ey - 0.6f * u, 1.8f * u, 1.8f * u); g.FillEllipse(b, cx + ex - 0.9f * u, ey - 0.6f * u, 1.8f * u, 1.8f * u);
+                        g.DrawLine(p, cx - 2 * u, r.Y + 14 * u, cx + 2 * u, r.Y + 14 * u);
+                        using (var db = new SolidBrush(Color.FromArgb(127, 119, 221))) for (int i = 0; i < 3; i++) g.FillEllipse(db, r.Right - 6 * u + i * 2.4f * u, r.Y - 0.5f * u, 1.6f * u, 1.6f * u);   // ...
+                        break;
                     default:   // betrayed: wide eyes, a wobbly frown, one tear (a hat, if any, is drawn after the switch)
                         g.FillEllipse(b, cx - ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u); g.FillEllipse(b, cx + ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u);   // big wet eyes: dark, with a shine
                         using (var hb = new SolidBrush(Color.White)) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
@@ -556,6 +607,22 @@ namespace AdeeboMeter
                 }
             }
             if (!asleep && r.Width >= 22 * S) { string h = HatNow(); if (h != "") Hat(g, r, h); }
+        }
+        static void Star(Graphics g, float x, float y, float rad, Color c)
+        {
+            var pts = new PointF[8]; for (int i = 0; i < 8; i++) { double a = Math.PI / 4 * i - Math.PI / 2; float rr = i % 2 == 0 ? rad : rad * 0.35f; pts[i] = new PointF(x + (float)Math.Cos(a) * rr, y + (float)Math.Sin(a) * rr); }
+            using (var b = new SolidBrush(c)) g.FillPolygon(b, pts);
+        }
+        static void Heart(Graphics g, float x, float y, float w, Color c)
+        {
+            using (var gp = new System.Drawing.Drawing2D.GraphicsPath())
+            {
+                gp.AddBezier(x, y + w * 0.3f, x, y - w * 0.1f, x - w * 0.5f, y - w * 0.1f, x - w * 0.5f, y + w * 0.3f);
+                gp.AddBezier(x - w * 0.5f, y + w * 0.3f, x - w * 0.5f, y + w * 0.6f, x, y + w * 0.8f, x, y + w);
+                gp.AddBezier(x, y + w, x, y + w * 0.8f, x + w * 0.5f, y + w * 0.6f, x + w * 0.5f, y + w * 0.3f);
+                gp.AddBezier(x + w * 0.5f, y + w * 0.3f, x + w * 0.5f, y - w * 0.1f, x, y - w * 0.1f, x, y + w * 0.3f);
+                using (var b = new SolidBrush(c)) g.FillPath(b, gp);
+            }
         }
         public static Bitmap Chip(Snap s, double dwell)
         {
