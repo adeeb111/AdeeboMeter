@@ -79,7 +79,7 @@ namespace AdeeboMeter
         {
             if (tbBusy) return;
             Cfg.TbView = v; Cfg.Save(); ApplyTbView();
-            tbSearch.Box.Text = ""; ShowQuestions(EveryTool ? tbQ : "");
+            tbSearch.Box.Text = ""; ShowQuestions(EveryTool ? "*" : "");
         }
         void ShowQuestions(string q)
         {

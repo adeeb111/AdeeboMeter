@@ -50,7 +50,9 @@ namespace AdeeboMeter
             bool rail = w > 860 * S; float rw = rail ? 250 * S : 0, cx = x + (rail ? rw + 24 * S : 0), cw = w - (rail ? rw + 24 * S : 0);
             float top = y + 6 * S; railEnd = 0;
             // ---- the questions: a rail, or a chip row on a narrow window
-            var items = new List<string[]> { new[] { "", "★ " + L.T("Pinned"), StarterPins.Union(MyPins()).Count().ToString(CultureInfo.CurrentCulture) } };   // bug-hunt L-152: a starter you also pinned counts once
+            if (!idxSeen) { idxSeen = true; if (tbQ == "") tbQ = "*"; }   // the first look is every tool (22 Nov)
+            int every = Tools2().Count(t => !SnmpView(t.Id) || t.Id == "snmp");
+            var items = new List<string[]> { new[] { "*", L.T("All tools"), every.ToString(CultureInfo.CurrentCulture) }, new[] { "", "★ " + L.T("Pinned"), StarterPins.Union(MyPins()).Count().ToString(CultureInfo.CurrentCulture) } };   // bug-hunt L-152: a starter you also pinned counts once
             foreach (var qd in Questions) items.Add(new[] { qd[0], L.T(qd[1]), ToolsOf(qd[0]).Count(t => !SnmpView(t.Id) || t.Id == "snmp").ToString(CultureInfo.CurrentCulture) });
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -60,7 +62,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < items.Count; i++)
                     {
                         var it = items[i]; bool on = tbFilter == "" && tbQ == it[0];
-                        if (i == 1) { g.DrawString(L.T("BY QUESTION"), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
+                        if (i == 2) { g.DrawString(L.T("BY QUESTION"), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
                         var rr = new RectangleF(x, ry, rw, 38 * S);
                         if (on) { Theme.Fill(g, rr, 10 * S, Kit.Soft(it[0] == "" ? "mine" : QAccent(it[0]))); using (var ab = new SolidBrush(Kit.Accent(it[0] == "" ? "mine" : QAccent(it[0])))) g.FillRectangle(ab, rr.X, rr.Y + 6 * S, 3 * S, rr.Height - 12 * S); }
                         using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
@@ -95,6 +97,11 @@ namespace AdeeboMeter
                     title = rows.Count == 0 ? L.T("Nothing matches") + " “" + tbFilter + "”" : allHits.Count + " " + L.T(allHits.Count == 1 ? "tool matches" : "tools match") + " “" + tbFilter + "”" + (allHits.Count > rows.Count ? " · " + L.T("the first") + " " + rows.Count + " " + L.T("shown") : "");
                     count = rows.Count == 0 ? L.T("try a shorter word, like dns or wifi") : L.T("Enter opens the first");
                 }
+                else if (tbQ == "*")
+                {
+                    rows = Tools2().Where(t => !SnmpView(t.Id) || t.Id == "snmp").ToList();
+                    title = L.T("All tools"); count = rows.Count + " " + L.T("tools") + " · " + L.T("hover one for what it does");
+                }
                 else if (tbQ == "" || Questions.All(z => z[0] != tbQ))
                 {
                     tbQ = ""; py = PaintPinned(g, cx, py, cw); Need(tbCanvas, Math.Max(railEnd, py + 30 * S)); return;
@@ -109,7 +116,7 @@ namespace AdeeboMeter
                 py += tsz.Height + 12 * S;
                 if (tbFilter == "") py = PinRow(g, cx, py, cw);
                 // grouped: by the tool's group inside a question (by question in a search)
-                var groups = tbFilter != "" ? rows.GroupBy(t => { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); return qn != null ? L.T(qn[1]) : GroupName(t.Group); }).ToList()
+                var groups = tbFilter != "" || tbQ == "*" ? rows.GroupBy(t => { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); return qn != null ? L.T(qn[1]) : GroupName(t.Group); }).ToList()
                                             : rows.GroupBy(t => GroupName(t.Group)).ToList();
                 foreach (var grp in groups)
                 {
@@ -122,7 +129,7 @@ namespace AdeeboMeter
                 Need(tbCanvas, Math.Max(railEnd, py + 30 * S));
             }
         }
-        float railEnd;
+        float railEnd; bool idxSeen;
 
         // one tool: name + what it answers (two lines before a cut), its state, a pin, Open; a family shows its views
         float IndexRow(Graphics g, Tool t, float x, float y, float w)
