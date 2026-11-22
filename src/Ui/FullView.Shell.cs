@@ -71,7 +71,7 @@ namespace AdeeboMeter
         void ShKey(object s, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; string line = shIn.Text; shIn.Clear(); ShRunLine(line); return; }
-            if (e.KeyCode == Keys.C && e.Control && shIn.SelectionLength == 0) { e.SuppressKeyPress = true; if (shRun != null) { shRun.Stop = true; WL("^C - stopping...", ShAmber); } else WL("^C", ShDim); ShEnd(); return; }
+            if (e.KeyCode == Keys.C && e.Control && shIn.SelectionLength == 0) { e.SuppressKeyPress = true; if (shQueue.Count > 0) { shQueue.Clear(); WL("(script stopped)", ShAmber); } if (shRun != null) { shRun.Stop = true; WL("^C - stopping...", ShAmber); } else WL("^C", ShDim); ShEnd(); return; }
             if (e.KeyCode == Keys.L && e.Control) { e.SuppressKeyPress = true; shOut.Clear(); return; }
             if (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down)
             {
@@ -134,6 +134,8 @@ namespace AdeeboMeter
                     case "copy": if (shLast == "") WL("nothing to copy yet - run a tool first", ShAmber); else { try { Clipboard.SetText(shLast); WL("copied the last result", ShGreen); } catch (Exception ce) { if (!(ce is System.Runtime.InteropServices.ExternalException || ce is System.Threading.ThreadStateException)) throw; WL("couldn't copy - another app holds the clipboard", ShRed); } } break;
                     case "save": ShSave(); break;
                     case "exit": case "quit": tab = "overview"; ShowTab(); SyncNav(); break;
+                    case "source": if (args.Count == 0) WL("usage: source <file> - runs its lines one by one, then writes <file>.out.txt", ShAmber); else ShSource(string.Join(" ", args)); break;
+                    case "alltools": ShAllTools(); break;
                     default:
                         var t = Tools2().FirstOrDefault(x => string.Equals(x.Id, cmd, StringComparison.OrdinalIgnoreCase));
                         if (t != null) ShTool(t, args, yes);
@@ -243,6 +245,41 @@ namespace AdeeboMeter
             if (shLast == "") { WL("nothing to save yet - run a tool first", ShAmber); return; }
             string dir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), f = Path.Combine(dir, "AdeeboShell-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt");
             try { File.WriteAllText(f, shLast); WL("saved: " + f, ShGreen); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; WL("couldn't save: " + e.Message, ShRed); }
+        }
+
+        // ---------- scripts (testing): "source file" runs its lines one after another - each waits for the one before, a tool
+        // gets 30 s (then it's stopped) - and writes everything shown to file.out.txt, ending "== DONE"; "alltools" queues every
+        // tool with its example inputs (documentation addresses become your router), the ones that need you left out
+        readonly Queue<string> shQueue = new Queue<string>(); string shOutFile; Timer shQTimer; DateTime shStepAt;
+        void ShSource(string file)
+        {
+            file = file.Trim().Trim('"'); if (!File.Exists(file)) { WL("source: no such file: " + file, ShRed); return; }
+            foreach (var l in File.ReadAllLines(file)) { var t = l.Trim(); if (t != "" && !t.StartsWith("#", StringComparison.Ordinal)) shQueue.Enqueue(t); }
+            shOutFile = file + ".out.txt"; WL("source: " + shQueue.Count + " lines queued", ShCyan); ShPump();
+        }
+        static readonly HashSet<string> ShSkip = new HashSet<string> { "newkey", "csrmake", "selfsigned", "encrypt", "decrypt", "recipients", "friend", "screentest", "keytest", "soundtest", "remote", "radiuslab", "wol", "keys", "mtu" };
+        void ShAllTools()
+        {
+            string gw; lock (M.L) gw = M.Gateway ?? "";
+            foreach (var t in Tools2())
+            {
+                if (ShSkip.Contains(t.Id)) continue; var ex = Examples.Get(t.Id); var inp = ex != null ? ex.In : new string[0];
+                var words = inp.Select(v => System.Text.RegularExpressions.Regex.Replace(v ?? "", @"\b(192\.0\.2|198\.51\.100|203\.0\.113)\.\d{1,3}\b", gw == "" ? "$0" : gw)).Select(v => v == "" ? "-" : "\"" + v.Replace("\"", "") + "\"");
+                shQueue.Enqueue((t.Id + " " + string.Join(" ", words)).Trim() + (LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep" ? " --yes" : ""));
+            }
+            WL("alltools: " + shQueue.Count + " commands queued (Ctrl+C stops the current one)", ShCyan); if (shOutFile == null) shOutFile = Path.Combine(Program.WriteDir, "alltools.out.txt"); ShPump();
+        }
+        void ShPump()
+        {
+            if (shQTimer == null) { shQTimer = new Timer { Interval = 250 }; shQTimer.Tick += delegate { ShPump(); }; }
+            if (shRun != null) { if ((DateTime.UtcNow - shStepAt).TotalSeconds > 30 && !shRun.Stop) { shRun.Stop = true; WL("(30 s - stopped by the script)", ShAmber); } if (!shQTimer.Enabled) shQTimer.Start(); return; }
+            if (shQueue.Count == 0)
+            {
+                shQTimer.Stop();
+                if (shOutFile != null) { try { File.WriteAllText(shOutFile, shOut.Text + "\n== DONE " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "\n"); WL("transcript: " + shOutFile, ShGreen); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; WL("couldn't write the transcript: " + e.Message, ShRed); } shOutFile = null; ShEnd(); }
+                return;
+            }
+            shStepAt = DateTime.UtcNow; ShRunLine(shQueue.Dequeue()); if (!shQTimer.Enabled) shQTimer.Start();
         }
 
         // ---------- a tool: the same code the Toolbox runs, off the window thread
