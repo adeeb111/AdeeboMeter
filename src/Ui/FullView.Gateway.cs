@@ -34,7 +34,7 @@ namespace AdeeboMeter
         static int LvMs(double v, double amber, double red) { return double.IsNaN(v) ? 2 : v > red ? 2 : v > amber ? 1 : 0; }
         float PathStrip(Graphics g, float x, float y, float w)
         {
-            string kind; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; }
+            string kind, link; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; link = M.LinkSpeed ?? ""; }
             bool wifi = kind == "Wi-Fi", cell = kind == "Cellular" || kind == "Mobile";
             double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), dns = M.Dns.Avg(6);
             var stops = new[] {
@@ -43,6 +43,9 @@ namespace AdeeboMeter
                 new object[] { "cpe", L.T("Router"), LvMs(gw, 15, 50) },
                 new object[] { "internet", L.T("Internet"), LvMs(net, 80, 150) },
                 new object[] { "dns", L.T("Names"), double.IsNaN(dns) ? 3 : dns > 300 ? 1 : 0 } };
+            Func<double, string> msT = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+            double cpu = snap.Cpu;
+            var vals = new[] { double.IsNaN(cpu) ? "" : "CPU " + (Math.Round(cpu / 10) * 10).ToString("0", CultureInfo.CurrentCulture) + "%", link, msT(gw), msT(net), double.IsNaN(dns) ? "" : msT(dns) };
             float ic = 34 * S, gap = Math.Min(110 * S, (w - stops.Length * ic) / (stops.Length - 1));
             for (int i = 0; i < stops.Length; i++)
             {
@@ -57,8 +60,12 @@ namespace AdeeboMeter
                 Glyphs.Draw(g, (string)stops[i][0], new RectangleF(ix, y, ic, ic), col, 1.8f);
                 using (var b = new SolidBrush(Theme.Sub)) using (var cf = new StringFormat { Alignment = StringAlignment.Center })
                     g.DrawString((string)stops[i][1], Draw.fSmall, b, new RectangleF(ix - 30 * S, y + ic + 2 * S, ic + 60 * S, 18 * S), cf);
+                // the detail under each stop (Adeeb, 22 Nov: "All quiet ... with more details")
+                string d = vals[i]; if (d == "") continue;
+                using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Muted)) using (var cf = new StringFormat { Alignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                    g.DrawString(d, Draw.fTiny, b, new RectangleF(ix - 40 * S, y + ic + 21 * S, ic + 80 * S, 17 * S), cf);
             }
-            return ic + 24 * S;
+            return ic + 42 * S;
         }
 
         // ---------- watch warnings: things AdeeboMeter keeps an eye on for you, not only what happened in the last 2 hours
@@ -172,7 +179,7 @@ namespace AdeeboMeter
         // ---------- the NOW line on Gamer, Streaming and Markets: your end of the path in one row, Home one click away
         float NowLine(Graphics g, Control c, float x, float y, float w)
         {
-            string kind; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; }
+            string kind, link; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; link = M.LinkSpeed ?? ""; }
             double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), cpu = M.Cpu.Avg(3);
             Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             var items = new List<object[]> {

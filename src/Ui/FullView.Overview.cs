@@ -88,7 +88,7 @@ namespace AdeeboMeter
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
             int sig; lock (M.L) sig = M.WifiSignal;
             // what moves every second (the four numbers, the path) redraws only its own spots; anything else redraws the page
-            string fast = r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + Draw.Pair(M.Down.Last, M.Up.Last) + "|" + sig;
+            string lsp; lock (M.L) lsp = M.LinkSpeed; string fast = r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + Draw.Pair(M.Down.Last, M.Up.Last) + "|" + sig + "|" + lsp + "|" + r(s.Cpu / 10);
             string k = s.Headline + "|" + s.Level + "|" + weather + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != ovKey) { ovKey = k; ovFast = fast; overviewCanvas.Invalidate(); }
             else if (fast != ovFast) { ovFast = fast; if (!RedrawSpots(overviewCanvas, "ov.now", "ov.path")) overviewCanvas.Invalidate(); }
@@ -118,17 +118,17 @@ namespace AdeeboMeter
         // the symptoms people notice: { where it goes, what they see, a few words more }
         static readonly string[][] Symptoms = {
             new[] { "guide:whats", "I have no internet", "nothing opens - works even when you can't google it" },
-            new[] { "guide:slow", "My internet is slow", "pages take ages, videos buffer" },
-            new[] { "guide:whats", "Wi-Fi says \"No internet\"", "connected, but nothing works" },
-            new[] { "guide:drops", "Internet stops and starts", "works, then doesn't, then works" },
-            new[] { "guide:slow", "Videos keep buffering", "YouTube, Netflix stop and spin" },
+            new[] { "case:slow", "My internet is slow", "pages take ages" },
+            new[] { "case:drops", "Internet stops and starts", "works, then doesn't, then works" },
+            new[] { "case:buffer", "Videos keep buffering", "YouTube, Netflix stop and spin" },
             new[] { "link", "Can't find my Wi-Fi", "the network isn't in the list" },
-            new[] { "guide:calls", "Calls are choppy", "Teams, Zoom, WhatsApp cut out" },
-            new[] { "guide:pc", "Computer feels slow", "everything takes a long time" },
+            new[] { "case:site", "Only one website is broken", "everything else works" },
+            new[] { "case:calls", "Calls are choppy", "Teams, Zoom, WhatsApp cut out" },
+            new[] { "case:game", "My game lags", "ping spikes, rubber-banding" },
+            new[] { "case:pc", "Computer feels slow", "everything takes a long time" },
             new[] { "guide:pc", "An app freezes", "it stops responding" },
             new[] { "guide:pc", "Fan is loud or it's hot", "something is working hard" },
-            new[] { "changes", "It was fine yesterday", "what changed since then?" },
-            new[] { "guide:site", "Only one website is broken", "everything else works" } };
+            new[] { "changes", "It was fine yesterday", "what changed since then?" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
         // Whole words only ("work" never matches "working"); a word of 6+ letters also matches what starts with it
         // ("disconnect" -> "disconnecting"). What's wrong (a symptom) beats where it happens ("at work", "work laptop"): the
@@ -186,6 +186,7 @@ namespace AdeeboMeter
         }
         void FixGo(string go)
         {
+            if (go.StartsWith("case:", StringComparison.Ordinal)) { OpenCase(go.Substring(5), "home", "", null, null); return; }
             if (go.StartsWith("guide:", StringComparison.Ordinal)) GoGuide(go.Substring(6));
             else if (go == "gamer" || go == "link" || go == "changes") { tab = go; ShowTab(); }
             else if (go.StartsWith("tool:", StringComparison.Ordinal)) { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(go.Substring(5)); }
@@ -235,19 +236,20 @@ namespace AdeeboMeter
                     Act(overviewCanvas, nr, delegate { SetLayout("classic"); });
                     y += cr.Height + 14 * S;
                 }
-                y = PaintFrontDoor(g, x, y, w); OvLap("front");   // the front door: "What's going on?" (FullView.Case.cs)
-                y = PaintCheckupCard(g, x, y, w); OvLap("checkup");
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
                 string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
                 float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)(w - 40 * S)).Height + 4 * S : 0;
-                float ph = 58 * S;   // the path as big icons (FullView.Gateway.cs)
+                float ph = 76 * S;   // the path as big icons, a detail under each (FullView.Gateway.cs)
                 var vr = new RectangleF(x, y, w, hh + 30 * S + wh + ph);
                 Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));
                 PathStrip(g, x + 20 * S, y + 22 * S + hh + wh, w - 40 * S); LiveSpot(overviewCanvas, "ov.path", new RectangleF(x + 10 * S, y + 18 * S + hh + wh, w - 20 * S, ph));
                 using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
                 if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh)); Hint(overviewCanvas, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh), "ov.WEATHER"); }
                 y += vr.Height + 18 * S; OvLap("verdict");
+                // then the do-everything button, then the front door (Adeeb, 22 Nov: verdict on top, Full checkup, then "What's going on?")
+                y = PaintCheckupCard(g, x, y, w); OvLap("checkup");
+                y = PaintFrontDoor(g, x, y, w); OvLap("front");   // the problem tiles (FullView.Case.cs)
 
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
                 if (Cfg.Mode == "")
@@ -326,68 +328,6 @@ namespace AdeeboMeter
                 }
                 y += 10 * S;
 
-                // Fix a problem. First "Not sure what's wrong?" - big, in everyday words: one button that checks everything, a box to
-                // describe it in your own words, and the symptoms people actually notice. Then the named problems, smaller.
-                {
-                    float cx0 = x + 20 * S, cw = w - 40 * S, cy = y + 20 * S;
-                    var card = new RectangleF(x, y, w, 0);
-                    int sc = Math.Max(1, Math.Min(3, (int)(cw / (240 * S)))); int sr = (Symptoms.Length + sc - 1) / sc; float sbh = 68 * S, sbw = (cw - (sc - 1) * 10 * S) / sc;
-                    card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
-                    Theme.Fill(g, card, 16 * S, Theme.Card); Kit.Frame(g, card);
-                    // the big button, right
-                    string big = L.T("Find what's wrong");   /* the quick network walk; "Full checkup" at the top checks everything */ var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
-                    Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
-                    Act(overviewCanvas, bbr, delegate { GoGuide("whats"); });
-                    float tw0 = bbr.X - cx0 - 16 * S;
-                    g.DrawString(L.T("Not sure what's wrong?"), Draw.fTitle, ink, new RectangleF(cx0, cy, tw0, 30 * S));
-                    g.DrawString(L.T("That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it."), Draw.fBody, muted, new RectangleF(cx0, cy + 32 * S, tw0, 40 * S));
-                    cy += 62 * S;
-                    // the describe-it box is a real text box, kept in place under the heading
-                    EnsureFixBox();
-                    var want = new Point((int)cx0, (int)(cy + overviewCanvas.AutoScrollPosition.Y)); int wantW = (int)(cw - 120 * S);
-                    if (fixBox.Location != want) fixBox.Location = want; if (fixBox.Width != wantW) fixBox.Width = wantW;
-                    var fb = new RectangleF(cx0 + wantW + 10 * S, cy, 110 * S, 40 * S);
-                    Theme.Fill(g, fb, 10 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T("Find it"), Draw.fBodyB, tb, fb, c);
-                    Act(overviewCanvas, fb, delegate { FixFind(); });
-                    cy += 56 * S;
-                    if (fixHint != "")
-                    {
-                        var hr = new RectangleF(cx0, cy - 6 * S, cw, 34 * S); Theme.Fill(g, hr, 8 * S, Theme.BlueSoft);
-                        using (var tb = new SolidBrush(Theme.Ink)) using (var nf = new StringFormat { LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(fixHint, Draw.fBody, tb, new RectangleF(hr.X + 12 * S, hr.Y, hr.Width - 24 * S, hr.Height), nf);
-                        if (fixGo != null) { string go = fixGo; Act(overviewCanvas, hr, delegate { FixGo(go); }); }
-                        cy += 40 * S;
-                    }
-                    g.DrawString(L.T("OR TAP WHAT YOU SEE"), Draw.fTiny, muted, cx0, cy); cy += 22 * S;
-                    for (int i = 0; i < Symptoms.Length; i++)
-                    {
-                        var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
-                        if (symRect == null || symRect.Length != Symptoms.Length) symRect = new RectangleF[Symptoms.Length];
-                        symRect[i] = br; DrawSymptom(g, i, br, i < symHot.Length ? symHot[i] : 0);
-                        string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
-                    }
-                    y = card.Bottom + 14 * S;
-
-                    // I know what it is
-                    g.DrawString(L.T("I KNOW WHAT IT IS"), Draw.fTiny, muted, x, y); y += 22 * S;
-                    float kx = x; var probs = FixProblems;
-                    for (int i = 1; i < probs.Length; i++)
-                    {
-                        var ks = g.MeasureString(L.T(probs[i][1]), Draw.fBody); var kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S);
-                        if (kr.Right > x + w && kx > x) { kx = x; y += 42 * S; kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S); }
-                        Kit.Box(g, kr, kr.Height / 2); g.DrawString(L.T(probs[i][1]), Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
-                        string go = probs[i][0]; Act(overviewCanvas, kr, delegate { FixGo(go); });
-                        if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, kr, "guide." + go.Substring(6));
-                        kx += kr.Width + 8 * S;
-                    }
-                    using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
-                    {
-                        string all = "See all problems  >"; var asz = g.MeasureString(all, Draw.fBodyB);
-                        if (kx + asz.Width > x + w) { kx = x; y += 42 * S; }
-                        var ar = new RectangleF(kx + 6 * S, y + (34 * S - asz.Height) / 2, asz.Width, asz.Height); g.DrawString(all, Draw.fBodyB, bl, ar.X, ar.Y);
-                        Act(overviewCanvas, ar, delegate { GoGuide(null); });
-                    }
-                    y += 52 * S;
-                }
 
                 // a Windows update that lines up with a lasting slowdown (only when strong and still there)
                 string ub = UpdateBreak.Strong; OvLap("fix");

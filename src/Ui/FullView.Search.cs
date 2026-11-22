@@ -71,6 +71,7 @@ namespace AdeeboMeter
             {
                 var l = toolHits(q); var sym = Cases.Match(q);
                 if (sym != null) { string sid = sym[0]; l.Insert(0, new PalItem { Group = L.T("Investigate"), Title = L.T("Investigate") + ": " + L.T(sym[1]), Sub = L.T("Runs the checks that fit, then a report you can keep"), Icon = "question", Acc = "home", Pin = "", Words = sym[3], Go = delegate { OpenCase(sid, "search", "", null, null); } }); }
+                else { var fm = FixMatch(q); if (fm != null) { string fg = fm[1]; l.Insert(0, new PalItem { Group = L.T("Investigate"), Title = L.T("Sounds like") + " " + L.T(fm[2]), Sub = L.T("I'll check") + " " + L.T(fm[3]), Icon = "question", Acc = "home", Pin = "", Words = q, Go = delegate { FixGo(fg); } }); } }   // the words Home's old describe box knew ("laptop is hot", "disk is full")
                 return l;
             };
             using (var pal = new Palette(items, hits, vocab, PinToMine))

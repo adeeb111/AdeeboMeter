@@ -47,20 +47,28 @@ namespace AdeeboMeter
         }
 
         // ---------- the front door on Home: "What's going on?" - one tap per common problem, plus your recent cases
-        static readonly string[] HomeChips = { "calls", "game", "buffer", "slow", "drops", "site", "pc" };
         float PaintFrontDoor(Graphics g, float x, float y, float w)
         {
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHAT'S GOING ON?  ·  TAP IT, OR TYPE IT IN THE SEARCH BOX (CTRL+K)"), Draw.fTiny, mb, x, y);
-            y += 22 * S; float cx = x;
-            foreach (var id in HomeChips)
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHAT'S GOING ON?  ·  TAP WHAT YOU SEE"), Draw.fTiny, mb, x, y);
+            y += 24 * S;
+            int sc = Math.Max(1, Math.Min(3, (int)(w / (240 * S)))); float sbh = 68 * S, sbw = (w - (sc - 1) * 10 * S) / sc;
+            if (symRect == null || symRect.Length != Symptoms.Length) symRect = new RectangleF[Symptoms.Length];
+            for (int i = 0; i < Symptoms.Length; i++)
             {
-                string t = L.T(Cases.Of(id)[1]); var ts = g.MeasureString(t, Draw.fBody); var r = new RectangleF(cx, y, ts.Width + 26 * S, 32 * S);
-                if (r.Right > x + w && cx > x) { cx = x; y += 40 * S; r = new RectangleF(cx, y, r.Width, r.Height); }
-                Theme.Fill(g, r, 16 * S, Kit.Soft("home")); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fBody, tb, r.X + 13 * S, r.Y + (32 * S - ts.Height) / 2);
-                string sid = id; Act(overviewCanvas, r, delegate { OpenCase(sid, "home", "", null, null); });
-                cx = r.Right + 8 * S;
+                var br = new RectangleF(x + (i % sc) * (sbw + 10 * S), y + (i / sc) * (sbh + 10 * S), sbw, sbh);
+                symRect[i] = br; DrawSymptom(g, i, br, i < symHot.Length ? symHot[i] : 0);
+                string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
             }
-            y += 44 * S;
+            y += ((Symptoms.Length + sc - 1) / sc) * (sbh + 10 * S) + 2 * S;
+            // not in the list: search knows the words (Ctrl+K), and every problem is one click away
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Something else? Type it in the search box (Ctrl+K)."), Draw.fSmall, mb, x, y + 2 * S);
+            using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+            {
+                string all = L.T("See all problems") + "  ›"; var asz = g.MeasureString(all, Draw.fBodyB);
+                var ar = new RectangleF(x + w - asz.Width, y, asz.Width, asz.Height); g.DrawString(all, Draw.fBodyB, bl, ar.X, ar.Y);
+                Act(overviewCanvas, ar, delegate { GoGuide(null); });
+            }
+            y += 34 * S;
             var rec = Cases.Recent().Where(c => c.Run != null && c.Run.Done).Take(3).ToList();
             if (rec.Count > 0)
             {
