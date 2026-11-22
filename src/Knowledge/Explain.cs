@@ -30,7 +30,7 @@ namespace AdeeboMeter
     // Static text only. Nothing here closes, changes or uploads anything - AdeeboMeter only explains.
     static class Explain
     {
-        public sealed class Entry { public string Friendly, Cat, Tag, What, How, Why, Without; public int Close; }
+        public sealed class Entry { public string Friendly, Cat, Tag, What, How, Why, Without; public int Close; public List<string[]> Facts; }   // Facts: short label · value lines under the tag (a tool's tip: you type, takes, sends)
         // Close: 0 safe to close · 1 leave it, OK to restart if it misbehaves · 2 don't - Windows needs it · 3 managed by IT
         public static readonly string[] CloseText =
         {
@@ -105,6 +105,15 @@ namespace AdeeboMeter
                 if (g != null) g.DrawString(e.Friendly, compact ? Draw.fHead : Draw.fTitle, ink, new RectangleF(x, y, w, th + 4)); y += th + 2 * S;
                 if (!string.IsNullOrEmpty(e.Tag)) { var tg = Draw.Measure(e.Tag, Draw.fBodyB, (int)w).Height; if (g != null) g.DrawString(e.Tag, Draw.fBodyB, blue, new RectangleF(x, y, w, tg + 4)); y += tg + 8 * S; }
             }
+            if (e.Facts != null)
+                foreach (var f in e.Facts)
+                    using (var mb = new SolidBrush(Theme.Muted)) using (var sb = new SolidBrush(Theme.Sub))
+                    {
+                        float lw = 76 * S, fh = Draw.Measure(f[1], Draw.fSmall, (int)(w - lw)).Height;
+                        if (g != null) { g.DrawString(f[0], Draw.fTiny, mb, x, y + 2 * S); g.DrawString(f[1], Draw.fSmall, sb, new RectangleF(x + lw, y, w - lw, fh + 2)); }
+                        y += fh + 4 * S;
+                    }
+            if (e.Facts != null) y += 6 * S;
             bool proc = e.Close >= 0 || e.Cat != "term";
             var rows = new List<string[]>();
             if (!string.IsNullOrEmpty(e.What)) rows.Add(new[] { proc ? "WHAT IT DOES" : "WHAT IT IS", e.What });

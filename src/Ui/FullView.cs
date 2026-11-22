@@ -235,15 +235,12 @@ namespace AdeeboMeter
                 tb.Click += delegate(object s, EventArgs e) { RunTool((string)((Control)s).Tag, ((Control)s).Text); };
                 hb.Controls.Add(tb);
             }
-            // the PC checks (they used to sit in the Toolbox): one click each, the result shows here
-            var hb2 = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Card, Padding = new Padding(Sc(14), 0, Sc(8), Sc(8)), WrapContents = true };
-            hb2.Controls.Add(new Label { Text = AdeeboMeter.L.T("LOOK DEEPER"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(0, Sc(10), Sc(6), 0) });
-            foreach (var t in new[] { new[] { "pressure", "Memory, disk, heat" }, new[] { "disk", "Disk" }, new[] { "space", "Where did my space go?" }, new[] { "bg", "Background jobs" }, new[] { "crash", "Crashes and hangs" }, new[] { "leaks", "Slow leaks" }, new[] { "gpu", "Graphics per app" }, new[] { "changed", "What changed (7 days)" }, new[] { "battery", "Battery" } })
-            {
-                var tb = new PillButton(t[1], PillButton.K.Chip) { Tag = "tb:" + t[0], Margin = new Padding(0, Sc(3), Sc(8), Sc(4)) };
-                tb.Click += delegate(object s, EventArgs e) { RunTool((string)((Control)s).Tag, ((Control)s).Text); };
-                hb2.Controls.Add(tb);
-            }
+            // the PC checks (they used to sit in the Toolbox): one click each, the result shows here - mid-size tiles with icons (22 Nov)
+            deeperCanvas = new DB { Name = "deeperCanvas", Dock = DockStyle.Top, Height = Sc(180), BackColor = Theme.Card };
+            deeperCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintDeeper(e.Graphics); }; Wire(deeperCanvas);
+            deeperCanvas.MouseMove += delegate(object s, MouseEventArgs e) { DeeperHover(e.Location); }; deeperCanvas.MouseLeave += delegate { DeeperHover(new Point(-1, -1)); };
+            deeperCanvas.Resize += delegate { int h = DeeperHeight(); if (deeperCanvas.Height != h) deeperCanvas.Height = h; deeperCanvas.Invalidate(); };
+            var hb2 = deeperCanvas;
             healthCanvas = new DB { Name = "healthCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             healthCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintHealth(e.Graphics); }; Wire(healthCanvas);
             healthPage.Controls.Add(healthCanvas); healthPage.Controls.Add(hb2); healthPage.Controls.Add(hb);
@@ -927,6 +924,38 @@ namespace AdeeboMeter
                 db.Announce(say != "" ? say : "item " + (i + 1) + " of " + l.Count);
                 db.Invalidate(); return true;
             };
+            db.ArrowStep = key =>
+            {
+                var l = ActsInOrder(db); if (l.Count == 0) return false; int i; bool had = actFocus.TryGetValue(db, out i) && i >= 0 && i < l.Count;
+                int best = -1;
+                if (!had)
+                {   // nothing marked yet: the first one on screen
+                    for (int k = 0; k < l.Count; k++) if (l[k].Key.Bottom > 0 && l[k].Key.Top < db.ClientSize.Height) { best = k; break; }
+                    if (best < 0) best = 0;
+                }
+                else
+                {
+                    var cur = l[i].Key; float cx = cur.X + cur.Width / 2, cy = cur.Y + cur.Height / 2, bestScore = float.MaxValue;
+                    for (int k = 0; k < l.Count; k++)
+                    {
+                        if (k == i) continue; var r = l[k].Key; float x = r.X + r.Width / 2, y = r.Y + r.Height / 2, dx = x - cx, dy = y - cy, along, across;
+                        if (key == Keys.Right) { if (r.Left < cur.Right - 2 || dx <= 0) continue; along = dx; across = Math.Abs(dy); }
+                        else if (key == Keys.Left) { if (r.Right > cur.Left + 2 || dx >= 0) continue; along = -dx; across = Math.Abs(dy); }
+                        else if (key == Keys.Down) { if (r.Top < cur.Bottom - 2) continue; along = dy; across = Math.Abs(dx); }
+                        else { if (r.Bottom > cur.Top + 2) continue; along = -dy; across = Math.Abs(dx); }
+                        float score = along + across * 2.5f; if (score < bestScore) { bestScore = score; best = k; }
+                    }
+                    if (best < 0) return true;   // nothing further that way: stay put
+                }
+                actFocus[db] = best; var br = l[best].Key;
+                if (db.AutoScroll && (br.Top < 0 || br.Bottom > db.ClientSize.Height)) { var sp = db.AutoScrollPosition; db.AutoScrollPosition = new Point(-sp.X, Math.Max(0, (int)(-sp.Y + br.Top - db.ClientSize.Height / 3))); }
+                // the tip for the marked one, as if the mouse were there (a tool's card: what it does, you type, takes, sends)
+                List<KeyValuePair<RectangleF, string>> hh; string hk = null;
+                if (hints.TryGetValue(db, out hh)) { var c0 = new PointF(br.X + br.Width / 2, br.Y + br.Height / 2); var hit = hh.LastOrDefault(kv => kv.Key.Contains(c0)); if (hit.Value != null && TipEntry(hit.Value) != null) hk = hit.Value; }
+                tipPoint = db.PointToScreen(new Point((int)br.Left, (int)br.Bottom - (int)(18 * S))); tipKey = null; SetTipKey(hk);
+                db.Invalidate(); return true;
+            };
+            db.MouseDown += delegate { tipPoint = null; if (actFocus.Remove(db)) db.Invalidate(); };   // the mouse takes over from the keyboard
             db.Press = () => { var r = mark(); if (r.Width <= 0) return; var l = ActsInOrder(db); int i; if (actFocus.TryGetValue(db, out i) && i < l.Count) { UiActivity.Doing = "key on " + db.Name + " (" + tab + ")"; string usedKeyTab = tab; l[i].Value(); PageUsed(usedKeyTab); } };
         }
         void Wire(Control c)
@@ -934,6 +963,7 @@ namespace AdeeboMeter
             var dbc = c as DB; if (dbc != null) WireKeys(dbc);
             c.MouseMove += delegate(object s, MouseEventArgs e)
             {
+                tipPoint = null;
                 List<KeyValuePair<RectangleF, Action>> l; bool click = acts.TryGetValue(c, out l) && l.Any(kv => kv.Key.Contains(e.Location));
                 List<KeyValuePair<RectangleF, string>> h; string key = null;
                 if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { key = h[i].Value; break; }
@@ -951,6 +981,7 @@ namespace AdeeboMeter
             c.MouseWheel += delegate(object s, MouseEventArgs e) { SetTipKey(null); if (ModifierKeys == Keys.Control && e.Delta != 0) ZoomBy(e.Delta > 0 ? 1 : -1); };   // Ctrl + wheel zooms
             c.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Right && !IsPopup(c)) PageMenu(c, e.Location); };
         }
+        Point? tipPoint;   // set when the keyboard marked something: the tip opens there, not at the mouse
         void SetTipKey(string key)
         {
             if (key == tipKey) return;
@@ -962,7 +993,7 @@ namespace AdeeboMeter
         {
             if (IsDisposed || tipKey == null || !Visible || WindowState == FormWindowState.Minimized) return;
             var e = TipEntry(tipKey); if (e == null) return;
-            tip.ShowAt(e, Cursor.Position, this); tipOver = WindowFromPoint(Cursor.Position);
+            var at = tipPoint ?? Cursor.Position; tip.ShowAt(e, at, this); tipOver = tipPoint != null ? WindowFromPoint(Cursor.Position) : WindowFromPoint(at);
             tipWatch = true; tipTimer.Interval = 400; tipTimer.Start();   // keep checking: a theme flip or a page change never fires MouseLeave
         }
         // V02 (r1 visual pass): the "Day or night" card stayed over What's running and Time machine - the pointer had left
@@ -973,7 +1004,9 @@ namespace AdeeboMeter
         {
             if (key.StartsWith("proc:", StringComparison.Ordinal)) return ProcEntry(key.Substring(5), null, null);
             if (key.StartsWith("hour:", StringComparison.Ordinal)) return HourEntry(key);
-            return Explain.Term(key);
+            var te = Explain.Term(key);
+            if (te != null && key.StartsWith("tb.", StringComparison.Ordinal)) return ToolTip(key.Substring(3), te);
+            return te;
         }
         static string CardKey(string title)
         {

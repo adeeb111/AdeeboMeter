@@ -106,6 +106,17 @@ namespace AdeeboMeter
             { "drops", new[] { "wifioff", "q.break", "Today's drops and what came just before" } }, { "vpn", new[] { "lock", "q.padlock", "Overlaps, proxy, VPN names, MTU" } },
             { "pc", new[] { "cpu", "q.windows", "CPU, memory, disk, heat, drivers" } }
         };
+        // { where it goes, title, icon, one line, accent }
+        static readonly string[][] MoreProblems = {
+            new[] { "guide:whats", "No internet at all", "wifioff", "Nothing opens - checks every step", "q.break" },
+            new[] { "guide:whats", "Wi-Fi says \"No internet\"", "wifi", "Connected, but nothing works", "q.break" },
+            new[] { "link", "Can't find my Wi-Fi", "wifi", "The network isn't in the list", "q.join" },
+            new[] { "tool:netcap", "Downloads are slow", "speed", "Your plan vs this PC's link and disk", "q.slow" },
+            new[] { "tool:lag", "My game lags", "game", "Your Wi-Fi, your line, or the game", "q.traffic" },
+            new[] { "case:buffer", "Videos keep buffering", "traffic", "Speed now and what else is busy", "q.slow" },
+            new[] { "tool:wakeup", "Slow after sleep or waking", "time", "How long it takes to get back online", "q.hw" },
+            new[] { "tool:mail", "Email won't send", "app", "Can this PC reach your mail server?", "q.reach" },
+            new[] { "tool:inventory", "A device on my network is missing", "devices", "Everything seen on this network", "q.network" } };
         void PaintGuide(Graphics g)
         {
             g.TranslateTransform(guideCanvas.AutoScrollPosition.X, guideCanvas.AutoScrollPosition.Y);
@@ -127,7 +138,16 @@ namespace AdeeboMeter
                         Kit.Tile(g, cr, look[0], f.Title.Replace(" (I can't name it)", ""), look[2], look[1], false, -1);
                         string id = f.Id; Act(guideCanvas, cr, delegate { StartGuide(id, false); }); Hint(guideCanvas, cr, "guide." + id);
                     }
-                    y += ((Investigate.All.Length + cols - 1) / cols) * (chh + 14 * S) + 10 * S;
+                    // more problems (22 Nov): each opens a check that already exists - a guide, a case, a page or a tool
+                    for (int j = 0; j < MoreProblems.Length; j++)
+                    {
+                        int i = Investigate.All.Length + j; var p = MoreProblems[j];
+                        var cr = new RectangleF(x + (i % cols) * (cw + 14 * S), y + (i / cols) * (chh + 14 * S), cw, chh);
+                        Kit.Tile(g, cr, p[2], p[1], p[3], p[4], false, -1);
+                        string go = p[0]; Act(guideCanvas, cr, delegate { FixGo(go); });
+                    }
+                    int all = Investigate.All.Length + MoreProblems.Length;
+                    y += ((all + cols - 1) / cols) * (chh + 14 * S) + 10 * S;
                     g.DrawString(Voice.P("Every answer says where each fact came from - measured, Windows-reported, seen in packets or inferred - and what I couldn't establish.", "Each fact is labelled: measured, Windows-reported, seen in packets, inferred or unavailable."), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
                     y += 40 * S;
                 }

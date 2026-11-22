@@ -26,6 +26,7 @@ namespace AdeeboMeter
         {
             if (tools != null) return tools;
             Func<string, string, string, string, Func<string[], Toolkit.Run, List<string[]>>, Tool> T = (id, g, t, ins, f) => new Tool { Id = id, Group = g, Title = t, Inputs = ins == null ? Array.Empty<string>() : ins.Split('|'), Do = f };   // inputs: "first|second|third"
+            toolsStatic = null;
             tools = new List<Tool> {
                 T("mtu", "PATH", "MTU per hop", "Destination - e.g. github.com", null),
                 T("udpmtu", "PATH", "MTU over UDP (QUIC / DNS)", "Target - a website (port 443) or a DNS server (port 53)|Port - 443 or 53", (a, r) => UdpMtu.Run(a[0], a[1], r)),
@@ -267,7 +268,7 @@ namespace AdeeboMeter
             foreach (var grp in TbLayout) for (int i = 1; i < grp.Length; i++) pos[grp[i]] = pos.Count;
             foreach (var t in tools) { var grp = TbLayout.FirstOrDefault(l => Array.IndexOf(l, t.Id, 1) > 0); if (grp != null) t.Group = grp[0]; }
             tools = tools.OrderBy(t => { int p; return pos.TryGetValue(t.Id, out p) ? p : 999; }).ToList();
-            return tools;
+            toolsStatic = tools; return tools;
         }
         List<PathTools.Hop> mtrHops;
         // five sections, each grouped by the question you're asking, not by technology
@@ -746,7 +747,7 @@ namespace AdeeboMeter
             var topBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(10), Sc(10), Sc(6)), WrapContents = true };
             tbChips = Sections.Select(sec => { var c = new PillButton(sec[1], PillButton.K.Chip) { Tag = sec[0], Margin = new Padding(0, Sc(3), Sc(8), 0) }; string id = sec[0]; c.Click += delegate { tbSearch.Box.Text = ""; ShowSection(id); }; return c; }).ToArray();
             foreach (var c in tbChips) { topBar.Controls.Add(c); tbClassic.Add(c); }
-            tbSearch = new RoundBox(Sc(320), Draw.fInput, "Find any tool (mtu, dns, wifi, slow...)") { Margin = new Padding(Sc(16), 0, 0, 0) };
+            tbSearch = new RoundBox(Sc(320), Draw.fInput, "Go to a tool - type ping, DNS, certificate, port, Wi-Fi...") { Margin = new Padding(Sc(16), 0, 0, 0) };
             tbSearch.Box.TextChanged += delegate
             {
                 tbFilter = tbSearch.Box.Text.Trim(); tbList.AutoScrollPosition = Point.Empty; tbList.Invalidate();
@@ -756,14 +757,15 @@ namespace AdeeboMeter
             {
                 if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; var first = ScopedMatches().FirstOrDefault(); if (first != null) { OpenTool(first.Id); if (tab != "toolbox") return; var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); } }
                 else if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; }
+                else if (e.KeyCode == Keys.Down && EveryTool && tbCanvas.ArrowStep != null) { e.SuppressKeyPress = true; tbCanvas.Focus(); tbCanvas.ArrowStep(Keys.Down); }   // All tools: down from the box into the list
                 else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; tbList.Focus(); MoveTool(tbVisible.IndexOf(tbSel) < 0 ? 0 : 1); }
             };
             topBar.Controls.Add(tbSearch);
             // by question, or the classic all-at-once list - remembered
             tbViewQ = new PillButton("By question", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewQ.Click += delegate { SetTbView("q"); };
             tbViewT = new PillButton("By topic", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), Sc(4), 0) }; tbViewT.Click += delegate { SetTbView("topic"); };   // 1.1.6: SNMP, DNS, DHCP...
-            tbViewL = new PillButton("Every tool", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), 0, 0) }; tbViewL.Click += delegate { SetTbView("list"); };
-            topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewT); topBar.Controls.Add(tbViewL); topBar.SetFlowBreak(tbViewL, true);
+            tbViewL = new PillButton("All tools", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewL.Click += delegate { SetTbView("list"); };
+            tbViewQ.Margin = new Padding(0, Sc(3), Sc(4), 0); topBar.Controls.Add(tbViewL); topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewT); topBar.SetFlowBreak(tbViewT, true);   // All tools first (22 Nov)
             // one click to the tools people reach for most - from any section
             var quick = new Label { Text = L.T("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
             foreach (var q in QuickTools)

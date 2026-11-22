@@ -127,7 +127,7 @@ namespace AdeeboMeter
             // id, icon, accent, name, live line, go
             var l = new List<object[]>();
             Action<string, string, string, string, string, Action> add = (id, ic, acc, name, live, go) => l.Add(new object[] { id, ic, acc, name, live, go });
-            add("toolbox", "tool", "toolbox", "Toolbox", "232 tools, by topic: DNS, DHCP, SNMP, Wi-Fi...", delegate { OpenNav("toolbox"); EnsureToolbox(); SetTbView("topic"); });
+            add("toolbox", "tool", "toolbox", "Toolbox", "232 tools - type a name to find one; hover for what it does", delegate { OpenNav("toolbox"); EnsureToolbox(); SetTbView("list"); });
             add("encrypt", "encrypt", "q.keys", "Encryption", "Lock a file with a code or for named people; open one; your keys.", delegate { OpenToolFromHome("encrypt"); });
             add("dest", "dns", "dest", "Check a destination", "Name, route, door, lock and answer for any site.", delegate { OpenNav("dest"); });
             add("time", "clock", "time", "Time machine", Cfg.History ? "Replay any minute, what changed, the week." : "History is off - turn it on to replay.", delegate { OpenNav("time"); });

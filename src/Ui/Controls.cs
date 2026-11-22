@@ -104,8 +104,16 @@ namespace AdeeboMeter
         // KeyNav: the panel takes focus (click or Tab) and gets the arrow keys - for owner-drawn lists
         bool keyNav;
         public bool KeyNav { get { return keyNav; } set { keyNav = value; SetStyle(ControlStyles.Selectable, value); TabStop = value; } }
-        protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || base.IsInputKey(k); }
-        protected override void OnMouseDown(MouseEventArgs e) { if (keyNav && !Focused) Focus(); base.OnMouseDown(e); }
+        protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; bool arrow = c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || (ArrowStep != null && arrow) || base.IsInputKey(k); }
+        // arrow keys move between the painted tiles and links (Adeeb, 22 Nov: "the keyboard doesn't move between them")
+        public Func<Keys, bool> ArrowStep;
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            var c = e.KeyCode;
+            if (!keyNav && ArrowStep != null && e.Modifiers == Keys.None && (c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right) && ArrowStep(c)) { e.Handled = true; return; }
+            base.OnKeyDown(e);
+        }
+        protected override void OnMouseDown(MouseEventArgs e) { if ((keyNav || ArrowStep != null) && !Focused) Focus(); base.OnMouseDown(e); }   // a click on a page lets the arrow keys work there next
         // Painted buttons and links reached from the keyboard: Tab / Shift+Tab step through them (then on to the next control),
         // Enter or Space presses the marked one. FullView supplies the steps; the mark is drawn after the page paints.
         Func<bool, bool> tabStep; public Action Press; public Func<RectangleF> Mark;
@@ -159,7 +167,7 @@ namespace AdeeboMeter
         {
             Paints++; PaintArea += (long)e.ClipRectangle.Width * e.ClipRectangle.Height;
             UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
-            if (Focused && ShowFocusCues && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(Rectangle.Round(r), 2, 2)); } }
+            if (Focused && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); var sm = e.Graphics.SmoothingMode; e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; Theme.Stroke(e.Graphics, RectangleF.Inflate(r, 2, 2), 12 * Draw.S, Theme.Blue, 2 * Draw.S); e.Graphics.SmoothingMode = sm; } }   // the keyboard's place: an outline in the accent colour, like a hovered tile
             string pn = Name ?? "";
             if (sw.ElapsedMilliseconds > 40)
             {
