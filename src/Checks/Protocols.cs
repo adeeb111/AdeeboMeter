@@ -567,16 +567,26 @@ namespace AdeeboMeter
                     u.Send(req, req.Length, new IPEndPoint(relay, 3478)); var from = Toolkit.AnyEp(u); var m = u.Receive(ref from);
                     if (!from.Address.Equals(relay) || m.Length < 20 || m[0] != 1 || m[1] != 1) continue;   // a Binding Success from the server we asked
                     bool mine = m[4] == 0x21 && m[5] == 0x12 && m[6] == 0xA4 && m[7] == 0x42; for (int k = 0; k < 12; k++) if (m[8 + k] != tid[k]) mine = false;
-                    if (!mine || 20 + (m[2] << 8 | m[3]) > m.Length) continue;
-                    for (int p = 20; p + 4 <= m.Length;)
-                    {
-                        int type = m[p] << 8 | m[p + 1], len = m[p + 2] << 8 | m[p + 3], v = p + 4;
-                        if (v + len > m.Length) break;
-                        if ((type == 0x20 || type == 1) && len >= 8 && m[v + 1] == 1) { int port = m[v + 2] << 8 | m[v + 3]; var ip = new[] { m[v + 4], m[v + 5], m[v + 6], m[v + 7] }; if (type == 0x20) { port ^= 0x2112; ip[0] ^= 0x21; ip[1] ^= 0x12; ip[2] ^= 0xA4; ip[3] ^= 0x42; } return new IPEndPoint(new IPAddress(ip), port); }
-                        p = v + ((len + 3) & ~3);
-                    }
+                    if (!mine) continue;
+                    var got = StunMapped(m); if (got != null) return got;
                 }
                 catch (SocketException) { }
+            return null;
+        }
+        // the mapped address in a STUN Binding Success, read only inside the length its header declares (RFC 8489) -
+        // bytes after the message are never attributes (review 22 Nov)
+        public static IPEndPoint StunMapped(byte[] m)
+        {
+            if (m == null || m.Length < 20) return null;
+            int end = 20 + (m[2] << 8 | m[3]);
+            if (end > m.Length || (end & 3) != 0) return null;
+            for (int p = 20; p + 4 <= end;)
+            {
+                int type = m[p] << 8 | m[p + 1], len = m[p + 2] << 8 | m[p + 3], v = p + 4;
+                if (v + len > end) break;
+                if ((type == 0x20 || type == 1) && len >= 8 && m[v + 1] == 1) { int port = m[v + 2] << 8 | m[v + 3]; var ip = new[] { m[v + 4], m[v + 5], m[v + 6], m[v + 7] }; if (type == 0x20) { port ^= 0x2112; ip[0] ^= 0x21; ip[1] ^= 0x12; ip[2] ^= 0xA4; ip[3] ^= 0x42; } return new IPEndPoint(new IPAddress(ip), port); }
+                p = v + ((len + 3) & ~3);
+            }
             return null;
         }
     }

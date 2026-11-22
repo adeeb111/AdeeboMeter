@@ -626,13 +626,30 @@ namespace AdeeboMeter
             catch { }
         }
 
+        // reads a helper's stream to the end, keeping at most `cap` characters (the rest is read and dropped)
+        static System.Threading.Tasks.Task<string> Drain(StreamReader r, int cap)
+        {
+            return System.Threading.Tasks.Task.Factory.StartNew(() => { try { return ReadCapped(r, cap); } catch (IOException) { return ""; } catch (ObjectDisposedException) { return ""; } }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
+        }
+        public static string ReadCapped(TextReader r, int cap)
+        {
+            var sb = new System.Text.StringBuilder(); var buf = new char[8192]; int n;
+            while ((n = r.Read(buf, 0, buf.Length)) > 0) if (sb.Length < cap) sb.Append(buf, 0, Math.Min(n, cap - sb.Length));
+            return sb.ToString();
+        }
+
         // Full path, so a netsh.exe planted somewhere on PATH can never be picked up instead.
         public static readonly string Netsh = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "netsh.exe");
         public static string Sys(string exe) { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), exe); }
 
         // Runs a fixed program with fixed arguments (never through cmd or PowerShell) and returns its output.
-        public static string Run(string exe, string args, int timeoutMs)
+        // review 22 Nov: output is capped (a runaway helper - tshark on a busy capture - can't fill the 64 MB budget), a timed-out
+        // helper is killed and reaped, and the caller can tell "timed out" from "printed nothing"
+        public const int MaxOutput = 8 * 1024 * 1024;   // characters kept; the rest is read and dropped so the helper never blocks on a full pipe
+        public static string Run(string exe, string args, int timeoutMs) { bool to; return Run(exe, args, timeoutMs, out to); }
+        public static string Run(string exe, string args, int timeoutMs, out bool timedOut)
         {
+            timedOut = false;
             var psi = new ProcessStartInfo(exe, args);
             psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.CreateNoWindow = true;
             psi.WorkingDirectory = Path.GetDirectoryName(exe);   // never the folder AdeeboMeter runs from (Downloads): a child could load a planted DLL from there
@@ -642,11 +659,18 @@ namespace AdeeboMeter
             using (var p = Process.Start(psi))
             {
                 Add(p);
-                var t = p.StandardOutput.ReadToEndAsync();
-                var et = p.StandardError.ReadToEndAsync(); et.ContinueWith(x => { var ignored = x.Exception; }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);   // bug-hunt L-72: drained and observed
-                if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } return ""; }
+                var t = Drain(p.StandardOutput, MaxOutput);
+                var et = Drain(p.StandardError, 64 * 1024);   // bug-hunt L-72: drained and observed - kept now, never left unwatched
+                if (!p.WaitForExit(timeoutMs))
+                {
+                    timedOut = true;
+                    try { p.Kill(); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
+                    try { p.WaitForExit(3000); } catch (InvalidOperationException) { }   // reaped, so its pipes close and the readers end
+                    t.Wait(1000); et.Wait(1000); return "";
+                }
                 p.WaitForExit();   // the redirected streams reach their end
-                return t.Wait(10000) ? t.Result : "";   // L-72: a long output gets time to finish, not 1 s
+                bool done = t.Wait(10000); et.Wait(1000);   // L-72: a long output gets time to finish, not 1 s
+                return done ? t.Result : "";
             }
         }
     }

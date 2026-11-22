@@ -453,6 +453,31 @@ namespace AdeeboMeter
                 if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || Reach.SafeHost("sw-01:22") || !Reach.SafeHost("[2001:db8::1]") || !Reach.SafeHost("2001:db8::1") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
+            T("review 22 Nov: big pings, STUN read inside its declared length, helper output capped", () =>
+            {
+                // 1. ICMP: 32,767 / 32,768 / 65,500 bytes all go out (a signed short sent 32,768+ in negative); loopback answers big pings
+                foreach (int size in new[] { 32767, 32768, Icmp.MaxPayload })
+                {
+                    var r = Icmp.Echo(System.Net.IPAddress.Loopback, size, 64, false, 3000, false);
+                    if (r.Status != Icmp.Ok) throw new InvalidOperationException("ping " + size + " bytes to loopback: status " + r.Status);
+                }
+                // 2. STUN: a good reply, the same reply with a fake attribute after the declared end, a truncated one, a bad length
+                Func<int, byte[], byte[]> msg = (declared, attrs) => { var m = new byte[20 + attrs.Length]; m[0] = 1; m[1] = 1; m[2] = (byte)(declared >> 8); m[3] = (byte)declared; m[4] = 0x21; m[5] = 0x12; m[6] = 0xA4; m[7] = 0x42; Array.Copy(attrs, 0, m, 20, attrs.Length); return m; };
+                var xor = new byte[] { 0, 0x20, 0, 8, 0, 1, (byte)(5000 >> 8 ^ 0x21), (byte)(5000 & 0xFF ^ 0x12), 203 ^ 0x21, 0 ^ 0x12, 113 ^ 0xA4, 7 ^ 0x42 };
+                var plain = new byte[] { 0, 1, 0, 8, 0, 1, 0x1F, 0x90, 10, 9, 9, 9 };   // MAPPED-ADDRESS 10.9.9.9:8080
+                var ok = Protocols.StunMapped(msg(12, xor));
+                if (ok == null || ok.ToString() != "203.0.113.7:5000") throw new InvalidOperationException("stun good: " + ok);
+                if (Protocols.StunMapped(msg(0, plain)) != null) throw new InvalidOperationException("stun: read an attribute past the declared end");
+                if (Protocols.StunMapped(msg(24, xor)) != null) throw new InvalidOperationException("stun: declared length longer than the datagram");
+                if (Protocols.StunMapped(msg(10, xor)) != null) throw new InvalidOperationException("stun: length not a multiple of 4");
+                if (Protocols.StunMapped(new byte[] { 1, 1, 0 }) != null) throw new InvalidOperationException("stun: 3 bytes");
+                // 3. helper output: kept up to the cap, the rest dropped
+                using (var sr = new System.IO.StringReader(new string('x', 20000))) if (Job.ReadCapped(sr, 5000).Length != 5000) throw new InvalidOperationException("cap");
+                bool to; Job.Run(Job.Sys("ping.exe"), "-n 30 127.0.0.1", 1500, out to);
+                if (!to) throw new InvalidOperationException("a helper that outlived its time wasn't reported as timed out");
+                Job.Run(Job.Sys("hostname.exe"), "", 10000, out to);
+                if (to) throw new InvalidOperationException("hostname.exe reported as timed out");
+            });
             T("AdeeboLab See my LAN: 50 devices drawn, the rest one +N more box, no loose links", () =>
             {
                 // AdeeboLab's See my LAN: 70 devices draw as 50 plus one "+19 more" box, every link joins two drawn stops

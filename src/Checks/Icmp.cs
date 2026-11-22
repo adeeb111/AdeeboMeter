@@ -13,7 +13,7 @@ namespace AdeeboMeter
     {
         [DllImport("iphlpapi.dll", SetLastError = true)] static extern IntPtr IcmpCreateFile();
         [DllImport("iphlpapi.dll")] [return: MarshalAs(UnmanagedType.Bool)] static extern bool IcmpCloseHandle(IntPtr h);
-        [DllImport("iphlpapi.dll", SetLastError = true)] static extern int IcmpSendEcho(IntPtr h, uint dest, byte[] data, short size, ref IpOpt opt, IntPtr reply, int replySize, int timeout);
+        [DllImport("iphlpapi.dll", SetLastError = true)] static extern int IcmpSendEcho(IntPtr h, uint dest, byte[] data, ushort size, ref IpOpt opt, IntPtr reply, int replySize, int timeout);
         [StructLayout(LayoutKind.Sequential)] struct IpOpt { public byte Ttl, Tos, Flags, OptionsSize; public IntPtr OptionsData; }
 
         public const int Ok = 0, TooBig = 11009, TimedOut = 11010, TtlExpired = 11013, NetUnreach = 11002, HostUnreach = 11003;
@@ -22,6 +22,8 @@ namespace AdeeboMeter
         public static uint Addr(IPAddress a) { return BitConverter.ToUInt32(a.GetAddressBytes(), 0); }
 
         // size = payload bytes (IP packet = size + 28). rr = ask every router to write its address (9 slots).
+        // review 22 Nov: the size goes to Windows as an unsigned 16-bit number (it was cast to a signed short, so 32,768+ went in negative)
+        public const int MaxPayload = 65500;   // what Windows sends at most (the Ping tool says so too)
         public static Res Echo(IPAddress dest, int size, int ttl, bool df, int timeoutMs, bool rr) { return Echo(dest, size, ttl, df, timeoutMs, rr, 0); }
         // tos = the whole TOS byte (DSCP << 2). Windows may clear it on the way out unless a QoS policy allows it - only a capture proves it left marked.
         public static Res Echo(IPAddress dest, int size, int ttl, bool df, int timeoutMs, bool rr, byte tos)
@@ -32,7 +34,7 @@ namespace AdeeboMeter
             IntPtr opts = IntPtr.Zero, buf = IntPtr.Zero;
             try
             {
-                var data = new byte[Math.Max(0, Math.Min(65000, size))];
+                var data = new byte[Math.Max(0, Math.Min(MaxPayload, size))];
                 for (int i = 0; i < data.Length; i++) data[i] = (byte)('a' + i % 23);
                 var o = new IpOpt { Ttl = (byte)Math.Max(1, Math.Min(255, ttl)), Tos = tos, Flags = (byte)(df ? 2 : 0) };
                 if (rr)
@@ -43,7 +45,7 @@ namespace AdeeboMeter
                 }
                 int size2 = 64 + IntPtr.Size * 4 + data.Length + 8 + 64;
                 buf = Marshal.AllocHGlobal(size2);
-                int n = IcmpSendEcho(h, Addr(dest), data, (short)data.Length, ref o, buf, size2, timeoutMs);
+                int n = IcmpSendEcho(h, Addr(dest), data, (ushort)data.Length, ref o, buf, size2, timeoutMs);
                 if (n == 0) { int e = Marshal.GetLastWin32Error(); r.Status = e >= 11000 && e < 11100 ? e : TimedOut; return r; }
                 r.From = new IPAddress((uint)Marshal.ReadInt32(buf, 0) & 0xFFFFFFFFL).ToString();
                 r.Status = Marshal.ReadInt32(buf, 4); r.Rtt = (uint)Marshal.ReadInt32(buf, 8);
@@ -69,7 +71,7 @@ namespace AdeeboMeter
 
         // IPv6 echo through Icmp6SendEcho2 (no admin). ttl = hop limit. Reply: address at 6 (after port + flow info), status at 28, time at 32.
         [DllImport("iphlpapi.dll", SetLastError = true)] static extern IntPtr Icmp6CreateFile();
-        [DllImport("iphlpapi.dll", SetLastError = true)] static extern int Icmp6SendEcho2(IntPtr h, IntPtr ev, IntPtr apc, IntPtr ctx, byte[] src, byte[] dst, byte[] data, short size, ref IpOpt opt, IntPtr reply, int replySize, int timeout);
+        [DllImport("iphlpapi.dll", SetLastError = true)] static extern int Icmp6SendEcho2(IntPtr h, IntPtr ev, IntPtr apc, IntPtr ctx, byte[] src, byte[] dst, byte[] data, ushort size, ref IpOpt opt, IntPtr reply, int replySize, int timeout);
         public static Res Echo6(IPAddress dest, int size, int ttl, int timeoutMs)
         {
             var r = new Res();
@@ -81,10 +83,10 @@ namespace AdeeboMeter
                 var src = new byte[28]; src[0] = 23;
                 var dst = new byte[28]; dst[0] = 23; Array.Copy(dest.GetAddressBytes(), 0, dst, 8, 16);
                 long scope = dest.ScopeId; dst[24] = (byte)scope; dst[25] = (byte)(scope >> 8); dst[26] = (byte)(scope >> 16); dst[27] = (byte)(scope >> 24);
-                var data = new byte[Math.Max(0, Math.Min(65000, size))]; for (int i = 0; i < data.Length; i++) data[i] = (byte)('a' + i % 23);
+                var data = new byte[Math.Max(0, Math.Min(MaxPayload, size))]; for (int i = 0; i < data.Length; i++) data[i] = (byte)('a' + i % 23);
                 var o = new IpOpt { Ttl = (byte)Math.Max(1, Math.Min(255, ttl)) };
                 int size2 = 36 + data.Length + 8 + 64 + 256; buf = Marshal.AllocHGlobal(size2);
-                int n = Icmp6SendEcho2(h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, src, dst, data, (short)data.Length, ref o, buf, size2, timeoutMs);
+                int n = Icmp6SendEcho2(h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, src, dst, data, (ushort)data.Length, ref o, buf, size2, timeoutMs);
                 if (n == 0) { int e = Marshal.GetLastWin32Error(); r.Status = e >= 11000 && e < 11100 ? e : TimedOut; return r; }   // no reply in the buffer to read
                 var a = new byte[16]; Marshal.Copy(buf + 6, a, 0, 16); r.From = new IPAddress(a).ToString();
                 if (n != 0) r.Status = Marshal.ReadInt32(buf, 28); r.Rtt = (uint)Marshal.ReadInt32(buf, 32);
