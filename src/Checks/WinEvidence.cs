@@ -81,7 +81,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("lease: " + e.Message); }
             }
-            var dh = EvLog.Recent("Microsoft-Windows-Dhcp-Client/Admin", "", 24 * 7, 5, out err);
+            var dh = EvLog.Recent("Microsoft-Windows-Dhcp-Client/Admin", "Level=1 or Level=2 or Level=3", 24 * 7, 5, out err);   // tool-run 22 Nov: "found a match in the cache" (information) was counted as trouble
             if (dh.Count > 0) rows.Add(R(1, "DHCP trouble", dh.Count + " events in 7 days - last: " + First(dh[0].Text), "", "w"));
             return rows;
         }

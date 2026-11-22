@@ -97,7 +97,7 @@ namespace AdeeboMeter
             if (p.RushHour >= 0) rows.Add(R(3, "Rush hour", DayNames[p.RushDow] + "s " + p.RushHour.ToString("00", c) + ":00-" + ((p.RushHour + 1) % 24).ToString("00", c) + ":00 · router " + N1(p.RushGw) + " ms", "The slowest hour of the week on your own network.", "m"));
             if (p.Laggiest != "") rows.Add(R(3, "Laggiest game", p.Laggiest + " · " + N0(p.LaggiestMs) + " ms on average", "From the Gamer Zone's history (kept " + Cfg.GameDays + " days).", "m"));
             double waits = p.BadMinutes + p.OutageUnrecorded;   // rough minutes, plus the outage minutes History didn't already count as rough
-            if (waits > 0) rows.Add(R(3, "Time lost waiting", N0(waits / 60.0) + " hours of outages and rough minutes", "", "i"));
+            if (waits > 0) rows.Add(R(3, "Time lost waiting", (waits < 90 ? N0(waits) + " minutes" : N0(waits / 60.0) + " hours") + " of outages and rough minutes", "", "i"));
         }
 
         // ---------- your month on the network ("2026-10", "october", empty = last month, "this" = this month so far)
@@ -244,13 +244,13 @@ namespace AdeeboMeter
             if (secs.Count == 0 && failed > 0) { rows.Add(R(2, "After waking", failed + " wake-up" + (failed == 1 ? "" : "s") + " - the router never answered within 2 minutes", "The Wi-Fi didn't come back by itself: the adapter's power saving, or a driver that doesn't resume well. Device Manager > the Wi-Fi adapter > Power Management.", "m")); return rows; }
             if (secs.Count == 0) { rows.Add(R(3, "No wake-ups yet", "the next time the PC wakes from sleep, AdeeboMeter times how long until the router and DNS answer", Cfg.History ? "" : "Turn on History to keep the times for a month.", "u")); return rows; }
             var c = CultureInfo.CurrentCulture; double avg = secs.Average(s => s.Item2), worst = secs.Max(s => s.Item2);
-            rows.Add(R(avg <= 10 ? 0 : avg <= 30 ? 1 : 2, "Back online after waking", N1(avg) + " s on average · slowest " + N1(worst) + " s · " + secs.Count + " wake-ups", avg <= 10 ? "Quick." : "Slow wake-ups are usually the Wi-Fi adapter's power saving or a long DHCP renew. Device Manager > the Wi-Fi adapter > Power Management, or a cable, often fixes it.", "m"));
+            rows.Add(R(avg <= 10 ? 0 : avg <= 30 ? 1 : 2, "Back online after waking", N1(avg) + " s on average · slowest " + N1(worst) + " s · " + secs.Count + (secs.Count == 1 ? " wake-up" : " wake-ups"), avg <= 10 ? "Quick." : "Slow wake-ups are usually the Wi-Fi adapter's power saving or a long DHCP renew. Device Manager > the Wi-Fi adapter > Power Management, or a cable, often fixes it.", "m"));
             double dns = Avg(secs.Select(s => s.Item3)); if (!double.IsNaN(dns)) rows.Add(R(3, "DNS answered", N1(dns) + " s after waking, on average", "", "m"));
             int noDns = secs.Count(s => double.IsNaN(s.Item3)); if (noDns > 0) rows.Add(R(1, "DNS never answered", noDns + " time" + (noDns == 1 ? "" : "s") + " the router came back but DNS didn't within 2 minutes", "", "m"));
             if (failed > 0) rows.Add(R(2, "Never came back", failed + " wake-up" + (failed == 1 ? "" : "s") + " - the router didn't answer within 2 minutes", "Not in the average above.", "m"));
             rows.Add(R(-1, "BY DAY", "", "", "m"));
             foreach (var g in secs.GroupBy(s => s.Item1.Date).OrderByDescending(g => g.Key).Take(14))
-                rows.Add(R(g.Max(s => s.Item2) > 30 ? 1 : 3, g.Key.ToString("ddd d MMM", c), g.Count() + " wake-ups · " + N1(g.Average(s => s.Item2)) + " s on average · slowest " + N1(g.Max(s => s.Item2)) + " s", "", "m"));
+                rows.Add(R(g.Max(s => s.Item2) > 30 ? 1 : 3, g.Key.ToString("ddd d MMM", c), g.Count() + (g.Count() == 1 ? " wake-up · " : " wake-ups · ") + N1(g.Average(s => s.Item2)) + " s on average · slowest " + N1(g.Max(s => s.Item2)) + " s", "", "m"));
             return rows;
         }
 
@@ -501,7 +501,7 @@ namespace AdeeboMeter
                     var devs = list.Where(x => (x.Id.StartsWith("BTHENUM\\DEV_", StringComparison.OrdinalIgnoreCase) || x.Id.StartsWith("BTHLE\\DEV_", StringComparison.OrdinalIgnoreCase)) && x.Name != "").GroupBy(x => x.Name + "|" + DevKey(x.Id)).Select(g => g.OrderByDescending(x => x.Present).First()).ToList();
                     if (radio.Count == 0 && devs.Count == 0) { rows.Add(R(3, "Bluetooth", "no Bluetooth radio found on this PC", "", "w")); return rows; }
                     foreach (var r in radio.Take(2)) rows.Add(R(r.Err == 0 ? 0 : 2, "Radio", r.Name + (r.Err == 0 ? "" : " · " + DevInfo.Problem((int)r.Err)[0]), r.Err == 0 ? "" : DevInfo.Problem((int)r.Err)[1], "w"));
-                    rows.Add(R(-1, "PAIRED WITH THIS PC", Math.Min(40, devs.Count) + (devs.Count > 40 ? " of " + devs.Count : "") + " devices", "", "w"));
+                    rows.Add(R(-1, "PAIRED WITH THIS PC", Math.Min(40, devs.Count) + (devs.Count > 40 ? " of " + devs.Count : "") + (devs.Count == 1 ? " device" : " devices"), "", "w"));
                     foreach (var d in devs.OrderByDescending(d => d.Present).ThenBy(d => d.Name).Take(40))
                     {   // bug-hunt L-289: code 45 is Windows' "not connected right now" - for Bluetooth that's just out of range, not a fault
                         bool fault = d.Err != 0 && d.Err != 45, here = d.Present && d.Err != 45;

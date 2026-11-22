@@ -201,8 +201,9 @@ namespace AdeeboMeter
             }
             Func<List<double>, string> sum = l => { var ok = l.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); return ok.Count == 0 ? "no replies" : "median " + ok[ok.Count / 2] + " ms · " + (l.Count - ok.Count) + " of " + l.Count + " lost"; };
             string name = Dscp.FirstOrDefault(x => x.Value == d).Key;
-            rows.Add(R(mk.Count(double.IsNaN) > pl.Count(double.IsNaN) + 1 ? 1 : 0, "DSCP " + d + (name != null ? " (" + name + ")" : ""), sum(mk), "", "m"));
-            rows.Add(R(0, "Unmarked (0)", sum(pl), "", "m"));
+            bool none = mk.Count > 0 && pl.Count > 0 && mk.All(double.IsNaN) && pl.All(double.IsNaN);   // tool-run 22 Nov: "no replies" was marked ok
+            rows.Add(R(none ? 2 : mk.Count(double.IsNaN) > pl.Count(double.IsNaN) + 1 ? 1 : 0, "DSCP " + d + (name != null ? " (" + name + ")" : ""), sum(mk), none ? "Nothing answered, marked or not - the target is off, wrong, or doesn't answer ping. Try your router or 1.1.1.1 first." : "", "m"));
+            rows.Add(R(none ? 2 : 0, "Unmarked (0)", sum(pl), "", "m"));
             rows.Add(R(3, "Was it really marked?", "only a capture can say", "Windows clears the marking a program asks for unless a QoS policy (Group Policy > Policy-based QoS) allows it. To check: Live capture with filter  icmp , look at the DSCP field of the request. Marked pings that are dropped while unmarked ones pass mean something on the way polices that class.", "i"));
             return rows;
         }

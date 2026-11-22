@@ -357,6 +357,7 @@ namespace AdeeboMeter
             run.Status = "Asking for " + d + "'s mail servers (MX)...";
             var msg = Toolkit.Query(dns, d, 15, true);
             var mx = msg == null ? new List<string[]>() : msg.Rrs.Where(r => r.Type == "MX" && r.Section == 1).Select(r => r.Data.Split(' ')).Where(x => x.Length == 2).OrderBy(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList();
+            if (mx.Count > 0 && mx.All(x => x[1].Trim('.') == "")) { rows.Add(R(1, "MX", d + " accepts no mail - it publishes a \"null MX\" (RFC 7505)", "The owner says on purpose that nobody should send mail to this domain - nothing to test.", "m")); return rows; }   // tool-run 22 Nov: example.com showed "MX:  (0)"
             if (mx.Count == 0) { rows.Add(R(2, "MX", msg == null ? "no answer from " + dns : "no MX records - mail to " + d + " goes to the domain itself, or nowhere", "", "m")); return rows; }
             rows.Add(R(0, "MX", string.Join(" · ", mx.Take(5).Select(x => x[1].TrimEnd('.') + " (" + x[0] + ")")), "Senders try the lowest number first.", "m"));
             if (mx.Count > 2) rows.Add(R(3, "Tested", "the first 2 of " + mx.Count + " mail servers (the lowest numbers - the ones senders try first)", "", "m"));   // bug-hunt L-216

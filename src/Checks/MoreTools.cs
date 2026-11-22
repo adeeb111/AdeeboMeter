@@ -419,7 +419,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string err;
             var evs = EvLog.Recent("System", "EventID=7000 or EventID=7001 or EventID=7009 or EventID=7011 or EventID=7022 or EventID=7023 or EventID=7024 or EventID=7031 or EventID=7034", 24 * 7, 500, out err);
             if (err != "") { rows.Add(R(3, "System log", err, "", "w")); return rows; }
-            var by = evs.Select(e => new { e, Svc = EvLog.Field(e.Xml, "param1") }).Where(x => x.Svc != "").GroupBy(x => x.Svc).OrderByDescending(g => g.Count()).ToList();
+            var by = evs.Select(e => new { e, Svc = EvLog.Field(e.Xml, e.Id == 7009 || e.Id == 7011 ? "param2" : "param1") })   /* 7009 / 7011: param1 is the timeout in ms (tool-run 22 Nov showed "120000") */.Where(x => x.Svc != "").GroupBy(x => x.Svc).OrderByDescending(g => g.Count()).ToList();
             rows.Add(R(by.Count == 0 ? 0 : 1, "Last 7 days", by.Count == 0 ? "no service failed to start or stopped unexpectedly" : by.Count + " services had trouble" + (evs.Count >= 500 ? " (from the newest 500 events)" : ""), "From Windows' own System log (Service Control Manager).", "w"));
             foreach (var g in by.Take(25))
             {

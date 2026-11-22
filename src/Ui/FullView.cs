@@ -355,7 +355,7 @@ namespace AdeeboMeter
                     // Ctrl+PageDown / PageUp: the next / previous SNMP view, from the keyboard
                     e.Handled = true; int k = Array.FindIndex(SnmpTabs, z => z[0] == tbSel); k = (k + (e.KeyCode == Keys.PageDown ? 1 : SnmpTabs.Length - 1)) % SnmpTabs.Length; SelectTool(SnmpTabs[k][0]);
                 }
-                else if (tab == "toolbox" && tbCanvas != null && e.Control && e.KeyCode == Keys.C && !(ActiveControl is TextBoxBase) && !tbSearch.Box.Focused && !tbBoxes.Any(b => b != null && b.Box.Focused) && tbRows != null && !Examples.IsExample(tbRows) && !tbBusy)
+                else if (tab == "toolbox" && tbCanvas != null && e.Control && e.KeyCode == Keys.C && !(ActiveControl is TextBoxBase) && !tbSearch.Box.Focused && !tbBoxes.Any(b => b != null && b.Box.Focused) && (tbRows != null || (tbSel == "mtu" && mtuHops != null) || (tbSel == "mtr" && mtrHops != null)) && !Examples.IsExample(tbRows) && !tbBusy)
                 {
                     e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { CopyFailed(ce); }   // Ctrl+C copies the result, like the link
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
@@ -726,6 +726,13 @@ namespace AdeeboMeter
             foreach (Control c in Controls) if (c == header) { c.SendToBack(); break; }
             tipBar.SendToBack(); header.SendToBack();
         }
+        // the tool-run test (toolbox:<tool>:fillreal): the examples' documentation addresses (192.0.2.x, 198.51.100.x, 203.0.113.x)
+        // never answer - this network's router stands in for them, so the tools measure something real
+        void RealAddresses()
+        {
+            string gw; lock (M.L) gw = M.Gateway ?? ""; if (gw == "") return;
+            foreach (var b in tbBoxes) if (b != null && !b.Box.UseSystemPasswordChar) { string v = b.Box.Text, nv = System.Text.RegularExpressions.Regex.Replace(v, @"\b(192\.0\.2|198\.51\.100|203\.0\.113)\.\d{1,3}\b", gw); if (nv != v) b.Box.Text = nv; }
+        }
         public void Debug(string page, string tipK, string destIn)
         {
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
@@ -741,7 +748,7 @@ namespace AdeeboMeter
             if (page == "phone" && sub == "askold") { sub = "ask"; System.Threading.Tasks.Task.Factory.StartNew(() => PhoneHub.Ask("allow", "Test phone", L.T("wants to watch this PC and start checks for up to 30 minutes."), "")); }
             if (page == "settings" && sub != null) { if (sub.StartsWith("q=", StringComparison.Ordinal)) settingsSearch.Box.Text = sub.Substring(2); else { var hit = SetSections.FirstOrDefault(z => z.StartsWith(sub, StringComparison.OrdinalIgnoreCase)); if (hit != null) setSec = hit; } settingsCanvas.Invalidate(); }
             if (page == "guide" && sub != null && Investigate.All.Any(f => f.Id == sub)) StartGuide(sub, false);
-            if (page == "toolbox" && sub != null) { EnsureToolbox(); bool ex = sub.EndsWith(":ex", StringComparison.Ordinal), fill = sub.EndsWith(":fill", StringComparison.Ordinal); if (ex) sub = sub.Substring(0, sub.Length - 3); if (fill) sub = sub.Substring(0, sub.Length - 5); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else { OpenTool(sub); if (ex) ShowExample(); if (fill) FillExample(sub); } }   // toolbox:ping:ex opens its Example (screenshots); toolbox:ping:fill puts the example's inputs in the boxes (the tool-run test presses Run)
+            if (page == "toolbox" && sub != null) { EnsureToolbox(); bool ex = sub.EndsWith(":ex", StringComparison.Ordinal), real = sub.EndsWith(":fillreal", StringComparison.Ordinal), fill = real || sub.EndsWith(":fill", StringComparison.Ordinal); if (ex) sub = sub.Substring(0, sub.Length - 3); if (fill) sub = sub.Substring(0, sub.Length - (real ? 9 : 5)); if (Sections.Any(z => z[0] == sub)) ShowSection(sub); else { OpenTool(sub); if (ex) ShowExample(); if (fill) FillExample(sub); if (real) RealAddresses(); } }   // toolbox:ping:ex opens its Example (screenshots); toolbox:ping:fill puts the example's inputs in the boxes (the tool-run test presses Run)
             if (page == "trade" && sub != null && MkTabs.Any(t => t[0] == sub)) mkTab = sub;   // trade:fx opens Markets › Currencies (links and screenshots)
             if (page == "sports" && sub != null) spTab = sub;
             if (destIn == "demo-story" && page == "dest")
