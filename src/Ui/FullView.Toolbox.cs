@@ -795,7 +795,7 @@ namespace AdeeboMeter
             tbEx = new PillButton("Example", PillButton.K.Chip) { Margin = new Padding(Sc(8), Sc(18), 0, 0) }; tbEx.Click += delegate { ShowExample(); };
             tbBar.Controls.Add(tbEx);
             tbCanvas = new DB { Name = "tbCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
-            tbCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTb(e.Graphics); }; Wire(tbCanvas);
+            tbCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTb(e.Graphics); }; Wire(tbCanvas); tbCanvas.MouseMove += delegate(object s2, MouseEventArgs e2) { IdxHover(e2.Location); }; tbCanvas.MouseLeave += delegate { IdxHover(new Point(-9999, -9999)); };
             tbHead = new DB { Name = "tbHead", Dock = DockStyle.Top, Height = Sc(100), BackColor = Theme.Card, Visible = false };
             tbHead.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbHead(e.Graphics); }; Wire(tbHead);
             BuildAssist();

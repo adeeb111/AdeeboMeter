@@ -119,18 +119,53 @@ namespace AdeeboMeter
                 // grouped: by the tool's group inside a question (by question in a search)
                 var groups = tbFilter != "" || tbQ == "*" ? rows.GroupBy(t => { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); return qn != null ? L.T(qn[1]) : GroupName(t.Group); }).ToList()
                                             : rows.GroupBy(t => GroupName(t.Group)).ToList();
+                // tiles, like Home's "Go to" (Adeeb, 22 Nov: "copy the homepage go-to style, hover for the details, in sections") -
+                // an icon in the section's colour, the name and one short line; the card with everything shows on hover
+                idxTiles.Clear();
+                int cols = Math.Max(1, Math.Min(4, (int)(cw / (240 * S)))); float tw = (cw - (cols - 1) * 12 * S) / cols, th = 70 * S;
                 foreach (var grp in groups)
                 {
-                    py += 14 * S;
-                    using (var gb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(grp.Key, Draw.fBodyB, gb, cx, py);
-                    string gc = grp.Count().ToString(CultureInfo.CurrentCulture); var gs = g.MeasureString(gc, Draw.fSmall); g.DrawString(gc, Draw.fSmall, muted, cx + cw - gs.Width, py + 2 * S);
-                    py += 26 * S; using (var p = new Pen(Theme.Line)) g.DrawLine(p, cx, py, cx + cw, py);
-                    foreach (var t in grp) py = IndexRow(g, t, cx, py, cw);
+                    py += 16 * S;
+                    g.DrawString(grp.Key.ToUpperInvariant() + "  ·  " + grp.Count().ToString(CultureInfo.CurrentCulture), Draw.fTiny, muted, cx, py);
+                    py += 24 * S; int n = 0;
+                    foreach (var t in grp)
+                    {
+                        var r = new RectangleF(cx + (n % cols) * (tw + 12 * S), py + (n / cols) * (th + 12 * S), tw, th); n++;
+                        idxTiles.Add(new KeyValuePair<RectangleF, string>(r, t.Id));
+                        if (!Kit.Off(g, r)) ToolTile(g, t, r, t.Id == idxHot);
+                        string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, r, "tb." + id);
+                    }
+                    py += ((n + cols - 1) / cols) * (th + 12 * S);
                 }
                 Need(tbCanvas, Math.Max(railEnd, py + 30 * S));
             }
         }
         float railEnd; bool idxSeen;
+        readonly List<KeyValuePair<RectangleF, string>> idxTiles = new List<KeyValuePair<RectangleF, string>>(); string idxHot;
+        void ToolTile(Graphics g, Tool t, RectangleF r, bool hot)
+        {
+            string q = QuestionOf(t), acc = QAccent(q), gk; Color c = Kit.Accent(acc);
+            Kit.Card(g, r, null, hot); if (hot) Theme.Stroke(g, r, 16 * S, c, 1.5f * S);
+            float ic = 40 * S; var ir = new RectangleF(r.X + 14 * S, r.Y + (r.Height - ic) / 2, ic, ic);
+            if (BigGlyph.TryGetValue("q:" + q, out gk) && Glyphs.Has(gk)) Glyphs.Tile(g, gk, ir, c, 10 * S); else Kit.Icon(g, "tool", ir, c);
+            float tx = ir.Right + 12 * S, tw = r.Right - tx - 10 * S; string tag = Answers(t);
+            using (var one = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+            using (var ink = new SolidBrush(Theme.Ink)) using (var mut = new SolidBrush(Theme.Muted))
+            {
+                float top = r.Y + (tag == "" ? (r.Height - 22 * S) / 2 : 14 * S);
+                g.DrawString(ToolName(t), Draw.fBodyB, ink, new RectangleF(tx, top, tw, 22 * S), one);
+                if (tag != "") g.DrawString(tag, Draw.fSmall, mut, new RectangleF(tx, top + 23 * S, tw, 20 * S), one);
+            }
+        }
+        // the tile under the mouse gets its edge in the section's colour (only that tile and the one before are drawn again)
+        void IdxHover(Point client)
+        {
+            if (!EveryTool || !tbHome) return;
+            var sp = tbCanvas.AutoScrollPosition; var pt = new PointF(client.X - sp.X, client.Y - sp.Y); string hit = null; RectangleF hr = RectangleF.Empty, was = RectangleF.Empty;
+            foreach (var kv in idxTiles) { if (kv.Key.Contains(pt)) { hit = kv.Value; hr = kv.Key; } if (kv.Value == idxHot) was = kv.Key; }
+            if (hit == idxHot) return; idxHot = hit;
+            foreach (var r in new[] { was, hr }) if (r.Width > 0) tbCanvas.Invalidate(Rectangle.Round(RectangleF.Inflate(new RectangleF(r.X + sp.X, r.Y + sp.Y, r.Width, r.Height), 4, 4)));
+        }
 
         // one tool: name + what it answers (two lines before a cut), its state, a pin, Open; a family shows its views
         float IndexRow(Graphics g, Tool t, float x, float y, float w)
