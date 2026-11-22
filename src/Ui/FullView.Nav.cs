@@ -141,21 +141,25 @@ namespace AdeeboMeter
             Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); sideNav.Acc.Add(Tuple.Create(L.T("Search anything"), Rectangle.Round(sr), (Action)OpenPalette)); y += 48 * S;
             // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
             // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
-            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S - 44 * S - 40 * S;   // 44: Settings always has its row at the bottom; 40: Your phone above it
-            bool compact = bar.Count * 46 * S + more.Count * 38 * S > room; float bigH = compact ? 36 : 44;
-            int fitMore = more.Count; if (compact) { float left = room - bar.Count * 38 * S; fitMore = Math.Max(0, (int)(left / (38 * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
+            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 6 * S - 18 * S - 4 * S - 44 * S - 40 * S;   // 44: Settings always has its row at the bottom; 40: Your phone above it
+            // 22 Nov (Adeeb: "make it tighter when all is enabled"): tighter rows to start with, and they shrink until everything fits
+            // (40/34 px down to 30/28); only past that does the rest go behind "More..."
+            float bigH = 40, smallH = 34;
+            while ((bar.Count * (bigH + 1) + more.Count * (smallH + 1)) * S > room && bigH > 30) { bigH -= 1; smallH = Math.Max(28, smallH - 1); }
+            bool compact = (bar.Count * (bigH + 1) + more.Count * (smallH + 1)) * S > room;
+            int fitMore = more.Count; if (compact) { float left = room - bar.Count * (bigH + 1) * S; fitMore = Math.Max(0, (int)(left / ((smallH + 1) * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
             Action<string, bool> row = (id, small) =>
             {
-                float h = (small ? 36 : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
+                float h = (small ? smallH : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
                 if (sel) { using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, rr); using (var b = new SolidBrush(hc ? SystemColors.Highlight : Aqua)) g.FillRectangle(b, rr.X, rr.Y + 6 * S, 3 * S, h - 12 * S); }
                 Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(sel ? ink : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
                 string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id); sideNav.Acc.Add(Tuple.Create(L.T(NavName(id)), Rectangle.Round(rr), (Action)delegate { OpenNav(nid); }));
-                y += h + 2 * S;
+                y += h + 1 * S;
             };
             foreach (var id in bar) row(id, false);
-            y += 8 * S;
-            using (var b = new SolidBrush(sub)) g.DrawString(L.T("MORE"), Draw.fTiny, b, x + 14 * S, y); y += 20 * S;
+            y += 6 * S;
+            using (var b = new SolidBrush(sub)) g.DrawString(L.T("MORE"), Draw.fTiny, b, x + 14 * S, y); y += 18 * S;
             foreach (var id in more.Take(fitMore)) row(id, true);
             if (fitMore < more.Count)
             {
