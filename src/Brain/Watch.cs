@@ -99,7 +99,6 @@ namespace AdeeboMeter
     static class Watch
     {
         public sealed class Sug {
-        static readonly int MyPid = System.Diagnostics.Process.GetCurrentProcess().Id; public DateTime T; public string App = "", Path = "", Why = "", How = ""; public int Lv; }
         public static readonly List<Sug> List = new List<Sug>();
         static Dictionary<string, DateTime> seen; static HashSet<string> night; static DateTime learnStart; static readonly object k = new object(); static DateTime saved = DateTime.MinValue;
         static void Load()
@@ -153,7 +152,7 @@ namespace AdeeboMeter
                 foreach (var g in list.Where(c => c.State == "ESTABLISHED" && IsPublic(c.RemoteIp)).GroupBy(c => c.Pid))
                 {
                     string path = Native.ExePath(g.Key); if (path == "") continue;
-                    if (g.Key == MyPid) continue;   // 22 Nov: AdeeboMeter warned about itself (a test build has no publisher yet)
+                    if (g.Key == Program.MyPid) continue;   // 22 Nov: AdeeboMeter warned about itself (a test build has no publisher yet)
                     var c0 = g.First();
                     // versioned folders (Teams, Discord, updaters: "app-1.0.9", "MSTeams_24123.1.2_x64") are the same app after an update
                     string key = Unversioned(path); DateTime was; if (key != path && seen.TryGetValue(path, out was) && !seen.ContainsKey(key)) seen[key] = was;

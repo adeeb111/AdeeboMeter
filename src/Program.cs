@@ -120,6 +120,7 @@ namespace AdeeboMeter
         public static int ForceTheme = -1;
         public static bool Restarted;   // started by the Restart button: open the big window again once running
         public static int StartViewMs = 1500;
+        public static readonly int MyPid = System.Diagnostics.Process.GetCurrentProcess().Id;
         public static string StartView, StartTip, StartDest, StartFile;   // StartFile: a locked .adeebo file to open (bug-hunt ML-127)   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes
 
