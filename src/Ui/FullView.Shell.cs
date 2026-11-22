@@ -45,6 +45,14 @@ namespace AdeeboMeter
         void W(string s, Color c) { if (shOut == null || shOut.IsDisposed) return; shOut.SelectionStart = shOut.TextLength; shOut.SelectionLength = 0; shOut.SelectionColor = c; shOut.AppendText(s); shOut.SelectionColor = ShFg; }
         void WL(string s, Color c) { W(s + "\n", c); }
         void WL(string s) { WL(s, ShFg); }
+        // no drawing while a block of lines goes in (WM_SETREDRAW), one paint after
+        int shHolds;
+        void ShHold(bool on)
+        {
+            if (shOut == null || shOut.IsDisposed || !shOut.IsHandleCreated) return;
+            if (on) { if (shHolds++ == 0) Native.SendMessage(shOut.Handle, 0x000B, IntPtr.Zero, IntPtr.Zero); }
+            else if (shHolds > 0 && --shHolds == 0) { Native.SendMessage(shOut.Handle, 0x000B, (IntPtr)1, IntPtr.Zero); shOut.Invalidate(); }
+        }
         void ShEnd() { shOut.SelectionStart = shOut.TextLength; shOut.ScrollToCaret(); }
         void ShWelcome()
         {
@@ -116,6 +124,7 @@ namespace AdeeboMeter
             line = (line ?? "").Trim(); if (line == "") { ShEnd(); return; }
             shHist.Remove(line); shHist.Add(line); if (shHist.Count > 200) shHist.RemoveAt(0); shHi = -1;
             var a = ShSplit(line); string cmd = a[0].ToLowerInvariant(); var args = a.Skip(1).ToList();
+            ShHold(true);
             bool yes = args.Remove("--yes") | args.Remove("-y");
             try
             {
@@ -148,6 +157,7 @@ namespace AdeeboMeter
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; WL("error: " + e.Message, ShRed); Program.Log("shell: " + e); }
+            finally { ShHold(false); }
             ShEnd();
         }
         void ShHelp()
@@ -165,7 +175,7 @@ namespace AdeeboMeter
                 new[] { "log [n]", "the last n lines of AdeeboMeter's own log (default 20)" },
                 new[] { "copy / save", "the last result to the clipboard / to a file in Documents" },
                 new[] { "history / clear / exit", "past commands / clear the screen (Ctrl+L) / back to Home" } })
-            { W("  " + c[0].PadRight(22), ShCyan); WL(c[1], ShDim); }
+            { W("  " + c[0].PadRight(24), ShCyan); WL(c[1], ShDim); }
             WL("Keys: Tab completes · Up/Down history · Ctrl+C stops a run · Ctrl+` opens the shell from anywhere", ShDim);
             WL("Example:  ping 1.1.1.1 50 200   ·   dig example.com MX   ·   subnet 10.1.2.3/22   ·   open markets", ShDim);
         }
@@ -287,6 +297,8 @@ namespace AdeeboMeter
         {
             if (shRun != null) { WL("a tool is still running - Ctrl+C stops it", ShAmber); return; }
             if (t.Do == null) { WL(t.Id + " draws its result as a picture - opening it in the Toolbox", ShAmber); tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(t.Id); SyncNav(); return; }
+            bool needs = t.Inputs.Length > 0 && t.Inputs[0] != "" && t.Inputs[0].IndexOf("optional", StringComparison.OrdinalIgnoreCase) < 0 && t.Inputs[0].IndexOf("empty", StringComparison.OrdinalIgnoreCase) < 0;
+            if (needs && args.Count == 0) { WL("usage: " + t.Id + " " + string.Join(" ", t.Inputs.Where(h => h != "").Select(h => "<" + BoxLabel(h).ToLowerInvariant().Replace(' ', '-') + ">")), ShAmber); var ex0 = Examples.Get(t.Id); if (ex0 != null && ex0.In.Any(z => z != "")) WL("e.g.   " + t.Id + " " + string.Join(" ", ex0.In.Select(z => z == "" ? "-" : z.Contains(" ") ? "\"" + z + "\"" : z)), ShDim); WL("man " + t.Id + " says more", ShDim); return; }   // 22 Nov: "ping" alone said "couldn't find  (IPv4)"
             var a = new string[Math.Max(4, t.Inputs.Length)];
             for (int i = 0; i < a.Length; i++) a[i] = i < args.Count && args[i] != "-" ? args[i] : "";
             // more words than boxes: the rest belong to the last box ("dig example.com MX" fits; a sentence for a free-text box too)
@@ -310,13 +322,19 @@ namespace AdeeboMeter
                     BeginInvoke((Action)delegate
                     {
                         shRun = null; if (shOut == null || shOut.IsDisposed) return;
+                        ShHold(true);
+                        if (t.Id == "mtr" && mtrHops != null)
+                        {
+                            WL("hop     router                                   loss  sent  avg   best  worst  jitter", ShBlue);
+                            foreach (var hp in mtrHops.ToList()) { double loss = hp.Sent > 0 ? 100.0 * hp.Lost / hp.Sent : 0, avg = hp.Sent - hp.Lost > 0 ? hp.Sum / (hp.Sent - hp.Lost) : double.NaN; WL(hp.N.ToString(CultureInfo.InvariantCulture).PadRight(8) + (hp.Ip == "" ? "*" : hp.Ip).PadRight(40) + (loss.ToString("0", CultureInfo.InvariantCulture) + "%").PadLeft(5) + hp.Sent.ToString(CultureInfo.InvariantCulture).PadLeft(6) + PathTools.F(avg).PadLeft(6) + PathTools.F(hp.Best).PadLeft(6) + PathTools.F(hp.Worst).PadLeft(7) + PathTools.F(hp.Jit).PadLeft(8), loss > 20 ? ShAmber : ShFg); }
+                        }
                         ShRows(res);
                         var sb = new StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · " + L.T(t.Title) + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
                         foreach (var o in res.Where(x => !IsSecretRow(x))) { string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     "; sb.AppendLine(lv + ShareCell(o[1]) + ": " + ShareCell(o[2])); if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + ShareCell(o[3])); }
                         shLast = sb.ToString();
                         WL((run.Stop ? "stopped" : "done") + " in " + sw.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s", ShDim);
                         if ((LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep") && !yes) WL("(it sends test traffic: add --yes if this is your network)", ShAmber);
-                        ShEnd();
+                        ShHold(false); ShEnd();
                     });
                 }
                 catch (InvalidOperationException) { shRun = null; }

@@ -44,14 +44,19 @@ namespace AdeeboMeter
             g.TranslateTransform(outlookCanvas.AutoScrollPosition.X, outlookCanvas.AutoScrollPosition.Y);
             Begin(outlookCanvas);
             float x = 24 * S, y = 20 * S, w = outlookCanvas.ClientSize.Width - 48 * S;
+            y = PaintOutlookBody(g, outlookCanvas, x, y, w, true); Need(outlookCanvas, y);
+        }
+        // the Outlook itself - on its own page and on Home (22 Nov: "everything should be in the page")
+        float PaintOutlookBody(Graphics g, Control oc, float x, float y, float w, bool own)
+        {
             int days = 0; double[] byHour = null; if (Cfg.History) byHour = LineHours.ByHour(out days);
             // the header: title, place, updated, refresh
-            OlText(g, L.T("Outlook"), Draw.fTitle, Theme.Ink, x, y);
-            using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("The weather, your network and this PC: how things are now, and what the last few days say about the next one."), Draw.fBody, sb, new RectangleF(x, y + 36 * S, w * 0.62f, 40 * S));
+            if (own) OlText(g, L.T("Outlook"), Draw.fTitle, Theme.Ink, x, y); else using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("OUTLOOK  ·  NOW AND NEXT"), Draw.fTiny, mb, x, y + 18 * S);
+            if (own) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("The weather, your network and this PC: how things are now, and what the last few days say about the next one."), Draw.fBody, sb, new RectangleF(x, y + 36 * S, w * 0.62f, 40 * S));
             string place = Weather.Active ? Weather.PlaceName() : L.T("Choose a place for the weather");
             var ps = g.MeasureString(place, Draw.fBtn); var pr = new RectangleF(x + w - ps.Width - 40 * S - 120 * S, y + 8 * S, ps.Width + 40 * S, 40 * S); Kit.Box(g, pr, 10 * S);
             Kit.Icon(g, "dest", new RectangleF(pr.X + 10 * S, pr.Y + 11 * S, 18 * S, 18 * S), Theme.Blue); OlText(g, place, Draw.fBtn, Theme.Ink, pr.X + 32 * S, pr.Y + (pr.Height - ps.Height) / 2);
-            Act(outlookCanvas, pr, delegate { var p = PickPlace(); if (p != null) { Cfg.WeatherPlace = Weather.Line(p); Cfg.WeatherOn = true; Cfg.Save(); outlookCanvas.Invalidate(); } });
+            Act(oc, pr, delegate { var p = PickPlace(); if (p != null) { Cfg.WeatherPlace = Weather.Line(p); Cfg.WeatherOn = true; Cfg.Save(); oc.Invalidate(); } });
             OlText(g, L.T("Updated") + " " + DateTime.Now.ToString("t", CultureInfo.CurrentCulture), Draw.fSmall, Theme.Muted, pr.Right + 12 * S, pr.Y + 12 * S);
             y += 86 * S;
 
@@ -153,7 +158,7 @@ namespace AdeeboMeter
             {
                 var ir = new RectangleF(ux + 16 * S, uy, ur.Width - 32 * S, 44 * S); Theme.Stroke(g, ir, 10 * S, Theme.Line2, 1);
                 OlText(g, it[0], Draw.fBodyB, Theme.Ink, ir.X + 12 * S, ir.Y + 4 * S); OlText(g, it[1], Draw.fTiny, Theme.Muted, ir.X + 12 * S, ir.Y + 24 * S);
-                if (it[2] != "") { string to = it[2]; Act(outlookCanvas, ir, delegate { tab = to; ShowTab(); SyncNav(); }); }
+                if (it[2] != "") { string to = it[2]; Act(oc, ir, delegate { tab = to; ShowTab(); SyncNav(); }); }
                 uy += 50 * S;
             }
             y += 226 * S;
@@ -187,7 +192,7 @@ namespace AdeeboMeter
                 ry += 44 * S;
             }
             y = tr2.Bottom + 24 * S;
-            Need(outlookCanvas, y);
+            return y;
         }
         // free space on the Windows drive (read at most once a minute)
         static string olFree = "-"; static DateTime olFreeAt = DateTime.MinValue;

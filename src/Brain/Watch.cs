@@ -98,7 +98,8 @@ namespace AdeeboMeter
     // ================================================================== watch and suggest (never blocks - that needs admin)
     static class Watch
     {
-        public sealed class Sug { public DateTime T; public string App = "", Path = "", Why = "", How = ""; public int Lv; }
+        public sealed class Sug {
+        static readonly int MyPid = System.Diagnostics.Process.GetCurrentProcess().Id; public DateTime T; public string App = "", Path = "", Why = "", How = ""; public int Lv; }
         public static readonly List<Sug> List = new List<Sug>();
         static Dictionary<string, DateTime> seen; static HashSet<string> night; static DateTime learnStart; static readonly object k = new object(); static DateTime saved = DateTime.MinValue;
         static void Load()
@@ -152,6 +153,7 @@ namespace AdeeboMeter
                 foreach (var g in list.Where(c => c.State == "ESTABLISHED" && IsPublic(c.RemoteIp)).GroupBy(c => c.Pid))
                 {
                     string path = Native.ExePath(g.Key); if (path == "") continue;
+                    if (g.Key == MyPid) continue;   // 22 Nov: AdeeboMeter warned about itself (a test build has no publisher yet)
                     var c0 = g.First();
                     // versioned folders (Teams, Discord, updaters: "app-1.0.9", "MSTeams_24123.1.2_x64") are the same app after an update
                     string key = Unversioned(path); DateTime was; if (key != path && seen.TryGetValue(path, out was) && !seen.ContainsKey(key)) seen[key] = was;
@@ -165,7 +167,7 @@ namespace AdeeboMeter
                         bool noPublisher = facts.Length > 1 && string.IsNullOrEmpty(facts[1]);
                         // temp-folder updaters are normal while it's still learning this PC: amber then, red afterwards
                         if (odd) Add(Learning ? 1 : 2, c0.Proc, path, "connects to the internet from " + (path.IndexOf("Downloads", StringComparison.OrdinalIgnoreCase) >= 0 ? "your Downloads folder" : "a temporary folder") + " - programs normally live in Program Files.", HowToBlock(path));
-                        else if (!Learning) Add(noPublisher ? 2 : 1, c0.Proc, path, "connected to the internet for the first time" + (noPublisher ? ", and its file names no publisher" : "") + " (" + Draw.Trunc(c0.Host != "" ? c0.Host : c0.RemoteIp, 40) + ").", noPublisher ? HowToBlock(path) : "If you just installed or updated it, that's expected. If not, look it up before trusting it. " + HowToBlock(path));
+                        else if (!Learning) Add(noPublisher ? 2 : 1, c0.Proc, path, "connected to the internet for the first time" + (noPublisher ? ", and its file has no publisher (it isn't signed)" : "") + " (" + Draw.Trunc(c0.Host != "" ? c0.Host : c0.RemoteIp, 40) + ").", noPublisher ? HowToBlock(path) : "If you just installed or updated it, that's expected. If not, look it up before trusting it. " + HowToBlock(path));
                     }
                     if (atNight && !night.Contains(path))
                     {

@@ -429,6 +429,7 @@ namespace AdeeboMeter
         void ProbeDns()
         {
             double ms; int rc = DnsTime("www.microsoft.com", out ms);
+            if (rc == 0 && ms > 30000) return;   // tool-run 22 Nov: "DNS is slow (22116417 ms)" - a lookup that spanned sleep; not a measurement, dropped
             lock (L) { DnsFailedLast = rc != 0 && rc != 9003 && rc != 9501; Dns.Add(DnsFailedLast ? double.NaN : ms); }
         }
         // A real lookup that skips the local cache, so it measures the DNS server itself.

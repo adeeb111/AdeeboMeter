@@ -89,7 +89,7 @@ namespace AdeeboMeter
             int sig; lock (M.L) sig = M.WifiSignal;
             // what moves every second (the four numbers, the path) redraws only its own spots; anything else redraws the page
             string lsp; lock (M.L) lsp = M.LinkSpeed; string fast = r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + Draw.Pair(M.Down.Last, M.Up.Last) + "|" + sig + "|" + lsp + "|" + r(s.Cpu / 10);
-            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + (DateTime.Now.Minute / 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
             if (k != ovKey) { ovKey = k; ovFast = fast; overviewCanvas.Invalidate(); }
             else if (fast != ovFast) { ovFast = fast; if (!RedrawSpots(overviewCanvas, "ov.now", "ov.path")) overviewCanvas.Invalidate(); }
         }
@@ -379,6 +379,7 @@ namespace AdeeboMeter
                 y += 14 * S;
 
                 // where things live: big-icon tiles with a live line (FullView.Gateway.cs)
+                y = PaintOutlookBody(g, overviewCanvas, x, y, w, false) + 10 * S; OvLap("outlook");   // the Outlook lives on Home now (22 Nov)
                 y = PaintGateway(g, x, y, w); OvLap("gateway");
                 g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
             }

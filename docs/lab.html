@@ -247,8 +247,8 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
       kids.push(txt(n.x, n.y - 3, n.name, {fill: c, "font-size": 12.5, "font-weight": 700}));
       if (n.sub) kids.push(txt(n.x, n.y + 12, n.sub, {fill: C.sub, "font-size": 10.5}));
     } else {
-      kids.push(el("rect", {x: n.x - 26, y: n.y - 30, width: 52, height: 50, rx: 12, fill: s ? "rgba(47,123,246,.14)" : C.page, stroke: s ? C.blue : "none"}));
-      kids.push(el("path", {d: G[n.k] || G.pc, transform: `translate(${n.x - 20} ${n.y - 25}) scale(1.6667)`, fill: "none", stroke: c, "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": dash}));
+      kids.push(el("rect", {x: n.x - 26, y: n.y - 30, width: 52, height: 50, rx: 12, fill: s ? "rgba(47,123,246,.14)" : C.page, stroke: s ? C.blue : dash ? C.line : "none", "stroke-dasharray": s ? null : dash}));
+      kids.push(el("path", {d: G[n.k] || G.pc, transform: `translate(${n.x - 20} ${n.y - 25}) scale(1.6667)`, fill: "none", stroke: c, "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: dash ? .7 : 1}));   /* 22 Nov: a not-measured device is dimmed, not dashed - dashed icons looked broken, half gone */
       kids.push(txt(n.x, n.y + 34, n.name, {fill: C.ink, "font-size": 12.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"}));
       if (n.sub) kids.push(txt(n.x, n.y + 48, n.sub, {fill: C.sub, "font-size": 10.5, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"}));
     }

@@ -212,7 +212,6 @@ namespace AdeeboMeter
                 try { if (!mtx.WaitOne(5000)) return 0; } catch (AbandonedMutexException) { }
             }
             Log("Start " + Version);
-            Warm.Start();
             Application.Run(new AppCtx());
             Log("Exit");
             GC.KeepAlive(mtx);
@@ -348,7 +347,7 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,toolbox,outlook,stream,sports,trade,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both", FmpEvery = "15";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile string Nav = "home,toolbox,stream,sports,trade,gamer,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both", FmpEvery = "15";   // the speed widget: Mb/s or MB/s; both directions, download or upload
         public static volatile bool WGraph = true, WTotal = true, SetupDone = true;   // SetupDone: false only on a fresh install until the 3 questions are answered or skipped   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string TbPins = "";   // your own Toolbox pins (Every tool), tool ids, up to 12
@@ -405,7 +404,7 @@ namespace AdeeboMeter
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
         public static readonly HashSet<string> Known = new HashSet<string> { "navsports", "tbview2", "fmpevery", "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme", "fxlist", "paper", "kickremind", "phonestandby", "linealert", "casualfri", "casualmoves" };   // 1.1.6: Markets and Sports
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
-        public static readonly string[] NavIds = { "home", "toolbox", "outlook", "stream", "sports", "trade", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports", "lab", "shell" };
+        public static readonly string[] NavIds = { "home", "toolbox", "stream", "sports", "trade", "gamer", "time", "learn", "story", "security", "dest", "calc", "lab", "shell" };   // 22 Nov: Outlook is on Home, Reports in the Toolbox ("Make a report") - not pages of their own
         public static bool NavSports;   // Sports became its own page (22 Nov): added once after Streaming in a saved bar
         public static string NavClean(string v)
         {
