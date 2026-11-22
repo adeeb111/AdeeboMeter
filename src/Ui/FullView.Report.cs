@@ -37,7 +37,7 @@ namespace AdeeboMeter
                         catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; status.Text = L.T("Couldn't copy - try again."); }
                         return;
                     }
-                    if (MessageBox.Show(f, L.T("This becomes a public GitHub issue that anyone can read:") + "\n\n" + (body.Length > 700 ? body.Substring(0, 700) + "\n..." : body) + "\n\n" + L.T("Send it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                    if (AskCard.Show(f, L.T("This becomes a public GitHub issue that anyone can read:") + "\n\n" + (body.Length > 700 ? body.Substring(0, 700) + "\n..." : body) + "\n\n" + L.T("Send it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
                     send.Enabled = false; status.Text = L.T("Sending...");
                     string first = text.Split('\n')[0].Trim(); if (first.Length > 80) first = first.Substring(0, 80);
                     Relay.Send(Relay.Json(bug ? "bug" : "feedback", first, body, null), r =>
@@ -65,8 +65,8 @@ namespace AdeeboMeter
                     wl.Links.Clear(); wl.Links.Add(lead.Length, rd.Length, "read"); wl.Links.Add(lead.Length + rd.Length + 3, dl.Length, "del");
                     wl.LinkClicked += delegate(object s2, LinkLabelLinkClickedEventArgs e2)
                     {
-                        if ((string)e2.Link.LinkData == "read") MessageBox.Show(f, Relay.WaitingText(), L.T("Waiting to send"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        else if (MessageBox.Show(f, L.T("Delete the waiting report(s)? They won't be sent."), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK) { wl.Text = Relay.DropWaiting() ? L.T("Deleted - nothing is waiting.") : L.T("Couldn't delete them."); wl.Links.Clear(); }
+                        if ((string)e2.Link.LinkData == "read") AskCard.Show(f, Relay.WaitingText(), L.T("Waiting to send"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        else if (AskCard.Show(f, L.T("Delete the waiting report(s)? They won't be sent."), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK) { wl.Text = Relay.DropWaiting() ? L.T("Deleted - nothing is waiting.") : L.T("Couldn't delete them."); wl.Links.Clear(); }
                     };
                     f.Controls.Add(wl); f.ClientSize = new Size(f.ClientSize.Width, Math.Max(f.ClientSize.Height, wl.Bottom + Sc(14)));
                 }

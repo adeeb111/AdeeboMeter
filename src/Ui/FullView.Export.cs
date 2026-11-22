@@ -367,7 +367,7 @@ namespace AdeeboMeter
                 }
                 if (f.Length > 7) foreach (var it in f[7].Split('~').Where(z => z != "")) { var p = it.Split(','); if (p.Length < 2) continue; lines.Add(p[0] == "-1" ? "\n" + D(p[1]).ToUpperInvariant() : "• " + D(p[1]) + (p.Length > 2 && p[2] != "" ? ": " + D(p[2]) : "") + (p.Length > 3 && p[3] != "" ? " (" + D(p[3]) + ")" : "")); }
                 string what = string.Join("\n", lines.Take(60)) + (lines.Count > 60 ? "\n• ... " + (lines.Count - 60) + " " + L.T("more lines") : "");
-                if (MessageBox.Show(this, L.T("Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                if (AskCard.Show(this, L.T("Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
                 phoneOk = body;
             }
             ShowQr(link);

@@ -408,7 +408,7 @@ namespace AdeeboMeter
             }
             else if (what == "del")
             {
-                if (MessageBox.Show(this, L.T("Delete this key from Windows?") + "\n\n" + k.Name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return null;
+                if (AskCard.Show(this, L.T("Delete this key from Windows?") + "\n\n" + k.Name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return null;
                 rows.Add(new[] { EcKeys.Delete(k) ? "0" : "2", "Deleted", k.Name, "", "w" }); rows.AddRange(CertKeys.MyKeys());
             }
             return rows;
@@ -450,7 +450,7 @@ namespace AdeeboMeter
                 else if (p[1] == "del")
                 {
                     var name = CertKeys.Mine().Where(c => c.Thumbprint == thumb).Select(CertKeys.NameOf).FirstOrDefault(); if (name == null) return;
-                    if (MessageBox.Show(this, L.T("Delete this key from Windows?") + "\n\n" + name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                    if (AskCard.Show(this, L.T("Delete this key from Windows?") + "\n\n" + name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                     res = new List<string[]> { new[] { CertKeys.Delete(thumb) ? "0" : "2", "Deleted", name, "", "w" } };
                     res.AddRange(CertKeys.MyKeys());
                 }
@@ -486,7 +486,7 @@ namespace AdeeboMeter
                 if (fp == null) return;
                 if (p[1] == "keep")
                 {
-                    if (MessageBox.Show(this, L.T("Use the new key for") + " " + who + "?\n\n" + L.T("New:") + " " + fp + "\n" + L.T("Now:") + " " + CertKeys.UsedPrint(who) + "\n\n" + L.T("Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                    if (AskCard.Show(this, L.T("Use the new key for") + " " + who + "?\n\n" + L.T("New:") + " " + fp + "\n" + L.T("Now:") + " " + CertKeys.UsedPrint(who) + "\n\n" + L.T("Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                     try { CertKeys.ConfirmPending(who); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException || e is System.Security.Cryptography.CryptographicException)) throw; Program.Log("recipient confirm: " + e.Message); }
                 }
                 else CertKeys.DropPending(who);
@@ -557,7 +557,7 @@ namespace AdeeboMeter
                     System.IO.File.WriteAllText(d.FileName, csv ? ResultCsv() : ResultText(), new System.Text.UTF8Encoding(true));
                     tbSaved = DateTime.Now; tbCanvas.Invalidate();
                 }
-                catch (Exception e) { Program.Log("save result: " + e.Message); MessageBox.Show(this, "Couldn't save: " + e.Message, "AdeeboMeter"); }
+                catch (Exception e) { Program.Log("save result: " + e.Message); AskCard.Show(this, "Couldn't save: " + e.Message, "AdeeboMeter"); }
             }
         }
         DateTime tbSaved;

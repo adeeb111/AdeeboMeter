@@ -42,7 +42,7 @@ namespace AdeeboMeter
         void CopyFailed(Exception e)
         {
             Program.Log("copy: " + e.Message);
-            if (!IsDisposed) MessageBox.Show(this, L.T("Couldn't copy - another app (often Remote Desktop) is holding the clipboard. Try again in a moment."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!IsDisposed) AskCard.Show(this, L.T("Couldn't copy - another app (often Remote Desktop) is holding the clipboard. Try again in a moment."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         void SaveText(string name, string text)
         {
@@ -50,7 +50,7 @@ namespace AdeeboMeter
             using (var d = new SaveFileDialog { Title = "Save the result", Filter = "Text (*.txt)|*.txt", FileName = name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt" })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
-                try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); MessageBox.Show(this, L.T("Couldn't save it:") + " " + e.Message, "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+                try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); AskCard.Show(this, L.T("Couldn't save it:") + " " + e.Message, "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
             }
         }
         float PaintToolResult(Graphics g, float x, float y, float w)

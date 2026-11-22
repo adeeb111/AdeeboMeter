@@ -256,6 +256,9 @@ namespace AdeeboMeter
             // silently overwritten with defaults as if this were a first start
             try { if (!first && (unreadable || (parsed == 0 && new FileInfo(settingsPath).Length > 0))) { File.Copy(settingsPath, settingsPath + ".damaged", true); Program.Log("settings file damaged - kept a copy as " + Path.GetFileName(settingsPath) + ".damaged, starting from defaults"); } }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            // 22 Nov: Sports became its own page - once, it joins a saved bar right after Streaming
+            if (!first && !Cfg.NavSports) { var l = Cfg.Nav.Split(',').ToList(); int si = l.IndexOf("stream"); if (si >= 0 && !l.Contains("sports")) { l.Insert(si + 1, "sports"); Cfg.Nav = Cfg.NavClean(string.Join(",", l)); } }
+            Cfg.NavSports = true;
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
             if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
             // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") is kept; a named preset sets the game timings too.

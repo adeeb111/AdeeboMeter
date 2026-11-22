@@ -70,7 +70,7 @@ namespace AdeeboMeter
                     float right = x + rw - 8 * S;
                     right = btn(right, y - 4 * S, null, "Delete", true, delegate
                     {
-                        if (t.Items.Count > 0 && MessageBox.Show(this, L.T("Delete this tab and its pins?") + "\n\n" + t.Name, "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                        if (t.Items.Count > 0 && AskCard.Show(this, L.T("Delete this tab and its pins?") + "\n\n" + t.Name, "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
                         var l = MyTabs().Where(z => z.Id != t.Id).ToList(); SaveMyTabs(l);
                         Cfg.Nav = NavAfterDelete(Cfg.Nav, t.Id); Cfg.Save(); ApplyLayout(); settingsCanvas.Invalidate();
                     });

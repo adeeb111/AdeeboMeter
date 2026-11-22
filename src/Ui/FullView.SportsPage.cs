@@ -98,8 +98,8 @@ namespace AdeeboMeter
         void SpTest()
         {
             if (spLink == null || StreamCheck.Running) return; string url = spLink.Text.Trim(); Uri u;
-            if (!Uri.TryCreate(url, UriKind.Absolute, out u) || (u.Scheme != "http" && u.Scheme != "https")) { MessageBox.Show(this, L.T("Paste a web address that starts with http:// or https:// - the stream's own link (ending in .m3u8 or .mpd) gives the full check."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
-            if (Policy.NoOnline) { MessageBox.Show(this, L.T("Online checks are turned off by your IT team."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            if (!Uri.TryCreate(url, UriKind.Absolute, out u) || (u.Scheme != "http" && u.Scheme != "https")) { AskCard.Show(this, L.T("Paste a web address that starts with http:// or https:// - the stream's own link (ending in .m3u8 or .mpd) gives the full check."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            if (Policy.NoOnline) { AskCard.Show(this, L.T("Online checks are turned off by your IT team."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
             StreamCheck.SaveLink(StreamCheck.LabelFor(url), url);
             StreamCheck.Start(url, M, SpRepaint()); sportsCanvas.Invalidate();
         }

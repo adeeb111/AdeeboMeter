@@ -360,7 +360,7 @@ namespace AdeeboMeter
                 {
                     bool left = false, right = false; Invoke((Action)delegate { left = AskTone(true); right = AskTone(false); });
                     rows.Add(R(left ? 0 : 2, "Left speaker", left ? "heard" : "not heard on the left", "")); rows.Add(R(right ? 0 : 2, "Right speaker", right ? "heard" : "not heard on the right", ""));
-                    Invoke((Action)delegate { MessageBox.Show(this, L.T("After OK, talk or clap for 4 seconds - the microphone is measured."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); });
+                    Invoke((Action)delegate { AskCard.Show(this, L.T("After OK, talk or clap for 4 seconds - the microphone is measured."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); });
                     double peak = MicPeak(4000);
                     rows.Add(R(double.IsNaN(peak) ? 3 : peak < 1 ? 2 : peak < 5 ? 1 : 0, "Microphone", double.IsNaN(peak) ? "no microphone found" : peak < 1 ? "silence - nothing came in" : "loudest " + peak.ToString("0", CultureInfo.CurrentCulture) + "% of full scale", double.IsNaN(peak) || peak < 1 ? "No sound: Settings > Privacy > Microphone (let desktop apps use it), or the mic is off / broken." : ""));
                     try { using (Process.Start(new ProcessStartInfo("microsoft.windows.camera:") { UseShellExecute = true })) { } rows.Add(R(3, "Camera", "Windows' Camera app opened - check the picture is clear and the light next to the camera comes on", "")); }
@@ -449,7 +449,7 @@ namespace AdeeboMeter
             w.Write(0x46464952); w.Write(36 + n * 4); w.Write(0x45564157); w.Write(0x20746d66); w.Write(16); w.Write((short)1); w.Write((short)2); w.Write(rate); w.Write(rate * 4); w.Write((short)4); w.Write((short)16); w.Write(0x61746164); w.Write(n * 4);
             for (int i = 0; i < n; i++) { short v = (short)(Math.Sin(2 * Math.PI * (left ? 440 : 660) * i / rate) * 9000 * Math.Min(1, Math.Min(i, n - i) / 2000.0)); w.Write(left ? v : (short)0); w.Write(left ? (short)0 : v); }
             ms.Position = 0; using (var p = new System.Media.SoundPlayer(ms)) { try { p.PlaySync(); } catch (InvalidOperationException) { } }
-            return MessageBox.Show(this, L.T(left ? "Did you hear the tone on the LEFT only?" : "Did you hear the tone on the RIGHT only?"), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+            return AskCard.Show(this, L.T(left ? "Did you hear the tone on the LEFT only?" : "Did you hear the tone on the RIGHT only?"), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
         }
         // the microphone: record a few seconds through winmm, return the loudest sample as % of full scale (NaN = no microphone)
         [StructLayout(LayoutKind.Sequential)] struct WaveFmt { public short Tag, Ch; public int Rate, Bps; public short Align, Bits, Extra; }

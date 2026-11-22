@@ -149,14 +149,14 @@ namespace AdeeboMeter
                     if (a != "Import..." && own == 0) continue;
                     string t = L.T(a); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, ts.Width + 4, 24 * S);
                     g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); string a0 = a;
-                    Act(settingsCanvas, r, delegate { if (a0 == "Import...") ImportLines(); else if (a0 == "Export...") SaveText("AdeeboMeter-my-lines", Lines.MineText()); else { if (!Lines.ClearMine()) System.Windows.Forms.MessageBox.Show(this, L.T("Windows wouldn't let me remove your lines file - nothing changed."), "AdeeboMeter"); Invalidate(true); } });
+                    Act(settingsCanvas, r, delegate { if (a0 == "Import...") ImportLines(); else if (a0 == "Export...") SaveText("AdeeboMeter-my-lines", Lines.MineText()); else { if (!Lines.ClearMine()) AskCard.Show(this, L.T("Windows wouldn't let me remove your lines file - nothing changed."), "AdeeboMeter"); Invalidate(true); } });
                     bx += ts.Width + 24 * S;
                 }
             if (Lines.CanUndoClear)
                 using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 {
                     string t = L.T("Undo clear"); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, ts.Width + 4, 24 * S);
-                    g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); Act(settingsCanvas, r, delegate { if (!Lines.UndoClear()) System.Windows.Forms.MessageBox.Show(this, L.T("Couldn't bring your lines back."), "AdeeboMeter"); Invalidate(true); });
+                    g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); Act(settingsCanvas, r, delegate { if (!Lines.UndoClear()) AskCard.Show(this, L.T("Couldn't bring your lines back."), "AdeeboMeter"); Invalidate(true); });
                 }
             y += 30 * S;
             using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("A text file, one line each: key|text - for example all.good|All calm, {addr}. Yours come first."), Draw.fSmall, m, new RectangleF(x, y, w, 36 * S));
@@ -182,10 +182,10 @@ namespace AdeeboMeter
                     BeginInvoke((Action)delegate
                     {
                         string msg = string.Join("\n", report.Take(18)) + (report.Count > 18 ? "\n(+" + (report.Count - 18) + " more)" : "");
-                        if (kept == null || kept.Count == 0) { System.Windows.Forms.MessageBox.Show(this, msg, "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information); return; }
-                        if (System.Windows.Forms.MessageBox.Show(this, msg + "\n\n" + L.T("Add these lines to yours?"), "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OKCancel, System.Windows.Forms.MessageBoxIcon.Question) != System.Windows.Forms.DialogResult.OK) return;
-                        if (!Lines.SaveMine(kept, true)) System.Windows.Forms.MessageBox.Show(this, L.T("Couldn't save your lines."), "AdeeboMeter");
-                        else if (Lines.LastDropped > 0) System.Windows.Forms.MessageBox.Show(this, L.T("Saved. Your lines are limited to 600, so the oldest") + " " + Lines.LastDropped + " " + L.T("were let go."), "AdeeboMeter");
+                        if (kept == null || kept.Count == 0) { AskCard.Show(this, msg, "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information); return; }
+                        if (AskCard.Show(this, msg + "\n\n" + L.T("Add these lines to yours?"), "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OKCancel, System.Windows.Forms.MessageBoxIcon.Question) != System.Windows.Forms.DialogResult.OK) return;
+                        if (!Lines.SaveMine(kept, true)) AskCard.Show(this, L.T("Couldn't save your lines."), "AdeeboMeter");
+                        else if (Lines.LastDropped > 0) AskCard.Show(this, L.T("Saved. Your lines are limited to 600, so the oldest") + " " + Lines.LastDropped + " " + L.T("were let go."), "AdeeboMeter");
                         Invalidate(true);
                     });
                 }

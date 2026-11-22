@@ -20,7 +20,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> NavInfo = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             { "home", new[] { "Home", "home", "home" } }, { "outlook", new[] { "Outlook", "outlook", "outlook" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
-            { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
+            { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "sports", new[] { "Sports", "star", "sports" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
             { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
             { "calc", new[] { "Calculators", "calc", "calc" } }, { "reports", new[] { "Reports", "report", "reports" } }
@@ -43,7 +43,7 @@ namespace AdeeboMeter
             if (page == "mine") return curMine;
             string s = SecOf(page); return s == "" ? "" : s;
         }
-        string curMine = "";
+        string curMine = "", navOwn = "";   // navOwn: Calculators or Reports opened from the bar - shown as their own page
         // Review-1: a search left in the box kept covering Calculators and Reports - each destination opens clean
         void ClearTbSearch() { if (tbSearch != null && tbSearch.Box.Text != "") tbSearch.Box.Text = ""; tbFilter = ""; }
         internal void OpenNav(string id)
@@ -51,13 +51,14 @@ namespace AdeeboMeter
             if (tbBusy && tab == "toolbox" && (id == "calc" || id == "reports" || id == "toolbox")) { BusyNote(); return; }
             switch (id)
             {
-                case "calc": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ClearTbSearch(); ShowQuestions("calc"); break;
-                case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ClearTbSearch(); ShowQuestions("report"); break;
+                // 22 Nov (Adeeb: "why did Calculators open the Toolbox?"): their own page - the tiles of that one section, under its
+                // own title, without the Toolbox's chips; the Toolbox's own view setting is left as it was
+                case "calc": case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); navOwn = id == "calc" ? "calc" : "report"; if (!EveryTool) { Cfg.TbView = "list"; ApplyTbView(); } ClearTbSearch(); ShowQuestions(navOwn); break;
                 default:
                     if (id.StartsWith("mine", StringComparison.Ordinal)) { curMine = id; tab = "mine"; ShowTab(); if (mineCanvas != null) mineCanvas.Invalidate(); break; }
                     var def = Secs.FirstOrDefault(x => x[0] == id); if (def == null) return;
                     string pg; tab = lastIn.TryGetValue(id, out pg) ? pg : def[2];
-                    if (id == "toolbox" && tbQ != "" && (tbQ == "calc" || tbQ == "report")) ShowQuestions("");
+                    if (id == "toolbox") { navOwn = ""; if (tbQ == "calc" || tbQ == "report") ShowQuestions(EveryTool ? "*" : ""); }
                     ShowTab(); break;
             }
             SyncNav();

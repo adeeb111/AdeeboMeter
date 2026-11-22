@@ -297,7 +297,7 @@ namespace AdeeboMeter
                         Act(settingsCanvas, clr, delegate
                         {
                             int nd = History.Days().Count;
-                            if (MessageBox.Show(this, L.T("Delete all saved history?") + "\n\n" + nd + " " + L.T("days of history are deleted for good - this can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                            if (AskCard.Show(this, L.T("Delete all saved history?") + "\n\n" + nd + " " + L.T("days of history are deleted for good - this can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                             History.Clear(); AirLog.Clear(); histDay = null; histData = null; histDays = null; histStatAt = DateTime.MinValue; ReplayForget(); settingsCanvas.Invalidate();
                         });
                         y += 30 * S;
@@ -686,7 +686,7 @@ namespace AdeeboMeter
                     kv.RemoveAll(x => x.Key == "histdays" && !asks.Any(o => o[0] == "histdays"));   // L-162: a value that isn't a choice never lands either
                     if (asks.Count > 0)
                     {
-                        var ans = MessageBox.Show(this, L.T("This file would also:") + "\n\n- " + string.Join("\n- ", asks.Select(o => L.T(o[1])).ToArray()) + "\n\n" + L.T("Yes: apply these too.  No: load the rest of the file without them.  Cancel: change nothing."), "AdeeboMeter", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                        var ans = AskCard.Show(this, L.T("This file would also:") + "\n\n- " + string.Join("\n- ", asks.Select(o => L.T(o[1])).ToArray()) + "\n\n" + L.T("Yes: apply these too.  No: load the rest of the file without them.  Cancel: change nothing."), "AdeeboMeter", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                         if (ans == DialogResult.Cancel) { settingsNote = "Nothing changed."; settingsCanvas.Invalidate(); return; }
                         if (ans != DialogResult.Yes) kv = kv.Where(x => !asks.Any(o => o[0] == x.Key)).ToList();
                     }

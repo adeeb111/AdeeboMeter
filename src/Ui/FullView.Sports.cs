@@ -101,8 +101,8 @@ namespace AdeeboMeter
                     if (note == "nokey")
                     {
                         g.DrawString(L.T("Scores need your own free key from ") + (sp == "cricket" ? "cricketdata.org" : "football-data.org") + ".", Draw.fSmall, sub, new RectangleF(cx, cy, colW, 36 * S)); cy += 38 * S;
-                        string bt = L.T("Add my key..."); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(cx, cy, bs.Width + 20 * S, 30 * S); Kit.Box(g, br, 10 * S);
-                        g.DrawString(bt, Draw.fBtn, ink, br.X + 10 * S, br.Y + (30 * S - bs.Height) / 2); string spc = sp; Act(sportsCanvas, br, delegate { AskSportKey(spc); }); cy += 42 * S;
+                        var br = MkSpButton(g, L.T("Add my key..."), cx, cy, false);   // the paper page's own button (it was the app's dark card: black on the paper)
+                        string spc = sp; Act(sportsCanvas, br, delegate { AskSportKey(spc); }); cy += 48 * S;
                     }
                     else if (note != null) { g.DrawString(Cut(note, 120), Draw.fSmall, sub, new RectangleF(cx, cy, colW, 36 * S)); cy += 38 * S; }
                     else if (gs.Count == 0) { g.DrawString(L.T("No games today."), Draw.fSmall, muted, cx, cy); cy += 24 * S; }
@@ -156,7 +156,7 @@ namespace AdeeboMeter
                 var tb = new TextBox { Location = new Point(Sc(14), Sc(62)), Width = Sc(430), UseSystemPasswordChar = true };
                 var ok = new Button { Text = L.T("Save"), DialogResult = DialogResult.OK, Location = new Point(Sc(274), Sc(104)), Size = new Size(Sc(80), Sc(30)) }; var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(364), Sc(104)), Size = new Size(Sc(80), Sc(30)) };
                 f.Controls.AddRange(new Control[] { lb, tb, ok, cancel }); f.AcceptButton = ok; f.CancelButton = cancel;
-                if (f.ShowDialog(this) == DialogResult.OK) { if (!Sports.SetKey(sport, tb.Text)) MessageBox.Show(this, L.T("The key couldn't be saved - check that AdeeboMeter's data folder isn't read-only, then try again."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { sportsCanvas.Invalidate(); }); } catch (InvalidOperationException) { } }); }
+                if (f.ShowDialog(this) == DialogResult.OK) { if (!Sports.SetKey(sport, tb.Text)) AskCard.Show(this, L.T("The key couldn't be saved - check that AdeeboMeter's data folder isn't read-only, then try again."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { sportsCanvas.Invalidate(); }); } catch (InvalidOperationException) { } }); }
                 tb.Text = "";
             }
         }

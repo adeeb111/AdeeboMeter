@@ -47,7 +47,8 @@ namespace AdeeboMeter
 
         void PaintIndex(Graphics g, float x, float y, float w)
         {
-            bool rail = w > 860 * S; float rw = rail ? 250 * S : 0, cx = x + (rail ? rw + 24 * S : 0), cw = w - (rail ? rw + 24 * S : 0);
+            bool own = navOwn != "" && tbQ == navOwn && tbFilter == "";   // Calculators / Reports from the bar: their own page, no chips
+            bool rail = w > 860 * S && !own; float rw = rail ? 250 * S : 0, cx = x + (rail ? rw + 24 * S : 0), cw = w - (rail ? rw + 24 * S : 0);
             float top = y + 6 * S; railEnd = 0;
             // ---- the questions: a rail, or a chip row on a narrow window
             if (!idxSeen) { idxSeen = true; if (tbQ == "") tbQ = "*"; }   // the first look is every tool (22 Nov)
@@ -74,7 +75,7 @@ namespace AdeeboMeter
                     using (var p = new Pen(Theme.Line)) g.DrawLine(p, x + rw + 12 * S, top, x + rw + 12 * S, Math.Max(ry, top + 200 * S));
                     railEnd = ry + 20 * S;   // one height for the whole page (rail and list): two Need calls a paint flipped the scrollbar on every repaint - the blinking
                 }
-                else
+                else if (!own)
                 {
                     float chx = cx, chy = top;
                     foreach (var it in items)
@@ -110,7 +111,7 @@ namespace AdeeboMeter
                 else
                 {
                     var qd = Questions.First(z => z[0] == tbQ); rows = ToolsOf(tbQ).Where(t => !SnmpView(t.Id) || t.Id == "snmp").ToList();
-                    title = L.T(qd[1]); count = rows.Count + " " + L.T(rows.Count == 1 ? "tool shown" : "tools shown");
+                    title = own ? L.T(navOwn == "calc" ? "Calculators" : "Reports") : L.T(qd[1]); count = rows.Count + " " + L.T(rows.Count == 1 ? "tool shown" : "tools shown");
                 }
                 var tsz = g.MeasureString(title, Draw.fTitle); g.DrawString(title, Draw.fTitle, ink, new RectangleF(cx, py, cw - 200 * S, tsz.Height + 4));
                 var csz = g.MeasureString(count, Draw.fBody); g.DrawString(count, Draw.fBody, sub, cx + cw - csz.Width, py + 8 * S);
