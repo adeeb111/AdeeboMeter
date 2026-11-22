@@ -1048,6 +1048,73 @@ namespace AdeeboMeter
                 finally { Cfg.WeatherOn = on0; Cfg.WeatherPlace = pl0; Cfg.Corner = co0; Cfg.WeatherF = f0; Weather.Inject(new List<Weather.Hour>(), ""); }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)));
             });
+            // 21 Nov: the sitting test - what a person notices by leaving it open (Adeeb: "I found a lot of bugs just by sitting").
+            // Plays a day on the real window: every page at three sizes, light and dark, idle; a freeze, a sleep; the face and
+            // the typing. Reports every problem at once, not just the first.
+            T("sitting: idle pages don't keep redrawing, nothing is wider than the window, slow pages, freeze card, sleep, typing, faces", () =>
+            {
+                var bad = new List<string>();
+                Action<int> pump = ms => { var until = DateTime.UtcNow.AddMilliseconds(ms); while (DateTime.UtcNow < until) { Application.DoEvents(); System.Threading.Thread.Sleep(15); } };
+                // the face and the typing (no window needed)
+                Typing.Show("sit", "first line", null); if (Typing.Show("sit", "second line", null) != "second line") bad.Add("typing: a line changing again within 15 s types again (should show whole)");
+                BuddyReact.Now(0); BuddyReact.Now(2); if (BuddyReact.Now(2) != "shout") bad.Add("face: an outage starting doesn't shout");
+                if (BuddyReact.Now(0) != "love") bad.Add("face: coming back up isn't love");
+                BuddyReact.Set("happy", 0.2); System.Threading.Thread.Sleep(300); if (BuddyReact.Now(0) != null) bad.Add("face: a reaction doesn't settle back");
+                BuddyReact.ToolDone(new List<string[]> { new[] { "0", "a", "b" }, new[] { "2", "c", "d" } }, false); if (BuddyReact.Now(0) != "tears") bad.Add("face: a red result isn't tears");
+                BuddyReact.Set("smug", 0);
+                using (var icon = Theme.MakeIcon(16))
+                {
+                    var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Size = new Size(1280, 860); fv.Show(); pump(1500);
+                    try
+                    {
+                        var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone" };
+                        foreach (var dark in new[] { false, true })
+                        {
+                            Theme.Apply(dark); fv.Invalidate(true);
+                            foreach (var sz in new[] { new Size(1280, 860), new Size(1024, 700), new Size(1920, 1080) })
+                            {
+                                fv.Size = sz; pump(300);
+                                foreach (var pg in pages)
+                                {
+                                    string at = pg + " " + sz.Width + "x" + sz.Height + (dark ? " dark" : "");
+                                    try { fv.TestShow(pg); } catch (Exception e) { bad.Add(at + ": opening threw " + e.GetType().Name + " " + e.Message); continue; }
+                                    pump(700);
+                                    var cs = fv.TestCanvases();
+                                    foreach (var c in cs)
+                                    {
+                                        var sw = System.Diagnostics.Stopwatch.StartNew(); c.Refresh(); sw.Stop();
+                                        if (sw.ElapsedMilliseconds > 400) bad.Add(at + ": " + c.Name + " takes " + sw.ElapsedMilliseconds + " ms to draw");
+                                        if (c.AutoScrollMinSize.Width > c.ClientSize.Width + 4) bad.Add(at + ": " + c.Name + " is wider than the window (" + c.AutoScrollMinSize.Width + " > " + c.ClientSize.Width + ")");
+                                    }
+                                    if (sz.Width != 1280 || dark) continue;   // idle redraw: once per page is enough
+                                    foreach (var c in cs) { c.Paints = 0; c.PaintArea = 0; }
+                                    pump(5000);
+                                    foreach (var c in cs)
+                                    {
+                                        double full = c.PaintArea / Math.Max(1.0, (double)c.ClientSize.Width * c.ClientSize.Height);
+                                        if (full > 2.5) bad.Add(pg + ": " + c.Name + " redrew " + full.ToString("0.0", CultureInfo.InvariantCulture) + " whole pages in 5 s while idle (" + c.Paints + " paints)");
+                                    }
+                                }
+                            }
+                        }
+                        Theme.Apply(false);
+                        // a real freeze shows the card, and it goes when the window answers
+                        fv.TestShow("overview"); pump(500); int shown0 = FreezeCard.Shown;
+                        System.Threading.Thread.Sleep(3300); pump(2500);
+                        if (FreezeCard.Shown == shown0) bad.Add("freeze card: a 3 s freeze didn't show it");
+                        if (FreezeCard.Visible) bad.Add("freeze card: still up after the window answered");
+                        // waking from sleep isn't a freeze
+                        int shown1 = FreezeCard.Shown; fv.TestSlept(); pump(2500);
+                        if (FreezeCard.Shown != shown1 || FreezeCard.Visible) bad.Add("freeze card: shown after a sleep");
+                        // the Time machine's "Opened from" ends when you leave
+                        fv.OpenTimeAt(DateTime.Now.AddMinutes(-2), "sitting test"); pump(400);
+                        if (fv.TestOpenedFrom != "sitting test") bad.Add("Time machine: Opened from not set");
+                        fv.TestShow("overview"); pump(200); if (fv.TestOpenedFrom != "") bad.Add("Time machine: Opened from still set after leaving");
+                    }
+                    finally { fv.Close(); fv.Dispose(); Theme.Apply(false); }
+                }
+                if (bad.Count > 0) throw new InvalidOperationException(bad.Count + " problem(s):\n  " + string.Join("\n  ", bad.Distinct().Take(80)));
+            });
             T("tool pictures: each one draws before a run and with its Example, and the Example fills it", () =>
             {
                 using (var icon = Theme.MakeIcon(16))

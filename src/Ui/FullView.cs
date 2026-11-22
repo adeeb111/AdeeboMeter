@@ -415,6 +415,12 @@ namespace AdeeboMeter
             if (onlineChip.Visible != on) onlineChip.Visible = on;
             if (on && onlineChip.Text != t) onlineChip.Text = t;
         }
+        // ---- self-test hooks (the sitting test): pretend the PC just slept, read the Time machine's "Opened from"
+        internal void TestSlept() { lastWatch = DateTime.UtcNow.AddSeconds(-60); lastPong = DateTime.UtcNow.AddSeconds(-60); }
+        internal string TestOpenedFrom { get { return replayFrom; } }
+        internal void TestShow(string page) { tab = page; ShowTab(); }
+        internal List<DB> TestCanvases() { return Descendants(this).OfType<DB>().Where(c => c.Visible && c.Width > 300 && c.Height > 200 && IsOnScreen(c)).ToList(); }
+        bool IsOnScreen(Control c) { for (var p = c; p != null && p != this; p = p.Parent) if (!p.Visible) return false; return true; }
         static System.Collections.Generic.IEnumerable<Control> Descendants(Control r) { foreach (Control c in r.Controls) { yield return c; foreach (var d in Descendants(c)) yield return d; } }
         static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; }
 

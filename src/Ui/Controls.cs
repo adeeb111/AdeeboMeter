@@ -77,6 +77,8 @@ namespace AdeeboMeter
     sealed class DB : Panel
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
+        // the self-test's paint counter (21 Nov sitting test): how often and how much of this canvas was redrawn
+        public int Paints; public long PaintArea;
         // R2-15: painted buttons named for screen readers and UI automation - the painter lists them (name, place, action)
         // each time it draws, and the panel reports them as buttons a reader can find and press
         public readonly List<Tuple<string, Rectangle, Action>> Acc = new List<Tuple<string, Rectangle, Action>>();
@@ -149,6 +151,7 @@ namespace AdeeboMeter
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
         protected override void OnPaint(PaintEventArgs e)
         {
+            Paints++; PaintArea += (long)e.ClipRectangle.Width * e.ClipRectangle.Height;
             UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
             if (Focused && ShowFocusCues && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(Rectangle.Round(r), 2, 2)); } }
             if (sw.ElapsedMilliseconds > 40)
