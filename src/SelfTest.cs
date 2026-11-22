@@ -1098,6 +1098,31 @@ namespace AdeeboMeter
                             }
                         }
                         Theme.Apply(false);
+                        // the other languages: longer words are where text runs off the page - a new window per language, as after a switch
+                        string oldL = L.Code;
+                        foreach (var lc in new[] { "fr", "es", "bn", "ar" })
+                        {
+                            try
+                            {
+                                L.Use(lc); Draw.UseLanguageFonts();
+                                var lv = new FullView(icon, M); lv.WindowState = FormWindowState.Normal; lv.Opacity = 0; lv.ShowInTaskbar = false; lv.Size = new Size(1024, 700); lv.Show(); pump(800);
+                                try
+                                {
+                                    foreach (var pg in pages)
+                                    {
+                                        try { lv.TestShow(pg); } catch (Exception e) { bad.Add(lc + " " + pg + ": opening threw " + e.GetType().Name + " " + e.Message); continue; }
+                                        pump(400);
+                                        foreach (var c in lv.TestCanvases())
+                                        {
+                                            try { c.Refresh(); } catch (Exception e) { bad.Add(lc + " " + pg + ": drawing threw " + e.GetType().Name); }
+                                            if (c.AutoScrollMinSize.Width > c.ClientSize.Width + 4) bad.Add(lc + " " + pg + ": " + c.Name + " is wider than the window");
+                                        }
+                                    }
+                                }
+                                finally { lv.Close(); lv.Dispose(); }
+                            }
+                            finally { L.Use(oldL); Draw.UseLanguageFonts(); }
+                        }
                         // a real freeze shows the card, and it goes when the window answers
                         fv.TestShow("overview"); pump(500); int shown0 = FreezeCard.Shown;
                         System.Threading.Thread.Sleep(3300); pump(2500);

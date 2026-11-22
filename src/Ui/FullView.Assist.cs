@@ -48,8 +48,12 @@ namespace AdeeboMeter
             }
             // a host: the one you used last, your router, your pinned sites. Not for names of runs, OIDs, MACs, accounts or lists
             if (Regex.IsMatch(lab, @"\b(host|target|address|server|device|ip|site|router|destination|url)\b|^name\b(?! this)|^name:port")
-                && !Regex.IsMatch(lab, @"\b(oid|mib|mac|account)\b|^name this") && !cue.Contains("empty ="))
+                && !Regex.IsMatch(lab, @"\b(oid|mib|mac|account)\b|^name this") && !cue.Contains("empty =")
+                // 21 Nov sitting test: a plain "Name" box whose example isn't a site (a key's name: "e.g. Adeeb work") gets no host chips
+                && !(Regex.IsMatch(lab, @"^name$") && !cue.Contains(".")))
             {
+                // a box that wants an IP address (and not a name) gets only IP addresses - never example.com
+                bool ipOnly = Regex.IsMatch(lab, @"\bip\b") && !Regex.IsMatch(lab, @"\b(host|name|site|url|domain|destination|target|server|device)\b");
                 // a box that wants host:port gets the port its hint names (":587", "(1812)") - 443 when it names none
                 string port = null;
                 if (Regex.IsMatch(lab, @"^(host|name):port")) { var m = Regex.Match(cue, @":(\d{2,5})\b"); if (!m.Success) m = Regex.Match(cue, @"\b(\d{2,5})\b"); port = m.Success ? m.Groups[1].Value : "443"; }
@@ -57,6 +61,7 @@ namespace AdeeboMeter
                 {
                     if (string.IsNullOrEmpty(h)) continue;
                     string v = port != null && h.IndexOf(':') < 0 ? h + ":" + port : h;
+                    System.Net.IPAddress ipa; if (ipOnly && !System.Net.IPAddress.TryParse(h, out ipa)) continue;
                     if (!l.Contains(v) && l.Count < 5) l.Add(v);
                 }
             }

@@ -102,7 +102,8 @@ namespace AdeeboMeter
             phoneWatch = delegate { try { if (!IsDisposed && IsHandleCreated) BeginInvoke((Action)PhoneChanged); } catch (InvalidOperationException) { } };
             PhoneHub.Watch(phoneWatch); Disposed += delegate { PhoneHub.Unwatch(phoneWatch); if (phoneQr != null) phoneQr.Dispose(); };
             // countdowns (time left, a question's 90 s) and the button's minutes
-            phoneTick = new Timer { Interval = 1000 }; phoneTick.Tick += delegate { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (tab == "phone" && Visible) phoneCanvas.Invalidate(); }; phoneTick.Start();
+            string phoneKey = "";
+            phoneTick = new Timer { Interval = 1000 }; phoneTick.Tick += delegate { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (tab == "phone" && Visible) { var rn = Remote.Now; string pk = (PhoneHub.Pending != null ? "ask" + DateTime.UtcNow.Second : "") + "|" + (rn == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(rn)) + "|" + DateTime.Now.Minute + "|" + (phoneCopied > DateTime.Now.AddSeconds(-3)); if (pk != phoneKey) { phoneKey = pk; phoneCanvas.Invalidate(); } } };   /* 21 Nov sitting test: every second only while a question counts down - not always */ phoneTick.Start();
             Disposed += delegate { phoneTick.Stop(); phoneTick.Dispose(); };
             return phonePage;
         }
