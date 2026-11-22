@@ -148,17 +148,20 @@ namespace AdeeboMeter
         protected override void Dispose(bool disposing) { if (disposing && glide != null) { glide.Stop(); glide.Dispose(); glide = null; } base.Dispose(disposing); }
         public void Announce(string name) { AccessibleName = name; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); AccessibilityNotifyClients(AccessibleEvents.Focus, -1); }
         // a paint slower than 40 ms is written to the log (at most once a minute per panel), so "it feels laggy" has numbers
+        static readonly System.Collections.Generic.HashSet<string> seen = new System.Collections.Generic.HashSet<string>();
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
         protected override void OnPaint(PaintEventArgs e)
         {
             Paints++; PaintArea += (long)e.ClipRectangle.Width * e.ClipRectangle.Height;
             UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
             if (Focused && ShowFocusCues && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(Rectangle.Round(r), 2, 2)); } }
+            string pn = Name ?? "";
             if (sw.ElapsedMilliseconds > 40)
             {
-                DateTime t; string n = Name ?? "";
-                if (!slowAt.TryGetValue(n, out t) || (DateTime.UtcNow - t).TotalSeconds > 60) { slowAt[n] = DateTime.UtcNow; Program.Log("slow paint: " + n + " " + sw.ElapsedMilliseconds + " ms"); }
+                DateTime t; string n = pn;
+                if (!slowAt.TryGetValue(n, out t) || (DateTime.UtcNow - t).TotalSeconds > 60) { slowAt[n] = DateTime.UtcNow; Program.Log("slow paint: " + n + " " + sw.ElapsedMilliseconds + " ms" + (seen.Contains(n) ? "" : " (first paint since start)")); }
             }
+            seen.Add(pn);
         }
     }
 

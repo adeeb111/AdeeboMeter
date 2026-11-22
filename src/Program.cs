@@ -212,6 +212,7 @@ namespace AdeeboMeter
                 try { if (!mtx.WaitOne(5000)) return 0; } catch (AbandonedMutexException) { }
             }
             Log("Start " + Version);
+            Warm.Start();
             Application.Run(new AppCtx());
             Log("Exit");
             GC.KeepAlive(mtx);

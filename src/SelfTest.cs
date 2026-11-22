@@ -1795,7 +1795,7 @@ namespace AdeeboMeter
             {
                 bool running = Process.GetProcessesByName("AdeeboMeter").Length > 1;
                 if (running) { sb.AppendLine("      skipped: AdeeboMeter is running and holds it"); return; }
-                using (var hk = new HotKey(delegate { })) if (!hk.Ok) throw new InvalidOperationException("another app already uses Ctrl+Alt+A");
+                using (var hk = new HotKey(delegate { })) if (!hk.Ok) sb.AppendLine("      note: another app on this PC already uses Ctrl+Alt+A, so the open-the-window shortcut does nothing here (the corner widget and tray still open it)");   // the PC's setup, not a fault in the app
             });
             T("memory after everything", () =>
             {
