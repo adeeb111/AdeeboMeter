@@ -79,8 +79,9 @@ namespace AdeeboMeter
                     float chx = cx, chy = top;
                     foreach (var it in items)
                     {
-                        bool on = tbFilter == "" && tbQ == it[0]; var r = Kit.Chip(g, it[1], chx, chy, it[0] == "" ? "mine" : QAccent(it[0]), on, null);
-                        if (r.Right > cx + cw && chx > cx) { chx = cx; chy += r.Height + 8 * S; r = Kit.Chip(g, it[1], chx, chy, it[0] == "" ? "mine" : QAccent(it[0]), on, null); }
+                        bool on = tbFilter == "" && tbQ == it[0];
+                        if (chx + Kit.ChipWidth(g, it[1], null) > cx + cw && chx > cx) { chx = cx; chy += 36 * S; }   // wrap first, then draw (a chip was drawn twice: cut at the edge, then again below)
+                        var r = Kit.Chip(g, it[1], chx, chy, it[0] == "" ? "mine" : QAccent(it[0]), on, null);
                         string q = it[0]; Act(tbCanvas, r, delegate { tbSearch.Box.Text = ""; tbQ = q; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate(); });
                         chx = r.Right + 8 * S;
                     }
@@ -201,7 +202,7 @@ namespace AdeeboMeter
             foreach (var t in pins)
             {
                 if (px + 60 * S > x + w) break;
-                var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); if (r.Right > x + w) break;
+                if (px + Kit.ChipWidth(g, ToolName(t), null) > x + w) break; var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null);
                 string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; shown++;
             }
             More(g, pins.Count - shown, px, y, x + w);   // bug-hunt L-151: what didn't fit is counted, not dropped
@@ -252,7 +253,7 @@ namespace AdeeboMeter
                 {
                     g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y); y += 22 * S; float px = x;
                     int shownR = 0;
-                    foreach (var t in recent) { if (px + 60 * S > x + w) break; var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); if (r.Right > x + w) break; shownR++; string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; }
+                    foreach (var t in recent) { if (px + 60 * S > x + w) break; if (px + Kit.ChipWidth(g, ToolName(t), null) > x + w) break; var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); shownR++; string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; }
                     More(g, recent.Count - shownR, px, y, x + w);
                     y += 46 * S;
                 }

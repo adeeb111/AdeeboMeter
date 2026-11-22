@@ -157,6 +157,8 @@ namespace AdeeboMeter
         }
 
         // ---------- chips: a rounded pill with optional icon. Returns the chip's rectangle so the page can make it clickable.
+        // the width a chip will take, without drawing it (so a row can wrap before the chip is drawn)
+        public static float ChipWidth(Graphics g, string text, string icon) { return g.MeasureString(text, Draw.fPill).Width + 22 * S + (icon != null ? 16 * S : 0); }
         public static RectangleF Chip(Graphics g, string text, float x, float y, string accent, bool on, string icon)
         {
             var f = Draw.fPill; var sz = g.MeasureString(text, f);
