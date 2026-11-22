@@ -453,6 +453,12 @@ namespace AdeeboMeter
                 if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || Reach.SafeHost("sw-01:22") || !Reach.SafeHost("[2001:db8::1]") || !Reach.SafeHost("2001:db8::1") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
             });
+            T("copied results name each box whole (\"How many (10-2000)\" not \"How many (10\")", () =>
+            {
+                if (FullView.BoxLabel("How many (10-2000)") != "How many (10-2000)") throw new InvalidOperationException(FullView.BoxLabel("How many (10-2000)"));
+                if (FullView.BoxLabel("Target - e.g. github.com") != "Target") throw new InvalidOperationException(FullView.BoxLabel("Target - e.g. github.com"));
+                if (FullView.BoxLabel("Wi-Fi name") != "Wi-Fi name") throw new InvalidOperationException("Wi-Fi");
+            });
             T("Security: 42 checks, end-of-support dates and site names read right", () =>
             {
                 var bad = new List<string>();

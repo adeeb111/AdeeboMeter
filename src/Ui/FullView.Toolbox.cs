@@ -573,12 +573,14 @@ namespace AdeeboMeter
             return sb.ToString();
         }
         // the result as plain text, for a ticket or a chat - built only when you press Copy; nothing is saved
+        // a box's name without its hint: "How many (10-2000)" stays whole, "Target - e.g. x" becomes "Target"
+        internal static string BoxLabel(string hint) { int d = hint.IndexOf(" - ", StringComparison.Ordinal); return (d > 0 ? hint.Substring(0, d) : hint).Trim(); }
         string ResultText()
         {
             if (Examples.IsExample(tbRows)) return "";   // made-up data is never copied
             var sb = new System.Text.StringBuilder(); var t = Tools2().First(x => x.Id == tbSel);
             sb.AppendLine("AdeeboMeter " + Program.Version + " · " + t.Title + " · " + tbAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + ShareCell(a[i]));
+            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(BoxLabel(t.Inputs[i]) + ": " + ShareCell(a[i]));
             sb.AppendLine();
             if (tbSel == "mtu" && mtuHops != null) foreach (var h in mtuHops) sb.AppendLine(("hop " + h.N).PadRight(8) + (h.Ip == "" ? "*" : h.Ip).PadRight(40) + (h.Mtu > 0 ? h.Mtu + "  " + h.MtuNote : h.MtuNote));
             if (tbSel == "mtr" && mtrHops != null)

@@ -201,7 +201,15 @@ namespace AdeeboMeter
             }
             return weather;
         }
+        // the first Home paint after a start, timed part by part and written to the log once (a real PC: 250-690 ms cold, 20-40 warm)
+        System.Diagnostics.Stopwatch ovLap; System.Text.StringBuilder ovLaps; bool ovTimed;
+        void OvLap(string part) { if (ovLaps == null) return; ovLaps.Append(part).Append(' ').Append(ovLap.ElapsedMilliseconds).Append(" · "); ovLap.Restart(); }
         void PaintOverview(Graphics g)
+        {
+            if (!ovTimed && overviewCanvas.Width > 300) { ovTimed = true; ovLap = System.Diagnostics.Stopwatch.StartNew(); ovLaps = new System.Text.StringBuilder(); try { PaintOverview1(g); } finally { OvLap("rest"); double up = -1; try { using (var me = System.Diagnostics.Process.GetCurrentProcess()) up = (DateTime.Now - me.StartTime).TotalMilliseconds; } catch (Exception) { } Program.Log("first Home paint (ms): " + ovLaps.ToString().TrimEnd(' ', '·') + "  ·  " + (up / 1000).ToString("0.0", CultureInfo.InvariantCulture) + " s after start"); ovLaps = null; } return; }
+            PaintOverview1(g);
+        }
+        void PaintOverview1(Graphics g)
         {
             g.TranslateTransform(overviewCanvas.AutoScrollPosition.X, overviewCanvas.AutoScrollPosition.Y);
             float x = 18 * S, y = 16 * S, w = overviewCanvas.ClientSize.Width - 36 * S;
@@ -225,8 +233,8 @@ namespace AdeeboMeter
                     Act(overviewCanvas, nr, delegate { SetLayout("classic"); });
                     y += cr.Height + 14 * S;
                 }
-                y = PaintFrontDoor(g, x, y, w);   // the front door: "What's going on?" (FullView.Case.cs)
-                y = PaintCheckupCard(g, x, y, w);
+                y = PaintFrontDoor(g, x, y, w); OvLap("front");   // the front door: "What's going on?" (FullView.Case.cs)
+                y = PaintCheckupCard(g, x, y, w); OvLap("checkup");
                 // the verdict
                 float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
                 string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
@@ -237,7 +245,7 @@ namespace AdeeboMeter
                 PathStrip(g, x + 20 * S, y + 22 * S + hh + wh, w - 40 * S); LiveSpot(overviewCanvas, "ov.path", new RectangleF(x + 10 * S, y + 18 * S + hh + wh, w - 20 * S, ph));
                 using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
                 if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh)); Hint(overviewCanvas, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh), "ov.WEATHER"); }
-                y += vr.Height + 18 * S;
+                y += vr.Height + 18 * S; OvLap("verdict");
 
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
                 if (Cfg.Mode == "")
@@ -286,7 +294,7 @@ namespace AdeeboMeter
                 LiveSpot(overviewCanvas, "ov.now", new RectangleF(x, y, w, ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 32 * S));   /* + the Wi-Fi line under them (its signal % moves too) */   // the four live numbers: redrawn alone (OverviewTick)
                 y += ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 8 * S;
                 string netLine = (kind == "Wi-Fi" ? "On Wi-Fi" + (ssid != "" ? " \"" + ssid + "\"" : " (name hidden - location is off)") + (sig >= 0 ? " · signal " + sig + "%" : "") : "On " + kind) + (speed != "" ? " · link " + speed : "") + (vpn ? " · VPN on" : "");
-                g.DrawString(netLine, Draw.fBody, sub, x, y); y += 24 * S;
+                g.DrawString(netLine, Draw.fBody, sub, x, y); y += 24 * S; OvLap("tiles");
                 // speed: only when you press the button (it talks to Cloudflare's speed server; the line says so)
                 {
                     var last = SpeedTest.Last; bool busy = SpeedTest.Busy;
@@ -381,7 +389,7 @@ namespace AdeeboMeter
                 }
 
                 // a Windows update that lines up with a lasting slowdown (only when strong and still there)
-                string ub = UpdateBreak.Strong;
+                string ub = UpdateBreak.Strong; OvLap("fix");
                 if (ub != "")
                 {
                     var ur = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, ur, 10 * S, Theme.LvSoft(1));
@@ -391,7 +399,7 @@ namespace AdeeboMeter
                 // needs attention
                 var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
                 g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
-                int watching; y = PaintWatch(g, x, y, w, out watching);   // a board host down 3 checks in a row, a certificate inside 30 days
+                int watching; y = PaintWatch(g, x, y, w, out watching); OvLap("watch");   // a board host down 3 checks in a row, a certificate inside 30 days
                 if (att.Count == 0 && watching == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in att)
@@ -419,7 +427,7 @@ namespace AdeeboMeter
                 y += 14 * S;
 
                 // your week, everything together (only once there's a record)
-                y = PaintWeek(g, x, y, w);
+                y = PaintWeek(g, x, y, w); OvLap("week");
 
                 // today
                 string today = "Used today on this network: " + Usage.Mb(Usage.Today(Brain.NetKey));
@@ -430,7 +438,7 @@ namespace AdeeboMeter
                 y += 14 * S;
 
                 // where things live: big-icon tiles with a live line (FullView.Gateway.cs)
-                y = PaintGateway(g, x, y, w);
+                y = PaintGateway(g, x, y, w); OvLap("gateway");
                 g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
