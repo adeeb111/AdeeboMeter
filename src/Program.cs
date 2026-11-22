@@ -411,7 +411,6 @@ namespace AdeeboMeter
         {
             var l = new List<string> { "home" };
             var given = (v ?? "").Split(',').Select(p => p.Trim()).ToList();
-            if (given.Contains("toolbox")) l.Add("toolbox");   // 22 Nov (Adeeb): Home, then Toolbox
             foreach (var t in given) { if ((NavIds.Contains(t) || (t.StartsWith("mine", StringComparison.Ordinal) && t.Length == 5 && t[4] >= '1' && t[4] <= '3')) && !l.Contains(t) && l.Count < 8) l.Add(t); }
             return string.Join(",", l);
         }
