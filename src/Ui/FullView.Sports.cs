@@ -98,6 +98,11 @@ namespace AdeeboMeter
                     // the scores box
                     var gs = games.Where(z => z.Sport == sp).OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 2 : 1).ThenBy(z => z.StartUtc).Take(8).ToList();
                     string note; notes.TryGetValue(sp, out note);
+                    if (sp == "football" && Sports.FromEspn && note == null)
+                    {   // the free default: ESPN, once a day - and how to get live scores
+                        g.DrawString(L.T("From ESPN's free scoreboards, updated once a day."), Draw.fSmall, sub, new RectangleF(cx, cy, colW, 20 * S)); cy += 22 * S;
+                        var ekr = MkSpButton(g, L.T("Live scores: add my key..."), cx, cy, false); string spk = sp; Act(sportsCanvas, ekr, delegate { AskSportKey(spk); }); cy += 48 * S;
+                    }
                     if (note == "nokey")
                     {
                         g.DrawString(L.T("Scores need your own free key from ") + (sp == "cricket" ? "cricketdata.org" : "football-data.org") + ".", Draw.fSmall, sub, new RectangleF(cx, cy, colW, 36 * S)); cy += 38 * S;

@@ -43,7 +43,7 @@ namespace AdeeboMeter
             y = Paper.Masthead(g, x, y, w, L.T("THE MARKETS PAGE"), L.T("AdeeboMeter Daily Financial Edition"), L.T("Your PC · Your Network · Your Markets"), L.T("All in One Place"), mkTab != "overview");
             List<Tuple<string, RectangleF>> hits; y = Paper.TabBar(g, x, y, w, MkTabs, mkTab, out hits);
             foreach (var h in hits) { string id = h.Item1; Act(tradeCanvas, h.Item2, delegate { mkTab = id; tradeCanvas.AutoScrollPosition = Point.Empty; tradeCanvas.Invalidate(); }); }
-            y = NowLine(g, tradeCanvas, x, y + 6 * S, w);   // the NOW line (FullView.Gateway.cs)
+            y = NowLine(g, tradeCanvas, x, y + 6 * S, w); y = TryThis(g, tradeCanvas, "trade", x, y, w, true);   // the NOW line (FullView.Gateway.cs)
             if (mkTab != "line") y = LineStrip(g, x, y, w);
             bool need = mkTab != "line" && mkTab != "world";
             if (need && (!Cfg.TradeFx || Policy.NoOnline)) y = MkTurnOn(g, x, y, w);

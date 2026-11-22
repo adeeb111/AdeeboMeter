@@ -30,6 +30,7 @@ namespace AdeeboMeter
             foreach (var h in hits) { string id = h.Item1; Act(sportsCanvas, h.Item2, delegate { spTab = id; sportsCanvas.AutoScrollPosition = Point.Empty; sportsCanvas.Invalidate(); }); }
             bool linkShown = false;
             if (spTab != "stream") y = StreamStrip(g, x, y, w);
+            y = TryThis(g, sportsCanvas, "sports", x, y, w, true);
             switch (spTab)
             {
                 case "teams": y = SpTeams(g, x, y, w); break;

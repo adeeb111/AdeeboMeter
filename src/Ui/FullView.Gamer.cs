@@ -65,7 +65,7 @@ namespace AdeeboMeter
             g.TranslateTransform(gamerCanvas.AutoScrollPosition.X, gamerCanvas.AutoScrollPosition.Y);
             Begin(gamerCanvas);
             float x = 18 * S, y = 16 * S, w = gamerCanvas.ClientSize.Width - 36 * S;
-            y = NowLine(g, gamerCanvas, x, y, w);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
+            y = NowLine(g, gamerCanvas, x, y, w); y = TryThis(g, gamerCanvas, "gamer", x, y, w, false);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
             var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games);
             string playing = GamePing.Me.Playing;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))

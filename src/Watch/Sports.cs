@@ -127,7 +127,8 @@ namespace AdeeboMeter
                 try
                 {
                     sport("hockey", Hockey);
-                    if (Key("football") == "") publish("football", new List<Game>(), null, NoKey("football")); else sport("football", () => Football(Key("football")));
+                    // no key of your own: ESPN's free scoreboards (no key, read once a day - the page says so); your own key turns ESPN off
+                    if (Key("football") == "") { if (!sport("football", EspnFootball)) publish("football", new List<Game>(), null, NoKey("football")); } else { FromEspn = false; sport("football", () => Football(Key("football"))); }
                     if (Key("cricket") == "") publish("cricket", new List<Game>(), null, NoKey("cricket"));
                     else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
                     else sport("cricket", () => Cricket(Key("cricket")));
@@ -164,6 +165,46 @@ namespace AdeeboMeter
                 var pd = D(V(g, "periodDescriptor")); var clock = D(V(g, "clock")); string per = Sv(pd, "number");
                 x.Detail = x.State == "live" ? (per != "" ? "P" + per : "") + (Sv(clock, "timeRemaining") != "" ? " · " + Sv(clock, "timeRemaining") : "") + (Sv(clock, "inIntermission") == "True" ? " · break" : "") : x.State == "done" ? "Final" + (Sv(pd, "periodType") == "OT" ? " (OT)" : Sv(pd, "periodType") == "SO" ? " (SO)" : "") : "";
                 if (x.State == "off") x.Detail = st.ToLowerInvariant();
+                if (x.Home != "" && x.Away != "") r.Add(x);
+            }
+            return r;
+        }
+        // ESPN's public scoreboards (unofficial, no key, may change): the big leagues, each read at most once a day and kept in the
+        // data folder (ESPN sees one request a day from this PC, not one every 5 minutes)
+        internal static bool FromEspn;
+        static readonly string[][] EspnLeagues = { new[] { "eng.1", "Premier League" }, new[] { "esp.1", "LaLiga" }, new[] { "ger.1", "Bundesliga" }, new[] { "ita.1", "Serie A" }, new[] { "uefa.champions", "Champions League" }, new[] { "usa.1", "MLS" } };
+        internal static List<Game> EspnFootball()
+        {
+            var r = new List<Game>(); string dir = Path.Combine(Program.WriteDir, "espn"); Directory.CreateDirectory(dir); int ok = 0;
+            foreach (var lg in EspnLeagues)
+            {
+                string f = Path.Combine(dir, lg[0] + ".json"), json = null;
+                try
+                {
+                    if (File.Exists(f) && (DateTime.UtcNow - File.GetLastWriteTimeUtc(f)).TotalHours < 24) json = File.ReadAllText(f);
+                    else { json = Get("https://site.api.espn.com/apis/site/v2/sports/soccer/" + lg[0] + "/scoreboard", null, null); File.WriteAllText(f, json); }
+                    r.AddRange(EspnFrom(json, lg[1])); ok++;
+                }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("espn " + lg[0] + ": " + e.Message); }
+            }
+            if (ok == 0) throw new InvalidDataException("ESPN's scoreboards couldn't be read");
+            FromEspn = true; return r;
+        }
+        internal static List<Game> EspnFrom(string json, string league)
+        {
+            var r = new List<Game>(); var root = D(Json.Parse(json)); var evs = A(V(root, "events"));
+            if (evs == null) throw new InvalidDataException("no events in ESPN's answer");
+            foreach (var o in evs)
+            {
+                var ev = D(o); var comp = D((A(V(ev, "competitions")) ?? new List<object>()).FirstOrDefault()); if (comp == null) continue;
+                Dictionary<string, object> h = null, a = null;
+                foreach (var c in A(V(comp, "competitors")) ?? new List<object>()) { var cd = D(c); if (Sv(cd, "homeAway") == "home") h = cd; else a = cd; }
+                if (h == null || a == null) continue;
+                var ht = D(V(h, "team")); var at = D(V(a, "team")); var st = D(V(D(V(ev, "status")), "type")); string state = Sv(st, "state");
+                var x = new Game { Sport = "football", League = league, Home = Or(Sv(ht, "shortDisplayName"), Sv(ht, "displayName")), Away = Or(Sv(at, "shortDisplayName"), Sv(at, "displayName")), HomeAlso = Sv(ht, "displayName") + " " + Sv(ht, "abbreviation"), AwayAlso = Sv(at, "displayName") + " " + Sv(at, "abbreviation") };
+                x.State = state == "in" ? "live" : state == "post" ? "done" : "soon";
+                if (x.State != "soon") { x.HomeScore = Sv(h, "score"); x.AwayScore = Sv(a, "score"); }
+                x.Detail = Sv(st, "shortDetail"); x.StartUtc = Utc(Sv(ev, "date"));
                 if (x.Home != "" && x.Away != "") r.Add(x);
             }
             return r;

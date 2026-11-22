@@ -46,7 +46,7 @@ namespace AdeeboMeter
             g.TranslateTransform(streamCanvas.AutoScrollPosition.X, streamCanvas.AutoScrollPosition.Y);
             Begin(streamCanvas);
             float x = 18 * S, y = 16 * S, w = streamCanvas.ClientSize.Width - 36 * S;
-            y = NowLine(g, streamCanvas, x, y, w);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
+            y = NowLine(g, streamCanvas, x, y, w); y = TryThis(g, streamCanvas, "stream", x, y, w, false);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
             var all = WatchKit.Recent("stream");
             if (streamSel != "")
             {
