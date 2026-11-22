@@ -148,14 +148,11 @@ namespace AdeeboMeter
             Kit.Card(g, r, null, hot); if (hot) Theme.Stroke(g, r, 16 * S, c, 1.5f * S);
             float ic = 40 * S; var ir = new RectangleF(r.X + 14 * S, r.Y + (r.Height - ic) / 2, ic, ic);
             if (BigGlyph.TryGetValue("q:" + q, out gk) && Glyphs.Has(gk)) Glyphs.Tile(g, gk, ir, c, 10 * S); else Kit.Icon(g, "tool", ir, c);
-            float tx = ir.Right + 12 * S, tw = r.Right - tx - 10 * S; string tag = Answers(t);
-            using (var one = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-            using (var ink = new SolidBrush(Theme.Ink)) using (var mut = new SolidBrush(Theme.Muted))
-            {
-                float top = r.Y + (tag == "" ? (r.Height - 22 * S) / 2 : 14 * S);
-                g.DrawString(ToolName(t), Draw.fBodyB, ink, new RectangleF(tx, top, tw, 22 * S), one);
-                if (tag != "") g.DrawString(tag, Draw.fSmall, mut, new RectangleF(tx, top + 23 * S, tw, 20 * S), one);
-            }
+            // the name only, up to two lines - what it does is in the card on hover (no wall of text)
+            float tx = ir.Right + 12 * S, tw = r.Right - tx - 10 * S; string name = ToolName(t);
+            float nh = Math.Min(2 * Draw.fBodyB.GetHeight(g) + 2, Draw.Measure(name, Draw.fBodyB, (int)tw).Height + 2);
+            using (var two = new StringFormat { FormatFlags = StringFormatFlags.LineLimit, Trimming = StringTrimming.EllipsisWord })
+            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(name, Draw.fBodyB, ink, new RectangleF(tx, r.Y + (r.Height - nh) / 2, tw, nh), two);
         }
         // the tile under the mouse gets its edge in the section's colour (only that tile and the one before are drawn again)
         void IdxHover(Point client)
