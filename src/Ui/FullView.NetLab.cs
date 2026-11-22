@@ -28,10 +28,10 @@ namespace AdeeboMeter
         }
         float PaintNetLab(Graphics g, float x, float y, float w)
         {
-            y = Title2(g, "Network Lab", x, y, w);
+            y = Title2(g, "AdeeboLab", x, y, w);
             y = Lead2(g, "Draw your network the way an engineer would - your PC, Wi-Fi, router, the provider's boxes, the internet and the server - then break one thing and watch the packet stop where it fails. It opens in its own window; nothing is sent.", x, y, w);
             y += 10 * S;
-            var a = LabPill(g, learnInfo, "Open the Network Lab  ›", x, y, true, delegate { OpenLab(null, false); });
+            var a = LabPill(g, learnInfo, "Open the AdeeboLab  ›", x, y, true, delegate { OpenLab(null, false); });
             LabPill(g, learnInfo, "Break it", a.Right + 10 * S, y, false, delegate { OpenLab(null, true); });
             y = a.Bottom + 16 * S;
             y = Lead2(g, "Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press \"Show my path\" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.", x, y, w);

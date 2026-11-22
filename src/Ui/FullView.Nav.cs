@@ -23,7 +23,7 @@ namespace AdeeboMeter
             { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "sports", new[] { "Sports", "star", "sports" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
             { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
-            { "calc", new[] { "Calculators", "calc", "calc" } }, { "lab", new[] { "Network Lab", "route", "learn" } }, { "shell", new[] { "AdeeboShell", "go", "home" } }, { "reports", new[] { "Reports", "report", "reports" } }
+            { "calc", new[] { "Calculators", "calc", "calc" } }, { "lab", new[] { "AdeeboLab", "route", "learn" } }, { "shell", new[] { "AdeeboShell", "go", "home" } }, { "reports", new[] { "Reports", "report", "reports" } }
         };
         static string NavName(string id) { string[] i; if (NavInfo.TryGetValue(id, out i)) return i[0]; var t = MyTab(id); return t != null ? t.Name : id; }
         static string NavIcon(string id) { string[] i; return NavInfo.TryGetValue(id, out i) ? i[1] : "star"; }

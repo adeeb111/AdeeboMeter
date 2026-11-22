@@ -90,7 +90,7 @@ namespace AdeeboMeter
                 l.Add(new PtItem { Key = k2, Title = title, Tag = gd != null ? gd[2] : "", Group = "Games", Value = Points.Value(k2), Go = delegate { tab = "learn"; ShowTab(); learnSel = "game:" + gid; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); } });
             }
             // 1.1.6 Network Lab: each fault watched to the end in Break it (read back from the lab window's storage)
-            foreach (var fl in LabLink.Faults) l.Add(new PtItem { Key = "nlab." + fl[0], Title = "Network Lab: " + fl[1], Tag = "Break it - watch the packet to where it fails", Group = "Challenges", Value = Points.Value("nlab." + fl[0]), Go = delegate { OpenLab(null, true); } });
+            foreach (var fl in LabLink.Faults) l.Add(new PtItem { Key = "nlab." + fl[0], Title = "AdeeboLab: " + fl[1], Tag = "Break it - watch the packet to where it fails", Group = "Challenges", Value = Points.Value("nlab." + fl[0]), Go = delegate { OpenLab(null, true); } });
             foreach (var pg in PtPages) { string tb = pg[1]; l.Add(new PtItem { Key = pg[0], Title = pg[2], Tag = pg[3], Group = "Pages", Value = Points.Value(pg[0]), Go = delegate { tab = tb; ShowTab(); } }); }
             foreach (var pa in Paths) { var p2 = pa; l.Add(new PtItem { Key = "path." + pa.Id, Title = pa.Title, Tag = pa.Tag, Group = "Learning paths", Value = Points.Value("path." + pa.Id), Go = delegate { tab = "points"; ShowTab(); pointsSearch.Box.Text = ""; pointsCanvas.AutoScrollPosition = Point.Empty; pointsCanvas.Invalidate(); } }); }
             return ptItems = l;
