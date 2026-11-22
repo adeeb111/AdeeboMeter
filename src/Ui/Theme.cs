@@ -522,11 +522,11 @@ namespace AdeeboMeter
             // the colour says how things are: red family for trouble, amber for a worry, grey for no answer / asleep, green otherwise
             bool redF = m == "betrayed" || m == "dizzy" || m == "tears" || m == "shout" || m == "angry" || m == "frustrated" || m == "gloom" || m == "sad";
             bool ambF = m == "worried" || m == "sweaty"; bool greyF = m == "speechless";
-            // 21 Nov (Adeeb: "3 colours, distracting - do vector 2D"): flat, two colours - one solid fill that says how things
-            // are, white features, any mark around the face in the same fill colour
+            // 21 Nov (Adeeb: "3 colours, distracting - do vector 2D"): flat, one colour that says how things are
             Color body = redF ? Theme.Red : ambF ? Theme.Amber : greyF ? Theme.Muted : Theme.Green;
-            Color ink = Color.White;
-            using (var b = new SolidBrush(body)) g.FillEllipse(b, r);
+            // 22 Nov (Adeeb: "the inside was transparent before"): no filled disc - a round outline and the features, all in that one colour
+            Color ink = body;
+            using (var ring = new Pen(body, Math.Max(1.2f, r.Width / 14f))) { float iw = ring.Width / 2; g.DrawEllipse(ring, r.X + iw, r.Y + iw, r.Width - 2 * iw, r.Height - 2 * iw); }
             float u = r.Width / 20f, cx = r.X + r.Width / 2, ey = r.Y + 8 * u, ex = 4 * u;
             using (var p = new Pen(ink, Math.Max(1f, 1.4f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
             using (var b = new SolidBrush(ink))
@@ -552,7 +552,7 @@ namespace AdeeboMeter
                     case "sweaty":
                         g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
                         g.DrawArc(p, cx - 3 * u, r.Y + 13 * u, 6 * u, 4 * u, 200, 140);
-                        using (var db = new SolidBrush(Color.FromArgb(210, 255, 255, 255))) g.FillEllipse(db, r.X + 16 * u, r.Y + 3.2f * u, 2.2f * u, 3.2f * u);   // a drop of sweat
+                        using (var db = new SolidBrush(Color.FromArgb(210, body))) g.FillEllipse(db, r.X + 16 * u, r.Y + 3.2f * u, 2.2f * u, 3.2f * u);   // a drop of sweat
                         break;
                     case "dizzy":
                         foreach (var dx in new[] { -ex, ex }) { g.DrawLine(p, cx + dx - 1.5f * u, ey - 1.5f * u, cx + dx + 1.5f * u, ey + 1.5f * u); g.DrawLine(p, cx + dx - 1.5f * u, ey + 1.5f * u, cx + dx + 1.5f * u, ey - 1.5f * u); }
@@ -565,7 +565,7 @@ namespace AdeeboMeter
                     case "blush":
                         g.DrawArc(p, cx - ex - 1.6f * u, ey - 0.6f * u, 3.2f * u, 2.6f * u, 200, 140); g.DrawArc(p, cx + ex - 1.6f * u, ey - 0.6f * u, 3.2f * u, 2.6f * u, 200, 140);   // ^ ^
                         g.DrawArc(p, cx - 4 * u, r.Y + 9.5f * u, 8 * u, 5.5f * u, 20, 140);   // a wide smile
-                        if (m == "blush") using (var cb = new SolidBrush(Color.FromArgb(110, 255, 255, 255))) { g.FillEllipse(cb, cx - ex - 2.6f * u, ey + 2 * u, 3 * u, 1.8f * u); g.FillEllipse(cb, cx + ex - 0.4f * u, ey + 2 * u, 3 * u, 1.8f * u); }
+                        if (m == "blush") using (var cb = new SolidBrush(Color.FromArgb(110, body))) { g.FillEllipse(cb, cx - ex - 2.6f * u, ey + 2 * u, 3 * u, 1.8f * u); g.FillEllipse(cb, cx + ex - 0.4f * u, ey + 2 * u, 3 * u, 1.8f * u); }
                         if (m == "sparkle") Star(g, r.Right - 2.5f * u, r.Y + 2.5f * u, 2.6f * u, body);
                         if (m == "love") Heart(g, r.Right - 3 * u, r.Y + 1.5f * u, 3.2f * u, body);
                         break;
@@ -573,7 +573,7 @@ namespace AdeeboMeter
                     case "tears":
                         g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
                         g.DrawArc(p, cx - 3 * u, r.Y + 13.5f * u, 6 * u, 4 * u, 200, 140);   // a frown
-                        if (m == "tears") using (var tp = new Pen(Color.FromArgb(210, 255, 255, 255), Math.Max(1f, 1.2f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+                        if (m == "tears") using (var tp = new Pen(Color.FromArgb(210, body), Math.Max(1f, 1.2f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
                             { g.DrawLine(tp, cx - ex, ey + 2.2f * u, cx - ex, ey + 6.5f * u); g.DrawLine(tp, cx + ex, ey + 2.2f * u, cx + ex, ey + 6.5f * u); }
                         break;
                     case "gloom":
@@ -603,7 +603,7 @@ namespace AdeeboMeter
                         g.FillEllipse(b, cx - ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u); g.FillEllipse(b, cx + ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u);   // big wet eyes: dark, with a shine
                         using (var hb = new SolidBrush(body)) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
                         g.DrawArc(p, cx - 3.5f * u, r.Y + 13.5f * u, 7 * u, 4 * u, 200, 140);
-                        using (var tb = new SolidBrush(Color.FromArgb(210, 255, 255, 255))) g.FillEllipse(tb, cx - ex - 0.8f * u, ey + 3.2f * u, 1.6f * u, 2.6f * u);
+                        using (var tb = new SolidBrush(Color.FromArgb(210, body))) g.FillEllipse(tb, cx - ex - 0.8f * u, ey + 3.2f * u, 1.6f * u, 2.6f * u);
                         break;
                 }
             }

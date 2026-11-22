@@ -13,7 +13,7 @@ namespace AdeeboMeter
         static readonly Color SymRed = Color.FromArgb(0xE2, 0x4B, 0x4A), SymAmber = Color.FromArgb(0xBA, 0x75, 0x17), SymPurple = Color.FromArgb(0x7F, 0x77, 0xDD),
                               SymTeal = Color.FromArgb(0x1D, 0x9E, 0x75), SymBlue = Color.FromArgb(0x37, 0x8A, 0xDD), SymPink = Color.FromArgb(0xD4, 0x53, 0x7E);
         // icon and colour for Symptoms[i], same order
-        static readonly string[] SymIcon = { "internet", "bolt", "route", "play", "wifi", "server", "phone", "game", "pc", "laptop", "tool", "clock" };
+        static readonly string[] SymIcon = { "internet", "bolt", "route", "play", "wifi", "server", "phone", "game", "pc", "database", "tool", "clock" };
         static readonly Color[] SymColor = { SymRed, SymAmber, SymRed, SymAmber, SymRed, SymPink, SymPurple, SymPurple, SymTeal, SymTeal, SymTeal, SymBlue };
         RectangleF[] symRect;   // where each tile was painted, in page coordinates
         readonly float[] symHot = new float[16]; int symHover = -1; Timer symAnim;

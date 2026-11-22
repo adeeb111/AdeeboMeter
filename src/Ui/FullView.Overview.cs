@@ -126,7 +126,7 @@ namespace AdeeboMeter
             new[] { "case:calls", "Calls are choppy", "Teams, Zoom, WhatsApp cut out" },
             new[] { "case:game", "My game lags", "ping spikes, rubber-banding" },
             new[] { "case:pc", "Computer feels slow", "everything takes a long time" },
-            new[] { "guide:pc", "An app freezes", "it stops responding" },
+            new[] { "tool:tidy", "Running out of space", "the disk is full, Windows nags" },
             new[] { "guide:pc", "Fan is loud or it's hot", "something is working hard" },
             new[] { "changes", "It was fine yesterday", "what changed since then?" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.

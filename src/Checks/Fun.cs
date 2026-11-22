@@ -132,16 +132,16 @@ namespace AdeeboMeter
         // the buddy, as a picture in a web page (the same five faces as the widget)
         static string FaceSvg(string mood)
         {
-            // 21 Nov: flat 2D, two colours - a solid fill that says how things were, white features (like the app's face)
+            // 22 Nov: flat, one colour that says how things were - a round outline, see-through inside (like the app's face)
             string body = mood == "betrayed" || mood == "dizzy" ? "#CF222E" : mood == "worried" || mood == "sweaty" ? "#BF8700" : "#2DA44E";
-            var s = new StringBuilder("<svg viewBox=\"0 0 20 20\" width=\"96\" height=\"96\"><circle cx=\"10\" cy=\"10\" r=\"9.3\" fill=\"" + body + "\"/><g stroke=\"#fff\" stroke-width=\"1.3\" stroke-linecap=\"round\" fill=\"none\">");
+            var s = new StringBuilder("<svg viewBox=\"0 0 20 20\" width=\"96\" height=\"96\"><circle cx=\"10\" cy=\"10\" r=\"9.3\" fill=\"none\" stroke=\"" + body + "\" stroke-width=\"1.3\"/><g stroke=\"" + body + "\" stroke-width=\"1.3\" stroke-linecap=\"round\" fill=\"none\">");
             switch (mood)
             {
-                case "smug": s.Append("<line x1=\"4.5\" y1=\"8\" x2=\"7.5\" y2=\"8\"/><circle cx=\"14\" cy=\"8\" r=\"1.1\" fill=\"#fff\" stroke=\"none\"/><path d=\"M7 13.5 Q11 15.5 13.5 12.5\"/>"); break;
-                case "worried": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"#fff\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"#fff\" stroke=\"none\"/><line x1=\"4\" y1=\"5.5\" x2=\"7.5\" y2=\"4.5\"/><line x1=\"16\" y1=\"5.5\" x2=\"12.5\" y2=\"4.5\"/><line x1=\"7\" y1=\"14\" x2=\"13\" y2=\"14\"/>"); break;
-                case "sweaty": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"#fff\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"#fff\" stroke=\"none\"/><path d=\"M7.5 15 Q10 13 12.5 15\"/><ellipse cx=\"15.5\" cy=\"6\" rx=\"1.2\" ry=\"1.7\" fill=\"#fff\" stroke=\"none\"/>"); break;
+                case "smug": s.Append("<line x1=\"4.5\" y1=\"8\" x2=\"7.5\" y2=\"8\"/><circle cx=\"14\" cy=\"8\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><path d=\"M7 13.5 Q11 15.5 13.5 12.5\"/>"); break;
+                case "worried": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><line x1=\"4\" y1=\"5.5\" x2=\"7.5\" y2=\"4.5\"/><line x1=\"16\" y1=\"5.5\" x2=\"12.5\" y2=\"4.5\"/><line x1=\"7\" y1=\"14\" x2=\"13\" y2=\"14\"/>"); break;
+                case "sweaty": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><path d=\"M7.5 15 Q10 13 12.5 15\"/><ellipse cx=\"15.5\" cy=\"6\" rx=\"1.2\" ry=\"1.7\" fill=\"" + body + "\" stroke=\"none\"/>"); break;
                 case "dizzy": s.Append("<path d=\"M4.5 6.5 L7.5 9.5 M7.5 6.5 L4.5 9.5 M12.5 6.5 L15.5 9.5 M15.5 6.5 L12.5 9.5\"/><circle cx=\"10\" cy=\"14\" r=\"1.5\"/>"); break;
-                default: s.Append("<circle cx=\"6\" cy=\"8\" r=\"1.8\"/><circle cx=\"14\" cy=\"8\" r=\"1.8\"/><circle cx=\"6\" cy=\"8.3\" r=\".6\" fill=\"#fff\"/><circle cx=\"14\" cy=\"8.3\" r=\".6\" fill=\"#fff\"/><path d=\"M6.5 15.5 Q10 12.5 13.5 15.5\"/><ellipse cx=\"6\" cy=\"11.5\" rx=\".8\" ry=\"1.3\" fill=\"#fff\" stroke=\"none\"/>"); break;
+                default: s.Append("<circle cx=\"6\" cy=\"8\" r=\"1.8\"/><circle cx=\"14\" cy=\"8\" r=\"1.8\"/><circle cx=\"6\" cy=\"8.3\" r=\".6\" fill=\"" + body + "\"/><circle cx=\"14\" cy=\"8.3\" r=\".6\" fill=\"" + body + "\"/><path d=\"M6.5 15.5 Q10 12.5 13.5 15.5\"/><ellipse cx=\"6\" cy=\"11.5\" rx=\".8\" ry=\"1.3\" fill=\"" + body + "\" stroke=\"none\"/>"); break;
             }
             return s.Append("</g></svg>").ToString();
         }
