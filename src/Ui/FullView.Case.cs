@@ -51,7 +51,7 @@ namespace AdeeboMeter
         {
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHAT'S GOING ON?  ·  TAP WHAT YOU SEE"), Draw.fTiny, mb, x, y);
             y += 24 * S;
-            int sc = Math.Max(1, Math.Min(3, (int)(w / (240 * S)))); float sbh = 68 * S, sbw = (w - (sc - 1) * 10 * S) / sc;
+            int sc = Math.Max(1, Math.Min(3, (int)(w / (300 * S)))); float sbh = 70 * S, sbw = (w - (sc - 1) * 10 * S) / sc;
             if (symRect == null || symRect.Length != Symptoms.Length) symRect = new RectangleF[Symptoms.Length];
             for (int i = 0; i < Symptoms.Length; i++)
             {

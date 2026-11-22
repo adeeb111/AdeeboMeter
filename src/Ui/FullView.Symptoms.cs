@@ -28,7 +28,7 @@ namespace AdeeboMeter
             float ic = 38 * S, grow = 3 * S * t; var ir = new RectangleF(r.X + 14 * S - grow / 2, r.Y + (r.Height - ic) / 2 - grow / 2, ic + grow, ic + grow);
             Glyphs.Tile(g, icon, ir, c, 10 * S);
             float tx = r.X + 14 * S + ic + 12 * S, tw = r.Right - tx - 30 * S;
-            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(tx, r.Y + 12 * S, tw, 22 * S));
+            using (var ink = new SolidBrush(Theme.Ink)) using (var one = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(tx, r.Y + 12 * S, tw, 22 * S), one);   // one line: a long title never runs into the line under it
             using (var muted = new SolidBrush(Theme.Muted)) using (var ef = new StringFormat { Trimming = StringTrimming.EllipsisWord })
                 g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(tx, r.Y + 35 * S, tw, Math.Max(18 * S, r.Height - 40 * S)), ef);
             if (t > 0.01f)
