@@ -331,14 +331,15 @@ namespace AdeeboMeter
         {
             UseLanguageFonts();
         }
+        // the self-test's language pass switches fonts for bn / ar and back: it keeps the set it started with and puts it back
+        public static object SaveFonts() { return new object[] { Grab(), S }; }
+        public static void RestoreFonts(object saved) { var o = (object[])saved; Put((Font[])o[0]); S = (float)o[1]; sets.Clear(); }
         public static void UseLanguageFonts()
         {
             if (!L.IsRtl && L.Code != "bn") return;
             // R2-079: the zoom cache may hold these very fonts - empty it first (fonts not in use now are let go), so a zoom back
             // never puts a disposed font in use
-            var live = new HashSet<Font>(Grab().Where(f => f != null));
-            foreach (var set in sets.Values) foreach (var f in set) if (f != null && !live.Contains(f)) f.Dispose();
-            sets.Clear();
+            sets.Clear();   // fonts aren't disposed here: a window or button made earlier may still hold one (a disposed font throws on paint)
             fName = ArabicFont(fName); fHead = ArabicFont(fHead);
             fBody = ArabicFont(fBody); fBodyB = ArabicFont(fBodyB);
             fSmall = ArabicFont(fSmall); fTiny = ArabicFont(fTiny);
@@ -351,7 +352,7 @@ namespace AdeeboMeter
         {
             if (old == null) return old;
             var font = new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, old.Size, old.Style, GraphicsUnit.Pixel);
-            old.Dispose(); return font;
+            return font;   // the old one stays valid for whoever holds it
         }
         public static void Init(float s)
         {

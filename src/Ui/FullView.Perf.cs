@@ -40,6 +40,61 @@ namespace AdeeboMeter
             finally { Cfg.Layout = layout0; ApplyLayout(); Cfg.SetTheme(theme0); }
             return string.Join("; ", bad);
         }
+        // --perf (23 Nov, Adeeb's PC: 50-150 ms pages that drew in 25 ms on 22 Nov): where a page's draw time goes. A sampler
+        // stops the window thread every ~2 ms while the page is drawn again and again, and counts the AdeeboMeter method it was in
+        // and what that method had called (DrawString, MeasureString, a LINQ step...) - the top ones per page, for the slow pages.
+        #pragma warning disable 618   // Thread.Suspend / StackTrace(Thread): obsolete, still the only way in .NET Framework, fine for a diagnostic run
+        internal string PerfProfile(double overMs)
+        {
+            var log = new StringBuilder(); string layout0 = Cfg.Layout; int theme0 = Cfg.GetTheme(); var ui = System.Threading.Thread.CurrentThread;
+            log.AppendLine("WHERE THE TIME GOES (pages over " + overMs + " ms; samples every ~2 ms; 'AdeeboMeter method  <-  what it was calling')");
+            try
+            {
+                foreach (var lay in new[] { "classic", "sidebar" })
+                    foreach (var th in new[] { 0, 1 })
+                    {
+                        Cfg.Layout = lay; ApplyLayout(); Cfg.SetTheme(th); Application.DoEvents();
+                        foreach (var t in tabNames.Keys.ToList())
+                        {
+                            tab = t; ShowTab(); Application.DoEvents(); leftPane.Refresh();
+                            var sw0 = Stopwatch.StartNew(); for (int i = 0; i < 3; i++) leftPane.Refresh(); double avg = sw0.Elapsed.TotalMilliseconds / 3;
+                            if (avg < overMs) continue;
+                            var counts = new Dictionary<string, int>(); int total = 0; bool on = true;
+                            var sampler = new System.Threading.Thread(() =>
+                            {
+                                while (on)
+                                {
+                                    System.Diagnostics.StackTrace st = null;
+                                    try { ui.Suspend(); try { st = new System.Diagnostics.StackTrace(ui, false); } finally { ui.Resume(); } }
+                                    catch (System.Threading.ThreadStateException) { }
+                                    if (st != null)
+                                    {
+                                        string ours = null, leaf = null;
+                                        for (int f = 0; f < st.FrameCount && f < 60; f++)
+                                        {
+                                            var m = st.GetFrame(f).GetMethod(); if (m == null || m.DeclaringType == null) continue;
+                                            string nm = m.DeclaringType.Name + "." + m.Name;
+                                            if (leaf == null) leaf = nm;
+                                            if (m.DeclaringType.Namespace == "AdeeboMeter" && !nm.StartsWith("FullView.PerfProfile", StringComparison.Ordinal) && !nm.Contains("<")) { ours = nm; break; }
+                                            if (m.DeclaringType.Namespace == "AdeeboMeter" && ours == null && nm.Contains("<")) { ours = nm; break; }
+                                        }
+                                        string k = (ours ?? "?") + "  <-  " + (leaf ?? "?"); lock (counts) { int c0; counts.TryGetValue(k, out c0); counts[k] = c0 + 1; total++; }
+                                    }
+                                    System.Threading.Thread.Sleep(2);
+                                }
+                            }) { IsBackground = true };
+                            sampler.Start();
+                            var sw = Stopwatch.StartNew(); int n = 0; while (sw.ElapsedMilliseconds < 1500) { leftPane.Refresh(); n++; }
+                            on = false; sampler.Join(1000);
+                            log.AppendLine(lay + "/" + (th == 0 ? "light" : "dark") + "/" + t + ": " + avg.ToString("0") + " ms a draw (" + n + " draws, " + total + " samples)");
+                            lock (counts) foreach (var kv in counts.OrderByDescending(z => z.Value).Take(10)) log.AppendLine("    " + (100.0 * kv.Value / Math.Max(1, total)).ToString("0").PadLeft(3) + "%  " + kv.Key);
+                        }
+                    }
+            }
+            finally { Cfg.Layout = layout0; ApplyLayout(); Cfg.SetTheme(theme0); }
+            return log.ToString();
+        }
+        #pragma warning restore 618
         // starting a heavy tool must hand its work to a worker: the call returns fast and the window keeps answering
         internal string StartCheck(StringBuilder log, double limitMs)
         {

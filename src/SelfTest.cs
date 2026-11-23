@@ -71,6 +71,7 @@ namespace AdeeboMeter
             {
                 var fv = new FullView(icon, M); fv.Show(); Application.DoEvents(); Thread.Sleep(1500); Application.DoEvents();
                 sb.Append(fv.Perf());
+                try { sb.AppendLine(); sb.Append(fv.PerfProfile(40)); } catch (Exception e) { if (e is OutOfMemoryException) throw; sb.AppendLine("profile: " + e.Message); }
                 fv.Close(); fv.Dispose();
             }
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-perf.txt"), sb.ToString());
@@ -1320,7 +1321,7 @@ namespace AdeeboMeter
                         }
                         Theme.Apply(false);
                         // the other languages: longer words are where text runs off the page - a new window per language, as after a switch
-                        string oldL = L.Code;
+                        string oldL = L.Code; var oldFonts = Draw.SaveFonts();
                         // R2-195: Arabic (the right-to-left one) also at full HD and in the dark theme
                         foreach (var lcv in new[] { "fr", "es", "bn", "ar", "ar:1920:dark" })
                         {
@@ -1344,7 +1345,7 @@ namespace AdeeboMeter
                                 }
                                 finally { lv.Close(); lv.Dispose(); }
                             }
-                            finally { L.Use(oldL); Draw.UseLanguageFonts(); if (ldark) Theme.Apply(false); }
+                            finally { L.Use(oldL); Draw.RestoreFonts(oldFonts); if (ldark) Theme.Apply(false); }   // the English fonts back, never Bengali / Segoe left behind for the tests after
                         }
                         // a real freeze shows the card, and it goes when the window answers
                         fv.TestShow("overview"); pump(500); int shown0 = FreezeCard.Shown;
