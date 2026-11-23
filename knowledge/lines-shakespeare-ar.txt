@@ -90,3 +90,18 @@ game.streak|{v} على التوالي - انتصار!
 game.timeup|انتهى الوقت.
 market.open|أبواب السوق مفتوحة.
 storm.near|عاصفة تقترب - وقد يتعثر اتصالك.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} يُعرض، ويُعرض بإتقان.
+stream.on|الممثلون يؤدون، ولا أحد يتعثر.
+stream.dip|البث قد وهن. {v}
+stream.dip|عثرة على المسرح. {v}
+stream.none|لا ممثلين على الخشبة الليلة.
+stream.none|المسرح خالٍ. لا بث.
+trade.ok|خط وسيطك يجري سريعًا صادقًا.
+trade.ok|الوسيط يجيب بإنصاف وسرعة.
+trade.slow|الوسيط يتمهل. كفّ يدك.
+trade.slow|بطيء هو الطريق إلى وسيطك. {v}
+trade.closed|السوق مغلق حتى التاسعة والنصف.
+trade.closed|السوق نائم. استرح حتى الصباح.
+view.switch|إلى واجهة {v}، في الحال!
+view.switch|انظر، واجهة {v}.

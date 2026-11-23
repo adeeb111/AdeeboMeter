@@ -49,12 +49,12 @@ namespace AdeeboMeter
             using (var cf = new StringFormat { Alignment = StringAlignment.Center }) using (var ib = new SolidBrush(HudInk)) using (var db = new SolidBrush(HudDim)) using (var gb = new SolidBrush(gc))
             {
                 g.DrawString(double.IsNaN(ping) ? "--" : Ms(ping), Draw.fCardNum, ib, new RectangleF(gr.X, gr.Y + gd * 0.30f, gd, 40 * S), cf);
-                g.DrawString("ms PING", Draw.fTiny, db, new RectangleF(gr.X, gr.Y + gd * 0.62f, gd, 16 * S), cf);
-                g.DrawString(grade, Draw.fTiny, gb, new RectangleF(gr.X - 10 * S, gr.Bottom - 6 * S, gd + 20 * S, 16 * S), cf);
+                g.DrawString(L.T("ms PING"), Draw.fTiny, db, new RectangleF(gr.X, gr.Y + gd * 0.62f, gd, 16 * S), cf);
+                g.DrawString(L.T(grade), Draw.fTiny, gb, new RectangleF(gr.X - 10 * S, gr.Bottom - 6 * S, gd + 20 * S, 16 * S), cf);
             }
             // the last minute, spikes marked
             float lx = gr.Right + 28 * S, lw = Math.Max(120 * S, w * 0.42f), ly = y + 26 * S, lh = 86 * S; var hist = s.NetHist ?? new double[0];
-            using (var db = new SolidBrush(HudDim)) g.DrawString("LAST 60 SECONDS", Draw.fTiny, db, lx, y + 12 * S);
+            using (var db = new SolidBrush(HudDim)) g.DrawString(L.T("LAST 60 SECONDS"), Draw.fTiny, db, lx, y + 12 * S);
             using (var gp = new Pen(HudLine, 1)) { g.DrawLine(gp, lx, ly + lh, lx + lw, ly + lh); g.DrawLine(gp, lx, ly + lh / 2, lx + lw, ly + lh / 2); }
             var ok = hist.Where(v => !double.IsNaN(v)).ToList();
             if (ok.Count > 1)
@@ -65,7 +65,7 @@ namespace AdeeboMeter
                     for (int i = 1; i < pts.Length; i++) if (!pts[i].IsEmpty && !pts[i - 1].IsEmpty) g.DrawLine(lp, pts[i - 1], pts[i]);
                 using (var sb = new SolidBrush(HudPink)) for (int i = 0; i < hist.Length; i++) { if (double.IsNaN(hist[i])) { g.FillRectangle(sb, pts.Length > i ? lx + lw * i / Math.Max(1, hist.Length - 1) - 1.5f * S : lx, ly + lh - 8 * S, 3 * S, 8 * S); continue; } if (hist[i] > med * 2 && hist[i] > med + 25) g.FillEllipse(sb, pts[i].X - 3.5f * S, pts[i].Y - 3.5f * S, 7 * S, 7 * S); }
             }
-            else using (var db = new SolidBrush(HudDim)) g.DrawString("warming up...", Draw.fSmall, db, lx, ly + lh / 2 - 8 * S);
+            else using (var db = new SolidBrush(HudDim)) g.DrawString(L.T("warming up..."), Draw.fSmall, db, lx, ly + lh / 2 - 8 * S);
             // stats
             string kind; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; }
             string bg = HudBackground(); bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5;
@@ -79,13 +79,16 @@ namespace AdeeboMeter
                 for (int i = 0; i < stats.Length; i++)
                 {
                     float yy = y + 16 * S + i * (sh + 4 * S);
-                    using (var db = new SolidBrush(HudDim)) g.DrawString((string)stats[i][0], Draw.fTiny, db, sx, yy + 7 * S);
-                    using (var vb = new SolidBrush((Color)stats[i][2])) using (var rf = new StringFormat { Alignment = StringAlignment.Far }) g.DrawString((string)stats[i][1], Draw.fBodyB, vb, new RectangleF(sx, yy + 3 * S, sw, sh), rf);
+                    using (var db = new SolidBrush(HudDim)) g.DrawString(L.T((string)stats[i][0]), Draw.fTiny, db, sx, yy + 7 * S);
+                    using (var vb = new SolidBrush((Color)stats[i][2])) using (var rf = new StringFormat { Alignment = StringAlignment.Far }) g.DrawString(L.T((string)stats[i][1]), Draw.fBodyB, vb, new RectangleF(sx, yy + 3 * S, sw, sh), rf);
                 }
             // the verdict
             string verdict = double.IsNaN(ping) ? "NO CONNECTION - check Home first" : bg != "" ? "WAIT - " + bg.ToUpperInvariant() : busy ? "WAIT - SOMETHING IS USING YOUR LINE" : ping >= 80 || s.LossPct > 2 ? "EXPECT LAG - " + (s.LossPct > 2 ? "PACKETS ARE BEING LOST" : "THE LINE IS SLOW RIGHT NOW") : "READY TO QUEUE · GG";
             Color vc = verdict.StartsWith("READY", StringComparison.Ordinal) ? HudGreen : verdict.StartsWith("NO", StringComparison.Ordinal) ? HudRed : HudAmber;
-            using (var vb = new SolidBrush(vc)) g.DrawString("▶ " + verdict, Draw.fBodyB, vb, lx, ly + lh + 16 * S);
+            // shown in the app's language: each part translated on its own ("WAIT - " + a program's name stays a program's name)
+            string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? L.T("WAIT - ") + verdict.Substring(7)
+                : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? L.T("EXPECT LAG - ") + L.T(verdict.Substring(13)) : L.T(verdict);
+            using (var vb = new SolidBrush(vc)) g.DrawString("▶ " + shown, Draw.fBodyB, vb, lx, ly + lh + 16 * S);
             LiveSpot(gamerCanvas, "gm.hud", r);
             return y + h + 16 * S;
         }

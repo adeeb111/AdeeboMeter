@@ -1,6 +1,6 @@
 # AdeeboMeter — Spanish Windows catalog. English TAB Spanish.
 # Names, protocols, units, commands and keys may retain their spelling.
-#coverage 83
+#coverage 100
 + Add server	+ Añadir servidor
 + Add your own game	+ Añadir tu juego
 1 day	1 día
@@ -43,7 +43,7 @@ Check a destination	Comprobar un destino
 Check for updates  >	Buscar actualizaciones  >
 Checks you start	Comprobaciones que inicias
 Companion	Compañero
-Computer feels slow	El ordenador va lento
+Computer feels slow	La computadora va lenta
 Connections	Conexiones
 Corner widget size	Tamaño del widget
 Dark	Oscuro
@@ -4220,3 +4220,669 @@ Couldn't restart - close AdeeboMeter from the tray icon and open it again	No se 
 not watched - only the best	sin vigilar - solo los
 servers are checked	mejores servidores se miden
 Restart	Reiniciar
+# 1.1.6 - 22 Nov
+(Bank of Canada)	(Banco de Canadá)
+(no 802.1X sign-in seen)	(no se vio ningún inicio de sesión 802.1X)
+(no ACK)	(sin ACK)
+(no DHCP - the address is set by hand)	(sin DHCP: la dirección está puesta a mano)
+(no IPv6 address to ping)	(no hay dirección IPv6 a la que hacer ping)
+(no Offer)	(sin Offer)
+(no SYN-ACK)	(sin SYN-ACK)
+(no certificate)	(sin certificado)
+(no reply)	(sin respuesta)
+(no usable answer)	(sin respuesta útil)
+(nobody announced themselves)	(nadie se anunció)
+(none answered - IPv6 is off on this network)	(nadie respondió: IPv6 está apagado en esta red)
+(not joined to a domain)	(no unido a un dominio)
+(nothing heard)	(no se oyó nada)
+(nothing to seal with)	(nada con qué sellar)
+(off)	(apagado)
+(this computer)	(este equipo)
+(your connection)	(tu conexión)
+(your time)	(tu hora)
+3 months	3 meses
+3 months:	3 meses:
+A Friday evening summary in the corner	Un resumen el viernes por la tarde en la esquina
+A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.	El cambio es cuánto se movió el precio de esa moneda en dólares canadienses. Haz clic en una fila para ver su gráfico.
+A check is already running - its report opens here when it's done.	Ya hay una revisión en marcha: su informe se abre aquí cuando termine.
+A month ago	Hace un mes
+A web page doesn't list its qualities. Paste the stream's own address for this table.	Una página web no indica sus calidades. Pega la dirección del propio stream para esta tabla.
+A year ago	Hace un año
+Add	Añadir
+Add a currency	Añadir una moneda
+Add a quote key...	Añadir una clave de cotizaciones...
+Add currency	Añadir moneda
+Add each month ($)	Aporte mensual ($)
+AdeeboLab	AdeeboLab
+AdeeboMeter Daily Financial Edition	AdeeboMeter Edición Financiera Diaria
+AdeeboMeter Matchday Edition	AdeeboMeter Edición de Partido
+After	Después
+All closed now - here is the next trading day, from	Todo cerrado ahora: este es el próximo día de mercado, desde
+All in One Place	Todo en un solo lugar
+All world markets	Todos los mercados del mundo
+Amount	Cantidad
+An index, not a price per barrel or ounce: it shows which way a group of Canadian exports moves, and how far.	Un índice, no un precio por barril u onza: muestra hacia dónde se mueve un grupo de exportaciones canadienses, y cuánto.
+Asking the devices on your network who they are (about 8 s)...	Preguntando a los dispositivos de tu red quiénes son (unos 8 s)...
+At kick-off: dry, most likely.	Al inicio del partido: seco, lo más probable.
+At kick-off: forecast unknown.	Al inicio del partido: pronóstico desconocido.
+At kick-off: rain likely.	Al inicio del partido: probable lluvia.
+At the Bank of Canada's rate. Banks and exchange shops add a margin.	Al tipo del Banco de Canadá. Bancos y casas de cambio añaden un margen.
+Average	Promedio
+Bank of Canada	Banco de Canadá
+Bank of Canada commodity price indexes, in US dollars · weekly	Índices de precios de materias primas del Banco de Canadá, en dólares estadounidenses · semanal
+Bank of Canada policy rate	Tasa de interés oficial del Banco de Canadá
+Based on	Basado en
+Biggest day	Día con más
+Busy	Ocupado
+Canadian dollar	Dólar canadiense
+Canadian dollar, in US dollars	Dólar canadiense, en dólares estadounidenses
+Certificate calendar, last looked	Calendario de certificados, última revisión
+Change	Cambio
+Change key...	Cambiar clave...
+Changes vs the day before; the commodity index vs last week.	Cambios frente al día anterior; el índice de materias primas frente a la semana pasada.
+Check my line	Revisar mi línea
+Check my line now (20 s)	Revisar mi línea ahora (20 s)
+Checking	Revisando
+Checking your line...	Revisando tu línea...
+Checking your network...	Revisando tu red...
+Choose a place above and the forecast shows here (Open-Meteo: free, no account).	Elige un lugar arriba y el pronóstico aparecerá aquí (Open-Meteo: gratis, sin cuenta).
+Choose a place for the weather	Elige un lugar para el clima
+Close heavy apps before kick-off.	Cierra las apps pesadas antes del partido.
+Closed	Cerrado
+Closes 1 PM	Cierra a la 1 PM
+Coming up	Próximamente
+Commodity index	Índice de materias primas
+Competition:	Competición:
+Cricket · CricketData	Críquet · CricketData
+Currency	Moneda
+Day	Día
+Delay is usually around	El retraso suele rondar
+Detected type:	Tipo detectado:
+Different words, no words on your phone, or you didn't just scan the code? Press Don't allow - it isn't your phone.	¿Palabras distintas, ninguna en tu teléfono o no acabas de escanear el código? Pulsa No permitir: no es tu teléfono.
+Draw your network, see the path, break one thing.	Dibuja tu red, mira el camino, rompe una cosa.
+Drops this week	Caídas esta semana
+Dry	Seco
+During the test (Mb/s, one point a second)	Durante la prueba (Mb/s, un punto por segundo)
+EXAMPLE - NO DATED EVENTS IN THIS RESULT	EJEMPLO: SIN EVENTOS CON FECHA EN ESTE RESULTADO
+EXAMPLE - RUN IT FOR YOURS	EJEMPLO: EJECÚTALO PARA VER EL TUYO
+Each line says what it's based on. With too little history, it says so instead of guessing.	Cada línea dice en qué se basa. Con poco historial, lo dice en vez de adivinar.
+Edition	Edición
+Energy index	Índice de energía
+Example shows a finished result first; Open runs it	Ejemplo muestra primero un resultado terminado; Abrir lo ejecuta
+Expect the usual slow stretch:	Espera el tramo lento de siempre:
+Facts from this week's numbers, not a forecast.	Hechos de los números de esta semana, no un pronóstico.
+Fair	Regular
+Feels like:	Sensación:
+Fewer	Menos
+Fine	Bien
+Follow a team...	Seguir a un equipo...
+Follow teams...	Seguir equipos...
+Follow your teams	Sigue a tus equipos
+Football · football-data.org	Fútbol · football-data.org
+From ESPN's free scoreboards, updated once a day.	De los marcadores gratuitos de ESPN, actualizados una vez al día.
+From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on.	Del Banco de Canadá: oficial, gratis, sin cuenta. Se descarga solo mientras esta página está abierta, como mucho una vez tras cada actualización diaria. Apagado hasta que lo actives.
+From your Financial Modeling Prep key · delayed while markets are open	De tu clave de Financial Modeling Prep · con retraso mientras los mercados están abiertos
+GO TO	IR A
+Good	Bueno
+Got as far as:	Llegó hasta:
+Group · what's in it	Grupo · qué incluye
+HLS (.m3u8), DASH (.mpd) or a web page · the link stays on this PC	HLS (.m3u8), DASH (.mpd) o una página web · el enlace se queda en este PC
+Headlines · BBC Sport	Titulares · BBC Sport
+Healthy	Sano
+High	Alto
+History is off	El historial está apagado
+History is off, so there's no replay of this minute (Settings › General › History).	El historial está apagado, así que no se puede repetir este minuto (Ajustes › General › Historial).
+History off	Historial apagado
+Hockey · the NHL's public feed	Hockey · el feed público de la NHL
+Holidays are known for New York and Toronto; other exchanges' holidays aren't checked.	Se conocen los feriados de Nueva York y Toronto; los de otras bolsas no se revisan.
+Humidity	Humedad
+I'll check	Lo reviso
+ITS CONNECTIONS	SUS CONEXIONES
+In CAD	En CAD
+Index levels need a quote service. Add your own free Financial Modeling Prep key and New York, Toronto, London, Frankfurt, Tokyo and more show here. Without one this stays empty - never old or made-up numbers.	Los niveles de los índices necesitan un servicio de cotizaciones. Añade tu propia clave gratuita de Financial Modeling Prep y aquí aparecerán Nueva York, Toronto, Londres, Fráncfort, Tokio y más. Sin ella esto queda vacío: nunca datos viejos ni inventados.
+Inflation, past 12 months	Inflación, últimos 12 meses
+Is your stream ready?	¿Está listo tu stream?
+Jitter:	Jitter:
+Kick-off (your time):	Inicio (tu hora):
+LINE CHECK	REVISIÓN DE LÍNEA
+Last 30 days	Últimos 30 días
+Last hop that answers	Último salto que responde
+Last move	Último movimiento
+Last one:	El último:
+Last test:	Última prueba:
+Last:	Último:
+Latency:	Latencia:
+Leads Commodities	Lidera las materias primas
+Learning	Aprendiendo
+Let remembered phones reconnect while AdeeboMeter runs	Permitir que los teléfonos recordados se reconecten mientras AdeeboMeter está abierto
+Live scores: add my key...	Marcadores en vivo: añadir mi clave...
+Live:	En vivo:
+Look at the phone in your own hand: does it show the same words?	Mira el teléfono que tienes en la mano: ¿muestra las mismas palabras?
+Loonie Firms	El loonie se afirma
+Loonie Holds Steady	El loonie se mantiene estable
+Loonie Slips	El loonie retrocede
+Loonie {0} {1:0.0}% against the US dollar this week.	El loonie {0} {1:0.0}% frente al dólar estadounidense esta semana.
+Loss, recent	Pérdida, reciente
+Low	Bajo
+Lunch	Almuerzo
+MATCHDAY BRIEFING	RESUMEN DEL PARTIDO
+Making the report...	Preparando el informe...
+Markets	Mercados
+Markets are closed for the weekend.	Los mercados están cerrados por el fin de semana.
+Markets are closed right now.	Los mercados están cerrados ahora.
+Markets are open	Los mercados están abiertos
+Markets are open.	Los mercados están abiertos.
+Markets open	Mercados abiertos
+May drop at peaks	Puede caer en horas pico
+Measuring...	Midiendo...
+Month	Mes
+My teams ›	Mis equipos ›
+NO ADDRESS FROM DHCP	SIN DIRECCIÓN POR DHCP
+NOW	AHORA
+Names	Nombres
+Needs	Necesita
+New York	Nueva York
+New York and Toronto	Nueva York y Toronto
+Next 12 hours	Próximas 12 horas
+Next game	Próximo partido
+Next open:	Próxima apertura:
+Next:	Siguiente:
+No IPv4 home range to compare on this PC's adapters.	No hay rango IPv4 de casa para comparar en los adaptadores de este PC.
+No closings in the next six weeks.	Sin cierres en las próximas seis semanas.
+No drops at this hour	Sin caídas a esta hora
+No drops in the last 7 days.	Sin caídas en los últimos 7 días.
+No finished games in today's feeds.	No hay partidos terminados en los feeds de hoy.
+No game in today's feeds	No hay partido en los feeds de hoy
+No game today for your teams	Hoy no juegan tus equipos
+No history yet for this day and hour - ask again after a few weeks.	Aún no hay historial para este día y hora: vuelve a preguntar en unas semanas.
+No hour stands out: your line is about as quick all day.	Ninguna hora destaca: tu línea va igual de rápida todo el día.
+No rain expected in the next 24 hours.	No se espera lluvia en las próximas 24 horas.
+No upcoming games in today's feeds.	No hay próximos partidos en los feeds de hoy.
+None yet: names or short codes work - Leafs, TOR, Arsenal, India.	Ninguno aún: sirven nombres o códigos cortos - Leafs, TOR, Arsenal, India.
+Not enough history yet to show a pattern - ask again in a few days.	Aún no hay historial suficiente para ver un patrón: vuelve a preguntar en unos días.
+Not enough history yet to spot a pattern. Ask again in	Aún no hay historial suficiente para ver un patrón. Vuelve a preguntar en
+Nothing live right now.	Nada en vivo ahora mismo.
+Nothing planned - follow a team or turn on the markets numbers.	Nada previsto: sigue a un equipo o activa los datos de mercados.
+Nothing running hot right now.	Nada va al límite ahora mismo.
+Nothing to change: it should play as well as this stream allows.	Nada que cambiar: debería verse tan bien como este stream permite.
+Nothing to fix: every check came back fine.	Nada que arreglar: todas las revisiones salieron bien.
+Now	Ahora
+Numbers only - AdeeboMeter never tells you what to buy or sell.	Solo números: AdeeboMeter nunca te dice qué comprar o vender.
+OUTLOOK  ·  NOW AND NEXT	PANORAMA  ·  AHORA Y DESPUÉS
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines - every 5 minutes at most.	Apagado hasta que lo actives. Luego, mientras esta página está abierta: marcadores de hockey de la NHL, fútbol y críquet con tus propias claves gratuitas y los titulares de BBC Sport, como mucho cada 5 minutos.
+One of the row buys this much of the column.	Una unidad de la fila compra esta cantidad de la columna.
+Online checks are turned off by your IT team.	Tu equipo de TI desactivó las revisiones en línea.
+Only my teams	Solo mis equipos
+Open-Meteo forecast	Pronóstico de Open-Meteo
+Opened from	Abierto desde
+Outlook for kick-off	Panorama para el partido
+PC busy	PC ocupado
+PINNED	FIJADO
+PINNED MOMENTS	MOMENTOS FIJADOS
+Packet loss:	Pérdida de paquetes:
+Paste	Pegar
+Paste a web address that starts with http:// or https:// - the stream's own link (ending in .m3u8 or .mpd) gives the full check.	Pega una dirección web que empiece por http:// o https://; el enlace propio del stream (terminado en .m3u8 o .mpd) da la revisión completa.
+Paste your stream link and press Test my stream. In about 30 seconds you'll know which quality will play smoothly - and what to change if it won't.	Pega el enlace de tu stream y pulsa Probar mi stream. En unos 30 segundos sabrás qué calidad se verá fluida, y qué cambiar si no.
+Paste your stream link and test it: which quality will play, and how to make it better.	Pega el enlace de tu stream y pruébalo: qué calidad se verá y cómo mejorarla.
+Pin this minute	Fijar este minuto
+Plays smoothly	Se ve fluido
+Quality	Calidad
+RAM:	RAM:
+Rain chance, next 24 h	Probabilidad de lluvia, próximas 24 h
+Rain from about	Lluvia desde aprox.
+Rain later	Lluvia más tarde
+Rain likely around	Probable lluvia hacia
+Rain:	Lluvia:
+Reading your history...	Leyendo tu historial...
+Red line: now.	Línea roja: ahora.
+Remind	Recordar
+Remind me in the corner 15 minutes before kick-off	Avisarme en la esquina 15 minutos antes del partido
+Resources are in good shape for streaming.	Los recursos están bien para hacer streaming.
+STREAM CHECK	REVISIÓN DEL STREAM
+Saved on this PC:	Guardado en este PC:
+Score:	Marcador:
+Secure:	Seguro:
+See	Ver
+See all problems	Ver todos los problemas
+Server:	Servidor:
+Service board	Panel de servicios
+Show my path	Mostrar mi camino
+Show my path in the Lab  ›	Mostrar mi camino en el Lab  ›
+Some	Algo
+Some drops	Algunas caídas
+Some weeks lost packets at this hour	Algunas semanas se perdieron paquetes a esta hora
+Something else? Type it in the search box (Ctrl+K).	¿Otra cosa? Escríbela en la búsqueda (Ctrl+K).
+Something is working the PC hard - see What's running.	Algo está exigiendo mucho al PC: mira Qué se está ejecutando.
+Sounds like	Suena a
+Stable	Estable
+Start with ($)	Empezar con ($)
+Starts in:	Empieza en:
+Statistics Canada	Statistics Canada
+Steady	Constante
+Storage:	Almacenamiento:
+Stream Check is on the Sports page	La revisión del stream está en la página de Deportes
+Struggling	Con problemas
+THE MARKETS PAGE	LA PÁGINA DE MERCADOS
+THE PICTURE	EL PANORAMA
+THIS PC'S ADDRESS IS FIXED	LA DIRECCIÓN DE ESTE PC ES FIJA
+THIS WEEK'S MARKET BRIEFING	RESUMEN SEMANAL DE MERCADOS
+Tell me when a currency on my list moves more than 2% in a week	Avisarme cuando una moneda de mi lista se mueva más de un 2% en una semana
+Test my stream	Probar mi stream
+Test your stream link (recommended).	Prueba el enlace de tu stream (recomendado).
+Tested	Probado
+Testing...	Probando...
+That doesn't look like a key: letters and digits only.	Eso no parece una clave: solo letras y dígitos.
+That spot was removed - nothing to rename.	Ese lugar se eliminó: no hay nada que renombrar.
+The Bank of Canada's numbers, in plain words.	Los números del Banco de Canadá, en palabras sencillas.
+The Week in Numbers	La semana en números
+The forecast is on its way...	El pronóstico está en camino...
+The groups arrive from the Bank of Canada in a moment.	Los grupos llegan del Banco de Canadá en un momento.
+The history arrives from the Bank of Canada in a moment.	El historial llega del Banco de Canadá en un momento.
+The next day, in short	El día siguiente, en breve
+The numbers arrive after the first fetch.	Los números llegan tras la primera descarga.
+The weather, your network and this PC: how things are now, and what the last few days say about the next one.	El clima, tu red y este PC: cómo están ahora y qué dicen los últimos días sobre el siguiente.
+Their next game becomes this page's lead, with everything you need to watch it.	Su próximo partido pasa a ser lo principal de esta página, con todo lo que necesitas para verlo.
+Their next game shows here as soon as it's in today's fixtures.	Su próximo partido aparece aquí en cuanto esté en el calendario de hoy.
+This stream lists one quality.	Este stream ofrece una sola calidad.
+Three days	Tres días
+Tip:	Consejo:
+Too little history	Muy poco historial
+Toronto	Toronto
+Try this	Prueba esto
+Turn on History in Settings: AdeeboMeter writes one line a minute on this PC, and this chart is made from it.	Activa el Historial en Ajustes: AdeeboMeter escribe una línea por minuto en este PC, y este gráfico sale de ahí.
+Turn on History to see how your line usually behaves.	Activa el Historial para ver cómo se comporta tu línea normalmente.
+Turn on Weather in Settings to see the weather for your place at kick-off.	Activa el Clima en Ajustes para ver el tiempo de tu zona al inicio del partido.
+Turn on scores to see your teams' next game here.	Activa los marcadores para ver aquí el próximo partido de tus equipos.
+Type the new name first.	Escribe primero el nuevo nombre.
+Unpin	Desfijar
+Unsteady	Inestable
+Update:	Actualización:
+Verdict	Veredicto
+Video came in at:	El video llegó a:
+WHAT'S GOING ON?  ·  TAP WHAT YOU SEE	¿QUÉ PASA?  ·  TOCA LO QUE VES
+Watch out	Cuidado
+Weather is off: your IT team turned online lookups off.	El clima está apagado: tu equipo de TI desactivó las consultas en línea.
+Week	Semana
+Weighs on Commodities	Pesa sobre las materias primas
+What $100 buys now	Lo que compran 100 $ ahora
+When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.	Cuando suben los precios de la energía, el dólar canadiense suele subir con ellos. Los dos en el mismo periodo, con base 100 al inicio.
+When your internet is slowest	Cuándo tu internet va más lento
+Which currency?	¿Qué moneda?
+Wind	Viento
+Wind:	Viento:
+Windows trusts it	Windows confía en él
+Windows' default: incoming blocked	Lo predeterminado en Windows: entrante bloqueado
+Windows, Apple and Linux-style names	Nombres al estilo de Windows, Apple y Linux
+Would buffer	Se cortaría
+YOUR WEEK IN TWO MINUTES	RESUMEN SEMANAL EN DOS MINUTOS
+Yearly growth (%)	Crecimiento anual (%)
+Years	Años
+Yesterday	Ayer
+You got	Obtuviste
+Your Financial Modeling Prep key (free at financialmodelingprep.com) - kept encrypted on this PC	Tu clave de Financial Modeling Prep (gratis en financialmodelingprep.com): se guarda cifrada en este PC
+Your PC is busy: close heavy apps.	Tu PC está ocupado: cierra las apps pesadas.
+Your PC is ready for streaming.	Tu PC está listo para hacer streaming.
+Your PC · Your Network · Your Markets	Tu PC · Tu red · Tus mercados
+Your PC · Your Network · Your Streaming	Tu PC · Tu red · Tu streaming
+Your match, your setup and your stream - all in one place.	Tu partido, tu equipo y tu stream: todo en un solo lugar.
+Your network	Tu red
+Your network is slow right now.	Tu red va lenta ahora mismo.
+Your network is stable - no action needed.	Tu red está estable: no hace falta hacer nada.
+Your stream link is tested.	El enlace de tu stream está probado.
+Your stream, ready for the match	Tu stream, listo para el partido
+a calculator, not a promise	una calculadora, no una promesa
+a packet to your own public address	un paquete a tu propia dirección pública
+a rise abroad can grow or shrink once it's turned into Canadian dollars	una subida en el extranjero puede crecer o encogerse al pasarla a dólares canadienses
+a team you follow	un equipo que sigues
+a trip, or money sent home	un viaje, o dinero enviado a casa
+a web server	un servidor web
+about 30 seconds	unos 30 segundos
+about 30 seconds · it downloads the real video to see what your line can carry	unos 30 segundos · descarga el video real para ver qué aguanta tu línea
+after (run it again)	después (ejecútalo otra vez)
+and by LLMNR / mDNS?	¿y por LLMNR / mDNS?
+and more on the Service board and in the Certificate calendar	y más en el Panel de servicios y en el Calendario de certificados
+any page, please - what time do you have?	cualquier página, por favor: ¿qué hora tienes?
+around	alrededor de
+arrived back here	volvió aquí
+as	como
+blocked (no rule allows it)	bloqueado (ninguna regla lo permite)
+chance	probabilidad
+checks in a row since	revisiones seguidas desde
+comes back the same way	vuelve por el mismo camino
+comes to	suma
+compared with the file you gave	comparado con el archivo que diste
+couldn't tell	no se pudo saber
+d	d
+days	días
+days of History	días de Historial
+days of History on this PC	días de Historial en este PC
+dip	bajón
+drops in the last 7 days.	caídas en los últimos 7 días.
+each set to 100 at the start, so you can compare	cada uno con base 100 al inicio, para poder comparar
+each square is a core with one thread - lit = working now	cada cuadro es un núcleo con un hilo; iluminado = trabajando ahora
+each square is a core; split ones run two threads, whole ones one - lit = working now	cada cuadro es un núcleo; los divididos ejecutan dos hilos, los enteros uno; iluminado = trabajando ahora
+every row	cada fila
+feels like	sensación
+fetched only while a Sports page is open, every 5 minutes at most	se descarga solo mientras una página de Deportes está abierta, como mucho cada 5 minutos
+free	gratis
+from the	desde el
+futures, from your quote key · delayed while open	futuros, de tu clave de cotizaciones · con retraso mientras está abierto
+growth	crecimiento
+h	h
+hello + who are you? (anonymous)	hola + ¿quién eres? (anónimo)
+high	alto
+history on its way	historial en camino
+hover one for what it does	pasa el ratón por uno para ver qué hace
+in CAD	en CAD
+in Canadian dollars	en dólares canadienses
+in Connections	en Conexiones
+in the Time machine	en la Máquina del tiempo
+in your time	en tu hora
+in your time · worked out on this PC	en tu hora · calculado en este PC
+index	índice
+is already a room - pick another name, or remove that one first.	ya es una habitación: elige otro nombre o elimina esa primero.
+is down	está caído
+it's on	está activo
+its Date header	su cabecera Date
+its host key	su clave de host
+its time, to the second	su hora, al segundo
+knock	toque
+last 6 weeks	últimas 6 semanas
+less now	menos ahora
+live, right now	en vivo, ahora mismo
+loonie stronger	loonie más fuerte
+loonie weaker	loonie más débil
+mail to it would travel unencrypted	el correo hacia él viajaría sin cifrar
+mail would travel unencrypted	el correo viajaría sin cifrar
+more hops	saltos más
+more in What changed	más en Qué cambió
+more now	más ahora
+most helpful first · each from something measured	lo más útil primero · cada uno sale de algo medido
+needs	necesita
+needs your free key	necesita tu clave gratuita
+no	no
+no DHCP server answered - Windows made up a 169.254 address	ningún servidor DHCP respondió: Windows se inventó una dirección 169.254
+no DHCP server answered in the capture	ningún servidor DHCP respondió en la captura
+no SSH answer	sin respuesta SSH
+no STARTTLS	sin STARTTLS
+no key needed	no hace falta clave
+no key yet	aún sin clave
+no reply can mean filtered - or it ignores this question	sin respuesta puede ser filtrado, o que ignora esta pregunta
+nobody else answered for it	nadie más respondió por ella
+none	ninguno
+none in today's fixtures	ninguno en el calendario de hoy
+not looked up	no consultado
+not read by this check - your SSH program shows it; if it ever changes, ask why	esta revisión no lo lee; tu programa SSH lo muestra; si alguna vez cambia, pregunta por qué
+of the last 6 weeks	de las últimas 6 semanas
+of what it bought a year ago	de lo que compraba hace un año
+offered, but never confirmed	ofrecida, pero nunca confirmada
+on its way from the Bank of Canada...	en camino desde el Banco de Canadá...
+on your list	en tu lista
+one address only	una sola dirección
+one unit, in Canadian dollars	una unidad, en dólares canadienses
+online	en línea
+out of 100	de 100
+playing now	jugando ahora
+plugged in	enchufado
+port 25 is blocked on most home lines	el puerto 25 está bloqueado en la mayoría de líneas domésticas
+read without a password, as every client does first	leído sin contraseña, como hace primero cualquier cliente
+remembered phone(s) couldn't be read (the list was damaged, or this is another Windows account) - remember them again from the phone.	teléfono(s) recordado(s) no se pudieron leer (la lista estaba dañada o es otra cuenta de Windows): recuérdalos otra vez desde el teléfono.
+replay	repetición
+right (within a second or two)	correcto (dentro de uno o dos segundos)
+routers	routers
+runs about	ronda
+scores are off	los marcadores están apagados
+see below	ver abajo
+seen:	visto:
+sent back in	devuelto en
+shown	mostrado
+sign-in tickets come from 88	los tickets de inicio de sesión vienen del 88
+signed with the shared secret	firmado con el secreto compartido
+since	desde
+slow moment	momento lento
+slower than the quietest hours	más lento que las horas más tranquilas
+something listens there	algo escucha ahí
+spike	pico
+starts in	empieza en
+the address to knock on	la dirección a la que tocar
+the certificate ends	el certificado termina
+the certificate has expired	el certificado ha caducado
+the directory's root entry	la entrada raíz del directorio
+the first	el primero
+the source Windows follows	la fuente que sigue Windows
+their games come first everywhere: Overview, the corner, Streaming	sus partidos van primero en todas partes: Resumen, la esquina, Streaming
+this PC again	este PC otra vez
+this PC's name (an example)	el nombre de este PC (un ejemplo)
+this run	esta ejecución
+type more to narrow it	escribe más para acotar
+unchanged since	sin cambios desde
+up	arriba
+video came in at	el video llegó a
+vs	vs
+vs CAD	vs CAD
+web page	página web
+weeks	semanas
+what each needs comes from the stream itself	lo que necesita cada uno sale del propio stream
+what to prepare	qué preparar
+works	funciona
+yes (HTTPS)	sí (HTTPS)
+you put in	aportas
+your key is set	tu clave está puesta
+your team	tu equipo
+{0} closed {1} ({2}).	{0} cerró {1} ({2}).
+{0} index {1} {2:0.0}% on the week.	Índice {0} {1} {2:0.0}% en la semana.
+{0} index {1} {2} weeks running.	Índice {0} {1} {2} semanas seguidas.
+Or tap what you see	O toca lo que ves
+Search or describe a problem	Busca o describe un problema
+What's going on?	¿Qué pasa?
+how sure	qué tan seguro
+No minutes recorded for this time yet - the case uses what it measures now.	Aún no hay minutos registrados para esta hora: el caso usa lo que mide ahora.
+History is off (Settings > History & data), so there are no past minutes to draw.	El historial está apagado (Ajustes > Historial y datos), así que no hay minutos pasados que dibujar.
+pressure right now	presión ahora mismo
+who uses it, health, space	quién lo usa, salud, espacio
+the usual suspects	los sospechosos de siempre
+the last 7 days	los últimos 7 días
+memory that only grows	memoria que solo crece
+who draws the most	quién gasta más
+installs and updates	instalaciones y actualizaciones
+health and charge cycles	salud y ciclos de carga
+Pick what's wrong - I'll run the checks and tell you what I saw, what I can't know, and what to try next.	Elige qué falla: hago las revisiones y te digo qué vi, qué no puedo saber y qué probar después.
+Choose the problem. AdeeboMeter runs the checks and reports findings, evidence, limits and next steps.	Elige el problema. AdeeboMeter hace las revisiones e informa hallazgos, pruebas, límites y siguientes pasos.
+Not established: 	No establecido: 
+Layer by layer, stops at the first broken one	Capa por capa, se detiene en la primera rota
+Finds where the delay starts	Encuentra dónde empieza el retraso
+Today's drops and what came just before	Las caídas de hoy y lo que pasó justo antes
+No internet at all	Nada de internet
+Nothing opens - checks every step	Nada abre: revisa cada paso
+Connected, but nothing works	Conectado, pero nada funciona
+The network isn't in the list	La red no aparece en la lista
+Downloads are slow	Las descargas van lentas
+Your plan vs this PC's link and disk	Tu plan frente al enlace y el disco de este PC
+My game lags	Mi juego tiene lag
+Your Wi-Fi, your line, or the game	Tu Wi-Fi, tu línea o el juego
+Speed now and what else is busy	La velocidad ahora y qué más está ocupado
+Slow after sleep or waking	Lento tras suspender o despertar
+How long it takes to get back online	Cuánto tarda en volver a estar en línea
+Email won't send	El correo no se envía
+Can this PC reach your mail server?	¿Llega este PC a tu servidor de correo?
+A device on my network is missing	Falta un dispositivo en mi red
+Everything seen on this network	Todo lo visto en esta red
+Pick what it feels like - I check it step by step.	Elige cómo se siente: lo reviso paso a paso.
+ (I can't name it)	 (no sé decir qué es)
+Every answer says where each fact came from - measured, Windows-reported, seen in packets or inferred - and what I couldn't establish.	Cada respuesta dice de dónde salió cada dato (medido, informado por Windows, visto en paquetes o deducido) y qué no pude establecer.
+Each fact is labelled: measured, Windows-reported, seen in packets, inferred or unavailable.	Cada dato va etiquetado: medido, informado por Windows, visto en paquetes, deducido o no disponible.
+Report saved - show it	Informe guardado: mostrarlo
+Make a report (PDF)	Crear un informe (PDF)
+Learn why	Saber por qué
+Report saved	Informe guardado
+Good. AdeeboMeter keeps watching - if it comes back, it'll tell you.	Bien. AdeeboMeter sigue vigilando: si vuelve, te lo dirá.
+Streams worse in the evening? See your network's rush hour - and when to watch.	¿Los streams van peor por la tarde? Mira la hora pico de tu red, y cuándo ver.
+Rush hour	Hora pico
+Picture freezing at the big moment? Find out if it's your Wi-Fi, your line or the service.	¿La imagen se congela en el gran momento? Averigua si es tu Wi-Fi, tu línea o el servicio.
+Why it buffers	Por qué se corta
+Going live? Check upload, Wi-Fi and what else is using the line in one go.	¿Vas a transmitir? Revisa la subida, el Wi-Fi y qué más usa la línea de una vez.
+Ready to stream?	¿Listo para transmitir?
+Frames dropping in OBS? See whether it's the network or the PC.	¿OBS pierde fotogramas? Mira si es la red o el PC.
+Is your plan fast enough for 4K on every screen at home?	¿Tu plan alcanza para 4K en todas las pantallas de casa?
+Plan check	Revisión del plan
+Your broker lags at the open? Check the line to it before the bell.	¿Tu bróker va lento en la apertura? Revisa la línea antes de la campana.
+Market-open check	Revisión de apertura del mercado
+Is your connection fast enough to trade? See what 40 ms really costs.	¿Tu conexión es lo bastante rápida para operar? Mira lo que cuestan de verdad 40 ms.
+Line vs trading	Línea frente a trading
+A slow moment while you traded? The Time machine shows what your line did then.	¿Un momento lento mientras operabas? La Máquina del tiempo muestra qué hizo tu línea entonces.
+Lag spikes? Find out whose fault it is - your Wi-Fi, your line or the game's server.	¿Picos de lag? Averigua de quién es la culpa: tu Wi-Fi, tu línea o el servidor del juego.
+Why it lags	Por qué hay lag
+Before a ranked match: one check of Wi-Fi, background downloads and the line.	Antes de una partida clasificatoria: una revisión del Wi-Fi, las descargas de fondo y la línea.
+Ready to play?	¿Listo para jugar?
+Would a ping booster (GPN) actually help you? Measure it instead of guessing.	¿Te ayudaría de verdad un acelerador de ping (GPN)? Mídelo en vez de adivinar.
+warming up...	calentando...
+NO CONNECTION - check Home first	SIN CONEXIÓN: revisa primero Inicio
+the first 80 shown	se muestran los primeros 80
+Go to	Ir a
+Pinned tools	Herramientas fijadas
+find the closest	buscar el más cercano
+Auto - Cloudflare, its nearest data centre (download and upload)	Auto: Cloudflare, su centro de datos más cercano (descarga y subida)
+Find the closest server for me	Buscar el servidor más cercano por mí
+Add my own server...	Añadir mi propio servidor...
+closest speed server	servidor de velocidad más cercano
+I can't name it	No sé decir qué es
+pages take ages	las páginas tardan muchísimo
+ping spikes, rubber-banding	picos de ping, saltos hacia atrás
+Running out of space	Me quedo sin espacio
+the disk is full, Windows nags	el disco está lleno, Windows insiste
+the VPN may be the slow part	la VPN puede ser la parte lenta
+how much of the delay is the VPN tunnel, and whether everything goes through it	cuánto del retraso es el túnel VPN, y si todo pasa por él
+it works at home but not on VPN or at work	funciona en casa pero no con VPN o en el trabajo
+overlapping networks, proxy, the VPN and the port	redes superpuestas, proxy, la VPN y el puerto
+your game is lagging	tu juego tiene lag
+the game's servers, your Wi-Fi and your provider - in the Gamer Zone	los servidores del juego, tu Wi-Fi y tu proveedor, en la Zona Gamer
+videos keep buffering	los videos se quedan cargando
+your speed, your Wi-Fi and whether something else is using the internet	tu velocidad, tu Wi-Fi y si algo más está usando internet
+calls are choppy	las llamadas se entrecortan
+jitter, loss, your upload and the VPN	jitter, pérdida, tu subida y la VPN
+the connection keeps dropping	la conexión se cae una y otra vez
+today's drops, roams and what the signal was doing	las caídas de hoy, los roams y qué hacía la señal
+the computer itself is slow	el propio computador va lento
+processor, memory, disk, heat and frozen apps	procesador, memoria, disco, calor y apps congeladas
+you're running out of storage	te estás quedando sin espacio
+temp files, the Recycle Bin and what takes the space	archivos temporales, la Papelera y qué ocupa el espacio
+a website or app won't open	una web o app no abre
+the name, the route, the door, the lock and the answer	el nombre, la ruta, la puerta, el candado y la respuesta
+the internet is slow	internet va lento
+where the delay starts: your PC, Wi-Fi, router, provider or DNS	dónde empieza el retraso: tu PC, el Wi-Fi, el router, el proveedor o el DNS
+names aren't turning into addresses (DNS)	los nombres no se convierten en direcciones (DNS)
+the DNS servers, how fast they answer and whether a site's name resolves	los servidores DNS, qué tan rápido responden y si el nombre de un sitio se resuelve
+every layer, from this PC to the internet	cada capa, desde este PC hasta internet
+something changed	algo cambió
+what changed on this PC and network since then	qué cambió en este PC y en la red desde entonces
+Wi-Fi works but nothing loads	El Wi-Fi funciona pero nada carga
+it's the link to your router	es el enlace con tu router
+your Wi-Fi or cable: signal, speed, channel and the neighbours	tu Wi-Fi o cable: señal, velocidad, canal y vecinos
+Describe the problem	Describe el problema
+I didn't recognise that - press here and I'll check everything, layer by layer.	No lo reconocí: pulsa aquí y lo reviso todo, capa por capa.
+Sounds like 	Suena a 
+Prefer the Classic tabs?	¿Prefieres las pestañas clásicas?
+Name lookups	Búsquedas de nombres
+not yet	aún no
+Your traffic	Tu tráfico
+On Wi-Fi	En Wi-Fi
+Finding the closest...	Buscando el más cercano...
+ MB. Never runs by itself.	 MB. Nunca se ejecuta solo.
+Nothing. Boring is good.	Nada. Lo aburrido es bueno.
+Nothing in the last 2 hours.	Nada en las últimas 2 horas.
+Used today on this network: 	Usado hoy en esta red: 
+See this moment in the Time machine	Ver este momento en la Máquina del tiempo
+Name, route, door, lock and answer for any site.	Nombre, ruta, puerta, candado y respuesta para cualquier sitio.
+Replay any minute, what changed, the week.	Repite cualquier minuto, qué cambió, la semana.
+History is off - turn it on to replay.	El historial está apagado: actívalo para repetir.
+ ending within 30 days	 vencen en 30 días
+When your sites' certificates end.	Cuándo vencen los certificados de tus sitios.
+None ending within 30 days.	Ninguno vence en 30 días.
+This PC's locks, your network and sites.	Los candados de este PC, tu red y tus sitios.
+Your traffic layer by layer, real packets.	Tu tráfico capa por capa, paquetes reales.
+Protocols, Windows inside, every term.	Protocolos, Windows por dentro, cada término.
+Draw a network, break one thing. 	Dibuja una red, rompe una cosa. 
+ faults seen.	 fallos vistos.
+Game servers live, lag spikes and whose fault.	Servidores de juegos en vivo, picos de lag y de quién es la culpa.
+Is the stream ready - and why it stalled.	Si el stream está listo, y por qué se detuvo.
+Your broker's connection, the day's numbers.	La conexión con tu bróker, los números del día.
+All quiet	Todo tranquilo
+Your tab	Tu pestaña
+Pin tools here from any tool page or search result.	Fija aquí herramientas desde cualquier página de herramienta o resultado de búsqueda.
+Open the AdeeboLab  ›	Abrir el AdeeboLab  ›
+Break it	Rómpelo
+Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	Tu propio camino: en Viaje del paquete, Gamer, Trading, Streaming o el Panel de servicios, pulsa "Mostrar mi camino": las paradas que midió AdeeboMeter se dibujan en blanco y el equipo del proveedor que no puede ver, en gris y discontinuo.
+Break it: 	Rómpelo: 
+ faults watched to the end · +	 fallos vistos hasta el final · +
+ Adeebo Points each, the first time.	 Adeebo Points cada uno, la primera vez.
+nothing to wait for - it answers as you type	nada que esperar: responde mientras escribes
+as many minutes as you choose	tantos minutos como elijas
+the seconds you choose (10-120)	los segundos que elijas (10-120)
+how many pings × how often - 200 pings every 200 ms is 40 s	cuántos pings × cada cuánto: 200 pings cada 200 ms son 40 s
+about a second per 10 packets	alrededor de un segundo por cada 10 paquetes
+a few seconds - or keeps watching, if you give it minutes	unos segundos, o sigue vigilando si le das minutos
+a few minutes (it tests the disk and memory)	unos minutos (prueba el disco y la memoria)
+a few seconds	unos segundos
+100-500 MB to Cloudflare's speed server	100-500 MB al servidor de velocidad de Cloudflare
+one TLS handshake to each site	un handshake TLS con cada sitio
+nothing - it reads the file or text you give it	nada: lee el archivo o texto que le das
+nothing - it's maths on this PC	nada: son cálculos en este PC
+nothing - it reads this PC and Windows	nada: lee este PC y Windows
+an SSH session to the server you type	una sesión SSH al servidor que escribes
+a request to your linked phone	una petición a tu teléfono vinculado
+SNMP questions to the device you type (read only)	consultas SNMP al dispositivo que escribes (solo lectura)
+the test packets you set up - nothing else	los paquetes de prueba que configures, nada más
+pings and test traffic to the server you type	pings y tráfico de prueba al servidor que escribes
+a few small requests to the address you type	unas pocas peticiones pequeñas a la dirección que escribes
+Busy · holding	Ocupado · aguantando
+Can I stream 4K right now?	¿Puedo ver 4K ahora mismo?
+Copy for my provider	Copiar para mi proveedor
+Copy my week	Copiar mi semana
+Copy report	Copiar informe
+Did you hear the tone on the LEFT only?	¿Oíste el tono solo a la IZQUIERDA?
+Did you hear the tone on the RIGHT only?	¿Oíste el tono solo a la DERECHA?
+Not tonight	Hoy no
+Posted as a PUBLIC issue on GitHub - anyone can read it. Leave out anything private. What you see above (and the details box) is exactly what goes, and nothing goes until you press Send.	Se publica como un issue PÚBLICO en GitHub: cualquiera puede leerlo. No incluyas nada privado. Lo que ves arriba (y la caja de detalles) es exactamente lo que se envía, y nada sale hasta que pulses Enviar.
+Saved - drag the selected file onto Quick Share, then accept it on your Android phone	Guardado: arrastra el archivo seleccionado a Quick Share y acéptalo en tu teléfono Android
+Saved - open Quick Share yourself from the Start menu (AdeeboMeter only starts it when Google's signature checks out)	Guardado: abre Quick Share tú mismo desde el menú Inicio (AdeeboMeter solo lo inicia si la firma de Google es válida)
+Send feedback	Enviar comentarios
+Sending isn't switched on yet - Copy puts it on the clipboard for the form on adeebometer.com.	El envío aún no está activado: Copiar lo pone en el portapapeles para el formulario de adeebometer.com.
+What happened? What did you expect?	¿Qué pasó? ¿Qué esperabas?
+Your IT team turned online sending off - Copy puts it on the clipboard instead.	Tu equipo de TI desactivó los envíos en línea: Copiar lo pone en el portapapeles.
+Your idea or question	Tu idea o pregunta
+Your own mix	Tu propia mezcla
+better now	mejor ahora
+page hidden	página oculta
+pages hidden	páginas ocultas
+subnet doesn't fit	la subred no cabe
+subnets don't fit	las subredes no caben
+tool matches	herramienta coincide
+tool shown	herramienta mostrada
+tools match	herramientas coinciden
+tools shown	herramientas mostradas
+worse now	peor ahora
+Risky	Riesgoso
+Safe	Seguro
+Starting...	Iniciando...
+Stopping...	Deteniendo...
+Calculators	Calculadoras
+NO SIGNAL	SIN SEÑAL
+COMPETITIVE	COMPETITIVO
+CASUAL	CASUAL
+LAGGY	CON LAG
+ms PING	ms PING
+LAST 60 SECONDS	ÚLTIMOS 60 SEGUNDOS
+JITTER	JITTER
+LOSS	PÉRDIDA
+LINK	ENLACE
+BACKGROUND	FONDO
+updating	actualizando
+busy line	línea ocupada
+WAIT - 	ESPERA - 
+WAIT - SOMETHING IS USING YOUR LINE	ESPERA - ALGO ESTÁ USANDO TU LÍNEA
+EXPECT LAG - 	ESPERA LAG - 
+PACKETS ARE BEING LOST	SE ESTÁN PERDIENDO PAQUETES
+THE LINE IS SLOW RIGHT NOW	LA LÍNEA VA LENTA AHORA
+READY TO QUEUE · GG	LISTO PARA JUGAR · GG
+YOU TYPE	ESCRIBES
+SENDS	ENVÍA

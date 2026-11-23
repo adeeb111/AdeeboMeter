@@ -1,6 +1,6 @@
 # AdeeboMeter — Arabic review catalog. UTF-8, English TAB Arabic.
 # Local machine draft plus reviewed UI overrides. Native Arabic proof review is required.
-#coverage 83
+#coverage 100
 + Add server	+ إضافة خادم
 + Add your own game	+ أضف لعبتك
 1 day	1 يوم
@@ -4220,3 +4220,669 @@ Couldn't restart - close AdeeboMeter from the tray icon and open it again	تعذ
 not watched - only the best	غير مراقَب - تُقاس فقط أفضل
 servers are checked	خوادم
 Restart	إعادة التشغيل
+# 1.1.6 - 22 Nov
+(Bank of Canada)	(بنك كندا)
+(no 802.1X sign-in seen)	(لم يُرَ أي تسجيل دخول 802.1X)
+(no ACK)	(لا ACK)
+(no DHCP - the address is set by hand)	(لا DHCP — العنوان مضبوط يدويًا)
+(no IPv6 address to ping)	(لا يوجد عنوان IPv6 لاختبار ping)
+(no Offer)	(لا Offer)
+(no SYN-ACK)	(لا SYN-ACK)
+(no certificate)	(لا توجد شهادة)
+(no reply)	(لا رد)
+(no usable answer)	(لا رد مفيد)
+(nobody announced themselves)	(لم يُعرّف أحد بنفسه)
+(none answered - IPv6 is off on this network)	(لم يرد أحد — IPv6 متوقف على هذه الشبكة)
+(not joined to a domain)	(غير منضم إلى نطاق)
+(nothing heard)	(لم يُسمع شيء)
+(nothing to seal with)	(لا شيء للختم به)
+(off)	(متوقف)
+(this computer)	(هذا الحاسوب)
+(your connection)	(اتصالك)
+(your time)	(وقتك)
+3 months	3 أشهر
+3 months:	3 أشهر:
+A Friday evening summary in the corner	ملخص مساء الجمعة في الزاوية
+A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.	التغيّر هو مقدار تحرك سعر تلك العملة بالدولار الكندي. انقر صفًا لعرض رسمه البياني.
+A check is already running - its report opens here when it's done.	هناك فحص قيد التشغيل بالفعل — سيفتح تقريره هنا عند انتهائه.
+A month ago	قبل شهر
+A web page doesn't list its qualities. Paste the stream's own address for this table.	صفحة الويب لا تذكر جوداتها. الصق عنوان البث نفسه لهذا الجدول.
+A year ago	قبل سنة
+Add	إضافة
+Add a currency	إضافة عملة
+Add a quote key...	إضافة مفتاح أسعار...
+Add currency	إضافة عملة
+Add each month ($)	الإضافة الشهرية ($)
+AdeeboLab	AdeeboLab
+AdeeboMeter Daily Financial Edition	AdeeboMeter — الإصدار المالي اليومي
+AdeeboMeter Matchday Edition	AdeeboMeter — إصدار يوم المباراة
+After	بعد
+All closed now - here is the next trading day, from	كل شيء مغلق الآن — هذا يوم التداول التالي، من
+All in One Place	كل شيء في مكان واحد
+All world markets	كل أسواق العالم
+Amount	المبلغ
+An index, not a price per barrel or ounce: it shows which way a group of Canadian exports moves, and how far.	مؤشر، وليس سعرًا للبرميل أو الأونصة: يُظهر اتجاه مجموعة من الصادرات الكندية ومقدار تحركها.
+Asking the devices on your network who they are (about 8 s)...	نسأل الأجهزة على شبكتك من هي (نحو 8 ثوانٍ)...
+At kick-off: dry, most likely.	عند انطلاق المباراة: جاف على الأرجح.
+At kick-off: forecast unknown.	عند انطلاق المباراة: التوقعات غير معروفة.
+At kick-off: rain likely.	عند انطلاق المباراة: مطر محتمل.
+At the Bank of Canada's rate. Banks and exchange shops add a margin.	بسعر بنك كندا. البنوك ومحلات الصرافة تضيف هامشًا.
+Average	المتوسط
+Bank of Canada	بنك كندا
+Bank of Canada commodity price indexes, in US dollars · weekly	مؤشرات أسعار السلع من بنك كندا، بالدولار الأمريكي · أسبوعيًا
+Bank of Canada policy rate	سعر الفائدة الرسمي لبنك كندا
+Based on	بناءً على
+Biggest day	أكبر يوم
+Busy	مشغول
+Canadian dollar	الدولار الكندي
+Canadian dollar, in US dollars	الدولار الكندي، بالدولار الأمريكي
+Certificate calendar, last looked	تقويم الشهادات، آخر فحص
+Change	التغيّر
+Change key...	تغيير المفتاح...
+Changes vs the day before; the commodity index vs last week.	التغيّر مقارنة باليوم السابق؛ ومؤشر السلع مقارنة بالأسبوع الماضي.
+Check my line	افحص خطي
+Check my line now (20 s)	افحص خطي الآن (20 ث)
+Checking	جارٍ الفحص
+Checking your line...	نفحص خطك...
+Checking your network...	نفحص شبكتك...
+Choose a place above and the forecast shows here (Open-Meteo: free, no account).	اختر مكانًا أعلاه وستظهر التوقعات هنا (Open-Meteo: مجاني، بلا حساب).
+Choose a place for the weather	اختر مكانًا للطقس
+Close heavy apps before kick-off.	أغلق التطبيقات الثقيلة قبل انطلاق المباراة.
+Closed	مغلق
+Closes 1 PM	يُغلق 1 ظهرًا
+Coming up	قريبًا
+Commodity index	مؤشر السلع
+Competition:	البطولة:
+Cricket · CricketData	الكريكيت · CricketData
+Currency	العملة
+Day	يوم
+Delay is usually around	التأخير عادةً نحو
+Detected type:	النوع المكتشف:
+Different words, no words on your phone, or you didn't just scan the code? Press Don't allow - it isn't your phone.	كلمات مختلفة، أو لا كلمات على هاتفك، أو لم تمسح الرمز للتو؟ اضغط «لا تسمح» — ليس هاتفك.
+Draw your network, see the path, break one thing.	ارسم شبكتك، شاهد المسار، اكسر شيئًا واحدًا.
+Drops this week	الانقطاعات هذا الأسبوع
+Dry	جاف
+During the test (Mb/s, one point a second)	أثناء الاختبار (Mb/s، نقطة كل ثانية)
+EXAMPLE - NO DATED EVENTS IN THIS RESULT	مثال — لا أحداث مؤرخة في هذه النتيجة
+EXAMPLE - RUN IT FOR YOURS	مثال — شغّله لترى نتيجتك
+Each line says what it's based on. With too little history, it says so instead of guessing.	كل سطر يذكر ما يستند إليه. ومع سجل قليل يقول ذلك بدل التخمين.
+Edition	الإصدار
+Energy index	مؤشر الطاقة
+Example shows a finished result first; Open runs it	«مثال» يعرض نتيجة جاهزة أولًا؛ «فتح» يشغّله
+Expect the usual slow stretch:	توقّع فترة البطء المعتادة:
+Facts from this week's numbers, not a forecast.	حقائق من أرقام هذا الأسبوع، وليست توقعات.
+Fair	مقبول
+Feels like:	الإحساس:
+Fewer	أقل
+Fine	جيد
+Follow a team...	تابع فريقًا...
+Follow teams...	تابع فرقًا...
+Follow your teams	تابع فرقك
+Football · football-data.org	كرة القدم · football-data.org
+From ESPN's free scoreboards, updated once a day.	من لوحات نتائج ESPN المجانية، تُحدَّث مرة يوميًا.
+From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on.	من بنك كندا: رسمي، مجاني، بلا حساب. يُجلب فقط أثناء فتح هذه الصفحة، مرة واحدة على الأكثر بعد كل تحديث يومي. متوقف حتى تشغّله.
+From your Financial Modeling Prep key · delayed while markets are open	من مفتاح Financial Modeling Prep الخاص بك · متأخر أثناء فتح الأسواق
+GO TO	انتقل إلى
+Good	جيد
+Got as far as:	وصل حتى:
+Group · what's in it	المجموعة · ما تحتويه
+HLS (.m3u8), DASH (.mpd) or a web page · the link stays on this PC	HLS (.m3u8) أو DASH (.mpd) أو صفحة ويب · يبقى الرابط على هذا الحاسوب
+Headlines · BBC Sport	العناوين · BBC Sport
+Healthy	سليم
+High	مرتفع
+History is off	السجل متوقف
+History is off, so there's no replay of this minute (Settings › General › History).	السجل متوقف، لذا لا توجد إعادة لهذه الدقيقة (الإعدادات › عام › السجل).
+History off	السجل متوقف
+Hockey · the NHL's public feed	الهوكي · الموجز العام لدوري NHL
+Holidays are known for New York and Toronto; other exchanges' holidays aren't checked.	عطلات نيويورك وتورنتو معروفة؛ أما عطلات البورصات الأخرى فلا تُفحص.
+Humidity	الرطوبة
+I'll check	سأفحص
+ITS CONNECTIONS	اتصالاته
+In CAD	بالدولار الكندي
+Index levels need a quote service. Add your own free Financial Modeling Prep key and New York, Toronto, London, Frankfurt, Tokyo and more show here. Without one this stays empty - never old or made-up numbers.	مستويات المؤشرات تحتاج إلى خدمة أسعار. أضف مفتاح Financial Modeling Prep المجاني الخاص بك وستظهر هنا نيويورك وتورنتو ولندن وفرانكفورت وطوكيو وغيرها. بدونه يبقى هذا فارغًا — لا أرقام قديمة أو مختلقة أبدًا.
+Inflation, past 12 months	التضخم، آخر 12 شهرًا
+Is your stream ready?	هل بثك جاهز؟
+Jitter:	التذبذب:
+Kick-off (your time):	الانطلاق (بتوقيتك):
+LINE CHECK	فحص الخط
+Last 30 days	آخر 30 يومًا
+Last hop that answers	آخر قفزة تجيب
+Last move	آخر تحرك
+Last one:	الأخير:
+Last test:	آخر اختبار:
+Last:	الأخير:
+Latency:	زمن الاستجابة:
+Leads Commodities	يتصدر السلع
+Learning	أتعلّم
+Let remembered phones reconnect while AdeeboMeter runs	السماح للهواتف المحفوظة بإعادة الاتصال أثناء تشغيل AdeeboMeter
+Live scores: add my key...	النتائج المباشرة: أضف مفتاحي...
+Live:	مباشر:
+Look at the phone in your own hand: does it show the same words?	انظر إلى الهاتف الذي في يدك: هل يعرض الكلمات نفسها؟
+Loonie Firms	الدولار الكندي يتماسك
+Loonie Holds Steady	الدولار الكندي مستقر
+Loonie Slips	الدولار الكندي يتراجع
+Loonie {0} {1:0.0}% against the US dollar this week.	الدولار الكندي {0} {1:0.0}% أمام الدولار الأمريكي هذا الأسبوع.
+Loss, recent	فقدان الحزم، مؤخرًا
+Low	منخفض
+Lunch	الغداء
+MATCHDAY BRIEFING	موجز يوم المباراة
+Making the report...	نُعدّ التقرير...
+Markets	الأسواق
+Markets are closed for the weekend.	الأسواق مغلقة لعطلة نهاية الأسبوع.
+Markets are closed right now.	الأسواق مغلقة الآن.
+Markets are open	الأسواق مفتوحة
+Markets are open.	الأسواق مفتوحة.
+Markets open	الأسواق مفتوحة
+May drop at peaks	قد ينقطع في أوقات الذروة
+Measuring...	نقيس...
+Month	الشهر
+My teams ›	فرقي ›
+NO ADDRESS FROM DHCP	لا عنوان من DHCP
+NOW	الآن
+Names	الأسماء
+Needs	يحتاج
+New York	نيويورك
+New York and Toronto	نيويورك وتورنتو
+Next 12 hours	الساعات الـ12 القادمة
+Next game	المباراة التالية
+Next open:	الافتتاح التالي:
+Next:	التالي:
+No IPv4 home range to compare on this PC's adapters.	لا يوجد نطاق IPv4 منزلي للمقارنة على محولات هذا الحاسوب.
+No closings in the next six weeks.	لا إغلاقات في الأسابيع الستة القادمة.
+No drops at this hour	لا انقطاعات في هذه الساعة
+No drops in the last 7 days.	لا انقطاعات في آخر 7 أيام.
+No finished games in today's feeds.	لا مباريات منتهية في موجزات اليوم.
+No game in today's feeds	لا مباراة في موجزات اليوم
+No game today for your teams	لا مباراة لفرقك اليوم
+No history yet for this day and hour - ask again after a few weeks.	لا سجل بعد لهذا اليوم وهذه الساعة — اسأل مجددًا بعد بضعة أسابيع.
+No hour stands out: your line is about as quick all day.	لا ساعة مميزة: خطك بالسرعة نفسها تقريبًا طوال اليوم.
+No rain expected in the next 24 hours.	لا يُتوقع مطر في الساعات الـ24 القادمة.
+No upcoming games in today's feeds.	لا مباريات قادمة في موجزات اليوم.
+None yet: names or short codes work - Leafs, TOR, Arsenal, India.	لا شيء بعد: الأسماء أو الرموز القصيرة تعمل — Leafs، TOR، Arsenal، India.
+Not enough history yet to show a pattern - ask again in a few days.	لا يوجد سجل كافٍ بعد لإظهار نمط — اسأل مجددًا بعد بضعة أيام.
+Not enough history yet to spot a pattern. Ask again in	لا يوجد سجل كافٍ بعد لاكتشاف نمط. اسأل مجددًا بعد
+Nothing live right now.	لا شيء مباشر الآن.
+Nothing planned - follow a team or turn on the markets numbers.	لا شيء مخطط — تابع فريقًا أو شغّل أرقام الأسواق.
+Nothing running hot right now.	لا شيء يعمل بحرارة الآن.
+Nothing to change: it should play as well as this stream allows.	لا شيء لتغييره: يجب أن يعمل بأفضل ما يسمح به هذا البث.
+Nothing to fix: every check came back fine.	لا شيء لإصلاحه: كل الفحوص جاءت سليمة.
+Now	الآن
+Numbers only - AdeeboMeter never tells you what to buy or sell.	أرقام فقط — AdeeboMeter لا يخبرك أبدًا بما تشتري أو تبيع.
+OUTLOOK  ·  NOW AND NEXT	نظرة عامة  ·  الآن والتالي
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines - every 5 minutes at most.	متوقف حتى تشغّله. بعدها، أثناء فتح هذه الصفحة: نتائج الهوكي من NHL، وكرة القدم والكريكيت بمفاتيحك المجانية، وعناوين BBC Sport — كل 5 دقائق على الأكثر.
+One of the row buys this much of the column.	وحدة من الصف تشتري هذا القدر من العمود.
+Online checks are turned off by your IT team.	فريق تقنية المعلومات لديك أوقف الفحوص عبر الإنترنت.
+Only my teams	فرقي فقط
+Open-Meteo forecast	توقعات Open-Meteo
+Opened from	فُتح من
+Outlook for kick-off	التوقعات لوقت الانطلاق
+PC busy	الحاسوب مشغول
+PINNED	مثبّت
+PINNED MOMENTS	لحظات مثبّتة
+Packet loss:	فقدان الحزم:
+Paste	لصق
+Paste a web address that starts with http:// or https:// - the stream's own link (ending in .m3u8 or .mpd) gives the full check.	الصق عنوان ويب يبدأ بـ http:// أو https:// — رابط البث نفسه (المنتهي بـ .m3u8 أو .mpd) يعطي الفحص الكامل.
+Paste your stream link and press Test my stream. In about 30 seconds you'll know which quality will play smoothly - and what to change if it won't.	الصق رابط بثك واضغط «اختبر بثي». خلال نحو 30 ثانية ستعرف أي جودة ستعمل بسلاسة — وما الذي تغيّره إن لم تعمل.
+Paste your stream link and test it: which quality will play, and how to make it better.	الصق رابط بثك واختبره: أي جودة ستعمل، وكيف تحسّنها.
+Pin this minute	ثبّت هذه الدقيقة
+Plays smoothly	يعمل بسلاسة
+Quality	الجودة
+RAM:	RAM:
+Rain chance, next 24 h	احتمال المطر، 24 ساعة القادمة
+Rain from about	مطر بدءًا من نحو
+Rain later	مطر لاحقًا
+Rain likely around	مطر محتمل نحو
+Rain:	المطر:
+Reading your history...	نقرأ سجلك...
+Red line: now.	الخط الأحمر: الآن.
+Remind	ذكّرني
+Remind me in the corner 15 minutes before kick-off	ذكّرني في الزاوية قبل الانطلاق بـ15 دقيقة
+Resources are in good shape for streaming.	الموارد في حالة جيدة للبث.
+STREAM CHECK	فحص البث
+Saved on this PC:	محفوظ على هذا الحاسوب:
+Score:	النتيجة:
+Secure:	آمن:
+See	عرض
+See all problems	عرض كل المشكلات
+Server:	الخادم:
+Service board	لوحة الخدمات
+Show my path	اعرض مساري
+Show my path in the Lab  ›	اعرض مساري في المختبر  ›
+Some	بعض
+Some drops	بعض الانقطاعات
+Some weeks lost packets at this hour	في بعض الأسابيع فُقدت حزم في هذه الساعة
+Something else? Type it in the search box (Ctrl+K).	شيء آخر؟ اكتبه في مربع البحث (Ctrl+K).
+Something is working the PC hard - see What's running.	شيء ما يُجهد الحاسوب — انظر «ما الذي يعمل الآن».
+Sounds like	يبدو مثل
+Stable	مستقر
+Start with ($)	البداية بـ ($)
+Starts in:	يبدأ بعد:
+Statistics Canada	Statistics Canada
+Steady	ثابت
+Storage:	التخزين:
+Stream Check is on the Sports page	فحص البث في صفحة الرياضة
+Struggling	يعاني
+THE MARKETS PAGE	صفحة الأسواق
+THE PICTURE	الصورة الكاملة
+THIS PC'S ADDRESS IS FIXED	عنوان هذا الحاسوب ثابت
+THIS WEEK'S MARKET BRIEFING	موجز الأسواق لهذا الأسبوع
+Tell me when a currency on my list moves more than 2% in a week	نبّهني عندما تتحرك عملة في قائمتي أكثر من 2% في أسبوع
+Test my stream	اختبر بثي
+Test your stream link (recommended).	اختبر رابط بثك (موصى به).
+Tested	مُختبَر
+Testing...	نختبر...
+That doesn't look like a key: letters and digits only.	لا يبدو هذا مفتاحًا: حروف وأرقام فقط.
+That spot was removed - nothing to rename.	أُزيل ذلك المكان — لا شيء لإعادة تسميته.
+The Bank of Canada's numbers, in plain words.	أرقام بنك كندا، بكلمات بسيطة.
+The Week in Numbers	الأسبوع بالأرقام
+The forecast is on its way...	التوقعات في الطريق...
+The groups arrive from the Bank of Canada in a moment.	تصل المجموعات من بنك كندا بعد لحظة.
+The history arrives from the Bank of Canada in a moment.	يصل السجل من بنك كندا بعد لحظة.
+The next day, in short	اليوم التالي، باختصار
+The numbers arrive after the first fetch.	تصل الأرقام بعد أول جلب.
+The weather, your network and this PC: how things are now, and what the last few days say about the next one.	الطقس وشبكتك وهذا الحاسوب: كيف هي الآن، وماذا تقول الأيام الأخيرة عن اليوم التالي.
+Their next game becomes this page's lead, with everything you need to watch it.	تصبح مباراتهم التالية العنوان الرئيسي لهذه الصفحة، مع كل ما تحتاجه لمشاهدتها.
+Their next game shows here as soon as it's in today's fixtures.	تظهر مباراتهم التالية هنا فور وجودها في جدول اليوم.
+This stream lists one quality.	هذا البث يقدّم جودة واحدة.
+Three days	ثلاثة أيام
+Tip:	نصيحة:
+Too little history	سجل قليل جدًا
+Toronto	تورنتو
+Try this	جرّب هذا
+Turn on History in Settings: AdeeboMeter writes one line a minute on this PC, and this chart is made from it.	شغّل السجل في الإعدادات: يكتب AdeeboMeter سطرًا كل دقيقة على هذا الحاسوب، ومنه يُرسم هذا الرسم البياني.
+Turn on History to see how your line usually behaves.	شغّل السجل لترى كيف يتصرف خطك عادةً.
+Turn on Weather in Settings to see the weather for your place at kick-off.	شغّل الطقس في الإعدادات لترى طقس منطقتك عند انطلاق المباراة.
+Turn on scores to see your teams' next game here.	شغّل النتائج لترى المباراة التالية لفرقك هنا.
+Type the new name first.	اكتب الاسم الجديد أولًا.
+Unpin	إلغاء التثبيت
+Unsteady	غير مستقر
+Update:	تحديث:
+Verdict	الحكم
+Video came in at:	وصل الفيديو بجودة:
+WHAT'S GOING ON?  ·  TAP WHAT YOU SEE	ماذا يحدث؟  ·  اضغط على ما تراه
+Watch out	انتبه
+Weather is off: your IT team turned online lookups off.	الطقس متوقف: فريق تقنية المعلومات أوقف البحث عبر الإنترنت.
+Week	الأسبوع
+Weighs on Commodities	يضغط على السلع
+What $100 buys now	ما تشتريه 100$ الآن
+When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.	عندما ترتفع أسعار الطاقة، يرتفع الدولار الكندي معها غالبًا. كلاهما على الفترة نفسها، بقيمة 100 عند البداية.
+When your internet is slowest	متى يكون إنترنتك أبطأ
+Which currency?	أي عملة؟
+Wind	الرياح
+Wind:	الرياح:
+Windows trusts it	Windows يثق به
+Windows' default: incoming blocked	الافتراضي في Windows: الوارد محظور
+Windows, Apple and Linux-style names	أسماء على طريقة Windows وApple وLinux
+Would buffer	سيتقطع
+YOUR WEEK IN TWO MINUTES	أسبوعك في دقيقتين
+Yearly growth (%)	النمو السنوي (%)
+Years	السنوات
+Yesterday	أمس
+You got	حصلت على
+Your Financial Modeling Prep key (free at financialmodelingprep.com) - kept encrypted on this PC	مفتاح Financial Modeling Prep الخاص بك (مجاني في financialmodelingprep.com) — محفوظ مشفّرًا على هذا الحاسوب
+Your PC is busy: close heavy apps.	حاسوبك مشغول: أغلق التطبيقات الثقيلة.
+Your PC is ready for streaming.	حاسوبك جاهز للبث.
+Your PC · Your Network · Your Markets	حاسوبك · شبكتك · أسواقك
+Your PC · Your Network · Your Streaming	حاسوبك · شبكتك · بثك
+Your match, your setup and your stream - all in one place.	مباراتك وتجهيزاتك وبثك — كلها في مكان واحد.
+Your network	شبكتك
+Your network is slow right now.	شبكتك بطيئة الآن.
+Your network is stable - no action needed.	شبكتك مستقرة — لا حاجة لأي إجراء.
+Your stream link is tested.	تم اختبار رابط بثك.
+Your stream, ready for the match	بثك جاهز للمباراة
+a calculator, not a promise	آلة حاسبة، وليست وعدًا
+a packet to your own public address	حزمة إلى عنوانك العام نفسه
+a rise abroad can grow or shrink once it's turned into Canadian dollars	الارتفاع في الخارج قد يكبر أو يصغر عند تحويله إلى الدولار الكندي
+a team you follow	فريق تتابعه
+a trip, or money sent home	سفر، أو مال يُرسل إلى الأهل
+a web server	خادم ويب
+about 30 seconds	نحو 30 ثانية
+about 30 seconds · it downloads the real video to see what your line can carry	نحو 30 ثانية · يُنزّل الفيديو الحقيقي ليرى ما يتحمله خطك
+after (run it again)	بعد (شغّله مجددًا)
+and by LLMNR / mDNS?	وعبر LLMNR / mDNS؟
+and more on the Service board and in the Certificate calendar	والمزيد في لوحة الخدمات وتقويم الشهادات
+any page, please - what time do you have?	أي صفحة من فضلك — كم الساعة لديك؟
+around	نحو
+arrived back here	عاد إلى هنا
+as	بصفة
+blocked (no rule allows it)	محظور (لا قاعدة تسمح به)
+chance	احتمال
+checks in a row since	فحوص متتالية منذ
+comes back the same way	يعود من الطريق نفسه
+comes to	يبلغ
+compared with the file you gave	مقارنةً بالملف الذي أعطيته
+couldn't tell	تعذّر التحديد
+d	ي
+days	أيام
+days of History	أيام من السجل
+days of History on this PC	أيام من السجل على هذا الحاسوب
+dip	هبوط
+drops in the last 7 days.	انقطاعات في آخر 7 أيام.
+each set to 100 at the start, so you can compare	كل منها بقيمة 100 عند البداية، لتسهل المقارنة
+each square is a core with one thread - lit = working now	كل مربع نواة بخيط واحد — المضيء = يعمل الآن
+each square is a core; split ones run two threads, whole ones one - lit = working now	كل مربع نواة؛ المقسوم يشغّل خيطين والكامل خيطًا واحدًا — المضيء = يعمل الآن
+every row	كل صف
+feels like	الإحساس
+fetched only while a Sports page is open, every 5 minutes at most	يُجلب فقط أثناء فتح صفحة الرياضة، كل 5 دقائق على الأكثر
+free	مجاني
+from the	من
+futures, from your quote key · delayed while open	العقود الآجلة، من مفتاح أسعارك · متأخرة أثناء الفتح
+growth	النمو
+h	س
+hello + who are you? (anonymous)	مرحبًا + من أنت؟ (مجهول)
+high	مرتفع
+history on its way	السجل في الطريق
+hover one for what it does	مرّر المؤشر على أحدها لترى ما يفعله
+in CAD	بالدولار الكندي
+in Canadian dollars	بالدولار الكندي
+in Connections	في الاتصالات
+in the Time machine	في سجل الأداء
+in your time	بتوقيتك
+in your time · worked out on this PC	بتوقيتك · محسوب على هذا الحاسوب
+index	المؤشر
+is already a room - pick another name, or remove that one first.	اسم غرفة موجودة بالفعل — اختر اسمًا آخر، أو احذف تلك أولًا.
+is down	متوقف
+it's on	يعمل
+its Date header	ترويسة Date الخاصة به
+its host key	مفتاح المضيف الخاص به
+its time, to the second	وقته، بالثانية
+knock	طرقة
+last 6 weeks	آخر 6 أسابيع
+less now	أقل الآن
+live, right now	مباشر، الآن
+loonie stronger	الدولار الكندي أقوى
+loonie weaker	الدولار الكندي أضعف
+mail to it would travel unencrypted	البريد إليه سينتقل دون تشفير
+mail would travel unencrypted	البريد سينتقل دون تشفير
+more hops	قفزات إضافية
+more in What changed	المزيد في «ما الذي تغيّر»
+more now	أكثر الآن
+most helpful first · each from something measured	الأكثر فائدة أولًا · كلٌّ من شيء مُقاس
+needs	يحتاج
+needs your free key	يحتاج مفتاحك المجاني
+no	لا
+no DHCP server answered - Windows made up a 169.254 address	لم يرد أي خادم DHCP — اختلق Windows عنوانًا من 169.254
+no DHCP server answered in the capture	لم يرد أي خادم DHCP في الالتقاط
+no SSH answer	لا رد SSH
+no STARTTLS	لا STARTTLS
+no key needed	لا حاجة لمفتاح
+no key yet	لا مفتاح بعد
+no reply can mean filtered - or it ignores this question	عدم الرد قد يعني أنه مُرشَّح — أو أنه يتجاهل هذا السؤال
+nobody else answered for it	لم يرد أحد آخر عنه
+none	لا شيء
+none in today's fixtures	لا شيء في جدول اليوم
+not looked up	لم يُبحث عنه
+not read by this check - your SSH program shows it; if it ever changes, ask why	لا يقرؤه هذا الفحص — يعرضه برنامج SSH لديك؛ إن تغيّر يومًا فاسأل عن السبب
+of the last 6 weeks	من آخر 6 أسابيع
+of what it bought a year ago	مما كان يشتريه قبل سنة
+offered, but never confirmed	عُرض، لكن لم يُؤكَّد أبدًا
+on its way from the Bank of Canada...	في الطريق من بنك كندا...
+on your list	في قائمتك
+one address only	عنوان واحد فقط
+one unit, in Canadian dollars	وحدة واحدة، بالدولار الكندي
+online	متصل
+out of 100	من 100
+playing now	يلعب الآن
+plugged in	موصول بالكهرباء
+port 25 is blocked on most home lines	المنفذ 25 محظور على معظم الخطوط المنزلية
+read without a password, as every client does first	يُقرأ دون كلمة مرور، كما يفعل كل عميل أولًا
+remembered phone(s) couldn't be read (the list was damaged, or this is another Windows account) - remember them again from the phone.	من الهواتف المحفوظة تعذّرت قراءتها (القائمة تالفة، أو هذا حساب Windows آخر) — احفظها مجددًا من الهاتف.
+replay	إعادة
+right (within a second or two)	صحيح (خلال ثانية أو ثانيتين)
+routers	موجّهات
+runs about	يعمل بنحو
+scores are off	النتائج متوقفة
+see below	انظر أدناه
+seen:	شوهد:
+sent back in	أُعيد خلال
+shown	معروض
+sign-in tickets come from 88	تذاكر تسجيل الدخول تأتي من 88
+signed with the shared secret	موقّع بالسر المشترك
+since	منذ
+slow moment	لحظة بطيئة
+slower than the quietest hours	أبطأ من أهدأ الساعات
+something listens there	شيء ما يستمع هناك
+spike	ارتفاع مفاجئ
+starts in	يبدأ بعد
+the address to knock on	العنوان الذي يُطرق
+the certificate ends	تنتهي الشهادة
+the certificate has expired	انتهت صلاحية الشهادة
+the directory's root entry	المُدخل الجذري للدليل
+the first	الأول
+the source Windows follows	المصدر الذي يتبعه Windows
+their games come first everywhere: Overview, the corner, Streaming	مبارياتهم تأتي أولًا في كل مكان: النظرة العامة، والزاوية، والبث
+this PC again	هذا الحاسوب مجددًا
+this PC's name (an example)	اسم هذا الحاسوب (مثال)
+this run	هذا التشغيل
+type more to narrow it	اكتب المزيد لتضييق البحث
+unchanged since	دون تغيير منذ
+up	أعلى
+video came in at	وصل الفيديو بجودة
+vs	ضد
+vs CAD	مقابل CAD
+web page	صفحة ويب
+weeks	أسابيع
+what each needs comes from the stream itself	ما يحتاجه كلٌّ منها يأتي من البث نفسه
+what to prepare	ما يجب تجهيزه
+works	يعمل
+yes (HTTPS)	نعم (HTTPS)
+you put in	تضعه أنت
+your key is set	مفتاحك مضبوط
+your team	فريقك
+{0} closed {1} ({2}).	{0} أُغلق {1} ({2}).
+{0} index {1} {2:0.0}% on the week.	مؤشر {0} {1} {2:0.0}% خلال الأسبوع.
+{0} index {1} {2} weeks running.	مؤشر {0} {1} لـ{2} أسابيع متتالية.
+Or tap what you see	أو اضغط على ما تراه
+Search or describe a problem	ابحث أو صف مشكلة
+What's going on?	ماذا يحدث؟
+how sure	مدى اليقين
+No minutes recorded for this time yet - the case uses what it measures now.	لا دقائق مسجلة لهذا الوقت بعد — تستخدم الحالة ما تقيسه الآن.
+History is off (Settings > History & data), so there are no past minutes to draw.	السجل متوقف (الإعدادات > السجل والبيانات)، لذا لا دقائق سابقة لرسمها.
+pressure right now	الضغط الآن
+who uses it, health, space	من يستخدمه، والحالة، والمساحة
+the usual suspects	المشتبه بهم المعتادون
+the last 7 days	آخر 7 أيام
+memory that only grows	ذاكرة لا تتوقف عن النمو
+who draws the most	من يستهلك أكثر
+installs and updates	التثبيتات والتحديثات
+health and charge cycles	الحالة ودورات الشحن
+Pick what's wrong - I'll run the checks and tell you what I saw, what I can't know, and what to try next.	اختر المشكلة — سأُجري الفحوص وأخبرك بما رأيت، وما لا يمكنني معرفته، وما تجربه بعد ذلك.
+Choose the problem. AdeeboMeter runs the checks and reports findings, evidence, limits and next steps.	اختر المشكلة. يُجري AdeeboMeter الفحوص ويعرض النتائج والأدلة والحدود والخطوات التالية.
+Not established: 	لم يثبت: 
+Layer by layer, stops at the first broken one	طبقة بطبقة، ويتوقف عند أول طبقة معطلة
+Finds where the delay starts	يحدد أين يبدأ التأخير
+Today's drops and what came just before	انقطاعات اليوم وما حدث قبلها مباشرة
+No internet at all	لا إنترنت إطلاقًا
+Nothing opens - checks every step	لا شيء يفتح — يفحص كل خطوة
+Connected, but nothing works	متصل، لكن لا شيء يعمل
+The network isn't in the list	الشبكة غير موجودة في القائمة
+Downloads are slow	التنزيلات بطيئة
+Your plan vs this PC's link and disk	باقتك مقابل وصلة هذا الحاسوب وقرصه
+My game lags	لعبتي متأخرة
+Your Wi-Fi, your line, or the game	شبكة Wi-Fi لديك، أم خطك، أم اللعبة
+Speed now and what else is busy	السرعة الآن وما الذي يشغل الخط أيضًا
+Slow after sleep or waking	بطء بعد السكون أو الاستيقاظ
+How long it takes to get back online	كم يستغرق الرجوع إلى الاتصال
+Email won't send	البريد لا يُرسل
+Can this PC reach your mail server?	هل يصل هذا الحاسوب إلى خادم بريدك؟
+A device on my network is missing	جهاز على شبكتي مفقود
+Everything seen on this network	كل ما شوهد على هذه الشبكة
+Pick what it feels like - I check it step by step.	اختر ما تشعر به — أفحصه خطوة بخطوة.
+ (I can't name it)	 (لا أستطيع تسميته)
+Every answer says where each fact came from - measured, Windows-reported, seen in packets or inferred - and what I couldn't establish.	كل إجابة تذكر مصدر كل معلومة — مُقاسة، أو أبلغ عنها Windows، أو شوهدت في الحزم، أو مُستنتجة — وما لم أتمكن من إثباته.
+Each fact is labelled: measured, Windows-reported, seen in packets, inferred or unavailable.	كل معلومة موسومة: مُقاسة، أو أبلغ عنها Windows، أو شوهدت في الحزم، أو مُستنتجة، أو غير متاحة.
+Report saved - show it	حُفظ التقرير — اعرضه
+Make a report (PDF)	أنشئ تقريرًا (PDF)
+Learn why	اعرف السبب
+Report saved	حُفظ التقرير
+Good. AdeeboMeter keeps watching - if it comes back, it'll tell you.	جيد. يواصل AdeeboMeter المراقبة — إن عادت المشكلة فسيخبرك.
+Streams worse in the evening? See your network's rush hour - and when to watch.	البث أسوأ في المساء؟ اطّلع على ساعة الذروة في شبكتك — ومتى تشاهد.
+Rush hour	ساعة الذروة
+Picture freezing at the big moment? Find out if it's your Wi-Fi, your line or the service.	الصورة تتجمد في اللحظة الحاسمة؟ اعرف إن كان السبب شبكة Wi-Fi أم خطك أم الخدمة.
+Why it buffers	لماذا يتقطع
+Going live? Check upload, Wi-Fi and what else is using the line in one go.	ستبث مباشرة؟ افحص الرفع وشبكة Wi-Fi وما يستخدم الخط دفعة واحدة.
+Ready to stream?	جاهز للبث؟
+Frames dropping in OBS? See whether it's the network or the PC.	إطارات تسقط في OBS؟ اعرف إن كانت الشبكة أم الحاسوب.
+Is your plan fast enough for 4K on every screen at home?	هل باقتك تكفي لـ4K على كل الشاشات في المنزل؟
+Plan check	فحص الباقة
+Your broker lags at the open? Check the line to it before the bell.	وسيطك بطيء عند الافتتاح؟ افحص الخط إليه قبل الجرس.
+Market-open check	فحص افتتاح السوق
+Is your connection fast enough to trade? See what 40 ms really costs.	هل اتصالك سريع بما يكفي للتداول؟ اعرف كم تكلّف 40 ms فعلًا.
+Line vs trading	الخط مقابل التداول
+A slow moment while you traded? The Time machine shows what your line did then.	لحظة بطء أثناء التداول؟ يعرض سجل الأداء ما فعله خطك حينها.
+Lag spikes? Find out whose fault it is - your Wi-Fi, your line or the game's server.	قفزات تأخير؟ اعرف من المسؤول — شبكة Wi-Fi أم خطك أم خادم اللعبة.
+Why it lags	لماذا التأخير
+Before a ranked match: one check of Wi-Fi, background downloads and the line.	قبل مباراة مصنّفة: فحص واحد لشبكة Wi-Fi والتنزيلات الخلفية والخط.
+Ready to play?	جاهز للعب؟
+Would a ping booster (GPN) actually help you? Measure it instead of guessing.	هل يفيدك معزز الاتصال (GPN) فعلًا؟ قِسه بدل التخمين.
+warming up...	جارٍ التحضير...
+NO CONNECTION - check Home first	لا اتصال — افحص الرئيسية أولًا
+the first 80 shown	تُعرض أول 80
+Go to	انتقل إلى
+Pinned tools	أدوات مثبّتة
+find the closest	ابحث عن الأقرب
+Auto - Cloudflare, its nearest data centre (download and upload)	تلقائي — Cloudflare، أقرب مركز بيانات له (تنزيل ورفع)
+Find the closest server for me	ابحث لي عن أقرب خادم
+Add my own server...	أضف خادمي الخاص...
+closest speed server	أقرب خادم سرعة
+I can't name it	لا أستطيع تسميته
+pages take ages	الصفحات تستغرق وقتًا طويلًا
+ping spikes, rubber-banding	قفزات في زمن الاستجابة وارتداد في الحركة
+Running out of space	المساحة توشك على النفاد
+the disk is full, Windows nags	القرص ممتلئ، وWindows يواصل التنبيه
+the VPN may be the slow part	قد تكون VPN هي الجزء البطيء
+how much of the delay is the VPN tunnel, and whether everything goes through it	كم من التأخير سببه نفق VPN، وهل يمر كل شيء عبره
+it works at home but not on VPN or at work	يعمل في المنزل لكن ليس عبر VPN أو في العمل
+overlapping networks, proxy, the VPN and the port	شبكات متداخلة، والوكيل، وVPN، والمنفذ
+your game is lagging	لعبتك متأخرة
+the game's servers, your Wi-Fi and your provider - in the Gamer Zone	خوادم اللعبة، وشبكة Wi-Fi لديك، ومزودك — في منطقة الألعاب
+videos keep buffering	مقاطع الفيديو تتقطع باستمرار
+your speed, your Wi-Fi and whether something else is using the internet	سرعتك، وشبكة Wi-Fi لديك، وهل هناك شيء آخر يستخدم الإنترنت
+calls are choppy	المكالمات متقطعة
+jitter, loss, your upload and the VPN	التذبذب، وفقدان الحزم، والرفع لديك، وVPN
+the connection keeps dropping	الاتصال ينقطع مرارًا
+today's drops, roams and what the signal was doing	انقطاعات اليوم، والتنقلات، وما كانت الإشارة تفعله
+the computer itself is slow	الحاسوب نفسه بطيء
+processor, memory, disk, heat and frozen apps	المعالج، والذاكرة، والقرص، والحرارة، والتطبيقات المتجمدة
+you're running out of storage	مساحة التخزين لديك توشك على النفاد
+temp files, the Recycle Bin and what takes the space	الملفات المؤقتة، وسلة المحذوفات، وما يشغل المساحة
+a website or app won't open	موقع أو تطبيق لا يفتح
+the name, the route, the door, the lock and the answer	الاسم، والمسار، والباب، والقفل، والإجابة
+the internet is slow	الإنترنت بطيء
+where the delay starts: your PC, Wi-Fi, router, provider or DNS	أين يبدأ التأخير: حاسوبك، أم شبكة Wi-Fi، أم الراوتر، أم المزود، أم DNS
+names aren't turning into addresses (DNS)	الأسماء لا تتحول إلى عناوين (DNS)
+the DNS servers, how fast they answer and whether a site's name resolves	خوادم DNS، ومدى سرعة ردها، وهل يُحلّ اسم الموقع
+every layer, from this PC to the internet	كل طبقة، من هذا الحاسوب إلى الإنترنت
+something changed	تغيّر شيء ما
+what changed on this PC and network since then	ما الذي تغيّر على هذا الحاسوب والشبكة منذ ذلك الحين
+Wi-Fi works but nothing loads	شبكة Wi-Fi تعمل لكن لا شيء يُحمَّل
+it's the link to your router	المشكلة في الوصلة مع الراوتر
+your Wi-Fi or cable: signal, speed, channel and the neighbours	شبكة Wi-Fi أو الكابل: الإشارة، والسرعة، والقناة، والجيران
+Describe the problem	صف المشكلة
+I didn't recognise that - press here and I'll check everything, layer by layer.	لم أتعرف على ذلك — اضغط هنا وسأفحص كل شيء طبقة بطبقة.
+Sounds like 	يبدو مثل 
+Prefer the Classic tabs?	هل تفضّل التبويبات الكلاسيكية؟
+Name lookups	البحث عن الأسماء
+not yet	ليس بعد
+Your traffic	حركة بياناتك
+On Wi-Fi	على Wi-Fi
+Finding the closest...	نبحث عن الأقرب...
+ MB. Never runs by itself.	 MB. لا يعمل من تلقاء نفسه أبدًا.
+Nothing. Boring is good.	لا شيء. الملل أمر جيد.
+Nothing in the last 2 hours.	لا شيء في آخر ساعتين.
+Used today on this network: 	المستخدم اليوم على هذه الشبكة: 
+See this moment in the Time machine	شاهد هذه اللحظة في سجل الأداء
+Name, route, door, lock and answer for any site.	الاسم والمسار والباب والقفل والإجابة لأي موقع.
+Replay any minute, what changed, the week.	أعد أي دقيقة، وما الذي تغيّر، والأسبوع.
+History is off - turn it on to replay.	السجل متوقف — شغّله لتتمكن من الإعادة.
+ ending within 30 days	 تنتهي خلال 30 يومًا
+When your sites' certificates end.	متى تنتهي شهادات مواقعك.
+None ending within 30 days.	لا شيء ينتهي خلال 30 يومًا.
+This PC's locks, your network and sites.	أقفال هذا الحاسوب، وشبكتك، ومواقعك.
+Your traffic layer by layer, real packets.	حركة بياناتك طبقة بطبقة، حزم حقيقية.
+Protocols, Windows inside, every term.	البروتوكولات، وWindows من الداخل، وكل مصطلح.
+Draw a network, break one thing. 	ارسم شبكة، اكسر شيئًا واحدًا. 
+ faults seen.	 أعطال شوهدت.
+Game servers live, lag spikes and whose fault.	خوادم الألعاب مباشرة، وقفزات التأخير، ومن المسؤول.
+Is the stream ready - and why it stalled.	هل البث جاهز — ولماذا توقف.
+Your broker's connection, the day's numbers.	اتصال وسيطك، وأرقام اليوم.
+All quiet	كل شيء هادئ
+Your tab	تبويبك
+Pin tools here from any tool page or search result.	ثبّت الأدوات هنا من أي صفحة أداة أو نتيجة بحث.
+Open the AdeeboLab  ›	افتح AdeeboLab  ›
+Break it	اكسرها
+Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	مسارك الخاص: في رحلة الحزمة أو الألعاب أو التداول أو البث أو لوحة الخدمات، اضغط «اعرض مساري» — المحطات التي قاسها AdeeboMeter مرسومة بالأبيض، ومعدات المزود التي لا يراها بالرمادي المتقطع.
+Break it: 	اكسرها: 
+ faults watched to the end · +	 أعطال شوهدت حتى النهاية · +
+ Adeebo Points each, the first time.	 من Adeebo Points لكل منها، في المرة الأولى.
+nothing to wait for - it answers as you type	لا شيء للانتظار — يجيب أثناء الكتابة
+as many minutes as you choose	عدد الدقائق الذي تختاره
+the seconds you choose (10-120)	الثواني التي تختارها (10-120)
+how many pings × how often - 200 pings every 200 ms is 40 s	عدد مرات ping × كل كم — 200 ping كل 200 ms تساوي 40 ث
+about a second per 10 packets	نحو ثانية لكل 10 حزم
+a few seconds - or keeps watching, if you give it minutes	بضع ثوانٍ — أو يواصل المراقبة إن أعطيته دقائق
+a few minutes (it tests the disk and memory)	بضع دقائق (يختبر القرص والذاكرة)
+a few seconds	بضع ثوانٍ
+100-500 MB to Cloudflare's speed server	100-500 MB إلى خادم السرعة لدى Cloudflare
+one TLS handshake to each site	مصافحة TLS واحدة لكل موقع
+nothing - it reads the file or text you give it	لا شيء — يقرأ الملف أو النص الذي تعطيه
+nothing - it's maths on this PC	لا شيء — حسابات على هذا الحاسوب
+nothing - it reads this PC and Windows	لا شيء — يقرأ هذا الحاسوب وWindows
+an SSH session to the server you type	جلسة SSH إلى الخادم الذي تكتبه
+a request to your linked phone	طلب إلى هاتفك المرتبط
+SNMP questions to the device you type (read only)	استعلامات SNMP إلى الجهاز الذي تكتبه (قراءة فقط)
+the test packets you set up - nothing else	حزم الاختبار التي تُعدّها — لا شيء غيرها
+pings and test traffic to the server you type	ping وحركة اختبار إلى الخادم الذي تكتبه
+a few small requests to the address you type	بضعة طلبات صغيرة إلى العنوان الذي تكتبه
+Busy · holding	مشغول · صامد
+Can I stream 4K right now?	هل يمكنني مشاهدة 4K الآن؟
+Copy for my provider	انسخ لمزودي
+Copy my week	انسخ أسبوعي
+Copy report	انسخ التقرير
+Did you hear the tone on the LEFT only?	هل سمعت النغمة على اليسار فقط؟
+Did you hear the tone on the RIGHT only?	هل سمعت النغمة على اليمين فقط؟
+Not tonight	ليس الليلة
+Posted as a PUBLIC issue on GitHub - anyone can read it. Leave out anything private. What you see above (and the details box) is exactly what goes, and nothing goes until you press Send.	يُنشر كمسألة عامة على GitHub — يمكن لأي شخص قراءتها. لا تضع أي شيء خاص. ما تراه أعلاه (ومربع التفاصيل) هو بالضبط ما يُرسل، ولا يُرسل شيء حتى تضغط إرسال.
+Saved - drag the selected file onto Quick Share, then accept it on your Android phone	حُفظ — اسحب الملف المحدد إلى Quick Share، ثم اقبله على هاتف Android
+Saved - open Quick Share yourself from the Start menu (AdeeboMeter only starts it when Google's signature checks out)	حُفظ — افتح Quick Share بنفسك من قائمة ابدأ (لا يشغّله AdeeboMeter إلا إذا صحّ توقيع Google)
+Send feedback	أرسل ملاحظات
+Sending isn't switched on yet - Copy puts it on the clipboard for the form on adeebometer.com.	الإرسال غير مفعّل بعد — «نسخ» يضعه في الحافظة لنموذج adeebometer.com.
+What happened? What did you expect?	ماذا حدث؟ وماذا كنت تتوقع؟
+Your IT team turned online sending off - Copy puts it on the clipboard instead.	فريق تقنية المعلومات لديك أوقف الإرسال عبر الإنترنت — «نسخ» يضعه في الحافظة بدلًا من ذلك.
+Your idea or question	فكرتك أو سؤالك
+Your own mix	مزيجك الخاص
+better now	أفضل الآن
+page hidden	صفحة مخفية
+pages hidden	صفحات مخفية
+subnet doesn't fit	الشبكة الفرعية لا تتسع
+subnets don't fit	الشبكات الفرعية لا تتسع
+tool matches	أداة مطابقة
+tool shown	أداة معروضة
+tools match	أدوات مطابقة
+tools shown	أدوات معروضة
+worse now	أسوأ الآن
+Risky	محفوف بالمخاطر
+Safe	آمن
+Starting...	جارٍ البدء...
+Stopping...	جارٍ الإيقاف...
+Calculators	الحاسبات
+NO SIGNAL	لا إشارة
+COMPETITIVE	تنافسي
+CASUAL	عادي
+LAGGY	متأخر
+ms PING	ms PING
+LAST 60 SECONDS	آخر 60 ثانية
+JITTER	التذبذب
+LOSS	الفقد
+LINK	الوصلة
+BACKGROUND	الخلفية
+updating	يُحدّث
+busy line	الخط مشغول
+WAIT - 	انتظر - 
+WAIT - SOMETHING IS USING YOUR LINE	انتظر - شيء ما يستخدم خطك
+EXPECT LAG - 	توقّع تأخيرًا - 
+PACKETS ARE BEING LOST	الحزم تُفقد
+THE LINE IS SLOW RIGHT NOW	الخط بطيء الآن
+READY TO QUEUE · GG	جاهز للعب · GG
+YOU TYPE	تكتب
+SENDS	يرسل

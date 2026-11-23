@@ -90,3 +90,18 @@ game.streak|{v} seguidas: ¡el pueblo celebra!
 game.timeup|¡Se acabó el tiempo: a reagruparse!
 market.open|Los mercados abren. Mantente alerta.
 storm.near|Se avecina una tormenta: mantén la línea.
+# 1.1.6 - streaming, trading and views
+stream.on|¡Ciudadanos, {v} suena libremente!
+stream.on|El stream pertenece al pueblo, y fluye.
+stream.dip|El stream tropezó. Seguimos marchando. {v}
+stream.dip|Un revés en el stream. {v}
+stream.none|Sin stream. La plaza está en calma.
+stream.none|Nada en reproducción. Esperamos, unidos.
+trade.ok|La línea al bróker se mantiene firme.
+trade.ok|Línea al bróker: estable, camaradas.
+trade.slow|La línea al bróker va lenta. Mantengan la línea.
+trade.slow|Freno en el bróker. {v}
+trade.closed|El mercado está cerrado. Descansen hasta las 9:30.
+trade.closed|Mercados cerrados. El pueblo descansa.
+view.switch|¡Adelante, a la vista {v}!
+view.switch|La vista {v}, para todos.

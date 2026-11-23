@@ -122,3 +122,18 @@ game.streak|¡{v} victorias seguidas, de esto se cantarán canciones!
 game.timeup|Las arenas del reloj se han agotado.
 market.open|Los grandes mercados abren sus puertas.
 storm.near|Una tempestad se cierne sobre tu reino.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} fluye fiel por todo el reino.
+stream.on|El relato sigue, sin interrupciones.
+stream.dip|El relato vaciló. {v}
+stream.dip|Una sombra cruzó el stream. {v}
+stream.none|Esta noche no se cuenta ningún relato.
+stream.none|El narrador descansa.
+trade.ok|El camino al gremio de la moneda es veloz.
+trade.ok|Cuervos veloces hacia tu bróker.
+trade.slow|Los cuervos vuelan lentos. Detén tu mano.
+trade.slow|Hoy el camino al bróker es largo. {v}
+trade.closed|El gremio de la moneda cierra hasta las 9:30.
+trade.closed|Las puertas del mercado están cerradas por esta noche.
+view.switch|¡Entramos al salón {v}!
+view.switch|Se alza el estandarte {v}.

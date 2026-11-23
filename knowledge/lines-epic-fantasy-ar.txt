@@ -122,3 +122,18 @@ game.streak|{v} انتصارات متتالية - ستُغنى الأغاني!
 game.timeup|رمال الساعة الرملية نفدت.
 market.open|الأسواق الكبرى تفتح أبوابها.
 storm.near|عاصفة تتجمع فوق مملكتك.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} يجري صادقًا عبر المملكة.
+stream.on|الحكاية مستمرة دون انقطاع.
+stream.dip|الحكاية تعثرت. {v}
+stream.dip|ظلٌّ عبر البث. {v}
+stream.none|لا حكاية تُروى الليلة.
+stream.none|الراوي يستريح.
+trade.ok|الطريق إلى نقابة المال سريع.
+trade.ok|غربان سريعة إلى وسيطك.
+trade.slow|الغربان تطير ببطء. أمسك يدك.
+trade.slow|طريق الوسيط طويل اليوم. {v}
+trade.closed|نقابة المال مغلقة حتى 9:30.
+trade.closed|أبواب السوق موصدة الليلة.
+view.switch|إلى قاعة {v} نخطو!
+view.switch|رُفعت راية {v}.

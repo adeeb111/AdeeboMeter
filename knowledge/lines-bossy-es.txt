@@ -97,3 +97,18 @@ game.streak|{v} seguidas. Sigue así.
 game.timeup|Se acabó el tiempo. Más rápido la próxima ronda.
 market.open|Los mercados están abiertos. Revisa tu conexión al bróker.
 storm.near|Tormenta cerca. Guarda tu trabajo.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} se está reproduciendo. Que siga así, red.
+stream.on|El stream va limpio. Que nadie toque el ancho de banda.
+stream.dip|El stream bajó. No mientras yo vigile. {v}
+stream.dip|Ese tropiezo se arregla. {v}
+stream.none|Sin stream. En espera.
+stream.none|Nada en reproducción. Sigo de guardia.
+trade.ok|La línea al bróker va rápida. Como se ordenó.
+trade.ok|La línea al bróker aguanta. Bien.
+trade.slow|La línea al bróker va lenta. Espera antes de hacer clic.
+trade.slow|Lento hacia el bróker. {v}
+trade.closed|Mercado cerrado. La revisión del bróker descansa hasta las 9:30.
+trade.closed|Cerrado. Descansa y reporta a las 9:30.
+view.switch|Vista {v}. Ya.
+view.switch|Cambiando a {v}. Sigue el ritmo.

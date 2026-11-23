@@ -90,3 +90,18 @@ game.streak|{v} على التوالي - بناء أخضر.
 game.timeup|تجاوزت المهلة.
 market.open|الأسواق متصلة. الحالة 200.
 storm.near|عاصفة قريبة - توقّع انقطاعات.
+# 1.1.6 - streaming, trading and views
+stream.on|stream.status = PLAYING ({v}). بلا استثناءات.
+stream.on|{v} يعمل. المخزن المؤقت سليم، بلا تحذيرات.
+stream.dip|Warning: البث تراجع. {v}
+stream.dip|سُجّل سقوط إطارات. {v}
+stream.none|stream == null. حلقة خاملة.
+stream.none|لم يُعثر على عملية بث. بانتظار play().
+trade.ok|ping(broker) يعود سريعًا. كل الاختبارات خضراء.
+trade.ok|زمن استجابة الوسيط ضمن المواصفات.
+trade.slow|تراجع في زمن استجابة الوسيط. أوقف الأمر.
+trade.slow|توقيت الوسيط خارج النطاق. {v}
+trade.closed|market.isOpen() == false. نوم حتى 9:30.
+trade.closed|السوق مغلق. مهمة cron تُستأنف عند 9:30.
+view.switch|تحميل الواجهة: {v}.
+view.switch|تبديل السياق إلى {v}. الإعدادات استُعيدت.

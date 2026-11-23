@@ -90,3 +90,18 @@ game.streak|{v} seguidas: la línea funciona suave.
 game.timeup|Se acabó el turno.
 market.open|La bolsa está en marcha.
 storm.near|Tormenta cerca: la luz y las líneas pueden fallar.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} corre en la línea, firme como un volante.
+stream.on|La cinta del stream corre suave.
+stream.dip|Un tirón en la cinta del stream. {v}
+stream.dip|La línea del stream patinó un engranaje. {v}
+stream.none|No hay stream en la línea.
+stream.none|Cinta del stream detenida.
+trade.ok|El tubo al bróker va a plena presión.
+trade.ok|Línea al bróker: manómetros en verde.
+trade.slow|Baja la presión hacia el bróker. Sujeta la palanca.
+trade.slow|El tubo al bróker va lento. {v}
+trade.closed|Terminó el turno del mercado. Volvemos a las 9:30.
+trade.closed|El parqué cierra hasta las 9:30.
+view.switch|Pasando la planta a {v}.
+view.switch|Vista {v} en la planta.

@@ -90,3 +90,18 @@ game.streak|{v} على التوالي - محرك القفز يعمل.
 game.timeup|انتهى وقت المهمة.
 market.open|محطات التجارة متصلة.
 storm.near|عاصفة أيونية قريبة - قد تضعف الإشارة.
+# 1.1.6 - streaming, trading and views
+stream.on|بث {v} واضح يا قبطان.
+stream.on|إشارة البث ثابتة.
+stream.dip|إشارة البث ومضت. {v}
+stream.dip|تشويش على البث. {v}
+stream.none|لا إرسال على البث.
+stream.none|قناة البث صامتة. جارٍ المسح.
+trade.ok|الوصلة مع محطة الوسيط قوية.
+trade.ok|قناة الوسيط مفتوحة وسريعة.
+trade.slow|قناة الوسيط متأخرة. حافظوا على الموقع.
+trade.slow|وصلة بطيئة مع محطة الوسيط. {v}
+trade.closed|محطة السوق خارج الخدمة حتى 9:30.
+trade.closed|ميناء التداول مغلق. راسون حتى 9:30.
+view.switch|تحويل الجسر إلى {v}.
+view.switch|شاشة {v} متصلة.

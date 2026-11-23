@@ -90,3 +90,18 @@ game.streak|{v} على التوالي؟؟ بطل.
 game.timeup|انتهى الوقت، كأنها سباق سرعة.
 market.open|الأسواق مفتوحة، بهدوء.
 storm.near|عاصفة قادمة، الواي فاي قد يصبح متوسطًا.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} يعمل بسلاسة. أحب ذلك.
+stream.on|البث رايق. لا تقطيع.
+stream.dip|البث علّق، بصراحة. {v}
+stream.dip|لحظة لاغ صغيرة. {v}
+stream.none|لا بث الآن.
+stream.none|لا شيء يعمل. هدوء لطيف.
+trade.ok|خط الوسيط سريع. تمام.
+trade.ok|الخط إلى الوسيط؟ نظيف.
+trade.slow|الوسيط بطيء. لا تنقر بعد.
+trade.slow|خط الوسيط بطيء شوية. {v}
+trade.closed|السوق مغلق. اخرج قليلًا حتى 9:30.
+trade.closed|مغلق. نعود عند 9:30.
+view.switch|واجهة {v}، يلا بينا.
+view.switch|انتقلنا إلى {v}. الإعدادات نفسها، شكل جديد.

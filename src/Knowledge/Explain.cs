@@ -109,8 +109,9 @@ namespace AdeeboMeter
                 foreach (var f in e.Facts)
                     using (var mb = new SolidBrush(Theme.Muted)) using (var sb = new SolidBrush(Theme.Sub))
                     {
-                        float lw = 76 * S, fh = Draw.Measure(f[1], Draw.fSmall, (int)(w - lw)).Height;
-                        if (g != null) { g.DrawString(f[0], Draw.fTiny, mb, x, y + 2 * S); g.DrawString(f[1], Draw.fSmall, sb, new RectangleF(x + lw, y, w - lw, fh + 2)); }
+                        string f0 = L.T(f[0]), f1 = L.T(f[1]);   // the language check, 22 Nov: the hover card's YOU TYPE / TAKES / SENDS were English only
+                        float lw = 76 * S, fh = Draw.Measure(f1, Draw.fSmall, (int)(w - lw)).Height;
+                        if (g != null) { g.DrawString(f0, Draw.fTiny, mb, x, y + 2 * S); g.DrawString(f1, Draw.fSmall, sb, new RectangleF(x + lw, y, w - lw, fh + 2)); }
                         y += fh + 4 * S;
                     }
             if (e.Facts != null) y += 6 * S;

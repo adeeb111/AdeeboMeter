@@ -90,3 +90,18 @@ game.streak|{v} على التوالي - الشعب يبتهج!
 game.timeup|انتهى الوقت - أعيدوا التنظيم!
 market.open|الأسواق تفتح. ابق يقظا.
 storm.near|عاصفة تتجمع - اثبت في موقعك.
+# 1.1.6 - streaming, trading and views
+stream.on|أيها المواطنون، {v} يُعرض بحرية!
+stream.on|البث ملك الشعب، وهو يتدفق.
+stream.dip|تعثر البث. نواصل المسير. {v}
+stream.dip|انتكاسة في البث. {v}
+stream.none|لا بث. الساحة هادئة.
+stream.none|لا شيء يعمل. ننتظر متحدين.
+trade.ok|الخط إلى الوسيط صامد بقوة.
+trade.ok|خط الوسيط: ثابت يا رفاق.
+trade.slow|خط الوسيط بطيء. اثبتوا.
+trade.slow|تباطؤ عند الوسيط. {v}
+trade.closed|السوق مغلق. استريحوا حتى 9:30.
+trade.closed|الأسواق مغلقة. الشعب يستريح.
+view.switch|إلى الأمام، نحو واجهة {v}!
+view.switch|واجهة {v}، للجميع.

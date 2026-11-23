@@ -90,3 +90,18 @@ game.streak|{v} على التوالي، عقد لؤلؤ صغير.
 game.timeup|الساعة أغمضت عينيها.
 market.open|الأسواق تستيقظ وتبدأ بالهمس.
 storm.near|عاصفة تقترب؛ قد ترتجف الإشارة.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} يجري كنهر هادئ.
+stream.on|البث يجري بسلاسة تحت سماء المساء.
+stream.dip|موجة كسرت البث. {v}
+stream.dip|توقفت الأغنية لتلتقط أنفاسها. {v}
+stream.none|لا بث الليلة. الأسلاك تستريح.
+stream.none|صمت على البث.
+trade.ok|الوسيط يجيب سريعًا كضوء الفجر.
+trade.ok|خط ثابت إلى وسيطك.
+trade.slow|الوسيط يتمهل. انتظر نفسًا.
+trade.slow|مدٌّ بطيء نحو الوسيط. {v}
+trade.closed|السوق نائم حتى 9:30.
+trade.closed|السوق مغلق، والليل طويل.
+view.switch|نقلب الصفحة إلى {v}.
+view.switch|تتفتح واجهة {v}.

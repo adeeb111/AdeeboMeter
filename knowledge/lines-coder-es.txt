@@ -90,3 +90,18 @@ game.streak|{v} seguidas: build en verde.
 game.timeup|Tiempo de espera excedido.
 market.open|Mercados en línea. Estado 200.
 storm.near|Tormenta cerca: espera conexiones caídas.
+# 1.1.6 - streaming, trading and views
+stream.on|stream.status = PLAYING ({v}). Sin excepciones.
+stream.on|{v} en marcha. Buffer sano, sin advertencias.
+stream.dip|Warning: el stream bajó. {v}
+stream.dip|Caída de fotogramas registrada. {v}
+stream.none|stream == null. Bucle en reposo.
+stream.none|No se encontró proceso de stream. Esperando play().
+trade.ok|ping(broker) responde rápido. Todos los tests en verde.
+trade.ok|Latencia del bróker dentro de especificación.
+trade.slow|Regresión de latencia del bróker. Retén la orden.
+trade.slow|Tiempos del bróker fuera de rango. {v}
+trade.closed|market.isOpen() == false. Sleep hasta las 9:30.
+trade.closed|Mercado cerrado. El cron job sigue a las 9:30.
+view.switch|Cargando vista: {v}.
+view.switch|Cambio de contexto a {v}. Ajustes restaurados.

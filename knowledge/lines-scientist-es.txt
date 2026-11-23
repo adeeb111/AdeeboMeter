@@ -90,3 +90,18 @@ game.streak|{v} seguidas: estadísticamente impresionante.
 game.timeup|Se acabó el tiempo. Experimento terminado.
 market.open|Mercados abiertos. Recogiendo datos.
 storm.near|Tormenta cercana: espera interferencias.
+# 1.1.6 - streaming, trading and views
+stream.on|Observación: {v} se reproduce sin pérdidas.
+stream.on|Stream estable. Resultados reproducibles.
+stream.dip|Anomalía registrada en el stream. {v}
+stream.dip|Bajada transitoria observada. {v}
+stream.none|No hay stream que observar.
+stream.none|Tamaño de la muestra de stream: cero.
+trade.ok|Latencia del bróker: dentro del rango de control.
+trade.ok|Línea al bróker, medida: rápida.
+trade.slow|Latencia del bróker elevada. Retrasa la orden.
+trade.slow|Lecturas del bróker fuera de rango. {v}
+trade.closed|Mercado cerrado. La observación se reanuda a las 9:30.
+trade.closed|Sin datos de mercado hasta las 9:30.
+view.switch|Cambiando el instrumento a {v}.
+view.switch|Vista {v}. Nuevas variables, mismo método.

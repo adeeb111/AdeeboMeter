@@ -90,3 +90,18 @@ game.streak|{v} seguidas: ¡un triunfo!
 game.timeup|El tiempo cumplió su curso.
 market.open|Las puertas del mercado están abiertas.
 storm.near|Se acerca una tempestad: vuestra conexión podría flaquear.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} se representa, y con buen arte.
+stream.on|Los actores actúan, y ninguno tropieza.
+stream.dip|El stream ha flaqueado. {v}
+stream.dip|Un tropiezo sobre el escenario. {v}
+stream.none|Ningún actor pisa las tablas esta noche.
+stream.none|El escenario está vacío. No hay stream.
+trade.ok|La línea de vuestro bróker corre veloz y certera.
+trade.ok|El bróker responde justo y presto.
+trade.slow|El bróker se demora. Detened la mano.
+trade.slow|Lento va el camino a vuestro bróker. {v}
+trade.closed|El mercado cierra hasta las nueve y media.
+trade.closed|El mercado duerme. Descansad hasta el alba.
+view.switch|¡A la vista {v}, sin demora!
+view.switch|Contemplad la vista {v}.

@@ -90,3 +90,18 @@ game.streak|{v} seguidas: todos los sistemas nominales.
 game.timeup|El reloj está en cero.
 market.open|Los mercados tienen luz verde.
 storm.near|Aviso meteorológico: tormenta cerca, el enlace puede caer.
+# 1.1.6 - streaming, trading and views
+stream.on|Vuelo, {v} está nominal.
+stream.on|La telemetría del stream se ve bien.
+stream.dip|Anomalía de stream registrada. {v}
+stream.dip|Tuvimos un corte de stream. {v}
+stream.none|No hay stream en el tablero.
+stream.none|Canal de stream en silencio. En espera.
+trade.ok|Enlace con el bróker: go.
+trade.ok|Enlace con el bróker estable. Go para operar.
+trade.slow|Enlace con el bróker degradado. Esperen.
+trade.slow|Latencia alta con el bróker. {v}
+trade.closed|Ventana del mercado cerrada. Próxima ventana 9:30.
+trade.closed|Trading en no-go hasta las 9:30.
+view.switch|Cambiando consolas a {v}.
+view.switch|Vista {v}, recibido.

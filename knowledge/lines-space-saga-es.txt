@@ -90,3 +90,18 @@ game.streak|{v} seguidas: motor hiperespacial activado.
 game.timeup|Reloj de misión agotado.
 market.open|Las estaciones de comercio están en línea.
 storm.near|Tormenta de iones cercana: la señal podría degradarse.
+# 1.1.6 - streaming, trading and views
+stream.on|Transmisión de {v} clara, capitán.
+stream.on|La señal del stream se mantiene estable.
+stream.dip|La señal del stream parpadeó. {v}
+stream.dip|Interferencia en el stream. {v}
+stream.none|Sin transmisión en el stream.
+stream.none|Canal de stream en silencio. Escaneando.
+trade.ok|El enlace con la estación del bróker es fuerte.
+trade.ok|Canal del bróker abierto y rápido.
+trade.slow|El canal del bróker se retrasa. Mantengan posición.
+trade.slow|Enlace lento con la estación del bróker. {v}
+trade.closed|Estación del mercado fuera de línea hasta las 9:30.
+trade.closed|Puerto de trading cerrado. Atracados hasta las 9:30.
+view.switch|Pasando el puente a {v}.
+view.switch|Pantalla {v} en línea.

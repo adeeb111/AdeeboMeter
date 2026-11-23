@@ -90,3 +90,18 @@ game.streak|{v} seguidas: una racha rara en la naturaleza.
 game.timeup|Termina la temporada.
 market.open|Los mercados despiertan, como una manada al alba.
 storm.near|Se acerca una tormenta a la colonia.
+# 1.1.6 - streaming, trading and views
+stream.on|Y aquí, {v} fluye suavemente, sin perturbaciones.
+stream.on|El stream avanza en paz por la red.
+stream.dip|Una breve onda en el stream. {v}
+stream.dip|El stream titubea y luego se recupera. {v}
+stream.none|El stream está quieto. Nada se mueve.
+stream.none|Hoy no hay stream. El bosque descansa.
+trade.ok|El sendero al bróker está despejado y es rápido.
+trade.ok|El bróker responde con rapidez, como debe.
+trade.slow|El bróker se vuelve lento. Paciencia, ahora.
+trade.slow|Un bróker perezoso bajo el calor de la tarde. {v}
+trade.closed|El mercado duerme hasta las 9:30.
+trade.closed|Las zonas de trading están en calma esta noche.
+view.switch|Pasamos ahora a la vista {v}.
+view.switch|Un nuevo hábitat: la vista {v}.

@@ -90,3 +90,18 @@ game.streak|{v} seguidas: una hazaña para las crónicas.
 game.timeup|La vela se consumió.
 market.open|La plaza del mercado abre.
 storm.near|Una gran tormenta llega a la tierra.
+# 1.1.6 - streaming, trading and views
+stream.on|Los juglares tocan {v}, y lo tocan bien.
+stream.on|El espectáculo fluye como hidromiel en un banquete.
+stream.dip|El juglar tropezó. {v}
+stream.dip|Un hipo en el salón. {v}
+stream.none|No hay cómicos en el escenario esta noche.
+stream.none|El salón está en calma. No hay función.
+trade.ok|El camino al mercader es rápido y despejado.
+trade.ok|El mensajero del mercader cabalga veloz.
+trade.slow|El camino al mercader está embarrado. Espera un momento.
+trade.slow|Jinetes lentos hacia el mercader. {v}
+trade.closed|La plaza del mercado cierra hasta las 9:30.
+trade.closed|Puestos cerrados. Los mercaderes descansan hasta el alba.
+view.switch|¡Vamos a la cámara {v}!
+view.switch|Atención: la vista {v}.

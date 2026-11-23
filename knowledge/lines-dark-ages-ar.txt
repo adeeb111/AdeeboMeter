@@ -90,3 +90,18 @@ game.streak|{v} على التوالي - إنجاز للسجلات.
 game.timeup|احترقت الشمعة.
 market.open|ساحة السوق تفتح.
 storm.near|عاصفة عظيمة تقترب من الأرض.
+# 1.1.6 - streaming, trading and views
+stream.on|المنشدون يعزفون {v}، ويعزفونه جيدًا.
+stream.on|العرض يجري كالشراب في الوليمة.
+stream.dip|تعثر المنشد. {v}
+stream.dip|فُواق في القاعة. {v}
+stream.none|لا مؤدين على المسرح الليلة.
+stream.none|القاعة هادئة. لا عرض.
+trade.ok|الطريق إلى التاجر سريع وواضح.
+trade.ok|رسول التاجر يركب مسرعًا.
+trade.slow|طريق التاجر موحل. انتظر لحظة.
+trade.slow|فرسان بطيئون نحو التاجر. {v}
+trade.closed|ساحة السوق مغلقة حتى 9:30.
+trade.closed|الأكشاك مغلقة. التجار يستريحون حتى الصباح.
+view.switch|إلى قاعة {v} نمضي!
+view.switch|اسمع، واجهة {v}.
