@@ -38,7 +38,7 @@ namespace AdeeboMeter
         void SizeBuddySheet()
         {
             int rows = 3 + (buddyMore ? (Lines.Personas.Length - Lines.Featured + 2) / 3 : 0);
-            int w = Math.Min(Sc(720), ClientSize.Width - Sc(24)), h = Sc(240) + Sc(130) + rows * Sc(68);   // + the words-of-comfort bar   // the bubble, the moods, the voices, the footer
+            int w = Math.Min(Sc(720), ClientSize.Width - Sc(24)), h = Sc(240) + (Lines.Faith != "off" ? Sc(130) : 0) + rows * Sc(68);   // + the words-of-comfort bar   // the bubble, the moods, the voices, the footer
             int right = gearBtn.Left + Sc(4);   // under the face, ending near the gear
             buddySheet.Bounds = new Rectangle(Math.Max(Sc(12), right - w), header.Bottom + Sc(6), w, Math.Min(h, ClientSize.Height - header.Bottom - Sc(20)));
             buddySheet.AutoScroll = true; buddySheet.AutoScrollMinSize = new Size(0, h > buddySheet.Height ? h : 0);   // AM-CG-178
@@ -80,7 +80,7 @@ namespace AdeeboMeter
             using (var kb = new SolidBrush(Color.White)) g.FillEllipse(kb, plain ? k.X + 2 * S : k.Right - 20 * S, k.Y + 2 * S, 18 * S, 18 * S);
             Act(buddySheet, fr, delegate { Voice.Serious = !Voice.Serious; Cfg.Save(); Invalidate(true); buddySheet.Invalidate(); });
             y += 76 * S;
-            y = PaintComfortBar(g, x, y, w) + 14 * S;
+            if (Lines.Faith != "off") y = PaintComfortBar(g, x, y, w) + 14 * S;   // Adeeb, 22 Nov: no religion choice on show by default - it lives in Settings › Companion; the bar only appears once you turned it on there
 
             // moods: chips with their faces
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("MOOD - HOW IT FEELS ABOUT THINGS"), Draw.fTiny, mb, x, y); y += 20 * S;
