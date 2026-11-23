@@ -17,6 +17,13 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 - Learn: 8 new money lessons (orders, spread, market hours, dividends, P/E, bonds, volatility, crypto) - for learning, never advice.
 - Hardware nerds: every part of the PC against its own ceiling, its own Toolbox section.
 - Community: a small heart beside Settings - who makes it, the promises, and the ways to help.
+- AdeeboShell is fenced to AdeeboMeter's own folder: it starts in `/` (pages, tools, data), never starts another program, and changes files only inside `/data` - your Windows folder and drives are read-only (no way out through a trailing dot or space, a junction, a symlink or a hard link). `open /data` shows that folder in File Explorer to paste scripts in; `home` goes back from anywhere; after every `cd` a hint says where you are and what to type next.
+- Ready-made scripts in `/data/scripts`: network-check, system-check, destinations-check, wifi-check, call-check, isp-evidence, security-check and all-tools (plus health-check, five-at-a-time, every-tool); the shell's welcome shows the connection right now and every script with what it does. A script you delete stays deleted.
+- AdeeboShell shows what it's doing: a passing status line while a command is quiet; `alltools` with [n/N], each tool's output as it comes and the time per tool; a scroll bar, scrollback that holds still while output arrives, and Copy all / Save log buttons.
+- No silent waits: anything that takes 5 seconds or more - a Toolbox tool, Windows' Wi-Fi report, the health or security check, any Windows command or WMI query - shows in the footer with its seconds, and the note clears when it's done.
+- The keyboard reaches everything: the arrow keys move across the window - from the sidebar into the page and back, along the header and the page's tab rows - as well as between a page's tiles.
+- AdeeboLab: double-click (or F2) renames again; devices and text resize from a blue corner handle, like areas; dragging follows the pointer exactly and snaps on release (Shift: free); panning and zooming move only the picture, and the dot grid moves with it.
+- The Theory of Everything PDF for 1.1.6, with slides on languages, AdeeboShell and its fence, AdeeboLab, and the keyboard.
 
 ### Fixed
 - Bug hunt round 2 (216 findings), the security hunt (SEC-01..14), the 1.1.6 bug hunt carry-overs and the shell review (94 findings and both carry-overs).
@@ -24,6 +31,9 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 - At logon, the first 45 seconds while Windows joins the network no longer show "Not connected" or log a false "No network connection".
 - Smoother pages: narrower redraws, gliding scroll, no blinking on Every tool, a faster first paint, no freeze card after sleep or while dragging.
 - Toolbox pictures play once, then rest for 50 s.
+- From the 1.1.6 PC test: the newspaper masthead no longer runs into the laurels; badge names, the Connections count and the lab's cards are no longer cut off; Your Wi-Fi counts the seconds while Windows answers and retries instead of "Asking..." for good; every window that reaches the taskbar carries the AdeeboMeter icon; `lsblk` lists partitions on Intel RST RAID disks; `console`, `dnscmp` and `ntp` get example inputs; headings no longer run into their notes in shell text; drive letters read "C:, D:"; "1 sudden power-off"; disk busy never below 0%.
+- Roast, the letter to your provider and the six-month review wait for a day of history (two hours graded a line F); Windows' evidence reads the DHCP lease's real end time.
+- Shell review round 3: `test -w` and `ls -l` follow the /data rule; `open .` inside /data; `/DATA` and other capitalisations; `cat` on a page or tool entry; `readonly` enforced, `unset a[-1]`, `local` arrays, `local` inside `$( )`, `$(( ))` nesting capped; lsblk never lists a disk twice; scrollback keeps its place on resize; Copy and Save work inside nano, vim and less.
 
 ## 1.1.5 (2026-11-17)
 
