@@ -154,7 +154,6 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
 html,body{overscroll-behavior:none}body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 nav.tabs,.tile,.btn,.seg,.act,.row{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tile,.btn,.row,.act i,nav.tabs button{transition:transform .12s ease,background-color .15s ease}.tile:active,.btn:active,.act:active i{transform:scale(.97)}
-#app>*{animation:vin .18s ease-out}@keyframes vin{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#app>*{animation:none}.tile,.btn,.row{transition:none}}
 img.logo{width:34px;height:34px;flex:none;display:block}
 #splash{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}#splash b{font-size:24px;letter-spacing:-.01em}#splash.out{opacity:0;pointer-events:none}
@@ -178,19 +177,16 @@ img.logo{width:34px;height:34px;flex:none;display:block}
 @keyframes amShine{0%{background-position:120% 0}100%{background-position:-20% 0}}
 body.intro #app>*{animation:amRise .5s cubic-bezier(.2,.8,.2,1) backwards}
 body.intro #app>*:nth-child(2){animation-delay:.05s}body.intro #app>*:nth-child(3){animation-delay:.1s}body.intro #app>*:nth-child(4){animation-delay:.15s}body.intro #app>*:nth-child(5){animation-delay:.2s}body.intro #app>*:nth-child(6){animation-delay:.25s}body.intro #app>*:nth-child(n+7){animation-delay:.3s}
-body.page #app>*{animation:amFade .22s ease-out backwards}
+/* a tab switch: one short fade, nothing else moves (motion review, 23 Nov - it is the most-used action in the app) */
+body.page #app>*{animation:amFade .12s cubic-bezier(.23,1,.32,1) backwards}
 @keyframes amRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
-@keyframes amFade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
-.bump{animation:amBump .45s cubic-bezier(.2,.8,.2,1)}
-@keyframes amBump{0%{opacity:.2;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+@keyframes amFade{0%{opacity:.4}100%{opacity:1}}
 .eyes{transform-box:fill-box;transform-origin:center;animation:amBlink 5.5s infinite}
 @keyframes amBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
 .led:not(.off):not(.warn){animation:amLed 2.4s ease-out infinite}
 @keyframes amLed{0%{box-shadow:0 0 0 0 rgba(63,185,80,.6)}70%{box-shadow:0 0 0 9px rgba(63,185,80,0)}100%{box-shadow:0 0 0 0 rgba(63,185,80,0)}}
 .btn,.row,.card[data-go],.card[data-act],#tabs button,.vchip,.gcard{transition:transform .12s ease,background-color .2s,box-shadow .2s}
 .btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active{transform:scale(.975)}
-#tabs button.on svg{animation:amPop .35s cubic-bezier(.3,1.6,.5,1)}
-@keyframes amPop{0%{transform:scale(.7)}100%{transform:none}}
 }
 p.foot{margin:22px 4px 6px;text-align:center;font-size:12px;color:var(--mut);line-height:1.6}
 #scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
@@ -261,6 +257,7 @@ textarea.in{resize:vertical;min-height:120px}
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="stylesheet" href="/brand-app.css">
 </head>
 <body>
 <div id="splash" aria-hidden="true"><svg class="amlogo" viewBox="0 0 64 64" width="96" height="96" style="--r:-42deg" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle cx="18.8" cy="42.6" r="2.3"/><circle cx="32" cy="42.6" r="2.3"/><circle cx="45.2" cy="42.6" r="2.3"/></g></svg><b class="amword">Adeebo<span class="m">Meter</span></b></div>
@@ -350,7 +347,6 @@ textarea.in{resize:vertical;min-height:120px}
     return '<svg class="amlogo logo" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" style="--r:' + r + 'deg;width:' + px + 'px;height:' + px + 'px;flex:none" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle class="dot d1" cx="18.8" cy="42.6" r="2.3"/><circle class="dot d2" cx="32" cy="42.6" r="2.3"/><circle class="dot d3" cx="45.2" cy="42.6" r="2.3"/></g></svg>';
   }
   setInterval(function () { if (document.hidden) return; [].forEach.call(document.querySelectorAll(".amlogo"), function (l) { l.classList.remove("breathe"); void l.getBoundingClientRect(); l.classList.add("breathe"); setTimeout(function () { l.classList.remove("breathe"); }, 1400); }); }, 300000);
-  function bump(el) { if (!el || !el.classList) return; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); setTimeout(function () { el.classList.remove("bump"); }, 500); }
   function faceHtml(look) { var d = document.createElement("span"); if (window.AMV) AMV.face(d, look); return d.innerHTML; }
   function lvOf(v, ok, bad) { return v == null ? 3 : v >= bad ? 2 : v >= ok ? 1 : 0; }
   function ms(v) { return v == null ? "–" : Math.round(v) + '<small> ms</small>'; }
@@ -883,14 +879,15 @@ textarea.in{resize:vertical;min-height:120px}
   function vrow() { var v = vdef(S.view); return '<div class="vrow"><button class="vchip" data-act="sheet" data-s="view">' + ic(v[1], 20) + '<small>Activity view</small><b>' + v[2] + '</b>' + ic("cdown", 18) + '</button><button class="cbtn" data-act="sheet" data-s="comp" aria-label="Change the companion">' + faceHtml("happy") + '</button></div>'; }
   function meta(r, who) { return (who || "This phone") + (r && r.at ? " · " + hm(r.at) : "") + (r && r.n ? " · " + r.n + " tries" : ""); }
   function ms(v) { return v == null ? "–" : v + '<small> ms</small>'; }
+  function dialSvg(deg) { return '<svg class="dial" viewBox="0 0 400 200" aria-hidden="true"><line class="tick" x1="362.0" y1="190.0" x2="376.0" y2="190.0"/><line class="tick" x1="359.5" y1="161.9" x2="367.4" y2="160.5"/><line class="tick" x1="352.2" y1="134.6" x2="359.7" y2="131.9"/><line class="tick" x1="340.3" y1="109.0" x2="352.4" y2="102.0"/><line class="tick" x1="324.1" y1="85.9" x2="330.2" y2="80.7"/><line class="tick" x1="304.1" y1="65.9" x2="309.3" y2="59.8"/><line class="tick" x1="281.0" y1="49.7" x2="288.0" y2="37.6"/><line class="tick" x1="255.4" y1="37.8" x2="258.1" y2="30.3"/><line class="tick" x1="228.1" y1="30.5" x2="229.5" y2="22.6"/><line class="tick" x1="200.0" y1="28.0" x2="200.0" y2="14.0"/><line class="tick" x1="171.9" y1="30.5" x2="170.5" y2="22.6"/><line class="tick" x1="144.6" y1="37.8" x2="141.9" y2="30.3"/><line class="tick" x1="119.0" y1="49.7" x2="112.0" y2="37.6"/><line class="tick" x1="95.9" y1="65.9" x2="90.7" y2="59.8"/><line class="tick" x1="75.9" y1="85.9" x2="69.8" y2="80.7"/><line class="tick" x1="59.7" y1="109.0" x2="47.6" y2="102.0"/><line class="tick" x1="47.8" y1="134.6" x2="40.3" y2="131.9"/><line class="tick" x1="40.5" y1="161.9" x2="32.6" y2="160.5"/><line class="tick" x1="38.0" y1="190.0" x2="24.0" y2="190.0"/><g fill="none" stroke-width="18" stroke-linecap="round"><path d="M61.4 170.5A140 140 0 0 1 113.8 79.7" stroke="#5EF2B0"/><path d="M147.6 60.2A140 140 0 0 1 252.4 60.2" stroke="#FCD34D"/><path d="M286.2 79.7A140 140 0 0 1 338.6 170.5" stroke="#FF7A6B"/></g><g class="needle" style="--r:' + deg + 'deg"><line x1="200" y1="190" x2="200" y2="70" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g><circle cx="200" cy="190" r="12" fill="#fff"/></svg>'; }
   function verdictEveryday() {
-    if (!me) { if (!phoneBusy) setTimeout(function () { if (!me && !phoneBusy) phoneCheck(); }, 50); return '<div class="card vcard"><div class="tag2"><span data-i18n="THIS PHONE">THIS PHONE</span></div><div class="vh"><span data-i18n="Measuring...">Measuring...</span></div><div style="color:var(--sub)"><span data-i18n="A few seconds.">A few seconds.</span></div></div>'; }
+    if (!me) { if (!phoneBusy) setTimeout(function () { if (!me && !phoneBusy) phoneCheck(); }, 50); return '<div class="card vcard face"><div class="tag2"><span class="lc" data-i18n="THIS PHONE">THIS PHONE</span></div>' + dialSvg(-84) + '<div class="vh"><span data-i18n="Measuring...">Measuring...</span></div><div style="color:var(--sub)"><span data-i18n="A few seconds.">A few seconds.</span></div><button class="btn" disabled>' + ic("refresh", 18) + ' ' + esc(tr("Measuring...")) + '</button></div>'; }
     var lv = worst(phoneRows(me)), ty = me.type === "cellular" ? "MOBILE DATA" : me.type === "wifi" ? "WI-FI" : "";
-    return '<div class="card vcard"><div class="tag2">' + esc(tr("THIS PHONE")) + (ty ? " · " + esc(tr(ty)) : "") + (me.org ? " · " + esc(me.org.toUpperCase()) : "") + ' · ' + hm(me.at) + '</div><div class="vh">'  + esc(tr(me.err ? "Couldn't reach the internet" : lv <= 0 ? "Low, steady delay" : lv === 1 ? "A bit slow or uneven" : "Slow or uneven")) + '</div>' +
+    return '<div class="card vcard face"><div class="tag2"><span class="lc">' + esc(tr("THIS PHONE")) + '</span>' + (ty ? " · " + (ty === "WI-FI" ? '<span class="keep">Wi-Fi</span>' : esc(tr(ty))) : "") + (me.org ? ' · <span class="keep">' + esc(me.org) + '</span>' : "") + ' · ' + hm(me.at) + '</div>' + dialSvg(me.err ? 62 : lv <= 0 ? -48 : lv === 1 ? 0 : 46) + '<div class="vh">'  + esc(tr(me.err ? "Couldn't reach the internet" : lv <= 0 ? "Low, steady delay" : lv === 1 ? "A bit slow or uneven" : "Slow or uneven")) + '</div>' +
       (me.err ? '<div style="color:var(--sub)">' + esc(phoneRows(me, true)[0][3]) + '</div>' : '<div class="big3"><div><small><span data-i18n="Delay">Delay</span></small><b>' + ms(Math.round(me.med)) + '</b></div><div><small><span data-i18n="Delay variation">Delay variation</span></small><b>' + ms(Math.round(me.jit)) + '</b></div><div><small>IPv6</small><b>' + (me.v6 == null ? "–" : esc(tr(me.v6 ? "Yes" : "No"))) + '</b></div></div>' +
         '<p class="fine" style="margin:8px 0 0">' + esc(tr("Timed to the nearest internet edge server")) + (me.colo ? " (" + esc(me.colo) + ")" : "") + ' at ' + hm(me.at)  + '. ' + esc(tr("Other screens time other servers, so their numbers differ.")) + '</p>' +
-        (lv >= 1 ? '<p style="margin:8px 0 0"><b><span data-i18n="Next:">Next:</span></b> <span data-i18n="check again closer to the router. Still uneven? Tools › This phone shows which step is slow.">check again closer to the router. Still uneven? Tools › This phone shows which step is slow.</span></p>' : '')) + '</div>' +
-      '<button class="btn" data-act="phone2"' + (phoneBusy ? " disabled" : "") + '>' + ic("refresh", 18) + (' ' + esc(tr(phoneBusy ? "Measuring..." : "Check this phone again"))) + '</button>';
+        (lv >= 1 ? '<p style="margin:8px 0 0"><b><span data-i18n="Next:">Next:</span></b> <span data-i18n="check again closer to the router. Still uneven? Tools › This phone shows which step is slow.">check again closer to the router. Still uneven? Tools › This phone shows which step is slow.</span></p>' : '')) +
+      '<button class="btn" data-act="phone2"' + (phoneBusy ? " disabled" : "") + '>' + ic("refresh", 18) + (' ' + esc(tr(phoneBusy ? "Measuring..." : "Check this phone again"))) + '</button></div>';
   }
   function gameCards() {
     return '<div class="hrow"><b>Your games</b><button class="lnk" data-act="sheet" data-s="games">Edit</button></div><div class="gscroll">' + myGames.map(function (id) {
@@ -942,7 +939,7 @@ textarea.in{resize:vertical;min-height:120px}
     var more = '<div class="qh"><span data-i18n="MORE">MORE</span></div><div class="qa">' + q("walk", "walk", "k-walk", "Wi-Fi walk") + w("/games.html", "game", "k-games", "Games") + (hasPc() ? w("/learn/", "book", "k-learn", "Learn") + w("/live.html", "chart", "k-live", "Live data") : q("addpc", "pc", "k-pc", "Connect to PC") + q("tools", "tools", "k-tools", "All tools")) + '</div>';
     if (!hasPc()) return '<div class="qa2"><div class="qh"><span data-i18n="ON THIS PHONE">ON THIS PHONE</span></div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "Report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' + more + '</div>';
     return '<div class="qa2"><div class="qh"><span data-i18n="ON THIS PHONE">ON THIS PHONE</span></div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "Report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' +
-      '<div class="qh">' + (on ? "YOUR PC" : 'WITH YOUR PC <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div>' + more + '</div>';
+      '<div class="qh">' + (on ? "<span>YOUR PC</span>" : '<span>WITH YOUR PC</span> <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div>' + more + '</div>';
   }
   function actList(n) {
     var L = DAY.d === today() ? DAY.act : [];
@@ -1013,7 +1010,7 @@ textarea.in{resize:vertical;min-height:120px}
     var pcCard = phase !== "none" || recLoad() ? hero() : "";
     if (wide()) return a + '<div class="two"><div>' + vrow() + say() + pcCard + viewBody() + '</div><div>' + quick() + actList(4) + (phase === "live" ? glance() : "") + installCard(true) + '</div></div>';
     if (!pcCard) pcCard = '<button class="pcrow2" data-go="' + (hasPc() ? "pair" : "addpc") + '" style="margin-top:0">' + ic("pc", 24) + '<span class="tx"><b>' + esc(tr(hasPc() ? "Connect your PC" : "Add your Windows PC")) + '</b><span dir="auto">' + esc(tr("Scan the QR code on your PC")) + '</span></span>' + ic("chev", 18) + '</button>';
-    return a + vrow() + say() + pcCard + viewBody() + quick() + actList(3) + (phase === "live" ? glance() : "") + installCard(true);
+    return a + say() + viewBody() + vrow() + pcCard + quick() + actList(3) + (phase === "live" ? glance() : "") + installCard(true);
   };
 
 
@@ -1958,13 +1955,14 @@ textarea.in{resize:vertical;min-height:120px}
   }
   function fmtM(v) { return v == null ? "–" : v >= 100 ? Math.round(v) + " Mbps" : v >= 10 ? v.toFixed(1).replace(/\.0$/, "") + " Mbps" : v.toFixed(2).replace(/0$/, "") + " Mbps"; }
   function bloatG(b) { return b == null ? ["–", 3] : b < 5 ? ["A+", 0] : b < 30 ? ["A", 0] : b < 60 ? ["B", 1] : b < 200 ? ["C", 1] : ["D", 2]; }
+  function speedDial(mbps) { var f = mbps > 0 ? Math.max(0, Math.min(1, Math.log(Math.max(mbps, 1)) / Math.LN10 / 3)) : 0; return '<svg class="dial sdial" viewBox="0 0 400 200" aria-hidden="true"><line class="tick" x1="362.0" y1="190.0" x2="378.0" y2="190.0"/><line class="tick" x1="356.5" y1="148.1" x2="364.2" y2="146.0"/><line class="tick" x1="340.3" y1="109.0" x2="347.2" y2="105.0"/><line class="tick" x1="314.6" y1="75.4" x2="320.2" y2="69.8"/><line class="tick" x1="281.0" y1="49.7" x2="289.0" y2="35.8"/><line class="tick" x1="241.9" y1="33.5" x2="244.0" y2="25.8"/><line class="tick" x1="200.0" y1="28.0" x2="200.0" y2="20.0"/><line class="tick" x1="158.1" y1="33.5" x2="156.0" y2="25.8"/><line class="tick" x1="119.0" y1="49.7" x2="111.0" y2="35.8"/><line class="tick" x1="85.4" y1="75.4" x2="79.8" y2="69.8"/><line class="tick" x1="59.7" y1="109.0" x2="52.8" y2="105.0"/><line class="tick" x1="43.5" y1="148.1" x2="35.8" y2="146.0"/><line class="tick" x1="38.0" y1="190.0" x2="22.0" y2="190.0"/><path d="M60.1 185.1A140 140 0 0 1 339.9 185.1" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="18" stroke-linecap="round"/><g class="lbl"><text x="88.0" y="195.0" text-anchor="middle">1</text><text x="144.0" y="98.0" text-anchor="middle">10</text><text x="256.0" y="98.0" text-anchor="middle">100</text><text x="312.0" y="195.0" text-anchor="middle">1000</text></g><g class="needle" style="--r:' + Math.round(-90 + 180 * f) + 'deg"><line x1="200" y1="190" x2="200" y2="70" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g><circle cx="200" cy="190" r="12" fill="#fff"/></svg>'; }
   TOOLV.speed = function () {
     var st = tst("speed"), r = st.res, L = st.live, cell = spdCell();
     var a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("Download, upload and how much the delay grows while the line is busy. Straight to Cloudflare's speed test servers - nothing goes through AdeeboMeter.")) + '</p>' + errBox("speed") +
       '<button class="btn" data-run="speed"' + (st.busy ? " disabled" : "") + '>' + esc(st.busy ? (L ? tr(L.phase) + "..." : tr("Testing...")) : tr("Start the test")) + '</button><p class="fine" style="text-align:center;margin:6px 0 0">' + esc(tr(cell ? "On mobile data: uses up to about 40 MB" : "Uses up to about 130 MB of data - less on slow lines")) + '</p>';
-    if (L) a += '<div class="card vcard" style="margin-top:14px"><div class="tag2">' + esc(tr("MEASURING")) + ' · ' + esc(tr(L.phase)) + '</div><div class="big3"><div><small>' + esc(tr("Delay")) + '</small><b>' + ms(L.idle.length ? Math.round(pct(L.idle, 0.5)) : null) + '</b></div><div><small>' + esc(tr("Download")) + '</small><b>' + (L.dnow ? fmtM(L.dnow).replace(" Mbps", '<small> Mbps</small>') : "–") + '</b></div><div><small>' + esc(tr("Upload")) + '</small><b>' + (L.unow ? fmtM(L.unow).replace(" Mbps", '<small> Mbps</small>') : "–") + '</b></div></div></div>';
+    if (L) a += '<div class="card vcard face" style="margin-top:14px"><div class="tag2">' + esc(tr("MEASURING")) + ' · ' + esc(tr(L.phase)) + '</div>' + speedDial(L.phase === "Upload" ? L.unow : L.dnow) + '<div class="big3"><div><small>' + esc(tr("Delay")) + '</small><b>' + ms(L.idle.length ? Math.round(pct(L.idle, 0.5)) : null) + '</b></div><div><small>' + esc(tr("Download")) + '</small><b>' + (L.dnow ? fmtM(L.dnow).replace(" Mbps", '<small> Mbps</small>') : "–") + '</b></div><div><small>' + esc(tr("Upload")) + '</small><b>' + (L.unow ? fmtM(L.unow).replace(" Mbps", '<small> Mbps</small>') : "–") + '</b></div></div></div>';
     if (r && !L) { var g = bloatG(r.bloat), dn = r.down || 0, up = r.up || 0;
-      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, (r.cell ? esc(tr("MOBILE DATA")) + " · " : "") + "CLOUDFLARE") + '<div class="big3"><div><small>' + esc(tr("Download")) + '</small><b>' + fmtM(r.down).replace(" Mbps", '<small> Mbps</small>') + '</b></div><div><small>' + esc(tr("Upload")) + '</small><b>' + fmtM(r.up).replace(" Mbps", '<small> Mbps</small>') + '</b></div><div><small>' + esc(tr("Delay")) + '</small><b>' + ms(r.idle) + '</b></div></div>' +
+      a += '<div class="card vcard face" style="margin-top:14px">' + stamp(r.at, (r.cell ? esc(tr("MOBILE DATA")) + " · " : "") + '<span class="keep">Cloudflare</span>') + speedDial(r.down) + '<div class="big3"><div><small>' + esc(tr("Download")) + '</small><b>' + fmtM(r.down).replace(" Mbps", '<small> Mbps</small>') + '</b></div><div><small>' + esc(tr("Upload")) + '</small><b>' + fmtM(r.up).replace(" Mbps", '<small> Mbps</small>') + '</b></div><div><small>' + esc(tr("Delay")) + '</small><b>' + ms(r.idle) + '</b></div></div>' +
         '<p class="fine">' + esc(trFormat("{amount} MB used. The speed is the 90th percentile of the bigger transfers, the way Cloudflare reports it.", { amount: Math.round(r.used / 1e6) })) + '</p></div>' +
         rowsCard([[lvS(g[1]), tr("Lag when busy (bufferbloat)") + " · " + g[0], r.bloat == null ? tr("not measured") : trFormat("+{extra} ms while downloading ({idle} → {busy} ms)", { extra: r.bloat, idle: r.idle, busy: r.load }), g[1] === 2 ? tr("Calls and games will stutter whenever someone downloads. A router with SQM / Smart Queue fixes this.") : g[1] === 1 ? tr("Some lag when the line is busy - noticeable in games.") : tr("The delay stays low even when the line is busy.")],
           [r.down == null ? "3" : dn >= 25 ? "0" : dn >= 5 ? "1" : "2", tr("Streaming"), r.down == null ? tr("not measured") : dn >= 25 ? tr("4K is fine") : dn >= 5 ? tr("HD is fine, 4K may buffer") : tr("SD only"), ""],
@@ -2190,7 +2188,7 @@ textarea.in{resize:vertical;min-height:120px}
   var lastHtml = "", lastTab = null, lastLocale = "";
   function entrance(tabNow) {
     if (lastTab === null) { document.body.classList.add("intro"); setTimeout(function () { document.body.classList.remove("intro"); }, 1600); }
-    else if (tabNow !== lastTab) { document.body.classList.remove("page"); void document.body.offsetWidth; document.body.classList.add("page"); setTimeout(function () { document.body.classList.remove("page"); }, 400); }
+    else if (tabNow !== lastTab) { document.body.classList.remove("page"); void document.body.offsetWidth; document.body.classList.add("page"); setTimeout(function () { document.body.classList.remove("page"); }, 200); }
     lastTab = tabNow;
   }
   function morph(root, html) {
@@ -2220,6 +2218,21 @@ textarea.in{resize:vertical;min-height:120px}
         }
       }
     }
+    // headings and small labels written in capitals read in sentence case (any language: the translation is in by now)
+    template.querySelectorAll("h2, .qh > span").forEach(function (h) {
+      var t = h.firstChild; if (!t || t.nodeType !== 3) return; var v = t.nodeValue, k = v.trim();
+      if (k.length > 2 && k === k.toUpperCase() && k !== k.toLowerCase()) t.nodeValue = v.replace(k, (k.charAt(0) + k.slice(1).toLowerCase()).replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr)\b/gi, function (w) { var m = { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }; return m[w.toLowerCase()] || w.toUpperCase(); }));
+    });
+    template.querySelectorAll(".tag2").forEach(function (tg) {
+      var w = document.createTreeWalker(tg, NodeFilter.SHOW_TEXT), first = true, n;
+      while ((n = w.nextNode())) {
+        if (n.parentNode.closest && n.parentNode.closest(".keep")) { first = false; continue; }
+        var v = n.nodeValue; if (v !== v.toUpperCase() || v === v.toLowerCase()) { if (/[a-z]/i.test(v)) first = false; continue; }
+        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }[x] || x.toUpperCase(); });
+        if (first) { v = v.replace(/[a-z]/, function (c) { return c.toUpperCase(); }); if (/[a-z]/i.test(v)) first = false; }
+        n.nodeValue = v;
+      }
+    });
     sync(root, template);
   }
   function sync(a, b) {
@@ -2228,7 +2241,7 @@ textarea.in{resize:vertical;min-height:120px}
       var x = an[i], y = bn[i];
       if (!x) { a.appendChild(y.cloneNode(true)); continue; }
       if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName || (x.nodeType === 1 && (x.getAttribute("data-say") !== y.getAttribute("data-say")))) { a.replaceChild(y.cloneNode(true), x); continue; }
-      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) { x.nodeValue = y.nodeValue; var pe = x.parentNode; if (pe && pe.closest && pe.closest(".big3 b, .st b, .gst")) bump(pe); } continue; }
+      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) { x.nodeValue = y.nodeValue; }   /* numbers change in place - live data arrives every second, a bounce each time was noise (motion review, 23 Nov) */ continue; }
       if (x.nodeType !== 1) continue;
       if (x.isEqualNode(y)) continue;
       if (x.hasAttribute("data-say")) { if (x.getAttribute("aria-label") !== y.getAttribute("aria-label")) a.replaceChild(y.cloneNode(true), x); continue; }   // the buddy's line types on its own clock

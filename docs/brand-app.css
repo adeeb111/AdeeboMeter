@@ -1,0 +1,101 @@
+/* AdeeboMeter phone app - brand layer (prototype, 23 Nov). Same instrument as the website:
+   graphite page, the logo's blue faceplate for the verdict, the gauge's three arcs for status. */
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600 800;font-display:swap}
+@font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
+
+:root:not([data-pal]){--bg:#111316;--bg2:#181B20;--card:#181B20;--card2:#1F2329;--well:#14171B;--edge:#262A31;--ink:#EEF1F5;--sub:#A9B1BD;--mut:#7E8794;
+  --blue:#3B7BF5;--green:#5EF2B0;--amber:#FCD34D;--red:#FF7A6B;--glow:0 0 0 1px var(--edge)}
+:root[data-theme="light"]:not([data-pal]){--bg:#F1F3F6;--bg2:#fff;--card:#fff;--card2:#F6F7F9;--well:#F1F3F6;--edge:#DDE1E7;--ink:#16191E;--sub:#4B5360;--mut:#6B7380;
+  --blue:#1155E0;--green:#1F9E6B;--amber:#B7791F;--red:#D9473A}
+:root{--face:#1155E0;--ease-out:cubic-bezier(.23,1,.32,1)}
+
+body{font-family:"Barlow","Segoe UI",system-ui,-apple-system,sans-serif;font-weight:500}
+header h1,.vh,.vbig,.amword,h2{font-family:"Barlow SC","Barlow",system-ui,sans-serif;letter-spacing:0}
+
+/* the top: a smaller name, so the answer is what you see first */
+header{margin:10px 0 12px}
+header h1{font-size:26px;font-weight:700}
+header .amlogo{width:30px!important;height:30px!important}
+
+/* labels in sentence case (the words stay the same for translations) */
+.tag2,.qh{letter-spacing:0;font-size:13px;font-weight:600}
+/* the fixed label words in sentence case; names and numbers beside them keep their own case */
+
+
+/* the companion: a plain line beside its face, not an italic speech bubble */
+.say2>span:last-child{font-style:normal;background:none;padding:0 4px;color:var(--sub);font-size:15px}
+
+/* the verdict is the faceplate */
+.card.face{background:var(--face);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 14px 32px -16px rgba(17,85,224,.65);color:#fff;border-radius:26px;padding:16px 18px 18px;text-align:center}
+.card.face .tag2{color:#CFE0FF}
+.card.face .dial{display:block;width:78%;margin:6px auto -4px}
+.card.face .dial .tick{stroke:rgba(255,255,255,.35);stroke-width:2;stroke-linecap:round}
+.card.face .dial .needle{transform-origin:200px 190px;transform:rotate(var(--r,0deg));transition:transform .6s var(--ease-out)}
+.card.face .vh{font-size:28px;line-height:1.05;margin:6px 0 4px}
+.card.face>div[style*="color:var(--sub)"],.card.face .fine{color:#CFE0FF!important}
+.card.face .big3>div{background:rgba(255,255,255,.1);border:0}
+.card.face .big3 small,.card.face .big3 b small{color:#CFE0FF}
+.card.face .btn{margin:16px 0 0;background:#fff!important;color:var(--face)!important;border-radius:14px}
+:root[data-theme="light"] .card.face{color:#fff}
+
+/* quick actions: plain icons on the page, no box around them and no tinted chips */
+.qa2{background:none;box-shadow:none;padding:4px 0;margin:18px 0 8px}
+.qh{padding:0 2px;color:var(--mut)}
+.qa button{color:var(--ink);font-size:13px;font-weight:600}
+.qa .qc{background:var(--card)!important;box-shadow:0 0 0 1px var(--edge);color:var(--ink)!important;border-radius:16px}
+
+/* the PC row: a quiet line, not a dashed box */
+.pcrow2{border:0;box-shadow:0 0 0 1px var(--edge);background:var(--card)}
+
+/* tabs: the active one in the logo blue */
+/* the colour themes (Neon, Midnight, Sunset, Mint) keep their own accent for tabs and buttons; the meter stays the logo's blue */
+:root:not([data-pal]) nav.tabs button.on{background:var(--face);color:#fff}
+:root:not([data-pal]) .btn:not(.ghost){background:var(--face)}
+.tile:active,.btn:active,.act:active i{transform:scale(.97)}
+.card.face .dial{width:62%}
+header .amword{font-size:24px}
+
+/* ---- polish pass (23 Nov) */
+/* order on the phone home: the answer, then the view picker and the PC row as quieter controls */
+.card.face{margin:4px 0 16px}
+.vrow{margin:0 0 10px}
+.vchip,.cbtn,.ibtn,.pcrow2{box-shadow:0 0 0 1px var(--edge);background:var(--card)}
+.ibtn{border-radius:14px}
+select{background:var(--card);font-family:inherit;font-weight:500}
+/* the faceplate: secondary text tinted from the blue, numbers that don't jump, a clear busy state */
+.card.face .vh{text-wrap:balance}
+.card.face p{color:#CFE0FF}
+.card.face p b{color:#fff}
+.big3 b,.vbig,.card.face .tag2{font-variant-numeric:tabular-nums}
+.card.face .big3{margin:12px 0 0}
+.card.face .big3>div{border-radius:14px;padding:10px 6px}
+.card.face .big3 b{color:#fff;font-family:"Barlow SC","Barlow",sans-serif;font-size:24px}
+.card.face .btn:disabled{opacity:1;background:rgba(255,255,255,.16)!important;color:#CFE0FF!important}
+.card.face .btn svg{vertical-align:-3px}
+/* browser surfaces in the palette */
+::selection{background:rgba(17,85,224,.35);color:inherit}
+html{scrollbar-color:var(--edge) var(--bg);caret-color:var(--blue)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:inherit}
+.card.face :focus-visible{outline-color:#fff}
+@media (prefers-reduced-motion:reduce){.card.face .dial .needle{transition:none}}
+.card.face p{font-size:15px;line-height:1.4}
+.card.face p.fine{font-size:13px;line-height:1.35}
+
+/* =================================================================== the rest of the app (redesign, 23 Nov) */
+/* small labels: sentence case everywhere (the translations keep their words); names and units keep their own case */
+h2{text-transform:none;letter-spacing:0;font-size:15px;font-weight:600;color:var(--sub);margin:18px 2px 10px}
+/* one icon colour: the logo's blue on a quiet well (the rainbow of category tints read as a template) */
+.ic,.ic.qc,.tile .ic,.vopt .ic{background:var(--card2)!important;color:var(--blue)!important;box-shadow:0 0 0 1px var(--edge)}
+.card.face .ic{background:rgba(255,255,255,.14)!important;color:#fff!important;box-shadow:none}
+/* lists and tiles: the same quiet surfaces, one radius per level (cards 20, wells 14, chips 10) */
+.card{border-radius:20px}
+.tile{border-radius:20px}
+.tile b,.row b{font-weight:600}
+input.search,input[type=search],input[type=text]{font-family:inherit;font-weight:500}
+input.search:focus{box-shadow:0 0 0 1px var(--blue),0 0 0 4px color-mix(in srgb,var(--blue) 22%,transparent)}
+/* the speed dial: the same instrument on a neutral scale */
+.sdial .lbl text{font-family:"Barlow SC","Barlow",sans-serif;font-weight:600;font-size:17px;fill:#CFE0FF}
+/* rows: a pressed row tints instead of shrinking the whole list */
+.row:active{transform:none;background:color-mix(in srgb,var(--blue) 8%,transparent)}
