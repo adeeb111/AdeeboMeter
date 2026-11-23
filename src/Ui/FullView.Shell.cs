@@ -94,7 +94,7 @@ namespace AdeeboMeter
             term.Write("  █▀█ █▀▄ █▀▀ █▀▀ █▄▄ █▀█   " + "AdeeboShell · AdeeboMeter " + Program.Version + "\n", ShCyan);
             term.Write("  █▀█ █▄▀ ██▄ ██▄ █▄█ █▄█   " + L.T("every tool is a command, every page is a folder") + "\n", ShCyan);
             term.Write("\n", ShFg);
-            term.Write("  " + "You're in AdeeboMeter's own folders: pages/  tools/  data/   ·   ~ and /mnt/c are your PC's files - to read, never to run" + "\n", ShDim);
+            term.Write("  " + "You're in AdeeboMeter's own folders: pages/  tools/  data/   ·   ~ and /mnt/c are your PC's files - read-only, never run" + "\n", ShDim);
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
             term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n\n", ShDim);
         }
@@ -887,6 +887,16 @@ namespace AdeeboMeter
             return "/" + string.Join("/", parts);
         }
         static string Home { get { return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); } }
+        // 1.1.6: AdeeboShell changes files only inside /data (AdeeboMeter's own folder). Your Windows folder and drives are read-only here,
+        // so a shell that looks like a toy can never delete or overwrite a real document.
+        internal static bool InData(string real)
+        {
+            if (string.IsNullOrEmpty(real)) return false;
+            try { string d = Path.GetFullPath(Program.DataDir).TrimEnd('\\') + "\\", f = Path.GetFullPath(real).TrimEnd('\\') + "\\"; return f.StartsWith(d, StringComparison.OrdinalIgnoreCase); }
+            catch (ArgumentException) { return false; } catch (NotSupportedException) { return false; } catch (PathTooLongException) { return false; }
+        }
+        const string ReadOnlyNote = ": read-only - AdeeboShell changes files only inside /data (AdeeboMeter's own folder); your PC's files can be read and copied into /data, never changed";
+        bool Writable(string real, string shown, string cmd, ShCtx c) { if (InData(real)) return true; Err(c, cmd + ": " + shown + ReadOnlyNote); return false; }
         // the real folder behind a path, or null for the virtual ones (/, /pages, /tools, /mnt, /proc)
         string Real(string v)
         {
@@ -913,7 +923,7 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
             return real;
         }
-        static readonly string[][] ShRoots = { new[] { "pages", "AdeeboMeter - every page: cd into one, then  open" }, new[] { "tools", "AdeeboMeter - every tool by group: each one is a command" }, new[] { "data", "AdeeboMeter's own files - history, reports, recordings" }, new[] { "home", "your Windows folder (" + Environment.UserName + ") - files to read and write; nothing here runs a program" }, new[] { "mnt", "your drives (C: is /mnt/c) - files only" }, new[] { "proc", "this PC as files - cpuinfo, meminfo, uptime, mounts" } };
+        static readonly string[][] ShRoots = { new[] { "pages", "AdeeboMeter - every page: cd into one, then  open" }, new[] { "tools", "AdeeboMeter - every tool by group: each one is a command" }, new[] { "data", "AdeeboMeter's own files - history, reports, recordings" }, new[] { "home", "your Windows folder (" + Environment.UserName + ") - read-only: look, and copy into /data" }, new[] { "mnt", "your drives (C: is /mnt/c) - read-only" }, new[] { "proc", "this PC as files - cpuinfo, meminfo, uptime, mounts" } };
         string ToolDir(string g) { return Regex.Replace(GroupName(g).ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-'); }
         List<string> ShPageIds() { return Secs.Select(z => z[0]).Concat(new[] { "calc", "reports", "lab", "settings", "about" }).Distinct().ToList(); }
         // what's in a virtual folder: (name, is a folder, a word about it)
@@ -1008,8 +1018,9 @@ namespace AdeeboMeter
             Func<string, bool, RTarget> open = (tg, app) =>
             {
                 if (tg == "/dev/null") return new RTarget { Kind = "null" };
-                string real = Real(Abs(tg)); if (real == null) { Err(c, "adeeboshell: " + tg + ": can't write there - only folders on a disk (~, /data, /mnt/...)"); return null; }
+                string real = Real(Abs(tg)); if (real == null) { Err(c, "adeeboshell: " + tg + ": can't write there - only inside /data"); return null; }
                 if (Directory.Exists(real)) { Err(c, "adeeboshell: " + tg + ": is a folder"); return null; }
+                if (!Writable(real, tg, "adeeboshell", c)) return null;
                 string full; try { full = Path.GetFullPath(real); } catch (ArgumentException) { Err(c, "adeeboshell: " + tg + ": not a file name"); return null; } catch (NotSupportedException) { Err(c, "adeeboshell: " + tg + ": not a file name"); return null; }
                 try { if (!app) File.WriteAllText(full, ""); else if (!File.Exists(full)) File.WriteAllText(full, ""); }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "adeeboshell: " + tg + ": " + e.Message); return null; }
@@ -1125,7 +1136,7 @@ namespace AdeeboMeter
                         fl0(); return 0;
                     }
                 case "wc": return Wc(args, c);
-                case "tee": { string txt = c.Stdin ?? ""; foreach (var f in Files(args)) { string r = Real(Abs(f)); if (r == null) { Err(c, "tee: " + f + ": can't write there"); return 1; } if (args.Contains("-a")) File.AppendAllText(r, txt); else File.WriteAllText(r, txt); } O(c, txt, ShFg); return 0; }
+                case "tee": { string txt = c.Stdin ?? ""; foreach (var f in Files(args)) { string r = Real(Abs(f)); if (r == null) { Err(c, "tee: " + f + ": can't write there"); return 1; } if (!Writable(r, f, "tee", c)) return 1; if (args.Contains("-a")) File.AppendAllText(r, txt); else File.WriteAllText(r, txt); } O(c, txt, ShFg); return 0; }
                 case "echo":   // #31: -n leaves the newline off; -e reads \n \t \\ escapes
                     {
                         bool nl = true, esc = false; int k = 0;
@@ -1135,15 +1146,15 @@ namespace AdeeboMeter
                     }
                 case "printf": return Printf(args, c);
                 case "cp": case "mv": return CpMv(cmd == "mv", args, c);
-                case "mkdir": { foreach (var d in Files(args)) { string r = Real(Abs(d)); if (r == null) { Err(c, "mkdir: " + d + ": not on a disk"); return 1; } if (Directory.Exists(r) && !args.Contains("-p")) { Err(c, "mkdir: " + d + ": already exists"); return 1; } Directory.CreateDirectory(r); } return 0; }
+                case "mkdir": { foreach (var d in Files(args)) { string r = Real(Abs(d)); if (r == null) { Err(c, "mkdir: " + d + ": not on a disk"); return 1; } if (!Writable(r, d, "mkdir", c)) return 1; if (Directory.Exists(r) && !args.Contains("-p")) { Err(c, "mkdir: " + d + ": already exists"); return 1; } Directory.CreateDirectory(r); } return 0; }
                 case "touch":   // #91: flags are flags; -c never creates
                     {
                         bool noCreate = Flags(args).Contains('c');
-                        foreach (var f in Files(args)) { string r = Real(Abs(f)); if (r == null) { Err(c, "touch: " + f + ": not on a disk"); return 1; } if (File.Exists(r)) File.SetLastWriteTime(r, DateTime.Now); else if (!noCreate) File.WriteAllText(r, ""); }
+                        foreach (var f in Files(args)) { string r = Real(Abs(f)); if (r == null) { Err(c, "touch: " + f + ": not on a disk"); return 1; } if (!Writable(r, f, "touch", c)) return 1; if (File.Exists(r)) File.SetLastWriteTime(r, DateTime.Now); else if (!noCreate) File.WriteAllText(r, ""); }
                         return 0;
                     }
                 case "rm": return Rm(args, c);
-                case "rmdir": { foreach (var d in Files(args)) { string v = Abs(d), r = Real(v); if (r == null || !Directory.Exists(r)) { Err(c, "rmdir: " + d + ": not a folder"); return 1; } if (v.Count(ch => ch == '/') <= 1 || r.TrimEnd('\\').Length <= 3) { Err(c, "rmdir: won't remove " + d); return 1; } if (Directory.EnumerateFileSystemEntries(r).Any()) { Err(c, "rmdir: " + d + ": not empty"); return 1; } Directory.Delete(r); } return 0; }
+                case "rmdir": { foreach (var d in Files(args)) { string v = Abs(d), r = Real(v); if (r == null || !Directory.Exists(r)) { Err(c, "rmdir: " + d + ": not a folder"); return 1; } if (!Writable(r, d, "rmdir", c)) return 1; if (v.Count(ch => ch == '/') <= 1 || r.TrimEnd('\\').Length <= 3) { Err(c, "rmdir: won't remove " + d); return 1; } if (Directory.EnumerateFileSystemEntries(r).Any()) { Err(c, "rmdir: " + d + ": not empty"); return 1; } Directory.Delete(r); } return 0; }
                 case "find": return Find(args, c);
                 case "stat": return Stat(args, c);
                 case "basename": { if (args.Count == 0) return 0; string b = args[0].TrimEnd('/'); b = b.Substring(b.LastIndexOf('/') + 1); if (args.Count > 1 && b.EndsWith(args[1], StringComparison.Ordinal) && b != args[1]) b = b.Substring(0, b.Length - args[1].Length); OL(c, b); return 0; }
@@ -1609,12 +1620,12 @@ namespace AdeeboMeter
         {
             bool rec = Flags(args).IndexOfAny(new[] { 'r', 'R', 'a' }) >= 0, noClobber = Flags(args).Contains('n'); var p = Files(args);
             if (p.Count < 2) { Err(c, "usage: " + (move ? "mv" : "cp [-r]") + " source... target"); return 1; }
-            string dst = Real(Abs(p[p.Count - 1])); if (dst == null) { Err(c, "can't write to " + p[p.Count - 1] + " - only folders on a disk"); return 1; }
+            string dst = Real(Abs(p[p.Count - 1])); if (dst == null) { Err(c, "can't write to " + p[p.Count - 1] + " - only folders on a disk"); return 1; } if (!Writable(dst, p[p.Count - 1], move ? "mv" : "cp", c)) return 1;
             if (p.Count > 2 && !Directory.Exists(dst)) { Err(c, (move ? "mv" : "cp") + ": " + p[p.Count - 1] + " isn't a folder (several sources need one)"); return 1; }
             int ex = 0;
             foreach (var s in p.Take(p.Count - 1))
             {
-                string src = Real(Abs(s)); if (src == null || (!File.Exists(src) && !Directory.Exists(src))) { Err(c, s + ": no such file"); ex = 1; continue; }
+                string src = Real(Abs(s)); if (src == null || (!File.Exists(src) && !Directory.Exists(src))) { Err(c, s + ": no such file"); ex = 1; continue; } if (move && !Writable(src, s, "mv", c)) { ex = 1; continue; }   // mv takes the file away from where it was
                 string to = Directory.Exists(dst) ? Path.Combine(dst, Path.GetFileName(src.TrimEnd('\\'))) : dst;
                 if (string.Equals(Path.GetFullPath(src).TrimEnd('\\'), Path.GetFullPath(to).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) { Err(c, s + " and " + p[p.Count - 1] + " are the same file"); ex = 1; continue; }
                 if (noClobber && (File.Exists(to) || Directory.Exists(to))) continue;
@@ -1650,7 +1661,7 @@ namespace AdeeboMeter
             var p = Files(args); if (p.Count == 0) { Err(c, "usage: rm [-r] [-f] file..."); return 1; }
             foreach (var s in p)
             {
-                string v = Abs(s), r = Real(v); if (r == null) { Err(c, "rm: " + s + ": not on a disk"); return 1; }
+                string v = Abs(s), r = Real(v); if (r == null) { Err(c, "rm: " + s + ": not on a disk"); return 1; } if (!Writable(r, s, "rm", c)) return 1;
                 if (v.Count(ch => ch == '/') <= 1 || string.Equals(r.TrimEnd('\\'), Home.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase) || r.TrimEnd('\\').Length <= 3) { Err(c, "rm: won't remove " + s + " - a top folder or a whole drive"); return 1; }
                 bool dir = Directory.Exists(r); if (!dir && !File.Exists(r)) { if (!force) Err(c, "rm: " + s + ": no such file"); continue; }
                 if (dir && !rec) { Err(c, "rm: " + s + " is a folder - rm -r"); return 1; }
@@ -2154,7 +2165,7 @@ namespace AdeeboMeter
             ed.Words = new HashSet<string>(ShCmds.Concat(shTools.Select(t => t.Id)), StringComparer.OrdinalIgnoreCase);
             ed.Save = (to, body) =>
             {
-                string r = to == real ? real : Real(Abs(to)); if (r == null) return "not a folder on a disk";
+                string r = to == real ? real : Real(Abs(to)); if (r == null) return "not a folder on a disk"; if (!InData(r)) return "read-only - save it inside /data (AdeeboMeter's own folder); your PC's files are never changed here";
                 try { string dir = Path.GetDirectoryName(r); if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) return "no folder " + dir; WriteShaped(r, body, shape); real = r; return null; }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException)) throw; return e.Message; }
             };

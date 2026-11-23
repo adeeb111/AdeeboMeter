@@ -737,7 +737,7 @@ namespace AdeeboMeter
                 }
                 catch (RegexMatchTimeoutException) { Err(c, "sed: the pattern took too long - stopped"); return 2; }
                 if (target == null) { O(c, outp.ToString(), ShFg); continue; }
-                string r = Real(Abs(target)); try { WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
+                string r = Real(Abs(target)); if (!Writable(r, target, "sed -i", c)) return 1; try { WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
             }
             return 0;
         }
