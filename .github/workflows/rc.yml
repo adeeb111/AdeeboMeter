@@ -1,0 +1,71 @@
+# RC check for 1.1.6 (23 Nov): build, self-test, deep test, a UI walk of every page in five languages with memory / handles /
+# GDI / idle CPU per page, a 10-minute page-cycling leak run, and every log line that says something went wrong.
+# Runs only on pushes to the branch "rc-check"; uploads everything as one artifact. Reads the repo, writes nothing back.
+name: rc-check
+on:
+  push:
+    branches: [rc-check]
+permissions:
+  contents: read
+jobs:
+  rc:
+    runs-on: windows-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Build (release.ps1)
+        shell: pwsh
+        run: ./release.ps1
+      - name: Prepare a portable test copy
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory rc -Force | Out-Null; Copy-Item dist/AdeeboMeter.exe rc/
+          New-Item -ItemType File rc/AdeeboMeter.portable -Force | Out-Null
+          New-Item -ItemType Directory out -Force | Out-Null
+      - name: Self-test
+        shell: pwsh
+        timeout-minutes: 25
+        run: |
+          Set-Location rc
+          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--selftest' -Wait -PassThru
+          Copy-Item AdeeboMeter-selftest.txt ../out/ -ErrorAction SilentlyContinue
+          "selftest exit $($p.ExitCode)" | Tee-Object -Append ../out/summary.txt
+      - name: Deep test (15 min - every tool with hostile input, leaks, the Toolbox under stress)
+        shell: pwsh
+        timeout-minutes: 30
+        run: |
+          Set-Location rc
+          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--deeptest','--minutes','15' -Wait -PassThru
+          Copy-Item AdeeboMeter-deeptest.txt ../out/ -ErrorAction SilentlyContinue
+          "deeptest exit $($p.ExitCode)" | Tee-Object -Append ../out/summary.txt
+      - name: Perf
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          Set-Location rc
+          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--perf' -Wait -PassThru
+          Copy-Item AdeeboMeter-perf.txt ../out/ -ErrorAction SilentlyContinue
+          "perf exit $($p.ExitCode)" | Tee-Object -Append ../out/summary.txt
+      - name: UI walk - every page, five languages, resources and idle CPU per page
+        shell: pwsh
+        timeout-minutes: 50
+        run: ./rc-walk.ps1 -Exe "$PWD/rc/AdeeboMeter.exe" -Out "$PWD/out"
+      - name: Leak run - cycle the pages for 10 minutes in one window
+        shell: pwsh
+        timeout-minutes: 20
+        run: ./rc-leak.ps1 -Exe "$PWD/rc/AdeeboMeter.exe" -Out "$PWD/out" -Minutes 10
+      - name: Errors in the logs
+        if: always()
+        shell: pwsh
+        run: |
+          $logs = Get-ChildItem rc -Recurse -Include *.log,*.log.1 -ErrorAction SilentlyContinue
+          $hits = foreach ($l in $logs) { Select-String -Path $l.FullName -Pattern 'Exception|THREW|error|failed|crash' -SimpleMatch:$false | ForEach-Object { "$($l.Name): $($_.Line)" } }
+          $hits | Set-Content out/log-errors.txt; "log lines flagged: $(@($hits).Count)" | Tee-Object -Append out/summary.txt
+          foreach ($l in $logs) { Copy-Item $l.FullName ("out/" + $l.Name) }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        if: always()
+        with:
+          name: rc-check
+          path: out/*
