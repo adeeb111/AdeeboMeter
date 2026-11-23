@@ -693,7 +693,12 @@ namespace AdeeboMeter
                     {
                         int code = (int)resp.StatusCode; string loc = resp.Headers["Location"] ?? "";
                         rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, (hop == 0 ? "" : "then ") + code + " " + resp.StatusDescription, Reach.NoUser(u) + " · " + sw.ElapsedMilliseconds + " ms" + (loc != "" ? " → " + Reach.NoUser(loc) : ""), "", "m"));
-                        if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) { u = n; followed = true; continue; } }
+                        if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) {
+                            // security recheck SECN-2: each hop is checked - http(s) only, and a site can't bounce this PC to the router, the LAN,
+                            // this PC or a cloud metadata address (only the host you typed may be one of those)
+                            bool sameHost = n.Host.Equals(first, StringComparison.OrdinalIgnoreCase);
+                            if ((n.Scheme != "https" && n.Scheme != "http") || n.UserInfo != "" || (!sameHost && !SpeedTest.SafeUrl(n.AbsoluteUri))) { rows.Add(R(1, "Not followed", "the redirect points at " + Reach.NoUser(n) + " - a local, private or non-web address, so it wasn't opened", "Redirects are only followed to public web addresses or the same host you typed.", "m")); break; }
+                            u = n; followed = true; continue; } }
                         foreach (var h in new[] { "Server", "Alt-Svc", "Content-Type", "Cache-Control", "Via", "X-Cache", "CF-Ray" })
                             if (!string.IsNullOrEmpty(resp.Headers[h])) rows.Add(R(3, h, Draw.Trunc(resp.Headers[h], 120), h == "Alt-Svc" && resp.Headers[h].Contains("h3") ? "The site also offers HTTP/3 (QUIC over UDP 443) - browsers switch to it after the first visit." : "", "m"));
                         rows.AddRange(SecurityHeaders(resp.Headers, u.Scheme == "https"));

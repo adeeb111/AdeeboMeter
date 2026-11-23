@@ -30,8 +30,8 @@ namespace AdeeboMeter
             if (!Cfg.Portal) { portalErr = "off"; return; }   // Settings › Sign-in page check is off: nothing is sent
             try
             {
-                var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.AllowAutoRedirect = false;
-                using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var body = rd.ReadToEnd(); if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
+                var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.ReadWriteTimeout = 5000; q.AllowAutoRedirect = false;
+                using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var cb = new char[200]; int got = rd.ReadBlock(cb, 0, cb.Length); var body = new string(cb, 0, got);   /* security recheck SECN-1: 200 characters at most - a hostile hotspot streaming forever can't fill memory */ if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
             }
             catch (WebException e) { var resp = e.Response as HttpWebResponse; portal = resp != null ? ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 ? "redirected to " + Draw.Trunc(resp.Headers["Location"] ?? "", 60) : "error " + (int)resp.StatusCode) : e.Status == WebExceptionStatus.Timeout ? "no answer (a proxy may be required)" : ""; if (resp == null && e.Status != WebExceptionStatus.Timeout) portalErr = e.Status.ToString(); if (resp != null) resp.Dispose(); }
         }

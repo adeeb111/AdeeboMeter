@@ -391,7 +391,7 @@ textarea.in{resize:vertical;min-height:120px}
           (async function () {
             if (!quiet) { phase = "asking"; draw(); }
             var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", w2: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", w2: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))), mac2: b64u(await hmac(auth, cat2(te.encode("hi2|1|1|" + dev), pk))) }));
           })().catch(function () { try { sock.close(); } catch (e) {} });
         };
       sock.onclose = function () {
@@ -407,7 +407,9 @@ textarea.in{resize:vertical;min-height:120px}
           if (m.t === "key" && !keyPk) {   // the PC's key early, so both can show the matching words before you press Allow
             var kp2 = unb64u(m.pk || "");
             if (kp2.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("key"), pk, kp2)))) { why = "This isn't your PC - its key wasn't signed with your code."; sock.close(); return; }
-            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2, m.wv === 2 ? 2 : 1); draw(); return;
+            // security recheck R-1: this page asked for six words - fewer is a downgrade, and a PC that signs the count (mac2) must sign 2
+            if (m.wv !== 2 || (m.mac2 != null && !same(unb64u(m.mac2 || ""), await hmac(auth, cat2(te.encode("key2|2"), pk, kp2))))) { why = "The PC offered fewer matching words than this page asked for - the session was closed to be safe. Update AdeeboMeter on the PC and scan again."; sock.close(); return; }
+            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2, 2); draw(); return;
           }
           if (m.t !== "ok") return;
           if (m.v && +m.v > PROTO) { why = "Your PC has a newer AdeeboMeter than this page. Close the app and open it again to update (it updates itself when it's online)."; if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (g) { if (g) g.update(); }); sock.close(); return; }
