@@ -91,6 +91,7 @@ namespace AdeeboMeter
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
         // the self-test's paint counter (21 Nov sitting test): how often and how much of this canvas was redrawn
         public int Paints; public long PaintArea;
+        public long LastFullPaintMs;   // how long the last paint of (nearly) the whole panel took - decides whether a wheel notch glides
         // R2-15: painted buttons named for screen readers and UI automation - the painter lists them (name, place, action)
         // each time it draws, and the panel reports them as buttons a reader can find and press
         public readonly List<Tuple<string, Rectangle, Action>> Acc = new List<Tuple<string, Rectangle, Action>>();
@@ -156,7 +157,9 @@ namespace AdeeboMeter
             int max = Math.Max(0, DisplayRectangle.Height - ClientSize.Height);
             int from = glideTo >= 0 ? glideTo : -AutoScrollPosition.Y;
             int y = Math.Max(0, Math.Min(max, from - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S)));
-            if (!Typing.On) { glideTo = -1; AutoScrollPosition = new Point(-AutoScrollPosition.X, y); return; }
+            // no glide when Windows' animations are off, or when this page took long to draw (a slow PC, a long page): every glide
+            // step repaints the page, so 4-8 slow paints per notch felt worse than one jump (motion review, 23 Nov)
+            if (!Typing.On || LastFullPaintMs > 16) { glideTo = -1; AutoScrollPosition = new Point(-AutoScrollPosition.X, y); return; }
             // time-based (Adeeb, 22 Nov: "laggy" on long pages): the position follows the clock, so a page that takes 30-40 ms
             // to draw moves in fewer, bigger steps and still arrives in ~130 ms - it never falls behind one paint per step
             glideFrom = -AutoScrollPosition.Y; glideTo = y; glideClock = System.Diagnostics.Stopwatch.StartNew();
@@ -185,6 +188,7 @@ namespace AdeeboMeter
         {
             Paints++; PaintArea += (long)e.ClipRectangle.Width * e.ClipRectangle.Height;
             UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
+            if ((long)e.ClipRectangle.Width * e.ClipRectangle.Height * 2 >= (long)Math.Max(1, ClientSize.Width) * Math.Max(1, ClientSize.Height)) LastFullPaintMs = sw.ElapsedMilliseconds;
             if (Focused && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); var sm = e.Graphics.SmoothingMode; e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; Theme.Stroke(e.Graphics, RectangleF.Inflate(r, 2, 2), 12 * Draw.S, Theme.Blue, 2 * Draw.S); e.Graphics.SmoothingMode = sm; } }   // the keyboard's place: an outline in the accent colour, like a hovered tile
             string pn = Name ?? "";
             if (sw.ElapsedMilliseconds > 40)

@@ -142,11 +142,30 @@ namespace AdeeboMeter
             if (!Cfg.SideOpen) { PaintSlim(g, r); return; }
             float x = 0, y = 0, w = r.Width;
             Begin(side);
-            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
+            // three cards, each its own live spot (motion review, 23 Nov): a new CPU % or a new top process redraws its card only,
+            // not the whole panel once a second; OnTimer decides which, and a change of shape (rows added) redraws the panel
+            float h1 = SideHealthH(); var c1 = new RectangleF(x, y, w - 1, h1);
+            PaintSideHealth(g, c1); LiveSpot(side, "side.health", c1, Theme.Bg, gg => PaintSideHealth(gg, c1));
+            y += h1 + 14 * S;
+            var c2 = new RectangleF(x, y, w - 1, 16 * S + 20 * S + 4 * 20 * S + 8 * S);
+            PaintSidePc(g, c2); LiveSpot(side, "side.pc", c2, Theme.Bg, gg => PaintSidePc(gg, c2));
+            y += c2.Height + 14 * S;
+            int n = SideTopRows(r.Height - y); if (n == 0) return;
+            var c3 = new RectangleF(x, y, w - 1, 16 * S + 18 * S + n * 20 * S + 8 * S);
+            PaintSideTop(g, c3, n); LiveSpot(side, "side.top", c3, Theme.Bg, gg => PaintSideTop(gg, c3, n));
+        }
+        float SideHealthH() { return 16 * S + 22 * S + snap.Health.Count * 24 * S + 8 * S; }
+        int SideTopRows(float room)
+        {
+            int fit = (int)((room - 16 * S - 18 * S - 8 * S) / (20 * S));   // fewer rows on short / high-DPI screens instead of clipping
+            return Math.Max(0, Math.Min(Math.Min(6, fit), Math.Max(snap.TopMem.Count, snap.TopCpu.Count)));
+        }
+        void PaintSideHealth(Graphics g, RectangleF c1)
+        {
+            Theme.Fill(g, c1, 16 * S, Theme.Card); Kit.Frame(g, c1);
+            float yy = c1.Y + 14 * S, xx = c1.X + 14 * S, ww = c1.Width + 1 - 28 * S;
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
             {
-                float h1 = 16 * S + 22 * S + snap.Health.Count * 24 * S + 8 * S;
-                var c1 = new RectangleF(x, y, w - 1, h1); Theme.Fill(g, c1, 16 * S, Theme.Card); Kit.Frame(g, c1);
-                float yy = y + 14 * S, xx = x + 14 * S, ww = w - 28 * S;
                 g.DrawString(L.T("TCP / IP HEALTH"), Draw.fTiny, muted, xx, yy);
                 var ns = g.MeasureString(L.T("Windows counters · no admin"), Draw.fSmall); g.DrawString(L.T("Windows counters · no admin"), Draw.fSmall, muted, xx + ww - ns.Width, yy - 2 * S);
                 yy += 22 * S;
@@ -161,21 +180,25 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.Lv(lv) : Theme.Ink)) g.DrawString(hrow[1], Draw.fMono, b, xx + ww - vs.Width, yy);
                     yy += 24 * S;
                 }
-                y += h1 + 14 * S;
-                float h2 = 16 * S + 20 * S + 4 * 20 * S + 8 * S;
-                var c2 = new RectangleF(x, y, w - 1, h2); Theme.Fill(g, c2, 16 * S, Theme.Card); Kit.Frame(g, c2);
-                yy = y + 14 * S; g.DrawString(L.T("THIS PC"), Draw.fTiny, muted, xx, yy); yy += 20 * S;
-                float yb = yy; Draw.Bar(g, "", "CPU", snap.Cpu, Draw.Fmt(snap.Cpu, "0", "%"), 60, 88, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "CPU");
-                yb = yy; Draw.Bar(g, "", "Memory", snap.Mem, snap.MemText, 80, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Memory");
-                yb = yy; Draw.Bar(g, "", "Disk", snap.Disk, snap.DiskText, 60, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Disk");
-                yb = yy; double dn = snap.Down; Draw.Bar(g, "", "Download", double.IsNaN(dn) ? double.NaN : Math.Min(100, dn), Draw.Rate(dn, true), 200, 200, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Download");
-                y += h2 + 14 * S;
-                int fit = (int)((r.Height - y - 16 * S - 18 * S - 8 * S) / (20 * S));   // fewer rows on short / high-DPI screens instead of clipping
-                int n = Math.Max(0, Math.Min(Math.Min(6, fit), Math.Max(snap.TopMem.Count, snap.TopCpu.Count)));
-                if (n == 0) return;
-                float h3 = 16 * S + 18 * S + n * 20 * S + 8 * S;
-                var c3 = new RectangleF(x, y, w - 1, h3); Theme.Fill(g, c3, 16 * S, Theme.Card); Kit.Frame(g, c3);
-                yy = y + 14 * S; float colW = (ww - 16 * S) / 2;
+            }
+        }
+        void PaintSidePc(Graphics g, RectangleF c2)
+        {
+            Theme.Fill(g, c2, 16 * S, Theme.Card); Kit.Frame(g, c2);
+            float xx = c2.X + 14 * S, ww = c2.Width + 1 - 28 * S, yy = c2.Y + 14 * S;
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(L.T("THIS PC"), Draw.fTiny, muted, xx, yy);
+            yy += 20 * S;
+            float yb = yy; Draw.Bar(g, "", "CPU", snap.Cpu, Draw.Fmt(snap.Cpu, "0", "%"), 60, 88, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "CPU");
+            yb = yy; Draw.Bar(g, "", "Memory", snap.Mem, snap.MemText, 80, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Memory");
+            yb = yy; Draw.Bar(g, "", "Disk", snap.Disk, snap.DiskText, 60, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Disk");
+            yb = yy; double dn = snap.Down; Draw.Bar(g, "", "Download", double.IsNaN(dn) ? double.NaN : Math.Min(100, dn), Draw.Rate(dn, true), 200, 200, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Download");
+        }
+        void PaintSideTop(Graphics g, RectangleF c3, int n)
+        {
+            Theme.Fill(g, c3, 16 * S, Theme.Card); Kit.Frame(g, c3);
+            float xx = c3.X + 14 * S, ww = c3.Width + 1 - 28 * S, yy = c3.Y + 14 * S, colW = (ww - 16 * S) / 2;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
+            {
                 g.DrawString(L.T("TOP BY MEMORY"), Draw.fTiny, muted, xx, yy); g.DrawString(L.T("TOP BY CPU"), Draw.fTiny, muted, xx + colW + 16 * S, yy);
                 Hint(side, new RectangleF(xx, yy, colW, 16 * S), "Top by memory"); Hint(side, new RectangleF(xx + colW + 16 * S, yy, colW, 16 * S), "Top by CPU"); yy += 18 * S;
                 for (int i = 0; i < n; i++)

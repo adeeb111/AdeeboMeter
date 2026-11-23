@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // fades back; anything that goes wrong puts the old view back - a switch never crashes the app.
     sealed partial class FullView
     {
-        DB viewSheet; string switchingTo, switchLine; DateTime switchAt; System.Windows.Forms.Timer switchTimer;
+        DB viewSheet; string switchingTo, switchLine; bool switchFailed; System.Windows.Forms.Timer switchTimer;
         // each view's colour and icon: the group it's for (combinations get both colours)
         static readonly Dictionary<string, string[]> ViewLook = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
@@ -149,7 +149,7 @@ namespace AdeeboMeter
         void RunSwitch(string id, bool reset)
         {
             if (switchingTo != null) return;   // one at a time
-            switchingTo = id; switchAt = DateTime.UtcNow; SetTipKey(null);
+            switchingTo = id; switchFailed = false; SetTipKey(null);
             string name = Views.NameOf(id);
             try { switchLine = Lines.Steady("view.switch", name) ?? ""; } catch (Exception e) { if (e is OutOfMemoryException) throw; switchLine = ""; }
             viewSheet.AutoScrollPosition = Point.Empty; viewSheet.Invalidate(); viewSheet.Update();   // the "switching" screen shows before the work starts
@@ -169,16 +169,16 @@ namespace AdeeboMeter
                     Program.Log("view switch to " + id + ": " + e.GetType().Name + " " + e.Message); err = e.Message;
                     try { Cfg.View = beforeId; Views.Put(before); Policy.Apply(); Cfg.Save(); AfterView(); } catch (Exception e2) { if (e2 is OutOfMemoryException) throw; Program.Log("view restore: " + e2.Message); }
                 }
-                if (err != null) switchLine = L.T("That didn't switch cleanly - your previous view is back, nothing lost.");
-                // stay long enough to read the line (at least 0.7 s), never longer than needed
-                if (switchTimer == null) { switchTimer = new System.Windows.Forms.Timer { Interval = 60 }; switchTimer.Tick += delegate { SwitchTick(); }; }
-                switchTimer.Start();
+                // motion review (23 Nov): a switch that worked closes the card at once - no minimum wait, the card only stood
+                // in for the time the work took. A switch that failed keeps its line up long enough to read, without repainting.
+                if (err == null) { switchingTo = null; HideViewSheet(); return; }
+                switchFailed = true; switchLine = L.T("That didn't switch cleanly - your previous view is back, nothing lost."); viewSheet.Invalidate();
+                if (switchTimer == null) { switchTimer = new System.Windows.Forms.Timer { Interval = 2500 }; switchTimer.Tick += delegate { SwitchTick(); }; }
+                switchTimer.Stop(); switchTimer.Start();
             });
         }
         void SwitchTick()
         {
-            if (viewSheet != null && viewSheet.Visible) viewSheet.Invalidate();
-            if ((DateTime.UtcNow - switchAt).TotalMilliseconds < 900) return;
             switchTimer.Stop(); switchingTo = null; HideViewSheet();
         }
         void PaintSwitching(Graphics g, float x, float w)
@@ -189,8 +189,9 @@ namespace AdeeboMeter
             var ic = new RectangleF(card.X + 26 * S, card.Y + 30 * S, 48 * S, 48 * S); Theme.Fill(g, ic, 14 * S, Kit.Soft(look[0])); Kit.Icon(g, look[2], new RectangleF(ic.X + 12 * S, ic.Y + 12 * S, 24 * S, 24 * S), Kit.Accent(look[0]));
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Switching to ") + Views.NameOf(switchingTo) + "...", Draw.fTitle, ink, ic.Right + 18 * S, ic.Y + 8 * S);
             if (!string.IsNullOrEmpty(switchLine)) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(switchLine, Draw.fBody, sb, new RectangleF(card.X + 26 * S, card.Y + 100 * S, card.Width - 52 * S, 46 * S));
-            // a small moving bar: something is happening
-            float t = (float)((DateTime.UtcNow - switchAt).TotalMilliseconds % 900 / 900.0); var track = new RectangleF(card.X + 26 * S, card.Bottom - 30 * S, card.Width - 52 * S, 5 * S);
+            // the bar says "working" while the switch runs; once it failed, the line is the message and the bar goes
+            if (switchFailed) return;
+            float t = 0; var track = new RectangleF(card.X + 26 * S, card.Bottom - 30 * S, card.Width - 52 * S, 5 * S);
             Theme.Fill(g, track, 2.5f * S, Theme.Track);
             Theme.Fill(g, new RectangleF(track.X + (track.Width * 0.7f) * t, track.Y, track.Width * 0.3f, track.Height), 2.5f * S, Kit.Accent(look[1] == "" ? look[0] : look[1]));
         }

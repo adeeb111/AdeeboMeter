@@ -179,7 +179,38 @@ namespace AdeeboMeter
         // the first Home paint after a start, timed part by part and written to the log once (a real PC: 250-690 ms cold, 20-40 warm)
         System.Diagnostics.Stopwatch ovLap; System.Text.StringBuilder ovLaps; bool ovTimed;
         void OvLap(string part) { if (ovLaps == null) return; ovLaps.Append(part).Append(' ').Append(ovLap.ElapsedMilliseconds).Append(" · "); ovLap.Restart(); }
+        // Home's live part: the four tiles and the connection line (drawn by the page, and alone by its live spot)
+        void PaintOvNow(Graphics g, float ix, float ty, float iw, int cols, float tw, float th, float ny)
+        {
+            double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), down = M.Down.Last, up = M.Up.Last, dns = M.Dns.Avg(6);
+            string kind, ssid, speed; bool vpn; int sig;
+            lock (M.L) { kind = M.AdapterKind; ssid = M.Ssid; speed = M.LinkSpeed; vpn = M.VpnUp; sig = M.WifiSignal; }
+            Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
+            {
+                var tiles = new[] {
+                    new[] { "Your router", ms(gw), "m", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
+                    new[] { "The internet", ms(net), "m", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
+                    new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), double.IsNaN(dns) ? "u" : "m", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
+                    new[] { "Your traffic", Draw.Pair(down, up), "w", "3", "ov.TRAFFIC" } };
+                for (int i = 0; i < tiles.Length; i++)
+                {
+                    var t = tiles[i]; var tr = new RectangleF(ix + (i % cols) * (tw + 12 * S), ty + (i / cols) * (th + 12 * S), tw, th);
+                    Kit.Box(g, tr);
+                    int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
+                    Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
+                    Glyphs.Tile(g, new[] { "cpe", "internet", "dns", "chart" }[i], new RectangleF(tr.Right - 54 * S, tr.Y + 12 * S, 42 * S, 42 * S), lv == 1 || lv == 2 ? Theme.LvText(lv) : Kit.Accent("home"), 10 * S);
+                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(t[0]).ToUpper(CultureInfo.CurrentCulture), Draw.fTiny, muted, new RectangleF(tr.X + 30 * S, tr.Y + 14 * S, tr.Width - 92 * S, 18 * S), nf);
+                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t[1], Draw.fName, vb, tr.X + 14 * S, tr.Y + 34 * S);
+                    Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
+                    Hint(overviewCanvas, tr, t[4]);
+                }
+                string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
+                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fBody, sub, new RectangleF(ix, ny, iw, 22 * S), nf);
+            }
+        }
         void PaintOverview(Graphics g)
+
         {
             if (!ovTimed && overviewCanvas.Width > 300) { ovTimed = true; ovLap = System.Diagnostics.Stopwatch.StartNew(); ovLaps = new System.Text.StringBuilder(); try { PaintOverview1(g); } finally { OvLap("rest"); double up = -1; try { using (var me = System.Diagnostics.Process.GetCurrentProcess()) up = (DateTime.Now - me.StartTime).TotalMilliseconds; } catch (Exception) { } Program.Log("first Home paint (ms): " + ovLaps.ToString().TrimEnd(' ', '·') + "  ·  " + (up / 1000).ToString("0.0", CultureInfo.InvariantCulture) + " s after start"); ovLaps = null; } return; }
             PaintOverview1(g);
@@ -227,27 +258,12 @@ namespace AdeeboMeter
                     using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(ix, y + 15 * S, iw, hh + 6));
                     if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(ix, y + 21 * S + hh, iw, wh)); Hint(overviewCanvas, new RectangleF(ix, y + 21 * S + hh, iw, wh), "ov.WEATHER"); }
                     float ty = y + 15 * S + hh + 6 * S + wh + 10 * S;
-                    var tiles = new[] {
-                        new[] { "Your router", ms(gw), "m", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
-                        new[] { "The internet", ms(net), "m", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
-                        new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), double.IsNaN(dns) ? "u" : "m", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
-                        new[] { "Your traffic", Draw.Pair(down, up), "w", "3", "ov.TRAFFIC" } };
-                    for (int i = 0; i < tiles.Length; i++)
-                    {
-                        var t = tiles[i]; var tr = new RectangleF(ix + (i % cols) * (tw + 12 * S), ty + (i / cols) * (th + 12 * S), tw, th);
-                        Kit.Box(g, tr);
-                        int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
-                        Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
-                        Glyphs.Tile(g, new[] { "cpe", "internet", "dns", "chart" }[i], new RectangleF(tr.Right - 54 * S, tr.Y + 12 * S, 42 * S, 42 * S), lv == 1 || lv == 2 ? Theme.LvText(lv) : Kit.Accent("home"), 10 * S);
-                        using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(t[0]).ToUpper(CultureInfo.CurrentCulture), Draw.fTiny, muted, new RectangleF(tr.X + 30 * S, tr.Y + 14 * S, tr.Width - 92 * S, 18 * S), nf);
-                        using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t[1], Draw.fName, vb, tr.X + 14 * S, tr.Y + 34 * S);
-                        Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
-                        Hint(overviewCanvas, tr, t[4]);
-                    }
                     float ny = ty + tilesH + 12 * S;
-                    string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
-                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fBody, sub, new RectangleF(ix, ny, iw, 22 * S), nf);
-                    LiveSpot(overviewCanvas, "ov.now", new RectangleF(ix, ty, iw, ny + 22 * S - ty));   // the four live numbers and the Wi-Fi line: redrawn alone (OverviewTick)
+                    PaintOvNow(g, ix, ty, iw, cols, tw, th, ny);
+                    // the four live numbers and the Wi-Fi line: redrawn alone (OverviewTick), straight from their own painter - the rest of
+                    // Home is not walked again for them (motion review, 23 Nov: a narrow redraw still ran the whole page's drawing, ~100-300 ms on a slow PC)
+                    Color nowBg = Theme.LvSoft(s.Level); float nX = ix, nY = ty, nW = iw, nTw = tw, nTh = th, nNy = ny; int nCols = cols;
+                    LiveSpot(overviewCanvas, "ov.now", new RectangleF(ix, ty, iw, ny + 22 * S - ty), nowBg, gg => PaintOvNow(gg, nX, nY, nW, nCols, nTw, nTh, nNy));
                     y += vr.Height + 18 * S; OvLap("verdict");
                 }
                 // then the do-everything button, then the front door (Adeeb, 22 Nov: verdict on top, Full checkup, then "What's going on?")

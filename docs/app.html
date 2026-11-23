@@ -154,7 +154,6 @@ nav.tabs button.on{color:#fff;background:var(--blue)}
 html,body{overscroll-behavior:none}body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 nav.tabs,.tile,.btn,.seg,.act,.row{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tile,.btn,.row,.act i,nav.tabs button{transition:transform .12s ease,background-color .15s ease}.tile:active,.btn:active,.act:active i{transform:scale(.97)}
-#app>*{animation:vin .18s ease-out}@keyframes vin{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#app>*{animation:none}.tile,.btn,.row{transition:none}}
 img.logo{width:34px;height:34px;flex:none;display:block}
 #splash{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}#splash b{font-size:24px;letter-spacing:-.01em}#splash.out{opacity:0;pointer-events:none}
@@ -178,19 +177,16 @@ img.logo{width:34px;height:34px;flex:none;display:block}
 @keyframes amShine{0%{background-position:120% 0}100%{background-position:-20% 0}}
 body.intro #app>*{animation:amRise .5s cubic-bezier(.2,.8,.2,1) backwards}
 body.intro #app>*:nth-child(2){animation-delay:.05s}body.intro #app>*:nth-child(3){animation-delay:.1s}body.intro #app>*:nth-child(4){animation-delay:.15s}body.intro #app>*:nth-child(5){animation-delay:.2s}body.intro #app>*:nth-child(6){animation-delay:.25s}body.intro #app>*:nth-child(n+7){animation-delay:.3s}
-body.page #app>*{animation:amFade .22s ease-out backwards}
+/* a tab switch: one short fade, nothing else moves (motion review, 23 Nov - it is the most-used action in the app) */
+body.page #app>*{animation:amFade .12s cubic-bezier(.23,1,.32,1) backwards}
 @keyframes amRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
-@keyframes amFade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
-.bump{animation:amBump .45s cubic-bezier(.2,.8,.2,1)}
-@keyframes amBump{0%{opacity:.2;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+@keyframes amFade{0%{opacity:.4}100%{opacity:1}}
 .eyes{transform-box:fill-box;transform-origin:center;animation:amBlink 5.5s infinite}
 @keyframes amBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
 .led:not(.off):not(.warn){animation:amLed 2.4s ease-out infinite}
 @keyframes amLed{0%{box-shadow:0 0 0 0 rgba(63,185,80,.6)}70%{box-shadow:0 0 0 9px rgba(63,185,80,0)}100%{box-shadow:0 0 0 0 rgba(63,185,80,0)}}
 .btn,.row,.card[data-go],.card[data-act],#tabs button,.vchip,.gcard{transition:transform .12s ease,background-color .2s,box-shadow .2s}
 .btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active{transform:scale(.975)}
-#tabs button.on svg{animation:amPop .35s cubic-bezier(.3,1.6,.5,1)}
-@keyframes amPop{0%{transform:scale(.7)}100%{transform:none}}
 }
 p.foot{margin:22px 4px 6px;text-align:center;font-size:12px;color:var(--mut);line-height:1.6}
 #scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
@@ -350,7 +346,6 @@ textarea.in{resize:vertical;min-height:120px}
     return '<svg class="amlogo logo" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" style="--r:' + r + 'deg;width:' + px + 'px;height:' + px + 'px;flex:none" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle class="dot d1" cx="18.8" cy="42.6" r="2.3"/><circle class="dot d2" cx="32" cy="42.6" r="2.3"/><circle class="dot d3" cx="45.2" cy="42.6" r="2.3"/></g></svg>';
   }
   setInterval(function () { if (document.hidden) return; [].forEach.call(document.querySelectorAll(".amlogo"), function (l) { l.classList.remove("breathe"); void l.getBoundingClientRect(); l.classList.add("breathe"); setTimeout(function () { l.classList.remove("breathe"); }, 1400); }); }, 300000);
-  function bump(el) { if (!el || !el.classList) return; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); setTimeout(function () { el.classList.remove("bump"); }, 500); }
   function faceHtml(look) { var d = document.createElement("span"); if (window.AMV) AMV.face(d, look); return d.innerHTML; }
   function lvOf(v, ok, bad) { return v == null ? 3 : v >= bad ? 2 : v >= ok ? 1 : 0; }
   function ms(v) { return v == null ? "–" : Math.round(v) + '<small> ms</small>'; }
@@ -2192,7 +2187,7 @@ textarea.in{resize:vertical;min-height:120px}
   var lastHtml = "", lastTab = null, lastLocale = "";
   function entrance(tabNow) {
     if (lastTab === null) { document.body.classList.add("intro"); setTimeout(function () { document.body.classList.remove("intro"); }, 1600); }
-    else if (tabNow !== lastTab) { document.body.classList.remove("page"); void document.body.offsetWidth; document.body.classList.add("page"); setTimeout(function () { document.body.classList.remove("page"); }, 400); }
+    else if (tabNow !== lastTab) { document.body.classList.remove("page"); void document.body.offsetWidth; document.body.classList.add("page"); setTimeout(function () { document.body.classList.remove("page"); }, 200); }
     lastTab = tabNow;
   }
   function morph(root, html) {
@@ -2230,7 +2225,7 @@ textarea.in{resize:vertical;min-height:120px}
       var x = an[i], y = bn[i];
       if (!x) { a.appendChild(y.cloneNode(true)); continue; }
       if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName || (x.nodeType === 1 && (x.getAttribute("data-say") !== y.getAttribute("data-say")))) { a.replaceChild(y.cloneNode(true), x); continue; }
-      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) { x.nodeValue = y.nodeValue; var pe = x.parentNode; if (pe && pe.closest && pe.closest(".big3 b, .st b, .gst")) bump(pe); } continue; }
+      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) { x.nodeValue = y.nodeValue; }   /* numbers change in place - live data arrives every second, a bounce each time was noise (motion review, 23 Nov) */ continue; }
       if (x.nodeType !== 1) continue;
       if (x.isEqualNode(y)) continue;
       if (x.hasAttribute("data-say")) { if (x.getAttribute("aria-label") !== y.getAttribute("aria-label")) a.replaceChild(y.cloneNode(true), x); continue; }   // the buddy's line types on its own clock

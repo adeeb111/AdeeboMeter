@@ -38,6 +38,14 @@ namespace AdeeboMeter
         readonly Dictionary<int, string> tcpEvents = new Dictionary<int, string>();
         List<string[]> labDns; bool labBusy, labNatBusy;   /* finding 11: the DNS walk and the NAT trace each have their own */ string labCg = ""; bool labCgOk; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = ""; int quizStreak;
 
+        // one frame of the TCP lab playing: the graph's spot on whichever surface shows it (the page and/or the full-screen window)
+        void LabPlayFrame()
+        {
+            bool any = false;
+            if (labHost != null && !labHost.IsDisposed) { any = true; if (!RedrawSpots(labHost, "lab.play")) labHost.Invalidate(); }
+            if (learnInfo != null && learnPage.Visible && learnSel == "lab:tcp") { any = true; if (!RedrawSpots(learnInfo, "lab.play")) learnInfo.Invalidate(); }
+            if (!any) LabRefresh();
+        }
         void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); if (learnInfo != null && learnPage.Visible && learnSel.StartsWith("lab:", StringComparison.Ordinal)) learnInfo.Invalidate(); }   // both: a change can come from either window
 
         float PaintLabList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
@@ -115,7 +123,7 @@ namespace AdeeboMeter
         void LabChanged(string key) { if (key.StartsWith("tcp.", StringComparison.Ordinal)) labShown = -1; LabRefresh(); }
         void LabPlay(bool on)
         {
-            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized && learnSel == "lab:tcp") || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; labShown = -1; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; } LabRefresh(); }; }
+            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized && learnSel == "lab:tcp") || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; labShown = -1; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; LabRefresh(); return; } LabPlayFrame(); }; }
             labShown = on ? 0 : -1; labTimer.Enabled = on; LabRefresh();
         }
 
@@ -224,9 +232,21 @@ namespace AdeeboMeter
             cx += Stepper(h, g, "tcp.loss", "Random loss", new double[] { 0, 0.001, 0.01, 0.1, 0.5, 1, 2 }, 0, v => v.ToString("0.###", CultureInfo.CurrentCulture) + "%", cx, y);
             cx += Stepper(h, g, "tcp.rounds", "Length", new double[] { 60, 120, 240, 480 }, 240, v => N0(v) + " RTTs", cx, y);
             y += 74 * S;   /* room for the axis label under the steppers */
+            // while it plays, only the graph and its numbers redraw, by their own painter (motion review, 23 Nov: the whole page
+            // was redrawn 15 times a second); if the numbers' card changes height mid-play, the page redraws once to re-flow
+            float top = y, end = LabTcpBody(h, g, x, y, w), x0 = x, w0 = w;
+            LiveSpot(h, "lab.play", new RectangleF(x - 4 * S, top - 20 * S, w + 8 * S, end - top + 20 * S), Theme.Card, gg => { float e = LabTcpBody(h, gg, x0, top, w0); if (Math.Abs(e - end) > 0.5f) h.Invalidate(); });
+            return end;
+        }
+        // the simulation for these settings, worked out once (it is deterministic: same settings, same seed, same steps)
+        string tcpSimKey; List<LabSim.Step> tcpSimMain, tcpSimOther;
+        float LabTcpBody(Control h, Graphics g, float x, float y, float w)
+        {
             string algo = LS("tcp.algo", "cubic"); int rounds = (int)LV("tcp.rounds", 240);
             Func<string, List<LabSim.Step>> run = a => { var p = new LabSim.TcpIn { Algo = a, Mbps = LV("tcp.mbps", 100), RttMs = LV("tcp.rtt", 40), BufferBdp = LV("tcp.buf", 1), LossPct = LV("tcp.loss", 0), Rounds = rounds }; foreach (var kv in tcpEvents) p.Events[kv.Key] = kv.Value; return LabSim.Tcp(p); };
-            var main = run(algo == "reno" ? "reno" : "cubic"); var other = algo == "both" ? run("reno") : null;
+            string simKey = algo + "|" + rounds + "|" + LV("tcp.mbps", 100) + "|" + LV("tcp.rtt", 40) + "|" + LV("tcp.buf", 1) + "|" + LV("tcp.loss", 0) + "|" + string.Join(",", tcpEvents.OrderBy(kv => kv.Key).Select(kv => kv.Key + kv.Value));
+            if (simKey != tcpSimKey || tcpSimMain == null) { tcpSimMain = run(algo == "reno" ? "reno" : "cubic"); tcpSimOther = algo == "both" ? run("reno") : null; tcpSimKey = simKey; }
+            var main = tcpSimMain; var other = tcpSimOther;
             double bdp = LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)), cap = LabSim.CapPackets(LV("tcp.mbps", 100), LV("tcp.rtt", 40), LV("tcp.buf", 1));
             int shown = labShown < 0 ? rounds : Math.Min(rounds, labShown + 1);
             var real = LabSim.LastRealCwnd; double realStep = LabSim.LastRealRttMs > 0 ? LabSim.LastRealRttMs / LV("tcp.rtt", 40) : 1;   // finding 7: one real point is one of the capture's round trips - put it where it belongs on the sim's axis

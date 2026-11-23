@@ -571,7 +571,7 @@ namespace AdeeboMeter
             foreach (Control c in chips.Controls) { var b = c as PillButton; if (b != null && b != idle) b.Selected = (string)b.Tag == list.Filter; }
         }
 
-        string headKey = "", pathKey = "", sideKey = "", footKey = "";
+        string headKey = "", pathKey = "", sideKey = "", sideShape = "", sideH = "", sideP = "", sideT = "", footKey = "";
         string gamerVer = "";
         void OnTimer()
         {
@@ -598,8 +598,19 @@ namespace AdeeboMeter
                 // the path strip and the side panel repaint only when what they print changed
                 string pk = snap.Hint + "|" + string.Join(",", snap.Path) + "|" + string.Join("|", snap.PathLabel) + "|" + string.Join("|", snap.PathMain) + "|" + string.Join("|", snap.PathSub);
                 if (pk != pathKey) { pathKey = pk; pathPanel.Invalidate(); }
-                string sk = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(HistKey)) + "|" + Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", "") + "|" + string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture)));
-                if (sk != sideKey) { sideKey = sk; side.Invalidate(); } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
+                // the side panel: each card redraws alone when only its numbers moved; a new shape (rows, collapsed) redraws the panel
+                string skH = string.Join("|", snap.Health.Select(h => h[1] + h[2])) + "|" + string.Join("|", snap.HealthHist.Select(HistKey)),
+                       skP = Draw.Fmt(snap.Cpu, "0", "%") + snap.MemText + snap.DiskText + Draw.Fmt(snap.Down, "0.0", ""),
+                       skT = string.Join(",", snap.TopMem.Take(6).Select(t => t.Name + Draw.MemStr(t.Mem))) + "|" + string.Join(",", snap.TopCpu.Take(6).Select(t => t.Name + t.Cpu.ToString("0.0", CultureInfo.InvariantCulture))),
+                       skL = Cfg.SideOpen + "|" + snap.Health.Count + "|" + Math.Min(6, Math.Max(snap.TopMem.Count, snap.TopCpu.Count)) + "|" + side.ClientSize;
+                if (skL != sideShape || !Cfg.SideOpen) { if (skL != sideShape || skH + skP + skT != sideKey) { sideShape = skL; sideKey = skH + skP + skT; sideH = skH; sideP = skP; sideT = skT; side.Invalidate(); } }
+                else
+                {
+                    var due = new List<string>();
+                    if (skH != sideH) due.Add("side.health"); if (skP != sideP) due.Add("side.pc"); if (skT != sideT) due.Add("side.top");
+                    sideH = skH; sideP = skP; sideT = skT; sideKey = skH + skP + skT;
+                    if (due.Count > 0 && !RedrawSpots(side, due.ToArray())) side.Invalidate();
+                } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
@@ -889,17 +900,56 @@ namespace AdeeboMeter
         readonly Dictionary<Control, Dictionary<string, RectangleF>> liveSpots = new Dictionary<Control, Dictionary<string, RectangleF>>();
         void LiveSpot(Control c, string id, RectangleF r)
         {
+            if (spotOnly) return;   // a spot repainting itself: the page's records stay as the last full paint left them
             var sp = ScrollOf(c); r.Offset(sp.X, sp.Y);
             Dictionary<string, RectangleF> d; if (!liveSpots.TryGetValue(c, out d)) liveSpots[c] = d = new Dictionary<string, RectangleF>(StringComparer.Ordinal);
             d[id] = r;
+        }
+        // a spot that can paint itself (motion review, 23 Nov): its painter draws it straight onto the canvas over its background,
+        // so a live number no longer walks the whole page's drawing - a narrow Invalidate still ran every card's text layout
+        readonly Dictionary<Control, Dictionary<string, KeyValuePair<Color, Action<Graphics>>>> spotPainters = new Dictionary<Control, Dictionary<string, KeyValuePair<Color, Action<Graphics>>>>();
+        bool spotOnly;   // true while a spot paints itself: Hint, Act and LiveSpot keep the full paint's records
+        void LiveSpot(Control c, string id, RectangleF r, Color bg, Action<Graphics> paint)
+        {
+            if (spotOnly) return;
+            LiveSpot(c, id, r);
+            Dictionary<string, KeyValuePair<Color, Action<Graphics>>> d; if (!spotPainters.TryGetValue(c, out d)) spotPainters[c] = d = new Dictionary<string, KeyValuePair<Color, Action<Graphics>>>(StringComparer.Ordinal);
+            d[id] = new KeyValuePair<Color, Action<Graphics>>(bg, paint);
+        }
+        // paint one spot now, double-buffered, straight onto the canvas; false: not possible now (the caller invalidates instead)
+        bool PaintSpotNow(Control c, Rectangle area, Color bg, Action<Graphics> paint)
+        {
+            if (c == null || c.IsDisposed || !c.IsHandleCreated || !c.Visible || spotOnly || c.Focused) return false;   // focused: the keyboard ring is drawn by the full paint
+            area.Intersect(c.ClientRectangle); if (area.Width <= 0 || area.Height <= 0) return true;   // scrolled out of sight: nothing to draw
+            try
+            {
+                using (var cg = c.CreateGraphics())
+                using (var buf = BufferedGraphicsManager.Current.Allocate(cg, area))
+                {
+                    var g = buf.Graphics; Prep(g); g.SetClip(area);
+                    using (var b = new SolidBrush(bg)) g.FillRectangle(b, area);
+                    var sp = ScrollOf(c); g.TranslateTransform(sp.X, sp.Y);
+                    spotOnly = true; try { paint(g); } finally { spotOnly = false; }
+                    buf.Render();
+                }
+                var db = c as DB; if (db != null) { db.Paints++; db.PaintArea += (long)area.Width * area.Height; }   // the sitting test counts these too
+                return true;
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("spot paint " + c.Name + ": " + e.Message); return false; }
         }
         // redraw just these spots; false when one isn't known yet (the caller then redraws the page)
         bool RedrawSpots(Control c, params string[] ids)
         {
             Dictionary<string, RectangleF> d; if (c == null || !liveSpots.TryGetValue(c, out d)) return false;
-            var rs = new List<Rectangle>();
-            foreach (var id in ids) { RectangleF r; if (!d.TryGetValue(id, out r)) return false; if (r.Width > 0 && r.Height > 0) rs.Add(Rectangle.Inflate(Rectangle.Round(r), 3, 3)); }
-            foreach (var r in rs) c.Invalidate(r);
+            var rs = new List<KeyValuePair<string, Rectangle>>();
+            foreach (var id in ids) { RectangleF r; if (!d.TryGetValue(id, out r)) return false; if (r.Width > 0 && r.Height > 0) rs.Add(new KeyValuePair<string, Rectangle>(id, Rectangle.Inflate(Rectangle.Round(r), 3, 3))); }
+            Dictionary<string, KeyValuePair<Color, Action<Graphics>>> pd; spotPainters.TryGetValue(c, out pd);
+            foreach (var kv in rs)
+            {
+                KeyValuePair<Color, Action<Graphics>> p;
+                if (pd != null && pd.TryGetValue(kv.Key, out p) && PaintSpotNow(c, kv.Value, p.Key, p.Value)) continue;
+                c.Invalidate(kv.Value);
+            }
             return true;
         }
         // a painted rectangle on a scrolling canvas, in the canvas's own (client) coordinates
@@ -915,12 +965,13 @@ namespace AdeeboMeter
         static Point ScrollOf(Control c) { var sc = c as ScrollableControl; return sc != null && sc.AutoScroll ? sc.AutoScrollPosition : Point.Empty; }
         void Hint(Control c, RectangleF r, string key)
         {
-            if (key == null) return; var sp = ScrollOf(c); r.Offset(sp.X, sp.Y);
+            if (key == null || spotOnly) return; var sp = ScrollOf(c); r.Offset(sp.X, sp.Y);
             List<KeyValuePair<RectangleF, string>> h; if (!hints.TryGetValue(c, out h)) hints[c] = h = new List<KeyValuePair<RectangleF, string>>();
             h.Add(new KeyValuePair<RectangleF, string>(r, key));
         }
         void Act(Control c, RectangleF r, Action a)
         {
+            if (spotOnly) return;
             var sp = ScrollOf(c); r.Offset(sp.X, sp.Y);
             List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) acts[c] = l = new List<KeyValuePair<RectangleF, Action>>();
             l.Add(new KeyValuePair<RectangleF, Action>(r, a));
